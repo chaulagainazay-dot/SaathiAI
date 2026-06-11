@@ -80,6 +80,29 @@ class Listener:
         self.last_reply_at = 0.0
         # callback(state) — "listening" | "thinking" | "speaking"; for menu bar UI
         self.on_state = on_state or (lambda s: None)
+        # Silero neural VAD (what Lemon-style apps use) — far better than a
+        # loudness threshold at telling speech from noise
+        self.vad = None
+        try:
+            from silero_vad import load_silero_vad
+            self.vad = load_silero_vad()
+            self._vad_buf = np.zeros(0, dtype=np.float32)
+        except Exception:
+            pass  # fall back to RMS energy
+
+    def _is_speech(self, frame: np.ndarray) -> bool:
+        """Neural VAD if available (512-sample windows), else RMS threshold."""
+        if self.vad is None:
+            return self._rms(frame) > self.noise_floor
+        import torch
+        self._vad_buf = np.concatenate([self._vad_buf, frame])
+        prob = None
+        while len(self._vad_buf) >= 512:
+            chunk, self._vad_buf = self._vad_buf[:512], self._vad_buf[512:]
+            prob = float(self.vad(torch.from_numpy(chunk), SR).item())
+        if prob is None:
+            return self._rms(frame) > self.noise_floor
+        return prob > 0.5
 
     # ---- mic stream ----
     def _callback(self, indata, frames, t, status):
@@ -120,7 +143,7 @@ class Listener:
                 frame = self.q.get(timeout=1)
             except queue.Empty:
                 continue
-            loud = self._rms(frame) > self.noise_floor
+            loud = self._is_speech(frame)
             if not started:
                 prebuf.append(frame)
                 if loud:
@@ -139,7 +162,7 @@ class Listener:
     def run(self):
         log("loading speech models (first run downloads ~500MB)…", "cyan")
         voice._get_whisper()
-        log("SaathiAI is listening. Say “Saathi, …” (Ctrl-C to quit)", "green")
+        log("Baadar is listening. Say “Baadar, …” (Ctrl-C to quit)", "green")
 
         with sd.InputStream(samplerate=SR, channels=1, dtype="float32",
                             blocksize=int(SR * FRAME), callback=self._callback):

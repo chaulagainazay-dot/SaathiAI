@@ -37,19 +37,39 @@ ALLOWED_LANGS = {"en", "ne", "hi"}
 # Prime Whisper to expect the wake word so it stops dropping it from transcripts.
 WAKE_HINT = "Baadar, baadar. The assistant's name is Baadar."
 
+# STT engine: "mlx" = whisper-small on the Apple GPU (same model Lemon uses,
+# ~2x faster and more accurate). "cpu" = faster-whisper fallback.
+STT_ENGINE = __import__("os").getenv("STT_ENGINE", "mlx")
+MLX_MODEL = "mlx-community/whisper-small-mlx"
+
+
+def _transcribe_mlx(wav: np.ndarray, language: str | None = None) -> dict:
+    import mlx_whisper
+    r = mlx_whisper.transcribe(wav, path_or_hf_repo=MLX_MODEL,
+                               language=language, initial_prompt=WAKE_HINT)
+    return {"text": (r.get("text") or "").strip(),
+            "language": r.get("language") or "en"}
+
+
+def _transcribe_cpu(wav: np.ndarray, language: str | None = None) -> dict:
+    segments, info = _get_whisper().transcribe(wav, beam_size=1, vad_filter=True,
+                                               language=language,
+                                               initial_prompt=WAKE_HINT)
+    return {"text": " ".join(s.text.strip() for s in segments).strip(),
+            "language": info.language or "en"}
+
 
 def transcribe_array(wav: np.ndarray, sample_rate: int = 16000) -> dict:
     """Transcribe a float32 mono numpy array. Returns {text, language}."""
-    segments, info = _get_whisper().transcribe(wav, beam_size=1, vad_filter=True,
-                                               initial_prompt=WAKE_HINT)
-    text = " ".join(s.text.strip() for s in segments).strip()
-    lang = info.language or "en"
+    engine = _transcribe_mlx if STT_ENGINE == "mlx" else _transcribe_cpu
+    try:
+        r = engine(wav)
+    except Exception:
+        r = _transcribe_cpu(wav)  # mlx hiccup → CPU fallback
+    text, lang = r["text"], r["language"]
     if lang not in ALLOWED_LANGS:
-        # retry forcing English; if confidence-free garbage persists, discard
-        segments, info = _get_whisper().transcribe(wav, beam_size=1, vad_filter=True,
-                                                   language="en", initial_prompt=WAKE_HINT)
-        text = " ".join(s.text.strip() for s in segments).strip()
-        lang = "en"
+        r = engine(wav, language="en")
+        text, lang = r["text"], "en"
         if not any(c.isascii() and c.isalpha() for c in text):
             return {"text": "", "language": lang, "discarded": "noise/unsupported language"}
     if lang == "ne" and text:
