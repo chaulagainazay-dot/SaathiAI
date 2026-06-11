@@ -79,7 +79,21 @@ class SaathiAgent:
 
         self.memory.save_turn(session_id, "user", user_text)
         self.memory.save_turn(session_id, "assistant", reply)
+        self._learn_in_background(user_text, reply)
         return reply
+
+    def _learn_in_background(self, user_text: str, reply: str):
+        """Extract durable learnings from this exchange without blocking the reply."""
+        import threading
+
+        def task():
+            try:
+                from . import selfimprove
+                selfimprove.learn_from_turn(user_text, reply)
+            except Exception:
+                pass
+
+        threading.Thread(target=task, daemon=True).start()
 
     # ---------- Gemini (OpenAI-compatible) ----------
 

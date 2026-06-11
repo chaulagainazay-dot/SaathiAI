@@ -47,6 +47,61 @@ def record_verification(sim: float, verified: bool):
     _db.commit()
 
 
+# ---------- 1b. continuous learning from conversation ----------
+
+_last_learn = 0.0
+_LEARN_COOLDOWN = 45  # seconds between learning passes (protects quota + speed)
+
+
+def learn_from_turn(user_text: str, reply: str) -> dict:
+    """After a normal exchange, extract any durable fact/preference about Ajay
+    and remember it. Runs in the background so it never slows a reply."""
+    global _last_learn
+    now = time.time()
+    if now - _last_learn < _LEARN_COOLDOWN or len(user_text.strip()) < 12:
+        return {"skipped": "throttled or trivial"}
+    _last_learn = now
+
+    from .agent import SaathiAgent
+    from .memory import Memory
+    agent = SaathiAgent()
+    system = (
+        "You build long-term memory for Saathi, Ajay's assistant. Read the exchange and "
+        "capture ONE durable thing about Ajay worth remembering for next time: a "
+        "preference, a fact about his business/canteen/people/routine, or how he likes "
+        "things done. Be eager to capture preferences and facts; only reply NONE for pure "
+        "small talk (greetings, 'what time is it', thanks).\n"
+        "Examples:\n"
+        "Ajay: 'I prefer short replies, no long talk' -> Ajay prefers short, brief replies.\n"
+        "Ajay: 'The canteen is busiest 8 to 9 AM' -> The canteen's busiest hour is 8-9 AM.\n"
+        "Ajay: 'Sajana handles the credit accounts' -> Sajana handles credit accounts.\n"
+        "Ajay: 'hello' -> NONE\n"
+        "Reply with just the one short sentence, or NONE. No preamble.")
+    exchange = f"Ajay said: {user_text}\nSaathi replied: {reply}\n\nWhat to remember:"
+    try:
+        out = agent.complete(system, exchange, max_tokens=80).strip()
+    except Exception as e:
+        return {"error": str(e)}
+    if not out or out.upper().startswith("NONE") or len(out) < 8:
+        return {"learned": None}
+
+    mem = Memory(config.DB_PATH)
+    # dedupe: skip if a very similar fact already exists
+    existing = mem.relevant_facts(out, limit=5)
+    if any(_similar(out, e) for e in existing):
+        return {"learned": None, "reason": "already known"}
+    mem.save_fact(out, category="conversation")
+    _db.execute("INSERT INTO feedback(kind, detail, ts) VALUES(?,?,?)",
+                ("learned", out, now))
+    _db.commit()
+    return {"learned": out}
+
+
+def _similar(a: str, b: str) -> bool:
+    import difflib
+    return difflib.SequenceMatcher(None, a.lower(), b.lower()).ratio() > 0.7
+
+
 # ---------- 2. nightly reflection ----------
 
 def reflect() -> dict:
@@ -132,6 +187,16 @@ def status() -> dict:
     return {"feedback_counts": dict(fb),
             "tuning": _read_tuning(),
             "last_reflection": (last[0] if last else "none yet")}
+
+
+def what_learned(limit: int = 12) -> dict:
+    """Recent things Saathi has learned about Ajay from talking with him."""
+    from .memory import Memory
+    mem = Memory(config.DB_PATH)
+    rows = mem.db.execute(
+        "SELECT fact FROM facts WHERE category IN ('conversation','self_improvement') "
+        "ORDER BY ts DESC LIMIT ?", (limit,)).fetchall()
+    return {"learned": [f for (f,) in rows], "count": len(rows)}
 
 
 def run_cycle() -> dict:

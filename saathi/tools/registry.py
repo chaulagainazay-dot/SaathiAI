@@ -287,6 +287,13 @@ TOOL_SCHEMAS = [
                        "settings, last reflection. Use when Ajay asks how you're learning.",
         "input_schema": {"type": "object", "properties": {}},
     },
+    {
+        "name": "what_learned",
+        "description": "List the things Saathi has learned about Ajay from talking with "
+                       "him. Use when he asks 'what do you know about me', 'what have you "
+                       "learned', 'maile ke sikeko'.",
+        "input_schema": {"type": "object", "properties": {}},
+    },
     # --- Nepali learning ---
     {
         "name": "teach_nepali",
@@ -354,6 +361,7 @@ _HANDLERS = {
     "record_feedback": lambda kind, detail="": selfimprove.record_feedback(kind, detail),
     "self_improve": lambda: selfimprove.run_cycle(),
     "self_status": lambda: selfimprove.status(),
+    "what_learned": lambda: selfimprove.what_learned(),
     "teach_nepali": lambda wrong, right: nepali.teach(wrong, right),
     "nepali_progress": lambda: nepali.progress(),
     "english_log_mistake": english.log_mistake,
