@@ -13,6 +13,24 @@ def open_app(app_name: str) -> dict:
     return _run(["open", "-a", app_name])
 
 
+def close_app(app_name: str) -> dict:
+    """Quit an application by name (fuzzy-matches what's actually running)."""
+    # find the best-matching running app so "cloud code" → "Claude" etc. works
+    running = subprocess.run(
+        ["osascript", "-e",
+         'tell application "System Events" to get name of every process whose background only is false'],
+        capture_output=True, text=True, timeout=15).stdout
+    names = [n.strip() for n in running.split(",") if n.strip()]
+    want = app_name.lower().replace(" ", "")
+    match = next((n for n in names if want in n.lower().replace(" ", "")
+                  or n.lower().replace(" ", "") in want), None)
+    target = match or app_name
+    r = _run(["osascript", "-e", f'tell application "{target}" to quit'])
+    if r["ok"]:
+        return {"ok": True, "closed": target}
+    return {"ok": False, "error": r["error"], "running_apps": names}
+
+
 def run_shortcut(shortcut_name: str, input_text: str = "") -> dict:
     cmd = ["shortcuts", "run", shortcut_name]
     if input_text:

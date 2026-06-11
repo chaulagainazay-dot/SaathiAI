@@ -5,7 +5,7 @@ from .. import nepali
 # Tools that require speaker verification (only Ajay's voice)
 PRIVILEGED = {
     "post_social_content", "trigger_n8n_workflow", "mac_run_shortcut",
-    "mac_open_app", "mac_type_text", "send_telegram",
+    "mac_open_app", "mac_close_app", "mac_type_text", "send_telegram",
     "search_mac_files", "read_mac_file",
     "run_shell", "write_file", "applescript", "get_mobile_link",
 }
@@ -87,6 +87,16 @@ TOOL_SCHEMAS = [
     {
         "name": "mac_open_app",
         "description": "PRIVILEGED. Open an application on the MacBook by name.",
+        "input_schema": {
+            "type": "object",
+            "properties": {"app_name": {"type": "string"}},
+            "required": ["app_name"],
+        },
+    },
+    {
+        "name": "mac_close_app",
+        "description": "PRIVILEGED. Quit/close an app on the Mac by name. Fuzzy-matches "
+                       "running apps, so 'close the browser' or 'close cloud code' works.",
         "input_schema": {
             "type": "object",
             "properties": {"app_name": {"type": "string"}},
@@ -275,6 +285,7 @@ _HANDLERS = {
     "trigger_n8n_workflow": n8n_tools.trigger,
     "send_telegram": n8n_tools.send_telegram,
     "mac_open_app": mac_control.open_app,
+    "mac_close_app": mac_control.close_app,
     "mac_run_shortcut": mac_control.run_shortcut,
     "mac_type_text": mac_control.type_text,
     "my_files": files.my_files,
