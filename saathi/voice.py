@@ -111,18 +111,29 @@ def speak(text: str, language: str = "en"):
 
 # ---------- Audio decoding helpers ----------
 
+import shutil
+
+def _ffmpeg() -> str:
+    """Absolute ffmpeg path — launchd's PATH excludes Homebrew dirs."""
+    for cand in (shutil.which("ffmpeg"), "/opt/homebrew/bin/ffmpeg",
+                 "/usr/local/bin/ffmpeg", "/usr/bin/ffmpeg"):
+        if cand and Path(cand).exists():
+            return cand
+    raise RuntimeError("ffmpeg not found — run: brew install ffmpeg")
+
+
 def _decode(audio_bytes: bytes, filename: str) -> tuple[np.ndarray, int]:
     import soundfile as sf
     try:
         wav, sr = sf.read(io.BytesIO(audio_bytes))
     except Exception:
-        # browser sends webm/opus — convert via afconvert-compatible path with ffmpeg
+        # browser sends webm/opus — convert with ffmpeg
         suffix = "." + (filename.rsplit(".", 1)[-1] if "." in filename else "webm")
         with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as f:
             f.write(audio_bytes)
             src = f.name
         dst = src + ".wav"
-        subprocess.run(["ffmpeg", "-y", "-i", src, "-ar", "16000", "-ac", "1", dst],
+        subprocess.run([_ffmpeg(), "-y", "-i", src, "-ar", "16000", "-ac", "1", dst],
                        capture_output=True, check=True, timeout=60)
         wav, sr = sf.read(dst)
         Path(src).unlink(missing_ok=True)

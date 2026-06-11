@@ -25,7 +25,8 @@ REF_META = CLONE_DIR / "reference.json"
 def enroll(sample_path: str, transcript: str):
     """Store a reference voice. Converts to the 24kHz mono WAV F5 expects."""
     CLONE_DIR.mkdir(parents=True, exist_ok=True)
-    subprocess.run(["ffmpeg", "-y", "-i", sample_path, "-ar", "24000", "-ac", "1",
+    from .voice import _ffmpeg
+    subprocess.run([_ffmpeg(), "-y", "-i", sample_path, "-ar", "24000", "-ac", "1",
                     str(REF_WAV)], capture_output=True, check=True, timeout=60)
     REF_META.write_text(json.dumps({"transcript": transcript}, ensure_ascii=False))
     print(f"✅ cloned-voice reference saved: {REF_WAV}")
