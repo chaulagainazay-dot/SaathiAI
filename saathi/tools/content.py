@@ -29,8 +29,12 @@ def draft(platform: str, topic: str, language: str = "mixed", notes: str = "") -
 
 
 def post(platform: str, content: str, title: str = "") -> dict:
-    """Publish via n8n webhook. The n8n workflow holds the actual platform credentials
-    (Facebook Page token, LinkedIn OAuth, YouTube API) so secrets never live here."""
+    """Publish a post. Facebook/LinkedIn go through the logged-in browser (no API
+    keys needed). YouTube still routes through n8n. Only called after Ajay approves."""
+    if platform.lower() in ("facebook", "linkedin"):
+        from . import browser
+        return browser.post(platform, content, title)
+    # YouTube (and anything else) via n8n
     r = httpx.post(
         f"{config.N8N_WEBHOOK_BASE}/social-post",
         json={"platform": platform, "content": content, "title": title},
