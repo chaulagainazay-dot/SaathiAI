@@ -16,13 +16,17 @@ GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "")
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash-lite")
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
 CLAUDE_MODEL = os.getenv("CLAUDE_MODEL", "claude-sonnet-4-6")
+# Groq — fastest brain (~0.3s), free tier, runs Llama/Qwen on LPU hardware
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
+GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
 # Fully-local brain via Ollama (no internet, no API key, 100% private)
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://127.0.0.1:11434/v1")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen2.5:3b")
-# Pick brain: set LLM_PROVIDER=ollama|gemini|anthropic in .env to force one;
-# otherwise Gemini if a key is set, else Claude.
+# Pick brain: set LLM_PROVIDER=groq|gemini|ollama|anthropic in .env to force one;
+# otherwise Groq if keyed (fastest), then Gemini, then Claude.
 LLM_PROVIDER = os.getenv("LLM_PROVIDER") or (
-    "gemini" if GOOGLE_API_KEY and not GOOGLE_API_KEY.startswith("YOUR")
+    "groq" if GROQ_API_KEY and not GROQ_API_KEY.startswith("YOUR")
+    else "gemini" if GOOGLE_API_KEY and not GOOGLE_API_KEY.startswith("YOUR")
     else "anthropic")
 
 # --- Voice (OmniVoice Studio local server, or fallbacks) ---

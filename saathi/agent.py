@@ -30,7 +30,12 @@ class SaathiAgent:
     def __init__(self):
         self.memory = Memory(config.DB_PATH)
         self.provider = config.LLM_PROVIDER
-        if self.provider == "gemini":
+        if self.provider == "groq":
+            from openai import OpenAI
+            self.client = OpenAI(api_key=config.GROQ_API_KEY,
+                                 base_url="https://api.groq.com/openai/v1")
+            self.model = config.GROQ_MODEL
+        elif self.provider == "gemini":
             from openai import OpenAI
             self.client = OpenAI(
                 api_key=config.GOOGLE_API_KEY,
@@ -48,7 +53,7 @@ class SaathiAgent:
 
     def complete(self, system: str, prompt: str, max_tokens: int = 400) -> str:
         """One simple no-tools completion — used by the self-improvement engine."""
-        if self.provider in ("gemini", "ollama"):
+        if self.provider in ("gemini", "ollama", "groq"):
             resp = self._create_with_retry(
                 messages=[{"role": "system", "content": system},
                           {"role": "user", "content": prompt}],
@@ -72,7 +77,7 @@ class SaathiAgent:
             system += "\n\n# Things you remember about Ajay\n" + "\n".join(f"- {f}" for f in facts)
         system += f"\n\n# Session\nSpeaker verified as Ajay: {speaker_verified}"
 
-        if self.provider in ("gemini", "ollama"):
+        if self.provider in ("gemini", "ollama", "groq"):
             reply = self._respond_openai(system, history, user_text, speaker_verified)
         else:
             reply = self._respond_anthropic(system, history, user_text, speaker_verified)
@@ -123,7 +128,7 @@ class SaathiAgent:
                         break
                     time.sleep(3 * (attempt + 1))
         # cloud quota exhausted — try the fully-local brain before giving up
-        if self.provider == "gemini":
+        if self.provider in ("gemini", "groq"):
             try:
                 self._fallback_to_ollama()
                 return self.client.chat.completions.create(model=self.model, **kwargs)
