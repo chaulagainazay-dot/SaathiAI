@@ -1,22 +1,23 @@
 """Baadar menu bar app — push-to-talk.
 
-  🌐  idle (hold Fn to talk)   🔴 recording   🌀 thinking   🟢 speaking
+  🎙️  idle (hold ⌥ to talk)   🔴 recording   🌀 thinking   🟢 speaking
 
-HOLD the Fn (Globe) key, speak, release. No always-on listening.
+HOLD the Right Option (⌥) key, speak, release. No always-on listening.
 Run: python -m saathi.menubar
 """
 import threading
 
 import rumps
 
-ICONS = {"listening": "🌐", "recording": "🔴", "thinking": "🌀",
+ICONS = {"listening": "🎙️", "recording": "🔴", "thinking": "🌀",
          "speaking": "🟢", "paused": "⚪️"}
 
 
 class SaathiMenuBar(rumps.App):
     def __init__(self):
         super().__init__(ICONS["paused"], quit_button=None)
-        self.menu = ["Hold Fn (🌐) to talk", None, "Open Baadar App", "Quit Baadar"]
+        self.menu = ["Hold Right Option (⌥) to talk", None,
+                     "Open Baadar App", "Quit Baadar"]
         self.ptt = None
         self._start_ptt()
 

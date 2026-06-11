@@ -1,12 +1,18 @@
-"""Push-to-talk mode — hold the Fn (Globe) key to talk to Baadar.
+"""Push-to-talk mode — hold the Right Option (⌥) key to talk to Baadar.
 
-No always-on listening: Baadar only records while you HOLD Fn, then transcribes
-and responds when you release. Private, deliberate, no wake word needed.
+No always-on listening: Baadar only records while you HOLD the key, then
+transcribes and responds when you release. Private, deliberate, no wake word.
+
+The Fn/Globe key is handled specially by macOS and its release often doesn't
+reach apps (causing a stuck recorder), so Right Option is used — it sends clean
+press/release events. Set PTT_KEYCODE in .env to use a different key.
 
 Uses a Quartz event tap (needs Accessibility permission, already granted to the
 SaathiAI python). Designed to run inside the rumps menu-bar run loop.
 """
+import os
 import threading
+import time
 
 import numpy as np
 import sounddevice as sd
@@ -16,8 +22,10 @@ from . import voice
 from .agent import SaathiAgent
 
 SR = 16000
-FN_FLAG = 0x800000  # kCGEventFlagMaskSecondaryFn — the Fn / Globe key
 MIN_HOLD_SAMPLES = int(0.3 * SR)
+MAX_RECORD_SEC = 30.0            # safety: never record longer than this
+OPTION_FLAG = 0x80000           # kCGEventFlagMaskAlternate (either Option key)
+PTT_KEYCODE = int(os.getenv("PTT_KEYCODE", "61"))  # 61 = Right Option, 58 = Left
 
 C = {"dim": "\033[2m", "cyan": "\033[96m", "green": "\033[92m", "red": "\033[91m",
      "end": "\033[0m"}
@@ -51,7 +59,19 @@ class PushToTalk:
                                      blocksize=int(SR * 0.03), callback=self._mic_cb)
         self.stream.start()
         self.on_state("recording")
-        log("🎤 recording… (release Fn to send)", "cyan")
+        log("🎤 recording… (release ⌥ to send)", "cyan")
+        # safety: auto-stop if a release event is ever missed, so it can't stick
+        self._rec_started = time.time()
+        threading.Thread(target=self._watchdog, daemon=True).start()
+
+    def _watchdog(self):
+        start = self._rec_started
+        while self.recording and self._rec_started == start:
+            if time.time() - start > MAX_RECORD_SEC:
+                log("⏱ max record reached — sending", "dim")
+                self.stop_recording()
+                return
+            time.sleep(0.2)
 
     def stop_recording(self):
         if not self.recording:
@@ -97,14 +117,17 @@ class PushToTalk:
             self.busy = False
             self.on_state("listening")
 
-    # ---- Fn key event tap ----
+    # ---- key event tap (Right Option by default) ----
     def _tap_cb(self, proxy, etype, event, refcon):
         try:
-            flags = Quartz.CGEventGetFlags(event)
-            fn_down = bool(flags & FN_FLAG)
-            if fn_down and not self.recording:
+            keycode = Quartz.CGEventGetIntegerValueField(
+                event, Quartz.kCGKeyboardEventKeycode)
+            if keycode != PTT_KEYCODE:
+                return event  # only react to the push-to-talk key
+            option_down = bool(Quartz.CGEventGetFlags(event) & OPTION_FLAG)
+            if option_down and not self.recording:
                 self.start_recording()
-            elif not fn_down and self.recording:
+            elif not option_down and self.recording:
                 self.stop_recording()
         except Exception:
             pass
@@ -125,7 +148,7 @@ class PushToTalk:
         Quartz.CGEventTapEnable(tap, True)
         self._tap = tap
         self.on_state("listening")
-        log("Baadar push-to-talk ready. HOLD the Fn (🌐) key to talk.", "green")
+        log("Baadar push-to-talk ready. HOLD the Right Option (⌥) key to talk.", "green")
 
     def run_standalone(self):
         """Run with its own run loop (for terminal use without the menu bar)."""
