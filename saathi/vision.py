@@ -36,18 +36,28 @@ def ask_screen(question: str, window_app: str | None = None) -> dict:
     png = grab_screen(window_app)
     b64 = base64.b64encode(png).decode()
 
-    from .agent import SaathiAgent
-    agent = SaathiAgent()
-    if agent.provider not in ("gemini",):
-        return {"error": "vision needs the Gemini brain (set GOOGLE_API_KEY); "
-                         "local Ollama text model can't see images."}
-    # use full flash for vision — sharper at reading text in screenshots
-    resp = agent.client.chat.completions.create(
-        model="gemini-2.5-flash", max_tokens=400,
-        messages=[{"role": "user", "content": [
-            {"type": "text", "text":
-                f"Look at this Mac screenshot and answer briefly for Ajay. {question}"},
-            {"type": "image_url",
-             "image_url": {"url": f"data:image/png;base64,{b64}"}},
-        ]}])
-    return {"answer": (resp.choices[0].message.content or "").strip()}
+    # Vision always uses Gemini directly (Groq/Ollama can't see images), regardless
+    # of which brain is primary for conversation.
+    if not config.GOOGLE_API_KEY:
+        return {"error": "vision needs a Google API key (GOOGLE_API_KEY) for Gemini."}
+    from openai import OpenAI
+    from openai import APIStatusError
+    client = OpenAI(api_key=config.GOOGLE_API_KEY,
+                    base_url="https://generativelanguage.googleapis.com/v1beta/openai/")
+    msgs = [{"role": "user", "content": [
+        {"type": "text", "text":
+            f"Look at this Mac screenshot and answer briefly for Ajay. {question}"},
+        {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{b64}"}},
+    ]}]
+    # flash-lite first (higher free quota), fall back to full flash
+    last = None
+    for model in ("gemini-2.5-flash-lite", "gemini-2.5-flash"):
+        try:
+            resp = client.chat.completions.create(model=model, max_tokens=400, messages=msgs)
+            return {"answer": (resp.choices[0].message.content or "").strip()}
+        except APIStatusError as e:
+            last = e
+            if e.status_code != 429:
+                break
+    return {"error": "Vision is rate-limited right now (Gemini free quota). "
+                     "Try again in a minute or tomorrow.", "detail": str(last)[:120]}
