@@ -17,12 +17,15 @@ from . import config
 
 _whisper = None
 
+# "base" = ~3x faster than "small"; set WHISPER_MODEL=small in .env if Nepali
+# accuracy matters more than speed
+WHISPER_MODEL = __import__("os").getenv("WHISPER_MODEL", "base")
+
 def _get_whisper():
     global _whisper
     if _whisper is None:
         from faster_whisper import WhisperModel
-        # "small" balances speed/accuracy on CPU; bump to "medium" for better Nepali
-        _whisper = WhisperModel("small", device="cpu", compute_type="int8")
+        _whisper = WhisperModel(WHISPER_MODEL, device="cpu", compute_type="int8")
     return _whisper
 
 
@@ -33,12 +36,12 @@ ALLOWED_LANGS = {"en", "ne", "hi"}
 
 def transcribe_array(wav: np.ndarray, sample_rate: int = 16000) -> dict:
     """Transcribe a float32 mono numpy array. Returns {text, language}."""
-    segments, info = _get_whisper().transcribe(wav, beam_size=3, vad_filter=True)
+    segments, info = _get_whisper().transcribe(wav, beam_size=1, vad_filter=True)
     text = " ".join(s.text.strip() for s in segments).strip()
     lang = info.language or "en"
     if lang not in ALLOWED_LANGS:
         # retry forcing English; if confidence-free garbage persists, discard
-        segments, info = _get_whisper().transcribe(wav, beam_size=3, vad_filter=True,
+        segments, info = _get_whisper().transcribe(wav, beam_size=1, vad_filter=True,
                                                    language="en")
         text = " ".join(s.text.strip() for s in segments).strip()
         lang = "en"
@@ -55,10 +58,20 @@ def transcribe(audio_bytes: bytes, filename: str = "audio.wav") -> dict:
 
 # ---------- Text-to-speech ----------
 
+TTS_ENGINE = __import__("os").getenv("TTS_ENGINE", "say")  # say | clone
+
+
 def synthesize(text: str, language: str = "en") -> tuple[bytes, str]:
     """Return (audio_bytes, mime_type) of spoken text — browser-playable."""
     if _has_devanagari(text):
         language = "ne"
+    if TTS_ENGINE == "clone" and not language.startswith("ne"):
+        try:
+            from . import cloning
+            if cloning.is_ready():
+                return cloning.synthesize_clone(text)
+        except Exception:
+            pass  # fall through to the fast built-in voice
     if language.startswith("ne"):
         from gtts import gTTS
         buf = io.BytesIO()
@@ -83,9 +96,11 @@ def speak(text: str, language: str = "en"):
     in English."""
     if _has_devanagari(text):
         language = "ne"
-    if language.startswith("ne"):
-        audio, _ = synthesize(text, "ne")
-        with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as f:
+    use_clone = TTS_ENGINE == "clone" and not language.startswith("ne")
+    if language.startswith("ne") or use_clone:
+        audio, mime = synthesize(text, language)
+        suffix = ".mp3" if mime == "audio/mpeg" else ".wav"
+        with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as f:
             f.write(audio)
             path = f.name
         subprocess.run(["afplay", path], timeout=300)

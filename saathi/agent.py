@@ -94,7 +94,7 @@ class SaathiAgent:
         tools = _openai_tools()
         for _ in range(MAX_TOOL_ITERATIONS):
             resp = self._create_with_retry(
-                messages=messages, tools=tools, max_tokens=1024)
+                messages=messages, tools=tools, max_tokens=512)
             msg = resp.choices[0].message
             if not msg.tool_calls:
                 text = (msg.content or "").strip()
@@ -126,7 +126,7 @@ class SaathiAgent:
         messages = history + [{"role": "user", "content": user_text}]
         for _ in range(MAX_TOOL_ITERATIONS):
             resp = self.client.messages.create(
-                model=self.model, max_tokens=1024, system=system,
+                model=self.model, max_tokens=512, system=system,
                 tools=TOOL_SCHEMAS, messages=messages)
             if resp.stop_reason != "tool_use":
                 break

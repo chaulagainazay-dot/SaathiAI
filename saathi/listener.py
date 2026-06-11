@@ -23,7 +23,7 @@ from .agent import SaathiAgent
 
 SR = 16000
 FRAME = 0.03            # 30 ms frames
-SILENCE_END = 1.0       # this much silence ends an utterance
+SILENCE_END = 0.7       # this much silence ends an utterance
 MAX_UTTERANCE = 20.0    # hard cap, seconds
 MIN_UTTERANCE = 0.4     # ignore blips shorter than this
 CALIBRATION_SECS = 1.5
@@ -62,11 +62,13 @@ def log(msg, color="dim"):
 
 
 class Listener:
-    def __init__(self):
+    def __init__(self, on_state=None):
         self.agent = SaathiAgent()
         self.q: queue.Queue = queue.Queue()
         self.noise_floor = 0.01
         self.last_reply_at = 0.0
+        # callback(state) — "listening" | "thinking" | "speaking"; for menu bar UI
+        self.on_state = on_state or (lambda s: None)
 
     # ---- mic stream ----
     def _callback(self, indata, frames, t, status):
@@ -127,7 +129,11 @@ class Listener:
                 wav = self.capture_utterance()
                 if wav is None:
                     continue
-                stt = voice.transcribe_array(wav, SR)
+                # speaker verification runs in parallel with transcription
+                from concurrent.futures import ThreadPoolExecutor
+                with ThreadPoolExecutor(max_workers=1) as pool:
+                    verify_future = pool.submit(voice.verify_array, wav, SR)
+                    stt = voice.transcribe_array(wav, SR)
                 text = stt["text"].strip()
                 if not text:
                     continue
@@ -142,10 +148,11 @@ class Listener:
                     log(f"(ignored, no wake word): {text}")
                     continue
 
+                self.on_state("thinking")
                 log(f"🗣  you [{stt['language']}]: {command}", "cyan")
 
                 try:
-                    ver = voice.verify_array(wav, SR)
+                    ver = verify_future.result(timeout=10)
                 except Exception as e:
                     ver = {"verified": False, "reason": str(e), "similarity": 0}
                 badge = ("✅" if ver["verified"]
@@ -161,6 +168,7 @@ class Listener:
                     log(f"agent error: {e}", "red")
 
                 log(f"🤖 saathi: {reply}", "green")
+                self.on_state("speaking")
                 # pause capture while speaking so Saathi doesn't hear itself
                 with self.q.mutex:
                     self.q.queue.clear()
@@ -171,6 +179,7 @@ class Listener:
                 with self.q.mutex:
                     self.q.queue.clear()
                 self.last_reply_at = time.time()
+                self.on_state("listening")
                 log(f"(follow-up window open {FOLLOWUP_WINDOW:.0f}s — just talk)")
 
 
