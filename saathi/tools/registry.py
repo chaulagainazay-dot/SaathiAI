@@ -6,7 +6,7 @@ PRIVILEGED = {
     "post_social_content", "trigger_n8n_workflow", "mac_run_shortcut",
     "mac_open_app", "mac_type_text", "send_telegram",
     "search_mac_files", "read_mac_file",
-    "run_shell", "write_file", "applescript",
+    "run_shell", "write_file", "applescript", "get_mobile_link",
 }
 
 TOOL_SCHEMAS = [
