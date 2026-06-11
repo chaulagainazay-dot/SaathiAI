@@ -14,6 +14,21 @@ app = FastAPI(title="SaathiAI")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"],
                    allow_headers=["*"])
 
+# Simple access key for remote/tunnel use. Local requests (the Mac itself)
+# are always allowed; remote requests must send X-Saathi-Token.
+import os as _os
+ACCESS_TOKEN = _os.getenv("SAATHI_TOKEN", "")
+
+
+@app.middleware("http")
+async def _auth(request, call_next):
+    from fastapi.responses import JSONResponse
+    if (ACCESS_TOKEN and request.url.path.startswith("/api/")
+            and request.client.host not in ("127.0.0.1", "::1")
+            and request.headers.get("x-saathi-token") != ACCESS_TOKEN):
+        return JSONResponse({"error": "missing or wrong access token"}, status_code=401)
+    return await call_next(request)
+
 agent = SaathiAgent()
 
 FILES_DIR = config.ROOT / "data" / "files"

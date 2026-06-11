@@ -104,6 +104,18 @@
 <script>
 const API = location.origin;
 const $ = id => document.getElementById(id);
+
+// access key: arrives once as #token=… in the URL, then lives in localStorage
+if (location.hash.startsWith('#token=')) {
+  localStorage.setItem('saathi_token', location.hash.slice(7));
+  history.replaceState(null, '', location.pathname);
+}
+const TOKEN = localStorage.getItem('saathi_token') || '';
+const _fetch = window.fetch;
+window.fetch = (url, opts = {}) => {
+  opts.headers = Object.assign({}, opts.headers, TOKEN ? {'X-Saathi-Token': TOKEN} : {});
+  return _fetch(url, opts);
+};
 const chat = $('chat'), label = $('stateLabel'), orbZone = $('orbZone');
 
 let state = 'idle';
