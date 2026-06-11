@@ -142,6 +142,15 @@ class Listener:
                 if not text:
                     continue
 
+                # passive Nepali learning: log every Nepali phrase overheard
+                # (local only) to grow Saathi's familiarity with how Ajay speaks
+                if stt["language"] == "ne":
+                    try:
+                        from . import nepali
+                        nepali.log_heard(text)
+                    except Exception:
+                        pass
+
                 in_conversation = (time.time() - self.last_reply_at) < FOLLOWUP_WINDOW
                 stripped = strip_wake_word(text)
                 if stripped is not None:

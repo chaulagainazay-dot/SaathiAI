@@ -1,5 +1,6 @@
 """Tool registry: schemas exposed to Claude + dispatcher with privilege gating."""
 from . import canteen, content, files, mac_control, n8n_tools, notes, english, system
+from .. import nepali
 
 # Tools that require speaker verification (only Ajay's voice)
 PRIVILEGED = {
@@ -224,6 +225,28 @@ TOOL_SCHEMAS = [
             "required": ["script"],
         },
     },
+    # --- Nepali learning ---
+    {
+        "name": "teach_nepali",
+        "description": "Record a Nepali transcription correction. Call this whenever "
+                       "Ajay corrects a word you misheard (e.g. he says 'I said X not Y', "
+                       "or 'that word was wrong, it's X'). Saves wrong→right so you never "
+                       "mishear it again.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "wrong": {"type": "string", "description": "what you mistakenly heard"},
+                "right": {"type": "string", "description": "the correct Nepali word/phrase"},
+            },
+            "required": ["wrong", "right"],
+        },
+    },
+    {
+        "name": "nepali_progress",
+        "description": "Show how much Nepali Saathi has learned: corrections stored and "
+                       "phrases overheard. Use when Ajay asks how your Nepali is improving.",
+        "input_schema": {"type": "object", "properties": {}},
+    },
     # --- English coaching ---
     {
         "name": "english_log_mistake",
@@ -263,6 +286,8 @@ _HANDLERS = {
     "write_file": system.write_file,
     "applescript": system.applescript,
     "get_mobile_link": system.get_mobile_link,
+    "teach_nepali": lambda wrong, right: nepali.teach(wrong, right),
+    "nepali_progress": lambda: nepali.progress(),
     "english_log_mistake": english.log_mistake,
     "english_progress": english.progress,
 }

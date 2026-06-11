@@ -47,6 +47,9 @@ def transcribe_array(wav: np.ndarray, sample_rate: int = 16000) -> dict:
         lang = "en"
         if not any(c.isascii() and c.isalpha() for c in text):
             return {"text": "", "language": lang, "discarded": "noise/unsupported language"}
+    if lang == "ne" and text:
+        from . import nepali
+        text = nepali.apply_corrections(text)
     return {"text": text, "language": lang}
 
 
