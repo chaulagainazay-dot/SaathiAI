@@ -1,11 +1,12 @@
 """Tool registry: schemas exposed to Claude + dispatcher with privilege gating."""
-from . import canteen, content, files, mac_control, n8n_tools, notes, english
+from . import canteen, content, files, mac_control, n8n_tools, notes, english, system
 
 # Tools that require speaker verification (only Ajay's voice)
 PRIVILEGED = {
     "post_social_content", "trigger_n8n_workflow", "mac_run_shortcut",
     "mac_open_app", "mac_type_text", "send_telegram",
     "search_mac_files", "read_mac_file",
+    "run_shell", "write_file", "applescript",
 }
 
 TOOL_SCHEMAS = [
@@ -175,6 +176,47 @@ TOOL_SCHEMAS = [
             "required": ["path"],
         },
     },
+    {
+        "name": "run_shell",
+        "description": "PRIVILEGED. Run a terminal command on the Mac and return its "
+                       "output. Full system access. CONFIRM with Ajay first before any "
+                       "command that deletes, moves, installs, or changes things; "
+                       "read-only commands (ls, cat, ps, df, git status...) can run "
+                       "immediately.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "command": {"type": "string"},
+                "timeout_sec": {"type": "integer", "default": 60},
+            },
+            "required": ["command"],
+        },
+    },
+    {
+        "name": "write_file",
+        "description": "PRIVILEGED. Create or edit a file in Ajay's home folder. "
+                       "Confirm before overwriting existing files.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "path": {"type": "string"},
+                "content": {"type": "string"},
+                "append": {"type": "boolean", "default": False},
+            },
+            "required": ["path", "content"],
+        },
+    },
+    {
+        "name": "applescript",
+        "description": "PRIVILEGED. Control any Mac app via AppleScript: create Notes, "
+                       "send iMessages (confirm first!), control Music, manage Finder "
+                       "windows, read Calendar, adjust volume, etc.",
+        "input_schema": {
+            "type": "object",
+            "properties": {"script": {"type": "string"}},
+            "required": ["script"],
+        },
+    },
     # --- English coaching ---
     {
         "name": "english_log_mistake",
@@ -210,6 +252,9 @@ _HANDLERS = {
     "read_mac_file": files.read_mac_file,
     "manage_tasks": notes.manage_tasks,
     "remember_fact": notes.remember_fact,
+    "run_shell": system.run_shell,
+    "write_file": system.write_file,
+    "applescript": system.applescript,
     "english_log_mistake": english.log_mistake,
     "english_progress": english.progress,
 }
