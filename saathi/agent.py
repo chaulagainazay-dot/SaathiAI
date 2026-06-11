@@ -37,6 +37,10 @@ class SaathiAgent:
                 base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
             )
             self.model = config.GEMINI_MODEL
+        elif self.provider == "ollama":
+            from openai import OpenAI
+            self.client = OpenAI(api_key="ollama", base_url=config.OLLAMA_URL)
+            self.model = config.OLLAMA_MODEL
         else:
             import anthropic
             self.client = anthropic.Anthropic(api_key=config.ANTHROPIC_API_KEY)
@@ -54,7 +58,7 @@ class SaathiAgent:
             system += "\n\n# Things you remember about Ajay\n" + "\n".join(f"- {f}" for f in facts)
         system += f"\n\n# Session\nSpeaker verified as Ajay: {speaker_verified}"
 
-        if self.provider == "gemini":
+        if self.provider in ("gemini", "ollama"):
             reply = self._respond_openai(system, history, user_text, speaker_verified)
         else:
             reply = self._respond_anthropic(system, history, user_text, speaker_verified)
@@ -72,7 +76,10 @@ class SaathiAgent:
         falling back to alternate Gemini models if the primary stays busy."""
         import time
         from openai import APIStatusError
-        models = [self.model] + [m for m in self.FALLBACK_MODELS if m != self.model]
+        if self.provider == "ollama":
+            models = [self.model]  # local model — no cloud fallbacks
+        else:
+            models = [self.model] + [m for m in self.FALLBACK_MODELS if m != self.model]
         last_err = None
         for model in models:
             for attempt in range(4):

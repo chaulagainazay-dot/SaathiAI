@@ -14,8 +14,14 @@ GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "")
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
 CLAUDE_MODEL = os.getenv("CLAUDE_MODEL", "claude-sonnet-4-6")
-LLM_PROVIDER = ("gemini" if GOOGLE_API_KEY and not GOOGLE_API_KEY.startswith("YOUR")
-                else "anthropic")
+# Fully-local brain via Ollama (no internet, no API key, 100% private)
+OLLAMA_URL = os.getenv("OLLAMA_URL", "http://127.0.0.1:11434/v1")
+OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen2.5:3b")
+# Pick brain: set LLM_PROVIDER=ollama|gemini|anthropic in .env to force one;
+# otherwise Gemini if a key is set, else Claude.
+LLM_PROVIDER = os.getenv("LLM_PROVIDER") or (
+    "gemini" if GOOGLE_API_KEY and not GOOGLE_API_KEY.startswith("YOUR")
+    else "anthropic")
 
 # --- Voice (OmniVoice Studio local server, or fallbacks) ---
 # OmniVoice exposes local STT/TTS; point these at its API once running.
