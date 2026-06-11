@@ -109,10 +109,12 @@ class SaathiAgent:
         falling back to alternate Gemini models if the primary stays busy."""
         import time
         from openai import APIStatusError
-        if self.provider == "ollama":
-            models = [self.model]  # local model — no cloud fallbacks
-        else:
+        if self.provider == "gemini":
+            # only Gemini understands these alternate model names
             models = [self.model] + [m for m in self.FALLBACK_MODELS if m != self.model]
+        else:
+            # groq / ollama: one model, then provider-level fallback below
+            models = [self.model]
         # Groq rate-limits on tokens/min — don't stall on long backoffs, fail
         # fast to the fallback brain so a reply still comes quickly.
         attempts, backoff = (2, 1.0) if self.provider == "groq" else (4, 3.0)

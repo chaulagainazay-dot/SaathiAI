@@ -1,65 +1,44 @@
-"""SaathiAI menu bar app — a small Siri-like icon that shows what Saathi is doing.
+"""Baadar menu bar app — push-to-talk.
 
-  ●  purple  : listening (always-on, hands-free)
-  ◐  rainbow : thinking
-  ●  green   : speaking
-  ○  grey    : paused
+  🌐  idle (hold Fn to talk)   🔴 recording   🌀 thinking   🟢 speaking
 
-Run: python -m saathi.menubar   (replaces the plain terminal listener)
+HOLD the Fn (Globe) key, speak, release. No always-on listening.
+Run: python -m saathi.menubar
 """
 import threading
 
 import rumps
 
-ICONS = {"listening": "🟣", "thinking": "🌀", "speaking": "🟢", "paused": "⚪️"}
+ICONS = {"listening": "🌐", "recording": "🔴", "thinking": "🌀",
+         "speaking": "🟢", "paused": "⚪️"}
 
 
 class SaathiMenuBar(rumps.App):
     def __init__(self):
         super().__init__(ICONS["paused"], quit_button=None)
-        self.menu = ["Pause / Resume", "Open Saathi App", None, "Quit Saathi"]
-        self.listener = None
-        self.paused = False
-        self._start_listener()
+        self.menu = ["Hold Fn (🌐) to talk", None, "Open Baadar App", "Quit Baadar"]
+        self.ptt = None
+        self._start_ptt()
 
     def _set_state(self, state: str):
-        if not self.paused:
-            self.title = ICONS.get(state, "🟣")
+        self.title = ICONS.get(state, "🌐")
 
-    def _start_listener(self):
-        from .listener import Listener
-        self.listener = Listener(on_state=self._set_state)
-        t = threading.Thread(target=self._run_listener, daemon=True)
-        t.start()
-
-    def _run_listener(self):
-        self.title = ICONS["listening"]
+    def _start_ptt(self):
+        from .pushtotalk import PushToTalk
+        self.ptt = PushToTalk(on_state=self._set_state)
+        # the event tap must live on the main run loop, which rumps drives
         try:
-            self.listener.run()
+            self.ptt.install_tap()
         except Exception as e:
-            rumps.notification("SaathiAI", "Listener stopped", str(e))
+            rumps.notification("Baadar", "Push-to-talk failed to start", str(e))
             self.title = ICONS["paused"]
 
-    @rumps.clicked("Pause / Resume")
-    def toggle(self, _):
-        # soft pause: raise the noise floor so nothing triggers
-        if not self.listener:
-            return
-        self.paused = not self.paused
-        if self.paused:
-            self._saved_floor = self.listener.noise_floor
-            self.listener.noise_floor = 99.0
-            self.title = ICONS["paused"]
-        else:
-            self.listener.noise_floor = getattr(self, "_saved_floor", 0.015)
-            self.title = ICONS["listening"]
-
-    @rumps.clicked("Open Saathi App")
+    @rumps.clicked("Open Baadar App")
     def open_app(self, _):
         import webbrowser
         webbrowser.open("http://localhost:8765")
 
-    @rumps.clicked("Quit Saathi")
+    @rumps.clicked("Quit Baadar")
     def quit_app(self, _):
         rumps.quit_application()
 
