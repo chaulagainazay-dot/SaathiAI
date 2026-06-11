@@ -1,5 +1,5 @@
 """Tool registry: schemas exposed to Claude + dispatcher with privilege gating."""
-from . import canteen, content, files, mac_control, n8n_tools, notes, english, system
+from . import canteen, content, files, mac_control, n8n_tools, notes, english, system, apps
 from .. import nepali, selfimprove
 
 # Tools that require speaker verification (only Ajay's voice)
@@ -8,6 +8,7 @@ PRIVILEGED = {
     "mac_open_app", "mac_close_app", "mac_type_text", "send_telegram",
     "search_mac_files", "read_mac_file",
     "run_shell", "write_file", "applescript", "get_mobile_link",
+    "check_messages", "look_at_screen",
 }
 
 TOOL_SCHEMAS = [
@@ -235,6 +236,28 @@ TOOL_SCHEMAS = [
             "required": ["script"],
         },
     },
+    # --- Messaging apps + screen vision ---
+    {
+        "name": "check_messages",
+        "description": "PRIVILEGED. Open a messaging app and tell Ajay who messaged "
+                       "him and what they said. Use for 'who messaged me', 'check "
+                       "WhatsApp', 'kasle message gareko'. Default app is WhatsApp.",
+        "input_schema": {
+            "type": "object",
+            "properties": {"app": {"type": "string", "default": "WhatsApp"}},
+        },
+    },
+    {
+        "name": "look_at_screen",
+        "description": "PRIVILEGED. Look at whatever is on Ajay's screen and answer a "
+                       "question about it ('what's on my screen', 'read this', "
+                       "'what does this say'). Saathi can see and describe any app.",
+        "input_schema": {
+            "type": "object",
+            "properties": {"question": {"type": "string"}},
+            "required": ["question"],
+        },
+    },
     # --- Self-improvement ---
     {
         "name": "record_feedback",
@@ -326,6 +349,8 @@ _HANDLERS = {
     "write_file": system.write_file,
     "applescript": system.applescript,
     "get_mobile_link": system.get_mobile_link,
+    "check_messages": apps.check_messages,
+    "look_at_screen": apps.look_at_screen,
     "record_feedback": lambda kind, detail="": selfimprove.record_feedback(kind, detail),
     "self_improve": lambda: selfimprove.run_cycle(),
     "self_status": lambda: selfimprove.status(),
