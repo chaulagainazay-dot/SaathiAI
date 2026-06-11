@@ -1,0 +1,11 @@
+# secrets — never commit
+.env
+
+# runtime data: voice profile, memory db, logs, uploaded files
+data/
+
+# python
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/

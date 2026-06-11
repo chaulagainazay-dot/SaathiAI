@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>com.ajay.saathiai</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/Users/macbookpro/SaathiAI/.venv/bin/python</string>
+    <string>-m</string>
+    <string>saathi.server</string>
+  </array>
+  <key>WorkingDirectory</key><string>/Users/macbookpro/SaathiAI</string>
+  <key>RunAtLoad</key><true/>
+  <key>KeepAlive</key><true/>
+  <key>StandardOutPath</key><string>/Users/macbookpro/SaathiAI/data/saathi.log</string>
+  <key>StandardErrorPath</key><string>/Users/macbookpro/SaathiAI/data/saathi.err.log</string>
+</dict>
+</plist>

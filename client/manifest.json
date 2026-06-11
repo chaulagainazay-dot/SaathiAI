@@ -1,0 +1,11 @@
+{
+  "name": "SaathiAI",
+  "short_name": "Saathi",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f0f13",
+  "theme_color": "#7c3aed",
+  "icons": [
+    { "src": "icon.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
