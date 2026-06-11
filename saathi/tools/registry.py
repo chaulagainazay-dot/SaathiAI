@@ -1,5 +1,5 @@
 """Tool registry: schemas exposed to Claude + dispatcher with privilege gating."""
-from . import canteen, content, files, mac_control, n8n_tools, notes, english, system, apps
+from . import canteen, content, files, mac_control, n8n_tools, notes, english, system, apps, research
 from .. import nepali, selfimprove
 
 # Tools that require speaker verification (only Ajay's voice)
@@ -236,6 +236,33 @@ TOOL_SCHEMAS = [
             "required": ["script"],
         },
     },
+    # --- Research + planning ---
+    {
+        "name": "research",
+        "description": "Search the live web and answer with current information. Use "
+                       "whenever Ajay asks to research, look up, find out, or anything "
+                       "needing fresh facts (prices, news, how-to, comparisons).",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "topic": {"type": "string"},
+                "depth": {"type": "string", "enum": ["quick", "deep"], "default": "quick"},
+            },
+            "required": ["topic"],
+        },
+    },
+    {
+        "name": "deep_plan",
+        "description": "Build a researched, step-by-step plan for one of Ajay's goals, "
+                       "combining live web research with everything you remember about "
+                       "him. Use for 'make me a plan', 'how should I...', business "
+                       "decisions, or big tasks.",
+        "input_schema": {
+            "type": "object",
+            "properties": {"goal": {"type": "string"}},
+            "required": ["goal"],
+        },
+    },
     # --- Messaging apps + screen vision ---
     {
         "name": "check_messages",
@@ -356,6 +383,8 @@ _HANDLERS = {
     "write_file": system.write_file,
     "applescript": system.applescript,
     "get_mobile_link": system.get_mobile_link,
+    "research": research.research,
+    "deep_plan": research.deep_plan,
     "check_messages": apps.check_messages,
     "look_at_screen": apps.look_at_screen,
     "record_feedback": lambda kind, detail="": selfimprove.record_feedback(kind, detail),

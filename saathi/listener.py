@@ -23,7 +23,7 @@ from .agent import SaathiAgent
 
 SR = 16000
 FRAME = 0.03            # 30 ms frames
-SILENCE_END = 0.7       # this much silence ends an utterance
+SILENCE_END = 0.5       # this much silence ends an utterance (neural VAD makes this safe)
 MAX_UTTERANCE = 20.0    # hard cap, seconds
 MIN_UTTERANCE = 0.4     # ignore blips shorter than this
 CALIBRATION_SECS = 1.5

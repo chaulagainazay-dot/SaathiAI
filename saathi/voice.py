@@ -125,7 +125,36 @@ def speak(text: str, language: str = "en"):
     if _has_devanagari(text):
         language = "ne"
     use_clone = TTS_ENGINE == "clone" and not language.startswith("ne")
-    if language.startswith("ne") or use_clone:
+    if language.startswith("ne") and not use_clone:
+        # stream sentence-by-sentence: speak sentence 1 while fetching sentence 2
+        import re
+        import threading
+        sentences = [s for s in re.split(r"(?<=[।.!?])\s+", text) if s.strip()]
+        next_audio: list = [None]
+
+        def fetch(s):
+            try:
+                next_audio[0] = synthesize(s, "ne")[0]
+            except Exception:
+                next_audio[0] = None
+
+        for i, sent in enumerate(sentences):
+            if i == 0:
+                audio, _ = synthesize(sent, "ne")
+            else:
+                t.join()
+                audio = next_audio[0]
+                if audio is None:
+                    continue
+            if i + 1 < len(sentences):
+                t = threading.Thread(target=fetch, args=(sentences[i + 1],))
+                t.start()
+            with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as f:
+                f.write(audio)
+                path = f.name
+            subprocess.run(["afplay", path], timeout=300)
+            Path(path).unlink(missing_ok=True)
+    elif use_clone:
         audio, mime = synthesize(text, language)
         suffix = ".mp3" if mime == "audio/mpeg" else ".wav"
         with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as f:
