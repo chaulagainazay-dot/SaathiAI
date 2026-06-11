@@ -1,9 +1,11 @@
 """Tool registry: schemas exposed to Claude + dispatcher with privilege gating."""
-from . import canteen, content, files, mac_control, n8n_tools, notes, english, system, apps, research
+from . import (canteen, content, files, mac_control, n8n_tools, notes, english,
+               system, apps, research, calendar as cal, email_tool)
 from .. import nepali, selfimprove
 
 # Tools that require speaker verification (only Ajay's voice)
 PRIVILEGED = {
+    "send_email",
     "post_social_content", "trigger_n8n_workflow", "mac_run_shortcut",
     "mac_open_app", "mac_close_app", "mac_type_text", "send_telegram",
     "search_mac_files", "read_mac_file",
@@ -236,6 +238,73 @@ TOOL_SCHEMAS = [
             "required": ["script"],
         },
     },
+    # --- Email (Gmail) ---
+    {
+        "name": "check_email",
+        "description": "Read Ajay's recent emails (default unread) — sender, subject, "
+                       "snippet. Use for 'any emails?', 'check my mail', 'important "
+                       "emails today'. `query` uses Gmail search syntax.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "default": "is:unread"},
+                "limit": {"type": "integer", "default": 8},
+            },
+        },
+    },
+    {
+        "name": "send_email",
+        "description": "PRIVILEGED. Send an email. Always read the full email back to "
+                       "Ajay and get his spoken approval before calling this.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "to": {"type": "string"},
+                "subject": {"type": "string"},
+                "body": {"type": "string"},
+            },
+            "required": ["to", "subject", "body"],
+        },
+    },
+    # --- Calendar + reminders (fire real alerts) ---
+    {
+        "name": "add_reminder",
+        "description": "Set a reminder that pops a notification at a time. Use for "
+                       "'remind me to...', 'don't let me forget...'. `when` examples: "
+                       "'5pm', 'today 17:30', 'tomorrow 8am', '2026-06-15 09:00'.",
+        "input_schema": {
+            "type": "object",
+            "properties": {"text": {"type": "string"}, "when": {"type": "string"}},
+            "required": ["text"],
+        },
+    },
+    {
+        "name": "list_reminders",
+        "description": "List Ajay's open reminders.",
+        "input_schema": {"type": "object", "properties": {}},
+    },
+    {
+        "name": "todays_events",
+        "description": "Read Ajay's calendar events for today / next few days. Use for "
+                       "'what's on my calendar', 'am I free', 'ke schedule chha'.",
+        "input_schema": {
+            "type": "object",
+            "properties": {"days": {"type": "integer", "default": 1}},
+        },
+    },
+    {
+        "name": "add_event",
+        "description": "Add an event to Ajay's calendar. `when` like 'tomorrow 3pm'.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "title": {"type": "string"},
+                "when": {"type": "string"},
+                "duration_min": {"type": "integer", "default": 60},
+            },
+            "required": ["title", "when"],
+        },
+    },
     # --- Research + planning ---
     {
         "name": "research",
@@ -383,6 +452,12 @@ _HANDLERS = {
     "write_file": system.write_file,
     "applescript": system.applescript,
     "get_mobile_link": system.get_mobile_link,
+    "check_email": email_tool.check_email,
+    "send_email": email_tool.send_email,
+    "add_reminder": cal.add_reminder,
+    "list_reminders": cal.list_reminders,
+    "todays_events": cal.todays_events,
+    "add_event": cal.add_event,
     "research": research.research,
     "deep_plan": research.deep_plan,
     "check_messages": apps.check_messages,

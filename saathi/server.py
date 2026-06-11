@@ -134,8 +134,8 @@ app.mount("/", StaticFiles(directory=str(config.ROOT / "client"), html=True),
 
 
 @app.on_event("startup")
-def _start_self_improvement():
-    """Run a self-improvement cycle once a day in the background."""
+def _start_background():
+    """Daily self-improvement cycle + the proactive scheduler."""
     import threading
 
     def loop():
@@ -149,6 +149,11 @@ def _start_self_improvement():
                 pass
 
     threading.Thread(target=loop, daemon=True).start()
+    try:
+        from . import scheduler
+        scheduler.start()  # morning briefing, 9pm canteen summary, weekly backup
+    except Exception:
+        pass
 
 
 def main():
