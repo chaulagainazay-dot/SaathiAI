@@ -41,8 +41,9 @@ def ask_screen(question: str, window_app: str | None = None) -> dict:
     if agent.provider not in ("gemini",):
         return {"error": "vision needs the Gemini brain (set GOOGLE_API_KEY); "
                          "local Ollama text model can't see images."}
+    # use full flash for vision — sharper at reading text in screenshots
     resp = agent.client.chat.completions.create(
-        model=agent.model, max_tokens=400,
+        model="gemini-2.5-flash", max_tokens=400,
         messages=[{"role": "user", "content": [
             {"type": "text", "text":
                 f"Look at this Mac screenshot and answer briefly for Ajay. {question}"},

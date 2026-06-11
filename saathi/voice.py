@@ -166,8 +166,11 @@ def _get_encoder():
     return _encoder
 
 
-def _embed_array(wav: np.ndarray, sr: int = 16000) -> np.ndarray:
+def _embed_array(wav: np.ndarray, sr: int = 16000, max_seconds: float = 5.0) -> np.ndarray:
     from resemblyzer import preprocess_wav
+    # a few seconds is enough to identify the speaker — capping keeps verify fast
+    if len(wav) > int(max_seconds * sr):
+        wav = wav[:int(max_seconds * sr)]
     processed = preprocess_wav(wav, source_sr=sr)
     return _get_encoder().embed_utterance(processed)
 

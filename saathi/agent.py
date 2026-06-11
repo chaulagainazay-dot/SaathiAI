@@ -63,8 +63,9 @@ class SaathiAgent:
 
     def respond(self, user_text: str, session_id: str = "default",
                 speaker_verified: bool = False) -> str:
-        history = self.memory.recent_turns(session_id, limit=20)
-        facts = self.memory.relevant_facts(user_text, limit=8)
+        # smaller context = faster replies; 6 turns + 4 facts is plenty for voice
+        history = self.memory.recent_turns(session_id, limit=6)
+        facts = self.memory.relevant_facts(user_text, limit=4)
 
         system = SYSTEM_PROMPT
         if facts:
@@ -82,7 +83,7 @@ class SaathiAgent:
 
     # ---------- Gemini (OpenAI-compatible) ----------
 
-    FALLBACK_MODELS = ["gemini-2.5-flash-lite"]
+    FALLBACK_MODELS = ["gemini-2.5-flash"]
 
     def _create_with_retry(self, **kwargs):
         """Retry on transient free-tier errors (503 overload, 429 rate limit),

@@ -11,7 +11,9 @@ load_dotenv(ROOT / ".env")
 # Free option: Google Gemini (free tier at aistudio.google.com).
 # If GOOGLE_API_KEY is set, Gemini is used; otherwise falls back to Claude.
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "")
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+# flash-lite is markedly faster than flash for short voice turns (and higher
+# free quota); flash is kept as the fallback / vision model.
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash-lite")
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
 CLAUDE_MODEL = os.getenv("CLAUDE_MODEL", "claude-sonnet-4-6")
 # Fully-local brain via Ollama (no internet, no API key, 100% private)
