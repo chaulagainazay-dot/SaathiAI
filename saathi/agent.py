@@ -113,9 +113,12 @@ class SaathiAgent:
             models = [self.model]  # local model — no cloud fallbacks
         else:
             models = [self.model] + [m for m in self.FALLBACK_MODELS if m != self.model]
+        # Groq rate-limits on tokens/min — don't stall on long backoffs, fail
+        # fast to the fallback brain so a reply still comes quickly.
+        attempts, backoff = (2, 1.0) if self.provider == "groq" else (4, 3.0)
         last_err = None
         for model in models:
-            for attempt in range(4):
+            for attempt in range(attempts):
                 try:
                     return self.client.chat.completions.create(model=model, **kwargs)
                 except APIStatusError as e:
@@ -126,8 +129,20 @@ class SaathiAgent:
                     # won't recover by waiting — skip to next model/fallback
                     if "limit: 0" in str(e) or "PerDay" in str(e):
                         break
-                    time.sleep(3 * (attempt + 1))
-        # cloud quota exhausted — try the fully-local brain before giving up
+                    if attempt < attempts - 1:
+                        time.sleep(backoff * (attempt + 1))
+        # busy/exhausted — fall back so a reply still comes. Groq → Gemini (fast
+        # cloud) → local Ollama; Gemini → local Ollama.
+        if self.provider == "groq" and config.GOOGLE_API_KEY:
+            try:
+                from openai import OpenAI
+                self.client = OpenAI(api_key=config.GOOGLE_API_KEY,
+                    base_url="https://generativelanguage.googleapis.com/v1beta/openai/")
+                self.model = config.GEMINI_MODEL
+                self.provider = "gemini"
+                return self.client.chat.completions.create(model=self.model, **kwargs)
+            except Exception:
+                pass
         if self.provider in ("gemini", "groq"):
             try:
                 self._fallback_to_ollama()
