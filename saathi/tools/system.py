@@ -40,16 +40,27 @@ def write_file(path: str, content: str, append: bool = False) -> dict:
             "mode": "appended" if append else ("overwrote" if existed else "created")}
 
 
-FIXED_ADDRESS = "https://macs-macbook-pro.tailbb1551.ts.net"
+TAILSCALE_ADDRESS = "https://macs-macbook-pro.tailbb1551.ts.net"
 
 
 def get_mobile_link() -> dict:
-    """Permanent phone-access URL via Tailscale (never changes)."""
+    """Phone-access URL. Prefers the public Cloudflare tunnel (works on any phone,
+    no VPN); falls back to the Tailscale address."""
     import os
+    import re
     token = os.getenv("SAATHI_TOKEN", "")
-    return {"mobile_link": f"{FIXED_ADDRESS}/#token={token}" if token else FIXED_ADDRESS,
-            "note": "Permanent address — works anywhere as long as the phone's "
-                    "Tailscale app is connected and the Mac is on."}
+    suffix = f"/#token={token}" if token else ""
+    log = HOME / "SaathiAI" / "data" / "tunnel.log"
+    if log.exists():
+        urls = re.findall(r"https://[a-z0-9-]+\.trycloudflare\.com", log.read_text())
+        if urls:
+            return {"mobile_link": urls[-1] + suffix,
+                    "type": "public (no VPN needed)",
+                    "note": "Works on any phone over normal internet. URL changes if "
+                            "the Mac reboots — just ask me again for the new one."}
+    return {"mobile_link": TAILSCALE_ADDRESS + suffix,
+            "type": "tailscale (needs VPN app)",
+            "note": "Cloudflare tunnel not running; this needs Tailscale on the phone."}
 
 
 def applescript(script: str) -> dict:
