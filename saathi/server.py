@@ -45,10 +45,21 @@ class ChatIn(BaseModel):
     speaker_verified: bool = False
 
 
+def _safe_respond(text: str, session_id: str, speaker_verified: bool) -> str:
+    try:
+        return agent.respond(text, session_id, speaker_verified=speaker_verified)
+    except Exception as e:
+        msg = str(e)
+        if "429" in msg or "quota" in msg.lower():
+            return ("Maaf garnus Ajay — my free brain quota is finished for today "
+                    "and the local brain isn't running. Open the Ollama app on the "
+                    "Mac, or try again after midnight (Pacific time).")
+        return f"Sorry, something broke on my side: {type(e).__name__}. Try again?"
+
+
 @app.post("/api/v1/agent/chat")
 def chat(body: ChatIn):
-    reply = agent.respond(body.text, body.session_id,
-                          speaker_verified=body.speaker_verified)
+    reply = _safe_respond(body.text, body.session_id, body.speaker_verified)
     return {"reply": reply}
 
 
@@ -82,8 +93,7 @@ async def voice_command(file: UploadFile = File(...),
     except Exception as e:
         ver = {"verified": False, "reason": f"verify_error: {e}", "similarity": 0.0}
 
-    reply = agent.respond(text, session_id,
-                          speaker_verified=ver.get("verified", False))
+    reply = _safe_respond(text, session_id, ver.get("verified", False))
     _last_reply_at = time.time()
 
     out = {"transcript": text, "language": stt["language"],

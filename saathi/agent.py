@@ -89,11 +89,29 @@ class SaathiAgent:
                     if e.status_code not in (429, 500, 503):
                         raise
                     last_err = e
-                    # "limit: 0" means this model has no free quota at all — skip it
-                    if "limit: 0" in str(e):
+                    # "limit: 0" = model has no free quota; daily-quota errors
+                    # won't recover by waiting — skip to next model/fallback
+                    if "limit: 0" in str(e) or "PerDay" in str(e):
                         break
                     time.sleep(3 * (attempt + 1))
+        # cloud quota exhausted — try the fully-local brain before giving up
+        if self.provider == "gemini":
+            try:
+                self._fallback_to_ollama()
+                return self.client.chat.completions.create(model=self.model, **kwargs)
+            except Exception:
+                pass
         raise last_err
+
+    def _fallback_to_ollama(self):
+        """When Gemini's free quota is exhausted, switch to the local brain."""
+        import httpx
+        from openai import OpenAI
+        base = config.OLLAMA_URL.rsplit("/v1", 1)[0]
+        httpx.get(base, timeout=3)  # raises if Ollama isn't running
+        self.client = OpenAI(api_key="ollama", base_url=config.OLLAMA_URL)
+        self.model = config.OLLAMA_MODEL
+        self.provider = "ollama"
 
     def _respond_openai(self, system, history, user_text, speaker_verified) -> str:
         messages = ([{"role": "system", "content": system}] + history +
