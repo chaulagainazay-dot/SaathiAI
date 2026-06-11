@@ -33,8 +33,8 @@ WAKE_WORDS = {"baadar", "badar", "bader", "baader", "bahadur", "bandar", "badal"
               "border", "batter", "bother", "brother", "padar", "vadar", "badaar",
               "buddha", "badr", "budder", "powder", "baadal",
               "बादर", "बादल", "बद्दर", "बादार", "बहादुर", "बाँदर"}
-WAKE_FUZZY_TARGET = "badar"
-WAKE_FUZZY_MIN = 0.6
+WAKE_FUZZY_TARGETS = ("badar", "baadar", "bahadur", "bandar")
+WAKE_FUZZY_MIN = 0.55
 WAKE_SCAN_TOKENS = 3  # accept the wake word anywhere in the first few words
 
 
@@ -45,7 +45,14 @@ def _is_wake(token: str) -> bool:
         return False
     if t in WAKE_WORDS:
         return True
-    return difflib.SequenceMatcher(None, t, WAKE_FUZZY_TARGET).ratio() >= WAKE_FUZZY_MIN
+    best = max(difflib.SequenceMatcher(None, t, tgt).ratio() for tgt in WAKE_FUZZY_TARGETS)
+    if best >= WAKE_FUZZY_MIN:
+        return True
+    # forgiving fallback: short b/v/p-initial word with a 'd' or trailing 'r'
+    if (2 <= len(t) <= 8 and t[0] in "bvp"
+            and ("d" in t[1:] or t.endswith("r")) and best >= 0.45):
+        return True
+    return False
 
 
 def strip_wake_word(text: str) -> str | None:
@@ -98,7 +105,14 @@ class Listener:
         log(f"noise floor: {self.noise_floor:.4f}")
 
     def capture_utterance(self) -> np.ndarray | None:
-        """Block until one spoken utterance is captured; return float32 mono @16k."""
+        """Block until one spoken utterance is captured; return float32 mono @16k.
+
+        Keeps a short pre-roll of audio from BEFORE speech is detected so the
+        onset of the first word (the wake word) isn't clipped — clipping was
+        making Whisper drop 'Baadar'."""
+        from collections import deque
+        preroll_frames = max(1, int(0.4 * SR / int(SR * FRAME)))  # ~0.4s of pre-roll
+        prebuf: deque = deque(maxlen=preroll_frames)
         buf, started, silence = [], False, 0.0
         start_time = None
         while True:
@@ -108,10 +122,11 @@ class Listener:
                 continue
             loud = self._rms(frame) > self.noise_floor
             if not started:
+                prebuf.append(frame)
                 if loud:
                     started = True
                     start_time = time.time()
-                    buf.append(frame)
+                    buf.extend(prebuf)  # include audio before the trigger
                 continue
             buf.append(frame)
             silence = 0.0 if loud else silence + len(frame) / SR
@@ -186,7 +201,7 @@ class Listener:
                     reply = f"Sorry, error: {e}"
                     log(f"agent error: {e}", "red")
 
-                log(f"🤖 saathi: {reply}", "green")
+                log(f"🤖 baadar: {reply}", "green")
                 self.on_state("speaking")
                 # pause capture while speaking so Saathi doesn't hear itself
                 with self.q.mutex:

@@ -34,15 +34,20 @@ def _get_whisper():
 ALLOWED_LANGS = {"en", "ne", "hi"}
 
 
+# Prime Whisper to expect the wake word so it stops dropping it from transcripts.
+WAKE_HINT = "Baadar, baadar. The assistant's name is Baadar."
+
+
 def transcribe_array(wav: np.ndarray, sample_rate: int = 16000) -> dict:
     """Transcribe a float32 mono numpy array. Returns {text, language}."""
-    segments, info = _get_whisper().transcribe(wav, beam_size=1, vad_filter=True)
+    segments, info = _get_whisper().transcribe(wav, beam_size=1, vad_filter=True,
+                                               initial_prompt=WAKE_HINT)
     text = " ".join(s.text.strip() for s in segments).strip()
     lang = info.language or "en"
     if lang not in ALLOWED_LANGS:
         # retry forcing English; if confidence-free garbage persists, discard
         segments, info = _get_whisper().transcribe(wav, beam_size=1, vad_filter=True,
-                                                   language="en")
+                                                   language="en", initial_prompt=WAKE_HINT)
         text = " ".join(s.text.strip() for s in segments).strip()
         lang = "en"
         if not any(c.isascii() and c.isalpha() for c in text):
