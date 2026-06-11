@@ -7,7 +7,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon.png">
 <link rel="apple-touch-icon" href="icon.png">
-<title>SaathiAI</title>
+<title>Baadar</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { height: 100%; }
@@ -89,17 +89,17 @@
 <div id="orbZone" title="Tap orb to toggle hands-free listening">
   <div id="orb"></div>
   <div id="stateLabel">tap the orb to start listening</div>
-  <div id="hint">say “Saathi …” · नेपाली or English · drag files anywhere</div>
+  <div id="hint">say “Baadar …” · नेपाली or English · drag files anywhere</div>
 </div>
 
 <div id="chat"></div>
 
 <footer>
-  <input id="textIn" placeholder="type to Saathi…" autocomplete="off">
+  <input id="textIn" placeholder="type to Baadar…" autocomplete="off">
   <button id="sendBtn">Send</button>
 </footer>
 
-<div id="dropOverlay">📂 Drop files for Saathi</div>
+<div id="dropOverlay">📂 Drop files for Baadar</div>
 
 <script>
 const API = location.origin;
@@ -126,7 +126,7 @@ function setState(s, text) {
     idle: 'tap the orb to start listening',
     listening: 'listening…',
     thinking: 'thinking…',
-    speaking: 'Saathi is speaking…',
+    speaking: 'Baadar is speaking…',
   }[s];
 }
 
@@ -226,7 +226,7 @@ async function sendUtterance(blob) {
     const r = await fetch(API + '/api/v1/voice/command', { method: 'POST', body: form });
     const data = await r.json();
     if (data.ignored) {
-      if (data.ignored === 'no_wake_word') addMeta('(heard, no “Saathi”): ' + (data.transcript || ''));
+      if (data.ignored === 'no_wake_word') addMeta('(heard, no “Baadar”): ' + (data.transcript || ''));
     } else {
       addMsg(data.transcript, 'user');
       if (data.verification) addMeta(data.verification.verified

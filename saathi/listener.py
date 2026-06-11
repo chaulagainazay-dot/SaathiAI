@@ -29,11 +29,11 @@ MIN_UTTERANCE = 0.4     # ignore blips shorter than this
 CALIBRATION_SECS = 1.5
 FOLLOWUP_WINDOW = 12.0  # after Saathi replies, listen without wake word
 
-WAKE_WORDS = {"sathi", "saathi", "sati", "sathee", "sarthi", "sathy", "sothi",
-              "sadi", "swati", "sotty", "sathiya", "saathe", "salty", "softy",
-              "sorry", "saati", "sahi", "shanti", "santi", "sathii", "thathi",
-              "साथी", "साथि", "साथीले", "साति", "साथ", "सती"}
-WAKE_FUZZY_TARGET = "sathi"
+WAKE_WORDS = {"baadar", "badar", "bader", "baader", "bahadur", "bandar", "badal",
+              "border", "batter", "bother", "brother", "padar", "vadar", "badaar",
+              "buddha", "badr", "budder", "powder", "baadal",
+              "बादर", "बादल", "बद्दर", "बादार", "बहादुर", "बाँदर"}
+WAKE_FUZZY_TARGET = "badar"
 WAKE_FUZZY_MIN = 0.6
 WAKE_SCAN_TOKENS = 3  # accept the wake word anywhere in the first few words
 
