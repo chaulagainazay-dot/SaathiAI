@@ -46,6 +46,19 @@ class SaathiAgent:
             self.client = anthropic.Anthropic(api_key=config.ANTHROPIC_API_KEY)
             self.model = config.CLAUDE_MODEL
 
+    def complete(self, system: str, prompt: str, max_tokens: int = 400) -> str:
+        """One simple no-tools completion — used by the self-improvement engine."""
+        if self.provider in ("gemini", "ollama"):
+            resp = self._create_with_retry(
+                messages=[{"role": "system", "content": system},
+                          {"role": "user", "content": prompt}],
+                max_tokens=max_tokens)
+            return (resp.choices[0].message.content or "").strip()
+        resp = self.client.messages.create(
+            model=self.model, max_tokens=max_tokens, system=system,
+            messages=[{"role": "user", "content": prompt}])
+        return "".join(b.text for b in resp.content if b.type == "text").strip()
+
     # ---------- public ----------
 
     def respond(self, user_text: str, session_id: str = "default",

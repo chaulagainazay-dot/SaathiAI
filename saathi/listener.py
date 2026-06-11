@@ -172,6 +172,12 @@ class Listener:
                          else "🔒" if ver.get("reason") != "no_profile_enrolled"
                          else "⚠️ no profile")
                 log(f"   speaker: {badge} (sim={ver.get('similarity')})")
+                try:
+                    from . import selfimprove
+                    selfimprove.record_verification(ver.get("similarity", 0),
+                                                    ver.get("verified", False))
+                except Exception:
+                    pass
 
                 try:
                     reply = self.agent.respond(command, session_id="terminal",

@@ -133,6 +133,24 @@ app.mount("/", StaticFiles(directory=str(config.ROOT / "client"), html=True),
           name="client")
 
 
+@app.on_event("startup")
+def _start_self_improvement():
+    """Run a self-improvement cycle once a day in the background."""
+    import threading
+
+    def loop():
+        import time
+        while True:
+            time.sleep(24 * 3600)
+            try:
+                from . import selfimprove
+                selfimprove.run_cycle()
+            except Exception:
+                pass
+
+    threading.Thread(target=loop, daemon=True).start()
+
+
 def main():
     import uvicorn
     uvicorn.run(app, host=config.HOST, port=config.PORT)

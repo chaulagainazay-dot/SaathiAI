@@ -32,7 +32,24 @@ TTS_VOICE_NE = os.getenv("TTS_VOICE_NE", "saathi_ne")
 # --- Speaker verification ---
 # Only Ajay's voice can run privileged tools. Enroll with scripts/enroll_voice.py
 VOICE_PROFILE_PATH = ROOT / "data" / "owner_voice.npy"
-SPEAKER_THRESHOLD = float(os.getenv("SPEAKER_THRESHOLD", "0.75"))
+
+
+def _speaker_threshold() -> float:
+    """Auto-tuned value (data/tuning.json) wins over the .env default."""
+    base = float(os.getenv("SPEAKER_THRESHOLD", "0.75"))
+    tuning = ROOT / "data" / "tuning.json"
+    if tuning.exists():
+        try:
+            import json
+            v = json.loads(tuning.read_text()).get("speaker_threshold")
+            if v:
+                return float(v)
+        except Exception:
+            pass
+    return base
+
+
+SPEAKER_THRESHOLD = _speaker_threshold()
 
 # --- HCGMS / Supabase ---
 SUPABASE_URL = os.getenv("SUPABASE_URL", "")

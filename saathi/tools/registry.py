@@ -1,6 +1,6 @@
 """Tool registry: schemas exposed to Claude + dispatcher with privilege gating."""
 from . import canteen, content, files, mac_control, n8n_tools, notes, english, system
-from .. import nepali
+from .. import nepali, selfimprove
 
 # Tools that require speaker verification (only Ajay's voice)
 PRIVILEGED = {
@@ -235,6 +235,35 @@ TOOL_SCHEMAS = [
             "required": ["script"],
         },
     },
+    # --- Self-improvement ---
+    {
+        "name": "record_feedback",
+        "description": "Log a signal about your own performance so you improve over "
+                       "time. Call when Ajay says something was wrong/'galat', when an "
+                       "action was blocked or errored, or when he praises you. "
+                       "kind: wrong | blocked | error | praise | missed.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "kind": {"type": "string"},
+                "detail": {"type": "string"},
+            },
+            "required": ["kind"],
+        },
+    },
+    {
+        "name": "self_improve",
+        "description": "Run a self-improvement cycle now: reflect on recent feedback "
+                       "into learnings and auto-tune settings. Use when Ajay says "
+                       "'learn from today', 'improve yourself', or 'update yourself'.",
+        "input_schema": {"type": "object", "properties": {}},
+    },
+    {
+        "name": "self_status",
+        "description": "Report how Saathi is improving: feedback counts, tuned "
+                       "settings, last reflection. Use when Ajay asks how you're learning.",
+        "input_schema": {"type": "object", "properties": {}},
+    },
     # --- Nepali learning ---
     {
         "name": "teach_nepali",
@@ -297,6 +326,9 @@ _HANDLERS = {
     "write_file": system.write_file,
     "applescript": system.applescript,
     "get_mobile_link": system.get_mobile_link,
+    "record_feedback": lambda kind, detail="": selfimprove.record_feedback(kind, detail),
+    "self_improve": lambda: selfimprove.run_cycle(),
+    "self_status": lambda: selfimprove.status(),
     "teach_nepali": lambda wrong, right: nepali.teach(wrong, right),
     "nepali_progress": lambda: nepali.progress(),
     "english_log_mistake": english.log_mistake,
