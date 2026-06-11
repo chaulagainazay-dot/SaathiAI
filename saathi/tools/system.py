@@ -40,6 +40,22 @@ def write_file(path: str, content: str, append: bool = False) -> dict:
             "mode": "appended" if append else ("overwrote" if existed else "created")}
 
 
+def get_mobile_link() -> dict:
+    """Current phone-access URL (tunnel URL changes when it reconnects)."""
+    import os
+    import re
+    log = HOME / "SaathiAI" / "data" / "tunnel.log"
+    if not log.exists():
+        return {"error": "tunnel log not found — is the tunnel service running?"}
+    urls = re.findall(r"https://[a-z0-9-]+\.trycloudflare\.com", log.read_text())
+    if not urls:
+        return {"error": "no tunnel URL yet — tunnel may still be starting"}
+    token = os.getenv("SAATHI_TOKEN", "")
+    return {"mobile_link": f"{urls[-1]}/#token={token}" if token else urls[-1],
+            "note": "Open on the phone once; it remembers the key. "
+                    "URL changes when the Mac reboots — just ask me again."}
+
+
 def applescript(script: str) -> dict:
     """Control any Mac app via AppleScript (Notes, Mail, Music, Finder, ...)."""
     p = subprocess.run(["osascript", "-e", script], capture_output=True,

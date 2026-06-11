@@ -207,6 +207,13 @@ TOOL_SCHEMAS = [
         },
     },
     {
+        "name": "get_mobile_link",
+        "description": "PRIVILEGED. Get the current link for using Saathi on the phone "
+                       "(it changes when the Mac restarts). Use when Ajay says the "
+                       "mobile app stopped working or asks for the phone link.",
+        "input_schema": {"type": "object", "properties": {}},
+    },
+    {
         "name": "applescript",
         "description": "PRIVILEGED. Control any Mac app via AppleScript: create Notes, "
                        "send iMessages (confirm first!), control Music, manage Finder "
@@ -255,6 +262,7 @@ _HANDLERS = {
     "run_shell": system.run_shell,
     "write_file": system.write_file,
     "applescript": system.applescript,
+    "get_mobile_link": system.get_mobile_link,
     "english_log_mistake": english.log_mistake,
     "english_progress": english.progress,
 }
