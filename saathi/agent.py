@@ -124,7 +124,11 @@ class SaathiAgent:
                 try:
                     return self.client.chat.completions.create(model=model, **kwargs)
                 except APIStatusError as e:
-                    if e.status_code not in (429, 500, 503):
+                    # Groq's llama sometimes emits malformed tool-call syntax
+                    # (400 tool_use_failed) — retrying usually fixes it
+                    transient = (e.status_code in (429, 500, 503)
+                                 or "tool_use_failed" in str(e))
+                    if not transient:
                         raise
                     last_err = e
                     # "limit: 0" = model has no free quota; daily-quota errors
