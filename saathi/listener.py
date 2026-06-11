@@ -30,27 +30,31 @@ CALIBRATION_SECS = 1.5
 FOLLOWUP_WINDOW = 12.0  # after Saathi replies, listen without wake word
 
 WAKE_WORDS = {"sathi", "saathi", "sati", "sathee", "sarthi", "sathy", "sothi",
-              "sadi", "swati", "sotty", "sathiya",
-              "साथी", "साथि", "साथीले", "साति"}
+              "sadi", "swati", "sotty", "sathiya", "saathe", "salty", "softy",
+              "sorry", "saati", "sahi", "shanti", "santi", "sathii", "thathi",
+              "साथी", "साथि", "साथीले", "साति", "साथ", "सती"}
 WAKE_FUZZY_TARGET = "sathi"
-WAKE_FUZZY_MIN = 0.65
+WAKE_FUZZY_MIN = 0.6
+WAKE_SCAN_TOKENS = 3  # accept the wake word anywhere in the first few words
+
+
+def _is_wake(token: str) -> bool:
+    import difflib
+    t = token.strip(",.!?;:।'\"").lower()
+    if not t:
+        return False
+    if t in WAKE_WORDS:
+        return True
+    return difflib.SequenceMatcher(None, t, WAKE_FUZZY_TARGET).ratio() >= WAKE_FUZZY_MIN
 
 
 def strip_wake_word(text: str) -> str | None:
-    """If the utterance starts with the wake word (exact or fuzzy), return the
-    rest of the command; otherwise None."""
-    import difflib
-    cleaned = text.strip()
-    parts = cleaned.split(None, 1)
-    if not parts:
-        return None
-    first = parts[0].strip(",.!?;:।").lower()
-    rest = parts[1].strip() if len(parts) > 1 else ""
-    if first in WAKE_WORDS:
-        return rest
-    ratio = difflib.SequenceMatcher(None, first, WAKE_FUZZY_TARGET).ratio()
-    if ratio >= WAKE_FUZZY_MIN:
-        return rest
+    """If the wake word appears within the first few words (exact or fuzzy),
+    return everything after it as the command; otherwise None."""
+    tokens = text.strip().split()
+    for i, tok in enumerate(tokens[:WAKE_SCAN_TOKENS]):
+        if _is_wake(tok):
+            return " ".join(tokens[i + 1:]).strip()
     return None
 
 C = {"dim": "\033[2m", "cyan": "\033[96m", "green": "\033[92m",
