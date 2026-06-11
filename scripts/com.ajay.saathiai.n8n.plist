@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>com.ajay.saathiai.n8n</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/opt/homebrew/opt/node@22/bin/node</string>
+    <string>/opt/homebrew/lib/node_modules/n8n/bin/n8n</string>
+    <string>start</string>
+  </array>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key><string>/opt/homebrew/opt/node@22/bin:/opt/homebrew/bin:/usr/bin:/bin</string>
+    <key>N8N_SECURE_COOKIE</key><string>false</string>
+    <key>N8N_PORT</key><string>5678</string>
+    <key>N8N_RUNNERS_ENABLED</key><string>true</string>
+  </dict>
+  <key>RunAtLoad</key><true/>
+  <key>KeepAlive</key><true/>
+  <key>StandardOutPath</key><string>/Users/macbookpro/SaathiAI/data/n8n.log</string>
+  <key>StandardErrorPath</key><string>/Users/macbookpro/SaathiAI/data/n8n.log</string>
+</dict>
+</plist>
