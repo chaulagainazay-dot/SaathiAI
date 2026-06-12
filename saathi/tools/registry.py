@@ -12,6 +12,7 @@ PRIVILEGED = {
     "search_mac_files", "read_mac_file",
     "run_shell", "write_file", "applescript", "get_mobile_link",
     "check_messages", "look_at_screen",
+    "register_project", "project_run", "project_edit_file",
 }
 
 TOOL_SCHEMAS = [
@@ -343,6 +344,43 @@ TOOL_SCHEMAS = [
         "input_schema": {"type": "object", "properties": {}},
     },
     {
+        "name": "plan_project_work",
+        "description": "Make a concrete step-by-step plan to do something in one of "
+                       "Ajay's projects (grounded in its real code). Use for 'plan how "
+                       "to add X to pielts', 'how should I build Y'. Read the plan back "
+                       "and wait for Ajay before executing.",
+        "input_schema": {
+            "type": "object",
+            "properties": {"name": {"type": "string"}, "goal": {"type": "string"}},
+            "required": ["name", "goal"],
+        },
+    },
+    {
+        "name": "project_run",
+        "description": "PRIVILEGED. Run a shell command inside a project (npm run dev, "
+                       "npm run build, git diff, git status…). Confirm before anything "
+                       "that changes or deploys.",
+        "input_schema": {
+            "type": "object",
+            "properties": {"name": {"type": "string"}, "command": {"type": "string"}},
+            "required": ["name", "command"],
+        },
+    },
+    {
+        "name": "project_edit_file",
+        "description": "PRIVILEGED. Create or edit a file inside a project (to execute a "
+                       "plan step). Read back what you'll change and confirm first; "
+                       "changes are git-tracked and reversible.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "name": {"type": "string"}, "relpath": {"type": "string"},
+                "content": {"type": "string"},
+            },
+            "required": ["name", "relpath", "content"],
+        },
+    },
+    {
         "name": "register_project",
         "description": "PRIVILEGED. Connect Baadar to a new project folder by name + path.",
         "input_schema": {
@@ -529,6 +567,9 @@ _HANDLERS = {
     "search_project": projects.search_project,
     "list_projects": lambda: projects.list_projects(),
     "register_project": projects.register_project,
+    "plan_project_work": projects.plan_project_work,
+    "project_run": projects.project_run,
+    "project_edit_file": projects.project_edit_file,
     "make_content": content_studio.generate_content_pack,
     "todays_content": lambda: content_studio.todays_content(),
     "make_avatar_video": content_studio.make_avatar_video,

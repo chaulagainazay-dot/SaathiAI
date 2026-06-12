@@ -104,6 +104,60 @@ def read_project_file(name: str, relpath: str) -> dict:
     return {"file": relpath, "content": f.read_text(errors="replace")[:20000]}
 
 
+def plan_project_work(name: str, goal: str) -> dict:
+    """Make a concrete step-by-step plan to achieve `goal` in the project,
+    grounded in the project's actual structure and stack."""
+    root = _resolve(name)
+    if not root:
+        return {"error": f"project '{name}' not registered"}
+    ov = project_overview(name)
+    ctx = (f"Project: {name} ({ov.get('stack', {}).get('name')})\n"
+           f"Stack: {ov.get('stack', {}).get('dependencies')}\n"
+           f"Files: {ov.get('files', [])[:60]}\n"
+           f"Recent commits: {ov.get('recent_commits', [])}")
+    from ..agent import SaathiAgent
+    plan = SaathiAgent().complete(
+        "You are Baadar, Ajay's coding assistant. Given this real project and a goal, "
+        "produce a SHORT numbered plan (3-7 concrete steps) naming the actual files to "
+        "create or edit and what to change. Be specific to the stack. End with the "
+        "single best first step.",
+        f"{ctx}\n\nGOAL: {goal}", max_tokens=600)
+    return {"project": name, "goal": goal, "plan": plan,
+            "note": "Say 'Baadar, do step 1' (or 'do the plan') to execute. "
+                    "Changes are in a git repo, so they're reversible."}
+
+
+def project_run(name: str, command: str) -> dict:
+    """Run a shell command INSIDE the project directory (npm run build, git diff…)."""
+    root = _resolve(name)
+    if not root:
+        return {"error": f"project '{name}' not registered"}
+    flat = " ".join(command.split())
+    for bad in ("rm -rf /", "rm -rf ~", ":(){", "mkfs", "git push --force"):
+        if bad in flat:
+            return {"blocked": True, "reason": "refused dangerous command"}
+    p = subprocess.run(command, shell=True, cwd=str(root),
+                       capture_output=True, text=True, timeout=180)
+    return {"exit_code": p.returncode,
+            "stdout": (p.stdout or "")[-3000:], "stderr": (p.stderr or "")[-1500:]}
+
+
+def project_edit_file(name: str, relpath: str, content: str) -> dict:
+    """Create or overwrite a file inside the project (confirm before overwriting)."""
+    root = _resolve(name)
+    if not root:
+        return {"error": f"project '{name}' not registered"}
+    f = (root / relpath).resolve()
+    if not str(f).startswith(str(root)):
+        return {"error": "path escapes project"}
+    existed = f.exists()
+    f.parent.mkdir(parents=True, exist_ok=True)
+    f.write_text(content)
+    return {"file": relpath, "mode": "overwrote" if existed else "created",
+            "bytes": len(content.encode()),
+            "tip": "Run 'git diff' in the project to review, 'git checkout' to undo."}
+
+
 def search_project(name: str, query: str) -> dict:
     """Search the project's code for a keyword."""
     root = _resolve(name)
