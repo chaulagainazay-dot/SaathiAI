@@ -55,6 +55,84 @@ def todays_content() -> dict:
                     "content' or give a topic."}
 
 
+def make_video(script: str = "", handle: str = "@pieltsapp") -> dict:
+    """Create a vertical (1080x1920) captioned TikTok/Reel video with voiceover —
+    free and local. Faceless slideshow: caption slides + Ajay's cloned voice."""
+    import subprocess
+    import tempfile
+    import textwrap
+    from pathlib import Path as _P
+
+    from PIL import Image, ImageDraw, ImageFont
+    from .. import voice
+
+    if not script:
+        script = todays_content().get("tiktok_script", "")
+    if not script:
+        return {"error": "no script — generate content first"}
+
+    out_dir = CONTENT_DIR / "videos"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    work = _P(tempfile.mkdtemp())
+    ff = voice._ffmpeg()
+    font_path = "/System/Library/Fonts/Supplemental/Arial Unicode.ttf"
+
+    # 1. voiceover (cloned voice if enabled, else built-in)
+    audio, mime = voice.synthesize(script, "en")
+    aud_ext = ".mp3" if mime == "audio/mpeg" else ".wav"
+    aud = work / f"voice{aud_ext}"
+    aud.write_bytes(audio)
+    dur = float(subprocess.run(
+        [ff.replace("ffmpeg", "ffprobe"), "-v", "quiet", "-show_entries",
+         "format=duration", "-of", "csv=p=0", str(aud)],
+        capture_output=True, text=True).stdout.strip() or "30")
+
+    # 2. split script into caption slides (~12 words each)
+    words = script.replace("\n", " ").split()
+    slides = [" ".join(words[i:i + 12]) for i in range(0, len(words), 12)] or [script]
+    per = max(dur / len(slides), 1.0)
+
+    # 3. render each slide as a 1080x1920 PNG
+    W, H = 1080, 1920
+    big = ImageFont.truetype(font_path, 60)
+    small = ImageFont.truetype(font_path, 44)
+    brand = ImageFont.truetype(font_path, 40)
+    for idx, text in enumerate(slides):
+        img = Image.new("RGB", (W, H), (15, 15, 35))
+        d = ImageDraw.Draw(img)
+        d.rectangle([0, 0, W, 14], fill=(124, 58, 237))
+        wrapped = textwrap.fill(text, width=22)
+        bbox = d.multiline_textbbox((0, 0), wrapped, font=big, spacing=18)
+        th = bbox[3] - bbox[1]
+        d.multiline_text((W / 2, H / 2 - th / 2), wrapped, font=big, fill="white",
+                         anchor="mm", align="center", spacing=18)
+        d.text((W / 2, H - 220), "pielts.web.app", font=small,
+               fill=(167, 139, 250), anchor="mm")
+        d.text((W / 2, H - 150), handle, font=brand, fill=(150, 150, 160), anchor="mm")
+        img.save(work / f"s{idx:03d}.png")
+
+    # 4. concat slides + audio into an MP4
+    listf = work / "list.txt"
+    lines = []
+    for idx in range(len(slides)):
+        lines.append(f"file 's{idx:03d}.png'")
+        lines.append(f"duration {per:.2f}")
+    lines.append(f"file 's{len(slides) - 1:03d}.png'")  # last frame held
+    listf.write_text("\n".join(lines))
+
+    ts = dt.date.today().isoformat()
+    out = out_dir / f"pielts-{ts}.mp4"
+    cmd = [ff, "-y", "-f", "concat", "-safe", "0", "-i", str(listf),
+           "-i", str(aud), "-pix_fmt", "yuv420p", "-vf", "fps=30",
+           "-c:v", "libx264", "-c:a", "aac", "-shortest", str(out)]
+    p = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+    if p.returncode != 0 or not out.exists():
+        return {"error": "video build failed", "detail": p.stderr[-300:]}
+    return {"video": str(out), "duration_sec": round(dur, 1), "slides": len(slides),
+            "note": f"Faceless captioned video ready at {out.name}. AirDrop it to your "
+                    "phone and post to TikTok @pieltsapp, or ask me to open it."}
+
+
 def make_avatar_video(script: str = "") -> dict:
     """Turn the script into an AI avatar talking-head video via D-ID."""
     import httpx

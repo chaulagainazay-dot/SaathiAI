@@ -407,9 +407,19 @@ TOOL_SCHEMAS = [
         "input_schema": {"type": "object", "properties": {}},
     },
     {
+        "name": "make_video",
+        "description": "Create a vertical captioned TikTok/Reel video with Ajay's "
+                       "voiceover (free, local, faceless slideshow) from today's or a "
+                       "given script. Use for 'make the video', 'video banau'.",
+        "input_schema": {
+            "type": "object",
+            "properties": {"script": {"type": "string"}},
+        },
+    },
+    {
         "name": "make_avatar_video",
         "description": "Turn today's (or given) TikTok script into an AI avatar "
-                       "talking-head video via D-ID. Needs DID_API_KEY.",
+                       "talking-head video via D-ID. Needs DID_API_KEY (paid for daily).",
         "input_schema": {
             "type": "object",
             "properties": {"script": {"type": "string"}},
@@ -572,6 +582,7 @@ _HANDLERS = {
     "project_edit_file": projects.project_edit_file,
     "make_content": content_studio.generate_content_pack,
     "todays_content": lambda: content_studio.todays_content(),
+    "make_video": content_studio.make_video,
     "make_avatar_video": content_studio.make_avatar_video,
     "check_email": email_tool.check_email,
     "send_email": email_tool.send_email,
