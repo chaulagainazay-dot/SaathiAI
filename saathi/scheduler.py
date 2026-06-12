@@ -73,6 +73,19 @@ def canteen_summary():
     _notify("🍴 Baadar — Daily Canteen Summary", msg)
 
 
+def daily_content():
+    """Draft the day's social content pack and notify Ajay to review/approve."""
+    try:
+        from .tools import content_studio
+        pack = content_studio.generate_content_pack()
+        topic = pack.get("topic", "today's topic")
+        _notify("📲 Baadar — Today's Content Ready",
+                f"Drafted posts about: {topic}. Say 'Baadar, show today's content' to "
+                f"review and post.")
+    except Exception:
+        pass
+
+
 def memory_backup():
     ts = datetime.now().strftime("%Y%m%d")
     dst = config.ROOT / "data" / "backups"
@@ -90,6 +103,7 @@ def memory_backup():
 # ---------- schedule table: (HH, MM, weekday_or_None, fn) ----------
 JOBS = [
     (7, 0, None, morning_briefing),    # every day 7:00am
+    (8, 0, None, daily_content),       # every day 8:00am — draft social content
     (21, 0, None, canteen_summary),    # every day 9:00pm
     (23, 30, 6, memory_backup),        # Sunday 11:30pm (weekday 6 = Sunday)
 ]

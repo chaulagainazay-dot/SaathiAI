@@ -1,6 +1,6 @@
 """Tool registry: schemas exposed to Claude + dispatcher with privilege gating."""
 from . import (canteen, content, files, mac_control, n8n_tools, notes, english,
-               system, apps, research, calendar as cal, email_tool)
+               system, apps, research, calendar as cal, email_tool, content_studio)
 from .. import nepali, selfimprove
 
 # Tools that require speaker verification (only Ajay's voice)
@@ -305,6 +305,32 @@ TOOL_SCHEMAS = [
             "required": ["title", "when"],
         },
     },
+    # --- Daily social content studio (IELTS / pielts.web.app) ---
+    {
+        "name": "make_content",
+        "description": "Generate today's full social media content pack — TikTok/Reel "
+                       "script, LinkedIn, Facebook, Instagram caption + hashtags — for "
+                       "Ajay's IELTS niche and pielts.web.app. Use for 'make today's "
+                       "content', 'aaja ko post banau', or with a specific topic.",
+        "input_schema": {
+            "type": "object",
+            "properties": {"topic": {"type": "string"}},
+        },
+    },
+    {
+        "name": "todays_content",
+        "description": "Show the content pack already generated for today.",
+        "input_schema": {"type": "object", "properties": {}},
+    },
+    {
+        "name": "make_avatar_video",
+        "description": "Turn today's (or given) TikTok script into an AI avatar "
+                       "talking-head video via D-ID. Needs DID_API_KEY.",
+        "input_schema": {
+            "type": "object",
+            "properties": {"script": {"type": "string"}},
+        },
+    },
     # --- Research + planning ---
     {
         "name": "research",
@@ -452,6 +478,9 @@ _HANDLERS = {
     "write_file": system.write_file,
     "applescript": system.applescript,
     "get_mobile_link": system.get_mobile_link,
+    "make_content": content_studio.generate_content_pack,
+    "todays_content": lambda: content_studio.todays_content(),
+    "make_avatar_video": content_studio.make_avatar_video,
     "check_email": email_tool.check_email,
     "send_email": email_tool.send_email,
     "add_reminder": cal.add_reminder,
