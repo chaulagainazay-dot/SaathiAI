@@ -1,6 +1,7 @@
 """Tool registry: schemas exposed to Claude + dispatcher with privilege gating."""
 from . import (canteen, content, files, mac_control, n8n_tools, notes, english,
-               system, apps, research, calendar as cal, email_tool, content_studio)
+               system, apps, research, calendar as cal, email_tool, content_studio,
+               projects)
 from .. import nepali, selfimprove
 
 # Tools that require speaker verification (only Ajay's voice)
@@ -305,6 +306,51 @@ TOOL_SCHEMAS = [
             "required": ["title", "when"],
         },
     },
+    # --- Project awareness (knows Ajay's codebases) ---
+    {
+        "name": "project_overview",
+        "description": "Understand one of Ajay's coding projects: its structure, README, "
+                       "tech stack, and recent changes. Use when he asks about 'my "
+                       "project', 'the IELTS app', 'pielts', what he's building, or "
+                       "before helping with its code.",
+        "input_schema": {
+            "type": "object",
+            "properties": {"name": {"type": "string"}},
+            "required": ["name"],
+        },
+    },
+    {
+        "name": "read_project_file",
+        "description": "Read a specific file inside a registered project (relative path).",
+        "input_schema": {
+            "type": "object",
+            "properties": {"name": {"type": "string"}, "relpath": {"type": "string"}},
+            "required": ["name", "relpath"],
+        },
+    },
+    {
+        "name": "search_project",
+        "description": "Search a project's code for a keyword/function/component.",
+        "input_schema": {
+            "type": "object",
+            "properties": {"name": {"type": "string"}, "query": {"type": "string"}},
+            "required": ["name", "query"],
+        },
+    },
+    {
+        "name": "list_projects",
+        "description": "List the projects Baadar is connected to.",
+        "input_schema": {"type": "object", "properties": {}},
+    },
+    {
+        "name": "register_project",
+        "description": "PRIVILEGED. Connect Baadar to a new project folder by name + path.",
+        "input_schema": {
+            "type": "object",
+            "properties": {"name": {"type": "string"}, "path": {"type": "string"}},
+            "required": ["name", "path"],
+        },
+    },
     # --- Daily social content studio (IELTS / pielts.web.app) ---
     {
         "name": "make_content",
@@ -478,6 +524,11 @@ _HANDLERS = {
     "write_file": system.write_file,
     "applescript": system.applescript,
     "get_mobile_link": system.get_mobile_link,
+    "project_overview": projects.project_overview,
+    "read_project_file": projects.read_project_file,
+    "search_project": projects.search_project,
+    "list_projects": lambda: projects.list_projects(),
+    "register_project": projects.register_project,
     "make_content": content_studio.generate_content_pack,
     "todays_content": lambda: content_studio.todays_content(),
     "make_avatar_video": content_studio.make_avatar_video,
