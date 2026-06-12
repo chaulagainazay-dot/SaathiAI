@@ -13,6 +13,7 @@ PRIVILEGED = {
     "run_shell", "write_file", "applescript", "get_mobile_link",
     "check_messages", "look_at_screen",
     "register_project", "project_run", "project_edit_file",
+    "send_video_to_phone",
 }
 
 TOOL_SCHEMAS = [
@@ -417,6 +418,16 @@ TOOL_SCHEMAS = [
         },
     },
     {
+        "name": "send_video_to_phone",
+        "description": "Send a video (or today's video) to Ajay's phone via Telegram — "
+                       "works on Android (AirDrop doesn't). Use after making a video, or "
+                       "for 'send it to my phone'.",
+        "input_schema": {
+            "type": "object",
+            "properties": {"path": {"type": "string"}, "caption": {"type": "string"}},
+        },
+    },
+    {
         "name": "make_avatar_video",
         "description": "Turn today's (or given) TikTok script into an AI avatar "
                        "talking-head video via D-ID. Needs DID_API_KEY (paid for daily).",
@@ -582,6 +593,7 @@ _HANDLERS = {
     "project_edit_file": projects.project_edit_file,
     "make_content": content_studio.generate_content_pack,
     "todays_content": lambda: content_studio.todays_content(),
+    "send_video_to_phone": content_studio.send_today_video,
     "make_video": content_studio.make_video,
     "make_avatar_video": content_studio.make_avatar_video,
     "check_email": email_tool.check_email,
