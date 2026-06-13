@@ -62,13 +62,21 @@ def generate_content_pack(topic: str = "") -> dict:
     return pack
 
 
+# FIXED character + voice — identical in EVERY video for brand consistency.
+MR_YETI_LOOK = ("fluffy white yeti professor, round black glasses, brown tweed blazer, "
+                "light-blue collared shirt, navy polka-dot tie, tan trousers, Pixar 3D cartoon style")
+MR_YETI_VOICE = ("a warm, friendly, middle-aged male voice with a clear American accent, "
+                 "cheerful and encouraging")
+
 FLOW_SCENE_RULES = (
-    "Break the lesson into 6-8 short SCENE PROMPTS for Google Flow (Veo 3). MR YETI is a "
-    "consistent saved character: fluffy white yeti professor, round black glasses, brown tweed "
-    "blazer, light-blue collared shirt, navy polka-dot tie, tan trousers, Pixar 3D cartoon style. "
+    "Break the lesson into 6-8 short SCENE PROMPTS for Google Flow (Veo 3). MR YETI is a FIXED, "
+    "consistent saved character — ALWAYS the same: " + MR_YETI_LOOK + ". "
     "Each scene = ONE ~8-second shot in the SAME bright sunny classroom beside a whiteboard. "
     "For each scene write: a camera/shot + Mr Yeti's action and expression, then his spoken line "
-    "in double quotes (Veo voices it with matching lip-sync — so keep each line short, ~1 sentence). "
+    "in double quotes (Veo voices it with matching lip-sync — keep each line short, ~1 sentence). "
+    "CRITICAL — SAME VOICE EVERY TIME: in EVERY scene Mr Yeti must speak in the SAME voice — "
+    + MR_YETI_VOICE + ". Include this exact voice description in every single scene so the voice "
+    "is identical across all videos. "
     "End every scene with 'Pixar 3D cartoon style, smooth animation.' Scene 1 must open with him "
     "waving and saying \"Namaste! I'm Mr Yeti, your IELTS coach.\" The LAST scene is a warm CTA: "
     "tell viewers to practise free on 'P-IELTS dot web dot app' plus one comment-bait question. "
