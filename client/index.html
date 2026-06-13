@@ -67,6 +67,22 @@
   .saathi { align-self: flex-start; background: #16161e; border: 1px solid #2a2a3a; }
   .meta { font-size: 10px; color: #555; align-self: center; }
 
+  /* ---------- Live steps (mirror of what Baadar is doing) ---------- */
+  .steps { align-self: flex-start; max-width: 92%; background: #0f0f18;
+           border: 1px solid #23233a; border-radius: 14px; padding: 9px 13px;
+           font-size: 12px; display: flex; flex-direction: column; gap: 5px; }
+  .steps-title { font-size: 9.5px; text-transform: uppercase; letter-spacing: .6px;
+                 color: #5a5a72; display: flex; align-items: center; gap: 6px; }
+  .steps-title::before { content: ''; width: 7px; height: 7px; border-radius: 50%;
+                 background: #10b981; animation: blink 1s ease-in-out infinite; }
+  .steps.finished .steps-title::before { animation: none; background: #444; }
+  @keyframes blink { 50% { opacity: .25; } }
+  .st { display: block; line-height: 1.45; animation: pop .2s ease-out; color: #8a8aa0; }
+  .st.tool   { color: #c4b5fd; font-weight: 600; }
+  .st.result { color: #6ee7b7; }
+  .st.think  { color: #6f6f88; font-style: italic; }
+  .st.done   { color: #10b981; font-weight: 700; }
+
   /* ---------- Bottom bar ---------- */
   footer { padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
            display: flex; gap: 9px; border-top: 1px solid #1c1c28; }
@@ -139,6 +155,40 @@ function addMeta(text) {
   const d = document.createElement('div');
   d.className = 'meta'; d.textContent = text;
   chat.appendChild(d); chat.scrollTop = chat.scrollHeight;
+}
+
+/* ============ Live step mirror ============ */
+// Polls the server and shows, in real time, each step Baadar takes for this task.
+function startActivity(sessionId) {
+  const box = document.createElement('div');
+  box.className = 'steps';
+  box.innerHTML = '<div class="steps-title">Baadar is working…</div>';
+  chat.appendChild(box); chat.scrollTop = chat.scrollHeight;
+  const ctl = { done: false, deadline: null };
+  (async () => {
+    let after = 0;
+    while (true) {
+      try {
+        const r = await fetch(API + '/api/v1/agent/activity?session_id='
+                              + encodeURIComponent(sessionId) + '&after=' + after);
+        const data = await r.json();
+        for (const e of (data.events || [])) {
+          after = e.seq;
+          const d = document.createElement('div');
+          d.className = 'st ' + e.kind; d.textContent = e.text;
+          box.appendChild(d); chat.scrollTop = chat.scrollHeight;
+          if (e.kind === 'done') ctl.done = true;
+        }
+      } catch (e) {}
+      if (ctl.done) break;
+      if (ctl.deadline && Date.now() > ctl.deadline) break;
+      await new Promise(r => setTimeout(r, 500));
+    }
+    box.classList.add('finished');
+    const t = box.querySelector('.steps-title');
+    if (t) t.textContent = 'Steps';
+  })();
+  return ctl;
 }
 
 /* ============ Hands-free engine ============ */
@@ -219,12 +269,14 @@ function startRecorder() {
 async function sendUtterance(blob) {
   busy = true;
   setState('thinking');
+  const act = startActivity('default');
   const form = new FormData();
   form.append('file', blob, 'speech.webm');
   form.append('require_wake', 'true');
   try {
     const r = await fetch(API + '/api/v1/voice/command', { method: 'POST', body: form });
     const data = await r.json();
+    act.deadline = Date.now() + 1500;
     if (data.ignored) {
       if (data.ignored === 'no_wake_word') addMeta('(heard, no “Baadar”): ' + (data.transcript || ''));
     } else {
@@ -236,6 +288,7 @@ async function sendUtterance(blob) {
       if (data.reply_audio_b64) await playReply(data.reply_audio_b64, data.reply_audio_mime);
     }
   } catch (e) { addMeta('⚠️ ' + e.message); }
+  act.deadline = Date.now() + 1500;
   busy = false;
   setState(listening ? 'listening' : 'idle');
 }
@@ -256,6 +309,7 @@ async function sendText() {
   $('textIn').value = '';
   addMsg(text, 'user');
   setState('thinking');
+  const act = startActivity('default');
   try {
     const r = await fetch(API + '/api/v1/agent/chat', {
       method: 'POST', headers: {'Content-Type': 'application/json'},
@@ -263,6 +317,7 @@ async function sendText() {
     });
     addMsg((await r.json()).reply, 'saathi');
   } catch (e) { addMeta('⚠️ ' + e.message); }
+  act.deadline = Date.now() + 1500;   // let the last steps flush in
   setState(listening ? 'listening' : 'idle');
 }
 $('sendBtn').onclick = sendText;

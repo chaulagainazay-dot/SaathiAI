@@ -7,6 +7,7 @@ Two interchangeable brains:
 import json
 
 from . import config
+from . import activity
 from .persona import SYSTEM_PROMPT
 from .memory import Memory
 from .tools.registry import TOOL_SCHEMAS, execute_tool
@@ -77,10 +78,13 @@ class SaathiAgent:
             system += "\n\n# Things you remember about Ajay\n" + "\n".join(f"- {f}" for f in facts)
         system += f"\n\n# Session\nSpeaker verified as Ajay: {speaker_verified}"
 
+        activity.clear(session_id)
+        activity.log(session_id, "start", "💭 Understanding your request…")
         if self.provider in ("gemini", "ollama", "groq"):
-            reply = self._respond_openai(system, history, user_text, speaker_verified)
+            reply = self._respond_openai(system, history, user_text, speaker_verified, session_id)
         else:
-            reply = self._respond_anthropic(system, history, user_text, speaker_verified)
+            reply = self._respond_anthropic(system, history, user_text, speaker_verified, session_id)
+        activity.log(session_id, "done", "✅ Done")
 
         self.memory.save_turn(session_id, "user", user_text)
         self.memory.save_turn(session_id, "assistant", reply)
@@ -167,7 +171,8 @@ class SaathiAgent:
         self.model = config.OLLAMA_MODEL
         self.provider = "ollama"
 
-    def _respond_openai(self, system, history, user_text, speaker_verified) -> str:
+    def _respond_openai(self, system, history, user_text, speaker_verified,
+                        session_id="default") -> str:
         messages = ([{"role": "system", "content": system}] + history +
                     [{"role": "user", "content": user_text}])
         tools = _openai_tools()
@@ -185,6 +190,8 @@ class SaathiAgent:
                                             "short spoken sentence (his language)."})
                 resp = self._create_with_retry(messages=messages, max_tokens=512)
                 return (resp.choices[0].message.content or "Done.").strip()
+            if (msg.content or "").strip():
+                activity.log(session_id, "think", "💭 " + msg.content.strip()[:120])
             messages.append({"role": "assistant", "content": msg.content,
                              "tool_calls": [tc.model_dump() for tc in msg.tool_calls]})
             for tc in msg.tool_calls:
@@ -192,8 +199,10 @@ class SaathiAgent:
                     args = json.loads(tc.function.arguments or "{}")
                 except json.JSONDecodeError:
                     args = {}
+                activity.log_tool(session_id, tc.function.name, args)
                 result = execute_tool(tc.function.name, args,
                                       speaker_verified=speaker_verified)
+                activity.log_result(session_id, result)
                 messages.append({"role": "tool", "tool_call_id": tc.id,
                                  "content": json.dumps(result, ensure_ascii=False,
                                                        default=str)})
@@ -201,7 +210,8 @@ class SaathiAgent:
 
     # ---------- Claude ----------
 
-    def _respond_anthropic(self, system, history, user_text, speaker_verified) -> str:
+    def _respond_anthropic(self, system, history, user_text, speaker_verified,
+                           session_id="default") -> str:
         messages = history + [{"role": "user", "content": user_text}]
         for _ in range(MAX_TOOL_ITERATIONS):
             resp = self.client.messages.create(
@@ -209,12 +219,17 @@ class SaathiAgent:
                 tools=TOOL_SCHEMAS, messages=messages)
             if resp.stop_reason != "tool_use":
                 break
+            for block in resp.content:
+                if block.type == "text" and block.text.strip():
+                    activity.log(session_id, "think", "💭 " + block.text.strip()[:120])
             messages.append({"role": "assistant", "content": resp.content})
             results = []
             for block in resp.content:
                 if block.type == "tool_use":
+                    activity.log_tool(session_id, block.name, block.input)
                     result = execute_tool(block.name, block.input,
                                           speaker_verified=speaker_verified)
+                    activity.log_result(session_id, result)
                     results.append({"type": "tool_result", "tool_use_id": block.id,
                                     "content": json.dumps(result, ensure_ascii=False,
                                                           default=str)})

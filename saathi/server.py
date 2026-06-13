@@ -63,6 +63,13 @@ def chat(body: ChatIn):
     return {"reply": reply}
 
 
+@app.get("/api/v1/agent/activity")
+def agent_activity(session_id: str = "default", after: int = 0):
+    """Live step-by-step mirror of what Baadar is doing right now (polled by the UI)."""
+    from . import activity
+    return {"events": activity.since(session_id, after)}
+
+
 @app.post("/api/v1/voice/command")
 async def voice_command(file: UploadFile = File(...),
                         session_id: str = Form("default"),
