@@ -71,7 +71,10 @@ MR_YETI_VOICE = ("a warm, friendly, middle-aged male voice with a clear American
 FLOW_SCENE_RULES = (
     "Break the lesson into 6-8 short SCENE PROMPTS for Google Flow (Veo 3). MR YETI is a FIXED, "
     "consistent saved character — ALWAYS the same: " + MR_YETI_LOOK + ". "
-    "Each scene = ONE ~8-second shot in the SAME bright sunny classroom beside a whiteboard. "
+    "Each scene = ONE ~8-second shot. ONLY Mr Yeti's look and voice stay fixed — the SETTING, "
+    "background, props, camera angle and his actions should CHANGE to fit the topic and keep it "
+    "visually interesting (e.g. a café for speaking practice, a desk with papers for writing, a "
+    "library for reading, an airport for travel vocab). Vary the scenes; don't repeat the same room. "
     "For each scene write: a camera/shot + Mr Yeti's action and expression, then his spoken line "
     "in double quotes (Veo voices it with matching lip-sync — keep each line short, ~1 sentence). "
     "CRITICAL — SAME VOICE EVERY TIME: in EVERY scene Mr Yeti must speak in the SAME voice — "
