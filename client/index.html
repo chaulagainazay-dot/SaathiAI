@@ -92,6 +92,34 @@
            font-weight: 600; cursor: pointer; }
   #sendBtn { background: #7c3aed; color: #fff; }
 
+  /* ---------- Sidebar / chat history ---------- */
+  #menuBtn { position: fixed; top: calc(8px + env(safe-area-inset-top)); left: 10px; z-index: 30;
+    width: 38px; height: 38px; padding: 0; border-radius: 11px; background: #16161e;
+    border: 1px solid #2a2a3a; color: #c4b5fd; font-size: 17px; }
+  #scrim { position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 40; opacity: 0;
+    pointer-events: none; transition: opacity .25s; }
+  body.nav-open #scrim { opacity: 1; pointer-events: auto; }
+  #sidebar { position: fixed; top: 0; left: 0; bottom: 0; width: 270px; max-width: 82vw; z-index: 41;
+    background: #0d0d16; border-right: 1px solid #1c1c28; transform: translateX(-100%);
+    transition: transform .25s ease; display: flex; flex-direction: column;
+    padding: calc(12px + env(safe-area-inset-top)) 10px calc(10px + env(safe-area-inset-bottom)); }
+  body.nav-open #sidebar { transform: translateX(0); }
+  .sb-head { display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 12px; padding: 0 4px; }
+  .sb-head b { font-size: 15px; color: #ddd6fe; }
+  #newChatBtn { background: #7c3aed; color: #fff; border-radius: 12px; padding: 8px 12px; font-size: 13px; }
+  #convoList { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
+  .convo { display: flex; align-items: center; gap: 4px; padding: 9px 10px; border-radius: 10px;
+    cursor: pointer; color: #b8b8c8; font-size: 13px; }
+  .convo:hover { background: #16161e; }
+  .convo.active { background: #241a3d; color: #fff; }
+  .convo .nm { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .convo .ic { opacity: 0; font-size: 12px; padding: 2px 5px; border-radius: 6px; }
+  .convo:hover .ic { opacity: .55; }
+  .convo .ic:hover { opacity: 1; background: #2a2a3a; }
+  #addBtn { background: #16161e; color: #c4b5fd; border: 1px solid #2a2a3a;
+    padding: 0 14px; font-size: 22px; line-height: 1; }
+
   /* ---------- Drag & drop ---------- */
   #dropOverlay { position: fixed; inset: 0; background: rgba(124,58,237,.18);
       border: 3px dashed #a78bfa; display: none; align-items: center;
@@ -102,15 +130,25 @@
 </head>
 <body data-state="idle">
 
+<button id="menuBtn" title="Chats">☰</button>
+<div id="scrim"></div>
+<aside id="sidebar">
+  <div class="sb-head"><b>🏔️ Baadar</b><button id="newChatBtn">+ New</button></div>
+  <div id="convoList"></div>
+</aside>
+
 <div id="orbZone" title="Tap orb to toggle hands-free listening">
   <div id="orb"></div>
   <div id="stateLabel">tap the orb to start listening</div>
-  <div id="hint">say “Baadar …” · नेपाली or English · drag files anywhere</div>
+  <div id="hint">☰ chats · नेपाली or English · drag files or tap +</div>
 </div>
 
 <div id="chat"></div>
 
 <footer>
+  <button id="addBtn" title="Attach file, PDF or image">+</button>
+  <input id="fileIn" type="file" multiple hidden
+         accept="image/*,application/pdf,.doc,.docx,.txt,.csv,.xlsx">
   <input id="textIn" placeholder="type to Baadar…" autocomplete="off">
   <button id="sendBtn">Send</button>
 </footer>
@@ -146,16 +184,87 @@ function setState(s, text) {
   }[s];
 }
 
-function addMsg(text, cls) {
+// low-level DOM render (no persistence) — used when replaying history
+function renderMsg(text, cls) {
   const d = document.createElement('div');
   d.className = 'msg ' + cls; d.textContent = text;
   chat.appendChild(d); chat.scrollTop = chat.scrollHeight;
 }
-function addMeta(text) {
+function renderMeta(text) {
   const d = document.createElement('div');
   d.className = 'meta'; d.textContent = text;
   chat.appendChild(d); chat.scrollTop = chat.scrollHeight;
 }
+// render + save into the current conversation
+function addMsg(text, cls) { renderMsg(text, cls); pushMsg(cls === 'user' ? 'user' : 'saathi', text, false); }
+function addMeta(text)      { renderMeta(text);       pushMsg('meta', text, true); }
+
+/* ============ Conversation history (categorise your work) ============ */
+const CONVO_KEY = 'baadar_convos', CUR_KEY = 'baadar_cur';
+let convos = []; try { convos = JSON.parse(localStorage.getItem(CONVO_KEY) || '[]'); } catch (e) {}
+let curId = localStorage.getItem(CUR_KEY) || '';
+
+const saveConvos = () => localStorage.setItem(CONVO_KEY, JSON.stringify(convos));
+const curConvo = () => convos.find(c => c.id === curId);
+const newId = () => 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+const session = () => curId || 'default';
+
+function pushMsg(role, text, isMeta) {
+  const c = curConvo(); if (!c) return;
+  c.msgs.push({ role, text, meta: !!isMeta });
+  if (c.title === 'New chat' && role === 'user' && !isMeta) c.title = text.slice(0, 42);
+  c.ts = Date.now();
+  saveConvos(); renderConvoList();
+}
+
+function renderChat() {
+  chat.innerHTML = '';
+  const c = curConvo();
+  (c ? c.msgs : []).forEach(m => m.meta ? renderMeta(m.text)
+        : renderMsg(m.text, m.role === 'user' ? 'user' : 'saathi'));
+}
+
+function renderConvoList() {
+  const list = $('convoList'); list.innerHTML = '';
+  convos.slice().sort((a, b) => b.ts - a.ts).forEach(c => {
+    const row = document.createElement('div');
+    row.className = 'convo' + (c.id === curId ? ' active' : '');
+    row.innerHTML = `<span class="nm"></span>`
+      + `<span class="ic" data-act="rename" title="Rename / categorise">✎</span>`
+      + `<span class="ic" data-act="del" title="Delete">🗑</span>`;
+    row.querySelector('.nm').textContent = c.title || 'Untitled';
+    row.querySelector('.nm').onclick = () => switchConvo(c.id);
+    row.querySelector('[data-act=rename]').onclick = e => { e.stopPropagation(); renameConvo(c.id); };
+    row.querySelector('[data-act=del]').onclick = e => { e.stopPropagation(); deleteConvo(c.id); };
+    list.appendChild(row);
+  });
+}
+
+function newConvo() {
+  const c = { id: newId(), title: 'New chat', msgs: [], ts: Date.now() };
+  convos.unshift(c); curId = c.id; localStorage.setItem(CUR_KEY, curId);
+  saveConvos(); renderConvoList(); renderChat(); closeNav();
+}
+function switchConvo(id) { curId = id; localStorage.setItem(CUR_KEY, id); renderConvoList(); renderChat(); closeNav(); }
+function renameConvo(id) {
+  const c = convos.find(x => x.id === id); if (!c) return;
+  const t = prompt('Name this chat / category:', c.title);
+  if (t !== null) { c.title = t.trim() || c.title; saveConvos(); renderConvoList(); }
+}
+function deleteConvo(id) {
+  if (!confirm('Delete this chat?')) return;
+  convos = convos.filter(c => c.id !== id);
+  if (curId === id) curId = convos[0]?.id || '';
+  saveConvos(); localStorage.setItem(CUR_KEY, curId);
+  if (!curId) newConvo(); else { renderConvoList(); renderChat(); }
+}
+
+/* sidebar open/close */
+const openNav = () => document.body.classList.add('nav-open');
+const closeNav = () => document.body.classList.remove('nav-open');
+$('menuBtn').onclick = openNav;
+$('scrim').onclick = closeNav;
+$('newChatBtn').onclick = newConvo;
 
 /* ============ Live step mirror ============ */
 // Polls the server and shows, in real time, each step Baadar takes for this task.
@@ -269,10 +378,11 @@ function startRecorder() {
 async function sendUtterance(blob) {
   busy = true;
   setState('thinking');
-  const act = startActivity('default');
+  const act = startActivity(session());
   const form = new FormData();
   form.append('file', blob, 'speech.webm');
   form.append('require_wake', 'true');
+  form.append('session_id', session());
   try {
     const r = await fetch(API + '/api/v1/voice/command', { method: 'POST', body: form });
     const data = await r.json();
@@ -309,11 +419,11 @@ async function sendText() {
   $('textIn').value = '';
   addMsg(text, 'user');
   setState('thinking');
-  const act = startActivity('default');
+  const act = startActivity(session());
   try {
     const r = await fetch(API + '/api/v1/agent/chat', {
       method: 'POST', headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ text, speaker_verified: true })
+      body: JSON.stringify({ text, session_id: session(), speaker_verified: true })
     });
     addMsg((await r.json()).reply, 'saathi');
   } catch (e) { addMeta('⚠️ ' + e.message); }
@@ -323,22 +433,41 @@ async function sendText() {
 $('sendBtn').onclick = sendText;
 $('textIn').addEventListener('keydown', e => { if (e.key === 'Enter') sendText(); });
 
-/* ============ Drag & drop files ============ */
-let dragDepth = 0;
-addEventListener('dragenter', e => { e.preventDefault(); if (++dragDepth) document.body.classList.add('dragging'); });
-addEventListener('dragleave', e => { e.preventDefault(); if (--dragDepth <= 0) { dragDepth = 0; document.body.classList.remove('dragging'); } });
-addEventListener('dragover', e => e.preventDefault());
-addEventListener('drop', async e => {
-  e.preventDefault(); dragDepth = 0; document.body.classList.remove('dragging');
-  for (const f of e.dataTransfer.files) {
+/* ============ File attach (drag-drop OR + button) ============ */
+async function uploadFiles(files) {
+  for (const f of files) {
+    addMeta('⬆️ uploading ' + f.name + '…');
     const form = new FormData(); form.append('file', f);
     try {
       const r = await fetch(API + '/api/v1/files/upload', { method: 'POST', body: form });
       const data = await r.json();
-      addMeta('📂 saved: ' + data.stored + ' (' + Math.round(data.size/1024) + ' KB) — ask Saathi about it');
+      addMeta('📎 ' + (data.stored || f.name) + ' (' + Math.round((data.size || f.size)/1024)
+              + ' KB) attached — ask Baadar about it');
     } catch (err) { addMeta('⚠️ upload failed: ' + err.message); }
   }
+}
+
+// + button → file picker
+$('addBtn').onclick = () => $('fileIn').click();
+$('fileIn').onchange = e => { if (e.target.files.length) uploadFiles(e.target.files); e.target.value = ''; };
+
+// drag & drop anywhere
+let dragDepth = 0;
+addEventListener('dragenter', e => { e.preventDefault(); if (++dragDepth) document.body.classList.add('dragging'); });
+addEventListener('dragleave', e => { e.preventDefault(); if (--dragDepth <= 0) { dragDepth = 0; document.body.classList.remove('dragging'); } });
+addEventListener('dragover', e => e.preventDefault());
+addEventListener('drop', e => {
+  e.preventDefault(); dragDepth = 0; document.body.classList.remove('dragging');
+  if (e.dataTransfer.files.length) uploadFiles(e.dataTransfer.files);
 });
+
+/* ============ Boot ============ */
+if (!convos.length || !curConvo()) {
+  if (!convos.length) { convos.push({ id: newId(), title: 'New chat', msgs: [], ts: Date.now() }); }
+  curId = convos[0].id; localStorage.setItem(CUR_KEY, curId); saveConvos();
+}
+renderConvoList();
+renderChat();
 
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
 </script>
