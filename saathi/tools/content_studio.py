@@ -62,6 +62,46 @@ def generate_content_pack(topic: str = "") -> dict:
     return pack
 
 
+FLOW_SCENE_RULES = (
+    "Break the lesson into 6-8 short SCENE PROMPTS for Google Flow (Veo 3). MR YETI is a "
+    "consistent saved character: fluffy white yeti professor, round black glasses, brown tweed "
+    "blazer, light-blue collared shirt, navy polka-dot tie, tan trousers, Pixar 3D cartoon style. "
+    "Each scene = ONE ~8-second shot in the SAME bright sunny classroom beside a whiteboard. "
+    "For each scene write: a camera/shot + Mr Yeti's action and expression, then his spoken line "
+    "in double quotes (Veo voices it with matching lip-sync — so keep each line short, ~1 sentence). "
+    "End every scene with 'Pixar 3D cartoon style, smooth animation.' Scene 1 must open with him "
+    "waving and saying \"Namaste! I'm Mr Yeti, your IELTS coach.\" The LAST scene is a warm CTA: "
+    "tell viewers to practise free on 'P-IELTS dot web dot app' plus one comment-bait question. "
+    "Do NOT add any separate narration — only the in-scene dialogue (Veo generates the audio).")
+
+
+def make_flow_prompts(topic: str = "") -> dict:
+    """Generate ready-to-paste Google Flow (Veo) SCENE PROMPTS for a Mr Yeti video.
+    Each scene has the shot + Mr Yeti's action + his spoken line (Veo voices it, lips synced).
+    Ajay pastes each into Flow with the saved Mr Yeti character, then stitches + captions in CapCut."""
+    from ..agent import SaathiAgent
+    agent = SaathiAgent()
+    ask = topic or "pick one fresh, specific, high-value IELTS tip for today"
+    system = (
+        "You are Baadar, scripting a Mr Yeti IELTS short video for Google Flow (Veo 3). " + NICHE
+        + "\n\n" + FLOW_SCENE_RULES + "\n\n"
+        "Return ONLY STRICT JSON (no markdown):\n"
+        '{"topic": "...", "youtube_title": "click-worthy title", '
+        '"caption": "short post caption with 1-2 emojis", '
+        '"hashtags": "10-15 hashtags as one string", '
+        '"scenes": ["full scene 1 prompt", "full scene 2 prompt", "..."]}')
+    raw = agent.complete(system, f"Topic: {ask}", max_tokens=1600)
+    pack = _parse_json(raw)
+    if not pack or not pack.get("scenes"):
+        return {"error": "could not generate Flow prompts, try again", "raw": raw[:200]}
+    pack["date"] = dt.date.today().isoformat()
+    pack["tool"] = "google-flow-veo"
+    CONTENT_DIR.mkdir(parents=True, exist_ok=True)
+    (CONTENT_DIR / f"flow-{pack['date']}.json").write_text(
+        json.dumps(pack, ensure_ascii=False, indent=2))
+    return pack
+
+
 def todays_content() -> dict:
     """Return today's saved content pack (or note that none exists yet)."""
     path = CONTENT_DIR / f"{dt.date.today().isoformat()}.json"

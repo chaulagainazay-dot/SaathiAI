@@ -428,6 +428,17 @@ TOOL_SCHEMAS = [
         },
     },
     {
+        "name": "make_flow_prompts",
+        "description": "Generate ready-to-paste Google Flow (Veo) SCENE PROMPTS for a Mr Yeti "
+                       "IELTS video (6-8 shots, each with action + spoken line). Use for "
+                       "'make flow prompts' / 'scene prompts' / 'next video'. Ajay pastes them "
+                       "into Google Flow.",
+        "input_schema": {
+            "type": "object",
+            "properties": {"topic": {"type": "string"}},
+        },
+    },
+    {
         "name": "make_talking_yeti",
         "description": "Make a FREE local animated talking Mr. Yeti video (cloned voice + "
                        "Wav2Lip lip-sync) from today's or a given script. No API keys, no "
@@ -614,6 +625,7 @@ _HANDLERS = {
     "todays_content": lambda: content_studio.todays_content(),
     "send_video_to_phone": content_studio.send_today_video,
     "make_video": content_studio.make_video,
+    "make_flow_prompts": content_studio.make_flow_prompts,
     "make_talking_yeti": content_studio.make_talking_yeti,
     "make_animated_video": content_studio.make_animated_video,
     "check_animated_video": content_studio.check_heygen_video,
