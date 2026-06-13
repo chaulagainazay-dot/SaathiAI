@@ -74,16 +74,36 @@ def canteen_summary():
 
 
 def daily_content():
-    """Draft the day's social content pack and notify Ajay to review/approve."""
+    """AUTOPILOT (approve-to-post mode): every morning Baadar drafts the day's Mr Yeti video
+    pack — Google Flow scene prompts + caption + hashtags — and Telegrams it to Ajay so he can
+    generate the clips and approve posting. Baadar NEVER posts publicly or spends money on its
+    own; FB/LinkedIn publishing happens only after Ajay replies 'post it'."""
     try:
-        from .tools import content_studio
-        pack = content_studio.generate_content_pack()
-        topic = pack.get("topic", "today's topic")
-        _notify("📲 Baadar — Today's Content Ready",
-                f"Drafted posts about: {topic}. Say 'Baadar, show today's content' to "
-                f"review and post.")
-    except Exception:
-        pass
+        from .tools import content_studio, n8n_tools
+        pack = content_studio.make_flow_prompts()
+        scenes = pack.get("scenes", [])
+        if not scenes:
+            _notify("📲 Baadar", "Couldn't draft today's video — say 'make flow prompts'.")
+            return
+        lines = ["🏔️ Baadar — Today's Mr Yeti video", "",
+                 f"📌 Topic: {pack.get('topic', '')}",
+                 f"▶️ YouTube title: {pack.get('youtube_title', '')}", "",
+                 "🎬 Google Flow scene prompts (paste each with the Mr Yeti character):"]
+        for i, s in enumerate(scenes, 1):
+            lines.append(f"{i}. {s}")
+        lines += ["", f"📝 Caption: {pack.get('caption', '')}",
+                  f"#️⃣ {pack.get('hashtags', '')}", "",
+                  "→ Generate the 7 clips in Flow, stitch + caption in CapCut, post to "
+                  "@pieltsapp/YouTube. Reply 'post it' and I'll publish the caption to "
+                  "Facebook & LinkedIn for you."]
+        try:
+            n8n_tools.send_telegram("\n".join(lines)[:4000])
+        except Exception:
+            pass
+        _notify("📲 Baadar — Today's Mr Yeti video ready",
+                f"Topic: {pack.get('topic', '')}. Flow prompts sent to your Telegram.")
+    except Exception as e:
+        _notify("📲 Baadar", f"Daily content error: {str(e)[:120]}")
 
 
 def memory_backup():
