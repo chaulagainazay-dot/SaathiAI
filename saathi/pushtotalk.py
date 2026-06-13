@@ -25,7 +25,10 @@ SR = 16000
 MIN_HOLD_SAMPLES = int(0.3 * SR)
 MAX_RECORD_SEC = 30.0            # safety: never record longer than this
 OPTION_FLAG = 0x80000           # kCGEventFlagMaskAlternate (either Option key)
+CMD_FLAG = 0x100000             # kCGEventFlagMaskCommand
 PTT_KEYCODE = int(os.getenv("PTT_KEYCODE", "61"))  # 61 = Right Option, 58 = Left
+# Global hotkey to pop Baadar open on screen: Cmd+Option+<key>. 11 = B (Baadar).
+HOTKEY_KEYCODE = int(os.getenv("BAADAR_HOTKEY_KEYCODE", "11"))
 
 C = {"dim": "\033[2m", "cyan": "\033[96m", "green": "\033[92m", "red": "\033[91m",
      "end": "\033[0m"}
@@ -44,6 +47,7 @@ class PushToTalk:
         self.stream = None
         self.busy = False
         self.session = "ptt"
+        self._last_open = 0.0
 
     # ---- mic ----
     def _mic_cb(self, indata, frames, t, status):
@@ -117,11 +121,28 @@ class PushToTalk:
             self.busy = False
             self.on_state("listening")
 
-    # ---- key event tap (Right Option by default) ----
+    def _open_app(self):
+        """Bring the Baadar window to the front (or open it)."""
+        if time.time() - self._last_open < 1.2:
+            return  # ignore key auto-repeat
+        self._last_open = time.time()
+        import webbrowser
+        from . import config
+        webbrowser.open(f"http://localhost:{config.PORT}")
+        log("⌘⌥B → opening Baadar", "green")
+
+    # ---- key event tap (Right Option PTT + Cmd+Option+B hotkey) ----
     def _tap_cb(self, proxy, etype, event, refcon):
         try:
             keycode = Quartz.CGEventGetIntegerValueField(
                 event, Quartz.kCGKeyboardEventKeycode)
+            # global hotkey: Cmd+Option+B opens Baadar on screen
+            if etype == Quartz.kCGEventKeyDown:
+                flags = Quartz.CGEventGetFlags(event)
+                if (keycode == HOTKEY_KEYCODE and (flags & CMD_FLAG)
+                        and (flags & OPTION_FLAG)):
+                    self._open_app()
+                return event
             if keycode != PTT_KEYCODE:
                 return event  # only react to the push-to-talk key
             option_down = bool(Quartz.CGEventGetFlags(event) & OPTION_FLAG)
@@ -135,7 +156,8 @@ class PushToTalk:
 
     def install_tap(self):
         """Attach the Fn-key tap to the current run loop (call from the rumps app)."""
-        mask = Quartz.CGEventMaskBit(Quartz.kCGEventFlagsChanged)
+        mask = (Quartz.CGEventMaskBit(Quartz.kCGEventFlagsChanged)
+                | Quartz.CGEventMaskBit(Quartz.kCGEventKeyDown))
         tap = Quartz.CGEventTapCreate(
             Quartz.kCGSessionEventTap, Quartz.kCGHeadInsertEventTap,
             Quartz.kCGEventTapOptionListenOnly, mask, self._tap_cb, None)
@@ -148,7 +170,7 @@ class PushToTalk:
         Quartz.CGEventTapEnable(tap, True)
         self._tap = tap
         self.on_state("listening")
-        log("Baadar push-to-talk ready. HOLD the Right Option (⌥) key to talk.", "green")
+        log("Baadar ready. HOLD Right Option (⌥) to talk · press ⌘⌥B to open Baadar.", "green")
 
     def run_standalone(self):
         """Run with its own run loop (for terminal use without the menu bar)."""
