@@ -70,6 +70,27 @@ def agent_activity(session_id: str = "default", after: int = 0):
     return {"events": activity.since(session_id, after)}
 
 
+@app.get("/api/v1/connections")
+def get_connections():
+    from . import connections
+    return {"connections": connections.get_all()}
+
+
+class ConnIn(BaseModel):
+    platform: str
+    connected: bool | None = None
+    method: str | None = None
+    handle: str | None = None
+    webhook: str | None = None
+
+
+@app.post("/api/v1/connections")
+def set_connection(body: ConnIn):
+    from . import connections
+    cfg = {k: v for k, v in body.dict().items() if k != "platform" and v is not None}
+    return {"saved": connections.save_one(body.platform, cfg)}
+
+
 @app.post("/api/v1/voice/command")
 async def voice_command(file: UploadFile = File(...),
                         session_id: str = Form("default"),

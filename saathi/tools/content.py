@@ -29,17 +29,47 @@ def draft(platform: str, topic: str, language: str = "mixed", notes: str = "") -
 
 
 def post(platform: str, content: str, title: str = "") -> dict:
-    """Publish a post. Facebook/LinkedIn go through the logged-in browser (no API
-    keys needed). YouTube still routes through n8n. Only called after Ajay approves."""
-    if platform.lower() in ("facebook", "linkedin"):
+    """Publish to ONE platform using its connected method. Only after Ajay approves."""
+    from .. import connections
+    cfg = connections.get_all().get(platform.lower(), {})
+    method = cfg.get("method",
+                     "browser" if platform.lower() in ("facebook", "linkedin") else "n8n")
+
+    if method == "manual":
+        return {"status": "manual_upload", "platform": platform,
+                "handle": cfg.get("handle", ""),
+                "note": f"Caption ready — upload the video to {cfg.get('handle') or platform} manually."}
+    if method == "browser":
         from . import browser
         return browser.post(platform, content, title)
-    # YouTube (and anything else) via n8n
-    r = httpx.post(
-        f"{config.N8N_WEBHOOK_BASE}/social-post",
-        json={"platform": platform, "content": content, "title": title},
-        timeout=60,
-    )
+    # n8n: per-platform webhook if set, else the shared social-post webhook
+    url = cfg.get("webhook") or f"{config.N8N_WEBHOOK_BASE}/social-post"
+    r = httpx.post(url, json={"platform": platform, "content": content, "title": title}, timeout=60)
     r.raise_for_status()
     return {"status": "sent_to_n8n", "platform": platform,
             "n8n_response": r.json() if r.headers.get("content-type", "").startswith("application/json") else r.text}
+
+
+def list_connections() -> dict:
+    """Show which social platforms are connected and how each one posts."""
+    from .. import connections
+    return {"connections": connections.get_all(), "connected": connections.connected()}
+
+
+def post_all(content: str, title: str = "", platforms: str = "") -> dict:
+    """Post the SAME content to every connected platform at once (or a comma-separated
+    subset). Only after Ajay approves the exact draft."""
+    from .. import connections
+    targets = ([p.strip().lower() for p in platforms.split(",") if p.strip()]
+               or connections.connected())
+    if not targets:
+        return {"status": "no_targets",
+                "message": "No platforms connected yet. Open Connections in Baadar "
+                           "(the 🔗 link icon) to connect them."}
+    results = {}
+    for p in targets:
+        try:
+            results[p] = post(p, content, title)
+        except Exception as e:
+            results[p] = {"status": "error", "error": str(e)[:140]}
+    return {"posted_to": targets, "results": results}

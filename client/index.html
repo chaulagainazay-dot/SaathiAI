@@ -119,6 +119,34 @@
   .convo .ic:hover { opacity: 1; background: #2a2a3a; }
   #addBtn { background: #16161e; color: #c4b5fd; border: 1px solid #2a2a3a;
     padding: 0 14px; font-size: 22px; line-height: 1; }
+  #connBtn { margin-top: 8px; background: #14141e; color: #a78bfa; border: 1px solid #2a2a3a;
+    border-radius: 12px; padding: 10px; font-size: 13px; }
+
+  /* ---------- Connections modal ---------- */
+  #connModal { position: fixed; inset: 0; z-index: 60; background: rgba(0,0,0,.6);
+    display: none; align-items: center; justify-content: center; padding: 16px; }
+  #connModal.open { display: flex; }
+  .cm-card { width: 440px; max-width: 100%; max-height: 86vh; overflow-y: auto;
+    background: #11111b; border: 1px solid #2a2a3a; border-radius: 18px; padding: 18px; }
+  .cm-head { display: flex; justify-content: space-between; align-items: center; }
+  .cm-head b { font-size: 16px; color: #ddd6fe; }
+  #connClose { background: none; color: #888; font-size: 16px; padding: 4px 8px; }
+  .cm-sub { font-size: 12px; color: #8a8aa0; margin: 4px 0 14px; }
+  .cm-foot { font-size: 11px; color: #5a5a72; margin-top: 12px; }
+  .conn { display: flex; align-items: center; gap: 10px; padding: 11px 0;
+    border-top: 1px solid #1c1c28; }
+  .conn .ico { font-size: 20px; width: 26px; text-align: center; }
+  .conn .info { flex: 1; min-width: 0; }
+  .conn .nm { font-size: 14px; color: #e8e8f0; }
+  .conn .mt { font-size: 11px; color: #777; }
+  .conn input[type=text] { width: 100%; margin-top: 5px; background: #0c0c14;
+    border: 1px solid #2a2a3a; color: #ddd; border-radius: 8px; padding: 5px 8px; font-size: 12px; }
+  .sw { width: 44px; height: 25px; border-radius: 13px; background: #2a2a3a; position: relative;
+    cursor: pointer; flex-shrink: 0; transition: background .2s; }
+  .sw::after { content: ''; position: absolute; top: 3px; left: 3px; width: 19px; height: 19px;
+    border-radius: 50%; background: #fff; transition: transform .2s; }
+  .sw.on { background: #10b981; }
+  .sw.on::after { transform: translateX(19px); }
 
   /* ---------- Drag & drop ---------- */
   #dropOverlay { position: fixed; inset: 0; background: rgba(124,58,237,.18);
@@ -135,7 +163,17 @@
 <aside id="sidebar">
   <div class="sb-head"><b>🏔️ Baadar</b><button id="newChatBtn">+ New</button></div>
   <div id="convoList"></div>
+  <button id="connBtn">🔗 Connect socials</button>
 </aside>
+
+<div id="connModal">
+  <div class="cm-card">
+    <div class="cm-head"><b>🔗 Connect your socials</b><button id="connClose">✕</button></div>
+    <p class="cm-sub">Connect once — then Baadar can post & plan across all of them.</p>
+    <div id="connList"></div>
+    <p class="cm-foot">Auto = Baadar posts for you · Assisted = Baadar preps it, you tap upload.</p>
+  </div>
+</div>
 
 <div id="orbZone" title="Tap orb to toggle hands-free listening">
   <div id="orb"></div>
@@ -265,6 +303,50 @@ const closeNav = () => document.body.classList.remove('nav-open');
 $('menuBtn').onclick = openNav;
 $('scrim').onclick = closeNav;
 $('newChatBtn').onclick = newConvo;
+
+/* ============ Social connections ============ */
+const PLATFORMS = [
+  { id: 'facebook', name: 'Facebook',  icon: '📘' },
+  { id: 'instagram', name: 'Instagram', icon: '📸' },
+  { id: 'tiktok',   name: 'TikTok',    icon: '🎵' },
+  { id: 'youtube',  name: 'YouTube',   icon: '▶️' },
+  { id: 'linkedin', name: 'LinkedIn',  icon: '💼' },
+  { id: 'x',        name: 'X',         icon: '✖️' },
+];
+const METHOD_LABEL = { browser: 'Auto · browser', n8n: 'Auto · n8n webhook', manual: 'Assisted · you upload' };
+
+async function openConnections() {
+  closeNav();
+  let data = {};
+  try { data = (await (await fetch(API + '/api/v1/connections')).json()).connections || {}; } catch (e) {}
+  const list = $('connList'); list.innerHTML = '';
+  PLATFORMS.forEach(p => {
+    const c = data[p.id] || { connected: false, method: 'manual', handle: '', webhook: '' };
+    const row = document.createElement('div');
+    row.className = 'conn';
+    row.innerHTML =
+      `<span class="ico">${p.icon}</span>`
+      + `<div class="info"><div class="nm">${p.name}</div>`
+      + `<div class="mt">${METHOD_LABEL[c.method] || c.method}</div>`
+      + (c.method === 'n8n'
+          ? `<input type="text" class="wh" placeholder="n8n webhook URL (optional)" value="${c.webhook || ''}">` : '')
+      + `<input type="text" class="hd" placeholder="handle e.g. @pieltsapp" value="${c.handle || ''}"></div>`
+      + `<div class="sw ${c.connected ? 'on' : ''}"></div>`;
+    const sw = row.querySelector('.sw');
+    const save = (extra) => fetch(API + '/api/v1/connections', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(Object.assign({ platform: p.id, connected: sw.classList.contains('on'),
+        handle: row.querySelector('.hd').value,
+        webhook: row.querySelector('.wh')?.value || '' }, extra)) });
+    sw.onclick = () => { sw.classList.toggle('on'); save(); };
+    row.querySelectorAll('input').forEach(inp => inp.onchange = () => save());
+    list.appendChild(row);
+  });
+  $('connModal').classList.add('open');
+}
+$('connBtn').onclick = openConnections;
+$('connClose').onclick = () => $('connModal').classList.remove('open');
+$('connModal').onclick = e => { if (e.target === $('connModal')) $('connModal').classList.remove('open'); };
 
 /* ============ Live step mirror ============ */
 // Polls the server and shows, in real time, each step Baadar takes for this task.

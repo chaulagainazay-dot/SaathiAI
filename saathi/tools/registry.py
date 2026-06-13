@@ -7,7 +7,8 @@ from .. import nepali, selfimprove
 # Tools that require speaker verification (only Ajay's voice)
 PRIVILEGED = {
     "send_email",
-    "post_social_content", "trigger_n8n_workflow", "mac_run_shortcut",
+    "post_social_content", "post_to_all_socials",
+    "trigger_n8n_workflow", "mac_run_shortcut",
     "mac_open_app", "mac_close_app", "mac_type_text", "send_telegram",
     "search_mac_files", "read_mac_file",
     "run_shell", "write_file", "applescript", "get_mobile_link",
@@ -63,6 +64,29 @@ TOOL_SCHEMAS = [
                 "title": {"type": "string", "description": "for YouTube"},
             },
             "required": ["platform", "content"],
+        },
+    },
+    {
+        "name": "list_social_connections",
+        "description": "List which social platforms Ajay has connected and how each one posts "
+                       "(browser/n8n/manual). Use this before posting to know where you can publish.",
+        "input_schema": {"type": "object", "properties": {}},
+    },
+    {
+        "name": "post_to_all_socials",
+        "description": "PRIVILEGED. Publish the SAME approved content to ALL connected social "
+                       "platforms at once (or a comma-separated subset like 'facebook,linkedin'). "
+                       "Only call after Ajay approved the exact draft. Manual-method platforms "
+                       "(e.g. TikTok) are prepared for upload, not auto-posted.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "content": {"type": "string"},
+                "title": {"type": "string", "description": "for YouTube"},
+                "platforms": {"type": "string",
+                              "description": "optional comma list; empty = all connected"},
+            },
+            "required": ["content"],
         },
     },
     # --- Automation ---
@@ -598,6 +622,8 @@ _HANDLERS = {
     "canteen_query": canteen.query,
     "draft_social_content": content.draft,
     "post_social_content": content.post,
+    "list_social_connections": content.list_connections,
+    "post_to_all_socials": content.post_all,
     "trigger_n8n_workflow": n8n_tools.trigger,
     "send_telegram": n8n_tools.send_telegram,
     "mac_open_app": mac_control.open_app,
