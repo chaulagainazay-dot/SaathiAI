@@ -15,12 +15,13 @@ from . import config
 
 def grab_screen(window_app: str | None = None) -> bytes:
     """Capture the screen (or bring an app to front first) as PNG bytes."""
+    # absolute paths — under launchd the PATH doesn't include /usr/sbin
     if window_app:
-        subprocess.run(["open", "-a", window_app], capture_output=True)
+        subprocess.run(["/usr/bin/open", "-a", window_app], capture_output=True)
         time.sleep(1.5)  # let it come to the front
     with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as f:
         path = f.name
-    r = subprocess.run(["screencapture", "-x", path], capture_output=True, text=True)
+    r = subprocess.run(["/usr/sbin/screencapture", "-x", path], capture_output=True, text=True)
     if r.returncode != 0 or not Path(path).exists() or Path(path).stat().st_size == 0:
         raise RuntimeError(
             "Screen Recording permission needed. Grant it once: System Settings → "
