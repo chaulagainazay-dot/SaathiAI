@@ -428,10 +428,19 @@ TOOL_SCHEMAS = [
         },
     },
     {
+        "name": "make_talking_yeti",
+        "description": "Make a FREE local animated talking Mr. Yeti video (cloned voice + "
+                       "Wav2Lip lip-sync) from today's or a given script. No API keys, no "
+                       "cost. Use for 'make the talking yeti' / 'make the animated yeti'.",
+        "input_schema": {
+            "type": "object",
+            "properties": {"script": {"type": "string"}},
+        },
+    },
+    {
         "name": "make_animated_video",
-        "description": "Make a FULL animated talking Mr.Yeti video (HeyGen avatar + "
-                       "ElevenLabs voice) from today's or a given script. Needs HeyGen + "
-                       "ElevenLabs keys. Use for 'make the animated video'.",
+        "description": "Make a FULL animated talking Mr.Yeti video via HeyGen (cloud, needs "
+                       "paid HeyGen + ElevenLabs keys). Prefer make_talking_yeti (free).",
         "input_schema": {
             "type": "object",
             "properties": {"script": {"type": "string"}},
@@ -605,6 +614,7 @@ _HANDLERS = {
     "todays_content": lambda: content_studio.todays_content(),
     "send_video_to_phone": content_studio.send_today_video,
     "make_video": content_studio.make_video,
+    "make_talking_yeti": content_studio.make_talking_yeti,
     "make_animated_video": content_studio.make_animated_video,
     "check_animated_video": content_studio.check_heygen_video,
     "check_email": email_tool.check_email,

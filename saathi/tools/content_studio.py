@@ -14,10 +14,25 @@ from .. import config
 CONTENT_DIR = config.ROOT / "data" / "content"
 
 NICHE = (
-    "Ajay is an IELTS teacher promoting his free IELTS practice app pielts.web.app. "
-    "Audience: Nepali and South-Asian students preparing for IELTS and planning to "
-    "study/move abroad. Tone: encouraging, practical, authentic, slightly personal "
-    "(he's going abroad himself). Always work in a natural mention of pielts.web.app.")
+    "Content for pielts.web.app — a free IELTS practice app. The face of the brand is "
+    "MR. YETI: a warm, funny, wise professor-yeti from the Himalayas (glasses, tweed "
+    "jacket, pointer at a whiteboard) who teaches IELTS. Audience: Nepali and South-Asian "
+    "students preparing for IELTS and planning to study/move abroad, but content must be "
+    "fun and simple enough for ALL ages. Mr. Yeti is the narrator and speaks in FIRST "
+    "PERSON as the yeti (never 'it's Ajay'). Personality: cheerful, encouraging, a little "
+    "playful, big-hearted teacher. Always work in a natural mention of pielts.web.app.")
+
+# The repeatable viral structure every short script must follow.
+VIRAL_RULES = (
+    "Write tiktok_script as MR. YETI speaking, 15-35 seconds (about 45-90 words):\n"
+    "1) HOOK in the FIRST sentence — a scroll-stopper (bold question / 'stop doing this' / "
+    "surprising claim). Open with his signature: 'Namaste! Yeti here!'\n"
+    "2) ONE tiny lesson (one word upgrade, one mistake, one quick trick) — not a lecture.\n"
+    "3) A concrete example.\n"
+    "4) Warm CTA to practise free on pielts.web.app (link in bio) PLUS one comment-bait "
+    "question (e.g. 'What's your target band? Comment below!').\n"
+    "Simple, upbeat, wholesome for all ages. Add light stage directions in (brackets) for "
+    "the yeti's expression/act, e.g. (shocked face), (thumbs up), (points to whiteboard).")
 
 
 def generate_content_pack(topic: str = "") -> dict:
@@ -26,16 +41,17 @@ def generate_content_pack(topic: str = "") -> dict:
     agent = SaathiAgent()
     ask_topic = topic or "pick one fresh, specific IELTS / study-abroad topic for today"
     system = (
-        "You are Baadar, running Ajay's daily social media. " + NICHE + "\n"
+        "You are Baadar, running the Mr. Yeti social media for pielts.web.app. " + NICHE + "\n\n"
+        + VIRAL_RULES + "\n\n"
         "Produce ONE day's content as STRICT JSON with these keys:\n"
         '{"topic": "...", '
-        '"tiktok_script": "60-90 sec spoken script with a 3-sec hook, one clear tip, '
-        'and a call to action to pielts.web.app", '
-        '"linkedin": "professional 120-180 word post, teacher voice, 2-3 hashtags", '
-        '"facebook": "warm casual 60-100 word post for students", '
-        '"instagram": "punchy caption", '
+        '"tiktok_script": "Mr. Yeti short script following the viral rules above", '
+        '"linkedin": "professional 120-180 word post in Mr. Yeti / teacher voice, 2-3 hashtags", '
+        '"facebook": "warm casual 60-100 word post for students (Mr. Yeti voice)", '
+        '"instagram": "punchy caption with 1-2 emojis", '
+        '"youtube_title": "click-worthy YouTube Shorts title with the key benefit", '
         '"hashtags": "10-15 relevant hashtags as one string", '
-        '"video_caption": "short on-screen title for the video"}\n'
+        '"video_caption": "short punchy on-screen title for the video"}\n'
         "Return ONLY the JSON, no markdown fences.")
     raw = agent.complete(system, f"Topic: {ask_topic}", max_tokens=900)
     pack = _parse_json(raw)
@@ -88,8 +104,11 @@ def make_video(script: str = "", handle: str = "@pieltsapp",
     ff = voice._ffmpeg()
     font_path = "/System/Library/Fonts/Supplemental/Arial Unicode.ttf"
 
-    # 1. voiceover (cloned voice if enabled, else built-in)
-    audio, mime = voice.synthesize(script, "en")
+    # 0. strip (stage directions) / labels so they're neither spoken nor shown on screen
+    script = _clean_for_speech(script)
+
+    # 1. voiceover — best available: ElevenLabs > OmniVoice professor > built-in
+    audio, mime = _voiceover(script)
     aud_ext = ".mp3" if mime == "audio/mpeg" else ".wav"
     aud = work / f"voice{aud_ext}"
     aud.write_bytes(audio)
@@ -201,6 +220,7 @@ def make_animated_video(script: str = "", image_path: str = "") -> dict:
         script = todays_content().get("tiktok_script", "")
     if not script:
         return {"error": "no script — generate content first"}
+    script = _clean_for_speech(script)
 
     hk = os.getenv("HEYGEN_API_KEY", "")
     if not hk:
@@ -287,6 +307,106 @@ def make_avatar_video(script: str = "") -> dict:
 
 
 # ---------- helpers ----------
+
+def make_talking_yeti(script: str = "", image_path: str = "") -> dict:
+    """FREE local animated talking Mr. Yeti: cloned OmniVoice voice -> Wav2Lip lip-sync.
+    No API keys, no cost. Needs the Wav2Lip repo + checkpoint (WAV2LIP_DIR) and the
+    OmniVoice backend running (for the cloned voice)."""
+    import subprocess
+    import tempfile
+    from pathlib import Path as _P
+
+    if not script:
+        script = todays_content().get("tiktok_script", "")
+    if not script:
+        return {"error": "no script — generate content first"}
+    script = _clean_for_speech(script)
+
+    w2l = _P(os.getenv("WAV2LIP_DIR", "")) if os.getenv("WAV2LIP_DIR") else \
+        _P("~/Downloads/talkingyeti/Wav2Lip").expanduser()
+    py = w2l / ".venv" / "bin" / "python"
+    ckpt = w2l / "checkpoints" / "wav2lip_gan.pth"
+    if not py.exists() or not ckpt.exists():
+        return {"setup_needed": True,
+                "message": f"Wav2Lip not set up at {w2l}. Need the repo + .venv + "
+                           "checkpoints/wav2lip_gan.pth."}
+
+    if not image_path:
+        for cand in ("~/Downloads/Yeti 1.jpeg", "~/Downloads/Yeti.jpeg"):
+            if _P(cand).expanduser().exists():
+                image_path = str(_P(cand).expanduser())
+                break
+    if not image_path:
+        return {"error": "Yeti image not found in ~/Downloads"}
+
+    # 1) cloned Mr. Yeti voiceover
+    audio, mime = _voiceover(script)
+    work = _P(tempfile.mkdtemp())
+    aud = work / ("voice" + (".mp3" if "mpeg" in mime else ".wav"))
+    aud.write_bytes(audio)
+
+    # 2) lip-sync with Wav2Lip (runs in its OWN venv)
+    out_dir = CONTENT_DIR / "videos"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    out = out_dir / f"yeti-talking-{dt.date.today().isoformat()}.mp4"
+    cmd = [str(py), "inference.py", "--checkpoint_path", str(ckpt),
+           "--face", str(_P(image_path).expanduser()), "--audio", str(aud),
+           "--outfile", str(out), "--pads", "0", "20", "0", "0", "--nosmooth"]
+    p = subprocess.run(cmd, cwd=str(w2l), capture_output=True, text=True, timeout=900)
+    if not out.exists():
+        return {"error": "Wav2Lip render failed",
+                "detail": (p.stderr or p.stdout or "")[-400:]}
+    return {"video": str(out), "engine": "wav2lip (free, local)",
+            "note": f"Animated talking Mr. Yeti ready at {out.name}. AirDrop to your "
+                    "phone and post to @pieltsapp."}
+
+
+def _clean_for_speech(text: str) -> str:
+    """Strip (stage directions) and Hook:/Tip: labels so they aren't spoken or shown."""
+    text = re.sub(r"\([^)]*\)", "", text)
+    text = re.sub(r"\b(Hook|Tip|CTA|Call to action|Lesson|Example)\s*:\s*", "", text, flags=re.I)
+    return re.sub(r"\s{2,}", " ", text).strip()
+
+
+def _voiceover(text: str) -> tuple[bytes, str]:
+    """Best available voice for videos: ElevenLabs (expressive) > OmniVoice professor
+    (free, local) > built-in. Returns (audio_bytes, mime)."""
+    # 1) ElevenLabs — premium, expressive (uses ELEVENLABS_API_KEY + ELEVENLABS_VOICE_ID)
+    key = os.getenv("ELEVENLABS_API_KEY", "")
+    if key:
+        try:
+            import httpx
+            vid = os.getenv("ELEVENLABS_VOICE_ID", "21m00Tcm4TlvDq8ikWAM")
+            r = httpx.post(
+                f"https://api.elevenlabs.io/v1/text-to-speech/{vid}",
+                headers={"xi-api-key": key, "accept": "audio/mpeg"},
+                json={"text": text, "model_id": "eleven_multilingual_v2",
+                      "voice_settings": {"stability": 0.45, "similarity_boost": 0.8, "style": 0.55}},
+                timeout=120)
+            if r.status_code == 200 and r.content:
+                return r.content, "audio/mpeg"
+        except Exception:
+            pass
+    # 2) OmniVoice — free local Mr. Yeti voice. Prefer the fixed CLONE profile
+    #    (consistent voice every time); fall back to voice-design traits.
+    try:
+        import httpx
+        base = os.getenv("OMNIVOICE_TTS_URL") or "http://127.0.0.1:3900"
+        profile = os.getenv("YETI_VOICE_PROFILE", "")
+        fields = {"text": text, "language": "English", "num_step": "28", "speed": "0.98"}
+        if profile:
+            fields["profile_id"] = profile           # exact cloned Mr. Yeti voice
+        else:
+            fields["instruct"] = "male, middle-aged, low pitch, american accent"
+        r = httpx.post(f"{base}/generate", data=fields, timeout=240)
+        if r.status_code == 200 and r.headers.get("content-type", "").startswith("audio"):
+            return r.content, "audio/wav"
+    except Exception:
+        pass
+    # 3) built-in fallback (macOS say)
+    from .. import voice
+    return voice.synthesize(text, "en")
+
 
 def _save(pack: dict):
     CONTENT_DIR.mkdir(parents=True, exist_ok=True)
