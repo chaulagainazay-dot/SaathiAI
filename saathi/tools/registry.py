@@ -428,12 +428,22 @@ TOOL_SCHEMAS = [
         },
     },
     {
-        "name": "make_avatar_video",
-        "description": "Turn today's (or given) TikTok script into an AI avatar "
-                       "talking-head video via D-ID. Needs DID_API_KEY (paid for daily).",
+        "name": "make_animated_video",
+        "description": "Make a FULL animated talking Mr.Yeti video (HeyGen avatar + "
+                       "ElevenLabs voice) from today's or a given script. Needs HeyGen + "
+                       "ElevenLabs keys. Use for 'make the animated video'.",
         "input_schema": {
             "type": "object",
             "properties": {"script": {"type": "string"}},
+        },
+    },
+    {
+        "name": "check_animated_video",
+        "description": "Check if the HeyGen animated video is done and download it.",
+        "input_schema": {
+            "type": "object",
+            "properties": {"video_id": {"type": "string"}},
+            "required": ["video_id"],
         },
     },
     # --- Research + planning ---
@@ -595,7 +605,8 @@ _HANDLERS = {
     "todays_content": lambda: content_studio.todays_content(),
     "send_video_to_phone": content_studio.send_today_video,
     "make_video": content_studio.make_video,
-    "make_avatar_video": content_studio.make_avatar_video,
+    "make_animated_video": content_studio.make_animated_video,
+    "check_animated_video": content_studio.check_heygen_video,
     "check_email": email_tool.check_email,
     "send_email": email_tool.send_email,
     "add_reminder": cal.add_reminder,

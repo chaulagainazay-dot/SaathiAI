@@ -166,6 +166,97 @@ def send_today_video(path: str = "", caption: str = "") -> dict:
     return n8n_tools.send_video(path, caption or "Your pielts video — ready for TikTok @pieltsapp 🎯")
 
 
+def elevenlabs_voiceover(text: str, out_path: str = "") -> dict:
+    """Generate a premium natural voiceover with ElevenLabs. Returns the audio path."""
+    import httpx
+    key = os.getenv("ELEVENLABS_API_KEY", "")
+    if not key:
+        return {"setup_needed": True,
+                "message": "Add ELEVENLABS_API_KEY to .env (free tier at elevenlabs.io)."}
+    voice_id = os.getenv("ELEVENLABS_VOICE_ID", "21m00Tcm4TlvDq8ikWAM")  # 'Rachel' default
+    out = out_path or str(CONTENT_DIR / "audio" /
+                          f"vo-{dt.date.today().isoformat()}.mp3")
+    from pathlib import Path as _P
+    _P(out).parent.mkdir(parents=True, exist_ok=True)
+    r = httpx.post(
+        f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}",
+        headers={"xi-api-key": key, "accept": "audio/mpeg"},
+        json={"text": text, "model_id": "eleven_multilingual_v2",
+              "voice_settings": {"stability": 0.5, "similarity_boost": 0.75}},
+        timeout=120)
+    if r.status_code != 200:
+        return {"error": f"ElevenLabs {r.status_code}", "detail": r.text[:200]}
+    _P(out).write_bytes(r.content)
+    return {"audio": out, "bytes": len(r.content)}
+
+
+def make_animated_video(script: str = "", image_path: str = "") -> dict:
+    """Full animated talking-Mr.Yeti video: ElevenLabs voiceover + HeyGen avatar.
+
+    Needs ELEVENLABS_API_KEY and HEYGEN_API_KEY (+ a HeyGen talking-photo id for the
+    Yeti, set as HEYGEN_TALKING_PHOTO_ID). Returns a HeyGen video job to poll.
+    """
+    import httpx
+    if not script:
+        script = todays_content().get("tiktok_script", "")
+    if not script:
+        return {"error": "no script — generate content first"}
+
+    hk = os.getenv("HEYGEN_API_KEY", "")
+    if not hk:
+        return {"setup_needed": True,
+                "message": "Animated video needs HeyGen. Add HEYGEN_API_KEY (and "
+                           "HEYGEN_TALKING_PHOTO_ID for the Mr. Yeti avatar) to .env. "
+                           "HeyGen API requires a paid plan (~$29/mo). The script + "
+                           "ElevenLabs voiceover are ready meanwhile."}
+
+    talking_photo_id = os.getenv("HEYGEN_TALKING_PHOTO_ID", "")
+    if not talking_photo_id:
+        return {"setup_needed": True,
+                "message": "Upload the Mr. Yeti image to HeyGen as a Talking Photo, then "
+                           "put its id in HEYGEN_TALKING_PHOTO_ID in .env."}
+
+    # voiceover first (ElevenLabs) — fall back to HeyGen's own voice if not set
+    voice_payload = {"type": "text", "input_text": script,
+                     "voice_id": os.getenv("HEYGEN_VOICE_ID", "1bd001e7e50f421d891986aad5158bc8")}
+
+    body = {
+        "video_inputs": [{
+            "character": {"type": "talking_photo", "talking_photo_id": talking_photo_id},
+            "voice": voice_payload,
+        }],
+        "dimension": {"width": 720, "height": 1280},  # vertical for TikTok
+    }
+    r = httpx.post("https://api.heygen.com/v2/video/generate",
+                   headers={"X-Api-Key": hk, "Content-Type": "application/json"},
+                   json=body, timeout=60)
+    if r.status_code not in (200, 201):
+        return {"error": f"HeyGen {r.status_code}", "detail": r.text[:300]}
+    vid = r.json().get("data", {}).get("video_id")
+    return {"status": "rendering", "video_id": vid,
+            "note": "HeyGen is animating Mr. Yeti. Ask me to 'check the animated video' "
+                    "in a minute, or check your HeyGen dashboard."}
+
+
+def check_heygen_video(video_id: str) -> dict:
+    """Poll a HeyGen video job; when done, download it to the videos folder."""
+    import httpx
+    hk = os.getenv("HEYGEN_API_KEY", "")
+    if not hk:
+        return {"error": "HEYGEN_API_KEY not set"}
+    r = httpx.get("https://api.heygen.com/v1/video_status.get",
+                  headers={"X-Api-Key": hk}, params={"video_id": video_id}, timeout=30)
+    data = r.json().get("data", {})
+    status = data.get("status")
+    if status != "completed":
+        return {"status": status, "video_id": video_id}
+    url = data.get("video_url")
+    out = CONTENT_DIR / "videos" / f"pielts-animated-{dt.date.today().isoformat()}.mp4"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_bytes(httpx.get(url, timeout=180).content)
+    return {"status": "completed", "video": str(out)}
+
+
 def make_avatar_video(script: str = "") -> dict:
     """Turn the script into an AI avatar talking-head video via D-ID."""
     import httpx
