@@ -70,6 +70,32 @@ def agent_activity(session_id: str = "default", after: int = 0):
     return {"events": activity.since(session_id, after)}
 
 
+@app.get("/api/v1/progress")
+def get_progress():
+    """Your content journey: which day you're on (Day 1 = first content), how many
+    video plans + posts done, and progress toward a 30-day goal."""
+    import re
+    from datetime import date
+    cdir = config.ROOT / "data" / "content"
+    plans = sorted(cdir.glob("flow-*.json")) if cdir.exists() else []
+    packs = sorted(cdir.glob("[0-9]*.json")) if cdir.exists() else []
+    videos = list((cdir / "videos").glob("*.mp4")) if (cdir / "videos").exists() else []
+    # earliest dated file marks Day 1
+    dates = []
+    for f in plans + packs:
+        m = re.search(r"(\d{4})-(\d{2})-(\d{2})", f.name)
+        if m:
+            try: dates.append(date(*map(int, m.groups())))
+            except ValueError: pass
+    start = min(dates) if dates else date.today()
+    day = (date.today() - start).days + 1
+    GOAL = 30
+    return {"day": day, "goal": GOAL,
+            "plans": len(plans), "videos": len(videos),
+            "start": start.isoformat(),
+            "pct": round(min(day / GOAL, 1.0) * 100)}
+
+
 @app.get("/api/v1/connections")
 def get_connections():
     from . import connections
