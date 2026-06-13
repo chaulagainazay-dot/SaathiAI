@@ -7,7 +7,7 @@ from .. import nepali, selfimprove
 # Tools that require speaker verification (only Ajay's voice)
 PRIVILEGED = {
     "send_email",
-    "post_social_content", "post_to_all_socials",
+    "post_social_content", "post_to_all_socials", "deploy_ielts_site",
     "trigger_n8n_workflow", "mac_run_shortcut",
     "mac_open_app", "mac_close_app", "mac_type_text", "send_telegram",
     "search_mac_files", "read_mac_file",
@@ -65,6 +65,13 @@ TOOL_SCHEMAS = [
             },
             "required": ["platform", "content"],
         },
+    },
+    {
+        "name": "deploy_ielts_site",
+        "description": "PRIVILEGED. Rebuild and publish the IELTS app pielts.web.app (regenerates "
+                       "sitemap + pre-renders pages for SEO, then deploys). Use after a new blog "
+                       "post is published, or when Ajay says 'publish/deploy the IELTS site'.",
+        "input_schema": {"type": "object", "properties": {}},
     },
     {
         "name": "list_social_connections",
@@ -624,6 +631,7 @@ _HANDLERS = {
     "post_social_content": content.post,
     "list_social_connections": content.list_connections,
     "post_to_all_socials": content.post_all,
+    "deploy_ielts_site": content_studio.deploy_ielts_site,
     "trigger_n8n_workflow": n8n_tools.trigger,
     "send_telegram": n8n_tools.send_telegram,
     "mac_open_app": mac_control.open_app,

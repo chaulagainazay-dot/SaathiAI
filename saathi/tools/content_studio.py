@@ -478,3 +478,26 @@ def _parse_json(raw: str) -> dict | None:
             except json.JSONDecodeError:
                 return None
     return None
+
+
+def deploy_ielts_site() -> dict:
+    """Rebuild (sitemap + prerender) and publish pielts.web.app. Run this after a new
+    blog post is published so Google + AI search engines pick it up. PRIVILEGED."""
+    import os
+    import subprocess
+    app = os.path.expanduser("~/Downloads/ielts-practice-app")
+    if not os.path.isdir(app):
+        return {"status": "error", "error": f"app dir not found: {app}"}
+    # login shell so Homebrew's npm/firebase are on PATH even under launchd
+    env = dict(os.environ, PATH="/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin")
+    try:
+        r = subprocess.run(["npm", "run", "deploy"], cwd=app, env=env,
+                           capture_output=True, text=True, timeout=900)
+        ok = r.returncode == 0
+        tail = (r.stdout + "\n" + r.stderr).strip()[-500:]
+        return {"status": "deployed" if ok else "failed", "ok": ok,
+                "url": "https://pielts.web.app", "log_tail": tail}
+    except subprocess.TimeoutExpired:
+        return {"status": "error", "error": "deploy timed out (15 min)"}
+    except Exception as e:
+        return {"status": "error", "error": str(e)[:200]}
