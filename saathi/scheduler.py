@@ -120,10 +120,17 @@ def memory_backup():
         pass
 
 
+def daily_autopost():
+    """8pm: post the next queued video to YouTube + Facebook + Instagram."""
+    from . import autopost
+    autopost.run_daily_autopost()
+
+
 # ---------- schedule table: (HH, MM, weekday_or_None, fn) ----------
 JOBS = [
     (7, 0, None, morning_briefing),    # every day 7:00am
     (8, 0, None, daily_content),       # every day 8:00am — draft social content
+    (20, 0, None, daily_autopost),     # every day 8:00pm — auto-post next queued video
     (21, 0, None, canteen_summary),    # every day 9:00pm
     (23, 30, 6, memory_backup),        # Sunday 11:30pm (weekday 6 = Sunday)
 ]
