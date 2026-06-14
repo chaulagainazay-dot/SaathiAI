@@ -7,7 +7,7 @@ from .. import nepali, selfimprove
 # Tools that require speaker verification (only Ajay's voice)
 PRIVILEGED = {
     "send_email",
-    "post_social_content", "post_to_all_socials", "deploy_ielts_site", "publish_to_youtube",
+    "post_social_content", "post_to_all_socials", "deploy_ielts_site", "publish_to_youtube", "queue_video",
     "trigger_n8n_workflow", "mac_run_shortcut",
     "mac_open_app", "mac_close_app", "mac_type_text", "send_telegram",
     "search_mac_files", "read_mac_file",
@@ -64,6 +64,23 @@ TOOL_SCHEMAS = [
                 "title": {"type": "string", "description": "for YouTube"},
             },
             "required": ["platform", "content"],
+        },
+    },
+    {
+        "name": "queue_video",
+        "description": "PRIVILEGED. Add a finished video to the daily 8pm auto-post queue. Baadar "
+                       "posts one queued video per day automatically to YouTube + FB/IG. Pass the "
+                       "local video path, title, description (with links), tags, and a caption.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "video_path": {"type": "string"},
+                "title": {"type": "string"},
+                "description": {"type": "string"},
+                "tags": {"type": "string"},
+                "caption": {"type": "string"},
+            },
+            "required": ["video_path", "title"],
         },
     },
     {
@@ -650,6 +667,7 @@ _HANDLERS = {
     "post_to_all_socials": content.post_all,
     "deploy_ielts_site": content_studio.deploy_ielts_site,
     "publish_to_youtube": content_studio.publish_to_youtube,
+    "queue_video": content_studio.queue_video,
     "trigger_n8n_workflow": n8n_tools.trigger,
     "send_telegram": n8n_tools.send_telegram,
     "mac_open_app": mac_control.open_app,

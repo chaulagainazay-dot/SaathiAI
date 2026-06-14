@@ -566,3 +566,16 @@ def publish_to_youtube(video_path: str, title: str, description: str = "", tags:
                 "channel": "@pieltsapp", "response": r.text[:300]}
     except Exception as e:
         return {"status": "error", "error": str(e)[:200]}
+
+
+def queue_video(video_path: str, title: str, description: str = "",
+                tags: str = "", caption: str = "") -> dict:
+    """Add a finished video to the daily 8pm auto-post queue (YouTube + FB/IG).
+    PRIVILEGED. Baadar posts one queued video per day automatically."""
+    import os
+    from .. import autopost
+    p = os.path.expanduser(video_path)
+    if not os.path.exists(p):
+        return {"status": "error", "error": f"video not found: {p}"}
+    n = autopost.add(p, title, description, tags, caption)
+    return {"status": "queued", "pending_in_queue": n, "title": title}
