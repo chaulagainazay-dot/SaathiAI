@@ -7,7 +7,7 @@ from .. import nepali, selfimprove
 # Tools that require speaker verification (only Ajay's voice)
 PRIVILEGED = {
     "send_email",
-    "post_social_content", "post_to_all_socials", "deploy_ielts_site",
+    "post_social_content", "post_to_all_socials", "deploy_ielts_site", "publish_to_youtube",
     "trigger_n8n_workflow", "mac_run_shortcut",
     "mac_open_app", "mac_close_app", "mac_type_text", "send_telegram",
     "search_mac_files", "read_mac_file",
@@ -64,6 +64,23 @@ TOOL_SCHEMAS = [
                 "title": {"type": "string", "description": "for YouTube"},
             },
             "required": ["platform", "content"],
+        },
+    },
+    {
+        "name": "publish_to_youtube",
+        "description": "PRIVILEGED. Upload a video to the PIELTS YouTube channel (@pieltsapp) via "
+                       "the connected n8n webhook. Pass the local video file path, title, "
+                       "description (include pielts.web.app + links), and comma tags. Only call "
+                       "after Ajay approves the exact video + title.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "video_path": {"type": "string", "description": "local .mp4 path"},
+                "title": {"type": "string"},
+                "description": {"type": "string"},
+                "tags": {"type": "string", "description": "comma-separated"},
+            },
+            "required": ["video_path", "title"],
         },
     },
     {
@@ -632,6 +649,7 @@ _HANDLERS = {
     "list_social_connections": content.list_connections,
     "post_to_all_socials": content.post_all,
     "deploy_ielts_site": content_studio.deploy_ielts_site,
+    "publish_to_youtube": content_studio.publish_to_youtube,
     "trigger_n8n_workflow": n8n_tools.trigger,
     "send_telegram": n8n_tools.send_telegram,
     "mac_open_app": mac_control.open_app,

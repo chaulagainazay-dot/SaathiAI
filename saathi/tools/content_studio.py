@@ -501,3 +501,27 @@ def deploy_ielts_site() -> dict:
         return {"status": "error", "error": "deploy timed out (15 min)"}
     except Exception as e:
         return {"status": "error", "error": str(e)[:200]}
+
+
+def publish_to_youtube(video_path: str, title: str, description: str = "", tags: str = "") -> dict:
+    """Upload a video to the PIELTS YouTube channel via the connected n8n webhook.
+    PRIVILEGED — only call after Ajay approves the exact video + title."""
+    import os
+    import httpx
+    from .. import connections
+    cfg = connections.get_all().get("youtube", {})
+    url = cfg.get("webhook")
+    if not cfg.get("connected") or not url:
+        return {"status": "not_connected",
+                "message": "YouTube isn't connected yet — set the n8n webhook in Connections."}
+    p = os.path.expanduser(video_path)
+    if not os.path.exists(p):
+        return {"status": "error", "error": f"video not found: {p}"}
+    try:
+        r = httpx.post(url, json={"title": title, "description": description,
+                                  "tags": tags, "videoPath": p}, timeout=900)
+        ok = r.status_code < 400
+        return {"status": "published" if ok else "failed", "http": r.status_code,
+                "channel": "@pieltsapp", "response": r.text[:300]}
+    except Exception as e:
+        return {"status": "error", "error": str(e)[:200]}
