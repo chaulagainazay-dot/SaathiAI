@@ -537,6 +537,22 @@ def publish_to_youtube(video_path: str, title: str, description: str = "", tags:
                 pielts.log_upload(vid, title)
             except Exception:
                 pass
+            # clean up storage: remove the temp staged copy; move the original to Trash
+            # (recoverable). Only runs after a CONFIRMED upload so nothing is lost on failure.
+            try:
+                os.remove(staged)
+            except Exception:
+                pass
+            try:
+                import time
+                trash = os.path.expanduser("~/.Trash")
+                if os.path.isdir(trash) and os.path.exists(p):
+                    dest = os.path.join(trash, os.path.basename(p))
+                    if os.path.exists(dest):
+                        dest = f"{dest}.{int(time.time())}"
+                    shutil.move(p, dest)
+            except Exception:
+                pass
         return {"status": "published" if ok else "failed", "http": r.status_code,
                 "channel": "@pieltsapp", "response": r.text[:300]}
     except Exception as e:
