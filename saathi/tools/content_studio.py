@@ -23,16 +23,25 @@ NICHE = (
     "playful, big-hearted teacher. Always work in a natural mention of pielts.web.app.")
 
 # The repeatable viral structure every short script must follow.
+# Formula locked in from the Growth Hacker plan (Jun 2026): proven hooks + content
+# pillars that maximise saves/shares and the swipe-to-subscribe motion.
 VIRAL_RULES = (
     "Write tiktok_script as MR. YETI speaking, 15-35 seconds (about 45-90 words):\n"
-    "1) HOOK in the FIRST sentence — a scroll-stopper (bold question / 'stop doing this' / "
-    "surprising claim). Open with his signature: 'Namaste! Yeti here!'\n"
-    "2) ONE tiny lesson (one word upgrade, one mistake, one quick trick) — not a lecture.\n"
-    "3) A concrete example.\n"
+    "1) HOOK in the FIRST 2 SECONDS — the only thing that matters. Use ONE proven formula: "
+    "loss-aversion ('This one word is killing your Speaking band'), number-promise ('3 linkers "
+    "that instantly sound Band 8'), direct call-out ('If you say nowadays in your essay, stop'), "
+    "curiosity-gap ('Examiners never tell you this about Part 2…'), or contrast ('Band 5 says "
+    "this. Band 8 says this'). Say the hook AND show it as on-screen text. Then his signature "
+    "'Namaste! Yeti here!' AFTER the hook (never before — no slow intro).\n"
+    "2) Pick ONE content PILLAR for the lesson: (a) Quick Win / one trick, (b) Mistake or myth "
+    "to fix, (c) Band 5 vs Band 8 transformation, or (d) study-abroad-dream motivation. ONE tiny "
+    "idea only — not a lecture.\n"
+    "3) A concrete before/after example.\n"
     "4) Warm CTA to practise free on pielts.web.app (link in bio) PLUS one comment-bait "
-    "question (e.g. 'What's your target band? Comment below!').\n"
-    "Simple, upbeat, wholesome for all ages. Add light stage directions in (brackets) for "
-    "the yeti's expression/act, e.g. (shocked face), (thumbs up), (points to whiteboard).")
+    "question (e.g. 'What's your target band? Comment below!'). Loop the last line back to the "
+    "hook so it replays.\n"
+    "Simple, upbeat, wholesome for all ages, captions-on (most watch muted). Add light stage "
+    "directions in (brackets), e.g. (shocked face), (thumbs up), (points to whiteboard).")
 
 
 def generate_content_pack(topic: str = "") -> dict:
