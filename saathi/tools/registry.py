@@ -7,7 +7,7 @@ from .. import nepali, selfimprove
 # Tools that require speaker verification (only Ajay's voice)
 PRIVILEGED = {
     "send_email",
-    "post_social_content", "post_to_all_socials", "deploy_ielts_site", "publish_to_youtube", "queue_video",
+    "post_social_content", "post_to_all_socials", "deploy_ielts_site", "publish_to_youtube", "queue_video", "publish_blog",
     "trigger_n8n_workflow", "mac_run_shortcut",
     "mac_open_app", "mac_close_app", "mac_type_text", "send_telegram",
     "search_mac_files", "read_mac_file",
@@ -72,6 +72,12 @@ TOOL_SCHEMAS = [
                        "Facebook post, an Instagram caption + hashtags, and a publish-ready blog "
                        "post. Use when Ajay says 'make today\'s content/kit'.",
         "input_schema": {"type": "object", "properties": {"topic": {"type": "string"}}},
+    },
+    {
+        "name": "publish_blog",
+        "description": "PRIVILEGED. Publish a blog post live to pielts.web.app (writes to the site "
+                       "database and redeploys). Use to publish a generated blog post.",
+        "input_schema": {"type":"object","properties":{"title":{"type":"string"},"content":{"type":"string"},"excerpt":{"type":"string"},"slug":{"type":"string"}},"required":["title","content"]},
     },
     {
         "name": "make_blog_post",
@@ -683,6 +689,7 @@ _HANDLERS = {
     "queue_video": content_studio.queue_video,
     "make_daily_kit": content_studio.make_daily_kit,
     "make_blog_post": content_studio.make_blog_post,
+    "publish_blog": content_studio.publish_blog,
     "trigger_n8n_workflow": n8n_tools.trigger,
     "send_telegram": n8n_tools.send_telegram,
     "mac_open_app": mac_control.open_app,

@@ -639,3 +639,37 @@ def make_daily_kit(topic: str = "") -> dict:
     (CONTENT_DIR / f"kit-{kit['date']}.json").write_text(
         json.dumps({**kit, "blog_content": blog.get("content", "")}, ensure_ascii=False, indent=2))
     return kit
+
+
+def publish_blog(title: str, content: str, excerpt: str = "", slug: str = "",
+                 deploy: bool = True) -> dict:
+    """Publish a blog post to pielts.web.app (Firebase RTDB) and redeploy the site.
+    Needs a Firebase service-account key at ~/SaathiAI/firebase-admin.json (or env
+    FIREBASE_SA_KEY). PRIVILEGED."""
+    import os
+    import time
+    key = os.path.expanduser(os.getenv("FIREBASE_SA_KEY", "~/SaathiAI/firebase-admin.json"))
+    if not os.path.exists(key):
+        return {"status": "not_configured",
+                "message": "Blog auto-publish needs the Firebase service-account key at "
+                           "~/SaathiAI/firebase-admin.json. Until then the blog is generated "
+                           "but not auto-published."}
+    try:
+        import firebase_admin
+        from firebase_admin import credentials, db
+        if not firebase_admin._apps:
+            firebase_admin.initialize_app(
+                credentials.Certificate(key),
+                {"databaseURL": "https://ielts-and-language-practice-default-rtdb.firebaseio.com"})
+        slug = slug or re.sub(r"[^a-z0-9]+", "-", title.lower()).strip("-")[:80]
+        now = int(time.time() * 1000)
+        db.reference(f"blog/{slug}").set({
+            "slug": slug, "title": title, "content": content, "excerpt": excerpt,
+            "ts": now, "updated": now, "published": True})
+        res = {"status": "published", "slug": slug,
+               "url": f"https://pielts.web.app/blog/{slug}"}
+        if deploy:
+            res["deploy"] = deploy_ielts_site().get("status")
+        return res
+    except Exception as e:
+        return {"status": "error", "error": str(e)[:200]}

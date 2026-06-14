@@ -84,6 +84,19 @@ def daily_content():
         if not kit.get("video_script") and not kit.get("blog_title"):
             _notify("📲 Baadar", "Couldn't draft today's content — say 'make today's kit'.")
             return
+        # auto-publish the blog to pielts.web.app (if the Firebase key is configured)
+        blog_status = ""
+        try:
+            from pathlib import Path
+            bf = config.ROOT / "data" / "content" / f"blog-{kit.get('date','')}.json"
+            if bf.exists():
+                import json as _json
+                b = _json.loads(bf.read_text())
+                pub = content_studio.publish_blog(b["title"], b["content"],
+                                                  b.get("excerpt", ""), b.get("slug", ""))
+                blog_status = pub.get("status", "")
+        except Exception:
+            pass
         lines = [
             f"🏔️ Baadar — Today's content kit ({kit.get('date','')})",
             f"📌 Topic: {kit.get('topic','')}", "",
@@ -95,7 +108,9 @@ def daily_content():
             f"#️⃣ {kit.get('hashtags','')}", "",
             f"📝 BLOG: {kit.get('blog_title','')}",
             f"   {kit.get('blog_excerpt','')}",
-            f"   (full post saved → kit-{kit.get('date','')}.json — publish on pielts.web.app)", "",
+            (f"   ✅ auto-published to pielts.web.app/blog/{kit.get('blog_slug','')}"
+             if blog_status == "published"
+             else f"   (saved — publish on pielts.web.app; auto-publish: {blog_status or 'off'})"), "",
             "→ Video posts to YouTube automatically at 8pm (keep the queue stocked). "
             "Schedule the FB+IG post in Meta Business Suite. Publish the blog from the app.",
         ]

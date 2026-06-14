@@ -9,3 +9,4 @@ data/
 __pycache__/
 *.pyc
 *.egg-info/
+firebase-admin.json
