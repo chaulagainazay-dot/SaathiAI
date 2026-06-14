@@ -514,12 +514,21 @@ def publish_to_youtube(video_path: str, title: str, description: str = "", tags:
     if not cfg.get("connected") or not url:
         return {"status": "not_connected",
                 "message": "YouTube isn't connected yet — set the n8n webhook in Connections."}
+    import shutil
     p = os.path.expanduser(video_path)
     if not os.path.exists(p):
         return {"status": "error", "error": f"video not found: {p}"}
+    # n8n's file node only reads from ~/.n8n-files — stage the video there first
+    stage_dir = os.path.expanduser("~/.n8n-files")
+    os.makedirs(stage_dir, exist_ok=True)
+    staged = os.path.join(stage_dir, os.path.basename(p))
+    try:
+        shutil.copy2(p, staged)
+    except Exception as e:
+        return {"status": "error", "error": f"could not stage video: {e}"}
     try:
         r = httpx.post(url, json={"title": title, "description": description,
-                                  "tags": tags, "videoPath": p}, timeout=900)
+                                  "tags": tags, "videoPath": staged}, timeout=900)
         ok = r.status_code < 400
         return {"status": "published" if ok else "failed", "http": r.status_code,
                 "channel": "@pieltsapp", "response": r.text[:300]}
