@@ -642,7 +642,7 @@ def make_daily_kit(topic: str = "") -> dict:
 
 
 def publish_blog(title: str, content: str, excerpt: str = "", slug: str = "",
-                 deploy: bool = True) -> dict:
+                 image: str = "/og-image.png", deploy: bool = True) -> dict:
     """Publish a blog post to pielts.web.app (Firebase RTDB) and redeploy the site.
     Needs a Firebase service-account key at ~/SaathiAI/firebase-admin.json (or env
     FIREBASE_SA_KEY). PRIVILEGED."""
@@ -665,7 +665,7 @@ def publish_blog(title: str, content: str, excerpt: str = "", slug: str = "",
         now = int(time.time() * 1000)
         db.reference(f"blog/{slug}").set({
             "slug": slug, "title": title, "content": content, "excerpt": excerpt,
-            "ts": now, "updated": now, "published": True})
+            "image": image, "ts": now, "updated": now, "published": True})
         res = {"status": "published", "slug": slug,
                "url": f"https://pielts.web.app/blog/{slug}"}
         if deploy:
