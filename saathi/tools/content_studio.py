@@ -530,6 +530,13 @@ def publish_to_youtube(video_path: str, title: str, description: str = "", tags:
         r = httpx.post(url, json={"title": title, "description": description,
                                   "tags": tags, "videoPath": staged}, timeout=900)
         ok = r.status_code < 400
+        if ok:
+            try:
+                vid = (r.json() or {}).get("uploadId", "")
+                from .. import pielts
+                pielts.log_upload(vid, title)
+            except Exception:
+                pass
         return {"status": "published" if ok else "failed", "http": r.status_code,
                 "channel": "@pieltsapp", "response": r.text[:300]}
     except Exception as e:

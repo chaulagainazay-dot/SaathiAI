@@ -22,14 +22,27 @@
   /* ---------- Top panel: what's connected to this chat ---------- */
   #topPanel { flex-shrink: 0; padding: calc(8px + env(safe-area-inset-top)) 14px 8px;
               display: flex; flex-direction: column; gap: 7px; border-bottom: 1px solid #1c1c28; }
-  #progressCard { background: linear-gradient(135deg, #1a1430, #11111b);
-                  border: 1px solid #2e2350; border-radius: 14px; padding: 10px 13px; margin: 0 32px; }
-  .pc-top { display: flex; justify-content: space-between; align-items: baseline; }
-  #pcDay { font-size: 15px; font-weight: 700; color: #ddd6fe; }
-  #pcStat { font-size: 11px; color: #8a8aa0; }
-  .pc-bar { height: 7px; border-radius: 4px; background: #241a3d; margin-top: 8px; overflow: hidden; }
-  #pcFill { height: 100%; width: 0; border-radius: 4px;
-            background: linear-gradient(90deg, #7c3aed, #10b981); transition: width .5s ease; }
+  #pieltsDash { background: linear-gradient(135deg, #1a1430, #11111b);
+                border: 1px solid #2e2350; border-radius: 14px; padding: 11px 13px; margin: 0 32px; }
+  .pd-head { display: flex; justify-content: space-between; align-items: baseline; }
+  .pd-title { font-size: 15px; font-weight: 800; color: #ddd6fe; letter-spacing: .3px; }
+  .pd-day { font-size: 11px; font-weight: 700; color: #10b981; }
+  .pd-stats { display: flex; gap: 8px; margin-top: 10px; }
+  .pd-tile { flex: 1; background: #0d0d16; border: 1px solid #23233a; border-radius: 10px; padding: 8px 9px; }
+  .pd-tile .v { font-size: 16px; font-weight: 800; color: #fff; }
+  .pd-tile .k { font-size: 9.5px; text-transform: uppercase; letter-spacing: .4px; color: #6a6a85; }
+  .pd-tile .bar { height: 4px; border-radius: 3px; background: #241a3d; margin-top: 5px; overflow: hidden; }
+  .pd-tile .fill { height: 100%; width: 0; border-radius: 3px; background: linear-gradient(90deg,#7c3aed,#10b981); transition: width .5s; }
+  .pd-goal { font-size: 11px; color: #c9b8f0; margin-top: 10px; line-height: 1.5;
+             background: #160f29; border: 1px solid #2e2350; border-radius: 9px; padding: 7px 10px; }
+  .pd-goal b { color: #ffd479; }
+  .pd-uploads { margin-top: 9px; }
+  .pd-uploads summary { font-size: 11px; color: #8a8aa0; cursor: pointer; list-style: none; }
+  .pd-uploads summary::-webkit-details-marker { display: none; }
+  #pdUpList { margin-top: 6px; display: flex; flex-direction: column; gap: 3px; max-height: 130px; overflow-y: auto; }
+  #pdUpList a { font-size: 11.5px; color: #93c5fd; text-decoration: none; white-space: nowrap;
+                overflow: hidden; text-overflow: ellipsis; }
+  #pdUpList a:hover { text-decoration: underline; }
   #connSummary { background: #11111b; border: 1px solid #23233a; border-radius: 14px;
                  padding: 9px 12px; cursor: pointer; margin: 0 32px; }
   #connSummary:hover { border-color: #3a3a55; }
@@ -170,9 +183,11 @@
 </div>
 
 <div id="topPanel">
-  <div id="progressCard">
-    <div class="pc-top"><span id="pcDay">Day 1</span><span id="pcStat"></span></div>
-    <div class="pc-bar"><div id="pcFill"></div></div>
+  <div id="pieltsDash">
+    <div class="pd-head"><span class="pd-title">🏔️ PIELTS</span><span class="pd-day" id="pdDay">Day 1</span></div>
+    <div class="pd-stats" id="pdStats"></div>
+    <div class="pd-goal" id="pdGoal"></div>
+    <details class="pd-uploads"><summary id="pdUpSum">Uploads</summary><div id="pdUpList"></div></details>
   </div>
   <div id="connSummary" title="Tap to connect / manage your socials">
     <span class="cs-label">🔗 Connected to this chat</span>
@@ -570,20 +585,40 @@ if (!convos.length || !curConvo()) {
   if (!convos.length) { convos.push({ id: newId(), title: 'New chat', msgs: [], ts: Date.now() }); }
   curId = convos[0].id; localStorage.setItem(CUR_KEY, curId); saveConvos();
 }
-// content journey progress bar (Day N + videos planned toward a 30-day goal)
-async function renderProgress() {
+// PIELTS dashboard — uploads, growth targets, money goal
+const fmt = n => n >= 1000 ? (n/1000).toFixed(n >= 10000 ? 0 : 1) + 'k' : String(n);
+function tile(k, val, cur, goal) {
+  let bar = '';
+  if (goal) { const pct = Math.min((cur || 0) / goal * 100, 100);
+    bar = `<div class="bar"><div class="fill" style="width:${pct}%"></div></div>`; }
+  return `<div class="pd-tile"><div class="v">${val}</div><div class="k">${k}</div>${bar}</div>`;
+}
+async function renderDashboard() {
   try {
-    const p = await (await fetch(API + '/api/v1/progress')).json();
-    $('pcDay').textContent = '🏔️ Day ' + p.day;
-    $('pcStat').textContent = p.plans + ' videos planned · ' + p.videos + ' made · goal ' + p.goal + ' days';
-    $('pcFill').style.width = p.pct + '%';
+    const d = await (await fetch(API + '/api/v1/pielts/dashboard')).json();
+    $('pdDay').textContent = 'Day ' + d.day;
+    const t = d.targets, s = d.stats || {};
+    const subs = s.subscribers, views = s.views;
+    $('pdStats').innerHTML =
+      tile('Subscribers', subs != null ? fmt(subs) + '/' + fmt(t.subscribers_goal) : '—',
+           subs, t.subscribers_goal)
+      + tile('Views', views != null ? fmt(views) : '—', views, t.views_goal)
+      + tile('Uploads', d.upload_count, 0, 0);
+    const costs = (t.costs || []).map(c => c.name).join(', ');
+    $('pdGoal').innerHTML = `💰 Goal: <b>$${t.monthly_revenue_goal_usd}/mo</b> to cover ${costs}. `
+      + `Channel monetizes at <b>${fmt(t.subscribers_goal)} subscribers</b> — post daily to get there.`
+      + (d.has_live_stats ? '' : ' <span style="color:#6a6a85">(add a free YouTube API key for live sub/view counts)</span>');
+    const ups = d.uploads || [];
+    $('pdUpSum').textContent = `📺 ${d.upload_count} uploads ▾`;
+    $('pdUpList').innerHTML = ups.map(u =>
+      u.url ? `<a href="${u.url}" target="_blank">▶ ${u.title}</a>` : `<span>▶ ${u.title}</span>`).join('');
   } catch (e) {}
 }
 
 renderConvoList();
 renderChat();
 renderConnSummary();
-renderProgress();
+renderDashboard();
 
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
 </script>

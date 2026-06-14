@@ -96,6 +96,25 @@ def get_progress():
             "pct": round(min(day / GOAL, 1.0) * 100)}
 
 
+@app.get("/api/v1/pielts/dashboard")
+def pielts_dashboard():
+    """PIELTS project dashboard — uploads, growth targets, money goal."""
+    from . import pielts
+    return pielts.dashboard()
+
+
+class TargetIn(BaseModel):
+    subscribers_goal: int | None = None
+    views_goal: int | None = None
+    monthly_revenue_goal_usd: int | None = None
+
+
+@app.post("/api/v1/pielts/targets")
+def pielts_set_targets(body: TargetIn):
+    from . import pielts
+    return {"saved": pielts.set_targets(**body.dict())}
+
+
 @app.get("/api/v1/connections")
 def get_connections():
     from . import connections
