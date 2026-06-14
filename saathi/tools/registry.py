@@ -67,6 +67,19 @@ TOOL_SCHEMAS = [
         },
     },
     {
+        "name": "make_daily_kit",
+        "description": "Generate ONE full day of content at once: a Mr Yeti video script, a "
+                       "Facebook post, an Instagram caption + hashtags, and a publish-ready blog "
+                       "post. Use when Ajay says 'make today\'s content/kit'.",
+        "input_schema": {"type": "object", "properties": {"topic": {"type": "string"}}},
+    },
+    {
+        "name": "make_blog_post",
+        "description": "Auto-write a daily IELTS blog post (title, excerpt, markdown content) for "
+                       "pielts.web.app in Mr Yeti's voice.",
+        "input_schema": {"type": "object", "properties": {"topic": {"type": "string"}}},
+    },
+    {
         "name": "queue_video",
         "description": "PRIVILEGED. Add a finished video to the daily 8pm auto-post queue. Baadar "
                        "posts one queued video per day automatically to YouTube + FB/IG. Pass the "
@@ -668,6 +681,8 @@ _HANDLERS = {
     "deploy_ielts_site": content_studio.deploy_ielts_site,
     "publish_to_youtube": content_studio.publish_to_youtube,
     "queue_video": content_studio.queue_video,
+    "make_daily_kit": content_studio.make_daily_kit,
+    "make_blog_post": content_studio.make_blog_post,
     "trigger_n8n_workflow": n8n_tools.trigger,
     "send_telegram": n8n_tools.send_telegram,
     "mac_open_app": mac_control.open_app,

@@ -74,34 +74,37 @@ def canteen_summary():
 
 
 def daily_content():
-    """AUTOPILOT (approve-to-post mode): every morning Baadar drafts the day's Mr Yeti video
-    pack — Google Flow scene prompts + caption + hashtags — and Telegrams it to Ajay so he can
-    generate the clips and approve posting. Baadar NEVER posts publicly or spends money on its
-    own; FB/LinkedIn publishing happens only after Ajay replies 'post it'."""
+    """Every morning Baadar produces ONE full day of content — a video script, a Facebook
+    post, an Instagram caption + hashtags, AND a publish-ready blog post — saves it all and
+    Telegrams Ajay the ready-to-publish kit (video → YouTube auto at 8pm; FB+IG → schedule in
+    Meta Business Suite; blog → publish on pielts.web.app)."""
     try:
         from .tools import content_studio, n8n_tools
-        pack = content_studio.make_flow_prompts()
-        scenes = pack.get("scenes", [])
-        if not scenes:
-            _notify("📲 Baadar", "Couldn't draft today's video — say 'make flow prompts'.")
+        kit = content_studio.make_daily_kit()
+        if not kit.get("video_script") and not kit.get("blog_title"):
+            _notify("📲 Baadar", "Couldn't draft today's content — say 'make today's kit'.")
             return
-        lines = ["🏔️ Baadar — Today's Mr Yeti video", "",
-                 f"📌 Topic: {pack.get('topic', '')}",
-                 f"▶️ YouTube title: {pack.get('youtube_title', '')}", "",
-                 "🎬 Google Flow scene prompts (paste each with the Mr Yeti character):"]
-        for i, s in enumerate(scenes, 1):
-            lines.append(f"{i}. {s}")
-        lines += ["", f"📝 Caption: {pack.get('caption', '')}",
-                  f"#️⃣ {pack.get('hashtags', '')}", "",
-                  "→ Generate the 7 clips in Flow, stitch + caption in CapCut, post to "
-                  "@pieltsapp/YouTube. Reply 'post it' and I'll publish the caption to "
-                  "Facebook & LinkedIn for you."]
+        lines = [
+            f"🏔️ Baadar — Today's content kit ({kit.get('date','')})",
+            f"📌 Topic: {kit.get('topic','')}", "",
+            "🎬 VIDEO (Mr Yeti short):",
+            kit.get("video_script", ""),
+            f"▶️ YouTube title: {kit.get('youtube_title','')}", "",
+            "📘 FACEBOOK post:", kit.get("facebook_post", ""), "",
+            "📸 INSTAGRAM caption:", kit.get("instagram_caption", ""),
+            f"#️⃣ {kit.get('hashtags','')}", "",
+            f"📝 BLOG: {kit.get('blog_title','')}",
+            f"   {kit.get('blog_excerpt','')}",
+            f"   (full post saved → kit-{kit.get('date','')}.json — publish on pielts.web.app)", "",
+            "→ Video posts to YouTube automatically at 8pm (keep the queue stocked). "
+            "Schedule the FB+IG post in Meta Business Suite. Publish the blog from the app.",
+        ]
         try:
             n8n_tools.send_telegram("\n".join(lines)[:4000])
         except Exception:
             pass
-        _notify("📲 Baadar — Today's Mr Yeti video ready",
-                f"Topic: {pack.get('topic', '')}. Flow prompts sent to your Telegram.")
+        _notify("📲 Baadar — Today's content kit ready",
+                f"Video + FB + IG + blog on '{kit.get('topic','')}' sent to your Telegram.")
     except Exception as e:
         _notify("📲 Baadar", f"Daily content error: {str(e)[:120]}")
 

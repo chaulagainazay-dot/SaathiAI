@@ -579,3 +579,63 @@ def queue_video(video_path: str, title: str, description: str = "",
         return {"status": "error", "error": f"video not found: {p}"}
     n = autopost.add(p, title, description, tags, caption)
     return {"status": "queued", "pending_in_queue": n, "title": title}
+
+
+def make_blog_post(topic: str = "") -> dict:
+    """Auto-write a daily IELTS blog post for pielts.web.app (Mr Yeti voice).
+    Returns {title, slug, excerpt, content}; saves to data/content/blog-<date>.json."""
+    from ..agent import SaathiAgent
+    agent = SaathiAgent()
+    ask = topic or "pick one fresh, specific, high-value IELTS or study-abroad topic for today"
+    system = (
+        "You are Baadar writing a blog post for pielts.web.app in Mr Yeti's warm teacher voice. "
+        + NICHE + "\n\n"
+        "Write a genuinely useful 400-600 word IELTS blog post: clear structure, short paragraphs, "
+        "concrete examples, an actionable tip list, and a natural closing CTA to practise free on "
+        "pielts.web.app. Target real IELTS search queries in the title.\n\n"
+        "Return EXACTLY in this format (NO JSON, no extra commentary):\n"
+        "TITLE: <SEO-friendly title>\n"
+        "EXCERPT: <one-sentence summary>\n"
+        "---\n"
+        "<full post body in markdown>")
+    raw = agent.complete(system, f"Topic: {ask}", max_tokens=2800)
+    title = excerpt = content = ""
+    if "---" in raw:
+        head, content = raw.split("---", 1)
+        content = content.strip()
+        for line in head.splitlines():
+            if line.upper().startswith("TITLE:"):
+                title = line.split(":", 1)[1].strip()
+            elif line.upper().startswith("EXCERPT:"):
+                excerpt = line.split(":", 1)[1].strip()
+    if not title or not content:
+        return {"error": "could not generate blog post", "raw": raw[:200]}
+    post = {"title": title, "excerpt": excerpt, "content": content}
+    post["slug"] = re.sub(r"[^a-z0-9]+", "-", post["title"].lower()).strip("-")[:80]
+    post["date"] = dt.date.today().isoformat()
+    CONTENT_DIR.mkdir(parents=True, exist_ok=True)
+    (CONTENT_DIR / f"blog-{post['date']}.json").write_text(
+        json.dumps(post, ensure_ascii=False, indent=2))
+    return post
+
+
+def make_daily_kit(topic: str = "") -> dict:
+    """Generate ONE full day of content: video script + FB post + IG caption + hashtags
+    + a publish-ready blog post. Saves everything; returns the combined kit."""
+    pack = generate_content_pack(topic)
+    blog = make_blog_post(pack.get("topic", topic))
+    kit = {
+        "date": dt.date.today().isoformat(),
+        "topic": pack.get("topic", ""),
+        "video_script": pack.get("tiktok_script", ""),
+        "youtube_title": pack.get("youtube_title", ""),
+        "facebook_post": pack.get("facebook", ""),
+        "instagram_caption": pack.get("instagram", ""),
+        "hashtags": pack.get("hashtags", ""),
+        "blog_title": blog.get("title", ""),
+        "blog_slug": blog.get("slug", ""),
+        "blog_excerpt": blog.get("excerpt", ""),
+    }
+    (CONTENT_DIR / f"kit-{kit['date']}.json").write_text(
+        json.dumps({**kit, "blog_content": blog.get("content", "")}, ensure_ascii=False, indent=2))
+    return kit
