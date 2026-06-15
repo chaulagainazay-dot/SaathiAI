@@ -144,10 +144,31 @@ def daily_autopost():
     autopost.run_daily_autopost()
 
 
+def daily_outreach():
+    """9am: find fresh Reddit/Quora IELTS questions + draft ready-to-paste answers, Telegram them.
+    Ajay posts manually (Baadar never auto-posts to communities — that gets banned)."""
+    try:
+        from .tools import content_studio, n8n_tools
+        kit = content_studio.community_outreach_kit()
+        entries = kit.get("entries", [])
+        if not entries:
+            return
+        lines = ["💬 Baadar — Today's community outreach (paste these yourself):", ""]
+        for i, e in enumerate(entries, 1):
+            lines += [f"━━ {i}. {e.get('question','')}",
+                      f"🔗 {e.get('link','')}",
+                      "✍️ Ready answer:", e.get("answer", ""), ""]
+        lines.append("Tip: tweak a few words so it sounds like you, then post. Engage first, link only where it fits.")
+        n8n_tools.send_telegram("\n".join(lines)[:4000])
+    except Exception as e:
+        _notify("💬 Baadar", f"Outreach error: {str(e)[:120]}")
+
+
 # ---------- schedule table: (HH, MM, weekday_or_None, fn) ----------
 JOBS = [
     (7, 0, None, morning_briefing),    # every day 7:00am
     (8, 0, None, daily_content),       # every day 8:00am — draft social content
+    (9, 0, None, daily_outreach),      # every day 9:00am — Reddit/Quora outreach kit
     (20, 0, None, daily_autopost),     # every day 8:00pm — auto-post next queued video
     (21, 0, None, canteen_summary),    # every day 9:00pm
     (23, 30, 6, memory_backup),        # Sunday 11:30pm (weekday 6 = Sunday)

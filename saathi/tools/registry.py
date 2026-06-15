@@ -67,6 +67,13 @@ TOOL_SCHEMAS = [
         },
     },
     {
+        "name": "find_community_questions",
+        "description": "Find recent Reddit/Quora IELTS questions + draft ready-to-paste helpful "
+                       "answers (with a natural pielts.web.app link) for Ajay to post himself. "
+                       "Use when Ajay says 'find questions to answer' or 'community outreach'.",
+        "input_schema": {"type":"object","properties":{"count":{"type":"integer"}}},
+    },
+    {
         "name": "make_daily_kit",
         "description": "Generate ONE full day of content at once: a Mr Yeti video script, a "
                        "Facebook post, an Instagram caption + hashtags, and a publish-ready blog "
@@ -689,6 +696,7 @@ _HANDLERS = {
     "queue_video": content_studio.queue_video,
     "make_daily_kit": content_studio.make_daily_kit,
     "make_blog_post": content_studio.make_blog_post,
+    "find_community_questions": content_studio.community_outreach_kit,
     "publish_blog": content_studio.publish_blog,
     "trigger_n8n_workflow": n8n_tools.trigger,
     "send_telegram": n8n_tools.send_telegram,

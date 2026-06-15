@@ -673,3 +673,46 @@ def publish_blog(title: str, content: str, excerpt: str = "", slug: str = "",
         return res
     except Exception as e:
         return {"status": "error", "error": str(e)[:200]}
+
+
+def community_outreach_kit(count: int = 3) -> dict:
+    """Find RECENT Reddit/Quora IELTS questions + draft ready-to-paste helpful answers
+    (with a natural pielts.web.app link). Ajay posts them himself — Baadar NEVER auto-posts
+    to communities (that gets banned + flags the domain as spam)."""
+    from . import research
+    prompt = (
+        f"Use Google Search to find {count} RECENT real questions from Reddit (r/IELTS, "
+        "r/EnglishLearning, r/Nepal) or Quora where someone is asking for IELTS help that a FREE "
+        "IELTS practice app could genuinely answer. The app: pielts.web.app — free Listening/"
+        "Reading/Writing/Speaking practice, instant automatic band scores, full mock tests, an AI "
+        "speaking examiner, live practice. Audience includes Nepali students.\n\n"
+        "For EACH question output EXACTLY this, separated by a line containing only ===:\n"
+        "Q: <question paraphrased>\n"
+        "LINK: <direct post URL if found, else the subreddit/Quora topic to search>\n"
+        "ANSWER: <a GENUINE, helpful 120-150 word answer in a friendly real-student voice that "
+        "actually solves their problem first, then mentions pielts.web.app naturally as a free "
+        "tool (NOT salesy, no hard sell). Vary the wording for each.>\n"
+        "Return only the entries.")
+    try:
+        raw = research._grounded(prompt, max_tokens=1800)
+    except Exception as e:
+        return {"error": str(e)[:200], "note": "search quota may be busy; try again shortly"}
+    entries = []
+    for block in raw.split("==="):
+        b = block.strip()
+        if not b:
+            continue
+        mq = re.search(r"Q:\s*(.+)", b)
+        ml = re.search(r"LINK:\s*(\S+)", b)
+        ma = re.search(r"ANSWER:\s*([\s\S]+)", b)
+        q = mq.group(1).strip() if mq else ""
+        ans = ma.group(1).strip() if ma else ""
+        if q and ans:
+            entries.append({"question": q,
+                            "link": ml.group(1).strip() if ml else "",
+                            "answer": ans})
+    kit = {"date": dt.date.today().isoformat(), "entries": entries}
+    CONTENT_DIR.mkdir(parents=True, exist_ok=True)
+    (CONTENT_DIR / f"outreach-{kit['date']}.json").write_text(
+        json.dumps(kit, ensure_ascii=False, indent=2))
+    return kit
