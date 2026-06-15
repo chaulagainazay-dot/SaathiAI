@@ -118,8 +118,18 @@ def daily_content():
             n8n_tools.send_telegram("\n".join(lines)[:4000])
         except Exception:
             pass
+        # in-app panel: a notification + the to-do items with one-click links
+        from . import tasks
+        tasks.add(f"Today's content kit ready: {kit.get('topic','')}", kind="note",
+                  body=f"Blog: {kit.get('blog_title','')}\nFB: {kit.get('facebook_post','')[:200]}")
+        tasks.add("Schedule today's FB + IG post in Meta Business Suite", kind="task",
+                  link="https://business.facebook.com/latest/posts/composer",
+                  body=f"FB: {kit.get('facebook_post','')}\n\nIG: {kit.get('instagram_caption','')}\n{kit.get('hashtags','')}")
+        if blog_status == "published":
+            tasks.add(f"Blog published: {kit.get('blog_title','')}", kind="note",
+                      link=f"https://pielts.web.app/blog/{kit.get('blog_slug','')}")
         _notify("📲 Baadar — Today's content kit ready",
-                f"Video + FB + IG + blog on '{kit.get('topic','')}' sent to your Telegram.")
+                f"Video + FB + IG + blog on '{kit.get('topic','')}' — see Baadar tasks.")
     except Exception as e:
         _notify("📲 Baadar", f"Daily content error: {str(e)[:120]}")
 
@@ -153,13 +163,20 @@ def daily_outreach():
         entries = kit.get("entries", [])
         if not entries:
             return
+        from . import tasks
         lines = ["💬 Baadar — Today's community outreach (paste these yourself):", ""]
         for i, e in enumerate(entries, 1):
             lines += [f"━━ {i}. {e.get('question','')}",
                       f"🔗 {e.get('link','')}",
                       "✍️ Ready answer:", e.get("answer", ""), ""]
+            # add to the in-app task panel (clickable link + the ready answer)
+            tasks.add(f"Answer on Reddit/Quora: {e.get('question','')[:70]}",
+                      kind="task", link=e.get("link", ""), body=e.get("answer", ""))
         lines.append("Tip: tweak a few words so it sounds like you, then post. Engage first, link only where it fits.")
-        n8n_tools.send_telegram("\n".join(lines)[:4000])
+        try:
+            n8n_tools.send_telegram("\n".join(lines)[:4000])
+        except Exception:
+            pass
     except Exception as e:
         _notify("💬 Baadar", f"Outreach error: {str(e)[:120]}")
 

@@ -96,6 +96,26 @@ def get_progress():
             "pct": round(min(day / GOAL, 1.0) * 100)}
 
 
+@app.get("/api/v1/tasks")
+def get_tasks(include_done: bool = False):
+    """In-app notifications + to-do list (with links) so Ajay never needs Telegram/browser."""
+    from . import tasks
+    return {"items": tasks.list_items(include_done)}
+
+
+@app.post("/api/v1/tasks/{tid}/done")
+def task_done(tid: int):
+    from . import tasks
+    return {"ok": tasks.mark_done(tid)}
+
+
+@app.post("/api/v1/tasks/clear-done")
+def task_clear_done():
+    from . import tasks
+    tasks.clear_done()
+    return {"ok": True}
+
+
 @app.get("/api/v1/pielts/dashboard")
 def pielts_dashboard():
     """PIELTS project dashboard — uploads, growth targets, money goal."""

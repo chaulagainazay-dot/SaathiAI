@@ -87,6 +87,23 @@ def run_daily_autopost() -> dict:
     left = len(pending())
     _notify("✅ Baadar posted today's video",
             f"{nxt['title']}\nPlatforms: {nxt['result']}\n{left} videos left in queue.")
+    try:
+        from . import tasks
+        yt = (results.get("youtube") or {})
+        vid = ""
+        if isinstance(yt, dict):
+            import json as _j
+            try:
+                vid = _j.loads(yt.get("response", "{}")).get("uploadId", "")
+            except Exception:
+                pass
+        tasks.add(f"Posted to YouTube: {nxt['title']}", kind="note",
+                  link=f"https://youtu.be/{vid}" if vid else "")
+        if left <= 2:
+            tasks.add(f"Video queue low ({left} left) — add more videos to keep posting",
+                      kind="task")
+    except Exception:
+        pass
     if left <= 2:
         _notify("⚠️ Baadar — queue running low", f"Only {left} videos left. Add more so I keep posting daily.")
     return {"status": "posted", "title": nxt["title"], "platforms": nxt["result"], "left": left}
