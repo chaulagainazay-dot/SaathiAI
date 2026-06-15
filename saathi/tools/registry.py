@@ -2,7 +2,7 @@
 from . import (canteen, content, files, mac_control, n8n_tools, notes, english,
                system, apps, research, calendar as cal, email_tool, content_studio,
                projects)
-from .. import nepali, selfimprove
+from .. import nepali, selfimprove, health, analytics, docs
 
 # Tools that require speaker verification (only Ajay's voice)
 PRIVILEGED = {
@@ -65,6 +65,24 @@ TOOL_SCHEMAS = [
             },
             "required": ["platform", "content"],
         },
+    },
+    {
+        "name": "system_health",
+        "description": "Run Baadar's self-health check across all subsystems (server, n8n, Telegram, "
+                       "video queue, YouTube, keys, disk) and report any failures/warnings.",
+        "input_schema": {"type": "object", "properties": {}},
+    },
+    {
+        "name": "performance_report",
+        "description": "Pull YouTube performance — channel stats + top/worst videos by views — so "
+                       "Ajay sees what content is working. Use for 'how are my videos doing'.",
+        "input_schema": {"type": "object", "properties": {}},
+    },
+    {
+        "name": "ask_document",
+        "description": "Read an uploaded file (PDF/text/docx that Ajay dropped into Baadar) and "
+                       "answer a question about it. Optionally name the file.",
+        "input_schema": {"type":"object","properties":{"question":{"type":"string"},"filename":{"type":"string"}},"required":["question"]},
     },
     {
         "name": "find_community_questions",
@@ -697,6 +715,9 @@ _HANDLERS = {
     "make_daily_kit": content_studio.make_daily_kit,
     "make_blog_post": content_studio.make_blog_post,
     "find_community_questions": content_studio.community_outreach_kit,
+    "system_health": health.health_check,
+    "performance_report": analytics.performance_report,
+    "ask_document": docs.ask_document,
     "publish_blog": content_studio.publish_blog,
     "trigger_n8n_workflow": n8n_tools.trigger,
     "send_telegram": n8n_tools.send_telegram,

@@ -154,6 +154,55 @@ def daily_autopost():
     autopost.run_daily_autopost()
 
 
+def daily_health():
+    """7:30am: self-health watchdog — catch silent failures, alert in-app + Telegram."""
+    try:
+        from . import health, tasks
+        h = health.health_check()
+        if h["overall"] == "ok":
+            return  # all good, stay quiet
+        bad = h["fails"] + h["warns"]
+        lines = ["🩺 Baadar health check — needs attention:"]
+        for c in bad:
+            icon = "🔴" if c["status"] == "fail" else "🟡"
+            lines.append(f"{icon} {c['name']}: {c['status']}" + (f" ({c['detail']})" if c["detail"] else ""))
+        msg = "\n".join(lines)
+        tasks.add("⚠️ Baadar health issue — check systems", kind="task", body=msg)
+        try:
+            from .tools import n8n_tools
+            n8n_tools.send_telegram(msg)
+        except Exception:
+            pass
+        _notify("🩺 Baadar health", f"{len(h['fails'])} failed, {len(h['warns'])} warnings")
+    except Exception as e:
+        _notify("🩺 Baadar health", f"check error: {str(e)[:100]}")
+
+
+def weekly_performance():
+    """Sunday 10am: what's working on YouTube → feed insight back."""
+    try:
+        from . import analytics, tasks
+        from .tools import n8n_tools
+        rep = analytics.performance_report()
+        if "error" in rep:
+            return
+        top = rep.get("top", [])
+        ch = rep.get("channel", {})
+        lines = [f"📊 Baadar weekly performance — {ch.get('subscribers','?')} subs, {ch.get('views','?')} views",
+                 "Top videos:"]
+        for v in top[:5]:
+            lines.append(f"  {v['views']} views · {v['title'][:50]}")
+        lines.append("→ Make more like the top performers; drop formats that flop.")
+        msg = "\n".join(lines)
+        tasks.add("📊 Weekly performance report", kind="note", body=msg)
+        try:
+            n8n_tools.send_telegram(msg)
+        except Exception:
+            pass
+    except Exception:
+        pass
+
+
 def daily_outreach():
     """9am: find fresh Reddit/Quora IELTS questions + draft ready-to-paste answers, Telegram them.
     Ajay posts manually (Baadar never auto-posts to communities — that gets banned)."""
@@ -184,8 +233,10 @@ def daily_outreach():
 # ---------- schedule table: (HH, MM, weekday_or_None, fn) ----------
 JOBS = [
     (7, 0, None, morning_briefing),    # every day 7:00am
+    (7, 30, None, daily_health),       # every day 7:30am — self-health watchdog
     (8, 0, None, daily_content),       # every day 8:00am — draft social content
     (9, 0, None, daily_outreach),      # every day 9:00am — Reddit/Quora outreach kit
+    (10, 0, 6, weekly_performance),    # Sunday 10:00am — performance report
     (20, 0, None, daily_autopost),     # every day 8:00pm — auto-post next queued video
     (21, 0, None, canteen_summary),    # every day 9:00pm
     (23, 30, 6, memory_backup),        # Sunday 11:30pm (weekday 6 = Sunday)
@@ -211,6 +262,12 @@ def _run_loop():
 def start():
     """Launch the scheduler in a background thread."""
     threading.Thread(target=_run_loop, daemon=True).start()
+    # two-way Telegram: let Ajay command Baadar from his phone (anywhere)
+    try:
+        from . import telegram_bot
+        telegram_bot.start()
+    except Exception:
+        pass
 
 
 if __name__ == "__main__":
