@@ -16,8 +16,8 @@
   --border:   #1e1e38;
   --border2:  #2a2a48;
   --text:     #ece9ff;
-  --text2:    #8888b0;
-  --text3:    #44445e;
+  --text2:    #9898c0;
+  --text3:    #50507a;
   --purple:   #7c3aed;
   --purple2:  #6d28d9;
   --lilac:    #a78bfa;
@@ -28,50 +28,52 @@
   --blue:     #3b82f6;
   --radius:   14px;
   --radius-sm:9px;
+  --fs-base:  16px;
+  --fs-sm:    14px;
+  --fs-xs:    12px;
+  --fs-xxs:   11px;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 html, body { height: 100%; overflow: hidden; }
 body { font-family: -apple-system, 'SF Pro Text', 'Segoe UI', sans-serif;
+       font-size: var(--fs-base);
        background: var(--bg); color: var(--text); display: flex; flex-direction: column; }
 
-/* ── SCROLLBAR ── */
-::-webkit-scrollbar { width: 3px; height: 3px; }
-::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
 
-/* ── LOGIN SCREEN ── */
+/* ── LOGIN ── */
 #loginScreen {
   position: fixed; inset: 0; z-index: 999;
   background: var(--bg);
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  padding: 32px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px;
 }
-.login-box { width: 100%; max-width: 320px; display: flex; flex-direction: column; align-items: center; gap: 28px; }
+.login-box { width: 100%; max-width: 340px; display: flex; flex-direction: column; align-items: center; gap: 28px; }
 .login-logo {
-  width: 80px; height: 80px; border-radius: 24px;
+  width: 88px; height: 88px; border-radius: 26px;
   background: linear-gradient(135deg, #7c3aed, #10b981);
   display: flex; align-items: center; justify-content: center;
-  font-size: 44px; box-shadow: 0 12px 40px rgba(124,58,237,.35);
+  font-size: 48px; box-shadow: 0 12px 40px rgba(124,58,237,.35);
 }
-.login-title { text-align: center; }
-.login-title h1 { font-size: 28px; font-weight: 800; color: #fff; letter-spacing: -.5px; }
-.login-title p  { font-size: 13px; color: var(--text3); margin-top: 4px; }
+.login-title h1 { font-size: 30px; font-weight: 800; color: #fff; letter-spacing: -.5px; text-align:center; }
+.login-title p  { font-size: var(--fs-sm); color: var(--text3); margin-top: 4px; text-align:center; }
 .login-form { width: 100%; display: flex; flex-direction: column; gap: 10px; }
 #loginPass {
   width: 100%; background: var(--surface); border: 1.5px solid var(--border);
-  color: var(--text); border-radius: var(--radius); padding: 15px 18px;
-  font-size: 18px; outline: none; font-family: inherit; text-align: center;
-  letter-spacing: 3px; transition: border-color .2s;
+  color: var(--text); border-radius: var(--radius); padding: 16px 18px;
+  font-size: 20px; outline: none; font-family: inherit; text-align: center;
+  letter-spacing: 4px; transition: border-color .2s;
 }
 #loginPass:focus { border-color: var(--purple); }
-#loginErr { color: var(--red); font-size: 12px; text-align: center; min-height: 16px; }
+#loginErr { color: var(--red); font-size: var(--fs-sm); text-align: center; min-height: 18px; }
 .login-btn {
   background: linear-gradient(135deg, #7c3aed, #6d28d9);
-  color: #fff; border: none; border-radius: var(--radius); padding: 15px;
-  font-size: 15px; font-weight: 700; cursor: pointer; width: 100%;
-  box-shadow: 0 4px 20px rgba(124,58,237,.4); transition: transform .1s, box-shadow .1s;
+  color: #fff; border: none; border-radius: var(--radius); padding: 16px;
+  font-size: var(--fs-base); font-weight: 700; cursor: pointer; width: 100%;
+  box-shadow: 0 4px 20px rgba(124,58,237,.4); transition: transform .1s;
 }
-.login-btn:active { transform: scale(.97); box-shadow: 0 2px 10px rgba(124,58,237,.3); }
-.login-hint { font-size: 11px; color: var(--text3); }
+.login-btn:active { transform: scale(.97); }
+.login-hint { font-size: var(--fs-xs); color: var(--text3); }
 
 /* ── HEADER ── */
 #hdr {
@@ -82,28 +84,26 @@ body { font-family: -apple-system, 'SF Pro Text', 'Segoe UI', sans-serif;
 }
 .hdr-brand { display: flex; align-items: center; gap: 10px; }
 .hdr-logo {
-  width: 34px; height: 34px; border-radius: 10px;
+  width: 36px; height: 36px; border-radius: 10px;
   background: linear-gradient(135deg, #7c3aed, #10b981);
-  display: flex; align-items: center; justify-content: center; font-size: 20px;
+  display: flex; align-items: center; justify-content: center; font-size: 21px;
 }
-.hdr-name { font-size: 17px; font-weight: 800; color: #fff; }
-.hdr-sub  { font-size: 10px; color: var(--text3); }
+.hdr-name { font-size: 18px; font-weight: 800; color: #fff; }
+.hdr-sub  { font-size: var(--fs-xxs); color: var(--text3); }
 .hdr-right { display: flex; align-items: center; gap: 6px; }
-#statusDot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); }
+#statusDot { width: 9px; height: 9px; border-radius: 50%; background: var(--green); }
 #statusDot.offline { background: var(--yellow); }
 .icon-btn {
-  background: none; border: none; cursor: pointer; font-size: 18px;
+  background: none; border: none; cursor: pointer; font-size: 20px;
   padding: 6px; border-radius: 8px; color: var(--text3);
   transition: background .15s, color .15s;
 }
 .icon-btn:hover { background: var(--surface); color: var(--text2); }
-
-/* ── TASK BADGE ── */
 .bell-wrap { position: relative; }
 #taskBadge {
   position: absolute; top: 1px; right: 1px;
   background: var(--red); color: #fff; font-size: 9px; font-weight: 800;
-  min-width: 15px; height: 15px; border-radius: 8px;
+  min-width: 16px; height: 16px; border-radius: 8px;
   display: none; align-items: center; justify-content: center;
 }
 #taskBadge.show { display: flex; }
@@ -114,53 +114,53 @@ body { font-family: -apple-system, 'SF Pro Text', 'Segoe UI', sans-serif;
   background: var(--bg); border-bottom: 1px solid var(--border);
 }
 .tab {
-  flex: 1; padding: 9px 4px 7px;
+  flex: 1; padding: 9px 2px 7px;
   display: flex; flex-direction: column; align-items: center; gap: 3px;
-  cursor: pointer; font-size: 9px; color: var(--text3);
-  text-transform: uppercase; letter-spacing: .4px; font-weight: 700;
+  cursor: pointer; font-size: var(--fs-xxs); color: var(--text3);
+  text-transform: uppercase; letter-spacing: .3px; font-weight: 700;
   border-bottom: 2px solid transparent; transition: color .15s, border-color .15s;
   user-select: none;
 }
-.tab .ti { font-size: 19px; line-height: 1; }
+.tab .ti { font-size: 20px; line-height: 1; }
 .tab.active { color: var(--lilac); border-bottom-color: var(--purple); }
 
 /* ── PANELS ── */
 #panels { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
 .panel { flex: 1; display: none; flex-direction: column; overflow: hidden; }
 .panel.active { display: flex; }
-.scroll-pane { flex: 1; overflow-y: auto; padding: 14px 15px 20px; display: flex; flex-direction: column; gap: 12px; }
+.scroll-pane { flex: 1; overflow-y: auto; padding: 14px 15px 24px; display: flex; flex-direction: column; gap: 13px; }
 
 /* ── CARDS ── */
 .card {
   background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: 14px 15px;
+  border-radius: var(--radius); padding: 15px 16px;
 }
-.card-hd { font-size: 10px; font-weight: 700; text-transform: uppercase;
-           letter-spacing: .5px; color: var(--text3); margin-bottom: 11px;
+.card-hd { font-size: var(--fs-xs); font-weight: 700; text-transform: uppercase;
+           letter-spacing: .5px; color: var(--text3); margin-bottom: 12px;
            display: flex; align-items: center; gap: 7px; }
-.card-hd .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--purple); }
+.card-hd .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--purple); }
 
 /* ── STAT TILES ── */
 .tiles { display: flex; gap: 8px; }
 .tile {
   flex: 1; background: var(--surface2); border: 1px solid var(--border);
-  border-radius: var(--radius-sm); padding: 10px 11px;
+  border-radius: var(--radius-sm); padding: 11px 12px;
 }
-.tv { font-size: 20px; font-weight: 800; color: #fff; }
-.tk { font-size: 9px; text-transform: uppercase; letter-spacing: .4px;
-      color: var(--text3); margin-top: 1px; }
-.tbar { height: 3px; border-radius: 3px; background: var(--border); margin-top: 7px; overflow: hidden; }
+.tv { font-size: 22px; font-weight: 800; color: #fff; }
+.tk { font-size: var(--fs-xxs); text-transform: uppercase; letter-spacing: .4px;
+      color: var(--text3); margin-top: 2px; }
+.tbar { height: 3px; border-radius: 3px; background: var(--border); margin-top: 8px; overflow: hidden; }
 .tbar-fill { height: 100%; border-radius: 3px;
              background: linear-gradient(90deg, var(--purple), var(--green)); transition: width .7s; }
 
 /* ── PROGRESS ── */
-.prog-wrap { background: var(--surface2); border-radius: 6px; overflow: hidden; height: 6px; }
+.prog-wrap { background: var(--surface2); border-radius: 6px; overflow: hidden; height: 7px; }
 .prog-fill  { height: 100%; border-radius: 6px;
               background: linear-gradient(90deg, var(--purple), var(--green)); transition: width .7s; }
 
 /* ── BADGES ── */
-.badge { display: inline-flex; align-items: center; padding: 2px 9px;
-         border-radius: 10px; font-size: 10px; font-weight: 700; }
+.badge { display: inline-flex; align-items: center; padding: 3px 10px;
+         border-radius: 10px; font-size: var(--fs-xxs); font-weight: 700; }
 .bg-green  { background: #052e16; color: var(--green);  border: 1px solid #064e35; }
 .bg-red    { background: #2d0a0a; color: var(--red);    border: 1px solid #7f1d1d; }
 .bg-yellow { background: #2d1e04; color: var(--yellow); border: 1px solid #78350f; }
@@ -170,103 +170,95 @@ body { font-family: -apple-system, 'SF Pro Text', 'Segoe UI', sans-serif;
 /* ── LIST ROWS ── */
 .list-row {
   display: flex; justify-content: space-between; align-items: center;
-  padding: 8px 0; border-bottom: 1px solid var(--surface2); font-size: 13px;
+  padding: 9px 0; border-bottom: 1px solid var(--surface2); font-size: var(--fs-sm);
 }
 .list-row:last-child { border-bottom: none; }
-.lk { color: var(--text2); font-size: 12px; }
+.lk { color: var(--text2); font-size: var(--fs-sm); }
 .lv { font-weight: 600; }
 
-/* ──────────────────────────────────────────
-   CHAT PANEL
-────────────────────────────────────────── */
+/* ── CHAT PANEL ── */
 #chatPanel { display: none; flex-direction: column; }
 #chatPanel.active { display: flex; }
 
-/* Activity bar */
 #actBar {
-  flex-shrink: 0; height: 32px; padding: 0 14px;
+  flex-shrink: 0; height: 34px; padding: 0 14px;
   background: var(--surface2); border-bottom: 1px solid var(--border);
-  display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--text3);
+  display: flex; align-items: center; gap: 8px; font-size: var(--fs-xs); color: var(--text3);
 }
-#actPulse { width: 6px; height: 6px; border-radius: 50%; background: var(--text3); flex-shrink: 0; }
+#actPulse { width: 7px; height: 7px; border-radius: 50%; background: var(--text3); flex-shrink: 0; }
 #actBar.busy #actPulse { background: var(--green); animation: blink 1s ease-in-out infinite; }
 @keyframes blink { 50% { opacity: .2; } }
 #actText { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-/* Messages */
-#chatLog { flex: 1; overflow-y: auto; padding: 14px 14px 8px;
-           display: flex; flex-direction: column; gap: 10px; }
+#chatLog { flex: 1; overflow-y: auto; padding: 16px 15px 10px;
+           display: flex; flex-direction: column; gap: 12px; }
 
-.msg-row { display: flex; align-items: flex-end; gap: 8px; animation: pop .15s ease-out; }
+.msg-row { display: flex; align-items: flex-end; gap: 9px; animation: pop .15s ease-out; }
 @keyframes pop { from { transform: translateY(6px); opacity: 0; } }
 .msg-row.user { flex-direction: row-reverse; }
 
-.avatar { width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
-          display: flex; align-items: center; justify-content: center;
-          font-size: 14px; }
-.avatar-bot { background: linear-gradient(135deg, var(--purple), var(--green)); }
+.avatar { width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+          display: flex; align-items: center; justify-content: center; font-size: 16px; }
+.avatar-bot  { background: linear-gradient(135deg, var(--purple), var(--green)); }
 .avatar-user { background: var(--surface2); border: 1px solid var(--border2); }
 
 .bubble {
-  max-width: 82%; padding: 10px 14px; border-radius: 18px;
-  font-size: 14px; line-height: 1.6; white-space: pre-wrap; word-break: break-word;
+  max-width: 82%; padding: 11px 15px; border-radius: 20px;
+  font-size: var(--fs-base); line-height: 1.65; white-space: pre-wrap; word-break: break-word;
 }
-.bubble-bot { background: var(--surface); border: 1px solid var(--border);
-              border-bottom-left-radius: 4px; color: var(--text); }
+.bubble-bot  { background: var(--surface); border: 1px solid var(--border);
+               border-bottom-left-radius: 4px; color: var(--text); }
 .bubble-user { background: var(--purple); color: #ede9fe;
                border-bottom-right-radius: 4px; }
-.msg-time { font-size: 9px; color: var(--text3); margin: 0 4px 2px; }
+.msg-time { font-size: var(--fs-xxs); color: var(--text3); margin: 0 4px 2px; }
 
-/* Step bubbles */
 .steps-card {
-  align-self: flex-start; max-width: 90%;
+  align-self: flex-start; max-width: 92%;
   background: var(--surface2); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: 10px 13px;
-  display: flex; flex-direction: column; gap: 4px; animation: pop .15s ease-out;
+  border-radius: var(--radius); padding: 11px 14px;
+  display: flex; flex-direction: column; gap: 5px; animation: pop .15s ease-out;
 }
-.steps-hd { font-size: 9px; text-transform: uppercase; letter-spacing: .6px;
+.steps-hd { font-size: var(--fs-xxs); text-transform: uppercase; letter-spacing: .6px;
             color: var(--text3); display: flex; align-items: center; gap: 6px; margin-bottom: 3px; }
-.steps-hd::before { content: ''; width: 5px; height: 5px; border-radius: 50%;
+.steps-hd::before { content: ''; width: 6px; height: 6px; border-radius: 50%;
                     background: var(--green); animation: blink 1s ease-in-out infinite; }
 .steps-card.done .steps-hd::before { animation: none; background: var(--text3); }
-.st { font-size: 12px; line-height: 1.45; color: var(--text3); }
+.st { font-size: var(--fs-sm); line-height: 1.5; color: var(--text3); }
 .st.tool   { color: var(--lilac); font-weight: 600; }
 .st.result { color: #6ee7b7; }
 .st.think  { font-style: italic; color: var(--text3); }
 .st.done-s { color: var(--green); font-weight: 700; }
 
-/* State label */
-#stateLabel { flex-shrink: 0; height: 18px; text-align: center;
-              font-size: 11px; color: var(--text3); }
+#stateLabel { flex-shrink: 0; height: 20px; text-align: center;
+              font-size: var(--fs-sm); color: var(--text3); }
 
-/* ── DRAFT APPROVAL CARD ── */
+/* ── DRAFT APPROVAL ── */
 #draftCard {
   flex-shrink: 0; display: none;
-  background: var(--surface2); border-top: 1px solid var(--border2);
-  padding: 12px 14px;
+  background: var(--surface2); border-top: 1px solid var(--border2); padding: 13px 15px;
 }
 #draftCard.show { display: block; animation: slideUp .2s ease-out; }
 @keyframes slideUp { from { transform: translateY(10px); opacity: 0; } }
-.draft-hd { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
-.draft-platform { font-size: 11px; font-weight: 700; text-transform: uppercase;
-                  letter-spacing: .4px; color: var(--lilac); display: flex; align-items: center; gap: 5px; }
-.draft-dismiss { font-size: 16px; cursor: pointer; color: var(--text3); background: none; border: none; }
+.draft-hd { display: flex; align-items: center; justify-content: space-between; margin-bottom: 9px; }
+.draft-platform { font-size: var(--fs-xs); font-weight: 700; text-transform: uppercase;
+                  letter-spacing: .4px; color: var(--lilac); display: flex; align-items: center; gap: 6px; }
+.draft-dismiss { font-size: 18px; cursor: pointer; color: var(--text3); background: none; border: none; }
 #draftText {
   width: 100%; background: var(--surface); border: 1px solid var(--border);
-  color: var(--text); border-radius: var(--radius-sm); padding: 9px 11px;
-  font-size: 13px; font-family: inherit; resize: vertical; min-height: 80px;
-  outline: none; line-height: 1.5;
+  color: var(--text); border-radius: var(--radius-sm); padding: 10px 12px;
+  font-size: var(--fs-base); font-family: inherit; resize: vertical; min-height: 90px;
+  outline: none; line-height: 1.55;
 }
 #draftText:focus { border-color: var(--purple); }
 #draftTitle {
   width: 100%; background: var(--surface); border: 1px solid var(--border);
-  color: var(--text); border-radius: var(--radius-sm); padding: 7px 11px;
-  font-size: 13px; font-family: inherit; outline: none; margin-bottom: 7px; display: none;
+  color: var(--text); border-radius: var(--radius-sm); padding: 8px 12px;
+  font-size: var(--fs-base); font-family: inherit; outline: none; margin-bottom: 8px; display: none;
 }
-.draft-actions { display: flex; gap: 7px; margin-top: 9px; flex-wrap: wrap; }
+.draft-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
 .da-btn {
   flex: 1; min-width: 90px; border: none; border-radius: var(--radius-sm);
-  padding: 9px 12px; font-size: 12px; font-weight: 700; cursor: pointer;
+  padding: 10px 12px; font-size: var(--fs-sm); font-weight: 700; cursor: pointer;
   transition: opacity .15s; white-space: nowrap;
 }
 .da-btn:active { opacity: .8; }
@@ -276,21 +268,21 @@ body { font-family: -apple-system, 'SF Pro Text', 'Segoe UI', sans-serif;
 
 /* ── CHAT FOOTER ── */
 #chatFoot {
-  flex-shrink: 0; padding: 9px 12px calc(env(safe-area-inset-bottom) + 9px);
+  flex-shrink: 0; padding: 10px 13px calc(env(safe-area-inset-bottom) + 10px);
   border-top: 1px solid var(--border);
-  display: flex; gap: 8px; align-items: center; background: var(--bg);
+  display: flex; gap: 9px; align-items: center; background: var(--bg);
 }
 #textIn {
   flex: 1; background: var(--surface); border: 1.5px solid var(--border);
-  color: var(--text); border-radius: 22px; padding: 10px 16px;
-  font-size: 14px; outline: none; font-family: inherit; line-height: 1.4;
+  color: var(--text); border-radius: 24px; padding: 11px 17px;
+  font-size: var(--fs-base); outline: none; font-family: inherit; line-height: 1.4;
 }
 #textIn:focus { border-color: var(--purple); }
 #textIn::placeholder { color: var(--text3); }
 #micBtn {
-  width: 42px; height: 42px; border-radius: 21px; flex-shrink: 0;
+  width: 44px; height: 44px; border-radius: 22px; flex-shrink: 0;
   background: var(--surface); border: 1.5px solid var(--border);
-  color: var(--lilac); font-size: 19px; cursor: pointer; display: flex;
+  color: var(--lilac); font-size: 20px; cursor: pointer; display: flex;
   align-items: center; justify-content: center; transition: background .15s;
 }
 body[data-state="listening"] #micBtn { background: #1e3a5f; border-color: #3b82f6;
@@ -302,98 +294,330 @@ body[data-state="speaking"]  #micBtn { background: #064e3b; border-color: var(--
   70% { box-shadow: 0 0 0 10px rgba(59,130,246,0); }
 }
 #sendBtn {
-  height: 42px; padding: 0 18px; border-radius: 21px; flex-shrink: 0;
+  height: 44px; padding: 0 20px; border-radius: 22px; flex-shrink: 0;
   background: var(--purple); color: #fff; border: none;
-  font-size: 14px; font-weight: 700; cursor: pointer; transition: background .15s;
+  font-size: var(--fs-base); font-weight: 700; cursor: pointer; transition: background .15s;
 }
 #sendBtn:hover { background: var(--purple2); }
 
-/* ──────────────────────────────────────────
-   FILES PANEL
-────────────────────────────────────────── */
+/* ═══════════════════════════════════════════
+   CREATE / PUBLISH PANEL
+═══════════════════════════════════════════ */
+#createPanel { display: none; flex-direction: column; }
+#createPanel.active { display: flex; }
+
+/* Quick-generate chips */
+.qg-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+.qg-btn {
+  display: flex; align-items: center; gap: 7px; padding: 9px 14px;
+  background: var(--surface2); border: 1px solid var(--border2);
+  border-radius: 20px; font-size: var(--fs-sm); font-weight: 600; color: var(--text2);
+  cursor: pointer; transition: all .15s; white-space: nowrap;
+}
+.qg-btn:hover { border-color: var(--purple); color: var(--lilac); background: #160f30; }
+.qg-btn .qi { font-size: 16px; }
+
+/* Weekly goal tracker */
+.goal-row {
+  display: flex; align-items: center; gap: 10px; padding: 9px 0;
+  border-bottom: 1px solid var(--surface2);
+}
+.goal-row:last-child { border-bottom: none; }
+.goal-check {
+  width: 22px; height: 22px; border-radius: 6px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; border: 1.5px solid var(--border2); background: var(--surface2);
+}
+.goal-check.done { background: #052e16; border-color: var(--green); }
+.goal-info { flex: 1; }
+.goal-label { font-size: var(--fs-sm); font-weight: 600; color: var(--text); }
+.goal-sub { font-size: var(--fs-xs); color: var(--text3); margin-top: 1px; }
+.goal-gen-btn {
+  padding: 6px 12px; font-size: var(--fs-xs); font-weight: 700; border: none;
+  border-radius: 16px; cursor: pointer; white-space: nowrap;
+  background: var(--purple); color: #fff; transition: opacity .15s;
+}
+.goal-gen-btn:active { opacity: .8; }
+.goal-gen-btn.done-btn { background: var(--surface2); border: 1px solid var(--border); color: var(--text3); }
+
+/* Platform picker */
+.plat-grid { display: flex; gap: 8px; flex-wrap: wrap; }
+.plat-pill {
+  display: flex; align-items: center; gap: 6px; padding: 8px 14px;
+  border-radius: 20px; font-size: var(--fs-sm); font-weight: 600;
+  background: var(--surface2); border: 1.5px solid var(--border);
+  color: var(--text3); cursor: pointer; transition: all .15s;
+}
+.plat-pill.sel { border-color: var(--purple); color: var(--lilac); background: #160f30; }
+
+/* Post form */
+.post-form { display: flex; flex-direction: column; gap: 9px; }
+.post-input {
+  width: 100%; background: var(--surface2); border: 1px solid var(--border);
+  color: var(--text); border-radius: var(--radius-sm); padding: 11px 14px;
+  font-size: var(--fs-base); font-family: inherit; outline: none; transition: border-color .2s;
+}
+.post-input:focus { border-color: var(--purple); }
+.post-input::placeholder { color: var(--text3); }
+#postContentTA {
+  resize: vertical; min-height: 110px; line-height: 1.6;
+}
+.post-actions { display: flex; gap: 8px; }
+.post-btn {
+  flex: 1; border: none; border-radius: var(--radius-sm); padding: 12px;
+  font-size: var(--fs-sm); font-weight: 700; cursor: pointer; transition: opacity .15s;
+}
+.post-btn:active { opacity: .8; }
+.post-btn-green  { background: var(--green); color: #fff; }
+.post-btn-purple { background: var(--purple); color: #fff; }
+.post-btn-gray   { background: var(--surface2); border: 1px solid var(--border); color: var(--text2); }
+
+/* Copy-for-Meta button */
+.copy-meta-btn {
+  width: 100%; border: none; border-radius: var(--radius-sm); padding: 11px;
+  font-size: var(--fs-sm); font-weight: 700; cursor: pointer;
+  background: #1877f2; color: #fff; display: flex; align-items: center;
+  justify-content: center; gap: 8px; transition: opacity .15s;
+}
+.copy-meta-btn:active { opacity: .85; }
+.copy-meta-btn.copied { background: var(--green); }
+
+/* Meta workflow guide */
+.meta-guide {
+  background: #0d1a30; border: 1px solid #1e3a6e; border-radius: var(--radius-sm);
+  padding: 11px 13px;
+}
+.meta-guide-title { font-size: var(--fs-xs); font-weight: 700; color: #93c5fd;
+                    text-transform: uppercase; letter-spacing: .4px; margin-bottom: 8px; }
+.meta-step {
+  display: flex; align-items: flex-start; gap: 9px; padding: 5px 0;
+  font-size: var(--fs-sm); color: var(--text2); line-height: 1.5;
+}
+.meta-step-num {
+  width: 20px; height: 20px; border-radius: 50%; background: #1e3a6e;
+  color: #93c5fd; font-size: 11px; font-weight: 800; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* Bot message copy button */
+.msg-copy-btn {
+  font-size: 13px; cursor: pointer; color: var(--text3); background: none; border: none;
+  padding: 3px 7px; border-radius: 8px; transition: background .15s, color .15s;
+  opacity: 0; pointer-events: none;
+}
+.msg-row:hover .msg-copy-btn { opacity: 1; pointer-events: auto; }
+.msg-copy-btn:hover { background: var(--surface2); color: var(--lilac); }
+
+/* ═══════════════════════════════════════════
+   FILES PANEL (Project + Mac)
+═══════════════════════════════════════════ */
 #filesPanel { display: none; flex-direction: column; overflow: hidden; }
 #filesPanel.active { display: flex; }
-#fileSplit { flex: 1; display: flex; overflow: hidden; }
-#fileTree { width: 210px; flex-shrink: 0; border-right: 1px solid var(--border);
+
+/* Sub-tab bar inside files */
+#filesSubBar {
+  flex-shrink: 0; display: flex; background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+}
+.ftab {
+  flex: 1; padding: 9px 8px; text-align: center; cursor: pointer;
+  font-size: var(--fs-xs); font-weight: 700; color: var(--text3);
+  border-bottom: 2px solid transparent; transition: color .15s, border-color .15s;
+  text-transform: uppercase; letter-spacing: .3px;
+}
+.ftab.active { color: var(--lilac); border-bottom-color: var(--purple); }
+
+/* File sub-panels */
+.file-subpanel { flex: 1; display: none; flex-direction: column; overflow: hidden; }
+.file-subpanel.active { display: flex; }
+
+/* Split layout */
+.fsplit { flex: 1; display: flex; overflow: hidden; }
+#fileTree { width: 200px; flex-shrink: 0; border-right: 1px solid var(--border);
             overflow-y: auto; padding: 8px 0; background: var(--surface2); }
+#macTree  { width: 200px; flex-shrink: 0; border-right: 1px solid var(--border);
+            overflow-y: auto; padding: 8px 0; background: var(--surface2); }
+
 .ft-item {
-  display: flex; align-items: center; gap: 7px; padding: 6px 12px 6px 14px;
-  cursor: pointer; font-size: 12px; color: var(--text3); white-space: nowrap;
+  display: flex; align-items: center; gap: 7px; padding: 7px 12px 7px 14px;
+  cursor: pointer; font-size: var(--fs-sm); color: var(--text3); white-space: nowrap;
   overflow: hidden; transition: background .1s, color .1s;
 }
 .ft-item:hover { background: var(--surface); color: var(--text2); }
 .ft-item.sel { background: #1a0d3d; color: var(--lilac); }
-.ft-icon { font-size: 13px; flex-shrink: 0; }
+.ft-icon { font-size: 14px; flex-shrink: 0; }
 .ft-dir  { color: var(--text2); font-weight: 600; }
 .ft-name { flex: 1; overflow: hidden; text-overflow: ellipsis; }
-.ft-size { font-size: 9px; color: var(--text3); flex-shrink: 0; }
-#fileEditor { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--bg); }
-#editorBar {
-  flex-shrink: 0; padding: 8px 12px; border-bottom: 1px solid var(--border);
-  display: flex; align-items: center; gap: 8px; min-height: 40px; background: var(--surface2);
+.ft-size { font-size: var(--fs-xxs); color: var(--text3); flex-shrink: 0; }
+
+/* Editor area shared by both file panels */
+#fileEditor {
+  flex: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--bg);
 }
-#editorPath { flex: 1; color: var(--lilac); font-family: monospace; font-size: 11px;
+#macFileEditor {
+  flex: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--bg);
+}
+#editorBar, #macEditorBar {
+  flex-shrink: 0; padding: 9px 13px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 8px; min-height: 42px; background: var(--surface2);
+}
+#editorPath, #macEditorPath { flex: 1; color: var(--lilac); font-family: monospace; font-size: var(--fs-xs);
               overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .eb-btn { background: var(--surface); border: 1px solid var(--border); color: var(--text2);
-          border-radius: 8px; padding: 4px 11px; font-size: 11px; font-weight: 600; cursor: pointer; }
+          border-radius: 8px; padding: 5px 12px; font-size: var(--fs-xs); font-weight: 600; cursor: pointer; }
 .eb-btn.save { background: var(--purple); color: #fff; border-color: var(--purple); }
 .eb-btn.save:hover { background: var(--purple2); }
-#codeArea {
+.eb-btn.del  { background: var(--red); color: #fff; border-color: var(--red); }
+#codeArea, #macCodeArea {
   flex: 1; width: 100%; background: var(--bg); color: #c9d1d9;
-  border: none; outline: none; resize: none; padding: 14px 16px;
-  font-family: 'SF Mono','Monaco','Menlo',monospace; font-size: 12.5px; line-height: 1.65;
+  border: none; outline: none; resize: none; padding: 15px 17px;
+  font-family: 'SF Mono','Monaco','Menlo',monospace; font-size: 13px; line-height: 1.7;
   tab-size: 4; display: none;
 }
-#fileWelcome { flex: 1; display: flex; flex-direction: column; align-items: center;
-               justify-content: center; color: var(--text3); gap: 10px; }
-#fileWelcome .fw-ico { font-size: 44px; }
-#fileWelcome p { font-size: 13px; line-height: 1.6; text-align: center; }
+#macImgArea { flex: 1; overflow: auto; display: none; align-items: center;
+              justify-content: center; background: #070710; }
+#macImgArea img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.file-welcome { flex: 1; display: flex; flex-direction: column; align-items: center;
+               justify-content: center; color: var(--text3); gap: 12px; }
+.file-welcome .fw-ico { font-size: 48px; }
+.file-welcome p { font-size: var(--fs-sm); line-height: 1.65; text-align: center; color: var(--text3); }
 
-/* ──────────────────────────────────────────
-   SETTINGS PANEL
-────────────────────────────────────────── */
+/* Mac quick-access shortcuts */
+#macShortcuts {
+  flex-shrink: 0; padding: 10px 12px; display: flex; gap: 7px; flex-wrap: wrap;
+  border-bottom: 1px solid var(--border); background: var(--surface2);
+}
+.mac-sc {
+  display: flex; align-items: center; gap: 5px; padding: 6px 12px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 16px; font-size: var(--fs-sm); font-weight: 600; color: var(--text2);
+  cursor: pointer; transition: all .15s;
+}
+.mac-sc:hover { border-color: var(--purple); color: var(--lilac); }
+.mac-toolbar {
+  flex-shrink: 0; padding: 8px 12px; display: flex; align-items: center; gap: 8px;
+  border-bottom: 1px solid var(--border); background: var(--surface2);
+}
+.mac-toolbar-btn {
+  padding: 6px 12px; font-size: var(--fs-xs); font-weight: 700; border: none;
+  border-radius: 8px; cursor: pointer; transition: opacity .15s;
+}
+.mac-toolbar-btn:active { opacity: .8; }
+.mtb-new  { background: var(--purple); color: #fff; }
+.mtb-del  { background: var(--red); color: #fff; }
+.mtb-up   { background: var(--surface); border: 1px solid var(--border); color: var(--text2); }
+#macBreadcrumb { flex: 1; font-size: var(--fs-xs); color: var(--text3);
+                 overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ── SETTINGS PANEL ── */
 .conn-grid { display: flex; flex-wrap: wrap; gap: 8px; }
 .conn-chip {
-  display: flex; align-items: center; gap: 6px; padding: 6px 12px;
-  border-radius: 20px; font-size: 12px; font-weight: 600;
+  display: flex; align-items: center; gap: 7px; padding: 7px 13px;
+  border-radius: 20px; font-size: var(--fs-sm); font-weight: 600;
   background: var(--surface2); border: 1px solid var(--border); color: var(--text3);
   cursor: pointer; transition: all .15s;
 }
 .conn-chip.on { color: var(--text); background: #160f30; border-color: #4c1d95; }
-.conn-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text3); }
+.conn-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text3); }
 .conn-chip.on .conn-dot { background: var(--green); }
-
-/* change password form */
-.pwd-form { display: flex; flex-direction: column; gap: 9px; }
+.pwd-form { display: flex; flex-direction: column; gap: 10px; }
 .pwd-input {
   width: 100%; background: var(--surface2); border: 1px solid var(--border);
-  color: var(--text); border-radius: var(--radius-sm); padding: 10px 13px;
-  font-size: 14px; outline: none; font-family: inherit; transition: border-color .2s;
+  color: var(--text); border-radius: var(--radius-sm); padding: 11px 14px;
+  font-size: var(--fs-base); outline: none; font-family: inherit; transition: border-color .2s;
 }
 .pwd-input:focus { border-color: var(--purple); }
 .pwd-input::placeholder { color: var(--text3); }
 .pwd-btn {
   background: var(--purple); color: #fff; border: none;
-  border-radius: var(--radius-sm); padding: 11px; font-size: 14px;
+  border-radius: var(--radius-sm); padding: 12px; font-size: var(--fs-base);
   font-weight: 700; cursor: pointer; width: 100%; transition: background .15s;
 }
 .pwd-btn:hover { background: var(--purple2); }
-#pwdMsg { font-size: 12px; text-align: center; min-height: 16px; }
-
-/* enroll btn */
+#pwdMsg { font-size: var(--fs-sm); text-align: center; min-height: 18px; }
 #enrollBtn {
   background: var(--surface2); border: 1px solid var(--green);
-  color: var(--green); border-radius: var(--radius-sm); padding: 11px;
-  font-size: 14px; font-weight: 700; cursor: pointer; width: 100%; transition: background .15s;
+  color: var(--green); border-radius: var(--radius-sm); padding: 12px;
+  font-size: var(--fs-base); font-weight: 700; cursor: pointer; width: 100%; transition: background .15s;
 }
 #enrollBtn:hover { background: #052e16; }
+
+/* ── QUICK CHIPS (Chat footer) ── */
+#quickChips {
+  flex-shrink: 0; display: flex; gap: 7px; padding: 8px 13px 0;
+  overflow-x: auto; scrollbar-width: none;
+}
+#quickChips::-webkit-scrollbar { display: none; }
+.qc {
+  display: flex; align-items: center; gap: 5px; padding: 7px 13px;
+  background: var(--surface2); border: 1px solid var(--border2);
+  border-radius: 18px; font-size: var(--fs-sm); font-weight: 600; color: var(--text2);
+  cursor: pointer; white-space: nowrap; flex-shrink: 0; transition: all .15s;
+}
+.qc:hover { border-color: var(--purple); color: var(--lilac); background: #160f30; }
+.qc .qci { font-size: 15px; }
+
+/* ── RESEARCH PANEL ── */
+#researchPanel { display: none; flex-direction: column; }
+#researchPanel.active { display: flex; }
+
+.res-tool-grid {
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: 7px;
+}
+.res-tool-btn {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 11px 6px; background: var(--surface2); border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm); cursor: pointer; transition: all .15s;
+  font-size: var(--fs-xxs); font-weight: 700; color: var(--text3);
+  text-transform: uppercase; letter-spacing: .3px;
+}
+.res-tool-btn .rti { font-size: 22px; line-height: 1; }
+.res-tool-btn:hover { border-color: var(--purple); color: var(--lilac); background: #160f30; }
+.res-tool-btn.active-tool { border-color: var(--purple); color: var(--lilac); background: #1a0d3d; }
+
+.res-input-row { display: flex; gap: 8px; }
+#resInput {
+  flex: 1; background: var(--surface2); border: 1.5px solid var(--border);
+  color: var(--text); border-radius: var(--radius); padding: 13px 16px;
+  font-size: var(--fs-base); outline: none; font-family: inherit;
+}
+#resInput:focus { border-color: var(--purple); }
+#resInput::placeholder { color: var(--text3); }
+#resGoBtn {
+  flex-shrink: 0; padding: 0 22px; border-radius: var(--radius);
+  background: var(--purple); color: #fff; border: none;
+  font-size: var(--fs-base); font-weight: 700; cursor: pointer; transition: background .15s;
+}
+#resGoBtn:hover { background: var(--purple2); }
+#resGoBtn:disabled { opacity: .5; cursor: default; }
+
+.res-result-card {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: var(--radius); overflow: hidden;
+}
+.res-result-hd {
+  padding: 10px 14px; background: var(--surface); border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: var(--fs-xs); font-weight: 700; color: var(--text3);
+  text-transform: uppercase; letter-spacing: .4px;
+}
+.res-result-body {
+  padding: 13px 15px; font-size: var(--fs-sm); color: var(--text2);
+  line-height: 1.7; white-space: pre-wrap; word-break: break-word;
+  max-height: 380px; overflow-y: auto;
+}
+.res-copy-btn {
+  background: none; border: 1px solid var(--border); color: var(--text2);
+  border-radius: 8px; padding: 4px 11px; font-size: var(--fs-xs); font-weight: 700; cursor: pointer;
+}
+.res-copy-btn:hover { background: var(--surface2); color: var(--lilac); }
 
 /* ── TOAST ── */
 #toastWrap { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%);
              z-index: 888; display: flex; flex-direction: column; gap: 6px; align-items: center; }
 .toast {
   background: var(--surface2); border: 1px solid var(--border2);
-  border-radius: 20px; padding: 8px 18px; font-size: 12px; color: var(--text2);
+  border-radius: 20px; padding: 9px 20px; font-size: var(--fs-sm); color: var(--text2);
   animation: toastIn .2s ease-out; white-space: nowrap;
   box-shadow: 0 4px 20px rgba(0,0,0,.4);
 }
@@ -407,28 +631,45 @@ body[data-state="speaking"]  #micBtn { background: #064e3b; border-color: var(--
 #taskDrawer.show { display: flex; }
 .task-sheet {
   width: 100%; background: var(--surface); border-radius: 20px 20px 0 0;
-  max-height: 60%; overflow-y: auto; padding: 16px 16px calc(env(safe-area-inset-bottom)+16px);
+  max-height: 62%; overflow-y: auto; padding: 17px 17px calc(env(safe-area-inset-bottom)+17px);
 }
-.task-hd { font-size: 14px; font-weight: 800; color: #fff; margin-bottom: 13px; }
-.task-row { display: flex; align-items: flex-start; gap: 10px; padding: 9px 0;
+.task-hd { font-size: 15px; font-weight: 800; color: #fff; margin-bottom: 14px; }
+.task-row { display: flex; align-items: flex-start; gap: 11px; padding: 10px 0;
             border-bottom: 1px solid var(--surface2); }
 .task-row:last-child { border-bottom: none; }
-.task-text { flex: 1; font-size: 13px; color: var(--text); line-height: 1.45; }
-.task-text a { color: #93c5fd; font-size: 11px; display: block; margin-top: 2px; }
+.task-text { flex: 1; font-size: var(--fs-sm); color: var(--text); line-height: 1.5; }
+.task-text a { color: #93c5fd; font-size: var(--fs-xs); display: block; margin-top: 2px; }
 .task-done-btn {
   background: var(--surface2); border: 1px solid var(--border); color: var(--green);
-  border-radius: 8px; padding: 4px 10px; font-size: 11px; font-weight: 700; cursor: pointer;
+  border-radius: 8px; padding: 5px 11px; font-size: var(--fs-xs); font-weight: 700; cursor: pointer;
 }
+.empty { color: var(--text3); font-size: var(--fs-sm); text-align: center; padding: 22px 0; }
 
-/* empty state */
-.empty { color: var(--text3); font-size: 13px; text-align: center; padding: 20px 0; }
+/* ── MODAL (new folder) ── */
+#modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.7);
+         z-index: 600; align-items: center; justify-content: center; }
+#modal.show { display: flex; }
+.modal-box { background: var(--surface); border: 1px solid var(--border2);
+             border-radius: var(--radius); padding: 20px; width: 280px; }
+.modal-title { font-size: 15px; font-weight: 800; margin-bottom: 12px; }
+.modal-input {
+  width: 100%; background: var(--surface2); border: 1px solid var(--border);
+  color: var(--text); border-radius: var(--radius-sm); padding: 10px 13px;
+  font-size: var(--fs-base); font-family: inherit; outline: none; margin-bottom: 10px;
+}
+.modal-input:focus { border-color: var(--purple); }
+.modal-btns { display: flex; gap: 8px; }
+.modal-ok { flex: 1; background: var(--purple); color: #fff; border: none;
+            border-radius: var(--radius-sm); padding: 10px; font-size: var(--fs-sm);
+            font-weight: 700; cursor: pointer; }
+.modal-cancel { flex: 1; background: var(--surface2); border: 1px solid var(--border);
+                color: var(--text2); border-radius: var(--radius-sm); padding: 10px;
+                font-size: var(--fs-sm); font-weight: 700; cursor: pointer; }
 </style>
 </head>
 <body data-state="idle">
 
-<!-- ══════════════════════════════════════════
-     LOGIN SCREEN
-═══════════════════════════════════════════ -->
+<!-- LOGIN -->
 <div id="loginScreen">
   <div class="login-box">
     <div class="login-logo">🤖</div>
@@ -447,9 +688,7 @@ body[data-state="speaking"]  #micBtn { background: #064e3b; border-color: var(--
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════
-     HEADER
-═══════════════════════════════════════════ -->
+<!-- HEADER -->
 <div id="hdr">
   <div class="hdr-brand">
     <div class="hdr-logo">🤖</div>
@@ -468,137 +707,349 @@ body[data-state="speaking"]  #micBtn { background: #064e3b; border-color: var(--
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════
-     TAB BAR
-═══════════════════════════════════════════ -->
+<!-- TAB BAR -->
 <div id="tabBar">
-  <div class="tab active" data-tab="chat"     onclick="switchTab('chat')">
-    <span class="ti">💬</span>Chat
+  <div class="tab active" data-tab="chat"     onclick="switchTab('chat')"><span class="ti">💬</span>Chat</div>
+  <div class="tab"        data-tab="create"   onclick="switchTab('create')"><span class="ti">✍️</span>Create</div>
+  <div class="tab"        data-tab="research" onclick="switchTab('research')"><span class="ti">🔍</span>Research</div>
+  <div class="tab"        data-tab="canteen"  onclick="switchTab('canteen')"><span class="ti">🍽️</span>Canteen</div>
+  <div class="tab"        data-tab="files"    onclick="switchTab('files')"><span class="ti">📁</span>Files</div>
+  <div class="tab"        data-tab="settings" onclick="switchTab('settings')"><span class="ti">⚙️</span>Settings</div>
+</div>
+
+<!-- PANELS -->
+<div id="panels">
+
+<!-- ████ CHAT ████ -->
+<div class="panel active" id="chatPanel">
+  <div id="actBar">
+    <div id="actPulse"></div>
+    <div id="actText">Ready</div>
   </div>
-  <div class="tab" data-tab="pielts"   onclick="switchTab('pielts')">
-    <span class="ti">📚</span>PIELTS
+  <div id="chatLog"></div>
+  <div id="draftCard">
+    <div class="draft-hd">
+      <div class="draft-platform">
+        <span id="draftPlatformIcon">📘</span>
+        <span id="draftPlatformLabel">Facebook</span>
+        <span class="badge bg-purple" style="margin-left:5px">Pending Approval</span>
+      </div>
+      <button class="draft-dismiss" onclick="discardDraft()">✕</button>
+    </div>
+    <input id="draftTitle" placeholder="Title (YouTube)…">
+    <textarea id="draftText" rows="4" placeholder="Draft content…"></textarea>
+    <div class="draft-actions">
+      <button class="da-btn da-approve" onclick="approveDraft(false)">✅ Post Now</button>
+      <button class="da-btn da-all"     onclick="approveDraft(true)">📤 Post to All</button>
+      <button class="da-btn da-cancel"  onclick="discardDraft()">❌ Cancel</button>
+    </div>
   </div>
-  <div class="tab" data-tab="canteen"  onclick="switchTab('canteen')">
-    <span class="ti">🍽️</span>Canteen
+  <div id="stateLabel"></div>
+  <div id="quickChips">
+    <div class="qc" onclick="qchip('Write a Facebook post in English only for pielts about one IELTS Writing tip. Under 150 words. Include hashtags. CTA to pielts.web.app. Output ONLY the English post.','Facebook Post')"><span class="qci">📘</span>FB Post</div>
+    <div class="qc" onclick="qchip('Write a 60-second YouTube Shorts script in English only for pielts about one IELTS tip. Hook in first 3 seconds. CTA at end. Output ONLY English script.','YT Script')"><span class="qci">🎥</span>YT Script</div>
+    <div class="qc" onclick="qchip('Write an Instagram caption in English only for pielts. IELTS tip. Under 100 words, 10 hashtags, ends with engagement question. Output ONLY English.','Instagram')"><span class="qci">📸</span>Instagram</div>
+    <div class="qc" onclick="switchTab('research')"><span class="qci">🔍</span>Research</div>
+    <div class="qc" onclick="qchip('Generate the full daily content kit for pielts in English only: 1) Facebook post, 2) Instagram caption, 3) YouTube Short script, 4) Blog post title + intro paragraph. All English only.','Daily Kit')"><span class="qci">🚀</span>Full Kit</div>
+    <div class="qc" onclick="qchip('Aaja ko canteen ko sales kati bhayo? Credit alerts ke xa? Brief summary deu.')"><span class="qci">🍽️</span>Canteen</div>
+    <div class="qc" onclick="qchip('Write a Twitter/X thread in English only (5 tweets) for pielts about top IELTS mistakes. Each under 280 chars. Output ONLY English.','Twitter')"><span class="qci">🐦</span>Twitter</div>
+    <div class="qc" onclick="qchip('Give me today\'s pielts performance summary: YouTube stats, what content worked best this week, and one improvement tip.')"><span class="qci">📊</span>Stats</div>
   </div>
-  <div class="tab" data-tab="files"    onclick="switchTab('files')">
-    <span class="ti">📁</span>Files
-  </div>
-  <div class="tab" data-tab="settings" onclick="switchTab('settings')">
-    <span class="ti">⚙️</span>Settings
+  <div id="chatFoot">
+    <button id="micBtn" onclick="toggleMic()">🎙</button>
+    <input id="textIn" placeholder="Ask Baadar anything…" onkeydown="onKey(event)">
+    <button id="sendBtn" onclick="sendText()">Send</button>
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════
-     PANELS
-═══════════════════════════════════════════ -->
-<div id="panels">
+<!-- ████ CREATE / PUBLISH ████ -->
+<div class="panel" id="createPanel">
+  <div class="scroll-pane">
 
-  <!-- ████ CHAT ████ -->
-  <div class="panel active" id="chatPanel">
-    <div id="actBar">
-      <div id="actPulse"></div>
-      <div id="actText">Ready</div>
-    </div>
+    <!-- One-tap Full Day Kit -->
+    <button onclick="genContent('Generate the complete daily content kit for pielts in English only:\n1. FACEBOOK POST: IELTS tip, under 150 words, hashtags, CTA to pielts.web.app\n2. INSTAGRAM CAPTION: same topic, under 100 words, 10 hashtags\n3. YOUTUBE SHORT SCRIPT: 60-second script, hook + tip + CTA\n4. BLOG TITLE + INTRO: SEO title + 80-word intro paragraph\nAll in English only. Output all 4 sections clearly labelled.','Daily Content Kit')" style="
+      display:flex;align-items:center;justify-content:center;gap:10px;
+      width:100%;padding:16px;border:none;border-radius:var(--radius);
+      background:linear-gradient(135deg,var(--purple),var(--green));
+      color:#fff;font-size:var(--fs-base);font-weight:800;cursor:pointer;
+      box-shadow:0 4px 20px rgba(124,58,237,.35);letter-spacing:-.2px;
+      transition:opacity .15s;
+    " onmouseenter="this.style.opacity='.9'" onmouseleave="this.style.opacity='1'">
+      <span style="font-size:22px">🚀</span> Generate Full Day Content Kit
+    </button>
 
-    <div id="chatLog"></div>
-
-    <!-- Draft approval card -->
-    <div id="draftCard">
-      <div class="draft-hd">
-        <div class="draft-platform">
-          <span id="draftPlatformIcon">📘</span>
-          <span id="draftPlatformLabel">Facebook</span>
-          <span class="badge bg-purple" style="margin-left:4px">Pending Approval</span>
+    <!-- pielts Weekly Goal Tracker -->
+    <div class="card">
+      <div class="card-hd">
+        <div class="dot" style="background:var(--blue)"></div>
+        pielts Weekly Goal
+        <span class="badge bg-yellow" style="margin-left:auto" id="goalDaysLeft">4 days left</span>
+      </div>
+      <!-- Progress bar -->
+      <div style="margin-bottom:13px">
+        <div style="display:flex;justify-content:space-between;font-size:var(--fs-xs);color:var(--text3);margin-bottom:6px">
+          <span>Weekly plan progress</span><span id="goalProgress">2 / 6 tasks</span>
         </div>
-        <button class="draft-dismiss" onclick="discardDraft()">✕</button>
+        <div class="prog-wrap"><div class="prog-fill" id="goalBar" style="width:33%"></div></div>
       </div>
-      <input id="draftTitle" placeholder="Title (YouTube)…">
-      <textarea id="draftText" rows="4" placeholder="Draft content…"></textarea>
-      <div class="draft-actions">
-        <button class="da-btn da-approve" onclick="approveDraft(false)">✅ Post Now</button>
-        <button class="da-btn da-all"     onclick="approveDraft(true)" >📤 Post to All</button>
-        <button class="da-btn da-cancel"  onclick="discardDraft()"     >❌ Cancel</button>
+      <!-- Goals list -->
+      <div class="goal-row">
+        <div class="goal-check" id="gc-posts">2/5</div>
+        <div class="goal-info">
+          <div class="goal-label">Facebook Posts</div>
+          <div class="goal-sub">Need 3 more this week • IELTS tips work best</div>
+        </div>
+        <button class="goal-gen-btn" onclick="genGoalContent('fb-post')">✍️ Generate</button>
+      </div>
+      <div class="goal-row">
+        <div class="goal-check" id="gc-story">0/1</div>
+        <div class="goal-info">
+          <div class="goal-label">Facebook Story</div>
+          <div class="goal-sub">Short, visual • tip card or question poll</div>
+        </div>
+        <button class="goal-gen-btn" onclick="genGoalContent('fb-story')">✍️ Generate</button>
+      </div>
+      <div class="goal-row">
+        <div class="goal-check" id="gc-ad">0/1</div>
+        <div class="goal-info">
+          <div class="goal-label">Facebook Ad</div>
+          <div class="goal-sub">Promote pielts app • boost followers to 100</div>
+        </div>
+        <button class="goal-gen-btn" onclick="genGoalContent('fb-ad')">✍️ Generate</button>
+      </div>
+      <div class="goal-row">
+        <div class="goal-check" id="gc-followers" style="font-size:11px">25/100</div>
+        <div class="goal-info">
+          <div class="goal-label">Grow to 100 Followers</div>
+          <div class="goal-sub">Need 75 more — unlocks insights & demographics</div>
+        </div>
+        <button class="goal-gen-btn" onclick="genGoalContent('fb-invite')">✍️ Strategy</button>
       </div>
     </div>
 
-    <div id="stateLabel"></div>
+    <!-- Content Ready Box + Copy for Meta -->
+    <div class="card" id="contentReadyCard" style="display:none">
+      <div class="card-hd">
+        <div class="dot" style="background:var(--green)"></div>
+        Content Ready — Copy to Meta Business Suite
+        <button onclick="document.getElementById('contentReadyCard').style.display='none'" style="margin-left:auto;background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px">✕</button>
+      </div>
+      <div id="contentReadyPlatform" style="font-size:var(--fs-xs);color:var(--text3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.4px;font-weight:700"></div>
+      <textarea class="post-input" id="postContentTA" style="resize:vertical;min-height:120px;line-height:1.6" placeholder="Generated content will appear here…"></textarea>
+      <input class="post-input" id="postTitleIn" placeholder="Title / Heading (optional)" style="margin-top:8px">
+      <div style="margin-top:10px;display:flex;flex-direction:column;gap:8px">
+        <button class="copy-meta-btn" id="copyMetaBtn" onclick="copyForMeta()">
+          <span>📋</span> Copy for Meta Business Suite
+        </button>
+        <div class="meta-guide">
+          <div class="meta-guide-title">📘 How to post in Meta Business Suite</div>
+          <div class="meta-step"><div class="meta-step-num">1</div><span>Tap <b>Copy</b> button above ↑</span></div>
+          <div class="meta-step"><div class="meta-step-num">2</div><span>Go to <b>business.facebook.com</b> (already open in your browser)</span></div>
+          <div class="meta-step"><div class="meta-step-num">3</div><span>Click <b>"Create Post"</b> (big blue button, top-left)</span></div>
+          <div class="meta-step"><div class="meta-step-num">4</div><span><b>Paste</b> (⌘V) into the text box</span></div>
+          <div class="meta-step"><div class="meta-step-num">5</div><span>Click <b>"Publish"</b> or <b>"Schedule"</b> for later</span></div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="post-btn post-btn-gray" style="font-size:var(--fs-xs)" onclick="aiDraftPost()">🤖 Improve with AI</button>
+          <button class="post-btn post-btn-gray" style="font-size:var(--fs-xs)" onclick="clearContent()">🗑️ Clear</button>
+        </div>
 
-    <div id="chatFoot">
-      <button id="micBtn" onclick="toggleMic()">🎙</button>
-      <input id="textIn" placeholder="Ask Baadar anything…" onkeydown="onKey(event)">
-      <button id="sendBtn" onclick="sendText()">Send</button>
-    </div>
-  </div>
+        <!-- Image generation -->
+        <div style="border-top:1px solid var(--border);margin-top:4px;padding-top:12px">
+          <div style="font-size:var(--fs-xs);color:var(--text3);font-weight:700;letter-spacing:.4px;margin-bottom:8px;text-transform:uppercase">🎨 Generate Post Image (AI)</div>
 
-  <!-- ████ PIELTS ████ -->
-  <div class="panel" id="pieltsPanel">
-    <div class="scroll-pane">
-      <div class="card">
-        <div class="card-hd"><div class="dot"></div>Channel Stats</div>
-        <div class="tiles" id="pielts-tiles">
-          <div class="tile"><div class="tv" id="pt-subs">—</div><div class="tk">Subs</div>
-            <div class="tbar"><div class="tbar-fill" id="pt-subs-f" style="width:0"></div></div></div>
-          <div class="tile"><div class="tv" id="pt-views">—</div><div class="tk">Views</div>
-            <div class="tbar"><div class="tbar-fill" id="pt-views-f" style="width:0"></div></div></div>
-          <div class="tile"><div class="tv" id="pt-vids">—</div><div class="tk">Videos</div></div>
-          <div class="tile"><div class="tv" id="pt-day">—</div><div class="tk">Day</div></div>
+          <!-- Mr. Yeti character sheet -->
+          <div id="yetiRefCard" style="display:flex;gap:10px;align-items:center;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin-bottom:10px">
+            <img src="/assets/mr_yeti_reference.jpeg" alt="Mr. Yeti reference"
+                 style="width:56px;height:56px;object-fit:cover;border-radius:8px;border:2px solid var(--accent);flex-shrink:0">
+            <div style="flex:1;min-width:0">
+              <div style="font-size:var(--fs-xs);font-weight:700;color:var(--text1);margin-bottom:2px">🧊 Mr. Yeti — Canonical Look</div>
+              <div style="font-size:10px;color:var(--text3);line-height:1.4">
+                White fluffy fur · Round black glasses · Brown tweed blazer · Navy polka-dot tie · Photorealistic 3D
+              </div>
+              <div style="font-size:10px;color:var(--accent);margin-top:2px;font-weight:600">Every image must match this reference ↑</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:6px;margin-bottom:8px">
+            <select id="imgStyleSel" style="flex:0 0 auto;background:var(--bg2);color:var(--text1);border:1px solid var(--border);border-radius:8px;padding:6px 8px;font-size:var(--fs-xs)">
+              <option value="yeti_post">🧊 Mr. Yeti Square Post</option>
+              <option value="yeti_thumbnail">🧊 Mr. Yeti YouTube Thumb</option>
+              <option value="social_media">📘 Text-only Square Post</option>
+              <option value="thumbnail">▶️ Text-only YouTube Thumb</option>
+              <option value="logo">🔷 Logo / Icon</option>
+            </select>
+            <input id="imgPromptIn" class="post-input" style="margin-top:0;flex:1;font-size:var(--fs-xs)" placeholder="Describe the image… (or click Auto)">
+          </div>
+          <div style="display:flex;gap:6px;margin-bottom:10px">
+            <button class="post-btn post-btn-gray" style="font-size:var(--fs-xs);flex:1" onclick="autoImagePrompt()">✨ Auto from post</button>
+            <button class="copy-meta-btn" style="flex:2;font-size:var(--fs-sm);padding:9px 12px" onclick="generatePostImage()">🎨 Generate Image</button>
+          </div>
+          <div id="imgGenStatus" style="font-size:var(--fs-xs);color:var(--text3);text-align:center;min-height:16px"></div>
+          <div id="imgResultArea" style="display:none;margin-top:10px">
+            <img id="genImgEl" style="width:100%;border-radius:10px;border:1px solid var(--border)" alt="Generated image">
+            <div style="display:flex;gap:6px;margin-top:8px">
+              <button class="copy-meta-btn" style="flex:1;font-size:var(--fs-xs);padding:8px" onclick="downloadGenImage()">⬇️ Download Image</button>
+              <button class="post-btn post-btn-gray" style="flex:1;font-size:var(--fs-xs)" onclick="regenerateImage()">🔄 Regenerate</button>
+            </div>
+            <div style="font-size:var(--fs-xs);color:var(--text3);margin-top:6px;text-align:center">⬆ Download → click "Add Photo" in Meta Business Suite → select this image</div>
+          </div>
         </div>
       </div>
-      <div class="card">
-        <div class="card-hd"><div class="dot"></div>Goals</div>
-        <div id="pielts-goals"></div>
-      </div>
-      <div class="card">
-        <div class="card-hd"><div class="dot"></div>Monthly Costs</div>
-        <div id="pielts-costs"></div>
-      </div>
-      <div class="card">
-        <div class="card-hd"><div class="dot"></div>Recent Uploads</div>
-        <div id="pielts-uploads"><div class="empty">No uploads logged yet.</div></div>
+      <div id="createMsg" style="font-size:var(--fs-sm);color:var(--green);min-height:18px;text-align:center;margin-top:6px"></div>
+    </div>
+
+    <!-- pielts IELTS Content Kit -->
+    <div class="card">
+      <div class="card-hd"><div class="dot" style="background:var(--yellow)"></div>pielts Content Kit</div>
+      <div class="qg-grid">
+        <button class="qg-btn" onclick="genContent('Write an engaging Facebook post in English only for the pielts page about one IELTS Writing Task 2 tip. Include 2-3 relevant hashtags. Keep it under 150 words. End with a CTA to try pielts app. Output only English.')"><span class="qi">📘</span>IELTS Writing Tip</button>
+        <button class="qg-btn" onclick="genContent('Write a Facebook post in English only for pielts page about one IELTS Speaking Part 2 tip. Add a sample topic. Under 150 words. Include hashtags #IELTS #IELTSSpeaking #pielts. Output only English.')"><span class="qi">🗣️</span>Speaking Tip</button>
+        <button class="qg-btn" onclick="genContent('Write a Facebook post in English only for pielts page about a common IELTS Reading mistake students make. Give one fix tip. Under 150 words. Hashtags: #IELTS #IELTSReading. Output only English.')"><span class="qi">📖</span>Reading Tip</button>
+        <button class="qg-btn" onclick="genContent('Write a Facebook post in English only for pielts page about one IELTS Listening tip. Make it practical. Under 150 words. Include #IELTS #IELTSListening hashtags. Output only English.')"><span class="qi">🎧</span>Listening Tip</button>
+        <button class="qg-btn" onclick="genContent('Write a short Facebook Story text in English only for pielts page. One IELTS vocabulary word with meaning and example sentence. Fun, visual, under 50 words. Output only English.')"><span class="qi">📖</span>Vocab Story</button>
+        <button class="qg-btn" onclick="genContent('Write a Facebook Story in English only for pielts page: a quick IELTS quiz question with 2 options (A or B). Engaging, fun, under 40 words. Output only English.')"><span class="qi">❓</span>Quiz Story</button>
+        <button class="qg-btn" onclick="genContent('Write a Facebook ad copy in English only for pielts app. Goal: get IELTS students to download the app. Headline + 2 lines body + CTA button text. Clear benefit, no fluff. Output only English.')"><span class="qi">📣</span>App Ad Copy</button>
+        <button class="qg-btn" onclick="genContent('Write a Facebook post in English only for pielts page: a motivational message for IELTS students who are struggling. Relatable, warm, encouraging. Under 120 words. Hashtags. Output only English.')"><span class="qi">💪</span>Motivation Post</button>
+        <button class="qg-btn" onclick="genContent('Create 3 Facebook post ideas in English only for pielts page this week — one writing tip, one speaking tip, one motivational. Give complete ready-to-post text for each. Output only English.')"><span class="qi">📅</span>3-Post Weekly Kit</button>
+        <button class="qg-btn" onclick="genContent('Write a Facebook post in English only for pielts page announcing the pielts app. Highlight top 3 features. Under 150 words. Include a CTA and hashtags. Output only English.')"><span class="qi">📱</span>App Promo</button>
       </div>
     </div>
-  </div>
 
-  <!-- ████ CANTEEN ████ -->
-  <div class="panel" id="canteenPanel">
-    <div class="scroll-pane">
-      <div class="card">
-        <div class="card-hd"><div class="dot" style="background:var(--green)"></div>Today's Sales</div>
-        <div id="ct-sales"><div class="empty">Loading…</div></div>
+    <!-- Video Content -->
+    <div class="card">
+      <div class="card-hd"><div class="dot" style="background:var(--red)"></div>Video Content</div>
+      <div class="qg-grid">
+        <button class="qg-btn" onclick="genContent('Write a YouTube video script in English only for pielts channel: IELTS Writing Task 2 — how to write a perfect introduction paragraph. Include hook, 3 tips, outro with CTA to subscribe. Output only English.')"><span class="qi">🎬</span>YouTube Script</button>
+        <button class="qg-btn" onclick="genContent('Write a 60-second TikTok/Reels script in English only for pielts about the #1 IELTS Speaking mistake. Fast-paced, hook in first 3 seconds, tip, CTA. Output only English.')"><span class="qi">🎥</span>Reel Script</button>
+        <button class="qg-btn" onclick="genContent('Write a YouTube video title, description and 10 tags in English only for an IELTS tips video by pielts channel. SEO optimized. Output only English.')"><span class="qi">▶️</span>YT Title & SEO</button>
+        <button class="qg-btn" onclick="genContent('Create 5 YouTube Shorts ideas in English only for pielts channel — each under 60 seconds, about one specific IELTS tip. Give title and 3-bullet script for each. Output only English.')"><span class="qi">📱</span>Shorts Ideas</button>
       </div>
-      <div class="card">
-        <div class="card-hd"><div class="dot" style="background:var(--yellow)"></div>Staff Reports</div>
-        <div id="ct-reports"><div class="empty">Loading…</div></div>
-      </div>
-      <div class="card">
-        <div class="card-hd"><div class="dot" style="background:var(--red)"></div>Credit Alerts</div>
-        <div id="ct-credits"><div class="empty">Loading…</div></div>
-      </div>
-      <div class="card">
-        <div class="card-hd"><div class="dot"></div>Hygiene Status</div>
-        <div id="ct-hygiene"><div class="empty">Loading…</div></div>
-      </div>
-      <button onclick="loadCanteen()" style="
-        background:var(--surface);border:1px solid var(--border);color:var(--lilac);
-        border-radius:var(--radius);padding:11px;font-size:13px;font-weight:700;
-        cursor:pointer;width:100%">🔄 Refresh</button>
     </div>
+
+    <!-- Other platforms -->
+    <div class="card">
+      <div class="card-hd"><div class="dot"></div>Other Platforms</div>
+      <div class="qg-grid">
+        <button class="qg-btn" onclick="genContent('Write an Instagram caption in English only for pielts page. IELTS tip post. Under 100 words, 10 hashtags, emoji-friendly, ends with question to boost engagement. Output only English.')"><span class="qi">📸</span>Instagram Caption</button>
+        <button class="qg-btn" onclick="genContent('Write a Reddit answer in English only for r/IELTS about how to improve IELTS Writing score from 6 to 7. Detailed, helpful, mention pielts app naturally at the end. Output only English.')"><span class="qi">🟠</span>Reddit Answer</button>
+        <button class="qg-btn" onclick="genContent('Write a LinkedIn post in English only for pielts about why IELTS preparation apps are better than traditional classes. Professional tone. Under 200 words. Output only English.')"><span class="qi">💼</span>LinkedIn Post</button>
+        <button class="qg-btn" onclick="genContent('Write a Twitter/X thread in English only (5 tweets) for pielts about top 5 IELTS Writing mistakes and how to fix them. Each tweet under 280 chars. Output only English.')"><span class="qi">🐦</span>Twitter Thread</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ████ RESEARCH ████ -->
+<div class="panel" id="researchPanel">
+  <div class="scroll-pane">
+
+    <!-- Tool selector -->
+    <div class="card">
+      <div class="card-hd"><div class="dot" style="background:var(--blue)"></div>Internet Research Tools</div>
+      <div class="res-tool-grid" style="margin-bottom:14px">
+        <button class="res-tool-btn active-tool" id="rtb-search" onclick="selectResTool('search',this)">
+          <span class="rti">🔍</span>Search
+        </button>
+        <button class="res-tool-btn" id="rtb-url" onclick="selectResTool('url',this)">
+          <span class="rti">🌐</span>Read URL
+        </button>
+        <button class="res-tool-btn" id="rtb-youtube" onclick="selectResTool('youtube',this)">
+          <span class="rti">📺</span>YouTube
+        </button>
+        <button class="res-tool-btn" id="rtb-github" onclick="selectResTool('github',this)">
+          <span class="rti">🐙</span>GitHub
+        </button>
+        <button class="res-tool-btn" id="rtb-rss" onclick="selectResTool('rss',this)">
+          <span class="rti">📰</span>RSS Feed
+        </button>
+      </div>
+      <div class="res-input-row">
+        <input id="resInput" placeholder="Search the web…" onkeydown="if(event.key==='Enter')runResearch()">
+        <button id="resGoBtn" onclick="runResearch()">Go</button>
+      </div>
+      <div id="resToolHint" style="margin-top:8px;font-size:var(--fs-xs);color:var(--text3)">
+        🔍 Web Search — enter any topic or question
+      </div>
+    </div>
+
+    <!-- Quick research shortcuts -->
+    <div class="card">
+      <div class="card-hd"><div class="dot" style="background:var(--yellow)"></div>Quick Research</div>
+      <div class="qg-grid">
+        <button class="qg-btn" onclick="quickResearch('search','IELTS 2025 exam changes and updates')"><span class="qi">📋</span>IELTS Updates</button>
+        <button class="qg-btn" onclick="quickResearch('search','IELTS Writing Task 2 band 7 tips 2025')"><span class="qi">✍️</span>Writing Tips</button>
+        <button class="qg-btn" onclick="quickResearch('search','best IELTS YouTube channels 2025')"><span class="qi">▶️</span>YT Channels</button>
+        <button class="qg-btn" onclick="quickResearch('search','pielts IELTS app competitor analysis')"><span class="qi">🏆</span>Competitors</button>
+        <button class="qg-btn" onclick="quickResearch('search','IELTS speaking topics 2025 part 2')"><span class="qi">🗣️</span>Speaking Topics</button>
+        <button class="qg-btn" onclick="quickResearch('url','https://ielts.org/news')"><span class="qi">📰</span>IELTS.org News</button>
+        <button class="qg-btn" onclick="quickResearch('rss','https://www.ieltsadvantage.com/feed/')"><span class="qi">📡</span>IELTS Blog Feed</button>
+        <button class="qg-btn" onclick="quickResearch('search','Nepal study abroad IELTS requirement 2025')"><span class="qi">🌏</span>Study Abroad</button>
+      </div>
+    </div>
+
+    <!-- Results area -->
+    <div class="res-result-card" id="resResultCard" style="display:none">
+      <div class="res-result-hd">
+        <span id="resResultLabel">Results</span>
+        <div style="display:flex;gap:7px">
+          <button class="res-copy-btn" onclick="copyResResult()">📋 Copy</button>
+          <button class="res-copy-btn" onclick="sendResToChat()">💬 Send to Chat</button>
+        </div>
+      </div>
+      <div class="res-result-body" id="resResultBody">—</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ████ CANTEEN ████ -->
+<div class="panel" id="canteenPanel">
+  <div class="scroll-pane">
+    <div class="card">
+      <div class="card-hd"><div class="dot" style="background:var(--green)"></div>Today's Sales</div>
+      <div id="ct-sales"><div class="empty">Loading…</div></div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><div class="dot" style="background:var(--yellow)"></div>Staff Reports</div>
+      <div id="ct-reports"><div class="empty">Loading…</div></div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><div class="dot" style="background:var(--red)"></div>Credit Alerts</div>
+      <div id="ct-credits"><div class="empty">Loading…</div></div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><div class="dot"></div>Hygiene Status</div>
+      <div id="ct-hygiene"><div class="empty">Loading…</div></div>
+    </div>
+    <button onclick="loadCanteen()" style="
+      background:var(--surface);border:1px solid var(--border);color:var(--lilac);
+      border-radius:var(--radius);padding:12px;font-size:var(--fs-sm);font-weight:700;
+      cursor:pointer;width:100%">🔄 Refresh</button>
+  </div>
+</div>
+
+<!-- ████ FILES ████ -->
+<div class="panel" id="filesPanel">
+  <!-- Sub-nav -->
+  <div id="filesSubBar">
+    <div class="ftab active" id="ftab-project" onclick="switchFilesTab('project')">📂 Project Files</div>
+    <div class="ftab"        id="ftab-mac"     onclick="switchFilesTab('mac')">🖥️ Mac Files</div>
   </div>
 
-  <!-- ████ FILES ████ -->
-  <div class="panel" id="filesPanel">
-    <div id="fileSplit">
+  <!-- Project files sub-panel -->
+  <div class="file-subpanel active" id="fp-project">
+    <div class="fsplit">
       <div id="fileTree"></div>
       <div id="fileEditor">
         <div id="editorBar">
           <span id="editorPath" style="color:var(--text3)">Select a file…</span>
-          <div id="editorActions" style="display:none;gap:6px;display:none">
-            <button class="eb-btn" onclick="closeFile()">✕</button>
+          <div id="editorActions" style="display:none;gap:6px">
+            <button class="eb-btn" onclick="closeFile()">✕ Close</button>
             <button class="eb-btn save" onclick="saveFile()">💾 Save</button>
           </div>
         </div>
-        <div id="fileWelcome">
+        <div class="file-welcome" id="fileWelcome">
           <div class="fw-ico">📂</div>
           <p>Select a file from the tree<br>to view or edit it.</p>
         </div>
@@ -607,86 +1058,124 @@ body[data-state="speaking"]  #micBtn { background: #064e3b; border-color: var(--
     </div>
   </div>
 
-  <!-- ████ SETTINGS ████ -->
-  <div class="panel" id="settingsPanel">
-    <div class="scroll-pane">
-
-      <!-- System status -->
-      <div class="card">
-        <div class="card-hd"><div class="dot"></div>Baadar System</div>
-        <div id="baadar-status"><div class="empty">Loading…</div></div>
-      </div>
-
-      <!-- Change password -->
-      <div class="card">
-        <div class="card-hd"><div class="dot" style="background:var(--yellow)"></div>Change Password</div>
-        <div class="pwd-form">
-          <input class="pwd-input" id="pwdCur"  type="password" placeholder="Current password">
-          <input class="pwd-input" id="pwdNew"  type="password" placeholder="New password">
-          <input class="pwd-input" id="pwdConf" type="password" placeholder="Confirm new password"
-                 onkeydown="if(event.key==='Enter')changePassword()">
-          <div id="pwdMsg"></div>
-          <button class="pwd-btn" onclick="changePassword()">🔑 Update Password</button>
+  <!-- Mac files sub-panel -->
+  <div class="file-subpanel" id="fp-mac">
+    <div id="macShortcuts">
+      <button class="mac-sc" onclick="macNav('')">🏠 Home</button>
+      <button class="mac-sc" onclick="macNav(macHome+'/Desktop')">🖥️ Desktop</button>
+      <button class="mac-sc" onclick="macNav(macHome+'/Downloads')">⬇️ Downloads</button>
+      <button class="mac-sc" onclick="macNav(macHome+'/Documents')">📄 Documents</button>
+      <button class="mac-sc" onclick="macNav(macHome+'/Pictures')">🖼️ Pictures</button>
+      <button class="mac-sc" onclick="macNav(macHome+'/Movies')">🎬 Movies</button>
+      <button class="mac-sc" onclick="macNav(macHome+'/Music')">🎵 Music</button>
+    </div>
+    <div class="mac-toolbar">
+      <span id="macBreadcrumb">~</span>
+      <button class="mac-toolbar-btn mtb-new" onclick="macNewFolder()">📁+ New Folder</button>
+      <button class="mac-toolbar-btn mtb-del" id="macDelBtn" onclick="macDeleteSelected()" style="display:none">🗑️ Delete</button>
+    </div>
+    <div class="fsplit">
+      <div id="macTree"></div>
+      <div id="macFileEditor">
+        <div id="macEditorBar">
+          <span id="macEditorPath" style="color:var(--text3)">Select a file…</span>
+          <div id="macEditorActions" style="display:none;gap:6px">
+            <button class="eb-btn" onclick="macCloseFile()">✕ Close</button>
+          </div>
         </div>
-      </div>
-
-      <!-- Connections -->
-      <div class="card">
-        <div class="card-hd"><div class="dot" style="background:var(--blue)"></div>Connected Platforms</div>
-        <div id="conn-grid" class="conn-grid"></div>
-        <div style="margin-top:10px;font-size:11px;color:var(--text3);line-height:1.5">
-          Tap to toggle. YouTube & Instagram need an n8n webhook to post automatically.
+        <div class="file-welcome" id="macFileWelcome">
+          <div class="fw-ico">🖥️</div>
+          <p>Browse your Mac files<br>Photos, Videos, Documents and more</p>
         </div>
+        <textarea id="macCodeArea" spellcheck="false" readonly></textarea>
+        <div id="macImgArea"><img id="macImgEl" src="" alt=""></div>
       </div>
-
-      <!-- Voice enrollment -->
-      <div class="card">
-        <div class="card-hd"><div class="dot" style="background:var(--green)"></div>Voice Enrollment</div>
-        <p style="font-size:13px;color:var(--text2);line-height:1.55;margin-bottom:12px">
-          Enroll your voice to unlock privileged tools — Mac control, social posting, and more.
-        </p>
-        <button id="enrollBtn" onclick="enrollVoice()">🎙 Enroll My Voice (10 sec)</button>
-        <div id="enrollStatus" style="margin-top:8px;font-size:12px;color:var(--text3);text-align:center"></div>
-      </div>
-
-      <!-- Registered projects -->
-      <div class="card">
-        <div class="card-hd"><div class="dot"></div>Registered Projects</div>
-        <div class="list-row">
-          <div><div class="lv">Baadar / SaathiAI</div><div class="lk">~/SaathiAI</div></div>
-          <span class="badge bg-green">Active</span>
-        </div>
-        <div class="list-row">
-          <div><div class="lv" style="color:var(--text2)">PIELTS App</div><div class="lk">~/Downloads/ielts-practice-app</div></div>
-          <span class="badge bg-purple">Linked</span>
-        </div>
-        <div class="list-row">
-          <div><div class="lv" style="color:var(--text2)">HCGMS Canteen</div><div class="lk">~/Downloads/hcgms</div></div>
-          <span class="badge bg-purple">Linked</span>
-        </div>
-      </div>
-
     </div>
   </div>
+</div>
+
+<!-- ████ SETTINGS ████ -->
+<div class="panel" id="settingsPanel">
+  <div class="scroll-pane">
+    <div class="card">
+      <div class="card-hd"><div class="dot"></div>Baadar System</div>
+      <div id="baadar-status"><div class="empty">Loading…</div></div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><div class="dot" style="background:var(--yellow)"></div>Change Password</div>
+      <div class="pwd-form">
+        <input class="pwd-input" id="pwdCur"  type="password" placeholder="Current password">
+        <input class="pwd-input" id="pwdNew"  type="password" placeholder="New password">
+        <input class="pwd-input" id="pwdConf" type="password" placeholder="Confirm new password"
+               onkeydown="if(event.key==='Enter')changePassword()">
+        <div id="pwdMsg"></div>
+        <button class="pwd-btn" onclick="changePassword()">🔑 Update Password</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><div class="dot" style="background:var(--blue)"></div>Connected Platforms</div>
+      <div id="conn-grid" class="conn-grid"></div>
+      <div style="margin-top:11px;font-size:var(--fs-xs);color:var(--text3);line-height:1.55">
+        Tap to toggle. YouTube & Instagram need an n8n webhook to post automatically.
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><div class="dot" style="background:var(--green)"></div>Voice Enrollment</div>
+      <p style="font-size:var(--fs-sm);color:var(--text2);line-height:1.6;margin-bottom:13px">
+        Enroll your voice to unlock privileged tools — Mac control, social posting, and more.
+      </p>
+      <button id="enrollBtn" onclick="enrollVoice()">🎙 Enroll My Voice (10 sec)</button>
+      <div id="enrollStatus" style="margin-top:9px;font-size:var(--fs-sm);color:var(--text3);text-align:center"></div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><div class="dot"></div>Registered Projects</div>
+      <div class="list-row">
+        <div><div class="lv">Baadar / SaathiAI</div><div class="lk">~/SaathiAI</div></div>
+        <span class="badge bg-green">Active</span>
+      </div>
+      <div class="list-row">
+        <div><div class="lv" style="color:var(--text2)">PIELTS App</div><div class="lk">~/Downloads/ielts-practice-app</div></div>
+        <span class="badge bg-purple">Linked</span>
+      </div>
+      <div class="list-row">
+        <div><div class="lv" style="color:var(--text2)">HCGMS Canteen</div><div class="lk">~/Downloads/hcgms</div></div>
+        <span class="badge bg-purple">Linked</span>
+      </div>
+    </div>
+  </div>
+</div>
 
 </div><!-- /panels -->
 
-<!-- ── TASK DRAWER ── -->
+<!-- TASK DRAWER -->
 <div id="taskDrawer" onclick="toggleTasks()">
   <div class="task-sheet" onclick="event.stopPropagation()">
     <div class="task-hd">🔔 Tasks & Notifications</div>
     <div id="taskList"><div class="empty">No tasks right now.</div></div>
-    <div style="display:flex;gap:8px;margin-top:12px">
+    <div style="display:flex;gap:8px;margin-top:13px">
       <button onclick="clearDoneTasks()" style="
         flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--text2);
-        border-radius:var(--radius-sm);padding:9px;font-size:12px;font-weight:700;cursor:pointer">
+        border-radius:var(--radius-sm);padding:10px;font-size:var(--fs-sm);font-weight:700;cursor:pointer">
         Clear Done
       </button>
       <button onclick="toggleTasks()" style="
         flex:1;background:var(--purple);color:#fff;border:none;
-        border-radius:var(--radius-sm);padding:9px;font-size:12px;font-weight:700;cursor:pointer">
+        border-radius:var(--radius-sm);padding:10px;font-size:var(--fs-sm);font-weight:700;cursor:pointer">
         Close
       </button>
+    </div>
+  </div>
+</div>
+
+<!-- NEW FOLDER MODAL -->
+<div id="modal">
+  <div class="modal-box">
+    <div class="modal-title">📁 New Folder</div>
+    <input class="modal-input" id="modalInput" placeholder="Folder name"
+           onkeydown="if(event.key==='Enter')modalOk()">
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="modalClose()">Cancel</button>
+      <button class="modal-ok"     onclick="modalOk()">Create</button>
     </div>
   </div>
 </div>
@@ -696,14 +1185,15 @@ body[data-state="speaking"]  #micBtn { background: #064e3b; border-color: var(--
 <script>
 const BASE = '';
 const SID  = Math.random().toString(36).slice(2,10);
+let macHome = '';
 
-// ═══════════════════════════════ AUTH ═══════════════════════════════
+// ════════════════════════ AUTH ════════════════════════
 async function doLogin() {
   const pass = document.getElementById('loginPass').value;
   const err  = document.getElementById('loginErr');
   if (!pass) { err.textContent = 'Enter your password'; return; }
   try {
-    const r = await api('/api/v1/auth/login', 'POST', { password: pass }, false);
+    const r = await api('/api/v1/auth/login', 'POST', { password: pass }, true);
     const d = await r.json();
     if (d.ok) {
       document.getElementById('loginScreen').style.display = 'none';
@@ -716,27 +1206,21 @@ async function doLogin() {
     }
   } catch { err.textContent = 'Cannot connect — is Baadar running?'; }
 }
-
 async function doLogout() {
   await api('/api/v1/auth/logout', 'POST');
   document.getElementById('loginScreen').style.display = 'flex';
   document.getElementById('loginPass').focus();
 }
-
 async function checkAuth() {
-  try {
-    const r = await api('/api/v1/health');
-    return r.ok;
-  } catch { return false; }
+  try { const r = await api('/api/v1/health'); return r.ok; }
+  catch { return false; }
 }
 
-// ═══════════════════════════════ API HELPER ═══════════════════════════════
+// ════════════════════════ API ════════════════════════
 async function api(path, method = 'GET', body = null, withCreds = true) {
-  const opts = { method, credentials: withCreds ? 'include' : 'omit',
-                 headers: {} };
+  const opts = { method, credentials: withCreds ? 'include' : 'omit', headers: {} };
   if (body) { opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body); }
   const res = await fetch(BASE + path, opts);
-  // session expired / password changed → force a clean re-login instead of silent blank replies
   if (res.status === 401 && path !== '/api/v1/auth/login') {
     const ls = document.getElementById('loginScreen');
     if (ls) { ls.style.display = 'flex'; const lp = document.getElementById('loginPass'); if (lp) lp.focus(); }
@@ -745,53 +1229,128 @@ async function api(path, method = 'GET', body = null, withCreds = true) {
   return res;
 }
 
-// ═══════════════════════════════ TABS ═══════════════════════════════
+// ════════════════════════ TABS ════════════════════════
 function switchTab(name) {
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.getElementById(name + 'Panel').classList.add('active');
-  if (name === 'pielts')   loadPielts();
   if (name === 'canteen')  loadCanteen();
-  if (name === 'files')    loadTree('');
+  if (name === 'files')    { loadTree(''); if (!macHome) loadMacTree(''); }
   if (name === 'settings') { loadStatus(); loadConnections(); }
 }
 
-// ═══════════════════════════════ TOAST ═══════════════════════════════
-function toast(msg, ms = 2500) {
+// ════════════════════════ QUICK CHIPS ════════════════════════
+function qchip(prompt, label) {
+  switchTab('chat');
+  _pendingContentCapture = label || null;
+  document.getElementById('textIn').value = prompt;
+  sendText();
+}
+
+// ════════════════════════ RESEARCH PANEL ════════════════════════
+const RES_TOOLS = {
+  search:  { placeholder: 'Search the web… e.g. "IELTS tips 2025"',   hint: '🔍 Web Search — enter any topic or question' },
+  url:     { placeholder: 'Paste a URL to read… e.g. https://ielts.org', hint: '🌐 Read URL — paste any webpage URL' },
+  youtube: { placeholder: 'YouTube URL or search… e.g. https://youtube.com/watch?v=…', hint: '📺 YouTube — paste a video URL to get info & transcript' },
+  github:  { placeholder: 'GitHub repo… e.g. kortix-ai/suna or full URL', hint: '🐙 GitHub — enter owner/repo or paste the full GitHub URL' },
+  rss:     { placeholder: 'RSS/Atom feed URL… e.g. https://blog.example.com/feed', hint: '📰 RSS Feed — paste any RSS or Atom feed URL' },
+};
+let _currentResTool = 'search';
+let _lastResResult  = '';
+
+function selectResTool(tool, el) {
+  _currentResTool = tool;
+  document.querySelectorAll('.res-tool-btn').forEach(b => b.classList.remove('active-tool'));
+  el.classList.add('active-tool');
+  const cfg = RES_TOOLS[tool];
+  document.getElementById('resInput').placeholder = cfg.placeholder;
+  document.getElementById('resToolHint').textContent = cfg.hint;
+  document.getElementById('resInput').focus();
+}
+
+async function runResearch() {
+  const q = document.getElementById('resInput').value.trim();
+  if (!q) { toast('Enter a search query or URL first'); return; }
+  const btn = document.getElementById('resGoBtn');
+  btn.disabled = true; btn.textContent = '…';
+  const resultCard = document.getElementById('resResultCard');
+  const resultBody = document.getElementById('resResultBody');
+  const resultLabel = document.getElementById('resResultLabel');
+  resultCard.style.display = 'block';
+  resultBody.textContent = '⏳ Fetching…';
+  resultLabel.textContent = _currentResTool.toUpperCase() + ': ' + q.slice(0, 50);
+
+  // Build a Baadar chat prompt that uses the right internet_reach tool
+  const toolPrompts = {
+    search:  `Use the web_search tool to search for: "${q}". Return the top results as a clean summary with key facts and source info.`,
+    url:     `Use the read_webpage tool to read this URL and give me a clean summary of the main content: ${q}`,
+    youtube: `Use the youtube_info tool on this YouTube URL and give me the title, description summary, and key points from the video: ${q}`,
+    github:  `Use the github_repo tool to get info about this GitHub repo: ${q}. Tell me what it does, star count, and whether it's relevant to my pielts or Baadar projects.`,
+    rss:     `Use the rss_feed tool to read this RSS feed and give me the latest 5-8 articles with titles and short summaries: ${q}`,
+  };
+
+  try {
+    const r = await api('/api/v1/agent/chat', 'POST', {
+      text: toolPrompts[_currentResTool],
+      session_id: SID + '-research',
+      speaker_verified: false
+    });
+    const d = await r.json();
+    _lastResResult = d.reply || 'No results.';
+    resultBody.textContent = _lastResResult;
+  } catch(e) {
+    resultBody.textContent = '❌ Error: ' + e.message;
+  }
+  btn.disabled = false; btn.textContent = 'Go';
+}
+
+function quickResearch(tool, query) {
+  selectResTool(tool, document.getElementById('rtb-' + tool));
+  document.getElementById('resInput').value = query;
+  runResearch();
+}
+
+function copyResResult() {
+  if (!_lastResResult) return;
+  navigator.clipboard.writeText(_lastResResult).then(() => toast('📋 Copied to clipboard!'));
+}
+
+function sendResToChat() {
+  if (!_lastResResult) return;
+  switchTab('chat');
+  addMsg('bot', '📋 Research result:\n\n' + _lastResResult);
+  toast('Sent to chat!');
+}
+
+// ════════════════════════ TOAST ════════════════════════
+function toast(msg, ms = 2800) {
   const d = document.createElement('div');
   d.className = 'toast'; d.textContent = msg;
   document.getElementById('toastWrap').appendChild(d);
   setTimeout(() => d.remove(), ms);
 }
 
-// ═══════════════════════════════ CHAT ═══════════════════════════════
+// ════════════════════════ CHAT ════════════════════════
 function setState(s) {
   document.body.dataset.state = s;
   document.getElementById('stateLabel').textContent =
     s === 'listening' ? '🎙 Listening…' : s === 'thinking' ? '⏳ Baadar is thinking…' :
     s === 'speaking'  ? '🔊 Speaking…'  : '';
 }
-
-function now() {
-  return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-}
+function now() { return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
 
 function addMsg(role, text) {
   const log = document.getElementById('chatLog');
   const row = document.createElement('div');
   row.className = 'msg-row ' + (role === 'user' ? 'user' : 'bot');
-
   const avatar = document.createElement('div');
   avatar.className = 'avatar ' + (role === 'user' ? 'avatar-user' : 'avatar-bot');
   avatar.textContent = role === 'user' ? '👤' : '🤖';
-
   const bubble = document.createElement('div');
   bubble.className = 'bubble ' + (role === 'user' ? 'bubble-user' : 'bubble-bot');
   bubble.textContent = text;
-
   const time = document.createElement('div');
   time.className = 'msg-time'; time.textContent = now();
-
   if (role === 'user') {
     row.appendChild(time); row.appendChild(bubble); row.appendChild(avatar);
   } else {
@@ -799,6 +1358,38 @@ function addMsg(role, text) {
   }
   log.appendChild(row);
   log.scrollTop = log.scrollHeight;
+
+  // Copy button on every bot message
+  if (role === 'bot') {
+    const copyBtn = document.createElement('button');
+    copyBtn.className = 'msg-copy-btn';
+    copyBtn.title = 'Copy';
+    copyBtn.textContent = '📋';
+    copyBtn.onclick = () => {
+      navigator.clipboard.writeText(text).then(() => {
+        copyBtn.textContent = '✅';
+        setTimeout(() => { copyBtn.textContent = '📋'; }, 2000);
+      });
+    };
+    row.appendChild(copyBtn);
+
+    // If a content-capture is pending, populate the Create tab
+    // Skip if the reply looks like an error/tool-debug message
+    if (_pendingContentCapture) {
+      const errorPhrases = ['mistake with the arguments', 'function should include', 'unexpected keyword', 'tool_use', 'error_code', 'Let\'s try calling', 'tool call', 'I\'ll provide new arguments'];
+      const looksLikeError = errorPhrases.some(p => text.toLowerCase().includes(p.toLowerCase()));
+      if (!looksLikeError) {
+        const label = _pendingContentCapture;
+        _pendingContentCapture = null;
+        setTimeout(() => {
+          switchTab('create');
+          showContentReady(text, label);
+        }, 500);
+      }
+      // if it looks like error, leave _pendingContentCapture set so the NEXT reply is captured
+    }
+  }
+
   return bubble;
 }
 
@@ -820,14 +1411,10 @@ function appendStep(cls, text) {
   const s = document.createElement('span');
   s.className = 'st ' + cls; s.textContent = text;
   ensureSteps().appendChild(s);
-  const log = document.getElementById('chatLog');
-  log.scrollTop = log.scrollHeight;
+  document.getElementById('chatLog').scrollTop = 999999;
 }
-function finishSteps() {
-  if (stepsEl) { stepsEl.classList.add('done'); stepsEl = null; }
-}
+function finishSteps() { if (stepsEl) { stepsEl.classList.add('done'); stepsEl = null; } }
 
-// Activity polling
 let actPoll = null, lastEvtId = 0;
 function startPoll(sid) {
   stopPoll();
@@ -873,7 +1460,6 @@ async function sendMsg(text, spokenLang) {
     setState('idle');
   }
 }
-
 function sendText() {
   const el = document.getElementById('textIn');
   const t = el.value.trim();
@@ -881,11 +1467,8 @@ function sendText() {
   el.value = '';
   sendMsg(t);
 }
-function onKey(e) {
-  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendText(); }
-}
+function onKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendText(); } }
 
-// ── MIC ──
 let mediaRec = null, chunks = [], recording = false;
 async function toggleMic() {
   if (recording) { mediaRec?.stop(); return; }
@@ -922,7 +1505,6 @@ async function processAudio(stream) {
     }
   } catch { setState('idle'); }
 }
-
 function playAudio(b64, mime) {
   setState('speaking');
   const a = new Audio('data:' + mime + ';base64,' + b64);
@@ -938,11 +1520,8 @@ function speakReply(text, lang) {
   speechSynthesis.speak(u);
 }
 
-// ═══════════════════════════════ DRAFT APPROVAL ═══════════════════════════════
-const PLATFORM_ICONS = {
-  facebook:'📘', instagram:'📸', linkedin:'💼',
-  youtube:'▶️', tiktok:'🎵', x:'🐦'
-};
+// ════════════════════════ DRAFT APPROVAL ════════════════════════
+const PLATFORM_ICONS = {facebook:'📘',instagram:'📸',linkedin:'💼',youtube:'▶️',tiktok:'🎵',x:'🐦'};
 let draftPollTimer = null;
 
 async function checkPendingDraft() {
@@ -953,26 +1532,22 @@ async function checkPendingDraft() {
     else hideDraftCard();
   } catch {}
 }
-
 function showDraftCard(d) {
   const card = document.getElementById('draftCard');
   card.classList.add('show');
   document.getElementById('draftPlatformIcon').textContent  = PLATFORM_ICONS[d.platform] || '📨';
-  document.getElementById('draftPlatformLabel').textContent = (d.platform || '').charAt(0).toUpperCase() + (d.platform || '').slice(1);
+  document.getElementById('draftPlatformLabel').textContent = (d.platform||'').charAt(0).toUpperCase()+(d.platform||'').slice(1);
   document.getElementById('draftText').value  = d.content || '';
   const titleEl = document.getElementById('draftTitle');
   if (d.title) { titleEl.value = d.title; titleEl.style.display = 'block'; }
   else titleEl.style.display = 'none';
-  // start polling for updates
   clearInterval(draftPollTimer);
   draftPollTimer = setInterval(checkPendingDraft, 5000);
 }
-
 function hideDraftCard() {
   document.getElementById('draftCard').classList.remove('show');
   clearInterval(draftPollTimer);
 }
-
 async function approveDraft(postAll) {
   const platform = document.getElementById('draftPlatformLabel').textContent.toLowerCase();
   const content  = document.getElementById('draftText').value.trim();
@@ -982,21 +1557,18 @@ async function approveDraft(postAll) {
     const r = await api('/api/v1/content/approve', 'POST', { platform, content, title, post_all: postAll });
     const d = await r.json();
     hideDraftCard();
-    const msg = postAll
-      ? `✅ Posted to all platforms!`
-      : `✅ Posted to ${platform}!`;
+    const msg = postAll ? '✅ Posted to all platforms!' : '✅ Posted to ' + platform + '!';
     toast(msg);
     addMsg('bot', msg + (d.results ? '\n' + JSON.stringify(d.results, null, 2) : ''));
   } catch(e) { toast('Post failed: ' + e.message); }
 }
-
 async function discardDraft() {
   await api('/api/v1/content/pending', 'DELETE');
   hideDraftCard();
   toast('Draft discarded.');
 }
 
-// ═══════════════════════════════ TASKS ═══════════════════════════════
+// ════════════════════════ TASKS ════════════════════════
 function toggleTasks() {
   const d = document.getElementById('taskDrawer');
   const show = !d.classList.contains('show');
@@ -1014,86 +1586,73 @@ async function loadTasks() {
     const el = document.getElementById('taskList');
     if (!items.length) { el.innerHTML = '<div class="empty">No tasks right now.</div>'; return; }
     el.innerHTML = items.map(i => `
-      <div class="task-row" style="${i.done ? 'opacity:.4' : ''}">
+      <div class="task-row" style="${i.done?'opacity:.4':''}">
         <div class="task-text">
-          <span style="${i.done ? 'text-decoration:line-through' : ''}">${i.text || i.title || ''}</span>
-          ${i.link ? `<a href="${i.link}" target="_blank">🔗 ${i.link}</a>` : ''}
+          <span style="${i.done?'text-decoration:line-through':''}">${i.text||i.title||''}</span>
+          ${i.link?`<a href="${i.link}" target="_blank">🔗 ${i.link}</a>`:''}
         </div>
-        ${!i.done ? `<button class="task-done-btn" onclick="doneTask(${i.id})">Done</button>` : ''}
+        ${!i.done?`<button class="task-done-btn" onclick="doneTask(${i.id})">Done</button>`:''}
       </div>`).join('');
   } catch {}
 }
-async function doneTask(id) {
-  await api(`/api/v1/tasks/${id}/done`, 'POST');
-  loadTasks();
-}
-async function clearDoneTasks() {
-  await api('/api/v1/tasks/clear-done', 'POST');
-  loadTasks();
-  toast('Cleared completed tasks');
-}
+async function doneTask(id) { await api(`/api/v1/tasks/${id}/done`, 'POST'); loadTasks(); }
+async function clearDoneTasks() { await api('/api/v1/tasks/clear-done', 'POST'); loadTasks(); toast('Cleared completed tasks'); }
 
-// ═══════════════════════════════ PIELTS ═══════════════════════════════
+// ════════════════════════ PIELTS ════════════════════════
 async function loadPielts() {
   try {
     const r = await api('/api/v1/pielts/dashboard');
     const d = await r.json();
     const s = d.stats || {}, t = d.targets || {};
     const fmt = n => n >= 1000 ? (n/1000).toFixed(1)+'k' : String(n);
-    document.getElementById('pt-subs').textContent  = fmt(s.subscribers || 0);
-    document.getElementById('pt-views').textContent = fmt(s.views || 0);
-    document.getElementById('pt-vids').textContent  = s.videos || d.upload_count || 0;
+    document.getElementById('pt-subs').textContent  = fmt(s.subscribers||0);
+    document.getElementById('pt-views').textContent = fmt(s.views||0);
+    document.getElementById('pt-vids').textContent  = s.videos||d.upload_count||0;
     document.getElementById('pt-day').textContent   = '#'+(d.day||1);
     const sp = Math.min((s.subscribers||0)/(t.subscribers_goal||1000)*100,100);
     const vp = Math.min((s.views||0)/(t.views_goal||100000)*100,100);
     document.getElementById('pt-subs-f').style.width  = sp+'%';
     document.getElementById('pt-views-f').style.width = vp+'%';
-
     document.getElementById('pielts-goals').innerHTML = [
-      { label:'Subscribers', cur:s.subscribers||0, goal:t.subscribers_goal||1000, unit:'' },
-      { label:'Views',       cur:s.views||0,       goal:t.views_goal||100000,     unit:'' },
-      { label:'Revenue',     cur:0,                goal:t.monthly_revenue_goal_usd||60, unit:'$' },
+      {label:'Subscribers',cur:s.subscribers||0,goal:t.subscribers_goal||1000,unit:''},
+      {label:'Views',cur:s.views||0,goal:t.views_goal||100000,unit:''},
+      {label:'Revenue',cur:0,goal:t.monthly_revenue_goal_usd||60,unit:'$'},
     ].map(g => {
       const pct = Math.min(g.cur/g.goal*100,100).toFixed(0);
-      return `<div style="margin-bottom:13px">
-        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px">
+      return `<div style="margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;font-size:var(--fs-sm);margin-bottom:6px">
           <span style="color:var(--text2)">${g.label}</span>
           <span style="color:var(--lilac)">${g.unit}${g.cur.toLocaleString()} / ${g.unit}${g.goal.toLocaleString()}
-            <span style="color:var(--text3)">(${pct}%)</span>
-          </span>
+            <span style="color:var(--text3)">(${pct}%)</span></span>
         </div>
         <div class="prog-wrap"><div class="prog-fill" style="width:${pct}%"></div></div>
       </div>`;
     }).join('');
-
-    const costs = t.costs || [];
+    const costs = t.costs||[];
     document.getElementById('pielts-costs').innerHTML = costs.map(c =>
-      `<div class="list-row"><span class="lk">${c.name}</span>
-       <span class="lv" style="color:var(--yellow)">$${c.usd}/mo</span></div>`
-    ).join('') + (costs.length ? `<div class="list-row" style="border-top:1px solid var(--border2);margin-top:4px">
+      `<div class="list-row"><span class="lk">${c.name}</span><span class="lv" style="color:var(--yellow)">$${c.usd}/mo</span></div>`
+    ).join('')+(costs.length?`<div class="list-row" style="border-top:1px solid var(--border2);margin-top:5px">
       <span class="lk" style="color:#fff;font-weight:700">Total</span>
-      <span class="lv" style="color:var(--red)">$${costs.reduce((a,c)=>a+c.usd,0)}/mo</span>
-    </div>` : '');
-
-    const ups = d.uploads || [];
+      <span class="lv" style="color:var(--red)">$${costs.reduce((a,c)=>a+c.usd,0)}/mo</span></div>`:'');
+    const ups = d.uploads||[];
     document.getElementById('pielts-uploads').innerHTML = ups.length
       ? ups.slice(0,15).map(u=>`
-          <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--surface2)">
-            <span style="font-size:14px">▶️</span>
-            <div style="flex:1;overflow:hidden">
-              <div style="font-size:12px;color:#93c5fd;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
-                ${u.url ? `<a href="${u.url}" target="_blank" style="color:inherit;text-decoration:none">${u.title}</a>` : u.title}
-              </div>
-              <div style="font-size:10px;color:var(--text3)">${u.ts?.slice(0,10)||''}</div>
+        <div style="display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px solid var(--surface2)">
+          <span style="font-size:16px">▶️</span>
+          <div style="flex:1;overflow:hidden">
+            <div style="font-size:var(--fs-sm);color:#93c5fd;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+              ${u.url?`<a href="${u.url}" target="_blank" style="color:inherit;text-decoration:none">${u.title}</a>`:u.title}
             </div>
-          </div>`).join('')
+            <div style="font-size:var(--fs-xxs);color:var(--text3)">${u.ts?.slice(0,10)||''}</div>
+          </div>
+        </div>`).join('')
       : '<div class="empty">No uploads logged yet.</div>';
   } catch(e) {
     document.getElementById('pielts-tiles').innerHTML = `<div class="empty">Load error: ${e.message}</div>`;
   }
 }
 
-// ═══════════════════════════════ CANTEEN ═══════════════════════════════
+// ════════════════════════ CANTEEN ════════════════════════
 async function loadCanteen() {
   ['sales','reports','credits','hygiene'].forEach(id =>
     document.getElementById('ct-'+id).innerHTML = '<div class="empty">Loading…</div>');
@@ -1116,16 +1675,15 @@ function renderSection(id, data) {
     if (typeof v === 'object') v = JSON.stringify(v);
     const s = String(v).toLowerCase();
     const cls = s.includes('ok')||s.includes('done') ? 'bg-green'
-              : s.includes('miss')||s.includes('alert')||s.includes('over') ? 'bg-red'
-              : '';
+              : s.includes('miss')||s.includes('alert')||s.includes('over') ? 'bg-red' : '';
     return `<div class="list-row">
       <span class="lk">${k.replace(/_/g,' ')}</span>
-      <span class="lv ${cls ? 'badge '+cls : ''}">${v}</span>
+      <span class="lv ${cls?'badge '+cls:''}">${v}</span>
     </div>`;
   }).join('');
 }
 
-// ═══════════════════════════════ FILES ═══════════════════════════════
+// ════════════════════════ PROJECT FILES ════════════════════════
 const EXT_ICONS = {py:'🐍',js:'🟨',ts:'🔷',jsx:'⚛️',tsx:'⚛️',json:'📋',
   md:'📝',html:'🌐',css:'🎨',sh:'⚡',yaml:'📐',yml:'📐',
   sql:'🗃️',txt:'📄',env:'🔐',plist:'🍎',toml:'⚙️',log:'📜'};
@@ -1150,13 +1708,12 @@ async function loadTree(rel) {
     }
     for (const e of d.entries) {
       const ico = fIcon(e.name, e.type==='dir');
-      const size = e.size != null ? (e.size>1024?(e.size/1024).toFixed(1)+'k':e.size+'b') : '';
+      const size = e.size!=null ? (e.size>1024?(e.size/1024).toFixed(1)+'k':e.size+'b') : '';
       if (e.type === 'dir') {
         html += `<div class="ft-item ft-dir" onclick="loadTree('${e.path}')">
           <span class="ft-icon">${ico}</span><span class="ft-name">${e.name}/</span></div>`;
       } else {
-        html += `<div class="ft-item" id="ft-${btoa(e.path).replace(/=/g,'')}"
-          onclick="openFile('${e.path}',this)">
+        html += `<div class="ft-item" onclick="openFile('${e.path}',this)">
           <span class="ft-icon">${ico}</span>
           <span class="ft-name">${e.name}</span>
           <span class="ft-size">${size}</span></div>`;
@@ -1165,9 +1722,8 @@ async function loadTree(rel) {
     tree.innerHTML = html || '<div class="ft-item" style="color:var(--text3)">Empty</div>';
   } catch(e) { tree.innerHTML = `<div class="ft-item">Error: ${e.message}</div>`; }
 }
-
 async function openFile(rel, el) {
-  document.querySelectorAll('.ft-item').forEach(i => i.classList.remove('sel'));
+  document.querySelectorAll('#fileTree .ft-item').forEach(i => i.classList.remove('sel'));
   el?.classList.add('sel');
   try {
     const r = await api(`/api/v1/project/file?rel=${encodeURIComponent(rel)}`);
@@ -1177,7 +1733,7 @@ async function openFile(rel, el) {
     document.getElementById('editorPath').textContent = rel;
     document.getElementById('editorPath').style.color = 'var(--lilac)';
     const actions = document.getElementById('editorActions');
-    actions.style.display = 'flex'; actions.style.gap = '6px';
+    actions.style.display = 'flex';
     document.getElementById('fileWelcome').style.display = 'none';
     const ta = document.getElementById('codeArea');
     ta.style.display = 'block'; ta.value = d.content;
@@ -1190,7 +1746,7 @@ function closeFile() {
   document.getElementById('editorActions').style.display = 'none';
   document.getElementById('fileWelcome').style.display = 'flex';
   document.getElementById('codeArea').style.display = 'none';
-  document.querySelectorAll('.ft-item').forEach(i => i.classList.remove('sel'));
+  document.querySelectorAll('#fileTree .ft-item').forEach(i => i.classList.remove('sel'));
 }
 async function saveFile() {
   if (!currentFile) return;
@@ -1198,11 +1754,361 @@ async function saveFile() {
     const r = await api('/api/v1/project/file', 'POST',
       { rel: currentFile, content: document.getElementById('codeArea').value });
     const d = await r.json();
-    toast(d.ok ? `✅ Saved — ${currentFile.split('/').pop()}` : '❌ Save failed');
+    toast(d.ok ? '✅ Saved — ' + currentFile.split('/').pop() : '❌ Save failed');
   } catch(e) { toast('Save error: ' + e.message); }
 }
 
-// ═══════════════════════════════ SETTINGS ═══════════════════════════════
+// ════════════════════════ FILES SUB-TABS ════════════════════════
+function switchFilesTab(name) {
+  document.getElementById('ftab-project').classList.toggle('active', name==='project');
+  document.getElementById('ftab-mac').classList.toggle('active', name==='mac');
+  document.getElementById('fp-project').classList.toggle('active', name==='project');
+  document.getElementById('fp-mac').classList.toggle('active', name==='mac');
+  if (name === 'mac' && !macHome) loadMacTree('');
+}
+
+// ════════════════════════ MAC FILE MANAGER ════════════════════════
+let macCurrentPath = '';
+let macSelectedItem = null;
+
+async function loadMacTree(path) {
+  const tree = document.getElementById('macTree');
+  tree.innerHTML = '<div class="ft-item" style="color:var(--text3)">Loading…</div>';
+  try {
+    const url = path ? `/api/v1/mac/tree?path=${encodeURIComponent(path)}` : '/api/v1/mac/tree';
+    const r = await api(url);
+    const d = await r.json();
+    macCurrentPath = d.current;
+    macHome = d.home || macHome;
+
+    // breadcrumb
+    const rel = macCurrentPath.replace(macHome, '~');
+    document.getElementById('macBreadcrumb').textContent = rel;
+
+    let html = '';
+    if (d.parent) {
+      html += `<div class="ft-item ft-dir" onclick="loadMacTree('${escJ(d.parent)}')">
+        <span class="ft-icon">⬆️</span><span class="ft-name">.. back</span></div>`;
+    }
+    for (const e of d.entries) {
+      const ico = macIcon(e);
+      const size = e.size!=null ? (e.size>1048576?(e.size/1048576).toFixed(1)+'M':e.size>1024?(e.size/1024).toFixed(0)+'k':e.size+'b') : '';
+      if (e.type === 'dir') {
+        html += `<div class="ft-item ft-dir" onclick="loadMacTree('${escJ(e.path)}')">
+          <span class="ft-icon">${ico}</span><span class="ft-name">${escH(e.name)}/</span></div>`;
+      } else {
+        html += `<div class="ft-item" data-path="${escA(e.path)}" data-img="${e.is_image}" data-vid="${e.is_video}"
+          onclick="macSelectItem(this,'${escJ(e.path)}',${e.is_image},${e.is_video})">
+          <span class="ft-icon">${ico}</span>
+          <span class="ft-name">${escH(e.name)}</span>
+          <span class="ft-size">${size}</span></div>`;
+      }
+    }
+    tree.innerHTML = html || '<div class="ft-item" style="color:var(--text3)">Empty folder</div>';
+  } catch(e) { tree.innerHTML = `<div class="ft-item">Error: ${e.message}</div>`; }
+}
+
+function macNav(path) { loadMacTree(path); macCloseFile(); }
+
+function macIcon(e) {
+  if (e.type === 'dir') return '📂';
+  if (e.is_image) return '🖼️';
+  if (e.is_video) return '🎬';
+  const extMap = {pdf:'📋',doc:'📘',docx:'📘',xls:'📗',xlsx:'📗',
+    ppt:'📙',pptx:'📙',zip:'🗜️',rar:'🗜️',mp3:'🎵',m4a:'🎵',
+    wav:'🎵',py:'🐍',js:'🟨',html:'🌐',css:'🎨',json:'📋',txt:'📄',
+    md:'📝',sh:'⚡',csv:'🗃️',dmg:'💿',pkg:'📦',app:'🖥️'};
+  const ext = (e.ext||'').replace('.','');
+  return extMap[ext] || '📄';
+}
+
+function macSelectItem(el, path, isImg, isVid) {
+  document.querySelectorAll('#macTree .ft-item').forEach(i => i.classList.remove('sel'));
+  el.classList.add('sel');
+  macSelectedItem = path;
+  document.getElementById('macDelBtn').style.display = 'inline-block';
+  macOpenFile(path, isImg, isVid);
+}
+
+async function macOpenFile(path, isImg, isVid) {
+  try {
+    if (isImg) {
+      const r = await api(`/api/v1/mac/file?path=${encodeURIComponent(path)}`);
+      const d = await r.json();
+      if (d.image) {
+        macShowEditor(path);
+        document.getElementById('macCodeArea').style.display = 'none';
+        const imgArea = document.getElementById('macImgArea');
+        imgArea.style.display = 'flex';
+        document.getElementById('macImgEl').src = `data:${d.mime};base64,${d.b64}`;
+        return;
+      }
+    }
+    if (isVid) {
+      macShowEditor(path);
+      document.getElementById('macCodeArea').style.display = 'none';
+      document.getElementById('macImgArea').style.display = 'none';
+      document.getElementById('macFileWelcome').style.display = 'flex';
+      document.getElementById('macFileWelcome').querySelector('p').textContent = '🎬 Video file — cannot preview in browser\n' + path.split('/').pop();
+      return;
+    }
+    const r = await api(`/api/v1/mac/file?path=${encodeURIComponent(path)}`);
+    const d = await r.json();
+    macShowEditor(path);
+    document.getElementById('macImgArea').style.display = 'none';
+    if (d.binary) {
+      document.getElementById('macCodeArea').style.display = 'none';
+      document.getElementById('macFileWelcome').style.display = 'flex';
+      document.getElementById('macFileWelcome').querySelector('p').textContent = '🗂️ Binary file: ' + d.name + '\nSize: ' + (d.size/1024).toFixed(1) + ' KB';
+    } else {
+      document.getElementById('macFileWelcome').style.display = 'none';
+      const ta = document.getElementById('macCodeArea');
+      ta.style.display = 'block'; ta.value = d.content;
+    }
+  } catch(e) { toast('Cannot open: ' + e.message); }
+}
+
+function macShowEditor(path) {
+  document.getElementById('macEditorPath').textContent = path.replace(macHome, '~');
+  document.getElementById('macEditorPath').style.color = 'var(--lilac)';
+  document.getElementById('macEditorActions').style.display = 'flex';
+  document.getElementById('macFileWelcome').style.display = 'none';
+}
+
+function macCloseFile() {
+  macSelectedItem = null;
+  document.getElementById('macEditorPath').textContent = 'Select a file…';
+  document.getElementById('macEditorPath').style.color = 'var(--text3)';
+  document.getElementById('macEditorActions').style.display = 'none';
+  document.getElementById('macFileWelcome').style.display = 'flex';
+  document.getElementById('macFileWelcome').querySelector('p').textContent = 'Browse your Mac files\nPhotos, Videos, Documents and more';
+  document.getElementById('macCodeArea').style.display = 'none';
+  document.getElementById('macImgArea').style.display = 'none';
+  document.getElementById('macDelBtn').style.display = 'none';
+  document.querySelectorAll('#macTree .ft-item').forEach(i => i.classList.remove('sel'));
+}
+
+// New Folder
+let _modalCallback = null;
+function macNewFolder() { showModal('New Folder Name', (name) => {
+  const newPath = macCurrentPath + '/' + name;
+  api('/api/v1/mac/folder', 'POST', { path: newPath }).then(() => {
+    toast('📁 Created: ' + name); loadMacTree(macCurrentPath);
+  }).catch(e => toast('Error: ' + e.message));
+}); }
+
+async function macDeleteSelected() {
+  if (!macSelectedItem) return;
+  const name = macSelectedItem.split('/').pop();
+  if (!confirm(`Delete "${name}"?\nThis cannot be undone.`)) return;
+  try {
+    await api('/api/v1/mac/item', 'DELETE', { path: macSelectedItem });
+    toast('🗑️ Deleted: ' + name);
+    macCloseFile();
+    loadMacTree(macCurrentPath);
+  } catch(e) { toast('Delete failed: ' + e.message); }
+}
+
+// Modal helper
+function showModal(title, callback) {
+  document.querySelector('.modal-title').textContent = '📁 ' + title;
+  document.getElementById('modalInput').value = '';
+  _modalCallback = callback;
+  document.getElementById('modal').classList.add('show');
+  setTimeout(() => document.getElementById('modalInput').focus(), 100);
+}
+function modalClose() { document.getElementById('modal').classList.remove('show'); _modalCallback = null; }
+function modalOk() {
+  const val = document.getElementById('modalInput').value.trim();
+  if (!val) return;
+  modalClose();
+  if (_modalCallback) _modalCallback(val);
+}
+
+// ════════════════════════ CREATE / PUBLISH ════════════════════════
+let selectedPlatform = 'facebook';
+function selPlat(el) {
+  document.querySelectorAll('.plat-pill').forEach(p => p.classList.remove('sel'));
+  el.classList.add('sel');
+  selectedPlatform = el.dataset.p;
+}
+
+// Show content ready card with generated text
+function showContentReady(text, platformLabel) {
+  document.getElementById('postContentTA').value = text;
+  document.getElementById('postTitleIn').value = '';
+  document.getElementById('contentReadyPlatform').textContent = '📘 ' + (platformLabel || 'Facebook') + ' — ready to copy & paste';
+  document.getElementById('contentReadyCard').style.display = 'block';
+  document.getElementById('copyMetaBtn').textContent = '📋 Copy for Meta Business Suite';
+  document.getElementById('copyMetaBtn').classList.remove('copied');
+  document.getElementById('createMsg').textContent = '';
+  // scroll to it
+  document.getElementById('contentReadyCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// Generate content via Baadar chat and capture reply into content box
+function genContent(prompt, platformLabel) {
+  // Switch to chat, send, wait for reply, then populate content box
+  switchTab('chat');
+  document.getElementById('textIn').value = prompt;
+  // override sendMsg to capture reply
+  _pendingContentCapture = platformLabel || 'Facebook';
+  sendText();
+}
+
+// Generate goal-specific content
+const GOAL_PROMPTS = {
+  'fb-post': {
+    prompt: 'Write an engaging Facebook post for the pielts IELTS app page. LANGUAGE: English only — do NOT use Chinese or any other language. Pick one IELTS tip (writing, speaking, reading or listening). Include 2-3 hashtags. Under 150 words. End with a CTA linking to pielts.web.app. Output ONLY the English post text — no explanations, no tool calls.',
+    label: 'Facebook Post'
+  },
+  'fb-story': {
+    prompt: 'Write text for a Facebook Story for the pielts IELTS page. LANGUAGE: English only — do NOT use any other language. Either (1) one IELTS vocabulary word with its meaning and an example sentence, OR (2) a quick poll question for IELTS students. Short, under 60 words. Output ONLY the English story text — no explanations, no Chinese, no other language.',
+    label: 'Facebook Story'
+  },
+  'fb-ad': {
+    prompt: 'Write Facebook Ad copy for the pielts IELTS app. LANGUAGE: English only. Goal: get students to try the app free at pielts.web.app. Format:\nHeadline (max 40 chars):\nPrimary text (2-3 sentences):\nDescription (1 line):\nCTA button: \nOutput ONLY the English ad copy — no explanations, no tool calls.',
+    label: 'Facebook Ad'
+  },
+  'fb-invite': {
+    prompt: 'Give me a 5-step action plan to grow the pielts Facebook page from 25 to 100 followers fast. LANGUAGE: English only. Cover: content types that get shared, posting frequency, hashtags, engaging IELTS community, and asking followers to invite friends. Output ONLY in English — no other language.',
+    label: 'Growth Strategy'
+  }
+};
+
+function genGoalContent(goalKey) {
+  const g = GOAL_PROMPTS[goalKey];
+  if (!g) return;
+  genContent(g.prompt, g.label);
+}
+
+// Capture flag: after next bot reply, populate content box
+let _pendingContentCapture = null;
+
+// ── Image generation ──────────────────────────────────────────────────────
+let _lastImgPrompt = '';
+let _lastImgStyle  = 'social_media';
+let _lastImgB64    = '';
+let _lastImgMime   = 'image/png';
+
+function autoImagePrompt() {
+  const postText = document.getElementById('postContentTA').value.trim();
+  const style    = document.getElementById('imgStyleSel').value;
+  const inp      = document.getElementById('imgPromptIn');
+  if (!postText) { toast('Generate a post first, then Auto will build the image prompt.'); return; }
+
+  // Extract headline (first sentence, max 80 chars)
+  const headline = postText.split(/[.!?\n]/)[0].slice(0, 80).trim();
+
+  const styleHints = {
+    yeti_post:       `Mr. Yeti standing at a classroom chalkboard, pointing at the text "${headline}". Warm encouraging expression. Navy blue background. Bold white text overlay: "${headline}". pielts.web.app at bottom.`,
+    yeti_thumbnail:  `Mr. Yeti with wide shocked/excited expression, pointing at bold text "${headline}". High contrast background, eye-catching colours. pielts.web.app watermark bottom-right.`,
+    social_media:    `Square social media post, navy blue background, bold white typography: "${headline}". Modern clean design, pielts brand colours (navy + orange). pielts.web.app at bottom.`,
+    thumbnail:       `YouTube thumbnail, bold text "${headline}", high contrast, eye-catching, IELTS education theme. pielts.web.app watermark.`,
+    logo:            `Simple flat icon for IELTS app, minimal, clean, navy blue and orange palette, mountain and book motif.`
+  };
+
+  inp.value = styleHints[style] || styleHints.social_media;
+  toast('✨ Auto prompt ready — click Generate Image!');
+}
+
+async function generatePostImage() {
+  const prompt = document.getElementById('imgPromptIn').value.trim();
+  const style  = document.getElementById('imgStyleSel').value;
+  if (!prompt) { toast('Write an image description first, or click ✨ Auto from post'); return; }
+
+  _lastImgPrompt = prompt;
+  _lastImgStyle  = style;
+
+  const statusEl = document.getElementById('imgGenStatus');
+  const resultEl = document.getElementById('imgResultArea');
+  statusEl.textContent = '🎨 Generating image with Gemini AI… (15–30 sec)';
+  resultEl.style.display = 'none';
+
+  try {
+    const res = await fetch('/api/v1/generate_image', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt, style })
+    });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || 'Generation failed');
+
+    _lastImgB64  = data.image;
+    _lastImgMime = data.mime || 'image/png';
+
+    const img = document.getElementById('genImgEl');
+    img.src = `data:${_lastImgMime};base64,${_lastImgB64}`;
+    resultEl.style.display = 'block';
+    statusEl.textContent = '✅ Image ready — download and add to Meta Business Suite!';
+    toast('🎨 Image generated! Download it and click Add Photo in Meta.');
+  } catch (e) {
+    statusEl.textContent = '❌ ' + e.message;
+    toast('Image generation failed: ' + e.message);
+  }
+}
+
+function downloadGenImage() {
+  if (!_lastImgB64) return;
+  const ext  = _lastImgMime.includes('png') ? 'png' : 'jpg';
+  const link = document.createElement('a');
+  link.href     = `data:${_lastImgMime};base64,${_lastImgB64}`;
+  link.download = `pielts-post-${Date.now()}.${ext}`;
+  link.click();
+  toast('⬇️ Image saved to Downloads!');
+}
+
+function regenerateImage() {
+  const inp = document.getElementById('imgPromptIn');
+  if (!inp.value.trim() && _lastImgPrompt) inp.value = _lastImgPrompt;
+  generatePostImage();
+}
+
+function copyForMeta() {
+  const content = document.getElementById('postContentTA').value.trim();
+  if (!content) return;
+  navigator.clipboard.writeText(content).then(() => {
+    const btn = document.getElementById('copyMetaBtn');
+    btn.classList.add('copied');
+    btn.innerHTML = '✅ Copied! Now go to Meta Business Suite → Create Post → Paste (⌘V)';
+    setTimeout(() => {
+      btn.classList.remove('copied');
+      btn.innerHTML = '<span>📋</span> Copy for Meta Business Suite';
+    }, 5000);
+    toast('📋 Copied! Switch to Meta Business Suite and paste.');
+  }).catch(() => {
+    // fallback: select all text
+    document.getElementById('postContentTA').select();
+    document.execCommand('copy');
+    toast('📋 Copied!');
+  });
+}
+
+function clearContent() {
+  document.getElementById('postContentTA').value = '';
+  document.getElementById('postTitleIn').value = '';
+  document.getElementById('createMsg').textContent = '';
+  document.getElementById('contentReadyCard').style.display = 'none';
+}
+
+function quickGen(prompt) {
+  switchTab('chat');
+  document.getElementById('textIn').value = prompt;
+  sendText();
+}
+
+async function aiDraftPost() {
+  const content = document.getElementById('postContentTA').value.trim();
+  const prompt  = content
+    ? `Improve this Facebook post for the pielts IELTS page and make it more engaging, add relevant hashtags if missing: ${content}`
+    : `Write a Facebook post for the pielts IELTS page about a useful IELTS tip`;
+  _pendingContentCapture = 'Facebook';
+  switchTab('chat');
+  document.getElementById('textIn').value = prompt;
+  sendText();
+}
+
+// ════════════════════════ SETTINGS ════════════════════════
 async function loadStatus() {
   try {
     const r = await api('/api/v1/baadar/status');
@@ -1211,19 +2117,12 @@ async function loadStatus() {
     dot.classList.toggle('offline', !d.online);
     dot.title = d.online ? 'Online' : 'Offline — using Ollama';
     document.getElementById('baadar-status').innerHTML = `
-      <div class="list-row"><span class="lk">Brain</span>
-        <span class="badge bg-purple">${d.provider}</span></div>
-      <div class="list-row"><span class="lk">Model</span>
-        <span class="lv" style="color:var(--lilac);font-size:12px">${d.model}</span></div>
-      <div class="list-row"><span class="lk">Internet</span>
-        <span class="badge ${d.online ? 'bg-green' : 'bg-yellow'}">${d.online ? 'Online' : 'Offline'}</span></div>
-      <div class="list-row"><span class="lk">Ollama</span>
-        <span class="badge ${d.ollama_ready ? 'bg-green' : 'bg-red'}">${d.ollama_ready ? 'Ready' : 'Not running'}</span></div>
-      <div class="list-row"><span class="lk">Tools</span>
-        <span class="lv" style="color:var(--green)">${d.tools} available</span></div>`;
-  } catch {
-    document.getElementById('baadar-status').innerHTML = '<div class="empty">Could not load</div>';
-  }
+      <div class="list-row"><span class="lk">Brain</span><span class="badge bg-purple">${d.provider}</span></div>
+      <div class="list-row"><span class="lk">Model</span><span class="lv" style="color:var(--lilac);font-size:var(--fs-sm)">${d.model}</span></div>
+      <div class="list-row"><span class="lk">Internet</span><span class="badge ${d.online?'bg-green':'bg-yellow'}">${d.online?'Online':'Offline'}</span></div>
+      <div class="list-row"><span class="lk">Ollama</span><span class="badge ${d.ollama_ready?'bg-green':'bg-red'}">${d.ollama_ready?'Ready':'Not running'}</span></div>
+      <div class="list-row"><span class="lk">Tools</span><span class="lv" style="color:var(--green)">${d.tools} available</span></div>`;
+  } catch { document.getElementById('baadar-status').innerHTML = '<div class="empty">Could not load</div>'; }
 }
 
 async function changePassword() {
@@ -1231,18 +2130,16 @@ async function changePassword() {
   const nw   = document.getElementById('pwdNew').value;
   const conf = document.getElementById('pwdConf').value;
   const msg  = document.getElementById('pwdMsg');
-  if (!cur || !nw) { msg.style.color='var(--red)'; msg.textContent='Fill all fields'; return; }
-  if (nw !== conf)  { msg.style.color='var(--red)'; msg.textContent='Passwords do not match'; return; }
-  if (nw.length < 4){ msg.style.color='var(--red)'; msg.textContent='Min 4 characters'; return; }
+  if (!cur||!nw) { msg.style.color='var(--red)'; msg.textContent='Fill all fields'; return; }
+  if (nw!==conf) { msg.style.color='var(--red)'; msg.textContent='Passwords do not match'; return; }
+  if (nw.length<4){ msg.style.color='var(--red)'; msg.textContent='Min 4 characters'; return; }
   try {
     const r = await api('/api/v1/auth/change-password','POST',{current:cur,new_password:nw});
     const d = await r.json();
     if (d.ok) {
       msg.style.color='var(--green)'; msg.textContent='✅ Password updated!';
       ['pwdCur','pwdNew','pwdConf'].forEach(id => document.getElementById(id).value='');
-    } else {
-      msg.style.color='var(--red)'; msg.textContent='❌ ' + (d.error||'Failed');
-    }
+    } else { msg.style.color='var(--red)'; msg.textContent='❌ '+(d.error||'Failed'); }
   } catch(e) { msg.style.color='var(--red)'; msg.textContent='Error: '+e.message; }
 }
 
@@ -1253,22 +2150,21 @@ async function loadConnections() {
     const ICONS = {facebook:'📘',instagram:'📸',tiktok:'🎵',youtube:'▶️',linkedin:'💼',x:'🐦'};
     document.getElementById('conn-grid').innerHTML = Object.entries(d.connections).map(([p,c])=>
       `<div class="conn-chip ${c.connected?'on':''}" onclick="toggleConn('${p}')">
-        <div class="conn-dot"></div>${ICONS[p]||'🔗'} ${p}
-      </div>`).join('');
+        <div class="conn-dot"></div>${ICONS[p]||'🔗'} ${p}</div>`).join('');
   } catch {}
 }
 async function toggleConn(platform) {
   try {
     const r1 = await api('/api/v1/connections');
     const d1 = await r1.json();
-    const cur = d1.connections[platform]?.connected || false;
+    const cur = d1.connections[platform]?.connected||false;
     await api('/api/v1/connections','POST',{platform,connected:!cur});
     loadConnections();
-    toast((cur?'🔴 Disconnected ':'🟢 Connected ') + platform);
+    toast((cur?'🔴 Disconnected ':'🟢 Connected ')+platform);
   } catch {}
 }
 
-// ═══════════════════════════════ VOICE ENROLL ═══════════════════════════════
+// ════════════════════════ VOICE ENROLL ════════════════════════
 async function enrollVoice() {
   const btn = document.getElementById('enrollBtn');
   const status = document.getElementById('enrollStatus');
@@ -1292,7 +2188,12 @@ async function enrollVoice() {
   } catch(e) { btn.disabled=false; status.textContent='❌ '+e.message; }
 }
 
-// ═══════════════════════════════ BOOT ═══════════════════════════════
+// ════════════════════════ UTILS ════════════════════════
+function escJ(s) { return s.replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
+function escH(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function escA(s) { return s.replace(/"/g,'&quot;'); }
+
+// ════════════════════════ BOOT ════════════════════════
 async function bootApp() {
   try {
     const r = await api('/api/v1/baadar/status');
@@ -1307,7 +2208,7 @@ async function bootApp() {
     b.textContent = n; b.classList.toggle('show', n > 0);
   } catch {}
   if (!document.getElementById('chatLog').children.length) {
-    addMsg('bot', 'Namaste Ajay! 🙏\n\nI\'m ready. Try:\n• "Aaja ko sales kati bhayo?"\n• "Draft a Facebook post about today\'s momo"\n• "What files are in the saathi folder?"');
+    addMsg('bot', 'Namaste Ajay! 🙏\n\nI\'m ready. Quick shortcuts:\n• Tap the chips above ↑ for instant FB Post, YT Script, Canteen check\n• ✍️ Create tab → 🚀 Full Day Kit generates everything at once\n• 🔍 Research tab → search web, read URLs, YouTube, GitHub\n• Or just type / speak anything below 👇');
   }
   checkPendingDraft();
 }

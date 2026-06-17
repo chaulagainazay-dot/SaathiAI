@@ -178,6 +178,65 @@ def daily_health():
         _notify("🩺 Baadar health", f"check error: {str(e)[:100]}")
 
 
+def memory_reflector():
+    """2am nightly: Suna-style memory reflector — reads recent activity + feedback,
+    updates saathi/memory/ files so every session starts with current context."""
+    from pathlib import Path
+    import json as _json
+
+    memory_dir = Path(__file__).parent / "memory"
+    memory_dir.mkdir(exist_ok=True)
+    integrations_file = memory_dir / "integrations.md"
+
+    try:
+        from .agent import SaathiAgent
+        from . import selfimprove
+
+        # Read recent feedback entries (last 20)
+        recent_feedback = []
+        try:
+            import sqlite3
+            conn = sqlite3.connect(config.DB_PATH, check_same_thread=False)
+            rows = conn.execute(
+                "SELECT kind, detail FROM feedback ORDER BY ts DESC LIMIT 20"
+            ).fetchall()
+            conn.close()
+            recent_feedback = [f"{r[0]}: {r[1][:200]}" for r in rows if r[1]]
+        except Exception:
+            pass
+
+        if not recent_feedback:
+            return  # nothing to reflect on
+
+        # Ask the LLM to produce memory update notes
+        agent = SaathiAgent()
+        prompt = (
+            "You are Baadar's memory reflector. Review this feedback log and produce "
+            "a brief update (3-5 bullet points) for the conventions.md memory file. "
+            "Focus on NEW patterns, mistakes to avoid, or preferences Ajay expressed. "
+            "Output ONLY the bullet points — no preamble, no explanation.\n\n"
+            "Recent feedback:\n" + "\n".join(recent_feedback)
+        )
+        notes = agent.complete(
+            "You are a memory reflector. Output only brief bullet-point updates.",
+            prompt, max_tokens=300)
+
+        if not notes or len(notes) < 20:
+            return
+
+        # Append new learnings to conventions.md under a dated section
+        conv_file = memory_dir / "conventions.md"
+        if conv_file.exists():
+            ts = datetime.now().strftime("%Y-%m-%d")
+            existing = conv_file.read_text(encoding="utf-8")
+            # Only append if this date isn't already there
+            if ts not in existing:
+                with open(conv_file, "a", encoding="utf-8") as f:
+                    f.write(f"\n\n## Auto-learned {ts}\n{notes}\n")
+    except Exception:
+        pass  # memory reflector must never crash the scheduler
+
+
 def weekly_performance():
     """Sunday 10am: what's working on YouTube → feed insight back."""
     try:
@@ -240,6 +299,7 @@ JOBS = [
     (20, 0, None, daily_autopost),     # every day 8:00pm — auto-post next queued video
     (21, 0, None, canteen_summary),    # every day 9:00pm
     (23, 30, 6, memory_backup),        # Sunday 11:30pm (weekday 6 = Sunday)
+    (2, 0, None, memory_reflector),    # every day 2:00am — Suna-style memory reflection
 ]
 
 

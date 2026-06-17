@@ -5,12 +5,72 @@ Two interchangeable brains:
   - Claude via the Anthropic API
 """
 import json
+from pathlib import Path
 
 from . import config
 from . import activity
 from .persona import SYSTEM_PROMPT
 from .memory import Memory
 from .tools.registry import TOOL_SCHEMAS, execute_tool
+
+# ---------- Suna-style skills + memory loader ----------
+
+_SKILLS_DIR = Path(__file__).parent / "skills"
+_MEMORY_DIR = Path(__file__).parent / "memory"
+
+# keyword → skill folder name (order = priority — first match wins)
+_SKILL_ROUTES = {
+    "deep-research": [
+        "search for", "research", "look up", "check online",
+        "youtube info", "youtube subtitles", "github", "rss feed",
+        "news about", "what is", "who is", "how does", "tell me about",
+        "find information", "find out",
+    ],
+    "canteen-ops": [
+        "canteen", "hcg", "hcgms", "sajana", "yabesh", "hasina",
+        "aayush", "nishant", "revenue", "sales", "credit", "report",
+        "hygiene", "npr", "daily summary", "target",
+    ],
+    "ielts-teaching": [
+        "ielts", "band score", "writing task", "speaking part",
+        "listening section", "reading task", "essay", "ielts vocabulary",
+        "ielts grammar", "general training", "task 1", "task 2",
+    ],
+    "content-creation": [
+        "post", "caption", "script", "story", "facebook", "instagram",
+        "youtube", "reel", "short video", "blog post", "content", "yeti",
+        "mr yeti", "publish", "write for", "draft a", "generate a post",
+    ],
+}
+
+
+def _load_skill(user_text: str) -> str:
+    """Return the SKILL.md content for the best-matching skill, or ''.
+    Uses score-based matching (most keyword hits wins) to handle overlap."""
+    text = user_text.lower()
+    best_skill, best_score = None, 0
+    for skill_name, keywords in _SKILL_ROUTES.items():
+        score = sum(1 for kw in keywords if kw in text)
+        if score > best_score:
+            best_score, best_skill = score, skill_name
+    if best_skill and best_score > 0:
+        skill_file = _SKILLS_DIR / best_skill / "SKILL.md"
+        if skill_file.exists():
+            return skill_file.read_text(encoding="utf-8")
+    return ""
+
+
+def _load_memory() -> str:
+    """Return a compact project-memory block from saathi/memory/*.md."""
+    if not _MEMORY_DIR.exists():
+        return ""
+    parts = []
+    # Always load conventions + decisions (most useful context)
+    for name in ("conventions.md", "decisions.md", "overview.md"):
+        f = _MEMORY_DIR / name
+        if f.exists():
+            parts.append(f"## {name}\n" + f.read_text(encoding="utf-8")[:1200])
+    return "\n\n".join(parts)
 
 MAX_TOOL_ITERATIONS = 8
 
@@ -74,6 +134,17 @@ class SaathiAgent:
         facts = self.memory.relevant_facts(user_text, limit=4)
 
         system = SYSTEM_PROMPT
+
+        # Suna-style: inject project memory (conventions, decisions, overview)
+        memory_ctx = _load_memory()
+        if memory_ctx:
+            system += f"\n\n<project-memory>\n{memory_ctx}\n</project-memory>"
+
+        # Suna-style: inject task-specific skill
+        skill_content = _load_skill(user_text)
+        if skill_content:
+            system += f"\n\n<skill>\n{skill_content}\n</skill>"
+
         if facts:
             system += "\n\n# Things you remember about Ajay\n" + "\n".join(f"- {f}" for f in facts)
         system += f"\n\n# Session\nSpeaker verified as Ajay: {speaker_verified}"
@@ -141,8 +212,16 @@ class SaathiAgent:
                         break
                     if attempt < attempts - 1:
                         time.sleep(backoff * (attempt + 1))
-        # busy/exhausted — fall back so a reply still comes. Groq → Gemini (fast
-        # cloud) → local Ollama; Gemini → local Ollama.
+                except Exception as e:
+                    # Network offline or DNS failure — go straight to Ollama
+                    err_s = str(e).lower()
+                    if any(k in err_s for k in ("connect", "network", "name or service",
+                                                "nodename", "timeout", "unreachable")):
+                        last_err = e
+                        break  # skip remaining attempts, fall through to Ollama
+                    raise
+        # busy/exhausted/offline — fall back so a reply still comes.
+        # Groq → Gemini (fast cloud) → local Ollama; Gemini → local Ollama.
         if self.provider == "groq" and config.GOOGLE_API_KEY:
             try:
                 from openai import OpenAI
