@@ -74,3 +74,6 @@ PORT = int(os.getenv("SAATHI_PORT", "8765"))
 
 # --- Memory ---
 DB_PATH = ROOT / "data" / "saathi.db"
+
+# --- Internal auth bypass (server calling its own API: health check, stage_draft) ---
+SAATHI_TOKEN = os.getenv("SAATHI_TOKEN", "")

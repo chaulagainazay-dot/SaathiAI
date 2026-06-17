@@ -1,0 +1,235 @@
+{
+  "name": "Baadar — Canteen Supabase Alert",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 1
+            }
+          ]
+        }
+      },
+      "id": "schedule-hourly",
+      "name": "Schedule: Every Hour",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/rpc/get_today_summary",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $env.SUPABASE_SERVICE_KEY }}"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.SUPABASE_SERVICE_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": []
+        }
+      },
+      "id": "fetch-sales",
+      "name": "Supabase: Fetch Today Sales",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/staff_reports?date=eq.{{ $now.format('yyyy-MM-dd') }}&select=staff_name,submitted",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $env.SUPABASE_SERVICE_KEY }}"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.SUPABASE_SERVICE_KEY }}"
+            }
+          ]
+        }
+      },
+      "id": "fetch-reports",
+      "name": "Supabase: Fetch Staff Reports",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [460, 480]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/credit_accounts?balance=gt.3000&select=account_name,balance&order=balance.desc&limit=10",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $env.SUPABASE_SERVICE_KEY }}"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.SUPABASE_SERVICE_KEY }}"
+            }
+          ]
+        }
+      },
+      "id": "fetch-credits",
+      "name": "Supabase: Fetch Credit Alerts",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [460, 640]
+    },
+    {
+      "parameters": {
+        "jsCode": "const sales = $('Supabase: Fetch Today Sales').item.json;\nconst reports = $('Supabase: Fetch Staff Reports').all().map(i => i.json);\nconst credits = $('Supabase: Fetch Credit Alerts').all().map(i => i.json);\n\nconst totalSales = sales.total_sales || 0;\nconst target = 30000;\nconst gap = target - totalSales;\nconst hour = new Date().getHours();\n\n// Only alert if worth alerting\nconst alerts = [];\n\n// Low sales alerts (only during business hours)\nif (hour >= 9 && hour <= 21) {\n  if (totalSales < 10000 && hour >= 14) {\n    alerts.push({ type: 'low_sales_critical', sales: totalSales, gap });\n  } else if (totalSales < 15000 && hour >= 18) {\n    alerts.push({ type: 'low_sales_warning', sales: totalSales, gap });\n  }\n}\n\n// Missing reports (9pm check)\nif (hour === 21) {\n  const missing = reports.filter(r => !r.submitted).map(r => r.staff_name);\n  if (missing.length > 0) {\n    alerts.push({ type: 'missing_reports', staff: missing });\n  }\n}\n\n// Credit over limit (check at 9am and 3pm)\nif (hour === 9 || hour === 15) {\n  if (credits.length > 0) {\n    alerts.push({ type: 'credit_over_limit', accounts: credits });\n  }\n}\n\n// Full 9pm summary (always)\nif (hour === 21) {\n  alerts.push({ \n    type: 'daily_summary',\n    sales: totalSales,\n    target,\n    gap,\n    achieved: totalSales >= target\n  });\n}\n\nreturn [{ json: { alerts, sales: totalSales, target, gap, hour, reports, credits } }];"
+      },
+      "id": "analyze",
+      "name": "Analyze & Decide Alerts",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [700, 460]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{ $json.alerts.length }}",
+              "operation": "larger",
+              "value2": 0
+            }
+          ]
+        }
+      },
+      "id": "has-alerts",
+      "name": "Has Alerts?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [920, 460]
+    },
+    {
+      "parameters": {
+        "jsCode": "const { alerts, sales, target, gap, credits } = $input.item.json;\nconst lines = [];\n\nfor (const a of alerts) {\n  if (a.type === 'daily_summary') {\n    lines.push(a.achieved\n      ? `✅ Daily summary: NPR ${sales.toLocaleString()} — target hit! 🎉`\n      : `📊 Daily summary: NPR ${sales.toLocaleString()} / ${target.toLocaleString()} — NPR ${gap.toLocaleString()} short`);\n  }\n  if (a.type === 'low_sales_critical') {\n    lines.push(`🔴 LOW SALES ALERT: Only NPR ${a.sales.toLocaleString()} by now — NPR ${a.gap.toLocaleString()} behind target. Accelerate!`);\n  }\n  if (a.type === 'low_sales_warning') {\n    lines.push(`🟡 Sales check: NPR ${a.sales.toLocaleString()} so far — NPR ${a.gap.toLocaleString()} still needed before close.`);\n  }\n  if (a.type === 'missing_reports') {\n    lines.push(`⚠️ Missing daily reports from: ${a.staff.join(', ')} — remind them to submit.`);\n  }\n  if (a.type === 'credit_over_limit') {\n    const list = a.accounts.map(c => `${c.account_name}: NPR ${c.balance}`).join(', ');\n    lines.push(`💳 Credit over NPR 3,000: ${list}`);\n  }\n}\n\nreturn [{ json: { message: '🍴 Baadar Canteen Alert\\n\\n' + lines.join('\\n') } }];"
+      },
+      "id": "format-message",
+      "name": "Format Alert Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1140, 380]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/sendMessage",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chat_id",
+              "value": "={{ $env.TELEGRAM_CHAT_ID }}"
+            },
+            {
+              "name": "text",
+              "value": "={{ $json.message }}"
+            }
+          ]
+        }
+      },
+      "id": "telegram-alert",
+      "name": "Telegram: Send Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1360, 380]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://127.0.0.1:8765/api/v1/agent/chat",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "={{ $('Format Alert Message').item.json.message }} — Process this canteen alert, update tasks panel, and be ready to answer Ajay's follow-up questions."
+            },
+            {
+              "name": "session_id",
+              "value": "n8n-canteen"
+            }
+          ]
+        }
+      },
+      "id": "notify-baadar",
+      "name": "Notify Baadar Agent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1360, 520]
+    }
+  ],
+  "connections": {
+    "Schedule: Every Hour": {
+      "main": [
+        [
+          {"node": "Supabase: Fetch Today Sales", "type": "main", "index": 0},
+          {"node": "Supabase: Fetch Staff Reports", "type": "main", "index": 0},
+          {"node": "Supabase: Fetch Credit Alerts", "type": "main", "index": 0}
+        ]
+      ]
+    },
+    "Supabase: Fetch Today Sales": {
+      "main": [[{"node": "Analyze & Decide Alerts", "type": "main", "index": 0}]]
+    },
+    "Supabase: Fetch Staff Reports": {
+      "main": [[{"node": "Analyze & Decide Alerts", "type": "main", "index": 0}]]
+    },
+    "Supabase: Fetch Credit Alerts": {
+      "main": [[{"node": "Analyze & Decide Alerts", "type": "main", "index": 0}]]
+    },
+    "Analyze & Decide Alerts": {
+      "main": [[{"node": "Has Alerts?", "type": "main", "index": 0}]]
+    },
+    "Has Alerts?": {
+      "main": [
+        [{"node": "Format Alert Message", "type": "main", "index": 0}],
+        []
+      ]
+    },
+    "Format Alert Message": {
+      "main": [
+        [
+          {"node": "Telegram: Send Alert", "type": "main", "index": 0},
+          {"node": "Notify Baadar Agent", "type": "main", "index": 0}
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "_comment": "SETUP: 1) Import into n8n. 2) Set env vars in n8n: SUPABASE_URL, SUPABASE_SERVICE_KEY, TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID. 3) Create the Supabase RPC function get_today_summary (SQL below). 4) Activate. SUPABASE SQL: CREATE OR REPLACE FUNCTION get_today_summary() RETURNS json AS $$ SELECT json_build_object('total_sales', COALESCE(SUM(amount), 0), 'transaction_count', COUNT(*), 'date', CURRENT_DATE) FROM sales WHERE date = CURRENT_DATE; $$ LANGUAGE sql SECURITY DEFINER;"
+}

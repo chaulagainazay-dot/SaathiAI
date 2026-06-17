@@ -56,27 +56,113 @@ def _load_skill(user_text: str) -> str:
     if best_skill and best_score > 0:
         skill_file = _SKILLS_DIR / best_skill / "SKILL.md"
         if skill_file.exists():
-            return skill_file.read_text(encoding="utf-8")
+            return skill_file.read_text(encoding="utf-8")[:1500]
     return ""
 
 
 def _load_memory() -> str:
-    """Return a compact project-memory block from saathi/memory/*.md."""
+    """Return a compact project-memory block from saathi/memory/*.md.
+    Keep under 400 chars per file to stay within Groq's 12k TPM limit."""
     if not _MEMORY_DIR.exists():
         return ""
     parts = []
-    # Always load conventions + decisions (most useful context)
-    for name in ("conventions.md", "decisions.md", "overview.md"):
+    for name in ("conventions.md", "decisions.md"):
         f = _MEMORY_DIR / name
         if f.exists():
-            parts.append(f"## {name}\n" + f.read_text(encoding="utf-8")[:1200])
+            parts.append(f"## {name}\n" + f.read_text(encoding="utf-8")[:400])
     return "\n\n".join(parts)
 
 MAX_TOOL_ITERATIONS = 8
 
 
+# Tools that are always sent (core actions every request might need)
+_CORE_TOOLS = {
+    "remember_fact", "manage_tasks", "record_feedback",
+    "look_at_screen", "check_messages", "run_shell",
+}
+
+# Keyword → tool names to add for that context
+_TOOL_ROUTES: dict[str, set[str]] = {
+    "content": {"draft_social_content", "stage_draft", "post_social_content",
+                "post_to_all_socials", "make_content", "todays_content",
+                "make_video", "send_video_to_phone", "make_flow_prompts",
+                "make_talking_yeti", "make_animated_video", "check_animated_video",
+                "make_daily_kit", "publish_blog", "make_blog_post",
+                "queue_video", "publish_to_youtube", "list_social_connections"},
+    "canteen": {"canteen_query"},
+    "research": {"web_search", "read_webpage", "youtube_info", "youtube_subtitles",
+                 "github_repo", "rss_feed", "bilibili_search", "research",
+                 "deep_plan", "reach_doctor"},
+    "mac":     {"mac_open_app", "mac_close_app", "mac_run_shortcut",
+                "mac_type_text", "applescript", "my_files", "search_mac_files",
+                "read_mac_file", "write_file", "get_mobile_link"},
+    "project": {"project_overview", "read_project_file", "search_project",
+                "list_projects", "plan_project_work", "project_run",
+                "project_edit_file", "register_project"},
+    "comms":   {"send_email", "check_email", "send_telegram",
+                "add_reminder", "list_reminders", "todays_events", "add_event",
+                "find_community_questions", "ask_document"},
+    "health":  {"system_health", "performance_report", "self_improve",
+                "self_status", "what_learned"},
+    "nepali":  {"teach_nepali", "nepali_progress",
+                "english_log_mistake", "english_progress"},
+    "n8n":     {"trigger_n8n_workflow"},
+}
+
+_ALL_TOOL_NAMES = {t["name"] for t in TOOL_SCHEMAS}
+
+
+def _select_tools(user_text: str) -> list[dict]:
+    """Send only tools relevant to this request to stay under Groq's TPM limit."""
+    text = user_text.lower()
+    selected = set(_CORE_TOOLS)
+
+    kw_map = {
+        "content": ["post", "caption", "script", "story", "facebook", "instagram",
+                    "youtube", "reel", "blog", "content", "yeti", "mr yeti",
+                    "publish", "draft", "generate", "write", "video", "kit"],
+        "canteen": ["canteen", "hcg", "hcgms", "sajana", "yabesh", "hasina",
+                    "aayush", "nishant", "revenue", "sales", "credit", "report",
+                    "hygiene", "npr", "daily summary", "target"],
+        "research": ["search", "research", "look up", "find", "youtube info",
+                     "github", "rss", "news", "what is", "who is", "how does",
+                     "webpage", "url", "website", "bilibili"],
+        "mac":     ["open", "close", "type", "screen", "file", "folder",
+                    "shortcut", "mac", "desktop", "app"],
+        "project": ["project", "code", "pielts", "hcgms", "build", "fix bug",
+                    "deploy", "git"],
+        "comms":   ["email", "telegram", "reminder", "event", "calendar",
+                    "message", "send", "reddit", "quora"],
+        "health":  ["health", "status", "performance", "learn", "improve",
+                    "self improve", "self status"],
+        "nepali":  ["nepali", "english coach", "practice", "correction"],
+        "n8n":     ["n8n", "workflow", "automate"],
+    }
+
+    for group, keywords in kw_map.items():
+        if any(kw in text for kw in keywords):
+            selected |= _TOOL_ROUTES.get(group, set())
+
+    # If nothing matched beyond core, send content + research as safe defaults
+    if selected == set(_CORE_TOOLS):
+        selected |= _TOOL_ROUTES["content"] | _TOOL_ROUTES["research"]
+
+    # Filter to only tools that actually exist in registry
+    selected &= _ALL_TOOL_NAMES
+
+    tool_map = {t["name"]: t for t in TOOL_SCHEMAS}
+    return [{
+        "type": "function",
+        "function": {
+            "name": t["name"],
+            "description": t["description"],
+            "parameters": t["input_schema"],
+        },
+    } for name in selected if (t := tool_map.get(name))]
+
+
 def _openai_tools() -> list[dict]:
-    """Convert Anthropic-style tool schemas to OpenAI/Gemini function format."""
+    """Convert all tool schemas — used for non-Groq providers."""
     return [{
         "type": "function",
         "function": {
@@ -254,7 +340,8 @@ class SaathiAgent:
                         session_id="default") -> str:
         messages = ([{"role": "system", "content": system}] + history +
                     [{"role": "user", "content": user_text}])
-        tools = _openai_tools()
+        # Groq has tight TPM limits — send only relevant tools to avoid 413 errors
+        tools = _select_tools(user_text) if self.provider == "groq" else _openai_tools()
         for _ in range(MAX_TOOL_ITERATIONS):
             resp = self._create_with_retry(
                 messages=messages, tools=tools, max_tokens=512)

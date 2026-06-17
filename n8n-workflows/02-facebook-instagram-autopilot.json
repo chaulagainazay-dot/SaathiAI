@@ -1,0 +1,230 @@
+{
+  "name": "Baadar — Facebook + Instagram Autopilot",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "post-social",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-social",
+      "name": "Webhook: Post Social",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "baadar-post-social"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.body.text }}",
+              "operation": "isNotEmpty"
+            }
+          ]
+        }
+      },
+      "id": "check-text",
+      "name": "Has Text?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $('Webhook: Post Social').item.json.body.platform }}",
+              "operation": "contains",
+              "value2": "facebook"
+            }
+          ]
+        }
+      },
+      "id": "route-facebook",
+      "name": "Facebook?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [680, 220]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $('Webhook: Post Social').item.json.body.platform }}",
+              "operation": "contains",
+              "value2": "instagram"
+            }
+          ]
+        }
+      },
+      "id": "route-instagram",
+      "name": "Instagram?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [680, 420]
+    },
+    {
+      "parameters": {
+        "resource": "post",
+        "operation": "create",
+        "pageId": "={{ $env.FACEBOOK_PAGE_ID }}",
+        "message": "={{ $('Webhook: Post Social').item.json.body.text }}",
+        "additionalFields": {
+          "link": "https://pielts.web.app"
+        }
+      },
+      "id": "facebook-post",
+      "name": "Facebook: Create Post",
+      "type": "n8n-nodes-base.facebook",
+      "typeVersion": 1,
+      "position": [900, 160],
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "fb-cred",
+          "name": "Facebook — pielts page"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "mediaPost",
+        "operation": "createImagePost",
+        "userId": "={{ $env.INSTAGRAM_BUSINESS_ACCOUNT_ID }}",
+        "caption": "={{ $('Webhook: Post Social').item.json.body.instagram_caption || $('Webhook: Post Social').item.json.body.text }}",
+        "imageUrl": "={{ $('Webhook: Post Social').item.json.body.image_url || '' }}"
+      },
+      "id": "instagram-post",
+      "name": "Instagram: Create Post",
+      "type": "n8n-nodes-base.instagram",
+      "typeVersion": 1,
+      "position": [900, 420],
+      "credentials": {
+        "instagramOAuth2Api": {
+          "id": "ig-cred",
+          "name": "Instagram — pieltsapp"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/sendMessage",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chat_id",
+              "value": "={{ $env.TELEGRAM_CHAT_ID }}"
+            },
+            {
+              "name": "text",
+              "value": "=✅ Posted to Facebook!\n📘 Post ID: {{ $json.id }}\n🔗 https://facebook.com/{{ $json.id }}"
+            }
+          ]
+        }
+      },
+      "id": "telegram-fb-ok",
+      "name": "Telegram: FB Posted",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1120, 160]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/sendMessage",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chat_id",
+              "value": "={{ $env.TELEGRAM_CHAT_ID }}"
+            },
+            {
+              "name": "text",
+              "value": "=✅ Posted to Instagram!\n📸 Media ID: {{ $json.id }}"
+            }
+          ]
+        }
+      },
+      "id": "telegram-ig-ok",
+      "name": "Telegram: IG Posted",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1120, 420]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"status\": \"posted\", \"platform\": \"{{ $('Webhook: Post Social').item.json.body.platform }}\" }"
+      },
+      "id": "respond-ok",
+      "name": "Respond: OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1320, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"status\": \"error\", \"message\": \"text field is required\" }"
+      },
+      "id": "respond-error",
+      "name": "Respond: Error",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [680, 580]
+    }
+  ],
+  "connections": {
+    "Webhook: Post Social": {
+      "main": [[{"node": "Has Text?", "type": "main", "index": 0}]]
+    },
+    "Has Text?": {
+      "main": [
+        [
+          {"node": "Facebook?", "type": "main", "index": 0},
+          {"node": "Instagram?", "type": "main", "index": 0}
+        ],
+        [{"node": "Respond: Error", "type": "main", "index": 0}]
+      ]
+    },
+    "Facebook?": {
+      "main": [
+        [{"node": "Facebook: Create Post", "type": "main", "index": 0}],
+        []
+      ]
+    },
+    "Instagram?": {
+      "main": [
+        [{"node": "Instagram: Create Post", "type": "main", "index": 0}],
+        []
+      ]
+    },
+    "Facebook: Create Post": {
+      "main": [
+        [
+          {"node": "Telegram: FB Posted", "type": "main", "index": 0},
+          {"node": "Respond: OK", "type": "main", "index": 0}
+        ]
+      ]
+    },
+    "Instagram: Create Post": {
+      "main": [
+        [
+          {"node": "Telegram: IG Posted", "type": "main", "index": 0},
+          {"node": "Respond: OK", "type": "main", "index": 0}
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "_comment": "SETUP: 1) Import into n8n. 2) Add Facebook Graph API credential (get Page Access Token from Meta for Developers). 3) Add Instagram OAuth2 credential (needs Instagram Business Account linked to Facebook Page). 4) Set env vars FACEBOOK_PAGE_ID and INSTAGRAM_BUSINESS_ACCOUNT_ID in n8n. 5) Activate. 6) Copy webhook URL → Baadar Settings > Connections > Facebook+Instagram."
+}

@@ -1,0 +1,165 @@
+{
+  "name": "Baadar — YouTube Autopilot",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "youtube-upload",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-yt",
+      "name": "Webhook: YouTube Upload",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "baadar-youtube-upload"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.body.videoPath }}",
+              "operation": "isNotEmpty"
+            },
+            {
+              "value1": "={{ $json.body.title }}",
+              "operation": "isNotEmpty"
+            }
+          ]
+        }
+      },
+      "id": "check-fields",
+      "name": "Validate Fields",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "resource": "video",
+        "operation": "upload",
+        "title": "={{ $('Webhook: YouTube Upload').item.json.body.title }}",
+        "description": "={{ $('Webhook: YouTube Upload').item.json.body.description }}\n\n🔗 Practice free at https://pielts.web.app\n📱 TikTok: @pieltsapp | Facebook: /pieltsapp",
+        "categoryId": "27",
+        "tags": {
+          "tag": "={{ $('Webhook: YouTube Upload').item.json.body.tags }}"
+        },
+        "privacyStatus": "public",
+        "binaryData": false,
+        "videoUrl": "={{ $('Webhook: YouTube Upload').item.json.body.videoPath }}"
+      },
+      "id": "youtube-upload",
+      "name": "YouTube: Upload Video",
+      "type": "n8n-nodes-base.youTube",
+      "typeVersion": 1,
+      "position": [700, 220],
+      "credentials": {
+        "youTubeOAuth2Api": {
+          "id": "youtube-cred",
+          "name": "YouTube — pielts (@pieltsapp)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://127.0.0.1:8765/api/v1/agent/chat",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "=YouTube upload complete! Video ID: {{ $json.id }}. Title: {{ $('Webhook: YouTube Upload').item.json.body.title }}. Live at https://youtu.be/{{ $json.id }} — tell Ajay it's live."
+            },
+            {
+              "name": "session_id",
+              "value": "n8n-autopost"
+            }
+          ]
+        }
+      },
+      "id": "notify-baadar-success",
+      "name": "Notify Baadar: Success",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [940, 220]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/sendMessage",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chat_id",
+              "value": "={{ $env.TELEGRAM_CHAT_ID }}"
+            },
+            {
+              "name": "text",
+              "value": "=✅ YouTube video live!\n🎬 {{ $('Webhook: YouTube Upload').item.json.body.title }}\n🔗 https://youtu.be/{{ $('YouTube: Upload Video').item.json.id }}"
+            }
+          ]
+        }
+      },
+      "id": "telegram-success",
+      "name": "Telegram: Upload Success",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [940, 360]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"status\": \"uploaded\", \"uploadId\": \"{{ $('YouTube: Upload Video').item.json.id }}\" }"
+      },
+      "id": "respond-ok",
+      "name": "Respond: OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1160, 280]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"status\": \"error\", \"message\": \"videoPath and title are required\" }"
+      },
+      "id": "respond-error",
+      "name": "Respond: Error",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [700, 420]
+    }
+  ],
+  "connections": {
+    "Webhook: YouTube Upload": {
+      "main": [[{"node": "Validate Fields", "type": "main", "index": 0}]]
+    },
+    "Validate Fields": {
+      "main": [
+        [{"node": "YouTube: Upload Video", "type": "main", "index": 0}],
+        [{"node": "Respond: Error", "type": "main", "index": 0}]
+      ]
+    },
+    "YouTube: Upload Video": {
+      "main": [
+        [
+          {"node": "Notify Baadar: Success", "type": "main", "index": 0},
+          {"node": "Telegram: Upload Success", "type": "main", "index": 0}
+        ]
+      ]
+    },
+    "Notify Baadar: Success": {
+      "main": [[{"node": "Respond: OK", "type": "main", "index": 0}]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "instanceId": "baadar-pielts"
+  },
+  "_comment": "SETUP: 1) Import into n8n. 2) Add YouTube OAuth2 credential named 'YouTube — pielts (@pieltsapp)'. 3) Activate workflow. 4) Copy webhook URL and paste into Baadar Settings > Connections > YouTube."
+}

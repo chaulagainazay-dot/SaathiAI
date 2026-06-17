@@ -43,8 +43,15 @@ def post(platform: str, content: str, title: str = "") -> dict:
         from . import browser
         return browser.post(platform, content, title)
     # n8n: per-platform webhook if set, else the shared social-post webhook
-    url = cfg.get("webhook") or f"{config.N8N_WEBHOOK_BASE}/social-post"
-    r = httpx.post(url, json={"platform": platform, "content": content, "title": title}, timeout=60)
+    url = cfg.get("webhook") or f"{config.N8N_WEBHOOK_BASE}/post-social"
+    # Payload matches 02-facebook-instagram-autopilot.json expectations
+    payload = {
+        "platform": platform.lower(),
+        "text": content,
+        "title": title,
+        "instagram_caption": content if platform.lower() == "instagram" else "",
+    }
+    r = httpx.post(url, json=payload, timeout=60)
     r.raise_for_status()
     return {"status": "sent_to_n8n", "platform": platform,
             "n8n_response": r.json() if r.headers.get("content-type", "").startswith("application/json") else r.text}

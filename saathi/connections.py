@@ -14,13 +14,15 @@ from . import config
 PATH = config.ROOT / "data" / "connections.json"
 
 # How automated each platform can realistically be, for free, today.
+_N8N = config.N8N_WEBHOOK_BASE  # e.g. http://127.0.0.1:5678/webhook
+
 DEFAULTS = {
-    "facebook":  {"connected": False, "method": "browser", "handle": "",          "webhook": ""},
-    "instagram": {"connected": False, "method": "manual",  "handle": "@pieltsapp", "webhook": ""},
-    "tiktok":    {"connected": False, "method": "manual",  "handle": "@pieltsapp", "webhook": ""},
-    "youtube":   {"connected": False, "method": "n8n",     "handle": "@pieltsapp", "webhook": ""},
-    "linkedin":  {"connected": False, "method": "browser", "handle": "",          "webhook": ""},
-    "x":         {"connected": False, "method": "n8n",     "handle": "",          "webhook": ""},
+    "facebook":  {"connected": False, "method": "n8n",    "handle": "pieltsapp",  "webhook": f"{_N8N}/post-social"},
+    "instagram": {"connected": False, "method": "n8n",    "handle": "@pieltsapp", "webhook": f"{_N8N}/post-social"},
+    "tiktok":    {"connected": False, "method": "manual", "handle": "@pieltsapp", "webhook": ""},
+    "youtube":   {"connected": False, "method": "n8n",    "handle": "@pieltsapp", "webhook": f"{_N8N}/youtube-upload"},
+    "linkedin":  {"connected": False, "method": "browser","handle": "",           "webhook": ""},
+    "x":         {"connected": False, "method": "n8n",    "handle": "",           "webhook": f"{_N8N}/post-social"},
 }
 _FIELDS = ("connected", "method", "handle", "webhook")
 
