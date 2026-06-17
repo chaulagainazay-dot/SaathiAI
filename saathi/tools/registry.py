@@ -1,7 +1,7 @@
 """Tool registry: schemas exposed to Claude + dispatcher with privilege gating."""
 from . import (canteen, content, files, mac_control, n8n_tools, notes, english,
                system, apps, research, calendar as cal, email_tool, content_studio,
-               projects)
+               projects, internet_reach, public_apis)
 from .. import nepali, selfimprove, health, analytics, docs
 
 # Tools that require speaker verification (only Ajay's voice)
@@ -50,6 +50,23 @@ TOOL_SCHEMAS = [
                 "notes": {"type": "string", "description": "extra details to include"},
             },
             "required": ["platform", "topic"],
+        },
+    },
+    {
+        "name": "stage_draft",
+        "description": "After writing a draft, call this to push it to the Baadar UI approval queue. "
+                       "The user will see Approve / Edit / Post to All buttons — no need for them to type. "
+                       "Always call this after draft_social_content produces a draft.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "platform": {"type": "string", "enum": ["facebook", "instagram", "linkedin", "youtube", "tiktok", "x"]},
+                "content_text": {"type": "string", "description": "The full draft text to post"},
+                "title": {"type": "string", "description": "Title (YouTube only)"},
+                "platforms": {"type": "array", "items": {"type": "string"},
+                              "description": "List of platforms if posting to multiple at once"},
+            },
+            "required": ["platform", "content_text"],
         },
     },
     {
@@ -575,6 +592,92 @@ TOOL_SCHEMAS = [
             "required": ["video_id"],
         },
     },
+    # --- Internet reach (Agent-Reach: web, YouTube, GitHub, RSS) ---
+    {
+        "name": "read_webpage",
+        "description": "Read any public webpage as clean text (Jina Reader). Use when Ajay "
+                       "pastes a URL and wants to know what's on it, or for any page research.",
+        "input_schema": {
+            "type": "object",
+            "properties": {"url": {"type": "string"}},
+            "required": ["url"],
+        },
+    },
+    {
+        "name": "youtube_info",
+        "description": "Get a YouTube video's title, description, and transcript/subtitles. "
+                       "Use when Ajay pastes a YouTube link or asks about a video.",
+        "input_schema": {
+            "type": "object",
+            "properties": {"url": {"type": "string"}},
+            "required": ["url"],
+        },
+    },
+    {
+        "name": "youtube_subtitles",
+        "description": "Extract the full subtitles/transcript from a YouTube video in a given language.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "url": {"type": "string"},
+                "lang": {"type": "string", "default": "en"},
+            },
+            "required": ["url"],
+        },
+    },
+    {
+        "name": "web_search",
+        "description": "Search the web for current information. Use for news, prices, "
+                       "how-to answers, trending topics — anything needing live internet data. "
+                       "Prefer this over the older 'research' tool for simple lookups.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string"},
+                "num_results": {"type": "integer", "default": 5},
+            },
+            "required": ["query"],
+        },
+    },
+    {
+        "name": "github_repo",
+        "description": "Read a GitHub repository's description, README, and metadata. "
+                       "Use when Ajay pastes a GitHub URL or asks about a repo.",
+        "input_schema": {
+            "type": "object",
+            "properties": {"repo": {"type": "string", "description": "owner/name or full GitHub URL"}},
+            "required": ["repo"],
+        },
+    },
+    {
+        "name": "rss_feed",
+        "description": "Read the latest entries from any RSS or Atom feed. Use for 'latest from' "
+                       "a blog, news site, or podcast feed.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "url": {"type": "string"},
+                "limit": {"type": "integer", "default": 10},
+            },
+            "required": ["url"],
+        },
+    },
+    {
+        "name": "bilibili_search",
+        "description": "Search Bilibili (Chinese YouTube) for videos by keyword. Useful for "
+                       "finding Nepali content, IELTS tips, or Chinese-language references.",
+        "input_schema": {
+            "type": "object",
+            "properties": {"query": {"type": "string"}},
+            "required": ["query"],
+        },
+    },
+    {
+        "name": "reach_doctor",
+        "description": "Check which Agent-Reach internet channels are active (yt-dlp, GitHub, "
+                       "feedparser, etc). Use for 'what internet tools do you have'.",
+        "input_schema": {"type": "object", "properties": {}},
+    },
     # --- Research + planning ---
     {
         "name": "research",
@@ -701,11 +804,65 @@ TOOL_SCHEMAS = [
         "description": "Show Ajay's most frequent English mistakes for review/practice.",
         "input_schema": {"type": "object", "properties": {}},
     },
+    # --- Free Public APIs (no key needed) ---
+    {
+        "name": "crypto_prices",
+        "description": "Live crypto prices in USD and NPR via CoinGecko (no API key). "
+                       "Use for Ajay's crypto signal agent or any crypto question. "
+                       "Default coins: bitcoin, ethereum, solana.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "coins": {
+                    "type": "string",
+                    "description": "Comma-separated CoinGecko coin ids, e.g. 'bitcoin,ethereum,solana,cardano'",
+                },
+            },
+        },
+    },
+    {
+        "name": "motivational_quote",
+        "description": "Random motivational or education quote from Quotable API (no key). "
+                       "Use to auto-generate Mr. Yeti Facebook/Instagram posts or IELTS motivation content. "
+                       "tag options: education, wisdom, success, inspirational, motivational",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "tag": {
+                    "type": "string",
+                    "description": "Quote category tag: education, wisdom, success, inspirational, motivational",
+                },
+            },
+        },
+    },
+    {
+        "name": "exchange_rate",
+        "description": "Live NPR currency exchange rates (no key). Essential for Ajay abroad — "
+                       "converts NPR to USD, AUD, GBP, INR etc. Also shows how much canteen revenue is worth in foreign currency.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number",
+                    "description": "Amount to convert (default 1.0)",
+                },
+                "from_currency": {
+                    "type": "string",
+                    "description": "Source currency code, e.g. NPR, USD (default NPR)",
+                },
+                "to_currency": {
+                    "type": "string",
+                    "description": "Target currencies comma-separated, e.g. USD,AUD,GBP,INR",
+                },
+            },
+        },
+    },
 ]
 
 _HANDLERS = {
     "canteen_query": canteen.query,
     "draft_social_content": content.draft,
+    "stage_draft": lambda platform, content_text, title="", platforms=None: _stage_draft(platform, content_text, title, platforms or []),
     "post_social_content": content.post,
     "list_social_connections": content.list_connections,
     "post_to_all_socials": content.post_all,
@@ -756,6 +913,14 @@ _HANDLERS = {
     "list_reminders": cal.list_reminders,
     "todays_events": cal.todays_events,
     "add_event": cal.add_event,
+    "read_webpage": lambda url: internet_reach.read_webpage(url),
+    "youtube_info": lambda url: internet_reach.youtube_info(url),
+    "youtube_subtitles": lambda url, lang="en": internet_reach.youtube_subtitles(url, lang),
+    "web_search": lambda query, num_results=5: internet_reach.web_search(query, num_results),
+    "github_repo": lambda repo: internet_reach.github_repo(repo),
+    "rss_feed": lambda url, limit=10: internet_reach.rss_feed(url, limit),
+    "bilibili_search": lambda query: internet_reach.bilibili_search(query),
+    "reach_doctor": lambda: internet_reach.reach_doctor(),
     "research": research.research,
     "deep_plan": research.deep_plan,
     "check_messages": apps.check_messages,
@@ -768,8 +933,27 @@ _HANDLERS = {
     "nepali_progress": lambda: nepali.progress(),
     "english_log_mistake": english.log_mistake,
     "english_progress": english.progress,
+    # Free public APIs
+    "crypto_prices": public_apis.crypto_prices,
+    "motivational_quote": public_apis.motivational_quote,
+    "exchange_rate": public_apis.exchange_rate,
 }
 
+
+def _stage_draft(platform: str, content_text: str, title: str = "", platforms: list = []) -> dict:
+    """Push draft to the UI approval queue."""
+    try:
+        import httpx
+        from .. import config
+        headers = {"x-saathi-token": config.SAATHI_TOKEN} if config.SAATHI_TOKEN else {}
+        httpx.post(f"http://127.0.0.1:{config.PORT}/api/v1/content/stage",
+                   json={"platform": platform, "content": content_text,
+                         "title": title, "platforms": platforms},
+                   headers=headers, timeout=3)
+    except Exception:
+        pass
+    return {"staged": True, "platform": platform,
+            "message": "Draft is ready in the Baadar UI — tap Approve to post or Edit to change it."}
 
 def execute_tool(name: str, args: dict, speaker_verified: bool = False) -> dict:
     if name in PRIVILEGED and not speaker_verified:
