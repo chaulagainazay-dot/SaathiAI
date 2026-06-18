@@ -674,6 +674,30 @@ def health():
     return {"ok": True, "provider": config.LLM_PROVIDER}
 
 
+# ── n8n status proxy (avoids CORS — browser can't hit localhost:5678 directly) ──
+import httpx as _httpx
+
+N8N_BASE_URL = _os.getenv("N8N_BASE_URL", "http://127.0.0.1:5678")
+
+@app.get("/api/v1/n8n/status")
+def n8n_status():
+    """Proxy n8n workflow list so Baadar JS doesn't hit CORS calling localhost:5678."""
+    try:
+        r = _httpx.get(f"{N8N_BASE_URL}/api/v1/workflows?limit=50", timeout=5)
+        if r.status_code == 200:
+            data = r.json()
+            workflows = [
+                {"id": w.get("id"), "name": w.get("name"), "active": w.get("active", False)}
+                for w in (data.get("data") or [])
+            ]
+            return {"ok": True, "workflows": workflows}
+        # n8n running but API needs auth key — fall back to health check
+        health_r = _httpx.get(f"{N8N_BASE_URL}/healthz", timeout=3)
+        return {"ok": health_r.is_success, "workflows": [], "note": "api_auth_required"}
+    except Exception as e:
+        return {"ok": False, "workflows": [], "error": str(e)}
+
+
 # ── Image generation (Gemini Imagen) ─────────────────────────────────────────
 class ImageGenIn(BaseModel):
     prompt: str

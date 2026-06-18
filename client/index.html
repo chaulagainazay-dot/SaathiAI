@@ -2415,16 +2415,13 @@ async function pingN8n() {
     return;
   }
 
-  // 2. Use n8n REST API to check workflow status — never trigger the actual webhook
-  //    GET /api/v1/workflows returns list with active status; no auth needed on local instance
+  // 2. Use Baadar's proxy endpoint — avoids CORS when calling n8n localhost:5678
   let allWorkflows = [];
   try {
-    const r = await fetch(`${N8N_BASE}/api/v1/workflows?limit=50`, {
-      signal: AbortSignal.timeout(5000)
-    });
+    const r = await fetch(`${BASE}/api/v1/n8n/status`, { signal: AbortSignal.timeout(6000) });
     if (r.ok) {
       const d = await r.json();
-      allWorkflows = d.data || [];
+      allWorkflows = d.workflows || [];
     }
   } catch {}
 
