@@ -2432,17 +2432,17 @@ async function pingN8n() {
   };
 
   for (const [id, keywords] of Object.entries(wfNameMap)) {
-    const match = allWorkflows.find(w =>
+    const matches = allWorkflows.filter(w =>
       keywords.some(k => w.name.toLowerCase().includes(k))
     );
+    // prefer active over inactive when duplicates exist
+    const match = matches.find(w => w.active) || matches[0];
     if (!match) {
       setBadge(id, false, '⚠️ Not imported');
     } else if (match.active) {
       setBadge(id, true, '✅ Active');
     } else {
-      // Workflow exists but is not activated — check if it's the creds issue
-      const needsCreds = id === 'wf-youtube'; // YouTube always needs OAuth
-      setBadge(id, false, needsCreds ? '🔑 Add YouTube creds' : '⚠️ Not activated');
+      setBadge(id, false, '⚠️ Not activated');
     }
   }
 }
