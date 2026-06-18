@@ -5,7 +5,8 @@
       "parameters": {
         "httpMethod": "POST",
         "path": "youtube-upload",
-        "responseMode": "responseNode",
+        "responseMode": "onReceived",
+        "responseData": "{ \"status\": \"queued\", \"message\": \"YouTube upload queued\" }",
         "options": {}
       },
       "id": "webhook-yt",

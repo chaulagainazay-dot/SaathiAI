@@ -2394,52 +2394,59 @@ const N8N_WORKFLOWS = {
 };
 
 async function pingN8n() {
-  // 1. ping n8n server itself
   const serverBadge = document.getElementById('n8nServerBadge');
   const serverUrl   = document.getElementById('n8nServerUrl');
   serverBadge.textContent = '…';
   serverBadge.className = 'badge';
+
+  // 1. Check n8n server health
+  let apiKey = null;
   try {
     const r = await fetch(`${N8N_BASE}/healthz`, { signal: AbortSignal.timeout(4000) });
-    if (r.ok) {
-      serverBadge.textContent = '✅ Running';
-      serverBadge.className = 'badge bg-green';
-      serverUrl.textContent = N8N_BASE;
-    } else throw new Error(r.status);
+    if (!r.ok) throw new Error(r.status);
+    serverBadge.textContent = '✅ Running';
+    serverBadge.className = 'badge bg-green';
+    serverUrl.textContent = N8N_BASE;
   } catch {
     serverBadge.textContent = '🔴 Not running';
     serverBadge.className = 'badge bg-red';
-    serverUrl.textContent = 'Start: docker run -p 5678:5678 n8nio/n8n';
-    // mark all workflows offline
+    serverUrl.textContent = 'Start n8n first';
     Object.keys(N8N_WORKFLOWS).forEach(id => setBadge(id, false, 'n8n offline'));
     return;
   }
 
-  // 2. ping each webhook endpoint
-  for (const [id, wf] of Object.entries(N8N_WORKFLOWS)) {
-    if (!wf.webhook) {
-      // canteen is a scheduled trigger — can't ping webhook, check via n8n API
-      try {
-        const r = await fetch(`${N8N_BASE}/api/v1/workflows`, {
-          signal: AbortSignal.timeout(4000)
-        });
-        setBadge(id, r.ok, r.ok ? 'Active (scheduled)' : 'Setup needed');
-      } catch { setBadge(id, false, 'Setup needed'); }
-      continue;
+  // 2. Use n8n REST API to check workflow status — never trigger the actual webhook
+  //    GET /api/v1/workflows returns list with active status; no auth needed on local instance
+  let allWorkflows = [];
+  try {
+    const r = await fetch(`${N8N_BASE}/api/v1/workflows?limit=50`, {
+      signal: AbortSignal.timeout(5000)
+    });
+    if (r.ok) {
+      const d = await r.json();
+      allWorkflows = d.data || [];
     }
-    try {
-      // send a test=true ping — workflows should return 200 even for test pings
-      const r = await fetch(`${N8N_BASE}${wf.webhook}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ _ping: true }),
-        signal: AbortSignal.timeout(5000)
-      });
-      // 200 = active, 404 = workflow not imported, 4xx = imported but needs creds
-      if (r.status === 200)      setBadge(id, true,  '✅ Active');
-      else if (r.status === 404) setBadge(id, false, '⚠️ Not imported');
-      else                       setBadge(id, false, `⚠️ Needs creds (${r.status})`);
-    } catch { setBadge(id, false, '⚠️ Not imported'); }
+  } catch {}
+
+  const wfNameMap = {
+    'wf-youtube':  ['youtube', 'pielts', 'baadar'],
+    'wf-social':   ['facebook', 'instagram', 'social'],
+    'wf-canteen':  ['canteen', 'supabase'],
+  };
+
+  for (const [id, keywords] of Object.entries(wfNameMap)) {
+    const match = allWorkflows.find(w =>
+      keywords.some(k => w.name.toLowerCase().includes(k))
+    );
+    if (!match) {
+      setBadge(id, false, '⚠️ Not imported');
+    } else if (match.active) {
+      setBadge(id, true, '✅ Active');
+    } else {
+      // Workflow exists but is not activated — check if it's the creds issue
+      const needsCreds = id === 'wf-youtube'; // YouTube always needs OAuth
+      setBadge(id, false, needsCreds ? '🔑 Add YouTube creds' : '⚠️ Not activated');
+    }
   }
 }
 
