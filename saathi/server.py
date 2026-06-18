@@ -681,21 +681,26 @@ N8N_BASE_URL = _os.getenv("N8N_BASE_URL", "http://127.0.0.1:5678")
 
 @app.get("/api/v1/n8n/status")
 def n8n_status():
-    """Proxy n8n workflow list so Baadar JS doesn't hit CORS calling localhost:5678."""
+    """Read n8n workflow status directly from SQLite — no API key needed."""
+    import sqlite3 as _sqlite3
+    import pathlib as _pathlib
+
+    db_path = _pathlib.Path.home() / ".n8n" / "database.sqlite"
     try:
-        r = _httpx.get(f"{N8N_BASE_URL}/api/v1/workflows?limit=50", timeout=5)
-        if r.status_code == 200:
-            data = r.json()
-            workflows = [
-                {"id": w.get("id"), "name": w.get("name"), "active": w.get("active", False)}
-                for w in (data.get("data") or [])
-            ]
-            return {"ok": True, "workflows": workflows}
-        # n8n running but API needs auth key — fall back to health check
-        health_r = _httpx.get(f"{N8N_BASE_URL}/healthz", timeout=3)
-        return {"ok": health_r.is_success, "workflows": [], "note": "api_auth_required"}
+        con = _sqlite3.connect(str(db_path), timeout=3)
+        rows = con.execute(
+            "SELECT id, name, active FROM workflow_entity ORDER BY name"
+        ).fetchall()
+        con.close()
+        workflows = [{"id": r[0], "name": r[1], "active": bool(r[2])} for r in rows]
+        return {"ok": True, "workflows": workflows}
     except Exception as e:
-        return {"ok": False, "workflows": [], "error": str(e)}
+        # fallback: try n8n healthz at least
+        try:
+            r = _httpx.get(f"{N8N_BASE_URL}/healthz", timeout=3)
+            return {"ok": r.is_success, "workflows": [], "error": str(e)}
+        except Exception:
+            return {"ok": False, "workflows": [], "error": str(e)}
 
 
 # ── Image generation (Gemini Imagen) ─────────────────────────────────────────
