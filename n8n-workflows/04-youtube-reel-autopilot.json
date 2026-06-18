@@ -1,0 +1,215 @@
+{
+  "name": "Baadar — YouTube Daily Reels (2x Auto)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            { "field": "cronExpression", "expression": "0 6 * * *" },
+            { "field": "cronExpression", "expression": "0 18 * * *" }
+          ]
+        }
+      },
+      "id": "cron-trigger",
+      "name": "Cron: 6AM + 6PM daily",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Detect slot from current hour\nconst hour = new Date().getHours();\nconst slot = hour < 14 ? 'morning' : 'evening';\nreturn [{ json: { slot } }];"
+      },
+      "id": "detect-slot",
+      "name": "Detect Slot",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [440, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://127.0.0.1:8765/api/v1/auto_reel",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "slot", "value": "={{ $json.slot }}" }
+          ]
+        },
+        "options": { "timeout": 180000 }
+      },
+      "id": "generate-reel",
+      "name": "Generate Reel (Baadar)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [660, 300],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "baadar-token",
+          "name": "Baadar API Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.ok }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "check-ok",
+      "name": "Check Success",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [880, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ 'http://127.0.0.1:8765/api/v1/auto_reel/download?path=' + encodeURIComponent($json.video_path) }}",
+        "options": { "timeout": 60000, "response": { "response": { "responseFormat": "file" } } }
+      },
+      "id": "download-video",
+      "name": "Download Video File",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1100, 200]
+    },
+    {
+      "parameters": {
+        "resource": "video",
+        "operation": "upload",
+        "title": "={{ $('Generate Reel (Baadar)').item.json.title }}",
+        "description": "={{ $('Generate Reel (Baadar)').item.json.description }}",
+        "categoryId": "27",
+        "tags": {
+          "tag": "={{ $('Generate Reel (Baadar)').item.json.tags }}"
+        },
+        "privacyStatus": "public",
+        "options": {
+          "madeForKids": false,
+          "isShort": true
+        }
+      },
+      "id": "youtube-upload",
+      "name": "YouTube Upload",
+      "type": "n8n-nodes-base.youTube",
+      "typeVersion": 1,
+      "position": [1320, 200],
+      "credentials": {
+        "youTubeOAuth2Api": {
+          "id": "youtube-cred",
+          "name": "YouTube account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://127.0.0.1:8765/api/v1/agent/chat",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "=✅ YouTube Short uploaded! '{{ $('Generate Reel (Baadar)').item.json.title }}' — https://youtu.be/{{ $json.id }} — tell Ajay it's live and add it to the content log."
+            },
+            { "name": "session_id", "value": "n8n-reel-autopilot" }
+          ]
+        }
+      },
+      "id": "notify-baadar",
+      "name": "Notify Baadar",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1540, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/sendMessage",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "chat_id", "value": "={{ $env.TELEGRAM_CHAT_ID }}" },
+            {
+              "name": "text",
+              "value": "=🎬 YouTube Short live!\n📌 {{ $('Generate Reel (Baadar)').item.json.title }}\n🔗 https://youtu.be/{{ $('YouTube Upload').item.json.id }}\n\n#pielts #MrYeti"
+            }
+          ]
+        }
+      },
+      "id": "telegram-notify",
+      "name": "Telegram Notify",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1540, 340]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/sendMessage",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "chat_id", "value": "={{ $env.TELEGRAM_CHAT_ID }}" },
+            {
+              "name": "text",
+              "value": "=❌ Reel generation failed!\nError: {{ $('Generate Reel (Baadar)').item.json.error }}"
+            }
+          ]
+        }
+      },
+      "id": "telegram-error",
+      "name": "Telegram: Error",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1100, 420]
+    }
+  ],
+  "connections": {
+    "Cron: 6AM + 6PM daily": {
+      "main": [[{ "node": "Detect Slot", "type": "main", "index": 0 }]]
+    },
+    "Detect Slot": {
+      "main": [[{ "node": "Generate Reel (Baadar)", "type": "main", "index": 0 }]]
+    },
+    "Generate Reel (Baadar)": {
+      "main": [[{ "node": "Check Success", "type": "main", "index": 0 }]]
+    },
+    "Check Success": {
+      "main": [
+        [{ "node": "Download Video File", "type": "main", "index": 0 }],
+        [{ "node": "Telegram: Error", "type": "main", "index": 0 }]
+      ]
+    },
+    "Download Video File": {
+      "main": [[{ "node": "YouTube Upload", "type": "main", "index": 0 }]]
+    },
+    "YouTube Upload": {
+      "main": [[
+        { "node": "Notify Baadar", "type": "main", "index": 0 },
+        { "node": "Telegram Notify", "type": "main", "index": 0 }
+      ]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": ""
+  },
+  "meta": { "instanceId": "baadar-pielts" },
+  "_setup": [
+    "1. Import this file into n8n",
+    "2. Add credential: HTTP Header Auth named 'Baadar API Token' → Header: x-saathi-token, Value: (from .env SAATHI_TOKEN)",
+    "3. Assign 'YouTube account' credential to the YouTube Upload node",
+    "4. Set env vars: TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID",
+    "5. Activate the workflow — runs 6AM + 6PM daily automatically"
+  ]
+}

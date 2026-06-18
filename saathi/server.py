@@ -674,6 +674,42 @@ def health():
     return {"ok": True, "provider": config.LLM_PROVIDER}
 
 
+# ── Auto-reel: generate daily YouTube Short ────────────────────────────────────
+from fastapi.responses import FileResponse
+
+@app.post("/api/v1/auto_reel")
+async def auto_reel(request: Request):
+    """Generate a Mr. Yeti YouTube Short (image + music → MP4) and return metadata.
+    Called by n8n cron twice daily; middleware handles auth."""
+    body = {}
+    try:
+        body = await request.json()
+    except Exception:
+        pass
+    slot = body.get("slot", "auto")
+
+    try:
+        from .tools.reel_maker import make_daily_reel
+        result = make_daily_reel(slot)
+        return result
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@app.get("/api/v1/auto_reel/download")
+async def auto_reel_download(path: str, request: Request):
+    """Serve the generated reel video file to n8n for upload."""
+    from fastapi import HTTPException
+    # allow internal calls from n8n (localhost) without auth
+    client_host = request.client.host if request.client else ""
+    if client_host not in ("127.0.0.1", "::1", "localhost") and not _is_authed(request):
+        raise HTTPException(401, "unauthorized")
+    p = Path(path)
+    if not p.exists() or not str(p).startswith(str(Path.home() / "SaathiAI" / "reels_output")):
+        raise HTTPException(404, "not found")
+    return FileResponse(str(p), media_type="video/mp4", filename=p.name)
+
+
 # ── n8n status proxy (avoids CORS — browser can't hit localhost:5678 directly) ──
 import httpx as _httpx
 
