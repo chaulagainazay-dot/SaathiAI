@@ -1252,6 +1252,28 @@ body[data-state="speaking"]  #micBtn { background: #064e3b; border-color: var(--
         </div>
       </details>
     </div>
+
+    <!-- n8n LIVE DASHBOARD EMBED -->
+    <div class="card" style="padding:0;overflow:hidden">
+      <div style="display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--border)">
+        <div class="dot" style="background:#ff6d00"></div>
+        <span style="font-size:var(--fs-xs);font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2)">n8n Live Dashboard</span>
+        <span id="n8nIframeStatus" style="font-size:10px;color:var(--text3);margin-left:2px"></span>
+        <div style="margin-left:auto;display:flex;gap:6px">
+          <button onclick="document.getElementById('n8nFrame').src=document.getElementById('n8nFrame').src"
+            style="background:var(--surface2);border:1px solid var(--border);color:var(--text2);border-radius:6px;padding:3px 10px;font-size:var(--fs-xs);font-weight:700;cursor:pointer">⟳ Reload</button>
+          <a href="http://localhost:5678" target="_blank"
+            style="background:var(--surface2);border:1px solid var(--border);color:var(--text2);border-radius:6px;padding:3px 10px;font-size:var(--fs-xs);font-weight:700;cursor:pointer;text-decoration:none">↗ Full Tab</a>
+        </div>
+      </div>
+      <iframe id="n8nFrame" src="http://localhost:5678"
+        style="width:100%;height:520px;border:none;background:var(--bg)"
+        allow="clipboard-read; clipboard-write"
+        onload="document.getElementById('n8nIframeStatus').textContent='● live'"
+        onerror="document.getElementById('n8nIframeStatus').textContent='○ offline'">
+      </iframe>
+    </div>
+
     <div class="card">
       <div class="card-hd"><div class="dot" style="background:var(--green)"></div>Voice Enrollment</div>
       <p style="font-size:var(--fs-sm);color:var(--text2);line-height:1.6;margin-bottom:13px">
