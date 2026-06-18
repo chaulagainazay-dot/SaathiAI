@@ -15,12 +15,12 @@ CONTENT_DIR = config.ROOT / "data" / "content"
 
 NICHE = (
     "Content for pielts.web.app — a free IELTS practice app. The face of the brand is "
-    "MR. YETI: a warm, funny, wise professor-yeti from the Himalayas (glasses, tweed "
-    "jacket, pointer at a whiteboard) who teaches IELTS. Audience: Nepali and South-Asian "
-    "students preparing for IELTS and planning to study/move abroad, but content must be "
-    "fun and simple enough for ALL ages. Mr. Yeti is the narrator and speaks in FIRST "
-    "PERSON as the yeti (never 'it's Ajay'). Personality: cheerful, encouraging, a little "
-    "playful, big-hearted teacher. Always work in a natural mention of pielts.web.app.")
+    "MR. YETI: a large fluffy white yeti professor from the Himalayas — round black glasses, "
+    "brown tweed blazer, light-blue shirt, navy polka-dot tie, photorealistic 3D render style. "
+    "He teaches IELTS with warmth and humour. Audience: Nepali and South-Asian students "
+    "preparing for IELTS and planning to study/move abroad. Mr. Yeti speaks in FIRST PERSON "
+    "(never 'it's Ajay'). Personality: cheerful, encouraging, a little playful, big-hearted "
+    "teacher. Always include a natural mention of pielts.web.app.")
 
 # The repeatable viral structure every short script must follow.
 # Formula locked in from the Growth Hacker plan (Jun 2026): proven hooks + content
@@ -71,28 +71,56 @@ def generate_content_pack(topic: str = "") -> dict:
     return pack
 
 
-# FIXED character + voice — identical in EVERY video for brand consistency.
-MR_YETI_LOOK = ("fluffy white yeti professor, round black glasses, brown tweed blazer, "
-                "light-blue collared shirt, navy polka-dot tie, tan trousers, Pixar 3D cartoon style")
-MR_YETI_VOICE = ("a warm, friendly, middle-aged male voice with a clear American accent, "
-                 "cheerful and encouraging")
+# ── Mr. Yeti canonical character — LOCKED, never change ─────────────────────
+# Reference image: client/assets/mr_yeti_reference.jpeg
+# Every image, video scene, and Google Flow prompt MUST match this exactly.
+MR_YETI_LOOK = (
+    "Mr. Yeti character — EXACT locked appearance, never deviate: "
+    "BODY: large broad-shouldered yeti, entirely covered in fluffy shaggy white/off-white fur with realistic texture. "
+    "FACE: wide warm smile showing upper teeth, large expressive dark-brown eyes, "
+    "round black-rimmed glasses sitting on a broad flat nose, fluffy white fur on cheeks and forehead, "
+    "friendly approachable expression. "
+    "OUTFIT: brown herringbone tweed blazer (no hood, no cape), "
+    "light-blue oxford collared shirt visible at the collar, "
+    "navy-blue polka-dot tie knotted at the neck. "
+    "HANDS: large white furry hands/paws. "
+    "STYLE: photorealistic cinematic 3D render, detailed fur simulation, "
+    "warm studio lighting, Pixar/DreamWorks movie-character quality — "
+    "NOT flat cartoon, NOT 2D illustration, NOT anime. "
+    "NAMEPLATE (optional): 'MR. YETI — Teacher. Mentor. Explorer.' "
+    "SIGNATURE PROP (optional): white ceramic mug with mountain logo saying BE CURIOUS. "
+    "CRITICAL: same face, same glasses, same tweed blazer and tie in EVERY image — only pose, expression and background change."
+)
+
+MR_YETI_VOICE = (
+    "a warm, friendly, middle-aged male voice with a clear American accent, "
+    "cheerful, encouraging, and slightly professorial"
+)
+
+# Short version for inline use inside longer prompts
+MR_YETI_LOOK_SHORT = (
+    "Mr. Yeti: large white-furred yeti, round black glasses, brown tweed blazer, "
+    "light-blue shirt, navy polka-dot tie, wide warm smile, photorealistic cinematic 3D render"
+)
 
 FLOW_SCENE_RULES = (
-    "Break the lesson into 6-8 short SCENE PROMPTS for Google Flow (Veo 3). MR YETI is a FIXED, "
-    "consistent saved character — ALWAYS the same: " + MR_YETI_LOOK + ". "
-    "Each scene = ONE ~8-second shot. ONLY Mr Yeti's look and voice stay fixed — the SETTING, "
-    "background, props, camera angle and his actions should CHANGE to fit the topic and keep it "
-    "visually interesting (e.g. a café for speaking practice, a desk with papers for writing, a "
-    "library for reading, an airport for travel vocab). Vary the scenes; don't repeat the same room. "
-    "For each scene write: a camera/shot + Mr Yeti's action and expression, then his spoken line "
-    "in double quotes (Veo voices it with matching lip-sync — keep each line short, ~1 sentence). "
-    "CRITICAL — SAME VOICE EVERY TIME: in EVERY scene Mr Yeti must speak in the SAME voice — "
-    + MR_YETI_VOICE + ". Include this exact voice description in every single scene so the voice "
-    "is identical across all videos. "
-    "End every scene with 'Pixar 3D cartoon style, smooth animation.' Scene 1 must open with him "
-    "waving and saying \"Namaste! I'm Mr Yeti, your IELTS coach.\" The LAST scene is a warm CTA: "
-    "tell viewers to practise free on 'P-IELTS dot web dot app' plus one comment-bait question. "
-    "Do NOT add any separate narration — only the in-scene dialogue (Veo generates the audio).")
+    "Break the lesson into 6-8 short SCENE PROMPTS for Google Flow (Veo 3). "
+    "MR YETI is the ONLY character — his look is FIXED and LOCKED in every single scene: "
+    + MR_YETI_LOOK + " "
+    "Each scene = ONE ~8-second shot. His look never changes. What CHANGES scene to scene: "
+    "the SETTING (café, classroom, library, airport, park, gym, kitchen, etc.), camera angle, "
+    "props, and his action/expression — to keep it visually dynamic. "
+    "For each scene write: camera/shot description + Mr. Yeti's action and expression, "
+    "then his ONE spoken line in double quotes (Veo voices it with lip-sync — keep each line "
+    "short, ~1 sentence max). "
+    "CRITICAL — SAME VOICE EVERY SCENE: " + MR_YETI_VOICE + ". "
+    "Copy this voice description into every scene prompt so Veo never drifts. "
+    "End every scene prompt with: 'photorealistic cinematic 3D render, detailed fur, warm lighting.' "
+    "Scene 1 must open with Mr. Yeti waving and saying \"Namaste! I'm Mr. Yeti, your IELTS coach!\" "
+    "The LAST scene is a CTA: Mr. Yeti gives a thumbs-up and says to practise free at "
+    "'P-IELTS dot web dot app' plus ONE comment-bait question. "
+    "Do NOT write narration — only the in-scene spoken dialogue (Veo generates all audio)."
+)
 
 
 def make_flow_prompts(topic: str = "") -> dict:

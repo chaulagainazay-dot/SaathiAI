@@ -101,10 +101,13 @@ def synthesize(text: str, language: str = "en") -> tuple[bytes, str]:
         except Exception:
             pass  # fall through to the fast built-in voice
     if language.startswith("ne"):
-        from gtts import gTTS
-        buf = io.BytesIO()
-        gTTS(text=text, lang="ne").write_to_fp(buf)
-        return buf.getvalue(), "audio/mpeg"
+        try:
+            from gtts import gTTS
+            buf = io.BytesIO()
+            gTTS(text=text, lang="ne").write_to_fp(buf)
+            return buf.getvalue(), "audio/mpeg"
+        except Exception:
+            pass  # offline — fall through to macOS say
     with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
         path = f.name
     subprocess.run(["say", "-v", "Samantha", "-o", path,
@@ -134,7 +137,8 @@ def speak(text: str, language: str = "en"):
 
         def fetch(s):
             try:
-                next_audio[0] = synthesize(s, "ne")[0]
+                audio, mime = synthesize(s, "ne")
+                next_audio[0] = (audio, mime)
             except Exception:
                 next_audio[0] = None
 

@@ -268,10 +268,29 @@ body { font-family: -apple-system, 'SF Pro Text', 'Segoe UI', sans-serif;
 
 /* ── CHAT FOOTER ── */
 #chatFoot {
-  flex-shrink: 0; padding: 10px 13px calc(env(safe-area-inset-bottom) + 10px);
-  border-top: 1px solid var(--border);
-  display: flex; gap: 9px; align-items: center; background: var(--bg);
+  flex-shrink: 0; padding: 8px 13px calc(env(safe-area-inset-bottom) + 8px);
+  border-top: 1px solid var(--border); background: var(--bg);
+  display: flex; flex-direction: column; gap: 6px;
 }
+/* file preview strip */
+#attachPreview {
+  display: none; align-items: center; gap: 8px; padding: 6px 10px;
+  background: var(--surface2); border-radius: 8px; border: 1px solid var(--border);
+  font-size: var(--fs-xs); color: var(--text2);
+}
+#attachPreview .ap-icon { font-size: 16px; }
+#attachPreview .ap-name { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+#attachPreview .ap-remove { cursor:pointer; color:var(--text3); font-size:14px; padding: 0 4px; }
+/* url detection pill */
+#urlPill {
+  display: none; align-items: center; gap: 7px; padding: 5px 10px;
+  background: #1a0d3d; border-radius: 8px; border: 1px solid var(--purple);
+  font-size: var(--fs-xs); color: var(--lilac);
+}
+#urlPill .up-tool { font-weight: 700; }
+#urlPill .up-close { cursor:pointer; margin-left:auto; color: var(--text3); }
+/* input row */
+#chatInputRow { display: flex; gap: 9px; align-items: center; }
 #textIn {
   flex: 1; background: var(--surface); border: 1.5px solid var(--border);
   color: var(--text); border-radius: 24px; padding: 11px 17px;
@@ -279,6 +298,17 @@ body { font-family: -apple-system, 'SF Pro Text', 'Segoe UI', sans-serif;
 }
 #textIn:focus { border-color: var(--purple); }
 #textIn::placeholder { color: var(--text3); }
+/* attach button */
+#attachBtn {
+  width: 44px; height: 44px; border-radius: 22px; flex-shrink: 0;
+  background: var(--surface); border: 1.5px solid var(--border);
+  color: var(--text2); font-size: 18px; cursor: pointer; display: flex;
+  align-items: center; justify-content: center; transition: background .15s;
+  position: relative;
+}
+#attachBtn:hover { background: var(--surface2); }
+#attachBtn.has-file { border-color: var(--purple); color: var(--lilac); background: #1a0d3d; }
+#fileInput { display: none; }
 #micBtn {
   width: 44px; height: 44px; border-radius: 22px; flex-shrink: 0;
   background: var(--surface); border: 1.5px solid var(--border);
@@ -299,6 +329,17 @@ body[data-state="speaking"]  #micBtn { background: #064e3b; border-color: var(--
   font-size: var(--fs-base); font-weight: 700; cursor: pointer; transition: background .15s;
 }
 #sendBtn:hover { background: var(--purple2); }
+/* inline research tool selector */
+#resToolPill {
+  display: none; gap: 6px; flex-wrap: wrap; padding: 6px 4px 2px;
+}
+.rtp-btn {
+  display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px;
+  border-radius: 20px; border: 1.5px solid var(--border); background: var(--surface2);
+  color: var(--text2); font-size: var(--fs-xs); font-weight: 600; cursor: pointer;
+  transition: all .15s;
+}
+.rtp-btn:hover, .rtp-btn.active { border-color: var(--purple); background: #1a0d3d; color: var(--lilac); }
 
 /* ═══════════════════════════════════════════
    CREATE / PUBLISH PANEL
@@ -766,9 +807,34 @@ body[data-state="speaking"]  #micBtn { background: #064e3b; border-color: var(--
     <div class="qc" onclick="qchip('Give me today\'s pielts performance summary: YouTube stats, what content worked best this week, and one improvement tip.')"><span class="qci">📊</span>Stats</div>
   </div>
   <div id="chatFoot">
-    <button id="micBtn" onclick="toggleMic()">🎙</button>
-    <input id="textIn" placeholder="Ask Baadar anything…" onkeydown="onKey(event)">
-    <button id="sendBtn" onclick="sendText()">Send</button>
+    <!-- URL auto-detected pill -->
+    <div id="urlPill">
+      <span id="urlPillIcon">🔍</span>
+      <span>Using <span id="urlPillTool" class="up-tool">web_search</span> for this URL</span>
+      <span class="up-close" onclick="dismissUrlPill()">✕</span>
+    </div>
+    <!-- File attach preview -->
+    <div id="attachPreview">
+      <span class="ap-icon" id="apIcon">📄</span>
+      <span class="ap-name" id="apName">file.pdf</span>
+      <span class="ap-remove" onclick="clearAttach()">✕</span>
+    </div>
+    <!-- Inline research tool pills (shown when URL detected) -->
+    <div id="resToolPill">
+      <span class="rtp-btn" id="rtp-read"    onclick="setResTool('read')">🌐 Read URL</span>
+      <span class="rtp-btn" id="rtp-youtube" onclick="setResTool('youtube')">▶️ YouTube</span>
+      <span class="rtp-btn" id="rtp-github"  onclick="setResTool('github')">🐙 GitHub</span>
+      <span class="rtp-btn" id="rtp-rss"     onclick="setResTool('rss')">📡 RSS Feed</span>
+      <span class="rtp-btn" id="rtp-search"  onclick="setResTool('search')">🔍 Search</span>
+    </div>
+    <!-- Main input row -->
+    <div id="chatInputRow">
+      <button id="attachBtn" onclick="document.getElementById('fileInput').click()" title="Attach PDF, image, or file">📎</button>
+      <input id="fileInput" type="file" accept=".pdf,.jpg,.jpeg,.png,.webp,.gif,.txt,.md,.csv,.json,.py,.js,.ts" onchange="onFileAttach(event)">
+      <button id="micBtn" onclick="toggleMic()">🎙</button>
+      <input id="textIn" placeholder="Ask anything, paste a URL, or attach a file…" onkeydown="onKey(event)" oninput="onChatInput(event)">
+      <button id="sendBtn" onclick="sendText()">Send</button>
+    </div>
   </div>
 </div>
 
@@ -1527,12 +1593,117 @@ async function sendMsg(text, spokenLang) {
     setState('idle');
   }
 }
+// ── File attach state ──────────────────────────────────────────────
+let _attachedFile = null;
+let _detectedUrl  = null;
+let _selectedTool = null;
+
+const _URL_RE = /https?:\/\/[^\s"'<>]+/i;
+
+const _TOOL_HINTS = {
+  'youtube.com': { tool: 'youtube_transcript', icon: '▶️', label: 'YouTube' },
+  'youtu.be':    { tool: 'youtube_transcript', icon: '▶️', label: 'YouTube' },
+  'github.com':  { tool: 'github_repo',        icon: '🐙', label: 'GitHub'  },
+};
+
+function _toolForUrl(url) {
+  try {
+    const h = new URL(url).hostname.replace(/^www\./, '');
+    for (const [k, v] of Object.entries(_TOOL_HINTS)) {
+      if (h.includes(k)) return v;
+    }
+    // RSS feeds
+    if (url.match(/\.(xml|rss|atom)(\?|$)/i)) return { tool: 'rss_reader', icon: '📡', label: 'RSS Feed' };
+  } catch {}
+  return { tool: 'web_read', icon: '🌐', label: 'Read URL' };
+}
+
+function onChatInput(e) {
+  const val = e.target.value;
+  const match = val.match(_URL_RE);
+  if (match) {
+    _detectedUrl = match[0];
+    const hint = _toolForUrl(_detectedUrl);
+    _selectedTool = hint.tool;
+    document.getElementById('urlPillTool').textContent = hint.label;
+    document.getElementById('urlPillIcon').textContent = hint.icon;
+    document.getElementById('urlPill').style.display = 'flex';
+    // highlight matching rtp button
+    document.querySelectorAll('.rtp-btn').forEach(b => b.classList.remove('active'));
+    const map = { web_read: 'rtp-read', youtube_transcript: 'rtp-youtube', github_repo: 'rtp-github', rss_reader: 'rtp-rss', web_search: 'rtp-search' };
+    const btn = document.getElementById(map[hint.tool]);
+    if (btn) btn.classList.add('active');
+    document.getElementById('resToolPill').style.display = 'flex';
+  } else {
+    dismissUrlPill();
+  }
+}
+
+function dismissUrlPill() {
+  _detectedUrl = null; _selectedTool = null;
+  document.getElementById('urlPill').style.display = 'none';
+  document.getElementById('resToolPill').style.display = 'none';
+  document.querySelectorAll('.rtp-btn').forEach(b => b.classList.remove('active'));
+}
+
+function setResTool(tool) {
+  const toolMap = { read: 'web_read', youtube: 'youtube_transcript', github: 'github_repo', rss: 'rss_reader', search: 'web_search' };
+  const labelMap = { read: '🌐 Read URL', youtube: '▶️ YouTube', github: '🐙 GitHub', rss: '📡 RSS Feed', search: '🔍 Search' };
+  _selectedTool = toolMap[tool];
+  document.getElementById('urlPillTool').textContent = labelMap[tool].replace(/^. /, '').split(' ').slice(1).join(' ') || labelMap[tool];
+  document.querySelectorAll('.rtp-btn').forEach(b => b.classList.remove('active'));
+  const btn = document.getElementById('rtp-' + tool);
+  if (btn) btn.classList.add('active');
+}
+
+function onFileAttach(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  _attachedFile = file;
+  const icon = file.type.startsWith('image/') ? '🖼️' : file.type === 'application/pdf' ? '📕' : '📄';
+  document.getElementById('apIcon').textContent = icon;
+  document.getElementById('apName').textContent = file.name;
+  document.getElementById('attachPreview').style.display = 'flex';
+  document.getElementById('attachBtn').classList.add('has-file');
+}
+
+function clearAttach() {
+  _attachedFile = null;
+  document.getElementById('attachPreview').style.display = 'none';
+  document.getElementById('attachBtn').classList.remove('has-file');
+  document.getElementById('fileInput').value = '';
+}
+
+async function sendWithFile(text) {
+  const fd = new FormData();
+  fd.append('file', _attachedFile, _attachedFile.name);
+  fd.append('message', text);
+  fd.append('session_id', SID);
+  clearAttach();
+  setState('thinking');
+  try {
+    const r = await fetch(`${BASE}/api/v1/agent/chat_with_file`, { method: 'POST', body: fd });
+    const d = await r.json();
+    addBubble('bot', d.reply || d.error || 'No reply');
+  } catch (err) {
+    addBubble('bot', '⚠️ Upload failed: ' + err.message);
+  }
+  setState('idle');
+}
+
 function sendText() {
   const el = document.getElementById('textIn');
   const t = el.value.trim();
-  if (!t) return;
+  if (!t && !_attachedFile) return;
+  const msg = t || '(see attached file)';
   el.value = '';
-  sendMsg(t);
+  dismissUrlPill();
+  if (_attachedFile) {
+    addBubble('user', (t ? t + '\n' : '') + '📎 ' + _attachedFile.name);
+    sendWithFile(msg);
+  } else {
+    sendMsg(t);
+  }
 }
 function onKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendText(); } }
 

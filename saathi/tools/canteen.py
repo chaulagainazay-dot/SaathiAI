@@ -69,11 +69,12 @@ def query(topic: str) -> dict:
                                  for r in rows[:10]]}
 
     if topic == "hygiene_status":
-        rows = _sb("hygiene_checklists", {"select": "submitted_by,approved_by_yabesh",
-                                          "created_at": f"gte.{today}"})
+        rows = _sb("hygiene_checklists", {"select": "staff_name,approved_by_yabesh",
+                                          "check_date": f"eq.{today}"})
         return {"submitted_today": len(rows),
                 "pending_approval": sum(1 for r in rows
-                                        if not r.get("approved_by_yabesh"))}
+                                        if not r.get("approved_by_yabesh")),
+                "submitted_by": [r.get("staff_name") for r in rows]}
 
     if topic == "duty_confirmation":
         tomorrow = (dt.date.today() + dt.timedelta(days=1)).isoformat()
@@ -87,9 +88,9 @@ def query(topic: str) -> dict:
                 "note": "AjayG hasn't confirmed tomorrow's 5:30am duty yet."}
 
     if topic == "notifications":
-        rows = _sb("notifications", {"select": "type,content,created_at",
+        rows = _sb("notifications", {"select": "type,title,body,is_read,created_at",
                                      "order": "created_at.desc", "limit": "10"})
-        return {"recent": rows}
+        return {"recent": rows, "unread": sum(1 for r in rows if not r.get("is_read"))}
 
     if topic == "weekly_summary":
         week_ago = (dt.date.today() - dt.timedelta(days=7)).isoformat()

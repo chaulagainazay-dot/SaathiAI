@@ -14,8 +14,9 @@ def _c(name, status, detail=""):
 def health_check() -> dict:
     checks = []
     try:
-        r = httpx.get(f"http://127.0.0.1:{config.PORT}/api/v1/health", timeout=4)
-        checks.append(_c("API server", "ok" if r.status_code == 200 else "fail"))
+        headers = {"x-saathi-token": config.SAATHI_TOKEN} if getattr(config, "SAATHI_TOKEN", "") else {}
+        r = httpx.get(f"http://127.0.0.1:{config.PORT}/api/v1/health", headers=headers, timeout=4)
+        checks.append(_c("API server", "ok" if r.status_code == 200 else "fail", f"http {r.status_code}"))
     except Exception as e:
         checks.append(_c("API server", "fail", str(e)[:50]))
     try:
