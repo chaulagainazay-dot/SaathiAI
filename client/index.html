@@ -511,6 +511,16 @@ body[data-state="speaking"]  #micBtn { background: #064e3b; border-color: var(--
 
 /* ── SETTINGS PANEL ── */
 .conn-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* n8n autopilot panel */
+.n8n-wf-list { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+.n8n-wf-row { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: var(--surface2); border-radius: 8px; border: 1px solid var(--border); }
+.n8n-wf-icon { font-size: 20px; flex-shrink: 0; }
+.n8n-wf-info { flex: 1; min-width: 0; }
+.n8n-wf-name { font-size: var(--fs-sm); font-weight: 700; color: var(--text1); }
+.n8n-wf-desc { font-size: var(--fs-xs); color: var(--text3); margin-top: 2px; }
+.n8n-badge { font-size: 10px; flex-shrink: 0; }
+.bg-orange { background: #431407; color: #fb923c; border: 1px solid #7c2d12; }
 .conn-chip {
   display: flex; align-items: center; gap: 7px; padding: 7px 13px;
   border-radius: 20px; font-size: var(--fs-sm); font-weight: 600;
@@ -1119,6 +1129,63 @@ body[data-state="speaking"]  #micBtn { background: #064e3b; border-color: var(--
         Tap to toggle. YouTube & Instagram need an n8n webhook to post automatically.
       </div>
     </div>
+
+    <!-- n8n AUTOPILOT PANEL -->
+    <div class="card" id="n8nCard">
+      <div class="card-hd"><div class="dot" style="background:#ff6d00"></div>n8n Autopilot Workflows
+        <button onclick="pingN8n()" style="margin-left:auto;background:var(--surface2);border:1px solid var(--border);color:var(--text2);border-radius:6px;padding:3px 10px;font-size:var(--fs-xs);font-weight:700;cursor:pointer">⟳ Ping</button>
+      </div>
+
+      <!-- Workflow rows -->
+      <div class="n8n-wf-list" id="n8nWfList">
+        <div class="n8n-wf-row" id="wf-youtube">
+          <div class="n8n-wf-icon">🎬</div>
+          <div class="n8n-wf-info">
+            <div class="n8n-wf-name">YouTube Autopilot</div>
+            <div class="n8n-wf-desc">Upload video → YouTube API → Telegram confirm</div>
+          </div>
+          <span class="badge n8n-badge" id="wf-youtube-badge">Checking…</span>
+        </div>
+        <div class="n8n-wf-row" id="wf-social">
+          <div class="n8n-wf-icon">📘</div>
+          <div class="n8n-wf-info">
+            <div class="n8n-wf-name">Facebook + Instagram</div>
+            <div class="n8n-wf-desc">Post text/image → Meta API → Telegram confirm</div>
+          </div>
+          <span class="badge n8n-badge" id="wf-social-badge">Checking…</span>
+        </div>
+        <div class="n8n-wf-row" id="wf-canteen">
+          <div class="n8n-wf-icon">🍴</div>
+          <div class="n8n-wf-info">
+            <div class="n8n-wf-name">Canteen Supabase Alert</div>
+            <div class="n8n-wf-desc">Hourly Supabase poll → low sales / credit alerts</div>
+          </div>
+          <span class="badge n8n-badge" id="wf-canteen-badge">Checking…</span>
+        </div>
+      </div>
+
+      <!-- n8n server status -->
+      <div style="display:flex;align-items:center;gap:8px;margin:10px 0 6px">
+        <span style="font-size:var(--fs-xs);color:var(--text3);font-weight:700">n8n SERVER</span>
+        <span class="badge" id="n8nServerBadge" style="font-size:10px">—</span>
+        <span style="font-size:var(--fs-xs);color:var(--text3)" id="n8nServerUrl"></span>
+      </div>
+
+      <!-- Import instructions -->
+      <details style="margin-top:8px">
+        <summary style="font-size:var(--fs-xs);color:var(--text3);cursor:pointer;font-weight:700;letter-spacing:.4px">📥 HOW TO IMPORT WORKFLOWS INTO n8n</summary>
+        <div style="font-size:var(--fs-xs);color:var(--text2);line-height:1.7;margin-top:8px;padding:8px;background:var(--surface2);border-radius:6px">
+          <b>Step 1:</b> Start n8n → <code style="background:var(--bg);padding:1px 5px;border-radius:3px">docker run -p 5678:5678 n8nio/n8n</code><br>
+          <b>Step 2:</b> Open <a href="http://localhost:5678" target="_blank" style="color:var(--purple)">localhost:5678</a> → New Workflow → Import from file<br>
+          <b>Step 3:</b> Import these 3 files from <code>~/SaathiAI/n8n-workflows/</code>:<br>
+          &nbsp;&nbsp;• <code>01-youtube-autopilot.json</code><br>
+          &nbsp;&nbsp;• <code>02-facebook-instagram-autopilot.json</code><br>
+          &nbsp;&nbsp;• <code>03-canteen-supabase-alert.json</code><br>
+          <b>Step 4:</b> Add credentials in each workflow, then Activate<br>
+          <b>Step 5:</b> Ping above to verify ✅
+        </div>
+      </details>
+    </div>
     <div class="card">
       <div class="card-hd"><div class="dot" style="background:var(--green)"></div>Voice Enrollment</div>
       <p style="font-size:var(--fs-sm);color:var(--text2);line-height:1.6;margin-bottom:13px">
@@ -1236,7 +1303,7 @@ function switchTab(name) {
   document.getElementById(name + 'Panel').classList.add('active');
   if (name === 'canteen')  loadCanteen();
   if (name === 'files')    { loadTree(''); if (!macHome) loadMacTree(''); }
-  if (name === 'settings') { loadStatus(); loadConnections(); }
+  if (name === 'settings') { loadStatus(); loadConnections(); pingN8n(); }
 }
 
 // ════════════════════════ QUICK CHIPS ════════════════════════
@@ -2123,6 +2190,71 @@ async function loadStatus() {
       <div class="list-row"><span class="lk">Ollama</span><span class="badge ${d.ollama_ready?'bg-green':'bg-red'}">${d.ollama_ready?'Ready':'Not running'}</span></div>
       <div class="list-row"><span class="lk">Tools</span><span class="lv" style="color:var(--green)">${d.tools} available</span></div>`;
   } catch { document.getElementById('baadar-status').innerHTML = '<div class="empty">Could not load</div>'; }
+}
+
+// ════════════ n8n AUTOPILOT ════════════
+const N8N_BASE = 'http://127.0.0.1:5678';
+const N8N_WORKFLOWS = {
+  'wf-youtube':  { name: 'YouTube Autopilot',        webhook: '/webhook/youtube-upload' },
+  'wf-social':   { name: 'Facebook + Instagram',     webhook: '/webhook/post-social'    },
+  'wf-canteen':  { name: 'Canteen Supabase Alert',   webhook: null /* scheduled */      },
+};
+
+async function pingN8n() {
+  // 1. ping n8n server itself
+  const serverBadge = document.getElementById('n8nServerBadge');
+  const serverUrl   = document.getElementById('n8nServerUrl');
+  serverBadge.textContent = '…';
+  serverBadge.className = 'badge';
+  try {
+    const r = await fetch(`${N8N_BASE}/healthz`, { signal: AbortSignal.timeout(4000) });
+    if (r.ok) {
+      serverBadge.textContent = '✅ Running';
+      serverBadge.className = 'badge bg-green';
+      serverUrl.textContent = N8N_BASE;
+    } else throw new Error(r.status);
+  } catch {
+    serverBadge.textContent = '🔴 Not running';
+    serverBadge.className = 'badge bg-red';
+    serverUrl.textContent = 'Start: docker run -p 5678:5678 n8nio/n8n';
+    // mark all workflows offline
+    Object.keys(N8N_WORKFLOWS).forEach(id => setBadge(id, false, 'n8n offline'));
+    return;
+  }
+
+  // 2. ping each webhook endpoint
+  for (const [id, wf] of Object.entries(N8N_WORKFLOWS)) {
+    if (!wf.webhook) {
+      // canteen is a scheduled trigger — can't ping webhook, check via n8n API
+      try {
+        const r = await fetch(`${N8N_BASE}/api/v1/workflows`, {
+          signal: AbortSignal.timeout(4000)
+        });
+        setBadge(id, r.ok, r.ok ? 'Active (scheduled)' : 'Setup needed');
+      } catch { setBadge(id, false, 'Setup needed'); }
+      continue;
+    }
+    try {
+      // send a test=true ping — workflows should return 200 even for test pings
+      const r = await fetch(`${N8N_BASE}${wf.webhook}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ _ping: true }),
+        signal: AbortSignal.timeout(5000)
+      });
+      // 200 = active, 404 = workflow not imported, 4xx = imported but needs creds
+      if (r.status === 200)      setBadge(id, true,  '✅ Active');
+      else if (r.status === 404) setBadge(id, false, '⚠️ Not imported');
+      else                       setBadge(id, false, `⚠️ Needs creds (${r.status})`);
+    } catch { setBadge(id, false, '⚠️ Not imported'); }
+  }
+}
+
+function setBadge(id, ok, label) {
+  const el = document.getElementById(`${id}-badge`);
+  if (!el) return;
+  el.textContent = label;
+  el.className = `badge n8n-badge ${ok ? 'bg-green' : 'bg-orange'}`;
 }
 
 async function changePassword() {
