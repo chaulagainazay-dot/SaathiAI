@@ -1,0 +1,49 @@
+name: 🎬 Video Post — 8:00 PM Nepal
+
+on:
+  schedule:
+    - cron: '15 14 * * *'   # 14:15 UTC = 8:00 PM Nepal (UTC+5:45)
+  workflow_dispatch:
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install system deps for video/image
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg fonts-liberation
+
+      - name: Install dependencies
+        run: |
+          pip install --quiet \
+            groq anthropic httpx python-dotenv requests \
+            pillow moviepy feedparser firebase-admin google-cloud-firestore \
+            python-telegram-bot google-api-python-client google-auth-oauthlib
+
+      - name: Run VIDEO autopost (quote fallback if no queue)
+        env:
+          GROQ_API_KEY:          ${{ secrets.GROQ_API_KEY }}
+          GOOGLE_API_KEY:        ${{ secrets.GOOGLE_API_KEY }}
+          ANTHROPIC_API_KEY:     ${{ secrets.ANTHROPIC_API_KEY }}
+          LLM_PROVIDER:          groq
+          CONNECTIONS_JSON:      ${{ secrets.CONNECTIONS_JSON }}
+          FIREBASE_ADMIN_JSON:   ${{ secrets.FIREBASE_ADMIN_JSON }}
+          GROWTH_CALENDAR_JSON:  ${{ secrets.GROWTH_CALENDAR_JSON }}
+          TELEGRAM_BOT_TOKEN:    ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID:      ${{ secrets.TELEGRAM_CHAT_ID }}
+          IMGUR_CLIENT_ID:       ${{ secrets.IMGUR_CLIENT_ID }}
+          YT_API_KEY:            ${{ secrets.YT_API_KEY }}
+          SAATHI_TOKEN:          ${{ secrets.SAATHI_TOKEN }}
+        run: python scripts/run_autopost.py --slot VIDEO

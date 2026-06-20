@@ -1,0 +1,85 @@
+{
+  "name": "Baadar — Stage 1: Content Research (6AM Daily)",
+  "nodes": [
+    {
+      "parameters": { "rule": { "interval": [{ "field": "cronExpression", "expression": "0 6 * * *" }] } },
+      "id": "cron", "name": "6AM Daily Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger", "typeVersion": 1.2, "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST", "url": "http://127.0.0.1:8765/api/v1/studio/research",
+        "sendHeaders": true,
+        "headerParameters": { "parameters": [{ "name": "x-saathi-token", "value": "9278af2af4de585e" }] },
+        "options": { "timeout": 120000 }
+      },
+      "id": "research", "name": "Research Trending Topics",
+      "type": "n8n-nodes-base.httpRequest", "typeVersion": 4, "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST", "url": "http://127.0.0.1:8765/api/v1/studio/script",
+        "sendHeaders": true,
+        "headerParameters": { "parameters": [{ "name": "x-saathi-token", "value": "9278af2af4de585e" }] },
+        "sendBody": true,
+        "bodyParameters": { "parameters": [
+          { "name": "topic", "value": "={{ $json.content_ideas[0].title ?? 'IELTS Band 7 Writing Tips' }}" },
+          { "name": "content_type", "value": "={{ $json.content_ideas[0].content_type ?? 'tip' }}" },
+          { "name": "format", "value": "short" }
+        ]},
+        "options": { "timeout": 90000 }
+      },
+      "id": "script", "name": "Generate Script",
+      "type": "n8n-nodes-base.httpRequest", "typeVersion": 4, "position": [700, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST", "url": "http://127.0.0.1:8765/api/v1/studio/seo",
+        "sendHeaders": true,
+        "headerParameters": { "parameters": [{ "name": "x-saathi-token", "value": "9278af2af4de585e" }] },
+        "sendBody": true,
+        "bodyParameters": { "parameters": [
+          { "name": "topic", "value": "={{ $json.title }}" },
+          { "name": "hook", "value": "={{ $json.hook }}" }
+        ]},
+        "options": { "timeout": 90000 }
+      },
+      "id": "seo", "name": "Generate SEO Package",
+      "type": "n8n-nodes-base.httpRequest", "typeVersion": 4, "position": [940, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST", "url": "http://127.0.0.1:8765/api/v1/agent/chat",
+        "sendHeaders": true,
+        "headerParameters": { "parameters": [{ "name": "x-saathi-token", "value": "9278af2af4de585e" }] },
+        "sendBody": true,
+        "bodyParameters": { "parameters": [
+          { "name": "text", "value": "=📊 Daily content research done! Today's top idea: '{{ $('Generate Script').item.json.title }}'. Script and SEO package are ready. Shall I trigger the video creation now?" },
+          { "name": "session_id", "value": "content-research-agent" }
+        ]}
+      },
+      "id": "notify", "name": "Notify Baadar",
+      "type": "n8n-nodes-base.httpRequest", "typeVersion": 4, "position": [1180, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/sendMessage",
+        "sendBody": true,
+        "bodyParameters": { "parameters": [
+          { "name": "chat_id", "value": "={{ $env.TELEGRAM_CHAT_ID }}" },
+          { "name": "text", "value": "=📊 Content Research Done!\n\n🎯 Today's topic: {{ $('Generate Script').item.json.title }}\n\n🔥 Hook: {{ $('Generate Script').item.json.hook }}\n\n📱 Ready for video creation!" }
+        ]}
+      },
+      "id": "telegram", "name": "Telegram Alert",
+      "type": "n8n-nodes-base.httpRequest", "typeVersion": 4, "position": [1180, 460]
+    }
+  ],
+  "connections": {
+    "6AM Daily Trigger": { "main": [[{ "node": "Research Trending Topics", "type": "main", "index": 0 }]] },
+    "Research Trending Topics": { "main": [[{ "node": "Generate Script", "type": "main", "index": 0 }]] },
+    "Generate Script": { "main": [[{ "node": "Generate SEO Package", "type": "main", "index": 0 }]] },
+    "Generate SEO Package": { "main": [[{ "node": "Notify Baadar", "type": "main", "index": 0 }, { "node": "Telegram Alert", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" }
+}

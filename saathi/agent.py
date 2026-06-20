@@ -347,7 +347,7 @@ class SaathiAgent:
         tools = _select_tools(user_text) if self.provider == "groq" else _openai_tools()
         for _ in range(MAX_TOOL_ITERATIONS):
             resp = self._create_with_retry(
-                messages=messages, tools=tools, max_tokens=512)
+                messages=messages, tools=tools, max_tokens=1500)
             msg = resp.choices[0].message
             if not msg.tool_calls:
                 text = (msg.content or "").strip()
@@ -355,9 +355,10 @@ class SaathiAgent:
                     return text
                 # model returned empty text after tool use — force a final answer
                 messages.append({"role": "user",
-                                 "content": "Summarize the tool result for Ajay in one "
-                                            "short spoken sentence (his language)."})
-                resp = self._create_with_retry(messages=messages, max_tokens=512)
+                                 "content": "Use the tool result above to answer Ajay's original request. "
+                                            "If he asked you to write or draft something (post, reply, script, plan), write it in FULL. "
+                                            "If it was a quick question, answer briefly. Reply in his language."})
+                resp = self._create_with_retry(messages=messages, max_tokens=1500)
                 return (resp.choices[0].message.content or "Done.").strip()
             if (msg.content or "").strip():
                 activity.log(session_id, "think", "💭 " + msg.content.strip()[:120])
@@ -384,7 +385,7 @@ class SaathiAgent:
         messages = history + [{"role": "user", "content": user_text}]
         for _ in range(MAX_TOOL_ITERATIONS):
             resp = self.client.messages.create(
-                model=self.model, max_tokens=512, system=system,
+                model=self.model, max_tokens=1500, system=system,
                 tools=TOOL_SCHEMAS, messages=messages)
             if resp.stop_reason != "tool_use":
                 break

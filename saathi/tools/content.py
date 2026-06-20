@@ -35,6 +35,20 @@ def post(platform: str, content: str, title: str = "") -> dict:
     method = cfg.get("method",
                      "browser" if platform.lower() in ("facebook", "linkedin") else "n8n")
 
+    # YouTube is video-only — text posts don't upload via webhook
+    if platform.lower() == "youtube":
+        return {"status": "manual_upload", "platform": "youtube",
+                "handle": cfg.get("handle", "@pieltsapp"),
+                "note": "YouTube needs a video file. Use publish_to_youtube(video_path, title, description) to upload a video."}
+
+    # Meta API — direct Graph API posting (no n8n needed)
+    if method == "api" and platform.lower() in ("facebook", "instagram"):
+        from . import meta_post
+        if platform.lower() == "facebook":
+            return meta_post.post_facebook(content)
+        else:
+            return meta_post.post_instagram_text(content)
+
     if method == "manual":
         return {"status": "manual_upload", "platform": platform,
                 "handle": cfg.get("handle", ""),
@@ -79,4 +93,19 @@ def post_all(content: str, title: str = "", platforms: str = "") -> dict:
             results[p] = post(p, content, title)
         except Exception as e:
             results[p] = {"status": "error", "error": str(e)[:140]}
-    return {"posted_to": targets, "results": results}
+
+    # Build human-readable summary for the agent to display
+    lines = []
+    for p, r in results.items():
+        status = r.get("status", "unknown")
+        if status in ("sent", "sent_to_n8n", "published"):
+            lines.append(f"✅ {p.capitalize()}: posted")
+        elif status == "manual_upload":
+            lines.append(f"📋 {p.capitalize()}: caption ready — upload manually to {r.get('handle', p)}")
+        elif status == "error":
+            lines.append(f"❌ {p.capitalize()}: failed — {r.get('error','unknown error')[:80]}")
+        else:
+            lines.append(f"⚠️ {p.capitalize()}: {status}")
+
+    summary = "\n".join(lines) if lines else "No platforms posted."
+    return {"posted_to": targets, "results": results, "summary": summary}

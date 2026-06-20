@@ -70,7 +70,7 @@ TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "")
 
 # --- Server ---
 HOST = os.getenv("SAATHI_HOST", "0.0.0.0")
-PORT = int(os.getenv("SAATHI_PORT", "8765"))
+PORT = int(os.getenv("PORT", os.getenv("SAATHI_PORT", "8765")))
 
 # --- Memory ---
 DB_PATH = ROOT / "data" / "saathi.db"

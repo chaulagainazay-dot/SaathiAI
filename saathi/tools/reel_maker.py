@@ -32,7 +32,71 @@ _REELS_DIR = _BASE / "reels_output"
 _REELS_DIR.mkdir(exist_ok=True)
 _MUSIC_DIR.mkdir(parents=True, exist_ok=True)
 
-_YETI_REF = _ASSETS / "mr_yeti_reference.jpeg"
+_YETI_REF   = _ASSETS / "mr_yeti_reference.jpeg"
+_POSES_DIR  = _ASSETS / "yeti_poses"
+_POSES_DIR.mkdir(parents=True, exist_ok=True)
+
+# ── Locked Yeti character description (NEVER change this) ─────────────────────
+_YETI_BASE = (
+    "Mr. Yeti IELTS teacher character — EXACT consistent look: "
+    "large broad-shouldered yeti, fluffy shaggy white/off-white fur, "
+    "wide warm smile showing teeth, large dark-brown eyes, "
+    "round black-rimmed glasses on a broad flat nose, "
+    "brown herringbone tweed blazer, light-blue oxford shirt, navy polka-dot tie. "
+    "Pixar/DreamWorks photorealistic 3D cinematic render. "
+    "Warm studio lighting. Same character EVERY time. "
+)
+
+# ── Pre-defined poses with FIXED seeds (generates once, reused forever) ───────
+_YETI_POSES = {
+    "teaching": {
+        "seed": 11111,
+        "prompt": _YETI_BASE + "Standing at a chalkboard, pointing with one hand, holding a book with the other. Confident teacher pose. Navy blue classroom background.",
+    },
+    "excited": {
+        "seed": 22222,
+        "prompt": _YETI_BASE + "Wide shocked/excited expression, both arms raised in celebration. Bright orange gradient background. Very expressive face.",
+    },
+    "pointing": {
+        "seed": 33333,
+        "prompt": _YETI_BASE + "Pointing directly at the camera/viewer with one finger, slight smile. Dark navy background with subtle glow.",
+    },
+    "flashcard": {
+        "seed": 44444,
+        "prompt": _YETI_BASE + "Holding a large white flashcard/signboard in both hands. Friendly smile. Clean white and navy background.",
+    },
+    "thinking": {
+        "seed": 55555,
+        "prompt": _YETI_BASE + "Thoughtful pose, one hand on chin, looking slightly upward. Soft warm background with floating question marks.",
+    },
+    "thumbsup": {
+        "seed": 66666,
+        "prompt": _YETI_BASE + "Big confident thumbs up, broad smile, looking at camera. Green accent background conveying success.",
+    },
+}
+
+def _get_yeti_pose(pose_name: str = "teaching") -> Path:
+    """Return cached Yeti pose — generates ONCE with fixed seed, reused forever."""
+    cached = _POSES_DIR / f"{pose_name}.jpg"
+    if cached.exists() and cached.stat().st_size > 10_000:
+        return cached
+    pose = _YETI_POSES.get(pose_name, _YETI_POSES["teaching"])
+    encoded = urllib.parse.quote(pose["prompt"])
+    url = (
+        f"https://image.pollinations.ai/prompt/{encoded}"
+        f"?width=1080&height=1920&model=flux&nologo=true&seed={pose['seed']}"
+    )
+    for attempt in range(3):
+        try:
+            r = httpx.get(url, timeout=90, follow_redirects=True)
+            r.raise_for_status()
+            cached.write_bytes(r.content)
+            return cached
+        except Exception as e:
+            if attempt == 2:
+                raise RuntimeError(f"Pose generation failed: {e}")
+            time.sleep(5)
+    return cached
 
 # ── Free royalty-free music clips (Pixabay CDN, CC0) ──────────────────────────
 _MUSIC_TRACKS = [
@@ -164,13 +228,14 @@ def _get_content(slot: str) -> dict:
     }
 
 
-# ── Image generation via Pollinations AI ──────────────────────────────────────
+# ── Image generation via Pollinations AI (kept for thumbnails/custom) ─────────
 
-def _generate_yeti_image(prompt: str, output_path: Path) -> Path:
+def _generate_yeti_image(prompt: str, output_path: Path, seed: int = 0) -> Path:
     encoded = urllib.parse.quote(prompt)
+    s = seed if seed else int(time.time())
     url = (
         f"https://image.pollinations.ai/prompt/{encoded}"
-        f"?width=1080&height=1920&model=flux&nologo=true&seed={int(time.time())}"
+        f"?width=1080&height=1920&model=flux&nologo=true&seed={s}"
     )
     for attempt in range(3):
         try:
@@ -299,14 +364,16 @@ def make_daily_reel(slot: str = "auto") -> dict:
     content = _get_content(slot)
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
 
-    with tempfile.TemporaryDirectory() as tmp:
-        img_path = Path(tmp) / "yeti.jpg"
-        _generate_yeti_image(content["image_prompt"], img_path)
+    # Pick pose: morning=flashcard (vocab), evening=pointing (tip)
+    pose_map = {"morning": "flashcard", "evening": "pointing"}
+    img_path = _get_yeti_pose(pose_map.get(slot, "teaching"))
 
+    with tempfile.TemporaryDirectory() as tmp:
         music_path = _get_music(slot)
 
         video_path = _REELS_DIR / f"reel_{slot}_{ts}.mp4"
         _make_video(img_path, music_path, content["overlay_text"], video_path)
+
 
     return {
         "ok": True,

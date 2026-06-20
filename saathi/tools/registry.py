@@ -1,13 +1,14 @@
 """Tool registry: schemas exposed to Claude + dispatcher with privilege gating."""
-from . import (canteen, content, files, mac_control, n8n_tools, notes, english,
+from . import (canteen, content, files, mac_control, n8n_tools, notes, english, meta_post,
                system, apps, research, calendar as cal, email_tool, content_studio,
-               projects, internet_reach, public_apis)
+               projects, internet_reach, public_apis, growth_engine, quote_maker)
 from .. import nepali, selfimprove, health, analytics, docs
 
 # Tools that require speaker verification (only Ajay's voice)
 PRIVILEGED = {
     "send_email",
     "post_social_content", "post_to_all_socials", "deploy_ielts_site", "publish_to_youtube", "queue_video", "publish_blog",
+    "connect_facebook_instagram",
     "trigger_n8n_workflow", "mac_run_shortcut",
     "mac_open_app", "mac_close_app", "mac_type_text", "send_telegram",
     "search_mac_files", "read_mac_file",
@@ -175,11 +176,27 @@ TOOL_SCHEMAS = [
         "input_schema": {"type": "object", "properties": {}},
     },
     {
+        "name": "connect_facebook_instagram",
+        "description": "Save Facebook Page Access Token + Page ID + Instagram Account ID to enable "
+                       "auto-posting to Facebook and Instagram via the Meta Graph API. "
+                       "Call this when Ajay provides these credentials. Also verifies the token works.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "page_access_token": {"type": "string", "description": "Long-lived Facebook Page Access Token"},
+                "page_id": {"type": "string", "description": "Numeric Facebook Page ID"},
+                "ig_account_id": {"type": "string", "description": "Numeric Instagram Business Account ID"},
+            },
+            "required": ["page_access_token", "page_id", "ig_account_id"],
+        },
+    },
+    {
         "name": "post_to_all_socials",
         "description": "PRIVILEGED. Publish the SAME approved content to ALL connected social "
                        "platforms at once (or a comma-separated subset like 'facebook,linkedin'). "
                        "Only call after Ajay approved the exact draft. Manual-method platforms "
-                       "(e.g. TikTok) are prepared for upload, not auto-posted.",
+                       "(e.g. TikTok) are prepared for upload, not auto-posted. "
+                       "The result has a 'summary' field — show ONLY that to Ajay, not raw JSON.",
         "input_schema": {
             "type": "object",
             "properties": {
@@ -857,7 +874,155 @@ TOOL_SCHEMAS = [
             },
         },
     },
+
+    # ── QUOTE MAKER ────────────────────────────────────────────────────────
+    {
+        "name": "make_quote_kit",
+        "description": "Generate a complete quote content kit: LLM IELTS quote → 1080×1080 image "
+                       "(for FB + IG) + 5-second YouTube Short MP4 + a blog post. "
+                       "Used automatically when no video is queued. Also call manually: "
+                       "'make a quote Short', 'generate a quote post', 'make a quote video'.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "topic": {"type": "string", "description": "IELTS topic (e.g. 'Writing Task 2', 'Speaking Part 1')"},
+                "pose": {"type": "string", "enum": ["teaching", "pointing", "thumbsup", "excited", "thinking", "flashcard"], "default": "teaching"},
+            },
+        },
+    },
+    {
+        "name": "make_quote_image",
+        "description": "Render a single branded Mr. Yeti quote image (1080×1080 for FB/IG feed "
+                       "or 1080×1920 for Stories/Shorts). Returns the local file path.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "quote": {"type": "string"},
+                "subtext": {"type": "string", "default": "Free practice → pielts.web.app"},
+                "pose": {"type": "string", "enum": ["teaching", "pointing", "thumbsup", "excited", "thinking", "flashcard"], "default": "teaching"},
+                "size": {"type": "array", "items": {"type": "integer"}, "description": "[width, height], e.g. [1080,1080] or [1080,1920]"},
+            },
+            "required": ["quote"],
+        },
+    },
+    {
+        "name": "make_quote_video",
+        "description": "Render a 5-second branded quote MP4 (1080×1920) for YouTube Shorts. "
+                       "Includes the Mr. Yeti image, quote text, and background music.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "quote": {"type": "string"},
+                "subtext": {"type": "string"},
+                "pose": {"type": "string", "enum": ["teaching", "pointing", "thumbsup", "excited", "thinking", "flashcard"], "default": "teaching"},
+                "duration": {"type": "number", "default": 5.0},
+            },
+            "required": ["quote"],
+        },
+    },
+    # ── GROWTH ENGINE (7 systems) ──────────────────────────────────────────
+    {
+        "name": "content_strategy_30day",
+        "description": "Generate a full 30-day content calendar with 2 posts per day (AM + PM). "
+                       "Every post has: platform, format, goal (GROW/TRUST/SELL), scroll-stopping hook, "
+                       "core message, caption starter, and CTA. 60% grow+trust, 40% trust+sell mix. "
+                       "Sends a 7-day preview to Telegram. Use when Ajay asks for a content plan or strategy.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "start_date": {"type": "string", "description": "YYYY-MM-DD (default: today)"},
+            },
+        },
+    },
+    {
+        "name": "viral_hook_generator",
+        "description": "Generate 5 scroll-stopping viral hooks for a topic. Each hook stops someone "
+                       "in under 2 seconds using proven formulas: loss-aversion, number-promise, "
+                       "curiosity-gap, contrast, challenge, or relatability. Use before writing any post.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "topic": {"type": "string", "description": "What the post is about"},
+                "platform": {"type": "string", "enum": ["instagram", "facebook", "youtube", "tiktok"], "default": "instagram"},
+                "goal": {"type": "string", "enum": ["GROW", "TRUST", "SELL"], "default": "GROW"},
+            },
+            "required": ["topic"],
+        },
+    },
+    {
+        "name": "profile_optimizer",
+        "description": "Rewrite the bio for Instagram, Facebook, or YouTube so visitors instantly "
+                       "know what they get, trust the brand in 3 seconds, and take action. "
+                       "Use when Ajay says 'optimize my bio' or 'rewrite my profile'.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "platform": {"type": "string", "enum": ["instagram", "facebook", "youtube", "all"]},
+                "current_bio": {"type": "string", "description": "Current bio text (optional — uses defaults if empty)"},
+            },
+            "required": ["platform"],
+        },
+    },
+    {
+        "name": "engagement_booster",
+        "description": "Rewrite an existing post to maximise comments, likes, and saves. "
+                       "Keeps the same message but adds a stronger hook, specific CTA, and a "
+                       "question that makes people want to comment. Use on any underperforming post.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "original_post": {"type": "string", "description": "The existing post text to rewrite"},
+                "platform": {"type": "string", "enum": ["instagram", "facebook", "youtube", "tiktok"], "default": "instagram"},
+            },
+            "required": ["original_post"],
+        },
+    },
+    {
+        "name": "dm_sales_converter",
+        "description": "Generate a warm, genuine DM reply for someone who commented asking about "
+                       "the pielts app or IELTS coaching. Converts interest into action without "
+                       "being salesy. Use when Ajay says 'someone commented' or 'reply to this DM'.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "comment": {"type": "string", "description": "The comment or question they posted"},
+                "platform": {"type": "string", "enum": ["instagram", "facebook", "youtube"], "default": "instagram"},
+            },
+            "required": ["comment"],
+        },
+    },
+    {
+        "name": "hashtag_seo_system",
+        "description": "Generate a tiered hashtag strategy (broad/mid/niche/brand/engagement tiers) "
+                       "plus the best posting time, 3 post-launch actions to boost the algorithm, "
+                       "and one unique growth tactic for this specific post.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "topic": {"type": "string", "description": "The post topic"},
+                "platform": {"type": "string", "enum": ["instagram", "facebook", "youtube", "tiktok"], "default": "instagram"},
+                "goal": {"type": "string", "enum": ["GROW", "TRUST", "SELL"], "default": "GROW"},
+            },
+            "required": ["topic"],
+        },
+    },
+    {
+        "name": "monthly_analytics_review",
+        "description": "Pull live analytics from Instagram, Facebook Page, and YouTube. "
+                       "Shows followers, avg likes/comments, top post, subscribers, total views. "
+                       "Use at end of month or when Ajay asks 'how are we doing' or 'analytics'.",
+        "input_schema": {"type": "object", "properties": {}},
+    },
 ]
+
+def _connect_fb_ig(page_access_token: str, page_id: str, ig_account_id: str) -> dict:
+    verify = meta_post.verify_token(page_access_token, page_id)
+    if not verify.get("ok"):
+        return {"ok": False, "error": f"Token verification failed: {verify.get('error')}"}
+    result = meta_post.save_credentials(page_access_token, page_id, ig_account_id)
+    result["page_name"] = verify.get("page_name")
+    return result
+
 
 _HANDLERS = {
     "canteen_query": canteen.query,
@@ -865,6 +1030,7 @@ _HANDLERS = {
     "stage_draft": lambda platform, content_text, title="", platforms=None: _stage_draft(platform, content_text, title, platforms or []),
     "post_social_content": content.post,
     "list_social_connections": content.list_connections,
+    "connect_facebook_instagram": _connect_fb_ig,
     "post_to_all_socials": content.post_all,
     "deploy_ielts_site": content_studio.deploy_ielts_site,
     "publish_to_youtube": content_studio.publish_to_youtube,
@@ -937,6 +1103,21 @@ _HANDLERS = {
     "crypto_prices": public_apis.crypto_prices,
     "motivational_quote": public_apis.motivational_quote,
     "exchange_rate": public_apis.exchange_rate,
+    # Quote Maker
+    "make_quote_kit": lambda **kw: quote_maker.make_full_quote_kit(**kw),
+    "make_quote_image": lambda **kw: {"path": quote_maker.make_quote_image(**kw)},
+    "make_quote_video": lambda **kw: {"path": quote_maker.make_quote_video(**kw)},
+    # Growth Engine
+    "content_strategy_30day": lambda **kw: growth_engine.content_strategy_30day(**kw),
+    "viral_hook_generator": lambda **kw: growth_engine.viral_hook_generator(**kw),
+    "profile_optimizer": lambda **kw: (
+        growth_engine.optimize_all_profiles() if kw.get("platform") == "all"
+        else growth_engine.profile_optimizer(**kw)
+    ),
+    "engagement_booster": lambda **kw: growth_engine.engagement_booster(**kw),
+    "dm_sales_converter": lambda **kw: growth_engine.dm_sales_converter(**kw),
+    "hashtag_seo_system": lambda **kw: growth_engine.hashtag_seo_system(**kw),
+    "monthly_analytics_review": lambda **kw: growth_engine.monthly_analytics_review(),
 }
 
 

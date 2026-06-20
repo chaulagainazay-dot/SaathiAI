@@ -1,0 +1,127 @@
+{
+  "name": "Baadar — Full Pipeline: Research→Script→Voice→Video→Thumbnail→SEO→Post",
+  "nodes": [
+    {
+      "parameters": { "rule": { "interval": [
+        { "field": "cronExpression", "expression": "30 6 * * *" },
+        { "field": "cronExpression", "expression": "30 18 * * *" }
+      ]}},
+      "id": "cron", "name": "Cron: 6:30AM + 6:30PM",
+      "type": "n8n-nodes-base.scheduleTrigger", "typeVersion": 1.2, "position": [120, 400]
+    },
+    {
+      "parameters": {
+        "jsCode": "const hour = new Date().getHours();\nreturn [{ json: { slot: hour < 14 ? 'morning' : 'evening' } }];"
+      },
+      "id": "slot", "name": "Detect Slot",
+      "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [320, 400]
+    },
+    {
+      "parameters": {
+        "method": "POST", "url": "http://127.0.0.1:8765/api/v1/auto_reel",
+        "sendHeaders": true,
+        "headerParameters": { "parameters": [{ "name": "x-saathi-token", "value": "9278af2af4de585e" }] },
+        "sendBody": true,
+        "bodyParameters": { "parameters": [{ "name": "slot", "value": "={{ $json.slot }}" }]},
+        "options": { "timeout": 180000 }
+      },
+      "id": "reel", "name": "Stage 4-5: Generate Reel Video",
+      "type": "n8n-nodes-base.httpRequest", "typeVersion": 4, "position": [540, 400]
+    },
+    {
+      "parameters": {
+        "method": "POST", "url": "http://127.0.0.1:8765/api/v1/studio/thumbnail",
+        "sendHeaders": true,
+        "headerParameters": { "parameters": [{ "name": "x-saathi-token", "value": "9278af2af4de585e" }] },
+        "sendBody": true,
+        "bodyParameters": { "parameters": [
+          { "name": "title", "value": "={{ $json.title }}" },
+          { "name": "thumbnail_text", "value": "={{ $json.title.split(' ').slice(0,4).join(' ') }}" },
+          { "name": "style", "value": "shocked" }
+        ]},
+        "options": { "timeout": 120000 }
+      },
+      "id": "thumb", "name": "Stage 7: Generate Thumbnail",
+      "type": "n8n-nodes-base.httpRequest", "typeVersion": 4, "position": [760, 260]
+    },
+    {
+      "parameters": {
+        "method": "POST", "url": "http://127.0.0.1:8765/api/v1/studio/seo",
+        "sendHeaders": true,
+        "headerParameters": { "parameters": [{ "name": "x-saathi-token", "value": "9278af2af4de585e" }] },
+        "sendBody": true,
+        "bodyParameters": { "parameters": [
+          { "name": "topic", "value": "={{ $('Stage 4-5: Generate Reel Video').item.json.title }}" },
+          { "name": "hook", "value": "={{ $('Stage 4-5: Generate Reel Video').item.json.description.split('\\n')[0] }}" }
+        ]},
+        "options": { "timeout": 90000 }
+      },
+      "id": "seo", "name": "Stage 8: Generate SEO",
+      "type": "n8n-nodes-base.httpRequest", "typeVersion": 4, "position": [760, 540]
+    },
+    {
+      "parameters": {
+        "url": "={{ 'http://127.0.0.1:8765/api/v1/auto_reel/download?path=' + encodeURIComponent($('Stage 4-5: Generate Reel Video').item.json.video_path) }}",
+        "options": { "timeout": 60000, "response": { "response": { "responseFormat": "file" }}}
+      },
+      "id": "dl-video", "name": "Download Video",
+      "type": "n8n-nodes-base.httpRequest", "typeVersion": 4, "position": [980, 400]
+    },
+    {
+      "parameters": {
+        "resource": "video", "operation": "upload",
+        "title": "={{ $('Stage 8: Generate SEO').item.json.youtube.title ?? $('Stage 4-5: Generate Reel Video').item.json.title }}",
+        "description": "={{ $('Stage 8: Generate SEO').item.json.youtube.description ?? $('Stage 4-5: Generate Reel Video').item.json.description }}",
+        "categoryId": "27",
+        "tags": { "tag": "={{ $('Stage 8: Generate SEO').item.json.youtube.tags.join(',') ?? $('Stage 4-5: Generate Reel Video').item.json.tags }}" },
+        "privacyStatus": "public",
+        "options": { "madeForKids": false }
+      },
+      "id": "yt-upload", "name": "Stage 9a: YouTube Upload",
+      "type": "n8n-nodes-base.youTube", "typeVersion": 1, "position": [1200, 300],
+      "credentials": { "youTubeOAuth2Api": { "id": "youtube-cred", "name": "YouTube account" }}
+    },
+    {
+      "parameters": {
+        "method": "POST", "url": "http://127.0.0.1:8765/api/v1/agent/chat",
+        "sendHeaders": true,
+        "headerParameters": { "parameters": [{ "name": "x-saathi-token", "value": "9278af2af4de585e" }] },
+        "sendBody": true,
+        "bodyParameters": { "parameters": [
+          { "name": "text", "value": "=✅ Full pipeline complete!\n🎬 YouTube: https://youtu.be/{{ $json.id }}\n📌 Title: {{ $('Stage 4-5: Generate Reel Video').item.json.title }}\nLog this to the content tracker and suggest tomorrow's topic based on performance." },
+          { "name": "session_id", "value": "pipeline-orchestrator" }
+        ]}
+      },
+      "id": "notify-baadar", "name": "Notify Baadar + Log",
+      "type": "n8n-nodes-base.httpRequest", "typeVersion": 4, "position": [1420, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/sendMessage",
+        "sendBody": true,
+        "bodyParameters": { "parameters": [
+          { "name": "chat_id", "value": "={{ $env.TELEGRAM_CHAT_ID }}" },
+          { "name": "text", "value": "=🚀 Full pipeline done!\n\n🎬 YouTube Short live!\n📌 {{ $('Stage 4-5: Generate Reel Video').item.json.title }}\n🔗 https://youtu.be/{{ $('Stage 9a: YouTube Upload').item.json.id }}\n\n🎯 SEO optimized ✅\n🖼️ Thumbnail generated ✅\n📱 Posted to YouTube ✅" }
+        ]}
+      },
+      "id": "telegram", "name": "Telegram Summary",
+      "type": "n8n-nodes-base.httpRequest", "typeVersion": 4, "position": [1420, 460]
+    }
+  ],
+  "connections": {
+    "Cron: 6:30AM + 6:30PM": { "main": [[{ "node": "Detect Slot", "type": "main", "index": 0 }]] },
+    "Detect Slot": { "main": [[{ "node": "Stage 4-5: Generate Reel Video", "type": "main", "index": 0 }]] },
+    "Stage 4-5: Generate Reel Video": { "main": [[
+      { "node": "Stage 7: Generate Thumbnail", "type": "main", "index": 0 },
+      { "node": "Stage 8: Generate SEO", "type": "main", "index": 0 },
+      { "node": "Download Video", "type": "main", "index": 0 }
+    ]]},
+    "Download Video": { "main": [[{ "node": "Stage 9a: YouTube Upload", "type": "main", "index": 0 }]] },
+    "Stage 9a: YouTube Upload": { "main": [[
+      { "node": "Notify Baadar + Log", "type": "main", "index": 0 },
+      { "node": "Telegram Summary", "type": "main", "index": 0 }
+    ]]}
+  },
+  "settings": { "executionOrder": "v1" }
+}

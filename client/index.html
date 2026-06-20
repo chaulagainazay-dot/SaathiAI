@@ -347,6 +347,90 @@ body[data-state="speaking"]  #micBtn { background: #064e3b; border-color: var(--
 #createPanel { display: none; flex-direction: column; }
 #createPanel.active { display: flex; }
 
+/* ── PLATFORM HUB ── */
+.plat-hub { display: flex; flex-direction: column; gap: 11px; }
+.plat-hub-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); overflow: hidden;
+}
+.plat-hub-head {
+  display: flex; align-items: center; gap: 11px; padding: 13px 15px;
+  border-bottom: 1px solid var(--border); cursor: pointer;
+  transition: background .15s;
+}
+.plat-hub-head:hover { background: var(--surface2); }
+.plat-hub-icon {
+  width: 40px; height: 40px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center; font-size: 22px;
+  flex-shrink: 0;
+}
+.plat-hub-name  { font-size: 15px; font-weight: 800; color: #fff; }
+.plat-hub-sub   { font-size: var(--fs-xxs); color: var(--text3); margin-top: 1px; }
+.plat-hub-badge { margin-left: auto; flex-shrink: 0; }
+.plat-hub-chevron { font-size: 12px; color: var(--text3); margin-left: 4px; transition: transform .2s; }
+.plat-hub-card.open .plat-hub-chevron { transform: rotate(180deg); }
+
+.plat-hub-body  { display: none; padding: 14px 15px; }
+.plat-hub-card.open .plat-hub-body { display: block; }
+
+.plat-stat-row {
+  display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 13px;
+}
+.plat-stat {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 10px 11px;
+  text-align: center;
+}
+.plat-stat-v { font-size: 20px; font-weight: 800; color: #fff; }
+.plat-stat-k { font-size: var(--fs-xxs); color: var(--text3); text-transform: uppercase;
+               letter-spacing: .3px; margin-top: 3px; }
+.plat-stat-d { font-size: 11px; margin-top: 3px; font-weight: 700; }
+.plat-stat-d.up   { color: var(--green); }
+.plat-stat-d.down { color: var(--red); }
+.plat-stat-d.flat { color: var(--text3); }
+
+.plat-actions { display: flex; gap: 8px; margin-bottom: 13px; }
+.plat-act-btn {
+  flex: 1; border: none; border-radius: var(--radius-sm); padding: 10px 8px;
+  font-size: var(--fs-xs); font-weight: 700; cursor: pointer; transition: opacity .15s;
+  display: flex; align-items: center; justify-content: center; gap: 5px;
+}
+.plat-act-btn:active { opacity: .8; }
+.pab-post   { background: var(--purple); color: #fff; }
+.pab-stats  { background: var(--surface2); border: 1px solid var(--border); color: var(--text2); }
+.pab-flow   { background: #0d1a30; border: 1px solid #1e3a6e; color: #93c5fd; }
+
+/* n8n-style flowchart */
+.flow-container {
+  background: #070710; border: 1px solid var(--border); border-radius: var(--radius-sm);
+  overflow: auto; position: relative;
+}
+.flow-svg { display: block; min-width: 320px; }
+.flow-node {
+  cursor: default;
+}
+.flow-node rect {
+  rx: 8; ry: 8;
+}
+.flow-label {
+  font-family: -apple-system,'SF Pro Text',sans-serif;
+  font-size: 11px; font-weight: 700; fill: #fff; text-anchor: middle;
+  dominant-baseline: middle; pointer-events: none;
+}
+.flow-sublabel {
+  font-size: 9px; fill: #9898c0; text-anchor: middle; dominant-baseline: middle; pointer-events: none;
+}
+.flow-icon {
+  font-size: 15px; text-anchor: middle; dominant-baseline: middle; pointer-events: none;
+}
+.flow-edge { fill: none; stroke: #2a2a48; stroke-width: 2; marker-end: url(#arr); }
+.flow-edge.active { stroke: var(--green); opacity: .7; }
+.flow-section-label {
+  font-size: 9px; fill: #50507a; font-weight: 700; letter-spacing: .4px;
+  text-transform: uppercase;
+}
+
+
 /* Quick-generate chips */
 .qg-grid { display: flex; flex-wrap: wrap; gap: 8px; }
 .qg-btn {
@@ -853,6 +937,249 @@ body[data-state="speaking"]  #micBtn { background: #064e3b; border-color: var(--
     " onmouseenter="this.style.opacity='.9'" onmouseleave="this.style.opacity='1'">
       <span style="font-size:22px">🚀</span> Generate Full Day Content Kit
     </button>
+
+    <!-- ── PLATFORM HUB ── -->
+    <div class="plat-hub" id="platHub">
+
+      <!-- YOUTUBE -->
+      <div class="plat-hub-card" id="phub-yt">
+        <div class="plat-hub-head" onclick="togglePlatHub('yt')">
+          <div class="plat-hub-icon" style="background:linear-gradient(135deg,#ff0000,#cc0000)">🎬</div>
+          <div>
+            <div class="plat-hub-name">YouTube</div>
+            <div class="plat-hub-sub" id="yt-sub-line">@pieltsapp · Loading stats…</div>
+          </div>
+          <span class="badge bg-red plat-hub-badge" id="yt-badge" style="font-size:10px">—</span>
+          <span class="plat-hub-chevron">▼</span>
+        </div>
+        <div class="plat-hub-body">
+          <div class="plat-stat-row" id="yt-stats">
+            <div class="plat-stat"><div class="plat-stat-v" id="yt-subs">—</div><div class="plat-stat-k">Subscribers</div></div>
+            <div class="plat-stat"><div class="plat-stat-v" id="yt-views">—</div><div class="plat-stat-k">Total Views</div></div>
+            <div class="plat-stat"><div class="plat-stat-v" id="yt-vids">—</div><div class="plat-stat-k">Videos</div></div>
+          </div>
+          <div class="plat-actions">
+            <button class="plat-act-btn pab-post" onclick="qchip('Generate a YouTube Short script in English for pielts about one IELTS tip. 60-second max, hook in first 3 seconds, tip, CTA to subscribe. Output only English.','YT Script')">✍️ Write Script</button>
+            <button class="plat-act-btn pab-stats" onclick="qchip('Give me the YouTube channel performance summary for pielts — top video this week, subscriber growth, and one improvement tip.')">📊 Ask Analysis</button>
+            <button class="plat-act-btn pab-flow" onclick="toggleFlow('yt-flow')">⚡ Process</button>
+          </div>
+          <!-- YouTube Flowchart -->
+          <div class="flow-container" id="yt-flow" style="display:none">
+            <svg class="flow-svg" viewBox="0 0 320 420" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <marker id="arr" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+                  <polygon points="0 0, 8 3, 0 6" fill="#2a2a48"/>
+                </marker>
+                <marker id="arr-green" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+                  <polygon points="0 0, 8 3, 0 6" fill="#10b981"/>
+                </marker>
+              </defs>
+              <!-- Edges -->
+              <line x1="160" y1="56" x2="160" y2="84" class="flow-edge"/>
+              <line x1="160" y1="126" x2="160" y2="154" class="flow-edge"/>
+              <line x1="160" y1="196" x2="160" y2="224" class="flow-edge"/>
+              <line x1="160" y1="266" x2="160" y2="294" class="flow-edge"/>
+              <line x1="160" y1="336" x2="160" y2="364" class="flow-edge"/>
+              <!-- Node 1: Trigger -->
+              <g class="flow-node">
+                <rect x="60" y="16" width="200" height="40" fill="#1a0d3d" stroke="#7c3aed" stroke-width="1.5"/>
+                <text x="160" y="32" class="flow-label">⏰ 8:00 AM — Scheduler</text>
+                <text x="160" y="46" class="flow-sublabel">daily_content() trigger</text>
+              </g>
+              <!-- Node 2: Script Gen -->
+              <g class="flow-node">
+                <rect x="60" y="84" width="200" height="42" fill="#0d1a30" stroke="#3b82f6" stroke-width="1.5"/>
+                <text x="160" y="100" class="flow-label">🤖 Groq LLM</text>
+                <text x="160" y="115" class="flow-sublabel">Generate YT Short script</text>
+              </g>
+              <!-- Node 3: Quote Maker -->
+              <g class="flow-node">
+                <rect x="60" y="154" width="200" height="42" fill="#0d2818" stroke="#10b981" stroke-width="1.5"/>
+                <text x="160" y="170" class="flow-label">🎨 quote_maker.py</text>
+                <text x="160" y="185" class="flow-sublabel">1080×1920 image + 5s MP4</text>
+              </g>
+              <!-- Node 4: Upload -->
+              <g class="flow-node">
+                <rect x="60" y="224" width="200" height="42" fill="#2d0a0a" stroke="#ef4444" stroke-width="1.5"/>
+                <text x="160" y="240" class="flow-label">▶️ YouTube API</text>
+                <text x="160" y="255" class="flow-sublabel">Upload Short → publish</text>
+              </g>
+              <!-- Node 5: Blog -->
+              <g class="flow-node">
+                <rect x="60" y="294" width="200" height="42" fill="#2d1e04" stroke="#f59e0b" stroke-width="1.5"/>
+                <text x="160" y="310" class="flow-label">📝 Blog Post</text>
+                <text x="160" y="325" class="flow-sublabel">Firebase → pielts.web.app</text>
+              </g>
+              <!-- Node 6: Telegram -->
+              <g class="flow-node">
+                <rect x="60" y="364" width="200" height="40" fill="#052e16" stroke="#10b981" stroke-width="1.5"/>
+                <text x="160" y="380" class="flow-label">📨 Telegram Alert</text>
+                <text x="160" y="394" class="flow-sublabel">@AjayGmailbot · confirm</text>
+              </g>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- FACEBOOK -->
+      <div class="plat-hub-card" id="phub-fb">
+        <div class="plat-hub-head" onclick="togglePlatHub('fb')">
+          <div class="plat-hub-icon" style="background:linear-gradient(135deg,#1877f2,#0d5fd1)">📘</div>
+          <div>
+            <div class="plat-hub-name">Facebook</div>
+            <div class="plat-hub-sub" id="fb-sub-line">@pieltsapp · Loading stats…</div>
+          </div>
+          <span class="badge bg-blue plat-hub-badge" id="fb-badge" style="font-size:10px">—</span>
+          <span class="plat-hub-chevron">▼</span>
+        </div>
+        <div class="plat-hub-body">
+          <div class="plat-stat-row" id="fb-stats">
+            <div class="plat-stat"><div class="plat-stat-v" id="fb-likes">—</div><div class="plat-stat-k">Page Likes</div></div>
+            <div class="plat-stat"><div class="plat-stat-v" id="fb-followers">—</div><div class="plat-stat-k">Followers</div></div>
+            <div class="plat-stat"><div class="plat-stat-v" id="fb-reach">—</div><div class="plat-stat-k">Est. Reach</div></div>
+          </div>
+          <div class="plat-actions">
+            <button class="plat-act-btn pab-post" onclick="triggerAutopost('fb')">🚀 Post Now</button>
+            <button class="plat-act-btn pab-stats" onclick="qchip('Give me the Facebook page performance for pielts — engagement rate, top post this week, and growth tip.')">📊 Ask Analysis</button>
+            <button class="plat-act-btn pab-flow" onclick="toggleFlow('fb-flow')">⚡ Process</button>
+          </div>
+          <!-- Facebook Flowchart -->
+          <div class="flow-container" id="fb-flow" style="display:none">
+            <svg class="flow-svg" viewBox="0 0 320 460" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <marker id="arr2" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+                  <polygon points="0 0, 8 3, 0 6" fill="#2a2a48"/>
+                </marker>
+              </defs>
+              <line x1="160" y1="56" x2="160" y2="84" stroke="#2a2a48" stroke-width="2" fill="none" marker-end="url(#arr2)"/>
+              <line x1="160" y1="126" x2="160" y2="154" stroke="#2a2a48" stroke-width="2" fill="none" marker-end="url(#arr2)"/>
+              <line x1="160" y1="196" x2="160" y2="224" stroke="#2a2a48" stroke-width="2" fill="none" marker-end="url(#arr2)"/>
+              <line x1="160" y1="266" x2="160" y2="294" stroke="#2a2a48" stroke-width="2" fill="none" marker-end="url(#arr2)"/>
+              <line x1="160" y1="336" x2="160" y2="364" stroke="#2a2a48" stroke-width="2" fill="none" marker-end="url(#arr2)"/>
+              <line x1="160" y1="406" x2="160" y2="428" stroke="#2a2a48" stroke-width="2" fill="none" marker-end="url(#arr2)"/>
+              <!-- Trigger -->
+              <g class="flow-node">
+                <rect x="60" y="16" width="200" height="40" fill="#1a0d3d" stroke="#7c3aed" stroke-width="1.5" rx="8"/>
+                <text x="160" y="32" class="flow-label">⏰ 9:00 AM / 6:00 PM</text>
+                <text x="160" y="46" class="flow-sublabel">social_autopost_am/pm()</text>
+              </g>
+              <!-- Calendar lookup -->
+              <g class="flow-node">
+                <rect x="60" y="84" width="200" height="42" fill="#0a1e3d" stroke="#3b82f6" stroke-width="1.5" rx="8"/>
+                <text x="160" y="100" class="flow-label">📅 30-Day Calendar</text>
+                <text x="160" y="115" class="flow-sublabel">strategy_30day_*.json lookup</text>
+              </g>
+              <!-- Caption build -->
+              <g class="flow-node">
+                <rect x="60" y="154" width="200" height="42" fill="#0d1a30" stroke="#3b82f6" stroke-width="1.5" rx="8"/>
+                <text x="160" y="170" class="flow-label">🤖 Hashtag + Caption</text>
+                <text x="160" y="185" class="flow-sublabel">growth_engine · hashtag_seo</text>
+              </g>
+              <!-- Imgur upload -->
+              <g class="flow-node">
+                <rect x="60" y="224" width="200" height="42" fill="#2d1e04" stroke="#f59e0b" stroke-width="1.5" rx="8"/>
+                <text x="160" y="240" class="flow-label">🖼️ Image → Imgur CDN</text>
+                <text x="160" y="255" class="flow-sublabel">anonymous upload · public URL</text>
+              </g>
+              <!-- Meta Graph API -->
+              <g class="flow-node">
+                <rect x="60" y="294" width="200" height="42" fill="#0d1a30" stroke="#1877f2" stroke-width="1.5" rx="8"/>
+                <text x="160" y="310" class="flow-label">📘 Meta Graph API</text>
+                <text x="160" y="325" class="flow-sublabel">v25.0 · Page post · permanent token</text>
+              </g>
+              <!-- Log -->
+              <g class="flow-node">
+                <rect x="60" y="364" width="200" height="42" fill="#052e16" stroke="#10b981" stroke-width="1.5" rx="8"/>
+                <text x="160" y="380" class="flow-label">📋 Post Log</text>
+                <text x="160" y="395" class="flow-sublabel">autopost_log.json · dedup guard</text>
+              </g>
+              <!-- Telegram -->
+              <g class="flow-node">
+                <rect x="60" y="420" width="200" height="32" fill="#052e16" stroke="#10b981" stroke-width="1.5" rx="8"/>
+                <text x="160" y="440" class="flow-label">📨 Telegram Confirm</text>
+              </g>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- INSTAGRAM -->
+      <div class="plat-hub-card" id="phub-ig">
+        <div class="plat-hub-head" onclick="togglePlatHub('ig')">
+          <div class="plat-hub-icon" style="background:linear-gradient(135deg,#e1306c,#833ab4,#f77737)">📸</div>
+          <div>
+            <div class="plat-hub-name">Instagram</div>
+            <div class="plat-hub-sub" id="ig-sub-line">@pieltsofficial · Loading stats…</div>
+          </div>
+          <span class="badge bg-purple plat-hub-badge" id="ig-badge" style="font-size:10px">—</span>
+          <span class="plat-hub-chevron">▼</span>
+        </div>
+        <div class="plat-hub-body">
+          <div class="plat-stat-row" id="ig-stats">
+            <div class="plat-stat"><div class="plat-stat-v" id="ig-followers">—</div><div class="plat-stat-k">Followers</div></div>
+            <div class="plat-stat"><div class="plat-stat-v" id="ig-avg-likes">—</div><div class="plat-stat-k">Avg Likes</div></div>
+            <div class="plat-stat"><div class="plat-stat-v" id="ig-posts">—</div><div class="plat-stat-k">Posts</div></div>
+          </div>
+          <div class="plat-actions">
+            <button class="plat-act-btn pab-post" onclick="triggerAutopost('ig')">🚀 Post Now</button>
+            <button class="plat-act-btn pab-stats" onclick="qchip('Give me the Instagram account performance for @pieltsofficial — follower growth, engagement rate, best content type.')">📊 Ask Analysis</button>
+            <button class="plat-act-btn pab-flow" onclick="toggleFlow('ig-flow')">⚡ Process</button>
+          </div>
+          <!-- Instagram Flowchart -->
+          <div class="flow-container" id="ig-flow" style="display:none">
+            <svg class="flow-svg" viewBox="0 0 320 440" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <marker id="arr3" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+                  <polygon points="0 0, 8 3, 0 6" fill="#2a2a48"/>
+                </marker>
+              </defs>
+              <line x1="160" y1="56" x2="160" y2="84" stroke="#2a2a48" stroke-width="2" fill="none" marker-end="url(#arr3)"/>
+              <line x1="160" y1="126" x2="160" y2="154" stroke="#2a2a48" stroke-width="2" fill="none" marker-end="url(#arr3)"/>
+              <line x1="160" y1="196" x2="160" y2="224" stroke="#2a2a48" stroke-width="2" fill="none" marker-end="url(#arr3)"/>
+              <line x1="160" y1="266" x2="160" y2="294" stroke="#2a2a48" stroke-width="2" fill="none" marker-end="url(#arr3)"/>
+              <line x1="160" y1="336" x2="160" y2="364" stroke="#2a2a48" stroke-width="2" fill="none" marker-end="url(#arr3)"/>
+              <!-- Trigger -->
+              <g class="flow-node">
+                <rect x="60" y="16" width="200" height="40" fill="#1a0d3d" stroke="#7c3aed" stroke-width="1.5" rx="8"/>
+                <text x="160" y="32" class="flow-label">⏰ 9 AM / 6 PM / 8 PM</text>
+                <text x="160" y="46" class="flow-sublabel">scheduler · 3 daily slots</text>
+              </g>
+              <!-- Image generation -->
+              <g class="flow-node">
+                <rect x="60" y="84" width="200" height="42" fill="#0d2818" stroke="#10b981" stroke-width="1.5" rx="8"/>
+                <text x="160" y="100" class="flow-label">🎨 Quote Card Builder</text>
+                <text x="160" y="115" class="flow-sublabel">PIL · 1080×1080 · Mr. Yeti pose</text>
+              </g>
+              <!-- Caption -->
+              <g class="flow-node">
+                <rect x="60" y="154" width="200" height="42" fill="#0d1a30" stroke="#3b82f6" stroke-width="1.5" rx="8"/>
+                <text x="160" y="170" class="flow-label">📝 Caption + Hashtags</text>
+                <text x="160" y="185" class="flow-sublabel">tier1/2/3 · goal-based CTA</text>
+              </g>
+              <!-- IG Step 1 -->
+              <g class="flow-node">
+                <rect x="60" y="224" width="200" height="42" fill="#1a0d2e" stroke="#833ab4" stroke-width="1.5" rx="8"/>
+                <text x="160" y="240" class="flow-label">📸 IG: Create Container</text>
+                <text x="160" y="255" class="flow-sublabel">media object · IBA 17841415523956193</text>
+              </g>
+              <!-- IG Step 2 -->
+              <g class="flow-node">
+                <rect x="60" y="294" width="200" height="42" fill="#1a0d2e" stroke="#e1306c" stroke-width="1.5" rx="8"/>
+                <text x="160" y="310" class="flow-label">✅ IG: Publish</text>
+                <text x="160" y="325" class="flow-sublabel">graph.instagram.com · publish</text>
+              </g>
+              <!-- Log + Notify -->
+              <g class="flow-node">
+                <rect x="60" y="364" width="200" height="42" fill="#052e16" stroke="#10b981" stroke-width="1.5" rx="8"/>
+                <text x="160" y="380" class="flow-label">📋 Log + Telegram</text>
+                <text x="160" y="395" class="flow-sublabel">autopost_log · @AjayGmailbot</text>
+              </g>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /plat-hub -->
 
     <!-- pielts Weekly Goal Tracker -->
     <div class="card">
@@ -1392,6 +1719,7 @@ function switchTab(name) {
   if (name === 'canteen')  loadCanteen();
   if (name === 'files')    { loadTree(''); if (!macHome) loadMacTree(''); }
   if (name === 'settings') { loadStatus(); loadConnections(); pingN8n(); }
+  if (name === 'create')   { /* auto-open YouTube card and load its stats */ setTimeout(() => { const ytCard = document.getElementById('phub-yt'); if (ytCard && !ytCard.classList.contains('open')) { ytCard.classList.add('open'); loadPlatformStats('yt'); } }, 100); }
 }
 
 // ════════════════════════ QUICK CHIPS ════════════════════════
@@ -2516,6 +2844,92 @@ async function enrollVoice() {
     mr.start(); setTimeout(()=>mr.stop(), 10000);
   } catch(e) { btn.disabled=false; status.textContent='❌ '+e.message; }
 }
+
+// ════════════════════════ PLATFORM HUB ════════════════════════
+function togglePlatHub(id) {
+  const card = document.getElementById('phub-' + id);
+  const wasOpen = card.classList.contains('open');
+  document.querySelectorAll('.plat-hub-card').forEach(c => c.classList.remove('open'));
+  if (!wasOpen) {
+    card.classList.add('open');
+    loadPlatformStats(id);
+  }
+}
+
+function toggleFlow(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const open = el.style.display === 'none';
+  el.style.display = open ? 'block' : 'none';
+}
+
+function _fmtNum(n) {
+  if (n == null || n === '' || n === undefined) return '—';
+  const num = parseInt(n);
+  if (isNaN(num)) return String(n);
+  if (num >= 1000000) return (num/1000000).toFixed(1) + 'M';
+  if (num >= 1000) return (num/1000).toFixed(1) + 'K';
+  return String(num);
+}
+
+async function loadPlatformStats(id) {
+  try {
+    const r = await api('/api/v1/tool', 'POST', {
+      name: 'monthly_analytics_review', args: {}
+    });
+    const d = await r.json();
+    const result = d.result || d;
+
+    if (id === 'yt') {
+      const yt = result.youtube || {};
+      document.getElementById('yt-subs').textContent  = _fmtNum(yt.subscribers || yt.subscriber_count);
+      document.getElementById('yt-views').textContent = _fmtNum(yt.views || yt.total_views);
+      document.getElementById('yt-vids').textContent  = _fmtNum(yt.video_count || yt.videos);
+      document.getElementById('yt-sub-line').textContent = '@pieltsapp · ' + (yt.subscribers || '—') + ' subscribers';
+      const badge = document.getElementById('yt-badge');
+      badge.textContent = yt.subscribers ? _fmtNum(yt.subscribers) + ' subs' : 'YouTube';
+    }
+    if (id === 'fb') {
+      const fb = result.facebook || {};
+      document.getElementById('fb-likes').textContent    = _fmtNum(fb.page_likes || fb.likes);
+      document.getElementById('fb-followers').textContent = _fmtNum(fb.followers || fb.page_followers);
+      document.getElementById('fb-reach').textContent    = _fmtNum(fb.reach) || '—';
+      document.getElementById('fb-sub-line').textContent = '@pieltsapp · ' + (fb.page_likes || '—') + ' likes';
+      const badge = document.getElementById('fb-badge');
+      badge.textContent = fb.page_likes ? _fmtNum(fb.page_likes) + ' likes' : 'Facebook';
+    }
+    if (id === 'ig') {
+      const ig = result.instagram || {};
+      document.getElementById('ig-followers').textContent = _fmtNum(ig.followers);
+      document.getElementById('ig-avg-likes').textContent = _fmtNum(ig.avg_likes || ig.average_likes);
+      document.getElementById('ig-posts').textContent     = _fmtNum(ig.media_count || ig.posts);
+      document.getElementById('ig-sub-line').textContent  = '@pieltsofficial · ' + (ig.followers || '—') + ' followers';
+      const badge = document.getElementById('ig-badge');
+      badge.textContent = ig.followers ? _fmtNum(ig.followers) + ' followers' : 'Instagram';
+    }
+  } catch(e) {
+    // silently fail — stats just stay as "—"
+  }
+}
+
+async function triggerAutopost(platform) {
+  const slot = platform === 'yt' ? 'VIDEO' : (new Date().getHours() < 14 ? 'AM' : 'PM');
+  const label = { yt: 'YouTube', fb: 'Facebook', ig: 'Instagram' }[platform];
+  toast('🚀 Triggering ' + label + ' autopost…');
+  try {
+    const r = await api('/api/v1/tool', 'POST', {
+      name: platform === 'yt' ? 'run_daily_autopost' : 'run_social_autopost',
+      args: { slot }
+    });
+    const d = await r.json();
+    toast('✅ ' + label + ' post sent!');
+  } catch(e) {
+    toast('❌ Post failed: ' + e.message);
+  }
+}
+
+// Also load stats when switching to Create tab
+const _origSwitchTab = typeof switchTab === 'function' ? switchTab : null;
 
 // ════════════════════════ UTILS ════════════════════════
 function escJ(s) { return s.replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }

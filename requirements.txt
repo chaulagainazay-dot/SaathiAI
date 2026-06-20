@@ -1,0 +1,19 @@
+# Core runtime — for Railway/Render cloud deployment
+# Heavy ML libs (whisper, moviepy, PIL, resemblyzer) are optional
+# and only needed for local voice + video features
+
+anthropic>=0.40
+fastapi>=0.110
+uvicorn[standard]>=0.29
+httpx>=0.27
+python-dotenv>=1.0
+python-multipart>=0.0.9
+groq>=0.4.0
+firebase-admin>=6.0
+google-cloud-firestore>=2.0
+feedparser>=6.0
+pillow>=10.0
+moviepy>=2.0
+requests>=2.31
+schedule>=1.2
+python-telegram-bot>=20.0

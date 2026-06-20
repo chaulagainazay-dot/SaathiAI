@@ -1,0 +1,86 @@
+{
+  "name": "Baadar — Canteen Supabase Alert (Hourly)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": { "interval": [{ "field": "cronExpression", "expression": "0 * * * *" }] }
+      },
+      "id": "cron-hourly",
+      "name": "Hourly Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [120, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://127.0.0.1:8765/api/v1/agent/chat",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [{ "name": "x-saathi-token", "value": "9278af2af4de585e" }]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "text", "value": "Check the canteen sales status. Are sales low today? Any credit alerts? Give a short 2-line summary." },
+            { "name": "session_id", "value": "canteen-alert-hourly" }
+          ]
+        },
+        "options": { "timeout": 60000 }
+      },
+      "id": "check-canteen",
+      "name": "Check Canteen via Baadar",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [340, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json.response ?? '';\nconst isAlert = /low|alert|credit|warn|zero|empty|urgent/i.test(response);\nreturn [{ json: { response, isAlert } }];"
+      },
+      "id": "check-alert",
+      "name": "Is Alert?",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [560, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": false },
+          "conditions": [{ "leftValue": "={{ $json.isAlert }}", "rightValue": true, "operator": { "type": "boolean", "operation": "equals" } }]
+        }
+      },
+      "id": "if-alert",
+      "name": "If Alert",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [760, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/sendMessage",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "chat_id", "value": "={{ $env.TELEGRAM_CHAT_ID }}" },
+            { "name": "text", "value": "=🍴 Canteen Alert!\n\n⚠️ {{ $('Check Canteen via Baadar').item.json.response?.slice(0, 300) }}" }
+          ]
+        }
+      },
+      "id": "telegram-alert",
+      "name": "Telegram Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [980, 200]
+    }
+  ],
+  "connections": {
+    "Hourly Trigger": { "main": [[{ "node": "Check Canteen via Baadar", "type": "main", "index": 0 }]] },
+    "Check Canteen via Baadar": { "main": [[{ "node": "Is Alert?", "type": "main", "index": 0 }]] },
+    "Is Alert?": { "main": [[{ "node": "If Alert", "type": "main", "index": 0 }]] },
+    "If Alert": { "main": [[{ "node": "Telegram Alert", "type": "main", "index": 0 }], []] }
+  },
+  "settings": { "executionOrder": "v1" }
+}

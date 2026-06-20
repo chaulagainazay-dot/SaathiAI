@@ -1,0 +1,43 @@
+# Fly.io config for Baadar / SaathiAI
+# Free tier: 3 shared CPUs, 256MB RAM, 3GB volume — always on, no sleeping
+
+app = "baadar-pielts"
+primary_region = "sin"   # Singapore — closest to Kathmandu
+
+[build]
+  # Fly auto-detects Python via nixpacks
+
+[processes]
+  app = "bash scripts/fly_start.sh"
+
+[env]
+  SAATHI_HOST = "0.0.0.0"
+  PORT = "8080"
+  LLM_PROVIDER = "groq"
+
+[[services]]
+  protocol = "tcp"
+  internal_port = 8080
+  auto_stop_machines = false   # NEVER sleep — this is the key setting
+  auto_start_machines = true
+  min_machines_running = 1     # always keep 1 machine alive
+
+  [[services.ports]]
+    port = 80
+    handlers = ["http"]
+
+  [[services.ports]]
+    port = 443
+    handlers = ["tls", "http"]
+
+  [services.http_checks]
+    interval = "30s"
+    timeout = "5s"
+    grace_period = "20s"
+    method = "GET"
+    path = "/api/v1/health"
+
+# Persistent volume — stores data/, logs, post queue, connections, voice profile
+[[mounts]]
+  source = "baadar_data"
+  destination = "/app/data"

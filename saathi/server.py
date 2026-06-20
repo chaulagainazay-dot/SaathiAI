@@ -674,6 +674,244 @@ def health():
     return {"ok": True, "provider": config.LLM_PROVIDER}
 
 
+# ══════════════════════════════════════════════════════════════════════════════
+# CONTENT STUDIO — 9-Stage Automation Pipeline
+# ══════════════════════════════════════════════════════════════════════════════
+
+# Stage 1 — Content Research
+@app.post("/api/v1/studio/research")
+async def studio_research(request: Request):
+    """Fetch trending IELTS topics from Reddit + YouTube + Google Trends."""
+    from .tools.content_research import research_daily_topics
+    try:
+        return research_daily_topics()
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+@app.get("/api/v1/studio/research/latest")
+async def studio_research_latest():
+    from .tools.content_research import get_latest_research
+    return get_latest_research()
+
+# Stage 2 — Script Writing
+class ScriptIn(BaseModel):
+    topic: str
+    content_type: str = "tip"
+    format: str = "short"  # short | long
+
+@app.post("/api/v1/studio/script")
+async def studio_script(body: ScriptIn, request: Request):
+    """Generate YouTube script with hook, lesson, CTA."""
+    from .tools.script_writer import generate_script
+    try:
+        return generate_script(body.topic, body.content_type, body.format)
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+@app.get("/api/v1/studio/script/latest")
+async def studio_script_latest():
+    from .tools.script_writer import get_latest_script
+    return get_latest_script()
+
+# Stage 3 — Voice Generation
+class VoiceIn(BaseModel):
+    text: str
+    accent: str = "co.uk"  # co.uk=British | com.au=Australian | com=American
+
+@app.post("/api/v1/studio/voice")
+async def studio_voice(body: VoiceIn, request: Request):
+    """Generate voice narration using gTTS (British/Australian/American accent)."""
+    import tempfile, time as _time
+    from pathlib import Path as _Path
+    voices_dir = _Path.home() / "SaathiAI" / "voices_output"
+    voices_dir.mkdir(exist_ok=True)
+    output_path = voices_dir / f"voice_{int(_time.time())}.mp3"
+    try:
+        from gtts import gTTS
+        tts = gTTS(text=body.text[:1000], lang="en", tld=body.accent, slow=False)
+        tts.save(str(output_path))
+        return {"ok": True, "voice_path": str(output_path), "accent": body.accent}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+@app.get("/api/v1/studio/voice/download")
+async def studio_voice_download(path: str):
+    from fastapi import HTTPException
+    from fastapi.responses import FileResponse as _FR
+    p = Path(path)
+    if not p.exists():
+        raise HTTPException(404, "not found")
+    return _FR(str(p), media_type="audio/mpeg", filename=p.name)
+
+# Stage 4 — Yeti Pose (warm up / pre-cache all poses)
+@app.post("/api/v1/studio/yeti_pose")
+async def studio_yeti_pose(request: Request):
+    """Pre-generate or return cached Yeti pose image."""
+    body = await request.json()
+    pose = body.get("pose", "teaching")
+    try:
+        from .tools.reel_maker import _get_yeti_pose
+        path = _get_yeti_pose(pose)
+        return {"ok": True, "pose": pose, "path": str(path)}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+@app.post("/api/v1/studio/yeti_warmup")
+async def studio_yeti_warmup(request: Request):
+    """Pre-generate ALL 6 Yeti poses for consistent use. Run once."""
+    from .tools.reel_maker import _get_yeti_pose, _YETI_POSES
+    results = {}
+    for pose in _YETI_POSES:
+        try:
+            path = _get_yeti_pose(pose)
+            results[pose] = {"ok": True, "path": str(path)}
+        except Exception as e:
+            results[pose] = {"ok": False, "error": str(e)}
+    return results
+
+# Stage 5 — Full Short Video (image + voice + music → MP4)
+class ShortVideoIn(BaseModel):
+    topic: str = ""
+    script_path: str = ""
+    pose: str = "teaching"
+    with_voice: bool = True
+    slot: str = "auto"
+
+@app.post("/api/v1/studio/short_video")
+async def studio_short_video(body: ShortVideoIn, request: Request):
+    """Create a complete YouTube Short from script."""
+    from .tools.video_editor import create_short_video
+    from .tools.script_writer import get_latest_script
+    import json as _json
+
+    if body.script_path:
+        try:
+            script = _json.loads(Path(body.script_path).read_text())
+        except Exception:
+            script = get_latest_script()
+    elif body.topic:
+        from .tools.script_writer import generate_script
+        script = generate_script(body.topic, format="short")
+    else:
+        script = get_latest_script()
+
+    try:
+        return create_short_video(script, pose=body.pose, with_voice=body.with_voice)
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+# Stage 6 — Serve any video/audio file to n8n
+@app.get("/api/v1/studio/download")
+async def studio_download(path: str, request: Request):
+    from fastapi import HTTPException
+    from fastapi.responses import FileResponse as _FR
+    client_host = request.client.host if request.client else ""
+    if client_host not in ("127.0.0.1", "::1", "localhost") and not _is_authed(request):
+        raise HTTPException(401, "unauthorized")
+    p = Path(path)
+    if not p.exists():
+        raise HTTPException(404, f"not found: {path}")
+    ext = p.suffix.lower()
+    mtype = {"mp4": "video/mp4", "mp3": "audio/mpeg", "jpg": "image/jpeg", "jpeg": "image/jpeg", "png": "image/png"}.get(ext[1:], "application/octet-stream")
+    return _FR(str(p), media_type=mtype, filename=p.name)
+
+# Stage 7 — Thumbnail
+class ThumbIn(BaseModel):
+    title: str
+    thumbnail_text: str
+    style: str = "shocked"
+
+@app.post("/api/v1/studio/thumbnail")
+async def studio_thumbnail(body: ThumbIn, request: Request):
+    from .tools.thumbnail_maker import generate_thumbnail
+    try:
+        return generate_thumbnail(body.title, body.thumbnail_text, body.style)
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+# Stage 8 — SEO Package
+class SeoIn(BaseModel):
+    topic: str
+    hook: str = ""
+    script_path: str = ""
+
+@app.post("/api/v1/studio/seo")
+async def studio_seo(body: SeoIn, request: Request):
+    from .tools.seo_optimizer import generate_seo_package
+    try:
+        return generate_seo_package(body.topic, body.hook, body.script_path)
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+# Stage 8b — Log video performance (self-improvement)
+class PerfIn(BaseModel):
+    video_id: str
+    platform: str
+    views: int
+    likes: int = 0
+    hashtags: list[str] = []
+
+@app.post("/api/v1/studio/log_performance")
+async def studio_log_performance(body: PerfIn):
+    from .tools.seo_optimizer import log_video_performance
+    return log_video_performance(body.video_id, body.platform, body.views, body.likes, body.hashtags)
+
+# Stage 9 — Full pipeline: research → script → video → SEO → ready to post
+@app.post("/api/v1/studio/full_pipeline")
+async def studio_full_pipeline(request: Request):
+    """Run complete 9-stage pipeline. Returns all assets ready for posting."""
+    body = {}
+    try:
+        body = await request.json()
+    except Exception:
+        pass
+
+    slot = body.get("slot", "auto")
+    import datetime as _dt
+    hour = _dt.datetime.now().hour
+    if slot == "auto":
+        slot = "morning" if hour < 14 else "evening"
+
+    results = {"slot": slot, "stages": {}}
+
+    # Stage 1: Use daily reel for shorts OR research for content ideas
+    try:
+        from .tools.reel_maker import make_daily_reel
+        reel = make_daily_reel(slot)
+        results["stages"]["reel"] = reel
+        results["video_path"] = reel.get("video_path")
+        results["title"] = reel.get("title")
+        results["description"] = reel.get("description")
+        results["tags"] = reel.get("tags")
+    except Exception as e:
+        results["stages"]["reel"] = {"ok": False, "error": str(e)}
+
+    # Stage 7: Thumbnail
+    try:
+        from .tools.thumbnail_maker import generate_thumbnail
+        thumb = generate_thumbnail(
+            results.get("title","IELTS Tips"),
+            results.get("title","Band 7\nSecret")[:30],
+            style="shocked"
+        )
+        results["stages"]["thumbnail"] = thumb
+        results["thumbnail_path"] = thumb.get("thumbnail_path")
+    except Exception as e:
+        results["stages"]["thumbnail"] = {"ok": False, "error": str(e)}
+
+    # Stage 8: SEO
+    try:
+        from .tools.seo_optimizer import generate_seo_package
+        seo = generate_seo_package(results.get("title","IELTS Tips"))
+        results["stages"]["seo"] = seo
+        results["seo"] = seo
+    except Exception as e:
+        results["stages"]["seo"] = {"ok": False, "error": str(e)}
+
+    results["ok"] = bool(results.get("video_path"))
+    return results
+
+
 # ── Auto-reel: generate daily YouTube Short ────────────────────────────────────
 from fastapi.responses import FileResponse
 

@@ -1,0 +1,47 @@
+name: 📘 Morning Post — 9:00 AM Nepal
+
+on:
+  schedule:
+    - cron: '15 3 * * *'   # 03:15 UTC = 9:00 AM Nepal (UTC+5:45)
+  workflow_dispatch:         # allow manual trigger from GitHub UI
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install --quiet \
+            groq anthropic httpx python-dotenv requests \
+            pillow feedparser firebase-admin google-cloud-firestore \
+            python-telegram-bot
+
+      - name: Run AM autopost
+        env:
+          # Brain
+          GROQ_API_KEY:          ${{ secrets.GROQ_API_KEY }}
+          GOOGLE_API_KEY:        ${{ secrets.GOOGLE_API_KEY }}
+          ANTHROPIC_API_KEY:     ${{ secrets.ANTHROPIC_API_KEY }}
+          LLM_PROVIDER:          groq
+          # Social tokens (stored as JSON secrets)
+          CONNECTIONS_JSON:      ${{ secrets.CONNECTIONS_JSON }}
+          FIREBASE_ADMIN_JSON:   ${{ secrets.FIREBASE_ADMIN_JSON }}
+          GROWTH_CALENDAR_JSON:  ${{ secrets.GROWTH_CALENDAR_JSON }}
+          # Telegram notifications
+          TELEGRAM_BOT_TOKEN:    ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID:      ${{ secrets.TELEGRAM_CHAT_ID }}
+          # Imgur CDN for FB image posts
+          IMGUR_CLIENT_ID:       ${{ secrets.IMGUR_CLIENT_ID }}
+          SAATHI_TOKEN:          ${{ secrets.SAATHI_TOKEN }}
+        run: python scripts/run_autopost.py --slot AM

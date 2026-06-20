@@ -1,0 +1,65 @@
+{
+  "name": "Baadar — Facebook + Instagram Social Post",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "post-social",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "webhook-social",
+      "name": "Webhook (post-social)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [120, 300],
+      "webhookId": "post-social"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://127.0.0.1:8765/api/v1/agent/chat",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [{ "name": "x-saathi-token", "value": "9278af2af4de585e" }]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "text", "value": "={{ 'Post to Facebook and Instagram: ' + ($json.caption ?? $json.text ?? $json.content ?? 'IELTS tip of the day') }}" },
+            { "name": "session_id", "value": "social-post-workflow" }
+          ]
+        },
+        "options": { "timeout": 60000 }
+      },
+      "id": "post-via-baadar",
+      "name": "Post via Baadar Agent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [340, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/sendMessage",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "chat_id", "value": "={{ $env.TELEGRAM_CHAT_ID }}" },
+            { "name": "text", "value": "=📱 Social post sent!\n\n✅ Facebook + Instagram updated\n💬 {{ $json.response?.slice(0, 200) ?? 'Posted successfully' }}" }
+          ]
+        }
+      },
+      "id": "telegram-confirm",
+      "name": "Telegram Confirm",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [560, 300]
+    }
+  ],
+  "connections": {
+    "Webhook (post-social)": { "main": [[{ "node": "Post via Baadar Agent", "type": "main", "index": 0 }]] },
+    "Post via Baadar Agent": { "main": [[{ "node": "Telegram Confirm", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" }
+}

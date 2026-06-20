@@ -74,62 +74,87 @@ def canteen_summary():
 
 
 def daily_content():
-    """Every morning Baadar produces ONE full day of content — a video script, a Facebook
-    post, an Instagram caption + hashtags, AND a publish-ready blog post — saves it all and
-    Telegrams Ajay the ready-to-publish kit (video → YouTube auto at 8pm; FB+IG → schedule in
-    Meta Business Suite; blog → publish on pielts.web.app)."""
+    """8am: Generate today's video script + blog post. FB+IG text posts fire automatically
+    at 9am and 6pm via run_social_autopost(). Video posts at 8pm via run_daily_autopost()."""
     try:
         from .tools import content_studio, n8n_tools
+        from . import autopost, tasks
+
+        # Check if a 30-day calendar exists; generate one if it's missing or expired
+        import json as _json
+        from pathlib import Path
+        growth_dir = config.ROOT / "data" / "growth"
+        growth_dir.mkdir(parents=True, exist_ok=True)
+        cal_files = sorted(growth_dir.glob("strategy_30day_*.json"), reverse=True)
+        needs_calendar = True
+        if cal_files:
+            try:
+                start_str = _json.loads(cal_files[0].read_text()).get("start_date", "")
+                import datetime as _dt
+                start = _dt.date.fromisoformat(start_str)
+                days_in = (_dt.date.today() - start).days
+                if 0 <= days_in < 30:
+                    needs_calendar = False
+            except Exception:
+                pass
+
+        if needs_calendar:
+            from .tools.growth_engine import content_strategy_30day
+            cal = content_strategy_30day()
+            try:
+                n8n_tools.send_telegram(
+                    f"📅 New 30-day content calendar generated!\n"
+                    f"{cal.get('total_posts',60)} posts planned.\n\n"
+                    + cal.get("telegram_preview", "")[:3000]
+                )
+            except Exception:
+                pass
+
+        # Generate video script + blog for today
         kit = content_studio.make_daily_kit()
-        if not kit.get("video_script") and not kit.get("blog_title"):
-            _notify("📲 Baadar", "Couldn't draft today's content — say 'make today's kit'.")
-            return
-        # auto-publish the blog to pielts.web.app (if the Firebase key is configured)
+        topic = kit.get("topic", "")
+
+        # Auto-publish blog
         blog_status = ""
         try:
-            from pathlib import Path
             bf = config.ROOT / "data" / "content" / f"blog-{kit.get('date','')}.json"
             if bf.exists():
-                import json as _json
                 b = _json.loads(bf.read_text())
                 pub = content_studio.publish_blog(b["title"], b["content"],
                                                   b.get("excerpt", ""), b.get("slug", ""))
                 blog_status = pub.get("status", "")
         except Exception:
             pass
+
+        # Telegram: daily briefing (video script + blog only — FB/IG posting is automatic)
         lines = [
-            f"🏔️ Baadar — Today's content kit ({kit.get('date','')})",
-            f"📌 Topic: {kit.get('topic','')}", "",
-            "🎬 VIDEO (Mr Yeti short):",
-            kit.get("video_script", ""),
-            f"▶️ YouTube title: {kit.get('youtube_title','')}", "",
-            "📘 FACEBOOK post:", kit.get("facebook_post", ""), "",
-            "📸 INSTAGRAM caption:", kit.get("instagram_caption", ""),
-            f"#️⃣ {kit.get('hashtags','')}", "",
-            f"📝 BLOG: {kit.get('blog_title','')}",
-            f"   {kit.get('blog_excerpt','')}",
-            (f"   ✅ auto-published to pielts.web.app/blog/{kit.get('blog_slug','')}"
+            f"☀️ Baadar — Day starts! ({kit.get('date','')})",
+            f"📌 Today's topic: {topic}", "",
+            "🎬 VIDEO SCRIPT (Mr Yeti):",
+            kit.get("video_script", "")[:600], "",
+            f"▶️ YouTube title: {kit.get('youtube_title','')}",
+            "→ Render the video and add it to the queue so 8pm auto-post fires.", "",
+            f"📝 Blog: {kit.get('blog_title','')}",
+            (f"   ✅ Published → pielts.web.app/blog/{kit.get('blog_slug','')}"
              if blog_status == "published"
-             else f"   (saved — publish on pielts.web.app; auto-publish: {blog_status or 'off'})"), "",
-            "→ Video posts to YouTube automatically at 8pm (keep the queue stocked). "
-            "Schedule the FB+IG post in Meta Business Suite. Publish the blog from the app.",
+             else f"   Saved (auto-publish {blog_status or 'off'})"),
+            "",
+            "📸 FB + IG text posts: AUTO-POSTING at 9am and 6pm today ✅",
+            "📹 Video post: AUTO-POSTING at 8pm (if video is in queue) ✅",
         ]
         try:
             n8n_tools.send_telegram("\n".join(lines)[:4000])
         except Exception:
             pass
-        # in-app panel: a notification + the to-do items with one-click links
-        from . import tasks
-        tasks.add(f"Today's content kit ready: {kit.get('topic','')}", kind="note",
-                  body=f"Blog: {kit.get('blog_title','')}\nFB: {kit.get('facebook_post','')[:200]}")
-        tasks.add("Schedule today's FB + IG post in Meta Business Suite", kind="task",
-                  link="https://business.facebook.com/latest/posts/composer",
-                  body=f"FB: {kit.get('facebook_post','')}\n\nIG: {kit.get('instagram_caption','')}\n{kit.get('hashtags','')}")
+
+        tasks.add(f"🎬 Render video: {kit.get('youtube_title','')}", kind="task",
+                  body=f"Script:\n{kit.get('video_script','')[:500]}")
         if blog_status == "published":
-            tasks.add(f"Blog published: {kit.get('blog_title','')}", kind="note",
+            tasks.add(f"Blog live: {kit.get('blog_title','')}", kind="note",
                       link=f"https://pielts.web.app/blog/{kit.get('blog_slug','')}")
-        _notify("📲 Baadar — Today's content kit ready",
-                f"Video + FB + IG + blog on '{kit.get('topic','')}' — see Baadar tasks.")
+
+        _notify("☀️ Baadar — Day started",
+                f"Topic: {topic}\nFB+IG auto at 9am+6pm | Video auto at 8pm")
     except Exception as e:
         _notify("📲 Baadar", f"Daily content error: {str(e)[:120]}")
 
@@ -146,6 +171,18 @@ def memory_backup():
             old.unlink(missing_ok=True)
     except Exception:
         pass
+
+
+def social_autopost_am():
+    """9am: auto-post the AM slot to Facebook + Instagram from the 30-day calendar."""
+    from . import autopost
+    autopost.run_social_autopost("AM")
+
+
+def social_autopost_pm():
+    """6pm: auto-post the PM slot to Facebook + Instagram from the 30-day calendar."""
+    from . import autopost
+    autopost.run_social_autopost("PM")
 
 
 def daily_autopost():
@@ -290,16 +327,55 @@ def daily_outreach():
 
 
 # ---------- schedule table: (HH, MM, weekday_or_None, fn) ----------
+def _monthly_analytics_job():
+    """Run on the 1st of each month — pull all platform analytics and send to Telegram."""
+    if datetime.now().day != 1:
+        return
+    try:
+        from .tools.growth_engine import monthly_analytics_review
+        result = monthly_analytics_review()
+        summary = result.get("summary", "Analytics unavailable")
+        _notify("📊 Baadar Monthly Review", summary[:200])
+        from .tools import n8n_tools
+        if config.TELEGRAM_BOT_TOKEN and config.TELEGRAM_CHAT_ID:
+            n8n_tools.send_telegram(summary[:4000])
+    except Exception as e:
+        _notify("📊 Analytics Error", str(e)[:120])
+
+
+def _weekly_engagement_audit():
+    """Every Sunday — send engagement tips and profile optimisation reminder."""
+    try:
+        from .tools.growth_engine import profile_optimizer
+        ig_bio = profile_optimizer("instagram")
+        msg = (
+            "📈 WEEKLY GROWTH CHECK\n\n"
+            "🔥 Optimized Instagram Bio:\n"
+            f"{ig_bio.get('optimized_bio', 'Run profile_optimizer in Baadar.')}\n\n"
+            "💡 Why it works: " + ig_bio.get("why_it_works", "") +
+            "\n\nTip: Use engagement_booster on your lowest-performing post this week."
+        )
+        from .tools import n8n_tools
+        if config.TELEGRAM_BOT_TOKEN and config.TELEGRAM_CHAT_ID:
+            n8n_tools.send_telegram(msg[:4000])
+    except Exception as e:
+        _notify("📈 Engagement Audit", f"Error: {str(e)[:100]}")
+
+
 JOBS = [
-    (7, 0, None, morning_briefing),    # every day 7:00am
-    (7, 30, None, daily_health),       # every day 7:30am — self-health watchdog
-    (8, 0, None, daily_content),       # every day 8:00am — draft social content
-    (9, 0, None, daily_outreach),      # every day 9:00am — Reddit/Quora outreach kit
-    (10, 0, 6, weekly_performance),    # Sunday 10:00am — performance report
-    (20, 0, None, daily_autopost),     # every day 8:00pm — auto-post next queued video
-    (21, 0, None, canteen_summary),    # every day 9:00pm
-    (23, 30, 6, memory_backup),        # Sunday 11:30pm (weekday 6 = Sunday)
-    (2, 0, None, memory_reflector),    # every day 2:00am — Suna-style memory reflection
+    (7, 0, None, morning_briefing),         # every day 7:00am  — morning briefing
+    (7, 30, None, daily_health),            # every day 7:30am  — health watchdog
+    (8, 0, None, daily_content),            # every day 8:00am  — video script + blog + calendar check
+    (9, 0, None, social_autopost_am),       # every day 9:00am  — AUTO-POST AM slot → FB + IG ✅
+    (9, 30, None, daily_outreach),          # every day 9:30am  — Reddit/Quora outreach kit
+    (10, 0, 6, weekly_performance),         # Sunday 10:00am    — YouTube performance report
+    (10, 30, 6, _weekly_engagement_audit),  # Sunday 10:30am    — engagement audit + bio tip
+    (18, 0, None, social_autopost_pm),      # every day 6:00pm  — AUTO-POST PM slot → FB + IG ✅
+    (20, 0, None, daily_autopost),          # every day 8:00pm  — AUTO-POST video → YT + FB + IG ✅
+    (21, 0, None, canteen_summary),         # every day 9:00pm  — canteen summary
+    (23, 30, 6, memory_backup),             # Sunday 11:30pm    — memory backup
+    (2, 0, None, memory_reflector),         # every day 2:00am  — memory reflection
+    (0, 1, None, _monthly_analytics_job),   # 1st of month 00:01am — analytics review
 ]
 
 
