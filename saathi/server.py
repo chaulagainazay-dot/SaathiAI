@@ -948,8 +948,107 @@ async def auto_reel_download(path: str, request: Request):
     return FileResponse(str(p), media_type="video/mp4", filename=p.name)
 
 
-# ── n8n status proxy (avoids CORS — browser can't hit localhost:5678 directly) ──
+# ── GitHub Actions status proxy ──────────────────────────────────────────────
 import httpx as _httpx
+
+_GH_TOKEN  = _os.getenv("GITHUB_TOKEN", "")
+_GH_REPO   = _os.getenv("GITHUB_REPO", "chaulagainazay-dot/SaathiAI")
+
+# Map workflow filename → platform key
+_WF_MAP = {
+    "post_am.yml":    "facebook_am",
+    "post_pm.yml":    "facebook_pm",
+    "post_video.yml": "youtube",
+}
+
+# Which steps represent which "agent"
+_STEP_AGENTS = {
+    "Checkout repo":          {"agent": "Git",          "icon": "📦"},
+    "Set up Python 3.12":     {"agent": "Python",       "icon": "🐍"},
+    "Install dependencies":   {"agent": "Pip",          "icon": "📥"},
+    "Install system deps":    {"agent": "System",       "icon": "🔧"},
+    "Run AM autopost":        {"agent": "Groq LLM → Meta API", "icon": "🤖"},
+    "Run PM autopost":        {"agent": "Groq LLM → Meta API", "icon": "🤖"},
+    "Run VIDEO autopost":     {"agent": "Groq LLM → YouTube API", "icon": "🎬"},
+}
+
+@app.get("/api/v1/github/actions")
+async def github_actions_status():
+    """Fetch latest GitHub Actions run status for all 3 posting workflows."""
+    token = _GH_TOKEN or _os.popen("gh auth token 2>/dev/null").read().strip()
+    if not token:
+        return {"error": "No GitHub token — set GITHUB_TOKEN in .env", "runs": {}}
+
+    headers = {"Authorization": f"Bearer {token}", "Accept": "application/vnd.github+json"}
+    result = {}
+
+    async with _httpx.AsyncClient(timeout=8) as client:
+        for wf_file, platform in _WF_MAP.items():
+            try:
+                # Get latest run for this workflow
+                r = await client.get(
+                    f"https://api.github.com/repos/{_GH_REPO}/actions/workflows/{wf_file}/runs",
+                    headers=headers, params={"per_page": 1}
+                )
+                runs = r.json().get("workflow_runs", [])
+                if not runs:
+                    result[platform] = {"status": "never_run"}
+                    continue
+
+                run = runs[0]
+                run_id   = run["id"]
+                status   = run["status"]       # queued | in_progress | completed
+                conclusion = run.get("conclusion")  # success | failure | None
+                updated  = run["updated_at"]
+                html_url = run["html_url"]
+
+                # Get job steps for live agent visibility
+                steps = []
+                try:
+                    jr = await client.get(
+                        f"https://api.github.com/repos/{_GH_REPO}/actions/runs/{run_id}/jobs",
+                        headers=headers
+                    )
+                    jobs = jr.json().get("jobs", [])
+                    if jobs:
+                        raw_steps = jobs[0].get("steps", [])
+                        for s in raw_steps:
+                            name = s["name"]
+                            agent_info = _STEP_AGENTS.get(name, {"agent": name, "icon": "⚙️"})
+                            steps.append({
+                                "name":       name,
+                                "agent":      agent_info["agent"],
+                                "icon":       agent_info["icon"],
+                                "status":     s["status"],
+                                "conclusion": s.get("conclusion"),
+                            })
+                except Exception:
+                    pass
+
+                # Find current active step
+                active_step = next(
+                    (s for s in steps if s["status"] == "in_progress"), None
+                )
+                last_step = next(
+                    (s for s in reversed(steps) if s["conclusion"] == "success"), None
+                )
+
+                result[platform] = {
+                    "run_id":      run_id,
+                    "status":      status,
+                    "conclusion":  conclusion,
+                    "updated_at":  updated,
+                    "html_url":    html_url,
+                    "steps":       steps,
+                    "active_step": active_step,
+                    "last_step":   last_step,
+                }
+            except Exception as e:
+                result[platform] = {"status": "error", "error": str(e)}
+
+    return {"runs": result}
+
+# ── n8n status proxy (avoids CORS — browser can't hit localhost:5678 directly) ──
 
 N8N_BASE_URL = _os.getenv("N8N_BASE_URL", "http://127.0.0.1:5678")
 

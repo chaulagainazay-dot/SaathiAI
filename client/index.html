@@ -430,6 +430,47 @@ body[data-state="speaking"]  #micBtn { background: #064e3b; border-color: var(--
   text-transform: uppercase;
 }
 
+/* ── GitHub Actions live status ── */
+.gh-status-bar {
+  display: flex; align-items: center; gap: 8px; padding: 9px 12px;
+  background: var(--surface2); border-radius: var(--radius-sm);
+  border: 1px solid var(--border); margin-bottom: 11px; font-size: var(--fs-xs);
+}
+.gh-status-dot {
+  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+  background: var(--text3);
+}
+.gh-status-dot.running  { background: var(--blue);  animation: blink 1s ease-in-out infinite; }
+.gh-status-dot.success  { background: var(--green); }
+.gh-status-dot.failure  { background: var(--red); }
+.gh-status-dot.queued   { background: var(--yellow); }
+.gh-run-label { flex: 1; color: var(--text2); font-weight: 600; }
+.gh-run-time  { color: var(--text3); font-size: 10px; }
+.gh-run-link  { color: var(--lilac); text-decoration: none; font-weight: 700; font-size: 10px; }
+.gh-run-link:hover { text-decoration: underline; }
+
+/* Agent steps timeline */
+.agent-steps { display: flex; flex-direction: column; gap: 5px; margin-bottom: 11px; }
+.agent-step {
+  display: flex; align-items: center; gap: 8px;
+  font-size: var(--fs-xs); padding: 5px 10px;
+  border-radius: 6px; border: 1px solid transparent;
+  transition: all .2s;
+}
+.agent-step.done    { color: var(--text3); }
+.agent-step.active  { color: #fff; background: #0d1a30; border-color: var(--blue);
+                       animation: stepPulse 1.5s ease-in-out infinite; }
+.agent-step.failed  { color: var(--red); background: #2d0a0a; border-color: var(--red); }
+.agent-step.waiting { color: var(--text3); opacity: .5; }
+@keyframes stepPulse {
+  0%,100% { border-color: var(--blue); }
+  50%      { border-color: var(--purple); }
+}
+.agent-step-icon { font-size: 14px; flex-shrink: 0; width: 20px; text-align: center; }
+.agent-step-name { flex: 1; font-weight: 600; }
+.agent-step-tick { font-size: 12px; flex-shrink: 0; }
+
+
 
 /* Quick-generate chips */
 .qg-grid { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -953,6 +994,15 @@ body[data-state="speaking"]  #micBtn { background: #064e3b; border-color: var(--
           <span class="plat-hub-chevron">▼</span>
         </div>
         <div class="plat-hub-body">
+          <!-- GitHub Actions live status -->
+          <div class="gh-status-bar" id="yt-gh-bar">
+            <div class="gh-status-dot" id="yt-gh-dot"></div>
+            <span class="gh-run-label" id="yt-gh-label">Loading action status…</span>
+            <span class="gh-run-time"  id="yt-gh-time"></span>
+            <a class="gh-run-link" id="yt-gh-link" href="#" target="_blank" style="display:none">↗ View</a>
+          </div>
+          <!-- Live agent steps -->
+          <div class="agent-steps" id="yt-agent-steps" style="display:none"></div>
           <div class="plat-stat-row" id="yt-stats">
             <div class="plat-stat"><div class="plat-stat-v" id="yt-subs">—</div><div class="plat-stat-k">Subscribers</div></div>
             <div class="plat-stat"><div class="plat-stat-v" id="yt-views">—</div><div class="plat-stat-k">Total Views</div></div>
@@ -1033,6 +1083,13 @@ body[data-state="speaking"]  #micBtn { background: #064e3b; border-color: var(--
           <span class="plat-hub-chevron">▼</span>
         </div>
         <div class="plat-hub-body">
+          <div class="gh-status-bar" id="fb-gh-bar">
+            <div class="gh-status-dot" id="fb-gh-dot"></div>
+            <span class="gh-run-label" id="fb-gh-label">Loading action status…</span>
+            <span class="gh-run-time"  id="fb-gh-time"></span>
+            <a class="gh-run-link" id="fb-gh-link" href="#" target="_blank" style="display:none">↗ View</a>
+          </div>
+          <div class="agent-steps" id="fb-agent-steps" style="display:none"></div>
           <div class="plat-stat-row" id="fb-stats">
             <div class="plat-stat"><div class="plat-stat-v" id="fb-likes">—</div><div class="plat-stat-k">Page Likes</div></div>
             <div class="plat-stat"><div class="plat-stat-v" id="fb-followers">—</div><div class="plat-stat-k">Followers</div></div>
@@ -1115,6 +1172,13 @@ body[data-state="speaking"]  #micBtn { background: #064e3b; border-color: var(--
           <span class="plat-hub-chevron">▼</span>
         </div>
         <div class="plat-hub-body">
+          <div class="gh-status-bar" id="ig-gh-bar">
+            <div class="gh-status-dot" id="ig-gh-dot"></div>
+            <span class="gh-run-label" id="ig-gh-label">Loading action status…</span>
+            <span class="gh-run-time"  id="ig-gh-time"></span>
+            <a class="gh-run-link" id="ig-gh-link" href="#" target="_blank" style="display:none">↗ View</a>
+          </div>
+          <div class="agent-steps" id="ig-agent-steps" style="display:none"></div>
           <div class="plat-stat-row" id="ig-stats">
             <div class="plat-stat"><div class="plat-stat-v" id="ig-followers">—</div><div class="plat-stat-k">Followers</div></div>
             <div class="plat-stat"><div class="plat-stat-v" id="ig-avg-likes">—</div><div class="plat-stat-k">Avg Likes</div></div>
@@ -1719,7 +1783,18 @@ function switchTab(name) {
   if (name === 'canteen')  loadCanteen();
   if (name === 'files')    { loadTree(''); if (!macHome) loadMacTree(''); }
   if (name === 'settings') { loadStatus(); loadConnections(); pingN8n(); }
-  if (name === 'create')   { /* auto-open YouTube card and load its stats */ setTimeout(() => { const ytCard = document.getElementById('phub-yt'); if (ytCard && !ytCard.classList.contains('open')) { ytCard.classList.add('open'); loadPlatformStats('yt'); } }, 100); }
+  if (name === 'create')   {
+    setTimeout(() => {
+      const ytCard = document.getElementById('phub-yt');
+      if (ytCard && !ytCard.classList.contains('open')) {
+        ytCard.classList.add('open');
+        loadPlatformStats('yt');
+      }
+      startGhPoll();
+    }, 100);
+  } else {
+    stopGhPoll();
+  }
 }
 
 // ════════════════════════ QUICK CHIPS ════════════════════════
@@ -2853,6 +2928,7 @@ function togglePlatHub(id) {
   if (!wasOpen) {
     card.classList.add('open');
     loadPlatformStats(id);
+    loadGithubActions();
   }
 }
 
@@ -2927,6 +3003,129 @@ async function triggerAutopost(platform) {
     toast('❌ Post failed: ' + e.message);
   }
 }
+
+// ════════════════════════ GITHUB ACTIONS STATUS ════════════════════════
+let _ghPollTimer = null;
+
+// platform id → which run key from API + which gh-* elements to update
+const _GH_MAP = {
+  yt: 'youtube',
+  fb: 'facebook_am',   // FB uses AM run as its "latest"
+  ig: 'facebook_am',   // IG posts in same workflow as FB
+};
+
+function _relTime(iso) {
+  if (!iso) return '';
+  const diff = Math.round((Date.now() - new Date(iso)) / 1000);
+  if (diff < 60)   return diff + 's ago';
+  if (diff < 3600) return Math.round(diff/60) + 'm ago';
+  if (diff < 86400)return Math.round(diff/3600) + 'h ago';
+  return Math.round(diff/86400) + 'd ago';
+}
+
+function _renderGhStatus(platId, run) {
+  const dot   = document.getElementById(platId + '-gh-dot');
+  const label = document.getElementById(platId + '-gh-label');
+  const time  = document.getElementById(platId + '-gh-time');
+  const link  = document.getElementById(platId + '-gh-link');
+  const steps = document.getElementById(platId + '-agent-steps');
+  if (!dot) return;
+
+  if (!run || run.status === 'never_run') {
+    dot.className = 'gh-status-dot';
+    label.textContent = 'No runs yet — will post at scheduled time';
+    return;
+  }
+  if (run.error) {
+    dot.className = 'gh-status-dot failure';
+    label.textContent = '⚠️ ' + run.error;
+    return;
+  }
+
+  // Status dot + label
+  const isRunning = run.status === 'in_progress' || run.status === 'queued';
+  const isOk      = run.conclusion === 'success';
+  const isFail    = run.conclusion === 'failure';
+
+  dot.className = 'gh-status-dot ' + (isRunning ? 'running' : isOk ? 'success' : isFail ? 'failure' : 'queued');
+
+  if (isRunning) {
+    const active = run.active_step;
+    label.textContent = active
+      ? active.icon + ' ' + active.agent + ' — running…'
+      : '⏳ Running on GitHub…';
+  } else if (isOk) {
+    const last = run.last_step;
+    label.textContent = last
+      ? '✅ Last post: ' + last.icon + ' ' + last.agent
+      : '✅ Posted successfully';
+  } else if (isFail) {
+    label.textContent = '❌ Last run failed — check logs';
+  } else {
+    label.textContent = '⏸ ' + run.status;
+  }
+
+  time.textContent = _relTime(run.updated_at);
+  if (run.html_url) {
+    link.href = run.html_url;
+    link.style.display = 'inline';
+  }
+
+  // Agent steps timeline
+  const allSteps = (run.steps || []).filter(s =>
+    !['Set up job','Complete job','Post Checkout repo','Post Set up Python 3.12'].includes(s.name)
+  );
+  if (allSteps.length) {
+    steps.style.display = 'flex';
+    steps.innerHTML = allSteps.map(s => {
+      const isActive  = s.status === 'in_progress';
+      const isDone    = s.conclusion === 'success';
+      const isFailed  = s.conclusion === 'failure';
+      const isWaiting = s.status === 'queued' || (!isDone && !isActive && !isFailed);
+      const cls = isActive ? 'active' : isDone ? 'done' : isFailed ? 'failed' : 'waiting';
+      const tick = isActive ? '▶' : isDone ? '✓' : isFailed ? '✕' : '·';
+      const info = {
+        'Checkout repo':        {icon:'📦', agent:'Git — fetch code'},
+        'Set up Python 3.12':   {icon:'🐍', agent:'Python 3.12 setup'},
+        'Install dependencies': {icon:'📥', agent:'Pip — install packages'},
+        'Install system deps':  {icon:'🔧', agent:'FFmpeg + fonts'},
+        'Run AM autopost':      {icon:'🤖', agent:'Groq LLM → Meta Graph API'},
+        'Run PM autopost':      {icon:'🤖', agent:'Groq LLM → Meta Graph API'},
+        'Run VIDEO autopost':   {icon:'🎬', agent:'Groq LLM → YouTube API'},
+      }[s.name] || {icon:'⚙️', agent: s.name};
+      return `<div class="agent-step ${cls}">
+        <span class="agent-step-icon">${info.icon}</span>
+        <span class="agent-step-name">${info.agent}</span>
+        <span class="agent-step-tick">${tick}</span>
+      </div>`;
+    }).join('');
+  } else {
+    steps.style.display = 'none';
+  }
+}
+
+async function loadGithubActions() {
+  try {
+    const r = await api('/api/v1/github/actions');
+    const d = await r.json();
+    const runs = d.runs || {};
+    _renderGhStatus('yt', runs.youtube);
+    _renderGhStatus('fb', runs.facebook_am);
+    _renderGhStatus('ig', runs.facebook_am);  // same workflow posts to both
+  } catch(e) {
+    ['yt','fb','ig'].forEach(id => {
+      const label = document.getElementById(id + '-gh-label');
+      if (label) label.textContent = 'GitHub status unavailable';
+    });
+  }
+}
+
+function startGhPoll() {
+  loadGithubActions();
+  clearInterval(_ghPollTimer);
+  _ghPollTimer = setInterval(loadGithubActions, 30000); // refresh every 30s
+}
+function stopGhPoll() { clearInterval(_ghPollTimer); _ghPollTimer = null; }
 
 // Also load stats when switching to Create tab
 const _origSwitchTab = typeof switchTab === 'function' ? switchTab : null;

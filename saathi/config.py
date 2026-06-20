@@ -77,3 +77,7 @@ DB_PATH = ROOT / "data" / "saathi.db"
 
 # --- Internal auth bypass (server calling its own API: health check, stage_draft) ---
 SAATHI_TOKEN = os.getenv("SAATHI_TOKEN", "")
+
+# --- GitHub Actions (for live status in Baadar UI) ---
+GITHUB_TOKEN = os.getenv("GITHUB_TOKEN", "")
+GITHUB_REPO  = os.getenv("GITHUB_REPO", "chaulagainazay-dot/SaathiAI")
