@@ -1,9 +1,11 @@
+from __future__ import annotations
 """SaathiAI FastAPI server — voice + text + files, serving the Siri-style web app."""
 import base64
 import time
 
-from fastapi import FastAPI, File, Form, Request, UploadFile
+from fastapi import Depends, FastAPI, File, Form, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
@@ -45,8 +47,14 @@ def _is_authed(request) -> bool:
 async def _auth(request, call_next):
     from fastapi.responses import JSONResponse
     path = request.url.path
-    # Always allow: login endpoint, static assets, manifest, icons
+    # Always allow: login endpoint, OAuth callbacks, static assets
     if (path == "/api/v1/auth/login"
+            or path == "/api/v1/linkedin/callback"
+            or path == "/api/v1/tiktok/callback"
+            or path == "/api/v1/tiktok/auth"
+            or path == "/api/v1/tiktok/status"
+            or path == "/api/v1/evaluate/writing"
+            or path == "/api/v1/evaluate/speaking"
             or not path.startswith("/api/")):
         return await call_next(request)
     # Legacy remote token (backward compat)
@@ -250,6 +258,13 @@ def pielts_dashboard():
     """PIELTS project dashboard — uploads, growth targets, money goal."""
     from . import pielts
     return pielts.dashboard()
+
+
+@app.get("/api/v1/social/dashboard")
+def social_dashboard():
+    """Live social stats + monetization progress for YouTube, Instagram, Facebook, TikTok."""
+    from .tools.social_dashboard import get_dashboard
+    return get_dashboard()
 
 
 class TargetIn(BaseModel):
@@ -697,14 +712,31 @@ async def studio_research_latest():
 class ScriptIn(BaseModel):
     topic: str
     content_type: str = "tip"
-    format: str = "short"  # short | long
+    format: str = "short"           # short | long
+    pillar: str = "horror_story"    # horror_story | before_after | dont_say | quiz | interview
+    use_chatgpt: bool = True        # True = ChatGPT in Brave first, False = Groq/Gemini
 
 @app.post("/api/v1/studio/script")
 async def studio_script(body: ScriptIn, request: Request):
-    """Generate YouTube script with hook, lesson, CTA."""
-    from .tools.script_writer import generate_script
+    """Generate Mr. Yeti YouTube script. Uses ChatGPT in Brave by default, falls back to Groq/Gemini."""
     try:
-        return generate_script(body.topic, body.content_type, body.format)
+        if body.use_chatgpt:
+            from .tools.chatgpt_browser import ask_chatgpt_for_script
+            result = ask_chatgpt_for_script(body.topic, body.pillar, body.content_type, body.format)
+            if result.get("ok"):
+                return result
+            # Fall through to API-based fallback
+        from .tools.script_writer import generate_script
+        return generate_script(body.topic, body.content_type, body.format, body.pillar)
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+@app.post("/api/v1/studio/script/chatgpt")
+async def studio_script_chatgpt(body: ScriptIn, request: Request):
+    """Direct ChatGPT-in-Brave script generation — no API fallback."""
+    from .tools.chatgpt_browser import ask_chatgpt_for_script
+    try:
+        return ask_chatgpt_for_script(body.topic, body.pillar, body.content_type, body.format)
     except Exception as e:
         return {"ok": False, "error": str(e)}
 
@@ -1141,6 +1173,1219 @@ async def generate_image(body: ImageGenIn, request: Request):
         return {"ok": True, "image": img_b64, "mime": mime}
     except Exception as e:
         return {"ok": False, "error": str(e)}
+
+
+@app.get("/api/v1/skills")
+async def list_skills_endpoint(request: Request):
+    """List all installed Claude Code skills."""
+    from .tools.skills_dispatch import list_skills, search_skills
+    q = request.query_params.get("q", "")
+    skills = search_skills(q) if q else list_skills()
+    return {"skills": skills, "count": len(skills)}
+
+@app.post("/api/v1/skills/dispatch")
+async def dispatch_skill(request: Request):
+    """Auto-pick the best skill for a task description."""
+    body = {}
+    try:
+        body = await request.json()
+    except Exception:
+        pass
+    task = body.get("task", "")
+    if not task:
+        return {"error": "task required"}
+    from .tools.skills_dispatch import auto_dispatch
+    return auto_dispatch(task)
+
+@app.post("/api/v1/studio/google_flow_video")
+async def google_flow_video(request: Request):
+    """Generate a Veo 2 3D video via Google Flow and return metadata + file path."""
+    # auth handled by middleware — no duplicate check needed
+    body = {}
+    try:
+        body = await request.json()
+    except Exception:
+        pass
+    topic   = body.get("topic", "")
+    use_veo = bool(body.get("use_veo", True))
+    try:
+        from .tools.google_flow import generate_full_video
+        result = await asyncio.get_event_loop().run_in_executor(
+            None, lambda: generate_full_video(topic=topic, use_veo=use_veo)
+        )
+        return result
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@app.get("/api/v1/studio/google_flow_video/status")
+async def google_flow_status(request: Request):
+    """Return the latest Google Flow video file in videos_output/."""
+    out_dir = config.ROOT / "videos_output"
+    videos  = sorted(out_dir.glob("google_flow_*.mp4"), key=lambda p: p.stat().st_mtime, reverse=True)
+    if not videos:
+        return {"ok": True, "latest": None}
+    latest = videos[0]
+    return {
+        "ok":      True,
+        "latest":  latest.name,
+        "size_kb": latest.stat().st_size // 1024,
+        "mtime":   latest.stat().st_mtime,
+        "count":   len(videos),
+    }
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# AUTO IMPROVE + AUTO DEVELOP — Baadar analyzes & extends itself
+# ══════════════════════════════════════════════════════════════════════════════
+
+@app.get("/api/v1/auto_improve/suggestions")
+async def auto_improve_suggestions(request: Request):
+    """Use LLM to analyze Baadar state and return improvement suggestions."""
+    from .tools._llm_helper import ask_llm, extract_json
+
+    # Gather context: disconnected platforms, etc.
+    ctx_parts = []
+    try:
+        from . import connections as _conn
+        conns = _conn.get_all()
+        disconnected = [k for k, v in conns.items() if not v.get("connected")]
+        if disconnected:
+            ctx_parts.append(f"Disconnected platforms: {', '.join(disconnected)}")
+    except Exception:
+        pass
+
+    context = "; ".join(ctx_parts) or "All systems nominal"
+
+    prompt = f"""You are analyzing the Baadar AI social media automation system for pielts IELTS app.
+Current state: {context}
+
+Return JSON array of 5 improvement suggestions, each with:
+- id: string slug
+- priority: "high" | "medium" | "low"
+- title: short title (under 8 words)
+- description: what to improve and why (under 40 words)
+- suggested_skill: one of [ralph, brainstorming, systematic-debugging, hyperframes, ckm-banner-design, ui-ux-pro-max, seo-audit, general-video, prd]
+- action: "auto" | "manual"
+
+Focus on: content quality, posting consistency, engagement rate, SEO, video production, UI improvements.
+Return ONLY valid JSON array."""
+
+    try:
+        raw = ask_llm(prompt, system="Return only valid JSON array.", timeout=30)
+        suggestions = extract_json(raw)
+    except Exception:
+        suggestions = None
+    if not isinstance(suggestions, list):
+        suggestions = [
+            {"id": "add-captions", "priority": "high", "title": "Add captions to Mr. Yeti videos", "description": "Captions increase watch time by 40% on Instagram Reels and YouTube Shorts.", "suggested_skill": "embedded-captions", "action": "auto"},
+            {"id": "seo-audit", "priority": "high", "title": "Run SEO audit on pielts.web.app", "description": "Monthly SEO audit catches ranking drops and technical issues early.", "suggested_skill": "seo-audit", "action": "auto"},
+            {"id": "banner-refresh", "priority": "medium", "title": "Refresh social media banners", "description": "Update Facebook/Instagram profile banners with new IELTS season branding.", "suggested_skill": "ckm-banner-design", "action": "auto"},
+            {"id": "video-pipeline", "priority": "medium", "title": "Build faceless explainer videos", "description": "Add text-to-video explainer pipeline for IELTS grammar topics.", "suggested_skill": "faceless-explainer", "action": "manual"},
+            {"id": "prd-next", "priority": "low", "title": "Write PRD for next Baadar features", "description": "Document premium tier, affiliate system, and multi-language support.", "suggested_skill": "prd", "action": "manual"},
+        ]
+    return {"ok": True, "suggestions": suggestions, "context": context}
+
+
+@app.post("/api/v1/auto_develop")
+async def auto_develop(request: Request):
+    """Auto-route a development task to the best skill."""
+    body = {}
+    try:
+        body = await request.json()
+    except Exception:
+        pass
+    task = body.get("task", "")
+    if not task:
+        return {"error": "task required"}
+    from .tools.skills_dispatch import auto_dispatch
+    result = auto_dispatch(task)
+    # Also get skill description from SKILL.md first line
+    skill_desc = ""
+    if result.get("prompt"):
+        for line in result["prompt"].splitlines():
+            line = line.strip()
+            if line and not line.startswith("#") and not line.startswith("---") and not line.startswith("name:") and not line.startswith("description:"):
+                skill_desc = line[:120]
+                break
+    result["skill_description"] = skill_desc
+    return result
+
+
+# ═══════════════════════════════════════════════════════════════
+# PIELTS MARKET INTEL + AUTO-IMPROVE AGENT
+# ═══════════════════════════════════════════════════════════════
+
+@app.post("/api/v1/pielts/research")
+async def pielts_research(request: Request):
+    """Trigger full market intelligence research pipeline (async, takes ~2-3 min)."""
+    import asyncio, threading
+    body = {}
+    try:
+        body = await request.json()
+    except Exception:
+        pass
+    force = body.get("force", False)
+
+    # Check if recent (< 6 hours old) report exists
+    from .tools.market_intel import get_latest, INTEL_DIR
+    from datetime import datetime, timedelta
+    latest = get_latest()
+    if latest and not force:
+        gen_at = latest.get("generated_at", "")
+        try:
+            age = datetime.now() - datetime.fromisoformat(gen_at)
+            if age < timedelta(hours=6):
+                return {"status": "cached", "message": "Using recent report (< 6h old)",
+                        "report_date": latest.get("date"), "summary": latest.get("summary", {})}
+        except Exception:
+            pass
+
+    # Run in background thread (takes 2-3 min)
+    def _run():
+        try:
+            from .tools.market_intel import run_full_research
+            run_full_research(save=True)
+        except Exception as e:
+            print(f"[market intel error] {e}")
+    threading.Thread(target=_run, daemon=True).start()
+
+    return {"status": "started", "message": "Market research running in background (~2-3 min). Check /api/v1/pielts/intel for results."}
+
+
+@app.get("/api/v1/pielts/intel")
+async def pielts_intel(request: Request):
+    """Get the latest market intelligence report."""
+    from .tools.market_intel import get_latest
+    latest = get_latest()
+    if not latest:
+        return {"status": "none", "message": "No research yet. POST /api/v1/pielts/research to start."}
+    return {
+        "status": "ok",
+        "date": latest.get("date"),
+        "summary": latest.get("summary", {}),
+        "goal_plan": latest.get("goal_plan", {}),
+        "top_improvements": latest.get("improvement_tasks", [])[:5],
+        "pain_points": latest.get("reddit_signals", {}).get("pain_points", [])[:5],
+        "market_gaps": latest.get("competitor_intel", {}).get("market_gaps", [])[:5],
+        "trending": latest.get("trend_signals", {}).get("rising_topics", [])[:5],
+        "competitors": latest.get("competitor_intel", {}).get("top_competitors", [])[:4],
+    }
+
+
+@app.post("/api/v1/pielts/improve")
+async def pielts_improve(request: Request):
+    """Generate concrete improvement tasks from latest market intel."""
+    import threading
+    body = {}
+    try:
+        body = await request.json()
+    except Exception:
+        pass
+    max_tasks = int(body.get("max_tasks", 5))
+
+    def _run():
+        try:
+            from .tools.pielts_improver import run_improvement_cycle
+            run_improvement_cycle(max_tasks=max_tasks)
+        except Exception as e:
+            print(f"[pielts improver error] {e}")
+    threading.Thread(target=_run, daemon=True).start()
+
+    return {"status": "started", "message": f"Generating {max_tasks} improvement tasks. Check /api/v1/pielts/queue."}
+
+
+@app.get("/api/v1/pielts/queue")
+async def pielts_queue(request: Request):
+    """Get the current pending improvement queue."""
+    from .tools.pielts_improver import get_pending_queue
+    queue = get_pending_queue()
+    if not queue:
+        return {"status": "empty", "message": "No improvements queued. POST /api/v1/pielts/improve first."}
+    return {
+        "status": "ok",
+        "generated_at": queue.get("generated_at"),
+        "count": len(queue.get("improvements", [])),
+        "improvements": [
+            {
+                "index": i,
+                "title": imp.get("task", {}).get("title", imp.get("feature_name", "?")),
+                "summary": imp.get("summary", imp.get("user_story", "")),
+                "category": imp.get("task", {}).get("category", "?"),
+                "impact": imp.get("task", {}).get("impact", "?"),
+                "effort": imp.get("task", {}).get("effort", "?"),
+                "files": imp.get("files_to_modify", []),
+            }
+            for i, imp in enumerate(queue.get("improvements", []))
+        ],
+    }
+
+
+@app.post("/api/v1/pielts/apply")
+async def pielts_apply(request: Request):
+    """Apply a specific improvement from the queue to the pielts codebase."""
+    body = {}
+    try:
+        body = await request.json()
+    except Exception:
+        pass
+    idx = int(body.get("index", 0))
+    from .tools.pielts_improver import apply_improvement
+    return apply_improvement(idx)
+
+
+@app.get("/api/v1/pielts/roadmap")
+async def pielts_roadmap(request: Request):
+    """Get the strategic 90-day roadmap to become #1 IELTS app."""
+    from .tools.market_intel import get_latest
+    latest = get_latest()
+    if not latest:
+        return {"status": "none"}
+    return {
+        "status": "ok",
+        "date": latest.get("date"),
+        "goal_plan": latest.get("goal_plan", {}),
+        "all_improvements": latest.get("improvement_tasks", []),
+        "competitor_advantages": latest.get("competitor_intel", {}).get("pielts_competitive_advantages", []),
+        "pielts_gaps": latest.get("competitor_intel", {}).get("pielts_missing_vs_competitors", []),
+    }
+
+
+@app.get("/api/v1/reddit/status")
+async def reddit_status(request: Request):
+    """Check Reddit credentials and queue summary."""
+    from .tools.reddit_outreach import creds_status, get_queue
+    status = creds_status()
+    drafts = get_queue("draft")
+    sent = get_queue("sent")
+    return {**status, "drafts": len(drafts), "sent_total": len(sent)}
+
+
+_reddit_scan_running = False
+
+@app.post("/api/v1/reddit/scan")
+async def reddit_scan(request: Request):
+    """Scan Reddit for IELTS questions and draft replies (runs in background)."""
+    global _reddit_scan_running
+    if _reddit_scan_running:
+        return {"status": "already_running"}
+    body = {}
+    try:
+        body = await request.json()
+    except Exception:
+        pass
+    max_new = int(body.get("max_new", 8))
+
+    def _run():
+        global _reddit_scan_running
+        _reddit_scan_running = True
+        try:
+            from .tools.reddit_outreach import scan_and_draft
+            scan_and_draft(max_new=max_new)
+        finally:
+            _reddit_scan_running = False
+
+    import threading
+    threading.Thread(target=_run, daemon=True).start()
+    return {"status": "started", "message": "Scanning Reddit and drafting replies in background…"}
+
+
+@app.get("/api/v1/reddit/queue")
+async def reddit_queue(request: Request):
+    """Return current draft (or all) queue entries."""
+    from .tools.reddit_outreach import get_queue
+    status = request.query_params.get("status", "draft")
+    items = get_queue(status)
+    return {"ok": True, "items": items, "count": len(items), "scanning": _reddit_scan_running}
+
+
+@app.post("/api/v1/reddit/send")
+async def reddit_send(request: Request):
+    """
+    Mark a draft as sent (actual posting happens browser-side via same-origin fetch).
+    Accepts: { post_id, comment_id, comment_url }
+    """
+    body = await request.json()
+    post_id = body.get("post_id", "")
+    if not post_id:
+        return {"ok": False, "error": "post_id required"}
+    from .tools.reddit_outreach import _load_queue, _save_queue
+    from datetime import datetime
+    queue = _load_queue()
+    for item in queue:
+        if item["post_id"] == post_id:
+            item["status"] = "sent"
+            item["sent_at"] = datetime.now().isoformat()
+            item["comment_id"] = body.get("comment_id", "")
+            item["comment_url"] = body.get("comment_url", "")
+            break
+    _save_queue(queue)
+    return {"ok": True}
+
+
+@app.post("/api/v1/reddit/skip")
+async def reddit_skip(request: Request):
+    body = await request.json()
+    from .tools.reddit_outreach import skip_post
+    return skip_post(body.get("post_id", ""))
+
+
+@app.post("/api/v1/reddit/update_draft")
+async def reddit_update_draft(request: Request):
+    body = await request.json()
+    from .tools.reddit_outreach import update_draft
+    return update_draft(body.get("post_id", ""), body.get("draft", ""))
+
+
+@app.get("/api/v1/reddit/daily")
+async def reddit_daily_pending(request: Request):
+    """Return today's pending Reddit submission (if any)."""
+    from .tools.reddit_outreach import get_pending_daily_posts
+    posts = get_pending_daily_posts()
+    return {"ok": True, "posts": posts, "count": len(posts)}
+
+
+@app.post("/api/v1/reddit/daily/queue")
+async def reddit_daily_queue(request: Request):
+    """Manually trigger drafting of today's Reddit post."""
+    body = {}
+    try:
+        body = await request.json()
+    except Exception:
+        pass
+    from .tools.reddit_outreach import queue_daily_post
+    return queue_daily_post(body.get("cal_post"))
+
+
+@app.post("/api/v1/reddit/daily/sent")
+async def reddit_daily_sent(request: Request):
+    """Mark today's Reddit post as sent (called from browser after posting)."""
+    body = await request.json()
+    from .tools.reddit_outreach import mark_daily_post_sent
+    return mark_daily_post_sent(body.get("date", ""), body.get("post_url", ""))
+
+
+@app.post("/api/v1/reddit/daily/skip")
+async def reddit_daily_skip(request: Request):
+    body = await request.json()
+    from .tools.reddit_outreach import skip_daily_post
+    return skip_daily_post(body.get("date", ""))
+
+
+
+# ── LinkedIn endpoints ────────────────────────────────────────────────────────
+
+@app.get("/api/v1/linkedin/status")
+async def linkedin_status():
+    from .tools.linkedin_post import status
+    return status()
+
+
+@app.get("/api/v1/linkedin/auth")
+async def linkedin_auth(request: Request):
+    from .tools.linkedin_post import get_auth_url, app_configured
+    if not app_configured():
+        return JSONResponse({"error": "Add LINKEDIN_CLIENT_ID and LINKEDIN_CLIENT_SECRET to .env first"}, status_code=400)
+    url = get_auth_url()
+    return RedirectResponse(url)
+
+
+@app.get("/api/v1/linkedin/callback")
+async def linkedin_callback(code: str = "", error: str = "", state: str = ""):
+    from .tools.linkedin_post import exchange_code
+    if error:
+        return HTMLResponse(f"<h3>LinkedIn auth failed: {error}</h3><p>Close this tab and try again.</p>")
+    if not code:
+        return HTMLResponse("<h3>No code returned</h3>")
+    result = exchange_code(code)
+    if result.get("ok"):
+        urn = result.get("person_urn") or "Not retrieved (see below)"
+        extra = "" if result.get("person_urn") else (
+            "<p style='color:orange'>⚠️ Could not fetch Person URN automatically. "
+            "Token is saved — posting will work once URN is set. "
+            "You can find your LinkedIn member ID at: "
+            "<a href='https://www.linkedin.com/in/me/' target='_blank'>linkedin.com/in/me</a> "
+            "→ check the URL after redirect → copy the numeric ID from the source.</p>"
+        )
+        return HTMLResponse(
+            "<h3>✅ LinkedIn connected!</h3>"
+            f"<p>Person URN: {urn}</p>"
+            f"{extra}"
+            "<p>You can close this tab. Baadar will post daily at 10am.</p>"
+        )
+    return HTMLResponse(f"<h3>❌ Error</h3><pre>{result}</pre>")
+
+
+@app.get("/api/v1/linkedin/daily")
+async def linkedin_daily():
+    from .tools.linkedin_post import get_pending, _load_daily
+    return {"pending": get_pending(), "all_today": get_pending()}
+
+
+@app.post("/api/v1/linkedin/daily/queue")
+async def linkedin_daily_queue():
+    from .tools.linkedin_post import queue_daily_post
+    return queue_daily_post()
+
+
+@app.post("/api/v1/linkedin/post")
+async def linkedin_post_now(request: Request):
+    body = await request.json()
+    date = body.get("date", "")
+    text = body.get("text", "")
+    if not text:
+        return JSONResponse({"error": "text required"}, status_code=400)
+    from .tools.linkedin_post import post_and_mark
+    return post_and_mark(date, text)
+
+
+@app.post("/api/v1/linkedin/daily/skip")
+async def linkedin_daily_skip(request: Request):
+    body = await request.json()
+    from .tools.linkedin_post import skip_today
+    return skip_today(body.get("date", ""))
+
+
+# ── TikTok Webhook ────────────────────────────────────────────────────────────
+
+@app.post("/api/v1/tiktok/webhook")
+async def tiktok_webhook(request: Request):
+    """Receive TikTok post-status notifications (publish success/failure)."""
+    import hmac, hashlib, json as _json
+    body_bytes = await request.body()
+
+    # Verify signature if secret available
+    secret = _os.getenv("TIKTOK_CLIENT_SECRET", "")
+    sig = request.headers.get("x-tiktok-signature", "")
+    if secret and sig:
+        expected = hmac.new(secret.encode(), body_bytes, hashlib.sha256).hexdigest()
+        if not hmac.compare_digest(sig, expected):
+            return JSONResponse({"error": "invalid signature"}, status_code=401)
+
+    try:
+        data = _json.loads(body_bytes)
+    except Exception:
+        data = {}
+
+    event   = data.get("event", "")
+    status  = data.get("data", {}).get("status", "")
+    pub_id  = data.get("data", {}).get("publish_id", "")
+    share_url = data.get("data", {}).get("share_url", "")
+
+    # Log it
+    print(f"📱 TikTok webhook: event={event} status={status} publish_id={pub_id}")
+
+    # Notify via Telegram
+    if event or status:
+        try:
+            from .tools.n8n_tools import send_telegram
+            icon = "✅" if status in ("PUBLISH_COMPLETE", "SUCCESS") else "⚠️"
+            msg  = (f"{icon} TikTok webhook: {event or status}\n"
+                    f"Publish ID: {pub_id}\n"
+                    + (f"🔗 {share_url}" if share_url else ""))
+            send_telegram(msg)
+        except Exception:
+            pass
+
+    # TikTok expects a 200 with specific body
+    return JSONResponse({"code": 0, "message": "success"})
+
+
+@app.get("/api/v1/tiktok/webhook")
+async def tiktok_webhook_verify(request: Request):
+    """Handle TikTok webhook URL verification challenge."""
+    challenge = request.query_params.get("challenge", "")
+    if challenge:
+        return JSONResponse({"challenge": challenge})
+    return JSONResponse({"status": "ok"})
+
+
+# ── HyperFrames endpoints ─────────────────────────────────────────────────────
+
+@app.post("/api/v1/hyperframes/render")
+async def hyperframes_render(request: Request):
+    """Render arbitrary HTML or a Mr. Yeti topic to MP4 via HyperFrames."""
+    body = await request.json()
+    html    = body.get("html", "")
+    topic   = body.get("topic", "")
+    slug    = body.get("slug", "")
+    quality = body.get("quality", "standard")
+
+    import threading
+    result_box = {}
+
+    def _run():
+        from .tools import hyperframes as hf
+        if html:
+            result_box.update(hf.render_html(html, slug=slug, quality=quality))
+        else:
+            result_box.update(hf.generate_and_render(topic=topic))
+
+    t = threading.Thread(target=_run, daemon=True)
+    t.start()
+    t.join(timeout=310)
+
+    if result_box.get("ok"):
+        return JSONResponse(result_box)
+    return JSONResponse(result_box or {"ok": False, "error": "Render timed out"}, status_code=500)
+
+
+@app.get("/api/v1/hyperframes/preview")
+async def hyperframes_preview():
+    """Return recent HyperFrames renders for the UI."""
+    from pathlib import Path as _P
+    out_dir = _P(str(config.ROOT)) / "videos_output"
+    files = sorted(out_dir.glob("hf_*.mp4"), key=lambda f: f.stat().st_mtime, reverse=True)
+    return {"renders": [{"name": f.name, "size_kb": f.stat().st_size // 1024,
+                         "path": str(f)} for f in files[:10]]}
+
+
+# ── TikTok endpoints ──────────────────────────────────────────────────────────
+
+@app.get("/api/v1/tiktok/status")
+async def tiktok_status():
+    from .tools.tiktok_post import status
+    return status()
+
+
+@app.get("/api/v1/tiktok/auth")
+async def tiktok_auth():
+    from .tools.tiktok_post import get_auth_url, app_configured
+    if not app_configured():
+        return JSONResponse({"error": "Add TIKTOK_CLIENT_KEY and TIKTOK_CLIENT_SECRET to .env first"}, status_code=400)
+    return RedirectResponse(get_auth_url())
+
+
+@app.get("/api/v1/tiktok/callback")
+async def tiktok_callback(code: str = "", error: str = "", state: str = ""):
+    from .tools.tiktok_post import exchange_code
+    if error:
+        return HTMLResponse(f"<h3>TikTok auth failed: {error}</h3><p>Close this tab and try again.</p>")
+    if not code:
+        return HTMLResponse("<h3>No code returned</h3>")
+    result = exchange_code(code)
+    if result.get("ok"):
+        return HTMLResponse(
+            "<h3>✅ TikTok connected!</h3>"
+            f"<p>Open ID: {result.get('open_id', '')}</p>"
+            "<p>Baadar will auto-post Mr. Yeti videos daily at 8am. Close this tab.</p>"
+        )
+    return HTMLResponse(f"<h3>❌ Error</h3><pre>{result}</pre>")
+
+
+# ── Mr. Yeti video pipeline endpoints ─────────────────────────────────────────
+
+@app.get("/api/v1/yeti/queue")
+async def yeti_queue():
+    from .tools.mr_yeti_pipeline import get_today_queue, _load_queue
+    return {"today": get_today_queue(), "recent": _load_queue()[-7:]}
+
+
+@app.post("/api/v1/yeti/generate")
+async def yeti_generate(request: Request):
+    body = await request.json()
+    topic = body.get("topic", "")
+    import threading
+    result_box = {}
+    def _run():
+        from .tools.mr_yeti_pipeline import queue_for_review
+        result_box.update(queue_for_review(topic=topic))
+    threading.Thread(target=_run, daemon=True).start()
+    return {"status": "generating", "message": "Generating Mr. Yeti video in background. You'll get a Telegram when it's ready."}
+
+
+@app.post("/api/v1/yeti/post")
+async def yeti_post_now():
+    from .tools.mr_yeti_pipeline import post_queued_today
+    return post_queued_today()
+
+
+@app.post("/api/v1/yeti/run_pipeline")
+async def yeti_run_pipeline(request: Request):
+    body = await request.json()
+    topic = body.get("topic", "")
+    force = body.get("force", False)
+    import threading
+    def _run():
+        from .tools.mr_yeti_pipeline import run_pipeline
+        run_pipeline(topic=topic, force=force)
+    threading.Thread(target=_run, daemon=True).start()
+    return {"status": "started", "message": "Pipeline running in background — Telegram notification when done."}
+
+
+@app.get("/api/v1/serve/{filename}")
+async def serve_reel_file(filename: str):
+    """Serve staged Reel video files publicly for Meta Graph API ingestion."""
+    from fastapi.responses import FileResponse
+    serve_dir = config.ROOT / "data" / "serve"
+    fpath = serve_dir / filename
+    if not fpath.exists() or not fpath.is_file():
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="File not found")
+    return FileResponse(str(fpath), media_type="video/mp4")
+
+
+@app.get("/api/v1/leads")
+async def get_leads(request: Request):
+    """Return email leads captured from pielts.web.app lead magnet."""
+    try:
+        import firebase_admin
+        from firebase_admin import firestore as _fs
+        db = _fs.client()
+        docs = db.collection("leads").order_by("createdAt", direction=_fs.Query.DESCENDING).limit(200).stream()
+        leads = []
+        for d in docs:
+            data = d.to_dict()
+            leads.append({
+                "email": data.get("email", ""),
+                "source": data.get("source", ""),
+                "createdAt": str(data.get("createdAt", "")),
+            })
+        return {"ok": True, "count": len(leads), "leads": leads}
+    except Exception as e:
+        return {"ok": False, "error": str(e)[:200]}
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# FLOW 8 — Master Orchestrator endpoints
+# ══════════════════════════════════════════════════════════════════════════════
+
+@app.post("/api/v1/studio/topics")
+async def studio_topics(request: Request):
+    """Generate Mr. Yeti IELTS video topic ideas via LLM."""
+    import json as _json
+    body = {}
+    try:
+        body = await request.json()
+    except Exception:
+        pass
+    count = int(body.get("count", 100))
+    niche = body.get("niche", "IELTS")
+    from .tools._llm_helper import ask_llm
+    prompt = (
+        f"Generate {count} unique YouTube video topic ideas for the Mr. Yeti channel — "
+        f"a 3D animated Yeti character teaching {niche}. "
+        f"Use these 5 content pillars (mix them roughly evenly): "
+        f"horror_story (scary exam situations), before_after (transformation stories), "
+        f"dont_say (common mistakes), quiz (interactive challenges), interview (mock interviews). "
+        f"Return ONLY a JSON array of {count} topic strings, no extra text, no numbering."
+    )
+    try:
+        raw = ask_llm(prompt)
+        # Parse JSON array from response
+        import re as _re
+        match = _re.search(r'\[.*\]', raw, _re.DOTALL)
+        if match:
+            topics = _json.loads(match.group())
+        else:
+            # Fallback: split by newlines
+            topics = [line.strip().strip('",') for line in raw.splitlines() if line.strip()]
+        # Save to data file
+        data_dir = config.ROOT / "data"
+        data_dir.mkdir(exist_ok=True)
+        with open(data_dir / "mr_yeti_topics.json", "w") as f:
+            _json.dump({"topics": topics, "count": len(topics)}, f, indent=2)
+        return {"ok": True, "topics": topics, "count": len(topics)}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@app.post("/api/v1/studio/scenes")
+async def studio_scenes(request: Request):
+    """Break a script into Veo/Google Flow scene prompts."""
+    import json as _json
+    body = {}
+    try:
+        body = await request.json()
+    except Exception:
+        pass
+    script = body.get("script", {})
+    yeti_library = body.get("yeti_library", ["walking", "pointing", "thinking", "celebrating", "surprised", "explaining"])
+    from .tools._llm_helper import ask_llm
+    script_text = _json.dumps(script) if isinstance(script, dict) else str(script)
+    prompt = (
+        f"You are a video director for Mr. Yeti, a 3D animated Yeti character teaching IELTS. "
+        f"Break the following script into 4-6 scenes for Veo/Google Flow video generation.\n\n"
+        f"Script: {script_text}\n\n"
+        f"Available Yeti poses: {yeti_library}\n\n"
+        f"Return a JSON array of scene objects. Each scene must have:\n"
+        f"- scene: integer (1-based)\n"
+        f"- duration_sec: integer (6-12 seconds)\n"
+        f"- prompt: string (Veo-style visual prompt starting with 'Mr. Yeti 3D animated...')\n"
+        f"- yeti_pose: one of the available poses\n"
+        f"- text_overlay: short text to display on screen\n\n"
+        f"Return ONLY the JSON array, no extra text."
+    )
+    try:
+        raw = ask_llm(prompt)
+        import re as _re
+        match = _re.search(r'\[.*\]', raw, _re.DOTALL)
+        scenes = _json.loads(match.group()) if match else []
+        total_duration = sum(s.get("duration_sec", 8) for s in scenes)
+        return {"ok": True, "scenes": scenes, "total_duration_sec": total_duration}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@app.post("/api/v1/studio/generate-video")
+async def studio_generate_video(request: Request):
+    """Generate video via Veo/Google Flow or return pending stub."""
+    body = {}
+    try:
+        body = await request.json()
+    except Exception:
+        pass
+    prompts = body.get("prompts", [])
+    method = body.get("method", "veo")
+    duration = body.get("duration", 480)
+    topic = prompts[0].get("prompt", "") if prompts else ""
+    try:
+        from .tools.google_flow import generate_full_video
+        result = await asyncio.get_event_loop().run_in_executor(
+            None, lambda: generate_full_video(topic=topic, use_veo=True)
+        )
+        return result
+    except Exception:
+        return {
+            "ok": True,
+            "video_path": "",
+            "method": "pending",
+            "message": "Veo not configured — add video manually to queue",
+        }
+
+
+@app.post("/api/v1/studio/stitch-video")
+async def studio_stitch_video(request: Request):
+    """Stitch Veo scene clips into master video using full FFmpeg pipeline."""
+    import datetime as _dt
+    body = {}
+    try:
+        body = await request.json()
+    except Exception:
+        pass
+    slug  = body.get("slug") or _dt.date.today().strftime("%Y%m%d")
+    clips = body.get("clips", [])   # list of file paths
+
+    # Auto-discover today's scene clips if none provided
+    if not clips:
+        scenes_dir = config.ROOT / "data" / "mr_yeti_scenes" / slug
+        if scenes_dir.exists():
+            clips = sorted(str(p) for p in scenes_dir.glob("*.mp4"))
+    if not clips:
+        return {"ok": False, "error": "No clips provided or found for slug: " + slug}
+
+    try:
+        from .tools.video_editor import stitch_scenes
+        result = stitch_scenes(clips, str(config.ROOT / "data" / "mr_yeti_videos" / f"{slug}_master.mp4"))
+        return result
+    except Exception as e:
+        return {"ok": False, "error": str(e)[:400]}
+
+
+@app.post("/api/v1/studio/extract-clips")
+async def studio_extract_clips(request: Request):
+    """Extract 6 Shorts from master video with overlays + BGM."""
+    import datetime as _dt
+    body = {}
+    try:
+        body = await request.json()
+    except Exception:
+        pass
+    slug       = body.get("slug") or _dt.date.today().strftime("%Y%m%d")
+    video_path = body.get("video_path", "")
+    add_music  = body.get("add_music", True)
+
+    if not video_path:
+        master = config.ROOT / "data" / "mr_yeti_videos" / f"{slug}_master.mp4"
+        captioned = config.ROOT / "data" / "mr_yeti_videos" / f"{slug}_captioned.mp4"
+        video_path = str(captioned) if captioned.exists() else str(master)
+
+    from pathlib import Path as _P
+    if not _P(video_path).exists():
+        return {"ok": False, "error": f"Video not found: {video_path}"}
+
+    try:
+        from .tools.video_editor import extract_shorts
+        shorts = extract_shorts(video_path, slug=slug, add_music=add_music)
+        return {"ok": True, "shorts": shorts, "count": len(shorts)}
+    except Exception as e:
+        return {"ok": False, "error": str(e)[:400]}
+
+
+@app.post("/api/v1/studio/transcribe")
+async def studio_transcribe(request: Request):
+    """Transcribe video audio → SRT file (Whisper local or OpenAI API)."""
+    body = {}
+    try:
+        body = await request.json()
+    except Exception:
+        pass
+    video_path  = body.get("video_path", "")
+    model_size  = body.get("model", "base")
+    if not video_path:
+        return {"ok": False, "error": "video_path required"}
+    try:
+        from .tools.video_editor import transcribe_audio
+        return transcribe_audio(video_path, model_size=model_size)
+    except Exception as e:
+        return {"ok": False, "error": str(e)[:400]}
+
+
+@app.post("/api/v1/studio/burn-captions")
+async def studio_burn_captions(request: Request):
+    """Burn SRT subtitles into video (TikTok-style bold centered text)."""
+    body = {}
+    try:
+        body = await request.json()
+    except Exception:
+        pass
+    video_path = body.get("video_path", "")
+    srt_path   = body.get("srt_path", "")
+    output     = body.get("output_path", video_path.replace(".mp4", "_captioned.mp4"))
+    if not video_path or not srt_path:
+        return {"ok": False, "error": "video_path and srt_path required"}
+    try:
+        from .tools.video_editor import burn_captions
+        return burn_captions(video_path, srt_path, output)
+    except Exception as e:
+        return {"ok": False, "error": str(e)[:400]}
+
+
+@app.post("/api/v1/studio/add-music")
+async def studio_add_music(request: Request):
+    """Mix background music under video audio at low volume."""
+    body = {}
+    try:
+        body = await request.json()
+    except Exception:
+        pass
+    video_path = body.get("video_path", "")
+    output     = body.get("output_path", video_path.replace(".mp4", "_music.mp4"))
+    volume     = float(body.get("volume", 0.18))
+    if not video_path:
+        return {"ok": False, "error": "video_path required"}
+    try:
+        from .tools.video_editor import add_background_music
+        return add_background_music(video_path, output, volume=volume)
+    except Exception as e:
+        return {"ok": False, "error": str(e)[:400]}
+
+
+@app.post("/api/v1/studio/full-pipeline")
+async def studio_full_pipeline(request: Request):
+    """
+    Run the complete editing pipeline on a set of raw Veo scene clips.
+    Body: { "slug": "20260623", "clips": ["path1.mp4", ...], "srt_path": null }
+    Returns paths to master, captioned, shorts, thumbnail.
+    """
+    import datetime as _dt
+    body = {}
+    try:
+        body = await request.json()
+    except Exception:
+        pass
+    slug   = body.get("slug") or _dt.date.today().strftime("%Y%m%d")
+    clips  = body.get("clips", [])
+    srt    = body.get("srt_path")
+
+    if not clips:
+        scenes_dir = config.ROOT / "data" / "mr_yeti_scenes" / slug
+        if scenes_dir.exists():
+            clips = sorted(str(p) for p in scenes_dir.glob("*.mp4"))
+    if not clips:
+        return {"ok": False, "error": "No clips provided or found"}
+
+    try:
+        from .tools.video_editor import run_full_edit_pipeline
+        import asyncio
+        loop = asyncio.get_event_loop()
+        result = await loop.run_in_executor(
+            None, lambda: run_full_edit_pipeline(clips, slug, srt_path=srt)
+        )
+        return result
+    except Exception as e:
+        return {"ok": False, "error": str(e)[:500]}
+
+
+@app.get("/api/v1/studio/asset-status")
+async def studio_asset_status(request: Request):
+    """Check which editing assets (BGM, intro, outro, FFmpeg) are available."""
+    try:
+        from .tools.video_editor import asset_status
+        return {"ok": True, **asset_status()}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@app.post("/api/v1/studio/download-bgm")
+async def studio_download_bgm(request: Request):
+    """Download a free CC0 background music track for video editing."""
+    try:
+        from .tools.video_editor import download_free_bgm
+        return download_free_bgm()
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@app.post("/api/v1/studio/captions")
+async def studio_captions(request: Request):
+    """Generate per-platform captions for each clip type via LLM."""
+    import json as _json
+    body = {}
+    try:
+        body = await request.json()
+    except Exception:
+        pass
+    clips = body.get("clips", {})
+    platforms = body.get("platforms", ["youtube", "tiktok", "instagram", "facebook"])
+    from .tools._llm_helper import ask_llm
+    captions = {}
+    for clip_type, clip_path in clips.items():
+        prompt = (
+            f"Generate social media captions for a Mr. Yeti IELTS video clip type: '{clip_type}'.\n"
+            f"Mr. Yeti is a friendly 3D animated Yeti character who teaches IELTS tips.\n\n"
+            f"Generate captions for these platforms: {platforms}\n\n"
+            f"For YouTube: include title (max 100 chars), description (2-3 paragraphs), and tags (list of 10).\n"
+            f"For TikTok, Instagram, Facebook: include a short punchy caption (max 150 chars) and hashtags (list of 8).\n\n"
+            f"Return ONLY a JSON object with platform names as keys. Example:\n"
+            f'{{"youtube": {{"title": "...", "description": "...", "tags": [...]}}, '
+            f'"tiktok": {{"caption": "...", "hashtags": [...]}}}}'
+        )
+        try:
+            raw = ask_llm(prompt)
+            import re as _re
+            match = _re.search(r'\{.*\}', raw, _re.DOTALL)
+            platform_captions = _json.loads(match.group()) if match else {}
+            captions[clip_type] = platform_captions
+        except Exception as e:
+            captions[clip_type] = {"error": str(e)}
+    return {"ok": True, "captions": captions}
+
+
+@app.post("/api/v1/telegram/send")
+async def telegram_send(request: Request):
+    """Send a Telegram message via n8n_tools."""
+    body = {}
+    try:
+        body = await request.json()
+    except Exception:
+        pass
+    text = body.get("text", "")
+    if not text:
+        return {"ok": False, "error": "text required"}
+    try:
+        from .tools.n8n_tools import send_telegram
+        send_telegram(text)
+        return {"ok": True}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+# ── Intelligence Layer: Flows 9–12 ────────────────────────────────────────────
+
+@app.post("/api/v1/analytics/run")
+async def analytics_run(request: Request):
+    """Flow 9: Pull analytics, score videos, update content weights."""
+    try:
+        from .tools.analytics_loop import run_analytics_loop
+        result = run_analytics_loop()
+        return result
+    except Exception as e:
+        return {"ok": False, "error": str(e)[:300]}
+
+
+@app.get("/api/v1/analytics/insights")
+async def analytics_insights(request: Request):
+    """Return current analytics weights + insight summary."""
+    try:
+        from .tools.analytics_loop import get_weights, _generate_insight
+        w = get_weights()
+        return {"ok": True, "weights": w, "insight": _generate_insight(w)}
+    except Exception as e:
+        return {"ok": False, "error": str(e)[:300]}
+
+
+@app.post("/api/v1/comments/mine")
+async def comments_mine(request: Request):
+    """Flow 10: Pull YouTube comments, extract video ideas."""
+    try:
+        from .tools.comment_miner import run_comment_miner
+        return run_comment_miner()
+    except Exception as e:
+        return {"ok": False, "error": str(e)[:300]}
+
+
+@app.get("/api/v1/comments/ideas")
+async def comments_ideas(request: Request):
+    """Return saved comment-derived video ideas."""
+    try:
+        from .tools.comment_miner import get_top_ideas
+        return {"ok": True, "ideas": get_top_ideas(n=10)}
+    except Exception as e:
+        return {"ok": False, "error": str(e)[:300]}
+
+
+@app.post("/api/v1/trends/scan")
+async def trends_scan(request: Request):
+    """Flow 11: Scan Reddit + YouTube trends, generate topic ideas."""
+    try:
+        from .tools.trend_hunter import run_trend_hunter
+        return run_trend_hunter()
+    except Exception as e:
+        return {"ok": False, "error": str(e)[:300]}
+
+
+@app.get("/api/v1/trends/topics")
+async def trends_topics(request: Request):
+    """Return current trending topic ideas."""
+    try:
+        from .tools.trend_hunter import get_trending_topics
+        return {"ok": True, "topics": get_trending_topics(n=10)}
+    except Exception as e:
+        return {"ok": False, "error": str(e)[:300]}
+
+
+@app.post("/api/v1/hooks/generate")
+async def hooks_generate(request: Request):
+    """Flow 12 / A/B: Generate 10 title + hook variants for a topic."""
+    body = {}
+    try:
+        body = await request.json()
+    except Exception:
+        pass
+    topic     = body.get("topic", "")
+    clip_type = body.get("clip_type", "hook")
+    n         = int(body.get("n", 10))
+    if not topic:
+        return {"ok": False, "error": "topic required"}
+    try:
+        from .tools.ab_tester import generate_hooks
+        data = generate_hooks(topic, clip_type, n=n)
+        return {"ok": True, **data}
+    except Exception as e:
+        return {"ok": False, "error": str(e)[:300]}
+
+
+@app.post("/api/v1/thumbnails/generate")
+async def thumbnails_generate(request: Request):
+    """Flow 12: Generate 5 thumbnail variants sorted by predicted CTR."""
+    body = {}
+    try:
+        body = await request.json()
+    except Exception:
+        pass
+    topic = body.get("topic", "")
+    title = body.get("video_title", topic)
+    n     = int(body.get("n", 5))
+    if not topic:
+        return {"ok": False, "error": "topic required"}
+    try:
+        from .tools.ab_tester import generate_thumbnail_variants
+        thumbnails = generate_thumbnail_variants(topic, title, n=n)
+        return {"ok": True, "thumbnails": thumbnails}
+    except Exception as e:
+        return {"ok": False, "error": str(e)[:300]}
+
+
+@app.post("/api/v1/ab/record")
+async def ab_record(request: Request):
+    """Record an A/B test result (views_a, views_b, test_id)."""
+    body = {}
+    try:
+        body = await request.json()
+    except Exception:
+        pass
+    test_id = body.get("test_id", "")
+    views_a = int(body.get("views_a", 0))
+    views_b = int(body.get("views_b", 0))
+    if not test_id:
+        return {"ok": False, "error": "test_id required"}
+    try:
+        from .tools.ab_tester import record_result
+        record_result(test_id, views_a, views_b)
+        return {"ok": True}
+    except Exception as e:
+        return {"ok": False, "error": str(e)[:300]}
+
+
+@app.get("/api/v1/ab/patterns")
+async def ab_patterns(request: Request):
+    """Return winning hook patterns from completed A/B tests."""
+    try:
+        from .tools.ab_tester import get_winning_patterns
+        return {"ok": True, **get_winning_patterns()}
+    except Exception as e:
+        return {"ok": False, "error": str(e)[:300]}
+
+
+@app.get("/api/v1/mailerlite/subscribers")
+async def mailerlite_subscriber_count(request: Request):
+    """Return total active subscriber count + per-group breakdown from MailerLite."""
+    try:
+        from .tools.mailerlite import list_groups, list_subscribers
+        groups_result = list_groups()
+        if "error" in groups_result:
+            return {"ok": False, "error": groups_result["error"]}
+        groups = groups_result.get("groups", [])
+        total_active = sum(g.get("count", 0) for g in groups)
+        # Also get overall subscriber count from the API meta
+        from .tools.mailerlite import _h, BASE
+        import httpx as _hx
+        meta_total = None
+        try:
+            r = _hx.get(f"{BASE}/subscribers", headers=_h(), params={"limit": 1}, timeout=10)
+            r.raise_for_status()
+            meta_total = r.json().get("meta", {}).get("total")
+        except Exception:
+            pass
+        return {
+            "ok": True,
+            "total": meta_total if meta_total is not None else total_active,
+            "active": total_active,
+            "groups": [{"id": g["id"], "name": g["name"], "count": g["count"]} for g in groups],
+        }
+    except Exception as e:
+        return {"ok": False, "error": str(e)[:300]}
+
+
+# ---------------------------------------------------------------------------
+# IELTS Writing Evaluator (public — no auth required, read-only AI call)
+# ---------------------------------------------------------------------------
+class WritingEvalIn(BaseModel):
+    essay: str
+    task_type: str = "task2"   # "task1" | "task2"
+    prompt: str = ""
+
+@app.post("/api/v1/evaluate/writing")
+async def evaluate_writing(body: WritingEvalIn):
+    """Gemini-powered IELTS essay scorer. Falls back to heuristic if key missing."""
+    from .tools.writing_eval import evaluate_essay
+    try:
+        result = evaluate_essay(body.essay, body.task_type, body.prompt)
+        return {"ok": True, **result}
+    except Exception as e:
+        return {"ok": False, "error": str(e)[:400]}
+
+
+@app.post("/api/v1/evaluate/speaking")
+async def evaluate_speaking_endpoint(
+    question: str = Form(""),
+    part: int = Form(1),
+    transcript: str = Form(""),
+    audio: UploadFile = File(None),
+):
+    from .tools.speaking_eval import transcribe_and_evaluate, evaluate_speaking
+    try:
+        if audio and audio.filename:
+            audio_bytes = await audio.read()
+            mime_type = audio.content_type or "audio/webm"
+            result = transcribe_and_evaluate(audio_bytes, mime_type, question, part)
+        else:
+            result = evaluate_speaking(transcript or "", question, part)
+            result["transcript"] = transcript
+        return {"ok": True, **result}
+    except Exception as e:
+        return {"ok": False, "error": str(e)[:400]}
 
 
 app.mount("/", StaticFiles(directory=str(config.ROOT / "client"), html=True),
