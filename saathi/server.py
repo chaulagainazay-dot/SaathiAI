@@ -405,6 +405,25 @@ def discard_draft():
     _PENDING_DRAFT = {}
     return {"ok": True}
 
+
+@app.post("/api/v1/trends/fuse")
+async def trends_fuse(request: Request):
+    """Fuse a trending format with an IELTS topic to generate a viral hook."""
+    body = {}
+    try:
+        body = await request.json()
+    except Exception:
+        pass
+    topic = body.get("topic", "IELTS Speaking")
+    trend_format = body.get("format", "")
+    try:
+        import asyncio
+        from .tools.content_studio import fuse_trend
+        result = await asyncio.get_event_loop().run_in_executor(None, fuse_trend, topic, trend_format)
+        return {"ok": True, **result}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
 @app.get("/api/v1/baadar/status")
 def baadar_status():
     import time as _time

@@ -145,3 +145,18 @@ def test_score_thumbnails_ranks_correctly():
         result = score_thumbnails(concepts)
     assert result[0]["rank"] == 1
     assert result[0]["total"] > result[1]["total"]
+
+
+# ── Task 9: Trend Fusion ────────────────────────────────────────────────────────
+def test_fuse_trend_returns_hook_and_angle():
+    fake = json.dumps({
+        "fused_hook": "POV: You just said this in your IELTS exam.",
+        "script_angle": "Role-play as an examiner reacting to the mistake"
+    })
+    with mock.patch("saathi.tools.content_studio.ask_llm", return_value=fake):
+        from saathi.tools.content_studio import fuse_trend
+        result = fuse_trend("Speaking Mistakes", "POV")
+    assert "fused_hook" in result
+    assert "POV" in result["fused_hook"] or "script_angle" in result
+    assert result["format"] == "POV"
+    assert result["topic"] == "Speaking Mistakes"

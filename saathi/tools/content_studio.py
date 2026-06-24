@@ -15,6 +15,13 @@ from ._llm_helper import ask_llm, extract_json
 
 CONTENT_DIR = config.ROOT / "data" / "content"
 
+# Rotating trending formats — update weekly
+TRENDING_FORMATS = [
+    "POV", "Story Time", "Reaction", "Before vs After",
+    "Hot Take", "Day in My Life", "Rate My", "Expectation vs Reality",
+    "What I Wish I Knew", "Mistakes I Made",
+]
+
 NICHE = (
     "Content for pielts.web.app — a free IELTS practice app. The face of the brand is "
     "MR. YETI: a large fluffy white yeti professor from the Himalayas — round black glasses, "
@@ -817,3 +824,30 @@ def save_hook_performance(hook_text: str, topic: str, video_id: str = ""):
             "INSERT INTO hook_performance (hook_text, topic, video_id) VALUES (?, ?, ?)",
             (hook_text, topic, video_id)
         )
+
+
+def fuse_trend(ielts_topic: str, trend_format: str = "") -> dict:
+    """Fuse a trending video format with an IELTS topic to create a viral hook."""
+    import random
+    if not trend_format:
+        trend_format = random.choice(TRENDING_FORMATS)
+    prompt = f"""You are creating viral IELTS content by fusing a trending video format with an educational topic.
+
+Trending format: "{trend_format}"
+IELTS topic: "{ielts_topic}"
+Character: Mr. Yeti (funny, direct, encouraging IELTS teacher)
+
+Create:
+1. fused_hook: An opening line that combines the trend format with the IELTS topic (max 12 words)
+   Example: Trending=POV, Topic=Speaking Mistakes → "POV: You just said this in your IELTS exam."
+2. script_angle: A 1-sentence description of how to structure the video using this format
+
+Return ONLY valid JSON: {{"fused_hook": "...", "script_angle": "..."}}"""
+    raw = ask_llm(prompt, system="You create viral educational content hooks. Reply ONLY with valid JSON.")
+    data = extract_json(raw)
+    return {
+        "fused_hook": data.get("fused_hook", ""),
+        "script_angle": data.get("script_angle", ""),
+        "format": trend_format,
+        "topic": ielts_topic,
+    }
