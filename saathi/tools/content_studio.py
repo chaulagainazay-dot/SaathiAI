@@ -11,6 +11,7 @@ import os
 import re
 
 from .. import config
+from ._llm_helper import ask_llm, extract_json
 
 CONTENT_DIR = config.ROOT / "data" / "content"
 
@@ -777,3 +778,42 @@ def community_outreach_kit(count: int = 3) -> dict:
     (CONTENT_DIR / f"outreach-{kit['date']}.json").write_text(
         json.dumps(kit, ensure_ascii=False, indent=2))
     return kit
+
+
+def generate_hooks(topic: str) -> dict:
+    """Generate 20 hooks for a topic, AI-score them, return top 3."""
+    prompt = f"""Generate exactly 20 short viral hooks for this IELTS content topic: "{topic}"
+Each hook must be under 12 words, written as a social video opening line.
+Score each hook (0-10) on:
+- curiosity: does it make the viewer need to know more?
+- urgency: does it create fear of missing out or failing?
+- specificity: is it concrete (numbers, names, specific mistakes)?
+
+Return ONLY valid JSON:
+{{
+  "hooks": [
+    {{"text": "...", "curiosity": 8, "urgency": 7, "specificity": 6}},
+    ...20 items...
+  ]
+}}"""
+    raw = ask_llm(prompt, system="You generate viral social media hooks. Reply ONLY with valid JSON.")
+    data = extract_json(raw)
+    hooks = data.get("hooks", [])
+    # Compute total score and sort descending
+    for h in hooks:
+        h["total"] = h.get("curiosity", 0) + h.get("urgency", 0) + h.get("specificity", 0)
+    hooks.sort(key=lambda x: x["total"], reverse=True)
+    top3 = [h["text"] for h in hooks[:3]]
+    return {"topic": topic, "hooks": hooks, "top3": top3}
+
+
+def save_hook_performance(hook_text: str, topic: str, video_id: str = ""):
+    """Store a hook in hook_performance table for later performance tracking."""
+    import sqlite3, os
+    from .. import config
+    db = os.getenv("BAADAR_DB", str(config.ROOT / "data" / "baadar.db"))
+    with sqlite3.connect(db) as c:
+        c.execute(
+            "INSERT INTO hook_performance (hook_text, topic, video_id) VALUES (?, ?, ?)",
+            (hook_text, topic, video_id)
+        )

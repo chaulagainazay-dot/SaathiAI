@@ -2307,23 +2307,19 @@ async def trends_topics(request: Request):
 
 @app.post("/api/v1/hooks/generate")
 async def hooks_generate(request: Request):
-    """Flow 12 / A/B: Generate 10 title + hook variants for a topic."""
+    """Generate 20 hooks for a topic, score them, return top 3."""
     body = {}
     try:
         body = await request.json()
     except Exception:
         pass
-    topic     = body.get("topic", "")
-    clip_type = body.get("clip_type", "hook")
-    n         = int(body.get("n", 10))
-    if not topic:
-        return {"ok": False, "error": "topic required"}
+    topic = body.get("topic", "IELTS tips")
     try:
-        from .tools.ab_tester import generate_hooks
-        data = generate_hooks(topic, clip_type, n=n)
-        return {"ok": True, **data}
+        from .tools.content_studio import generate_hooks
+        result = generate_hooks(topic)
+        return {"ok": True, **result}
     except Exception as e:
-        return {"ok": False, "error": str(e)[:300]}
+        return {"ok": False, "error": str(e)}
 
 
 @app.post("/api/v1/thumbnails/generate")

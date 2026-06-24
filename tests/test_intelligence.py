@@ -34,3 +34,26 @@ def test_upsert_and_get_retention():
     assert row is not None
     assert row["completion_pct"] == 68.0
     assert row["score"] == "B"
+
+
+# ── Task 3: Hook Laboratory ──────────────────────────────────────────────────
+import json
+import unittest.mock as mock
+
+def test_generate_hooks_returns_top3():
+    fake_llm_response = json.dumps({
+        "hooks": [
+            {"text": "Stop making this mistake.", "curiosity": 8, "urgency": 7, "specificity": 6},
+            {"text": "97% of students fail because of this.", "curiosity": 9, "urgency": 9, "specificity": 8},
+            {"text": "This one trick changed my IELTS score.", "curiosity": 7, "urgency": 6, "specificity": 7},
+            {"text": "You are doing grammar wrong.", "curiosity": 6, "urgency": 5, "specificity": 5},
+        ]
+    })
+    with mock.patch("saathi.tools.content_studio.ask_llm", return_value=fake_llm_response):
+        from saathi.tools.content_studio import generate_hooks
+        result = generate_hooks("Grammar Mistakes")
+    assert "hooks" in result
+    assert "top3" in result
+    assert len(result["top3"]) == 3
+    # top hook should be highest total score
+    assert result["top3"][0] == "97% of students fail because of this."
