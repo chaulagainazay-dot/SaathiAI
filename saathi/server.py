@@ -55,6 +55,7 @@ async def _auth(request, call_next):
             or path == "/api/v1/tiktok/status"
             or path == "/api/v1/evaluate/writing"
             or path == "/api/v1/evaluate/speaking"
+            or path == "/api/v1/notify/new-user"
             or not path.startswith("/api/")):
         return await call_next(request)
     # Legacy remote token (backward compat)
@@ -2181,6 +2182,39 @@ async def telegram_send(request: Request):
         return {"ok": False, "error": str(e)}
 
 
+@app.post("/api/v1/notify/new-user")
+async def notify_new_user(request: Request):
+    """Called by pielts frontend when a new user registers — sends Telegram notification."""
+    body = {}
+    try:
+        body = await request.json()
+    except Exception:
+        pass
+    uid = body.get("uid", "?")
+    name = body.get("name", "(no name)")
+    email = body.get("email", "(no email)")
+    phone = body.get("phone", "")
+    account_type = body.get("accountType", "individual")
+    from datetime import datetime, timezone, timedelta
+    npt = datetime.now(timezone(timedelta(hours=5, minutes=45)))
+    time_str = npt.strftime("%b %d, %Y %I:%M %p NPT")
+    phone_line = f"\n📞 Phone: {phone}" if phone else ""
+    msg = (
+        f"🎉 New pielts.web.app Registration!\n\n"
+        f"👤 Name: {name}\n"
+        f"📧 Email: {email}{phone_line}\n"
+        f"🔑 Type: {account_type}\n"
+        f"🕐 Time: {time_str}\n"
+        f"🆔 UID: {uid}"
+    )
+    try:
+        from .tools.n8n_tools import send_telegram
+        send_telegram(msg)
+    except Exception:
+        pass
+    return {"ok": True}
+
+
 # ── Intelligence Layer: Flows 9–12 ────────────────────────────────────────────
 
 @app.post("/api/v1/analytics/run")
@@ -2396,6 +2430,13 @@ app.mount("/", StaticFiles(directory=str(config.ROOT / "client"), html=True),
 def _start_background():
     """Daily self-improvement cycle + the proactive scheduler."""
     import threading
+
+    # Initialize intelligence database tables
+    try:
+        from .tools.intelligence import init_db as _init_intelligence_db
+        _init_intelligence_db()
+    except Exception:
+        pass
 
     def loop():
         import time
