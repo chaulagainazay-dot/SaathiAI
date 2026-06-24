@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Daily content studio — Baadar runs Ajay's IELTS/study-abroad social operation.
 
 Generates a full multi-platform content pack (TikTok/Reel script + LinkedIn +
@@ -502,7 +503,7 @@ def _save(pack: dict):
         json.dumps(pack, ensure_ascii=False, indent=2))
 
 
-def _parse_json(raw: str) -> dict | None:
+def _parse_json(raw: str) -> "dict | None":
     raw = raw.strip()
     raw = re.sub(r"^```(?:json)?|```$", "", raw, flags=re.MULTILINE).strip()
     try:
@@ -563,37 +564,66 @@ def publish_to_youtube(video_path: str, title: str, description: str = "", tags:
         shutil.copy2(p, staged)
     except Exception as e:
         return {"status": "error", "error": f"could not stage video: {e}"}
-    try:
-        r = httpx.post(url, json={"title": title, "description": description,
-                                  "tags": tags, "videoPath": staged}, timeout=900)
-        ok = r.status_code < 400
-        if ok:
-            try:
-                vid = (r.json() or {}).get("uploadId", "")
-                from .. import pielts
-                pielts.log_upload(vid, title)
-            except Exception:
-                pass
-            # clean up storage: remove the temp staged copy; move the original to Trash
-            # (recoverable). Only runs after a CONFIRMED upload so nothing is lost on failure.
-            try:
-                os.remove(staged)
-            except Exception:
-                pass
-            try:
-                import time
-                trash = os.path.expanduser("~/.Trash")
-                if os.path.isdir(trash) and os.path.exists(p):
-                    dest = os.path.join(trash, os.path.basename(p))
-                    if os.path.exists(dest):
-                        dest = f"{dest}.{int(time.time())}"
-                    shutil.move(p, dest)
-            except Exception:
-                pass
-        return {"status": "published" if ok else "failed", "http": r.status_code,
-                "channel": "@pieltsapp", "response": r.text[:300]}
-    except Exception as e:
-        return {"status": "error", "error": str(e)[:200]}
+    # Call the n8n webhook — retry up to 3 times for transient 5xx, but bail
+    # immediately on "No item to return" (n8n workflow misconfiguration / expired OAuth).
+    last_err = ""
+    r = None
+    for attempt in range(3):
+        try:
+            r = httpx.post(url, json={"title": title, "description": description,
+                                      "tags": tags, "videoPath": staged}, timeout=120)
+            if r.status_code < 500:
+                break  # 2xx or 4xx — don't retry client errors
+            body = r.text
+            # n8n returns this when the YouTube node fails (expired OAuth / unconfigured)
+            if "No item to return" in body or "no item to return" in body.lower():
+                try:
+                    os.remove(staged)
+                except Exception:
+                    pass
+                print("  ⚠️  YouTube n8n workflow not configured — set up YouTube OAuth in n8n")
+                return {"status": "not_configured",
+                        "error": "YouTube n8n workflow returned 'No item to return' — reconnect YouTube OAuth in n8n"}
+            last_err = f"HTTP {r.status_code}: {body[:100]}"
+            print(f"  ⚠️  n8n webhook attempt {attempt+1} returned {r.status_code} — retrying")
+        except Exception as req_err:
+            last_err = str(req_err)[:200]
+            print(f"  ⚠️  n8n webhook attempt {attempt+1} error: {last_err}")
+            r = None
+        if attempt < 2:
+            import time; time.sleep(3)
+
+    if r is None:
+        try:
+            os.remove(staged)
+        except Exception:
+            pass
+        return {"status": "error", "error": f"n8n webhook failed after 3 attempts: {last_err}"}
+
+    ok = r.status_code < 400
+    if ok:
+        try:
+            vid = (r.json() or {}).get("uploadId", "")
+            from .. import pielts
+            pielts.log_upload(vid, title)
+        except Exception:
+            pass
+        try:
+            os.remove(staged)
+        except Exception:
+            pass
+        try:
+            import time
+            trash = os.path.expanduser("~/.Trash")
+            if os.path.isdir(trash) and os.path.exists(p):
+                dest = os.path.join(trash, os.path.basename(p))
+                if os.path.exists(dest):
+                    dest = f"{dest}.{int(time.time())}"
+                shutil.move(p, dest)
+        except Exception:
+            pass
+    return {"status": "published" if ok else "failed", "http": r.status_code,
+            "channel": "@pieltsapp", "response": r.text[:300]}
 
 
 def queue_video(video_path: str, title: str, description: str = "",

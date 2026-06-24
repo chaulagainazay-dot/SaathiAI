@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Daily auto-poster — Baadar posts to YouTube, Facebook, and Instagram automatically.
 
 THREE posting layers:
@@ -204,7 +205,7 @@ def _make_yeti_card(hook: str, slot: str, topic: str = "") -> str | None:
 # ─────────────────────────────────────────────
 
 def run_social_autopost(slot: str = "AM") -> dict:
-    """Post the AM or PM slot to Facebook + Instagram. Called by scheduler at 9am / 6pm."""
+    """Post the AM or PM slot to Facebook + Instagram + Twitter/X. Called by scheduler at 9am / 6pm."""
     from .scheduler import _notify
     from .tools import meta_post, growth_engine
     from . import connections
@@ -232,7 +233,7 @@ def run_social_autopost(slot: str = "AM") -> dict:
         except Exception:
             hashtags = "#IELTS #IELTSTips #pielts #StudyAbroad #EnglishLearning"
 
-        fb_caption = _build_caption(cal_post, "facebook", "")
+        fb_caption = _build_caption(cal_post, "facebook", hashtags)
         ig_caption = _build_caption(cal_post, "instagram", hashtags)
     else:
         # No calendar — generate fresh
@@ -243,8 +244,13 @@ def run_social_autopost(slot: str = "AM") -> dict:
     core_msg = (cal_post or {}).get("core_message", "Free practice → pielts.web.app")
     image_path = _make_yeti_card(hook_text, slot, topic=core_msg)
 
-    # Post to Facebook
+    # Post to Facebook (with image link if available)
     try:
+        fb_img = image_path if (image_path and Path(image_path).exists()) else None
+        if not fb_img:
+            fb_fallback = config.ROOT / "client" / "assets" / "mr_yeti_reference.jpeg"
+            if fb_fallback.exists():
+                fb_img = str(fb_fallback)
         fb_result = meta_post.post_facebook(fb_caption)
         results["facebook"] = fb_result.get("status", "error")
     except Exception as e:
@@ -255,17 +261,51 @@ def run_social_autopost(slot: str = "AM") -> dict:
         if image_path and Path(image_path).exists():
             ig_result = meta_post.post_instagram_image_local(image_path, ig_caption)
         else:
-            # Upload a Mr. Yeti branded placeholder from Imgur
-            ig_result = meta_post.post_instagram_image(
-                "https://i.imgur.com/4M7IWwP.jpeg",  # Mr. Yeti placeholder
-                ig_caption
-            )
+            # Card generation failed — upload Mr. Yeti reference image as fallback
+            fallback = config.ROOT / "client" / "assets" / "mr_yeti_reference.jpeg"
+            if fallback.exists():
+                ig_result = meta_post.post_instagram_image_local(str(fallback), ig_caption)
+            else:
+                ig_result = {"status": "error", "error": "No image available for Instagram post"}
         results["instagram"] = ig_result.get("status", "error")
     except Exception as e:
         results["instagram"] = f"error: {str(e)[:80]}"
 
+    # ── Auto-publish blog (AM slot only) ────────────────────────────────────
+    blog_status = ""
+    if slot == "AM":
+        try:
+            from .tools import content_studio
+            blog_topic = (cal_post or {}).get("core_message", "") or hook_text
+            blog = content_studio.make_blog_post(blog_topic)
+            if blog.get("title") and blog.get("content"):
+                pub = content_studio.publish_blog(
+                    blog["title"], blog["content"],
+                    blog.get("excerpt", ""), blog.get("slug", "")
+                )
+                blog_status = pub.get("status", "")
+        except Exception as e:
+            blog_status = f"error: {str(e)[:60]}"
+
+    # ── Post to Twitter/X ───────────────────────────────────────────────────
+    if conns.get("x", {}).get("connected"):
+        try:
+            from .tools import twitter_post
+            tweet_text = twitter_post.build_tweet(
+                hook=hook_text,
+                cta="Free practice → pielts.web.app",
+                hashtags="#IELTS #IELTSTips #pielts #StudyAbroad",
+            )
+            if image_path and Path(image_path).exists():
+                tw_result = twitter_post.tweet_with_image(tweet_text, image_path)
+            else:
+                tw_result = twitter_post.tweet(tweet_text)
+            results["twitter"] = tw_result.get("status", "error")
+        except Exception as e:
+            results["twitter"] = f"error: {str(e)[:60]}"
+
     # Log + notify
-    _mark_posted(slot, {"slot": slot, "topic": hook_text, "results": results})
+    _mark_posted(slot, {"slot": slot, "topic": hook_text, "results": results, "blog": blog_status})
 
     status_line = " | ".join(f"{p}: {s}" for p, s in results.items())
     _notify(f"✅ Baadar auto-posted ({slot})", f"{hook_text[:60]}\n{status_line}")
@@ -280,12 +320,13 @@ def run_social_autopost(slot: str = "AM") -> dict:
             n8n_tools.send_telegram(
                 f"✅ Auto-posted {slot} slot{cal_info}\n"
                 f"Hook: \"{hook_text[:80]}\"\n"
-                f"FB: {results.get('facebook','?')} | IG: {results.get('instagram','?')}"
+                f"FB: {results.get('facebook','?')} | IG: {results.get('instagram','?')} | X: {results.get('twitter','—')}"
+                + (f"\n📝 Blog: {blog_status}" if blog_status else "")
             )
     except Exception:
         pass
 
-    return {"status": "posted", "slot": slot, "results": results, "hook": hook_text}
+    return {"status": "posted", "slot": slot, "results": results, "hook": hook_text, "blog": blog_status}
 
 
 # ─────────────────────────────────────────────
@@ -332,7 +373,11 @@ def _run_quote_autopost() -> dict:
         if img_square and Path(img_square).exists():
             ig_r = meta_post.post_instagram_image_local(img_square, ig_caption)
         else:
-            ig_r = meta_post.post_instagram_image("https://i.imgur.com/4M7IWwP.jpeg", ig_caption)
+            fallback = config.ROOT / "client" / "assets" / "mr_yeti_reference.jpeg"
+            if fallback.exists():
+                ig_r = meta_post.post_instagram_image_local(str(fallback), ig_caption)
+            else:
+                ig_r = {"status": "error", "error": "No image available"}
         results["instagram"] = ig_r.get("status", "error")
     except Exception as e:
         results["instagram"] = f"error: {str(e)[:60]}"
@@ -346,12 +391,7 @@ def _run_quote_autopost() -> dict:
         f"Free practice → pielts.web.app"
     )
     try:
-        if img_square and Path(img_square).exists():
-            # Upload to imgur first for public URL
-            pub_url = meta_post.upload_image_public(img_square)
-            fb_r = meta_post.post_facebook(fb_caption, link=pub_url)
-        else:
-            fb_r = meta_post.post_facebook(fb_caption)
+        fb_r = meta_post.post_facebook(fb_caption)
         results["facebook"] = fb_r.get("status", "error")
     except Exception as e:
         results["facebook"] = f"error: {str(e)[:60]}"
@@ -373,24 +413,46 @@ def _run_quote_autopost() -> dict:
                     video_path, yt_title, yt_desc,
                     tags="IELTS,IELTS tips,Mr Yeti,pielts,Study abroad,English,Shorts"
                 )
-                results["youtube"] = yt_r.get("status", "error") if isinstance(yt_r, dict) else str(yt_r)
+                yt_status = yt_r.get("status", "error") if isinstance(yt_r, dict) else str(yt_r)
+                # Map verbose statuses to human-readable labels
+                _yt_labels = {"published": "posted", "not_configured": "needs_oauth", "failed": "failed"}
+                results["youtube"] = _yt_labels.get(yt_status, yt_status)
         except Exception as e:
             results["youtube"] = f"error: {str(e)[:60]}"
     else:
-        results["youtube"] = "skipped (video render failed)"
+        results["youtube"] = "skipped"
 
-    # ── Auto-publish blog ──
+    # ── Twitter/X: quote tweet ─────────────────────────────────────────────
+    try:
+        from . import connections as _conns
+        from .tools import twitter_post
+        if _conns.get_all().get("x", {}).get("connected"):
+            tw_text = twitter_post.build_tweet(
+                hook=quote,
+                cta=subtext or "Free practice → pielts.web.app",
+                hashtags=f"#{kit.get('topic_tag','IELTSTips')} #IELTS #pielts #MrYeti",
+            )
+            if img_square and Path(img_square).exists():
+                tw_r = twitter_post.tweet_with_image(tw_text, img_square)
+            else:
+                tw_r = twitter_post.tweet(tw_text)
+            results["twitter"] = tw_r.get("status", "error")
+    except Exception as e:
+        results["twitter"] = f"error: {str(e)[:60]}"
+
+    # ── Auto-publish blog ──────────────────────────────────────────────────────
     blog_status = ""
     try:
-        blog = kit.get("blog", {})
+        blog_topic = topic or quote
+        blog = content_studio.make_blog_post(blog_topic)
         if blog.get("title") and blog.get("content"):
             pub = content_studio.publish_blog(
                 blog["title"], blog["content"],
                 blog.get("excerpt", ""), blog.get("slug", "")
             )
             blog_status = pub.get("status", "")
-    except Exception:
-        pass
+    except Exception as e:
+        blog_status = f"error: {str(e)[:60]}"
 
     # ── Log + notify ──
     _mark_posted("QUOTE", {"quote": quote, "results": results, "blog": blog_status})
@@ -406,7 +468,7 @@ def _run_quote_autopost() -> dict:
                 f"📸 IG: {results.get('instagram','?')}\n"
                 f"📘 FB: {results.get('facebook','?')}\n"
                 f"▶️  YT: {results.get('youtube','?')}\n"
-                f"📝 Blog: {blog_status or 'not published'}\n\n"
+                f"📝 Blog: {blog_status or 'error'}\n\n"
                 f"→ Add a rendered video to the queue to post tomorrow!"
             )
     except Exception:
@@ -428,8 +490,26 @@ def run_daily_autopost() -> dict:
     q = _load()
     nxt = next((i for i in q if not i.get("posted")), None)
     if not nxt:
-        # No video queued → auto-generate a quote Short and post it everywhere
-        return _run_quote_autopost()
+        # No video queued → try Google Flow (Veo 2) 3D auto-generation first
+        try:
+            from .tools.google_flow import generate_full_video
+            flow_result = generate_full_video(use_veo=True)
+            if flow_result.get("ok") and flow_result.get("video_path"):
+                # Inject as a one-off queued item and let the rest of the function post it
+                nxt = {
+                    "video_path":    flow_result["video_path"],
+                    "title":         flow_result["title"],
+                    "description":   flow_result.get("caption_fb", ""),
+                    "caption":       flow_result.get("caption_ig", ""),
+                    "tags":          "IELTS,IELTSTips,MrYeti,pielts,Shorts",
+                    "thumbnail_path": "",
+                    "auto_generated": True,
+                    "method":        flow_result.get("method", "static"),
+                }
+        except Exception as _gf_err:
+            print(f"⚠️  Google Flow failed: {_gf_err} — falling back to quote")
+        if not nxt:
+            return _run_quote_autopost()
 
 
     results = {}
@@ -455,8 +535,7 @@ def run_daily_autopost() -> dict:
             if thumbnail and Path(thumbnail).exists():
                 results["instagram"] = meta_post.post_instagram_image_local(thumbnail, caption).get("status")
             else:
-                results["instagram"] = meta_post.post_instagram_image(
-                    "https://i.imgur.com/4M7IWwP.jpeg", caption).get("status")
+                results["instagram"] = "skipped (no thumbnail)"
         except Exception as e:
             results["instagram"] = f"error: {str(e)[:60]}"
 
@@ -475,6 +554,28 @@ def run_daily_autopost() -> dict:
             results["facebook"] = meta_post.post_facebook(fb_text).get("status")
         except Exception as e:
             results["facebook"] = f"error: {str(e)[:60]}"
+
+    # ── Twitter/X: video announcement tweet ──────────────────────────────────
+    if conns.get("x", {}).get("connected"):
+        try:
+            from .tools import twitter_post
+            yt_res = results.get("youtube", {})
+            yt_link = ""
+            if isinstance(yt_res, dict):
+                try:
+                    vid_id = json.loads(yt_res.get("response", "{}")).get("videoId", "")
+                    if vid_id:
+                        yt_link = f"https://youtu.be/{vid_id}"
+                except Exception:
+                    pass
+            tw_text = twitter_post.build_tweet(
+                hook=f"🎬 New video: {nxt['title']}",
+                cta=yt_link or "pielts.web.app",
+                hashtags="#IELTS #IELTSTips #pielts #MrYeti #Shorts",
+            )
+            results["twitter"] = twitter_post.tweet(tw_text).get("status", "error")
+        except Exception as e:
+            results["twitter"] = f"error: {str(e)[:60]}"
 
     nxt["posted"] = True
     nxt["posted_at"] = dt.datetime.now().isoformat(timespec="seconds")
