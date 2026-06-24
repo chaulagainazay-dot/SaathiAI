@@ -89,3 +89,72 @@ def init_db():
             conversions   INTEGER DEFAULT 0
         );
         """)
+
+
+def score_retention(completion_pct: float) -> str:
+    """A=>=70%, B=>=50%, C=>=30%, D=<30%."""
+    if completion_pct >= 70:
+        return "A"
+    if completion_pct >= 50:
+        return "B"
+    if completion_pct >= 30:
+        return "C"
+    return "D"
+
+
+def upsert_retention(video_id: str, platform: str, ret_3s: float, ret_10s: float,
+                     ret_30s: float, avg_watch_sec: float, completion_pct: float) -> dict:
+    """Store/update retention data for a video."""
+    grade = score_retention(completion_pct)
+    with _conn() as c:
+        c.execute("""
+            INSERT INTO video_retention
+                (video_id, platform, ret_3s, ret_10s, ret_30s, avg_watch_sec, completion_pct, score)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(video_id, platform) DO UPDATE SET
+                ret_3s=excluded.ret_3s, ret_10s=excluded.ret_10s,
+                ret_30s=excluded.ret_30s, avg_watch_sec=excluded.avg_watch_sec,
+                completion_pct=excluded.completion_pct, score=excluded.score,
+                recorded_at=datetime('now')
+        """, (video_id, platform, ret_3s, ret_10s, ret_30s, avg_watch_sec, completion_pct, grade))
+    return {"video_id": video_id, "platform": platform, "score": grade,
+            "completion_pct": completion_pct}
+
+
+def get_retention(video_id: str, platform: str) -> "dict | None":
+    """Fetch retention record for a video."""
+    with _conn() as c:
+        row = c.execute(
+            "SELECT * FROM video_retention WHERE video_id=? AND platform=?",
+            (video_id, platform)
+        ).fetchone()
+    return dict(row) if row else None
+
+
+def get_killed_formats() -> list:
+    """Return format_types that have >=3 D-scored videos — suppress these in pipeline."""
+    with _conn() as c:
+        rows = c.execute("""
+            SELECT vp.format_type
+            FROM viral_patterns vp
+            JOIN video_retention vr ON vp.hook = vr.video_id
+            WHERE vr.score = 'D'
+            GROUP BY vp.format_type
+            HAVING COUNT(*) >= 3
+        """).fetchall()
+    return [r["format_type"] for r in rows]
+
+
+def get_all_retention(platform: str = None) -> list:
+    """Fetch all retention records, optionally filtered by platform."""
+    with _conn() as c:
+        if platform:
+            rows = c.execute(
+                "SELECT * FROM video_retention WHERE platform=? ORDER BY recorded_at DESC",
+                (platform,)
+            ).fetchall()
+        else:
+            rows = c.execute(
+                "SELECT * FROM video_retention ORDER BY recorded_at DESC"
+            ).fetchall()
+    return [dict(r) for r in rows]

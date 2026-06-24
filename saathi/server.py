@@ -2228,6 +2228,32 @@ async def analytics_run(request: Request):
         return {"ok": False, "error": str(e)[:300]}
 
 
+@app.get("/api/v1/analytics/retention")
+async def analytics_retention(platform: str = None):
+    """Return all stored retention data, optionally filtered by platform."""
+    try:
+        from .tools.intelligence import get_all_retention
+        return {"ok": True, "data": get_all_retention(platform)}
+    except Exception as e:
+        return {"ok": False, "error": str(e)[:300]}
+
+
+@app.post("/api/v1/analytics/retention")
+async def analytics_retention_save(request: Request):
+    """Store/update retention data for a video."""
+    try:
+        body = await request.json()
+        from .tools.intelligence import upsert_retention
+        result = upsert_retention(
+            body["video_id"], body["platform"],
+            body.get("ret_3s", 0), body.get("ret_10s", 0), body.get("ret_30s", 0),
+            body.get("avg_watch_sec", 0), body["completion_pct"]
+        )
+        return {"ok": True, "result": result}
+    except Exception as e:
+        return {"ok": False, "error": str(e)[:300]}
+
+
 @app.get("/api/v1/analytics/insights")
 async def analytics_insights(request: Request):
     """Return current analytics weights + insight summary."""
