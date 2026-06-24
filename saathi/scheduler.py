@@ -214,6 +214,101 @@ def daily_health():
     except Exception as e:
         _notify("🩺 Baadar health", f"check error: {str(e)[:100]}")
 
+    # TikTok token expiry alert (Option B: Telegram when expires soon / already expired)
+    try:
+        from .tools.tiktok_post import token_expiry_days, app_configured
+        if app_configured():
+            days = token_expiry_days()
+            if days == 0:
+                msg = ("⚠️ TikTok token has EXPIRED — videos cannot be posted.\n"
+                       "Re-auth: http://localhost:8765/api/v1/tiktok/auth")
+                try:
+                    from .tools import n8n_tools
+                    n8n_tools.send_telegram(msg)
+                except Exception:
+                    pass
+                _notify("🔴 TikTok token expired", "Re-auth required")
+            elif 0 < days <= 7:
+                msg = (f"⚠️ TikTok token expires in {days} day(s).\n"
+                       "Re-auth now: http://localhost:8765/api/v1/tiktok/auth")
+                try:
+                    from .tools import n8n_tools
+                    n8n_tools.send_telegram(msg)
+                except Exception:
+                    pass
+    except Exception:
+        pass
+
+
+def nightly_analytics():
+    """2:30am nightly: pull analytics → update content weights → send insight to Telegram."""
+    try:
+        from .tools.analytics_loop import run_analytics_loop
+        result = run_analytics_loop()
+        if result.get("ok") and result.get("videos_analyzed", 0) > 0:
+            insight = result.get("insight", "")
+            top = result.get("top_performers", [])
+            msg = (
+                f"📊 Analytics Loop\n"
+                f"Videos analysed: {result['videos_analyzed']}\n"
+                f"💡 {insight}\n"
+            )
+            if top:
+                msg += "🏆 Top: " + " | ".join(v["title"][:40] for v in top[:3])
+            try:
+                from .tools import n8n_tools
+                n8n_tools.send_telegram(msg)
+            except Exception:
+                pass
+    except Exception as e:
+        _notify("📊 Analytics", f"error: {str(e)[:100]}")
+
+
+def nightly_comment_miner():
+    """3:00am nightly: mine YouTube comments → generate video ideas."""
+    try:
+        from .tools.comment_miner import run_comment_miner
+        result = run_comment_miner()
+        if result.get("ideas_generated", 0) > 0:
+            top = result.get("top_ideas", [])
+            msg = (
+                f"💬 Comment Miner\n"
+                f"Comments read: {result['comments_read']} → "
+                f"{result['ideas_generated']} video ideas\n"
+            )
+            if top:
+                msg += "Top ideas:\n" + "\n".join(f"• {i.get('video_title','')}" for i in top[:3])
+            try:
+                from .tools import n8n_tools
+                n8n_tools.send_telegram(msg)
+            except Exception:
+                pass
+    except Exception as e:
+        pass
+
+
+def daily_trend_hunt():
+    """5:00am daily: scan Reddit + YouTube trends → save to trending_topics.json for Flow 1."""
+    try:
+        from .tools.trend_hunter import run_trend_hunter
+        result = run_trend_hunter()
+        if result.get("topics_generated", 0) > 0:
+            top = result.get("top_topics", [])
+            msg = (
+                f"🔥 Trend Hunter\n"
+                f"Reddit: {result['reddit_posts']} posts | YT: {result['yt_videos']} videos\n"
+                f"→ {result['topics_generated']} trending Mr. Yeti topics generated\n"
+            )
+            if top:
+                msg += "\n".join(f"• {t.get('video_title','')}" for t in top[:3])
+            try:
+                from .tools import n8n_tools
+                n8n_tools.send_telegram(msg)
+            except Exception:
+                pass
+    except Exception as e:
+        pass
+
 
 def memory_reflector():
     """2am nightly: Suna-style memory reflector — reads recent activity + feedback,
@@ -274,6 +369,60 @@ def memory_reflector():
         pass  # memory reflector must never crash the scheduler
 
 
+def disaster_recovery_backup():
+    """Sunday 2:05am: full disaster-recovery backup — Firebase + MailerLite.
+
+    Runs the two scripts in ~/SaathiAI/scripts/ and sends a combined
+    Telegram report so Ajay always has an off-site summary even when abroad.
+    Safe to run weekly; each script keeps only the last 8 snapshots.
+    """
+    from pathlib import Path
+    import subprocess
+
+    scripts_dir = config.ROOT / "scripts"
+    results: list[str] = []
+    had_error = False
+
+    for script in ("backup_firebase.py", "backup_mailerlite.py"):
+        script_path = scripts_dir / script
+        if not script_path.exists():
+            results.append(f"⚠️ {script}: not found at {script_path}")
+            had_error = True
+            continue
+        try:
+            proc = subprocess.run(
+                [__import__("sys").executable, str(script_path)],
+                capture_output=True, text=True, timeout=300
+            )
+            output = (proc.stdout or "").strip()
+            stderr = (proc.stderr or "").strip()
+            if proc.returncode != 0:
+                had_error = True
+                results.append(
+                    f"🔴 {script} failed (exit {proc.returncode})\n"
+                    + (stderr or output)[:400]
+                )
+            else:
+                # First non-empty line is the script's own summary line
+                first_line = next((l for l in output.splitlines() if l.strip()), script)
+                results.append(first_line)
+        except subprocess.TimeoutExpired:
+            had_error = True
+            results.append(f"🔴 {script}: timed out after 300s")
+        except Exception as e:
+            had_error = True
+            results.append(f"🔴 {script}: {e}")
+
+    header = "🗄️ Baadar — Sunday Disaster-Recovery Backup"
+    body   = "\n".join(results)
+    _notify(header, body[:200])
+    try:
+        from .tools import n8n_tools
+        n8n_tools.send_telegram(f"{header}\n\n{body}"[:4000])
+    except Exception:
+        pass
+
+
 def weekly_performance():
     """Sunday 10am: what's working on YouTube → feed insight back."""
     try:
@@ -289,6 +438,22 @@ def weekly_performance():
         for v in top[:5]:
             lines.append(f"  {v['views']} views · {v['title'][:50]}")
         lines.append("→ Make more like the top performers; drop formats that flop.")
+
+        # ── Analytics feedback loop: write top-performing topics to guide next week ──
+        try:
+            import json
+            from pathlib import Path
+            from . import config as _cfg
+            feedback_file = _cfg.ROOT / "data" / "content_feedback.json"
+            top_topics = [v["title"][:80] for v in top[:5]]
+            existing = json.loads(feedback_file.read_text()) if feedback_file.exists() else {}
+            existing["top_topics_last_week"] = top_topics
+            existing["updated"] = __import__("datetime").datetime.now().isoformat()
+            feedback_file.write_text(json.dumps(existing, indent=2))
+            lines.append(f"\n📌 Top topics saved → content_feedback.json (used in next week's Mr. Yeti videos)")
+        except Exception:
+            pass
+
         msg = "\n".join(lines)
         tasks.add("📊 Weekly performance report", kind="note", body=msg)
         try:
@@ -300,30 +465,202 @@ def weekly_performance():
 
 
 def daily_outreach():
-    """9am: find fresh Reddit/Quora IELTS questions + draft ready-to-paste answers, Telegram them.
-    Ajay posts manually (Baadar never auto-posts to communities — that gets banned)."""
+    """9:30am: draft today's Reddit post + LinkedIn post + find reply opportunities."""
     try:
         from .tools import content_studio, n8n_tools
-        kit = content_studio.community_outreach_kit()
-        entries = kit.get("entries", [])
-        if not entries:
-            return
-        from . import tasks
-        lines = ["💬 Baadar — Today's community outreach (paste these yourself):", ""]
-        for i, e in enumerate(entries, 1):
-            lines += [f"━━ {i}. {e.get('question','')}",
-                      f"🔗 {e.get('link','')}",
-                      "✍️ Ready answer:", e.get("answer", ""), ""]
-            # add to the in-app task panel (clickable link + the ready answer)
-            tasks.add(f"Answer on Reddit/Quora: {e.get('question','')[:70]}",
-                      kind="task", link=e.get("link", ""), body=e.get("answer", ""))
-        lines.append("Tip: tweak a few words so it sounds like you, then post. Engage first, link only where it fits.")
+        from .tools.reddit_outreach import queue_daily_post, scan_and_draft
+        from .tools.linkedin_post import queue_daily_post as li_queue
+        from .autopost import _todays_posts
+
+        # ── 1. Draft today's Reddit submission from content calendar ─────────
+        cal_post = _todays_posts("AM") or _todays_posts("PM") or {}
+        result = queue_daily_post(cal_post)
+        draft = result.get("draft", {})
+
+        # ── 2. Draft today's LinkedIn post ────────────────────────────────────
+        try:
+            li_result = li_queue(cal_post)
+            li_draft = li_result.get("draft", {})
+        except Exception as li_err:
+            li_draft = {}
+            print(f"LinkedIn queue error: {li_err}")
+
+        # ── 3. Scan for reply opportunities (background, non-blocking) ───────
+        import threading
+        threading.Thread(target=scan_and_draft, kwargs={"max_new": 5}, daemon=True).start()
+
+        # ── 4. Telegram notification ─────────────────────────────────────────
+        lines = ["📮 Baadar — Today's Content Queue", ""]
+        if draft:
+            lines += [
+                "🔴 Reddit:",
+                f"📌 r/{draft.get('subreddit','IELTS')}",
+                f"Title: {draft.get('title','')}",
+                draft.get("body", "")[:300],
+                "",
+            ]
+        if li_draft:
+            lines += [
+                "💼 LinkedIn:",
+                li_draft.get("text", "")[:300],
+                "",
+            ]
+        lines.append("👆 Open Baadar → Settings to post")
+        if not draft and not li_draft:
+            lines.append("Already queued for today.")
+
         try:
             n8n_tools.send_telegram("\n".join(lines)[:4000])
         except Exception:
             pass
+
     except Exception as e:
         _notify("💬 Baadar", f"Outreach error: {str(e)[:120]}")
+
+
+def daily_mr_yeti_video():
+    """8:00am: Generate master video → extract clips → queue for 4 daily slots."""
+    try:
+        from .tools.mr_yeti_pipeline import run_pipeline
+        run_pipeline()
+    except Exception as e:
+        _notify("🎬 Mr. Yeti", f"Pipeline error: {str(e)[:120]}")
+
+
+def mr_yeti_7am():
+    """7:00am: Post 2 Shorts → YouTube Shorts + TikTok."""
+    try:
+        from .tools.mr_yeti_pipeline import post_slot
+        post_slot("7am")
+    except Exception as e:
+        _notify("📲 Mr. Yeti 7am", f"Post error: {str(e)[:120]}")
+
+
+def mr_yeti_12pm():
+    """12:00pm: Post 2 Shorts → YouTube Shorts + Instagram."""
+    try:
+        from .tools.mr_yeti_pipeline import post_slot
+        post_slot("12pm")
+    except Exception as e:
+        _notify("📲 Mr. Yeti 12pm", f"Post error: {str(e)[:120]}")
+
+
+def mr_yeti_5pm():
+    """5:00pm: Post 2 Shorts → TikTok + Instagram."""
+    try:
+        from .tools.mr_yeti_pipeline import post_slot
+        post_slot("5pm")
+    except Exception as e:
+        _notify("📲 Mr. Yeti 5pm", f"Post error: {str(e)[:120]}")
+
+
+def mr_yeti_8pm():
+    """8:00pm: Post long video → YouTube + Reel → Facebook."""
+    try:
+        from .tools.mr_yeti_pipeline import post_slot
+        post_slot("8pm")
+    except Exception as e:
+        _notify("🌙 Mr. Yeti 8pm", f"Post error: {str(e)[:120]}")
+
+
+def daily_linkedin_post():
+    """10:00am: Auto-post today's LinkedIn draft via API (hands-free)."""
+    try:
+        from .tools.linkedin_post import get_pending, post_and_mark
+        from .tools import n8n_tools
+        pending = get_pending()
+        if not pending:
+            return
+        p = pending[0]
+        result = post_and_mark(p["date"], p["text"])
+        if result.get("ok"):
+            msg = f"💼 LinkedIn posted!\n{p['text'][:200]}…\n{result.get('post_url','')}"
+        else:
+            msg = f"💼 LinkedIn post failed: {result.get('error','unknown')}"
+        try:
+            n8n_tools.send_telegram(msg)
+        except Exception:
+            pass
+    except Exception as e:
+        _notify("💼 LinkedIn", f"Auto-post error: {str(e)[:120]}")
+
+
+def auto_reddit_post():
+    """10:05am: Auto-submit today's Reddit post via Brave browser JS (hands-free)."""
+    try:
+        from .tools.reddit_outreach import get_pending_daily_posts, mark_daily_post_sent
+        from .tools import n8n_tools
+        import subprocess
+
+        pending = get_pending_daily_posts()
+        if not pending:
+            return
+        p = pending[0]
+
+        title   = p["title"].replace("\\", "\\\\").replace('"', '\\"')
+        body    = p.get("body", "").replace("\\", "\\\\").replace('"', '\\"').replace("\n", "\\n")
+        subreddit = p["subreddit"]
+
+        script = f'''tell application "Brave Browser"
+    activate
+    set newTab to make new tab at end of tabs of window 1
+    set URL of newTab to "https://www.reddit.com"
+    delay 4
+    execute newTab javascript "(async()=>{{const r=await fetch('/api/me.json',{{credentials:'include'}});const d=await r.json();const uh=d?.data?.modhash;if(!uh){{window.__rdErr='no_modhash';return;}}const fd=new FormData();fd.append('api_type','json');fd.append('kind','self');fd.append('sr','{subreddit}');fd.append('title',\\"{title}\\");fd.append('text',\\"{body}\\");fd.append('uh',uh);const sr=await fetch('/api/submit',{{method:'POST',credentials:'include',body:fd}});const sd=await sr.json();window.__rdAutoResult=sd;}})();"
+    delay 5
+    set res to execute newTab javascript "JSON.stringify(window.__rdAutoResult||window.__rdErr||'pending')"
+    close newTab
+    return res
+end tell'''
+
+        r = subprocess.run(["osascript", "-e", script], capture_output=True, text=True, timeout=40)
+
+        # AppleScript errors (e.g. JS disabled in Brave) come through stderr
+        if r.returncode != 0 or "execution error" in r.stderr:
+            err = r.stderr.strip()[:200] or r.stdout.strip()[:200]
+            print(f"  ❌ Reddit AppleScript failed: {err}")
+            # DON'T mark as sent — leave pending so it can be retried
+            _notify("🔴 Reddit", f"Auto-post FAILED (enable JS in Brave → View → Developer): {err[:80]}")
+            try:
+                n8n_tools.send_telegram(
+                    f"❌ Reddit post FAILED\n"
+                    f"Reason: {err[:150]}\n"
+                    f"Fix: Brave → View → Developer → Allow JavaScript from Apple Events ✓"
+                )
+            except Exception:
+                pass
+            return
+
+        output = r.stdout.strip()
+        # Check for Reddit API error in JS result
+        if "no_modhash" in output or '"errors"' in output:
+            print(f"  ❌ Reddit JS error: {output[:200]}")
+            _notify("🔴 Reddit", f"Post failed — not logged in or Reddit blocked: {output[:80]}")
+            try:
+                n8n_tools.send_telegram(f"❌ Reddit post blocked\nResult: {output[:200]}")
+            except Exception:
+                pass
+            return
+
+        # Only mark sent if everything looks good
+        import json as _json
+        post_url = ""
+        try:
+            data = _json.loads(output)
+            post_url = (data.get("json", {}).get("data", {}) or {}).get("url", "")
+        except Exception:
+            pass
+
+        mark_daily_post_sent(p["date"], post_url)
+        try:
+            n8n_tools.send_telegram(
+                f"✅ Reddit posted!\nr/{subreddit}: {p['title']}\n"
+                + (f"🔗 {post_url}" if post_url else output[:200])
+            )
+        except Exception:
+            pass
+    except Exception as e:
+        _notify("🔴 Reddit", f"Auto-post error: {str(e)[:120]}")
 
 
 # ---------- schedule table: (HH, MM, weekday_or_None, fn) ----------
@@ -362,42 +699,117 @@ def _weekly_engagement_audit():
         _notify("📈 Engagement Audit", f"Error: {str(e)[:100]}")
 
 
+def ab_result_check():
+    """4:00am daily: find A/B tests from 48h ago, pull analytics, close the loop."""
+    try:
+        from .tools.ab_tester import _load_log, record_result, _save_log
+        from .tools.analytics_loop import pull_youtube_analytics
+        import json
+        from datetime import datetime, timedelta
+
+        log = _load_log()
+        now = datetime.now()
+        closed = 0
+
+        for entry in log:
+            if entry.get("winner"):
+                continue  # already resolved
+            try:
+                test_date = datetime.strptime(entry["date"], "%Y-%m-%d")
+            except Exception:
+                continue
+            age_hours = (now - test_date).total_seconds() / 3600
+            if age_hours < 48:
+                continue  # too early
+
+            # Attempt to pull real views; fall back to 0/0 so the loop still closes
+            try:
+                videos = pull_youtube_analytics(days_back=3)
+                title_a = (entry.get("variant_a") or {}).get("title", {})
+                title_b = (entry.get("variant_b") or {}).get("title", {})
+                title_a_text = title_a.get("text", "") if isinstance(title_a, dict) else str(title_a)
+                title_b_text = title_b.get("text", "") if isinstance(title_b, dict) else str(title_b)
+                views_a = next((v.get("views", 0) for v in videos if title_a_text and title_a_text[:20] in v.get("title", "")), 0)
+                views_b = next((v.get("views", 0) for v in videos if title_b_text and title_b_text[:20] in v.get("title", "")), 0)
+            except Exception:
+                views_a, views_b = 0, 0
+
+            record_result(entry["test_id"], views_a, views_b)
+            closed += 1
+
+        if closed:
+            try:
+                from .tools.n8n_tools import send_telegram
+                send_telegram(f"🧪 A/B loop closed {closed} test(s) — winning patterns updated.")
+            except Exception:
+                pass
+    except Exception:
+        pass
+
+
 JOBS = [
     (7, 0, None, morning_briefing),         # every day 7:00am  — morning briefing
+    (7, 0, None, mr_yeti_7am),              # every day 7:00am  — 2 Shorts → YT Shorts + TikTok ✅
     (7, 30, None, daily_health),            # every day 7:30am  — health watchdog
-    (8, 0, None, daily_content),            # every day 8:00am  — video script + blog + calendar check
+    (8, 0, None, daily_mr_yeti_video),      # every day 8:00am  — generate master video → extract clips ✅
+    (12, 0, None, mr_yeti_12pm),            # every day 12:00pm — 2 Shorts → YT Shorts + Instagram ✅
+    (17, 0, None, mr_yeti_5pm),             # every day 5:00pm  — 2 Shorts → TikTok + Instagram ✅
+    (20, 0, None, mr_yeti_8pm),             # every day 8:00pm  — long video → YouTube + Reel → Facebook ✅
+    (8, 15, None, daily_content),           # every day 8:15am  — video script + blog + calendar check
     (9, 0, None, social_autopost_am),       # every day 9:00am  — AUTO-POST AM slot → FB + IG ✅
     (9, 30, None, daily_outreach),          # every day 9:30am  — Reddit/Quora outreach kit
+    (10, 0, None, daily_linkedin_post),     # every day 10:00am — LinkedIn auto-post ✅
+    (10, 5, None, auto_reddit_post),        # every day 10:05am — Reddit auto-post ✅
     (10, 0, 6, weekly_performance),         # Sunday 10:00am    — YouTube performance report
     (10, 30, 6, _weekly_engagement_audit),  # Sunday 10:30am    — engagement audit + bio tip
     (18, 0, None, social_autopost_pm),      # every day 6:00pm  — AUTO-POST PM slot → FB + IG ✅
-    (20, 0, None, daily_autopost),          # every day 8:00pm  — AUTO-POST video → YT + FB + IG ✅
+    # 8:00pm Mr. Yeti slot (mr_yeti_8pm above) handles video posting — daily_autopost removed
     (21, 0, None, canteen_summary),         # every day 9:00pm  — canteen summary
     (23, 30, 6, memory_backup),             # Sunday 11:30pm    — memory backup
     (2, 0, None, memory_reflector),         # every day 2:00am  — memory reflection
+    (2, 5, 6, disaster_recovery_backup),   # Sunday  2:05am    — Firebase + MailerLite DR backup ✅
+    (2, 30, None, nightly_analytics),       # every day 2:30am  — analytics loop → update content weights ✅
+    (3, 0, None, nightly_comment_miner),    # every day 3:00am  — mine YouTube comments → video ideas ✅
+    (5, 0, None, daily_trend_hunt),         # every day 5:00am  — Reddit + YT trends → topic feed ✅
+    (4, 0, None, ab_result_check),          # every day 4:00am  — close A/B loops from 48h ago ✅
     (0, 1, None, _monthly_analytics_job),   # 1st of month 00:01am — analytics review
 ]
 
 
 def _run_loop():
-    fired: dict = {}  # (job_index) -> date already fired
+    fired: dict = {}  # job_index -> date already fired
+    CATCHUP_WINDOW_MINS = 10  # fire missed jobs up to 10 min late (handles restarts)
     while True:
         now = datetime.now()
+        now_mins = now.hour * 60 + now.minute
         for i, (hh, mm, wd, fn) in enumerate(JOBS):
-            if now.hour == hh and now.minute == mm:
+            job_mins = hh * 60 + mm
+            # Fire if within the catchup window and not already fired today
+            if 0 <= now_mins - job_mins <= CATCHUP_WINDOW_MINS:
                 if wd is not None and now.isoweekday() % 7 != wd % 7:
                     continue
-                key = i
-                if fired.get(key) == now.date():
+                if fired.get(i) == now.date():
                     continue
-                fired[key] = now.date()
+                fired[i] = now.date()
                 threading.Thread(target=fn, daemon=True).start()
         time.sleep(30)
+
+
+def _referral_poll_loop():
+    """Poll Firebase RTDB every 6 hours for users with band score improvements."""
+    while True:
+        try:
+            from .tools.referral import poll_score_improvements
+            poll_score_improvements()
+        except Exception:
+            pass
+        time.sleep(6 * 3600)  # every 6 hours
 
 
 def start():
     """Launch the scheduler in a background thread."""
     threading.Thread(target=_run_loop, daemon=True).start()
+    threading.Thread(target=_referral_poll_loop, daemon=True).start()
     # two-way Telegram: let Ajay command Baadar from his phone (anywhere)
     try:
         from . import telegram_bot
@@ -411,3 +823,4 @@ if __name__ == "__main__":
     start()
     while True:
         time.sleep(3600)
+

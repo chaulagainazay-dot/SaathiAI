@@ -710,6 +710,24 @@ def health():
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+# REFERRAL ENGINE
+# ══════════════════════════════════════════════════════════════════════════════
+
+@app.post("/api/v1/referral/check")
+async def referral_check(request: Request):
+    """Manually trigger a referral check for a specific user."""
+    body = await request.json()
+    uid = body.get("uid", "")
+    old_score = float(body.get("old_score", 0))
+    new_score = float(body.get("new_score", 0))
+    if not uid:
+        return {"ok": False, "error": "uid required"}
+    from .tools.referral import check_and_trigger_referral
+    result = check_and_trigger_referral(uid, old_score, new_score)
+    return {"ok": True, **result}
+
+
+# ══════════════════════════════════════════════════════════════════════════════
 # CONTENT STUDIO — 9-Stage Automation Pipeline
 # ══════════════════════════════════════════════════════════════════════════════
 
