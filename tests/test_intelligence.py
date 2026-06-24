@@ -126,3 +126,22 @@ def test_competitor_insights_returns_gaps():
     result = get_competitor_insights()
     assert "top_topics" in result
     assert "channels" in result
+
+
+# ── Task 8: Thumbnail Scoring ────────────────────────────────────────────────
+def test_score_thumbnails_ranks_correctly():
+    fake_response = json.dumps({
+        "scored": [
+            {"idx": 0, "face_visibility": 9, "text_contrast": 8, "color_pop": 7, "emotion": 8, "curiosity_gap": 9},
+            {"idx": 1, "face_visibility": 5, "text_contrast": 6, "color_pop": 5, "emotion": 4, "curiosity_gap": 5},
+        ]
+    })
+    concepts = [
+        {"description": "Mr. Yeti shocked face, text: STOP MAKING THIS MISTAKE"},
+        {"description": "Plain text on white background"},
+    ]
+    with mock.patch("saathi.tools.thumbnail.ask_llm", return_value=fake_response):
+        from saathi.tools.thumbnail import score_thumbnails
+        result = score_thumbnails(concepts)
+    assert result[0]["rank"] == 1
+    assert result[0]["total"] > result[1]["total"]

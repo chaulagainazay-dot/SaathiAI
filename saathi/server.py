@@ -876,10 +876,20 @@ class ThumbIn(BaseModel):
     style: str = "shocked"
 
 @app.post("/api/v1/studio/thumbnail")
-async def studio_thumbnail(body: ThumbIn, request: Request):
-    from .tools.thumbnail_maker import generate_thumbnail
+async def studio_thumbnail(request: Request):
+    """Generate 5 thumbnail concepts, AI-score them, return best + all ranked."""
+    body = {}
     try:
-        return generate_thumbnail(body.title, body.thumbnail_text, body.style)
+        body = await request.json()
+    except Exception:
+        pass
+    topic = body.get("topic", "IELTS tip")
+    title = body.get("title", "")
+    try:
+        import asyncio
+        from .tools.thumbnail import generate_and_score
+        result = await asyncio.get_event_loop().run_in_executor(None, generate_and_score, topic, title)
+        return {"ok": True, **result}
     except Exception as e:
         return {"ok": False, "error": str(e)}
 
