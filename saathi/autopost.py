@@ -415,7 +415,7 @@ def _run_quote_autopost() -> dict:
                 )
                 yt_status = yt_r.get("status", "error") if isinstance(yt_r, dict) else str(yt_r)
                 # Map verbose statuses to human-readable labels
-                _yt_labels = {"published": "posted", "not_configured": "needs_oauth", "failed": "failed"}
+                _yt_labels = {"published": "posted", "not_configured": "needs_oauth", "failed": "failed", "skipped": "skipped(ci)"}
                 results["youtube"] = _yt_labels.get(yt_status, yt_status)
         except Exception as e:
             results["youtube"] = f"error: {str(e)[:60]}"

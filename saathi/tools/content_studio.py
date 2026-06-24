@@ -547,6 +547,9 @@ def publish_to_youtube(video_path: str, title: str, description: str = "", tags:
     import os
     import httpx
     from .. import connections
+    # n8n runs locally — cannot reach 127.0.0.1 from GitHub Actions cloud runner
+    if os.environ.get("GITHUB_ACTIONS"):
+        return {"status": "skipped", "reason": "YouTube uploads run via local Baadar/n8n, not CI"}
     cfg = connections.get_all().get("youtube", {})
     url = cfg.get("webhook")
     if not cfg.get("connected") or not url:
