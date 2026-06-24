@@ -1,5 +1,5 @@
 import os, json, pytest
-os.environ.setdefault("BAADAR_DB", "/tmp/test_baadar_ref.db")
+os.environ.setdefault("BAADAR_DB", "/tmp/test_baadar.db")
 
 from saathi.tools.intelligence import init_db
 

@@ -47,6 +47,7 @@ def check_and_trigger_referral(uid: str, old_score: float, new_score: float) -> 
             "INSERT INTO referral_events (uid, old_score, new_score, referral_code) VALUES (?,?,?,?)",
             (uid, old_score, new_score, code)
         )
+        c.commit()
     # Send Telegram alert to Ajay
     try:
         from .n8n_tools import send_telegram
