@@ -773,6 +773,7 @@ JOBS = [
     (5, 0, None, daily_trend_hunt),         # every day 5:00am  — Reddit + YT trends → topic feed ✅
     (4, 0, None, ab_result_check),          # every day 4:00am  — close A/B loops from 48h ago ✅
     (0, 1, None, _monthly_analytics_job),   # 1st of month 00:01am — analytics review
+    (0, 0, None, referral_score_check),     # every day 12:00am — poll Firebase RTDB for band improvements (6h job) ✅
 ]
 
 
@@ -795,21 +796,18 @@ def _run_loop():
         time.sleep(30)
 
 
-def _referral_poll_loop():
-    """Poll Firebase RTDB every 6 hours for users with band score improvements."""
-    while True:
-        try:
-            from .tools.referral import poll_score_improvements
-            poll_score_improvements()
-        except Exception:
-            pass
-        time.sleep(6 * 3600)  # every 6 hours
+def referral_score_check():
+    """6-hour job: Poll Firebase RTDB for users with band score improvements."""
+    try:
+        from .tools.referral import poll_score_improvements
+        poll_score_improvements()
+    except Exception:
+        pass
 
 
 def start():
     """Launch the scheduler in a background thread."""
     threading.Thread(target=_run_loop, daemon=True).start()
-    threading.Thread(target=_referral_poll_loop, daemon=True).start()
     # two-way Telegram: let Ajay command Baadar from his phone (anywhere)
     try:
         from . import telegram_bot
