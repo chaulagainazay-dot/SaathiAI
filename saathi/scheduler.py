@@ -773,7 +773,10 @@ JOBS = [
     (5, 0, None, daily_trend_hunt),         # every day 5:00am  — Reddit + YT trends → topic feed ✅
     (4, 0, None, ab_result_check),          # every day 4:00am  — close A/B loops from 48h ago ✅
     (0, 1, None, _monthly_analytics_job),   # 1st of month 00:01am — analytics review
-    (0, 0, None, referral_score_check),     # every day 12:00am — poll Firebase RTDB for band improvements (6h job) ✅
+    (0,  0, None, referral_score_check),    # 00:00 — poll Firebase RTDB for band score improvements
+    (6,  0, None, referral_score_check),    # 06:00 — poll Firebase RTDB (every 6h)
+    (12, 0, None, referral_score_check),    # 12:00 — poll Firebase RTDB (every 6h)
+    (18, 0, None, referral_score_check),    # 18:00 — poll Firebase RTDB (every 6h)
 ]
 
 
