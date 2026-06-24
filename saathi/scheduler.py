@@ -527,6 +527,15 @@ def daily_mr_yeti_video():
         _notify("🎬 Mr. Yeti", f"Pipeline error: {str(e)[:120]}")
 
 
+def ceo_dashboard_job():
+    """8:00am NPT (2:15am UTC): Send CEO morning dashboard to Telegram."""
+    try:
+        from .tools.intelligence import send_ceo_dashboard
+        send_ceo_dashboard()
+    except Exception as e:
+        _notify("📊 CEO Dashboard", f"Error: {str(e)[:120]}")
+
+
 def mr_yeti_7am():
     """7:00am: Post 2 Shorts → YouTube Shorts + TikTok."""
     try:
@@ -752,6 +761,7 @@ JOBS = [
     (7, 0, None, mr_yeti_7am),              # every day 7:00am  — 2 Shorts → YT Shorts + TikTok ✅
     (7, 30, None, daily_health),            # every day 7:30am  — health watchdog
     (8, 0, None, daily_mr_yeti_video),      # every day 8:00am  — generate master video → extract clips ✅
+    (2, 15, None, ceo_dashboard_job),       # every day 2:15am (UTC) = 8:00am NPT — CEO morning dashboard ✅
     (12, 0, None, mr_yeti_12pm),            # every day 12:00pm — 2 Shorts → YT Shorts + Instagram ✅
     (17, 0, None, mr_yeti_5pm),             # every day 5:00pm  — 2 Shorts → TikTok + Instagram ✅
     (20, 0, None, mr_yeti_8pm),             # every day 8:00pm  — long video → YouTube + Reel → Facebook ✅

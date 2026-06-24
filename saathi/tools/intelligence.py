@@ -315,3 +315,87 @@ Return ONLY valid JSON: {{"top_topics": [...], "gaps": [...], "upload_pattern": 
     data["channels"] = {k: len(v) for k, v in channels.items()}
     data["total_videos_tracked"] = len(all_titles)
     return data
+
+
+# ── Task 11: CEO Morning Dashboard ───────────────────────────────────────────────
+
+
+def _fetch_firebase_new_users(hours: int = 24) -> int:
+    """Count users created in the last N hours from Firebase RTDB."""
+    try:
+        import firebase_admin
+        from firebase_admin import credentials, db as rtdb
+        sa_key = os.path.expanduser(os.getenv("FIREBASE_SA_KEY", "~/SaathiAI/firebase-admin.json"))
+        if not firebase_admin._apps:
+            cred = credentials.Certificate(sa_key)
+            firebase_admin.initialize_app(cred, {
+                "databaseURL": "https://ielts-and-language-practice-default-rtdb.firebaseio.com"
+            })
+        users = rtdb.reference("users").get() or {}
+        cutoff = (datetime.now(timezone.utc) - timedelta(hours=hours)).timestamp() * 1000
+        return sum(1 for u in users.values()
+                   if isinstance(u, dict) and u.get("createdAt", 0) > cutoff)
+    except Exception:
+        return 0
+
+
+def _fetch_best_worst_video() -> tuple:
+    """Return (best, worst) video dicts from retention table."""
+    with _conn() as c:
+        best = c.execute(
+            "SELECT video_id, completion_pct, score FROM video_retention ORDER BY completion_pct DESC LIMIT 1"
+        ).fetchone()
+        worst = c.execute(
+            "SELECT video_id, completion_pct, score FROM video_retention ORDER BY completion_pct ASC LIMIT 1"
+        ).fetchone()
+    best_d = {"title": best["video_id"], "retention": best["completion_pct"]} if best else {"title": "N/A", "retention": 0}
+    worst_d = {"title": worst["video_id"], "retention": worst["completion_pct"]} if worst else {"title": "N/A", "retention": 0}
+    return best_d, worst_d
+
+
+def build_ceo_dashboard() -> str:
+    """Build the daily CEO Telegram message."""
+    new_users = _fetch_firebase_new_users(24)
+    best, worst = _fetch_best_worst_video()
+    avgs = get_format_avg_retention()
+    top_format = max(avgs, key=lambda k: avgs[k]) if avgs else "quiz"
+    top_retention = avgs.get(top_format, 0)
+
+    # Simple revenue estimate from DB (premium user count × NPR 500/month rough estimate)
+    try:
+        with _conn() as c:
+            premium_count = c.execute(
+                "SELECT COUNT(*) FROM referral_events WHERE conversions > 0"
+            ).fetchone()[0]
+        revenue_est = premium_count * 500
+    except Exception:
+        revenue_est = 0
+
+    recommendation = f"Make more {top_format} videos — avg {top_retention:.0f}% retention."
+    if worst["retention"] < 30:
+        recommendation += f" Stop making '{worst['title']}' style content."
+
+    from datetime import timezone, timedelta
+    npt = datetime.now(timezone(timedelta(hours=5, minutes=45)))
+    date_str = npt.strftime("%b %d, %Y")
+
+    return (
+        f"☀️ Good morning, Ajay — {date_str}\n\n"
+        f"📊 PIELTS Daily Report\n\n"
+        f"👤 New Users (24h): {new_users}\n"
+        f"🏆 Best Video: {best['title']}\n"
+        f"   Retention: {best['retention']:.0f}%\n"
+        f"💀 Worst Video: {worst['title']}\n"
+        f"   Retention: {worst['retention']:.0f}%\n"
+        f"💰 Revenue Est: NPR {revenue_est:,}\n\n"
+        f"📈 Format Performance:\n"
+        + "\n".join(f"  {k}: {v:.0f}% avg retention" for k, v in sorted(avgs.items(), key=lambda x: -x[1]))
+        + f"\n\n💡 Recommendation:\n{recommendation}"
+    )
+
+
+def send_ceo_dashboard():
+    """Build and send the CEO dashboard to Telegram."""
+    from .n8n_tools import send_telegram
+    msg = build_ceo_dashboard()
+    send_telegram(msg)

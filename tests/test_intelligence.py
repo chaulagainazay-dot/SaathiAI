@@ -160,3 +160,29 @@ def test_fuse_trend_returns_hook_and_angle():
     assert "POV" in result["fused_hook"] or "script_angle" in result
     assert result["format"] == "POV"
     assert result["topic"] == "Speaking Mistakes"
+
+
+# ── Task 11: CEO Morning Dashboard ──────────────────────────────────────────
+def test_build_ceo_dashboard_contains_sections():
+    init_db()
+    from saathi.tools.intelligence import save_viral_pattern, build_ceo_dashboard
+
+    # Insert test data
+    save_viral_pattern("Quiz #1", "Grammar", "quiz", 81.0, 1000, 50, 30, "youtube")
+    save_viral_pattern("Vocab #14", "Vocabulary", "vocab", 38.0, 300, 10, 5, "youtube")
+
+    with mock.patch("saathi.tools.intelligence._fetch_firebase_new_users", return_value=5):
+        with mock.patch("saathi.tools.intelligence._fetch_best_worst_video",
+                        return_value=({"title": "Quiz #1", "retention": 81},
+                                     {"title": "Vocab #14", "retention": 38})):
+            msg = build_ceo_dashboard()
+
+    # Assert key sections are present
+    assert "Good morning, Ajay" in msg
+    assert "PIELTS Daily Report" in msg
+    assert "New Users" in msg
+    assert "Best Video" in msg
+    assert "Worst Video" in msg
+    assert "Revenue Est" in msg
+    assert "Format Performance" in msg
+    assert "Recommendation" in msg
