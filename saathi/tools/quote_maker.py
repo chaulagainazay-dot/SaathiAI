@@ -21,7 +21,7 @@ from .. import config
 ASSETS = config.ROOT / "client" / "assets"
 YETI_IMG = ASSETS / "mr_yeti_reference.jpeg"
 POSES = ASSETS / "yeti_poses"
-MUSIC = ASSETS / "music" / "upbeat_edu.mp3"
+MUSIC = ASSETS / "music" / "bg_happy.mp3"
 OUT_DIR = config.ROOT / "data" / "quote_cards"
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 

@@ -1,0 +1,327 @@
+{
+  "name": "Branded Social Media Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        416,
+        -144
+      ],
+      "id": "51e2dfab-2bf6-4256-8d23-7a90f08c9c16",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "I am Ai automation expert and Write a caption for my service for facebook. Also write a small heading to add in my post image under 13 charecter.\n\nIn json format.\n\n{\ncaption:{caption will e here}\nheading : {heading under 13 charecter}\nImage: {image generation prompt like a white american person with professional dress , sitting in computer desk, face should be visible}\n}\n\n"
+            }
+          ]
+        },
+        "jsonOutput": true,
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        640,
+        -144
+      ],
+      "id": "61605010-301c-4477-bdfc-51721c4e21fc",
+      "name": "Message a model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "YOUR_GOOGLE_GEMINI_CREDENTIAL_ID",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.facebook.com/v21.0/283985245479609/photos",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "message",
+              "value": "={{ $('Code in JavaScript').item.json.caption }}"
+            },
+            {
+              "name": "access_token",
+              "value": "YOUR_FACEBOOK_ACCESS_TOKEN"
+            },
+            {
+              "name": "url",
+              "value": "={{ $json.download_url_png }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        2336,
+        -144
+      ],
+      "id": "5bc26847-9637-47f4-9c3e-757616f6a0b4",
+      "name": "Facebook Post"
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json.content.parts[0].text;\n\nreturn [\n  {\n    json: JSON.parse(raw)\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        992,
+        -144
+      ],
+      "id": "3eb30d19-6a20-4d7f-a4bc-8a01f073bb44",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.kie.ai/api/v1/jobs/createTask",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_KIE_AI_API_KEY"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n    \"model\": \"nano-banana-2\",\n    \"callBackUrl\": \"https://your-domain.com/api/callback\",\n    \"input\": {\n      \"prompt\": \"{{ $json.Image }}\",    \n      \"aspect_ratio\": \"1:1\",\n      \"google_search\": false,\n      \"resolution\": \"1K\",\n      \"output_format\": \"jpg\"\n    }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1216,
+        -144
+      ],
+      "id": "75ee4c13-f454-4d18-b424-114c70cf6728",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "amount": 50
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1440,
+        -144
+      ],
+      "id": "063f91f6-f2ff-445d-8cf6-5a4951a34134",
+      "name": "Wait",
+      "webhookId": "2151a117-fc07-4626-84a1-f75c6fb42943"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.kie.ai/api/v1/jobs/recordInfo?taskId={{ $('HTTP Request').item.json.data.taskId }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_KIE_AI_API_KEY"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1664,
+        -144
+      ],
+      "id": "1df2b508-06b8-462a-9321-cbec2850f093",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json.data.resultJson;\n\nreturn [\n  {\n    json: {\n      url: JSON.parse(raw).resultUrls[0]\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1888,
+        -144
+      ],
+      "id": "bda42504-a915-49b4-9635-0d4438d2135d",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "imageTemplateId": "YOUR_APITEMPLATE_TEMPLATE_ID",
+        "overridesUi": {
+          "overrideValues": [
+            {
+              "propertiesUi": {
+                "propertyValues": [
+                  {
+                    "key": "text.text",
+                    "value": "={{ $('Code in JavaScript').item.json.heading }}"
+                  },
+                  {
+                    "key": "image.src",
+                    "value": "={{ $json.url }}"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.apiTemplateIo",
+      "typeVersion": 1,
+      "position": [
+        2112,
+        -144
+      ],
+      "id": "bdff7a1a-cfa5-4a5e-9495-ed4238b1f4bd",
+      "name": "Create an image",
+      "credentials": {
+        "apiTemplateIoApi": {
+          "id": "YOUR_APITEMPLATE_IO_CREDENTIAL_ID",
+          "name": "APITemplate.io account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Create an image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create an image": {
+      "main": [
+        [
+          {
+            "node": "Facebook Post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "7bcb2bdf-b013-47a9-8af6-1ce6fba6e866",
+  "meta": {
+    "instanceId": "e924a246a6cb3152f4a51c5f656e77c3ead5119e4522b0c43738c79c461f6574"
+  },
+  "id": "068zhvGGAkBLtTha",
+  "tags": []
+}

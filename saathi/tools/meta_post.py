@@ -6,9 +6,33 @@ Required fields:
   instagram.ig_account_id     — numeric Instagram Business Account ID (linked to the Page)
 """
 import json
+import os
+import subprocess
+import tempfile
 from pathlib import Path
 
 import httpx
+
+
+def _ensure_ig_codec(video_path: str) -> str:
+    """Re-encode to H.264/AAC/9:16 if needed — Instagram rejects other codecs (error 2207085)."""
+    p = Path(video_path)
+    out = p.parent / f"{p.stem}_ig.mp4"
+    if out.exists():
+        return str(out)
+    try:
+        subprocess.run([
+            "ffmpeg", "-y", "-i", str(p),
+            "-vf", "scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2",
+            "-c:v", "libx264", "-preset", "fast", "-crf", "23",
+            "-c:a", "aac", "-b:a", "128k",
+            "-movflags", "+faststart",
+            "-pix_fmt", "yuv420p",
+            str(out),
+        ], capture_output=True, timeout=180, check=True)
+        return str(out)
+    except Exception:
+        return video_path  # fallback to original if ffmpeg fails
 
 _API = "https://graph.facebook.com/v19.0"
 
@@ -107,36 +131,151 @@ def post_instagram_image(image_url: str, caption: str) -> dict:
 
 
 def post_instagram_reel(video_url: str, caption: str, thumbnail_url: str = "") -> dict:
-    """Upload a Reel to Instagram via Graph API (video must be a public URL)."""
+    """Upload a Reel to Instagram — tries resumable direct upload first, falls back to URL."""
     c = _creds()
     if not c["token"] or not c["ig_id"]:
         return {"status": "error", "error": "Instagram not configured"}
+
+    # If video_url is a local file path, use resumable upload (no public URL needed)
+    from pathlib import Path as _P
+    local_path = video_url if _P(video_url).exists() else None
+    if local_path:
+        return _post_instagram_reel_direct(local_path, caption, c)
+
+    # Fallback: URL-based upload
+    return _post_instagram_reel_url(video_url, caption, c)
+
+
+def _post_instagram_reel_direct(local_path: str, caption: str, c: dict) -> dict:
+    """Upload Reel by streaming the file directly via Meta Resumable Upload API."""
+    import time
     try:
-        payload = {"media_type": "REELS", "video_url": video_url,
-                   "caption": caption, "access_token": c["token"]}
-        if thumbnail_url:
-            payload["thumb_offset"] = "0"
-        r1 = httpx.post(f"{_API}/{c['ig_id']}/media", data=payload, timeout=60)
+        # Ensure H.264/AAC codec — Instagram rejects other formats (error 2207085)
+        local_path = _ensure_ig_codec(local_path)
+        file_size = os.path.getsize(local_path)
+
+        # Step 1: Create resumable upload session
+        session_r = httpx.post(
+            f"{_API}/{c['ig_id']}/media",
+            data={
+                "media_type": "REELS",
+                "upload_type": "resumable",
+                "caption": caption,
+                "access_token": c["token"],
+            },
+            timeout=30,
+        )
+        session_r.raise_for_status()
+        session_data = session_r.json()
+        upload_uri   = session_data.get("uri") or session_data.get("upload_url")
+        container_id = session_data.get("id")
+
+        if not upload_uri or not container_id:
+            return {"status": "error", "error": f"No upload URI returned: {session_r.text[:300]}"}
+
+        # Step 2: Stream file bytes to upload URI
+        with open(local_path, "rb") as f:
+            video_bytes = f.read()
+
+        upload_r = httpx.post(
+            upload_uri,
+            content=video_bytes,
+            headers={
+                "Authorization": f"OAuth {c['token']}",
+                "offset": "0",
+                "file_size": str(file_size),
+                "Content-Type": "video/mp4",
+            },
+            timeout=300,
+        )
+        upload_r.raise_for_status()
+
+        # Step 3: Poll container until FINISHED (max 24 × 5s = 120s)
+        container_ready = False
+        for attempt in range(24):
+            time.sleep(5)
+            try:
+                status_r = httpx.get(
+                    f"{_API}/{container_id}",
+                    params={"fields": "status_code,status", "access_token": c["token"]},
+                    timeout=15,
+                )
+                status_data = status_r.json()
+            except Exception as poll_err:
+                print(f"  ⚠️  IG container poll error (attempt {attempt+1}): {poll_err}")
+                continue
+            code = status_data.get("status_code", "")
+            print(f"  ⏳ IG container status: {code} ({attempt+1}/24)")
+            if code == "FINISHED":
+                container_ready = True
+                break
+            if code == "ERROR":
+                err_msg = status_data.get("status", "Processing error")
+                print(f"  ❌ IG container processing error: {err_msg}")
+                return {"status": "error", "error": err_msg}
+
+        if not container_ready:
+            return {"status": "error", "error": "Instagram container processing timed out after 120s — video may be too large or wrong format"}
+
+        # Step 4: Publish
+        pub_r = httpx.post(
+            f"{_API}/{c['ig_id']}/media_publish",
+            data={"creation_id": container_id, "access_token": c["token"]},
+            timeout=30,
+        )
+        pub_r.raise_for_status()
+        media_id = pub_r.json().get("id", "")
+        if not media_id:
+            return {"status": "error", "error": f"Publish succeeded but no media_id returned: {pub_r.text[:200]}"}
+        return {"status": "posted", "platform": "instagram", "media_id": media_id}
+    except Exception as e:
+        return {"status": "error", "error": str(e)[:300]}
+
+
+def _post_instagram_reel_url(video_url: str, caption: str, c: dict) -> dict:
+    """Upload Reel via public video URL (original method)."""
+    import time
+    try:
+        r1 = httpx.post(
+            f"{_API}/{c['ig_id']}/media",
+            data={"media_type": "REELS", "video_url": video_url,
+                  "caption": caption, "access_token": c["token"]},
+            timeout=60,
+        )
         r1.raise_for_status()
         container_id = r1.json().get("id")
         if not container_id:
             return {"status": "error", "error": r1.text[:200]}
 
-        # Poll until ready (up to 60s)
-        import time
-        for _ in range(12):
+        container_ready = False
+        for attempt in range(12):
             time.sleep(5)
-            status_r = httpx.get(f"{_API}/{container_id}",
-                                 params={"fields": "status_code", "access_token": c["token"]},
-                                 timeout=15)
-            if status_r.json().get("status_code") == "FINISHED":
+            try:
+                status_r = httpx.get(f"{_API}/{container_id}",
+                                     params={"fields": "status_code,status", "access_token": c["token"]},
+                                     timeout=15)
+                status_data = status_r.json()
+            except Exception as poll_err:
+                print(f"  ⚠️  IG URL container poll error (attempt {attempt+1}): {poll_err}")
+                continue
+            code = status_data.get("status_code", "")
+            if code == "FINISHED":
+                container_ready = True
                 break
+            if code == "ERROR":
+                return {"status": "error", "error": status_data.get("status", "Processing error")}
+
+        if not container_ready:
+            return {"status": "error", "error": "Instagram URL container timed out after 60s"}
 
         r2 = httpx.post(f"{_API}/{c['ig_id']}/media_publish",
                         data={"creation_id": container_id, "access_token": c["token"]},
                         timeout=30)
         r2.raise_for_status()
-        return {"status": "posted", "platform": "instagram", "media_id": r2.json().get("id", "")}
+        media_id = r2.json().get("id", "")
+        if not media_id:
+            return {"status": "error", "error": f"Publish returned no media_id: {r2.text[:200]}"}
+        return {"status": "posted", "platform": "instagram", "media_id": media_id}
     except Exception as e:
         return {"status": "error", "error": str(e)[:200]}
 

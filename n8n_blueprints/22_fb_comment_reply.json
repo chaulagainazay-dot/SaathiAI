@@ -1,0 +1,661 @@
+{
+    "name": "Facebook Comment Reply",
+    "flow": [
+        {
+            "id": 1,
+            "module": "placeholder:Placeholder",
+            "metadata": {
+                "designer": {
+                    "x": 0,
+                    "y": 0
+                }
+            }
+        }
+    ],
+    "metadata": {
+        "instant": false,
+        "version": 1,
+        "scenario": {
+            "roundtrips": 1,
+            "maxErrors": 3,
+            "autoCommit": true,
+            "autoCommitTriggerLast": true,
+            "sequential": false,
+            "slots": null,
+            "confidential": false,
+            "dataloss": false,
+            "dlq": false,
+            "freshVariables": false
+        },
+        "designer": {
+            "orphans": [
+                [
+                    {
+                        "id": 2,
+                        "module": "facebook-pages:WatchComments",
+                        "version": 6,
+                        "parameters": {
+                            "id": "POST_ID",
+                            "limit": 1,
+                            "page_id": "PAGE_ID",
+                            "__IMTCONN__": 0
+                        },
+                        "mapper": {},
+                        "metadata": {
+                            "designer": {
+                                "x": -1006,
+                                "y": -218,
+                                "messages": [
+                                    {
+                                        "category": "link",
+                                        "severity": "warning",
+                                        "message": "A trigger must be the first module in a scenario."
+                                    },
+                                    {
+                                        "category": "setup",
+                                        "severity": "error",
+                                        "message": "Connection: Value must not be empty."
+                                    }
+                                ]
+                            },
+                            "restore": {
+                                "parameters": {
+                                    "id": {
+                                        "mode": "chose",
+                                        "label": "Prayer post (content removed)"
+                                    },
+                                    "page_id": {
+                                        "label": "My Page"
+                                    },
+                                    "__IMTCONN__": {
+                                        "data": {
+                                            "scoped": "true",
+                                            "connection": "facebook"
+                                        },
+                                        "label": "My Facebook Page (Anonymized)"
+                                    }
+                                }
+                            },
+                            "parameters": [
+                                {
+                                    "name": "__IMTCONN__",
+                                    "type": "account:facebook",
+                                    "label": "Connection",
+                                    "required": true
+                                },
+                                {
+                                    "name": "page_id",
+                                    "type": "select",
+                                    "label": "Page",
+                                    "required": true
+                                },
+                                {
+                                    "name": "limit",
+                                    "type": "uinteger",
+                                    "label": "Limit",
+                                    "required": true
+                                },
+                                {
+                                    "name": "id",
+                                    "type": "select",
+                                    "label": "Post ID",
+                                    "required": true
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "id": 3,
+                        "module": "datastore:SearchRecord",
+                        "version": 1,
+                        "parameters": {
+                            "limit": null,
+                            "datastore": 0,
+                            "continueWhenNoRes": true
+                        },
+                        "filter": {
+                            "name": "It is Me?",
+                            "conditions": [
+                                [
+                                    {
+                                        "a": "{{2.from.id}}",
+                                        "b": "PAGE_ID",
+                                        "o": "text:notequal"
+                                    }
+                                ]
+                            ]
+                        },
+                        "mapper": {
+                            "sort": [],
+                            "filter": [
+                                [
+                                    {
+                                        "a": "CommentID",
+                                        "b": "{{2.id}}",
+                                        "o": "number:equal"
+                                    }
+                                ]
+                            ],
+                            "mappAbleLimit": ""
+                        },
+                        "metadata": {
+                            "designer": {
+                                "x": -654,
+                                "y": -214,
+                                "messages": [
+                                    {
+                                        "category": "setup",
+                                        "severity": "error",
+                                        "message": "Data store: Value must not be empty."
+                                    }
+                                ]
+                            },
+                            "restore": {
+                                "parameters": {
+                                    "datastore": {
+                                        "label": "My data store"
+                                    }
+                                }
+                            },
+                            "parameters": [
+                                {
+                                    "name": "datastore",
+                                    "type": "datastore",
+                                    "label": "Data store",
+                                    "required": true
+                                },
+                                {
+                                    "name": "continueWhenNoRes",
+                                    "type": "boolean",
+                                    "label": "Continue the execution of the route even if the module returns no results"
+                                },
+                                {
+                                    "name": "limit",
+                                    "type": "uinteger",
+                                    "label": "Limit"
+                                }
+                            ],
+                            "expect": [
+                                {
+                                    "name": "filter",
+                                    "type": "filter",
+                                    "label": "Filter",
+                                    "options": "rpc://datastore/1.15.1/RpcGetUDTKeys",
+                                    "required": true
+                                },
+                                {
+                                    "name": "sort",
+                                    "spec": [
+                                        {
+                                            "name": "key",
+                                            "type": "select",
+                                            "label": "Key",
+                                            "dynamic": true,
+                                            "options": [],
+                                            "required": true
+                                        },
+                                        {
+                                            "name": "order",
+                                            "type": "select",
+                                            "label": "Order",
+                                            "options": [
+                                                {
+                                                    "label": "Ascending",
+                                                    "value": 1
+                                                },
+                                                {
+                                                    "label": "Descending",
+                                                    "value": -1
+                                                }
+                                            ],
+                                            "required": true
+                                        }
+                                    ],
+                                    "type": "array",
+                                    "label": "Sort"
+                                },
+                                {
+                                    "name": "mappAbleLimit",
+                                    "type": "uinteger",
+                                    "label": "Mappable Limit"
+                                }
+                            ],
+                            "interface": [
+                                {
+                                    "name": "__IMTLENGTH__",
+                                    "type": "uinteger",
+                                    "label": "Total number of bundles"
+                                },
+                                {
+                                    "name": "__IMTINDEX__",
+                                    "type": "uinteger",
+                                    "label": "Bundle order position"
+                                },
+                                {
+                                    "name": "key",
+                                    "type": "text",
+                                    "label": "Key"
+                                },
+                                {
+                                    "name": "data",
+                                    "spec": [
+                                        {
+                                            "help": "",
+                                            "name": "CommentID",
+                                            "type": "text",
+                                            "label": null,
+                                            "default": null,
+                                            "required": true,
+                                            "multiline": false
+                                        }
+                                    ],
+                                    "type": "collection",
+                                    "label": "Record"
+                                }
+                            ],
+                            "advanced": true
+                        }
+                    },
+                    {
+                        "id": 4,
+                        "module": "ai-local-agent:RunLocalAIAgent",
+                        "version": 0,
+                        "parameters": {
+                            "makeConnectionId": 0
+                        },
+                        "filter": {
+                            "name": "Duplicate Check",
+                            "conditions": [
+                                [
+                                    {
+                                        "a": "{{3.data.CommentID}}",
+                                        "o": "notexist"
+                                    }
+                                ]
+                            ]
+                        },
+                        "mapper": {
+                            "files": [],
+                            "message": "Comment : {{2.message}}",
+                            "timeout": "",
+                            "threadId": "",
+                            "outputType": "text",
+                            "modelConfig": {
+                                "recursionLimit": 300,
+                                "iterationsFromHistoryCount": "10"
+                            },
+                            "defaultModel": "gpt-5-mini",
+                            "systemPrompt": "You are a compassionate AI assistant for a faith-based social media page. Your task is to reply to comments on posts with warmth, encouragement, and scriptural insight.\n\nBefore writing any reply, you must search the knowledge base using the core topic of the comment (e.g., grief, gratitude, prayer request). Use the closest matching example to guide your tone, length, and structure.\n\nGuidelines:\n- Acknowledge the commenter’s emotions directly before offering encouragement.\n- Keep replies concise (2–4 sentences), conversational, and never preachy.\n- Weave in a brief scripture reference or prayer only when it fits naturally.\n- If a comment is simply “Amen” or an emoji/image, reply with a short, warm affirmation (e.g., “Amen! He is worthy.”).\n- Never use quotation marks, never repeat the comment verbatim, and never include explanations or labels.\n- Output only the final reply text.\n\nLet your reply sound like a caring, Spirit-led human, not a bot.",
+                            "reasoningEffort": "low"
+                        },
+                        "metadata": {
+                            "designer": {
+                                "x": -318,
+                                "y": -221,
+                                "messages": [
+                                    {
+                                        "category": "setup",
+                                        "severity": "error",
+                                        "message": "Connection: Value must not be empty."
+                                    }
+                                ]
+                            },
+                            "restore": {
+                                "expect": {
+                                    "files": {
+                                        "mode": "chose"
+                                    },
+                                    "outputType": {
+                                        "label": "Text"
+                                    },
+                                    "defaultModel": {
+                                        "mode": "chose",
+                                        "label": "GPT-5 miniA balanced, quick choice for clearly defined tasks needing reliable answers rather than deep analysis"
+                                    },
+                                    "reasoningEffort": {
+                                        "mode": "chose",
+                                        "label": "Low"
+                                    }
+                                },
+                                "parameters": {
+                                    "makeConnectionId": {
+                                        "data": {
+                                            "scoped": "true",
+                                            "connection": "openai-gpt-3"
+                                        },
+                                        "label": "My AI Connection (Anonymized)"
+                                    }
+                                }
+                            },
+                            "parameters": [
+                                {
+                                    "name": "makeConnectionId",
+                                    "type": "account:ai-provider,openai-gpt-3,anthropic-claude,gemini-ai-q9zyjp,ai-agent-foundry-openai,ai-agent-foundry-non-openai,mistral-ai,cohere,groq,ai-agent-xai,amazon-bedrock,ai-agent-openai-compatible",
+                                    "label": "Connection",
+                                    "required": true
+                                }
+                            ],
+                            "expect": [
+                                {
+                                    "name": "defaultModel",
+                                    "type": "select",
+                                    "label": "Model",
+                                    "required": true
+                                },
+                                {
+                                    "name": "reasoningEffort",
+                                    "type": "select",
+                                    "label": "Reasoning effort",
+                                    "validate": {
+                                        "enum": [
+                                            "low",
+                                            "medium",
+                                            "high"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "name": "systemPrompt",
+                                    "type": "text",
+                                    "label": "Instructions"
+                                },
+                                {
+                                    "name": "message",
+                                    "type": "text",
+                                    "label": "Input",
+                                    "required": true
+                                },
+                                {
+                                    "name": "files",
+                                    "spec": [
+                                        {
+                                            "name": "fileName",
+                                            "type": "filename",
+                                            "label": "File name",
+                                            "semantic": "file:name"
+                                        },
+                                        {
+                                            "name": "data",
+                                            "type": "buffer",
+                                            "label": "Data",
+                                            "semantic": "file:data"
+                                        }
+                                    ],
+                                    "type": "array",
+                                    "label": "Input files"
+                                },
+                                {
+                                    "name": "threadId",
+                                    "type": "text",
+                                    "label": "Conversation ID"
+                                },
+                                {
+                                    "name": "modelConfig",
+                                    "spec": [
+                                        {
+                                            "name": "tokenLimit",
+                                            "type": "hidden",
+                                            "label": "Max output tokens"
+                                        },
+                                        {
+                                            "name": "recursionLimit",
+                                            "type": "hidden",
+                                            "label": "Steps per agent call"
+                                        },
+                                        {
+                                            "name": "iterationsFromHistoryCount",
+                                            "type": "number",
+                                            "label": "Maximum conversation history"
+                                        }
+                                    ],
+                                    "type": "collection",
+                                    "label": "Model configuration"
+                                },
+                                {
+                                    "name": "timeout",
+                                    "type": "number",
+                                    "label": "Step timeout",
+                                    "validate": {
+                                        "max": 600,
+                                        "min": 120
+                                    }
+                                },
+                                {
+                                    "name": "outputType",
+                                    "type": "select",
+                                    "label": "Response format",
+                                    "required": true,
+                                    "validate": {
+                                        "enum": [
+                                            "text",
+                                            "make-schema"
+                                        ]
+                                    }
+                                }
+                            ]
+                        },
+                        "tools": [
+                            {
+                                "name": "Agent knowledge",
+                                "description": "Search uploaded files using semantic similarity to retrieve relevant facts and context needed to answer the user’s question. Use this tool when the answer depends on information contained in the uploaded documents.",
+                                "flow": [
+                                    {
+                                        "id": 5,
+                                        "module": "knowledge:KnowledgeStandAlone",
+                                        "version": 1,
+                                        "parameters": {},
+                                        "mapper": {
+                                            "limit": "50",
+                                            "query": "{{4.query}}",
+                                            "fileIds": [],
+                                            "filestorage": [
+                                                "FILESTORAGE_ID"
+                                            ]
+                                        },
+                                        "metadata": {
+                                            "designer": {
+                                                "x": -499,
+                                                "y": 40
+                                            },
+                                            "expect": [
+                                                {
+                                                    "name": "filestorage",
+                                                    "type": "filestorage",
+                                                    "label": "Knowledge files"
+                                                },
+                                                {
+                                                    "name": "query",
+                                                    "type": "text",
+                                                    "label": "Search query",
+                                                    "required": true
+                                                },
+                                                {
+                                                    "name": "fileIds",
+                                                    "type": "hidden",
+                                                    "required": true
+                                                },
+                                                {
+                                                    "name": "limit",
+                                                    "type": "number",
+                                                    "label": "Limit",
+                                                    "required": true,
+                                                    "validate": {
+                                                        "max": 100,
+                                                        "min": 1
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "id": 6,
+                        "module": "facebook-pages:CreateComment",
+                        "version": 6,
+                        "parameters": {
+                            "__IMTCONN__": 0
+                        },
+                        "mapper": {
+                            "id": "{{2.id}}",
+                            "message": "{{4.response}}",
+                            "page_id": "PAGE_ID"
+                        },
+                        "metadata": {
+                            "designer": {
+                                "x": 11,
+                                "y": -230,
+                                "messages": [
+                                    {
+                                        "category": "setup",
+                                        "severity": "error",
+                                        "message": "Connection: Value must not be empty."
+                                    }
+                                ]
+                            },
+                            "restore": {
+                                "expect": {
+                                    "id": {
+                                        "mode": "edit"
+                                    },
+                                    "page_id": {
+                                        "mode": "chose",
+                                        "label": "My Page"
+                                    },
+                                    "attachment": {
+                                        "mode": "chose",
+                                        "label": "Empty"
+                                    }
+                                },
+                                "parameters": {
+                                    "__IMTCONN__": {
+                                        "data": {
+                                            "scoped": "true",
+                                            "connection": "facebook"
+                                        },
+                                        "label": "My Facebook Page (Anonymized)"
+                                    }
+                                }
+                            },
+                            "parameters": [
+                                {
+                                    "name": "__IMTCONN__",
+                                    "type": "account:facebook",
+                                    "label": "Connection",
+                                    "required": true
+                                }
+                            ],
+                            "expect": [
+                                {
+                                    "name": "page_id",
+                                    "type": "select",
+                                    "label": "Page",
+                                    "required": true
+                                },
+                                {
+                                    "name": "message",
+                                    "type": "text",
+                                    "label": "Comment text"
+                                },
+                                {
+                                    "name": "attachment",
+                                    "type": "select",
+                                    "label": "Attachment type",
+                                    "validate": {
+                                        "enum": [
+                                            "url",
+                                            "share"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "name": "id",
+                                    "type": "select",
+                                    "label": "Post ID",
+                                    "required": true
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "id": 7,
+                        "module": "datastore:AddRecord",
+                        "version": 1,
+                        "parameters": {
+                            "datastore": 0
+                        },
+                        "mapper": {
+                            "key": "{{2.id}}",
+                            "data": {
+                                "CommentID": "{{2.id}}"
+                            },
+                            "overwrite": true
+                        },
+                        "metadata": {
+                            "designer": {
+                                "x": 343,
+                                "y": -233,
+                                "messages": [
+                                    {
+                                        "category": "setup",
+                                        "severity": "error",
+                                        "message": "Data store: Value must not be empty."
+                                    }
+                                ]
+                            },
+                            "restore": {
+                                "expect": {
+                                    "overwrite": {
+                                        "mode": "chose"
+                                    }
+                                },
+                                "parameters": {
+                                    "datastore": {
+                                        "label": "My data store"
+                                    }
+                                }
+                            },
+                            "parameters": [
+                                {
+                                    "name": "datastore",
+                                    "type": "datastore",
+                                    "label": "Data store",
+                                    "required": true
+                                }
+                            ],
+                            "expect": [
+                                {
+                                    "name": "key",
+                                    "type": "text",
+                                    "label": "Key"
+                                },
+                                {
+                                    "name": "overwrite",
+                                    "type": "boolean",
+                                    "label": "Overwrite an existing record",
+                                    "required": true
+                                },
+                                {
+                                    "name": "data",
+                                    "spec": [
+                                        {
+                                            "name": "CommentID",
+                                            "type": "text",
+                                            "label": null
+                                        }
+                                    ],
+                                    "type": "collection",
+                                    "label": "Record"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            ]
+        },
+        "zone": "eu2.make.com",
+        "notes": []
+    }
+}

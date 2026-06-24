@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Nepali learning — local, private, gets better every time Saathi is used.
 
 Two mechanisms:

@@ -1,7 +1,8 @@
 """Tool registry: schemas exposed to Claude + dispatcher with privilege gating."""
 from . import (canteen, content, files, mac_control, n8n_tools, notes, english, meta_post,
                system, apps, research, calendar as cal, email_tool, content_studio,
-               projects, internet_reach, public_apis, growth_engine, quote_maker)
+               projects, internet_reach, public_apis, growth_engine, quote_maker, hyperframes,
+               social_dashboard, mailerlite, cheap_llm, agent_browser, prose)
 from .. import nepali, selfimprove, health, analytics, docs
 
 # Tools that require speaker verification (only Ajay's voice)
@@ -223,6 +224,27 @@ TOOL_SCHEMAS = [
         },
     },
     {
+        "name": "trigger_blueprint",
+        "description": "Trigger one of the 11 LeadGenSpot automation blueprints by slug. "
+                       "Slugs: email-reply-agent, chatgpt-content, branded-social, "
+                       "instagram-carousel, social-cross-post, tiktok-repost, "
+                       "content-generator, content-publisher, fb-lead-notify, "
+                       "coach-reel-carousel, fb-comment-reply.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "slug": {"type": "string", "description": "Blueprint slug name"},
+                "params": {"type": "object", "description": "Optional JSON payload"},
+            },
+            "required": ["slug"],
+        },
+    },
+    {
+        "name": "list_blueprints",
+        "description": "List all available LeadGenSpot blueprint workflow slugs in n8n.",
+        "input_schema": {"type": "object", "properties": {}},
+    },
+    {
         "name": "send_telegram",
         "description": "PRIVILEGED. Send a message to Ajay's Telegram (notes-to-self, reminders, "
                        "forwarding a summary to read later).",
@@ -231,6 +253,82 @@ TOOL_SCHEMAS = [
             "properties": {"text": {"type": "string"}},
             "required": ["text"],
         },
+    },
+    # --- Agent Browser (headless Chrome automation) ---
+    {
+        "name": "ab_open",
+        "description": "Open the headless browser and navigate to a URL. Use for scraping, research, or any web task.",
+        "input_schema": {"type": "object", "properties": {"url": {"type": "string", "description": "URL to open (leave blank to just launch browser)"}}},
+    },
+    {
+        "name": "ab_goto",
+        "description": "Navigate to a new URL in the currently open browser.",
+        "input_schema": {"type": "object", "properties": {"url": {"type": "string"}}, "required": ["url"]},
+    },
+    {
+        "name": "ab_snapshot",
+        "description": "Get the accessibility tree of the current page — best structured view for understanding page content.",
+        "input_schema": {"type": "object", "properties": {}},
+    },
+    {
+        "name": "ab_screenshot",
+        "description": "Take a screenshot of the current browser page.",
+        "input_schema": {"type": "object", "properties": {"path": {"type": "string", "description": "Optional file path to save screenshot"}}},
+    },
+    {
+        "name": "ab_get_text",
+        "description": "Get visible text of an element by CSS selector.",
+        "input_schema": {"type": "object", "properties": {"selector": {"type": "string"}}, "required": ["selector"]},
+    },
+    {
+        "name": "ab_get_url",
+        "description": "Get the current page URL.",
+        "input_schema": {"type": "object", "properties": {}},
+    },
+    {
+        "name": "ab_click",
+        "description": "Click an element by CSS selector.",
+        "input_schema": {"type": "object", "properties": {"selector": {"type": "string"}}, "required": ["selector"]},
+    },
+    {
+        "name": "ab_fill",
+        "description": "Clear a form field and fill it with text.",
+        "input_schema": {"type": "object", "properties": {"selector": {"type": "string"}, "text": {"type": "string"}}, "required": ["selector", "text"]},
+    },
+    {
+        "name": "ab_press",
+        "description": "Press a keyboard key: Enter, Tab, Escape, Control+a, etc.",
+        "input_schema": {"type": "object", "properties": {"key": {"type": "string"}}, "required": ["key"]},
+    },
+    {
+        "name": "ab_eval",
+        "description": "Execute JavaScript on the current page and return the result.",
+        "input_schema": {"type": "object", "properties": {"js": {"type": "string"}}, "required": ["js"]},
+    },
+    {
+        "name": "ab_find_text",
+        "description": "Find an element by its visible text and perform an action (click/text/hover).",
+        "input_schema": {"type": "object", "properties": {"text": {"type": "string"}, "action": {"type": "string", "default": "click"}}, "required": ["text"]},
+    },
+    {
+        "name": "ab_batch",
+        "description": "Run multiple browser commands in one fast call. Pass list of command strings like ['open https://example.com', 'snapshot', 'screenshot'].",
+        "input_schema": {"type": "object", "properties": {"commands": {"type": "array", "items": {"type": "string"}}}, "required": ["commands"]},
+    },
+    {
+        "name": "ab_ai_chat",
+        "description": "Control browser with natural language — agent-browser's built-in AI mode. E.g. 'Go to google.com, search IELTS tips, screenshot the results'.",
+        "input_schema": {"type": "object", "properties": {"instruction": {"type": "string"}}, "required": ["instruction"]},
+    },
+    {
+        "name": "ab_close",
+        "description": "Close the browser session.",
+        "input_schema": {"type": "object", "properties": {}},
+    },
+    {
+        "name": "ab_status",
+        "description": "Check agent-browser health: Chrome installed, daemon running, config.",
+        "input_schema": {"type": "object", "properties": {}},
     },
     # --- Mac control ---
     {
@@ -906,6 +1004,29 @@ TOOL_SCHEMAS = [
         },
     },
     {
+        "name": "render_hyperframes_video",
+        "description": "Render an HTML-to-MP4 video using HyperFrames (v0.6.118). "
+                       "Use to create animated Mr. Yeti IELTS Short videos, product promo clips, "
+                       "or any HTML/CSS/GSAP animation as a video file. "
+                       "Pass 'topic' for a full LLM-scripted Mr. Yeti Short, or 'html' for custom HTML. "
+                       "Returns a local MP4 path. Much faster than Google Flow (no AI image gen). "
+                       "Also supports batch rendering multiple videos from one template.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "topic": {"type": "string",
+                          "description": "IELTS topic for Mr. Yeti Short (e.g. 'Writing Task 2 tips'). "
+                                         "If provided, LLM generates the script and HyperFrames renders it."},
+                "html": {"type": "string",
+                         "description": "Raw HyperFrames HTML composition to render. "
+                                        "Overrides topic if both are provided."},
+                "slug": {"type": "string", "description": "Output filename slug (optional)"},
+                "quality": {"type": "string", "enum": ["draft", "standard", "high"],
+                            "default": "standard"},
+            },
+        },
+    },
+    {
         "name": "make_quote_video",
         "description": "Render a 5-second branded quote MP4 (1080×1920) for YouTube Shorts. "
                        "Includes the Mr. Yeti image, quote text, and background music.",
@@ -1013,6 +1134,123 @@ TOOL_SCHEMAS = [
                        "Use at end of month or when Ajay asks 'how are we doing' or 'analytics'.",
         "input_schema": {"type": "object", "properties": {}},
     },
+    # ── MailerLite ─────────────────────────────────────────────────────────────
+    {
+        "name": "ml_add_subscriber",
+        "description": "Add or update a MailerLite subscriber for pielts.web.app. Optionally assign to a group.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "email": {"type": "string"},
+                "group_id": {"type": "string", "description": "MailerLite group ID (optional)"},
+            },
+            "required": ["email"],
+        },
+    },
+    {
+        "name": "ml_get_subscriber",
+        "description": "Look up a MailerLite subscriber by email.",
+        "input_schema": {"type": "object", "properties": {"email": {"type": "string"}}, "required": ["email"]},
+    },
+    {
+        "name": "ml_list_subscribers",
+        "description": "List MailerLite subscribers. Optionally filter by group_id.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "group_id": {"type": "string"},
+                "limit": {"type": "integer", "default": 25},
+            },
+        },
+    },
+    {
+        "name": "ml_list_groups",
+        "description": "List all MailerLite subscriber groups with counts.",
+        "input_schema": {"type": "object", "properties": {}},
+    },
+    {
+        "name": "ml_create_group",
+        "description": "Create a new MailerLite subscriber group.",
+        "input_schema": {"type": "object", "properties": {"name": {"type": "string"}}, "required": ["name"]},
+    },
+    {
+        "name": "ml_list_automations",
+        "description": "List all MailerLite automations for pielts.web.app.",
+        "input_schema": {"type": "object", "properties": {}},
+    },
+    {
+        "name": "ml_get_automation",
+        "description": "Get details of a specific MailerLite automation by ID.",
+        "input_schema": {"type": "object", "properties": {"automation_id": {"type": "string"}}, "required": ["automation_id"]},
+    },
+    {
+        "name": "ml_create_campaign",
+        "description": "Create a broadcast email campaign in MailerLite to send to a group.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "name": {"type": "string"},
+                "subject": {"type": "string"},
+                "from_name": {"type": "string"},
+                "from_email": {"type": "string"},
+                "html_content": {"type": "string"},
+                "group_ids": {"type": "array", "items": {"type": "string"}},
+            },
+            "required": ["name", "subject", "from_name", "from_email", "html_content", "group_ids"],
+        },
+    },
+    {
+        "name": "ml_list_campaigns",
+        "description": "List recent MailerLite campaigns with open rates and send stats.",
+        "input_schema": {"type": "object", "properties": {"limit": {"type": "integer", "default": 20}}},
+    },
+    {
+        "name": "ml_stats",
+        "description": "Get MailerLite account overview: groups, subscriber counts, automations.",
+        "input_schema": {"type": "object", "properties": {}},
+    },
+    {
+        "name": "cheap_ask",
+        "description": "Send a prompt to Groq (free, llama-3.3-70b) via cheap proxy. Use for captions, summaries, rewrites, translations — any routine task that doesn't need Claude.",
+        "input_schema": {"type": "object", "properties": {
+            "prompt": {"type": "string", "description": "The prompt to send"},
+            "system": {"type": "string", "description": "System prompt (optional)"},
+            "max_tokens": {"type": "integer", "description": "Max tokens (default 1024)"},
+        }, "required": ["prompt"]},
+    },
+    {
+        "name": "cheap_proxy_status",
+        "description": "Check if the cheap proxy (anthropic-proxy → Groq) is running on port 8788.",
+        "input_schema": {"type": "object", "properties": {}},
+    },
+    # --- Prose cleaner (stop-slop) ---
+    {
+        "name": "clean_prose",
+        "description": "Remove AI writing tells from any text — emails, captions, blog posts, scripts. "
+                       "Applies stop-slop rules: cuts filler phrases, passive voice, adverbs, "
+                       "vague declaratives, em dashes, and formulaic structures. "
+                       "Use after drafting Mr. Yeti content or MailerLite copy to make it sound human.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "text": {"type": "string", "description": "The prose to clean"},
+                "context": {"type": "string", "description": "Optional: e.g. 'ielts email', 'instagram caption', 'blog intro'"},
+            },
+            "required": ["text"],
+        },
+    },
+    {
+        "name": "score_prose",
+        "description": "Score prose on 5 stop-slop dimensions (Directness, Rhythm, Trust, Authenticity, Density). "
+                       "Returns scores out of 10 each and a pass/revise verdict. Use before sending important copy.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "text": {"type": "string", "description": "The prose to score"},
+            },
+            "required": ["text"],
+        },
+    },
 ]
 
 def _connect_fb_ig(page_access_token: str, page_id: str, ig_account_id: str) -> dict:
@@ -1043,6 +1281,8 @@ _HANDLERS = {
     "ask_document": docs.ask_document,
     "publish_blog": content_studio.publish_blog,
     "trigger_n8n_workflow": n8n_tools.trigger,
+    "trigger_blueprint": n8n_tools.trigger_blueprint,
+    "list_blueprints": n8n_tools.list_blueprints,
     "send_telegram": n8n_tools.send_telegram,
     "mac_open_app": mac_control.open_app,
     "mac_close_app": mac_control.close_app,
@@ -1103,6 +1343,12 @@ _HANDLERS = {
     "crypto_prices": public_apis.crypto_prices,
     "motivational_quote": public_apis.motivational_quote,
     "exchange_rate": public_apis.exchange_rate,
+    # HyperFrames HTML→MP4 renderer
+    "render_hyperframes_video": lambda **kw: (
+        hyperframes.render_html(kw["html"], slug=kw.get("slug",""), quality=kw.get("quality","standard"))
+        if kw.get("html")
+        else hyperframes.generate_and_render(topic=kw.get("topic",""))
+    ),
     # Quote Maker
     "make_quote_kit": lambda **kw: quote_maker.make_full_quote_kit(**kw),
     "make_quote_image": lambda **kw: {"path": quote_maker.make_quote_image(**kw)},
@@ -1118,6 +1364,39 @@ _HANDLERS = {
     "dm_sales_converter": lambda **kw: growth_engine.dm_sales_converter(**kw),
     "hashtag_seo_system": lambda **kw: growth_engine.hashtag_seo_system(**kw),
     "monthly_analytics_review": lambda **kw: growth_engine.monthly_analytics_review(),
+    "social_dashboard": lambda **kw: social_dashboard.get_dashboard(),
+    # MailerLite — pielts.web.app email marketing
+    "ml_add_subscriber": lambda email, group_id="", **kw: mailerlite.add_subscriber(email, group_id),
+    "ml_get_subscriber": lambda email: mailerlite.get_subscriber(email),
+    "ml_list_subscribers": lambda group_id="", limit=25: mailerlite.list_subscribers(group_id, limit),
+    "ml_list_groups": lambda: mailerlite.list_groups(),
+    "ml_create_group": lambda name: mailerlite.create_group(name),
+    "ml_list_automations": lambda: mailerlite.list_automations(),
+    "ml_get_automation": lambda automation_id: mailerlite.get_automation(automation_id),
+    "ml_create_campaign": lambda **kw: mailerlite.create_campaign(**kw),
+    "ml_list_campaigns": lambda limit=20: mailerlite.list_campaigns(limit),
+    "ml_stats": lambda: mailerlite.get_stats(),
+    "cheap_ask": lambda prompt, system="You are a helpful assistant.", max_tokens=1024: cheap_llm.cheap_ask(prompt, system, max_tokens),
+    "cheap_proxy_status": lambda: cheap_llm.cheap_proxy_status(),
+    # --- Agent Browser ---
+    "ab_open":       lambda url="": agent_browser.ab_open(url),
+    "ab_goto":       lambda url: agent_browser.ab_goto(url),
+    "ab_snapshot":   lambda: agent_browser.ab_snapshot(),
+    "ab_screenshot": lambda path="": agent_browser.ab_screenshot(path),
+    "ab_get_text":   lambda selector: agent_browser.ab_get_text(selector),
+    "ab_get_url":    lambda: agent_browser.ab_get_url(),
+    "ab_click":      lambda selector: agent_browser.ab_click(selector),
+    "ab_fill":       lambda selector, text: agent_browser.ab_fill(selector, text),
+    "ab_press":      lambda key: agent_browser.ab_press(key),
+    "ab_eval":       lambda js: agent_browser.ab_eval(js),
+    "ab_find_text":  lambda text, action="click": agent_browser.ab_find_text(text, action),
+    "ab_batch":      lambda commands: agent_browser.ab_batch(commands),
+    "ab_ai_chat":    lambda instruction: agent_browser.ab_ai_chat(instruction),
+    "ab_close":      lambda: agent_browser.ab_close(),
+    "ab_status":     lambda: agent_browser.ab_status(),
+    # Prose cleaner
+    "clean_prose":   lambda text, context="": prose.clean_prose(text, context),
+    "score_prose":   lambda text: prose.score_prose(text),
 }
 
 

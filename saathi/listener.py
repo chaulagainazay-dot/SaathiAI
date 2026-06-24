@@ -1,3 +1,4 @@
+from __future__ import annotations
 """SaathiAI hands-free terminal mode.
 
 Always-on microphone loop:

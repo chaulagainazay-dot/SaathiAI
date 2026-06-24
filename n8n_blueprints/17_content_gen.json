@@ -1,0 +1,590 @@
+{
+    "name": "Social media post generator",
+    "flow": [
+        {
+            "id": 1,
+            "module": "google-sheets:filterRows",
+            "version": 2,
+            "parameters": {
+                "__IMTCONN__": "GOOGLE_CONNECTION_PLACEHOLDER"
+            },
+            "mapper": {
+                "from": "drive",
+                "limit": "01",
+                "filter": [
+                    [
+                        {
+                            "a": "A",
+                            "o": "exist"
+                        },
+                        {
+                            "a": "D",
+                            "o": "notexist"
+                        }
+                    ]
+                ],
+                "sheetId": "Sheet1",
+                "sortOrder": "asc",
+                "spreadsheetId": "SPREADSHEET_ID_PLACEHOLDER",
+                "tableFirstRow": "A1:Z1",
+                "includesHeaders": true,
+                "valueRenderOption": "FORMATTED_VALUE",
+                "dateTimeRenderOption": "FORMATTED_STRING"
+            },
+            "metadata": {
+                "designer": {
+                    "x": 0,
+                    "y": 0
+                },
+                "restore": {
+                    "expect": {
+                        "from": {
+                            "label": "Select from My Drive"
+                        },
+                        "orderBy": {
+                            "mode": "chose",
+                            "label": "Empty"
+                        },
+                        "sheetId": {
+                            "mode": "chose",
+                            "label": "Sheet1"
+                        },
+                        "sortOrder": {
+                            "mode": "chose",
+                            "label": "Ascending"
+                        },
+                        "spreadsheetId": {
+                            "mode": "chose",
+                            "label": "Social media post spreadsheet"
+                        },
+                        "tableFirstRow": {
+                            "label": "A-Z"
+                        },
+                        "includesHeaders": {
+                            "mode": "chose",
+                            "label": "Yes"
+                        },
+                        "valueRenderOption": {
+                            "mode": "chose",
+                            "label": "Formatted value"
+                        },
+                        "dateTimeRenderOption": {
+                            "mode": "chose",
+                            "label": "Formatted string"
+                        }
+                    },
+                    "parameters": {
+                        "__IMTCONN__": {
+                            "data": {
+                                "scoped": "true",
+                                "connection": "google"
+                            },
+                            "label": "Google connection"
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "__IMTCONN__",
+                        "type": "account:google",
+                        "label": "Connection",
+                        "required": true
+                    }
+                ],
+                "interface": [
+                    {
+                        "name": "__IMTLENGTH__",
+                        "type": "uinteger",
+                        "label": "Total number of bundles"
+                    },
+                    {
+                        "name": "__IMTINDEX__",
+                        "type": "uinteger",
+                        "label": "Bundle order position"
+                    },
+                    {
+                        "name": "__ROW_NUMBER__",
+                        "type": "number",
+                        "label": "Row number"
+                    },
+                    {
+                        "name": "__SPREADSHEET_ID__",
+                        "type": "text",
+                        "label": "Spreadsheet ID"
+                    },
+                    {
+                        "name": "__SHEET__",
+                        "type": "text",
+                        "label": "Sheet"
+                    },
+                    {
+                        "name": "0",
+                        "type": "text",
+                        "label": "Title (A)"
+                    },
+                    {
+                        "name": "1",
+                        "type": "text",
+                        "label": "Caption (B)"
+                    },
+                    {
+                        "name": "2",
+                        "type": "text",
+                        "label": "Image (C)"
+                    },
+                    {
+                        "name": "3",
+                        "type": "text",
+                        "label": "Status (D)"
+                    }
+                ]
+            }
+        },
+        {
+            "id": 8,
+            "module": "gemini-ai:createACompletionGeminiPro",
+            "version": 1,
+            "parameters": {
+                "__IMTCONN__": "GEMINI_AI_CONNECTION_PLACEHOLDER"
+            },
+            "mapper": {
+                "model": "gemini-2.5-pro",
+                "contents": [
+                    {
+                        "role": "user",
+                        "parts": [
+                            {
+                                "text": "You are Digdots AI — a Swedish web design agency content creator.\r\n\r\nWrite all content in Swedish.\r\n\r\nSTYLE:\r\n- Under 750 character\r\n- Clean, modern, professional digital-agency tone.\r\n- Short paragraphs, bullet points, and emojis when relevant.\r\n- Use titles like: \"Varför är … viktigt?\"\r\n- Use benefit-style lines such as: \"Trovärdighet & Professionalism – …\"\r\n- Include relevant hashtags at the end for social posts.\r\n- Do NOT include URLs.\r\n\r\nCONTENT RULES:\r\n- Output ONLY the final result. No explanation, no notes.\r\n- Keep it short, engaging, and valuable.\r\n- Always connect the topic to digital growth, web design, advertising, hosting, SEO or business growth.\r\n\r\nTASK:\r\nCreate a polished Swedish post in Digdots style based on this topic:\r\n{{1.`0`}}",
+                                "type": "text"
+                            }
+                        ]
+                    }
+                ],
+                "generationConfig": {
+                    "imageConfig": {},
+                    "thinkingConfig": {},
+                    "responseModalities": [
+                        "text"
+                    ]
+                },
+                "system_instruction": {}
+            },
+            "metadata": {
+                "designer": {
+                    "x": 300,
+                    "y": 0,
+                    "name": "Generate caption"
+                },
+                "restore": {
+                    "expect": {
+                        "model": {
+                            "mode": "chose",
+                            "label": "Gemini 2.5 Pro"
+                        },
+                        "contents": {
+                            "mode": "chose",
+                            "items": [
+                                {
+                                    "role": {
+                                        "mode": "chose",
+                                        "label": "User"
+                                    },
+                                    "parts": {
+                                        "mode": "chose",
+                                        "items": [
+                                            {
+                                                "type": {
+                                                    "mode": "chose",
+                                                    "label": "Text"
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "parameters": {
+                        "__IMTCONN__": {
+                            "data": {
+                                "scoped": "true",
+                                "connection": "gemini-ai"
+                            },
+                            "label": "Gemini AI connection"
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "__IMTCONN__",
+                        "type": "account:gemini-ai",
+                        "label": "Connection",
+                        "required": true
+                    }
+                ]
+            }
+        },
+        {
+            "id": 11,
+            "module": "gemini-ai:createACompletionGeminiPro",
+            "version": 1,
+            "parameters": {
+                "__IMTCONN__": "GEMINI_AI_CONNECTION_PLACEHOLDER"
+            },
+            "mapper": {
+                "model": "gemini-2.5-pro",
+                "contents": [
+                    {
+                        "role": "user",
+                        "parts": [
+                            {
+                                "text": "You are a professional marketing copy assistant for a Swedish web design agency.\r\n\r\nYour task:\r\nBased ONLY on the provided post caption, generate short, clear on-image text content.\r\n\r\nSTRICT RULES:\r\n\r\n* Do NOT mention background, colors, style, layout, lighting, or visual design.\r\n* Do NOT describe images or environments.\r\n* Focus ONLY on text content.\r\n* Keep the tone modern, professional, and agency-level.\r\n* Text must be suitable for website or social media visuals.\r\n* Use simple, high-conversion language.\r\n* Write in English unless the caption is clearly in Swedish.\r\n\r\nOUTPUT FORMAT (must follow exactly):\r\n\r\n(1 concise supporting sentence, max 12 words)\r\n\r\nINPUT CAPTION:\r\n{{8.result}}\r\n\r\nNote: The output must include only the subheading text. Do not display the word \"subheading.\" Show only the final clean text with no extra labels or instructions.",
+                                "type": "text"
+                            }
+                        ]
+                    }
+                ],
+                "generationConfig": {
+                    "imageConfig": {},
+                    "thinkingConfig": {},
+                    "responseModalities": [
+                        "text"
+                    ]
+                },
+                "system_instruction": {}
+            },
+            "metadata": {
+                "designer": {
+                    "x": 600,
+                    "y": 0,
+                    "name": "Subheading Generate"
+                },
+                "restore": {
+                    "expect": {
+                        "model": {
+                            "mode": "chose",
+                            "label": "Gemini 2.5 Pro"
+                        },
+                        "contents": {
+                            "mode": "chose",
+                            "items": [
+                                {
+                                    "role": {
+                                        "mode": "chose",
+                                        "label": "User"
+                                    },
+                                    "parts": {
+                                        "mode": "chose",
+                                        "items": [
+                                            {
+                                                "type": {
+                                                    "mode": "chose",
+                                                    "label": "Text"
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "parameters": {
+                        "__IMTCONN__": {
+                            "data": {
+                                "scoped": "true",
+                                "connection": "gemini-ai"
+                            },
+                            "label": "Gemini AI connection"
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "__IMTCONN__",
+                        "type": "account:gemini-ai",
+                        "label": "Connection",
+                        "required": true
+                    }
+                ]
+            }
+        },
+        {
+            "id": 20,
+            "module": "gemini-ai:createAnImage",
+            "version": 1,
+            "parameters": {
+                "__IMTCONN__": "GEMINI_AI_CONNECTION_PLACEHOLDER"
+            },
+            "mapper": {
+                "model": "imagen-4.0-ultra-generate-001",
+                "prompt": "Design a high-impact social media image for a modern Swedish web design agency. Use only Swedish language.\r\n\r\nActual Image Layout:\r\n\r\n{{1.`0`}}\r\n(This text should be visible at the top, centered, in bold sans-serif)\r\n\r\n{{11.result}}\r\n(This text should be visible in the center, centered, without bold, sans-serif)\r\n\r\nCRITICAL INSTRUCTION:\r\n\r\nThe final image must display only the exact text above.\r\n\r\nDo not display placeholders, field names, or instruction text.\r\n\r\nLAYOUT & ELEMENT PLACEMENT:\r\n\r\nAll text must be perfectly centered with clear vertical spacing.\r\n\r\nLeft side: subtle web-design–related elements (a realistic laptop and smartphone mockup displaying a vibrant, colorful service business website, bold UI accents, gradient buttons, and lively interface details; supporting UI cards, code brackets, layout grids, and wireframes in soft but colorful tones layered lightly around the devices).\r\n\r\nRight side: complementary web-design symbols (responsive layout icons, browser frames, CSS/HTML symbols, design system components) rendered with subtle yet colorful highlights that add energy without overpowering the composition.\r\n\r\nSide elements must remain balanced, tasteful, and decorative, enhancing visual interest while keeping focus on the message.\r\n\r\nEnsure generous, clear negative space around the text for maximum readability and clarity.\r\n\r\nBACKGROUND STYLE (Modern & Abstract):\r\n\r\nA modern, abstract background with a dark gradient from black to charcoal. Subtle geometric grid lines and circuit-like patterns in white and light grey. Minimalist, semi-transparent wireframes of a laptop screen and a smartphone screen integrated into the composition. Soft glow effects and graphic icons in the accent color #FF904B (orange): a cloud (hosting), a shield (security), a circular arrow (backups), and a support headset.\r\n\r\nOVERALL STYLE:\r\n\r\nModern, Scandinavian-inspired, premium feel. High contrast, sharp typography. Clean, professional agency-level finish. Optimized for social media formats such as Instagram Reels and Stories.",
+                "aspectRatio": "1:1",
+                "personGeneration": "ALLOW_ADULT"
+            },
+            "metadata": {
+                "designer": {
+                    "x": 900,
+                    "y": 0,
+                    "name": "Generate Image"
+                },
+                "restore": {
+                    "expect": {
+                        "model": {
+                            "mode": "chose",
+                            "label": "Imagen 4 Ultra"
+                        },
+                        "aspectRatio": {
+                            "mode": "chose",
+                            "label": "1:1"
+                        },
+                        "personGeneration": {
+                            "mode": "chose",
+                            "label": "Allow Adults"
+                        }
+                    },
+                    "parameters": {
+                        "__IMTCONN__": {
+                            "data": {
+                                "scoped": "true",
+                                "connection": "gemini-ai"
+                            },
+                            "label": "Gemini AI connection"
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "__IMTCONN__",
+                        "type": "account:gemini-ai",
+                        "label": "Connection",
+                        "required": true
+                    }
+                ]
+            }
+        },
+        {
+            "id": 14,
+            "module": "imgbb:UploadPhotoV1",
+            "version": 1,
+            "parameters": {
+                "__IMTCONN__": "IMGBB_CONNECTION_PLACEHOLDER"
+            },
+            "mapper": {
+                "data": "{{20.data}}",
+                "fileName": "{{20.fileName}}"
+            },
+            "metadata": {
+                "designer": {
+                    "x": 1200,
+                    "y": 0
+                },
+                "restore": {
+                    "parameters": {
+                        "__IMTCONN__": {
+                            "data": {
+                                "scoped": "true",
+                                "connection": "imgbb"
+                            },
+                            "label": "ImgBB connection"
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "__IMTCONN__",
+                        "type": "account:imgbb",
+                        "label": "Connection",
+                        "required": true
+                    }
+                ]
+            }
+        },
+        {
+            "id": 9,
+            "module": "google-sheets:updateRow",
+            "version": 2,
+            "parameters": {
+                "__IMTCONN__": "GOOGLE_CONNECTION_PLACEHOLDER"
+            },
+            "mapper": {
+                "from": "drive",
+                "mode": "select",
+                "values": {
+                    "1": "{{8.result}}",
+                    "2": "{{14.display_url}}",
+                    "3": "Under Review"
+                },
+                "sheetId": "Sheet1",
+                "rowNumber": "{{1.`__ROW_NUMBER__`}}",
+                "spreadsheetId": "/SPREADSHEET_ID_PLACEHOLDER",
+                "includesHeaders": true,
+                "valueInputOption": "USER_ENTERED"
+            },
+            "metadata": {
+                "designer": {
+                    "x": 1500,
+                    "y": 0
+                },
+                "restore": {
+                    "expect": {
+                        "from": {
+                            "label": "My Drive"
+                        },
+                        "mode": {
+                            "label": "Search by path"
+                        },
+                        "sheetId": {
+                            "label": "Sheet1"
+                        },
+                        "spreadsheetId": {
+                            "path": [
+                                "Social media post spreadsheet"
+                            ]
+                        },
+                        "includesHeaders": {
+                            "label": "Yes"
+                        },
+                        "valueInputOption": {
+                            "mode": "chose",
+                            "label": "User entered"
+                        }
+                    },
+                    "parameters": {
+                        "__IMTCONN__": {
+                            "data": {
+                                "scoped": "true",
+                                "connection": "google"
+                            },
+                            "label": "Google connection"
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "__IMTCONN__",
+                        "type": "account:google",
+                        "label": "Connection",
+                        "required": true
+                    }
+                ],
+                "expect": [
+                    {
+                        "name": "mode",
+                        "type": "select",
+                        "label": "Search Method",
+                        "required": true,
+                        "validate": {
+                            "enum": [
+                                "select",
+                                "fromAll",
+                                "map"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "valueInputOption",
+                        "type": "select",
+                        "label": "Value input option",
+                        "validate": {
+                            "enum": [
+                                "USER_ENTERED",
+                                "RAW"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "from",
+                        "type": "select",
+                        "label": "Drive",
+                        "required": true,
+                        "validate": {
+                            "enum": [
+                                "drive",
+                                "share",
+                                "team"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "spreadsheetId",
+                        "type": "file",
+                        "label": "Spreadsheet ID",
+                        "required": true
+                    },
+                    {
+                        "name": "sheetId",
+                        "type": "select",
+                        "label": "Sheet Name",
+                        "required": true
+                    },
+                    {
+                        "name": "rowNumber",
+                        "type": "uinteger",
+                        "label": "Row number",
+                        "required": true
+                    },
+                    {
+                        "name": "includesHeaders",
+                        "type": "select",
+                        "label": "Table contains headers",
+                        "required": true,
+                        "validate": {
+                            "enum": [
+                                true,
+                                false
+                            ]
+                        }
+                    },
+                    {
+                        "name": "values",
+                        "spec": [
+                            {
+                                "name": "0",
+                                "type": "text",
+                                "label": "Topic (A)"
+                            },
+                            {
+                                "name": "1",
+                                "type": "text",
+                                "label": "Caption (B)"
+                            },
+                            {
+                                "name": "2",
+                                "type": "text",
+                                "label": "Image URL (C)"
+                            },
+                            {
+                                "name": "3",
+                                "type": "text",
+                                "label": "Status (D)"
+                            }
+                        ],
+                        "type": "collection",
+                        "label": "Values"
+                    }
+                ]
+            }
+        }
+    ],
+    "metadata": {
+        "instant": false,
+        "version": 1,
+        "scenario": {
+            "roundtrips": 1,
+            "maxErrors": 3,
+            "autoCommit": true,
+            "autoCommitTriggerLast": true,
+            "sequential": false,
+            "slots": null,
+            "confidential": false,
+            "dataloss": false,
+            "dlq": false,
+            "freshVariables": false
+        },
+        "designer": {
+            "orphans": []
+        },
+        "zone": "eu1.make.com",
+        "notes": []
+    }
+}

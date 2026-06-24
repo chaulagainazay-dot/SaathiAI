@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Screen vision — Saathi looks at the screen and answers questions about it.
 
 Uses screencapture (built-in) + Gemini's free vision. Lets Saathi read WhatsApp

@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Voice pipeline — fully local where possible.
 
 STT : faster-whisper (local, Nepali + English, auto language detection)

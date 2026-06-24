@@ -1,0 +1,129 @@
+{
+  "name": "pielts — Weekly Market Intel + Auto-Improve",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "weeks", "weeksInterval": 1 }]
+        }
+      },
+      "id": "schedule-weekly",
+      "name": "Every Monday 6am",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://127.0.0.1:8765/api/v1/pielts/research",
+        "requestMethod": "POST",
+        "jsonParameters": true,
+        "options": {},
+        "bodyParametersJson": "{\"force\": true}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth"
+      },
+      "id": "trigger-research",
+      "name": "Start Market Research",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 300],
+      "credentials": { "httpHeaderAuth": { "id": "1", "name": "Baadar Token" } }
+    },
+    {
+      "parameters": { "amount": 180, "unit": "seconds" },
+      "id": "wait-3min",
+      "name": "Wait 3 min (research runs)",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [660, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://127.0.0.1:8765/api/v1/pielts/intel",
+        "requestMethod": "GET",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth"
+      },
+      "id": "fetch-intel",
+      "name": "Fetch Intel Results",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [860, 300],
+      "credentials": { "httpHeaderAuth": { "id": "1", "name": "Baadar Token" } }
+    },
+    {
+      "parameters": {
+        "url": "http://127.0.0.1:8765/api/v1/pielts/improve",
+        "requestMethod": "POST",
+        "jsonParameters": true,
+        "bodyParametersJson": "{\"max_tasks\": 5}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth"
+      },
+      "id": "trigger-improve",
+      "name": "Generate Improvements",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1060, 300],
+      "credentials": { "httpHeaderAuth": { "id": "1", "name": "Baadar Token" } }
+    },
+    {
+      "parameters": { "amount": 120, "unit": "seconds" },
+      "id": "wait-2min",
+      "name": "Wait 2 min (improvements generate)",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [1260, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://127.0.0.1:8765/api/v1/pielts/queue",
+        "requestMethod": "GET",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth"
+      },
+      "id": "fetch-queue",
+      "name": "Fetch Improvement Queue",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1460, 300],
+      "credentials": { "httpHeaderAuth": { "id": "1", "name": "Baadar Token" } }
+    },
+    {
+      "parameters": {
+        "jsCode": "const intel = $('Fetch Intel Results').first().json;\nconst queue = $('Fetch Improvement Queue').first().json;\n\nconst gaps = (intel.market_gaps || []).slice(0,3).map(g => `• ${g.gap || g}`).join('\\n');\nconst tasks = (queue.improvements || []).slice(0,5).map((t,i) => `${i+1}. [${t.category}] ${t.title} — Impact: ${t.impact}`).join('\\n');\nconst trending = (intel.trending || []).slice(0,3).join(', ');\nconst pains = (intel.pain_points || []).slice(0,3).map(p => `• ${p.issue || p}`).join('\\n');\n\nreturn [{\n  json: {\n    message: `📊 pielts Weekly Market Intel\\n\\n🔍 User Pain Points:\\n${pains}\\n\\n📈 Trending: ${trending}\\n\\n🎯 Market Gaps:\\n${gaps}\\n\\n🔧 Top Improvements This Week:\\n${tasks}\\n\\n🚀 Review + apply at: http://127.0.0.1:8765 → pielts tab`\n  }\n}];"
+      },
+      "id": "format-report",
+      "name": "Format Telegram Report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1660, 300]
+    },
+    {
+      "parameters": {
+        "url": "=https://api.telegram.org/bot{{$env.TELEGRAM_BOT_TOKEN}}/sendMessage",
+        "requestMethod": "POST",
+        "jsonParameters": true,
+        "bodyParametersJson": "={\"chat_id\": \"{{$env.TELEGRAM_CHAT_ID}}\", \"text\": \"{{$node['Format Telegram Report'].json.message}}\", \"parse_mode\": \"HTML\"}"
+      },
+      "id": "telegram-notify",
+      "name": "Telegram: Weekly Report",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1860, 300]
+    }
+  ],
+  "connections": {
+    "Every Monday 6am": { "main": [[{ "node": "Start Market Research", "type": "main", "index": 0 }]] },
+    "Start Market Research": { "main": [[{ "node": "Wait 3 min (research runs)", "type": "main", "index": 0 }]] },
+    "Wait 3 min (research runs)": { "main": [[{ "node": "Fetch Intel Results", "type": "main", "index": 0 }]] },
+    "Fetch Intel Results": { "main": [[{ "node": "Generate Improvements", "type": "main", "index": 0 }]] },
+    "Generate Improvements": { "main": [[{ "node": "Wait 2 min (improvements generate)", "type": "main", "index": 0 }]] },
+    "Wait 2 min (improvements generate)": { "main": [[{ "node": "Fetch Improvement Queue", "type": "main", "index": 0 }]] },
+    "Fetch Improvement Queue": { "main": [[{ "node": "Format Telegram Report", "type": "main", "index": 0 }]] },
+    "Format Telegram Report": { "main": [[{ "node": "Telegram: Weekly Report", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" },
+  "tags": [{ "name": "pielts" }, { "name": "market-intel" }]
+}

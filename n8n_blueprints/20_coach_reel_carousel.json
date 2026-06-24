@@ -1,0 +1,2482 @@
+{
+  "name": "Social Media Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -1072,
+        32
+      ],
+      "id": "58abb2e9-3e2e-4857-9778-444cc853f239",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SHEET_ID",
+          "mode": "list",
+          "cachedResultName": "Your Excel",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR_GOOGLE_SHEET_ID/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Carousel Post",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR_GOOGLE_SHEET_ID/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Status",
+              "lookupValue": "=New"
+            }
+          ]
+        },
+        "options": {
+          "returnFirstMatch": true
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -848,
+        32
+      ],
+      "id": "d30d48ac-41c4-4c9f-9ef7-faa62a5e5ecb",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YOUR_CREDENTIALS_ID",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.kie.ai/api/v1/jobs/createTask",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_KIE_API_BEARER_TOKEN"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"nano-banana-2\",\n  \"callBackUrl\": \"https://your-domain.com/api/callback\",\n  \"input\": {\n    \"prompt\": {{ JSON.stringify($json.prompt) }},\n    \"aspect_ratio\": \"4:5\",\n    \"resolution\": \"1K\",\n    \"output_format\": \"png\"\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -48,
+        128
+      ],
+      "id": "cdac4c54-0a6f-4a5b-8a65-c2eae545653f",
+      "name": "Generate Image"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SHEET_ID",
+          "mode": "list",
+          "cachedResultName": "Your Excel",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR_GOOGLE_SHEET_ID/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 358016233,
+          "mode": "list",
+          "cachedResultName": "Reel Post",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR_GOOGLE_SHEET_ID/edit#gid=358016233"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Status",
+              "lookupValue": "New"
+            }
+          ]
+        },
+        "options": {
+          "returnFirstMatch": true
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -848,
+        688
+      ],
+      "id": "6d687045-48a7-4083-9e77-7345f85b2a37",
+      "name": "Get row(s) in sheet1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YOUR_CREDENTIALS_ID",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 6,
+        "unit": "minutes"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        352,
+        32
+      ],
+      "id": "d4b5114a-8dad-406f-af72-b5a99844c7c4",
+      "name": "Wait",
+      "webhookId": "d0e24a4d-8eff-41be-b38f-e25ec03af78f"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"Caption\": \"Social Media Caption\",\n  \"Image1\": \"Detailed prompt describing the first image...\",\n  \"Image2\": \"Detailed prompt describing the second image...\",\n  \"Image3\": \"Detailed prompt describing the third image...\",\n  \"Image4\": \"Detailed prompt describing the fourth image...\",\n  \"Image5\": \"Detailed prompt describing the fifth image...\",\n  \"Image6\": \"Detailed prompt describing the sixth image...\",\n  \"Image7\": \"Detailed prompt describing the seventh image...\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -480,
+        144
+      ],
+      "id": "d0ee3012-7576-47be-9bb1-d0ec4a9358a5",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "claude-haiku-4-5-20251001",
+          "mode": "list",
+          "cachedResultName": "Claude Haiku 4.5"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.4,
+      "position": [
+        -608,
+        144
+      ],
+      "id": "75b9d757-da69-4b9f-a98d-5d92c66b31bd",
+      "name": "Anthropic Chat Model",
+      "credentials": {
+        "anthropicApi": {
+          "id": "YOUR_ANTHROPIC_CREDENTIALS_ID",
+          "name": "Anthropic account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst parsedItems = items.map((item) => {\n  item.json.data.resultJson = JSON.parse(item.json.data.resultJson);\n  return item;\n});\nreturn parsedItems;\n"
+      },
+      "id": "5d63e3e6-19d2-42d5-86fe-70b6e84e4442",
+      "name": "Parse Prompts",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1088,
+        32
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://api.kie.ai/api/v1/jobs/recordInfo?taskId={{ $json.data.taskId }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_KIE_API_BEARER_TOKEN"
+            }
+          ]
+        },
+        "options": {
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          }
+        }
+      },
+      "id": "2b5ba77d-a6f2-4572-9ff3-3d8ab44a824e",
+      "name": "Check Image Status1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        624,
+        -48
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.data.state }}",
+                    "rightValue": "success",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "5f8189f1-be70-42e6-a380-a0d2aa25e4e0"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "success"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "ed8a7f52-7770-4f08-b244-0cf9e29b14ed",
+                    "leftValue": "={{ $json.data.state }}",
+                    "rightValue": "running",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "waiting"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "24af290a-2a73-439a-9296-70cf7a2295af",
+                    "leftValue": "={{ $json.data.state }}",
+                    "rightValue": "waiting",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "waiting"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        848,
+        16
+      ],
+      "id": "04c34c69-777d-4d04-8809-85326b76dd5d",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "fieldsToAggregate": {
+          "fieldToAggregate": [
+            {
+              "fieldToAggregate": "data.resultJson.resultUrls[0]"
+            }
+          ]
+        },
+        "options": {
+          "includeBinaries": false
+        }
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        1296,
+        32
+      ],
+      "id": "ce7e84ce-c495-4e8d-b64b-0590edc5c4d2",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "daysInterval": 2,
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -1072,
+        688
+      ],
+      "id": "b16c6878-4194-4036-8178-eacf0e34b818",
+      "name": "Schedule Trigger1"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "claude-haiku-4-5-20251001",
+          "mode": "list",
+          "cachedResultName": "Claude Haiku 4.5"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.4,
+      "position": [
+        -608,
+        912
+      ],
+      "id": "6d653d24-5daa-444a-87d1-290b21cea32d",
+      "name": "Anthropic Chat Model1",
+      "credentials": {
+        "anthropicApi": {
+          "id": "YOUR_ANTHROPIC_CREDENTIALS_ID",
+          "name": "Anthropic account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"Caption\": \"Caption in there\",\n  \"Prompts\": [\n    \"First prompt will be there\",\n    \"second prompt will be there\",\n    \"third prompt will be there\",\n    \"fourth prompt will be there\",\n    \"fifth prompt will be there\"\n  ]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -480,
+        912
+      ],
+      "id": "4a800940-4c32-49fd-9633-6a312ae6bf48",
+      "name": "Structured Output Parser2"
+    },
+    {
+      "parameters": {
+        "amount": 1,
+        "unit": "minutes"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        176,
+        688
+      ],
+      "id": "49f262d0-bf8f-4623-9797-d9b11d8cbbd8",
+      "name": "Wait1",
+      "webhookId": "d0e24a4d-8eff-41be-b38f-e25ec03af78f"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.kie.ai/api/v1/jobs/recordInfo?taskId={{ $json.data.taskId }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_KIE_API_BEARER_TOKEN"
+            }
+          ]
+        },
+        "options": {
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          }
+        }
+      },
+      "id": "6320903c-0b88-4c51-b003-8a60c4acdc96",
+      "name": "Check Image Status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        400,
+        608
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.data.state }}",
+                    "rightValue": "success",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "5f8189f1-be70-42e6-a380-a0d2aa25e4e0"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "success"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "ed8a7f52-7770-4f08-b244-0cf9e29b14ed",
+                    "leftValue": "={{ $json.data.state }}",
+                    "rightValue": "running",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "waiting"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "24af290a-2a73-439a-9296-70cf7a2295af",
+                    "leftValue": "={{ $json.data.state }}",
+                    "rightValue": "waiting",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "waiting"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        624,
+        672
+      ],
+      "id": "0c2c2f9b-cde5-4245-a780-61e914c17334",
+      "name": "Switch2"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst parsedItems = items.map((item) => {\n  item.json.data.resultJson = JSON.parse(item.json.data.resultJson);\n  return item;\n});\nreturn parsedItems;\n"
+      },
+      "id": "b0253791-4838-493d-9e40-6cbe0c71e502",
+      "name": "Parse Prompts1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        848,
+        688
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 1,
+        "unit": "minutes"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1248,
+        688
+      ],
+      "id": "833ab73d-8cc3-4bb7-8636-115e5525d0c6",
+      "name": "Wait2",
+      "webhookId": "d0e24a4d-8eff-41be-b38f-e25ec03af78f"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('Check Video Status').item.json.data.response.resultUrls }}",
+                    "rightValue": "success",
+                    "operator": {
+                      "type": "array",
+                      "operation": "exists",
+                      "singleValue": true
+                    },
+                    "id": "5f8189f1-be70-42e6-a380-a0d2aa25e4e0"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "success"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "ed8a7f52-7770-4f08-b244-0cf9e29b14ed",
+                    "leftValue": "={{ $('Check Video Status').item.json.data.response.resultUrls }}",
+                    "rightValue": "running",
+                    "operator": {
+                      "type": "array",
+                      "operation": "notExists",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "waiting"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        1792,
+        688
+      ],
+      "id": "31ec6e16-dbc4-4022-8bda-64f5717862eb",
+      "name": "Switch3"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.kie.ai/api/v1/veo/generate",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_KIE_API_BEARER_TOKEN"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"prompt\": \"Create a cinematic video using a single image only. The image should appear immediately and remain fully visible and stable for the entire duration of the video. Do not include any image-to-image transition, cuts, or multiple images. Keep all text completely static, sharp, and unchanged with zero movement, distortion, or animation in the entire video. Add only very subtle, natural background motion such as soft warm light or shadow shifts, faint dust particles , or gentle ambient shadows to create a premium cinematic feel. Do not add or generate any new symbols, faces, eyes, logos, graphics, or objects. Preserve the original image exactly as provided throughout the entire video. The sound should a soft music related to the image, that matched with video.\",\n  \"imageUrls\": [\n    \"{{ $json.data.resultJson.resultUrls[0] }}\"\n  ],\n  \"model\": \"veo3_lite\",\n  \"generationType\": \"FIRST_AND_LAST_FRAMES_2_VIDEO\",\n  \"duration\": 6,\n  \"callBackUrl\": \"http://your-callback-url.com/complete\",\n  \"aspect_ratio\": \"9:16\",\n  \"enableFallback\": false,\n  \"enableTranslation\": false\n}",
+        "options": {
+          "redirect": {
+            "redirect": {}
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1040,
+        688
+      ],
+      "id": "0a049b36-2d15-45b5-8ea8-f4b52379e0f4",
+      "name": "Veo3 generate video"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the output object from the AI Agent\nconst output = $input.item.json.output;\nconst separatedImages = [];\n\n// Loop from Image2 to Image7 and create individual items\nfor (let i = 2; i <= 7; i++) {\n  const imageName = `Image${i}`;\n  if (output[imageName]) {\n    separatedImages.push({\n      json: {\n        slide: imageName,\n        prompt: output[imageName]\n      }\n    });\n  }\n}\n\nreturn separatedImages;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -272,
+        128
+      ],
+      "id": "105853bc-1e50-4726-a6bd-3de038cddd84",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.kie.ai/api/v1/jobs/createTask",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_KIE_API_BEARER_TOKEN"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"nano-banana-2\",\n  \"callBackUrl\": \"https://your-domain.com/api/callback\",\n  \"input\": {\n    \"prompt\": {{ JSON.stringify($json.output.Image1) }},\n    \"image_input\": [\"YOUR_LOGO_URL\"],\n    \"aspect_ratio\": \"4:5\",\n    \"resolution\": \"1K\",\n    \"output_format\": \"png\"\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -48,
+        -64
+      ],
+      "id": "e065ad08-ef69-4a08-9036-d689a8a4930b",
+      "name": "Cover Image Generation"
+    },
+    {
+      "parameters": {
+        "numberInputs": 7
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        176,
+        -48
+      ],
+      "id": "55dc957d-146a-4273-aa99-0c8cb5c578c0",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SHEET_ID",
+          "mode": "list",
+          "cachedResultName": "Your Excel",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR_GOOGLE_SHEET_ID/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 358016233,
+          "mode": "list",
+          "cachedResultName": "Reel Post",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR_GOOGLE_SHEET_ID/edit#gid=358016233"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "row_number": "={{ $('Get row(s) in sheet1').item.json.row_number }}",
+            "Status": "Done"
+          },
+          "matchingColumns": [
+            "row_number"
+          ],
+          "schema": [
+            {
+              "id": "Content Idea",
+              "displayName": "Content Idea",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Video Url",
+              "displayName": "Video Url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2320,
+        704
+      ],
+      "id": "415a9f2a-c893-4c69-8f8c-648c3f295205",
+      "name": "Update row in sheet1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YOUR_CREDENTIALS_ID",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://api.kie.ai/api/v1/veo/record-info?taskId={{ $json.data.taskId }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_KIE_API_BEARER_TOKEN"
+            }
+          ]
+        },
+        "options": {
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          }
+        }
+      },
+      "id": "cc9acd39-1191-47ab-bc97-01d4e894474b",
+      "name": "Check Video Status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1424,
+        640
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Reel Automation\n**Double click** to edit me. [Guide](https://docs.n8n.io/workflows/components/sticky-notes/)",
+        "height": 592,
+        "width": 3648
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1152,
+        544
+      ],
+      "typeVersion": 1,
+      "id": "b9c712c7-bbf6-4f29-8699-4b9c04246bb4",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Carousel Post\n",
+        "height": 592,
+        "width": 3152
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1168,
+        -176
+      ],
+      "typeVersion": 1,
+      "id": "2a760169-e869-4e1b-bcb3-7ee9e6b610b5",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v25.0/YOUR_FACEBOOK_PAGE_ID/media",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "facebookGraphApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "children",
+              "value": "={{ $('Container Image 1').item.json.id }}, {{ $('Container Image 2').item.json.id }}, {{ $('Container Image 3').item.json.id }}, {{ $('Container Image 4').item.json.id }}, {{ $('Container Image 5').item.json.id }}, {{ $('Container Image 6').item.json.id }}, {{ $json.id }}"
+            },
+            {
+              "name": "caption",
+              "value": "={{ $('Carousel Agent').item.json.output.Caption }}"
+            },
+            {
+              "name": "media_type",
+              "value": "CAROUSEL"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "722f2156-1a14-42cd-8ec1-c06fbdaac9d3",
+      "name": "Container HTTP Carousel",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        -64,
+        1360
+      ],
+      "typeVersion": 4.2,
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "YOUR_FACEBOOK_CREDENTIALS_ID",
+          "name": "Facebook Graph account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v25.0/YOUR_FACEBOOK_PAGE_ID/media",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "facebookGraphApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "image_url",
+              "value": "={{ $json.resultUrls[0][0] }}"
+            },
+            {
+              "name": "is_carousel_item",
+              "value": "=true"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "6add067c-a631-4c43-a37d-333087e30254",
+      "name": "Container Image 1",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        272,
+        1664
+      ],
+      "typeVersion": 4.2,
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "YOUR_FACEBOOK_CREDENTIALS_ID",
+          "name": "Facebook Graph account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v25.0/YOUR_FACEBOOK_PAGE_ID/media",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "facebookGraphApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "image_url",
+              "value": "={{ $('Aggregate').item.json.resultUrls[0][1] }}"
+            },
+            {
+              "name": "is_carousel_item",
+              "value": "=true"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "0a2d6ea7-ad3b-4e77-ae7f-d08b141eabf6",
+      "name": "Container Image 2",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        448,
+        1520
+      ],
+      "typeVersion": 4.2,
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "YOUR_FACEBOOK_CREDENTIALS_ID",
+          "name": "Facebook Graph account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v25.0/YOUR_FACEBOOK_PAGE_ID/media",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "facebookGraphApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "image_url",
+              "value": "={{ $('Aggregate').item.json.resultUrls[0][2] }}"
+            },
+            {
+              "name": "is_carousel_item",
+              "value": "=true"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "6c46095f-7569-411d-8843-bb506a6bfbed",
+      "name": "Container Image 3",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        -80,
+        1664
+      ],
+      "typeVersion": 4.2,
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "YOUR_FACEBOOK_CREDENTIALS_ID",
+          "name": "Facebook Graph account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v25.0/YOUR_FACEBOOK_PAGE_ID/media",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "facebookGraphApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "image_url",
+              "value": "={{ $('Aggregate').item.json.resultUrls[0][3] }}"
+            },
+            {
+              "name": "is_carousel_item",
+              "value": "=true"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c2246911-4264-4206-bb2e-245ad724027d",
+      "name": "Container Image 4",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        112,
+        1680
+      ],
+      "typeVersion": 4.2,
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "YOUR_FACEBOOK_CREDENTIALS_ID",
+          "name": "Facebook Graph account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v25.0/YOUR_FACEBOOK_PAGE_ID/media",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "facebookGraphApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "image_url",
+              "value": "={{ $('Aggregate').item.json.resultUrls[0][5] }}"
+            },
+            {
+              "name": "is_carousel_item",
+              "value": "=true"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "89fc5cb0-88b3-4af1-a4e8-bff59dc73661",
+      "name": "Container Image 6",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        96,
+        1520
+      ],
+      "typeVersion": 4.2,
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "YOUR_FACEBOOK_CREDENTIALS_ID",
+          "name": "Facebook Graph account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v25.0/YOUR_FACEBOOK_PAGE_ID/media",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "facebookGraphApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "image_url",
+              "value": "={{ $('Aggregate').item.json.resultUrls[0][4] }}"
+            },
+            {
+              "name": "is_carousel_item",
+              "value": "=true"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ab22e09f-1c37-4dc8-82f0-6158d8a52d04",
+      "name": "Container Image 5",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        288,
+        1520
+      ],
+      "typeVersion": 4.2,
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "YOUR_FACEBOOK_CREDENTIALS_ID",
+          "name": "Facebook Graph account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v25.0/YOUR_FACEBOOK_PAGE_ID/media",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "facebookGraphApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "image_url",
+              "value": "={{ $('Aggregate').item.json.resultUrls[0][6] }}"
+            },
+            {
+              "name": "is_carousel_item",
+              "value": "=true"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c9cf9841-73dd-4638-b939-0f73d018a219",
+      "name": "Container Image 7",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        -80,
+        1520
+      ],
+      "typeVersion": 4.2,
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "YOUR_FACEBOOK_CREDENTIALS_ID",
+          "name": "Facebook Graph account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.kie.ai/api/v1/jobs/createTask",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_KIE_API_BEARER_TOKEN"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n    \"model\": \"nano-banana-2\",\n    \"callBackUrl\": \"https://your-domain.com/api/callback\",\n    \"input\": {\n        \"prompt\": \"{{ $('Reel Agent').item.json.output.Prompts[1] }}\",\n        \"image_input\": [\"YOUR_LOGO_URL\"],\n        \"aspect_ratio\": \"9:16\",\n        \"resolution\": \"1K\",\n        \"output_format\": \"png\"\n    }\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -96,
+        688
+      ],
+      "id": "08741082-1c83-4986-ab6b-3971e6fdd58f",
+      "name": "Image For Reel"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.kie.ai/api/v1/jobs/createTask",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_KIE_API_BEARER_TOKEN"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n    \"model\": \"nano-banana-2\",\n    \"callBackUrl\": \"https://your-domain.com/api/callback\",\n    \"input\": {\n        \"prompt\": \"{{ $json.output.Prompts[0] }}\",\n        \"image_input\": [\"YOUR_LOGO_URL\"],\n        \"aspect_ratio\": \"9:16\",\n        \"resolution\": \"1K\",\n        \"output_format\": \"png\"\n    }\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -288,
+        688
+      ],
+      "id": "9cdab94e-dfe9-403f-bc58-8fc7c0bf79e2",
+      "name": "Reel Thumbnail"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.kie.ai/api/v1/jobs/createTask",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_KIE_API_BEARER_TOKEN"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n    \"model\": \"nano-banana-2\",\n    \"callBackUrl\": \"https://your-domain.com/api/callback\",\n    \"input\": {\n        \"prompt\": {{ JSON.stringify($json[\"output.Prompts\"]) }},\n        \"image_input\": [\"YOUR_LOGO_URL\"],\n        \"aspect_ratio\": \"9:16\",\n        \"resolution\": \"1K\",\n        \"output_format\": \"png\"\n    }\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -192,
+        880
+      ],
+      "id": "03580a88-611b-484d-8652-de0322427bb5",
+      "name": "Older Version"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Crea un post Instagram completo per [COMPANY] basato sulla seguente idea di contenuto. In the Image Must have content like heading, sub heading and detail.\n\nIDEA DI CONTENUTO: {{ $json['Content Idea'] }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are the content strategist and creative director of [COMPANY], an Italian wellness and personal growth brand.\n\nLANGUAGE RULE:\nAll output text — Caption, slide headlines, subtitles, body copy, and any text described as overlaid on slides — must be written in Italian. JSON keys (Caption, Prompts) stay in English.\n\nCAROUSEL STRUCTURE — always 2 slides:\n\nSlide 1 is always a full-bleed cinematic photo cover. The subject is warm, intimate, and emotionally aligned with the content theme. The background, environment, and visual elements should be uniquely inspired by the specific content idea, message, or topic of the slide, avoiding repetitive subjects or recurring elements. No faces visible. Lighting is golden hour or soft diffused daylight with analog film grain and a soft vignette. A large bold serif headline in warm cream appears centered in the image. A smaller elegant italic subtitle appears directly below it. The exact attached [COMPANY] logo image must be placed as-is at the very bottom center of the slide — do not recreate, redraw, or describe it as text, use only the provided logo file exactly. All text must stay within the safe content area — away from all four edges with a comfortable inward margin — so nothing is hidden or clipped by Instagram's interface on any device. The Instagram Safe Zone is the central area of a Reel or Story canvas where you place important text and visuals to prevent them from being covered up by the app's native user interface buttons and account text overlays.\n\nSlide 2 is a solid background text slide with no photography, no objects, and no people. The background is a flat warm solid color #F4EbE2 with slightly darker edges and a warmer center giving quiet depth. The Italian headline appears bold and large in a suitable dark gray or black tone. Below it, 4 to 10 Italian sentences in soft cream serve as the body copy. No logo and no decorative elements. All text must stay within the safe content area with comfortable inward margins. The full slide text must be explicitly written inside the prompt so Nano Banana can render it accurately.\n\nBRAND VOICE — all copy always in Italian:\nTone is reflective, intimate, poetic, and invitational — never prescriptive or motivational-cliché. Sentences are short, rhythmic, and lyrical. No exclamation marks. No emojis. No anglicisms. Use present tense and second person singular (tu/ti). Use concrete sensory language, paradox, and poetic tension.\n\nIMAGE PROMPT RULES:\nEvery prompt must be 100% detailed and descriptive. Write the actual Italian headline and body text explicitly inside the prompt as visible overlay text. For Slide 1, describe the photograph, the overlaid Italian text, and the [COMPANY] logo at the bottom. For Slide 2, describe the solid #F4EbE2 background and include the full Italian headline and body copy. Never include hex codes, pixel sizes, font names, typographic specs, software names, or technical layout jargon inside the generated prompts. Every prompt must be a single continuous paragraph with no line breaks, no special characters, and no escape sequences. Prompts must be pixel-perfect descriptive for NanoBanana 2.\n\nCAPTION STRUCTURE — always in Italian:\nPoetic opening hook of 1 to 2 lines, followed by a brief context or question, then flowing prose paragraphs, then a closing reflection or invitation, then 5 to 10 relevant hashtags including #[COMPANY] #crescitapersonale #consapevolezza #benessere #mindfulness.\n\nOUTPUT FORMAT:\nRespond only with a valid JSON object. No text before or after. No markdown, no backticks, no comments. Start with { and end with }.\n\n{\n\"Caption\": \"Social Media Caption\",\n\"Image1\": \"Detailed prompt describing the first image...\",\n\"Image2\": \"Detailed prompt describing the second image...\"\n}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -624,
+        688
+      ],
+      "id": "96f2215f-dc37-4dc4-a7a2-ef8bb4199ac8",
+      "name": "Reel Agent"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Content idea: {{ $json['Content Idea(Don\\'t include how many slide in, only add idea )'] }}\n\nOUTPUT FORMAT:\nRespond only with a valid JSON object. No text before or after. No markdown, no backticks, no comments. Start with { and end with }.\n{\n  \"Caption\": \"Social Media Caption\",\n  \"Image1\": \"Detailed prompt describing the first image...\",\n  \"Image2\": \"Detailed prompt describing the second image...\",\n  \"Image3\": \"Detailed prompt describing the third image...\",\n  \"Image4\": \"Detailed prompt describing the fourth image...\",\n  \"Image5\": \"Detailed prompt describing the fifth image...\",\n  \"Image6\": \"Detailed prompt describing the sixth image...\",\n  \"Image7\": \"Detailed prompt describing the seventh image...\"\n}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are the content strategist and creative director of [COMPANY], an Italian wellness and personal growth brand.\n\nLANGUAGE RULE:\nAll output text — Caption, slide headlines, subtitles, body copy, and any text described as overlaid on slides — must be written in Italian. JSON keys (Caption, Prompts) stay in English.\n\nCAROUSEL STRUCTURE — always 7 slides:\n\nSlide 1 is always a full-bleed cinematic photo cover. The subject is warm, and emotionally aligned with the content theme. **The background, environment, and visual elements should be uniquely inspired by the specific content idea, message, or topic of the slide, avoiding repetitive subjects or recurring elements.** No faces visible. Lighting is golden hour or soft diffused daylight with analog film grain and a soft vignette. A large bold serif headline in warm cream appears centered in the lower-center of the image, with a smaller elegant italic subtitle directly below. The exact attached [COMPANY] logo image must be placed as-is at the very bottom center of the slide — do not recreate, redraw, or describe it as text, use only the provided logo file exactly. All text must stay within the safe content area — away from all four edges with a comfortable inward margin — so nothing is hidden or clipped by Instagram's interface on any device. The Instagram Safe Zone is the central area of a Reel or Story canvas where you place important text and visuals to prevent them from being covered up by the app's native user interface buttons and account text overlays. Important: The text should be Top-Center of the image; do not include text in the bottom of the image. logo should be bottom and not too big.\n\n\nSlides 2 through 7 are 100% solid #F4EbE2 background color (no gradient) with text slides with no photography, no objects, and no people. Each slide has a flat warm solid background color , no gradient — slightly darker at the edges, slightly warmer at the center — giving quiet depth. Each of the six slides uses same #F4EbE2 background color this one #F4EbE2. Never use other color as a background, use only #F4EbE2. The Italian headline appears bold and large in suitable color only black. Below it, 6 to 10  Italian sentences in black serve as the body copy. No logo and no decorative diamond on text slides. All text must stay within the safe content area — away from all four edges with a comfortable inward margin — so nothing is hidden or clipped by Instagram's interface on any device. From image two to seven every image should have enough content. In the prompt must be include the full text so Nanobanana can add. All Prompt should be 100% detail to get best result.\n\nBRAND VOICE — all copy always in Italian:\nTone is reflective, poetic, and invitational — never prescriptive or motivational-cliché. Sentences are short, rhythmic, and lyrical. No exclamation marks. No emojis. No anglicisms. Use present tense and second person singular (tu/ti). Use concrete sensory language, paradox, and poetic tension.\n\nIMAGE PROMPT RULES:\nEvery prompt is should be 100% detail and descriptive. Write the actual Italian headline and body text explicitly in the prompt as text that appears on the slide. For slide 1, describe the photograph, the overlaid Italian text, the [COMPANY] logo are only in the first image. For slides 2 to 7, describe the solid #F4EbE2 color background, the Italian headline and enough body copy visible on the slide. Never include hex codes, pixel sizes, font names, typographic specs, software names, or technical layout jargon. Every prompt must be a single continuous para with no line breaks, no special characters, and no escape sequences. Prompt should 100% pixel perfect describe to get accurate result by Nanobanana 2 model. \n\nCAPTION STRUCTURE — always in Italian:\nPoetic opening hook of 1 to 2 lines, followed by a brief context or question, then flowing prose body paragraphs, then a closing reflection or invitation, then 5 to 10 relevant hashtags including #[COMPANY] #crescitapersonale #consapevolezza #benessere #mindfulness.\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -624,
+        -80
+      ],
+      "id": "6b75b334-1d43-4543-9118-85eba9424c31",
+      "name": "Carousel Agent"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.kie.ai/api/v1/jobs/recordInfo?taskId={{ $('Reel Thumbnail').item.json.data.taskId }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_KIE_API_BEARER_TOKEN"
+            }
+          ]
+        },
+        "options": {
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          }
+        }
+      },
+      "id": "ecba2732-2df3-4872-b506-cc50da94da26",
+      "name": "Check Thumbnail Status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1600,
+        640
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "post",
+        "organizationId": "YOUR_BUFFER_ORG_ID",
+        "channelId": "YOUR_BUFFER_CHANNEL_ID|instagram",
+        "postText": "={{ $('Reel Agent').item.json.output.Caption }}",
+        "attachmentType": "video",
+        "videoUrl": "={{ $('Check Video Status').item.json.data.response.resultUrls[0] }}"
+      },
+      "type": "@bufferapp/n8n-nodes-buffer.buffer",
+      "typeVersion": 1,
+      "position": [
+        2112,
+        592
+      ],
+      "id": "39a8b530-b3b6-41cf-8daf-2bf3df1dc3a6",
+      "name": "Instagram Reel",
+      "credentials": {
+        "bufferApi": {
+          "id": "YOUR_BUFFER_CREDENTIALS_ID",
+          "name": "Buffer account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "post",
+        "organizationId": "YOUR_BUFFER_ORG_ID",
+        "channelId": "YOUR_BUFFER_CHANNEL_ID|instagram",
+        "postText": "={{ $('Reel Agent').item.json.output.Caption }}",
+        "attachmentType": "video",
+        "videoUrl": "={{ $('Check Video Status').item.json.data.response.resultUrls[0] }}"
+      },
+      "type": "@bufferapp/n8n-nodes-buffer.buffer",
+      "typeVersion": 1,
+      "position": [
+        2080,
+        752
+      ],
+      "id": "b814bdc7-0978-4363-83f3-c6c30ec815dd",
+      "name": "Facebook Reel",
+      "credentials": {
+        "bufferApi": {
+          "id": "YOUR_BUFFER_CREDENTIALS_ID",
+          "name": "Buffer account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "post",
+        "organizationId": "YOUR_BUFFER_ORG_ID",
+        "channelId": "YOUR_BUFFER_CHANNEL_ID|instagram",
+        "postText": "={{ $('Reel Agent').item.json.output.Caption }}",
+        "attachmentType": "video",
+        "videoUrl": "={{ $('Check Video Status').item.json.data.response.resultUrls[0] }}"
+      },
+      "type": "@bufferapp/n8n-nodes-buffer.buffer",
+      "typeVersion": 1,
+      "position": [
+        2048,
+        896
+      ],
+      "id": "b56137b5-243d-438d-8325-e057fac5c96a",
+      "name": "Tiktok Video",
+      "credentials": {
+        "bufferApi": {
+          "id": "YOUR_BUFFER_CREDENTIALS_ID",
+          "name": "Buffer account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v25.0/YOUR_FACEBOOK_PAGE_ID/media_publish",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "facebookGraphApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "creation_id",
+              "value": "={{ $json.id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a4806ed9-9971-4688-bd4a-8afa3be7adac",
+      "name": "Instagram Carousel Publish",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        96,
+        1360
+      ],
+      "typeVersion": 4.2,
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "YOUR_FACEBOOK_CREDENTIALS_ID",
+          "name": "Facebook Graph account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v25.0/YOUR_SECOND_FACEBOOK_PAGE_ID/photos",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "facebookGraphApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"url\": \"https://tempfile.aiquickdraw.com/p/your_image.png\",\n  \"published\": false\n}",
+        "options": {}
+      },
+      "id": "4ff6f22f-b4be-4311-80b0-bb4a9ea976aa",
+      "name": "Container Image ",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        -528,
+        1280
+      ],
+      "typeVersion": 4.2,
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "YOUR_FACEBOOK_CREDENTIALS_ID",
+          "name": "Facebook Graph account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v25.0/YOUR_SECOND_FACEBOOK_PAGE_ID/photos",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "facebookGraphApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "url",
+              "value": "=https://tempfile.aiquickdraw.com/images/1780498348076-spp5yuslx4.png"
+            },
+            {
+              "name": "published",
+              "value": "=false"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "3ff76f22-8452-4721-acd0-f81f8a5cb005",
+      "name": "Container Image 9",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        -304,
+        1296
+      ],
+      "typeVersion": 4.2,
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "YOUR_FACEBOOK_CREDENTIALS_ID",
+          "name": "Facebook Graph account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v25.0/YOUR_SECOND_FACEBOOK_PAGE_ID/photos",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "facebookGraphApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "url",
+              "value": "=https://tempfile.aiquickdraw.com/images/1780498338034-6u57zxk4dt8.png"
+            },
+            {
+              "name": "published",
+              "value": "=false"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "de6423cd-8edf-4f78-9a62-2caeeda7f2ad",
+      "name": "Container Image 10",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        -528,
+        1440
+      ],
+      "typeVersion": 4.2,
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "YOUR_FACEBOOK_CREDENTIALS_ID",
+          "name": "Facebook Graph account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v25.0/YOUR_SECOND_FACEBOOK_PAGE_ID/photos",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "facebookGraphApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "url",
+              "value": "=https://tempfile.aiquickdraw.com/images/1780498337380-77sr761qgog.png"
+            },
+            {
+              "name": "published",
+              "value": "=false"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "fa24d5ac-3619-4b0f-a5ef-013a6abd851b",
+      "name": "Container Image 11",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        -304,
+        1440
+      ],
+      "typeVersion": 4.2,
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "YOUR_FACEBOOK_CREDENTIALS_ID",
+          "name": "Facebook Graph account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v25.0/YOUR_SECOND_FACEBOOK_PAGE_ID/photos",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "facebookGraphApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "url",
+              "value": "=https://tempfile.aiquickdraw.com/images/1780498336393-skis7slu3g.png"
+            },
+            {
+              "name": "published",
+              "value": "=false"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "72ca41f5-9e13-4b40-8e64-42813102719a",
+      "name": "Container Image 12",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        -304,
+        1600
+      ],
+      "typeVersion": 4.2,
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "YOUR_FACEBOOK_CREDENTIALS_ID",
+          "name": "Facebook Graph account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v25.0/YOUR_SECOND_FACEBOOK_PAGE_ID/photos",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "facebookGraphApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "url",
+              "value": "=https://tempfile.aiquickdraw.com/images/1780498310427-egmvgc6avs4.png"
+            },
+            {
+              "name": "published",
+              "value": "=false"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "e4f64a9d-4676-4219-8ee2-72dd33bca5de",
+      "name": "Container Image 13",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        -528,
+        1600
+      ],
+      "typeVersion": 4.2,
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "YOUR_FACEBOOK_CREDENTIALS_ID",
+          "name": "Facebook Graph account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v25.0/YOUR_SECOND_FACEBOOK_PAGE_ID/photos",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "facebookGraphApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "url",
+              "value": "=https://tempfile.aiquickdraw.com/images/1780498338050-4qw93vhandk.png"
+            },
+            {
+              "name": "published",
+              "value": "=false"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "8baa8074-efed-4732-8c20-e69d2e9df26b",
+      "name": "Container Image 14",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        -432,
+        1744
+      ],
+      "typeVersion": 4.2,
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "YOUR_FACEBOOK_CREDENTIALS_ID",
+          "name": "Facebook Graph account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SHEET_ID",
+          "mode": "list",
+          "cachedResultName": "Your Excel",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR_GOOGLE_SHEET_ID/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR_GOOGLE_SHEET_ID/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Status",
+              "lookupValue": "=New"
+            }
+          ]
+        },
+        "options": {
+          "returnFirstMatch": true
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        288,
+        1360
+      ],
+      "id": "87a129e3-57c5-4be6-b2cc-ac9e7c2f43f9",
+      "name": "Get row(s) in sheet2",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YOUR_CREDENTIALS_ID",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SHEET_ID",
+          "mode": "list",
+          "cachedResultName": "Your Excel",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR_GOOGLE_SHEET_ID/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Carousel Post",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR_GOOGLE_SHEET_ID/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "row_number": "={{ $('Get row(s) in sheet').item.json.row_number }}",
+            "Status": "Done"
+          },
+          "matchingColumns": [
+            "row_number"
+          ],
+          "schema": [
+            {
+              "id": "Content Idea",
+              "displayName": "Content Idea",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "img",
+              "displayName": "img",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1728,
+        128
+      ],
+      "id": "58360997-7403-49c7-a069-b27dc0820cbd",
+      "name": "Update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YOUR_CREDENTIALS_ID",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.buffer.com",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_BUFFER_BEARER_TOKEN"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "query GetChannels {\n  channels(input: { organizationId: \"YOUR_BUFFER_ORG_ID\" }) {\n    id\n    name\n    service\n  }\n}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        528,
+        1376
+      ],
+      "id": "db8f961f-c10a-42f6-829e-17b41dd62c75",
+      "name": "Facebook Carousel Post1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.buffer.com",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_BUFFER_BEARER_TOKEN"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "=mutation CreateInstagramCarousel {\n  createPost(\n    input: {\n      text: \"This is a Sample post\"\n      channelId: \"YOUR_BUFFER_CHANNEL_ID\"\n      schedulingType: automatic\n      mode: shareNow\n      assets: [\n        { image: { url: \"{{ $json.resultUrls[0][0] }}\" } }\n        { image: { url: \"{{ $json.resultUrls[0][1] }}\" } }\n        { image: { url: \"{{ $json.resultUrls[0][2] }}\" } }\n        { image: { url: \"{{ $json.resultUrls[0][3] }}\" } }\n        { image: { url: \"{{ $json.resultUrls[0][4] }}\" } }\n        { image: { url: \"{{ $json.resultUrls[0][5] }}\" } }\n        { image: { url: \"{{ $json.resultUrls[0][6] }}\" } }\n      ]\n      metadata: {\n        facebook: {\n          type: post\n        }\n      }\n    }\n  ) {\n    ... on PostActionSuccess {\n      post {\n        id\n        text\n        dueAt\n        assets { id mimeType }\n      }\n    }\n    ... on MutationError {\n      message\n    }\n  }\n} "
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1616,
+        -96
+      ],
+      "id": "045e9898-71bd-4246-90db-2b6612ad9830",
+      "name": "Instagram Carousel Post1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.buffer.com",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_BUFFER_BEARER_TOKEN"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "=mutation CreateInstagramCarousel {\n  createPost(\n    input: {\n      text: \"{{ $('Carousel Agent').item.json.output.Caption }}\"\n      channelId: \"YOUR_BUFFER_CHANNEL_ID\"\n      schedulingType: automatic\n      mode: shareNow\n      assets: [\n        { image: { url: \"{{ $json.resultUrls[0][0] }}\" } }\n        { image: { url: \"{{ $json.resultUrls[0][1] }}\" } }\n        { image: { url: \"{{ $json.resultUrls[0][2] }}\" } }\n        { image: { url: \"{{ $json.resultUrls[0][3] }}\" } }\n        { image: { url: \"{{ $json.resultUrls[0][4] }}\" } }\n        { image: { url: \"{{ $json.resultUrls[0][5] }}\" } }\n        { image: { url: \"{{ $json.resultUrls[0][6] }}\" } }\n      ]\n      metadata: {\n        instagram: {\n          type: post\n          shouldShareToFeed: true\n        }\n      }\n    }\n  ) {\n    ... on PostActionSuccess {\n      post {\n        id\n        text\n        dueAt\n        assets { id mimeType }\n      }\n    }\n    ... on MutationError {\n      message\n    }\n  }\n} "
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1536,
+        160
+      ],
+      "id": "1547f7c9-14d4-4d63-acb3-2689c1d36d17",
+      "name": "Facebook Carousel Post"
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Carousel Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Image": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet1": {
+      "main": [
+        [
+          {
+            "node": "Reel Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Check Image Status1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Carousel Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Carousel Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Prompts": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Image Status1": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Parse Prompts",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Facebook Carousel Post",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Instagram Carousel Post1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger1": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Reel Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser2": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Reel Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait1": {
+      "main": [
+        [
+          {
+            "node": "Check Image Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Image Status": {
+      "main": [
+        [
+          {
+            "node": "Switch2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch2": {
+      "main": [
+        [
+          {
+            "node": "Parse Prompts1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Prompts1": {
+      "main": [
+        [
+          {
+            "node": "Veo3 generate video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch3": {
+      "main": [
+        [
+          {
+            "node": "Instagram Reel",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Facebook Reel",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Tiktok Video",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait2": {
+      "main": [
+        [
+          {
+            "node": "Check Video Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Veo3 generate video": {
+      "main": [
+        [
+          {
+            "node": "Wait2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Generate Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cover Image Generation": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Video Status": {
+      "main": [
+        [
+          {
+            "node": "Check Thumbnail Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Container Image 1": {
+      "main": [
+        [
+          {
+            "node": "Container Image 2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Container Image 2": {
+      "main": [
+        [
+          {
+            "node": "Container Image 3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Container Image 3": {
+      "main": [
+        [
+          {
+            "node": "Container Image 4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Container Image 4": {
+      "main": [
+        [
+          {
+            "node": "Container Image 5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Container Image 5": {
+      "main": [
+        [
+          {
+            "node": "Container Image 6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Container Image 6": {
+      "main": [
+        [
+          {
+            "node": "Container Image 7",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Container Image 7": {
+      "main": [
+        [
+          {
+            "node": "Container HTTP Carousel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Container HTTP Carousel": {
+      "main": [
+        [
+          {
+            "node": "Instagram Carousel Publish",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Image For Reel": {
+      "main": [
+        [
+          {
+            "node": "Wait1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reel Thumbnail": {
+      "main": [
+        [
+          {
+            "node": "Image For Reel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reel Agent": {
+      "main": [
+        [
+          {
+            "node": "Reel Thumbnail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Carousel Agent": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Cover Image Generation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Thumbnail Status": {
+      "main": [
+        [
+          {
+            "node": "Switch3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Instagram Reel": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Facebook Reel": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tiktok Video": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Container Image ": {
+      "main": [
+        [
+          {
+            "node": "Container Image 9",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Container Image 9": {
+      "main": [
+        [
+          {
+            "node": "Container Image 10",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Container Image 10": {
+      "main": [
+        [
+          {
+            "node": "Container Image 11",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Container Image 11": {
+      "main": [
+        [
+          {
+            "node": "Container Image 13",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Container Image 12": {
+      "main": [
+        [
+          {
+            "node": "Container Image 14",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Container Image 13": {
+      "main": [
+        [
+          {
+            "node": "Container Image 12",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Instagram Carousel Publish": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Facebook Carousel Post": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "3b1830b7-e9d5-4935-b4e2-efffcc5be9ab",
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "nodeGroups": [],
+  "id": "bsrg1R7Q5erX55EW",
+  "tags": []
+}

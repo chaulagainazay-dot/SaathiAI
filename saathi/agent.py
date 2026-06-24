@@ -107,7 +107,15 @@ _TOOL_ROUTES: dict[str, set[str]] = {
                 "self_status", "what_learned"},
     "nepali":  {"teach_nepali", "nepali_progress",
                 "english_log_mistake", "english_progress"},
-    "n8n":     {"trigger_n8n_workflow"},
+    "n8n":     {"trigger_n8n_workflow", "trigger_blueprint", "list_blueprints"},
+    "browser": {"ab_open", "ab_goto", "ab_snapshot", "ab_screenshot", "ab_get_text",
+                "ab_get_url", "ab_click", "ab_fill", "ab_press", "ab_eval",
+                "ab_find_text", "ab_batch", "ab_ai_chat", "ab_close", "ab_status"},
+    "mailerlite": {"ml_add_subscriber", "ml_get_subscriber", "ml_list_subscribers",
+                   "ml_list_groups", "ml_create_group", "ml_list_automations",
+                   "ml_get_automation", "ml_create_campaign", "ml_list_campaigns",
+                   "ml_stats"},
+    "prose":      {"clean_prose", "score_prose"},
 }
 
 _ALL_TOOL_NAMES = {t["name"] for t in TOOL_SCHEMAS}
@@ -139,7 +147,17 @@ def _select_tools(user_text: str) -> list[dict]:
         "health":  ["health", "status", "performance", "learn", "improve",
                     "self improve", "self status"],
         "nepali":  ["nepali", "english coach", "practice", "correction"],
-        "n8n":     ["n8n", "workflow", "automate"],
+        "n8n":     ["n8n", "workflow", "automate", "blueprint", "trigger blueprint",
+                    "email reply agent", "instagram carousel", "tiktok repost",
+                    "fb lead", "facebook comment", "social cross-post", "content publisher"],
+        "browser":    ["browser", "web scrape", "screenshot", "click", "navigate",
+                       "headless", "agent browser", "open website", "fill form",
+                       "ab_open", "ab_goto", "ab_snapshot", "automation"],
+        "mailerlite": ["mailerlite", "mailer", "subscriber", "ml_", "email list",
+                       "leads", "campaign", "automation", "nurture", "sequence",
+                       "group", "band 7", "cheatsheet lead"],
+        "prose":      ["clean prose", "fix writing", "remove ai", "stop slop", "score prose",
+                       "sounds ai", "ai tells", "too ai", "humanize", "edit copy"],
     }
 
     for group, keywords in kw_map.items():
@@ -148,7 +166,7 @@ def _select_tools(user_text: str) -> list[dict]:
 
     # If nothing matched beyond core, send content + research as safe defaults
     if selected == set(_CORE_TOOLS):
-        selected |= _TOOL_ROUTES["content"] | _TOOL_ROUTES["research"]
+        selected |= _TOOL_ROUTES["content"] | _TOOL_ROUTES["research"] | _TOOL_ROUTES["prose"]
 
     # Filter to only tools that actually exist in registry
     selected &= _ALL_TOOL_NAMES
@@ -351,6 +369,35 @@ class SaathiAgent:
             msg = resp.choices[0].message
             if not msg.tool_calls:
                 text = (msg.content or "").strip()
+                # Llama/Groq sometimes outputs tool calls as raw <function> XML in text
+                # Parse and execute them instead of returning them literally
+                if text and "<function" in text:
+                    import re as _re
+                    fn_matches = _re.findall(
+                        r'<function\s+(\w+)\s*(\{.*?\})\s*(?:</function>|/>)',
+                        text, _re.DOTALL)
+                    if fn_matches:
+                        tool_results = []
+                        for fn_name, fn_args_str in fn_matches:
+                            try:
+                                fn_args = json.loads(fn_args_str)
+                            except Exception:
+                                fn_args = {}
+                            activity.log_tool(session_id, fn_name, fn_args)
+                            try:
+                                res = execute_tool(fn_name, fn_args,
+                                                   session_id=session_id,
+                                                   speaker_verified=speaker_verified)
+                            except Exception as e:
+                                res = f"Error: {e}"
+                            tool_results.append(f"[{fn_name}]: {str(res)[:800]}")
+                        messages.append({"role": "assistant", "content": text})
+                        messages.append({"role": "user",
+                                         "content": "Tool results:\n" + "\n\n".join(tool_results) +
+                                                    "\n\nNow answer Ajay's question using these results. "
+                                                    "Reply in his language."})
+                        resp = self._create_with_retry(messages=messages, max_tokens=1500)
+                        return (resp.choices[0].message.content or "Done.").strip()
                 if text:
                     return text
                 # model returned empty text after tool use — force a final answer

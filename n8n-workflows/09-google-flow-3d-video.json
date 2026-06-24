@@ -1,0 +1,269 @@
+{
+  "name": "09 - Google Flow 3D Video (Veo 2 → YT/FB/IG)",
+  "nodes": [
+    {
+      "id": "trigger-schedule",
+      "name": "⏰ Schedule (8pm Nepal)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 300],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "15 14 * * *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "trigger-webhook",
+      "name": "🔗 Webhook (manual trigger)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 460],
+      "parameters": {
+        "path": "google-flow-video",
+        "responseMode": "onReceived",
+        "responseData": "firstEntryJson"
+      },
+      "webhookId": "google-flow-3d-video"
+    },
+    {
+      "id": "merge-triggers",
+      "name": "🔀 Merge triggers",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [480, 380],
+      "parameters": {
+        "mode": "passThrough",
+        "output": "input1"
+      }
+    },
+    {
+      "id": "call-baadar-generate",
+      "name": "🎬 Call Baadar: Generate Veo 2 Video",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [720, 380],
+      "parameters": {
+        "method": "POST",
+        "url": "http://127.0.0.1:8765/api/v1/studio/google_flow_video",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-Saathi-Token", "value": "={{ $env.SAATHI_TOKEN }}" },
+            { "name": "Content-Type",   "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "topic",   "value": "={{ $json.topic || '' }}" },
+            { "name": "use_veo", "value": true }
+          ]
+        },
+        "options": {
+          "timeout": 300000,
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "check-video-ok",
+      "name": "✅ Video generated?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [960, 380],
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true },
+          "conditions": [
+            {
+              "id": "check-ok",
+              "leftValue": "={{ $json.ok }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "equals" }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "upload-youtube",
+      "name": "▶️ Upload to YouTube",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1200, 280],
+      "parameters": {
+        "method": "POST",
+        "url": "http://127.0.0.1:8765/api/v1/tool",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-Saathi-Token", "value": "={{ $env.SAATHI_TOKEN }}" },
+            { "name": "Content-Type",   "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "tool",        "value": "publish_youtube" },
+            { "name": "video_path",  "value": "={{ $('Call Baadar: Generate Veo 2 Video').item.json.video_path }}" },
+            { "name": "title",       "value": "={{ $('Call Baadar: Generate Veo 2 Video').item.json.title }}" },
+            { "name": "description", "value": "={{ $('Call Baadar: Generate Veo 2 Video').item.json.caption_fb }}" },
+            { "name": "tags",        "value": "IELTS,IELTSTips,MrYeti,pielts,Shorts" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "post-instagram",
+      "name": "📸 Post to Instagram",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1200, 420],
+      "parameters": {
+        "method": "POST",
+        "url": "http://127.0.0.1:8765/api/v1/tool",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-Saathi-Token", "value": "={{ $env.SAATHI_TOKEN }}" },
+            { "name": "Content-Type",   "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "tool",    "value": "post_instagram_image" },
+            { "name": "caption", "value": "={{ $('Call Baadar: Generate Veo 2 Video').item.json.caption_ig }}" },
+            { "name": "image_url", "value": "https://i.imgur.com/4M7IWwP.jpeg" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "post-facebook",
+      "name": "📘 Post to Facebook",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1200, 560],
+      "parameters": {
+        "method": "POST",
+        "url": "http://127.0.0.1:8765/api/v1/tool",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-Saathi-Token", "value": "={{ $env.SAATHI_TOKEN }}" },
+            { "name": "Content-Type",   "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "tool",    "value": "post_facebook" },
+            { "name": "message", "value": "={{ $('Call Baadar: Generate Veo 2 Video').item.json.caption_fb }}" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "telegram-success",
+      "name": "📱 Telegram: Success",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1440, 420],
+      "parameters": {
+        "method": "POST",
+        "url": "http://127.0.0.1:8765/api/v1/tool",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-Saathi-Token", "value": "={{ $env.SAATHI_TOKEN }}" },
+            { "name": "Content-Type",   "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "tool",    "value": "send_telegram" },
+            { "name": "message", "value": "🎬 Google Flow video posted!\n\n📹 {{ $('Call Baadar: Generate Veo 2 Video').item.json.title }}\n🤖 Method: {{ $('Call Baadar: Generate Veo 2 Video').item.json.method }}\n🎞️ Scenes: {{ $('Call Baadar: Generate Veo 2 Video').item.json.scenes_generated }}\n\n▶️ YouTube: posted\n📸 IG: posted\n📘 FB: posted" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "telegram-fail",
+      "name": "⚠️ Telegram: Fallback",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1200, 680],
+      "parameters": {
+        "method": "POST",
+        "url": "http://127.0.0.1:8765/api/v1/tool",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-Saathi-Token", "value": "={{ $env.SAATHI_TOKEN }}" },
+            { "name": "Content-Type",   "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "tool",    "value": "send_telegram" },
+            { "name": "message", "value": "⚠️ Google Flow video generation failed — quote fallback posted instead.\nError: {{ $json.error || 'unknown' }}" }
+          ]
+        }
+      }
+    }
+  ],
+  "connections": {
+    "⏰ Schedule (8pm Nepal)":     { "main": [[{ "node": "🔀 Merge triggers",                        "type": "main", "index": 0 }]] },
+    "🔗 Webhook (manual trigger)": { "main": [[{ "node": "🔀 Merge triggers",                        "type": "main", "index": 1 }]] },
+    "🔀 Merge triggers":           { "main": [[{ "node": "🎬 Call Baadar: Generate Veo 2 Video",      "type": "main", "index": 0 }]] },
+    "🎬 Call Baadar: Generate Veo 2 Video": { "main": [[{ "node": "✅ Video generated?",            "type": "main", "index": 0 }]] },
+    "✅ Video generated?":         {
+      "main": [
+        [
+          { "node": "▶️ Upload to YouTube",  "type": "main", "index": 0 },
+          { "node": "📸 Post to Instagram",  "type": "main", "index": 0 },
+          { "node": "📘 Post to Facebook",   "type": "main", "index": 0 }
+        ],
+        [{ "node": "⚠️ Telegram: Fallback",  "type": "main", "index": 0 }]
+      ]
+    },
+    "▶️ Upload to YouTube":  { "main": [[{ "node": "📱 Telegram: Success", "type": "main", "index": 0 }]] },
+    "📸 Post to Instagram":  { "main": [[{ "node": "📱 Telegram: Success", "type": "main", "index": 0 }]] },
+    "📘 Post to Facebook":   { "main": [[{ "node": "📱 Telegram: Success", "type": "main", "index": 0 }]] }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveExecutionProgress": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "meta": {
+    "templateId": "09-google-flow-3d-video",
+    "description": "Veo 2 3D video generation pipeline for Mr. Yeti IELTS Shorts. Triggers at 8pm Nepal time (14:15 UTC) or via webhook. Calls Baadar /api/v1/studio/google_flow_video → uploads to YT → posts to FB/IG → Telegram notification.",
+    "version": "1.0.0"
+  }
+}

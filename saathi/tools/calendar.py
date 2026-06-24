@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Calendar + Reminders via macOS built-in apps (AppleScript).
 
 No cloud OAuth needed — uses the Calendar and Reminders apps already on the Mac.

@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "baadar",
+      "runtimeExecutable": "/Users/macbookpro/SaathiAI/.venv/bin/python",
+      "runtimeArgs": ["-m", "saathi.server"],
+      "port": 8765
+    }
+  ]
+}

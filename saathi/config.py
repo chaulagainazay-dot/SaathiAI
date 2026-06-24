@@ -16,6 +16,9 @@ GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "")
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash-lite")
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
 CLAUDE_MODEL = os.getenv("CLAUDE_MODEL", "claude-sonnet-4-6")
+# Cheap proxy — routes Anthropic API calls to Groq (free) via anthropic-proxy
+CHEAP_PROXY_URL = os.getenv("CHEAP_PROXY_URL", "http://localhost:8788")
+USE_CHEAP_PROXY = os.getenv("USE_CHEAP_PROXY", "0") == "1"
 # Groq — fastest brain (~0.3s), free tier, runs Llama/Qwen on LPU hardware
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
@@ -81,3 +84,7 @@ SAATHI_TOKEN = os.getenv("SAATHI_TOKEN", "")
 # --- GitHub Actions (for live status in Baadar UI) ---
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN", "")
 GITHUB_REPO  = os.getenv("GITHUB_REPO", "chaulagainazay-dot/SaathiAI")
+
+# --- MailerLite (email list backup) ---
+MAILERLITE_API_KEY  = os.getenv("MAILERLITE_API_KEY", "")
+MAILERLITE_GROUP_ID = os.getenv("MAILERLITE_GROUP_ID", "")

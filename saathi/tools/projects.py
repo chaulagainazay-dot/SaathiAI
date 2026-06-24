@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Project awareness — Baadar 'lives inside' Ajay's working projects.
 
 Registers project folders so Baadar knows them by name, can map their structure,

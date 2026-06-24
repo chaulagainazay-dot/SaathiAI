@@ -1,3 +1,4 @@
+from __future__ import annotations
 """HCGMS canteen queries against the live Supabase (REST API, service key).
 
 Schema matched to the real HCGMS database (June 2026).

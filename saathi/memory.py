@@ -1,3 +1,4 @@
+from __future__ import annotations
 """SQLite memory: conversation history + long-term facts with keyword recall."""
 import re
 import sqlite3

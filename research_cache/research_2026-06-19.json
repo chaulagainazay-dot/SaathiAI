@@ -1,0 +1,23 @@
+{
+  "date": "2026-06-19",
+  "google_trends": [
+    {
+      "source": "google_trends",
+      "error": "The request failed: Google returned a response with code 429"
+    }
+  ],
+  "reddit": [
+    {
+      "source": "reddit",
+      "error": "Client error '403 Blocked' for url 'https://www.reddit.com/r/IELTS/hot.json?limit=25'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/403"
+    }
+  ],
+  "youtube": [
+    {
+      "source": "youtube",
+      "error": "Client error '404 Not Found' for url 'https://yt.lemnoslife.com/noKey/search?q=IELTS+tips+2025&part=snippet&type=video&maxResults=10'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/404"
+    }
+  ],
+  "content_ideas": [],
+  "total_signals": 3
+}

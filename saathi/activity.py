@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Live activity feed — mirrors every step Baadar takes while it works on a task,
 so Ajay can watch what it's doing in real time inside the app.
 
