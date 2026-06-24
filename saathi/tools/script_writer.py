@@ -7,9 +7,12 @@ from datetime import datetime
 from pathlib import Path
 
 import httpx
+from .. import config
 
 _SCRIPTS_DIR = Path.home() / "SaathiAI" / "scripts_cache"
 _SCRIPTS_DIR.mkdir(parents=True, exist_ok=True)
+
+_PERSONA_PATH = config.ROOT / "data" / "yeti_persona.json"
 
 
 def _get_token() -> str:
@@ -24,23 +27,76 @@ def _get_token() -> str:
     return os.getenv("SAATHI_TOKEN", "")
 
 
-_SHORT_PROMPT = """You are Mr. Yeti, an enthusiastic IELTS teacher. Write a YouTube SHORT script (max 60 sec / ~150 words).
+def load_persona() -> dict:
+    """Load Mr. Yeti persona from yeti_persona.json."""
+    try:
+        return json.loads(_PERSONA_PATH.read_text())
+    except Exception:
+        return {}
+
+
+def persona_system_prompt() -> str:
+    """Format persona traits into a system prompt string."""
+    p = load_persona()
+    if not p:
+        return "You are Mr. Yeti, a funny direct IELTS teacher."
+    traits = ", ".join(p.get("traits", []))
+    openers = "\n".join(f"  - {o}" for o in p.get("signature_openers", []))
+    catchphrases = "\n".join(f"  - {c}" for c in p.get("catchphrases", []))
+    forbidden = ", ".join(f'"{w}"' for w in p.get("forbidden_phrases", []))
+    patterns = "\n".join(f"  - {s}" for s in p.get("speech_patterns", []))
+    return f"""You are {p.get('name', 'Mr. Yeti')} — {p.get('tagline', '')}.
+Personality traits: {traits}.
+Tone: {p.get('tone', '')}
+Speech patterns:
+{patterns}
+Signature openers (use one of these to start):
+{openers}
+Catchphrases (end with one of these):
+{catchphrases}
+NEVER say these words or phrases: {forbidden}.
+Stay in character at all times. Short sentences. Speak to 'you' directly."""
+
+
+_MR_YETI_SYSTEM = """You are a viral YouTube Shorts scriptwriter for Mr. Yeti — a funny, smart, brutally honest Pixar-style 3D animated Yeti who teaches IELTS.
+
+Channel formula:
+- Hook MUST stop the scroll in 3 seconds ("95% of IELTS students fail because of THIS")
+- People click: "Why You Keep Getting Band 5", "The Mistake That Destroyed My Score", "Yeti Exposes IELTS Scam"
+- People do NOT click: "IELTS Reading Tips", "IELTS Writing Lesson 12"
+- Mr. Yeti's personality: funny + brutally honest. He reacts dramatically to mistakes.
+- Always end with: "Practice free at pielts.web.app"
+- Write for animation — include stage directions, Mr. Yeti reactions, sound effects in [brackets]
+
+Content pillars:
+1. HORROR STORIES — Mr. Yeti acts out student mistakes with dramatic reactions
+2. BEFORE vs AFTER — Split screen Band 5 vs Band 8 difference
+3. DON'T SAY THIS — Wrong word → Mr. Yeti reaction → Band 8 alternative
+4. QUIZ CHALLENGE — Mr. Yeti asks question, 3-second countdown, huge retention
+5. FUNNY INTERVIEWS — Mr. Yeti interviews unusual characters (zombie, alien, dragon) taking IELTS
+
+Reply ONLY with valid JSON."""
+
+_SHORT_PROMPT = """Write a Mr. Yeti YouTube SHORT script (max 60 sec / ~150 words).
 
 Topic: {topic}
 Content type: {content_type}
+Pillar: {pillar}
 
 FORMAT (strict JSON):
 {{
-  "title": "Engaging YouTube title with keyword",
-  "hook": "Opening 10 seconds — shocking fact, question, or bold statement that stops the scroll",
-  "lesson": "Core 40-second lesson — clear, simple, actionable. Use 1 example sentence.",
-  "cta": "Final 10 seconds — 'Follow for daily IELTS tips! Practice free at pielts.web.app'",
-  "overlay_text": "3-line text for video overlay (word/tip/hook)",
+  "title": "Viral YouTube title — emotionally charged, not generic",
+  "hook": "First 3 seconds of narration — shocking/bold/question. Must stop the scroll.",
+  "scene_directions": "Animation stage directions for the full video [Mr. Yeti reactions, sound effects, text overlays]",
+  "narration": "Full word-for-word script with Mr. Yeti dialogue and reactions in [brackets]",
+  "cta": "Last 3 seconds — 'Practice free at pielts.web.app'",
+  "overlay_text": "3-line text for video overlay",
   "thumbnail_text": "Bold 4-word thumbnail text",
   "tags": ["tag1","tag2","tag3","tag4","tag5","tag6","tag7","tag8"],
-  "hashtags": "#IELTS #IELTSTips #Shorts",
+  "hashtags": "#IELTS #IELTSTips #Shorts #MrYeti",
   "difficulty": "beginner|intermediate|advanced",
-  "duration_sec": 45
+  "duration_sec": 45,
+  "pillar": "{pillar}"
 }}"""
 
 _LONG_PROMPT = """You are Mr. Yeti, expert IELTS teacher. Write a full YouTube video script (4-5 minutes / ~700 words).
@@ -69,18 +125,22 @@ FORMAT (strict JSON):
 }}"""
 
 
-def generate_script(topic: str, content_type: str = "tip", format: str = "short") -> dict:
+def generate_script(topic: str, content_type: str = "tip", format: str = "short",
+                    pillar: str = "horror_story", persona: bool = True) -> dict:
     """
-    Generate a complete YouTube script.
+    Generate a Mr. Yeti YouTube script via ChatGPT (falls back to Groq/Gemini).
     format: 'short' (60 sec) | 'long' (4-5 min)
     content_type: 'vocab' | 'tip' | 'mistake' | 'strategy' | 'speaking' | 'writing'
+    pillar: 'horror_story' | 'before_after' | 'dont_say' | 'quiz' | 'interview'
+    persona: if True, inject loaded persona traits into system prompt
     """
     prompt_template = _SHORT_PROMPT if format == "short" else _LONG_PROMPT
-    prompt = prompt_template.format(topic=topic, content_type=content_type)
+    prompt = prompt_template.format(topic=topic, content_type=content_type, pillar=pillar)
 
     try:
         from ._llm_helper import ask_llm
-        reply = ask_llm(prompt, timeout=60)
+        system = persona_system_prompt() if persona else _MR_YETI_SYSTEM
+        reply = ask_llm(prompt, system=system, timeout=60)
 
         import re
         match = re.search(r'\{.*\}', reply, re.DOTALL)
@@ -93,6 +153,7 @@ def generate_script(topic: str, content_type: str = "tip", format: str = "short"
         script["topic"] = topic
         script["content_type"] = content_type
         script["format"] = format
+        script["pillar"] = pillar
         script["generated_at"] = datetime.now().isoformat()
 
         # Save to cache

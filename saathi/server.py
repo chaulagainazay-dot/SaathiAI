@@ -802,6 +802,27 @@ async def studio_yeti_warmup(request: Request):
             results[pose] = {"ok": False, "error": str(e)}
     return results
 
+# Task 5 — Mr. Yeti Character Engine
+@app.get("/api/v1/yeti/persona")
+async def yeti_persona_get():
+    """Get current Mr. Yeti persona traits and configuration."""
+    from .tools.script_writer import load_persona
+    return {"ok": True, "persona": load_persona()}
+
+@app.post("/api/v1/yeti/persona")
+async def yeti_persona_update(request: Request):
+    """Update one or more fields in yeti_persona.json."""
+    import json as _json
+    from pathlib import Path
+    body = await request.json()
+    persona_path = config.ROOT / "data" / "yeti_persona.json"
+    current = {}
+    if persona_path.exists():
+        current = _json.loads(persona_path.read_text())
+    current.update(body)
+    persona_path.write_text(_json.dumps(current, indent=2, ensure_ascii=False))
+    return {"ok": True, "persona": current}
+
 # Stage 5 — Full Short Video (image + voice + music → MP4)
 class ShortVideoIn(BaseModel):
     topic: str = ""

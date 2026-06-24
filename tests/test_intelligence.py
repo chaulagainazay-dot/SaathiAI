@@ -81,3 +81,12 @@ def test_get_top_formats():
     tops = get_top_formats(2)
     assert tops[0] == "quiz"
     assert tops[1] == "story"
+
+
+# ── Task 5: Mr. Yeti Character Engine ──────────────────────────────────────────
+def test_persona_system_prompt_contains_traits():
+    from saathi.tools.script_writer import persona_system_prompt
+    prompt = persona_system_prompt()
+    assert "funny" in prompt
+    assert "Mr. Yeti" in prompt
+    assert "forbidden" in prompt.lower() or "never say" in prompt.lower()
