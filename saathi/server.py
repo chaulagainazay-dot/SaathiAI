@@ -2265,6 +2265,34 @@ async def analytics_insights(request: Request):
         return {"ok": False, "error": str(e)[:300]}
 
 
+@app.get("/api/v1/analytics/patterns")
+async def analytics_patterns():
+    """Return avg retention per format type and top performing formats."""
+    try:
+        from .tools.intelligence import get_format_avg_retention, get_top_formats
+        avgs = get_format_avg_retention()
+        tops = get_top_formats(3)
+        return {"ok": True, "avg_by_format": avgs, "top_formats": tops}
+    except Exception as e:
+        return {"ok": False, "error": str(e)[:300]}
+
+
+@app.post("/api/v1/analytics/patterns")
+async def analytics_patterns_save(request: Request):
+    """Save a viral pattern data point."""
+    try:
+        body = await request.json()
+        from .tools.intelligence import save_viral_pattern
+        save_viral_pattern(
+            body.get("hook", ""), body.get("topic", ""), body.get("format_type", "tip"),
+            body.get("retention_pct", 0), body.get("views", 0),
+            body.get("shares", 0), body.get("saves", 0), body.get("platform", "youtube")
+        )
+        return {"ok": True}
+    except Exception as e:
+        return {"ok": False, "error": str(e)[:300]}
+
+
 @app.post("/api/v1/comments/mine")
 async def comments_mine(request: Request):
     """Flow 10: Pull YouTube comments, extract video ideas."""

@@ -158,3 +158,32 @@ def get_all_retention(platform: str = None) -> list:
                 "SELECT * FROM video_retention ORDER BY recorded_at DESC"
             ).fetchall()
     return [dict(r) for r in rows]
+
+
+def save_viral_pattern(hook: str, topic: str, format_type: str, retention_pct: float,
+                       views: int, shares: int, saves: int, platform: str):
+    """Save a viral pattern data point to the database."""
+    with _conn() as c:
+        c.execute("""
+            INSERT INTO viral_patterns (hook, topic, format_type, retention_pct, views, shares, saves, platform)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """, (hook, topic, format_type, retention_pct, views, shares, saves, platform))
+
+
+def get_format_avg_retention() -> dict:
+    """Return avg retention per format_type (only formats with >=1 data points)."""
+    with _conn() as c:
+        rows = c.execute("""
+            SELECT format_type, AVG(retention_pct) as avg_ret, COUNT(*) as cnt
+            FROM viral_patterns
+            GROUP BY format_type
+            HAVING cnt >= 1
+            ORDER BY avg_ret DESC
+        """).fetchall()
+    return {r["format_type"]: round(r["avg_ret"], 1) for r in rows}
+
+
+def get_top_formats(n: int = 3) -> list:
+    """Return format_types sorted by avg retention descending."""
+    avgs = get_format_avg_retention()
+    return sorted(avgs, key=lambda k: avgs[k], reverse=True)[:n]

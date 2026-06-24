@@ -57,3 +57,27 @@ def test_generate_hooks_returns_top3():
     assert len(result["top3"]) == 3
     # top hook should be highest total score
     assert result["top3"][0] == "97% of students fail because of this."
+
+
+# ── Task 4: Viral Pattern Database ──────────────────────────────────────────
+def test_viral_pattern_avg_retention():
+    init_db()
+    from saathi.tools.intelligence import save_viral_pattern, get_format_avg_retention
+    save_viral_pattern("Hook A", "Grammar", "quiz", 82.0, 1000, 50, 30, "youtube")
+    save_viral_pattern("Hook B", "Grammar", "quiz", 78.0, 800, 40, 25, "youtube")
+    save_viral_pattern("Hook C", "Vocab", "vocab", 40.0, 300, 10, 5, "youtube")
+    avgs = get_format_avg_retention()
+    assert "quiz" in avgs
+    assert abs(avgs["quiz"] - 80.0) < 1.0
+    assert "vocab" in avgs
+
+
+def test_get_top_formats():
+    init_db()
+    from saathi.tools.intelligence import save_viral_pattern, get_top_formats
+    save_viral_pattern("Hook X", "Topic", "quiz",  80.0, 1000, 0, 0, "youtube")
+    save_viral_pattern("Hook Y", "Topic", "story", 65.0, 800, 0, 0, "youtube")
+    save_viral_pattern("Hook Z", "Topic", "vocab", 40.0, 300, 0, 0, "youtube")
+    tops = get_top_formats(2)
+    assert tops[0] == "quiz"
+    assert tops[1] == "story"
