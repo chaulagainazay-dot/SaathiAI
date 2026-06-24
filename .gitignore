@@ -11,3 +11,12 @@ __pycache__/
 *.egg-info/
 firebase-admin.json
 .superpowers/
+
+# Credentials and large binaries — never commit
+.proxy.env
+scripts/pielts-sa-key.json
+anthropic-proxy
+videos_output/
+reels_output/
+thumbnails/
+research_cache/
