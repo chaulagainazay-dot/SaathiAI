@@ -106,3 +106,23 @@ def test_classify_comments_adds_category():
         result = classify_comments(comments)
     assert result[0]["category"] == "question"
     assert "video_idea" in result[0]
+
+
+# ── Task 7: Competitor Intelligence ─────────────────────────────────────────
+def test_competitor_insights_returns_gaps():
+    init_db()
+    # Insert fake competitor data
+    db = os.getenv("BAADAR_DB", str(os.path.dirname(__file__) + "/../data/baadar.db"))
+    with sqlite3.connect(db) as c:
+        c.execute("""INSERT INTO competitor_data
+            (channel_name, channel_id, video_title, views, upload_date, topic_tags, scanned_at)
+            VALUES (?, ?, ?, ?, ?, ?, datetime('now'))""",
+            ("E2 IELTS", "UC_xyz", "IELTS Reading Tips", 50000, "2026-06-01", '["reading","tips"]'))
+        c.execute("""INSERT INTO competitor_data
+            (channel_name, channel_id, video_title, views, upload_date, topic_tags, scanned_at)
+            VALUES (?, ?, ?, ?, ?, ?, datetime('now'))""",
+            ("IELTS Liz", "UC_abc", "IELTS Writing Task 1", 30000, "2026-06-05", '["writing","task1"]'))
+    from saathi.tools.intelligence import get_competitor_insights
+    result = get_competitor_insights()
+    assert "top_topics" in result
+    assert "channels" in result

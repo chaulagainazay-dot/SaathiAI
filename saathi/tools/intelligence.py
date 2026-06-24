@@ -232,3 +232,86 @@ def get_video_ideas_from_comments(n: int = 10) -> list:
             LIMIT ?
         """, (n,)).fetchall()
     return [dict(r) for r in rows]
+
+
+# ── Task 7: Competitor Intelligence ──────────────────────────────────────────
+
+
+COMPETITOR_CHANNELS = {
+    "IELTS Advantage":  "UCJ5p5Pf4yCw6FVHISuDtkNA",
+    "E2 IELTS":         "UCqs-8qjL4x4oKr0HVqfCr_A",
+    "Fastrack IELTS":   "UCkFu3qQcMSDQFqBQIKFB5mQ",
+    "IELTS Liz":        "UCDvDnBXBSNGJwZmh-jCYJpw",
+}
+
+
+def scan_competitors() -> dict:
+    """Fetch top 5 videos from each competitor via YouTube Data API."""
+    import httpx
+    api_key = os.getenv("GOOGLE_API_KEY", "")
+    if not api_key:
+        return {"error": "GOOGLE_API_KEY not set"}
+    results = {}
+    for name, channel_id in COMPETITOR_CHANNELS.items():
+        try:
+            r = httpx.get(
+                "https://www.googleapis.com/youtube/v3/search",
+                params={
+                    "key": api_key, "channelId": channel_id, "part": "snippet",
+                    "order": "viewCount", "maxResults": 5, "type": "video",
+                    "publishedAfter": (
+                        datetime.now(timezone.utc) - timedelta(days=30)
+                    ).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                },
+                timeout=15,
+            )
+            items = r.json().get("items", [])
+            channel_results = []
+            with _conn() as c:
+                for item in items:
+                    snippet = item["snippet"]
+                    title = snippet.get("title", "")
+                    published = snippet.get("publishedAt", "")[:10]
+                    c.execute("""
+                        INSERT OR IGNORE INTO competitor_data
+                            (channel_name, channel_id, video_title, views, upload_date, topic_tags)
+                        VALUES (?, ?, ?, ?, ?, ?)
+                    """, (name, channel_id, title, 0, published, json.dumps([])))
+                    channel_results.append({"title": title, "published": published})
+            results[name] = channel_results
+        except Exception as e:
+            results[name] = {"error": str(e)}
+    return results
+
+
+def get_competitor_insights() -> dict:
+    """Analyze competitor data — top topics, upload frequency, gaps."""
+    with _conn() as c:
+        rows = c.execute(
+            "SELECT channel_name, video_title, views, upload_date FROM competitor_data ORDER BY scanned_at DESC"
+        ).fetchall()
+    channels: dict = {}
+    all_titles = []
+    for r in rows:
+        channels.setdefault(r["channel_name"], []).append(r["video_title"])
+        all_titles.append(r["video_title"])
+    # Use LLM to find topic patterns and gaps
+    if all_titles:
+        prompt = f"""These are recent video titles from top IELTS YouTube channels:
+{json.dumps(all_titles[:40], ensure_ascii=False)}
+
+Analyze and return:
+1. top_topics: list of 5 most common topics (e.g. "Writing Task 2", "Speaking Part 1")
+2. gaps: list of 3 topics rarely covered that Mr. Yeti could own
+3. upload_pattern: observation about how often they upload
+
+Return ONLY valid JSON: {{"top_topics": [...], "gaps": [...], "upload_pattern": "..."}}"""
+        try:
+            data = extract_json(ask_llm(prompt))
+        except Exception:
+            data = {"top_topics": [], "gaps": [], "upload_pattern": "unknown"}
+    else:
+        data = {"top_topics": [], "gaps": [], "upload_pattern": "no data yet"}
+    data["channels"] = {k: len(v) for k, v in channels.items()}
+    data["total_videos_tracked"] = len(all_titles)
+    return data

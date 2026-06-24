@@ -2356,6 +2356,30 @@ async def comments_classify(request: Request):
         return {"ok": False, "error": str(e)[:300]}
 
 
+@app.post("/api/v1/competitors/scan")
+async def competitors_scan():
+    """Fetch top 5 videos from each competitor channel."""
+    from .tools.intelligence import scan_competitors
+    import asyncio
+    try:
+        result = await asyncio.get_event_loop().run_in_executor(None, scan_competitors)
+        return {"ok": True, "results": result}
+    except Exception as e:
+        return {"ok": False, "error": str(e)[:300]}
+
+
+@app.get("/api/v1/competitors/insights")
+async def competitors_insights():
+    """Return pattern analysis from competitor data."""
+    from .tools.intelligence import get_competitor_insights
+    import asyncio
+    try:
+        result = await asyncio.get_event_loop().run_in_executor(None, get_competitor_insights)
+        return {"ok": True, **result}
+    except Exception as e:
+        return {"ok": False, "error": str(e)[:300]}
+
+
 @app.post("/api/v1/trends/scan")
 async def trends_scan(request: Request):
     """Flow 11: Scan Reddit + YouTube trends, generate topic ideas."""
