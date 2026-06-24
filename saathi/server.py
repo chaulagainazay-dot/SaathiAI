@@ -2334,6 +2334,28 @@ async def comments_ideas(request: Request):
         return {"ok": False, "error": str(e)[:300]}
 
 
+@app.get("/api/v1/comments/video-ideas")
+async def comments_video_ideas(n: int = 10):
+    """Return top video ideas extracted from comments."""
+    try:
+        from .tools.intelligence import get_video_ideas_from_comments
+        return {"ok": True, "ideas": get_video_ideas_from_comments(n)}
+    except Exception as e:
+        return {"ok": False, "error": str(e)[:300]}
+
+
+@app.post("/api/v1/comments/classify")
+async def comments_classify(request: Request):
+    """Classify a batch of comments and save to DB."""
+    try:
+        body = await request.json()
+        comments = body.get("comments", [])
+        from .tools.intelligence import classify_comments
+        return {"ok": True, "results": classify_comments(comments)}
+    except Exception as e:
+        return {"ok": False, "error": str(e)[:300]}
+
+
 @app.post("/api/v1/trends/scan")
 async def trends_scan(request: Request):
     """Flow 11: Scan Reddit + YouTube trends, generate topic ideas."""

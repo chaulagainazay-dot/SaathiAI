@@ -7,6 +7,7 @@ from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
 from .. import config
+from ._llm_helper import ask_llm, extract_json
 
 DB_PATH = os.getenv("BAADAR_DB", str(config.ROOT / "data" / "baadar.db"))
 
@@ -187,3 +188,47 @@ def get_top_formats(n: int = 3) -> list:
     """Return format_types sorted by avg retention descending."""
     avgs = get_format_avg_retention()
     return sorted(avgs, key=lambda k: avgs[k], reverse=True)[:n]
+
+
+def classify_comments(comments: list) -> list:
+    """Use LLM to classify comments and extract video ideas."""
+    if not comments:
+        return []
+    batch = [{"comment_text": c.get("text", c.get("comment_text", "")),
+              "video_id": c.get("video_id", "")} for c in comments[:50]]
+    prompt = f"""Classify each of these YouTube/TikTok comments from an IELTS channel.
+For each comment, assign:
+- category: one of "question", "pain_point", "request", "praise", "other"
+- video_idea: a short title for a video that answers this comment (or "" if not applicable)
+
+Comments:
+{json.dumps(batch, ensure_ascii=False)}
+
+Return ONLY valid JSON:
+{{"results": [{{"comment_text": "...", "category": "...", "video_idea": "..."}}]}}"""
+    raw = ask_llm(prompt, system="You classify social media comments. Reply ONLY with valid JSON.")
+    data = extract_json(raw)
+    results = data.get("results", [])
+    # Save to DB
+    with _conn() as c:
+        for item in results:
+            c.execute("""
+                INSERT INTO comment_intelligence (platform, comment_text, category, video_idea, source_video_id)
+                VALUES (?, ?, ?, ?, ?)
+            """, ("youtube", item.get("comment_text", ""), item.get("category", "other"),
+                  item.get("video_idea", ""), item.get("video_id", "")))
+    return results
+
+
+def get_video_ideas_from_comments(n: int = 10) -> list:
+    """Return top video ideas from comments, ranked by frequency."""
+    with _conn() as c:
+        rows = c.execute("""
+            SELECT video_idea, COUNT(*) as freq, category
+            FROM comment_intelligence
+            WHERE video_idea != ''
+            GROUP BY video_idea
+            ORDER BY freq DESC
+            LIMIT ?
+        """, (n,)).fetchall()
+    return [dict(r) for r in rows]

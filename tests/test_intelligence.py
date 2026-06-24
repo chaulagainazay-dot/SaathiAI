@@ -90,3 +90,19 @@ def test_persona_system_prompt_contains_traits():
     assert "funny" in prompt
     assert "Mr. Yeti" in prompt
     assert "forbidden" in prompt.lower() or "never say" in prompt.lower()
+
+
+# ── Task 6: Comment Intelligence ────────────────────────────────────────────────
+def test_classify_comments_adds_category():
+    fake_response = json.dumps({
+        "results": [
+            {"comment_text": "What tense should I use in Task 2?",
+             "category": "question", "video_idea": "IELTS Writing Task 2 tense guide"}
+        ]
+    })
+    comments = [{"text": "What tense should I use in Task 2?", "video_id": "vid1"}]
+    with mock.patch("saathi.tools.intelligence.ask_llm", return_value=fake_response):
+        from saathi.tools.intelligence import classify_comments
+        result = classify_comments(comments)
+    assert result[0]["category"] == "question"
+    assert "video_idea" in result[0]
