@@ -1,7 +1,25 @@
-# SaathiAI 🎙️
+---
+title: Baadar AI
+emoji: 🏔️
+colorFrom: purple
+colorTo: blue
+sdk: docker
+app_port: 7860
+pinned: true
+---
 
-Ajay's personal bilingual (Nepali + English) voice agent. Runs in the background on the
-MacBook; usable by voice from the phone (PWA) and the Mac browser.
+# Baadar / SaathiAI 🎙️
+
+Ajay's personal AI assistant + social content engine. FastAPI on Hugging Face Spaces.
+Dashboard: `/dashboard.html`  |  Health: `/api/v1/health`
+
+## Quick deploy env vars (set in HF Space Settings → Variables and secrets)
+
+`FIREBASE_ADMIN_JSON` · `ANTHROPIC_API_KEY` · `GOOGLE_API_KEY` · `GROQ_API_KEY`
+`TELEGRAM_BOT_TOKEN` · `TELEGRAM_CHAT_ID` · `SAATHI_TOKEN` · `BAADAR_PASSWORD`
+`SUPABASE_URL` · `SUPABASE_SERVICE_KEY` · `CONNECTIONS_JSON` · `MAILERLITE_API_KEY`
+
+---
 
 ## What it does
 - **Talks like a friend** in Nepali, English, or mixed — replies in your language.
