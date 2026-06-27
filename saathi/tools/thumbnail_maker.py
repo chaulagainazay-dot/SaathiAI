@@ -95,9 +95,23 @@ def generate_thumbnail(title: str, thumbnail_text: str, style: str = "shocked") 
     out_path = _THUMBS_DIR / f"thumb_{ts}.jpg"
     img.save(str(out_path), "JPEG", quality=95)
 
+    # Upload thumbnail to R2 and remove local copy
+    final_path = str(out_path)
+    try:
+        from .r2_storage import upload_file as _r2_upload, is_configured as _r2_ok
+        if _r2_ok():
+            r2_url = _r2_upload(out_path, f"thumbnails/{out_path.name}", "image/jpeg")
+            try:
+                out_path.unlink()
+            except Exception:
+                pass
+            final_path = r2_url
+    except Exception as r2e:
+        print(f"⚠️  R2 thumbnail upload failed ({r2e}) — keeping local")
+
     return {
         "ok": True,
-        "thumbnail_path": str(out_path),
+        "thumbnail_path": final_path,
         "title": title,
         "thumbnail_text": thumbnail_text,
     }

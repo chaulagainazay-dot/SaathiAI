@@ -374,10 +374,23 @@ def make_daily_reel(slot: str = "auto") -> dict:
         video_path = _REELS_DIR / f"reel_{slot}_{ts}.mp4"
         _make_video(img_path, music_path, content["overlay_text"], video_path)
 
+    # Upload reel to R2 and remove local copy
+    final_video_path = str(video_path)
+    try:
+        from .r2_storage import upload_file as _r2_upload, is_configured as _r2_ok
+        if _r2_ok() and video_path.exists():
+            r2_url = _r2_upload(video_path, f"reels/{video_path.name}", "video/mp4")
+            try:
+                video_path.unlink()
+            except Exception:
+                pass
+            final_video_path = r2_url
+    except Exception as r2e:
+        print(f"⚠️  R2 reel upload failed ({r2e}) — keeping local")
 
     return {
         "ok": True,
-        "video_path": str(video_path),
+        "video_path": final_video_path,
         "slot": slot,
         "title": content["title"],
         "description": content["description"],

@@ -161,9 +161,23 @@ def create_short_video(
         if result.returncode != 0:
             return {"ok": False, "error": f"ffmpeg: {result.stderr[-400:]}"}
 
+    # Upload short video to R2
+    final_video_path = str(output_path)
+    try:
+        from .r2_storage import upload_file as _r2_upload, is_configured as _r2_ok
+        if _r2_ok() and output_path.exists():
+            r2_url = _r2_upload(output_path, f"mr_yeti/{output_path.name}", "video/mp4")
+            try:
+                output_path.unlink()
+            except Exception:
+                pass
+            final_video_path = r2_url
+    except Exception as r2e:
+        print(f"⚠️  R2 short video upload failed ({r2e}) — keeping local")
+
     return {
         "ok": True,
-        "video_path": str(output_path),
+        "video_path": final_video_path,
         "duration_sec": duration,
         "with_voice": with_voice,
         "title": script.get("title", ""),
@@ -249,9 +263,23 @@ def create_landscape_video(script: dict, pose: str = "teaching") -> dict:
         if result.returncode != 0:
             return {"ok": False, "error": result.stderr[-400:]}
 
+    # Upload landscape video to R2
+    final_video_path = str(output_path)
+    try:
+        from .r2_storage import upload_file as _r2_upload, is_configured as _r2_ok
+        if _r2_ok() and output_path.exists():
+            r2_url = _r2_upload(output_path, f"mr_yeti/{output_path.name}", "video/mp4")
+            try:
+                output_path.unlink()
+            except Exception:
+                pass
+            final_video_path = r2_url
+    except Exception as r2e:
+        print(f"⚠️  R2 landscape video upload failed ({r2e}) — keeping local")
+
     return {
         "ok": True,
-        "video_path": str(output_path),
+        "video_path": final_video_path,
         "format": "1920x1080_landscape",
         "title": script.get("title",""),
     }
@@ -671,6 +699,21 @@ def run_full_edit_pipeline(scene_clips: list, slug: str,
         result["thumbnail"] = thumb["path"]
 
     result["ok"] = True
+
+    # Upload final pipeline output to R2
+    try:
+        from .r2_storage import upload_file as _r2_upload, is_configured as _r2_ok
+        if _r2_ok() and working and Path(working).exists():
+            r2_url = _r2_upload(working, f"mr_yeti/{Path(working).name}", "video/mp4")
+            try:
+                Path(working).unlink()
+            except Exception:
+                pass
+            result["ready_to_publish"] = r2_url
+            working = r2_url
+    except Exception as r2e:
+        print(f"⚠️  R2 final video upload failed ({r2e}) — keeping local")
+
     print(f"[{slug}] ✅ Done → {working}")
     return result
 

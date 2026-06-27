@@ -36,7 +36,7 @@ section { margin-bottom: 32px; }
 section h2 { font-size: 14px; font-weight: 700; color: #7070a0; text-transform: uppercase; letter-spacing: .8px; margin-bottom: 14px; }
 
 /* STAT CARDS */
-.stat-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.stat-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
 .stat-card { background: #1a1a2e; border: 1px solid #2a2a4a; border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 6px; }
 .stat-card .icon { font-size: 24px; }
 .stat-card .label { font-size: 12px; color: #7070a0; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }
@@ -93,16 +93,18 @@ section h2 { font-size: 14px; font-weight: 700; color: #7070a0; text-transform: 
     <div class="header-right">
       <span class="uptime-badge" id="uptimeBadge">Up —</span>
       <button class="btn btn-sm" onclick="loadStatus()">↻ Reload</button>
+      <button class="btn btn-sm" onclick="cleanupDisk()">🗑️ Clean Disk</button>
     </div>
   </header>
 
   <!-- DB STATS -->
   <section>
-    <h2>Database</h2>
+    <h2>Database & System</h2>
     <div class="stat-row">
       <div class="stat-card"><div class="icon">🪝</div><div class="label">Hooks</div><div class="value" id="statHooks">—</div></div>
       <div class="stat-card"><div class="icon">📊</div><div class="label">Viral Patterns</div><div class="value" id="statPatterns">—</div></div>
       <div class="stat-card"><div class="icon">🔗</div><div class="label">Referral Events</div><div class="value" id="statReferrals">—</div></div>
+      <div class="stat-card"><div class="icon">💾</div><div class="label">Mac Disk Free</div><div class="value" id="statDisk">—</div></div>
     </div>
   </section>
 
@@ -189,6 +191,21 @@ function renderStatus(d) {
   document.getElementById('statHooks').textContent = d.db_stats?.total_hooks ?? '—';
   document.getElementById('statPatterns').textContent = d.db_stats?.total_patterns ?? '—';
   document.getElementById('statReferrals').textContent = d.db_stats?.total_referral_events ?? '—';
+  // disk stats
+  if (d.disk_stats) {
+    const free = d.disk_stats.free_gb;
+    const pct = d.disk_stats.used_pct;
+    const statDiskEl = document.getElementById('statDisk');
+    statDiskEl.textContent = `${free}GB (${pct}%)`;
+    // Color: red if < 10GB, green if > 20GB
+    if (free < 10) {
+      statDiskEl.style.color = '#ef4444';
+    } else if (free > 20) {
+      statDiskEl.style.color = '#10b981';
+    } else {
+      statDiskEl.style.color = '#a78bfa';
+    }
+  }
   // jobs
   const jobs = d.scheduler_jobs || [];
   document.getElementById('jobCount').textContent = `(${jobs.length})`;
@@ -210,7 +227,15 @@ function renderStatus(d) {
 async function loadStatus() {
   try {
     const r = await fetch('/api/v1/dashboard/status', {credentials: 'include'});
-    if (r.ok) renderStatus(await r.json());
+    if (r.ok) {
+      const d = await r.json();
+      // fetch disk stats in parallel
+      try {
+        const dr = await fetch('/api/v1/system/disk', {credentials: 'include'});
+        if (dr.ok) d.disk_stats = await dr.json();
+      } catch(e) {}
+      renderStatus(d);
+    }
   } catch(e) {}
 }
 
@@ -242,6 +267,23 @@ async function trigger(job) {
     const d = await r.json();
     if (d.ok) showToast('✅ ' + job.replace(/_/g,' ') + ' started', 'ok');
     else showToast('❌ ' + (d.error || 'Error'), 'err');
+  } catch(e) { showToast('❌ ' + e.message, 'err'); }
+}
+
+// ── Cleanup Disk ───────────────────────────────────────────────────────────
+async function cleanupDisk() {
+  try {
+    const r = await fetch('/api/v1/system/cleanup-disk', {
+      method: 'POST', credentials: 'include'
+    });
+    const d = await r.json();
+    if (d.ok) {
+      const total = d.cleaned.reduce((s, c) => s + c.freed_mb, 0);
+      showToast(`✅ Cleaned ${total.toFixed(1)}MB (${d.cleaned.map(c => c.dir).join(', ')})`, 'ok');
+      loadStatus();
+    } else {
+      showToast('❌ ' + (d.error || 'Cleanup failed'), 'err');
+    }
   } catch(e) { showToast('❌ ' + e.message, 'err'); }
 }
 

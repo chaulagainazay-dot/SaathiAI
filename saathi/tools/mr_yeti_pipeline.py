@@ -444,6 +444,17 @@ def _apply_chalkboard_captions(video_path: str, date_slug: str) -> str:
         out_name = Path(video_path).stem + "_chalk.mp4"
         out_path = OUT_DIR / out_name
         shutil.copy2(final, out_path)
+
+        # Upload to R2 and clean up local copy
+        from .r2_storage import upload_file as _r2_upload, is_configured as _r2_ok
+        if _r2_ok():
+            r2_url = _r2_upload(out_path, f"mr_yeti/{out_name}", "video/mp4")
+            try:
+                out_path.unlink()
+            except Exception:
+                pass
+            return r2_url
+
         return str(out_path)
     finally:
         shutil.rmtree(proj, ignore_errors=True)
@@ -670,6 +681,18 @@ def run_pipeline(topic: str = "", force: bool = False,
         from .thumbnail import generate as gen_thumb
         thumb_path = gen_thumb(short_path, title=results["title"],
                                slug=today.replace("-", ""))
+        # Upload thumbnail to R2
+        from .r2_storage import upload_file as _r2_upload, is_configured as _r2_ok
+        if _r2_ok() and thumb_path and Path(thumb_path).exists():
+            try:
+                r2_thumb = _r2_upload(thumb_path, f"thumbnails/{Path(thumb_path).name}", "image/jpeg")
+                try:
+                    Path(thumb_path).unlink()
+                except Exception:
+                    pass
+                thumb_path = r2_thumb
+            except Exception as r2e:
+                print(f"⚠️  R2 thumbnail upload failed ({r2e}) — keeping local")
         results["thumbnail"] = thumb_path
         print(f"✅ Thumbnail → {thumb_path}")
     except Exception as e:

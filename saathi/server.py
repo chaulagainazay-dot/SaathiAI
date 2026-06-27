@@ -16,6 +16,12 @@ app = FastAPI(title="SaathiAI")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"],
                    allow_headers=["*"])
 
+try:
+    from .tools.r2_storage import cleanup_old_local_dirs
+    cleanup_old_local_dirs()
+except Exception:
+    pass
+
 # Simple access key for remote/tunnel use. Local requests (the Mac itself)
 # are always allowed; remote requests must send X-Saathi-Token.
 import os as _os
@@ -2655,6 +2661,41 @@ def dashboard_trigger(body: TriggerIn, request: Request):
             threading.Thread(target=fn, daemon=True).start()
             return {"ok": True, "job": body.job}
     return JSONResponse({"error": f"Job '{body.job}' not found"}, status_code=404)
+
+
+# ── System monitoring ─────────────────────────────────────────────────────────
+
+@app.get("/api/v1/system/disk")
+async def system_disk(request: Request):
+    """Returns local disk usage — helps monitor if disk is filling up."""
+    if not _is_authed(request):
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+    import shutil
+    total, used, free = shutil.disk_usage("/")
+    gb = 1024**3
+    return {
+        "total_gb": round(total / gb, 1),
+        "used_gb": round(used / gb, 1),
+        "free_gb": round(free / gb, 1),
+        "used_pct": round(used / total * 100, 1),
+    }
+
+
+@app.post("/api/v1/system/cleanup-disk")
+async def cleanup_disk(request: Request):
+    """Delete local video/reel/thumbnail dirs to free disk space."""
+    if not _is_authed(request):
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+    import shutil
+    from . import config as _config
+    cleaned = []
+    for dirname in ("videos_output", "reels_output", "thumbnails"):
+        d = _config.ROOT / dirname
+        if d.exists():
+            size = sum(f.stat().st_size for f in d.rglob("*") if f.is_file())
+            shutil.rmtree(d, ignore_errors=True)
+            cleaned.append({"dir": dirname, "freed_mb": round(size / 1024**2, 1)})
+    return {"ok": True, "cleaned": cleaned}
 
 
 # ── Static client ─────────────────────────────────────────────────────────────
