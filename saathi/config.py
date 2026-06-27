@@ -103,9 +103,6 @@ GITHUB_REPO  = os.getenv("GITHUB_REPO", "chaulagainazay-dot/SaathiAI")
 MAILERLITE_API_KEY  = os.getenv("MAILERLITE_API_KEY", "")
 MAILERLITE_GROUP_ID = os.getenv("MAILERLITE_GROUP_ID", "")
 
-# --- Cloudflare R2 (cloud video/thumbnail storage, S3-compatible, free 10GB) ---
-R2_ENDPOINT_URL = os.getenv("R2_ENDPOINT_URL", "")
-R2_ACCESS_KEY_ID = os.getenv("R2_ACCESS_KEY_ID", "")
-R2_SECRET_ACCESS_KEY = os.getenv("R2_SECRET_ACCESS_KEY", "")
-R2_BUCKET = os.getenv("R2_BUCKET", "baadar-videos")
-R2_PUBLIC_URL = os.getenv("R2_PUBLIC_URL", "")
+# --- Firebase Storage (cloud video/thumbnail storage, free 5GB, no card needed) ---
+# Bucket name auto-derived from firebase-admin.json project_id if not set
+FIREBASE_STORAGE_BUCKET = os.getenv("FIREBASE_STORAGE_BUCKET", "")

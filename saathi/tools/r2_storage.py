@@ -1,77 +1,122 @@
 """
-r2_storage.py — Cloudflare R2 upload/download helper (S3-compatible).
+r2_storage.py — Firebase Storage upload helper.
 All video, thumbnail, and reel files go here instead of local disk.
+Falls back to local path if Firebase Storage is not configured.
+
+Same public interface as the original R2 version so no callers need changes.
 """
 import os
 from pathlib import Path
-from typing import Optional
 
-R2_ENDPOINT = os.getenv("R2_ENDPOINT_URL", "")          # https://<account_id>.r2.cloudflarestorage.com
-R2_ACCESS_KEY = os.getenv("R2_ACCESS_KEY_ID", "")
-R2_SECRET_KEY = os.getenv("R2_SECRET_ACCESS_KEY", "")
-R2_BUCKET = os.getenv("R2_BUCKET", "baadar-videos")
-R2_PUBLIC_URL = os.getenv("R2_PUBLIC_URL", "")          # optional CDN URL prefix
+# Firebase Storage bucket (default: <project_id>.appspot.com)
+_FB_BUCKET = os.getenv("FIREBASE_STORAGE_BUCKET", "")
 
-def _client():
-    import boto3
-    return boto3.client(
-        "s3",
-        endpoint_url=R2_ENDPOINT,
-        aws_access_key_id=R2_ACCESS_KEY,
-        aws_secret_access_key=R2_SECRET_KEY,
-        region_name="auto",
-    )
 
 def is_configured() -> bool:
-    return bool(R2_ENDPOINT and R2_ACCESS_KEY and R2_SECRET_KEY)
+    try:
+        _bucket()
+        return True
+    except Exception:
+        return False
+
+
+def _bucket():
+    """Return a firebase_admin.storage bucket handle, initialising the app if needed."""
+    import firebase_admin
+    from firebase_admin import credentials, storage
+
+    bucket_name = _FB_BUCKET or _default_bucket()
+    if not bucket_name:
+        raise RuntimeError("FIREBASE_STORAGE_BUCKET not set and project_id unknown")
+
+    # Reuse existing app if already initialised
+    try:
+        app = firebase_admin.get_app()
+    except ValueError:
+        sa_key = os.getenv("FIREBASE_SA_KEY", "")
+        if not sa_key:
+            raise RuntimeError("FIREBASE_SA_KEY not set")
+        cred = credentials.Certificate(sa_key)
+        app = firebase_admin.initialize_app(cred, {"storageBucket": bucket_name})
+
+    return storage.bucket(bucket_name, app=app)
+
+
+def _default_bucket() -> str:
+    """Read project_id from the service-account JSON and derive bucket name."""
+    sa_key = os.getenv("FIREBASE_SA_KEY", "")
+    if not sa_key:
+        return ""
+    try:
+        import json
+        with open(sa_key) as f:
+            data = json.load(f)
+        pid = data.get("project_id", "")
+        return f"{pid}.appspot.com" if pid else ""
+    except Exception:
+        return ""
+
+
+def _public_url(blob) -> str:
+    """Return a long-lived signed URL (1 year) for a GCS blob."""
+    import datetime
+    return blob.generate_signed_url(
+        expiration=datetime.timedelta(days=365),
+        method="GET",
+        version="v4",
+    )
+
 
 def upload_file(local_path: "str | Path", key: str, content_type: str = "video/mp4") -> str:
-    """Upload a local file to R2. Returns the public URL."""
-    if not is_configured():
-        return str(local_path)   # fallback: return local path if R2 not set up
-    _client().upload_file(
-        str(local_path), R2_BUCKET, key,
-        ExtraArgs={"ContentType": content_type}
-    )
-    return _public_url(key)
+    """Upload a local file to Firebase Storage. Returns a signed public URL."""
+    try:
+        bucket = _bucket()
+    except Exception:
+        return str(local_path)   # fallback: local path
+    blob = bucket.blob(key)
+    blob.upload_from_filename(str(local_path), content_type=content_type)
+    return _public_url(blob)
+
 
 def upload_bytes(data: bytes, key: str, content_type: str = "video/mp4") -> str:
-    """Upload bytes directly to R2. Returns the public URL."""
-    if not is_configured():
+    """Upload bytes directly to Firebase Storage. Returns a signed public URL."""
+    try:
+        bucket = _bucket()
+    except Exception:
         return key
-    import io
-    _client().upload_fileobj(io.BytesIO(data), R2_BUCKET, key,
-        ExtraArgs={"ContentType": content_type})
-    return _public_url(key)
+    blob = bucket.blob(key)
+    blob.upload_from_string(data, content_type=content_type)
+    return _public_url(blob)
+
 
 def download_url_to_r2(url: str, key: str, content_type: str = "video/mp4") -> str:
-    """Download a URL and stream it straight to R2. Returns public URL. Never touches disk."""
-    if not is_configured():
+    """Download a URL and upload it to Firebase Storage. Never touches disk."""
+    try:
+        bucket = _bucket()
+    except Exception:
         return url
     import httpx
     with httpx.stream("GET", url, timeout=120, follow_redirects=True) as r:
         r.raise_for_status()
-        import io
-        buf = io.BytesIO(r.read())
-    buf.seek(0)
-    _client().upload_fileobj(buf, R2_BUCKET, key,
-        ExtraArgs={"ContentType": content_type})
-    return _public_url(key)
+        data = r.read()
+    blob = bucket.blob(key)
+    blob.upload_from_string(data, content_type=content_type)
+    return _public_url(blob)
 
-def _public_url(key: str) -> str:
-    if R2_PUBLIC_URL:
-        return f"{R2_PUBLIC_URL.rstrip('/')}/{key}"
-    return f"{R2_ENDPOINT}/{R2_BUCKET}/{key}"
 
 def list_keys(prefix: str = "") -> list:
-    if not is_configured():
+    try:
+        return [b.name for b in _bucket().list_blobs(prefix=prefix)]
+    except Exception:
         return []
-    resp = _client().list_objects_v2(Bucket=R2_BUCKET, Prefix=prefix)
-    return [o["Key"] for o in resp.get("Contents", [])]
+
 
 def delete_key(key: str):
-    if is_configured():
-        _client().delete_object(Bucket=R2_BUCKET, Key=key)
+    try:
+        _bucket().blob(key).delete()
+    except Exception:
+        pass
+
 
 def cleanup_old_local_dirs():
     """Delete local video/reel/thumbnail directories to free disk."""
