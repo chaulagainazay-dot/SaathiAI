@@ -6,17 +6,66 @@ Form fields:
   transcript: str (optional) — if audio unavailable, score from text
   question: str — the question that was asked
   part: int — 1, 2, or 3
-Returns: {band_score, criteria, feedback, band8_sample, transcript, source}
+  duration_seconds: float (optional) — audio length for WPM calculation
+Returns: {band_score, criteria, feedback, band8_sample, transcript, source, speech_metrics}
+
+Speech metrics inspired by ai_speech_trainer_agent (awesome-llm-apps):
+  filler_count, filler_rate, words_per_minute, lexical_diversity, long_pauses_estimate
 """
 import json
 import os
 import re
 import tempfile
+from collections import Counter
 from pathlib import Path
 
 from openai import OpenAI
 
 from .. import config
+
+# Filler words common in South Asian English speakers (from speech trainer repo patterns)
+_FILLERS = {
+    "um", "uh", "uhh", "umm", "er", "err", "like", "basically", "actually",
+    "you know", "i mean", "kind of", "sort of", "right", "okay", "so yeah",
+    "well", "literally", "obviously", "honestly", "frankly"
+}
+
+
+def analyze_speech_metrics(transcript: str, duration_seconds=None) -> dict:
+    """
+    Pure-Python speech analysis — no extra deps.
+    Adapted from ai_speech_trainer_agent voice_analysis_tool patterns.
+    """
+    words = transcript.lower().split()
+    total_words = len(words)
+    if total_words == 0:
+        return {"filler_count": 0, "filler_rate": 0.0, "words_per_minute": 0,
+                "lexical_diversity": 0.0, "unique_words": 0, "word_count": 0}
+
+    # Filler word detection
+    filler_count = sum(1 for w in words if w.strip(".,!?;:") in _FILLERS)
+    # Also check bigrams for "you know", "i mean" etc.
+    bigrams = [f"{words[i]} {words[i+1]}" for i in range(len(words)-1)]
+    filler_count += sum(1 for bg in bigrams if bg in _FILLERS)
+    filler_rate = round(filler_count / total_words * 100, 1)
+
+    # Lexical diversity (Type-Token Ratio) — higher = richer vocabulary
+    unique_words = len(set(w.strip(".,!?;:") for w in words))
+    lexical_diversity = round(unique_words / total_words, 3)
+
+    # Speaking pace
+    wpm = None
+    if duration_seconds and duration_seconds > 0:
+        wpm = round(total_words / (duration_seconds / 60))
+
+    return {
+        "word_count": total_words,
+        "unique_words": unique_words,
+        "filler_count": filler_count,
+        "filler_rate": filler_rate,       # % of words that are fillers
+        "lexical_diversity": lexical_diversity,  # 0–1, target >0.65 for Band 7
+        "words_per_minute": wpm,          # None if no duration; target 120–150 for IELTS
+    }
 
 
 def _transcribe(audio_bytes: bytes, mime_type: str = "audio/webm") -> str:
@@ -91,6 +140,10 @@ Rules:
 - band8_sample: write a full Band 8 model answer (80-150 words) for this exact question
 - feedback: 2-3 sentences of direct encouragement + what to improve
 - pronunciation band: estimate 5.5-7.5 based on vocabulary sophistication (no audio = use 6.0 as neutral)
+- Use the speech_metrics data to inform fluency_coherence: high filler_rate (>10%) = lower fluency band; low lexical_diversity (<0.5) = lower lexical band; if wpm<100 or wpm>180 = note pacing issue
+
+Speech metrics (computed from transcript):
+{metrics}
 
 Question asked: {question}
 Student's transcript: {transcript}"""
@@ -118,13 +171,24 @@ def _heuristic_speaking(transcript: str, question: str, part: int) -> dict:
     }
 
 
-def evaluate_speaking(transcript: str, question: str, part: int = 1) -> dict:
+def evaluate_speaking(
+    transcript: str,
+    question: str,
+    part: int = 1,
+    duration_seconds=None,
+) -> dict:
+    metrics = analyze_speech_metrics(transcript or "", duration_seconds)
+
     if not transcript or len(transcript.strip()) < 10:
-        return _heuristic_speaking(transcript or "", question, part)
+        result = _heuristic_speaking(transcript or "", question, part)
+        result["speech_metrics"] = metrics
+        return result
 
     api_key = config.GOOGLE_API_KEY
     if not api_key or api_key.startswith("YOUR"):
-        return _heuristic_speaking(transcript, question, part)
+        result = _heuristic_speaking(transcript, question, part)
+        result["speech_metrics"] = metrics
+        return result
 
     model = os.getenv("GEMINI_MODEL", config.GEMINI_MODEL)
     try:
@@ -132,11 +196,19 @@ def evaluate_speaking(transcript: str, question: str, part: int = 1) -> dict:
             api_key=api_key,
             base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
         )
+        metrics_str = (
+            f"word_count={metrics['word_count']}, "
+            f"filler_count={metrics['filler_count']} ({metrics['filler_rate']}%), "
+            f"lexical_diversity={metrics['lexical_diversity']} (>0.65 = Band 7 target), "
+            f"wpm={'N/A' if metrics['words_per_minute'] is None else metrics['words_per_minute']}"
+            f" (target 120-150)"
+        )
         user_msg = _SPEAKING_PROMPT.format(
             part=part,
             schema=_SPEAKING_SCHEMA,
             question=question,
             transcript=transcript,
+            metrics=metrics_str,
         )
         response = client.chat.completions.create(
             model=model,
@@ -149,10 +221,12 @@ def evaluate_speaking(transcript: str, question: str, part: int = 1) -> dict:
         raw = re.sub(r"\s*```$", "", raw)
         result = json.loads(raw)
         result["source"] = "gemini"
+        result["speech_metrics"] = metrics
         return result
     except Exception as exc:
         fallback = _heuristic_speaking(transcript, question, part)
         fallback["ai_error"] = str(exc)
+        fallback["speech_metrics"] = metrics
         return fallback
 
 
@@ -161,8 +235,9 @@ def transcribe_and_evaluate(
     mime_type: str,
     question: str,
     part: int = 1,
+    duration_seconds=None,
 ) -> dict:
     transcript = _transcribe(audio_bytes, mime_type)
-    result = evaluate_speaking(transcript or "(inaudible)", question, part)
+    result = evaluate_speaking(transcript or "(inaudible)", question, part, duration_seconds)
     result["transcript"] = transcript
     return result

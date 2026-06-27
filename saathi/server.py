@@ -2577,6 +2577,7 @@ async def evaluate_speaking_endpoint(
     question: str = Form(""),
     part: int = Form(1),
     transcript: str = Form(""),
+    duration_seconds: float = Form(None),
     audio: UploadFile = File(None),
 ):
     from .tools.speaking_eval import transcribe_and_evaluate, evaluate_speaking
@@ -2584,9 +2585,9 @@ async def evaluate_speaking_endpoint(
         if audio and audio.filename:
             audio_bytes = await audio.read()
             mime_type = audio.content_type or "audio/webm"
-            result = transcribe_and_evaluate(audio_bytes, mime_type, question, part)
+            result = transcribe_and_evaluate(audio_bytes, mime_type, question, part, duration_seconds)
         else:
-            result = evaluate_speaking(transcript or "", question, part)
+            result = evaluate_speaking(transcript or "", question, part, duration_seconds)
             result["transcript"] = transcript
         return {"ok": True, **result}
     except Exception as e:
