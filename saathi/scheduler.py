@@ -756,6 +756,15 @@ def ab_result_check():
         pass
 
 
+def referral_score_check():
+    """6-hour job: Poll Firebase RTDB for users with band score improvements."""
+    try:
+        from .tools.referral import poll_score_improvements
+        poll_score_improvements()
+    except Exception:
+        pass
+
+
 JOBS = [
     (7, 0, None, morning_briefing),         # every day 7:00am  — morning briefing
     (7, 0, None, mr_yeti_7am),              # every day 7:00am  — 2 Shorts → YT Shorts + TikTok ✅
@@ -807,15 +816,6 @@ def _run_loop():
                 fired[i] = now.date()
                 threading.Thread(target=fn, daemon=True).start()
         time.sleep(30)
-
-
-def referral_score_check():
-    """6-hour job: Poll Firebase RTDB for users with band score improvements."""
-    try:
-        from .tools.referral import poll_score_improvements
-        poll_score_improvements()
-    except Exception:
-        pass
 
 
 def start():

@@ -23,6 +23,7 @@ import hashlib as _hashlib
 import secrets as _secrets
 
 ACCESS_TOKEN = _os.getenv("SAATHI_TOKEN", "")
+_SERVER_START = time.time()
 _RAW_PASSWORD = _os.getenv("BAADAR_PASSWORD", "")
 _PASSWORD_HASH = _hashlib.sha256(_RAW_PASSWORD.encode()).hexdigest() if _RAW_PASSWORD else ""
 
@@ -2585,6 +2586,78 @@ async def evaluate_speaking_endpoint(
     except Exception as e:
         return {"ok": False, "error": str(e)[:400]}
 
+
+# ── Dashboard API ────────────────────────────────────────────────────────────
+
+_ceo_cache: dict = {"ts": 0, "data": None}
+
+
+@app.get("/api/v1/dashboard/status")
+def dashboard_status(request: Request):
+    if not _is_authed(request):
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+    from .scheduler import JOBS as SCHEDULER_JOBS
+    # Scheduler jobs
+    jobs = []
+    for hh, mm, wd, fn in SCHEDULER_JOBS:
+        jobs.append({"time": f"{hh:02d}:{mm:02d}", "name": fn.__name__, "weekday": wd})
+    # DB stats
+    import sqlite3
+    db_stats = {"total_hooks": 0, "total_patterns": 0, "total_referral_events": 0}
+    try:
+        con = sqlite3.connect(str(config.DB_PATH))
+        try:
+            db_stats["total_hooks"] = con.execute("SELECT COUNT(*) FROM hooks").fetchone()[0]
+        except Exception:
+            pass
+        try:
+            db_stats["total_patterns"] = con.execute("SELECT COUNT(*) FROM viral_patterns").fetchone()[0]
+        except Exception:
+            pass
+        try:
+            db_stats["total_referral_events"] = con.execute("SELECT COUNT(*) FROM referral_events").fetchone()[0]
+        except Exception:
+            pass
+        con.close()
+    except Exception:
+        pass
+    return {"scheduler_jobs": jobs, "db_stats": db_stats, "server_uptime_seconds": time.time() - _SERVER_START}
+
+
+@app.get("/api/v1/dashboard/ceo")
+def dashboard_ceo(request: Request):
+    if not _is_authed(request):
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+    global _ceo_cache
+    if time.time() - _ceo_cache["ts"] < 300 and _ceo_cache["data"] is not None:
+        return {"ok": True, "dashboard": _ceo_cache["data"]}
+    try:
+        from .tools.intelligence import build_ceo_dashboard
+        result = build_ceo_dashboard()
+        _ceo_cache = {"ts": time.time(), "data": result}
+        return {"ok": True, "dashboard": result}
+    except Exception as e:
+        return {"ok": False, "error": str(e)[:300]}
+
+
+class TriggerIn(BaseModel):
+    job: str
+
+
+@app.post("/api/v1/dashboard/trigger")
+def dashboard_trigger(body: TriggerIn, request: Request):
+    if not _is_authed(request):
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+    from .scheduler import JOBS as SCHEDULER_JOBS
+    import threading
+    for hh, mm, wd, fn in SCHEDULER_JOBS:
+        if fn.__name__ == body.job:
+            threading.Thread(target=fn, daemon=True).start()
+            return {"ok": True, "job": body.job}
+    return JSONResponse({"error": f"Job '{body.job}' not found"}, status_code=404)
+
+
+# ── Static client ─────────────────────────────────────────────────────────────
 
 app.mount("/", StaticFiles(directory=str(config.ROOT / "client"), html=True),
           name="client")

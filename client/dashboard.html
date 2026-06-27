@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Baadar Mission Control</title>
+<link rel="icon" href="icon.png">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { min-height: 100%; font-family: -apple-system, 'Inter', 'Segoe UI', sans-serif; background: #0f0f1a; color: #f0f0ff; -webkit-font-smoothing: antialiased; }
+::-webkit-scrollbar { width: 5px; } ::-webkit-scrollbar-thumb { background: #2a2a4a; border-radius: 4px; }
+
+/* LOGIN */
+#loginScreen { position: fixed; inset: 0; background: #0f0f1a; z-index: 999; display: flex; align-items: center; justify-content: center; }
+.login-box { width: 320px; display: flex; flex-direction: column; gap: 16px; }
+.login-box h1 { font-size: 22px; font-weight: 800; color: #a78bfa; text-align: center; }
+.login-box p { font-size: 13px; color: #7070a0; text-align: center; }
+#loginPass { width: 100%; background: #1a1a2e; border: 1.5px solid #2a2a4a; color: #f0f0ff; border-radius: 12px; padding: 14px 16px; font-size: 18px; text-align: center; letter-spacing: 4px; outline: none; font-family: inherit; transition: border-color .2s; }
+#loginPass:focus { border-color: #6C3FCF; }
+#loginErr { color: #ef4444; font-size: 13px; text-align: center; min-height: 16px; }
+.login-btn { background: linear-gradient(135deg, #6C3FCF, #4c1d95); color: #fff; border: none; border-radius: 12px; padding: 14px; font-size: 15px; font-weight: 700; cursor: pointer; width: 100%; }
+.login-btn:hover { opacity: .88; }
+
+/* LAYOUT */
+#app { display: none; padding: 20px; max-width: 1100px; margin: 0 auto; }
+header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; flex-wrap: wrap; gap: 12px; }
+header h1 { font-size: 20px; font-weight: 900; color: #a78bfa; }
+.header-right { display: flex; align-items: center; gap: 12px; }
+.uptime-badge { background: #1a1a2e; border: 1px solid #2a2a4a; border-radius: 8px; padding: 6px 14px; font-size: 13px; color: #00BFA5; font-weight: 600; }
+.btn { background: #6C3FCF; color: #fff; border: none; border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 700; cursor: pointer; transition: opacity .15s; }
+.btn:hover { opacity: .8; }
+.btn-sm { padding: 6px 12px; font-size: 12px; }
+.btn-teal { background: #00856e; }
+
+section { margin-bottom: 32px; }
+section h2 { font-size: 14px; font-weight: 700; color: #7070a0; text-transform: uppercase; letter-spacing: .8px; margin-bottom: 14px; }
+
+/* STAT CARDS */
+.stat-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.stat-card { background: #1a1a2e; border: 1px solid #2a2a4a; border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 6px; }
+.stat-card .icon { font-size: 24px; }
+.stat-card .label { font-size: 12px; color: #7070a0; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }
+.stat-card .value { font-size: 32px; font-weight: 900; color: #a78bfa; }
+
+/* JOB GRID */
+.job-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; max-height: 340px; overflow-y: auto; padding-right: 4px; }
+.job-card { background: #1a1a2e; border: 1px solid #2a2a4a; border-radius: 12px; padding: 12px 14px; display: flex; align-items: center; gap: 10px; border-left: 3px solid #00BFA5; }
+.job-card.weekly { border-left-color: #f59e0b; }
+.time-badge { background: #6C3FCF22; color: #a78bfa; font-size: 12px; font-weight: 800; border-radius: 6px; padding: 3px 8px; white-space: nowrap; }
+.job-name { font-size: 13px; color: #c8c8f0; flex: 1; word-break: break-word; }
+.day-chip { background: #f59e0b22; color: #f59e0b; font-size: 10px; font-weight: 700; border-radius: 4px; padding: 2px 6px; flex-shrink: 0; }
+
+/* CEO DASHBOARD */
+.ceo-card { background: #1a1a2e; border: 1px solid #2a2a4a; border-radius: 14px; padding: 20px; }
+.ceo-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.ceo-header span { font-size: 14px; font-weight: 700; color: #a78bfa; }
+#ceoPre { font-size: 13px; line-height: 1.65; color: #c8c8f0; white-space: pre-wrap; max-height: 320px; overflow-y: auto; font-family: 'SF Mono', 'Fira Code', monospace; }
+.ceo-loading { color: #7070a0; font-size: 13px; font-style: italic; }
+
+/* QUICK TRIGGER */
+.trigger-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
+.trigger-btn { background: #1a1a2e; border: 1px solid #2a2a4a; border-radius: 12px; padding: 14px 16px; font-size: 14px; font-weight: 700; color: #f0f0ff; cursor: pointer; text-align: left; transition: background .15s, border-color .15s; }
+.trigger-btn:hover { background: #22224a; border-color: #6C3FCF; }
+.trigger-btn:active { transform: scale(.97); }
+
+/* TOAST */
+#toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: #1a1a2e; border: 1px solid #2a2a4a; color: #f0f0ff; padding: 12px 24px; border-radius: 10px; font-size: 14px; font-weight: 600; transition: transform .3s; z-index: 9999; pointer-events: none; }
+#toast.show { transform: translateX(-50%) translateY(0); }
+#toast.ok { border-color: #00BFA5; color: #00BFA5; }
+#toast.err { border-color: #ef4444; color: #ef4444; }
+
+@media (max-width: 580px) { .stat-row { grid-template-columns: 1fr 1fr; } .stat-row .stat-card:last-child { grid-column: 1 / -1; } }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div style="font-size:48px;text-align:center">🤖</div>
+    <h1>Baadar Mission Control</h1>
+    <p>Enter your Baadar password</p>
+    <input id="loginPass" type="password" placeholder="••••••••" autocomplete="current-password">
+    <div id="loginErr"></div>
+    <button class="login-btn" onclick="doLogin()">Unlock</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <header>
+    <h1>🤖 Baadar Mission Control</h1>
+    <div class="header-right">
+      <span class="uptime-badge" id="uptimeBadge">Up —</span>
+      <button class="btn btn-sm" onclick="loadStatus()">↻ Reload</button>
+    </div>
+  </header>
+
+  <!-- DB STATS -->
+  <section>
+    <h2>Database</h2>
+    <div class="stat-row">
+      <div class="stat-card"><div class="icon">🪝</div><div class="label">Hooks</div><div class="value" id="statHooks">—</div></div>
+      <div class="stat-card"><div class="icon">📊</div><div class="label">Viral Patterns</div><div class="value" id="statPatterns">—</div></div>
+      <div class="stat-card"><div class="icon">🔗</div><div class="label">Referral Events</div><div class="value" id="statReferrals">—</div></div>
+    </div>
+  </section>
+
+  <!-- SCHEDULER JOBS -->
+  <section>
+    <h2>Scheduler Jobs <span id="jobCount" style="font-size:12px;font-weight:400;color:#7070a0;margin-left:6px;"></span></h2>
+    <div class="job-grid" id="jobGrid"><div class="ceo-loading">Loading jobs…</div></div>
+  </section>
+
+  <!-- CEO DASHBOARD -->
+  <section>
+    <h2>CEO Dashboard Snapshot</h2>
+    <div class="ceo-card">
+      <div class="ceo-header">
+        <span>Last snapshot</span>
+        <button class="btn btn-sm btn-teal" onclick="loadCeo()">⟳ Refresh</button>
+      </div>
+      <pre id="ceoPre" class="ceo-loading">Click Refresh to load the CEO dashboard snapshot…</pre>
+    </div>
+  </section>
+
+  <!-- QUICK TRIGGER -->
+  <section>
+    <h2>Quick Trigger</h2>
+    <div class="trigger-grid">
+      <button class="trigger-btn" onclick="trigger('morning_briefing')">🌅 Morning Briefing</button>
+      <button class="trigger-btn" onclick="trigger('mr_yeti_7am')">🎬 Mr Yeti 7am</button>
+      <button class="trigger-btn" onclick="trigger('ceo_dashboard_job')">📊 CEO Dashboard</button>
+      <button class="trigger-btn" onclick="trigger('daily_trend_hunt')">🔍 Trend Hunt</button>
+      <button class="trigger-btn" onclick="trigger('daily_outreach')">📬 Reddit Outreach</button>
+      <button class="trigger-btn" onclick="trigger('daily_content')">📧 Daily Content</button>
+      <button class="trigger-btn" onclick="trigger('daily_health')">🩺 Health Check</button>
+      <button class="trigger-btn" onclick="trigger('nightly_analytics')">📈 Analytics Loop</button>
+    </div>
+  </section>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ── Auth ───────────────────────────────────────────────────────────────────
+async function doLogin() {
+  const pw = document.getElementById('loginPass').value;
+  const err = document.getElementById('loginErr');
+  err.textContent = '';
+  try {
+    const r = await fetch('/api/v1/auth/login', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({password: pw}), credentials: 'include'
+    });
+    const d = await r.json();
+    if (d.ok) {
+      // store token as cookie manually (server also sets it)
+      document.cookie = `baadar_session=${d.token};path=/;max-age=2592000`;
+      bootApp();
+    } else {
+      err.textContent = d.error || 'Wrong password';
+    }
+  } catch(e) { err.textContent = 'Connection error'; }
+}
+document.getElementById('loginPass').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+
+// ── Boot ───────────────────────────────────────────────────────────────────
+async function bootApp() {
+  const r = await fetch('/api/v1/dashboard/status', {credentials: 'include'});
+  if (r.status === 401) { document.getElementById('loginScreen').style.display = 'flex'; return; }
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  const d = await r.json();
+  renderStatus(d);
+}
+
+function fmtUptime(s) {
+  s = Math.floor(s);
+  const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60);
+  if (h > 0) return `Up ${h}h ${m}m`;
+  return `Up ${m}m`;
+}
+
+function renderStatus(d) {
+  // uptime
+  document.getElementById('uptimeBadge').textContent = fmtUptime(d.server_uptime_seconds || 0);
+  // db stats
+  document.getElementById('statHooks').textContent = d.db_stats?.total_hooks ?? '—';
+  document.getElementById('statPatterns').textContent = d.db_stats?.total_patterns ?? '—';
+  document.getElementById('statReferrals').textContent = d.db_stats?.total_referral_events ?? '—';
+  // jobs
+  const jobs = d.scheduler_jobs || [];
+  document.getElementById('jobCount').textContent = `(${jobs.length})`;
+  const grid = document.getElementById('jobGrid');
+  if (!jobs.length) { grid.innerHTML = '<div class="ceo-loading">No jobs found</div>'; return; }
+  const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  grid.innerHTML = jobs.map(j => {
+    const weekly = j.weekday !== null;
+    const dayLabel = weekly ? `<span class="day-chip">${DAYS[j.weekday] || j.weekday}</span>` : '';
+    const name = j.name.replace(/_/g, ' ');
+    return `<div class="job-card${weekly ? ' weekly' : ''}">
+      <span class="time-badge">${j.time}</span>
+      <span class="job-name">${name}</span>
+      ${dayLabel}
+    </div>`;
+  }).join('');
+}
+
+async function loadStatus() {
+  try {
+    const r = await fetch('/api/v1/dashboard/status', {credentials: 'include'});
+    if (r.ok) renderStatus(await r.json());
+  } catch(e) {}
+}
+
+// ── CEO Dashboard ──────────────────────────────────────────────────────────
+async function loadCeo() {
+  const pre = document.getElementById('ceoPre');
+  pre.textContent = 'Loading CEO dashboard… (may take 10-20s)';
+  pre.className = 'ceo-loading';
+  try {
+    const r = await fetch('/api/v1/dashboard/ceo', {credentials: 'include'});
+    const d = await r.json();
+    if (d.ok && d.dashboard) {
+      pre.textContent = d.dashboard;
+      pre.className = '';
+    } else {
+      pre.textContent = d.error || 'Failed to load';
+      pre.className = 'ceo-loading';
+    }
+  } catch(e) { pre.textContent = 'Error: ' + e.message; pre.className = 'ceo-loading'; }
+}
+
+// ── Trigger ────────────────────────────────────────────────────────────────
+async function trigger(job) {
+  try {
+    const r = await fetch('/api/v1/dashboard/trigger', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({job}), credentials: 'include'
+    });
+    const d = await r.json();
+    if (d.ok) showToast('✅ ' + job.replace(/_/g,' ') + ' started', 'ok');
+    else showToast('❌ ' + (d.error || 'Error'), 'err');
+  } catch(e) { showToast('❌ ' + e.message, 'err'); }
+}
+
+// ── Toast ──────────────────────────────────────────────────────────────────
+let _toastTimer;
+function showToast(msg, cls) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show ' + (cls || '');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => { t.className = cls || ''; }, 3000);
+}
+
+// ── Init ───────────────────────────────────────────────────────────────────
+bootApp();
+setInterval(loadStatus, 60000);
+</script>
+</body>
+</html>
