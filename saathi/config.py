@@ -106,3 +106,8 @@ MAILERLITE_GROUP_ID = os.getenv("MAILERLITE_GROUP_ID", "")
 # --- Firebase Storage (cloud video/thumbnail storage, free 5GB, no card needed) ---
 # Bucket name auto-derived from firebase-admin.json project_id if not set
 FIREBASE_STORAGE_BUCKET = os.getenv("FIREBASE_STORAGE_BUCKET", "")
+
+# --- Reference Library ---
+# awesome-llm-apps: 100+ production AI agent & RAG patterns (cloned locally)
+AWESOME_LLM_APPS_PATH = os.getenv("AWESOME_LLM_APPS_PATH",
+    str(Path.home() / "awesome-llm-apps"))

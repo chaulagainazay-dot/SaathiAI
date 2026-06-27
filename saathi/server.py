@@ -2594,6 +2594,30 @@ async def evaluate_speaking_endpoint(
         return {"ok": False, "error": str(e)[:400]}
 
 
+# ── Auto-Dev Agent ───────────────────────────────────────────────────────────
+
+@app.post("/api/v1/dev/auto")
+async def auto_dev_endpoint(request: Request):
+    """
+    Spec → Build → Review → Deploy loop.
+    Body: {"task": str, "project": "baadar|pielts", "deploy": bool}
+    Reference: ~/.claude/skills/auto-dev/README.md
+    Patterns: ~/awesome-llm-apps/
+    """
+    try:
+        body = await request.json()
+        task = body.get("task", "")
+        project = body.get("project", "baadar")
+        deploy = body.get("deploy", False)
+        if not task:
+            return {"ok": False, "error": "task is required"}
+        from .tools.auto_dev import run_auto_dev
+        result = await run_auto_dev(task, project, deploy)
+        return result
+    except Exception as e:
+        return {"ok": False, "error": str(e)[:500]}
+
+
 # ── Dashboard API ────────────────────────────────────────────────────────────
 
 _ceo_cache: dict = {"ts": 0, "data": None}
