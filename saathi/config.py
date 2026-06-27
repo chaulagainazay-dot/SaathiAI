@@ -1,11 +1,25 @@
 """SaathiAI configuration — loaded from environment / .env file."""
+import json
 import os
+import tempfile
 from pathlib import Path
 
 from dotenv import load_dotenv
 
 ROOT = Path(__file__).resolve().parent.parent
 load_dotenv(ROOT / ".env")
+
+# --- Firebase: support JSON content in env var (for cloud deployments) ---
+_fb_json_str = os.getenv("FIREBASE_CREDENTIALS_JSON", "")
+_fb_file = ROOT / "firebase-admin.json"
+if _fb_json_str and not _fb_file.exists():
+    try:
+        _tmp = tempfile.NamedTemporaryFile(suffix=".json", delete=False, mode="w")
+        json.dump(json.loads(_fb_json_str), _tmp)
+        _tmp.close()
+        os.environ.setdefault("FIREBASE_SA_KEY", _tmp.name)
+    except Exception:
+        pass
 
 # --- Brain ---
 # Free option: Google Gemini (free tier at aistudio.google.com).
