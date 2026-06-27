@@ -2723,6 +2723,23 @@ async def cleanup_disk(request: Request):
     return {"ok": True, "cleaned": cleaned}
 
 
+# ── Opik observability ───────────────────────────────────────────────────────
+
+@app.get("/api/v1/opik/status")
+def opik_status():
+    """Return Opik tracing status and dashboard link."""
+    try:
+        import opik
+        return {
+            "enabled": True,
+            "project": "baadar",
+            "dashboard": "https://www.comet.com/opik",
+            "sdk_version": opik.__version__,
+        }
+    except Exception as e:
+        return {"enabled": False, "error": str(e)}
+
+
 # ── Static client ─────────────────────────────────────────────────────────────
 
 app.mount("/", StaticFiles(directory=str(config.ROOT / "client"), html=True),

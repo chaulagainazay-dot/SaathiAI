@@ -1,5 +1,5 @@
 """Shared LLM caller for studio tools — calls Groq/Gemini directly, no server loopback."""
-import json, os, re
+import json, os, re, time
 from pathlib import Path
 
 
@@ -15,14 +15,16 @@ def _load_env():
 
 def ask_llm(prompt: str, system: str = "You are a helpful assistant. Reply ONLY with valid JSON.",
             timeout: int = 60, max_tokens: int = 4000) -> str:
-    """Call LLM directly. Priority: OpenAI GPT-4o → Groq → Gemini."""
+    """Call LLM directly. Priority: OpenAI GPT-4o → Groq → Gemini. All calls traced via Opik."""
     _load_env()
+    from .opik_tracer import trace_llm_call
 
     # ── 1. OpenAI ChatGPT (primary for creative/script work) ──────────────────
     openai_key = os.getenv("OPENAI_API_KEY", "")
     openai_model = os.getenv("OPENAI_MODEL", "gpt-4o")
     if openai_key and not openai_key.startswith("YOUR"):
         import httpx
+        t0 = time.monotonic()
         r = httpx.post(
             "https://api.openai.com/v1/chat/completions",
             headers={"Authorization": f"Bearer {openai_key}", "Content-Type": "application/json"},
@@ -30,7 +32,14 @@ def ask_llm(prompt: str, system: str = "You are a helpful assistant. Reply ONLY 
             timeout=timeout,
         )
         r.raise_for_status()
-        return r.json()["choices"][0]["message"]["content"]
+        data = r.json()
+        output = data["choices"][0]["message"]["content"]
+        usage = data.get("usage", {})
+        trace_llm_call("openai", openai_model, prompt, system, output,
+                       (time.monotonic() - t0) * 1000,
+                       {"prompt_tokens": usage.get("prompt_tokens"), "completion_tokens": usage.get("completion_tokens")},
+                       tags=["tool-call"])
+        return output
 
     # ── 2. Groq (fast free fallback) ──────────────────────────────────────────
     groq_key = os.getenv("GROQ_API_KEY", "")
@@ -39,6 +48,7 @@ def ask_llm(prompt: str, system: str = "You are a helpful assistant. Reply ONLY 
     if groq_key and not groq_key.startswith("YOUR"):
         import httpx
         try:
+            t0 = time.monotonic()
             r = httpx.post(
                 "https://api.groq.com/openai/v1/chat/completions",
                 headers={"Authorization": f"Bearer {groq_key}", "Content-Type": "application/json"},
@@ -49,22 +59,33 @@ def ask_llm(prompt: str, system: str = "You are a helpful assistant. Reply ONLY 
                 pass  # fall through to Gemini
             else:
                 r.raise_for_status()
-                return r.json()["choices"][0]["message"]["content"]
+                data = r.json()
+                output = data["choices"][0]["message"]["content"]
+                usage = data.get("usage", {})
+                trace_llm_call("groq", model, prompt, system, output,
+                               (time.monotonic() - t0) * 1000,
+                               {"prompt_tokens": usage.get("prompt_tokens"), "completion_tokens": usage.get("completion_tokens")},
+                               tags=["tool-call"])
+                return output
         except Exception:
             pass  # fall through to Gemini
 
-    # Fallback: Gemini
+    # ── 3. Gemini fallback ────────────────────────────────────────────────────
     gemini_key = os.getenv("GOOGLE_API_KEY", "")
     gemini_model = os.getenv("GEMINI_MODEL", "gemini-2.5-flash-lite")
     if gemini_key and not gemini_key.startswith("YOUR"):
         import httpx
+        t0 = time.monotonic()
         r = httpx.post(
             f"https://generativelanguage.googleapis.com/v1beta/models/{gemini_model}:generateContent?key={gemini_key}",
             json={"contents": [{"parts": [{"text": f"{system}\n\n{prompt}"}]}]},
             timeout=timeout,
         )
         r.raise_for_status()
-        return r.json()["candidates"][0]["content"]["parts"][0]["text"]
+        output = r.json()["candidates"][0]["content"]["parts"][0]["text"]
+        trace_llm_call("gemini", gemini_model, prompt, system, output,
+                       (time.monotonic() - t0) * 1000, tags=["tool-call"])
+        return output
 
     raise RuntimeError("No LLM API key available (GROQ_API_KEY or GOOGLE_API_KEY)")
 

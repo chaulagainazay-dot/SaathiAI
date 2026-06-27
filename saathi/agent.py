@@ -216,7 +216,12 @@ class SaathiAgent:
             self.model = config.OLLAMA_MODEL
         else:
             import anthropic
-            self.client = anthropic.Anthropic(api_key=config.ANTHROPIC_API_KEY)
+            raw_client = anthropic.Anthropic(api_key=config.ANTHROPIC_API_KEY)
+            try:
+                from opik.integrations.anthropic import track_anthropic
+                self.client = track_anthropic(raw_client)
+            except Exception:
+                self.client = raw_client
             self.model = config.CLAUDE_MODEL
 
     def complete(self, system: str, prompt: str, max_tokens: int = 400) -> str:
