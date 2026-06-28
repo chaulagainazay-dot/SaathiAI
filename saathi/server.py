@@ -28,6 +28,12 @@ try:
 except Exception:
     pass
 
+try:
+    from .agents.router import router as bma_router
+    app.include_router(bma_router)
+except Exception:
+    pass
+
 # Simple access key for remote/tunnel use. Local requests (the Mac itself)
 # are always allowed; remote requests must send X-Saathi-Token.
 import os as _os

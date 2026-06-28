@@ -1,0 +1,20 @@
+master_loop:
+  max_micro_agents: 2          # max micro-agents invoked per request
+  cross_pattern_threshold: 2   # same error in N skills → intervention
+
+memory:
+  working_capacity: 20         # interactions per student
+  episodic_db: data/baadar_episodic.db
+  semantic_db: data/baadar_semantic.db
+  chroma_path: data/chroma      # Phase 6: vector store
+
+sub_agents:
+  model: llama-3.3-70b-versatile
+  max_tokens: 400
+  temperature: 0.5
+
+safety:
+  band_min: 1.0
+  band_max: 9.0
+  blocked_patterns:
+    - "\\b(hack|cheat|exploit)\\b"
