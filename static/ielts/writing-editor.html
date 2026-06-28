@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mr. Yeti's Writing Coach - PIELTS</title>
+    <link rel="stylesheet" href="/ielts/mr-yeti.css">
+    <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs/loader.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: rgba(255,255,255,0.95);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            color: #2C3E50;
+            font-size: 20px;
+        }
+
+        .band-display {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+
+        .main-container {
+            display: flex;
+            flex: 1;
+            padding: 20px;
+            gap: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .editor-panel {
+            flex: 1;
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+
+        .task-info {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .task-info h3 {
+            color: #667eea;
+            margin-bottom: 8px;
+        }
+
+        #editor {
+            height: 500px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+        }
+
+        .stats-panel {
+            width: 300px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        }
+
+        .stat-card h4 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 14px;
+            text-transform: uppercase;
+        }
+
+        .word-count {
+            font-size: 36px;
+            font-weight: bold;
+            color: #2C3E50;
+        }
+
+        .correction-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .correction-item {
+            padding: 10px;
+            margin-bottom: 8px;
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            border-radius: 5px;
+            font-size: 13px;
+        }
+
+        .correction-item.fixed {
+            background: #d4edda;
+            border-left-color: #28a745;
+        }
+
+        .timer {
+            font-size: 24px;
+            font-weight: bold;
+            color: #e74c3c;
+            text-align: center;
+        }
+
+        .squiggly-error   { text-decoration: wavy underline #e74c3c; }
+        .squiggly-warning { text-decoration: wavy underline #f39c12; }
+
+        /* Yeti popup for inline corrections */
+        .yeti-popup {
+            position: absolute;
+            background: white;
+            padding: 12px 16px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            max-width: 280px;
+            z-index: 100;
+            display: none;
+            animation: popIn 0.3s ease;
+        }
+
+        .yeti-popup::before {
+            content: '🏔️';
+            font-size: 20px;
+            margin-right: 8px;
+        }
+
+        @keyframes popIn {
+            from { opacity: 0; transform: scale(0.8) translateY(10px); }
+            to   { opacity: 1; transform: scale(1)   translateY(0);    }
+        }
+
+        .yeti-popup.visible { display: block; }
+
+        .submit-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: transform 0.2s;
+        }
+
+        .submit-btn:hover { transform: translateY(-2px); }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎓 Mr. Yeti's Writing Classroom</h1>
+        <div class="band-display">Target Band: 7.0</div>
+    </div>
+
+    <div class="main-container">
+        <div class="editor-panel">
+            <div class="task-info">
+                <h3>Task 2: Essay Writing</h3>
+                <p>Some people think that the best way to reduce crime is to give longer prison sentences. To what extent do you agree or disagree?</p>
+            </div>
+            <div id="editor"></div>
+        </div>
+
+        <div class="stats-panel">
+            <div class="stat-card">
+                <h4>⏱️ Time Remaining</h4>
+                <div class="timer" id="timer">40:00</div>
+            </div>
+
+            <div class="stat-card">
+                <h4>📝 Word Count</h4>
+                <div class="word-count" id="wordCount">0</div>
+                <small>Target: 250+ words</small>
+            </div>
+
+            <div class="stat-card">
+                <h4>🔍 Corrections</h4>
+                <div class="correction-list" id="correctionList">
+                    <p style="color: #999; font-size: 13px;">Start writing to see corrections...</p>
+                </div>
+            </div>
+
+            <button class="submit-btn" onclick="submitEssay()">Submit Essay</button>
+        </div>
+    </div>
+
+    <!-- Mr. Yeti Avatar -->
+    <div class="mr-yeti-container" id="mr-yeti-container">
+        <div class="yeti-speech-bubble" id="yeti-speech">Hello! I'm Mr. Yeti! 🏔️</div>
+        <div class="mr-yeti-avatar" id="mr-yeti-avatar">
+            <div class="yeti-head">
+                <div class="yeti-eye left"></div>
+                <div class="yeti-eye right"></div>
+                <div class="yeti-mouth" id="yeti-mouth"></div>
+            </div>
+            <div class="yeti-body"></div>
+            <div class="yeti-arm left"></div>
+            <div class="yeti-arm right"></div>
+        </div>
+    </div>
+
+    <!-- Yeti Popup for inline corrections -->
+    <div class="yeti-popup" id="yeti-popup"></div>
+
+    <script src="/ielts/mr-yeti.js"></script>
+    <script>
+        let editor;
+        let yeti;
+        let correctionTimeout;
+        let timeLeft = 40 * 60; // 40 minutes in seconds
+        let corrections = [];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            yeti = new MrYeti();
+            yeti.wave();
+
+            initMonaco();
+            startTimer();
+
+            setTimeout(() => {
+                yeti.speak(
+                    "Welcome to Writing Task 2! I'll watch your writing and help you improve. Start whenever you're ready! 🏔️",
+                    5000
+                );
+            }, 1000);
+        });
+
+        function initMonaco() {
+            require.config({ paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs' } });
+
+            require(['vs/editor/editor.main'], () => {
+                editor = monaco.editor.create(document.getElementById('editor'), {
+                    value: '',
+                    language: 'plaintext',
+                    theme: 'vs-light',
+                    fontSize: 16,
+                    lineNumbers: 'on',
+                    wordWrap: 'on',
+                    minimap: { enabled: false },
+                    scrollBeyondLastLine: false,
+                    automaticLayout: true,
+                    padding: { top: 20 },
+                });
+
+                // Debounced real-time correction check
+                editor.onDidChangeModelContent(() => {
+                    updateWordCount();
+                    clearTimeout(correctionTimeout);
+                    correctionTimeout = setTimeout(checkWriting, 1500);
+                });
+            });
+        }
+
+        function updateWordCount() {
+            const text  = editor.getValue();
+            const words = text.trim().split(/\s+/).filter(w => w.length > 0);
+            document.getElementById('wordCount').textContent = words.length;
+
+            if (words.length === 50)  yeti.encourage("Great start! Keep going! 🏔️");
+            if (words.length === 150) yeti.encourage("Halfway there! You're doing amazing!");
+            if (words.length === 250) yeti.celebrate("250 words! That's the target! 🎉");
+        }
+
+        async function checkWriting() {
+            const text = editor.getValue();
+            if (text.length < 10) return;
+
+            const cursorPosition = editor.getPosition();
+
+            try {
+                const response = await fetch('/api/v1/ielts/writing-check', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        text,
+                        cursor_position: cursorPosition.column,
+                        student_id: 'student_001',
+                        task_type: 'task2',
+                    }),
+                });
+
+                const result = await response.json();
+
+                if (result.has_error) {
+                    showCorrection(result);
+                    yeti.correct(result.yeti_message || result.explanation);
+                }
+
+            } catch (err) {
+                console.error('Correction check failed:', err);
+            }
+        }
+
+        function showCorrection(result) {
+            const popup = document.getElementById('yeti-popup');
+            popup.innerHTML = `
+                <strong>🏔️ Mr. Yeti says:</strong><br>
+                ${result.yeti_message}<br><br>
+                <code style="color:#e74c3c;text-decoration:line-through">${result.error_text}</code><br>
+                <code style="color:#27ae60">${result.suggestion}</code>
+            `;
+            popup.style.left = '50%';
+            popup.style.top  = '30%';
+            popup.classList.add('visible');
+            setTimeout(() => popup.classList.remove('visible'), 5000);
+
+            addToCorrectionList(result);
+        }
+
+        function addToCorrectionList(result) {
+            const list = document.getElementById('correctionList');
+            if (list.querySelector('p')) list.innerHTML = '';
+
+            const item = document.createElement('div');
+            item.className = 'correction-item';
+            item.innerHTML = `
+                <strong>${result.error_text}</strong> → ${result.suggestion}<br>
+                <small>${result.explanation}</small>
+            `;
+            list.insertBefore(item, list.firstChild);
+            corrections.push(result);
+        }
+
+        function startTimer() {
+            const timerEl = document.getElementById('timer');
+
+            const interval = setInterval(() => {
+                timeLeft--;
+                const mins = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+                const secs = (timeLeft % 60).toString().padStart(2, '0');
+                timerEl.textContent = `${mins}:${secs}`;
+
+                if (timeLeft === 300) yeti.speak("5 minutes left! Start wrapping up your conclusion. 🏔️", 4000);
+                if (timeLeft === 60)  yeti.speak("Last minute! Quick final check! ⏰", 3000);
+                if (timeLeft <= 0)    clearInterval(interval);
+            }, 1000);
+        }
+
+        async function submitEssay() {
+            const text  = editor.getValue();
+            const words = text.trim().split(/\s+/).filter(w => w.length > 0).length;
+
+            yeti.setState('talking');
+            yeti.speak("Submitting your essay… Let me analyse it! 🏔️", 3000);
+
+            setTimeout(() => {
+                yeti.celebrate(`Essay submitted! ${words} words. Great effort! 🎉`);
+                alert(
+                    `Essay Summary:\nWords: ${words}\nCorrections made: ${corrections.length}\n\n` +
+                    `Mr. Yeti will review this and give you detailed feedback soon!`
+                );
+            }, 2000);
+        }
+    </script>
+</body>
+</html>

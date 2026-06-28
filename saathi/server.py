@@ -22,6 +22,12 @@ try:
 except Exception:
     pass
 
+try:
+    from .tools.ielts_endpoints import router as ielts_router
+    app.include_router(ielts_router)
+except Exception:
+    pass
+
 # Simple access key for remote/tunnel use. Local requests (the Mac itself)
 # are always allowed; remote requests must send X-Saathi-Token.
 import os as _os
@@ -2741,6 +2747,11 @@ def opik_status():
 
 
 # ── Static client ─────────────────────────────────────────────────────────────
+
+# IELTS static assets (mr-yeti.css, mr-yeti.js, writing-editor.html)
+_ielts_static = config.ROOT / "static" / "ielts"
+if _ielts_static.exists():
+    app.mount("/ielts", StaticFiles(directory=str(_ielts_static)), name="ielts_static")
 
 app.mount("/", StaticFiles(directory=str(config.ROOT / "client"), html=True),
           name="client")

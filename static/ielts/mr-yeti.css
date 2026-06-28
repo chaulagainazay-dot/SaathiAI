@@ -1,0 +1,241 @@
+/* Mr. Yeti Avatar Styles */
+.mr-yeti-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 200px;
+    height: 280px;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    pointer-events: none;
+}
+
+.mr-yeti-avatar {
+    width: 150px;
+    height: 180px;
+    position: relative;
+    transition: transform 0.3s ease;
+}
+
+/* Yeti Body */
+.yeti-body {
+    width: 120px;
+    height: 140px;
+    background: linear-gradient(135deg, #E8E8E8 0%, #D0D0D0 100%);
+    border-radius: 60px 60px 50px 50px;
+    position: absolute;
+    bottom: 0;
+    left: 15px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
+
+/* Yeti Head */
+.yeti-head {
+    width: 100px;
+    height: 90px;
+    background: linear-gradient(135deg, #F5F5F5 0%, #E0E0E0 100%);
+    border-radius: 50px;
+    position: absolute;
+    top: 0;
+    left: 25px;
+    z-index: 2;
+}
+
+/* Eyes */
+.yeti-eye {
+    width: 18px;
+    height: 22px;
+    background: #2C3E50;
+    border-radius: 50%;
+    position: absolute;
+    top: 35px;
+    animation: blink 4s infinite;
+}
+
+.yeti-eye.left { left: 25px; }
+.yeti-eye.right { right: 25px; }
+
+.yeti-eye::after {
+    content: '';
+    width: 6px;
+    height: 6px;
+    background: white;
+    border-radius: 50%;
+    position: absolute;
+    top: 4px;
+    right: 4px;
+}
+
+/* Mouth */
+.yeti-mouth {
+    width: 30px;
+    height: 15px;
+    background: #2C3E50;
+    border-radius: 0 0 30px 30px;
+    position: absolute;
+    bottom: 20px;
+    left: 35px;
+    transition: all 0.3s ease;
+}
+
+/* Mouth states */
+.yeti-mouth.smile {
+    height: 20px;
+    border-radius: 0 0 30px 30px;
+}
+
+.yeti-mouth.talking {
+    animation: talk 0.3s infinite alternate;
+}
+
+.yeti-mouth.sad {
+    height: 10px;
+    border-radius: 30px 30px 0 0;
+    background: #E74C3C;
+}
+
+/* Arms */
+.yeti-arm {
+    width: 35px;
+    height: 60px;
+    background: linear-gradient(135deg, #E8E8E8, #D0D0D0);
+    border-radius: 20px;
+    position: absolute;
+    top: 80px;
+    transition: transform 0.3s ease;
+}
+
+.yeti-arm.left {
+    left: -10px;
+    transform-origin: top right;
+    transform: rotate(-20deg);
+}
+
+.yeti-arm.right {
+    right: -10px;
+    transform-origin: top left;
+    transform: rotate(20deg);
+}
+
+.yeti-arm.waving {
+    animation: wave 1s ease infinite;
+}
+
+/* Speech Bubble */
+.yeti-speech-bubble {
+    position: absolute;
+    bottom: 200px;
+    right: 0;
+    max-width: 250px;
+    padding: 15px 20px;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    font-size: 14px;
+    line-height: 1.5;
+    color: #2C3E50;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.3s ease;
+    pointer-events: auto;
+}
+
+.yeti-speech-bubble::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    right: 40px;
+    width: 0;
+    height: 0;
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-top: 10px solid white;
+}
+
+.yeti-speech-bubble.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Animations */
+@keyframes blink {
+    0%, 96%, 100% { transform: scaleY(1); }
+    98% { transform: scaleY(0.1); }
+}
+
+@keyframes talk {
+    0% { height: 15px; width: 30px; }
+    100% { height: 25px; width: 35px; }
+}
+
+@keyframes wave {
+    0%, 100% { transform: rotate(20deg); }
+    50% { transform: rotate(-30deg); }
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+@keyframes celebrate {
+    0%, 100% { transform: scale(1) rotate(0); }
+    25% { transform: scale(1.1) rotate(-5deg); }
+    75% { transform: scale(1.1) rotate(5deg); }
+}
+
+/* State classes */
+.mr-yeti-avatar.talking .yeti-mouth {
+    animation: talk 0.3s infinite alternate;
+}
+
+.mr-yeti-avatar.celebrating {
+    animation: celebrate 0.5s ease infinite;
+}
+
+.mr-yeti-avatar.waving .yeti-arm.right {
+    animation: wave 1s ease infinite;
+}
+
+.mr-yeti-avatar.listening {
+    transform: scale(1.05);
+}
+
+.mr-yeti-avatar.listening .yeti-eye {
+    animation: blink 2s infinite;
+}
+
+/* Confetti for celebrations */
+.confetti {
+    width: 10px;
+    height: 10px;
+    background: #FFD700;
+    position: absolute;
+    animation: confetti-fall 3s ease-out forwards;
+}
+
+@keyframes confetti-fall {
+    0% { transform: translateY(0) rotate(0); opacity: 1; }
+    100% { transform: translateY(200px) rotate(720deg); opacity: 0; }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .mr-yeti-container {
+        width: 150px;
+        height: 200px;
+        bottom: 10px;
+        right: 10px;
+    }
+
+    .mr-yeti-avatar {
+        transform: scale(0.8);
+    }
+
+    .yeti-speech-bubble {
+        max-width: 200px;
+        font-size: 12px;
+    }
+}

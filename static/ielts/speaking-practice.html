@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mr. Yeti's Speaking Practice - PIELTS</title>
+    <link rel="stylesheet" href="/ielts/mr-yeti.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: rgba(255,255,255,0.95);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 { color: #2C3E50; font-size: 20px; }
+
+        .part-indicator {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 20px;
+        }
+
+        .main-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+        }
+
+        .conversation-area {
+            width: 100%;
+            max-width: 800px;
+            height: 400px;
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+
+        .message {
+            display: flex;
+            margin-bottom: 15px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.student { justify-content: flex-end; }
+        .message.yeti    { justify-content: flex-start; }
+
+        .message-bubble {
+            max-width: 70%;
+            padding: 12px 18px;
+            border-radius: 18px;
+            font-size: 15px;
+            line-height: 1.5;
+        }
+
+        .message.student .message-bubble {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message.yeti .message-bubble {
+            background: #f0f0f0;
+            color: #2C3E50;
+            border-bottom-left-radius: 4px;
+        }
+
+        .message-meta {
+            font-size: 11px;
+            color: #999;
+            margin-top: 4px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .mic-btn {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: none;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            font-size: 30px;
+            cursor: pointer;
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .mic-btn:hover  { transform: scale(1.1); }
+        .mic-btn:active { transform: scale(0.95); }
+
+        .mic-btn.listening {
+            background: #e74c3c;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7); }
+            50%       { box-shadow: 0 0 0 20px rgba(231, 76, 60, 0); }
+        }
+
+        .status-text {
+            color: white;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .transcript-preview {
+            position: absolute;
+            bottom: 120px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 14px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            white-space: nowrap;
+            max-width: 90%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .transcript-preview.visible { opacity: 1; }
+
+        .tips-panel {
+            position: fixed;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 250px;
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .tips-panel h4 { color: #667eea; margin-bottom: 10px; }
+
+        .tips-panel ul { list-style: none; font-size: 13px; color: #555; }
+
+        .tips-panel li {
+            padding: 5px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .tips-panel li::before { content: '💡 '; }
+
+        @media (max-width: 768px) {
+            .tips-panel { display: none; }
+            .conversation-area { height: 300px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎙️ Mr. Yeti's Speaking Practice</h1>
+        <div class="part-indicator">Part 1</div>
+    </div>
+
+    <div class="tips-panel">
+        <h4>Speaking Tips</h4>
+        <ul>
+            <li>Speak for 30+ seconds</li>
+            <li>Use linking words</li>
+            <li>Give examples</li>
+            <li>Don't memorize answers</li>
+            <li>It's okay to pause</li>
+        </ul>
+    </div>
+
+    <div class="main-container">
+        <div class="conversation-area" id="conversation">
+            <div class="message yeti">
+                <div>
+                    <div class="message-bubble">Hello! I'm Mr. Yeti, your IELTS speaking examiner today. Let's start with Part 1. Can you tell me about your hometown?</div>
+                    <div class="message-meta">Mr. Yeti • Just now</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="transcript-preview" id="transcriptPreview"></div>
+
+        <div class="controls">
+            <button class="mic-btn" id="micBtn" onclick="toggleRecording()">🎤</button>
+            <span class="status-text" id="statusText">Tap to speak</span>
+        </div>
+    </div>
+
+    <!-- Mr. Yeti Avatar -->
+    <div class="mr-yeti-container" id="mr-yeti-container">
+        <div class="yeti-speech-bubble" id="yeti-speech">Listening... 🏔️</div>
+        <div class="mr-yeti-avatar" id="mr-yeti-avatar">
+            <div class="yeti-head">
+                <div class="yeti-eye left"></div>
+                <div class="yeti-eye right"></div>
+                <div class="yeti-mouth" id="yeti-mouth"></div>
+            </div>
+            <div class="yeti-body"></div>
+            <div class="yeti-arm left"></div>
+            <div class="yeti-arm right"></div>
+        </div>
+    </div>
+
+    <script src="/ielts/mr-yeti.js"></script>
+    <script>
+        let yeti;
+        let recognition;
+        let isRecording = false;
+        let ws;
+        let currentStreamingMessage = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            yeti = new MrYeti();
+            yeti.wave();
+            initSpeechRecognition();
+            initWebSocket();
+        });
+
+        // ── Speech Recognition ────────────────────────────────────────────────
+
+        function initSpeechRecognition() {
+            const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SR) {
+                alert('Speech recognition not supported. Please use Chrome.');
+                return;
+            }
+
+            recognition = new SR();
+            recognition.continuous     = true;
+            recognition.interimResults = true;
+            recognition.lang           = 'en-US';
+
+            recognition.onstart = () => {
+                isRecording = true;
+                document.getElementById('micBtn').classList.add('listening');
+                document.getElementById('statusText').textContent = 'Listening...';
+                yeti.setState('listening');
+            };
+
+            recognition.onresult = (e) => {
+                let finalTranscript   = '';
+                let interimTranscript = '';
+
+                for (let i = e.resultIndex; i < e.results.length; i++) {
+                    const t = e.results[i][0].transcript;
+                    if (e.results[i].isFinal) finalTranscript   += t;
+                    else                       interimTranscript += t;
+                }
+
+                if (interimTranscript) {
+                    const preview = document.getElementById('transcriptPreview');
+                    preview.textContent = interimTranscript;
+                    preview.classList.add('visible');
+                }
+
+                if (finalTranscript) {
+                    sendToYeti(finalTranscript);
+                    document.getElementById('transcriptPreview').classList.remove('visible');
+                }
+            };
+
+            recognition.onerror = (e) => {
+                console.error('Speech recognition error:', e.error);
+                if (e.error === 'no-speech') {
+                    yeti.speak("I didn't catch that. Could you speak again? 🏔️", 3000);
+                }
+            };
+
+            // Auto-restart while still recording (Chrome stops after silence)
+            recognition.onend = () => {
+                if (isRecording) recognition.start();
+            };
+        }
+
+        // ── WebSocket ─────────────────────────────────────────────────────────
+
+        function initWebSocket() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            ws = new WebSocket(`${protocol}//${window.location.host}/api/v1/ielts/ws/speaking/student_001`);
+
+            ws.onopen    = () => console.log('Connected to Mr. Yeti');
+            ws.onmessage = (e) => handleYetiMessage(JSON.parse(e.data));
+            ws.onerror   = (e) => console.error('WebSocket error:', e);
+        }
+
+        // ── Controls ──────────────────────────────────────────────────────────
+
+        function toggleRecording() {
+            if (!recognition) { alert('Speech recognition not available'); return; }
+
+            if (isRecording) {
+                recognition.stop();
+                isRecording = false;
+                document.getElementById('micBtn').classList.remove('listening');
+                document.getElementById('statusText').textContent = 'Tap to speak';
+                yeti.setState('idle');
+            } else {
+                recognition.start();
+            }
+        }
+
+        // ── Message handling ──────────────────────────────────────────────────
+
+        function sendToYeti(transcript) {
+            addMessage('student', transcript);
+
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ type: 'speech_transcript', text: transcript }));
+            } else {
+                // HTTP fallback when WebSocket is down
+                fetch('/api/v1/ielts/speaking-practice', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ transcript, student_id: 'student_001', part: 1 }),
+                })
+                .then(r => r.json())
+                .then(handleYetiResponse);
+            }
+        }
+
+        function handleYetiMessage(data) {
+            switch (data.type) {
+                case 'yeti_welcome':
+                    yeti.speak(data.message, 4000);
+                    break;
+
+                case 'yeti_stream':
+                    yeti.setState('talking');
+                    appendToStreamingMessage(data.content);
+                    break;
+
+                case 'yeti_complete':
+                    finaliseStreamingMessage(data.full_message);
+                    speakText(data.full_message);
+                    break;
+
+                case 'yeti_goodbye':
+                    yeti.speak(data.message, 3000);
+                    break;
+            }
+        }
+
+        function handleYetiResponse(data) {
+            addMessage('yeti', data.yeti_reply);
+            yeti.speak(data.yeti_reply, 4000);
+            speakText(data.yeti_reply);
+            if (data.correction) {
+                setTimeout(() => yeti.correct(data.correction), 2000);
+            }
+        }
+
+        function addMessage(sender, text) {
+            const container = document.getElementById('conversation');
+            const div       = document.createElement('div');
+            div.className   = `message ${sender}`;
+            const time      = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            div.innerHTML   = `
+                <div>
+                    <div class="message-bubble">${text}</div>
+                    <div class="message-meta">${sender === 'yeti' ? 'Mr. Yeti' : 'You'} • ${time}</div>
+                </div>`;
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function appendToStreamingMessage(chunk) {
+            const container = document.getElementById('conversation');
+            if (!currentStreamingMessage) {
+                currentStreamingMessage = document.createElement('div');
+                currentStreamingMessage.className = 'message yeti streaming';
+                currentStreamingMessage.innerHTML = `
+                    <div>
+                        <div class="message-bubble"></div>
+                        <div class="message-meta">Mr. Yeti • typing…</div>
+                    </div>`;
+                container.appendChild(currentStreamingMessage);
+            }
+            currentStreamingMessage.querySelector('.message-bubble').textContent += chunk;
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function finaliseStreamingMessage(fullText) {
+            if (currentStreamingMessage) {
+                currentStreamingMessage.querySelector('.message-meta').textContent =
+                    `Mr. Yeti • ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+                currentStreamingMessage = null;
+            } else {
+                addMessage('yeti', fullText);
+            }
+            yeti.setState('idle');
+        }
+
+        // ── Browser TTS ───────────────────────────────────────────────────────
+
+        function speakText(text) {
+            if (!('speechSynthesis' in window)) return;
+            window.speechSynthesis.cancel();
+
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.rate  = 0.9;
+            utterance.pitch = 1.1;
+
+            const voices = window.speechSynthesis.getVoices();
+            const preferred = voices.find(v =>
+                v.name.includes('Google US English') ||
+                v.name.includes('Samantha') ||
+                v.name.includes('Daniel')
+            );
+            if (preferred) utterance.voice = preferred;
+
+            utterance.onstart = () => yeti.setState('talking');
+            utterance.onend   = () => yeti.setState('idle');
+
+            window.speechSynthesis.speak(utterance);
+        }
+
+        // Pre-load voices (required in some browsers)
+        window.speechSynthesis?.getVoices();
+        if (window.speechSynthesis) {
+            window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+        }
+    </script>
+</body>
+</html>
