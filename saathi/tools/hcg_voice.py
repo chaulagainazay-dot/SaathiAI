@@ -138,8 +138,10 @@ def _download_audio(url: str) -> tuple[bytes, str]:
 
 # ── intent extraction ────────────────────────────────────────────────
 def _extract_intent_gemini(transcript: str) -> dict[str, Any] | None:
-    """Use Gemini for structured intent extraction. Returns None on failure."""
-    api_key = os.environ.get("GEMINI_API_KEY")
+    """Use Gemini for structured intent extraction. Returns None on failure.
+    Accepts either GEMINI_API_KEY or GOOGLE_API_KEY (the SaathiAI env uses
+    the latter; both Google SDKs accept either name)."""
+    api_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
     if not api_key:
         return None
     try:

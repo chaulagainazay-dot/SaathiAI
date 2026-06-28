@@ -34,6 +34,12 @@ try:
 except Exception:
     pass
 
+try:
+    from .tools.hcg_voice import router as hcg_voice_router
+    app.include_router(hcg_voice_router)
+except Exception as _e:
+    print(f"[saathi] hcg_voice router unavailable: {_e}")
+
 # Simple access key for remote/tunnel use. Local requests (the Mac itself)
 # are always allowed; remote requests must send X-Saathi-Token.
 import os as _os
@@ -66,7 +72,8 @@ def _is_authed(request) -> bool:
 async def _auth(request, call_next):
     from fastapi.responses import JSONResponse
     path = request.url.path
-    # Always allow: login endpoint, OAuth callbacks, static assets
+    # Always allow: login endpoint, OAuth callbacks, static assets, and
+    # endpoints that enforce their own bearer auth (BAADAR_API_KEY).
     if (path == "/api/v1/auth/login"
             or path == "/api/v1/linkedin/callback"
             or path == "/api/v1/tiktok/callback"
@@ -75,6 +82,7 @@ async def _auth(request, call_next):
             or path == "/api/v1/evaluate/writing"
             or path == "/api/v1/evaluate/speaking"
             or path == "/api/v1/notify/new-user"
+            or path == "/api/v1/voice/transcribe"
             or not path.startswith("/api/")):
         return await call_next(request)
     # Legacy remote token (backward compat)
