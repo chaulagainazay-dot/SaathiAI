@@ -765,7 +765,17 @@ def referral_score_check():
         pass
 
 
+def nightly_storage_cleanup():
+    """Nightly Storage Intelligence cleanup pass (SES-019A Part 9)."""
+    try:
+        from .storage.service import get_storage_service
+        get_storage_service().cleanup.nightly()
+    except Exception:
+        pass  # cleanup must never crash the scheduler
+
+
 JOBS = [
+    (3, 0, None, nightly_storage_cleanup),  # every day 3:00am  — Storage Intelligence cleanup ✅
     (7, 0, None, morning_briefing),         # every day 7:00am  — morning briefing
     (7, 0, None, mr_yeti_7am),              # every day 7:00am  — 2 Shorts → YT Shorts + TikTok ✅
     (7, 30, None, daily_health),            # every day 7:30am  — health watchdog
@@ -827,6 +837,14 @@ def start():
         telegram_bot.start()
     except Exception:
         pass
+    # Storage Intelligence: 1-minute disk watchdog + event-first Mission Control
+    # + Telegram alerts. Emergency cleanup fires automatically at 95%.
+    try:
+        from .storage.service import get_storage_service
+        svc = get_storage_service(enable_telegram=True)
+        svc.start(interval_seconds=60)
+    except Exception:
+        pass  # storage monitoring must never block server startup
 
 
 if __name__ == "__main__":

@@ -39,7 +39,11 @@ GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
 # Fully-local brain via Ollama (no internet, no API key, 100% private)
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://127.0.0.1:11434/v1")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen2.5:3b")
-# Pick brain: set LLM_PROVIDER=groq|gemini|ollama|anthropic in .env to force one;
+# Fully-local brain via Shimmy (OpenAI-compatible local GGUF server)
+SHIMMY_URL = os.getenv("SHIMMY_URL", "http://127.0.0.1:11435/v1")
+SHIMMY_MODEL = os.getenv("SHIMMY_MODEL", "tinyllama-1.1b")
+SHIMMY_API_KEY = os.getenv("SHIMMY_API_KEY", "sk-local")
+# Pick brain: set LLM_PROVIDER=groq|gemini|shimmy|ollama|anthropic in .env to force one;
 # otherwise Groq if keyed (fastest), then Gemini, then Claude.
 LLM_PROVIDER = os.getenv("LLM_PROVIDER") or (
     "groq" if GROQ_API_KEY and not GROQ_API_KEY.startswith("YOUR")

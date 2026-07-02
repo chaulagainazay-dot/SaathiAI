@@ -18,6 +18,7 @@ Dashboard: `/dashboard.html`  |  Health: `/api/v1/health`
 `FIREBASE_ADMIN_JSON` · `ANTHROPIC_API_KEY` · `GOOGLE_API_KEY` · `GROQ_API_KEY`
 `TELEGRAM_BOT_TOKEN` · `TELEGRAM_CHAT_ID` · `SAATHI_TOKEN` · `BAADAR_PASSWORD`
 `SUPABASE_URL` · `SUPABASE_SERVICE_KEY` · `CONNECTIONS_JSON` · `MAILERLITE_API_KEY`
+`LLM_PROVIDER` · `SHIMMY_URL` · `SHIMMY_MODEL`
 
 ---
 
@@ -60,6 +61,10 @@ cp .env.example .env   # fill in ANTHROPIC_API_KEY + Supabase keys
      follow-up window stays open so you can keep talking without repeating the wake word.
    - **Server + phone PWA**: `.venv/bin/python -m saathi.server` → open
      http://localhost:8765 (Mac) or `http://<mac-ip>:8765` on your phone → Add to Home Screen.
+   - **Optional local Shimmy brain**:
+     run Shimmy on `http://127.0.0.1:11435/v1`, then set
+     `LLM_PROVIDER=shimmy`, `SHIMMY_MODEL=<your-model-id>`, and optionally
+     `SHIMMY_URL=http://127.0.0.1:11435/v1` in `.env`.
 5. **Background service** (starts at login, restarts if it crashes):
    ```bash
    cp scripts/com.ajay.saathiai.plist ~/Library/LaunchAgents/

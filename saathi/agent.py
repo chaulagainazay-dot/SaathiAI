@@ -3,6 +3,7 @@
 Two interchangeable brains:
   - Gemini (free tier) via its OpenAI-compatible endpoint  ← default if GOOGLE_API_KEY set
   - Claude via the Anthropic API
+  - Shimmy via its local OpenAI-compatible endpoint
 """
 import json
 from pathlib import Path
@@ -214,6 +215,11 @@ class SaathiAgent:
             from openai import OpenAI
             self.client = OpenAI(api_key="ollama", base_url=config.OLLAMA_URL)
             self.model = config.OLLAMA_MODEL
+        elif self.provider == "shimmy":
+            from openai import OpenAI
+            self.client = OpenAI(api_key=config.SHIMMY_API_KEY,
+                                 base_url=config.SHIMMY_URL)
+            self.model = config.SHIMMY_MODEL
         else:
             import anthropic
             raw_client = anthropic.Anthropic(api_key=config.ANTHROPIC_API_KEY)
@@ -226,7 +232,7 @@ class SaathiAgent:
 
     def complete(self, system: str, prompt: str, max_tokens: int = 400) -> str:
         """One simple no-tools completion — used by the self-improvement engine."""
-        if self.provider in ("gemini", "ollama", "groq"):
+        if self.provider in ("gemini", "ollama", "shimmy", "groq"):
             resp = self._create_with_retry(
                 messages=[{"role": "system", "content": system},
                           {"role": "user", "content": prompt}],
@@ -263,7 +269,7 @@ class SaathiAgent:
 
         activity.clear(session_id)
         activity.log(session_id, "start", "💭 Understanding your request…")
-        if self.provider in ("gemini", "ollama", "groq"):
+        if self.provider in ("gemini", "ollama", "shimmy", "groq"):
             reply = self._respond_openai(system, history, user_text, speaker_verified, session_id)
         else:
             reply = self._respond_anthropic(system, history, user_text, speaker_verified, session_id)
@@ -300,7 +306,7 @@ class SaathiAgent:
             # only Gemini understands these alternate model names
             models = [self.model] + [m for m in self.FALLBACK_MODELS if m != self.model]
         else:
-            # groq / ollama: one model, then provider-level fallback below
+            # groq / ollama / shimmy: one model, then provider-level fallback below
             models = [self.model]
         # Groq rate-limits on tokens/min — don't stall on long backoffs, fail
         # fast to the fallback brain so a reply still comes quickly.
@@ -333,7 +339,7 @@ class SaathiAgent:
                         break  # skip remaining attempts, fall through to Ollama
                     raise
         # busy/exhausted/offline — fall back so a reply still comes.
-        # Groq → Gemini (fast cloud) → local Ollama; Gemini → local Ollama.
+        # Groq → Gemini (fast cloud) → local Shimmy/Ollama; Gemini → local Shimmy/Ollama.
         if self.provider == "groq" and config.GOOGLE_API_KEY:
             try:
                 from openai import OpenAI
@@ -346,11 +352,26 @@ class SaathiAgent:
                 pass
         if self.provider in ("gemini", "groq"):
             try:
+                self._fallback_to_shimmy()
+                return self.client.chat.completions.create(model=self.model, **kwargs)
+            except Exception:
+                pass
+            try:
                 self._fallback_to_ollama()
                 return self.client.chat.completions.create(model=self.model, **kwargs)
             except Exception:
                 pass
         raise last_err
+
+    def _fallback_to_shimmy(self):
+        """When cloud brains are exhausted, switch to the local Shimmy brain."""
+        import httpx
+        from openai import OpenAI
+        base = config.SHIMMY_URL.rsplit("/v1", 1)[0]
+        httpx.get(f"{base}/v1/models", timeout=3)  # raises if Shimmy isn't running
+        self.client = OpenAI(api_key=config.SHIMMY_API_KEY, base_url=config.SHIMMY_URL)
+        self.model = config.SHIMMY_MODEL
+        self.provider = "shimmy"
 
     def _fallback_to_ollama(self):
         """When Gemini's free quota is exhausted, switch to the local brain."""

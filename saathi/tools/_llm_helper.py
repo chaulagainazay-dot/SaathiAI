@@ -15,8 +15,25 @@ def _load_env():
 
 def ask_llm(prompt: str, system: str = "You are a helpful assistant. Reply ONLY with valid JSON.",
             timeout: int = 60, max_tokens: int = 4000) -> str:
-    """Call LLM directly. Priority: OpenAI GPT-4o → Groq → Gemini. All calls traced via Opik."""
+    """Call an LLM via the capability-based Model Router (SES-002).
+
+    Routes the STANDARD label with a QUALITY preference — which orders OpenAI
+    (quality_tier 1) ahead of Groq/Gemini, preserving this function's original
+    OpenAI-first behavior while going through the router instead of a hardcoded
+    chain. Falls back to the legacy inline chain only if the router path errors.
+    """
     _load_env()
+
+    # ── Primary path: the Model Router decides + executes (no hardcoded order) ─
+    try:
+        from ..llm import generate
+        from ..model_router import ModelLabel, Prefer
+        return generate(
+            ModelLabel.STANDARD, prompt, system,
+            prefer=Prefer.QUALITY, max_tokens=max_tokens, timeout=timeout,
+        ).text
+    except Exception:
+        pass  # fall through to the legacy inline chain below (belt-and-suspenders)
     from .opik_tracer import trace_llm_call
 
     # ── 1. OpenAI ChatGPT (primary for creative/script work) ──────────────────

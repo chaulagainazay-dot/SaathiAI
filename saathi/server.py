@@ -468,10 +468,19 @@ def baadar_status():
         ollama_ready = True
     except Exception:
         pass
+    shimmy_ready = False
+    try:
+        import urllib.request as _ur
+        _ur.urlopen(config.SHIMMY_URL.rstrip("/") + "/models", timeout=2)
+        shimmy_ready = True
+    except Exception:
+        pass
     if config.LLM_PROVIDER == "groq":
         model = config.GROQ_MODEL
     elif config.LLM_PROVIDER == "gemini":
         model = config.GEMINI_MODEL
+    elif config.LLM_PROVIDER == "shimmy":
+        model = config.SHIMMY_MODEL
     elif config.LLM_PROVIDER == "ollama":
         model = config.OLLAMA_MODEL
     else:
@@ -487,6 +496,7 @@ def baadar_status():
         "model": model,
         "online": online,
         "ollama_ready": ollama_ready,
+        "shimmy_ready": shimmy_ready,
         "tools": tools_count,
     }
 

@@ -1415,6 +1415,25 @@ def _stage_draft(platform: str, content_text: str, title: str = "", platforms: l
     return {"staged": True, "platform": platform,
             "message": "Draft is ready in the Baadar UI — tap Approve to post or Edit to change it."}
 
+from collections import deque as _deque
+
+# Runtime Governance Engine — nothing bypasses this gate (SES-002, AP-14).
+_governance_harness = None
+_governance_audit = _deque(maxlen=200)   # recent decisions, for Mission Control
+
+
+def _governance():
+    global _governance_harness
+    if _governance_harness is None:
+        from ..safety import SafetyHarness
+        _governance_harness = SafetyHarness(audit_sink=_governance_audit.append)
+    return _governance_harness
+
+
+def recent_governance_decisions(limit: int = 50) -> list:
+    return list(_governance_audit)[-limit:][::-1]
+
+
 def execute_tool(name: str, args: dict, speaker_verified: bool = False) -> dict:
     if name in PRIVILEGED and not speaker_verified:
         return {"error": "speaker_not_verified",
@@ -1423,6 +1442,27 @@ def execute_tool(name: str, args: dict, speaker_verified: bool = False) -> dict:
     handler = _HANDLERS.get(name)
     if not handler:
         return {"error": f"unknown tool: {name}"}
+
+    # ── Runtime Governance Engine gate — classify, govern, audit ──────────────
+    # Ajay's verified voice counts as operator approval (human + code confirm);
+    # any other caller is gated by the action's L0–L5 classification.
+    from ..safety import ActionRequest, Identity
+    decision = _governance().gate(
+        ActionRequest(tool=name, args=args or {},
+                      identity=Identity.ADMIN if speaker_verified else Identity.USER,
+                      why="tool dispatch"),
+        human_approved=speaker_verified,
+        code_confirmed=speaker_verified,
+    )
+    if not decision.allowed:
+        return {"error": "governance_denied",
+                "level": decision.level.name,
+                "approval": decision.approval.value,
+                "risk": decision.risk,
+                "reasons": decision.reasons,
+                "message": f"Action '{name}' classified {decision.level.name} was blocked by "
+                           f"the governance engine: " + "; ".join(decision.reasons)}
+
     try:
         return handler(**args)
     except Exception as e:  # surface errors to the model so it can explain
