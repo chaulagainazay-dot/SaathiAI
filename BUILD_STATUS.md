@@ -45,8 +45,8 @@
 | # | Integration | Status |
 |---|-------------|--------|
 | **1** | **PIELTS × Learning Runtime** | ✅ **Complete (2026-07-03)** — `saathi/integration.py`, 3 tests. Every BMA tutoring turn now records a platform `Episode` (`ingest_pielts_interaction`, wired into `master.py update_memory`, guarded/non-breaking; existing IELTS memory untouched). Proven end-to-end: student interactions → episodes → Promotion Engine → knowledge candidate; Learning Engine sees pielts success rates. **PIELTS is now a continuously-improving tutor.** (Fixed a real bug: the pielts adapter was hardcoding `outcome="success"`.) |
-| 2 | Discovery Engine × AI Studio | ⬜ next |
-| 3 | AI Studio autonomous publish pipeline | ⬜ |
+| **2** | **Discovery × Publishing (the pre-publish gate)** | ✅ **Complete (2026-07-03)** — `saathi/publishing_pipeline.py`, 7 tests. **"Nothing publishes without passing Discovery" is now enforced**: content missing SEO tags / thumbnail / title / description is *blocked* (GEO/schema recommended, not blocking). Every publish AND every block becomes a platform Episode → Learning Runtime; `record_performance()` turns analytics (views/likes/engagement) into episodes, closing the loop so the Learning Engine sees which content actually performs. `PublishingPipeline.production()` wires it to the live platform (episodes → `integration.ingest_episode`, events → Event Fabric). Publisher (the platform poster) is the one injected piece. |
+| 3 | AI Studio autonomous publish pipeline | ⬜ (the gate + episode recording is the backbone; remaining = wire real posters through `.production()`) |
 | 4 | HCG Live Signal × Research + Learning | ⬜ |
 | 5 | HCG POS × Business Intelligence | ⬜ |
 
