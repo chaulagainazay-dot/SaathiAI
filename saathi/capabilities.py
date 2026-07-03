@@ -98,6 +98,8 @@ def default_registry() -> CapabilityRegistry:
         ("Portfolio Intelligence", "1.0", True, True, True, False),
         ("Portfolio Impact Simulator", "1.0", True, True, True, False),
         ("Capital Reserve Engine", "1.0", True, True, True, False),
+        ("Execution Layer (Intent/Connector/Service)", "1.0", True, True, True, False),
+        ("Broker Registry", "1.0", True, True, True, False),
         ("Runtime Governance Engine", "1.0", True, True, True, True),
         ("Mission Control",      "0.8", True, True, True, True),
         ("Voice OS",             "0.6", True, True, False, False),
