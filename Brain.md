@@ -150,6 +150,20 @@ Every future capability becomes part of the ecosystem rather than an isolated fe
 
 ---
 
+## 5d. Development Rule #3 — Integration Sprint After Every Milestone
+
+The platform's biggest risk is no longer missing features — it's staying cohesive as it grows. After every major milestone, run an Integration Sprint that requires:
+
+1. Every capability registered in the **Platform Capability Registry**.
+2. Every new feature emits standardized events to the **Event Fabric**.
+3. Every business activity creates **Episodes** for the Learning Runtime where appropriate.
+4. Every major subsystem exposes **KPIs** to Mission Control.
+5. Every significant architectural decision reflected in the governance docs (`Brain.md`, `Business.md`, `Wisdom.md`, Writing & Speaking Style).
+
+This keeps SaathiAI a unified AI operating system, not a collection of disconnected modules.
+
+---
+
 ## 6b. Memory Layer L6 — Platform Wisdom (the constitution)
 
 Beyond the ordinary memory tiers (L0 working → L5 archive), SaathiAI has a **constitutional** layer that must never be buried among ordinary memories:

@@ -7,7 +7,11 @@
 > **Update cadence:** Every time a capability changes status (designed → implemented → tested → production). Keep it honest — an over-optimistic BUILD_STATUS is worse than none.
 
 **Last updated:** 2026-07-02
-**Current milestone:** 🎉 **M1 — AI OS Core: COMPLETE** (2026-07-03, `v0.1.0-alpha`) → next: M2 (Memory Promotion Engine + Learning Runtime)
+**Current milestone:** M4 — Executive Intelligence (in progress). Shipped: M1 AI OS Core (`v0.1.0-alpha`) · M2 Learning Runtime (`v0.2.0-beta`) · M3 Business OS + Content Factory + integrations.
+
+### M4 — Executive Intelligence (the daily CEO)
+- ✅ **Decision Engine · Goal Alignment · Forecast · Execution Score · Executive Briefing** (`saathi/executive.py`, 9 tests). The morning brief is now "what should I do next", not "what happened": prioritized actions ranked by impact × confidence × (1−risk), each explaining *why* (no black box); every action scored against the $7,938,838.98 dream; daily Execution Score (0–100) trended; linear Forecast Engine. Ties into KPI Engine + CEO Dashboard + Revenue.
+- ⬜ Opportunity Engine (scanning) + Executive Memory (major-decision log via Knowledge Graph Decision nodes) = next.
 
 > **M1 complete — all 10 exit criteria met.** The audited, hardened AI-OS core is real: Storage Intelligence, Model Router, Runtime Governance Engine, Tool Registry all ✅ Production; Event Fabric, Agent Runtime (9-phase BMA), Agent Registry, Mission Control all ✅ Tested. 118 tests passing. Governance is the mandatory gate — nothing bypasses it.
 

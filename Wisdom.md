@@ -49,6 +49,7 @@ The full definitions live in `Brain.md` §6; the constitutional statements:
 2. **Ecosystem integration is mandatory.** No new autonomous capability ships unless it integrates with Memory, Event Fabric, Mission Control, Runtime Governance, and the Learning Engine where applicable.
 3. **Audit first, build second.** Compare reality against the spec, identify the gap, patch the gap. Never rewrite what can be reconciled.
 4. **Finish one capability before starting the next.** A capability reaches Designed → Built → Tested → Production before attention moves on.
+5. **Integration Sprint after every milestone.** Every capability registered, every feature emits events, every business activity creates Episodes, every subsystem exposes KPIs, every decision reflected in the governance docs. Cohesion over feature count.
 
 ---
 
