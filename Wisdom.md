@@ -37,6 +37,9 @@ The full definitions live in `Brain.md` §6; the constitutional statements:
 | AP-17 | **Promotion Is Deterministic Before AI-Assisted** — discovery, scoring, and state transitions are deterministic; an LLM may assist extraction but never decides promotion. |
 | AP-18 | **Learning Proposes, Never Mutates** — the Learning Engine produces governed proposals (improvement / knowledge / doc candidate / ADR / task), never silent edits. Prefer measurable A/B experiments to replacement. |
 | AP-19 | **Relationships Are First-Class Knowledge** — an edge between facts is often more valuable than the facts. Departments query `KnowledgeGraph`, never a backend, never Cypher. |
+| AP-20 | **Human Documents Are Derived Artifacts, Not Primary Storage** — the source is Knowledge → Graph → Memory; Brain/Business/Wisdom/Style are published views. The Publication Engine proposes; markdown renders only after approval. Prevents drift forever. |
+
+> **Note:** This very file (`Wisdom.md`) is itself a derived view under AP-20. Its authoritative source is the L6 Platform Wisdom memory layer + the Knowledge Graph. The Publication Engine may propose additions here — but only a human approves them.
 
 ---
 
