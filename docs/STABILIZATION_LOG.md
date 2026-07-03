@@ -33,7 +33,56 @@ Copy the block. Keep it short. One observation per entry.
 Metrics to watch: Discovery-gate block rate · publishing success · learning episodes generated ·
 improvement proposals generated · revenue attribution.
 
-_(observations below)_
+### Objective: 10 consecutive Mr. Yeti videos through the full platform, NO architectural changes
+Not zero manual steps — the *architecture* stays frozen while I learn where operational
+improvements are needed. Achieving this validates the design, not just the code. **Do not** change
+prompts / models / workflow after every run; run several, collect observations, look for trends.
+
+### Per-run instrumentation matrix (a wiring test, not a quality bar)
+One Mr. Yeti run touches: Idea → Script → AI Director → Storyboard → Character Manager → Video Gen
+→ Audio → QA → Discovery Gate → Publishing → Analytics → Audience Intelligence → Learning Runtime
+→ Knowledge Promotion → Executive Briefing. For each stage record: completed? · duration · human
+intervention? · artifact produced · episode recorded? · event emitted? · Mission Control saw it? ·
+reflected in next-morning CEO briefing? A stage failing is a valid observation — log it, don't fix mid-window.
+
+**Copy per run:**
+```
+#### Run <N> — <video title> — <date>
+| Stage | Done? | Time | Manual? | Artifact | Episode? | Event? | In Mission Control? | In briefing? |
+|-------|-------|------|---------|----------|----------|--------|---------------------|--------------|
+| Idea            |  |  |  |  |  |  |  |  |
+| Script          |  |  |  |  |  |  |  |  |
+| AI Director     |  |  |  |  |  |  |  |  |
+| Storyboard      |  |  |  |  |  |  |  |  |
+| Character Mgr   |  |  |  |  |  |  |  |  |
+| Video Gen       |  |  |  |  |  |  |  |  |
+| Audio           |  |  |  |  |  |  |  |  |
+| QA              |  |  |  |  |  |  |  |  |
+| Discovery Gate  |  |  |  |  |  |  |  |  |
+| Publishing      |  |  |  |  |  |  |  |  |
+| Analytics       |  |  |  |  |  |  |  |  |
+| Audience Intel  |  |  |  |  |  |  |  |  |
+| Learning        |  |  |  |  |  |  |  |  |
+| Knowledge Promo |  |  |  |  |  |  |  |  |
+| Exec Briefing   |  |  |  |  |  |  |  |  |
+- Observations from this run:
+```
+
+### 10-video progress tracker
+| # | Title | Date | Published? | Stages completed | Manual interventions | Key observation |
+|---|-------|------|-----------|------------------|----------------------|-----------------|
+| 1 |       |      |           |                  |                      |                 |
+| 2 |       |      |           |                  |                      |                 |
+| 3 |       |      |           |                  |                      |                 |
+| 4 |       |      |           |                  |                      |                 |
+| 5 |       |      |           |                  |                      |                 |
+| 6 |       |      |           |                  |                      |                 |
+| 7 |       |      |           |                  |                      |                 |
+| 8 |       |      |           |                  |                      |                 |
+| 9 |       |      |           |                  |                      |                 |
+| 10|       |      |           |                  |                      |                 |
+
+_(per-run matrices + observations below)_
 
 
 ## Week 2 — HCG Cafeteria (real daily data)
