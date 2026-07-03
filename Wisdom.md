@@ -79,7 +79,10 @@ The full definitions live in `Brain.md` §6; the constitutional statements:
 - **The platform test:** "Does this make SaathiAI a better AI Operating System, or does it solve only one product's problem?" Platform capability → build once in the platform. Product problem → product layer.
 - **The maturity test:** Designed / Built / Tested / Production are distinct claims. Never report a further stage than the evidence supports.
 - **The governance test (AP-14):** before shipping any new autonomous power, name its safety classification, its audit trail, and its undo/kill path. If any is missing, it doesn't ship.
+- **Capital never moves itself (M5):** SaathiAI prepares the analysis; the human confirms the trade. An execution can only be born from an approved, executable decision — financial actions are L4, and no connector, dashboard, or department may bypass approval or the Governance Engine. Learning proposes; the human disposes.
+- **Explainable or it doesn't ship (M5):** every recommendation must carry a complete lineage — why discovered, why recommended, which research agents and evidence, which risk rules, why the position size, why it made or lost money, what lesson it taught, what proposal it generated. Preserve what the system believed at decision time (Decision + Market snapshots) so hindsight stays honest.
 
 ---
 
 *Created 2026-07-03 (M2 Phase 1a). Changes to this file require human approval.*
+*Extended 2026-07-03 (M5 v0.4.0-finance) with the two financial-governance principles above.*
