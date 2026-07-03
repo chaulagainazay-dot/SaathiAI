@@ -102,6 +102,7 @@ def default_registry() -> CapabilityRegistry:
         ("Broker Registry", "1.0", True, True, True, False),
         ("Investment Memory & Trade Journal", "1.0", True, True, True, False),
         ("Trade Performance Analytics", "1.0", True, True, True, False),
+        ("Investment Learning Runtime", "1.0", True, True, True, False),
         ("Runtime Governance Engine", "1.0", True, True, True, True),
         ("Mission Control",      "0.8", True, True, True, True),
         ("Voice OS",             "0.6", True, True, False, False),
