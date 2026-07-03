@@ -36,6 +36,7 @@ The full definitions live in `Brain.md` §6; the constitutional statements:
 | AP-16 | **Contradictory Knowledge Is Reviewed, Never Silently Replaced** — conflicting knowledge is kept, linked, and routed to review; history of reasoning is preserved. |
 | AP-17 | **Promotion Is Deterministic Before AI-Assisted** — discovery, scoring, and state transitions are deterministic; an LLM may assist extraction but never decides promotion. |
 | AP-18 | **Learning Proposes, Never Mutates** — the Learning Engine produces governed proposals (improvement / knowledge / doc candidate / ADR / task), never silent edits. Prefer measurable A/B experiments to replacement. |
+| AP-19 | **Relationships Are First-Class Knowledge** — an edge between facts is often more valuable than the facts. Departments query `KnowledgeGraph`, never a backend, never Cypher. |
 
 ---
 
