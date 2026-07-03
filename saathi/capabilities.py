@@ -100,6 +100,8 @@ def default_registry() -> CapabilityRegistry:
         ("Capital Reserve Engine", "1.0", True, True, True, False),
         ("Execution Layer (Intent/Connector/Service)", "1.0", True, True, True, False),
         ("Broker Registry", "1.0", True, True, True, False),
+        ("Investment Memory & Trade Journal", "1.0", True, True, True, False),
+        ("Trade Performance Analytics", "1.0", True, True, True, False),
         ("Runtime Governance Engine", "1.0", True, True, True, True),
         ("Mission Control",      "0.8", True, True, True, True),
         ("Voice OS",             "0.6", True, True, False, False),
