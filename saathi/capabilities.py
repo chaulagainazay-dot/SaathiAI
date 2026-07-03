@@ -92,6 +92,8 @@ def default_registry() -> CapabilityRegistry:
         ("Capital Allocation Engine", "1.0", True, True, True, False),
         ("Research Department", "1.0", True, True, True, False),
         ("Research Confidence Framework", "1.0", True, True, True, False),
+        ("Opportunity Intelligence", "1.0", True, True, True, False),
+        ("Opportunity Memory", "1.0", True, True, True, False),
         ("Runtime Governance Engine", "1.0", True, True, True, True),
         ("Mission Control",      "0.8", True, True, True, True),
         ("Voice OS",             "0.6", True, True, False, False),
