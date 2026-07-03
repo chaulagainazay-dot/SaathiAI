@@ -88,6 +88,8 @@ def default_registry() -> CapabilityRegistry:
         ("Business OS",          "1.0", True, True, True, False),
         ("Enterprise KPI Engine", "1.0", True, True, True, False),
         ("Executive Intelligence", "1.0", True, True, True, False),
+        ("Investment Intelligence", "1.0", True, True, True, False),
+        ("Capital Allocation Engine", "1.0", True, True, True, False),
         ("Runtime Governance Engine", "1.0", True, True, True, True),
         ("Mission Control",      "0.8", True, True, True, True),
         ("Voice OS",             "0.6", True, True, False, False),

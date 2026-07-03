@@ -7,7 +7,11 @@
 > **Update cadence:** Every time a capability changes status (designed → implemented → tested → production). Keep it honest — an over-optimistic BUILD_STATUS is worse than none.
 
 **Last updated:** 2026-07-02
-**Current milestone:** M4 — Executive Intelligence (in progress). Shipped: M1 AI OS Core (`v0.1.0-alpha`) · M2 Learning Runtime (`v0.2.0-beta`) · M3 Business OS + Content Factory + integrations.
+**Current milestone:** M5 — Investment Intelligence (branch `milestone/m5-investment-intelligence`). Shipped: M1 AI OS Core (`v0.1.0-alpha`) · M2 Learning Runtime (`v0.2.0-beta`) · M3 Business OS · M4 Executive Intelligence · M4.5 Integration Sprint → **`v0.3.0-platform`** (integrated AI OS on `master`).
+
+### M5 — Investment Intelligence Department (the daily investment analyst)
+- ✅ **Opportunity scoring · Due Diligence · Risk sizing · Simulation · Recommendation · Capital Allocation** (`saathi/investment.py`, 8 tests). Decision-support, **never autonomy**: every recommendation `requires_approval=True` and is `executable` only after a human approves (AP-14, certified by M4.5 Sprint 7 — financial = L4). Nothing reaches a recommendation without passing Due Diligence; verdicts downgrade to HOLD on contradictions or negative EV. **Capital Allocation Engine** — every dollar competes across asset classes AND businesses (a test proves risk-adjusted EV picks *AI Studio marketing* over a high-ROI meme coin). Simulation is scenario-based ("what happens if BTC falls 35%"), never "should I buy?".
+- ⬜ Research/Opportunity-Discovery scanning (external feeds), Portfolio Intelligence, Investment Learning wiring, Financial Mission Control panel = next slices. Tag `v0.4.0-finance` when complete.
 
 ### M4 — Executive Intelligence (the daily CEO)
 - ✅ **Decision Engine · Goal Alignment · Forecast · Execution Score · Executive Briefing** (`saathi/executive.py`, 9 tests). The morning brief is now "what should I do next", not "what happened": prioritized actions ranked by impact × confidence × (1−risk), each explaining *why* (no black box); every action scored against the $7,938,838.98 dream; daily Execution Score (0–100) trended; linear Forecast Engine. Ties into KPI Engine + CEO Dashboard + Revenue.
