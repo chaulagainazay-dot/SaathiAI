@@ -534,6 +534,13 @@ def ceo_dashboard_job():
         send_ceo_dashboard()
     except Exception as e:
         _notify("📊 CEO Dashboard", f"Error: {str(e)[:120]}")
+    # Platform CEO briefing (Mission Control) — learning/knowledge/publishing/storage
+    # aggregated from the Event Fabric. Guarded; never breaks the existing dashboard.
+    try:
+        from .ceo_dashboard import send_morning_briefing
+        send_morning_briefing()
+    except Exception:
+        pass
 
 
 def mr_yeti_7am():

@@ -226,6 +226,22 @@ class MasterAgentLoop:
         }
         await self.memory.store_interaction(perception.student_id, interaction)
 
+        # Platform integration (Dev Rule #2): the same interaction feeds the
+        # shared Learning Runtime, so PIELTS improves itself over time. Guarded
+        # so the tutoring loop never breaks on a platform-memory hiccup.
+        try:
+            from ..integration import ingest_pielts_interaction
+            ingest_pielts_interaction(
+                student_id=perception.student_id,
+                skill=str(result.skill),
+                input_text=perception.raw_input,
+                response=result.response,
+                band_est=result.band_estimate,
+                outcome="success" if result.safe else "partial",
+            )
+        except Exception:
+            pass
+
     # ── Legacy grouping wrappers (preserve the 4-phase public API) ──────────────
 
     async def perceive(self, student_input: StudentInput) -> Perception:
