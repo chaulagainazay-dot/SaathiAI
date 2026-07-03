@@ -410,5 +410,24 @@ The Policy Engine is the governance layer that makes autonomous operation trustw
 
 ---
 
-*Last updated: 2026-07-02*
-*Next update: After SES-005 and SES-010 complete*
+## M5 — Investment Intelligence Department (v0.4.0-finance, 2026-07-03)
+
+The financial specialization of the AI-OS: a governed decision-support platform where every
+recommendation is explainable, every execution audited, every outcome preserved, and every
+completed trade feeds learning. Built as a chain of deterministic engines (AP-17), all
+side-effects injected (AP-12): Research Department (+ Research Confidence Framework) →
+Opportunity Intelligence (+ Opportunity Memory) → Investment Pipeline (InvestmentCase) →
+Portfolio Intelligence (+ Impact Simulator + Capital Reserve Engine) → Execution Layer
+(immutable Intent, broker-independent connectors, paper-first, idempotent recovery) → Trade
+Journal (append-only financial Platform Memory) → Investment Learning Runtime (proposes into
+M2, never mutates) → Financial Mission Control (consumer) → Executive Financial Integration
+(+ Cross-Department Priority Engine). Certified in `docs/M5_INTEGRATION_SPRINT.md`.
+
+**M5 principle (AP-14 applied to capital):** no trade bypasses human approval or the Governance
+Engine — financial actions are L4, and an ExecutionIntent can only be born from an approved,
+executable InvestmentCase. Learning proposes; the human disposes.
+
+---
+
+*Last updated: 2026-07-03*
+*Next update: After the v0.4.0-finance stabilization window (paper-trading + live business data)*
