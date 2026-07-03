@@ -105,6 +105,8 @@ def default_registry() -> CapabilityRegistry:
         ("Investment Learning Runtime", "1.0", True, True, True, False),
         ("Financial Mission Control", "1.0", True, True, True, True),
         ("Capital Allocation Timeline", "1.0", True, True, True, True),
+        ("Executive Intelligence Financial Integration", "1.0", True, True, True, True),
+        ("Cross-Department Priority Engine", "1.0", True, True, True, True),
         ("Runtime Governance Engine", "1.0", True, True, True, True),
         ("Mission Control",      "0.8", True, True, True, True),
         ("Voice OS",             "0.6", True, True, False, False),
