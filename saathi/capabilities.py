@@ -85,6 +85,8 @@ def default_registry() -> CapabilityRegistry:
         ("Content Factory",      "1.0", True, True, True, False),
         ("Revenue Engine",       "1.0", True, True, True, False),
         ("Audience Intelligence", "1.0", True, True, True, False),
+        ("Business OS",          "1.0", True, True, True, False),
+        ("Enterprise KPI Engine", "1.0", True, True, True, False),
         ("Runtime Governance Engine", "1.0", True, True, True, True),
         ("Mission Control",      "0.8", True, True, True, True),
         ("Voice OS",             "0.6", True, True, False, False),
