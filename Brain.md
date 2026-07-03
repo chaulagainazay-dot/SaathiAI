@@ -119,6 +119,7 @@ These ten principles govern every engineering decision. When in doubt, ask which
 | AP-15 | Knowledge Promotion Is Evidence-Driven, Not Occurrence-Driven | A pattern becomes knowledge because the *evidence* supports it (verification count, source diversity, time consistency, cross-product reach) — not merely because it was observed. Seeing something once, or a hundred times from one source, is not the same as knowing it. Every knowledge item carries its source trace and can answer *"why do I believe this?"* |
 | AP-16 | Contradictory Knowledge Is Reviewed, Never Silently Replaced | When new knowledge conflicts with existing promoted knowledge, both are kept and linked, and the conflict is routed to review. History of reasoning is preserved; the platform never quietly overwrites what it used to believe. |
 | AP-17 | Promotion Is Deterministic Before AI-Assisted | Candidate discovery, clustering, evidence scoring, and state transitions are deterministic and testable. An LLM may *assist* pattern extraction, but it never decides promotion, contradiction, or state. Governance stays predictable and auditable. |
+| AP-18 | Learning Proposes, Never Mutates | The Learning Engine never edits a prompt, a config, or a core document directly. It produces explicit, governed **proposals** — a capability improvement, a knowledge candidate, a Brain/Business/Wisdom candidate, an ADR candidate, or an engineering task — that a human (or an approval policy) accepts. Improvement is measurable and reversible: prefer an A/B experiment to a silent replacement. |
 
 ---
 
