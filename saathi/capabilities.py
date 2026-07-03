@@ -75,6 +75,8 @@ def default_registry() -> CapabilityRegistry:
         ("Model Router",         "1.0", True, True, True, True),
         ("Tool Registry",        "1.0", True, True, True, True),
         ("Memory",               "0.9", True, True, False, False),
+        ("Platform Memory",      "1.0", True, True, True, False),
+        ("Memory Promotion Engine", "1.0", True, True, True, False),
         ("Runtime Governance Engine", "1.0", True, True, True, True),
         ("Mission Control",      "0.6", True, True, True, False),
         ("Voice OS",             "0.6", True, True, False, False),

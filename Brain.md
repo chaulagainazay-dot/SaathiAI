@@ -116,6 +116,9 @@ These ten principles govern every engineering decision. When in doubt, ask which
 | AP-12 | Independently Testable | Every subsystem is unit-, integration-, load-, and failure-recovery-testable in isolation, and observable. Dependencies are injected, not imported. A subsystem that can't be tested alone isn't done. |
 | AP-13 | Event-First Integration | Subsystems publish events and subscribe to events; they do not call each other directly unless absolutely necessary. Storage → Event Fabric → {Mission Control, Telegram, Analytics, Learning Engine}, not Storage → Mission Control. Keeps SaathiAI loosely coupled as it grows. |
 | AP-14 | Autonomy Is Earned, Not Assumed | Every increase in autonomous capability must be matched by an equivalent increase in **governance, observability, and recoverability**. A new autonomous power ships only with its safety classification, its audit trail, and its undo/kill path. Capability without governance is a regression, not progress. |
+| AP-15 | Knowledge Promotion Is Evidence-Driven, Not Occurrence-Driven | A pattern becomes knowledge because the *evidence* supports it (verification count, source diversity, time consistency, cross-product reach) — not merely because it was observed. Seeing something once, or a hundred times from one source, is not the same as knowing it. Every knowledge item carries its source trace and can answer *"why do I believe this?"* |
+| AP-16 | Contradictory Knowledge Is Reviewed, Never Silently Replaced | When new knowledge conflicts with existing promoted knowledge, both are kept and linked, and the conflict is routed to review. History of reasoning is preserved; the platform never quietly overwrites what it used to believe. |
+| AP-17 | Promotion Is Deterministic Before AI-Assisted | Candidate discovery, clustering, evidence scoring, and state transitions are deterministic and testable. An LLM may *assist* pattern extraction, but it never decides promotion, contradiction, or state. Governance stays predictable and auditable. |
 
 ---
 
@@ -131,6 +134,31 @@ The permanent working discipline for the Engineering Phase:
 Do NOT document entire future systems months before implementation — it produces specs that drift from reality. SES-001 through SES-020 exist as a roadmap; only the milestone in flight gets detailed, reconciled-against-code specification. Progress is judged by **running, tested code**, not by document count.
 
 > **Phase marker (2026-07-02):** SaathiAI has moved from the **Architecture Phase** to the **Engineering Phase**. From here, `BUILD_STATUS.md` is the source of truth for what is real; SES docs describe intent.
+
+> **Phase marker (2026-07-03):** M1 — AI OS Core **complete** (`v0.1.0-alpha`). Six production platform capabilities. Now in **M2 — Learning Runtime**: SaathiAI learns from completed work and measurably improves future decisions without manual prompt edits.
+
+---
+
+## 5c. Development Rule #2 — Ecosystem Integration Is Mandatory
+
+> No new autonomous capability may be implemented unless it integrates with **Memory, Event Fabric, Mission Control, Runtime Governance, and the Learning Engine** where applicable.
+
+Every future capability becomes part of the ecosystem rather than an isolated feature. A capability that publishes no events, records no memory, surfaces nothing to Mission Control, and bypasses governance is a silo — and silos violate AP-01 (Platform-First). Build capabilities once, reuse everywhere, improve continuously.
+
+---
+
+## 6b. Memory Layer L6 — Platform Wisdom (the constitution)
+
+Beyond the ordinary memory tiers (L0 working → L5 archive), SaathiAI has a **constitutional** layer that must never be buried among ordinary memories:
+
+**L6 — Platform Wisdom** is not facts. It contains the rules that govern how SaathiAI thinks and acts:
+- Engineering & Architecture Principles (AP-01 … AP-14)
+- Development Rules (#1 docs-one-milestone-ahead, #2 ecosystem-integration)
+- Business Principles, Coding Standards, Safety Policies, Decision Frameworks
+
+Examples: *AP-11 — Intelligence Decides, Automation Executes.* *AP-14 — Autonomy is earned, not assumed.*
+
+These are the constitutional rules. The Learning Engine and Brain Synchronizer (M2) may propose **candidates** for L6, but promotion into it is the highest-governance action — human-approved only, never auto-promoted. L6 is where `Brain.md`'s principles live; ordinary learned patterns live in L2 semantic memory and below.
 
 ---
 

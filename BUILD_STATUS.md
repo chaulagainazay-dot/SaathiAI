@@ -110,6 +110,23 @@ Sprint is complete only when ALL are true:
 
 ---
 
+## Active Sprint: M2 — Learning Runtime (branch `milestone/m2-learning-runtime`)
+
+**Success criterion:** SaathiAI learns from completed work and measurably improves future decisions without manual prompt edits.
+
+| Phase | Work | Status |
+|-------|------|--------|
+| 0 | Memory System Audit (`docs/M2_MEMORY_AUDIT.md`) | ✅ Complete — key finding: PIELTS application memory, not platform memory; two duplicate systems |
+| **1a** | **Platform Memory Foundation** | ✅ **Complete (2026-07-03)** — `saathi/memory/platform.py`, 12 tests. Generic `Episode`/`Knowledge` schemas (products attach metadata — pielts/HCG/Studio/crypto proven on one schema); Promotion State Machine (NEW→CANDIDATE→UNDER_REVIEW→PROMOTED→SUPERSEDED→ARCHIVED, illegal jumps rejected); retention policies (SESSION 7d / WORKFLOW 30d / SEMANTIC forever / PLATFORM_WISDOM never); scope firewall (only platform/global cross products); **Source Trace** (`source_episode_ids` — "why do I believe this?"); **verification_count** (evidence-based trust). Dead shadowed `saathi/memory.py` deleted; PIELTS backward-compat adapter tested. `Wisdom.md` seeded (human-readable L6). |
+| **1b** | **Memory Promotion Engine** ⭐ | ✅ **Complete (2026-07-03)** — `saathi/memory/promotion.py` + `saathi/memory/evidence.py`, 19 tests. 7-stage deterministic pipeline (Discovery → Intent Clustering → Structured Extraction → Evidence Scoring → State Transition → Routing → Events); engine only moves states via the Promotion State Machine (never illegal); **Evidence Scorer** (verification/diversity/time-consistency/cross-product/contradiction-risk + LLM confidence, weighted); **Knowledge Contradiction Detector** (flags conflicts for review, never silently overwrites — both items linked); auto-promote / contradiction / strategic-review routing; publishes `knowledge.promoted` / `knowledge.conflict_detected` / `knowledge.review_requested` / `brain.update_candidate`; idempotent (episodes marked consumed). LLM-free defaults; LLM extractor pluggable later. |
+| 2 | Memory Quality Scorer + Review Queue | ⬜ |
+| 3 | Learning Engine | ⬜ |
+| 4 | Knowledge Graph (SQLite adjacency) | ⬜ |
+| 5 | Brain Synchronizer (Brain/Business/Writing-Style/ADR routing) | ⬜ |
+| 6 | Mission Control Learning Dashboard | ⬜ |
+
+---
+
 ## Capability Status (SES → Code)
 
 | Capability | SES Doc | Design | Code | Notes |
