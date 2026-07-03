@@ -83,7 +83,7 @@ def default_registry() -> CapabilityRegistry:
         ("Knowledge Graph",      "1.0", True, True, True, False),
         ("Knowledge Publication Engine", "1.0", True, True, True, False),
         ("Runtime Governance Engine", "1.0", True, True, True, True),
-        ("Mission Control",      "0.6", True, True, True, False),
+        ("Mission Control",      "0.8", True, True, True, True),
         ("Voice OS",             "0.6", True, True, False, False),
         ("AI Studio",            "0.5", True, True, False, False),
         ("Discovery Engine",     "0.4", True, True, False, False),

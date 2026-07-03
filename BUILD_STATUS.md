@@ -49,6 +49,7 @@
 | 3 | AI Studio autonomous publish pipeline | ⬜ (the gate + episode recording is the backbone; remaining = wire real posters through `.production()`) |
 | 4 | HCG Live Signal × Research + Learning | ⬜ |
 | 5 | HCG POS × Business Intelligence | ⬜ |
+| **A** | **Mission Control — CEO Dashboard** | ✅ **Complete (2026-07-03)** — `saathi/ceo_dashboard.py`, 5 tests. Event-first daily operating view (AP-13): aggregates publishing / learning / knowledge-graph / docs / storage streams from the Event Fabric into one snapshot + a text **morning briefing**. **Live-wired** — `send_morning_briefing()` pushes to Telegram via the existing 8am-NPT `ceo_dashboard_job`. Honest by construction (Dev Rule #1): the `$7,938,838.98` Dream Meter reads "$0 — revenue not yet connected" until Business/Financial OS wire it, rather than faking numbers. |
 
 ---
 
