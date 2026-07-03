@@ -77,6 +77,7 @@ def default_registry() -> CapabilityRegistry:
         ("Memory",               "0.9", True, True, False, False),
         ("Platform Memory",      "1.0", True, True, True, False),
         ("Memory Promotion Engine", "1.0", True, True, True, False),
+        ("Knowledge Governance (Review Queue)", "1.0", True, True, True, False),
         ("Runtime Governance Engine", "1.0", True, True, True, True),
         ("Mission Control",      "0.6", True, True, True, False),
         ("Voice OS",             "0.6", True, True, False, False),
