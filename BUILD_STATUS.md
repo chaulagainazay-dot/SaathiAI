@@ -38,6 +38,20 @@
 
 ---
 
+## Active Sprint: Platform Integration (M3 prelude) — connect products to the platform
+
+**Objective:** products *use* the shared platform (Memory, Learning, Storage, Model Router, Governance, Knowledge Graph) rather than reimplementing it (Dev Rule #2, AP-01). This is where SaathiAI starts creating value, not just being well-architected.
+
+| # | Integration | Status |
+|---|-------------|--------|
+| **1** | **PIELTS × Learning Runtime** | ✅ **Complete (2026-07-03)** — `saathi/integration.py`, 3 tests. Every BMA tutoring turn now records a platform `Episode` (`ingest_pielts_interaction`, wired into `master.py update_memory`, guarded/non-breaking; existing IELTS memory untouched). Proven end-to-end: student interactions → episodes → Promotion Engine → knowledge candidate; Learning Engine sees pielts success rates. **PIELTS is now a continuously-improving tutor.** (Fixed a real bug: the pielts adapter was hardcoding `outcome="success"`.) |
+| 2 | Discovery Engine × AI Studio | ⬜ next |
+| 3 | AI Studio autonomous publish pipeline | ⬜ |
+| 4 | HCG Live Signal × Research + Learning | ⬜ |
+| 5 | HCG POS × Business Intelligence | ⬜ |
+
+---
+
 ## Capability Maturity Matrix
 
 Distinguishes "exists" from "ready." Filled from actual code inspection (Core Runtime Audit, 2026-07-02), not planned features. Legend: ✅ done · ⚠️ partial · ❌ not yet.

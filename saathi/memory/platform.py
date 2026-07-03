@@ -240,13 +240,14 @@ class PlatformMemory:
     def record_pielts_interaction(self, *, student_id: str, skill: str,
                                   input_text: str, response: str,
                                   band_est: float | None = None,
+                                  outcome: str = "success",
                                   **extra_metadata) -> int:
         """The old (student_id, skill, band_est) shape maps into metadata —
         PIELTS keeps working; the platform schema stays generic."""
         return self.record_episode(
             agent=f"{skill}_subagent", department="IELTS Tutor", product="pielts",
             user=student_id, intent=f"ielts_{skill}_practice",
-            action=input_text[:500], result=response[:500], outcome="success",
+            action=input_text[:500], result=response[:500], outcome=outcome,
             quality_score=(band_est / 9.0) if band_est is not None else 0.0,
             metadata={"student_id": student_id, "skill": skill,
                       "band_est": band_est, **extra_metadata},
