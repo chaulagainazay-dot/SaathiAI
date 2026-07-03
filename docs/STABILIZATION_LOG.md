@@ -37,15 +37,22 @@ _(observations below)_
 
 
 ## Week 2 — HCG Cafeteria (real daily data)
-Metrics to watch: production · sales · waste · recommendations · recommendation accuracy · savings.
-Key question: do the AI's suggestions actually reduce waste?
+Metrics to watch: production · sales · waste · savings, plus —
+- **Forecast accuracy:** recommended production vs. actual demand
+- **Recommendation adoption rate:** did I follow the AI's suggestion?
+- **Impact of adopted recommendations:** e.g. waste % before → after following the advice
+Key question: do the AI's suggestions *consistently improve* operations, or are they merely plausible?
 
 _(observations below)_
 
 
-## Week 3 — Paper Trading (continuous, observe only — do NOT optimize)
-Metrics to watch: research quality · recommendation quality · DD pass rate · portfolio health ·
-learning proposals.
+## Week 3 — Paper Trading (continuous — calibration, NOT a competition; do NOT optimize)
+Metrics to watch: research quality · portfolio health · learning proposals, plus —
+- **Recommendation precision** (of BUYs that played out)
+- **Due-diligence pass rate**
+- **Average confidence vs. actual outcome** (is the system well-calibrated?)
+- **False positives** (recommended, lost) / **False negatives** (rejected/held, would have won)
+These tell us where the Research Department and scoring models need refinement.
 
 _(observations below)_
 
@@ -54,6 +61,23 @@ _(observations below)_
 Every morning: could I run my businesses from this briefing alone? Log every "No".
 
 _(observations below)_
+
+---
+
+## Recommendation Outcome Ledger — did the advice actually improve results?
+The other half of the loop. Observations capture what was *missing*; this captures whether the
+system's recommendations were *good*. Log every recommendation I acted on (or deliberately didn't)
+and its real-world result. Over a month this measures whether SaathiAI's advice improves outcomes.
+
+| Date | Area | Recommendation | Followed? | Result |
+|------|------|----------------|-----------|--------|
+| _e.g._ Jul 5 | Cafeteria | Reduce Dal Bhat by 6 portions | Yes | Waste 5% → 3% |
+| _e.g._ Jul 8 | AI Studio | Approve marketing allocation | Yes | CTR +17% |
+| _e.g._ Jul 10 | Paper Trading | Hold Opportunity #218 | Yes | Asset fell 12% after |
+|      |      |                |           |        |
+
+> Roll-up at window close: **adoption rate** (Followed? = Yes / total) and **hit rate** (good
+> Result / Followed). A high hit rate on followed advice is the strongest signal M5 is production-worthy.
 
 ---
 
