@@ -37,7 +37,11 @@ def _loop():
                 if not text or chat != str(config.TELEGRAM_CHAT_ID):
                     continue  # only Ajay's chat is trusted
                 try:
-                    reply = agent.respond(text, session_id="telegram", speaker_verified=True)
+                    # fast CEO command layer first; falls through to the agent
+                    from .telegram_ceo import handle_command
+                    reply = handle_command(text)
+                    if reply is None:
+                        reply = agent.respond(text, session_id="telegram", speaker_verified=True)
                 except Exception as e:
                     reply = f"⚠️ {type(e).__name__}: {str(e)[:120]}"
                 _send(reply)

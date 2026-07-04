@@ -13,6 +13,35 @@ infrastructure. Observe and log only. Refinements are proposed, batched, and shi
 **Success question, asked every morning:** *If I only had this briefing, could I run my
 businesses today?* Every "No" is logged below and becomes a high-value improvement.
 
+**Daily success rule (measured, not aspirational):** every day SaathiAI should
+**decide ≥1** business decision · **automate ≥1** task · **learn from ≥1** real outcome ·
+**earn** measurable revenue · **reflect** — answer *"what surprised me today?"*
+(`/reflect <observation>`, captured as a reflection Episode). Computed live from Episodes +
+Revenue by `saathi/daily_scorecard.py`, shown in the 8 AM Telegram briefing (`/scorecard`):
+```
+📊  Today 4/5   ✅ decide  ✅ automate  ✅ learn  ✅ earn  ⬜ reflect
+🪞  /reflect — what surprised you today?
+```
+**Reflect is the highest-leverage box** — the surprise captures what the system *didn't*
+anticipate, and becomes tomorrow's experiment → eventually permanent knowledge. Examples:
+"Travel leads respond faster after 7 PM" · "Dal Bhat demand spikes when it rains" ·
+"6-min whiteboards beat 8-min" · "high-sentiment/weak-fundamentals paper trades consistently fail."
+
+A day under 5/5 is a signal, not a failure — log *why* the missing box didn't fire below.
+
+| Date | Decide | Automate | Learn | Earn | Reflect (the surprise) |
+|------|--------|----------|-------|------|------------------------|
+|      |        |          |       |      |                        |
+
+### End-of-window success questions (ask these, not "how many features?")
+- Did the CEO briefing become the first thing I open each morning?
+- Did I make decisions faster? Did the platform save measurable time?
+- Did revenue improve *because of* recommendations? Did cafeteria waste decrease?
+- Did the Learning Runtime produce insights I actually used?
+- How often did I ignore SaathiAI's recommendations — and why?
+- **The milestone:** do I now instinctively ask *"Saathi, what should I do next?"* before opening
+  YouTube Studio / POS / my crypto app / spreadsheets? When yes — it's an operating system, not a project.
+
 ---
 
 ## How to log

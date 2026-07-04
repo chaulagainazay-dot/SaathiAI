@@ -3,7 +3,7 @@ from __future__ import annotations
 import base64
 import time
 
-from fastapi import Depends, FastAPI, File, Form, Request, UploadFile
+from fastapi import Body, Depends, FastAPI, File, Form, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -15,6 +15,177 @@ from .agent import SaathiAgent
 app = FastAPI(title="SaathiAI")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"],
                    allow_headers=["*"])
+
+
+# ── BFF: one aggregated contract for the CEO Home screen (desktop + mobile) ──
+@app.get("/api/executive/briefing")
+@app.get("/api/v1/ceo/home")
+def ceo_home_endpoint():
+    from saathi.bff import ceo_home
+    return ceo_home()
+
+
+# loop-safe event publisher: inside FastAPI's running loop we can't use
+# bus.publish_sync, so fire-and-forget an awaitable task instead.
+def _loop_safe_publish(name, payload):
+    import asyncio
+    from saathi.events import bus
+    try:
+        asyncio.get_running_loop().create_task(bus.publish(name, payload))
+    except RuntimeError:
+        bus.publish_sync(name, payload)
+
+
+# ── Autonomous Content Factory — thin endpoints for n8n (SaathiAI = intelligence) ──
+# n8n only orchestrates + calls external generators; every call here records an Episode.
+def _factory():
+    from saathi.content_pipeline import ContentFactoryPipeline
+    return ContentFactoryPipeline(publish_event=_loop_safe_publish)
+
+@app.post("/api/v1/factory/discover")
+async def factory_discover(body: dict = Body(...)):
+    from saathi.content_pipeline import ContentRun
+    run = ContentRun()
+    topics = _factory().rank_topics(run, body.get("signals", []), top=body.get("top", 20))
+    return {"topics": [{"title": t.title, "source": t.source, "score": t.score} for t in topics],
+            "episodes": run.episodes}
+
+@app.post("/api/v1/factory/research")
+async def factory_research(body: dict = Body(...)):
+    from saathi.content_pipeline import ContentRun, Topic
+    run = ContentRun(); t = body.get("topic", {})
+    conf = _factory().research_topic(run, Topic(
+        title=t.get("title", ""), source=t.get("source", "unknown"),
+        relevance=t.get("relevance", 0.5), evidence=t.get("evidence", 0)))
+    return {"confidence": conf, "episodes": run.episodes}
+
+@app.post("/api/v1/factory/script/validate")
+async def factory_script(body: dict = Body(...)):
+    from saathi.content_pipeline import ContentRun
+    run = ContentRun(); ok = _factory().validate_script(run, body.get("script", {}))
+    return {"ok": ok, "issues": run.script_issues, "episodes": run.episodes}
+
+@app.post("/api/v1/factory/scenes")
+async def factory_scenes(body: dict = Body(...)):
+    from saathi.content_pipeline import ContentRun
+    run = ContentRun()
+    scenes = _factory().plan_scenes(run, body.get("script", {}))
+    return {"scenes": [{"text": s.text, "image_prompt": s.image_prompt} for s in scenes],
+            "episodes": run.episodes}
+
+@app.post("/api/v1/factory/gate")
+async def factory_gate(body: dict = Body(...)):
+    from saathi.content_pipeline import ContentRun
+    run = ContentRun(); run.metadata = body.get("metadata", {})
+    passed = _factory().gate(run)
+    return {"passed": passed, "blockers": run.gate_blockers, "status": run.status,
+            "episodes": run.episodes}
+
+@app.post("/api/v1/factory/failure")
+async def factory_failure(body: dict = Body(...)):
+    from saathi.content_pipeline import Stage
+    stage = Stage(body.get("stage", "render"))
+    return _factory().record_failure(stage, body.get("error", "unknown"), topic=body.get("topic", ""))
+
+
+# ── Content Intelligence — Analytics → Learning (self-improving AI Studio) ──
+def _content_intel():
+    import os
+    from saathi.content_intelligence import ContentIntelligence
+    data = os.path.join(os.path.dirname(__file__), "..", "data")
+    try:
+        from saathi.learning.registry import CapabilityImprovementRegistry
+        imp = CapabilityImprovementRegistry(os.path.join(data, "improvements.db"))
+    except Exception:
+        imp = None
+    return ContentIntelligence(os.path.join(data, "content_intel.db"),
+                               improvement_registry=imp, publish=_loop_safe_publish)
+
+@app.post("/api/content/analytics")
+async def content_analytics(body: dict = Body(...)):
+    from saathi.content_intelligence import normalize
+    a = normalize(body.get("platform", "youtube"), body.get("analytics", body))
+    return _content_intel().ingest(a)
+
+@app.post("/api/content/compare")
+async def content_compare(body: dict = Body(...)):
+    return _content_intel().compare(body["a"], body["b"])
+
+@app.get("/api/content/recommendations")
+async def content_recommendations(top: int = 5):
+    ci = _content_intel()
+    return {"recommendations": ci.recommendations(top), "briefing": ci.content_briefing()}
+
+@app.get("/api/content/leaderboard")
+async def content_leaderboard(top: int = 5):
+    return {"leaderboard": _content_intel().leaderboard(top)}
+
+@app.get("/api/content/experiments")
+async def content_experiments():
+    return {"experiments": _content_intel().experiments()}
+
+
+# ── Saathi Coach — IELTS as the daily Learn box (conversational, own-project topics) ──
+def _coach():
+    import os
+    from saathi.coach import SaathiCoach, BandPredictor
+    data = os.path.join(os.path.dirname(__file__), "..", "data")
+    return SaathiCoach(BandPredictor(os.path.join(data, "coach.db")), publish=_loop_safe_publish)
+
+@app.get("/api/v1/coach/challenge")
+async def coach_challenge():
+    from saathi.coach import daily_challenge
+    c = daily_challenge()
+    return {"skill": c.skill, "topic": c.topic, "minutes": c.minutes,
+            "expected_band_gain": c.expected_band_gain, "reason": c.reason, "text": c.render()}
+
+@app.post("/api/v1/coach/score")
+async def coach_score(body: dict = Body(...)):
+    out = _coach().practice_speaking(body.get("transcript", ""), topic=body.get("topic", ""),
+                                     pronunciation_hint=body.get("pronunciation_hint"))
+    s = out["score"]
+    return {"band": s.band, "grammar": s.grammar, "vocabulary": s.vocabulary,
+            "fluency": s.fluency, "pronunciation": s.pronunciation, "weakness": s.weakness,
+            "prediction": out["prediction"]}
+
+@app.get("/api/v1/coach/prediction")
+async def coach_prediction(days_left: int = 11):
+    import os
+    from saathi.coach import BandPredictor
+    data = os.path.join(os.path.dirname(__file__), "..", "data")
+    return BandPredictor(os.path.join(data, "coach.db")).predict(days_left=days_left)
+
+
+# ── Telegram CEO Companion — push the morning briefing ──
+@app.post("/api/v1/ceo/telegram/brief")
+async def ceo_telegram_brief():
+    from saathi.telegram_ceo import briefing_text
+    from saathi.bff import ceo_home
+    try:
+        from saathi.daily_scorecard import today_scorecard
+        sc = today_scorecard().render()
+    except Exception:
+        sc = None
+    text = briefing_text(ceo_home(), scorecard=sc)
+    try:
+        from saathi.telegram_bot import _send
+        _send(text)
+        sent = True
+    except Exception:
+        sent = False
+    return {"sent": sent, "text": text}
+
+
+# ── Live event stream (SSE) — the platform breathing to every client ──
+@app.get("/api/events/stream")
+async def events_stream(demo: int = 1):
+    from fastapi.responses import StreamingResponse
+    from saathi.eventstream import sse_stream
+    return StreamingResponse(
+        sse_stream(demo=bool(demo)),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "Connection": "keep-alive",
+                 "X-Accel-Buffering": "no"})
 
 try:
     from .tools.r2_storage import cleanup_old_local_dirs
@@ -75,6 +246,14 @@ async def _auth(request, call_next):
     # Always allow: login endpoint, OAuth callbacks, static assets, and
     # endpoints that enforce their own bearer auth (BAADAR_API_KEY).
     if (path == "/api/v1/auth/login"
+            or path == "/api/executive/briefing"
+            or path == "/api/v1/ceo/home"
+            or path == "/api/events/stream"
+            or path == "/api/content/recommendations"
+            or path == "/api/content/leaderboard"
+            or path == "/api/content/experiments"
+            or path == "/api/v1/coach/challenge"
+            or path == "/api/v1/coach/prediction"
             or path == "/api/v1/linkedin/callback"
             or path == "/api/v1/tiktok/callback"
             or path == "/api/v1/tiktok/auth"
@@ -88,6 +267,17 @@ async def _auth(request, call_next):
     # Legacy remote token (backward compat)
     if ACCESS_TOKEN and request.headers.get("x-saathi-token") == ACCESS_TOKEN:
         return await call_next(request)
+    # Stage 2 — Logto access token (JWT / RBAC). Additive; inert until LOGTO_ENDPOINT set.
+    try:
+        from saathi.auth_logto import enabled as _logto_on, authorize as _logto_authz, AuthError as _LErr
+        if _logto_on() and request.headers.get("authorization"):
+            try:
+                request.state.principal = _logto_authz(request.headers.get("authorization"))
+                return await call_next(request)
+            except _LErr:
+                pass  # fall through to session auth
+    except Exception:
+        pass
     if not _is_authed(request):
         return JSONResponse({"error": "unauthorized"}, status_code=401)
     return await call_next(request)

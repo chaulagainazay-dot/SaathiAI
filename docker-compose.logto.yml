@@ -1,0 +1,34 @@
+# Stage 2 — Logto auth (JWT / RBAC / Organizations) for SaathiAI.
+# Run:  docker compose -f docker-compose.logto.yml up -d
+# Admin console: http://localhost:3002   ·   Auth/OIDC endpoint: http://localhost:3001
+services:
+  logto-db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: p0stgr3s
+    volumes:
+      - logto-pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  logto:
+    image: svhd/logto:latest
+    depends_on:
+      logto-db:
+        condition: service_healthy
+    ports:
+      - "3001:3001"   # OIDC / auth endpoint  (LOGTO_ENDPOINT)
+      - "3002:3002"   # admin console
+    environment:
+      - TRUST_PROXY_HEADER=1
+      - DB_URL=postgres://postgres:p0stgr3s@logto-db:5432/logto
+      - ENDPOINT=http://localhost:3001
+      - ADMIN_ENDPOINT=http://localhost:3002
+    entrypoint: ["sh", "-c", "npm run cli db seed -- --swe-role || true; npm start"]
+
+volumes:
+  logto-pg:

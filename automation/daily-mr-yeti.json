@@ -1,0 +1,85 @@
+{
+  "name": "01 · Daily Mr. Yeti (thin — SaathiAI decides)",
+  "nodes": [
+    {
+      "parameters": { "rule": { "interval": [{ "field": "cronExpression", "expression": "0 8 * * *" }] } },
+      "id": "sched", "name": "8:00 AM", "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1, "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST", "url": "http://localhost:8765/api/v1/factory/discover",
+        "sendHeaders": true,
+        "headerParameters": { "parameters": [{ "name": "x-saathi-token", "value": "={{$env.SAATHI_TOKEN}}" }] },
+        "sendBody": true, "specifyBody": "json",
+        "jsonBody": "={{ { signals: $json.signals } }}"
+      },
+      "id": "discover", "name": "SaathiAI · rank topics", "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2, "position": [460, 300],
+      "retryOnFail": true, "maxTries": 3, "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "method": "POST", "url": "https://openrouter.ai/api/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": { "parameters": [{ "name": "Authorization", "value": "=Bearer {{$env.OPENROUTER_KEY}}" }] },
+        "sendBody": true, "specifyBody": "json",
+        "jsonBody": "={{ { model: 'anthropic/claude-3.5-sonnet', messages: [{ role:'user', content:'Write a Mr. Yeti IELTS script for: ' + $json.topics[0].title }] } }}"
+      },
+      "id": "gen-script", "name": "OpenRouter · generate script (external)", "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2, "position": [680, 300], "retryOnFail": true, "maxTries": 3
+    },
+    {
+      "parameters": {
+        "method": "POST", "url": "http://localhost:8765/api/v1/factory/script/validate",
+        "sendHeaders": true,
+        "headerParameters": { "parameters": [{ "name": "x-saathi-token", "value": "={{$env.SAATHI_TOKEN}}" }] },
+        "sendBody": true, "specifyBody": "json", "jsonBody": "={{ { script: $json.script } }}"
+      },
+      "id": "validate", "name": "SaathiAI · validate script", "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2, "position": [900, 300], "retryOnFail": true, "maxTries": 3
+    },
+    {
+      "parameters": {
+        "method": "POST", "url": "http://localhost:8765/api/v1/factory/gate",
+        "sendHeaders": true,
+        "headerParameters": { "parameters": [{ "name": "x-saathi-token", "value": "={{$env.SAATHI_TOKEN}}" }] },
+        "sendBody": true, "specifyBody": "json", "jsonBody": "={{ { metadata: $json.metadata } }}"
+      },
+      "id": "gate", "name": "SaathiAI · Discovery Gate", "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2, "position": [1120, 300], "retryOnFail": true, "maxTries": 3
+    },
+    {
+      "parameters": {
+        "conditions": { "boolean": [{ "value1": "={{$json.passed}}", "value2": true }] }
+      },
+      "id": "if-gate", "name": "Gate passed?", "type": "n8n-nodes-base.if",
+      "typeVersion": 1, "position": [1340, 300]
+    },
+    {
+      "parameters": {},
+      "id": "approve", "name": "Human approval → publish (Telegram)", "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1, "position": [1560, 220]
+    },
+    {
+      "parameters": {},
+      "id": "improve", "name": "Blocked → improve + Episode", "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1, "position": [1560, 400]
+    }
+  ],
+  "connections": {
+    "8:00 AM": { "main": [[{ "node": "SaathiAI · rank topics", "type": "main", "index": 0 }]] },
+    "SaathiAI · rank topics": { "main": [[{ "node": "OpenRouter · generate script (external)", "type": "main", "index": 0 }]] },
+    "OpenRouter · generate script (external)": { "main": [[{ "node": "SaathiAI · validate script", "type": "main", "index": 0 }]] },
+    "SaathiAI · validate script": { "main": [[{ "node": "SaathiAI · Discovery Gate", "type": "main", "index": 0 }]] },
+    "SaathiAI · Discovery Gate": { "main": [[{ "node": "Gate passed?", "type": "main", "index": 0 }]] },
+    "Gate passed?": { "main": [
+      [{ "node": "Human approval → publish (Telegram)", "type": "main", "index": 0 }],
+      [{ "node": "Blocked → improve + Episode", "type": "main", "index": 0 }]
+    ] }
+  },
+  "settings": { "executionOrder": "v1" },
+  "meta": {
+    "note": "THIN by design. Every decision (rank/validate/gate) is a SaathiAI /factory/* call; only generation (OpenRouter/Flux/ElevenLabs/publish) is external. n8n holds no intelligence."
+  }
+}

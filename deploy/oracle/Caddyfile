@@ -1,0 +1,24 @@
+# SaathiAI — single-origin reverse proxy with automatic HTTPS (Let's Encrypt).
+# /api/*  → FastAPI platform (:8765)   ·   everything else → Next.js UI (:3000)
+# SAATHI_DOMAIN is replaced by setup.sh (e.g. 140-238-1-2.nip.io or your No-IP host).
+SAATHI_DOMAIN {
+	encode zstd gzip
+
+	# Server-Sent Events must stream, not buffer.
+	@sse path /api/events/stream
+	handle @sse {
+		reverse_proxy localhost:8765 {
+			flush_interval -1
+		}
+	}
+
+	# platform API (BFF, content, coach, telegram, factory, …)
+	handle /api/* {
+		reverse_proxy localhost:8765
+	}
+
+	# the CEO Companion UI (installable PWA)
+	handle {
+		reverse_proxy localhost:3000
+	}
+}
