@@ -74,6 +74,22 @@ async def human_test(request: Request):
                 "hint": "start the Mac Agent: bash ~/SaathiAI/run_human_agent.sh"}
 
 
+@app.get("/api/v1/human/automation")
+async def human_automation():
+    """Automation Center status + Browser Health Score + recent runs (flight recorder)."""
+    import asyncio
+    from saathi.infrastructure.human_browser.automation import status
+    return await asyncio.to_thread(status)
+
+
+@app.get("/api/v1/human/runs/{run_id}")
+async def human_run(run_id: str):
+    """One run's full record for the Replay viewer (timeline + artifacts)."""
+    from saathi.infrastructure.human_browser.run_store import default_store
+    run = default_store().get(run_id)
+    return run or {"error": "run not found"}
+
+
 @app.get("/api/v1/infrastructure/health")
 async def infrastructure_health():
     """Unified infra diagnostics for the CEO dashboard's Infrastructure panel
@@ -328,6 +344,8 @@ async def _auth(request, call_next):
             or path == "/api/executive/briefing"
             or path == "/api/v1/ceo/home"
             or path == "/api/v1/infrastructure/health"
+            or path == "/api/v1/human/automation"
+            or path.startswith("/api/v1/human/runs/")
             or path == "/api/events/stream"
             or path == "/api/content/recommendations"
             or path == "/api/content/leaderboard"

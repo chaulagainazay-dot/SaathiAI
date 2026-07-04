@@ -15,6 +15,19 @@ export async function fetchInfraHealth() {
   return r.json();
 }
 
+// Automation Center — status, health score, recent runs (flight recorder).
+export async function fetchAutomation() {
+  const r = await fetch(`${API_BASE}/api/v1/human/automation`, { cache: "no-store" });
+  if (!r.ok) throw new Error(`automation ${r.status}`);
+  return r.json();
+}
+
+export async function fetchRun(runId) {
+  const r = await fetch(`${API_BASE}/api/v1/human/runs/${runId}`, { cache: "no-store" });
+  if (!r.ok) throw new Error(`run ${r.status}`);
+  return r.json();
+}
+
 // Click-to-test the Human Browser Driver end-to-end (token-gated).
 export async function testHumanBrowser(token) {
   const r = await fetch(`${API_BASE}/api/v1/human/test`, {

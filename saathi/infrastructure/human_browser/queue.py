@@ -40,13 +40,18 @@ class InMemoryQueue(JobQueue):
     def __init__(self):
         self._pending: list[Envelope] = []
         self._results: dict[str, JobResult] = {}
+        self._last_claim = 0.0        # Mac Agent heartbeat: updated every poll
 
     def enqueue(self, env: Envelope) -> str:
         self._pending.append(env)
         return env.job["id"]
 
     def claim(self) -> Envelope | None:
+        self._last_claim = time.time()
         return self._pending.pop(0) if self._pending else None
+
+    def last_claim_at(self) -> float:
+        return self._last_claim
 
     def complete(self, result: JobResult) -> None:
         self._results[result.job_id] = result
