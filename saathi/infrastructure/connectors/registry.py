@@ -45,11 +45,11 @@ class ConnectorRegistry:
         Rank: usable-health, then reliability↓, cost↑, latency↑."""
         ranked = []
         for c in self.by_capability(capability):
-            m = c.metadata()
+            m = c.manifest()
             if m.requires_auth and not c.authenticate():
                 continue
             h = c.health()
-            self._note_status(c.id, h.status)
+            self._note_status(c.id, h.status, h.metrics)
             if not h.status.usable:
                 continue
             ranked.append((0 if h.status is Status.OK else 1,
@@ -62,17 +62,22 @@ class ConnectorRegistry:
         target = self.get(connector_id) if connector_id else self.best(capability)
         if target is None:
             raise ConnectorError(f"no healthy connector serves {capability!r}")
+        import time
         try:
             result = target.execute(capability, **payload)
-            self._emit(ConnectorEvent.CONNECTED, target.id, {"capability": capability})
+            target._last_success = time.time()
+            self._emit(ConnectorEvent.EXECUTED, target.id, {"capability": capability})
             return result
         except AuthRequired as e:
+            target._last_error = str(e)
             self._emit(ConnectorEvent.AUTH_REQUIRED, target.id, {"error": str(e)})
             raise
         except RateLimited as e:
+            target._last_error = str(e)
             self._emit(ConnectorEvent.RATE_LIMITED, target.id, {"error": str(e)})
             raise
         except Exception as e:
+            target._last_error = str(e)
             self._emit(ConnectorEvent.FAILED, target.id, {"capability": capability, "error": str(e)})
             raise
 
@@ -81,7 +86,7 @@ class ConnectorRegistry:
         out = {}
         for c in self._connectors.values():
             h = c.health()
-            self._note_status(c.id, h.status)
+            self._note_status(c.id, h.status, h.metrics)
             out[c.id] = {"status": h.status.value, "light": h.status.light, "detail": h.detail,
                          "metrics": h.metrics}
         return out
@@ -90,16 +95,23 @@ class ConnectorRegistry:
         return [c.diagnostics() for c in self._connectors.values()]
 
     # ── event plumbing ──────────────────────────────────────────────────
-    def _note_status(self, cid: str, status: Status) -> None:
+    def _note_status(self, cid: str, status: Status, metrics: dict | None = None) -> None:
         prev = self._last_status.get(cid)
         self._last_status[cid] = status
+        # quota warnings fire regardless of transition (a live threshold signal)
+        q = (metrics or {}).get("quota_remaining")
+        if q is not None and q <= 15:
+            self._emit(ConnectorEvent.QUOTA_WARNING, cid, {"quota_remaining": q})
         if prev is not None and prev is status:
-            return  # only emit on transition
-        if status is Status.DEGRADED:
+            return  # status-transition events only fire on change
+        if status is Status.OK and prev is not None:
+            self._emit(ConnectorEvent.CONNECTED, cid, {})
+        elif status is Status.DEGRADED:
             self._emit(ConnectorEvent.DEGRADED, cid, {})
         elif status is Status.AUTH_REQUIRED:
             self._emit(ConnectorEvent.AUTH_REQUIRED, cid, {})
         elif status is Status.DOWN:
+            self._emit(ConnectorEvent.DISCONNECTED, cid, {})
             self._emit(ConnectorEvent.FAILED, cid, {})
 
     def _emit(self, event: ConnectorEvent, connector_id: str, payload: dict) -> None:

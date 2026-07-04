@@ -7,9 +7,8 @@ from __future__ import annotations
 
 import os
 
-from .base import (
-    Connector, ConnectorMetadata, Health, Status, ConnectorError, RateLimited,
-)
+from ..base import Connector, Health, Status, ConnectorError, RateLimited
+from ..manifest import Manifest
 
 _CAPS = frozenset({"send_text", "send_photo", "send_document", "send_video"})
 _METHOD = {"send_text": ("sendMessage", "text"), "send_photo": ("sendPhoto", "photo"),
@@ -24,11 +23,12 @@ class TelegramConnector(Connector):
         self._chat = chat_id if chat_id is not None else os.getenv("TELEGRAM_CHAT_ID", "")
         self._transport = transport
 
-    def metadata(self) -> ConnectorMetadata:
-        return ConnectorMetadata(
-            id=self.id, capabilities=_CAPS, permissions=frozenset({"outbound", "webhook"}),
+    def manifest(self) -> Manifest:
+        return Manifest(
+            id=self.id, display_name="Telegram", category="messaging", version=1,
+            capabilities=_CAPS, permissions=frozenset({"outbound", "inbound", "webhook"}),
             requires_auth=True, cost=0.0, latency="low", reliability=0.99,
-            rate_limits="30/sec")
+            rate_limits={"requests_per_second": 30}, health_checks=frozenset({"token", "api"}))
 
     def authenticate(self) -> bool:
         return bool(self._token) and not self._token.startswith("YOUR")

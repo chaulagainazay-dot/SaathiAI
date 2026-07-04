@@ -6,9 +6,8 @@ from __future__ import annotations
 
 import os
 
-from .base import (
-    Connector, ConnectorMetadata, Health, Status, ConnectorError, RateLimited, AuthRequired,
-)
+from ..base import Connector, Health, Status, ConnectorError, RateLimited, AuthRequired
+from ..manifest import Manifest
 
 _CAPS = frozenset({"get_user", "get_repo", "list_issues", "create_issue", "get_file"})
 
@@ -20,11 +19,12 @@ class GitHubConnector(Connector):
         self._token = token if token is not None else os.getenv("GITHUB_TOKEN", "")
         self._transport = transport
 
-    def metadata(self) -> ConnectorMetadata:
-        return ConnectorMetadata(
-            id=self.id, capabilities=_CAPS, permissions=frozenset({"outbound"}),
+    def manifest(self) -> Manifest:
+        return Manifest(
+            id=self.id, display_name="GitHub", category="developer", version=1,
+            capabilities=_CAPS, permissions=frozenset({"outbound"}),
             requires_auth=True, cost=0.0, latency="low", reliability=0.98,
-            rate_limits="5000/hr")
+            rate_limits={"requests_per_hour": 5000}, health_checks=frozenset({"token", "api"}))
 
     def authenticate(self) -> bool:
         return bool(self._token) and not self._token.startswith("YOUR")
@@ -49,11 +49,12 @@ class GitHubConnector(Connector):
             r.raise_for_status()
             core = r.json().get("resources", {}).get("core", {})
             remaining, limit = core.get("remaining", 1), core.get("limit", 1) or 1
-            pct_used = round(100 * (1 - remaining / limit))
+            pct_remaining = round(100 * remaining / limit)
+            metrics = {"quota_remaining": pct_remaining, "quota_pct": 100 - pct_remaining}
             if remaining == 0:
-                return Health(Status.DEGRADED, "rate limit exhausted", {"quota_pct": 100})
-            status = Status.DEGRADED if pct_used >= 90 else Status.OK
-            return Health(status, f"{remaining}/{limit} left", {"quota_pct": pct_used})
+                return Health(Status.DEGRADED, "rate limit exhausted", metrics)
+            status = Status.DEGRADED if pct_remaining <= 10 else Status.OK
+            return Health(status, f"{remaining}/{limit} left", metrics)
         except Exception as e:
             return Health(Status.DOWN, str(e))
 

@@ -18,7 +18,7 @@ class FakeConnector(Connector):
         self._cost, self._lat, self._auth = cost, latency, auth
         self.calls = []
 
-    def metadata(self):
+    def manifest(self):
         return ConnectorMetadata(id=self.id, capabilities=self._caps, requires_auth=True,
                                  cost=self._cost, latency=self._lat, reliability=self._rel)
 
@@ -69,7 +69,7 @@ def test_execute_routes_to_best_and_emits_connected():
     reg.register(FakeConnector("winner", ["send_text"], reliability=0.99))
     out = reg.execute(capability="send_text", text="hi")
     assert out == {"ok": "winner"}
-    assert (ConnectorEvent.CONNECTED.value, {"connector": "winner", "capability": "send_text"}) in bus.events
+    assert (ConnectorEvent.EXECUTED.value, {"connector": "winner", "capability": "send_text"}) in bus.events
 
 
 def test_execute_explicit_connector_id():
