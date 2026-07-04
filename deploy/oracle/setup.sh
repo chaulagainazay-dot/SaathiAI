@@ -14,8 +14,15 @@ echo "▶ Deploying SaathiAI → https://${DOMAIN}  (public IP ${IP})"
 
 # ── 1. system packages ─────────────────────────────────────────────────────
 sudo apt-get update -y
-sudo apt-get install -y python3 python3-venv python3-pip build-essential git curl \
+sudo apt-get install -y build-essential git curl software-properties-common \
     ffmpeg libportaudio2 ca-certificates gnupg debian-keyring debian-archive-keyring apt-transport-https
+# Python 3.12 (SaathiAI needs >=3.11; Ubuntu 22.04 ships 3.10, so use deadsnakes)
+if ! command -v python3.12 >/dev/null 2>&1; then
+  sudo add-apt-repository -y ppa:deadsnakes/ppa
+  sudo apt-get update -y
+  sudo apt-get install -y python3.12 python3.12-venv python3.12-dev
+fi
+PY=python3.12
 # Node 20
 curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
 sudo apt-get install -y nodejs
@@ -26,7 +33,7 @@ sudo apt-get update -y && sudo apt-get install -y caddy
 
 # ── 2. Python platform ─────────────────────────────────────────────────────
 cd "$APP"
-[ -d .venv ] || python3 -m venv .venv
+[ -d .venv ] || "$PY" -m venv .venv
 ./.venv/bin/pip install --upgrade pip wheel
 ./.venv/bin/pip install -e .
 if [ ! -f .env ]; then
