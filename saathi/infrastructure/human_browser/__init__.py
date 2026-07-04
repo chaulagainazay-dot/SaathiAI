@@ -1,0 +1,34 @@
+"""Human Browser Driver — publish through your real, logged-in Chrome, safely.
+
+Third execution mode after API and headless Browser. The VM signs jobs and drops
+them on a queue; the Mac Agent (on your trusted machine) verifies and drives your
+actual Chrome profile. Departments stay provider-agnostic; the Connector Registry
+picks the mode by `best()` ranking (API ★ > Browser > Human), and your cookies
+never leave the Mac.
+
+    # VM side
+    proxy = HumanBrowserProxy(queue, secret=SECRET)
+    proxy.execute("publish_video", profile="ajay/youtube", path="clip.mp4")
+
+    # Mac side (separate process)
+    MacAgent(queue, ChromeBackend(), secret=SECRET).run_forever()
+"""
+from .jobs import HumanJob, sign, verify, NonceStore, JobError, BadSignature, JobExpired, JobReplayed
+from .queue import JobQueue, InMemoryQueue, HttpQueueClient, Envelope, JobResult
+
+# Process-wide queue shared by the VM proxy (producer) and the VM's
+# /api/v1/human/* endpoints (which the remote Mac Agent polls).
+default_queue = InMemoryQueue()
+from .driver import HumanBrowser, CAPS
+from .proxy import HumanBrowserProxy
+from .agent import MacAgent
+from .profiles import ProfileStore
+from .chrome_backend import ChromeBackend
+
+__all__ = [
+    "HumanJob", "sign", "verify", "NonceStore",
+    "JobError", "BadSignature", "JobExpired", "JobReplayed",
+    "JobQueue", "InMemoryQueue", "HttpQueueClient", "Envelope", "JobResult", "default_queue",
+    "HumanBrowser", "CAPS", "HumanBrowserProxy", "MacAgent",
+    "ProfileStore", "ChromeBackend",
+]

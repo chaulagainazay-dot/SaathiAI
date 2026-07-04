@@ -10,6 +10,7 @@ class Tier(IntEnum):
     HTTP = 1        # plain fetch, no JavaScript
     PLAYWRIGHT = 2  # real browser, renders JS, screenshots/PDF
     CAMOFOX = 3     # anti-detect browser for blocked/bot-walled pages
+    HUMAN = 4       # your real logged-in Chrome profile via the Mac Agent (last resort)
 
 
 class BrowserError(Exception):

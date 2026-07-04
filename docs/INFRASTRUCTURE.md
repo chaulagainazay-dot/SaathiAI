@@ -92,3 +92,29 @@ The "no provider imports outside infrastructure" rule has a few deliberate carve
   `connector.executed`, `browser.finished` → Episodes (wired at server startup).
 - Reverse dependency removed: Conversation Engine no longer imports `saathi.agent`
   (brain registered via `register_default_brain` at startup).
+
+## Human Browser Driver (`infrastructure.human_browser`)
+Third execution mode after API and headless Browser — publish through your real,
+logged-in Chrome. **The VM never drives your browser or holds a cookie:** it signs
+a `HumanJob` (HMAC-SHA256, `expires_at`, one-time `nonce`) and drops it on a queue;
+the **Mac Agent** on your trusted machine verifies and drives your Chrome profiles.
+
+```
+VM: HumanBrowserProxy.execute("publish_video", profile="ajay/youtube", …)  → signs + enqueues
+    ↳ /api/v1/human/{claim,complete}  (authenticated relay; never runs a browser)
+Mac: MacAgent(HttpQueueClient, ChromeBackend, secret).run_forever()  → verifies + drives Chrome
+```
+
+- **Profiles:** `profiles/ajay/{youtube,facebook,instagram,…}` — persistent Chrome
+  contexts, log in once, reused forever (`ProfileStore`). Live only on the Mac.
+- **Escalation tier:** `HumanTier` slots into the Browser Service as `HTTP → Playwright
+  → Camofox → Human` (opt-in; needs a queue + `HUMAN_BROWSER_SECRET`).
+- **Mode selection:** register a human-backed connector at lower reliability than the
+  API/Browser connectors for the same capability — the registry's `best()` picks API
+  first, Browser next, Human last. Departments stay provider-agnostic.
+- **Run the agent (Mac only):** `python -m saathi.infrastructure.human_browser.run_agent`
+  with `SAATHI_BASE_URL`, `SAATHI_TOKEN`, `HUMAN_BROWSER_SECRET` set.
+
+Security model: a compromised VM can only enqueue jobs signed with the shared secret
+— it can never drive the browser or read your sessions. Rotate `HUMAN_BROWSER_SECRET`
+to revoke.

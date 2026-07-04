@@ -25,6 +25,30 @@ def ceo_home_endpoint():
     return ceo_home()
 
 
+# ── Human Browser Driver: the Mac Agent polls these (authenticated, NOT
+# whitelisted — requires SAATHI_TOKEN). The VM only relays signed jobs; it never
+# drives the browser or holds a cookie.
+@app.get("/api/v1/human/claim")
+def human_claim():
+    from saathi.infrastructure.human_browser import default_queue
+    env = default_queue.claim()
+    if env is None:
+        from fastapi.responses import Response
+        return Response(status_code=204)
+    return {"envelope": {"job": env.job, "signature": env.signature}}
+
+
+@app.post("/api/v1/human/complete")
+async def human_complete(request: Request):
+    from saathi.infrastructure.human_browser import default_queue
+    from saathi.infrastructure.human_browser.queue import JobResult
+    body = await request.json()
+    default_queue.complete(JobResult(
+        job_id=body["job_id"], ok=bool(body.get("ok")), data=body.get("data", {}),
+        error=body.get("error", ""), screenshot_b64=body.get("screenshot_b64", "")))
+    return {"ok": True}
+
+
 @app.get("/api/v1/infrastructure/health")
 async def infrastructure_health():
     """Unified infra diagnostics for the CEO dashboard's Infrastructure panel
