@@ -19,8 +19,9 @@ class FakeTier(BrowserTier):
     def capabilities(self): return self._caps
     def available(self): return self._avail
 
-    def open(self, url, *, timeout=30):
+    def open(self, url, *, timeout=30, session=None):
         self.opened += 1
+        self.last_session = session
         if self._boom:
             raise RuntimeError("tier crashed")
         return self._page or Page(url=url, status=200, text="ok", tier=self.tier)

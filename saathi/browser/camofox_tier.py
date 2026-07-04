@@ -38,11 +38,15 @@ class CamofoxTier(BrowserTier):
         from camoufox.sync_api import Camoufox
         return Camoufox(headless=self._headless, humanize=self._humanize)
 
-    def open(self, url: str, *, timeout: int = 30) -> Page:
+    def open(self, url: str, *, timeout: int = 30, session=None) -> Page:
         with self._browser() as browser:
-            page = browser.new_page()
+            storage = (session.storage_state or None) if session is not None else None
+            context = browser.new_context(storage_state=storage)
+            page = context.new_page()
             resp = page.goto(url, timeout=timeout * 1000, wait_until="domcontentloaded")
             html = page.content()
+            if session is not None:
+                session.storage_state = context.storage_state()
             from .http_tier import html_to_text, _looks_blocked
             return Page(url=page.url, status=(resp.status if resp else 200),
                         html=html, text=html_to_text(html), title=page.title(),

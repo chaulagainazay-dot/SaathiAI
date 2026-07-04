@@ -63,15 +63,19 @@ class HttpTier(BrowserTier):
         except Exception:
             return False
 
-    def _client(self, timeout: int):
+    def _client(self, timeout: int, cookies=None):
         import httpx
         return httpx.Client(follow_redirects=True, timeout=timeout,
-                            headers={"User-Agent": _UA},
+                            headers={"User-Agent": _UA}, cookies=cookies,
                             transport=self._transport)
 
-    def open(self, url: str, *, timeout: int = 30) -> Page:
-        with self._client(timeout) as c:
+    def open(self, url: str, *, timeout: int = 30, session=None) -> Page:
+        from .session import to_httpx_cookies, capture_httpx_cookies
+        cookies = to_httpx_cookies(session) if session is not None else None
+        with self._client(timeout, cookies=cookies) as c:
             r = c.get(url)
+            if session is not None:
+                capture_httpx_cookies(session, c)   # persist any Set-Cookie
         html = r.text or ""
         blocked = _looks_blocked(r.status_code, html)
         return Page(url=str(r.url), status=r.status_code, html=html,

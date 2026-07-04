@@ -9,5 +9,7 @@ fakes (no network, no browser).
 """
 from .types import Page, SearchResult, Tier, BrowserError
 from .service import BrowserService, browser
+from .session import SessionManager, SessionState
 
-__all__ = ["Page", "SearchResult", "Tier", "BrowserError", "BrowserService", "browser"]
+__all__ = ["Page", "SearchResult", "Tier", "BrowserError", "BrowserService",
+           "browser", "SessionManager", "SessionState"]

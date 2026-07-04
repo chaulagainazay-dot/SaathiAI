@@ -26,17 +26,21 @@ class PlaywrightTier(BrowserTier):
         except Exception:
             return False
 
-    def _page(self, pw, headless=True):
+    def _page(self, pw, headless=True, session=None):
         browser = getattr(pw, self._engine).launch(headless=headless)
-        return browser, browser.new_page()
+        storage = (session.storage_state or None) if session is not None else None
+        context = browser.new_context(storage_state=storage)
+        return browser, context, context.new_page()
 
-    def open(self, url: str, *, timeout: int = 30) -> Page:
+    def open(self, url: str, *, timeout: int = 30, session=None) -> Page:
         from playwright.sync_api import sync_playwright
         with sync_playwright() as pw:
-            browser, page = self._page(pw)
+            browser, context, page = self._page(pw, session=session)
             try:
                 resp = page.goto(url, timeout=timeout * 1000, wait_until="domcontentloaded")
                 html = page.content()
+                if session is not None:
+                    session.storage_state = context.storage_state()   # persist login
                 from .http_tier import html_to_text
                 return Page(url=page.url, status=(resp.status if resp else 200),
                             html=html, text=html_to_text(html), title=page.title(),
@@ -47,7 +51,7 @@ class PlaywrightTier(BrowserTier):
     def screenshot(self, url: str, *, timeout: int = 30, full_page: bool = True) -> bytes:
         from playwright.sync_api import sync_playwright
         with sync_playwright() as pw:
-            browser, page = self._page(pw)
+            browser, _ctx, page = self._page(pw)
             try:
                 page.goto(url, timeout=timeout * 1000, wait_until="networkidle")
                 return page.screenshot(full_page=full_page)
@@ -57,7 +61,7 @@ class PlaywrightTier(BrowserTier):
     def pdf(self, url: str, *, timeout: int = 30) -> bytes:
         from playwright.sync_api import sync_playwright
         with sync_playwright() as pw:
-            browser, page = self._page(pw)  # PDF requires headless chromium
+            browser, _ctx, page = self._page(pw)  # PDF requires headless chromium
             try:
                 page.goto(url, timeout=timeout * 1000, wait_until="networkidle")
                 return page.pdf()
@@ -67,7 +71,7 @@ class PlaywrightTier(BrowserTier):
     def query(self, url: str, selector: str, *, timeout: int = 30) -> list[str]:
         from playwright.sync_api import sync_playwright
         with sync_playwright() as pw:
-            browser, page = self._page(pw)
+            browser, _ctx, page = self._page(pw)
             try:
                 page.goto(url, timeout=timeout * 1000, wait_until="domcontentloaded")
                 return [el.inner_text() for el in page.query_selector_all(selector)]

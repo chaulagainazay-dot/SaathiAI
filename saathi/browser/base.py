@@ -25,7 +25,9 @@ class BrowserTier(ABC):
         (dependency installed / binary present). Cheap, no network."""
 
     @abstractmethod
-    def open(self, url: str, *, timeout: int = 30) -> Page: ...
+    def open(self, url: str, *, timeout: int = 30, session=None) -> Page:
+        """Fetch `url`. `session` (optional SessionState) supplies cookies /
+        storage-state and is updated in place with anything the fetch sets."""
 
     # Optional capabilities — default to NotImplemented so the service escalates.
     def screenshot(self, url: str, *, timeout: int = 30, full_page: bool = True) -> bytes:

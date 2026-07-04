@@ -27,9 +27,18 @@ def _default_tiers() -> list[BrowserTier]:
 
 
 class BrowserService:
-    def __init__(self, tiers: list[BrowserTier] | None = None):
+    def __init__(self, tiers: list[BrowserTier] | None = None, sessions=None):
         self._tiers = sorted(tiers if tiers is not None else _default_tiers(),
                              key=lambda t: t.tier)
+        if sessions is None:
+            from .session import SessionManager
+            sessions = SessionManager()
+        self._sessions = sessions
+
+    @property
+    def sessions(self):
+        """The SessionManager (cookies / login state / profiles)."""
+        return self._sessions
 
     # ── tier selection ──────────────────────────────────────────────────
     def _usable(self, cap_attr: str, *, min_tier: Tier = Tier.HTTP) -> list[BrowserTier]:
@@ -48,25 +57,33 @@ class BrowserService:
         """Diagnostics: which tiers are installed/usable right now."""
         return {t.name: t.available() for t in self._tiers}
 
-    # ── open (with escalation) ──────────────────────────────────────────
-    def open(self, url: str, *, evade: bool = False, timeout: int = 30) -> Page:
+    # ── open (with escalation + optional named session) ─────────────────
+    def open(self, url: str, *, evade: bool = False, timeout: int = 30,
+             session: str | None = None) -> Page:
         min_tier = Tier.CAMOFOX if evade else Tier.HTTP
         candidates = self._usable("fetch", min_tier=min_tier)
         if not candidates:
             raise BrowserError(f"no available browser tier can fetch (evade={evade})")
+        state = self._sessions.load(session) if session else None
         last: Page | None = None
         last_err: Exception | None = None
+        result: Page | None = None
         for t in candidates:
             try:
-                page = t.open(url, timeout=timeout)
+                page = t.open(url, timeout=timeout, session=state)
             except Exception as e:  # tier crashed — escalate
                 last_err = e
                 continue
             if page.ok:
-                return page
+                result = page
+                break
             last = page  # blocked/non-ok — remember, try a stronger tier
-        if last is not None:
-            return last  # best effort: return the blocked page rather than nothing
+        if result is None:
+            result = last
+        if state is not None and result is not None:
+            self._sessions.save(state)   # persist cookies / login the fetch updated
+        if result is not None:
+            return result
         raise BrowserError(f"all tiers failed to open {url}: {last_err}")
 
     # ── extract ─────────────────────────────────────────────────────────
