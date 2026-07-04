@@ -49,6 +49,31 @@ async def human_complete(request: Request):
     return {"ok": True}
 
 
+@app.post("/api/v1/human/test")
+async def human_test(request: Request):
+    """Click-to-test: enqueue a benign 'open a page' job and wait for the Mac
+    Agent's result. Proves the whole VM→signed-queue→agent→Chrome loop live.
+    Token-gated (not whitelisted)."""
+    import asyncio
+    import json as _json
+    import os as _osenv
+    from saathi.infrastructure.human_browser import HumanBrowserProxy, default_queue
+    raw = await request.body()
+    body = _json.loads(raw) if raw else {}
+    url = body.get("url", "https://example.com")
+    secret = _osenv.getenv("HUMAN_BROWSER_SECRET", "")
+    if not secret:
+        return {"ok": False, "error": "HUMAN_BROWSER_SECRET not set on the VM"}
+    proxy = HumanBrowserProxy(default_queue, secret=secret, timeout=15)
+    try:
+        result = await asyncio.to_thread(proxy.execute, "open",
+                                         profile=body.get("profile", ""), url=url)
+        return {"ok": True, "result": result}
+    except Exception as e:
+        return {"ok": False, "error": str(e),
+                "hint": "start the Mac Agent: bash ~/SaathiAI/run_human_agent.sh"}
+
+
 @app.get("/api/v1/infrastructure/health")
 async def infrastructure_health():
     """Unified infra diagnostics for the CEO dashboard's Infrastructure panel

@@ -14,3 +14,14 @@ export async function fetchInfraHealth() {
   if (!r.ok) throw new Error(`infra ${r.status}`);
   return r.json();
 }
+
+// Click-to-test the Human Browser Driver end-to-end (token-gated).
+export async function testHumanBrowser(token) {
+  const r = await fetch(`${API_BASE}/api/v1/human/test`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "x-saathi-token": token || "" },
+    body: JSON.stringify({}),
+  });
+  if (r.status === 401) return { ok: false, error: "unauthorized — wrong SAATHI_TOKEN" };
+  return r.json();
+}

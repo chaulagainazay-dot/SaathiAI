@@ -1,9 +1,50 @@
 "use client";
+import { useState } from "react";
 import { Panel, Eyebrow, Ring } from "@/components/ui";
 import { color } from "@/lib/departments";
 import { useInfraHealth } from "@/lib/useInfraHealth";
+import { testHumanBrowser } from "@/lib/api";
 
 const CYAN = color("INFRA");
+
+function HumanBrowserTest() {
+  const [state, setState] = useState({ status: "idle", msg: "" });
+  async function run() {
+    let token = typeof window !== "undefined" ? localStorage.getItem("saathi_token") : "";
+    if (!token) {
+      token = window.prompt("SAATHI_TOKEN (to authorize the test job):") || "";
+      if (token) localStorage.setItem("saathi_token", token);
+    }
+    setState({ status: "running", msg: "enqueuing signed job → waiting for Mac Agent…" });
+    try {
+      const r = await testHumanBrowser(token);
+      if (r.ok) setState({ status: "ok", msg: `Agent drove Chrome → "${r.result?.title || r.result?.url}"` });
+      else setState({ status: "err", msg: r.error + (r.hint ? ` — ${r.hint}` : "") });
+    } catch (e) {
+      setState({ status: "err", msg: String(e) });
+    }
+  }
+  const clr = { idle: "#8FA0C4", running: "#E8B84B", ok: "#4FD07A", err: "#FF5A5A" }[state.status];
+  return (
+    <Panel style={{ padding: 18, marginTop: 14 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+        <div>
+          <Eyebrow style={{ color: CYAN }}>Human Browser Driver</Eyebrow>
+          <div style={{ fontSize: 13, opacity: 0.6, marginTop: 4 }}>
+            Signs a job on the VM → your Mac Agent opens example.com in real Chrome → returns the title.
+          </div>
+          {state.msg && <div style={{ fontSize: 13, marginTop: 8, color: clr }}>{state.msg}</div>}
+        </div>
+        <button onClick={run} disabled={state.status === "running"}
+          style={{ padding: "9px 16px", borderRadius: 20, whiteSpace: "nowrap",
+            border: `1px solid ${CYAN}`, background: `${CYAN}18`, color: CYAN,
+            cursor: state.status === "running" ? "wait" : "pointer" }}>
+          {state.status === "running" ? "Testing…" : "Test a job"}
+        </button>
+      </div>
+    </Panel>
+  );
+}
 
 function Row({ name, light, note }) {
   return (
@@ -82,6 +123,8 @@ export default function Infrastructure() {
         <Section title="Connectors" rows={connectors} />
         <Section title="Conversation" rows={conversation} />
       </div>
+
+      <HumanBrowserTest />
     </div>
   );
 }
