@@ -24,6 +24,9 @@ from .proxy import HumanBrowserProxy
 from .agent import MacAgent
 from .profiles import ProfileStore
 from .chrome_backend import ChromeBackend
+from .primitives import BrowserPrimitives, Step, BrowserActionError
+from .workflows import YouTubeUploadWorkflow, WORKFLOWS
+from .publish import publish
 
 __all__ = [
     "HumanJob", "sign", "verify", "NonceStore",
@@ -31,4 +34,6 @@ __all__ = [
     "JobQueue", "InMemoryQueue", "HttpQueueClient", "Envelope", "JobResult", "default_queue",
     "HumanBrowser", "CAPS", "HumanBrowserProxy", "MacAgent",
     "ProfileStore", "ChromeBackend",
+    "BrowserPrimitives", "Step", "BrowserActionError",
+    "YouTubeUploadWorkflow", "WORKFLOWS", "publish",
 ]

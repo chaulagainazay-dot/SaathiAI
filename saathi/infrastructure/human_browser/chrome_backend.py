@@ -54,8 +54,17 @@ class ChromeBackend(HumanBrowser):
                 if capability == "wait":
                     page.wait_for_timeout(int(payload.get("ms", 1000))); return {"waited": True}
                 if capability == "publish_video":
-                    # scripted UI flow lives here (per service); left to the operator to script
-                    return {"status": "publish flow not scripted yet", "profile": profile}
+                    from .primitives import BrowserPrimitives
+                    from .workflows import WORKFLOWS
+                    wf_name = payload.get("workflow", "youtube_upload")
+                    wf_cls = WORKFLOWS.get(wf_name)
+                    if wf_cls is None:
+                        return {"error": f"unknown workflow {wf_name!r}"}
+                    prims = BrowserPrimitives(page)
+                    return wf_cls().run(
+                        prims, video_path=payload["path"], title=payload.get("title", ""),
+                        description=payload.get("description", ""),
+                        visibility=payload.get("visibility", "Public"))
                 if capability == "close":
                     return {"closed": True}
                 return {"error": f"unknown capability {capability}"}
