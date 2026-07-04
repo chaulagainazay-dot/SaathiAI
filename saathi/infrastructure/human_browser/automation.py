@@ -21,7 +21,7 @@ def status(*, queue=None, store=None, now: float | None = None) -> dict:
     store = store or default_store()
 
     last_poll = queue.last_claim_at() if hasattr(queue, "last_claim_at") else 0.0
-    agent_online = bool(last_poll) and (now - last_poll) < 45      # polled in last 45s
+    agent_online = bool(last_poll) and (now - last_poll) < 90       # heartbeat: polled within 90s
     vision_ready = VisionVerifier().available()
     secret_ready = bool(os.getenv("HUMAN_BROWSER_SECRET"))
 
