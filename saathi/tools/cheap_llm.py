@@ -5,7 +5,20 @@ from .. import config
 
 
 def cheap_ask(prompt: str, system: str = "You are a helpful assistant.", max_tokens: int = 1024) -> dict:
-    """Send a prompt to Groq (free) via anthropic-proxy. Use for captions, summaries, rewrites."""
+    """Cheapest capable model for routine work (captions, summaries, rewrites).
+
+    Routes the SCREENING label with a COST preference through the Model Router
+    (SES-002), so the cheapest available provider wins and the chain falls back
+    on failure — provider-agnostic, no hardcoded Groq. Fails over to the local
+    anthropic-proxy only if the router path errors (belt-and-suspenders)."""
+    try:
+        from ..llm import generate
+        from ..model_router import ModelLabel, Prefer
+        res = generate(ModelLabel.SCREENING, prompt, system,
+                       prefer=Prefer.COST, max_tokens=max_tokens, timeout=60)
+        return {"reply": res.text, "model": res.provider, "cost": "cheapest-available"}
+    except Exception:
+        pass  # fall through to the local proxy below
     try:
         r = httpx.post(
             f"{config.CHEAP_PROXY_URL}/v1/messages",

@@ -61,8 +61,16 @@ class ProviderSpec:
 # Default registry — maps real providers to capabilities. Provider identity
 # lives ONLY here; the rest of the platform speaks in labels.
 DEFAULT_PROVIDERS: list[ProviderSpec] = [
+    ProviderSpec("anthropic/claude", frozenset({ModelLabel.STANDARD, ModelLabel.REASONING,
+                 ModelLabel.MULTIMODAL, ModelLabel.LONG}), cost_per_1k=6.0, latency_tier=2, is_local=False, quality_tier=1),
     ProviderSpec("openai/gpt-4o", frozenset({ModelLabel.STANDARD, ModelLabel.REASONING,
                  ModelLabel.MULTIMODAL, ModelLabel.LONG}), cost_per_1k=5.0, latency_tier=2, is_local=False, quality_tier=1),
+    ProviderSpec("deepseek/deepseek-chat", frozenset({ModelLabel.STANDARD, ModelLabel.REASONING,
+                 ModelLabel.LONG}), cost_per_1k=0.3, latency_tier=2, is_local=False, quality_tier=1),
+    ProviderSpec("glm/glm-4.6", frozenset({ModelLabel.STANDARD, ModelLabel.REASONING,
+                 ModelLabel.LONG}), cost_per_1k=0.5, latency_tier=2, is_local=False, quality_tier=2),
+    ProviderSpec("qwen/qwen-2.5-72b", frozenset({ModelLabel.SCREENING, ModelLabel.STANDARD,
+                 ModelLabel.LONG, ModelLabel.FAST}), cost_per_1k=0.4, latency_tier=2, is_local=False, quality_tier=2),
     ProviderSpec("groq/llama-3.3-70b", frozenset({ModelLabel.SCREENING, ModelLabel.STANDARD,
                  ModelLabel.FAST}), cost_per_1k=0.0, latency_tier=1, is_local=False, quality_tier=2),
     ProviderSpec("gemini/2.5-flash-lite", frozenset({ModelLabel.SCREENING, ModelLabel.STANDARD,

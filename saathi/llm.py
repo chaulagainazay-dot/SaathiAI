@@ -37,18 +37,68 @@ def _has(key: str) -> bool:
 
 
 def env_availability(name: str) -> bool:
+    if name.startswith("anthropic/"):
+        return _has("ANTHROPIC_API_KEY")
     if name.startswith("openai/"):
         return _has("OPENAI_API_KEY")
     if name.startswith("groq/"):
         return _has("GROQ_API_KEY")
     if name.startswith("gemini/"):
         return _has("GOOGLE_API_KEY")
+    # GLM / DeepSeek / Qwen are served through OpenRouter (one key, many models).
+    if name.startswith(("deepseek/", "glm/", "qwen/")):
+        return _has("OPENROUTER_API_KEY")
     if name.startswith("ollama/"):
         return bool(os.getenv("OLLAMA_HOST"))   # only if explicitly configured
     return False
 
 
 # ── real provider callers (compact; mirror tools/_llm_helper) ────────────
+def _call_anthropic(prompt, system, max_tokens, timeout):
+    import httpx
+    model = os.getenv("CLAUDE_MODEL", "claude-sonnet-5")
+    r = httpx.post("https://api.anthropic.com/v1/messages",
+                   headers={"x-api-key": os.getenv("ANTHROPIC_API_KEY", ""),
+                            "anthropic-version": "2023-06-01"},
+                   json={"model": model, "max_tokens": max_tokens, "system": system,
+                         "messages": [{"role": "user", "content": prompt}]},
+                   timeout=timeout)
+    r.raise_for_status()
+    d = r.json()
+    text = "".join(b.get("text", "") for b in d.get("content", []))
+    return text, model, d.get("usage", {})
+
+
+def _openrouter(prompt, system, max_tokens, timeout, model):
+    """Shared OpenAI-compatible caller for OpenRouter-served models."""
+    import httpx
+    r = httpx.post("https://openrouter.ai/api/v1/chat/completions",
+                   headers={"Authorization": f"Bearer {os.getenv('OPENROUTER_API_KEY')}"},
+                   json={"model": model, "messages": [{"role": "system", "content": system},
+                         {"role": "user", "content": prompt}], "max_tokens": max_tokens},
+                   timeout=timeout)
+    if r.status_code == 429:
+        raise RuntimeError("openrouter rate-limited")
+    r.raise_for_status()
+    d = r.json()
+    return d["choices"][0]["message"]["content"], model, d.get("usage", {})
+
+
+def _call_deepseek(prompt, system, max_tokens, timeout):
+    return _openrouter(prompt, system, max_tokens, timeout,
+                       os.getenv("DEEPSEEK_MODEL", "deepseek/deepseek-chat"))
+
+
+def _call_glm(prompt, system, max_tokens, timeout):
+    return _openrouter(prompt, system, max_tokens, timeout,
+                       os.getenv("GLM_MODEL", "z-ai/glm-4.6"))
+
+
+def _call_qwen(prompt, system, max_tokens, timeout):
+    return _openrouter(prompt, system, max_tokens, timeout,
+                       os.getenv("QWEN_MODEL", "qwen/qwen-2.5-72b-instruct"))
+
+
 def _call_openai(prompt, system, max_tokens, timeout):
     import httpx
     model = os.getenv("OPENAI_MODEL", "gpt-4o")
@@ -100,7 +150,11 @@ def _call_ollama(prompt, system, max_tokens, timeout):
 
 
 DEFAULT_CALLERS: dict[str, Caller] = {
+    "anthropic": _call_anthropic,
     "openai": _call_openai,
+    "deepseek": _call_deepseek,
+    "glm": _call_glm,
+    "qwen": _call_qwen,
     "groq": _call_groq,
     "gemini": _call_gemini,
     "ollama": _call_ollama,

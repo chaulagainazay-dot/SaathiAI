@@ -20,8 +20,11 @@ def test_reasoning_prefers_capable_cloud_model():
     r = ModelRouter()
     best = r.best(ModelLabel.REASONING)
     assert best is not None
-    assert ModelLabel.REASONING in best.capabilities
-    assert best.name == "openai/gpt-4o"   # only one that serves reasoning by default
+    assert ModelLabel.REASONING in best.capabilities   # serves reasoning
+    assert not best.is_local                            # a capable cloud model
+    # default preference is COST, so the cheapest reasoning-capable provider wins
+    reasoning = [p for p in r.providers if ModelLabel.REASONING in p.capabilities]
+    assert best.cost_per_1k == min(p.cost_per_1k for p in reasoning)
 
 
 def test_cost_preference_orders_cheapest_first():
