@@ -194,11 +194,23 @@ def generate(
             text, model, usage = caller(prompt, system, max_tokens, timeout)
             if trace:
                 _trace(spec, model, prompt, system, text, (time.monotonic() - t0) * 1000, usage)
+            _event("model.selected", {"label": label.value, "provider": spec.name, "model": model})
             return LLMResult(text=text, provider=spec.name, model=model)
         except Exception as e:  # fall through to the next provider in the chain
             last_err = e
+            _event("model.fallback", {"label": label.value, "provider": spec.name, "error": str(e)})
             continue
+    _event("model.failed", {"label": label.value, "error": str(last_err)})
     raise RuntimeError(f"All providers failed for '{label.value}': {last_err}")
+
+
+def _event(name: str, payload: dict) -> None:
+    """Publish a Model Router event to the platform Event Fabric (best-effort)."""
+    try:
+        from saathi.events import bus
+        bus.publish_sync(name, payload)
+    except Exception:
+        pass
 
 
 def _trace(spec: ProviderSpec, model, prompt, system, output, ms, usage):

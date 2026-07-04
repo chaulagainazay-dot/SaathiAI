@@ -72,10 +72,23 @@ register in `drivers/__init__.py` + `_DEFAULT_DRIVER_CLASSES`).
   authenticated, last_success, last_error}`.
 - **Migration policy** (old top-level modules vs `infrastructure/`): `infrastructure/README.md`.
 
-## Known gaps (M5.1 Integration Sprint findings)
-- Model Router + Browser Service do not yet emit Event-Fabric events (`model.*`,
-  `browser.*`) — only Opik tracing / return values.
-- Event→Episode bridge is partial: `conversation.*`/`connector.*` events publish,
-  but only the Telegram command path records Episodes today.
-- `tools/prose.py`, `tools/auto_dev.py`, `vision.py` still import LLM SDKs directly
-  (Agent-Runtime-adjacent; not yet routed through the Model Router).
+## Sanctioned direct-SDK exceptions (intentional, not violations)
+The "no provider imports outside infrastructure" rule has a few deliberate carve-outs:
+- **`saathi/agent.py`** — the Agent Runtime (tool-use, streaming, multi-turn). A
+  separate abstraction from the capability router (see `infrastructure/README.md`).
+- **`tools/auto_dev.py`** — Agent Runtime (Claude `tool_use` build/review loop).
+- **`vision.py`** — multimodal (image input); the router's text `generate()` can't carry it yet.
+- **`tools/speaking_eval.py`** — speech/audio (Whisper); belongs to the Conversation
+  speech layer, to be routed there in a later phase.
+- **`tools/writing_eval.py`** — IELTS band scorer pinned to Gemini for scoring
+  accuracy; a product-tuned path. Revisit after the exam.
+
+`tools/prose.py` was migrated to the Model Router (plain completion, low stakes).
+
+## Closed in the M5.1 Integration Sprint
+- Model Router emits `model.selected / model.fallback / model.failed`.
+- Browser Service emits `browser.started / blocked / escalated / finished`.
+- Event→Episode bridge (`saathi/episode_bridge.py`): `conversation.completed`,
+  `connector.executed`, `browser.finished` → Episodes (wired at server startup).
+- Reverse dependency removed: Conversation Engine no longer imports `saathi.agent`
+  (brain registered via `register_default_brain` at startup).

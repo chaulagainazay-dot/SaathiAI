@@ -4,7 +4,7 @@ Based on https://github.com/hardikpandya/stop-slop (MIT License, Hardik Pandya)
 Useful as a post-processor for any Mr. Yeti content or MailerLite email copy.
 """
 from __future__ import annotations
-import anthropic
+# LLM calls route through the Model Router (infrastructure.llm), not the SDK.
 import os
 
 _STOP_SLOP_SYSTEM = """\
@@ -65,14 +65,10 @@ def clean_prose(text: str, context: str = "") -> dict:
         prompt = f"Context: {context}\n\n---\n\n{text}"
 
     try:
-        client = anthropic.Anthropic(api_key=api_key)
-        msg = client.messages.create(
-            model="claude-haiku-4-5-20251001",
-            max_tokens=2048,
-            system=_STOP_SLOP_SYSTEM,
-            messages=[{"role": "user", "content": prompt}],
-        )
-        cleaned = msg.content[0].text.strip()
+        from saathi.infrastructure.llm import generate
+        from saathi.infrastructure.model_router import ModelLabel
+        cleaned = generate(ModelLabel.STANDARD, prompt, _STOP_SLOP_SYSTEM,
+                           max_tokens=2048).text.strip()
         return {"cleaned": cleaned, "original_length": len(text), "cleaned_length": len(cleaned)}
     except Exception as e:
         return {"error": type(e).__name__, "message": str(e)[:300]}
@@ -102,14 +98,11 @@ Text to score:
 Reply format: {{"directness": N, "rhythm": N, "trust": N, "authenticity": N, "density": N, "total": N, "verdict": "pass|revise"}}
 """
     try:
-        client = anthropic.Anthropic(api_key=api_key)
-        msg = client.messages.create(
-            model="claude-haiku-4-5-20251001",
-            max_tokens=256,
-            messages=[{"role": "user", "content": score_prompt}],
-        )
+        from saathi.infrastructure.llm import generate
+        from saathi.infrastructure.model_router import ModelLabel
         import json
-        scores = json.loads(msg.content[0].text.strip())
-        return scores
+        out = generate(ModelLabel.STANDARD, score_prompt,
+                       "Reply with ONLY a JSON object.", max_tokens=256).text.strip()
+        return json.loads(out)
     except Exception as e:
         return {"error": type(e).__name__, "message": str(e)[:300]}

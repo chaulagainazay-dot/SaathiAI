@@ -3001,6 +3001,25 @@ def _start_background():
     except Exception:
         pass
 
+    # M5.1 infrastructure wiring: infra events → Episodes, and register the
+    # reasoning brain so the Conversation Engine has Executive Intelligence
+    # without infrastructure importing a department.
+    try:
+        from .events import bus as _bus
+        from . import episode_bridge
+        episode_bridge.install(_bus)
+    except Exception:
+        pass
+    try:
+        from .infrastructure.conversation import register_default_brain
+        from .agent import SaathiAgent
+        _agent = SaathiAgent()
+        register_default_brain(
+            lambda message, session: _agent.respond(
+                message, session_id=session.session_id, speaker_verified=True))
+    except Exception:
+        pass
+
     def loop():
         import time
         while True:

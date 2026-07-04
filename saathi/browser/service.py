@@ -19,6 +19,15 @@ from .base import BrowserTier
 from .types import BrowserError, Page, SearchResult, Snapshot, Tier
 
 
+def _event(name: str, payload: dict) -> None:
+    """Publish a Browser Service event to the platform Event Fabric (best-effort)."""
+    try:
+        from saathi.events import bus
+        bus.publish_sync(name, payload)
+    except Exception:
+        pass
+
+
 def _default_tiers() -> list[BrowserTier]:
     from .http_tier import HttpTier
     from .playwright_tier import PlaywrightTier
@@ -65,25 +74,34 @@ class BrowserService:
         if not candidates:
             raise BrowserError(f"no available browser tier can fetch (evade={evade})")
         state = self._sessions.load(session) if session else None
+        _event("browser.started", {"url": url, "evade": evade})
         last: Page | None = None
         last_err: Exception | None = None
         result: Page | None = None
-        for t in candidates:
+        for i, t in enumerate(candidates):
             try:
                 page = t.open(url, timeout=timeout, session=state)
             except Exception as e:  # tier crashed — escalate
                 last_err = e
+                if i + 1 < len(candidates):
+                    _event("browser.escalated", {"url": url, "from": t.name, "reason": "error"})
                 continue
             if page.ok:
                 result = page
                 break
             last = page  # blocked/non-ok — remember, try a stronger tier
+            _event("browser.blocked", {"url": url, "tier": t.name})
+            if i + 1 < len(candidates):
+                _event("browser.escalated", {"url": url, "from": t.name, "reason": "blocked"})
         if result is None:
             result = last
         if state is not None and result is not None:
             self._sessions.save(state)   # persist cookies / login the fetch updated
         if result is not None:
+            _event("browser.finished", {"url": url, "tier": result.tier.name,
+                                        "ok": result.ok, "status": result.status})
             return result
+        _event("browser.finished", {"url": url, "ok": False, "error": str(last_err)})
         raise BrowserError(f"all tiers failed to open {url}: {last_err}")
 
     # ── extract ─────────────────────────────────────────────────────────
