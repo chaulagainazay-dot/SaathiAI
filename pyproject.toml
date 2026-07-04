@@ -12,6 +12,7 @@ dependencies = [
     "python-multipart>=0.0.9",
     "numpy>=1.26",
     "soundfile>=0.12",
+    "pillow>=10.0",         # thumbnail scoring / image analysis
 ]
 
 [project.optional-dependencies]
@@ -28,12 +29,9 @@ saathi-listen = "saathi.listener:main"
 requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
-[tool.setuptools]
-packages = [
-    "saathi", "saathi.tools",
-    "saathi.agents", "saathi.agents.sub_agents", "saathi.agents.sub_agents.micro",
-    "saathi.memory", "saathi.models", "saathi.config",
-]
+[tool.setuptools.packages.find]
+include = ["saathi*"]
+exclude = ["saathi-os*", "tests*"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

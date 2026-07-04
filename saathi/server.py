@@ -230,10 +230,30 @@ def _session_token() -> str:
     return _hashlib.sha256((_PASSWORD_HASH + ":baadar-session").encode()).hexdigest()
 
 
+def _is_local(request) -> bool:
+    """True only for genuine on-box requests (Mac dev, on-VM curl, loopback).
+
+    Behind our Caddy reverse proxy every hop arrives from 127.0.0.1, so the peer
+    address alone cannot distinguish an external visitor from a truly local
+    caller. Caddy (like every sane proxy) stamps X-Forwarded-For on proxied
+    traffic; genuine loopback requests never carry it. Requiring BOTH a loopback
+    peer AND no forwarding header is what makes "local = trusted" safe on a
+    public deployment."""
+    host = request.client.host if request.client else ""
+    if host not in ("127.0.0.1", "::1", "localhost"):
+        return False
+    if request.headers.get("x-forwarded-for") or request.headers.get("x-forwarded-host"):
+        return False
+    return True
+
+
 def _is_authed(request) -> bool:
     """Check session token from cookie or header."""
     if not _PASSWORD_HASH:
-        return True
+        # No password configured: only genuine local callers are trusted. On a
+        # public deployment (proxied traffic) this returns False, so callers
+        # must present the SAATHI_TOKEN or a Logto JWT instead of walking in.
+        return _is_local(request)
     token = (request.cookies.get("baadar_session")
              or request.headers.get("x-baadar-session", ""))
     return token == _session_token()
@@ -1123,8 +1143,7 @@ async def studio_short_video(body: ShortVideoIn, request: Request):
 async def studio_download(path: str, request: Request):
     from fastapi import HTTPException
     from fastapi.responses import FileResponse as _FR
-    client_host = request.client.host if request.client else ""
-    if client_host not in ("127.0.0.1", "::1", "localhost") and not _is_authed(request):
+    if not _is_local(request) and not _is_authed(request):
         raise HTTPException(401, "unauthorized")
     p = Path(path)
     if not p.exists():
@@ -1267,8 +1286,7 @@ async def auto_reel_download(path: str, request: Request):
     """Serve the generated reel video file to n8n for upload."""
     from fastapi import HTTPException
     # allow internal calls from n8n (localhost) without auth
-    client_host = request.client.host if request.client else ""
-    if client_host not in ("127.0.0.1", "::1", "localhost") and not _is_authed(request):
+    if not _is_local(request) and not _is_authed(request):
         raise HTTPException(401, "unauthorized")
     p = Path(path)
     if not p.exists() or not str(p).startswith(str(Path.home() / "SaathiAI" / "reels_output")):
