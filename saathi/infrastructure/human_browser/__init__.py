@@ -25,7 +25,8 @@ from .agent import MacAgent
 from .profiles import ProfileStore
 from .chrome_backend import ChromeBackend
 from .primitives import BrowserPrimitives, Step, BrowserActionError
-from .workflows import YouTubeUploadWorkflow, WORKFLOWS
+from .workflows import (YouTubeUploadWorkflow, LinkedInPostWorkflow,
+                        TikTokUploadWorkflow, WORKFLOWS)
 from .keyed import KeyedBrowser
 from .publish import publish
 from .daily import publish_next, next_in_queue
@@ -44,7 +45,8 @@ __all__ = [
     "HumanBrowser", "CAPS", "HumanBrowserProxy", "MacAgent",
     "ProfileStore", "ChromeBackend",
     "BrowserPrimitives", "Step", "BrowserActionError",
-    "YouTubeUploadWorkflow", "WORKFLOWS", "KeyedBrowser", "publish",
+    "YouTubeUploadWorkflow", "LinkedInPostWorkflow", "TikTokUploadWorkflow",
+    "WORKFLOWS", "KeyedBrowser", "publish",
     "VisionVerifier", "default_verifier",
     "RunStore", "default_store", "automation",
     "SelectorRegistry", "KnownSelector", "default_selector_registry",

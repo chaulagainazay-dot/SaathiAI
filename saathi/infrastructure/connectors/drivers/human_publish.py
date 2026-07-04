@@ -12,7 +12,7 @@ import os
 from ..base import Connector, Health, Status, AuthRequired
 from ..manifest import Manifest
 
-_CAPS = frozenset({"publish_video", "publish_photo"})
+_CAPS = frozenset({"publish_video", "publish_photo", "publish_post"})
 
 
 class HumanPublishConnector(Connector):

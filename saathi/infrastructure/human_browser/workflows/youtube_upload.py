@@ -15,9 +15,11 @@ from .base import Workflow, visual_check
 class YouTubeUploadWorkflow(Workflow):
     name = "youtube_upload"
 
-    def run(self, b, *, video_path: str, title: str, description: str = "",
-            visibility: str = "Public", verifier=None, wizard_steps: int = 3,
-            upload_wait_ms: int = 180000, registry=None, on_teach=None) -> dict:
+    def run(self, b, *, path: str = "", video_path: str = "", title: str = "",
+            description: str = "", visibility: str = "Public", verifier=None,
+            wizard_steps: int = 3, upload_wait_ms: int = 180000, registry=None,
+            on_teach=None, **_) -> dict:
+        video_path = path or video_path
         kb = KeyedBrowser(b, registry=registry, keys=YT.KEYS, on_teach=on_teach)
 
         # 1. open the upload dialog and drop the file (hidden input → attached)

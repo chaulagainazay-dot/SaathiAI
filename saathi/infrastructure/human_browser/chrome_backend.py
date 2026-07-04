@@ -64,26 +64,26 @@ class ChromeBackend(HumanBrowser):
                     return {"screenshot_b64": base64.b64encode(png).decode()}
                 if capability == "wait":
                     page.wait_for_timeout(int(payload.get("ms", 1000))); return {"waited": True}
-                if capability == "publish_video":
+                if capability in ("publish_video", "publish_post"):
                     from .primitives import BrowserPrimitives
                     from .workflows import WORKFLOWS
                     from .vision_verifier import default_verifier
-                    wf_name = payload.get("workflow", "youtube_upload")
-                    wf_cls = WORKFLOWS.get(wf_name)
+                    from .selector_registry import default_registry as _selreg
+                    _default_wf = "youtube_upload" if capability == "publish_video" else "linkedin_post"
+                    wf_cls = WORKFLOWS.get(payload.get("workflow") or _default_wf)
                     if wf_cls is None:
-                        return {"error": f"unknown workflow {wf_name!r}"}
+                        return {"error": f"unknown workflow {payload.get('workflow')!r}"}
+                    reg = _selreg()
+                    for _m in ("youtube", "linkedin", "tiktok"):    # seed all known page objects
+                        try:
+                            __import__(f"saathi.infrastructure.human_browser.pages.{_m}",
+                                       fromlist=[_m]).seed(reg)
+                        except Exception:
+                            pass
                     prims = BrowserPrimitives(page)
                     verifier = None if payload.get("no_vision") else default_verifier()
-                    # self-healing + learning: resolve selectors via the registry and
-                    # reward/penalize keys as the real run succeeds/fails
-                    from .selector_registry import default_registry as _selreg
-                    from .pages import youtube as _yt
-                    reg = _selreg(); _yt.seed(reg)
-                    return wf_cls().run(
-                        prims, video_path=payload["path"], title=payload.get("title", ""),
-                        description=payload.get("description", ""),
-                        visibility=payload.get("visibility", "Public"),
-                        verifier=verifier, registry=reg)
+                    content = {k: v for k, v in payload.items() if k not in ("workflow", "no_vision")}
+                    return wf_cls().run(prims, verifier=verifier, registry=reg, **content)
                 if capability == "close":
                     return {"closed": True}
                 return {"error": f"unknown capability {capability}"}

@@ -3182,8 +3182,9 @@ def _start_background():
     # Automation Knowledge Graph is populated from first boot
     try:
         from .infrastructure.human_browser import default_selector_registry
-        from .infrastructure.human_browser.pages import youtube as _yt
-        _yt.seed(default_selector_registry())
+        from .infrastructure.human_browser.pages import youtube as _yt, linkedin as _li, tiktok as _tt
+        reg = default_selector_registry()
+        _yt.seed(reg); _li.seed(reg); _tt.seed(reg)
     except Exception:
         pass
     try:
