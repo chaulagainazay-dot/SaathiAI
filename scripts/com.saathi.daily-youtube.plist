@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Daily YouTube publisher at 20:00. Install:
+     1) edit the env values below (CDP url, base url, token)
+     2) cp scripts/com.saathi.daily-youtube.plist ~/Library/LaunchAgents/
+     3) launchctl load ~/Library/LaunchAgents/com.saathi.daily-youtube.plist
+     Logs: ~/SaathiAI/queue/daily-youtube.log -->
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>com.saathi.daily-youtube</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/Users/macbookpro/SaathiAI/.venv/bin/python</string>
+    <string>/Users/macbookpro/SaathiAI/scripts/daily_youtube.py</string>
+  </array>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>CHROME_CDP_URL</key><string>http://localhost:9222</string>
+    <key>SAATHI_BASE_URL</key><string>https://140-245-193-190.nip.io</string>
+    <key>SAATHI_TOKEN</key><string>REPLACE_WITH_VM_TOKEN</string>
+  </dict>
+  <key>StartCalendarInterval</key>
+  <dict><key>Hour</key><integer>20</integer><key>Minute</key><integer>0</integer></dict>
+  <key>StandardOutPath</key><string>/Users/macbookpro/SaathiAI/queue/daily-youtube.log</string>
+  <key>StandardErrorPath</key><string>/Users/macbookpro/SaathiAI/queue/daily-youtube.log</string>
+</dict>
+</plist>

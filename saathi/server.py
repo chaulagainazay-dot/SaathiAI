@@ -90,6 +90,28 @@ def _teacher():
     return t
 
 
+@app.post("/api/v1/human/report-run")
+async def human_report_run(request: Request):
+    """The Mac's daily publisher reports a run here so the flight recorder +
+    Maturity dashboard reflect real Applications activity. Token-gated."""
+    import json as _json
+    from saathi.infrastructure.human_browser.run_store import default_store
+    from saathi.events import bus as _bus
+    raw = await request.body()
+    r = _json.loads(raw) if raw else {}
+    default_store().record(
+        workflow=r.get("workflow", "youtube_upload"), capability=r.get("capability", "publish_video"),
+        title=r.get("title", ""), ok=bool(r.get("ok")), error=r.get("error", ""),
+        video_url=r.get("video_url", ""), duration_ms=int(r.get("duration_ms", 0)),
+        started=float(r.get("started", 0) or 0), timeline=r.get("timeline", []))
+    try:
+        _bus.publish_sync("browser.published" if r.get("ok") else "browser.failed",
+                          {"title": r.get("title"), "video_url": r.get("video_url"), "ok": bool(r.get("ok"))})
+    except Exception:
+        pass
+    return {"ok": True}
+
+
 @app.get("/api/v1/human/teach")
 async def teach_pending():
     """Open Teach sessions the operator can take control of (whitelisted read)."""
