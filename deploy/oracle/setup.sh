@@ -12,6 +12,15 @@ IP="$(curl -fsS ifconfig.me || curl -fsS https://api.ipify.org)"
 DOMAIN="${1:-$(echo "$IP" | tr '.' '-').nip.io}"
 echo "▶ Deploying SaathiAI → https://${DOMAIN}  (public IP ${IP})"
 
+# ── 0. swap — 1 GB micro VMs (E2.1.Micro) can't build Next.js without it ─────
+MEM_MB="$(free -m | awk '/^Mem:/{print $2}')"
+if [ "${MEM_MB:-4000}" -lt 2000 ] && [ ! -f /swapfile ]; then
+  echo "▶ Low RAM (${MEM_MB} MB) — creating 4 GB swap so the UI build survives…"
+  sudo fallocate -l 4G /swapfile 2>/dev/null || sudo dd if=/dev/zero of=/swapfile bs=1M count=4096
+  sudo chmod 600 /swapfile && sudo mkswap /swapfile && sudo swapon /swapfile
+  grep -q '/swapfile' /etc/fstab || echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab >/dev/null
+fi
+
 # ── 1. system packages ─────────────────────────────────────────────────────
 sudo apt-get update -y
 sudo apt-get install -y build-essential git curl software-properties-common \
@@ -43,7 +52,7 @@ fi
 # ── 3. Next.js UI (same-origin API via Caddy → NEXT_PUBLIC_SAATHI_API empty) ─
 cd "$APP/saathi-os"
 npm ci
-NEXT_PUBLIC_SAATHI_API="" npm run build
+NODE_OPTIONS="--max-old-space-size=1536" NEXT_PUBLIC_SAATHI_API="" npm run build
 
 # ── 4. open host firewall (Oracle Ubuntu images block ports in iptables) ────
 sudo iptables -I INPUT -p tcp --dport 80  -m conntrack --ctstate NEW -j ACCEPT || true
