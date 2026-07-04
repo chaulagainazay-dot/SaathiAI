@@ -35,18 +35,30 @@ class Reply:
 # brain: (message, session) -> reply text
 Brain = Callable[[str, ConversationSession], str]
 
+# The reasoning brain (Executive Intelligence / the agent) lives in the
+# APPLICATION layer. Infrastructure must never import it (no reverse
+# dependency). The app registers its brain here at startup; until then a
+# clearly-unconfigured fallback is used.
+_DEFAULT_BRAIN: "Brain | None" = None
 
-def _default_brain(message: str, session: ConversationSession) -> str:
-    """Executive Intelligence via the platform agent (lazy; heavy import)."""
-    from saathi.agent import SaathiAgent
-    agent = SaathiAgent()
-    return agent.respond(message, session_id=session.session_id, speaker_verified=True)
+
+def register_default_brain(fn: "Brain") -> None:
+    """App layer calls this at startup to wire Executive Intelligence in,
+    without infrastructure ever importing a department module."""
+    global _DEFAULT_BRAIN
+    _DEFAULT_BRAIN = fn
+
+
+def _fallback_brain(message: str, session: ConversationSession) -> str:
+    if _DEFAULT_BRAIN is not None:
+        return _DEFAULT_BRAIN(message, session)
+    return "(no reasoning brain configured — call conversation.register_default_brain)"
 
 
 class ConversationEngine:
     def __init__(self, *, brain: Brain | None = None, commands=None, voice=None,
                  bus=None, sessions: SessionStore | None = None):
-        self._brain = brain or _default_brain
+        self._brain = brain or _fallback_brain
         self._commands = commands if commands is not None else default_commands
         self._voice = voice
         self._bus = bus

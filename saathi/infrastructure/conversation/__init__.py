@@ -11,7 +11,7 @@ API, voice — shares the same engine:
     engine = ConversationEngine()
     reply = ApiAdapter(engine).handle("web:42", "Today's revenue?")
 """
-from .engine import ConversationEngine, Reply, Brain
+from .engine import ConversationEngine, Reply, Brain, register_default_brain
 from .session import ConversationSession, SessionStore
 from .events import ConversationEvent, VoiceEvent
 from .adapters import KeyboardAdapter, ApiAdapter, TelegramAdapter, VoiceAdapter
@@ -29,7 +29,8 @@ def default_engine(*, bus=None, voice=None) -> ConversationEngine:
 
 
 __all__ = [
-    "ConversationEngine", "Reply", "Brain", "ConversationSession", "SessionStore",
+    "ConversationEngine", "Reply", "Brain", "register_default_brain",
+    "ConversationSession", "SessionStore",
     "ConversationEvent", "VoiceEvent", "KeyboardAdapter", "ApiAdapter",
     "TelegramAdapter", "VoiceAdapter", "diagnostics", "default_engine",
 ]
