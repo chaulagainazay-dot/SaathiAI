@@ -82,6 +82,47 @@ async def human_automation():
     return await asyncio.to_thread(status)
 
 
+def _teacher():
+    from saathi.infrastructure.human_browser import default_teacher
+    from saathi.events import bus as _b
+    t = default_teacher()
+    t._bus = _b
+    return t
+
+
+@app.get("/api/v1/human/teach")
+async def teach_pending():
+    """Open Teach sessions the operator can take control of (whitelisted read)."""
+    return {"sessions": [s.as_dict() for s in _teacher().store.pending()]}
+
+
+@app.post("/api/v1/human/teach/{sid}/{action}")
+async def teach_action(sid: str, action: str, request: Request):
+    """Drive the Teach loop: take_control · capture · confirm · learn · abort.
+    Token-gated (the Mac Agent posts `capture`; the operator confirms/learns)."""
+    import json as _json
+    from saathi.infrastructure.human_browser import TeachCapture
+    t = _teacher()
+    raw = await request.body()
+    body = _json.loads(raw) if raw else {}
+    try:
+        if action == "take_control":
+            s = t.take_control(sid)
+        elif action == "capture":
+            s = t.submit_capture(sid, TeachCapture(**{**{"key": t.store.get(sid).key}, **body}))
+        elif action == "confirm":
+            s = t.confirm(sid, selector=body.get("selector"))
+        elif action == "learn":
+            s = t.learn(sid, operator=body.get("operator", "Ajay"))
+        elif action == "abort":
+            s = t.abort(sid)
+        else:
+            return {"error": f"unknown action {action}"}
+        return s.as_dict()
+    except (KeyError, ValueError) as e:
+        return {"error": str(e)}
+
+
 @app.get("/api/v1/human/selectors")
 async def human_selectors():
     """Automation Knowledge Graph — every element SaathiAI has learned, with
@@ -360,6 +401,7 @@ async def _auth(request, call_next):
             or path == "/api/v1/ceo/home"
             or path == "/api/v1/infrastructure/health"
             or path == "/api/v1/human/automation"
+            or path == "/api/v1/human/teach"
             or path.startswith("/api/v1/human/runs/")
             or path.startswith("/api/v1/human/selectors")
             or path == "/api/events/stream"

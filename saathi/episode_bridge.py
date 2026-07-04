@@ -17,6 +17,7 @@ _EPISODE_EVENTS = {
     "browser.finished":       ("infrastructure", "browser_fetch"),
     "browser.published":      ("ai_studio", "publish"),        # video went live → learning
     "browser.failed":         ("ai_studio", "publish"),        # publish failed → learning
+    "selector.learned":       ("automation", "teach"),         # Saathi taught itself a selector
 }
 
 
