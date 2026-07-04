@@ -15,6 +15,7 @@ export const DEPARTMENTS = {
   BUSINESS:    { name: "Business",    color: "#10C98A", route: "/business",  short: "Business" },
   INFRA:       { name: "Infrastructure", color: "#7CF5E4", route: "/infrastructure", short: "Infra" },
   AUTOMATION:  { name: "Automation",    color: "#FF8A3D", route: "/automation",   short: "Auto" },
+  MATURITY:    { name: "Maturity",      color: "#E8B84B", route: "/maturity",     short: "Maturity" },
 };
 
 export const color = (key) => DEPARTMENTS[key]?.color ?? "#8FA0C4";
@@ -22,5 +23,5 @@ export const color = (key) => DEPARTMENTS[key]?.color ?? "#8FA0C4";
 // Dock order (per spec) — Executive first, Settings last.
 export const DOCK = [
   "EXECUTIVE", "MISSION", "FINANCE", "AI STUDIO", "KNOWLEDGE",
-  "LEARNING", "TRAVEL", "CAFETERIA", "CRYPTO", "DISCOVERY", "INFRA", "AUTOMATION",
+  "LEARNING", "TRAVEL", "CAFETERIA", "CRYPTO", "DISCOVERY", "INFRA", "AUTOMATION", "MATURITY",
 ];

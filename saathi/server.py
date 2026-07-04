@@ -146,6 +146,15 @@ async def human_run(run_id: str):
     return run or {"error": "run not found"}
 
 
+@app.get("/api/v1/platform/maturity")
+async def platform_maturity():
+    """Honest platform-maturity mirror (Infrastructure vs Applications vs Real
+    Data vs Learning). Deliberately computed from real signals."""
+    import asyncio
+    from saathi.platform_maturity import snapshot
+    return await asyncio.to_thread(snapshot)
+
+
 @app.get("/api/v1/infrastructure/health")
 async def infrastructure_health():
     """Unified infra diagnostics for the CEO dashboard's Infrastructure panel
@@ -400,6 +409,7 @@ async def _auth(request, call_next):
             or path == "/api/executive/briefing"
             or path == "/api/v1/ceo/home"
             or path == "/api/v1/infrastructure/health"
+            or path == "/api/v1/platform/maturity"
             or path == "/api/v1/human/automation"
             or path == "/api/v1/human/teach"
             or path.startswith("/api/v1/human/runs/")

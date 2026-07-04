@@ -15,6 +15,13 @@ export async function fetchInfraHealth() {
   return r.json();
 }
 
+// Platform Maturity — the honest mirror (Infrastructure vs Applications vs Real Data).
+export async function fetchMaturity() {
+  const r = await fetch(`${API_BASE}/api/v1/platform/maturity`, { cache: "no-store" });
+  if (!r.ok) throw new Error(`maturity ${r.status}`);
+  return r.json();
+}
+
 // Automation Center — status, health score, recent runs (flight recorder).
 export async function fetchAutomation() {
   const r = await fetch(`${API_BASE}/api/v1/human/automation`, { cache: "no-store" });
