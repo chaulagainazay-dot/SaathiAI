@@ -16,12 +16,13 @@ export const DEPARTMENTS = {
   INFRA:       { name: "Infrastructure", color: "#7CF5E4", route: "/infrastructure", short: "Infra" },
   AUTOMATION:  { name: "Automation",    color: "#FF8A3D", route: "/automation",   short: "Auto" },
   MATURITY:    { name: "Maturity",      color: "#E8B84B", route: "/maturity",     short: "Maturity" },
+  OS:          { name: "Operating System", color: "#F4F6FB", route: "/os",        short: "OS" },
 };
 
 export const color = (key) => DEPARTMENTS[key]?.color ?? "#8FA0C4";
 
 // Dock order (per spec) — Executive first, Settings last.
 export const DOCK = [
-  "EXECUTIVE", "MISSION", "FINANCE", "AI STUDIO", "KNOWLEDGE",
+  "OS", "EXECUTIVE", "MISSION", "FINANCE", "AI STUDIO", "KNOWLEDGE",
   "LEARNING", "TRAVEL", "CAFETERIA", "CRYPTO", "DISCOVERY", "INFRA", "AUTOMATION", "MATURITY",
 ];

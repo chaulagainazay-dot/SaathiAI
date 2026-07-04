@@ -15,6 +15,13 @@ export async function fetchInfraHealth() {
   return r.json();
 }
 
+// Today's Operating System — one aggregated home-screen call (all real).
+export async function fetchCeoOs() {
+  const r = await fetch(`${API_BASE}/api/v1/ceo/os`, { cache: "no-store" });
+  if (!r.ok) throw new Error(`ceo-os ${r.status}`);
+  return r.json();
+}
+
 // Platform Maturity — the honest mirror (Infrastructure vs Applications vs Real Data).
 export async function fetchMaturity() {
   const r = await fetch(`${API_BASE}/api/v1/platform/maturity`, { cache: "no-store" });

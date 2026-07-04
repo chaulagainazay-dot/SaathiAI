@@ -168,6 +168,15 @@ async def human_run(run_id: str):
     return run or {"error": "run not found"}
 
 
+@app.get("/api/v1/ceo/os")
+async def ceo_operating_system():
+    """Today's Operating System — one aggregated call for the home screen
+    (dream · rule · automation · learning · revenue · needs-you), all real."""
+    import asyncio
+    from saathi.ceo_os import snapshot
+    return await asyncio.to_thread(snapshot)
+
+
 @app.get("/api/v1/platform/maturity")
 async def platform_maturity():
     """Honest platform-maturity mirror (Infrastructure vs Applications vs Real
@@ -430,6 +439,7 @@ async def _auth(request, call_next):
     if (path == "/api/v1/auth/login"
             or path == "/api/executive/briefing"
             or path == "/api/v1/ceo/home"
+            or path == "/api/v1/ceo/os"
             or path == "/api/v1/infrastructure/health"
             or path == "/api/v1/platform/maturity"
             or path == "/api/v1/human/automation"
