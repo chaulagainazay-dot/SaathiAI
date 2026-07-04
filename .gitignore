@@ -20,3 +20,5 @@ videos_output/
 reels_output/
 thumbnails/
 research_cache/
+run_human_agent.sh
+queue/
