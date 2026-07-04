@@ -13,6 +13,7 @@ dependencies = [
     "numpy>=1.26",
     "soundfile>=0.12",
     "pillow>=10.0",         # thumbnail scoring / image analysis
+    "openai>=1.0",          # agent runtime + Gemini(OpenAI-compat)/eval clients
 ]
 
 [project.optional-dependencies]
