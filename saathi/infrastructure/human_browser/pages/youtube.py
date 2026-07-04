@@ -55,3 +55,21 @@ SHARE_URL = (
 )
 PROCESSING_STATUS = "ytcp-video-upload-progress, .ytcp-video-upload-progress"
 CLOSE_DIALOG = "ytcp-button#close-button, #close-button"
+
+# ── element keys → default strategies (seed the Selector Registry) ──────────
+KEYS = {
+    "youtube/file_input": FILE_INPUT,
+    "youtube/title": TITLE_BOX,
+    "youtube/description": DESCRIPTION_BOX,
+    "youtube/not_for_kids": NOT_FOR_KIDS,
+    "youtube/next": NEXT_BUTTON,
+    "youtube/publish": PUBLISH_BUTTON,
+    "youtube/share_url": SHARE_URL,
+}
+
+
+def seed(registry) -> None:
+    """Register YouTube's default selectors as the baseline knowledge."""
+    for key, sel in KEYS.items():
+        registry.seed(key, [s.strip() for s in sel.split(",")])
+

@@ -82,6 +82,21 @@ async def human_automation():
     return await asyncio.to_thread(status)
 
 
+@app.get("/api/v1/human/selectors")
+async def human_selectors():
+    """Automation Knowledge Graph — every element SaathiAI has learned, with
+    confidence + how many strategies it knows."""
+    from saathi.infrastructure.human_browser import default_selector_registry
+    return {"elements": default_selector_registry().overview()}
+
+
+@app.get("/api/v1/human/selectors/{key:path}")
+async def human_selector_detail(key: str):
+    from saathi.infrastructure.human_browser import default_selector_registry
+    from dataclasses import asdict
+    return {"key": key, "selectors": [asdict(k) for k in default_selector_registry().known(key)]}
+
+
 @app.get("/api/v1/human/runs/{run_id}")
 async def human_run(run_id: str):
     """One run's full record for the Replay viewer (timeline + artifacts)."""
@@ -346,6 +361,7 @@ async def _auth(request, call_next):
             or path == "/api/v1/infrastructure/health"
             or path == "/api/v1/human/automation"
             or path.startswith("/api/v1/human/runs/")
+            or path.startswith("/api/v1/human/selectors")
             or path == "/api/events/stream"
             or path == "/api/content/recommendations"
             or path == "/api/content/leaderboard"
@@ -3086,6 +3102,14 @@ def _start_background():
         from .events import bus as _bus
         from . import episode_bridge
         episode_bridge.install(_bus)
+    except Exception:
+        pass
+    # seed the Selector Registry with the YouTube page-object defaults so the
+    # Automation Knowledge Graph is populated from first boot
+    try:
+        from .infrastructure.human_browser import default_selector_registry
+        from .infrastructure.human_browser.pages import youtube as _yt
+        _yt.seed(default_selector_registry())
     except Exception:
         pass
     try:

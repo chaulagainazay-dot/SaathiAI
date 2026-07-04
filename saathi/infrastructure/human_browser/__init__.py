@@ -29,6 +29,8 @@ from .workflows import YouTubeUploadWorkflow, WORKFLOWS
 from .publish import publish
 from .vision_verifier import VisionVerifier, default_verifier
 from .run_store import RunStore, default_store
+from .selector_registry import SelectorRegistry, KnownSelector, default_registry as default_selector_registry
+from .teach import TeachRequest, TeachCapture, learn_from_capture
 from . import automation
 
 __all__ = [
@@ -41,4 +43,6 @@ __all__ = [
     "YouTubeUploadWorkflow", "WORKFLOWS", "publish",
     "VisionVerifier", "default_verifier",
     "RunStore", "default_store", "automation",
+    "SelectorRegistry", "KnownSelector", "default_selector_registry",
+    "TeachRequest", "TeachCapture", "learn_from_capture",
 ]
