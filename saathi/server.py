@@ -25,6 +25,16 @@ def ceo_home_endpoint():
     return ceo_home()
 
 
+@app.get("/api/v1/infrastructure/health")
+async def infrastructure_health():
+    """Unified infra diagnostics for the CEO dashboard's Infrastructure panel
+    (Models · Browser · Connectors · Conversation + a health score). Runs in a
+    thread — connector health checks may touch the network."""
+    import asyncio
+    from saathi.infrastructure.diagnostics import snapshot
+    return await asyncio.to_thread(snapshot)
+
+
 # loop-safe event publisher: inside FastAPI's running loop we can't use
 # bus.publish_sync, so fire-and-forget an awaitable task instead.
 def _loop_safe_publish(name, payload):
@@ -268,6 +278,7 @@ async def _auth(request, call_next):
     if (path == "/api/v1/auth/login"
             or path == "/api/executive/briefing"
             or path == "/api/v1/ceo/home"
+            or path == "/api/v1/infrastructure/health"
             or path == "/api/events/stream"
             or path == "/api/content/recommendations"
             or path == "/api/content/leaderboard"

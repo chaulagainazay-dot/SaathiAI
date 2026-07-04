@@ -7,3 +7,10 @@ export async function fetchCeoHome() {
   if (!r.ok) throw new Error(`bff ${r.status}`);
   return r.json();
 }
+
+// Unified infrastructure diagnostics (Models · Browser · Connectors · Conversation + score).
+export async function fetchInfraHealth() {
+  const r = await fetch(`${API_BASE}/api/v1/infrastructure/health`, { cache: "no-store" });
+  if (!r.ok) throw new Error(`infra ${r.status}`);
+  return r.json();
+}
