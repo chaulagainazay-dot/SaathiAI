@@ -22,31 +22,33 @@ def _send(text: str):
 def _loop():
     if not (config.TELEGRAM_BOT_TOKEN and config.TELEGRAM_CHAT_ID):
         return
+    # One shared conversation engine (command layer → agent) behind the Telegram
+    # adapter — the same brain every other channel uses. One agent instance is
+    # reused across messages so in-process state persists.
     from .agent import SaathiAgent
+    from saathi.infrastructure.conversation import ConversationEngine, TelegramAdapter
+    from saathi.infrastructure.connectors import default_registry
+    try:
+        from saathi.events import bus as _bus
+    except Exception:
+        _bus = None
     agent = SaathiAgent()
+
+    def _brain(message, session):
+        return agent.respond(message, session_id=session.session_id, speaker_verified=True)
+
+    engine = ConversationEngine(brain=_brain, bus=_bus)
+    adapter = TelegramAdapter(engine, registry=default_registry(),
+                              trusted_chat=config.TELEGRAM_CHAT_ID)
     offset = None
     while True:
         try:
-            from saathi.infrastructure.connectors import default_registry
             r = default_registry().execute(capability="get_updates", connector_id="telegram",
                                            timeout=50, offset=offset,
                                            allowed_updates='["message"]')
             for u in r.get("result", []):
                 offset = u["update_id"] + 1
-                msg = u.get("message", {})
-                chat = str(msg.get("chat", {}).get("id", ""))
-                text = (msg.get("text") or "").strip()
-                if not text or chat != str(config.TELEGRAM_CHAT_ID):
-                    continue  # only Ajay's chat is trusted
-                try:
-                    # fast CEO command layer first; falls through to the agent
-                    from .telegram_ceo import handle_command
-                    reply = handle_command(text)
-                    if reply is None:
-                        reply = agent.respond(text, session_id="telegram", speaker_verified=True)
-                except Exception as e:
-                    reply = f"⚠️ {type(e).__name__}: {str(e)[:120]}"
-                _send(reply)
+                adapter.handle_update(u)   # parse → engine → deliver via connector
         except Exception:
             time.sleep(5)
 
