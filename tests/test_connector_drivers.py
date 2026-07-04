@@ -162,10 +162,10 @@ def test_github_actions_capabilities():
 
 
 # ── defaults + richer diagnostics ───────────────────────────────────────────
-def test_install_defaults_registers_all_six():
+def test_install_defaults_registers_all_drivers():
     reg = install_defaults(ConnectorRegistry())
     ids = {c.id for c in reg.all()}
-    assert ids == {"telegram", "github", "n8n", "browser", "youtube", "filesystem"}
+    assert ids == {"telegram", "github", "n8n", "browser", "youtube", "filesystem", "human_publish"}
 
 
 def test_diagnostics_dict_is_first_class(tmp_path):

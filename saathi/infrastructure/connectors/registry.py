@@ -40,10 +40,11 @@ class ConnectorRegistry:
     def by_capability(self, capability: str) -> list[Connector]:
         return [c for c in self._connectors.values() if c.supports(capability)]
 
-    def best(self, capability: str) -> Connector | None:
-        """Strongest healthy+authenticated connector for a capability.
-        Rank: usable-health, then reliability↓, cost↑, latency↑."""
-        ranked = []
+    def ranked(self, capability: str) -> list[Connector]:
+        """Healthy+authenticated connectors for a capability, best-first.
+        Rank: usable-health, then reliability↓, cost↑, latency↑ — this is the
+        API ★ > Browser > Human ordering when they advertise the same capability."""
+        scored = []
         for c in self.by_capability(capability):
             m = c.manifest()
             if m.requires_auth and not c.authenticate():
@@ -52,34 +53,44 @@ class ConnectorRegistry:
             self._note_status(c.id, h.status, h.metrics)
             if not h.status.usable:
                 continue
-            ranked.append((0 if h.status is Status.OK else 1,
+            scored.append((0 if h.status is Status.OK else 1,
                            -m.reliability, m.cost, m.latency_rank, c))
-        ranked.sort(key=lambda t: t[:4])
-        return ranked[0][4] if ranked else None
+        scored.sort(key=lambda t: t[:4])
+        return [t[4] for t in scored]
+
+    def best(self, capability: str) -> Connector | None:
+        chain = self.ranked(capability)
+        return chain[0] if chain else None
 
     # ── execution ───────────────────────────────────────────────────────
     def execute(self, capability: str, *, connector_id: str | None = None, **payload):
-        target = self.get(connector_id) if connector_id else self.best(capability)
-        if target is None:
-            raise ConnectorError(f"no healthy connector serves {capability!r}")
+        """Run a capability, falling through the ranked connectors on failure —
+        so `publish_video` tries the API, then browser, then the human driver,
+        and the department never learns which mode succeeded."""
         import time
-        try:
-            result = target.execute(capability, **payload)
-            target._last_success = time.time()
-            self._emit(ConnectorEvent.EXECUTED, target.id, {"capability": capability})
-            return result
-        except AuthRequired as e:
-            target._last_error = str(e)
-            self._emit(ConnectorEvent.AUTH_REQUIRED, target.id, {"error": str(e)})
-            raise
-        except RateLimited as e:
-            target._last_error = str(e)
-            self._emit(ConnectorEvent.RATE_LIMITED, target.id, {"error": str(e)})
-            raise
-        except Exception as e:
-            target._last_error = str(e)
-            self._emit(ConnectorEvent.FAILED, target.id, {"capability": capability, "error": str(e)})
-            raise
+        chain = [self.get(connector_id)] if connector_id else self.ranked(capability)
+        if not chain:
+            raise ConnectorError(f"no healthy connector serves {capability!r}")
+        last_err: Exception | None = None
+        for i, target in enumerate(chain):
+            try:
+                result = target.execute(capability, **payload)
+                target._last_success = time.time()
+                self._emit(ConnectorEvent.EXECUTED,
+                           target.id, {"capability": capability, "mode": target.id})
+                return result
+            except (AuthRequired, RateLimited) as e:
+                target._last_error = str(e); last_err = e
+                ev = ConnectorEvent.AUTH_REQUIRED if isinstance(e, AuthRequired) else ConnectorEvent.RATE_LIMITED
+                self._emit(ev, target.id, {"error": str(e)})
+            except Exception as e:
+                target._last_error = str(e); last_err = e
+                self._emit(ConnectorEvent.FAILED, target.id,
+                           {"capability": capability, "error": str(e)})
+            if i + 1 < len(chain):
+                self._emit(ConnectorEvent.DEGRADED, target.id,
+                           {"capability": capability, "falling_back_to": chain[i + 1].id})
+        raise last_err if last_err else ConnectorError(f"no connector served {capability!r}")
 
     # ── health / diagnostics ────────────────────────────────────────────
     def health_all(self) -> dict[str, dict]:

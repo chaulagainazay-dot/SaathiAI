@@ -13,7 +13,7 @@ from .manifest import Manifest, ConnectorMetadata
 from .registry import ConnectorRegistry, registry
 from .drivers import (
     TelegramConnector, GitHubConnector, N8nConnector,
-    BrowserConnector, YouTubeConnector, FilesystemConnector,
+    BrowserConnector, YouTubeConnector, FilesystemConnector, HumanPublishConnector,
 )
 from . import diagnostics
 
@@ -21,7 +21,7 @@ from . import diagnostics
 # rest self-report AUTH_REQUIRED until their env keys are set.
 _DEFAULT_DRIVER_CLASSES = (
     TelegramConnector, GitHubConnector, N8nConnector,
-    BrowserConnector, YouTubeConnector, FilesystemConnector,
+    BrowserConnector, YouTubeConnector, FilesystemConnector, HumanPublishConnector,
 )
 
 
@@ -58,5 +58,5 @@ __all__ = [
     "ConnectorError", "AuthRequired", "RateLimited", "CapabilityUnsupported",
     "ConnectorRegistry", "registry", "diagnostics", "install_defaults", "default_registry",
     "TelegramConnector", "GitHubConnector", "N8nConnector",
-    "BrowserConnector", "YouTubeConnector", "FilesystemConnector",
+    "BrowserConnector", "YouTubeConnector", "FilesystemConnector", "HumanPublishConnector",
 ]

@@ -10,6 +10,8 @@ from .n8n import N8nConnector
 from .browser import BrowserConnector
 from .youtube import YouTubeConnector
 from .filesystem import FilesystemConnector
+from .human_publish import HumanPublishConnector
 
 __all__ = ["TelegramConnector", "GitHubConnector", "N8nConnector",
-           "BrowserConnector", "YouTubeConnector", "FilesystemConnector"]
+           "BrowserConnector", "YouTubeConnector", "FilesystemConnector",
+           "HumanPublishConnector"]

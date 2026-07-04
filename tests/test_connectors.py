@@ -69,7 +69,8 @@ def test_execute_routes_to_best_and_emits_connected():
     reg.register(FakeConnector("winner", ["send_text"], reliability=0.99))
     out = reg.execute(capability="send_text", text="hi")
     assert out == {"ok": "winner"}
-    assert (ConnectorEvent.EXECUTED.value, {"connector": "winner", "capability": "send_text"}) in bus.events
+    assert (ConnectorEvent.EXECUTED.value,
+            {"connector": "winner", "capability": "send_text", "mode": "winner"}) in bus.events
 
 
 def test_execute_explicit_connector_id():
