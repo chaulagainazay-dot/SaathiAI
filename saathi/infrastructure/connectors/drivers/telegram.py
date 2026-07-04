@@ -10,7 +10,7 @@ import os
 from ..base import Connector, Health, Status, ConnectorError, RateLimited
 from ..manifest import Manifest
 
-_CAPS = frozenset({"send_text", "send_photo", "send_document", "send_video"})
+_CAPS = frozenset({"send_text", "send_photo", "send_document", "send_video", "get_updates"})
 _METHOD = {"send_text": ("sendMessage", "text"), "send_photo": ("sendPhoto", "photo"),
            "send_document": ("sendDocument", "document"), "send_video": ("sendVideo", "video")}
 
@@ -56,13 +56,27 @@ class TelegramConnector(Connector):
 
     def execute(self, capability: str, **payload):
         self._require(capability)
+        if capability == "get_updates":                 # inbound polling (no chat_id)
+            with self._client(timeout=payload.get("timeout", 60) + 10) as c:
+                r = c.get("/getUpdates", params={k: v for k, v in payload.items() if v is not None})
+            if r.status_code == 429:
+                raise RateLimited("telegram 429")
+            r.raise_for_status()
+            return r.json()
         method, arg = _METHOD[capability]
         chat_id = payload.pop("chat_id", None) or self._chat
         if not chat_id:
             raise ConnectorError("no chat_id (pass chat_id= or set TELEGRAM_CHAT_ID)")
-        body = {"chat_id": chat_id, **payload}
-        with self._client() as c:
-            r = c.post(f"/{method}", json=body)
+        file_path = payload.pop("file_path", None)      # multipart upload of a local file
+        with self._client(timeout=120 if file_path else 15) as c:
+            if file_path:
+                from pathlib import Path
+                p = Path(file_path).expanduser()
+                data = {"chat_id": chat_id, **{k: v for k, v in payload.items() if v is not None}}
+                with open(p, "rb") as f:
+                    r = c.post(f"/{method}", data=data, files={arg: (p.name, f, "application/octet-stream")})
+            else:
+                r = c.post(f"/{method}", json={"chat_id": chat_id, **payload})
         if r.status_code == 429:
             raise RateLimited("telegram 429")
         r.raise_for_status()

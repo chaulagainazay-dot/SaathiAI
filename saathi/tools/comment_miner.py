@@ -23,27 +23,21 @@ def pull_youtube_comments(max_results: int = 200) -> list[dict]:
         return []
 
     try:
-        import httpx
+        from saathi.infrastructure.connectors import default_registry
+        reg = default_registry()
 
         # Get recent video IDs
-        search_r = httpx.get(
-            "https://www.googleapis.com/youtube/v3/search",
-            params={"key": api_key, "channelId": channel_id, "part": "id",
-                    "type": "video", "order": "date", "maxResults": 10},
-            timeout=15,
-        )
-        video_ids = [i["id"]["videoId"] for i in search_r.json().get("items", [])
+        search_r = reg.execute(capability="search", connector_id="youtube",
+                               channelId=channel_id, part="id", type="video",
+                               order="date", maxResults=10)
+        video_ids = [i["id"]["videoId"] for i in search_r.get("items", [])
                      if i.get("id", {}).get("videoId")]
 
         comments = []
         for vid in video_ids[:5]:  # top 5 most recent
-            cr = httpx.get(
-                "https://www.googleapis.com/youtube/v3/commentThreads",
-                params={"key": api_key, "videoId": vid, "part": "snippet",
-                        "maxResults": 40, "order": "relevance"},
-                timeout=15,
-            )
-            for item in cr.json().get("items", []):
+            cr = reg.execute(capability="list_comments", connector_id="youtube",
+                             videoId=vid, part="snippet", maxResults=40, order="relevance")
+            for item in cr.get("items", []):
                 text = item["snippet"]["topLevelComment"]["snippet"].get("textDisplay", "")
                 likes = item["snippet"]["topLevelComment"]["snippet"].get("likeCount", 0)
                 comments.append({"video_id": vid, "text": text, "likes": likes})

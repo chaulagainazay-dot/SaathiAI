@@ -67,39 +67,26 @@ def pull_youtube_analytics(days_back: int = 30) -> list:
         return []
 
     try:
-        import httpx
+        from saathi.infrastructure.connectors import default_registry
+        reg = default_registry()
         # Step 1: get recent uploads
-        search_url = "https://www.googleapis.com/youtube/v3/search"
-        params = {
-            "key": api_key,
-            "channelId": channel_id,
-            "part": "id,snippet",
-            "order": "date",
-            "maxResults": 50,
-            "type": "video",
-            "publishedAfter": (datetime.now(timezone.utc) - timedelta(days=days_back)).isoformat(),
-        }
-        r = httpx.get(search_url, params=params, timeout=20)
-        if r.status_code != 200:
-            return []
+        search = reg.execute(
+            capability="search", connector_id="youtube",
+            channelId=channel_id, part="id,snippet", order="date",
+            maxResults=50, type="video",
+            publishedAfter=(datetime.now(timezone.utc) - timedelta(days=days_back)).isoformat())
 
-        items = r.json().get("items", [])
+        items = search.get("items", [])
         video_ids = [i["id"]["videoId"] for i in items if i.get("id", {}).get("videoId")]
         if not video_ids:
             return []
 
         # Step 2: get stats for each video
-        stats_url = "https://www.googleapis.com/youtube/v3/videos"
-        stats_r = httpx.get(stats_url, params={
-            "key": api_key,
-            "id": ",".join(video_ids),
-            "part": "statistics,contentDetails,snippet",
-        }, timeout=20)
-        if stats_r.status_code != 200:
-            return []
+        stats = reg.execute(capability="get_video", connector_id="youtube",
+                            id=",".join(video_ids), part="statistics,contentDetails,snippet")
 
         results = []
-        for item in stats_r.json().get("items", []):
+        for item in stats.get("items", []):
             stats = item.get("statistics", {})
             snippet = item.get("snippet", {})
             results.append({

@@ -13,9 +13,9 @@ def performance_report() -> dict:
     if not key or not vids:
         return {"error": "no YouTube data yet (need API key + uploads)"}
     try:
-        r = httpx.get("https://www.googleapis.com/youtube/v3/videos",
-                      params={"part": "statistics,snippet", "id": ",".join(vids), "key": key},
-                      timeout=15).json()
+        from saathi.infrastructure.connectors import default_registry
+        r = default_registry().execute(capability="get_video", connector_id="youtube",
+                                       part="statistics,snippet", id=",".join(vids))
         items = [{"title": i["snippet"]["title"],
                   "views": int(i["statistics"].get("viewCount", 0)),
                   "likes": int(i["statistics"].get("likeCount", 0))}

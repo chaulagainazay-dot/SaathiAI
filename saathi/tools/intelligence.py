@@ -254,18 +254,14 @@ def scan_competitors() -> dict:
     results = {}
     for name, channel_id in COMPETITOR_CHANNELS.items():
         try:
-            r = httpx.get(
-                "https://www.googleapis.com/youtube/v3/search",
-                params={
-                    "key": api_key, "channelId": channel_id, "part": "snippet",
-                    "order": "viewCount", "maxResults": 5, "type": "video",
-                    "publishedAfter": (
-                        datetime.now(timezone.utc) - timedelta(days=30)
-                    ).strftime("%Y-%m-%dT%H:%M:%SZ"),
-                },
-                timeout=15,
-            )
-            items = r.json().get("items", [])
+            from saathi.infrastructure.connectors import default_registry
+            r = default_registry().execute(
+                capability="search", connector_id="youtube",
+                channelId=channel_id, part="snippet", order="viewCount",
+                maxResults=5, type="video",
+                publishedAfter=(datetime.now(timezone.utc) - timedelta(days=30)
+                                ).strftime("%Y-%m-%dT%H:%M:%SZ"))
+            items = r.get("items", [])
             channel_results = []
             with _conn() as c:
                 for item in items:

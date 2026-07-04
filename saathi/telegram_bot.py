@@ -12,8 +12,9 @@ _STARTED = False
 
 def _send(text: str):
     try:
-        httpx.post(f"https://api.telegram.org/bot{config.TELEGRAM_BOT_TOKEN}/sendMessage",
-                   json={"chat_id": config.TELEGRAM_CHAT_ID, "text": text[:4000]}, timeout=15)
+        from saathi.infrastructure.connectors import default_registry
+        default_registry().execute(capability="send_text", connector_id="telegram",
+                                   chat_id=config.TELEGRAM_CHAT_ID, text=text[:4000])
     except Exception:
         pass
 
@@ -26,9 +27,10 @@ def _loop():
     offset = None
     while True:
         try:
-            r = httpx.get(f"https://api.telegram.org/bot{config.TELEGRAM_BOT_TOKEN}/getUpdates",
-                          params={"timeout": 50, "offset": offset,
-                                  "allowed_updates": '["message"]'}, timeout=60).json()
+            from saathi.infrastructure.connectors import default_registry
+            r = default_registry().execute(capability="get_updates", connector_id="telegram",
+                                           timeout=50, offset=offset,
+                                           allowed_updates='["message"]')
             for u in r.get("result", []):
                 offset = u["update_id"] + 1
                 msg = u.get("message", {})

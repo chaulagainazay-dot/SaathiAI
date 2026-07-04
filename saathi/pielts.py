@@ -72,10 +72,10 @@ def yt_stats() -> dict:
     if not key:
         return {}
     try:
-        url = (f"https://www.googleapis.com/youtube/v3/channels?part=statistics"
-               f"&id={CHANNEL_ID}&key={key}")
-        with urllib.request.urlopen(url, timeout=10) as r:
-            s = json.load(r)["items"][0]["statistics"]
+        from saathi.infrastructure.connectors import default_registry
+        data = default_registry().execute(capability="channel_stats", connector_id="youtube",
+                                          part="statistics", id=CHANNEL_ID)
+        s = data["items"][0]["statistics"]
         return {"subscribers": int(s.get("subscriberCount", 0)),
                 "views": int(s.get("viewCount", 0)),
                 "videos": int(s.get("videoCount", 0))}

@@ -56,20 +56,18 @@ def scan_youtube_trending_ielts() -> list[dict]:
     if not api_key:
         return []
     try:
-        import httpx
         from datetime import datetime, timedelta, timezone
+        from saathi.infrastructure.connectors import default_registry
+        reg = default_registry()
         week_ago = (datetime.now(timezone.utc) - timedelta(days=7)).isoformat()
 
         queries = ["IELTS speaking tips 2025", "IELTS writing task 2", "IELTS band 7 mistakes"]
         results = []
         for q in queries:
-            r = httpx.get(
-                "https://www.googleapis.com/youtube/v3/search",
-                params={"key": api_key, "q": q, "part": "snippet", "type": "video",
-                        "order": "viewCount", "publishedAfter": week_ago, "maxResults": 5},
-                timeout=15,
-            )
-            for item in r.json().get("items", []):
+            r = reg.execute(capability="search", connector_id="youtube",
+                            q=q, part="snippet", type="video",
+                            order="viewCount", publishedAfter=week_ago, maxResults=5)
+            for item in r.get("items", []):
                 sn = item.get("snippet", {})
                 results.append({
                     "title":  sn.get("title", ""),

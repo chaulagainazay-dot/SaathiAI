@@ -35,10 +35,28 @@ def install_defaults(reg: ConnectorRegistry | None = None, *, bus=None) -> Conne
     return reg
 
 
+_default_ready = False
+
+
+def default_registry() -> ConnectorRegistry:
+    """The process-wide registry with default drivers installed once (lazy).
+    Department code calls this: `default_registry().execute(capability=..., ...)`."""
+    global _default_ready
+    if not _default_ready:
+        # wire the Event Fabric so connector events reach the platform
+        try:
+            from saathi.events import bus as _fabric
+        except Exception:
+            _fabric = None
+        install_defaults(registry, bus=_fabric)
+        _default_ready = True
+    return registry
+
+
 __all__ = [
     "Connector", "Manifest", "ConnectorMetadata", "Health", "Status", "ConnectorEvent",
     "ConnectorError", "AuthRequired", "RateLimited", "CapabilityUnsupported",
-    "ConnectorRegistry", "registry", "diagnostics", "install_defaults",
+    "ConnectorRegistry", "registry", "diagnostics", "install_defaults", "default_registry",
     "TelegramConnector", "GitHubConnector", "N8nConnector",
     "BrowserConnector", "YouTubeConnector", "FilesystemConnector",
 ]

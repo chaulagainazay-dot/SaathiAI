@@ -6,11 +6,11 @@ from .. import config
 
 
 def trigger(workflow: str, params: dict | None = None) -> dict:
-    r = httpx.post(f"{config.N8N_WEBHOOK_BASE}/{workflow}",
-                   json=params or {}, timeout=60)
-    r.raise_for_status()
-    body = (r.json() if r.headers.get("content-type", "").startswith("application/json")
-            else r.text)
+    from saathi.infrastructure.connectors import default_registry
+    out = default_registry().execute(capability="trigger_workflow", connector_id="n8n",
+                                     path=workflow, data=params or {})
+    # connector returns raw JSON, or {"status","text"} for non-JSON responses
+    body = out["text"] if isinstance(out, dict) and set(out) == {"status", "text"} else out
     return {"status": "triggered", "workflow": workflow, "response": body}
 
 
@@ -18,8 +18,8 @@ def _discover_chat_id() -> str:
     """Find Ajay's chat id from recent messages to the bot (after he messages it)."""
     if config.TELEGRAM_CHAT_ID:
         return config.TELEGRAM_CHAT_ID
-    r = httpx.get(f"https://api.telegram.org/bot{config.TELEGRAM_BOT_TOKEN}/getUpdates",
-                  timeout=15).json()
+    from saathi.infrastructure.connectors import default_registry
+    r = default_registry().execute(capability="get_updates", connector_id="telegram")
     for u in reversed(r.get("result", [])):
         chat = (u.get("message") or u.get("channel_post") or {}).get("chat", {})
         if chat.get("id"):
@@ -30,6 +30,7 @@ def _discover_chat_id() -> str:
 def send_video(path: str, caption: str = "") -> dict:
     """Send a video file to Ajay's Telegram (works on Android — replaces AirDrop)."""
     from pathlib import Path
+    from saathi.infrastructure.connectors import default_registry
     chat_id = _discover_chat_id()
     if not chat_id:
         return {"error": "no_chat_id",
@@ -38,12 +39,8 @@ def send_video(path: str, caption: str = "") -> dict:
     if not p.exists():
         return {"error": "video not found", "path": str(p)}
     try:
-        with open(p, "rb") as f:
-            r = httpx.post(
-                f"https://api.telegram.org/bot{config.TELEGRAM_BOT_TOKEN}/sendVideo",
-                data={"chat_id": chat_id, "caption": caption[:1000]},
-                files={"video": (p.name, f, "video/mp4")}, timeout=120)
-        r.raise_for_status()
+        default_registry().execute(capability="send_video", connector_id="telegram",
+                                   chat_id=chat_id, caption=caption[:1000], file_path=str(p))
         return {"sent": True, "to_chat": chat_id, "file": p.name}
     except Exception as e:
         return {"error": str(e), "file": p.name}
@@ -86,12 +83,9 @@ def send_telegram(text: str) -> dict:
     if not config.TELEGRAM_BOT_TOKEN:
         return {"error": "no_token"}
     try:
-        r = httpx.post(
-            f"https://api.telegram.org/bot{config.TELEGRAM_BOT_TOKEN}/sendMessage",
-            json={"chat_id": config.TELEGRAM_CHAT_ID, "text": text},
-            timeout=8,
-        )
-        r.raise_for_status()
+        from saathi.infrastructure.connectors import default_registry
+        default_registry().execute(capability="send_text", connector_id="telegram",
+                                   chat_id=config.TELEGRAM_CHAT_ID, text=text)
         return {"status": "sent"}
     except Exception as e:
         return {"error": str(e)}

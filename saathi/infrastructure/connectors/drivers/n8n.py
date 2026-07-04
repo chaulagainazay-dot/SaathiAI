@@ -38,23 +38,17 @@ class N8nConnector(Connector):
     def health(self) -> Health:
         if not self.authenticate():
             return Health(Status.AUTH_REQUIRED, "N8N_WEBHOOK_BASE missing")
-        try:
-            with self._client(timeout=5) as c:
-                r = c.get("/healthz")
-            return Health(Status.OK if r.status_code < 500 else Status.DOWN,
-                          f"HTTP {r.status_code}")
-        except Exception as e:
-            return Health(Status.DOWN, str(e))
+        return Health(Status.OK, f"base={self._base}")   # webhook base is configured
 
     def execute(self, capability: str, **payload):
         self._require(capability)
-        path = payload.pop("path", None) or payload.pop("webhook", None)
+        # N8N_WEBHOOK_BASE already includes the webhook segment; the workflow/path
+        # is appended directly (matches the platform's existing convention).
+        path = payload.pop("path", None) or payload.pop("workflow", None) or payload.pop("webhook", None)
         if not path:
-            raise ConnectorError("n8n needs a 'path' (the webhook path)")
+            raise ConnectorError("n8n needs a 'path'/'workflow' (the webhook id)")
         with self._client() as c:
-            r = c.post(f"/webhook/{path.lstrip('/')}", json=payload.get("data", payload))
+            r = c.post(f"/{str(path).lstrip('/')}", json=payload.get("data", payload))
         r.raise_for_status()
-        try:
-            return r.json()
-        except Exception:
-            return {"status": r.status_code, "text": r.text}
+        ct = r.headers.get("content-type", "")
+        return r.json() if ct.startswith("application/json") else {"status": r.status_code, "text": r.text}

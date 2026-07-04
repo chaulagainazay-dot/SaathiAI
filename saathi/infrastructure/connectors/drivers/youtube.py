@@ -12,16 +12,22 @@ import os
 from ..base import Connector, Health, Status, ConnectorError, AuthRequired
 from ..manifest import Manifest
 
-_READ = frozenset({"search", "get_video", "channel_stats"})
+_READ = frozenset({"search", "get_video", "channel_stats", "list_comments"})
 _WRITE = frozenset({"upload_video", "publish_video"})
 _CAPS = _READ | _WRITE
+# capability → Data API resource path
+_PATH = {"search": "/search", "get_video": "/videos", "channel_stats": "/channels",
+         "list_comments": "/commentThreads"}
 
 
 class YouTubeConnector(Connector):
     id = "youtube"
 
     def __init__(self, api_key: str | None = None, oauth_token: str | None = None, transport=None):
-        self._key = api_key if api_key is not None else os.getenv("YT_API_KEY", "")
+        # accept any of the env names used across the codebase for the Data API key
+        self._key = (api_key if api_key is not None
+                     else os.getenv("YT_API_KEY") or os.getenv("YOUTUBE_API_KEY")
+                     or os.getenv("GOOGLE_API_KEY", ""))
         self._oauth = oauth_token if oauth_token is not None else os.getenv("YT_OAUTH_TOKEN", "")
         self._transport = transport
 
@@ -59,17 +65,15 @@ class YouTubeConnector(Connector):
         self._require(capability)
         if capability in _WRITE and not self._oauth:
             raise AuthRequired("youtube upload requires OAuth (set YT_OAUTH_TOKEN)")
+        # Read paths forward the caller's own Data API params verbatim (part, q,
+        # id, order, maxResults, publishedAfter, videoId, …) — provider-agnostic
+        # callers keep exact query semantics; only the key/transport are ours.
+        params = {k: v for k, v in payload.items() if v is not None}
+        params.setdefault("part", "snippet")
+        params["key"] = self._key
         with self._client() as c:
-            if capability == "search":
-                r = c.get("/search", params={"part": "snippet", "q": payload["query"],
-                          "maxResults": payload.get("limit", 5), "type": "video", "key": self._key})
-            elif capability == "get_video":
-                r = c.get("/videos", params={"part": "snippet,statistics",
-                          "id": payload["video_id"], "key": self._key})
-            elif capability == "channel_stats":
-                r = c.get("/channels", params={"part": "statistics",
-                          "id": payload["channel_id"], "key": self._key})
-            else:
-                raise ConnectorError(f"{capability} not implemented (OAuth upload path)")
+            r = c.get(_PATH[capability], params=params)
+        if r.status_code == 403:
+            raise RateLimited("youtube quota/forbidden")
         r.raise_for_status()
         return r.json()

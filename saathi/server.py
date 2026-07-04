@@ -1331,12 +1331,13 @@ async def github_actions_status():
     async with _httpx.AsyncClient(timeout=8) as client:
         for wf_file, platform in _WF_MAP.items():
             try:
-                # Get latest run for this workflow
-                r = await client.get(
-                    f"https://api.github.com/repos/{_GH_REPO}/actions/workflows/{wf_file}/runs",
-                    headers=headers, params={"per_page": 1}
-                )
-                runs = r.json().get("workflow_runs", [])
+                # Get latest run for this workflow (via the GitHub connector)
+                import asyncio as _asyncio
+                from saathi.infrastructure.connectors import default_registry as _dreg
+                r = await _asyncio.to_thread(
+                    _dreg().execute, capability="list_workflow_runs", connector_id="github",
+                    repo_full=_GH_REPO, workflow=wf_file, per_page=1)
+                runs = r.get("workflow_runs", [])
                 if not runs:
                     result[platform] = {"status": "never_run"}
                     continue
@@ -1351,11 +1352,10 @@ async def github_actions_status():
                 # Get job steps for live agent visibility
                 steps = []
                 try:
-                    jr = await client.get(
-                        f"https://api.github.com/repos/{_GH_REPO}/actions/runs/{run_id}/jobs",
-                        headers=headers
-                    )
-                    jobs = jr.json().get("jobs", [])
+                    jr = await _asyncio.to_thread(
+                        _dreg().execute, capability="list_run_jobs", connector_id="github",
+                        repo_full=_GH_REPO, run_id=run_id)
+                    jobs = jr.get("jobs", [])
                     if jobs:
                         raw_steps = jobs[0].get("steps", [])
                         for s in raw_steps:

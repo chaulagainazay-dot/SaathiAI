@@ -9,7 +9,12 @@ import os
 from ..base import Connector, Health, Status, ConnectorError, RateLimited, AuthRequired
 from ..manifest import Manifest
 
-_CAPS = frozenset({"get_user", "get_repo", "list_issues", "create_issue", "get_file"})
+_CAPS = frozenset({"get_user", "get_repo", "list_issues", "create_issue", "get_file",
+                   "list_workflow_runs", "list_run_jobs"})
+
+
+def _repo(payload) -> str:
+    return payload.get("repo_full") or f"{payload['owner']}/{payload['repo']}"
 
 
 class GitHubConnector(Connector):
@@ -73,6 +78,11 @@ class GitHubConnector(Connector):
                            json={"title": payload["title"], "body": payload.get("body", "")})
             elif capability == "get_file":
                 r = c.get(f"/repos/{payload['owner']}/{payload['repo']}/contents/{payload['path']}")
+            elif capability == "list_workflow_runs":
+                r = c.get(f"/repos/{_repo(payload)}/actions/workflows/{payload['workflow']}/runs",
+                          params={"per_page": payload.get("per_page", 1)})
+            elif capability == "list_run_jobs":
+                r = c.get(f"/repos/{_repo(payload)}/actions/runs/{payload['run_id']}/jobs")
             else:  # unreachable — _require already gated
                 raise ConnectorError(capability)
         if r.status_code == 401:
