@@ -26,6 +26,7 @@ from .profiles import ProfileStore
 from .chrome_backend import ChromeBackend
 from .primitives import BrowserPrimitives, Step, BrowserActionError
 from .workflows import YouTubeUploadWorkflow, WORKFLOWS
+from .keyed import KeyedBrowser
 from .publish import publish
 from .vision_verifier import VisionVerifier, default_verifier
 from .run_store import RunStore, default_store
@@ -42,7 +43,7 @@ __all__ = [
     "HumanBrowser", "CAPS", "HumanBrowserProxy", "MacAgent",
     "ProfileStore", "ChromeBackend",
     "BrowserPrimitives", "Step", "BrowserActionError",
-    "YouTubeUploadWorkflow", "WORKFLOWS", "publish",
+    "YouTubeUploadWorkflow", "WORKFLOWS", "KeyedBrowser", "publish",
     "VisionVerifier", "default_verifier",
     "RunStore", "default_store", "automation",
     "SelectorRegistry", "KnownSelector", "default_selector_registry",

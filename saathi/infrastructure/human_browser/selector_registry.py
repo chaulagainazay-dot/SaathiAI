@@ -87,6 +87,20 @@ class SelectorRegistry:
                 confidence=MAX(0.0, confidence-0.15), failures=failures+1
                 WHERE key=? AND selector=?""", (key, selector))
 
+    def reward(self, key: str) -> None:
+        """A keyed step succeeded — repeated use is stronger evidence than one
+        capture, so raise the leading selector's confidence toward 1.0."""
+        top = self.known(key)
+        if top:
+            self.record_success(key, top[0].selector)
+
+    def penalize(self, key: str) -> None:
+        """A keyed step failed to resolve — decay the leading selector (and this
+        is where Teach Mode is triggered)."""
+        top = self.known(key)
+        if top:
+            self.record_failure(key, top[0].selector)
+
     # ── reads ───────────────────────────────────────────────────────────
     def known(self, key: str) -> list[KnownSelector]:
         with self._conn() as c:

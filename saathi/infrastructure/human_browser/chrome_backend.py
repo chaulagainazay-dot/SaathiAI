@@ -14,10 +14,14 @@ from .profiles import ProfileStore
 
 class ChromeBackend(HumanBrowser):
     def __init__(self, profiles: ProfileStore | None = None, *, headless: bool = False,
-                 channel: str = "chrome"):
+                 channel: str = "chrome", cdp_url: str | None = None):
         self._profiles = profiles or ProfileStore()
         self._headless = headless
         self._channel = channel
+        # cdp_url attaches to a Chrome YOU launched (no automation flags → no
+        # Google sign-in block, reuses your real logged-in session).
+        import os as _os
+        self._cdp_url = cdp_url if cdp_url is not None else _os.getenv("CHROME_CDP_URL")
 
     def available(self) -> bool:
         try:
@@ -27,6 +31,11 @@ class ChromeBackend(HumanBrowser):
             return False
 
     def _context(self, pw, profile: str):
+        if self._cdp_url:
+            browser = pw.chromium.connect_over_cdp(self._cdp_url)
+            ctx = browser.contexts[0] if browser.contexts else browser.new_context()
+            ctx._saathi_attached = True   # marker: don't close the user's browser
+            return ctx
         user_dir = str(self._profiles.ensure(profile))
         return pw.chromium.launch_persistent_context(
             user_dir, headless=self._headless, channel=self._channel)
@@ -35,7 +44,9 @@ class ChromeBackend(HumanBrowser):
         from playwright.sync_api import sync_playwright
         with sync_playwright() as pw:
             ctx = self._context(pw, profile)
-            page = ctx.pages[0] if ctx.pages else ctx.new_page()
+            # attached (CDP): open a fresh tab so we never hijack the user's tabs
+            page = ctx.new_page() if getattr(ctx, "_saathi_attached", False) else (
+                ctx.pages[0] if ctx.pages else ctx.new_page())
             try:
                 if capability in ("open", "login"):
                     page.goto(payload["url"] if "url" in payload else payload.get("service", "about:blank"),
@@ -63,13 +74,19 @@ class ChromeBackend(HumanBrowser):
                         return {"error": f"unknown workflow {wf_name!r}"}
                     prims = BrowserPrimitives(page)
                     verifier = None if payload.get("no_vision") else default_verifier()
+                    # self-healing + learning: resolve selectors via the registry and
+                    # reward/penalize keys as the real run succeeds/fails
+                    from .selector_registry import default_registry as _selreg
+                    from .pages import youtube as _yt
+                    reg = _selreg(); _yt.seed(reg)
                     return wf_cls().run(
                         prims, video_path=payload["path"], title=payload.get("title", ""),
                         description=payload.get("description", ""),
                         visibility=payload.get("visibility", "Public"),
-                        verifier=verifier)
+                        verifier=verifier, registry=reg)
                 if capability == "close":
                     return {"closed": True}
                 return {"error": f"unknown capability {capability}"}
             finally:
-                ctx.close()
+                if not getattr(ctx, "_saathi_attached", False):
+                    ctx.close()          # never close a Chrome the user launched (CDP attach)

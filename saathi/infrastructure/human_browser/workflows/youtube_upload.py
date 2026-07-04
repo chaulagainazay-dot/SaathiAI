@@ -1,13 +1,14 @@
-"""YouTube Studio upload workflow — the sequence, in generic primitives.
+"""YouTube Studio upload workflow — the sequence, addressed by KEY.
 
-Mirrors the manual flow: open Studio upload → drop the file → fill title/description
-→ mark not-for-kids → Next ×3 (Details → Elements → Checks → Visibility) → set
-visibility → Publish → read the share URL. Selectors live in `pages/youtube.py`;
-this file is only the ordering.
+Elements are named ("youtube/publish"), resolved through the Selector Registry
+(self-healing + confidence-over-time) with the page-object as the fallback. When
+a step can't resolve, `on_teach` fires → Teach Mode. Selectors live in
+`pages/youtube.py`; this file is only the ordering.
 """
 from __future__ import annotations
 
 from ..pages import youtube as YT
+from ..keyed import KeyedBrowser
 from .base import Workflow, visual_check
 
 
@@ -16,34 +17,35 @@ class YouTubeUploadWorkflow(Workflow):
 
     def run(self, b, *, video_path: str, title: str, description: str = "",
             visibility: str = "Public", verifier=None, wizard_steps: int = 3,
-            upload_wait_ms: int = 180000) -> dict:
-        # 1. open the upload dialog and drop the file
-        b.goto(YT.STUDIO_UPLOAD)
-        b.wait_for(YT.FILE_INPUT)
-        b.upload(YT.FILE_INPUT, video_path)
+            upload_wait_ms: int = 180000, registry=None, on_teach=None) -> dict:
+        kb = KeyedBrowser(b, registry=registry, keys=YT.KEYS, on_teach=on_teach)
+
+        # 1. open the upload dialog and drop the file (hidden input → attached)
+        kb.goto(YT.STUDIO_UPLOAD)
+        kb.wait_for("youtube/file_input", state="attached")
+        kb.upload("youtube/file_input", video_path)
 
         # 2. details form appears once the upload starts processing
-        b.wait_for(YT.TITLE_BOX, timeout_ms=upload_wait_ms)
+        kb.wait_for("youtube/title", timeout_ms=upload_wait_ms)
         visual_check(b, verifier, "Is the video details form visible with a Title field?")
-        b.fill(YT.TITLE_BOX, title)
+        kb.fill("youtube/title", title)
         if description:
-            b.fill(YT.DESCRIPTION_BOX, description)
-        if b.exists(YT.NOT_FOR_KIDS):
-            b.click(YT.NOT_FOR_KIDS)
+            kb.fill("youtube/description", description)
+        if kb.exists("youtube/not_for_kids"):
+            kb.click("youtube/not_for_kids")
 
         # 3. advance the wizard: Details → Video elements → Checks → Visibility
         for _ in range(wizard_steps):
-            b.click(YT.NEXT_BUTTON)
+            kb.click("youtube/next")
 
-        # 4. set visibility and publish
-        b.click(YT.visibility_radio(visibility))
+        # 4. set visibility (dynamic per level) and publish
+        kb.click_selector(YT.visibility_radio(visibility))
         visual_check(b, verifier, f"Is visibility set to {visibility} with a Publish/Done button?")
-        b.click(YT.PUBLISH_BUTTON)
+        kb.click("youtube/publish")
 
         # 5. confirm + read the share URL
-        b.wait_for(YT.SHARE_URL, timeout_ms=upload_wait_ms)
-        el = b.find(YT.SHARE_URL)
+        kb.wait_for("youtube/share_url", timeout_ms=upload_wait_ms)
+        el = kb.find("youtube/share_url")
         video_url = el.get_attribute("href") if el is not None else ""
-        return {"published": True, "video_url": video_url,
-                "visibility": visibility, "title": title,
-                "steps": b.log(), "timeline": b.timeline()}
+        return {"published": True, "video_url": video_url, "visibility": visibility,
+                "title": title, "steps": b.log(), "timeline": b.timeline()}

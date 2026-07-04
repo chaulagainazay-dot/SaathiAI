@@ -31,6 +31,14 @@ def main() -> int:
         print("Playwright not installed here — run: pip install playwright && playwright install chrome",
               file=sys.stderr)
         return 3
+    cdp = os.getenv("CHROME_CDP_URL")
+    if cdp:
+        print(f"▶ CDP mode: attaching to your real Chrome at {cdp} (no automation flags, no Google block)")
+    else:
+        print("▶ profile mode: launching a dedicated Chrome profile. For a logged-in session, prefer CDP:")
+        print("    quit Chrome, then: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' \\")
+        print("      --user-data-dir=\"$HOME/.saathi/chrome-cdp\" --remote-debugging-port=9222 &")
+        print("    export CHROME_CDP_URL=http://localhost:9222  and re-run this agent.")
     agent = MacAgent(HttpQueueClient(base, token), backend, secret=secret)
     print(f"Mac Agent polling {base} for signed jobs… (Ctrl+C to stop)")
     agent.run_forever()

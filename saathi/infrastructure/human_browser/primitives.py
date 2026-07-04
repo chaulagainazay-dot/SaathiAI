@@ -70,9 +70,11 @@ class BrowserPrimitives:
         return self._do("upload", path,
                         lambda: self.page.set_input_files(selector, path, timeout=self._t))
 
-    def wait_for(self, selector: str, *, timeout_ms: int | None = None):
+    def wait_for(self, selector: str, *, timeout_ms: int | None = None, state: str = "visible"):
+        # state="attached" for hidden-but-present elements (e.g. file inputs)
         return self._do("wait_for", selector,
-                        lambda: self.page.wait_for_selector(selector, timeout=timeout_ms or self._t))
+                        lambda: self.page.wait_for_selector(selector, timeout=timeout_ms or self._t,
+                                                            state=state))
 
     def press(self, key: str):
         return self._do("press", key, lambda: self.page.keyboard.press(key))
