@@ -45,4 +45,5 @@ class YouTubeUploadWorkflow(Workflow):
         el = b.find(YT.SHARE_URL)
         video_url = el.get_attribute("href") if el is not None else ""
         return {"published": True, "video_url": video_url,
-                "visibility": visibility, "title": title, "steps": b.log()}
+                "visibility": visibility, "title": title,
+                "steps": b.log(), "timeline": b.timeline()}

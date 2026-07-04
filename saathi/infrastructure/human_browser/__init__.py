@@ -27,6 +27,7 @@ from .chrome_backend import ChromeBackend
 from .primitives import BrowserPrimitives, Step, BrowserActionError
 from .workflows import YouTubeUploadWorkflow, WORKFLOWS
 from .publish import publish
+from .vision_verifier import VisionVerifier, default_verifier
 
 __all__ = [
     "HumanJob", "sign", "verify", "NonceStore",
@@ -36,4 +37,5 @@ __all__ = [
     "ProfileStore", "ChromeBackend",
     "BrowserPrimitives", "Step", "BrowserActionError",
     "YouTubeUploadWorkflow", "WORKFLOWS", "publish",
+    "VisionVerifier", "default_verifier",
 ]

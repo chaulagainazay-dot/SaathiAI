@@ -106,3 +106,16 @@ class BrowserPrimitives:
     # ── run summary ─────────────────────────────────────────────────────
     def log(self) -> list[dict]:
         return [s.as_dict() for s in self.steps]
+
+    def timeline(self) -> list[dict]:
+        """Human-readable ordered timeline for debugging + the Episode:
+        [{clock, elapsed_ms, action, target, ok, detail}] — 'exactly where and
+        why' a run went, without opening logs."""
+        t0 = self.steps[0].at if self.steps else 0.0
+        out = []
+        for s in self.steps:
+            clock = time.strftime("%H:%M:%S", time.localtime(s.at))
+            out.append({"clock": clock, "elapsed_ms": round((s.at - t0) * 1000),
+                        "action": s.action, "target": s.target[:80],
+                        "ok": s.ok, "detail": s.detail})
+        return out

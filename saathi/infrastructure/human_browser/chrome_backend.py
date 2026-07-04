@@ -56,15 +56,18 @@ class ChromeBackend(HumanBrowser):
                 if capability == "publish_video":
                     from .primitives import BrowserPrimitives
                     from .workflows import WORKFLOWS
+                    from .vision_verifier import default_verifier
                     wf_name = payload.get("workflow", "youtube_upload")
                     wf_cls = WORKFLOWS.get(wf_name)
                     if wf_cls is None:
                         return {"error": f"unknown workflow {wf_name!r}"}
                     prims = BrowserPrimitives(page)
+                    verifier = None if payload.get("no_vision") else default_verifier()
                     return wf_cls().run(
                         prims, video_path=payload["path"], title=payload.get("title", ""),
                         description=payload.get("description", ""),
-                        visibility=payload.get("visibility", "Public"))
+                        visibility=payload.get("visibility", "Public"),
+                        verifier=verifier)
                 if capability == "close":
                     return {"closed": True}
                 return {"error": f"unknown capability {capability}"}
