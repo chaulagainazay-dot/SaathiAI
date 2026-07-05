@@ -428,7 +428,7 @@ async def ceo_telegram_brief():
 
 # ── Live event stream (SSE) — the platform breathing to every client ──
 @app.get("/api/events/stream")
-async def events_stream(demo: int = 1):
+async def events_stream(demo: int = 0):
     from fastapi.responses import StreamingResponse
     from saathi.eventstream import sse_stream
     return StreamingResponse(

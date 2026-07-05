@@ -26,6 +26,16 @@ export async function fetchStudioQueue() {
   return r.json();
 }
 
+// Log in (sets the httponly session cookie so chat/writes are authorized).
+export async function login(password) {
+  const r = await fetch(`${API_BASE}/api/v1/auth/login`, {
+    method: "POST", credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ password }),
+  });
+  return r.json();   // { ok: true } | { ok: false, error }
+}
+
 // AI Lab — Prompt Library catalog (name · active version · scores).
 export async function fetchLabPrompts() {
   const r = await fetch(`${API_BASE}/api/v1/lab/prompts`, { cache: "no-store" });

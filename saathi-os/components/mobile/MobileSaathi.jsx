@@ -2,14 +2,17 @@
 import { useState, useRef, useEffect } from "react";
 import { saathiExamples } from "@/lib/data";
 import { Eyebrow } from "@/components/ui";
-import { sendChat } from "@/lib/api";
+import { sendChat, login } from "@/lib/api";
 
 export default function MobileSaathi() {
   const [chat, setChat] = useState([]);   // {role:"you"|"saathi", text}
   const [ask, setAsk] = useState("");
   const [busy, setBusy] = useState(false);
+  const [needPw, setNeedPw] = useState(false);
+  const [pw, setPw] = useState("");
+  const pendingRef = useRef(null);         // message to resend after unlock
   const endRef = useRef(null);
-  useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [chat, busy]);
+  useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [chat, busy, needPw]);
 
   const send = async (text) => {
     text = (text || "").trim();
@@ -19,10 +22,28 @@ export default function MobileSaathi() {
       const r = await sendChat(text, "mobile");
       setChat((c) => [...c, { role: "saathi", text: r.reply || "…" }]);
     } catch (e) {
-      setChat((c) => [...c, { role: "saathi",
-        text: String(e).includes("unauthorized")
-          ? "Please log in on the dashboard first, then chat here."
-          : "Sorry — I couldn't reach my brain just now." }]);
+      if (String(e).includes("unauthorized")) {
+        pendingRef.current = text; setNeedPw(true);       // show inline unlock, then retry
+      } else {
+        setChat((c) => [...c, { role: "saathi", text: "Sorry — I couldn't reach my brain just now." }]);
+      }
+    } finally { setBusy(false); }
+  };
+
+  const unlock = async () => {
+    if (!pw.trim()) return;
+    setBusy(true);
+    try {
+      const r = await login(pw);
+      if (r.ok) {
+        setNeedPw(false); setPw("");
+        const pending = pendingRef.current; pendingRef.current = null;
+        if (pending) await send(pending);
+      } else {
+        setChat((c) => [...c, { role: "saathi", text: "That password didn't work — try again." }]);
+      }
+    } catch {
+      setChat((c) => [...c, { role: "saathi", text: "Couldn't sign in just now." }]);
     } finally { setBusy(false); }
   };
 
@@ -64,18 +85,37 @@ export default function MobileSaathi() {
         <div ref={endRef} />
       </div>
 
-      {/* input */}
-      <div style={{ display: "flex", gap: 8, paddingTop: 8 }}>
-        <input value={ask} onChange={(e) => setAsk(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && send(ask)} disabled={busy}
-          placeholder="Message Saathi…"
-          style={{ flex: 1, padding: "13px 16px", borderRadius: 22, fontSize: 15,
-            border: "1px solid rgba(255,255,255,0.12)", background: "rgba(255,255,255,0.05)", color: "inherit" }} />
-        <button onClick={() => send(ask)} disabled={busy || !ask.trim()}
-          style={{ width: 52, borderRadius: 22, border: "none", fontSize: 20, cursor: "pointer",
-            background: "radial-gradient(circle at 38% 35%, #ffffff, #9fc0ff)", color: "#0A1120",
-            opacity: busy || !ask.trim() ? 0.5 : 1 }}>➤</button>
-      </div>
+      {/* input / inline unlock */}
+      {needPw ? (
+        <div style={{ paddingTop: 8 }}>
+          <div style={{ fontSize: 12, color: "var(--color-ink-400)", padding: "0 4px 8px" }}>
+            🔒 Enter your password once to unlock Saathi on this phone.
+          </div>
+          <div style={{ display: "flex", gap: 8 }}>
+            <input type="password" value={pw} onChange={(e) => setPw(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && unlock()} disabled={busy} autoFocus
+              placeholder="Password"
+              style={{ flex: 1, padding: "13px 16px", borderRadius: 22, fontSize: 15,
+                border: "1px solid rgba(143,180,255,0.4)", background: "rgba(255,255,255,0.05)", color: "inherit" }} />
+            <button onClick={unlock} disabled={busy || !pw.trim()}
+              style={{ padding: "0 18px", borderRadius: 22, border: "none", fontSize: 14, fontWeight: 600, cursor: "pointer",
+                background: "radial-gradient(circle at 38% 35%, #ffffff, #9fc0ff)", color: "#0A1120",
+                opacity: busy || !pw.trim() ? 0.5 : 1 }}>Unlock</button>
+          </div>
+        </div>
+      ) : (
+        <div style={{ display: "flex", gap: 8, paddingTop: 8 }}>
+          <input value={ask} onChange={(e) => setAsk(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && send(ask)} disabled={busy}
+            placeholder="Message Saathi…"
+            style={{ flex: 1, padding: "13px 16px", borderRadius: 22, fontSize: 15,
+              border: "1px solid rgba(255,255,255,0.12)", background: "rgba(255,255,255,0.05)", color: "inherit" }} />
+          <button onClick={() => send(ask)} disabled={busy || !ask.trim()}
+            style={{ width: 52, borderRadius: 22, border: "none", fontSize: 20, cursor: "pointer",
+              background: "radial-gradient(circle at 38% 35%, #ffffff, #9fc0ff)", color: "#0A1120",
+              opacity: busy || !ask.trim() ? 0.5 : 1 }}>➤</button>
+        </div>
+      )}
     </div>
   );
 }

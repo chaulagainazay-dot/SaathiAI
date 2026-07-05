@@ -40,7 +40,9 @@ export function LiveProvider({ children }) {
   useEffect(() => {
     let es;
     try {
-      es = new EventSource(`${API_BASE}/api/events/stream?demo=1`);
+      // demo=0: only REAL Event-Fabric traffic. Demo beats were fake data (trade/
+      // revenue) firing every 4s — noise, and against the real-evidence principle.
+      es = new EventSource(`${API_BASE}/api/events/stream?demo=0`);
       esRef.current = es;
       es.onopen = () => dispatch({ type: "connect" });
       es.onerror = () => dispatch({ type: "disconnect" });   // EventSource auto-reconnects

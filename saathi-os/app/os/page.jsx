@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { Panel, Eyebrow } from "@/components/ui";
-import { fetchCeoOs, completeMission, sendChat } from "@/lib/api";
+import { fetchCeoOs, completeMission, sendChat, login } from "@/lib/api";
 
 const GOLD = "#E8B84B";
 const RULE = ["Decide", "Automate", "Learn", "Earn"];
@@ -33,10 +33,25 @@ export default function OperatingSystem() {
       const r = await sendChat(text);
       setChat((c) => [...c, { role: "saathi", text: r.reply || "…" }]);
     } catch (e) {
-      setChat((c) => [...c, { role: "saathi",
-        text: String(e).includes("unauthorized")
-          ? "Please log in on the dashboard first, then ask me again."
-          : "Sorry — I couldn't reach my brain just now." }]);
+      if (String(e).includes("unauthorized")) {
+        const pw = typeof window !== "undefined" ? window.prompt("Enter your password to unlock Saathi:") : null;
+        if (pw) {
+          const r = await login(pw).catch(() => ({ ok: false }));
+          if (r.ok) { setBusy(false); return submitAskText(text); }
+        }
+        setChat((c) => [...c, { role: "saathi", text: "Couldn't sign in — try again." }]);
+      } else {
+        setChat((c) => [...c, { role: "saathi", text: "Sorry — I couldn't reach my brain just now." }]);
+      }
+    } finally { setBusy(false); }
+  };
+  const submitAskText = async (text) => {
+    setBusy(true);
+    try {
+      const r = await sendChat(text);
+      setChat((c) => [...c, { role: "saathi", text: r.reply || "…" }]);
+    } catch {
+      setChat((c) => [...c, { role: "saathi", text: "Sorry — I couldn't reach my brain just now." }]);
     } finally { setBusy(false); }
   };
   if (!d) return <div className="only-desktop" style={{ maxWidth: 1000, margin: "40px auto", opacity: 0.5 }}>loading…</div>;
