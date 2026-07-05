@@ -38,16 +38,22 @@ def _from_model(topic: str, script: dict) -> dict | None:
 
 
 def _deterministic(topic: str, script: dict) -> dict:
-    scenes = [{"label": "Intro", "prompt": f"warm classroom, Mr Yeti greets, topic {topic}",
+    scenes = [{"label": "Intro", "prompt": f"Mr Yeti greets warmly, introduces {topic}",
                "narration": script.get("hook", f"Let's learn {topic}."), "seconds": 5}]
     for i, t in enumerate(script.get("teaching", []), 1):
-        scenes.append({"label": f"Teaching {i}", "prompt": f"whiteboard illustration of {topic}",
+        scenes.append({"label": f"Teaching {i}", "prompt": f"Mr Yeti at the chalkboard explaining {topic}",
                        "narration": t, "seconds": 8})
-    scenes.append({"label": "Example", "prompt": "example sentence on screen, Mr Yeti points",
+    scenes.append({"label": "Example", "prompt": "Mr Yeti points to an example sentence on the board",
                    "narration": script.get("examples", "Here's an example."), "seconds": 6})
-    scenes.append({"label": "Practice", "prompt": "pielts.web.app call to action, friendly Yeti wave",
+    scenes.append({"label": "Practice", "prompt": "Mr Yeti waves, pielts.web.app call to action",
                    "narration": script.get("cta", "Practice on pielts.web.app."), "seconds": 5})
-    return {"style": "Pixar classroom", "voice_tone": "friendly", "music_mood": "curious",
+    style, tone = "Pixar classroom", "friendly"
+    try:
+        from saathi.character import BIBLE, voice_tone
+        style, tone = BIBLE["style"], voice_tone()
+    except Exception:
+        pass
+    return {"style": style, "voice_tone": tone, "music_mood": "curious",
             "camera": "slow zoom", "scenes": [s for s in scenes if s["narration"]]}
 
 

@@ -49,8 +49,12 @@ def _flux(beat: dict, path: Path) -> bool:
         return False
     try:
         import httpx
-        prompt = (f"Pixar-style friendly Mr. Yeti IELTS teacher, {beat['label']} scene: "
-                  f"{beat['text']}. Warm classroom, soft lighting, no text.")
+        try:
+            from saathi.character import scene_prompt
+            prompt = scene_prompt(f"{beat['label']}: {beat['text']}")
+        except Exception:
+            prompt = (f"Pixar-style friendly Mr. Yeti IELTS teacher, {beat['label']} scene: "
+                      f"{beat['text']}. Warm classroom, soft lighting, no text.")
         r = httpx.post(url, headers={"Authorization": f"Bearer {key}"} if key else {},
                        json={"prompt": prompt, "width": W, "height": H}, timeout=120)
         if r.status_code == 200 and r.content:
