@@ -21,6 +21,13 @@ voice = [
     "resemblyzer>=0.1.4",   # speaker verification
     "sounddevice>=0.4.6",   # enrollment recording
 ]
+# AI Studio generation (Mac-side only; the VM records runs but never generates,
+# so keep torch/kokoro OUT of the base install). FFmpeg is a system dep (brew).
+generation = [
+    "kokoro>=0.9.4",        # local TTS narration (pulls torch)
+    "soundfile>=0.12",      # WAV I/O + duration
+    "pillow>=10",           # deterministic scene-card fallback
+]
 
 [project.scripts]
 saathi = "saathi.server:main"
