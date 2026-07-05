@@ -1,23 +1,52 @@
-"""365-Day Mr. Yeti IELTS Curriculum — decide WHAT to teach once, so the factory
-can focus on HOW to teach it best.
+"""IELTS Mastery — a versioned learning program (not just a 365-day list).
 
-Fixed syllabus by phase (Ajay's structure):
-  Days   1– 90  Grammar fundamentals
-  Days  91–180  Vocabulary
-  Days 181–240  Speaking
-  Days 241–300  Writing Task 1
-  Days 301–365  Writing Task 2 + Listening + Reading strategies
+Two ideas the CTO called out:
 
-`lesson_for_day(day)` and `today()` are deterministic — no state, no daily
-"what should I teach?" decision. Analytics later adapt presentation (hook, length,
-examples), never the syllabus. One lesson feeds every business: video, PIELTS
-lesson, Telegram quiz, blog, social. See docs/PAT-CHECKLIST.md.
+1. **Versioned program with a start date.** Every learner — including Ajay —
+   begins at Day 1 relative to THEIR enrolment, never dropped into Day 287. The
+   channel publishes in program order from the program start date.
+
+2. **Curriculum day ≠ episode number.** Curriculum day is per-learner progress;
+   the episode number is the global publishing counter (Day 41 → EP-041 →
+   "Mr. Yeti #41"). Keep them separate.
+
+`lesson_for_day(day)` returns a rich `Lesson` object every department consumes
+(video, PIELTS lesson, flashcards, quiz, blog, social). Deep pedagogical fields
+(grammar_points, quiz, tasks…) start empty and are filled by the content pipeline
+on demand — the curriculum owns the SPEC, not fabricated lesson content.
+
+v0.4.1 keeps the exam-section ordering (grammar→vocab→speaking→writing→strategy).
+The spiral model (a little of every skill each day) is a deliberate v0.5 change,
+to be driven by real learning analytics — not assumed now.
 """
 from __future__ import annotations
 
+import datetime as _dt
 import os
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+
+# ── the program ───────────────────────────────────────────────────────────────
+PROGRAM_NAME = "IELTS Mastery"
+PROGRAM_VERSION = "v1"
+PROGRAM_START = "2026-07-06"          # channel publishing start; override via env
+
+
+@dataclass
+class Program:
+    name: str
+    version: str
+    start_date: str
+
+    @property
+    def title(self) -> str:
+        return f"{self.name} {self.version}"
+
+
+def program(now: float | None = None) -> Program:
+    return Program(PROGRAM_NAME, PROGRAM_VERSION,
+                   os.getenv("SAATHI_CURRICULUM_START", PROGRAM_START))
+
 
 # ── topic banks (real IELTS content; wrapped to fill each phase) ──────────────
 _GRAMMAR = [
@@ -85,13 +114,13 @@ _TASK2_ETC = [
     "Exam-day strategy overview", "Full mock test review", "Band 9 study routine",
 ]
 
-# (phase name, skill tag, day_start, day_end, topic bank)
+# (phase name, skill tag, day_start, day_end, topic bank, CEFR difficulty)
 PHASES = [
-    ("Grammar Fundamentals", "grammar", 1, 90, _GRAMMAR),
-    ("Vocabulary Building", "vocabulary", 91, 180, _VOCAB),
-    ("Speaking Mastery", "speaking", 181, 240, _SPEAKING),
-    ("Writing Task 1", "writing-task1", 241, 300, _TASK1),
-    ("Writing Task 2 + Listening + Reading", "exam-strategy", 301, 365, _TASK2_ETC),
+    ("Grammar Fundamentals", "grammar", 1, 90, _GRAMMAR, "B1"),
+    ("Vocabulary Building", "vocabulary", 91, 180, _VOCAB, "B2"),
+    ("Speaking Mastery", "speaking", 181, 240, _SPEAKING, "B2"),
+    ("Writing Task 1", "writing-task1", 241, 300, _TASK1, "B2"),
+    ("Writing Task 2 + Listening + Reading", "exam-strategy", 301, 365, _TASK2_ETC, "C1"),
 ]
 
 
@@ -101,32 +130,80 @@ class Lesson:
     phase: str
     skill: str
     topic: str
+    objective: str
+    difficulty: str
+    estimated_minutes: int
+    prerequisites: list[int]
+    seo_keywords: list[str]
+    youtube_title: str
+    # enrichable by the content pipeline (Research/Script directors); spec only here
+    grammar_points: list = field(default_factory=list)
+    vocabulary: list = field(default_factory=list)
+    common_mistakes: list = field(default_factory=list)
+    speaking_task: list = field(default_factory=list)
+    writing_task: list = field(default_factory=list)
+    reading_task: list = field(default_factory=list)
+    listening_task: list = field(default_factory=list)
+    quiz: list = field(default_factory=list)
+    homework: list = field(default_factory=list)
+
+    @property
+    def episode(self) -> str:
+        return f"EP-{self.day:03d}"
+
+    @property
+    def youtube_number(self) -> str:
+        return f"Mr. Yeti #{self.day}"
 
     def as_dict(self) -> dict:
-        return {"day": self.day, "phase": self.phase, "skill": self.skill, "topic": self.topic}
+        d = self.__dict__.copy()
+        d["episode"] = self.episode
+        d["youtube_number"] = self.youtube_number
+        return d
 
 
 def lesson_for_day(day: int) -> Lesson:
-    """Deterministic: day 1..365 → a lesson. Days outside range wrap into the year."""
+    """Deterministic: day 1..365 → a rich Lesson. Days outside range wrap into the year."""
     day = ((int(day) - 1) % 365) + 1
-    for name, skill, start, end, bank in PHASES:
+    for name, skill, start, end, bank, diff in PHASES:
         if start <= day <= end:
             topic = bank[(day - start) % len(bank)]
-            return Lesson(day=day, phase=name, skill=skill, topic=topic)
-    # unreachable (phases cover 1..365), but stay safe
-    return Lesson(day=day, phase=PHASES[0][0], skill=PHASES[0][1], topic=_GRAMMAR[0])
+            # grammar deepens B1→B2 across its 90 days
+            difficulty = "B2" if (skill == "grammar" and day > 45) else diff
+            prereqs = [d for d in (day - 2, day - 1) if start <= d < day]
+            return Lesson(
+                day=day, phase=name, skill=skill, topic=topic,
+                objective=f"Understand and correctly use {topic.lower()} for IELTS {skill}.",
+                difficulty=difficulty, estimated_minutes=18, prerequisites=prereqs,
+                seo_keywords=[topic, "IELTS", skill, "Mr Yeti", f"IELTS {skill}"],
+                youtube_title=f"Mr. Yeti #{day}: {topic} | IELTS {name}")
+    return lesson_for_day(1)  # unreachable (phases cover 1..365)
+
+
+# ── program-day vs learner-day ────────────────────────────────────────────────
+def _start_date(now: float) -> _dt.date:
+    raw = os.getenv("SAATHI_CURRICULUM_START", PROGRAM_START)
+    try:
+        return _dt.date.fromisoformat(raw)
+    except Exception:
+        return _dt.date.fromtimestamp(now)
+
+
+def program_day(now: float | None = None) -> int:
+    """Days since the program start (channel/publishing counter). Clamped to ≥1
+    so a pre-launch preview shows Day 1 rather than 0/negative."""
+    now = now or time.time()
+    day = (_dt.date.fromtimestamp(now) - _start_date(now)).days + 1
+    return max(1, day)
+
+
+def learner_day(enrolled: str | _dt.date, now: float | None = None) -> int:
+    """Per-learner progress: Day 1 on the day they enrolled, never dropped mid-program."""
+    now = now or time.time()
+    e = _dt.date.fromisoformat(enrolled) if isinstance(enrolled, str) else enrolled
+    return max(1, (_dt.date.fromtimestamp(now) - e).days + 1)
 
 
 def today(now: float | None = None) -> Lesson:
-    """Today's lesson. Anchored to SAATHI_CURRICULUM_START (YYYY-MM-DD) if set —
-    day N = days since start + 1 — else falls back to day-of-year."""
-    now = now or time.time()
-    start = os.getenv("SAATHI_CURRICULUM_START")
-    if start:
-        try:
-            import datetime as dt
-            s = dt.date.fromisoformat(start)
-            return lesson_for_day((dt.date.fromtimestamp(now) - s).days + 1)
-        except Exception:
-            pass
-    return lesson_for_day(int(time.strftime("%j", time.localtime(now))))
+    """Today's lesson on the program schedule (episode = program_day)."""
+    return lesson_for_day(program_day(now))

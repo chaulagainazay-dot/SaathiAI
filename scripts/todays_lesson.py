@@ -13,13 +13,15 @@ import sys
 
 sys.path.insert(0, os.path.expanduser("~/SaathiAI"))
 
-from saathi.curriculum import today  # noqa: E402
+from saathi.curriculum import today, program  # noqa: E402
 
 
 def main():
     lesson = today()
     if "--full" in sys.argv:
-        print(f"Day {lesson.day} · {lesson.phase} · {lesson.skill}: {lesson.topic}")
+        p = program()
+        print(f"{p.title} · Day {lesson.day} ({lesson.episode}, {lesson.youtube_number}) · "
+              f"{lesson.phase} · {lesson.difficulty}: {lesson.topic}")
     else:
         print(lesson.topic)
     return 0
