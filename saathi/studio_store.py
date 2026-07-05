@@ -12,6 +12,11 @@ import uuid
 from pathlib import Path
 
 
+# statuses that count as a blocked lane (a stage failed and needs attention)
+_BLOCKED = {"script_blocked", "voice_failed", "assets_failed", "render_failed",
+            "gate_blocked", "publish_failed"}
+
+
 class StudioStore:
     def __init__(self, db_path: str | None = None):
         self.db_path = Path(db_path) if db_path else (Path.home() / ".saathi" / "studio_runs.db")
@@ -27,17 +32,24 @@ class StudioStore:
             c.execute("""CREATE TABLE IF NOT EXISTS studio_runs(
                 id TEXT PRIMARY KEY, topic TEXT, mode TEXT, status TEXT,
                 confidence REAL, cost REAL, duration_ms INTEGER, video_url TEXT,
-                failure TEXT, created REAL)""")
+                failure TEXT, created REAL, run_id TEXT, stage_flags TEXT)""")
+            # migrate older DBs that predate run_id / stage_flags
+            cols = {r[1] for r in c.execute("PRAGMA table_info(studio_runs)").fetchall()}
+            if "run_id" not in cols:
+                c.execute("ALTER TABLE studio_runs ADD COLUMN run_id TEXT")
+            if "stage_flags" not in cols:
+                c.execute("ALTER TABLE studio_runs ADD COLUMN stage_flags TEXT")
 
     def record(self, sr) -> str:
         import json
         rid = uuid.uuid4().hex[:12]
         with self._conn() as c:
             c.execute("""INSERT INTO studio_runs
-                (id,topic,mode,status,confidence,cost,duration_ms,video_url,failure,created)
-                VALUES(?,?,?,?,?,?,?,?,?,?)""",
+                (id,topic,mode,status,confidence,cost,duration_ms,video_url,failure,created,run_id,stage_flags)
+                VALUES(?,?,?,?,?,?,?,?,?,?,?,?)""",
                 (rid, sr.topic, sr.mode, sr.status, sr.overall_confidence, round(sr.cost_total, 3),
-                 sr.duration_ms, sr.video_url, json.dumps(sr.failure) if sr.failure else "", time.time()))
+                 sr.duration_ms, sr.video_url, json.dumps(sr.failure) if sr.failure else "", time.time(),
+                 getattr(sr, "run_id", ""), json.dumps(getattr(sr, "stage_flags", {}) or {})))
         return rid
 
     def recent(self, limit: int = 15) -> list[dict]:
@@ -58,19 +70,28 @@ class StudioStore:
         runs = len(rows)
         published = sum(1 for r in rows if r["status"] == "published")
         waiting = sum(1 for r in rows if r["status"] == "awaiting_approval")
-        blocked = sum(1 for r in rows if r["status"] in {"script_blocked", "gate_blocked", "publish_failed"})
+        blocked = sum(1 for r in rows if r["status"] in _BLOCKED)
         avg = lambda k: round(sum(r[k] or 0 for r in rows) / runs, 3) if runs else 0
+        latest_stages = {}
+        if rows:
+            import json
+            newest = max(rows, key=lambda r: r["created"])
+            try:
+                latest_stages = json.loads(newest["stage_flags"] or "{}")
+            except (json.JSONDecodeError, TypeError):
+                latest_stages = {}
         return {
             "runs": runs, "published": published, "waiting_approval": waiting, "blocked": blocked,
             "avg_confidence": avg("confidence"),
             "avg_cost": avg("cost"),
             "avg_runtime_ms": int(avg("duration_ms")),
+            "latest_stages": latest_stages,
         }
 
     def queue_counts(self) -> dict:
         # map internal statuses → the operator's production-queue lanes
         lanes = {"awaiting_approval": 0, "published": 0, "blocked": 0, "in_progress": 0}
-        blocked = {"script_blocked", "gate_blocked", "publish_failed"}
+        blocked = _BLOCKED
         with self._conn() as c:
             for r in c.execute("SELECT status, COUNT(*) n FROM studio_runs GROUP BY status").fetchall():
                 s, n = r["status"], r["n"]

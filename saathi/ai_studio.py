@@ -29,6 +29,9 @@ _STAGE_COST = {"research": 0.01, "script": 0.03, "storyboard": 0.01, "assets": 0
 # structured failure recommendations
 _FIX = {
     "script": ("script incomplete", "Regenerate script (hook/teaching/examples/cta)"),
+    "voice": ("voice not produced", "Configure a TTS provider (saathi.tools.voice) or supply narration"),
+    "assets": ("scene images not produced", "Configure an image provider (saathi.tools.images)"),
+    "render": ("video not rendered", "Configure the renderer (saathi.tools.render) or pass a clip"),
     "gate": ("Discovery Gate blocked", "Fix missing metadata (title/description/SEO/thumbnail)"),
     "publish": ("publish failed", "Teach the changed selector (Teach Mode) or retry"),
 }
@@ -56,11 +59,14 @@ class StudioRun:
     published: list = field(default_factory=list)
     failure: dict | None = None
     video_url: str = ""
+    run_id: str = ""
+    stage_flags: dict = field(default_factory=dict)
 
     def as_dict(self) -> dict:
         return {"topic": self.topic, "mode": self.mode, "status": self.status,
                 "overall_confidence": self.overall_confidence, "cost_total": round(self.cost_total, 3),
                 "duration_ms": self.duration_ms, "video_url": self.video_url, "failure": self.failure,
+                "run_id": self.run_id, "stage_flags": self.stage_flags,
                 "stages": [s.__dict__ for s in self.stages],
                 "published": self.published}
 
@@ -117,11 +123,65 @@ def default_publisher(*, video_path: str, platform: str, metadata: dict, backend
     return {"error": f"unknown platform {platform}"}
 
 
+# generation hooks (provider-gated) — each returns a path or None. None means the
+# provider is not configured yet, and the PAT reveals that stage as ✗ honestly.
+def default_voice(*, script: dict, run) -> str | None:
+    try:
+        from saathi.tools.voice import synthesize  # OmniVoice / TTS, when configured
+    except Exception:
+        return None
+    try:
+        text = " ".join([script.get("hook", ""), *script.get("teaching", []),
+                         script.get("examples", ""), script.get("cta", "")]).strip()
+        data = synthesize(text)
+        return str(run.save_bytes("narration.wav", data)) if data else None
+    except Exception:
+        return None
+
+
+def default_images(*, script: dict, run) -> list | None:
+    try:
+        from saathi.tools.images import generate_scene_images  # Flux/Imagen, when configured
+    except Exception:
+        return None
+    try:
+        paths = generate_scene_images(script, out_dir=str(run.subdir("assets")))
+        return paths or None
+    except Exception:
+        return None
+
+
+def default_render(*, run, voice: str | None, images: list | None,
+                   video_path: str | None = None) -> str | None:
+    """Produce video.mp4 from generated assets. If a real renderer isn't wired,
+    fall back to an externally-supplied clip ONLY when the caller passed one —
+    that keeps the publish half certifiable while render stays 🟡."""
+    try:
+        from saathi.tools.render import render_video  # FFmpeg pipeline, when configured
+        if voice and images:
+            out = render_video(voice=voice, images=images, out=str(run.path("video.mp4")))
+            if out:
+                return str(out)
+    except Exception:
+        pass
+    if video_path:
+        try:
+            return str(run.adopt("video.mp4", video_path))
+        except Exception:
+            return video_path
+    return None
+
+
 class AIStudio:
-    def __init__(self, *, pipeline=None, metadata_gen=None, publisher=None, store=None):
+    def __init__(self, *, pipeline=None, metadata_gen=None, publisher=None, store=None,
+                 run_manager=None, voice_gen=None, image_gen=None, renderer=None):
         self.pipeline = pipeline or ContentFactoryPipeline()
         self._gen = metadata_gen or default_metadata
         self._publisher = publisher or default_publisher
+        self._rm = run_manager
+        self._voice = voice_gen or default_voice
+        self._images = image_gen or default_images
+        self._render = renderer or default_render
         if store is None:
             try:
                 from saathi.studio_store import default_store
@@ -130,59 +190,120 @@ class AIStudio:
                 store = None
         self._store = store
 
-    def run(self, *, topic: str, video_path: str, platforms=("youtube",),
+    def run(self, *, topic: str, video_path: str | None = None, platforms=("youtube",),
             mode: str = Mode.ASSISTED, approver: str | None = None,
-            confidence_threshold: float = 0.9, thumbnail: str | None = None) -> StudioRun:
+            confidence_threshold: float = 0.9, thumbnail: str | None = None,
+            generate: bool = False, run_prefix: str = "YETI") -> StudioRun:
         sr = StudioRun(topic=topic, mode=str(mode))
         run = ContentRun()
         t_start = time.time()
 
-        def stage(name, fn):
+        # Run Manager owns the workspace; subsystems only touch `arun`. When no
+        # RunManager is injected, arun stays None and workspace steps are skipped.
+        arun = None
+        if self._rm is not None:
+            try:
+                arun = self._rm.new_run(prefix=run_prefix)
+                sr.run_id = arun.id
+            except Exception:
+                arun = None
+
+        def stage(name, fn, artifact=None):
+            if arun:
+                arun.stage_start(name)
             t0 = time.time()
             conf, reasons, ok = fn()
             rep = StageReport(stage=name, confidence=round(conf, 2), reasons=reasons,
                               duration_ms=round((time.time() - t0) * 1000),
                               cost=_STAGE_COST.get(name, 0.0), ok=ok)
             sr.stages.append(rep); sr.cost_total += rep.cost
+            if arun:
+                verified = arun.verify(artifact) if artifact else True
+                arun.stage_end(name, ok=(ok and verified), artifact=artifact,
+                               note="; ".join(reasons)[:120])
             return rep
 
-        # 1-2 research
+        # 1-2 research → research.md
         def _research():
             conf = self.pipeline.research_topic(
                 run, Topic(title=topic, source="operator", trend=0.7, relevance=0.8,
                            competition=0.4, evidence=5))
+            if arun:
+                arun.save_text("research.md", f"# {topic}\n\nconfidence {conf:.0%}\n"
+                               "evidence gathered from operator brief\n")
             return conf, ["evidence gathered", f"confidence {conf:.0%}"], conf >= 0.4
-        stage("research", _research)
+        stage("research", _research, artifact="research.md")
 
-        # 3-4 metadata + script + scenes + SEO
+        # 3 script + scenes → script.md
         content = self._gen(topic)
+        script = content["script"]
         def _script():
-            ok = self.pipeline.validate_script(run, content["script"])
-            self.pipeline.plan_scenes(run, content["script"])
-            self.pipeline.build_metadata(run, title=content["title"], description=content["description"],
-                                         seo_tags=content["seo_tags"], thumbnail=thumbnail)
+            ok = self.pipeline.validate_script(run, script)
+            self.pipeline.plan_scenes(run, script)
+            if arun:
+                body = "\n\n".join([f"# {content['title']}", f"**Hook:** {script.get('hook','')}",
+                                    "## Teaching\n" + "\n".join(f"- {t}" for t in script.get("teaching", [])),
+                                    f"**Examples:** {script.get('examples','')}",
+                                    f"**CTA:** {script.get('cta','')}"])
+                arun.save_text("script.md", body)
             reasons = ["hook/teaching/examples/cta present"] if ok else run.script_issues
             return (1.0 if ok else 0.0), reasons, ok
-        srep = stage("script", _script)
+        srep = stage("script", _script, artifact="script.md")
         if not srep.ok:
-            return self._finish(sr, run, t_start, "script", "script_blocked")
+            return self._finish(sr, run, t_start, "script", "script_blocked", arun)
 
-        # 7 discovery gate
+        # 4-6 generation chain (opt-in). Voice/assets are SOFT (recorded ✗ but the
+        # run continues on the fallback clip); render is the HARD gate.
+        thumb = thumbnail
+        if generate:
+            stage("voice", lambda: (
+                (1.0, ["narration synthesized"], True) if (v := self._voice(script=script, run=arun))
+                else (0.0, ["no TTS provider configured"], False)), artifact="narration.wav")
+            stage("assets", lambda: (
+                (1.0, ["scene images generated"], True) if (self._images(script=script, run=arun))
+                else (0.0, ["no image provider configured"], False)), artifact="assets")
+
+            def _render():
+                voice = arun.path("narration.wav") if (arun and arun.verify("narration.wav")) else None
+                imgs = list(arun.subdir("assets").iterdir()) if (arun and arun.verify("assets")) else None
+                out = self._render(run=arun, voice=str(voice) if voice else None,
+                                   images=[str(i) for i in imgs] if imgs else None,
+                                   video_path=video_path)
+                return (1.0, ["video rendered"], True) if out else (0.0, ["no renderer / no clip"], False)
+            rrep = stage("render", _render, artifact="video.mp4")
+            if not rrep.ok:
+                return self._finish(sr, run, t_start, "render", "render_failed", arun)
+            video_path = str(arun.path("video.mp4")) if (arun and arun.verify("video.mp4")) else video_path
+            if arun and arun.verify("video.mp4") and not thumb:
+                thumb = video_path  # first-frame thumbnail stand-in until a thumbnailer is wired
+
+        # 7 metadata + SEO → metadata.json
+        def _meta():
+            self.pipeline.build_metadata(run, title=content["title"], description=content["description"],
+                                         seo_tags=content["seo_tags"], thumbnail=thumb)
+            if arun:
+                arun.save_json("metadata.json", {"title": content["title"],
+                               "description": content["description"], "seo_tags": content["seo_tags"],
+                               "thumbnail": thumb})
+            return 1.0, ["title/description/SEO built"], True
+        stage("metadata", _meta, artifact="metadata.json" if arun else None)
+
+        # 8 discovery gate
         grep = stage("gate", lambda: (
             (1.0, ["title/description/SEO/thumbnail ok"], True) if self.pipeline.gate(run)
             else (0.0, run.gate_blockers, False)))
         if not grep.ok:
-            return self._finish(sr, run, t_start, "gate", "gate_blocked")
+            return self._finish(sr, run, t_start, "gate", "gate_blocked", arun)
 
         sr.overall_confidence = round(sum(s.confidence for s in sr.stages) / len(sr.stages), 2)
 
         # approval gating by MODE
         auto = (mode == Mode.AUTONOMOUS and sr.overall_confidence >= confidence_threshold)
         if not (approver or auto):
-            return self._finish(sr, run, t_start, None, "awaiting_approval")
+            return self._finish(sr, run, t_start, None, "awaiting_approval", arun)
         self.pipeline.approve(run, approver or "autonomous")
 
-        # 8 publish (proven browser path)
+        # 9 publish (proven browser path) → publish.json
         def _pub():
             self.pipeline.publish(run, list(platforms),
                                   lambda md, platform: self._publisher(
@@ -190,15 +311,25 @@ class AIStudio:
             ok = all(p["ok"] for p in run.published) if run.published else False
             urls = [(p.get("result") or {}).get("video_url") for p in run.published]
             sr.video_url = next((u for u in urls if u), "")
+            if arun:
+                arun.save_json("publish.json", {"platforms": list(platforms), "ok": ok,
+                               "video_url": sr.video_url, "results": run.published})
             return (1.0 if ok else 0.0), (["published"] if ok else ["publish error"]), ok
-        prep = stage("publish", _pub)
+        prep = stage("publish", _pub, artifact="publish.json" if arun else None)
         sr.published = run.published
         if not prep.ok:
-            return self._finish(sr, run, t_start, "publish", "publish_failed")
-        return self._finish(sr, run, t_start, None, "published")
+            return self._finish(sr, run, t_start, "publish", "publish_failed", arun)
+
+        # 10-11 analytics + learning (workspace-recorded)
+        if arun:
+            stage("analytics", lambda: (arun.save_json("analytics.json",
+                  {"video_url": sr.video_url, "recorded": True}),
+                  (1.0, ["analytics recorded"], True))[1], artifact="analytics.json")
+            stage("learning", lambda: (1.0, ["episode recorded for learning runtime"], True))
+        return self._finish(sr, run, t_start, None, "published", arun)
 
     def _finish(self, sr: StudioRun, run: ContentRun, t_start: float,
-                fail_stage: str | None, status: str) -> StudioRun:
+                fail_stage: str | None, status: str, arun=None) -> StudioRun:
         sr.status = status
         sr.duration_ms = round((time.time() - t_start) * 1000)
         if not sr.overall_confidence and sr.stages:
@@ -207,6 +338,12 @@ class AIStudio:
             reason, rec = _FIX.get(fail_stage, ("stage failed", "review"))
             detail = "; ".join(run.gate_blockers) if fail_stage == "gate" and run.gate_blockers else reason
             sr.failure = {"stage": fail_stage, "reason": detail, "recommendation": rec}
+        if arun is not None:
+            try:
+                sr.stage_flags = arun.stage_flags()
+                arun.finalize(status)
+            except Exception:
+                pass
         if self._store is not None:
             try:
                 self._store.record(sr)

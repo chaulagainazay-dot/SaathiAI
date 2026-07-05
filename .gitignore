@@ -22,3 +22,6 @@ thumbnails/
 research_cache/
 run_human_agent.sh
 queue/
+
+# Run Manager workspaces (reproducible artifacts, not source)
+runs/

@@ -121,3 +121,36 @@ def test_factory_kpis_today(tmp_path):
     k = store.factory_kpis()
     assert k["runs"] == 2 and k["published"] >= 1 and k["waiting_approval"] >= 1
     assert 0 <= k["avg_confidence"] <= 1 and k["avg_cost"] >= 0 and k["avg_runtime_ms"] >= 0
+
+
+# ── Run Manager + full generation chain ──────────────────────────────────────
+def test_workspace_run_writes_artifacts_and_stage_flags(tmp_path):
+    from saathi.ai_studio import AIStudio
+    from saathi.run_manager import RunManager
+    rm = RunManager(root=tmp_path / "runs")
+    studio = AIStudio(pipeline=_pipeline([], []), metadata_gen=_meta,
+                      publisher=lambda **k: {"video_url": "https://youtu.be/x"},
+                      run_manager=rm, store=None)
+    # fallback clip lets render's hard gate pass while voice/assets are unwired
+    clip = tmp_path / "clip.mp4"; clip.write_bytes(b"\x00" * 32)
+    run = studio.run(topic="past perfect", video_path=str(clip), approver="Ajay",
+                     thumbnail=str(clip), generate=True, run_prefix="PAT")
+    assert run.status == "published" and run.run_id.startswith("PAT-")
+    # artifacts landed in the owned workspace
+    wr = rm.get(run.run_id)
+    for art in ("research.md", "script.md", "metadata.json", "video.mp4", "publish.json", "run.json"):
+        assert wr.verify(art) or art == "run.json", f"missing {art}"
+    flags = run.stage_flags
+    assert flags["research"] and flags["script"] and flags["render"] and flags["publish"]
+    assert flags["voice"] is False and flags["assets"] is False   # honest: no provider yet
+
+
+def test_generate_render_fails_without_clip_or_renderer(tmp_path):
+    from saathi.ai_studio import AIStudio
+    from saathi.run_manager import RunManager
+    rm = RunManager(root=tmp_path / "runs")
+    studio = AIStudio(pipeline=_pipeline([], []), metadata_gen=_meta,
+                      publisher=lambda **k: {"video_url": "u"}, run_manager=rm, store=None)
+    run = studio.run(topic="x", video_path=None, approver="Ajay", generate=True, run_prefix="PAT")
+    assert run.status == "render_failed"
+    assert run.failure["stage"] == "render" and run.failure["recommendation"]

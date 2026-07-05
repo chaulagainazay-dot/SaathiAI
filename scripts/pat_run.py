@@ -1,19 +1,25 @@
 #!/usr/bin/env python3
 """Production Acceptance Test (PAT) — the daily certification loop for v0.4.1.
 
-Runs the EXACT operating loop, but in a safe test lane:
-  • uploads are Unlisted (default_publisher already forces Unlisted)
+Certifies the WHOLE factory, not just publishing. Every run gets a Run ID and an
+owned workspace (runs/PAT-YYYYMMDD-NNN/) with one artifact per stage, so the chain
+research → script → voice → assets → render → metadata → gate → publish →
+analytics → learning is exercised and each stage's ✓/✗ is inspectable.
+
+Safe test lane:
+  • uploads are Unlisted (default_publisher forces it)
   • title is prefixed "[PAT]" so test videos are unmistakable on the channel
     (create a "PAT / test" playlist in YouTube Studio and drag them in)
-  • prints the merge-checklist evidence after every run
+  • voice/assets stages are honest: until a TTS/image provider is configured they
+    show ✗, and the run falls back to an optional clip so the publish half still
+    certifies. Render is the hard gate — no renderer AND no clip → render_failed.
 
-This never touches real content. Run it once a day for 7 days; only merge
-milestone/m5.1-infrastructure → master when every checklist line is ✅
+Only merge milestone/m5.1-infrastructure → master when every checklist line is ✅
 several days running.
 
   export CHROME_CDP_URL=http://localhost:9222
   export SAATHI_BASE_URL=https://140-245-193-190.nip.io ; export SAATHI_TOKEN=<vm token>
-  .venv/bin/python scripts/pat_run.py "past perfect tense" ~/SaathiAI/queue/youtube/clip.mp4
+  .venv/bin/python scripts/pat_run.py "past perfect tense" [optional-fallback-clip.mp4]
 """
 import os
 import sys
@@ -22,6 +28,7 @@ import time
 sys.path.insert(0, os.path.expanduser("~/SaathiAI"))
 
 from saathi.ai_studio import AIStudio, default_metadata  # noqa: E402
+from saathi.run_manager import default_manager  # noqa: E402
 from saathi.infrastructure.human_browser.run_store import default_store  # noqa: E402
 
 
@@ -62,15 +69,17 @@ def _checklist(run):
 
 
 def main():
-    if len(sys.argv) < 3:
-        print("usage: pat_run.py <topic> <video_path>"); return 2
-    topic, video = sys.argv[1], os.path.expanduser(sys.argv[2])
+    if len(sys.argv) < 2:
+        print("usage: pat_run.py <topic> [fallback-clip.mp4]"); return 2
+    topic = sys.argv[1]
+    clip = os.path.expanduser(sys.argv[2]) if len(sys.argv) > 2 else None
     t0 = time.time()
-    print(f"▶ PAT [assisted · Unlisted]: '{topic}'  (metadata → gate → publish…)")
-    studio = AIStudio(metadata_gen=_pat_metadata)
-    run = studio.run(topic=topic, video_path=video, platforms=["youtube"], mode="assisted",
-                     approver="Ajay", confidence_threshold=0.7, thumbnail=video)
-    print(f"\nstatus: {run.status}  ·  confidence {run.overall_confidence}  ·  "
+    print(f"▶ PAT [assisted · Unlisted · full chain]: '{topic}'")
+    studio = AIStudio(metadata_gen=_pat_metadata, run_manager=default_manager())
+    run = studio.run(topic=topic, video_path=clip, platforms=["youtube"], mode="assisted",
+                     approver="Ajay", confidence_threshold=0.7, thumbnail=clip,
+                     generate=True, run_prefix="PAT")
+    print(f"\nRun {run.run_id}  ·  status {run.status}  ·  confidence {run.overall_confidence}  ·  "
           f"cost ${run.cost_total:.2f}  ·  time {run.duration_ms/1000:.0f}s")
     for s in run.stages:
         print(f"  {s.stage:10} conf {s.confidence:<5} {s.duration_ms:>6}ms  ${s.cost:.2f}  "

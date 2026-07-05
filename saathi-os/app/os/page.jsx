@@ -72,6 +72,17 @@ export default function OperatingSystem() {
 
       <Panel style={{ padding: 18, marginTop: 14 }}>
         <div style={{ fontSize: 12, opacity: 0.55, marginBottom: 12 }}>🏭 Today's Factory</div>
+        {Object.keys(f.latest_stages || {}).length > 0 && (
+          <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 16,
+            paddingBottom: 14, borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+            {["research", "script", "voice", "assets", "render", "metadata", "gate", "publish", "analytics", "learning"]
+              .filter((s) => s in f.latest_stages).map((s) => (
+              <span key={s} style={{ fontSize: 12, opacity: 0.85 }}>
+                {f.latest_stages[s] ? "✅" : "❌"} {s}
+              </span>
+            ))}
+          </div>
+        )}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 14, rowGap: 16 }}>
           {[
             ["Runs", f.runs ?? 0],
