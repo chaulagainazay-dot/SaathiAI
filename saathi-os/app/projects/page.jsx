@@ -161,6 +161,14 @@ export default function Projects() {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(300px,1fr))", gap: 16, marginTop: 16 }}>
           <Panel style={{ padding: 18 }}>
             <Eyebrow style={{ color: TEAL }}>Research Output</Eyebrow>
+            {R.website && (
+              <div style={{ fontSize: 11.5, opacity: 0.6, marginTop: 8, padding: "8px 10px", borderRadius: 8, background: "rgba(0,191,165,0.08)" }}>
+                {R.website.ok
+                  ? <>🌐 Live site crawled: <b>{R.website.title || R.website.url}</b>
+                      {R.socials_found?.length > 0 && <> · socials: {R.socials_found.join(", ")}</>}</>
+                  : <>🌐 Site not reachable ({R.website.error?.slice(0, 40)})</>}
+              </div>
+            )}
             <p style={{ fontSize: 13.5, opacity: 0.85, marginTop: 8 }}>{R.company_overview || R.summary}</p>
             <Chips title="Strengths" items={R.strengths} color="#8FE0A8" />
             <Chips title="Areas to Improve" items={R.areas_to_improve} color="#FF9B9B" />

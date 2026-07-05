@@ -75,3 +75,21 @@ def test_studio_run_tags_project(tmp_path):
                      thumbnail="/x.mp4", project_id="proj123")
     assert run.project_id == "proj123"
     assert store.recent()[0]["project_id"] == "proj123"
+
+
+def test_web_research_graceful_on_bad_url():
+    from saathi.tools.web_research import research_site, summarize
+    s = research_site("")                       # no url → no crash
+    assert s["ok"] is False and s["error"]
+    s2 = research_site("http://nonexistent.invalid.tld.zzz", timeout=3)
+    assert s2["ok"] is False                     # DNS fail handled
+    assert "could not be crawled" in summarize(s2)
+
+
+def test_research_attaches_website(tmp_path):
+    from saathi.client_intake import research_project
+    s = _store(tmp_path)
+    p = s.create({"company": {"name": "X", "website": "http://nonexistent.invalid.tld.zzz"}})
+    research, strategy = research_project(s.get(p["id"]))   # crawl fails gracefully, still returns
+    assert "website" in research and research["website"]["ok"] is False
+    assert research["company_overview"] and strategy["direction"]

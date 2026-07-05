@@ -114,11 +114,30 @@ def _brief(data: dict) -> str:
 
 
 def research_project(project: dict) -> tuple[dict, dict]:
-    """Return (research, strategy). Tries the Model Router with the versioned
-    `agency.research` prompt; falls back to a deterministic plan."""
+    """Return (research, strategy). Crawls the client's real website first (Stage 2),
+    then the Model Router with the versioned `agency.research` prompt; deterministic
+    fallback. The crawled site is attached to research['website']."""
     data = project.get("data") or {}
     brief = _brief(data)
     co = (data.get("company") or {}).get("name", "the company")
+
+    # Stage 2 — live website + social research (grounds the report in the real site)
+    site = None
+    website = (data.get("company") or {}).get("website", "")
+    if website:
+        try:
+            from saathi.tools.web_research import research_site, summarize
+            site = research_site(website)
+            brief = brief + "\n\n" + summarize(site)
+        except Exception:
+            site = None
+
+    def _attach(research: dict) -> dict:
+        if site is not None:
+            research = {**research, "website": site,
+                        "socials_found": list((site.get("socials") or {}).keys())}
+        return research
+
     try:
         from saathi.infrastructure.llm import generate
         from saathi.infrastructure.model_router import ModelLabel
@@ -135,10 +154,11 @@ def research_project(project: dict) -> tuple[dict, dict]:
         obj = json.loads(out.strip().strip("`").replace("json", "", 1))
         r, s = obj.get("research") or {}, obj.get("strategy") or {}
         if r and s:
-            return _shape_research(r), _shape_strategy(s)
+            return _attach(_shape_research(r)), _shape_strategy(s)
     except Exception:
         pass
-    return _fallback(co, brief)
+    fr, fs = _fallback(co, brief)
+    return _attach(fr), fs
 
 
 def _L(d: dict, k: str) -> list:
