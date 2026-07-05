@@ -659,6 +659,7 @@ async def _auth(request, call_next):
             or path == "/api/v1/mission"
             or path == "/api/v1/mission/complete"
             or path == "/api/v1/agent/chat"
+            or path == "/api/v1/voice/command"
             or path == "/api/v1/code-memory/status"
             or path == "/api/v1/lab/prompts"
             or path.startswith("/api/v1/lab/prompts/")
@@ -968,12 +969,14 @@ def set_connection(body: ConnIn):
 
 
 @app.post("/api/v1/voice/command")
-async def voice_command(file: UploadFile = File(...),
+async def voice_command(request: Request, file: UploadFile = File(...),
                         session_id: str = Form("default"),
                         speak_reply: bool = Form(True),
                         require_wake: bool = Form(False)):
     """Full voice turn: audio → verify speaker → transcribe → (wake check) → agent → TTS."""
     global _last_reply_at
+    if not _rate_ok(request):
+        return {"reply": "One moment — too many requests. Try again shortly.", "transcript": ""}
     audio = await file.read()
 
     stt = voice.transcribe(audio, file.filename or "audio.wav")

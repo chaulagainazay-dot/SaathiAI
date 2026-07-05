@@ -1,17 +1,15 @@
+// PWA manifest — makes SaathiAI OS installable (ported from the Baadar PWA).
 export default function manifest() {
   return {
-    name: "SaathiAI — CEO Companion",
-    short_name: "SaathiAI",
-    description: "Your AI Operating System. Mobile is for deciding.",
-    start_url: "/",
+    name: "SaathiAI OS",
+    short_name: "Saathi",
+    description: "Your AI Operating System",
+    start_url: "/os",
     display: "standalone",
-    orientation: "portrait",
-    background_color: "#05070f",
-    theme_color: "#070c17",
+    background_color: "#090912",
+    theme_color: "#090912",
     icons: [
-      { src: "/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
-      { src: "/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
-      { src: "/icon-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
+      { src: "/icon.png", sizes: "512x512", type: "image/png", purpose: "any maskable" },
     ],
   };
 }

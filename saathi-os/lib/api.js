@@ -99,6 +99,18 @@ export async function rollbackLabPrompt(name, version) {
   return r.json();
 }
 
+// Voice turn: send recorded audio → { transcript, reply, reply_audio_b64, reply_audio_mime }.
+export async function sendVoice(blob, sessionId = "web") {
+  const fd = new FormData();
+  fd.append("file", blob, "speech.webm");
+  fd.append("session_id", sessionId);
+  fd.append("speak_reply", "true");
+  fd.append("require_wake", "false");
+  const r = await fetch(`${API_BASE}/api/v1/voice/command`, { method: "POST", body: fd });
+  if (!r.ok) throw new Error(`voice ${r.status}`);
+  return r.json();
+}
+
 // Talk to Saathi (the conversation brain). Same-origin cookie auth — the user
 // must be logged in on the dashboard. Returns { reply } or throws on 401.
 export async function sendChat(text, sessionId = "dashboard") {

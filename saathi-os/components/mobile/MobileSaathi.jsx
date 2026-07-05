@@ -3,11 +3,16 @@ import { useState, useRef, useEffect } from "react";
 import { saathiExamples } from "@/lib/data";
 import { Eyebrow } from "@/components/ui";
 import { sendChat, login } from "@/lib/api";
+import { useVoice } from "@/lib/useVoice";
 
 export default function MobileSaathi() {
   const [chat, setChat] = useState([]);   // {role:"you"|"saathi", text}
   const [ask, setAsk] = useState("");
   const [busy, setBusy] = useState(false);
+  const voice = useVoice((transcript, reply) => {
+    setChat((c) => [...c, ...(transcript ? [{ role: "you", text: transcript }] : []),
+      { role: "saathi", text: reply }]);
+  });
   const [needPw, setNeedPw] = useState(false);
   const [pw, setPw] = useState("");
   const pendingRef = useRef(null);         // message to resend after unlock
@@ -106,10 +111,17 @@ export default function MobileSaathi() {
       ) : (
         <div style={{ display: "flex", gap: 8, paddingTop: 8 }}>
           <input value={ask} onChange={(e) => setAsk(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && send(ask)} disabled={busy}
-            placeholder="Message Saathi…"
+            onKeyDown={(e) => e.key === "Enter" && send(ask)} disabled={busy || voice.busy}
+            placeholder={voice.recording ? "Listening…" : voice.busy ? "Transcribing…" : "Message Saathi…"}
             style={{ flex: 1, padding: "13px 16px", borderRadius: 22, fontSize: 15,
               border: "1px solid rgba(255,255,255,0.12)", background: "rgba(255,255,255,0.05)", color: "inherit" }} />
+          {/* push-to-talk (ported from Baadar): hold to speak */}
+          <button onPointerDown={voice.start} onPointerUp={voice.stop} onPointerLeave={voice.stop}
+            disabled={busy || voice.busy}
+            style={{ width: 52, borderRadius: 22, border: "none", fontSize: 20, cursor: "pointer",
+              background: voice.recording ? "radial-gradient(circle at 38% 35%, #ffd0d0, #ff6b6b)"
+                : "rgba(255,255,255,0.08)", color: voice.recording ? "#0A1120" : "inherit",
+              boxShadow: voice.recording ? "0 0 20px rgba(255,107,107,0.7)" : "none" }}>🎤</button>
           <button onClick={() => send(ask)} disabled={busy || !ask.trim()}
             style={{ width: 52, borderRadius: 22, border: "none", fontSize: 20, cursor: "pointer",
               background: "radial-gradient(circle at 38% 35%, #ffffff, #9fc0ff)", color: "#0A1120",
