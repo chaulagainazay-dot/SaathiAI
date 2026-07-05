@@ -1,6 +1,10 @@
 // Talks to the SaathiAI platform BFF (FastAPI, port 8765).
-export const API_BASE =
-  process.env.NEXT_PUBLIC_SAATHI_API || "http://localhost:8765";
+// IMPORTANT: an explicitly-set empty string means "same origin" (relative URLs,
+// production behind Caddy). Only fall back to localhost when the var is truly
+// UNSET (local dev, UI on :3000 + API on :8765). Using `||` here was a bug —
+// "" is falsy, so production silently called localhost from the browser/phone.
+const _RAW = process.env.NEXT_PUBLIC_SAATHI_API;
+export const API_BASE = (_RAW === undefined || _RAW === null) ? "http://localhost:8765" : _RAW;
 
 export async function fetchCeoHome() {
   const r = await fetch(`${API_BASE}/api/executive/briefing`, { cache: "no-store" });
