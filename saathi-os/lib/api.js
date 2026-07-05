@@ -57,6 +57,13 @@ export async function sendChat(text, sessionId = "dashboard") {
   return r.json();
 }
 
+// Today's daily IELTS Mission (lesson topic + checklist + streak).
+export async function fetchMission() {
+  const r = await fetch(`${API_BASE}/api/v1/mission`, { cache: "no-store" });
+  if (!r.ok) throw new Error(`mission ${r.status}`);
+  return r.json();
+}
+
 // Mark a daily IELTS Mission item done (lesson/speaking/writing/quiz).
 export async function completeMission(item) {
   const r = await fetch(`${API_BASE}/api/v1/mission/complete`, {

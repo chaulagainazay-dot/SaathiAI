@@ -1,17 +1,23 @@
 "use client";
 import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { notices, DREAM_TARGET } from "@/lib/data";
 import { DEPARTMENTS, color } from "@/lib/departments";
 import { Eyebrow, Counter } from "@/components/ui";
 import { useCeoHome } from "@/lib/useCeoHome";
+import { fetchMission, completeMission } from "@/lib/api";
 
 const usd = (n) => "$" + n.toLocaleString("en-US");
+const TEAL = "#00BFA5";
 
 export default function MobileHome() {
   const router = useRouter();
   const { data: home, live } = useCeoHome();
   const dreamFrac = home.dreamCurrent / DREAM_TARGET;
+  const [mission, setMission] = useState(null);
+  useEffect(() => { fetchMission().then(setMission).catch(() => {}); }, []);
+  const tick = (key) => completeMission(key).then((r) => r.mission && setMission(r.mission)).catch(() => {});
   return (
     <div className="m-page">
       {/* dream + score + revenue */}
@@ -56,6 +62,35 @@ export default function MobileHome() {
           <span className="eyebrow" style={{ fontSize: 9 }}>{live ? "Live from platform" : "Offline · cached"}</span>
         </div>
       </div>
+
+      {/* today's IELTS mission */}
+      {mission && mission.topic && (
+        <div className="m-card">
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+            <Eyebrow>🎓 {mission.program} · Day {mission.day}</Eyebrow>
+            <span className="mono" style={{ fontSize: 10, color: "var(--color-ink-400)" }}>🔥 {mission.streak}d · ~{mission.estimated_minutes}m</span>
+          </div>
+          <div style={{ fontSize: 16, fontWeight: 600, margin: "8px 0 2px", color: "var(--color-ink-100)" }}>{mission.topic}</div>
+          <div className="mono" style={{ fontSize: 10, color: "var(--color-ink-400)", marginBottom: 12 }}>
+            {mission.episode} · {mission.phase} · {mission.difficulty}
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {(mission.checklist || []).map((c) => (
+              <button key={c.key} onClick={() => tick(c.key)}
+                style={{ display: "flex", alignItems: "center", gap: 10, textAlign: "left", cursor: "pointer",
+                  padding: "11px 14px", borderRadius: 14, fontSize: 14,
+                  background: c.done ? "rgba(0,191,165,0.12)" : "rgba(255,255,255,0.04)",
+                  border: `1px solid ${c.done ? "rgba(0,191,165,0.4)" : "rgba(255,255,255,0.08)"}`,
+                  color: "var(--color-ink-200)" }}>
+                <span style={{ fontSize: 16 }}>{c.done ? "✅" : "⬜"}</span> {c.label}
+              </button>
+            ))}
+          </div>
+          <div className="mono" style={{ fontSize: 10, color: "var(--color-ink-500)", marginTop: 10 }}>
+            {mission.completed}/{mission.total} done · reward +1 streak · +{mission.reward?.dream_pct}% dream
+          </div>
+        </div>
+      )}
 
       {/* top priorities */}
       <div>
