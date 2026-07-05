@@ -10,9 +10,9 @@ const LANES = [["Awaiting Approval", "awaiting_approval"], ["Published", "publis
 
 // pipeline stages → wiring status (green=wired, amber=needs provider, grey=todo)
 const STAGES = [
-  ["Discovery", "🟢"], ["Research", "🟢"], ["Script", "🟢"], ["Storyboard", "🟢"],
-  ["Assets (image)", "🟡"], ["Voice", "🟡"], ["Music", "⚪"], ["Render", "🟡"],
-  ["Quality", "⚪"], ["Thumbnail", "🟢"], ["SEO / GEO", "🟢"], ["Discovery Gate", "🟢"],
+  ["Research", "🟢"], ["Script", "🟢"], ["Creative Director", "🟢"],
+  ["Voice (Kokoro/say)", "🟢"], ["Assets (Flux/card)", "🟢"], ["Music", "🟢"],
+  ["Render (FFmpeg)", "🟢"], ["Thumbnail", "🟢"], ["SEO / GEO", "🟢"], ["Discovery Gate", "🟢"],
   ["Publish", "🟢"], ["Analytics", "🟢"], ["Learning", "🟢"],
 ];
 
@@ -29,8 +29,8 @@ export default function AIStudio() {
       <Eyebrow style={{ color: ORANGE }}>AI Studio</Eyebrow>
       <div style={{ fontSize: 26, fontWeight: 600, margin: "4px 0 6px" }}>Autonomous content pipeline</div>
       <div style={{ fontSize: 13, opacity: 0.5, marginBottom: 20 }}>
-        Topic → AI script + SEO → Discovery Gate → publish via your browser → Episodes → Learning.
-        🟢 wired · 🟡 needs a provider · ⚪ planned
+        Topic → Creative Director → voice + images → FFmpeg render → gate → publish → Episodes → Learning.
+        Local-first (draft): Kokoro/say · Flux/card · FFmpeg — swap in premium providers without changing the pipeline.
       </div>
 
       <div style={{ display: "flex", gap: 12, marginBottom: 16, flexWrap: "wrap" }}>

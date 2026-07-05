@@ -128,9 +128,11 @@ def test_workspace_run_writes_artifacts_and_stage_flags(tmp_path):
     from saathi.ai_studio import AIStudio
     from saathi.run_manager import RunManager
     rm = RunManager(root=tmp_path / "runs")
+    # force the honest no-provider path so the test is host-independent
     studio = AIStudio(pipeline=_pipeline([], []), metadata_gen=_meta,
                       publisher=lambda **k: {"video_url": "https://youtu.be/x"},
-                      run_manager=rm, store=None)
+                      run_manager=rm, store=None,
+                      voice_gen=lambda **k: None, image_gen=lambda **k: None)
     # fallback clip lets render's hard gate pass while voice/assets are unwired
     clip = tmp_path / "clip.mp4"; clip.write_bytes(b"\x00" * 32)
     run = studio.run(topic="past perfect", video_path=str(clip), approver="Ajay",
@@ -149,8 +151,11 @@ def test_generate_render_fails_without_clip_or_renderer(tmp_path):
     from saathi.ai_studio import AIStudio
     from saathi.run_manager import RunManager
     rm = RunManager(root=tmp_path / "runs")
+    # null renderer + no clip → render's hard gate must fail honestly
     studio = AIStudio(pipeline=_pipeline([], []), metadata_gen=_meta,
-                      publisher=lambda **k: {"video_url": "u"}, run_manager=rm, store=None)
+                      publisher=lambda **k: {"video_url": "u"}, run_manager=rm, store=None,
+                      voice_gen=lambda **k: None, image_gen=lambda **k: None,
+                      renderer=lambda **k: None)
     run = studio.run(topic="x", video_path=None, approver="Ajay", generate=True, run_prefix="PAT")
     assert run.status == "render_failed"
     assert run.failure["stage"] == "render" and run.failure["recommendation"]

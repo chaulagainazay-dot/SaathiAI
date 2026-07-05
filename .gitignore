@@ -25,3 +25,8 @@ queue/
 
 # Run Manager workspaces (reproducible artifacts, not source)
 runs/
+
+# bring-your-own music (no copyrighted audio in git)
+assets/music/*
+!assets/music/README.md
+assets/logo.png

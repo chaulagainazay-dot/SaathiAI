@@ -9,6 +9,7 @@ LLM/browser/network.
 """
 from __future__ import annotations
 
+import os
 import time
 from dataclasses import dataclass, field
 from enum import Enum
@@ -125,41 +126,49 @@ def default_publisher(*, video_path: str, platform: str, metadata: dict, backend
 
 # generation hooks (provider-gated) — each returns a path or None. None means the
 # provider is not configured yet, and the PAT reveals that stage as ✗ honestly.
-def default_voice(*, script: dict, run) -> str | None:
+def default_voice(*, script: dict, run, brief: dict | None = None) -> str | None:
     try:
-        from saathi.tools.voice import synthesize  # OmniVoice / TTS, when configured
+        from saathi.tools.voice import synthesize  # Kokoro → OpenAI → ElevenLabs → say
     except Exception:
         return None
     try:
-        text = " ".join([script.get("hook", ""), *script.get("teaching", []),
-                         script.get("examples", ""), script.get("cta", "")]).strip()
+        if brief and brief.get("scenes"):
+            text = " ".join(s.get("narration", "") for s in brief["scenes"]).strip()
+        else:
+            text = " ".join([script.get("hook", ""), *script.get("teaching", []),
+                             script.get("examples", ""), script.get("cta", "")]).strip()
         data = synthesize(text)
         return str(run.save_bytes("narration.wav", data)) if data else None
     except Exception:
         return None
 
 
-def default_images(*, script: dict, run) -> list | None:
+def default_images(*, script: dict, run, brief: dict | None = None) -> list | None:
     try:
-        from saathi.tools.images import generate_scene_images  # Flux/Imagen, when configured
+        from saathi.tools.images import generate_scene_images  # Flux → branded PIL card
     except Exception:
         return None
     try:
-        paths = generate_scene_images(script, out_dir=str(run.subdir("assets")))
+        paths = generate_scene_images(script, out_dir=str(run.subdir("assets")), brief=brief)
         return paths or None
     except Exception:
         return None
 
 
 def default_render(*, run, voice: str | None, images: list | None,
-                   video_path: str | None = None) -> str | None:
-    """Produce video.mp4 from generated assets. If a real renderer isn't wired,
-    fall back to an externally-supplied clip ONLY when the caller passed one —
-    that keeps the publish half certifiable while render stays 🟡."""
+                   video_path: str | None = None, brief: dict | None = None) -> str | None:
+    """Produce video.mp4 (FFmpeg: Ken Burns + narration + ducked music + logo).
+    Falls back to an externally-supplied clip ONLY when the caller passed one —
+    keeps the publish half certifiable if render inputs are missing."""
     try:
-        from saathi.tools.render import render_video  # FFmpeg pipeline, when configured
-        if voice and images:
-            out = render_video(voice=voice, images=images, out=str(run.path("video.mp4")))
+        from saathi.tools.render import render_video
+        from saathi.tools import music as _music
+        if images:
+            mood = (brief or {}).get("music_mood")
+            track = _music.select(mood)
+            logo = os.path.expanduser("~/SaathiAI/assets/logo.png")
+            out = render_video(voice=voice, images=images, out=str(run.path("video.mp4")),
+                               music=track, logo=logo if os.path.exists(logo) else None)
             if out:
                 return str(out)
     except Exception:
@@ -193,7 +202,8 @@ class AIStudio:
     def run(self, *, topic: str, video_path: str | None = None, platforms=("youtube",),
             mode: str = Mode.ASSISTED, approver: str | None = None,
             confidence_threshold: float = 0.9, thumbnail: str | None = None,
-            generate: bool = False, run_prefix: str = "YETI") -> StudioRun:
+            generate: bool = False, run_prefix: str = "YETI",
+            quality: str = "draft") -> StudioRun:
         sr = StudioRun(topic=topic, mode=str(mode))
         run = ContentRun()
         t_start = time.time()
@@ -252,23 +262,36 @@ class AIStudio:
         if not srep.ok:
             return self._finish(sr, run, t_start, "script", "script_blocked", arun)
 
-        # 4-6 generation chain (opt-in). Voice/assets are SOFT (recorded ✗ but the
-        # run continues on the fallback clip); render is the HARD gate.
+        # 4-9 generation chain (opt-in). Creative Director first (direction lifts
+        # quality without changing renderers), then voice/assets SOFT, render HARD.
         thumb = thumbnail
+        brief = None
         if generate:
+            def _direct():
+                nonlocal brief
+                from saathi.creative_director import direct
+                brief = direct(topic, script, quality=quality)
+                if arun:
+                    arun.save_json("brief.json", brief)
+                n = len(brief.get("scenes", []))
+                return 1.0, [f"{brief.get('style','')}, {n} scenes, {brief.get('music_mood','')}"], n > 0
+            stage("direct", _direct, artifact="brief.json" if arun else None)
+
             stage("voice", lambda: (
-                (1.0, ["narration synthesized"], True) if (v := self._voice(script=script, run=arun))
+                (1.0, ["narration synthesized"], True)
+                if self._voice(script=script, run=arun, brief=brief)
                 else (0.0, ["no TTS provider configured"], False)), artifact="narration.wav")
             stage("assets", lambda: (
-                (1.0, ["scene images generated"], True) if (self._images(script=script, run=arun))
+                (1.0, ["scene images generated"], True)
+                if self._images(script=script, run=arun, brief=brief)
                 else (0.0, ["no image provider configured"], False)), artifact="assets")
 
             def _render():
                 voice = arun.path("narration.wav") if (arun and arun.verify("narration.wav")) else None
-                imgs = list(arun.subdir("assets").iterdir()) if (arun and arun.verify("assets")) else None
+                imgs = sorted(arun.subdir("assets").iterdir()) if (arun and arun.verify("assets")) else None
                 out = self._render(run=arun, voice=str(voice) if voice else None,
                                    images=[str(i) for i in imgs] if imgs else None,
-                                   video_path=video_path)
+                                   video_path=video_path, brief=brief)
                 return (1.0, ["video rendered"], True) if out else (0.0, ["no renderer / no clip"], False)
             rrep = stage("render", _render, artifact="video.mp4")
             if not rrep.ok:
