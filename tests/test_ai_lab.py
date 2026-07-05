@@ -52,6 +52,24 @@ def test_rollback_sets_active(tmp_path):
     assert r.rollback("p", 99) is False                # unknown version
 
 
+def test_studio_tracks_prompt_only_with_default_gen():
+    from saathi.ai_studio import AIStudio, default_metadata
+    # default metadata gen → auto-eval the registry prompt
+    assert AIStudio(store=None)._track_prompt == "mr-yeti.metadata"
+    # injected gen → do not attribute evals to the registry prompt
+    assert AIStudio(metadata_gen=lambda t: {}, store=None)._track_prompt is None
+    assert default_metadata  # symbol exists
+
+
+def test_seed_defaults_idempotent(tmp_path):
+    from saathi.ai_lab import PromptRegistry, seed_defaults
+    r = PromptRegistry(db_path=str(tmp_path / "seed.db"))
+    n1 = seed_defaults(r)
+    n2 = seed_defaults(r)
+    assert n1 >= 4 and n2 == 0                      # second pass adds nothing
+    assert r.active("mr-yeti.metadata").version == 1
+
+
 def test_catalog_summarizes(tmp_path):
     r = _reg(tmp_path)
     r.register("a", "x", project="mr-yeti"); r.register("a", "y", project="mr-yeti")

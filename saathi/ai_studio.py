@@ -85,8 +85,14 @@ def default_metadata(topic: str) -> dict:
         from saathi.infrastructure.llm import generate
         from saathi.infrastructure.model_router import ModelLabel
         import json
-        prompt = (f"Create a Mr. Yeti IELTS video plan for: {topic}. Reply ONLY as JSON: "
-                  '{"title","description","seo_tags":[],"hook","teaching":[],"examples","cta"}')
+        # render the ACTIVE version from the AI Lab Prompt Registry so the prompt is
+        # versioned + measurable in production; fall back to the inline default.
+        try:
+            from saathi.ai_lab import default_registry
+            prompt = default_registry().render("mr-yeti.metadata", topic=topic)
+        except Exception:
+            prompt = (f"Create a Mr. Yeti IELTS video plan for: {topic}. Reply ONLY as JSON: "
+                      '{"title","description","seo_tags":[],"hook","teaching":[],"examples","cta"}')
         out = generate(ModelLabel.STANDARD, prompt, "Reply with ONLY JSON.", max_tokens=600).text
         return _shape(json.loads(out.strip().strip("`").replace("json", "", 1)), topic)
     except Exception:
@@ -97,13 +103,30 @@ def default_metadata(topic: str) -> dict:
                        "seo_tags": ["ielts", "mr yeti", topic]}, topic)
 
 
+def _flatten(v) -> str:
+    """LLMs return list/dict values for teaching/examples; coerce to a clean string
+    so downstream (plan_scenes, validate_script) never sees a dict."""
+    if isinstance(v, str):
+        return v
+    if isinstance(v, dict):
+        return " ".join(str(x) for x in v.values())
+    if isinstance(v, (list, tuple)):
+        return " ".join(_flatten(x) for x in v)
+    return str(v) if v is not None else ""
+
+
 def _shape(p: dict, topic: str) -> dict:
+    teaching = p.get("teaching") or [p.get("description", "")]
+    if not isinstance(teaching, list):
+        teaching = [teaching]
+    teaching = [_flatten(t) for t in teaching if _flatten(t).strip()]
     return {"title": p.get("title") or f"Mr. Yeti: {topic}",
             "description": p.get("description") or f"A Mr. Yeti IELTS lesson about {topic} with examples.",
             "seo_tags": p.get("seo_tags") or p.get("tags") or ["ielts", "mr yeti"],
-            "script": {"hook": p.get("hook", ""),
-                       "teaching": p.get("teaching", []) or [p.get("description", "")],
-                       "examples": p.get("examples", "example"), "cta": p.get("cta", "pielts.web.app")}}
+            "script": {"hook": _flatten(p.get("hook", "")),
+                       "teaching": teaching or [f"Key idea about {topic}."],
+                       "examples": _flatten(p.get("examples", "example")) or "example",
+                       "cta": _flatten(p.get("cta", "pielts.web.app")) or "pielts.web.app"}}
 
 
 def default_publisher(*, video_path: str, platform: str, metadata: dict, backend=None,
@@ -191,6 +214,8 @@ class AIStudio:
         self._voice = voice_gen or default_voice
         self._images = image_gen or default_images
         self._render = renderer or default_render
+        # only auto-evaluate the registry prompt when we're actually using it
+        self._track_prompt = "mr-yeti.metadata" if self._gen is default_metadata else None
         if store is None:
             try:
                 from saathi.studio_store import default_store
@@ -365,6 +390,21 @@ class AIStudio:
             try:
                 sr.stage_flags = arun.stage_flags()
                 arun.finalize(status)
+            except Exception:
+                pass
+        # close the loop: feed the run's quality back to the Prompt Registry so the
+        # metadata prompt's active version accrues a real, live evaluation (run-level
+        # proxy: overall confidence + cost, failure counts as 1).
+        if self._track_prompt:
+            try:
+                from saathi.ai_lab import default_registry
+                reg = default_registry()
+                pv = reg.active(self._track_prompt)
+                if pv:
+                    reg.record_eval(self._track_prompt, pv.version,
+                                    score=sr.overall_confidence, cost=sr.cost_total,
+                                    failures=1 if sr.failure else 0,
+                                    notes=f"studio run: {sr.status}")
             except Exception:
                 pass
         if self._store is not None:
