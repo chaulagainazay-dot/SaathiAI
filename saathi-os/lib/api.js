@@ -6,6 +6,13 @@
 const _RAW = process.env.NEXT_PUBLIC_SAATHI_API;
 export const API_BASE = (_RAW === undefined || _RAW === null) ? "http://localhost:8765" : _RAW;
 
+// LOCAL_BASE = Mac-only capabilities (voice/STT, code-memory) that must run on the
+// machine with the mic + binary. On the local build, API_BASE points at the VM (one
+// source of truth for DATA) while LOCAL_BASE stays localhost for these. On the VM
+// build, both are the same origin.
+const _LOCAL = process.env.NEXT_PUBLIC_LOCAL_API;
+export const LOCAL_BASE = (_LOCAL === undefined || _LOCAL === null) ? API_BASE : _LOCAL;
+
 export async function fetchCeoHome() {
   const r = await fetch(`${API_BASE}/api/executive/briefing`, { cache: "no-store" });
   if (!r.ok) throw new Error(`bff ${r.status}`);
@@ -28,7 +35,7 @@ export async function fetchStudioQueue() {
 
 // Code Memory (codebase-memory-mcp) connector status + indexed projects.
 export async function fetchCodeMemory() {
-  const r = await fetch(`${API_BASE}/api/v1/code-memory/status`, { cache: "no-store" });
+  const r = await fetch(`${LOCAL_BASE}/api/v1/code-memory/status`, { cache: "no-store" });
   if (!r.ok) throw new Error(`code-memory ${r.status}`);
   return r.json();
 }
@@ -106,7 +113,7 @@ export async function sendVoice(blob, sessionId = "web") {
   fd.append("session_id", sessionId);
   fd.append("speak_reply", "true");
   fd.append("require_wake", "false");
-  const r = await fetch(`${API_BASE}/api/v1/voice/command`, { method: "POST", body: fd });
+  const r = await fetch(`${LOCAL_BASE}/api/v1/voice/command`, { method: "POST", body: fd });
   if (!r.ok) throw new Error(`voice ${r.status}`);
   return r.json();
 }

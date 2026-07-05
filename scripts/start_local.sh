@@ -10,10 +10,13 @@ if ! curl -s -o /dev/null http://localhost:8765/api/v1/mission 2>/dev/null; then
   nohup ./.venv/bin/python -m saathi.server > data/local_server.log 2>&1 &
 fi
 
-# 2. UI (prod build → start; falls back to dev)
+# 2. UI — ONE SOURCE OF TRUTH: data comes from the VM (SAATHI_OS_DATA), while
+#    Mac-only capabilities (voice, code-memory) stay on the local API :8765.
 cd saathi-os
+export NEXT_PUBLIC_SAATHI_API="${SAATHI_OS_DATA:-https://140-245-193-190.nip.io}"
+export NEXT_PUBLIC_LOCAL_API="http://localhost:8765"
 if ! curl -s -o /dev/null http://localhost:3000 2>/dev/null; then
-  [ -d .next ] || NEXT_PUBLIC_SAATHI_API="" npm run build >/dev/null 2>&1 || true
-  NEXT_PUBLIC_SAATHI_API="" nohup npm run start >/dev/null 2>&1 &
+  npm run build >/dev/null 2>&1 || true
+  nohup npm run start >/dev/null 2>&1 &
 fi
 wait
