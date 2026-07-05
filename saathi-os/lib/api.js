@@ -22,6 +22,28 @@ export async function fetchStudioQueue() {
   return r.json();
 }
 
+// AI Lab — Prompt Library catalog (name · active version · scores).
+export async function fetchLabPrompts() {
+  const r = await fetch(`${API_BASE}/api/v1/lab/prompts`, { cache: "no-store" });
+  if (!r.ok) throw new Error(`lab ${r.status}`);
+  return r.json();
+}
+
+export async function fetchLabPrompt(name) {
+  const r = await fetch(`${API_BASE}/api/v1/lab/prompts/${encodeURIComponent(name)}`, { cache: "no-store" });
+  if (!r.ok) throw new Error(`lab ${r.status}`);
+  return r.json();
+}
+
+export async function rollbackLabPrompt(name, version) {
+  const r = await fetch(`${API_BASE}/api/v1/lab/prompts/${encodeURIComponent(name)}/rollback`, {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ version }),
+  });
+  if (!r.ok) throw new Error(`lab ${r.status}`);
+  return r.json();
+}
+
 // Talk to Saathi (the conversation brain). Same-origin cookie auth — the user
 // must be logged in on the dashboard. Returns { reply } or throws on 401.
 export async function sendChat(text, sessionId = "dashboard") {

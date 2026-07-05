@@ -207,6 +207,55 @@ async def daily_mission_complete(request: Request):
     return {"ok": True, "mission": mission()}
 
 
+@app.get("/api/v1/lab/prompts")
+async def lab_prompts():
+    """AI Lab — Prompt Library catalog: every prompt with active version + best
+    score (whitelisted read)."""
+    from saathi.ai_lab import default_registry
+    return {"prompts": default_registry().catalog()}
+
+
+@app.get("/api/v1/lab/prompts/{name}")
+async def lab_prompt_detail(name: str):
+    """One prompt: version changelog + leaderboard (whitelisted read)."""
+    from saathi.ai_lab import default_registry
+    reg = default_registry()
+    return {"name": name, "versions": reg.versions(name), "leaderboard": reg.leaderboard(name)}
+
+
+@app.post("/api/v1/lab/prompts")
+async def lab_register(request: Request):
+    """Register a new prompt version (becomes active). Auth-gated."""
+    b = await request.json()
+    from saathi.ai_lab import default_registry
+    if not b.get("name") or not b.get("template"):
+        return {"ok": False, "error": "name and template required"}
+    v = default_registry().register(b["name"], b["template"], purpose=b.get("purpose", ""),
+                                    author=b.get("author", "Ajay"), project=b.get("project", ""),
+                                    notes=b.get("notes", ""))
+    return {"ok": True, "version": v}
+
+
+@app.post("/api/v1/lab/prompts/{name}/eval")
+async def lab_eval(name: str, request: Request):
+    """Record an evaluation result for a prompt version. Auth-gated."""
+    b = await request.json()
+    from saathi.ai_lab import default_registry
+    default_registry().record_eval(name, int(b.get("version", 1)), score=float(b.get("score", 0)),
+                                   latency_ms=int(b.get("latency_ms", 0)), cost=float(b.get("cost", 0)),
+                                   failures=int(b.get("failures", 0)), notes=b.get("notes", ""))
+    return {"ok": True}
+
+
+@app.post("/api/v1/lab/prompts/{name}/rollback")
+async def lab_rollback(name: str, request: Request):
+    """Redeploy an older version as active. Auth-gated."""
+    b = await request.json()
+    from saathi.ai_lab import default_registry
+    ok = default_registry().rollback(name, int(b.get("version", 1)))
+    return {"ok": ok}
+
+
 @app.get("/api/v1/platform/maturity")
 async def platform_maturity():
     """Honest platform-maturity mirror (Infrastructure vs Applications vs Real
@@ -475,6 +524,8 @@ async def _auth(request, call_next):
             or path == "/api/v1/studio/queue"
             or path == "/api/v1/mission"
             or path == "/api/v1/mission/complete"
+            or path == "/api/v1/lab/prompts"
+            or path.startswith("/api/v1/lab/prompts/")
             or path == "/api/v1/human/automation"
             or path == "/api/v1/human/teach"
             or path.startswith("/api/v1/human/runs/")
@@ -3228,6 +3279,12 @@ def _start_background():
         from .infrastructure.human_browser.pages import youtube as _yt, linkedin as _li, tiktok as _tt
         reg = default_selector_registry()
         _yt.seed(reg); _li.seed(reg); _tt.seed(reg)
+    except Exception:
+        pass
+    # seed the AI Lab Prompt Library with the real prompts from the codebase
+    try:
+        from .ai_lab import seed_defaults
+        seed_defaults()
     except Exception:
         pass
     try:
