@@ -126,10 +126,11 @@ def research_project(project: dict) -> tuple[dict, dict]:
             from saathi.ai_lab import default_registry
             prompt = default_registry().render("agency.research", brief=brief)
         except Exception:
-            prompt = (f"You are an agency strategist. Research this company and produce a plan.\n{brief}\n"
-                      'Reply ONLY as JSON: {"research":{"summary","industry_overview",'
-                      '"opportunities":[],"gaps":[],"competitors":[],"positioning"},'
-                      '"strategy":{"direction","content_ideas":[],"marketing_plan","next_steps":[]}}')
+            prompt = (f"You are a senior agency strategist. Research this company.\n{brief}\n"
+                      'Reply ONLY as JSON: {"research":{"company_overview","strengths":[],'
+                      '"areas_to_improve":[],"competitors":[],"market_opportunity":[],"positioning"},'
+                      '"strategy":{"direction","content_ideas":[],"marketing_plan","next_steps":[],'
+                      '"channels":[{"name","why"}],"roadmap":[{"phase","focus","items":[]}]}}')
         out = generate(ModelLabel.STANDARD, prompt, "Reply with ONLY JSON.", max_tokens=900).text
         obj = json.loads(out.strip().strip("`").replace("json", "", 1))
         r, s = obj.get("research") or {}, obj.get("strategy") or {}
@@ -140,28 +141,51 @@ def research_project(project: dict) -> tuple[dict, dict]:
     return _fallback(co, brief)
 
 
+def _L(d: dict, k: str) -> list:
+    v = d.get(k)
+    return v if isinstance(v, list) else ([v] if v else [])
+
+
 def _shape_research(r: dict) -> dict:
-    L = lambda k: r.get(k) if isinstance(r.get(k), list) else ([r[k]] if r.get(k) else [])
-    return {"summary": r.get("summary", ""), "industry_overview": r.get("industry_overview", ""),
-            "opportunities": L("opportunities"), "gaps": L("gaps"),
-            "competitors": L("competitors"), "positioning": r.get("positioning", "")}
+    overview = r.get("company_overview") or r.get("summary", "")
+    return {"company_overview": overview, "summary": overview,
+            "strengths": _L(r, "strengths"), "areas_to_improve": _L(r, "areas_to_improve"),
+            "competitors": _L(r, "competitors"), "market_opportunity": _L(r, "market_opportunity"),
+            "opportunities": _L(r, "opportunities") or _L(r, "market_opportunity"),
+            "gaps": _L(r, "gaps") or _L(r, "areas_to_improve"),
+            "positioning": r.get("positioning", "")}
 
 
 def _shape_strategy(s: dict) -> dict:
-    L = lambda k: s.get(k) if isinstance(s.get(k), list) else ([s[k]] if s.get(k) else [])
-    return {"direction": s.get("direction", ""), "content_ideas": L("content_ideas"),
-            "marketing_plan": s.get("marketing_plan", ""), "next_steps": L("next_steps")}
+    return {"direction": s.get("direction", ""), "content_ideas": _L(s, "content_ideas"),
+            "marketing_plan": s.get("marketing_plan", ""), "next_steps": _L(s, "next_steps"),
+            "channels": _L(s, "channels"), "roadmap": _L(s, "roadmap")}
 
 
 def _fallback(name: str, brief: str) -> tuple[dict, dict]:
-    research = {"summary": f"Intake captured for {name}. Configure an LLM provider for deep research.",
-                "industry_overview": "", "opportunities": ["Build a consistent content presence",
-                "Clarify the target audience", "Differentiate from competitors"],
-                "gaps": ["No documented strategy yet"], "competitors": [], "positioning": ""}
-    strategy = {"direction": f"Establish {name}'s positioning and a repeatable content engine.",
-                "content_ideas": ["Founder story", "Customer results", "Educational how-to series"],
-                "marketing_plan": "Start with one channel, publish consistently, measure, expand.",
-                "next_steps": ["Confirm goals & audience", "Approve a content calendar", "Launch week 1"]}
+    research = _shape_research({
+        "company_overview": f"Intake captured for {name}. Configure an LLM provider for deep research.",
+        "strengths": ["Clear service offering", "Established contact details"],
+        "areas_to_improve": ["Website SEO", "Content consistency", "Social engagement"],
+        "competitors": ["Direct local competitors", "Larger national players", "Online marketplaces"],
+        "market_opportunity": ["Under-served niche audiences", "Content-led demand", "Referral growth"],
+        "positioning": ""})
+    strategy = _shape_strategy({
+        "direction": f"Establish {name}'s positioning and a repeatable content engine.",
+        "content_ideas": ["Founder story", "Customer results", "Educational how-to series",
+                          "Behind the scenes", "FAQ / myth-busting"],
+        "marketing_plan": "Start with one channel, publish consistently, measure, expand.",
+        "next_steps": ["Confirm goals & audience", "Approve a content calendar", "Launch week 1"],
+        "channels": [{"name": "Instagram", "why": "Visual storytelling"},
+                     {"name": "Facebook", "why": "Community & offers"},
+                     {"name": "YouTube", "why": "Depth & discovery"},
+                     {"name": "Google", "why": "High-intent search"}],
+        "roadmap": [
+            {"phase": "Foundation", "focus": "Weeks 1-2", "items": ["Website audit", "Branding consistency"]},
+            {"phase": "Visibility", "focus": "Weeks 3-6", "items": ["SEO", "Content & blogging"]},
+            {"phase": "Engagement", "focus": "Weeks 7-12", "items": ["Social campaigns", "Email setup"]},
+            {"phase": "Growth", "focus": "Months 4-6", "items": ["Paid ads", "Retargeting", "CRM"]},
+            {"phase": "Scaling", "focus": "Months 6+", "items": ["Conversion optimization", "New markets"]}]})
     return research, strategy
 
 

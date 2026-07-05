@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import Stars from "./Stars";
 import TopBar from "./TopBar";
 import Dock from "./Dock";
@@ -13,9 +14,16 @@ import { LiveProvider } from "./live/LiveProvider";
 import LiveToasts from "./live/LiveToasts";
 
 export default function Shell({ children }) {
+  const pathname = usePathname();
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [ceoOpen, setCeoOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
+
+  // Public, client-facing pages (shared smart-form) render bare — no dashboard
+  // dock/nav/toasts. This is what a client sees when you send them the link.
+  if (pathname?.startsWith("/project/create/")) {
+    return <main style={{ minHeight: "100vh" }}>{children}</main>;
+  }
 
   useEffect(() => {
     const onKey = (e) => {

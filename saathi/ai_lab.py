@@ -164,6 +164,14 @@ class PromptRegistry:
                 return None
         return self.register(name, template, **meta)
 
+    def register_or_update(self, name: str, template: str, **meta) -> int | None:
+        """Register a new version only if the active template differs — so updating
+        a seeded prompt's text bumps the version, but restarts don't churn."""
+        cur = self.active(name)
+        if cur and cur.template == template:
+            return None
+        return self.register(name, template, **meta)
+
 
 # real prompts already living in the codebase, brought under version control so
 # every project starts with a populated, cross-project Prompt Library.
@@ -180,11 +188,16 @@ _SEED = [
     ("hcg.signal", "hcg", "Detect swing opportunities from market data",
      "Analyse this market data for a swing-trade signal (signals only, no auto-trading): "
      "{market}. Reply with signal, confidence, and reasoning."),
-    ("agency.research", "agency", "Research a client company → strategy + direction",
-     "You are an agency strategist. Research this company and produce a plan.\n{brief}\n"
-     'Reply ONLY as JSON: {{"research":{{"summary","industry_overview","opportunities":[],'
-     '"gaps":[],"competitors":[],"positioning"}},"strategy":{{"direction","content_ideas":[],'
-     '"marketing_plan","next_steps":[]}}}}'),
+    ("agency.research", "agency", "Research a client company → full strategy + roadmap",
+     "You are a senior agency strategist. Research this company and produce a complete "
+     "plan.\n{brief}\nReply ONLY as JSON with this exact shape:\n"
+     '{{"research":{{"company_overview","strengths":[],"areas_to_improve":[],'
+     '"competitors":[],"market_opportunity":[],"positioning"}},'
+     '"strategy":{{"direction","content_ideas":[],"marketing_plan","next_steps":[],'
+     '"channels":[{{"name","why"}}],'
+     '"roadmap":[{{"phase","focus","timeframe","items":[]}}]}}}}\n'
+     "Give 3-5 strengths, 3-5 areas_to_improve, 4-5 competitors, 3-5 market_opportunity, "
+     "5-7 channels, and a 5-phase roadmap (Foundation, Visibility, Engagement, Growth, Scaling)."),
 ]
 
 
@@ -192,7 +205,7 @@ def seed_defaults(reg: "PromptRegistry | None" = None) -> int:
     reg = reg or default_registry()
     n = 0
     for name, project, purpose, template in _SEED:
-        if reg.register_if_absent(name, template, purpose=purpose, author="Claude Code",
+        if reg.register_or_update(name, template, purpose=purpose, author="Claude Code",
                                   project=project) is not None:
             n += 1
     return n
