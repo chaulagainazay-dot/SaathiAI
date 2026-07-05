@@ -71,10 +71,14 @@ DEFAULT_PROVIDERS: list[ProviderSpec] = [
                  ModelLabel.LONG}), cost_per_1k=0.5, latency_tier=2, is_local=False, quality_tier=2),
     ProviderSpec("qwen/qwen-2.5-72b", frozenset({ModelLabel.SCREENING, ModelLabel.STANDARD,
                  ModelLabel.LONG, ModelLabel.FAST}), cost_per_1k=0.4, latency_tier=2, is_local=False, quality_tier=2),
+    # Gemini 3.5 Flash — the DEFAULT brain: free tier (cost 0), fast. Listed BEFORE
+    # groq so it wins the cost/quality/latency tie (insertion order) and ranks first
+    # for general work; Claude/GPT still win REASONING/QUALITY. Model = GEMINI_MODEL.
+    ProviderSpec("gemini/3.5-flash", frozenset({ModelLabel.SCREENING, ModelLabel.STANDARD,
+                 ModelLabel.MULTIMODAL, ModelLabel.LONG, ModelLabel.FAST}),
+                 cost_per_1k=0.0, latency_tier=1, is_local=False, quality_tier=2),
     ProviderSpec("groq/llama-3.3-70b", frozenset({ModelLabel.SCREENING, ModelLabel.STANDARD,
                  ModelLabel.FAST}), cost_per_1k=0.0, latency_tier=1, is_local=False, quality_tier=2),
-    ProviderSpec("gemini/2.5-flash-lite", frozenset({ModelLabel.SCREENING, ModelLabel.STANDARD,
-                 ModelLabel.MULTIMODAL, ModelLabel.LONG, ModelLabel.FAST}), cost_per_1k=0.5, latency_tier=1, is_local=False, quality_tier=2),
     ProviderSpec("ollama/local", frozenset({ModelLabel.SCREENING, ModelLabel.STANDARD,
                  ModelLabel.FAST, ModelLabel.PRIVATE}), cost_per_1k=0.0, latency_tier=2, is_local=True, quality_tier=3),
 ]
@@ -113,8 +117,8 @@ class ModelRouter:
             candidates.sort(key=lambda p: (p.latency_tier, p.cost_per_1k))
         elif prefer is Prefer.QUALITY:
             candidates.sort(key=lambda p: (p.quality_tier, p.cost_per_1k))
-        else:  # COST
-            candidates.sort(key=lambda p: (p.cost_per_1k, p.latency_tier))
+        else:  # COST — on a cost tie, prefer higher quality then lower latency
+            candidates.sort(key=lambda p: (p.cost_per_1k, p.quality_tier, p.latency_tier))
         return candidates
 
     def best(self, label: ModelLabel, **kw) -> ProviderSpec | None:

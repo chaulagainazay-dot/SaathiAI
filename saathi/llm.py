@@ -129,7 +129,8 @@ def _call_groq(prompt, system, max_tokens, timeout):
 
 def _call_gemini(prompt, system, max_tokens, timeout):
     import httpx
-    model = os.getenv("GEMINI_MODEL", "gemini-2.5-flash-lite")
+    from saathi import config
+    model = os.getenv("GEMINI_MODEL") or config.GEMINI_MODEL
     r = httpx.post(
         f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
         f"?key={os.getenv('GOOGLE_API_KEY')}",
