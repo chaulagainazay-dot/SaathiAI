@@ -165,7 +165,8 @@ def test_github_actions_capabilities():
 def test_install_defaults_registers_all_drivers():
     reg = install_defaults(ConnectorRegistry())
     ids = {c.id for c in reg.all()}
-    assert ids == {"telegram", "github", "n8n", "browser", "youtube", "filesystem", "human_publish"}
+    assert ids == {"telegram", "github", "n8n", "browser", "youtube", "filesystem",
+                   "human_publish", "code_memory"}
 
 
 def test_diagnostics_dict_is_first_class(tmp_path):

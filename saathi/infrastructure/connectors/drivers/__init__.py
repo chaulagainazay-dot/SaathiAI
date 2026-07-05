@@ -11,7 +11,8 @@ from .browser import BrowserConnector
 from .youtube import YouTubeConnector
 from .filesystem import FilesystemConnector
 from .human_publish import HumanPublishConnector
+from .code_memory import CodeMemoryConnector
 
 __all__ = ["TelegramConnector", "GitHubConnector", "N8nConnector",
            "BrowserConnector", "YouTubeConnector", "FilesystemConnector",
-           "HumanPublishConnector"]
+           "HumanPublishConnector", "CodeMemoryConnector"]

@@ -14,6 +14,7 @@ from .registry import ConnectorRegistry, registry
 from .drivers import (
     TelegramConnector, GitHubConnector, N8nConnector,
     BrowserConnector, YouTubeConnector, FilesystemConnector, HumanPublishConnector,
+    CodeMemoryConnector,
 )
 from . import diagnostics
 
@@ -22,6 +23,7 @@ from . import diagnostics
 _DEFAULT_DRIVER_CLASSES = (
     TelegramConnector, GitHubConnector, N8nConnector,
     BrowserConnector, YouTubeConnector, FilesystemConnector, HumanPublishConnector,
+    CodeMemoryConnector,
 )
 
 
@@ -59,4 +61,5 @@ __all__ = [
     "ConnectorRegistry", "registry", "diagnostics", "install_defaults", "default_registry",
     "TelegramConnector", "GitHubConnector", "N8nConnector",
     "BrowserConnector", "YouTubeConnector", "FilesystemConnector", "HumanPublishConnector",
+    "CodeMemoryConnector",
 ]
