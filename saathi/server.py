@@ -262,6 +262,27 @@ def _share_url(request: Request, token: str) -> str:
     return f"{base}/project/create/{token}"
 
 
+@app.get("/api/v1/code-memory/status")
+async def code_memory_status():
+    """Code Memory (codebase-memory-mcp) connector status + indexed projects."""
+    import asyncio
+    from saathi.infrastructure.connectors.drivers.code_memory import CodeMemoryConnector
+    c = CodeMemoryConnector()
+    h = c.health()
+    installed = h.status.value == "ok"
+    out = {"installed": installed, "detail": h.detail,
+           "binary": h.metrics.get("binary", ""), "projects": [], "count": 0}
+    if installed:
+        try:
+            res = await asyncio.to_thread(c.execute, "list_projects")
+            projs = res.get("projects", []) if isinstance(res, dict) else []
+            out["projects"] = projs
+            out["count"] = len(projs)
+        except Exception as e:
+            out["detail"] = f"query failed: {str(e)[:80]}"
+    return out
+
+
 @app.get("/api/v1/intake/projects")
 async def intake_list():
     """All client-intake projects (whitelisted read)."""
@@ -619,6 +640,7 @@ async def _auth(request, call_next):
             or path == "/api/v1/mission"
             or path == "/api/v1/mission/complete"
             or path == "/api/v1/agent/chat"
+            or path == "/api/v1/code-memory/status"
             or path == "/api/v1/lab/prompts"
             or path.startswith("/api/v1/lab/prompts/")
             or path == "/api/v1/intake/projects"

@@ -3,9 +3,34 @@ import { useState } from "react";
 import { Panel, Eyebrow, Ring } from "@/components/ui";
 import { color } from "@/lib/departments";
 import { useInfraHealth } from "@/lib/useInfraHealth";
-import { testHumanBrowser } from "@/lib/api";
+import { useEffect } from "react";
+import { testHumanBrowser, fetchCodeMemory } from "@/lib/api";
 
 const CYAN = color("INFRA");
+
+function CodeMemoryCard() {
+  const [d, setD] = useState(null);
+  useEffect(() => { fetchCodeMemory().then(setD).catch(() => {}); }, []);
+  const installed = d?.installed;
+  return (
+    <Panel style={{ padding: 18, marginTop: 14 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+        <div>
+          <Eyebrow style={{ color: CYAN }}>🧠 Code Memory (codebase-memory-mcp)</Eyebrow>
+          <div style={{ fontSize: 13, opacity: 0.6, marginTop: 4 }}>
+            Local code-intelligence engine — 14 tools, tree-sitter knowledge graph. Connector behind the registry.
+          </div>
+          <div style={{ fontSize: 13, marginTop: 8, color: installed ? "#4FD07A" : "#8FA0C4" }}>
+            {d == null ? "checking…"
+              : installed
+                ? `🟢 ${d.count} project${d.count === 1 ? "" : "s"} indexed${d.projects?.length ? ": " + d.projects.map((p) => (typeof p === "string" ? p : p.name || p.project || p.id)).slice(0, 4).join(", ") : ""}`
+                : `⚪ ${d.detail || "not installed on this host (runs Mac-side)"}`}
+          </div>
+        </div>
+      </div>
+    </Panel>
+  );
+}
 
 function HumanBrowserTest() {
   const [state, setState] = useState({ status: "idle", msg: "" });
@@ -125,6 +150,7 @@ export default function Infrastructure() {
       </div>
 
       <HumanBrowserTest />
+      <CodeMemoryCard />
     </div>
   );
 }

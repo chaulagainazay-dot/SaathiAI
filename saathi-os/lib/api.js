@@ -26,6 +26,13 @@ export async function fetchStudioQueue() {
   return r.json();
 }
 
+// Code Memory (codebase-memory-mcp) connector status + indexed projects.
+export async function fetchCodeMemory() {
+  const r = await fetch(`${API_BASE}/api/v1/code-memory/status`, { cache: "no-store" });
+  if (!r.ok) throw new Error(`code-memory ${r.status}`);
+  return r.json();
+}
+
 // ── Client Intake — Create New Project ──────────────────────────────────────
 export async function fetchProjects() {
   const r = await fetch(`${API_BASE}/api/v1/intake/projects`, { cache: "no-store" });
