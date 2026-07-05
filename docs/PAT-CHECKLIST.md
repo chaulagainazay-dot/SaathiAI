@@ -15,10 +15,13 @@ run. Fix only issues the PAT reveals; add no features.
 export CHROME_CDP_URL=http://localhost:9222
 export SAATHI_BASE_URL=https://140-245-193-190.nip.io
 export SAATHI_TOKEN=<vm token>
-.venv/bin/python scripts/pat_run.py "<today's lesson>"     # generates the video on Kokoro
+# today's topic comes from the fixed 365-day curriculum — no daily decision
+.venv/bin/python scripts/pat_run.py "$(.venv/bin/python scripts/todays_lesson.py)"
 ```
 
-Uploads Unlisted, prefixes the title `[PAT]`. Drag test uploads into a dedicated
+`todays_lesson.py --full` shows the day/phase/skill. Anchor the program start with
+`SAATHI_CURRICULUM_START=YYYY-MM-DD` (else it uses day-of-year). Uploads Unlisted,
+prefixes the title `[PAT]`. Drag test uploads into a dedicated
 YouTube **"PAT / test"** playlist so they never clutter real content.
 
 ## Expected behavior (NOT failures)
