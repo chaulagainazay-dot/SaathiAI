@@ -22,6 +22,19 @@ export async function fetchStudioQueue() {
   return r.json();
 }
 
+// Talk to Saathi (the conversation brain). Same-origin cookie auth — the user
+// must be logged in on the dashboard. Returns { reply } or throws on 401.
+export async function sendChat(text, sessionId = "dashboard") {
+  const r = await fetch(`${API_BASE}/api/v1/agent/chat`, {
+    method: "POST", credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text, session_id: sessionId }),
+  });
+  if (r.status === 401) throw new Error("unauthorized");
+  if (!r.ok) throw new Error(`chat ${r.status}`);
+  return r.json();
+}
+
 // Mark a daily IELTS Mission item done (lesson/speaking/writing/quiz).
 export async function completeMission(item) {
   const r = await fetch(`${API_BASE}/api/v1/mission/complete`, {

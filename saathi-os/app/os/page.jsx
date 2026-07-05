@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { Panel, Eyebrow } from "@/components/ui";
-import { fetchCeoOs, completeMission } from "@/lib/api";
+import { fetchCeoOs, completeMission, sendChat } from "@/lib/api";
 
 const GOLD = "#E8B84B";
 const RULE = ["Decide", "Automate", "Learn", "Earn"];
@@ -17,10 +17,28 @@ function Card({ icon, title, children }) {
 
 export default function OperatingSystem() {
   const [d, setD] = useState(null);
+  const [chat, setChat] = useState([]);      // {role, text}
+  const [ask, setAsk] = useState("");
+  const [busy, setBusy] = useState(false);
   useEffect(() => {
     const t = () => fetchCeoOs().then(setD).catch(() => {});
     t(); const id = setInterval(t, 10000); return () => clearInterval(id);
   }, []);
+
+  const submitAsk = async () => {
+    const text = ask.trim();
+    if (!text || busy) return;
+    setChat((c) => [...c, { role: "you", text }]); setAsk(""); setBusy(true);
+    try {
+      const r = await sendChat(text);
+      setChat((c) => [...c, { role: "saathi", text: r.reply || "…" }]);
+    } catch (e) {
+      setChat((c) => [...c, { role: "saathi",
+        text: String(e).includes("unauthorized")
+          ? "Please log in on the dashboard first, then ask me again."
+          : "Sorry — I couldn't reach my brain just now." }]);
+    } finally { setBusy(false); }
+  };
   if (!d) return <div className="only-desktop" style={{ maxWidth: 1000, margin: "40px auto", opacity: 0.5 }}>loading…</div>;
 
   const completeMissionItem = (item) =>
@@ -134,7 +152,21 @@ export default function OperatingSystem() {
         </div>
       </Panel>
 
-      <input placeholder="Ask Saathi…" style={{ width: "100%", marginTop: 18, padding: "12px 16px",
+      {chat.length > 0 && (
+        <div style={{ marginTop: 18, display: "flex", flexDirection: "column", gap: 8 }}>
+          {chat.map((m, i) => (
+            <div key={i} style={{ alignSelf: m.role === "you" ? "flex-end" : "flex-start",
+              maxWidth: "80%", padding: "8px 14px", borderRadius: 14, fontSize: 14,
+              background: m.role === "you" ? "rgba(232,184,75,0.15)" : "rgba(255,255,255,0.06)" }}>
+              {m.text}
+            </div>
+          ))}
+        </div>
+      )}
+      <input value={ask} onChange={(e) => setAsk(e.target.value)}
+        onKeyDown={(e) => e.key === "Enter" && submitAsk()} disabled={busy}
+        placeholder={busy ? "Saathi is thinking…" : "Ask Saathi…"}
+        style={{ width: "100%", marginTop: 12, padding: "12px 16px",
         borderRadius: 24, border: "1px solid rgba(255,255,255,0.12)", background: "rgba(255,255,255,0.04)",
         color: "inherit", fontSize: 14 }} />
     </div>

@@ -3256,6 +3256,13 @@ def _start_background():
         scheduler.start()  # morning briefing, 9pm canteen summary, weekly backup
     except Exception:
         pass
+    # Two-way Telegram — the phone conversation surface. start() is inert unless
+    # TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID are set, so this is safe to always call.
+    try:
+        from . import telegram_bot
+        telegram_bot.start()
+    except Exception:
+        pass
     # Auto-register known projects so Baadar can access their files by name
     try:
         from .tools.projects import register_project
