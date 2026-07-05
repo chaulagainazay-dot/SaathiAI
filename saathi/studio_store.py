@@ -39,17 +39,20 @@ class StudioStore:
                 c.execute("ALTER TABLE studio_runs ADD COLUMN run_id TEXT")
             if "stage_flags" not in cols:
                 c.execute("ALTER TABLE studio_runs ADD COLUMN stage_flags TEXT")
+            if "project_id" not in cols:
+                c.execute("ALTER TABLE studio_runs ADD COLUMN project_id TEXT")
 
     def record(self, sr) -> str:
         import json
         rid = uuid.uuid4().hex[:12]
         with self._conn() as c:
             c.execute("""INSERT INTO studio_runs
-                (id,topic,mode,status,confidence,cost,duration_ms,video_url,failure,created,run_id,stage_flags)
-                VALUES(?,?,?,?,?,?,?,?,?,?,?,?)""",
+                (id,topic,mode,status,confidence,cost,duration_ms,video_url,failure,created,run_id,stage_flags,project_id)
+                VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                 (rid, sr.topic, sr.mode, sr.status, sr.overall_confidence, round(sr.cost_total, 3),
                  sr.duration_ms, sr.video_url, json.dumps(sr.failure) if sr.failure else "", time.time(),
-                 getattr(sr, "run_id", ""), json.dumps(getattr(sr, "stage_flags", {}) or {})))
+                 getattr(sr, "run_id", ""), json.dumps(getattr(sr, "stage_flags", {}) or {}),
+                 getattr(sr, "project_id", "")))
         return rid
 
     def recent(self, limit: int = 15) -> list[dict]:

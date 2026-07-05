@@ -47,3 +47,31 @@ def test_research_produces_research_and_strategy(tmp_path):
 
 def test_seven_capture_steps():
     assert STEPS == ["company", "goals", "audience", "services", "budget", "uploads", "review"]
+
+
+def test_studio_topics_wire(tmp_path):
+    from saathi.client_intake import studio_topics
+    s = _store(tmp_path)
+    p = s.create({"company": {"name": "WanderOn"}})
+    research, strategy = research_project(s.get(p["id"]))
+    out = s.set_output(p["id"], research, {**strategy, "content_ideas": ["Bali guide", "Honeymoon tips"]})
+    wire = studio_topics(out)
+    assert wire["project_id"] == p["id"] and wire["project"] == "WanderOn"
+    assert wire["topics"] == ["Bali guide", "Honeymoon tips"]
+
+
+def test_studio_run_tags_project(tmp_path):
+    from saathi.ai_studio import AIStudio
+    from saathi.studio_store import StudioStore
+    from saathi.content_pipeline import ContentFactoryPipeline
+    store = StudioStore(db_path=str(tmp_path / "s.db"))
+    meta = {"title": "Mr. Yeti: Bali", "description": "A friendly Mr. Yeti lesson about Bali with examples.",
+            "seo_tags": ["ielts"], "script": {"hook": "h", "teaching": ["a very long teaching sentence "
+            "that clearly exceeds the twenty five word minimum so the script validator is satisfied here "
+            "with plenty of words to spare indeed yes"], "examples": "e", "cta": "c"}}
+    studio = AIStudio(pipeline=ContentFactoryPipeline(), metadata_gen=lambda t: meta,
+                      publisher=lambda **k: {"video_url": "u"}, store=store)
+    run = studio.run(topic="Bali guide", video_path="/x.mp4", approver="Ajay",
+                     thumbnail="/x.mp4", project_id="proj123")
+    assert run.project_id == "proj123"
+    assert store.recent()[0]["project_id"] == "proj123"

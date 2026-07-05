@@ -164,6 +164,25 @@ export default function Projects() {
           </Panel>
         </div>
       )}
+
+      {/* wire: strategy → AI Studio content plan */}
+      {cur.strategy?.content_ideas?.length > 0 && (
+        <Panel style={{ padding: 18, marginTop: 16, border: "1px solid rgba(255,138,61,0.3)" }}>
+          <Eyebrow style={{ color: "#FF8A3D" }}>🎬 Produce in AI Studio</Eyebrow>
+          <div style={{ fontSize: 12, opacity: 0.5, margin: "6px 0 12px" }}>
+            These content ideas are ready as AI Studio topics for this client. Runs are tagged to the project.
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+            {cur.strategy.content_ideas.map((t, i) => (
+              <span key={i} style={{ fontSize: 12.5, padding: "7px 12px", borderRadius: 999,
+                background: "rgba(255,138,61,0.12)", border: "1px solid rgba(255,138,61,0.3)" }}>🎥 {t}</span>
+            ))}
+          </div>
+          <div className="mono" style={{ fontSize: 11, opacity: 0.5, marginTop: 12 }}>
+            Run (Mac): <code>scripts/studio_from_project.py {cur.id} --generate</code>
+          </div>
+        </Panel>
+      )}
     </div>
   );
 }

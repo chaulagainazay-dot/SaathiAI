@@ -165,6 +165,21 @@ def _fallback(name: str, brief: str) -> tuple[dict, dict]:
     return research, strategy
 
 
+def studio_topics(project: dict) -> dict:
+    """Turn a project's strategy into AI Studio input: content ideas → topics,
+    tagged to the client, with the strategy direction as the guiding brief.
+    This is the wire from Client Intake → AI Studio content production."""
+    strat = project.get("strategy") or {}
+    data = project.get("data") or {}
+    co = (data.get("company") or {}).get("name") or project.get("name") or "Client"
+    topics = [t for t in (strat.get("content_ideas") or []) if isinstance(t, str) and t.strip()]
+    if not topics:  # no strategy yet — fall back to the company/services
+        base = data.get("services") or data.get("goals") or co
+        topics = [f"{co}: {base}"]
+    return {"project_id": project.get("id"), "project": co,
+            "direction": strat.get("direction", ""), "topics": topics}
+
+
 _default = None
 def default_store() -> IntakeStore:
     global _default

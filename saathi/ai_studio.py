@@ -62,12 +62,14 @@ class StudioRun:
     video_url: str = ""
     run_id: str = ""
     stage_flags: dict = field(default_factory=dict)
+    project_id: str = ""     # client-intake project this content belongs to (if any)
 
     def as_dict(self) -> dict:
         return {"topic": self.topic, "mode": self.mode, "status": self.status,
                 "overall_confidence": self.overall_confidence, "cost_total": round(self.cost_total, 3),
                 "duration_ms": self.duration_ms, "video_url": self.video_url, "failure": self.failure,
                 "run_id": self.run_id, "stage_flags": self.stage_flags,
+                "project_id": self.project_id,
                 "stages": [s.__dict__ for s in self.stages],
                 "published": self.published}
 
@@ -228,8 +230,8 @@ class AIStudio:
             mode: str = Mode.ASSISTED, approver: str | None = None,
             confidence_threshold: float = 0.9, thumbnail: str | None = None,
             generate: bool = False, run_prefix: str = "YETI",
-            quality: str = "draft") -> StudioRun:
-        sr = StudioRun(topic=topic, mode=str(mode))
+            quality: str = "draft", project_id: str = "") -> StudioRun:
+        sr = StudioRun(topic=topic, mode=str(mode), project_id=project_id)
         run = ContentRun()
         t_start = time.time()
 

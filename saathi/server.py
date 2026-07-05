@@ -312,6 +312,16 @@ async def intake_research(pid: str):
     return store.set_output(pid, research, strategy)
 
 
+@app.get("/api/v1/intake/projects/{pid}/studio-topics")
+async def intake_studio_topics(pid: str):
+    """Wire → AI Studio: the project's strategy content ideas as production topics."""
+    from saathi.client_intake import default_store, studio_topics
+    p = default_store().get(pid)
+    if not p:
+        return JSONResponse({"error": "not found"}, status_code=404)
+    return studio_topics(p)
+
+
 # public smart-form path (whitelisted; token IS the credential)
 @app.get("/api/v1/intake/form/{token}")
 async def intake_form_get(token: str):
