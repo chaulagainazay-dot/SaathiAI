@@ -15,6 +15,72 @@ data → experiments → evaluation → improvement, not code.
 | AI Studio | prompt quality (not FFmpeg) |
 | Cafeteria | operational data collection (not the dashboard) |
 
+**What SaathiAI v0.5 actually is:** not better YouTube/PIELTS/HCG — a system that
+**continuously improves every business using production evidence.** One learning
+system, four products.
+
+---
+
+## THE GOVERNING RULE
+
+> **Every improvement must be justified by production evidence.**
+
+- No new prompt without a measured hypothesis.
+- No workflow rewrite without production data.
+- No model switch without evaluation results.
+- No feature because it's "interesting."
+- No architecture expansion unless production evidence shows it solves a
+  *recurring* problem.
+
+This single rule is what keeps SaathiAI an operating system instead of a
+collection of experiments. It applies to this repo's own development too.
+
+---
+
+## Architecture: Evidence first
+
+Everything in Production Intelligence starts from **Evidence** — the layer above
+all the others:
+
+```
+Production Intelligence
+├── Evidence Store        ← everything starts here
+│
+├── Prompt Library
+├── Workflow Library
+├── Dataset Manager
+├── Evaluation Center
+├── Experiment Tracker
+│
+└── Improvement Engine    ← consumes evidence, proposes the next version
+```
+
+**Opik is one source of evidence, not the truth.** SaathiAI holds evidence Opik
+never sees. Evidence is the union:
+
+```
+Evidence = Opik traces
+         + Episodes (Connector → Event → Episode, already built — just extend to Evidence)
+         + Connector events (Telegram approvals, YouTube analytics, …)
+         + Business metrics (cafeteria revenue, IELTS scores, crypto PnL, daily scorecard)
+         + Human feedback (approvals, corrections)
+```
+
+Every PAT stage should emit an evidence object, e.g.:
+
+```
+Episode #41 · prompt mr-yeti.metadata v12 · score 0.91 · CTR 5.7% · retention 46%
+            · comments 73 · revenue $4.80
+```
+
+Then evaluation is never guessing: `prompt v11 vs v12 → evidence → winner`. The
+four products become one system over the same Evidence Store:
+
+- AI Studio: prompt → thumbnail → CTR → retention
+- PIELTS: essay → band prediction → real IELTS score → difference
+- HCG: signal → trade → PnL → risk
+- Cafeteria: menu → sales → waste → profit
+
 ---
 
 ## Principle: connectors, not centers
@@ -29,19 +95,23 @@ SaathiAI → Connector Registry → { OpenHands · LibreChat · Dify · Opik } d
 
 ## Tooling decisions (researched Jul 2026)
 
-| Capability | Use | Why | Status |
-|---|---|---|---|
-| **Prompt Library + versioning** | **native `saathi/ai_lab.py`** (built) | one registry every project renders from; already wired to AI Studio + auto-evals | ✅ built |
-| **Evaluation Center / tracing** | **Opik** (Comet, Apache-2.0) | ALREADY integrated (`tools/opik_tracer.py`); LLM-as-judge, datasets from traces, experiments, ~14× faster evals than Langfuse | ⚙️ present, enable it |
-| _(alt eval/observability)_ | Langfuse (MIT, 28k★) | prompt UI + playground + datasets + evals if we ever outgrow Opik | reference only |
-| **Eval-in-CI / red-team** | Promptfoo | config-driven assertions for prompt regressions in the test suite | reference only |
-| **Dataset annotation** | Argilla / Label Studio | human labelling for PIELTS bands, HCG trade outcomes | reference only |
-| **Visual Workflow editor** | Dify / Flowise / Langflow | study the UX; the AI Studio pipeline backend already exists | later (Phase, after PAT) |
-| **Universal AI console** | LibreChat / Open WebUI | compare Claude/GPT/Gemini/DeepSeek/Qwen without code | connector, later |
-| **Dev worker** | OpenHands / Aider | "fix bug #321" from the Engineering dept | connector, later |
+| Capability | Tool | Role |
+|---|---|---|
+| Prompt versioning | **Native `ai_lab` + Opik** | Core |
+| Evaluation | **Opik** (already integrated, Apache-2.0) | Core |
+| Datasets | **Native (Evidence Store) + Argilla** | Core |
+| Prompt regression | Promptfoo | CI |
+| Visual workflow | Dify | Connector — **Workflow Playground only, never the execution engine** |
+| AI console | LibreChat | Connector — the AI *comparison workstation* (Claude/GPT/Gemini/DeepSeek/GLM/Qwen/Ollama side by side, winner saved back to the Prompt Library) |
+| Dev worker | OpenHands | Connector — lives inside **Engineering** (fix #341 → commit → PAT → eval → approval) |
 
-> Native for the substrate (Prompt Registry — it must feed Episodes/Learning/`/os`);
-> connector for the heavy UIs (Dify/LibreChat/OpenHands) and the eval engine (Opik).
+> Native for the substrate (Evidence Store + Prompt Registry — they must feed
+> Episodes/Learning/`/os`); connector for the heavy UIs. **We are already past
+> where Dify starts** (Model Router, Connector Registry, Browser, Conversation,
+> Automation Center, AI Studio, Prompt Registry all exist) — so Dify is a
+> playground, not the platform. Langfuse (MIT) stays the reference alternative to
+> Opik. Every model comparison in LibreChat and every OpenHands task is judged
+> against the same Evidence Store before acceptance.
 
 ---
 
@@ -95,19 +165,24 @@ SaathiAI → Connector Registry → { OpenHands · LibreChat · Dify · Opik } d
 
 ---
 
-## Roadmap (evidence-first; M5.1 frozen)
+## The order (evidence-first; M5.1 frozen)
 
-- **Phase A — Production Intelligence** (highest ROI, helps every product):
-  Prompt Library ✅ → Evaluation Center (enable Opik) → Dataset Manager →
-  Experiment Tracker. **Do the 7-day PAT FIRST** so these tables fill with real
-  prompts/datasets/failures/evals instead of being empty.
-- **Phase B — AI Studio:** use Production Intelligence to improve scripts,
-  thumbnails, titles, hooks, retention.
-- **Phase C — PIELTS:** biggest short-term return — feed essays/speaking/grammar/
-  vocab into datasets; every human result improves `pielts.writing-eval`.
-- **Phase D — HCG Live Signal:** strategy evaluation, prompt A/B, trade replay,
-  signal-quality scoring — once Production Intelligence is mature.
+**Step 0 — Run the 7-day PAT exactly as planned.** Do NOT jump into Dify/LibreChat/
+OpenHands. The PAT produces the first real Production Intelligence dataset: prompt
+versions, Opik traces, Episodes, business metrics, human approvals, failures,
+analytics. Only after that is there evidence to organize.
 
-**The discipline:** let evidence drive the next layer. Build the substrate native,
-attach the tools as connectors around real workflows, and never let a department
-depend on a tool that could be swapped in a year.
+Then the order becomes obvious:
+
+1. **Turn on the Opik Evaluation Center** with the real traces.
+2. **Wire PIELTS essay grading** into the same evaluation pipeline (`pielts.writing-eval`).
+3. **Add a native Dataset Manager** backed by the **Evidence Store**.
+4. **Connect LibreChat** to compare prompts across models using those datasets;
+   save the winner back to the Prompt Library.
+5. **Connect OpenHands** so engineering tasks are evaluated against the same
+   evidence before they're accepted.
+
+**The discipline:** let evidence drive the next layer. Build the substrate native
+(Evidence Store, Prompt Registry), attach tools as connectors around *real*
+workflows, and never let a department depend on a tool that could be swapped in a
+year. Every addition grounded in real usage, not anticipated need.
