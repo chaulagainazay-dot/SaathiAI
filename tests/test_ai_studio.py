@@ -13,8 +13,12 @@ def _meta(topic):
     return {"title": f"Mr. Yeti: {topic}",
             "description": f"A friendly Mr. Yeti IELTS lesson about {topic} with examples.",
             "seo_tags": ["ielts", "mr yeti", topic],
-            "script": {"hook": "Struggling?", "teaching": ["idea one", "idea two"],
-                       "examples": "an example sentence here", "cta": "pielts.web.app"}}
+            "script": {"hook": f"Struggling with {topic} in your IELTS speaking test?",
+                       "teaching": ["The present perfect links a past action to the present moment "
+                                    "using has or have plus the past participle of the verb.",
+                                    "Use it for life experiences and changes that still matter now."],
+                       "examples": "I have visited London twice this year already.",
+                       "cta": "Practice free on pielts.web.app today"}}
 
 
 def test_full_run_publishes_via_injected_publisher():
@@ -55,3 +59,52 @@ def test_default_metadata_never_raises():
     from saathi.ai_studio import default_metadata
     m = default_metadata("conditionals")
     assert m["title"] and "script" in m and isinstance(m["seo_tags"], list)
+
+
+# ── operating modes + instrumentation ────────────────────────────────────────
+def test_autonomous_mode_auto_publishes_above_threshold():
+    from saathi.ai_studio import AIStudio, Mode
+    eps, events, published = [], [], []
+    studio = AIStudio(pipeline=_pipeline(eps, events), metadata_gen=_meta,
+                      publisher=lambda **k: published.append(k) or {"video_url": "https://youtu.be/x"})
+    run = studio.run(topic="modal verbs", video_path="/x.mp4", mode=Mode.AUTONOMOUS,
+                     approver=None, confidence_threshold=0.4, thumbnail="t.png")
+    assert run.status == "published"                 # no human approver needed — confidence gated
+    assert run.overall_confidence >= 0.4 and run.cost_total > 0
+    assert run.video_url == "https://youtu.be/x"
+    assert {s.stage for s in run.stages} >= {"research", "script", "gate", "publish"}
+    assert all(isinstance(s.duration_ms, int) for s in run.stages)   # time tracking
+
+
+def test_autonomous_low_confidence_pauses():
+    from saathi.ai_studio import AIStudio, Mode
+    studio = AIStudio(pipeline=_pipeline([], []), metadata_gen=_meta,
+                      publisher=lambda **k: {"video_url": "u"})
+    run = studio.run(topic="x", video_path="/x.mp4", mode=Mode.AUTONOMOUS,
+                     approver=None, confidence_threshold=0.99, thumbnail="t.png")
+    assert run.status == "awaiting_approval"         # confidence below threshold → pause
+
+
+def test_structured_failure_on_gate_block():
+    from saathi.ai_studio import AIStudio
+    studio = AIStudio(pipeline=_pipeline([], []),
+                      metadata_gen=lambda t: {"title": "Mr Yeti short", "description": "too short",
+                                              "seo_tags": ["ielts"],
+                                              "script": _meta(t)["script"]},
+                      publisher=lambda **k: {})
+    run = studio.run(topic="x", video_path="/x.mp4", approver="Ajay", thumbnail="t.png")
+    assert run.status == "gate_blocked"
+    assert run.failure and run.failure["stage"] == "gate" and run.failure["recommendation"]
+
+
+def test_studio_store_queue_counts(tmp_path):
+    from saathi.ai_studio import AIStudio, Mode
+    from saathi.studio_store import StudioStore
+    store = StudioStore(db_path=str(tmp_path / "s.db"))
+    studio = AIStudio(pipeline=_pipeline([], []), metadata_gen=_meta,
+                      publisher=lambda **k: {"video_url": "u"}, store=store)
+    studio.run(topic="a", video_path="/x", mode=Mode.AUTONOMOUS, confidence_threshold=0.4, thumbnail="t")
+    studio.run(topic="b", video_path="/x", mode=Mode.ASSISTED, approver=None, thumbnail="t")
+    counts = store.queue_counts()
+    assert counts["published"] >= 1 and counts["awaiting_approval"] >= 1
+    assert len(store.recent()) == 2

@@ -12,10 +12,19 @@ def snapshot() -> dict:
         "dream": _dream(),
         "rule": _rule(),
         "automation": _automation(),
+        "studio": _studio(),
         "learning": _learning(),
         "revenue": _revenue(),
         "needs_you": _needs_you(),
     }
+
+
+def _studio() -> dict:
+    try:
+        from saathi.studio_store import default_store
+        return default_store().queue_counts()
+    except Exception:
+        return {"awaiting_approval": 0, "published": 0, "blocked": 0, "in_progress": 0}
 
 
 def _greeting() -> str:

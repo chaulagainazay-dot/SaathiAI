@@ -15,6 +15,13 @@ export async function fetchInfraHealth() {
   return r.json();
 }
 
+// AI Studio Production Queue — counts by lane + recent runs (confidence/cost/time).
+export async function fetchStudioQueue() {
+  const r = await fetch(`${API_BASE}/api/v1/studio/queue`, { cache: "no-store" });
+  if (!r.ok) throw new Error(`studio ${r.status}`);
+  return r.json();
+}
+
 // Today's Operating System — one aggregated home-screen call (all real).
 export async function fetchCeoOs() {
   const r = await fetch(`${API_BASE}/api/v1/ceo/os`, { cache: "no-store" });
