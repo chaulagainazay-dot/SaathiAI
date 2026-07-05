@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { Panel, Eyebrow } from "@/components/ui";
-import { fetchCeoOs } from "@/lib/api";
+import { fetchCeoOs, completeMission } from "@/lib/api";
 
 const GOLD = "#E8B84B";
 const RULE = ["Decide", "Automate", "Learn", "Earn"];
@@ -22,6 +22,9 @@ export default function OperatingSystem() {
     t(); const id = setInterval(t, 10000); return () => clearInterval(id);
   }, []);
   if (!d) return <div className="only-desktop" style={{ maxWidth: 1000, margin: "40px auto", opacity: 0.5 }}>loading…</div>;
+
+  const completeMissionItem = (item) =>
+    completeMission(item).then((r) => r.mission && setD({ ...d, mission: r.mission })).catch(() => {});
 
   const met = d.rule.met || {};
   const f = (d.studio && d.studio.factory) || {};
@@ -69,6 +72,33 @@ export default function OperatingSystem() {
               </div>))}
         </Card>
       </div>
+
+      {d.mission && d.mission.topic && (
+        <Panel style={{ padding: 18, marginTop: 14 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 10 }}>
+            <div style={{ fontSize: 12, opacity: 0.55 }}>
+              🎓 {d.mission.program} — Day {d.mission.day} · {d.mission.episode}
+            </div>
+            <div style={{ fontSize: 12, opacity: 0.6 }}>🔥 {d.mission.streak}d streak · ~{d.mission.estimated_minutes} min</div>
+          </div>
+          <div style={{ fontSize: 20, fontWeight: 600, marginBottom: 2 }}>{d.mission.topic}</div>
+          <div style={{ fontSize: 12, opacity: 0.5, marginBottom: 14 }}>
+            {d.mission.phase} · {d.mission.difficulty} · 🎥 {d.mission.youtube_number} · {d.mission.video_status}
+          </div>
+          <div style={{ display: "flex", gap: 18, flexWrap: "wrap" }}>
+            {(d.mission.checklist || []).map((c) => (
+              <button key={c.key} onClick={() => completeMissionItem(c.key)}
+                style={{ background: "none", border: "none", color: "inherit", cursor: "pointer",
+                  fontSize: 14, opacity: c.done ? 0.9 : 0.6, padding: 0 }}>
+                {c.done ? "✅" : "⬜"} {c.label}
+              </button>
+            ))}
+          </div>
+          <div style={{ fontSize: 11, opacity: 0.4, marginTop: 12 }}>
+            {d.mission.completed}/{d.mission.total} done · reward +1 episode · +1 streak · +{d.mission.reward?.dream_pct}% dream
+          </div>
+        </Panel>
+      )}
 
       <Panel style={{ padding: 18, marginTop: 14 }}>
         <div style={{ fontSize: 12, opacity: 0.55, marginBottom: 12 }}>🏭 Today's Factory</div>

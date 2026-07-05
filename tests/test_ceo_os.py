@@ -5,7 +5,7 @@ from saathi.ceo_os import snapshot
 def test_snapshot_has_all_sections():
     m = snapshot()
     assert set(m) == {"greeting", "dream", "rule", "automation", "studio",
-                      "learning", "revenue", "needs_you"}
+                      "mission", "learning", "revenue", "needs_you"}
 
 
 def test_sections_are_well_formed():

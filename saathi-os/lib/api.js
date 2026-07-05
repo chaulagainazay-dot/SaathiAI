@@ -22,6 +22,16 @@ export async function fetchStudioQueue() {
   return r.json();
 }
 
+// Mark a daily IELTS Mission item done (lesson/speaking/writing/quiz).
+export async function completeMission(item) {
+  const r = await fetch(`${API_BASE}/api/v1/mission/complete`, {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ item, done: true }),
+  });
+  if (!r.ok) throw new Error(`mission ${r.status}`);
+  return r.json();
+}
+
 // Today's Operating System — one aggregated home-screen call (all real).
 export async function fetchCeoOs() {
   const r = await fetch(`${API_BASE}/api/v1/ceo/os`, { cache: "no-store" });

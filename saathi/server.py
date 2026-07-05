@@ -186,6 +186,27 @@ async def studio_queue():
     return {"counts": st.queue_counts(), "recent": st.recent(12)}
 
 
+@app.get("/api/v1/mission")
+async def daily_mission_get():
+    """Today's zero-choice IELTS Mission from the curriculum + study streak
+    (whitelisted read)."""
+    from saathi.daily_mission import mission
+    return mission()
+
+
+@app.post("/api/v1/mission/complete")
+async def daily_mission_complete(request: Request):
+    """Mark a mission item done (lesson/speaking/writing/quiz). Token-gated."""
+    body = await request.json()
+    item = (body or {}).get("item", "")
+    done = (body or {}).get("done", True)
+    from saathi.daily_mission import mark, mission, ITEMS
+    if item not in {k for k, _ in ITEMS}:
+        return {"ok": False, "error": f"unknown item {item!r}"}
+    mark(item, bool(done))
+    return {"ok": True, "mission": mission()}
+
+
 @app.get("/api/v1/platform/maturity")
 async def platform_maturity():
     """Honest platform-maturity mirror (Infrastructure vs Applications vs Real
@@ -452,6 +473,8 @@ async def _auth(request, call_next):
             or path == "/api/v1/infrastructure/health"
             or path == "/api/v1/platform/maturity"
             or path == "/api/v1/studio/queue"
+            or path == "/api/v1/mission"
+            or path == "/api/v1/mission/complete"
             or path == "/api/v1/human/automation"
             or path == "/api/v1/human/teach"
             or path.startswith("/api/v1/human/runs/")

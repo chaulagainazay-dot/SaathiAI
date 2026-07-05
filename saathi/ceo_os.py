@@ -13,6 +13,7 @@ def snapshot() -> dict:
         "rule": _rule(),
         "automation": _automation(),
         "studio": _studio(),
+        "mission": _mission(),
         "learning": _learning(),
         "revenue": _revenue(),
         "needs_you": _needs_you(),
@@ -31,6 +32,14 @@ def _studio() -> dict:
         return {"awaiting_approval": 0, "published": 0, "blocked": 0, "in_progress": 0,
                 "factory": {"runs": 0, "published": 0, "waiting_approval": 0, "blocked": 0,
                             "avg_confidence": 0, "avg_cost": 0, "avg_runtime_ms": 0}}
+
+
+def _mission() -> dict:
+    try:
+        from saathi.daily_mission import mission
+        return mission()
+    except Exception:
+        return {}
 
 
 def _greeting() -> str:

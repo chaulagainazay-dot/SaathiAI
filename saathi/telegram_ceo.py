@@ -50,6 +50,12 @@ def briefing_text(home: dict, scorecard: str | None = None) -> str:
                 pass
         if "⬜ reflect" in scorecard:
             lines.append("🪞  /reflect — what surprised you today?")
+    # today's zero-choice IELTS mission (the reason to not open the app)
+    try:
+        from saathi.daily_mission import briefing_lines
+        lines += briefing_lines()
+    except Exception:
+        pass
     lines += ["", "Reply:  /learn   /approve   /details   /revenue"]
     return "\n".join(lines)
 
