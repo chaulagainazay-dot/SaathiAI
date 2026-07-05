@@ -110,6 +110,22 @@ def test_studio_store_queue_counts(tmp_path):
     assert len(store.recent()) == 2
 
 
+def test_studio_store_record_payload_from_dict(tmp_path):
+    from saathi.studio_store import StudioStore
+    store = StudioStore(db_path=str(tmp_path / "s.db"))
+    # a StudioRun.as_dict()-shaped payload from a remote Mac worker
+    payload = {"topic": "past perfect", "mode": "assisted", "status": "published",
+               "overall_confidence": 0.91, "cost_total": 0.42, "duration_ms": 21000,
+               "video_url": "https://youtu.be/x", "failure": None, "run_id": "PAT-1",
+               "stage_flags": {"research": True, "publish": True}, "project_id": "proj9"}
+    store.record_payload(payload)
+    r = store.recent()[0]
+    assert r["topic"] == "past perfect" and r["status"] == "published"
+    assert r["confidence"] == 0.91 and r["project_id"] == "proj9"
+    assert store.queue_counts()["published"] == 1
+    assert store.factory_kpis()["runs"] == 1
+
+
 def test_factory_kpis_today(tmp_path):
     from saathi.ai_studio import AIStudio, Mode
     from saathi.studio_store import StudioStore

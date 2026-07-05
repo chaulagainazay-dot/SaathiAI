@@ -55,6 +55,22 @@ class StudioStore:
                  getattr(sr, "project_id", "")))
         return rid
 
+    def record_payload(self, d: dict) -> str:
+        """Record a run from a StudioRun.as_dict() payload — used when the Mac
+        worker reports its runs to the VM so one dashboard reflects everything."""
+        import json
+        rid = uuid.uuid4().hex[:12]
+        with self._conn() as c:
+            c.execute("""INSERT INTO studio_runs
+                (id,topic,mode,status,confidence,cost,duration_ms,video_url,failure,created,run_id,stage_flags,project_id)
+                VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                (rid, d.get("topic", ""), d.get("mode", ""), d.get("status", ""),
+                 float(d.get("overall_confidence", 0) or 0), float(d.get("cost_total", 0) or 0),
+                 int(d.get("duration_ms", 0) or 0), d.get("video_url", ""),
+                 json.dumps(d["failure"]) if d.get("failure") else "", time.time(),
+                 d.get("run_id", ""), json.dumps(d.get("stage_flags", {}) or {}), d.get("project_id", "")))
+        return rid
+
     def recent(self, limit: int = 15) -> list[dict]:
         with self._conn() as c:
             rows = c.execute("SELECT * FROM studio_runs ORDER BY created DESC LIMIT ?", (limit,)).fetchall()

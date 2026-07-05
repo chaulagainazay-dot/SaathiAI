@@ -177,6 +177,25 @@ async def ceo_operating_system():
     return await asyncio.to_thread(snapshot)
 
 
+@app.get("/", include_in_schema=False)
+async def _root_to_saathi_os():
+    """Retire the legacy 'Baadar' static UI: the local instance now opens the
+    same SaathiAI OS dashboard. On the VM, Caddy serves '/' → Next, so this is
+    only hit locally. SAATHI_OS_URL overrides the target."""
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse(_os.getenv("SAATHI_OS_URL", "http://localhost:3000"), status_code=307)
+
+
+@app.post("/api/v1/studio/report")
+async def studio_report(request: Request):
+    """The Mac worker reports a completed AI Studio run so the VM's Production
+    Queue + Today's Factory reflect real Mac production. Token-gated."""
+    body = await request.json()
+    from saathi.studio_store import default_store
+    rid = default_store().record_payload(body or {})
+    return {"ok": True, "id": rid}
+
+
 @app.get("/api/v1/studio/queue")
 async def studio_queue():
     """Production Queue — content-factory bird's-eye view + recent runs with

@@ -26,10 +26,16 @@ def _report(run, topic, platforms, t0):
                            duration_ms=round((time.time() - t0) * 1000), started=t0)
     if base and token:
         import httpx
-        httpx.post(f"{base}/api/v1/human/report-run", headers={"x-saathi-token": token},
+        h = {"x-saathi-token": token}
+        httpx.post(f"{base}/api/v1/human/report-run", headers=h,
                    json={"workflow": "ai_studio", "capability": "publish_video", "title": topic,
                          "ok": ok, "error": "" if ok else run.status, "video_url": url,
                          "duration_ms": round((time.time() - t0) * 1000), "started": t0}, timeout=20)
+        # sync the full run → VM Production Queue / Today's Factory (one dashboard)
+        try:
+            httpx.post(f"{base}/api/v1/studio/report", headers=h, json=run.as_dict(), timeout=20)
+        except Exception:
+            pass
 
 
 def main():

@@ -41,6 +41,13 @@ def main():
                          run_prefix="CLIENT", project_id=pid)
         print(f"  status {run.status} · confidence {run.overall_confidence} · "
               f"cost ${run.cost_total:.2f}" + (f" · {run.video_url}" if run.video_url else ""))
+        token = os.getenv("SAATHI_TOKEN")
+        if token and base != "http://localhost:8765":   # sync to the VM dashboard
+            try:
+                httpx.post(f"{base}/api/v1/studio/report", headers={"x-saathi-token": token},
+                           json=run.as_dict(), timeout=20)
+            except Exception:
+                pass
     return 0
 
 

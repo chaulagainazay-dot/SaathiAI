@@ -4,8 +4,21 @@
     {
       "name": "baadar",
       "runtimeExecutable": "/Users/macbookpro/SaathiAI/.venv/bin/python",
-      "runtimeArgs": ["-m", "saathi.server"],
+      "runtimeArgs": [
+        "-m",
+        "saathi.server"
+      ],
       "port": 8765
+    },
+    {
+      "name": "saathi-os-ui",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev"
+      ],
+      "cwd": "saathi-os",
+      "port": 3000
     }
   ]
 }
