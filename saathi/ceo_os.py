@@ -20,11 +20,17 @@ def snapshot() -> dict:
 
 
 def _studio() -> dict:
+    """Today's Factory — queue lanes + today's real averages (confidence/cost/runtime)."""
     try:
         from saathi.studio_store import default_store
-        return default_store().queue_counts()
+        st = default_store()
+        out = st.queue_counts()
+        out["factory"] = st.factory_kpis()
+        return out
     except Exception:
-        return {"awaiting_approval": 0, "published": 0, "blocked": 0, "in_progress": 0}
+        return {"awaiting_approval": 0, "published": 0, "blocked": 0, "in_progress": 0,
+                "factory": {"runs": 0, "published": 0, "waiting_approval": 0, "blocked": 0,
+                            "avg_confidence": 0, "avg_cost": 0, "avg_runtime_ms": 0}}
 
 
 def _greeting() -> str:

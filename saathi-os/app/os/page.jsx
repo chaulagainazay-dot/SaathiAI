@@ -24,6 +24,8 @@ export default function OperatingSystem() {
   if (!d) return <div className="only-desktop" style={{ maxWidth: 1000, margin: "40px auto", opacity: 0.5 }}>loading…</div>;
 
   const met = d.rule.met || {};
+  const f = (d.studio && d.studio.factory) || {};
+  const runtime = f.avg_runtime_ms ? `${Math.floor(f.avg_runtime_ms / 60000)}m ${Math.round((f.avg_runtime_ms % 60000) / 1000)}s` : "—";
   return (
     <div className="only-desktop" style={{ maxWidth: 1000, margin: "0 auto" }}>
       <div style={{ fontSize: 30, fontWeight: 600, margin: "6px 0 4px" }}>{d.greeting} 👋</div>
@@ -67,6 +69,29 @@ export default function OperatingSystem() {
               </div>))}
         </Card>
       </div>
+
+      <Panel style={{ padding: 18, marginTop: 14 }}>
+        <div style={{ fontSize: 12, opacity: 0.55, marginBottom: 12 }}>🏭 Today's Factory</div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 14, rowGap: 16 }}>
+          {[
+            ["Runs", f.runs ?? 0],
+            ["Published", f.published ?? 0],
+            ["Waiting", f.waiting_approval ?? 0],
+            ["Blocked", f.blocked ?? 0, (f.blocked ?? 0) > 0 ? "#FF5A5A" : null],
+            ["Avg Confidence", `${Math.round((f.avg_confidence || 0) * 100)}%`],
+            ["Avg Cost", `$${(f.avg_cost || 0).toFixed(2)}`],
+            ["Avg Runtime", runtime],
+            ["Learning Episodes", d.learning.episodes_today],
+            ["Verified Insights", d.learning.verified_improvements],
+            ["Revenue Today", `$${d.revenue.ai_studio || 0}`],
+          ].map(([label, val, col]) => (
+            <div key={label}>
+              <div style={{ fontSize: 22, fontWeight: 600, color: col || "inherit" }}>{val}</div>
+              <div style={{ fontSize: 11, opacity: 0.5 }}>{label}</div>
+            </div>
+          ))}
+        </div>
+      </Panel>
 
       <input placeholder="Ask Saathi…" style={{ width: "100%", marginTop: 18, padding: "12px 16px",
         borderRadius: 24, border: "1px solid rgba(255,255,255,0.12)", background: "rgba(255,255,255,0.04)",

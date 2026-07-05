@@ -45,6 +45,28 @@ class StudioStore:
             rows = c.execute("SELECT * FROM studio_runs ORDER BY created DESC LIMIT ?", (limit,)).fetchall()
         return [dict(r) for r in rows]
 
+    def factory_kpis(self, now: float | None = None) -> dict:
+        """Today's Factory — one-glance health from real rows since local midnight.
+        Averages are over today's runs only; 0/None-safe so the card never crashes."""
+        import time as _t
+        now = now or _t.time()
+        lt = _t.localtime(now)
+        midnight = now - (lt.tm_hour * 3600 + lt.tm_min * 60 + lt.tm_sec)
+        with self._conn() as c:
+            rows = [dict(r) for r in c.execute(
+                "SELECT * FROM studio_runs WHERE created >= ?", (midnight,)).fetchall()]
+        runs = len(rows)
+        published = sum(1 for r in rows if r["status"] == "published")
+        waiting = sum(1 for r in rows if r["status"] == "awaiting_approval")
+        blocked = sum(1 for r in rows if r["status"] in {"script_blocked", "gate_blocked", "publish_failed"})
+        avg = lambda k: round(sum(r[k] or 0 for r in rows) / runs, 3) if runs else 0
+        return {
+            "runs": runs, "published": published, "waiting_approval": waiting, "blocked": blocked,
+            "avg_confidence": avg("confidence"),
+            "avg_cost": avg("cost"),
+            "avg_runtime_ms": int(avg("duration_ms")),
+        }
+
     def queue_counts(self) -> dict:
         # map internal statuses → the operator's production-queue lanes
         lanes = {"awaiting_approval": 0, "published": 0, "blocked": 0, "in_progress": 0}

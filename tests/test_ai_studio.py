@@ -108,3 +108,16 @@ def test_studio_store_queue_counts(tmp_path):
     counts = store.queue_counts()
     assert counts["published"] >= 1 and counts["awaiting_approval"] >= 1
     assert len(store.recent()) == 2
+
+
+def test_factory_kpis_today(tmp_path):
+    from saathi.ai_studio import AIStudio, Mode
+    from saathi.studio_store import StudioStore
+    store = StudioStore(db_path=str(tmp_path / "s.db"))
+    studio = AIStudio(pipeline=_pipeline([], []), metadata_gen=_meta,
+                      publisher=lambda **k: {"video_url": "u"}, store=store)
+    studio.run(topic="a", video_path="/x", mode=Mode.AUTONOMOUS, confidence_threshold=0.4, thumbnail="t")
+    studio.run(topic="b", video_path="/x", mode=Mode.ASSISTED, approver=None, thumbnail="t")
+    k = store.factory_kpis()
+    assert k["runs"] == 2 and k["published"] >= 1 and k["waiting_approval"] >= 1
+    assert 0 <= k["avg_confidence"] <= 1 and k["avg_cost"] >= 0 and k["avg_runtime_ms"] >= 0
