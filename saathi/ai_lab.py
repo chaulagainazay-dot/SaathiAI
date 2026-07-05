@@ -180,6 +180,11 @@ _SEED = [
     ("hcg.signal", "hcg", "Detect swing opportunities from market data",
      "Analyse this market data for a swing-trade signal (signals only, no auto-trading): "
      "{market}. Reply with signal, confidence, and reasoning."),
+    ("agency.research", "agency", "Research a client company → strategy + direction",
+     "You are an agency strategist. Research this company and produce a plan.\n{brief}\n"
+     'Reply ONLY as JSON: {{"research":{{"summary","industry_overview","opportunities":[],'
+     '"gaps":[],"competitors":[],"positioning"}},"strategy":{{"direction","content_ideas":[],'
+     '"marketing_plan","next_steps":[]}}}}'),
 ]
 
 

@@ -63,6 +63,18 @@ export default function MobileHome() {
         </div>
       </div>
 
+      {/* create new project */}
+      <button onClick={() => router.push("/projects")} className="m-card"
+        style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer", textAlign: "left",
+          border: "1px solid rgba(108,63,207,0.4)", background: "rgba(108,63,207,0.10)", color: "inherit" }}>
+        <span style={{ fontSize: 22 }}>📁</span>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontWeight: 600, fontSize: 14.5 }}>Create New Project</div>
+          <div className="mono" style={{ fontSize: 10, color: "var(--color-ink-400)", marginTop: 2 }}>Capture a company → AI research → strategy</div>
+        </div>
+        <span style={{ fontSize: 18, color: "#6C3FCF" }}>+</span>
+      </button>
+
       {/* today's IELTS mission */}
       {mission && mission.topic && (
         <div className="m-card">

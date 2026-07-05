@@ -256,6 +256,84 @@ async def lab_rollback(name: str, request: Request):
     return {"ok": ok}
 
 
+# ── Client Intake — "Create New Project" ─────────────────────────────────────
+def _share_url(request: Request, token: str) -> str:
+    base = str(request.base_url).rstrip("/")
+    return f"{base}/project/create/{token}"
+
+
+@app.get("/api/v1/intake/projects")
+async def intake_list():
+    """All client-intake projects (whitelisted read)."""
+    from saathi.client_intake import default_store
+    return {"projects": default_store().list()}
+
+
+@app.post("/api/v1/intake/projects")
+async def intake_create(request: Request):
+    """Create a new project (optionally with initial company data). Returns the
+    share link for the smart-form capture path."""
+    body = await request.json()
+    from saathi.client_intake import default_store
+    p = default_store().create(body or {})
+    p["share_url"] = _share_url(request, p["token"])
+    return p
+
+
+@app.get("/api/v1/intake/projects/{pid}")
+async def intake_get(pid: str, request: Request):
+    from saathi.client_intake import default_store
+    p = default_store().get(pid)
+    if not p:
+        return JSONResponse({"error": "not found"}, status_code=404)
+    p["share_url"] = _share_url(request, p["token"])
+    return p
+
+
+@app.patch("/api/v1/intake/projects/{pid}")
+async def intake_update(pid: str, request: Request):
+    body = await request.json()
+    from saathi.client_intake import default_store
+    p = default_store().update(pid, body.get("data", body), status=body.get("status"))
+    return p or JSONResponse({"error": "not found"}, status_code=404)
+
+
+@app.post("/api/v1/intake/projects/{pid}/research")
+async def intake_research(pid: str):
+    """Run AI research → strategy, mark the project ready."""
+    import asyncio
+    from saathi.client_intake import default_store, research_project
+    store = default_store()
+    p = store.get(pid)
+    if not p:
+        return JSONResponse({"error": "not found"}, status_code=404)
+    store.set_status(pid, "researching")
+    research, strategy = await asyncio.to_thread(research_project, p)
+    return store.set_output(pid, research, strategy)
+
+
+# public smart-form path (whitelisted; token IS the credential)
+@app.get("/api/v1/intake/form/{token}")
+async def intake_form_get(token: str):
+    from saathi.client_intake import default_store
+    p = default_store().get_by_token(token)
+    if not p:
+        return JSONResponse({"error": "invalid link"}, status_code=404)
+    return {"id": p["id"], "status": p["status"], "data": p["data"]}
+
+
+@app.post("/api/v1/intake/form/{token}")
+async def intake_form_submit(token: str, request: Request):
+    body = await request.json()
+    from saathi.client_intake import default_store
+    store = default_store()
+    p = store.get_by_token(token)
+    if not p:
+        return JSONResponse({"error": "invalid link"}, status_code=404)
+    updated = store.update(p["id"], body.get("data", body), status="submitted")
+    return {"ok": True, "status": updated["status"]}
+
+
 @app.get("/api/v1/platform/maturity")
 async def platform_maturity():
     """Honest platform-maturity mirror (Infrastructure vs Applications vs Real
@@ -526,6 +604,9 @@ async def _auth(request, call_next):
             or path == "/api/v1/mission/complete"
             or path == "/api/v1/lab/prompts"
             or path.startswith("/api/v1/lab/prompts/")
+            or path == "/api/v1/intake/projects"
+            or path.startswith("/api/v1/intake/projects/")
+            or path.startswith("/api/v1/intake/form/")
             or path == "/api/v1/human/automation"
             or path == "/api/v1/human/teach"
             or path.startswith("/api/v1/human/runs/")

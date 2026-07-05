@@ -26,6 +26,40 @@ export async function fetchStudioQueue() {
   return r.json();
 }
 
+// ── Client Intake — Create New Project ──────────────────────────────────────
+export async function fetchProjects() {
+  const r = await fetch(`${API_BASE}/api/v1/intake/projects`, { cache: "no-store" });
+  if (!r.ok) throw new Error(`projects ${r.status}`); return r.json();
+}
+export async function createProject(data = {}) {
+  const r = await fetch(`${API_BASE}/api/v1/intake/projects`, {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
+  if (!r.ok) throw new Error(`create ${r.status}`); return r.json();
+}
+export async function fetchProject(id) {
+  const r = await fetch(`${API_BASE}/api/v1/intake/projects/${id}`, { cache: "no-store" });
+  if (!r.ok) throw new Error(`project ${r.status}`); return r.json();
+}
+export async function updateProject(id, data, status) {
+  const r = await fetch(`${API_BASE}/api/v1/intake/projects/${id}`, {
+    method: "PATCH", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ data, status }) });
+  if (!r.ok) throw new Error(`update ${r.status}`); return r.json();
+}
+export async function researchProject(id) {
+  const r = await fetch(`${API_BASE}/api/v1/intake/projects/${id}/research`, { method: "POST" });
+  if (!r.ok) throw new Error(`research ${r.status}`); return r.json();
+}
+export async function fetchIntakeForm(token) {
+  const r = await fetch(`${API_BASE}/api/v1/intake/form/${token}`, { cache: "no-store" });
+  if (!r.ok) throw new Error(`form ${r.status}`); return r.json();
+}
+export async function submitIntakeForm(token, data) {
+  const r = await fetch(`${API_BASE}/api/v1/intake/form/${token}`, {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ data }) });
+  if (!r.ok) throw new Error(`submit ${r.status}`); return r.json();
+}
+
 // Log in (sets the httponly session cookie so chat/writes are authorized).
 export async function login(password) {
   const r = await fetch(`${API_BASE}/api/v1/auth/login`, {
