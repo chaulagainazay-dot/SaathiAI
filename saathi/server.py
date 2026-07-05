@@ -552,10 +552,11 @@ _PASSWORD_HASH = _hashlib.sha256(_RAW_PASSWORD.encode()).hexdigest() if _RAW_PAS
 
 
 def _session_token() -> str:
-    """Deterministic session token derived from the current password hash.
-    Stateless — survives server restarts. Changing the password invalidates
-    every existing session automatically (recomputes to a new value)."""
-    return _hashlib.sha256((_PASSWORD_HASH + ":baadar-session").encode()).hexdigest()
+    """Deterministic session token. Seeded from the password hash when a password
+    is set, otherwise from SAATHI_TOKEN — so a login is possible (and the session
+    cookie is honoured) even when BAADAR_PASSWORD isn't configured. Stateless."""
+    seed = _PASSWORD_HASH or ACCESS_TOKEN or ""
+    return _hashlib.sha256((seed + ":baadar-session").encode()).hexdigest()
 
 
 def _is_local(request) -> bool:
@@ -576,15 +577,20 @@ def _is_local(request) -> bool:
 
 
 def _is_authed(request) -> bool:
-    """Check session token from cookie or header."""
-    if not _PASSWORD_HASH:
-        # No password configured: only genuine local callers are trusted. On a
-        # public deployment (proxied traffic) this returns False, so callers
-        # must present the SAATHI_TOKEN or a Logto JWT instead of walking in.
-        return _is_local(request)
-    token = (request.cookies.get("baadar_session")
+    """Authorize via session cookie, session header, or the raw SAATHI_TOKEN."""
+    # a valid session cookie/header (issued by /auth/login) is always accepted
+    cookies = getattr(request, "cookies", None) or {}
+    token = (cookies.get("baadar_session")
              or request.headers.get("x-baadar-session", ""))
-    return token == _session_token()
+    if token and token == _session_token():
+        return True
+    # the raw platform token also authorizes (API clients)
+    if ACCESS_TOKEN and request.headers.get("x-saathi-token") == ACCESS_TOKEN:
+        return True
+    # no password configured → trust genuine local callers (unchanged contract)
+    if not _PASSWORD_HASH:
+        return _is_local(request)
+    return False
 
 
 @app.middleware("http")
@@ -652,9 +658,15 @@ class LoginIn(BaseModel):
 def login(body: LoginIn):
     from fastapi.responses import JSONResponse
     import hashlib
-    if _PASSWORD_HASH:
-        given = hashlib.sha256(body.password.encode()).hexdigest()
-        if given != _PASSWORD_HASH:
+    given = hashlib.sha256(body.password.encode()).hexdigest()
+    # accept the configured password OR the SAATHI_TOKEN (so login works even when
+    # BAADAR_PASSWORD isn't set — the previous behaviour issued a cookie that was
+    # then ignored, causing an endless re-login loop).
+    ok = (_PASSWORD_HASH and given == _PASSWORD_HASH) or (ACCESS_TOKEN and body.password == ACCESS_TOKEN)
+    if not ok:
+        if not (_PASSWORD_HASH or ACCESS_TOKEN):
+            ok = True  # nothing configured — let the owner in
+        else:
             return JSONResponse({"ok": False, "error": "Wrong password"}, status_code=401)
     token = _session_token()
     r = JSONResponse({"ok": True, "token": token})
