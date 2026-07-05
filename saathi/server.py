@@ -618,6 +618,7 @@ async def _auth(request, call_next):
             or path == "/api/v1/studio/queue"
             or path == "/api/v1/mission"
             or path == "/api/v1/mission/complete"
+            or path == "/api/v1/agent/chat"
             or path == "/api/v1/lab/prompts"
             or path.startswith("/api/v1/lab/prompts/")
             or path == "/api/v1/intake/projects"
@@ -739,8 +740,30 @@ def _safe_respond(text: str, session_id: str, speaker_verified: bool) -> str:
         return f"Sorry, something broke on my side: {type(e).__name__}. Try again?"
 
 
+# lightweight brain rate limit — chat is open (no login) but the LLM quota is
+# protected: per-caller and global sliding windows.
+_CHAT_HITS: dict = {}
+_CHAT_GLOBAL: list = []
+_CHAT_PER_IP, _CHAT_GLOBAL_MAX, _CHAT_WINDOW = 30, 240, 600.0   # per-IP / global per 10 min
+
+
+def _rate_ok(request: Request) -> bool:
+    now = time.time()
+    key = (request.headers.get("x-forwarded-for", "").split(",")[0].strip()
+           or (request.client.host if request.client else "local"))
+    _CHAT_GLOBAL[:] = [t for t in _CHAT_GLOBAL if now - t < _CHAT_WINDOW]
+    hits = [t for t in _CHAT_HITS.get(key, []) if now - t < _CHAT_WINDOW]
+    if len(hits) >= _CHAT_PER_IP or len(_CHAT_GLOBAL) >= _CHAT_GLOBAL_MAX:
+        _CHAT_HITS[key] = hits
+        return False
+    hits.append(now); _CHAT_HITS[key] = hits; _CHAT_GLOBAL.append(now)
+    return True
+
+
 @app.post("/api/v1/agent/chat")
-def chat(body: ChatIn):
+def chat(body: ChatIn, request: Request):
+    if not _rate_ok(request):
+        return {"reply": "I'm getting a lot of requests right now — give me a minute and try again."}
     reply = _safe_respond(body.text, body.session_id, body.speaker_verified)
     return {"reply": reply}
 
