@@ -184,6 +184,26 @@ export async function createMissionTwin(payload) {
   return r.json();
 }
 
+// Brand Identity + Voice Registry (voice = reusable per-Mission asset).
+export async function fetchBrand(missionId) {
+  const r = await fetch(`${API_BASE}/api/v1/missions/${missionId}/brand`, { cache: "no-store" });
+  if (!r.ok) throw new Error(`brand ${r.status}`);
+  return r.json();
+}
+export async function registerVoice(missionId, payload) {
+  const r = await fetch(`${API_BASE}/api/v1/missions/${missionId}/voices`, {
+    method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload) });
+  if (!r.ok) throw new Error(`voice ${r.status}`);
+  return r.json();
+}
+export async function activateVoice(missionId, voiceId) {
+  const r = await fetch(`${API_BASE}/api/v1/missions/${missionId}/voices/${voiceId}/activate`, {
+    method: "POST", credentials: "include" });
+  if (!r.ok) throw new Error(`activate ${r.status}`);
+  return r.json();
+}
+
 // Workflows + Tasks (Director → Workflow → Task).
 export async function fetchWorkflows(missionId) {
   const r = await fetch(`${API_BASE}/api/v1/missions/${missionId}/workflows`, { cache: "no-store" });

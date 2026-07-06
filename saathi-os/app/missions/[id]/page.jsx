@@ -42,6 +42,9 @@ export default function MissionDetail() {
           {m.key} · {m.department} · {m.status}
         </div>
         <div style={{ display: "flex", gap: 8 }}>
+          <a href={`/missions/${id}/voice`} style={{ fontSize: 12.5, fontWeight: 600, color,
+            textDecoration: "none", padding: "7px 14px", borderRadius: 10, border: `1px solid ${color}66` }}>
+            🎙 Voice{d.active_voice ? ` · ${d.active_voice.name}` : ""}</a>
           <a href={`/missions/${id}/intake`} style={{ fontSize: 12.5, fontWeight: 600, color,
             textDecoration: "none", padding: "7px 14px", borderRadius: 10, border: `1px solid ${color}66` }}>
             ＋ Intake</a>
