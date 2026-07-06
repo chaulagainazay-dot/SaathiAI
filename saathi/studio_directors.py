@@ -94,6 +94,7 @@ class Production:
     research: dict = field(default_factory=dict)
     creative: dict = field(default_factory=dict)
     script: dict = field(default_factory=dict)
+    scene_package: dict = field(default_factory=dict)
     est_seconds: int = 0
     notes: list = field(default_factory=list)
 
@@ -125,8 +126,16 @@ class StudioExecutive:
         doc = write_script(brief)
         p.script = doc.as_dict(); p.est_seconds = doc.est_seconds; p.status = "scripted"
 
+        # Visual Department — Scene Package (image prompts, camera, motion, character)
+        try:
+            from saathi.studio_visual import scene_package
+            p.scene_package = scene_package(p.script); p.status = "storyboarded"
+        except Exception:
+            p.scene_package = {}
+
         # ready-vs-revision gate
-        ok = bool(doc.hook) and len(doc.scenes) >= 3 and bool(doc.cta) and 20 <= doc.est_seconds <= 400
+        ok = (bool(doc.hook) and len(doc.scenes) >= 3 and bool(doc.cta)
+              and 20 <= doc.est_seconds <= 400 and bool(p.scene_package.get("scenes")))
         p.status = "ready" if ok else "revision"
         if not ok:
             p.notes.append("Needs revision: missing hook/CTA, too few scenes, or bad duration.")

@@ -202,6 +202,10 @@ _SEED = [
      "per scene; a real IELTS example; end with the CTA. Reply ONLY as JSON: "
      '{{"hook","learning_goal","scenes":[{{"narration","visual","camera","animation","seconds"}}],'
      '"cta","thumbnail_ideas":[],"seo":{{"title","description","tags":[]}},"captions"}}. 4-6 scenes.'),
+    ("mr-yeti.storyboard", "mr-yeti", "Episode Script → Scene Package (image prompts/camera/motion)",
+     "You are the Storyboard Director for a Mr. Yeti IELTS episode. For each scene give a vivid "
+     "image prompt (character-consistent), camera, motion, transition, effects.\n{brief}\n"
+     'Reply ONLY as JSON: {{"scenes":[{{"n","image_prompt","camera","motion","transition","effects"}}]}}.'),
     ("agency.research", "agency", "Research a client company → full strategy + roadmap",
      "You are a senior agency strategist. Research this company and produce a complete "
      "plan.\n{brief}\nReply ONLY as JSON with this exact shape:\n"

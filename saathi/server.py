@@ -228,6 +228,31 @@ async def studio_produce():
     return p.as_dict()
 
 
+@app.get("/api/v1/studio/storyboard")
+async def studio_storyboard():
+    """Visual Department — today's plan → script → Scene Package. Whitelisted."""
+    import asyncio
+    from saathi.studio import plan_today
+    from saathi.script_director import build_brief, write_script
+    from saathi.studio_visual import scene_package
+    plan = plan_today().as_dict()
+    doc = await asyncio.to_thread(write_script, build_brief(plan))
+    pkg = await asyncio.to_thread(scene_package, doc.as_dict())
+    return {"plan": {"day": plan["day"], "episode": plan["episode"], "topic": plan["topic"]}, "scene_package": pkg}
+
+
+@app.get("/api/v1/directors/registry")
+async def directors_registry(capability: str = "", quality: str = "balanced", cost: str = "any"):
+    """Director Registry — capability→best director (provider-agnostic). Whitelisted."""
+    from saathi.production.director_registry import default_registry
+    reg = default_registry()
+    if not capability:
+        return {"capabilities": reg.capabilities(), "directors": reg.catalog()}
+    best = reg.best(capability, quality=quality, cost=cost)
+    return {"capability": capability, "best": best.info() if best else None,
+            "chain": [s.info() for s in reg.route(capability, quality=quality, cost=cost)]}
+
+
 @app.get("/api/v1/studio/script")
 async def studio_script():
     """Script Director — today's plan → structured episode document. Whitelisted."""
@@ -722,7 +747,9 @@ async def _auth(request, call_next):
             or path == "/api/v1/studio/queue"
             or path == "/api/v1/studio/plan"
             or path == "/api/v1/studio/script"
+            or path == "/api/v1/studio/storyboard"
             or path == "/api/v1/studio/produce"
+            or path == "/api/v1/directors/registry"
             or path == "/api/v1/mission"
             or path == "/api/v1/mission/complete"
             or path == "/api/v1/agent/chat"
