@@ -47,25 +47,46 @@ export default function MissionDetail() {
         ))}
       </div>
 
-      {/* Business Digital Twin — briefing + departments + roadmap */}
+      {/* Business Digital Twin — Executive Strategist briefing + confidence + reports */}
       {d.twin && (
         <Panel style={{ padding: 18, marginBottom: 16, borderLeft: `3px solid ${color}` }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
             <Eyebrow style={{ color }}>Business Digital Twin · Executive Briefing</Eyebrow>
             <span className="mono" style={{ fontSize: 12 }}>
               Health <b style={{ color: (d.twin.briefing?.health || 0) >= 0.6 ? TEAL : AMBER }}>
-                {pct(d.twin.briefing?.health)}</b></span>
+                {pct(d.twin.briefing?.health)}</b>
+              {"  ·  "}Confidence <b style={{ color: (d.twin.confidence?.overall || 0) >= 0.6 ? TEAL : AMBER }}>
+                {pct(d.twin.confidence?.overall)}</b></span>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18, marginTop: 12 }}>
+
+          {/* confidence dimensions — how much we actually know */}
+          {d.twin.confidence?.dimensions && (
+            <div style={{ marginTop: 10, display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8 }}>
+              {Object.entries(d.twin.confidence.dimensions).map(([dim, v]) => (
+                <div key={dim} style={{ fontSize: 10.5 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", opacity: 0.6 }}>
+                    <span style={{ textTransform: "capitalize" }}>{dim}</span><span>{pct(v)}</span>
+                  </div>
+                  <div style={{ height: 4, borderRadius: 3, background: "rgba(255,255,255,0.07)", marginTop: 2 }}>
+                    <div style={{ width: pct(v), height: "100%", borderRadius: 3,
+                      background: v >= 0.6 ? TEAL : v > 0 ? AMBER : "rgba(255,255,255,0.1)" }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18, marginTop: 14 }}>
             <div>
-              <div style={{ fontSize: 11, opacity: 0.5, color: TEAL }}>STRENGTHS</div>
-              {(d.twin.briefing?.strengths || []).map((s, i) => <div key={i} style={{ fontSize: 12.5, padding: "2px 0" }}>✓ {s}</div>)}
-              <div style={{ fontSize: 11, opacity: 0.5, color: RED, marginTop: 8 }}>WEAKNESSES</div>
-              {(d.twin.briefing?.weaknesses || []).map((s, i) => <div key={i} style={{ fontSize: 12.5, padding: "2px 0" }}>⚠ {s}</div>)}
+              <div style={{ fontSize: 11, opacity: 0.5, color: RED }}>TOP RISKS</div>
+              {(d.twin.briefing?.top_risks || []).map((s, i) => <div key={i} style={{ fontSize: 12.5, padding: "2px 0" }}>⚠ {s}</div>)}
+              {(d.twin.briefing?.top_risks || []).length === 0 && <div style={{ fontSize: 12, opacity: 0.4 }}>none flagged</div>}
+              <div style={{ fontSize: 11, opacity: 0.5, color: TEAL, marginTop: 8 }}>QUICK WINS</div>
+              {(d.twin.briefing?.quick_wins || []).map((s, i) => <div key={i} style={{ fontSize: 12.5, padding: "2px 0" }}>✓ {s}</div>)}
             </div>
             <div>
               <div style={{ fontSize: 11, opacity: 0.5, color: AMBER }}>TOP OPPORTUNITIES</div>
-              {(d.twin.briefing?.opportunities || []).map((s, i) => <div key={i} style={{ fontSize: 12.5, padding: "2px 0" }}>{i + 1}. {s}</div>)}
+              {(d.twin.briefing?.top_opportunities || []).map((s, i) => <div key={i} style={{ fontSize: 12.5, padding: "2px 0" }}>{i + 1}. {s}</div>)}
               <div style={{ fontSize: 11, opacity: 0.5, marginTop: 8 }}>ESTIMATED ROI</div>
               {Object.entries(d.twin.briefing?.roi || {}).map(([area, stars]) => (
                 <div key={area} style={{ fontSize: 12.5, padding: "1px 0" }}>
@@ -74,6 +95,23 @@ export default function MissionDetail() {
               ))}
             </div>
           </div>
+
+          {/* research reports summary */}
+          {d.twin.reports && (
+            <div style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap", fontSize: 11 }}>
+              <span className="mono" style={{ padding: "3px 10px", borderRadius: 999, background: "rgba(255,255,255,0.06)" }}>
+                SEO {d.twin.reports.seo?.score}/100 ({d.twin.reports.seo?.scope})</span>
+              <span className="mono" style={{ padding: "3px 10px", borderRadius: 999, background: "rgba(255,255,255,0.06)" }}>
+                Social {d.twin.reports.social?.count} channels</span>
+              <span className="mono" style={{ padding: "3px 10px", borderRadius: 999, background: "rgba(255,255,255,0.06)" }}>
+                Competitors {d.twin.reports.competitors?.count} {d.twin.reports.competitors?.gathered ? "" : "(source not wired)"}</span>
+            </div>
+          )}
+          {d.twin.briefing?.biggest_revenue_opportunity && (
+            <div style={{ marginTop: 10, fontSize: 12.5 }}>
+              <span style={{ opacity: 0.5 }}>💰 Biggest revenue opportunity: </span>{d.twin.briefing.biggest_revenue_opportunity}
+            </div>
+          )}
           {/* departments */}
           <div style={{ fontSize: 11, opacity: 0.5, marginTop: 14 }}>DEPARTMENTS · {d.twin.template} template</div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 6 }}>
@@ -82,13 +120,22 @@ export default function MissionDetail() {
                 background: "rgba(255,255,255,0.06)" }}>{dep}</span>
             ))}
           </div>
-          {/* roadmap */}
+          {/* roadmap — 30-day (weeks) + 90-day (months) */}
           <div style={{ fontSize: 11, opacity: 0.5, marginTop: 14 }}>30-DAY ROADMAP</div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 10, marginTop: 6 }}>
-            {Object.entries(d.twin.roadmap || {}).map(([wk, items]) => (
+            {Object.entries(d.twin.roadmap?.["30-day"] || {}).map(([wk, items]) => (
               <div key={wk}>
                 <div style={{ fontSize: 11.5, fontWeight: 600, color }}>{wk}</div>
-                {items.map((it, i) => <div key={i} style={{ fontSize: 11, opacity: 0.65, padding: "1px 0" }}>◦ {it}</div>)}
+                {(items || []).map((it, i) => <div key={i} style={{ fontSize: 11, opacity: 0.65, padding: "1px 0" }}>◦ {it}</div>)}
+              </div>
+            ))}
+          </div>
+          <div style={{ fontSize: 11, opacity: 0.5, marginTop: 12 }}>90-DAY PLAN</div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginTop: 6 }}>
+            {Object.entries(d.twin.roadmap?.["90-day"] || {}).map(([mo, items]) => (
+              <div key={mo}>
+                <div style={{ fontSize: 11.5, fontWeight: 600, color }}>{mo}</div>
+                {(items || []).map((it, i) => <div key={i} style={{ fontSize: 11, opacity: 0.65, padding: "1px 0" }}>◦ {it}</div>)}
               </div>
             ))}
           </div>
