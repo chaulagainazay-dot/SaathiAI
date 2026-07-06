@@ -327,6 +327,53 @@ async def mission_create_twin(request: Request):
     return {"ok": True, "id": mid, "key": key, "twin": twin}
 
 
+@app.post("/api/v1/missions/{mission_id}/intake")
+async def mission_intake(mission_id: str, request: Request):
+    """Mission Intake — apply a structured onboarding payload into the Knowledge Graph
+    (accounts, social stats, revenue, services, customers, goals). Token-gated."""
+    body = await request.json()
+    from saathi.missions.store import default_store as m_store
+    from saathi.missions.intake import apply_intake
+    from saathi.missions.timeline import default_store as tl
+    ms = m_store()
+    m = ms.get(mission_id) or ms.get_by_key(mission_id)
+    if not m:
+        return {"ok": False, "error": "mission not found"}
+    res = apply_intake(m["id"], body)
+    tl().record(m["id"], "connected", "Intake applied",
+                detail=f"{res['nodes_added']} nodes · coverage {int(res['coverage']*100)}%")
+    return {"ok": True, **res}
+
+
+@app.post("/api/v1/missions/{mission_id}/document")
+async def mission_document(mission_id: str, request: Request):
+    """Paste a document — extract prices/emails/phones into the Knowledge Graph. Token-gated."""
+    body = await request.json()
+    from saathi.missions.store import default_store as m_store
+    from saathi.missions.intake import extract_document
+    from saathi.missions.timeline import default_store as tl
+    ms = m_store()
+    m = ms.get(mission_id) or ms.get_by_key(mission_id)
+    if not m:
+        return {"ok": False, "error": "mission not found"}
+    res = extract_document(m["id"], body.get("text", ""), title=body.get("title", ""))
+    tl().record(m["id"], "connected", f"Document extracted: {body.get('title', 'untitled')}",
+                detail=f"{res['nodes_added']} nodes")
+    return {"ok": True, **res}
+
+
+@app.get("/api/v1/missions/{mission_id}/health")
+async def mission_health_get(mission_id: str):
+    """Mission Health — per-function scores (where the business is weak). Whitelisted read."""
+    from saathi.missions.store import default_store as m_store
+    from saathi.missions.health import mission_health
+    ms = m_store()
+    m = ms.get(mission_id) or ms.get_by_key(mission_id)
+    if not m:
+        return {"error": "mission not found"}
+    return mission_health(m)
+
+
 @app.get("/api/v1/missions/{mission_id}/knowledge")
 async def mission_knowledge(mission_id: str, type: str = ""):
     """Mission Knowledge Graph — nodes + coverage (the business memory). Whitelisted read."""
