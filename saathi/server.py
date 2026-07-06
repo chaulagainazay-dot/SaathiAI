@@ -218,6 +218,16 @@ async def studio_plan():
     return d
 
 
+@app.get("/api/v1/studio/produce")
+async def studio_produce():
+    """Studio Executive — run the full department pipeline (Research → Creative →
+    Script), return every structured artifact + ready/revision status. Whitelisted."""
+    import asyncio
+    from saathi.studio_directors import default_executive
+    p = await asyncio.to_thread(default_executive().produce)
+    return p.as_dict()
+
+
 @app.get("/api/v1/studio/script")
 async def studio_script():
     """Script Director — today's plan → structured episode document. Whitelisted."""
@@ -692,6 +702,7 @@ async def _auth(request, call_next):
             or path == "/api/v1/studio/queue"
             or path == "/api/v1/studio/plan"
             or path == "/api/v1/studio/script"
+            or path == "/api/v1/studio/produce"
             or path == "/api/v1/mission"
             or path == "/api/v1/mission/complete"
             or path == "/api/v1/agent/chat"
