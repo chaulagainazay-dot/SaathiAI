@@ -46,9 +46,25 @@ def overview(mission: dict) -> dict:
     except Exception:
         pass
 
+    # digital-twin artifacts (departments / briefing / roadmap) + timeline history
+    twin = None
+    try:
+        from saathi.missions.twin import default_store as twin_store
+        twin = twin_store().get(mission.get("id", ""))
+    except Exception:
+        pass
+    timeline = []
+    try:
+        from saathi.missions.timeline import default_store as tl_store
+        timeline = tl_store().list(mission.get("id", ""), limit=30)
+    except Exception:
+        pass
+
     pending = sum(1 for r in recs if r.get("status") == "pending")
     return {
         "mission": mission,
+        "twin": twin,
+        "timeline": timeline,
         "kpis": {
             "evidence": ev_count,
             "events": evt_count,

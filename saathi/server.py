@@ -296,6 +296,48 @@ async def mission_create(request: Request):
     return {"ok": True, "id": mid, "key": key}
 
 
+@app.post("/api/v1/missions/twin")
+async def mission_create_twin(request: Request):
+    """＋ New Mission — create a Business Digital Twin: mission + AI research +
+    departments + executive briefing + 30-day roadmap + timeline. Token-gated."""
+    import asyncio
+    body = await request.json()
+    from saathi.missions.store import Mission, default_store, TYPES
+    from saathi.missions.timeline import default_store as tl_store
+    from saathi.missions import twin as twin_mod
+    name = (body.get("name") or "").strip()
+    if not name:
+        return {"ok": False, "error": "name required"}
+    key = (body.get("key") or name.lower().replace(" ", "_"))[:40]
+    mtype = body.get("type", "business")
+    identity = body.get("identity") or {}
+    for f in ("website", "industry", "country", "target_market", "services"):
+        if body.get(f):
+            identity.setdefault(f, body[f])
+    m = Mission(key=key, name=name, type=mtype if mtype in TYPES else "business",
+                department=body.get("department", ""), identity=identity,
+                objectives=body.get("objectives") or ([body["goals"]] if body.get("goals") else []))
+    st = default_store()
+    if st.get_by_key(key):
+        return {"ok": False, "error": f"mission '{key}' already exists"}
+    mid = st.create(m)
+    tl_store().record(mid, "created", f"Mission created: {name}", detail=f"type={m.type}")
+    md = st.get(mid)
+    twin = await asyncio.to_thread(twin_mod.build, md, body)
+    return {"ok": True, "id": mid, "key": key, "twin": twin}
+
+
+@app.get("/api/v1/missions/{mission_id}/timeline")
+async def mission_timeline(mission_id: str, kind: str = "", limit: int = 100):
+    """A Mission's append-only history (the business record). Whitelisted read."""
+    from saathi.missions.store import default_store
+    from saathi.missions.timeline import default_store as tl_store
+    m = default_store().get(mission_id) or default_store().get_by_key(mission_id)
+    if not m:
+        return {"error": "mission not found"}
+    return {"timeline": tl_store().list(m["id"], kind=kind or None, limit=min(limit, 500))}
+
+
 @app.patch("/api/v1/missions/{mission_id}")
 async def mission_update(mission_id: str, request: Request):
     """Update a Mission's identity/objectives/KPIs/status. Token-gated."""
