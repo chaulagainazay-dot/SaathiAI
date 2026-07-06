@@ -2,7 +2,8 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { Panel, Eyebrow } from "@/components/ui";
-import { fetchBrand, registerVoice, activateVoice } from "@/lib/api";
+import { fetchBrand, registerVoice, activateVoice, fetchVoicePackage,
+  fetchVoiceExperiments, createVoiceExperiment } from "@/lib/api";
 
 const ACCENT = "#9B6BFF", TEAL = "#00BFA5", RED = "#FF5A5A";
 
@@ -13,9 +14,22 @@ export default function VoicePage() {
     accent: "Nepali", style: "teacher", emotion: "friendly", speed: "1.05", pitch: "medium", provider: "kokoro" });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState(null);
-  const load = () => fetchBrand(id).then(setB).catch((e) => setErr(String(e)));
+  const [pkg, setPkg] = useState(null);
+  const [emotion, setEmotion] = useState("encouraging");
+  const [exps, setExps] = useState([]);
+  const [exp, setExp] = useState({ episode: "", voice_a: "", voice_b: "" });
+  const load = () => {
+    fetchBrand(id).then(setB).catch((e) => setErr(String(e)));
+    fetchVoiceExperiments(id).then((d) => setExps(d.experiments || [])).catch(() => {});
+  };
   useEffect(() => { load(); }, [id]);
+  useEffect(() => { fetchVoicePackage(id, emotion, "hook").then((d) => setPkg(d.voice_package)).catch(() => {}); }, [id, emotion, b]);
   const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
+  const startExp = async () => {
+    if (!exp.voice_a || !exp.voice_b) { setErr("Pick two voices for the A/B"); return; }
+    try { await createVoiceExperiment(id, exp); setExp({ episode: "", voice_a: "", voice_b: "" }); load(); }
+    catch (e) { setErr(String(e)); }
+  };
 
   const save = async () => {
     if (!f.name.trim()) { setErr("Voice name required"); return; }
@@ -33,8 +47,8 @@ export default function VoicePage() {
   return (
     <div className="page" style={{ maxWidth: 760, margin: "0 auto", paddingBottom: 60 }}>
       <a href={`/missions/${id}`} style={{ fontSize: 12, opacity: 0.5, textDecoration: "none", color: "inherit" }}>← Mission</a>
-      <Eyebrow style={{ color: ACCENT, marginTop: 8 }}>Brand Identity · Voice</Eyebrow>
-      <div style={{ fontSize: 26, fontWeight: 600, margin: "4px 0 4px" }}>Voice Identity</div>
+      <Eyebrow style={{ color: ACCENT, marginTop: 8 }}>Brand Identity · Voice Studio</Eyebrow>
+      <div style={{ fontSize: 26, fontWeight: 600, margin: "4px 0 4px" }}>Voice Studio</div>
       <div style={{ fontSize: 13, opacity: 0.5, marginBottom: 16 }}>
         A reusable per-Mission asset every Director reads. Register a profile now; the audio recording +
         clone backend plugs in later behind the provider without changing the pipeline.
@@ -80,6 +94,48 @@ export default function VoicePage() {
           style={{ marginTop: 12, padding: "11px 18px", borderRadius: 11, border: "none", cursor: "pointer",
             fontWeight: 600, color: "#fff", background: ACCENT, opacity: busy ? 0.6 : 1, width: "100%" }}>
           {busy ? "Registering…" : "Register voice (new version)"}</button>
+      </Panel>
+
+      {/* Voice Director — provider-agnostic Voice Package preview */}
+      {pkg && <Panel style={{ padding: 18, marginBottom: 14 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+          <Eyebrow style={{ color: ACCENT }}>Voice Director · Voice Package</Eyebrow>
+          <select value={emotion} onChange={(e) => setEmotion(e.target.value)} style={{ ...inp, width: "auto", padding: "4px 8px" }}>
+            {["encouraging", "excited", "calm", "serious", "warm"].map((x) => <option key={x} value={x} style={{ color: "#000" }}>{x}</option>)}
+          </select>
+        </div>
+        <div className="mono" style={{ fontSize: 11.5, opacity: 0.75, marginTop: 8, lineHeight: 1.7 }}>
+          voice: {pkg.voice_name || "—"} v{pkg.version} · provider <b style={{ color: TEAL }}>{pkg.provider}</b>
+          {" · "}scene emotion: {pkg.scene_emotion}<br />
+          delivery: rate {pkg.delivery?.rate} · pitch {pkg.delivery?.pitch} · emphasis {pkg.delivery?.emphasis}<br />
+          providers available: {(pkg.providers_available || []).join(", ")}
+        </div>
+        <div style={{ fontSize: 10.5, opacity: 0.4, marginTop: 6 }}>
+          Director emits this provider-agnostic package; TTS adapters consume it. Swap engine = swap adapter.
+        </div>
+      </Panel>}
+
+      {/* Voice Experiments — A/B by evidence */}
+      <Panel style={{ padding: 18, marginBottom: 14 }}>
+        <Eyebrow style={{ color: ACCENT }}>Voice Experiments · A/B by evidence</Eyebrow>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr auto", gap: 8, marginTop: 10 }}>
+          <input placeholder="Episode" value={exp.episode} onChange={(e) => setExp({ ...exp, episode: e.target.value })} style={inp} />
+          <input placeholder="Voice A" value={exp.voice_a} onChange={(e) => setExp({ ...exp, voice_a: e.target.value })} style={inp} />
+          <input placeholder="Voice B" value={exp.voice_b} onChange={(e) => setExp({ ...exp, voice_b: e.target.value })} style={inp} />
+          <button onClick={startExp} style={{ padding: "0 16px", borderRadius: 9, border: "none",
+            cursor: "pointer", fontWeight: 600, color: "#fff", background: ACCENT }}>Start</button>
+        </div>
+        <div style={{ marginTop: 10 }}>
+          {exps.length === 0 && <div style={{ fontSize: 12, opacity: 0.4 }}>no experiments yet</div>}
+          {exps.map((e) => (
+            <div key={e.id} style={{ fontSize: 12.5, padding: "5px 0", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+              <b>{e.episode || "—"}</b> · {e.voice_a} vs {e.voice_b} · split {e.split}%
+              {e.status === "done"
+                ? <span style={{ color: TEAL }}> · winner {e.winner} {e.metrics?.retention ? `(${e.metrics.retention})` : ""}</span>
+                : <span style={{ color: AMBER }}> · running</span>}
+            </div>
+          ))}
+        </div>
       </Panel>
 
       {/* voice registry */}

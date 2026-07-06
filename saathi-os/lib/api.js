@@ -204,6 +204,26 @@ export async function activateVoice(missionId, voiceId) {
   return r.json();
 }
 
+// Voice Studio — Voice Director package (provider-agnostic) + A/B experiments.
+export async function fetchVoicePackage(missionId, emotion = "", objective = "") {
+  const q = new URLSearchParams({ emotion, objective });
+  const r = await fetch(`${API_BASE}/api/v1/missions/${missionId}/voice/package?${q}`, { cache: "no-store" });
+  if (!r.ok) throw new Error(`voice-package ${r.status}`);
+  return r.json();
+}
+export async function fetchVoiceExperiments(missionId) {
+  const r = await fetch(`${API_BASE}/api/v1/missions/${missionId}/voice/experiments`, { cache: "no-store" });
+  if (!r.ok) throw new Error(`experiments ${r.status}`);
+  return r.json();
+}
+export async function createVoiceExperiment(missionId, payload) {
+  const r = await fetch(`${API_BASE}/api/v1/missions/${missionId}/voice/experiments`, {
+    method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload) });
+  if (!r.ok) throw new Error(`create-exp ${r.status}`);
+  return r.json();
+}
+
 // Workflows + Tasks (Director → Workflow → Task).
 export async function fetchWorkflows(missionId) {
   const r = await fetch(`${API_BASE}/api/v1/missions/${missionId}/workflows`, { cache: "no-store" });
