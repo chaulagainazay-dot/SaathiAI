@@ -40,10 +40,15 @@ export default function ControlRoom() {
             {r.episode} · {r.est_seconds}s · <span style={{ color: r.status === "ready" ? TEAL : AMBER }}>● {r.status}</span>
           </div>
         </div>
-        <button onClick={load} disabled={busy}
-          style={{ padding: "10px 20px", borderRadius: 12, border: "none", cursor: "pointer",
-            fontWeight: 600, color: "#fff", background: ORANGE, opacity: busy ? 0.6 : 1 }}>
-          {busy ? "Producing…" : "▶ Produce Episode"}</button>
+        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+          <a href="/evidence" style={{ fontSize: 12.5, fontWeight: 600, color: "#6E72F0",
+            textDecoration: "none", padding: "9px 14px", borderRadius: 12, border: "1px solid #6E72F066" }}>
+            🧠 Evidence →</a>
+          <button onClick={load} disabled={busy}
+            style={{ padding: "10px 20px", borderRadius: 12, border: "none", cursor: "pointer",
+              fontWeight: 600, color: "#fff", background: ORANGE, opacity: busy ? 0.6 : 1 }}>
+            {busy ? "Producing…" : "▶ Produce Episode"}</button>
+        </div>
       </div>
 
       {/* health strip */}

@@ -159,6 +159,21 @@ export async function fetchControlRoom() {
   return r.json();
 }
 
+// Evidence Service — CEO roll-up across every department (shared memory).
+export async function fetchEvidenceStats(days = 30) {
+  const r = await fetch(`${API_BASE}/api/v1/evidence/stats?days=${days}`, { cache: "no-store" });
+  if (!r.ok) throw new Error(`evidence-stats ${r.status}`);
+  return r.json();
+}
+
+// Evidence Service — raw query (filter by department/project/episode).
+export async function fetchEvidence({ department = "", episode = "", limit = 50 } = {}) {
+  const q = new URLSearchParams({ department, episode, limit: String(limit) });
+  const r = await fetch(`${API_BASE}/api/v1/evidence?${q}`, { cache: "no-store" });
+  if (!r.ok) throw new Error(`evidence ${r.status}`);
+  return r.json();
+}
+
 // Script Director — generate today's structured episode document.
 export async function fetchStudioScript() {
   const r = await fetch(`${API_BASE}/api/v1/studio/script`, { cache: "no-store" });
