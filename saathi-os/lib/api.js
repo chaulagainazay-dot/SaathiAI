@@ -125,6 +125,16 @@ export async function sendVoice(blob, sessionId = "web") {
   return r.json();
 }
 
+// Enroll the owner's voice (speaker verification) — records the profile so Saathi
+// recognises you. Local-only capability (Mac has the mic + resemblyzer).
+export async function enrollVoice(blob) {
+  const fd = new FormData();
+  fd.append("file", blob, "enroll.webm");
+  const r = await fetch(`${LOCAL_BASE}/api/v1/voice/enroll`, { method: "POST", body: fd });
+  if (!r.ok) throw new Error(`enroll ${r.status}`);
+  return r.json();
+}
+
 // Talk to Saathi (the conversation brain). Same-origin cookie auth — the user
 // must be logged in on the dashboard. Returns { reply } or throws on 401.
 export async function sendChat(text, sessionId = "dashboard") {

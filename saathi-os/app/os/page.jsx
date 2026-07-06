@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { Panel, Eyebrow } from "@/components/ui";
-import { fetchCeoOs, completeMission, sendChat, login } from "@/lib/api";
+import { fetchCeoOs, completeMission, sendChat, login, enrollVoice } from "@/lib/api";
 import { useVoice } from "@/lib/useVoice";
 
 const GOLD = "#E8B84B";
@@ -61,6 +61,28 @@ export default function OperatingSystem() {
     completeMission(item).then((r) => r.mission && setD({ ...d, mission: r.mission })).catch(() => {});
   const voice = useVoice((transcript, reply) =>
     setChat((c) => [...c, ...(transcript ? [{ role: "you", text: transcript }] : []), { role: "saathi", text: reply }]));
+
+  const [enrolling, setEnrolling] = useState(false);
+  const [enrollMsg, setEnrollMsg] = useState("");
+  const enroll = async () => {
+    setEnrollMsg(""); setEnrolling(true);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const rec = new MediaRecorder(stream);
+      const chunks = [];
+      rec.ondataavailable = (e) => e.data.size && chunks.push(e.data);
+      rec.onstop = async () => {
+        stream.getTracks().forEach((t) => t.stop());
+        try {
+          await enrollVoice(new Blob(chunks, { type: "audio/webm" }));
+          setEnrollMsg("✓ Voice enrolled — Saathi will now recognise you.");
+        } catch (e) { setEnrollMsg(`Enroll failed: ${e}`); }
+        finally { setEnrolling(false); }
+      };
+      rec.start();
+      setTimeout(() => rec.state !== "inactive" && rec.stop(), 5000); // ~5s sample
+    } catch { setEnrollMsg("Microphone permission needed."); setEnrolling(false); }
+  };
 
   const met = d.rule.met || {};
   const f = (d.studio && d.studio.factory) || {};
@@ -194,6 +216,14 @@ export default function OperatingSystem() {
             background: voice.recording ? "radial-gradient(circle at 38% 35%, #ffd0d0, #ff6b6b)" : "rgba(255,255,255,0.08)",
             color: voice.recording ? "#0A1120" : "inherit",
             boxShadow: voice.recording ? "0 0 20px rgba(255,107,107,0.7)" : "none" }}>🎤</button>
+      </div>
+      <div style={{ marginTop: 8, display: "flex", gap: 10, alignItems: "center" }}>
+        <button onClick={enroll} disabled={enrolling}
+          style={{ fontSize: 12, padding: "6px 14px", borderRadius: 20, cursor: "pointer",
+            border: "1px solid rgba(232,184,75,0.5)", background: "transparent", color: GOLD,
+            opacity: enrolling ? 0.6 : 1 }}>
+          {enrolling ? "Recording 5s — keep talking…" : "🔐 Teach Saathi my voice"}</button>
+        {enrollMsg && <span style={{ fontSize: 11.5, opacity: 0.7 }}>{enrollMsg}</span>}
       </div>
     </div>
   );
