@@ -39,8 +39,13 @@ export default function EvidenceDashboard() {
     <div className="only-desktop" style={{ maxWidth: 1120, margin: "0 auto", paddingBottom: 60 }}>
       <Eyebrow style={{ color: ACCENT }}>SaathiOS · Evidence</Eyebrow>
       <div style={{ fontSize: 28, fontWeight: 600, margin: "4px 0 4px" }}>The company's shared memory</div>
-      <div style={{ fontSize: 13, opacity: 0.5, marginBottom: 18 }}>
-        Every department writes one schema · the CEO queries one truth · {data.total} records total (last 30 days).
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
+        <div style={{ fontSize: 13, opacity: 0.5 }}>
+          Every department writes one schema · the CEO queries one truth · {data.total} records total (last 30 days).
+        </div>
+        <a href="/learning" style={{ fontSize: 12.5, fontWeight: 600, color: "#9B6BFF", textDecoration: "none",
+          padding: "8px 14px", borderRadius: 10, border: "1px solid #9B6BFF66", whiteSpace: "nowrap" }}>
+          🔎 Learning Directors →</a>
       </div>
 
       {/* department roll-up */}

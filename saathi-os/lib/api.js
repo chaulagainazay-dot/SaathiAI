@@ -159,6 +159,31 @@ export async function fetchControlRoom() {
   return r.json();
 }
 
+// Learning — run all 3 Learning Directors over the Evidence Store (recommend-only).
+export async function runLearningAnalysis() {
+  const r = await fetch(`${API_BASE}/api/v1/learning/analyze`, { cache: "no-store" });
+  if (!r.ok) throw new Error(`learning-analyze ${r.status}`);
+  return r.json();
+}
+
+// Learning — list recommendations (searchable by category/status).
+export async function fetchRecommendations({ category = "", status = "", limit = 60 } = {}) {
+  const q = new URLSearchParams({ category, status, limit: String(limit) });
+  const r = await fetch(`${API_BASE}/api/v1/learning/recommendations?${q}`, { cache: "no-store" });
+  if (!r.ok) throw new Error(`recommendations ${r.status}`);
+  return r.json();
+}
+
+// Learning — CEO accepts/rejects a recommendation (nothing auto-changes).
+export async function decideRecommendation(id, accept, implemented_in = "") {
+  const r = await fetch(`${API_BASE}/api/v1/learning/decide`, {
+    method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id, accept, implemented_in }),
+  });
+  if (!r.ok) throw new Error(`decide ${r.status}`);
+  return r.json();
+}
+
 // Evidence Service — CEO roll-up across every department (shared memory).
 export async function fetchEvidenceStats(days = 30) {
   const r = await fetch(`${API_BASE}/api/v1/evidence/stats?days=${days}`, { cache: "no-store" });
