@@ -52,6 +52,34 @@ export default function MissionDetail() {
         ))}
       </div>
 
+      {/* Knowledge Coverage — how much of the business we hold in memory */}
+      {d.knowledge && (
+        <Panel style={{ padding: 16, marginBottom: 16, borderLeft: `3px solid ${color}` }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+            <Eyebrow style={{ color }}>Knowledge Graph · Business Memory</Eyebrow>
+            <span className="mono" style={{ fontSize: 12 }}>
+              Coverage <b style={{ color: (d.knowledge.overall || 0) >= 0.6 ? TEAL : AMBER }}>
+                {pct(d.knowledge.overall)}</b> · {d.knowledge.node_count} nodes</span>
+          </div>
+          <div style={{ marginTop: 10, display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8 }}>
+            {Object.entries(d.knowledge.categories || {}).map(([cat, v]) => (
+              <div key={cat} style={{ fontSize: 10.5 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", opacity: 0.6 }}>
+                  <span style={{ textTransform: "capitalize" }}>{cat.replace("_", " ")}</span><span>{pct(v)}</span>
+                </div>
+                <div style={{ height: 4, borderRadius: 3, background: "rgba(255,255,255,0.07)", marginTop: 2 }}>
+                  <div style={{ width: pct(v), height: "100%", borderRadius: 3,
+                    background: v >= 1 ? TEAL : v > 0 ? AMBER : "rgba(255,255,255,0.1)" }} />
+                </div>
+              </div>
+            ))}
+          </div>
+          <div style={{ fontSize: 10.5, opacity: 0.4, marginTop: 8 }}>
+            Every Director reads this memory · connectors + uploads raise coverage. Empty categories are honest gaps, not zeros to hide.
+          </div>
+        </Panel>
+      )}
+
       {/* Business Digital Twin — Executive Strategist briefing + confidence + reports */}
       {d.twin && (
         <Panel style={{ padding: 18, marginBottom: 16, borderLeft: `3px solid ${color}` }}>
