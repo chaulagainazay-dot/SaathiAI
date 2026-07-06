@@ -44,10 +44,12 @@ def test_twin_build_from_info_no_website(monkeypatch):
     assert "Sales" in twin["departments"]
     b = twin["briefing"]
     assert 0.0 <= b["health"] <= 1.0 and b["roi"]["Automation"] == 5
-    assert "Week 1" in twin["roadmap"] and len(twin["roadmap"]["Week 1"]) >= 3
-    # timeline captured the build
+    assert b["top_opportunities"] and "confidence" in b
+    assert "30-day" in twin["roadmap"] and "90-day" in twin["roadmap"]
+    assert 0.0 <= twin["confidence"]["overall"] <= 1.0
+    # timeline captured the build (research + milestone)
     kinds = {t["kind"] for t in tlm._default.list("MX")}
-    assert {"created", "milestone"} <= kinds
+    assert {"created", "research", "milestone"} <= kinds
 
 
 def test_twin_briefing_flags_missing_signals(monkeypatch):
@@ -58,7 +60,8 @@ def test_twin_briefing_flags_missing_signals(monkeypatch):
     monkeypatch.setattr(tw, "_default", tw.TwinStore(tp))
     monkeypatch.setattr(tlm, "_default", tlm.TimelineStore(lp))
     monkeypatch.setattr(tlm, "default_store", lambda: tlm._default)
-    # no website → briefing must honestly flag it and still produce a roadmap
+    # no website → briefing must honestly flag it via top_risks and still produce a roadmap
     twin = tw.build({"id": "MY", "name": "X", "type": "business", "identity": {}}, {})
-    assert any("not reachable" in w or "not provided" in w for w in twin["briefing"]["weaknesses"])
-    assert tw.default_store().get("MY")["briefing"]["health"] >= 0
+    assert any("invisible" in r or "website" in r.lower() for r in twin["briefing"]["top_risks"])
+    saved = tw.default_store().get("MY")
+    assert saved["briefing"]["health"] >= 0 and saved["confidence"]["overall"] < 0.3  # no data → low confidence

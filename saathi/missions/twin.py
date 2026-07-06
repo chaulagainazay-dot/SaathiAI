@@ -24,26 +24,37 @@ class TwinStore:
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         with self._conn() as c:
             c.execute("CREATE TABLE IF NOT EXISTS twin(mission_id TEXT PRIMARY KEY, "
-                      "departments TEXT, research TEXT, briefing TEXT, roadmap TEXT, updated REAL)")
+                      "departments TEXT, research TEXT, briefing TEXT, roadmap TEXT, updated REAL, "
+                      "reports TEXT, confidence TEXT)")
+            # migrate older tables that predate reports/confidence
+            cols = {r[1] for r in c.execute("PRAGMA table_info(twin)").fetchall()}
+            if "reports" not in cols:
+                c.execute("ALTER TABLE twin ADD COLUMN reports TEXT")
+            if "confidence" not in cols:
+                c.execute("ALTER TABLE twin ADD COLUMN confidence TEXT")
 
     def _conn(self):
         return sqlite3.connect(str(self.db_path))
 
-    def save(self, mission_id: str, *, departments, research, briefing, roadmap) -> None:
+    def save(self, mission_id: str, *, departments, research, briefing, roadmap,
+             reports=None, confidence=None) -> None:
         with self._conn() as c:
-            c.execute("INSERT OR REPLACE INTO twin VALUES(?,?,?,?,?,?)",
+            c.execute("INSERT OR REPLACE INTO twin(mission_id,departments,research,briefing,roadmap,"
+                      "updated,reports,confidence) VALUES(?,?,?,?,?,?,?,?)",
                       (mission_id, json.dumps(departments), json.dumps(research),
-                       json.dumps(briefing), json.dumps(roadmap), time.time()))
+                       json.dumps(briefing), json.dumps(roadmap), time.time(),
+                       json.dumps(reports or {}), json.dumps(confidence or {})))
 
     def get(self, mission_id: str) -> dict | None:
         with self._conn() as c:
-            r = c.execute("SELECT departments,research,briefing,roadmap,updated FROM twin "
-                          "WHERE mission_id=?", (mission_id,)).fetchone()
+            r = c.execute("SELECT departments,research,briefing,roadmap,updated,reports,confidence "
+                          "FROM twin WHERE mission_id=?", (mission_id,)).fetchone()
         if not r:
             return None
         return {"departments": json.loads(r[0] or "[]"), "research": json.loads(r[1] or "{}"),
                 "briefing": json.loads(r[2] or "{}"), "roadmap": json.loads(r[3] or "{}"),
-                "updated": r[4]}
+                "updated": r[4], "reports": json.loads(r[5] or "{}") if len(r) > 5 else {},
+                "confidence": json.loads(r[6] or "{}") if len(r) > 6 else {}}
 
 
 _default = None
@@ -52,62 +63,6 @@ def default_store() -> TwinStore:
     if _default is None:
         _default = TwinStore()
     return _default
-
-
-# ── Executive Briefing — derived from REAL signals, honest about gaps ──────────
-def _briefing(info: dict, research: dict, departments: list) -> dict:
-    strengths, weaknesses, opportunities = [], [], []
-
-    site_ok = research.get("ok")
-    if site_ok:
-        strengths.append("Live website reachable")
-    else:
-        weaknesses.append("Website not reachable / not provided")
-
-    if research.get("description"):
-        strengths.append("Homepage has a meta description")
-    elif site_ok:
-        weaknesses.append("Missing meta description — weak on-page SEO")
-        opportunities.append("Add titles + meta descriptions across key pages")
-
-    if len(research.get("headings") or []) >= 3:
-        strengths.append("Structured page headings")
-    elif site_ok:
-        weaknesses.append("Thin heading structure")
-
-    socials = research.get("socials") or {}
-    if socials:
-        strengths.append(f"Social presence found: {', '.join(sorted(socials))}")
-    else:
-        weaknesses.append("No social links found on site")
-        opportunities.append("Activate Instagram/Facebook with a weekly content calendar")
-
-    if info.get("goals"):
-        opportunities.append(f"Align execution to stated goal: {str(info['goals'])[:80]}")
-    opportunities += ["Google Business + reviews", "WhatsApp/Telegram automation for enquiries",
-                      "Blog/content for organic search"]
-
-    # honest health score: fraction of positive signals over signals we could check
-    checked = len(strengths) + len(weaknesses)
-    health = round(len(strengths) / checked, 2) if checked else 0.5
-
-    # ROI stars (1-5) — heuristic weighting where the biggest gaps are
-    def stars(weak_hits, base):
-        return min(5, base + weak_hits)
-    roi = {
-        "SEO": stars(sum(1 for w in weaknesses if "SEO" in w or "meta" in w or "heading" in w), 3),
-        "Marketing": stars(sum(1 for w in weaknesses if "social" in w.lower()), 3),
-        "Automation": 5,
-        "Website": stars(0 if site_ok else 2, 3),
-    }
-    return {
-        "health": health,
-        "strengths": strengths[:6],
-        "weaknesses": weaknesses[:6],
-        "opportunities": opportunities[:6],
-        "roi": roi,
-        "departments": len(departments),
-    }
 
 
 # ── 30-day roadmap — driven by the briefing's weaknesses + template ───────────
@@ -150,15 +105,29 @@ def build(mission: dict, info: dict | None = None, *, research_timeout: float = 
     tl.record(mid, "created", f"Departments provisioned ({tpl} template)",
               detail=", ".join(departments), meta={"template": tpl})
 
-    # 3. + 4. executive briefing + roadmap
-    briefing = _briefing(info, research, departments)
-    roadmap = _roadmap(briefing)
+    # 3. Business Intelligence — Research 2.0 sub-directors + Executive Strategist
+    info_full = dict(info)
+    info_full.setdefault("name", mission.get("name", ""))
+    info_full.setdefault("industry", info.get("industry") or identity.get("industry", ""))
+    from saathi.missions.intel import analyze
+    intel = analyze(info_full, research)
+    briefing = intel["briefing"]
+    conf = intel["confidence"]
+    reports = intel["reports"]
+
+    # 4. roadmap
+    roadmap = {"30-day": _roadmap({"weaknesses": briefing.get("quick_wins", [])}),
+               "90-day": briefing.get("plan_90", {})}
+
+    tl.record(mid, "research", "Business intelligence completed",
+              detail=f"SEO {reports['seo'].get('score', 0)}/100 · "
+                     f"confidence {int(conf['overall']*100)}% · "
+                     f"{len(briefing['top_opportunities'])} opportunities")
     tl.record(mid, "milestone", "Executive briefing generated",
-              detail=f"Health {int(briefing['health']*100)}% · "
-                     f"{len(briefing['opportunities'])} opportunities identified")
+              detail=f"Health {int(briefing['health']*100)}% · Confidence {int(conf['overall']*100)}%")
 
     twin = {"template": tpl, "departments": departments, "research": research,
-            "briefing": briefing, "roadmap": roadmap}
-    default_store().save(mid, departments=departments, research=research,
-                         briefing=briefing, roadmap=roadmap)
+            "briefing": briefing, "roadmap": roadmap, "reports": reports, "confidence": conf}
+    default_store().save(mid, departments=departments, research=research, briefing=briefing,
+                         roadmap=roadmap, reports=reports, confidence=conf)
     return twin
