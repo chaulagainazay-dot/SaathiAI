@@ -84,6 +84,13 @@ export async function login(password) {
   return r.json();   // { ok: true } | { ok: false, error }
 }
 
+// Director Library — imported agency Directors (slug/name/description).
+export async function fetchDirectors() {
+  const r = await fetch(`${API_BASE}/api/v1/directors`, { cache: "no-store" });
+  if (!r.ok) throw new Error(`directors ${r.status}`);
+  return r.json();
+}
+
 // AI Lab — Prompt Library catalog (name · active version · scores).
 export async function fetchLabPrompts() {
   const r = await fetch(`${API_BASE}/api/v1/lab/prompts`, { cache: "no-store" });
@@ -128,6 +135,34 @@ export async function sendChat(text, sessionId = "dashboard") {
   });
   if (r.status === 401) throw new Error("unauthorized");
   if (!r.ok) throw new Error(`chat ${r.status}`);
+  return r.json();
+}
+
+// SaathiAI Studio — today's production brief (Director/Planner).
+export async function fetchStudioPlan() {
+  const r = await fetch(`${API_BASE}/api/v1/studio/plan`, { cache: "no-store" });
+  if (!r.ok) throw new Error(`plan ${r.status}`);
+  return r.json();
+}
+
+// Studio Executive — run the full department pipeline (Research→Creative→Script).
+export async function fetchStudioProduce() {
+  const r = await fetch(`${API_BASE}/api/v1/studio/produce`, { cache: "no-store" });
+  if (!r.ok) throw new Error(`produce ${r.status}`);
+  return r.json();
+}
+
+// AI Studio OS — the whole content factory in one read (Control Room).
+export async function fetchControlRoom() {
+  const r = await fetch(`${API_BASE}/api/v1/studio/control-room`, { cache: "no-store" });
+  if (!r.ok) throw new Error(`control-room ${r.status}`);
+  return r.json();
+}
+
+// Script Director — generate today's structured episode document.
+export async function fetchStudioScript() {
+  const r = await fetch(`${API_BASE}/api/v1/studio/script`, { cache: "no-store" });
+  if (!r.ok) throw new Error(`script ${r.status}`);
   return r.json();
 }
 

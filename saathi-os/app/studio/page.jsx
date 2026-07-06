@@ -2,9 +2,10 @@
 import { useEffect, useState } from "react";
 import { Panel, Eyebrow } from "@/components/ui";
 import { color } from "@/lib/departments";
-import { fetchStudioQueue } from "@/lib/api";
+import { fetchStudioQueue, fetchStudioPlan, fetchStudioScript, fetchStudioProduce } from "@/lib/api";
 
 const ORANGE = color("AI STUDIO");
+const TEAL = "#00BFA5";
 const LANES = [["Awaiting Approval", "awaiting_approval"], ["Published", "published"],
                ["In Progress", "in_progress"], ["Blocked", "blocked"]];
 
@@ -18,20 +19,96 @@ const STAGES = [
 
 export default function AIStudio() {
   const [q, setQ] = useState({ counts: {}, recent: [] });
+  const [plan, setPlan] = useState(null);
+  const [script, setScript] = useState(null);
+  const [writing, setWriting] = useState(false);
+  const genScript = () => { setWriting(true); fetchStudioScript().then((d) => setScript(d.script)).catch(() => {}).finally(() => setWriting(false)); };
+  const [prod, setProd] = useState(null);
+  const [producing, setProducing] = useState(false);
+  const produce = () => { setProducing(true); fetchStudioProduce().then((p) => { setProd(p); setScript(p.script); }).catch(() => {}).finally(() => setProducing(false)); };
   useEffect(() => {
     const t = () => fetchStudioQueue().then(setQ).catch(() => {});
-    t(); const id = setInterval(t, 10000); return () => clearInterval(id);
+    t(); const id = setInterval(t, 10000);
+    fetchStudioPlan().then(setPlan).catch(() => {});
+    return () => clearInterval(id);
   }, []);
   const runs = q.recent || [];
 
   return (
     <div className="only-desktop" style={{ maxWidth: 1000, margin: "0 auto" }}>
-      <Eyebrow style={{ color: ORANGE }}>AI Studio</Eyebrow>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+        <Eyebrow style={{ color: ORANGE }}>AI Studio</Eyebrow>
+        <a href="/studio/control-room" style={{ fontSize: 12.5, fontWeight: 600, color: ORANGE,
+          textDecoration: "none", padding: "6px 14px", borderRadius: 10, border: `1px solid ${ORANGE}66` }}>
+          🎛 Control Room →</a>
+      </div>
       <div style={{ fontSize: 26, fontWeight: 600, margin: "4px 0 6px" }}>Autonomous content pipeline</div>
-      <div style={{ fontSize: 13, opacity: 0.5, marginBottom: 20 }}>
+      <div style={{ fontSize: 13, opacity: 0.5, marginBottom: 16 }}>
         Topic → Creative Director → voice + images → FFmpeg render → gate → publish → Episodes → Learning.
         Local-first (draft): Kokoro/say · Flux/card · FFmpeg — swap in premium providers without changing the pipeline.
       </div>
+
+      {plan && plan.topic && (
+        <Panel style={{ padding: 16, marginBottom: 16, border: "1px solid rgba(255,138,61,0.3)" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+            <Eyebrow style={{ color: ORANGE }}>🎬 Today's Studio Plan (Director)</Eyebrow>
+            <span className="mono" style={{ fontSize: 10, opacity: 0.5 }}>{plan.memory_count} made · {plan.episode}</span>
+          </div>
+          <div style={{ fontSize: 16, fontWeight: 600, marginTop: 8 }}>Day {plan.day}: {plan.topic}</div>
+          <div className="mono" style={{ fontSize: 11, opacity: 0.55, marginTop: 2 }}>
+            {plan.phase} · {plan.skill} · 🎭 {plan.character?.name || "Mr. Yeti"} · {plan.voice_tone}
+          </div>
+          <div style={{ fontSize: 12, opacity: 0.6, marginTop: 6 }}>{plan.objective}</div>
+          {plan.avoid?.length > 0 && <div style={{ fontSize: 10.5, opacity: 0.4, marginTop: 6 }}>avoiding: {plan.avoid.slice(0, 4).join(", ")}</div>}
+          <div style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
+            <button onClick={produce} disabled={producing}
+              style={{ padding: "8px 16px", borderRadius: 10, border: "none", cursor: "pointer",
+                fontWeight: 600, color: "#fff", background: ORANGE, opacity: producing ? 0.6 : 1 }}>
+              {producing ? "Studio Executive running…" : "🎬 Produce Episode (full pipeline)"}</button>
+            <button onClick={genScript} disabled={writing}
+              style={{ padding: "8px 16px", borderRadius: 10, cursor: "pointer",
+                border: `1px solid ${ORANGE}`, background: "transparent", color: ORANGE, opacity: writing ? 0.6 : 1 }}>
+              {writing ? "writing…" : "✍ Script only"}</button>
+          </div>
+
+          {prod && (
+            <div style={{ marginTop: 12, display: "flex", gap: 6, flexWrap: "wrap", fontSize: 11 }}>
+              {[["Research", prod.research?.summary], ["Creative", prod.creative?.story_arc], ["Script", `${prod.script?.scenes?.length} scenes`], ["Storyboard", `${prod.scene_package?.scene_count || 0} scenes`], ["Render", prod.render_plan?.adapter || (prod.plan_check?.ok === false ? "blocked" : "—")], ["Publish", prod.publish_plan?.platform_count ? `${prod.publish_plan.platform_count} platforms` : "—"]].map(([k, v]) => (
+                <span key={k} style={{ padding: "4px 10px", borderRadius: 999, background: "rgba(255,138,61,0.12)" }}>✓ {k}</span>
+              ))}
+              <span style={{ padding: "4px 10px", borderRadius: 999,
+                background: prod.status === "ready" ? "rgba(0,191,165,0.18)" : "rgba(232,184,75,0.18)",
+                color: prod.status === "ready" ? TEAL : "#E8B84B" }}>● {prod.status}</span>
+            </div>
+          )}
+          {prod?.research?.common_mistakes?.length > 0 && (
+            <div style={{ marginTop: 8, fontSize: 11, opacity: 0.55 }}>
+              🔎 common mistakes found: {prod.research.common_mistakes.slice(0, 2).join(" · ")}
+            </div>
+          )}
+
+          {script && (
+            <div style={{ marginTop: 14, borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: 12 }}>
+              <div style={{ fontSize: 12, opacity: 0.5 }}>HOOK</div>
+              <div style={{ fontSize: 13.5, marginBottom: 10 }}>{script.hook}</div>
+              <div style={{ fontSize: 12, opacity: 0.5 }}>SCENES · {script.est_seconds}s</div>
+              {(script.scenes || []).map((s) => (
+                <div key={s.n} style={{ fontSize: 12.5, padding: "5px 0", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                  <b>{s.n}. ({s.seconds}s)</b> {s.narration}
+                  <div style={{ fontSize: 10.5, opacity: 0.45 }}>🎥 {s.visual} · {s.camera}{s.animation ? ` · ${s.animation}` : ""}</div>
+                </div>
+              ))}
+              <div style={{ fontSize: 12, opacity: 0.5, marginTop: 10 }}>SEO</div>
+              <div style={{ fontSize: 12.5 }}>{script.seo?.title}</div>
+              <div style={{ fontSize: 11, opacity: 0.5, marginTop: 2 }}>{(script.seo?.tags || []).slice(0, 8).join(" · ")}</div>
+              {script.thumbnail_ideas?.length > 0 && <>
+                <div style={{ fontSize: 12, opacity: 0.5, marginTop: 10 }}>THUMBNAIL IDEAS</div>
+                {script.thumbnail_ideas.slice(0, 3).map((t, i) => <div key={i} style={{ fontSize: 11.5, opacity: 0.7, padding: "2px 0" }}>🖼 {t}</div>)}
+              </>}
+            </div>
+          )}
+        </Panel>
+      )}
 
       <div style={{ display: "flex", gap: 12, marginBottom: 16, flexWrap: "wrap" }}>
         {LANES.map(([label, key]) => (
