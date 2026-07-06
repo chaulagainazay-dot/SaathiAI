@@ -159,6 +159,21 @@ export async function fetchControlRoom() {
   return r.json();
 }
 
+// Event Bus — volume by type/source + routing table (the spine every product emits to).
+export async function fetchEventStats(days = 30) {
+  const r = await fetch(`${API_BASE}/api/v1/events/stats?days=${days}`, { cache: "no-store" });
+  if (!r.ok) throw new Error(`event-stats ${r.status}`);
+  return r.json();
+}
+
+// Event Bus — recent events (filter by type glob / source).
+export async function fetchEvents({ type = "", source = "", limit = 30 } = {}) {
+  const q = new URLSearchParams({ type, source, limit: String(limit) });
+  const r = await fetch(`${API_BASE}/api/v1/events?${q}`, { cache: "no-store" });
+  if (!r.ok) throw new Error(`events ${r.status}`);
+  return r.json();
+}
+
 // Learning — run all 3 Learning Directors over the Evidence Store (recommend-only).
 export async function runLearningAnalysis() {
   const r = await fetch(`${API_BASE}/api/v1/learning/analyze`, { cache: "no-store" });

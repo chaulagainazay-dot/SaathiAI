@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { Panel, Eyebrow } from "@/components/ui";
-import { fetchEvidenceStats, fetchEvidence } from "@/lib/api";
+import { fetchEvidenceStats, fetchEvidence, fetchEventStats } from "@/lib/api";
 
 const ACCENT = "#6E72F0";        // Memory colour — Evidence is the company's memory
 const TEAL = "#00BFA5";
@@ -20,10 +20,12 @@ const DEPT_COLOR = {
 export default function EvidenceDashboard() {
   const [data, setData] = useState(null);
   const [rows, setRows] = useState([]);
+  const [evt, setEvt] = useState(null);
   const [err, setErr] = useState(null);
   const load = () => {
     fetchEvidenceStats(30).then(setData).catch((e) => setErr(String(e)));
     fetchEvidence({ limit: 40 }).then((d) => setRows(d.evidence || [])).catch(() => {});
+    fetchEventStats(30).then(setEvt).catch(() => {});
   };
   useEffect(() => { load(); }, []);
 
@@ -47,6 +49,27 @@ export default function EvidenceDashboard() {
           padding: "8px 14px", borderRadius: 10, border: "1px solid #9B6BFF66", whiteSpace: "nowrap" }}>
           🔎 Learning Directors →</a>
       </div>
+
+      {/* event bus spine */}
+      {evt && (
+        <Panel style={{ padding: 14, marginBottom: 16, border: "1px solid rgba(110,114,240,0.25)" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+            <Eyebrow style={{ color: ACCENT }}>Event Bus · the spine every product emits to</Eyebrow>
+            <span className="mono" style={{ fontSize: 11, opacity: 0.5 }}>{evt.total} events · {evt.routes.length} routes</span>
+          </div>
+          <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
+            {Object.entries(evt.stats.by_type || {}).slice(0, 10).map(([t, n]) => (
+              <span key={t} className="mono" style={{ fontSize: 11, padding: "3px 10px", borderRadius: 999,
+                background: "rgba(110,114,240,0.12)" }}>{t} <b style={{ color: ACCENT }}>{n}</b></span>
+            ))}
+            {Object.keys(evt.stats.by_type || {}).length === 0 &&
+              <span style={{ fontSize: 12, opacity: 0.4 }}>no events yet — products emit lesson.completed / essay.scored / trade.closed / episode.produced …</span>}
+          </div>
+          <div style={{ fontSize: 10.5, opacity: 0.4, marginTop: 8 }}>
+            Products emit events only · the bus routes them into Evidence via adapters · no product knows about the Evidence Store.
+          </div>
+        </Panel>
+      )}
 
       {/* department roll-up */}
       <div style={{ display: "flex", gap: 12, marginBottom: 18, flexWrap: "wrap" }}>
