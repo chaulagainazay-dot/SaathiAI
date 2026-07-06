@@ -92,6 +92,9 @@ def _build_specs() -> list[DirectorSpec]:
         specs.append(DirectorSpec("publishing", frozenset({"publishing", "distribution"}), 1, 0.0, "builtin",
                      run=lambda script=None, render_plan=None, plan=None, episode="", **_:
                          _publish_pkg(script or {}, render_plan=render_plan, plan=plan, episode=episode)))
+        from saathi.learning.directors import analyze_all as _learn
+        specs.append(DirectorSpec("learning", frozenset({"learning", "recommendation"}), 1, 0.0, "builtin",
+                     run=lambda **_: _learn(persist=False)))
     except Exception:
         pass
     # imported agency Directors

@@ -1,25 +1,9 @@
-"""Learning Runtime — SaathiAI becomes better tomorrow because of today (M2 Phase 3).
-
-    Execution → Outcome Evaluation → Failure Analysis → Lesson Extraction
-              → Capability Improvement → Learning Policy → explicit outputs
-
-The Learning Engine never writes prompts directly — it proposes. LLM assists
-only lesson extraction (AP-17); everything else is deterministic and testable.
+"""Learning layer — three independent Learning Directors that recommend (never
+edit) from the Evidence Store, plus the universal Recommendation schema/store.
 """
-from saathi.learning.failures import FailureCategory, classify_failure
-from saathi.learning.registry import (
-    CapabilityImprovementRegistry, ImprovementProposal, ImprovementStatus,
-    Experiment, ExperimentStatus,
-)
-from saathi.learning.engine import (
-    LearningEngine, LearningReport, Lesson, OutcomeScore, LearningOutput,
-    route_lesson, deterministic_lesson_extractor,
-)
+from saathi.learning.recommendation import (Recommendation, RecommendationStore,
+                                            default_store, CATEGORIES, STATUSES)
+from saathi.learning.directors import technical, educational, business, analyze_all
 
-__all__ = [
-    "FailureCategory", "classify_failure",
-    "CapabilityImprovementRegistry", "ImprovementProposal", "ImprovementStatus",
-    "Experiment", "ExperimentStatus",
-    "LearningEngine", "LearningReport", "Lesson", "OutcomeScore", "LearningOutput",
-    "route_lesson", "deterministic_lesson_extractor",
-]
+__all__ = ["Recommendation", "RecommendationStore", "default_store", "CATEGORIES",
+           "STATUSES", "technical", "educational", "business", "analyze_all"]

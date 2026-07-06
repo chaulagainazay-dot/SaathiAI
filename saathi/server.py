@@ -258,6 +258,37 @@ async def studio_publish_plan():
     return {"publish_plan": pkg, "platforms_supported": sorted(PLATFORMS)}
 
 
+@app.get("/api/v1/learning/analyze")
+async def learning_analyze():
+    """Run all three Learning Directors over the Evidence Store → pending recommendations.
+    Recommends only; never edits. Whitelisted read."""
+    import asyncio
+    from saathi.learning.directors import analyze_all
+    return await asyncio.to_thread(analyze_all, persist=True)
+
+
+@app.get("/api/v1/learning/recommendations")
+async def learning_recommendations(category: str = "", status: str = "", limit: int = 50):
+    """List recommendations (searchable by category/status). Whitelisted read."""
+    from saathi.learning.recommendation import default_store
+    st = default_store()
+    return {"recommendations": st.list(category=category or None, status=status or None,
+                                       limit=min(limit, 200)), "counts": st.counts()}
+
+
+@app.post("/api/v1/learning/decide")
+async def learning_decide(request: Request):
+    """CEO accepts/rejects a recommendation. Nothing changes automatically — acceptance only
+    records the decision (and the prompt version it will ship in). Token-gated."""
+    body = await request.json()
+    rec_id = body.get("id", "")
+    accept = bool(body.get("accept", False))
+    implemented_in = body.get("implemented_in", "")
+    from saathi.learning.recommendation import default_store
+    ok = default_store().decide(rec_id, accept, implemented_in=implemented_in)
+    return {"ok": ok, "id": rec_id, "status": "accepted" if accept else "rejected"}
+
+
 @app.get("/api/v1/evidence")
 async def evidence_query(department: str = "", project: str = "", episode: str = "", limit: int = 50):
     """Evidence Service — query the company's shared memory. Whitelisted read."""
@@ -824,6 +855,8 @@ async def _auth(request, call_next):
             or path == "/api/v1/studio/control-room"
             or path == "/api/v1/evidence"
             or path == "/api/v1/evidence/stats"
+            or path == "/api/v1/learning/analyze"
+            or path == "/api/v1/learning/recommendations"
             or path == "/api/v1/studio/produce"
             or path == "/api/v1/directors/registry"
             or path == "/api/v1/mission"
