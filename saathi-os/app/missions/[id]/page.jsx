@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { Panel, Eyebrow } from "@/components/ui";
-import { fetchMissionDetail } from "@/lib/api";
+import { fetchMissionDetail, setTaskStatus } from "@/lib/api";
 
 const DEPT_COLOR = {
   ai_studio: "#FF8A3D", pielts: "#6C3FCF", travel: "#5FC8FF", hcg: "#FF5A5A", cafeteria: "#4FD07A",
@@ -13,7 +13,12 @@ export default function MissionDetail() {
   const { id } = useParams();
   const [d, setD] = useState(null);
   const [err, setErr] = useState(null);
-  useEffect(() => { fetchMissionDetail(id).then(setD).catch((e) => setErr(String(e))); }, [id]);
+  const load = () => fetchMissionDetail(id).then(setD).catch((e) => setErr(String(e)));
+  useEffect(() => { load(); }, [id]);
+  const cycleTask = async (t) => {
+    const next = t.status === "todo" ? "doing" : t.status === "doing" ? "done" : "todo";
+    try { await setTaskStatus(id, t.id, next); load(); } catch {}
+  };
 
   if (err) return <div className="page" style={{ padding: 40, opacity: 0.6 }}>{err}</div>;
   if (!d || !d.mission) return <div className="page" style={{ padding: 40, opacity: 0.5 }}>Loading mission…</div>;
@@ -55,6 +60,35 @@ export default function MissionDetail() {
             <div style={{ fontSize: 11, opacity: 0.55 }}>{lbl}</div>
           </div>
         ))}
+      </div>
+
+      {/* CEO cockpit — pipeline · priorities · revenue */}
+      <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr", gap: 16, marginBottom: 16 }}>
+        <Panel style={{ padding: 16 }}>
+          <Eyebrow style={{ color }}>Pipeline</Eyebrow>
+          <div style={{ display: "flex", gap: 6, marginTop: 10, flexWrap: "wrap" }}>
+            {Object.entries(d.pipeline || {}).map(([stage, st]) => {
+              const good = ["done", "accepted", "active", "flowing"].includes(st);
+              const c = good ? TEAL : st === "ready" ? AMBER : "#5b6478";
+              return (
+                <span key={stage} className="mono" style={{ fontSize: 11, padding: "4px 11px", borderRadius: 999,
+                  background: `${c}22`, color: c, textTransform: "capitalize" }}>
+                  {good ? "●" : st === "ready" ? "◐" : "○"} {stage}</span>
+              );
+            })}
+          </div>
+          <div style={{ fontSize: 11, opacity: 0.5, marginTop: 12 }}>TOP PRIORITIES</div>
+          {(d.priorities || []).map((p, i) => (
+            <div key={i} style={{ fontSize: 12.5, padding: "3px 0" }}>{i + 1}. {p}</div>
+          ))}
+          {(d.priorities || []).length === 0 && <div style={{ fontSize: 12, opacity: 0.4 }}>all clear</div>}
+        </Panel>
+        <Panel style={{ padding: 16 }}>
+          <Eyebrow style={{ color }}>Revenue</Eyebrow>
+          <div style={{ fontSize: 26, fontWeight: 600, marginTop: 8, color }}>
+            {d.revenue ? `NPR ${Number(d.revenue.total).toLocaleString()}` : "—"}</div>
+          <div style={{ fontSize: 11, opacity: 0.5 }}>{d.revenue ? `${d.revenue.entries} entr${d.revenue.entries === 1 ? "y" : "ies"}` : "no revenue recorded — add via Intake"}</div>
+        </Panel>
       </div>
 
       {/* Mission Health — where the business is weak (per function) */}
@@ -287,6 +321,35 @@ export default function MissionDetail() {
           </div>
         </Panel>
       </div>
+
+      {/* Workflows — Director → Workflow → Task */}
+      {(d.workflows || []).length > 0 && (
+        <Panel style={{ padding: 18, marginTop: 16 }}>
+          <Eyebrow style={{ color }}>Workflows · tap a task to advance (todo → doing → done)</Eyebrow>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginTop: 12 }}>
+            {d.workflows.map((w) => (
+              <div key={w.id}>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, fontWeight: 600 }}>
+                  <span>{w.name}</span>
+                  <span className="mono" style={{ fontSize: 10.5, color: w.progress >= 1 ? TEAL : AMBER }}>{pct(w.progress)}</span>
+                </div>
+                <div style={{ fontSize: 10.5, opacity: 0.45 }}>{w.director}</div>
+                <div style={{ marginTop: 6, display: "flex", flexWrap: "wrap", gap: 5 }}>
+                  {w.tasks.map((t) => {
+                    const c = t.status === "done" ? TEAL : t.status === "doing" ? AMBER : "#5b6478";
+                    return (
+                      <button key={t.id} onClick={() => cycleTask(t)}
+                        style={{ fontSize: 10.5, padding: "3px 9px", borderRadius: 999, cursor: "pointer",
+                          border: `1px solid ${c}66`, background: `${c}18`, color: c }}>
+                        {t.status === "done" ? "✓" : t.status === "doing" ? "◐" : "○"} {t.title}</button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        </Panel>
+      )}
 
       {/* Timeline — the append-only business record */}
       <Panel style={{ padding: 18, marginTop: 16 }}>

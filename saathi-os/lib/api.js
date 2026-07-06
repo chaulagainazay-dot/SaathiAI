@@ -184,6 +184,27 @@ export async function createMissionTwin(payload) {
   return r.json();
 }
 
+// Workflows + Tasks (Director → Workflow → Task).
+export async function fetchWorkflows(missionId) {
+  const r = await fetch(`${API_BASE}/api/v1/missions/${missionId}/workflows`, { cache: "no-store" });
+  if (!r.ok) throw new Error(`workflows ${r.status}`);
+  return r.json();
+}
+export async function createWorkflow(missionId, payload) {
+  const r = await fetch(`${API_BASE}/api/v1/missions/${missionId}/workflows`, {
+    method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload) });
+  if (!r.ok) throw new Error(`create-wf ${r.status}`);
+  return r.json();
+}
+export async function setTaskStatus(missionId, taskId, status) {
+  const r = await fetch(`${API_BASE}/api/v1/missions/${missionId}/tasks/${taskId}`, {
+    method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ status }) });
+  if (!r.ok) throw new Error(`task ${r.status}`);
+  return r.json();
+}
+
 // Mission Intake — apply structured onboarding into the Knowledge Graph (no OAuth).
 export async function applyIntake(missionId, payload) {
   const r = await fetch(`${API_BASE}/api/v1/missions/${missionId}/intake`, {
