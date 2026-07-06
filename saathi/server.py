@@ -193,7 +193,29 @@ async def studio_report(request: Request):
     body = await request.json()
     from saathi.studio_store import default_store
     rid = default_store().record_payload(body or {})
+    # Content Memory: remember every published piece so the Studio Planner dedups
+    if (body or {}).get("status") == "published" and body.get("topic"):
+        try:
+            from saathi.content_memory import default_memory
+            default_memory().record(topic=body["topic"], run_id=body.get("run_id", ""),
+                                    video_url=body.get("video_url", ""),
+                                    project_id=body.get("project_id", ""))
+        except Exception:
+            pass
     return {"ok": True, "id": rid}
+
+
+@app.get("/api/v1/studio/plan")
+async def studio_plan():
+    """SaathiAI Studio Director — today's production brief (curriculum + memory
+    dedup + Mr. Yeti reference). Whitelisted read."""
+    from saathi.studio import plan_today
+    from saathi.content_memory import default_memory
+    b = plan_today()
+    d = b.as_dict()
+    d["memory_count"] = default_memory().count()
+    d["skills_this_week"] = default_memory().skills_this_week()
+    return d
 
 
 @app.get("/api/v1/studio/queue")
@@ -656,6 +678,7 @@ async def _auth(request, call_next):
             or path == "/api/v1/infrastructure/health"
             or path == "/api/v1/platform/maturity"
             or path == "/api/v1/studio/queue"
+            or path == "/api/v1/studio/plan"
             or path == "/api/v1/mission"
             or path == "/api/v1/mission/complete"
             or path == "/api/v1/agent/chat"
