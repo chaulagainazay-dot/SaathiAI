@@ -258,6 +258,39 @@ async def studio_publish_plan():
     return {"publish_plan": pkg, "platforms_supported": sorted(PLATFORMS)}
 
 
+@app.get("/api/v1/evidence")
+async def evidence_query(department: str = "", project: str = "", episode: str = "", limit: int = 50):
+    """Evidence Service — query the company's shared memory. Whitelisted read."""
+    from saathi.evidence.store import default_store
+    st = default_store()
+    return {"evidence": st.query(department=department or None, project=project or None,
+                                 episode=episode or None, limit=min(limit, 200))}
+
+
+@app.get("/api/v1/evidence/stats")
+async def evidence_stats(days: int = 30):
+    """CEO roll-up across all departments + latest AI Studio episodes. Whitelisted."""
+    import time as _t
+    from saathi.evidence.store import default_store
+    st = default_store()
+    since = _t.time() - days * 86400
+    return {"stats": st.stats(since=since), "total": st.count(),
+            "studio_episodes": st.episodes("ai_studio", limit=15)}
+
+
+@app.post("/api/v1/evidence/record")
+async def evidence_record(request: Request):
+    """Any department feeds a native event; its adapter normalises + persists. Token-gated."""
+    body = await request.json()
+    dept = body.get("department", "")
+    event = body.get("event", {})
+    from saathi.evidence.adapters import ingest, ADAPTERS
+    if dept not in ADAPTERS:
+        return {"ok": False, "error": f"no adapter for '{dept}'", "adapters": sorted(ADAPTERS)}
+    ids = ingest(dept, event)
+    return {"ok": True, "recorded": len(ids), "ids": ids}
+
+
 @app.get("/api/v1/studio/control-room")
 async def studio_control_room():
     """AI Studio OS — the CEO Control Room report (full factory in one read). Whitelisted."""
@@ -789,6 +822,8 @@ async def _auth(request, call_next):
             or path == "/api/v1/studio/render-plan"
             or path == "/api/v1/studio/publish-plan"
             or path == "/api/v1/studio/control-room"
+            or path == "/api/v1/evidence"
+            or path == "/api/v1/evidence/stats"
             or path == "/api/v1/studio/produce"
             or path == "/api/v1/directors/registry"
             or path == "/api/v1/mission"

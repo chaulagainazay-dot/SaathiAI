@@ -161,6 +161,13 @@ class StudioExecutive:
         p.status = "ready" if ok else "revision"
         if not ok:
             p.notes.append("Needs revision: missing hook/CTA, too few scenes, or bad duration.")
+
+        # Evidence Service — every production run feeds the company's shared memory
+        try:
+            from saathi.evidence.adapters import ingest
+            ingest("ai_studio", p.as_dict())
+        except Exception:
+            pass
         return p
 
 
