@@ -76,6 +76,56 @@ def overview(mission: dict) -> dict:
     except Exception:
         pass
 
+    # workflows + open tasks
+    workflows, open_tasks = [], []
+    try:
+        from saathi.missions.workflow import default_store as wf_store
+        ws = wf_store()
+        workflows = ws.list(mission.get("id", ""))
+        open_tasks = ws.open_tasks(mission.get("id", ""))
+    except Exception:
+        pass
+
+    # revenue from the knowledge graph
+    revenue = None
+    try:
+        from saathi.missions.knowledge import default_graph
+        revs = default_graph().nodes(mission.get("id", ""), node_type="revenue")
+        amounts = [r["data"].get("amount") for r in revs if isinstance(r.get("data"), dict)]
+        amounts = [a for a in amounts if isinstance(a, (int, float))]
+        if amounts:
+            revenue = {"total": sum(amounts), "entries": len(amounts)}
+    except Exception:
+        pass
+
+    # CEO pipeline: research → proposal → execution → evidence
+    proposal = None
+    try:
+        from saathi.missions.proposal import default_store as p_store
+        proposal = p_store().latest(mission.get("id", ""))
+    except Exception:
+        pass
+    pipeline = {
+        "research": "done" if twin else "pending",
+        "proposal": ("accepted" if (proposal or {}).get("status") == "accepted"
+                     else "ready" if proposal else "pending"),
+        "execution": "active" if mission.get("status") == "active" and workflows else (
+            "active" if mission.get("status") == "active" else "pending"),
+        "evidence": "flowing" if ev_count > 0 else "pending",
+    }
+
+    # top priorities — from weakest health dims + open tasks + pending recs
+    priorities = []
+    if health:
+        for dim, v in sorted((health.get("dimensions") or {}).items(), key=lambda x: x[1])[:2]:
+            if v < 0.6:
+                priorities.append(f"Raise {dim.replace('_', ' ')} ({int(v*100)}%)")
+    for t in open_tasks[:2]:
+        priorities.append(f"{t['title']}" + (f" ({t['director']})" if t.get("director") else ""))
+    for r in recs:
+        if r.get("status") == "pending":
+            priorities.append(r.get("recommendation", "")[:60]); break
+
     pending = sum(1 for r in recs if r.get("status") == "pending")
     return {
         "mission": mission,
@@ -83,6 +133,11 @@ def overview(mission: dict) -> dict:
         "timeline": timeline,
         "knowledge": coverage,
         "health": health,
+        "workflows": workflows,
+        "open_tasks": open_tasks,
+        "revenue": revenue,
+        "pipeline": pipeline,
+        "priorities": priorities[:5],
         "kpis": {
             "evidence": ev_count,
             "events": evt_count,

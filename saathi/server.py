@@ -362,6 +362,45 @@ async def mission_document(mission_id: str, request: Request):
     return {"ok": True, **res}
 
 
+@app.get("/api/v1/missions/{mission_id}/workflows")
+async def mission_workflows(mission_id: str):
+    """Workflows + tasks for a Mission (Director → Workflow → Task). Whitelisted read."""
+    from saathi.missions.store import default_store as m_store
+    from saathi.missions.workflow import default_store as wf_store
+    ms = m_store()
+    m = ms.get(mission_id) or ms.get_by_key(mission_id)
+    if not m:
+        return {"error": "mission not found"}
+    ws = wf_store()
+    return {"workflows": ws.list(m["id"]), "templates": list(__import__(
+        "saathi.missions.workflow", fromlist=["TEMPLATES"]).TEMPLATES.keys())}
+
+
+@app.post("/api/v1/missions/{mission_id}/workflows")
+async def mission_workflow_create(mission_id: str, request: Request):
+    """Create a workflow from a template/director. Token-gated."""
+    body = await request.json()
+    from saathi.missions.store import default_store as m_store
+    from saathi.missions.workflow import default_store as wf_store
+    ms = m_store()
+    m = ms.get(mission_id) or ms.get_by_key(mission_id)
+    if not m:
+        return {"ok": False, "error": "mission not found"}
+    wf = wf_store().create(m["id"], director=body.get("director", ""),
+                           department=body.get("department", ""), template=body.get("template", ""),
+                           name=body.get("name", ""))
+    return {"ok": True, "workflow": wf}
+
+
+@app.post("/api/v1/missions/{mission_id}/tasks/{task_id}")
+async def mission_task_update(mission_id: str, task_id: str, request: Request):
+    """Update a task status (todo/doing/done/blocked). Token-gated."""
+    body = await request.json()
+    from saathi.missions.workflow import default_store as wf_store
+    ok = wf_store().set_task(task_id, body.get("status", ""))
+    return {"ok": ok, "task_id": task_id, "status": body.get("status", "")}
+
+
 @app.get("/api/v1/missions/{mission_id}/health")
 async def mission_health_get(mission_id: str):
     """Mission Health — per-function scores (where the business is weak). Whitelisted read."""
@@ -465,6 +504,16 @@ async def mission_proposal_decide(mission_id: str, request: Request):
         tl_store().record(m["id"], "decision", "Proposal accepted — moving to execution",
                           detail="Mission status → active")
         tl_store().record(m["id"], "launch", "Execution started")
+        # stand up the department workflows for this business type
+        try:
+            from saathi.missions.workflow import provision_execution, default_store as wf_store
+            from saathi.missions.twin import default_store as twin_store
+            tw = twin_store().get(m["id"]) or {}
+            wfs = provision_execution(m["id"], tw.get("template", "generic"), store=wf_store())
+            tl_store().record(m["id"], "note", f"{len(wfs)} department workflows provisioned",
+                              detail=", ".join(w["name"] for w in wfs))
+        except Exception:
+            pass
     else:
         tl_store().record(m["id"], "decision", "Proposal rejected")
     return {"ok": True, "status": "accepted" if accept else "rejected"}
