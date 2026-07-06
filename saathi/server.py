@@ -258,6 +258,53 @@ async def studio_publish_plan():
     return {"publish_plan": pkg, "platforms_supported": sorted(PLATFORMS)}
 
 
+@app.get("/api/v1/missions")
+async def missions_list(status: str = ""):
+    """All Missions — the CEO OS dashboard of every business. Whitelisted read."""
+    from saathi.missions.store import default_store
+    return {"missions": default_store().list(status=status or None)}
+
+
+@app.get("/api/v1/missions/{mission_id}")
+async def mission_detail(mission_id: str):
+    """One Mission's Executive Dashboard (identity + KPIs + evidence + learning + events).
+    Whitelisted read."""
+    import asyncio
+    from saathi.missions.store import default_store
+    from saathi.missions.overview import overview
+    m = default_store().get(mission_id) or default_store().get_by_key(mission_id)
+    if not m:
+        return {"error": "mission not found", "id": mission_id}
+    return await asyncio.to_thread(overview, m)
+
+
+@app.post("/api/v1/missions")
+async def mission_create(request: Request):
+    """Create a new Mission (＋ New Mission). Token-gated."""
+    body = await request.json()
+    from saathi.missions.store import Mission, default_store, TYPES
+    key = body.get("key", "").strip()
+    name = body.get("name", "").strip()
+    if not key or not name:
+        return {"ok": False, "error": "key and name required"}
+    mtype = body.get("type", "business")
+    m = Mission(key=key, name=name, type=mtype if mtype in TYPES else "business",
+                department=body.get("department", ""), identity=body.get("identity") or {},
+                objectives=body.get("objectives") or [], kpis=body.get("kpis") or {},
+                directors=body.get("directors") or [])
+    mid = default_store().create_if_absent(m)
+    return {"ok": True, "id": mid, "key": key}
+
+
+@app.patch("/api/v1/missions/{mission_id}")
+async def mission_update(mission_id: str, request: Request):
+    """Update a Mission's identity/objectives/KPIs/status. Token-gated."""
+    body = await request.json()
+    from saathi.missions.store import default_store
+    ok = default_store().update(mission_id, body)
+    return {"ok": ok, "id": mission_id}
+
+
 @app.post("/api/v1/events")
 async def events_emit(request: Request):
     """Any product emits ONE event; the bus persists it and routes it into Evidence.
@@ -890,8 +937,11 @@ async def _auth(request, call_next):
             or path == "/api/v1/evidence/stats"
             or path == "/api/v1/learning/analyze"
             or path == "/api/v1/learning/recommendations"
-            or path == "/api/v1/events"
             or path == "/api/v1/events/stats"
+            or (request.method == "GET" and (
+                path == "/api/v1/events"
+                or path == "/api/v1/missions"
+                or path.startswith("/api/v1/missions/")))
             or path == "/api/v1/studio/produce"
             or path == "/api/v1/directors/registry"
             or path == "/api/v1/mission"
@@ -3700,6 +3750,12 @@ def _start_background():
     try:
         from .production.agency_importer import import_directors
         import_directors()
+    except Exception:
+        pass
+    # seed the five businesses as Missions (root object of SaathiOS)
+    try:
+        from .missions.store import seed_missions
+        seed_missions()
     except Exception:
         pass
     try:
