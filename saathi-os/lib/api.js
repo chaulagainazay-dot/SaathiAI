@@ -169,6 +169,21 @@ export async function fetchControlRoom() {
   return r.json();
 }
 
+// Knowledge Library — company-wide sources searchable by every Director.
+export async function fetchLibrary({ q = "", category = "", director = "", tag = "" } = {}) {
+  const params = new URLSearchParams({ q, category, director, tag });
+  const r = await fetch(`${API_BASE}/api/v1/knowledge/library?${params}`, { cache: "no-store" });
+  if (!r.ok) throw new Error(`library ${r.status}`);
+  return r.json();
+}
+export async function importRepo(url, category = "AI Engineering") {
+  const r = await fetch(`${API_BASE}/api/v1/knowledge/library/import`, {
+    method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ url, category }) });
+  if (!r.ok) throw new Error(`import ${r.status}`);
+  return r.json();
+}
+
 // Missions — the CEO OS dashboard of every business (Mission = root object).
 export async function fetchMissions(status = "") {
   const q = status ? `?status=${status}` : "";
