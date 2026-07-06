@@ -21,7 +21,12 @@ export default function MissionsPage() {
 
   return (
     <div className="only-desktop" style={{ maxWidth: 1080, margin: "0 auto", paddingBottom: 60 }}>
-      <Eyebrow style={{ color: "#9B6BFF" }}>SaathiOS · Missions</Eyebrow>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+        <Eyebrow style={{ color: "#9B6BFF" }}>SaathiOS · Missions</Eyebrow>
+        <button onClick={() => router.push("/missions/new")}
+          style={{ padding: "9px 18px", borderRadius: 12, border: "none", cursor: "pointer",
+            fontWeight: 600, color: "#fff", background: "#9B6BFF" }}>＋ New Mission</button>
+      </div>
       <div style={{ fontSize: 28, fontWeight: 600, margin: "4px 0 4px" }}>Mission Control</div>
       <div style={{ fontSize: 13, opacity: 0.5, marginBottom: 20 }}>
         Every business is a Mission — the root object. Directors work inside it · events, evidence and learning

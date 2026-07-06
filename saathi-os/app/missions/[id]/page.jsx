@@ -47,6 +47,54 @@ export default function MissionDetail() {
         ))}
       </div>
 
+      {/* Business Digital Twin — briefing + departments + roadmap */}
+      {d.twin && (
+        <Panel style={{ padding: 18, marginBottom: 16, borderLeft: `3px solid ${color}` }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+            <Eyebrow style={{ color }}>Business Digital Twin · Executive Briefing</Eyebrow>
+            <span className="mono" style={{ fontSize: 12 }}>
+              Health <b style={{ color: (d.twin.briefing?.health || 0) >= 0.6 ? TEAL : AMBER }}>
+                {pct(d.twin.briefing?.health)}</b></span>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18, marginTop: 12 }}>
+            <div>
+              <div style={{ fontSize: 11, opacity: 0.5, color: TEAL }}>STRENGTHS</div>
+              {(d.twin.briefing?.strengths || []).map((s, i) => <div key={i} style={{ fontSize: 12.5, padding: "2px 0" }}>✓ {s}</div>)}
+              <div style={{ fontSize: 11, opacity: 0.5, color: RED, marginTop: 8 }}>WEAKNESSES</div>
+              {(d.twin.briefing?.weaknesses || []).map((s, i) => <div key={i} style={{ fontSize: 12.5, padding: "2px 0" }}>⚠ {s}</div>)}
+            </div>
+            <div>
+              <div style={{ fontSize: 11, opacity: 0.5, color: AMBER }}>TOP OPPORTUNITIES</div>
+              {(d.twin.briefing?.opportunities || []).map((s, i) => <div key={i} style={{ fontSize: 12.5, padding: "2px 0" }}>{i + 1}. {s}</div>)}
+              <div style={{ fontSize: 11, opacity: 0.5, marginTop: 8 }}>ESTIMATED ROI</div>
+              {Object.entries(d.twin.briefing?.roi || {}).map(([area, stars]) => (
+                <div key={area} style={{ fontSize: 12.5, padding: "1px 0" }}>
+                  {area} <span style={{ color: AMBER }}>{"★".repeat(stars)}{"☆".repeat(5 - stars)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          {/* departments */}
+          <div style={{ fontSize: 11, opacity: 0.5, marginTop: 14 }}>DEPARTMENTS · {d.twin.template} template</div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 6 }}>
+            {(d.twin.departments || []).map((dep) => (
+              <span key={dep} className="mono" style={{ fontSize: 10.5, padding: "3px 9px", borderRadius: 999,
+                background: "rgba(255,255,255,0.06)" }}>{dep}</span>
+            ))}
+          </div>
+          {/* roadmap */}
+          <div style={{ fontSize: 11, opacity: 0.5, marginTop: 14 }}>30-DAY ROADMAP</div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 10, marginTop: 6 }}>
+            {Object.entries(d.twin.roadmap || {}).map(([wk, items]) => (
+              <div key={wk}>
+                <div style={{ fontSize: 11.5, fontWeight: 600, color }}>{wk}</div>
+                {items.map((it, i) => <div key={i} style={{ fontSize: 11, opacity: 0.65, padding: "1px 0" }}>◦ {it}</div>)}
+              </div>
+            ))}
+          </div>
+        </Panel>
+      )}
+
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
         {/* identity + objectives + directors */}
         <Panel style={{ padding: 18 }}>
@@ -129,6 +177,28 @@ export default function MissionDetail() {
           </div>
         </Panel>
       </div>
+
+      {/* Timeline — the append-only business record */}
+      <Panel style={{ padding: 18, marginTop: 16 }}>
+        <Eyebrow style={{ color }}>Timeline · business history</Eyebrow>
+        <div style={{ marginTop: 12 }}>
+          {(d.timeline || []).map((t) => (
+            <div key={t.id} style={{ display: "flex", gap: 10, padding: "6px 0",
+              borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+              <span style={{ width: 8, height: 8, borderRadius: "50%", background: color, marginTop: 5, flexShrink: 0 }} />
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 12.5 }}>{t.title}</div>
+                {t.detail && <div style={{ fontSize: 11, opacity: 0.5 }}>{t.detail}</div>}
+              </div>
+              <span className="mono" style={{ fontSize: 9.5, padding: "1px 7px", borderRadius: 999,
+                background: "rgba(255,255,255,0.06)", height: "fit-content", opacity: 0.6 }}>{t.kind}</span>
+              <span className="mono" style={{ fontSize: 10, opacity: 0.4, whiteSpace: "nowrap" }}>
+                {new Date((t.timestamp || 0) * 1000).toLocaleDateString()}</span>
+            </div>
+          ))}
+          {(d.timeline || []).length === 0 && <div style={{ fontSize: 12.5, opacity: 0.4 }}>no history yet</div>}
+        </div>
+      </Panel>
     </div>
   );
 }

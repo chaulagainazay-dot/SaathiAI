@@ -174,6 +174,16 @@ export async function fetchMissionDetail(id) {
   return r.json();
 }
 
+// Missions — ＋New Mission: create a Business Digital Twin (research + departments + briefing + roadmap).
+export async function createMissionTwin(payload) {
+  const r = await fetch(`${API_BASE}/api/v1/missions/twin`, {
+    method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!r.ok) throw new Error(`create-twin ${r.status}`);
+  return r.json();
+}
+
 // Event Bus — volume by type/source + routing table (the spine every product emits to).
 export async function fetchEventStats(days = 30) {
   const r = await fetch(`${API_BASE}/api/v1/events/stats?days=${days}`, { cache: "no-store" });
