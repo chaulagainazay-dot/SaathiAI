@@ -270,6 +270,49 @@ async def knowledge_library(q: str = "", category: str = "", tag: str = "", dire
     return {"sources": items, "categories": st.categories()}
 
 
+@app.get("/api/v1/knowledge/library/consult")
+async def knowledge_consult(q: str = "", director: str = "", limit: int = 5):
+    """Manual retrieval — a Director deliberately consults the Library (records influence).
+    This is the toggle path before automatic retrieval is enabled. Whitelisted read."""
+    from saathi.knowledge_library.store import default_store
+    return {"sources": default_store().consult(q, director=director, limit=min(limit, 20))}
+
+
+@app.get("/api/v1/knowledge/queue")
+async def knowledge_queue(status: str = ""):
+    """Reading Queue — the AI-engineering curriculum backlog. Whitelisted read."""
+    from saathi.knowledge_library.queue import default_store
+    return {"queue": default_store().list(status=status or None if status else "")}
+
+
+@app.post("/api/v1/knowledge/queue")
+async def knowledge_queue_add(request: Request):
+    """Add a source to the reading backlog. Token-gated."""
+    body = await request.json()
+    from saathi.knowledge_library.queue import default_store
+    if not body.get("title"):
+        return {"ok": False, "error": "title required"}
+    q = default_store().add(body["title"], url=body.get("url", ""), category=body.get("category", ""),
+                            priority=int(body.get("priority", 3)), status=body.get("status", "pending"))
+    return {"ok": True, "item": q}
+
+
+@app.post("/api/v1/knowledge/library/{sid}/rate")
+async def knowledge_rate(sid: str, request: Request):
+    """Rate a source's usefulness for a Director, set trust, or advance its lifecycle status. Token-gated."""
+    body = await request.json()
+    from saathi.knowledge_library.store import default_store
+    st = default_store()
+    done = {}
+    if body.get("director") and body.get("stars") is not None:
+        done["rated"] = st.rate_director(sid, body["director"], int(body["stars"]))
+    if body.get("trust") is not None:
+        done["trust"] = st.set_trust(sid, int(body["trust"]))
+    if body.get("status"):
+        done["status"] = st.set_status(sid, body["status"])
+    return {"ok": any(done.values()), **done, "source": st.get(sid)}
+
+
 @app.post("/api/v1/knowledge/library/import")
 async def knowledge_library_import(request: Request):
     """Knowledge Importer — ingest a GitHub repo (reads its real README). Token-gated."""
@@ -279,7 +322,17 @@ async def knowledge_library_import(request: Request):
     if not url:
         return {"ok": False, "error": "url required"}
     from saathi.knowledge_library.importer import import_repo
-    return await asyncio.to_thread(import_repo, url, category=body.get("category", "AI Engineering"))
+    res = await asyncio.to_thread(import_repo, url, category=body.get("category", "AI Engineering"))
+    # if this url was on the reading backlog, mark it imported
+    try:
+        from saathi.knowledge_library.queue import default_store as q_store
+        qs = q_store()
+        for item in qs.list():
+            if item["url"] and item["url"].rstrip("/").rstrip(".git") == url.rstrip("/").rstrip(".git"):
+                qs.set_status(item["id"], "imported")
+    except Exception:
+        pass
+    return res
 
 
 @app.post("/api/v1/knowledge/library")
@@ -1330,6 +1383,8 @@ async def _auth(request, call_next):
                 path == "/api/v1/events"
                 or path == "/api/v1/missions"
                 or path == "/api/v1/knowledge/library"
+                or path == "/api/v1/knowledge/library/consult"
+                or path == "/api/v1/knowledge/queue"
                 or path.startswith("/api/v1/missions/")))
             or path == "/api/v1/studio/produce"
             or path == "/api/v1/directors/registry"
@@ -4147,10 +4202,12 @@ def _start_background():
         seed_missions()
     except Exception:
         pass
-    # seed the Knowledge Library with foundational sources
+    # seed the Knowledge Library with foundational sources + the reading backlog
     try:
         from .knowledge_library.importer import seed_defaults as seed_library
         seed_library()
+        from .knowledge_library.queue import seed_queue
+        seed_queue()
     except Exception:
         pass
     try:
