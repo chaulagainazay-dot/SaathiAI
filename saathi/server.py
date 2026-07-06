@@ -258,6 +258,14 @@ async def studio_publish_plan():
     return {"publish_plan": pkg, "platforms_supported": sorted(PLATFORMS)}
 
 
+@app.get("/api/v1/studio/control-room")
+async def studio_control_room():
+    """AI Studio OS — the CEO Control Room report (full factory in one read). Whitelisted."""
+    import asyncio
+    from saathi.studio_control_room import report
+    return await asyncio.to_thread(report)
+
+
 @app.get("/api/v1/studio/storyboard")
 async def studio_storyboard():
     """Visual Department — today's plan → script → Scene Package. Whitelisted."""
@@ -780,6 +788,7 @@ async def _auth(request, call_next):
             or path == "/api/v1/studio/storyboard"
             or path == "/api/v1/studio/render-plan"
             or path == "/api/v1/studio/publish-plan"
+            or path == "/api/v1/studio/control-room"
             or path == "/api/v1/studio/produce"
             or path == "/api/v1/directors/registry"
             or path == "/api/v1/mission"
