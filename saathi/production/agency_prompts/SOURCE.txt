@@ -1,0 +1,1 @@
+SOURCE: github.com/msitarzewski/agency-agents (curated subset, imported as Directors)

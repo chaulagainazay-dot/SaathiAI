@@ -270,6 +270,26 @@ async def daily_mission_complete(request: Request):
     return {"ok": True, "mission": mission()}
 
 
+@app.get("/api/v1/directors")
+async def directors_list():
+    """Director Library — imported agency Directors (slug/name/description). Whitelisted."""
+    from saathi.production.director_library import list_directors
+    return {"directors": list_directors()}
+
+
+@app.post("/api/v1/directors/{slug}/run")
+async def director_run(slug: str, request: Request):
+    """Run a Director on a task via the Model Router. Token/local-gated."""
+    import asyncio
+    body = await request.json()
+    from saathi.production.director_library import run
+    task = (body or {}).get("task", "")
+    if not task:
+        return {"ok": False, "error": "task required"}
+    ctx = {k: v for k, v in (body or {}).items() if k != "task"}
+    return await asyncio.to_thread(run, slug, task, **ctx)
+
+
 @app.get("/api/v1/lab/prompts")
 async def lab_prompts():
     """AI Lab — Prompt Library catalog: every prompt with active version + best
@@ -710,6 +730,7 @@ async def _auth(request, call_next):
             or path == "/api/v1/code-memory/status"
             or path == "/api/v1/lab/prompts"
             or path.startswith("/api/v1/lab/prompts/")
+            or path == "/api/v1/directors"
             or path == "/api/v1/intake/projects"
             or path.startswith("/api/v1/intake/projects/")
             or path.startswith("/api/v1/intake/form/")
@@ -3502,6 +3523,12 @@ def _start_background():
     try:
         from .ai_lab import seed_defaults
         seed_defaults()
+    except Exception:
+        pass
+    # import the curated agency-agents prompts as Directors (Director Library)
+    try:
+        from .production.agency_importer import import_directors
+        import_directors()
     except Exception:
         pass
     try:

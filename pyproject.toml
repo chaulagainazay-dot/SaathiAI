@@ -47,3 +47,6 @@ exclude = ["saathi-os*", "tests*"]
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
+
+[tool.setuptools.package-data]
+"saathi.production" = ["agency_prompts/*.md", "agency_prompts/*.txt"]
