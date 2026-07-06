@@ -362,6 +362,66 @@ async def mission_document(mission_id: str, request: Request):
     return {"ok": True, **res}
 
 
+@app.get("/api/v1/missions/{mission_id}/brand")
+async def mission_brand(mission_id: str):
+    """Brand Identity + Voice Registry for a Mission (voice = reusable asset). Whitelisted read."""
+    from saathi.missions.store import default_store as m_store
+    from saathi.missions.brand import default_store as b_store, default_brand, SAMPLE_PROMPTS, PURPOSES
+    ms = m_store()
+    m = ms.get(mission_id) or ms.get_by_key(mission_id)
+    if not m:
+        return {"error": "mission not found"}
+    bs = b_store()
+    return {"brand": bs.get_brand(m["id"]) or default_brand(m), "voices": bs.list_voices(m["id"]),
+            "active_voice": bs.active_voice(m["id"]), "sample_prompts": SAMPLE_PROMPTS,
+            "purposes": list(PURPOSES)}
+
+
+@app.post("/api/v1/missions/{mission_id}/brand")
+async def mission_brand_save(mission_id: str, request: Request):
+    """Save brand identity fields (logo/colors/fonts/writing_style/character/guidelines…). Token-gated."""
+    body = await request.json()
+    from saathi.missions.store import default_store as m_store
+    from saathi.missions.brand import default_store as b_store
+    ms = m_store()
+    m = ms.get(mission_id) or ms.get_by_key(mission_id)
+    if not m:
+        return {"ok": False, "error": "mission not found"}
+    b_store().save_brand(m["id"], body)
+    return {"ok": True, "brand": b_store().get_brand(m["id"])}
+
+
+@app.post("/api/v1/missions/{mission_id}/voices")
+async def mission_voice_register(mission_id: str, request: Request):
+    """Register a voice profile version (name + purpose/language/accent/style/emotion/speed/pitch/
+    provider/samples). Versioned like the Prompt Registry. Token-gated."""
+    body = await request.json()
+    from saathi.missions.store import default_store as m_store
+    from saathi.missions.brand import default_store as b_store
+    ms = m_store()
+    m = ms.get(mission_id) or ms.get_by_key(mission_id)
+    if not m:
+        return {"ok": False, "error": "mission not found"}
+    name = body.get("name", "").strip()
+    if not name:
+        return {"ok": False, "error": "voice name required"}
+    v = b_store().register_voice(m["id"], name, body)
+    b_store().set_active_voice(m["id"], v["id"])   # newest becomes active
+    return {"ok": True, "voice": v}
+
+
+@app.post("/api/v1/missions/{mission_id}/voices/{voice_id}/activate")
+async def mission_voice_activate(mission_id: str, voice_id: str):
+    """Set a voice as the Mission's active voice (what Directors read). Token-gated."""
+    from saathi.missions.store import default_store as m_store
+    from saathi.missions.brand import default_store as b_store
+    ms = m_store()
+    m = ms.get(mission_id) or ms.get_by_key(mission_id)
+    if not m:
+        return {"ok": False, "error": "mission not found"}
+    return {"ok": b_store().set_active_voice(m["id"], voice_id)}
+
+
 @app.get("/api/v1/missions/{mission_id}/workflows")
 async def mission_workflows(mission_id: str):
     """Workflows + tasks for a Mission (Director → Workflow → Task). Whitelisted read."""

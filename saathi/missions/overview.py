@@ -126,6 +126,17 @@ def overview(mission: dict) -> dict:
         if r.get("status") == "pending":
             priorities.append(r.get("recommendation", "")[:60]); break
 
+    # brand identity + active voice (what Directors read)
+    brand, active_voice, voice_count = {}, None, 0
+    try:
+        from saathi.missions.brand import default_store as b_store, default_brand
+        bs = b_store()
+        brand = bs.get_brand(mission.get("id", "")) or default_brand(mission)
+        active_voice = bs.active_voice(mission.get("id", ""))
+        voice_count = len(bs.list_voices(mission.get("id", "")))
+    except Exception:
+        pass
+
     pending = sum(1 for r in recs if r.get("status") == "pending")
     return {
         "mission": mission,
@@ -133,6 +144,9 @@ def overview(mission: dict) -> dict:
         "timeline": timeline,
         "knowledge": coverage,
         "health": health,
+        "brand": brand,
+        "active_voice": active_voice,
+        "voice_count": voice_count,
         "workflows": workflows,
         "open_tasks": open_tasks,
         "revenue": revenue,
