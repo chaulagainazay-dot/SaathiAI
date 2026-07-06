@@ -130,4 +130,14 @@ def build(mission: dict, info: dict | None = None, *, research_timeout: float = 
             "briefing": briefing, "roadmap": roadmap, "reports": reports, "confidence": conf}
     default_store().save(mid, departments=departments, research=research, briefing=briefing,
                          roadmap=roadmap, reports=reports, confidence=conf)
+
+    # 5. write everything into the Mission Knowledge Graph (the business memory)
+    try:
+        from saathi.missions.knowledge import populate_from_twin, default_graph
+        added = populate_from_twin(mission, twin, graph=default_graph())
+        cov = default_graph().coverage(mid)
+        tl.record(mid, "note", "Knowledge graph populated",
+                  detail=f"{added} nodes · coverage {int(cov['overall']*100)}%")
+    except Exception:
+        pass
     return twin

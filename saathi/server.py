@@ -327,6 +327,40 @@ async def mission_create_twin(request: Request):
     return {"ok": True, "id": mid, "key": key, "twin": twin}
 
 
+@app.get("/api/v1/missions/{mission_id}/knowledge")
+async def mission_knowledge(mission_id: str, type: str = ""):
+    """Mission Knowledge Graph — nodes + coverage (the business memory). Whitelisted read."""
+    from saathi.missions.store import default_store as m_store
+    from saathi.missions.knowledge import default_graph
+    ms = m_store()
+    m = ms.get(mission_id) or ms.get_by_key(mission_id)
+    if not m:
+        return {"error": "mission not found"}
+    g = default_graph()
+    return {"nodes": g.nodes(m["id"], node_type=type or None), "coverage": g.coverage(m["id"]),
+            "counts": g.counts(m["id"])}
+
+
+@app.post("/api/v1/missions/{mission_id}/knowledge")
+async def mission_knowledge_write(mission_id: str, request: Request):
+    """Write a node into the Business Memory — used by connectors, uploads, and
+    Directors. Body: {type, key, label?, data?, source?}. Token-gated."""
+    body = await request.json()
+    from saathi.missions.store import default_store as m_store
+    from saathi.missions.knowledge import default_graph
+    ms = m_store()
+    m = ms.get(mission_id) or ms.get_by_key(mission_id)
+    if not m:
+        return {"ok": False, "error": "mission not found"}
+    ntype = body.get("type", "")
+    key = body.get("key", "")
+    if not ntype or not key:
+        return {"ok": False, "error": "type and key required"}
+    nid = default_graph().upsert(m["id"], ntype, key, label=body.get("label", ""),
+                                 data=body.get("data") or {}, source=body.get("source", "api"))
+    return {"ok": True, "id": nid, "coverage": default_graph().coverage(m["id"])["overall"]}
+
+
 @app.post("/api/v1/missions/{mission_id}/proposal")
 async def mission_proposal_generate(mission_id: str):
     """Proposal Director — build the full Proposal Package from the Mission twin.

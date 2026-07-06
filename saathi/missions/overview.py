@@ -60,11 +60,20 @@ def overview(mission: dict) -> dict:
     except Exception:
         pass
 
+    # knowledge coverage — how much of the business we hold in memory
+    coverage = None
+    try:
+        from saathi.missions.knowledge import default_graph
+        coverage = default_graph().coverage(mission.get("id", ""))
+    except Exception:
+        pass
+
     pending = sum(1 for r in recs if r.get("status") == "pending")
     return {
         "mission": mission,
         "twin": twin,
         "timeline": timeline,
+        "knowledge": coverage,
         "kpis": {
             "evidence": ev_count,
             "events": evt_count,
