@@ -87,6 +87,9 @@ class BrandStore:
             c.execute("CREATE TABLE IF NOT EXISTS voice(id TEXT PRIMARY KEY, mission_id TEXT, name TEXT, "
                       "version INTEGER, data TEXT, status TEXT, created REAL)")
             c.execute("CREATE INDEX IF NOT EXISTS idx_voice_m ON voice(mission_id)")
+            c.execute("CREATE TABLE IF NOT EXISTS voice_experiment(id TEXT PRIMARY KEY, mission_id TEXT, "
+                      "episode TEXT, voice_a TEXT, voice_b TEXT, split INTEGER, status TEXT, "
+                      "winner TEXT, metrics TEXT, created REAL)")
 
     def _conn(self):
         return sqlite3.connect(str(self.db_path))
@@ -152,6 +155,42 @@ class BrandStore:
                 return v
         voices = self.list_voices(mission_id)
         return voices[0] if voices else None
+
+    # ── voice experiments (A/B → evidence, like prompt experiments) ───────────
+    def create_experiment(self, mission_id: str, *, episode: str, voice_a: str,
+                          voice_b: str, split: int = 50) -> dict:
+        eid = uuid.uuid4().hex[:16]
+        with self._conn() as c:
+            c.execute("INSERT INTO voice_experiment VALUES(?,?,?,?,?,?,?,?,?,?)",
+                      (eid, mission_id, episode, voice_a, voice_b, int(split), "running",
+                       "", json.dumps({}), time.time()))
+        return self.get_experiment(eid)
+
+    def get_experiment(self, eid: str) -> dict | None:
+        cols = ["id", "mission_id", "episode", "voice_a", "voice_b", "split", "status",
+                "winner", "metrics", "created"]
+        with self._conn() as c:
+            r = c.execute("SELECT " + ",".join(cols) + " FROM voice_experiment WHERE id=?", (eid,)).fetchone()
+        if not r:
+            return None
+        d = dict(zip(cols, r))
+        try:
+            d["metrics"] = json.loads(d["metrics"] or "{}")
+        except Exception:
+            d["metrics"] = {}
+        return d
+
+    def resolve_experiment(self, eid: str, winner: str, metrics: dict | None = None) -> bool:
+        with self._conn() as c:
+            cur = c.execute("UPDATE voice_experiment SET status='done', winner=?, metrics=? WHERE id=?",
+                            (winner, json.dumps(metrics or {}), eid))
+            return cur.rowcount > 0
+
+    def experiments(self, mission_id: str) -> list[dict]:
+        with self._conn() as c:
+            ids = [r[0] for r in c.execute("SELECT id FROM voice_experiment WHERE mission_id=? "
+                                           "ORDER BY created DESC", (mission_id,)).fetchall()]
+        return [self.get_experiment(i) for i in ids]
 
 
 _default = None

@@ -407,7 +407,64 @@ async def mission_voice_register(mission_id: str, request: Request):
         return {"ok": False, "error": "voice name required"}
     v = b_store().register_voice(m["id"], name, body)
     b_store().set_active_voice(m["id"], v["id"])   # newest becomes active
+    try:
+        from saathi.missions.timeline import default_store as tl
+        tl().record(m["id"], "decision", f"Voice registered: {name} v{v['version']} (active)",
+                    detail=f"{v.get('provider', '')} · {v.get('style', '')}")
+    except Exception:
+        pass
     return {"ok": True, "voice": v}
+
+
+@app.get("/api/v1/missions/{mission_id}/voice/package")
+async def mission_voice_package(mission_id: str, emotion: str = "", objective: str = "", provider: str = ""):
+    """Voice Director — active voice + scene emotion + objective → provider-agnostic
+    Voice Package (what TTS adapters consume). Whitelisted read."""
+    from saathi.missions.store import default_store as m_store
+    from saathi.missions.voice_director import package
+    ms = m_store()
+    m = ms.get(mission_id) or ms.get_by_key(mission_id)
+    if not m:
+        return {"error": "mission not found"}
+    return {"voice_package": package(m["id"], scene_emotion=emotion, objective=objective,
+                                     prefer_provider=provider)}
+
+
+@app.get("/api/v1/missions/{mission_id}/voice/experiments")
+async def mission_voice_experiments(mission_id: str):
+    """List voice A/B experiments (voice choice by evidence, not opinion). Whitelisted read."""
+    from saathi.missions.store import default_store as m_store
+    from saathi.missions.brand import default_store as b_store
+    ms = m_store()
+    m = ms.get(mission_id) or ms.get_by_key(mission_id)
+    if not m:
+        return {"error": "mission not found"}
+    return {"experiments": b_store().experiments(m["id"])}
+
+
+@app.post("/api/v1/missions/{mission_id}/voice/experiments")
+async def mission_voice_experiment_create(mission_id: str, request: Request):
+    """Start a voice A/B experiment (episode, voice_a, voice_b, split). Token-gated."""
+    body = await request.json()
+    from saathi.missions.store import default_store as m_store
+    from saathi.missions.brand import default_store as b_store
+    ms = m_store()
+    m = ms.get(mission_id) or ms.get_by_key(mission_id)
+    if not m:
+        return {"ok": False, "error": "mission not found"}
+    exp = b_store().create_experiment(m["id"], episode=body.get("episode", ""),
+                                      voice_a=body.get("voice_a", ""), voice_b=body.get("voice_b", ""),
+                                      split=int(body.get("split", 50)))
+    return {"ok": True, "experiment": exp}
+
+
+@app.post("/api/v1/missions/{mission_id}/voice/experiments/{eid}/result")
+async def mission_voice_experiment_result(mission_id: str, eid: str, request: Request):
+    """Record the winning voice + metrics; a Learning-Director-style recommendation can act on it. Token-gated."""
+    body = await request.json()
+    from saathi.missions.brand import default_store as b_store
+    ok = b_store().resolve_experiment(eid, body.get("winner", ""), body.get("metrics") or {})
+    return {"ok": ok}
 
 
 @app.post("/api/v1/missions/{mission_id}/voices/{voice_id}/activate")
