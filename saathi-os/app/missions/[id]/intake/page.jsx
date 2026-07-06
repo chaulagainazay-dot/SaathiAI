@@ -40,7 +40,7 @@ export default function IntakePage() {
     border: "1px solid rgba(255,255,255,0.12)", background: "rgba(255,255,255,0.04)", color: "inherit" };
 
   return (
-    <div className="only-desktop" style={{ maxWidth: 720, margin: "0 auto", paddingBottom: 60 }}>
+    <div className="page" style={{ maxWidth: 720, margin: "0 auto", paddingBottom: 60 }}>
       <a href={`/missions/${id}`} style={{ fontSize: 12, opacity: 0.5, textDecoration: "none", color: "inherit" }}>← Mission</a>
       <Eyebrow style={{ color: ACCENT, marginTop: 8 }}>Mission Intake</Eyebrow>
       <div style={{ fontSize: 26, fontWeight: 600, margin: "4px 0 4px" }}>Fill the business memory</div>

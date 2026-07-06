@@ -20,7 +20,7 @@ export default function MissionsPage() {
   useEffect(() => { fetchMissions().then((d) => setMissions(d.missions || [])).catch((e) => setErr(String(e))); }, []);
 
   return (
-    <div className="only-desktop" style={{ maxWidth: 1080, margin: "0 auto", paddingBottom: 60 }}>
+    <div className="page" style={{ maxWidth: 1080, margin: "0 auto", paddingBottom: 60 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
         <Eyebrow style={{ color: "#9B6BFF" }}>SaathiOS · Missions</Eyebrow>
         <button onClick={() => router.push("/missions/new")}

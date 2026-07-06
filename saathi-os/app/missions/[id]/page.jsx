@@ -15,8 +15,8 @@ export default function MissionDetail() {
   const [err, setErr] = useState(null);
   useEffect(() => { fetchMissionDetail(id).then(setD).catch((e) => setErr(String(e))); }, [id]);
 
-  if (err) return <div className="only-desktop" style={{ padding: 40, opacity: 0.6 }}>{err}</div>;
-  if (!d || !d.mission) return <div className="only-desktop" style={{ padding: 40, opacity: 0.5 }}>Loading mission…</div>;
+  if (err) return <div className="page" style={{ padding: 40, opacity: 0.6 }}>{err}</div>;
+  if (!d || !d.mission) return <div className="page" style={{ padding: 40, opacity: 0.5 }}>Loading mission…</div>;
 
   const m = d.mission;
   const color = DEPT_COLOR[m.department] || "#9B6BFF";
@@ -24,7 +24,7 @@ export default function MissionDetail() {
   const pct = (x) => `${Math.round((x || 0) * 100)}%`;
 
   return (
-    <div className="only-desktop" style={{ maxWidth: 1080, margin: "0 auto", paddingBottom: 60 }}>
+    <div className="page" style={{ maxWidth: 1080, margin: "0 auto", paddingBottom: 60 }}>
       <a href="/missions" style={{ fontSize: 12, opacity: 0.5, textDecoration: "none", color: "inherit" }}>← Missions</a>
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 8 }}>
         <div style={{ width: 12, height: 12, borderRadius: "50%", background: color }} />

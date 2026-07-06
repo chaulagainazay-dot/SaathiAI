@@ -23,14 +23,14 @@ export default function ControlRoom() {
   const load = () => { setBusy(true); fetchControlRoom().then(setR).catch((e) => setErr(String(e))).finally(() => setBusy(false)); };
   useEffect(() => { load(); }, []);
 
-  if (err && !r) return <div className="only-desktop" style={{ padding: 40, opacity: 0.6 }}>Control Room offline — {err}</div>;
-  if (!r) return <div className="only-desktop" style={{ padding: 40, opacity: 0.5 }}>Booting the factory…</div>;
+  if (err && !r) return <div className="page" style={{ padding: 40, opacity: 0.6 }}>Control Room offline — {err}</div>;
+  if (!r) return <div className="page" style={{ padding: 40, opacity: 0.5 }}>Booting the factory…</div>;
 
   const stage = r.stages.find((s) => s.stage === sel) || r.stages[0];
   const pct = (x) => `${Math.round((x || 0) * 100)}%`;
 
   return (
-    <div className="only-desktop" style={{ maxWidth: 1180, margin: "0 auto", paddingBottom: 60 }}>
+    <div className="page" style={{ maxWidth: 1180, margin: "0 auto", paddingBottom: 60 }}>
       {/* header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 18 }}>
         <div>

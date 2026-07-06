@@ -107,6 +107,14 @@ html, body {
   .m-tabs { display: grid; }
 }
 
+/* responsive pages (missions/evidence/learning): visible on mobile, grids stack */
+.page { display: block; }
+@media (max-width: 820px) {
+  .page { padding-left: 14px !important; padding-right: 14px !important; box-sizing: border-box; max-width: 100% !important; }
+  .page [style*="grid-template-columns"] { grid-template-columns: 1fr !important; }
+  .page [style*="max-width"] { max-width: 100% !important; }
+}
+
 /* mobile shell */
 .m-shell { min-height: 100dvh; padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
 .m-top { display: none; position: sticky; top: 0; z-index: 30; padding: calc(16px + env(safe-area-inset-top)) 20px 12px;

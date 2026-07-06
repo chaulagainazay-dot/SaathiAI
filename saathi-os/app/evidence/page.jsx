@@ -29,8 +29,8 @@ export default function EvidenceDashboard() {
   };
   useEffect(() => { load(); }, []);
 
-  if (err && !data) return <div className="only-desktop" style={{ padding: 40, opacity: 0.6 }}>Evidence Service offline — {err}</div>;
-  if (!data) return <div className="only-desktop" style={{ padding: 40, opacity: 0.5 }}>Reading the company's memory…</div>;
+  if (err && !data) return <div className="page" style={{ padding: 40, opacity: 0.6 }}>Evidence Service offline — {err}</div>;
+  if (!data) return <div className="page" style={{ padding: 40, opacity: 0.5 }}>Reading the company's memory…</div>;
 
   const depts = Object.entries(data.stats.departments || {});
   const pct = (x) => `${Math.round((x || 0) * 100)}%`;
@@ -38,7 +38,7 @@ export default function EvidenceDashboard() {
   const confColor = (c) => (c >= 0.9 ? TEAL : c >= 0.6 ? AMBER : RED);
 
   return (
-    <div className="only-desktop" style={{ maxWidth: 1120, margin: "0 auto", paddingBottom: 60 }}>
+    <div className="page" style={{ maxWidth: 1120, margin: "0 auto", paddingBottom: 60 }}>
       <Eyebrow style={{ color: ACCENT }}>SaathiOS · Evidence</Eyebrow>
       <div style={{ fontSize: 28, fontWeight: 600, margin: "4px 0 4px" }}>The company's shared memory</div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>

@@ -26,7 +26,7 @@ export default function NewMission() {
   };
 
   return (
-    <div className="only-desktop" style={{ maxWidth: 620, margin: "0 auto", paddingBottom: 60 }}>
+    <div className="page" style={{ maxWidth: 620, margin: "0 auto", paddingBottom: 60 }}>
       <a href="/missions" style={{ fontSize: 12, opacity: 0.5, textDecoration: "none", color: "inherit" }}>← Missions</a>
       <Eyebrow style={{ color: ACCENT, marginTop: 8 }}>SaathiOS · New Mission</Eyebrow>
       <div style={{ fontSize: 26, fontWeight: 600, margin: "4px 0 4px" }}>Onboard a business</div>

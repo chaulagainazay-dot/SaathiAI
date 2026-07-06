@@ -36,7 +36,7 @@ export default function LearningDirectors() {
   const pending = recs.filter((r) => r.status === "pending");
 
   return (
-    <div className="only-desktop" style={{ maxWidth: 980, margin: "0 auto", paddingBottom: 60 }}>
+    <div className="page" style={{ maxWidth: 980, margin: "0 auto", paddingBottom: 60 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 6 }}>
         <div>
           <Eyebrow style={{ color: PURPLE }}>SaathiOS · Learning</Eyebrow>

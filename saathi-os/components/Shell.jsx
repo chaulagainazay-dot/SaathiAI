@@ -12,6 +12,7 @@ import MobileTabBar from "./mobile/MobileTabBar";
 import QuickSheet from "./mobile/QuickSheet";
 import { LiveProvider } from "./live/LiveProvider";
 import LiveToasts from "./live/LiveToasts";
+import MobileMic from "./MobileMic";
 
 export default function Shell({ children }) {
   const pathname = usePathname();
@@ -58,6 +59,7 @@ export default function Shell({ children }) {
       <div className="only-desktop"><Dock /></div>
       <MobileTabBar onAdd={() => setSheetOpen(true)} />
       <QuickSheet open={sheetOpen} onClose={() => setSheetOpen(false)} />
+      <div className="only-mobile"><MobileMic /></div>
 
       <LiveToasts />
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />

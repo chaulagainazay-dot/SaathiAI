@@ -22,7 +22,7 @@ export default function ProposalPage() {
   const s = pkg?.sections;
 
   return (
-    <div className="only-desktop" style={{ maxWidth: 820, margin: "0 auto", paddingBottom: 60 }}>
+    <div className="page" style={{ maxWidth: 820, margin: "0 auto", paddingBottom: 60 }}>
       <a href={`/missions/${id}`} style={{ fontSize: 12, opacity: 0.5, textDecoration: "none", color: "inherit" }}>← Mission</a>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: 8 }}>
         <div>
