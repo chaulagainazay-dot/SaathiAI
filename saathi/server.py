@@ -258,6 +258,39 @@ async def studio_publish_plan():
     return {"publish_plan": pkg, "platforms_supported": sorted(PLATFORMS)}
 
 
+@app.post("/api/v1/events")
+async def events_emit(request: Request):
+    """Any product emits ONE event; the bus persists it and routes it into Evidence.
+    Products know nothing about Evidence/Learning. Token-gated."""
+    body = await request.json()
+    etype = body.get("type", "")
+    source = body.get("source", "")
+    if not etype or not source:
+        return {"ok": False, "error": "type and source required"}
+    from saathi.events.bus import default_bus
+    res = default_bus().emit(etype, source, body.get("payload") or {},
+                             project=body.get("project", ""), subject=body.get("subject", ""))
+    return {"ok": True, **res}
+
+
+@app.get("/api/v1/events")
+async def events_query(type: str = "", source: str = "", limit: int = 50):
+    """Recent events (filter by type glob / source). Whitelisted read."""
+    from saathi.events.bus import default_bus
+    return {"events": default_bus().query(type=type or None, source=source or None, limit=min(limit, 200))}
+
+
+@app.get("/api/v1/events/stats")
+async def events_stats(days: int = 30):
+    """Event volume by type + source, and the routing table. Whitelisted read."""
+    import time as _t
+    from saathi.events.bus import default_bus
+    from saathi.events.routes import ROUTES
+    since = _t.time() - days * 86400
+    return {"stats": default_bus().stats(since=since), "total": default_bus().count(),
+            "routes": [{"pattern": p, "department": d} for p, d in ROUTES]}
+
+
 @app.get("/api/v1/learning/analyze")
 async def learning_analyze():
     """Run all three Learning Directors over the Evidence Store → pending recommendations.
@@ -857,6 +890,8 @@ async def _auth(request, call_next):
             or path == "/api/v1/evidence/stats"
             or path == "/api/v1/learning/analyze"
             or path == "/api/v1/learning/recommendations"
+            or path == "/api/v1/events"
+            or path == "/api/v1/events/stats"
             or path == "/api/v1/studio/produce"
             or path == "/api/v1/directors/registry"
             or path == "/api/v1/mission"

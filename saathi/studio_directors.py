@@ -162,10 +162,12 @@ class StudioExecutive:
         if not ok:
             p.notes.append("Needs revision: missing hook/CTA, too few scenes, or bad duration.")
 
-        # Evidence Service — every production run feeds the company's shared memory
+        # AI Studio only EMITS an event — the bus routes it into Evidence.
+        # No department knows about the Evidence Store (like providers behind the router).
         try:
-            from saathi.evidence.adapters import ingest
-            ingest("ai_studio", p.as_dict())
+            from saathi.events.bus import default_bus
+            default_bus().emit("episode.produced", source="ai_studio",
+                               subject=p.episode, project="mr_yeti", payload=p.as_dict())
         except Exception:
             pass
         return p
