@@ -218,6 +218,18 @@ async def studio_plan():
     return d
 
 
+@app.get("/api/v1/studio/script")
+async def studio_script():
+    """Script Director — today's plan → structured episode document. Whitelisted."""
+    import asyncio
+    from saathi.studio import plan_today
+    from saathi.script_director import build_brief, write_script
+    plan = plan_today().as_dict()
+    brief = build_brief(plan)
+    doc = await asyncio.to_thread(write_script, brief)
+    return {"brief": brief, "script": doc.as_dict()}
+
+
 @app.get("/api/v1/studio/queue")
 async def studio_queue():
     """Production Queue — content-factory bird's-eye view + recent runs with
@@ -679,6 +691,7 @@ async def _auth(request, call_next):
             or path == "/api/v1/platform/maturity"
             or path == "/api/v1/studio/queue"
             or path == "/api/v1/studio/plan"
+            or path == "/api/v1/studio/script"
             or path == "/api/v1/mission"
             or path == "/api/v1/mission/complete"
             or path == "/api/v1/agent/chat"

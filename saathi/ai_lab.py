@@ -188,6 +188,12 @@ _SEED = [
     ("hcg.signal", "hcg", "Detect swing opportunities from market data",
      "Analyse this market data for a swing-trade signal (signals only, no auto-trading): "
      "{market}. Reply with signal, confidence, and reasoning."),
+    ("mr-yeti.script-director", "mr-yeti", "Structured Script Brief → full episode document",
+     "You are the Script Director for a Mr. Yeti IELTS explainer. Write a complete episode "
+     "from this brief:\n{brief}\nMr. Yeti is warm, encouraging, gently funny; one clear idea "
+     "per scene; a real IELTS example; end with the CTA. Reply ONLY as JSON: "
+     '{{"hook","learning_goal","scenes":[{{"narration","visual","camera","animation","seconds"}}],'
+     '"cta","thumbnail_ideas":[],"seo":{{"title","description","tags":[]}},"captions"}}. 4-6 scenes.'),
     ("agency.research", "agency", "Research a client company → full strategy + roadmap",
      "You are a senior agency strategist. Research this company and produce a complete "
      "plan.\n{brief}\nReply ONLY as JSON with this exact shape:\n"
