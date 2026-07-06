@@ -159,6 +159,21 @@ export async function fetchControlRoom() {
   return r.json();
 }
 
+// Missions — the CEO OS dashboard of every business (Mission = root object).
+export async function fetchMissions(status = "") {
+  const q = status ? `?status=${status}` : "";
+  const r = await fetch(`${API_BASE}/api/v1/missions${q}`, { cache: "no-store" });
+  if (!r.ok) throw new Error(`missions ${r.status}`);
+  return r.json();
+}
+
+// Missions — one Mission's Executive Dashboard (identity + KPIs + evidence + learning + events).
+export async function fetchMissionDetail(id) {
+  const r = await fetch(`${API_BASE}/api/v1/missions/${id}`, { cache: "no-store" });
+  if (!r.ok) throw new Error(`mission ${r.status}`);
+  return r.json();
+}
+
 // Event Bus — volume by type/source + routing table (the spine every product emits to).
 export async function fetchEventStats(days = 30) {
   const r = await fetch(`${API_BASE}/api/v1/events/stats?days=${days}`, { cache: "no-store" });
