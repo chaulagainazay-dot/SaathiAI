@@ -258,6 +258,43 @@ async def studio_publish_plan():
     return {"publish_plan": pkg, "platforms_supported": sorted(PLATFORMS)}
 
 
+@app.get("/api/v1/knowledge/library")
+async def knowledge_library(q: str = "", category: str = "", tag: str = "", director: str = ""):
+    """Knowledge Library — search sources (books/github/papers/docs) by any Director. Whitelisted read."""
+    from saathi.knowledge_library.store import default_store
+    st = default_store()
+    if q or tag or director or category:
+        items = st.search(q, tag=tag, director=director, category=category)
+    else:
+        items = st.list()
+    return {"sources": items, "categories": st.categories()}
+
+
+@app.post("/api/v1/knowledge/library/import")
+async def knowledge_library_import(request: Request):
+    """Knowledge Importer — ingest a GitHub repo (reads its real README). Token-gated."""
+    import asyncio
+    body = await request.json()
+    url = body.get("url", "").strip()
+    if not url:
+        return {"ok": False, "error": "url required"}
+    from saathi.knowledge_library.importer import import_repo
+    return await asyncio.to_thread(import_repo, url, category=body.get("category", "AI Engineering"))
+
+
+@app.post("/api/v1/knowledge/library")
+async def knowledge_library_add(request: Request):
+    """Manually add a source (book/paper/doc/sop) to the library. Token-gated."""
+    body = await request.json()
+    from saathi.knowledge_library.store import default_store
+    if not body.get("title"):
+        return {"ok": False, "error": "title required"}
+    src = default_store().add(**{k: v for k, v in body.items() if k in (
+        "title", "url", "author", "license", "category", "source_type", "difficulty",
+        "summary", "tags", "related_directors", "key_lessons", "quality")})
+    return {"ok": True, "source": src}
+
+
 @app.get("/api/v1/missions")
 async def missions_list(status: str = ""):
     """All Missions — the CEO OS dashboard of every business. Whitelisted read."""
@@ -1292,6 +1329,7 @@ async def _auth(request, call_next):
             or (request.method == "GET" and (
                 path == "/api/v1/events"
                 or path == "/api/v1/missions"
+                or path == "/api/v1/knowledge/library"
                 or path.startswith("/api/v1/missions/")))
             or path == "/api/v1/studio/produce"
             or path == "/api/v1/directors/registry"
@@ -4107,6 +4145,12 @@ def _start_background():
     try:
         from .missions.store import seed_missions
         seed_missions()
+    except Exception:
+        pass
+    # seed the Knowledge Library with foundational sources
+    try:
+        from .knowledge_library.importer import seed_defaults as seed_library
+        seed_library()
     except Exception:
         pass
     try:
