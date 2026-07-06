@@ -184,6 +184,7 @@ class LibraryStore:
         if record:
             for s in hits:
                 self.record_influence(s["id"])
+            hits = [self.get(s["id"]) for s in hits]   # return fresh (post-increment influence)
         return hits
 
     def categories(self) -> dict:
