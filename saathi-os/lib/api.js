@@ -184,6 +184,26 @@ export async function createMissionTwin(payload) {
   return r.json();
 }
 
+// Proposal Director — generate the full Proposal Package from a Mission twin.
+export async function generateProposal(missionId) {
+  const r = await fetch(`${API_BASE}/api/v1/missions/${missionId}/proposal`, {
+    method: "POST", credentials: "include" });
+  if (!r.ok) throw new Error(`proposal ${r.status}`);
+  return r.json();
+}
+export async function fetchProposal(missionId) {
+  const r = await fetch(`${API_BASE}/api/v1/missions/${missionId}/proposal`, { cache: "no-store" });
+  if (!r.ok) throw new Error(`proposal ${r.status}`);
+  return r.json();
+}
+export async function decideProposal(missionId, accept) {
+  const r = await fetch(`${API_BASE}/api/v1/missions/${missionId}/proposal/decide`, {
+    method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ accept }) });
+  if (!r.ok) throw new Error(`decide ${r.status}`);
+  return r.json();
+}
+
 // Event Bus — volume by type/source + routing table (the spine every product emits to).
 export async function fetchEventStats(days = 30) {
   const r = await fetch(`${API_BASE}/api/v1/events/stats?days=${days}`, { cache: "no-store" });

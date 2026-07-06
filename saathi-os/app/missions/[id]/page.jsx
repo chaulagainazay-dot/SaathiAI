@@ -32,8 +32,13 @@ export default function MissionDetail() {
         <span className="mono" style={{ fontSize: 11, padding: "2px 10px", borderRadius: 999,
           background: `${color}22`, color }}>{m.type}</span>
       </div>
-      <div className="mono" style={{ fontSize: 11.5, opacity: 0.5, marginTop: 4 }}>
-        {m.key} · {m.department} · {m.status}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 4 }}>
+        <div className="mono" style={{ fontSize: 11.5, opacity: 0.5 }}>
+          {m.key} · {m.department} · {m.status}
+        </div>
+        <a href={`/missions/${id}/proposal`} style={{ fontSize: 12.5, fontWeight: 600, color,
+          textDecoration: "none", padding: "7px 14px", borderRadius: 10, border: `1px solid ${color}66` }}>
+          📄 Proposal →</a>
       </div>
 
       {/* KPI strip */}
