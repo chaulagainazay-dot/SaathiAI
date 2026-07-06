@@ -245,6 +245,19 @@ async def studio_render_plan():
     return {"plan_check": check, "render_plan": rp, "adapters_available": available_adapters()}
 
 
+@app.get("/api/v1/studio/publish-plan")
+async def studio_publish_plan():
+    """Publishing Director → per-platform Publishing Package. Whitelisted."""
+    import asyncio
+    from saathi.studio import plan_today
+    from saathi.script_director import build_brief, write_script
+    from saathi.publishing_director import package, PLATFORMS
+    p = plan_today().as_dict()
+    doc = await asyncio.to_thread(write_script, build_brief(p))
+    pkg = package(doc.as_dict(), plan=p, episode=p["episode"])
+    return {"publish_plan": pkg, "platforms_supported": sorted(PLATFORMS)}
+
+
 @app.get("/api/v1/studio/storyboard")
 async def studio_storyboard():
     """Visual Department — today's plan → script → Scene Package. Whitelisted."""
@@ -766,6 +779,7 @@ async def _auth(request, call_next):
             or path == "/api/v1/studio/script"
             or path == "/api/v1/studio/storyboard"
             or path == "/api/v1/studio/render-plan"
+            or path == "/api/v1/studio/publish-plan"
             or path == "/api/v1/studio/produce"
             or path == "/api/v1/directors/registry"
             or path == "/api/v1/mission"

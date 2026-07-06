@@ -88,6 +88,10 @@ def _build_specs() -> list[DirectorSpec]:
         from saathi.render_director import plan as _render_plan
         specs.append(DirectorSpec("render", frozenset({"render_planning", "render"}), 1, 0.0, "builtin",
                      run=lambda scene_package=None, episode="", **_: _render_plan(scene_package or {}, episode=episode)))
+        from saathi.publishing_director import package as _publish_pkg
+        specs.append(DirectorSpec("publishing", frozenset({"publishing", "distribution"}), 1, 0.0, "builtin",
+                     run=lambda script=None, render_plan=None, plan=None, episode="", **_:
+                         _publish_pkg(script or {}, render_plan=render_plan, plan=plan, episode=episode)))
     except Exception:
         pass
     # imported agency Directors

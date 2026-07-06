@@ -97,6 +97,7 @@ class Production:
     scene_package: dict = field(default_factory=dict)
     plan_check: dict = field(default_factory=dict)
     render_plan: dict = field(default_factory=dict)
+    publish_plan: dict = field(default_factory=dict)
     est_seconds: int = 0
     notes: list = field(default_factory=list)
 
@@ -144,6 +145,14 @@ class StudioExecutive:
                 p.render_plan = render_plan(p.scene_package, episode=p.episode); p.status = "planned"
         except Exception:
             p.plan_check = {"ok": False, "issues": ["planner error"]}
+
+        # Publishing Director — per-platform Publishing Package (adapt, don't regenerate)
+        try:
+            from saathi.publishing_director import package as publish_package
+            p.publish_plan = publish_package(p.script, render_plan=p.render_plan,
+                                             plan=plan, episode=p.episode)
+        except Exception:
+            p.publish_plan = {}
 
         # ready-vs-revision gate
         ok = (bool(doc.hook) and len(doc.scenes) >= 3 and bool(doc.cta)
