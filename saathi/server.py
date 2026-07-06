@@ -228,6 +228,23 @@ async def studio_produce():
     return p.as_dict()
 
 
+@app.get("/api/v1/studio/render-plan")
+async def studio_render_plan():
+    """Production Planner (gate) + Render Director → Render Package manifest. Whitelisted."""
+    import asyncio
+    from saathi.studio import plan_today
+    from saathi.script_director import build_brief, write_script
+    from saathi.studio_visual import scene_package
+    from saathi.production_planner import validate
+    from saathi.render_director import plan, available_adapters
+    p = plan_today().as_dict()
+    doc = await asyncio.to_thread(write_script, build_brief(p))
+    pkg = await asyncio.to_thread(scene_package, doc.as_dict())
+    check = validate(pkg)
+    rp = plan(pkg, episode=p["episode"]) if check["ok"] else {}
+    return {"plan_check": check, "render_plan": rp, "adapters_available": available_adapters()}
+
+
 @app.get("/api/v1/studio/storyboard")
 async def studio_storyboard():
     """Visual Department — today's plan → script → Scene Package. Whitelisted."""
@@ -748,6 +765,7 @@ async def _auth(request, call_next):
             or path == "/api/v1/studio/plan"
             or path == "/api/v1/studio/script"
             or path == "/api/v1/studio/storyboard"
+            or path == "/api/v1/studio/render-plan"
             or path == "/api/v1/studio/produce"
             or path == "/api/v1/directors/registry"
             or path == "/api/v1/mission"

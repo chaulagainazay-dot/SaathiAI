@@ -85,6 +85,9 @@ def _build_specs() -> list[DirectorSpec]:
             DirectorSpec("storyboard", frozenset({"storyboard_generation", "visual_direction"}), 1, 0.0, "builtin",
                          run=lambda script=None, **_: scene_package(script or {})),
         ]
+        from saathi.render_director import plan as _render_plan
+        specs.append(DirectorSpec("render", frozenset({"render_planning", "render"}), 1, 0.0, "builtin",
+                     run=lambda scene_package=None, episode="", **_: _render_plan(scene_package or {}, episode=episode)))
     except Exception:
         pass
     # imported agency Directors

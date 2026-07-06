@@ -95,6 +95,8 @@ class Production:
     creative: dict = field(default_factory=dict)
     script: dict = field(default_factory=dict)
     scene_package: dict = field(default_factory=dict)
+    plan_check: dict = field(default_factory=dict)
+    render_plan: dict = field(default_factory=dict)
     est_seconds: int = 0
     notes: list = field(default_factory=list)
 
@@ -133,9 +135,20 @@ class StudioExecutive:
         except Exception:
             p.scene_package = {}
 
+        # Production Planner (gate) → Render Director (how-to-render manifest)
+        try:
+            from saathi.production_planner import validate
+            from saathi.render_director import plan as render_plan
+            p.plan_check = validate(p.scene_package)
+            if p.plan_check.get("ok"):
+                p.render_plan = render_plan(p.scene_package, episode=p.episode); p.status = "planned"
+        except Exception:
+            p.plan_check = {"ok": False, "issues": ["planner error"]}
+
         # ready-vs-revision gate
         ok = (bool(doc.hook) and len(doc.scenes) >= 3 and bool(doc.cta)
-              and 20 <= doc.est_seconds <= 400 and bool(p.scene_package.get("scenes")))
+              and 20 <= doc.est_seconds <= 400 and bool(p.scene_package.get("scenes"))
+              and p.plan_check.get("ok"))
         p.status = "ready" if ok else "revision"
         if not ok:
             p.notes.append("Needs revision: missing hook/CTA, too few scenes, or bad duration.")
