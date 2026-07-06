@@ -327,6 +327,68 @@ async def mission_create_twin(request: Request):
     return {"ok": True, "id": mid, "key": key, "twin": twin}
 
 
+@app.post("/api/v1/missions/{mission_id}/proposal")
+async def mission_proposal_generate(mission_id: str):
+    """Proposal Director — build the full Proposal Package from the Mission twin.
+    Token-gated (creates a client artifact)."""
+    from saathi.missions.store import default_store as m_store
+    from saathi.missions.twin import default_store as twin_store
+    from saathi.missions.proposal import build, default_store as p_store
+    from saathi.missions.timeline import default_store as tl_store
+    ms = m_store()
+    m = ms.get(mission_id) or ms.get_by_key(mission_id)
+    if not m:
+        return {"ok": False, "error": "mission not found"}
+    twin = twin_store().get(m["id"])
+    if not twin:
+        return {"ok": False, "error": "no digital twin yet — create the mission twin first"}
+    pkg = build(m, twin)
+    p_store().save(pkg)
+    tl_store().record(m["id"], "proposal", "Proposal package generated",
+                      detail=f"{len(pkg['sections']['recommended_services'])} services · "
+                             f"{pkg['sections']['pricing']['currency']} pricing")
+    return {"ok": True, "proposal": pkg}
+
+
+@app.get("/api/v1/missions/{mission_id}/proposal")
+async def mission_proposal_get(mission_id: str):
+    """Latest Proposal Package for a Mission. Whitelisted read."""
+    from saathi.missions.store import default_store as m_store
+    from saathi.missions.proposal import default_store as p_store
+    ms = m_store()
+    m = ms.get(mission_id) or ms.get_by_key(mission_id)
+    if not m:
+        return {"error": "mission not found"}
+    return {"proposal": p_store().latest(m["id"])}
+
+
+@app.post("/api/v1/missions/{mission_id}/proposal/decide")
+async def mission_proposal_decide(mission_id: str, request: Request):
+    """Client/CEO accepts or rejects the proposal. On accept the Mission moves into
+    execution (status=active) and the lifecycle milestone is recorded. Token-gated."""
+    body = await request.json()
+    accept = bool(body.get("accept", False))
+    from saathi.missions.store import default_store as m_store
+    from saathi.missions.proposal import default_store as p_store
+    from saathi.missions.timeline import default_store as tl_store
+    ms = m_store()
+    m = ms.get(mission_id) or ms.get_by_key(mission_id)
+    if not m:
+        return {"ok": False, "error": "mission not found"}
+    pkg = p_store().latest(m["id"])
+    if not pkg:
+        return {"ok": False, "error": "no proposal to decide on"}
+    p_store().set_status(pkg["id"], "accepted" if accept else "rejected")
+    if accept:
+        ms.update(m["id"], {"status": "active"})
+        tl_store().record(m["id"], "decision", "Proposal accepted — moving to execution",
+                          detail="Mission status → active")
+        tl_store().record(m["id"], "launch", "Execution started")
+    else:
+        tl_store().record(m["id"], "decision", "Proposal rejected")
+    return {"ok": True, "status": "accepted" if accept else "rejected"}
+
+
 @app.get("/api/v1/missions/{mission_id}/timeline")
 async def mission_timeline(mission_id: str, kind: str = "", limit: int = 100):
     """A Mission's append-only history (the business record). Whitelisted read."""
