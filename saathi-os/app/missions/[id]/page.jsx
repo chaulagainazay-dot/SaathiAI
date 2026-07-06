@@ -36,9 +36,14 @@ export default function MissionDetail() {
         <div className="mono" style={{ fontSize: 11.5, opacity: 0.5 }}>
           {m.key} · {m.department} · {m.status}
         </div>
-        <a href={`/missions/${id}/proposal`} style={{ fontSize: 12.5, fontWeight: 600, color,
-          textDecoration: "none", padding: "7px 14px", borderRadius: 10, border: `1px solid ${color}66` }}>
-          📄 Proposal →</a>
+        <div style={{ display: "flex", gap: 8 }}>
+          <a href={`/missions/${id}/intake`} style={{ fontSize: 12.5, fontWeight: 600, color,
+            textDecoration: "none", padding: "7px 14px", borderRadius: 10, border: `1px solid ${color}66` }}>
+            ＋ Intake</a>
+          <a href={`/missions/${id}/proposal`} style={{ fontSize: 12.5, fontWeight: 600, color,
+            textDecoration: "none", padding: "7px 14px", borderRadius: 10, border: `1px solid ${color}66` }}>
+            📄 Proposal →</a>
+        </div>
       </div>
 
       {/* KPI strip */}
@@ -51,6 +56,31 @@ export default function MissionDetail() {
           </div>
         ))}
       </div>
+
+      {/* Mission Health — where the business is weak (per function) */}
+      {d.health && (
+        <Panel style={{ padding: 16, marginBottom: 16 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+            <Eyebrow style={{ color }}>Mission Health · per function</Eyebrow>
+            <span className="mono" style={{ fontSize: 12 }}>
+              Overall <b style={{ color: (d.health.overall || 0) >= 0.6 ? TEAL : AMBER }}>{pct(d.health.overall)}</b>
+              {"  · weakest "}<b style={{ color: RED }}>{d.health.weakest}</b></span>
+          </div>
+          <div style={{ marginTop: 10, display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8 }}>
+            {Object.entries(d.health.dimensions || {}).map(([dim, v]) => (
+              <div key={dim} style={{ fontSize: 10.5 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", opacity: 0.6 }}>
+                  <span style={{ textTransform: "capitalize" }}>{dim.replace("_", " ")}</span><span>{pct(v)}</span>
+                </div>
+                <div style={{ height: 4, borderRadius: 3, background: "rgba(255,255,255,0.07)", marginTop: 2 }}>
+                  <div style={{ width: pct(v), height: "100%", borderRadius: 3,
+                    background: v >= 0.6 ? TEAL : v > 0 ? AMBER : "rgba(255,255,255,0.1)" }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </Panel>
+      )}
 
       {/* Knowledge Coverage — how much of the business we hold in memory */}
       {d.knowledge && (

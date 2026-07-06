@@ -184,6 +184,22 @@ export async function createMissionTwin(payload) {
   return r.json();
 }
 
+// Mission Intake — apply structured onboarding into the Knowledge Graph (no OAuth).
+export async function applyIntake(missionId, payload) {
+  const r = await fetch(`${API_BASE}/api/v1/missions/${missionId}/intake`, {
+    method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload) });
+  if (!r.ok) throw new Error(`intake ${r.status}`);
+  return r.json();
+}
+export async function extractDocument(missionId, title, text) {
+  const r = await fetch(`${API_BASE}/api/v1/missions/${missionId}/document`, {
+    method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ title, text }) });
+  if (!r.ok) throw new Error(`document ${r.status}`);
+  return r.json();
+}
+
 // Proposal Director — generate the full Proposal Package from a Mission twin.
 export async function generateProposal(missionId) {
   const r = await fetch(`${API_BASE}/api/v1/missions/${missionId}/proposal`, {
