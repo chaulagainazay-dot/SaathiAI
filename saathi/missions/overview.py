@@ -137,9 +137,19 @@ def overview(mission: dict) -> dict:
     except Exception:
         pass
 
+    # connected accounts (Connector layer) for this Mission
+    accounts = []
+    try:
+        from saathi.connectors.accounts import default_store as acc_store
+        accounts = [{"id": a["id"], "provider": a["provider"], "display_name": a["display_name"],
+                     "status": a["status"]} for a in acc_store().list(mission=mission.get("key", ""))]
+    except Exception:
+        pass
+
     pending = sum(1 for r in recs if r.get("status") == "pending")
     return {
         "mission": mission,
+        "accounts": accounts,
         "twin": twin,
         "timeline": timeline,
         "knowledge": coverage,

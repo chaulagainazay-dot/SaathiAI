@@ -261,6 +261,61 @@ async def studio_publish_plan():
     return {"publish_plan": pkg, "platforms_supported": sorted(PLATFORMS)}
 
 
+@app.get("/api/v1/connectors/providers")
+async def connectors_providers():
+    """Provider + capability catalog (what SaathiOS can connect to). Whitelisted read."""
+    from saathi.connectors.catalog import catalog, CAPABILITIES
+    return {"providers": catalog(), "capabilities": CAPABILITIES}
+
+
+@app.get("/api/v1/connectors/accounts")
+async def connectors_accounts(provider: str = "", mission: str = ""):
+    """Connected accounts (never returns secrets) + health. Whitelisted read."""
+    from saathi.connectors.accounts import default_store
+    st = default_store()
+    return {"accounts": st.list(provider=provider or "", mission=mission or ""), "health": st.health()}
+
+
+@app.post("/api/v1/connectors/accounts")
+async def connectors_account_add(request: Request):
+    """Register an account (secret encrypted at rest, never stored in Git). Token-gated."""
+    body = await request.json()
+    from saathi.connectors.accounts import default_store
+    if not body.get("provider"):
+        return {"ok": False, "error": "provider required"}
+    a = default_store().add(provider=body["provider"], display_name=body.get("display_name", ""),
+                            email=body.get("email", ""), scopes=body.get("scopes") or [],
+                            secret=body.get("secret") or None, status=body.get("status", "connected"))
+    a.pop("secret", None)
+    return {"ok": True, "account": a}
+
+
+@app.post("/api/v1/connectors/accounts/{aid}/mission")
+async def connectors_link_mission(aid: str, request: Request):
+    """Link/unlink an account to a Mission. Token-gated."""
+    body = await request.json()
+    from saathi.connectors.accounts import default_store
+    ok = default_store().link_mission(aid, body.get("mission", ""), bool(body.get("on", True)))
+    return {"ok": ok}
+
+
+@app.delete("/api/v1/connectors/accounts/{aid}")
+async def connectors_account_delete(aid: str):
+    """Remove an account (and its encrypted secret). Token-gated."""
+    from saathi.connectors.accounts import default_store
+    return {"ok": default_store().delete(aid)}
+
+
+@app.post("/api/v1/connectors/execute")
+async def connectors_execute(request: Request):
+    """Run a capability through the Connector Manager (emits an event → Evidence). Token-gated."""
+    import asyncio
+    body = await request.json()
+    from saathi.connectors.manager import execute
+    return await asyncio.to_thread(execute, body.get("account", ""), body.get("capability", ""),
+                                   body.get("params") or {}, mission=body.get("mission", ""))
+
+
 @app.get("/api/v1/knowledge/library")
 async def knowledge_library(q: str = "", category: str = "", tag: str = "", director: str = ""):
     """Knowledge Library — search sources (books/github/papers/docs) by any Director. Whitelisted read."""
@@ -1474,6 +1529,8 @@ async def _auth(request, call_next):
                 path == "/api/v1/events"
                 or path == "/api/v1/missions"
                 or path == "/api/v1/knowledge/library"
+                or path == "/api/v1/connectors/providers"
+                or path == "/api/v1/connectors/accounts"
                 or path == "/api/v1/knowledge/library/consult"
                 or path == "/api/v1/knowledge/queue"
                 or path == "/api/v1/skills"
