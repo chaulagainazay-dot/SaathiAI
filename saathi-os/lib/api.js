@@ -96,11 +96,11 @@ export async function setPassword(current, newPassword) {
   return j;
 }
 
-export async function login(password) {
+export async function login(password, rememberMe = true) {
   const r = await afetch(`${API_BASE}/api/v1/auth/login`, {
     method: "POST", credentials: "include",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ password }),
+    body: JSON.stringify({ password, remember_me: rememberMe }),
   });
   const j = await r.json();
   if (j.token) setSessionToken(j.token);
