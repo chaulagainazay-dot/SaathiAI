@@ -1,24 +1,25 @@
-// SaathiAI service worker — offline-first for the CEO Companion.
-const CACHE = "saathi-os-v1";
-const APP_SHELL = ["/", "/finance", "/mission", "/saathi", "/me", "/manifest.webmanifest",
-  "/icon-192.png", "/icon-512.png"];
+// SaathiAI service worker — offline shell for navigations ONLY.
+// v2: never intercept JS/CSS/chunks (those must always load fresh from network,
+// or a stale/mismatched bundle crashes the app on installed PWAs like iPad).
+const CACHE = "saathi-os-v2";
 
 self.addEventListener("install", (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(APP_SHELL)).catch(() => {}));
   self.skipWaiting();
 });
 
 self.addEventListener("activate", (e) => {
   e.waitUntil(
-    caches.keys().then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
+    caches.keys()
+      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
+      .then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
-// network-first for navigations/API (fresh dashboard when online), cache fallback offline.
 self.addEventListener("fetch", (e) => {
   const req = e.request;
-  if (req.method !== "GET") return;
+  // ONLY handle top-level page navigations. Everything else (JS, CSS, chunks,
+  // API, images) passes straight through to the network — no stale bundles.
+  if (req.method !== "GET" || req.mode !== "navigate") return;
   e.respondWith(
     fetch(req)
       .then((res) => {
