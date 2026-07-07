@@ -270,6 +270,61 @@ async def knowledge_library(q: str = "", category: str = "", tag: str = "", dire
     return {"sources": items, "categories": st.categories()}
 
 
+@app.get("/api/v1/automation/credits")
+async def automation_credits():
+    """Credit Manager — what each generation provider can do today. Whitelisted read."""
+    from saathi.production_automation.credits import default_manager
+    return {"providers": default_manager().status()}
+
+
+@app.post("/api/v1/automation/credits/refresh")
+async def automation_credits_refresh():
+    """Reset daily credits + re-check API keys (midnight-style). Token-gated."""
+    from saathi.production_automation.credits import default_manager
+    default_manager().refresh()
+    return {"ok": True, "providers": default_manager().status()}
+
+
+@app.get("/api/v1/automation/plan")
+async def automation_plan():
+    """Production Automation — build today's Production Plan: provider-per-scene (credit-aware,
+    cost-optimised), character verification, quality gate, approval mode. Whitelisted read."""
+    import asyncio
+    from saathi.studio import plan_today
+    from saathi.script_director import build_brief, write_script
+    from saathi.studio_visual import scene_package
+    from saathi.render_director import plan as render_plan_fn
+    from saathi.production_automation.pipeline import build_plan, default_store
+
+    p = plan_today().as_dict()
+    doc = await asyncio.to_thread(write_script, build_brief(p))
+    pkg = await asyncio.to_thread(scene_package, doc.as_dict())
+    rp = render_plan_fn(pkg, episode=p["episode"]) if pkg.get("scenes") else {}
+    bible = p.get("character") or {}
+    mode = default_store().approval_mode()
+    plan = build_plan(pkg, render_plan=rp, script=doc.as_dict(), bible=bible,
+                      approval_mode=mode, reserve=False)
+    plan["episode"] = p["episode"]
+    return {"production_plan": plan}
+
+
+@app.get("/api/v1/automation/settings")
+async def automation_settings():
+    """Approval mode + recent production runs. Whitelisted read."""
+    from saathi.production_automation.pipeline import default_store, APPROVAL_MODES
+    st = default_store()
+    return {"approval_mode": st.approval_mode(), "modes": list(APPROVAL_MODES),
+            "recent_runs": st.recent_runs()}
+
+
+@app.post("/api/v1/automation/settings")
+async def automation_settings_set(request: Request):
+    """Set approval mode (auto/semi/manual). Token-gated."""
+    body = await request.json()
+    from saathi.production_automation.pipeline import default_store
+    return {"ok": default_store().set_approval_mode(body.get("approval_mode", ""))}
+
+
 @app.get("/api/v1/skills")
 async def skills_list(q: str = "", director: str = "", category: str = ""):
     """Skill Library — reusable skills any Director can find/call. Whitelisted read."""
@@ -1417,6 +1472,9 @@ async def _auth(request, call_next):
                 or path == "/api/v1/knowledge/queue"
                 or path == "/api/v1/skills"
                 or path.startswith("/api/v1/skills/")
+                or path == "/api/v1/automation/credits"
+                or path == "/api/v1/automation/plan"
+                or path == "/api/v1/automation/settings"
                 or path.startswith("/api/v1/missions/")))
             or path == "/api/v1/studio/produce"
             or path == "/api/v1/directors/registry"
