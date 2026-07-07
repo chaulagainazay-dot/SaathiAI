@@ -45,3 +45,25 @@ def test_repo_analysis_voice_repo_maps_to_provider(monkeypatch):
 
 def test_mission_context_no_mission():
     assert "No Mission" in mission_context(None)
+
+
+def test_extract_steps_from_plan():
+    from saathi.workspace import _extract_steps
+    txt = "Plan:\n1. Research competitors\n2) Audit the website\n- Fix meta tags\nrandom line\n* Publish"
+    steps = _extract_steps(txt)
+    assert steps == ["Research competitors", "Audit the website", "Fix meta tags", "Publish"]
+
+
+def test_decision_hint_triggers_capture(monkeypatch, tmp_path):
+    import saathi.workspace as ws
+    calls = {"tl": [], "node": []}
+    class TL:
+        def record(self, mid, kind, title, detail=""): calls["tl"].append((kind, title))
+    class G:
+        def upsert(self, mid, t, k, label="", data=None, source=""): calls["node"].append(t)
+    import saathi.missions.timeline as tlm, saathi.missions.knowledge as kn
+    monkeypatch.setattr(tlm, "default_store", lambda: TL())
+    monkeypatch.setattr(kn, "default_graph", lambda: G())
+    out = ws._capture({"id": "M1"}, "should we use X?", "I recommend importing X as a tool.", "cowork")
+    assert "timeline" in out and "decision_node" in out
+    assert calls["tl"][0][0] == "decision" and "decision" in calls["node"]

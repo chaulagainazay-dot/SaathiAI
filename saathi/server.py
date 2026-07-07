@@ -1648,6 +1648,15 @@ async def workspace_turn(request: Request):
                                    mission_key=body.get("mission", ""), mode=body.get("mode", "cowork"))
 
 
+@app.post("/api/v1/workspace/plan/save")
+async def workspace_save_plan(request: Request):
+    """Turn an implementation-mode plan into a real Workflow + Tasks on the Mission. Token-gated."""
+    body = await request.json()
+    from saathi.workspace import save_plan_as_workflow
+    return save_plan_as_workflow(body.get("mission", ""), body.get("name", "Plan"),
+                                 body.get("steps") or [])
+
+
 @app.post("/api/v1/agent/chat_with_file")
 async def chat_with_file(
     file: UploadFile = File(...),

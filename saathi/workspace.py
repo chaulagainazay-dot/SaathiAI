@@ -161,16 +161,117 @@ def handle(message: str, *, mission_key: str = "", mode: str = "cowork") -> dict
 
     # Otherwise → mission-aware brain call, gated by mode
     ctx = mission_context(mission)
-    system = (f"You are Saathi, the CEO's AI operating workspace.\n{_MODE_INSTRUCTION[mode]}\n\n"
-              f"MISSION CONTEXT:\n{ctx}\n\n"
-              "Ground answers in the platform SaathiOS already has (Mission OS, Knowledge Graph, Evidence, "
-              "Learning, Directors, Prompt/Skill/Knowledge Libraries, Workflow Engine, Event Bus). "
-              "Prefer reusing existing subsystems over building new ones. Be concise.")
+    if mode == "cowork":
+        out = _cowork(message, ctx)
+    else:
+        system = (f"You are Saathi, the CEO's AI operating workspace.\n{_MODE_INSTRUCTION[mode]}\n\n"
+                  f"MISSION CONTEXT:\n{ctx}\n\n"
+                  "Ground answers in the platform SaathiOS already has (Mission OS, Knowledge Graph, Evidence, "
+                  "Learning, Directors, Prompt/Skill/Knowledge Libraries, Workflow Engine, Event Bus). "
+                  "Prefer reusing existing subsystems over building new ones. Be concise.")
+        out = _brain(message, system, 700)
+
+    # implementation mode → extract an ordered plan the CEO can turn into tasks
+    plan = _extract_steps(out) if mode == "implementation" else []
+
+    # auto-capture: record the turn to the Mission (Timeline + a decision node if one was made)
+    actions = _capture(mission, message, out, mode)
+
+    return {"reply": out, "mode": mode, "mission": (mission or {}).get("key", ""),
+            "context_used": ctx, "plan": plan, "actions": actions}
+
+
+def _brain(message: str, system: str, max_tokens: int = 400) -> str:
     try:
         from saathi.infrastructure.llm import generate
         from saathi.infrastructure.model_router import ModelLabel
-        out = generate(ModelLabel.STANDARD, message, system, max_tokens=700).text.strip()
+        return generate(ModelLabel.STANDARD, message, system, max_tokens=max_tokens).text.strip()
     except Exception as e:
-        out = f"(brain unavailable: {str(e)[:80]})"
-    return {"reply": out, "mode": mode, "mission": (mission or {}).get("key", ""),
-            "context_used": ctx, "actions": []}
+        return f"(brain unavailable: {str(e)[:80]})"
+
+
+def _cowork(message: str, ctx: str) -> str:
+    """Each Director contributes a real perspective (its own focused call), then the CEO synthesises."""
+    directors = [
+        ("Research Director", "In ONE sentence: what does prior art / the Knowledge & Research Library suggest here?"),
+        ("Business Director", "In ONE sentence: the business / ROI angle for this Mission."),
+        ("Engineering Director", "In ONE sentence: feasibility + rough effort, reusing existing SaathiOS subsystems."),
+    ]
+    lines = []
+    for name, q in directors:
+        out = _brain(f"{message}\n\n{q}", f"You are the {name} of SaathiOS.\nMISSION CONTEXT:\n{ctx}", 120)
+        if out and not out.startswith("(brain"):
+            lines.append(f"**{name}:** {out}")
+    synth = _brain(message + "\n\nThe team said:\n" + "\n".join(lines),
+                   "You are the CEO of SaathiOS. Give ONE decisive recommendation line.", 120)
+    if synth and not synth.startswith("(brain"):
+        lines.append(f"**CEO recommendation:** {synth}")
+    return "\n\n".join(lines) if lines else "(team unavailable right now)"
+
+
+_STEP = re.compile(r"^\s*(?:\d+[.)]|[-*])\s+(.+)$")
+
+
+def _extract_steps(text: str) -> list[str]:
+    steps = []
+    for ln in (text or "").splitlines():
+        m = _STEP.match(ln)
+        if m:
+            steps.append(m.group(1).strip()[:80])
+    return steps[:12]
+
+
+_DECISION_HINT = re.compile(r"\b(recommend|decision|proceed|approve|choose|should|conclusion)\b", re.I)
+
+
+def _capture(mission: dict | None, message: str, reply: str, mode: str) -> list[str]:
+    """Record valuable turns to the Mission — Timeline always, a Decision node when one was made."""
+    if not mission:
+        return []
+    mid = mission.get("id", "")
+    done = []
+    try:
+        from saathi.missions.timeline import default_store as tl
+        tl().record(mid, "decision" if _DECISION_HINT.search(reply) else "note",
+                    f"Workspace ({mode}): {message[:60]}", detail=reply[:180])
+        done.append("timeline")
+    except Exception:
+        pass
+    if _DECISION_HINT.search(reply):
+        try:
+            import uuid
+            from saathi.missions.knowledge import default_graph
+            default_graph().upsert(mid, "decision", f"dec-{uuid.uuid4().hex[:6]}",
+                                   label=message[:60], data={"question": message[:120], "outcome": reply[:200],
+                                                             "mode": mode}, source="workspace")
+            done.append("decision_node")
+        except Exception:
+            pass
+    return done
+
+
+def save_plan_as_workflow(mission_key: str, name: str, steps: list[str]) -> dict:
+    """Turn an implementation-mode plan into a real Workflow + Tasks on the Mission."""
+    from saathi.missions.store import default_store as m_store
+    ms = m_store()
+    m = ms.get(mission_key) or ms.get_by_key(mission_key)
+    if not m:
+        return {"ok": False, "error": "mission not found"}
+    if not steps:
+        return {"ok": False, "error": "no steps to save"}
+    from saathi.missions.workflow import default_store as wf_store, WorkflowStore, TEMPLATES  # noqa
+    ws = wf_store()
+    wf = ws.create(m["id"], director="workspace", name=name or "Plan")
+    # replace template tasks with the plan's steps
+    import sqlite3, time, uuid
+    with ws._conn() as c:
+        c.execute("DELETE FROM task WHERE workflow_id=?", (wf["id"],))
+        for i, s in enumerate(steps):
+            c.execute("INSERT INTO task VALUES(?,?,?,?,?,?,?,?,?)",
+                      (uuid.uuid4().hex[:16], wf["id"], m["id"], s, "todo", i, "workspace", "", time.time()))
+    try:
+        from saathi.missions.timeline import default_store as tl
+        tl().record(m["id"], "decision", f"Plan saved as workflow: {name}", detail=f"{len(steps)} tasks")
+    except Exception:
+        pass
+    return {"ok": True, "workflow": ws.get(wf["id"])}
