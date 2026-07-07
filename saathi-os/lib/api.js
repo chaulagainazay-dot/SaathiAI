@@ -169,6 +169,14 @@ export async function fetchControlRoom() {
   return r.json();
 }
 
+// Skill Library — reusable skills any Director can find/call.
+export async function fetchSkills({ q = "", director = "", category = "" } = {}) {
+  const params = new URLSearchParams({ q, director, category });
+  const r = await fetch(`${API_BASE}/api/v1/skills?${params}`, { cache: "no-store" });
+  if (!r.ok) throw new Error(`skills ${r.status}`);
+  return r.json();
+}
+
 // Knowledge Library — company-wide sources searchable by every Director.
 export async function fetchLibrary({ q = "", category = "", director = "", tag = "" } = {}) {
   const params = new URLSearchParams({ q, category, director, tag });
