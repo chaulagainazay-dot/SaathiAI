@@ -59,7 +59,7 @@ export default function Shell({ children }) {
       <div className="only-desktop"><Dock /></div>
       <MobileTabBar onAdd={() => setSheetOpen(true)} />
       <QuickSheet open={sheetOpen} onClose={() => setSheetOpen(false)} />
-      <div className="only-mobile"><MobileMic /></div>
+      <div className="only-touch"><MobileMic /></div>
 
       <LiveToasts />
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />

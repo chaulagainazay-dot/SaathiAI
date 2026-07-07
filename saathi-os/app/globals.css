@@ -97,23 +97,34 @@ html, body {
   .live-toasts { top: calc(12px + env(safe-area-inset-top)); left: 16px; right: 16px; width: auto; }
 }
 
-/* ---------- adaptive layouts: mobile = CEO Companion, desktop = Control Center ---------- */
+/* ---------- adaptive layouts: phone = CEO Companion, tablet+desktop = Control Center ---------- */
 .only-mobile { display: none; }
 .only-desktop { display: block; }
-@media (max-width: 820px) {
+/* phones only (< 700px) get the mobile companion */
+@media (max-width: 699px) {
   .only-mobile { display: block; }
   .only-desktop { display: none !important; }
   .m-top { display: block; }
   .m-tabs { display: grid; }
 }
+/* tablet (iPad, 700–1200px): show the FULL desktop dashboard, collapse grids to fit */
+@media (min-width: 700px) and (max-width: 1200px) {
+  .only-desktop { padding-left: 18px !important; padding-right: 18px !important; box-sizing: border-box; }
+  .only-desktop [style*="grid-template-columns"] { grid-template-columns: 1fr !important; }
+  .only-desktop [style*="max-width"] { max-width: 100% !important; }
+}
 
-/* responsive pages (missions/evidence/learning): visible on mobile, grids stack */
+/* responsive pages (missions/evidence/learning/etc): visible everywhere, grids stack on tablet+phone */
 .page { display: block; }
-@media (max-width: 820px) {
-  .page { padding-left: 14px !important; padding-right: 14px !important; box-sizing: border-box; max-width: 100% !important; }
+@media (max-width: 1200px) {
+  .page { padding-left: 16px !important; padding-right: 16px !important; box-sizing: border-box; max-width: 100% !important; }
   .page [style*="grid-template-columns"] { grid-template-columns: 1fr !important; }
   .page [style*="max-width"] { max-width: 100% !important; }
 }
+
+/* touch devices (phone + tablet) — e.g. floating voice mic */
+.only-touch { display: none; }
+@media (max-width: 1200px) { .only-touch { display: block; } }
 
 /* mobile shell */
 .m-shell { min-height: 100dvh; padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
