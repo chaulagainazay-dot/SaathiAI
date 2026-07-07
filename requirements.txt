@@ -21,3 +21,4 @@ python-telegram-bot>=20.0
 google-cloud-storage>=2.10
 opik>=2.0
 tweepy>=4.0
+webauthn>=2.0

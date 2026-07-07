@@ -1447,6 +1447,7 @@ async def _auth(request, call_next):
     # Always allow: login endpoint, OAuth callbacks, static assets, and
     # endpoints that enforce their own bearer auth (BAADAR_API_KEY).
     if (path == "/api/v1/auth/login"
+            or path.startswith("/api/v1/auth/passkey")
             or path == "/api/executive/briefing"
             or path == "/api/v1/ceo/home"
             or path == "/api/v1/ceo/os"
@@ -1549,6 +1550,76 @@ def login(body: LoginIn):
     r = JSONResponse({"ok": True, "token": token})
     r.set_cookie("baadar_session", token, httponly=True, samesite="lax", max_age=30*24*3600)
     return r
+
+def _rp(request) -> tuple[str, str]:
+    """Derive WebAuthn RP id (host, no port) + origin (scheme://host[:port]) from the request."""
+    host = (request.headers.get("host") or request.url.netloc or "localhost")
+    rp_id = host.split(":")[0]
+    scheme = request.headers.get("x-forwarded-proto") or request.url.scheme or "https"
+    return rp_id, f"{scheme}://{host}"
+
+
+@app.get("/api/v1/auth/passkey/status")
+def passkey_status(request: Request):
+    """Whether a passkey is registered for this host. Whitelisted read."""
+    from saathi import passkey
+    rp_id, _ = _rp(request)
+    return {"has_passkey": passkey.has_passkey(rp_id), "rp_id": rp_id}
+
+
+@app.post("/api/v1/auth/passkey/register/options")
+async def passkey_register_options(request: Request):
+    """Begin passkey registration (Touch ID / Face ID). Must already be signed in."""
+    if not (_is_authed(request) or _is_local(request)):
+        from fastapi.responses import JSONResponse
+        return JSONResponse({"error": "sign in first"}, status_code=401)
+    from saathi import passkey
+    rp_id, _ = _rp(request)
+    return passkey.registration_options(rp_id)
+
+
+@app.post("/api/v1/auth/passkey/register/verify")
+async def passkey_register_verify(request: Request):
+    """Finish passkey registration — stores the credential. Must be signed in."""
+    if not (_is_authed(request) or _is_local(request)):
+        from fastapi.responses import JSONResponse
+        return JSONResponse({"ok": False, "error": "sign in first"}, status_code=401)
+    from saathi import passkey
+    rp_id, origin = _rp(request)
+    body = await request.json()
+    try:
+        ok = passkey.verify_registration(body.get("credential") or body, rp_id, origin)
+    except Exception as e:
+        return {"ok": False, "error": str(e)[:120]}
+    return {"ok": ok}
+
+
+@app.post("/api/v1/auth/passkey/login/options")
+async def passkey_login_options(request: Request):
+    """Begin biometric unlock (unauthenticated — that's the point). Whitelisted."""
+    from saathi import passkey
+    rp_id, _ = _rp(request)
+    return passkey.authentication_options(rp_id)
+
+
+@app.post("/api/v1/auth/passkey/login/verify")
+async def passkey_login_verify(request: Request):
+    """Finish biometric unlock → issue the owner session cookie. Whitelisted."""
+    from fastapi.responses import JSONResponse
+    from saathi import passkey
+    rp_id, origin = _rp(request)
+    body = await request.json()
+    try:
+        ok = passkey.verify_authentication(body.get("credential") or body, rp_id, origin)
+    except Exception as e:
+        return JSONResponse({"ok": False, "error": str(e)[:120]}, status_code=400)
+    if not ok:
+        return JSONResponse({"ok": False, "error": "unlock failed"}, status_code=401)
+    token = _session_token()
+    r = JSONResponse({"ok": True})
+    r.set_cookie("baadar_session", token, httponly=True, samesite="lax", max_age=30*24*3600)
+    return r
+
 
 class ChangePasswordIn(BaseModel):
     current: str
@@ -1842,10 +1913,16 @@ async def voice_command(request: Request, file: UploadFile = File(...),
         else:
             return {"ignored": "no_wake_word", "transcript": stt["text"]}
 
-    try:
-        ver = voice.verify(audio)
-    except Exception as e:
-        ver = {"verified": False, "reason": f"verify_error: {e}", "similarity": 0.0}
+    # Already signed in (password or passkey session, or local machine)? Trust the
+    # owner — skip per-utterance voice verification. Only fall back to speaker
+    # verification when there is NO session.
+    if _is_authed(request) or _is_local(request):
+        ver = {"verified": True, "reason": "session_authenticated", "similarity": 1.0}
+    else:
+        try:
+            ver = voice.verify(audio)
+        except Exception as e:
+            ver = {"verified": False, "reason": f"verify_error: {e}", "similarity": 0.0}
 
     reply = _safe_respond(text, session_id, ver.get("verified", False))
     _last_reply_at = time.time()

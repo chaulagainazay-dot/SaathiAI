@@ -27,6 +27,7 @@ export const DEPARTMENTS = {
   CONTROL:     { name: "Control Room",    color: "#FF8A3D", route: "/studio/control-room", short: "Control" },
   VOICE:       { name: "Voice",           color: "#00BFA5", route: "/voice",      short: "Voice" },
   WORKSPACE:   { name: "Workspace",       color: "#9B6BFF", route: "/workspace",  short: "Chat" },
+  UNLOCK:      { name: "Unlock",           color: "#7CF5E4", route: "/unlock",     short: "Unlock" },
 };
 
 export const color = (key) => DEPARTMENTS[key]?.color ?? "#8FA0C4";
@@ -34,5 +35,5 @@ export const color = (key) => DEPARTMENTS[key]?.color ?? "#8FA0C4";
 // Dock = the REAL, working subsystems (scaffold department pages removed).
 export const DOCK = [
   "OS", "WORKSPACE", "EXECUTIVE", "MISSIONS", "VOICE", "AI STUDIO", "CONTROL", "PRODUCTION",
-  "EVIDENCE", "LEARNING", "SKILLS", "LIBRARY", "PROJECTS", "LAB", "INFRA",
+  "EVIDENCE", "LEARNING", "SKILLS", "LIBRARY", "PROJECTS", "LAB", "INFRA", "UNLOCK",
 ];
