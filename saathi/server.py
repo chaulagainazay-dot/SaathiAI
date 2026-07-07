@@ -1481,6 +1481,7 @@ async def _auth(request, call_next):
             or path == "/api/v1/mission"
             or path == "/api/v1/mission/complete"
             or path == "/api/v1/agent/chat"
+            or path == "/api/v1/workspace"
             or path == "/api/v1/voice/command"
             or path == "/api/v1/code-memory/status"
             or path == "/api/v1/lab/prompts"
@@ -1631,6 +1632,20 @@ def chat(body: ChatIn, request: Request):
         return {"reply": "I'm getting a lot of requests right now — give me a minute and try again."}
     reply = _safe_respond(body.text, body.session_id, body.speaker_verified)
     return {"reply": reply}
+
+
+@app.post("/api/v1/workspace")
+async def workspace_turn(request: Request):
+    """Saathi Workspace — one conversation that researches/plans/acts on a Mission.
+    Modes: research/planning/implementation/cowork. Auto-analyses pasted GitHub URLs.
+    Whitelisted + rate-limited (like chat)."""
+    import asyncio
+    if not _rate_ok(request):
+        return {"reply": "Getting a lot of requests — give me a minute.", "actions": []}
+    body = await request.json()
+    from saathi.workspace import handle
+    return await asyncio.to_thread(handle, body.get("message", ""),
+                                   mission_key=body.get("mission", ""), mode=body.get("mode", "cowork"))
 
 
 @app.post("/api/v1/agent/chat_with_file")
