@@ -75,14 +75,17 @@ export default function CeoHome() {
           <Eyebrow style={{ marginBottom: 14 }}>What should I do next</Eyebrow>
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             {home.actions.map((a, i) => (
-              <Panel key={a.title} delay={0.06 * i} style={{ padding: "18px 22px", display: "flex", alignItems: "center", gap: 16 }}>
+              <Panel key={a.title} delay={0.06 * i}
+                onClick={() => a.route && router.push(a.route)}
+                style={{ padding: "18px 22px", display: "flex", alignItems: "center", gap: 16,
+                  cursor: a.route ? "pointer" : "default" }}>
                 <Dot color={color(a.dept)} size={9} />
                 <div style={{ flex: 1 }}>
-                  <div className="eyebrow" style={{ color: color(a.dept), fontSize: 9 }}>{DEPARTMENTS[a.dept]?.name}</div>
+                  <div className="eyebrow" style={{ color: color(a.dept), fontSize: 9 }}>{DEPARTMENTS[a.dept]?.name || a.dept}</div>
                   <div style={{ fontWeight: 600, fontSize: 15.5, marginTop: 3, color: "var(--color-ink-100)" }}>{a.title}</div>
                   <div className="mono" style={{ fontSize: 10.5, color: "var(--color-ink-400)", marginTop: 5 }}>{a.meta}</div>
                 </div>
-                <Pill color={color(a.dept)} filled={0.16}>{a.tag}</Pill>
+                <Pill color={color(a.dept)} filled={0.16}>{a.tag} →</Pill>
               </Panel>
             ))}
           </div>

@@ -68,28 +68,115 @@ def compute_priority(sig: Signals) -> tuple[int, list[dict]]:
 
 
 def _top_actions() -> list[dict]:
-    """Rank cross-department recommendations into the Top-3 the CEO should act on."""
-    eng = CrossDepartmentPriorityEngine()
-    eng.add_many([
-        DepartmentRecommendation("Approve AI Studio marketing allocation", "FINANCE",
-            estimated_value_usd=2000, confidence=0.91, urgency=0.6, risk=0.2, goal_alignment=0.9,
-            requires_approval=True),
-        DepartmentRecommendation("Review Opportunity #218 — Bittensor", "OPPORTUNITY",
-            estimated_value_usd=1500, confidence=0.88, urgency=0.7, risk=0.3, goal_alignment=0.8),
-        DepartmentRecommendation("Publish Mr. Yeti Lesson #43", "AI STUDIO",
-            estimated_value_usd=600, confidence=0.8, urgency=0.9, risk=0.15, goal_alignment=0.6),
-    ])
-    meta = {
-        "Approve AI Studio marketing allocation": ("$2,000 · ROI 31% · confidence 91%", "APPROVAL"),
-        "Review Opportunity #218 — Bittensor": ("Due diligence passed · research 88%", "REVIEW"),
-        "Publish Mr. Yeti Lesson #43": ("Queued · discovery gate passed", "RUN"),
-    }
+    """The real next-actions the CEO should take, each linking to the page that does it."""
     out = []
-    for r in eng.top(3):
-        m, tag = meta.get(r.title, ("", "OPEN"))
-        out.append({"title": r.title, "dept": r.department, "meta": m, "tag": tag,
-                    "requiresApproval": r.requires_approval})
-    return out
+    # 1. pending learning recommendations → Learning inbox
+    try:
+        from saathi.learning.recommendation import default_store as rec_store
+        for r in rec_store().list(status="pending", limit=2):
+            out.append({"title": f"Review: {r.get('recommendation', '')[:44]}", "dept": "LEARNING",
+                        "meta": f"{r.get('category', '')} · {int((r.get('confidence') or 0)*100)}% confidence",
+                        "tag": "REVIEW", "route": "/learning", "requiresApproval": True})
+    except Exception:
+        pass
+    # 2. missions with thin knowledge → complete intake
+    try:
+        from saathi.missions.store import default_store as m_store
+        from saathi.missions.knowledge import default_graph
+        g = default_graph()
+        for m in m_store().list(status="active"):
+            cov = g.coverage(m["id"])["overall"]
+            if cov < 0.5:
+                out.append({"title": f"Complete intake: {m['name']}", "dept": "MISSIONS",
+                            "meta": f"knowledge coverage {int(cov*100)}%", "tag": "INTAKE",
+                            "route": f"/missions/{m['id']}/intake", "requiresApproval": False})
+                break
+    except Exception:
+        pass
+    # 3. today's production is always an available action
+    out.append({"title": "Build today's production plan", "dept": "AI STUDIO",
+                "meta": "provider-scheduled · quality-gated", "tag": "RUN",
+                "route": "/automation/production", "requiresApproval": False})
+    return out[:3]
+
+
+def _real_revenue() -> tuple[float, float]:
+    """Total recorded revenue across all Missions (from Knowledge Graph revenue nodes)."""
+    total = 0.0
+    try:
+        from saathi.missions.store import default_store as m_store
+        from saathi.missions.knowledge import default_graph
+        g = default_graph()
+        for m in m_store().list():
+            for n in g.nodes(m["id"], node_type="revenue"):
+                amt = (n.get("data") or {}).get("amount")
+                if isinstance(amt, (int, float)):
+                    total += amt
+    except Exception:
+        pass
+    return 0.0, round(total, 2)   # (today — no daily tracking yet, honest 0), total-to-date
+
+
+def _active_missions() -> list:
+    try:
+        from saathi.missions.store import default_store as m_store
+        return m_store().list(status="active")
+    except Exception:
+        return []
+
+
+def _real_approvals() -> dict:
+    """Real pending approvals: draft proposals + pending learning recommendations."""
+    items, count = [], 0
+    try:
+        from saathi.learning.recommendation import default_store as rec_store
+        n = len(rec_store().list(status="pending", limit=50))
+        if n:
+            items.append(f"{n} learning recommendation{'s' if n != 1 else ''}"); count += n
+    except Exception:
+        pass
+    try:
+        from saathi.missions.store import default_store as m_store
+        from saathi.missions.proposal import default_store as p_store
+        drafts = sum(1 for m in m_store().list()
+                     if (p_store().latest(m["id"]) or {}).get("status") == "draft")
+        if drafts:
+            items.append(f"{drafts} proposal{'s' if drafts != 1 else ''} to review"); count += drafts
+    except Exception:
+        pass
+    return {"count": count, "items": items or ["nothing pending"]}
+
+
+def _real_notifications() -> list:
+    """Real signals from the platform stores."""
+    out = []
+    try:
+        from saathi.evidence.store import default_store as ev
+        n = ev().count()
+        if n:
+            out.append({"text": f"{n} evidence rows collected", "dept": "EVIDENCE"})
+    except Exception:
+        pass
+    try:
+        from saathi.knowledge_library.store import default_store as lib
+        n = len(lib().list())
+        if n:
+            out.append({"text": f"Knowledge Library · {n} sources", "dept": "LIBRARY"})
+    except Exception:
+        pass
+    try:
+        from saathi.skills_library.store import default_store as sk
+        n = len(sk().list())
+        if n:
+            out.append({"text": f"Skill Library · {n} skills", "dept": "SKILLS"})
+    except Exception:
+        pass
+    try:
+        from saathi.missions.store import default_store as m_store
+        out.append({"text": f"{len(m_store().list())} Missions active", "dept": "MISSIONS"})
+    except Exception:
+        pass
+    return out or [{"text": "Platform nominal", "dept": "OS"}]
 
 
 def ceo_home(sig: Signals | None = None) -> dict:
@@ -119,6 +206,12 @@ def ceo_home(sig: Signals | None = None) -> dict:
     _hour = _now.hour
     _greet = ("Good morning" if _hour < 12 else "Good afternoon" if _hour < 17 else "Good evening")
 
+    rev_today, rev_total = _real_revenue()
+    real_dream_pct = round(rev_total / DREAM_TARGET * 100, 4)
+    actions = _top_actions()
+    approvals = _real_approvals()
+    notifications = _real_notifications()
+
     return {
         "greeting": f"{_greet}, Ajay.",
         "dateLabel": _now.strftime("%A · %-d %B %Y").upper(),
@@ -126,19 +219,14 @@ def ceo_home(sig: Signals | None = None) -> dict:
         "priorityReasons": reasons,
         "executionScore": execution.score,
         "executionDelta": sig.execution_delta_pct,
-        "revenueToday": sig.revenue_today_usd,
-        "revenueSplit": sig.revenue_split,
+        "revenueToday": rev_today,
+        "revenueSplit": f"{sum(1 for m in _active_missions())} active missions · NPR-recorded",
         "dreamTarget": DREAM_TARGET,
-        "dreamCurrent": sig.revenue_to_date_usd,
-        "dreamPct": dream_pct,
-        "actions": _top_actions(),
-        "approvals": {"count": 2, "items": ["1 investment", "1 allocation"]},
-        "notifications": [
-            {"text": "Knowledge promoted ×2", "dept": "KNOWLEDGE"},
-            {"text": "Learning: 3 proposals", "dept": "LEARNING"},
-            {"text": "Crypto above target", "dept": "CRYPTO"},
-            {"text": f"Storage at {sig.storage_pct:.0%}", "dept": "AI STUDIO"},
-        ],
+        "dreamCurrent": rev_total,
+        "dreamPct": real_dream_pct,
+        "actions": actions,
+        "approvals": approvals,
+        "notifications": notifications,
         "briefing": [
             f"Execution {'improved' if sig.execution_delta_pct >= 0 else 'dropped'} "
             f"{abs(sig.execution_delta_pct):.0f}% overnight.",
