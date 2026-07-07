@@ -12,6 +12,7 @@ are derived from the request host so it works on both localhost and the VM domai
 from __future__ import annotations
 
 import json
+import time
 from pathlib import Path
 
 _STORE = Path.home() / ".saathi" / "passkeys.json"
@@ -48,7 +49,7 @@ def registration_options(rp_id: str) -> dict:
     return json.loads(options_to_json(opts))
 
 
-def verify_registration(credential: dict, rp_id: str, origin: str) -> bool:
+def verify_registration(credential: dict, rp_id: str, origin: str, ua: str = "") -> bool:
     from webauthn import verify_registration_response
     from webauthn.helpers import bytes_to_base64url
     ch = _pending.get(rp_id)
@@ -58,9 +59,27 @@ def verify_registration(credential: dict, rp_id: str, origin: str) -> bool:
                                      expected_challenge=ch, expected_rp_id=rp_id,
                                      expected_origin=origin)
     creds = _load()
+    # Parse UA for device metadata
+    device_name = ""
+    browser = ""
+    if ua:
+        import re
+        browser = ("Edge" if re.search(r"Edg/|EdgA/", ua) else
+                   "Chrome" if re.search(r"Chrome|CriOS", ua) else
+                   "Firefox" if re.search(r"Firefox|FxiOS", ua) else
+                   "Safari" if "Safari" in ua else "Unknown")
+        # Extract device name (e.g., Mac, iPhone, iPad)
+        device_name = ("iPhone" if "iPhone" in ua else
+                       "iPad" if "iPad" in ua else
+                       "Mac" if "Mac OS X" in ua or "Macintosh" in ua else
+                       "Android" if "Android" in ua else
+                       "Windows" if "Windows" in ua else
+                       "Linux" if "Linux" in ua else "Unknown")
     creds.append({"id": bytes_to_base64url(v.credential_id),
                   "public_key": bytes_to_base64url(v.credential_public_key),
-                  "sign_count": v.sign_count, "rp_id": rp_id})
+                  "sign_count": v.sign_count, "rp_id": rp_id,
+                  "created": time.time(), "last_used": 0,
+                  "device_name": device_name, "browser": browser})
     _save(creds)
     _pending.pop(rp_id, None)
     return True
@@ -96,6 +115,25 @@ def verify_authentication(credential: dict, rp_id: str, origin: str) -> bool:
     except Exception:
         return False
     match["sign_count"] = v.new_sign_count
+    match["last_used"] = time.time()
     _save(creds)
     _pending.pop(rp_id, None)
     return True
+
+
+def list_passkeys(rp_id: str = "") -> list[dict]:
+    """Return all registered passkeys with metadata (no secrets)."""
+    out = []
+    for c in _load():
+        if not rp_id or c.get("rp_id") == rp_id:
+            out.append({
+                "id": c.get("id", ""),
+                "rp_id": c.get("rp_id", ""),
+                "label": c.get("label", ""),
+                "sign_count": c.get("sign_count", 0),
+                "created": c.get("created", 0),
+                "last_used": c.get("last_used", 0),
+                "device_name": c.get("device_name", ""),
+                "browser": c.get("browser", ""),
+            })
+    return out

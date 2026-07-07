@@ -1,4 +1,3 @@
-from __future__ import annotations
 """SaathiAI FastAPI server — voice + text + files, serving the Siri-style web app."""
 import base64
 import json
@@ -6,8 +5,10 @@ import re
 import secrets
 import time
 from pathlib import Path
-
+import os as _os
 from fastapi import Body, Depends, FastAPI, File, Form, Request, UploadFile
+
+
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -17,10 +18,14 @@ from . import config, voice
 from .agent import SaathiAgent
 
 app = FastAPI(title="SaathiAI")
-# allow_origin_regex reflects the caller's origin so credentialed cross-origin
-# requests (localhost dashboard → VM API) work — a wildcard "*" is invalid with
-# credentials, which broke sign-in / set-password with "Failed to fetch".
-app.add_middleware(CORSMiddleware, allow_origin_regex=".*", allow_credentials=True,
+# CORS — strict origin whitelist from env. NO wildcard, NO regex.
+# Default covers common local dev ports; production sets SAATHI_CORS_ORIGINS.
+_cors_origins = _os.getenv("SAATHI_CORS_ORIGINS", "")
+if _cors_origins:
+    _origins = [o.strip() for o in _cors_origins.split(",") if o.strip()]
+else:
+    _origins = ["http://localhost:3000", "http://127.0.0.1:3000", "http://localhost:8765"]
+app.add_middleware(CORSMiddleware, allow_origins=_origins, allow_credentials=True,
                    allow_methods=["*"], allow_headers=["*"])
 
 
@@ -1515,7 +1520,11 @@ import secrets as _secrets
 ACCESS_TOKEN = _os.getenv("SAATHI_TOKEN", "")
 _SERVER_START = time.time()
 _RAW_PASSWORD = _os.getenv("BAADAR_PASSWORD", "")
-_PASSWORD_HASH = _hashlib.sha256(_RAW_PASSWORD.encode()).hexdigest() if _RAW_PASSWORD else ""
+# Support both legacy bare-sha256 and new PBKDF2 hashes.
+# BAADAR_PASSWORD_HASH takes precedence; if absent, derive from BAADAR_PASSWORD.
+_PASSWORD_HASH = _os.getenv("BAADAR_PASSWORD_HASH", "")
+if not _PASSWORD_HASH and _RAW_PASSWORD:
+    _PASSWORD_HASH = _hashlib.sha256(_RAW_PASSWORD.encode()).hexdigest()
 
 
 def _session_token() -> str:
@@ -1664,11 +1673,11 @@ async def _auth(request, call_next):
 
 class LoginIn(BaseModel):
     password: str
+    remember_me: bool = True
 
 @app.post("/api/v1/auth/login")
 def login(body: LoginIn, request: Request):
     from fastapi.responses import JSONResponse
-    import hashlib
     from saathi import sessions, authsec
     ip = request.headers.get("x-forwarded-for", "").split(",")[0].strip() or (request.client.host if request.client else "")
     ua = request.headers.get("user-agent", "")
@@ -1677,8 +1686,7 @@ def login(body: LoginIn, request: Request):
     if not allowed:
         authsec.audit("login", ok=False, ip=ip, ua=ua, detail="rate_limited")
         return JSONResponse({"ok": False, "error": f"Too many attempts. Try again in {retry_after}s."}, status_code=429)
-    given = hashlib.sha256(body.password.encode()).hexdigest()
-    ok = (_PASSWORD_HASH and given == _PASSWORD_HASH) or (ACCESS_TOKEN and body.password == ACCESS_TOKEN)
+    ok = (_PASSWORD_HASH and authsec.verify_password(body.password, _PASSWORD_HASH)) or (ACCESS_TOKEN and body.password == ACCESS_TOKEN)
     if not ok:
         if not (_PASSWORD_HASH or ACCESS_TOKEN):
             ok = True  # nothing configured — let the owner in
@@ -1686,10 +1694,11 @@ def login(body: LoginIn, request: Request):
             authsec.rate_hit(f"{ip}:login")
             authsec.audit("login", ok=False, ip=ip, ua=ua, detail="wrong_password")
             return JSONResponse({"ok": False, "error": "Wrong password"}, status_code=401)
-    token = sessions.create(ua=ua, ip=ip, kind="password")
+    token = sessions.create(ua=ua, ip=ip, kind="password", remember_me=body.remember_me)
     authsec.audit("login", ok=True, ip=ip, ua=ua, detail=f"session_{sessions.session_id(token)}")
     r = JSONResponse({"ok": True, "token": token})
-    r.set_cookie("baadar_session", token, httponly=True, samesite="none", secure=True, max_age=30*24*3600)
+    max_age = (30*24*3600) if body.remember_me else (24*3600)
+    r.set_cookie("baadar_session", token, httponly=True, samesite="none", secure=True, max_age=max_age)
     return r
 
 def _rp(request) -> tuple[str, str]:
@@ -1729,8 +1738,9 @@ async def passkey_register_verify(request: Request):
     from saathi import passkey
     rp_id, origin = _rp(request)
     body = await request.json()
+    ua = request.headers.get("user-agent", "")
     try:
-        ok = passkey.verify_registration(body.get("credential") or body, rp_id, origin)
+        ok = passkey.verify_registration(body.get("credential") or body, rp_id, origin, ua)
     except Exception as e:
         return {"ok": False, "error": str(e)[:120]}
     return {"ok": ok}
@@ -1761,10 +1771,12 @@ async def passkey_login_verify(request: Request):
     if not ok:
         authsec.audit("passkey_login", ok=False, ip=ip, ua=ua, detail="verification_failed")
         return JSONResponse({"ok": False, "error": "unlock failed"}, status_code=401)
-    token = sessions.create(ua=ua, ip=ip, kind="passkey")
+    remember_me = body.get("remember_me", True)
+    token = sessions.create(ua=ua, ip=ip, kind="passkey", remember_me=remember_me)
     authsec.audit("passkey_login", ok=True, ip=ip, ua=ua, detail=f"session_{sessions.session_id(token)}")
     r = JSONResponse({"ok": True, "token": token})
-    r.set_cookie("baadar_session", token, httponly=True, samesite="none", secure=True, max_age=30*24*3600)
+    max_age = (30*24*3600) if remember_me else (24*3600)
+    r.set_cookie("baadar_session", token, httponly=True, samesite="none", secure=True, max_age=max_age)
     return r
 
 
@@ -1785,7 +1797,7 @@ def change_password(body: ChangePasswordIn, request: Request):
     if not allowed:
         authsec.audit("change_password", ok=False, ip=ip, ua=ua, detail="rate_limited")
         return JSONResponse({"ok": False, "error": f"Too many attempts. Try again in {retry_after}s."}, status_code=429)
-    if _PASSWORD_HASH and hashlib.sha256(body.current.encode()).hexdigest() != _PASSWORD_HASH:
+    if _PASSWORD_HASH and not authsec.verify_password(body.current, _PASSWORD_HASH):
         authsec.audit("change_password", ok=False, ip=ip, ua=ua, detail="wrong_current")
         return JSONResponse({"ok": False, "error": "Current password is wrong"}, status_code=400)
     strength = authsec.password_strength(body.new_password)
@@ -1793,7 +1805,7 @@ def change_password(body: ChangePasswordIn, request: Request):
         authsec.audit("change_password", ok=False, ip=ip, ua=ua, detail="weak_password")
         return JSONResponse({"ok": False, "error": "Password too weak. Use 8+ chars with upper, lower, number and symbol."}, status_code=400)
     _RAW_PASSWORD = body.new_password
-    _PASSWORD_HASH = hashlib.sha256(body.new_password.encode()).hexdigest()
+    _PASSWORD_HASH = authsec.hash_password(body.new_password)
     env_path = config.ROOT / ".env"
     text = env_path.read_text() if env_path.exists() else ""
     if re.search(r'^BAADAR_PASSWORD=', text, flags=re.MULTILINE):
@@ -2038,7 +2050,7 @@ async def reset_password(body: ResetIn, request: Request):
     _save_reset_tokens(rows)
     # Update password
     _RAW_PASSWORD = body.new_password
-    _PASSWORD_HASH = _hashlib.sha256(body.new_password.encode()).hexdigest()
+    _PASSWORD_HASH = authsec.hash_password(body.new_password)
     env_path = config.ROOT / ".env"
     text = env_path.read_text() if env_path.exists() else ""
     if re.search(r'^BAADAR_PASSWORD=', text, flags=re.MULTILINE):

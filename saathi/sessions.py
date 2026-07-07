@@ -63,12 +63,13 @@ def _now() -> float:
 
 
 def _prune(rows: list[dict]) -> list[dict]:
-    cut = _now() - _MAX_AGE
-    return [r for r in rows if r.get("last_seen", 0) >= cut]
+    now = _now()
+    cut = now - _MAX_AGE
+    return [r for r in rows if r.get("last_seen", 0) >= cut and r.get("expires", float("inf")) > now]
 
 
 # ── public API ────────────────────────────────────────────────────────────────
-def create(ua: str = "", ip: str = "", kind: str = "password") -> str:
+def create(ua: str = "", ip: str = "", kind: str = "password", remember_me: bool = True) -> str:
     """Mint a new session; return the RAW token (store keeps only its hash)."""
     token = secrets.token_urlsafe(32)
     browser, os_name = describe(ua)
@@ -79,6 +80,9 @@ def create(ua: str = "", ip: str = "", kind: str = "password") -> str:
         "created": _now(), "last_seen": _now(),
         "browser": browser, "os": os_name, "ua": (ua or "")[:200],
         "ip": ip or "", "kind": kind, "label": "",
+        "remember_me": remember_me,
+        "expires": _now() + (30*24*3600 if remember_me else 24*3600),
+        "revoked": False,
     })
     _save(rows)
     return token
@@ -92,6 +96,12 @@ def validate(token: str, *, touch: bool = True) -> bool:
     rows = _prune(_load())
     hit = next((r for r in rows if r.get("th") == th), None)
     if not hit:
+        return False
+    if hit.get("revoked"):
+        return False
+    if hit.get("expires", 0) < _now():
+        # Remove expired session
+        _save([r for r in rows if r.get("th") != th])
         return False
     if touch:
         hit["last_seen"] = _now()
@@ -114,6 +124,8 @@ def listing(current_token: str = "") -> list[dict]:
             "kind": r.get("kind", "password"), "label": r.get("label", ""),
             "created": r.get("created", 0), "last_seen": r.get("last_seen", 0),
             "current": bool(cur) and r.get("th") == cur,
+            "expires": r.get("expires", 0),
+            "remember_me": r.get("remember_me", True),
         })
     out.sort(key=lambda x: x["last_seen"], reverse=True)
     return out
@@ -121,18 +133,25 @@ def listing(current_token: str = "") -> list[dict]:
 
 def revoke(session_id: str) -> bool:
     rows = _load()
-    keep = [r for r in rows if r.get("id") != session_id]
-    _save(keep)
-    return len(keep) != len(rows)
+    hit = next((r for r in rows if r.get("id") == session_id), None)
+    if not hit:
+        return False
+    hit["revoked"] = True
+    _save(rows)
+    return True
 
 
 def revoke_all(except_token: str = "") -> int:
     """Logout everywhere. Keep only the caller's own session when given."""
     keep_th = _hash(except_token) if except_token else ""
     rows = _load()
-    keep = [r for r in rows if keep_th and r.get("th") == keep_th]
-    _save(keep)
-    return len(rows) - len(keep)
+    revoked = 0
+    for r in rows:
+        if not (keep_th and r.get("th") == keep_th):
+            r["revoked"] = True
+            revoked += 1
+    _save(rows)
+    return revoked
 
 
 def rename(session_id: str, label: str) -> bool:
