@@ -221,6 +221,15 @@ export async function importRepo(url, category = "AI Engineering") {
   return r.json();
 }
 
+// Saathi Workspace — one Mission-aware chat that researches/plans/acts (modes).
+export async function workspaceTurn(message, mission = "", mode = "cowork") {
+  const r = await fetch(`${API_BASE}/api/v1/workspace`, {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ message, mission, mode }) });
+  if (!r.ok) throw new Error(`workspace ${r.status}`);
+  return r.json();
+}
+
 // Missions — the CEO OS dashboard of every business (Mission = root object).
 export async function fetchMissions(status = "") {
   const q = status ? `?status=${status}` : "";
