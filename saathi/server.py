@@ -13,8 +13,11 @@ from . import config, voice
 from .agent import SaathiAgent
 
 app = FastAPI(title="SaathiAI")
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"],
-                   allow_headers=["*"])
+# allow_origin_regex reflects the caller's origin so credentialed cross-origin
+# requests (localhost dashboard → VM API) work — a wildcard "*" is invalid with
+# credentials, which broke sign-in / set-password with "Failed to fetch".
+app.add_middleware(CORSMiddleware, allow_origin_regex=".*", allow_credentials=True,
+                   allow_methods=["*"], allow_headers=["*"])
 
 
 # ── BFF: one aggregated contract for the CEO Home screen (desktop + mobile) ──
