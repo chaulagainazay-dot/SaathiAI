@@ -169,6 +169,30 @@ export async function fetchControlRoom() {
   return r.json();
 }
 
+// Production Automation — Credit Manager, Production Plan, approval mode.
+export async function fetchAutomationCredits() {
+  const r = await fetch(`${API_BASE}/api/v1/automation/credits`, { cache: "no-store" });
+  if (!r.ok) throw new Error(`credits ${r.status}`);
+  return r.json();
+}
+export async function fetchProductionPlan() {
+  const r = await fetch(`${API_BASE}/api/v1/automation/plan`, { cache: "no-store" });
+  if (!r.ok) throw new Error(`plan ${r.status}`);
+  return r.json();
+}
+export async function fetchAutomationSettings() {
+  const r = await fetch(`${API_BASE}/api/v1/automation/settings`, { cache: "no-store" });
+  if (!r.ok) throw new Error(`settings ${r.status}`);
+  return r.json();
+}
+export async function setApprovalMode(mode) {
+  const r = await fetch(`${API_BASE}/api/v1/automation/settings`, {
+    method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ approval_mode: mode }) });
+  if (!r.ok) throw new Error(`mode ${r.status}`);
+  return r.json();
+}
+
 // Skill Library — reusable skills any Director can find/call.
 export async function fetchSkills({ q = "", director = "", category = "" } = {}) {
   const params = new URLSearchParams({ q, director, category });
