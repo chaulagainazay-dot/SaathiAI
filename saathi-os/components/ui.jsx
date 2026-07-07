@@ -2,14 +2,16 @@
 import { motion, useMotionValue, useTransform, animate } from "framer-motion";
 import { useEffect } from "react";
 
-export function Panel({ className = "", children, delay = 0, soft = false, style }) {
+export function Panel({ className = "", children, delay = 0, soft = false, style, onClick, ...rest }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay, ease: [0.22, 1, 0.36, 1] }}
       className={`${soft ? "glass-soft" : "glass"} ${className}`}
-      style={style}
+      style={onClick ? { cursor: "pointer", ...style } : style}
+      onClick={onClick}
+      {...rest}
     >
       {children}
     </motion.div>
