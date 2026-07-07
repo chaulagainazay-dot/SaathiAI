@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { Panel, Eyebrow } from "@/components/ui";
-import { fetchConnectorProviders, fetchAccounts, addAccount, linkAccountMission, fetchMissions } from "@/lib/api";
+import { fetchConnectorProviders, fetchAccounts, addAccount, linkAccountMission, fetchMissions, executeConnector } from "@/lib/api";
 
 const ACCENT = "#7CF5E4", TEAL = "#00BFA5", AMBER = "#E8B84B", RED = "#FF5A5A";
 
@@ -10,7 +10,9 @@ export default function Connectors() {
   const [accounts, setAccounts] = useState([]);
   const [health, setHealth] = useState({});
   const [missions, setMissions] = useState([]);
-  const [form, setForm] = useState({ provider: "gmail", display_name: "", email: "" });
+  const [form, setForm] = useState({ provider: "telegram", display_name: "", email: "" });
+  const [secret, setSecret] = useState({ bot_token: "", chat_id: "" });
+  const [testMsg, setTestMsg] = useState({});
   const [err, setErr] = useState(null);
   const load = () => {
     fetchAccounts().then((d) => { setAccounts(d.accounts || []); setHealth(d.health || {}); }).catch((e) => setErr(String(e)));
@@ -22,8 +24,17 @@ export default function Connectors() {
   }, []);
 
   const add = async () => {
-    try { await addAccount(form); setForm({ ...form, display_name: "", email: "" }); load(); }
+    const payload = { ...form };
+    if (form.provider === "telegram" && (secret.bot_token || secret.chat_id)) payload.secret = { ...secret };
+    try { await addAccount(payload); setForm({ ...form, display_name: "", email: "" }); setSecret({ bot_token: "", chat_id: "" }); load(); }
     catch (e) { setErr(`${e} — login may be required`); }
+  };
+  const testSend = async (aid) => {
+    setTestMsg({ ...testMsg, [aid]: "sending…" });
+    try {
+      const r = await executeConnector(aid, "messaging.send", { text: "✅ Saathi connector test — Telegram is live." });
+      setTestMsg({ ...testMsg, [aid]: r.result?.ok ? `✓ sent (mode ${r.mode})` : `✗ ${r.result?.error || r.error}` });
+    } catch (e) { setTestMsg({ ...testMsg, [aid]: `✗ ${e}` }); }
   };
   const toggle = async (aid, key, on) => { try { await linkAccountMission(aid, key, on); load(); } catch (e) { setErr(String(e)); } };
 
@@ -66,8 +77,17 @@ export default function Connectors() {
           <button onClick={add} style={{ padding: "0 18px", borderRadius: 9, border: "none", cursor: "pointer",
             fontWeight: 600, color: "#000", background: ACCENT }}>＋ Add</button>
         </div>
+        {form.provider === "telegram" && (
+          <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
+            <input placeholder="Bot token (from @BotFather)" value={secret.bot_token}
+              onChange={(e) => setSecret({ ...secret, bot_token: e.target.value })} style={inp(280)} />
+            <input placeholder="Chat ID (e.g. 919874672)" value={secret.chat_id}
+              onChange={(e) => setSecret({ ...secret, chat_id: e.target.value })} style={inp(180)} />
+            <span style={{ fontSize: 10.5, opacity: 0.5, alignSelf: "center" }}>🔒 encrypted at rest</span>
+          </div>
+        )}
         <div style={{ fontSize: 10.5, opacity: 0.4, marginTop: 6 }}>
-          Live OAuth is added adapter-by-adapter; accounts registered now run through the layer in simulated mode.
+          Telegram is LIVE (real Bot API). Other providers register through the layer in simulated mode until their adapter is wired.
         </div>
       </Panel>
 
@@ -83,7 +103,14 @@ export default function Connectors() {
                 <b style={{ fontSize: 13.5 }}>{a.display_name}</b>
                 <span className="mono" style={{ fontSize: 11, opacity: 0.5 }}>{a.provider}{a.email ? ` · ${a.email}` : ""}</span>
                 <span className="mono" style={{ marginLeft: "auto", fontSize: 10.5, color: statusColor(a.status) }}>{a.status}</span>
+                {a.provider === "telegram" && (
+                  <button onClick={() => testSend(a.id)} style={{ fontSize: 10.5, padding: "3px 10px",
+                    borderRadius: 8, cursor: "pointer", border: `1px solid ${ACCENT}`, background: "transparent", color: ACCENT }}>
+                    Test send</button>
+                )}
               </div>
+              {testMsg[a.id] && <div style={{ fontSize: 10.5, marginTop: 3,
+                color: testMsg[a.id].startsWith("✓") ? TEAL : AMBER }}>{testMsg[a.id]}</div>}
               <div style={{ display: "flex", gap: 6, marginTop: 6, flexWrap: "wrap" }}>
                 {missions.map((m) => {
                   const on = (a.missions || []).includes(m.key);

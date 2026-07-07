@@ -264,6 +264,13 @@ export async function addAccount(payload) {
   if (!r.ok) throw new Error(`add-account ${r.status}`);
   return r.json();
 }
+export async function executeConnector(account, capability, params = {}, mission = "") {
+  const r = await fetch(`${API_BASE}/api/v1/connectors/execute`, {
+    method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ account, capability, params, mission }) });
+  if (!r.ok) throw new Error(`execute ${r.status}`);
+  return r.json();
+}
 export async function linkAccountMission(aid, mission, on = true) {
   const r = await fetch(`${API_BASE}/api/v1/connectors/accounts/${aid}/mission`, {
     method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },

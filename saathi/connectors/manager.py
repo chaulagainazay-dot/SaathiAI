@@ -31,6 +31,17 @@ def register_adapter(provider: str, adapter) -> None:
     _LIVE_ADAPTERS[provider] = adapter
 
 
+def _register_defaults() -> None:
+    try:
+        from saathi.connectors.adapters.telegram import register as reg_tg
+        reg_tg(register_adapter)
+    except Exception:
+        pass
+
+
+_register_defaults()
+
+
 def _rate_ok(account_id: str, capability: str) -> bool:
     # placeholder token-bucket hook — real per-provider limits plug in with the adapter
     return True
@@ -57,7 +68,8 @@ def execute(account_id: str, capability: str, params: dict | None = None, *,
     adapter = _LIVE_ADAPTERS.get(provider)
     try:
         if adapter and hasattr(adapter, verb):
-            result = getattr(adapter, verb)(acct, params or {})
+            acct_full = st.get(account_id, with_secret=True)   # live adapters get the decrypted secret
+            result = getattr(adapter, verb)(acct_full, params or {})
             mode = "live"
         else:
             result = {"simulated": True, "capability": capability, "params_keys": list((params or {}).keys())}
