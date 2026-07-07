@@ -1447,6 +1447,8 @@ async def _auth(request, call_next):
     # Always allow: login endpoint, OAuth callbacks, static assets, and
     # endpoints that enforce their own bearer auth (BAADAR_API_KEY).
     if (path == "/api/v1/auth/login"
+            or path == "/api/v1/auth/change-password"
+            or path == "/api/v1/auth/logout"
             or path.startswith("/api/v1/auth/passkey")
             or path == "/api/executive/briefing"
             or path == "/api/v1/ceo/home"
@@ -1561,10 +1563,11 @@ def _rp(request) -> tuple[str, str]:
 
 @app.get("/api/v1/auth/passkey/status")
 def passkey_status(request: Request):
-    """Whether a passkey is registered for this host. Whitelisted read."""
+    """Auth setup status: is a password set, is a passkey registered, am I signed in. Whitelisted."""
     from saathi import passkey
     rp_id, _ = _rp(request)
-    return {"has_passkey": passkey.has_passkey(rp_id), "rp_id": rp_id}
+    return {"has_passkey": passkey.has_passkey(rp_id), "rp_id": rp_id,
+            "has_password": bool(_PASSWORD_HASH), "signed_in": _is_authed(request) or _is_local(request)}
 
 
 @app.post("/api/v1/auth/passkey/register/options")
@@ -1637,10 +1640,17 @@ def change_password(body: ChangePasswordIn):
     _RAW_PASSWORD = body.new_password
     _PASSWORD_HASH = hashlib.sha256(body.new_password.encode()).hexdigest()
     env_path = config.ROOT / ".env"
-    text = env_path.read_text()
-    text = re.sub(r'^BAADAR_PASSWORD=.*$', f'BAADAR_PASSWORD={body.new_password}', text, flags=re.MULTILINE)
+    text = env_path.read_text() if env_path.exists() else ""
+    if re.search(r'^BAADAR_PASSWORD=', text, flags=re.MULTILINE):
+        text = re.sub(r'^BAADAR_PASSWORD=.*$', f'BAADAR_PASSWORD={body.new_password}', text, flags=re.MULTILINE)
+    else:
+        text = (text.rstrip("\n") + "\n" if text else "") + f'BAADAR_PASSWORD={body.new_password}\n'
     env_path.write_text(text)
-    return {"ok": True}
+    # issue a session so the owner is signed in right after setting the password
+    from fastapi.responses import JSONResponse
+    r = JSONResponse({"ok": True})
+    r.set_cookie("baadar_session", _session_token(), httponly=True, samesite="lax", max_age=30*24*3600)
+    return r
 
 @app.post("/api/v1/auth/logout")
 def logout(request: Request):

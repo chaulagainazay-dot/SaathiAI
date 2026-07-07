@@ -75,6 +75,13 @@ export async function submitIntakeForm(token, data) {
 }
 
 // Log in (sets the httponly session cookie so chat/writes are authorized).
+export async function setPassword(current, newPassword) {
+  const r = await fetch(`${API_BASE}/api/v1/auth/change-password`, {
+    method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ current: current || "", new_password: newPassword }) });
+  return r.json();
+}
+
 export async function login(password) {
   const r = await fetch(`${API_BASE}/api/v1/auth/login`, {
     method: "POST", credentials: "include",
