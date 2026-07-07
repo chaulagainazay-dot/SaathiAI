@@ -1,7 +1,11 @@
 from __future__ import annotations
 """SaathiAI FastAPI server — voice + text + files, serving the Siri-style web app."""
 import base64
+import json
+import re
+import secrets
 import time
+from pathlib import Path
 
 from fastapi import Body, Depends, FastAPI, File, Form, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
@@ -18,6 +22,33 @@ app = FastAPI(title="SaathiAI")
 # credentials, which broke sign-in / set-password with "Failed to fetch".
 app.add_middleware(CORSMiddleware, allow_origin_regex=".*", allow_credentials=True,
                    allow_methods=["*"], allow_headers=["*"])
+
+
+# ── Security Headers Middleware (Phase 7) ───────────────────────────────────
+from starlette.middleware.base import BaseHTTPMiddleware
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        response = await call_next(request)
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+        # CSP — strict but allowing inline scripts/styles for Next.js dev builds
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'self'; "
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval'; "
+            "style-src 'self' 'unsafe-inline'; "
+            "img-src 'self' data: blob: https:; "
+            "font-src 'self' data:; "
+            "connect-src 'self' ws: wss:; "
+            "frame-ancestors 'none'; "
+            "base-uri 'self'; "
+            "form-action 'self'"
+        )
+        return response
+
+app.add_middleware(SecurityHeadersMiddleware)
 
 
 # ── BFF: one aggregated contract for the CEO Home screen (desktop + mobile) ──
@@ -1518,8 +1549,14 @@ def _is_authed(request) -> bool:
     cookies = getattr(request, "cookies", None) or {}
     token = (cookies.get("baadar_session")
              or request.headers.get("x-baadar-session", ""))
-    if token and token == _session_token():
-        return True
+    if token:
+        # New random-token session store (per-device, revocable)
+        from saathi import sessions
+        if sessions.validate(token):
+            return True
+        # Legacy deterministic token (backward compat during transition)
+        if token == _session_token():
+            return True
     # the raw platform token also authorizes (API clients)
     if ACCESS_TOKEN and request.headers.get("x-saathi-token") == ACCESS_TOKEN:
         return True
@@ -1538,7 +1575,10 @@ async def _auth(request, call_next):
     if (path == "/api/v1/auth/login"
             or path == "/api/v1/auth/change-password"
             or path == "/api/v1/auth/logout"
+            or path == "/api/v1/auth/forgot"
+            or path.startswith("/api/v1/auth/reset")
             or path.startswith("/api/v1/auth/passkey")
+            or path.startswith("/api/v1/auth/oauth")
             or path == "/api/executive/briefing"
             or path == "/api/v1/ceo/home"
             or path == "/api/v1/ceo/os"
@@ -1626,20 +1666,28 @@ class LoginIn(BaseModel):
     password: str
 
 @app.post("/api/v1/auth/login")
-def login(body: LoginIn):
+def login(body: LoginIn, request: Request):
     from fastapi.responses import JSONResponse
     import hashlib
+    from saathi import sessions, authsec
+    ip = request.headers.get("x-forwarded-for", "").split(",")[0].strip() or (request.client.host if request.client else "")
+    ua = request.headers.get("user-agent", "")
+    # rate-limit brute-force attempts
+    allowed, retry_after = authsec.rate_check(f"{ip}:login", limit=5, window=300)
+    if not allowed:
+        authsec.audit("login", ok=False, ip=ip, ua=ua, detail="rate_limited")
+        return JSONResponse({"ok": False, "error": f"Too many attempts. Try again in {retry_after}s."}, status_code=429)
     given = hashlib.sha256(body.password.encode()).hexdigest()
-    # accept the configured password OR the SAATHI_TOKEN (so login works even when
-    # BAADAR_PASSWORD isn't set — the previous behaviour issued a cookie that was
-    # then ignored, causing an endless re-login loop).
     ok = (_PASSWORD_HASH and given == _PASSWORD_HASH) or (ACCESS_TOKEN and body.password == ACCESS_TOKEN)
     if not ok:
         if not (_PASSWORD_HASH or ACCESS_TOKEN):
             ok = True  # nothing configured — let the owner in
         else:
+            authsec.rate_hit(f"{ip}:login")
+            authsec.audit("login", ok=False, ip=ip, ua=ua, detail="wrong_password")
             return JSONResponse({"ok": False, "error": "Wrong password"}, status_code=401)
-    token = _session_token()
+    token = sessions.create(ua=ua, ip=ip, kind="password")
+    authsec.audit("login", ok=True, ip=ip, ua=ua, detail=f"session_{sessions.session_id(token)}")
     r = JSONResponse({"ok": True, "token": token})
     r.set_cookie("baadar_session", token, httponly=True, samesite="none", secure=True, max_age=30*24*3600)
     return r
@@ -1698,18 +1746,23 @@ async def passkey_login_options(request: Request):
 
 @app.post("/api/v1/auth/passkey/login/verify")
 async def passkey_login_verify(request: Request):
-    """Finish biometric unlock → issue the owner session cookie. Whitelisted."""
+    """Finish biometric unlock → issue a new random session cookie. Whitelisted."""
     from fastapi.responses import JSONResponse
-    from saathi import passkey
+    from saathi import passkey, sessions, authsec
     rp_id, origin = _rp(request)
     body = await request.json()
+    ip = request.headers.get("x-forwarded-for", "").split(",")[0].strip() or (request.client.host if request.client else "")
+    ua = request.headers.get("user-agent", "")
     try:
         ok = passkey.verify_authentication(body.get("credential") or body, rp_id, origin)
     except Exception as e:
+        authsec.audit("passkey_login", ok=False, ip=ip, ua=ua, detail=str(e)[:120])
         return JSONResponse({"ok": False, "error": str(e)[:120]}, status_code=400)
     if not ok:
+        authsec.audit("passkey_login", ok=False, ip=ip, ua=ua, detail="verification_failed")
         return JSONResponse({"ok": False, "error": "unlock failed"}, status_code=401)
-    token = _session_token()
+    token = sessions.create(ua=ua, ip=ip, kind="passkey")
+    authsec.audit("passkey_login", ok=True, ip=ip, ua=ua, detail=f"session_{sessions.session_id(token)}")
     r = JSONResponse({"ok": True, "token": token})
     r.set_cookie("baadar_session", token, httponly=True, samesite="none", secure=True, max_age=30*24*3600)
     return r
@@ -1720,14 +1773,25 @@ class ChangePasswordIn(BaseModel):
     new_password: str
 
 @app.post("/api/v1/auth/change-password")
-def change_password(body: ChangePasswordIn):
+def change_password(body: ChangePasswordIn, request: Request):
     global _PASSWORD_HASH, _RAW_PASSWORD
     import hashlib, re
     from fastapi.responses import JSONResponse
+    from saathi import sessions, authsec
+    ip = request.headers.get("x-forwarded-for", "").split(",")[0].strip() or (request.client.host if request.client else "")
+    ua = request.headers.get("user-agent", "")
+    # rate limit password changes
+    allowed, retry_after = authsec.rate_check(f"{ip}:change-password", limit=3, window=600)
+    if not allowed:
+        authsec.audit("change_password", ok=False, ip=ip, ua=ua, detail="rate_limited")
+        return JSONResponse({"ok": False, "error": f"Too many attempts. Try again in {retry_after}s."}, status_code=429)
     if _PASSWORD_HASH and hashlib.sha256(body.current.encode()).hexdigest() != _PASSWORD_HASH:
+        authsec.audit("change_password", ok=False, ip=ip, ua=ua, detail="wrong_current")
         return JSONResponse({"ok": False, "error": "Current password is wrong"}, status_code=400)
-    if len(body.new_password) < 4:
-        return JSONResponse({"ok": False, "error": "Password must be at least 4 characters"}, status_code=400)
+    strength = authsec.password_strength(body.new_password)
+    if strength["score"] < 2:
+        authsec.audit("change_password", ok=False, ip=ip, ua=ua, detail="weak_password")
+        return JSONResponse({"ok": False, "error": "Password too weak. Use 8+ chars with upper, lower, number and symbol."}, status_code=400)
     _RAW_PASSWORD = body.new_password
     _PASSWORD_HASH = hashlib.sha256(body.new_password.encode()).hexdigest()
     env_path = config.ROOT / ".env"
@@ -1737,19 +1801,344 @@ def change_password(body: ChangePasswordIn):
     else:
         text = (text.rstrip("\n") + "\n" if text else "") + f'BAADAR_PASSWORD={body.new_password}\n'
     env_path.write_text(text)
-    # issue a session so the owner is signed in right after setting the password
-    from fastapi.responses import JSONResponse
-    tok = _session_token()
-    r = JSONResponse({"ok": True, "token": tok})
-    r.set_cookie("baadar_session", tok, httponly=True, samesite="none", secure=True, max_age=30*24*3600)
+    # SECURITY: invalidate all existing sessions, then issue a fresh one
+    cookies = getattr(request, "cookies", None) or {}
+    old_token = (cookies.get("baadar_session") or request.headers.get("x-baadar-session", ""))
+    sessions.revoke_all(except_token=old_token)
+    sessions.revoke(sessions.session_id(old_token))
+    token = sessions.create(ua=ua, ip=ip, kind="password")
+    authsec.audit("change_password", ok=True, ip=ip, ua=ua, detail=f"new_session_{sessions.session_id(token)}")
+    r = JSONResponse({"ok": True, "token": token})
+    r.set_cookie("baadar_session", token, httponly=True, samesite="none", secure=True, max_age=30*24*3600)
     return r
 
 @app.post("/api/v1/auth/logout")
 def logout(request: Request):
     from fastapi.responses import JSONResponse
+    from saathi import sessions, authsec
+    cookies = getattr(request, "cookies", None) or {}
+    token = (cookies.get("baadar_session")
+             or request.headers.get("x-baadar-session", ""))
+    if token:
+        sessions.revoke(sessions.session_id(token))
+    authsec.audit("logout", ok=True, ip=request.client.host if request.client else "", ua=request.headers.get("user-agent", ""))
     r = JSONResponse({"ok": True})
     r.delete_cookie("baadar_session", samesite="none", secure=True)
     return r
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  AUTH v1.0 — Session Management, Passkey Management, Forgot Password,
+#  Account Security, OAuth Architecture
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# ── Phase 3: Session / Device Management ─────────────────────────────────────
+
+@app.get("/api/v1/auth/sessions")
+def list_sessions(request: Request):
+    """List all active sessions for the owner (device, browser, OS, last seen)."""
+    from fastapi.responses import JSONResponse
+    from saathi import sessions
+    if not _is_authed(request):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    token = (getattr(request, "cookies", {}).get("baadar_session")
+             or request.headers.get("x-baadar-session", ""))
+    return {"sessions": sessions.listing(current_token=token)}
+
+
+@app.delete("/api/v1/auth/sessions/{sid}")
+def revoke_session(sid: str, request: Request):
+    """Revoke a specific session by its public ID (logout that device)."""
+    from fastapi.responses import JSONResponse
+    from saathi import sessions, authsec
+    if not _is_authed(request):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    ip = request.headers.get("x-forwarded-for", "").split(",")[0].strip() or (request.client.host if request.client else "")
+    ua = request.headers.get("user-agent", "")
+    ok = sessions.revoke(sid)
+    authsec.audit("revoke_session", ok=ok, ip=ip, ua=ua, detail=sid)
+    return {"ok": ok}
+
+
+@app.post("/api/v1/auth/sessions/revoke-all")
+def revoke_all_sessions(request: Request):
+    """Logout everywhere — invalidate all sessions except the caller's."""
+    from fastapi.responses import JSONResponse
+    from saathi import sessions, authsec
+    if not _is_authed(request):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    token = (getattr(request, "cookies", {}).get("baadar_session")
+             or request.headers.get("x-baadar-session", ""))
+    ip = request.headers.get("x-forwarded-for", "").split(",")[0].strip() or (request.client.host if request.client else "")
+    ua = request.headers.get("user-agent", "")
+    count = sessions.revoke_all(except_token=token)
+    authsec.audit("revoke_all", ok=True, ip=ip, ua=ua, detail=f"revoked_{count}")
+    return {"ok": True, "revoked": count}
+
+
+@app.post("/api/v1/auth/session/rotate")
+def rotate_session(request: Request):
+    """Rotate the current session token — invalidate old, mint new."""
+    from fastapi.responses import JSONResponse
+    from saathi import sessions, authsec
+    if not _is_authed(request):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    token = (getattr(request, "cookies", {}).get("baadar_session")
+             or request.headers.get("x-baadar-session", ""))
+    ip = request.headers.get("x-forwarded-for", "").split(",")[0].strip() or (request.client.host if request.client else "")
+    ua = request.headers.get("user-agent", "")
+    new_token = sessions.rotate(token, ua=ua, ip=ip)
+    authsec.audit("rotate_session", ok=True, ip=ip, ua=ua, detail=f"new_{sessions.session_id(new_token)}")
+    r = JSONResponse({"ok": True, "token": new_token})
+    r.set_cookie("baadar_session", new_token, httponly=True, samesite="none", secure=True, max_age=30*24*3600)
+    return r
+
+
+@app.post("/api/v1/auth/sessions/{sid}/rename")
+async def rename_session(sid: str, request: Request):
+    """Label a session (e.g., 'Work Mac', 'iPhone')."""
+    from fastapi.responses import JSONResponse
+    from saathi import sessions
+    if not _is_authed(request):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    body = await request.json()
+    label = (body.get("label") or "")[:60]
+    return {"ok": sessions.rename(sid, label)}
+
+
+# ── Phase 2: Passkey Management ──────────────────────────────────────────────
+
+@app.get("/api/v1/auth/passkeys")
+def list_passkeys(request: Request):
+    """List all registered passkeys (id, rp_id, creation info — no secrets)."""
+    from fastapi.responses import JSONResponse
+    from saathi import passkey
+    if not _is_authed(request):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    rp_id, _ = _rp(request)
+    creds = passkey._load()
+    out = []
+    for c in creds:
+        if not rp_id or c.get("rp_id") == rp_id:
+            out.append({"id": c.get("id", ""), "rp_id": c.get("rp_id", ""),
+                        "label": c.get("label", ""), "sign_count": c.get("sign_count", 0)})
+    return {"passkeys": out}
+
+
+@app.delete("/api/v1/auth/passkeys/{pid}")
+def delete_passkey(pid: str, request: Request):
+    """Remove a passkey credential by its ID."""
+    from fastapi.responses import JSONResponse
+    from saathi import passkey, authsec
+    if not _is_authed(request):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    ip = request.headers.get("x-forwarded-for", "").split(",")[0].strip() or (request.client.host if request.client else "")
+    ua = request.headers.get("user-agent", "")
+    creds = passkey._load()
+    keep = [c for c in creds if c.get("id") != pid]
+    ok = len(keep) != len(creds)
+    passkey._save(keep)
+    authsec.audit("delete_passkey", ok=ok, ip=ip, ua=ua, detail=pid)
+    return {"ok": ok}
+
+
+@app.patch("/api/v1/auth/passkeys/{pid}")
+async def rename_passkey(pid: str, request: Request):
+    """Rename a passkey (label)."""
+    from fastapi.responses import JSONResponse
+    from saathi import passkey, authsec
+    if not _is_authed(request):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    body = await request.json()
+    label = (body.get("label") or "")[:60]
+    creds = passkey._load()
+    hit = next((c for c in creds if c.get("id") == pid), None)
+    if not hit:
+        return JSONResponse({"ok": False, "error": "passkey not found"}, status_code=404)
+    hit["label"] = label
+    passkey._save(creds)
+    authsec.audit("rename_passkey", ok=True, ip=request.client.host if request.client else "", ua=request.headers.get("user-agent", ""), detail=pid)
+    return {"ok": True}
+
+
+# ── Phase 1: Forgot Password ─────────────────────────────────────────────────
+# Reset tokens are stored in ~/.saathi/reset_tokens.json with 15-minute TTL.
+
+_RESET_STORE = Path.home() / ".saathi" / "reset_tokens.json"
+_RESET_TTL = 900  # 15 minutes
+
+
+def _save_reset_tokens(rows: list[dict]) -> None:
+    _RESET_STORE.parent.mkdir(parents=True, exist_ok=True)
+    now = time.time()
+    _RESET_STORE.write_text(json.dumps([r for r in rows if r.get("expires", 0) > now]))
+
+
+def _load_reset_tokens() -> list[dict]:
+    try:
+        now = time.time()
+        rows = json.loads(_RESET_STORE.read_text())
+        return [r for r in rows if r.get("expires", 0) > now]
+    except Exception:
+        return []
+
+
+@app.post("/api/v1/auth/forgot")
+async def forgot_password(request: Request):
+    """Request a password reset email. Inert if email not configured (outbox.log fallback)."""
+    from fastapi.responses import JSONResponse
+    from saathi import mailer, authsec
+    body = await request.json()
+    ip = request.headers.get("x-forwarded-for", "").split(",")[0].strip() or (request.client.host if request.client else "")
+    ua = request.headers.get("user-agent", "")
+    # rate limit: 3 requests per 15 min
+    allowed, retry_after = authsec.rate_check(f"{ip}:forgot", limit=3, window=900)
+    if not allowed:
+        return JSONResponse({"ok": False, "error": f"Too many requests. Try again in {retry_after}s."}, status_code=429)
+    email = (body.get("email") or "").strip().lower()
+    authsec.rate_hit(f"{ip}:forgot")
+    # Single-owner: we don't have a user database, so we accept any email attempt
+    # and silently succeed to prevent enumeration. In production, this would lookup
+    # the user's email. For now, we store the token and email it if SMTP configured.
+    token = _secrets.token_urlsafe(32)
+    rows = _load_reset_tokens()
+    rows.append({"token": token, "email": email, "created": time.time(), "expires": time.time() + _RESET_TTL, "ip": ip, "used": False})
+    _save_reset_tokens(rows)
+    reset_link = f"{_rp(request)[1]}/reset-password?token={token}"
+    subject = "SaathiOS — Reset your password"
+    body_text = f"Someone requested a password reset for SaathiOS.\n\nIf this was you, click this link (expires in 15 minutes):\n{reset_link}\n\nIf not, ignore this email."
+    result = mailer.send(email, subject, body_text)
+    authsec.audit("forgot_password", ok=True, ip=ip, ua=ua, detail=f"email={email} delivered={result.get('delivered')}")
+    # Always return success to prevent email enumeration
+    return {"ok": True, "message": "If that email is registered, a reset link was sent."}
+
+
+class ResetIn(BaseModel):
+    token: str
+    new_password: str
+
+
+@app.post("/api/v1/auth/reset")
+async def reset_password(body: ResetIn, request: Request):
+    """Verify a reset token and set a new password."""
+    from fastapi.responses import JSONResponse
+    from saathi import authsec
+    global _PASSWORD_HASH, _RAW_PASSWORD
+    ip = request.headers.get("x-forwarded-for", "").split(",")[0].strip() or (request.client.host if request.client else "")
+    ua = request.headers.get("user-agent", "")
+    rows = _load_reset_tokens()
+    match = next((r for r in rows if r.get("token") == body.token and not r.get("used")), None)
+    if not match:
+        authsec.audit("reset_password", ok=False, ip=ip, ua=ua, detail="invalid_or_expired_token")
+        return JSONResponse({"ok": False, "error": "Invalid or expired reset link."}, status_code=400)
+    strength = authsec.password_strength(body.new_password)
+    if strength["score"] < 2:
+        return JSONResponse({"ok": False, "error": "Password too weak. Use 8+ chars with upper, lower, number and symbol."}, status_code=400)
+    # Invalidate the token
+    match["used"] = True
+    _save_reset_tokens(rows)
+    # Update password
+    _RAW_PASSWORD = body.new_password
+    _PASSWORD_HASH = _hashlib.sha256(body.new_password.encode()).hexdigest()
+    env_path = config.ROOT / ".env"
+    text = env_path.read_text() if env_path.exists() else ""
+    if re.search(r'^BAADAR_PASSWORD=', text, flags=re.MULTILINE):
+        text = re.sub(r'^BAADAR_PASSWORD=.*$', f'BAADAR_PASSWORD={body.new_password}', text, flags=re.MULTILINE)
+    else:
+        text = (text.rstrip("\n") + "\n" if text else "") + f'BAADAR_PASSWORD={body.new_password}\n'
+    env_path.write_text(text)
+    authsec.audit("reset_password", ok=True, ip=ip, ua=ua, detail="password_changed")
+    return {"ok": True, "message": "Password updated. Sign in with your new password."}
+
+
+# ── Phase 4: Audit / Login History ───────────────────────────────────────────
+
+@app.get("/api/v1/auth/audit")
+def auth_audit(request: Request, limit: int = 40):
+    """Recent authentication events (login, logout, passkey, reset, revoke)."""
+    from fastapi.responses import JSONResponse
+    from saathi import authsec
+    if not _is_authed(request):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    return {"events": authsec.recent_audit(limit=min(limit, 100))}
+
+
+# ── Phase 5: OAuth Architecture (pluggable, no providers enabled yet) ─────────
+
+class OAuthProvider:
+    """Registry entry for a federated identity provider."""
+    def __init__(self, name: str, display: str, authorize_url: str, scope: str, enabled: bool = False):
+        self.name = name; self.display = display; self.authorize_url = authorize_url
+        self.scope = scope; self.enabled = enabled
+
+
+_OAUTH_PROVIDERS: dict[str, OAuthProvider] = {
+    "google":   OAuthProvider("google",   "Google",   "https://accounts.google.com/o/oauth2/v2/auth",   "openid email profile", False),
+    "apple":    OAuthProvider("apple",    "Apple",    "https://appleid.apple.com/auth/authorize",       "openid name email",    False),
+    "github":   OAuthProvider("github",   "GitHub",   "https://github.com/login/oauth/authorize",       "read:user user:email", False),
+    "microsoft":OAuthProvider("microsoft","Microsoft","https://login.microsoftonline.com/common/oauth2/v2.0/authorize", "openid email profile", False),
+    "facebook": OAuthProvider("facebook","Facebook","https://www.facebook.com/v18.0/dialog/oauth",      "email public_profile", False),
+    "telegram": OAuthProvider("telegram", "Telegram", "", "", False),  # uses Bot API, not OAuth2
+}
+
+
+@app.get("/api/v1/auth/oauth/providers")
+def oauth_providers(request: Request):
+    """List available OAuth providers and their enabled status."""
+    return {"providers": [{"name": p.name, "display": p.display, "enabled": p.enabled,
+                           "configured": bool(_os.getenv(f"OAUTH_{p.name.upper()}_CLIENT_ID"))}
+                          for p in _OAUTH_PROVIDERS.values()]}
+
+
+@app.get("/api/v1/auth/oauth/{provider}/authorize")
+def oauth_authorize(provider: str, request: Request, redirect_uri: str = ""):
+    """Start OAuth flow for a provider. Returns the authorization URL to redirect to."""
+    from fastapi.responses import JSONResponse
+    p = _OAUTH_PROVIDERS.get(provider)
+    if not p:
+        return JSONResponse({"ok": False, "error": "Unknown provider"}, status_code=400)
+    client_id = _os.getenv(f"OAUTH_{provider.upper()}_CLIENT_ID", "")
+    if not client_id:
+        return JSONResponse({"ok": False, "error": f"{p.display} OAuth not configured"}, status_code=400)
+    # Generate a state token (CSRF protection)
+    state = _secrets.token_urlsafe(16)
+    # Store state → provider mapping (simple file, 10-min TTL)
+    state_store = Path.home() / ".saathi" / "oauth_states.json"
+    try:
+        states = json.loads(state_store.read_text()) if state_store.exists() else {}
+    except Exception:
+        states = {}
+    states[state] = {"provider": provider, "created": time.time(), "redirect_uri": redirect_uri}
+    state_store.parent.mkdir(parents=True, exist_ok=True)
+    state_store.write_text(json.dumps(states))
+    # Build authorization URL
+    cb = redirect_uri or f"{_rp(request)[1]}/api/v1/auth/oauth/callback"
+    auth_url = f"{p.authorize_url}?client_id={client_id}&response_type=code&scope={p.scope}&redirect_uri={cb}&state={state}"
+    return {"ok": True, "authorization_url": auth_url}
+
+
+@app.get("/api/v1/auth/oauth/callback")
+async def oauth_callback(request: Request, code: str = "", state: str = "", error: str = ""):
+    """OAuth callback — validates state, exchanges code for token (placeholder)."""
+    from fastapi.responses import JSONResponse, RedirectResponse
+    if error:
+        return JSONResponse({"ok": False, "error": error}, status_code=400)
+    state_store = Path.home() / ".saathi" / "oauth_states.json"
+    try:
+        states = json.loads(state_store.read_text()) if state_store.exists() else {}
+    except Exception:
+        states = {}
+    ctx = states.pop(state, None)
+    if state_store.exists():
+        state_store.write_text(json.dumps(states))
+    if not ctx or time.time() - ctx.get("created", 0) > 600:
+        return JSONResponse({"ok": False, "error": "Invalid or expired state"}, status_code=400)
+    provider = ctx.get("provider", "")
+    # PLACEHOLDER: actual token exchange requires provider-specific code.
+    # When a provider is enabled, this exchanges 'code' for an access token,
+    # fetches the user's profile, and creates a session. For now, we return
+    # a clear message so the architecture is ready.
+    return JSONResponse({"ok": True, "message": f"OAuth callback received for {provider}. "
+                         "Token exchange not yet implemented — enable the provider and add the exchange logic."})
 
 agent = SaathiAgent()
 

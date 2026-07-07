@@ -1,13 +1,12 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Panel, Eyebrow } from "@/components/ui";
-import { login, setPassword } from "@/lib/api";
+import { login, setPassword, forgotPassword } from "@/lib/api";
 import { passkeySupported, passkeyStatus, registerPasskey, unlockPasskey } from "@/lib/passkey";
 
-const ACCENT = "#9B6BFF", TEAL = "#00BFA5", RED = "#FF5A5A";
+const ACCENT = "#9B6BFF", TEAL = "#00BFA5", RED = "#FF5A5A", AMBER = "#FFB800";
 
-// Turn raw errors / thrown WebAuthn exceptions into calm, human sentences.
 function friendly(e) {
   const s = String(e && e.message ? e.message : e);
   if (/NotAllowedError|not allowed|timed out/i.test(s)) return "Cancelled or timed out — try again.";
@@ -18,6 +17,13 @@ function friendly(e) {
   return s.replace(/^Error:\s*/, "") || "Something went wrong — try again.";
 }
 
+function strengthLabel(score) {
+  return ["Very weak", "Weak", "Fair", "Good", "Strong"][Math.max(0, Math.min(4, score))];
+}
+function strengthColor(score) {
+  return [RED, RED, AMBER, TEAL, "#4ade80"][Math.max(0, Math.min(4, score))];
+}
+
 export default function Unlock() {
   const router = useRouter();
   const [status, setStatus] = useState({ has_password: false, has_passkey: false, signed_in: false });
@@ -26,38 +32,90 @@ export default function Unlock() {
   const [np2, setNp2] = useState("");
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState(false);
+  const [showPw, setShowPw] = useState(false);
+  const [showNp, setShowNp] = useState(false);
+  const [capsOn, setCapsOn] = useState(false);
+  const [strength, setStrength] = useState({ score: 0, checks: {} });
+  const [mode, setMode] = useState("unlock"); // unlock | forgot | reset
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [rememberMe, setRememberMe] = useState(true);
+  const [online, setOnline] = useState(true);
   const supported = passkeySupported();
+  const pwRef = useRef(null);
 
   const refresh = () => passkeyStatus().then(setStatus).catch(() => {});
   useEffect(() => { refresh(); }, []);
 
+  // Offline detection
+  useEffect(() => {
+    const on = () => setOnline(true);
+    const off = () => setOnline(false);
+    window.addEventListener("online", on);
+    window.addEventListener("offline", off);
+    setOnline(navigator.onLine);
+    return () => { window.removeEventListener("online", on); window.removeEventListener("offline", off); };
+  }, []);
+
   const wrap = async (fn) => { setBusy(true); setMsg(""); try { await fn(); } catch (e) { setMsg(friendly(e)); } finally { setBusy(false); } };
 
   const doSetPassword = () => wrap(async () => {
-    if (np.length < 4) return setMsg("Password must be at least 4 characters");
+    if (np.length < 8) return setMsg("Password must be at least 8 characters");
     if (np !== np2) return setMsg("Passwords don't match");
     const r = await setPassword(pw, np);
     if (r.ok) { setMsg(status.has_password ? "✓ Password changed." : "✓ Password set — you're signed in.");
       setPw(""); setNp(""); setNp2(""); refresh(); }
     else setMsg(friendly(r.error || "Failed"));
   });
+
   const doLogin = () => wrap(async () => {
     const r = await login(pw);
-    if (r.ok) { setMsg("✓ Signed in."); setPw(""); refresh(); setTimeout(() => router.push("/os"), 600); }
-    else setMsg(friendly(r.error || "Wrong password"));
+    if (r.ok) {
+      if (!rememberMe) {
+        // Short session: 24 hours instead of 30 days
+        try { localStorage.setItem("saathi_session_short", "1"); } catch {}
+      }
+      setMsg("✓ Signed in."); setPw(""); refresh(); setTimeout(() => router.push("/os"), 600);
+    } else setMsg(friendly(r.error || "Wrong password"));
   });
+
   const doUnlock = () => wrap(async () => {
     const r = await unlockPasskey();
     if (r.ok) { setMsg("✓ Unlocked."); setTimeout(() => router.push("/os"), 600); }
     else setMsg(friendly(r.error || "Unlock failed"));
   });
+
   const doRegister = () => wrap(async () => {
     const r = await registerPasskey();
     if (r.ok) { setMsg("✓ Fingerprint / Face ID set up."); refresh(); }
     else setMsg(friendly(r.error || "Setup failed"));
   });
 
-  // ≥44px touch targets; 16px font stops iOS Safari zoom-on-focus.
+  const doForgot = () => wrap(async () => {
+    if (!forgotEmail.includes("@")) return setMsg("Enter a valid email address.");
+    const r = await forgotPassword(forgotEmail);
+    if (r.ok) setMsg("✓ If that email is registered, a reset link was sent.");
+    else setMsg(friendly(r.error || "Failed to send reset email"));
+  });
+
+  const onKeyDown = (e) => { setCapsOn(e.getModifierState("CapsLock")); };
+  const onNpChange = (v) => {
+    setNp(v);
+    const s = scorePassword(v);
+    setStrength(s);
+  };
+
+  const scorePassword = (v) => {
+    const checks = {
+      length: v.length >= 8,
+      lower: /[a-z]/.test(v),
+      upper: /[A-Z]/.test(v),
+      digit: /\d/.test(v),
+      symbol: /[^a-zA-Z0-9]/.test(v),
+    };
+    const score = [checks.length, checks.lower || checks.upper, checks.digit, checks.symbol].filter(Boolean).length;
+    return { score, checks };
+  };
+
   const inp = { width: "100%", padding: "13px 14px", borderRadius: 11, fontSize: 16, marginTop: 8,
     minHeight: 46, border: "1px solid rgba(255,255,255,0.12)", background: "rgba(255,255,255,0.04)",
     color: "inherit", WebkitAppearance: "none" };
@@ -70,71 +128,167 @@ export default function Unlock() {
       padding: "max(env(safe-area-inset-top), 32px) max(env(safe-area-inset-right), 18px) " +
                "max(env(safe-area-inset-bottom), 32px) max(env(safe-area-inset-left), 18px)" }}>
       <div style={{ width: "100%", maxWidth: 420 }}>
+        {!online && (
+          <div style={{ background: "rgba(255,184,0,0.12)", color: AMBER, padding: "10px 14px", borderRadius: 10, fontSize: 13, marginBottom: 14, display: "flex", alignItems: "center", gap: 8 }}>
+            <span>⚠️</span> You're offline. Sign-in requires a connection.
+          </div>
+        )}
+
         <Eyebrow style={{ color: ACCENT }}>SaathiOS · Security</Eyebrow>
         <div style={{ fontSize: 26, fontWeight: 600, margin: "4px 0 6px" }}>
-          {status.has_password ? (status.signed_in ? "You're signed in" : "Sign in") : "Set up sign-in"}</div>
+          {mode === "forgot" ? "Reset password" : status.has_password ? (status.signed_in ? "You're signed in" : "Sign in") : "Set up sign-in"}
+        </div>
         <div style={{ fontSize: 13, opacity: 0.55, marginBottom: 18 }}>
-          Set a password and fingerprint once — then Saathi trusts you on this device.
+          {mode === "forgot" ? "Enter your email and we'll send a reset link." : "Set a password and fingerprint once — then Saathi trusts you on this device."}
         </div>
 
-        {/* hidden username helps password managers / Apple Keychain associate the credential */}
         <input type="text" name="username" autoComplete="username" value="Ajay" readOnly
           aria-hidden="true" tabIndex={-1}
           style={{ position: "absolute", width: 1, height: 1, opacity: 0, pointerEvents: "none" }} />
 
-        {supported && status.has_passkey && (
-          <button onClick={doUnlock} disabled={busy} style={btn(TEAL)}>🔓 Unlock with Touch ID / Face ID</button>
+        {/* ── Passkey unlock button ── */}
+        {mode === "unlock" && supported && status.has_passkey && (
+          <button onClick={doUnlock} disabled={busy || !online} style={btn(TEAL)}>
+            🔓 Unlock with Touch ID / Face ID
+          </button>
+        )}
+        {mode === "unlock" && !supported && (
+          <div style={{ background: "rgba(255,255,255,0.04)", padding: 14, borderRadius: 11, fontSize: 13, color: "var(--color-ink-400)", marginTop: 14 }}>
+            <strong>Passkeys not supported</strong><br />
+            Your browser doesn't support biometric login. Use your password instead, or try Safari on iPhone/Mac, Chrome on Android, or Edge on Windows.
+          </div>
         )}
 
-        <Panel style={{ padding: 18, marginTop: 14 }}>
-          <div style={{ fontSize: 13, fontWeight: 600 }}>
-            {status.has_password ? "Password" : "Set a password"}</div>
-          {status.has_password && !status.signed_in && (
-            <>
-              <input type="password" value={pw} onChange={(e) => setPw(e.target.value)}
-                autoComplete="current-password" autoCapitalize="off" autoCorrect="off"
-                spellCheck={false} enterKeyHint="go"
-                onKeyDown={(e) => e.key === "Enter" && doLogin()} placeholder="Password" style={inp} />
-              <button onClick={doLogin} disabled={busy} style={btn(ACCENT)}>Sign in</button>
-            </>
-          )}
-          {(!status.has_password || status.signed_in) && (
-            <>
-              {status.has_password && (
-                <input type="password" value={pw} onChange={(e) => setPw(e.target.value)}
-                  autoComplete="current-password" autoCapitalize="off" autoCorrect="off" spellCheck={false}
-                  placeholder="Current password" style={inp} />
-              )}
-              <input type="password" value={np} onChange={(e) => setNp(e.target.value)}
-                autoComplete="new-password" autoCapitalize="off" autoCorrect="off" spellCheck={false}
-                placeholder={status.has_password ? "New password" : "Choose a password"} style={inp} />
-              <input type="password" value={np2} onChange={(e) => setNp2(e.target.value)}
-                autoComplete="new-password" autoCapitalize="off" autoCorrect="off" spellCheck={false}
-                enterKeyHint="done"
-                onKeyDown={(e) => e.key === "Enter" && doSetPassword()} placeholder="Confirm password" style={inp} />
-              <button onClick={doSetPassword} disabled={busy} style={btn(ACCENT)}>
-                {status.has_password ? "Change password" : "Set password"}</button>
-            </>
-          )}
-        </Panel>
-
-        {supported && (
+        {/* ── Forgot Password form ── */}
+        {mode === "forgot" && (
           <Panel style={{ padding: 18, marginTop: 14 }}>
-            <div style={{ fontSize: 13, fontWeight: 600 }}>Fingerprint / Face ID</div>
-            <div style={{ fontSize: 12, opacity: 0.55, margin: "6px 0 4px" }}>
-              {status.has_passkey ? "A passkey is set up on this device."
-                : status.signed_in ? "Register this device's biometrics."
-                : "Set a password (or sign in) first, then register biometrics."}
-            </div>
-            <button onClick={doRegister} disabled={busy || !status.signed_in}
-              style={btn(status.has_passkey ? "#5b6478" : ACCENT, !status.signed_in)}>
-              {status.has_passkey ? "＋ Add another device" : "🔐 Set up fingerprint on this device"}</button>
+            <div style={{ fontSize: 13, fontWeight: 600 }}>Email address</div>
+            <input type="email" value={forgotEmail} onChange={(e) => setForgotEmail(e.target.value)}
+              autoComplete="email" autoCapitalize="off" autoCorrect="off" spellCheck={false}
+              enterKeyHint="send" onKeyDown={(e) => e.key === "Enter" && doForgot()} placeholder="you@example.com" style={inp} />
+            <button onClick={doForgot} disabled={busy || !online} style={btn(ACCENT)}>Send reset link</button>
+            <button onClick={() => { setMode("unlock"); setMsg(""); }} disabled={busy} style={btn("transparent")}>
+              <span style={{ opacity: 0.7 }}>← Back to sign in</span>
+            </button>
           </Panel>
         )}
 
-        {status.signed_in && (
-          <button onClick={() => router.push("/os")} style={btn("transparent")}>
-            <span style={{ opacity: 0.7 }}>Continue to SaathiOS →</span></button>
+        {/* ── Password form (login or set/change) ── */}
+        {mode === "unlock" && (
+          <>
+            <Panel style={{ padding: 18, marginTop: 14 }}>
+              <div style={{ fontSize: 13, fontWeight: 600 }}>
+                {status.has_password ? "Password" : "Set a password"}
+              </div>
+
+              {status.has_password && !status.signed_in && (
+                <>
+                  <div style={{ position: "relative" }}>
+                    <input type={showPw ? "text" : "password"} value={pw} onChange={(e) => setPw(e.target.value)}
+                      ref={pwRef} onKeyDown={onKeyDown}
+                      autoComplete="current-password" autoCapitalize="off" autoCorrect="off"
+                      spellCheck={false} enterKeyHint="go"
+                      onKeyDownCapture={(e) => { if (e.key === "Enter") doLogin(); onKeyDown(e); }}
+                      placeholder="Password" style={inp} />
+                    <button onClick={() => setShowPw(!showPw)} tabIndex={-1}
+                      style={{ position: "absolute", right: 10, top: 18, background: "none", border: "none", color: "rgba(255,255,255,0.4)", cursor: "pointer", fontSize: 13 }}>
+                      {showPw ? "🙈" : "👁️"}
+                    </button>
+                  </div>
+                  {capsOn && (
+                    <div style={{ fontSize: 12, color: AMBER, marginTop: 6 }}>⚠️ Caps Lock is on</div>
+                  )}
+                  <button onClick={doLogin} disabled={busy || !online} style={btn(ACCENT)}>Sign in</button>
+
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 10 }}>
+                    <label style={{ fontSize: 13, opacity: 0.7, display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
+                      <input type="checkbox" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} style={{ accentColor: ACCENT }} />
+                      Keep me signed in
+                    </label>
+                    <button onClick={() => { setMode("forgot"); setMsg(""); }} style={{ background: "none", border: "none", color: ACCENT, fontSize: 13, cursor: "pointer", padding: 0 }}>
+                      Forgot password?
+                    </button>
+                  </div>
+                </>
+              )}
+
+              {(!status.has_password || status.signed_in) && (
+                <>
+                  {status.has_password && (
+                    <div style={{ position: "relative" }}>
+                      <input type={showPw ? "text" : "password"} value={pw} onChange={(e) => setPw(e.target.value)}
+                        autoComplete="current-password" autoCapitalize="off" autoCorrect="off" spellCheck={false}
+                        placeholder="Current password" style={inp} />
+                      <button onClick={() => setShowPw(!showPw)} tabIndex={-1}
+                        style={{ position: "absolute", right: 10, top: 18, background: "none", border: "none", color: "rgba(255,255,255,0.4)", cursor: "pointer", fontSize: 13 }}>
+                        {showPw ? "🙈" : "👁️"}
+                      </button>
+                    </div>
+                  )}
+                  <div style={{ position: "relative" }}>
+                    <input type={showNp ? "text" : "password"} value={np} onChange={(e) => onNpChange(e.target.value)}
+                      autoComplete="new-password" autoCapitalize="off" autoCorrect="off" spellCheck={false}
+                      placeholder={status.has_password ? "New password" : "Choose a password"} style={inp} />
+                    <button onClick={() => setShowNp(!showNp)} tabIndex={-1}
+                      style={{ position: "absolute", right: 10, top: 18, background: "none", border: "none", color: "rgba(255,255,255,0.4)", cursor: "pointer", fontSize: 13 }}>
+                      {showNp ? "🙈" : "👁️"}
+                    </button>
+                  </div>
+
+                  {/* Strength meter */}
+                  {np.length > 0 && (
+                    <div style={{ marginTop: 10 }}>
+                      <div style={{ display: "flex", gap: 4, height: 4, marginBottom: 6 }}>
+                        {[0,1,2,3].map(i => (
+                          <div key={i} style={{ flex: 1, borderRadius: 2, background: i < strength.score ? strengthColor(strength.score) : "rgba(255,255,255,0.1)" }} />
+                        ))}
+                      </div>
+                      <div style={{ fontSize: 12, color: strengthColor(strength.score), fontWeight: 600 }}>
+                        {strengthLabel(strength.score)}
+                      </div>
+                      <div style={{ fontSize: 11, opacity: 0.5, marginTop: 4, lineHeight: 1.5 }}>
+                        {strength.checks.length ? "✓" : "○"} 8+ chars &nbsp;
+                        {strength.checks.upper ? "✓" : "○"} Uppercase &nbsp;
+                        {strength.checks.lower ? "✓" : "○"} Lowercase &nbsp;
+                        {strength.checks.digit ? "✓" : "○"} Number &nbsp;
+                        {strength.checks.symbol ? "✓" : "○"} Symbol
+                      </div>
+                    </div>
+                  )}
+
+                  <input type={showNp ? "text" : "password"} value={np2} onChange={(e) => setNp2(e.target.value)}
+                    autoComplete="new-password" autoCapitalize="off" autoCorrect="off" spellCheck={false}
+                    enterKeyHint="done"
+                    onKeyDown={(e) => e.key === "Enter" && doSetPassword()} placeholder="Confirm password" style={inp} />
+                  <button onClick={doSetPassword} disabled={busy} style={btn(ACCENT)}>
+                    {status.has_password ? "Change password" : "Set password"}
+                  </button>
+                </>
+              )}
+            </Panel>
+
+            {/* ── Passkey panel ── */}
+            {supported && (
+              <Panel style={{ padding: 18, marginTop: 14 }}>
+                <div style={{ fontSize: 13, fontWeight: 600 }}>Fingerprint / Face ID</div>
+                <div style={{ fontSize: 12, opacity: 0.55, margin: "6px 0 4px" }}>
+                  {status.has_passkey ? "A passkey is set up on this device."
+                    : status.signed_in ? "Register this device's biometrics."
+                    : "Set a password (or sign in) first, then register biometrics."}
+                </div>
+                <button onClick={doRegister} disabled={busy || !status.signed_in}
+                  style={btn(status.has_passkey ? "#5b6478" : ACCENT, !status.signed_in)}>
+                  {status.has_passkey ? "＋ Add another device" : "🔐 Set up fingerprint on this device"}
+                </button>
+              </Panel>
+            )}
+
+            {status.signed_in && (
+              <button onClick={() => router.push("/os")} style={btn("transparent")}>
+                <span style={{ opacity: 0.7 }}>Continue to SaathiOS →</span>
+              </button>
+            )}
+          </>
         )}
 
         {msg && <div role="status" aria-live="polite"

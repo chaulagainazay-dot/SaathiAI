@@ -46,6 +46,10 @@ export default function MobileMe() {
           Mobile = CEO Companion · Desktop = Control Center<br />
           Works offline · installable
         </div>
+        <button onClick={() => router.push("/security")}
+          style={{ marginTop: 12, background: "none", border: "none", color: "#9B6BFF", fontSize: 13, cursor: "pointer", padding: 0, fontWeight: 600 }}>
+          🔐 Account Security →
+        </button>
       </div>
     </div>
   );

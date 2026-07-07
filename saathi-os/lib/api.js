@@ -533,3 +533,97 @@ export async function testHumanBrowser(token) {
   if (r.status === 401) return { ok: false, error: "unauthorized — wrong SAATHI_TOKEN" };
   return r.json();
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  AUTH v1.0 — Session Management, Passkey Management, Forgot Password
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export async function logout() {
+  const r = await afetch(`${API_BASE}/api/v1/auth/logout`, { method: "POST", credentials: "include" });
+  clearSessionToken();
+  return r.json();
+}
+
+export async function fetchSessions() {
+  const r = await afetch(`${API_BASE}/api/v1/auth/sessions`, { cache: "no-store" });
+  if (!r.ok) throw new Error(`sessions ${r.status}`);
+  return r.json();
+}
+
+export async function revokeSession(sid) {
+  const r = await afetch(`${API_BASE}/api/v1/auth/sessions/${sid}`, { method: "DELETE", credentials: "include" });
+  if (!r.ok) throw new Error(`revoke ${r.status}`);
+  return r.json();
+}
+
+export async function revokeAllSessions() {
+  const r = await afetch(`${API_BASE}/api/v1/auth/sessions/revoke-all`, { method: "POST", credentials: "include" });
+  if (!r.ok) throw new Error(`revoke-all ${r.status}`);
+  clearSessionToken();
+  return r.json();
+}
+
+export async function rotateSession() {
+  const r = await afetch(`${API_BASE}/api/v1/auth/session/rotate`, { method: "POST", credentials: "include" });
+  const j = await r.json();
+  if (j.token) setSessionToken(j.token);
+  return j;
+}
+
+export async function renameSession(sid, label) {
+  const r = await afetch(`${API_BASE}/api/v1/auth/sessions/${sid}/rename`, {
+    method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ label }),
+  });
+  if (!r.ok) throw new Error(`rename ${r.status}`);
+  return r.json();
+}
+
+export async function fetchPasskeys() {
+  const r = await afetch(`${API_BASE}/api/v1/auth/passkeys`, { cache: "no-store" });
+  if (!r.ok) throw new Error(`passkeys ${r.status}`);
+  return r.json();
+}
+
+export async function deletePasskey(pid) {
+  const r = await afetch(`${API_BASE}/api/v1/auth/passkeys/${pid}`, { method: "DELETE", credentials: "include" });
+  if (!r.ok) throw new Error(`delete-passkey ${r.status}`);
+  return r.json();
+}
+
+export async function renamePasskey(pid, label) {
+  const r = await afetch(`${API_BASE}/api/v1/auth/passkeys/${pid}`, {
+    method: "PATCH", credentials: "include", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ label }),
+  });
+  if (!r.ok) throw new Error(`rename-passkey ${r.status}`);
+  return r.json();
+}
+
+export async function forgotPassword(email) {
+  const r = await afetch(`${API_BASE}/api/v1/auth/forgot`, {
+    method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+  return r.json();
+}
+
+export async function resetPassword(token, newPassword) {
+  const r = await afetch(`${API_BASE}/api/v1/auth/reset`, {
+    method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token, new_password: newPassword }),
+  });
+  return r.json();
+}
+
+export async function fetchAuthAudit(limit = 40) {
+  const r = await afetch(`${API_BASE}/api/v1/auth/audit?limit=${limit}`, { cache: "no-store" });
+  if (!r.ok) throw new Error(`audit ${r.status}`);
+  return r.json();
+}
+
+export async function fetchOAuthProviders() {
+  const r = await afetch(`${API_BASE}/api/v1/auth/oauth/providers`, { cache: "no-store" });
+  if (!r.ok) throw new Error(`oauth ${r.status}`);
+  return r.json();
+}
