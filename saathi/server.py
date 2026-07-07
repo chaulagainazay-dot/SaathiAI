@@ -270,6 +270,36 @@ async def knowledge_library(q: str = "", category: str = "", tag: str = "", dire
     return {"sources": items, "categories": st.categories()}
 
 
+@app.get("/api/v1/skills")
+async def skills_list(q: str = "", director: str = "", category: str = ""):
+    """Skill Library — reusable skills any Director can find/call. Whitelisted read."""
+    from saathi.skills_library.store import default_store
+    st = default_store()
+    items = st.search(q, director=director, category=category) if (q or director or category) else st.list()
+    return {"skills": items, "categories": st.categories()}
+
+
+@app.get("/api/v1/skills/{slug}")
+async def skill_get(slug: str):
+    """One skill (latest version) by slug. Whitelisted read."""
+    from saathi.skills_library.store import default_store
+    s = default_store().get_by_slug(slug)
+    return {"skill": s} if s else {"error": "skill not found"}
+
+
+@app.post("/api/v1/skills")
+async def skill_register(request: Request):
+    """Register a new skill version (name/owner_director/inputs/outputs/prompt_template…). Token-gated."""
+    body = await request.json()
+    from saathi.skills_library.store import default_store
+    if not body.get("slug") or not body.get("name"):
+        return {"ok": False, "error": "slug and name required"}
+    s = default_store().register(**{k: v for k, v in body.items() if k in (
+        "slug", "name", "owner_director", "category", "description", "inputs", "outputs",
+        "prompt_template", "examples", "tools", "evaluation", "related_directors", "trust")})
+    return {"ok": True, "skill": s}
+
+
 @app.get("/api/v1/knowledge/library/consult")
 async def knowledge_consult(q: str = "", director: str = "", limit: int = 5):
     """Manual retrieval — a Director deliberately consults the Library (records influence).
@@ -1385,6 +1415,8 @@ async def _auth(request, call_next):
                 or path == "/api/v1/knowledge/library"
                 or path == "/api/v1/knowledge/library/consult"
                 or path == "/api/v1/knowledge/queue"
+                or path == "/api/v1/skills"
+                or path.startswith("/api/v1/skills/")
                 or path.startswith("/api/v1/missions/")))
             or path == "/api/v1/studio/produce"
             or path == "/api/v1/directors/registry"
@@ -4208,6 +4240,8 @@ def _start_background():
         seed_library()
         from .knowledge_library.queue import seed_queue
         seed_queue()
+        from .skills_library.seed import seed_skills
+        seed_skills()
     except Exception:
         pass
     try:
