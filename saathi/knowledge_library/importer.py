@@ -50,6 +50,23 @@ def _fetch_readme(owner: str, repo: str, timeout: float = 12.0) -> str:
     return ""
 
 
+# generic section headings that are NOT a repo's real title
+_GENERIC_TITLES = {"features", "highlights", "quickstart", "toc", "table of contents",
+                   "before / after", "before/after", "overview", "introduction", "getting started",
+                   "installation", "usage", "how it works", "about"}
+
+
+def _pick_title(headings: list[str], repo: str) -> str:
+    fallback = repo.replace("-", " ").replace("_", " ").title()
+    for h in headings[:4]:
+        clean = h.strip().lstrip("✨#🎯🚀⭐ ").strip()
+        letters = "".join(ch for ch in clean if ch.isalpha())
+        first = clean.lower().split(":")[0].split()[0] if clean else ""
+        if len(letters) >= 3 and clean.lower() not in _GENERIC_TITLES and first not in _GENERIC_TITLES:
+            return clean[:80]
+    return fallback
+
+
 def _headings(md: str) -> list[str]:
     return [re.sub(r"^#+\s*", "", ln).strip() for ln in md.splitlines() if ln.lstrip().startswith("#")][:20]
 
@@ -99,7 +116,7 @@ def import_repo(url: str, *, category: str = "AI Engineering", store=None) -> di
         return {"ok": True, "fetched": False, "source": src}
 
     headings = _headings(md)
-    title = headings[0] if headings else repo.replace("-", " ").title()
+    title = _pick_title(headings, repo)
     tags = _tags(md)
     src = st.add(title=title, url=url, author=owner, source_type="github", category=category,
                  summary=_summary(md), tags=tags, related_directors=_directors_for(tags),
