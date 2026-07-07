@@ -21,12 +21,16 @@ export const DEPARTMENTS = {
   OS:          { name: "Operating System", color: "#F4F6FB", route: "/os",        short: "OS" },
   EVIDENCE:    { name: "Evidence",        color: "#6E72F0", route: "/evidence",   short: "Evidence" },
   MISSIONS:    { name: "Missions",        color: "#9B6BFF", route: "/missions",   short: "Missions" },
+  SKILLS:      { name: "Skill Library",   color: "#22D3EE", route: "/skills",     short: "Skills" },
+  LIBRARY:     { name: "Knowledge Library", color: "#3E7BFF", route: "/knowledge/library", short: "Library" },
+  PRODUCTION:  { name: "Production",      color: "#FF8A3D", route: "/automation/production", short: "Production" },
+  CONTROL:     { name: "Control Room",    color: "#FF8A3D", route: "/studio/control-room", short: "Control" },
 };
 
 export const color = (key) => DEPARTMENTS[key]?.color ?? "#8FA0C4";
 
-// Dock order (per spec) — Executive first, Settings last.
+// Dock = the REAL, working subsystems (scaffold department pages removed).
 export const DOCK = [
-  "OS", "EXECUTIVE", "MISSIONS", "PROJECTS", "MISSION", "FINANCE", "AI STUDIO", "KNOWLEDGE",
-  "EVIDENCE", "LEARNING", "TRAVEL", "CAFETERIA", "CRYPTO", "DISCOVERY", "INFRA", "AUTOMATION", "MATURITY", "LAB",
+  "OS", "EXECUTIVE", "MISSIONS", "AI STUDIO", "CONTROL", "PRODUCTION",
+  "EVIDENCE", "LEARNING", "SKILLS", "LIBRARY", "PROJECTS", "LAB", "INFRA",
 ];
