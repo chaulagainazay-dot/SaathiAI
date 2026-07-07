@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { Panel, Eyebrow } from "@/components/ui";
 import { fetchConnectorProviders, fetchAccounts, addAccount, linkAccountMission, fetchMissions, executeConnector } from "@/lib/api";
+import { passkeyStatus } from "@/lib/passkey";
 
 const ACCENT = "#7CF5E4", TEAL = "#00BFA5", AMBER = "#E8B84B", RED = "#FF5A5A";
 
@@ -13,6 +14,7 @@ export default function Connectors() {
   const [form, setForm] = useState({ provider: "telegram", display_name: "", email: "" });
   const [secret, setSecret] = useState({ bot_token: "", chat_id: "" });
   const [testMsg, setTestMsg] = useState({});
+  const [authed, setAuthed] = useState(true);
   const [err, setErr] = useState(null);
   const load = () => {
     fetchAccounts().then((d) => { setAccounts(d.accounts || []); setHealth(d.health || {}); }).catch((e) => setErr(String(e)));
@@ -20,6 +22,7 @@ export default function Connectors() {
   useEffect(() => {
     fetchConnectorProviders().then((d) => setProviders(d.providers || [])).catch((e) => setErr(String(e)));
     fetchMissions().then((d) => setMissions(d.missions || [])).catch(() => {});
+    passkeyStatus().then((s) => setAuthed(!!s.signed_in)).catch(() => {});
     load();
   }, []);
 
@@ -60,6 +63,15 @@ export default function Connectors() {
           </div>
         ))}
       </div>
+      {!authed && (
+        <Panel style={{ padding: 14, marginBottom: 14, border: "1px solid rgba(232,184,75,0.4)" }}>
+          <div style={{ fontSize: 13, color: AMBER }}>⚠ You're not signed in — adding accounts and Test send need a session.</div>
+          <div style={{ fontSize: 11.5, opacity: 0.6, marginTop: 4 }}>
+            Open this app on the VM link directly (not localhost) and sign in at
+            <a href="/unlock" style={{ color: ACCENT }}> Unlock</a>. Writes need the session same-origin.
+          </div>
+        </Panel>
+      )}
       {err && <div style={{ fontSize: 12, color: RED, marginBottom: 10 }}>{err}</div>}
 
       {/* add account */}
