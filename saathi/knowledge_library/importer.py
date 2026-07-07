@@ -57,14 +57,15 @@ _GENERIC_TITLES = {"features", "highlights", "quickstart", "toc", "table of cont
 
 
 def _pick_title(headings: list[str], repo: str) -> str:
-    fallback = repo.replace("-", " ").replace("_", " ").title()
-    for h in headings[:4]:
+    """The repo name is the canonical, reliable title — READMEs open with section
+    headings, not the project name. Use an H1 ONLY if it clearly names the repo."""
+    name = repo.replace("-", " ").replace("_", " ").title()
+    repo_key = repo.replace("-", "").replace("_", "").lower()
+    for h in headings[:3]:
         clean = h.strip().lstrip("✨#🎯🚀⭐ ").strip()
-        letters = "".join(ch for ch in clean if ch.isalpha())
-        first = clean.lower().split(":")[0].split()[0] if clean else ""
-        if len(letters) >= 3 and clean.lower() not in _GENERIC_TITLES and first not in _GENERIC_TITLES:
-            return clean[:80]
-    return fallback
+        if clean.replace(" ", "").replace("-", "").lower().startswith(repo_key) and 3 <= len(clean) <= 60:
+            return clean
+    return name
 
 
 def _headings(md: str) -> list[str]:
