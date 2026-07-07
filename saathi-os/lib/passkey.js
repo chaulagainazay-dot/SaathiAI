@@ -1,6 +1,6 @@
 // Passkey (WebAuthn) client — fingerprint / Face ID unlock.
 // The owner registers a platform authenticator once, then unlocks with biometrics.
-import { API_BASE } from "./api";
+import { API_BASE, afetch, setSessionToken } from "./api";
 
 const b64uToBuf = (s) => {
   s = s.replace(/-/g, "+").replace(/_/g, "/");
@@ -16,7 +16,7 @@ const bufToB64u = (buf) => {
   for (const b of bytes) s += String.fromCharCode(b);
   return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 };
-const post = (path, body) => fetch(`${API_BASE}${path}`, {
+const post = (path, body) => afetch(`${API_BASE}${path}`, {
   method: "POST", credentials: "include",
   headers: body ? { "Content-Type": "application/json" } : {},
   body: body ? JSON.stringify(body) : undefined,
@@ -27,8 +27,8 @@ export function passkeySupported() {
 }
 
 export async function passkeyStatus() {
-  const r = await fetch(`${API_BASE}/api/v1/auth/passkey/status`, { cache: "no-store" });
-  return r.json();   // { has_passkey, rp_id }
+  const r = await afetch(`${API_BASE}/api/v1/auth/passkey/status`, { cache: "no-store" });
+  return r.json();   // { has_passkey, rp_id, signed_in }
 }
 
 // Register a new passkey (must already be signed in). Prompts Touch ID / Face ID.
@@ -65,5 +65,7 @@ export async function unlockPasskey() {
       userHandle: a.response.userHandle ? bufToB64u(a.response.userHandle) : null,
     },
   };
-  return post("/api/v1/auth/passkey/login/verify", { credential: payload });
+  const res = await post("/api/v1/auth/passkey/login/verify", { credential: payload });
+  if (res && res.token) setSessionToken(res.token);
+  return res;
 }

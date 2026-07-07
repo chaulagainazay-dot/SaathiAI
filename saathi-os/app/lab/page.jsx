@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { Panel, Eyebrow } from "@/components/ui";
-import { fetchLabPrompts, fetchLabPrompt, rollbackLabPrompt } from "@/lib/api";
+import { fetchLabPrompts, fetchLabPrompt, rollbackLabPrompt, fetchDirectors } from "@/lib/api";
 
 const CYAN = "#22D3EE";
 const pct = (s) => (s == null ? "—" : `${Math.round(s * 100)}%`);
@@ -9,8 +9,9 @@ const pct = (s) => (s == null ? "—" : `${Math.round(s * 100)}%`);
 export default function AILab() {
   const [cat, setCat] = useState([]);
   const [open, setOpen] = useState(null);   // { name, versions, leaderboard }
+  const [directors, setDirectors] = useState([]);
   const load = () => fetchLabPrompts().then((d) => setCat(d.prompts || [])).catch(() => {});
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); fetchDirectors().then((d) => setDirectors(d.directors || [])).catch(() => {}); }, []);
 
   const openPrompt = (name) => fetchLabPrompt(name).then(setOpen).catch(() => {});
   const doRollback = (name, v) =>
@@ -24,6 +25,24 @@ export default function AILab() {
         Every prompt is versioned, measurable, and rollback-able — one shared service for
         HCG · PIELTS · Mr. Yeti · Saathi. The foundation of Production Intelligence.
       </div>
+
+      {directors.length > 0 && (
+        <Panel style={{ padding: 16, marginBottom: 16 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+            <Eyebrow style={{ color: CYAN }}>🎬 Director Library</Eyebrow>
+            <span className="mono" style={{ fontSize: 10, opacity: 0.5 }}>{directors.length} · from agency-agents, run on your Model Router</span>
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 12 }}>
+            {directors.map((d) => (
+              <span key={d.slug} title={d.description}
+                style={{ fontSize: 12, padding: "6px 12px", borderRadius: 999,
+                  background: "rgba(34,211,238,0.1)", border: "1px solid rgba(34,211,238,0.3)" }}>
+                🎭 {d.name}
+              </span>
+            ))}
+          </div>
+        </Panel>
+      )}
 
       <div style={{ display: "grid", gridTemplateColumns: open ? "1fr 1fr" : "1fr", gap: 16 }}>
         <Panel style={{ padding: 0, overflow: "hidden" }}>

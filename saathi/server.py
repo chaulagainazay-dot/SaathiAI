@@ -1641,7 +1641,7 @@ def login(body: LoginIn):
             return JSONResponse({"ok": False, "error": "Wrong password"}, status_code=401)
     token = _session_token()
     r = JSONResponse({"ok": True, "token": token})
-    r.set_cookie("baadar_session", token, httponly=True, samesite="lax", max_age=30*24*3600)
+    r.set_cookie("baadar_session", token, httponly=True, samesite="none", secure=True, max_age=30*24*3600)
     return r
 
 def _rp(request) -> tuple[str, str]:
@@ -1710,8 +1710,8 @@ async def passkey_login_verify(request: Request):
     if not ok:
         return JSONResponse({"ok": False, "error": "unlock failed"}, status_code=401)
     token = _session_token()
-    r = JSONResponse({"ok": True})
-    r.set_cookie("baadar_session", token, httponly=True, samesite="lax", max_age=30*24*3600)
+    r = JSONResponse({"ok": True, "token": token})
+    r.set_cookie("baadar_session", token, httponly=True, samesite="none", secure=True, max_age=30*24*3600)
     return r
 
 
@@ -1739,15 +1739,16 @@ def change_password(body: ChangePasswordIn):
     env_path.write_text(text)
     # issue a session so the owner is signed in right after setting the password
     from fastapi.responses import JSONResponse
-    r = JSONResponse({"ok": True})
-    r.set_cookie("baadar_session", _session_token(), httponly=True, samesite="lax", max_age=30*24*3600)
+    tok = _session_token()
+    r = JSONResponse({"ok": True, "token": tok})
+    r.set_cookie("baadar_session", tok, httponly=True, samesite="none", secure=True, max_age=30*24*3600)
     return r
 
 @app.post("/api/v1/auth/logout")
 def logout(request: Request):
     from fastapi.responses import JSONResponse
     r = JSONResponse({"ok": True})
-    r.delete_cookie("baadar_session")
+    r.delete_cookie("baadar_session", samesite="none", secure=True)
     return r
 
 agent = SaathiAgent()

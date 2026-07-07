@@ -30,3 +30,7 @@ runs/
 assets/music/*
 !assets/music/README.md
 assets/logo.png
+
+# credentials / env backups — never commit
+secrets/
+.env.bak
