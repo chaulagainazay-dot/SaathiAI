@@ -53,6 +53,20 @@ def detect_github(text: str) -> str | None:
     return m.group(0) if m else None
 
 
+_URL = re.compile(r"https?://[^\s]+", re.I)
+
+
+def _all_urls(text: str) -> list[str]:
+    return [u.rstrip(".,) ") for u in _URL.findall(text or "")]
+
+
+def _detect_website(text: str) -> str | None:
+    for u in _all_urls(text):
+        if "github.com" not in u.lower():
+            return u
+    return None
+
+
 # ── Repo Analysis Pipeline ────────────────────────────────────────────────────
 def analyze_repo(url: str, *, mission_id: str = "") -> dict:
     """Fetch README → capabilities → compare with Saathi → overlap/gaps → store → recommend."""
@@ -144,6 +158,30 @@ def handle(message: str, *, mission_key: str = "", mode: str = "cowork") -> dict
             mission = m_store().get(mission_key) or m_store().get_by_key(mission_key)
         except Exception:
             mission = None
+
+    # Website Intelligence — a non-GitHub URL + design/analyse intent
+    site = _detect_website(message)
+    if site and any(w in message.lower() for w in ("website", "design", "analyze", "analyse", "redesign", "ui", "ux")):
+        from saathi.missions.website import intelligence
+        urls = _all_urls(message)
+        compare = urls[1] if len(urls) > 1 else ""
+        rep = intelligence(mission_key, site, compare_url=compare)
+        r = rep["reference"]
+        ds = rep["design_system"]
+        reply = (f"**Website analysis — {r['url']}**\n"
+                 f"Stack: {', '.join(r['stack']) or 'not detected'}\n"
+                 f"SEO: {r['seo'].get('score')}/100 · UX: {r['ux']['cta_count']} CTAs, "
+                 f"{'responsive' if r['ux']['responsive'] else 'not responsive'}, "
+                 f"{'animated' if r['ux']['animated'] else 'static'}\n"
+                 f"Patterns: {', '.join(rep['design_patterns']) or 'none detected'}\n\n"
+                 f"**Original design system for {mission_key or 'this Mission'}** (not copied):\n"
+                 f"Mood: {ds['mood']} · Palette: {', '.join(ds['palette'][:4])} · "
+                 f"Type: {ds['typography']['heading']} / {ds['typography']['body']}\n"
+                 f"Pages: {', '.join(w['page'] for w in rep['wireframes'])}\n"
+                 f"Stack to build: {', '.join(rep['blueprint']['stack'])}\n\n"
+                 f"Stored in the Knowledge Graph + Research Library. {rep['principle']}")
+        return {"reply": reply, "mode": mode, "mission": mission_key,
+                "website": rep, "actions": ["knowledge_graph", "research_library", "timeline"]}
 
     # Repo Analysis Pipeline — fires whenever a GitHub URL is present
     gh = detect_github(message)

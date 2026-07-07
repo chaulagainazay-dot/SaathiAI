@@ -797,6 +797,21 @@ async def mission_knowledge_write(mission_id: str, request: Request):
     return {"ok": True, "id": nid, "coverage": default_graph().coverage(m["id"])["overall"]}
 
 
+@app.post("/api/v1/missions/{mission_id}/website")
+async def mission_website(mission_id: str, request: Request):
+    """Website Intelligence & Design Director — analyse a site (+ optional client site),
+    generate an original Mission-branded design system + blueprint, store in the graph.
+    Token-gated."""
+    import asyncio
+    body = await request.json()
+    url = (body.get("url") or "").strip()
+    if not url:
+        return {"ok": False, "error": "url required"}
+    from saathi.missions.website import intelligence
+    rep = await asyncio.to_thread(intelligence, mission_id, url, compare_url=body.get("compare_url", ""))
+    return {"ok": True, **rep}
+
+
 @app.post("/api/v1/missions/{mission_id}/proposal")
 async def mission_proposal_generate(mission_id: str):
     """Proposal Director — build the full Proposal Package from the Mission twin.
