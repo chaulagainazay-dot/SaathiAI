@@ -176,6 +176,11 @@ export async function fetchLibrary({ q = "", category = "", director = "", tag =
   if (!r.ok) throw new Error(`library ${r.status}`);
   return r.json();
 }
+export async function fetchReadingQueue() {
+  const r = await fetch(`${API_BASE}/api/v1/knowledge/queue`, { cache: "no-store" });
+  if (!r.ok) throw new Error(`queue ${r.status}`);
+  return r.json();
+}
 export async function importRepo(url, category = "AI Engineering") {
   const r = await fetch(`${API_BASE}/api/v1/knowledge/library/import`, {
     method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },

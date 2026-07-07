@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { Panel, Eyebrow } from "@/components/ui";
-import { fetchLibrary, importRepo } from "@/lib/api";
+import { fetchLibrary, importRepo, fetchReadingQueue } from "@/lib/api";
 
 const ACCENT = "#3E7BFF", TEAL = "#00BFA5", RED = "#FF5A5A";
 
@@ -11,8 +11,10 @@ export default function KnowledgeLibrary() {
   const [url, setUrl] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState(null);
+  const [queue, setQueue] = useState([]);
   const load = (query = "") => fetchLibrary({ q: query }).then(setD).catch((e) => setErr(String(e)));
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); fetchReadingQueue().then((d) => setQueue(d.queue || [])).catch(() => {}); }, []);
+  const stars = (n) => "★".repeat(n || 0) + "☆".repeat(5 - (n || 0));
 
   const doImport = async () => {
     if (!url.trim()) return;
@@ -51,6 +53,31 @@ export default function KnowledgeLibrary() {
       </div>
       {err && <div style={{ fontSize: 12, color: RED, marginBottom: 10 }}>{err}</div>}
 
+      {/* reading queue — the AI-engineering curriculum backlog */}
+      {queue.length > 0 && (
+        <Panel style={{ padding: 14, marginBottom: 14, borderLeft: "3px solid #E8B84B" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+            <Eyebrow style={{ color: "#E8B84B" }}>Reading Queue · curriculum</Eyebrow>
+            <span className="mono" style={{ fontSize: 11, opacity: 0.5 }}>
+              {queue.filter((q) => q.status === "imported").length}/{queue.length} imported</span>
+          </div>
+          <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 3 }}>
+            {queue.slice(0, 12).map((q) => (
+              <div key={q.id} style={{ display: "flex", gap: 8, fontSize: 12, alignItems: "center" }}>
+                <span style={{ color: "#E8B84B", fontSize: 10 }}>{stars(q.priority)}</span>
+                <span style={{ flex: 1, opacity: q.status === "imported" ? 0.5 : 0.85 }}>
+                  {q.status === "imported" ? "✓ " : "○ "}{q.title}</span>
+                <span className="mono" style={{ fontSize: 10, opacity: 0.4 }}>{q.category}</span>
+                {q.url && q.status !== "imported" && (
+                  <button onClick={() => { setUrl(q.url); }} style={{ fontSize: 10, padding: "2px 8px",
+                    borderRadius: 6, cursor: "pointer", border: `1px solid ${ACCENT}66`, background: "transparent", color: ACCENT }}>
+                    load ↑</button>)}
+              </div>
+            ))}
+          </div>
+        </Panel>
+      )}
+
       {/* categories */}
       <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
         {Object.entries(d.categories || {}).map(([cat, n]) => (
@@ -67,6 +94,13 @@ export default function KnowledgeLibrary() {
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
               <div style={{ fontSize: 15, fontWeight: 600 }}>{s.title}</div>
               <span className="mono" style={{ fontSize: 10, opacity: 0.5 }}>{s.source_type} · {s.difficulty}</span>
+            </div>
+            <div style={{ display: "flex", gap: 12, marginTop: 4, fontSize: 11, alignItems: "center" }}>
+              <span title="trust" style={{ color: "#E8B84B" }}>{stars(s.trust)}</span>
+              <span className="mono" style={{ padding: "2px 8px", borderRadius: 999,
+                background: s.status === "director_ready" ? `${TEAL}22` : "rgba(255,255,255,0.06)",
+                color: s.status === "director_ready" ? TEAL : "inherit" }}>{s.status}</span>
+              {s.influence > 0 && <span style={{ opacity: 0.55 }}>influenced {s.influence} report{s.influence === 1 ? "" : "s"}</span>}
             </div>
             <div className="mono" style={{ fontSize: 10.5, opacity: 0.5, marginTop: 2 }}>
               {s.author}{s.category ? ` · ${s.category}` : ""}{s.url ? " · " : ""}
