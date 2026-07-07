@@ -159,7 +159,25 @@ def handle(message: str, *, mission_key: str = "", mode: str = "cowork") -> dict
         except Exception:
             mission = None
 
-    # Website Intelligence — a non-GitHub URL + design/analyse intent
+    # Reference Intelligence — 2+ references of any kind + analyse/compare/design intent
+    urls = _all_urls(message)
+    if len(urls) >= 2 and any(w in message.lower() for w in
+                              ("analyz", "analys", "compar", "design", "reference", "better", "website")):
+        from saathi.missions.reference import analyze_many
+        rep = analyze_many(urls, mission_key=mission_key)
+        ds = rep.get("design_system", {})
+        reply = (f"**Reference Intelligence — {rep['count']} references** ({', '.join(rep['kinds'])})\n"
+                 f"Patterns extracted: {', '.join(rep['patterns'][:10]) or 'none detected'}\n\n"
+                 + (f"**Original design system for {mission_key or 'this Mission'}**:\n"
+                    f"Mood: {ds.get('mood')} · Palette: {', '.join((ds.get('palette') or [])[:4])} · "
+                    f"Type: {ds.get('typography', {}).get('heading')} / {ds.get('typography', {}).get('body')}\n"
+                    f"Pages: {', '.join(w['page'] for w in rep.get('wireframes', []))}\n\n" if ds else "")
+                 + f"Stored in Knowledge Graph + Research Library. {rep['principle']}")
+        return {"reply": reply, "mode": mode, "mission": mission_key,
+                "website": rep if ds else None, "reference": rep,
+                "actions": ["knowledge_graph", "research_library", "timeline"]}
+
+    # Website Intelligence — a single non-GitHub URL + design/analyse intent
     site = _detect_website(message)
     if site and any(w in message.lower() for w in ("website", "design", "analyze", "analyse", "redesign", "ui", "ux")):
         from saathi.missions.website import intelligence

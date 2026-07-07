@@ -797,6 +797,22 @@ async def mission_knowledge_write(mission_id: str, request: Request):
     return {"ok": True, "id": nid, "coverage": default_graph().coverage(m["id"])["overall"]}
 
 
+@app.post("/api/v1/missions/{mission_id}/reference")
+async def mission_reference(mission_id: str, request: Request):
+    """Reference Intelligence — analyse N references of any kind (website/video/social/
+    github/…), extract patterns → Knowledge Graph + Research Library, generate an
+    original Mission-branded design system. Token-gated."""
+    import asyncio
+    body = await request.json()
+    urls = body.get("urls") or ([body["url"]] if body.get("url") else [])
+    if not urls:
+        return {"ok": False, "error": "urls required"}
+    from saathi.missions.reference import analyze_many
+    rep = await asyncio.to_thread(analyze_many, urls, mission_key=mission_id,
+                                  generate=bool(body.get("generate", True)))
+    return {"ok": True, **rep}
+
+
 @app.post("/api/v1/missions/{mission_id}/website")
 async def mission_website(mission_id: str, request: Request):
     """Website Intelligence & Design Director — analyse a site (+ optional client site),
