@@ -21,9 +21,53 @@ function formatDate(ts) {
   return d.toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
 }
 
+function formatExpires(ts) {
+  if (!ts) return "";
+  const now = Date.now() / 1000;
+  const diff = ts - now;
+  if (diff <= 0) return "Expired";
+  const hours = Math.floor(diff / 3600);
+  const days = Math.floor(diff / 86400);
+  if (days >= 1) return `Expires in ${days} day${days > 1 ? "s" : ""}`;
+  return `Expires in ${hours} hour${hours > 1 ? "s" : ""}`;
+}
+
 function SessionIcon({ browser, os }) {
   const icon = (browser === "Safari" ? "🧭" : browser === "Chrome" ? "🌐" : browser === "Firefox" ? "🦊" : "💻");
   return <span title={`${browser} on ${os}`}>{icon}</span>;
+}
+
+function computeSecurityScore(sessions, passkeys, audit) {
+  let score = 0;
+  const hasPassword = sessions.some(s => s.kind === "password") || audit.some(e => e.event === "password_changed");
+  if (hasPassword) score += 20;
+  if (passkeys.length > 0) score += 30;
+  const passwordChanges = audit.filter(e => e.event === "password_changed").sort((a, b) => b.ts - a.ts);
+  if (passwordChanges.length > 0) {
+    const daysSince = (Date.now() / 1000 - passwordChanges[0].ts) / 86400;
+    if (daysSince < 30) score += 20;
+  }
+  if (sessions.length > 1) score -= 10;
+  return Math.max(0, Math.min(100, score));
+}
+
+function SecurityScore({ score }) {
+  const color = score >= 80 ? "#4ade80" : score >= 50 ? AMBER : RED;
+  const label = score >= 80 ? "Strong" : score >= 50 ? "Fair" : "At risk";
+  return (
+    <div style={{ marginBottom: 18, padding: "14px 16px", borderRadius: 12, background: "rgba(255,255,255,0.04)" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+        <span style={{ fontSize: 14, fontWeight: 600 }}>Security Score</span>
+        <span style={{ fontSize: 14, fontWeight: 700, color }}>{score}/100 — {label}</span>
+      </div>
+      <div style={{ height: 8, borderRadius: 4, background: "rgba(255,255,255,0.08)", overflow: "hidden" }}>
+        <div style={{ width: `${score}%`, height: "100%", background: color, borderRadius: 4, transition: "width 0.4s ease" }} />
+      </div>
+      <div style={{ fontSize: 11, opacity: 0.5, marginTop: 6, lineHeight: 1.5 }}>
+        +20 password &nbsp; +30 passkey &nbsp; +20 recent change &nbsp; −10 multiple sessions
+      </div>
+    </div>
+  );
 }
 
 export default function SecurityPage() {
@@ -49,7 +93,7 @@ export default function SecurityPage() {
     if (s) setSessions(s.sessions || []);
     const p = await wrap(() => fetchPasskeys());
     if (p) setPasskeys(p.passkeys || []);
-    const a = await wrap(() => fetchAuthAudit(20));
+    const a = await wrap(() => fetchAuthAudit(40));
     if (a) setAudit(a.events || []);
   };
 
@@ -104,8 +148,18 @@ export default function SecurityPage() {
   const tabBtn = (t) => ({ padding: "8px 14px", borderRadius: 10, border: "none", cursor: "pointer",
     fontWeight: 600, fontSize: 13, background: tab === t ? ACCENT : "rgba(255,255,255,0.06)", color: "#fff" });
 
+  const score = computeSecurityScore(sessions, passkeys, audit);
+
   return (
-    <div style={{ minHeight: "100dvh", padding: "max(env(safe-area-inset-top), 32px) max(env(safe-area-inset-right), 18px) max(env(safe-area-inset-bottom), 32px) max(env(safe-area-inset-left), 18px)" }}>
+    <div className="security-page" style={{ minHeight: "100dvh", padding: "max(env(safe-area-inset-top), 32px) max(env(safe-area-inset-right), 18px) max(env(safe-area-inset-bottom), 32px) max(env(safe-area-inset-left), 18px)" }}>
+      <style>{`
+        .security-page button:focus-visible,
+        .security-page input:focus-visible,
+        .security-page a:focus-visible {
+          outline: 2px solid ${ACCENT};
+          outline-offset: 2px;
+        }
+      `}</style>
       <div style={{ maxWidth: 720, margin: "0 auto" }}>
         <Eyebrow style={{ color: ACCENT }}>SaathiOS · Account Security</Eyebrow>
         <div style={{ fontSize: 26, fontWeight: 600, margin: "4px 0 6px" }}>Security</div>
@@ -113,7 +167,9 @@ export default function SecurityPage() {
           Manage your sessions, passkeys, and password.
         </div>
 
-        {msg && <div role="status" aria-live="polite"
+        <SecurityScore score={score} />
+
+        {msg && <div role={msg.startsWith("✓") ? "status" : "alert"} aria-live={msg.startsWith("✓") ? "polite" : "assertive"}
           style={{ fontSize: 13, marginBottom: 14, padding: "10px 14px", borderRadius: 10,
             background: msg.startsWith("✓") ? "rgba(0,191,165,0.12)" : "rgba(255,90,90,0.12)",
             color: msg.startsWith("✓") ? TEAL : RED }}>{msg}</div>}
@@ -144,6 +200,8 @@ export default function SecurityPage() {
                   </div>
                   <div style={{ fontSize: 12, opacity: 0.5, marginTop: 2 }}>
                     {s.kind} · {formatDate(s.last_seen)} · {s.ip}
+                    {s.remember_me !== undefined && ` · ${s.remember_me ? "📌 Remembered" : "🕐 24h session"}`}
+                    {s.expires && ` · ${formatExpires(s.expires)}`}
                   </div>
                 </div>
                 <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
@@ -184,7 +242,11 @@ export default function SecurityPage() {
                 <div style={{ fontSize: 22 }}>🔐</div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 14, fontWeight: 600 }}>{p.label || `Passkey on ${p.rp_id}`}</div>
-                  <div style={{ fontSize: 12, opacity: 0.5, marginTop: 2 }}>ID: {p.id.slice(0, 16)}…</div>
+                  <div style={{ fontSize: 12, opacity: 0.5, marginTop: 2 }}>
+                    {p.browser && p.device_name ? `${p.browser} · ${p.device_name}` : `ID: ${p.id.slice(0, 16)}…`}
+                    {p.created && ` · Created ${formatDate(p.created)}`}
+                    {p.last_used && ` · Last used ${formatDate(p.last_used)}`}
+                  </div>
                 </div>
                 <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
                   <button onClick={() => { setRenameId(p.id); setRenameLabel(p.label || ""); }}
@@ -214,37 +276,31 @@ export default function SecurityPage() {
             <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 14 }}>Change Password</div>
             <div style={{ position: "relative" }}>
               <input type={showPw ? "text" : "password"} value={pw} onChange={(e) => setPw(e.target.value)}
-                autoComplete="current-password" placeholder="Current password" style={inp} />
+                autoComplete="current-password" placeholder="Current password" style={inp}
+                aria-label="Current password" />
               <button onClick={() => setShowPw(!showPw)} tabIndex={-1}
+                aria-label={showPw ? "Hide password" : "Show password"}
                 style={{ position: "absolute", right: 10, top: 18, background: "none", border: "none", color: "rgba(255,255,255,0.4)", cursor: "pointer", fontSize: 13 }}>
                 {showPw ? "🙈" : "👁️"}
               </button>
             </div>
             <div style={{ position: "relative" }}>
               <input type={showNp ? "text" : "password"} value={np} onChange={(e) => setNp(e.target.value)}
-                autoComplete="new-password" placeholder="New password" style={inp} />
+                autoComplete="new-password" placeholder="New password" style={inp}
+                aria-label="New password" />
               <button onClick={() => setShowNp(!showNp)} tabIndex={-1}
+                aria-label={showNp ? "Hide password" : "Show password"}
                 style={{ position: "absolute", right: 10, top: 18, background: "none", border: "none", color: "rgba(255,255,255,0.4)", cursor: "pointer", fontSize: 13 }}>
                 {showNp ? "🙈" : "👁️"}
               </button>
             </div>
             <input type={showNp ? "text" : "password"} value={np2} onChange={(e) => setNp2(e.target.value)}
-              autoComplete="new-password" placeholder="Confirm new password" style={inp} />
-            <button onClick={doChangePassword} disabled={busy} style={btn(ACCENT)}>Change password</button>
-
-            <div style={{ marginTop: 24, paddingTop: 18, borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-              <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 10 }}>Two-Factor Authentication</div>
-              <div style={{ fontSize: 13, opacity: 0.5, lineHeight: 1.5 }}>
-                2FA is not yet enabled. This will be available in a future update (TOTP-based).
-              </div>
-            </div>
-
-            <div style={{ marginTop: 24, paddingTop: 18, borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-              <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 10 }}>Recovery Email</div>
-              <div style={{ fontSize: 13, opacity: 0.5, lineHeight: 1.5 }}>
-                Recovery email is not configured. Set it in your environment variables to receive password reset links.
-              </div>
-            </div>
+              autoComplete="new-password" placeholder="Confirm new password" style={inp}
+              aria-label="Confirm new password"
+              onKeyDown={(e) => e.key === "Enter" && doChangePassword()} />
+            <button onClick={doChangePassword} disabled={busy} style={btn(ACCENT)}>
+              {busy ? "Changing…" : "Change password"}
+            </button>
           </Panel>
         )}
 

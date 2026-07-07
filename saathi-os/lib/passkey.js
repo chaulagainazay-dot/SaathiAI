@@ -26,6 +26,32 @@ export function passkeySupported() {
   return typeof window !== "undefined" && !!window.PublicKeyCredential && !!navigator.credentials;
 }
 
+export function passkeyPlatformName() {
+  if (typeof window === "undefined" || typeof navigator === "undefined") return "Biometrics";
+  const ua = navigator.userAgent || "";
+  const platform = navigator.platform || "";
+
+  // iOS Face ID
+  if (/iPhone|iPad/.test(ua) && /Safari/.test(ua) && !/Chrome/.test(ua)) return "Face ID";
+  // macOS Touch ID
+  if (/Mac/.test(platform) && !/iPhone|iPad/.test(ua)) {
+    if (/Safari/.test(ua) || /Chrome/.test(ua)) return "Touch ID";
+  }
+  // Windows Hello
+  if (/Win/.test(platform) && (/Edg/.test(ua) || /Chrome/.test(ua))) return "Windows Hello";
+  // Android Biometrics
+  if (/Android/.test(ua) && /Chrome/.test(ua)) return "fingerprint";
+  // Fallback for iOS non-Safari
+  if (/iPhone|iPad/.test(ua)) return "Face ID";
+
+  return "Biometrics";
+}
+
+export function passkeyUnsupportedReason() {
+  if (passkeySupported()) return null;
+  return "This browser doesn't support passkeys. Use your password instead.";
+}
+
 export async function passkeyStatus() {
   const r = await afetch(`${API_BASE}/api/v1/auth/passkey/status`, { cache: "no-store" });
   return r.json();   // { has_passkey, rp_id, signed_in }
@@ -50,7 +76,7 @@ export async function registerPasskey() {
 }
 
 // Unlock with biometrics → sets the owner session.
-export async function unlockPasskey() {
+export async function unlockPasskey(rememberMe = true) {
   const opts = await post("/api/v1/auth/passkey/login/options");
   if (opts.error) throw new Error(opts.error);
   opts.challenge = b64uToBuf(opts.challenge);
@@ -65,7 +91,9 @@ export async function unlockPasskey() {
       userHandle: a.response.userHandle ? bufToB64u(a.response.userHandle) : null,
     },
   };
-  const res = await post("/api/v1/auth/passkey/login/verify", { credential: payload });
+  const body = { credential: payload };
+  if (rememberMe !== undefined) body.remember_me = rememberMe;
+  const res = await post("/api/v1/auth/passkey/login/verify", body);
   if (res && res.token) setSessionToken(res.token);
   return res;
 }

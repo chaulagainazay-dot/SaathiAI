@@ -1,9 +1,9 @@
 "use client";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Panel, Eyebrow } from "@/components/ui";
 import { login, setPassword, forgotPassword } from "@/lib/api";
-import { passkeySupported, passkeyStatus, registerPasskey, unlockPasskey } from "@/lib/passkey";
+import { passkeySupported, passkeyPlatformName, passkeyUnsupportedReason, passkeyStatus, registerPasskey, unlockPasskey } from "@/lib/passkey";
 
 const ACCENT = "#9B6BFF", TEAL = "#00BFA5", RED = "#FF5A5A", AMBER = "#FFB800";
 
@@ -41,6 +41,7 @@ export default function Unlock() {
   const [rememberMe, setRememberMe] = useState(true);
   const [online, setOnline] = useState(true);
   const supported = passkeySupported();
+  const platformName = passkeyPlatformName();
   const pwRef = useRef(null);
 
   const refresh = () => passkeyStatus().then(setStatus).catch(() => {});
@@ -56,6 +57,18 @@ export default function Unlock() {
     return () => { window.removeEventListener("online", on); window.removeEventListener("offline", off); };
   }, []);
 
+  // Escape key dismisses messages and resets mode
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === "Escape") {
+        setMsg("");
+        if (mode !== "unlock") setMode("unlock");
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [mode]);
+
   const wrap = async (fn) => { setBusy(true); setMsg(""); try { await fn(); } catch (e) { setMsg(friendly(e)); } finally { setBusy(false); } };
 
   const doSetPassword = () => wrap(async () => {
@@ -68,25 +81,21 @@ export default function Unlock() {
   });
 
   const doLogin = () => wrap(async () => {
-    const r = await login(pw);
+    const r = await login(pw, rememberMe);
     if (r.ok) {
-      if (!rememberMe) {
-        // Short session: 24 hours instead of 30 days
-        try { localStorage.setItem("saathi_session_short", "1"); } catch {}
-      }
       setMsg("✓ Signed in."); setPw(""); refresh(); setTimeout(() => router.push("/os"), 600);
     } else setMsg(friendly(r.error || "Wrong password"));
   });
 
   const doUnlock = () => wrap(async () => {
-    const r = await unlockPasskey();
+    const r = await unlockPasskey(rememberMe);
     if (r.ok) { setMsg("✓ Unlocked."); setTimeout(() => router.push("/os"), 600); }
     else setMsg(friendly(r.error || "Unlock failed"));
   });
 
   const doRegister = () => wrap(async () => {
     const r = await registerPasskey();
-    if (r.ok) { setMsg("✓ Fingerprint / Face ID set up."); refresh(); }
+    if (r.ok) { setMsg("✓ Passkey set up."); refresh(); }
     else setMsg(friendly(r.error || "Setup failed"));
   });
 
@@ -97,7 +106,6 @@ export default function Unlock() {
     else setMsg(friendly(r.error || "Failed to send reset email"));
   });
 
-  const onKeyDown = (e) => { setCapsOn(e.getModifierState("CapsLock")); };
   const onNpChange = (v) => {
     setNp(v);
     const s = scorePassword(v);
@@ -116,6 +124,14 @@ export default function Unlock() {
     return { score, checks };
   };
 
+  const handlePwKeyDown = useCallback((e) => {
+    setCapsOn(e.getModifierState("CapsLock"));
+    if (e.key === "Enter") {
+      e.preventDefault();
+      doLogin();
+    }
+  }, [doLogin]);
+
   const inp = { width: "100%", padding: "13px 14px", borderRadius: 11, fontSize: 16, marginTop: 8,
     minHeight: 46, border: "1px solid rgba(255,255,255,0.12)", background: "rgba(255,255,255,0.04)",
     color: "inherit", WebkitAppearance: "none" };
@@ -123,14 +139,23 @@ export default function Unlock() {
     fontWeight: 600, fontSize: 15, minHeight: 46, color: "#fff", background: bg, width: "100%",
     marginTop: 12, opacity: (busy || dis) ? 0.5 : 1, touchAction: "manipulation" });
 
+  const unsupportedMsg = passkeyUnsupportedReason();
+
   return (
-    <div style={{ minHeight: "100dvh", display: "flex", alignItems: "flex-start", justifyContent: "center",
+    <div className="unlock-page" style={{ minHeight: "100dvh", display: "flex", alignItems: "flex-start", justifyContent: "center",
       padding: "max(env(safe-area-inset-top), 32px) max(env(safe-area-inset-right), 18px) " +
                "max(env(safe-area-inset-bottom), 32px) max(env(safe-area-inset-left), 18px)" }}>
+      <style>{`
+        .unlock-page button:focus-visible,
+        .unlock-page input:focus-visible {
+          outline: 2px solid ${ACCENT};
+          outline-offset: 2px;
+        }
+      `}</style>
       <div style={{ width: "100%", maxWidth: 420 }}>
         {!online && (
-          <div style={{ background: "rgba(255,184,0,0.12)", color: AMBER, padding: "10px 14px", borderRadius: 10, fontSize: 13, marginBottom: 14, display: "flex", alignItems: "center", gap: 8 }}>
-            <span>⚠️</span> You're offline. Sign-in requires a connection.
+          <div role="alert" style={{ background: "rgba(255,184,0,0.12)", color: AMBER, padding: "10px 14px", borderRadius: 10, fontSize: 13, marginBottom: 14, display: "flex", alignItems: "center", gap: 8 }}>
+            <span aria-hidden="true">⚠️</span> You're offline. Sign-in requires a connection.
           </div>
         )}
 
@@ -148,25 +173,30 @@ export default function Unlock() {
 
         {/* ── Passkey unlock button ── */}
         {mode === "unlock" && supported && status.has_passkey && (
-          <button onClick={doUnlock} disabled={busy || !online} style={btn(TEAL)}>
-            🔓 Unlock with Touch ID / Face ID
+          <button onClick={doUnlock} disabled={busy || !online} style={btn(TEAL)}
+            aria-label={`Unlock with ${platformName}`}>
+            {busy ? "Unlocking…" : `🔓 Unlock with ${platformName}`}
           </button>
         )}
         {mode === "unlock" && !supported && (
-          <div style={{ background: "rgba(255,255,255,0.04)", padding: 14, borderRadius: 11, fontSize: 13, color: "var(--color-ink-400)", marginTop: 14 }}>
+          <div role="alert" style={{ background: "rgba(255,255,255,0.04)", padding: 14, borderRadius: 11, fontSize: 13, color: "var(--color-ink-400)", marginTop: 14 }}>
             <strong>Passkeys not supported</strong><br />
-            Your browser doesn't support biometric login. Use your password instead, or try Safari on iPhone/Mac, Chrome on Android, or Edge on Windows.
+            {unsupportedMsg}
           </div>
         )}
 
         {/* ── Forgot Password form ── */}
         {mode === "forgot" && (
           <Panel style={{ padding: 18, marginTop: 14 }}>
-            <div style={{ fontSize: 13, fontWeight: 600 }}>Email address</div>
+            <div style={{ fontSize: 13, fontWeight: 600 }} id="forgot-email-label">Email address</div>
             <input type="email" value={forgotEmail} onChange={(e) => setForgotEmail(e.target.value)}
               autoComplete="email" autoCapitalize="off" autoCorrect="off" spellCheck={false}
-              enterKeyHint="send" onKeyDown={(e) => e.key === "Enter" && doForgot()} placeholder="you@example.com" style={inp} />
-            <button onClick={doForgot} disabled={busy || !online} style={btn(ACCENT)}>Send reset link</button>
+              enterKeyHint="send" onKeyDown={(e) => e.key === "Enter" && doForgot()}
+              placeholder="you@example.com" style={inp}
+              aria-label="Email address" aria-describedby="forgot-email-label" />
+            <button onClick={doForgot} disabled={busy || !online} style={btn(ACCENT)}>
+              {busy ? "Sending…" : "Send reset link"}
+            </button>
             <button onClick={() => { setMode("unlock"); setMsg(""); }} disabled={busy} style={btn("transparent")}>
               <span style={{ opacity: 0.7 }}>← Back to sign in</span>
             </button>
@@ -185,27 +215,32 @@ export default function Unlock() {
                 <>
                   <div style={{ position: "relative" }}>
                     <input type={showPw ? "text" : "password"} value={pw} onChange={(e) => setPw(e.target.value)}
-                      ref={pwRef} onKeyDown={onKeyDown}
+                      ref={pwRef} onKeyDown={handlePwKeyDown}
                       autoComplete="current-password" autoCapitalize="off" autoCorrect="off"
                       spellCheck={false} enterKeyHint="go"
-                      onKeyDownCapture={(e) => { if (e.key === "Enter") doLogin(); onKeyDown(e); }}
-                      placeholder="Password" style={inp} />
+                      placeholder="Password" style={inp}
+                      aria-label="Password"
+                      aria-describedby={capsOn ? "caps-warning" : undefined} />
                     <button onClick={() => setShowPw(!showPw)} tabIndex={-1}
+                      aria-label={showPw ? "Hide password" : "Show password"}
                       style={{ position: "absolute", right: 10, top: 18, background: "none", border: "none", color: "rgba(255,255,255,0.4)", cursor: "pointer", fontSize: 13 }}>
                       {showPw ? "🙈" : "👁️"}
                     </button>
                   </div>
                   {capsOn && (
-                    <div style={{ fontSize: 12, color: AMBER, marginTop: 6 }}>⚠️ Caps Lock is on</div>
+                    <div id="caps-warning" role="alert" style={{ fontSize: 12, color: AMBER, marginTop: 6 }}>⚠️ Caps Lock is on</div>
                   )}
-                  <button onClick={doLogin} disabled={busy || !online} style={btn(ACCENT)}>Sign in</button>
+                  <button onClick={doLogin} disabled={busy || !online} style={btn(ACCENT)}>
+                    {busy ? "Signing in…" : "Sign in"}
+                  </button>
 
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 10 }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 10, flexWrap: "wrap", gap: 8 }}>
                     <label style={{ fontSize: 13, opacity: 0.7, display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
-                      <input type="checkbox" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} style={{ accentColor: ACCENT }} />
+                      <input type="checkbox" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} style={{ accentColor: ACCENT, width: 18, height: 18 }} />
                       Keep me signed in
                     </label>
-                    <button onClick={() => { setMode("forgot"); setMsg(""); }} style={{ background: "none", border: "none", color: ACCENT, fontSize: 13, cursor: "pointer", padding: 0 }}>
+                    <button onClick={() => { setMode("forgot"); setMsg(""); }}
+                      style={{ background: "none", border: "none", color: ACCENT, fontSize: 13, cursor: "pointer", padding: 0, minHeight: 44 }}>
                       Forgot password?
                     </button>
                   </div>
@@ -218,8 +253,10 @@ export default function Unlock() {
                     <div style={{ position: "relative" }}>
                       <input type={showPw ? "text" : "password"} value={pw} onChange={(e) => setPw(e.target.value)}
                         autoComplete="current-password" autoCapitalize="off" autoCorrect="off" spellCheck={false}
-                        placeholder="Current password" style={inp} />
+                        placeholder="Current password" style={inp}
+                        aria-label="Current password" />
                       <button onClick={() => setShowPw(!showPw)} tabIndex={-1}
+                        aria-label={showPw ? "Hide password" : "Show password"}
                         style={{ position: "absolute", right: 10, top: 18, background: "none", border: "none", color: "rgba(255,255,255,0.4)", cursor: "pointer", fontSize: 13 }}>
                         {showPw ? "🙈" : "👁️"}
                       </button>
@@ -228,8 +265,11 @@ export default function Unlock() {
                   <div style={{ position: "relative" }}>
                     <input type={showNp ? "text" : "password"} value={np} onChange={(e) => onNpChange(e.target.value)}
                       autoComplete="new-password" autoCapitalize="off" autoCorrect="off" spellCheck={false}
-                      placeholder={status.has_password ? "New password" : "Choose a password"} style={inp} />
+                      placeholder={status.has_password ? "New password" : "Choose a password"} style={inp}
+                      aria-label={status.has_password ? "New password" : "Choose a password"}
+                      aria-describedby="strength-meter" />
                     <button onClick={() => setShowNp(!showNp)} tabIndex={-1}
+                      aria-label={showNp ? "Hide password" : "Show password"}
                       style={{ position: "absolute", right: 10, top: 18, background: "none", border: "none", color: "rgba(255,255,255,0.4)", cursor: "pointer", fontSize: 13 }}>
                       {showNp ? "🙈" : "👁️"}
                     </button>
@@ -237,7 +277,7 @@ export default function Unlock() {
 
                   {/* Strength meter */}
                   {np.length > 0 && (
-                    <div style={{ marginTop: 10 }}>
+                    <div id="strength-meter" style={{ marginTop: 10 }}>
                       <div style={{ display: "flex", gap: 4, height: 4, marginBottom: 6 }}>
                         {[0,1,2,3].map(i => (
                           <div key={i} style={{ flex: 1, borderRadius: 2, background: i < strength.score ? strengthColor(strength.score) : "rgba(255,255,255,0.1)" }} />
@@ -259,9 +299,10 @@ export default function Unlock() {
                   <input type={showNp ? "text" : "password"} value={np2} onChange={(e) => setNp2(e.target.value)}
                     autoComplete="new-password" autoCapitalize="off" autoCorrect="off" spellCheck={false}
                     enterKeyHint="done"
-                    onKeyDown={(e) => e.key === "Enter" && doSetPassword()} placeholder="Confirm password" style={inp} />
+                    onKeyDown={(e) => e.key === "Enter" && doSetPassword()} placeholder="Confirm password" style={inp}
+                    aria-label="Confirm password" />
                   <button onClick={doSetPassword} disabled={busy} style={btn(ACCENT)}>
-                    {status.has_password ? "Change password" : "Set password"}
+                    {busy ? "Saving…" : (status.has_password ? "Change password" : "Set password")}
                   </button>
                 </>
               )}
@@ -277,8 +318,9 @@ export default function Unlock() {
                     : "Set a password (or sign in) first, then register biometrics."}
                 </div>
                 <button onClick={doRegister} disabled={busy || !status.signed_in}
-                  style={btn(status.has_passkey ? "#5b6478" : ACCENT, !status.signed_in)}>
-                  {status.has_passkey ? "＋ Add another device" : "🔐 Set up fingerprint on this device"}
+                  style={btn(status.has_passkey ? "#5b6478" : ACCENT, !status.signed_in)}
+                  aria-label={status.has_passkey ? "Add another passkey" : `Set up ${platformName} on this device`}>
+                  {busy ? "Setting up…" : (status.has_passkey ? "＋ Add another device" : `🔐 Set up ${platformName} on this device`)}
                 </button>
               </Panel>
             )}
@@ -291,7 +333,7 @@ export default function Unlock() {
           </>
         )}
 
-        {msg && <div role="status" aria-live="polite"
+        {msg && <div role={msg.startsWith("✓") ? "status" : "alert"} aria-live={msg.startsWith("✓") ? "polite" : "assertive"}
           style={{ fontSize: 12.5, marginTop: 14, color: msg.startsWith("✓") ? TEAL : RED }}>{msg}</div>}
       </div>
     </div>
