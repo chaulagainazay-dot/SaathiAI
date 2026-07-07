@@ -230,6 +230,15 @@ export async function workspaceTurn(message, mission = "", mode = "cowork") {
   return r.json();
 }
 
+// Saathi Workspace — turn an implementation plan into real Mission workflow tasks.
+export async function savePlan(mission, name, steps) {
+  const r = await fetch(`${API_BASE}/api/v1/workspace/plan/save`, {
+    method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ mission, name, steps }) });
+  if (!r.ok) throw new Error(`save-plan ${r.status}`);
+  return r.json();
+}
+
 // Missions — the CEO OS dashboard of every business (Mission = root object).
 export async function fetchMissions(status = "") {
   const q = status ? `?status=${status}` : "";

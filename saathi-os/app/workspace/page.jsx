@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { Panel, Eyebrow } from "@/components/ui";
-import { workspaceTurn, fetchMissions } from "@/lib/api";
+import { workspaceTurn, fetchMissions, savePlan } from "@/lib/api";
 
 const ACCENT = "#9B6BFF", TEAL = "#00BFA5", GREY = "#5b6478";
 const MODES = [
@@ -29,7 +29,7 @@ export default function Workspace() {
     try {
       const r = await workspaceTurn(msg, mission, mode);
       setThread((t) => [...t, { role: "saathi", text: r.reply || "…", mode: r.mode,
-        analysis: r.analysis, actions: (r.actions || []).filter(Boolean) }]);
+        analysis: r.analysis, plan: r.plan || [], actions: (r.actions || []).filter(Boolean) }]);
     } catch (e) {
       setThread((t) => [...t, { role: "saathi", text: `Couldn't reach the workspace: ${e}` }]);
     } finally { setBusy(false); }
@@ -81,8 +81,23 @@ export default function Workspace() {
                 📚 stored in Library · tags: {(m.analysis.tags || []).slice(0, 6).join(", ")}
               </div>
             )}
+            {m.plan?.length > 0 && (
+              <div style={{ marginTop: 8, padding: "10px 12px", borderRadius: 10,
+                background: "rgba(155,107,255,0.08)", border: "1px solid rgba(155,107,255,0.25)" }}>
+                <div style={{ fontSize: 10.5, opacity: 0.6, marginBottom: 4 }}>PLAN · {m.plan.length} steps</div>
+                {m.plan.map((s, j) => <div key={j} style={{ fontSize: 12, padding: "1px 0" }}>{j + 1}. {s.replace(/\*\*/g, "")}</div>)}
+                {mission && (
+                  <button disabled={m.saved}
+                    onClick={async () => { try { await savePlan(mission, "Workspace plan", m.plan);
+                      setThread((t) => t.map((x) => x === m ? { ...x, saved: true } : x)); } catch {} }}
+                    style={{ marginTop: 8, fontSize: 11.5, padding: "6px 14px", borderRadius: 8, cursor: "pointer",
+                      border: "none", fontWeight: 600, color: "#fff", background: m.saved ? TEAL : ACCENT }}>
+                    {m.saved ? "✓ Saved as tasks" : "＋ Save as Mission tasks"}</button>
+                )}
+              </div>
+            )}
             {m.actions?.length > 0 && (
-              <div style={{ marginTop: 4, fontSize: 10, color: TEAL }}>✓ {m.actions.join(" · ")}</div>
+              <div style={{ marginTop: 4, fontSize: 10, color: TEAL }}>✓ captured: {m.actions.join(" · ")}</div>
             )}
           </div>
         ))}
