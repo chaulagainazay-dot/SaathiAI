@@ -29,7 +29,7 @@ export default function Workspace() {
     try {
       const r = await workspaceTurn(msg, mission, mode);
       setThread((t) => [...t, { role: "saathi", text: r.reply || "…", mode: r.mode,
-        analysis: r.analysis, plan: r.plan || [], actions: (r.actions || []).filter(Boolean) }]);
+        analysis: r.analysis, plan: r.plan || [], website: r.website, actions: (r.actions || []).filter(Boolean) }]);
     } catch (e) {
       setThread((t) => [...t, { role: "saathi", text: `Couldn't reach the workspace: ${e}` }]);
     } finally { setBusy(false); }
@@ -94,6 +94,23 @@ export default function Workspace() {
                       border: "none", fontWeight: 600, color: "#fff", background: m.saved ? TEAL : ACCENT }}>
                     {m.saved ? "✓ Saved as tasks" : "＋ Save as Mission tasks"}</button>
                 )}
+              </div>
+            )}
+            {m.website?.design_system && (
+              <div style={{ marginTop: 8, padding: "10px 12px", borderRadius: 10,
+                background: "rgba(0,191,165,0.06)", border: "1px solid rgba(0,191,165,0.25)" }}>
+                <div style={{ fontSize: 10.5, opacity: 0.6, marginBottom: 6 }}>ORIGINAL DESIGN SYSTEM · {m.website.design_system.mood}</div>
+                <div style={{ display: "flex", gap: 5, marginBottom: 6 }}>
+                  {(m.website.design_system.palette || []).map((c) => (
+                    <span key={c} title={c} style={{ width: 26, height: 26, borderRadius: 6, background: c,
+                      border: "1px solid rgba(255,255,255,0.15)" }} />
+                  ))}
+                </div>
+                <div style={{ fontSize: 11.5, opacity: 0.75 }}>
+                  Type: {m.website.design_system.typography?.heading} / {m.website.design_system.typography?.body}<br />
+                  Pages: {(m.website.wireframes || []).map((w) => w.page).join(" · ")}<br />
+                  Build: {(m.website.blueprint?.stack || []).join(", ")}
+                </div>
               </div>
             )}
             {m.actions?.length > 0 && (
