@@ -1,16 +1,42 @@
 "use client";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
+import { DEPARTMENTS } from "@/lib/departments";
 
+// pages with a bespoke eyebrow/title; everything else derives from the route
 const TITLES = {
-  "/": ["MONDAY · 3 JULY 2026", "Good morning, Ajay."],
+  "/": ["EXECUTIVE · CEO HOME", "Good morning, Ajay."],
   "/mission": ["SYSTEM · ALL DEPARTMENTS NOMINAL", "Mission Control"],
-  "/finance": ["DEPARTMENT · FINANCE INTELLIGENCE", "Finance"],
-  "/knowledge": ["EXPLORE · KNOWLEDGE GRAPH", "Knowledge"],
 };
+
+// route → friendly name, so no page shows a generic "Workspace"
+const ROUTE_NAME = Object.fromEntries(
+  Object.values(DEPARTMENTS).map((d) => [d.route, d.name])
+);
+
+function deriveTitle(path) {
+  if (TITLES[path]) return TITLES[path];
+  if (ROUTE_NAME[path]) return [`SAATHIOS · ${ROUTE_NAME[path].toUpperCase()}`, ROUTE_NAME[path]];
+  const seg = path.split("/").filter(Boolean);
+  if (seg.length) {
+    const name = seg[seg.length - 1].replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+    return [`SAATHIOS · ${seg[0].toUpperCase()}`, name];
+  }
+  return ["SAATHIOS", "SaathiOS"];
+}
 
 export default function TopBar({ onSearch }) {
   const path = usePathname();
-  const [eyebrow, title] = TITLES[path] || ["DEPARTMENT", "Workspace"];
+  const [eyebrow, title] = deriveTitle(path);
+  const [clock, setClock] = useState("");
+  useEffect(() => {
+    const tick = () => setClock(new Date().toLocaleTimeString("en-GB",
+      { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Kathmandu" }));
+    tick();
+    const id = setInterval(tick, 1000 * 30);
+    return () => clearInterval(id);
+  }, []);
+
   return (
     <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between",
       padding: "34px 56px 0" }}>
@@ -20,7 +46,7 @@ export default function TopBar({ onSearch }) {
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 16, marginTop: 6 }}>
         <span className="mono" style={{ fontSize: 11, letterSpacing: "0.14em", color: "var(--color-ink-400)" }}>
-          07:42&nbsp;&nbsp;KATHMANDU
+          {clock}&nbsp;&nbsp;KATHMANDU
         </span>
         <button onClick={onSearch} className="mono"
           style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 14px",

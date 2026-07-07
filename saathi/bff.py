@@ -110,9 +110,18 @@ def ceo_home(sig: Signals | None = None) -> dict:
     briefing_obj = build_briefing(decisions=decisions, dream_progress_pct=dream_pct / 100,
                                   execution=None, execution_trend="up")
 
+    import datetime as _dt
+    try:
+        from zoneinfo import ZoneInfo
+        _now = _dt.datetime.now(ZoneInfo("Asia/Kathmandu"))
+    except Exception:
+        _now = _dt.datetime.now()
+    _hour = _now.hour
+    _greet = ("Good morning" if _hour < 12 else "Good afternoon" if _hour < 17 else "Good evening")
+
     return {
-        "greeting": "Good morning, Ajay.",
-        "dateLabel": "MONDAY · 3 JULY 2026",
+        "greeting": f"{_greet}, Ajay.",
+        "dateLabel": _now.strftime("%A · %-d %B %Y").upper(),
         "priorityScore": priority,
         "priorityReasons": reasons,
         "executionScore": execution.score,
