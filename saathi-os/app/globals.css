@@ -109,7 +109,8 @@ html, body {
 }
 /* tablet (iPad, 700–1200px): show the FULL desktop dashboard, collapse grids to fit */
 @media (min-width: 700px) and (max-width: 1200px) {
-  .only-desktop { padding-left: 18px !important; padding-right: 18px !important; box-sizing: border-box; }
+  .only-desktop { padding-left: 18px !important; padding-right: 18px !important; box-sizing: border-box; max-width: 100% !important; }
+  .only-desktop[style*="grid-template-columns"],
   .only-desktop [style*="grid-template-columns"] { grid-template-columns: 1fr !important; }
   .only-desktop [style*="max-width"] { max-width: 100% !important; }
 }
@@ -118,6 +119,7 @@ html, body {
 .page { display: block; }
 @media (max-width: 1200px) {
   .page { padding-left: 16px !important; padding-right: 16px !important; box-sizing: border-box; max-width: 100% !important; }
+  .page[style*="grid-template-columns"],
   .page [style*="grid-template-columns"] { grid-template-columns: 1fr !important; }
   .page [style*="max-width"] { max-width: 100% !important; }
 }
