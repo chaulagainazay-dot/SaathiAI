@@ -246,6 +246,32 @@ export async function savePlan(mission, name, steps) {
   return r.json();
 }
 
+// Connectors — universal account & connector layer.
+export async function fetchConnectorProviders() {
+  const r = await fetch(`${API_BASE}/api/v1/connectors/providers`, { cache: "no-store" });
+  if (!r.ok) throw new Error(`providers ${r.status}`);
+  return r.json();
+}
+export async function fetchAccounts() {
+  const r = await fetch(`${API_BASE}/api/v1/connectors/accounts`, { cache: "no-store" });
+  if (!r.ok) throw new Error(`accounts ${r.status}`);
+  return r.json();
+}
+export async function addAccount(payload) {
+  const r = await fetch(`${API_BASE}/api/v1/connectors/accounts`, {
+    method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload) });
+  if (!r.ok) throw new Error(`add-account ${r.status}`);
+  return r.json();
+}
+export async function linkAccountMission(aid, mission, on = true) {
+  const r = await fetch(`${API_BASE}/api/v1/connectors/accounts/${aid}/mission`, {
+    method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ mission, on }) });
+  if (!r.ok) throw new Error(`link ${r.status}`);
+  return r.json();
+}
+
 // Missions — the CEO OS dashboard of every business (Mission = root object).
 export async function fetchMissions(status = "") {
   const q = status ? `?status=${status}` : "";
