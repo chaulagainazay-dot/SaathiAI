@@ -25,6 +25,22 @@ export default function MobileMic() {
     recRef.current = rec;
   }, []);
 
+  const speak = (msg) => {
+    try {
+      const synth = window.speechSynthesis;
+      if (!synth) return;
+      synth.cancel();
+      synth.resume();                       // iOS pauses the queue; wake it
+      const u = new SpeechSynthesisUtterance(msg);
+      u.lang = "en-US"; u.rate = 1.0; u.pitch = 1.0;
+      const voices = synth.getVoices();
+      const v = voices.find((x) => /en[-_]/i.test(x.lang) && /female|Samantha|Google US/i.test(x.name))
+        || voices.find((x) => /en[-_]/i.test(x.lang));
+      if (v) u.voice = v;
+      synth.speak(u);
+    } catch {}
+  };
+
   const ask = async (text) => {
     if (!text) return;
     setBusy(true); setReply("");
@@ -32,16 +48,19 @@ export default function MobileMic() {
       const r = await sendChat(text);
       const msg = r.reply || "…";
       setReply(msg);
-      try {
-        const u = new SpeechSynthesisUtterance(msg);
-        window.speechSynthesis.cancel(); window.speechSynthesis.speak(u);
-      } catch {}
+      speak(msg);
     } catch (e) { setReply("Couldn't reach the brain just now."); }
     finally { setBusy(false); }
   };
 
   const toggle = () => {
     if (!recRef.current) return;
+    // iOS Safari only allows speech that starts from a user gesture — prime the
+    // synthesizer on this tap so the later (post-fetch) reply is allowed to speak.
+    try {
+      const synth = window.speechSynthesis;
+      if (synth) { synth.getVoices(); synth.resume(); synth.speak(new SpeechSynthesisUtterance("")); }
+    } catch {}
     if (listening) { recRef.current.stop(); setListening(false); return; }
     setHeard(""); setReply("");
     try { recRef.current.start(); setListening(true); } catch {}
