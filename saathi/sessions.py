@@ -1,44 +1,32 @@
-"""Stateful session store — the keystone for real session management.
+"""Stateful session store — v1.2 adapter over Security Store.
 
-The legacy session token was *deterministic* (a hash of the password), so every
-device shared one token that never rotated: "logout everywhere", per-device
-revocation, device lists and token rotation were all impossible. This module
-issues opaque *random* tokens, each persisted with device metadata, so all of
-that becomes possible.
-
-Single-owner, file-backed (~/.saathi/sessions.json). Tokens are stored HASHED
-(sha256) — the raw token lives only in the owner's cookie/localStorage, so a
-leak of the store cannot mint a session. Backward-compatible: the server still
-also accepts the legacy deterministic token for already-signed-in devices.
+The public API is unchanged from v1.1 for backward compatibility.
+The backend now uses SQLite via Security Store instead of JSON files.
 """
 from __future__ import annotations
 
 import hashlib
-import json
 import re
 import secrets
 import time
-from pathlib import Path
 
-_STORE = Path.home() / ".saathi" / "sessions.json"
-_MAX_AGE = 30 * 24 * 3600          # 30 days idle → expired
-_HARD_CAP = 100                    # keep the file bounded
+from saathi.security.store import get_store
 
 
 def _hash(token: str) -> str:
     return hashlib.sha256(token.encode()).hexdigest()
 
 
-def _load() -> list[dict]:
-    try:
-        return json.loads(_STORE.read_text())
-    except Exception:
-        return []
+def _store():
+    return get_store()
 
 
-def _save(rows: list[dict]) -> None:
-    _STORE.parent.mkdir(parents=True, exist_ok=True)
-    _STORE.write_text(json.dumps(rows[-_HARD_CAP:]))
+def _owner_id() -> str:
+    return _store().get_or_create_owner()
+
+
+def _now() -> float:
+    return time.time()
 
 
 # ── device parsing (no external dep) ──────────────────────────────────────────
@@ -50,7 +38,6 @@ def describe(ua: str) -> tuple[str, str]:
                "Windows" if "Windows" in ua else
                "macOS" if re.search(r"Mac OS X|Macintosh", ua) else
                "Linux" if "Linux" in ua else "Unknown")
-    # order matters: Edge/Chrome both contain "Chrome"; Chrome/Safari overlap
     browser = ("Edge" if re.search(r"Edg/|EdgA/", ua) else
                "Chrome" if re.search(r"Chrome|CriOS", ua) else
                "Firefox" if re.search(r"Firefox|FxiOS", ua) else
@@ -58,33 +45,41 @@ def describe(ua: str) -> tuple[str, str]:
     return browser, os_name
 
 
-def _now() -> float:
-    return time.time()
+def _platform_from_ua(ua: str) -> str:
+    ua = ua or ""
+    if re.search(r"iPhone|Android.*Mobile", ua):
+        return "mobile"
+    if re.search(r"iPad|Android(?!.*Mobile)", ua):
+        return "tablet"
+    return "desktop"
 
 
-def _prune(rows: list[dict]) -> list[dict]:
-    now = _now()
-    cut = now - _MAX_AGE
-    return [r for r in rows if r.get("last_seen", 0) >= cut and r.get("expires", float("inf")) > now]
-
-
-# ── public API ────────────────────────────────────────────────────────────────
+# ── public API (unchanged from v1.1) ──────────────────────────────────────────
 def create(ua: str = "", ip: str = "", kind: str = "password", remember_me: bool = True) -> str:
-    """Mint a new session; return the RAW token (store keeps only its hash)."""
+    """Mint a new session; return the RAW token."""
     token = secrets.token_urlsafe(32)
     browser, os_name = describe(ua)
-    rows = _prune(_load())
-    rows.append({
-        "id": _hash(token)[:12],           # stable public handle for revoke/list
-        "th": _hash(token),                # token hash (secret compare)
-        "created": _now(), "last_seen": _now(),
-        "browser": browser, "os": os_name, "ua": (ua or "")[:200],
-        "ip": ip or "", "kind": kind, "label": "",
-        "remember_me": remember_me,
-        "expires": _now() + (30*24*3600 if remember_me else 24*3600),
-        "revoked": False,
-    })
-    _save(rows)
+    platform = _platform_from_ua(ua)
+    # Extract device name
+    device_name = ("iPhone" if "iPhone" in ua else
+                   "iPad" if "iPad" in ua else
+                   "Mac" if "Mac OS X" in ua or "Macintosh" in ua else
+                   "Android" if "Android" in ua else
+                   "Windows" if "Windows" in ua else
+                   "Linux" if "Linux" in ua else "Unknown")
+    _store().session_create(
+        user_id=_owner_id(),
+        token_hash=_hash(token),
+        browser=browser,
+        os=os_name,
+        platform=platform,
+        device_name=device_name,
+        user_agent=(ua or "")[:200],
+        ip_address=ip or "",
+        login_method=kind,
+        remember_me=1 if remember_me else 0,
+        expires_at=_now() + (30 * 24 * 3600 if remember_me else 24 * 3600),
+    )
     return token
 
 
@@ -93,19 +88,17 @@ def validate(token: str, *, touch: bool = True) -> bool:
     if not token:
         return False
     th = _hash(token)
-    rows = _prune(_load())
-    hit = next((r for r in rows if r.get("th") == th), None)
-    if not hit:
+    rec = _store().session_by_hash(th)
+    if not rec:
         return False
-    if hit.get("revoked"):
+    if rec.get("revoked"):
         return False
-    if hit.get("expires", 0) < _now():
-        # Remove expired session
-        _save([r for r in rows if r.get("th") != th])
+    if rec.get("expires_at", 0) < _now():
+        # Expired — the store's session_by_hash already filters revoked,
+        # but we also check expiry here for safety
         return False
     if touch:
-        hit["last_seen"] = _now()
-        _save(rows)
+        _store().session_touch(th)
     return True
 
 
@@ -117,51 +110,39 @@ def listing(current_token: str = "") -> list[dict]:
     """Devices/sessions for the Security page — never leaks token material."""
     cur = _hash(current_token) if current_token else ""
     out = []
-    for r in _prune(_load()):
+    for r in _store().session_list(_owner_id()):
         out.append({
-            "id": r.get("id", ""), "browser": r.get("browser", "Unknown"),
-            "os": r.get("os", "Unknown"), "ip": r.get("ip", ""),
-            "kind": r.get("kind", "password"), "label": r.get("label", ""),
-            "created": r.get("created", 0), "last_seen": r.get("last_seen", 0),
-            "current": bool(cur) and r.get("th") == cur,
-            "expires": r.get("expires", 0),
-            "remember_me": r.get("remember_me", True),
+            "id": r.get("id", ""),
+            "browser": r.get("browser", "Unknown"),
+            "os": r.get("os", "Unknown"),
+            "platform": r.get("platform", "Unknown"),
+            "device_name": r.get("device_name", "Unknown"),
+            "ip": r.get("ip_address", ""),
+            "kind": r.get("login_method", "password"),
+            "label": r.get("label", ""),
+            "created": r.get("first_seen", 0),
+            "last_seen": r.get("last_seen", 0),
+            "current": bool(cur) and r.get("token_hash") == cur,
+            "expires": r.get("expires_at", 0),
+            "remember_me": bool(r.get("remember_me", 1)),
+            "risk_score": r.get("risk_score", 0),
         })
     out.sort(key=lambda x: x["last_seen"], reverse=True)
     return out
 
 
 def revoke(session_id: str) -> bool:
-    rows = _load()
-    hit = next((r for r in rows if r.get("id") == session_id), None)
-    if not hit:
-        return False
-    hit["revoked"] = True
-    _save(rows)
-    return True
+    return _store().session_revoke(session_id)
 
 
 def revoke_all(except_token: str = "") -> int:
     """Logout everywhere. Keep only the caller's own session when given."""
     keep_th = _hash(except_token) if except_token else ""
-    rows = _load()
-    revoked = 0
-    for r in rows:
-        if not (keep_th and r.get("th") == keep_th):
-            r["revoked"] = True
-            revoked += 1
-    _save(rows)
-    return revoked
+    return _store().session_revoke_all(_owner_id(), except_hash=keep_th)
 
 
 def rename(session_id: str, label: str) -> bool:
-    rows = _load()
-    hit = next((r for r in rows if r.get("id") == session_id), None)
-    if not hit:
-        return False
-    hit["label"] = (label or "")[:60]
-    _save(rows)
-    return True
+    return _store().session_rename(session_id, label)
 
 
 def rotate(old_token: str, ua: str = "", ip: str = "") -> str:

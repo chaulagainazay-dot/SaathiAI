@@ -97,3 +97,22 @@ export async function unlockPasskey(rememberMe = true) {
   if (res && res.token) setSessionToken(res.token);
   return res;
 }
+
+// Diagnostic helper — maps WebAuthn errors to human-readable messages.
+export async function diagnosePasskeyError(errorName, reason = "") {
+  try {
+    const { fetchPasskeyDiagnostics } = await import("./api");
+    const j = await fetchPasskeyDiagnostics(errorName, reason);
+    return j.message || "Passkey error. Please try again or use your password.";
+  } catch {
+    // Fallback messages if the backend endpoint is unreachable
+    const map = {
+      NotAllowedError: "You cancelled the passkey prompt. You can try again or use your password.",
+      NotSupportedError: "This browser doesn't support passkeys. Try Safari, Chrome, or Edge.",
+      SecurityError: "Passkeys require a secure context (HTTPS or localhost).",
+      InvalidStateError: "A passkey already exists for this device. Try unlocking instead.",
+      AbortError: "The passkey request was interrupted. Please try again.",
+    };
+    return map[errorName] || `Passkey error (${errorName}). Please try again or use your password.`;
+  }
+}

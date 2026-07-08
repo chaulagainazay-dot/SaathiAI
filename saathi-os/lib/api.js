@@ -627,3 +627,56 @@ export async function fetchOAuthProviders() {
   if (!r.ok) throw new Error(`oauth ${r.status}`);
   return r.json();
 }
+
+// ── Security v1.2 ──────────────────────────────────────────────────────────
+export async function fetchSecurityTimeline(limit = 50, kind = "") {
+  const q = new URLSearchParams({ limit: String(limit) });
+  if (kind) q.set("kind", kind);
+  const r = await afetch(`${API_BASE}/api/v1/security/timeline?${q}`, { cache: "no-store" });
+  if (!r.ok) throw new Error(`timeline ${r.status}`);
+  return r.json();
+}
+
+export async function fetchSecurityHealth() {
+  const r = await afetch(`${API_BASE}/api/v1/security/health`, { cache: "no-store" });
+  if (!r.ok) throw new Error(`health ${r.status}`);
+  return r.json();
+}
+
+export async function fetchSecurityTokens() {
+  const r = await afetch(`${API_BASE}/api/v1/security/tokens`, { cache: "no-store" });
+  if (!r.ok) throw new Error(`tokens ${r.status}`);
+  return r.json();
+}
+
+export async function createSecurityToken(name, purpose = "", permissions = []) {
+  const r = await afetch(`${API_BASE}/api/v1/security/tokens`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, purpose, permissions }),
+  });
+  const j = await r.json();
+  if (!r.ok) throw new Error(j.error || `tokens ${r.status}`);
+  return j;
+}
+
+export async function revokeSecurityToken(id) {
+  const r = await afetch(`${API_BASE}/api/v1/security/tokens/${id}`, { method: "DELETE" });
+  if (!r.ok) throw new Error(`revoke-token ${r.status}`);
+  return r.json();
+}
+
+export async function fetchPasskeyDiagnostics(error = "", reason = "") {
+  const q = new URLSearchParams();
+  if (error) q.set("error", error);
+  if (reason) q.set("reason", reason);
+  const r = await afetch(`${API_BASE}/api/v1/auth/passkey/diagnostics?${q}`, { cache: "no-store" });
+  if (!r.ok) throw new Error(`diagnostics ${r.status}`);
+  return r.json();
+}
+
+export async function fetchIdentityProviders() {
+  const r = await afetch(`${API_BASE}/api/v1/auth/providers`, { cache: "no-store" });
+  if (!r.ok) throw new Error(`providers ${r.status}`);
+  return r.json();
+}

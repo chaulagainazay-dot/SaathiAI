@@ -6,6 +6,8 @@ import {
   fetchSessions, revokeSession, revokeAllSessions, renameSession,
   fetchPasskeys, deletePasskey, renamePasskey,
   fetchAuthAudit, setPassword, logout,
+  fetchSecurityTimeline, fetchSecurityHealth, fetchSecurityTokens,
+  createSecurityToken, revokeSecurityToken,
 } from "@/lib/api";
 
 const ACCENT = "#9B6BFF", TEAL = "#00BFA5", RED = "#FF5A5A", AMBER = "#FFB800";
@@ -84,7 +86,13 @@ export default function SecurityPage() {
   const [showNp, setShowNp] = useState(false);
   const [renameId, setRenameId] = useState("");
   const [renameLabel, setRenameLabel] = useState("");
-  const [tab, setTab] = useState("sessions"); // sessions | passkeys | password | audit
+  const [tab, setTab] = useState("sessions"); // sessions | passkeys | password | audit | timeline | health | tokens
+  const [timeline, setTimeline] = useState([]);
+  const [health, setHealth] = useState(null);
+  const [tokens, setTokens] = useState([]);
+  const [newTokenName, setNewTokenName] = useState("");
+  const [newTokenPurpose, setNewTokenPurpose] = useState("");
+  const [createdTokenRaw, setCreatedTokenRaw] = useState("");
 
   const wrap = async (fn) => { setBusy(true); setMsg(""); try { const r = await fn(); return r; } catch (e) { setMsg(friendly(e)); return null; } finally { setBusy(false); } };
 
@@ -95,6 +103,12 @@ export default function SecurityPage() {
     if (p) setPasskeys(p.passkeys || []);
     const a = await wrap(() => fetchAuthAudit(40));
     if (a) setAudit(a.events || []);
+    const tl = await wrap(() => fetchSecurityTimeline(50));
+    if (tl) setTimeline(tl.events || []);
+    const h = await wrap(() => fetchSecurityHealth());
+    if (h) setHealth(h);
+    const tok = await wrap(() => fetchSecurityTokens());
+    if (tok) setTokens(tok.tokens || []);
   };
 
   useEffect(() => { load(); }, []);
@@ -178,6 +192,9 @@ export default function SecurityPage() {
           <button onClick={() => setTab("sessions")} style={tabBtn("sessions")}>Sessions</button>
           <button onClick={() => setTab("passkeys")} style={tabBtn("passkeys")}>Passkeys</button>
           <button onClick={() => setTab("password")} style={tabBtn("password")}>Password</button>
+          <button onClick={() => setTab("timeline")} style={tabBtn("timeline")}>Timeline</button>
+          <button onClick={() => setTab("health")} style={tabBtn("health")}>Health</button>
+          <button onClick={() => setTab("tokens")} style={tabBtn("tokens")}>API Tokens</button>
           <button onClick={() => setTab("audit")} style={tabBtn("audit")}>History</button>
         </div>
 
@@ -301,6 +318,115 @@ export default function SecurityPage() {
             <button onClick={doChangePassword} disabled={busy} style={btn(ACCENT)}>
               {busy ? "Changing…" : "Change password"}
             </button>
+          </Panel>
+        )}
+
+        {/* ── Password Health tab ── */}
+        {tab === "health" && (
+          <Panel style={{ padding: 18 }}>
+            <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 14 }}>Password Health</div>
+            {!health && <div style={{ fontSize: 13, opacity: 0.5 }}>Loading…</div>}
+            {health && (
+              <div>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12, padding: "12px 14px", borderRadius: 10, background: "rgba(255,255,255,0.04)" }}>
+                  <span style={{ fontSize: 13 }}>Status</span>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: health.status === "strong" ? TEAL : health.status === "overdue" ? RED : AMBER }}>
+                    {health.status === "strong" ? "Strong" : health.status === "overdue" ? "Overdue" : health.status === "unknown" ? "No password" : "Fair"}
+                  </span>
+                </div>
+                {health.strength && (
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12, padding: "12px 14px", borderRadius: 10, background: "rgba(255,255,255,0.04)" }}>
+                    <span style={{ fontSize: 13 }}>Strength</span>
+                    <span style={{ fontSize: 13, fontWeight: 600 }}>{health.strength.score}/4 — {health.strength.label}</span>
+                  </div>
+                )}
+                {health.age_days !== undefined && (
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12, padding: "12px 14px", borderRadius: 10, background: "rgba(255,255,255,0.04)" }}>
+                    <span style={{ fontSize: 13 }}>Age</span>
+                    <span style={{ fontSize: 13, fontWeight: 600 }}>{health.age_days} day{health.age_days !== 1 ? "s" : ""}</span>
+                  </div>
+                )}
+                {health.days_until_rotation !== undefined && (
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12, padding: "12px 14px", borderRadius: 10, background: "rgba(255,255,255,0.04)" }}>
+                    <span style={{ fontSize: 13 }}>Days until rotation</span>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: health.days_until_rotation < 0 ? RED : health.days_until_rotation < 7 ? AMBER : TEAL }}>
+                      {health.days_until_rotation < 0 ? `${Math.abs(health.days_until_rotation)} days overdue` : `${health.days_until_rotation} days`}
+                    </span>
+                  </div>
+                )}
+                {health.history_count !== undefined && (
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12, padding: "12px 14px", borderRadius: 10, background: "rgba(255,255,255,0.04)" }}>
+                    <span style={{ fontSize: 13 }}>Password history</span>
+                    <span style={{ fontSize: 13, fontWeight: 600 }}>{health.history_count} version{health.history_count !== 1 ? "s" : ""}</span>
+                  </div>
+                )}
+                {health.recommendation && (
+                  <div style={{ fontSize: 12, opacity: 0.6, marginTop: 8, lineHeight: 1.5 }}>💡 {health.recommendation}</div>
+                )}
+              </div>
+            )}
+          </Panel>
+        )}
+
+        {/* ── Security Timeline tab ── */}
+        {tab === "timeline" && (
+          <Panel style={{ padding: 18 }}>
+            <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 14 }}>Security Timeline</div>
+            {timeline.length === 0 && <div style={{ fontSize: 13, opacity: 0.5 }}>No security events yet.</div>}
+            {timeline.map((e, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 12, padding: "10px 0", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+                <div style={{ fontSize: 18, marginTop: 2 }}>
+                  {e.kind === "login_success" ? "🔓" : e.kind === "logout" ? "🚪" : e.kind === "password_changed" ? "🔑" : e.kind === "passkey_added" ? "🔐" : e.kind === "passkey_deleted" ? "🗑️" : "📝"}
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600 }}>{e.title || e.kind}</div>
+                  {e.detail && <div style={{ fontSize: 12, opacity: 0.6, marginTop: 2 }}>{e.detail}</div>}
+                  <div style={{ fontSize: 11, opacity: 0.4, marginTop: 4 }}>{formatDate(e.ts)} · {e.ip || "unknown IP"}</div>
+                </div>
+              </div>
+            ))}
+          </Panel>
+        )}
+
+        {/* ── API Tokens tab ── */}
+        {tab === "tokens" && (
+          <Panel style={{ padding: 18 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+              <div style={{ fontSize: 15, fontWeight: 600 }}>API Tokens</div>
+            </div>
+            {createdTokenRaw && (
+              <div style={{ marginBottom: 14, padding: "12px 14px", borderRadius: 10, background: "rgba(0,191,165,0.12)" }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: TEAL, marginBottom: 4 }}>✓ Token created — copy it now</div>
+                <code style={{ fontSize: 12, wordBreak: "break-all", display: "block", padding: "8px 10px", borderRadius: 6, background: "rgba(0,0,0,0.3)" }}>{createdTokenRaw}</code>
+                <button onClick={() => setCreatedTokenRaw("")} style={{ marginTop: 8, background: "none", border: "none", color: TEAL, fontSize: 12, cursor: "pointer" }}>Dismiss</button>
+              </div>
+            )}
+            <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
+              <input value={newTokenName} onChange={(e) => setNewTokenName(e.target.value)} placeholder="Token name" style={{ ...inp, marginTop: 0, flex: 1 }} />
+              <input value={newTokenPurpose} onChange={(e) => setNewTokenPurpose(e.target.value)} placeholder="Purpose (optional)" style={{ ...inp, marginTop: 0, flex: 1 }} />
+              <button onClick={() => wrap(async () => {
+                const r = await createSecurityToken(newTokenName, newTokenPurpose);
+                if (r && r.ok) { setCreatedTokenRaw(r.token); setNewTokenName(""); setNewTokenPurpose(""); load(); }
+              })} disabled={busy || !newTokenName.trim()} style={{ ...btn(ACCENT), marginTop: 0, width: "auto", padding: "0 16px" }}>Create</button>
+            </div>
+            {tokens.length === 0 && <div style={{ fontSize: 13, opacity: 0.5 }}>No API tokens.</div>}
+            {tokens.map((t) => (
+              <div key={t.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 0", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+                <div style={{ fontSize: 22 }}>🔑</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 14, fontWeight: 600 }}>{t.name}</div>
+                  <div style={{ fontSize: 12, opacity: 0.5, marginTop: 2 }}>
+                    {t.purpose || "No purpose"} · {t.permissions?.length || 0} permission{t.permissions?.length !== 1 ? "s" : ""}
+                    {t.last_used_at && ` · Last used ${formatDate(t.last_used_at)}`}
+                    {t.expires_at && ` · Expires ${formatDate(t.expires_at)}`}
+                  </div>
+                </div>
+                <button onClick={() => wrap(async () => { const r = await revokeSecurityToken(t.id); if (r && r.ok) { setMsg("✓ Token revoked."); load(); } })} disabled={busy}
+                  style={{ background: "rgba(255,90,90,0.15)", color: RED, border: "none", borderRadius: 8, padding: "6px 10px", fontSize: 12, cursor: "pointer" }}>
+                  Revoke
+                </button>
+              </div>
+            ))}
           </Panel>
         )}
 

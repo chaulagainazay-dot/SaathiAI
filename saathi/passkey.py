@@ -1,39 +1,29 @@
-"""Passkey (WebAuthn) — fingerprint / Face ID unlock for the owner.
+"""Passkey (WebAuthn) — v1.2 adapter over Security Store.
 
-Register a platform authenticator (Mac Touch ID, iPad Face ID) once, then unlock
-with biometrics instead of the password. On success the caller issues the normal
-session cookie, so the rest of SaathiOS (and voice) treats you as the owner without
-re-verifying your voice.
-
-Single-owner: credentials + the in-flight challenge are stored locally. RP id/origin
-are derived from the request host so it works on both localhost and the VM domain
-(register once per host).
+The public API is unchanged from v1.1 for backward compatibility.
+The backend now uses SQLite via Security Store instead of JSON files.
 """
 from __future__ import annotations
 
-import json
 import time
-from pathlib import Path
 
-_STORE = Path.home() / ".saathi" / "passkeys.json"
+from saathi.security.store import get_store
+
+
+def _store():
+    return get_store()
+
+
+def _owner_id() -> str:
+    return _store().get_or_create_owner()
+
+
 _pending: dict[str, bytes] = {}   # host → last challenge (single owner)
 
 
-def _load() -> list[dict]:
-    try:
-        return json.loads(_STORE.read_text())
-    except Exception:
-        return []
-
-
-def _save(creds: list[dict]) -> None:
-    _STORE.parent.mkdir(parents=True, exist_ok=True)
-    _STORE.write_text(json.dumps(creds))
-
-
 def has_passkey(rp_id: str = "") -> bool:
-    creds = _load()
-    return any((not rp_id) or c.get("rp_id") == rp_id for c in creds)
+    rows = _store().passkey_list(_owner_id(), rp_id=rp_id)
+    return len(rows) > 0
 
 
 def registration_options(rp_id: str) -> dict:
@@ -46,41 +36,48 @@ def registration_options(rp_id: str) -> dict:
             resident_key=ResidentKeyRequirement.PREFERRED,
             user_verification=UserVerificationRequirement.PREFERRED))
     _pending[rp_id] = opts.challenge
-    return json.loads(options_to_json(opts))
+    return __import__("json").loads(options_to_json(opts))
 
 
 def verify_registration(credential: dict, rp_id: str, origin: str, ua: str = "") -> bool:
     from webauthn import verify_registration_response
     from webauthn.helpers import bytes_to_base64url
+    import re
     ch = _pending.get(rp_id)
     if not ch:
         return False
-    v = verify_registration_response(credential=json.dumps(credential),
+    v = verify_registration_response(credential=__import__("json").dumps(credential),
                                      expected_challenge=ch, expected_rp_id=rp_id,
                                      expected_origin=origin)
-    creds = _load()
     # Parse UA for device metadata
     device_name = ""
     browser = ""
+    platform = "desktop"
     if ua:
-        import re
         browser = ("Edge" if re.search(r"Edg/|EdgA/", ua) else
                    "Chrome" if re.search(r"Chrome|CriOS", ua) else
                    "Firefox" if re.search(r"Firefox|FxiOS", ua) else
                    "Safari" if "Safari" in ua else "Unknown")
-        # Extract device name (e.g., Mac, iPhone, iPad)
         device_name = ("iPhone" if "iPhone" in ua else
                        "iPad" if "iPad" in ua else
                        "Mac" if "Mac OS X" in ua or "Macintosh" in ua else
                        "Android" if "Android" in ua else
                        "Windows" if "Windows" in ua else
                        "Linux" if "Linux" in ua else "Unknown")
-    creds.append({"id": bytes_to_base64url(v.credential_id),
-                  "public_key": bytes_to_base64url(v.credential_public_key),
-                  "sign_count": v.sign_count, "rp_id": rp_id,
-                  "created": time.time(), "last_used": 0,
-                  "device_name": device_name, "browser": browser})
-    _save(creds)
+        platform = ("mobile" if re.search(r"iPhone|Android.*Mobile", ua) else
+                    "tablet" if re.search(r"iPad|Android(?!.*Mobile)", ua) else
+                    "desktop")
+    _store().passkey_save(
+        user_id=_owner_id(),
+        credential_id=bytes_to_base64url(v.credential_id),
+        public_key=bytes_to_base64url(v.credential_public_key),
+        rp_id=rp_id,
+        sign_count=v.sign_count,
+        device_name=device_name,
+        browser=browser,
+        platform=platform,
+        created_at=time.time(),
+    )
     _pending.pop(rp_id, None)
     return True
 
@@ -89,11 +86,12 @@ def authentication_options(rp_id: str) -> dict:
     from webauthn import generate_authentication_options, options_to_json
     from webauthn.helpers import base64url_to_bytes
     from webauthn.helpers.structs import PublicKeyCredentialDescriptor
+    creds = _store().passkey_list(_owner_id(), rp_id=rp_id)
     allow = [PublicKeyCredentialDescriptor(id=base64url_to_bytes(c["id"]))
-             for c in _load() if c.get("rp_id") == rp_id]
+             for c in creds]
     opts = generate_authentication_options(rp_id=rp_id, allow_credentials=allow or None)
     _pending[rp_id] = opts.challenge
-    return json.loads(options_to_json(opts))
+    return __import__("json").loads(options_to_json(opts))
 
 
 def verify_authentication(credential: dict, rp_id: str, origin: str) -> bool:
@@ -103,20 +101,18 @@ def verify_authentication(credential: dict, rp_id: str, origin: str) -> bool:
     if not ch:
         return False
     cid = credential.get("id") or credential.get("rawId")
-    creds = _load()
-    match = next((c for c in creds if c["id"] == cid and c.get("rp_id") == rp_id), None)
-    if not match:
+    match = _store().passkey_get(cid)
+    if not match or match.get("rp_id") != rp_id:
         return False
     try:
         v = verify_authentication_response(
-            credential=json.dumps(credential), expected_challenge=ch, expected_rp_id=rp_id,
-            expected_origin=origin, credential_public_key=base64url_to_bytes(match["public_key"]),
+            credential=__import__("json").dumps(credential), expected_challenge=ch,
+            expected_rp_id=rp_id, expected_origin=origin,
+            credential_public_key=base64url_to_bytes(match["public_key"]),
             credential_current_sign_count=match.get("sign_count", 0))
     except Exception:
         return False
-    match["sign_count"] = v.new_sign_count
-    match["last_used"] = time.time()
-    _save(creds)
+    _store().passkey_update_sign_count(cid, v.new_sign_count)
     _pending.pop(rp_id, None)
     return True
 
@@ -124,16 +120,26 @@ def verify_authentication(credential: dict, rp_id: str, origin: str) -> bool:
 def list_passkeys(rp_id: str = "") -> list[dict]:
     """Return all registered passkeys with metadata (no secrets)."""
     out = []
-    for c in _load():
-        if not rp_id or c.get("rp_id") == rp_id:
-            out.append({
-                "id": c.get("id", ""),
-                "rp_id": c.get("rp_id", ""),
-                "label": c.get("label", ""),
-                "sign_count": c.get("sign_count", 0),
-                "created": c.get("created", 0),
-                "last_used": c.get("last_used", 0),
-                "device_name": c.get("device_name", ""),
-                "browser": c.get("browser", ""),
-            })
+    for c in _store().passkey_list(_owner_id(), rp_id=rp_id):
+        out.append({
+            "id": c.get("id", ""),
+            "rp_id": c.get("rp_id", ""),
+            "label": c.get("label", ""),
+            "sign_count": c.get("sign_count", 0),
+            "created": c.get("created_at", 0),
+            "last_used": c.get("last_used_at", 0),
+            "device_name": c.get("device_name", ""),
+            "browser": c.get("browser", ""),
+            "platform": c.get("platform", ""),
+        })
     return out
+
+
+def delete_passkey(credential_id: str) -> bool:
+    """Remove a passkey by credential ID."""
+    return _store().passkey_delete(credential_id)
+
+
+def rename_passkey(credential_id: str, label: str) -> bool:
+    """Rename a passkey."""
+    return _store().passkey_rename(credential_id, label)

@@ -45,3 +45,7 @@
 
 ## Auto-learned 2026-07-07
 - **Daily Performance Summaries**: Proactively
+
+
+## Auto-learned 2026-07-08
+* Prioritize providing daily performance summaries that combine canteen sales

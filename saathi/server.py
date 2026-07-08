@@ -1553,26 +1553,38 @@ def _is_local(request) -> bool:
 
 
 def _is_authed(request) -> bool:
-    """Authorize via session cookie, session header, or the raw SAATHI_TOKEN."""
+    """Authorize via session cookie, session header, SAATHI_TOKEN, or Token Registry."""
     # a valid session cookie/header (issued by /auth/login) is always accepted
     cookies = getattr(request, "cookies", None) or {}
     token = (cookies.get("baadar_session")
              or request.headers.get("x-baadar-session", ""))
     if token:
-        # New random-token session store (per-device, revocable)
         from saathi import sessions
         if sessions.validate(token):
             return True
-        # Legacy deterministic token (backward compat during transition)
         if token == _session_token():
             return True
-    # the raw platform token also authorizes (API clients)
-    if ACCESS_TOKEN and request.headers.get("x-saathi-token") == ACCESS_TOKEN:
-        return True
-    # no password configured → trust genuine local callers (unchanged contract)
+    # Token Registry: named, permissioned API tokens
+    raw_api_token = request.headers.get("x-saathi-token", "")
+    if raw_api_token:
+        from saathi.security.registry import get_registry
+        reg = get_registry()
+        rec = reg.verify(raw_api_token)
+        if rec:
+            return True
+        # Legacy SAATHI_TOKEN backward compat
+        if ACCESS_TOKEN and raw_api_token == ACCESS_TOKEN:
+            return True
+    # no password configured → trust genuine local callers
     if not _PASSWORD_HASH:
         return _is_local(request)
     return False
+
+
+def _owner_id() -> str:
+    """Return the owner user_id from the Security Store."""
+    from saathi.security.store import get_store
+    return get_store().get_or_create_owner()
 
 
 @app.middleware("http")
@@ -1587,6 +1599,7 @@ async def _auth(request, call_next):
             or path == "/api/v1/auth/forgot"
             or path.startswith("/api/v1/auth/reset")
             or path.startswith("/api/v1/auth/passkey")
+            or path == "/api/v1/auth/providers"
             or path.startswith("/api/v1/auth/oauth")
             or path == "/api/executive/briefing"
             or path == "/api/v1/ceo/home"
@@ -1694,9 +1707,44 @@ def login(body: LoginIn, request: Request):
             authsec.rate_hit(f"{ip}:login")
             authsec.audit("login", ok=False, ip=ip, ua=ua, detail="wrong_password")
             return JSONResponse({"ok": False, "error": "Wrong password"}, status_code=401)
+    # Compute risk score
+    from saathi.security.risk import RiskEngine
+    from saathi import sessions
+    browser, os_name = sessions.describe(ua)
+    device_name = ("iPhone" if "iPhone" in ua else
+                   "iPad" if "iPad" in ua else
+                   "Mac" if "Mac OS X" in ua or "Macintosh" in ua else
+                   "Android" if "Android" in ua else
+                   "Windows" if "Windows" in ua else
+                   "Linux" if "Linux" in ua else "Unknown")
+    risk = RiskEngine()
+    risk_score = risk.score(_owner_id(), browser=browser, ip=ip,
+                            device_name=device_name, failed_attempts=0)
     token = sessions.create(ua=ua, ip=ip, kind="password", remember_me=body.remember_me)
-    authsec.audit("login", ok=True, ip=ip, ua=ua, detail=f"session_{sessions.session_id(token)}")
-    r = JSONResponse({"ok": True, "token": token})
+    sid = sessions.session_id(token)
+    authsec.audit("login", ok=True, ip=ip, ua=ua, detail=f"session_{sid}")
+    # Record security event
+    from saathi.security.timeline import get_timeline
+    get_timeline().record(_owner_id(), "login_success",
+        title="Signed in with password",
+        detail=f"{browser} on {device_name}",
+        meta={"browser": browser, "os": os_name, "ip": ip, "risk_score": risk_score},
+        ip=ip, ua=ua)
+    from saathi.security.risk import RiskEngine
+    risk = RiskEngine()
+    risk_score = risk.score(_owner_id(), browser=browser, ip=ip,
+                            device_name=device_name, failed_attempts=0)
+    token = sessions.create(ua=ua, ip=ip, kind="password", remember_me=body.remember_me)
+    sid = sessions.session_id(token)
+    authsec.audit("login", ok=True, ip=ip, ua=ua, detail=f"session_{sid}")
+    # Record security event
+    from saathi.security.timeline import get_timeline
+    get_timeline().record(_owner_id(), "login_success",
+        title="Signed in with password",
+        detail=f"{browser} on {device_name}",
+        meta={"browser": browser, "os": os_name, "ip": ip, "risk_score": risk_score},
+        ip=ip, ua=ua)
+    r = JSONResponse({"ok": True, "token": token, "risk_score": risk_score})
     max_age = (30*24*3600) if body.remember_me else (24*3600)
     r.set_cookie("baadar_session", token, httponly=True, samesite="none", secure=True, max_age=max_age)
     return r
@@ -1772,9 +1820,28 @@ async def passkey_login_verify(request: Request):
         authsec.audit("passkey_login", ok=False, ip=ip, ua=ua, detail="verification_failed")
         return JSONResponse({"ok": False, "error": "unlock failed"}, status_code=401)
     remember_me = body.get("remember_me", True)
+    from saathi.security.risk import RiskEngine
+    from saathi import sessions
+    browser, os_name = sessions.describe(ua)
+    device_name = ("iPhone" if "iPhone" in ua else
+                   "iPad" if "iPad" in ua else
+                   "Mac" if "Mac OS X" in ua or "Macintosh" in ua else
+                   "Android" if "Android" in ua else
+                   "Windows" if "Windows" in ua else
+                   "Linux" if "Linux" in ua else "Unknown")
+    risk = RiskEngine()
+    risk_score = risk.score(_owner_id(), browser=browser, ip=ip, device_name=device_name)
     token = sessions.create(ua=ua, ip=ip, kind="passkey", remember_me=remember_me)
-    authsec.audit("passkey_login", ok=True, ip=ip, ua=ua, detail=f"session_{sessions.session_id(token)}")
-    r = JSONResponse({"ok": True, "token": token})
+    sid = sessions.session_id(token)
+    authsec.audit("passkey_login", ok=True, ip=ip, ua=ua, detail=f"session_{sid}")
+    from saathi.security.timeline import get_timeline
+    get_timeline().record(_owner_id(), "login_success",
+        title="Signed in with passkey",
+        detail=f"{browser} on {device_name}",
+        meta={"browser": browser, "os": os_name, "ip": ip, "risk_score": risk_score, "method": "passkey"},
+        ip=ip, ua=ua)
+
+    r = JSONResponse({"ok": True, "token": token, "risk_score": risk_score})
     max_age = (30*24*3600) if remember_me else (24*3600)
     r.set_cookie("baadar_session", token, httponly=True, samesite="none", secure=True, max_age=max_age)
     return r
@@ -1820,6 +1887,15 @@ def change_password(body: ChangePasswordIn, request: Request):
     sessions.revoke(sessions.session_id(old_token))
     token = sessions.create(ua=ua, ip=ip, kind="password")
     authsec.audit("change_password", ok=True, ip=ip, ua=ua, detail=f"new_session_{sessions.session_id(token)}")
+    from saathi.security.timeline import get_timeline
+    from saathi.security.store import get_store
+    from saathi import sessions as _sessions
+    _browser, _os_name = _sessions.describe(ua)
+    get_timeline().record(get_store().get_or_create_owner(), "password_changed",
+        title="Password changed",
+        detail="From Security settings",
+        meta={"browser": _browser, "os": _os_name, "ip": ip},
+        ip=ip, ua=ua)
     r = JSONResponse({"ok": True, "token": token})
     r.set_cookie("baadar_session", token, httponly=True, samesite="none", secure=True, max_age=30*24*3600)
     return r
@@ -1834,6 +1910,11 @@ def logout(request: Request):
     if token:
         sessions.revoke(sessions.session_id(token))
     authsec.audit("logout", ok=True, ip=request.client.host if request.client else "", ua=request.headers.get("user-agent", ""))
+    from saathi.security.timeline import get_timeline
+    from saathi.security.store import get_store
+    get_timeline().record(get_store().get_or_create_owner(), "logout",
+        title="Signed out", ip=request.client.host if request.client else "",
+        ua=request.headers.get("user-agent", ""))
     r = JSONResponse({"ok": True})
     r.delete_cookie("baadar_session", samesite="none", secure=True)
     return r
@@ -2072,6 +2153,113 @@ def auth_audit(request: Request, limit: int = 40):
     if not _is_authed(request):
         return JSONResponse({"error": "unauthorized"}, status_code=401)
     return {"events": authsec.recent_audit(limit=min(limit, 100))}
+
+
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  AUTH v1.2 — Security Platform Endpoints
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@app.get("/api/v1/security/timeline")
+def security_timeline(request: Request, limit: int = 50, kind: str = ""):
+    """Security Timeline — append-only event history."""
+    from fastapi.responses import JSONResponse
+    from saathi.security.timeline import get_timeline
+    from saathi.security.store import get_store
+    if not _is_authed(request):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    user_id = get_store().get_or_create_owner()
+    events = get_timeline().list(user_id, kind=kind or None, limit=min(limit, 200))
+    return {"events": events}
+
+
+@app.get("/api/v1/security/health")
+def security_health(request: Request):
+    """Password Health metrics — strength, age, rotation status."""
+    from fastapi.responses import JSONResponse
+    from saathi.security.health import PasswordHealth
+    from saathi.security.store import get_store
+    if not _is_authed(request):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    user_id = get_store().get_or_create_owner()
+    health = PasswordHealth()
+    return {"health": health.metrics(user_id)}
+
+
+@app.get("/api/v1/security/tokens")
+def list_tokens(request: Request):
+    """List all API tokens for the owner."""
+    from fastapi.responses import JSONResponse
+    from saathi.security.registry import get_registry
+    from saathi.security.store import get_store
+    if not _is_authed(request):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    user_id = get_store().get_or_create_owner()
+    tokens = get_registry().list(user_id)
+    return {"tokens": tokens}
+
+
+class CreateTokenIn(BaseModel):
+    name: str
+    purpose: str = ""
+    permissions: list[str] | None = None
+    expires_in_days: int | None = None
+
+@app.post("/api/v1/security/tokens")
+def create_token(body: CreateTokenIn, request: Request):
+    """Create a new API token. Raw token is returned ONCE."""
+    from fastapi.responses import JSONResponse
+    from saathi.security.registry import get_registry
+    from saathi.security.store import get_store
+    from saathi.security.timeline import get_timeline
+    if not _is_authed(request):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    user_id = get_store().get_or_create_owner()
+    reg = get_registry()
+    tid, raw = reg.create(user_id, body.name, purpose=body.purpose,
+                          permissions=body.permissions,
+                          expires_in_days=body.expires_in_days)
+    get_timeline().record(user_id, "token_created",
+        title=f"API token created: {body.name}",
+        detail=body.purpose or "No description",
+        meta={"token_id": tid, "name": body.name})
+    return {"ok": True, "token_id": tid, "token": raw}
+
+
+@app.delete("/api/v1/security/tokens/{tid}")
+def revoke_token(tid: str, request: Request):
+    """Revoke an API token."""
+    from fastapi.responses import JSONResponse
+    from saathi.security.registry import get_registry
+    from saathi.security.store import get_store
+    from saathi.security.timeline import get_timeline
+    if not _is_authed(request):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    user_id = get_store().get_or_create_owner()
+    ok = get_registry().revoke(tid)
+    if ok:
+        get_timeline().record(user_id, "token_revoked",
+            title="API token revoked", detail=tid)
+    return {"ok": ok}
+
+
+@app.get("/api/v1/auth/providers")
+def identity_providers(request: Request):
+    """List available identity providers (OAuth / SSO)."""
+    from saathi.security.identity import default_router
+    router = default_router()
+    return {
+        "available": router.available(),
+        "all": router.all_names(),
+    }
+
+
+@app.get("/api/v1/auth/passkey/diagnostics")
+def passkey_diagnostics(request: Request, error: str = "", reason: str = ""):
+    """Get human-readable diagnostic for a passkey error."""
+    from saathi.security.diagnostics import passkey_diagnostic
+    return {"message": passkey_diagnostic(error, reason)}
 
 
 # ── Phase 5: OAuth Architecture (pluggable, no providers enabled yet) ─────────
