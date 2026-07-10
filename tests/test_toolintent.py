@@ -457,5 +457,106 @@ class TestExpiry:
         assert intent.is_expired()
 
 
+class TestJSONSerializability:
+    """Test JSON serialization safety."""
+
+    def test_deterministic_json_output(self):
+        """Test that JSON output is deterministic regardless of parameter insertion order."""
+        fixed_id = str(uuid.uuid4())
+        fixed_corr_id = str(uuid.uuid4())
+        now = datetime.now().timestamp()
+        exp = now + 86400
+
+        intent1 = ToolIntent(
+            intent_id=fixed_id,
+            correlation_id=fixed_corr_id,
+            actor_id="user-1",
+            mission_id="m1",
+            capability="email.send",
+            connector_id="gmail",
+            operation="send",
+            reason="test",
+            parameters={"z": 1, "a": 2, "m": 3},
+            created_at=now,
+            expires_at=exp
+        )
+
+        intent2 = ToolIntent(
+            intent_id=fixed_id,
+            correlation_id=fixed_corr_id,
+            actor_id="user-1",
+            mission_id="m1",
+            capability="email.send",
+            connector_id="gmail",
+            operation="send",
+            reason="test",
+            parameters={"a": 2, "m": 3, "z": 1},
+            created_at=now,
+            expires_at=exp
+        )
+
+        # Idempotency keys should match
+        assert intent1.idempotency_key == intent2.idempotency_key
+        # JSON output should be identical (same key order)
+        assert intent1.to_json() == intent2.to_json()
+
+    def test_rejects_non_serializable_parameters(self):
+        """Test that non-JSON-serializable parameter values are rejected."""
+        intent = ToolIntent(
+            actor_id="user-1",
+            mission_id="m1",
+            capability="email.send",
+            connector_id="gmail",
+            operation="send",
+            reason="test",
+            parameters={"tags": {1, 2, 3}}  # sets are not JSON serializable
+        )
+        errors = intent.validate()
+        assert any("parameters" in e and "non-JSON-serializable" in e for e in errors)
+
+    def test_rejects_non_serializable_metadata(self):
+        """Test that non-JSON-serializable metadata values are rejected."""
+        intent = ToolIntent(
+            actor_id="user-1",
+            mission_id="m1",
+            capability="email.send",
+            connector_id="gmail",
+            operation="send",
+            reason="test",
+            metadata={"data": bytes([1, 2, 3])}  # bytes are not JSON serializable
+        )
+        errors = intent.validate()
+        assert any("metadata" in e and "non-JSON-serializable" in e for e in errors)
+
+    def test_rejects_nan_in_parameters(self):
+        """Test that NaN values in parameters are rejected."""
+        intent = ToolIntent(
+            actor_id="user-1",
+            mission_id="m1",
+            capability="test.call",
+            connector_id="test",
+            operation="call",
+            reason="test",
+            parameters={"value": float('nan')}
+        )
+        errors = intent.validate()
+        # NaN should fail JSON serialization check
+        assert any("parameters" in e for e in errors)
+
+    def test_rejects_infinity_in_parameters(self):
+        """Test that Infinity values in parameters are rejected."""
+        intent = ToolIntent(
+            actor_id="user-1",
+            mission_id="m1",
+            capability="test.call",
+            connector_id="test",
+            operation="call",
+            reason="test",
+            parameters={"value": float('inf')}
+        )
+        errors = intent.validate()
+        assert any("parameters" in e for e in errors)
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

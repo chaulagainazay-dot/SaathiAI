@@ -206,10 +206,22 @@ class ToolIntent:
         # Parameters
         if not isinstance(self.parameters, dict):
             errors.append("parameters: must be dict")
+        else:
+            # Validate JSON serializability (reject NaN/Infinity)
+            try:
+                json.dumps(self.parameters, allow_nan=False)
+            except (TypeError, ValueError) as e:
+                errors.append(f"parameters: contains non-JSON-serializable value ({type(e).__name__})")
 
         # Metadata
         if not isinstance(self.metadata, dict):
             errors.append("metadata: must be dict")
+        else:
+            # Validate JSON serializability (reject NaN/Infinity)
+            try:
+                json.dumps(self.metadata, allow_nan=False)
+            except (TypeError, ValueError) as e:
+                errors.append(f"metadata: contains non-JSON-serializable value ({type(e).__name__})")
 
         return errors
 
@@ -233,8 +245,8 @@ class ToolIntent:
         return d
 
     def to_json(self, redact: bool = False, indent: Optional[int] = None) -> str:
-        """Serialize to JSON."""
-        return json.dumps(self.to_dict(redact=redact), indent=indent)
+        """Serialize to JSON (deterministic output via sort_keys, reject NaN/Infinity)."""
+        return json.dumps(self.to_dict(redact=redact), indent=indent, sort_keys=True, allow_nan=False)
 
     def safe_repr(self) -> str:
         """Logging-safe representation with secrets redacted."""
