@@ -22,9 +22,17 @@ WILDCARD = _events_py.WILDCARD
 STORAGE_WARNING = _events_py.STORAGE_WARNING
 STORAGE_CRITICAL = _events_py.STORAGE_CRITICAL
 
-# Re-export the SQLite-backed bus and routes
+# Re-export the SQLite-backed bus and routes.
+# NOTE: importing the submodule `saathi.events.bus` binds the name `bus` on this
+# package to that MODULE, shadowing the fabric singleton instance set above
+# (`bus = _events_py.bus`). Producers and tests do `from saathi.events import bus`
+# expecting the fabric INSTANCE (with .subscribe/.publish/.publish_sync), so we
+# re-bind `bus` to the fabric instance AFTER these submodule imports.
 from saathi.events.bus import EventBus as BusEventBus, default_bus
 from saathi.events.routes import ROUTES, business_for, department_for, to_evidence
+
+# Restore the fabric singleton as the canonical `saathi.events.bus` attribute.
+bus = _events_py.bus
 
 # Storage Intelligence event vocabulary (dotted namespace) — feeds Mission Control
 STORAGE_EVENTS = {
