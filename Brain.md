@@ -37,6 +37,7 @@ If the answer is the latter, the feature belongs in the product layer, not the p
 | Agent System | ✅ Complete (L3) | SES-002 |
 | Memory & Knowledge Graph | ✅ Complete (L3) | SES-003 |
 | Voice OS | ✅ Complete (L3) | SES-004 |
+| Execution Infrastructure | ✅ Complete (L1) | Phase 3.1 ToolIntent, Phase 3.2 ExecutionGateway |
 | AI Studio | 🔄 Writing | SES-005 |
 | Autonomous Engineering | 📋 Queued | SES-006 |
 | Mission Control | 📋 Queued | SES-007 |
@@ -224,6 +225,9 @@ These are the major decisions already made. They are not up for re-evaluation wi
 | Storage Intelligence as a formal platform capability | Infrastructure Department owns Disk Watchdog, Lifecycle Engine, Cleanup Engine, Archive Manager, Backup Manager, Cloud Sync, Predictive Storage Engine, Storage Analytics; no other department deletes files directly — they submit lifecycle requests | Prevents the Mac's SSD (or any render node) from filling silently; makes storage measurable and policy-driven instead of ad-hoc cleanup scripts |
 | No render starts without a Predictive Storage Engine safety check | Studio Director estimates peak disk usage from the storyboard before entering production; postpones and triggers cleanup if unsafe | A render that runs out of disk mid-job wastes compute and produces nothing; better to know upfront |
 | Storage events flow through the Event Fabric (SES-012), not direct calls | `render_started`, `upload_verified`, `cleanup_requested`, `storage_critical`, etc. are published/subscribed, not inline function calls between departments | Decouples "a render finished" from "someone must clean up" — keeps departments independent |
+| ToolIntent as universal execution contract (Phase 3.1) | Every external action (connector call, LLM request, publish, email, webhook) is represented as an immutable ToolIntent | Enables idempotency, audit trail, approval workflow, and deterministic authorization; all connectors and agents go through ExecutionGateway, not direct API calls |
+| ExecutionGateway as single execution authority (Phase 3.2) | All external actions route through one gateway that validates, authorizes, approves, manages credentials, executes, and records | Prevents authorization bypass; unifies audit trail; enables cost control and retry strategy |
+| Immutable identity prevents authorization bypass (Phase 3.1) | Idempotency key computed once at creation; deep copy on input/output isolates external mutation; all approval decisions based on intent state at creation time | If authorization decisions could be invalidated by later mutation, the whole approval workflow becomes unreliable |
 
 ---
 
