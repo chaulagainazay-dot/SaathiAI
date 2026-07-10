@@ -19,7 +19,7 @@ class MemoryQueue(ExecutionQueue):
         self.running = {}
 
     async def enqueue(self, intent: ToolIntent, priority: int = 0) -> QueuedItem:
-        if self.is_duplicate(intent.intent_id):
+        if await self.is_duplicate(intent.intent_id):
             raise ValueError(f"Duplicate intent: {intent.intent_id}")
 
         item = QueuedItem(

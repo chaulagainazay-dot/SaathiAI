@@ -3,6 +3,9 @@
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
+import asyncio
+import concurrent.futures
+import inspect
 import logging
 
 from saathi.execution.toolintent import ToolIntent
@@ -19,6 +22,28 @@ from saathi.execution.errors import (
 from saathi.execution.queue.base import ExecutionQueue
 
 logger = logging.getLogger(__name__)
+
+
+def _run_coro(coro):
+    """Run a coroutine to completion from synchronous gateway code.
+
+    The ExecutionGateway pipeline is synchronous but the queue interface is
+    async (durable queue lands in Phase 3.2). Before Repair 1 the gateway
+    called ``self.queue.enqueue(intent)`` without awaiting, silently dropping
+    the coroutine so the enqueue never happened — breaking idempotency /
+    duplicate detection. This helper executes the coroutine correctly whether
+    or not an event loop is already running in the current thread.
+    """
+    if not inspect.isawaitable(coro):
+        return coro
+    try:
+        asyncio.get_running_loop()
+    except RuntimeError:
+        return asyncio.run(coro)
+    # A loop is already running in this thread; run the coroutine to completion
+    # on a dedicated worker thread with its own loop.
+    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+        return pool.submit(lambda: asyncio.run(coro)).result()
 
 
 @dataclass
@@ -213,7 +238,7 @@ class ExecutionGateway:
         # - Return queue position and ETA
 
         try:
-            self.queue.enqueue(intent)
+            _run_coro(self.queue.enqueue(intent))
             history.add_transition(
                 IntentState.QUEUED,
                 "added to execution queue"

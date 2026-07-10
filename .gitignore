@@ -34,3 +34,22 @@ assets/logo.png
 # credentials / env backups — never commit
 secrets/
 .env.bak
+
+# pattern-based secret exclusions — never commit (Repair 0)
+.env.*
+!.env.example
+*-admin.json
+!*-admin.example.json
+*serviceAccount*.json
+*service-account*.json
+*.pem
+*.key
+*.p12
+*.pfx
+*-credentials.json
+*_credentials.json
+*.token
+token.json
+oauth*.json
+*session*.json
+!*.example.json

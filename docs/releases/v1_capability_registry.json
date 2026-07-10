@@ -1,0 +1,1792 @@
+{
+ "captured": "2026-07-10",
+ "branch": "milestone/m7-security-engine",
+ "head": "d1736ed",
+ "api_endpoint_count": 291,
+ "frontend_route_count": 35,
+ "endpoints": [
+  {
+   "path": "/",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/content/analytics",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/content/compare",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/content/experiments",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/content/leaderboard",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/content/recommendations",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/events/stream",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/executive/briefing",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/ab/patterns",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/ab/record",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/agent/activity",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/agent/chat",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/agent/chat_with_file",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/analytics/insights",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/analytics/patterns",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/analytics/patterns",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/analytics/retention",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/analytics/retention",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/analytics/run",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/auth/audit",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/auth/change-password",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/auth/forgot",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/auth/login",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/auth/logout",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/auth/oauth/callback",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/auth/oauth/providers",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/auth/oauth/{provider}/authorize",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/auth/passkey/diagnostics",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/auth/passkey/login/options",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/auth/passkey/login/verify",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/auth/passkey/register/options",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/auth/passkey/register/verify",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/auth/passkey/status",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/auth/passkeys",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/auth/passkeys/{pid}",
+   "methods": [
+    "DELETE"
+   ]
+  },
+  {
+   "path": "/api/v1/auth/passkeys/{pid}",
+   "methods": [
+    "PATCH"
+   ]
+  },
+  {
+   "path": "/api/v1/auth/providers",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/auth/reset",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/auth/session/rotate",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/auth/sessions",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/auth/sessions/revoke-all",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/auth/sessions/{sid}",
+   "methods": [
+    "DELETE"
+   ]
+  },
+  {
+   "path": "/api/v1/auth/sessions/{sid}/rename",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/auto_develop",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/auto_improve/suggestions",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/auto_reel",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/auto_reel/download",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/automation/credits",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/automation/credits/refresh",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/automation/plan",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/automation/settings",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/automation/settings",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/baadar/status",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/ceo/home",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/ceo/os",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/ceo/telegram/brief",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/coach/challenge",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/coach/prediction",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/coach/score",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/code-memory/status",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/comments/classify",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/comments/ideas",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/comments/mine",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/comments/video-ideas",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/competitors/insights",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/competitors/scan",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/connections",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/connections",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/connectors/accounts",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/connectors/accounts",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/connectors/accounts/{aid}",
+   "methods": [
+    "DELETE"
+   ]
+  },
+  {
+   "path": "/api/v1/connectors/accounts/{aid}/mission",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/connectors/execute",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/connectors/providers",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/content/approve",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/content/pending",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/content/pending",
+   "methods": [
+    "DELETE"
+   ]
+  },
+  {
+   "path": "/api/v1/content/stage",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/dashboard/ceo",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/dashboard/status",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/dashboard/trigger",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/dev/auto",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/directors",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/directors/registry",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/directors/{slug}/run",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/evaluate/speaking",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/evaluate/writing",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/events",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/events",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/events/stats",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/evidence",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/evidence/record",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/evidence/stats",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/factory/discover",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/factory/failure",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/factory/gate",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/factory/research",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/factory/scenes",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/factory/script/validate",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/files/upload",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/generate_image",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/github/actions",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/hcgms/dashboard",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/health",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/hooks/generate",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/human/automation",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/human/claim",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/human/complete",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/human/report-run",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/human/runs/{run_id}",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/human/selectors",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/human/selectors/{key:path}",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/human/teach",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/human/teach/{sid}/{action}",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/human/test",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/hyperframes/preview",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/hyperframes/render",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/infrastructure/health",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/intake/form/{token}",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/intake/form/{token}",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/intake/projects",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/intake/projects",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/intake/projects/{pid}",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/intake/projects/{pid}",
+   "methods": [
+    "PATCH"
+   ]
+  },
+  {
+   "path": "/api/v1/intake/projects/{pid}/research",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/intake/projects/{pid}/studio-topics",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/knowledge/library",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/knowledge/library",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/knowledge/library/consult",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/knowledge/library/import",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/knowledge/library/{sid}/rate",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/knowledge/queue",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/knowledge/queue",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/lab/prompts",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/lab/prompts",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/lab/prompts/{name}",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/lab/prompts/{name}/eval",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/lab/prompts/{name}/rollback",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/leads",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/learning/analyze",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/learning/decide",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/learning/recommendations",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/linkedin/auth",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/linkedin/callback",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/linkedin/daily",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/linkedin/daily/queue",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/linkedin/daily/skip",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/linkedin/post",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/linkedin/status",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/mac/file",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/mac/folder",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/mac/item",
+   "methods": [
+    "DELETE"
+   ]
+  },
+  {
+   "path": "/api/v1/mac/rename",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/mac/tree",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/mailerlite/subscribers",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/mission",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/mission/complete",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/missions",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/missions",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/missions/twin",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/missions/{mission_id}",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/missions/{mission_id}",
+   "methods": [
+    "PATCH"
+   ]
+  },
+  {
+   "path": "/api/v1/missions/{mission_id}/brand",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/missions/{mission_id}/brand",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/missions/{mission_id}/document",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/missions/{mission_id}/health",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/missions/{mission_id}/intake",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/missions/{mission_id}/knowledge",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/missions/{mission_id}/knowledge",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/missions/{mission_id}/proposal",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/missions/{mission_id}/proposal",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/missions/{mission_id}/proposal/decide",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/missions/{mission_id}/reference",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/missions/{mission_id}/tasks/{task_id}",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/missions/{mission_id}/timeline",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/missions/{mission_id}/voice/experiments",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/missions/{mission_id}/voice/experiments",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/missions/{mission_id}/voice/experiments/{eid}/result",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/missions/{mission_id}/voice/package",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/missions/{mission_id}/voices",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/missions/{mission_id}/voices/{voice_id}/activate",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/missions/{mission_id}/website",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/missions/{mission_id}/workflows",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/missions/{mission_id}/workflows",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/n8n/status",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/notify/new-user",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/opik/status",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/pielts/apply",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/pielts/dashboard",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/pielts/improve",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/pielts/intel",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/pielts/queue",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/pielts/research",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/pielts/roadmap",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/pielts/targets",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/platform/maturity",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/progress",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/project/file",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/project/file",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/project/file",
+   "methods": [
+    "DELETE"
+   ]
+  },
+  {
+   "path": "/api/v1/project/tree",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/reddit/daily",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/reddit/daily/queue",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/reddit/daily/sent",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/reddit/daily/skip",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/reddit/queue",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/reddit/scan",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/reddit/send",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/reddit/skip",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/reddit/status",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/reddit/update_draft",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/referral/check",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/security/health",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/security/timeline",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/security/tokens",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/security/tokens",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/security/tokens/{tid}",
+   "methods": [
+    "DELETE"
+   ]
+  },
+  {
+   "path": "/api/v1/serve/{filename}",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/skills",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/skills",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/skills",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/skills/dispatch",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/skills/{slug}",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/social/dashboard",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/studio/add-music",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/studio/asset-status",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/studio/burn-captions",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/studio/captions",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/studio/control-room",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/studio/download",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/studio/download-bgm",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/studio/extract-clips",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/studio/full-pipeline",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/studio/full_pipeline",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/studio/generate-video",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/studio/google_flow_video",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/studio/google_flow_video/status",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/studio/log_performance",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/studio/plan",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/studio/produce",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/studio/publish-plan",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/studio/queue",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/studio/render-plan",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/studio/report",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/studio/research",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/studio/research/latest",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/studio/scenes",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/studio/script",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/studio/script",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/studio/script/chatgpt",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/studio/script/latest",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/studio/seo",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/studio/short_video",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/studio/stitch-video",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/studio/storyboard",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/studio/thumbnail",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/studio/topics",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/studio/transcribe",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/studio/voice",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/studio/voice/download",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/studio/yeti_pose",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/studio/yeti_warmup",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/system/cleanup-disk",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/system/disk",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/tasks",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/tasks/clear-done",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/tasks/{tid}/done",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/telegram/send",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/thumbnails/generate",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/tiktok/auth",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/tiktok/callback",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/tiktok/status",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/tiktok/webhook",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/tiktok/webhook",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/trends/fuse",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/trends/scan",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/trends/topics",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/voice/command",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/voice/enroll",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/workspace",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/workspace/plan/save",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/yeti/generate",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/yeti/persona",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/yeti/persona",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/yeti/post",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/api/v1/yeti/queue",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/api/v1/yeti/run_pipeline",
+   "methods": [
+    "POST"
+   ]
+  },
+  {
+   "path": "/docs",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/docs/oauth2-redirect",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/openapi.json",
+   "methods": [
+    "GET"
+   ]
+  },
+  {
+   "path": "/redoc",
+   "methods": [
+    "GET"
+   ]
+  }
+ ],
+ "frontend_routes": [
+  "/",
+  "/[dept]",
+  "/automation",
+  "/automation/production",
+  "/connectors",
+  "/evidence",
+  "/finance",
+  "/infrastructure",
+  "/knowledge",
+  "/knowledge/library",
+  "/lab",
+  "/learning",
+  "/maturity",
+  "/me",
+  "/mission",
+  "/missions",
+  "/missions/[id]",
+  "/missions/[id]/intake",
+  "/missions/[id]/proposal",
+  "/missions/[id]/reference",
+  "/missions/[id]/voice",
+  "/missions/[id]/website",
+  "/missions/new",
+  "/os",
+  "/project/create/[token]",
+  "/projects",
+  "/reset-password",
+  "/saathi",
+  "/security",
+  "/skills",
+  "/studio",
+  "/studio/control-room",
+  "/unlock",
+  "/voice",
+  "/workspace"
+ ]
+}
