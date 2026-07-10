@@ -1730,20 +1730,6 @@ def login(body: LoginIn, request: Request):
         detail=f"{browser} on {device_name}",
         meta={"browser": browser, "os": os_name, "ip": ip, "risk_score": risk_score},
         ip=ip, ua=ua)
-    from saathi.security.risk import RiskEngine
-    risk = RiskEngine()
-    risk_score = risk.score(_owner_id(), browser=browser, ip=ip,
-                            device_name=device_name, failed_attempts=0)
-    token = sessions.create(ua=ua, ip=ip, kind="password", remember_me=body.remember_me)
-    sid = sessions.session_id(token)
-    authsec.audit("login", ok=True, ip=ip, ua=ua, detail=f"session_{sid}")
-    # Record security event
-    from saathi.security.timeline import get_timeline
-    get_timeline().record(_owner_id(), "login_success",
-        title="Signed in with password",
-        detail=f"{browser} on {device_name}",
-        meta={"browser": browser, "os": os_name, "ip": ip, "risk_score": risk_score},
-        ip=ip, ua=ua)
     r = JSONResponse({"ok": True, "token": token, "risk_score": risk_score})
     max_age = (30*24*3600) if body.remember_me else (24*3600)
     r.set_cookie("baadar_session", token, httponly=True, samesite="none", secure=True, max_age=max_age)

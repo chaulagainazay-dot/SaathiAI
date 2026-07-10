@@ -29,6 +29,7 @@ export const DEPARTMENTS = {
   WORKSPACE:   { name: "Workspace",       color: "#9B6BFF", route: "/workspace",  short: "Chat" },
   UNLOCK:      { name: "Unlock",           color: "#7CF5E4", route: "/unlock",     short: "Unlock" },
   CONNECTORS:  { name: "Connectors",       color: "#7CF5E4", route: "/connectors", short: "Connect" },
+  SECURITY:    { name: "Security",         color: "#FF5A5A", route: "/security",   short: "Security" },
 };
 
 export const color = (key) => DEPARTMENTS[key]?.color ?? "#8FA0C4";

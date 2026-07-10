@@ -55,15 +55,15 @@ export default function OperatingSystem() {
       setChat((c) => [...c, { role: "saathi", text: "Sorry — I couldn't reach my brain just now." }]);
     } finally { setBusy(false); }
   };
+  const voice = useVoice((transcript, reply) =>
+    setChat((c) => [...c, ...(transcript ? [{ role: "you", text: transcript }] : []), { role: "saathi", text: reply }]));
+  const [enrolling, setEnrolling] = useState(false);
+  const [enrollMsg, setEnrollMsg] = useState("");
+
   if (!d) return <div className="only-desktop" style={{ maxWidth: 1000, margin: "40px auto", opacity: 0.5 }}>loading…</div>;
 
   const completeMissionItem = (item) =>
     completeMission(item).then((r) => r.mission && setD({ ...d, mission: r.mission })).catch(() => {});
-  const voice = useVoice((transcript, reply) =>
-    setChat((c) => [...c, ...(transcript ? [{ role: "you", text: transcript }] : []), { role: "saathi", text: reply }]));
-
-  const [enrolling, setEnrolling] = useState(false);
-  const [enrollMsg, setEnrollMsg] = useState("");
   const enroll = async () => {
     setEnrollMsg(""); setEnrolling(true);
     try {

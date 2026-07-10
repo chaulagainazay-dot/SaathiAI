@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { Panel, Eyebrow } from "@/components/ui";
+import MissionNav from "@/components/MissionNav";
 import { fetchProposal, generateProposal, decideProposal } from "@/lib/api";
 
 const ACCENT = "#9B6BFF", TEAL = "#00BFA5", AMBER = "#E8B84B", RED = "#FF5A5A";
@@ -22,11 +23,12 @@ export default function ProposalPage() {
   const s = pkg?.sections;
 
   return (
-    <div className="page" style={{ maxWidth: 820, margin: "0 auto", paddingBottom: 60 }}>
-      <a href={`/missions/${id}`} style={{ fontSize: 12, opacity: 0.5, textDecoration: "none", color: "inherit" }}>← Mission</a>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: 8 }}>
-        <div>
-          <Eyebrow style={{ color: ACCENT }}>Proposal Director</Eyebrow>
+    <div>
+      <MissionNav />
+      <div className="page" style={{ maxWidth: 820, margin: "0 auto", paddingBottom: 60 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: 8 }}>
+          <div>
+            <Eyebrow style={{ color: ACCENT }}>Proposal Director</Eyebrow>
           <div style={{ fontSize: 26, fontWeight: 600, marginTop: 4 }}>Business Proposal Package</div>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
@@ -126,6 +128,7 @@ export default function ProposalPage() {
         </Panel>
       </div>}
     </div>
+  </div>
   );
 }
 

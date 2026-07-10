@@ -1,21 +1,30 @@
-"use client";
+// Live CEO Home data from the platform BFF. No mock fallback — honest empty states.
 import { useEffect, useState } from "react";
-import { home as mock } from "./data";
 import { fetchCeoHome } from "./api";
 
-// Live CEO Home data from the platform BFF, with graceful offline fallback to
-// the mock contract (so the companion still works with no connection).
 export function useCeoHome() {
-  const [data, setData] = useState(mock);
+  const [data, setData] = useState(null);
   const [live, setLive] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let on = true;
+    setLoading(true);
     fetchCeoHome()
-      .then((d) => { if (on) { setData({ ...mock, ...d }); setLive(true); } })
-      .catch(() => { if (on) setLive(false); });
+      .then((d) => {
+        if (on) {
+          setData(d || null);
+          setLive(true);
+        }
+      })
+      .catch(() => {
+        if (on) setLive(false);
+      })
+      .finally(() => {
+        if (on) setLoading(false);
+      });
     return () => { on = false; };
   }, []);
 
-  return { data, live };
+  return { data, live, loading };
 }

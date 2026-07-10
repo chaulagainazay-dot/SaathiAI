@@ -1,10 +1,10 @@
 "use client";
 import { useState, useMemo, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { DEPARTMENTS } from "@/lib/departments";
 
-const COMMANDS = [
+const GLOBAL_COMMANDS = [
   { label: "Open CEO Home", dept: "EXECUTIVE", route: "/" },
   { label: "Open Mission Control", dept: "MISSION", route: "/mission" },
   { label: "Open Finance", dept: "FINANCE", route: "/finance" },
@@ -15,18 +15,48 @@ const COMMANDS = [
   { label: "Publish video", dept: "AI STUDIO", route: "/studio" },
   { label: "Record revenue", dept: "CAFETERIA", route: "/cafeteria" },
   { label: "Review Opportunity #218", dept: "OPPORTUNITY", route: "/finance" },
+  { label: "Open Learning", dept: "LEARNING", route: "/learning" },
+  { label: "Open Evidence", dept: "EVIDENCE", route: "/evidence" },
+  { label: "Open Connectors", dept: "CONNECTOR", route: "/connectors" },
+  { label: "Open Security", dept: "SECURITY", route: "/security" },
 ];
+
+function getMissionCommands(id) {
+  return [
+    { label: "Mission Overview", dept: "MISSION", route: `/missions/${id}` },
+    { label: "Mission Intake", dept: "MISSION", route: `/missions/${id}/intake` },
+    { label: "Knowledge Graph", dept: "KNOWLEDGE", route: `/knowledge` },
+    { label: "Website Intelligence", dept: "MISSION", route: `/missions/${id}/website` },
+    { label: "Reference Intelligence", dept: "MISSION", route: `/missions/${id}/reference` },
+    { label: "Proposal", dept: "MISSION", route: `/missions/${id}/proposal` },
+    { label: "Voice Studio", dept: "MISSION", route: `/missions/${id}/voice` },
+    { label: "Generate Proposal", dept: "MISSION", route: `/missions/${id}/proposal` },
+    { label: "Open Workspace", dept: "MISSION", route: `/workspace` },
+  ];
+}
 
 export default function CommandPalette({ open, onClose }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [q, setQ] = useState("");
   const [sel, setSel] = useState(0);
   const inputRef = useRef(null);
 
+  // Detect mission context from URL
+  const missionMatch = pathname?.match(/^\/missions\/([^/]+)/);
+  const missionId = missionMatch ? missionMatch[1] : null;
+
+  const commands = useMemo(() => {
+    if (missionId) {
+      return [...getMissionCommands(missionId), ...GLOBAL_COMMANDS];
+    }
+    return GLOBAL_COMMANDS;
+  }, [missionId]);
+
   const results = useMemo(() => {
     const s = q.trim().toLowerCase();
-    return s ? COMMANDS.filter((c) => c.label.toLowerCase().includes(s)) : COMMANDS;
-  }, [q]);
+    return s ? commands.filter((c) => c.label.toLowerCase().includes(s)) : commands;
+  }, [q, commands]);
 
   useEffect(() => { if (open) { setQ(""); setSel(0); setTimeout(() => inputRef.current?.focus(), 40); } }, [open]);
   useEffect(() => { setSel(0); }, [q]);
@@ -55,7 +85,7 @@ export default function CommandPalette({ open, onClose }) {
             <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px" }}>
               <span className="mono" style={{ color: "var(--color-ink-500)", fontSize: 12 }}>⌘K</span>
               <input ref={inputRef} value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={onKey}
-                placeholder="Search commands, departments, actions…"
+                placeholder={missionId ? "Search mission commands, actions…" : "Search commands, departments, actions…"}
                 style={{ flex: 1, background: "transparent", border: "none", outline: "none",
                   color: "var(--color-ink-100)", fontSize: 16, fontFamily: "var(--font-ui)" }} />
             </div>
@@ -64,7 +94,7 @@ export default function CommandPalette({ open, onClose }) {
               {results.map((c, i) => {
                 const color = DEPARTMENTS[c.dept]?.color;
                 return (
-                  <div key={c.label} onMouseEnter={() => setSel(i)} onClick={() => go(c)}
+                  <div key={c.label + c.route} onMouseEnter={() => setSel(i)} onClick={() => go(c)}
                     style={{ display: "flex", alignItems: "center", gap: 12, padding: "11px 14px",
                       borderRadius: 12, cursor: "pointer",
                       background: i === sel ? "rgba(255,255,255,0.06)" : "transparent" }}>

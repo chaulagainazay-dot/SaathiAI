@@ -18,7 +18,6 @@ from __future__ import annotations
 from saathi.security.store import SecurityStore, get_store
 
 
-# Vocabulary of security history
 EVENT_KINDS = frozenset({
     "password_changed",
     "password_reset",
@@ -43,24 +42,19 @@ EVENT_KINDS = frozenset({
 
 
 class SecurityTimeline:
-    """Append-only security event log."""
-
     def __init__(self, store: SecurityStore | None = None):
         self.store = store or get_store()
 
     def record(self, user_id: str, kind: str, title: str, *, detail: str = "",
                meta: dict | None = None, ip: str = "", ua: str = "") -> str:
-        """Record a security event. Returns event ID."""
         kind = kind if kind in EVENT_KINDS else "security_setting_changed"
         return self.store.event_record(user_id, kind, title, detail=detail,
                                        meta=meta, ip=ip, ua=ua)
 
     def list(self, user_id: str, *, kind: str | None = None, limit: int = 100) -> list[dict]:
-        """Recent security events for a user."""
         return self.store.event_list(user_id, kind=kind, limit=limit)
 
     def recent_kinds(self, user_id: str, kinds: list[str], limit: int = 20) -> list[dict]:
-        """Events matching any of the given kinds."""
         placeholders = ",".join("?" * len(kinds))
         rows = self.store.db.execute(
             f"SELECT * FROM security_events WHERE user_id=? AND kind IN ({placeholders})"
@@ -79,7 +73,6 @@ class SecurityTimeline:
         return out
 
 
-# ── process-wide singleton ───────────────────────────────────────────────────
 _default_timeline: SecurityTimeline | None = None
 
 
@@ -88,3 +81,8 @@ def get_timeline() -> SecurityTimeline:
     if _default_timeline is None:
         _default_timeline = SecurityTimeline()
     return _default_timeline
+
+
+def close_timeline() -> None:
+    global _default_timeline
+    _default_timeline = None
