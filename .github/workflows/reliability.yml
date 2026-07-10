@@ -1,0 +1,73 @@
+name: reliability
+
+# Diagnose-only CI: collection check, critical regression manifest, server
+# import + route count, full suite, report artifact. CI never commits or
+# pushes production-code changes — it diagnoses, classifies, and fails clearly.
+
+on:
+  push:
+    branches: [master, "milestone/**", "release/**"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  reliability:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install -U pip
+          pip install -e . pytest pytest-asyncio httpx
+
+      - name: Collection check (no import/collection errors)
+        run: python -m pytest tests/ --collect-only -q
+
+      - name: Server import + route count
+        run: |
+          python - <<'PY'
+          from saathi.server import app
+          n = len(app.routes)
+          print(f"routes: {n}")
+          assert n >= 290, f"route-count regression: {n} < 290"
+          PY
+
+      - name: Critical regression manifest
+        run: |
+          python - <<'PY'
+          import json, sys
+          from saathi.repair.manifest import load_manifest
+          import subprocess
+          failed = []
+          for chk in load_manifest():
+              r = subprocess.run([sys.executable, "-m", "pytest", "-q",
+                                  "-p", "no:cacheprovider", *chk.targets],
+                                 capture_output=True, text=True, timeout=900)
+              ok = r.returncode == 0
+              print(f"{'PASS' if ok else 'FAIL'}  {chk.id}")
+              if chk.blocking and not ok:
+                  failed.append(chk.id)
+                  print(r.stdout[-1500:])
+          if failed:
+              sys.exit(f"blocking critical checks failed: {failed}")
+          PY
+
+      - name: Full test suite
+        run: python -m pytest tests/ -q -p no:cacheprovider
+
+      - name: Upload repair/diagnostic reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reliability-reports
+          path: |
+            artifacts/repairs/
+            data/repair_baseline.json
+          if-no-files-found: ignore

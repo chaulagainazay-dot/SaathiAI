@@ -214,6 +214,18 @@ class AutoRepairLoop:
         inc.status = RepairStatus.REPAIRED
         _emit("repair.committed", {"incident_id": inc.incident_id,
                                    "commit": commit}, events)
+
+        # Baseline updates ONLY here — after the complete validation ladder
+        # (focused + full suite + server smoke + regression guard) succeeded.
+        try:
+            from saathi.repair.baseline import update_baseline
+            update_baseline(branch=rb_mod.current_branch(), commit=commit,
+                            passed=after_full.passed, failed=after_full.failed,
+                            skipped=after_full.skipped, collection_errors=after_full.errors,
+                            duration_sec=0.0, server_import=routes_after_ok,
+                            route_count=routes_after, full_success=True)
+        except Exception:
+            pass  # baseline is a record, not a gate — never fail the repair on it
         out = self._finish(inc, RepairStatus.REPAIRED,
                            f"repaired and committed {commit}", events)
         out.regression = report.__dict__

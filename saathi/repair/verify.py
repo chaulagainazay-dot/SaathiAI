@@ -37,9 +37,12 @@ class TestOutcome:
 
 def _parse(output: str) -> TestOutcome:
     o = TestOutcome(ran=True, raw_tail=output[-400:])
-    # find the pytest summary line (last matching)
+    # find the pytest summary line (last matching). With -q and all tests
+    # passing, pytest prints a bare "N passed in 1.2s" without the "==="
+    # decoration, so fall back to any summary-shaped line.
     for line in reversed(output.splitlines()):
-        if ("passed" in line or "failed" in line or "error" in line) and "==" in line:
+        if ("passed" in line or "failed" in line or "error" in line) and \
+                re.search(r"\d+ (passed|failed|error)", line):
             for m in re.finditer(r"(\d+) (passed|failed|skipped|error)", line):
                 n, kind = int(m.group(1)), m.group(2)
                 setattr(o, {"passed": "passed", "failed": "failed",

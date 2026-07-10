@@ -1,0 +1,25 @@
+{
+  "allowed_paths": ["saathi/", "tests/", "docs/"],
+  "protected_paths": [
+    "secrets/", ".env", "firebase-admin.json",
+    "saathi/auth_logto.py", "saathi/authsec.py", "saathi/sessions.py",
+    "saathi/execution/trade.py",
+    "deploy/", ".github/workflows/",
+    "data/backups/"
+  ],
+  "max_files_per_auto_repair": 8,
+  "max_patch_lines": 400,
+  "max_repair_cycles": 3,
+  "max_attempts_per_incident": 2,
+  "command_timeout_sec": 900,
+  "allowed_test_commands": ["pytest"],
+  "baseline_path": "data/repair_baseline.json",
+  "journal_path": "artifacts/repairs/",
+  "known_failures_path": "data/known_failures.json",
+  "critical_checks_path": "saathi/repair/critical_checks.json",
+  "risk_rules": {
+    "high": ["migrations", "auth", "billing", "payment", "secrets", "deploy"],
+    "medium": ["contract", "schema", "shared service"],
+    "low": ["import", "await", "registration", "event binding"]
+  }
+}

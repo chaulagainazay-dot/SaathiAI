@@ -464,3 +464,22 @@ production-safe pipeline: **Failure → Evidence → Classify → Root cause →
 - **Anti-hallucination** — task-execution repairs verify the execution *trace*,
   not the final text. No tool call → "the task was not executed." Missing
   credentials → "connector is not connected or authenticated." Never fabricates.
+
+### Reliability extensions (Repair 3)
+
+- **Critical regression manifest** (`saathi/repair/critical_checks.json`): 11
+  blocking checks — event bus API/emission/stream, studio tracking, intake
+  tagging, BFF contract + dream pct + regression pack, execution gateway +
+  finance trade layer, repair self-tests — plus server import + route count.
+- **Quality records**: baseline (`data/repair_baseline.json`, updated only
+  after full-ladder success), known-failure registry
+  (`data/known_failures.json`, detects new/recurring/resolved/returned/
+  signature-changed), journal (`artifacts/repairs/`, secret-redacted JSON+MD).
+- **Bounded loop modes**: inspect / diagnose / repair --test / loop
+  --max-cycles (1..10, fingerprint no-progress detection) / report / critical.
+  Exit codes 0-7 documented in AUTO_REPAIR_RUNBOOK.md.
+- **Canonical dream progress**: `financial_mission_control.dream_progress_pct`
+  — the single source of truth; percentage semantics (1.0 == 1% of
+  DREAM_TARGET), defensive against zero/negative/NaN inputs.
+- **CEO Home DI rule**: explicit `Signals` drive the payload (tests/previews);
+  no Signals → real recorded Mission revenue. Regression from f80a37f fixed.

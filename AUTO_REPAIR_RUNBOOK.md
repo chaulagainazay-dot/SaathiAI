@@ -60,3 +60,41 @@ code untouched). It never fabricates Gmail availability.
 Each safe repair records the pre-repair HEAD as its rollback commit. To restore:
 `saathi repair rollback <incident-id>` → `git reset --hard <rollback_head>`.
 Automatic rollback also fires whenever verification/regression/secret-scan fails.
+
+---
+
+## Reliability modes (Repair 3 additions)
+
+```bash
+.venv/bin/python -m saathi.repair.cli inspect              # read-only env+failures analysis
+.venv/bin/python -m saathi.repair.cli diagnose             # collection + critical manifest + server import
+.venv/bin/python -m saathi.repair.cli repair --test <node> # targeted repair of one failing test
+.venv/bin/python -m saathi.repair.cli loop --max-cycles 3  # bounded repair loop (1..10, never infinite)
+.venv/bin/python -m saathi.repair.cli report               # latest journal + open known failures + baseline
+.venv/bin/python -m saathi.repair.cli critical             # run critical regression manifest only
+```
+
+### Exit codes
+`0` passed · `1` unresolved failures · `2` bad command/config · `3` unsafe worktree ·
+`4` medium/high-risk needs review · `5` regression introduced · `6` infra failure ·
+`7` max cycles reached unresolved.
+
+### Quality records
+- Critical manifest: `saathi/repair/critical_checks.json` (11 checks + server import)
+- Baseline: `data/repair_baseline.json` — updated ONLY after full ladder success
+- Known failures: `data/known_failures.json` — new/recurring/resolved/returned/signature-changed
+- Journal: `artifacts/repairs/repair-<stamp>.{json,md}` — secret-redacted
+- Policy: `saathi/repair/repair_policy.json` — limits, protected paths, risk rules
+
+### BFF contracts (Repair 3)
+- **CEO Home payload**: 14 required keys; `actions` is exactly 3 real navigable
+  cards, FINANCE ranked first (standing daily review, real pending count).
+- **dreamPct canonical**: `saathi.financial_mission_control.dream_progress_pct`
+  — PERCENTAGE (1.0 == 1% of DREAM_TARGET), 4 dp, negatives→0, zero/invalid
+  target→0.0, >100 allowed. DI rule: explicit `Signals` drive the payload;
+  no Signals → real recorded revenue.
+
+### CI
+`.github/workflows/reliability.yml` — collection check, server import +
+route-count floor, critical manifest, full suite, report artifacts.
+Diagnose-only: CI never commits or pushes code changes.
