@@ -65,6 +65,12 @@
       "targets": ["tests/test_auto_repair.py"],
       "subsystem": "repair",
       "blocking": true
+    },
+    {
+      "id": "chat.saathi_chat_m8",
+      "targets": ["tests/test_chat.py"],
+      "subsystem": "chat",
+      "blocking": true
     }
   ]
 }

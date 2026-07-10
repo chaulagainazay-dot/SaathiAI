@@ -48,3 +48,13 @@ briefing, and reports can never disagree. With no recorded revenue the
 dashboard shows 0 — real zeros, never fabricated progress. The CEO Home
 always presents exactly three real next-actions with Finance review ranked
 first — the standing daily discipline.
+
+## Saathi Chat (M8)
+
+One conversation surface now fronts the whole platform: missions, knowledge,
+projects and agents flow into every reply automatically, and every model call
+is gateway-audited with a visible execution trail. Business value: decisions
+made in chat are traceable (who/what/cost/duration), conversations are never
+lost (durable store + checkpoints), and failed inference is reported honestly
+instead of masked with fabricated answers — the same no-fake-completions
+standard as the repair system.

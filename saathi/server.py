@@ -1517,6 +1517,12 @@ try:
 except Exception as _e:
     print(f"[saathi] repair router unavailable: {_e}")
 
+try:
+    from .chat.api import router as chat_router
+    app.include_router(chat_router)
+except Exception as _e:
+    print(f"[saathi] chat router unavailable: {_e}")
+
 # Simple access key for remote/tunnel use. Local requests (the Mac itself)
 # are always allowed; remote requests must send X-Saathi-Token.
 import os as _os

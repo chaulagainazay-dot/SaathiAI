@@ -483,3 +483,48 @@ production-safe pipeline: **Failure → Evidence → Classify → Root cause →
   DREAM_TARGET), defensive against zero/negative/NaN inputs.
 - **CEO Home DI rule**: explicit `Signals` drive the payload (tests/previews);
   no Signals → real recorded Mission revenue. Regression from f80a37f fixed.
+
+---
+
+## M8 — Saathi Chat (central intelligence interface)
+
+`saathi/chat/` — every other subsystem integrates through this chat.
+
+**Architecture (data flow):**
+```
+user text → ChatEngine.send()
+  → memory retrieval (related conversations + mission knowledge, automatic)
+  → attachment RAG (chunk scoring → context + citations)
+  → project context (project_ref resources)
+  → ToolIntent → ExecutionGateway (validate/authorize/risk/approve/queue)
+  → ChatLLMAdapter → Model Router (Anthropic/OpenAI/DeepSeek/Qwen/GLM/
+    Groq/Gemini/Ollama — provider-extensible)
+  → sanitize → evidence → persist (message + execution + citations)
+  → rolling summary + auto-checkpoint every 8 messages
+```
+Models are never called directly by the API layer; every inference and tool
+call is a gateway-audited ToolIntent with an execution record.
+
+**Store** (`data/chat.db`, 11 normalized tables): conversation, message
+(edit chains = version history), attachment, memory_link, citation,
+execution, tool_invocation, summary, project_ref, agent_run, checkpoint.
+Soft delete + restore — no conversation is ever hard-lost; checkpoints are
+restorable full snapshots.
+
+**API** `/api/v1/chat/*` (auth inherited): conversations CRUD/search/
+restore, messages (send + SSE streaming, edit-and-resend, regenerate,
+versions, citations), attachments, tools, checkpoints/restore, agents.
+
+**Agents** (Layer 9): planner/researcher/coder/reviewer/architect/writer/ceo
+— role-prompted runs recorded in agent_run; delegate() chains agents with
+provenance (delegated_by).
+
+**Honesty invariants:** LLM failure → "The task was not executed — …" (never
+fabricated replies); unknown tools → status=blocked with reason (never faked
+results).
+
+**UI:** `saathi-os/app/chat` — sidebar (search/pinned/recent/folders/project),
+streamed messages, agent selector, execution timeline + memory links +
+agent runs + checkpoints panel.
+
+**Critical manifest:** `chat.saathi_chat_m8` → tests/test_chat.py (blocking).
