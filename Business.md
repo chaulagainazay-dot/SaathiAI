@@ -38,3 +38,13 @@ dependable without a human babysitting every failure.
 No autonomous push/deploy, no credential rotation, no email send/delete, no
 trades or transfers, no database deletion, no security-control changes. These
 remain human decisions by design.
+
+## Dream progress semantics (Repair 3)
+
+The CEO dashboard's dream progress (`dreamPct`) is a **percentage of the
+7,938,838.98 USD dream target** — 1.0 means 1% earned. One canonical
+calculation (`dream_progress_pct`) feeds every surface, so the Home screen,
+briefing, and reports can never disagree. With no recorded revenue the
+dashboard shows 0 — real zeros, never fabricated progress. The CEO Home
+always presents exactly three real next-actions with Finance review ranked
+first — the standing daily discipline.

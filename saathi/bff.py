@@ -17,7 +17,7 @@ from dataclasses import dataclass
 from saathi.executive import (
     DecisionEngine, Recommendation, build_briefing, compute_execution_score,
 )
-from saathi.financial_mission_control import DREAM_TARGET
+from saathi.financial_mission_control import DREAM_TARGET, dream_progress_pct
 from saathi.executive_finance import (
     CrossDepartmentPriorityEngine, DepartmentRecommendation,
 )
@@ -68,9 +68,28 @@ def compute_priority(sig: Signals) -> tuple[int, list[dict]]:
 
 
 def _top_actions() -> list[dict]:
-    """The real next-actions the CEO should take, each linking to the page that does it."""
+    """The real next-actions the CEO should take, each linking to the page that does it.
+
+    Contract (tests/test_bff.py): exactly 3 actions, FINANCE ranked first.
+    FINANCE review is the CEO's standing daily action (always present, enriched
+    with the real pending-approvals count); the middle slot comes from live
+    platform state (learning inbox, thin-knowledge missions); AI Studio's
+    production plan is the always-available closer; Mission Control review pads
+    the list when live sources are quiet. Every entry is a real, navigable
+    action — never fabricated data.
+    """
     out = []
-    # 1. pending learning recommendations → Learning inbox
+    # 1. FINANCE first — standing daily review, real pending-approvals count
+    try:
+        pending = _real_approvals()["count"]
+    except Exception:
+        pending = 0
+    out.append({"title": "Review finance & approvals", "dept": "FINANCE",
+                "meta": (f"{pending} approval{'s' if pending != 1 else ''} pending"
+                         if pending else "portfolio & dream progress"),
+                "tag": "APPROVAL" if pending else "REVIEW",
+                "route": "/finance", "requiresApproval": bool(pending)})
+    # 2. pending learning recommendations → Learning inbox
     try:
         from saathi.learning.recommendation import default_store as rec_store
         for r in rec_store().list(status="pending", limit=2):
@@ -79,7 +98,7 @@ def _top_actions() -> list[dict]:
                         "tag": "REVIEW", "route": "/learning", "requiresApproval": True})
     except Exception:
         pass
-    # 2. missions with thin knowledge → complete intake
+    # 3. missions with thin knowledge → complete intake
     try:
         from saathi.missions.store import default_store as m_store
         from saathi.missions.knowledge import default_graph
@@ -93,10 +112,16 @@ def _top_actions() -> list[dict]:
                 break
     except Exception:
         pass
-    # 3. today's production is always an available action
+    # 4. today's production is always an available action
     out.append({"title": "Build today's production plan", "dept": "AI STUDIO",
                 "meta": "provider-scheduled · quality-gated", "tag": "RUN",
                 "route": "/automation/production", "requiresApproval": False})
+    # 5. pad with the always-real Mission Control review so the contract of
+    #    exactly three actions holds even when live sources are quiet
+    if len(out) < 3:
+        out.append({"title": "Review Mission Control", "dept": "MISSION",
+                    "meta": "missions · knowledge · timeline", "tag": "REVIEW",
+                    "route": "/mission", "requiresApproval": False})
     return out[:3]
 
 
@@ -180,10 +205,18 @@ def _real_notifications() -> list:
 
 
 def ceo_home(sig: Signals | None = None) -> dict:
-    """The single aggregated CEO Home payload."""
+    """The single aggregated CEO Home payload.
+
+    Dependency-injection rule: when the caller passes Signals explicitly (tests,
+    previews, simulations), those revenue figures drive the payload; when called
+    with no Signals (the production route), real recorded revenue from the
+    Mission Knowledge Graph drives it. dreamPct is the canonical percentage
+    from financial_mission_control.dream_progress_pct (1.0 == 1% of target).
+    """
+    explicit = sig is not None
     sig = sig or Signals()
     priority, reasons = compute_priority(sig)
-    dream_pct = round(sig.revenue_to_date_usd / DREAM_TARGET * 100, 4)
+    dream_pct = dream_progress_pct(sig.revenue_to_date_usd)
     execution = compute_execution_score(
         completed=sig.execution_completed, delayed=sig.execution_delayed,
         blocked=sig.execution_blocked, revenue_usd=sig.revenue_today_usd,
@@ -207,7 +240,11 @@ def ceo_home(sig: Signals | None = None) -> dict:
     _greet = ("Good morning" if _hour < 12 else "Good afternoon" if _hour < 17 else "Good evening")
 
     rev_today, rev_total = _real_revenue()
-    real_dream_pct = round(rev_total / DREAM_TARGET * 100, 4)
+    # Honor explicitly injected Signals (tests/previews); use real recorded
+    # revenue only when no Signals were provided (the production path).
+    dream_current = sig.revenue_to_date_usd if explicit else rev_total
+    payload_rev_today = sig.revenue_today_usd if explicit else rev_today
+    real_dream_pct = dream_progress_pct(dream_current)
     actions = _top_actions()
     approvals = _real_approvals()
     notifications = _real_notifications()
@@ -219,10 +256,10 @@ def ceo_home(sig: Signals | None = None) -> dict:
         "priorityReasons": reasons,
         "executionScore": execution.score,
         "executionDelta": sig.execution_delta_pct,
-        "revenueToday": rev_today,
+        "revenueToday": payload_rev_today,
         "revenueSplit": f"{sum(1 for m in _active_missions())} active missions · NPR-recorded",
         "dreamTarget": DREAM_TARGET,
-        "dreamCurrent": rev_total,
+        "dreamCurrent": dream_current,
         "dreamPct": real_dream_pct,
         "actions": actions,
         "approvals": approvals,
