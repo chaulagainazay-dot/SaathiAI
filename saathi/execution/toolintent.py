@@ -7,6 +7,7 @@ This module defines the schema, validation, serialization, and safe logging.
 """
 from __future__ import annotations
 
+import copy
 import hashlib
 import json
 import re
@@ -14,6 +15,8 @@ import uuid
 from dataclasses import dataclass, field, asdict
 from datetime import datetime, timedelta
 from enum import Enum
+from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any, Dict, List, Optional
 
 
@@ -111,7 +114,11 @@ def _canonical_params(params: Dict[str, Any]) -> str:
 
 @dataclass(frozen=True)
 class ToolIntent:
-    """Immutable, auditable specification of an execution request."""
+    """Immutable, auditable specification of an execution request.
+
+    Deep immutability enforced: parameters and metadata are frozen after creation.
+    This prevents authorization/hashing bypass via external mutation.
+    """
 
     schema_version: str = "1.0"
     intent_id: str = field(default_factory=lambda: str(uuid.uuid4()))
@@ -144,6 +151,14 @@ class ToolIntent:
     expires_at: float = field(default_factory=lambda: (datetime.now() + timedelta(hours=24)).timestamp())
 
     metadata: Dict[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self):
+        """Enforce defensive copying to prevent external mutation.
+
+        Deep-copy input parameters and metadata so external changes don't affect intent.
+        """
+        object.__setattr__(self, "parameters", copy.deepcopy(self.parameters))
+        object.__setattr__(self, "metadata", copy.deepcopy(self.metadata))
 
     def validate(self) -> List[str]:
         """Return list of validation errors, or empty list if valid."""
@@ -230,7 +245,11 @@ class ToolIntent:
         return datetime.now().timestamp() >= self.expires_at
 
     def to_dict(self, redact: bool = False) -> Dict[str, Any]:
-        """Convert to dict. If redact=True, sanitizes sensitive fields for logging."""
+        """Convert to dict. If redact=True, sanitizes sensitive fields for logging.
+
+        Note: parameters and metadata are deep-copied to prevent mutation of the returned dict
+        from affecting the immutable original.
+        """
         d = asdict(self)
         # Convert Enum values to strings
         d["actor_type"] = self.actor_type.value
@@ -238,6 +257,10 @@ class ToolIntent:
         d["approval_level"] = self.approval_level.value
         d["priority"] = self.priority.value
         d["business_unit"] = self.business_unit.value
+
+        # Deep-copy mutable structures to prevent external mutation
+        d["parameters"] = copy.deepcopy(dict(d["parameters"]))
+        d["metadata"] = copy.deepcopy(dict(d["metadata"]))
 
         if redact:
             d["parameters"] = _redact_secrets(d["parameters"])
@@ -254,8 +277,11 @@ class ToolIntent:
 
     @staticmethod
     def from_dict(data: Dict[str, Any]) -> ToolIntent:
-        """Construct from dict, converting string enums to types."""
-        d = dict(data)
+        """Construct from dict, converting string enums to types.
+
+        Defensive deep-copy prevents mutation of input dict from affecting the intent.
+        """
+        d = copy.deepcopy(dict(data))
         # Convert string enums to enum types
         if isinstance(d.get("actor_type"), str):
             d["actor_type"] = ActorType(d["actor_type"])

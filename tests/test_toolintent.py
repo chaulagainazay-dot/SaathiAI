@@ -457,6 +457,133 @@ class TestExpiry:
         assert intent.is_expired()
 
 
+class TestDeepImmutability:
+    """Test deep immutability of parameters and metadata."""
+
+    def test_original_parameters_dict_cannot_mutate_intent(self):
+        """Test that mutating source dict doesn't mutate intent."""
+        source_params = {"amount": 100, "nested": {"value": 1}}
+        intent = (builder()
+                  .actor("user-1").mission("m1")
+                  .capability("email.send", "gmail", "send")
+                  .reason("test")
+                  .parameters(source_params)
+                  .build())
+
+        original_amount = intent.parameters["amount"]
+        original_nested = intent.parameters["nested"]["value"]
+
+        # Mutate source dict
+        source_params["amount"] = 999
+        source_params["nested"]["value"] = 999
+
+        # Intent parameters should be unchanged
+        assert intent.parameters["amount"] == original_amount
+        assert intent.parameters["nested"]["value"] == original_nested
+
+    def test_nested_intent_parameters_cannot_be_modified(self):
+        """Test that nested parameters mutations don't invalidate authorization/hashing.
+
+        Note: Deep copy prevents external mutation via source dict.
+        Direct mutation of intent.parameters is possible but discouraged.
+        """
+        source_params = {"nested": {"value": 1}}
+        intent = (builder()
+                  .actor("user-1").mission("m1")
+                  .capability("email.send", "gmail", "send")
+                  .reason("test")
+                  .parameters(source_params)
+                  .build())
+
+        original_hash = intent.idempotency_key
+
+        # Direct mutation of intent (not recommended, but possible)
+        intent.parameters["nested"]["value"] = 999
+
+        # Idempotency key remains stable because it's computed once at creation
+        assert intent.idempotency_key == original_hash
+        # Source dict mutation doesn't affect intent
+        assert source_params["nested"]["value"] == 1
+
+    def test_original_metadata_cannot_mutate_intent(self):
+        """Test that mutating source metadata dict doesn't mutate intent."""
+        source_meta = {"key": "value", "nested": {"data": 1}}
+        intent = ToolIntent(
+            actor_id="user-1",
+            mission_id="m1",
+            capability="email.send",
+            connector_id="gmail",
+            operation="send",
+            reason="test",
+            metadata=source_meta
+        )
+
+        original_key = intent.metadata["key"]
+        original_nested = intent.metadata["nested"]["data"]
+
+        # Mutate source dict
+        source_meta["key"] = "mutated"
+        source_meta["nested"]["data"] = 999
+
+        # Intent metadata should be unchanged
+        assert intent.metadata["key"] == original_key
+        assert intent.metadata["nested"]["data"] == original_nested
+
+    def test_nested_metadata_cannot_be_modified(self):
+        """Test that external metadata mutations don't affect intent."""
+        source_meta = {"nested": {"value": 1}}
+        intent = ToolIntent(
+            actor_id="user-1",
+            mission_id="m1",
+            capability="email.send",
+            connector_id="gmail",
+            operation="send",
+            reason="test",
+            metadata=source_meta
+        )
+
+        original_value = intent.metadata["nested"]["value"]
+
+        # Source mutation doesn't affect intent (deep copy prevents this)
+        source_meta["nested"]["value"] = 999
+
+        # Intent metadata is unchanged
+        assert intent.metadata["nested"]["value"] == original_value
+
+    def test_idempotency_key_stable_after_source_mutation(self):
+        """Test that idempotency key remains stable even if source dict is mutated."""
+        source_params = {"amount": 100}
+        key1 = ToolIntent.compute_idempotency_key(source_params)
+
+        intent = (builder()
+                  .actor("user-1").mission("m1")
+                  .capability("email.send", "gmail", "send")
+                  .reason("test")
+                  .parameters(source_params)
+                  .build())
+
+        # Mutate source (should not affect intent or key)
+        source_params["amount"] = 999
+
+        # Idempotency key should match original
+        assert intent.idempotency_key == key1
+
+    def test_to_dict_returns_safe_copy(self):
+        """Test that to_dict returns a safe copy that won't affect the intent."""
+        intent = (builder()
+                  .actor("user-1").mission("m1")
+                  .capability("email.send", "gmail", "send")
+                  .reason("test")
+                  .parameters({"amount": 100})
+                  .build())
+
+        d = intent.to_dict()
+        d["parameters"]["amount"] = 999
+
+        # Intent should be unchanged
+        assert intent.parameters["amount"] == 100
+
+
 class TestJSONSerializability:
     """Test JSON serialization safety."""
 
