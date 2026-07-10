@@ -58,3 +58,13 @@ made in chat are traceable (who/what/cost/duration), conversations are never
 lost (durable store + checkpoints), and failed inference is reported honestly
 instead of masked with fabricated answers — the same no-fake-completions
 standard as the repair system.
+
+## Unified Memory (M9)
+
+SaathiOS now remembers across conversations, projects, and the business itself
+— preferences, decisions, rules, and architecture surface automatically in
+chat, each traceable to its source. Value: continuity (the platform stops
+re-asking what it already knows), auditability (every retrieval logged with
+why-it-matched), and trust (deleted memory truly disappears from results;
+nothing is fabricated). Privacy is enforced by scope firewalls — user, project,
+and agent memories never leak across boundaries.

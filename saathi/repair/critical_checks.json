@@ -71,6 +71,12 @@
       "targets": ["tests/test_chat.py"],
       "subsystem": "chat",
       "blocking": true
+    },
+    {
+      "id": "memory.engine_m9",
+      "targets": ["tests/test_memory_engine.py"],
+      "subsystem": "memory",
+      "blocking": true
     }
   ]
 }

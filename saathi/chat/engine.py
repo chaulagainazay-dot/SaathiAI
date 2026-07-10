@@ -84,10 +84,19 @@ class ChatEngine:
     """All chat operations over a ChatStore + the ExecutionGateway."""
 
     def __init__(self, store: ChatStore | None = None,
-                 llm_fn: LLMFn | None = None):
+                 llm_fn: LLMFn | None = None, memory=None):
         self.store = store or default_store()
         self.llm_fn = llm_fn or _default_llm
         self._system = None  # lazy SaathiExecutionSystem
+        self._memory = memory  # M9 MemoryEngine; None → lazy global default
+
+    def _mem(self):
+        """The M9 Memory Engine (injected or global default). Best-effort —
+        callers wrap use in try/except so memory never blocks chat."""
+        if self._memory is None:
+            from saathi.memory.engine import default_engine as mem_engine
+            self._memory = mem_engine()
+        return self._memory
 
     # ── gateway wiring (Layer 3) ──────────────────────────────────────────
     def _execution_system(self):
@@ -139,10 +148,31 @@ class ChatEngine:
         return data, meta
 
     # ── Layer 5: memory retrieval ─────────────────────────────────────────
-    def _retrieve_memory(self, cid: str, text: str) -> list[dict]:
-        """Automatic pre-execution memory retrieval: related conversations +
-        mission knowledge. Failures degrade to empty — never block the send."""
+    def _retrieve_memory(self, cid: str, text: str,
+                         conv: dict | None = None) -> tuple[list[dict], str, list[dict]]:
+        """Automatic pre-execution memory retrieval.
+
+        Primary path (M9): the unified MemoryEngine hybrid retrieval
+        (semantic + keyword + lifecycle, scope-firewalled, provenance-tracked).
+        Also keeps the conversation + mission links for the UI panel. Returns
+        (memory_links, memory_context_block, memory_citations). Failures
+        degrade to empty — never block the send."""
         links: list[dict] = []
+        mem_context = ""
+        mem_citations: list[dict] = []
+        try:  # M9 unified memory engine
+            project_id = (conv or {}).get("project_id", "") or ""
+            got = self._mem().retrieve_for_chat(
+                text, user="ajay", project_id=project_id, conversation_id=cid,
+                top_k=6)
+            mem_context = got["context_block"]
+            mem_citations = got["citations"]
+            for r in got["results"]:
+                links.append(self.store.add_memory_link(
+                    cid, memory_kind=f"m9:{r['memory_type']}",
+                    memory_ref=r["memory_id"], relevance=r["final_score"]))
+        except Exception:
+            pass
         try:  # related conversations (semantic-lite: keyword content search)
             import re
             terms = sorted({w.lower() for w in re.findall(r"\w{5,}", text)},
@@ -169,7 +199,7 @@ class ChatEngine:
                         relevance=0.4))
         except Exception:
             pass
-        return links
+        return links, mem_context, mem_citations
 
     # ── Layer 6: knowledge / RAG over attachments ─────────────────────────
     def _retrieve_knowledge(self, cid: str, text: str) -> tuple[str, list[dict]]:
@@ -221,8 +251,9 @@ class ChatEngine:
         user_msg = self.store.add_message(cid, "user", text)
 
         # Layers 5+6+8 — automatic pre-execution context
-        links = self._retrieve_memory(cid, text)
+        links, mem_context, mem_citations = self._retrieve_memory(cid, text, conv)
         knowledge, citation_specs = self._retrieve_knowledge(cid, text)
+        citation_specs = citation_specs + mem_citations
         project = self._project_context(conv)
 
         history = self.store.list_messages(cid, limit=20)
@@ -235,6 +266,8 @@ class ChatEngine:
             parts.append(project)
         if conv.get("summary"):
             parts.append(f"Conversation summary so far: {conv['summary']}")
+        if mem_context:
+            parts.append("Relevant memory (scope-checked; cite [mem:…] you use):\n" + mem_context)
         if knowledge:
             parts.append("Relevant knowledge (cite [chunk refs] you use):\n" + knowledge)
         full_system = "\n\n".join(parts)
@@ -272,6 +305,18 @@ class ChatEngine:
         self.store.add_summary(
             cid, f"{len(msgs)} messages; last topic: {text[:120]}",
             upto_message_id=reply["id"])
+
+        # Layer 5 write-back — bounded deterministic extraction of the user turn
+        # into the unified Memory Engine (preferences/decisions/rules/tasks only;
+        # chatter is discarded). Never blocks the reply.
+        try:
+            project_id = conv.get("project_id", "") or ""
+            ns = f"project:{project_id}" if project_id else f"conversation:{cid}"
+            self._mem().observe(text, namespace=ns, project_id=project_id,
+                                user_scope="ajay", source_type="chat",
+                                source_id=user_msg["id"])
+        except Exception:
+            pass
 
         return SendResult(message=reply, execution=execution,
                           memory_links=links, citations=citations)

@@ -16,9 +16,26 @@ def store(tmp_path):
     return ChatStore(tmp_path / "chat.db")
 
 
+@pytest.fixture(autouse=True)
+def _isolate_global_memory(tmp_path, monkeypatch):
+    """Isolate the global M9 memory engine so direct-constructed ChatEngines
+    (memory=None) never touch the repo's data/memory.db during tests."""
+    from saathi.memory.engine import MemoryEngine, MemoryStore
+    import saathi.memory.engine.core as core
+    iso = MemoryEngine(MemoryStore(tmp_path / "global_mem.db"))
+    monkeypatch.setattr(core, "_default", iso)
+    monkeypatch.setattr(core, "default_engine", lambda: iso)
+
+
 @pytest.fixture
-def engine(store):
-    return ChatEngine(store, llm_fn=lambda p, s: {
+def mem(tmp_path):
+    from saathi.memory.engine import MemoryEngine, MemoryStore
+    return MemoryEngine(MemoryStore(tmp_path / "mem.db"))
+
+
+@pytest.fixture
+def engine(store, mem):
+    return ChatEngine(store, memory=mem, llm_fn=lambda p, s: {
         "text": f"reply({p[-40:]})", "provider": "test-llm", "tokens": 7})
 
 

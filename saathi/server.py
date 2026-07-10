@@ -1523,6 +1523,12 @@ try:
 except Exception as _e:
     print(f"[saathi] chat router unavailable: {_e}")
 
+try:
+    from .memory.api import router as memory_router
+    app.include_router(memory_router)
+except Exception as _e:
+    print(f"[saathi] memory router unavailable: {_e}")
+
 # Simple access key for remote/tunnel use. Local requests (the Mac itself)
 # are always allowed; remote requests must send X-Saathi-Token.
 import os as _os

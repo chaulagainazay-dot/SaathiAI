@@ -528,3 +528,46 @@ streamed messages, agent selector, execution timeline + memory links +
 agent runs + checkpoints panel.
 
 **Critical manifest:** `chat.saathi_chat_m8` → tests/test_chat.py (blocking).
+
+---
+
+## M9 — Unified Memory Engine
+
+`saathi/memory/engine/` — production memory behind the M8 ChatEngine's stable
+interface. Reuses `platform.py` scopes/retention + `evidence.find_contradictions`.
+
+**Lifecycle:** observe → extract (bounded, deterministic) → classify → store →
+embed → link → retrieve → rank → reinforce → decay → forget.
+
+**Retrieval:** hybrid = semantic (local numpy embeddings, real cosine,
+vectorized matmul) + keyword + recency + importance + confidence + context +
+feedback, one canonical ranking function with per-result explanation and MMR
+diversity. Namespace list = the privacy firewall (retrieval only reads listed
+scopes). Graph expansion (1-hop relations) complements vectors.
+
+**Embeddings:** provider-neutral. Default = `LocalDeterministicEmbedder`
+(numpy, dependency-free, deterministic) → semantic works offline. ST / Ollama
+adapters share the contract and `available()`-gate; cloud adapters are the
+extension point. `embedding_version` tracked; `reindex` is bounded + resumable.
+
+**Memory types:** working, conversation, episodic, semantic, procedural, user,
+business, project, agent, document. Schema: 14 normalized tables in
+`data/memory.db` (memory_item/version/source/embedding/relation/access/
+feedback/policy/namespace/summary/conflict/tombstone, retrieval_run/result).
+
+**Lifecycle guarantees:** delete = tombstone + embedding drop → never
+retrievable (restorable re-embeds). Conflicts (opposing polarity, same topic)
+flagged, never auto-resolved. Supersede preserves history. Decay spares pinned
++ semantic/platform_wisdom retention. Stored content is untrusted data with
+provenance — never executed (prompt-injection safe).
+
+**Chat integration:** `MemoryEngine.retrieve_for_chat` feeds ChatEngine before
+model execution (scope-checked, thresholded, token-budgeted, with citations);
+user turns are observed back into memory (bounded extraction). ExecutionGateway
+enforcement unchanged; no direct model calls.
+
+**API** `/api/v1/memory/*` (auth inherited): list/search/create/item/update/
+pin/feedback/delete/restore/conflicts/reindex/runs/health.
+**CLI** `python -m saathi.memory.cli`: inspect/search/health/reindex/conflicts/
+stats/export/decay (read-only cmds don't mutate; exit codes 0/1/2).
+**Manifest:** `memory.engine_m9` (blocking).
