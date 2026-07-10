@@ -571,3 +571,46 @@ pin/feedback/delete/restore/conflicts/reindex/runs/health.
 **CLI** `python -m saathi.memory.cli`: inspect/search/health/reindex/conflicts/
 stats/export/decay (read-only cmds don't mutate; exit codes 0/1/2).
 **Manifest:** `memory.engine_m9` (blocking).
+
+---
+
+## M10 — Multi-Agent Runtime
+
+`saathi/agent_runtime/` — bounded, observable, gateway-only agent orchestration.
+
+**Flow:** objective → strategy → task DAG → memory-scoped agent turns (via
+ExecutionGateway) → verify (evidence) → independent review → bounded retry →
+checkpoint → outcome. No agent calls a provider/connector/terminal/FS directly.
+
+**8 agents** (config-driven, versioned): planner, researcher, architect,
+builder, reviewer, executor, writer, ceo. Each has allowed/denied tools, memory
+scopes, risk ceiling, budgets, delegation permissions, output contract.
+Planner + CEO cannot self-approve.
+
+**State machine** (durable, validated): created→planning→awaiting_approval→
+approved→queued→running→delegated→verifying→reviewing→completed + paused/
+cancelled/timed_out/blocked/failed/rolled_back/partially_completed. Illegal
+transitions raise; terminal states have no exits.
+
+**Risk model** 0–4 (maps to gateway L0–L4): read-only / local-reversible /
+local-mutation / external-side-effect / high-impact. Risk ≥ local-mutation
+needs explicit user approval; high-impact stays manual-only. Denied at
+tool-check when over an agent's ceiling.
+
+**Delegation:** narrowing-only permissions (child ⊆ parent tools/scopes/risk);
+limits on depth (3), children/agent (4), total agents (12), repeats. No loops.
+
+**Budgets:** tokens/cost/wall/steps/tool-calls/retries/delegation-depth/
+artifacts/parallel — runs stop safely + report partial. **Retry:** transient +
+progress + budget only; no-progress fingerprint stops.
+
+**Memory:** M9 scoped retrieval per agent/task (never widens). **Gateway:**
+every action a ToolIntent; a static regression test scans runtime for direct
+provider/subprocess bypasses. **Events:** `agentrun.*` on the fabric bus.
+
+**Schema:** 19 tables in `data/agent_runtime.db`. **Strategies:** single/build/
+architect_build/document/business/broad_research (config-driven).
+**API** `/api/v1/agents/*`, **CLI** `python -m saathi.agent_runtime.cli`,
+**Chat:** `ChatEngine.start_orchestration` (multi-agent activates only when
+selected/justified; simple asks stay single-turn). **Manifest:**
+`agents.runtime_m10` (blocking).

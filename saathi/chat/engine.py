@@ -392,6 +392,30 @@ class ChatEngine:
         """One agent hands a subtask to another; both runs are recorded."""
         return self.run_agent(cid, to_agent, task, delegated_by=from_agent)
 
+    # ── M10: multi-agent orchestration from chat ──────────────────────────
+    def start_orchestration(self, cid: str, objective: str, *, strategy: str = "",
+                            execute: bool = True) -> dict:
+        """Spawn an M10 orchestration run linked to this conversation. Simple
+        questions should still use send(); this activates only when the user
+        selects multi-agent mode or the objective clearly warrants a team."""
+        conv = self.store.get_conversation(cid)
+        if not conv:
+            raise KeyError(cid)
+        from saathi.agent_runtime.orchestrator import default_orchestrator
+        orch = default_orchestrator()
+        run_id = orch.create_run(objective, actor="user:ajay", strategy=strategy,
+                                 project_id=conv.get("project_id", ""),
+                                 conversation_id=cid)
+        outcome = orch.run(run_id) if execute else {"run_id": run_id,
+                                                    "state": "queued"}
+        # record a chat message pointing at the run (evidence-linked)
+        self.store.add_message(
+            cid, "assistant",
+            f"Started multi-agent run ({outcome.get('state', 'queued')}): "
+            f"{outcome.get('tasks_done', 0)} tasks completed. Run {run_id[:8]}.",
+            model="agent-runtime", meta={"agent_run_id": run_id})
+        return {"run_id": run_id, "outcome": outcome}
+
 
 _default_engine: ChatEngine | None = None
 

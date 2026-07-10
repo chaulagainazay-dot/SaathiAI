@@ -68,3 +68,13 @@ re-asking what it already knows), auditability (every retrieval logged with
 why-it-matched), and trust (deleted memory truly disappears from results;
 nothing is fabricated). Privacy is enforced by scope firewalls — user, project,
 and agent memories never leak across boundaries.
+
+## Multi-Agent Runtime (M10)
+
+Complex work (build, research, architecture, business analysis) now runs as a
+bounded team of specialist agents — planned, delegated, verified, and
+independently reviewed — with every step auditable and every high-impact action
+gated behind the owner's explicit approval. Value: more capability without loss
+of control. Agents cannot self-approve, cannot bypass the ExecutionGateway, and
+cannot widen their own permissions; money, deploys, and external sends stay
+manual. Runs are resumable and never silently exceed their budget.

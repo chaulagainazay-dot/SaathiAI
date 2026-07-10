@@ -77,6 +77,12 @@
       "targets": ["tests/test_memory_engine.py"],
       "subsystem": "memory",
       "blocking": true
+    },
+    {
+      "id": "agents.runtime_m10",
+      "targets": ["tests/test_agent_runtime.py"],
+      "subsystem": "agent_runtime",
+      "blocking": true
     }
   ]
 }
