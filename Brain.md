@@ -435,3 +435,32 @@ executable InvestmentCase. Learning proposes; the human disposes.
 
 *Last updated: 2026-07-03*
 *Next update: After the v0.4.0-finance stabilization window (paper-trading + live business data)*
+
+---
+
+## Auto-Repair Loop (reliability spine)
+
+SaathiOS repairs its own recoverable failures through `saathi/repair/` — a
+production-safe pipeline: **Failure → Evidence → Classify → Root cause → Policy
+→ Rollback point → Minimal patch → Focused tests → Full suite → Verify runtime
+→ Local commit → Report**. See `AUTO_REPAIR_LOOP.md`.
+
+- **Failure classification** — 21 categories (IMPORT_ERROR … EXECUTION_BYPASS …
+  CONNECTOR_AUTH_ERROR … EVENT_BUS_ERROR … UNKNOWN); each carries confidence,
+  subsystem, and suspected files.
+- **Evidence model** — read-only capture. Env vars recorded as *presence*
+  booleans, never values. All free-text redacted for secrets on ingest.
+- **Repair policy** — Level 0 diagnose-only, Level 1 safe-local (edit + local
+  commit), Level 2 approval-required, Level 3 prohibited (push/deploy/credential/
+  send/trade/history-rewrite — never autonomous).
+- **Verification ladder** — focused → subsystem → full suite → server import →
+  route-count smoke. Success = target recovered AND no new regressions AND route
+  count intact AND secret scan clean; otherwise auto-rollback.
+- **Stopping conditions** — secret risk, unsafe git state, external
+  credential/payment/deploy needed, 2 failed attempts per fingerprint, low
+  confidence, unknown root cause. Never loops infinitely.
+- **Rollback** — pre-repair HEAD recorded per incident; unrelated dirty work
+  blocks auto-repair; restore via `saathi repair rollback <id>`.
+- **Anti-hallucination** — task-execution repairs verify the execution *trace*,
+  not the final text. No tool call → "the task was not executed." Missing
+  credentials → "connector is not connected or authenticated." Never fabricates.

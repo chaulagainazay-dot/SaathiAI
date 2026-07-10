@@ -1511,6 +1511,12 @@ try:
 except Exception as _e:
     print(f"[saathi] hcg_voice router unavailable: {_e}")
 
+try:
+    from .repair.api import router as repair_router
+    app.include_router(repair_router)
+except Exception as _e:
+    print(f"[saathi] repair router unavailable: {_e}")
+
 # Simple access key for remote/tunnel use. Local requests (the Mac itself)
 # are always allowed; remote requests must send X-Saathi-Token.
 import os as _os

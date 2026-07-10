@@ -1,0 +1,40 @@
+# SaathiOS — Business
+
+## Reliability goals (Auto-Repair Loop)
+
+SaathiOS is a daily-use operating system; silent breakage erodes trust faster
+than missing features. The Auto-Repair Loop exists to keep the platform
+dependable without a human babysitting every failure.
+
+- **Reduced downtime** — recoverable failures (import collisions, unawaited
+  coroutines, event-bus regressions, broken routes) are detected, repaired, and
+  verified automatically, shrinking mean-time-to-recovery from hours to minutes.
+- **Repair auditability** — every repair produces an incident record (category,
+  root cause, files changed, tests before/after, repair commit, rollback commit,
+  status, confidence) in `data/repair_history.json`, and a local git commit with
+  a structured message. Nothing is changed without a trail.
+- **Customer trust** — the system never claims success without evidence. A user
+  is told plainly when a task was not executed or a connector is not connected,
+  instead of receiving a confident but false completion.
+- **Human-approval boundaries** — money, credentials, deployments, migrations,
+  permission changes, and dependency upgrades always stop for explicit human
+  approval. The loop can make the platform self-healing for mechanical faults
+  without ever taking an irreversible or costly action on its own.
+
+## Cost-control rules
+
+- No paid external services are introduced by the repair system; it reuses the
+  repo's local + open-source components (git, pytest, the existing event bus,
+  health checks).
+- Bounded work per incident: `max_attempts_per_incident=2`,
+  `max_files_per_auto_repair=8`, `max_patch_lines=400`, configurable runtime
+  cap. Repeated failures escalate to a human rather than burning cycles.
+- Diagnose-only is the default; code changes require a vetted strategy and a
+  passing verification ladder, so compute is spent only on repairs likely to
+  land.
+
+## What it does NOT do
+
+No autonomous push/deploy, no credential rotation, no email send/delete, no
+trades or transfers, no database deletion, no security-control changes. These
+remain human decisions by design.
