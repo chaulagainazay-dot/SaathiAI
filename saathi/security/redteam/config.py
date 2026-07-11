@@ -30,7 +30,13 @@ _PROD_DENY_RE = re.compile(r"(?i)\b(prod|production|api\.|www\.|\.com|\.io|\.ai|
 # secret-ish tokens redacted from every stored artifact
 _SECRET_RE = re.compile(
     r"(?i)(token|secret|api[_-]?key|password|passwd|bearer|cookie|authorization|"
-    r"client[_-]?secret|private[_-]?key)\s*[=:]\s*\S+")
+    r"client[_-]?secret|private[_-]?key)\s*[=:]\s*(?:bearer\s+)?\S+")
+# bare "Bearer <token>" anywhere (e.g. inside an Authorization header value)
+_BEARER_RE = re.compile(r"(?i)\bbearer\s+\S+")
+# provider token shapes (sk-, ghp_, gho_, xoxb-, AKIA…) even without a label
+_TOKEN_SHAPE_RE = re.compile(
+    r"\b(sk-[A-Za-z0-9]{8,}|gh[pousr]_[A-Za-z0-9]{8,}|xox[baprs]-[A-Za-z0-9-]{8,}|"
+    r"AKIA[0-9A-Z]{12,})\b")
 _ENVVAR_VALUE_RE = re.compile(r"\b([A-Z][A-Z0-9_]{6,})=([^\s]{6,})")
 
 

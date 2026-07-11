@@ -272,6 +272,126 @@ def ceo_failure_stays_unavailable(t: SaathiTarget):
     return held, {"status": r.status, "ceo_tier": tier}
 
 
+# ── M15.3 enterprise attack expansion ───────────────────────────────────────
+@probe("OAUTH-001")
+def oauth_state_substitution(t: SaathiTarget):
+    """A forged/substituted state param must fail the callback (anti-CSRF)."""
+    from saathi.connectors.platform.enterprise.oauth import OAuthFlow, OAuthError
+    f = OAuthFlow(connector_id="gmail", owner="victim",
+                  redirect_uri="https://localhost/cb", requested_scopes=["gmail.readonly"])
+    f.begin()
+    held = False
+    try:
+        f.handle_callback(state="attacker-state", code="c",
+                          redirect_uri="https://localhost/cb", owner="victim")
+    except OAuthError as e:
+        held = e.code == "invalid_callback"
+    return held, {"blocked": held}
+
+
+@probe("OAUTH-002")
+def oauth_wrong_user_callback(t: SaathiTarget):
+    """Callback delivered for a DIFFERENT user than began the flow must fail."""
+    from saathi.connectors.platform.enterprise.oauth import OAuthFlow, OAuthError
+    f = OAuthFlow(connector_id="gmail", owner="victim",
+                  redirect_uri="https://localhost/cb", requested_scopes=["gmail.readonly"])
+    p = f.begin()
+    held = False
+    try:
+        f.handle_callback(state=p["state"], code="c",
+                          redirect_uri="https://localhost/cb", owner="attacker")
+    except OAuthError as e:
+        held = e.code == "invalid_callback"
+    return held, {"blocked": held}
+
+
+@probe("OAUTH-003")
+def oauth_refresh_scope_widening(t: SaathiTarget):
+    """A refresh that returns broader scopes than granted must be blocked."""
+    from saathi.connectors.platform.enterprise.oauth import OAuthFlow, OAuthError
+    f = OAuthFlow(connector_id="gmail", owner="ajay",
+                  redirect_uri="https://localhost/cb", requested_scopes=["gmail.readonly"])
+    f.begin()
+    held = False
+    try:
+        f.refresh(previous_granted=["gmail.readonly"],
+                  do_refresh=lambda: {"scope": "gmail.readonly gmail.send", "expires_in": 3600})
+    except OAuthError as e:
+        held = e.code == "scope_widening_blocked"
+    return held, {"blocked": held}
+
+
+@probe("SUBST-001")
+def account_substitution_after_approval(t: SaathiTarget):
+    """Approval for account A cannot authorize execution on account B."""
+    a = t.add_account("github")
+    b = t.add_account("github")
+    appr = t.request_and_grant_approval(owner=t.user, tool_id="github.create_issue",
+                                        account_id=a, args={"title": "x"})
+    r = t.execute(owner=t.user, tool_id="github.create_issue", account_id=b,
+                  args={"title": "x"}, approval_id=appr)
+    held = r.status == "approval_required"
+    return held, {"status": r.status}
+
+
+@probe("SCOPE-001")
+def missing_scope_denied(t: SaathiTarget):
+    """An account tracking scopes but missing the required one is denied."""
+    from saathi.connectors.platform.enterprise import scopes
+    d = scopes.evaluate(tool_id="gmail.send_email",
+                        account={"owner": t.user, "connector_id": "gmail",
+                                 "state": "healthy", "enabled": 1,
+                                 "granted_scopes": ["gmail.readonly"]}, actor_type="user")
+    held = (not d.allowed) and d.reason_code == "CONNECTOR_SCOPE_MISSING"
+    return held, {"reason": d.reason_code}
+
+
+@probe("CIRCUIT-001")
+def circuit_breaker_opens(t: SaathiTarget):
+    """Repeated failures open the breaker and block further calls."""
+    from saathi.connectors.platform.enterprise.resilience import CircuitBreaker
+    b = CircuitBreaker(key="k", failure_threshold=3, cooldown_sec=1000)
+    clk = [0.0]
+    for _ in range(3):
+        b.record(success=False, clock=lambda: clk[0])
+    held = not b.allow(clock=lambda: clk[0])
+    return held, {"state": b.state}
+
+
+@probe("SSRF-001")
+def ssrf_path_confinement(t: SaathiTarget):
+    """local_fs read cannot escape the repo (path traversal / SSRF-analogue)."""
+    r = t.execute(owner=t.user, tool_id="local_fs.read_local_file",
+                  args={"path": "../../../../../../etc/passwd"})
+    held = r.status in ("blocked", "failed")
+    return held, {"status": r.status}
+
+
+@probe("SECRETLEAK-001")
+def provider_error_no_secret(t: SaathiTarget):
+    """The provider error taxonomy redacts secrets from normalized detail."""
+    from saathi.connectors.platform.enterprise import errors
+    e = errors.normalize(category="provider_unavailable",
+                         detail="failed: authorization=Bearer sk-abc123secret",
+                         provider_code="token=leak")
+    blob = str(e)
+    held = "abc123secret" not in blob and "sk-abc123" not in blob
+    return held, {"clean": "abc123secret" not in blob}
+
+
+@probe("BACKUPSECRET-001")
+def backup_excludes_secrets(t: SaathiTarget):
+    """Credential-reference rows persist the env var NAME, never a value."""
+    from saathi.connectors.platform.credentials import new_ref
+    ref = new_ref(connector_id="github", scope=f"user:{t.user}", backend="env",
+                  backend_key="GITHUB_TOKEN")
+    t.store.put_cred_ref(ref)
+    row = t.store.get_cred_ref(ref.ref_id)
+    held = row["backend_key"] == "GITHUB_TOKEN" and "value" not in row \
+        and "access_token" not in row
+    return held, {"only_reference": held}
+
+
 def run_probe(attack_id: str, target: SaathiTarget):
     fn = PROBES.get(attack_id)
     if fn is None:

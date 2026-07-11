@@ -81,6 +81,8 @@ class ExecutionEngine:
                 self._gw = ExecutionGateway(MemoryQueue())
             except Exception:  # pragma: no cover
                 self._gw = None
+        from saathi.connectors.platform.enterprise.resilience import BreakerRegistry
+        self._breakers = BreakerRegistry()
 
     # ── public API ──────────────────────────────────────────────────────────
     def execute(self, req: ExecRequest) -> ToolResult:
@@ -128,6 +130,25 @@ class ExecutionEngine:
             if not is_executable(state):
                 return self._fail(req, self._state_failure(state),
                                   f"connection not executable ({state.value})")
+
+        # 2b) canonical scope + permission engine (exact scope match, reason codes)
+        acct_row = None
+        if not conn.local:
+            acct_row = self.store.get_account(req.account_id) if req.account_id else None
+        from saathi.connectors.platform.enterprise import scopes as _scopes
+        decision = _scopes.evaluate(tool_id=req.tool_id, account=acct_row,
+                                    actor_type=req.actor_type, environment=req.environment)
+        if not decision.allowed:
+            return self._blocked(req, FailureClass.POLICY,
+                                 f"scope/permission denied: {decision.reason_code}")
+
+        # 2c) circuit breaker (scoped connector:account:operation)
+        breaker = self._breakers.get(connector_id=conn.connector_id,
+                                     account_id=req.account_id, operation=req.tool_id)
+        if not breaker.allow():
+            return self._fail(req, FailureClass.UNAVAILABLE,
+                              "circuit open for connector/account/operation",
+                              extra={"circuit": "open"})
 
         # 3) risk / approval binding
         needs_approval = int(risk) >= int(APPROVAL_THRESHOLD) or tool.requires_approval
@@ -177,6 +198,10 @@ class ExecutionEngine:
 
         # 7) classify + retry policy (uncertain / non-idempotent never retried)
         result = self._finalize(req, tool, conn, result, input_hash, gw_ref)
+
+        # 7b) feed the circuit breaker (provider_unavailable/timeout count as
+        # failures; uncertain does NOT trip the breaker — it needs reconciliation)
+        breaker.record(success=result.status in ("success", "partial"))
 
         # 8) consume single-use approval + persist execution + evidence
         if needs_approval and req.approval_id and result.status in (

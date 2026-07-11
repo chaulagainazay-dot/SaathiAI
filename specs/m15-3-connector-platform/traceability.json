@@ -1,0 +1,19 @@
+{
+  "milestone": "M15-3",
+  "title": "Enterprise Connector Platform and Live Connector Validation",
+  "constitution_version": "1.0",
+  "requirements": [
+    {"id": "M15-3-SCOPE-001", "text": "Canonical scope engine: exact match, structured reason codes", "artifact": "saathi/connectors/platform/enterprise/scopes.py", "test": "tests/test_m15_3_enterprise.py::test_scope_exact_match_missing"},
+    {"id": "M15-3-SCOPE-002", "text": "Scope engine wired into ExecutionEngine; missing scope denied at execution", "artifact": "saathi/connectors/platform/execution.py", "test": "tests/test_m15_3_enterprise.py::test_engine_denies_missing_scope"},
+    {"id": "M15-3-OAUTH-001", "text": "OAuth lifecycle: state/redirect/user binding; forged/wrong-user callback rejected", "artifact": "saathi/connectors/platform/enterprise/oauth.py", "test": "tests/test_m15_3_enterprise.py::test_oauth_wrong_user_blocked"},
+    {"id": "M15-3-OAUTH-002", "text": "Token refresh must not widen scopes; expansion blocked", "artifact": "saathi/connectors/platform/enterprise/oauth.py", "test": "tests/test_m15_3_enterprise.py::test_oauth_refresh_no_widen"},
+    {"id": "M15-3-APPROVAL-001", "text": "Account substitution after approval invalidates approval (engine)", "artifact": "saathi/connectors/platform/execution.py", "test": "tests/test_m15_3_enterprise.py::test_engine_account_substitution_after_approval"},
+    {"id": "M15-3-RESILIENCE-001", "text": "Circuit breaker opens on repeated failure; scoped per account; half-open recovery", "artifact": "saathi/connectors/platform/enterprise/resilience.py", "test": "tests/test_m15_3_enterprise.py::test_circuit_opens_and_half_open_recovers"},
+    {"id": "M15-3-RESILIENCE-002", "text": "Layered rate limiting (user/connector/account/operation)", "artifact": "saathi/connectors/platform/enterprise/resilience.py", "test": "tests/test_m15_3_enterprise.py::test_rate_limiter_layered"},
+    {"id": "M15-3-ERROR-001", "text": "Provider error taxonomy: stable categories, redacted detail", "artifact": "saathi/connectors/platform/enterprise/errors.py", "test": "tests/test_m15_3_enterprise.py::test_error_taxonomy_redacts_and_classifies"},
+    {"id": "M15-3-SECRET-001", "text": "Secrets never in errors/backups; provider-error + backup redaction", "artifact": "saathi/security/redteam/config.py", "test": "tests/test_m15_2_harness.py::test_redaction_of_secrets"},
+    {"id": "M15-3-SANDBOX-001", "text": "Path traversal / SSRF-analogue blocked", "artifact": "saathi/connectors/platform/adapters.py", "test": "tests/test_m15_2_security.py::test_probe_boundary_holds"},
+    {"id": "M15-3-LIVE-001", "text": "Live-validation framework: CI-safe vs live modes; honest verification matrix", "artifact": "saathi/connectors/platform/enterprise/live_validation.py", "test": "tests/test_m15_3_enterprise.py::test_verification_matrix_no_fake_live"},
+    {"id": "M15-3-REDTEAM-001", "text": "Red-team expansion (OAuth/substitution/circuit/SSRF/secret-leak) 29/29 hold", "artifact": "saathi/security/redteam/probes.py", "test": "tests/test_m15_2_security.py::test_full_suite_no_release_blocking"}
+  ]
+}

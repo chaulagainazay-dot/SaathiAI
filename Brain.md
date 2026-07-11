@@ -904,3 +904,39 @@ Spec Kit `specs/m15-2-agent-security/*` + threat-model (STRIDE) CONVERGED 15/15.
 confirmed, remediation regression-tested; adversarial-model (HackAgent), live
 browser/Voice, and live cloud connector attack paths remain environment-blocked
 (needed for SECURITY PRODUCTION READY).
+
+## M15.3 — Enterprise Connector Platform
+
+Hardened M15 into an enterprise integration platform (no parallel framework),
+`saathi/connectors/platform/enterprise/`:
+- **Scope engine** (`scopes.py`): one evaluator, EXACT scope match, structured
+  reason codes (CONNECTOR_SCOPE_MISSING, ACCOUNT_REVOKED, MANUAL_ONLY_RISK4…),
+  wired into `ExecutionEngine` BEFORE approval. Enforced for accounts that track
+  scopes (real OAuth); local/deterministic accounts pass (other gates still apply).
+- **OAuth 2.0 + PKCE lifecycle** (`oauth.py`): begin (state+PKCE+nonce), callback
+  validation (constant-time state, exact redirect-URI, same-user binding),
+  scope-reduction detection, **refresh must not widen scopes**. Live token
+  exchange/refresh injectable → environment-blocked here (no IdP). Raw tokens
+  never persist on the flow.
+- **Resilience** (`resilience.py`): circuit breaker scoped connector:account:
+  operation (one failing account doesn't trip the connector; half-open recovery),
+  layered rate limiter (user/connector/account/operation). Breaker wired into engine.
+- **Error taxonomy** (`errors.py`): 21 stable categories → retryable/user_action/
+  operator_action, redacted detail.
+- **Live-validation** (`live_validation.py`): modes contract/deterministic/sandbox
+  vs live_read_only/reversible/side_effect; CI runs safe only; live credentials-
+  gated; honest verification matrix (configured != healthy != live-tested).
+
+Canonical execution path unchanged: ownership (M15.2) → scope engine → circuit
+breaker → risk/approval binding → gateway → adapter → evidence. Red-team expanded
+to **29 attacks (29/29 hold)**: OAuth state substitution / wrong-user callback /
+refresh scope widening, account substitution after approval, missing-scope denial,
+circuit breaker, SSRF path traversal, provider-error secret leak, backup secret
+exclusion. **Found + fixed a real CRITICAL** (SECRETLEAK-001): redactor stopped at
+"Bearer", leaking the token; now consumes `Bearer <token>` + token shapes
+(sk-/ghp_/xoxb-/AKIA). Ops: critical manifest → m15.3 (+10 checks). Tests:
+`test_m15_3_enterprise.py` (21). Spec Kit CONVERGED 12/12. **Verdict: CONNECTOR
+STAGING READY** — enterprise controls deterministically verified + red-team-tested,
+ownership/approval intact, 0 Critical/High; live OAuth/refresh/provider + browser
+env-blocked (needed for CONNECTOR PRODUCTION READY). Incident runbook:
+docs/runbooks/CONNECTOR_INCIDENT_RESPONSE.md.

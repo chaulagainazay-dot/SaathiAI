@@ -151,3 +151,16 @@ one path could act on another user's account; that's now fixed and permanently
 guarded by a test. The verdict is honest: the boundaries we can test here are
 green; full sign-off still needs live adversarial tooling and real accounts on a
 staging server.
+
+## M15.3 — Connectors become enterprise-grade
+
+The connector layer is now an enterprise integration platform: a real OAuth
+sign-in flow with anti-forgery protections, exact-permission checks (an account
+can only do what it was actually granted), automatic circuit breakers and rate
+limits so one flaky provider can't cause a storm, and a clean error vocabulary
+that never leaks secrets. Each connector's readiness is stated honestly —
+implemented, configured, or actually live-tested — so nobody mistakes a wired-up
+connector for a verified one. Cloud connectors (Gmail, Calendar, GitHub, Vercel)
+are ready to validate the moment real credentials are supplied on staging; until
+then they are marked environment-blocked, not "working". Live provider sign-off
+and production use still require testing on real accounts in staging.

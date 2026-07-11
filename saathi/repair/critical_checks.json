@@ -393,6 +393,86 @@
    ],
    "subsystem": "security",
    "blocking": true
+  },
+  {
+   "id": "connectors.scope_exact",
+   "targets": [
+    "tests/test_m15_3_enterprise.py::test_scope_exact_match_missing"
+   ],
+   "subsystem": "connectors",
+   "blocking": true
+  },
+  {
+   "id": "connectors.scope_engine_denies",
+   "targets": [
+    "tests/test_m15_3_enterprise.py::test_engine_denies_missing_scope"
+   ],
+   "subsystem": "connectors",
+   "blocking": true
+  },
+  {
+   "id": "connectors.oauth_state",
+   "targets": [
+    "tests/test_m15_3_enterprise.py::test_oauth_state_mismatch_blocked"
+   ],
+   "subsystem": "connectors",
+   "blocking": true
+  },
+  {
+   "id": "connectors.oauth_wrong_user",
+   "targets": [
+    "tests/test_m15_3_enterprise.py::test_oauth_wrong_user_blocked"
+   ],
+   "subsystem": "connectors",
+   "blocking": true
+  },
+  {
+   "id": "connectors.oauth_refresh_no_widen",
+   "targets": [
+    "tests/test_m15_3_enterprise.py::test_oauth_refresh_no_widen"
+   ],
+   "subsystem": "connectors",
+   "blocking": true
+  },
+  {
+   "id": "connectors.account_substitution",
+   "targets": [
+    "tests/test_m15_3_enterprise.py::test_engine_account_substitution_after_approval"
+   ],
+   "subsystem": "connectors",
+   "blocking": true
+  },
+  {
+   "id": "connectors.circuit_breaker",
+   "targets": [
+    "tests/test_m15_3_enterprise.py::test_circuit_opens_and_half_open_recovers"
+   ],
+   "subsystem": "connectors",
+   "blocking": true
+  },
+  {
+   "id": "connectors.error_redaction",
+   "targets": [
+    "tests/test_m15_3_enterprise.py::test_error_taxonomy_redacts_and_classifies"
+   ],
+   "subsystem": "connectors",
+   "blocking": true
+  },
+  {
+   "id": "connectors.live_matrix_honest",
+   "targets": [
+    "tests/test_m15_3_enterprise.py::test_verification_matrix_no_fake_live"
+   ],
+   "subsystem": "connectors",
+   "blocking": true
+  },
+  {
+   "id": "security.redteam_secretleak",
+   "targets": [
+    "tests/test_m15_2_security.py::test_full_suite_no_release_blocking"
+   ],
+   "subsystem": "security",
+   "blocking": true
   }
  ]
 }
