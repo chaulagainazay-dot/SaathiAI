@@ -100,3 +100,15 @@ Safety-first: disk exhaustion (a real past incident) is hard-gated before any
 render; nothing publishes without explicit approval and a verified output; and
 the system never claims a video was made or a post was published unless the
 file exists and the receipt is real.
+
+## Production hardening (M13.5)
+
+SaathiOS now has the operational spine for controlled daily use: one-command
+health/status/backup/restore/release checks, real disk-exhaustion protection,
+stale-backend detection (which caused a real prior incident), and a proven
+backup-and-restore drill. Cost/operational implications: local providers
+(images, FFmpeg video, macOS narration) are free but macOS-only — Linux
+production needs a configured cross-platform TTS before relying on narration.
+Verdict is STAGING READY: safe for internal/pilot daily use; full PRODUCTION
+readiness still needs authenticated browser verification and a real staging
+deploy + rollback in production-representative infrastructure.

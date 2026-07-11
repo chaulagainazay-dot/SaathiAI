@@ -5002,22 +5002,24 @@ _PROCESS_START = time.time()
 
 @app.get("/api/v1/system/version")
 async def system_version():
-    """Runtime-build identity (M12 Phase 24) — lets the frontend detect a
-    stale backend process (this exact class of bug broke M11's first live
-    smoke test: a days-old process serving pre-M8 code). No sensitive
-    environment details exposed — only counts and a commit hash."""
-    import subprocess as _sp
-    try:
-        commit = _sp.run(["git", "rev-parse", "--short", "HEAD"], cwd=str(config.ROOT),
-                         capture_output=True, text=True, timeout=3).stdout.strip()
-    except Exception:
-        commit = "unknown"
-    return {
-        "commit": commit,
-        "process_start": _PROCESS_START,
-        "route_count": len(app.routes),
-        "schema_version": "m12",
-    }
+    """Runtime-build identity (M12 Phase 24, strengthened M13.5 Phase 3) — lets
+    the frontend detect a stale/incompatible backend (the bug that broke M11's
+    first live smoke). No secrets/paths/env — only counts + a commit hash."""
+    from .ops.identity import identity
+    return identity(route_count=len(app.routes))
+
+
+class _VersionCompat(BaseModel):
+    api_version: str = ""
+    route_manifest_version: str = ""
+
+
+@app.post("/api/v1/system/version/compat")
+async def system_version_compat(body: _VersionCompat):
+    """Frontend posts its build's API + route-manifest version; backend replies
+    whether they are compatible so the UI can warn on a version mismatch."""
+    from .ops.identity import compatible
+    return compatible(body.api_version, body.route_manifest_version)
 
 
 @app.get("/api/v1/system/disk")

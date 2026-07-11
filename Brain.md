@@ -722,3 +722,38 @@ producing 11 real artifacts (real PIL image → real FFmpeg video → real say
 narration → real muxed final_video → real extracted thumbnail, all ffprobe-
 verified). Cloud media generation, real social publishing, and live browser
 Studio UX were NOT verified (no keys/accounts/getUserMedia in this environment).
+
+---
+
+## M13.5 — Production Hardening (ops toolkit)
+
+`saathi/ops/` — operations toolkit, read-only by default, mutation explicit:
+- **identity.py**: safe runtime identity (commit/branch/api_version/schema_versions/
+  route_manifest); `compatible()` lets the frontend detect a stale/incompatible
+  backend (the M11 bug). `/api/v1/system/version` (+ `/version/compat`).
+- **config_check.py**: env validation, secrets shown only as PRESENT/ABSENT,
+  flags a tracked firebase key.
+- **storage.py**: global disk report + thresholds (ok/warning/block/critical);
+  preview-first cleanup (never deletes user artifacts).
+- **db_integrity.py**: real `PRAGMA integrity_check` + fk_check on all 5 app dbs.
+- **backup.py**: REAL checksum-verified backup (dbs + redacted config manifest;
+  excludes secrets/media); restore into an ISOLATED dir (refuses live-dir
+  overwrite + path-traversal archives); verify re-checks checksums + integrity +
+  schema. **Real drill passed**: 5 dbs, all checksums match, all integrity ok.
+- **release_gate.py**: `release-check` with stable exit codes 0-12; runs
+  storage/config/db/**backup+restore**/strong-credential-secret-scan gates.
+- **process.py**: backend listener + stale-process detection (running commit vs
+  working tree); never kills unknown processes.
+- **cli.py** / `python -m saathi.ops`: status/health/config-check/storage/cleanup/
+  db-check/backup/restore/verify-restore/release-check/identity.
+
+**Frontend**: AI Studio workspace (`/studio-os`) on the real /api/v1/studio-os/*
+(no mock data); STUDIO_OS dock entry. Version-mismatch compat endpoint.
+
+**Manifest**: `ops.hardening_m13_5` (blocking). Docs: readiness matrix +
+release gates + security + DR + deploy + perf + ops runbook.
+
+**Verdict: STAGING READY.** Env-blocked (honest): authenticated browser
+workflows, live approval click, cloud media providers, real social publishing,
+real staging deploy + live rollback. Everything locally verifiable is
+implemented, tested, and (backup/restore) recovery-proven.

@@ -28,7 +28,8 @@ _PATTERNS = [
 
 # Placeholder values that must never count as secrets (used in templates/tests).
 _ALLOWLIST = re.compile(
-    r"(?i)REPLACE_WITH|YOUR_|xxxxx|example|placeholder|REDACTED|dummy|<[^>]+>|\bsk-local\b")
+    r"(?i)REPLACE_WITH|YOUR_|xxxxx|example|placeholder|REDACTED|dummy|<[^>]+>|"
+    r"\bsk-local\b|\$\{?[A-Z_]+\}?")  # $ENV / ${ENV} shell placeholders are not secrets
 
 
 @dataclass

@@ -95,6 +95,12 @@
       "targets": ["tests/test_studio_os.py"],
       "subsystem": "studio_os",
       "blocking": true
+    },
+    {
+      "id": "ops.hardening_m13_5",
+      "targets": ["tests/test_ops.py"],
+      "subsystem": "ops",
+      "blocking": true
     }
   ]
 }
