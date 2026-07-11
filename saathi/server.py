@@ -1535,6 +1535,12 @@ try:
 except Exception as _e:
     print(f"[saathi] agent-runtime router unavailable: {_e}")
 
+try:
+    from .voice_os.api import router as voice_router
+    app.include_router(voice_router)
+except Exception as _e:
+    print(f"[saathi] voice-os router unavailable: {_e}")
+
 # Simple access key for remote/tunnel use. Local requests (the Mac itself)
 # are always allowed; remote requests must send X-Saathi-Token.
 import os as _os
@@ -4984,6 +4990,29 @@ def dashboard_trigger(body: TriggerIn, request: Request):
 
 
 # ── System monitoring ─────────────────────────────────────────────────────────
+
+_PROCESS_START = time.time()
+
+
+@app.get("/api/v1/system/version")
+async def system_version():
+    """Runtime-build identity (M12 Phase 24) — lets the frontend detect a
+    stale backend process (this exact class of bug broke M11's first live
+    smoke test: a days-old process serving pre-M8 code). No sensitive
+    environment details exposed — only counts and a commit hash."""
+    import subprocess as _sp
+    try:
+        commit = _sp.run(["git", "rev-parse", "--short", "HEAD"], cwd=str(config.ROOT),
+                         capture_output=True, text=True, timeout=3).stdout.strip()
+    except Exception:
+        commit = "unknown"
+    return {
+        "commit": commit,
+        "process_start": _PROCESS_START,
+        "route_count": len(app.routes),
+        "schema_version": "m12",
+    }
+
 
 @app.get("/api/v1/system/disk")
 async def system_disk(request: Request):

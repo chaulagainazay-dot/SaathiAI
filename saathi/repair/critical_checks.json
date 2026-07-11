@@ -83,6 +83,12 @@
       "targets": ["tests/test_agent_runtime.py"],
       "subsystem": "agent_runtime",
       "blocking": true
+    },
+    {
+      "id": "voice.voice_os_m12",
+      "targets": ["tests/test_voice_os.py"],
+      "subsystem": "voice_os",
+      "blocking": true
     }
   ]
 }

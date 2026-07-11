@@ -614,3 +614,59 @@ architect_build/document/business/broad_research (config-driven).
 **Chat:** `ChatEngine.start_orchestration` (multi-agent activates only when
 selected/justified; simple asks stay single-turn). **Manifest:**
 `agents.runtime_m10` (blocking).
+
+---
+
+## M12 — Voice OS
+
+`saathi/voice_os/` — real-time speech interface for Saathi Chat. Voice never
+calls a model provider or tool directly: every final transcript resolves
+through `saathi.chat.engine.ChatEngine` (Solo) or `ChatEngine.start_orchestration`
+(Team, the M10 Orchestrator), and voice approvals resolve through the same
+`Orchestrator.approve()` ownership/expiry-checked path the M11 UI buttons use.
+
+**Canonical flow:** microphone (browser) → VAD → STT → transcript pipeline
+(dedupe/normalize/command-detect) → ChatEngine/Orchestrator → response
+segmentation → TTS → playback. Barge-in: new speech immediately cancels
+`speechSynthesis` playback client-side and records `stop_latency_ms` server-side.
+
+**Session/turn model:** 14-state session state machine (created…completed/
+cancelled/failed, validated transitions, illegal raises); voice_turn persists
+transcript/response/execution/agent_run linkage. Raw audio is **never**
+retained by default — `retain_raw_audio` is opt-in per session.
+
+**Providers (provider-neutral, real-first):**
+- STT: `DeterministicSTT` (test) · `FasterWhisperSTT` (**real**, installed,
+  verified via a genuine TTS→STT round trip in tests) · `BrowserPassthroughSTT`
+  (carries the browser's own real webkitSpeechRecognition output).
+- TTS: `DeterministicTTS` (test) · `SayTTS` (**real**, macOS `say`, verified
+  producing real audio bytes) · `BrowserSpeechSynthesisTTS` (marker — real
+  synthesis happens client-side via `window.speechSynthesis`).
+- Cloud adapters (OpenAI/ElevenLabs-compatible) are contract-ready extension
+  points only — no keys in this environment, never claimed as tested.
+
+**Commands:** bounded exact-phrase recognition (stop/pause/resume/repeat/
+cancel/approve/deny/mute/mode-switch/…) — confidence-gated, never fuzzy;
+approval commands still require the full ownership+expiry check, never a
+keyword shortcut.
+
+**Segmentation:** strips markdown/code/tables/citations/URLs before TTS;
+splits on sentence/clause boundaries within a bounded length.
+
+**API** `/api/v1/voice/*` (HTTP/SSE — no WebSocket; STT/TTS happen
+client-side so no bidirectional low-latency channel is needed). **CLI**
+`python -m saathi.voice_os.cli` (labels real-adapter vs deterministic-fallback
+test results explicitly). **UI:** collapsible `VoiceControl` in Saathi Chat
+using real `SpeechRecognition`/`SpeechSynthesis` — optional, never replaces
+text chat.
+
+**Backend freshness (Phase 24):** `GET /api/v1/system/version` — the M11 live
+smoke test discovered a days-old backend process serving pre-M8 code; this
+endpoint exposes commit/process-start/route-count so staleness is detectable.
+
+**Manifest:** `voice.voice_os_m12` (blocking).
+
+**Honesty note:** live browser microphone permission and a real spoken
+utterance were not exercised in this sandboxed session (no `getUserMedia`
+grant available to the automation). Real local adapters (faster_whisper,
+macOS `say`) and the full deterministic pipeline were genuinely tested.

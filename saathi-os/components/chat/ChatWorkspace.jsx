@@ -6,6 +6,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { API_BASE, afetch } from "@/lib/api";
 import AgentRunPanel from "./AgentRunPanel";
+import VoiceControl from "./VoiceControl";
 
 const AGENTS = ["", "planner", "researcher", "coder", "reviewer", "architect", "writer", "ceo"];
 
@@ -62,6 +63,7 @@ export default function ChatWorkspace() {
   const [error, setError] = useState("");
   const [teamMode, setTeamMode] = useState(false);
   const [teamRunId, setTeamRunId] = useState(null);
+  const [voiceOpen, setVoiceOpen] = useState(false);
   const bottomRef = useRef(null);
 
   const loadConvs = useCallback(async () => {
@@ -230,6 +232,16 @@ export default function ChatWorkspace() {
             }}>
             {teamMode ? "☰ Team" : "☰ Solo"}
           </button>
+          <button
+            onClick={() => setVoiceOpen((v) => !v)}
+            title="Voice mode (browser microphone + speech)"
+            aria-pressed={voiceOpen}
+            style={{
+              ...S.btn, background: voiceOpen ? "rgba(0,191,165,.2)" : S.btn.background,
+              borderColor: voiceOpen ? "rgba(0,191,165,.5)" : undefined,
+            }}>
+            🎙
+          </button>
         </header>
 
         <section style={{ flex: 1, overflowY: "auto", display: "flex",
@@ -257,6 +269,20 @@ export default function ChatWorkspace() {
         </section>
 
         {error && <div style={{ padding: "6px 16px", color: "#ff8c8c", fontSize: 12 }}>{error}</div>}
+
+        {voiceOpen && (
+          <div style={{ padding: "0 14px 10px" }}>
+            <VoiceControl
+              conversationId={active}
+              chatMode={teamMode ? "team" : "solo"}
+              agent={agent}
+              onTurn={async (turn) => {
+                if (turn.command) return; // command turns don't touch chat history
+                await loadDetail(active); await loadConvs();
+                if (teamMode && turn.agent_run_id) setTeamRunId(turn.agent_run_id);
+              }} />
+          </div>
+        )}
 
         <footer style={{ display: "flex", gap: 8, padding: 14,
                          borderTop: "1px solid rgba(255,255,255,.08)" }}>

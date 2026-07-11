@@ -78,3 +78,13 @@ gated behind the owner's explicit approval. Value: more capability without loss
 of control. Agents cannot self-approve, cannot bypass the ExecutionGateway, and
 cannot widen their own permissions; money, deploys, and external sends stay
 manual. Runs are resumable and never silently exceed their budget.
+
+## Voice OS (M12)
+
+Ajay can now talk to SaathiOS instead of typing — the same Chat brain,
+memory, and multi-agent runtime, just spoken. Value: hands-free operation
+while driving/cooking/multitasking, faster capture of business decisions in
+the moment they're made, and voice approvals for agent actions that still go
+through the exact same ownership and expiry checks as clicking Approve in the
+UI — speed without weakening the safety model. Privacy-first by default: no
+recording is ever kept unless explicitly turned on.
