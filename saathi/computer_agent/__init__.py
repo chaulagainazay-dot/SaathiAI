@@ -15,6 +15,14 @@ from saathi.computer_agent.agent import ComputerAgent
 from saathi.computer_agent.perception import Screen, UIElement, ElementType
 from saathi.computer_agent.providers import provider_availability, default_provider
 from saathi.computer_agent.replay import Replay
+from saathi.computer_agent.session import ComputerSession, SessionState, SessionInactive
+from saathi.computer_agent.intent import (
+    ComputerActionIntent, ResolvedElement, InteractionLayer, choose_layer,
+)
+from saathi.computer_agent import sensitive, policy, recovery
 
 __all__ = ["ComputerAgent", "Screen", "UIElement", "ElementType",
-           "provider_availability", "default_provider", "Replay", "operations"]
+           "provider_availability", "default_provider", "Replay", "operations",
+           "ComputerSession", "SessionState", "SessionInactive",
+           "ComputerActionIntent", "ResolvedElement", "InteractionLayer",
+           "choose_layer", "sensitive", "policy", "recovery"]

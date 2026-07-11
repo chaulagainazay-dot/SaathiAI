@@ -35,3 +35,39 @@ Live desktop control, real browser actuation, OCR/vision on real screens,
 authenticated-app workflows, multi-monitor, replay re-run against live apps.
 All deterministic; live is not faked. Voice/CEO/Chat computer surfaces are wired
 via the shared funnel + Computer Center read model, not live-driven here.
+
+## M17 hardening (session/consent + security boundary)
+Added on top of the M17 core:
+- **session.py** ComputerSession: active-session consent boundary (auth user +
+  device + os_user + allowed apps/origins/file-roots/displays + risk ceiling +
+  expiry + screenshot/clipboard policy). Emergency stop (collision-checked
+  shortcut) halts control; stop conditions: expiry/stop/revoke/lock/identity-
+  change/secure-desktop. No control without a live session.
+- **intent.py** ComputerActionIntent + InteractionLayer (API>DOM/CDP>
+  accessibility>OCR/vision>coordinate). Coordinate never default when a
+  structured element exists; mutation requires a postcondition; input digest +
+  to_dict redact sensitive args.
+- **sensitive.py**: sensitive-field detection (AX role/DOM type/label); pause-
+  for-user plan (no capture); CAPTCHA/MFA/biometric detection + bypass refusal.
+- **policy.py**: browser origin allow-list, download confinement, upload allow-
+  list; desktop app allow-list, file-root confinement (traversal + symlink-escape
+  rejected); shell + AppleScript injection guards; page/AX text is untrusted data.
+- **recovery.py**: obstacle classifier; CAPTCHA/MFA/secure-input/login/permission
+  → pause_for_user; crash/expiry → replan_from_checkpoint; irreversible+uncertain
+  → stop_uncertain; no budget → stop_no_progress.
+- Agent wired: active-session + app/origin allow-list + sensitive pause enforced
+  before every action; emergency_stop().
+- Control Center: /control/computer page (connectors, tools, honest provider
+  availability, live_desktop_control = environment_blocked).
+
+Red-team expanded to **46 attacks (46/46 hold)**: page prompt injection stays
+data, download traversal, upload substitution, symlink escape, AppleScript/shell
+injection, CAPTCHA bypass refused, MFA capture refused, sensitive-not-recorded,
+emergency-stop halts, app-allow-list, coordinate-not-default.
+
+### Honest capability classification (unchanged where live)
+implemented + deterministic-tested + red-team-tested: full hardening spine.
+live-browser-tested / live-desktop-tested: **none** (permission/dependency-
+blocked — no verified Playwright run, no Accessibility permission, no vision
+credentials). contract-ready: Windows UIA + Linux AT-SPI. Not claimed as
+operational on real applications.

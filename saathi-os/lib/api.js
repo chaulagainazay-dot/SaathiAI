@@ -715,3 +715,4 @@ export const controlSecurity = () => _ccj(`/api/v1/control/security`);
 export const controlRelease = () => _ccj(`/api/v1/control/release`);
 export const controlTimeline = (limit = 25) => _ccj(`/api/v1/control/timeline?limit=${limit}`);
 export const controlSearch = (q) => _ccj(`/api/v1/control/search?q=${encodeURIComponent(q)}`);
+export const controlComputer = () => _ccj(`/api/v1/control/computer`);

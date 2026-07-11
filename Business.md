@@ -190,3 +190,15 @@ replays, and one user's session can never see another's. Today this is proven wi
 a deterministic simulator; driving real authenticated applications on a real
 desktop is the next, credential-and-permission-gated step before it becomes a
 pilot-ready digital worker.
+
+## M17 hardening — safe by construction
+
+Before SaathiOS touches a real screen it now demands explicit consent: a live
+session that names exactly which apps, sites, and folders it may use, for how
+long, and up to what risk — with a one-press emergency stop that instantly halts
+it. It refuses to type passwords or one-time codes (it hands those moments back to
+you and records only "entered by user"), never solves a CAPTCHA or bypasses MFA,
+stays inside the folders you allowed, rejects booby-trapped page instructions, and
+stops rather than guessing when the screen is uncertain. Every one of these
+guarantees is proven by an automated attack suite. Driving real logged-in
+applications on a real desktop is the next, permission-gated step.

@@ -585,6 +585,86 @@
    ],
    "subsystem": "computer_agent",
    "blocking": true
+  },
+  {
+   "id": "computer.active_session",
+   "targets": [
+    "tests/test_m17_hardening.py::test_emergency_stop_halts_control"
+   ],
+   "subsystem": "computer_agent",
+   "blocking": true
+  },
+  {
+   "id": "computer.app_allowlist",
+   "targets": [
+    "tests/test_m17_hardening.py::test_app_allowlist_enforced"
+   ],
+   "subsystem": "computer_agent",
+   "blocking": true
+  },
+  {
+   "id": "computer.origin_allowlist",
+   "targets": [
+    "tests/test_m17_hardening.py::test_origin_allowlist_enforced"
+   ],
+   "subsystem": "computer_agent",
+   "blocking": true
+  },
+  {
+   "id": "computer.sensitive_not_recorded",
+   "targets": [
+    "tests/test_m17_hardening.py::test_sensitive_field_pauses_and_not_recorded"
+   ],
+   "subsystem": "computer_agent",
+   "blocking": true
+  },
+  {
+   "id": "computer.file_root_confinement",
+   "targets": [
+    "tests/test_m17_hardening.py::test_file_root_traversal_blocked"
+   ],
+   "subsystem": "computer_agent",
+   "blocking": true
+  },
+  {
+   "id": "computer.injection_guards",
+   "targets": [
+    "tests/test_m17_hardening.py::test_shell_and_applescript_guards"
+   ],
+   "subsystem": "computer_agent",
+   "blocking": true
+  },
+  {
+   "id": "computer.mfa_captcha_refuse",
+   "targets": [
+    "tests/test_m17_hardening.py::test_captcha_mfa_detection_and_refusal"
+   ],
+   "subsystem": "computer_agent",
+   "blocking": true
+  },
+  {
+   "id": "computer.postcondition_required",
+   "targets": [
+    "tests/test_m17_hardening.py::test_intent_requires_postcondition_for_mutation"
+   ],
+   "subsystem": "computer_agent",
+   "blocking": true
+  },
+  {
+   "id": "computer.coord_not_default",
+   "targets": [
+    "tests/test_m17_hardening.py::test_coordinate_not_default_with_structured_element"
+   ],
+   "subsystem": "computer_agent",
+   "blocking": true
+  },
+  {
+   "id": "computer.recovery_no_unsafe_retry",
+   "targets": [
+    "tests/test_m17_hardening.py::test_recovery_irreversible_uncertain_stops"
+   ],
+   "subsystem": "computer_agent",
+   "blocking": true
   }
  ]
 }

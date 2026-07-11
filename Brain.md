@@ -997,3 +997,28 @@ STAGING READY** — perception→gateway-routed execution→verification→sanit
 spine deterministically verified + red-team-tested, no bypass. Live desktop/browser
 actuation on real authenticated apps remains environment-blocked (needed for
 DIGITAL WORKER PILOT/PRODUCTION READY).
+
+## M17 hardening — computer-agent security boundary
+
+session.py (ComputerSession consent boundary: auth user + device + allowed apps/
+origins/file-roots + risk ceiling + expiry + emergency stop; **no control without
+a live session**), intent.py (ComputerActionIntent + InteractionLayer API>DOM>
+accessibility>OCR>coordinate; coordinate never default when a structured element
+exists; mutation requires postcondition; sensitive args redacted), sensitive.py
+(sensitive-field detection + pause-for-user, no capture; **CAPTCHA/MFA/biometric
+bypass refused**), policy.py (origin/app allow-lists, download/upload/file-root
+confinement with traversal + symlink-escape rejection, shell + AppleScript
+injection guards; page/AX text is untrusted data), recovery.py (obstacle
+classifier: CAPTCHA/MFA/login/permission → pause_for_user; irreversible+uncertain
+→ stop_uncertain; no budget → stop_no_progress). Agent enforces active-session +
+allow-lists + sensitive-pause before every action; emergency_stop(). Control
+Center /control/computer page (honest provider availability). Red-team **46/46**
+(+12: page-inject, traversal, symlink, AppleScript/shell, CAPTCHA/MFA, sensitive-
+not-recorded, emergency-stop, app-allowlist, coord-not-default). Ops: critical
+manifest m17 (+10 hardening checks). Tests: test_m17_hardening.py (21). Spec Kit
+CONVERGED 17/17. **Verdict: COMPUTER AGENT STAGING READY** — perception → session-
+gated gateway-routed execution → verification → sanitized replay, with consent
+boundary, sensitive-input protection, injection guards, and recovery all
+deterministically verified + red-team-tested. Live browser/desktop actuation on
+real authenticated apps remains permission/dependency-blocked (needed for DIGITAL
+WORKER PILOT/PRODUCTION READY).
