@@ -139,3 +139,15 @@ are genuinely live; cloud accounts (Gmail, Calendar, Telegram, publishing) are
 wired and waiting only on real credentials, and the system says so honestly
 rather than pretending they work. A connector failure never turns into a fake
 "zero" or "done" on a CEO dashboard — it stays visibly unavailable.
+
+## M15.2 — Continuous security proof
+
+SaathiOS now attacks itself. A built-in red-team harness runs a library of
+adversarial scenarios — prompt injection, tricking an agent into misusing a
+tool, replaying an approval, reading another user's data, extracting a secret —
+against the real system on every run, and proves each attack is blocked with hard
+evidence (not a model's opinion). On its first run it caught a genuine flaw where
+one path could act on another user's account; that's now fixed and permanently
+guarded by a test. The verdict is honest: the boundaries we can test here are
+green; full sign-off still needs live adversarial tooling and real accounts on a
+staging server.

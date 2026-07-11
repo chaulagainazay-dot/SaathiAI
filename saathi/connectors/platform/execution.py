@@ -110,6 +110,18 @@ class ExecutionEngine:
             if not acct:
                 return self._fail(req, FailureClass.AUTH,
                                   "no connected account for connector")
+            # ownership boundary: the caller must OWN the account. Enforced here
+            # (not only at the API) so agents/funnel/direct callers cannot execute
+            # on another user's account. Cross-user access is blocked.
+            if acct.get("owner") != req.owner:
+                self.store.event("connector.cross_owner_blocked",
+                                 {"account": req.account_id, "caller": req.owner})
+                return self._blocked(req, FailureClass.AUTHZ,
+                                     "account not owned by caller")
+            # account connector must match the requested tool's connector
+            if acct.get("connector_id") != conn.connector_id:
+                return self._blocked(req, FailureClass.AUTHZ,
+                                     "account/connector mismatch")
             state = ConnState(acct["state"])
             if not acct.get("enabled", 1):
                 return self._blocked(req, FailureClass.POLICY, "account disabled")

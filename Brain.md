@@ -869,3 +869,38 @@ verified only). **Verdict: STAGING READY** for the local + governance surface;
 cloud live-mutation + browser smoke remain environment-blocked pending creds.
 Note: gstack is an optional external Claude/Codex dev-workflow toolkit, not a
 Spec Kit implementation or SaathiOS dependency.
+
+## M15.2 — Agent Security Red-Team Harness
+
+`saathi/security/redteam/`: SaathiOS-owned, isolated, **deterministic** adversarial
+harness proving M8–M15.1 boundaries hold under attack. Deterministic probes are
+**authoritative**; a judge/LLM opinion never confirms or clears a finding.
+HackAgent (Apache-2.0) integrated as an **optional, pinned (0.3.0), local-only,
+cloud-sync-off** dev-security dependency — advisory only, never on the production
+path; absent here → honestly `environment_blocked`. Config guards: production/
+public targets **blocked** (in-process/loopback only), secrets redacted from every
+artifact, budgets bound attacks/time/tokens.
+
+Corpus `security/redteam/attacks/corpus.yaml` (v1, 20 attacks) binds 1:1 to
+deterministic probes (`probes.py`) that drive real attacks against isolated
+in-process targets (temp connectors.db, isolated user vs attacker identity):
+prompt/indirect injection, goal hijack, tool misuse, approval bypass (changed-
+input/replay/forged), privilege/delegation (agent no self-approve), memory
+poisoning, cross-user isolation, secret extraction, MCP clamp, webhook replay,
+unsafe retry, CEO evidence. Finding model (deterministic vs advisory-judge),
+severity, baseline + compare, sanitized report + release-gate (blocks on
+Critical/High), CLI (`python -m saathi.security.redteam.cli
+health|list-attacks|run|report|baseline|compare`), read-only report API
+`/api/v1/security/redteam/*` (prod-disabled, authenticated).
+
+**Found + fixed a real CRITICAL**: ExecutionEngine did not verify account
+ownership — the M15.1 API did, but the funnel/agents call the engine directly, so
+cross-user execution succeeded (probe ISO-001). Root-cause fix in
+`execution.py` (ownership + account/connector match enforced in the engine);
+re-run 20/20 hold, regression-protected, no M15/M15.1 regression. Ops: critical
+manifest → m15.2 (+11 blocking checks). Tests: `test_m15_2_{security,harness}.py`.
+Spec Kit `specs/m15-2-agent-security/*` + threat-model (STRIDE) CONVERGED 15/15.
+**Verdict: SECURITY STAGING READY** — deterministic controls green, 0 Critical/High
+confirmed, remediation regression-tested; adversarial-model (HackAgent), live
+browser/Voice, and live cloud connector attack paths remain environment-blocked
+(needed for SECURITY PRODUCTION READY).

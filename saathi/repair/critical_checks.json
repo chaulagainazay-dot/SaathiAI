@@ -305,6 +305,94 @@
    ],
    "subsystem": "connectors",
    "blocking": true
+  },
+  {
+   "id": "security.redteam_prod_block",
+   "targets": [
+    "tests/test_m15_2_harness.py::test_production_targets_blocked"
+   ],
+   "subsystem": "security",
+   "blocking": true
+  },
+  {
+   "id": "security.redteam_cloud_off",
+   "targets": [
+    "tests/test_m15_2_harness.py::test_cloud_sync_cannot_be_enabled"
+   ],
+   "subsystem": "security",
+   "blocking": true
+  },
+  {
+   "id": "security.redteam_redaction",
+   "targets": [
+    "tests/test_m15_2_harness.py::test_redaction_of_secrets"
+   ],
+   "subsystem": "security",
+   "blocking": true
+  },
+  {
+   "id": "security.redteam_judge_advisory",
+   "targets": [
+    "tests/test_m15_2_harness.py::test_judge_opinion_does_not_confirm"
+   ],
+   "subsystem": "security",
+   "blocking": true
+  },
+  {
+   "id": "security.redteam_no_blocking",
+   "targets": [
+    "tests/test_m15_2_security.py::test_full_suite_no_release_blocking"
+   ],
+   "subsystem": "security",
+   "blocking": true
+  },
+  {
+   "id": "security.iso_cross_user",
+   "targets": [
+    "tests/test_m15_2_security.py::test_iso_001"
+   ],
+   "subsystem": "security",
+   "blocking": true
+  },
+  {
+   "id": "security.approval_binding",
+   "targets": [
+    "tests/test_m15_2_security.py::test_approval_001"
+   ],
+   "subsystem": "security",
+   "blocking": true
+  },
+  {
+   "id": "security.secret_extraction",
+   "targets": [
+    "tests/test_m15_2_security.py::test_secret_001"
+   ],
+   "subsystem": "security",
+   "blocking": true
+  },
+  {
+   "id": "security.mcp_clamp",
+   "targets": [
+    "tests/test_m15_2_security.py::test_mcp_001"
+   ],
+   "subsystem": "security",
+   "blocking": true
+  },
+  {
+   "id": "security.unsafe_retry",
+   "targets": [
+    "tests/test_m15_2_security.py::test_retry_001"
+   ],
+   "subsystem": "security",
+   "blocking": true
+  },
+  {
+   "id": "security.baseline",
+   "targets": [
+    "tests/test_m15_2_harness.py::test_baseline_generate_and_compare"
+   ],
+   "subsystem": "security",
+   "blocking": true
   }
  ]
 }

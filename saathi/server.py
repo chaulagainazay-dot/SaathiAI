@@ -1559,6 +1559,15 @@ try:
 except Exception as _e:
     print(f"[saathi] connectors-platform router unavailable: {_e}")
 
+# M15.2 red-team report API — read-only, authenticated, disabled in production.
+try:
+    import os as _os2
+    if _os2.getenv("SAATHI_ENV", "local").lower() != "production":
+        from .security.redteam.api import router as redteam_router
+        app.include_router(redteam_router)
+except Exception as _e:
+    print(f"[saathi] redteam router unavailable: {_e}")
+
 # Simple access key for remote/tunnel use. Local requests (the Mac itself)
 # are always allowed; remote requests must send X-Saathi-Token.
 import os as _os
