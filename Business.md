@@ -126,3 +126,16 @@ the 7.94M target) is reused unchanged. **Review cadence:** Daily Brief (real
 data, evidence-tagged), weekly review persisted with provenance to memory.
 Budget model: approved/committed/actual/forecast with variance + hard stop;
 budget-increasing execution follows approval policy.
+
+## M15.1 — Connectors reach staging
+
+The connector platform now has a real, authenticated door: every business
+action (send, publish, deploy, read email, check calendar) goes through one
+governed API where the user owns their accounts, secrets are never shown, and
+any side-effect needs a one-time approval bound to that exact action. Chat, the
+agents, CEO OS, and Voice all reach the outside world through this single funnel
+— nothing calls a provider behind the platform's back. Local tools (files, git)
+are genuinely live; cloud accounts (Gmail, Calendar, Telegram, publishing) are
+wired and waiting only on real credentials, and the system says so honestly
+rather than pretending they work. A connector failure never turns into a fake
+"zero" or "done" on a CEO dashboard — it stays visibly unavailable.

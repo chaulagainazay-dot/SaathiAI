@@ -300,6 +300,40 @@ class ConnectorStore:
             return [dict(r) for r in c.execute(
                 "SELECT * FROM failure ORDER BY created_at DESC LIMIT ?", (limit,)).fetchall()]
 
+    def count_executions(self, owner=None):
+        with self._conn() as c:
+            q = "SELECT status, COUNT(*) n FROM execution"
+            args = []
+            if owner:
+                q += " WHERE owner=?"; args.append(owner)
+            q += " GROUP BY status"
+            return {r["status"]: r["n"] for r in c.execute(q, args).fetchall()}
+
+    def metrics(self, owner=None) -> dict:
+        """Staging observability aggregate over a genuine sample (never faked)."""
+        by_status = self.count_executions(owner)
+        total = sum(by_status.values())
+        with self._conn() as c:
+            accts = c.execute("SELECT COUNT(*) n FROM account" +
+                             (" WHERE owner=?" if owner else ""),
+                             ([owner] if owner else [])).fetchone()["n"]
+            approvals = {r["status"]: r["n"] for r in c.execute(
+                "SELECT status, COUNT(*) n FROM approval GROUP BY status").fetchall()}
+            failures = {r["failure_class"]: r["n"] for r in c.execute(
+                "SELECT failure_class, COUNT(*) n FROM failure GROUP BY failure_class").fetchall()}
+        succ = by_status.get("success", 0) + by_status.get("partial", 0)
+        return {
+            "sample_size": total, "connected_accounts": accts,
+            "executions_by_status": by_status,
+            "success_rate": round(succ / total, 4) if total else None,
+            "failure_rate": round(by_status.get("failed", 0) / total, 4) if total else None,
+            "blocked_rate": round(by_status.get("blocked", 0) / total, 4) if total else None,
+            "approval_required": by_status.get("approval_required", 0),
+            "uncertain": by_status.get("uncertain", 0),
+            "approvals_by_status": approvals, "failures_by_class": failures,
+            "note": "aggregates over actual local sample; not production p95",
+        }
+
 
 _default: Optional[ConnectorStore] = None
 

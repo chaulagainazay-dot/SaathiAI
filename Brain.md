@@ -833,3 +833,39 @@ Convergence gate: every requirement mapped to an artifact + a passing test.
 live authenticated connector workflows unverified (no creds), connector API + UI
 remain. Ops: `connectors.db` in backup/db-integrity APP_DBS, schema `connectors:m15`,
 critical manifest → m15. Tests: `tests/test_m15_connectors.py`, `tests/test_m15_specs.py`.
+
+## M15.1 — Connector Platform Staging Completion
+
+Promotes M15 toward STAGING READY without rebuilding the core. Adds the
+authenticated REST API `saathi/connectors/platform/api.py` mounted at
+`/api/v1/connectors/*` (owner-scoped via `request.state.user_id`, same auth as
+CEO/chat routers): registry/capability/tool/account/health/metrics/execution/
+approval/webhook/sync routes. Every route enforces authentication + connector/
+account ownership; cross-user access → 403; **raw secrets never returned, never
+in error bodies**; all execution flows through the ExecutionEngine (gateway
+provenance on every result). New mutation paths avoid legacy collisions
+(`/accounts/connect`, `/executions`).
+
+**Credential hardening** (`credentials.resolve_for_account`): validates owner +
+connector + scope BEFORE any backend lookup, typed `CredentialScopeError`,
+revoked/expired fail immediately, minimal secret lifetime; wired into the engine
+secret getter. **Integration funnel** (`integration.py`): the ONE surface Chat/
+M10 Agents/CEO OS/Voice use — `describe_action` (surfaces exact risk/approval for
+spoken confirmation), `run` (gateway-routed; agents can't self-approve),
+`ceo_evidence_tier` (a connector FAILURE stays *unavailable*, never faked to
+zero/success). **Migration** (`migration.py`): legacy ledger + `scan_direct_calls`
+(0 violations in the platform package) guarding Constitution Art. I. **UI**:
+`/connectors` rewritten on the real platform API with honest integration-status
+states, approval panel bound to exact action, execution history, env-blocked
+states — Next build passes (34/34 pages, `/connectors` compiled). **Observability**:
+`store.metrics()` over a genuine sample (no fabricated p95).
+
+Ops: route manifest → m15, critical manifest → m15.1 (+12 blocking checks).
+Tests: 33 new (`test_m15_1_{api,integration,live_local,ui}.py`). Evidence honesty:
+local_fs/local_git **LIVE TESTED**; GitHub/browser/sqlite deterministic; gmail/
+gcal/gcontacts/telegram/publishing **environment-blocked** (no creds, not faked);
+deploy contract-ready; interactive browser smoke environment-blocked (build
+verified only). **Verdict: STAGING READY** for the local + governance surface;
+cloud live-mutation + browser smoke remain environment-blocked pending creds.
+Note: gstack is an optional external Claude/Codex dev-workflow toolkit, not a
+Spec Kit implementation or SaathiOS dependency.

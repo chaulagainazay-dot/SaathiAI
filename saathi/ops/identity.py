@@ -13,14 +13,14 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent.parent
 
 API_VERSION = "1.0"
-ROUTE_MANIFEST_VERSION = "m14"
+ROUTE_MANIFEST_VERSION = "m15"
 # schema versions per subsystem db (bumped when a table changes)
 SCHEMA_VERSIONS = {
     "chat": "m8", "memory": "m9", "agent_runtime": "m10",
     "voice_os": "m12", "studio_os": "m13", "ceo_os": "m14", "repair": "m9",
     "connectors": "m15",
 }
-CRITICAL_MANIFEST_VERSION = "m15"
+CRITICAL_MANIFEST_VERSION = "m15.1"
 
 _PROCESS_START = time.time()
 

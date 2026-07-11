@@ -153,7 +153,8 @@ class ExecutionEngine:
                               f"adapter for {conn.connector_id} unavailable",
                               extra={"integration_status": conn.integration_status})
 
-        secret_getter = self._secret_getter(req.account_id) if not conn.local else None
+        secret_getter = (self._secret_getter(req.account_id, conn.connector_id, req.owner)
+                         if not conn.local else None)
         try:
             result = adapter.execute(tool=tool, account_id=req.account_id,
                                      args=req.args, secret_getter=secret_getter)
@@ -273,7 +274,7 @@ class ExecutionEngine:
         return result
 
     # ── secret access (in-process only) ──────────────────────────────────────
-    def _secret_getter(self, account_id):
+    def _secret_getter(self, account_id, connector_id, owner):
         store = self.store
 
         def _get(backend_key_hint: str = "") -> str:
@@ -285,7 +286,10 @@ class ExecutionEngine:
                 raise SecretUnavailable("credential reference missing")
             ref = CredentialRef(**{k: row[k] for k in row if k in
                                    CredentialRef.__dataclass_fields__})
-            return resolve_secret(ref)  # in-process, never returned/logged
+            # staging-hardened: validate ownership/scope/connector before lookup
+            from saathi.connectors.platform.credentials import resolve_for_account
+            return resolve_for_account(account=acct, ref=ref,
+                                       expected_connector=connector_id, owner=owner)
         return _get
 
     # ── helpers ──────────────────────────────────────────────────────────────

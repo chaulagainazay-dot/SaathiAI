@@ -680,3 +680,25 @@ export async function fetchIdentityProviders() {
   if (!r.ok) throw new Error(`providers ${r.status}`);
   return r.json();
 }
+
+// ── M15.1 Universal Connector Platform (/api/v1/connectors/*) — authenticated,
+// gateway-routed, honest states. Never returns raw secrets.
+async function _cj(path, opts) {
+  const r = await afetch(`${API_BASE}${path}`, { cache: "no-store", ...(opts || {}) });
+  if (!r.ok) throw new Error(`connectors ${r.status}`);
+  return r.json();
+}
+export const platformConnectors = (limit = 100) => _cj(`/api/v1/connectors?limit=${limit}`);
+export const platformHealth = () => _cj(`/api/v1/connectors/health/platform`);
+export const platformMetrics = () => _cj(`/api/v1/connectors/metrics/overview`);
+export const platformCapabilities = () => _cj(`/api/v1/connectors/capabilities`);
+export const platformTools = (cap = "") => _cj(`/api/v1/connectors/tools${cap ? `?capability=${cap}` : ""}`);
+export const platformAccounts = (cid = "") => _cj(`/api/v1/connectors/accounts/list${cid ? `?connector_id=${cid}` : ""}`);
+export const platformExecutions = (limit = 50) => _cj(`/api/v1/connectors/executions/list?limit=${limit}`);
+export const platformPendingApprovals = () => _cj(`/api/v1/connectors/approvals/pending`);
+export const platformDecideApproval = (aid, approved) =>
+  _cj(`/api/v1/connectors/approvals/${aid}/decide?approved=${approved}`, { method: "POST" });
+export const platformExecute = (body) =>
+  _cj(`/api/v1/connectors/executions`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+export const platformConnectAccount = (body) =>
+  _cj(`/api/v1/connectors/accounts/connect`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });

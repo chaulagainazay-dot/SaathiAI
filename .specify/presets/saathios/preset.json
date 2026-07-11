@@ -1,12 +1,27 @@
 {
   "name": "saathios",
   "constitution": ".specify/memory/constitution.md",
-  "pipeline": ["constitution", "spec", "clarify", "plan", "tasks",
-               "consistency", "implement", "validate", "converge", "report"],
-  "requirement_id_pattern": "^M\\d+-[A-Z]+-\\d{3}$",
+  "pipeline": [
+    "constitution",
+    "spec",
+    "clarify",
+    "plan",
+    "tasks",
+    "consistency",
+    "implement",
+    "validate",
+    "converge",
+    "report"
+  ],
+  "requirement_id_pattern": "^M\\d+(-\\d+)?-[A-Z]+-\\d{3}$",
   "gates": {
-    "convergence": {"every_requirement_mapped": true, "every_requirement_tested": true},
-    "constitution": {"version": "1.0"}
+    "convergence": {
+      "every_requirement_mapped": true,
+      "every_requirement_tested": true
+    },
+    "constitution": {
+      "version": "1.0"
+    }
   },
   "orchestration": "derive M10 agent strategy from tasks.md task graph"
 }

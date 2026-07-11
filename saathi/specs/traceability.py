@@ -13,7 +13,7 @@ import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent.parent
-_ID_RE = re.compile(r"^M\d+-[A-Z]+-\d{3}$")
+_ID_RE = re.compile(r"^M\d+(-\d+)?-[A-Z]+-\d{3}$")
 
 
 def load_traceability(path: str | Path) -> dict:

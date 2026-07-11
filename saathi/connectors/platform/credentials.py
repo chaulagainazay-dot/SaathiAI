@@ -86,6 +86,34 @@ def resolve_secret(ref: CredentialRef) -> str:
     raise SecretUnavailable(f"backend {ref.backend} not configured")
 
 
+class CredentialScopeError(SecretUnavailable):
+    """Account/connector/scope mismatch — resolution refused before any lookup."""
+
+
+def resolve_for_account(*, account: dict, ref: CredentialRef,
+                        expected_connector: str, owner: str) -> str:
+    """Staging-hardened resolution: validate ownership/scope/connector match
+    BEFORE touching any backend, then resolve in-process. Raises typed errors;
+    never logs, never returns the value to any caller but the adapter.
+
+    Checks (fail-closed):
+      * account belongs to owner
+      * credential reference connector matches the account's connector
+      * credential scope matches the resolving owner
+      * status not revoked/expired (delegated to resolve_secret)
+    """
+    if account.get("owner") != owner:
+        raise CredentialScopeError("account not owned by resolver")
+    if ref.connector_id != expected_connector:
+        raise CredentialScopeError("credential connector mismatch")
+    if account.get("connector_id") != ref.connector_id:
+        raise CredentialScopeError("account/credential connector mismatch")
+    if ref.scope and ref.scope not in (f"user:{owner}", f"org:{owner}"):
+        raise CredentialScopeError("credential scope does not match owner")
+    # resolve last, minimize lifetime — caller must discard immediately
+    return resolve_secret(ref)
+
+
 def has_secret(ref: CredentialRef) -> bool:
     """Presence check WITHOUT resolving/returning the value."""
     if ref.backend == SecretBackend.ENV.value:

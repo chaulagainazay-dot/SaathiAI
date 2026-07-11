@@ -209,6 +209,102 @@
    ],
    "subsystem": "specs",
    "blocking": true
+  },
+  {
+   "id": "connectors.api_auth",
+   "targets": [
+    "tests/test_m15_1_api.py::test_unauthenticated_rejected"
+   ],
+   "subsystem": "connectors",
+   "blocking": true
+  },
+  {
+   "id": "connectors.api_cross_user",
+   "targets": [
+    "tests/test_m15_1_api.py::test_account_lifecycle_owner_scoped"
+   ],
+   "subsystem": "connectors",
+   "blocking": true
+  },
+  {
+   "id": "connectors.api_secret_redaction",
+   "targets": [
+    "tests/test_m15_1_api.py::test_no_secret_in_error_body"
+   ],
+   "subsystem": "connectors",
+   "blocking": true
+  },
+  {
+   "id": "connectors.api_approval_binding",
+   "targets": [
+    "tests/test_m15_1_api.py::test_side_effect_needs_bound_approval_via_api"
+   ],
+   "subsystem": "connectors",
+   "blocking": true
+  },
+  {
+   "id": "connectors.credential_scope",
+   "targets": [
+    "tests/test_m15_1_integration.py::test_credential_scope_mismatch_rejected"
+   ],
+   "subsystem": "connectors",
+   "blocking": true
+  },
+  {
+   "id": "connectors.direct_call_scan",
+   "targets": [
+    "tests/test_m15_1_integration.py::test_no_direct_provider_calls_in_platform"
+   ],
+   "subsystem": "connectors",
+   "blocking": true
+  },
+  {
+   "id": "connectors.funnel_gateway",
+   "targets": [
+    "tests/test_m15_1_integration.py::test_funnel_routes_through_gateway"
+   ],
+   "subsystem": "connectors",
+   "blocking": true
+  },
+  {
+   "id": "connectors.agent_no_self_approve",
+   "targets": [
+    "tests/test_m15_1_integration.py::test_agent_cannot_self_approve"
+   ],
+   "subsystem": "connectors",
+   "blocking": true
+  },
+  {
+   "id": "connectors.ceo_evidence_tier",
+   "targets": [
+    "tests/test_m15_1_integration.py::test_ceo_evidence_tier_never_fakes_success"
+   ],
+   "subsystem": "connectors",
+   "blocking": true
+  },
+  {
+   "id": "connectors.live_local",
+   "targets": [
+    "tests/test_m15_1_live_local.py::test_live_local_git_inspect"
+   ],
+   "subsystem": "connectors",
+   "blocking": true
+  },
+  {
+   "id": "connectors.ui_real_api",
+   "targets": [
+    "tests/test_m15_1_ui.py::test_ui_uses_real_platform_api"
+   ],
+   "subsystem": "connectors",
+   "blocking": true
+  },
+  {
+   "id": "connectors.backup_refs",
+   "targets": [
+    "tests/test_m15_1_integration.py::test_backup_preserves_references_not_secrets"
+   ],
+   "subsystem": "connectors",
+   "blocking": true
   }
  ]
 }

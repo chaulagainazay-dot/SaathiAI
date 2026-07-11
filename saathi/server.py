@@ -1553,6 +1553,12 @@ try:
 except Exception as _e:
     print(f"[saathi] ceo router unavailable: {_e}")
 
+try:
+    from .connectors.platform.api import router as connectors_platform_router
+    app.include_router(connectors_platform_router)
+except Exception as _e:
+    print(f"[saathi] connectors-platform router unavailable: {_e}")
+
 # Simple access key for remote/tunnel use. Local requests (the Mac itself)
 # are always allowed; remote requests must send X-Saathi-Token.
 import os as _os

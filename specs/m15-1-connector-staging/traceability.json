@@ -1,0 +1,25 @@
+{
+  "milestone": "M15-1",
+  "title": "Connector Platform Staging Completion",
+  "constitution_version": "1.0",
+  "requirements": [
+    {"id": "M15-1-API-001", "text": "Authenticated connector REST API mounted at /api/v1/connectors/*", "artifact": "saathi/connectors/platform/api.py", "test": "tests/test_m15_1_api.py::test_registry_routes"},
+    {"id": "M15-1-AUTH-001", "text": "Unauthenticated requests rejected", "artifact": "saathi/connectors/platform/api.py", "test": "tests/test_m15_1_api.py::test_unauthenticated_rejected"},
+    {"id": "M15-1-AUTH-002", "text": "Cross-user account + execution access rejected", "artifact": "saathi/connectors/platform/api.py", "test": "tests/test_m15_1_api.py::test_account_lifecycle_owner_scoped"},
+    {"id": "M15-1-API-002", "text": "Execution requires account ownership and is gateway-routed", "artifact": "saathi/connectors/platform/api.py", "test": "tests/test_m15_1_api.py::test_execution_requires_account_ownership"},
+    {"id": "M15-1-SEC-001", "text": "Raw secrets never returned by API or in error bodies", "artifact": "saathi/connectors/platform/api.py", "test": "tests/test_m15_1_api.py::test_no_secret_in_error_body"},
+    {"id": "M15-1-API-003", "text": "Approval bound to exact action via API; changed input invalidates", "artifact": "saathi/connectors/platform/api.py", "test": "tests/test_m15_1_api.py::test_side_effect_needs_bound_approval_via_api"},
+    {"id": "M15-1-CRED-001", "text": "Credential resolution validates owner/connector/scope before lookup", "artifact": "saathi/connectors/platform/credentials.py", "test": "tests/test_m15_1_integration.py::test_credential_scope_mismatch_rejected"},
+    {"id": "M15-1-CRED-002", "text": "Revoked/expired credential references fail immediately", "artifact": "saathi/connectors/platform/credentials.py", "test": "tests/test_m15_1_integration.py::test_credential_revoked_fails"},
+    {"id": "M15-1-UI-001", "text": "Connector management UI consumes the real platform API with honest states", "artifact": "saathi-os/app/connectors/page.jsx", "test": "tests/test_m15_1_ui.py::test_ui_uses_real_platform_api"},
+    {"id": "M15-1-LIVE-001", "text": "Local connectors genuinely executed through the platform (LIVE)", "artifact": "saathi/connectors/platform/adapters.py", "test": "tests/test_m15_1_live_local.py::test_live_local_git_inspect"},
+    {"id": "M15-1-MIG-001", "text": "Legacy migration ledger + prohibited direct-call scanner", "artifact": "saathi/connectors/platform/migration.py", "test": "tests/test_m15_1_integration.py::test_no_direct_provider_calls_in_platform"},
+    {"id": "M15-1-CHAT-001", "text": "Integration funnel routes Chat/Agent/CEO/Voice through the gateway", "artifact": "saathi/connectors/platform/integration.py", "test": "tests/test_m15_1_integration.py::test_funnel_routes_through_gateway"},
+    {"id": "M15-1-AGENT-001", "text": "Agents cannot self-approve side-effect actions", "artifact": "saathi/connectors/platform/integration.py", "test": "tests/test_m15_1_integration.py::test_agent_cannot_self_approve"},
+    {"id": "M15-1-CEO-001", "text": "CEO OS evidence tier: connector failure stays unavailable, never faked", "artifact": "saathi/connectors/platform/integration.py", "test": "tests/test_m15_1_integration.py::test_ceo_evidence_tier_never_fakes_success"},
+    {"id": "M15-1-VOICE-001", "text": "Action description surfaces exact risk/approval for spoken confirmation", "artifact": "saathi/connectors/platform/integration.py", "test": "tests/test_m15_1_integration.py::test_describe_action_surfaces_risk"},
+    {"id": "M15-1-FAIL-001", "text": "Failure paths typed, honest, never converted to success", "artifact": "saathi/connectors/platform/execution.py", "test": "tests/test_m15_1_integration.py::test_failure_paths_typed_and_not_success"},
+    {"id": "M15-1-BACKUP-001", "text": "Backup preserves credential references but not raw secrets; history preserved", "artifact": "saathi/connectors/platform/store.py", "test": "tests/test_m15_1_integration.py::test_backup_preserves_references_not_secrets"},
+    {"id": "M15-1-OBS-001", "text": "Observability metrics over a genuine sample (not fabricated p95)", "artifact": "saathi/connectors/platform/store.py", "test": "tests/test_m15_1_api.py::test_health_and_metrics"}
+  ]
+}
