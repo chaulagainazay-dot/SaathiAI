@@ -1541,6 +1541,12 @@ try:
 except Exception as _e:
     print(f"[saathi] voice-os router unavailable: {_e}")
 
+try:
+    from .studio_os.api import router as studio_os_router
+    app.include_router(studio_os_router)
+except Exception as _e:
+    print(f"[saathi] studio-os router unavailable: {_e}")
+
 # Simple access key for remote/tunnel use. Local requests (the Mac itself)
 # are always allowed; remote requests must send X-Saathi-Token.
 import os as _os

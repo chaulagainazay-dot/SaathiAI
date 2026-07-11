@@ -88,3 +88,15 @@ the moment they're made, and voice approvals for agent actions that still go
 through the exact same ownership and expiry checks as clicking Approve in the
 UI — speed without weakening the safety model. Privacy-first by default: no
 recording is ever kept unless explicitly turned on.
+
+## AI Studio (M13)
+
+SaathiOS can now take a content objective and drive it through research,
+script, storyboard, media, assembly, thumbnail, SEO, and review — producing
+real, verifiable media locally (images, narrated video, thumbnails) with every
+step costed and auditable. Value: a repeatable content factory that reuses the
+same agents, memory, and approval controls as the rest of the platform.
+Safety-first: disk exhaustion (a real past incident) is hard-gated before any
+render; nothing publishes without explicit approval and a verified output; and
+the system never claims a video was made or a post was published unless the
+file exists and the receipt is real.

@@ -670,3 +670,55 @@ endpoint exposes commit/process-start/route-count so staleness is detectable.
 utterance were not exercised in this sandboxed session (no `getUserMedia`
 grant available to the automation). Real local adapters (faster_whisper,
 macOS `say`) and the full deterministic pipeline were genuinely tested.
+
+---
+
+## M13 — AI Studio (end-to-end content workflows)
+
+`saathi/studio_os/` — idea → reviewed, exportable, optionally-published content.
+Reuses M10 (orchestration + approvals), M9 (memory/learning), M12 (voice/TTS),
+ExecutionGateway (all provider/FFmpeg calls), the event bus. NOT a new
+orchestrator/memory/approval/agent system.
+
+**Flow:** objective → M10-orchestrated planning/scripting (real ChatEngine) →
+real local media stages → versioned checksummed artifacts → review → approval →
+export/publish. Every stage persists an artifact + status + cost.
+
+**Project state machine:** 15 states (draft…completed/partially_completed/
+cancelled/failed/archived, validated transitions, illegal raises).
+
+**Artifacts:** 25 types, versioned (new supersedes prior latest of same
+type+stage), checksummed; media binaries on disk (storage_uri), never in SQLite.
+
+**Real local providers (verified):** Pillow images (genuine PNG), FFmpeg
+render/probe/thumbnail/mux (gateway-routed, argument-safe list form — no shell
+injection), macOS `say` narration (shared with M12). Cloud image/video
+(Flux/Veo/HeyGen/ComfyUI) + real publishing = honest deterministic/dry-run;
+capability matrix marks them configured:false, never "tested."
+
+**Disk safety (core, not optional — user has hit disk exhaustion):** real
+`shutil.disk_usage` preflight HARD-GATES every generation (refuses if free space
+would drop below a 5GB margin or breach the project quota); checksum dedup,
+partial/temp cleanup, path confinement (traversal rejected).
+
+**Budget:** dry-run estimate + hard stop — a generation is refused before it
+exceeds the project budget; local providers cost $0.
+
+**Publishing:** approval-gated + verified-artifact-gated; idempotency keys stop
+duplicates; `live=True` with no configured connector is refused honestly (no
+fabricated receipt/URL); dry-run records status='dry_run' with no fake URL.
+
+**Studio agents:** 7 roles (content_strategist/script_writer/storyboard_agent/
+visual_director/seo_agent/brand_reviewer/publisher) registered INTO the M10
+registry; publisher is EXTERNAL_SIDE_EFFECT + requires_approval.
+
+**API** `/api/v1/studio-os/*` (distinct from the legacy /api/v1/studio
+dashboard). **CLI** `python -m saathi.studio_os.cli` (render-smoke does a REAL
+ffmpeg render; read-only cmds never mutate; publish enforces approval).
+**Manifest:** `studio.studio_os_m13` (blocking).
+
+**Honesty note:** the full short-video workflow was verified end-to-end
+producing 11 real artifacts (real PIL image → real FFmpeg video → real say
+narration → real muxed final_video → real extracted thumbnail, all ffprobe-
+verified). Cloud media generation, real social publishing, and live browser
+Studio UX were NOT verified (no keys/accounts/getUserMedia in this environment).

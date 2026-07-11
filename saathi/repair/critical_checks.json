@@ -89,6 +89,12 @@
       "targets": ["tests/test_voice_os.py"],
       "subsystem": "voice_os",
       "blocking": true
+    },
+    {
+      "id": "studio.studio_os_m13",
+      "targets": ["tests/test_studio_os.py"],
+      "subsystem": "studio_os",
+      "blocking": true
     }
   ]
 }

@@ -390,7 +390,11 @@ def test_api_handlers_direct(store, monkeypatch):
                         memory=False)
     monkeypatch.setattr(api, "default_orchestrator", lambda: orch)
     defs = api.definitions()["agents"]
-    assert len(defs) == 8
+    # The registry is extensible (M13 Studio registers additional roles into it);
+    # assert the 8 core M10 agents are present rather than an exact global count.
+    ids = {d["agent_id"] for d in defs}
+    assert {"planner", "researcher", "architect", "builder", "reviewer",
+            "executor", "writer", "ceo"} <= ids
     r = api.create_run(api.CreateRun(objective="implement x", strategy="build"))
     out = api.execute(r["run_id"])
     assert out["state"] == RunState.COMPLETED.value

@@ -66,3 +66,15 @@ the existing text-response rules (still authoritative for typed chat):
   confidence the underlying retrieval/execution doesn't have.
 - **Agent progress**: Team-mode voice announces concisely — active agent,
   what finished, what's next — not raw event-log language.
+
+## Studio content style (M13)
+
+- **No invented statistics**: research artifacts distinguish verified fact vs
+  inference vs recommendation vs creative choice; scripts never fabricate
+  numbers or citations.
+- **Brand consistency**: recurring characters (e.g. Mr. Yeti) keep face/voice/
+  wardrobe/personality via reference anchors — never claim visual consistency
+  that wasn't tested across outputs.
+- **Honest provider status**: "generated" means the output file exists and is
+  checksummed; "published" means a real platform receipt exists. A dry run says
+  "dry run", never "published."
