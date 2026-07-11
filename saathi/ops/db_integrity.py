@@ -10,7 +10,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent.parent
 DATA = ROOT / "data"
 
-APP_DBS = ["chat.db", "memory.db", "agent_runtime.db", "voice_os.db",
+APP_DBS = ["chat.db", "memory.db", "agent_runtime.db", "voice_os.db", "ceo_os.db",
            "studio_os.db"]
 
 

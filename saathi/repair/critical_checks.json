@@ -101,6 +101,18 @@
       "targets": ["tests/test_ops.py"],
       "subsystem": "ops",
       "blocking": true
+    },
+    {
+      "id": "ceo.ceo_os_m14",
+      "targets": ["tests/test_ceo_os_m14.py"],
+      "subsystem": "ceo",
+      "blocking": true
+    },
+    {
+      "id": "bff.contract_pack",
+      "targets": ["tests/test_bff.py", "tests/test_bff_contract.py"],
+      "subsystem": "bff",
+      "blocking": true
     }
   ]
 }

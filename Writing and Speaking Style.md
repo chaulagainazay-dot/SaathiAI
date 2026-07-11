@@ -78,3 +78,20 @@ the existing text-response rules (still authoritative for typed chat):
 - **Honest provider status**: "generated" means the output file exists and is
   checksummed; "published" means a real platform receipt exists. A dry run says
   "dry run", never "published."
+
+## CEO OS language (M14)
+
+- **Daily Brief**: lead with what matters, tag every item with its evidence
+  tier (observed / calculated / inferred / forecast / recommended /
+  unavailable). Never state a recommendation as a fact.
+- **Spoken financial summaries**: say "actual" vs "estimated" vs "forecast"
+  explicitly — never read an estimate as earned revenue. If no source: "No
+  verified financial data source is available."
+- **Uncertainty**: name it ("this is inferred, confidence low") rather than
+  hedging vaguely; never invent a number to fill a gap.
+- **Recommendation wording**: "I recommend… because [evidence]" — always with
+  the supporting evidence and what remains uncertain.
+- **Approval wording**: state the action, its reversibility, and its risk;
+  never assume consent; protected decisions require the user.
+- **Alert severity**: critical / warning / info — plain, deduplicated, with the
+  evidence behind the alert.

@@ -757,3 +757,45 @@ release gates + security + DR + deploy + perf + ops runbook.
 workflows, live approval click, cloud media providers, real social publishing,
 real staging deploy + live rollback. Everything locally verifiable is
 implemented, tested, and (backup/restore) recovery-proven.
+
+---
+
+## M14 — CEO OS (unified operating + decision layer)
+
+`saathi/ceo/` — orchestrates existing systems; NOT a separate AI brain, NOT a
+new dashboard fork. Reuses M10 (mission execution + approvals), M9 (memory),
+M13 (studio), ExecutionGateway, event bus, and the verified BFF/`dream_pct`
+contracts (both now in the critical manifest so they can't regress).
+
+**Source-of-truth decisions:** canonical entities live in `data/ceo_os.db`
+(business/goal/kpi/metric_observation/decision/risk/opportunity/budget/
+financial_entry/review/alert/brief). Missions are NOT a new entity — a CEO
+mission IS an M10 orchestration run.
+
+**Evidence requirement:** every value carries an `EvidenceTier` — observed /
+calculated / inferred / forecast / recommended / unavailable. A recommendation
+is never presented as a verified fact. A KPI with no observation returns
+UNAVAILABLE, never a guessed value.
+
+**Deterministic priority rules:** `priority.score` is a transparent weighted
+sum with a per-factor explanation (`PRIORITY_WEIGHTS`). An LLM may only
+recommend weight adjustments; deterministic logic controls execution.
+
+**KPI percentage convention:** reuses the verified `dream_progress_pct`
+(1.0 == 1% of DREAM_TARGET); regular KPIs use value/target*100. Ratio-vs-pct
+regression guarded by tests.
+
+**Financial semantics:** actual / estimated / forecast / unknown are SEPARATE
+states — an estimate is never summed into actual revenue. Personal vs business
+scopes are explicitly labeled.
+
+**Authorization boundaries:** CEO Agent (M10 `ceo`, READ_ONLY, can_self_approve
+=False) only PROPOSES decisions (status=proposed); protected states
+(approve/reject/implement) require an authenticated user via the API — an agent
+has no user identity to reach them. No CEO-direct execution; no self-approval;
+no fabricated metrics.
+
+**API** `/api/v1/ceo/*` (routes 304→305). **CLI** `python -m saathi.ceo.cli`
+(read-only lists + brief; mission/decision/budget mutations are API-only,
+authz-gated). **Frontend**: CEO OS workspace `/ceo` (real API, evidence tiers
+visible, no mock data). **Manifest**: `ceo.ceo_os_m14` + `bff.contract_pack`.

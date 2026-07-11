@@ -21,7 +21,7 @@ ROOT = Path(__file__).resolve().parent.parent.parent
 DATA = ROOT / "data"
 BACKUP_DIR = DATA / "backups"
 
-APP_DBS = ["chat.db", "memory.db", "agent_runtime.db", "voice_os.db", "studio_os.db"]
+APP_DBS = ["chat.db", "memory.db", "agent_runtime.db", "voice_os.db", "studio_os.db", "ceo_os.db"]
 
 # never back these up
 _FORBIDDEN = {".env", ".env.bak", "firebase-admin.json"}

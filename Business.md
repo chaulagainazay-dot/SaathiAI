@@ -112,3 +112,17 @@ production needs a configured cross-platform TTS before relying on narration.
 Verdict is STAGING READY: safe for internal/pilot daily use; full PRODUCTION
 readiness still needs authenticated browser verification and a real staging
 deploy + rollback in production-representative infrastructure.
+
+## CEO OS (M14)
+
+CEO OS turns goals → priorities → missions → evidence → KPIs → decisions into
+one operating layer over the whole platform. Portfolio model: businesses hold
+goals + KPIs; a CEO mission is a real M10 agent run; risks/opportunities convert
+into missions/projects. **Financial semantics (strict):** actual, estimated,
+and forecast are always separate — an estimate is never shown as earned revenue,
+and a KPI with no verified source reads "No verified data source" rather than a
+guess. **KPI convention:** the verified dream-progress percentage (1.0 == 1% of
+the 7.94M target) is reused unchanged. **Review cadence:** Daily Brief (real
+data, evidence-tagged), weekly review persisted with provenance to memory.
+Budget model: approved/committed/actual/forecast with variance + hard stop;
+budget-increasing execution follows approval policy.

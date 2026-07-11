@@ -1547,6 +1547,12 @@ try:
 except Exception as _e:
     print(f"[saathi] studio-os router unavailable: {_e}")
 
+try:
+    from .ceo.api import router as ceo_router
+    app.include_router(ceo_router)
+except Exception as _e:
+    print(f"[saathi] ceo router unavailable: {_e}")
+
 # Simple access key for remote/tunnel use. Local requests (the Mac itself)
 # are always allowed; remote requests must send X-Saathi-Token.
 import os as _os
