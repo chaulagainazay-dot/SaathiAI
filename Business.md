@@ -164,3 +164,16 @@ connector for a verified one. Cloud connectors (Gmail, Calendar, GitHub, Vercel)
 are ready to validate the moment real credentials are supplied on staging; until
 then they are marked environment-blocked, not "working". Live provider sign-off
 and production use still require testing on real accounts in staging.
+
+## M16 — One place to run everything
+
+The Control Center is the single screen an operator opens to understand the whole
+platform: what needs attention now (pending approvals, security findings, failing
+release gates, blocked connectors), the live health of every subsystem, a
+searchable index across connectors/accounts/approvals/executions, and recent
+activity — each value tagged with where it came from and how fresh it is. It is
+deliberately a window and a control panel, not a second brain: every action it
+offers is executed by the real subsystem behind it, with the same approvals and
+ownership checks. When a data source is down, it says so instead of showing a
+comforting fake number. It is ready for staging use; full production sign-off
+still needs authenticated browser verification and live provider data.

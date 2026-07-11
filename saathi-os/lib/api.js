@@ -702,3 +702,16 @@ export const platformExecute = (body) =>
   _cj(`/api/v1/connectors/executions`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
 export const platformConnectAccount = (body) =>
   _cj(`/api/v1/connectors/accounts/connect`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+
+// ── M16 Control Center (/api/v1/control/*) — read-only aggregation, honest cells.
+async function _ccj(path) {
+  const r = await afetch(`${API_BASE}${path}`, { cache: "no-store" });
+  if (!r.ok) throw new Error(`control ${r.status}`);
+  return r.json();
+}
+export const controlOverview = () => _ccj(`/api/v1/control/overview`);
+export const controlAttention = () => _ccj(`/api/v1/control/attention`);
+export const controlSecurity = () => _ccj(`/api/v1/control/security`);
+export const controlRelease = () => _ccj(`/api/v1/control/release`);
+export const controlTimeline = (limit = 25) => _ccj(`/api/v1/control/timeline?limit=${limit}`);
+export const controlSearch = (q) => _ccj(`/api/v1/control/search?q=${encodeURIComponent(q)}`);

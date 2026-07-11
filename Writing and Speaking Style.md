@@ -95,3 +95,14 @@ the existing text-response rules (still authoritative for typed chat):
   never assume consent; protected decisions require the user.
 - **Alert severity**: critical / warning / info — plain, deduplicated, with the
   evidence behind the alert.
+
+## M16 — Control Center language
+- **Unavailable data**: say "unavailable — source <x> is down" with the reason,
+  never a blank or a zero. Degraded is not healthy; say which.
+- **Freshness**: every stated metric names its source and age ("connectors.health · 4s ago").
+- **Alerts**: lead with severity + the one action ("2 approvals pending → open Approvals").
+- **Approvals (spoken/written)**: restate the exact action, connector, account, and risk;
+  never approve from a friendly summary alone.
+- **Uncertainty**: distinguish actual vs estimated vs unknown; never render an estimate as an actual.
+- **Security severity**: critical/high are release-blocking; state so plainly.
+- **Streaming**: bounded polling is "updated every 30s", not "live/real-time".

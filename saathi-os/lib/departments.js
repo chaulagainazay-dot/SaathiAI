@@ -31,6 +31,7 @@ export const DEPARTMENTS = {
   STUDIO_OS:   { name: "AI Studio",       color: "#FF8A3D", route: "/studio-os",  short: "Studio" },
   CEO_OS:      { name: "CEO OS",          color: "#F4F6FB", route: "/ceo",        short: "CEO" },
   UNLOCK:      { name: "Unlock",           color: "#7CF5E4", route: "/unlock",     short: "Unlock" },
+  CONTROL:     { name: "Control Center",   color: "#7CF5E4", route: "/control",    short: "Control" },
   CONNECTORS:  { name: "Connectors",       color: "#7CF5E4", route: "/connectors", short: "Connect" },
   SECURITY:    { name: "Security",         color: "#FF5A5A", route: "/security",   short: "Security" },
 };

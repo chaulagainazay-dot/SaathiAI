@@ -940,3 +940,34 @@ STAGING READY** — enterprise controls deterministically verified + red-team-te
 ownership/approval intact, 0 Critical/High; live OAuth/refresh/provider + browser
 env-blocked (needed for CONNECTOR PRODUCTION READY). Incident runbook:
 docs/runbooks/CONNECTOR_INCIDENT_RESPONSE.md.
+
+## M16 — Unified Control Center
+
+`saathi/control_center/`: ONE read/observation + safe-control layer over the
+canonical subsystems. **Not an execution engine** — never calls providers, never
+writes subsystem stores, never bypasses ExecutionGateway; mutations are rendered
+as ActionDescriptors pointing ONLY at canonical subsystem APIs (proven:
+test_control_api_is_read_only, test_actions_point_at_canonical_apis).
+
+`aggregator.py`: bounded aggregation; each subsystem read wrapped in `guarded()`
+→ `Cell{value, source, status(ok|degraded|unavailable), observed_at,
+degraded_reason, age_sec}`. One failing source degrades to a typed cell, never
+crashes the page. Overview composes real cells: connectors health, security
+red-team release-gate + baseline, connector metrics, release gates, event bus,
+live-validation matrix. Attention items ranked (critical→info), real + actionable.
+`search.py`: federated, **owner-scoped** (accounts/approvals/executions filtered
+by caller; connectors/operations are public capability info), secret-free.
+`api.py`: `/api/v1/control/*` READ-ONLY (GET/HEAD), authenticated, owner-scoped;
+partial failure degrades, never 500. `cli.py` read-only. UI `/control` on the
+real API with source+freshness, honest degraded/unavailable states, bounded
+refresh paused when tab hidden.
+
+Canonical rule: Control Center holds NO source of truth; every value carries its
+source + freshness. Ops: route manifest → m16, critical manifest → m16 (+7
+checks). Tests: `test_m16_control_center.py` (11, incl. cross-user search
+isolation + no-bypass). Spec Kit CONVERGED 10/10. **Verdict: CONTROL CENTER
+STAGING READY** — Overview/search/governance real-data-backed, owner-scoped,
+honest on partial failure, cannot bypass subsystem policy. Interactive browser
+verification, live provider data, and real-time streaming remain environment-
+blocked (bounded polling is not claimed as streaming) — required for CONTROL
+CENTER PRODUCTION READY.

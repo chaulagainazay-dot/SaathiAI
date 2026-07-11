@@ -473,6 +473,62 @@
    ],
    "subsystem": "security",
    "blocking": true
+  },
+  {
+   "id": "control.overview_real",
+   "targets": [
+    "tests/test_m16_control_center.py::test_overview_real_sources"
+   ],
+   "subsystem": "control_center",
+   "blocking": true
+  },
+  {
+   "id": "control.partial_failure",
+   "targets": [
+    "tests/test_m16_control_center.py::test_partial_failure_degrades_not_crash"
+   ],
+   "subsystem": "control_center",
+   "blocking": true
+  },
+  {
+   "id": "control.read_only_api",
+   "targets": [
+    "tests/test_m16_control_center.py::test_control_api_is_read_only"
+   ],
+   "subsystem": "control_center",
+   "blocking": true
+  },
+  {
+   "id": "control.auth",
+   "targets": [
+    "tests/test_m16_control_center.py::test_control_api_requires_auth"
+   ],
+   "subsystem": "control_center",
+   "blocking": true
+  },
+  {
+   "id": "control.search_isolation",
+   "targets": [
+    "tests/test_m16_control_center.py::test_search_owner_scoped_executions"
+   ],
+   "subsystem": "control_center",
+   "blocking": true
+  },
+  {
+   "id": "control.no_bypass",
+   "targets": [
+    "tests/test_m16_control_center.py::test_actions_point_at_canonical_apis"
+   ],
+   "subsystem": "control_center",
+   "blocking": true
+  },
+  {
+   "id": "control.ui_real_api",
+   "targets": [
+    "tests/test_m16_control_center.py::test_ui_uses_control_api"
+   ],
+   "subsystem": "control_center",
+   "blocking": true
   }
  ]
 }

@@ -1568,6 +1568,13 @@ try:
 except Exception as _e:
     print(f"[saathi] redteam router unavailable: {_e}")
 
+# M16 Control Center — read-only aggregation API (authenticated).
+try:
+    from .control_center.api import router as control_center_router
+    app.include_router(control_center_router)
+except Exception as _e:
+    print(f"[saathi] control-center router unavailable: {_e}")
+
 # Simple access key for remote/tunnel use. Local requests (the Mac itself)
 # are always allowed; remote requests must send X-Saathi-Token.
 import os as _os
