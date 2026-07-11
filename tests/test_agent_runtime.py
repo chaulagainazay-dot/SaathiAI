@@ -429,3 +429,30 @@ def test_run_creation_and_cycle_check_fast(orch):
     TaskGraph(tasks)
     dtc = (time.perf_counter() - t0) * 1000
     assert dtc < 300, f"cycle check too slow: {dtc:.0f}ms"
+
+
+# ── M11: chat UI backend surface (conversation-scoped runs) ────────────────
+def test_list_runs_filters_by_conversation(orch):
+    r1 = orch.create_run("run for conv a", strategy="build",
+                         conversation_id="conv-a")
+    orch.create_run("run for conv b", strategy="build", conversation_id="conv-b")
+    only_a = orch.store.list_runs(conversation_id="conv-a")
+    assert len(only_a) == 1 and only_a[0]["id"] == r1
+    assert only_a[0]["conversation_id"] == "conv-a"
+
+
+def test_list_runs_without_filter_returns_all(orch):
+    orch.create_run("a", strategy="build", conversation_id="x")
+    orch.create_run("b", strategy="build", conversation_id="y")
+    assert len(orch.store.list_runs()) == 2
+
+
+def test_api_list_runs_by_conversation(store, monkeypatch):
+    from saathi.agent_runtime import api
+    orch = Orchestrator(store=store, executor=AgentExecutor(execute_fn=_fake_exec),
+                        memory=False)
+    monkeypatch.setattr(api, "default_orchestrator", lambda: orch)
+    r1 = orch.create_run("a", strategy="build", conversation_id="conv-1")
+    orch.create_run("b", strategy="build", conversation_id="conv-2")
+    out = api.list_runs(conversation_id="conv-1")
+    assert [r["id"] for r in out["runs"]] == [r1]

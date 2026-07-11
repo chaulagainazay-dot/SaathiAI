@@ -5,6 +5,7 @@
 // timeline panel, memory indicator, composer with attachments.
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { API_BASE, afetch } from "@/lib/api";
+import AgentRunPanel from "./AgentRunPanel";
 
 const AGENTS = ["", "planner", "researcher", "coder", "reviewer", "architect", "writer", "ceo"];
 
@@ -59,6 +60,8 @@ export default function ChatWorkspace() {
   const [busy, setBusy] = useState(false);
   const [streamText, setStreamText] = useState("");
   const [error, setError] = useState("");
+  const [teamMode, setTeamMode] = useState(false);
+  const [teamRunId, setTeamRunId] = useState(null);
   const bottomRef = useRef(null);
 
   const loadConvs = useCallback(async () => {
@@ -81,8 +84,19 @@ export default function ChatWorkspace() {
     } catch { /* keep last */ }
   }, []);
 
+  const loadLatestTeamRun = useCallback(async (cid) => {
+    if (!cid) { setTeamRunId(null); return; }
+    try {
+      const r = await afetch(
+        `${API_BASE}/api/v1/agents/runs?conversation_id=${cid}&limit=1`,
+        { cache: "no-store" });
+      const j = await r.json();
+      setTeamRunId(j.runs?.[0]?.id || null);
+    } catch { setTeamRunId(null); }
+  }, []);
+
   useEffect(() => { loadConvs(); }, [loadConvs]);
-  useEffect(() => { loadDetail(active); }, [active, loadDetail]);
+  useEffect(() => { loadDetail(active); loadLatestTeamRun(active); }, [active, loadDetail, loadLatestTeamRun]);
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); },
     [detail?.messages?.length, streamText]);
 
@@ -111,6 +125,25 @@ export default function ChatWorkspace() {
     setText(""); setBusy(true); setStreamText("");
     setDetail((d) => d ? { ...d, messages: [...(d.messages || []),
       { id: "tmp", role: "user", content: t, status: "complete" }] } : d);
+
+    if (teamMode) {
+      // Real M10 orchestration — multi-agent, task graph, approvals.
+      // Not a mock: this call executes the run synchronously and returns
+      // its genuine outcome; the panel then polls the live run state.
+      try {
+        const r = await afetch(`${API_BASE}/api/v1/chat/conversations/${cid}/team-run`, {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ objective: t, execute: true }),
+        });
+        const j = await r.json();
+        if (j.error) setError(j.error);
+        else setTeamRunId(j.run_id);
+      } catch { setError("Team run failed — network or auth."); }
+      setBusy(false);
+      await loadDetail(cid); await loadConvs();
+      return;
+    }
+
     try {
       const r = await afetch(`${API_BASE}/api/v1/chat/conversations/${cid}/messages`, {
         method: "POST", headers: { "Content-Type": "application/json" },
@@ -183,9 +216,20 @@ export default function ChatWorkspace() {
           {conv && <span style={S.tag}>{(detail?.memory_links?.length || 0)} memories</span>}
           {conv && <span style={S.tag}>{conv.tokens_in + conv.tokens_out} tok</span>}
           <select value={agent} onChange={(e) => setAgent(e.target.value)}
-                  style={{ ...S.input, width: 130 }}>
+                  disabled={teamMode}
+                  style={{ ...S.input, width: 130, opacity: teamMode ? .4 : 1 }}>
             {AGENTS.map((a) => <option key={a} value={a}>{a ? `@${a}` : "saathi"}</option>)}
           </select>
+          <button
+            onClick={() => setTeamMode((v) => !v)}
+            title="Multi-agent orchestration: planner/builder/reviewer team with approvals"
+            style={{
+              ...S.btn, background: teamMode ? "rgba(108,63,207,.25)" : S.btn.background,
+              borderColor: teamMode ? "rgba(108,63,207,.5)" : undefined,
+              color: teamMode ? "#c9b6ff" : S.btn.color,
+            }}>
+            {teamMode ? "☰ Team" : "☰ Solo"}
+          </button>
         </header>
 
         <section style={{ flex: 1, overflowY: "auto", display: "flex",
@@ -217,11 +261,12 @@ export default function ChatWorkspace() {
         <footer style={{ display: "flex", gap: 8, padding: 14,
                          borderTop: "1px solid rgba(255,255,255,.08)" }}>
           <textarea style={{ ...S.input, resize: "none", height: 56 }} value={text}
-            placeholder={agent ? `Message @${agent}…` : "Message Saathi…"}
+            placeholder={teamMode ? "Describe the objective for the agent team…"
+                        : agent ? `Message @${agent}…` : "Message Saathi…"}
             onChange={(e) => setText(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }} />
           <button style={{ ...S.btn, alignSelf: "stretch" }} disabled={busy} onClick={send}>
-            {busy ? "…" : "Send"}
+            {busy ? "…" : teamMode ? "Run team" : "Send"}
           </button>
         </footer>
       </main>
@@ -229,6 +274,15 @@ export default function ChatWorkspace() {
       {/* ── context panel ── */}
       {conv && (
         <aside style={S.panel} className="only-desktop">
+          {teamRunId && (
+            <>
+              <div style={{ fontSize: 10, opacity: .5, letterSpacing: ".14em", marginBottom: 8 }}>
+                AGENT TEAM RUN
+              </div>
+              <AgentRunPanel runId={teamRunId} onClose={() => setTeamRunId(null)} />
+              <div style={{ borderTop: "1px solid rgba(255,255,255,.08)", margin: "14px 0" }} />
+            </>
+          )}
           <div style={{ fontSize: 10, opacity: .5, letterSpacing: ".14em", marginBottom: 8 }}>EXECUTION TIMELINE</div>
           {(detail?.executions || []).slice(-6).reverse().map((x) => (
             <div key={x.id} style={{ marginBottom: 8, padding: 8, borderRadius: 8,

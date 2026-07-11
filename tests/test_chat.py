@@ -328,3 +328,66 @@ def test_api_streaming_sse(store, monkeypatch):
     assert events[0] == "start" and events[-1] == "done"
     text = "".join(f.get("text", "") for f in frames if f["event"] == "delta")
     assert "streamed words" in text
+
+
+# ── M11: chat API team-run route (delegates to start_orchestration) ────────
+def test_api_team_run_delegates_to_engine(store, monkeypatch):
+    from saathi.chat import api as chat_api
+
+    calls = {}
+
+    class StubEngine:
+        def start_orchestration(self, cid, objective, *, strategy="", execute=True):
+            calls["args"] = (cid, objective, strategy, execute)
+            return {"run_id": "run-123", "outcome": {"state": "completed"}}
+
+        def create_conversation(self, **kw):
+            return chat_api.default_store()
+
+    stub = StubEngine()
+    monkeypatch.setattr(chat_api, "default_store", lambda: store)
+    monkeypatch.setattr(chat_api, "default_engine", lambda: stub)
+    conv = store.create_conversation(title="team")
+    out = chat_api.team_run(conv["id"], chat_api.TeamRun(
+        objective="implement login", strategy="build"))
+    assert out == {"run_id": "run-123", "outcome": {"state": "completed"}}
+    assert calls["args"] == (conv["id"], "implement login", "build", True)
+
+
+def test_api_team_run_missing_conversation_reports_error(monkeypatch):
+    from saathi.chat import api as chat_api
+
+    class StubEngine:
+        def start_orchestration(self, *a, **k):
+            raise KeyError("no such conversation")
+
+    monkeypatch.setattr(chat_api, "default_engine", lambda: StubEngine())
+    out = chat_api.team_run("ghost", chat_api.TeamRun(objective="x"))
+    assert out == {"error": "conversation not found"}
+
+
+def test_chat_engine_start_orchestration_real_integration(tmp_path, monkeypatch):
+    """Real integration: ChatEngine -> M10 Orchestrator, isolated stores."""
+    from saathi.agent_runtime.store import RunStore
+    from saathi.agent_runtime.gateway_exec import AgentExecutor
+    from saathi.agent_runtime.orchestrator import Orchestrator
+    import saathi.agent_runtime.orchestrator as orch_mod
+
+    rstore = RunStore(tmp_path / "ar.db")
+    fake_exec = AgentExecutor(execute_fn=lambda role, p, s: {
+        "text": f"{role} done", "provider": "test", "tokens": 4, "status": "success"})
+    shared = Orchestrator(store=rstore, executor=fake_exec, memory=False)
+    monkeypatch.setattr(orch_mod, "_default", shared)
+    monkeypatch.setattr(orch_mod, "default_orchestrator", lambda: shared)
+
+    cstore = ChatStore(tmp_path / "chat.db")
+    from saathi.memory.engine import MemoryEngine, MemoryStore
+    eng = ChatEngine(cstore, memory=MemoryEngine(MemoryStore(tmp_path / "mem.db")),
+                     llm_fn=lambda p, s: {"text": "ok", "provider": "t", "tokens": 1})
+    conv = cstore.create_conversation(title="team-real")
+    res = eng.start_orchestration(conv["id"], "implement login", strategy="build")
+
+    assert res["outcome"]["state"] == "completed"
+    # the run is truly persisted and conversation-scoped, queryable by filter
+    scoped = rstore.list_runs(conversation_id=conv["id"])
+    assert len(scoped) == 1 and scoped[0]["id"] == res["run_id"]

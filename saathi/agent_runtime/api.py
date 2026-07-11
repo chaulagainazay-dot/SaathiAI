@@ -54,8 +54,9 @@ def execute(rid: str, max_wall_sec: float = 60.0):
 
 
 @router.get("/runs")
-def list_runs(limit: int = 50):
-    return {"runs": default_orchestrator().store.list_runs(limit=limit)}
+def list_runs(limit: int = 50, conversation_id: str | None = None):
+    return {"runs": default_orchestrator().store.list_runs(
+        limit=limit, conversation_id=conversation_id)}
 
 
 @router.get("/runs/{rid}")

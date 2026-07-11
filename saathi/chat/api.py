@@ -225,3 +225,24 @@ def run_agent(cid: str, req: AgentTask):
                                           delegated_by=req.delegated_by)
     except ValueError as exc:
         return {"error": str(exc)}
+
+
+# ── M10: multi-agent team runs (real orchestration, not a mock) ────────────
+class TeamRun(BaseModel):
+    objective: str
+    strategy: str = ""
+    execute: bool = True
+
+
+@router.post("/conversations/{cid}/team-run")
+def team_run(cid: str, req: TeamRun):
+    """Spawn a real M10 orchestration run linked to this conversation.
+
+    Delegates to ChatEngine.start_orchestration (M10 Orchestrator underneath)
+    — no parallel execution path. Task graph, approvals, tool intents, and
+    events are all inspectable via /api/v1/agents/runs/{run_id}."""
+    try:
+        return default_engine().start_orchestration(
+            cid, req.objective, strategy=req.strategy, execute=req.execute)
+    except KeyError:
+        return {"error": "conversation not found"}

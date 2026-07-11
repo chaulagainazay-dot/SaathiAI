@@ -137,12 +137,17 @@ class RunStore:
             c.execute("UPDATE orchestration_run SET final_outcome=?, updated_at=? "
                       "WHERE id=?", (json.dumps(outcome), _now(), rid))
 
-    def list_runs(self, *, limit: int = 50) -> list[dict]:
+    def list_runs(self, *, limit: int = 50, conversation_id: str | None = None) -> list[dict]:
+        where, args = "", []
+        if conversation_id:
+            where = " WHERE conversation_id=?"
+            args.append(conversation_id)
+        args.append(limit)
         with self._conn() as c:
             return [dict(r) for r in c.execute(
-                "SELECT id,objective,strategy,state,actor,created_at "
-                "FROM orchestration_run ORDER BY created_at DESC LIMIT ?",
-                (limit,)).fetchall()]
+                "SELECT id,objective,strategy,state,actor,conversation_id,created_at "
+                f"FROM orchestration_run{where} ORDER BY created_at DESC LIMIT ?",
+                args).fetchall()]
 
     # ── tasks ─────────────────────────────────────────────────────────────
     def add_task(self, rid: str, task) -> None:
