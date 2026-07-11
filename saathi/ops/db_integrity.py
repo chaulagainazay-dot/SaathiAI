@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parent.parent.parent
 DATA = ROOT / "data"
 
 APP_DBS = ["chat.db", "memory.db", "agent_runtime.db", "voice_os.db", "ceo_os.db",
-           "studio_os.db"]
+           "studio_os.db", "connectors.db"]
 
 
 def check_db(path: Path) -> dict:

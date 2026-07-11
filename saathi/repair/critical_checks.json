@@ -1,118 +1,214 @@
 {
-  "critical_checks": [
-    {
-      "id": "events.public_bus_api",
-      "targets": ["tests/test_events_bus_api.py"],
-      "subsystem": "events",
-      "blocking": true
-    },
-    {
-      "id": "events.infra_emission",
-      "targets": ["tests/test_infra_events.py"],
-      "subsystem": "events",
-      "blocking": true
-    },
-    {
-      "id": "events.stream_delivery",
-      "targets": ["tests/test_eventstream.py"],
-      "subsystem": "events",
-      "blocking": true
-    },
-    {
-      "id": "studio.prompt_tracking",
-      "targets": ["tests/test_ai_lab.py::test_studio_tracks_prompt_only_with_default_gen"],
-      "subsystem": "ai_lab",
-      "blocking": true
-    },
-    {
-      "id": "intake.project_tagging",
-      "targets": ["tests/test_client_intake.py::test_studio_run_tags_project"],
-      "subsystem": "client_intake",
-      "blocking": true
-    },
-    {
-      "id": "bff.payload_contract",
-      "targets": ["tests/test_bff.py::test_payload_has_full_contract"],
-      "subsystem": "bff",
-      "blocking": true
-    },
-    {
-      "id": "bff.dream_pct",
-      "targets": ["tests/test_bff.py::test_dream_pct_tracks_revenue"],
-      "subsystem": "bff",
-      "blocking": true
-    },
-    {
-      "id": "bff.regression_pack",
-      "targets": ["tests/test_bff_contract.py"],
-      "subsystem": "bff",
-      "blocking": true
-    },
-    {
-      "id": "execution.gateway_reference_path",
-      "targets": ["tests/test_execution_gateway.py"],
-      "subsystem": "execution_gateway",
-      "blocking": true
-    },
-    {
-      "id": "execution.finance_trade_layer",
-      "targets": ["tests/test_execution.py", "tests/test_trade_journal.py"],
-      "subsystem": "execution_gateway",
-      "blocking": true
-    },
-    {
-      "id": "repair.loop_self_tests",
-      "targets": ["tests/test_auto_repair.py"],
-      "subsystem": "repair",
-      "blocking": true
-    },
-    {
-      "id": "chat.saathi_chat_m8",
-      "targets": ["tests/test_chat.py"],
-      "subsystem": "chat",
-      "blocking": true
-    },
-    {
-      "id": "memory.engine_m9",
-      "targets": ["tests/test_memory_engine.py"],
-      "subsystem": "memory",
-      "blocking": true
-    },
-    {
-      "id": "agents.runtime_m10",
-      "targets": ["tests/test_agent_runtime.py"],
-      "subsystem": "agent_runtime",
-      "blocking": true
-    },
-    {
-      "id": "voice.voice_os_m12",
-      "targets": ["tests/test_voice_os.py"],
-      "subsystem": "voice_os",
-      "blocking": true
-    },
-    {
-      "id": "studio.studio_os_m13",
-      "targets": ["tests/test_studio_os.py"],
-      "subsystem": "studio_os",
-      "blocking": true
-    },
-    {
-      "id": "ops.hardening_m13_5",
-      "targets": ["tests/test_ops.py"],
-      "subsystem": "ops",
-      "blocking": true
-    },
-    {
-      "id": "ceo.ceo_os_m14",
-      "targets": ["tests/test_ceo_os_m14.py"],
-      "subsystem": "ceo",
-      "blocking": true
-    },
-    {
-      "id": "bff.contract_pack",
-      "targets": ["tests/test_bff.py", "tests/test_bff_contract.py"],
-      "subsystem": "bff",
-      "blocking": true
-    }
-  ]
+ "critical_checks": [
+  {
+   "id": "events.public_bus_api",
+   "targets": [
+    "tests/test_events_bus_api.py"
+   ],
+   "subsystem": "events",
+   "blocking": true
+  },
+  {
+   "id": "events.infra_emission",
+   "targets": [
+    "tests/test_infra_events.py"
+   ],
+   "subsystem": "events",
+   "blocking": true
+  },
+  {
+   "id": "events.stream_delivery",
+   "targets": [
+    "tests/test_eventstream.py"
+   ],
+   "subsystem": "events",
+   "blocking": true
+  },
+  {
+   "id": "studio.prompt_tracking",
+   "targets": [
+    "tests/test_ai_lab.py::test_studio_tracks_prompt_only_with_default_gen"
+   ],
+   "subsystem": "ai_lab",
+   "blocking": true
+  },
+  {
+   "id": "intake.project_tagging",
+   "targets": [
+    "tests/test_client_intake.py::test_studio_run_tags_project"
+   ],
+   "subsystem": "client_intake",
+   "blocking": true
+  },
+  {
+   "id": "bff.payload_contract",
+   "targets": [
+    "tests/test_bff.py::test_payload_has_full_contract"
+   ],
+   "subsystem": "bff",
+   "blocking": true
+  },
+  {
+   "id": "bff.dream_pct",
+   "targets": [
+    "tests/test_bff.py::test_dream_pct_tracks_revenue"
+   ],
+   "subsystem": "bff",
+   "blocking": true
+  },
+  {
+   "id": "bff.regression_pack",
+   "targets": [
+    "tests/test_bff_contract.py"
+   ],
+   "subsystem": "bff",
+   "blocking": true
+  },
+  {
+   "id": "execution.gateway_reference_path",
+   "targets": [
+    "tests/test_execution_gateway.py"
+   ],
+   "subsystem": "execution_gateway",
+   "blocking": true
+  },
+  {
+   "id": "execution.finance_trade_layer",
+   "targets": [
+    "tests/test_execution.py",
+    "tests/test_trade_journal.py"
+   ],
+   "subsystem": "execution_gateway",
+   "blocking": true
+  },
+  {
+   "id": "repair.loop_self_tests",
+   "targets": [
+    "tests/test_auto_repair.py"
+   ],
+   "subsystem": "repair",
+   "blocking": true
+  },
+  {
+   "id": "chat.saathi_chat_m8",
+   "targets": [
+    "tests/test_chat.py"
+   ],
+   "subsystem": "chat",
+   "blocking": true
+  },
+  {
+   "id": "memory.engine_m9",
+   "targets": [
+    "tests/test_memory_engine.py"
+   ],
+   "subsystem": "memory",
+   "blocking": true
+  },
+  {
+   "id": "agents.runtime_m10",
+   "targets": [
+    "tests/test_agent_runtime.py"
+   ],
+   "subsystem": "agent_runtime",
+   "blocking": true
+  },
+  {
+   "id": "voice.voice_os_m12",
+   "targets": [
+    "tests/test_voice_os.py"
+   ],
+   "subsystem": "voice_os",
+   "blocking": true
+  },
+  {
+   "id": "studio.studio_os_m13",
+   "targets": [
+    "tests/test_studio_os.py"
+   ],
+   "subsystem": "studio_os",
+   "blocking": true
+  },
+  {
+   "id": "ops.hardening_m13_5",
+   "targets": [
+    "tests/test_ops.py"
+   ],
+   "subsystem": "ops",
+   "blocking": true
+  },
+  {
+   "id": "ceo.ceo_os_m14",
+   "targets": [
+    "tests/test_ceo_os_m14.py"
+   ],
+   "subsystem": "ceo",
+   "blocking": true
+  },
+  {
+   "id": "bff.contract_pack",
+   "targets": [
+    "tests/test_bff.py",
+    "tests/test_bff_contract.py"
+   ],
+   "subsystem": "bff",
+   "blocking": true
+  },
+  {
+   "id": "connectors.gateway_governed",
+   "targets": [
+    "tests/test_m15_connectors.py::test_gateway_governed"
+   ],
+   "subsystem": "connectors",
+   "blocking": true
+  },
+  {
+   "id": "connectors.approval_binding",
+   "targets": [
+    "tests/test_m15_connectors.py::test_approval_binding"
+   ],
+   "subsystem": "connectors",
+   "blocking": true
+  },
+  {
+   "id": "connectors.idempotency",
+   "targets": [
+    "tests/test_m15_connectors.py::test_idempotency_replay"
+   ],
+   "subsystem": "connectors",
+   "blocking": true
+  },
+  {
+   "id": "connectors.uncertain_no_retry",
+   "targets": [
+    "tests/test_m15_connectors.py::test_uncertain_not_retryable"
+   ],
+   "subsystem": "connectors",
+   "blocking": true
+  },
+  {
+   "id": "connectors.secret_redaction",
+   "targets": [
+    "tests/test_m15_connectors.py::test_secret_redaction"
+   ],
+   "subsystem": "connectors",
+   "blocking": true
+  },
+  {
+   "id": "connectors.webhook_security",
+   "targets": [
+    "tests/test_m15_connectors.py::test_webhook_security"
+   ],
+   "subsystem": "connectors",
+   "blocking": true
+  },
+  {
+   "id": "specs.convergence_gate",
+   "targets": [
+    "tests/test_m15_specs.py::test_convergence_gate"
+   ],
+   "subsystem": "specs",
+   "blocking": true
+  }
+ ]
 }

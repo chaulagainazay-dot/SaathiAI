@@ -799,3 +799,37 @@ no fabricated metrics.
 (read-only lists + brief; mission/decision/budget mutations are API-only,
 authz-gated). **Frontend**: CEO OS workspace `/ceo` (real API, evidence tiers
 visible, no mock data). **Manifest**: `ceo.ceo_os_m14` + `bff.contract_pack`.
+
+## M15 — Universal Connector Platform + Spec-Driven Governance
+
+`saathi/connectors/platform/`: one governed integration layer. Canonical
+connector/tool/result models with a non-downgradable risk floor (0–4),
+provider-neutral capability catalog, registry seeding 11 connectors / 28 tools
+with **honest integration-status labels** (live-tested | deterministic-adapter-
+tested | contract-ready | environment-blocked). Credential **references** only
+(metadata; secrets resolved in-process, redacted from errors). Durable store
+`data/connectors.db` (accounts, cred refs, executions with unique idempotency,
+approvals bound to the exact-action input hash, webhook dedup, sync checkpoints,
+rate buckets, failures).
+
+**ExecutionEngine is the sole execution boundary** — every action routes through
+the ExecutionGateway (governance pass recorded as `provenance.gateway_ref`),
+then connector-native enforcement: lifecycle gate (only executable states),
+approval binding (risk ≥ 3, single-use, expiring; risk 4 manual-only),
+idempotency replay, rate limits, failure classification, and the hard rule that
+**uncertain / non-idempotent failures never auto-retry**. Health platform
+(no creds → environment-blocked, never faked green), webhook platform
+(HMAC + freshness + replay defense), resumable checkpointed sync, and MCP tools
+ingested as **untrusted** connectors (risk clamped UP, gateway-routed, cannot
+self-approve).
+
+**Objective B — governance.** Native offline Spec Kit wrapper (NOT vendored;
+gstack is a SaaS starter, not Spec Kit): `.specify/memory/constitution.md` (v1.0,
+8 articles), `.specify/presets/saathios/`, `saathi/specs/{traceability,cli}.py`
+(`python -m saathi.specs.cli version|health|init|validate|converge`),
+`specs/m15-universal-connectors/` (spec/plan/tasks/traceability.json/convergence).
+Convergence gate: every requirement mapped to an artifact + a passing test.
+**M15 verdict: CONVERGED (19/19), DEVELOPMENT READY** — core spine test-green;
+live authenticated connector workflows unverified (no creds), connector API + UI
+remain. Ops: `connectors.db` in backup/db-integrity APP_DBS, schema `connectors:m15`,
+critical manifest → m15. Tests: `tests/test_m15_connectors.py`, `tests/test_m15_specs.py`.
