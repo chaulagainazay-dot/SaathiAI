@@ -95,6 +95,32 @@ class ControlCenterAggregator:
                     for r in rows]
         return guarded("events.bus", _ev)
 
+    def computer_agent(self) -> Cell:
+        """M17 Computer Center: registered computer connectors + honest provider
+        availability (live desktop control env-blocked unless a provider is present)."""
+        def _ca():
+            from saathi.computer_agent.providers import provider_availability
+            from saathi.connectors.platform import registry as R
+            conns = [c.connector_id for c in R.all_connectors()
+                     if c.category == "computer"]
+            import os
+            avail = provider_availability()
+            importable = [k for k, v in avail.items()
+                          if v.get("available") and k != "deterministic"]
+            # a provider being importable is NOT proof of verified live control.
+            # Live desktop control is only claimed when explicitly enabled AND a
+            # provider is importable — otherwise honestly environment-blocked.
+            live_enabled = os.getenv("SAATHI_COMPUTER_LIVE") == "1"
+            live_desktop = "available" if (live_enabled and importable) else "environment_blocked"
+            return {"connectors": conns,
+                    "tools": len([t for t in R.all_tools()
+                                  if t.connector_id in conns]),
+                    "providers": avail,
+                    "importable_providers": importable,
+                    "live_desktop_control": live_desktop,
+                    "note": "importable != verified live control; deterministic is authoritative here"}
+        return guarded("computer_agent", _ca)
+
     def release_readiness(self) -> Cell:
         def _rel():
             from saathi.ops.release_gate import release_check

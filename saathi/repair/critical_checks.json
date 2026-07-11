@@ -529,6 +529,62 @@
    ],
    "subsystem": "control_center",
    "blocking": true
+  },
+  {
+   "id": "computer.ops_gateway_routed",
+   "targets": [
+    "tests/test_m17_computer_agent.py::test_read_op_no_approval"
+   ],
+   "subsystem": "computer_agent",
+   "blocking": true
+  },
+  {
+   "id": "computer.destructive_gated",
+   "targets": [
+    "tests/test_m17_computer_agent.py::test_delete_requires_approval_or_blocked"
+   ],
+   "subsystem": "computer_agent",
+   "blocking": true
+  },
+  {
+   "id": "computer.never_assume_success",
+   "targets": [
+    "tests/test_m17_computer_agent.py::test_unverified_action_is_uncertain"
+   ],
+   "subsystem": "computer_agent",
+   "blocking": true
+  },
+  {
+   "id": "computer.replay_redacts",
+   "targets": [
+    "tests/test_m17_computer_agent.py::test_replay_redacts_credentials"
+   ],
+   "subsystem": "computer_agent",
+   "blocking": true
+  },
+  {
+   "id": "computer.provider_honesty",
+   "targets": [
+    "tests/test_m17_computer_agent.py::test_provider_availability_honest"
+   ],
+   "subsystem": "computer_agent",
+   "blocking": true
+  },
+  {
+   "id": "computer.cross_user_isolation",
+   "targets": [
+    "tests/test_m17_computer_agent.py::test_cross_user_desktop_history_isolated"
+   ],
+   "subsystem": "computer_agent",
+   "blocking": true
+  },
+  {
+   "id": "computer.redteam",
+   "targets": [
+    "tests/test_m15_2_security.py::test_full_suite_no_release_blocking"
+   ],
+   "subsystem": "computer_agent",
+   "blocking": true
   }
  ]
 }

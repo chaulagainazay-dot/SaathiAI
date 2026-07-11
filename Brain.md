@@ -971,3 +971,29 @@ honest on partial failure, cannot bypass subsystem policy. Interactive browser
 verification, live provider data, and real-time streaming remain environment-
 blocked (bounded polling is not claimed as streaming) — required for CONTROL
 CENTER PRODUCTION READY.
+
+## M17 — Universal Computer Agent
+
+`saathi/computer_agent/`: SaathiOS operates desktop apps + browsers by registering
+computer operations as M15 connector tools — **no new execution engine, no
+app-specific code**. Every action flows through ExecutionEngine → ExecutionGateway
+→ M15.2 ownership → M15.3 scope/circuit → risk/approval → evidence.
+- perception.py: canonical UIElement + Screen model (one schema for all providers).
+- providers.py: provider abstraction (Playwright/CDP/accessibility/OCR/vision),
+  deterministic default; **live desktop control environment-blocked** (importable
+  != verified; honestly reported; SAATHI_COMPUTER_LIVE gate).
+- operations.py: vision/desktop/browser_agent connectors with EXPLICIT risk —
+  read L0, click/type/scroll L2, upload/download/send L3 (approval), delete/
+  purchase/run_binary L4 (manual-only) — + post-action **visual verification**
+  (unverified → uncertain; never assume success).
+- replay.py: sanitized replayable timeline (password/OTP/token/secret → [REDACTED]).
+- agent.py: runner via the M15 funnel (describe-before-act + gateway-routed step).
+Red-team +5 (34/34 hold): destructive-needs-approval, password-not-in-replay,
+agent-no-self-approve-purchase, cross-user desktop isolation, never-assume-success.
+Control Center Computer Center cell + /api/v1/control/computer (live_desktop_control
+= environment_blocked). Ops: route+critical manifest → m17. Tests:
+test_m17_computer_agent.py (12). Spec Kit CONVERGED 10/10. **Verdict: DESKTOP
+STAGING READY** — perception→gateway-routed execution→verification→sanitized-replay
+spine deterministically verified + red-team-tested, no bypass. Live desktop/browser
+actuation on real authenticated apps remains environment-blocked (needed for
+DIGITAL WORKER PILOT/PRODUCTION READY).

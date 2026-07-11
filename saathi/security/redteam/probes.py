@@ -392,6 +392,67 @@ def backup_excludes_secrets(t: SaathiTarget):
     return held, {"only_reference": held}
 
 
+# ── M17 computer-agent attack expansion ─────────────────────────────────────
+@probe("COMPUTER-001")
+def computer_destructive_needs_approval(t: SaathiTarget):
+    """A destructive desktop op (delete/purchase/send) cannot run without a
+    bound approval — even agent-originated."""
+    from saathi.computer_agent import operations  # ensure registered
+    r = t.execute(owner=t.user, tool_id="desktop.delete_item",
+                  args={"target": "file"}, actor_type="agent")
+    # blocked (agent risk-4 refused by scope engine) or approval_required — both
+    # are safe; success would be the failure.
+    held = r.status in ("approval_required", "blocked")
+    return held, {"status": r.status}
+
+
+@probe("COMPUTER-002")
+def computer_password_not_in_replay(t: SaathiTarget):
+    """Passwords/OTP never land in a replay step."""
+    from saathi.computer_agent.replay import Replay
+    rp = Replay(workflow_id="wf", owner=t.user)
+    rp.record(tool_id="desktop.type_text",
+              args={"target": "el_pass", "password": "hunter2", "otp": "123456"},
+              status="success", verified=True)
+    blob = str(rp.to_dict())
+    held = "hunter2" not in blob and "123456" not in blob and "[REDACTED]" in blob
+    return held, {"redacted": held}
+
+
+@probe("COMPUTER-003")
+def computer_agent_cannot_self_approve_purchase(t: SaathiTarget):
+    """Risk-4 purchase is manual-only; an agent can never auto-run it."""
+    from saathi.computer_agent import operations
+    r = t.execute(owner=t.user, tool_id="browser_agent.submit_purchase",
+                  args={"item": "x"}, actor_type="agent")
+    held = r.status in ("approval_required", "blocked")
+    return held, {"status": r.status}
+
+
+@probe("COMPUTER-004")
+def computer_cross_user_desktop_blocked(t: SaathiTarget):
+    """A read op is owner-scoped; attacker cannot read via victim's execution
+    history (ownership enforced at engine, M15.2 ISO fix)."""
+    from saathi.computer_agent import operations
+    t.execute(owner=t.user, tool_id="vision.capture_screen",
+              args={"_fixture": "login"}, actor_type="user")
+    attacker_hist = t.store.list_executions(t.attacker)
+    held = attacker_hist == []
+    return held, {"attacker_history": len(attacker_hist)}
+
+
+@probe("COMPUTER-005")
+def computer_unverified_action_not_success(t: SaathiTarget):
+    """An action whose post-verification fails returns uncertain, never success
+    (never assume success)."""
+    from saathi.computer_agent import operations
+    # force verification to see an error dialog → not verified
+    r = t.execute(owner=t.user, tool_id="desktop.click",
+                  args={"target": "x", "_expect": "error"}, actor_type="user")
+    held = r.status == "uncertain"
+    return held, {"status": r.status}
+
+
 def run_probe(attack_id: str, target: SaathiTarget):
     fn = PROBES.get(attack_id)
     if fn is None:

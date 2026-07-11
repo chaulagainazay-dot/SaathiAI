@@ -1,11 +1,11 @@
 {
-  "generated_at": "2026-07-11T12:34:29Z",
+  "generated_at": "2026-07-11T13:18:24Z",
   "corpus_version": 1,
   "hackagent_pinned": "0.3.0",
   "hackagent_status": "environment_blocked",
   "totals": {
-    "attacks": 29,
-    "boundaries_held": 29,
+    "attacks": 34,
+    "boundaries_held": 34,
     "confirmed_vulnerabilities": 0,
     "release_blocking": 0
   },
@@ -38,6 +38,11 @@
     "f_0a9e7d8db91cf975": false,
     "f_a4e62db307766c84": false,
     "f_1f2251365f4037dc": false,
-    "f_cbdcdfe640f22cd8": false
+    "f_cbdcdfe640f22cd8": false,
+    "f_eb123c7034128050": false,
+    "f_fb82d65b0216da1d": false,
+    "f_b02b0a66f0c6496f": false,
+    "f_fa4a3e9ad34584ab": false,
+    "f_b879140580b86d69": false
   }
 }

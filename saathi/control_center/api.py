@@ -52,6 +52,11 @@ def release(request: Request):
     return ControlCenterAggregator(_user(request)).release_readiness().to_dict()
 
 
+@router.get("/computer")
+def computer(request: Request):
+    return ControlCenterAggregator(_user(request)).computer_agent().to_dict()
+
+
 @router.get("/timeline")
 def timeline(request: Request, limit: int = 25):
     return ControlCenterAggregator(_user(request)).recent_events(limit=limit).to_dict()

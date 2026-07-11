@@ -177,3 +177,16 @@ offers is executed by the real subsystem behind it, with the same approvals and
 ownership checks. When a data source is down, it says so instead of showing a
 comforting fake number. It is ready for staging use; full production sign-off
 still needs authenticated browser verification and live provider data.
+
+## M17 — SaathiOS as a digital worker
+
+SaathiOS can now be pointed at a screen and operate software the way a person
+does — see the window, find the button, click, type, verify the result — across
+browsers and desktop apps, without custom code per app. Crucially it runs on the
+same safety rails as everything else: it never assumes an action worked (it looks
+again to confirm), destructive or costly actions (delete, purchase, send, deploy)
+stop for approval, passwords and one-time codes never appear in its recorded
+replays, and one user's session can never see another's. Today this is proven with
+a deterministic simulator; driving real authenticated applications on a real
+desktop is the next, credential-and-permission-gated step before it becomes a
+pilot-ready digital worker.
