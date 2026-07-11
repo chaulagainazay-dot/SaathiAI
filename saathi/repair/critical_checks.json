@@ -665,6 +665,38 @@
    ],
    "subsystem": "computer_agent",
    "blocking": true
+  },
+  {
+   "id": "computer.perm_readiness",
+   "targets": [
+    "tests/test_m17_1_live.py::test_permission_summary_honest"
+   ],
+   "subsystem": "computer_agent",
+   "blocking": true
+  },
+  {
+   "id": "computer.workspace_confined",
+   "targets": [
+    "tests/test_m17_1_live.py::test_workspace_confined_and_gitignored"
+   ],
+   "subsystem": "computer_agent",
+   "blocking": true
+  },
+  {
+   "id": "computer.live_report_honest",
+   "targets": [
+    "tests/test_m17_1_live.py::test_live_report_classifies_honestly"
+   ],
+   "subsystem": "computer_agent",
+   "blocking": true
+  },
+  {
+   "id": "computer.cdp_loopback",
+   "targets": [
+    "tests/test_m15_2_security.py::test_full_suite_no_release_blocking"
+   ],
+   "subsystem": "computer_agent",
+   "blocking": true
   }
  ]
 }

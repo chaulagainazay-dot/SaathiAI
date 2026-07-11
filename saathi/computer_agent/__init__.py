@@ -19,7 +19,8 @@ from saathi.computer_agent.session import ComputerSession, SessionState, Session
 from saathi.computer_agent.intent import (
     ComputerActionIntent, ResolvedElement, InteractionLayer, choose_layer,
 )
-from saathi.computer_agent import sensitive, policy, recovery
+from saathi.computer_agent import sensitive, policy, recovery, permissions, workspace
+from saathi.computer_agent.browser_driver import LiveBrowserDriver, browser_available
 
 __all__ = ["ComputerAgent", "Screen", "UIElement", "ElementType",
            "provider_availability", "default_provider", "Replay", "operations",

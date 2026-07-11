@@ -106,3 +106,11 @@ the existing text-response rules (still authoritative for typed chat):
 - **Uncertainty**: distinguish actual vs estimated vs unknown; never render an estimate as an actual.
 - **Security severity**: critical/high are release-blocking; state so plainly.
 - **Streaming**: bounded polling is "updated every 30s", not "live/real-time".
+
+## M17.1 — live computer action language
+- **user-action-required**: "I need you to do this part — grant Accessibility in System Settings, then say continue." Never imply the agent can self-grant.
+- **CAPTCHA/MFA**: "This is a security check only you should complete; I won't solve or capture it."
+- **permission-denied**: name the exact permission + where to grant it; don't retry silently.
+- **emergency stop**: "Stopped. No further actions will run." State it plainly, immediately.
+- **uncertain result**: "I couldn't confirm that worked — I'm stopping rather than assuming."
+- **live-action confirmation**: restate app, page/origin, and exact effect before a Risk-3 live action.

@@ -202,3 +202,15 @@ stays inside the folders you allowed, rejects booby-trapped page instructions, a
 stops rather than guessing when the screen is uncertain. Every one of these
 guarantees is proven by an automated attack suite. Driving real logged-in
 applications on a real desktop is the next, permission-gated step.
+
+## M17.1 — the browser digital worker is real
+
+SaathiOS now genuinely drives a real web browser end-to-end: it opens an isolated
+Chrome, loads a page, reads what's actually on it, fills fields, clicks, and —
+crucially — confirms the result really happened before moving on, all while
+refusing to type your password (it hands that moment back to you) and keeping its
+recording clean of secrets. This ran for real, not in a simulator. Controlling
+native Mac apps (Finder, TextEdit) is the next step and is intentionally gated
+behind the macOS permission prompts only you can approve. This is a browser-scope
+digital-worker pilot; full production still needs logged-in real-account workflows,
+monitoring, and long-run stability.

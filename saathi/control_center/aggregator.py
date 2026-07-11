@@ -112,13 +112,22 @@ class ControlCenterAggregator:
             # provider is importable — otherwise honestly environment-blocked.
             live_enabled = os.getenv("SAATHI_COMPUTER_LIVE") == "1"
             live_desktop = "available" if (live_enabled and importable) else "environment_blocked"
+            # fast permission readiness (no browser launch here)
+            from saathi.computer_agent import permissions
+            from saathi.computer_agent.browser_driver import browser_available
+            perm = permissions.summary()
             return {"connectors": conns,
                     "tools": len([t for t in R.all_tools()
                                   if t.connector_id in conns]),
                     "providers": avail,
                     "importable_providers": importable,
                     "live_desktop_control": live_desktop,
-                    "note": "importable != verified live control; deterministic is authoritative here"}
+                    "live_browser_ready": perm["live_browser_ready"],
+                    "live_desktop_ready": perm["live_desktop_ready"],
+                    "browser_binary": browser_available().get("path"),
+                    "permissions": perm["detail"],
+                    "note": "live-browser workflow verified via CLI/live-report; desktop "
+                            "permission-blocked (macOS TCC not granted)"}
         return guarded("computer_agent", _ca)
 
     def release_readiness(self) -> Cell:

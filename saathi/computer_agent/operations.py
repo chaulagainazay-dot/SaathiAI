@@ -20,10 +20,26 @@ from saathi.computer_agent.providers import default_provider, provider_availabil
 
 _REGISTERED = False
 
+# module-level LIVE browser driver, set for the duration of an authorized live
+# browser session. When present, browser_agent ops drive a REAL browser through
+# it (still via ExecutionEngine → gateway → this adapter). Absent → deterministic.
+_LIVE_BROWSER = None
+
+
+def set_live_browser(driver) -> None:
+    global _LIVE_BROWSER
+    _LIVE_BROWSER = driver
+
+
+def clear_live_browser() -> None:
+    global _LIVE_BROWSER
+    _LIVE_BROWSER = None
+
 
 class ComputerAdapter(A.Adapter):
     """Bridges connector execution to a computer provider. Deterministic by
-    default (no real desktop). Mutating ops run a post-action verification."""
+    default; drives a REAL browser when a live driver is set. Mutating ops run a
+    post-action verification."""
     name = "computer"
 
     def available(self) -> bool:
@@ -36,6 +52,9 @@ class ComputerAdapter(A.Adapter):
     def execute(self, *, tool, account_id, args, secret_getter=None) -> ToolResult:
         started = _now_iso()
         surface = "browser" if tool.connector_id == "browser_agent" else "desktop"
+        # LIVE browser path — real actuation through the sanctioned driver
+        if tool.connector_id == "browser_agent" and _LIVE_BROWSER is not None:
+            return self._execute_live_browser(tool, args, started)
         provider = default_provider(surface)
         base = dict(connector_id=tool.connector_id, tool_id=tool.tool_id,
                     capability_id=tool.capability_id, started_at=started,
@@ -60,6 +79,56 @@ class ComputerAdapter(A.Adapter):
                               else ["post-action verification did not confirm the result"],
                               evidence=[{"provider": provider.name, "verified": verification["verified"]}],
                               completed_at=_now_iso(), **base)
+        except Exception as e:
+            return ToolResult(status="failed", completed_at=_now_iso(),
+                              errors=[{"class": "internal_error", "message": str(e)[:200]}],
+                              **base)
+
+    def _execute_live_browser(self, tool, args, started) -> ToolResult:
+        """Drive the REAL browser via the sanctioned live driver, then verify
+        the declared postcondition (never assume success)."""
+        d = _LIVE_BROWSER
+        op = tool.capability_id
+        base = dict(connector_id=tool.connector_id, tool_id=tool.tool_id,
+                    capability_id=tool.capability_id, started_at=started,
+                    provenance={"adapter": "computer", "provider": "live-cdp-browser"})
+        try:
+            if op == "read_page":
+                data = {"url": d.current_url(), "title": d.title(),
+                        "body": d.dom_text("body")[:2000]}
+                return ToolResult(status="success", data=data,
+                                  evidence=[{"provider": "live-cdp-browser",
+                                             "url": data["url"]}],
+                                  completed_at=_now_iso(), **base)
+            if op == "navigate":
+                ev = d.navigate(args.get("url", "about:blank"))
+                expect = args.get("_expect_url", "")
+                verified = (expect in ev.detail.get("url", "")) if expect else True
+                return ToolResult(status="success" if verified else "uncertain",
+                                  data={"navigate": ev.detail,
+                                        "verification": {"verified": verified,
+                                                         "method": "url_match"}},
+                                  completed_at=_now_iso(), **base)
+            if op == "click":
+                ev = d.click(args.get("selector", ""))
+                expect = args.get("_expect_text", "")
+                verified = (expect in d.dom_text("body")) if expect else ev.ok
+                return ToolResult(status="success" if (ev.ok and verified) else "uncertain",
+                                  data={"click": ev.detail,
+                                        "verification": {"verified": verified,
+                                                         "method": "text_present"}},
+                                  completed_at=_now_iso(), **base)
+            if op == "fill_form":
+                # sensitive fields must never reach here (agent pauses upstream)
+                ev = d.fill(args.get("selector", ""), args.get("value", ""))
+                verified = ev.ok
+                return ToolResult(status="success" if verified else "uncertain",
+                                  data={"fill": {"selector": ev.detail.get("selector")},
+                                        "verification": {"verified": verified}},
+                                  completed_at=_now_iso(), **base)
+            return ToolResult(status="failed", completed_at=_now_iso(),
+                              errors=[{"class": "unsupported_operation",
+                                       "message": f"live browser has no {op}"}], **base)
         except Exception as e:
             return ToolResult(status="failed", completed_at=_now_iso(),
                               errors=[{"class": "internal_error", "message": str(e)[:200]}],

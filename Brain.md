@@ -1022,3 +1022,30 @@ boundary, sensitive-input protection, injection guards, and recovery all
 deterministically verified + red-team-tested. Live browser/desktop actuation on
 real authenticated apps remains permission/dependency-blocked (needed for DIGITAL
 WORKER PILOT/PRODUCTION READY).
+
+## M17.1 — live browser validation (genuine)
+
+Real browser control WITHOUT install/permission: system Chrome launched headless
+with a bounded loopback --remote-debugging-port + isolated --user-data-dir,
+driven over CDP via a minimal STDLIB websocket (browser_driver.py) — the ONLY
+place a real browser is driven; agents reach it through ComputerAgent →
+ExecutionEngine → ExecutionGateway → ComputerAdapter → live driver (no bypass).
+A genuine workflow (live_workflow.run_browser_smoke) launches Chrome, loads a
+local test site, reads real DOM, fills a non-sensitive field, clicks submit,
+**verifies the real confirmation text**, captures a real screenshot to the
+git-ignored pilot workspace, PAUSES on the password field (never typed/recorded),
+and closes cleanly (process exit + isolated-profile cleanup). permissions.py
+reports honest readiness (browser headless = granted, no permission needed;
+macOS Accessibility/Screen-Recording = user_action_required; TCC never self-
+granted). workspace.py confines all test files to data/computer-agent-pilot
+(git-ignored, never committed/uploaded). live_report.py classifies every
+capability honestly (live-browser-tested / permission-blocked / dependency-
+blocked / environment-blocked). Red-team +6 (52/52): CDP-loopback-only,
+isolated-profile, origin-switch-blocked, download-confined, no-control-after-
+lock, screenshot-confined. Ops: critical manifest m17.1 (+4 checks). Tests:
+test_m17_1_live.py (9; 4 real live-browser). **Verdict: DIGITAL WORKER PILOT
+READY (browser)** — real controlled browser workflow verified through the gateway
+with sensitive-input protection + redacted replay + clean teardown. Native-desktop
+(Finder/TextEdit/Accessibility) is **permission-blocked** (macOS TCC not granted);
+OCR/vision dependency-blocked; authenticated + external side-effect environment-
+blocked. Not PRODUCTION READY.
