@@ -122,3 +122,12 @@ the existing text-response rules (still authoritative for typed chat):
 - **uncertain native action**: "I couldn't confirm the window/app is the one expected — pausing instead of acting."
 - **native failure**: state the app, the step, and the observed obstacle; recover from the last checkpoint, don't restart blindly.
 - **readiness honesty**: keep browser vs native verdicts separate; never call the desktop worker ready because the browser works.
+
+## M17.3 — harness language
+- **harness selection**: "I'll use the trusted FFmpeg harness (structured, verifiable) instead of GUI control."
+- **untrusted harness**: "That harness is imported but not reviewed — I can't run it until it's approved."
+- **install-approval**: name the source repo + exact commit; "installing needs your approval."
+- **verification-failure**: "the tool reported success, but my independent check didn't confirm the artifact — treating as uncertain."
+- **fallback**: "no trusted harness for this app; falling back to browser/desktop control, and I'll verify the outcome."
+- **unavailable-application**: "LibreOffice isn't installed — that capability is dependency-blocked."
+- **quarantined-harness**: "that harness is quarantined and cannot run."

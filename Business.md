@@ -226,3 +226,15 @@ desktop session; until then those steps report "permission needed", never a fake
 success. So the native worker is staged and safe, with real read-level proof; the
 browser worker (already piloted) and the native worker are tracked as separate
 readiness levels so neither borrows the other's credibility.
+
+## M17.3 — agents operate real apps, structurally
+
+Instead of clicking around a screen, SaathiOS can now drive real applications
+through their command-line "engines" — starting with FFmpeg, which it uses to
+transcode a video and then independently re-checks the result really is a valid
+video before calling it done. Only vetted, source-pinned harnesses run, each in a
+locked-down process with no access to secrets or the wider filesystem; an agent
+can suggest a new application harness but can never bless it as trusted itself —
+that stays a human decision. External harness catalogs (like CLI-Anything's) can be
+browsed but everything imported is untrusted until reviewed. This is a one-app pilot
+(FFmpeg live); more apps and the install/update security come before production.

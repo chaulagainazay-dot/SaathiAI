@@ -1076,3 +1076,33 @@ gateway; Finder/TextEdit actuation permission-blocked pending an Accessibility
 grant + interactive session (browser pilot from M17.1 stays DIGITAL WORKER PILOT
 READY separately). Not native DIGITAL WORKER PILOT READY (no Finder/TextEdit
 workflow completed).
+
+## M17.3 — Agent-Native Application Harness Platform
+
+`saathi/application_harness/`: lets agents operate applications through structured
+CLI harnesses BEFORE browser/visual control. Design informed by HKUDS/CLI-Anything
+(Apache-2.0) — **no code copied** (THIRD_PARTY_NOTICES.md). Capability resolution
+order: connector_api → trusted_harness → dom_cdp → accessibility → ocr_vision →
+coordinate (resolver.py). **ApplicationHarnessAdapter is the sole subprocess
+boundary**: argv-only (never shell=True), sanitized minimal env (no inherited
+secrets), minimal PATH, file-root confinement + symlink/traversal rejection,
+output-size cap, process-group cleanup. service.run_harness_action is the only
+governed entry (ownership + trust + risk/approval gated); no agent/chat/frontend
+reaches the adapter directly. **Trust lifecycle** (trust.py): discovered→…→
+approved→trusted; no skip/backward; APPROVED needs deterministic+security+license
++exact-source evidence AND a human (agents cannot self-promote); source change
+resets trust; quarantine blocks. **Importer** (importer.py): CLI-Anything registry
+read-only → every entry external_untrusted; rejects shell chains / traversal /
+bad install schemes (17/79 rejected in the real registry). **Independent
+verification** (verify.py): ffprobe/magic-bytes/checksum + XXE-safe XML + ZIP-slip-
+safe archives + oversize/secret-pattern rejection — a process `status:success` is
+NEVER trusted alone. **FFmpeg pilot** wraps the existing canonical tool:
+probe_media (risk 0) + transcode (risk 1), LIVE-tested end-to-end through the
+gateway with independent ffprobe verification. Red-team +11 (68/68): untrusted/
+quarantined blocked, source-resets-trust, agent-no-self-promote, shell-inject
+rejected, adapter argv-only, import-untrusted, fake-success-not-accepted, XXE,
+ZIP-slip, oversize. Ops: critical manifest m17.3 (+9). Tests: test_m17_3_harness.py
+(19; 2 live ffmpeg). **Verdict: AGENT-NATIVE APPLICATION PILOT READY** — one real
+application harness (FFmpeg) executes through ExecutionGateway, produces a verified
+artifact, trust + source pinning enforced, cross-user blocked. LibreOffice/Blender
+dependency-blocked. Not PRODUCTION READY.

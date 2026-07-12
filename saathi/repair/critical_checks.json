@@ -698,11 +698,125 @@
    "subsystem": "computer_agent",
    "blocking": true
   },
-  {"id": "native.perm_honest", "targets": ["tests/test_m17_2_native.py::test_permission_summary_honest"], "subsystem": "computer_agent", "blocking": true},
-  {"id": "native.exec_identity", "targets": ["tests/test_m17_2_native.py::test_executable_identity_stable"], "subsystem": "computer_agent", "blocking": true},
-  {"id": "native.ops_gateway", "targets": ["tests/test_m17_2_native.py::test_native_ops_registered_gateway_routed"], "subsystem": "computer_agent", "blocking": true},
-  {"id": "native.workspace_confined", "targets": ["tests/test_m17_2_native.py::test_native_workspace_confined_no_symlink"], "subsystem": "computer_agent", "blocking": true},
-  {"id": "native.report_honest", "targets": ["tests/test_m17_2_native.py::test_native_report_classifies_honestly"], "subsystem": "computer_agent", "blocking": true},
-  {"id": "native.spoof_pid", "targets": ["tests/test_m17_2_native.py::test_live_identity_verification_rejects_spoofed_pid"], "subsystem": "computer_agent", "blocking": true}
+  {
+   "id": "native.perm_honest",
+   "targets": [
+    "tests/test_m17_2_native.py::test_permission_summary_honest"
+   ],
+   "subsystem": "computer_agent",
+   "blocking": true
+  },
+  {
+   "id": "native.exec_identity",
+   "targets": [
+    "tests/test_m17_2_native.py::test_executable_identity_stable"
+   ],
+   "subsystem": "computer_agent",
+   "blocking": true
+  },
+  {
+   "id": "native.ops_gateway",
+   "targets": [
+    "tests/test_m17_2_native.py::test_native_ops_registered_gateway_routed"
+   ],
+   "subsystem": "computer_agent",
+   "blocking": true
+  },
+  {
+   "id": "native.workspace_confined",
+   "targets": [
+    "tests/test_m17_2_native.py::test_native_workspace_confined_no_symlink"
+   ],
+   "subsystem": "computer_agent",
+   "blocking": true
+  },
+  {
+   "id": "native.report_honest",
+   "targets": [
+    "tests/test_m17_2_native.py::test_native_report_classifies_honestly"
+   ],
+   "subsystem": "computer_agent",
+   "blocking": true
+  },
+  {
+   "id": "native.spoof_pid",
+   "targets": [
+    "tests/test_m17_2_native.py::test_live_identity_verification_rejects_spoofed_pid"
+   ],
+   "subsystem": "computer_agent",
+   "blocking": true
+  },
+  {
+   "id": "harness.untrusted_blocked",
+   "targets": [
+    "tests/test_m17_3_harness.py::test_untrusted_cannot_execute"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "harness.adapter_argv_only",
+   "targets": [
+    "tests/test_m17_3_harness.py::test_adapter_rejects_shell_string"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "harness.shell_inject",
+   "targets": [
+    "tests/test_m17_3_harness.py::test_shell_injection_arg_rejected"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "harness.source_resets_trust",
+   "targets": [
+    "tests/test_m17_3_harness.py::test_source_change_resets_trust"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "harness.agent_no_promote",
+   "targets": [
+    "tests/test_m17_3_harness.py::test_agent_cannot_promote_to_approved"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "harness.import_untrusted",
+   "targets": [
+    "tests/test_m17_3_harness.py::test_importer_untrusted_and_rejects_bad"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "harness.independent_verify",
+   "targets": [
+    "tests/test_m17_3_harness.py::test_live_ffmpeg_probe_and_transcode_verified"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "harness.xxe_zipslip",
+   "targets": [
+    "tests/test_m17_3_harness.py::test_xxe_rejected"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "harness.cross_user",
+   "targets": [
+    "tests/test_m17_3_harness.py::test_service_cross_user_blocked"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  }
  ]
 }

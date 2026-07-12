@@ -20,7 +20,7 @@ SCHEMA_VERSIONS = {
     "voice_os": "m12", "studio_os": "m13", "ceo_os": "m14", "repair": "m9",
     "connectors": "m15",
 }
-CRITICAL_MANIFEST_VERSION = "m17.2"
+CRITICAL_MANIFEST_VERSION = "m17.3"
 
 _PROCESS_START = time.time()
 
