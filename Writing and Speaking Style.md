@@ -149,3 +149,12 @@ the existing text-response rules (still authoritative for typed chat):
 - **stuck run**: "this run's heartbeat is stale / its process is missing — flagging it for attention, not auto-failing it on one missed beat."
 - **pause/resume honesty**: "pause/resume is a defined contract, not built — process suspension is not application checkpointing; I won't pretend a checkpoint exists."
 - **migration**: "old run records are backed up and migrated read-only; the import is reversible and imports no secrets."
+
+## M17.10 — run-monitoring language
+- **stuck run detected**: "this run stopped checking in — I've raised an alert, not failed it on one missed beat."
+- **cancel not honoured**: "cancel was requested but the run hasn't stopped — flagging it as cancellation-stuck for attention."
+- **process vanished**: "the run's process is gone — I reconciled it as crash-recovered; I did not re-run its work."
+- **dedup honesty**: "already alerted on this — I won't raise a duplicate every check."
+- **self-heal**: "the run resumed / finished, so I cleared its alert."
+- **acknowledge**: "acknowledged by the verified local operator (recorded); the underlying run is still stuck until it resolves."
+- **scope honesty**: "alerts show state only — never your command arguments, output, or secrets."

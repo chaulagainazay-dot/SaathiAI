@@ -1045,6 +1045,27 @@
    ],
    "subsystem": "control_center",
    "blocking": true
+  },
+  {
+   "id": "ledger.monitor_alerting",
+   "targets": [
+    "tests/test_m17_10_run_monitor.py::test_repeated_sweep_does_not_duplicate_alert",
+    "tests/test_m17_10_run_monitor.py::test_terminal_auto_resolves_open_alerts",
+    "tests/test_m17_10_run_monitor.py::test_concurrent_sweeps_no_duplicate_alerts",
+    "tests/test_m17_10_run_monitor.py::test_open_alerts_owner_scoped_and_safe",
+    "tests/test_m17_10_run_monitor.py::test_acknowledge_alert_audited_and_fail_closed"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "ledger.monitor_control_center_contract",
+   "targets": [
+    "tests/test_m17_10_run_monitor.py::test_control_center_attention_surfaces_alerts",
+    "tests/test_m17_10_run_monitor.py::test_cli_monitor_commands_admin_gated"
+   ],
+   "subsystem": "control_center",
+   "blocking": true
   }
  ]
 }

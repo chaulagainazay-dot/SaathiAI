@@ -292,3 +292,19 @@ command details, output, or secrets are ever exposed. This is the difference
 between "it usually works" and "we can prove what happened" — the foundation for
 running long, important tasks unattended. Still ahead before production: proving it
 under many simultaneous users, and a live monitoring/alerting dashboard.
+
+## M17.10 — SaathiOS notices when a task gets stuck
+
+Running real work unattended only matters if someone notices when a job hangs.
+SaathiOS now watches its own long-running tasks: if a job stops checking in, or was
+told to cancel but won't stop, or its process quietly vanished, the system raises a
+clear, de-duplicated alert — once per problem, not a flood — and surfaces it on the
+control center's "needs attention" list, ranked by severity. Alerts clear
+themselves the moment the job recovers or finishes, so the list always reflects
+reality. An operator can acknowledge an alert (recorded with who did it), and a
+vanished job is automatically reconciled without ever re-running work or touching a
+job that's still alive. Everyday users see only their own alerts, and no private
+command details are exposed. This is the foundation of "run it and trust it" —
+the safety net before autonomous operation. Still ahead: sending alerts out to
+email/Slack, running the watcher on a schedule, and a full incident drill. This
+milestone touches nothing financial and enables no autonomous trading.

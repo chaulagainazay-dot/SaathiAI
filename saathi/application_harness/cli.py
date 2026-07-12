@@ -18,6 +18,9 @@ M17.9 durable run-ledger operations — LOCAL ADMIN-MAINTENANCE surface.
     python -m saathi.application_harness.cli run-reconcile <run_id>
     python -m saathi.application_harness.cli runs-reconcile-stale
     python -m saathi.application_harness.cli run-transitions <run_id>
+    python -m saathi.application_harness.cli runs-monitor          (M17.10 sweep)
+    python -m saathi.application_harness.cli run-alerts            (M17.10 open alerts)
+    python -m saathi.application_harness.cli alert-ack <alert_id>  (M17.10 acknowledge)
 
 Security model: this CLI has NO authenticated user context, so it never trusts a
 caller-supplied identity for authorization. Ledger inspection + mutation are
@@ -39,7 +42,8 @@ from saathi.application_harness import registry, resolver, importer
 from saathi.application_harness.pilots import ffmpeg as F
 
 _LEDGER_CMDS = {"runs", "run-inspect", "run-cancel", "run-reconcile",
-                "runs-reconcile-stale", "run-transitions", "ledger-health"}
+                "runs-reconcile-stale", "run-transitions", "ledger-health",
+                "runs-monitor", "run-alerts", "alert-ack"}
 _ADMIN_MSG = ("ledger maintenance commands require admin mode: set "
               "SAATHI_HARNESS_ADMIN=1 (the verified local OS identity is used "
               "as the audited operator; no caller-supplied identity is trusted)")
@@ -110,6 +114,21 @@ def _ledger_cmd(cmd, rest) -> int | None:
         print(json.dumps(led.reconcile_run(rest[0]), indent=2, default=str)); return 0
     if cmd == "runs-reconcile-stale":
         print(json.dumps(led.reconcile_stale(), indent=2, default=str)); return 0
+    if cmd == "runs-monitor":                # M17.10 deterministic stuck-run sweep
+        from saathi.application_harness.run_monitor import HarnessRunMonitor
+        print(json.dumps(HarnessRunMonitor(led).sweep(), indent=2, default=str)); return 0
+    if cmd == "run-alerts":
+        print(json.dumps(led.open_alerts(), indent=2, default=str)); return 0
+    if cmd == "alert-ack":
+        if not rest:
+            print("alert-ack needs <alert_id>", file=sys.stderr); return 2
+        try:
+            aid = int(rest[0])
+        except ValueError:
+            print("alert-ack needs a numeric <alert_id>", file=sys.stderr); return 2
+        res = led.acknowledge_alert(aid, operator=operator)   # audited, OS identity
+        print(json.dumps(res, indent=2, default=str))
+        return 0 if res.get("ok") else 1
     return None
 
 
@@ -118,7 +137,8 @@ def main(argv=None) -> int:
     if not argv:
         print("usage: list|inspect|operations|resolve|import-cli-anything|health|live-report"
               "|runs|run-inspect|run-cancel|run-reconcile|runs-reconcile-stale"
-              "|run-transitions|ledger-health", file=sys.stderr)
+              "|run-transitions|ledger-health|runs-monitor|run-alerts|alert-ack",
+              file=sys.stderr)
         return 2
     cmd, rest = argv[0], argv[1:]
     ledger_rc = _ledger_cmd(cmd, rest)

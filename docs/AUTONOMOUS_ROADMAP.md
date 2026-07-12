@@ -44,6 +44,22 @@ READY** — not production-ready (needs multi-user load, production monitoring/
 alerting, representative deployment, incident-response drill). Pause/resume/
 checkpoint kept `contract_ready` (process suspension ≠ application checkpointing).
 
+## M17.10 (this invocation) — harness run monitoring & stuck-run alerting
+Start/rollback point: HEAD `73e97f9` (M17.9). No higher Critical/High open; release
+blockers environment-blocked. Selected the bounded first slice of the "production
+monitoring" candidate (the roadmap gated it on "a bounded design existing"): a
+deterministic, deduplicated, self-resolving stuck-run alerting layer over the M17.9
+run ledger. Delivered: ledger `run_alert` store (partial-unique dedup, idempotent
+raise, auto-resolve on terminal/reconcile, admin-audited acknowledge), a
+`run_monitor.py` sweep (classify → alert → reconcile → self-heal; deterministic,
+injectable now/thresholds/is_alive), Control Center attention integration
+(`kind: harness_run`), 3 admin-gated CLI commands, and **2 dedicated blocking
+Critical Manifest checks**. Multi-PROCESS concurrent-sweep dedup proven; restart
+persistence proven. Extends the ledger + Control Center attention + event bus — no
+second monitoring stack. Touches no financial/external surface (Trading Guardian
+not engaged). Verdict: **HARNESS RUN MONITORING STAGING READY** — not production
+(external transports, scheduled sweeps, multi-user load, incident drill remain).
+
 ## Blocked / deferred (need user action or larger scope)
 - authenticated browser / cloud connector workflow — needs a safe staging account.
 - native Finder/TextEdit actuation — macOS Accessibility (TCC) not granted.

@@ -1201,3 +1201,38 @@ drill outstanding). Pause/resume/checkpoint = contract_ready only (process
 suspension is NOT application checkpointing; transactional run state is NOT
 exactly-once external side effects; uncertain outcomes stay stop_uncertain;
 recovery never blindly repeats non-idempotent work).
+
+## M17.10 — harness run monitoring & deterministic stuck-run alerting
+
+Autonomous-loop milestone. Bounded first slice of "production monitoring" (the
+roadmap gated it on a bounded design existing). Extends the M17.9 run ledger +
+Control Center attention + event bus — NO second monitoring stack. Ledger gains a
+run_alert store (same DB) with a partial-unique dedup index
+(idx_alert_dedup(state_key) WHERE status!='resolved') so at most one non-resolved
+alert exists per (run_id, alert_class): raise_alert is idempotent (INSERT OR
+IGNORE), resolve_alerts flips open->resolved and is auto-called on every terminal
+transition (complete) and crash reconcile, and acknowledge_alert is admin-audited +
+fail-closed. Deterministic severity: process_missing/cancellation_stuck=high,
+heartbeat_stale=medium. New run_monitor.py HarnessRunMonitor.sweep() classifies
+active runs via the ledger's existing classify(), raises dedup alerts for
+heartbeat_stale/cancellation_stuck, reconciles process_missing through the M17.9
+idempotent live-safe path (the ONLY run mutation — never reruns work, never
+overwrites a live process), and self-heals (resolves alerts for runs that became
+active again). Deterministic: now/thresholds/is_alive injectable, no randomness, so
+a tick-schedule causes no alert storms or replay dupes. Control Center harnesses()
+cell exposes owner-safe run_alerts; _attention() folds harness stuck-run alerts
+into the ranked list (kind harness_run, link /control/harnesses); overview() passes
+the harness cell. CLI +3 admin-maintenance commands (SAATHI_HARNESS_ADMIN=1;
+verified OS identity; audited): runs-monitor, run-alerts, alert-ack. Proven with
+real spawned PROCESSES: 6 concurrent sweeps over one stuck run -> exactly 1 alert,
+integrity ok. Restart persistence proven. Ops: 2 dedicated BLOCKING critical-
+manifest entries (ledger.monitor_alerting, ledger.monitor_control_center_contract).
+Tests: test_m17_10_run_monitor.py (15). Full suite 1598 passed / 1 skipped / 0
+failed. Server 308 routes. Release exit 0. Secret scan clean. Trading Guardian NOT
+engaged (no financial/external/portfolio/autonomous-execution surface). **Verdict:
+HARNESS RUN MONITORING STAGING READY** — deterministic dedup self-resolving stuck-
+run alerting over the ledger, surfaced through existing attention + event bus, with
+admin-audited acknowledge and a green blocking manifest. NOT production (external
+alert transports email/Slack/PagerDuty, scheduled sweeps, multi-user load, incident-
+response drill outstanding). Backward compatible: additive CREATE TABLE IF NOT
+EXISTS; M17.9 fully preserved; revert = single-commit rollback.

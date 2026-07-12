@@ -201,12 +201,34 @@ CREATE TABLE IF NOT EXISTS run_transition(
   actor TEXT DEFAULT '',
   reason TEXT DEFAULT '',
   ts REAL);
+CREATE TABLE IF NOT EXISTS run_alert(
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  run_id TEXT NOT NULL,
+  alert_class TEXT NOT NULL,
+  severity TEXT NOT NULL,
+  state_key TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'open',
+  owner TEXT DEFAULT '',
+  detail TEXT DEFAULT '',
+  created_at REAL,
+  acknowledged_at REAL DEFAULT 0,
+  acknowledged_by TEXT DEFAULT '',
+  resolved_at REAL DEFAULT 0);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_run_idem ON run(idempotency_key)
   WHERE idempotency_key != '';
 CREATE INDEX IF NOT EXISTS idx_run_owner ON run(owner, state);
 CREATE INDEX IF NOT EXISTS idx_run_state ON run(state);
 CREATE INDEX IF NOT EXISTS idx_trans_run ON run_transition(run_id, id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_alert_dedup ON run_alert(state_key)
+  WHERE status != 'resolved';
+CREATE INDEX IF NOT EXISTS idx_alert_open ON run_alert(status, owner);
+CREATE INDEX IF NOT EXISTS idx_alert_run ON run_alert(run_id);
 """
+
+# M17.10 stuck-run alert classes + deterministic severity
+ALERT_SEVERITY = {"process_missing": "high", "cancellation_stuck": "high",
+                  "heartbeat_stale": "medium"}
+ALERTABLE = set(ALERT_SEVERITY)
 
 # fields exposed in owner-safe read models (never args / output / secrets)
 _SAFE_FIELDS = ("run_id", "owner", "harness_id", "operation_id", "state",
@@ -464,6 +486,7 @@ class RunLedger:
         res = self._transition(run_id, state, actor="complete", reason=state,
                                **fields)
         if not res.get("noop"):
+            self.resolve_alerts(run_id)       # terminal → clear open alerts
             self._event("harness.run.completed", {"run_id": run_id, "state": state})
         return res
 
@@ -548,6 +571,7 @@ class RunLedger:
             self._transition(run_id, CRASH_RECOVERED, actor="reconcile",
                              reason="pid_dead", terminal_at=_now(),
                              recovery_status="crash_reconciled")
+            self.resolve_alerts(run_id)       # terminal → clear open alerts
             self._event("harness.run.crash_recovered", {"run_id": run_id})
             return {"reconciled": True, "run_id": run_id, "state": CRASH_RECOVERED}
         except (LedgerTransitionError, LedgerConcurrencyError) as e:
@@ -599,6 +623,92 @@ class RunLedger:
             c.close()
         return {"ok": True, "run_id": run_id, "recovery_status": status}
 
+    # ── M17.10 stuck-run alerts (deduplicated, self-resolving) ──────────────
+    def raise_alert(self, run_id, *, alert_class, severity=None, owner="",
+                    detail="") -> dict:
+        """Raise a stuck-run alert. Deduplicated: at most ONE non-resolved alert
+        per (run_id, alert_class) — a repeat raise is an idempotent no-op, so a
+        monitor sweep can run every tick without alert storms or replay dupes."""
+        if alert_class not in ALERTABLE:
+            raise LedgerError("unknown_alert_class", alert_class)
+        severity = severity or ALERT_SEVERITY[alert_class]
+        detail = _clean_str(detail, field="alert_detail", maxlen=300)
+        owner = _clean_str(owner, field="owner")
+        state_key = f"{run_id}:{alert_class}"
+        c = self._conn()
+        try:
+            c.execute("BEGIN IMMEDIATE")
+            n = c.execute(
+                "INSERT OR IGNORE INTO run_alert(run_id,alert_class,severity,"
+                "state_key,status,owner,detail,created_at) "
+                "VALUES(?,?,?,?,'open',?,?,?)",
+                (run_id, alert_class, severity, state_key, owner, detail, _now())
+            ).rowcount
+            c.execute("COMMIT")
+        finally:
+            c.close()
+        if n == 1:
+            self._event("harness.run.alert", {"run_id": run_id,
+                        "alert_class": alert_class, "severity": severity})
+        return {"raised": n == 1, "run_id": run_id, "alert_class": alert_class}
+
+    def resolve_alerts(self, run_id, *, alert_class=None) -> int:
+        """Resolve open/acknowledged alerts for a run (optionally one class).
+        Called on every terminal transition + crash reconcile + self-heal, so
+        alerts always reflect current truth."""
+        c = self._conn()
+        try:
+            c.execute("BEGIN IMMEDIATE")
+            q = ("UPDATE run_alert SET status='resolved', resolved_at=? "
+                 "WHERE run_id=? AND status!='resolved'")
+            args = [_now(), run_id]
+            if alert_class is not None:
+                q += " AND alert_class=?"; args.append(alert_class)
+            n = c.execute(q, args).rowcount
+            c.execute("COMMIT")
+        finally:
+            c.close()
+        return n
+
+    def open_alerts(self, owner: str | None = None, *, limit: int = 200) -> list[dict]:
+        """Owner-safe list of non-resolved alerts (no argv/output/secrets)."""
+        limit = max(1, min(int(limit), 1000))
+        q = ("SELECT id,run_id,owner,alert_class,severity,status,detail,created_at,"
+             "acknowledged_at,acknowledged_by FROM run_alert WHERE status!='resolved'")
+        args: list = []
+        if owner:
+            q += " AND owner=?"; args.append(owner)
+        q += " ORDER BY created_at DESC LIMIT ?"; args.append(limit)
+        with self._conn() as c:
+            return [dict(r) for r in c.execute(q, args).fetchall()]
+
+    def acknowledge_alert(self, alert_id, *, operator) -> dict:
+        """Admin-audited acknowledge. `operator` MUST come from a trusted context
+        (verified OS identity), never untrusted request data. Fails closed for an
+        unknown or already-resolved alert."""
+        operator = _clean_str(operator, field="operator")
+        if not operator:
+            raise LedgerSecurityError("LEDGER_FIELD_REJECTED", "empty operator")
+        c = self._conn()
+        try:
+            c.execute("BEGIN IMMEDIATE")
+            row = c.execute("SELECT status, run_id FROM run_alert WHERE id=?",
+                            (alert_id,)).fetchone()
+            if row is None:
+                c.execute("ROLLBACK")
+                return {"ok": False, "reason": "unknown_alert"}
+            if row["status"] != "open":
+                c.execute("ROLLBACK")
+                return {"ok": False, "reason": f"not_open:{row['status']}"}
+            c.execute("UPDATE run_alert SET status='acknowledged', "
+                      "acknowledged_at=?, acknowledged_by=? WHERE id=? AND status='open'",
+                      (_now(), f"admin:{operator}", alert_id))
+            c.execute("COMMIT")
+        finally:
+            c.close()
+        self._event("harness.run.alert_ack", {"alert_id": alert_id, "operator": operator})
+        return {"ok": True, "alert_id": alert_id, "operator": operator}
+
     def cleanup(self, *, retention_sec: float, now=None) -> dict:
         """Delete terminal runs (and their transitions) older than the retention
         window. Active runs are never touched."""
@@ -613,6 +723,7 @@ class RunLedger:
                 (*sorted(TERMINAL), cutoff)).fetchall()]
             for rid in ids:
                 c.execute("DELETE FROM run_transition WHERE run_id=?", (rid,))
+                c.execute("DELETE FROM run_alert WHERE run_id=?", (rid,))
                 c.execute("DELETE FROM run WHERE run_id=?", (rid,))
             c.execute("COMMIT")
         finally:
@@ -657,10 +768,12 @@ class RunLedger:
             dupes = c.execute("SELECT COUNT(*) n FROM (SELECT idempotency_key, "
                               "COUNT(*) c FROM run WHERE idempotency_key!='' "
                               "GROUP BY idempotency_key HAVING c>1)").fetchone()["n"]
+            open_alerts = c.execute("SELECT COUNT(*) n FROM run_alert "
+                                    "WHERE status!='resolved'").fetchone()["n"]
         return {"integrity": integrity, "ok": integrity == "ok" and dupes == 0,
                 "total_runs": total, "by_state": census, "transitions": trans,
                 "active": sum(census.get(s, 0) for s in ACTIVE),
-                "idempotency_collisions": dupes,
+                "idempotency_collisions": dupes, "open_alerts": open_alerts,
                 "db_path": str(self.db_path)}
 
     # ── M17.8 journal drop-in (adapter compatibility, no adapter changes) ───

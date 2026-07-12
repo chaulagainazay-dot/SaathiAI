@@ -169,8 +169,11 @@ class ControlCenterAggregator:
                 cell["run_ledger"] = led.read_model(self.owner)
                 cell["ledger_health"] = {k: led.health()[k]
                                          for k in ("ok", "active", "by_state")}
+                # M17.10 owner-safe stuck-run alerts (deduplicated)
+                cell["run_alerts"] = led.open_alerts(self.owner)
             except Exception as e:            # degrade gracefully, never crash cell
                 cell["run_ledger"] = {"unavailable": str(e)[:120]}
+                cell["run_alerts"] = []
             return cell
         return guarded("application_harness", _h)
 
@@ -195,7 +198,8 @@ class ControlCenterAggregator:
         rel = self.release_readiness()
         metrics = self.connector_metrics()
         events = self.recent_events(limit=15)
-        attention = self._attention(sec, appr, rel, health)
+        harn = self.harnesses()
+        attention = self._attention(sec, appr, rel, health, harn)
         return {
             "owner": self.owner,
             "generated_at": _now(),
@@ -210,9 +214,18 @@ class ControlCenterAggregator:
                                  if c.status != "ok"],
         }
 
-    def _attention(self, sec: Cell, appr: Cell, rel: Cell, health: Cell) -> list[dict]:
+    def _attention(self, sec: Cell, appr: Cell, rel: Cell, health: Cell,
+                   harn: Cell | None = None) -> list[dict]:
         """Rank what needs the user NOW. Real, actionable, honest."""
         items = []
+        # M17.10 harness stuck-run alerts (owner-safe; deduplicated in the ledger)
+        if harn is not None and harn.status == "ok" and harn.value:
+            for a in (harn.value.get("run_alerts") or []):
+                items.append({"severity": a.get("severity", "medium"),
+                              "kind": "harness_run",
+                              "message": f"run {a['run_id']} {a['alert_class']}"
+                                         + (f" ({a['status']})" if a.get("status") != "open" else ""),
+                              "link": "/control/harnesses"})
         if sec.status == "ok" and sec.value:
             rb = sec.value.get("release_blocking", 0)
             if rb:
