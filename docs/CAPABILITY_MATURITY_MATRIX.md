@@ -15,6 +15,7 @@ Levels: implemented < deterministic-tested < security/red-team-tested < live-tes
 | Application harness — jq (JSON transform) | live-application-tested | M17.6 transform+json verify |
 | Application harness — zip (archive packaging) | live-application-tested | M17.7 pack+ZIP-slip/zip-bomb verify (live hostile archive) |
 | Application harness — GUI apps (LibreOffice/Blender/Kdenlive) | dependency-blocked | not installed |
+| Harness long-running task control (cancel/timeout-kill/resource-limits/crash-recovery) | live-proven | M17.8 real cancel+SIGXFSZ+reconcile, orphan-free |
 | Red-team harness | live | 78/78 deterministic |
 | Backup/restore | deterministic+drill | M13.5 real drill |
 | Multi-user isolation | single-user tested | cross-user probes only |
