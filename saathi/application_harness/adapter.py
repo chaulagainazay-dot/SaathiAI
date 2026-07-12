@@ -76,7 +76,8 @@ class ApplicationHarnessAdapter:
 
     def run(self, *, defn: HarnessDefinition, intent: HarnessActionIntent,
             argv: list[str], work_dir: str, file_roots: list[str],
-            timeout: float = 60.0, env_allow: list | None = None) -> HarnessResult:
+            timeout: float = 60.0, env_allow: list | None = None,
+            limits=None) -> HarnessResult:
         # 1) trust gate
         ok, reason = T.can_execute(defn)
         if not ok:
@@ -104,12 +105,16 @@ class ApplicationHarnessAdapter:
             return HarnessResult("blocked", None, "", "", 0.0, error_code=e.code)
         os.makedirs(work_dir, exist_ok=True)
 
+        # resource limits (CPU/RAM/file-size) applied in the child before exec
+        from saathi.application_harness.limits import DEFAULT_LIMITS
+        lim = limits or DEFAULT_LIMITS
         started = time.time()
         try:
             proc = subprocess.Popen(
                 argv, cwd=work_dir, env=_sanitized_env(env_allow),
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                start_new_session=True)   # own process group for clean kill
+                start_new_session=True,   # own process group for clean kill
+                preexec_fn=lim.preexec())
             try:
                 out, err = proc.communicate(timeout=timeout)
             except subprocess.TimeoutExpired:

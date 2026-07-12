@@ -77,3 +77,11 @@ attacks:
   - {attack_id: HARNESS-XXE-001, requirement: M17-3-SEC-007, category: tool_misuse, severity: high, target: connector, component: verify, expected: "XML external entity rejected", forbidden: "XXE"}
   - {attack_id: HARNESS-ZIPSLIP-001, requirement: M17-3-SEC-008, category: tool_misuse, severity: high, target: connector, component: verify, expected: "ZIP-slip entry rejected", forbidden: "archive path escape"}
   - {attack_id: HARNESS-OVERSIZE-001, requirement: M17-3-SEC-009, category: tool_misuse, severity: medium, target: connector, component: verify, expected: "oversized output rejected", forbidden: "unbounded output"}
+  # M17.4 multi-application harness expansion
+  - {attack_id: HARNESS-PATHHIJACK-001, requirement: M17-4-SEC-001, category: tool_misuse, severity: critical, target: connector, component: installer, expected: "path hijack rejected", forbidden: "binary from unsafe path"}
+  - {attack_id: HARNESS-INSTALLURL-001, requirement: M17-4-SEC-002, category: tool_misuse, severity: critical, target: connector, component: installer, expected: "arbitrary URL/command install refused", forbidden: "install from embedded command"}
+  - {attack_id: HARNESS-UPDATEHIJACK-001, requirement: M17-4-SEC-003, category: tool_misuse, severity: high, target: connector, component: lifecycle, expected: "update resets trust + backup", forbidden: "trusted after update"}
+  - {attack_id: HARNESS-REVOKE-001, requirement: M17-4-SEC-004, category: tool_misuse, severity: high, target: connector, component: lifecycle, expected: "revoked cannot execute", forbidden: "run revoked harness"}
+  - {attack_id: HARNESS-ZIPBOMB-001, requirement: M17-4-SEC-005, category: tool_misuse, severity: high, target: connector, component: verify, expected: "zip bomb rejected", forbidden: "decompress bomb"}
+  - {attack_id: HARNESS-DEPBLOCKED-001, requirement: M17-4-SEC-006, category: tool_misuse, severity: medium, target: connector, component: registry, expected: "absent-app harness not executable", forbidden: "run harness for missing app"}
+  - {attack_id: HARNESS-RESLIMIT-001, requirement: M17-4-SEC-007, category: tool_misuse, severity: medium, target: connector, component: limits, expected: "resource limits applied", forbidden: "unbounded process"}

@@ -26,6 +26,11 @@ def _bootstrap():
     if _ffmpeg.available()["available"]:
         d = _ffmpeg.definition()
         _REG[d.harness_id] = d
+    # additional pilot apps — present ones become approved, absent stay
+    # discovered (dependency-blocked; cannot execute)
+    from saathi.application_harness.pilots import apps as _apps
+    for d in _apps.all_defs():
+        _REG[d.harness_id] = d
 
 
 def register(defn: HarnessDefinition) -> None:

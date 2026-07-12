@@ -817,6 +817,70 @@
    ],
    "subsystem": "application_harness",
    "blocking": true
+  },
+  {
+   "id": "harness.discovery_honest",
+   "targets": [
+    "tests/test_m17_4_multiapp.py::test_discovery_honest"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "harness.install_path_hijack",
+   "targets": [
+    "tests/test_m17_4_multiapp.py::test_install_path_hijack_rejected"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "harness.install_no_url",
+   "targets": [
+    "tests/test_m17_4_multiapp.py::test_install_embedded_command_refused"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "harness.update_resets_trust4",
+   "targets": [
+    "tests/test_m17_4_multiapp.py::test_update_resets_trust_and_backup"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "harness.revoke_blocks",
+   "targets": [
+    "tests/test_m17_4_multiapp.py::test_revoke_and_uninstall_block"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "harness.zip_bomb",
+   "targets": [
+    "tests/test_m17_4_multiapp.py::test_zip_bomb_rejected"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "harness.resource_limits",
+   "targets": [
+    "tests/test_m17_4_multiapp.py::test_resource_limits_preexec"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "harness.dep_blocked_not_exec",
+   "targets": [
+    "tests/test_m17_4_multiapp.py::test_registry_has_multiapp_defs"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
   }
  ]
 }

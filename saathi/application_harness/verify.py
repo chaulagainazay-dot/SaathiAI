@@ -146,6 +146,108 @@ def verify_file_in_roots(path: str, roots: list) -> dict:
     return _fail("HARNESS_FILE_ROOT_VIOLATION")
 
 
+# ── M17.4 expanded verifiers ─────────────────────────────────────────────────
+_OPENXML_PARTS = {
+    "docx": ["[Content_Types].xml", "word/document.xml"],
+    "pptx": ["[Content_Types].xml", "ppt/presentation.xml"],
+    "xlsx": ["[Content_Types].xml", "xl/workbook.xml"],
+}
+
+# zip-bomb guard: refuse archives whose uncompressed size explodes vs compressed
+_MAX_COMPRESSION_RATIO = 200
+_MAX_UNCOMPRESSED = 2_000_000_000
+
+
+def verify_openxml(path: str, kind: str) -> dict:
+    parts = _OPENXML_PARTS.get(kind, [])
+    base = verify_zip_container(path, required_parts=parts)
+    if not base.get("verified"):
+        return base
+    bomb = _zip_bomb_check(path)
+    if not bomb["safe"]:
+        return _fail(bomb["reason"])
+    return _ok({"format": kind, **{k: v for k, v in base.items() if k != "verified"}})
+
+
+def _zip_bomb_check(path: str) -> dict:
+    try:
+        with zipfile.ZipFile(path) as z:
+            comp = sum(i.compress_size for i in z.infolist()) or 1
+            uncomp = sum(i.file_size for i in z.infolist())
+            if uncomp > _MAX_UNCOMPRESSED:
+                return {"safe": False, "reason": "zip_bomb:uncompressed_too_large"}
+            if uncomp / comp > _MAX_COMPRESSION_RATIO:
+                return {"safe": False, "reason": "zip_bomb:ratio"}
+        return {"safe": True, "ratio": round(uncomp / comp, 1)}
+    except Exception as e:
+        return {"safe": False, "reason": str(e)[:100]}
+
+
+def verify_zip_safe(path: str) -> dict:
+    """Generic ZIP: reject slip entries + bomb."""
+    base = verify_zip_container(path, required_parts=[])
+    if not base.get("verified"):
+        return base
+    bomb = _zip_bomb_check(path)
+    return _ok({"format": "zip", "ratio": bomb.get("ratio")}) if bomb["safe"] \
+        else _fail(bomb["reason"])
+
+
+def verify_jpeg(path: str) -> dict:
+    try:
+        with open(path, "rb") as f:
+            sig = f.read(3)
+        return _ok({"format": "jpeg", "sha256": sha256(path)[:16]}) \
+            if sig == b"\xff\xd8\xff" else _fail("not a JPEG")
+    except Exception as e:
+        return _fail(str(e)[:120])
+
+
+def verify_audio(path: str) -> dict:
+    """Audio via ffprobe — readable stream + duration + codec + sample rate."""
+    info = verify_media(path)
+    if not info.get("verified"):
+        return info
+    return info if info.get("duration", 0) > 0 else _fail("zero-duration audio")
+
+
+def verify_directory_tree(path: str, roots: list, *, max_entries: int = 100000) -> dict:
+    """A produced directory tree: confined, no symlink escape, bounded size."""
+    p = Path(path).resolve()
+    for r in roots:
+        try:
+            p.relative_to(Path(r).resolve())
+            break
+        except ValueError:
+            continue
+    else:
+        return _fail("HARNESS_FILE_ROOT_VIOLATION")
+    n, total = 0, 0
+    for entry in p.rglob("*"):
+        n += 1
+        if n > max_entries:
+            return _fail("too_many_entries")
+        if entry.is_symlink():
+            try:
+                entry.resolve().relative_to(p)
+            except ValueError:
+                return _fail("symlink_escape")
+        if entry.is_file():
+            total += entry.stat().st_size
+    return _ok({"entries": n, "bytes": total})
+
+
+VERIFIERS = {
+    "media": verify_media, "png": verify_png, "jpeg": verify_jpeg, "pdf": verify_pdf,
+    "xml": verify_xml_safe, "svg": verify_xml_safe, "audio": verify_audio,
+    "mp4": verify_media, "mov": verify_media, "mkv": verify_media,
+    "mp3": verify_audio, "wav": verify_audio, "zip": verify_zip_safe,
+    "docx": lambda p: verify_openxml(p, "docx"),
+    "pptx": lambda p: verify_openxml(p, "pptx"),
+    "xlsx": lambda p: verify_openxml(p, "xlsx"),
+}
+
+
 def _ok(d: dict) -> dict:
     return {"verified": True, **d}
 

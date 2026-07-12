@@ -1106,3 +1106,23 @@ ZIP-slip, oversize. Ops: critical manifest m17.3 (+9). Tests: test_m17_3_harness
 application harness (FFmpeg) executes through ExecutionGateway, produces a verified
 artifact, trust + source pinning enforced, cross-user blocked. LibreOffice/Blender
 dependency-blocked. Not PRODUCTION READY.
+
+## M17.4 — Multi-Application Harness Platform
+
+Generalizes M17.3 (no new execution path). discovery.py (real app detection:
+NSWorkspace/Applications/which/brew; Win/Linux contract-ready). installer.py:
+staged secure install (inspect→hash→dependency→path-hijack-check→smoke→register)
++ rollback; refuses arbitrary URL / embedded command / unknown method / unpinned
+source / unsafe binary path. lifecycle.py: update RESETS trust (backup for
+rollback), disable/quarantine/revoke/uninstall block execution + preserve
+evidence. limits.py: RLIMIT CPU/AS/FSIZE preexec + wall-clock + artifact cap wired
+into the adapter. verify.py expanded to 15+ formats (OpenXML docx/pptx/xlsx with
+ZIP-slip + zip-bomb guard, jpeg, mov/mkv/mp4, mp3/wav via ffprobe, dir-tree).
+pilots/apps.py: LibreOffice/Blender/Kdenlive/Inkscape/ImageMagick defs — present→
+approved, absent→dependency-blocked (never faked). Control Center harness cell.
+Red-team +7 (75/75): path-hijack, install-URL, update-hijack, revoke, zip-bomb,
+dep-blocked, resource-limits. Ops: critical manifest m17.4. Tests:
+test_m17_4_multiapp.py (12; 2 live ffmpeg verifier). **Verdict: HARNESS PLATFORM
+STAGING READY** — platform generalized + hardened; only FFmpeg live (others
+dependency-blocked). Not MULTI-APPLICATION PILOT READY (needs >=2 apps live), not
+PRODUCTION READY.

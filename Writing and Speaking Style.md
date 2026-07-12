@@ -131,3 +131,11 @@ the existing text-response rules (still authoritative for typed chat):
 - **fallback**: "no trusted harness for this app; falling back to browser/desktop control, and I'll verify the outcome."
 - **unavailable-application**: "LibreOffice isn't installed — that capability is dependency-blocked."
 - **quarantined-harness**: "that harness is quarantined and cannot run."
+
+## M17.4 — multi-app harness language
+- **dependency-blocked app**: "Blender isn't installed — that harness is available in principle but can't run yet."
+- **install-approval**: name source + exact commit + hash; "installing needs your approval."
+- **update**: "This is a new version, so it starts untrusted until re-reviewed."
+- **revoked/quarantined**: "that harness is revoked/quarantined and cannot run."
+- **verification**: name the independent check ("verified: valid MP4, 1 stream") — never rely on the tool's own success.
+- **readiness honesty**: one live app is not a multi-app pilot; say so.

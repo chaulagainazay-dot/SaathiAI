@@ -150,6 +150,19 @@ class ControlCenterAggregator:
     def _placeholder_never_called(self):  # pragma: no cover
         pass
 
+    def harnesses(self) -> Cell:
+        """M17.3/M17.4 application-harness platform state (registry + discovery)."""
+        def _h():
+            from saathi.application_harness import registry, discovery
+            s = registry.summary()
+            d = discovery.discover()
+            return {"total": s["total"], "by_trust": s["by_trust"],
+                    "executable": s["executable"],
+                    "available_apps": d.get("available_harnesses", []),
+                    "dependency_blocked": d.get("dependency_blocked", []),
+                    "harnesses": s["harnesses"]}
+        return guarded("application_harness", _h)
+
     def release_readiness(self) -> Cell:
         def _rel():
             from saathi.ops.release_gate import release_check

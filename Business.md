@@ -238,3 +238,16 @@ can suggest a new application harness but can never bless it as trusted itself �
 that stays a human decision. External harness catalogs (like CLI-Anything's) can be
 browsed but everything imported is untrusted until reviewed. This is a one-app pilot
 (FFmpeg live); more apps and the install/update security come before production.
+
+## M17.4 — one platform, many apps (safely)
+
+The harness platform is now general: SaathiOS can discover which applications are
+actually installed, install/update/roll-back/revoke their harnesses under strict
+supply-chain checks (no installing from a random URL, binaries must live in
+trusted locations, every update starts untrusted again), cap what a harness may
+consume, and independently verify a wide range of outputs (documents,
+spreadsheets, images, video, audio, archives) — refusing booby-trapped files like
+zip bombs. Today FFmpeg is the one live, verified application; LibreOffice,
+Blender and Kdenlive are wired and waiting only on being installed. Honest status:
+staging-ready platform, one live app — more real apps come before a multi-app
+pilot.
