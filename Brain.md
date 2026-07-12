@@ -1049,3 +1049,30 @@ with sensitive-input protection + redacted replay + clean teardown. Native-deskt
 (Finder/TextEdit/Accessibility) is **permission-blocked** (macOS TCC not granted);
 OCR/vision dependency-blocked; authenticated + external side-effect environment-
 blocked. Not PRODUCTION READY.
+
+## M17.2 — native macOS activation (honest live reads)
+
+Canonical `macos_driver.py` is the ONLY place native APIs (NSWorkspace/Quartz/
+AXUIElement/AppleScript) are called; native ops registered as the `macos`
+connector so they route through ExecutionEngine → ExecutionGateway (no bypass).
+`macos_permissions.py`: real probes — AXIsProcessTrusted (Accessibility),
+CGPreflightScreenCaptureAccess (Screen Recording), executable identity (TCC binds
+to the interpreter; stable venv path, adhoc-signed). **Genuinely live-desktop-
+tested** (real macOS through the gateway): application enumeration (NSWorkspace,
+real bundle IDs + PIDs), application/process identity verification (spoofed PID
+REJECTED), screen capture (real screencapture PNG, confined to git-ignored pilot
+workspace, probe deleted for privacy). **Permission-blocked** (AXIsProcessTrusted
+= False here): AX tree, Finder/TextEdit/menu/app-switch/keyboard actuation.
+**Environment-blocked** (no interactive GUI session): app activation, Electron,
+multi-monitor. Native pilot workspace data/computer-agent-pilot/native (git-
+ignored, symlink-free, never committed). Red-team +5 (57/57): spoofed-PID
+rejected, no-native-control-without-allowed-session, native file-root confinement,
+screenshot-confined, AX-label-injection-stays-data. Ops: critical manifest m17.2.
+Tests: test_m17_2_native.py (9; 4 real live-desktop reads). Native driver boundary
+rule: no native action from Chat/Voice/agents/shell/AppleScript-helper — only
+ComputerAdapter → gateway → MacDriver. **Verdict: NATIVE DESKTOP STAGING READY** —
+real macOS reads (enumeration/identity/screen-capture) verified through the
+gateway; Finder/TextEdit actuation permission-blocked pending an Accessibility
+grant + interactive session (browser pilot from M17.1 stays DIGITAL WORKER PILOT
+READY separately). Not native DIGITAL WORKER PILOT READY (no Finder/TextEdit
+workflow completed).

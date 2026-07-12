@@ -64,6 +64,33 @@ def main(argv=None) -> int:
     if cmd == "live-report":
         from saathi.computer_agent.live_report import build_report
         print(json.dumps(build_report(), indent=2, default=str)); return 0
+    # ── M17.2 native macOS ──
+    if cmd == "macos-permissions":
+        from saathi.computer_agent import macos_permissions
+        print(json.dumps(macos_permissions.check(), indent=2)); return 0
+    if cmd == "macos-applications":
+        from saathi.computer_agent.macos_driver import MacDriver
+        print(json.dumps(MacDriver().list_applications().data, indent=2)); return 0
+    if cmd == "macos-windows":
+        from saathi.computer_agent.macos_driver import MacDriver
+        r = MacDriver().ax_tree(bundle_id=(rest[0] if rest else "com.apple.finder"))
+        print(json.dumps({"status": r.status, "data": r.data}, indent=2)); return 0
+    if cmd in ("native-workspace-create", "native-workspace-inspect",
+               "native-workspace-reset", "native-workspace-cleanup"):
+        if cmd.endswith("create"):
+            print(json.dumps(workspace.native_create(), indent=2))
+        elif cmd.endswith("inspect"):
+            print(json.dumps(workspace.native_inspect(), indent=2))
+        elif cmd.endswith("reset"):
+            workspace.native_cleanup(); print(json.dumps(workspace.native_create(), indent=2))
+        else:
+            print(json.dumps(workspace.native_cleanup(dry_run="--dry-run" in rest), indent=2))
+        return 0
+    if cmd == "native-live-report":
+        from saathi.computer_agent.native_report import build_report as nrep
+        r = nrep()
+        print(json.dumps(r, indent=2, default=str))
+        return 0
     print(f"unknown command {cmd}", file=sys.stderr)
     return 2
 

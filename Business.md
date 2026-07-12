@@ -214,3 +214,15 @@ native Mac apps (Finder, TextEdit) is the next step and is intentionally gated
 behind the macOS permission prompts only you can approve. This is a browser-scope
 digital-worker pilot; full production still needs logged-in real-account workflows,
 monitoring, and long-run stability.
+
+## M17.2 — the Mac digital worker, honestly staged
+
+SaathiOS now reads the real Mac: it lists the actually-running applications with
+their true identities, refuses to be fooled by a look-alike window (a wrong
+process is rejected), and captures the real screen — all through the same
+governed pipeline. Actually operating Finder and TextEdit is deliberately gated
+behind the one macOS Accessibility switch only you can flip, and a logged-in
+desktop session; until then those steps report "permission needed", never a fake
+success. So the native worker is staged and safe, with real read-level proof; the
+browser worker (already piloted) and the native worker are tracked as separate
+readiness levels so neither borrows the other's credibility.

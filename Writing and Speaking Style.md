@@ -114,3 +114,11 @@ the existing text-response rules (still authoritative for typed chat):
 - **emergency stop**: "Stopped. No further actions will run." State it plainly, immediately.
 - **uncertain result**: "I couldn't confirm that worked — I'm stopping rather than assuming."
 - **live-action confirmation**: restate app, page/origin, and exact effect before a Risk-3 live action.
+
+## M17.2 — native macOS language
+- **permission-request**: name the exact toggle + pane ("enable Accessibility for this app in System Settings › Privacy"). Never imply I can grant it.
+- **secure-input handoff**: "This field is protected — please type it yourself; I won't read or record it."
+- **screen-lock/user-change**: "The screen locked / the user changed — I stopped the session and won't resume on my own."
+- **uncertain native action**: "I couldn't confirm the window/app is the one expected — pausing instead of acting."
+- **native failure**: state the app, the step, and the observed obstacle; recover from the last checkpoint, don't restart blindly.
+- **readiness honesty**: keep browser vs native verdicts separate; never call the desktop worker ready because the browser works.

@@ -32,6 +32,22 @@ class Cell:
                 "age_sec": round(_now() - self.observed_at, 2) if self.observed_at else None}
 
 
+def _native_readiness() -> dict:
+    """Fast native macOS readiness for the Computer Center (no actuation)."""
+    try:
+        from saathi.computer_agent import macos_permissions as P
+        from saathi.computer_agent.macos_driver import available
+        s = P.summary()
+        return {"pyobjc": available().get("available", False),
+                "accessibility_ready": s.get("native_accessibility_ready"),
+                "screen_recording_ready": s.get("screen_recording_ready"),
+                "actuation_ready": s.get("native_actuation_ready"),
+                "note": "live reads (enumeration/identity/screenshot) verified; "
+                        "actuation needs Accessibility + interactive session"}
+    except Exception as e:
+        return {"pyobjc": False, "error": str(e)[:120]}
+
+
 def guarded(source: str, fn: Callable[[], Any], *, timeout_note: str = "") -> Cell:
     """Run a subsystem read; never raise. Redact nothing here — sources are
     already secret-safe (health/metrics/gate); callers must not pass secrets."""
@@ -125,10 +141,14 @@ class ControlCenterAggregator:
                     "live_browser_ready": perm["live_browser_ready"],
                     "live_desktop_ready": perm["live_desktop_ready"],
                     "browser_binary": browser_available().get("path"),
+                    "native_macos": _native_readiness(),
                     "permissions": perm["detail"],
                     "note": "live-browser workflow verified via CLI/live-report; desktop "
                             "permission-blocked (macOS TCC not granted)"}
         return guarded("computer_agent", _ca)
+
+    def _placeholder_never_called(self):  # pragma: no cover
+        pass
 
     def release_readiness(self) -> Cell:
         def _rel():

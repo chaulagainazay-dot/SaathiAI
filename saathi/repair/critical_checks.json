@@ -697,6 +697,12 @@
    ],
    "subsystem": "computer_agent",
    "blocking": true
-  }
+  },
+  {"id": "native.perm_honest", "targets": ["tests/test_m17_2_native.py::test_permission_summary_honest"], "subsystem": "computer_agent", "blocking": true},
+  {"id": "native.exec_identity", "targets": ["tests/test_m17_2_native.py::test_executable_identity_stable"], "subsystem": "computer_agent", "blocking": true},
+  {"id": "native.ops_gateway", "targets": ["tests/test_m17_2_native.py::test_native_ops_registered_gateway_routed"], "subsystem": "computer_agent", "blocking": true},
+  {"id": "native.workspace_confined", "targets": ["tests/test_m17_2_native.py::test_native_workspace_confined_no_symlink"], "subsystem": "computer_agent", "blocking": true},
+  {"id": "native.report_honest", "targets": ["tests/test_m17_2_native.py::test_native_report_classifies_honestly"], "subsystem": "computer_agent", "blocking": true},
+  {"id": "native.spoof_pid", "targets": ["tests/test_m17_2_native.py::test_live_identity_verification_rejects_spoofed_pid"], "subsystem": "computer_agent", "blocking": true}
  ]
 }

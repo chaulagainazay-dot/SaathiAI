@@ -13,6 +13,39 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent.parent
 WORKSPACE = ROOT / "data" / "computer-agent-pilot"
 TEST_SITE = WORKSPACE / "site"
+NATIVE = WORKSPACE / "native"
+
+
+def native_create() -> dict:
+    """Isolated native pilot workspace (git-ignored, never committed/uploaded)."""
+    NATIVE.mkdir(parents=True, exist_ok=True)
+    (NATIVE / "target").mkdir(exist_ok=True)
+    (NATIVE / "rename_me.txt").write_text("saathi native pilot test\n")
+    (NATIVE / "expected.txt").write_text("expected document contents\n")
+    return native_inspect()
+
+
+def native_inspect() -> dict:
+    if not NATIVE.exists():
+        return {"exists": False}
+    files = [{"path": str(p.relative_to(NATIVE)), "bytes": p.stat().st_size,
+              "sha256": _sha(p)} for p in sorted(NATIVE.rglob("*")) if p.is_file()]
+    return {"exists": True, "root": str(NATIVE), "files": files,
+            "confined": True, "committed": False, "symlink_free": _no_symlinks(NATIVE)}
+
+
+def native_cleanup(*, dry_run: bool = False) -> dict:
+    if not NATIVE.exists():
+        return {"removed": [], "dry_run": dry_run}
+    targets = [p for p in NATIVE.rglob("*") if p.is_file()]
+    if not dry_run:
+        shutil.rmtree(NATIVE, ignore_errors=True)
+    return {"removed": [str(p.relative_to(NATIVE)) for p in targets],
+            "count": len(targets), "dry_run": dry_run}
+
+
+def _no_symlinks(root: Path) -> bool:
+    return not any(p.is_symlink() for p in root.rglob("*"))
 
 
 def create() -> dict:
