@@ -34,6 +34,10 @@ def _bootstrap():
     if _jq.available()["available"]:
         d = _jq.definition()
         _REG[d.harness_id] = d
+    from saathi.application_harness.pilots import zip_archive as _zip
+    if _zip.available()["available"]:
+        d = _zip.definition()
+        _REG[d.harness_id] = d
     # additional pilot apps — present ones become approved, absent stay
     # discovered (dependency-blocked; cannot execute)
     from saathi.application_harness.pilots import apps as _apps

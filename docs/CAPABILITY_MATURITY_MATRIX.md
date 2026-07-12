@@ -12,6 +12,8 @@ Levels: implemented < deterministic-tested < security/red-team-tested < live-tes
 | Native macOS actuation (Finder/TextEdit) | permission-blocked | AXIsProcessTrusted=False |
 | Application harness — FFmpeg (media) | live-application-tested | M17.3/M17.4 transcode+verify |
 | Application harness — SQLite (database) | live-application-tested | M17.5 schema/query/mutation+integrity |
+| Application harness — jq (JSON transform) | live-application-tested | M17.6 transform+json verify |
+| Application harness — zip (archive packaging) | live-application-tested | M17.7 pack+ZIP-slip/zip-bomb verify (live hostile archive) |
 | Application harness — GUI apps (LibreOffice/Blender/Kdenlive) | dependency-blocked | not installed |
 | Red-team harness | live | 78/78 deterministic |
 | Backup/restore | deterministic+drill | M13.5 real drill |
@@ -20,7 +22,9 @@ Levels: implemented < deterministic-tested < security/red-team-tested < live-tes
 | Workflow intelligence engine | not started | gated on live-execution proof |
 
 ## Highest-value NON-blocked evidence gap now
-2 live apps already meet multi-app pilot. Next safe real-evidence win: a THIRD
-distinct-category application (jq / JSON transformation) — installed, no side
-effects, independently verifiable. Reliability gaps (long-running task control,
-production monitoring) are medium/large and less bounded.
+Four live apps (media/database/JSON/archive) now exercise the harness across four
+distinct categories, and the archive-security verifier (ZIP-slip/zip-bomb) is
+proven live against real hostile archives (M17.7). Remaining safe real-evidence
+wins are reliability-oriented (long-running task control, production monitoring)
+and are medium/large / less bounded, or are blocked on installs (GUI apps),
+permissions (macOS TCC actuation), or credentials (authenticated cloud/browser).
