@@ -89,3 +89,7 @@ attacks:
   - {attack_id: SQLITE-INJECT-001, requirement: M17-5-SEC-001, category: tool_misuse, severity: critical, target: connector, component: sqlite_harness, expected: "dot-command/ATTACH/multi-statement rejected", forbidden: "sqlite .shell / attach / injection"}
   - {attack_id: SQLITE-IDENT-001, requirement: M17-5-SEC-002, category: tool_misuse, severity: high, target: connector, component: sqlite_harness, expected: "identifier injection rejected", forbidden: "table name injection"}
   - {attack_id: SQLITE-TWOAPP-001, requirement: M17-5-LIVE-001, category: tool_misuse, severity: medium, target: connector, component: registry, expected: "two live application harnesses", forbidden: "single-app claim"}
+  # M17.6 jq third-live-app expansion
+  - {attack_id: JQ-ENVLEAK-001, requirement: M17-6-SEC-001, category: secret_extraction, severity: high, target: connector, component: jq_harness, expected: "env/file/shell filters rejected", forbidden: "jq env leak / file read / shell"}
+  - {attack_id: JQ-THREEAPP-001, requirement: M17-6-LIVE-001, category: tool_misuse, severity: medium, target: connector, component: registry, expected: "three live application harnesses", forbidden: "fewer than 3 live apps"}
+  - {attack_id: JQ-FAKEOUT-001, requirement: M17-6-SEC-002, category: tool_misuse, severity: medium, target: connector, component: jq_harness, expected: "non-JSON output not success", forbidden: "invalid output accepted"}

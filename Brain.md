@@ -1144,3 +1144,19 @@ two-live-apps present. Ops: critical manifest m17.5. Tests: test_m17_5_sqlite.py
 (14; 4 live sqlite). **Verdict: MULTI-APPLICATION PILOT READY** — TWO real apps
 (FFmpeg + SQLite) run through the trusted-harness path with independent
 verification + cross-user isolation. Not PRODUCTION READY.
+
+## M17.6 — third live application harness (jq)
+
+Autonomous-loop milestone. saathi/application_harness/pilots/jq_harness.py wraps
+the system jq CLI (JSON transformation) through the SAME service->adapter->gateway
+path. transform op (risk 0, no side effects). Untrusted jq FILTER validated
+against a denylist (env/$ENV/input/inputs/include/import/getpath/input_filename/
+modulemeta/@sh/$__loc__/debug) + length bound; input file-root confined; argv-only
+(-c -e, no --rawfile/--slurpfile/--args). Independent verification parses jq stdout
+as JSON (verify_json_stdout) — jq's exit is never trusted alone; empty/non-JSON ->
+not success. Red-team +3 (81/81): env/file/shell filters rejected, three-live-apps,
+invalid-output-not-success. Ops: critical manifest m17.6. Tests: test_m17_6_jq.py
+(17; live jq). **Three live application harnesses across three distinct categories:
+FFmpeg (media) + SQLite (database) + jq (data transformation)** — all through one
+governed, independently-verified path. Verdict: MULTI-APPLICATION PILOT READY
+(strengthened). Not PRODUCTION READY.

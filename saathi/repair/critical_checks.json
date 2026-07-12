@@ -913,6 +913,38 @@
    ],
    "subsystem": "application_harness",
    "blocking": true
+  },
+  {
+   "id": "jq.three_live_apps",
+   "targets": [
+    "tests/test_m17_6_jq.py::test_three_live_applications"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "jq.filter_injection",
+   "targets": [
+    "tests/test_m17_6_jq.py::test_forbidden_filters_rejected"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "jq.invalid_not_success",
+   "targets": [
+    "tests/test_m17_6_jq.py::test_invalid_output_not_success"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "jq.cross_user",
+   "targets": [
+    "tests/test_m17_6_jq.py::test_cross_user_blocked"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
   }
  ]
 }

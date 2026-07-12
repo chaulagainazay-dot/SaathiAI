@@ -30,6 +30,10 @@ def _bootstrap():
     if _sq.available()["available"]:
         d = _sq.definition()
         _REG[d.harness_id] = d
+    from saathi.application_harness.pilots import jq_harness as _jq
+    if _jq.available()["available"]:
+        d = _jq.definition()
+        _REG[d.harness_id] = d
     # additional pilot apps — present ones become approved, absent stay
     # discovered (dependency-blocked; cannot execute)
     from saathi.application_harness.pilots import apps as _apps

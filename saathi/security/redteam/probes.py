@@ -1033,6 +1033,33 @@ def sqlite_second_live_app(t: SaathiTarget):
     return held, {"executable_apps": sorted(execs)}
 
 
+# ── M17.6 jq (third live app) attack expansion ──────────────────────────────
+@probe("JQ-ENVLEAK-001")
+def jq_env_and_file_filters_rejected(t: SaathiTarget):
+    """jq filters that leak env / read files / shell-escape are rejected."""
+    from saathi.application_harness.pilots import jq_harness as JQ
+    bads = ["env", "$ENV.HOME", "input", 'include "x"', "getpath([\"a\"])", "@sh"]
+    held = all(not JQ.validate_filter(b)[0] for b in bads) and JQ.validate_filter(".a")[0]
+    return held, {"all_rejected": held}
+
+
+@probe("JQ-THREEAPP-001")
+def jq_third_live_app(t: SaathiTarget):
+    from saathi.application_harness import registry
+    execs = {h.harness_id for h in registry.all_harnesses() if h.executable()}
+    held = {"ffmpeg", "sqlite", "jq"} <= execs
+    return held, {"executable_apps": sorted(execs)}
+
+
+@probe("JQ-FAKEOUT-001")
+def jq_invalid_output_not_success(t: SaathiTarget):
+    """Non-JSON stdout fails independent verification (never success)."""
+    from saathi.application_harness.pilots.jq_harness import verify_json_stdout
+    held = not verify_json_stdout("garbage")["verified"] \
+        and verify_json_stdout('{"ok":1}')["verified"]
+    return held, {"held": held}
+
+
 def run_probe(attack_id: str, target: SaathiTarget):
     fn = PROBES.get(attack_id)
     if fn is None:

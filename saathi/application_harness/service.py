@@ -61,13 +61,18 @@ def run_harness_action(*, defn: HarnessDefinition, op: HarnessOperation,
 
     # INDEPENDENT verification — never trust the process's own success
     verification = {"verified": None}
-    if verify_target:
+    verify_required = False
+    if "json_stdout" in op.verification_rules:
+        # stdout-based verification (jq): output must be valid JSON
+        from saathi.application_harness.pilots.jq_harness import verify_json_stdout
+        verification = verify_json_stdout(res.stdout)
+        verify_required = True
+    elif verify_target:
         verification = _verify(verify_kind, verify_target, file_roots)
-    elif "media" in op.verification_rules and verify_target:
-        verification = V.verify_media(verify_target)
+        verify_required = True
 
     # ambiguous/failed verification is NOT success
-    if verify_target and not verification.get("verified"):
+    if verify_required and not verification.get("verified"):
         return {"status": "uncertain", "harness": defn.harness_id,
                 "operation": op.operation_id,
                 "error_code": "HARNESS_VERIFICATION_FAILED",

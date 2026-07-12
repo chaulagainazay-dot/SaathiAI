@@ -263,3 +263,14 @@ other databases, multi-statement injection). This is the multi-application pilot
 threshold: the platform is proven to generalize across very different kinds of
 software, safely. GUI apps (LibreOffice, Blender) still need installing before
 they join.
+
+## M17.6 — three real apps, three categories
+
+SaathiOS now safely operates three genuinely different real applications through
+one governed path: FFmpeg (video/audio), SQLite (databases), and jq (transforming
+JSON — exactly the shape of data connectors and APIs return). Each runs with the
+same guarantees: locked-down process, no secret access, and an independent check
+that the result is real (a valid video, an intact database, well-formed JSON) —
+never taking the tool's word for success. This breadth across categories is what
+makes the harness platform a real multi-application pilot rather than a one-trick
+demo. Installing GUI apps (LibreOffice/Blender) is the next optional step.
