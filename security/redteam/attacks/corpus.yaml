@@ -85,3 +85,7 @@ attacks:
   - {attack_id: HARNESS-ZIPBOMB-001, requirement: M17-4-SEC-005, category: tool_misuse, severity: high, target: connector, component: verify, expected: "zip bomb rejected", forbidden: "decompress bomb"}
   - {attack_id: HARNESS-DEPBLOCKED-001, requirement: M17-4-SEC-006, category: tool_misuse, severity: medium, target: connector, component: registry, expected: "absent-app harness not executable", forbidden: "run harness for missing app"}
   - {attack_id: HARNESS-RESLIMIT-001, requirement: M17-4-SEC-007, category: tool_misuse, severity: medium, target: connector, component: limits, expected: "resource limits applied", forbidden: "unbounded process"}
+  # M17.5 SQLite second-live-app expansion
+  - {attack_id: SQLITE-INJECT-001, requirement: M17-5-SEC-001, category: tool_misuse, severity: critical, target: connector, component: sqlite_harness, expected: "dot-command/ATTACH/multi-statement rejected", forbidden: "sqlite .shell / attach / injection"}
+  - {attack_id: SQLITE-IDENT-001, requirement: M17-5-SEC-002, category: tool_misuse, severity: high, target: connector, component: sqlite_harness, expected: "identifier injection rejected", forbidden: "table name injection"}
+  - {attack_id: SQLITE-TWOAPP-001, requirement: M17-5-LIVE-001, category: tool_misuse, severity: medium, target: connector, component: registry, expected: "two live application harnesses", forbidden: "single-app claim"}

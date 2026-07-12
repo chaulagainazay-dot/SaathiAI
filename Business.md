@@ -251,3 +251,15 @@ zip bombs. Today FFmpeg is the one live, verified application; LibreOffice,
 Blender and Kdenlive are wired and waiting only on being installed. Honest status:
 staging-ready platform, one live app — more real apps come before a multi-app
 pilot.
+
+## M17.5 — two real apps, one safe path
+
+The harness platform is no longer a one-app demo: SaathiOS now operates two real
+applications — FFmpeg (media) and SQLite (databases) — through the exact same
+governed, independently-verified path. For SQLite that means it can inspect a
+schema, run read-only queries (writes are hard-blocked), and make a safe
+reversible change, while refusing every dangerous trick (shell escapes, attaching
+other databases, multi-statement injection). This is the multi-application pilot
+threshold: the platform is proven to generalize across very different kinds of
+software, safely. GUI apps (LibreOffice, Blender) still need installing before
+they join.

@@ -881,6 +881,38 @@
    ],
    "subsystem": "application_harness",
    "blocking": true
+  },
+  {
+   "id": "sqlite.two_live_apps",
+   "targets": [
+    "tests/test_m17_5_sqlite.py::test_two_live_applications_registered"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "sqlite.injection_rejected",
+   "targets": [
+    "tests/test_m17_5_sqlite.py::test_forbidden_sql_rejected"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "sqlite.readonly_no_write",
+   "targets": [
+    "tests/test_m17_5_sqlite.py::test_live_query_readonly_cannot_write"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "sqlite.cross_user",
+   "targets": [
+    "tests/test_m17_5_sqlite.py::test_cross_user_blocked"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
   }
  ]
 }

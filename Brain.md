@@ -1126,3 +1126,21 @@ test_m17_4_multiapp.py (12; 2 live ffmpeg verifier). **Verdict: HARNESS PLATFORM
 STAGING READY** — platform generalized + hardened; only FFmpeg live (others
 dependency-blocked). Not MULTI-APPLICATION PILOT READY (needs >=2 apps live), not
 PRODUCTION READY.
+
+## M17.5 — second live application harness (SQLite)
+
+Closes M17.4's "one live app" gap. saathi/application_harness/pilots/sqlite_harness.py
+wraps the system sqlite3 CLI in the harness contract, routed through the SAME
+service→adapter→gateway path (no new execution path). Ops: inspect_schema (risk0,
+-readonly), query_readonly (risk0, -readonly — writes blocked at the engine),
+safe_mutation (risk2, reversible, pilot-workspace DB). Untrusted SQL rejects
+dot-commands (.shell/.import/.output), ATTACH/DETACH, PRAGMA, VACUUM,
+load_extension, multi-statement (;), and oversized SQL; table identifiers
+validated (no name injection); mutation SQL built from constants + a validated
+identifier only. Independent verification opens the DB directly (PRAGMA
+integrity_check + table count) — the sqlite3 exit/word is never trusted alone.
+Red-team +3 (78/78): dot/attach/injection rejected, identifier injection rejected,
+two-live-apps present. Ops: critical manifest m17.5. Tests: test_m17_5_sqlite.py
+(14; 4 live sqlite). **Verdict: MULTI-APPLICATION PILOT READY** — TWO real apps
+(FFmpeg + SQLite) run through the trusted-harness path with independent
+verification + cross-user isolation. Not PRODUCTION READY.

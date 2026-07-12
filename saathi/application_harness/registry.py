@@ -26,6 +26,10 @@ def _bootstrap():
     if _ffmpeg.available()["available"]:
         d = _ffmpeg.definition()
         _REG[d.harness_id] = d
+    from saathi.application_harness.pilots import sqlite_harness as _sq
+    if _sq.available()["available"]:
+        d = _sq.definition()
+        _REG[d.harness_id] = d
     # additional pilot apps — present ones become approved, absent stay
     # discovered (dependency-blocked; cannot execute)
     from saathi.application_harness.pilots import apps as _apps

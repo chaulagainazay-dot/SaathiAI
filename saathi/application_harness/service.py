@@ -89,10 +89,13 @@ def run_harness_action(*, defn: HarnessDefinition, op: HarnessOperation,
 
 
 def _verify(kind: str, target: str, roots: list) -> dict:
-    return {
-        "media": V.verify_media, "png": V.verify_png, "pdf": V.verify_pdf,
-        "xml": V.verify_xml_safe,
-    }.get(kind, lambda t: V.verify_file_in_roots(t, roots))(target)
+    if kind == "sqlite_db":
+        from saathi.application_harness.pilots.sqlite_harness import verify_db
+        return verify_db(target)
+    fn = V.VERIFIERS.get(kind)
+    if fn:
+        return fn(target)
+    return V.verify_file_in_roots(target, roots)
 
 
 def _blocked(code: str, started: float) -> dict:

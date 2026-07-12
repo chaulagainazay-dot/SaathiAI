@@ -1005,6 +1005,34 @@ def harness_resource_limits_applied(t: SaathiTarget):
     return held, {"cpu": lim.cpu_seconds}
 
 
+# ── M17.5 SQLite (second live app) attack expansion ─────────────────────────
+@probe("SQLITE-INJECT-001")
+def sqlite_dot_and_attach_rejected(t: SaathiTarget):
+    """Dangerous SQL (dot-commands/ATTACH/multi-statement/load_extension) is
+    rejected before reaching the sqlite3 CLI."""
+    from saathi.application_harness.pilots import sqlite_harness as SQ
+    bads = [".shell rm -rf /", "ATTACH DATABASE '/etc/x' AS y",
+            "SELECT 1; DROP TABLE t", "SELECT load_extension('x')", ".import a b"]
+    held = all(not SQ.validate_sql(b)[0] for b in bads) and SQ.validate_sql("SELECT 1")[0]
+    return held, {"all_rejected": held}
+
+
+@probe("SQLITE-IDENT-001")
+def sqlite_identifier_injection_rejected(t: SaathiTarget):
+    from saathi.application_harness.pilots import sqlite_harness as SQ
+    held = (not SQ.valid_identifier("t; DROP TABLE t")) and SQ.valid_identifier("ok_name")
+    return held, {"blocked": held}
+
+
+@probe("SQLITE-TWOAPP-001")
+def sqlite_second_live_app(t: SaathiTarget):
+    """The platform now exposes a SECOND executable application harness."""
+    from saathi.application_harness import registry
+    execs = {h.harness_id for h in registry.all_harnesses() if h.executable()}
+    held = "ffmpeg" in execs and "sqlite" in execs
+    return held, {"executable_apps": sorted(execs)}
+
+
 def run_probe(attack_id: str, target: SaathiTarget):
     fn = PROBES.get(attack_id)
     if fn is None:
