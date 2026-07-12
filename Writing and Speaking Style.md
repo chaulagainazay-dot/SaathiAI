@@ -139,3 +139,13 @@ the existing text-response rules (still authoritative for typed chat):
 - **revoked/quarantined**: "that harness is revoked/quarantined and cannot run."
 - **verification**: name the independent check ("verified: valid MP4, 1 stream") — never rely on the tool's own success.
 - **readiness honesty**: one live app is not a multi-app pilot; say so.
+
+## M17.9 — run-ledger language
+- **claim contention**: "another worker already claimed that run — I won't start a duplicate."
+- **terminal-immutable**: "that run already finished; I can't reopen a completed run."
+- **crash recovery**: "the process died mid-run; I've recorded it as crash-recovered — I won't blindly re-run non-idempotent work."
+- **uncertain outcome**: "I can't confirm whether the side effect completed — marking this stop_uncertain for review, not retrying."
+- **ownership**: "you can only cancel your own runs" (end users); operator maintenance actions are done as the verified local admin and audited.
+- **stuck run**: "this run's heartbeat is stale / its process is missing — flagging it for attention, not auto-failing it on one missed beat."
+- **pause/resume honesty**: "pause/resume is a defined contract, not built — process suspension is not application checkpointing; I won't pretend a checkpoint exists."
+- **migration**: "old run records are backed up and migrated read-only; the import is reversible and imports no secrets."

@@ -274,3 +274,21 @@ that the result is real (a valid video, an intact database, well-formed JSON) �
 never taking the tool's word for success. This breadth across categories is what
 makes the harness platform a real multi-application pilot rather than a one-trick
 demo. Installing GUI apps (LibreOffice/Blender) is the next optional step.
+
+## M17.9 — runs you can trust, even when things crash or collide
+
+When SaathiOS runs real software for you, it now keeps a durable, tamper-resistant
+ledger of every run — who started it, what state it's in, when it last checked in,
+and how it ended. The upgrade matters for reliability: two processes can never
+both "claim" the same job, a finished job can never be silently flipped back to
+running, and if the machine crashes mid-run, the interrupted job is reconciled
+exactly once into clear "crash recovered" evidence instead of vanishing into an
+unknown state. Recovery is careful by design — it never re-runs work that isn't
+safe to repeat and never touches a job whose process is still alive. Old records
+from the previous system are migrated safely (backed up first, reversible, nothing
+lost). Operators get a maintenance view of active runs, stuck-run alerts, and a
+one-command health check; everyday users see only their own runs, and no private
+command details, output, or secrets are ever exposed. This is the difference
+between "it usually works" and "we can prove what happened" — the foundation for
+running long, important tasks unattended. Still ahead before production: proving it
+under many simultaneous users, and a live monitoring/alerting dashboard.

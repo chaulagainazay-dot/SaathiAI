@@ -3,8 +3,8 @@
   "repository": "SaathiOS",
   "branch": "milestone/m7-security-engine",
   "loop_started_at": "2026-07-12",
-  "initial_head": "c2b23a1",
-  "current_head": "c2b23a1",
+  "initial_head": "2dcfd3d",
+  "current_head": "HEAD of milestone/m7-security-engine (see git log; rollback point = initial_head 2dcfd3d)",
   "iterations_completed": 1,
   "iteration_limit": 1,
   "active_milestone": null,
@@ -14,21 +14,29 @@
     "M17.4",
     "M17.5 SQLite second live app",
     "M17.6 jq third live app",
-    "M17.7 zip archive fourth live app (ZIP-slip/zip-bomb verifier proven live)"
+    "M17.7 zip archive fourth live app",
+    "M17.8 governed long-running task control",
+    "M17.9 durable run ledger, concurrency safety, recovery operations"
   ],
   "blocked_items": [
     "native Finder/TextEdit actuation: macOS Accessibility not granted (user_action_required)",
     "LibreOffice/Blender/Kdenlive/Inkscape/ImageMagick: not installed (dependency_blocked)",
-    "authenticated browser/cloud workflow: needs a safe staging account (credential)"
+    "authenticated browser/cloud workflow: needs a safe staging account (credential)",
+    "staging deploy + live rollback drill: needs a deploy target (no push/deploy)"
   ],
   "unverified_items": [
-    "workflow intelligence (not started; gated on live execution proof)",
-    "production monitoring/alerting (not built; medium/large, less bounded)"
+    "multi-user LOAD concurrency (M17.9 proves cross-user gates + local multi-process, not load)",
+    "production monitoring/alerting dashboard (not built; M17.9 read model + reconcile_stale is the substrate)",
+    "pause/resume/checkpoint (contract_ready only; process suspension is not application checkpointing)",
+    "workflow intelligence (not started; gated on live execution proof)"
   ],
   "manual_actions_required": [],
-  "last_full_suite": "1503 passed / 1 skipped",
-  "last_redteam": "81/81 held",
-  "last_release_check": "gates passed",
-  "last_secret_scan": "clean",
-  "stop_reason": "one bounded milestone completed this invocation (M17.7 zip archive fourth live app; first live exercise of the ZIP-slip/zip-bomb verifier against a real hostile archive). Maximum milestones this invocation = 1. Remaining candidates need installs/permissions/credentials or are larger/less bounded (workflow intelligence, production monitoring)."
+  "last_full_suite": "1583 passed / 1 skipped / 0 failed",
+  "last_redteam": "M17.9 +19 ledger probes green; prior harness/security red-team held",
+  "last_release_check": "exit 0; database_ok/backup_ok/restore_verified true",
+  "last_secret_scan": "clean (0 matches over M17.9 files)",
+  "critical_manifest": "11 dedicated blocking ledger.* checks green via manifest runner",
+  "milestone_verdict": "RUN LEDGER STAGING READY",
+  "stop_reason": "one bounded milestone completed this invocation (M17.9 durable run ledger: transactional CAS state machine, one-claimant-per-run, terminal immutability, ownership-safe cancel, exactly-once idempotent crash recovery, safe reversible JSONL migration, multi-process concurrency proofs, admin-maintenance CLI with verified OS identity, Control Center read model, 11 blocking critical-manifest checks). Maximum milestones this invocation = 1. Not production-ready: needs multi-user load, production monitoring/alerting, representative deployment, incident-response drill.",
+  "unrelated_untouched": "saathi/memory/conventions.md remains modified and UNSTAGED (excluded from the milestone commit)"
 }

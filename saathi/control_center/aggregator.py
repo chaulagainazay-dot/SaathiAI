@@ -151,16 +151,27 @@ class ControlCenterAggregator:
         pass
 
     def harnesses(self) -> Cell:
-        """M17.3/M17.4 application-harness platform state (registry + discovery)."""
+        """M17.3/M17.4 application-harness platform state (registry + discovery)
+        plus the M17.9 durable run-ledger read model (active runs, heartbeats,
+        recovery + attention items — owner-safe, never raw argv/output/secrets)."""
         def _h():
             from saathi.application_harness import registry, discovery
             s = registry.summary()
             d = discovery.discover()
-            return {"total": s["total"], "by_trust": s["by_trust"],
+            cell = {"total": s["total"], "by_trust": s["by_trust"],
                     "executable": s["executable"],
                     "available_apps": d.get("available_harnesses", []),
                     "dependency_blocked": d.get("dependency_blocked", []),
                     "harnesses": s["harnesses"]}
+            try:
+                from saathi.application_harness.run_ledger import default_ledger
+                led = default_ledger()
+                cell["run_ledger"] = led.read_model(self.owner)
+                cell["ledger_health"] = {k: led.health()[k]
+                                         for k in ("ok", "active", "by_state")}
+            except Exception as e:            # degrade gracefully, never crash cell
+                cell["run_ledger"] = {"unavailable": str(e)[:120]}
+            return cell
         return guarded("application_harness", _h)
 
     def release_readiness(self) -> Cell:

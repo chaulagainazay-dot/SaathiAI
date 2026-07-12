@@ -945,6 +945,106 @@
    ],
    "subsystem": "application_harness",
    "blocking": true
+  },
+  {
+   "id": "ledger.import_and_migration_safe",
+   "targets": [
+    "tests/test_m17_9_run_ledger.py::test_migration_preserves_provenance_and_backs_up",
+    "tests/test_m17_9_run_ledger.py::test_migration_is_idempotent_and_reversible",
+    "tests/test_m17_9_run_ledger.py::test_migration_never_overwrites_live_ledger_run"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "ledger.valid_transitions_enforced",
+   "targets": [
+    "tests/test_m17_9_run_ledger.py::test_illegal_edge_fails_closed",
+    "tests/test_m17_9_run_ledger.py::test_valid_lifecycle"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "ledger.terminal_immutable",
+   "targets": [
+    "tests/test_m17_9_run_ledger.py::test_terminal_state_is_immutable",
+    "tests/test_m17_9_redteam.py::test_probe_terminal_resurrection"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "ledger.one_claimant_per_run",
+   "targets": [
+    "tests/test_m17_9_concurrency.py::test_concurrent_claim_exactly_one_winner",
+    "tests/test_m17_9_redteam.py::test_probe_duplicate_claim"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "ledger.ownership_safe_cancel",
+   "targets": [
+    "tests/test_m17_9_run_ledger.py::test_cross_user_cancel_denied",
+    "tests/test_m17_9_integration.py::test_cli_mutations_and_reads_require_admin_mode",
+    "tests/test_m17_9_integration.py::test_cli_no_requester_or_owner_flag_is_trusted"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "ledger.crash_recovery_idempotent",
+   "targets": [
+    "tests/test_m17_9_live.py::test_live_crash_reconciled",
+    "tests/test_m17_9_run_ledger.py::test_reconcile_dead_pid_once_and_idempotent"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "ledger.stale_run_reconciliation",
+   "targets": [
+    "tests/test_m17_9_run_ledger.py::test_reconcile_stale_recovers_and_reports_attention",
+    "tests/test_m17_9_redteam.py::test_probe_recovery_of_live_process"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "ledger.no_process_control_bypass",
+   "targets": [
+    "tests/test_m17_9_redteam.py::test_probe_no_process_control_in_ledger"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "ledger.idempotency_uniqueness",
+   "targets": [
+    "tests/test_m17_9_run_ledger.py::test_idempotency_key_prevents_duplicate_run",
+    "tests/test_m17_9_redteam.py::test_probe_idempotency_collision"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "ledger.database_integrity",
+   "targets": [
+    "tests/test_m17_9_run_ledger.py::test_health_reports_integrity_and_census",
+    "tests/test_m17_9_live.py::test_restart_persistence"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "ledger.control_center_contract",
+   "targets": [
+    "tests/test_m17_9_integration.py::test_control_center_shows_ledger",
+    "tests/test_m17_9_integration.py::test_control_center_scoped_to_owner"
+   ],
+   "subsystem": "control_center",
+   "blocking": true
   }
  ]
 }

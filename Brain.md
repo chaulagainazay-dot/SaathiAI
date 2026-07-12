@@ -1160,3 +1160,44 @@ invalid-output-not-success. Ops: critical manifest m17.6. Tests: test_m17_6_jq.p
 FFmpeg (media) + SQLite (database) + jq (data transformation)** — all through one
 governed, independently-verified path. Verdict: MULTI-APPLICATION PILOT READY
 (strengthened). Not PRODUCTION READY.
+
+## M17.9 — durable run ledger, concurrency safety, recovery ops
+
+Autonomous-loop milestone. Upgrades M17.8's single-process append-only JSONL run
+journal into a transactional SQLite run ledger (saathi/application_harness/
+run_ledger.py) beneath the SAME service->adapter->gateway path — no second
+execution engine; the adapter is byte-unchanged and ledgers state via a journal
+drop-in. Explicit state set {queued,starting,running,cancellation_requested,
+cancelled,succeeded,failed,timed_out,crash_recovered,blocked,stop_uncertain} with
+a fail-closed transition graph. One write primitive: BEGIN IMMEDIATE + terminal/
+edge/require_from/stale-version checks + compare-and-set on state_version +
+transition-row insert -> exactly one caller wins each transition. Proven with real
+spawned PROCESSES (not threads): one-claimant-per-run, deterministic cancel/
+complete race, many heartbeat writers, cross-process recovery, db-lock handling.
+Terminal states immutable (no resurrection); ownership-safe cancel; exactly-once
+idempotent crash recovery that never overwrites a live process; heartbeats +
+stuck-run classification (active/heartbeat_stale/process_missing/cancellation_stuck
+/terminal); recovery ops (inspect/list/reconcile/reconcile-stale/mark-recovery/
+transitions/cleanup). JSONL migration is read-only, backed-up, provenance/timestamp-
+preserving, malformed-injection-rejecting, idempotent, reversible. CLI ledger ops
+are admin-maintenance-only (SAATHI_HARNESS_ADMIN=1; actor = verified local OS
+identity; audited) — NO caller-supplied --requester/--owner is ever trusted for
+authorization; only aggregate ledger-health is open. Control Center harness cell
+gains an owner-safe run_ledger read model + ledger_health. Ledger db added to the
+release backup/restore + integrity gates. Red-team +19 deterministic probes
+(duplicate claim, stale writer, terminal resurrection, cross-user cancel, run-id
+substitution, pid reuse, process-group substitution, idempotency collision, forged
+heartbeat/recovery, migration injection, malformed JSONL, db path traversal,
+symlink db, secret injection, unbounded history, lock DoS). Ops: 11 dedicated
+BLOCKING critical-manifest entries (ledger.*). Tests: test_m17_9_run_ledger.py
+(33) + concurrency (6, spawn) + live/backup-restore (7) + redteam (19) +
+integration (9) = 74. **Verdict: RUN LEDGER STAGING READY** — transactional state,
+terminal immutability, one-claimant multi-process proven, ownership isolation,
+deterministic races, exactly-once crash recovery, restart + backup/restore
+persistence, safe reversible migration, green blocking manifest, real Control
+Center read model — all through the single adapter boundary. NOT production-ready
+(multi-user load, production monitoring/alerting, deployment, incident-response
+drill outstanding). Pause/resume/checkpoint = contract_ready only (process
+suspension is NOT application checkpointing; transactional run state is NOT
+exactly-once external side effects; uncertain outcomes stay stop_uncertain;
+recovery never blindly repeats non-idempotent work).

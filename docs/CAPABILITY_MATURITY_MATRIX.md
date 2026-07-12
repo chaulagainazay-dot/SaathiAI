@@ -16,10 +16,12 @@ Levels: implemented < deterministic-tested < security/red-team-tested < live-tes
 | Application harness — zip (archive packaging) | live-application-tested | M17.7 pack+ZIP-slip/zip-bomb verify (live hostile archive) |
 | Application harness — GUI apps (LibreOffice/Blender/Kdenlive) | dependency-blocked | not installed |
 | Harness long-running task control (cancel/timeout-kill/resource-limits/crash-recovery) | live-proven | M17.8 real cancel+SIGXFSZ+reconcile, orphan-free |
-| Red-team harness | live | 78/78 deterministic |
-| Backup/restore | deterministic+drill | M13.5 real drill |
-| Multi-user isolation | single-user tested | cross-user probes only |
-| Production monitoring/alerting | not built | gap |
+| Harness durable run ledger (transactional state / concurrency / recovery) | staging-ready (multi-process proven) | M17.9 SQLite CAS ledger: one-claimant, terminal-immutable, ownership-safe cancel, exactly-once crash recovery, migration, backup/restore, 11 blocking manifest checks |
+| Harness pause/resume/checkpoint | contract_ready | M17.9 capability contract only; process suspension ≠ app checkpointing (deferred) |
+| Red-team harness | live | deterministic (M17.9 +19 ledger probes) |
+| Backup/restore | deterministic+drill | M13.5 real drill; M17.9 ledger db covered |
+| Multi-user isolation | single-user + multi-process tested | cross-user gates + M17.9 spawn concurrency; not multi-user LOAD |
+| Production monitoring/alerting | not built (substrate ready) | M17.9 read model + reconcile_stale attention items |
 | Workflow intelligence engine | not started | gated on live-execution proof |
 
 ## Highest-value NON-blocked evidence gap now

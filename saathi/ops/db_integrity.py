@@ -11,7 +11,8 @@ ROOT = Path(__file__).resolve().parent.parent.parent
 DATA = ROOT / "data"
 
 APP_DBS = ["chat.db", "memory.db", "agent_runtime.db", "voice_os.db", "ceo_os.db",
-           "studio_os.db", "connectors.db"]
+           "studio_os.db", "connectors.db",
+           "application_harness_runs/ledger.db"]      # M17.9 durable run ledger
 
 
 def check_db(path: Path) -> dict:

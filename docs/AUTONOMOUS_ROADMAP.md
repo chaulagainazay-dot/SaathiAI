@@ -27,6 +27,23 @@ is fully live-validatable (real cancel, real SIGXFSZ resource kill, real crash
 reconciliation). Turns the top actionable real-debt item from "designed" to
 "live-proven".
 
+## M17.9 (this invocation) — durable run ledger, concurrency safety, recovery ops
+Start/rollback point: HEAD `2dcfd3d` (M17.8). No higher Critical/High open;
+release blockers environment-blocked. Selected the top real-debt item: upgrade
+M17.8's single-process JSONL journal into a **transactional SQLite run ledger**.
+Delivered: CAS state machine (one-claimant-per-run, terminal immutability, stale-
+writer rejection), ownership-safe cancellation, exactly-once idempotent crash
+recovery, heartbeats + stuck-run classification, recovery operations, safe
+reversible JSONL migration, admin-maintenance CLI (verified OS identity, audited —
+NO caller-supplied identity trusted), owner-safe Control Center read model, ledger
+db in the backup/restore + integrity gates, and **11 dedicated blocking Critical
+Manifest checks**. Multi-PROCESS concurrency proven (spawn, not threads); live
+process lifecycle, restart persistence, and backup/isolated-restore proven.
+Reuses the ONE adapter (no second execution engine). Verdict: **RUN LEDGER STAGING
+READY** — not production-ready (needs multi-user load, production monitoring/
+alerting, representative deployment, incident-response drill). Pause/resume/
+checkpoint kept `contract_ready` (process suspension ≠ application checkpointing).
+
 ## Blocked / deferred (need user action or larger scope)
 - authenticated browser / cloud connector workflow — needs a safe staging account.
 - native Finder/TextEdit actuation — macOS Accessibility (TCC) not granted.

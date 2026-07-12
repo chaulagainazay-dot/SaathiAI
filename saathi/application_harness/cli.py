@@ -8,25 +8,122 @@
     python -m saathi.application_harness.cli health
     python -m saathi.application_harness.cli live-report
 
-Read-only commands never mutate; import marks entries untrusted; execution/trust
-changes go through canonical policy (not exposed as free CLI mutations here).
+M17.9 durable run-ledger operations — LOCAL ADMIN-MAINTENANCE surface.
+
+    python -m saathi.application_harness.cli ledger-health           (always: aggregate)
+  # the rest require SAATHI_HARNESS_ADMIN=1 (trusted local operator):
+    python -m saathi.application_harness.cli runs
+    python -m saathi.application_harness.cli run-inspect <run_id>
+    python -m saathi.application_harness.cli run-cancel <run_id>
+    python -m saathi.application_harness.cli run-reconcile <run_id>
+    python -m saathi.application_harness.cli runs-reconcile-stale
+    python -m saathi.application_harness.cli run-transitions <run_id>
+
+Security model: this CLI has NO authenticated user context, so it never trusts a
+caller-supplied identity for authorization. Ledger inspection + mutation are
+admin-maintenance-only, gated by the SAATHI_HARNESS_ADMIN=1 operator opt-in; the
+acting identity is the *verified local OS user* (never a --requester/--owner
+flag), and every mutation is audit-logged through the event bus with that
+operator id. End-user, owner-scoped run access is served by the authenticated API
+/ Control Center, not here. Reconcile commands only settle dead-PID runs — they
+never rerun work or overwrite a live process. Output is owner-safe: no raw argv,
+output, secrets, approval material, or private artifact paths.
 """
 from __future__ import annotations
 
 import json
+import os
 import sys
 
 from saathi.application_harness import registry, resolver, importer
 from saathi.application_harness.pilots import ffmpeg as F
 
+_LEDGER_CMDS = {"runs", "run-inspect", "run-cancel", "run-reconcile",
+                "runs-reconcile-stale", "run-transitions", "ledger-health"}
+_ADMIN_MSG = ("ledger maintenance commands require admin mode: set "
+              "SAATHI_HARNESS_ADMIN=1 (the verified local OS identity is used "
+              "as the audited operator; no caller-supplied identity is trusted)")
+
+
+def _operator_identity() -> str:
+    """Trusted, kernel-provided local identity — NEVER caller-supplied."""
+    try:
+        import pwd
+        return pwd.getpwuid(os.getuid()).pw_name
+    except Exception:
+        import getpass
+        return getpass.getuser()
+
+
+def _admin_enabled() -> bool:
+    return os.environ.get("SAATHI_HARNESS_ADMIN") == "1"
+
+
+def _safe_row(row: dict | None) -> dict:
+    """Project a raw ledger row to owner-safe fields (no approval material,
+    idempotency keys, intent digests, or process internals leak out)."""
+    from saathi.application_harness.run_ledger import _SAFE_FIELDS
+    if not row:
+        return {"error": "not found"}
+    return {k: row.get(k) for k in _SAFE_FIELDS}
+
+
+def _ledger_cmd(cmd, rest) -> int | None:
+    """Handle M17.9 run-ledger subcommands. Returns an exit code, or None if
+    `cmd` is not a ledger command."""
+    if cmd not in _LEDGER_CMDS:
+        return None
+    from saathi.application_harness.run_ledger import default_ledger
+    led = default_ledger()
+    # aggregate integrity only — no per-user or secret data — always available
+    if cmd == "ledger-health":
+        h = led.health()
+        print(json.dumps(h, indent=2, default=str))
+        return 0 if h.get("ok") else 1
+    # everything else is admin-maintenance-only; identity from trusted OS context
+    if not _admin_enabled():
+        print(_ADMIN_MSG, file=sys.stderr)
+        return 3
+    operator = _operator_identity()
+    if cmd == "runs":
+        rm = led.read_model(None)                # operator diagnostic; owner-safe fields
+        print(json.dumps(rm, indent=2, default=str)); return 0
+    if cmd == "run-inspect":
+        if not rest:
+            print("run-inspect needs <run_id>", file=sys.stderr); return 2
+        r = led.inspect(rest[0])
+        print(json.dumps(_safe_row(r), indent=2, default=str))
+        return 0 if r else 1
+    if cmd == "run-transitions":
+        if not rest:
+            print("run-transitions needs <run_id>", file=sys.stderr); return 2
+        print(json.dumps(led.transitions(rest[0]), indent=2, default=str)); return 0
+    if cmd == "run-cancel":
+        if not rest:
+            print("run-cancel needs <run_id>", file=sys.stderr); return 2
+        res = led.admin_cancel(rest[0], operator=operator)   # audited, state-safe
+        print(json.dumps(res, indent=2, default=str))
+        return 0 if res.get("cancelled") else 1
+    if cmd == "run-reconcile":
+        if not rest:
+            print("run-reconcile needs <run_id>", file=sys.stderr); return 2
+        print(json.dumps(led.reconcile_run(rest[0]), indent=2, default=str)); return 0
+    if cmd == "runs-reconcile-stale":
+        print(json.dumps(led.reconcile_stale(), indent=2, default=str)); return 0
+    return None
+
 
 def main(argv=None) -> int:
     argv = argv if argv is not None else sys.argv[1:]
     if not argv:
-        print("usage: list|inspect|operations|resolve|import-cli-anything|health|live-report",
-              file=sys.stderr)
+        print("usage: list|inspect|operations|resolve|import-cli-anything|health|live-report"
+              "|runs|run-inspect|run-cancel|run-reconcile|runs-reconcile-stale"
+              "|run-transitions|ledger-health", file=sys.stderr)
         return 2
     cmd, rest = argv[0], argv[1:]
+    ledger_rc = _ledger_cmd(cmd, rest)
+    if ledger_rc is not None:
+        return ledger_rc
     if cmd == "list":
         print(json.dumps(registry.summary(), indent=2)); return 0
     if cmd == "inspect":
