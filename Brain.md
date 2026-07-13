@@ -1318,3 +1318,53 @@ Guardian NOT engaged (approval gates strengthened, never bypassed). **Verdict:
 GOVERNED MULTI-HARNESS PIPELINE STAGING READY** — NOT production (parallel/branching
 DAGs, pipeline retry/resume/checkpoint, untrusted spec ingestion, multi-user load
 outstanding).
+
+## M17.13 — autonomous mission engine
+
+Autonomous-loop milestone (start/rollback 186a72f, M17.12). Puts one layer ABOVE
+the pipeline so a Mission = one business objective (today's IELTS lesson, daily CEO
+brief, kitchen inventory audit …). HIERARCHY: Mission → Pipeline → Harness Step →
+Adapter → Verification → Ledger. KEY: a Mission NEVER executes a tool — it holds an
+objective + strongly-typed validated params + an approval requirement + a reference
+to a TEMPLATE, and DELEGATES to the existing M17.12 PipelineRunner (which delegates
+to the sole governed run_harness_action). NO second execution engine / trust model /
+DB / scheduler / approval path. Additive mission + mission_run tables in the SAME
+ledger DB: mission PK-unique (concurrent duplicate create → one winner);
+mission_run UNIQUE(mission_id, attempt); state machine
+draft→(approval_required|approved)→queued→running→{completed|failed|cancelled|
+blocked} enforced by an explicit graph (anything unlisted rejected, fail closed);
+terminal immutable; owner-safe field projections; params secret-rejected on write and
+stored as owner-safe JSON (declared inputs like date/difficulty are safe to surface;
+argv/output/secrets are NOT). mission.py MissionEngine: create (validate_params —
+strong coercion, required checks, enum bounds, unknown-key rejection BEFORE any
+execution; bool is NOT a valid int/float), approve (external approver → approved),
+enqueue (no-approval mission auto-approves→queued; approval-required mission that
+isn't approved is moved to approval_required and NOT queued — no silent elevation),
+run (queued→running, build the trusted pipeline steps from the template, delegate ONE
+PipelineSpec, then completed ONLY if pipeline ok else failed — no partial success;
+any exception → MISSION_EXCEPTION failed; missing template → MISSION_TEMPLATE_MISSING
+failed), launch (enqueue+run convenience), cancel/block (active→terminal),
+retry (rejected unless the mission is FAILED; a failed retry CLONES a NEW mission
+instance correlated to its parent — terminal stays immutable). begin_mission_run is
+guarded (only queued; no double-run). Owner isolation on every op (mismatch rejected,
+never executes). Templates declared in TRUSTED Python (like the pilots) — shipped
+default `data_bundle` = the proven sqlite→zip chain as one objective; untrusted
+mission-spec JSON deferred. RECURRENCE modeled as instance-per-occurrence (templates
+produce instances); a live scheduler is deferred (mirrors M17.11's opt-in stance).
+Control Center harnesses() cell: owner-safe missions + mission_health; _attention
+folds failed missions (kind harness_mission, high) and approval_required missions
+(medium). CLI: mission-health (always, aggregate), missions + mission-inspect +
+mission-history + mission-run + mission-retry (admin-gated, verified OS identity,
+owner-safe; mission-run launches under the mission's OWN stored owner, approval-
+required halts at approval_required). LIVE proven: a mission completes via a real
+delegated governed pipeline (data.db→bundle.zip, independently verified); a pipeline
+failure fails the mission. Multi-PROCESS concurrent create dedups to exactly 1. Ops:
+7 dedicated BLOCKING critical-manifest entries (mission.*). Tests:
+test_m17_13_mission_engine.py (32). Backward compatible: additive CREATE TABLE IF NOT
+EXISTS; M17.9–M17.12 preserved; revert = single-commit rollback (two unused tables
+remain). NOTE: the pre-existing `saathi/missions/` business-content package is a
+DIFFERENT lineage and is untouched — the mission engine lives in
+`saathi/application_harness/mission.py`. Trading Guardian NOT engaged (approval gates
+strengthened, never bypassed). **Verdict: AUTONOMOUS MISSION ENGINE STAGING READY** —
+NOT production (untrusted spec ingestion, live scheduling/event triggers, parallel
+missions, multi-user load outstanding).

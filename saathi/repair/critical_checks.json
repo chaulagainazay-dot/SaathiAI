@@ -1208,6 +1208,75 @@
    ],
    "subsystem": "control_center",
    "blocking": true
+  },
+  {
+   "id": "mission.completes_via_delegated_pipeline",
+   "targets": [
+    "tests/test_m17_13_mission_engine.py::test_mission_completes_via_delegated_pipeline",
+    "tests/test_m17_13_mission_engine.py::test_mission_never_executes_tools_directly"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "mission.fail_closed_no_partial_success",
+   "targets": [
+    "tests/test_m17_13_mission_engine.py::test_pipeline_failure_fails_the_mission",
+    "tests/test_m17_13_mission_engine.py::test_template_that_raises_fails_closed",
+    "tests/test_m17_13_mission_engine.py::test_template_producing_no_steps_fails_closed"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "mission.owner_isolation",
+   "targets": [
+    "tests/test_m17_13_mission_engine.py::test_owner_mismatch_is_rejected_everywhere"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "mission.approval_gates_honoured",
+   "targets": [
+    "tests/test_m17_13_mission_engine.py::test_approval_required_mission_cannot_queue_without_approval",
+    "tests/test_m17_13_mission_engine.py::test_approval_required_mission_runs_after_approval",
+    "tests/test_m17_13_mission_engine.py::test_no_approval_mission_auto_approves_on_enqueue"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "mission.state_machine_and_immutability",
+   "targets": [
+    "tests/test_m17_13_mission_engine.py::test_cannot_run_a_draft_mission",
+    "tests/test_m17_13_mission_engine.py::test_terminal_mission_is_immutable",
+    "tests/test_m17_13_mission_engine.py::test_invalid_transition_rejected",
+    "tests/test_m17_13_mission_engine.py::test_begin_run_is_idempotent_guarded"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "mission.retry_and_ledger_invariants",
+   "targets": [
+    "tests/test_m17_13_mission_engine.py::test_retry_rejected_for_completed_mission",
+    "tests/test_m17_13_mission_engine.py::test_retry_rejected_for_draft_mission",
+    "tests/test_m17_13_mission_engine.py::test_retry_of_failed_mission_clones_new_instance",
+    "tests/test_m17_13_mission_engine.py::test_duplicate_mission_id_rejected",
+    "tests/test_m17_13_mission_engine.py::test_secret_shaped_params_rejected",
+    "tests/test_m17_13_mission_engine.py::test_create_rejects_invalid_parameters_before_execution"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "mission.control_center_contract",
+   "targets": [
+    "tests/test_m17_13_mission_engine.py::test_control_center_surfaces_failed_and_pending_missions"
+   ],
+   "subsystem": "control_center",
+   "blocking": true
   }
  ]
 }

@@ -177,3 +177,13 @@ the existing text-response rules (still authoritative for typed chat):
 - **approval honesty**: "that step needs approval it wasn't given, so the pipeline halted — no silent elevation."
 - **owner-safe record**: "I can show which step failed and why, with no raw commands, file contents, or secrets."
 - **not an engine**: "this only sequences existing governed runs — it's not a new way to execute anything."
+
+## M17.13 — mission language
+- **objective, not tools**: "you give me the objective — 'make today's lesson' — and I take it down to the safe steps; you don't wire the tools."
+- **delegates, never executes**: "a mission never runs a tool itself; it hands the work to the governed pipeline underneath."
+- **validated up front**: "I check the inputs before anything runs — a missing date or a bad difficulty is caught first, not halfway through."
+- **all-or-nothing**: "the mission is done only if every step succeeded — there's no half-finished result."
+- **approval honesty**: "this mission needs sign-off, so it can't start until it's approved — I never elevate it quietly."
+- **reusable templates**: "define the objective once; each run is a fresh, auditable instance."
+- **safe retry**: "a failed mission retries as a brand-new instance — I don't reopen a closed one, so the history stays trustworthy."
+- **owner-safe**: "a failed mission shows up for its owner alone, with the reason but no raw commands or secrets."

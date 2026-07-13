@@ -4,7 +4,7 @@
   "branch": "milestone/m7-security-engine",
   "loop_started_at": "2026-07-12",
   "initial_head": "28ce958",
-  "current_head": "HEAD of milestone/m7-security-engine (M17.11 committed 22c2fe0; M17.12 committed this invocation — see git log; rollback point for M17.12 = 22c2fe0)",
+  "current_head": "HEAD of milestone/m7-security-engine (M17.12 committed 186a72f; M17.13 committed this invocation — see git log; rollback point for M17.13 = 186a72f)",
   "iterations_completed": 1,
   "iteration_limit": 1,
   "active_milestone": null,
@@ -19,7 +19,8 @@
     "M17.9 durable run ledger, concurrency safety, recovery operations",
     "M17.10 harness run monitoring & deterministic stuck-run alerting",
     "M17.11 scheduled run monitoring & reliable alert delivery",
-    "M17.12 governed multi-harness pipeline (sequential, fail-closed, live-validated)"
+    "M17.12 governed multi-harness pipeline (sequential, fail-closed, live-validated)",
+    "M17.13 autonomous mission engine (Mission ABOVE the pipeline, fail-closed, live-validated)"
   ],
   "blocked_items": [
     "native Finder/TextEdit actuation: macOS Accessibility not granted (user_action_required)",
@@ -33,16 +34,18 @@
     "PARALLEL / branching harness pipelines — M17.12 ships deterministic SEQUENTIAL fail-closed pipelines only; DAGs deferred",
     "pipeline retry/resume/checkpoint + scheduling — M17.12 re-runs a failed pipeline as a new pipeline; no pipeline-level resume",
     "untrusted pipeline spec-JSON ingestion — M17.12 steps are declared in trusted Python; external spec parsing deferred (larger validation surface)",
-    "multi-user LOAD concurrency (cross-user gates + local multi-process proven, not load)",
+    "M17.13 mission LIVE scheduling + event/triggered execution — recurrence is instance-per-occurrence only; no cron/launchd/event bus trigger wired (mirrors M17.11 opt-in stance)",
+    "M17.13 untrusted mission-spec JSON ingestion — mission templates are declared in trusted Python; external spec parsing deferred",
+    "PARALLEL missions + multi-user LOAD concurrency (cross-user gates + local multi-process proven, not load)",
     "workflow intelligence (not started; gated on live execution proof)"
   ],
   "manual_actions_required": [],
-  "last_full_suite": "1655 passed / 1 skipped / 0 failed (+21 M17.12 tests over the 1634 baseline)",
-  "last_redteam": "M17.11 security probes held; M17.12 security probes (workspace path-escape rejection, approval-gate honoured/no-elevation, argv-only/no-shell, owner-scope, secret-shaped name rejection, unknown/non-executable fail-closed) green",
-  "last_release_check": "exit 0; database_ok/backup_ok/restore_verified true (ledger db with additive pipeline tables passes integrity + backup/restore)",
-  "last_secret_scan": "clean (0 matches over M17.12 files)",
-  "critical_manifest": "M17.9 11 + M17.10 2 + M17.11 7 + M17.12 7 blocking checks green via manifest runner",
-  "milestone_verdict": "GOVERNED MULTI-HARNESS PIPELINE STAGING READY",
-  "stop_reason": "one bounded milestone completed this invocation (M17.12 governed multi-harness pipeline: additive pipeline_run + pipeline_step ledger tables, deterministic SEQUENTIAL orchestrator composing the sole governed run_harness_action per step, one confined workspace with pre-execution path-escape rejection, artifact wiring, fail-closed short-circuit on the first non-success, honoured approval gates with no silent elevation, owner-scoped + owner-safe records, Control Center pipelines + harness_pipeline attention, 3 CLI commands, 7 blocking critical-manifest checks; LIVE sqlite->zip chain + multi-process concurrent-create dedup proven). This invocation also finalized M17.11 (committed 22c2fe0 after full validation). Extends the ledger + event bus + Control Center attention + admin gate; NO second execution engine / trust model / DB / scheduler / bus. Trading Guardian not engaged (approval gates strengthened, never bypassed). Maximum milestones this invocation = 1. Not production-ready: parallel/branching DAGs, pipeline retry/resume, untrusted spec ingestion, multi-user load.",
+  "last_full_suite": "1687 passed / 1 skipped / 0 failed (+32 M17.13 tests over the 1655 baseline)",
+  "last_redteam": "M17.12 security probes held; M17.13 security probes (owner-mismatch rejected on every op, approval-required cannot queue/run without explicit approval / no elevation, params secret-rejected on write, strong parameter validation before execution, terminal-immutable state machine + invalid-transition rejection, retry rejected for non-failed, fail-closed no-partial-success) green",
+  "last_release_check": "exit 0; database_ok/backup_ok/restore_verified true (ledger db with additive mission tables passes integrity + backup/restore)",
+  "last_secret_scan": "clean (0 matches over M17.13 files)",
+  "critical_manifest": "M17.9 11 + M17.10 2 + M17.11 7 + M17.12 7 + M17.13 7 blocking checks green via manifest runner",
+  "milestone_verdict": "AUTONOMOUS MISSION ENGINE STAGING READY",
+  "stop_reason": "one bounded milestone completed this invocation (M17.13 autonomous mission engine: a Mission is ONE business objective carrying strongly-typed validated parameters + an approval requirement + a reusable template reference, sitting ABOVE the pipeline — Mission -> Pipeline -> Harness Step -> Adapter -> Verification -> Ledger. The Mission NEVER executes a tool; it DELEGATES to the sole governed M17.12 PipelineRunner. Additive mission + mission_run ledger tables, explicit fail-closed state machine with immutable terminals, owner isolation on every op, honoured approval gates with no silent elevation, fail-closed no-partial-success (completed only if the delegated pipeline succeeded), retry-as-new-instance, strong parameter validation before execution, Control Center missions cell + harness_mission attention, 6 CLI commands, 7 blocking critical-manifest checks; LIVE delegated sqlite->zip mission + multi-process concurrent-create dedup proven). Extends the ledger + event bus + Control Center attention + admin gate; NO second execution engine / trust model / DB / scheduler / approval path. Distinct from the older saathi/missions/ business-content package (untouched). Trading Guardian not engaged (approval gates strengthened, never bypassed). Maximum milestones this invocation = 1. Not production-ready: untrusted mission-spec ingestion, live scheduling/event triggers, parallel missions, multi-user load.",
   "unrelated_untouched": "saathi/memory/conventions.md remains modified and UNSTAGED (unrelated auto-learned memory append, excluded from milestone commits); .saathi-agent-state/ left untracked (runtime scratch)"
 }

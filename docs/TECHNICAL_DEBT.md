@@ -37,6 +37,20 @@
   sqlite→zip chain, and 7 green blocking manifest entries. No second execution
   engine. Remaining: PARALLEL / branching DAGs, pipeline retry/resume/checkpoint,
   scheduling, and untrusted spec-JSON ingestion (all deferred).
+- Autonomous mission engine: FIRST SLICE BUILT. M17.13 added a layer ABOVE the
+  pipeline (mission.py MissionEngine) — a Mission carries one business objective +
+  strongly-typed validated params + an approval requirement + a template ref and
+  DELEGATES to the M17.12 PipelineRunner (never executes tools). Additive
+  mission/mission_run ledger tables, explicit fail-closed state machine with
+  immutable terminals, owner isolation, honoured approval gates (no elevation),
+  fail-closed (completed only if the pipeline succeeded), retry-as-new-instance,
+  Control Center attention (failed + approval_required), 6 CLI commands, a LIVE
+  delegated sqlite→zip mission, and 7 green blocking manifest entries. No second
+  execution engine / trust model / DB / scheduler. Remaining (deferred):
+  untrusted mission-spec JSON ingestion, LIVE scheduling + event/triggered
+  execution (recurrence is instance-per-occurrence only; no cron/launchd wired),
+  PARALLEL missions, and multi-user LOAD. NOTE: distinct from the older
+  saathi/missions/ business-content package (untouched).
 - Harness registry persistence (data/application_harnesses/registry.json) written
   but not loaded on boot (in-memory bootstrap only).
 - Multi-user isolation only probe-tested, not exercised with concurrent users.

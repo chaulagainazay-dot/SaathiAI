@@ -26,9 +26,15 @@ M17.9 durable run-ledger operations — LOCAL ADMIN-MAINTENANCE surface.
     python -m saathi.application_harness.cli retry-delivery <id>   (M17.11 admin retry)
     python -m saathi.application_harness.cli monitor-schedule-status (M17.11 scheduler)
     python -m saathi.application_harness.cli pipeline-health        (M17.12 census: always)
+    python -m saathi.application_harness.cli mission-health         (M17.13 census: always)
   # admin-gated (SAATHI_HARNESS_ADMIN=1):
     python -m saathi.application_harness.cli pipelines             (M17.12 recent pipelines)
     python -m saathi.application_harness.cli pipeline-inspect <id> (M17.12 steps, owner-safe)
+    python -m saathi.application_harness.cli missions             (M17.13 recent missions)
+    python -m saathi.application_harness.cli mission-inspect <id> (M17.13 mission + runs)
+    python -m saathi.application_harness.cli mission-history <id> (M17.13 run history)
+    python -m saathi.application_harness.cli mission-run <id>     (M17.13 execute, fail-closed)
+    python -m saathi.application_harness.cli mission-retry <id>   (M17.13 clone a failed mission)
 
 Security model: this CLI has NO authenticated user context, so it never trusts a
 caller-supplied identity for authorization. Ledger inspection + mutation are
@@ -54,7 +60,9 @@ _LEDGER_CMDS = {"runs", "run-inspect", "run-cancel", "run-reconcile",
                 "runs-monitor", "run-alerts", "alert-ack",
                 "notify-dispatch", "alert-deliveries", "retry-delivery",
                 "monitor-schedule-status",
-                "pipelines", "pipeline-inspect", "pipeline-health"}
+                "pipelines", "pipeline-inspect", "pipeline-health",
+                "missions", "mission-inspect", "mission-run", "mission-health",
+                "mission-history", "mission-retry"}
 _ADMIN_MSG = ("ledger maintenance commands require admin mode: set "
               "SAATHI_HARNESS_ADMIN=1 (the verified local OS identity is used "
               "as the audited operator; no caller-supplied identity is trusted)")
@@ -97,6 +105,8 @@ def _ledger_cmd(cmd, rest) -> int | None:
         return 0 if h.get("ok") else 1
     if cmd == "pipeline-health":              # M17.12 aggregate census — no secrets
         print(json.dumps(led.pipeline_health(), indent=2, default=str)); return 0
+    if cmd == "mission-health":               # M17.13 aggregate census — no secrets
+        print(json.dumps(led.mission_health(), indent=2, default=str)); return 0
     # everything else is admin-maintenance-only; identity from trusted OS context
     if not _admin_enabled():
         print(_ADMIN_MSG, file=sys.stderr)
@@ -160,6 +170,41 @@ def _ledger_cmd(cmd, rest) -> int | None:
         p = led.inspect_pipeline(rest[0])
         print(json.dumps(p or {"error": "not found"}, indent=2, default=str))
         return 0 if p else 1
+    if cmd == "missions":                     # M17.13 operator diagnostic (owner-safe)
+        print(json.dumps(led.list_missions(None), indent=2, default=str)); return 0
+    if cmd == "mission-inspect":
+        if not rest:
+            print("mission-inspect needs <mission_id>", file=sys.stderr); return 2
+        m = led.inspect_mission(rest[0])
+        print(json.dumps(m or {"error": "not found"}, indent=2, default=str))
+        return 0 if m else 1
+    if cmd == "mission-history":
+        if not rest:
+            print("mission-history needs <mission_id>", file=sys.stderr); return 2
+        print(json.dumps(led.mission_history(rest[0]), indent=2, default=str)); return 0
+    if cmd == "mission-run":                   # execute an existing mission (fail-closed)
+        if not rest:
+            print("mission-run needs <mission_id>", file=sys.stderr); return 2
+        m = led.inspect_mission(rest[0])
+        if not m:
+            print(json.dumps({"error": "not found"})); return 1
+        from saathi.application_harness.mission import MissionEngine
+        eng = MissionEngine(ledger=led)
+        # runs under the mission's OWN stored owner; approval-required missions
+        # halt at approval_required (never elevated by the operator).
+        res = eng.launch(rest[0], owner=m["owner"], session_id=f"cli:{operator}")
+        print(json.dumps(res, indent=2, default=str))
+        return 0 if res.get("ok") else 1
+    if cmd == "mission-retry":                 # clone a FAILED mission to a new instance
+        if not rest:
+            print("mission-retry needs <mission_id>", file=sys.stderr); return 2
+        m = led.inspect_mission(rest[0])
+        if not m:
+            print(json.dumps({"error": "not found"})); return 1
+        from saathi.application_harness.mission import MissionEngine
+        res = MissionEngine(ledger=led).retry(rest[0], owner=m["owner"])
+        print(json.dumps(res, indent=2, default=str))
+        return 0 if res.get("ok") else 1
     if cmd == "alert-ack":
         if not rest:
             print("alert-ack needs <alert_id>", file=sys.stderr); return 2
@@ -180,7 +225,8 @@ def main(argv=None) -> int:
               "|runs|run-inspect|run-cancel|run-reconcile|runs-reconcile-stale"
               "|run-transitions|ledger-health|runs-monitor|run-alerts|alert-ack"
               "|notify-dispatch|alert-deliveries|retry-delivery|monitor-schedule-status"
-              "|pipelines|pipeline-inspect|pipeline-health",
+              "|pipelines|pipeline-inspect|pipeline-health"
+              "|missions|mission-inspect|mission-run|mission-health|mission-history|mission-retry",
               file=sys.stderr)
         return 2
     cmd, rest = argv[0], argv[1:]

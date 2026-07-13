@@ -345,3 +345,27 @@ over the last four milestones. It adds no new engine and changes nothing financi
 approval gates are made stronger here, never weaker. Still to come: running steps in
 parallel, resuming a failed workflow from where it stopped, and accepting
 externally-authored workflow definitions.
+
+## M17.13 — one objective, done safely end to end
+
+Until now you had to think in tools and steps. M17.13 lets you think in OBJECTIVES:
+"make today's IELTS lesson", "produce the daily CEO brief", "run the kitchen
+inventory audit". Each objective is a Mission — a named job with its own typed
+inputs (a date, a difficulty, a language, a publish yes/no), an owner, and a clear
+rule about whether a human must approve it before it runs. A Mission never touches a
+tool itself; it hands the work down to the governed workflow built last milestone,
+which hands each step to the sole safe executor. The inputs are checked before
+anything runs, so a bad or missing value is caught up front, not halfway through. A
+mission is marked done ONLY if every step actually succeeded — there is no
+half-finished "sort of worked". If the work fails, the mission fails cleanly and
+shows up for its owner (and only its owner) in the Control Center, with the reason
+but never any raw commands or secrets. Approval is honest: a mission that needs
+sign-off cannot start until it gets it. Missions are reusable through templates —
+define "daily crypto analysis" once and stamp out a fresh, auditable instance each
+day. A failed mission can be retried, which safely starts a brand-new instance
+rather than quietly reopening a closed one, so the history stays trustworthy. This
+is the layer that turns SaathiOS from "a set of safe tools" into "an assistant you
+give objectives to". It adds no new engine and changes nothing financial — approval
+gates are strengthened here, never weakened. Still to come: automatic scheduling and
+event triggers, running missions in parallel, and accepting externally-authored
+mission definitions.

@@ -103,6 +103,38 @@ gates strengthened, never bypassed). Verdict: **GOVERNED MULTI-HARNESS PIPELINE
 STAGING READY** — not production (parallel/branching DAGs, pipeline retry/resume,
 untrusted spec ingestion, multi-user load remain).
 
+## M17.13 (this invocation) — autonomous mission engine
+Start/rollback point: HEAD `186a72f` (M17.12). No higher Critical/High open; release
+blockers environment-blocked. M17.12 proved that real tools compose into ONE governed
+workflow; M17.13 adds the layer ABOVE it so the system can be driven by OBJECTIVES,
+not tools. HIERARCHY is now Mission → Pipeline → Harness Step → Adapter →
+Verification → Ledger. A Mission is ONE business objective (today's IELTS lesson,
+daily CEO brief, kitchen inventory audit) carrying strongly-typed validated
+parameters, an approval requirement, and a reference to a reusable TEMPLATE — and it
+NEVER executes a tool: it DELEGATES to the existing M17.12 `PipelineRunner` (which
+delegates to the sole governed `run_harness_action`). Delivered: additive
+`mission` + `mission_run` ledger tables (PK-unique, UNIQUE(mission_id,attempt),
+explicit fail-closed state machine
+draft→(approval_required|approved)→queued→running→{completed|failed|cancelled|blocked}
+with immutable terminals, owner-safe field projections, params secret-rejected on
+write), a `mission.py` MissionEngine (strong parameter validation BEFORE execution;
+owner isolation on every op; approval gates honoured with NO silent elevation;
+fail-closed — a mission completes ONLY if its delegated pipeline succeeded, no partial
+success; retry rejected unless failed, and a failed retry CLONES a new instance;
+trusted-Python templates like the pilots), Control Center missions cell +
+`harness_mission` attention (failed → high, approval_required → medium), 6 CLI
+commands (1 always-on census + 5 admin-gated owner-safe), and **7 dedicated blocking
+Critical Manifest checks**. LIVE proven: a mission completes via a real delegated
+governed pipeline (sqlite → data.db → zip → bundle.zip, independently verified); a
+pipeline failure fails the mission. Multi-PROCESS concurrent create dedups to exactly
+one. Extends the ledger + event bus + Control Center attention + admin gate — no
+second execution engine / trust model / DB / scheduler / approval path. Distinct from
+the older `saathi/missions/` business-content package (untouched). Trading Guardian
+not engaged (approval gates strengthened, never bypassed). Verdict: **AUTONOMOUS
+MISSION ENGINE STAGING READY** — not production (untrusted mission-spec ingestion,
+live scheduling + event/triggered execution, parallel missions, multi-user load
+remain).
+
 ## Blocked / deferred (need user action or larger scope)
 - authenticated browser / cloud connector workflow — needs a safe staging account.
 - native Finder/TextEdit actuation — macOS Accessibility (TCC) not granted.

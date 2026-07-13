@@ -177,6 +177,9 @@ class ControlCenterAggregator:
                 # M17.12 owner-safe multi-harness pipeline runs + health
                 cell["pipelines"] = led.list_pipelines(self.owner, limit=25)
                 cell["pipeline_health"] = led.pipeline_health(self.owner)
+                # M17.13 owner-safe autonomous missions + health
+                cell["missions"] = led.list_missions(self.owner, limit=25)
+                cell["mission_health"] = led.mission_health(self.owner)
                 try:
                     from saathi.application_harness.run_scheduler import is_enabled, JOB_ID
                     cell["monitor_schedule"] = {"job": JOB_ID, "enabled": is_enabled()}
@@ -256,6 +259,20 @@ class ControlCenterAggregator:
                                              f"{p.get('failed_step')} "
                                              f"({p.get('failure_code', '')})",
                                   "link": "/control/harnesses"})
+            # M17.13 autonomous missions needing owner action (failed / awaiting approval)
+            for m in (harn.value.get("missions") or []):
+                st = m.get("state")
+                if st == "failed":
+                    items.append({"severity": "high", "kind": "harness_mission",
+                                  "message": f"mission {m['mission_id']} "
+                                             f"({m.get('title', '')}) failed "
+                                             f"({m.get('failure_code', '')})",
+                                  "link": "/control/missions"})
+                elif st == "approval_required":
+                    items.append({"severity": "medium", "kind": "harness_mission",
+                                  "message": f"mission {m['mission_id']} "
+                                             f"({m.get('title', '')}) awaits approval",
+                                  "link": "/control/missions"})
         if sec.status == "ok" and sec.value:
             rb = sec.value.get("release_blocking", 0)
             if rb:

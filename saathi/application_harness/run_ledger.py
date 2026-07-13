@@ -147,6 +147,15 @@ def _clean_str(v, *, field: str, maxlen: int = 512) -> str:
     return s[:maxlen]
 
 
+def _mission_params(raw) -> dict:
+    """Decode the owner-safe params JSON blob back to a dict (never raises)."""
+    try:
+        d = json.loads(raw) if isinstance(raw, str) else (raw or {})
+        return d if isinstance(d, dict) else {}
+    except Exception:
+        return {}
+
+
 def _validate_db_path(path: Path) -> Path:
     """Reject NUL/traversal and symlink substitution of the ledger file."""
     raw = str(path)
@@ -263,6 +272,42 @@ CREATE TABLE IF NOT EXISTS pipeline_step(
   recorded_at REAL,
   UNIQUE(pipeline_id, step_index),
   FOREIGN KEY(pipeline_id) REFERENCES pipeline_run(pipeline_id));
+CREATE TABLE IF NOT EXISTS mission(
+  mission_id TEXT PRIMARY KEY,
+  owner TEXT NOT NULL,
+  title TEXT DEFAULT '',
+  objective TEXT DEFAULT '',
+  mission_type TEXT DEFAULT 'manual',
+  trigger TEXT DEFAULT 'manual',
+  priority TEXT DEFAULT 'normal',
+  risk INTEGER DEFAULT 0,
+  approval_required INTEGER DEFAULT 0,
+  template TEXT DEFAULT '',
+  params TEXT DEFAULT '{}',
+  schedule TEXT DEFAULT '',
+  state TEXT NOT NULL DEFAULT 'draft',
+  run_count INTEGER DEFAULT 0,
+  last_pipeline_id TEXT DEFAULT '',
+  failure_code TEXT DEFAULT '',
+  correlation_id TEXT DEFAULT '',
+  created_at REAL,
+  approved_at REAL DEFAULT 0,
+  approved_by TEXT DEFAULT '',
+  queued_at REAL DEFAULT 0,
+  started_at REAL DEFAULT 0,
+  terminal_at REAL DEFAULT 0);
+CREATE TABLE IF NOT EXISTS mission_run(
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  mission_id TEXT NOT NULL,
+  attempt INTEGER NOT NULL,
+  pipeline_id TEXT DEFAULT '',
+  state TEXT DEFAULT 'running',
+  failure_code TEXT DEFAULT '',
+  steps_run INTEGER DEFAULT 0,
+  started_at REAL,
+  terminal_at REAL DEFAULT 0,
+  UNIQUE(mission_id, attempt),
+  FOREIGN KEY(mission_id) REFERENCES mission(mission_id));
 CREATE UNIQUE INDEX IF NOT EXISTS idx_run_idem ON run(idempotency_key)
   WHERE idempotency_key != '';
 CREATE INDEX IF NOT EXISTS idx_run_owner ON run(owner, state);
@@ -277,6 +322,8 @@ CREATE INDEX IF NOT EXISTS idx_delivery_status ON run_alert_delivery(status, nex
 CREATE INDEX IF NOT EXISTS idx_delivery_alert ON run_alert_delivery(alert_id);
 CREATE INDEX IF NOT EXISTS idx_pipeline_owner ON pipeline_run(owner, state);
 CREATE INDEX IF NOT EXISTS idx_pipeline_step ON pipeline_step(pipeline_id, step_index);
+CREATE INDEX IF NOT EXISTS idx_mission_owner ON mission(owner, state);
+CREATE INDEX IF NOT EXISTS idx_mission_run ON mission_run(mission_id, attempt);
 """
 
 # M17.12 governed multi-harness pipeline states (sequential, fail-closed)
@@ -289,6 +336,43 @@ PIPELINE_TERMINAL = {PIPELINE_SUCCEEDED, PIPELINE_FAILED}
 _PIPELINE_SAFE_FIELDS = ("pipeline_id", "owner", "name", "state", "step_count",
                          "failed_step", "failure_code", "correlation_id",
                          "created_at", "started_at", "terminal_at")
+
+# M17.13 autonomous mission states — Mission is ABOVE the pipeline; it never
+# executes tools, only delegates one governed pipeline. Fail-closed, no partial
+# success. Terminal states are immutable (never resurrected).
+MISSION_DRAFT = "draft"
+MISSION_APPROVAL_REQUIRED = "approval_required"
+MISSION_APPROVED = "approved"
+MISSION_QUEUED = "queued"
+MISSION_RUNNING = "running"
+MISSION_COMPLETED = "completed"
+MISSION_FAILED = "failed"
+MISSION_CANCELLED = "cancelled"
+MISSION_BLOCKED = "blocked"
+MISSION_ACTIVE = {MISSION_DRAFT, MISSION_APPROVAL_REQUIRED, MISSION_APPROVED,
+                  MISSION_QUEUED, MISSION_RUNNING}
+MISSION_TERMINAL = {MISSION_COMPLETED, MISSION_FAILED, MISSION_CANCELLED,
+                    MISSION_BLOCKED}
+MISSION_RUN_TERMINAL = {MISSION_COMPLETED, MISSION_FAILED, MISSION_BLOCKED}
+# explicit transition graph — anything not listed is rejected (fail closed)
+_MISSION_VALID: dict[str, set[str]] = {
+    MISSION_DRAFT: {MISSION_APPROVAL_REQUIRED, MISSION_APPROVED,
+                    MISSION_CANCELLED, MISSION_BLOCKED},
+    MISSION_APPROVAL_REQUIRED: {MISSION_APPROVED, MISSION_CANCELLED,
+                                MISSION_BLOCKED},
+    MISSION_APPROVED: {MISSION_QUEUED, MISSION_CANCELLED, MISSION_BLOCKED},
+    MISSION_QUEUED: {MISSION_RUNNING, MISSION_CANCELLED, MISSION_BLOCKED},
+    MISSION_RUNNING: {MISSION_COMPLETED, MISSION_FAILED, MISSION_CANCELLED,
+                      MISSION_BLOCKED},
+}
+# owner-safe mission fields (never raw argv / output / secrets — params are
+# secret-rejected at write time, so the declared inputs are safe to surface)
+_MISSION_SAFE_FIELDS = ("mission_id", "owner", "title", "objective",
+                        "mission_type", "trigger", "priority", "risk",
+                        "approval_required", "template", "params", "schedule",
+                        "state", "run_count", "last_pipeline_id", "failure_code",
+                        "correlation_id", "created_at", "approved_at",
+                        "approved_by", "queued_at", "started_at", "terminal_at")
 
 # M17.10 stuck-run alert classes + deterministic severity
 ALERT_SEVERITY = {"process_missing": "high", "cancellation_stuck": "high",
@@ -1225,6 +1309,256 @@ class RunLedger:
                 "failed": by_state.get(PIPELINE_FAILED, 0),
                 "total": sum(by_state.values())}
 
+    # ── M17.13 autonomous mission records (ABOVE the pipeline) ──────────────
+    def create_mission(self, mission_id, *, owner, title="", objective="",
+                       mission_type="manual", trigger="manual", priority="normal",
+                       risk=0, approval_required=False, template="", params=None,
+                       schedule="", correlation_id="", now=None) -> dict:
+        """Insert a mission in `draft`. mission_id is PRIMARY-KEY-unique — a
+        duplicate is rejected (no second mission). Owner is mandatory + sanitized;
+        params are secret-rejected and stored as owner-safe JSON (never argv)."""
+        owner = _clean_str(owner, field="owner")
+        if not owner:
+            raise LedgerSecurityError("LEDGER_FIELD_REJECTED", "empty owner")
+        mission_id = _clean_str(mission_id, field="mission_id", maxlen=128)
+        title = _clean_str(title, field="title", maxlen=200)
+        objective = _clean_str(objective, field="objective", maxlen=500)
+        mission_type = _clean_str(mission_type, field="mission_type", maxlen=40)
+        trigger = _clean_str(trigger, field="trigger", maxlen=60)
+        priority = _clean_str(priority, field="priority", maxlen=20)
+        template = _clean_str(template, field="template", maxlen=120)
+        schedule = _clean_str(schedule, field="schedule", maxlen=200)
+        correlation_id = _clean_str(correlation_id, field="correlation_id")
+        params = params or {}
+        _reject_secrets({"title": title, "objective": objective,
+                         "schedule": schedule, "params": params},
+                        where="mission_identity")
+        params_json = json.dumps(params, sort_keys=True, default=str)[:4000]
+        now = now if now is not None else _now()
+        c = self._conn()
+        try:
+            c.execute("BEGIN IMMEDIATE")
+            try:
+                c.execute(
+                    "INSERT INTO mission(mission_id,owner,title,objective,"
+                    "mission_type,trigger,priority,risk,approval_required,template,"
+                    "params,schedule,state,correlation_id,created_at) "
+                    "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                    (mission_id, owner, title, objective, mission_type, trigger,
+                     priority, int(risk), 1 if approval_required else 0, template,
+                     params_json, schedule, MISSION_DRAFT, correlation_id, now))
+            except sqlite3.IntegrityError:
+                c.execute("ROLLBACK")
+                return {"created": False, "reason": "duplicate_mission_id",
+                        "mission_id": mission_id}
+            c.execute("COMMIT")
+        finally:
+            c.close()
+        self._event("harness.mission.created",
+                    {"mission_id": mission_id, "owner": owner,
+                     "template": template, "approval_required": bool(approval_required)})
+        return {"created": True, "mission_id": mission_id}
+
+    def _mission_state(self, c, mission_id):
+        row = c.execute("SELECT state FROM mission WHERE mission_id=?",
+                        (mission_id,)).fetchone()
+        return row["state"] if row else None
+
+    def _mission_transition(self, mission_id, to_state, *, extra_sql="",
+                            extra_args=(), event="", now=None) -> dict:
+        """CAS-style mission state transition inside a BEGIN IMMEDIATE txn. Rejects
+        an unknown mission, a terminal (immutable) mission, and any move not in the
+        explicit transition graph (fail closed). Idempotent no-op if already in
+        `to_state`."""
+        now = now if now is not None else _now()
+        c = self._conn()
+        try:
+            c.execute("BEGIN IMMEDIATE")
+            cur = self._mission_state(c, mission_id)
+            if cur is None:
+                c.execute("ROLLBACK"); return {"ok": False, "reason": "unknown_mission"}
+            if cur == to_state:
+                c.execute("ROLLBACK"); return {"ok": True, "noop": True, "state": cur}
+            if cur in MISSION_TERMINAL:
+                c.execute("ROLLBACK")
+                return {"ok": False, "reason": f"terminal:{cur}"}
+            if to_state not in _MISSION_VALID.get(cur, set()):
+                c.execute("ROLLBACK")
+                return {"ok": False, "reason": f"invalid_transition:{cur}->{to_state}"}
+            sets = "state=?"
+            args = [to_state]
+            if extra_sql:
+                sets += ", " + extra_sql
+                args.extend(extra_args)
+            args.append(mission_id)
+            c.execute(f"UPDATE mission SET {sets} WHERE mission_id=?", args)
+            c.execute("COMMIT")
+        finally:
+            c.close()
+        if event:
+            self._event(event, {"mission_id": mission_id, "state": to_state})
+        return {"ok": True, "state": to_state}
+
+    def mark_mission_approval_required(self, mission_id, *, now=None) -> dict:
+        return self._mission_transition(mission_id, MISSION_APPROVAL_REQUIRED,
+                                        event="harness.mission.approval_required",
+                                        now=now)
+
+    def approve_mission(self, mission_id, *, approver, now=None) -> dict:
+        approver = _clean_str(approver, field="approver", maxlen=120)
+        now = now if now is not None else _now()
+        return self._mission_transition(
+            mission_id, MISSION_APPROVED,
+            extra_sql="approved_at=?, approved_by=?", extra_args=(now, approver),
+            event="harness.mission.approved", now=now)
+
+    def enqueue_mission(self, mission_id, *, now=None) -> dict:
+        now = now if now is not None else _now()
+        return self._mission_transition(
+            mission_id, MISSION_QUEUED, extra_sql="queued_at=?", extra_args=(now,),
+            event="harness.mission.queued", now=now)
+
+    def cancel_mission(self, mission_id, *, requester="", now=None) -> dict:
+        now = now if now is not None else _now()
+        return self._mission_transition(
+            mission_id, MISSION_CANCELLED, extra_sql="terminal_at=?",
+            extra_args=(now,), event="harness.mission.cancelled", now=now)
+
+    def block_mission(self, mission_id, *, reason="", now=None) -> dict:
+        reason = _clean_str(reason, field="reason", maxlen=120)
+        now = now if now is not None else _now()
+        return self._mission_transition(
+            mission_id, MISSION_BLOCKED,
+            extra_sql="terminal_at=?, failure_code=?", extra_args=(now, reason),
+            event="harness.mission.blocked", now=now)
+
+    def begin_mission_run(self, mission_id, *, now=None) -> dict:
+        """queued → running; open a mission_run attempt row. Returns the attempt
+        number. Fail-closed on a non-queued mission (never double-run)."""
+        now = now if now is not None else _now()
+        c = self._conn()
+        try:
+            c.execute("BEGIN IMMEDIATE")
+            row = c.execute("SELECT state, run_count FROM mission WHERE mission_id=?",
+                            (mission_id,)).fetchone()
+            if row is None:
+                c.execute("ROLLBACK"); return {"ok": False, "reason": "unknown_mission"}
+            if row["state"] != MISSION_QUEUED:
+                c.execute("ROLLBACK")
+                return {"ok": False, "reason": f"not_queued:{row['state']}"}
+            attempt = int(row["run_count"]) + 1
+            c.execute("UPDATE mission SET state=?, run_count=?, started_at=? "
+                      "WHERE mission_id=? AND state=?",
+                      (MISSION_RUNNING, attempt, now, mission_id, MISSION_QUEUED))
+            c.execute("INSERT INTO mission_run(mission_id,attempt,state,started_at) "
+                      "VALUES(?,?,?,?)",
+                      (mission_id, attempt, MISSION_RUNNING, now))
+            c.execute("COMMIT")
+        finally:
+            c.close()
+        self._event("harness.mission.started",
+                    {"mission_id": mission_id, "attempt": attempt})
+        return {"ok": True, "attempt": attempt}
+
+    def finish_mission_run(self, mission_id, *, attempt, state, pipeline_id="",
+                           failure_code="", steps_run=0, now=None) -> dict:
+        """running → completed | failed | blocked. Records the run attempt outcome
+        AND the mission terminal state atomically. Terminal is immutable."""
+        if state not in MISSION_RUN_TERMINAL:
+            raise LedgerError("bad_mission_state", state)
+        pipeline_id = _clean_str(pipeline_id, field="pipeline_id", maxlen=128)
+        failure_code = _clean_str(failure_code, field="failure_code", maxlen=160)
+        now = now if now is not None else _now()
+        c = self._conn()
+        try:
+            c.execute("BEGIN IMMEDIATE")
+            row = c.execute("SELECT state FROM mission WHERE mission_id=?",
+                            (mission_id,)).fetchone()
+            if row is None:
+                c.execute("ROLLBACK"); return {"ok": False, "reason": "unknown_mission"}
+            if row["state"] in MISSION_TERMINAL:
+                c.execute("ROLLBACK")
+                return {"ok": False, "reason": f"already_terminal:{row['state']}"}
+            c.execute("UPDATE mission_run SET state=?, pipeline_id=?, failure_code=?, "
+                      "steps_run=?, terminal_at=? WHERE mission_id=? AND attempt=?",
+                      (state, pipeline_id, failure_code, int(steps_run), now,
+                       mission_id, int(attempt)))
+            c.execute("UPDATE mission SET state=?, last_pipeline_id=?, failure_code=?, "
+                      "terminal_at=? WHERE mission_id=? AND state=?",
+                      (state, pipeline_id, failure_code, now, mission_id,
+                       MISSION_RUNNING))
+            c.execute("COMMIT")
+        finally:
+            c.close()
+        self._event(f"harness.mission.{state}",
+                    {"mission_id": mission_id, "attempt": int(attempt),
+                     "pipeline_id": pipeline_id, "failure_code": failure_code})
+        return {"ok": True, "state": state}
+
+    def inspect_mission(self, mission_id, *, owner: str | None = None) -> Optional[dict]:
+        """Owner-safe mission record + its run history. If `owner` is given and does
+        not match, returns None (no cross-owner disclosure)."""
+        with self._conn() as c:
+            row = c.execute("SELECT * FROM mission WHERE mission_id=?",
+                            (mission_id,)).fetchone()
+            if row is None:
+                return None
+            if owner is not None and row["owner"] != owner:
+                return None
+            runs = [dict(r) for r in c.execute(
+                "SELECT attempt,pipeline_id,state,failure_code,steps_run,started_at,"
+                "terminal_at FROM mission_run WHERE mission_id=? ORDER BY attempt",
+                (mission_id,)).fetchall()]
+        out = {k: row[k] for k in _MISSION_SAFE_FIELDS}
+        out["approval_required"] = bool(out["approval_required"])
+        out["params"] = _mission_params(out["params"])
+        out["runs"] = runs
+        return out
+
+    def list_missions(self, owner: str | None = None, *, limit: int = 100) -> list[dict]:
+        """Owner-safe recent missions (no argv/output)."""
+        limit = max(1, min(int(limit), 1000))
+        q = f"SELECT {','.join(_MISSION_SAFE_FIELDS)} FROM mission"
+        args: list = []
+        if owner:
+            q += " WHERE owner=?"; args.append(owner)
+        q += " ORDER BY created_at DESC LIMIT ?"; args.append(limit)
+        with self._conn() as c:
+            rows = [dict(r) for r in c.execute(q, args).fetchall()]
+        for r in rows:
+            r["approval_required"] = bool(r["approval_required"])
+            r["params"] = _mission_params(r["params"])
+        return rows
+
+    def mission_history(self, mission_id, *, owner: str | None = None) -> list[dict]:
+        """Owner-safe execution history (run attempts) for one mission."""
+        with self._conn() as c:
+            m = c.execute("SELECT owner FROM mission WHERE mission_id=?",
+                          (mission_id,)).fetchone()
+            if m is None or (owner is not None and m["owner"] != owner):
+                return []
+            return [dict(r) for r in c.execute(
+                "SELECT attempt,pipeline_id,state,failure_code,steps_run,started_at,"
+                "terminal_at FROM mission_run WHERE mission_id=? ORDER BY attempt",
+                (mission_id,)).fetchall()]
+
+    def mission_health(self, owner: str | None = None) -> dict:
+        """Mission state census (owner-scoped when owner given)."""
+        where, args = "", []
+        if owner:
+            where, args = " WHERE owner=?", [owner]
+        with self._conn() as c:
+            by_state = {r["state"]: r["n"] for r in c.execute(
+                f"SELECT state, COUNT(*) n FROM mission{where} GROUP BY state",
+                args).fetchall()}
+        return {"by_state": by_state,
+                "running": by_state.get(MISSION_RUNNING, 0),
+                "queued": by_state.get(MISSION_QUEUED, 0),
+                "completed": by_state.get(MISSION_COMPLETED, 0),
+                "failed": by_state.get(MISSION_FAILED, 0),
+                "approval_required": by_state.get(MISSION_APPROVAL_REQUIRED, 0),
+                "total": sum(by_state.values())}
+
     def cleanup(self, *, retention_sec: float, now=None) -> dict:
         """Delete terminal runs (and their transitions) older than the retention
         window. Active runs are never touched."""
@@ -1287,11 +1621,13 @@ class RunLedger:
             open_alerts = c.execute("SELECT COUNT(*) n FROM run_alert "
                                     "WHERE status!='resolved'").fetchone()["n"]
             pipelines = c.execute("SELECT COUNT(*) n FROM pipeline_run").fetchone()["n"]
+            missions = c.execute("SELECT COUNT(*) n FROM mission").fetchone()["n"]
         return {"integrity": integrity, "ok": integrity == "ok" and dupes == 0,
                 "total_runs": total, "by_state": census, "transitions": trans,
                 "active": sum(census.get(s, 0) for s in ACTIVE),
                 "idempotency_collisions": dupes, "open_alerts": open_alerts,
-                "pipelines": pipelines, "db_path": str(self.db_path)}
+                "pipelines": pipelines, "missions": missions,
+                "db_path": str(self.db_path)}
 
     # ── M17.8 journal drop-in (adapter compatibility, no adapter changes) ───
     # The ApplicationHarnessAdapter calls journal.record_start / record_end;
