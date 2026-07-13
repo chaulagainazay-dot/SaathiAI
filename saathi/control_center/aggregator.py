@@ -174,6 +174,9 @@ class ControlCenterAggregator:
                 # M17.11 owner-safe notification delivery health + scheduler status
                 cell["run_deliveries"] = led.open_deliveries(self.owner)
                 cell["delivery_health"] = led.delivery_health()
+                # M17.12 owner-safe multi-harness pipeline runs + health
+                cell["pipelines"] = led.list_pipelines(self.owner, limit=25)
+                cell["pipeline_health"] = led.pipeline_health(self.owner)
                 try:
                     from saathi.application_harness.run_scheduler import is_enabled, JOB_ID
                     cell["monitor_schedule"] = {"job": JOB_ID, "enabled": is_enabled()}
@@ -183,6 +186,7 @@ class ControlCenterAggregator:
                 cell["run_ledger"] = {"unavailable": str(e)[:120]}
                 cell["run_alerts"] = []
                 cell["run_deliveries"] = []
+                cell["pipelines"] = []
             return cell
         return guarded("application_harness", _h)
 
@@ -242,6 +246,15 @@ class ControlCenterAggregator:
                                   "message": f"alert {d['alert_id']} delivery via "
                                              f"{d['channel']} terminally failed "
                                              f"({d.get('last_error_code', '')})",
+                                  "link": "/control/harnesses"})
+            # M17.12 failed multi-harness pipelines need owner attention
+            for p in (harn.value.get("pipelines") or []):
+                if p.get("state") == "failed":
+                    items.append({"severity": "high", "kind": "harness_pipeline",
+                                  "message": f"pipeline {p['pipeline_id']} "
+                                             f"({p.get('name', '')}) failed at step "
+                                             f"{p.get('failed_step')} "
+                                             f"({p.get('failure_code', '')})",
                                   "link": "/control/harnesses"})
         if sec.status == "ok" and sec.value:
             rb = sec.value.get("release_blocking", 0)

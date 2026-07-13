@@ -79,6 +79,30 @@ execution; notification stays advisory-compatible). Verdict: **RELIABLE LOCAL AL
 DELIVERY STAGING READY** — not production (external transports, auto scheduling,
 multi-user load, incident drill remain).
 
+## M17.12 (this invocation) — governed multi-harness pipeline
+Start/rollback point: HEAD `22c2fe0` (M17.11). No higher Critical/High open; release
+blockers environment-blocked. M17.8–M17.11 proved single-run execution + monitoring
++ delivery reliability — clearing the exact gate the roadmap set on the "AI Studio
+multi-harness pipeline" candidate ("do after execution reliability is proven"). Made
+the four proven live apps (FFmpeg/SQLite/jq/zip) composable into ONE governed,
+deterministic, SEQUENTIAL, fail-closed workflow. This is an ORCHESTRATOR, not a
+second execution engine: every step runs through the SAME governed
+`run_harness_action` (ownership → trust → risk/approval → the sole adapter →
+INDEPENDENT verification). Delivered: additive `pipeline_run` + `pipeline_step`
+ledger tables (PK-unique, terminal-immutable, owner-safe), a `pipeline.py`
+orchestrator (one confined workspace, artifact wiring, fail-closed short-circuit on
+the first non-success, pre-execution path-escape rejection, honoured approval gates
+— no silent elevation), Control Center pipelines cell + `harness_pipeline`
+attention, 3 CLI commands (1 always-on census + 2 admin-gated owner-safe), and **7
+dedicated blocking Critical Manifest checks**. LIVE two-application chain proven
+(sqlite `safe_mutation` → data.db → zip `pack` → bundle.zip, independently verified,
+artifact wired end-to-end). Multi-PROCESS concurrent create dedup proven. Extends
+the ledger + event bus + Control Center attention + admin gate — no second execution
+engine / trust model / DB / scheduler / bus. Trading Guardian not engaged (approval
+gates strengthened, never bypassed). Verdict: **GOVERNED MULTI-HARNESS PIPELINE
+STAGING READY** — not production (parallel/branching DAGs, pipeline retry/resume,
+untrusted spec ingestion, multi-user load remain).
+
 ## Blocked / deferred (need user action or larger scope)
 - authenticated browser / cloud connector workflow — needs a safe staging account.
 - native Finder/TextEdit actuation — macOS Accessibility (TCC) not granted.

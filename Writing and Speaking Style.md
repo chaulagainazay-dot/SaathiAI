@@ -168,3 +168,12 @@ the existing text-response rules (still authoritative for typed chat):
 - **transport honesty**: "that external channel isn't configured — I fail closed and never fake a delivery."
 - **restart**: "picked up the pending deliveries where they left off; no duplicates."
 - **admin retry**: "retried by the verified local operator (audited); not something an alert can authorize itself."
+
+## M17.12 — pipeline language
+- **chained**: "step one's output feeds step two — one ordered workflow, not four separate runs."
+- **fail-closed**: "step two failed, so the pipeline stopped there; step three never ran — no half-finished result."
+- **confinement**: "every step stays inside one scratch folder for that run; a step can't reach outside it, even by naming an escape path."
+- **verified per step**: "each step is independently verified — I don't trust a tool's own 'success'."
+- **approval honesty**: "that step needs approval it wasn't given, so the pipeline halted — no silent elevation."
+- **owner-safe record**: "I can show which step failed and why, with no raw commands, file contents, or secrets."
+- **not an engine**: "this only sequences existing governed runs — it's not a new way to execute anything."

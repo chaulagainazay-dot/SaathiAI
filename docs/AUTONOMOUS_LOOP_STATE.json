@@ -4,7 +4,7 @@
   "branch": "milestone/m7-security-engine",
   "loop_started_at": "2026-07-12",
   "initial_head": "28ce958",
-  "current_head": "HEAD of milestone/m7-security-engine (see git log; rollback point = initial_head 28ce958)",
+  "current_head": "HEAD of milestone/m7-security-engine (M17.11 committed 22c2fe0; M17.12 committed this invocation — see git log; rollback point for M17.12 = 22c2fe0)",
   "iterations_completed": 1,
   "iteration_limit": 1,
   "active_milestone": null,
@@ -18,7 +18,8 @@
     "M17.8 governed long-running task control",
     "M17.9 durable run ledger, concurrency safety, recovery operations",
     "M17.10 harness run monitoring & deterministic stuck-run alerting",
-    "M17.11 scheduled run monitoring & reliable alert delivery"
+    "M17.11 scheduled run monitoring & reliable alert delivery",
+    "M17.12 governed multi-harness pipeline (sequential, fail-closed, live-validated)"
   ],
   "blocked_items": [
     "native Finder/TextEdit actuation: macOS Accessibility not granted (user_action_required)",
@@ -29,17 +30,19 @@
   "unverified_items": [
     "EXTERNAL alert transports (Telegram/email/Slack/PagerDuty) — M17.11 ships fail-closed stubs + a credential-free local transport; live providers deferred (need secret-managed config)",
     "production/auto scheduling of the monitor sweep — M17.11 scheduler is opt-in (default disabled), not server-auto-started; no cron/launchd/cloud provisioning",
+    "PARALLEL / branching harness pipelines — M17.12 ships deterministic SEQUENTIAL fail-closed pipelines only; DAGs deferred",
+    "pipeline retry/resume/checkpoint + scheduling — M17.12 re-runs a failed pipeline as a new pipeline; no pipeline-level resume",
+    "untrusted pipeline spec-JSON ingestion — M17.12 steps are declared in trusted Python; external spec parsing deferred (larger validation surface)",
     "multi-user LOAD concurrency (cross-user gates + local multi-process proven, not load)",
-    "pause/resume/checkpoint (contract_ready only; process suspension is not application checkpointing)",
     "workflow intelligence (not started; gated on live execution proof)"
   ],
   "manual_actions_required": [],
-  "last_full_suite": "1613 passed / 1 skipped / 0 failed",
-  "last_redteam": "M17.9 +19 ledger probes + M17.10 alert probes held; M17.11 security probes (owner-scope, forged/empty identity, bounded errors, malicious-content-as-data, admin gating) green",
-  "last_release_check": "exit 0; database_ok/backup_ok/restore_verified true",
-  "last_secret_scan": "clean (0 matches over M17.11 files)",
-  "critical_manifest": "M17.9 11 + M17.10 2 + M17.11 7 blocking checks green via manifest runner",
-  "milestone_verdict": "RELIABLE LOCAL ALERT DELIVERY STAGING READY",
-  "stop_reason": "one bounded milestone completed this invocation (M17.11 scheduled run monitoring & reliable alert delivery: additive run_alert_delivery ledger table, deterministic dedup policy, bounded deterministic retry to terminal_failed, restart-safe, lease-based concurrency-safe claims, credential-free local transport with external fail-closed stubs, opt-in interval scheduler default-disabled, resolve/ack suppression, event-bus taxonomy, Control Center delivery health, 4 admin-gated CLI commands, 7 blocking critical-manifest checks). Extends the ledger + event bus + Control Center attention + admin gate; no second monitoring/scheduler/bus/DB/auth. Trading Guardian not engaged (no financial/external execution). Maximum milestones this invocation = 1. Not production-ready: external transports, auto scheduling, multi-user load, incident-response drill.",
-  "unrelated_untouched": "saathi/memory/conventions.md remains modified and UNSTAGED (excluded from the milestone commit)"
+  "last_full_suite": "1655 passed / 1 skipped / 0 failed (+21 M17.12 tests over the 1634 baseline)",
+  "last_redteam": "M17.11 security probes held; M17.12 security probes (workspace path-escape rejection, approval-gate honoured/no-elevation, argv-only/no-shell, owner-scope, secret-shaped name rejection, unknown/non-executable fail-closed) green",
+  "last_release_check": "exit 0; database_ok/backup_ok/restore_verified true (ledger db with additive pipeline tables passes integrity + backup/restore)",
+  "last_secret_scan": "clean (0 matches over M17.12 files)",
+  "critical_manifest": "M17.9 11 + M17.10 2 + M17.11 7 + M17.12 7 blocking checks green via manifest runner",
+  "milestone_verdict": "GOVERNED MULTI-HARNESS PIPELINE STAGING READY",
+  "stop_reason": "one bounded milestone completed this invocation (M17.12 governed multi-harness pipeline: additive pipeline_run + pipeline_step ledger tables, deterministic SEQUENTIAL orchestrator composing the sole governed run_harness_action per step, one confined workspace with pre-execution path-escape rejection, artifact wiring, fail-closed short-circuit on the first non-success, honoured approval gates with no silent elevation, owner-scoped + owner-safe records, Control Center pipelines + harness_pipeline attention, 3 CLI commands, 7 blocking critical-manifest checks; LIVE sqlite->zip chain + multi-process concurrent-create dedup proven). This invocation also finalized M17.11 (committed 22c2fe0 after full validation). Extends the ledger + event bus + Control Center attention + admin gate; NO second execution engine / trust model / DB / scheduler / bus. Trading Guardian not engaged (approval gates strengthened, never bypassed). Maximum milestones this invocation = 1. Not production-ready: parallel/branching DAGs, pipeline retry/resume, untrusted spec ingestion, multi-user load.",
+  "unrelated_untouched": "saathi/memory/conventions.md remains modified and UNSTAGED (unrelated auto-learned memory append, excluded from milestone commits); .saathi-agent-state/ left untracked (runtime scratch)"
 }

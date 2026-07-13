@@ -1140,6 +1140,74 @@
    ],
    "subsystem": "control_center",
    "blocking": true
+  },
+  {
+   "id": "pipeline.live_chain_and_wiring",
+   "targets": [
+    "tests/test_m17_12_harness_pipeline.py::test_live_sqlite_then_zip_pipeline_succeeds",
+    "tests/test_m17_12_harness_pipeline.py::test_pipeline_artifact_wiring_uses_prior_output"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "pipeline.fail_closed_short_circuit",
+   "targets": [
+    "tests/test_m17_12_harness_pipeline.py::test_pipeline_fail_closed_short_circuits",
+    "tests/test_m17_12_harness_pipeline.py::test_pipeline_unknown_harness_operation_fails_closed",
+    "tests/test_m17_12_harness_pipeline.py::test_pipeline_non_executable_harness_fails_closed",
+    "tests/test_m17_12_harness_pipeline.py::test_pipeline_step_builder_error_fails_closed"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "pipeline.workspace_confinement",
+   "targets": [
+    "tests/test_m17_12_harness_pipeline.py::test_pipeline_confinement_rejects_escaping_produces",
+    "tests/test_m17_12_harness_pipeline.py::test_pipeline_confinement_rejects_absolute_produces",
+    "tests/test_m17_12_harness_pipeline.py::test_pipeline_confinement_rejects_escaping_verify_target"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "pipeline.approval_and_shell_safety",
+   "targets": [
+    "tests/test_m17_12_harness_pipeline.py::test_pipeline_approval_gated_step_halts",
+    "tests/test_m17_12_harness_pipeline.py::test_pipeline_approved_step_proceeds",
+    "tests/test_m17_12_harness_pipeline.py::test_pipeline_argv_control_char_blocked_not_shelled"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "pipeline.owner_scope_and_safe_records",
+   "targets": [
+    "tests/test_m17_12_harness_pipeline.py::test_pipeline_owner_scoped_inspect",
+    "tests/test_m17_12_harness_pipeline.py::test_pipeline_records_are_owner_safe",
+    "tests/test_m17_12_harness_pipeline.py::test_pipeline_secret_shaped_name_rejected"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "pipeline.ledger_invariants_and_concurrency",
+   "targets": [
+    "tests/test_m17_12_harness_pipeline.py::test_pipeline_duplicate_id_rejected",
+    "tests/test_m17_12_harness_pipeline.py::test_pipeline_terminal_immutable",
+    "tests/test_m17_12_harness_pipeline.py::test_concurrent_pipeline_create_dedups"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "pipeline.control_center_contract",
+   "targets": [
+    "tests/test_m17_12_harness_pipeline.py::test_control_center_surfaces_failed_pipeline"
+   ],
+   "subsystem": "control_center",
+   "blocking": true
   }
  ]
 }

@@ -25,6 +25,10 @@ M17.9 durable run-ledger operations — LOCAL ADMIN-MAINTENANCE surface.
     python -m saathi.application_harness.cli alert-deliveries      (M17.11 open deliveries)
     python -m saathi.application_harness.cli retry-delivery <id>   (M17.11 admin retry)
     python -m saathi.application_harness.cli monitor-schedule-status (M17.11 scheduler)
+    python -m saathi.application_harness.cli pipeline-health        (M17.12 census: always)
+  # admin-gated (SAATHI_HARNESS_ADMIN=1):
+    python -m saathi.application_harness.cli pipelines             (M17.12 recent pipelines)
+    python -m saathi.application_harness.cli pipeline-inspect <id> (M17.12 steps, owner-safe)
 
 Security model: this CLI has NO authenticated user context, so it never trusts a
 caller-supplied identity for authorization. Ledger inspection + mutation are
@@ -49,7 +53,8 @@ _LEDGER_CMDS = {"runs", "run-inspect", "run-cancel", "run-reconcile",
                 "runs-reconcile-stale", "run-transitions", "ledger-health",
                 "runs-monitor", "run-alerts", "alert-ack",
                 "notify-dispatch", "alert-deliveries", "retry-delivery",
-                "monitor-schedule-status"}
+                "monitor-schedule-status",
+                "pipelines", "pipeline-inspect", "pipeline-health"}
 _ADMIN_MSG = ("ledger maintenance commands require admin mode: set "
               "SAATHI_HARNESS_ADMIN=1 (the verified local OS identity is used "
               "as the audited operator; no caller-supplied identity is trusted)")
@@ -90,6 +95,8 @@ def _ledger_cmd(cmd, rest) -> int | None:
         h = led.health()
         print(json.dumps(h, indent=2, default=str))
         return 0 if h.get("ok") else 1
+    if cmd == "pipeline-health":              # M17.12 aggregate census — no secrets
+        print(json.dumps(led.pipeline_health(), indent=2, default=str)); return 0
     # everything else is admin-maintenance-only; identity from trusted OS context
     if not _admin_enabled():
         print(_ADMIN_MSG, file=sys.stderr)
@@ -145,6 +152,14 @@ def _ledger_cmd(cmd, rest) -> int | None:
         res = led.admin_retry_delivery(did, operator=operator)   # audited, OS identity
         print(json.dumps(res, indent=2, default=str))
         return 0 if res.get("ok") else 1
+    if cmd == "pipelines":                    # M17.12 operator diagnostic (owner-safe)
+        print(json.dumps(led.list_pipelines(None), indent=2, default=str)); return 0
+    if cmd == "pipeline-inspect":
+        if not rest:
+            print("pipeline-inspect needs <pipeline_id>", file=sys.stderr); return 2
+        p = led.inspect_pipeline(rest[0])
+        print(json.dumps(p or {"error": "not found"}, indent=2, default=str))
+        return 0 if p else 1
     if cmd == "alert-ack":
         if not rest:
             print("alert-ack needs <alert_id>", file=sys.stderr); return 2
@@ -164,7 +179,8 @@ def main(argv=None) -> int:
         print("usage: list|inspect|operations|resolve|import-cli-anything|health|live-report"
               "|runs|run-inspect|run-cancel|run-reconcile|runs-reconcile-stale"
               "|run-transitions|ledger-health|runs-monitor|run-alerts|alert-ack"
-              "|notify-dispatch|alert-deliveries|retry-delivery|monitor-schedule-status",
+              "|notify-dispatch|alert-deliveries|retry-delivery|monitor-schedule-status"
+              "|pipelines|pipeline-inspect|pipeline-health",
               file=sys.stderr)
         return 2
     cmd, rest = argv[0], argv[1:]

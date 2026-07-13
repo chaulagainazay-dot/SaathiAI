@@ -1278,3 +1278,43 @@ trade; no delivery/ack authorizes financial action; notification stays advisory-
 compatible). **Verdict: RELIABLE LOCAL ALERT DELIVERY STAGING READY** — NOT
 production (external transports Telegram/email/Slack/PagerDuty are fail-closed stubs,
 auto scheduling, multi-user load, incident-response drill outstanding).
+
+## M17.12 — governed multi-harness pipeline
+
+Autonomous-loop milestone (start/rollback 22c2fe0, M17.11). M17.8–M17.11 proved
+single-run execution + monitoring + delivery — clearing the roadmap gate on the
+"multi-harness pipeline" candidate. Makes the four proven live apps (FFmpeg/SQLite/
+jq/zip) composable into ONE governed, deterministic, SEQUENTIAL, fail-closed
+workflow. KEY: this is an ORCHESTRATOR, NOT a second execution engine — every step
+runs through the SAME governed service.run_harness_action (ownership → trust →
+risk/approval → the sole adapter → INDEPENDENT verification). Additive pipeline_run
++ pipeline_step tables in the SAME ledger DB; pipeline_run PK-unique (concurrent
+duplicate create → one winner); unique (pipeline_id, step_index); state
+pending→running→{succeeded|failed}, terminal immutable; owner-safe field
+projections; secret-shaped names rejected. NOTE: a single harness action is NOT
+process-journaled (adapter journal only wired for M17.8), and QUEUED only
+transitions to STARTING/CANCELLED/BLOCKED/STOP_UNCERTAIN — so NO synthetic per-step
+`run` row is fabricated; the pipeline_step record IS the durable per-step ledger
+entry. pipeline.py PipelineRunner: one confined per-pipeline workspace = the SOLE
+file_roots; artifact wiring exposes a producing step's output to later steps by name
+inside the workspace (StepContext.artifacts); fail-closed short-circuit on the first
+non-success (blocked/failed/timeout/uncertain/approval_required/unknown-or-non-
+executable harness/plan-builder exception) → pipeline failed at that step, later
+steps NEVER run. Defence-in-depth confinement: reject BEFORE execution an
+absolute/`..`/realpath-escaping produces or verify_target. Approval gates honoured:
+risk≥3 → approval_required unless StepPlan.approved (no silent elevation), risk 4
+manual-only. Steps declared in TRUSTED Python (like the pilots) via a plan callable —
+untrusted spec-JSON parsing deferred. Control Center harnesses() cell: owner-safe
+pipelines + pipeline_health; _attention folds failed pipelines (kind
+harness_pipeline, high). CLI: pipeline-health (always, aggregate), pipelines +
+pipeline-inspect (admin-gated, verified OS identity, owner-safe). LIVE chain proven:
+sqlite safe_mutation → data.db → zip pack → bundle.zip, both independently verified,
+artifact wired end-to-end (bundle contains the exact db). Multi-PROCESS concurrent
+create dedups to exactly 1. Ops: 7 dedicated BLOCKING critical-manifest entries
+(pipeline.*); full manifest 146 checks green. Tests: test_m17_12_harness_pipeline.py
+(21). Backward compatible: additive CREATE TABLE IF NOT EXISTS; M17.9/10/11
+preserved; revert = single-commit rollback (two unused tables remain). Trading
+Guardian NOT engaged (approval gates strengthened, never bypassed). **Verdict:
+GOVERNED MULTI-HARNESS PIPELINE STAGING READY** — NOT production (parallel/branching
+DAGs, pipeline retry/resume/checkpoint, untrusted spec ingestion, multi-user load
+outstanding).

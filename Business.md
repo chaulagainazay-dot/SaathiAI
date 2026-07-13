@@ -326,3 +326,22 @@ fails safely when not configured. An opt-in scheduler can run the watcher on an
 interval. This milestone touches nothing financial and enables no trading — but the
 delivery plumbing is built so future Trading Guardian alerts could ride the same
 reliable path, advisory-only.
+
+## M17.12 — chaining real tools into one governed workflow
+
+The four real applications SaathiOS can already drive safely — FFmpeg, SQLite, jq,
+and zip — could until now only be run one at a time. M17.12 lets them be chained
+into a single, ordered workflow: do step one, hand its result to step two, and so
+on. The chain is deterministic and honest — if any step fails, is uncertain, or
+would need approval it hasn't been granted, the whole workflow stops there and the
+later steps never run (no half-finished, misleading results). Every step's output
+stays inside one private scratch folder for that run; a step can never reach outside
+it, even by trying to name a file with an escape path. Each run is recorded so you
+can see exactly which steps succeeded, which one failed, and why — without any raw
+commands, file contents, or secrets ever being exposed. A failed workflow shows up
+in the Control Center for the owner (and only the owner) to see. This proves out the
+"AI Studio" idea — real multi-tool jobs — on top of the execution reliability built
+over the last four milestones. It adds no new engine and changes nothing financial:
+approval gates are made stronger here, never weaker. Still to come: running steps in
+parallel, resuming a failed workflow from where it stopped, and accepting
+externally-authored workflow definitions.

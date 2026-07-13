@@ -29,6 +29,14 @@
   blocking manifest entries. Remaining: EXTERNAL transports (Telegram/email/Slack/
   PagerDuty — fail-closed stubs today), production/auto scheduling, escalation
   policy, and an incident-response drill.
+- Multi-harness pipeline: FIRST SLICE BUILT. M17.12 added a governed SEQUENTIAL,
+  fail-closed orchestrator (pipeline.py) composing the sole run_harness_action per
+  step, additive pipeline_run/pipeline_step ledger tables, one confined workspace
+  with pre-execution path-escape rejection + artifact wiring, honoured approval
+  gates (no silent elevation), owner-safe records, Control Center attention, a LIVE
+  sqlite→zip chain, and 7 green blocking manifest entries. No second execution
+  engine. Remaining: PARALLEL / branching DAGs, pipeline retry/resume/checkpoint,
+  scheduling, and untrusted spec-JSON ingestion (all deferred).
 - Harness registry persistence (data/application_harnesses/registry.json) written
   but not loaded on boot (in-memory bootstrap only).
 - Multi-user isolation only probe-tested, not exercised with concurrent users.

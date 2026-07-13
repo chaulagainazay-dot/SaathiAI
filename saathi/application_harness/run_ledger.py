@@ -237,6 +237,32 @@ CREATE TABLE IF NOT EXISTS run_alert_delivery(
   created_at REAL,
   updated_at REAL,
   FOREIGN KEY(alert_id) REFERENCES run_alert(id));
+CREATE TABLE IF NOT EXISTS pipeline_run(
+  pipeline_id TEXT PRIMARY KEY,
+  owner TEXT NOT NULL,
+  name TEXT DEFAULT '',
+  state TEXT NOT NULL DEFAULT 'pending',
+  step_count INTEGER DEFAULT 0,
+  failed_step INTEGER DEFAULT -1,
+  failure_code TEXT DEFAULT '',
+  correlation_id TEXT DEFAULT '',
+  created_at REAL,
+  started_at REAL DEFAULT 0,
+  terminal_at REAL DEFAULT 0);
+CREATE TABLE IF NOT EXISTS pipeline_step(
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  pipeline_id TEXT NOT NULL,
+  step_index INTEGER NOT NULL,
+  step_name TEXT DEFAULT '',
+  harness_id TEXT DEFAULT '',
+  operation_id TEXT DEFAULT '',
+  run_id TEXT DEFAULT '',
+  status TEXT DEFAULT '',
+  error_code TEXT DEFAULT '',
+  artifact TEXT DEFAULT '',
+  recorded_at REAL,
+  UNIQUE(pipeline_id, step_index),
+  FOREIGN KEY(pipeline_id) REFERENCES pipeline_run(pipeline_id));
 CREATE UNIQUE INDEX IF NOT EXISTS idx_run_idem ON run(idempotency_key)
   WHERE idempotency_key != '';
 CREATE INDEX IF NOT EXISTS idx_run_owner ON run(owner, state);
@@ -249,7 +275,20 @@ CREATE INDEX IF NOT EXISTS idx_alert_run ON run_alert(run_id);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_delivery_idem ON run_alert_delivery(idem_key);
 CREATE INDEX IF NOT EXISTS idx_delivery_status ON run_alert_delivery(status, next_attempt_at);
 CREATE INDEX IF NOT EXISTS idx_delivery_alert ON run_alert_delivery(alert_id);
+CREATE INDEX IF NOT EXISTS idx_pipeline_owner ON pipeline_run(owner, state);
+CREATE INDEX IF NOT EXISTS idx_pipeline_step ON pipeline_step(pipeline_id, step_index);
 """
+
+# M17.12 governed multi-harness pipeline states (sequential, fail-closed)
+PIPELINE_PENDING = "pending"
+PIPELINE_RUNNING = "running"
+PIPELINE_SUCCEEDED = "succeeded"
+PIPELINE_FAILED = "failed"
+PIPELINE_TERMINAL = {PIPELINE_SUCCEEDED, PIPELINE_FAILED}
+# owner-safe pipeline fields (never argv / output / secrets)
+_PIPELINE_SAFE_FIELDS = ("pipeline_id", "owner", "name", "state", "step_count",
+                         "failed_step", "failure_code", "correlation_id",
+                         "created_at", "started_at", "terminal_at")
 
 # M17.10 stuck-run alert classes + deterministic severity
 ALERT_SEVERITY = {"process_missing": "high", "cancellation_stuck": "high",
@@ -1020,6 +1059,172 @@ class RunLedger:
                 "terminal_failed": by_status.get(DELIVERY_TERMINAL_FAILED, 0),
                 "oldest_pending_age_sec": round(now - oldest, 2) if oldest else None}
 
+    # ── M17.12 governed multi-harness pipeline (sequential, fail-closed) ─────
+    def create_pipeline(self, pipeline_id, *, owner, name="", step_count=0,
+                        correlation_id="", now=None) -> dict:
+        """Insert a pipeline in `pending`. pipeline_id is PRIMARY-KEY-unique — a
+        duplicate is rejected (no second run). Owner is mandatory + sanitized."""
+        owner = _clean_str(owner, field="owner")
+        if not owner:
+            raise LedgerSecurityError("LEDGER_FIELD_REJECTED", "empty owner")
+        pipeline_id = _clean_str(pipeline_id, field="pipeline_id", maxlen=128)
+        name = _clean_str(name, field="name", maxlen=200)
+        correlation_id = _clean_str(correlation_id, field="correlation_id")
+        _reject_secrets({"name": name, "correlation_id": correlation_id},
+                        where="pipeline_identity")
+        now = now if now is not None else _now()
+        c = self._conn()
+        try:
+            c.execute("BEGIN IMMEDIATE")
+            try:
+                c.execute("INSERT INTO pipeline_run(pipeline_id,owner,name,state,"
+                          "step_count,correlation_id,created_at) VALUES(?,?,?,?,?,?,?)",
+                          (pipeline_id, owner, name, PIPELINE_PENDING,
+                           int(step_count), correlation_id, now))
+            except sqlite3.IntegrityError:
+                c.execute("ROLLBACK")
+                return {"created": False, "reason": "duplicate_pipeline_id",
+                        "pipeline_id": pipeline_id}
+            c.execute("COMMIT")
+        finally:
+            c.close()
+        self._event("harness.pipeline.created",
+                    {"pipeline_id": pipeline_id, "owner": owner, "steps": int(step_count)})
+        return {"created": True, "pipeline_id": pipeline_id}
+
+    def start_pipeline(self, pipeline_id, *, now=None) -> dict:
+        """pending → running. Idempotent no-op if already running; fails closed on
+        an unknown or already-terminal pipeline (never resurrect)."""
+        now = now if now is not None else _now()
+        c = self._conn()
+        try:
+            c.execute("BEGIN IMMEDIATE")
+            row = c.execute("SELECT state FROM pipeline_run WHERE pipeline_id=?",
+                            (pipeline_id,)).fetchone()
+            if row is None:
+                c.execute("ROLLBACK"); return {"ok": False, "reason": "unknown_pipeline"}
+            if row["state"] in PIPELINE_TERMINAL:
+                c.execute("ROLLBACK")
+                return {"ok": False, "reason": f"terminal:{row['state']}"}
+            if row["state"] == PIPELINE_RUNNING:
+                c.execute("ROLLBACK"); return {"ok": True, "noop": True}
+            c.execute("UPDATE pipeline_run SET state=?, started_at=? WHERE "
+                      "pipeline_id=? AND state=?",
+                      (PIPELINE_RUNNING, now, pipeline_id, PIPELINE_PENDING))
+            c.execute("COMMIT")
+        finally:
+            c.close()
+        self._event("harness.pipeline.started", {"pipeline_id": pipeline_id})
+        return {"ok": True}
+
+    def record_pipeline_step(self, pipeline_id, *, step_index, step_name="",
+                             harness_id="", operation_id="", run_id="",
+                             status="", error_code="", artifact="", now=None) -> dict:
+        """Record (upsert) one step's outcome. Free-text fields are sanitized;
+        no argv/output is ever stored — `artifact` is a workspace-relative name."""
+        now = now if now is not None else _now()
+        step_name = _clean_str(step_name, field="step_name", maxlen=120)
+        harness_id = _clean_str(harness_id, field="harness_id", maxlen=120)
+        operation_id = _clean_str(operation_id, field="operation_id", maxlen=120)
+        run_id = _clean_str(run_id, field="run_id", maxlen=128)
+        status = _clean_str(status, field="status", maxlen=40)
+        error_code = _clean_str(error_code, field="error_code", maxlen=120)
+        artifact = _clean_str(artifact, field="artifact", maxlen=256)
+        c = self._conn()
+        try:
+            c.execute("BEGIN IMMEDIATE")
+            c.execute(
+                "INSERT INTO pipeline_step(pipeline_id,step_index,step_name,"
+                "harness_id,operation_id,run_id,status,error_code,artifact,recorded_at) "
+                "VALUES(?,?,?,?,?,?,?,?,?,?) "
+                "ON CONFLICT(pipeline_id,step_index) DO UPDATE SET "
+                "step_name=excluded.step_name,harness_id=excluded.harness_id,"
+                "operation_id=excluded.operation_id,run_id=excluded.run_id,"
+                "status=excluded.status,error_code=excluded.error_code,"
+                "artifact=excluded.artifact,recorded_at=excluded.recorded_at",
+                (pipeline_id, int(step_index), step_name, harness_id, operation_id,
+                 run_id, status, error_code, artifact, now))
+            c.execute("COMMIT")
+        finally:
+            c.close()
+        self._event("harness.pipeline.step_recorded",
+                    {"pipeline_id": pipeline_id, "step_index": int(step_index),
+                     "status": status})
+        return {"ok": True}
+
+    def complete_pipeline(self, pipeline_id, *, state, failed_step=-1,
+                          failure_code="", now=None) -> dict:
+        """running → succeeded | failed. Terminal is immutable (never resurrect)."""
+        if state not in PIPELINE_TERMINAL:
+            raise LedgerError("bad_pipeline_state", state)
+        failure_code = _clean_str(failure_code, field="failure_code", maxlen=120)
+        now = now if now is not None else _now()
+        c = self._conn()
+        try:
+            c.execute("BEGIN IMMEDIATE")
+            row = c.execute("SELECT state FROM pipeline_run WHERE pipeline_id=?",
+                            (pipeline_id,)).fetchone()
+            if row is None:
+                c.execute("ROLLBACK"); return {"ok": False, "reason": "unknown_pipeline"}
+            if row["state"] in PIPELINE_TERMINAL:
+                c.execute("ROLLBACK")
+                return {"ok": False, "reason": f"already_terminal:{row['state']}"}
+            c.execute("UPDATE pipeline_run SET state=?, failed_step=?, failure_code=?, "
+                      "terminal_at=? WHERE pipeline_id=? AND state NOT IN (?,?)",
+                      (state, int(failed_step), failure_code, now, pipeline_id,
+                       PIPELINE_SUCCEEDED, PIPELINE_FAILED))
+            c.execute("COMMIT")
+        finally:
+            c.close()
+        self._event(f"harness.pipeline.{state}",
+                    {"pipeline_id": pipeline_id, "failed_step": int(failed_step),
+                     "failure_code": failure_code})
+        return {"ok": True, "state": state}
+
+    def inspect_pipeline(self, pipeline_id, *, owner: str | None = None) -> Optional[dict]:
+        """Owner-safe pipeline record + its steps. If `owner` is given and does not
+        match, returns None (no cross-owner disclosure)."""
+        with self._conn() as c:
+            row = c.execute("SELECT * FROM pipeline_run WHERE pipeline_id=?",
+                            (pipeline_id,)).fetchone()
+            if row is None:
+                return None
+            if owner is not None and row["owner"] != owner:
+                return None
+            steps = [dict(r) for r in c.execute(
+                "SELECT step_index,step_name,harness_id,operation_id,run_id,status,"
+                "error_code,artifact,recorded_at FROM pipeline_step WHERE pipeline_id=? "
+                "ORDER BY step_index", (pipeline_id,)).fetchall()]
+        out = {k: row[k] for k in _PIPELINE_SAFE_FIELDS}
+        out["steps"] = steps
+        return out
+
+    def list_pipelines(self, owner: str | None = None, *, limit: int = 100) -> list[dict]:
+        """Owner-safe recent pipelines (no argv/output)."""
+        limit = max(1, min(int(limit), 1000))
+        q = f"SELECT {','.join(_PIPELINE_SAFE_FIELDS)} FROM pipeline_run"
+        args: list = []
+        if owner:
+            q += " WHERE owner=?"; args.append(owner)
+        q += " ORDER BY created_at DESC LIMIT ?"; args.append(limit)
+        with self._conn() as c:
+            return [dict(r) for r in c.execute(q, args).fetchall()]
+
+    def pipeline_health(self, owner: str | None = None) -> dict:
+        """Pipeline state census (owner-scoped when owner given)."""
+        where, args = "", []
+        if owner:
+            where, args = " WHERE owner=?", [owner]
+        with self._conn() as c:
+            by_state = {r["state"]: r["n"] for r in c.execute(
+                f"SELECT state, COUNT(*) n FROM pipeline_run{where} GROUP BY state",
+                args).fetchall()}
+        return {"by_state": by_state,
+                "running": by_state.get(PIPELINE_RUNNING, 0),
+                "succeeded": by_state.get(PIPELINE_SUCCEEDED, 0),
+                "failed": by_state.get(PIPELINE_FAILED, 0),
+                "total": sum(by_state.values())}
+
     def cleanup(self, *, retention_sec: float, now=None) -> dict:
         """Delete terminal runs (and their transitions) older than the retention
         window. Active runs are never touched."""
@@ -1081,11 +1286,12 @@ class RunLedger:
                               "GROUP BY idempotency_key HAVING c>1)").fetchone()["n"]
             open_alerts = c.execute("SELECT COUNT(*) n FROM run_alert "
                                     "WHERE status!='resolved'").fetchone()["n"]
+            pipelines = c.execute("SELECT COUNT(*) n FROM pipeline_run").fetchone()["n"]
         return {"integrity": integrity, "ok": integrity == "ok" and dupes == 0,
                 "total_runs": total, "by_state": census, "transitions": trans,
                 "active": sum(census.get(s, 0) for s in ACTIVE),
                 "idempotency_collisions": dupes, "open_alerts": open_alerts,
-                "db_path": str(self.db_path)}
+                "pipelines": pipelines, "db_path": str(self.db_path)}
 
     # ── M17.8 journal drop-in (adapter compatibility, no adapter changes) ───
     # The ApplicationHarnessAdapter calls journal.record_start / record_end;
