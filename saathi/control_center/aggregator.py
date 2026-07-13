@@ -171,9 +171,18 @@ class ControlCenterAggregator:
                                          for k in ("ok", "active", "by_state")}
                 # M17.10 owner-safe stuck-run alerts (deduplicated)
                 cell["run_alerts"] = led.open_alerts(self.owner)
+                # M17.11 owner-safe notification delivery health + scheduler status
+                cell["run_deliveries"] = led.open_deliveries(self.owner)
+                cell["delivery_health"] = led.delivery_health()
+                try:
+                    from saathi.application_harness.run_scheduler import is_enabled, JOB_ID
+                    cell["monitor_schedule"] = {"job": JOB_ID, "enabled": is_enabled()}
+                except Exception:
+                    cell["monitor_schedule"] = {"enabled": False}
             except Exception as e:            # degrade gracefully, never crash cell
                 cell["run_ledger"] = {"unavailable": str(e)[:120]}
                 cell["run_alerts"] = []
+                cell["run_deliveries"] = []
             return cell
         return guarded("application_harness", _h)
 
@@ -226,6 +235,14 @@ class ControlCenterAggregator:
                               "message": f"run {a['run_id']} {a['alert_class']}"
                                          + (f" ({a['status']})" if a.get("status") != "open" else ""),
                               "link": "/control/harnesses"})
+            # M17.11 terminal notification-delivery failures need operator action
+            for d in (harn.value.get("run_deliveries") or []):
+                if d.get("status") == "terminal_failed":
+                    items.append({"severity": "high", "kind": "harness_notification",
+                                  "message": f"alert {d['alert_id']} delivery via "
+                                             f"{d['channel']} terminally failed "
+                                             f"({d.get('last_error_code', '')})",
+                                  "link": "/control/harnesses"})
         if sec.status == "ok" and sec.value:
             rb = sec.value.get("release_blocking", 0)
             if rb:

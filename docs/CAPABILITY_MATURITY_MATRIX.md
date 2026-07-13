@@ -22,7 +22,8 @@ Levels: implemented < deterministic-tested < security/red-team-tested < live-tes
 | Backup/restore | deterministic+drill | M13.5 real drill; M17.9 ledger db covered |
 | Multi-user isolation | single-user + multi-process tested | cross-user gates + M17.9 spawn concurrency; not multi-user LOAD |
 | Harness run monitoring / stuck-run alerting | staging-ready (first slice) | M17.10 deterministic dedup sweep: heartbeat_stale/cancellation_stuck/process_missing, self-resolving, Control Center attention, admin-audited ack, 2 blocking manifest checks |
-| Production monitoring/alerting (external transports + scheduled) | not built | M17.10 substrate live; email/Slack/cron + incident drill outstanding |
+| Harness alert delivery (durable, retryable, local transport) | staging-ready | M17.11 run_alert_delivery: dedup idem_key, bounded deterministic retry→terminal_failed, restart-safe, concurrency-safe lease claims, credential-free local transport, resolve/ack suppression, opt-in scheduler, 7 blocking manifest checks |
+| Production monitoring/alerting (external transports + auto-scheduled) | not built | M17.11 local delivery + opt-in scheduler live; Telegram/email/Slack/cron + incident drill outstanding |
 | Workflow intelligence engine | not started | gated on live-execution proof |
 
 ## Highest-value NON-blocked evidence gap now

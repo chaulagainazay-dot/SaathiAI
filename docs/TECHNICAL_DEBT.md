@@ -19,13 +19,16 @@
   Remaining: pause/resume/checkpoint (contract_ready only — process suspension is
   NOT application checkpointing); multi-user LOAD (vs. cross-user gates); a
   production monitoring/alerting dashboard on top of the ledger read model.
-- Production monitoring/alerting: FIRST SLICE BUILT (M17.10 run_monitor.py +
-  ledger run_alert store). Deterministic, deduplicated, self-resolving stuck-run
-  alerting (heartbeat_stale/cancellation_stuck/process_missing) over the M17.9
-  ledger, surfaced through the existing Control Center attention + event bus, with
-  an admin-audited acknowledge path and a green blocking manifest entry. Remaining:
-  external alert transports (email/Slack/PagerDuty), live scheduled sweeps, and an
-  incident-response drill.
+- Production monitoring/alerting: SUBSTRATE + DELIVERY BUILT. M17.10 added
+  deterministic dedup stuck-run alerting; M17.11 added durable, deduplicated,
+  retryable notification DELIVERY (run_alert_delivery table, bounded deterministic
+  retry to terminal_failed, restart-safe, concurrency-safe lease claims, one
+  credential-free local transport, deterministic policy with resolve/ack
+  suppression), an opt-in interval scheduler adapter (default disabled), event-bus
+  evidence, Control Center delivery health, admin-audited retry, and 7 green
+  blocking manifest entries. Remaining: EXTERNAL transports (Telegram/email/Slack/
+  PagerDuty — fail-closed stubs today), production/auto scheduling, escalation
+  policy, and an incident-response drill.
 - Harness registry persistence (data/application_harnesses/registry.json) written
   but not loaded on boot (in-memory bootstrap only).
 - Multi-user isolation only probe-tested, not exercised with concurrent users.

@@ -1236,3 +1236,45 @@ admin-audited acknowledge and a green blocking manifest. NOT production (externa
 alert transports email/Slack/PagerDuty, scheduled sweeps, multi-user load, incident-
 response drill outstanding). Backward compatible: additive CREATE TABLE IF NOT
 EXISTS; M17.9 fully preserved; revert = single-commit rollback.
+
+## M17.11 — scheduled run monitoring & reliable alert delivery
+
+Autonomous-loop milestone. Makes the M17.10 monitoring substrate operationally
+useful. Additive run_alert_delivery table in the SAME ledger DB (FK to run_alert),
+unique idem_key=alert_id:channel:destination:fingerprint so one active delivery per
+alert+channel+destination+payload version. States pending/attempting/delivered/
+retry_wait/suppressed/terminal_failed/cancelled; CAS under BEGIN IMMEDIATE; lease-
+based claim (claim_owner/claim_at) for concurrency; delivered/suppressed/cancelled
+immutable, terminal_failed immutable except audited admin retry. Bounded
+DETERMINISTIC retry RETRY_SCHEDULE=(0,60,300,900,3600)s, MAX 5 → terminal_failed;
+next_attempt_at persisted (restart-safe); injectable clock, no real sleeps, no LLM.
+Policy: only OPEN alerts create deliveries (acknowledged→none), unknown class fails
+closed, resolved/acknowledged suppress pending (wired into resolve_alerts +
+acknowledge_alert), fingerprint=sha256(run_id|class|severity) is the payload
+version. notify.py: AlertTransport Protocol, LocalFileTransport (durable owner-safe
+JSONL under gitignored data dir, credential-free, fingerprint-idempotent, never
+fakes success), DisabledTransport/UnconfiguredTransport fail closed,
+NotificationDispatcher (enqueue policy + lease-claim dispatch + reclaim_stale for
+crash-after-claim). run_scheduler.py MonitorScheduler: one named job
+harness.monitor.sweep, idempotent register/start, overlap lock, DEFAULT DISABLED
+(SAATHI_HARNESS_MONITOR_ENABLED=1), restart-safe (reclaim leases + resume retry_wait),
+sweep_started/finished/failed events; mirrors storage svc.start(interval_seconds=60)
+— not a new framework. Control Center harnesses() cell: owner-safe run_deliveries +
+delivery_health + monitor_schedule; _attention folds terminal delivery failures
+(kind harness_notification, high). CLI +4 admin-maintenance commands (verified OS
+identity, audited): notify-dispatch, alert-deliveries, retry-delivery, monitor-
+schedule-status. Send-before-persist: at-least-once via local transport idempotency
++ stale-claim reclaim; uncertainty never hidden. Proven with real spawned PROCESSES:
+concurrent create dedups to 1, concurrent claim 1 winner, concurrent dispatch 1
+durable line, stale claim reclaimed. Events: harness.notification.queued/attempted/
+delivered/retry_scheduled/suppressed/terminal_failed/admin_retry +
+harness.monitor.sweep_started/finished/failed. Ops: 7 dedicated BLOCKING critical-
+manifest entries (notification.*). Tests: test_m17_11_notification_delivery.py (34).
+Full suite 1613 passed / 1 skipped / 0 failed. Server 308 routes. Release exit 0.
+Secret scan clean. Backward compatible: additive CREATE TABLE IF NOT EXISTS;
+M17.9/M17.10 preserved; terminal runs immutable; revert = single-commit rollback.
+Trading Guardian NOT engaged (no financial/external execution; no alert triggers a
+trade; no delivery/ack authorizes financial action; notification stays advisory-
+compatible). **Verdict: RELIABLE LOCAL ALERT DELIVERY STAGING READY** — NOT
+production (external transports Telegram/email/Slack/PagerDuty are fail-closed stubs,
+auto scheduling, multi-user load, incident-response drill outstanding).

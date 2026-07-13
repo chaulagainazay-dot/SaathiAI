@@ -1066,6 +1066,80 @@
    ],
    "subsystem": "control_center",
    "blocking": true
+  },
+  {
+   "id": "notification.delivery_dedup_and_local",
+   "targets": [
+    "tests/test_m17_11_notification_delivery.py::test_alert_creates_one_delivery",
+    "tests/test_m17_11_notification_delivery.py::test_repeated_enqueue_no_duplicate",
+    "tests/test_m17_11_notification_delivery.py::test_successful_local_delivery_writes_durable_evidence",
+    "tests/test_m17_11_notification_delivery.py::test_local_transport_idempotent"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "notification.retry_and_terminal",
+   "targets": [
+    "tests/test_m17_11_notification_delivery.py::test_first_failure_schedules_retry_deterministically",
+    "tests/test_m17_11_notification_delivery.py::test_max_attempts_then_terminal_failed",
+    "tests/test_m17_11_notification_delivery.py::test_delivered_is_never_retried",
+    "tests/test_m17_11_notification_delivery.py::test_restart_resumes_retry_wait"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "notification.suppression",
+   "targets": [
+    "tests/test_m17_11_notification_delivery.py::test_resolved_alert_suppresses_pending_delivery",
+    "tests/test_m17_11_notification_delivery.py::test_acknowledged_alert_suppresses_pending_delivery",
+    "tests/test_m17_11_notification_delivery.py::test_acknowledged_alert_creates_no_new_delivery"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "notification.concurrency",
+   "targets": [
+    "tests/test_m17_11_notification_delivery.py::test_concurrent_delivery_creation_dedups",
+    "tests/test_m17_11_notification_delivery.py::test_concurrent_claim_single_winner",
+    "tests/test_m17_11_notification_delivery.py::test_concurrent_dispatch_single_delivery_line",
+    "tests/test_m17_11_notification_delivery.py::test_stale_claim_reclaimed"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "notification.security",
+   "targets": [
+    "tests/test_m17_11_notification_delivery.py::test_open_deliveries_owner_scoped",
+    "tests/test_m17_11_notification_delivery.py::test_admin_retry_forged_empty_identity_rejected",
+    "tests/test_m17_11_notification_delivery.py::test_error_summary_bounded_and_no_secret_dump",
+    "tests/test_m17_11_notification_delivery.py::test_cli_notification_commands_admin_gated",
+    "tests/test_m17_11_notification_delivery.py::test_malicious_alert_content_is_data_not_executed"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "notification.scheduler_integration",
+   "targets": [
+    "tests/test_m17_11_notification_delivery.py::test_scheduler_registration_is_idempotent",
+    "tests/test_m17_11_notification_delivery.py::test_scheduler_disabled_by_default",
+    "tests/test_m17_11_notification_delivery.py::test_scheduler_overlap_is_skipped",
+    "tests/test_m17_11_notification_delivery.py::test_scheduler_sweep_failure_isolated_from_delivery"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "notification.control_center_contract",
+   "targets": [
+    "tests/test_m17_11_notification_delivery.py::test_control_center_exposes_delivery_health"
+   ],
+   "subsystem": "control_center",
+   "blocking": true
   }
  ]
 }

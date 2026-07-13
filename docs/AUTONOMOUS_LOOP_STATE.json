@@ -3,8 +3,8 @@
   "repository": "SaathiOS",
   "branch": "milestone/m7-security-engine",
   "loop_started_at": "2026-07-12",
-  "initial_head": "73e97f9",
-  "current_head": "HEAD of milestone/m7-security-engine (see git log; rollback point = initial_head 73e97f9)",
+  "initial_head": "28ce958",
+  "current_head": "HEAD of milestone/m7-security-engine (see git log; rollback point = initial_head 28ce958)",
   "iterations_completed": 1,
   "iteration_limit": 1,
   "active_milestone": null,
@@ -17,7 +17,8 @@
     "M17.7 zip archive fourth live app",
     "M17.8 governed long-running task control",
     "M17.9 durable run ledger, concurrency safety, recovery operations",
-    "M17.10 harness run monitoring & deterministic stuck-run alerting"
+    "M17.10 harness run monitoring & deterministic stuck-run alerting",
+    "M17.11 scheduled run monitoring & reliable alert delivery"
   ],
   "blocked_items": [
     "native Finder/TextEdit actuation: macOS Accessibility not granted (user_action_required)",
@@ -26,18 +27,19 @@
     "staging deploy + live rollback drill: needs a deploy target (no push/deploy)"
   ],
   "unverified_items": [
-    "production monitoring EXTERNAL transports + scheduled sweeps (M17.10 built the deterministic dedup alerting substrate; email/Slack/cron + incident-response drill outstanding)",
-    "multi-user LOAD concurrency (M17.9 cross-user gates + local multi-process proven, not load)",
+    "EXTERNAL alert transports (Telegram/email/Slack/PagerDuty) — M17.11 ships fail-closed stubs + a credential-free local transport; live providers deferred (need secret-managed config)",
+    "production/auto scheduling of the monitor sweep — M17.11 scheduler is opt-in (default disabled), not server-auto-started; no cron/launchd/cloud provisioning",
+    "multi-user LOAD concurrency (cross-user gates + local multi-process proven, not load)",
     "pause/resume/checkpoint (contract_ready only; process suspension is not application checkpointing)",
     "workflow intelligence (not started; gated on live execution proof)"
   ],
   "manual_actions_required": [],
-  "last_full_suite": "1598 passed / 1 skipped / 0 failed",
-  "last_redteam": "M17.9 +19 ledger probes held; M17.10 owner-safe/admin-gated/fail-closed alert probes green",
+  "last_full_suite": "1613 passed / 1 skipped / 0 failed",
+  "last_redteam": "M17.9 +19 ledger probes + M17.10 alert probes held; M17.11 security probes (owner-scope, forged/empty identity, bounded errors, malicious-content-as-data, admin gating) green",
   "last_release_check": "exit 0; database_ok/backup_ok/restore_verified true",
-  "last_secret_scan": "clean (0 matches over M17.10 files)",
-  "critical_manifest": "M17.9 11 blocking ledger.* + M17.10 2 blocking monitor checks green via manifest runner",
-  "milestone_verdict": "HARNESS RUN MONITORING STAGING READY",
-  "stop_reason": "one bounded milestone completed this invocation (M17.10 harness run monitoring: deterministic deduplicated self-resolving stuck-run alerting over the M17.9 ledger, multi-process concurrent-sweep dedup, Control Center attention integration, admin-audited acknowledge, 3 admin-gated CLI commands, 2 blocking critical-manifest checks). Extends the ledger + Control Center attention + event bus; no second monitoring stack. Trading Guardian not engaged (no financial/external surface). Maximum milestones this invocation = 1. Not production-ready: external alert transports, scheduled sweeps, multi-user load, incident-response drill.",
+  "last_secret_scan": "clean (0 matches over M17.11 files)",
+  "critical_manifest": "M17.9 11 + M17.10 2 + M17.11 7 blocking checks green via manifest runner",
+  "milestone_verdict": "RELIABLE LOCAL ALERT DELIVERY STAGING READY",
+  "stop_reason": "one bounded milestone completed this invocation (M17.11 scheduled run monitoring & reliable alert delivery: additive run_alert_delivery ledger table, deterministic dedup policy, bounded deterministic retry to terminal_failed, restart-safe, lease-based concurrency-safe claims, credential-free local transport with external fail-closed stubs, opt-in interval scheduler default-disabled, resolve/ack suppression, event-bus taxonomy, Control Center delivery health, 4 admin-gated CLI commands, 7 blocking critical-manifest checks). Extends the ledger + event bus + Control Center attention + admin gate; no second monitoring/scheduler/bus/DB/auth. Trading Guardian not engaged (no financial/external execution). Maximum milestones this invocation = 1. Not production-ready: external transports, auto scheduling, multi-user load, incident-response drill.",
   "unrelated_untouched": "saathi/memory/conventions.md remains modified and UNSTAGED (excluded from the milestone commit)"
 }

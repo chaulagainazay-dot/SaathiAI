@@ -214,6 +214,29 @@ CREATE TABLE IF NOT EXISTS run_alert(
   acknowledged_at REAL DEFAULT 0,
   acknowledged_by TEXT DEFAULT '',
   resolved_at REAL DEFAULT 0);
+CREATE TABLE IF NOT EXISTS run_alert_delivery(
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  alert_id INTEGER NOT NULL,
+  owner TEXT DEFAULT '',
+  channel TEXT NOT NULL,
+  destination_key TEXT DEFAULT '',
+  payload_fingerprint TEXT NOT NULL,
+  idem_key TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending',
+  attempt_count INTEGER DEFAULT 0,
+  max_attempts INTEGER DEFAULT 5,
+  next_attempt_at REAL DEFAULT 0,
+  first_attempt_at REAL DEFAULT 0,
+  last_attempt_at REAL DEFAULT 0,
+  delivered_at REAL DEFAULT 0,
+  terminal_failed_at REAL DEFAULT 0,
+  last_error_code TEXT DEFAULT '',
+  last_error_summary TEXT DEFAULT '',
+  claim_owner TEXT DEFAULT '',
+  claim_at REAL DEFAULT 0,
+  created_at REAL,
+  updated_at REAL,
+  FOREIGN KEY(alert_id) REFERENCES run_alert(id));
 CREATE UNIQUE INDEX IF NOT EXISTS idx_run_idem ON run(idempotency_key)
   WHERE idempotency_key != '';
 CREATE INDEX IF NOT EXISTS idx_run_owner ON run(owner, state);
@@ -223,12 +246,39 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_alert_dedup ON run_alert(state_key)
   WHERE status != 'resolved';
 CREATE INDEX IF NOT EXISTS idx_alert_open ON run_alert(status, owner);
 CREATE INDEX IF NOT EXISTS idx_alert_run ON run_alert(run_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_delivery_idem ON run_alert_delivery(idem_key);
+CREATE INDEX IF NOT EXISTS idx_delivery_status ON run_alert_delivery(status, next_attempt_at);
+CREATE INDEX IF NOT EXISTS idx_delivery_alert ON run_alert_delivery(alert_id);
 """
 
 # M17.10 stuck-run alert classes + deterministic severity
 ALERT_SEVERITY = {"process_missing": "high", "cancellation_stuck": "high",
                   "heartbeat_stale": "medium"}
 ALERTABLE = set(ALERT_SEVERITY)
+
+# M17.11 notification-delivery states + bounded deterministic retry schedule
+DELIVERY_PENDING = "pending"
+DELIVERY_ATTEMPTING = "attempting"
+DELIVERY_DELIVERED = "delivered"
+DELIVERY_RETRY_WAIT = "retry_wait"
+DELIVERY_SUPPRESSED = "suppressed"
+DELIVERY_TERMINAL_FAILED = "terminal_failed"
+DELIVERY_CANCELLED = "cancelled"
+DELIVERY_TERMINAL = {DELIVERY_DELIVERED, DELIVERY_TERMINAL_FAILED, DELIVERY_CANCELLED,
+                     DELIVERY_SUPPRESSED}
+DELIVERY_DISPATCHABLE = {DELIVERY_PENDING, DELIVERY_RETRY_WAIT}
+# seconds before attempt N (index = attempt_count so far); beyond → terminal_failed
+RETRY_SCHEDULE = (0.0, 60.0, 300.0, 900.0, 3600.0)
+MAX_DELIVERY_ATTEMPTS = len(RETRY_SCHEDULE)
+
+
+def retry_delay(attempt_count: int) -> float:
+    """Deterministic delay before the next attempt (no jitter)."""
+    if attempt_count < 0:
+        attempt_count = 0
+    if attempt_count >= len(RETRY_SCHEDULE):
+        return RETRY_SCHEDULE[-1]
+    return RETRY_SCHEDULE[attempt_count]
 
 # fields exposed in owner-safe read models (never args / output / secrets)
 _SAFE_FIELDS = ("run_id", "owner", "harness_id", "operation_id", "state",
@@ -659,6 +709,11 @@ class RunLedger:
         c = self._conn()
         try:
             c.execute("BEGIN IMMEDIATE")
+            sel = "SELECT id FROM run_alert WHERE run_id=? AND status!='resolved'"
+            sargs = [run_id]
+            if alert_class is not None:
+                sel += " AND alert_class=?"; sargs.append(alert_class)
+            ids = [r["id"] for r in c.execute(sel, sargs).fetchall()]
             q = ("UPDATE run_alert SET status='resolved', resolved_at=? "
                  "WHERE run_id=? AND status!='resolved'")
             args = [_now(), run_id]
@@ -668,6 +723,9 @@ class RunLedger:
             c.execute("COMMIT")
         finally:
             c.close()
+        # a resolved alert must not deliver a stale unresolved-alert notification
+        for aid in ids:
+            self.suppress_deliveries_for_alert(aid, reason="alert_resolved")
         return n
 
     def open_alerts(self, owner: str | None = None, *, limit: int = 200) -> list[dict]:
@@ -681,6 +739,15 @@ class RunLedger:
         q += " ORDER BY created_at DESC LIMIT ?"; args.append(limit)
         with self._conn() as c:
             return [dict(r) for r in c.execute(q, args).fetchall()]
+
+    def alert_by_id(self, alert_id) -> Optional[dict]:
+        """Owner-safe single alert (no argv/output/secrets)."""
+        with self._conn() as c:
+            row = c.execute(
+                "SELECT id,run_id,owner,alert_class,severity,status,detail,created_at,"
+                "acknowledged_at,acknowledged_by,resolved_at FROM run_alert WHERE id=?",
+                (alert_id,)).fetchone()
+        return dict(row) if row else None
 
     def acknowledge_alert(self, alert_id, *, operator) -> dict:
         """Admin-audited acknowledge. `operator` MUST come from a trusted context
@@ -706,8 +773,252 @@ class RunLedger:
             c.execute("COMMIT")
         finally:
             c.close()
+        # acknowledged: suppress any pending UNSENT delivery (delivered ones stay
+        # historically delivered; escalation is not enabled in this milestone).
+        self.suppress_deliveries_for_alert(alert_id, reason="alert_acknowledged")
         self._event("harness.run.alert_ack", {"alert_id": alert_id, "operator": operator})
         return {"ok": True, "alert_id": alert_id, "operator": operator}
+
+    # ── M17.11 notification deliveries (durable, deduplicated, retryable) ────
+    def create_delivery(self, alert_id, *, channel, payload_fingerprint,
+                        owner="", destination_key="",
+                        max_attempts: int = MAX_DELIVERY_ATTEMPTS, now=None) -> dict:
+        """Create a delivery for an alert. Deduplicated by
+        idem_key=alert:channel:dest:fingerprint — a repeat is an idempotent no-op
+        (one active delivery per alert+channel+destination+payload version)."""
+        channel = _clean_str(channel, field="channel", maxlen=64)
+        payload_fingerprint = _clean_str(payload_fingerprint, field="fingerprint", maxlen=128)
+        destination_key = _clean_str(destination_key, field="destination_key", maxlen=256)
+        owner = _clean_str(owner, field="owner")
+        if not channel or not payload_fingerprint:
+            raise LedgerError("delivery_field_missing")
+        now = now if now is not None else _now()
+        idem = f"{alert_id}:{channel}:{destination_key}:{payload_fingerprint}"
+        c = self._conn()
+        try:
+            c.execute("BEGIN IMMEDIATE")
+            if c.execute("SELECT 1 FROM run_alert WHERE id=?", (alert_id,)).fetchone() is None:
+                c.execute("ROLLBACK")
+                return {"created": False, "reason": "unknown_alert"}
+            n = c.execute(
+                "INSERT OR IGNORE INTO run_alert_delivery(alert_id,owner,channel,"
+                "destination_key,payload_fingerprint,idem_key,status,attempt_count,"
+                "max_attempts,next_attempt_at,created_at,updated_at) "
+                "VALUES(?,?,?,?,?,?,?,0,?,?,?,?)",
+                (alert_id, owner, channel, destination_key, payload_fingerprint, idem,
+                 DELIVERY_PENDING, int(max_attempts), now, now, now)).rowcount
+            did = None
+            if n == 1:
+                did = c.execute("SELECT id FROM run_alert_delivery WHERE idem_key=?",
+                                (idem,)).fetchone()["id"]
+            c.execute("COMMIT")
+        finally:
+            c.close()
+        if n == 1:
+            self._event("harness.notification.queued",
+                        {"delivery_id": did, "alert_id": alert_id, "channel": channel})
+        return {"created": n == 1, "delivery_id": did, "idem_key": idem}
+
+    def claim_delivery(self, delivery_id, *, worker, now=None, lease_sec: float = 120.0) -> bool:
+        """Lease-claim a dispatchable (or stale-attempting) delivery. CAS on the
+        observed status — exactly one worker wins; a not-yet-due retry is skipped."""
+        worker = _clean_str(worker, field="worker", maxlen=120)
+        now = now if now is not None else _now()
+        c = self._conn()
+        try:
+            c.execute("BEGIN IMMEDIATE")
+            row = c.execute("SELECT status,next_attempt_at,claim_at FROM "
+                            "run_alert_delivery WHERE id=?", (delivery_id,)).fetchone()
+            if row is None:
+                c.execute("ROLLBACK"); return False
+            st = row["status"]
+            claimable = st in DELIVERY_DISPATCHABLE or (
+                st == DELIVERY_ATTEMPTING and (row["claim_at"] or 0) < now - lease_sec)
+            if not claimable or (row["next_attempt_at"] or 0) > now:
+                c.execute("ROLLBACK"); return False
+            n = c.execute("UPDATE run_alert_delivery SET status=?, claim_owner=?, "
+                          "claim_at=?, updated_at=? WHERE id=? AND status=?",
+                          (DELIVERY_ATTEMPTING, worker, now, now, delivery_id, st)).rowcount
+            if n != 1:
+                c.execute("ROLLBACK"); return False
+            c.execute("COMMIT")
+            return True
+        finally:
+            c.close()
+
+    def mark_delivered(self, delivery_id, *, now=None) -> dict:
+        now = now if now is not None else _now()
+        c = self._conn()
+        try:
+            c.execute("BEGIN IMMEDIATE")
+            n = c.execute(
+                "UPDATE run_alert_delivery SET status=?, delivered_at=?, "
+                "attempt_count=attempt_count+1, last_attempt_at=?, "
+                "first_attempt_at=CASE WHEN first_attempt_at=0 THEN ? ELSE first_attempt_at END, "
+                "claim_owner='', updated_at=? WHERE id=? AND status=?",
+                (DELIVERY_DELIVERED, now, now, now, now, delivery_id, DELIVERY_ATTEMPTING)).rowcount
+            c.execute("COMMIT")
+        finally:
+            c.close()
+        if n == 1:
+            self._event("harness.notification.delivered", {"delivery_id": delivery_id})
+        return {"ok": n == 1, "delivery_id": delivery_id}
+
+    def mark_attempt_failed(self, delivery_id, *, error_code="", error_summary="",
+                            now=None) -> dict:
+        """attempting → retry_wait (deterministic next_attempt_at) or → terminal_failed
+        when max attempts are exhausted."""
+        now = now if now is not None else _now()
+        error_code = _clean_str(error_code, field="error_code", maxlen=80)
+        error_summary = _clean_str(error_summary, field="error_summary", maxlen=300)
+        c = self._conn()
+        try:
+            c.execute("BEGIN IMMEDIATE")
+            row = c.execute("SELECT attempt_count,max_attempts FROM run_alert_delivery "
+                            "WHERE id=? AND status=?",
+                            (delivery_id, DELIVERY_ATTEMPTING)).fetchone()
+            if row is None:
+                c.execute("ROLLBACK")
+                return {"ok": False, "reason": "not_attempting"}
+            new_count = (row["attempt_count"] or 0) + 1
+            if new_count >= (row["max_attempts"] or MAX_DELIVERY_ATTEMPTS):
+                status, nxt, term = DELIVERY_TERMINAL_FAILED, 0, now
+            else:
+                status, nxt, term = DELIVERY_RETRY_WAIT, now + retry_delay(new_count), 0
+            c.execute("UPDATE run_alert_delivery SET status=?, attempt_count=?, "
+                      "next_attempt_at=?, last_attempt_at=?, terminal_failed_at=?, "
+                      "last_error_code=?, last_error_summary=?, "
+                      "first_attempt_at=CASE WHEN first_attempt_at=0 THEN ? ELSE first_attempt_at END, "
+                      "claim_owner='', updated_at=? WHERE id=? AND status=?",
+                      (status, new_count, nxt, now, term, error_code, error_summary,
+                       now, now, delivery_id, DELIVERY_ATTEMPTING))
+            c.execute("COMMIT")
+        finally:
+            c.close()
+        if status == DELIVERY_TERMINAL_FAILED:
+            self._event("harness.notification.terminal_failed",
+                        {"delivery_id": delivery_id, "error_code": error_code})
+        else:
+            self._event("harness.notification.retry_scheduled",
+                        {"delivery_id": delivery_id, "attempt": new_count})
+        return {"ok": True, "status": status, "attempt_count": new_count}
+
+    def suppress_deliveries_for_alert(self, alert_id, *, reason="alert_closed", now=None) -> int:
+        """Suppress (not deliver) any pending/retry_wait deliveries for an alert —
+        used when its alert is resolved or acknowledged."""
+        now = now if now is not None else _now()
+        c = self._conn()
+        try:
+            c.execute("BEGIN IMMEDIATE")
+            n = c.execute(
+                f"UPDATE run_alert_delivery SET status=?, last_error_code=?, "
+                f"updated_at=? WHERE alert_id=? AND status IN "
+                f"({','.join('?'*len(DELIVERY_DISPATCHABLE))})",
+                (DELIVERY_SUPPRESSED, _clean_str(reason, field="reason", maxlen=80), now,
+                 alert_id, *sorted(DELIVERY_DISPATCHABLE))).rowcount
+            c.execute("COMMIT")
+        finally:
+            c.close()
+        if n:
+            self._event("harness.notification.suppressed",
+                        {"alert_id": alert_id, "count": n, "reason": reason})
+        return n
+
+    def reclaim_stale_deliveries(self, *, now=None, lease_sec: float = 120.0) -> list[int]:
+        """Return attempting deliveries whose lease expired (crash-after-claim) to
+        retry_wait so they can be re-dispatched (transport idempotency dedups)."""
+        now = now if now is not None else _now()
+        c = self._conn()
+        try:
+            c.execute("BEGIN IMMEDIATE")
+            ids = [r["id"] for r in c.execute(
+                "SELECT id FROM run_alert_delivery WHERE status=? AND claim_at>0 "
+                "AND claim_at<?", (DELIVERY_ATTEMPTING, now - lease_sec)).fetchall()]
+            for did in ids:
+                c.execute("UPDATE run_alert_delivery SET status=?, next_attempt_at=?, "
+                          "claim_owner='', updated_at=? WHERE id=? AND status=?",
+                          (DELIVERY_RETRY_WAIT, now, now, did, DELIVERY_ATTEMPTING))
+            c.execute("COMMIT")
+        finally:
+            c.close()
+        return ids
+
+    def admin_retry_delivery(self, delivery_id, *, operator, now=None) -> dict:
+        """Admin-audited retry of a terminal_failed delivery. `operator` MUST come
+        from a trusted context (verified OS identity). Fails closed otherwise."""
+        operator = _clean_str(operator, field="operator")
+        if not operator:
+            raise LedgerSecurityError("LEDGER_FIELD_REJECTED", "empty operator")
+        now = now if now is not None else _now()
+        c = self._conn()
+        try:
+            c.execute("BEGIN IMMEDIATE")
+            n = c.execute("UPDATE run_alert_delivery SET status=?, next_attempt_at=?, "
+                          "last_error_code='admin_retry', updated_at=? WHERE id=? AND status=?",
+                          (DELIVERY_RETRY_WAIT, now, now, delivery_id,
+                           DELIVERY_TERMINAL_FAILED)).rowcount
+            c.execute("COMMIT")
+        finally:
+            c.close()
+        if n != 1:
+            return {"ok": False, "reason": "not_terminal_failed"}
+        self._event("harness.notification.admin_retry",
+                    {"delivery_id": delivery_id, "operator": operator})
+        return {"ok": True, "delivery_id": delivery_id, "operator": operator}
+
+    def delivery(self, delivery_id) -> Optional[dict]:
+        with self._conn() as c:
+            row = c.execute("SELECT * FROM run_alert_delivery WHERE id=?",
+                            (delivery_id,)).fetchone()
+        return dict(row) if row else None
+
+    def deliveries_for_alert(self, alert_id) -> list[dict]:
+        with self._conn() as c:
+            return [dict(r) for r in c.execute(
+                "SELECT * FROM run_alert_delivery WHERE alert_id=? ORDER BY id",
+                (alert_id,)).fetchall()]
+
+    def pending_dispatchable(self, *, now=None, limit: int = 100) -> list[dict]:
+        now = now if now is not None else _now()
+        limit = max(1, min(int(limit), 1000))
+        with self._conn() as c:
+            return [dict(r) for r in c.execute(
+                f"SELECT * FROM run_alert_delivery WHERE status IN "
+                f"({','.join('?'*len(DELIVERY_DISPATCHABLE))}) AND next_attempt_at<=? "
+                "ORDER BY next_attempt_at LIMIT ?",
+                (*sorted(DELIVERY_DISPATCHABLE), now, limit)).fetchall()]
+
+    def open_deliveries(self, owner: str | None = None, *, limit: int = 200) -> list[dict]:
+        """Deliveries still needing attention — hides delivered/suppressed/cancelled
+        but KEEPS terminal_failed (operator-actionable via admin retry)."""
+        limit = max(1, min(int(limit), 1000))
+        hidden = (DELIVERY_DELIVERED, DELIVERY_SUPPRESSED, DELIVERY_CANCELLED)
+        q = ("SELECT id,alert_id,owner,channel,status,attempt_count,max_attempts,"
+             "next_attempt_at,last_error_code,created_at,delivered_at,terminal_failed_at "
+             "FROM run_alert_delivery WHERE status NOT IN "
+             f"({','.join('?'*len(hidden))})")
+        args: list = list(hidden)
+        if owner:
+            q += " AND owner=?"; args.append(owner)
+        q += " ORDER BY created_at DESC LIMIT ?"; args.append(limit)
+        with self._conn() as c:
+            return [dict(r) for r in c.execute(q, args).fetchall()]
+
+    def delivery_health(self, *, now=None) -> dict:
+        now = now if now is not None else _now()
+        with self._conn() as c:
+            by_status = {r["status"]: r["n"] for r in c.execute(
+                "SELECT status, COUNT(*) n FROM run_alert_delivery GROUP BY status").fetchall()}
+            oldest = c.execute(
+                f"SELECT MIN(created_at) m FROM run_alert_delivery WHERE status IN "
+                f"({','.join('?'*len(DELIVERY_DISPATCHABLE))})",
+                tuple(sorted(DELIVERY_DISPATCHABLE))).fetchone()["m"]
+        return {"by_status": by_status,
+                "pending": by_status.get(DELIVERY_PENDING, 0),
+                "retry_wait": by_status.get(DELIVERY_RETRY_WAIT, 0),
+                "delivered": by_status.get(DELIVERY_DELIVERED, 0),
+                "terminal_failed": by_status.get(DELIVERY_TERMINAL_FAILED, 0),
+                "oldest_pending_age_sec": round(now - oldest, 2) if oldest else None}
 
     def cleanup(self, *, retention_sec: float, now=None) -> dict:
         """Delete terminal runs (and their transitions) older than the retention

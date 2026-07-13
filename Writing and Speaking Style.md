@@ -158,3 +158,13 @@ the existing text-response rules (still authoritative for typed chat):
 - **self-heal**: "the run resumed / finished, so I cleared its alert."
 - **acknowledge**: "acknowledged by the verified local operator (recorded); the underlying run is still stuck until it resolves."
 - **scope honesty**: "alerts show state only — never your command arguments, output, or secrets."
+
+## M17.11 — alert-delivery language
+- **queued**: "alert recorded and queued for delivery — I'll confirm once it actually lands."
+- **delivered**: "delivered (and written to durable evidence); I won't send it again."
+- **retrying**: "delivery failed; retrying on a fixed schedule (1, 5, 15, 60 min), not indefinitely."
+- **terminal failure**: "couldn't deliver after 5 attempts — flagged for an operator to retry by hand."
+- **suppressed**: "the problem resolved / was acknowledged, so I suppressed the pending notification instead of nagging."
+- **transport honesty**: "that external channel isn't configured — I fail closed and never fake a delivery."
+- **restart**: "picked up the pending deliveries where they left off; no duplicates."
+- **admin retry**: "retried by the verified local operator (audited); not something an alert can authorize itself."

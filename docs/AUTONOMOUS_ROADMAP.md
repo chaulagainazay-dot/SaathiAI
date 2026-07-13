@@ -60,6 +60,25 @@ second monitoring stack. Touches no financial/external surface (Trading Guardian
 not engaged). Verdict: **HARNESS RUN MONITORING STAGING READY** — not production
 (external transports, scheduled sweeps, multi-user load, incident drill remain).
 
+## M17.11 (this invocation) — scheduled monitoring & reliable alert delivery
+Start/rollback point: HEAD `28ce958` (M17.10). No higher Critical/High open; release
+blockers environment-blocked. Made the M17.10 monitoring substrate operationally
+useful: durable, deduplicated, retryable notification DELIVERY over the ledger
+(additive `run_alert_delivery` table, unique idem_key, lease-based concurrency-safe
+claims, bounded deterministic retry `[0,60,300,900,3600]`s → terminal_failed,
+restart-safe, resolve/ack suppression), a narrow transport contract + one
+credential-free durable local transport (external providers fail-closed stubs), an
+opt-in interval scheduler adapter (default DISABLED, idempotent registration, overlap
+lock, mirrors the storage watchdog pattern — no new framework), the full
+notification/monitor event taxonomy, Control Center delivery-health + attention
+integration, 4 admin-gated CLI commands, and **7 dedicated blocking Critical Manifest
+checks**. Multi-PROCESS concurrency proven (dedup/claim/dispatch/stale-reclaim).
+Extends the ledger + event bus + Control Center attention + admin gate — no second
+monitoring/scheduler/bus/DB/auth. Trading Guardian not engaged (no financial/external
+execution; notification stays advisory-compatible). Verdict: **RELIABLE LOCAL ALERT
+DELIVERY STAGING READY** — not production (external transports, auto scheduling,
+multi-user load, incident drill remain).
+
 ## Blocked / deferred (need user action or larger scope)
 - authenticated browser / cloud connector workflow — needs a safe staging account.
 - native Finder/TextEdit actuation — macOS Accessibility (TCC) not granted.

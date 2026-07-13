@@ -21,6 +21,10 @@ M17.9 durable run-ledger operations — LOCAL ADMIN-MAINTENANCE surface.
     python -m saathi.application_harness.cli runs-monitor          (M17.10 sweep)
     python -m saathi.application_harness.cli run-alerts            (M17.10 open alerts)
     python -m saathi.application_harness.cli alert-ack <alert_id>  (M17.10 acknowledge)
+    python -m saathi.application_harness.cli notify-dispatch       (M17.11 enqueue+dispatch)
+    python -m saathi.application_harness.cli alert-deliveries      (M17.11 open deliveries)
+    python -m saathi.application_harness.cli retry-delivery <id>   (M17.11 admin retry)
+    python -m saathi.application_harness.cli monitor-schedule-status (M17.11 scheduler)
 
 Security model: this CLI has NO authenticated user context, so it never trusts a
 caller-supplied identity for authorization. Ledger inspection + mutation are
@@ -43,7 +47,9 @@ from saathi.application_harness.pilots import ffmpeg as F
 
 _LEDGER_CMDS = {"runs", "run-inspect", "run-cancel", "run-reconcile",
                 "runs-reconcile-stale", "run-transitions", "ledger-health",
-                "runs-monitor", "run-alerts", "alert-ack"}
+                "runs-monitor", "run-alerts", "alert-ack",
+                "notify-dispatch", "alert-deliveries", "retry-delivery",
+                "monitor-schedule-status"}
 _ADMIN_MSG = ("ledger maintenance commands require admin mode: set "
               "SAATHI_HARNESS_ADMIN=1 (the verified local OS identity is used "
               "as the audited operator; no caller-supplied identity is trusted)")
@@ -119,6 +125,26 @@ def _ledger_cmd(cmd, rest) -> int | None:
         print(json.dumps(HarnessRunMonitor(led).sweep(), indent=2, default=str)); return 0
     if cmd == "run-alerts":
         print(json.dumps(led.open_alerts(), indent=2, default=str)); return 0
+    if cmd == "notify-dispatch":             # M17.11 run one enqueue+dispatch pass
+        from saathi.application_harness.notify import NotificationDispatcher
+        print(json.dumps(NotificationDispatcher(led).run_once(), indent=2, default=str))
+        return 0
+    if cmd == "alert-deliveries":
+        print(json.dumps(led.open_deliveries(), indent=2, default=str)); return 0
+    if cmd == "monitor-schedule-status":
+        from saathi.application_harness.run_scheduler import default_scheduler
+        print(json.dumps(default_scheduler().schedule_status(), indent=2, default=str))
+        return 0
+    if cmd == "retry-delivery":              # admin-audited terminal-failure retry
+        if not rest:
+            print("retry-delivery needs <delivery_id>", file=sys.stderr); return 2
+        try:
+            did = int(rest[0])
+        except ValueError:
+            print("retry-delivery needs a numeric <delivery_id>", file=sys.stderr); return 2
+        res = led.admin_retry_delivery(did, operator=operator)   # audited, OS identity
+        print(json.dumps(res, indent=2, default=str))
+        return 0 if res.get("ok") else 1
     if cmd == "alert-ack":
         if not rest:
             print("alert-ack needs <alert_id>", file=sys.stderr); return 2
@@ -137,7 +163,8 @@ def main(argv=None) -> int:
     if not argv:
         print("usage: list|inspect|operations|resolve|import-cli-anything|health|live-report"
               "|runs|run-inspect|run-cancel|run-reconcile|runs-reconcile-stale"
-              "|run-transitions|ledger-health|runs-monitor|run-alerts|alert-ack",
+              "|run-transitions|ledger-health|runs-monitor|run-alerts|alert-ack"
+              "|notify-dispatch|alert-deliveries|retry-delivery|monitor-schedule-status",
               file=sys.stderr)
         return 2
     cmd, rest = argv[0], argv[1:]

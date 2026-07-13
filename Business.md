@@ -308,3 +308,21 @@ command details are exposed. This is the foundation of "run it and trust it" —
 the safety net before autonomous operation. Still ahead: sending alerts out to
 email/Slack, running the watcher on a schedule, and a full incident drill. This
 milestone touches nothing financial and enables no autonomous trading.
+
+## M17.11 — alerts that actually reach someone, reliably
+
+M17.10 let SaathiOS notice a stuck task; M17.11 makes sure that notice actually gets
+delivered — durably, once, and with retries if the first attempt fails. Every alert
+becomes a tracked delivery record: it is sent through a configured channel, retried
+on a fixed, predictable schedule (immediately, then 1, 5, 15, 60 minutes) up to five
+times, and if it still can't get through it becomes a clearly-marked "delivery
+failed" item an operator can retry by hand. Nothing is delivered twice, even if two
+background workers run at once or the machine restarts mid-send. If the underlying
+problem resolves or an operator acknowledges it, pending notifications are quietly
+suppressed instead of nagging. A built-in local delivery channel works with no
+accounts or credentials at all, so the whole safety net functions offline;
+connecting external channels like email or Telegram is a later, optional step and
+fails safely when not configured. An opt-in scheduler can run the watcher on an
+interval. This milestone touches nothing financial and enables no trading — but the
+delivery plumbing is built so future Trading Guardian alerts could ride the same
+reliable path, advisory-only.
