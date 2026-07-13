@@ -167,6 +167,38 @@ Verdict: **GOVERNED MISSION SCHEDULING & TRUSTED EVENT TRIGGERS STAGING READY** 
 production (cron, public webhooks, untrusted JSON defs, distributed/parallel
 scheduling, production auto-scheduling remain).
 
+## M17.15 (this invocation) — governed pipeline retry, resume & checkpoints
+Start/rollback point: HEAD `4cad92a` (M17.14). No higher Critical/High open; release
+blockers environment-blocked. Closes the M17.12 deferred gap (pipeline retry/resume/
+checkpoint) that M17.14's retry section pointed at. A failed/interrupted pipeline now
+CONTINUES FROM ITS LAST INDEPENDENTLY VERIFIED STEP instead of restarting — implemented
+inside/around the existing PipelineRunner + ledger, with NO second pipeline/execution
+engine, retry framework, verification path, or ledger. Delivered: additive
+`pipeline_checkpoint` (UNIQUE per pipeline_id,step_index) + `pipeline_recovery` ledger
+tables; a checkpoint written ONLY after a verified success; deterministic fingerprints
+(step-definition / dependency / artifact) that reuse ONLY a CONTIGUOUS valid verified
+prefix and fail closed on any mismatch (owner, step identity, fingerprints, verify
+policy, artifact existence+confinement+integrity, invalidation); category-ALLOWLISTED
+bounded retry on the shared RETRY_SCHEDULE (approval/owner/verification/param/tamper/
+cancellation/unknown never auto-retry); approval never implied (increased risk
+invalidates reuse; resume stops at approval_required; risk-4 manual-only); lease-based
+recovery claiming (one winner, active not stealable, expired reclaimable); crash
+reconciliation preferring reconcile over duplicate execution (uncertain → stop_uncertain,
+never assume success); a governed audited attempt-bounded `reopen_pipeline` (the ONE
+exception to pipeline terminal immutability; complete_pipeline unchanged); mission
+integration (failed mission pipeline resumes in place, no duplicate mission); Control
+Center recovery cell + attention; `pipeline-recovery-health` + 7 admin-gated owner-safe
+CLI commands (operator may INVALIDATE but never force-valid); and **9 dedicated blocking
+Critical Manifest checks**. LIVE proof: sqlite→zip with an injected transient failure —
+step1 verified+checkpointed, step2 transient-fails, retry reuses step1 (not rerun),
+step1 revalidated, step2 verified, pipeline succeeds; duplicate resume refused;
+tamper of data.db invalidates the checkpoint and reruns from step1. Extends the ledger
++ Control Center attention + admin gate — no second engine. Trading Guardian not engaged
+(recovery module has no trading surface; recovery adds no execution path). Verdict:
+**GOVERNED PIPELINE RETRY / RESUME / CHECKPOINT STAGING READY** — not production
+(parallel/branching DAGs, distributed/remote/cloud checkpoints, untrusted pipeline JSON,
+cross-owner reuse, production auto-scheduling remain).
+
 ## Blocked / deferred (need user action or larger scope)
 - authenticated browser / cloud connector workflow — needs a safe staging account.
 - native Finder/TextEdit actuation — macOS Accessibility (TCC) not granted.

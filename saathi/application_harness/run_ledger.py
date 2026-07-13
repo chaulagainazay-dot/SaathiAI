@@ -308,6 +308,40 @@ CREATE TABLE IF NOT EXISTS mission_run(
   terminal_at REAL DEFAULT 0,
   UNIQUE(mission_id, attempt),
   FOREIGN KEY(mission_id) REFERENCES mission(mission_id));
+CREATE TABLE IF NOT EXISTS pipeline_checkpoint(
+  checkpoint_id TEXT PRIMARY KEY,
+  pipeline_id TEXT NOT NULL,
+  owner TEXT NOT NULL,
+  step_index INTEGER NOT NULL,
+  step_name TEXT DEFAULT '',
+  step_fingerprint TEXT DEFAULT '',
+  dependency_fingerprint TEXT DEFAULT '',
+  input_fingerprint TEXT DEFAULT '',
+  artifact TEXT DEFAULT '',
+  artifact_fingerprint TEXT DEFAULT '',
+  verify_kind TEXT DEFAULT '',
+  verification_result INTEGER DEFAULT 0,
+  status TEXT NOT NULL DEFAULT 'valid',
+  version INTEGER DEFAULT 1,
+  created_at REAL,
+  invalidated_at REAL DEFAULT 0,
+  invalidation_reason TEXT DEFAULT '',
+  UNIQUE(pipeline_id, step_index));
+CREATE TABLE IF NOT EXISTS pipeline_recovery(
+  pipeline_id TEXT PRIMARY KEY,
+  owner TEXT NOT NULL,
+  attempt INTEGER DEFAULT 1,
+  max_attempts INTEGER DEFAULT 5,
+  next_retry_at REAL DEFAULT 0,
+  retry_reason TEXT DEFAULT '',
+  failure_category TEXT DEFAULT '',
+  reused_steps INTEGER DEFAULT 0,
+  rerun_steps INTEGER DEFAULT 0,
+  claim_owner TEXT DEFAULT '',
+  lease_expires_at REAL DEFAULT 0,
+  state TEXT NOT NULL DEFAULT 'retry_wait',
+  created_at REAL,
+  updated_at REAL DEFAULT 0);
 CREATE TABLE IF NOT EXISTS mission_schedule(
   schedule_id TEXT PRIMARY KEY,
   owner TEXT NOT NULL,
@@ -394,6 +428,10 @@ CREATE INDEX IF NOT EXISTS idx_occurrence_owner ON mission_occurrence(owner, sta
 CREATE INDEX IF NOT EXISTS idx_trigger_owner ON mission_event_trigger(owner, event_type);
 CREATE INDEX IF NOT EXISTS idx_trigger_event ON mission_event_trigger(event_type, status);
 CREATE INDEX IF NOT EXISTS idx_receipt_owner ON mission_event_receipt(owner, received_at);
+CREATE INDEX IF NOT EXISTS idx_checkpoint_pipeline ON pipeline_checkpoint(pipeline_id, step_index);
+CREATE INDEX IF NOT EXISTS idx_checkpoint_owner ON pipeline_checkpoint(owner, status);
+CREATE INDEX IF NOT EXISTS idx_recovery_owner ON pipeline_recovery(owner, state);
+CREATE INDEX IF NOT EXISTS idx_recovery_state ON pipeline_recovery(state, next_retry_at);
 """
 
 # M17.12 governed multi-harness pipeline states (sequential, fail-closed)
@@ -510,6 +548,30 @@ _TRIGGER_SAFE_FIELDS = ("trigger_id", "owner", "event_type",
 _RECEIPT_SAFE_FIELDS = ("receipt_id", "trigger_id", "owner", "event_type",
                         "source_event_id", "state", "mission_id",
                         "rejection_category", "received_at")
+
+# M17.15 governed pipeline recovery — durable per-step checkpoints + resume/retry.
+# Recovery reuses ONLY independently-verified checkpoints and stays inside the same
+# PipelineRunner + ledger; it adds NO second engine/retry framework/verification path.
+CHECKPOINT_VALID = "valid"
+CHECKPOINT_INVALID = "invalid"
+CHECKPOINT_SUPERSEDED = "superseded"
+CHECKPOINT_MISSING_ARTIFACT = "missing_artifact"
+CHECKPOINT_VERIFICATION_FAILED = "verification_failed"
+_CHECKPOINT_SAFE_FIELDS = ("checkpoint_id", "pipeline_id", "owner", "step_index",
+                           "step_name", "step_fingerprint", "dependency_fingerprint",
+                           "input_fingerprint", "artifact", "artifact_fingerprint",
+                           "verify_kind", "verification_result", "status", "version",
+                           "created_at", "invalidated_at", "invalidation_reason")
+RECOVERY_RETRY_WAIT = "retry_wait"
+RECOVERY_RESUMING = "resuming"
+RECOVERY_EXHAUSTED = "exhausted"
+RECOVERY_RECOVERED = "recovered"
+RECOVERY_STOP_UNCERTAIN = "stop_uncertain"
+RECOVERY_TERMINAL = {RECOVERY_EXHAUSTED, RECOVERY_RECOVERED}
+_RECOVERY_SAFE_FIELDS = ("pipeline_id", "owner", "attempt", "max_attempts",
+                         "next_retry_at", "retry_reason", "failure_category",
+                         "reused_steps", "rerun_steps", "state", "created_at",
+                         "updated_at")
 
 # M17.10 stuck-run alert classes + deterministic severity
 ALERT_SEVERITY = {"process_missing": "high", "cancellation_stuck": "high",
@@ -2279,6 +2341,273 @@ class RunLedger:
         with self._conn() as c:
             return [dict(r) for r in c.execute(q, args).fetchall()]
 
+    # ── M17.15 pipeline CHECKPOINTS (durable per-step verified evidence) ────
+    def upsert_checkpoint(self, checkpoint_id, *, pipeline_id, owner, step_index,
+                          step_name="", step_fingerprint="", dependency_fingerprint="",
+                          input_fingerprint="", artifact="", artifact_fingerprint="",
+                          verify_kind="", verification_result=True, now=None) -> dict:
+        """Record (or supersede) one step's verified checkpoint. Only a
+        SUCCESSFUL + independently-verified step should call this — a re-run
+        overwrites the prior checkpoint with a bumped version, state `valid`."""
+        owner = _clean_str(owner, field="owner")
+        if not owner:
+            raise LedgerSecurityError("LEDGER_FIELD_REJECTED", "empty owner")
+        now = now if now is not None else _now()
+        c = self._conn()
+        try:
+            c.execute("BEGIN IMMEDIATE")
+            prev = c.execute("SELECT version FROM pipeline_checkpoint WHERE "
+                             "pipeline_id=? AND step_index=?",
+                             (pipeline_id, int(step_index))).fetchone()
+            version = (int(prev["version"]) + 1) if prev else 1
+            c.execute(
+                "INSERT INTO pipeline_checkpoint(checkpoint_id,pipeline_id,owner,"
+                "step_index,step_name,step_fingerprint,dependency_fingerprint,"
+                "input_fingerprint,artifact,artifact_fingerprint,verify_kind,"
+                "verification_result,status,version,created_at) "
+                "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) "
+                "ON CONFLICT(pipeline_id,step_index) DO UPDATE SET "
+                "checkpoint_id=excluded.checkpoint_id,step_name=excluded.step_name,"
+                "step_fingerprint=excluded.step_fingerprint,"
+                "dependency_fingerprint=excluded.dependency_fingerprint,"
+                "input_fingerprint=excluded.input_fingerprint,"
+                "artifact=excluded.artifact,artifact_fingerprint=excluded.artifact_fingerprint,"
+                "verify_kind=excluded.verify_kind,verification_result=excluded.verification_result,"
+                "status=?,version=?,created_at=?,invalidated_at=0,invalidation_reason=''",
+                (checkpoint_id, pipeline_id, owner, int(step_index),
+                 _clean_str(step_name, field="step_name", maxlen=120),
+                 _clean_str(step_fingerprint, field="fp", maxlen=80),
+                 _clean_str(dependency_fingerprint, field="fp", maxlen=80),
+                 _clean_str(input_fingerprint, field="fp", maxlen=80),
+                 _clean_str(artifact, field="artifact", maxlen=256),
+                 _clean_str(artifact_fingerprint, field="fp", maxlen=80),
+                 _clean_str(verify_kind, field="vk", maxlen=60),
+                 1 if verification_result else 0, CHECKPOINT_VALID, version, now,
+                 CHECKPOINT_VALID, version, now))
+            c.execute("COMMIT")
+        finally:
+            c.close()
+        self._event("harness.checkpoint.created",
+                    {"pipeline_id": pipeline_id, "step_index": int(step_index),
+                     "version": version})
+        return {"ok": True, "version": version}
+
+    def invalidate_checkpoint(self, pipeline_id, *, step_index, reason,
+                              status=None, now=None) -> dict:
+        now = now if now is not None else _now()
+        status = status or CHECKPOINT_INVALID
+        reason = _clean_str(reason, field="reason", maxlen=120)
+        c = self._conn()
+        try:
+            c.execute("BEGIN IMMEDIATE")
+            row = c.execute("SELECT status FROM pipeline_checkpoint WHERE "
+                            "pipeline_id=? AND step_index=?",
+                            (pipeline_id, int(step_index))).fetchone()
+            if row is None:
+                c.execute("ROLLBACK"); return {"ok": False, "reason": "unknown_checkpoint"}
+            c.execute("UPDATE pipeline_checkpoint SET status=?, invalidated_at=?, "
+                      "invalidation_reason=? WHERE pipeline_id=? AND step_index=?",
+                      (status, now, reason, pipeline_id, int(step_index)))
+            c.execute("COMMIT")
+        finally:
+            c.close()
+        self._event("harness.checkpoint.invalidated",
+                    {"pipeline_id": pipeline_id, "step_index": int(step_index),
+                     "reason": reason})
+        return {"ok": True, "status": status}
+
+    def get_checkpoint(self, pipeline_id, *, step_index,
+                       owner: str | None = None) -> Optional[dict]:
+        with self._conn() as c:
+            row = c.execute("SELECT * FROM pipeline_checkpoint WHERE pipeline_id=? "
+                            "AND step_index=?", (pipeline_id, int(step_index))).fetchone()
+        if row is None or (owner is not None and row["owner"] != owner):
+            return None
+        out = {k: row[k] for k in _CHECKPOINT_SAFE_FIELDS}
+        out["verification_result"] = bool(out["verification_result"])
+        return out
+
+    def list_checkpoints(self, pipeline_id, *, owner: str | None = None) -> list[dict]:
+        with self._conn() as c:
+            o = c.execute("SELECT owner FROM pipeline_run WHERE pipeline_id=?",
+                          (pipeline_id,)).fetchone()
+            rows = [dict(r) for r in c.execute(
+                f"SELECT {','.join(_CHECKPOINT_SAFE_FIELDS)} FROM pipeline_checkpoint "
+                "WHERE pipeline_id=? ORDER BY step_index", (pipeline_id,)).fetchall()]
+        if owner is not None and rows and rows[0]["owner"] != owner:
+            return []
+        for r in rows:
+            r["verification_result"] = bool(r["verification_result"])
+        return rows
+
+    def checkpoints_owned(self, owner: str | None = None, *, limit: int = 200) -> list[dict]:
+        limit = max(1, min(int(limit), 1000))
+        q = f"SELECT {','.join(_CHECKPOINT_SAFE_FIELDS)} FROM pipeline_checkpoint"
+        args: list = []
+        if owner:
+            q += " WHERE owner=?"; args.append(owner)
+        q += " ORDER BY created_at DESC LIMIT ?"; args.append(limit)
+        with self._conn() as c:
+            rows = [dict(r) for r in c.execute(q, args).fetchall()]
+        for r in rows:
+            r["verification_result"] = bool(r["verification_result"])
+        return rows
+
+    # ── M17.15 pipeline RECOVERY state (attempts, retry timing, lease) ──────
+    def upsert_recovery(self, pipeline_id, *, owner, failure_category="",
+                        retry_reason="", attempt=1, max_attempts=5, next_retry_at=0.0,
+                        state=RECOVERY_RETRY_WAIT, reused_steps=None, rerun_steps=None,
+                        now=None) -> dict:
+        owner = _clean_str(owner, field="owner")
+        if not owner:
+            raise LedgerSecurityError("LEDGER_FIELD_REJECTED", "empty owner")
+        now = now if now is not None else _now()
+        c = self._conn()
+        try:
+            c.execute("BEGIN IMMEDIATE")
+            extra_sets = ""
+            extra_args: list = []
+            if reused_steps is not None:
+                extra_sets += ",reused_steps=?"; extra_args.append(int(reused_steps))
+            if rerun_steps is not None:
+                extra_sets += ",rerun_steps=?"; extra_args.append(int(rerun_steps))
+            c.execute(
+                "INSERT INTO pipeline_recovery(pipeline_id,owner,attempt,max_attempts,"
+                "next_retry_at,retry_reason,failure_category,state,created_at,updated_at,"
+                "reused_steps,rerun_steps) VALUES(?,?,?,?,?,?,?,?,?,?,?,?) "
+                "ON CONFLICT(pipeline_id) DO UPDATE SET attempt=?,max_attempts=?,"
+                "next_retry_at=?,retry_reason=?,failure_category=?,state=?,updated_at=?"
+                + extra_sets,
+                (pipeline_id, owner, int(attempt), int(max_attempts), float(next_retry_at),
+                 _clean_str(retry_reason, field="rr", maxlen=120),
+                 _clean_str(failure_category, field="fc", maxlen=80), state, now, now,
+                 int(reused_steps or 0), int(rerun_steps or 0),
+                 int(attempt), int(max_attempts), float(next_retry_at),
+                 _clean_str(retry_reason, field="rr", maxlen=120),
+                 _clean_str(failure_category, field="fc", maxlen=80), state, now,
+                 *extra_args))
+            c.execute("COMMIT")
+        finally:
+            c.close()
+        return {"ok": True, "state": state, "attempt": int(attempt)}
+
+    def claim_recovery(self, pipeline_id, *, worker, now=None, lease_sec=120.0) -> bool:
+        """Atomic recovery-claim: only one resumer/retrier wins; an active lease is
+        not stealable; an expired lease is reclaimable."""
+        now = now if now is not None else _now()
+        c = self._conn()
+        try:
+            c.execute("BEGIN IMMEDIATE")
+            row = c.execute("SELECT state, lease_expires_at FROM pipeline_recovery "
+                            "WHERE pipeline_id=?", (pipeline_id,)).fetchone()
+            if row is None:
+                c.execute("ROLLBACK"); return False
+            if row["state"] in RECOVERY_TERMINAL:
+                c.execute("ROLLBACK"); return False
+            if (row["lease_expires_at"] or 0) > now:
+                c.execute("ROLLBACK"); return False
+            c.execute("UPDATE pipeline_recovery SET claim_owner=?, lease_expires_at=?, "
+                      "state=?, updated_at=? WHERE pipeline_id=?",
+                      (_clean_str(worker, field="w", maxlen=80), now + float(lease_sec),
+                       RECOVERY_RESUMING, now, pipeline_id))
+            c.execute("COMMIT")
+        finally:
+            c.close()
+        return True
+
+    def release_recovery(self, pipeline_id, *, state, reused_steps=None,
+                         rerun_steps=None, retry_reason="", next_retry_at=None,
+                         attempt=None, now=None) -> dict:
+        now = now if now is not None else _now()
+        sets = ["state=?", "claim_owner=''", "lease_expires_at=0", "updated_at=?"]
+        args: list = [state, now]
+        if reused_steps is not None:
+            sets.append("reused_steps=?"); args.append(int(reused_steps))
+        if rerun_steps is not None:
+            sets.append("rerun_steps=?"); args.append(int(rerun_steps))
+        if retry_reason:
+            sets.append("retry_reason=?"); args.append(_clean_str(retry_reason, field="rr", maxlen=120))
+        if next_retry_at is not None:
+            sets.append("next_retry_at=?"); args.append(float(next_retry_at))
+        if attempt is not None:
+            sets.append("attempt=?"); args.append(int(attempt))
+        args.append(pipeline_id)
+        with self._conn() as c:
+            c.execute(f"UPDATE pipeline_recovery SET {','.join(sets)} WHERE pipeline_id=?",
+                      args)
+        self._event("harness.recovery.state", {"pipeline_id": pipeline_id, "state": state})
+        return {"ok": True, "state": state}
+
+    def reclaim_stale_recovery(self, *, now=None, lease_sec=120.0) -> list[dict]:
+        now = now if now is not None else _now()
+        with self._conn() as c:
+            rows = [dict(r) for r in c.execute(
+                "SELECT pipeline_id, owner, attempt FROM pipeline_recovery WHERE "
+                "state=? AND lease_expires_at>0 AND lease_expires_at<?",
+                (RECOVERY_RESUMING, now)).fetchall()]
+        return rows
+
+    def get_recovery(self, pipeline_id, *, owner: str | None = None) -> Optional[dict]:
+        with self._conn() as c:
+            row = c.execute("SELECT * FROM pipeline_recovery WHERE pipeline_id=?",
+                            (pipeline_id,)).fetchone()
+        if row is None or (owner is not None and row["owner"] != owner):
+            return None
+        return {k: row[k] for k in _RECOVERY_SAFE_FIELDS}
+
+    def list_recoveries(self, owner: str | None = None, *, limit: int = 200) -> list[dict]:
+        limit = max(1, min(int(limit), 1000))
+        q = f"SELECT {','.join(_RECOVERY_SAFE_FIELDS)} FROM pipeline_recovery"
+        args: list = []
+        if owner:
+            q += " WHERE owner=?"; args.append(owner)
+        q += " ORDER BY updated_at DESC LIMIT ?"; args.append(limit)
+        with self._conn() as c:
+            return [dict(r) for r in c.execute(q, args).fetchall()]
+
+    def reopen_pipeline(self, pipeline_id, *, now=None) -> dict:
+        """Governed recovery reopen: a FAILED pipeline → running so the runner can
+        resume from the first non-reusable step. This is the ONE audited, bounded
+        exception to pipeline terminal immutability (attempts are bounded by the
+        recovery record; `complete_pipeline` stays immutable for normal runs)."""
+        now = now if now is not None else _now()
+        c = self._conn()
+        try:
+            c.execute("BEGIN IMMEDIATE")
+            row = c.execute("SELECT state FROM pipeline_run WHERE pipeline_id=?",
+                            (pipeline_id,)).fetchone()
+            if row is None:
+                c.execute("ROLLBACK"); return {"ok": False, "reason": "unknown_pipeline"}
+            if row["state"] != PIPELINE_FAILED:
+                c.execute("ROLLBACK")
+                return {"ok": False, "reason": f"not_resumable:{row['state']}"}
+            c.execute("UPDATE pipeline_run SET state=?, failed_step=-1, failure_code='' "
+                      "WHERE pipeline_id=? AND state=?",
+                      (PIPELINE_RUNNING, pipeline_id, PIPELINE_FAILED))
+            c.execute("COMMIT")
+        finally:
+            c.close()
+        self._event("harness.pipeline.reopened", {"pipeline_id": pipeline_id})
+        return {"ok": True, "state": PIPELINE_RUNNING}
+
+    def recovery_health(self, owner: str | None = None) -> dict:
+        where, args = "", []
+        if owner:
+            where, args = " WHERE owner=?", [owner]
+        with self._conn() as c:
+            by = {r["state"]: r["n"] for r in c.execute(
+                f"SELECT state, COUNT(*) n FROM pipeline_recovery{where} GROUP BY state",
+                args).fetchall()}
+            invalid_cp = c.execute(
+                "SELECT COUNT(*) n FROM pipeline_checkpoint WHERE status!=?" +
+                (" AND owner=?" if owner else ""),
+                ([CHECKPOINT_VALID, owner] if owner else [CHECKPOINT_VALID])).fetchone()["n"]
+        return {"by_state": by, "retry_wait": by.get(RECOVERY_RETRY_WAIT, 0),
+                "exhausted": by.get(RECOVERY_EXHAUSTED, 0),
+                "recovered": by.get(RECOVERY_RECOVERED, 0),
+                "stop_uncertain": by.get(RECOVERY_STOP_UNCERTAIN, 0),
+                "invalid_checkpoints": invalid_cp, "total": sum(by.values())}
+
     def cleanup(self, *, retention_sec: float, now=None) -> dict:
         """Delete terminal runs (and their transitions) older than the retention
         window. Active runs are never touched."""
@@ -2347,6 +2676,8 @@ class RunLedger:
             occ_dupes = c.execute("SELECT COUNT(*) n FROM (SELECT dedup_key, "
                                   "COUNT(*) c FROM mission_occurrence GROUP BY "
                                   "dedup_key HAVING c>1)").fetchone()["n"]
+            checkpoints = c.execute("SELECT COUNT(*) n FROM pipeline_checkpoint").fetchone()["n"]
+            recoveries = c.execute("SELECT COUNT(*) n FROM pipeline_recovery").fetchone()["n"]
         return {"integrity": integrity,
                 "ok": integrity == "ok" and dupes == 0 and occ_dupes == 0,
                 "total_runs": total, "by_state": census, "transitions": trans,
@@ -2354,7 +2685,8 @@ class RunLedger:
                 "idempotency_collisions": dupes, "open_alerts": open_alerts,
                 "pipelines": pipelines, "missions": missions,
                 "schedules": schedules, "occurrences": occurrences,
-                "occurrence_collisions": occ_dupes, "db_path": str(self.db_path)}
+                "occurrence_collisions": occ_dupes, "checkpoints": checkpoints,
+                "recoveries": recoveries, "db_path": str(self.db_path)}
 
     # ── M17.8 journal drop-in (adapter compatibility, no adapter changes) ───
     # The ApplicationHarnessAdapter calls journal.record_start / record_end;

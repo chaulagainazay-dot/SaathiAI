@@ -46,6 +46,14 @@ M17.9 durable run-ledger operations — LOCAL ADMIN-MAINTENANCE surface.
     python -m saathi.application_harness.cli occurrence-reconcile
     python -m saathi.application_harness.cli triggers
     python -m saathi.application_harness.cli trigger-inspect <id>
+    python -m saathi.application_harness.cli pipeline-recovery-health   (M17.15 census: always)
+  # M17.15 recovery admin-gated (SAATHI_HARNESS_ADMIN=1), owner-safe:
+    python -m saathi.application_harness.cli pipeline-checkpoints <pipeline_id>
+    python -m saathi.application_harness.cli pipeline-checkpoint-inspect <pipeline_id> <step_index>
+    python -m saathi.application_harness.cli pipeline-recovery-history
+    python -m saathi.application_harness.cli pipeline-recovery-reconcile
+    python -m saathi.application_harness.cli pipeline-invalidate-checkpoint <pipeline_id> <step_index>
+    python -m saathi.application_harness.cli pipeline-resume|pipeline-retry <pipeline_id>
 
 Security model: this CLI has NO authenticated user context, so it never trusts a
 caller-supplied identity for authorization. Ledger inspection + mutation are
@@ -77,7 +85,11 @@ _LEDGER_CMDS = {"runs", "run-inspect", "run-cancel", "run-reconcile",
                 "scheduler-health", "schedules", "schedule-inspect",
                 "schedule-create", "schedule-pause", "schedule-resume",
                 "schedule-disable", "occurrences", "occurrence-inspect",
-                "occurrence-reconcile", "triggers", "trigger-inspect"}
+                "occurrence-reconcile", "triggers", "trigger-inspect",
+                "pipeline-recovery-health", "pipeline-checkpoints",
+                "pipeline-checkpoint-inspect", "pipeline-resume", "pipeline-retry",
+                "pipeline-recovery-reconcile", "pipeline-invalidate-checkpoint",
+                "pipeline-recovery-history"}
 _ADMIN_MSG = ("ledger maintenance commands require admin mode: set "
               "SAATHI_HARNESS_ADMIN=1 (the verified local OS identity is used "
               "as the audited operator; no caller-supplied identity is trusted)")
@@ -106,6 +118,32 @@ def _safe_row(row: dict | None) -> dict:
     return {k: row.get(k) for k in _SAFE_FIELDS}
 
 
+def _recovery_spec(led, pipeline_id):
+    """Rebuild the trusted PipelineSpec for a MISSION-originated pipeline so an
+    operator resume/retry runs the SAME governed steps. Falls closed (None) when the
+    pipeline was not produced by a known mission template (no arbitrary specs)."""
+    run = led.inspect_pipeline(pipeline_id)
+    if run is None:
+        return None
+    mid = run.get("correlation_id")
+    if not mid:
+        return None
+    m = led.inspect_mission(mid)
+    if m is None:
+        return None
+    from saathi.application_harness.mission import MissionEngine
+    from saathi.application_harness.pipeline import PipelineSpec
+    tmpl = MissionEngine(ledger=led).templates.get(m["template"])
+    if tmpl is None or tmpl.build_steps is None:
+        return None
+    try:
+        steps = tmpl.build_steps(dict(m["params"]))
+    except Exception:
+        return None
+    return (PipelineSpec(name=m["title"], owner=run["owner"], steps=steps,
+                         pipeline_id=pipeline_id, correlation_id=mid), run["owner"])
+
+
 def _ledger_cmd(cmd, rest) -> int | None:
     """Handle M17.9 run-ledger subcommands. Returns an exit code, or None if
     `cmd` is not a ledger command."""
@@ -126,6 +164,8 @@ def _ledger_cmd(cmd, rest) -> int | None:
         print(json.dumps({"schedules": led.schedule_health(),
                           "occurrences": led.occurrence_health()},
                          indent=2, default=str)); return 0
+    if cmd == "pipeline-recovery-health":     # M17.15 aggregate census — no secrets
+        print(json.dumps(led.recovery_health(), indent=2, default=str)); return 0
     # everything else is admin-maintenance-only; identity from trusted OS context
     if not _admin_enabled():
         print(_ADMIN_MSG, file=sys.stderr)
@@ -279,6 +319,56 @@ def _ledger_cmd(cmd, rest) -> int | None:
         t = led.get_trigger(rest[0])
         print(json.dumps(t or {"error": "not found"}, indent=2, default=str))
         return 0 if t else 1
+    if cmd == "pipeline-recovery-history":     # M17.15 operator diagnostic (owner-safe)
+        print(json.dumps(led.list_recoveries(None), indent=2, default=str)); return 0
+    if cmd == "pipeline-checkpoints":
+        if not rest:
+            print("pipeline-checkpoints needs <pipeline_id>", file=sys.stderr); return 2
+        print(json.dumps(led.list_checkpoints(rest[0]), indent=2, default=str)); return 0
+    if cmd == "pipeline-checkpoint-inspect":
+        if len(rest) < 2:
+            print("pipeline-checkpoint-inspect needs <pipeline_id> <step_index>",
+                  file=sys.stderr); return 2
+        try:
+            si = int(rest[1])
+        except ValueError:
+            print("step_index must be an integer", file=sys.stderr); return 2
+        cp = led.get_checkpoint(rest[0], step_index=si)
+        print(json.dumps(cp or {"error": "not found"}, indent=2, default=str))
+        return 0 if cp else 1
+    if cmd == "pipeline-invalidate-checkpoint":   # operator may INVALIDATE (never validate)
+        if len(rest) < 2:
+            print("pipeline-invalidate-checkpoint needs <pipeline_id> <step_index>",
+                  file=sys.stderr); return 2
+        try:
+            si = int(rest[1])
+        except ValueError:
+            print("step_index must be an integer", file=sys.stderr); return 2
+        res = led.invalidate_checkpoint(rest[0], step_index=si,
+                                        reason=f"operator:{operator}")   # audited
+        print(json.dumps(res, indent=2, default=str))
+        return 0 if res.get("ok") else 1
+    if cmd == "pipeline-recovery-reconcile":      # settle stale recovery claims only
+        from saathi.application_harness.pipeline_recovery import PipelineRecovery
+        print(json.dumps(PipelineRecovery(ledger=led).reconcile(), indent=2, default=str))
+        return 0
+    if cmd in ("pipeline-resume", "pipeline-retry"):
+        if not rest:
+            print(f"{cmd} needs <pipeline_id>", file=sys.stderr); return 2
+        spec_owner = _recovery_spec(led, rest[0])
+        if spec_owner is None:
+            print(json.dumps({"ok": False,
+                              "reason": "spec_unavailable — resume/retry is driven "
+                                        "through the owning mission template"}))
+            return 1
+        spec, owner = spec_owner
+        from saathi.application_harness.pipeline_recovery import PipelineRecovery
+        rec = PipelineRecovery(ledger=led)
+        res = (rec.resume(spec, owner=owner, session_id=f"cli:{operator}")
+               if cmd == "pipeline-resume"
+               else rec.retry(spec, owner=owner, session_id=f"cli:{operator}"))
+        print(json.dumps(res, indent=2, default=str))
+        return 0 if res.get("ok") else 1
     if cmd == "alert-ack":
         if not rest:
             print("alert-ack needs <alert_id>", file=sys.stderr); return 2
@@ -303,7 +393,10 @@ def main(argv=None) -> int:
               "|missions|mission-inspect|mission-run|mission-health|mission-history|mission-retry"
               "|scheduler-health|schedules|schedule-inspect|schedule-create|schedule-pause"
               "|schedule-resume|schedule-disable|occurrences|occurrence-inspect"
-              "|occurrence-reconcile|triggers|trigger-inspect",
+              "|occurrence-reconcile|triggers|trigger-inspect"
+              "|pipeline-recovery-health|pipeline-checkpoints|pipeline-checkpoint-inspect"
+              "|pipeline-resume|pipeline-retry|pipeline-recovery-reconcile"
+              "|pipeline-invalidate-checkpoint|pipeline-recovery-history",
               file=sys.stderr)
         return 2
     cmd, rest = argv[0], argv[1:]

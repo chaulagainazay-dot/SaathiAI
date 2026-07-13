@@ -1358,6 +1358,94 @@
    ],
    "subsystem": "application_harness",
    "blocking": true
+  },
+  {
+   "id": "pipeline_recovery.checkpoint_integrity",
+   "targets": [
+    "tests/test_m17_15_pipeline_recovery.py::test_verified_step_creates_valid_checkpoint",
+    "tests/test_m17_15_pipeline_recovery.py::test_missing_artifact_invalidates",
+    "tests/test_m17_15_pipeline_recovery.py::test_modified_artifact_invalidates",
+    "tests/test_m17_15_pipeline_recovery.py::test_path_escape_artifact_rejected"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "pipeline_recovery.resume_contiguous_prefix",
+   "targets": [
+    "tests/test_m17_15_pipeline_recovery.py::test_unchanged_prefix_reusable",
+    "tests/test_m17_15_pipeline_recovery.py::test_changed_step_definition_invalidates",
+    "tests/test_m17_15_pipeline_recovery.py::test_resume_reuses_prefix_and_completes",
+    "tests/test_m17_15_pipeline_recovery.py::test_resume_does_not_rerun_verified_step",
+    "tests/test_m17_15_pipeline_recovery.py::test_resume_starts_at_first_invalid_middle_step"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "pipeline_recovery.retry_policy",
+   "targets": [
+    "tests/test_m17_15_pipeline_recovery.py::test_retry_eligibility_allowlist",
+    "tests/test_m17_15_pipeline_recovery.py::test_eligible_transient_retry_succeeds_after_backoff",
+    "tests/test_m17_15_pipeline_recovery.py::test_retry_bounded_and_backoff_then_exhausted",
+    "tests/test_m17_15_pipeline_recovery.py::test_non_retryable_failure_does_not_retry"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "pipeline_recovery.crash_reconciliation",
+   "targets": [
+    "tests/test_m17_15_pipeline_recovery.py::test_reconcile_avoids_duplicate_execution",
+    "tests/test_m17_15_pipeline_recovery.py::test_uncertain_execution_fails_closed_stop_uncertain"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "pipeline_recovery.concurrency_dedup",
+   "targets": [
+    "tests/test_m17_15_pipeline_recovery.py::test_active_recovery_lease_not_stealable_expired_reclaimable",
+    "tests/test_m17_15_pipeline_recovery.py::test_duplicate_resume_deduplicated"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "pipeline_recovery.approval_owner_safety",
+   "targets": [
+    "tests/test_m17_15_pipeline_recovery.py::test_increased_risk_invalidates_checkpoint_reuse",
+    "tests/test_m17_15_pipeline_recovery.py::test_resume_stops_closed_at_approval_required",
+    "tests/test_m17_15_pipeline_recovery.py::test_approval_required_failure_does_not_retry",
+    "tests/test_m17_15_pipeline_recovery.py::test_resume_owner_mismatch_rejected",
+    "tests/test_m17_15_pipeline_recovery.py::test_recovery_module_has_no_execution_shortcut"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "pipeline_recovery.mission_scheduler_integration",
+   "targets": [
+    "tests/test_m17_15_pipeline_recovery.py::test_mission_pipeline_resume_no_duplicate_mission"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "pipeline_recovery.control_center_owner_scope",
+   "targets": [
+    "tests/test_m17_15_pipeline_recovery.py::test_control_center_recovery_attention_owner_safe"
+   ],
+   "subsystem": "control_center",
+   "blocking": true
+  },
+  {
+   "id": "pipeline_recovery.database_backup_restore",
+   "targets": [
+    "tests/test_m17_15_pipeline_recovery.py::test_recovery_ledger_survives_backup_restore"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
   }
  ]
 }

@@ -27,6 +27,8 @@ scheduling are deliberately out of scope for this milestone.
 """
 from __future__ import annotations
 
+import hashlib
+import json
 import os
 import uuid
 from dataclasses import dataclass, field
@@ -38,6 +40,7 @@ from saathi.application_harness import service as _service
 from saathi.application_harness.models import HarnessActionIntent
 from saathi.application_harness.run_ledger import (
     RunLedger, default_ledger, PIPELINE_SUCCEEDED, PIPELINE_FAILED,
+    RECOVERY_RETRY_WAIT,
 )
 
 # root under the (gitignored) harness data dir — every pipeline gets an isolated
@@ -121,6 +124,50 @@ def _within(root: str, path: str) -> bool:
         return False
 
 
+# ── M17.15 deterministic fingerprints (canonical; never hash raw secrets) ───
+def _sha(s: str) -> str:
+    return hashlib.sha256(s.encode()).hexdigest()[:24]
+
+
+def file_fingerprint(path: str) -> str:
+    """sha256 of an artifact's bytes; "" if missing (→ checkpoint not reusable)."""
+    try:
+        h = hashlib.sha256()
+        with open(path, "rb") as f:
+            for chunk in iter(lambda: f.read(65536), b""):
+                h.update(chunk)
+        return h.hexdigest()[:24]
+    except Exception:
+        return ""
+
+
+def step_fingerprint(step: "PipelineStep", plan: "StepPlan", op, workspace: str) -> str:
+    """Deterministic fingerprint of a step's EXECUTION-AFFECTING definition:
+    harness/operation identity, the workspace-normalized argv, produced artifact,
+    verification policy, risk, and approval requirement. Cosmetic fields do not
+    enter it; an execution-affecting change does. Stable across process restarts."""
+    argv_norm = [a.replace(workspace, "<WS>") if isinstance(a, str) else a
+                 for a in (plan.argv or [])]
+    verify_norm = (plan.verify_target or "").replace(workspace, "<WS>")
+    basis = json.dumps({
+        "h": step.harness_id, "op": step.operation_id, "argv": argv_norm,
+        "produces": plan.produces, "verify_kind": plan.verify_kind,
+        "verify_target": verify_norm, "approved": bool(plan.approved),
+        "risk": getattr(op, "risk", 0),
+        "approval": getattr(op, "approval_requirement", "auto"),
+    }, sort_keys=True, default=str)
+    return _sha(basis)
+
+
+def dependency_fingerprint(prior_steps, artifact_fps: dict) -> str:
+    """Fingerprint of the upstream state a step depends on: the ordered prior step
+    names and their produced-artifact fingerprints. A changed/missing upstream
+    artifact changes this → downstream checkpoints fail closed."""
+    basis = json.dumps([[s.name, artifact_fps.get(s.name, "")] for s in prior_steps],
+                       sort_keys=True)
+    return _sha(basis)
+
+
 class PipelineRunner:
     """Runs a PipelineSpec. All steps share ONE confined workspace; the runner
     never bypasses the governed service."""
@@ -146,28 +193,65 @@ class PipelineRunner:
         if not created.get("created"):
             return {"ok": False, "pipeline_id": pid, "reason": created.get("reason")}
         self.ledger.start_pipeline(pid)
+        return self._execute(pid, spec, owner, workspace, session_id,
+                             start_index=0, artifacts={}, artifact_fps={}, reused=0)
 
-        artifacts: dict = {}
-        for idx, step in enumerate(spec.steps):
+    def execute_resume(self, spec: PipelineSpec, owner: str, *, start_index: int,
+                       seed_artifacts: dict, seed_fps: dict,
+                       session_id: str = "resume") -> dict:
+        """Continue an ALREADY-REOPENED pipeline_run from `start_index`, seeding the
+        reused verified artifacts. The step loop is IDENTICAL to a fresh run — same
+        governed run_harness_action, same confinement, same independent verification,
+        same checkpoint writing. Reused steps are NOT re-executed."""
+        pid = spec.pipeline_id
+        workspace = str(self.runs_root / pid)
+        return self._execute(pid, spec, owner, workspace, session_id,
+                             start_index=start_index, artifacts=dict(seed_artifacts),
+                             artifact_fps=dict(seed_fps), reused=start_index)
+
+    def _execute(self, pid, spec, owner, workspace, session_id, *, start_index,
+                 artifacts, artifact_fps, reused) -> dict:
+        rerun = 0
+        for idx in range(start_index, len(spec.steps)):
+            step = spec.steps[idx]
+            dep_fp = dependency_fingerprint(spec.steps[:idx], artifact_fps)
             outcome = self._run_step(pid, idx, step, owner, workspace, artifacts,
-                                     session_id)
+                                     session_id, dep_fp)
             if outcome["status"] != _SUCCESS:
-                self.ledger.complete_pipeline(
-                    pid, state=PIPELINE_FAILED, failed_step=idx,
-                    failure_code=outcome.get("error_code") or outcome["status"])
+                code = outcome.get("error_code") or outcome["status"]
+                self.ledger.complete_pipeline(pid, state=PIPELINE_FAILED,
+                                              failed_step=idx, failure_code=code)
+                self._record_failure(pid, owner, code)
                 return {"ok": False, "pipeline_id": pid, "state": PIPELINE_FAILED,
                         "failed_step": idx, "failed_step_name": step.name,
-                        "failure_code": outcome.get("error_code") or outcome["status"],
-                        "steps_run": idx + 1}
+                        "failure_code": code, "steps_run": idx + 1,
+                        "reused_steps": reused, "rerun_steps": rerun}
+            rerun += 1
             if outcome.get("artifact"):
                 artifacts[step.name] = os.path.join(workspace, outcome["artifact"])
-
+                artifact_fps[step.name] = outcome.get("artifact_fp", "")
         self.ledger.complete_pipeline(pid, state=PIPELINE_SUCCEEDED)
         return {"ok": True, "pipeline_id": pid, "state": PIPELINE_SUCCEEDED,
-                "steps_run": len(spec.steps),
-                "artifacts": sorted(artifacts.keys())}
+                "steps_run": len(spec.steps), "reused_steps": reused,
+                "rerun_steps": rerun, "artifacts": sorted(artifacts.keys())}
 
-    def _run_step(self, pid, idx, step, owner, workspace, artifacts, session_id) -> dict:
+    def _record_failure(self, pid, owner, code) -> None:
+        """Record a failed pipeline's recovery seed (owner-safe category) so a later
+        governed retry/resume can find it. Never raises into the run path."""
+        try:
+            from saathi.application_harness.run_ledger import RECOVERY_STOP_UNCERTAIN
+            rec = self.ledger.get_recovery(pid)
+            up = code.upper()
+            state = (RECOVERY_STOP_UNCERTAIN
+                     if ("UNCERTAIN" in up or "VERIFICATION" in up) else RECOVERY_RETRY_WAIT)
+            self.ledger.upsert_recovery(pid, owner=owner, failure_category=code,
+                                        attempt=(rec["attempt"] if rec else 1),
+                                        next_retry_at=0.0, state=state)
+        except Exception:
+            pass
+
+    def _run_step(self, pid, idx, step, owner, workspace, artifacts, session_id,
+                  dep_fp="") -> dict:
         defn, op = self.resolver(step.harness_id, step.operation_id)
         if defn is None or op is None:
             return self._record_blocked(pid, idx, step, run_id="",
@@ -213,8 +297,22 @@ class PipelineRunner:
             pid, step_index=idx, step_name=step.name, harness_id=step.harness_id,
             operation_id=step.operation_id, run_id=run_id, status=status,
             error_code=res.get("error_code", ""), artifact=artifact)
+        artifact_fp = ""
+        if status == _SUCCESS:
+            # a SUCCESS here is already independently verified by run_harness_action
+            # (blocked/failed/uncertain/approval_required never reach this branch),
+            # so this is exactly where a durable, reusable checkpoint belongs.
+            artifact_fp = file_fingerprint(os.path.join(workspace, plan.produces)) \
+                if plan.produces else ""
+            self.ledger.upsert_checkpoint(
+                "cp_" + uuid.uuid4().hex[:16], pipeline_id=pid, owner=owner,
+                step_index=idx, step_name=step.name,
+                step_fingerprint=step_fingerprint(step, plan, op, workspace),
+                dependency_fingerprint=dep_fp, input_fingerprint=dep_fp,
+                artifact=plan.produces, artifact_fingerprint=artifact_fp,
+                verify_kind=plan.verify_kind, verification_result=True)
         return {"status": status, "error_code": res.get("error_code", ""),
-                "artifact": artifact}
+                "artifact": artifact, "artifact_fp": artifact_fp}
 
     def _record_blocked(self, pid, idx, step, *, run_id, code) -> dict:
         self.ledger.record_pipeline_step(

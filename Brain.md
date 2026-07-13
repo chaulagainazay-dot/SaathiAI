@@ -1431,3 +1431,65 @@ this invocation (see git log); rollback point 73fd251. **Verdict: GOVERNED MISSI
 SCHEDULING & TRUSTED EVENT TRIGGERS STAGING READY** — NOT production (cron, public
 webhooks, untrusted JSON defs, distributed/parallel scheduling, production auto-
 scheduling outstanding).
+
+## M17.15 — governed pipeline retry, resume & checkpoints
+
+Autonomous-loop milestone (start/rollback 4cad92a, M17.14). A failed/interrupted
+pipeline CONTINUES FROM ITS LAST INDEPENDENTLY VERIFIED STEP instead of restarting.
+KEY: RECOVERY REUSES ONLY VERIFIED CHECKPOINTS, and ONLY A CONTIGUOUS VALID PREFIX
+is reusable — reuse stops at the first invalid/missing/changed step and every later
+step reruns; no already-verified step reruns unless its checkpoint is invalid.
+RESUME STILL USES PipelineRunner and run_harness_action — recovery is IMMEDIATELY
+AROUND the existing PipelineRunner (static test asserts pipeline_recovery.py has no
+run_harness_action/adapter/subprocess/Popen reference; the only downward call is
+PipelineRunner.execute_resume). NO second pipeline/execution engine, retry
+framework, verification path, or ledger. Additive ledger tables: pipeline_checkpoint
+(UNIQUE per pipeline_id,step_index; status valid|invalid|superseded|
+missing_artifact|verification_failed) + pipeline_recovery (attempt/max/next_retry/
+lease/state retry_wait|resuming|exhausted|recovered|stop_uncertain). A checkpoint is
+written ONLY after a SUCCESS+verified step (blocked/failed/uncertain/approval_required
+never reach that branch). FINGERPRINTS (deterministic, canonical, never raw secrets;
+stable across restart): step_fingerprint = harness/op identity + workspace-normalized
+argv + produces + verify_kind + verify_target + approved + RISK + APPROVAL
+requirement; dependency_fingerprint = ordered prior step names + their artifact
+fingerprints; artifact_fingerprint = sha256 of file bytes. ARTIFACT INTEGRITY IS
+CHECKED BEFORE REUSE: artifact must exist, realpath inside the workspace, and
+fingerprint match — a missing/modified/escaping artifact invalidates the checkpoint
+and reruns its producing step (downstream not reused). CHECKPOINT REUSABLE only if
+owner + pipeline + step identity + step/dependency fingerprints + verify policy +
+verification passed + artifact intact + not invalidated all hold — fail closed on any
+mismatch. RETRY IS CATEGORY-ALLOWLISTED AND BOUNDED: only transient/infra categories
+(timeout/transient_lock/fs_contention/adapter_timeout/resource_unavailable/
+interrupted) auto-retry, on the shared deterministic RETRY_SCHEDULE
+[0,60,300,900,3600]s → exhausted; approval/owner/verification/param/path-escape/
+secret/manual-only/cancellation/tamper/fingerprint-mismatch/unknown NEVER auto-retry
+(unknown category fails closed). APPROVAL IS NOT IMPLIED: risk + approval requirement
+are in the step fingerprint, so INCREASED RISK invalidates checkpoint reuse and the
+step reruns and stops at approval_required; resume/retry never elevate; risk-4
+manual-only via unchanged run_harness_action; operator may INVALIDATE a checkpoint but
+NEVER mark one valid (no force-success). reopen_pipeline = the ONE governed, audited,
+attempt-bounded exception to pipeline terminal immutability (complete_pipeline stays
+immutable for normal runs; M17.12 tests unchanged). CONCURRENCY: lease-based recovery
+claim (one resumer wins; active lease not stealable; expired reclaimable; concurrent
+resume/retry → one resumed run). CRASH RECONCILE prefers reconciliation over duplicate
+execution (now-succeeded → recovered; uncertain → retry_wait, never assume success;
+verification-uncertain → stop_uncertain). MISSION INTEGRATION: a mission's failed
+pipeline resumes IN PLACE (same pipeline_id/workspace) — no duplicate mission/
+occurrence; owner preserved; mission terminal reflects the resumed result. Control
+Center: owner-safe recovery cell + attention (retry exhausted/high, stop_uncertain/
+high, missing-artifact checkpoint/high, other invalid checkpoint/medium). CLI:
+pipeline-recovery-health (always) + 7 admin-gated owner-safe (checkpoints,
+checkpoint-inspect, recovery-history, recovery-reconcile, invalidate-checkpoint,
+resume, retry). Ops: 9 BLOCKING pipeline_recovery.* manifest checks. Tests:
+test_m17_15_pipeline_recovery.py (35). VALIDATION: 35 new; 249 harness-lineage+CC
+regression; full suite 1771 passed / 1 skipped / 0 failed (+35 over 1736); 9
+pipeline_recovery.* manifest GREEN via runner; release gate exit 0 (db/backup/restore
+true) + dedicated backup/restore test; secret scan clean; git diff --check clean.
+Backward compatible: additive CREATE TABLE IF NOT EXISTS; M17.8–M17.14 preserved;
+revert = single-commit rollback (two unused tables remain). Trading Guardian NOT
+engaged (recovery module has no trading surface — asserted; recovery adds no execution
+path so no trading action can be retried/resumed). Commit: this invocation (see git
+log); rollback point 4cad92a. **Verdict: GOVERNED PIPELINE RETRY / RESUME / CHECKPOINT
+STAGING READY** — NOT production (parallel/branching DAGs, distributed/remote/cloud
+checkpoints, untrusted pipeline JSON, cross-owner reuse, production auto-scheduling
+outstanding).

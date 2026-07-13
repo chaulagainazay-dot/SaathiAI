@@ -399,3 +399,31 @@ DEFAULT (the recurring runner is opt-in for local use; no always-on server job i
 provisioned), and LIVE TRADING IS NOT ENABLED — scheduling a mission can never turn
 advisory permission into trading permission. It adds no new engine and changes
 nothing financial.
+
+## M17.15 — long jobs no longer restart from zero after a safe hiccup
+
+Some SaathiOS jobs have several steps — build a file, verify it, package it, publish
+it. Until now, if a late step hit a temporary snag, the ENTIRE job had to start over,
+repeating work that already succeeded. M17.15 fixes that: LONG WORKFLOWS NO LONGER
+NEED TO RESTART FROM ZERO AFTER A SAFE, RECOVERABLE FAILURE. Every step that
+succeeds is independently verified and saved as a trustworthy checkpoint. When the
+job resumes, it REUSES COMPLETED VERIFIED WORK ONLY WHEN IT IS UNCHANGED AND INTACT,
+and picks up from the first step that still needs doing. If a saved output was
+deleted or altered, the system notices — TAMPERED OR MISSING OUTPUTS FORCE A SAFE
+RERUN of the step that produced them (and everything after it), rather than trusting
+a bad file. And APPROVALS REMAIN MANDATORY: resuming or retrying a job never grants
+permission — a step that needs sign-off still waits for it. Retries happen only for
+genuinely temporary problems, a bounded number of times, then stop.
+
+What it unlocks, in plain terms:
+- **IELTSAlert video generation**: a multi-step render that stumbles on the packaging
+  step resumes from packaging — the verified audio/segments aren't rebuilt.
+- **Cafeteria (HCG) reports**: an evening report that hits a momentary file lock
+  retries just the affected step, not the whole report.
+- **CEO OS**: a brief that fails late resumes from where it stopped, and still waits
+  for approval if approval was required.
+- **HCG research**: a long research pipeline continues from its last verified stage
+  after an interruption, without redoing completed, verified work.
+
+Live trading remains disabled — recovery adds no trading ability and can never retry
+or resume a trade. It adds no new engine and changes nothing financial.

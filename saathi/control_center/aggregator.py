@@ -180,6 +180,12 @@ class ControlCenterAggregator:
                 # M17.13 owner-safe autonomous missions + health
                 cell["missions"] = led.list_missions(self.owner, limit=25)
                 cell["mission_health"] = led.mission_health(self.owner)
+                # M17.15 owner-safe pipeline recovery (checkpoints + resume/retry)
+                cell["pipeline_recoveries"] = led.list_recoveries(self.owner, limit=25)
+                cell["recovery_health"] = led.recovery_health(self.owner)
+                cell["invalid_checkpoints"] = [
+                    c for c in led.checkpoints_owned(self.owner, limit=50)
+                    if c["status"] != "valid"]
                 # M17.14 owner-safe mission scheduling (schedules/occurrences/triggers)
                 cell["schedules"] = led.list_schedules(self.owner, limit=25)
                 cell["schedule_health"] = led.schedule_health(self.owner)
@@ -280,6 +286,26 @@ class ControlCenterAggregator:
                                   "message": f"mission {m['mission_id']} "
                                              f"({m.get('title', '')}) awaits approval",
                                   "link": "/control/missions"})
+            # M17.15 pipeline-recovery attention (owner-safe summaries only)
+            for r in (harn.value.get("pipeline_recoveries") or []):
+                st = r.get("state")
+                if st == "exhausted":
+                    items.append({"severity": "high", "kind": "pipeline_recovery",
+                                  "message": f"pipeline {r['pipeline_id']} retry exhausted "
+                                             f"({r.get('failure_category', '')})",
+                                  "link": "/control/recovery"})
+                elif st == "stop_uncertain":
+                    items.append({"severity": "high", "kind": "pipeline_recovery",
+                                  "message": f"pipeline {r['pipeline_id']} STOP_UNCERTAIN "
+                                             f"— manual review",
+                                  "link": "/control/recovery"})
+            for c in (harn.value.get("invalid_checkpoints") or []):
+                sev = "high" if c["status"] == "missing_artifact" else "medium"
+                items.append({"severity": sev, "kind": "pipeline_checkpoint",
+                              "message": f"checkpoint {c['pipeline_id']} step "
+                                         f"{c['step_index']} {c['status']} "
+                                         f"({c.get('invalidation_reason', '')})",
+                              "link": "/control/recovery"})
             # M17.14 scheduler attention (owner-safe summaries only)
             for s in (harn.value.get("schedules") or []):
                 if s.get("status") == "invalid":

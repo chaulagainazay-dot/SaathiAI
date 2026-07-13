@@ -35,8 +35,22 @@
   with pre-execution path-escape rejection + artifact wiring, honoured approval
   gates (no silent elevation), owner-safe records, Control Center attention, a LIVE
   sqlite→zip chain, and 7 green blocking manifest entries. No second execution
-  engine. Remaining: PARALLEL / branching DAGs, pipeline retry/resume/checkpoint,
-  scheduling, and untrusted spec-JSON ingestion (all deferred).
+  engine. Remaining: PARALLEL / branching DAGs and untrusted spec-JSON ingestion
+  (deferred). Pipeline retry/resume/checkpoint: BUILT in M17.15 (see below).
+- Pipeline retry/resume/checkpoint: BUILT. M17.15 added governed recovery around the
+  existing PipelineRunner + ledger — additive pipeline_checkpoint + pipeline_recovery
+  tables, checkpoint-on-verified-success, deterministic step/dependency/artifact
+  fingerprints, contiguous-valid-prefix reuse with artifact-integrity + confinement
+  checks, category-allowlisted bounded retry, approval-safe (increased risk invalidates
+  reuse; resume stops at approval_required; no force-success), lease-based recovery
+  claiming, crash reconciliation (uncertain → stop_uncertain), a governed bounded
+  reopen_pipeline (the sole exception to pipeline terminal immutability), mission
+  integration (no duplicate mission), Control Center attention, 8 CLI commands, and 9
+  green blocking manifest checks. No second engine/retry framework/verification path.
+  Remaining (deferred): PARALLEL/branching DAG recovery, distributed/remote/cloud
+  checkpoints, arbitrary user-authored pipeline JSON, automatic recovery of untrusted
+  steps, cross-owner checkpoint reuse. Trading Guardian stays disabled (no trading
+  surface in the recovery module).
 - Autonomous mission engine: FIRST SLICE BUILT. M17.13 added a layer ABOVE the
   pipeline (mission.py MissionEngine) — a Mission carries one business objective +
   strongly-typed validated params + an approval requirement + a template ref and

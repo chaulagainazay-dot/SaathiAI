@@ -197,3 +197,12 @@ the existing text-response rules (still authoritative for typed chat):
 - **lease reclaimed**: "The occurrence lease expired and was safely reclaimed."
 - **when, not how**: "Scheduling decides when a mission is due; it does not bypass how missions execute."
 - **dedup**: "That event already ran this mission, so the repeat was ignored — one event, one mission."
+
+## M17.15 — pipeline recovery language
+- **resume from verified**: "Steps one and two were already verified, so I resumed safely from step three."
+- **integrity reject**: "The saved artifact changed, so I rejected the checkpoint and reran its producing step."
+- **not retryable**: "This failure is not retryable, so I stopped instead of repeating it."
+- **bounded**: "The retry limit was reached; no further automatic attempts will occur."
+- **reuse count**: "The resumed run reused two verified steps and reran one step."
+- **approval still holds**: "Approval is still required; retry did not grant permission."
+- **same path**: "Recovery continues through the same governed pipeline — it does not create a second execution path."
