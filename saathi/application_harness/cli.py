@@ -35,6 +35,17 @@ M17.9 durable run-ledger operations — LOCAL ADMIN-MAINTENANCE surface.
     python -m saathi.application_harness.cli mission-history <id> (M17.13 run history)
     python -m saathi.application_harness.cli mission-run <id>     (M17.13 execute, fail-closed)
     python -m saathi.application_harness.cli mission-retry <id>   (M17.13 clone a failed mission)
+    python -m saathi.application_harness.cli scheduler-health      (M17.14 census: always)
+  # M17.14 scheduler admin-gated (SAATHI_HARNESS_ADMIN=1), owner-safe:
+    python -m saathi.application_harness.cli schedules
+    python -m saathi.application_harness.cli schedule-inspect <id>
+    python -m saathi.application_harness.cli schedule-create <owner> <template> <type> <expr_json> [params_json]
+    python -m saathi.application_harness.cli schedule-pause|schedule-resume|schedule-disable <id>
+    python -m saathi.application_harness.cli occurrences
+    python -m saathi.application_harness.cli occurrence-inspect <id>
+    python -m saathi.application_harness.cli occurrence-reconcile
+    python -m saathi.application_harness.cli triggers
+    python -m saathi.application_harness.cli trigger-inspect <id>
 
 Security model: this CLI has NO authenticated user context, so it never trusts a
 caller-supplied identity for authorization. Ledger inspection + mutation are
@@ -62,7 +73,11 @@ _LEDGER_CMDS = {"runs", "run-inspect", "run-cancel", "run-reconcile",
                 "monitor-schedule-status",
                 "pipelines", "pipeline-inspect", "pipeline-health",
                 "missions", "mission-inspect", "mission-run", "mission-health",
-                "mission-history", "mission-retry"}
+                "mission-history", "mission-retry",
+                "scheduler-health", "schedules", "schedule-inspect",
+                "schedule-create", "schedule-pause", "schedule-resume",
+                "schedule-disable", "occurrences", "occurrence-inspect",
+                "occurrence-reconcile", "triggers", "trigger-inspect"}
 _ADMIN_MSG = ("ledger maintenance commands require admin mode: set "
               "SAATHI_HARNESS_ADMIN=1 (the verified local OS identity is used "
               "as the audited operator; no caller-supplied identity is trusted)")
@@ -107,6 +122,10 @@ def _ledger_cmd(cmd, rest) -> int | None:
         print(json.dumps(led.pipeline_health(), indent=2, default=str)); return 0
     if cmd == "mission-health":               # M17.13 aggregate census — no secrets
         print(json.dumps(led.mission_health(), indent=2, default=str)); return 0
+    if cmd == "scheduler-health":             # M17.14 aggregate census — no secrets
+        print(json.dumps({"schedules": led.schedule_health(),
+                          "occurrences": led.occurrence_health()},
+                         indent=2, default=str)); return 0
     # everything else is admin-maintenance-only; identity from trusted OS context
     if not _admin_enabled():
         print(_ADMIN_MSG, file=sys.stderr)
@@ -205,6 +224,61 @@ def _ledger_cmd(cmd, rest) -> int | None:
         res = MissionEngine(ledger=led).retry(rest[0], owner=m["owner"])
         print(json.dumps(res, indent=2, default=str))
         return 0 if res.get("ok") else 1
+    if cmd == "schedules":                     # M17.14 operator diagnostic (owner-safe)
+        print(json.dumps(led.list_schedules(None), indent=2, default=str)); return 0
+    if cmd == "schedule-inspect":
+        if not rest:
+            print("schedule-inspect needs <schedule_id>", file=sys.stderr); return 2
+        s = led.get_schedule(rest[0])
+        print(json.dumps(s or {"error": "not found"}, indent=2, default=str))
+        return 0 if s else 1
+    if cmd == "schedule-create":               # admin-audited; typed template params
+        if len(rest) < 4:
+            print("schedule-create needs <owner> <template_id> <schedule_type> "
+                  "<expr_json> [params_json]", file=sys.stderr); return 2
+        try:
+            expr = json.loads(rest[3]); params = json.loads(rest[4]) if len(rest) > 4 else {}
+        except ValueError as e:
+            print(f"bad json: {e}", file=sys.stderr); return 2
+        from saathi.application_harness.scheduler import MissionScheduler
+        res = MissionScheduler(ledger=led).create_schedule(
+            owner=rest[0], mission_template_id=rest[1], schedule_type=rest[2],
+            expression=expr, params=params)
+        print(json.dumps(res, indent=2, default=str))
+        return 0 if res.get("ok") else 1
+    if cmd in ("schedule-pause", "schedule-resume", "schedule-disable"):
+        if not rest:
+            print(f"{cmd} needs <schedule_id>", file=sys.stderr); return 2
+        s = led.get_schedule(rest[0])
+        if not s:
+            print(json.dumps({"error": "not found"})); return 1
+        from saathi.application_harness.scheduler import MissionScheduler
+        sch = MissionScheduler(ledger=led)
+        fn = {"schedule-pause": sch.pause, "schedule-resume": sch.resume,
+              "schedule-disable": sch.disable}[cmd]
+        res = fn(rest[0], owner=s["owner"])      # audited via ledger event
+        print(json.dumps(res, indent=2, default=str))
+        return 0 if res.get("ok") else 1
+    if cmd == "occurrences":
+        print(json.dumps(led.list_occurrences(None), indent=2, default=str)); return 0
+    if cmd == "occurrence-inspect":
+        if not rest:
+            print("occurrence-inspect needs <occurrence_id>", file=sys.stderr); return 2
+        o = led.inspect_occurrence(rest[0])
+        print(json.dumps(o or {"error": "not found"}, indent=2, default=str))
+        return 0 if o else 1
+    if cmd == "occurrence-reconcile":          # settle stale-lease occurrences only
+        from saathi.application_harness.scheduler import MissionScheduler
+        print(json.dumps(MissionScheduler(ledger=led).reconcile(), indent=2, default=str))
+        return 0
+    if cmd == "triggers":
+        print(json.dumps(led.list_triggers(None), indent=2, default=str)); return 0
+    if cmd == "trigger-inspect":
+        if not rest:
+            print("trigger-inspect needs <trigger_id>", file=sys.stderr); return 2
+        t = led.get_trigger(rest[0])
+        print(json.dumps(t or {"error": "not found"}, indent=2, default=str))
+        return 0 if t else 1
     if cmd == "alert-ack":
         if not rest:
             print("alert-ack needs <alert_id>", file=sys.stderr); return 2
@@ -226,7 +300,10 @@ def main(argv=None) -> int:
               "|run-transitions|ledger-health|runs-monitor|run-alerts|alert-ack"
               "|notify-dispatch|alert-deliveries|retry-delivery|monitor-schedule-status"
               "|pipelines|pipeline-inspect|pipeline-health"
-              "|missions|mission-inspect|mission-run|mission-health|mission-history|mission-retry",
+              "|missions|mission-inspect|mission-run|mission-health|mission-history|mission-retry"
+              "|scheduler-health|schedules|schedule-inspect|schedule-create|schedule-pause"
+              "|schedule-resume|schedule-disable|occurrences|occurrence-inspect"
+              "|occurrence-reconcile|triggers|trigger-inspect",
               file=sys.stderr)
         return 2
     cmd, rest = argv[0], argv[1:]

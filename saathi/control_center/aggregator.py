@@ -180,6 +180,13 @@ class ControlCenterAggregator:
                 # M17.13 owner-safe autonomous missions + health
                 cell["missions"] = led.list_missions(self.owner, limit=25)
                 cell["mission_health"] = led.mission_health(self.owner)
+                # M17.14 owner-safe mission scheduling (schedules/occurrences/triggers)
+                cell["schedules"] = led.list_schedules(self.owner, limit=25)
+                cell["schedule_health"] = led.schedule_health(self.owner)
+                cell["occurrences"] = led.list_occurrences(self.owner, limit=25)
+                cell["occurrence_health"] = led.occurrence_health(self.owner)
+                cell["triggers"] = led.list_triggers(self.owner, limit=25)
+                cell["trigger_receipts"] = led.list_receipts(self.owner, limit=25)
                 try:
                     from saathi.application_harness.run_scheduler import is_enabled, JOB_ID
                     cell["monitor_schedule"] = {"job": JOB_ID, "enabled": is_enabled()}
@@ -273,6 +280,36 @@ class ControlCenterAggregator:
                                   "message": f"mission {m['mission_id']} "
                                              f"({m.get('title', '')}) awaits approval",
                                   "link": "/control/missions"})
+            # M17.14 scheduler attention (owner-safe summaries only)
+            for s in (harn.value.get("schedules") or []):
+                if s.get("status") == "invalid":
+                    items.append({"severity": "high", "kind": "mission_schedule",
+                                  "message": f"schedule {s['schedule_id']} is invalid",
+                                  "link": "/control/scheduler"})
+            for o in (harn.value.get("occurrences") or []):
+                st = o.get("state")
+                if st == "failed":
+                    items.append({"severity": "high", "kind": "mission_occurrence",
+                                  "message": f"occurrence {o['occurrence_id']} failed "
+                                             f"({o.get('failure_category', '')})",
+                                  "link": "/control/scheduler"})
+                elif st == "approval_required":
+                    items.append({"severity": "medium", "kind": "mission_occurrence",
+                                  "message": f"scheduled mission {o['occurrence_id']} "
+                                             f"awaits approval",
+                                  "link": "/control/scheduler"})
+            occ_health = harn.value.get("occurrence_health") or {}
+            if occ_health.get("stale_leases"):
+                items.append({"severity": "medium", "kind": "mission_occurrence",
+                              "message": f"{occ_health['stale_leases']} occurrence "
+                                         f"lease(s) stale — reconcile pending",
+                              "link": "/control/scheduler"})
+            rejected = [r for r in (harn.value.get("trigger_receipts") or [])
+                        if r.get("state") == "rejected"]
+            if len(rejected) >= 5:
+                items.append({"severity": "medium", "kind": "mission_trigger",
+                              "message": f"{len(rejected)} event trigger rejection(s)",
+                              "link": "/control/scheduler"})
         if sec.status == "ok" and sec.value:
             rb = sec.value.get("release_blocking", 0)
             if rb:

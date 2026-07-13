@@ -4,7 +4,7 @@
   "branch": "milestone/m7-security-engine",
   "loop_started_at": "2026-07-12",
   "initial_head": "28ce958",
-  "current_head": "HEAD of milestone/m7-security-engine (M17.12 committed 186a72f; M17.13 committed this invocation — see git log; rollback point for M17.13 = 186a72f)",
+  "current_head": "HEAD of milestone/m7-security-engine (M17.13 committed 73fd251; M17.14 committed this invocation — see git log; rollback point for M17.14 = 73fd251)",
   "iterations_completed": 1,
   "iteration_limit": 1,
   "active_milestone": null,
@@ -20,7 +20,8 @@
     "M17.10 harness run monitoring & deterministic stuck-run alerting",
     "M17.11 scheduled run monitoring & reliable alert delivery",
     "M17.12 governed multi-harness pipeline (sequential, fail-closed, live-validated)",
-    "M17.13 autonomous mission engine (Mission ABOVE the pipeline, fail-closed, live-validated)"
+    "M17.13 autonomous mission engine (Mission ABOVE the pipeline, fail-closed, live-validated)",
+    "M17.14 governed mission scheduler & trusted event triggers (durable occurrences, lease claiming, restart-safe, live-validated)"
   ],
   "blocked_items": [
     "native Finder/TextEdit actuation: macOS Accessibility not granted (user_action_required)",
@@ -30,22 +31,21 @@
   ],
   "unverified_items": [
     "EXTERNAL alert transports (Telegram/email/Slack/PagerDuty) — M17.11 ships fail-closed stubs + a credential-free local transport; live providers deferred (need secret-managed config)",
-    "production/auto scheduling of the monitor sweep — M17.11 scheduler is opt-in (default disabled), not server-auto-started; no cron/launchd/cloud provisioning",
+    "PRODUCTION auto-scheduling — M17.14 interval runner is opt-in (default DISABLED, SAATHI_MISSION_SCHEDULER_ENABLED=1); no cron/launchd/cloud provisioning; the M17.11 monitor scheduler likewise opt-in",
     "PARALLEL / branching harness pipelines — M17.12 ships deterministic SEQUENTIAL fail-closed pipelines only; DAGs deferred",
-    "pipeline retry/resume/checkpoint + scheduling — M17.12 re-runs a failed pipeline as a new pipeline; no pipeline-level resume",
-    "untrusted pipeline spec-JSON ingestion — M17.12 steps are declared in trusted Python; external spec parsing deferred (larger validation surface)",
-    "M17.13 mission LIVE scheduling + event/triggered execution — recurrence is instance-per-occurrence only; no cron/launchd/event bus trigger wired (mirrors M17.11 opt-in stance)",
-    "M17.13 untrusted mission-spec JSON ingestion — mission templates are declared in trusted Python; external spec parsing deferred",
-    "PARALLEL missions + multi-user LOAD concurrency (cross-user gates + local multi-process proven, not load)",
+    "pipeline retry/resume/checkpoint — M17.12 re-runs a failed pipeline as a new pipeline; no pipeline-level resume",
+    "untrusted pipeline spec-JSON ingestion (M17.12) + untrusted mission-spec JSON ingestion (M17.13) — declared in trusted Python; external spec parsing deferred",
+    "M17.14 CRON expressions — deliberately omitted (one_time/interval/daily/weekly only); public webhook ingestion, distributed/multi-region scheduling, PARALLEL mission execution, NL calendar parsing, external SaaS schedulers all deferred",
+    "multi-user LOAD concurrency (cross-user gates + local multi-process proven, not load)",
     "workflow intelligence (not started; gated on live execution proof)"
   ],
   "manual_actions_required": [],
-  "last_full_suite": "1687 passed / 1 skipped / 0 failed (+32 M17.13 tests over the 1655 baseline)",
-  "last_redteam": "M17.12 security probes held; M17.13 security probes (owner-mismatch rejected on every op, approval-required cannot queue/run without explicit approval / no elevation, params secret-rejected on write, strong parameter validation before execution, terminal-immutable state machine + invalid-transition rejection, retry rejected for non-failed, fail-closed no-partial-success) green",
-  "last_release_check": "exit 0; database_ok/backup_ok/restore_verified true (ledger db with additive mission tables passes integrity + backup/restore)",
-  "last_secret_scan": "clean (0 matches over M17.13 files)",
-  "critical_manifest": "M17.9 11 + M17.10 2 + M17.11 7 + M17.12 7 + M17.13 7 blocking checks green via manifest runner",
-  "milestone_verdict": "AUTONOMOUS MISSION ENGINE STAGING READY",
-  "stop_reason": "one bounded milestone completed this invocation (M17.13 autonomous mission engine: a Mission is ONE business objective carrying strongly-typed validated parameters + an approval requirement + a reusable template reference, sitting ABOVE the pipeline — Mission -> Pipeline -> Harness Step -> Adapter -> Verification -> Ledger. The Mission NEVER executes a tool; it DELEGATES to the sole governed M17.12 PipelineRunner. Additive mission + mission_run ledger tables, explicit fail-closed state machine with immutable terminals, owner isolation on every op, honoured approval gates with no silent elevation, fail-closed no-partial-success (completed only if the delegated pipeline succeeded), retry-as-new-instance, strong parameter validation before execution, Control Center missions cell + harness_mission attention, 6 CLI commands, 7 blocking critical-manifest checks; LIVE delegated sqlite->zip mission + multi-process concurrent-create dedup proven). Extends the ledger + event bus + Control Center attention + admin gate; NO second execution engine / trust model / DB / scheduler / approval path. Distinct from the older saathi/missions/ business-content package (untouched). Trading Guardian not engaged (approval gates strengthened, never bypassed). Maximum milestones this invocation = 1. Not production-ready: untrusted mission-spec ingestion, live scheduling/event triggers, parallel missions, multi-user load.",
+  "last_full_suite": "1736 passed / 1 skipped / 0 failed (+49 M17.14 tests over the 1687 baseline)",
+  "last_redteam": "M17.13 security probes held; M17.14 security probes green (delegation-only static assertion — no PipelineRunner/adapter/subprocess/run_harness_action in scheduler+event modules; one-occurrence-per-due-time + one-mission-per-occurrence idempotency; multi-thread AND multi-process concurrent-create one winner; active lease not stealable; restart reconcile no-duplicate-mission across all 4 crash windows; approval-required scheduled mission stops at approval_required / no elevation; owner mismatch + invalid template execute nothing; infra-only bounded retry, never for approval/owner/param/mission-outcome; trusted event allowlist, unknown/duplicate/unexpected-field/secret-payload/forbidden-override all rejected; receipts store no raw payload; scheduler+event modules carry no trading surface)",
+  "last_release_check": "exit 0; database_ok/backup_ok/restore_verified true (ledger db with additive scheduler tables passes integrity + backup/restore; dedicated backup/restore test green)",
+  "last_secret_scan": "clean (0 real matches over M17.14 files; only intentional secret-rejection fixtures/regex)",
+  "critical_manifest": "M17.9 11 + M17.10 2 + M17.11 7 + M17.12 7 + M17.13 7 + M17.14 8 blocking checks green via manifest runner",
+  "milestone_verdict": "GOVERNED MISSION SCHEDULING & TRUSTED EVENT TRIGGERS STAGING READY",
+  "stop_reason": "one bounded milestone completed this invocation (M17.14 governed mission scheduler & trusted event triggers: the WHEN layer ABOVE the MissionEngine. Scheduler/Trusted-Event -> Mission instance -> MissionEngine -> PipelineRunner -> run_harness_action -> Adapter -> verification -> ledger. The scheduler NEVER executes a tool — it only creates/claims a valid occurrence (or accepts a trusted internal event) and delegates to the existing MissionEngine (static test asserts no PipelineRunner/adapter/subprocess/run_harness_action reference). Additive mission_schedule + mission_occurrence + mission_event_trigger + mission_event_receipt ledger tables; deterministic tz-aware due math (one_time/interval/daily/weekly, DST via zoneinfo, cron omitted); one occurrence per due time (unique dedup key) and one mission per occurrence (deterministic mission id -> crash-safe); lease-based claiming (active not stealable, expired recoverable); restart reconciliation (no duplicate mission across 4 crash windows); infra-only bounded retry [0,60,300,900,3600]s; trusted event allowlist + static template binding + allowlisted scalar payload mapping + durable receipt dedup (payload can't set owner/template/risk/approval); opt-in interval runner (default DISABLED); Control Center scheduler cell + attention; 12 CLI commands; 8 blocking critical-manifest checks; LIVE scheduled data_bundle -> occurrence -> MissionEngine -> governed sqlite->zip pipeline (verified), re-sweep no duplicate, restart reconcile safe; multi-process + multi-thread concurrent-create dedup to one). Extends the ledger + event bus + Control Center attention + admin gate; NO second scheduler DB / job runner / execution engine / approval system / event bus / ledger. Trading Guardian not engaged (scheduler/event modules carry no trading surface; scheduling never converts advisory into execution permission). Maximum milestones this invocation = 1. Not production-ready: cron, public webhooks, untrusted JSON defs, distributed/parallel scheduling, production auto-scheduling.",
   "unrelated_untouched": "saathi/memory/conventions.md remains modified and UNSTAGED (unrelated auto-learned memory append, excluded from milestone commits); .saathi-agent-state/ left untracked (runtime scratch)"
 }

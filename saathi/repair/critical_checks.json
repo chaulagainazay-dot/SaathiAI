@@ -1277,6 +1277,87 @@
    ],
    "subsystem": "control_center",
    "blocking": true
+  },
+  {
+   "id": "scheduler.due_idempotency",
+   "targets": [
+    "tests/test_m17_14_mission_scheduler.py::test_no_duplicate_occurrence_for_same_due_time",
+    "tests/test_m17_14_mission_scheduler.py::test_one_time_schedule_runs_exactly_once",
+    "tests/test_m17_14_mission_scheduler.py::test_interval_produces_expected_due_times",
+    "tests/test_m17_14_mission_scheduler.py::test_no_duplicate_mission_after_crash_window"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "scheduler.claim_concurrency",
+   "targets": [
+    "tests/test_m17_14_mission_scheduler.py::test_multithread_duplicate_occurrence_creation_one_winner",
+    "tests/test_m17_14_mission_scheduler.py::test_multiprocess_duplicate_occurrence_creation_one_winner",
+    "tests/test_m17_14_mission_scheduler.py::test_exactly_one_claim_winner_and_active_lease_not_stealable",
+    "tests/test_m17_14_mission_scheduler.py::test_expired_lease_can_be_reclaimed"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "scheduler.restart_recovery",
+   "targets": [
+    "tests/test_m17_14_mission_scheduler.py::test_crash_after_claim_no_mission_requeues",
+    "tests/test_m17_14_mission_scheduler.py::test_crash_after_mission_creation_reconciles_existing_mission",
+    "tests/test_m17_14_mission_scheduler.py::test_crash_after_mission_completion_finalizes_occurrence"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "scheduler.mission_delegation",
+   "targets": [
+    "tests/test_m17_14_mission_scheduler.py::test_scheduler_module_has_no_execution_shortcut",
+    "tests/test_m17_14_mission_scheduler.py::test_dispatch_delegates_through_missionengine_to_pipeline"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "scheduler.approval_and_owner_safety",
+   "targets": [
+    "tests/test_m17_14_mission_scheduler.py::test_approval_required_scheduled_mission_stops_at_approval_required",
+    "tests/test_m17_14_mission_scheduler.py::test_owner_mismatch_executes_nothing",
+    "tests/test_m17_14_mission_scheduler.py::test_invalid_template_at_dispatch_executes_nothing",
+    "tests/test_m17_14_mission_scheduler.py::test_no_retry_for_approval_owner_or_param_failures"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "scheduler.event_trigger_dedup",
+   "targets": [
+    "tests/test_m17_14_mission_scheduler.py::test_allowlisted_event_creates_exactly_one_mission",
+    "tests/test_m17_14_mission_scheduler.py::test_unknown_event_rejected",
+    "tests/test_m17_14_mission_scheduler.py::test_duplicate_source_event_deduplicated",
+    "tests/test_m17_14_mission_scheduler.py::test_unexpected_payload_field_rejected",
+    "tests/test_m17_14_mission_scheduler.py::test_owner_approval_risk_cannot_be_overridden_by_payload"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "scheduler.control_center_owner_scope",
+   "targets": [
+    "tests/test_m17_14_mission_scheduler.py::test_control_center_scheduler_attention_and_owner_scope",
+    "tests/test_m17_14_mission_scheduler.py::test_control_center_stale_lease_attention"
+   ],
+   "subsystem": "control_center",
+   "blocking": true
+  },
+  {
+   "id": "scheduler.database_backup_restore",
+   "targets": [
+    "tests/test_m17_14_mission_scheduler.py::test_scheduler_ledger_survives_backup_restore"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
   }
  ]
 }

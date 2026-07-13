@@ -187,3 +187,13 @@ the existing text-response rules (still authoritative for typed chat):
 - **reusable templates**: "define the objective once; each run is a fresh, auditable instance."
 - **safe retry**: "a failed mission retries as a brand-new instance — I don't reopen a closed one, so the history stays trustworthy."
 - **owner-safe**: "a failed mission shows up for its owner alone, with the reason but no raw commands or secrets."
+
+## M17.14 — scheduler & event-trigger language
+- **scheduled exactly once**: "This mission was scheduled for 6:00 AM and created exactly once."
+- **restart is safe**: "The scheduler restarted and safely resumed the existing occurrence; it did not create a duplicate."
+- **approval still holds**: "This scheduled mission requires approval, so it stopped before execution."
+- **untrusted event**: "The event was not trusted, so no mission was created."
+- **paused means nothing runs**: "The schedule is paused; nothing ran."
+- **lease reclaimed**: "The occurrence lease expired and was safely reclaimed."
+- **when, not how**: "Scheduling decides when a mission is due; it does not bypass how missions execute."
+- **dedup**: "That event already ran this mission, so the repeat was ignored — one event, one mission."

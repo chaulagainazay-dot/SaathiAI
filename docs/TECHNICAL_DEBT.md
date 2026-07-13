@@ -51,6 +51,20 @@
   execution (recurrence is instance-per-occurrence only; no cron/launchd wired),
   PARALLEL missions, and multi-user LOAD. NOTE: distinct from the older
   saathi/missions/ business-content package (untouched).
+- Mission scheduler + trusted event triggers: FIRST SLICE BUILT. M17.14 added the
+  WHEN layer ABOVE the MissionEngine (scheduler.py + event_triggers.py) — schedules
+  (one_time/interval/daily/weekly), durable occurrences (one per due time, unique
+  dedup key), deterministic mission ids (one mission per occurrence), lease-based
+  claiming, restart reconciliation, infra-only bounded retry, a trusted internal
+  event allowlist with receipt dedup, an opt-in interval runner (default OFF),
+  Control Center attention, 12 CLI commands, and 8 green blocking manifest checks.
+  Delegates to the MissionEngine ONLY (no execution shortcut — asserted). No second
+  scheduler DB / job runner / execution engine. Remaining (deferred): CRON
+  expressions, arbitrary PUBLIC WEBHOOK ingestion, UNTRUSTED JSON mission
+  definitions, DISTRIBUTED / multi-region scheduling, PARALLEL mission execution, NL
+  calendar parsing, external SaaS schedulers, and PRODUCTION AUTO-SCHEDULING (the
+  interval runner is opt-in; no OS launch agent / cron / cloud job is provisioned).
+  Trading Guardian stays disabled (scheduler/event modules carry no trading surface).
 - Harness registry persistence (data/application_harnesses/registry.json) written
   but not loaded on boot (in-memory bootstrap only).
 - Multi-user isolation only probe-tested, not exercised with concurrent users.

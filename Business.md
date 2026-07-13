@@ -369,3 +369,33 @@ give objectives to". It adds no new engine and changes nothing financial — app
 gates are strengthened here, never weakened. Still to come: automatic scheduling and
 event triggers, running missions in parallel, and accepting externally-authored
 mission definitions.
+
+## M17.14 — recurring missions that run on time, exactly once
+
+SaathiOS can now run APPROVED missions on a schedule — a one-time run, an interval,
+a daily time, or a weekly day-and-time — and can also start a mission in response to
+a small set of TRUSTED internal events (for example, "a pipeline failed" or "the
+daily rollover happened"). Each due time creates exactly one piece of work, and each
+piece of work creates at most one mission: FAILURES DO NOT CREATE SILENT DUPLICATE
+WORK. If the system restarts in the middle of a scheduled run, it safely resumes the
+existing work rather than starting a second copy. Scheduling only decides WHEN a
+mission is due — it never changes how the mission runs: SCHEDULED WORK STILL RESPECTS
+APPROVALS. A scheduled mission that needs sign-off stops and waits for it; it is
+never auto-approved just because it was scheduled. Everything is owner-scoped and
+shows up safely in the Control Center — no raw event data, commands, or secrets.
+
+What it unlocks, in plain terms:
+- **IELTSAlert**: "build today's practice set every morning at 6:00" — created once
+  per day, on time, verified end to end.
+- **CEO OS**: "produce the daily CEO brief on a schedule, or the moment the review
+  is requested" — and if it needs approval, it waits for you.
+- **Cafeteria (HCG) reporting**: "run the closing/inventory report each evening" —
+  once per evening, with a clear record of success or the reason it failed.
+- **HCG research**: "kick off a research mission when an upstream job finishes" —
+  from a trusted internal event, deduplicated so one event means one mission.
+
+Two things stay deliberately off: PRODUCTION AUTO-SCHEDULING IS STILL NOT ENABLED BY
+DEFAULT (the recurring runner is opt-in for local use; no always-on server job is
+provisioned), and LIVE TRADING IS NOT ENABLED — scheduling a mission can never turn
+advisory permission into trading permission. It adds no new engine and changes
+nothing financial.

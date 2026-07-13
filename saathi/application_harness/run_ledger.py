@@ -308,6 +308,68 @@ CREATE TABLE IF NOT EXISTS mission_run(
   terminal_at REAL DEFAULT 0,
   UNIQUE(mission_id, attempt),
   FOREIGN KEY(mission_id) REFERENCES mission(mission_id));
+CREATE TABLE IF NOT EXISTS mission_schedule(
+  schedule_id TEXT PRIMARY KEY,
+  owner TEXT NOT NULL,
+  mission_template_id TEXT NOT NULL,
+  schedule_type TEXT NOT NULL,
+  timezone TEXT DEFAULT 'UTC',
+  expression TEXT DEFAULT '{}',
+  params TEXT DEFAULT '{}',
+  enabled INTEGER DEFAULT 1,
+  status TEXT NOT NULL DEFAULT 'active',
+  description TEXT DEFAULT '',
+  retry_policy TEXT DEFAULT 'default',
+  version INTEGER DEFAULT 1,
+  next_due_at REAL DEFAULT 0,
+  last_due_at REAL DEFAULT 0,
+  last_occurrence_id TEXT DEFAULT '',
+  created_at REAL,
+  updated_at REAL DEFAULT 0);
+CREATE TABLE IF NOT EXISTS mission_occurrence(
+  occurrence_id TEXT PRIMARY KEY,
+  schedule_id TEXT NOT NULL,
+  owner TEXT NOT NULL,
+  due_at REAL NOT NULL,
+  dedup_key TEXT NOT NULL,
+  state TEXT NOT NULL DEFAULT 'pending',
+  claim_owner TEXT DEFAULT '',
+  lease_expires_at REAL DEFAULT 0,
+  attempt_count INTEGER DEFAULT 0,
+  next_attempt_at REAL DEFAULT 0,
+  mission_id TEXT DEFAULT '',
+  mission_run_id TEXT DEFAULT '',
+  failure_category TEXT DEFAULT '',
+  failure_summary TEXT DEFAULT '',
+  created_at REAL,
+  started_at REAL DEFAULT 0,
+  completed_at REAL DEFAULT 0,
+  UNIQUE(dedup_key));
+CREATE TABLE IF NOT EXISTS mission_event_trigger(
+  trigger_id TEXT PRIMARY KEY,
+  owner TEXT NOT NULL,
+  event_type TEXT NOT NULL,
+  mission_template_id TEXT NOT NULL,
+  params TEXT DEFAULT '{}',
+  payload_map TEXT DEFAULT '{}',
+  enabled INTEGER DEFAULT 1,
+  cooldown_sec REAL DEFAULT 0,
+  status TEXT NOT NULL DEFAULT 'active',
+  description TEXT DEFAULT '',
+  created_at REAL,
+  updated_at REAL DEFAULT 0);
+CREATE TABLE IF NOT EXISTS mission_event_receipt(
+  receipt_id TEXT PRIMARY KEY,
+  trigger_id TEXT DEFAULT '',
+  owner TEXT DEFAULT '',
+  event_type TEXT DEFAULT '',
+  source_event_id TEXT DEFAULT '',
+  dedup_key TEXT NOT NULL,
+  state TEXT NOT NULL DEFAULT 'accepted',
+  mission_id TEXT DEFAULT '',
+  rejection_category TEXT DEFAULT '',
+  received_at REAL,
+  UNIQUE(dedup_key));
 CREATE UNIQUE INDEX IF NOT EXISTS idx_run_idem ON run(idempotency_key)
   WHERE idempotency_key != '';
 CREATE INDEX IF NOT EXISTS idx_run_owner ON run(owner, state);
@@ -324,6 +386,14 @@ CREATE INDEX IF NOT EXISTS idx_pipeline_owner ON pipeline_run(owner, state);
 CREATE INDEX IF NOT EXISTS idx_pipeline_step ON pipeline_step(pipeline_id, step_index);
 CREATE INDEX IF NOT EXISTS idx_mission_owner ON mission(owner, state);
 CREATE INDEX IF NOT EXISTS idx_mission_run ON mission_run(mission_id, attempt);
+CREATE INDEX IF NOT EXISTS idx_schedule_owner ON mission_schedule(owner, status);
+CREATE INDEX IF NOT EXISTS idx_schedule_due ON mission_schedule(status, next_due_at);
+CREATE INDEX IF NOT EXISTS idx_occurrence_sched ON mission_occurrence(schedule_id);
+CREATE INDEX IF NOT EXISTS idx_occurrence_state ON mission_occurrence(state, next_attempt_at);
+CREATE INDEX IF NOT EXISTS idx_occurrence_owner ON mission_occurrence(owner, state);
+CREATE INDEX IF NOT EXISTS idx_trigger_owner ON mission_event_trigger(owner, event_type);
+CREATE INDEX IF NOT EXISTS idx_trigger_event ON mission_event_trigger(event_type, status);
+CREATE INDEX IF NOT EXISTS idx_receipt_owner ON mission_event_receipt(owner, received_at);
 """
 
 # M17.12 governed multi-harness pipeline states (sequential, fail-closed)
@@ -373,6 +443,73 @@ _MISSION_SAFE_FIELDS = ("mission_id", "owner", "title", "objective",
                         "state", "run_count", "last_pipeline_id", "failure_code",
                         "correlation_id", "created_at", "approved_at",
                         "approved_by", "queued_at", "started_at", "terminal_at")
+
+# M17.14 governed mission scheduler + trusted event triggers. The scheduler sits
+# ABOVE the MissionEngine; it NEVER executes tools — it only creates/claims a valid
+# occurrence and delegates to the existing MissionEngine. Fail-closed everywhere.
+SCHEDULE_ACTIVE = "active"
+SCHEDULE_PAUSED = "paused"
+SCHEDULE_COMPLETED = "completed"
+SCHEDULE_DISABLED = "disabled"
+SCHEDULE_INVALID = "invalid"
+SCHEDULE_TERMINAL = {SCHEDULE_COMPLETED, SCHEDULE_DISABLED, SCHEDULE_INVALID}
+SCHEDULE_GENERATING = {SCHEDULE_ACTIVE}          # only these emit occurrences
+_SCHEDULE_VALID: dict[str, set[str]] = {
+    SCHEDULE_ACTIVE: {SCHEDULE_PAUSED, SCHEDULE_COMPLETED, SCHEDULE_DISABLED,
+                      SCHEDULE_INVALID},
+    SCHEDULE_PAUSED: {SCHEDULE_ACTIVE, SCHEDULE_DISABLED, SCHEDULE_INVALID},
+}
+SCHEDULE_TYPES = {"one_time", "interval", "daily", "weekly"}
+_SCHEDULE_SAFE_FIELDS = ("schedule_id", "owner", "mission_template_id",
+                         "schedule_type", "timezone", "expression", "params",
+                         "enabled", "status", "description", "retry_policy",
+                         "version", "next_due_at", "last_due_at",
+                         "last_occurrence_id", "created_at", "updated_at")
+
+# occurrence lifecycle — success reflects the LINKED mission result, never "created"
+OCC_PENDING = "pending"
+OCC_CLAIMED = "claimed"
+OCC_RUNNING = "running"
+OCC_RETRY_WAIT = "retry_wait"
+OCC_SUCCEEDED = "succeeded"
+OCC_FAILED = "failed"
+OCC_BLOCKED = "blocked"
+OCC_APPROVAL_REQUIRED = "approval_required"
+OCC_CANCELLED = "cancelled"
+OCC_EXPIRED = "expired"
+OCC_ACTIVE = {OCC_PENDING, OCC_CLAIMED, OCC_RUNNING, OCC_RETRY_WAIT}
+OCC_TERMINAL = {OCC_SUCCEEDED, OCC_FAILED, OCC_BLOCKED, OCC_APPROVAL_REQUIRED,
+                OCC_CANCELLED, OCC_EXPIRED}
+OCC_DISPATCHABLE = {OCC_PENDING, OCC_RETRY_WAIT}
+_OCC_VALID: dict[str, set[str]] = {
+    OCC_PENDING: {OCC_CLAIMED, OCC_CANCELLED, OCC_EXPIRED},
+    OCC_CLAIMED: {OCC_RUNNING, OCC_RETRY_WAIT, OCC_FAILED, OCC_BLOCKED,
+                  OCC_APPROVAL_REQUIRED, OCC_CANCELLED, OCC_PENDING},
+    OCC_RUNNING: {OCC_SUCCEEDED, OCC_FAILED, OCC_BLOCKED, OCC_APPROVAL_REQUIRED,
+                  OCC_CANCELLED},
+    OCC_RETRY_WAIT: {OCC_PENDING, OCC_CLAIMED, OCC_FAILED, OCC_CANCELLED},
+}
+_OCC_SAFE_FIELDS = ("occurrence_id", "schedule_id", "owner", "due_at", "state",
+                    "claim_owner", "lease_expires_at", "attempt_count",
+                    "next_attempt_at", "mission_id", "mission_run_id",
+                    "failure_category", "failure_summary", "created_at",
+                    "started_at", "completed_at")
+
+# trusted internal event allowlist — ONLY these event types may drive a trigger.
+# Arbitrary/external event names are rejected (fail closed).
+TRUSTED_EVENT_TYPES = {
+    "harness.pipeline.failed", "harness.pipeline.succeeded",
+    "harness.mission.completed", "harness.mission.failed",
+    "harness.notification.terminal_failed", "system.daily_rollover",
+    "ceo.review.requested",
+}
+_TRIGGER_SAFE_FIELDS = ("trigger_id", "owner", "event_type",
+                        "mission_template_id", "params", "payload_map",
+                        "enabled", "cooldown_sec", "status", "description",
+                        "created_at", "updated_at")
+_RECEIPT_SAFE_FIELDS = ("receipt_id", "trigger_id", "owner", "event_type",
+                        "source_event_id", "state", "mission_id",
+                        "rejection_category", "received_at")
 
 # M17.10 stuck-run alert classes + deterministic severity
 ALERT_SEVERITY = {"process_missing": "high", "cancellation_stuck": "high",
@@ -1559,6 +1696,589 @@ class RunLedger:
                 "approval_required": by_state.get(MISSION_APPROVAL_REQUIRED, 0),
                 "total": sum(by_state.values())}
 
+    # ── M17.14 mission SCHEDULES (durable definitions; scheduler is above) ───
+    def create_schedule(self, schedule_id, *, owner, mission_template_id,
+                        schedule_type, timezone="UTC", expression=None, params=None,
+                        description="", retry_policy="default", next_due_at=0.0,
+                        version=1, now=None) -> dict:
+        owner = _clean_str(owner, field="owner")
+        if not owner:
+            raise LedgerSecurityError("LEDGER_FIELD_REJECTED", "empty owner")
+        schedule_id = _clean_str(schedule_id, field="schedule_id", maxlen=128)
+        mission_template_id = _clean_str(mission_template_id,
+                                         field="mission_template_id", maxlen=120)
+        schedule_type = _clean_str(schedule_type, field="schedule_type", maxlen=40)
+        timezone = _clean_str(timezone, field="timezone", maxlen=64)
+        description = _clean_str(description, field="description", maxlen=300)
+        retry_policy = _clean_str(retry_policy, field="retry_policy", maxlen=40)
+        expression = expression or {}
+        params = params or {}
+        _reject_secrets({"description": description, "params": params,
+                         "expression": expression}, where="schedule_identity")
+        expr_json = json.dumps(expression, sort_keys=True, default=str)[:1000]
+        params_json = json.dumps(params, sort_keys=True, default=str)[:4000]
+        now = now if now is not None else _now()
+        c = self._conn()
+        try:
+            c.execute("BEGIN IMMEDIATE")
+            try:
+                c.execute(
+                    "INSERT INTO mission_schedule(schedule_id,owner,"
+                    "mission_template_id,schedule_type,timezone,expression,params,"
+                    "enabled,status,description,retry_policy,version,next_due_at,"
+                    "created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                    (schedule_id, owner, mission_template_id, schedule_type, timezone,
+                     expr_json, params_json, 1, SCHEDULE_ACTIVE, description,
+                     retry_policy, int(version), float(next_due_at), now, now))
+            except sqlite3.IntegrityError:
+                c.execute("ROLLBACK")
+                return {"created": False, "reason": "duplicate_schedule_id",
+                        "schedule_id": schedule_id}
+            c.execute("COMMIT")
+        finally:
+            c.close()
+        self._event("harness.schedule.created",
+                    {"schedule_id": schedule_id, "owner": owner,
+                     "template": mission_template_id, "type": schedule_type})
+        return {"created": True, "schedule_id": schedule_id}
+
+    def set_schedule_status(self, schedule_id, *, to_status, now=None) -> dict:
+        """Explicit, validated schedule state transition. Terminal/disabled states
+        never silently reactivate; anything unlisted is rejected (fail closed)."""
+        now = now if now is not None else _now()
+        c = self._conn()
+        try:
+            c.execute("BEGIN IMMEDIATE")
+            row = c.execute("SELECT status FROM mission_schedule WHERE schedule_id=?",
+                            (schedule_id,)).fetchone()
+            if row is None:
+                c.execute("ROLLBACK"); return {"ok": False, "reason": "unknown_schedule"}
+            cur = row["status"]
+            if cur == to_status:
+                c.execute("ROLLBACK"); return {"ok": True, "noop": True, "status": cur}
+            if cur in SCHEDULE_TERMINAL:
+                c.execute("ROLLBACK"); return {"ok": False, "reason": f"terminal:{cur}"}
+            if to_status not in _SCHEDULE_VALID.get(cur, set()):
+                c.execute("ROLLBACK")
+                return {"ok": False, "reason": f"invalid_transition:{cur}->{to_status}"}
+            enabled = 1 if to_status == SCHEDULE_ACTIVE else 0
+            c.execute("UPDATE mission_schedule SET status=?, enabled=?, updated_at=? "
+                      "WHERE schedule_id=?", (to_status, enabled, now, schedule_id))
+            c.execute("COMMIT")
+        finally:
+            c.close()
+        self._event("harness.schedule.status", {"schedule_id": schedule_id,
+                                                 "status": to_status})
+        return {"ok": True, "status": to_status}
+
+    def update_schedule_due(self, schedule_id, *, next_due_at, last_due_at=None,
+                            last_occurrence_id=None, now=None) -> dict:
+        """Advance a schedule's due bookkeeping. Only touches an ACTIVE schedule
+        (never resurrect a paused/terminal one)."""
+        now = now if now is not None else _now()
+        c = self._conn()
+        try:
+            c.execute("BEGIN IMMEDIATE")
+            row = c.execute("SELECT status FROM mission_schedule WHERE schedule_id=?",
+                            (schedule_id,)).fetchone()
+            if row is None or row["status"] != SCHEDULE_ACTIVE:
+                c.execute("ROLLBACK")
+                return {"ok": False, "reason": "not_active"}
+            sets, args = ["next_due_at=?", "updated_at=?"], [float(next_due_at), now]
+            if last_due_at is not None:
+                sets.append("last_due_at=?"); args.append(float(last_due_at))
+            if last_occurrence_id is not None:
+                sets.append("last_occurrence_id=?")
+                args.append(_clean_str(last_occurrence_id, field="occ", maxlen=128))
+            args.append(schedule_id)
+            c.execute(f"UPDATE mission_schedule SET {','.join(sets)} WHERE schedule_id=?",
+                      args)
+            c.execute("COMMIT")
+        finally:
+            c.close()
+        return {"ok": True}
+
+    def get_schedule(self, schedule_id, *, owner: str | None = None) -> Optional[dict]:
+        with self._conn() as c:
+            row = c.execute("SELECT * FROM mission_schedule WHERE schedule_id=?",
+                            (schedule_id,)).fetchone()
+        if row is None or (owner is not None and row["owner"] != owner):
+            return None
+        out = {k: row[k] for k in _SCHEDULE_SAFE_FIELDS}
+        out["enabled"] = bool(out["enabled"])
+        out["expression"] = _mission_params(out["expression"])
+        out["params"] = _mission_params(out["params"])
+        return out
+
+    def list_schedules(self, owner: str | None = None, *, limit: int = 200) -> list[dict]:
+        limit = max(1, min(int(limit), 1000))
+        q = f"SELECT {','.join(_SCHEDULE_SAFE_FIELDS)} FROM mission_schedule"
+        args: list = []
+        if owner:
+            q += " WHERE owner=?"; args.append(owner)
+        q += " ORDER BY created_at DESC LIMIT ?"; args.append(limit)
+        with self._conn() as c:
+            rows = [dict(r) for r in c.execute(q, args).fetchall()]
+        for r in rows:
+            r["enabled"] = bool(r["enabled"])
+            r["expression"] = _mission_params(r["expression"])
+            r["params"] = _mission_params(r["params"])
+        return rows
+
+    def due_schedules(self, *, now=None, limit: int = 200) -> list[dict]:
+        """ACTIVE schedules whose next_due_at has arrived (owner-safe rows)."""
+        now = now if now is not None else _now()
+        with self._conn() as c:
+            rows = [dict(r) for r in c.execute(
+                f"SELECT {','.join(_SCHEDULE_SAFE_FIELDS)} FROM mission_schedule "
+                "WHERE status=? AND enabled=1 AND next_due_at>0 AND next_due_at<=? "
+                "ORDER BY next_due_at LIMIT ?",
+                (SCHEDULE_ACTIVE, now, max(1, min(int(limit), 1000)))).fetchall()]
+        for r in rows:
+            r["enabled"] = bool(r["enabled"])
+            r["expression"] = _mission_params(r["expression"])
+            r["params"] = _mission_params(r["params"])
+        return rows
+
+    def schedule_health(self, owner: str | None = None) -> dict:
+        where, args = "", []
+        if owner:
+            where, args = " WHERE owner=?", [owner]
+        with self._conn() as c:
+            by = {r["status"]: r["n"] for r in c.execute(
+                f"SELECT status, COUNT(*) n FROM mission_schedule{where} "
+                "GROUP BY status", args).fetchall()}
+        return {"by_status": by, "active": by.get(SCHEDULE_ACTIVE, 0),
+                "paused": by.get(SCHEDULE_PAUSED, 0),
+                "disabled": by.get(SCHEDULE_DISABLED, 0),
+                "completed": by.get(SCHEDULE_COMPLETED, 0),
+                "invalid": by.get(SCHEDULE_INVALID, 0),
+                "total": sum(by.values())}
+
+    # ── M17.14 mission OCCURRENCES (one per due time; lease-claimed) ─────────
+    def create_occurrence(self, occurrence_id, *, schedule_id, owner, due_at,
+                          dedup_key, now=None) -> dict:
+        """Idempotent create — the UNIQUE(dedup_key) makes concurrent creators
+        resolve to exactly one winner (no duplicate occurrence, no duplicate
+        mission downstream)."""
+        owner = _clean_str(owner, field="owner")
+        if not owner:
+            raise LedgerSecurityError("LEDGER_FIELD_REJECTED", "empty owner")
+        occurrence_id = _clean_str(occurrence_id, field="occurrence_id", maxlen=160)
+        schedule_id = _clean_str(schedule_id, field="schedule_id", maxlen=128)
+        dedup_key = _clean_str(dedup_key, field="dedup_key", maxlen=200)
+        now = now if now is not None else _now()
+        c = self._conn()
+        try:
+            c.execute("BEGIN IMMEDIATE")
+            try:
+                c.execute(
+                    "INSERT INTO mission_occurrence(occurrence_id,schedule_id,owner,"
+                    "due_at,dedup_key,state,created_at) VALUES(?,?,?,?,?,?,?)",
+                    (occurrence_id, schedule_id, owner, float(due_at), dedup_key,
+                     OCC_PENDING, now))
+            except sqlite3.IntegrityError:
+                c.execute("ROLLBACK")
+                return {"created": False, "reason": "duplicate_occurrence"}
+            c.execute("COMMIT")
+        finally:
+            c.close()
+        self._event("harness.occurrence.created",
+                    {"occurrence_id": occurrence_id, "schedule_id": schedule_id})
+        return {"created": True, "occurrence_id": occurrence_id}
+
+    def claim_occurrence(self, occurrence_id, *, worker, now=None,
+                         lease_sec: float = 120.0) -> bool:
+        """Atomic lease claim: pending/retry_wait → claimed, only if unleased or the
+        lease has expired. An ACTIVE lease is NOT stealable. Exactly one winner."""
+        now = now if now is not None else _now()
+        c = self._conn()
+        try:
+            c.execute("BEGIN IMMEDIATE")
+            row = c.execute("SELECT state, lease_expires_at, next_attempt_at "
+                            "FROM mission_occurrence WHERE occurrence_id=?",
+                            (occurrence_id,)).fetchone()
+            if row is None:
+                c.execute("ROLLBACK"); return False
+            if row["state"] not in OCC_DISPATCHABLE:
+                c.execute("ROLLBACK"); return False
+            if row["state"] == OCC_RETRY_WAIT and (row["next_attempt_at"] or 0) > now:
+                c.execute("ROLLBACK"); return False
+            if (row["lease_expires_at"] or 0) > now:      # active lease → not stealable
+                c.execute("ROLLBACK"); return False
+            c.execute("UPDATE mission_occurrence SET state=?, claim_owner=?, "
+                      "lease_expires_at=?, started_at=CASE WHEN started_at=0 THEN ? "
+                      "ELSE started_at END WHERE occurrence_id=? AND state IN (?,?)",
+                      (OCC_CLAIMED, _clean_str(worker, field="worker", maxlen=80),
+                       now + float(lease_sec), now, occurrence_id,
+                       OCC_PENDING, OCC_RETRY_WAIT))
+            c.execute("COMMIT")
+        finally:
+            c.close()
+        return True
+
+    def _occ_transition(self, occurrence_id, to_state, *, extra_sql="",
+                        extra_args=(), event="", now=None) -> dict:
+        """Validated occurrence state transition (fail-closed graph, immutable
+        terminals). `extra_sql` is an optional trailing SET clause (no state)."""
+        now = now if now is not None else _now()
+        c = self._conn()
+        try:
+            c.execute("BEGIN IMMEDIATE")
+            row = c.execute("SELECT state FROM mission_occurrence WHERE occurrence_id=?",
+                            (occurrence_id,)).fetchone()
+            if row is None:
+                c.execute("ROLLBACK"); return {"ok": False, "reason": "unknown_occurrence"}
+            cur = row["state"]
+            if cur in OCC_TERMINAL:
+                c.execute("ROLLBACK"); return {"ok": False, "reason": f"terminal:{cur}"}
+            if to_state not in _OCC_VALID.get(cur, set()):
+                c.execute("ROLLBACK")
+                return {"ok": False, "reason": f"invalid_transition:{cur}->{to_state}"}
+            clause = "state=?" + (", " + extra_sql if extra_sql else "")
+            args = [to_state, *extra_args, occurrence_id]
+            c.execute(f"UPDATE mission_occurrence SET {clause} WHERE occurrence_id=?",
+                      args)
+            c.execute("COMMIT")
+        finally:
+            c.close()
+        if event:
+            self._event(event, {"occurrence_id": occurrence_id, "state": to_state})
+        return {"ok": True, "state": to_state}
+
+    def link_occurrence_mission(self, occurrence_id, *, mission_id, now=None) -> dict:
+        """claimed → running, binding the (deterministic) mission_id. Idempotent if
+        already running with the same mission_id (crash-recovery safe)."""
+        mission_id = _clean_str(mission_id, field="mission_id", maxlen=160)
+        now = now if now is not None else _now()
+        c = self._conn()
+        try:
+            c.execute("BEGIN IMMEDIATE")
+            row = c.execute("SELECT state, mission_id FROM mission_occurrence "
+                            "WHERE occurrence_id=?", (occurrence_id,)).fetchone()
+            if row is None:
+                c.execute("ROLLBACK"); return {"ok": False, "reason": "unknown_occurrence"}
+            if row["state"] in OCC_TERMINAL:
+                c.execute("ROLLBACK"); return {"ok": False, "reason": f"terminal:{row['state']}"}
+            if row["state"] == OCC_RUNNING and row["mission_id"] == mission_id:
+                c.execute("ROLLBACK"); return {"ok": True, "noop": True}
+            if row["state"] not in (OCC_CLAIMED, OCC_RUNNING):
+                c.execute("ROLLBACK")
+                return {"ok": False, "reason": f"not_claimed:{row['state']}"}
+            c.execute("UPDATE mission_occurrence SET state=?, mission_id=? "
+                      "WHERE occurrence_id=?", (OCC_RUNNING, mission_id, occurrence_id))
+            c.execute("COMMIT")
+        finally:
+            c.close()
+        self._event("harness.occurrence.mission_created",
+                    {"occurrence_id": occurrence_id, "mission_id": mission_id})
+        return {"ok": True, "state": OCC_RUNNING}
+
+    def finish_occurrence(self, occurrence_id, *, state, mission_run_id="",
+                          failure_category="", failure_summary="", now=None) -> dict:
+        """Move an occurrence to a terminal state that REFLECTS the linked mission
+        result. Terminal is immutable."""
+        if state not in OCC_TERMINAL:
+            raise LedgerError("bad_occurrence_state", state)
+        failure_category = _clean_str(failure_category, field="failure_category", maxlen=80)
+        failure_summary = _clean_str(failure_summary, field="failure_summary", maxlen=200)
+        mission_run_id = _clean_str(mission_run_id, field="mission_run_id", maxlen=64)
+        now = now if now is not None else _now()
+        c = self._conn()
+        try:
+            c.execute("BEGIN IMMEDIATE")
+            row = c.execute("SELECT state FROM mission_occurrence WHERE occurrence_id=?",
+                            (occurrence_id,)).fetchone()
+            if row is None:
+                c.execute("ROLLBACK"); return {"ok": False, "reason": "unknown_occurrence"}
+            if row["state"] in OCC_TERMINAL:
+                c.execute("ROLLBACK")
+                return {"ok": False, "reason": f"already_terminal:{row['state']}"}
+            c.execute("UPDATE mission_occurrence SET state=?, mission_run_id=?, "
+                      "failure_category=?, failure_summary=?, lease_expires_at=0, "
+                      "completed_at=? WHERE occurrence_id=?",
+                      (state, mission_run_id, failure_category, failure_summary,
+                       now, occurrence_id))
+            c.execute("COMMIT")
+        finally:
+            c.close()
+        self._event(f"harness.occurrence.{state}",
+                    {"occurrence_id": occurrence_id, "failure_category": failure_category})
+        return {"ok": True, "state": state}
+
+    def occurrence_retry(self, occurrence_id, *, reason="", max_attempts=None,
+                         now=None) -> dict:
+        """Infrastructure-failure retry: attempt++, next_attempt_at via the shared
+        deterministic RETRY_SCHEDULE, state → retry_wait. Past the bound → failed
+        terminal (never unbounded). NOT used for approval/owner/param/mission
+        outcomes — those go straight to their terminal state."""
+        max_attempts = max_attempts if max_attempts is not None else MAX_DELIVERY_ATTEMPTS
+        reason = _clean_str(reason, field="reason", maxlen=120)
+        now = now if now is not None else _now()
+        c = self._conn()
+        try:
+            c.execute("BEGIN IMMEDIATE")
+            row = c.execute("SELECT state, attempt_count FROM mission_occurrence "
+                            "WHERE occurrence_id=?", (occurrence_id,)).fetchone()
+            if row is None:
+                c.execute("ROLLBACK"); return {"ok": False, "reason": "unknown_occurrence"}
+            if row["state"] in OCC_TERMINAL:
+                c.execute("ROLLBACK"); return {"ok": False, "reason": "terminal"}
+            attempt = int(row["attempt_count"]) + 1
+            if attempt >= int(max_attempts):
+                c.execute("UPDATE mission_occurrence SET state=?, attempt_count=?, "
+                          "failure_category=?, failure_summary=?, lease_expires_at=0, "
+                          "completed_at=? WHERE occurrence_id=?",
+                          (OCC_FAILED, attempt, "infrastructure",
+                           f"retry_exhausted:{reason}"[:200], now, occurrence_id))
+                c.execute("COMMIT")
+                self._event("harness.occurrence.failed",
+                            {"occurrence_id": occurrence_id, "failure_category": "infrastructure"})
+                return {"ok": True, "state": OCC_FAILED, "terminal": True}
+            delay = retry_delay(attempt)
+            c.execute("UPDATE mission_occurrence SET state=?, attempt_count=?, "
+                      "next_attempt_at=?, lease_expires_at=0, claim_owner='' "
+                      "WHERE occurrence_id=?",
+                      (OCC_RETRY_WAIT, attempt, now + delay, occurrence_id))
+            c.execute("COMMIT")
+        finally:
+            c.close()
+        return {"ok": True, "state": OCC_RETRY_WAIT, "attempt": attempt,
+                "next_attempt_at": now + delay}
+
+    def pending_due_occurrences(self, *, now=None, limit: int = 100) -> list[dict]:
+        """Dispatchable occurrences: pending, or retry_wait whose next_attempt_at
+        has arrived. Deterministic ordering (due_at, occurrence_id)."""
+        now = now if now is not None else _now()
+        with self._conn() as c:
+            rows = [dict(r) for r in c.execute(
+                "SELECT * FROM mission_occurrence WHERE (state=? OR "
+                "(state=? AND next_attempt_at<=?)) ORDER BY due_at, occurrence_id "
+                "LIMIT ?", (OCC_PENDING, OCC_RETRY_WAIT, now,
+                            max(1, min(int(limit), 1000)))).fetchall()]
+        return rows
+
+    def reclaim_stale_occurrences(self, *, now=None, lease_sec: float = 120.0) -> list[dict]:
+        """Return CLAIMED/RUNNING occurrences whose lease expired — for the
+        reconciler to inspect (crash recovery). Does not itself create missions."""
+        now = now if now is not None else _now()
+        with self._conn() as c:
+            return [dict(r) for r in c.execute(
+                "SELECT * FROM mission_occurrence WHERE state IN (?,?) "
+                "AND lease_expires_at>0 AND lease_expires_at<?",
+                (OCC_CLAIMED, OCC_RUNNING, now)).fetchall()]
+
+    def requeue_occurrence(self, occurrence_id, *, now=None) -> dict:
+        """A crashed CLAIMED occurrence with NO mission yet → back to pending."""
+        return self._occ_transition(occurrence_id, OCC_PENDING,
+                                    extra_sql="lease_expires_at=0, claim_owner=''",
+                                    event="harness.occurrence.requeued", now=now)
+
+    def inspect_occurrence(self, occurrence_id, *, owner: str | None = None) -> Optional[dict]:
+        with self._conn() as c:
+            row = c.execute("SELECT * FROM mission_occurrence WHERE occurrence_id=?",
+                            (occurrence_id,)).fetchone()
+        if row is None or (owner is not None and row["owner"] != owner):
+            return None
+        return {k: row[k] for k in _OCC_SAFE_FIELDS}
+
+    def list_occurrences(self, owner: str | None = None, *, schedule_id=None,
+                         limit: int = 200) -> list[dict]:
+        limit = max(1, min(int(limit), 1000))
+        q = f"SELECT {','.join(_OCC_SAFE_FIELDS)} FROM mission_occurrence"
+        conds, args = [], []
+        if owner:
+            conds.append("owner=?"); args.append(owner)
+        if schedule_id:
+            conds.append("schedule_id=?"); args.append(schedule_id)
+        if conds:
+            q += " WHERE " + " AND ".join(conds)
+        q += " ORDER BY due_at DESC LIMIT ?"; args.append(limit)
+        with self._conn() as c:
+            return [dict(r) for r in c.execute(q, args).fetchall()]
+
+    def occurrence_health(self, owner: str | None = None, *, now=None) -> dict:
+        now = now if now is not None else _now()
+        where, args = "", []
+        if owner:
+            where, args = " WHERE owner=?", [owner]
+        with self._conn() as c:
+            by = {r["state"]: r["n"] for r in c.execute(
+                f"SELECT state, COUNT(*) n FROM mission_occurrence{where} "
+                "GROUP BY state", args).fetchall()}
+            stale = c.execute(
+                "SELECT COUNT(*) n FROM mission_occurrence WHERE state IN (?,?) "
+                "AND lease_expires_at>0 AND lease_expires_at<?",
+                (OCC_CLAIMED, OCC_RUNNING, now)).fetchone()["n"]
+        return {"by_state": by, "pending": by.get(OCC_PENDING, 0),
+                "claimed": by.get(OCC_CLAIMED, 0), "running": by.get(OCC_RUNNING, 0),
+                "retry_wait": by.get(OCC_RETRY_WAIT, 0),
+                "succeeded": by.get(OCC_SUCCEEDED, 0), "failed": by.get(OCC_FAILED, 0),
+                "approval_required": by.get(OCC_APPROVAL_REQUIRED, 0),
+                "stale_leases": stale, "total": sum(by.values())}
+
+    # ── M17.14 trusted event TRIGGERS + receipts (allowlist, dedup) ─────────
+    def create_trigger(self, trigger_id, *, owner, event_type, mission_template_id,
+                       params=None, payload_map=None, cooldown_sec=0.0,
+                       description="", now=None) -> dict:
+        owner = _clean_str(owner, field="owner")
+        if not owner:
+            raise LedgerSecurityError("LEDGER_FIELD_REJECTED", "empty owner")
+        trigger_id = _clean_str(trigger_id, field="trigger_id", maxlen=128)
+        event_type = _clean_str(event_type, field="event_type", maxlen=80)
+        mission_template_id = _clean_str(mission_template_id,
+                                         field="mission_template_id", maxlen=120)
+        description = _clean_str(description, field="description", maxlen=300)
+        params = params or {}
+        payload_map = payload_map or {}
+        _reject_secrets({"params": params, "payload_map": payload_map,
+                         "description": description}, where="trigger_identity")
+        p_json = json.dumps(params, sort_keys=True, default=str)[:4000]
+        m_json = json.dumps(payload_map, sort_keys=True, default=str)[:2000]
+        now = now if now is not None else _now()
+        c = self._conn()
+        try:
+            c.execute("BEGIN IMMEDIATE")
+            try:
+                c.execute(
+                    "INSERT INTO mission_event_trigger(trigger_id,owner,event_type,"
+                    "mission_template_id,params,payload_map,enabled,cooldown_sec,"
+                    "status,description,created_at,updated_at) "
+                    "VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",
+                    (trigger_id, owner, event_type, mission_template_id, p_json,
+                     m_json, 1, float(cooldown_sec), SCHEDULE_ACTIVE, description,
+                     now, now))
+            except sqlite3.IntegrityError:
+                c.execute("ROLLBACK")
+                return {"created": False, "reason": "duplicate_trigger_id"}
+            c.execute("COMMIT")
+        finally:
+            c.close()
+        self._event("harness.trigger.created",
+                    {"trigger_id": trigger_id, "owner": owner, "event_type": event_type})
+        return {"created": True, "trigger_id": trigger_id}
+
+    def set_trigger_status(self, trigger_id, *, to_status, now=None) -> dict:
+        now = now if now is not None else _now()
+        if to_status not in (SCHEDULE_ACTIVE, SCHEDULE_PAUSED, SCHEDULE_DISABLED):
+            return {"ok": False, "reason": "bad_status"}
+        c = self._conn()
+        try:
+            c.execute("BEGIN IMMEDIATE")
+            row = c.execute("SELECT status FROM mission_event_trigger WHERE trigger_id=?",
+                            (trigger_id,)).fetchone()
+            if row is None:
+                c.execute("ROLLBACK"); return {"ok": False, "reason": "unknown_trigger"}
+            if row["status"] == SCHEDULE_DISABLED:
+                c.execute("ROLLBACK"); return {"ok": False, "reason": "terminal:disabled"}
+            enabled = 1 if to_status == SCHEDULE_ACTIVE else 0
+            c.execute("UPDATE mission_event_trigger SET status=?, enabled=?, updated_at=? "
+                      "WHERE trigger_id=?", (to_status, enabled, now, trigger_id))
+            c.execute("COMMIT")
+        finally:
+            c.close()
+        self._event("harness.trigger.status", {"trigger_id": trigger_id, "status": to_status})
+        return {"ok": True, "status": to_status}
+
+    def triggers_for_event(self, event_type, *, now=None) -> list[dict]:
+        """ACTIVE, enabled triggers bound to an allowlisted event type."""
+        if event_type not in TRUSTED_EVENT_TYPES:
+            return []
+        with self._conn() as c:
+            rows = [dict(r) for r in c.execute(
+                "SELECT * FROM mission_event_trigger WHERE event_type=? AND status=? "
+                "AND enabled=1", (event_type, SCHEDULE_ACTIVE)).fetchall()]
+        for r in rows:
+            r["params"] = _mission_params(r["params"])
+            r["payload_map"] = _mission_params(r["payload_map"])
+        return rows
+
+    def get_trigger(self, trigger_id, *, owner: str | None = None) -> Optional[dict]:
+        with self._conn() as c:
+            row = c.execute("SELECT * FROM mission_event_trigger WHERE trigger_id=?",
+                            (trigger_id,)).fetchone()
+        if row is None or (owner is not None and row["owner"] != owner):
+            return None
+        out = {k: row[k] for k in _TRIGGER_SAFE_FIELDS}
+        out["enabled"] = bool(out["enabled"])
+        out["params"] = _mission_params(out["params"])
+        out["payload_map"] = _mission_params(out["payload_map"])
+        return out
+
+    def list_triggers(self, owner: str | None = None, *, limit: int = 200) -> list[dict]:
+        limit = max(1, min(int(limit), 1000))
+        q = f"SELECT {','.join(_TRIGGER_SAFE_FIELDS)} FROM mission_event_trigger"
+        args: list = []
+        if owner:
+            q += " WHERE owner=?"; args.append(owner)
+        q += " ORDER BY created_at DESC LIMIT ?"; args.append(limit)
+        with self._conn() as c:
+            rows = [dict(r) for r in c.execute(q, args).fetchall()]
+        for r in rows:
+            r["enabled"] = bool(r["enabled"])
+            r["params"] = _mission_params(r["params"])
+            r["payload_map"] = _mission_params(r["payload_map"])
+        return rows
+
+    def create_receipt(self, receipt_id, *, trigger_id, owner, event_type,
+                       source_event_id, dedup_key, state="accepted", mission_id="",
+                       rejection_category="", now=None) -> dict:
+        """Durable trigger receipt. UNIQUE(dedup_key) makes a repeated source event
+        a no-op (no duplicate mission)."""
+        receipt_id = _clean_str(receipt_id, field="receipt_id", maxlen=160)
+        dedup_key = _clean_str(dedup_key, field="dedup_key", maxlen=200)
+        owner = _clean_str(owner, field="owner")
+        now = now if now is not None else _now()
+        c = self._conn()
+        try:
+            c.execute("BEGIN IMMEDIATE")
+            try:
+                c.execute(
+                    "INSERT INTO mission_event_receipt(receipt_id,trigger_id,owner,"
+                    "event_type,source_event_id,dedup_key,state,mission_id,"
+                    "rejection_category,received_at) VALUES(?,?,?,?,?,?,?,?,?,?)",
+                    (receipt_id, _clean_str(trigger_id, field="trigger_id", maxlen=128),
+                     owner, _clean_str(event_type, field="event_type", maxlen=80),
+                     _clean_str(source_event_id, field="source_event_id", maxlen=160),
+                     dedup_key, state,
+                     _clean_str(mission_id, field="mission_id", maxlen=160),
+                     _clean_str(rejection_category, field="rejection_category", maxlen=80),
+                     now))
+            except sqlite3.IntegrityError:
+                c.execute("ROLLBACK")
+                return {"created": False, "reason": "duplicate_receipt"}
+            c.execute("COMMIT")
+        finally:
+            c.close()
+        self._event("harness.trigger.receipt",
+                    {"receipt_id": receipt_id, "trigger_id": trigger_id, "state": state})
+        return {"created": True, "receipt_id": receipt_id}
+
+    def update_receipt(self, receipt_id, *, state, mission_id=None,
+                       rejection_category=None) -> dict:
+        sets, args = ["state=?"], [state]
+        if mission_id is not None:
+            sets.append("mission_id=?")
+            args.append(_clean_str(mission_id, field="mission_id", maxlen=160))
+        if rejection_category is not None:
+            sets.append("rejection_category=?")
+            args.append(_clean_str(rejection_category, field="rej", maxlen=80))
+        args.append(receipt_id)
+        with self._conn() as c:
+            c.execute(f"UPDATE mission_event_receipt SET {','.join(sets)} "
+                      "WHERE receipt_id=?", args)
+        return {"ok": True}
+
+    def list_receipts(self, owner: str | None = None, *, limit: int = 200) -> list[dict]:
+        limit = max(1, min(int(limit), 1000))
+        q = f"SELECT {','.join(_RECEIPT_SAFE_FIELDS)} FROM mission_event_receipt"
+        args: list = []
+        if owner:
+            q += " WHERE owner=?"; args.append(owner)
+        q += " ORDER BY received_at DESC LIMIT ?"; args.append(limit)
+        with self._conn() as c:
+            return [dict(r) for r in c.execute(q, args).fetchall()]
+
     def cleanup(self, *, retention_sec: float, now=None) -> dict:
         """Delete terminal runs (and their transitions) older than the retention
         window. Active runs are never touched."""
@@ -1622,12 +2342,19 @@ class RunLedger:
                                     "WHERE status!='resolved'").fetchone()["n"]
             pipelines = c.execute("SELECT COUNT(*) n FROM pipeline_run").fetchone()["n"]
             missions = c.execute("SELECT COUNT(*) n FROM mission").fetchone()["n"]
-        return {"integrity": integrity, "ok": integrity == "ok" and dupes == 0,
+            schedules = c.execute("SELECT COUNT(*) n FROM mission_schedule").fetchone()["n"]
+            occurrences = c.execute("SELECT COUNT(*) n FROM mission_occurrence").fetchone()["n"]
+            occ_dupes = c.execute("SELECT COUNT(*) n FROM (SELECT dedup_key, "
+                                  "COUNT(*) c FROM mission_occurrence GROUP BY "
+                                  "dedup_key HAVING c>1)").fetchone()["n"]
+        return {"integrity": integrity,
+                "ok": integrity == "ok" and dupes == 0 and occ_dupes == 0,
                 "total_runs": total, "by_state": census, "transitions": trans,
                 "active": sum(census.get(s, 0) for s in ACTIVE),
                 "idempotency_collisions": dupes, "open_alerts": open_alerts,
                 "pipelines": pipelines, "missions": missions,
-                "db_path": str(self.db_path)}
+                "schedules": schedules, "occurrences": occurrences,
+                "occurrence_collisions": occ_dupes, "db_path": str(self.db_path)}
 
     # ── M17.8 journal drop-in (adapter compatibility, no adapter changes) ───
     # The ApplicationHarnessAdapter calls journal.record_start / record_end;

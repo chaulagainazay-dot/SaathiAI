@@ -135,6 +135,38 @@ MISSION ENGINE STAGING READY** — not production (untrusted mission-spec ingest
 live scheduling + event/triggered execution, parallel missions, multi-user load
 remain).
 
+## M17.14 (this invocation) — governed mission scheduler & trusted event triggers
+Start/rollback point: HEAD `73fd251` (M17.13). No higher Critical/High open; release
+blockers environment-blocked. M17.13 delivered objective-driven missions; M17.14 adds
+the WHEN layer ABOVE the MissionEngine so approved missions run on a schedule or from
+a trusted internal event — without a second scheduler DB, job runner, execution
+engine, approval system, or event bus. HIERARCHY: Scheduler/Trusted-Event → Mission
+instance → MissionEngine → PipelineRunner → run_harness_action → Adapter →
+verification → ledger; the scheduler NEVER executes a tool (static test asserts no
+PipelineRunner/adapter/subprocess reference). Delivered: additive `mission_schedule`
++ `mission_occurrence` (UNIQUE dedup_key) + `mission_event_trigger` +
+`mission_event_receipt` (UNIQUE dedup_key) ledger tables; deterministic tz-aware due
+math (one_time/interval/daily/weekly; DST via zoneinfo; cron omitted); each due time
+→ exactly ONE occurrence and each occurrence → at most ONE mission (deterministic
+mission id = crash-safe idempotency); lease-based claiming (active lease not
+stealable, expired recoverable); restart reconciliation (no duplicate mission);
+infra-only bounded retry `[0,60,300,900,3600]`s (NEVER for approval/owner/param/
+mission outcome); a trusted event ALLOWLIST with static template binding +
+allowlisted scalar payload mapping + durable receipt dedup (payload can't set owner/
+template/risk/approval); an opt-in interval runner (default DISABLED); Control Center
+scheduler cell + attention; 12 CLI commands (1 always-on census + 11 admin-gated
+owner-safe); and **8 dedicated blocking Critical Manifest checks**. LIVE proof: a
+scheduled data_bundle mission generated one occurrence, dispatched through the
+MissionEngine to a real governed sqlite→zip pipeline (independently verified), re-swept
+with no duplicate occurrence/mission, and reconciled after a simulated restart.
+Multi-PROCESS + multi-thread concurrent occurrence create each dedup to exactly one.
+Extends the ledger + event bus + Control Center attention + admin gate — no second
+scheduler/engine/DB/bus. Trading Guardian not engaged (scheduler/event modules carry
+no trading surface; scheduling never converts advisory into execution permission).
+Verdict: **GOVERNED MISSION SCHEDULING & TRUSTED EVENT TRIGGERS STAGING READY** — not
+production (cron, public webhooks, untrusted JSON defs, distributed/parallel
+scheduling, production auto-scheduling remain).
+
 ## Blocked / deferred (need user action or larger scope)
 - authenticated browser / cloud connector workflow — needs a safe staging account.
 - native Finder/TextEdit actuation — macOS Accessibility (TCC) not granted.

@@ -1368,3 +1368,66 @@ DIFFERENT lineage and is untouched — the mission engine lives in
 strengthened, never bypassed). **Verdict: AUTONOMOUS MISSION ENGINE STAGING READY** —
 NOT production (untrusted spec ingestion, live scheduling/event triggers, parallel
 missions, multi-user load outstanding).
+
+## M17.14 — governed mission scheduler & trusted event triggers
+
+Autonomous-loop milestone (start/rollback 73fd251, M17.13). Adds the WHEN layer
+ABOVE the MissionEngine: SCHEDULING SITS ABOVE MissionEngine and delegates down —
+Scheduler/Trusted-Event → Mission instance → MissionEngine → PipelineRunner →
+run_harness_action → Adapter → verification → ledger. NO DIRECT EXECUTION PATH: the
+scheduler NEVER runs a pipeline/harness/adapter/shell/tool (STATIC TEST asserts
+scheduler.py + event_triggers.py reference no PipelineRunner/run_harness_action/
+adapter/subprocess/Popen — the only downward call is MissionEngine.create/launch/
+inspect). NO second scheduler DB / job runner / execution engine / approval system /
+event bus / ledger. Additive tables in the SAME ledger DB: mission_schedule,
+mission_occurrence (UNIQUE dedup_key), mission_event_trigger, mission_event_receipt
+(UNIQUE dedup_key). DURABLE OCCURRENCES: each due time → exactly ONE occurrence
+(unique dedup_key = schedule_id:normalized_due_at:version; concurrent creators, one
+winner — proven multi-thread AND multi-process). Each occurrence → at most ONE
+mission via a DETERMINISTIC mission id = ms_+sha(occurrence_id), so a crash-after-
+create re-attempt reconciles the existing mission (create returns duplicate) rather
+than making a second. LEASE CLAIMING: claim_occurrence = atomic BEGIN IMMEDIATE CAS
+(pending/due-retry_wait + no live lease → claimed w/ bounded lease); active lease NOT
+stealable; expired lease recoverable. RESTART RECONCILIATION: reconcile() scans
+stale-lease occurrences — no mission → requeue pending; mission terminal/approval →
+finalize occurrence from it; mission mid-flight → re-launch (idempotent) then
+finalize; never duplicates. Occurrence state machine pending→claimed→running→
+{succeeded|failed|blocked|approval_required|cancelled}, plus retry_wait (infra only)
+and pending/expired; terminal immutable; SUCCEEDED only if the LINKED mission
+completed (never "mission created"). Schedule types one_time/interval/daily/weekly
+(cron deliberately omitted); UTC internal, daily/weekly wall-clock via zoneinfo so
+DST is library-handled (a daily 06:00 job stays 06:00 local across DST; spring-
+forward day = 23h — proven). Schedule states active→{paused,completed,disabled,
+invalid}, terminal never reactivates; paused/disabled generate nothing. RETRY: infra-
+only via shared RETRY_SCHEDULE [0,60,300,900,3600]s→terminal_failed; NEVER for
+approval/owner/template/param/verification/mission-outcome. APPROVAL & OWNERSHIP
+PRESERVED: approval-required scheduled mission STOPS at approval_required (never auto-
+approved); owner consistency checked BEFORE the engine (occurrence.owner==schedule
+.owner), mismatch executes nothing; risk-4 stays manual-only under the unchanged
+run_harness_action. TRUSTED EVENT ALLOWLIST: ingest_event accepts only
+TRUSTED_EVENT_TYPES (harness.pipeline.failed/succeeded, harness.mission.completed/
+failed, harness.notification.terminal_failed, system.daily_rollover,
+ceo.review.requested); a trigger STATICALLY binds owner+template+static params; a
+payload can never choose template / change owner / alter risk / grant approval
+(forbidden mappings refused at registration); only allowlisted SCALAR payload fields
+mapped, unexpected/secret/nested rejected; durable receipt (unique
+trigger_id:source_event_id) dedups repeats to ONE mission; receipts store no raw
+payload. Opt-in interval runner scheduler_runner.py (default DISABLED via
+SAATHI_MISSION_SCHEDULER_ENABLED=1; overlap-safe, restart-safe; no OS/cron/cloud).
+Control Center: owner-safe scheduler cell + attention (invalid schedule / failed +
+approval_required occurrence / stale lease / trigger-rejection threshold). CLI:
+scheduler-health (always) + 11 admin-gated owner-safe (schedules, schedule-inspect,
+schedule-create typed, pause/resume/disable, occurrences, occurrence-inspect,
+occurrence-reconcile, triggers, trigger-inspect). Ops: 8 BLOCKING scheduler.*
+manifest checks. Tests: test_m17_14_mission_scheduler.py (49). VALIDATION: 49 new;
+214 harness-lineage+CC regression; full suite 1736 passed / 1 skipped / 0 failed
+(+49 over 1687); 8 scheduler.* manifest GREEN via runner; release gate exit 0
+(db/backup/restore true) + dedicated backup/restore test; secret scan clean; git
+diff --check clean. Backward compatible: additive CREATE TABLE IF NOT EXISTS; M17.8–
+M17.13 preserved; revert = single-commit rollback (four unused tables remain).
+Trading Guardian NOT engaged (scheduler/event modules contain no trading surface —
+asserted; scheduling never converts advisory into execution permission). Commit:
+this invocation (see git log); rollback point 73fd251. **Verdict: GOVERNED MISSION
+SCHEDULING & TRUSTED EVENT TRIGGERS STAGING READY** — NOT production (cron, public
+webhooks, untrusted JSON defs, distributed/parallel scheduling, production auto-
+scheduling outstanding).
