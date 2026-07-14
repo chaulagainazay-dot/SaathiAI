@@ -186,6 +186,13 @@ class ControlCenterAggregator:
                 cell["invalid_checkpoints"] = [
                     c for c in led.checkpoints_owned(self.owner, limit=50)
                     if c["status"] != "valid"]
+                # M17.16 owner-safe bounded parallel/branching graph pipelines
+                cell["graph_pipelines"] = led.list_graphs(self.owner, limit=25)
+                cell["graph_health"] = led.graph_health(self.owner)
+                cell["graph_branches"] = [
+                    b for b in led.branches_owned(self.owner, limit=50)
+                    if b["state"] in ("failed", "approval_required", "stop_uncertain",
+                                      "blocked")]
                 # M17.14 owner-safe mission scheduling (schedules/occurrences/triggers)
                 cell["schedules"] = led.list_schedules(self.owner, limit=25)
                 cell["schedule_health"] = led.schedule_health(self.owner)
@@ -306,6 +313,23 @@ class ControlCenterAggregator:
                                          f"{c['step_index']} {c['status']} "
                                          f"({c.get('invalidation_reason', '')})",
                               "link": "/control/recovery"})
+            # M17.16 graph-pipeline attention: failed / approval / stop_uncertain
+            # branches and blocked joins (owner-safe summaries only)
+            for g in (harn.value.get("graph_pipelines") or []):
+                if g.get("state") == "failed":
+                    items.append({"severity": "high", "kind": "graph_pipeline",
+                                  "message": f"graph {g['pipeline_id']} "
+                                             f"({g.get('name', '')}) failed — join "
+                                             f"blocked ({g.get('failure_code', '')})",
+                                  "link": "/control/graphs"})
+            for b in (harn.value.get("graph_branches") or []):
+                st = b.get("state")
+                sev = "medium" if st == "approval_required" else "high"
+                items.append({"severity": sev, "kind": "graph_branch",
+                              "message": f"graph {b['pipeline_id']} branch "
+                                         f"{b['branch_key']} {st} "
+                                         f"({b.get('failure_code', '')})",
+                              "link": "/control/graphs"})
             # M17.14 scheduler attention (owner-safe summaries only)
             for s in (harn.value.get("schedules") or []):
                 if s.get("status") == "invalid":

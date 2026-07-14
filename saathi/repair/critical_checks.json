@@ -1446,6 +1446,143 @@
    ],
    "subsystem": "application_harness",
    "blocking": true
+  },
+  {
+   "id": "pipeline_graph.validation",
+   "targets": [
+    "tests/test_m17_16_parallel_pipeline.py::test_valid_diamond_graph",
+    "tests/test_m17_16_parallel_pipeline.py::test_valid_three_branch_graph",
+    "tests/test_m17_16_parallel_pipeline.py::test_duplicate_step_id_rejected",
+    "tests/test_m17_16_parallel_pipeline.py::test_missing_dependency_rejected",
+    "tests/test_m17_16_parallel_pipeline.py::test_self_dependency_rejected",
+    "tests/test_m17_16_parallel_pipeline.py::test_cycle_rejected",
+    "tests/test_m17_16_parallel_pipeline.py::test_owner_mismatch_rejected",
+    "tests/test_m17_16_parallel_pipeline.py::test_graph_size_limit_enforced",
+    "tests/test_m17_16_parallel_pipeline.py::test_concurrency_limit_enforced",
+    "tests/test_m17_16_parallel_pipeline.py::test_nested_fork_rejected",
+    "tests/test_m17_16_parallel_pipeline.py::test_second_join_rejected",
+    "tests/test_m17_16_parallel_pipeline.py::test_branch_width_exceeded_rejected",
+    "tests/test_m17_16_parallel_pipeline.py::test_artifact_collision_rejected",
+    "tests/test_m17_16_parallel_pipeline.py::test_secret_shaped_name_rejected",
+    "tests/test_m17_16_parallel_pipeline.py::test_path_escape_rejected",
+    "tests/test_m17_16_parallel_pipeline.py::test_unknown_harness_rejected",
+    "tests/test_m17_16_parallel_pipeline.py::test_invalid_graph_executes_nothing"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "pipeline_graph.ready_queue",
+   "targets": [
+    "tests/test_m17_16_parallel_pipeline.py::test_diamond_runs_and_join_receives_both_branches",
+    "tests/test_m17_16_parallel_pipeline.py::test_branch_sees_only_declared_dependency_artifacts"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "pipeline_graph.parallel_execution",
+   "targets": [
+    "tests/test_m17_16_parallel_pipeline.py::test_two_branches_execute_concurrently_under_bound",
+    "tests/test_m17_16_parallel_pipeline.py::test_worker_bound_serializes_when_limit_one",
+    "tests/test_m17_16_parallel_pipeline.py::test_each_step_passes_through_run_harness_action"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "pipeline_graph.join_barrier",
+   "targets": [
+    "tests/test_m17_16_parallel_pipeline.py::test_diamond_runs_and_join_receives_both_branches",
+    "tests/test_m17_16_parallel_pipeline.py::test_branch_failure_prevents_join"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "pipeline_graph.fail_closed",
+   "targets": [
+    "tests/test_m17_16_parallel_pipeline.py::test_branch_failure_prevents_join",
+    "tests/test_m17_16_parallel_pipeline.py::test_approval_required_branch_blocks_join",
+    "tests/test_m17_16_parallel_pipeline.py::test_risk4_branch_needs_approval_and_blocks_join"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "pipeline_graph.checkpoint_resume",
+   "targets": [
+    "tests/test_m17_16_parallel_pipeline.py::test_partial_reuse_reruns_only_failed_branch_and_descendants",
+    "tests/test_m17_16_parallel_pipeline.py::test_invalid_root_invalidates_all_downstream",
+    "tests/test_m17_16_parallel_pipeline.py::test_artifact_tamper_invalidates_branch_and_join_only",
+    "tests/test_m17_16_parallel_pipeline.py::test_reusable_subgraph_is_dependency_closed",
+    "tests/test_m17_16_parallel_pipeline.py::test_duplicate_resume_deduplicated"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "pipeline_graph.retry_isolation",
+   "targets": [
+    "tests/test_m17_16_parallel_pipeline.py::test_retryable_failure_reruns_only_that_branch",
+    "tests/test_m17_16_parallel_pipeline.py::test_non_retryable_categories_are_not_retried"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "pipeline_graph.crash_reconciliation",
+   "targets": [
+    "tests/test_m17_16_parallel_pipeline.py::test_stale_step_claim_reclaimed",
+    "tests/test_m17_16_parallel_pipeline.py::test_crash_before_join_no_duplicate_branch_work"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "pipeline_graph.concurrency_dedup",
+   "targets": [
+    "tests/test_m17_16_parallel_pipeline.py::test_duplicate_graph_launch_deduplicated",
+    "tests/test_m17_16_parallel_pipeline.py::test_exactly_one_claim_per_step_and_not_stealable",
+    "tests/test_m17_16_parallel_pipeline.py::test_each_step_claimed_exactly_once_during_run"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "pipeline_graph.approval_owner_safety",
+   "targets": [
+    "tests/test_m17_16_parallel_pipeline.py::test_owner_mismatch_executes_nothing",
+    "tests/test_m17_16_parallel_pipeline.py::test_cross_owner_graph_inspection_hidden",
+    "tests/test_m17_16_parallel_pipeline.py::test_risk_increase_changes_step_fingerprint",
+    "tests/test_m17_16_parallel_pipeline.py::test_graph_layer_opens_no_trading_surface"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "pipeline_graph.mission_scheduler_integration",
+   "targets": [
+    "tests/test_m17_16_parallel_pipeline.py::test_mission_launches_graph_through_pipeline_runner"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "pipeline_graph.control_center_owner_scope",
+   "targets": [
+    "tests/test_m17_16_parallel_pipeline.py::test_control_center_graph_cell_owner_safe"
+   ],
+   "subsystem": "control_center",
+   "blocking": true
+  },
+  {
+   "id": "pipeline_graph.database_backup_restore",
+   "targets": [
+    "tests/test_m17_16_parallel_pipeline.py::test_graph_ledger_survives_backup_restore"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
   }
  ]
 }

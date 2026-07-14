@@ -89,7 +89,10 @@ _LEDGER_CMDS = {"runs", "run-inspect", "run-cancel", "run-reconcile",
                 "pipeline-recovery-health", "pipeline-checkpoints",
                 "pipeline-checkpoint-inspect", "pipeline-resume", "pipeline-retry",
                 "pipeline-recovery-reconcile", "pipeline-invalidate-checkpoint",
-                "pipeline-recovery-history"}
+                "pipeline-recovery-history",
+                "pipeline-graph-health", "pipeline-graph", "pipeline-branches",
+                "pipeline-branch-inspect", "pipeline-graph-resume",
+                "pipeline-graph-reconcile", "pipeline-graph-history"}
 _ADMIN_MSG = ("ledger maintenance commands require admin mode: set "
               "SAATHI_HARNESS_ADMIN=1 (the verified local OS identity is used "
               "as the audited operator; no caller-supplied identity is trusted)")
@@ -144,6 +147,33 @@ def _recovery_spec(led, pipeline_id):
                          pipeline_id=pipeline_id, correlation_id=mid), run["owner"])
 
 
+def _graph_spec(led, pipeline_id):
+    """Rebuild the trusted GraphSpec for a MISSION-originated graph pipeline so an
+    operator resume runs the SAME governed graph. Falls closed (None) when the graph
+    was not produced by a known mission graph template (no arbitrary graphs)."""
+    run = led.inspect_pipeline(pipeline_id)
+    if run is None:
+        return None
+    mid = run.get("correlation_id")
+    if not mid:
+        return None
+    m = led.inspect_mission(mid)
+    if m is None:
+        return None
+    from saathi.application_harness.mission import MissionEngine
+    from saathi.application_harness.pipeline_graph import GraphSpec
+    tmpl = MissionEngine(ledger=led).templates.get(m["template"])
+    if tmpl is None or tmpl.build_graph is None:
+        return None
+    try:
+        steps = tmpl.build_graph(dict(m["params"]))
+    except Exception:
+        return None
+    return (GraphSpec(name=m["title"], owner=run["owner"], steps=steps,
+                      concurrency_limit=tmpl.concurrency_limit,
+                      pipeline_id=pipeline_id, correlation_id=mid), run["owner"])
+
+
 def _ledger_cmd(cmd, rest) -> int | None:
     """Handle M17.9 run-ledger subcommands. Returns an exit code, or None if
     `cmd` is not a ledger command."""
@@ -166,6 +196,8 @@ def _ledger_cmd(cmd, rest) -> int | None:
                          indent=2, default=str)); return 0
     if cmd == "pipeline-recovery-health":     # M17.15 aggregate census — no secrets
         print(json.dumps(led.recovery_health(), indent=2, default=str)); return 0
+    if cmd == "pipeline-graph-health":        # M17.16 aggregate census — no secrets
+        print(json.dumps(led.graph_health(), indent=2, default=str)); return 0
     # everything else is admin-maintenance-only; identity from trusted OS context
     if not _admin_enabled():
         print(_ADMIN_MSG, file=sys.stderr)
@@ -369,6 +401,46 @@ def _ledger_cmd(cmd, rest) -> int | None:
                else rec.retry(spec, owner=owner, session_id=f"cli:{operator}"))
         print(json.dumps(res, indent=2, default=str))
         return 0 if res.get("ok") else 1
+    # ── M17.16 bounded graph-pipeline operator surface (owner-safe, audited) ──
+    if cmd == "pipeline-graph":                   # owner-safe graph structure + state
+        if not rest:
+            print("pipeline-graph needs <pipeline_id>", file=sys.stderr); return 2
+        g = led.inspect_graph(rest[0])
+        print(json.dumps(g or {"error": "not found"}, indent=2, default=str))
+        return 0 if g else 1
+    if cmd == "pipeline-branches":
+        if not rest:
+            print("pipeline-branches needs <pipeline_id>", file=sys.stderr); return 2
+        print(json.dumps(led.list_branches(rest[0]), indent=2, default=str)); return 0
+    if cmd == "pipeline-branch-inspect":
+        if len(rest) < 2:
+            print("pipeline-branch-inspect needs <pipeline_id> <branch_key>",
+                  file=sys.stderr); return 2
+        b = [x for x in led.list_branches(rest[0]) if x["branch_key"] == rest[1]]
+        print(json.dumps(b[0] if b else {"error": "not found"}, indent=2, default=str))
+        return 0 if b else 1
+    if cmd == "pipeline-graph-history":
+        print(json.dumps(led.list_graphs(None), indent=2, default=str)); return 0
+    if cmd == "pipeline-graph-reconcile":         # settle stale per-step claims only
+        from saathi.application_harness.pipeline_graph import GraphPipelineRunner
+        print(json.dumps(GraphPipelineRunner(ledger=led).reconcile(), indent=2,
+                         default=str))
+        return 0
+    if cmd == "pipeline-graph-resume":            # audited; SAME governed graph
+        if not rest:
+            print("pipeline-graph-resume needs <pipeline_id>", file=sys.stderr); return 2
+        spec_owner = _graph_spec(led, rest[0])
+        if spec_owner is None:
+            print(json.dumps({"ok": False,
+                              "reason": "spec_unavailable — graph resume is driven "
+                                        "through the owning mission template"}))
+            return 1
+        spec, owner = spec_owner
+        from saathi.application_harness.pipeline_graph import GraphPipelineRunner
+        res = GraphPipelineRunner(ledger=led).resume(
+            spec, owner=owner, session_id=f"cli:{operator}")
+        print(json.dumps(res, indent=2, default=str))
+        return 0 if res.get("ok") else 1
     if cmd == "alert-ack":
         if not rest:
             print("alert-ack needs <alert_id>", file=sys.stderr); return 2
@@ -396,7 +468,10 @@ def main(argv=None) -> int:
               "|occurrence-reconcile|triggers|trigger-inspect"
               "|pipeline-recovery-health|pipeline-checkpoints|pipeline-checkpoint-inspect"
               "|pipeline-resume|pipeline-retry|pipeline-recovery-reconcile"
-              "|pipeline-invalidate-checkpoint|pipeline-recovery-history",
+              "|pipeline-invalidate-checkpoint|pipeline-recovery-history"
+              "|pipeline-graph-health|pipeline-graph|pipeline-branches"
+              "|pipeline-branch-inspect|pipeline-graph-resume|pipeline-graph-reconcile"
+              "|pipeline-graph-history",
               file=sys.stderr)
         return 2
     cmd, rest = argv[0], argv[1:]

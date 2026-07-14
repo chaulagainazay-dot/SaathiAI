@@ -206,3 +206,14 @@ the existing text-response rules (still authoritative for typed chat):
 - **reuse count**: "The resumed run reused two verified steps and reran one step."
 - **approval still holds**: "Approval is still required; retry did not grant permission."
 - **same path**: "Recovery continues through the same governed pipeline — it does not create a second execution path."
+
+## M17.16 — parallel & branching graph language
+
+- **ran together**: "The two independent branches ran at the same time, and each was verified separately."
+- **join waited**: "The join waited until both required branches succeeded."
+- **failed branch stopped the join**: "One branch failed, so the final packaging step never ran."
+- **reuse after retry**: "The successful branch was reused; only the failed branch ran again."
+- **bounded, not unlimited**: "The graph is acyclic and bounded — this is not an unrestricted workflow engine."
+- **governance unchanged**: "Parallel execution changes when safe steps run, not how they are governed."
+- **approval still blocks**: "That branch still needs approval, so the join remains blocked."
+- **tamper reran**: "The artifact changed, so its branch and dependent join were rerun."

@@ -427,3 +427,36 @@ What it unlocks, in plain terms:
 
 Live trading remains disabled — recovery adds no trading ability and can never retry
 or resume a trade. It adds no new engine and changes nothing financial.
+
+## M17.16 — independent work now happens at the same time, still fully checked
+
+Until now a workflow ran one step after another, even when two steps had nothing to
+do with each other. M17.16 lets INDEPENDENT WORK RUN AT THE SAME TIME. A workflow can
+now fork into two or more branches that run together and then rejoin at a single
+packaging step — for example, build a dataset once, then generate a report AND render
+a media asset in parallel, then bundle both.
+
+What does NOT change is the checking. Every branch is still verified separately, by
+the same independent checks as before. Faster execution does not reduce verification.
+And the safety is stricter, not looser:
+
+- **One failed branch prevents a misleading final result.** If either branch fails,
+  the final packaging step never runs — you never get a "finished" bundle that is
+  quietly missing half its contents.
+- **Verified successful branches can be reused.** If one branch fails and is retried,
+  the branch that already succeeded is not redone — only the failed branch runs again.
+- **Approval stays per step.** One branch running does not approve another; a branch
+  that needs approval blocks the join until it is granted.
+
+Examples:
+- **IELTSAlert content generation**: generate the lesson text and the practice audio
+  as two parallel branches, then package them together once both are verified.
+- **CEO reports**: pull the numbers once, then build the financial section and the
+  narrative section at the same time, then assemble the final brief.
+- **Cafeteria reporting**: run the inventory summary and the sales summary in
+  parallel, then combine them into one verified daily report.
+- **HCG research**: gather two independent source sets concurrently, then merge them
+  into one verified research bundle.
+
+Public production and live trading remain disabled. This is a bounded, acyclic
+workflow — not an unrestricted workflow engine — and it adds no financial ability.

@@ -199,6 +199,38 @@ tamper of data.db invalidates the checkpoint and reruns from step1. Extends the 
 (parallel/branching DAGs, distributed/remote/cloud checkpoints, untrusted pipeline JSON,
 cross-owner reuse, production auto-scheduling remain).
 
+## M17.16 (this invocation) — governed bounded parallel & branching pipeline graphs
+Start/rollback point: HEAD `5bc8317` (M17.15). Closes the M17.12/M17.15 deferred gap
+(parallel/branching DAG). The pipeline gains a bounded, deterministic, ACYCLIC graph —
+one fork, N independent branches, one explicit join barrier (diamond A→(B,C)→D) —
+implemented as a thin dependency-aware bounded executor (`pipeline_graph.py`) that
+WRAPS the existing PipelineRunner and calls the SAME `_run_step` → `run_harness_action`
+for every step. NO second pipeline/execution/DAG engine, scheduler, retry framework,
+checkpoint system, approval system, or ledger. Delivered: full pre-exec graph
+validation (cycle / unknown-dep / dup-id / self-dep / owner / size / concurrency /
+nested-fork / second-join / branch-width / artifact-collision / secret-name /
+path-escape / unknown-or-non-executable-harness → no partial exec); bounded
+ThreadPoolExecutor (≤4 workers) over a deterministic ready queue; the join barrier via
+the dependency mechanism (no partial join); fail-closed on first branch failure (join
+never runs, siblings settle honestly, unstarted cancelled, never partial-success);
+dependency-CLOSED checkpoint reuse on graph resume (not a linear prefix) reusing the
+M17.15 `_validate_checkpoint`; branch-local retry via the shared M17.15 schedule;
+durable per-step claims (`pipeline_step_claim`) for exactly-once + crash-safe reclaim;
+graph-launch + resume dedup; additive ledger tables (`pipeline_graph`/
+`pipeline_dependency`/`pipeline_branch`/`pipeline_step_claim`; the graph IS a
+pipeline_run reusing pipeline_step + pipeline_checkpoint); mission integration
+(`MissionTemplate.build_graph` launches a graph through the SAME PipelineRunner, no
+duplicate mission/occurrence); Control Center owner-safe graph cell + attention; CLI
+(`pipeline-graph-health` always + 6 admin-gated owner-safe, resume driven through the
+owning mission template — no arbitrary graph JSON, no force-success/skip/bypass); 13
+BLOCKING pipeline_graph.* manifest checks; 44 tests. LIVE PROOF: real sqlite→
+(sqlite||sqlite)→zip diamond with concurrent verified branches, confinement,
+fail-closed, partial reuse, tamper invalidation, dedup, crash-before-join reconcile.
+Trading Guardian not engaged (graph layer asserted free of trading surfaces).
+Verdict: **GOVERNED BOUNDED PARALLEL/BRANCHING GRAPH STAGING READY** — not production
+(cyclic/nested-fork graphs, dynamic mutation, untrusted graph JSON, distributed/remote
+execution, cross-owner delegation, production auto-scheduling, live trading remain OUT).
+
 ## Blocked / deferred (need user action or larger scope)
 - authenticated browser / cloud connector workflow — needs a safe staging account.
 - native Finder/TextEdit actuation — macOS Accessibility (TCC) not granted.

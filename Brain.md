@@ -1493,3 +1493,63 @@ log); rollback point 4cad92a. **Verdict: GOVERNED PIPELINE RETRY / RESUME / CHEC
 STAGING READY** — NOT production (parallel/branching DAGs, distributed/remote/cloud
 checkpoints, untrusted pipeline JSON, cross-owner reuse, production auto-scheduling
 outstanding).
+
+## M17.16 — governed bounded parallel & branching pipeline graphs
+
+Autonomous-loop milestone (start/rollback 5bc8317, M17.15). The pipeline gains a
+small, deterministic, ACYCLIC graph: ONE fork, N independent branches, ONE explicit
+join barrier (bounded diamond A→(B,C)→D). KEY CONSTITUTIONAL FACTS: (1) STILL ONE
+ENGINE — no second pipeline/execution/DAG engine, scheduler, retry framework,
+checkpoint system, approval system, or ledger. The new dependency-aware bounded
+executor (saathi/application_harness/pipeline_graph.py) wraps the EXISTING M17.12
+PipelineRunner and calls the SAME PipelineRunner._run_step for EVERY step. (2) EVERY
+branch step (root, each branch, join) still executes through run_harness_action
+(ownership → trust → risk/approval → the sole adapter → INDEPENDENT verification →
+durable ledger + M17.15 checkpoints). (3) The JOIN requires ALL upstream branch
+dependencies verified — the dependency mechanism IS the barrier; no partial/"best
+effort" join. (4) GRAPH RESUME uses a DEPENDENCY-CLOSED reusable-checkpoint set (not
+a linear prefix): a step is reusable only if all its deps are reusable/fresh; the
+first invalid step + all descendants rerun; valid independent siblings stay reused.
+(5) A branch failure is FAIL-CLOSED — no new downstream work starts, the join never
+runs, already-running siblings settle honestly, unstarted siblings are cancelled, the
+pipeline finalizes failed; partial completion is NEVER labelled succeeded. (6) OWNER
+and APPROVAL remain PER-STEP — parallelism implies no collective approval; one branch
+cannot approve another; risk-4 stays gated; risk increase changes the step
+fingerprint and invalidates reuse. BOUNDS (exist + tested): ≤16 steps, ≤4 concurrent
+workers, ≤4 branch fork width, ≤1 fork, ≤1 join. CONCURRENCY: one bounded
+ThreadPoolExecutor(max_workers=concurrency); no unbounded threads, no shell
+orchestration, no distributed/remote workers; per-step durable claims
+(pipeline_step_claim) give exactly-once execution + crash-safe reclaim; graph launch
+dedups on the pipeline_run PK. DETERMINISM: validation, Kahn topo order (declaration-
+index tie-break), ready ordering, branch keys (min name of weakly-connected
+component), sorted dependency fingerprints, reusable-subgraph, and final result
+(success ⇔ all steps succeeded) are all timing-independent. LEDGER (additive): tables
+pipeline_graph / pipeline_dependency / pipeline_branch / pipeline_step_claim (the
+graph IS a pipeline_run — reuses pipeline_step + pipeline_checkpoint unchanged);
+integrity report now counts graphs/branches/dependencies/step_claims (backup/restore
+verified). MISSION: a MissionTemplate.build_graph launches a bounded graph through
+the SAME PipelineRunner via GraphPipelineRunner — no second mission/occurrence path;
+mission history shows the graph pipeline id + branches + join + result. CONTROL
+CENTER: owner-safe graph cell (graph_pipelines/graph_health/graph_branches) +
+attention (failed graph→join blocked/high; failed|stop_uncertain|blocked branch/high;
+approval_required branch/medium); cross-owner hidden. CLI: pipeline-graph-health
+(always) + 6 admin-gated owner-safe (pipeline-graph, pipeline-branches,
+pipeline-branch-inspect, pipeline-graph-history, pipeline-graph-reconcile,
+pipeline-graph-resume — resume driven through the owning mission template, no
+arbitrary graph JSON; no force-success/force-valid/skip/adapter/approval-bypass).
+OPS: 13 BLOCKING pipeline_graph.* manifest checks. TESTS:
+test_m17_16_parallel_pipeline.py (44). LIVE PROOF: real bounded sqlite(root) →
+sqlite||sqlite(2 branches, concurrent, each verified) → zip(join) diamond; validated
+before exec; branches confined to declared deps; fail-closed proven (branch fail →
+join never runs); partial reuse proven (A+C reused, B+D rerun); tamper invalidates
+branch+join; duplicate launch + duplicate resume deduped; crash before join reuses 3
+reruns 1. Backward compatible: additive CREATE TABLE IF NOT EXISTS; M17.8–M17.15
+preserved (sequential pipeline + recovery unchanged); revert = single-commit rollback
+(unused tables remain). Trading Guardian NOT engaged (graph layer asserted free of
+broker/withdraw/leverage/rebalance/place_order/trade_execution/portfolio_/
+exchange_execution surfaces; parallelism changes WHEN safe steps run, not HOW they
+are governed). Commit: this invocation (see git log); rollback point 5bc8317.
+**Verdict: GOVERNED BOUNDED PARALLEL/BRANCHING GRAPH STAGING READY** — NOT production
+(cyclic/nested-fork graphs, dynamic graph mutation, untrusted graph JSON, distributed/
+remote execution, cross-owner delegation, production auto-scheduling, live trading all
+remain OUT).

@@ -342,6 +342,46 @@ CREATE TABLE IF NOT EXISTS pipeline_recovery(
   state TEXT NOT NULL DEFAULT 'retry_wait',
   created_at REAL,
   updated_at REAL DEFAULT 0);
+CREATE TABLE IF NOT EXISTS pipeline_graph(
+  pipeline_id TEXT PRIMARY KEY,
+  owner TEXT NOT NULL,
+  name TEXT DEFAULT '',
+  step_count INTEGER DEFAULT 0,
+  concurrency_limit INTEGER DEFAULT 1,
+  fork_step TEXT DEFAULT '',
+  join_step TEXT DEFAULT '',
+  branch_count INTEGER DEFAULT 0,
+  resumed_from TEXT DEFAULT '',
+  correlation_id TEXT DEFAULT '',
+  created_at REAL,
+  updated_at REAL DEFAULT 0,
+  FOREIGN KEY(pipeline_id) REFERENCES pipeline_run(pipeline_id));
+CREATE TABLE IF NOT EXISTS pipeline_dependency(
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  pipeline_id TEXT NOT NULL,
+  step_name TEXT NOT NULL,
+  depends_on TEXT NOT NULL,
+  UNIQUE(pipeline_id, step_name, depends_on));
+CREATE TABLE IF NOT EXISTS pipeline_branch(
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  pipeline_id TEXT NOT NULL,
+  branch_key TEXT NOT NULL,
+  owner TEXT NOT NULL,
+  step_names TEXT DEFAULT '',
+  state TEXT NOT NULL DEFAULT 'pending',
+  failure_code TEXT DEFAULT '',
+  updated_at REAL DEFAULT 0,
+  UNIQUE(pipeline_id, branch_key));
+CREATE TABLE IF NOT EXISTS pipeline_step_claim(
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  pipeline_id TEXT NOT NULL,
+  step_index INTEGER NOT NULL,
+  step_name TEXT DEFAULT '',
+  claim_owner TEXT DEFAULT '',
+  state TEXT NOT NULL DEFAULT 'claimed',
+  lease_expires_at REAL DEFAULT 0,
+  claimed_at REAL,
+  UNIQUE(pipeline_id, step_index));
 CREATE TABLE IF NOT EXISTS mission_schedule(
   schedule_id TEXT PRIMARY KEY,
   owner TEXT NOT NULL,
@@ -432,6 +472,12 @@ CREATE INDEX IF NOT EXISTS idx_checkpoint_pipeline ON pipeline_checkpoint(pipeli
 CREATE INDEX IF NOT EXISTS idx_checkpoint_owner ON pipeline_checkpoint(owner, status);
 CREATE INDEX IF NOT EXISTS idx_recovery_owner ON pipeline_recovery(owner, state);
 CREATE INDEX IF NOT EXISTS idx_recovery_state ON pipeline_recovery(state, next_retry_at);
+CREATE INDEX IF NOT EXISTS idx_graph_owner ON pipeline_graph(owner);
+CREATE INDEX IF NOT EXISTS idx_dependency_pipeline ON pipeline_dependency(pipeline_id, step_name);
+CREATE INDEX IF NOT EXISTS idx_branch_pipeline ON pipeline_branch(pipeline_id, branch_key);
+CREATE INDEX IF NOT EXISTS idx_branch_owner ON pipeline_branch(owner, state);
+CREATE INDEX IF NOT EXISTS idx_stepclaim_pipeline ON pipeline_step_claim(pipeline_id, step_index);
+CREATE INDEX IF NOT EXISTS idx_stepclaim_state ON pipeline_step_claim(state, lease_expires_at);
 """
 
 # M17.12 governed multi-harness pipeline states (sequential, fail-closed)
@@ -572,6 +618,37 @@ _RECOVERY_SAFE_FIELDS = ("pipeline_id", "owner", "attempt", "max_attempts",
                          "next_retry_at", "retry_reason", "failure_category",
                          "reused_steps", "rerun_steps", "state", "created_at",
                          "updated_at")
+
+# M17.16 governed bounded parallel/branching graph pipelines. The graph IS a
+# pipeline_run (same state machine, same steps, same checkpoints); these additive
+# tables record ONLY the graph STRUCTURE (dependencies, fork/join, branches) and
+# durable per-step execution claims. No second engine/scheduler/DB is introduced.
+_GRAPH_SAFE_FIELDS = ("pipeline_id", "owner", "name", "step_count",
+                      "concurrency_limit", "fork_step", "join_step",
+                      "branch_count", "resumed_from", "correlation_id",
+                      "created_at", "updated_at")
+# branch states — a branch succeeds ONLY when every step in it succeeds+verifies.
+BRANCH_PENDING = "pending"
+BRANCH_RUNNING = "running"
+BRANCH_SUCCEEDED = "succeeded"
+BRANCH_FAILED = "failed"
+BRANCH_BLOCKED = "blocked"
+BRANCH_APPROVAL_REQUIRED = "approval_required"
+BRANCH_CANCELLED = "cancelled"
+BRANCH_STOP_UNCERTAIN = "stop_uncertain"
+BRANCH_TERMINAL = {BRANCH_SUCCEEDED, BRANCH_FAILED, BRANCH_BLOCKED,
+                   BRANCH_APPROVAL_REQUIRED, BRANCH_CANCELLED, BRANCH_STOP_UNCERTAIN}
+_BRANCH_SAFE_FIELDS = ("pipeline_id", "branch_key", "owner", "step_names",
+                       "state", "failure_code", "updated_at")
+# per-step durable execution claim (dedup + crash-safe reclaim)
+CLAIM_CLAIMED = "claimed"
+CLAIM_RUNNING = "running"
+CLAIM_SUCCEEDED = "succeeded"
+CLAIM_FAILED = "failed"
+CLAIM_RELEASED = "released"
+CLAIM_TERMINAL = {CLAIM_SUCCEEDED}
+_CLAIM_SAFE_FIELDS = ("pipeline_id", "step_index", "step_name", "claim_owner",
+                      "state", "lease_expires_at", "claimed_at")
 
 # M17.10 stuck-run alert classes + deterministic severity
 ALERT_SEVERITY = {"process_missing": "high", "cancellation_stuck": "high",
@@ -2608,6 +2685,232 @@ class RunLedger:
                 "stop_uncertain": by.get(RECOVERY_STOP_UNCERTAIN, 0),
                 "invalid_checkpoints": invalid_cp, "total": sum(by.values())}
 
+    # ── M17.16 bounded parallel/branching GRAPH structure + step claims ──────
+    def create_graph(self, pipeline_id, *, owner, name="", step_count=0,
+                     concurrency_limit=1, fork_step="", join_step="",
+                     branch_count=0, dependencies=None, resumed_from="",
+                     correlation_id="", now=None) -> dict:
+        """Record a graph's STRUCTURE for an EXISTING pipeline_run (created via
+        create_pipeline, which owns dedup + owner-safety). PRIMARY-KEY-unique →
+        a duplicate graph launch is rejected (no second run)."""
+        owner = _clean_str(owner, field="owner")
+        if not owner:
+            raise LedgerSecurityError("LEDGER_FIELD_REJECTED", "empty owner")
+        pipeline_id = _clean_str(pipeline_id, field="pipeline_id", maxlen=128)
+        name = _clean_str(name, field="name", maxlen=200)
+        _reject_secrets({"name": name, "fork": fork_step, "join": join_step},
+                        where="graph_identity")
+        now = now if now is not None else _now()
+        c = self._conn()
+        try:
+            c.execute("BEGIN IMMEDIATE")
+            try:
+                c.execute(
+                    "INSERT INTO pipeline_graph(pipeline_id,owner,name,step_count,"
+                    "concurrency_limit,fork_step,join_step,branch_count,resumed_from,"
+                    "correlation_id,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",
+                    (pipeline_id, owner, name, int(step_count), int(concurrency_limit),
+                     _clean_str(fork_step, field="fork", maxlen=120),
+                     _clean_str(join_step, field="join", maxlen=120), int(branch_count),
+                     _clean_str(resumed_from, field="rf", maxlen=128),
+                     _clean_str(correlation_id, field="cid", maxlen=128), now, now))
+            except sqlite3.IntegrityError:
+                c.execute("ROLLBACK")
+                return {"created": False, "reason": "duplicate_graph"}
+            for (sn, dep) in (dependencies or []):
+                c.execute("INSERT OR IGNORE INTO pipeline_dependency"
+                          "(pipeline_id,step_name,depends_on) VALUES(?,?,?)",
+                          (pipeline_id, _clean_str(sn, field="sn", maxlen=120),
+                           _clean_str(dep, field="dep", maxlen=120)))
+            c.execute("COMMIT")
+        finally:
+            c.close()
+        self._event("harness.graph.created",
+                    {"pipeline_id": pipeline_id, "owner": owner,
+                     "steps": int(step_count), "branches": int(branch_count)})
+        return {"created": True, "pipeline_id": pipeline_id}
+
+    def inspect_graph(self, pipeline_id, *, owner: str | None = None) -> Optional[dict]:
+        """Owner-safe graph structure + dependencies + branches + the underlying
+        pipeline_run state and steps. None on unknown or cross-owner."""
+        with self._conn() as c:
+            g = c.execute("SELECT * FROM pipeline_graph WHERE pipeline_id=?",
+                          (pipeline_id,)).fetchone()
+            if g is None or (owner is not None and g["owner"] != owner):
+                return None
+            deps = [dict(r) for r in c.execute(
+                "SELECT step_name,depends_on FROM pipeline_dependency WHERE "
+                "pipeline_id=? ORDER BY step_name,depends_on", (pipeline_id,)).fetchall()]
+            branches = [{k: r[k] for k in _BRANCH_SAFE_FIELDS} for r in c.execute(
+                f"SELECT {','.join(_BRANCH_SAFE_FIELDS)} FROM pipeline_branch WHERE "
+                "pipeline_id=? ORDER BY branch_key", (pipeline_id,)).fetchall()]
+        out = {k: g[k] for k in _GRAPH_SAFE_FIELDS}
+        out["dependencies"] = deps
+        out["branches"] = branches
+        run = self.inspect_pipeline(pipeline_id)
+        out["state"] = run["state"] if run else "unknown"
+        out["failure_code"] = run["failure_code"] if run else ""
+        out["steps"] = run["steps"] if run else []
+        return out
+
+    def list_graphs(self, owner: str | None = None, *, limit: int = 100) -> list[dict]:
+        limit = max(1, min(int(limit), 1000))
+        q = (f"SELECT g.{',g.'.join(_GRAPH_SAFE_FIELDS)}, r.state AS state, "
+             "r.failure_code AS failure_code FROM pipeline_graph g "
+             "LEFT JOIN pipeline_run r ON r.pipeline_id=g.pipeline_id")
+        args: list = []
+        if owner:
+            q += " WHERE g.owner=?"; args.append(owner)
+        q += " ORDER BY g.created_at DESC LIMIT ?"; args.append(limit)
+        with self._conn() as c:
+            return [dict(r) for r in c.execute(q, args).fetchall()]
+
+    def upsert_branch(self, pipeline_id, *, branch_key, owner, step_names="",
+                      state=BRANCH_PENDING, failure_code="", now=None) -> dict:
+        owner = _clean_str(owner, field="owner")
+        now = now if now is not None else _now()
+        with self._conn() as c:
+            c.execute("BEGIN IMMEDIATE")
+            c.execute(
+                "INSERT INTO pipeline_branch(pipeline_id,branch_key,owner,step_names,"
+                "state,failure_code,updated_at) VALUES(?,?,?,?,?,?,?) "
+                "ON CONFLICT(pipeline_id,branch_key) DO UPDATE SET "
+                "state=excluded.state,failure_code=excluded.failure_code,"
+                "step_names=excluded.step_names,updated_at=excluded.updated_at",
+                (pipeline_id, _clean_str(branch_key, field="bk", maxlen=120), owner,
+                 _clean_str(step_names, field="sn", maxlen=400), state,
+                 _clean_str(failure_code, field="fc", maxlen=120), now))
+            c.execute("COMMIT")
+        return {"ok": True, "state": state}
+
+    def set_branch_state(self, pipeline_id, *, branch_key, state, failure_code="",
+                         now=None) -> dict:
+        now = now if now is not None else _now()
+        with self._conn() as c:
+            c.execute("UPDATE pipeline_branch SET state=?, failure_code=?, updated_at=? "
+                      "WHERE pipeline_id=? AND branch_key=?",
+                      (state, _clean_str(failure_code, field="fc", maxlen=120), now,
+                       pipeline_id, branch_key))
+        return {"ok": True, "state": state}
+
+    def list_branches(self, pipeline_id, *, owner: str | None = None) -> list[dict]:
+        with self._conn() as c:
+            rows = [{k: r[k] for k in _BRANCH_SAFE_FIELDS} for r in c.execute(
+                f"SELECT {','.join(_BRANCH_SAFE_FIELDS)} FROM pipeline_branch WHERE "
+                "pipeline_id=? ORDER BY branch_key", (pipeline_id,)).fetchall()]
+        if owner is not None and rows and rows[0]["owner"] != owner:
+            return []
+        return rows
+
+    def branches_owned(self, owner: str | None = None, *, limit: int = 200) -> list[dict]:
+        limit = max(1, min(int(limit), 1000))
+        q = f"SELECT {','.join(_BRANCH_SAFE_FIELDS)} FROM pipeline_branch"
+        args: list = []
+        if owner:
+            q += " WHERE owner=?"; args.append(owner)
+        q += " ORDER BY updated_at DESC LIMIT ?"; args.append(limit)
+        with self._conn() as c:
+            return [dict(r) for r in c.execute(q, args).fetchall()]
+
+    def claim_graph_step(self, pipeline_id, *, step_index, step_name, worker,
+                         now=None, lease_sec=120.0) -> bool:
+        """Atomic per-step claim: exactly one worker may hold a step. A SUCCEEDED
+        claim is never re-runnable; an ACTIVE lease is not stealable; an expired
+        lease is reclaimable. Prevents duplicate branch/join execution."""
+        now = now if now is not None else _now()
+        c = self._conn()
+        try:
+            c.execute("BEGIN IMMEDIATE")
+            row = c.execute("SELECT state, lease_expires_at FROM pipeline_step_claim "
+                            "WHERE pipeline_id=? AND step_index=?",
+                            (pipeline_id, int(step_index))).fetchone()
+            if row is not None:
+                if row["state"] in CLAIM_TERMINAL:
+                    c.execute("ROLLBACK"); return False
+                if (row["lease_expires_at"] or 0) > now:
+                    c.execute("ROLLBACK"); return False
+                c.execute("UPDATE pipeline_step_claim SET claim_owner=?, state=?, "
+                          "lease_expires_at=?, claimed_at=? WHERE pipeline_id=? AND step_index=?",
+                          (_clean_str(worker, field="w", maxlen=80), CLAIM_RUNNING,
+                           now + float(lease_sec), now, pipeline_id, int(step_index)))
+            else:
+                c.execute("INSERT INTO pipeline_step_claim(pipeline_id,step_index,"
+                          "step_name,claim_owner,state,lease_expires_at,claimed_at) "
+                          "VALUES(?,?,?,?,?,?,?)",
+                          (pipeline_id, int(step_index),
+                           _clean_str(step_name, field="sn", maxlen=120),
+                           _clean_str(worker, field="w", maxlen=80), CLAIM_RUNNING,
+                           now + float(lease_sec), now))
+            c.execute("COMMIT")
+        except sqlite3.IntegrityError:
+            return False
+        finally:
+            c.close()
+        return True
+
+    def release_graph_step(self, pipeline_id, *, step_index, state, now=None) -> dict:
+        now = now if now is not None else _now()
+        lease = 0 if state in (CLAIM_SUCCEEDED, CLAIM_FAILED, CLAIM_RELEASED) else None
+        with self._conn() as c:
+            if lease is not None:
+                c.execute("UPDATE pipeline_step_claim SET state=?, lease_expires_at=0 "
+                          "WHERE pipeline_id=? AND step_index=?",
+                          (state, pipeline_id, int(step_index)))
+            else:
+                c.execute("UPDATE pipeline_step_claim SET state=? WHERE "
+                          "pipeline_id=? AND step_index=?",
+                          (state, pipeline_id, int(step_index)))
+        return {"ok": True, "state": state}
+
+    def reclaim_stale_step_claims(self, pipeline_id=None, *, now=None,
+                                  lease_sec=120.0) -> list[dict]:
+        """Return non-terminal claims whose lease has expired (crash recovery)."""
+        now = now if now is not None else _now()
+        q = ("SELECT pipeline_id, step_index, step_name FROM pipeline_step_claim "
+             "WHERE state NOT IN (?,?,?) AND lease_expires_at>0 AND lease_expires_at<?")
+        args = [CLAIM_SUCCEEDED, CLAIM_FAILED, CLAIM_RELEASED, now]
+        if pipeline_id:
+            q += " AND pipeline_id=?"; args.append(pipeline_id)
+        with self._conn() as c:
+            return [dict(r) for r in c.execute(q, args).fetchall()]
+
+    def list_step_claims(self, pipeline_id, *, owner: str | None = None) -> list[dict]:
+        with self._conn() as c:
+            if owner is not None:
+                o = c.execute("SELECT owner FROM pipeline_run WHERE pipeline_id=?",
+                              (pipeline_id,)).fetchone()
+                if o is None or o["owner"] != owner:
+                    return []
+            return [dict(r) for r in c.execute(
+                f"SELECT {','.join(_CLAIM_SAFE_FIELDS)} FROM pipeline_step_claim "
+                "WHERE pipeline_id=? ORDER BY step_index", (pipeline_id,)).fetchall()]
+
+    def graph_health(self, owner: str | None = None) -> dict:
+        """Graph-pipeline census + branch/claim summaries (owner-scoped)."""
+        gwhere, gargs = "", []
+        bwhere, bargs = "", []
+        if owner:
+            gwhere, gargs = " AND g.owner=?", [owner]
+            bwhere, bargs = " WHERE owner=?", [owner]
+        with self._conn() as c:
+            by_state = {r["state"]: r["n"] for r in c.execute(
+                "SELECT r.state state, COUNT(*) n FROM pipeline_graph g "
+                "JOIN pipeline_run r ON r.pipeline_id=g.pipeline_id WHERE 1=1"
+                + gwhere + " GROUP BY r.state", gargs).fetchall()}
+            by_branch = {r["state"]: r["n"] for r in c.execute(
+                f"SELECT state, COUNT(*) n FROM pipeline_branch{bwhere} GROUP BY state",
+                bargs).fetchall()}
+            stale = c.execute(
+                "SELECT COUNT(*) n FROM pipeline_step_claim WHERE state NOT IN (?,?,?) "
+                "AND lease_expires_at>0", (CLAIM_SUCCEEDED, CLAIM_FAILED,
+                                           CLAIM_RELEASED)).fetchone()["n"]
+        return {"by_state": by_state, "by_branch": by_branch,
+                "total_graphs": sum(by_state.values()),
+                "failed_branches": by_branch.get(BRANCH_FAILED, 0),
+                "approval_required_branches": by_branch.get(BRANCH_APPROVAL_REQUIRED, 0),
+                "stop_uncertain_branches": by_branch.get(BRANCH_STOP_UNCERTAIN, 0),
+                "active_step_claims": stale}
+
     def cleanup(self, *, retention_sec: float, now=None) -> dict:
         """Delete terminal runs (and their transitions) older than the retention
         window. Active runs are never touched."""
@@ -2678,6 +2981,10 @@ class RunLedger:
                                   "dedup_key HAVING c>1)").fetchone()["n"]
             checkpoints = c.execute("SELECT COUNT(*) n FROM pipeline_checkpoint").fetchone()["n"]
             recoveries = c.execute("SELECT COUNT(*) n FROM pipeline_recovery").fetchone()["n"]
+            graphs = c.execute("SELECT COUNT(*) n FROM pipeline_graph").fetchone()["n"]
+            branches = c.execute("SELECT COUNT(*) n FROM pipeline_branch").fetchone()["n"]
+            dependencies = c.execute("SELECT COUNT(*) n FROM pipeline_dependency").fetchone()["n"]
+            step_claims = c.execute("SELECT COUNT(*) n FROM pipeline_step_claim").fetchone()["n"]
         return {"integrity": integrity,
                 "ok": integrity == "ok" and dupes == 0 and occ_dupes == 0,
                 "total_runs": total, "by_state": census, "transitions": trans,
@@ -2686,7 +2993,9 @@ class RunLedger:
                 "pipelines": pipelines, "missions": missions,
                 "schedules": schedules, "occurrences": occurrences,
                 "occurrence_collisions": occ_dupes, "checkpoints": checkpoints,
-                "recoveries": recoveries, "db_path": str(self.db_path)}
+                "recoveries": recoveries, "graphs": graphs, "branches": branches,
+                "dependencies": dependencies, "step_claims": step_claims,
+                "db_path": str(self.db_path)}
 
     # ── M17.8 journal drop-in (adapter compatibility, no adapter changes) ───
     # The ApplicationHarnessAdapter calls journal.record_start / record_end;

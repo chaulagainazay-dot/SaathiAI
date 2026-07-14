@@ -35,8 +35,9 @@
   with pre-execution path-escape rejection + artifact wiring, honoured approval
   gates (no silent elevation), owner-safe records, Control Center attention, a LIVE
   sqlite→zip chain, and 7 green blocking manifest entries. No second execution
-  engine. Remaining: PARALLEL / branching DAGs and untrusted spec-JSON ingestion
-  (deferred). Pipeline retry/resume/checkpoint: BUILT in M17.15 (see below).
+  engine. PARALLEL / branching DAGs: BUILT (bounded, acyclic) in M17.16 (see below).
+  Remaining: untrusted spec-JSON ingestion (deferred). Pipeline retry/resume/
+  checkpoint: BUILT in M17.15 (see below).
 - Pipeline retry/resume/checkpoint: BUILT. M17.15 added governed recovery around the
   existing PipelineRunner + ledger — additive pipeline_checkpoint + pipeline_recovery
   tables, checkpoint-on-verified-success, deterministic step/dependency/artifact
@@ -47,10 +48,26 @@
   reopen_pipeline (the sole exception to pipeline terminal immutability), mission
   integration (no duplicate mission), Control Center attention, 8 CLI commands, and 9
   green blocking manifest checks. No second engine/retry framework/verification path.
-  Remaining (deferred): PARALLEL/branching DAG recovery, distributed/remote/cloud
-  checkpoints, arbitrary user-authored pipeline JSON, automatic recovery of untrusted
-  steps, cross-owner checkpoint reuse. Trading Guardian stays disabled (no trading
-  surface in the recovery module).
+  Remaining (deferred): distributed/remote/cloud checkpoints, arbitrary user-authored
+  pipeline JSON, automatic recovery of untrusted steps, cross-owner checkpoint reuse.
+  Trading Guardian stays disabled (no trading surface in the recovery module).
+- Bounded parallel/branching graph pipelines: BUILT (bounded, acyclic). M17.16 added a
+  thin dependency-aware bounded executor (pipeline_graph.py) around the SAME
+  PipelineRunner — one fork, N independent branches, one explicit join barrier. Every
+  step still runs through _run_step → run_harness_action → independent verification.
+  Additive ledger tables (pipeline_graph/pipeline_dependency/pipeline_branch/
+  pipeline_step_claim; the graph IS a pipeline_run). Full pre-exec validation; bounded
+  ThreadPoolExecutor (≤16 steps, ≤4 workers, ≤4 branch width, ≤1 fork, ≤1 join);
+  fail-closed join; dependency-CLOSED checkpoint reuse on resume (reuses M17.15
+  _validate_checkpoint); shared M17.15 retry; durable per-step claims for exactly-once
+  + crash reclaim; mission build_graph integration (no duplicate mission); Control
+  Center graph cell + attention; CLI (pipeline-graph-health + 6 admin-gated); 13 green
+  blocking pipeline_graph.* manifest checks; 44 tests; live sqlite→(sqlite||sqlite)→zip
+  diamond. No second engine/scheduler/DAG-engine/retry-framework/checkpoint-system/
+  ledger. Remaining (deferred): cyclic/nested-fork graphs, dynamic graph mutation,
+  untrusted graph JSON, distributed/remote/multi-region execution, work stealing,
+  cross-owner branch delegation, partial-join success, production auto-scheduling.
+  Trading Guardian stays disabled (graph layer has no trading surface — asserted).
 - Autonomous mission engine: FIRST SLICE BUILT. M17.13 added a layer ABOVE the
   pipeline (mission.py MissionEngine) — a Mission carries one business objective +
   strongly-typed validated params + an approval requirement + a template ref and

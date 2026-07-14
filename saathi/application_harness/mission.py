@@ -78,7 +78,9 @@ class MissionTemplate:
     approval_required: bool = False
     schedule: str = ""
     parameters: tuple = ()
-    build_steps: Callable = None          # (dict) -> list[PipelineStep]
+    build_steps: Callable = None          # (dict) -> list[PipelineStep]  (sequential)
+    build_graph: Callable = None          # (dict) -> list[GraphStep]  (M17.16 graph)
+    concurrency_limit: int = 4            # bounded local concurrency for a graph
 
 
 def validate_params(parameters, values: dict) -> dict:
@@ -145,12 +147,18 @@ class MissionEngine:
 
     def __init__(self, *, ledger: RunLedger | None = None, templates=None,
                  pipeline_runner: PipelineRunner | None = None,
-                 runs_root: str | None = None):
+                 graph_runner=None, runs_root: str | None = None):
         self.ledger = ledger or default_ledger()
         self.templates: dict[str, MissionTemplate] = dict(templates
                                                           or _default_templates())
         self.runner = pipeline_runner or PipelineRunner(ledger=self.ledger,
                                                         runs_root=runs_root)
+        # M17.16: a graph mission is launched through the SAME PipelineRunner,
+        # wrapped by the bounded dependency-aware executor (one engine, no 2nd path).
+        if graph_runner is None:
+            from saathi.application_harness.pipeline_graph import GraphPipelineRunner
+            graph_runner = GraphPipelineRunner(ledger=self.ledger, runner=self.runner)
+        self.graph_runner = graph_runner
 
     # ── creation (templates produce instances) ─────────────────────────────
     def create(self, template_id: str, *, owner: str, params: dict | None = None,
@@ -223,7 +231,7 @@ class MissionEngine:
         if mission["state"] != MISSION_QUEUED:
             return {"ok": False, "reason": f"not_queued:{mission['state']}"}
         tmpl = self.templates.get(mission["template"])
-        if tmpl is None or tmpl.build_steps is None:
+        if tmpl is None or (tmpl.build_steps is None and tmpl.build_graph is None):
             self.ledger.begin_mission_run(mission_id)
             self.ledger.finish_mission_run(mission_id, attempt=mission["run_count"] + 1,
                                            state=MISSION_FAILED,
@@ -235,12 +243,22 @@ class MissionEngine:
             return {"ok": False, "reason": begun.get("reason")}
         attempt = begun["attempt"]
         try:
-            steps = tmpl.build_steps(dict(mission["params"]))
-            if not steps or not all(isinstance(s, PipelineStep) for s in steps):
-                raise ValueError("template produced no valid pipeline steps")
-            spec = PipelineSpec(name=mission["title"], owner=owner, steps=steps,
-                                correlation_id=mission_id)
-            pres = self.runner.run(spec, session_id=session_id)
+            if tmpl.build_graph is not None:            # M17.16 bounded graph mission
+                from saathi.application_harness.pipeline_graph import GraphSpec, GraphStep
+                gsteps = tmpl.build_graph(dict(mission["params"]))
+                if not gsteps or not all(isinstance(s, GraphStep) for s in gsteps):
+                    raise ValueError("template produced no valid graph steps")
+                gspec = GraphSpec(name=mission["title"], owner=owner, steps=gsteps,
+                                  concurrency_limit=tmpl.concurrency_limit,
+                                  correlation_id=mission_id)
+                pres = self.graph_runner.run(gspec, session_id=session_id)
+            else:
+                steps = tmpl.build_steps(dict(mission["params"]))
+                if not steps or not all(isinstance(s, PipelineStep) for s in steps):
+                    raise ValueError("template produced no valid pipeline steps")
+                spec = PipelineSpec(name=mission["title"], owner=owner, steps=steps,
+                                    correlation_id=mission_id)
+                pres = self.runner.run(spec, session_id=session_id)
         except Exception as e:                          # any exception → fail closed
             self.ledger.finish_mission_run(
                 mission_id, attempt=attempt, state=MISSION_FAILED,
