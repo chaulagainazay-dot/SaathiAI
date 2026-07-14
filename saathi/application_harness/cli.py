@@ -500,8 +500,12 @@ def main(argv=None) -> int:
             print("needs a registry.json path", file=sys.stderr); return 2
         raw = open(rest[0]).read()
         res = importer.import_registry(raw)
+        # M17.18: register untrusted discovery records and persist STORE
+        reg = registry.import_records(res.get("records") or [])
         print(json.dumps({"imported": res["imported"], "rejected": len(res["rejected"]),
-                          "trust": res["trust"]}, indent=2)); return 0
+                          "trust": res["trust"], "registered": reg["added"],
+                          "total": reg["total"], "store": str(registry.STORE)},
+                         indent=2)); return 0
     if cmd == "health":
         print(json.dumps({"ffmpeg": F.available(), "registry": registry.summary()},
                          indent=2)); return 0

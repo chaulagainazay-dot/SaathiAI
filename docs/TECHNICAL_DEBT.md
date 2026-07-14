@@ -110,8 +110,12 @@
   calendar parsing, external SaaS schedulers, and PRODUCTION AUTO-SCHEDULING (the
   interval runner is opt-in; no OS launch agent / cron / cloud job is provisioned).
   Trading Guardian stays disabled (scheduler/event modules carry no trading surface).
-- Harness registry persistence (data/application_harnesses/registry.json) written
-  but not loaded on boot (in-memory bootstrap only).
+- Harness registry persistence: BUILT (M17.18). `registry.json` loads on first
+  bootstrap (fail-closed corrupt/oversized/secret payloads); `register` /
+  `import_records` persist; external trust never elevates from disk; pilots seed
+  from code with restrictive-only overlay (revoke/quarantine/etc.). 15 tests + 5
+  blocking `registry.*` checks. Remaining: multi-writer concurrency, optional
+  dedicated Control Center cell (summary already exposes load diagnostics).
 - Multi-user isolation only probe-tested, not exercised with concurrent users.
 - legacy saathi/connectors (pre-M15) telegram adapter = transitional exception,
   not yet wrapped under the platform adapter.

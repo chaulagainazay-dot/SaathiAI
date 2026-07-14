@@ -256,6 +256,18 @@ surfaces). Verdict: **GOVERNED SCHEDULED GRAPH RECOVERY STAGING READY** — not 
 (production auto-scheduling, distributed/multi-region recovery, untrusted graph JSON, dynamic
 mutation, public webhooks, live trading remain OUT).
 
+## M17.18 — harness registry boot persistence (DONE)
+Autonomous-loop milestone (start/rollback `04be33c` / M17.17). Closes the real-debt
+item: `data/application_harnesses/registry.json` was written by `persist()` but never
+loaded — in-memory pilot bootstrap only. Delivered: load-on-first-bootstrap
+(fail-closed on missing/corrupt/oversized/secret-bearing JSON), persist-on-mutate
+(`register`, `import_records`), external records demoted if disk claims executable
+trust, pilot code-seed with restrictive-only trust overlay from disk, CLI
+`import-cli-anything` now registers+persists, `load_report()` / summary diagnostics,
+15 deterministic tests, 5 blocking `registry.*` critical checks. No second registry,
+no ledger/schema change, Trading Guardian unengaged. Verdict: **REGISTRY BOOT
+PERSISTENCE STAGING READY**.
+
 ## Blocked / deferred (need user action or larger scope)
 - authenticated browser / cloud connector workflow — needs a safe staging account.
 - native Finder/TextEdit actuation — macOS Accessibility (TCC) not granted.
