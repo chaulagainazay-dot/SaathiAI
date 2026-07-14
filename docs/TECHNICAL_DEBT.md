@@ -7,6 +7,20 @@
 - GUI app installs (LibreOffice/Blender/Kdenlive) → more harness apps.
 
 ## Real debt (actionable without approval)
+- Scheduled graph mission recovery (M17.17) BUILT: scheduled/trusted-event graph-backed
+  missions launch through the MissionEngine, resume through the EXISTING graph + recovery
+  layers, and settle mission+occurrence exactly once; honest graph→mission→occurrence
+  state map; deterministic recovered-mission idempotency; crash windows F/G reconciled;
+  12 blocking scheduled_graph.* checks; 31 tests. Delegates to the MissionEngine ONLY (no
+  execution shortcut, asserted); no new tables (one read-only helper). Remaining
+  (deferred): additional crash windows beyond F/G are covered by design (per-record
+  leases) but not each exhaustively unit-tested; a dedicated scheduled-graph CLI command
+  set + Control Center cell wiring beyond coord.health() were NOT added this milestone
+  (reuse existing mission/scheduler/graph/recovery CLI + the coord.health aggregate);
+  automatic reconciliation is opt-in (no OS/cloud scheduler provisioned); production
+  auto-scheduling, distributed/multi-region recovery, untrusted graph JSON, dynamic graph
+  mutation, and public webhooks remain OUT. Trading Guardian stays disabled (integration +
+  engine recovery modules carry no trading surface, asserted).
 - Long-running harness task control: cancel + orphan-free timeout kill +
   live-enforced resource limits BUILT & live-proven (M17.8). Durable run tracking
   upgraded from the single-process JSONL journal to a **transactional SQLite run

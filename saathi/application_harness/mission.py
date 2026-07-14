@@ -35,6 +35,7 @@ live scheduler is deferred, mirroring M17.11's opt-in stance).
 """
 from __future__ import annotations
 
+import hashlib
 import uuid
 from dataclasses import dataclass, field
 from typing import Any, Callable, Optional
@@ -42,10 +43,12 @@ from typing import Any, Callable, Optional
 from saathi.application_harness.pipeline import (
     PipelineRunner, PipelineSpec, PipelineStep,
 )
+from saathi.application_harness import run_ledger as L
 from saathi.application_harness.run_ledger import (
     RunLedger, default_ledger,
     MISSION_DRAFT, MISSION_APPROVAL_REQUIRED, MISSION_APPROVED, MISSION_QUEUED,
-    MISSION_RUNNING, MISSION_COMPLETED, MISSION_FAILED,
+    MISSION_RUNNING, MISSION_COMPLETED, MISSION_FAILED, MISSION_BLOCKED,
+    MISSION_TERMINAL,
 )
 
 # recognised mission triggers / types — additive; new kinds append, never rewrite
@@ -272,12 +275,16 @@ class MissionEngine:
             return {"ok": True, "state": MISSION_COMPLETED,
                     "mission_id": mission_id, "pipeline_id": pres["pipeline_id"]}
         code = pres.get("failure_code") or pres.get("reason") or "PIPELINE_FAILED"
+        pid = pres.get("pipeline_id", "")
+        state = MISSION_FAILED
+        if tmpl.build_graph is not None:            # M17.17 honest graph→mission map
+            disp = self._classify_graph_failure(pid, owner, code)
+            state, code = disp["state"], disp["failure_code"]
         self.ledger.finish_mission_run(
-            mission_id, attempt=attempt, state=MISSION_FAILED,
-            pipeline_id=pres.get("pipeline_id", ""), failure_code=code,
-            steps_run=pres.get("steps_run", 0))
-        return {"ok": False, "state": MISSION_FAILED, "mission_id": mission_id,
-                "pipeline_id": pres.get("pipeline_id", ""), "failure_code": code}
+            mission_id, attempt=attempt, state=state,
+            pipeline_id=pid, failure_code=code, steps_run=pres.get("steps_run", 0))
+        return {"ok": False, "state": state, "mission_id": mission_id,
+                "pipeline_id": pid, "failure_code": code}
 
     def launch(self, mission_id: str, *, owner: str, session_id: str = "mission") -> dict:
         """Convenience: enqueue (auto-approving a no-approval mission) then run.
@@ -302,6 +309,160 @@ class MissionEngine:
         if res.get("ok"):
             res["retried_from"] = mission_id
         return res
+
+    # ── M17.17 graph mission recovery integration (still mission authority) ──
+    def _classify_graph_failure(self, pipeline_id: str, owner: str, code: str) -> dict:
+        """Map a FAILED graph pipeline into an honest mission disposition. Approval
+        and stop-uncertain graphs are fail-closed BLOCKED (never silently `failed`),
+        so the scheduler occurrence can propagate `approval_required` / attention.
+        A plain transient/other failure stays `failed` (auto-recoverable upstream)."""
+        up = (code or "").upper()
+        bstates: set = set()
+        try:
+            g = self.ledger.inspect_graph(pipeline_id, owner=owner) if pipeline_id else None
+            bstates = {b["state"] for b in (g or {}).get("branches", [])}
+        except Exception:
+            g = None
+        if L.BRANCH_APPROVAL_REQUIRED in bstates or "APPROVAL" in up:
+            return {"state": MISSION_BLOCKED, "failure_code": "GRAPH_APPROVAL_REQUIRED"}
+        if (L.BRANCH_STOP_UNCERTAIN in bstates or "UNCERTAIN" in up
+                or "VERIFICATION" in up):
+            return {"state": MISSION_BLOCKED, "failure_code": "GRAPH_STOP_UNCERTAIN"}
+        if L.BRANCH_BLOCKED in bstates:
+            return {"state": MISSION_BLOCKED, "failure_code": code or "GRAPH_BLOCKED"}
+        return {"state": MISSION_FAILED, "failure_code": code or "GRAPH_FAILED"}
+
+    def _recovered_mission_id(self, mission_id: str) -> str:
+        # DETERMINISTIC linked-retry id: repeated recovery of the same failed graph
+        # mission maps to the SAME recovered mission (idempotent; no duplicate run).
+        return "ms_rec_" + hashlib.sha256(mission_id.encode()).hexdigest()[:20]
+
+    def settle_recovered(self, mission_id: str, *, owner: str, pipeline_id: str,
+                         ok: bool, failure_code: str = "", steps_run: int = 0,
+                         session_id: str = "graph_recovery") -> dict:
+        """Bind an ALREADY-resumed graph pipeline result to a fresh mission instance
+        and finalize it through the normal mission lifecycle WITHOUT launching a
+        second graph (the graph was resumed in place by the recovery layer). Mission
+        stays the authority for its own state; idempotent on a terminal mission."""
+        m = self._owned(mission_id, owner)
+        if not m["ok"]:
+            return m
+        mission = m["mission"]
+        if mission["state"] in MISSION_TERMINAL:        # already settled — idempotent
+            return {"ok": mission["state"] == MISSION_COMPLETED,
+                    "state": mission["state"], "mission_id": mission_id,
+                    "idempotent": True}
+        eq = self.enqueue(mission_id, owner=owner)      # draft/approved → queued
+        if not eq.get("ok"):
+            return eq
+        begun = self.ledger.begin_mission_run(mission_id)
+        if not begun.get("ok"):
+            return {"ok": False, "reason": begun.get("reason")}
+        attempt = begun["attempt"]
+        if ok:
+            self.ledger.finish_mission_run(mission_id, attempt=attempt,
+                                           state=MISSION_COMPLETED,
+                                           pipeline_id=pipeline_id, steps_run=steps_run)
+            return {"ok": True, "state": MISSION_COMPLETED, "mission_id": mission_id,
+                    "pipeline_id": pipeline_id}
+        disp = self._classify_graph_failure(pipeline_id, owner, failure_code)
+        self.ledger.finish_mission_run(mission_id, attempt=attempt, state=disp["state"],
+                                       pipeline_id=pipeline_id,
+                                       failure_code=disp["failure_code"],
+                                       steps_run=steps_run)
+        return {"ok": False, "state": disp["state"], "mission_id": mission_id,
+                "pipeline_id": pipeline_id, "failure_code": disp["failure_code"]}
+
+    def resume_graph_mission(self, mission_id: str, *, owner: str,
+                             session_id: str = "graph_recovery", now=None) -> dict:
+        """Recover a FAILED graph mission by resuming its EXISTING graph pipeline
+        through the existing graph recovery interface (reusing valid checkpoints,
+        rerunning only the interrupted branch, running the join once), then recording
+        the outcome on a DETERMINISTIC linked-retry mission. The original failed
+        mission stays immutable. Fully idempotent — repeated calls settle to the same
+        recovered mission and never duplicate a branch, join, or mission run."""
+        m = self._owned(mission_id, owner)
+        if not m["ok"]:
+            return m
+        mission = m["mission"]
+        tmpl = self.templates.get(mission["template"])
+        if tmpl is None or tmpl.build_graph is None:
+            return {"ok": False, "reason": "not_graph_mission"}
+        if mission["state"] != MISSION_FAILED:
+            return {"ok": False, "reason": f"not_recoverable:{mission['state']}"}
+        pid = mission.get("last_pipeline_id") or ""
+        if not pid:
+            return {"ok": False, "reason": "no_graph_pipeline"}
+        rec_id = self._recovered_mission_id(mission_id)
+        existing = self.ledger.inspect_mission(rec_id, owner=owner)
+        if existing and existing["state"] in MISSION_TERMINAL:   # already recovered
+            return {"ok": existing["state"] == MISSION_COMPLETED, "mission_id": rec_id,
+                    "state": existing["state"], "pipeline_id": pid,
+                    "retried_from": mission_id, "idempotent": True}
+        from saathi.application_harness.pipeline_graph import GraphSpec
+        gspec = GraphSpec(name=mission["title"], owner=owner,
+                          steps=tmpl.build_graph(dict(mission["params"])),
+                          concurrency_limit=tmpl.concurrency_limit,
+                          correlation_id=mission_id, pipeline_id=pid)
+        rres = self.graph_runner.resume(gspec, owner=owner, session_id=session_id,
+                                        now=now)
+        # another worker holds the recovery lease — do NOT settle a linked mission on
+        # a possibly-stale graph read; leave it recoverable for a bounded next pass.
+        if not rres.get("ok") and rres.get("reason") == "recovery_claimed":
+            return {"ok": False, "reason": "resume_in_progress", "mission_id": mission_id,
+                    "retried_from": mission_id, "pipeline_id": pid, "in_progress": True}
+        # the graph terminal state is authoritative regardless of who won the resume
+        g = self.ledger.inspect_graph(pid, owner=owner)
+        graph_ok = bool(g) and g["state"] == L.PIPELINE_SUCCEEDED
+        gcode = (g or {}).get("failure_code", "") or rres.get("failure_code", "")
+        # ensure the deterministic recovered mission exists (duplicate is fine)
+        self.create(mission["template"], owner=owner, params=mission["params"],
+                    mission_id=rec_id, correlation_id=mission_id)
+        settle = self.settle_recovered(rec_id, owner=owner, pipeline_id=pid,
+                                       ok=graph_ok, failure_code=gcode,
+                                       steps_run=rres.get("rerun_steps", 0),
+                                       session_id=session_id)
+        return {"ok": graph_ok, "mission_id": rec_id, "retried_from": mission_id,
+                "pipeline_id": pid, "state": settle.get("state"),
+                "reused_steps": rres.get("reused_steps", 0),
+                "rerun_steps": rres.get("rerun_steps", 0),
+                "resume_reason": rres.get("reason", ""),
+                "failure_code": settle.get("failure_code", "")}
+
+    def reconcile_running_mission(self, mission_id: str, *, owner: str) -> dict:
+        """Crash window F: a mission left RUNNING while its graph pipeline already
+        reached a terminal state (the process died between graph completion and
+        `finish_mission_run`). Settle the mission from the authoritative graph state.
+        No tool executes; idempotent on an already-terminal mission."""
+        m = self._owned(mission_id, owner)
+        if not m["ok"]:
+            return m
+        mission = m["mission"]
+        if mission["state"] in MISSION_TERMINAL:
+            return {"ok": mission["state"] == MISSION_COMPLETED,
+                    "state": mission["state"], "idempotent": True}
+        if mission["state"] != MISSION_RUNNING:
+            return {"ok": False, "reason": f"not_running:{mission['state']}"}
+        pid = mission.get("last_pipeline_id") or ""
+        if not pid:                                     # never written pre-crash
+            runs = self.ledger.pipelines_for_correlation(mission_id, owner=owner)
+            pid = runs[0]["pipeline_id"] if runs else ""
+        if not pid:
+            return {"ok": False, "reason": "no_pipeline"}
+        g = self.ledger.inspect_graph(pid, owner=owner)
+        if g is None or g["state"] not in L.PIPELINE_TERMINAL:
+            return {"ok": False, "reason": "graph_not_terminal"}
+        attempt = int(mission["run_count"]) or 1
+        if g["state"] == L.PIPELINE_SUCCEEDED:
+            self.ledger.finish_mission_run(mission_id, attempt=attempt,
+                                           state=MISSION_COMPLETED, pipeline_id=pid)
+            return {"ok": True, "state": MISSION_COMPLETED, "mission_id": mission_id,
+                    "pipeline_id": pid}
+        disp = self._classify_graph_failure(pid, owner, g.get("failure_code", ""))
+        self.ledger.finish_mission_run(mission_id, attempt=attempt, state=disp["state"],
+                                       pipeline_id=pid, failure_code=disp["failure_code"])
+        return {"ok": False, "state": disp["state"], "mission_id": mission_id,
+                "pipeline_id": pid, "failure_code": disp["failure_code"]}
 
     # ── owner-safe reads ───────────────────────────────────────────────────
     def inspect(self, mission_id: str, *, owner: str | None = None) -> Optional[dict]:

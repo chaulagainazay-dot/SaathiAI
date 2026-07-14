@@ -231,6 +231,31 @@ Verdict: **GOVERNED BOUNDED PARALLEL/BRANCHING GRAPH STAGING READY** — not pro
 (cyclic/nested-fork graphs, dynamic mutation, untrusted graph JSON, distributed/remote
 execution, cross-owner delegation, production auto-scheduling, live trading remain OUT).
 
+## M17.17 — governed graph mission scheduling & recovery integration (DONE)
+Autonomous-loop milestone (start/rollback e7207dd). Joins M17.14 scheduling, M17.15
+recovery, M17.16 graph pipelines, and M17.13 MissionEngine so a SCHEDULED occurrence (or
+trusted event) launches a GRAPH-backed mission, survives interruption, resumes through the
+EXISTING graph + recovery layers, and settles the mission AND occurrence EXACTLY ONCE. No
+new execution path: scheduler → MissionEngine → PipelineRunner → bounded graph executor →
+run_harness_action → adapter → verification → ledger. Scheduler still delegates ONLY to the
+MissionEngine (fresh execution via engine.launch; no direct graph/recovery calls, asserted).
+New MissionEngine methods (mission authority): resume_graph_mission / settle_recovered /
+reconcile_running_mission + honest graph→mission classification. Honest state map with
+approval→approval_required, stop_uncertain→blocked (fail closed), transient failure→deferred
+retry_wait→succeeded after recovery. Idempotent + durable (deterministic recovered mission
+id; recovery/step/occurrence claims); original failed mission immutable (linked retry). Crash
+windows F/G reconciled. Retry = M17.15 allowlist + [0,60,300,900,3600]s. NO new tables (one
+read-only helper). Additive default-off scheduler flag. 12 BLOCKING scheduled_graph.*
+manifest checks (194 total); 31 deterministic tests; M17.13–16 regression 160 green; full
+suite 1844/1 skipped/0 failed. LIVE PROOF (credential-free): scheduled sqlite-root → 2
+concurrent verified sqlite branches → zip join; repeat sweep no-dup; injected retryable
+branch failure → durable recovery → reuse root+branch_a, rerun branch_b + join once →
+mission+occurrence settled once (idempotent); crash F/G reconciled; approval branch blocks
+join+schedule without auto-approval. Trading Guardian not engaged (asserted free of trading
+surfaces). Verdict: **GOVERNED SCHEDULED GRAPH RECOVERY STAGING READY** — not production
+(production auto-scheduling, distributed/multi-region recovery, untrusted graph JSON, dynamic
+mutation, public webhooks, live trading remain OUT).
+
 ## Blocked / deferred (need user action or larger scope)
 - authenticated browser / cloud connector workflow — needs a safe staging account.
 - native Finder/TextEdit actuation — macOS Accessibility (TCC) not granted.

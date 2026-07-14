@@ -1570,6 +1570,25 @@ class RunLedger:
         with self._conn() as c:
             return [dict(r) for r in c.execute(q, args).fetchall()]
 
+    def pipelines_for_correlation(self, correlation_id, *, owner: str | None = None,
+                                  limit: int = 20) -> list[dict]:
+        """Owner-safe pipeline runs bound to a correlation id (e.g. a mission id),
+        most-recent first. Used by M17.17 to resolve a graph mission's underlying
+        graph pipeline after a crash between graph completion and mission settlement
+        (when `last_pipeline_id` was never written). Read-only; no cross-owner rows."""
+        correlation_id = _clean_str(correlation_id, field="correlation_id")
+        if not correlation_id:
+            return []
+        limit = max(1, min(int(limit), 100))
+        q = (f"SELECT {','.join(_PIPELINE_SAFE_FIELDS)} FROM pipeline_run "
+             "WHERE correlation_id=?")
+        args: list = [correlation_id]
+        if owner:
+            q += " AND owner=?"; args.append(owner)
+        q += " ORDER BY created_at DESC LIMIT ?"; args.append(limit)
+        with self._conn() as c:
+            return [dict(r) for r in c.execute(q, args).fetchall()]
+
     def pipeline_health(self, owner: str | None = None) -> dict:
         """Pipeline state census (owner-scoped when owner given)."""
         where, args = "", []

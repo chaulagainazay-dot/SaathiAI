@@ -260,7 +260,8 @@ class MissionScheduler:
         return made
 
     # ── dispatch: delegate to the MissionEngine ONLY ───────────────────────
-    def dispatch_occurrence(self, occurrence_id, *, now=None, worker="scheduler") -> dict:
+    def dispatch_occurrence(self, occurrence_id, *, now=None, worker="scheduler",
+                            graph_recovery=False) -> dict:
         now = now if now is not None else L._now()
         occ = self.ledger.inspect_occurrence(occurrence_id)
         if occ is None:
@@ -305,7 +306,8 @@ class MissionScheduler:
             self.engine.launch(mid, owner=owner, session_id=f"scheduler:{occurrence_id}")
             # 9. observe the AUTHORITATIVE mission result
             m = self.engine.inspect(mid, owner=owner)
-            return self._finalize_from_mission(occurrence_id, m, now=now)
+            return self._finalize_from_mission(occurrence_id, m, now=now,
+                                               graph_recovery=graph_recovery)
         except Exception as e:                     # infrastructure failure → retry
             self.ledger.occurrence_retry(occurrence_id,
                                          reason=f"dispatch:{type(e).__name__}", now=now)
@@ -317,24 +319,59 @@ class MissionScheduler:
         L.MISSION_APPROVAL_REQUIRED: L.OCC_APPROVAL_REQUIRED,
     }
 
-    def _finalize_from_mission(self, occurrence_id, mission, *, now=None) -> dict:
+    def _graph_retryable(self, pipeline_id) -> bool:
+        """M17.17: does this graph pipeline carry an OPEN, allowlisted-transient
+        recovery record with retries remaining? (observed via the existing recovery
+        interface — the scheduler never computes graph-ready/checkpoint logic)."""
+        from saathi.application_harness.pipeline_recovery import is_retryable
+        rec = self.ledger.get_recovery(pipeline_id)
+        if not rec or rec["state"] in L.RECOVERY_TERMINAL:
+            return False
+        return (is_retryable(rec["failure_category"])
+                and rec["attempt"] < rec["max_attempts"])
+
+    def _finalize_from_mission(self, occurrence_id, mission, *, now=None,
+                               graph_recovery=False) -> dict:
         if mission is None:                        # should not happen → retry
             self.ledger.occurrence_retry(occurrence_id, reason="mission_missing", now=now)
             return {"ok": False, "state": L.OCC_RETRY_WAIT}
         st = mission["state"]
-        occ_state = self._MISSION_TO_OCC.get(st)
+        fcode = mission.get("failure_code", "") or ""
+        # M17.17: a fail-closed graph awaiting approval propagates approval_required
+        if st == L.MISSION_BLOCKED and fcode == "GRAPH_APPROVAL_REQUIRED":
+            occ_state = L.OCC_APPROVAL_REQUIRED
+        else:
+            occ_state = self._MISSION_TO_OCC.get(st)
         if occ_state is None:                      # mission not resolved (crash) → retry
             self.ledger.occurrence_retry(occurrence_id,
                                          reason=f"mission_unresolved:{st}", now=now)
             return {"ok": False, "state": L.OCC_RETRY_WAIT}
+        # M17.17: defer terminal failure when the graph left a RETRYABLE recovery
+        # record, so the scheduled-graph recovery coordinator can resume it. A
+        # non-retryable graph failure still goes terminal at once (no relaunch storm).
+        if graph_recovery and occ_state == L.OCC_FAILED:
+            pid = mission.get("last_pipeline_id") or ""
+            if pid and self._graph_retryable(pid):
+                self.ledger.occurrence_retry(occurrence_id, reason="graph_retryable",
+                                             now=now)
+                return {"ok": False, "state": L.OCC_RETRY_WAIT, "recoverable": True,
+                        "mission_id": mission["mission_id"], "pipeline_id": pid}
         cat = "" if occ_state == L.OCC_SUCCEEDED else st
-        summary = mission.get("failure_code", "") if occ_state != L.OCC_SUCCEEDED else ""
+        summary = fcode if occ_state != L.OCC_SUCCEEDED else ""
         run_id = str(mission["run_count"]) if mission.get("run_count") else ""
         self.ledger.finish_occurrence(occurrence_id, state=occ_state,
                                       mission_run_id=run_id, failure_category=cat,
                                       failure_summary=summary, now=now)
         return {"ok": occ_state == L.OCC_SUCCEEDED, "state": occ_state,
                 "mission_id": mission["mission_id"], "mission_state": st}
+
+    def settle_occurrence_from_mission(self, occurrence_id, mission, *, now=None,
+                                       graph_recovery=False) -> dict:
+        """Public entry for the M17.17 coordinator to settle an occurrence from an
+        authoritative mission record, reusing the SAME honest mapping (approval →
+        approval_required; retryable graph failure → deferred retry_wait)."""
+        return self._finalize_from_mission(occurrence_id, mission, now=now,
+                                           graph_recovery=graph_recovery)
 
     def _terminal(self, occurrence_id, state, category, *, detail="", now=None) -> dict:
         self.ledger.finish_occurrence(occurrence_id, state=state,

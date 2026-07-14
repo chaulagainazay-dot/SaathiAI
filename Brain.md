@@ -1553,3 +1553,63 @@ are governed). Commit: this invocation (see git log); rollback point 5bc8317.
 (cyclic/nested-fork graphs, dynamic graph mutation, untrusted graph JSON, distributed/
 remote execution, cross-owner delegation, production auto-scheduling, live trading all
 remain OUT).
+
+## M17.17 — governed graph mission scheduling & recovery integration
+
+Autonomous-loop milestone (start/rollback e7207dd, M17.16). Completes the lifecycle
+integration so a SCHEDULED occurrence (or trusted event) can launch a GRAPH-backed
+mission, survive interruption, resume through the EXISTING graph + recovery layers, and
+settle the mission AND scheduler occurrence EXACTLY ONCE. KEY CONSTITUTIONAL FACTS:
+(1) NO NEW EXECUTION PATH. Scheduler/trusted-event → mission occurrence → MissionEngine →
+existing PipelineRunner → existing bounded graph executor (M17.16) → run_harness_action →
+adapter → INDEPENDENT verification → existing ledger/checkpoints/claims/recovery.
+(2) SCHEDULER STILL DELEGATES ONLY TO THE MISSIONENGINE — fresh execution flows through
+engine.launch (never the graph executor directly, asserted); the scheduler module does
+NOT import the graph executor or PipelineRecovery. (3) MISSIONENGINE REMAINS THE MISSION
+AUTHORITY — new methods resume_graph_mission / settle_recovered / reconcile_running_mission
++ _classify_graph_failure live in MissionEngine; the scheduler/coordinator never duplicate
+mission lifecycle logic. (4) GRAPH RECOVERY STAYS IN THE EXISTING RECOVERY LAYER — the
+coordinator only REQUESTS it via engine.resume_graph_mission → GraphPipelineRunner.resume;
+it computes no checkpoint/graph-ready/branch-retry/claim logic. (5) HONEST STATE
+PROPAGATION — graph succeeded→mission completed→occurrence succeeded; graph failed
+(transient)→mission failed→occurrence DEFERRED retry_wait→succeeded after recovery; graph
+approval-required branch→mission BLOCKED(GRAPH_APPROVAL_REQUIRED)→occurrence
+approval_required (join never runs, never auto-approved); graph stop_uncertain/verification
+→mission BLOCKED(GRAPH_STOP_UNCERTAIN)→occurrence blocked (fail closed); success is NEVER
+invented while recovery is pending. (6) IDEMPOTENCY IS LAYERED + DURABLE (not memory-only):
+one occurrence/due (dedup_key), one mission/occurrence (deterministic id), one graph/mission
+run (pipeline_run PK), one recovery/graph (recovery claim), one claim/step, one join, one
+DETERMINISTIC recovered mission (ms_rec_<sha(parent)>), one final settlement (terminal
+immutable). A resume already claimed by another worker short-circuits (resume_in_progress)
+and stays recoverable. (7) MISSION IMMUTABILITY — a failed graph mission is NOT reopened;
+recovery records the resumed result on a LINKED retry mission, preserving the original
+failure as audit truth. (8) RESTART RECONCILIATION covers crash windows: F (graph terminal,
+mission running → reconcile_running_mission) and G (mission terminal, occurrence unsettled →
+settle_occurrence_from_mission), plus cases A–J documented in RECONCILIATION_SEMANTICS.
+(9) RETRY reuses M17.15 allowlist + [0,60,300,900,3600]s; approval/owner/invalid/tamper/
+verification/unknown never auto-retry; a non-retryable failed graph settles terminal at once
+(no relaunch storm). (10) OWNER consistent end to end; any mismatch fails closed. DATABASE:
+NO new tables — reuses existing records + one READ-ONLY helper (pipelines_for_correlation on
+the existing correlation_id column); M17.8–M17.16 data/backup/restore/integrity preserved;
+revert = single-commit rollback. SCHEDULER change is ADDITIVE + DEFAULT-OFF (graph_recovery
+flag; M17.14 behavior unchanged). TEMPLATES: trusted graph-backed mission templates
+(graph_data_bundle: sqlite root → 2 verified sqlite branches → zip join); a schedule/event
+payload can NEVER supply graph/deps/harness/command/risk/approval/owner/concurrency.
+CONTROL CENTER: coord.health owner-safe (graphs/recovery/occurrences/missions + attention:
+approval_required_scheduled_graph, stop_uncertain_graph, retry_exhausted, failed_graph_branch);
+cross-owner hidden; no raw commands/payloads/artifacts/secrets. OPS: 12 BLOCKING
+scheduled_graph.* manifest checks (194 total green). TESTS:
+test_m17_17_scheduled_graph_recovery.py (31, deterministic — injected clocks/runners,
+barriers, no sleeps). Regression: M17.13–M17.16 160 green; full suite 1844 passed / 1
+skipped / 0 failed. LIVE PROOF (credential-free): scheduled one_time schedule → 1 occurrence
+→ dispatch → graph (root, 2 concurrent verified branches, zip join) → mission completed →
+occurrence succeeded; repeat sweep = no duplicate; injected retryable branch_b failure →
+durable recovery state → recover reuses root+branch_a checkpoints, reruns only branch_b +
+join once → mission (linked retry) completed → occurrence succeeded (idempotent); crash F/G
+reconciled; approval-required branch propagates without running the join. Trading Guardian
+NOT engaged (integration + engine recovery modules asserted free of trading/broker/
+withdraw/leverage/transfer/order-submission surfaces). Commit: this invocation (see git
+log); rollback point e7207dd.
+**Verdict: GOVERNED SCHEDULED GRAPH RECOVERY STAGING READY** — NOT production (production
+auto-scheduling, distributed/multi-region recovery, untrusted graph JSON, dynamic graph
+mutation, public webhooks, live trading all remain OUT).

@@ -1583,6 +1583,126 @@
    ],
    "subsystem": "application_harness",
    "blocking": true
+  },
+  {
+   "id": "scheduled_graph.template_safety",
+   "targets": [
+    "tests/test_m17_17_scheduled_graph_recovery.py::test_graph_backed_template_registered",
+    "tests/test_m17_17_scheduled_graph_recovery.py::test_register_is_idempotent_and_additive",
+    "tests/test_m17_17_scheduled_graph_recovery.py::test_ordinary_sequential_template_unchanged",
+    "tests/test_m17_17_scheduled_graph_recovery.py::test_schedule_cannot_supply_graph_definition",
+    "tests/test_m17_17_scheduled_graph_recovery.py::test_unknown_template_rejected"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "scheduled_graph.launch_idempotency",
+   "targets": [
+    "tests/test_m17_17_scheduled_graph_recovery.py::test_due_occurrence_launches_one_graph_mission",
+    "tests/test_m17_17_scheduled_graph_recovery.py::test_repeated_dispatch_creates_no_duplicate"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "scheduled_graph.state_propagation",
+   "targets": [
+    "tests/test_m17_17_scheduled_graph_recovery.py::test_graph_success_completes_mission_and_occurrence",
+    "tests/test_m17_17_scheduled_graph_recovery.py::test_graph_approval_required_propagates",
+    "tests/test_m17_17_scheduled_graph_recovery.py::test_graph_stop_uncertain_fails_closed",
+    "tests/test_m17_17_scheduled_graph_recovery.py::test_retryable_failure_defers_not_settles_success",
+    "tests/test_m17_17_scheduled_graph_recovery.py::test_non_retryable_failure_is_terminal_not_deferred"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "scheduled_graph.restart_reconciliation",
+   "targets": [
+    "tests/test_m17_17_scheduled_graph_recovery.py::test_crash_after_graph_terminal_before_mission_settlement",
+    "tests/test_m17_17_scheduled_graph_recovery.py::test_crash_after_mission_terminal_before_occurrence_settlement"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "scheduled_graph.graph_recovery_reuse",
+   "targets": [
+    "tests/test_m17_17_scheduled_graph_recovery.py::test_recover_reuses_checkpoint_and_reruns_only_interrupted_branch",
+    "tests/test_m17_17_scheduled_graph_recovery.py::test_recover_is_idempotent",
+    "tests/test_m17_17_scheduled_graph_recovery.py::test_original_failed_mission_stays_immutable_after_recovery"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "scheduled_graph.retry_policy",
+   "targets": [
+    "tests/test_m17_17_scheduled_graph_recovery.py::test_retryable_failure_defers_not_settles_success",
+    "tests/test_m17_17_scheduled_graph_recovery.py::test_non_retryable_failure_is_terminal_not_deferred",
+    "tests/test_m17_17_scheduled_graph_recovery.py::test_approval_required_does_not_auto_recover"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "scheduled_graph.approval_owner_safety",
+   "targets": [
+    "tests/test_m17_17_scheduled_graph_recovery.py::test_graph_approval_required_propagates",
+    "tests/test_m17_17_scheduled_graph_recovery.py::test_approval_required_does_not_auto_recover",
+    "tests/test_m17_17_scheduled_graph_recovery.py::test_owner_mismatch_recover_fails_closed",
+    "tests/test_m17_17_scheduled_graph_recovery.py::test_health_is_owner_scoped"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "scheduled_graph.event_trigger_safety",
+   "targets": [
+    "tests/test_m17_17_scheduled_graph_recovery.py::test_trusted_event_launches_graph_mission_and_dedups",
+    "tests/test_m17_17_scheduled_graph_recovery.py::test_event_cannot_override_owner_or_template"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "scheduled_graph.concurrency_dedup",
+   "targets": [
+    "tests/test_m17_17_scheduled_graph_recovery.py::test_concurrent_dispatch_creates_one_mission_and_graph",
+    "tests/test_m17_17_scheduled_graph_recovery.py::test_concurrent_recover_creates_one_resumed_graph"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "scheduled_graph.mission_scheduler_layering",
+   "targets": [
+    "tests/test_m17_17_scheduled_graph_recovery.py::test_scheduler_does_not_call_graph_executor_or_recovery_directly",
+    "tests/test_m17_17_scheduled_graph_recovery.py::test_coordinator_fresh_launch_only_through_missionengine",
+    "tests/test_m17_17_scheduled_graph_recovery.py::test_graph_recovery_flag_defaults_off_for_scheduler",
+    "tests/test_m17_17_scheduled_graph_recovery.py::test_ordinary_sequential_scheduled_mission_still_works"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
+  },
+  {
+   "id": "scheduled_graph.control_center_owner_scope",
+   "targets": [
+    "tests/test_m17_17_scheduled_graph_recovery.py::test_control_center_attention_for_approval_and_owner_scope",
+    "tests/test_m17_17_scheduled_graph_recovery.py::test_health_is_owner_scoped"
+   ],
+   "subsystem": "control_center",
+   "blocking": true
+  },
+  {
+   "id": "scheduled_graph.trading_boundary",
+   "targets": [
+    "tests/test_m17_17_scheduled_graph_recovery.py::test_integration_module_opens_no_trading_surface",
+    "tests/test_m17_17_scheduled_graph_recovery.py::test_engine_recovery_methods_open_no_trading_surface"
+   ],
+   "subsystem": "application_harness",
+   "blocking": true
   }
  ]
 }

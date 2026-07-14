@@ -460,3 +460,37 @@ Examples:
 
 Public production and live trading remain disabled. This is a bounded, acyclic
 workflow — not an unrestricted workflow engine — and it adds no financial ability.
+
+## M17.17 — scheduled multi-branch work that safely finishes itself after a hiccup
+
+M17.16 let independent work run in parallel; M17.14 let approved missions run on a
+schedule. M17.17 JOINS THEM: a SCHEDULED mission can now run multi-branch (parallel)
+work, and if it is interrupted, it RESUMES SAFELY instead of starting over or leaving a
+half-finished result.
+
+What this means in plain terms:
+
+- **Scheduled missions can now do multi-branch work.** A daily job can fork into parallel
+  branches and rejoin at a single packaging step — on a schedule, unattended.
+- **An interrupted scheduled mission resumes its existing work.** If the machine restarts
+  or a branch hits a transient hiccup, the system reconciles the EXISTING mission and
+  graph — it does not create a second mission or redo verified work.
+- **Verified branches are reused.** Only the interrupted branch runs again; the join runs
+  exactly once; the mission and its schedule slot settle exactly once.
+- **Duplicate work is suppressed.** Running the schedule sweep twice, or reconciling
+  twice, never creates a duplicate occurrence, mission, graph, branch, join, or retry.
+- **Scheduled work never grants approval.** If a branch needs approval, the whole
+  scheduled mission waits — a schedule, a retry, or another branch can never approve it.
+
+Examples:
+- **IELTSAlert**: schedule the daily lesson; if the audio branch stalls, the text branch
+  that already finished is reused and only the audio branch reruns before packaging.
+- **CEO reports**: schedule the morning brief; a restart mid-run finishes the missing
+  record instead of re-pulling everything or sending a half-empty brief.
+- **Cafeteria reporting**: schedule the daily report; a transient database hiccup on the
+  sales branch resumes cleanly, the inventory branch is not redone.
+- **HCG research**: schedule the nightly bundle; if it is interrupted, the completed
+  source set is reused and only the missing one is re-gathered before the merge.
+
+Production auto-scheduling and live trading remain disabled. Reconciliation is opt-in and
+bounded; nothing runs itself continuously, and no financial ability is added.

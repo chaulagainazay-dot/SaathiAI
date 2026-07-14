@@ -217,3 +217,13 @@ the existing text-response rules (still authoritative for typed chat):
 - **governance unchanged**: "Parallel execution changes when safe steps run, not how they are governed."
 - **approval still blocks**: "That branch still needs approval, so the join remains blocked."
 - **tamper reran**: "The artifact changed, so its branch and dependent join were rerun."
+
+## M17.17 — scheduled graph recovery language
+
+- **resumed, not recreated**: "The scheduled mission resumed its existing graph; it did not create a second mission."
+- **reused verified work**: "The verified branch was reused, and only the interrupted branch ran again."
+- **settled once**: "The graph finished, so I settled the mission and its schedule occurrence exactly once."
+- **approval blocks the schedule**: "This branch requires approval, so the join and scheduled mission remain blocked."
+- **finished the missing record**: "The system restarted after the graph completed and safely finished the missing mission record."
+- **when vs how**: "Scheduling decides when the mission is due; MissionEngine and the governed pipeline still decide how it runs."
+- **reconciled, not duplicated**: "The recovery coordinator reconciled existing records instead of creating duplicate work."
