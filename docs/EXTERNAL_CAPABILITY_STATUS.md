@@ -23,7 +23,7 @@ This document is the **concise operational** view. SES-000E remains the full reg
 | **saathios-loop-engineering** skill | `REGISTERED` (skill) | in-repo skill | MIT adapted | Skill | `.grok/skills/saathios-loop-engineering` | skill file presence | foundation tests | 2026-07-15 | Architecture | disable skill | — | — |
 | **external-integration-audit** | `REGISTERED` | in-repo | SaathiOS | Skill | `.grok/skills/external-integration-audit` | skill file | foundation tests | 2026-07-15 | Architecture | remove skill | — | — |
 | **external-service-health** | `REGISTERED` | in-repo | SaathiOS | Skill | `.grok/skills/external-service-health` | skill file | foundation tests | 2026-07-15 | Architecture | remove skill | — | — |
-| **InsForge/InsForge** | **`PILOT_APPROVED_READ_ONLY`** | adapter M18.3; upstream ~2.2.x | **Apache-2.0** | Adapter / External Service (product data plane) | `saathi/providers/insforge` | `InsForgeProvider.health()` | `tests/test_m18_3_insforge_provider.py` | 2026-07-15 | Architecture | `SAATHI_INSFORGE_ENABLED` default false | Managed Postgres/BaaS for products only | No writes yet; no raw MCP; no local Docker by default |
+| **InsForge/InsForge** | **`PILOT_APPROVED_GOVERNED_MIGRATION_WRITE`** | adapter M18.3 read + M18.4 migration pilot; upstream ~2.2.x | **Apache-2.0** | Adapter / External Service (product data plane) | `saathi/providers/insforge` | `InsForgeProvider.health()` | `tests/test_m18_3_insforge_provider.py`, `tests/test_m18_4_insforge_migration.py` | 2026-07-15 | Architecture | `SAATHI_INSFORGE_ENABLED` / `SAATHI_INSFORGE_WRITES_ENABLED` default false | Managed Postgres/BaaS for products only | Not production; dual flags + fingerprint approval; no raw MCP; no local Docker by default |
 
 ---
 

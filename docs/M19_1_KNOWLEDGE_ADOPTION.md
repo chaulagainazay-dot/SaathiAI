@@ -1,7 +1,7 @@
 # M19.1 — Knowledge Service Adoption, Shadow Evaluation, Legacy Migration
 
-**Status:** Pilot (not production-ready)  
-**Base:** M19.0 `0332469` Unified Knowledge Service  
+**Status:** Pilot (not production-ready)
+**Base:** M19.0 `0332469` Unified Knowledge Service
 **Verdict target:** `KNOWLEDGE SERVICE ADOPTION PILOT READY`
 
 ---

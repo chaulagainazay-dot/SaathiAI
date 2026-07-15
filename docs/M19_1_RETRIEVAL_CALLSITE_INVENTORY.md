@@ -1,9 +1,9 @@
 # M19.1 — Retrieval Call-Site Inventory
 
-**Status:** Complete (pre-implementation gate)  
-**Repository:** SaathiAI / SaathiOS  
-**Base commit:** `0332469` (M19.0 Unified Knowledge Service)  
-**Inventory date:** 2026-07-15  
+**Status:** Complete (pre-implementation gate)
+**Repository:** SaathiAI / SaathiOS
+**Base commit:** `0332469` (M19.0 Unified Knowledge Service)
+**Inventory date:** 2026-07-15
 
 This inventory was produced **before** any M19.1 call-site modifications.
 Classifications drive the first migration wave; deferred callers stay on legacy paths.
@@ -74,7 +74,7 @@ Classifications drive the first migration wave; deferred callers stay on legacy 
 | C08 | `mission_context_prepare` | MISSION_CONTEXT | `legacy` (opt-in shadow/unified) | New facade only |
 | C09 | `audit_evidence_lookup` | AUDIT_EVIDENCE | `legacy` (opt-in shadow/unified) | New facade only |
 
-Global default for M19.1: **`legacy`** (conservative).  
+Global default for M19.1: **`legacy`** (conservative).
 Per-caller override via `SAATHI_KS_ROLLOUT` / `SAATHI_KS_ROLLOUT_<CALLER>`.
 
 ---
@@ -109,17 +109,17 @@ Per-caller override via `SAATHI_KS_ROLLOUT` / `SAATHI_KS_ROLLOUT_<CALLER>`.
 
 ## Architecture reuse (no new infrastructure)
 
-* M19.0 `KnowledgeService`, router, rank, dedupe, assemble, permissions, adapters  
-* M18.2 codebase memory index + search  
-* Existing events bus best-effort emit  
-* Existing MCP enable flag for CBM  
-* Existing env-var configuration convention (`SAATHI_*`)  
-* Existing test fixtures and eval harness patterns  
+* M19.0 `KnowledgeService`, router, rank, dedupe, assemble, permissions, adapters
+* M18.2 codebase memory index + search
+* Existing events bus best-effort emit
+* Existing MCP enable flag for CBM
+* Existing env-var configuration convention (`SAATHI_*`)
+* Existing test fixtures and eval harness patterns
 
 ---
 
 ## Safety notes for inventory
 
-* Inventory is read-only classification.  
-* No trading, payment, auth, or production mutation paths selected.  
+* Inventory is read-only classification.
+* No trading, payment, auth, or production mutation paths selected.
 * Retrieved content is data, not authority.
