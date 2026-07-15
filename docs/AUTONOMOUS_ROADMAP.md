@@ -21,6 +21,8 @@ canonical `saathi-codebase-memory`, provider-neutral memory contract,
 namespace isolation, health/degradation, write governance, Continuum remains
 **BLOCKED_LICENSE**.
 
+**M19.4 (Context Composer + mission context quality)** completed: structured budgeted composer over M19.0 results; profiles coding/repair/audit/architecture/incident; provenance/trust/injection boundaries; mission+repair facades attach `composed` on unified path only; TG/InsForge untouched. Not production-ready.
+
 **M19.3 (Real-Index Knowledge Campaign + controlled promotion)** completed: real registered-index dual-path campaign; durable metrics; promote exactly one caller (`codebase_memory_search`) to `unified_with_fallback` with per-caller/`SAATHI_KS_DISABLE_PROMOTIONS` rollback; TG/InsForge/chat LTM untouched. Not production-ready.
 
 **M19.2 (Shadow Evaluation Campaign + second-wave KS adoption)** completed: campaign metrics, control_center repository facet (opt-in), repair_context_prepare; default legacy; TG/InsForge untouched. Not production-ready.

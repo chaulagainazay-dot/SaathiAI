@@ -24,6 +24,14 @@ from saathi.knowledge.adoption import (
     mission_context_prepare,
     repair_context_prepare,
 )
+from saathi.knowledge.composer import (
+    ComposerProfile,
+    ComposedContext,
+    compose_context,
+    compose_for_mission,
+    compose_from_response,
+    composer_profiles,
+)
 from saathi.knowledge.real_campaign import (
     run_real_index_campaign,
     write_campaign_report,
@@ -33,6 +41,8 @@ from saathi.knowledge.service import KnowledgeService, default_knowledge_service
 from saathi.knowledge.types import KnowledgeQuery, KnowledgeResponse, RetrievalProfile
 
 __all__ = [
+    "ComposerProfile",
+    "ComposedContext",
     "KnowledgeQuery",
     "KnowledgeResponse",
     "KnowledgeService",
@@ -41,6 +51,10 @@ __all__ = [
     "adopt_retrieve",
     "adopted_codebase_search",
     "audit_evidence_lookup",
+    "compose_context",
+    "compose_for_mission",
+    "compose_from_response",
+    "composer_profiles",
     "control_center_repository_search",
     "default_knowledge_service",
     "metrics_snapshot",

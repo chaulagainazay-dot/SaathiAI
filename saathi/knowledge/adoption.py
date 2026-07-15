@@ -430,6 +430,45 @@ def _collect_warnings(resp: KnowledgeResponse) -> list[str]:
     return w
 
 
+def _attach_composed_context(
+    payload: dict,
+    *,
+    knowledge: KnowledgeResponse | None,
+    profile: str,
+    mission_objective: str,
+    budget: int = 0,
+) -> None:
+    """M19.4 — attach structured ComposedContext when KS results exist.
+
+    Never elevates authorizes_* flags. Failures are recorded as warnings only.
+    """
+    if knowledge is None or not getattr(knowledge, "results", None):
+        payload["composed"] = None
+        return
+    try:
+        from saathi.knowledge.composer import compose_from_response
+
+        composed = compose_from_response(
+            knowledge,
+            profile=profile,
+            mission_objective=mission_objective,
+            budget=budget or None,
+        )
+        payload["composed"] = composed.to_dict()
+        if composed.prompt_text:
+            # Prefer structured prompt when composition succeeds
+            payload["prompt_block_composed"] = composed.prompt_text
+            if not payload.get("prompt_block"):
+                payload["prompt_block"] = composed.prompt_text
+        payload["authorizes_code_modification"] = False
+        payload["authorizes_tool_invocation"] = False
+    except Exception as e:
+        payload["composed"] = None
+        payload.setdefault("warnings", [])
+        if isinstance(payload["warnings"], list):
+            payload["warnings"].append(f"composer_error:{type(e).__name__}")
+
+
 # --- Fallback decision -------------------------------------------------------
 
 def classify_unified_failure(resp: KnowledgeResponse | None, exc: BaseException | None = None) -> str:
@@ -1018,6 +1057,14 @@ def mission_context_prepare(
         "supporting_memory",
         "lower_trust_generated",
     ]
+    # M19.4 structured composer (when KS results available)
+    _attach_composed_context(
+        payload,
+        knowledge=result.knowledge,
+        profile="coding_mission",
+        mission_objective=objective,
+        budget=kq.resolved_budget(),
+    )
     return payload
 
 
@@ -1273,4 +1320,12 @@ def repair_context_prepare(
     }
     if result.shadow is not None:
         payload["shadow"] = result.shadow.to_dict()
+    # M19.4 structured composer (when KS results available)
+    _attach_composed_context(
+        payload,
+        knowledge=result.knowledge,
+        profile="repair_mission",
+        mission_objective=incident_summary,
+        budget=kq.resolved_budget(),
+    )
     return payload

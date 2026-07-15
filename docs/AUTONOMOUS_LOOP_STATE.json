@@ -4,26 +4,17 @@
   "branch": "milestone/m7-security-engine",
   "loop_started_at": "2026-07-15",
   "initial_head": "f40ee27",
-  "current_head": "M19.3 (pre-commit)",
-  "iterations_completed": 1,
+  "current_head": "M19.4 (pre-commit)",
+  "iterations_completed": 2,
   "iteration_limit": 3,
-  "active_milestone": "M19.3",
+  "active_milestone": "M19.4",
   "completed_milestones": [
-    "M17.18\u2013M17.26 browser/harness history on branch",
-    "ECP M17.24 External Capability Register and Skills Foundation",
-    "M18.1 Project MCP Governance and Memory Consolidation (historical temporary label M17.25 MCP governance, commit 2223322)",
-    "M18.2 Governed Codebase Memory MCP, Repository Indexing, and Retrieval Quality",
-    "M18.3 InsForge read-only provider pilot",
-    "M18.4 InsForge governed migration write pilot",
     "M19.0 Unified Knowledge Service",
     "M19.1 Knowledge Service adoption",
     "M19.2 Shadow Evaluation Campaign and Second-Wave KS Adoption",
-    "M19.3 Real-Index Knowledge Campaign and Controlled Promotion"
+    "M19.3 Real-Index Knowledge Campaign and Controlled Promotion",
+    "M19.4 Context Composer and Mission Context Quality"
   ],
-  "milestone_number_mapping": {
-    "M17.25 Project MCP Governance and Memory Consolidation": "M18.1 Project MCP Governance and Memory Consolidation",
-    "note": "Browser M17.25 interactive sessions remains M17.25; git history not rewritten"
-  },
   "blocked_items": [
     "native Finder/TextEdit actuation",
     "GUI harness apps not installed",
@@ -31,25 +22,11 @@
     "staging deploy + live rollback drill",
     "Continuum license unclear (BLOCKED_LICENSE \u2014 no install)"
   ],
-  "unverified_items": [
-    "optional human disable of home codebase-memory-mcp alias",
-    "full-repo eval 100% pass rate under all ranking modes",
-    "p95 latency with n>=20 real-index samples"
-  ],
-  "manual_actions_required": [
-    "Clarify Continuum license before any Continuum pilot",
-    "Optional: enabled=false for home [mcp_servers.codebase-memory-mcp]",
-    "Disable broken home headroom MCP when convenient"
-  ],
-  "last_full_suite": "M19.3:15 + M19.2/M19.1:52 pass; real campaign 12/12 ready",
-  "last_release_check": "not re-run full critical manifest this milestone",
-  "last_secret_scan": "campaign report scan clean",
-  "critical_manifest": "pre-existing CI env failures (studio disk, redteam, native linux, ffmpeg) unchanged",
-  "milestone_verdict": "M19.3 REAL-INDEX PILOT PROMOTED",
-  "stop_reason": null,
-  "unrelated_untouched": "Trading Guardian unchanged; Continuum not installed; InsForge not expanded",
-  "ci_disposition": "Gate C pre-existing env; collection install repaired in prior commits",
+  "last_full_suite": "M19.4:15 + M19.1-19.3:82 pass",
+  "milestone_verdict": "M19.4 CONTEXT COMPOSER READY",
   "promoted_caller": "codebase_memory_search",
   "promoted_mode": "unified_with_fallback",
-  "next_milestone": "M19.4 Context Composer and Mission Context Quality"
+  "next_milestone": "M19.5 Incremental Knowledge Refresh and Repository Change Awareness",
+  "unrelated_untouched": "Trading Guardian unchanged; InsForge not expanded; no merge/deploy",
+  "ci_disposition": "Gate C pre-existing env failures unchanged"
 }
