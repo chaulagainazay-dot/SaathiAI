@@ -1,4 +1,4 @@
-"""M19.0–M19.2 — Unified Knowledge Service + adoption + shadow campaign.
+"""M19.0–M19.3 — Unified Knowledge Service + adoption + campaigns + pilot promotion.
 
 Coordinates existing retrieval (codebase memory, docs, registered sources).
 Does **not** replace memory, knowledge graph, indexes, or InsForge control.
@@ -8,6 +8,10 @@ and governed fallback — without new retrieval infrastructure.
 
 M19.2 adds shadow evaluation campaign metrics and second-wave callers
 (control-center repository search, repair-context prepare).
+
+M19.3 runs real-index campaigns and promotes exactly one low-risk caller
+(``codebase_memory_search``) to ``unified_with_fallback`` with per-caller
+disable and ``SAATHI_KS_DISABLE_PROMOTIONS``.
 """
 from __future__ import annotations
 
@@ -19,6 +23,10 @@ from saathi.knowledge.adoption import (
     metrics_snapshot,
     mission_context_prepare,
     repair_context_prepare,
+)
+from saathi.knowledge.real_campaign import (
+    run_real_index_campaign,
+    write_campaign_report,
 )
 from saathi.knowledge.rollout import RolloutMode, resolve_mode, rollout_snapshot
 from saathi.knowledge.service import KnowledgeService, default_knowledge_service
@@ -40,4 +48,6 @@ __all__ = [
     "repair_context_prepare",
     "resolve_mode",
     "rollout_snapshot",
+    "run_real_index_campaign",
+    "write_campaign_report",
 ]

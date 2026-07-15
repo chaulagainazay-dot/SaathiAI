@@ -1,13 +1,18 @@
-"""M19.1/M19.2 — Knowledge Service adoption rollout modes and configuration.
+"""M19.1–M19.3 — Knowledge Service adoption rollout modes and configuration.
 
 Reuses existing SAATHI_* environment conventions. Does not introduce a new
 feature-flag platform.
 
 Modes:
-  legacy                 — M18.2 / legacy path only (global default)
+  legacy                 — M18.2 / legacy path only (global default for most callers)
   shadow                 — legacy authoritative; KS runs for metrics only
   unified_with_fallback  — KS first; governed fallback to legacy on soft errors
   unified_only           — KS only (no legacy fallback)
+
+M19.3 pilot promotion: exactly one low-risk caller
+(``codebase_memory_search`` / operator code lookup) defaults to
+``unified_with_fallback`` when promotions are enabled. All other callers
+remain ``legacy`` unless explicitly configured.
 """
 from __future__ import annotations
 
@@ -30,6 +35,8 @@ VALID_MODES = frozenset(m.value for m in RolloutMode)
 ENV_GLOBAL = "SAATHI_KS_ROLLOUT"
 # Per-caller: SAATHI_KS_ROLLOUT_CODEBASE_MEMORY_SEARCH=shadow
 ENV_CALLER_PREFIX = "SAATHI_KS_ROLLOUT_"
+# Kill switch for all pilot promotions (M19.3+)
+ENV_DISABLE_PROMOTIONS = "SAATHI_KS_DISABLE_PROMOTIONS"
 
 # Known first-wave caller keys
 CALLER_CODEBASE_MEMORY_SEARCH = "codebase_memory_search"
@@ -60,6 +67,26 @@ SECOND_WAVE_CALLERS = frozenset({
 })
 
 KNOWN_CALLERS = FIRST_WAVE_CALLERS | SECOND_WAVE_CALLERS
+
+# M19.3 — exactly one pilot promotion (operator code lookup).
+# Must remain a real-legacy-fallback caller (not empty-noop second-wave).
+PROMOTED_CALLER_M19_3 = CALLER_CODEBASE_MEMORY_SEARCH
+PROMOTED_DEFAULTS: dict[str, RolloutMode] = {
+    PROMOTED_CALLER_M19_3: RolloutMode.UNIFIED_WITH_FALLBACK,
+}
+
+# Callers that must never receive automatic promotion.
+PROMOTION_FORBIDDEN = frozenset({
+    "trading_guardian",
+    "chat_ltm",
+    "voice_turn",
+    "payment",
+    "auth_decision",
+    "kill_switch",
+    "browser_dispatch",
+    "deployment_authorization",
+    CALLER_MISSION_CONTEXT,  # deferred: broader blast radius
+})
 
 _lock = threading.RLock()
 _runtime_overrides: dict[str, RolloutMode] = {}
@@ -111,8 +138,26 @@ def reset_rollout_state() -> None:
         _global_override = None
 
 
+def promotions_enabled() -> bool:
+    """Pilot promotions active unless SAATHI_KS_DISABLE_PROMOTIONS is truthy."""
+    raw = (os.getenv(ENV_DISABLE_PROMOTIONS) or "").strip().lower()
+    return raw not in ("1", "true", "yes", "on")
+
+
+def promoted_defaults_snapshot() -> dict[str, str]:
+    """Non-sensitive view of pilot promotion defaults."""
+    if not promotions_enabled():
+        return {}
+    return {k: v.value for k, v in PROMOTED_DEFAULTS.items()}
+
+
 def resolve_mode(caller_id: str, *, explicit: RolloutMode | str | None = None) -> RolloutMode:
-    """Resolve rollout mode: explicit > runtime caller > env caller > runtime global > env global > legacy."""
+    """Resolve rollout mode.
+
+    Precedence:
+      explicit > runtime caller > env caller > runtime global > env global
+      > promoted pilot default (M19.3) > legacy
+    """
     if explicit is not None:
         m = explicit if isinstance(explicit, RolloutMode) else _parse_mode(str(explicit))
         if m is not None:
@@ -138,6 +183,13 @@ def resolve_mode(caller_id: str, *, explicit: RolloutMode | str | None = None) -
     m = _parse_mode(os.getenv(ENV_GLOBAL))
     if m is not None:
         return m
+
+    # M19.3 pilot promotions (single caller); never promote forbidden keys
+    if promotions_enabled() and key not in PROMOTION_FORBIDDEN:
+        promoted = PROMOTED_DEFAULTS.get(key)
+        if promoted is not None:
+            return promoted
+
     return RolloutMode.LEGACY
 
 
@@ -155,4 +207,8 @@ def rollout_snapshot() -> dict:
         "second_wave": sorted(SECOND_WAVE_CALLERS),
         "known_callers": sorted(KNOWN_CALLERS),
         "valid_modes": sorted(VALID_MODES),
+        "promotions_enabled": promotions_enabled(),
+        "promoted_defaults": promoted_defaults_snapshot(),
+        "promoted_caller_m19_3": PROMOTED_CALLER_M19_3,
+        "disable_promotions_env": ENV_DISABLE_PROMOTIONS,
     }

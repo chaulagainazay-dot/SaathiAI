@@ -478,7 +478,10 @@ def test_20_per_caller_mode_resolution():
     set_caller_mode(CALLER_REPAIR_CONTEXT, RolloutMode.UNIFIED_WITH_FALLBACK)
     assert resolve_mode(CALLER_CONTROL_CENTER_REPO) == RolloutMode.SHADOW
     assert resolve_mode(CALLER_REPAIR_CONTEXT) == RolloutMode.UNIFIED_WITH_FALLBACK
-    assert resolve_mode("codebase_memory_search") == RolloutMode.LEGACY
+    # M19.3 pilot: codebase_memory_search defaults to unified_with_fallback
+    assert resolve_mode("codebase_memory_search") == RolloutMode.UNIFIED_WITH_FALLBACK
+    # non-promoted first-wave remains legacy
+    assert resolve_mode("mission_context_prepare") == RolloutMode.LEGACY
 
 
 # --- M19.1 regression smoke --------------------------------------------------

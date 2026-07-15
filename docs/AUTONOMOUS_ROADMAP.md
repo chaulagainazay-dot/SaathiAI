@@ -21,9 +21,11 @@ canonical `saathi-codebase-memory`, provider-neutral memory contract,
 namespace isolation, health/degradation, write governance, Continuum remains
 **BLOCKED_LICENSE**.
 
+**M19.3 (Real-Index Knowledge Campaign + controlled promotion)** completed: real registered-index dual-path campaign; durable metrics; promote exactly one caller (`codebase_memory_search`) to `unified_with_fallback` with per-caller/`SAATHI_KS_DISABLE_PROMOTIONS` rollback; TG/InsForge/chat LTM untouched. Not production-ready.
+
 **M19.2 (Shadow Evaluation Campaign + second-wave KS adoption)** completed: campaign metrics, control_center repository facet (opt-in), repair_context_prepare; default legacy; TG/InsForge untouched. Not production-ready.
 
-**M19.1 (Knowledge Service adoption)** first-wave callers via adoption gateway; default rollout `legacy`; shadow/fallback; TG isolated. Not production-ready.
+**M19.1 (Knowledge Service adoption)** first-wave callers via adoption gateway; default rollout `legacy` (M19.3 promotes one pilot caller); shadow/fallback; TG isolated. Not production-ready.
 
 **M19.0 (Unified Knowledge Service)** retrieval router + multi-repo context over M18.2.
 

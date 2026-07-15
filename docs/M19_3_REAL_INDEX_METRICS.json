@@ -1,0 +1,225 @@
+{
+  "campaign": {
+    "canonical_source_hit_rate": 1.0,
+    "case_ids": [
+      "exact_symbol_eventbus",
+      "file_location_adoption",
+      "architecture_ses",
+      "related_tests_m19",
+      "milestone_evidence_m19",
+      "repair_planning_context",
+      "control_center_operator",
+      "permission_denial_secret",
+      "secret_path_request",
+      "context_budget_pressure",
+      "prompt_injection_repo",
+      "recent_change_lookup"
+    ],
+    "case_summaries": [
+      {
+        "canonical_hit": true,
+        "compared": true,
+        "id": "exact_symbol_eventbus",
+        "ok": true,
+        "top5_overlap": 1.0
+      },
+      {
+        "canonical_hit": true,
+        "compared": true,
+        "id": "file_location_adoption",
+        "ok": true,
+        "top5_overlap": 1.0
+      },
+      {
+        "canonical_hit": true,
+        "compared": true,
+        "id": "architecture_ses",
+        "ok": true,
+        "top5_overlap": 0.25
+      },
+      {
+        "canonical_hit": true,
+        "compared": true,
+        "id": "related_tests_m19",
+        "ok": true,
+        "top5_overlap": 0.25
+      },
+      {
+        "canonical_hit": true,
+        "compared": true,
+        "id": "milestone_evidence_m19",
+        "ok": true,
+        "top5_overlap": 0.5
+      },
+      {
+        "canonical_hit": true,
+        "compared": true,
+        "id": "repair_planning_context",
+        "ok": true,
+        "top5_overlap": 0.5
+      },
+      {
+        "canonical_hit": true,
+        "compared": true,
+        "id": "control_center_operator",
+        "ok": true,
+        "top5_overlap": 0.8
+      },
+      {
+        "canonical_hit": true,
+        "compared": true,
+        "id": "permission_denial_secret",
+        "ok": true,
+        "top5_overlap": 0.6
+      },
+      {
+        "canonical_hit": true,
+        "compared": true,
+        "id": "secret_path_request",
+        "ok": true,
+        "top5_overlap": 1.0
+      },
+      {
+        "canonical_hit": true,
+        "compared": true,
+        "id": "context_budget_pressure",
+        "ok": true,
+        "top5_overlap": 0.6
+      },
+      {
+        "canonical_hit": true,
+        "compared": true,
+        "id": "prompt_injection_repo",
+        "ok": true,
+        "top5_overlap": 0.4
+      },
+      {
+        "canonical_hit": true,
+        "compared": true,
+        "id": "recent_change_lookup",
+        "ok": true,
+        "top5_overlap": 0.5
+      }
+    ],
+    "context_budget_compliance": 1.0,
+    "deterministic_repeatability": 1.0,
+    "duplicate_rate_mean": 0.0,
+    "exact_symbol_hit_rate": 0.0,
+    "generated_summary_ratio_mean": 0.0,
+    "insufficient_sample_for_p95": true,
+    "no_result_rate_legacy": 0.0,
+    "no_result_rate_unified": 0.0,
+    "ok": true,
+    "p50_legacy_latency_ms": 318.33,
+    "p50_shadow_overhead_ms": 665.86,
+    "p50_unified_latency_ms": 350.69,
+    "p95_legacy_latency_ms": 436.65,
+    "p95_unified_latency_ms": 557.0,
+    "partial_result_rate": 0.0833,
+    "path_jaccard_mean": 0.2808,
+    "permission_denial_correctness": 1.0,
+    "primary_evidence_ratio_mean": 0.2999,
+    "profiles": {
+      "AUDIT_EVIDENCE": {
+        "case_count": 1,
+        "mean_legacy_latency_ms": 331.91,
+        "mean_top5_overlap": 0.5,
+        "mean_unified_latency_ms": 300.38
+      },
+      "CODE_EXPLAIN": {
+        "case_count": 6,
+        "mean_legacy_latency_ms": 348.5217,
+        "mean_top5_overlap": 0.4167,
+        "mean_unified_latency_ms": 389.335
+      },
+      "FAST_LOOKUP": {
+        "case_count": 4,
+        "mean_legacy_latency_ms": 302.08,
+        "mean_top5_overlap": 0.95,
+        "mean_unified_latency_ms": 330.9725
+      },
+      "MISSION_CONTEXT": {
+        "case_count": 1,
+        "mean_legacy_latency_ms": 409.25,
+        "mean_top5_overlap": 0.6,
+        "mean_unified_latency_ms": 589.73
+      }
+    },
+    "query_count": 12,
+    "result_fingerprint": "a7c7adc244839d4e",
+    "sampling_policy": "full",
+    "successful_comparison_count": 12,
+    "top1_agreement": 0.5,
+    "top3_overlap": 0.5833,
+    "top5_overlap": 0.6167,
+    "warnings": [
+      "insufficient_sample_for_p95:n=12<min=20"
+    ]
+  },
+  "canonical_source_hit_rate": 1.0,
+  "context_budget_compliance": 1.0,
+  "deterministic_repeatability": 1.0,
+  "disable_control": "SAATHI_KS_ROLLOUT_CODEBASE_MEMORY_SEARCH=legacy or SAATHI_KS_DISABLE_PROMOTIONS=1",
+  "duplicate_rate": 0.0,
+  "duration_ms": 15745.74,
+  "exact_symbol_hit_rate": 0.0,
+  "index_ready": true,
+  "inventory": [
+    {
+      "adapter": "codebase_memory",
+      "chunks": 13981,
+      "current_commit": "f40ee273b76fc8a5b95a9a41742665dc626ea8f5",
+      "db_path": "/Users/macbookpro/.saathi/codebase_memory/179a0f7f672fbf969be80c9f.sqlite",
+      "files": 1387,
+      "health_status": "HEALTHY",
+      "indexable": true,
+      "indexed_commit": "f40ee273b76fc8a5b95a9a41742665dc626ea8f5",
+      "location": "/Users/macbookpro/SaathiAI",
+      "notes": [],
+      "repository_id": "saathiai",
+      "schema_ok": true,
+      "source_id": "saathiai.codebase_index",
+      "stale": false,
+      "symbols": 8387
+    }
+  ],
+  "no_result_rate_legacy": 0.0,
+  "no_result_rate_unified": 0.0,
+  "ok": true,
+  "p50_legacy_latency_ms": 318.33,
+  "p50_unified_latency_ms": 350.69,
+  "p95_legacy_latency_ms": 436.65,
+  "p95_unified_latency_ms": 557.0,
+  "partial_result_rate": 0.0833,
+  "permission_denial_correctness": 1.0,
+  "primary_evidence_ratio": 0.2999,
+  "promoted_caller": "codebase_memory_search",
+  "promoted_mode": "unified_with_fallback",
+  "promotion_decision": {
+    "advisory_only": false,
+    "canonical_source_hit_rate": 1.0,
+    "comparisons": 12,
+    "context_budget_compliance": 1.0,
+    "index_ready": true,
+    "permission_denial_correctness": 1.0,
+    "promotion_caller": "codebase_memory_search",
+    "promotion_mode": "unified_with_fallback",
+    "ready": true,
+    "reasons": [],
+    "repository_selection_accuracy": 1.0,
+    "stale_result_rate": 0.0,
+    "top5_overlap": 0.6167
+  },
+  "query_count": 12,
+  "repository_selection_accuracy": 1.0,
+  "result_fingerprint": "a7c7adc244839d4e",
+  "saathi_root": "/Users/macbookpro/SaathiAI",
+  "stale_result_rate": 0.0,
+  "successful_comparison_count": 12,
+  "top1_agreement": 0.5,
+  "top3_overlap": 0.5833,
+  "top5_overlap": 0.6167,
+  "warnings": [
+    "insufficient_sample_for_p95:n=12<min=20"
+  ]
+}

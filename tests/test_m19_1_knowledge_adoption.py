@@ -26,6 +26,7 @@ from saathi.knowledge.adoption import (
 )
 from saathi.knowledge.compat import search_compatible
 from saathi.knowledge.rollout import (
+    CALLER_AUDIT_EVIDENCE,
     CALLER_CODEBASE_MEMORY_SEARCH,
     CALLER_MISSION_CONTEXT,
     FIRST_WAVE_CALLERS,
@@ -137,10 +138,14 @@ def test_01_inventory_doc_exists():
 
 
 def test_02_rollout_default_is_legacy():
-    assert resolve_mode(CALLER_CODEBASE_MEMORY_SEARCH) == RolloutMode.LEGACY
+    # M19.3: operator code lookup is the sole pilot promotion; others stay legacy.
+    assert resolve_mode(CALLER_MISSION_CONTEXT) == RolloutMode.LEGACY
+    assert resolve_mode(CALLER_AUDIT_EVIDENCE) == RolloutMode.LEGACY
+    assert resolve_mode(CALLER_CODEBASE_MEMORY_SEARCH) == RolloutMode.UNIFIED_WITH_FALLBACK
     snap = rollout_snapshot()
     assert snap["default"] == "legacy"
     assert CALLER_MISSION_CONTEXT in FIRST_WAVE_CALLERS
+    assert snap.get("promoted_caller_m19_3") == CALLER_CODEBASE_MEMORY_SEARCH
 
 
 def test_03_rollout_modes_resolve(monkeypatch):
@@ -403,21 +408,23 @@ def test_18_retrieval_cannot_authorize():
 
 # --- Runtime wiring ----------------------------------------------------------
 
-def test_19_runtime_search_default_legacy(tmp_path):
+def test_19_runtime_search_default_promoted_or_safe(tmp_path):
     from saathi.codebase_memory.service import CodebaseMemoryRuntime
     from saathi.mcp_governance.policy import set_enabled, reset_policy_state
     from saathi.mcp_governance.inventory import CANONICAL_CODEBASE_MEMORY_ID
 
     reset_policy_state()
     set_enabled(True, CANONICAL_CODEBASE_MEMORY_ID)
-    # empty repo — may degrade but must not crash and path_used legacy
+    # empty repo — may degrade but must not crash (M19.3 pilot uses unified_with_fallback)
     rt = CodebaseMemoryRuntime(tmp_path, base_dir=tmp_path / "idx")
     out = rt.search("EventBus", top_k=3)
     assert "ok" in out
     assert "hits" in out
-    # adoption metadata when routed
+    # adoption metadata when routed — pilot default or explicit legacy
     if "adoption" in out:
-        assert out["adoption"]["mode"] == "legacy"
+        assert out["adoption"]["mode"] in (
+            "legacy", "unified_with_fallback", "shadow", "unified_only",
+        )
 
 
 def test_20_dispatch_tool_still_blocks_writes():

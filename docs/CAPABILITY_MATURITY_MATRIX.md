@@ -49,3 +49,4 @@ permissions (macOS TCC actuation), or credentials (authenticated cloud/browser).
 | InsForge governed migration write pilot | deterministic-tested | M18.4 plan/preflight/approval/idempotency/verify; no raw SQL |
 | Unified Knowledge Service + retrieval router | deterministic-tested | M19.0 multi-source plan/rank/dedupe/context; M18.2 compat |
 | KS adoption + shadow campaign (M19.1/19.2) | deterministic-tested | first+second wave; default legacy; campaign metrics; not prod |
+| Real-index campaign + pilot promotion (M19.3) | deterministic-tested | real CBM index eval; codebase_memory_search → unified_with_fallback; not prod |
