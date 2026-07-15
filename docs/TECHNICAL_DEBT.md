@@ -110,12 +110,11 @@
   calendar parsing, external SaaS schedulers, and PRODUCTION AUTO-SCHEDULING (the
   interval runner is opt-in; no OS launch agent / cron / cloud job is provisioned).
   Trading Guardian stays disabled (scheduler/event modules carry no trading surface).
-- Harness registry persistence: BUILT (M17.18) + HARDENED (M17.19). `registry.json`
-  loads on first bootstrap with bounded read, schema_version gate, shared entry
-  validator (boot/register/import), resource limits, unknown-field reject, atomic
-  write, fail-closed envelope; external trust never elevates; pilots seed from
-  code with restrictive-only overlay. 38 M17.19 + 15 M17.18 tests; 10 blocking
-  `registry.*` checks (5 prior + 5 new). Remaining: multi-writer concurrency,
+- Harness registry persistence: BUILT (M17.18) + HARDENED (M17.19) + MULTI-WRITER
+  (M17.20). Bounded untrusted load; shared validator; atomic write; process-safe
+  flock + revision CAS + applied_ops idempotency; lock→reload→mutate path for
+  register/import. 33 M17.20 + 38 M17.19 + 15 M17.18 tests; 15 blocking
+  `registry.*` checks. Remaining: multi-host/NFS consensus (out of scope),
   optional Control Center cell, richer quarantine retention UX.
 - Memory conventions auto-learn dirt: FIXED (M17.18.1). `memory_reflector` no
   longer mutates curated `saathi/memory/conventions.md`; runtime notes go to
