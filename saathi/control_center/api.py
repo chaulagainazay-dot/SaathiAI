@@ -76,6 +76,12 @@ def execution_gateway(request: Request):
     return ControlCenterAggregator(_user(request)).execution_gateway().to_dict()
 
 
+@router.get("/browser")
+def browser_execution(request: Request):
+    """M17.23 governed browser metrics cell (read-only, no secrets/HTML)."""
+    return ControlCenterAggregator(_user(request)).browser_execution().to_dict()
+
+
 @router.get("/timeline")
 def timeline(request: Request, limit: int = 25):
     return ControlCenterAggregator(_user(request)).recent_events(limit=limit).to_dict()

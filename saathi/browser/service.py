@@ -68,7 +68,15 @@ class BrowserService:
 
     # ── open (with escalation + optional named session) ─────────────────
     def open(self, url: str, *, evade: bool = False, timeout: int = 30,
-             session: str | None = None) -> Page:
+             session: str | None = None, governed: bool | None = None) -> Page:
+        """Open URL. When governed=True, routes via M17.23 ExecutionGateway first.
+
+        Default governed=None keeps legacy tier path for existing tests/callers;
+        call sites that need fail-closed policy should pass governed=True or use
+        ``saathi.browser.governed.GovernedBrowser``.
+        """
+        if governed is True:
+            return self._open_governed(url, evade=evade, timeout=timeout, session=session)
         min_tier = Tier.CAMOFOX if evade else Tier.HTTP
         candidates = self._usable("fetch", min_tier=min_tier)
         if not candidates:
@@ -103,6 +111,26 @@ class BrowserService:
             return result
         _event("browser.finished", {"url": url, "ok": False, "error": str(last_err)})
         raise BrowserError(f"all tiers failed to open {url}: {last_err}")
+
+    def _open_governed(self, url: str, *, evade: bool = False, timeout: int = 30,
+                       session: str | None = None) -> Page:
+        from saathi.browser.governed import BrowserAdapter, GovernedBrowser
+        gb = GovernedBrowser(
+            mode="service",
+            adapter=BrowserAdapter(service=self, mode="service"),
+        )
+        rec = gb.execute(
+            action="navigate", url=url, session_id=session or "default",
+            environment="dev",
+        )
+        if rec.status != "succeeded":
+            raise BrowserError(
+                f"governed browser denied/failed: {rec.failure_category or rec.status}: "
+                f"{rec.result_summary}"
+            )
+        # Adapter already opened; reconstruct Page from record summary for API compat
+        # Prefer a second technical open after authorization was recorded.
+        return self.open(url, evade=evade, timeout=timeout, session=session, governed=False)
 
     # ── extract ─────────────────────────────────────────────────────────
     def extract(self, url: str, selector: str | None = None, *, timeout: int = 30):

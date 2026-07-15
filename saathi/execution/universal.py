@@ -64,10 +64,10 @@ except Exception:  # pragma: no cover
 MAX_RETRIES = MAX_DELIVERY_ATTEMPTS
 Handler = Callable[[ToolIntent, ExecutionRecord], dict]
 
-# Families in scope for Phase 1
-PHASE1_FAMILIES = frozenset({"connector", "cli", "local", "mcp"})
-# Explicitly out of Phase 1 migration (must not claim completeness)
-FUTURE_FAMILIES = frozenset({"browser", "n8n", "llm", "trading"})
+# Families in scope for universal gateway (M17.22 + M17.23 browser)
+PHASE1_FAMILIES = frozenset({"connector", "cli", "local", "mcp", "browser"})
+# Explicitly out of migration (must not claim completeness)
+FUTURE_FAMILIES = frozenset({"n8n", "llm", "trading"})
 
 _digest_locks: dict[str, threading.Lock] = {}
 _digest_locks_guard = threading.Lock()
@@ -93,6 +93,8 @@ def classify_family(intent: ToolIntent) -> str:
         return "cli"
     if cid in ("local", "local-tool", "builtin") or cap in ("local", "builtin"):
         return "local"
+    if cid == "browser" or cap == "browser" or "browser" in cap:
+        return "browser"
     if cid in FUTURE_FAMILIES or cap in FUTURE_FAMILIES:
         return cid if cid in FUTURE_FAMILIES else cap
     return "connector"

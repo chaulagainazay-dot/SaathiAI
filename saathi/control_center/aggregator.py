@@ -176,6 +176,28 @@ class ControlCenterAggregator:
             }
         return guarded("execution.gateway", _eg)
 
+    def browser_execution(self) -> Cell:
+        """M17.23 governed browser metrics (safe summaries only)."""
+        def _be():
+            from saathi.browser.governed import browser_metrics
+            m = browser_metrics()
+            return {
+                "requested": m.get("requested", 0),
+                "succeeded": m.get("succeeded", 0),
+                "failed": m.get("failed", 0),
+                "denied": m.get("denied", 0),
+                "cancelled": m.get("cancelled", 0),
+                "expired": m.get("expired", 0),
+                "outcome_uncertain": m.get("outcome_uncertain", 0),
+                "approval_required": m.get("approval_required", 0),
+                "domain_denied": m.get("domain_denied", 0),
+                "policy_denied": m.get("policy_denied", 0),
+                "prompt_injection_detected": m.get("prompt_injection_detected", 0),
+                "average_runtime_sec": m.get("average_runtime_sec", 0),
+                "recent_failures": m.get("recent_failures") or [],
+            }
+        return guarded("browser.execution", _be)
+
     def harnesses(self) -> Cell:
         """M17.3/M17.4 application-harness platform state (registry + discovery)
         plus the M17.9 durable run-ledger read model (active runs, heartbeats,
@@ -264,7 +286,8 @@ class ControlCenterAggregator:
         harn = self.harnesses()
         reg_h = self.registry_health()
         egw = self.execution_gateway()
-        attention = self._attention(sec, appr, rel, health, harn, reg_h, egw)
+        brw = self.browser_execution()
+        attention = self._attention(sec, appr, rel, health, harn, reg_h, egw, brw)
         return {
             "owner": self.owner,
             "generated_at": _now(),
@@ -276,18 +299,56 @@ class ControlCenterAggregator:
             "recent_timeline": events.to_dict(),
             "registry_health": reg_h.to_dict(),
             "execution_gateway": egw.to_dict(),
+            "browser_execution": brw.to_dict(),
             "requires_attention": attention,
             "degraded_sources": [c.source for c in (
-                health, sec, appr, rel, metrics, events, reg_h, egw)
+                health, sec, appr, rel, metrics, events, reg_h, egw, brw)
                                  if c.status != "ok"],
         }
 
     def _attention(self, sec: Cell, appr: Cell, rel: Cell, health: Cell,
                    harn: Cell | None = None,
                    reg_h: Cell | None = None,
-                   egw: Cell | None = None) -> list[dict]:
+                   egw: Cell | None = None,
+                   brw: Cell | None = None) -> list[dict]:
         """Rank what needs the user NOW. Real, actionable, honest."""
         items = []
+        # M17.23 browser execution attention (failures / uncertain / policy)
+        if brw is not None and brw.status == "ok" and brw.value:
+            bv = brw.value
+            if (bv.get("failed") or 0) > 0 or (bv.get("outcome_uncertain") or 0) > 0:
+                items.append({
+                    "severity": "high", "kind": "browser_execution",
+                    "message": (
+                        f"browser failed={bv.get('failed', 0)} "
+                        f"uncertain={bv.get('outcome_uncertain', 0)}"
+                    ),
+                    "link": "/control/browser",
+                })
+            if (bv.get("approval_required") or 0) > 0:
+                items.append({
+                    "severity": "medium", "kind": "browser_approval",
+                    "message": f"{bv.get('approval_required')} browser action(s) "
+                               f"awaiting approval",
+                    "link": "/control/browser",
+                })
+            if (bv.get("domain_denied") or 0) > 0 or (bv.get("policy_denied") or 0) > 0:
+                items.append({
+                    "severity": "medium", "kind": "browser_policy",
+                    "message": (
+                        f"browser policy denials "
+                        f"domain={bv.get('domain_denied', 0)} "
+                        f"policy={bv.get('policy_denied', 0)}"
+                    ),
+                    "link": "/control/browser",
+                })
+            if (bv.get("prompt_injection_detected") or 0) > 0:
+                items.append({
+                    "severity": "high", "kind": "browser_injection",
+                    "message": f"prompt-injection markers detected in page content "
+                               f"({bv.get('prompt_injection_detected')})",
+                    "link": "/control/browser",
+                })
         # M17.22 execution gateway (failures / approval backlog / high latency)
         if egw is not None and egw.status == "ok" and egw.value:
             ev = egw.value

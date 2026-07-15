@@ -6,6 +6,9 @@ first: HTTP (no JS) → Playwright (renders JS) → Camofox (anti-detect). Same
 architecture as the Model Router: capability-based selection, an ordered
 fallback chain, and injectable backends so the whole thing is testable with
 fakes (no network, no browser).
+
+M17.23: side-effecting browser actions that need policy/approval should use
+``saathi.browser.governed.GovernedBrowser`` (ExecutionGateway boundary).
 """
 from .types import Page, SearchResult, Tier, BrowserError
 from .service import BrowserService, browser

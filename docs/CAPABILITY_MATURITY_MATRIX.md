@@ -5,7 +5,8 @@ Levels: implemented < deterministic-tested < security/red-team-tested < live-tes
 | capability | maturity | evidence |
 |-----------|----------|----------|
 | ExecutionGateway / approval binding | live+red-team | M15/M15.2 gateway-routed, 78/78 red-team |
-| Universal ExecutionGateway (Phase 1 boundary) | deterministic-tested | M17.22 submit path, states/idempotency/approval/retry, connector via gateway, 25 tests, +5 checks; browser/n8n/LLM/trading not migrated |
+| Universal ExecutionGateway (Phase 1 boundary) | deterministic-tested | M17.22 submit path, states/idempotency/approval/retry, connector via gateway, 25 tests, +5 checks |
+| Governed browser actions via ExecutionGateway | deterministic-tested | M17.23 domain/risk/approval/idempotency/injection isolation, 46 tests, +6 checks; residual ungoverned open() |
 | Connector platform (local git/fs) | live-tested | M15.1 real local execution |
 | Connector platform (cloud gmail/gcal/telegram) | environment-blocked | no credentials |
 | Browser agent (Chrome CDP) | live-browser-tested | M17.1 real workflow |

@@ -1945,6 +1945,61 @@
       ],
       "subsystem": "execution",
       "blocking": true
+    },
+    {
+      "id": "browser.gateway_boundary_present",
+      "targets": [
+        "tests/test_m17_23_browser_execution_gateway.py::test_navigate_through_gateway",
+        "tests/test_m17_23_browser_execution_gateway.py::test_m17_22_gateway_still_works"
+      ],
+      "subsystem": "browser",
+      "blocking": true
+    },
+    {
+      "id": "browser.domain_policy_enforced",
+      "targets": [
+        "tests/test_m17_23_browser_execution_gateway.py::test_disallowed_domain_rejected",
+        "tests/test_m17_23_browser_execution_gateway.py::test_metadata_blocked",
+        "tests/test_m17_23_browser_execution_gateway.py::test_dangerous_scheme_rejected"
+      ],
+      "subsystem": "browser",
+      "blocking": true
+    },
+    {
+      "id": "browser.high_risk_approval_enforced",
+      "targets": [
+        "tests/test_m17_23_browser_execution_gateway.py::test_submit_requires_approval",
+        "tests/test_m17_23_browser_execution_gateway.py::test_approved_submit_once"
+      ],
+      "subsystem": "browser",
+      "blocking": true
+    },
+    {
+      "id": "browser.idempotent_submission",
+      "targets": [
+        "tests/test_m17_23_browser_execution_gateway.py::test_duplicate_toolintent_no_double_submit",
+        "tests/test_m17_23_browser_execution_gateway.py::test_uncertain_submit_not_retried"
+      ],
+      "subsystem": "browser",
+      "blocking": true
+    },
+    {
+      "id": "browser.prompt_injection_isolated",
+      "targets": [
+        "tests/test_m17_23_browser_execution_gateway.py::test_page_content_not_new_intent",
+        "tests/test_m17_23_browser_execution_gateway.py::test_prompt_injection_isolated"
+      ],
+      "subsystem": "browser",
+      "blocking": true
+    },
+    {
+      "id": "browser.evidence_generated",
+      "targets": [
+        "tests/test_m17_23_browser_execution_gateway.py::test_screenshot_creates_evidence",
+        "tests/test_m17_23_browser_execution_gateway.py::test_no_secrets_in_evidence_or_logs"
+      ],
+      "subsystem": "browser",
+      "blocking": true
     }
   ]
 }

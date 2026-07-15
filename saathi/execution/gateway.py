@@ -97,8 +97,8 @@ class ExecutionGateway:
     10. Business-unit isolation mandatory
 
     M17.22: use :meth:`submit` for the durable universal boundary (connector,
-    CLI, local, MCP). Trading Guardian / browser / n8n / LLM remain future
-    migration work and are not claimed by Phase 1.
+    CLI, local, MCP). M17.23 adds browser family via GovernedBrowser.
+    Trading Guardian / n8n / LLM remain future migration work.
     """
 
     def __init__(self, queue: ExecutionQueue | None = None, *, boundary=None):

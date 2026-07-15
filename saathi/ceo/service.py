@@ -183,6 +183,24 @@ class CEOService:
         except Exception:
             pass
 
+        # M17.23 browser — only failures / uncertain / backlog / policy / injection
+        try:
+            from saathi.browser.governed import ceo_browser_summary
+            bs = ceo_browser_summary()
+            if bs and bs.get("include_in_ceo_brief"):
+                add(
+                    "Browser",
+                    f"failed={bs.get('failed', 0)} "
+                    f"uncertain={bs.get('outcome_uncertain', 0)} "
+                    f"approval_backlog={bs.get('approval_backlog', 0)} "
+                    f"domain_denied={bs.get('domain_denied', 0)} "
+                    f"injection={bs.get('prompt_injection_detected', 0)}",
+                    EvidenceTier.OBSERVED.value,
+                    ["browser.execution.metrics"],
+                )
+        except Exception:
+            pass
+
         brief = {"owner": owner, "generated_at": time.time(),
                 "items": items, "sections": sorted({i["section"] for i in items})}
         if persist:

@@ -135,3 +135,9 @@
 ## Deferred (large / premature)
 - Workflow Intelligence engine (gated: needs more live-execution proof first).
 - Cloud/multi-tenant deployment, worker fleet, billing.
+
+- Governed browser via ExecutionGateway: FIRST SLICE BUILT (M17.23).
+  GovernedBrowser + policy + fake/service adapter; high-risk approval; domain
+  deny; injection isolation; CC/CEO metrics. Remaining: migrate agent_browser /
+  computer_agent CDP to gateway-only, remove ungoverned BrowserService default,
+  live interactive session adapter for click/type/submit on real pages.

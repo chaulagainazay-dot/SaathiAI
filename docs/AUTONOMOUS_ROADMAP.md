@@ -317,6 +317,16 @@ checks, 25 focused tests. Connector substrate reuses existing approval engine
 n8n / LLM / trading migration deferred. Verdict: **UNIVERSAL EXECUTION GATEWAY
 PHASE 1 STAGING READY**.
 
+## M17.23 — Governed Browser Actions through ExecutionGateway (DONE)
+Autonomous-loop milestone (start after restored M17.22). Browser actions enter
+ExecutionGateway via GovernedBrowser: domain/scheme policy, risk classification,
+digest-bound approval, idempotency, uncertain-outcome non-retry, prompt-injection
+isolation, workspace downloads/uploads, CC browser cell + gated CEO brief.
+Reuses BrowserService tiers (no second engine). 46 focused tests; +6 browser.*
+checks. Residual: default BrowserService.open ungoverned for compat; live
+interactive CDP paths deferred. Trading Guardian unengaged. Verdict:
+**GOVERNED BROWSER ACTIONS STAGING READY**.
+
 ## Blocked / deferred (need user action or larger scope)
 - authenticated browser / cloud connector workflow — needs a safe staging account.
 - native Finder/TextEdit actuation — macOS Accessibility (TCC) not granted.
