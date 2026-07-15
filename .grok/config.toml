@@ -1,0 +1,30 @@
+# SaathiOS project-scoped Grok configuration (requires folder trust).
+# Strategy: keep production MCP minimal; prefer home-level binaries documented in
+# docs/integrations/MCP_PROJECT_INVENTORY.md. Do not enable Continuum/CodeFlow
+# MCP here until their pilot milestones land with health checks and tests.
+
+[mcp]
+# Cap large MCP payloads (bytes) for 8 GB Mac sessions
+max_output_bytes = 40000
+
+# Project MCP servers — intentionally empty / disabled until ECP pilots.
+# Home-level (user) MCP is documented separately; do not duplicate risky servers.
+#
+# Allowed eventually (per ECP):
+#   codebase-memory (local binary, engineering graph)
+#   continuum (pilot shared engineering knowledge only)
+#   documentation lookup (context7-class)
+#   github read-only
+#   filesystem restricted to SaathiAI
+#
+# Forbidden here:
+#   unrestricted shell MCP
+#   live trading MCP
+#   production DB write MCP
+#   unrestricted Gmail write / cloud deploy
+#   home-directory filesystem MCP
+
+# Example disable pattern for a future pilot:
+# [mcp_servers.continuum]
+# command = "..."
+# enabled = false

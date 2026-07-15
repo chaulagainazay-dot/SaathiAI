@@ -4,7 +4,7 @@
   "branch": "milestone/m7-security-engine",
   "loop_started_at": "2026-07-12",
   "initial_head": "28ce958",
-  "current_head": "HEAD after M17.23 (governed browser via ExecutionGateway); M17.22 restored then extended",
+  "current_head": "ECP M17.24 foundation (register + skills); prior browser M17.26 at previous HEAD",
   "iterations_completed": 1,
   "iteration_limit": 1,
   "active_milestone": null,
@@ -15,27 +15,34 @@
     "M17.20 multi-writer harness registry concurrency",
     "M17.21 Control Center Registry Health cell",
     "M17.22 Universal ExecutionGateway Phase 1",
-    "M17.23 Governed Browser Actions through ExecutionGateway"
+    "M17.23 Governed Browser Actions through ExecutionGateway",
+    "M17.24\u2013M17.26 browser production adapters (branch history)",
+    "ECP M17.24 External Capability Register and Skills Foundation"
   ],
   "blocked_items": [
     "native Finder/TextEdit actuation",
     "GUI harness apps not installed",
     "authenticated browser/cloud workflow",
-    "staging deploy + live rollback drill"
+    "staging deploy + live rollback drill",
+    "Continuum license unclear (blocks ECP M17.25 until clarified)"
   ],
   "unverified_items": [
     "live interactive CDP fully gateway-only",
     "agent_browser CLI migration",
     "n8n/LLM/trading migration",
-    "multi-host execution federation"
+    "multi-host execution federation",
+    "OpenMontage/OpenJarvis/claude-video adapters still stubs"
   ],
-  "manual_actions_required": [],
-  "last_full_suite": "full suite 2030 passed / 1 skipped / 0 failed; focused M17.23: 46; M17.22: 25",
-  "last_redteam": "M17.23 browser policy fail-closed; no trading surface; secrets redacted",
+  "manual_actions_required": [
+    "Clarify Continuum license before M17.25 pilot",
+    "Disable broken home headroom MCP when convenient"
+  ],
+  "last_full_suite": "2192 passed / 1 skipped / 0 failed (ECP M17.24)",
+  "last_redteam": "ECP foundation: no new execution surface; TG not engaged",
   "last_release_check": "exit 0: storage/config/database/backup+restore/secret_scan green",
   "last_secret_scan": "clean (release-check strong_hits 0)",
-  "critical_manifest": "prior 219 + M17.23 6 browser.* (225 total)",
-  "milestone_verdict": "GOVERNED BROWSER ACTIONS STAGING READY",
-  "stop_reason": "one bounded milestone completed (M17.23). Do not begin M17.24.",
-  "unrelated_untouched": "Trading Guardian unchanged; default BrowserService.open ungoverned residual documented"
+  "critical_manifest": "unchanged by ECP foundation docs/skills",
+  "milestone_verdict": "ECP FOUNDATION REGISTERED \u2014 skills + SES-000E only",
+  "stop_reason": "one bounded milestone completed (ECP M17.24). Do not begin ECP M17.25.",
+  "unrelated_untouched": "Trading Guardian unchanged; no Priority 2/3 services installed"
 }

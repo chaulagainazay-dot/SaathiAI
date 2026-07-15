@@ -503,3 +503,11 @@ Examples:
 
 Production auto-scheduling and live trading remain disabled. Reconciliation is opt-in and
 bounded; nothing runs itself continuously, and no financial ability is added.
+
+## External Capability Program (business constraint)
+
+External tools (video, PM, OSINT, trading UIs, incident tools) may be piloted only
+as **non-authoritative** capabilities behind SaathiOS governance. Live trading is
+not authorized. Human PM tools (Leantime) and file browsers must not replace
+missions, approvals, run ledger, or CEO OS. Marketing publishers (Blotato) remain
+external services unless a dedicated governed connector exists.

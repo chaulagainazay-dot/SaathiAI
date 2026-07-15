@@ -1,5 +1,15 @@
 # SaathiOS Autonomous Roadmap
 
+## ECP note (2026-07-15)
+
+External Capability Program **ECP M17.24** completed: SES-000E Part 6 register for
+all Priority 1–3 repositories, project Grok skills (GSAP + loop engineering +
+audit/health), MCP inventory. **No runtime services.** Next ECP milestone only
+when explicitly authorized: **M17.25 Continuum** (license gate).
+
+Do not auto-start Priority 2/3 installs on the 8 GB Mac.
+
+---
 Detected state: branch milestone/m7-security-engine, HEAD 1feb928 (M17.7, four
 live apps: FFmpeg/SQLite/jq/zip). Priorities checked this invocation: no open
 Critical/High (critical_checks green, red-team 81/81); release blockers are all

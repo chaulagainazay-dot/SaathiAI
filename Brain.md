@@ -1716,3 +1716,22 @@ ARCHITECTURE, DOMAIN_POLICY, EVIDENCE_REDACTION.
 **Verdict: PRODUCTION BROWSER ADAPTERS, DOMAIN POLICY, WORKFLOW MIGRATION, AND EVIDENCE REDACTION GOVERNED**
 — NOT full production deploy (live CDP still needs managed loopback endpoint +
 binary; human signed-queue workflows remain isolated; pixel OCR not required).
+
+## ECP M17.24 — External Capability Program foundation (2026-07-15)
+
+**Scope:** Register Priority 1–3 external repositories in SES-000E Part 6; adapt
+GSAP + Loop Engineering as project Grok skills; document MCP inventory; correct
+false “Complete” integration claims for OpenMontage/OpenJarvis/claude-video
+adapters (stubs remain). **No** clones, services, or runtime pilots.
+
+**Skills:** `.grok/skills/frontend-gsap`, `saathios-loop-engineering`,
+`external-integration-audit`, `external-service-health`.
+
+**MCP:** `docs/integrations/MCP_PROJECT_INVENTORY.md` + project
+`.grok/config.toml` (empty pilots). Home codebase-memory documented; headroom
+flagged broken.
+
+**Trading Guardian:** Not engaged. Vibe-Trading / Fincept registered research-only.
+
+**Verdict: ECP FOUNDATION REGISTERED — NOT runtime integration**
+**Next permitted:** ECP M17.25 Continuum pilot (explicit authorization only; license gate).

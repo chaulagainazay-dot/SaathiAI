@@ -141,3 +141,11 @@
   deny; injection isolation; CC/CEO metrics. Remaining: migrate agent_browser /
   computer_agent CDP to gateway-only, remove ungoverned BrowserService default,
   live interactive session adapter for click/type/submit on real pages.
+
+## External Capability Program debt (2026-07-15)
+
+- SES-000E still Draft L1; AC-001 cross-ref vs requirements incomplete historically.
+- OpenMontage / OpenJarvis / claude-video adapters are **stubs** (documented as discovery-only after ECP M17.24 correction).
+- Home MCP: duplicate codebase-memory entries; **headroom enabled but binary missing**.
+- Continuum / CodeFlow / Fincept / blotato-skills licenses unclear — pilot gates.
+- Priority 2/3 services not installed (intentional); Traceway vs OpenObserve decision open.
