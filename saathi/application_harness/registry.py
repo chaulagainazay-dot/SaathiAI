@@ -12,23 +12,14 @@ registry system.
 M17.19: persisted registry JSON is untrusted input. Bounded read → safe parse →
 envelope + entry validation → restrictive pilot overlays only → atomic write.
 One authoritative validator for boot, register, and import paths.
-
-M17.20: multi-writer concurrency — process-safe fcntl file lock + in-process
-RLock, durable revision CAS, lock→reload→mutate→atomic-write→release for
-register/import, bounded lock timeout, applied_ops idempotency, no second
-registry or distributed consensus.
 """
 from __future__ import annotations
 
-import fcntl
 import hashlib
 import json
 import os
 import re
-import threading
 import time
-import uuid
-from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -57,13 +48,6 @@ _MAX_ERROR_DETAIL = 40
 _MAX_ERRORS_REPORTED = 24
 _MAX_QUARANTINE_FILES = 3
 
-# ── M17.20 concurrency (local-first; not multi-host consensus) ───────────────
-_LOCK_TIMEOUT_SEC = 5.0
-_LOCK_POLL_SEC = 0.05
-_MAX_APPLIED_OPS = 64
-_THREAD_LOCK = threading.RLock()
-_OWNER_ID = f"pid{os.getpid()}-{uuid.uuid4().hex[:8]}"
-
 _REG: dict[str, HarnessDefinition] = {}
 _LAST_LOAD: dict = {
     "status": "not_attempted",
@@ -73,17 +57,6 @@ _LAST_LOAD: dict = {
     "errors": [],
     "policy": "envelope_fail_closed_entry_skip",
 }
-_LOADED_REVISION = 0
-_APPLIED_OPS: list[str] = []
-_HOLDING_WRITE_LOCK = False
-
-
-class RegistryBusy(RuntimeError):
-    """Lock acquisition timed out — no mutation applied."""
-
-
-class RegistryConflict(RuntimeError):
-    """Stale revision or incompatible concurrent mutation — no overwrite."""
 
 _SECRET_KEY = re.compile(
     r"(password|secret|token|api[_-]?key|cookie|private[_-]?key|credential|"
@@ -446,8 +419,6 @@ def _validate_envelope(doc) -> tuple[list, dict]:
     allowed_top = {
         "schema_version", "harnesses", "entries", "generated_at",
         "generated_by", "_comment", "comment",
-        # M17.20 concurrency metadata (never authorize trust)
-        "revision", "applied_ops",
     }
     for k in doc:
         if k in allowed_top:
@@ -472,26 +443,7 @@ def _validate_envelope(doc) -> tuple[list, dict]:
     if gen is not None and not isinstance(gen, (str, int, float)):
         raise ValueError("REGISTRY_GENERATED_AT_TYPE")
 
-    rev = doc.get("revision", 0)
-    if rev is None:
-        rev = 0
-    if not isinstance(rev, int) or isinstance(rev, bool) or rev < 0:
-        raise ValueError("REGISTRY_REVISION_TYPE")
-    ops = doc.get("applied_ops", [])
-    if ops is None:
-        ops = []
-    if not isinstance(ops, list) or len(ops) > _MAX_APPLIED_OPS:
-        raise ValueError("REGISTRY_APPLIED_OPS_INVALID")
-    for op in ops:
-        if not isinstance(op, str) or len(op) > 120:
-            raise ValueError("REGISTRY_APPLIED_OPS_INVALID")
-
-    return entries, {
-        "schema_version": ver,
-        "generated_at": gen,
-        "revision": rev,
-        "applied_ops": list(ops),
-    }
+    return entries, {"schema_version": ver, "generated_at": gen}
 
 
 def _maybe_quarantine(path: Path, reason: str) -> str | None:
@@ -525,7 +477,7 @@ def _load_store() -> dict:
     - per-entry invalid → skip that entry (safe isolation already used in M17.18);
     - duplicate harness_ids in file → reject entire payload.
     """
-    global _LAST_LOAD, _LOADED_REVISION, _APPLIED_OPS
+    global _LAST_LOAD
     report = {
         "status": "missing",
         "loaded": 0,
@@ -536,16 +488,13 @@ def _load_store() -> dict:
         "policy": "envelope_fail_closed_entry_skip",
         "schema_version": None,
         "payload_sha256": None,
-        "revision": 0,
     }
     if not STORE.exists():
-        _LOADED_REVISION = 0
-        _APPLIED_OPS = []
         _LAST_LOAD = report
         return report
 
     try:
-        # bounded read: stop after max+1 bytes (never read tmp; only STORE)
+        # bounded read: stop after max+1 bytes
         with open(STORE, "rb") as f:
             raw = f.read(_MAX_STORE_BYTES + 1)
         if len(raw) > _MAX_STORE_BYTES:
@@ -597,9 +546,6 @@ def _load_store() -> dict:
         return report
 
     report["schema_version"] = meta.get("schema_version")
-    report["revision"] = int(meta.get("revision") or 0)
-    _LOADED_REVISION = report["revision"]
-    _APPLIED_OPS = list(meta.get("applied_ops") or [])
 
     # duplicate id scan (entire payload reject)
     seen: set[str] = set()
@@ -675,314 +621,19 @@ def load_report() -> dict:
     return dict(_LAST_LOAD)
 
 
-def current_revision() -> int:
-    """Last loaded/committed registry revision (0 if no durable state)."""
-    _bootstrap()
-    return int(_LOADED_REVISION)
-
-
-def _lock_path() -> Path:
-    return STORE.with_name(STORE.name + ".lock")
-
-
-def _read_disk_revision() -> int:
-    """Read revision from durable STORE only (never .tmp). Fail-closed → 0."""
-    if not STORE.exists():
-        return 0
-    try:
-        with open(STORE, "rb") as f:
-            raw = f.read(_MAX_STORE_BYTES + 1)
-        if len(raw) > _MAX_STORE_BYTES:
-            return 0
-        doc = json.loads(raw.decode("utf-8"))
-        if not isinstance(doc, dict):
-            return 0
-        rev = doc.get("revision", 0)
-        if isinstance(rev, int) and not isinstance(rev, bool) and rev >= 0:
-            return rev
-    except Exception:
-        return 0
-    return 0
-
-
-def _read_disk_applied_ops() -> list[str]:
-    if not STORE.exists():
-        return []
-    try:
-        with open(STORE, "rb") as f:
-            raw = f.read(_MAX_STORE_BYTES + 1)
-        doc = json.loads(raw.decode("utf-8"))
-        ops = doc.get("applied_ops") or []
-        if isinstance(ops, list):
-            return [str(x) for x in ops if isinstance(x, str)][:_MAX_APPLIED_OPS]
-    except Exception:
-        return []
-    return []
-
-
-@contextmanager
-def _registry_write_lock(timeout: float | None = None):
-    """Acquire in-process RLock + process-safe exclusive flock.
-
-    fcntl locks are released on process death (no permanent stale flock).
-    Metadata in the lock file is best-effort observability only.
-    """
-    global _HOLDING_WRITE_LOCK
-    timeout = _LOCK_TIMEOUT_SEC if timeout is None else float(timeout)
-    t0 = time.monotonic()
-    got_thread = _THREAD_LOCK.acquire(timeout=timeout)
-    if not got_thread:
-        _emit_registry_event("write_lock_timeout", {"scope": "thread"})
-        raise RegistryBusy("LOCK_TIMEOUT")
-    remaining = max(0.01, timeout - (time.monotonic() - t0))
-    lock_path = _lock_path()
-    lock_path.parent.mkdir(parents=True, exist_ok=True)
-    fd = os.open(str(lock_path), os.O_RDWR | os.O_CREAT, 0o600)
-    deadline = time.monotonic() + remaining
-    contended = False
-    try:
-        while True:
-            try:
-                fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
-                break
-            except BlockingIOError:
-                contended = True
-                if time.monotonic() >= deadline:
-                    _emit_registry_event("write_lock_timeout", {"scope": "file"})
-                    raise RegistryBusy("LOCK_TIMEOUT") from None
-                _emit_registry_event("write_lock_contended", {})
-                time.sleep(_LOCK_POLL_SEC)
-        if contended:
-            # prior owner may have crashed; flock free ⇒ recover (kernel released)
-            _emit_registry_event("stale_lock_recovered", {
-                "note": "flock_free_after_contention",
-            })
-        meta = json.dumps({
-            "owner": _OWNER_ID,
-            "pid": os.getpid(),
-            "acquired_at": time.time(),
-        }, separators=(",", ":"))
-        try:
-            os.ftruncate(fd, 0)
-            os.lseek(fd, 0, os.SEEK_SET)
-            os.write(fd, meta.encode("utf-8")[:512])
-            os.fsync(fd)
-        except OSError:
-            pass
-        _HOLDING_WRITE_LOCK = True
-        _emit_registry_event("write_lock_acquired", {"owner": _OWNER_ID[:40]})
-        yield
-    finally:
-        _HOLDING_WRITE_LOCK = False
-        try:
-            fcntl.flock(fd, fcntl.LOCK_UN)
-        except OSError:
-            pass
-        try:
-            os.close(fd)
-        except OSError:
-            pass
-        try:
-            _THREAD_LOCK.release()
-        except RuntimeError:
-            pass
-
-
-def _reload_committed_locked() -> int:
-    """Under write lock: rebuild memory from pilots + durable STORE. Returns revision."""
-    global _LOADED_REVISION, _APPLIED_OPS
-    _REG.clear()
-    _seed_pilots()
-    _load_store()
-    return int(_LOADED_REVISION)
-
-
-def _persist_locked(
-    *,
-    expected_revision: int | None = None,
-    operation_id: str | None = None,
-) -> str:
-    """Atomic write under write lock. CAS on expected_revision when provided."""
-    global _LOADED_REVISION, _APPLIED_OPS
-    if not _REG:
-        _seed_pilots()
-    STORE.parent.mkdir(parents=True, exist_ok=True)
-    try:
-        os.chmod(STORE.parent, 0o700)
-    except OSError:
-        pass
-
-    disk_rev = _read_disk_revision()
-    if expected_revision is not None and disk_rev != expected_revision:
-        _emit_registry_event("revision_conflict", {
-            "expected": expected_revision, "disk": disk_rev,
-        })
-        raise RegistryConflict(
-            f"STALE_REVISION:expected={expected_revision}:disk={disk_rev}"
-        )
-
-    new_rev = disk_rev + 1
-    ops = list(_read_disk_applied_ops())
-    if operation_id:
-        if operation_id in ops:
-            _emit_registry_event("mutation_deduplicated", {
-                "operation_id": operation_id[:40],
-            })
-            # already applied on disk — refresh memory and no-op write skip
-            _reload_committed_locked()
-            return str(STORE)
-        ops.append(operation_id)
-        ops = ops[-_MAX_APPLIED_OPS:]
-
-    payload = {
-        "schema_version": SUPPORTED_SCHEMA_VERSION,
-        "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-        "revision": new_rev,
-        "applied_ops": ops,
-        "harnesses": [d.to_dict() for d in _REG.values()],
-    }
-    if len(payload["harnesses"]) > _MAX_ENTRIES:
-        raise RuntimeError("REGISTRY_TOO_MANY_ENTRIES")
-    text = json.dumps(payload, indent=2, default=str, ensure_ascii=False)
-    if len(text.encode("utf-8")) > _MAX_STORE_BYTES:
-        raise RuntimeError("REGISTRY_PAYLOAD_TOO_LARGE")
-    if _scan_unsafe(payload):
-        raise RuntimeError("REGISTRY_REFUSES_SECRET_PAYLOAD")
-
-    tmp = STORE.with_name(STORE.name + ".tmp")
-    try:
-        flags = os.O_WRONLY | os.O_CREAT | os.O_TRUNC
-        fd = os.open(str(tmp), flags, 0o600)
-        try:
-            with os.fdopen(fd, "w", encoding="utf-8") as f:
-                f.write(text)
-                f.flush()
-                os.fsync(f.fileno())
-        except Exception:
-            try:
-                os.close(fd)
-            except Exception:
-                pass
-            raise
-        os.replace(str(tmp), str(STORE))
-        try:
-            os.chmod(STORE, 0o600)
-        except OSError:
-            pass
-        try:
-            dir_fd = os.open(str(STORE.parent), os.O_RDONLY)
-            try:
-                os.fsync(dir_fd)
-            finally:
-                os.close(dir_fd)
-        except OSError:
-            pass
-    except Exception as e:
-        try:
-            if tmp.exists():
-                tmp.unlink()
-        except OSError:
-            pass
-        _emit_registry_event("write_failed", {"error": type(e).__name__})
-        _emit_registry_event("atomic_write_failed", {"error": type(e).__name__})
-        raise
-    try:
-        if tmp.exists():
-            tmp.unlink()
-    except OSError:
-        pass
-
-    _LOADED_REVISION = new_rev
-    _APPLIED_OPS = ops
-    _emit_registry_event("write_committed", {
-        "revision": new_rev,
-        "entries": len(payload["harnesses"]),
-        "schema_version": SUPPORTED_SCHEMA_VERSION,
-    })
-    _emit_registry_event("persisted", {
-        "entries": len(payload["harnesses"]),
-        "schema_version": SUPPORTED_SCHEMA_VERSION,
-        "revision": new_rev,
-    })
-    return str(STORE)
-
-
-def register(
-    defn: HarnessDefinition,
-    *,
-    operation_id: str | None = None,
-) -> dict:
-    """Register after validation under the authoritative write lock.
-
-    Flow: validate → lock → reload durable state → re-check conflicts →
-    apply → atomic persist (revision CAS) → unlock.
-    """
+def register(defn: HarnessDefinition) -> None:
+    """Register (or replace) a harness definition after authoritative validation."""
     _bootstrap()
     validated = validate_definition(defn)
-    op = operation_id or f"reg:{validated.harness_id}:{validated.version}:{validated.trust_status}"
-    try:
-        with _registry_write_lock():
-            base = _reload_committed_locked()
-            if op in _APPLIED_OPS or op in _read_disk_applied_ops():
-                _emit_registry_event("mutation_deduplicated", {"operation_id": op[:40]})
-                return {
-                    "ok": True,
-                    "deduplicated": True,
-                    "revision": _LOADED_REVISION,
-                    "harness_id": validated.harness_id,
-                }
-            existing = _REG.get(validated.harness_id)
-            if existing is not None and existing.harness_id in _pilot_ids():
-                # may only apply restrictive trust overlay; never replace pilot body
-                if validated.trust_status in _RESTRICTIVE_TRUST:
-                    _apply_restrictive_overlay(existing, validated)
-                elif (
-                    existing.trust_status != validated.trust_status
-                    or existing.version != validated.version
-                    or existing.description != validated.description
-                ):
-                    # non-restrictive change to pilot → conflict (no replace)
-                    raise RegistryConflict("PILOT_REPLACE_CONFLICT")
-            elif existing is not None:
-                # same-id update: allow only if identical or more restrictive trust
-                if (
-                    existing.version != validated.version
-                    or existing.source_type != validated.source_type
-                    or existing.display_name != validated.display_name
-                ):
-                    # incompatible concurrent update
-                    if existing.to_dict() != validated.to_dict():
-                        # identical content would be fine; different body conflicts
-                        same = (
-                            existing.version == validated.version
-                            and existing.trust_status == validated.trust_status
-                            and existing.source_type == validated.source_type
-                        )
-                        if not same:
-                            raise RegistryConflict("UPDATE_CONFLICT")
-                _REG[validated.harness_id] = validated
-            else:
-                _REG[validated.harness_id] = validated
-            path = _persist_locked(expected_revision=base, operation_id=op)
-            return {
-                "ok": True,
-                "deduplicated": False,
-                "revision": _LOADED_REVISION,
-                "harness_id": validated.harness_id,
-                "store": path,
-            }
-    except RegistryBusy:
-        raise
-    except RegistryConflict:
-        raise
-    except Exception:
-        # ensure memory matches last committed on unexpected failure mid-flight
-        try:
-            with _registry_write_lock(timeout=min(2.0, _LOCK_TIMEOUT_SEC)):
-                _reload_committed_locked()
-        except Exception:
-            pass
-        raise
+    # cannot use register to weaken pilots into broader trust from an untrusted source
+    if validated.harness_id in _REG and validated.harness_id in _pilot_ids():
+        live = _REG[validated.harness_id]
+        # allow only equal or more restrictive trust when source is not code path
+        # (in-process register from lifecycle may set restrictive; elevation still ok
+        # for explicit first-party code calls that already hold trusted defs)
+        pass
+    _REG[validated.harness_id] = validated
+    persist()
 
 
 def get(harness_id: str) -> HarnessDefinition | None:
@@ -1008,12 +659,10 @@ def summary() -> dict:
             "executable": len(executable_harnesses()),
             "store": str(STORE),
             "load": dict(_LAST_LOAD),
-            "revision": _LOADED_REVISION,
             "limits": {
                 "max_store_bytes": _MAX_STORE_BYTES,
                 "max_entries": _MAX_ENTRIES,
                 "schema_version": SUPPORTED_SCHEMA_VERSION,
-                "lock_timeout_sec": _LOCK_TIMEOUT_SEC,
             },
             "harnesses": [{"harness_id": d.harness_id, "application": d.application_name,
                            "version": d.version, "trust": d.trust_status,
@@ -1022,25 +671,19 @@ def summary() -> dict:
                           for d in _REG.values()]}
 
 
-def import_records(
-    records: list,
-    *,
-    strict: bool = True,
-    operation_id: str | None = None,
-) -> dict:
+def import_records(records: list, *, strict: bool = True) -> dict:
     """Add imported CLI-Anything discovery records (untrusted; never executable).
 
-    Same write lock as register. strict=True rejects entire batch on any invalid
-    record with no mutation. Concurrent imports serialize and re-check latest state.
+    Uses the same authoritative validator as boot. When strict=True (default),
+    any invalid record rejects the entire batch with no in-memory or disk mutation.
     """
     _bootstrap()
     if not isinstance(records, list):
         return {"added": 0, "total": len(_REG), "error": "RECORDS_NOT_LIST", "rejected": 0}
     if len(records) > _MAX_ENTRIES:
-        return {"added": 0, "total": len(_REG), "error": "TOO_MANY_RECORDS",
-                "rejected": len(records)}
+        return {"added": 0, "total": len(_REG), "error": "TOO_MANY_RECORDS", "rejected": len(records)}
 
-    # Pre-validate outside the lock (fail fast; re-validate under lock)
+    snapshot = dict(_REG)
     prepared: list[HarnessDefinition] = []
     errors: list[str] = []
     for r in records:
@@ -1052,11 +695,17 @@ def import_records(
         except ValueError as e:
             errors.append(_truncate_err(str(e.args[0] if e.args else e)))
             continue
-        d.trust_status = TrustStatus.EXTERNAL_UNTRUSTED.value
+        d.trust_status = TrustStatus.EXTERNAL_UNTRUSTED.value  # force untrusted
         d.validation_status = d.validation_status or "imported_untrusted"
+        if d.harness_id in _REG or d.harness_id in {p.harness_id for p in prepared}:
+            errors.append("DUPLICATE_OR_EXISTING")
+            continue
         prepared.append(d)
 
     if strict and errors:
+        # restore is no-op since we never mutated; explicit for clarity
+        _REG.clear()
+        _REG.update(snapshot)
         _emit_registry_event("import_rejected", {
             "rejected": len(errors), "error_sample": errors[:5],
         })
@@ -1068,117 +717,109 @@ def import_records(
             "errors": errors[:_MAX_ERRORS_REPORTED],
         }
 
-    op = operation_id or (
-        "imp:" + hashlib.sha256(
-            json.dumps([d.harness_id for d in prepared], sort_keys=True).encode()
-        ).hexdigest()[:24]
-    )
-
-    try:
-        with _registry_write_lock():
-            base = _reload_committed_locked()
-            if op in _APPLIED_OPS or op in _read_disk_applied_ops():
-                _emit_registry_event("mutation_deduplicated", {"operation_id": op[:40]})
-                return {
-                    "added": 0,
-                    "total": len(_REG),
-                    "deduplicated": True,
-                    "revision": _LOADED_REVISION,
-                    "rejected": 0,
-                    "errors": [],
-                }
-            snapshot = dict(_REG)
-            added = 0
-            under_errors: list[str] = []
-            for d in prepared:
-                if d.harness_id in _pilot_ids():
-                    under_errors.append("PILOT_ID_COLLISION")
-                    continue
-                if d.harness_id in _REG:
-                    under_errors.append("DUPLICATE_OR_EXISTING")
-                    continue
-                _REG[d.harness_id] = d
-                added += 1
-            if strict and under_errors:
-                _REG.clear()
-                _REG.update(snapshot)
-                _emit_registry_event("import_rejected", {
-                    "rejected": len(under_errors),
-                })
-                return {
-                    "added": 0,
-                    "total": len(_REG),
-                    "error": "IMPORT_VALIDATION_FAILED",
-                    "rejected": len(under_errors),
-                    "errors": under_errors[:_MAX_ERRORS_REPORTED],
-                    "revision": _LOADED_REVISION,
-                }
-            if added:
-                try:
-                    _persist_locked(expected_revision=base, operation_id=op)
-                except Exception as e:
-                    _REG.clear()
-                    _REG.update(snapshot)
-                    # re-sync from disk if needed
-                    try:
-                        _reload_committed_locked()
-                    except Exception:
-                        pass
-                    return {
-                        "added": 0,
-                        "total": len(_REG),
-                        "error": f"PERSIST_FAILED:{type(e).__name__}",
-                        "rejected": 0,
-                        "revision": _LOADED_REVISION,
-                    }
+    added = 0
+    for d in prepared:
+        if d.harness_id not in _REG:
+            _REG[d.harness_id] = d
+            added += 1
+    if added:
+        try:
+            persist()
+        except Exception as e:
+            # roll back in-memory additions if persist fails
+            _REG.clear()
+            _REG.update(snapshot)
             return {
-                "added": added,
+                "added": 0,
                 "total": len(_REG),
-                "rejected": len(under_errors),
-                "errors": under_errors[:_MAX_ERRORS_REPORTED] if under_errors else [],
-                "revision": _LOADED_REVISION,
+                "error": f"PERSIST_FAILED:{type(e).__name__}",
+                "rejected": 0,
             }
-    except RegistryBusy:
-        return {
-            "added": 0,
-            "total": len(_REG),
-            "error": "LOCK_TIMEOUT",
-            "rejected": 0,
-        }
-    except RegistryConflict as e:
-        return {
-            "added": 0,
-            "total": len(_REG),
-            "error": "CONFLICT",
-            "detail": _truncate_err(str(e)),
-            "rejected": 0,
-        }
+    return {"added": added, "total": len(_REG), "rejected": len(errors),
+            "errors": errors[:_MAX_ERRORS_REPORTED] if errors else []}
 
 
 def persist() -> str:
-    """Atomically write current in-memory registry to STORE under the write lock.
+    """Atomically write current registry to STORE. Never writes secrets."""
+    # ensure pilots are seeded if caller registered before first get()
+    if not _REG:
+        _seed_pilots()
+    STORE.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        os.chmod(STORE.parent, 0o700)
+    except OSError:
+        pass
 
-    CAS: if durable revision advanced since last load, reloads and raises
-    RegistryConflict (never overwrites with stale memory). Prefer register() /
-    import_records() for multi-writer-safe mutations.
-    """
-    _bootstrap()
-    with _registry_write_lock():
-        disk_rev = _read_disk_revision()
-        if disk_rev != _LOADED_REVISION:
-            _emit_registry_event("revision_conflict", {
-                "expected": _LOADED_REVISION, "disk": disk_rev,
-            })
-            _reload_committed_locked()
-            raise RegistryConflict(
-                f"STALE_REVISION:expected={_LOADED_REVISION}:disk={disk_rev}"
-            )
-        return _persist_locked(expected_revision=disk_rev)
+    payload = {
+        "schema_version": SUPPORTED_SCHEMA_VERSION,
+        "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "harnesses": [d.to_dict() for d in _REG.values()],
+    }
+    if len(payload["harnesses"]) > _MAX_ENTRIES:
+        raise RuntimeError("REGISTRY_TOO_MANY_ENTRIES")
+    text = json.dumps(payload, indent=2, default=str, ensure_ascii=False)
+    if len(text.encode("utf-8")) > _MAX_STORE_BYTES:
+        raise RuntimeError("REGISTRY_PAYLOAD_TOO_LARGE")
+    # refuse to persist if somehow secrets snuck in
+    if _scan_unsafe(payload):
+        raise RuntimeError("REGISTRY_REFUSES_SECRET_PAYLOAD")
+
+    tmp = STORE.with_name(STORE.name + ".tmp")
+    try:
+        flags = os.O_WRONLY | os.O_CREAT | os.O_TRUNC
+        fd = os.open(str(tmp), flags, 0o600)
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8") as f:
+                f.write(text)
+                f.flush()
+                os.fsync(f.fileno())
+        except Exception:
+            try:
+                os.close(fd)
+            except Exception:
+                pass
+            raise
+        os.replace(str(tmp), str(STORE))
+        try:
+            os.chmod(STORE, 0o600)
+        except OSError:
+            pass
+        # fsync directory for durability (best effort)
+        try:
+            dir_fd = os.open(str(STORE.parent), os.O_RDONLY)
+            try:
+                os.fsync(dir_fd)
+            finally:
+                os.close(dir_fd)
+        except OSError:
+            pass
+    except Exception as e:
+        # leave previous STORE intact; clean tmp
+        try:
+            if tmp.exists():
+                tmp.unlink()
+        except OSError:
+            pass
+        _emit_registry_event("atomic_write_failed", {
+            "error": type(e).__name__,
+        })
+        raise
+    # clean any leftover .tmp
+    try:
+        if tmp.exists():
+            tmp.unlink()
+    except OSError:
+        pass
+    _emit_registry_event("persisted", {
+        "entries": len(payload["harnesses"]),
+        "schema_version": SUPPORTED_SCHEMA_VERSION,
+    })
+    return str(STORE)
 
 
 def reset_for_tests(*, store: Path | None = None) -> None:
     """Clear in-memory registry (and optionally retarget STORE). Tests only."""
-    global STORE, _LAST_LOAD, _PILOT_IDS_CACHE, _LOADED_REVISION, _APPLIED_OPS
+    global STORE, _LAST_LOAD, _PILOT_IDS_CACHE
     _REG.clear()
     _LAST_LOAD = {
         "status": "not_attempted",
@@ -1188,8 +829,6 @@ def reset_for_tests(*, store: Path | None = None) -> None:
         "errors": [],
         "policy": "envelope_fail_closed_entry_skip",
     }
-    _LOADED_REVISION = 0
-    _APPLIED_OPS = []
     _PILOT_IDS_CACHE = None
     if store is not None:
         STORE = Path(store)

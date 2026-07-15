@@ -289,15 +289,6 @@ bounded diagnostics (hashes/counts, no full payloads), CLI strict import exit 3,
 second registry. Trading Guardian unengaged. Verdict: **REGISTRY UNTRUSTED
 PERSISTENCE HARDENING STAGING READY**.
 
-## M17.20 — multi-writer harness registry concurrency (DONE)
-Autonomous-loop milestone (start `f0e1a55`). Serializes registry mutations with
-process-safe `fcntl.flock` + in-process RLock, durable `revision` CAS,
-lock→reload→mutate→atomic-write, `applied_ops` idempotency, bounded lock
-timeout, crash-safe prior-file preservation, CLI exit 4/5 for contention/conflict,
-5 new blocking critical checks, 33 focused tests. Single-host only (not
-multi-host consensus). Trading Guardian unengaged. Verdict: **REGISTRY
-MULTI-WRITER CONCURRENCY STAGING READY**.
-
 ## Blocked / deferred (need user action or larger scope)
 - authenticated browser / cloud connector workflow — needs a safe staging account.
 - native Finder/TextEdit actuation — macOS Accessibility (TCC) not granted.

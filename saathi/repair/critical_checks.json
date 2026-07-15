@@ -1802,56 +1802,6 @@
       ],
       "subsystem": "application_harness",
       "blocking": true
-    },
-    {
-      "id": "registry.concurrent_write_serialized",
-      "targets": [
-        "tests/test_m17_20_registry_concurrency.py::test_two_writers_different_ids_both_survive",
-        "tests/test_m17_20_registry_concurrency.py::test_second_writer_times_out_safely",
-        "tests/test_m17_20_registry_concurrency.py::test_concurrent_imports_do_not_overwrite"
-      ],
-      "subsystem": "application_harness",
-      "blocking": true
-    },
-    {
-      "id": "registry.stale_revision_rejected",
-      "targets": [
-        "tests/test_m17_20_registry_concurrency.py::test_stale_revision_cannot_overwrite",
-        "tests/test_m17_20_registry_concurrency.py::test_revision_increments_after_success",
-        "tests/test_m17_20_registry_concurrency.py::test_failed_mutation_does_not_increment_revision"
-      ],
-      "subsystem": "application_harness",
-      "blocking": true
-    },
-    {
-      "id": "registry.lock_timeout_fail_closed",
-      "targets": [
-        "tests/test_m17_20_registry_concurrency.py::test_second_writer_times_out_safely",
-        "tests/test_m17_20_registry_concurrency.py::test_active_lock_not_stolen",
-        "tests/test_m17_20_registry_concurrency.py::test_lock_released_after_persist_failure"
-      ],
-      "subsystem": "application_harness",
-      "blocking": true
-    },
-    {
-      "id": "registry.in_memory_disk_consistent",
-      "targets": [
-        "tests/test_m17_20_registry_concurrency.py::test_restart_loads_latest_revision",
-        "tests/test_m17_20_registry_concurrency.py::test_failed_import_leaves_disk_unchanged",
-        "tests/test_m17_20_registry_concurrency.py::test_failed_import_leaves_memory_unchanged"
-      ],
-      "subsystem": "application_harness",
-      "blocking": true
-    },
-    {
-      "id": "registry.crash_recovery_preserves_valid_state",
-      "targets": [
-        "tests/test_m17_20_registry_concurrency.py::test_crash_before_persistence_leaves_previous_valid",
-        "tests/test_m17_20_registry_concurrency.py::test_crash_during_temp_write_leaves_previous",
-        "tests/test_m17_20_registry_concurrency.py::test_reader_never_observes_partial_json"
-      ],
-      "subsystem": "application_harness",
-      "blocking": true
     }
   ]
 }

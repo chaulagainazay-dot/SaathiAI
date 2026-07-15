@@ -4,34 +4,50 @@
   "branch": "milestone/m7-security-engine",
   "loop_started_at": "2026-07-12",
   "initial_head": "28ce958",
-  "current_head": "HEAD after M17.20 (multi-writer registry concurrency); rollback = f0e1a55 (M17.19)",
+  "current_head": "HEAD after M17.19 (registry untrusted persistence hardening); rollback = 059671d (M17.18.1)",
   "iterations_completed": 1,
   "iteration_limit": 1,
   "active_milestone": null,
   "completed_milestones": [
+    "M17.2",
+    "M17.3",
+    "M17.4",
+    "M17.5 SQLite second live app",
+    "M17.6 jq third live app",
+    "M17.7 zip archive fourth live app",
+    "M17.8 governed long-running task control",
+    "M17.9 durable run ledger, concurrency safety, recovery operations",
+    "M17.10 harness run monitoring & deterministic stuck-run alerting",
+    "M17.11 scheduled run monitoring & reliable alert delivery",
+    "M17.12 governed multi-harness pipeline (sequential, fail-closed, live-validated)",
+    "M17.13 autonomous mission engine (Mission ABOVE the pipeline, fail-closed, live-validated)",
+    "M17.14 governed mission scheduler & trusted event triggers (durable occurrences, lease claiming, restart-safe, live-validated)",
+    "M17.15 governed pipeline retry/resume/checkpoint (verified-checkpoint reuse, contiguous prefix, bounded retry, approval-safe, live-validated)",
+    "M17.16 governed bounded parallel & branching pipeline graphs (one fork, N independent branches, one join barrier; bounded ThreadPool; dependency-closed checkpoint resume; per-step claims; fail-closed join; live-validated)",
+    "M17.17 governed graph mission scheduling & recovery integration",
     "M17.18 harness registry boot persistence",
     "M17.18.1 curated vs runtime memory conventions split",
-    "M17.19 harness registry untrusted persistence hardening",
-    "M17.20 multi-writer harness registry concurrency (fcntl flock + revision CAS + applied_ops idempotency; 33 tests; +5 registry.* checks)"
+    "M17.19 harness registry untrusted persistence hardening (bounded read, schema gate, shared validator, atomic write, fail-closed envelope, 38 tests, +5 registry.* checks)"
   ],
   "blocked_items": [
-    "native Finder/TextEdit actuation: macOS Accessibility not granted",
-    "GUI harness apps not installed",
-    "authenticated browser/cloud workflow: needs staging account",
-    "staging deploy + live rollback drill: needs deploy target"
+    "native Finder/TextEdit actuation: macOS Accessibility not granted (user_action_required)",
+    "LibreOffice/Blender/Kdenlive/Inkscape/ImageMagick: not installed (dependency_blocked)",
+    "authenticated browser/cloud workflow: needs a safe staging account (credential)",
+    "staging deploy + live rollback drill: needs a deploy target (no push/deploy)"
   ],
   "unverified_items": [
-    "multi-host / NFS distributed registry locking (single-host flock only)",
-    "EXTERNAL alert transports",
-    "PRODUCTION auto-scheduling"
+    "EXTERNAL alert transports (Telegram/email/Slack/PagerDuty)",
+    "PRODUCTION auto-scheduling",
+    "multi-writer concurrent registry editors",
+    "workflow intelligence (not started; gated on live execution proof)"
   ],
   "manual_actions_required": [],
-  "last_full_suite": "full suite 1940 passed / 1 skipped / 0 failed; focused M17.20: 33; M17.18+19: 53; related harness: 87",
-  "last_redteam": "M17.20: no trading surface; locks serialize mutations only; trust escalation still rejected; pilots not replaceable",
-  "last_release_check": "exit 0: storage/config/database/backup+restore/secret_scan green",
+  "last_full_suite": "full suite: 1907 passed / 1 skipped / 0 failed; focused M17.19: 38; M17.18: 15; related harness/registry: 140; registry critical targets: 29",
+  "last_redteam": "M17.19 static: registry module free of trading/broker surfaces (asserted); untrusted JSON cannot grant executable trust to external sources; pilot integrity preserved; no code execution from registry JSON.",
+  "last_release_check": "exit 0: storage healthy, config ok, database all_ok, backup_ok + restore_verified, secret_scan clean; git dirty only intentional M17.19 files pre-commit",
   "last_secret_scan": "clean (release-check strong_hits 0)",
-  "critical_manifest": "prior 204 + M17.20 5 registry.* (209 total)",
-  "milestone_verdict": "REGISTRY MULTI-WRITER CONCURRENCY STAGING READY",
-  "stop_reason": "one bounded milestone completed this invocation (M17.20). Maximum milestones = 1. Do not begin M17.21. Not multi-host consensus.",
-  "unrelated_untouched": "clean tree expected at commit"
+  "critical_manifest": "prior 199 + M17.19 5 registry.* (204 total)",
+  "milestone_verdict": "REGISTRY UNTRUSTED PERSISTENCE HARDENING STAGING READY",
+  "stop_reason": "one bounded milestone completed this invocation (M17.19). Maximum milestones this invocation = 1. Do not begin M17.20. Not production-ready: multi-writer registry concurrency, external alert transports, production auto-scheduling.",
+  "unrelated_untouched": "working tree expected clean of non-M17.19 paths at commit"
 }
