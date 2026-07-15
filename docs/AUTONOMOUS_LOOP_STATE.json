@@ -46,12 +46,12 @@
     "learned\to curated promotion UI/CLI (M17.18.1 leaves promotion as human review only)"
   ],
   "manual_actions_required": [],
-  "last_full_suite": "focused M17.18.1: 3 passed (test_memory_conventions_split); full suite not re-run this hygiene iteration \u2014 targeted validation",
+  "last_full_suite": "focused M17.18.1: 10 passed; related memory/agent/scheduler: 153 passed; full suite: 1869 passed / 1 skipped / 0 failed",
   "last_redteam": "M17.18.1 is memory hygiene only \u2014 no new execution/trust/trading surface. Prior M17.17/M17.18 red-team posture unchanged.",
-  "last_release_check": "not re-run (no schema/ledger/release-gate surface); git diff --check on milestone paths",
-  "last_secret_scan": "clean on M17.18.1 paths (no secrets in learned-path config or tests); git diff --check clean on milestone paths",
+  "last_release_check": "exit 0 (M17.18.1 completion): storage healthy, config ok, database all_ok, backup_ok + restore_verified true, secret_scan clean; git dirty only intentional M17.18.1 source files pre-commit; git diff --check clean",
+  "last_secret_scan": "clean on M17.18.1 paths; release-check secret_scan clean (0 strong hits)",
   "critical_manifest": "unchanged at 199 (no new blocking checks for memory hygiene slice)",
   "milestone_verdict": "MEMORY CONVENTIONS SPLIT STAGING READY",
-  "stop_reason": "one bounded milestone completed this invocation (M17.18.1 curated vs runtime memory conventions split: memory_reflector writes only data/memory/learned_conventions.{md,jsonl}; never mutates saathi/memory/conventions.md; agent loads curated then learned slice; .saathi-agent-state/ + storage/*.db* gitignored; 3 deterministic tests; docs updated). Maximum milestones this invocation = 1. Do not begin M17.19. Not production-ready: learned\to curated promotion UX, external alert transports, production auto-scheduling.",
+  "stop_reason": "one bounded milestone completed this invocation (M17.18.1 verification/completion: recent-tail load when learned file >400 chars; 10 focused tests incl. missing-safe, dedupe, gitignore, conventions.md + storage.db immutability; related 153 + full suite 1869 green; release-check exit 0). Maximum milestones this invocation = 1. Do not begin M17.19. Not production-ready: learned\to curated promotion UX, external alert transports, production auto-scheduling.",
   "unrelated_untouched": "saathi/memory/conventions.md left clean (restored baseline; not part of commit content beyond the rule that reflector must not dirty it). Any pre-existing storage.db / .saathi-agent-state content remains local runtime only (now gitignored)."
 }

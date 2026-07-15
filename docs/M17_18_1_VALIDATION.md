@@ -22,14 +22,24 @@ Also gitignores local runtime dirt that repeatedly contaminated the tree:
 
 - `saathi/config.py` — `LEARNED_MEMORY_DIR`, `LEARNED_CONVENTIONS_MD`, `LEARNED_CONVENTIONS_JSONL`
 - `saathi/scheduler.py` — `memory_reflector` writes learned paths only
-- `saathi/agent.py` — `_load_memory()` includes learned slice
+- `saathi/agent.py` — `_load_memory()` includes learned slice; prefers recent
+  tail when learned file exceeds 400 chars
 - `saathi/memory/MEMORY.md` — documents the two-layer model
 - `.gitignore` — agent state + storage runtime DBs
-- `tests/test_memory_conventions_split.py` — 3 deterministic tests
+- `tests/test_memory_conventions_split.py` — 10 deterministic tests
 
 ## Test results
 
-- **Focused M17.18.1:** 3 passed (`tests/test_memory_conventions_split.py`).
+- **Focused M17.18.1:** 10 passed (`tests/test_memory_conventions_split.py`), covering:
+  1. missing learned files load safely
+  2. recent (tail) slice selected when learned file exceeds 400-char budget
+  3. same-day reflection dedupes dated md + jsonl
+  4. `data/memory/learned_conventions.*` gitignored
+  5. real `saathi/memory/conventions.md` bytes unchanged by reflection
+  6. `storage/storage.db` bytes/mtime unchanged by reflection
+- **Related memory/agent/scheduler tests:** 153 passed
+- **Full suite:** 1869 passed, 1 skipped, 0 failed
+- **release-check:** exit 0 (storage/config/database/backup+restore/secret_scan green)
 - Trading Guardian: unengaged (memory hygiene only; no trading surface).
 
 ## Architecture reused

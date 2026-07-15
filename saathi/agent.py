@@ -75,13 +75,16 @@ def _load_memory() -> str:
             f = _MEMORY_DIR / name
             if f.exists():
                 parts.append(f"## {name}\n" + f.read_text(encoding="utf-8")[:400])
-    # Runtime auto-learned conventions — never written into the curated baseline
+    # Runtime auto-learned conventions — never written into the curated baseline.
+    # Prefer the most recent slice when the file exceeds the 400-char budget
+    # (sections are appended chronologically, so the tail is newest).
     try:
         learned = Path(config.LEARNED_CONVENTIONS_MD)
         if learned.exists():
-            parts.append(
-                "## learned_conventions.md\n" + learned.read_text(encoding="utf-8")[:400]
-            )
+            text = learned.read_text(encoding="utf-8")
+            if len(text) > 400:
+                text = text[-400:]
+            parts.append("## learned_conventions.md\n" + text)
     except Exception:
         pass
     return "\n\n".join(parts)

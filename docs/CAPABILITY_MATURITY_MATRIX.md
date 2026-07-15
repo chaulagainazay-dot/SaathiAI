@@ -15,7 +15,7 @@ Levels: implemented < deterministic-tested < security/red-team-tested < live-tes
 | Application harness — jq (JSON transform) | live-application-tested | M17.6 transform+json verify |
 | Application harness — zip (archive packaging) | live-application-tested | M17.7 pack+ZIP-slip/zip-bomb verify (live hostile archive) |
 | Application harness registry persistence (load-on-boot) | deterministic-tested | M17.18 persist+reload, fail-closed, 15 tests, 5 blocking checks |
-| Memory conventions split (curated vs runtime learned) | deterministic-tested | M17.18.1 reflector writes data/memory only; agent loads both; 3 tests |
+| Memory conventions split (curated vs runtime learned) | deterministic-tested | M17.18.1 reflector writes data/memory only; recent-tail load; 10 tests; full suite green |
 | Application harness — GUI apps (LibreOffice/Blender/Kdenlive) | dependency-blocked | not installed |
 | Harness long-running task control (cancel/timeout-kill/resource-limits/crash-recovery) | live-proven | M17.8 real cancel+SIGXFSZ+reconcile, orphan-free |
 | Harness durable run ledger (transactional state / concurrency / recovery) | staging-ready (multi-process proven) | M17.9 SQLite CAS ledger: one-claimant, terminal-immutable, ownership-safe cancel, exactly-once crash recovery, migration, backup/restore, 11 blocking manifest checks |

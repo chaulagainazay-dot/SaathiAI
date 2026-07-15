@@ -21,4 +21,5 @@ Written by the memory-reflector (`scheduler.py` `memory_reflector` job).
 **Never write auto-learned notes into `conventions.md`.** Promote durable patterns
 from learned files into `conventions.md` only after human review.
 
-The agent loads curated files first, then appends a short learned-conventions slice.
+The agent loads curated files first, then appends a short learned-conventions
+slice (most recent 400 chars when the learned file is large).
