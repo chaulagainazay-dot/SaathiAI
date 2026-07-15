@@ -21,6 +21,8 @@ canonical `saathi-codebase-memory`, provider-neutral memory contract,
 namespace isolation, health/degradation, write governance, Continuum remains
 **BLOCKED_LICENSE**.
 
+**M19.0 (Unified Knowledge Service)** retrieval router + multi-repo context over M18.2.
+
 **M18.4 (InsForge governed migration write pilot)** structured ops + fingerprint approval + gateway.
 
 **M18.3 (InsForge read-only provider pilot)** registers InsForge as `PILOT_APPROVED_READ_ONLY` data-plane adapter (`saathi/providers/insforge`); writes/MCP still blocked.

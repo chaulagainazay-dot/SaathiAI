@@ -47,3 +47,4 @@ and are medium/large / less bounded, or are blocked on installs (GUI apps),
 permissions (macOS TCC actuation), or credentials (authenticated cloud/browser).
 | InsForge provider (read-only pilot) | deterministic-tested | M18.3 allowlisted GET adapter; disabled by default; mock tests |
 | InsForge governed migration write pilot | deterministic-tested | M18.4 plan/preflight/approval/idempotency/verify; no raw SQL |
+| Unified Knowledge Service + retrieval router | deterministic-tested | M19.0 multi-source plan/rank/dedupe/context; M18.2 compat |
