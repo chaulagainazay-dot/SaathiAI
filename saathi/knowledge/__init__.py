@@ -36,6 +36,12 @@ from saathi.knowledge.real_campaign import (
     run_real_index_campaign,
     write_campaign_report,
 )
+from saathi.knowledge.refresh import (
+    detect_changes,
+    incremental_refresh,
+    last_refresh_evidence,
+    refresh_registered_repositories,
+)
 from saathi.knowledge.rollout import RolloutMode, resolve_mode, rollout_snapshot
 from saathi.knowledge.service import KnowledgeService, default_knowledge_service
 from saathi.knowledge.types import KnowledgeQuery, KnowledgeResponse, RetrievalProfile
@@ -57,8 +63,12 @@ __all__ = [
     "composer_profiles",
     "control_center_repository_search",
     "default_knowledge_service",
+    "detect_changes",
+    "incremental_refresh",
+    "last_refresh_evidence",
     "metrics_snapshot",
     "mission_context_prepare",
+    "refresh_registered_repositories",
     "repair_context_prepare",
     "resolve_mode",
     "rollout_snapshot",

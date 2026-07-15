@@ -46,7 +46,25 @@ class CodebaseMemoryRuntime:
         return s.to_dict()
 
     def refresh(self) -> dict:
-        return self.index(rebuild=False)
+        """M19.5: commit-aware incremental refresh with durable evidence.
+
+        Falls back to M18.2 hash-walk indexing when the knowledge refresh
+        layer is unavailable.
+        """
+        try:
+            from saathi.knowledge.refresh import incremental_refresh
+
+            ev = incremental_refresh(
+                self.project_root, base_dir=self.base_dir, rebuild=False,
+            )
+            out = ev.to_dict()
+            # Preserve M18.2-shaped keys for existing CLI consumers
+            out.setdefault("files_indexed", ev.files_indexed)
+            out.setdefault("files_unchanged", ev.files_unchanged)
+            out.setdefault("files_deleted", ev.files_deleted)
+            return out
+        except Exception:
+            return self.index(rebuild=False)
 
     def search(self, query: str, **kwargs) -> dict:
         if not is_enabled(CANONICAL_CODEBASE_MEMORY_ID):
