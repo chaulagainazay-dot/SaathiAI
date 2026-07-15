@@ -1,12 +1,14 @@
-"""M18.2 compatibility: existing codebase_memory search still works; optional unified route."""
+"""M18.2 / M19.1 compatibility: legacy search shape with optional unified route.
+
+Temporary adapter layer — provenance and truncation must not be lost.
+Does not duplicate retrieval; routes through adoption gateway.
+"""
 from __future__ import annotations
 
 from pathlib import Path
 from typing import Any
 
-from saathi.codebase_memory.retrieve import search as legacy_search
-from saathi.knowledge.service import KnowledgeService
-from saathi.knowledge.types import KnowledgeQuery, RetrievalProfile
+from saathi.knowledge.rollout import CALLER_COMPAT_SEARCH, RolloutMode
 
 
 def search_compatible(
@@ -16,61 +18,36 @@ def search_compatible(
     top_k: int = 10,
     use_unified: bool = False,
     shadow: bool = False,
+    mode: str | RolloutMode | None = None,
     **legacy_kwargs: Any,
 ) -> dict:
-    """Preserve M18.2-style dict response.
+    """Preserve M18.2-style dict response with M19.1 rollout modes.
 
-    When use_unified=False (default), calls legacy search unchanged.
-    When use_unified=True, routes via KnowledgeService and maps to similar shape.
+    Precedence for mode:
+      explicit `mode` >
+      shadow=True → shadow >
+      use_unified=True → unified_with_fallback >
+      default resolve (legacy unless env/runtime set)
     """
-    if not use_unified:
-        r = legacy_search(
-            query, project_root=project_root, top_k=top_k, **legacy_kwargs,
-        )
-        out = r.to_dict()
-        if shadow:
-            try:
-                ks = KnowledgeService(saathi_root=project_root)
-                u = ks.retrieve(KnowledgeQuery(
-                    query=query,
-                    profile=RetrievalProfile.CODE_EXPLAIN,
-                    max_results=top_k,
-                    shadow_compare_legacy=False,
-                ))
-                out["unified_shadow"] = {
-                    "ok": u.ok,
-                    "paths": [x.path for x in u.results[:top_k]],
-                    "request_id": u.request_id,
-                }
-            except Exception as e:
-                out["unified_shadow"] = {"ok": False, "error": type(e).__name__}
-        return out
+    from saathi.knowledge.adoption import adopted_codebase_search
 
-    ks = KnowledgeService(saathi_root=project_root)
-    u = ks.retrieve(KnowledgeQuery(
-        query=query,
-        profile=RetrievalProfile.CODE_EXPLAIN,
-        max_results=top_k,
-    ))
-    return {
-        "ok": u.ok,
-        "query": query,
-        "hits": [
-            {
-                "id": r.result_id,
-                "path": r.path,
-                "title": r.title,
-                "snippet": r.excerpt,
-                "score": r.final_score,
-                "repository_id": r.repository_id,
-                "source_id": r.source_id,
-                "untrusted": False,
-            }
-            for r in u.results
-        ],
-        "mode": "unified_knowledge",
-        "plan": u.plan,
-        "context": u.context,
-        "consulted_index": True,
-        "legacy_compatible": True,
-    }
+    resolved_mode = mode
+    if resolved_mode is None:
+        if shadow:
+            resolved_mode = RolloutMode.SHADOW
+        elif use_unified:
+            resolved_mode = RolloutMode.UNIFIED_WITH_FALLBACK
+
+    out = adopted_codebase_search(
+        query,
+        project_root=project_root,
+        top_k=top_k,
+        mode=resolved_mode,
+        caller_id=CALLER_COMPAT_SEARCH,
+        **legacy_kwargs,
+    )
+    # Ensure legacy keys always present
+    out.setdefault("hits", [])
+    out.setdefault("ok", True)
+    out.setdefault("legacy_compatible", True)
+    return out

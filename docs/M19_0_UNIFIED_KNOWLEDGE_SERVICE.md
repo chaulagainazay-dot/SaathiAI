@@ -54,6 +54,9 @@ search_compatible(q, use_unified=True)   # unified mapping
 search_compatible(q, shadow=True)        # legacy + unified_shadow
 ```
 
+**M19.1 adoption:** first-wave callers route through `saathi.knowledge.adoption`
+with rollout modes (`legacy` default). See `docs/M19_1_KNOWLEDGE_ADOPTION.md`.
+
 ## Permissions
 
 * Unregistered repos not queryable via free params alone

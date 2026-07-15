@@ -54,20 +54,62 @@ class CodebaseMemoryRuntime:
                 "ok": False, "degraded": True, "error": "disabled",
                 "error_category": "disabled", "hits": [], "consulted_index": False,
             }
-        r = memory_search(
-            query, project_root=self.project_root, base_dir=self.base_dir, **kwargs,
+        # M19.1: route through adoption gateway (default mode = legacy → same M18.2 path)
+        from saathi.knowledge.adoption import adopted_codebase_search
+        from saathi.knowledge.rollout import CALLER_CODEBASE_MEMORY_SEARCH
+
+        mode = kwargs.pop("adoption_mode", None)
+        mission_id = kwargs.pop("mission_id", "")
+        run_id = kwargs.pop("run_id", "")
+        return adopted_codebase_search(
+            query,
+            project_root=self.project_root,
+            base_dir=self.base_dir,
+            mission_id=mission_id,
+            run_id=run_id,
+            mode=mode,
+            caller_id=CALLER_CODEBASE_MEMORY_SEARCH,
+            **kwargs,
         )
-        return r.to_dict()
 
-    def symbol(self, name: str, *, top_k: int = 15) -> dict:
-        return self.search(name, symbol_filter=name, top_k=top_k)
+    def symbol(self, name: str, *, top_k: int = 15, **kwargs) -> dict:
+        from saathi.knowledge.adoption import adopted_symbol_lookup
+        mode = kwargs.pop("adoption_mode", None)
+        return adopted_symbol_lookup(
+            name,
+            project_root=self.project_root,
+            base_dir=self.base_dir,
+            top_k=top_k,
+            mode=mode,
+            **kwargs,
+        )
 
-    def document(self, query: str, *, top_k: int = 10) -> dict:
-        return self.search(query, documentation_only=True, top_k=top_k)
+    def document(self, query: str, *, top_k: int = 10, **kwargs) -> dict:
+        from saathi.knowledge.adoption import adopted_document_search
+        mode = kwargs.pop("adoption_mode", None)
+        return adopted_document_search(
+            query,
+            project_root=self.project_root,
+            base_dir=self.base_dir,
+            top_k=top_k,
+            mode=mode,
+            **kwargs,
+        )
 
     def explain(self, query: str, **kwargs) -> dict:
-        r = self.search(query, explain=True, **kwargs)
-        return r
+        kwargs.setdefault("explain", True)
+        from saathi.knowledge.rollout import CALLER_CODEBASE_MEMORY_EXPLAIN
+        # Force explain caller id for metrics while reusing search adoption
+        from saathi.knowledge.adoption import adopted_codebase_search
+        mode = kwargs.pop("adoption_mode", None)
+        return adopted_codebase_search(
+            query,
+            project_root=self.project_root,
+            base_dir=self.base_dir,
+            mode=mode,
+            caller_id=CALLER_CODEBASE_MEMORY_EXPLAIN,
+            **kwargs,
+        )
 
     def rebuild(self, *, dry_run: bool = False) -> dict:
         return self.index(rebuild=True, dry_run=dry_run)
@@ -126,13 +168,25 @@ def dispatch_tool(name: str, args: dict | None = None, *, project_root: str | No
             current_only=args.get("current_only", True),
             historical=bool(args.get("historical")),
             namespace=args.get("namespace"),
+            mission_id=str(args.get("mission_id") or ""),
+            run_id=str(args.get("run_id") or ""),
+            adoption_mode=args.get("adoption_mode"),
         )
     if name == "codebase_memory_symbol":
-        return rt.symbol(str(args.get("name") or args.get("query") or ""))
+        return rt.symbol(
+            str(args.get("name") or args.get("query") or ""),
+            adoption_mode=args.get("adoption_mode"),
+        )
     if name == "codebase_memory_document":
-        return rt.document(str(args.get("query") or ""))
+        return rt.document(
+            str(args.get("query") or ""),
+            adoption_mode=args.get("adoption_mode"),
+        )
     if name == "codebase_memory_explain":
-        return rt.explain(str(args.get("query") or ""))
+        return rt.explain(
+            str(args.get("query") or ""),
+            adoption_mode=args.get("adoption_mode"),
+        )
     if name == "codebase_memory_rebuild":
         return rt.rebuild(dry_run=bool(args.get("dry_run")))
     return {"ok": False, "error": f"unknown_tool:{name}", "denied": True}
