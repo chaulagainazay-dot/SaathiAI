@@ -25,6 +25,7 @@ Next Review         : 2026-10-02
 | 0.1.0 | 2026-07-02 | Ajay Chaulagain | Initial draft — master index of integrated and evaluated repositories |
 | 0.2.0 | 2026-07-15 | Ajay Chaulagain / ECP M17.24 | External Capability Program register (Priority 1–3); honest non-integrated status; skills foundation |
 | 0.2.1 | 2026-07-15 | Ajay Chaulagain / M17.25 | MCP governance; Continuum remains BLOCKED_LICENSE; saathi-codebase-memory canonical |
+| 0.2.2 | 2026-07-15 | Ajay Chaulagain / M18.3 | InsForge PILOT_APPROVED_READ_ONLY adapter registration |
 
 ---
 
@@ -860,6 +861,38 @@ The following third-party tracks had **discovery/docs** that used the word “Co
 Authoritative decision file corrections: `docs/integrations/REPOSITORY_DECISIONS.md` (ECP M17.24).
 
 ---
+
+
+
+---
+
+## Part 6.x — InsForge (M18.3 pilot)
+
+| Field | Value |
+|-------|-------|
+| Repository | github.com/InsForge/InsForge |
+| Priority | Optional product-backend infrastructure |
+| Capability | Postgres, product auth, storage, edge functions, logs (read-only pilot) |
+| Current status | **PILOT_APPROVED_READ_ONLY** (BOUNDARY_DEFINED) |
+| Integration type | Adapter Pattern / External Service |
+| Authoritative role | **Non-authoritative data plane** for product backends only |
+| What it must not replace | Mission engine, ExecutionGateway, memory, Model Router, scheduler, event bus, SES, Trading Guardian |
+| License | **Apache-2.0** |
+| Commercial-use implications | Permissive; retain notice |
+| Runtime requirements | Prefer cloud/remote; local Docker not default on 8 GB Mac |
+| Credentials required | Optional `SAATHI_INSFORGE_API_KEY`; never commit |
+| Data handled | Product backend metadata/logs (sanitized) |
+| Security classification | Medium (admin APIs exist upstream — adapter allowlists reads only) |
+| Local Mac suitability | ON_DEMAND_REMOTE / CLOUD preferred |
+| Deployment model | External; SaathiOS does not vendor full stack |
+| SaathiOS adapter | `saathi/providers/insforge` (GET-only) |
+| Health check | `InsForgeProvider.health()` |
+| Test evidence | `tests/test_m18_3_insforge_provider.py` |
+| Rollback / disable method | `SAATHI_INSFORGE_ENABLED=0` (default) |
+| Owner | SaathiOS Architecture |
+| Deferred risks | Writes; raw MCP; dual memory/schedules; resource cost of local compose |
+| Blocked interfaces | migrations, secrets write, memory, schedules, AI gateway as Model Router, trading, unrestricted MCP |
+
 
 *End of SES-000E Repository Index — Version 0.2.0*
 

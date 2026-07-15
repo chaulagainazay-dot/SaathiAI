@@ -172,3 +172,12 @@ set_enabled(False)
 - Continuum pilot still licence-blocked
 - CodeFlow / other ECP pilots not yet configured
 - Live binary end-to-end search not required for governance milestone (fake harness + connector tests cover paths)
+
+
+## InsForge MCP (explicitly not product-integrated)
+
+| Item | Policy |
+|------|--------|
+| Raw InsForge MCP | **Forbidden** for unrestricted SaathiOS agents |
+| Approved access | `saathi/providers/insforge` read-only REST allowlist only (M18.3) |
+| Status | PILOT_APPROVED_READ_ONLY |

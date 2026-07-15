@@ -45,3 +45,4 @@ proven live against real hostile archives (M17.7). Remaining safe real-evidence
 wins are reliability-oriented (long-running task control, production monitoring)
 and are medium/large / less bounded, or are blocked on installs (GUI apps),
 permissions (macOS TCC actuation), or credentials (authenticated cloud/browser).
+| InsForge provider (read-only pilot) | deterministic-tested | M18.3 allowlisted GET adapter; disabled by default; mock tests |

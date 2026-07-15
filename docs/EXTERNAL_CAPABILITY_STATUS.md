@@ -1,6 +1,6 @@
 # External Capability Status (Operational Source of Truth)
 
-**Updated:** 2026-07-15 (M18.2; governance = M18.1, was temporary M17.25 label)
+**Updated:** 2026-07-15 (M18.3 InsForge read-only pilot; M18.2 index; M18.1 governance)
 **Register detail:** `docs/SES/v1.0/SES-000E_REPOSITORY_INDEX.md` Part 6
 **MCP detail:** `docs/MCP_INVENTORY.md`
 
@@ -10,7 +10,7 @@ This document is the **concise operational** view. SES-000E remains the full reg
 
 ## Status legend
 
-`REGISTERED` · `BOUNDARY_DEFINED` · `CONFIGURED` · `FOCUSED_TESTED` · `INTEGRATED` · `BLOCKED_LICENSE` · `BROKEN` · `DEFERRED`
+`REGISTERED` · `PILOT_APPROVED_READ_ONLY` · `BOUNDARY_DEFINED` · `CONFIGURED` · `FOCUSED_TESTED` · `INTEGRATED` · `BLOCKED_LICENSE` · `BROKEN` · `DEFERRED`
 
 ---
 
@@ -23,6 +23,7 @@ This document is the **concise operational** view. SES-000E remains the full reg
 | **saathios-loop-engineering** skill | `REGISTERED` (skill) | in-repo skill | MIT adapted | Skill | `.grok/skills/saathios-loop-engineering` | skill file presence | foundation tests | 2026-07-15 | Architecture | disable skill | — | — |
 | **external-integration-audit** | `REGISTERED` | in-repo | SaathiOS | Skill | `.grok/skills/external-integration-audit` | skill file | foundation tests | 2026-07-15 | Architecture | remove skill | — | — |
 | **external-service-health** | `REGISTERED` | in-repo | SaathiOS | Skill | `.grok/skills/external-service-health` | skill file | foundation tests | 2026-07-15 | Architecture | remove skill | — | — |
+| **InsForge/InsForge** | **`PILOT_APPROVED_READ_ONLY`** | adapter M18.3; upstream ~2.2.x | **Apache-2.0** | Adapter / External Service (product data plane) | `saathi/providers/insforge` | `InsForgeProvider.health()` | `tests/test_m18_3_insforge_provider.py` | 2026-07-15 | Architecture | `SAATHI_INSFORGE_ENABLED` default false | Managed Postgres/BaaS for products only | No writes yet; no raw MCP; no local Docker by default |
 
 ---
 
