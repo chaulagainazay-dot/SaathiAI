@@ -149,4 +149,5 @@
 - Home MCP: alias duplicate `codebase-memory` / `codebase-memory-mcp` (same backend — documented in M17.25; optional human disable of alias); **headroom enabled but binary missing**.
 - Continuum remains **BLOCKED_LICENSE** (M17.25); CodeFlow / Fincept / blotato-skills licenses unclear — pilot gates.
 - Priority 2/3 services not installed (intentional); Traceway vs OpenObserve decision open.
-- Live end-to-end codebase-memory CLI search under ExecutionGateway still partial (governance + connector health present; full product search UX deferred).
+- M18.2 delivered local-first index+CLI+hybrid retrieval; optional home alias cleanup and Continuum licence still open.
+- Full-repo eval quality is good but not perfect (lexical ranking; embeddings optional local-det only).

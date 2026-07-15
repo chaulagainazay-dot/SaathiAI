@@ -1,16 +1,32 @@
 # SaathiOS Autonomous Roadmap
 
-## ECP note (2026-07-15)
+## ECP / MCP memory note (2026-07-15)
 
 External Capability Program **ECP M17.24** completed: SES-000E Part 6 register for
 all Priority 1–3 repositories, project Grok skills (GSAP + loop engineering +
 audit/health), initial MCP inventory. **No runtime services.**
 
-**M17.25 (MCP Governance)** completed: authoritative `docs/MCP_INVENTORY.md`,
+### Milestone number mapping (MCP governance)
+
+| Historical label | Canonical label |
+|------------------|-----------------|
+| M17.25 Project MCP Governance and Memory Consolidation | **M18.1** Project MCP Governance and Memory Consolidation |
+
+Originally implemented and committed under the temporary label
+“M17.25 — Project MCP Governance and Memory Consolidation” (`2223322`);
+canonical roadmap designation is now **M18.1**.
+
+**M18.1 (MCP Governance)** completed: authoritative `docs/MCP_INVENTORY.md`,
 canonical `saathi-codebase-memory`, provider-neutral memory contract,
 namespace isolation, health/degradation, write governance, Continuum remains
-**BLOCKED_LICENSE**. Next Continuum pilot only when licence is clarified
-and explicitly authorized (do not auto-install).
+**BLOCKED_LICENSE**.
+
+**M18.2 (Governed Codebase Memory Indexing & Retrieval)** operationalizes local-first
+repository indexing, hybrid retrieval, provenance, freshness, and evaluation.
+Continuum pilot only when licence is clarified (do not auto-install).
+
+Browser milestone **M17.25 — Governed Interactive Browser Sessions** remains M17.25
+(distinct from the historical MCP-governance temporary label).
 
 Do not auto-start Priority 2/3 installs on the 8 GB Mac.
 

@@ -1,6 +1,8 @@
 # SaathiOS MCP Inventory (Authoritative)
 
-**Milestone:** M17.25 — Project MCP Governance and Memory Consolidation
+**Milestone:** M18.1 — Project MCP Governance and Memory Consolidation
+**Historical label:** Originally implemented/committed as temporary “M17.25 — Project MCP Governance…” (commit `2223322`);
+canonical roadmap designation is **M18.1**. Browser M17.25 (interactive sessions) is a different milestone.
 **Date:** 2026-07-15
 **Machine inventory module:** `saathi/mcp_governance/inventory.py`
 **Cross-reference:** `docs/EXTERNAL_CAPABILITY_STATUS.md`

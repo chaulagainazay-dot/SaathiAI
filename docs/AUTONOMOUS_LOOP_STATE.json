@@ -3,23 +3,21 @@
   "repository": "SaathiOS",
   "branch": "milestone/m7-security-engine",
   "loop_started_at": "2026-07-15",
-  "initial_head": "e64b6b2",
-  "current_head": "M17.25 MCP governance (post-commit)",
+  "initial_head": "2223322",
+  "current_head": "M18.2 codebase memory (post-commit)",
   "iterations_completed": 1,
   "iteration_limit": 1,
   "active_milestone": null,
   "completed_milestones": [
-    "M17.18 harness registry boot persistence",
-    "M17.18.1 curated vs runtime memory conventions split",
-    "M17.19 harness registry untrusted persistence hardening",
-    "M17.20 multi-writer harness registry concurrency",
-    "M17.21 Control Center Registry Health cell",
-    "M17.22 Universal ExecutionGateway Phase 1",
-    "M17.23 Governed Browser Actions through ExecutionGateway",
-    "M17.24–M17.26 browser production adapters (branch history)",
+    "M17.18–M17.26 browser/harness history on branch",
     "ECP M17.24 External Capability Register and Skills Foundation",
-    "M17.25 Project MCP Governance and Memory Consolidation"
+    "M18.1 Project MCP Governance and Memory Consolidation (historical temporary label M17.25 MCP governance, commit 2223322)",
+    "M18.2 Governed Codebase Memory MCP, Repository Indexing, and Retrieval Quality"
   ],
+  "milestone_number_mapping": {
+    "M17.25 Project MCP Governance and Memory Consolidation": "M18.1 Project MCP Governance and Memory Consolidation",
+    "note": "Browser M17.25 interactive sessions remains M17.25; git history not rewritten"
+  },
   "blocked_items": [
     "native Finder/TextEdit actuation",
     "GUI harness apps not installed",
@@ -28,24 +26,19 @@
     "Continuum license unclear (BLOCKED_LICENSE — no install)"
   ],
   "unverified_items": [
-    "live interactive CDP fully gateway-only",
-    "agent_browser CLI migration",
-    "n8n/LLM/trading migration",
-    "multi-host execution federation",
-    "OpenMontage/OpenJarvis/claude-video adapters still stubs",
-    "optional human disable of home codebase-memory-mcp alias"
+    "optional human disable of home codebase-memory-mcp alias",
+    "full-repo eval 100% pass rate under all ranking modes"
   ],
   "manual_actions_required": [
     "Clarify Continuum license before any Continuum pilot",
-    "Disable broken home headroom MCP when convenient",
-    "Optional: disable duplicate home MCP name codebase-memory-mcp"
+    "Optional: enabled=false for home [mcp_servers.codebase-memory-mcp]",
+    "Disable broken home headroom MCP when convenient"
   ],
-  "last_full_suite": "2224 passed / 1 skipped / 0 failed (M17.25)",
-  "last_redteam": "M17.25: no new execution surface; TG not engaged",
+  "last_full_suite": "2242 passed / 1 skipped / 0 failed (M18.2)",
   "last_release_check": "exit 0: storage/config/database/backup+restore/secret_scan green",
-  "last_secret_scan": "clean (release-check strong_hits 0)",
-  "critical_manifest": "added mcp.inventory_complete, mcp.canonical_identity_unique, mcp.namespace_isolated, mcp.failure_degrades_safely, mcp.write_governance_enforced, mcp.secrets_redacted",
-  "milestone_verdict": "M17.25 COMPLETE",
-  "stop_reason": "one bounded milestone (M17.25). Do not begin M17.26 or Continuum pilot.",
-  "unrelated_untouched": "Trading Guardian unchanged; Continuum not installed; no Priority 2/3 services"
+  "last_secret_scan": "clean (strong_hits 0)",
+  "critical_manifest": "added cbm.identity_isolated, cbm.secret_safe_index, cbm.retrieval_provenance, cbm.incremental_index",
+  "milestone_verdict": "M18.2 COMPLETE",
+  "stop_reason": "one bounded milestone (M18.2). Do not install Continuum or begin next without authorization.",
+  "unrelated_untouched": "Trading Guardian unchanged; Continuum not installed; no push/deploy"
 }

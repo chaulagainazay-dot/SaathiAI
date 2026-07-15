@@ -2210,6 +2210,43 @@
       ],
       "subsystem": "mcp_governance",
       "blocking": true
+    },
+    {
+      "id": "cbm.identity_isolated",
+      "targets": [
+        "tests/test_m18_2_codebase_memory.py::test_01_identity_isolation",
+        "tests/test_m18_2_codebase_memory.py::test_02_non_git_fail_closed",
+        "tests/test_m18_2_codebase_memory.py::test_06_namespace_isolation"
+      ],
+      "subsystem": "codebase_memory",
+      "blocking": true
+    },
+    {
+      "id": "cbm.secret_safe_index",
+      "targets": [
+        "tests/test_m18_2_codebase_memory.py::test_04_secret_scan_rejects_keys_keeps_docs",
+        "tests/test_m18_2_codebase_memory.py::test_12_no_vendored_or_env_in_hits"
+      ],
+      "subsystem": "codebase_memory",
+      "blocking": true
+    },
+    {
+      "id": "cbm.retrieval_provenance",
+      "targets": [
+        "tests/test_m18_2_codebase_memory.py::test_07_retrieval_provenance_and_freshness",
+        "tests/test_m18_2_codebase_memory.py::test_08_live_verification_stale"
+      ],
+      "subsystem": "codebase_memory",
+      "blocking": true
+    },
+    {
+      "id": "cbm.incremental_index",
+      "targets": [
+        "tests/test_m18_2_codebase_memory.py::test_05_index_and_incremental",
+        "tests/test_m18_2_codebase_memory.py::test_11_rebuild_and_schema"
+      ],
+      "subsystem": "codebase_memory",
+      "blocking": true
     }
   ]
 }

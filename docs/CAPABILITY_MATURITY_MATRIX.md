@@ -35,7 +35,8 @@ Levels: implemented < deterministic-tested < security/red-team-tested < live-tes
 | Multi-harness pipeline (chained live-app workflows) | staging-ready | M17.12 governed SEQUENTIAL fail-closed orchestrator over the sole run_harness_action: additive pipeline_run/pipeline_step ledger tables, one confined workspace, artifact wiring, pre-execution path-escape rejection, honoured approval gates, owner-safe records, Control Center attention, LIVE sqlite→zip chain, 7 blocking manifest checks; parallel DAGs / retry-resume / untrusted spec deferred |
 | Workflow intelligence engine | not started | gated on live-execution proof |
 | External capability register (ECP P1–P3) + project skills | registered (docs) | SES-000E Part 6; `.grok/skills/*`; MCP inventory; no runtime pilots |
-| MCP governance + codebase-memory contract | deterministic-tested | M17.25 inventory/namespace/write-governance/health degrade; Continuum BLOCKED_LICENSE; 30+ tests; +6 mcp.* checks |
+| MCP governance + codebase-memory contract (M18.1) | deterministic-tested | Historical label M17.25 MCP governance (`2223322`); inventory/namespace/write-governance; Continuum BLOCKED_LICENSE |
+| Governed codebase memory indexing + hybrid retrieval (M18.2) | deterministic-tested | local SQLite index, provenance, freshness, secret exclusion, CLI/tools, eval set |
 
 ## Highest-value NON-blocked evidence gap now
 Four live apps (media/database/JSON/archive) now exercise the harness across four

@@ -199,10 +199,26 @@ class ControlCenterAggregator:
         return guarded("browser.execution", _be)
 
     def mcp_health(self) -> Cell:
-        """M17.25 MCP governance health (codebase-memory; Continuum blocked)."""
+        """M18.1/M18.2 MCP governance + codebase memory index health."""
         def _mh():
             from saathi.mcp_governance.health import health_snapshot
-            return health_snapshot()
+            gov = health_snapshot()
+            try:
+                from saathi.codebase_memory.health import index_health
+                idx = index_health().to_dict()
+            except Exception as e:
+                idx = {"status": "UNAVAILABLE", "degraded_reason": str(e)[:120]}
+            return {
+                "governance": gov,
+                "index": idx,
+                "status": idx.get("status") or gov.get("status"),
+                "continuum_status": idx.get("continuum_status") or gov.get("continuum_status"),
+                "mcp_id": gov.get("mcp_id") or idx.get("mcp_id"),
+                "include_in_ceo_brief": bool(
+                    gov.get("include_in_ceo_brief")
+                    or (idx.get("status") in ("STALE", "CORRUPT", "UNAVAILABLE", "DEGRADED", "REBUILD_REQUIRED"))
+                ),
+            }
         return guarded("mcp.governance.health", _mh)
 
     def harnesses(self) -> Cell:

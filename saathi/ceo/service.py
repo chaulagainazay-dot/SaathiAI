@@ -201,19 +201,36 @@ class CEOService:
         except Exception:
             pass
 
-        # M17.25 MCP codebase-memory — only when degraded/unavailable (not when healthy)
+        # M18.1/M18.2 MCP + index — only when degraded/unavailable/stale (not when healthy)
         try:
             from saathi.mcp_governance.health import ceo_mcp_summary
             ms = ceo_mcp_summary()
+            idx_status = ""
+            idx_reason = ""
+            try:
+                from saathi.codebase_memory.health import index_health
+                ih = index_health()
+                idx_status = ih.status
+                idx_reason = ih.degraded_reason or ""
+                if ih.status in (
+                    "STALE", "CORRUPT", "UNAVAILABLE", "DEGRADED", "REBUILD_REQUIRED",
+                ):
+                    ms = dict(ms or {})
+                    ms["include_in_ceo_brief"] = True
+                    ms["status"] = ih.status
+                    ms["degraded_reason"] = idx_reason or ms.get("degraded_reason")
+            except Exception:
+                pass
             if ms and ms.get("include_in_ceo_brief"):
                 add(
                     "MCP Memory",
                     f"status={ms.get('status')} "
+                    f"index={idx_status or 'n/a'} "
                     f"reachable={ms.get('reachable')} "
-                    f"reason={ms.get('degraded_reason') or ms.get('last_error_category') or 'n/a'} "
+                    f"reason={ms.get('degraded_reason') or idx_reason or ms.get('last_error_category') or 'n/a'} "
                     f"continuum={ms.get('continuum_status')}",
                     EvidenceTier.OBSERVED.value,
-                    ["mcp.governance.health"],
+                    ["mcp.governance.health", "codebase_memory.index"],
                 )
         except Exception:
             pass
