@@ -278,6 +278,17 @@ short learned slice; `.saathi-agent-state/` + `storage/*.db*` gitignored; 3
 deterministic tests. No second memory engine. Verdict: **MEMORY CONVENTIONS SPLIT
 STAGING READY**.
 
+## M17.19 — harness registry untrusted persistence hardening (DONE)
+Autonomous-loop milestone (start `059671d`). Persisted `registry.json` is treated
+as untrusted input: bounded read, versioned envelope (schema_version=1), shared
+entry validator for boot/register/import, resource limits, unknown-field reject,
+restrictive-only pilot trust overlays, demotion of elevated external trust, atomic
+tmp+fsync+replace writes, fail-closed envelope rejection with pilots preserved,
+bounded diagnostics (hashes/counts, no full payloads), CLI strict import exit 3,
+5 new blocking critical checks, 38 focused tests + M17.18 regression green. No
+second registry. Trading Guardian unengaged. Verdict: **REGISTRY UNTRUSTED
+PERSISTENCE HARDENING STAGING READY**.
+
 ## Blocked / deferred (need user action or larger scope)
 - authenticated browser / cloud connector workflow — needs a safe staging account.
 - native Finder/TextEdit actuation — macOS Accessibility (TCC) not granted.

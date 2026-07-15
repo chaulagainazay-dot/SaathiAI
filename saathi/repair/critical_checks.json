@@ -1749,6 +1749,59 @@
       ],
       "subsystem": "application_harness",
       "blocking": true
+    },
+    {
+      "id": "registry.schema_version_supported",
+      "targets": [
+        "tests/test_m17_19_registry_untrusted_persistence.py::test_valid_versioned_registry_loads",
+        "tests/test_m17_19_registry_untrusted_persistence.py::test_unsupported_future_schema_rejected",
+        "tests/test_m17_19_registry_untrusted_persistence.py::test_legacy_entries_alias_migrates_deterministically"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "registry.persisted_payload_bounded",
+      "targets": [
+        "tests/test_m17_19_registry_untrusted_persistence.py::test_oversized_file_rejected_before_normal_loading",
+        "tests/test_m17_19_registry_untrusted_persistence.py::test_too_many_entries_rejected",
+        "tests/test_m17_19_registry_untrusted_persistence.py::test_overlong_name_or_description_rejected"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "registry.builtin_integrity_preserved",
+      "targets": [
+        "tests/test_m17_19_registry_untrusted_persistence.py::test_persisted_entry_cannot_replace_builtin_pilot",
+        "tests/test_m17_19_registry_untrusted_persistence.py::test_restrictive_trust_overlay_accepted",
+        "tests/test_m17_19_registry_untrusted_persistence.py::test_persisted_trust_cannot_broaden_builtin_trust"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "registry.atomic_write_verified",
+      "targets": [
+        "tests/test_m17_19_registry_untrusted_persistence.py::test_atomic_write_preserves_previous_on_failure",
+        "tests/test_m17_19_registry_untrusted_persistence.py::test_successful_write_produces_valid_parseable_json",
+        "tests/test_m17_19_registry_untrusted_persistence.py::test_temporary_files_cleaned_after_success"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "registry.untrusted_input_fail_closed",
+      "targets": [
+        "tests/test_m17_19_registry_untrusted_persistence.py::test_malformed_json_fail_closed",
+        "tests/test_m17_19_registry_untrusted_persistence.py::test_invalid_utf8_fail_closed",
+        "tests/test_m17_19_registry_untrusted_persistence.py::test_duplicate_harness_identifiers_rejected",
+        "tests/test_m17_19_registry_untrusted_persistence.py::test_unknown_security_sensitive_field_rejected",
+        "tests/test_m17_19_registry_untrusted_persistence.py::test_failed_import_leaves_memory_unchanged",
+        "tests/test_m17_19_registry_untrusted_persistence.py::test_registry_loading_cannot_engage_trading_guardian"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
     }
   ]
 }

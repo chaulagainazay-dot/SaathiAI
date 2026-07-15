@@ -4,7 +4,7 @@
   "branch": "milestone/m7-security-engine",
   "loop_started_at": "2026-07-12",
   "initial_head": "28ce958",
-  "current_head": "HEAD after M17.18.1 (memory conventions split); rollback = b4224db (AGENTS.md) / 4d30fb0 (M17.18)",
+  "current_head": "HEAD after M17.19 (registry untrusted persistence hardening); rollback = 059671d (M17.18.1)",
   "iterations_completed": 1,
   "iteration_limit": 1,
   "active_milestone": null,
@@ -24,9 +24,10 @@
     "M17.14 governed mission scheduler & trusted event triggers (durable occurrences, lease claiming, restart-safe, live-validated)",
     "M17.15 governed pipeline retry/resume/checkpoint (verified-checkpoint reuse, contiguous prefix, bounded retry, approval-safe, live-validated)",
     "M17.16 governed bounded parallel & branching pipeline graphs (one fork, N independent branches, one join barrier; bounded ThreadPool; dependency-closed checkpoint resume; per-step claims; fail-closed join; live-validated)",
-    "M17.17 governed graph mission scheduling & recovery integration (scheduled/trusted-event graph-backed missions launch through the MissionEngine, resume through the EXISTING graph + recovery layers, settle mission+occurrence EXACTLY ONCE; honest graph->mission->occurrence state map; deterministic recovered-mission idempotency; original failed mission immutable via linked retry; crash windows F/G reconciled; no new tables; 12 blocking scheduled_graph.* checks; live-validated)",
-    "M17.18 harness registry boot persistence (load-on-boot, persist-on-mutate, fail-closed, no trust elevation, 15 tests, 5 blocking registry.* checks)",
-    "M17.18.1 curated vs runtime memory conventions split (reflector writes data/memory/learned_conventions.* only; agent loads curated+learned; gitignore agent-state+storage DBs; 3 tests)"
+    "M17.17 governed graph mission scheduling & recovery integration",
+    "M17.18 harness registry boot persistence",
+    "M17.18.1 curated vs runtime memory conventions split",
+    "M17.19 harness registry untrusted persistence hardening (bounded read, schema gate, shared validator, atomic write, fail-closed envelope, 38 tests, +5 registry.* checks)"
   ],
   "blocked_items": [
     "native Finder/TextEdit actuation: macOS Accessibility not granted (user_action_required)",
@@ -35,23 +36,18 @@
     "staging deploy + live rollback drill: needs a deploy target (no push/deploy)"
   ],
   "unverified_items": [
-    "EXTERNAL alert transports (Telegram/email/Slack/PagerDuty) \u2014 M17.11 ships fail-closed stubs + a credential-free local transport; live providers deferred (need secret-managed config)",
-    "PRODUCTION auto-scheduling \u2014 M17.14 interval runner is opt-in (default DISABLED); no cron/launchd/cloud provisioning",
-    "cyclic / nested-fork graphs, dynamic graph mutation, untrusted graph JSON, distributed/remote/multi-region graph execution, work stealing, cross-owner branch delegation, partial-join success \u2014 M17.16 ships BOUNDED ACYCLIC graphs only (one fork, one join, \u226416 steps, \u22644 workers); the above remain deferred",
-    "untrusted pipeline spec-JSON ingestion (M17.12) + untrusted mission-spec JSON ingestion (M17.13) \u2014 declared in trusted Python; external spec parsing deferred",
-    "M17.14 CRON expressions + public webhook ingestion + distributed/multi-region scheduling + PARALLEL mission execution \u2014 deferred",
-    "M17.15 distributed/remote/cloud checkpoints + cross-owner checkpoint reuse + automatic recovery of untrusted steps \u2014 deferred (local, owner-scoped, trusted-template recovery only)",
-    "multi-user LOAD concurrency (cross-user gates + local multi-process proven, not load)",
-    "workflow intelligence (not started; gated on live execution proof)",
-    "learned\to curated promotion UI/CLI (M17.18.1 leaves promotion as human review only)"
+    "EXTERNAL alert transports (Telegram/email/Slack/PagerDuty)",
+    "PRODUCTION auto-scheduling",
+    "multi-writer concurrent registry editors",
+    "workflow intelligence (not started; gated on live execution proof)"
   ],
   "manual_actions_required": [],
-  "last_full_suite": "focused M17.18.1: 10 passed; related memory/agent/scheduler: 153 passed; full suite: 1869 passed / 1 skipped / 0 failed",
-  "last_redteam": "M17.18.1 is memory hygiene only \u2014 no new execution/trust/trading surface. Prior M17.17/M17.18 red-team posture unchanged.",
-  "last_release_check": "exit 0 (M17.18.1 completion): storage healthy, config ok, database all_ok, backup_ok + restore_verified true, secret_scan clean; git dirty only intentional M17.18.1 source files pre-commit; git diff --check clean",
-  "last_secret_scan": "clean on M17.18.1 paths; release-check secret_scan clean (0 strong hits)",
-  "critical_manifest": "unchanged at 199 (no new blocking checks for memory hygiene slice)",
-  "milestone_verdict": "MEMORY CONVENTIONS SPLIT STAGING READY",
-  "stop_reason": "one bounded milestone completed this invocation (M17.18.1 verification/completion: recent-tail load when learned file >400 chars; 10 focused tests incl. missing-safe, dedupe, gitignore, conventions.md + storage.db immutability; related 153 + full suite 1869 green; release-check exit 0). Maximum milestones this invocation = 1. Do not begin M17.19. Not production-ready: learned\to curated promotion UX, external alert transports, production auto-scheduling.",
-  "unrelated_untouched": "saathi/memory/conventions.md left clean (restored baseline; not part of commit content beyond the rule that reflector must not dirty it). Any pre-existing storage.db / .saathi-agent-state content remains local runtime only (now gitignored)."
+  "last_full_suite": "full suite: 1907 passed / 1 skipped / 0 failed; focused M17.19: 38; M17.18: 15; related harness/registry: 140; registry critical targets: 29",
+  "last_redteam": "M17.19 static: registry module free of trading/broker surfaces (asserted); untrusted JSON cannot grant executable trust to external sources; pilot integrity preserved; no code execution from registry JSON.",
+  "last_release_check": "exit 0: storage healthy, config ok, database all_ok, backup_ok + restore_verified, secret_scan clean; git dirty only intentional M17.19 files pre-commit",
+  "last_secret_scan": "clean (release-check strong_hits 0)",
+  "critical_manifest": "prior 199 + M17.19 5 registry.* (204 total)",
+  "milestone_verdict": "REGISTRY UNTRUSTED PERSISTENCE HARDENING STAGING READY",
+  "stop_reason": "one bounded milestone completed this invocation (M17.19). Maximum milestones this invocation = 1. Do not begin M17.20. Not production-ready: multi-writer registry concurrency, external alert transports, production auto-scheduling.",
+  "unrelated_untouched": "working tree expected clean of non-M17.19 paths at commit"
 }
