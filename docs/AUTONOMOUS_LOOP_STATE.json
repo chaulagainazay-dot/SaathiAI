@@ -3,8 +3,8 @@
   "repository": "SaathiOS",
   "branch": "milestone/m7-security-engine",
   "loop_started_at": "2026-07-15",
-  "initial_head": "cdad7c4",
-  "current_head": "M18.3 InsForge pilot (post-commit)",
+  "initial_head": "5bda42f",
+  "current_head": "M18.4 (post-commit)",
   "iterations_completed": 1,
   "iteration_limit": 1,
   "active_milestone": null,
@@ -13,7 +13,8 @@
     "ECP M17.24 External Capability Register and Skills Foundation",
     "M18.1 Project MCP Governance and Memory Consolidation (historical temporary label M17.25 MCP governance, commit 2223322)",
     "M18.2 Governed Codebase Memory MCP, Repository Indexing, and Retrieval Quality",
-    "M18.3 InsForge read-only provider pilot"
+    "M18.3 InsForge read-only provider pilot",
+    "M18.4 InsForge governed migration write pilot"
   ],
   "milestone_number_mapping": {
     "M17.25 Project MCP Governance and Memory Consolidation": "M18.1 Project MCP Governance and Memory Consolidation",
@@ -35,11 +36,11 @@
     "Optional: enabled=false for home [mcp_servers.codebase-memory-mcp]",
     "Disable broken home headroom MCP when convenient"
   ],
-  "last_full_suite": "2270 passed / 1 skipped / 0 failed (M18.3)",
+  "last_full_suite": "2301 passed / 1 skipped / 0 failed (M18.4)",
   "last_release_check": "exit 0",
   "last_secret_scan": "clean strong_hits 0",
   "critical_manifest": "added cbm.identity_isolated, cbm.secret_safe_index, cbm.retrieval_provenance, cbm.incremental_index",
-  "milestone_verdict": "M18.3 COMPLETE \u2014 READ_ONLY PILOT READY",
-  "stop_reason": "one bounded milestone (M18.3). Do not enable writes or raw InsForge MCP.",
+  "milestone_verdict": "M18.4 COMPLETE \u2014 GOVERNED MIGRATION PILOT READY",
+  "stop_reason": "one bounded milestone (M18.4). No production InsForge; no push.",
   "unrelated_untouched": "Trading Guardian unchanged; Continuum not installed; no push/deploy"
 }

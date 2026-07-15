@@ -19,9 +19,9 @@ from saathi.providers.insforge.sanitization import (
 from saathi.providers.insforge.types import OperationResult
 
 PROVIDER_ID = "insforge"
-PILOT_STATUS = "PILOT_APPROVED_READ_ONLY"
+PILOT_STATUS = "PILOT_APPROVED_GOVERNED_MIGRATION_WRITE"
 
-# Capabilities (read-only)
+# Read capabilities (M18.3)
 CAPS = frozenset({
     "health",
     "provider_metadata",
@@ -31,7 +31,7 @@ CAPS = frozenset({
     "read_sanitized_logs",
 })
 
-# Explicit denylist for regression tests / docs
+# Explicit denylist for direct invoke (migration goes through MigrationService)
 WRITE_DENYLIST = frozenset({
     "migrate", "run_sql", "create_table", "delete_table",
     "upload_object", "delete_object", "create_bucket", "delete_bucket",
@@ -39,6 +39,7 @@ WRITE_DENYLIST = frozenset({
     "create_secret", "update_secret", "configure_auth",
     "deploy_site", "create_schedule", "write_memory",
     "model_complete", "trade", "place_order", "mcp_invoke",
+    "drop_table", "truncate", "execute_sql",
 })
 
 

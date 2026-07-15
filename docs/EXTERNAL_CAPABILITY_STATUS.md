@@ -1,6 +1,6 @@
 # External Capability Status (Operational Source of Truth)
 
-**Updated:** 2026-07-15 (M18.3 InsForge read-only pilot; M18.2 index; M18.1 governance)
+**Updated:** 2026-07-15 (M18.4 governed migration pilot; M18.3 read-only base)
 **Register detail:** `docs/SES/v1.0/SES-000E_REPOSITORY_INDEX.md` Part 6
 **MCP detail:** `docs/MCP_INVENTORY.md`
 
@@ -10,7 +10,7 @@ This document is the **concise operational** view. SES-000E remains the full reg
 
 ## Status legend
 
-`REGISTERED` · `PILOT_APPROVED_READ_ONLY` · `BOUNDARY_DEFINED` · `CONFIGURED` · `FOCUSED_TESTED` · `INTEGRATED` · `BLOCKED_LICENSE` · `BROKEN` · `DEFERRED`
+`REGISTERED` · `PILOT_APPROVED_GOVERNED_MIGRATION_WRITE` · `BOUNDARY_DEFINED` · `CONFIGURED` · `FOCUSED_TESTED` · `INTEGRATED` · `BLOCKED_LICENSE` · `BROKEN` · `DEFERRED`
 
 ---
 

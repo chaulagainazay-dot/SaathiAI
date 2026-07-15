@@ -105,7 +105,8 @@ def test_05_only_allowlisted_paths():
     assert not is_path_allowed("/api/secrets")
     assert not is_path_allowed("/api/memory")
     assert is_path_blocked("/api/secrets")
-    assert is_path_blocked("/api/database/migrations")
+    # migrations not on GET allowlist (POST only under writes gate in M18.4)
+    assert not is_path_allowed("/api/database/migrations")
 
 
 def test_06_arbitrary_path_rejected():

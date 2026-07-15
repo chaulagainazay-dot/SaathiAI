@@ -18,14 +18,47 @@ from saathi.providers.insforge.errors import InsForgeError, InsForgeErrorCategor
 TransportFactory = Callable[..., Any]
 
 
+# POST allowlist for M18.4 migration pilot only (never open)
+WRITE_ALLOWED_PATHS: frozenset[str] = frozenset({
+    "/api/database/migrations",
+})
+
+
 class InsForgeClient:
-    """GET-only client. Rejects writes, non-allowlisted paths, oversized bodies."""
+    """HTTP client: GET allowlist + single POST migration path when writes enabled."""
 
     def __init__(self, config: InsForgeConfig, *, transport: Any = None):
         self.config = config
         self._transport = transport
 
     def get_json(self, path: str, *, params: dict | None = None) -> dict | list:
+        return self._request("GET", path, params=params)
+
+    def post_json(self, path: str, *, json_body: dict | None = None) -> dict | list:
+        """Migration-only POST. Requires writes_enabled + path allowlist."""
+        if not getattr(self.config, "writes_enabled", False):
+            raise InsForgeError(
+                InsForgeErrorCategory.WRITE_FORBIDDEN, "writes_disabled",
+            )
+        path = (path or "").strip()
+        if not path.startswith("/"):
+            path = "/" + path
+        clean = path.split("?", 1)[0].rstrip("/") or path
+        if clean not in WRITE_ALLOWED_PATHS:
+            raise InsForgeError(
+                InsForgeErrorCategory.SECURITY_POLICY_DENIED,
+                f"write_path_not_allowlisted:{clean[:80]}",
+            )
+        return self._request("POST", path, json_body=json_body)
+
+    def _request(
+        self,
+        method: str,
+        path: str,
+        *,
+        params: dict | None = None,
+        json_body: dict | None = None,
+    ) -> dict | list:
         cfg = self.config
         if not cfg.enabled:
             raise InsForgeError(InsForgeErrorCategory.PROVIDER_DISABLED, "insforge disabled")
@@ -37,19 +70,32 @@ class InsForgeClient:
         path = (path or "").strip()
         if not path.startswith("/"):
             path = "/" + path
-        if is_path_blocked(path):
+        method_u = method.upper()
+        if method_u == "GET":
+            if is_path_blocked(path):
+                raise InsForgeError(
+                    InsForgeErrorCategory.SECURITY_POLICY_DENIED,
+                    f"path_blocked:{path.split('?',1)[0][:80]}",
+                )
+            if not is_path_allowed(path):
+                raise InsForgeError(
+                    InsForgeErrorCategory.SECURITY_POLICY_DENIED,
+                    f"path_not_allowlisted:{path.split('?',1)[0][:80]}",
+                )
+        elif method_u == "POST":
+            clean = path.split("?", 1)[0].rstrip("/")
+            if clean not in WRITE_ALLOWED_PATHS:
+                raise InsForgeError(
+                    InsForgeErrorCategory.WRITE_FORBIDDEN,
+                    f"post_not_allowlisted:{clean[:80]}",
+                )
+        else:
             raise InsForgeError(
-                InsForgeErrorCategory.SECURITY_POLICY_DENIED,
-                f"path_blocked:{path.split('?',1)[0][:80]}",
-            )
-        if not is_path_allowed(path):
-            raise InsForgeError(
-                InsForgeErrorCategory.SECURITY_POLICY_DENIED,
-                f"path_not_allowlisted:{path.split('?',1)[0][:80]}",
+                InsForgeErrorCategory.WRITE_FORBIDDEN,
+                f"method_denied:{method_u}",
             )
 
         url = urljoin(cfg.base_url.rstrip("/") + "/", path.lstrip("/"))
-        # Final URL host must match base
         base_host = urlparse(cfg.base_url).hostname
         got_host = urlparse(url).hostname
         if not base_host or base_host != got_host:
@@ -59,10 +105,9 @@ class InsForgeClient:
 
         headers = {
             "Accept": "application/json",
-            "User-Agent": "SaathiOS-InsForgePilot/m18.3",
+            "User-Agent": "SaathiOS-InsForgePilot/m18.4",
         }
         if cfg.api_key:
-            # Support ik_ / anon_ opaque keys or bearer tokens without logging them
             if cfg.api_key.startswith("ik_") or cfg.api_key.startswith("anon_"):
                 headers["Authorization"] = f"Bearer {cfg.api_key}"
                 headers["X-API-Key"] = cfg.api_key
@@ -81,9 +126,13 @@ class InsForgeClient:
                 timeout=cfg.timeout_sec,
                 transport=self._transport,
                 verify=cfg.tls_verify,
-                follow_redirects=False,  # no open redirects
+                follow_redirects=False,
             ) as client:
-                resp = client.get(url, headers=headers, params=params or None)
+                if method_u == "GET":
+                    resp = client.get(url, headers=headers, params=params or None)
+                else:
+                    headers["Content-Type"] = "application/json"
+                    resp = client.post(url, headers=headers, json=json_body or {})
         except httpx.TimeoutException as e:
             raise InsForgeError(InsForgeErrorCategory.TIMEOUT, "request_timeout") from e
         except httpx.TransportError as e:
@@ -104,7 +153,6 @@ class InsForgeClient:
             )
 
         if 300 <= resp.status_code < 400:
-            # follow_redirects=False — still reject redirect status explicitly
             raise InsForgeError(
                 InsForgeErrorCategory.SECURITY_POLICY_DENIED,
                 f"redirect_denied:{resp.status_code}",

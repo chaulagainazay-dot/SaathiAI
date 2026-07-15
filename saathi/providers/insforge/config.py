@@ -15,6 +15,7 @@ ENV_MAX_BYTES = "SAATHI_INSFORGE_MAX_RESPONSE_BYTES"
 ENV_MAX_LOGS = "SAATHI_INSFORGE_MAX_LOG_RECORDS"
 ENV_TLS_VERIFY = "SAATHI_INSFORGE_TLS_VERIFY"
 ENV_ALLOW_LOOPBACK = "SAATHI_INSFORGE_ALLOW_LOOPBACK"
+ENV_WRITES_ENABLED = "SAATHI_INSFORGE_WRITES_ENABLED"
 
 DEFAULT_TIMEOUT_SEC = 10.0
 MAX_TIMEOUT_SEC = 30.0
@@ -23,7 +24,7 @@ MAX_MAX_RESPONSE_BYTES = 2_000_000
 DEFAULT_MAX_LOG_RECORDS = 50
 MAX_MAX_LOG_RECORDS = 200
 
-# Strict path allowlist (relative to API root). Methods: GET only.
+# Strict path allowlist (relative to API root). Methods: GET only (reads).
 ALLOWED_PATHS: frozenset[str] = frozenset({
     "/api/health",
     "/api/metadata",
@@ -33,9 +34,8 @@ ALLOWED_PATHS: frozenset[str] = frozenset({
     "/api/logs",
 })
 
-# Write / high-risk path prefixes — always rejected
+# Write / high-risk path prefixes — blocked for GET; POST migration is separate gate
 BLOCKED_PATH_PREFIXES: tuple[str, ...] = (
-    "/api/database/migrations",
     "/api/secrets",
     "/api/memory",
     "/api/schedules",
@@ -60,6 +60,7 @@ class InsForgeConfig:
     max_log_records: int = DEFAULT_MAX_LOG_RECORDS
     tls_verify: bool = True
     allow_loopback: bool = False
+    writes_enabled: bool = False  # M18.4: separate from enabled; still default false
 
     def public_dict(self) -> dict[str, Any]:
         """Safe summary — never includes api_key."""
@@ -73,8 +74,8 @@ class InsForgeConfig:
             "tls_verify": self.tls_verify,
             "allow_loopback": self.allow_loopback,
             "allowed_paths": sorted(ALLOWED_PATHS),
-            "pilot": "read_only",
-            "writes_enabled": False,
+            "pilot": "governed_migration_write" if self.writes_enabled else "read_only",
+            "writes_enabled": bool(self.writes_enabled),
         }
 
 
@@ -113,6 +114,7 @@ def load_config(*, env: dict | None = None) -> InsForgeConfig:
         ),
         tls_verify=_truthy(e.get(ENV_TLS_VERIFY) or "1"),
         allow_loopback=_truthy(e.get(ENV_ALLOW_LOOPBACK)),
+        writes_enabled=_truthy(e.get(ENV_WRITES_ENABLED)),
     )
 
 

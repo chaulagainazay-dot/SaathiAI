@@ -101,3 +101,15 @@ export SAATHI_INSFORGE_ENABLED=0
 ```
 
 Remove or ignore `saathi/providers/insforge/` on revert of the M18.3 commit.
+
+
+---
+
+## M18.4 extension — governed migration write
+
+Status upgraded to **`PILOT_APPROVED_GOVERNED_MIGRATION_WRITE`**.
+
+* Structured ops only (`create_table`, `add_column`, `create_index`)
+* Requires `SAATHI_INSFORGE_WRITES_ENABLED=1` **and** valid fingerprint-bound approval
+* Execution only via `MigrationService` → ExecutionGateway
+* See `docs/M18_4_INSFORGE_MIGRATION_WRITE_PILOT.md`

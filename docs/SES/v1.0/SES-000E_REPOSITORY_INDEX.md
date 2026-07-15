@@ -26,6 +26,7 @@ Next Review         : 2026-10-02
 | 0.2.0 | 2026-07-15 | Ajay Chaulagain / ECP M17.24 | External Capability Program register (Priority 1–3); honest non-integrated status; skills foundation |
 | 0.2.1 | 2026-07-15 | Ajay Chaulagain / M17.25 | MCP governance; Continuum remains BLOCKED_LICENSE; saathi-codebase-memory canonical |
 | 0.2.2 | 2026-07-15 | Ajay Chaulagain / M18.3 | InsForge PILOT_APPROVED_READ_ONLY adapter registration |
+| 0.2.3 | 2026-07-15 | Ajay Chaulagain / M18.4 | Governed migration write pilot (structured ops + approval) |
 
 ---
 
@@ -873,7 +874,7 @@ Authoritative decision file corrections: `docs/integrations/REPOSITORY_DECISIONS
 | Repository | github.com/InsForge/InsForge |
 | Priority | Optional product-backend infrastructure |
 | Capability | Postgres, product auth, storage, edge functions, logs (read-only pilot) |
-| Current status | **PILOT_APPROVED_READ_ONLY** (BOUNDARY_DEFINED) |
+| Current status | **PILOT_APPROVED_GOVERNED_MIGRATION_WRITE** (M18.4; still not production) |
 | Integration type | Adapter Pattern / External Service |
 | Authoritative role | **Non-authoritative data plane** for product backends only |
 | What it must not replace | Mission engine, ExecutionGateway, memory, Model Router, scheduler, event bus, SES, Trading Guardian |
