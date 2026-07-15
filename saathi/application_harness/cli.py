@@ -508,8 +508,15 @@ def main(argv=None) -> int:
         if reg.get("error"):
             out["error"] = reg["error"]
             out["validation_errors"] = reg.get("errors") or []
+            if reg.get("detail"):
+                out["detail"] = reg["detail"]
             print(json.dumps(out, indent=2), file=sys.stderr)
-            return 3  # validation failure (distinct from usage errors)
+            # 3 = validation, 4 = lock contention, 5 = revision/mutation conflict
+            if reg["error"] == "LOCK_TIMEOUT":
+                return 4
+            if reg["error"] in ("CONFLICT",) or str(reg["error"]).startswith("CONFLICT"):
+                return 5
+            return 3
         print(json.dumps(out, indent=2)); return 0
     if cmd == "health":
         print(json.dumps({"ffmpeg": F.available(), "registry": registry.summary()},
