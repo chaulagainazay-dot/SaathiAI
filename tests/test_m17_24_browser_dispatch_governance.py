@@ -241,8 +241,13 @@ def test_duplicate_event_trigger_governed(iso):
 def test_agent_tool_no_raw_driver(monkeypatch):
     monkeypatch.delenv("SAATHI_ALLOW_RAW_BROWSER", raising=False)
     from saathi.tools import agent_browser
+    # M17.25: ab_click routes through InteractiveBrowser (governed), not raw CLI
     r = agent_browser.ab_click("#btn")
-    assert r.get("code") == "RAW_BROWSER_DISABLED" or r.get("error") == "browser_governance"
+    assert r.get("governed") is True or r.get("code") == "RAW_BROWSER_DISABLED" \
+        or r.get("error") == "browser_governance"
+    assert r.get("interactive") is True or r.get("code") == "RAW_BROWSER_DISABLED" \
+        or r.get("status") in ("succeeded", "denied", "approval_required")
+    # Raw subprocess path remains fail-closed
     r2 = agent_browser._run("open", "https://example.com/")
     assert r2.get("code") == "RAW_BROWSER_DISABLED"
 

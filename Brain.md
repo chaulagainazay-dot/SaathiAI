@@ -1647,3 +1647,35 @@ M17_24_BROWSER_DISPATCH_AUDIT.md, M17_24_ARCHITECTURE.md. Inventory: 20 paths,
 **Verdict: ALL PRODUCTION BROWSER DISPATCH PATHS GOVERNED** — NOT production
 (full human-browser workflow migration, live interactive service-mode sessions,
 production host allowlists, and deploy remain OUT).
+
+## M17.25 — governed interactive browser sessions, actions, and human handoffs
+
+Autonomous-loop milestone (start/rollback caca1da, M17.24 complete). Extends the
+governed browser boundary from dispatch/navigation into full interactive
+execution without a second browser engine. KEY CONSTITUTIONAL FACTS:
+(1) InteractiveBrowser is the canonical interactive API — open_session / act /
+request_handoff / resume / close — always entering GovernedBrowser →
+ExecutionGateway. (2) SESSION OWNERSHIP — durable BrowserSessionStore records
+actor, mission/run, domains, allowed action classes, leases, checkpoints, and
+handoff state; cross-actor and cross-mission access fail closed; expired and
+cancelled sessions cannot act. (3) ACTION TAXONOMY — read_only, low_interactive,
+sensitive_input, external_effect, financial, prohibited; clicks are not treated
+as submits; navigation approval NEVER authorizes external_effect or financial
+actions. (4) COMMIT BOUNDARY — submit/publish/book require dedicated approval,
+idempotency_key, pre-commit checkpoint, single execution, and ledger replay for
+duplicates; uncertain outcomes enter reconciliation and are not blindly retried.
+(5) TARGET SAFETY — role/label/test_id preferred; ambiguous and missing targets
+denied; raw coordinates blocked; sensitive selectors elevate class; secrets never
+stored in the action ledger. (6) HUMAN HANDOFF — CAPTCHA/MFA/uncertain targets
+become paused_for_human with checkpoint + lease release; human claim/complete/
+decline; resume re-validates domain, fingerprint, ownership, and policy; dual
+control prevented. (7) PRODUCTION RAW BLOCK — SAATHI_ALLOW_RAW_BROWSER is ignored
+when SAATHI_ENV is production; normal interactive work needs no raw override.
+(8) TRADING — financial browser actions require Trading Guardian authorization;
+ordinary click/navigate leave trade.py unengaged. MODULES: gov_session.py,
+interactive.py; agent_browser click/fill/type delegate to InteractiveBrowser.
+TESTS: test_m17_25_interactive_browser.py (34). Critical checks +5 browser.*
+interactive. Docs: M17_25_INTERACTIVE_BROWSER_AUDIT.md, M17_25_ARCHITECTURE.md.
+**Verdict: INTERACTIVE BROWSER SESSIONS, ACTIONS, AND HUMAN HANDOFFS GOVERNED**
+— NOT production (live Playwright service-mode interactive still needs live
+session adapter; full human-browser workflow migration remains larger scope).

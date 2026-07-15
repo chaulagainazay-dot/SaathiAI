@@ -55,6 +55,8 @@ LOW_LEVEL_DRIVER_ALLOWLIST: frozenset[str] = frozenset({
     "saathi/browser/base.py",
     "saathi/browser/types.py",
     "saathi/browser/session.py",
+    "saathi/browser/gov_session.py",
+    "saathi/browser/interactive.py",
     "saathi/browser/__init__.py",
     # Live CDP driver — only ComputerAdapter may hold a live session
     "saathi/computer_agent/browser_driver.py",
@@ -148,7 +150,26 @@ SCAN_SKIP_DIR_NAMES: frozenset[str] = frozenset({
 RAW_BROWSER_ENV = "SAATHI_ALLOW_RAW_BROWSER"
 
 
+def production_environment() -> bool:
+    """True when SaathiOS is running in a production-classified environment."""
+    env = (
+        os.environ.get("SAATHI_ENV")
+        or os.environ.get("SAATHI_ENVIRONMENT")
+        or os.environ.get("ENVIRONMENT")
+        or os.environ.get("ENV")
+        or ""
+    ).strip().lower()
+    return env in ("prod", "production", "live")
+
+
 def raw_browser_env_enabled() -> bool:
+    """Emergency raw browser override.
+
+    M17.25: blocked in production environments even if the env var is set.
+    Normal governed interactive operation must not require this flag.
+    """
+    if production_environment():
+        return False
     return os.environ.get(RAW_BROWSER_ENV, "").strip() in ("1", "true", "TRUE", "yes")
 
 

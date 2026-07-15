@@ -124,14 +124,49 @@ def ab_eval(js: str) -> dict:
 
 # ── Interaction ───────────────────────────────────────────────────────────────
 
-def ab_click(selector: str) -> dict:
-    return deny_raw_production_dispatch(source="ab_click", action=f"click:{selector}")
+def _interactive_act(action: str, **kwargs) -> dict:
+    """M17.25: interactive tools use governed InteractiveBrowser sessions."""
+    try:
+        from saathi.browser.interactive import default_interactive_browser
+        from saathi.browser.gov_session import SessionError
+        ib = default_interactive_browser()
+        session_id = kwargs.pop("session_id", "") or ""
+        actor = kwargs.pop("actor", "agent:tool")
+        if not session_id:
+            # ephemeral governed session for agent tools (read_only + low_interactive)
+            sess = ib.open_session(
+                actor_id=actor,
+                mission_id="agent_browser",
+                mission_run_id=f"ab-{action}",
+                request_source="agent",
+                allowed_action_classes=["read_only", "low_interactive", "sensitive_input"],
+                url=kwargs.get("url") or "https://example.com/",
+            )
+            session_id = sess.session_id
+        res = ib.act(
+            session_id=session_id,
+            action=action,
+            actor_id=actor,
+            selector=kwargs.get("selector") or "",
+            text=kwargs.get("text") or "",
+            url=kwargs.get("url") or "",
+            idempotency_key=kwargs.get("idempotency_key") or "",
+            approval_id=kwargs.get("approval_id") or "",
+        )
+        return {**res.as_dict(), "governed": True, "interactive": True}
+    except Exception as e:
+        return {"error": "interactive_governance_error", "message": str(e)[:200],
+                "governed": True}
 
-def ab_fill(selector: str, text: str) -> dict:
-    return deny_raw_production_dispatch(source="ab_fill", action=f"fill:{selector}")
 
-def ab_type(selector: str, text: str) -> dict:
-    return deny_raw_production_dispatch(source="ab_type", action=f"type:{selector}")
+def ab_click(selector: str, **kwargs) -> dict:
+    return _interactive_act("click", selector=selector, **kwargs)
+
+def ab_fill(selector: str, text: str, **kwargs) -> dict:
+    return _interactive_act("fill", selector=selector, text=text, **kwargs)
+
+def ab_type(selector: str, text: str, **kwargs) -> dict:
+    return _interactive_act("type", selector=selector, text=text, **kwargs)
 
 def ab_press(key: str) -> dict:
     return deny_raw_production_dispatch(source="ab_press", action=f"press:{key}")

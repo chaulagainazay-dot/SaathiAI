@@ -2049,6 +2049,56 @@
       ],
       "subsystem": "browser",
       "blocking": true
+    },
+    {
+      "id": "browser.interactive_session_ownership",
+      "targets": [
+        "tests/test_m17_25_interactive_browser.py::test_cross_actor_denied",
+        "tests/test_m17_25_interactive_browser.py::test_cross_mission_denied",
+        "tests/test_m17_25_interactive_browser.py::test_expired_session_denied",
+        "tests/test_m17_25_interactive_browser.py::test_stale_lease_blocks_other_worker"
+      ],
+      "subsystem": "browser",
+      "blocking": true
+    },
+    {
+      "id": "browser.interactive_commit_boundary",
+      "targets": [
+        "tests/test_m17_25_interactive_browser.py::test_navigate_approval_does_not_authorize_submit",
+        "tests/test_m17_25_interactive_browser.py::test_submit_with_dedicated_approval",
+        "tests/test_m17_25_interactive_browser.py::test_commit_requires_idempotency_key"
+      ],
+      "subsystem": "browser",
+      "blocking": true
+    },
+    {
+      "id": "browser.human_handoff_resume",
+      "targets": [
+        "tests/test_m17_25_interactive_browser.py::test_handoff_pauses_and_blocks_agent",
+        "tests/test_m17_25_interactive_browser.py::test_handoff_claim_and_complete_resume",
+        "tests/test_m17_25_interactive_browser.py::test_resume_page_mismatch_denied"
+      ],
+      "subsystem": "browser",
+      "blocking": true
+    },
+    {
+      "id": "browser.raw_blocked_in_production",
+      "targets": [
+        "tests/test_m17_25_interactive_browser.py::test_raw_browser_blocked_in_production",
+        "tests/test_m17_25_interactive_browser.py::test_guard_still_clean"
+      ],
+      "subsystem": "browser",
+      "blocking": true
+    },
+    {
+      "id": "browser.interactive_idempotency",
+      "targets": [
+        "tests/test_m17_25_interactive_browser.py::test_submit_idempotent_no_double",
+        "tests/test_m17_25_interactive_browser.py::test_uncertain_submit_not_retried",
+        "tests/test_m17_25_interactive_browser.py::test_sensitive_values_not_in_action_ledger"
+      ],
+      "subsystem": "browser",
+      "blocking": true
     }
   ]
 }

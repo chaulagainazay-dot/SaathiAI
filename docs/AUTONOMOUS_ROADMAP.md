@@ -340,6 +340,20 @@ Trading Guardian unengaged for ordinary browse; trading-classified actions deny
 without TG auth. No live trading, no deploy, no push. Verdict:
 **ALL PRODUCTION BROWSER DISPATCH PATHS GOVERNED**.
 
+## M17.25 — Governed Interactive Browser Sessions, Actions, and Human Handoffs (DONE)
+Autonomous-loop milestone (start `caca1da` / tag `m17.24-browser-governance-complete`).
+Extends M17.24 from navigation/dispatch into interactive execution:
+`InteractiveBrowser` + `BrowserSessionStore` (ownership, leases, lifecycle,
+action ledger, handoffs, checkpoints); action taxonomy (read_only → financial);
+target resolution (ambiguous/missing/coordinates blocked); commit boundary
+(submit requires dedicated approval + idempotency + pre-commit checkpoint —
+navigation approval insufficient); human handoff workflow (pause, claim,
+complete/decline, validated resume); production hard-blocks
+`SAATHI_ALLOW_RAW_BROWSER`; agent click/fill/type route through interactive
+sessions; +5 blocking critical checks; 34 focused tests. Trading Guardian
+isolation preserved. No live external side effects, no push/deploy. Verdict:
+**INTERACTIVE BROWSER SESSIONS, ACTIONS, AND HUMAN HANDOFFS GOVERNED**.
+
 ## Blocked / deferred (need user action or larger scope)
 - authenticated browser / cloud connector workflow — needs a safe staging account.
 - native Finder/TextEdit actuation — macOS Accessibility (TCC) not granted.
