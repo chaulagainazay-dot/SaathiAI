@@ -4,7 +4,7 @@
   "branch": "milestone/m7-security-engine",
   "loop_started_at": "2026-07-12",
   "initial_head": "28ce958",
-  "current_head": "HEAD after M17.18 (registry boot persistence); rollback = 04be33c (M17.17)",
+  "current_head": "HEAD after M17.18.1 (memory conventions split); rollback = b4224db (AGENTS.md) / 4d30fb0 (M17.18)",
   "iterations_completed": 1,
   "iteration_limit": 1,
   "active_milestone": null,
@@ -25,7 +25,8 @@
     "M17.15 governed pipeline retry/resume/checkpoint (verified-checkpoint reuse, contiguous prefix, bounded retry, approval-safe, live-validated)",
     "M17.16 governed bounded parallel & branching pipeline graphs (one fork, N independent branches, one join barrier; bounded ThreadPool; dependency-closed checkpoint resume; per-step claims; fail-closed join; live-validated)",
     "M17.17 governed graph mission scheduling & recovery integration (scheduled/trusted-event graph-backed missions launch through the MissionEngine, resume through the EXISTING graph + recovery layers, settle mission+occurrence EXACTLY ONCE; honest graph->mission->occurrence state map; deterministic recovered-mission idempotency; original failed mission immutable via linked retry; crash windows F/G reconciled; no new tables; 12 blocking scheduled_graph.* checks; live-validated)",
-    "M17.18 harness registry boot persistence (load-on-boot, persist-on-mutate, fail-closed, no trust elevation, 15 tests, 5 blocking registry.* checks)"
+    "M17.18 harness registry boot persistence (load-on-boot, persist-on-mutate, fail-closed, no trust elevation, 15 tests, 5 blocking registry.* checks)",
+    "M17.18.1 curated vs runtime memory conventions split (reflector writes data/memory/learned_conventions.* only; agent loads curated+learned; gitignore agent-state+storage DBs; 3 tests)"
   ],
   "blocked_items": [
     "native Finder/TextEdit actuation: macOS Accessibility not granted (user_action_required)",
@@ -41,15 +42,16 @@
     "M17.14 CRON expressions + public webhook ingestion + distributed/multi-region scheduling + PARALLEL mission execution \u2014 deferred",
     "M17.15 distributed/remote/cloud checkpoints + cross-owner checkpoint reuse + automatic recovery of untrusted steps \u2014 deferred (local, owner-scoped, trusted-template recovery only)",
     "multi-user LOAD concurrency (cross-user gates + local multi-process proven, not load)",
-    "workflow intelligence (not started; gated on live execution proof)"
+    "workflow intelligence (not started; gated on live execution proof)",
+    "learned\to curated promotion UI/CLI (M17.18.1 leaves promotion as human review only)"
   ],
   "manual_actions_required": [],
-  "last_full_suite": "focused M17.18: 15 passed; harness M17.3-7+18: 91 passed; registry critical checks 5/5 green (full suite not re-run this iteration \u2014 targeted validation)",
-  "last_redteam": "M17.17 green \u2014 integration adds NO new execution path (scheduler delegates only to MissionEngine; fresh execution via engine.launch; recovery via engine.resume_graph_mission -> existing GraphPipelineRunner.resume; asserted no direct graph-executor/recovery/adapter/subprocess call); every graph step still runs through the SAME governed _run_step -> run_harness_action; owner consistent end to end (cross-owner recover/settle fail closed, asserted); approval never auto-granted by schedule/retry/reconcile/sibling; terminal mission+occurrence immutable (recovery uses a linked retry mission, original failure preserved); idempotency durable via deterministic ids + recovery/step/occurrence claims; integration + engine recovery modules asserted free of trading/broker/withdraw/leverage/transfer/order-submission surfaces. LEGACY M17.16: graph layer reuses the SAME governed _run_step -> run_harness_action for every step (no new execution/trust/verification path); full pre-exec validation rejects cycle/unknown-dep/dup-id/self-dep/owner/size/concurrency/nested-fork/second-join/branch-width/artifact-collision/secret-name/path-escape/unknown-or-non-executable-harness with NO partial execution; branch confined to declared deps only; fail-closed join (branch failure/approval/blocked/stop_uncertain never joins; no partial success); dependency-CLOSED checkpoint reuse (reuses M17.15 _validate_checkpoint; tamper/missing/changed invalidates branch+descendants); per-step claim exactly-once + not-stealable + expired-reclaimable + duplicate-launch/resume deduped; owner mismatch executes nothing + cross-owner graph/branch/claim hidden; approval per-step (one branch cannot approve another; risk-4 gated; risk increase changes step fingerprint); graph layer asserted free of broker/withdraw/leverage/rebalance/place_order/trade_execution/portfolio_/exchange_execution surfaces",
-  "last_release_check": "exit 0 (M17.17): storage healthy, config ok, database all_ok, backup_ok + restore_verified true (no new tables \u2014 existing graph/mission/recovery records + one read-only helper; WAL-safe backup/restore), secret_scan clean; git diff --check clean",
-  "last_secret_scan": "clean on M17.18 files (fixture uses REDACTED_FIXTURE_NOT_A_REAL_SECRET); git diff --check clean on milestone paths",
-  "critical_manifest": "prior 194 + M17.18 5 registry.* blocking checks (199 total); registry.* 5/5 green this invocation",
-  "milestone_verdict": "REGISTRY BOOT PERSISTENCE STAGING READY",
-  "stop_reason": "one bounded milestone completed this invocation (M17.18 harness registry boot persistence: STORE load-on-bootstrap fail-closed; persist on register/import_records; external demotion; pilot restrictive overlay; CLI import wires to registry; 15 tests; 5 blocking registry.* checks; harness regression 91 green; Trading Guardian unengaged). Maximum milestones this invocation = 1. Not production-ready: multi-writer registry concurrency, external alert transports, production auto-scheduling.",
-  "unrelated_untouched": "saathi/memory/conventions.md remains modified and UNSTAGED; storage/storage.db UNSTAGED; .saathi-agent-state/ untracked; AGENTS.md untracked (agent instructions; not part of M17.18 code milestone)"
+  "last_full_suite": "focused M17.18.1: 3 passed (test_memory_conventions_split); full suite not re-run this hygiene iteration \u2014 targeted validation",
+  "last_redteam": "M17.18.1 is memory hygiene only \u2014 no new execution/trust/trading surface. Prior M17.17/M17.18 red-team posture unchanged.",
+  "last_release_check": "not re-run (no schema/ledger/release-gate surface); git diff --check on milestone paths",
+  "last_secret_scan": "clean on M17.18.1 paths (no secrets in learned-path config or tests); git diff --check clean on milestone paths",
+  "critical_manifest": "unchanged at 199 (no new blocking checks for memory hygiene slice)",
+  "milestone_verdict": "MEMORY CONVENTIONS SPLIT STAGING READY",
+  "stop_reason": "one bounded milestone completed this invocation (M17.18.1 curated vs runtime memory conventions split: memory_reflector writes only data/memory/learned_conventions.{md,jsonl}; never mutates saathi/memory/conventions.md; agent loads curated then learned slice; .saathi-agent-state/ + storage/*.db* gitignored; 3 deterministic tests; docs updated). Maximum milestones this invocation = 1. Do not begin M17.19. Not production-ready: learned\to curated promotion UX, external alert transports, production auto-scheduling.",
+  "unrelated_untouched": "saathi/memory/conventions.md left clean (restored baseline; not part of commit content beyond the rule that reflector must not dirty it). Any pre-existing storage.db / .saathi-agent-state content remains local runtime only (now gitignored)."
 }

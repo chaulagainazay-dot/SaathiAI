@@ -268,6 +268,16 @@ trust, pilot code-seed with restrictive-only trust overlay from disk, CLI
 no ledger/schema change, Trading Guardian unengaged. Verdict: **REGISTRY BOOT
 PERSISTENCE STAGING READY**.
 
+## M17.18.1 — curated vs runtime memory conventions split (DONE)
+Hygiene follow-on after M17.18 (start HEAD after M17.18 + AGENTS.md). Nightly
+`memory_reflector` previously appended auto-learned bullets into
+`saathi/memory/conventions.md`, leaving durable dirt on every loop. Delivered:
+curated baseline stays git-tracked under `saathi/memory/`; runtime learning writes
+only to `data/memory/learned_conventions.{md,jsonl}`; agent loads curated then a
+short learned slice; `.saathi-agent-state/` + `storage/*.db*` gitignored; 3
+deterministic tests. No second memory engine. Verdict: **MEMORY CONVENTIONS SPLIT
+STAGING READY**.
+
 ## Blocked / deferred (need user action or larger scope)
 - authenticated browser / cloud connector workflow — needs a safe staging account.
 - native Finder/TextEdit actuation — macOS Accessibility (TCC) not granted.

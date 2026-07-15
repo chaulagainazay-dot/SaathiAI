@@ -94,6 +94,11 @@ PORT = int(os.getenv("PORT", os.getenv("SAATHI_PORT", "8765")))
 
 # --- Memory ---
 DB_PATH = ROOT / "data" / "saathi.db"
+# Curated baseline lives under saathi/memory/*.md (git-tracked).
+# Runtime auto-learning MUST write only under data/memory/ (gitignored via data/).
+LEARNED_MEMORY_DIR = ROOT / "data" / "memory"
+LEARNED_CONVENTIONS_MD = LEARNED_MEMORY_DIR / "learned_conventions.md"
+LEARNED_CONVENTIONS_JSONL = LEARNED_MEMORY_DIR / "learned_conventions.jsonl"
 
 # --- Internal auth bypass (server calling its own API: health check, stage_draft) ---
 SAATHI_TOKEN = os.getenv("SAATHI_TOKEN", "")

@@ -62,15 +62,28 @@ def _load_skill(user_text: str) -> str:
 
 
 def _load_memory() -> str:
-    """Return a compact project-memory block from saathi/memory/*.md.
-    Keep under 400 chars per file to stay within Groq's 12k TPM limit."""
-    if not _MEMORY_DIR.exists():
-        return ""
+    """Return a compact project-memory block.
+
+    Curated baseline (git-tracked): saathi/memory/conventions.md, decisions.md
+    Runtime learning (gitignored):  data/memory/learned_conventions.md
+
+    Keep under 400 chars per file to stay within Groq's 12k TPM limit.
+    """
     parts = []
-    for name in ("conventions.md", "decisions.md"):
-        f = _MEMORY_DIR / name
-        if f.exists():
-            parts.append(f"## {name}\n" + f.read_text(encoding="utf-8")[:400])
+    if _MEMORY_DIR.exists():
+        for name in ("conventions.md", "decisions.md"):
+            f = _MEMORY_DIR / name
+            if f.exists():
+                parts.append(f"## {name}\n" + f.read_text(encoding="utf-8")[:400])
+    # Runtime auto-learned conventions — never written into the curated baseline
+    try:
+        learned = Path(config.LEARNED_CONVENTIONS_MD)
+        if learned.exists():
+            parts.append(
+                "## learned_conventions.md\n" + learned.read_text(encoding="utf-8")[:400]
+            )
+    except Exception:
+        pass
     return "\n\n".join(parts)
 
 MAX_TOOL_ITERATIONS = 8

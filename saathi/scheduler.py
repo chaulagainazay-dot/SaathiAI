@@ -311,8 +311,11 @@ def daily_trend_hunt():
 
 
 def memory_reflector():
-    """2am nightly: Suna-style memory reflector — reads recent activity + feedback,
-    updates saathi/memory/ files so every session starts with current context."""
+    """2am nightly: Suna-style memory reflector — reads recent activity + feedback.
+
+    Writes runtime learning state only under data/memory/learned_conventions.*
+    Never mutates curated saathi/memory/conventions.md (human-reviewed baseline).
+    """
     from pathlib import Path
     import json as _json
 
@@ -344,7 +347,7 @@ def memory_reflector():
         agent = SaathiAgent()
         prompt = (
             "You are Baadar's memory reflector. Review this feedback log and produce "
-            "a brief update (3-5 bullet points) for the conventions.md memory file. "
+            "a brief update (3-5 bullet points) for runtime learned conventions. "
             "Focus on NEW patterns, mistakes to avoid, or preferences Ajay expressed. "
             "Output ONLY the bullet points — no preamble, no explanation.\n\n"
             "Recent feedback:\n" + "\n".join(recent_feedback)
@@ -356,15 +359,28 @@ def memory_reflector():
         if not notes or len(notes) < 20:
             return
 
-        # Append new learnings to conventions.md under a dated section
-        conv_file = memory_dir / "conventions.md"
-        if conv_file.exists():
-            ts = datetime.now().strftime("%Y-%m-%d")
-            existing = conv_file.read_text(encoding="utf-8")
-            # Only append if this date isn't already there
-            if ts not in existing:
-                with open(conv_file, "a", encoding="utf-8") as f:
-                    f.write(f"\n\n## Auto-learned {ts}\n{notes}\n")
+        # Runtime learning state ONLY — never mutate curated saathi/memory/conventions.md.
+        # Curated baseline: saathi/memory/conventions.md (reviewed, git-tracked).
+        # Learned state:    data/memory/learned_conventions.md (gitignored under data/).
+        from . import config as _cfg
+        learned_dir = Path(_cfg.LEARNED_MEMORY_DIR)
+        learned_dir.mkdir(parents=True, exist_ok=True)
+        learned_md = Path(_cfg.LEARNED_CONVENTIONS_MD)
+        learned_jsonl = Path(_cfg.LEARNED_CONVENTIONS_JSONL)
+        ts = datetime.now().strftime("%Y-%m-%d")
+        existing = learned_md.read_text(encoding="utf-8") if learned_md.exists() else ""
+        # Only append if this date isn't already there
+        if f"## Auto-learned {ts}" not in existing:
+            with open(learned_md, "a", encoding="utf-8") as f:
+                if existing and not existing.endswith("\n"):
+                    f.write("\n")
+                f.write(f"\n## Auto-learned {ts}\n{notes}\n")
+            with open(learned_jsonl, "a", encoding="utf-8") as f:
+                f.write(_json.dumps({
+                    "date": ts,
+                    "source": "memory_reflector",
+                    "notes": notes,
+                }, ensure_ascii=False) + "\n")
     except Exception:
         pass  # memory reflector must never crash the scheduler
 

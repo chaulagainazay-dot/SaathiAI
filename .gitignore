@@ -53,3 +53,11 @@ token.json
 oauth*.json
 *session*.json
 !*.example.json
+
+# Local AI-agent runtime state
+.saathi-agent-state/
+
+# Local runtime databases
+storage/*.db
+storage/*.db-shm
+storage/*.db-wal

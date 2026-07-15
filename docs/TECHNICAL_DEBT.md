@@ -116,6 +116,12 @@
   from code with restrictive-only overlay (revoke/quarantine/etc.). 15 tests + 5
   blocking `registry.*` checks. Remaining: multi-writer concurrency, optional
   dedicated Control Center cell (summary already exposes load diagnostics).
+- Memory conventions auto-learn dirt: FIXED (M17.18.1). `memory_reflector` no
+  longer mutates curated `saathi/memory/conventions.md`; runtime notes go to
+  `data/memory/learned_conventions.{md,jsonl}` (under gitignored `data/`). Agent
+  loads curated + short learned slice. Remaining: optional human promotion UI/CLI
+  from learned → curated; any historical auto-learned sections already in
+  conventions.md stay until manually reviewed.
 - Multi-user isolation only probe-tested, not exercised with concurrent users.
 - legacy saathi/connectors (pre-M15) telegram adapter = transitional exception,
   not yet wrapped under the platform adapter.
