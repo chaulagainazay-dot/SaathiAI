@@ -25,10 +25,11 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install -U pip
-          # Collection imports agents (groq) and security.redteam (yaml).
-          # These are runtime deps used by product modules under test collection;
-          # pyproject base extras omit them for lighter local installs.
-          pip install -e . pytest pytest-asyncio httpx groq "pyyaml>=6.0"
+          # Collection imports agents (groq), security.redteam (yaml), and
+          # auth/logto paths (PyJWT). Product modules under test collection use
+          # these; pyproject base extras omit them for lighter local installs.
+          pip install -e . pytest pytest-asyncio httpx \
+            groq "pyyaml>=6.0" "PyJWT>=2.0"
 
       - name: Collection check (no import/collection errors)
         run: python -m pytest tests/ --collect-only -q
