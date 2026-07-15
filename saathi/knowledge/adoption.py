@@ -21,7 +21,9 @@ from saathi.knowledge.rollout import (
     CALLER_CODEBASE_MEMORY_SEARCH,
     CALLER_CODEBASE_MEMORY_SYMBOL,
     CALLER_COMPAT_SEARCH,
+    CALLER_CONTROL_CENTER_REPO,
     CALLER_MISSION_CONTEXT,
+    CALLER_REPAIR_CONTEXT,
     RolloutMode,
     resolve_mode,
 )
@@ -308,6 +310,58 @@ def build_audit_evidence_query(
         include_generated=False,
         min_trust=TrustLevel.MEDIUM,
         permission_actor="system",
+    )
+
+
+def build_control_center_repo_query(
+    raw_query: str,
+    *,
+    owner: str = "",
+    top_k: int = 8,
+    run_id: str = "",
+    requesting_component: str = "control_center",
+) -> KnowledgeQuery:
+    """Operator repository lookup — FAST_LOOKUP, read-only, bounded."""
+    intent = extract_bounded_intent(raw_query)
+    return KnowledgeQuery(
+        query=intent,
+        profile=RetrievalProfile.FAST_LOOKUP,
+        intent=RetrievalIntent.GENERAL_REPO,
+        requesting_component=requesting_component,
+        run_id=run_id or "",
+        max_results=max(1, min(int(top_k or 8), 20)),
+        include_generated=False,
+        min_trust=TrustLevel.LOW,
+        permission_actor=owner or "operator",
+        max_context_chars=4_000,
+    )
+
+
+def build_repair_context_query(
+    incident_summary: str,
+    *,
+    mission_id: str = "",
+    run_id: str = "",
+    top_k: int = 12,
+    requesting_component: str = "repair_planning",
+) -> KnowledgeQuery:
+    """Repair planning context — implementation + tests + known limits.
+
+    Retrieved text is untrusted evidence only; never authorizes code modification.
+    """
+    intent = extract_bounded_intent(incident_summary)
+    return KnowledgeQuery(
+        query=intent,
+        profile=RetrievalProfile.CODE_EXPLAIN,
+        intent=RetrievalIntent.FIND_IMPLEMENTATION,
+        requesting_component=requesting_component,
+        mission_id=mission_id or "",
+        run_id=run_id or "",
+        max_results=max(1, min(int(top_k or 12), 30)),
+        include_generated=False,
+        min_trust=TrustLevel.LOW,
+        permission_actor="system",
+        max_context_chars=10_000,
     )
 
 
@@ -1032,4 +1086,191 @@ def audit_evidence_lookup(
         "path_used": result.path_used,
         "run_id": run_id,
     }
+    return payload
+
+
+def control_center_repository_search(
+    query: str,
+    *,
+    owner: str = "",
+    project_root: str | Path | None = None,
+    top_k: int = 8,
+    mode: RolloutMode | str | None = None,
+    knowledge_service: KnowledgeService | None = None,
+    run_id: str = "",
+) -> dict:
+    """M19.2 second-wave: Control Center operator repository knowledge search.
+
+    Read-only. Default rollout is ``legacy`` (empty repo facet — preserves
+    pre-M19.2 federated-search behaviour when not opted in). Shadow/unified
+    use KnowledgeService FAST_LOOKUP. Does not touch kill switches or
+    operational safety controls.
+    """
+    kq = build_control_center_repo_query(
+        query, owner=owner, top_k=top_k, run_id=run_id,
+    )
+
+    def _legacy_empty(**_kw) -> dict:
+        return {
+            "ok": True,
+            "hits": [],
+            "mode": "legacy_noop",
+            "context": {
+                "text": "", "char_count": 0, "budget": kq.resolved_budget(),
+                "truncated": False, "included_result_ids": [],
+                "excluded_reasons": [{"reason": "legacy_noop_cc_repo"}],
+                "fingerprint": "",
+            },
+            "note": "control_center_repository legacy is empty; enable shadow/unified for KS",
+        }
+
+    result = adopt_retrieve(
+        caller_id=CALLER_CONTROL_CENTER_REPO,
+        query=kq,
+        legacy_fn=_legacy_empty,
+        mode=mode,
+        knowledge_service=knowledge_service,
+        saathi_root=project_root,
+        return_legacy_shape=True,
+    )
+    payload = dict(result.payload)
+    # Operator-visible SearchResult-compatible projection (bounded, no secrets)
+    op_results = []
+    for h in (payload.get("hits") or [])[:top_k]:
+        path = str(h.get("path") or "")
+        if any(x in path.lower() for x in (".env", "id_rsa", "credentials", "secret")):
+            continue
+        snippet = str(h.get("snippet") or h.get("title") or "")[:240]
+        op_results.append({
+            "entity_type": "repository",
+            "title": path or str(h.get("title") or "hit"),
+            "summary": snippet,
+            "source": str(h.get("source_id") or h.get("repository_id") or "knowledge"),
+            "timestamp": 0.0,
+            "link": f"/control/search?types=repository&q={path}",
+            "relevance": float(h.get("score") or 0.0),
+            "path": path,
+            "repository_id": h.get("repository_id") or "",
+            "evidence_class": h.get("evidence_class") or "",
+            "untrusted": True,
+            "partial": bool(payload.get("truncated") or result.partial),
+        })
+    payload["operator_results"] = op_results
+    payload["read_only"] = True
+    payload["secrets_excluded"] = True
+    payload["adoption"] = {
+        "caller_id": CALLER_CONTROL_CENTER_REPO,
+        "mode": result.mode,
+        "path_used": result.path_used,
+        "fallback_reason": result.fallback_reason,
+        "latency_ms": result.latency_ms,
+        "owner_scoped": bool(owner),
+    }
+    if result.shadow is not None:
+        payload["shadow"] = result.shadow.to_dict()
+    return payload
+
+
+def repair_context_prepare(
+    incident_summary: str,
+    *,
+    mission_id: str = "",
+    run_id: str = "",
+    project_root: str | Path | None = None,
+    top_k: int = 12,
+    mode: RolloutMode | str | None = None,
+    knowledge_service: KnowledgeService | None = None,
+) -> dict:
+    """M19.2 second-wave: repair-planning repository context.
+
+    Retrieves implementation, focused tests, architecture docs, and known
+    limitations via KnowledgeService. Does **not** authorize patches, tool
+    calls, or repair commits. Planner remains under existing mission/execution
+    controls. Default mode is legacy empty (opt-in shadow/unified).
+    """
+    kq = build_repair_context_query(
+        incident_summary,
+        mission_id=mission_id,
+        run_id=run_id,
+        top_k=top_k,
+    )
+
+    def _legacy_empty(**_kw) -> dict:
+        return {
+            "ok": True,
+            "hits": [],
+            "mode": "legacy_noop",
+            "context": {
+                "text": "", "char_count": 0, "budget": kq.resolved_budget(),
+                "truncated": False, "included_result_ids": [],
+                "excluded_reasons": [{"reason": "legacy_noop_repair_context"}],
+                "fingerprint": "",
+            },
+            "note": "repair_context legacy is empty; enable shadow/unified to use KS",
+        }
+
+    result = adopt_retrieve(
+        caller_id=CALLER_REPAIR_CONTEXT,
+        query=kq,
+        legacy_fn=_legacy_empty,
+        mode=mode,
+        knowledge_service=knowledge_service,
+        saathi_root=project_root,
+        return_legacy_shape=True,
+    )
+    payload = dict(result.payload)
+    ctx = payload.get("context") or {}
+    if isinstance(ctx, dict) and ctx.get("text"):
+        payload["context_safe"] = safe_context_for_consumer(ctx)
+        payload["prompt_block"] = wrap_retrieved_context(
+            ctx.get("text") or "",
+            fingerprint=str(ctx.get("fingerprint") or ""),
+            truncated=bool(ctx.get("truncated")),
+        )
+    else:
+        payload["context_safe"] = safe_context_for_consumer(
+            ctx if isinstance(ctx, dict) else {}
+        )
+        payload["prompt_block"] = ""
+
+    # Partition hints for repair planner consumers
+    hits = payload.get("hits") or []
+    impl = [h for h in hits if "test" not in str(h.get("path") or "").lower()
+            and str(h.get("path") or "").endswith((".py", ".ts", ".js", ".go", ".rs"))]
+    tests = [h for h in hits if "test" in str(h.get("path") or "").lower()]
+    docs = [h for h in hits if str(h.get("path") or "").startswith("docs/")
+            or str(h.get("path") or "").endswith(".md")]
+    payload["repair_buckets"] = {
+        "implementation": [h.get("path") for h in impl[:8]],
+        "tests": [h.get("path") for h in tests[:8]],
+        "architecture_docs": [h.get("path") for h in docs[:6]],
+        "known_limitations": [
+            h.get("path") for h in hits
+            if "limit" in str(h.get("path") or "").lower()
+            or "known" in str(h.get("snippet") or "").lower()
+        ][:4],
+    }
+    payload["untrusted_evidence_only"] = True
+    payload["authorizes_code_modification"] = False
+    payload["authorizes_tool_invocation"] = False
+    payload["assembly_priority"] = [
+        "canonical_governance",
+        "incident_objective",
+        "exact_implementation",
+        "focused_tests",
+        "architecture_docs",
+        "known_limitations",
+        "supporting_context",
+    ]
+    payload["adoption"] = {
+        "caller_id": CALLER_REPAIR_CONTEXT,
+        "mode": result.mode,
+        "path_used": result.path_used,
+        "fallback_reason": result.fallback_reason,
+        "latency_ms": result.latency_ms,
+        "mission_id": mission_id,
+        "run_id": run_id,
+    }
+    if result.shadow is not None:
+        payload["shadow"] = result.shadow.to_dict()
     return payload

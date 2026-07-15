@@ -26,6 +26,7 @@ _INJECTION_HINTS = re.compile(
 FORBIDDEN_FROM_RETRIEVAL = frozenset({
     "shell_exec",
     "trade_execute",
+    "approve_trade",
     "payment_execute",
     "approve_tool",
     "disable_kill_switch",

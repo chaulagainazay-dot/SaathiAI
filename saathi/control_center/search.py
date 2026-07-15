@@ -93,6 +93,42 @@ def federated_search(*, owner: str, query: str, entity_types: list | None = None
                                f"{ex.get('status')}", "connectors",
                                link=f"/control/work#{ex['id']}", relevance=r))
 
+    # M19.2: optional repository knowledge facet — explicit type only so default
+    # federated_search behaviour (types=None) remains unchanged.
+    if entity_types is not None and "repository" in entity_types and want("repository"):
+        try:
+            from saathi.knowledge.adoption import control_center_repository_search
+            ks_out = control_center_repository_search(
+                query, owner=owner, top_k=min(limit, 10),
+            )
+            for item in ks_out.get("operator_results") or []:
+                results.append(SearchResult(
+                    entity_type="repository",
+                    title=str(item.get("title") or "")[:200],
+                    summary=str(item.get("summary") or "")[:240],
+                    source=str(item.get("source") or "knowledge"),
+                    link=str(item.get("link") or ""),
+                    relevance=float(item.get("relevance") or 0.0),
+                ))
+            # Surface adoption metadata without secrets
+            adoption_meta = ks_out.get("adoption") or {}
+        except Exception as e:
+            adoption_meta = {"error": type(e).__name__, "path_used": "error"}
+    else:
+        adoption_meta = None
+
     results.sort(key=lambda x: x.relevance, reverse=True)
-    return {"query": query, "total": len(results),
-            "results": [r.to_dict() for r in results[:limit]]}
+    out = {"query": query, "total": len(results),
+           "results": [r.to_dict() for r in results[:limit]]}
+    if adoption_meta is not None:
+        out["repository_adoption"] = {
+            k: adoption_meta[k]
+            for k in ("caller_id", "mode", "path_used", "latency_ms", "fallback_reason")
+            if k in adoption_meta
+        }
+        # Partial-result flag for operator visibility
+        if any(r.entity_type == "repository" for r in results):
+            out["partial_repository"] = False
+        else:
+            out["partial_repository"] = True
+    return out

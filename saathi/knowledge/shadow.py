@@ -14,6 +14,9 @@ class ShadowComparison:
     unified_paths: list[str] = field(default_factory=list)
     source_overlap: float = 0.0
     top_k_overlap: float = 0.0
+    top1_agreement: float = 0.0
+    top3_overlap: float = 0.0
+    top5_overlap: float = 0.0
     path_jaccard: float = 0.0
     legacy_only_paths: list[str] = field(default_factory=list)
     unified_only_paths: list[str] = field(default_factory=list)
@@ -21,15 +24,18 @@ class ShadowComparison:
     unified_count: int = 0
     legacy_latency_ms: float = 0.0
     unified_latency_ms: float = 0.0
+    shadow_overhead_ms: float = 0.0
     legacy_ok: bool = True
     unified_ok: bool = True
     legacy_error: str = ""
     unified_error: str = ""
     primary_evidence_ratio_unified: float = 0.0
+    generated_summary_ratio_unified: float = 0.0
     duplicate_rate_unified: float = 0.0
     truncated_unified: bool = False
     context_chars_unified: int = 0
     permission_denied_unified: bool = False
+    canonical_hit_unified: bool = False
     notes: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict:
@@ -115,7 +121,9 @@ def compare_retrieval(
     truncated = False
     ctx_chars = 0
     primary_ratio = 0.0
+    generated_ratio = 0.0
     dup_rate = 0.0
+    canonical_hit = False
 
     if unified is not None:
         if hasattr(unified, "ok"):
@@ -129,12 +137,19 @@ def compare_retrieval(
             results = getattr(unified, "results", None) or []
             if results:
                 primary = 0
+                generated = 0
                 for r in results:
                     ec = getattr(r, "evidence_class", None)
                     val = ec.value if hasattr(ec, "value") else str(ec or "")
                     if "primary" in val or val in ("primary_code", "primary_tests"):
                         primary += 1
+                    if "generated" in val or bool(getattr(r, "is_generated", False)):
+                        generated += 1
+                    path = str(getattr(r, "path", "") or "").lower()
+                    if path.startswith("docs/") or "ses-" in path or "architecture" in path:
+                        canonical_hit = True
                 primary_ratio = primary / len(results)
+                generated_ratio = generated / len(results)
             meta = getattr(unified, "dedupe_meta", None) or {}
             if isinstance(meta, dict) and meta.get("before") and meta.get("after") is not None:
                 before = int(meta.get("before") or 0)
@@ -149,10 +164,34 @@ def compare_retrieval(
             if isinstance(ctx, dict):
                 truncated = bool(ctx.get("truncated"))
                 ctx_chars = int(ctx.get("char_count") or 0)
+            hits = unified.get("results") or unified.get("hits") or []
+            if hits:
+                primary = 0
+                generated = 0
+                for h in hits:
+                    if isinstance(h, dict):
+                        val = str(h.get("evidence_class") or "")
+                        path = str(h.get("path") or "").lower()
+                        gen = bool(h.get("is_generated"))
+                    else:
+                        val = str(getattr(h, "evidence_class", "") or "")
+                        path = str(getattr(h, "path", "") or "").lower()
+                        gen = bool(getattr(h, "is_generated", False))
+                    if "primary" in val:
+                        primary += 1
+                    if gen or "generated" in val:
+                        generated += 1
+                    if path.startswith("docs/") or "ses-" in path:
+                        canonical_hit = True
+                primary_ratio = primary / len(hits)
+                generated_ratio = generated / len(hits)
 
     k = max(1, int(top_k or 10))
     leg_only = [p for p in leg_paths if p not in set(uni_paths)]
     uni_only = [p for p in uni_paths if p not in set(leg_paths)]
+    top1 = 1.0 if (
+        leg_paths and uni_paths and _norm_path(leg_paths[0]) == _norm_path(uni_paths[0])
+    ) else (1.0 if not leg_paths and not uni_paths else 0.0)
 
     return ShadowComparison(
         ok=True,
@@ -161,6 +200,9 @@ def compare_retrieval(
         unified_paths=uni_paths[:k],
         source_overlap=_jaccard(leg_paths, uni_paths),
         top_k_overlap=_overlap_at_k(leg_paths, uni_paths, k),
+        top1_agreement=top1,
+        top3_overlap=_overlap_at_k(leg_paths, uni_paths, 3),
+        top5_overlap=_overlap_at_k(leg_paths, uni_paths, 5),
         path_jaccard=_jaccard(leg_paths[:k], uni_paths[:k]),
         legacy_only_paths=leg_only[:k],
         unified_only_paths=uni_only[:k],
@@ -168,14 +210,17 @@ def compare_retrieval(
         unified_count=len(uni_paths),
         legacy_latency_ms=round(legacy_latency_ms, 2),
         unified_latency_ms=round(unified_latency_ms, 2),
+        shadow_overhead_ms=round(float(legacy_latency_ms) + float(unified_latency_ms), 2),
         legacy_ok=leg_ok,
         unified_ok=uni_ok,
         legacy_error=leg_err[:80],
         unified_error=uni_err[:80],
         primary_evidence_ratio_unified=round(primary_ratio, 3),
+        generated_summary_ratio_unified=round(generated_ratio, 3),
         duplicate_rate_unified=round(dup_rate, 3),
         truncated_unified=truncated,
         context_chars_unified=ctx_chars,
         permission_denied_unified=denied,
+        canonical_hit_unified=canonical_hit,
         notes=[],
     )

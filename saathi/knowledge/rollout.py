@@ -1,4 +1,4 @@
-"""M19.1 — Knowledge Service adoption rollout modes and configuration.
+"""M19.1/M19.2 — Knowledge Service adoption rollout modes and configuration.
 
 Reuses existing SAATHI_* environment conventions. Does not introduce a new
 feature-flag platform.
@@ -26,7 +26,7 @@ class RolloutMode(str, Enum):
 
 VALID_MODES = frozenset(m.value for m in RolloutMode)
 
-# Global default remains conservative for M19.1
+# Global default remains conservative for M19.1+
 ENV_GLOBAL = "SAATHI_KS_ROLLOUT"
 # Per-caller: SAATHI_KS_ROLLOUT_CODEBASE_MEMORY_SEARCH=shadow
 ENV_CALLER_PREFIX = "SAATHI_KS_ROLLOUT_"
@@ -40,6 +40,10 @@ CALLER_COMPAT_SEARCH = "compat_search"
 CALLER_MISSION_CONTEXT = "mission_context_prepare"
 CALLER_AUDIT_EVIDENCE = "audit_evidence_lookup"
 
+# M19.2 second-wave caller keys
+CALLER_CONTROL_CENTER_REPO = "control_center_repository_search"
+CALLER_REPAIR_CONTEXT = "repair_context_prepare"
+
 FIRST_WAVE_CALLERS = frozenset({
     CALLER_CODEBASE_MEMORY_SEARCH,
     CALLER_CODEBASE_MEMORY_SYMBOL,
@@ -49,6 +53,13 @@ FIRST_WAVE_CALLERS = frozenset({
     CALLER_MISSION_CONTEXT,
     CALLER_AUDIT_EVIDENCE,
 })
+
+SECOND_WAVE_CALLERS = frozenset({
+    CALLER_CONTROL_CENTER_REPO,
+    CALLER_REPAIR_CONTEXT,
+})
+
+KNOWN_CALLERS = FIRST_WAVE_CALLERS | SECOND_WAVE_CALLERS
 
 _lock = threading.RLock()
 _runtime_overrides: dict[str, RolloutMode] = {}
@@ -141,5 +152,7 @@ def rollout_snapshot() -> dict:
         "runtime_callers": overrides,
         "default": RolloutMode.LEGACY.value,
         "first_wave": sorted(FIRST_WAVE_CALLERS),
+        "second_wave": sorted(SECOND_WAVE_CALLERS),
+        "known_callers": sorted(KNOWN_CALLERS),
         "valid_modes": sorted(VALID_MODES),
     }

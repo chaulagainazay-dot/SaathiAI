@@ -21,6 +21,8 @@ canonical `saathi-codebase-memory`, provider-neutral memory contract,
 namespace isolation, health/degradation, write governance, Continuum remains
 **BLOCKED_LICENSE**.
 
+**M19.2 (Shadow Evaluation Campaign + second-wave KS adoption)** completed: campaign metrics, control_center repository facet (opt-in), repair_context_prepare; default legacy; TG/InsForge untouched. Not production-ready.
+
 **M19.1 (Knowledge Service adoption)** first-wave callers via adoption gateway; default rollout `legacy`; shadow/fallback; TG isolated. Not production-ready.
 
 **M19.0 (Unified Knowledge Service)** retrieval router + multi-repo context over M18.2.
