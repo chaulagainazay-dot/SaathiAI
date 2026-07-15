@@ -92,24 +92,72 @@ async def human_complete(request: Request):
 async def human_test(request: Request):
     """Click-to-test: enqueue a benign 'open a page' job and wait for the Mac
     Agent's result. Proves the whole VM→signed-queue→agent→Chrome loop live.
-    Token-gated (not whitelisted)."""
+    Token-gated (not whitelisted).
+
+    M17.24: records a governed browser intent first; raw human-browser enqueue
+    requires SAATHI_ALLOW_RAW_BROWSER=1 or an explicit approval_id.
+    """
     import asyncio
     import json as _json
     import os as _osenv
     from saathi.infrastructure.human_browser import HumanBrowserProxy, default_queue
+    from saathi.browser.guard import raw_browser_env_enabled
     raw = await request.body()
     body = _json.loads(raw) if raw else {}
     url = body.get("url", "https://example.com")
+    actor = body.get("actor") or "user:api"
+    approval_id = body.get("approval_id") or ""
+    # Governed intent (domain policy + risk + ledger)
+    try:
+        from saathi.browser.governed import default_governed_browser
+        rec = default_governed_browser().execute(
+            action="navigate",
+            url=url,
+            actor=actor,
+            approval_id=approval_id,
+            approval_pre_resolved=bool(approval_id),
+            request_source="api",
+            mission_id=body.get("mission_id") or "human_browser_test",
+            mission_run_id=body.get("mission_run_id") or "human-test",
+            environment=body.get("environment") or "dev",
+        )
+        if rec.status in ("denied", "failed") and rec.failure_category in (
+            "domain", "domain_not_allowlisted", "dangerous_or_unsupported_scheme",
+            "missing_actor", "mission_cancelled",
+        ):
+            return {
+                "ok": False,
+                "error": "governance_denied",
+                "status": rec.status,
+                "execution_id": rec.execution_id,
+                "failure_category": rec.failure_category,
+                "governed": True,
+            }
+        gov_exec_id = rec.execution_id
+    except Exception as e:
+        return {"ok": False, "error": f"governance_error: {e}", "governed": True}
+
+    if not raw_browser_env_enabled() and not approval_id:
+        return {
+            "ok": False,
+            "error": "raw_human_browser_disabled",
+            "execution_id": gov_exec_id,
+            "message": "Human-browser enqueue requires approval_id or "
+                       "SAATHI_ALLOW_RAW_BROWSER=1 after governed intent succeeds",
+            "governed": True,
+        }
+
     secret = _osenv.getenv("HUMAN_BROWSER_SECRET", "")
     if not secret:
-        return {"ok": False, "error": "HUMAN_BROWSER_SECRET not set on the VM"}
+        return {"ok": False, "error": "HUMAN_BROWSER_SECRET not set on the VM",
+                "execution_id": gov_exec_id, "governed": True}
     proxy = HumanBrowserProxy(default_queue, secret=secret, timeout=15)
     try:
         result = await asyncio.to_thread(proxy.execute, "open",
                                          profile=body.get("profile", ""), url=url)
-        return {"ok": True, "result": result}
+        return {"ok": True, "result": result, "execution_id": gov_exec_id, "governed": True}
     except Exception as e:
-        return {"ok": False, "error": str(e),
+        return {"ok": False, "error": str(e), "execution_id": gov_exec_id, "governed": True,
                 "hint": "start the Mac Agent: bash ~/SaathiAI/run_human_agent.sh"}
 
 

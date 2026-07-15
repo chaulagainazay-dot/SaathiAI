@@ -2000,6 +2000,55 @@
       ],
       "subsystem": "browser",
       "blocking": true
+    },
+    {
+      "id": "browser.dispatch_guard_present",
+      "targets": [
+        "tests/test_m17_24_browser_dispatch_governance.py::test_direct_low_level_import_blocked",
+        "tests/test_m17_24_browser_dispatch_governance.py::test_production_singleton_defaults_governed"
+      ],
+      "subsystem": "browser",
+      "blocking": true
+    },
+    {
+      "id": "browser.no_ungoverned_driver_imports",
+      "targets": [
+        "tests/test_m17_24_browser_dispatch_governance.py::test_direct_low_level_import_blocked",
+        "tests/test_m17_24_browser_dispatch_governance.py::test_subprocess_browser_outside_allowlist_detected"
+      ],
+      "subsystem": "browser",
+      "blocking": true
+    },
+    {
+      "id": "browser.direct_dispatch_blocked",
+      "targets": [
+        "tests/test_m17_24_browser_dispatch_governance.py::test_direct_dispatch_outside_gateway_blocked",
+        "tests/test_m17_24_browser_dispatch_governance.py::test_agent_tool_no_raw_driver",
+        "tests/test_m17_24_browser_dispatch_governance.py::test_legacy_debug_path_fails_closed"
+      ],
+      "subsystem": "browser",
+      "blocking": true
+    },
+    {
+      "id": "browser.context_attribution_enforced",
+      "targets": [
+        "tests/test_m17_24_browser_dispatch_governance.py::test_missing_actor_denied",
+        "tests/test_m17_24_browser_dispatch_governance.py::test_missing_mission_run_denied_for_agent",
+        "tests/test_m17_24_browser_dispatch_governance.py::test_api_cannot_forge_mission",
+        "tests/test_m17_24_browser_dispatch_governance.py::test_cancelled_mission_cannot_dispatch"
+      ],
+      "subsystem": "browser",
+      "blocking": true
+    },
+    {
+      "id": "browser.trading_isolation",
+      "targets": [
+        "tests/test_m17_24_browser_dispatch_governance.py::test_trading_classified_defers_to_guardian",
+        "tests/test_m17_24_browser_dispatch_governance.py::test_generic_browser_approval_not_trading",
+        "tests/test_m17_24_browser_dispatch_governance.py::test_trading_guardian_unengaged_for_browser"
+      ],
+      "subsystem": "browser",
+      "blocking": true
     }
   ]
 }

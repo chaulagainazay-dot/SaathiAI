@@ -10,6 +10,11 @@ binds to a non-loopback interface, and shuts the browser down with the session.
 Agents NEVER call this directly — the ComputerAdapter invokes it behind
 ComputerActionIntent → ExecutionGateway. When no browser binary is present the
 driver reports unavailable (dependency-blocked) and nothing is faked.
+
+M17.24: this module is on the low-level driver allowlist. Production product
+code outside the allowlist must not import LiveBrowserDriver (enforced by
+``saathi.browser.guard.scan_repository``). Prefer GovernedBrowser for browser
+family work; computer-agent live sessions remain gateway-routed via ComputerAdapter.
 """
 from __future__ import annotations
 

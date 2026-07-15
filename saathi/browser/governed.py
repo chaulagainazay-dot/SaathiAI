@@ -58,6 +58,7 @@ logger = logging.getLogger(__name__)
 
 _SECRET_RE = re.compile(
     r"(?i)(password|passwd|secret|token|cookie|authorization|bearer|api[_-]?key)"
+    r"(?:\s*[=:]\s*\S+)?"
 )
 
 # Workspace roots for downloads/uploads (tests override)
@@ -460,8 +461,19 @@ class BrowserAdapter:
         svc = self.service()
         try:
             if action in (BrowserAction.NAVIGATE, BrowserAction.OPEN):
-                page = svc.open(url, session=session_id or None,
-                                timeout=int((params or {}).get("timeout") or 30))
+                # Technical path after gateway authorization (never re-enter gateway)
+                open_direct = getattr(svc, "_open_direct", None)
+                if callable(open_direct):
+                    page = open_direct(
+                        url, session=session_id or None,
+                        timeout=int((params or {}).get("timeout") or 30),
+                    )
+                else:
+                    page = svc.open(
+                        url, session=session_id or None,
+                        timeout=int((params or {}).get("timeout") or 30),
+                        governed=False,
+                    )
                 # revalidate final URL if different
                 final = page.url or url
                 if final != url:
@@ -489,7 +501,11 @@ class BrowserAdapter:
                     nodes = svc.extract(url, selector)
                     text = " ".join(nodes) if isinstance(nodes, list) else str(nodes)
                 else:
-                    page = svc.open(url, session=session_id or None)
+                    open_direct = getattr(svc, "_open_direct", None)
+                    if callable(open_direct):
+                        page = open_direct(url, session=session_id or None)
+                    else:
+                        page = svc.open(url, session=session_id or None, governed=False)
                     text = page.text
                     title = page.title
                     final = page.url
@@ -639,10 +655,78 @@ class GovernedBrowser:
         approval_pre_resolved: bool = False,
         force_new: bool = False,
         idempotency_key: str = "",
+        mission_id: str = "browser",
+        mission_run_id: str = "",
+        mission_state: str = "",
+        request_source: str = "api",
+        correlation_id: str = "",
+        parent_run_id: str = "",
+        retry_attempt: int = 0,
+        retry_authorized: bool = True,
+        checkpoint_reference: str = "",
+        resume: bool = False,
+        schedule_enabled: bool = True,
+        trigger_trusted: bool = True,
+        require_mission: bool = False,
+        trading_classified: bool = False,
+        trading_authorized: bool = False,
+        expected_mission_id: str = "",
+        approval_expired: bool = False,
+        approval_valid: bool | None = None,
     ) -> ExecutionRecord:
-        """Governed browser action entry (authoritative)."""
+        """Governed browser action entry (authoritative, M17.24 context-bound)."""
         _bump("requested")
         act = parse_action(action)
+
+        # Context preconditions (fail closed) — M17.24
+        from saathi.browser.guard import BrowserGovernanceError, require_governed_context
+        try:
+            # Mission-bound sources must carry mission/run attribution
+            src = (request_source or "").lower()
+            need_mission = require_mission or src in (
+                "scheduler", "event_trigger", "mission", "pipeline", "agent", "control_center",
+            )
+            # Trading classification from action type
+            if act == BrowserAction.TRADE or act == BrowserAction.PAYMENT:
+                trading_classified = True
+            require_governed_context(
+                actor_id=actor,
+                mission_id=mission_id,
+                mission_run_id=mission_run_id,
+                require_mission=need_mission,
+                mission_state=mission_state,
+                cancelled=(mission_state or "").lower() in ("cancelled", "canceled", "killed"),
+                approval_id=approval_id,
+                approval_valid=approval_valid,
+                approval_expired=approval_expired,
+                trading_classified=trading_classified,
+                trading_authorized=trading_authorized,
+                retry_attempt=retry_attempt,
+                retry_authorized=retry_authorized,
+                checkpoint_reference=checkpoint_reference,
+                resume=resume,
+                schedule_enabled=schedule_enabled,
+                trigger_trusted=trigger_trusted,
+            )
+            # Ownership: cannot forge another mission's execution context
+            if expected_mission_id and mission_id and expected_mission_id != mission_id:
+                raise BrowserGovernanceError(
+                    "MISSION_FORGERY",
+                    "caller cannot forge another mission's browser execution context",
+                    details={
+                        "expected_mission_id": expected_mission_id,
+                        "mission_id": mission_id,
+                    },
+                )
+        except BrowserGovernanceError as e:
+            _bump("denied")
+            _bump("policy_denied")
+            intent = build_browser_intent(
+                action=act, url=url, actor=actor or "unknown",
+                session_id=session_id, environment=environment,
+                mission_id=mission_id or "browser",
+            )
+            return self._deny_record(intent, reason=e.code.lower(), kind=e.code.lower())
 
         # Prohibited — fail closed before gateway handler
         if act in PROHIBITED_ACTIONS:
@@ -702,7 +786,21 @@ class GovernedBrowser:
             environment=environment,
             allowed_hosts=list(self.allowed_hosts or DEFAULT_ALLOWED_HOST_SUFFIXES),
             approval_pre_resolved=approval_pre_resolved or bool(approval_id),
+            mission_id=mission_id or "browser",
         )
+        # Enrich metadata with M17.24 attribution (frozen ToolIntent → rebuild fields)
+        meta = dict(intent.metadata or {})
+        meta.update({
+            "request_source": request_source,
+            "mission_run_id": mission_run_id,
+            "parent_run_id": parent_run_id,
+            "retry_attempt": int(retry_attempt or 0),
+            "checkpoint_reference": checkpoint_reference,
+            "correlation_hint": correlation_id,
+        })
+        object.__setattr__(intent, "metadata", meta)
+        if correlation_id:
+            object.__setattr__(intent, "correlation_id", correlation_id)
         if idempotency_key:
             key = idempotency_key if len(idempotency_key) == 64 else hashlib.sha256(
                 idempotency_key.encode()

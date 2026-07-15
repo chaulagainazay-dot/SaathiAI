@@ -1613,3 +1613,37 @@ log); rollback point e7207dd.
 **Verdict: GOVERNED SCHEDULED GRAPH RECOVERY STAGING READY** — NOT production (production
 auto-scheduling, distributed/multi-region recovery, untrusted graph JSON, dynamic graph
 mutation, public webhooks, live trading all remain OUT).
+
+## M17.24 — eliminate residual ungoverned browser dispatch paths
+
+Autonomous-loop milestone (start/rollback f2f262f, M17.23). Closes every
+production-reachable path that could initiate browser activity without the
+canonical GovernedBrowser → ExecutionGateway boundary. KEY CONSTITUTIONAL FACTS:
+(1) ONE BROWSER ENTRY — GovernedBrowser.execute is authoritative; BrowserAdapter
+is technical-only after authorization. (2) PRODUCTION SINGLETON FAIL-CLOSED —
+BrowserService(allow_direct=False) routes open/extract/screenshot/download through
+governance; _open_direct is reserved for the adapter and injected test harnesses.
+(3) LEGACY TOOLS FAIL CLOSED — agent-browser CLI, AppleScript social post, and
+chatgpt_browser refuse raw actuation unless SAATHI_ALLOW_RAW_BROWSER=1 (never a
+production default); navigate-class agent tools may delegate into GovernedBrowser.
+(4) CONTEXT ATTRIBUTION — missing actor, missing mission/run when required,
+invalid/expired approval, cancelled/paused mission, disabled schedule, untrusted
+trigger, unauthorized retry, resume without checkpoint, and mission-id forgery
+all DENY before adapter dispatch. (5) STATIC GUARDRAIL — saathi/browser/guard.py
+AST-scans product code for forbidden playwright/selenium/LiveBrowserDriver imports
+and subprocess browser launch patterns outside an explicit allowlist; blocking
+critical checks browser.dispatch_guard_present, browser.no_ungoverned_driver_imports,
+browser.direct_dispatch_blocked, browser.context_attribution_enforced,
+browser.trading_isolation. (6) TRADING ISOLATION — trade/payment browser actions
+require Trading Guardian authorization; generic browser approval is insufficient;
+ordinary browse does not engage saathi.execution.trade; no live trading added.
+(7) HUMAN BROWSER — /api/v1/human/test records a governed intent first and only
+enqueues raw human-browser work with approval_id or raw env; claim/complete remain
+queue relays (no browser on the VM). (8) EVIDENCE — success and denial emit
+execution records + security timeline; secrets redacted (password/token/cookie
+values). TESTS: test_m17_24_browser_dispatch_governance.py (30). Docs:
+M17_24_BROWSER_DISPATCH_AUDIT.md, M17_24_ARCHITECTURE.md. Inventory: 20 paths,
+0 UNGOVERNED_BLOCKING remaining. Trading Guardian unengaged for non-trading work.
+**Verdict: ALL PRODUCTION BROWSER DISPATCH PATHS GOVERNED** — NOT production
+(full human-browser workflow migration, live interactive service-mode sessions,
+production host allowlists, and deploy remain OUT).

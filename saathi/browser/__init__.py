@@ -7,12 +7,15 @@ architecture as the Model Router: capability-based selection, an ordered
 fallback chain, and injectable backends so the whole thing is testable with
 fakes (no network, no browser).
 
-M17.23: side-effecting browser actions that need policy/approval should use
-``saathi.browser.governed.GovernedBrowser`` (ExecutionGateway boundary).
+M17.23/M17.24: production side-effecting browser actions MUST enter through
+``saathi.browser.governed.GovernedBrowser`` (ExecutionGateway boundary). The
+process-wide ``browser`` singleton has ``allow_direct=False`` and routes open
+through governance. Low-level drivers are allowlisted in ``guard.py``.
 """
 from .types import Page, SearchResult, Tier, BrowserError
 from .service import BrowserService, browser
 from .session import SessionManager, SessionState
+from .guard import BrowserGovernanceError
 
 __all__ = ["Page", "SearchResult", "Tier", "BrowserError", "BrowserService",
-           "browser", "SessionManager", "SessionState"]
+           "browser", "SessionManager", "SessionState", "BrowserGovernanceError"]

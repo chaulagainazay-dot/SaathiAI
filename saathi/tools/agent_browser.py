@@ -1,18 +1,32 @@
-"""agent_browser.py — agent-browser CLI integration for Baadar.
+"""agent_browser.py — agent-browser CLI integration (M17.24 governed).
 
-Wraps https://github.com/vercel-labs/agent-browser so Baadar can control
-a headless Chrome browser: navigate, click, type, screenshot, extract text,
-run JS, and do full AI-driven browser control.
+Raw subprocess control of headless Chrome is **disabled** for production tool
+dispatch. Legitimate browser work must enter through:
+
+    GovernedBrowser.execute → ExecutionGateway → BrowserAdapter
+
+Emergency local override (never production default)::
+
+    SAATHI_ALLOW_RAW_BROWSER=1
 """
 from __future__ import annotations
+
 import json
-import subprocess
 import shutil
+import subprocess
+
+from saathi.browser.guard import deny_raw_production_dispatch, raw_browser_env_enabled
 
 _BIN = shutil.which("agent-browser") or "/opt/homebrew/bin/agent-browser"
 
 
 def _run(*args: str, timeout: int = 30) -> dict:
+    """Low-level CLI runner — blocked unless raw env override is set."""
+    if not raw_browser_env_enabled():
+        return deny_raw_production_dispatch(
+            source="saathi.tools.agent_browser._run",
+            action=" ".join(args)[:80],
+        )
     cmd = [_BIN] + list(args)
     try:
         r = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
@@ -32,108 +46,125 @@ def _run(*args: str, timeout: int = 30) -> dict:
         return {"error": str(e)}
 
 
+def _governed(action: str, *, url: str = "", selector: str = "",
+              payload: dict | None = None, actor: str = "agent:tool") -> dict:
+    """Delegate to canonical GovernedBrowser boundary."""
+    try:
+        from saathi.browser.governed import default_governed_browser
+        gb = default_governed_browser()
+        rec = gb.execute(
+            action=action,
+            url=url,
+            selector=selector,
+            payload=payload,
+            actor=actor,
+            request_source="agent",
+            mission_id="agent_browser",
+            mission_run_id=f"ab-{action}",
+            environment="dev",
+        )
+        return {
+            "ok": rec.status == "succeeded",
+            "status": rec.status,
+            "execution_id": rec.execution_id,
+            "summary": rec.result_summary,
+            "failure_category": rec.failure_category,
+            "governed": True,
+        }
+    except Exception as e:
+        return {"error": "governance_error", "message": str(e)[:200], "governed": True}
+
+
 # ── Navigation ────────────────────────────────────────────────────────────────
 
 def ab_open(url: str = "") -> dict:
-    """Open browser and navigate to URL (leave url blank to just launch)."""
-    return _run("open", url) if url else _run("open")
+    """Open browser and navigate to URL via governed gateway."""
+    if not url:
+        return deny_raw_production_dispatch(source="ab_open", action="open")
+    return _governed("navigate", url=url)
 
 def ab_goto(url: str) -> dict:
-    """Navigate to a URL in the running browser session."""
-    return _run("open", url)
+    """Navigate to a URL via governed gateway."""
+    return _governed("navigate", url=url)
 
 def ab_close() -> dict:
-    """Close the current browser session."""
-    return _run("close")
+    """Close is a session lifecycle op — recorded as governed no-op fail-closed."""
+    return {
+        "ok": True,
+        "result": "session_close_acknowledged",
+        "governed": True,
+        "note": "raw agent-browser close disabled; no live driver session in production path",
+    }
 
 
 # ── Reading ───────────────────────────────────────────────────────────────────
 
 def ab_snapshot() -> dict:
-    """Get accessibility tree — best structured view for AI reasoning about a page."""
-    return _run("snapshot", timeout=15)
+    return deny_raw_production_dispatch(source="ab_snapshot", action="snapshot")
 
 def ab_get_text(selector: str) -> dict:
-    """Get visible text of element matching CSS selector."""
-    return _run("get", "text", selector)
+    return deny_raw_production_dispatch(source="ab_get_text", action=f"get_text:{selector}")
 
 def ab_get_url() -> dict:
-    """Get current page URL."""
-    return _run("get", "url")
+    return deny_raw_production_dispatch(source="ab_get_url", action="get_url")
 
 def ab_get_title() -> dict:
-    """Get current page title."""
-    return _run("get", "title")
+    return deny_raw_production_dispatch(source="ab_get_title", action="get_title")
 
 def ab_screenshot(path: str = "") -> dict:
-    """Take a screenshot. Optionally specify save path."""
-    return _run("screenshot", path) if path else _run("screenshot")
+    # Without URL, cannot form a governed intent — fail closed
+    if path and path.startswith("http"):
+        return _governed("screenshot", url=path)
+    return deny_raw_production_dispatch(source="ab_screenshot", action="screenshot")
 
 def ab_eval(js: str) -> dict:
-    """Execute JavaScript on the page and return result."""
-    return _run("eval", js, timeout=20)
+    """eval_js is a prohibited browser action — always fail closed."""
+    return _governed("eval_js", url="https://example.com/", payload={"js_digest": "redacted"})
 
 
 # ── Interaction ───────────────────────────────────────────────────────────────
 
 def ab_click(selector: str) -> dict:
-    """Click element by CSS selector."""
-    return _run("click", selector)
+    return deny_raw_production_dispatch(source="ab_click", action=f"click:{selector}")
 
 def ab_fill(selector: str, text: str) -> dict:
-    """Clear an input field and fill it with text."""
-    return _run("fill", selector, text)
+    return deny_raw_production_dispatch(source="ab_fill", action=f"fill:{selector}")
 
 def ab_type(selector: str, text: str) -> dict:
-    """Type text into element (without clearing first)."""
-    return _run("type", selector, text)
+    return deny_raw_production_dispatch(source="ab_type", action=f"type:{selector}")
 
 def ab_press(key: str) -> dict:
-    """Press a key: Enter, Tab, Escape, Control+a, etc."""
-    return _run("press", key)
+    return deny_raw_production_dispatch(source="ab_press", action=f"press:{key}")
 
 def ab_scroll(direction: str, pixels: str = "300") -> dict:
-    """Scroll page. direction: up | down | left | right"""
-    return _run("scroll", direction, pixels)
+    return deny_raw_production_dispatch(source="ab_scroll", action=f"scroll:{direction}")
 
 def ab_wait(selector_or_ms: str) -> dict:
-    """Wait for an element to appear, or wait N milliseconds."""
-    return _run("wait", selector_or_ms, timeout=20)
+    return deny_raw_production_dispatch(source="ab_wait", action=f"wait:{selector_or_ms}")
 
 
 # ── Semantic find ─────────────────────────────────────────────────────────────
 
 def ab_find_text(text: str, action: str = "click") -> dict:
-    """Find element by visible text and perform action (click / text / hover)."""
-    return _run("find", "text", text, action)
+    return deny_raw_production_dispatch(source="ab_find_text", action=f"find:{text}")
 
 def ab_find_role(role: str, name: str = "", action: str = "click") -> dict:
-    """Find element by ARIA role (button/link/input) optionally filtered by name."""
-    args = ["find", "role", role, action]
-    if name:
-        args += ["--name", name]
-    return _run(*args)
+    return deny_raw_production_dispatch(source="ab_find_role", action=f"role:{role}")
 
 
 # ── Batch & AI ────────────────────────────────────────────────────────────────
 
-def ab_batch(commands: list[str]) -> dict:
-    """Run multiple browser commands in one fast call.
-    commands: e.g. ["open https://example.com", "snapshot", "screenshot"]
-    """
-    if not commands:
-        return {"error": "empty commands list"}
-    return _run("batch", *commands, timeout=60)
+def ab_batch(commands: list) -> dict:
+    return deny_raw_production_dispatch(source="ab_batch", action="batch")
 
 def ab_ai_chat(instruction: str) -> dict:
-    """Control browser with natural language via agent-browser's built-in AI.
-    Example: 'Go to google.com, search IELTS tips, take a screenshot.'
-    """
-    return _run("chat", instruction, timeout=120)
-
-
-# ── Status ────────────────────────────────────────────────────────────────────
+    return deny_raw_production_dispatch(source="ab_ai_chat", action="ai_chat")
 
 def ab_status() -> dict:
-    """Check agent-browser health: Chrome, daemon, config."""
-    return _run("doctor", "--json", timeout=10)
+    return {
+        "ok": True,
+        "governed": True,
+        "raw_enabled": raw_browser_env_enabled(),
+        "bin": _BIN if raw_browser_env_enabled() else None,
+        "message": "agent-browser tools require GovernedBrowser; raw CLI disabled by default",
+    }

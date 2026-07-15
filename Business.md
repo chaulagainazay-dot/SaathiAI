@@ -77,7 +77,10 @@ independently reviewed — with every step auditable and every high-impact actio
 gated behind the owner's explicit approval. Value: more capability without loss
 of control. Agents cannot self-approve, cannot bypass the ExecutionGateway, and
 cannot widen their own permissions; money, deploys, and external sends stay
-manual. Runs are resumable and never silently exceed their budget.
+manual. Runs are resumable and never silently exceed their budget. Browser
+automation (M17.24) is included in that boundary: every production browser
+action requires an attributable actor and governed run context; raw browser
+drivers and CLI tools cannot be invoked as a silent shortcut.
 
 ## Voice OS (M12)
 

@@ -327,6 +327,19 @@ checks. Residual: default BrowserService.open ungoverned for compat; live
 interactive CDP paths deferred. Trading Guardian unengaged. Verdict:
 **GOVERNED BROWSER ACTIONS STAGING READY**.
 
+## M17.24 — Eliminate Residual Ungoverned Browser Dispatch Paths (DONE)
+Autonomous-loop milestone (start `f2f262f`). Inventory of all browser dispatch
+paths; production singleton `BrowserService(allow_direct=False)` defaults to
+gateway; raw agent-browser / AppleScript / ChatGPT browser fail closed (optional
+`SAATHI_ALLOW_RAW_BROWSER`); BrowserConnector production path governed; human
+`/api/v1/human/test` requires governed intent + approval/env; AST import/launch
+allowlist in `saathi/browser/guard.py`; context attribution (actor, mission/run,
+approval, schedule, trigger, retry, checkpoint, mission forgery, trading
+isolation); +5 blocking `browser.*` critical checks; 30 focused M17.24 tests.
+Trading Guardian unengaged for ordinary browse; trading-classified actions deny
+without TG auth. No live trading, no deploy, no push. Verdict:
+**ALL PRODUCTION BROWSER DISPATCH PATHS GOVERNED**.
+
 ## Blocked / deferred (need user action or larger scope)
 - authenticated browser / cloud connector workflow — needs a safe staging account.
 - native Finder/TextEdit actuation — macOS Accessibility (TCC) not granted.
