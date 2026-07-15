@@ -116,6 +116,12 @@
   registry tests; 20 blocking `registry.*` checks. Remaining: multi-host/NFS
   consensus (out of scope), live critical-check re-run in health poll (proxy
   only), richer quarantine retention UX.
+- Universal ExecutionGateway Phase 1: BUILT (M17.22). Durable execution records,
+  state machine, digest-bound approval, connector/CLI/local/MCP path through
+  `ExecutionGateway.submit`, evidence/security/ledger/CC/CEO integrations, 25
+  tests, 5 blocking `execution.*` checks. Remaining migration: browser, n8n,
+  LLM model gateway, Trading Guardian unification, multi-host federation,
+  production durable queue beyond local SQLite.
 - Memory conventions auto-learn dirt: FIXED (M17.18.1). `memory_reflector` no
   longer mutates curated `saathi/memory/conventions.md`; runtime notes go to
   `data/memory/learned_conventions.{md,jsonl}` (under gitignored `data/`). Agent

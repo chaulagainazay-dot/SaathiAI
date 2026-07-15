@@ -4,7 +4,7 @@
   "branch": "milestone/m7-security-engine",
   "loop_started_at": "2026-07-12",
   "initial_head": "28ce958",
-  "current_head": "HEAD after M17.21 (registry health cell); rollback = a276843 (M17.20 reapply)",
+  "current_head": "HEAD after M17.22 (universal ExecutionGateway Phase 1); rollback = 398d40e (M17.21)",
   "iterations_completed": 1,
   "iteration_limit": 1,
   "active_milestone": null,
@@ -13,7 +13,8 @@
     "M17.18.1 curated vs runtime memory conventions split",
     "M17.19 harness registry untrusted persistence hardening",
     "M17.20 multi-writer harness registry concurrency",
-    "M17.21 Control Center Registry Health cell (deterministic score/status; CC + CEO brief; 19 tests; +5 checks)"
+    "M17.21 Control Center Registry Health cell (deterministic score/status; CC + CEO brief; 19 tests; +5 checks)",
+    "M17.22 Universal ExecutionGateway Phase 1 (states/records/approval/idempotency/retry; connector path; evidence/ledger/CC/CEO; 25 tests; +5 checks)"
   ],
   "blocked_items": [
     "native Finder/TextEdit actuation",
@@ -22,18 +23,19 @@
     "staging deploy + live rollback drill"
   ],
   "unverified_items": [
-    "multi-host registry locking",
-    "live pytest re-run inside health() (inventory proxy only)",
+    "browser/n8n/LLM/trading migration onto ExecutionGateway",
+    "multi-host execution federation",
+    "production durable queue beyond local SQLite",
     "EXTERNAL alert transports",
     "PRODUCTION auto-scheduling"
   ],
   "manual_actions_required": [],
-  "last_full_suite": "full suite 1959 passed / 1 skipped / 0 failed; focused M17.21: 19; registry 18-20: 86; control center: 11",
-  "last_redteam": "M17.21 read-only observability; no trading surface; no secrets in health/diagnostics",
+  "last_full_suite": "full suite 1984 passed / 1 skipped / 0 failed; focused M17.22: 25; connectors+gateway regressions green",
+  "last_redteam": "M17.22 no trading surface; APPROVAL-002 single-use holds; secrets redacted in records/metrics",
   "last_release_check": "exit 0: storage/config/database/backup+restore/secret_scan green",
   "last_secret_scan": "clean (release-check strong_hits 0)",
-  "critical_manifest": "prior 209 + M17.21 5 registry.* (214 total)",
-  "milestone_verdict": "REGISTRY HEALTH CELL STAGING READY",
-  "stop_reason": "one bounded milestone completed (M17.21). Do not begin M17.22.",
-  "unrelated_untouched": "clean at commit"
+  "critical_manifest": "prior 214 + M17.22 5 execution.* (219 total)",
+  "milestone_verdict": "UNIVERSAL EXECUTION GATEWAY PHASE 1 STAGING READY",
+  "stop_reason": "one bounded milestone completed (M17.22). Do not begin M17.23.",
+  "unrelated_untouched": "Trading Guardian / saathi.execution.trade unchanged"
 }

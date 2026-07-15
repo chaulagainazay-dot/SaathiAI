@@ -1900,6 +1900,51 @@
       ],
       "subsystem": "application_harness",
       "blocking": true
+    },
+    {
+      "id": "execution.gateway_present",
+      "targets": [
+        "tests/test_m17_22_execution_gateway.py::test_gateway_reuse_singleton_api",
+        "tests/test_m17_22_execution_gateway.py::test_successful_execution"
+      ],
+      "subsystem": "execution",
+      "blocking": true
+    },
+    {
+      "id": "execution.single_boundary",
+      "targets": [
+        "tests/test_m17_22_execution_gateway.py::test_state_transitions_valid_and_invalid",
+        "tests/test_m17_22_execution_gateway.py::test_connector_path_sets_gateway_ref"
+      ],
+      "subsystem": "execution",
+      "blocking": true
+    },
+    {
+      "id": "execution.approval_enforced",
+      "targets": [
+        "tests/test_m17_22_execution_gateway.py::test_approval_required_and_approve",
+        "tests/test_m17_22_execution_gateway.py::test_approval_binds_to_digest"
+      ],
+      "subsystem": "execution",
+      "blocking": true
+    },
+    {
+      "id": "execution.idempotent",
+      "targets": [
+        "tests/test_m17_22_execution_gateway.py::test_idempotency_same_toolintent",
+        "tests/test_m17_22_execution_gateway.py::test_duplicate_toolintent_digest"
+      ],
+      "subsystem": "execution",
+      "blocking": true
+    },
+    {
+      "id": "execution.evidence_generated",
+      "targets": [
+        "tests/test_m17_22_execution_gateway.py::test_evidence_generated",
+        "tests/test_m17_22_execution_gateway.py::test_no_secret_leakage"
+      ],
+      "subsystem": "execution",
+      "blocking": true
     }
   ]
 }

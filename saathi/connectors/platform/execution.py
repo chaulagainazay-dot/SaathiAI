@@ -1,10 +1,8 @@
-"""M15 connector execution engine — the sole execution boundary.
+"""M15 connector execution engine — substrate under the universal gateway.
 
-Every connector action is routed through the SaathiOS ExecutionGateway
-(receive → validate → idempotency → authorize → classify_risk → check_approval)
-BEFORE any adapter runs. On top of the gateway's governance pass, the connector
-layer enforces the connector-native guarantees the gateway skeleton leaves to
-the substrate:
+M17.22: every connector / CLI / local / MCP action enters the SaathiOS
+ExecutionGateway.submit boundary first. The connector layer remains the
+substrate that enforces connector-native guarantees:
 
   * connection lifecycle: only executable states may run
   * risk model: a tool can never downgrade below its capability floor
@@ -15,7 +13,7 @@ the substrate:
   * failure classification: uncertain / non-idempotent side effects NEVER auto-retry
   * evidence + provenance recorded for every attempt; secrets never surface
 
-No connector may bypass this path. No agent may bypass connector policy.
+No connector may bypass the gateway path. No agent may bypass connector policy.
 """
 from __future__ import annotations
 
@@ -34,15 +32,16 @@ from saathi.connectors.platform.credentials import (
     CredentialRef, resolve_secret, has_secret, SecretUnavailable,
 )
 
-# gateway (governance pass) — optional import guard so the engine still runs
-# if the execution package is refactored; the connector-native checks below are
-# the hard guarantee either way.
+# Universal ExecutionGateway (M17.22) — optional import guard so the engine
+# still runs if the execution package is refactored; connector-native checks
+# remain the hard substrate either way.
 try:
     from saathi.execution.toolintent import (
-        builder, ActorType, RiskLevel, ApprovalLevel,
+        builder, ActorType, RiskLevel, ApprovalLevel, BusinessUnit,
     )
     from saathi.execution.gateway import ExecutionGateway, ExecutionContext
     from saathi.execution.queue.memory import MemoryQueue
+    from saathi.execution.record import tool_intent_digest
     _GATEWAY_OK = True
 except Exception:  # pragma: no cover
     _GATEWAY_OK = False
@@ -78,14 +77,32 @@ class ExecutionEngine:
         self._gw = None
         if _GATEWAY_OK:
             try:
-                self._gw = ExecutionGateway(MemoryQueue())
+                from pathlib import Path
+                from saathi.execution.store import ExecutionStore, DEFAULT_DB
+                from saathi.execution.universal import UniversalBoundary
+                # Keep gateway records co-located with the connector store so
+                # tests (temp DBs) stay isolated; production uses default store.
+                try:
+                    cpath = Path(self.store.db_path)
+                    egw_path = cpath.with_name(cpath.stem + ".egw.db")
+                except Exception:
+                    egw_path = DEFAULT_DB
+                boundary = UniversalBoundary(
+                    store=ExecutionStore(egw_path),
+                    auto_integrations=True,
+                )
+                self._gw = ExecutionGateway(MemoryQueue(), boundary=boundary)
             except Exception:  # pragma: no cover
-                self._gw = None
+                try:
+                    self._gw = ExecutionGateway(MemoryQueue())
+                except Exception:
+                    self._gw = None
         from saathi.connectors.platform.enterprise.resilience import BreakerRegistry
         self._breakers = BreakerRegistry()
 
     # ── public API ──────────────────────────────────────────────────────────
     def execute(self, req: ExecRequest) -> ToolResult:
+        """Execute via universal ExecutionGateway (M17.22) → connector substrate."""
         tool = R.get_tool(req.tool_id)
         if tool is None:
             return self._fail(req, FailureClass.UNSUPPORTED, f"unknown tool {req.tool_id}")
@@ -94,33 +111,33 @@ class ExecutionEngine:
             return self._fail(req, FailureClass.UNSUPPORTED,
                               f"no connector for {req.tool_id}")
 
-        risk = tool.risk_class
-        input_hash = normalized_input_hash(req.tool_id, req.account_id, req.args)
+        # Prefer universal gateway path when available
+        if self._gw is not None and _GATEWAY_OK:
+            try:
+                return self._execute_via_gateway(req, tool, conn)
+            except Exception as e:
+                self.store.event("connector.gateway_submit_error",
+                                 {"error": self._redact(str(e)), "tool": req.tool_id})
+                # fall through to substrate-only path (still governed checks below)
 
-        # 1) idempotency replay — same key already completed → return stored
-        idem = req.idempotency_key
-        if idem:
-            prior = self.store.execution_by_idempotency(idem)
-            if prior:
-                self.store.event("connector.idempotent_replay",
-                                 {"tool": req.tool_id, "key": idem})
-                return self._replay(prior)
+        return self._execute_substrate(req, tool, conn, gw_ref="gateway-unavailable")
 
-        # 2) connection lifecycle gate (skip for local no-auth connectors)
+    def _preflight_substrate(self, req: ExecRequest, tool, conn) -> Optional[ToolResult]:
+        """Lifecycle / ownership / scope / circuit before approval or adapter.
+
+        Keeps fail-closed ordering: policy denials surface as blocked even when
+        the action would also require approval.
+        """
         if not conn.local:
             acct = self.store.get_account(req.account_id) if req.account_id else None
             if not acct:
                 return self._fail(req, FailureClass.AUTH,
                                   "no connected account for connector")
-            # ownership boundary: the caller must OWN the account. Enforced here
-            # (not only at the API) so agents/funnel/direct callers cannot execute
-            # on another user's account. Cross-user access is blocked.
             if acct.get("owner") != req.owner:
                 self.store.event("connector.cross_owner_blocked",
                                  {"account": req.account_id, "caller": req.owner})
                 return self._blocked(req, FailureClass.AUTHZ,
                                      "account not owned by caller")
-            # account connector must match the requested tool's connector
             if acct.get("connector_id") != conn.connector_id:
                 return self._blocked(req, FailureClass.AUTHZ,
                                      "account/connector mismatch")
@@ -131,7 +148,6 @@ class ExecutionEngine:
                 return self._fail(req, self._state_failure(state),
                                   f"connection not executable ({state.value})")
 
-        # 2b) canonical scope + permission engine (exact scope match, reason codes)
         acct_row = None
         if not conn.local:
             acct_row = self.store.get_account(req.account_id) if req.account_id else None
@@ -142,18 +158,204 @@ class ExecutionEngine:
             return self._blocked(req, FailureClass.POLICY,
                                  f"scope/permission denied: {decision.reason_code}")
 
-        # 2c) circuit breaker (scoped connector:account:operation)
         breaker = self._breakers.get(connector_id=conn.connector_id,
                                      account_id=req.account_id, operation=req.tool_id)
         if not breaker.allow():
             return self._fail(req, FailureClass.UNAVAILABLE,
                               "circuit open for connector/account/operation",
                               extra={"circuit": "open"})
+        return None
 
-        # 3) risk / approval binding
+    def _execute_via_gateway(self, req: ExecRequest, tool, conn) -> ToolResult:
+        """Outer boundary: ToolIntent → ExecutionGateway.submit → substrate handler."""
+        risk = tool.risk_class
+        input_hash = normalized_input_hash(req.tool_id, req.account_id, req.args)
+        needs_appr = int(risk) >= int(APPROVAL_THRESHOLD) or tool.requires_approval
+        family = "mcp" if (conn.provider or "").lower() == "mcp" else (
+            "cli" if (conn.provider or "").lower() in ("cli", "local-cli") else (
+                "local" if conn.local else "connector"))
+
+        # Preflight before approval so scope/ownership denials stay blocked.
+        pre = self._preflight_substrate(req, tool, conn)
+        if pre is not None:
+            return pre
+
+        # Connector-native approval (exact-action binding) — reused, not replaced.
+        # Invalid / used / missing approval always short-circuits (single-use).
+        connector_appr = None
+        if needs_appr:
+            connector_appr = self._resolve_approval(
+                req, risk, input_hash, int(risk) >= int(MANUAL_ONLY))
+            if connector_appr is None:
+                # Missing, used, expired, or mismatched approval — single-use
+                # and exact-action binding stay connector-native.
+                intent = self._build_intent(req, tool, risk, family, require_approval=True)
+                rec = self._gw.submit(intent, execute=True)  # stops at approval_required
+                return ToolResult(
+                    status="approval_required", connector_id=conn.connector_id,
+                    tool_id=tool.tool_id, capability_id=tool.capability_id,
+                    started_at=_now_iso(), completed_at=_now_iso(),
+                    errors=[{"class": FailureClass.APPROVAL,
+                             "message": f"risk {int(risk)} action requires bound approval",
+                             "input_hash": input_hash,
+                             "manual_only": int(risk) >= int(MANUAL_ONLY),
+                             "execution_id": rec.execution_id,
+                             "digest": rec.tool_intent_digest}],
+                    provenance={"risk": int(risk), "input_hash": input_hash,
+                                "gateway_ref": rec.execution_id,
+                                "gateway_status": rec.status})
+
+        # Auto-approve at gateway when connector approval already resolved (or not needed)
+        pre_resolved = bool(connector_appr) or not needs_appr
+        intent = self._build_intent(
+            req, tool, risk, family,
+            require_approval=not pre_resolved,
+            approval_pre_resolved=pre_resolved and needs_appr,
+        )
+
+        captured: dict = {}
+
+        def _handler(intent_obj, rec):
+            # skip preflight (done) + approval (done); still run adapter path
+            result = self._execute_substrate(
+                req, tool, conn, gw_ref=rec.execution_id,
+                skip_idempotency=False, skip_approval=True,
+                skip_preflight=True)
+            captured["result"] = result
+            st = result.status
+            if st in ("success", "partial"):
+                return {"status": "succeeded",
+                        "summary": f"{tool.tool_id}:{st}"}
+            if st == "approval_required":
+                return {"status": "failed", "summary": "approval_required",
+                        "failure_category": "approval", "retryable": False}
+            if st == "blocked":
+                return {"status": "failed", "summary": (result.errors or [{}])[0].get("message", "blocked"),
+                        "failure_category": "permission", "retryable": False}
+            err = (result.errors or [{}])[0]
+            return {
+                "status": "failed",
+                "summary": err.get("message", st),
+                "failure_category": err.get("class", "execution"),
+                "retryable": bool(result.retryable),
+            }
+
+        rec = self._gw.submit(
+            intent,
+            approval_id="",
+            handler=_handler,
+            execute=True,
+        )
+        if "result" in captured:
+            r = captured["result"]
+            r.provenance = {**(r.provenance or {}),
+                            "gateway_ref": rec.execution_id,
+                            "gateway_status": rec.status,
+                            "tool_intent_digest": rec.tool_intent_digest}
+            return r
+        # Gateway terminal without handler (denied/expired/approval/idempotent replay)
+        if rec.status == "approval_required":
+            return ToolResult(
+                status="approval_required", connector_id=conn.connector_id,
+                tool_id=tool.tool_id, capability_id=tool.capability_id,
+                started_at=_now_iso(), completed_at=_now_iso(),
+                errors=[{"class": FailureClass.APPROVAL,
+                         "message": rec.result_summary or "approval required",
+                         "input_hash": input_hash}],
+                provenance={"gateway_ref": rec.execution_id,
+                            "gateway_status": rec.status,
+                            "tool_intent_digest": rec.tool_intent_digest})
+        if rec.status == "succeeded":
+            return ToolResult(
+                status="success", connector_id=conn.connector_id,
+                tool_id=tool.tool_id, capability_id=tool.capability_id,
+                execution_id=rec.execution_id,
+                started_at=_now_iso(), completed_at=_now_iso(),
+                provenance={"gateway_ref": rec.execution_id,
+                            "gateway_status": rec.status,
+                            "tool_intent_digest": rec.tool_intent_digest,
+                            "replayed": True})
+        return ToolResult(
+            status="failed" if rec.status != "denied" else "blocked",
+            connector_id=conn.connector_id, tool_id=tool.tool_id,
+            capability_id=tool.capability_id, execution_id=rec.execution_id,
+            started_at=_now_iso(), completed_at=_now_iso(),
+            errors=[{"class": rec.failure_category or FailureClass.INTERNAL,
+                     "message": rec.result_summary or rec.status}],
+            retryable=bool(rec.retryable),
+            provenance={"gateway_ref": rec.execution_id,
+                        "gateway_status": rec.status,
+                        "tool_intent_digest": rec.tool_intent_digest})
+
+    def _build_intent(self, req, tool, risk, family: str, *, require_approval: bool,
+                      approval_pre_resolved: bool = False):
+        level_name = _RISK_TO_GATEWAY_LEVEL.get(risk, "MEDIUM")
+        appr = ApprovalLevel.L4 if require_approval else ApprovalLevel.L1
+        b = (builder()
+             .actor(req.owner, ActorType.AGENT if req.actor_type == "agent"
+                    else ActorType.USER)
+             .mission(f"connector:{tool.tool_id}")
+             .capability(tool.capability_id or tool.tool_id, tool.connector_id, tool.tool_id)
+             .parameters(dict(req.args or {}))
+             .reason(f"connector exec {tool.tool_id}")
+             .risk(RiskLevel[level_name], appr)
+             .metadata({
+                 "family": family,
+                 "target": req.target or "",
+                 "account_id": req.account_id or "",
+                 "environment": req.environment,
+                 "require_approval": require_approval,
+                 "approval_pre_resolved": approval_pre_resolved,
+             }))
+        import hashlib
+        import uuid as _uuid
+        if req.idempotency_key:
+            # ToolIntent idempotency_key must be 64-char hex; hash arbitrary keys
+            key = req.idempotency_key
+            if len(key) != 64:
+                key = hashlib.sha256(key.encode()).hexdigest()
+            b.data["idempotency_key"] = key
+        else:
+            # No caller key → unique attempt id so terminal success is not
+            # auto-replayed (connector single-use approval + re-run semantics).
+            # Digest still binds approval for the same action content.
+            b.data["idempotency_key"] = hashlib.sha256(
+                f"attempt:{_uuid.uuid4().hex}".encode()
+            ).hexdigest()
+        return b.build()
+
+    def _execute_substrate(self, req: ExecRequest, tool, conn, *, gw_ref: str,
+                           skip_idempotency: bool = False,
+                           skip_approval: bool = False,
+                           skip_preflight: bool = False) -> ToolResult:
+        """Connector-native checks + adapter invoke (substrate under the gateway)."""
+        risk = tool.risk_class
+        input_hash = normalized_input_hash(req.tool_id, req.account_id, req.args)
+
+        # 1) idempotency replay — same key already completed → return stored
+        idem = req.idempotency_key
+        if idem and not skip_idempotency:
+            prior = self.store.execution_by_idempotency(idem)
+            if prior:
+                self.store.event("connector.idempotent_replay",
+                                 {"tool": req.tool_id, "key": idem})
+                return self._replay(prior)
+
+        # 2) preflight (lifecycle / scope / circuit) unless already done
+        breaker = self._breakers.get(connector_id=conn.connector_id,
+                                     account_id=req.account_id, operation=req.tool_id)
+        if not skip_preflight:
+            pre = self._preflight_substrate(req, tool, conn)
+            if pre is not None:
+                return pre
+        # re-fetch breaker after preflight (same instance)
+        breaker = self._breakers.get(connector_id=conn.connector_id,
+                                     account_id=req.account_id, operation=req.tool_id)
+
+        # 3) risk / approval binding (skipped when gateway already enforced)
         needs_approval = int(risk) >= int(APPROVAL_THRESHOLD) or tool.requires_approval
         manual_only = int(risk) >= int(MANUAL_ONLY)
-        if needs_approval:
+        if needs_approval and not skip_approval:
             appr = self._resolve_approval(req, risk, input_hash, manual_only)
             if appr is None:
                 return ToolResult(
@@ -163,10 +365,13 @@ class ExecutionEngine:
                     errors=[{"class": FailureClass.APPROVAL,
                              "message": f"risk {int(risk)} action requires bound approval",
                              "input_hash": input_hash, "manual_only": manual_only}],
-                    provenance={"risk": int(risk), "input_hash": input_hash})
+                    provenance={"risk": int(risk), "input_hash": input_hash,
+                                "gateway_ref": gw_ref})
 
-        # 4) governance pass through ExecutionGateway (records decision states)
-        gw_ref = self._governed(req, tool, risk)
+        # 4) legacy governance pass retained for audit when not via submit
+        if gw_ref in ("gateway-unavailable", "gateway-error") or not str(gw_ref).startswith("egw"):
+            if gw_ref in ("gateway-unavailable",) or not self._gw:
+                gw_ref = self._governed(req, tool, risk) or gw_ref
 
         # 5) rate-limit bucket
         rl = self._rate_check(conn.rate_limit_policy, tool.rate_limit_bucket or conn.connector_id)
@@ -179,7 +384,7 @@ class ExecutionEngine:
                               retryable=True, rate_limit=rl,
                               provenance={"gateway_ref": gw_ref})
 
-        # 6) execute via adapter (secret resolved in-process only, never stored)
+        # 6) execute via adapter
         adapter = R.get_adapter(conn.connector_id)
         if adapter is None or not adapter.available():
             return self._fail(req, FailureClass.UNAVAILABLE,
@@ -193,14 +398,11 @@ class ExecutionEngine:
                                      args=req.args, secret_getter=secret_getter)
         except SecretUnavailable as e:
             return self._fail(req, FailureClass.SECRET, str(e))
-        except Exception as e:  # adapter crash → internal, redacted
+        except Exception as e:
             return self._fail(req, FailureClass.INTERNAL, self._redact(str(e)))
 
-        # 7) classify + retry policy (uncertain / non-idempotent never retried)
+        # 7) classify + retry policy
         result = self._finalize(req, tool, conn, result, input_hash, gw_ref)
-
-        # 7b) feed the circuit breaker (provider_unavailable/timeout count as
-        # failures; uncertain does NOT trip the breaker — it needs reconciliation)
         breaker.record(success=result.status in ("success", "partial"))
 
         # 8) consume single-use approval + persist execution + evidence

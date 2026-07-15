@@ -166,6 +166,23 @@ class CEOService:
         except Exception:
             pass
 
+        # M17.22 execution gateway — only failures / retries / approval backlog / latency
+        try:
+            from saathi.execution.universal import default_boundary
+            es = default_boundary().ceo_summary()
+            if es and es.get("include_in_ceo_brief"):
+                add(
+                    "Execution",
+                    f"failed={es.get('failed', 0)} retries={es.get('retries', 0)} "
+                    f"approval_backlog={es.get('approval_backlog', 0)} "
+                    f"avg_runtime_s={es.get('average_runtime_sec', 0)} "
+                    f"running={es.get('running', 0)} denied={es.get('denied', 0)}",
+                    EvidenceTier.OBSERVED.value,
+                    ["execution.gateway.metrics"],
+                )
+        except Exception:
+            pass
+
         brief = {"owner": owner, "generated_at": time.time(),
                 "items": items, "sections": sorted({i["section"] for i in items})}
         if persist:

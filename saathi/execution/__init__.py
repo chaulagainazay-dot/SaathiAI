@@ -61,6 +61,17 @@ from saathi.execution.state import (
     StateTransition,
     StateHistory,
 )
+# M17.22 universal boundary surface
+from saathi.execution.execution_state import (
+    ExecutionState,
+    TERMINAL_STATES,
+    assert_transition,
+    can_transition,
+    is_terminal,
+)
+from saathi.execution.record import ExecutionRecord, tool_intent_digest, safe_summary
+from saathi.execution.store import ExecutionStore, default_store
+from saathi.execution.universal import UniversalBoundary, default_boundary
 from saathi.execution.errors import (
     ExecutionError,
     ErrorSeverity,
@@ -109,6 +120,19 @@ __all__ = [
     "ApprovalDecision",
     "StateTransition",
     "StateHistory",
+    # M17.22 universal boundary
+    "ExecutionState",
+    "TERMINAL_STATES",
+    "assert_transition",
+    "can_transition",
+    "is_terminal",
+    "ExecutionRecord",
+    "tool_intent_digest",
+    "safe_summary",
+    "ExecutionStore",
+    "default_store",
+    "UniversalBoundary",
+    "default_boundary",
     # Errors
     "ExecutionError",
     "ErrorSeverity",

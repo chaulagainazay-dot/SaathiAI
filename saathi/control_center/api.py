@@ -70,6 +70,12 @@ def registry_diagnostics(request: Request):
     return reg.health_diagnostics()
 
 
+@router.get("/execution")
+def execution_gateway(request: Request):
+    """M17.22 ExecutionGateway metrics cell (read-only, no secrets)."""
+    return ControlCenterAggregator(_user(request)).execution_gateway().to_dict()
+
+
 @router.get("/timeline")
 def timeline(request: Request, limit: int = 25):
     return ControlCenterAggregator(_user(request)).recent_events(limit=limit).to_dict()

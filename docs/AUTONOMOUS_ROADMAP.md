@@ -305,6 +305,18 @@ CEO Daily Brief only when unhealthy; safe diagnostics API; 5 blocking critical
 checks; 19 focused tests. No second dashboard/registry. Trading Guardian
 unengaged. Verdict: **REGISTRY HEALTH CELL STAGING READY**.
 
+## M17.22 — Universal ExecutionGateway Phase 1 (DONE)
+Autonomous-loop milestone (start `398d40e`). One authoritative execution
+boundary: ToolIntent → validation → permission → risk → approval →
+ExecutionGateway.submit → connector/CLI/local/MCP handler → evidence →
+security event → run ledger → Control Center + gated CEO brief. Deterministic
+states (terminal-immutable), durable ExecutionRecord, digest-bound approval,
+idempotency + restart recovery, M17 retry schedule, +5 `execution.*` critical
+checks, 25 focused tests. Connector substrate reuses existing approval engine
+(no second gateway/queue/approval system). Trading Guardian unchanged. Browser /
+n8n / LLM / trading migration deferred. Verdict: **UNIVERSAL EXECUTION GATEWAY
+PHASE 1 STAGING READY**.
+
 ## Blocked / deferred (need user action or larger scope)
 - authenticated browser / cloud connector workflow — needs a safe staging account.
 - native Finder/TextEdit actuation — macOS Accessibility (TCC) not granted.

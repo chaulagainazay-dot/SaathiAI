@@ -157,6 +157,25 @@ class ControlCenterAggregator:
             return registry.health()
         return guarded("application_harness.registry_health", _rh)
 
+    def execution_gateway(self) -> Cell:
+        """M17.22 ExecutionGateway metrics cell (running/queued/succeeded/failed…)."""
+        def _eg():
+            from saathi.execution.universal import default_boundary
+            m = default_boundary().metrics()
+            return {
+                "running": m.get("running", 0),
+                "queued": m.get("queued", 0),
+                "succeeded": m.get("succeeded", 0),
+                "failed": m.get("failed", 0),
+                "denied": m.get("denied", 0),
+                "approval_required": m.get("approval_required", 0),
+                "average_runtime_sec": m.get("average_runtime_sec", 0),
+                "retry_count": m.get("retry_count", 0),
+                "recent_failures": m.get("recent_failures") or [],
+                "by_status": m.get("by_status") or {},
+            }
+        return guarded("execution.gateway", _eg)
+
     def harnesses(self) -> Cell:
         """M17.3/M17.4 application-harness platform state (registry + discovery)
         plus the M17.9 durable run-ledger read model (active runs, heartbeats,
@@ -244,7 +263,8 @@ class ControlCenterAggregator:
         events = self.recent_events(limit=15)
         harn = self.harnesses()
         reg_h = self.registry_health()
-        attention = self._attention(sec, appr, rel, health, harn, reg_h)
+        egw = self.execution_gateway()
+        attention = self._attention(sec, appr, rel, health, harn, reg_h, egw)
         return {
             "owner": self.owner,
             "generated_at": _now(),
@@ -255,17 +275,43 @@ class ControlCenterAggregator:
             "connector_metrics": metrics.to_dict(),
             "recent_timeline": events.to_dict(),
             "registry_health": reg_h.to_dict(),
+            "execution_gateway": egw.to_dict(),
             "requires_attention": attention,
             "degraded_sources": [c.source for c in (
-                health, sec, appr, rel, metrics, events, reg_h)
+                health, sec, appr, rel, metrics, events, reg_h, egw)
                                  if c.status != "ok"],
         }
 
     def _attention(self, sec: Cell, appr: Cell, rel: Cell, health: Cell,
                    harn: Cell | None = None,
-                   reg_h: Cell | None = None) -> list[dict]:
+                   reg_h: Cell | None = None,
+                   egw: Cell | None = None) -> list[dict]:
         """Rank what needs the user NOW. Real, actionable, honest."""
         items = []
+        # M17.22 execution gateway (failures / approval backlog / high latency)
+        if egw is not None and egw.status == "ok" and egw.value:
+            ev = egw.value
+            if (ev.get("failed") or 0) > 0:
+                items.append({
+                    "severity": "high", "kind": "execution_failed",
+                    "message": f"{ev.get('failed')} execution(s) failed "
+                               f"(retries={ev.get('retry_count', 0)})",
+                    "link": "/control/execution",
+                })
+            if (ev.get("approval_required") or 0) > 0:
+                items.append({
+                    "severity": "medium", "kind": "execution_approval",
+                    "message": f"{ev.get('approval_required')} execution(s) "
+                               f"awaiting approval",
+                    "link": "/control/execution",
+                })
+            if float(ev.get("average_runtime_sec") or 0) >= 30.0:
+                items.append({
+                    "severity": "medium", "kind": "execution_latency",
+                    "message": f"avg execution runtime "
+                               f"{ev.get('average_runtime_sec')}s",
+                    "link": "/control/execution",
+                })
         # M17.21 registry health alerts (dedupe by kind; no payload)
         if reg_h is not None and reg_h.status == "ok" and reg_h.value:
             rh = reg_h.value

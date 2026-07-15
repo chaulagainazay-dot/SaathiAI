@@ -1,8 +1,18 @@
-"""ExecutionGateway: Single authority for all external actions."""
+"""ExecutionGateway: Single authority for all external actions.
+
+M17.22 Phase 1 completes the *universal* boundary:
+
+    ToolIntent → Validation → Permission → Risk → Approval →
+    ExecutionGateway.submit → Handler (connector/cli/local/mcp) →
+    Evidence → Security Event → Run Ledger → CEO Metrics
+
+Legacy step methods (receive_intent / validate_intent / …) remain for
+backward-compatible governance passes. New callers should use ``submit``.
+"""
 
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, Callable
 import asyncio
 import concurrent.futures
 import inspect
@@ -85,11 +95,89 @@ class ExecutionGateway:
     8. Every attempt produces Evidence
     9. Connector output is untrusted
     10. Business-unit isolation mandatory
+
+    M17.22: use :meth:`submit` for the durable universal boundary (connector,
+    CLI, local, MCP). Trading Guardian / browser / n8n / LLM remain future
+    migration work and are not claimed by Phase 1.
     """
 
-    def __init__(self, queue: ExecutionQueue):
+    def __init__(self, queue: ExecutionQueue | None = None, *, boundary=None):
+        # queue may be None when only the M17.22 submit path is used
+        if queue is None:
+            from saathi.execution.queue.memory import MemoryQueue
+            queue = MemoryQueue()
         self.queue = queue
         self.audit_trails: Dict[str, AuditTrail] = {}
+        self._boundary = boundary  # lazy UniversalBoundary
+
+    # ── M17.22 universal boundary ─────────────────────────────────────────
+    def _ub(self):
+        if self._boundary is None:
+            from saathi.execution.universal import default_boundary
+            self._boundary = default_boundary()
+        return self._boundary
+
+    def submit(
+        self,
+        intent: ToolIntent,
+        *,
+        approval_id: str = "",
+        handler: Optional[Callable] = None,
+        execute: bool = True,
+        force_new: bool = False,
+    ):
+        """Authoritative entry: ToolIntent → durable ExecutionRecord.
+
+        All connector / CLI / local / MCP actions should enter here.
+        """
+        return self._ub().submit(
+            intent,
+            approval_id=approval_id,
+            handler=handler,
+            execute=execute,
+            force_new=force_new,
+        )
+
+    def cancel_execution(self, execution_id: str, *, reason: str = "cancelled"):
+        return self._ub().cancel(execution_id, reason=reason)
+
+    def expire_execution(self, execution_id: str, *, reason: str = "expired"):
+        return self._ub().expire(execution_id, reason=reason)
+
+    def approve_execution(
+        self,
+        execution_id: str,
+        *,
+        approval_id: str = "",
+        execute: bool = True,
+        handler=None,
+        intent: ToolIntent | None = None,
+    ):
+        return self._ub().approve(
+            execution_id,
+            approval_id=approval_id,
+            execute=execute,
+            handler=handler,
+            intent=intent,
+        )
+
+    def retry_execution(self, execution_id: str, *, intent: ToolIntent, handler=None):
+        return self._ub().retry(execution_id, intent=intent, handler=handler)
+
+    def execution_metrics(self, **kwargs) -> dict:
+        return self._ub().metrics(**kwargs)
+
+    def ceo_execution_summary(self, **kwargs):
+        return self._ub().ceo_summary(**kwargs)
+
+    def recover_after_restart(self, **kwargs):
+        return self._ub().recover_after_restart(**kwargs)
+
+    def register_handler(self, family: str, handler) -> None:
+        self._ub().register_handler(family, handler)
+
+    def get_execution(self, execution_id: str):
+        return self._ub().store.get(execution_id)
 
     def receive_intent(self, intent: ToolIntent) -> StateHistory:
         """Receive new intent and begin execution flow.

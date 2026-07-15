@@ -5,6 +5,7 @@ Levels: implemented < deterministic-tested < security/red-team-tested < live-tes
 | capability | maturity | evidence |
 |-----------|----------|----------|
 | ExecutionGateway / approval binding | live+red-team | M15/M15.2 gateway-routed, 78/78 red-team |
+| Universal ExecutionGateway (Phase 1 boundary) | deterministic-tested | M17.22 submit path, states/idempotency/approval/retry, connector via gateway, 25 tests, +5 checks; browser/n8n/LLM/trading not migrated |
 | Connector platform (local git/fs) | live-tested | M15.1 real local execution |
 | Connector platform (cloud gmail/gcal/telegram) | environment-blocked | no credentials |
 | Browser agent (Chrome CDP) | live-browser-tested | M17.1 real workflow |
@@ -18,6 +19,7 @@ Levels: implemented < deterministic-tested < security/red-team-tested < live-tes
 | Harness registry untrusted persistence hardening | deterministic-tested | M17.19 envelope/limits/atomic write/shared validator, 38 tests, +5 checks |
 | Harness registry multi-writer concurrency | deterministic-tested | M17.20 flock+revision CAS+idempotency, 33 tests, +5 checks; single-host |
 | Control Center registry health cell | deterministic-tested | M17.21 score/status cell + CEO brief gate, 19 tests, +5 checks |
+| Control Center execution gateway cell | deterministic-tested | M17.22 metrics cell + attention + CEO gated summary |
 | Memory conventions split (curated vs runtime learned) | deterministic-tested | M17.18.1 reflector writes data/memory only; recent-tail load; 10 tests; full suite green |
 | Application harness — GUI apps (LibreOffice/Blender/Kdenlive) | dependency-blocked | not installed |
 | Harness long-running task control (cancel/timeout-kill/resource-limits/crash-recovery) | live-proven | M17.8 real cancel+SIGXFSZ+reconcile, orphan-free |
