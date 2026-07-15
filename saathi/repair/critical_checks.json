@@ -1852,6 +1852,54 @@
       ],
       "subsystem": "application_harness",
       "blocking": true
+    },
+    {
+      "id": "registry.health_green",
+      "targets": [
+        "tests/test_m17_21_registry_health.py::test_health_score_perfect_on_clean_bootstrap",
+        "tests/test_m17_21_registry_health.py::test_score_function_pure"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "registry.health_score_valid",
+      "targets": [
+        "tests/test_m17_21_registry_health.py::test_failed_validation_lowers_score",
+        "tests/test_m17_21_registry_health.py::test_critical_failures_become_red",
+        "tests/test_m17_21_registry_health.py::test_health_deterministic"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "registry.health_metrics_complete",
+      "targets": [
+        "tests/test_m17_21_registry_health.py::test_health_metrics_complete",
+        "tests/test_m17_21_registry_health.py::test_critical_check_aggregation"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "registry.control_center_visible",
+      "targets": [
+        "tests/test_m17_21_registry_health.py::test_control_center_registry_cell",
+        "tests/test_m17_21_registry_health.py::test_control_center_overview_includes_registry_health",
+        "tests/test_m17_21_registry_health.py::test_attention_includes_registry_when_red"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "registry.ceo_summary_available",
+      "targets": [
+        "tests/test_m17_21_registry_health.py::test_ceo_summary_suppressed_when_green",
+        "tests/test_m17_21_registry_health.py::test_ceo_summary_shown_when_unhealthy",
+        "tests/test_m17_21_registry_health.py::test_safe_diagnostics_only"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
     }
   ]
 }

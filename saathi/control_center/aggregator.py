@@ -150,6 +150,13 @@ class ControlCenterAggregator:
     def _placeholder_never_called(self):  # pragma: no cover
         pass
 
+    def registry_health(self) -> Cell:
+        """M17.21 Control Center Registry Health cell (read-only, safe summaries)."""
+        def _rh():
+            from saathi.application_harness import registry
+            return registry.health()
+        return guarded("application_harness.registry_health", _rh)
+
     def harnesses(self) -> Cell:
         """M17.3/M17.4 application-harness platform state (registry + discovery)
         plus the M17.9 durable run-ledger read model (active runs, heartbeats,
@@ -162,7 +169,8 @@ class ControlCenterAggregator:
                     "executable": s["executable"],
                     "available_apps": d.get("available_harnesses", []),
                     "dependency_blocked": d.get("dependency_blocked", []),
-                    "harnesses": s["harnesses"]}
+                    "harnesses": s["harnesses"],
+                    "registry_health": registry.health()}
             try:
                 from saathi.application_harness.run_ledger import default_ledger
                 led = default_ledger()
@@ -235,7 +243,8 @@ class ControlCenterAggregator:
         metrics = self.connector_metrics()
         events = self.recent_events(limit=15)
         harn = self.harnesses()
-        attention = self._attention(sec, appr, rel, health, harn)
+        reg_h = self.registry_health()
+        attention = self._attention(sec, appr, rel, health, harn, reg_h)
         return {
             "owner": self.owner,
             "generated_at": _now(),
@@ -245,15 +254,52 @@ class ControlCenterAggregator:
             "release_readiness": rel.to_dict(),
             "connector_metrics": metrics.to_dict(),
             "recent_timeline": events.to_dict(),
+            "registry_health": reg_h.to_dict(),
             "requires_attention": attention,
-            "degraded_sources": [c.source for c in (health, sec, appr, rel, metrics, events)
+            "degraded_sources": [c.source for c in (
+                health, sec, appr, rel, metrics, events, reg_h)
                                  if c.status != "ok"],
         }
 
     def _attention(self, sec: Cell, appr: Cell, rel: Cell, health: Cell,
-                   harn: Cell | None = None) -> list[dict]:
+                   harn: Cell | None = None,
+                   reg_h: Cell | None = None) -> list[dict]:
         """Rank what needs the user NOW. Real, actionable, honest."""
         items = []
+        # M17.21 registry health alerts (dedupe by kind; no payload)
+        if reg_h is not None and reg_h.status == "ok" and reg_h.value:
+            rh = reg_h.value
+            st = rh.get("overall_status")
+            if st == "RED":
+                items.append({
+                    "severity": "critical", "kind": "registry_health",
+                    "message": f"registry health RED (score {rh.get('health_score')})",
+                    "link": "/control/registry",
+                })
+            elif st == "ORANGE":
+                items.append({
+                    "severity": "high", "kind": "registry_health",
+                    "message": f"registry health ORANGE (score {rh.get('health_score')})",
+                    "link": "/control/registry",
+                })
+            elif st == "YELLOW":
+                items.append({
+                    "severity": "medium", "kind": "registry_health",
+                    "message": f"registry health YELLOW (score {rh.get('health_score')})",
+                    "link": "/control/registry",
+                })
+            if rh.get("load_status") == "unsupported_schema":
+                items.append({
+                    "severity": "critical", "kind": "registry_schema",
+                    "message": "registry schema mismatch / unsupported version",
+                    "link": "/control/registry",
+                })
+            if rh.get("lock_state") == "held":
+                items.append({
+                    "severity": "medium", "kind": "registry_lock",
+                    "message": "registry write lock currently held",
+                    "link": "/control/registry",
+                })
         # M17.10 harness stuck-run alerts (owner-safe; deduplicated in the ledger)
         if harn is not None and harn.status == "ok" and harn.value:
             for a in (harn.value.get("run_alerts") or []):

@@ -57,6 +57,19 @@ def computer(request: Request):
     return ControlCenterAggregator(_user(request)).computer_agent().to_dict()
 
 
+@router.get("/registry")
+def registry_health(request: Request):
+    """M17.21 Registry Health cell (read-only safe summary)."""
+    return ControlCenterAggregator(_user(request)).registry_health().to_dict()
+
+
+@router.get("/registry/diagnostics")
+def registry_diagnostics(request: Request):
+    """M17.21 safe diagnostics — no payloads/secrets."""
+    from saathi.application_harness import registry as reg
+    return reg.health_diagnostics()
+
+
 @router.get("/timeline")
 def timeline(request: Request, limit: int = 25):
     return ControlCenterAggregator(_user(request)).recent_events(limit=limit).to_dict()

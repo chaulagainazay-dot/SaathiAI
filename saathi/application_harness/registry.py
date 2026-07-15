@@ -77,6 +77,20 @@ _LOADED_REVISION = 0
 _APPLIED_OPS: list[str] = []
 _HOLDING_WRITE_LOCK = False
 
+# M17.21 operational diagnostics (bounded; never store payloads/secrets)
+_HEALTH_DIAG: dict = {
+    "last_load_time": None,
+    "last_successful_write": None,
+    "last_validation": None,
+    "last_atomic_write": None,
+    "last_conflict": None,
+    "last_recovery": None,
+    "failed_validations": 0,
+    "last_validation_status": None,
+    "warnings": [],
+}
+_CEO_BRIEF_SCORE_THRESHOLD = 80  # suppress brief noise when GREEN and score ≥ this
+
 
 class RegistryBusy(RuntimeError):
     """Lock acquisition timed out — no mutation applied."""
@@ -144,6 +158,42 @@ def _truncate_err(msg: str) -> str:
     return msg
 
 
+def _note_health(kind: str, detail: str | None = None) -> None:
+    """Update bounded health diagnostics from operational events."""
+    now = time.time()
+    if kind in ("loaded", "rejected", "invalid", "too_large", "unsupported_schema"):
+        _HEALTH_DIAG["last_load_time"] = now
+        _HEALTH_DIAG["last_validation"] = now
+        _HEALTH_DIAG["last_validation_status"] = kind
+        if kind not in ("loaded",):
+            _HEALTH_DIAG["failed_validations"] = int(
+                _HEALTH_DIAG.get("failed_validations") or 0
+            ) + 1
+    if kind in ("write_committed", "persisted"):
+        _HEALTH_DIAG["last_successful_write"] = now
+        _HEALTH_DIAG["last_atomic_write"] = now
+    if kind in ("atomic_write_failed", "write_failed"):
+        _HEALTH_DIAG["last_atomic_write"] = now
+        _HEALTH_DIAG["failed_validations"] = int(
+            _HEALTH_DIAG.get("failed_validations") or 0
+        ) + 1
+    if kind in ("revision_conflict",) or "conflict" in kind:
+        _HEALTH_DIAG["last_conflict"] = {
+            "at": now, "kind": kind, "detail": (detail or "")[:80],
+        }
+    if kind in ("stale_lock_recovered",):
+        _HEALTH_DIAG["last_recovery"] = {
+            "at": now, "kind": kind, "detail": (detail or "")[:80],
+        }
+    warns = list(_HEALTH_DIAG.get("warnings") or [])
+    if kind in (
+        "write_lock_timeout", "revision_conflict", "atomic_write_failed",
+        "rejected", "too_large", "unsupported_schema",
+    ):
+        warns.append({"at": now, "kind": kind})
+        _HEALTH_DIAG["warnings"] = warns[-12:]
+
+
 def _emit_registry_event(name: str, payload: dict) -> None:
     """Bounded observability — never emit full untrusted payloads."""
     safe = {}
@@ -160,6 +210,10 @@ def _emit_registry_event(name: str, payload: dict) -> None:
             safe[k] = {str(sk)[:40]: str(sv)[:40] for sk, sv in list(v.items())[:8]}
         else:
             safe[k] = type(v).__name__
+    try:
+        _note_health(name, str(safe.get("reason") or safe.get("code") or "")[:80])
+    except Exception:
+        pass
     try:
         from saathi.events.bus import EventBus
         bus = EventBus()
@@ -659,6 +713,7 @@ def _load_store() -> dict:
 
     report["status"] = "ok"
     _LAST_LOAD = report
+    _note_health("loaded")
     _emit_registry_event("loaded", {
         "loaded": report["loaded"],
         "merged": report["merged"],
@@ -1022,6 +1077,236 @@ def summary() -> dict:
                           for d in _REG.values()]}
 
 
+def _registry_critical_inventory() -> tuple[int, list[str]]:
+    """Count blocking registry.* checks in the critical manifest (no pytest run)."""
+    try:
+        from saathi.repair.manifest import load_manifest
+        ids = [
+            c.id for c in load_manifest()
+            if str(getattr(c, "id", "")).startswith("registry.")
+            and getattr(c, "blocking", True)
+        ]
+        return len(ids), ids
+    except Exception:
+        return 0, []
+
+
+def _quarantine_count() -> int:
+    try:
+        parent = STORE.parent
+        if not parent.exists():
+            return 0
+        return len(list(parent.glob(STORE.name + ".corrupt.*")))
+    except Exception:
+        return 0
+
+
+def _score_and_status(signals: dict) -> tuple[int, str, list[str]]:
+    """Deterministic health score (0–100) and status. No LLM."""
+    score = 100
+    reasons: list[str] = []
+    load_st = signals.get("load_status") or "not_attempted"
+    if load_st in ("invalid", "invalid_schema", "unsupported_schema", "too_large",
+                   "too_many_entries"):
+        score -= 40
+        reasons.append(f"load:{load_st}")
+    if load_st == "unsupported_schema":
+        score -= 10
+        reasons.append("schema_mismatch")
+    skipped = int(signals.get("skipped") or 0)
+    if skipped:
+        pen = min(20, skipped * 2)
+        score -= pen
+        reasons.append(f"skipped_entries:{skipped}")
+    if signals.get("failed_validations"):
+        pen = min(15, int(signals["failed_validations"]) * 3)
+        score -= pen
+        reasons.append("failed_validations")
+    size = int(signals.get("registry_size_bytes") or 0)
+    limit = int(signals.get("size_limit") or _MAX_STORE_BYTES)
+    if limit > 0:
+        ratio = size / limit
+        if ratio >= 1.0:
+            score -= 25
+            reasons.append("oversized")
+        elif ratio >= 0.95:
+            score -= 15
+            reasons.append("near_size_limit")
+        elif ratio >= 0.80:
+            score -= 10
+            reasons.append("size_warning")
+    if signals.get("last_conflict"):
+        score -= 10
+        reasons.append("conflict")
+    if signals.get("last_recovery"):
+        score -= 5
+        reasons.append("recovery")
+    if signals.get("lock_state") == "held":
+        score -= 5
+        reasons.append("lock_held")
+    if int(signals.get("quarantined_files") or 0) > 0:
+        score -= min(15, 5 * int(signals["quarantined_files"]))
+        reasons.append("quarantine")
+    green = int(signals.get("critical_checks_green") or 0)
+    total = int(signals.get("critical_checks_total") or 0)
+    if total and green < total:
+        # operational proxy: if load broken, treat checks as not green
+        score -= min(20, (total - green) * 2)
+        reasons.append("critical_checks")
+    if signals.get("schema_mismatch"):
+        score -= 15
+        if "schema_mismatch" not in reasons:
+            reasons.append("schema_mismatch")
+    if signals.get("atomic_write_failed_recent"):
+        score -= 20
+        reasons.append("atomic_write_failed")
+    score = max(0, min(100, score))
+    if score < 40 or load_st in ("invalid", "unsupported_schema", "too_large"):
+        status = "RED"
+    elif score < 60:
+        status = "ORANGE"
+    elif score < 80:
+        status = "YELLOW"
+    else:
+        status = "GREEN"
+    return score, status, reasons
+
+
+def health() -> dict:
+    """M17.21 authoritative registry health object (read-only, safe summaries).
+
+    Never includes registry payload, credentials, or raw untrusted JSON.
+    Health score is deterministic (no LLM).
+    """
+    _bootstrap()
+    load = dict(_LAST_LOAD)
+    by_trust = {}
+    pilots = 0
+    active = 0
+    disabled = 0
+    overlays = 0
+    pids = _pilot_ids()
+    for d in _REG.values():
+        by_trust[d.trust_status] = by_trust.get(d.trust_status, 0) + 1
+        if d.harness_id in pids:
+            pilots += 1
+        if d.trust_status in _RESTRICTIVE_TRUST:
+            if d.harness_id in pids:
+                overlays += 1
+            disabled += 1
+        elif d.executable() or d.trust_status not in (
+            TrustStatus.REJECTED.value, TrustStatus.REVOKED.value,
+            TrustStatus.QUARANTINED.value, TrustStatus.COMPROMISED.value,
+        ):
+            active += 1
+        else:
+            disabled += 1
+    size = 0
+    if STORE.exists():
+        try:
+            size = int(STORE.stat().st_size)
+        except OSError:
+            size = 0
+    crit_total, crit_ids = _registry_critical_inventory()
+    load_st = load.get("status") or "not_attempted"
+    # operational proxy for "green" without running pytest each call
+    crit_green = crit_total if load_st in ("ok", "missing", "not_attempted") else 0
+    schema_mismatch = load_st == "unsupported_schema"
+    qcount = _quarantine_count()
+    warns = []
+    for w in (_HEALTH_DIAG.get("warnings") or [])[-6:]:
+        if isinstance(w, dict):
+            warns.append({"kind": w.get("kind"), "at": w.get("at")})
+    atomic_fail = any(
+        (w.get("kind") if isinstance(w, dict) else None) == "atomic_write_failed"
+        for w in (_HEALTH_DIAG.get("warnings") or [])[-6:]
+    )
+    signals = {
+        "load_status": load_st,
+        "skipped": load.get("skipped") or 0,
+        "failed_validations": _HEALTH_DIAG.get("failed_validations") or 0,
+        "registry_size_bytes": size,
+        "size_limit": _MAX_STORE_BYTES,
+        "last_conflict": _HEALTH_DIAG.get("last_conflict"),
+        "last_recovery": _HEALTH_DIAG.get("last_recovery"),
+        "lock_state": "held" if _HOLDING_WRITE_LOCK else "free",
+        "quarantined_files": qcount,
+        "critical_checks_green": crit_green,
+        "critical_checks_total": crit_total,
+        "schema_mismatch": schema_mismatch,
+        "atomic_write_failed_recent": atomic_fail,
+    }
+    score, status, reasons = _score_and_status(signals)
+    # last_validation: prefer diagnostics, else load timestamp proxy
+    last_val = _HEALTH_DIAG.get("last_validation")
+    if last_val is None and load_st not in ("not_attempted",):
+        last_val = _HEALTH_DIAG.get("last_load_time")
+    out = {
+        "overall_status": status,
+        "health_score": score,
+        "score_reasons": reasons,
+        "schema_version": SUPPORTED_SCHEMA_VERSION,
+        "loaded_schema_version": load.get("schema_version"),
+        "registry_revision": int(_LOADED_REVISION),
+        "built_in_pilots": pilots,
+        "persisted_entries": int(load.get("loaded") or 0),
+        "active_entries": active,
+        "disabled_entries": disabled,
+        "trust_overlays": overlays,
+        "total_entries": len(_REG),
+        "by_trust": by_trust,
+        "last_load_time": _HEALTH_DIAG.get("last_load_time"),
+        "last_successful_write": _HEALTH_DIAG.get("last_successful_write"),
+        "last_validation": last_val,
+        "last_atomic_write": _HEALTH_DIAG.get("last_atomic_write"),
+        "lock_state": "held" if _HOLDING_WRITE_LOCK else "free",
+        "lock_owner": _OWNER_ID if _HOLDING_WRITE_LOCK else None,
+        "lock_waiters": 0,  # flock does not expose waiter count
+        "last_conflict": _HEALTH_DIAG.get("last_conflict"),
+        "last_recovery": _HEALTH_DIAG.get("last_recovery"),
+        "failed_validations": int(_HEALTH_DIAG.get("failed_validations") or 0),
+        "rejected_entries": int(load.get("skipped") or 0),
+        "quarantined_files": qcount,
+        "registry_size_bytes": size,
+        "entry_limit": _MAX_ENTRIES,
+        "size_limit": _MAX_STORE_BYTES,
+        "critical_checks_green": crit_green,
+        "critical_checks_total": crit_total,
+        "critical_check_ids": crit_ids[:32],
+        "load_status": load_st,
+        "load_errors": list(load.get("errors") or [])[:8],
+        "warnings": warns,
+        "ceo_brief_threshold": _CEO_BRIEF_SCORE_THRESHOLD,
+        "include_in_ceo_brief": status != "GREEN" or score < _CEO_BRIEF_SCORE_THRESHOLD,
+    }
+    return out
+
+
+def health_diagnostics() -> dict:
+    """Safe diagnostics slice for Control Center drill-down (no secrets/payloads)."""
+    h = health()
+    return {
+        "overall_status": h["overall_status"],
+        "health_score": h["health_score"],
+        "score_reasons": h["score_reasons"],
+        "load_status": h["load_status"],
+        "load_errors": h["load_errors"],
+        "last_conflict": h["last_conflict"],
+        "last_recovery": h["last_recovery"],
+        "limits": {
+            "entry_limit": h["entry_limit"],
+            "size_limit": h["size_limit"],
+            "lock_timeout_sec": _LOCK_TIMEOUT_SEC,
+        },
+        "critical_checks": {
+            "green": h["critical_checks_green"],
+            "total": h["critical_checks_total"],
+            "ids": h["critical_check_ids"],
+        },
+        "warnings": h["warnings"],
+    }
+
+
 def import_records(
     records: list,
     *,
@@ -1191,5 +1476,17 @@ def reset_for_tests(*, store: Path | None = None) -> None:
     _LOADED_REVISION = 0
     _APPLIED_OPS = []
     _PILOT_IDS_CACHE = None
+    _HEALTH_DIAG.clear()
+    _HEALTH_DIAG.update({
+        "last_load_time": None,
+        "last_successful_write": None,
+        "last_validation": None,
+        "last_atomic_write": None,
+        "last_conflict": None,
+        "last_recovery": None,
+        "failed_validations": 0,
+        "last_validation_status": None,
+        "warnings": [],
+    })
     if store is not None:
         STORE = Path(store)

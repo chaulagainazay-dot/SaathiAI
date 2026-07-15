@@ -17,6 +17,7 @@ Levels: implemented < deterministic-tested < security/red-team-tested < live-tes
 | Application harness registry persistence (load-on-boot) | deterministic-tested | M17.18 persist+reload, fail-closed, 15 tests, 5 blocking checks |
 | Harness registry untrusted persistence hardening | deterministic-tested | M17.19 envelope/limits/atomic write/shared validator, 38 tests, +5 checks |
 | Harness registry multi-writer concurrency | deterministic-tested | M17.20 flock+revision CAS+idempotency, 33 tests, +5 checks; single-host |
+| Control Center registry health cell | deterministic-tested | M17.21 score/status cell + CEO brief gate, 19 tests, +5 checks |
 | Memory conventions split (curated vs runtime learned) | deterministic-tested | M17.18.1 reflector writes data/memory only; recent-tail load; 10 tests; full suite green |
 | Application harness — GUI apps (LibreOffice/Blender/Kdenlive) | dependency-blocked | not installed |
 | Harness long-running task control (cancel/timeout-kill/resource-limits/crash-recovery) | live-proven | M17.8 real cancel+SIGXFSZ+reconcile, orphan-free |

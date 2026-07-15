@@ -298,6 +298,13 @@ timeout, crash-safe prior-file preservation, CLI exit 4/5 for contention/conflic
 multi-host consensus). Trading Guardian unengaged. Verdict: **REGISTRY
 MULTI-WRITER CONCURRENCY STAGING READY**.
 
+## M17.21 — Control Center Registry Health cell (DONE)
+Autonomous-loop milestone (start `a276843`). Read-only Registry Health object
+with deterministic score/status; Control Center cell + overview + attention;
+CEO Daily Brief only when unhealthy; safe diagnostics API; 5 blocking critical
+checks; 19 focused tests. No second dashboard/registry. Trading Guardian
+unengaged. Verdict: **REGISTRY HEALTH CELL STAGING READY**.
+
 ## Blocked / deferred (need user action or larger scope)
 - authenticated browser / cloud connector workflow — needs a safe staging account.
 - native Finder/TextEdit actuation — macOS Accessibility (TCC) not granted.

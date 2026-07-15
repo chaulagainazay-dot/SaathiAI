@@ -147,6 +147,25 @@ class CEOService:
             f"storage:{sh['storage']} · {sh['active_agent_runs']} active runs · "
             f"{sh['studio_projects']} studio projects", EvidenceTier.OBSERVED.value)
 
+        # M17.21 registry health — only when not GREEN or score below threshold
+        try:
+            from saathi.application_harness import registry as _reg
+            rh = _reg.health()
+            if rh.get("include_in_ceo_brief"):
+                add(
+                    "Registry Health",
+                    f"{rh.get('overall_status')} score={rh.get('health_score')} "
+                    f"rev={rh.get('registry_revision')} "
+                    f"load={rh.get('load_status')} "
+                    f"size={rh.get('registry_size_bytes')}/"
+                    f"{rh.get('size_limit')} "
+                    f"reasons={','.join(rh.get('score_reasons') or []) or 'none'}",
+                    EvidenceTier.OBSERVED.value,
+                    ["application_harness.registry.health"],
+                )
+        except Exception:
+            pass
+
         brief = {"owner": owner, "generated_at": time.time(),
                 "items": items, "sections": sorted({i["section"] for i in items})}
         if persist:
