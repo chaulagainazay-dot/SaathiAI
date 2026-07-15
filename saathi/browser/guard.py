@@ -57,6 +57,13 @@ LOW_LEVEL_DRIVER_ALLOWLIST: frozenset[str] = frozenset({
     "saathi/browser/session.py",
     "saathi/browser/gov_session.py",
     "saathi/browser/interactive.py",
+    "saathi/browser/domain_policy.py",
+    "saathi/browser/adapter_contract.py",
+    "saathi/browser/production_adapter.py",
+    "saathi/browser/human_mac_adapter.py",
+    "saathi/browser/evidence_redaction.py",
+    "saathi/browser/workflow_migrate.py",
+    "saathi/browser/adapter_monitor.py",
     "saathi/browser/__init__.py",
     # Live CDP driver — only ComputerAdapter may hold a live session
     "saathi/computer_agent/browser_driver.py",
@@ -125,6 +132,17 @@ FORBIDDEN_FROM_IMPORTS: frozenset[tuple[str, str]] = frozenset({
     ("saathi.infrastructure.human_browser.chrome_backend", "ChromeBackend"),
 })
 
+# M17.26: additional low-level symbols blocked outside adapter allowlist
+FORBIDDEN_CALL_NAMES: frozenset[str] = frozenset({
+    "connect_over_cdp",
+    "chromium.connect",
+})
+
+FORBIDDEN_ATTR_CALLS: frozenset[str] = frozenset({
+    "connect_over_cdp",
+    "launch_persistent_context",
+})
+
 # Subprocess / shell browser *launch* patterns (not mere product-name mentions)
 SUBPROCESS_BROWSER_LAUNCH_RE = re.compile(
     r"(?i)("
@@ -132,12 +150,19 @@ SUBPROCESS_BROWSER_LAUNCH_RE = re.compile(
     r"|playwright\s+install"
     r"|chromium\.launch"
     r"|launch_persistent_context"
+    r"|connect_over_cdp"
     r"|google-chrome"
     r"|chromium-browser"
     r"|open\s+-a\s+[\"']?(Google Chrome|Chromium|Brave Browser|Microsoft Edge)"
     r"|/Applications/Google Chrome\.app"
     r"|/Applications/Chromium\.app"
     r")"
+)
+
+# AppleScript browser automation (osascript alone is OK for mail/calendar/mac tools)
+APPLESCRIPT_BROWSER_RE = re.compile(
+    r"(?i)osascript[\s\S]{0,120}(Google Chrome|Chromium|Safari|Brave Browser|"
+    r"Microsoft Edge|tell application\s+[\"'](Google Chrome|Safari|Chromium))"
 )
 
 # Paths scanned for production violations (relative to repo root)
@@ -326,6 +351,14 @@ def scan_file(path: Path, *, root: Path | None = None) -> list[GuardFinding]:
                     rel, "subprocess_browser_marker",
                     f"launch pattern {m2.group(0)!r}", 0,
                 ))
+        # AppleScript specifically targeting browsers
+        if not any(f.kind == "subprocess_browser_marker" for f in findings):
+            m3 = APPLESCRIPT_BROWSER_RE.search(src)
+            if m3:
+                findings.append(GuardFinding(
+                    rel, "applescript_browser_marker",
+                    "osascript browser automation outside allowlist", 0,
+                ))
 
     # Direct re-exports of LiveBrowserDriver from non-allowlisted modules
     if re.search(r"LiveBrowserDriver", src) and "browser_driver" in src:
@@ -334,6 +367,31 @@ def scan_file(path: Path, *, root: Path | None = None) -> list[GuardFinding]:
                 rel, "live_driver_reference",
                 "references LiveBrowserDriver outside allowlist", 0,
             ))
+
+    # M17.26: block connect_over_cdp / raw CDP attach outside allowlist
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Call):
+            func = node.func
+            attr = ""
+            if isinstance(func, ast.Attribute):
+                attr = func.attr
+            elif isinstance(func, ast.Name):
+                attr = func.id
+            if attr in FORBIDDEN_ATTR_CALLS:
+                findings.append(GuardFinding(
+                    rel, "forbidden_browser_call",
+                    f"call {attr} outside allowlisted adapter",
+                    getattr(node, "lineno", 0),
+                ))
+        # String markers for raw screenshot persist without redaction path
+        if isinstance(node, ast.Constant) and isinstance(node.value, str):
+            lit = node.value
+            if "connect_over_cdp" in lit:
+                findings.append(GuardFinding(
+                    rel, "cdp_connect_marker",
+                    "connect_over_cdp reference outside allowlist",
+                    getattr(node, "lineno", 0),
+                ))
 
     return findings
 
@@ -465,8 +523,45 @@ def deny_raw_production_dispatch(*, source: str, action: str = "") -> dict:
         "code": "RAW_BROWSER_DISABLED",
         "message": (
             f"Raw browser path {source!r} is disabled. "
-            "Use saathi.browser.governed.GovernedBrowser → ExecutionGateway."
+            "Use saathi.browser.governed.GovernedBrowser → ExecutionGateway "
+            "or saathi.browser.interactive.InteractiveBrowser.act."
         ),
         "action": action,
         "raw_env_override": RAW_BROWSER_ENV,
     }
+
+
+def validate_production_browser_config(
+    *,
+    environment: str | None = None,
+    allowed_hosts: list[str] | None = None,
+    browser_enabled: bool = True,
+    screenshot_redaction_enabled: bool = True,
+    traces_enabled: bool = False,
+    traces_have_policy: bool = False,
+    unrestricted_desktop: bool = False,
+    allow_file: bool = False,
+    allow_private: bool = False,
+    allow_custom_protocols: bool = False,
+    allow_wildcards: bool = False,
+) -> list[dict]:
+    """Blocking production configuration checks for M17.26."""
+    from saathi.browser.domain_policy import production_config_violations
+    raw = raw_browser_env_enabled() if not production_environment() else (
+        os.environ.get(RAW_BROWSER_ENV, "").strip() in ("1", "true", "TRUE", "yes")
+    )
+    # In production raw is always blocked at runtime, but flag config if env set
+    raw_set = os.environ.get(RAW_BROWSER_ENV, "").strip() in ("1", "true", "TRUE", "yes")
+    return production_config_violations(
+        environment=environment,
+        allowed_hosts=allowed_hosts,
+        raw_browser_enabled=raw_set and production_environment(),
+        allow_file=allow_file,
+        allow_private=allow_private,
+        allow_custom_protocols=allow_custom_protocols,
+        allow_wildcards=allow_wildcards,
+        screenshot_without_redaction=not screenshot_redaction_enabled,
+        traces_without_policy=traces_enabled and not traces_have_policy,
+        unrestricted_desktop=unrestricted_desktop,
+        browser_enabled=browser_enabled,
+    )

@@ -206,8 +206,37 @@ def check_domain(
     *,
     allowed_hosts: tuple[str, ...] | list[str] | None = None,
     allow_private: bool = False,
+    environment: str | None = None,
 ) -> DomainDecision:
-    """Fail-closed domain / scheme policy."""
+    """Fail-closed domain / scheme policy (M17.26 environment-aware).
+
+    When ``environment`` is provided (or SAATHI_ENV is production), uses the
+    canonical DomainPolicyService. Otherwise preserves legacy staging defaults
+    for backward-compatible callers that pass explicit allowlists.
+    """
+    # Prefer canonical M17.26 service when environment is known / production
+    try:
+        from saathi.browser.domain_policy import (
+            BrowserEnvironment,
+            DomainPolicyService,
+            resolve_environment,
+        )
+        env = resolve_environment(environment)
+        # Always use env-aware service for production; also when env explicitly set
+        if environment is not None or env == BrowserEnvironment.PRODUCTION:
+            svc = DomainPolicyService.for_environment(
+                env, allowed_hosts=allowed_hosts,
+            )
+            if allow_private:
+                svc.config.allow_private_networks = True
+                svc.config.allow_ip_literals = True
+            d = svc.check(url)
+            return DomainDecision(
+                d.allowed, d.reason, origin=d.origin, host=d.host, scheme=d.scheme,
+            )
+    except Exception:
+        pass  # fall through to legacy path
+
     if not url or not isinstance(url, str):
         return DomainDecision(False, "empty_url")
     raw = url.strip()
@@ -217,6 +246,8 @@ def check_domain(
         return DomainDecision(False, f"dangerous_or_unsupported_scheme:{scheme or 'none'}",
                               scheme=scheme)
     host = (p.hostname or "").lower()
+    if host.endswith("."):
+        host = host[:-1]
     if not host:
         return DomainDecision(False, "missing_host", scheme=scheme)
     if host in _METADATA_HOSTS or host.endswith(".metadata.google.internal"):
@@ -227,11 +258,15 @@ def check_domain(
         return DomainDecision(False, why, origin=origin_of(raw), host=host, scheme=scheme)
 
     allow = tuple(allowed_hosts) if allowed_hosts is not None else DEFAULT_ALLOWED_HOST_SUFFIXES
-    # exact or suffix match
+    # Exact host or explicit subdomain-of root — not arbitrary substring
     ok = False
     for a in allow:
-        a = a.lower().lstrip(".")
-        if host == a or host.endswith("." + a) or (a in ("localhost", "127.0.0.1", "::1") and host == a):
+        a = a.lower().lstrip(".").rstrip(".")
+        if not a:
+            continue
+        if host == a or host.endswith("." + a) or (
+            a in ("localhost", "127.0.0.1", "::1") and host == a
+        ):
             ok = True
             break
     if not ok:

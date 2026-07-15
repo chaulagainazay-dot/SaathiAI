@@ -272,12 +272,14 @@ class BrowserAdapter:
         mode: str = "service",
         workspace: Path | str | None = None,
         allowed_hosts: Optional[list[str]] = None,
+        production_adapter=None,
     ):
         self.mode = mode
         self._service = service
         self.workspace = Path(workspace) if workspace else DEFAULT_WORKSPACE
         self.workspace.mkdir(parents=True, exist_ok=True)
         self.allowed_hosts = allowed_hosts
+        self._production_adapter = production_adapter  # M17.26 governed live/sandbox
         self._fake_state: dict[str, Any] = {
             "pages": {},
             "clicks": [],
@@ -289,6 +291,10 @@ class BrowserAdapter:
             "redirect_to": None,
         }
         self.dispatch_count = 0
+
+    def bind_production_adapter(self, adapter) -> None:
+        """Bind a ProductionBrowserAdapter for interactive session execution."""
+        self._production_adapter = adapter
 
     def service(self):
         if self._service is None and self.mode == "service":
@@ -555,16 +561,69 @@ class BrowserAdapter:
                     summary=f"downloaded {sanitize_filename(Path(path).name)}",
                     duration_sec=time.time() - t0,
                 )
-            # Interactive actions: prefer Playwright if available, else fail closed
+            # Interactive actions: M17.26 production adapter when bound to session
             if action in (BrowserAction.CLICK, BrowserAction.TYPE, BrowserAction.FILL,
                           BrowserAction.SUBMIT, BrowserAction.UPLOAD, BrowserAction.WORKFLOW):
-                # Without a live interactive session API on BrowserService, use fake-safe
-                # message — production interactive path uses computer_agent / agent_browser
-                # (documented remaining bypass until fully migrated).
+                prod = getattr(self, "_production_adapter", None)
+                if prod is not None and session_id and prod.validate_session(session_id):
+                    try:
+                        from saathi.browser.adapter_contract import GovernedActionRequest
+                        aclass = str(params.get("action_class") or "low_interactive")
+                        req = GovernedActionRequest(
+                            session_id=session_id,
+                            action_id=str(params.get("action_id") or f"gw-{session_id[:8]}"),
+                            action_type=action.value,
+                            action_class=aclass,
+                            actor_id=str(params.get("actor_id") or intent.actor or "user:system"),
+                            mission_id=str(params.get("mission_id") or ""),
+                            mission_run_id=str(params.get("mission_run_id") or ""),
+                            url=url,
+                            selector=selector,
+                            target_digest=str(params.get("target_digest") or ""),
+                            page_fingerprint=str(params.get("page_fingerprint") or ""),
+                            expected_effect=str(params.get("expected_effect") or ""),
+                            approval_id=str(params.get("approval_id") or ""),
+                            idempotency_key=str(params.get("idempotency_key") or ""),
+                            payload={
+                                k: v for k, v in (params or {}).items()
+                                if k not in ("text", "password", "value", "secret")
+                            },
+                            text_redacted=True,
+                            lease_owner=str(params.get("lease_owner") or ""),
+                            domain_validated=True,
+                            policy_validated=True,
+                            trading_authorized=bool(params.get("trading_authorized")),
+                        )
+                        ar = prod.act(req)
+                        return BrowserResult(
+                            status=ar.status if ar.status in (
+                                "succeeded", "failed", "denied", "uncertain",
+                            ) else "failed",
+                            action=action.value,
+                            error_category=ar.error_category,
+                            summary=ar.summary,
+                            final_origin=ar.final_origin,
+                            page_title=ar.page_title,
+                            duration_sec=time.time() - t0,
+                            retryable=ar.retryable,
+                            reconciliation_hints=(
+                                ["reconcile"] if ar.reconciliation_required else []
+                            ),
+                        )
+                    except Exception as e:
+                        return BrowserResult(
+                            status="failed", action=action.value,
+                            error_category="production_adapter_error",
+                            summary=redact_text(str(e)),
+                            duration_sec=time.time() - t0, retryable=False,
+                        )
                 return BrowserResult(
                     status="failed", action=action.value,
                     error_category="interactive_requires_live_session",
-                    summary="interactive browser action needs live session adapter",
+                    summary=(
+                        "interactive browser action needs governed production "
+                        "adapter bound to session (InteractiveBrowser.act)"
+                    ),
                     duration_sec=time.time() - t0, retryable=False,
                 )
             return BrowserResult(

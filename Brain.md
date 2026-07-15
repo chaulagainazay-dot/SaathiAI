@@ -1679,3 +1679,40 @@ interactive. Docs: M17_25_INTERACTIVE_BROWSER_AUDIT.md, M17_25_ARCHITECTURE.md.
 **Verdict: INTERACTIVE BROWSER SESSIONS, ACTIONS, AND HUMAN HANDOFFS GOVERNED**
 — NOT production (live Playwright service-mode interactive still needs live
 session adapter; full human-browser workflow migration remains larger scope).
+
+## M17.26 — production browser adapters, domain policy, evidence redaction, workflow migration
+
+Autonomous-loop milestone (start/rollback 7b21915, M17.25 complete). Connects
+governed interactive sessions to production-safe adapter execution without a
+browser-engine rewrite. KEY CONSTITUTIONAL FACTS:
+(1) CANONICAL ADAPTER CONTRACT — attach_session / validate / health / navigate /
+inspect / act / capture_evidence / pause / resume / reconcile / close_session;
+adapters receive fully validated GovernedActionRequest and never decide auth,
+policy, approval, TG, domain, or retry. (2) PRODUCTION ADAPTER —
+ProductionBrowserAdapter binds live/sandbox CDP to session_id; scoped pages only;
+ownership+lease before every action; DEGRADED blocks high-risk; disconnect →
+reconciliation; reconnect revalidates page/domain/kill-switch; no unmanaged
+browser on attach failure; raw page objects never exposed. (3) HUMAN MAC —
+same contract; takeover pauses agent; concurrent control denied; bounded to
+browser app; human completion ≠ approval; raw osascript blocked outside
+allowlisted backend. (4) DOMAIN POLICY — DomainPolicyService per
+development/test/staging/production; production deny-by-default HTTPS-only; no
+localhost/private/file/javascript/data/wildcards; normalize trailing-dot/IDN/
+mixed-script/alt-IP; exact host or explicit subdomain-of root (never substring);
+redirect/popup revalidation. (5) WORKFLOW MIGRATION — workflow step schema
+rejects script/eval bypass; execute_workflow_step → InteractiveBrowser.act;
+CAPTCHA/MFA → handoff; legacy raw fail-closed. (6) EVIDENCE — classify PUBLIC→
+PROHIBITED_CAPTURE; modes ALLOW→SUPPRESS; deterministic masks before persist;
+OCR optional secondary only; traces/video disabled by default; cookies/storage
+never logged; alerts privacy-safe. (7) MONITORING — adapter health, domain
+denial, redaction failure, uncertain effect, reconnect exhaustion; Control
+Center snapshot without secrets. (8) TRADING — financial still TG-only; trading
+screenshots TRADING_SENSITIVE; no live trading capability. MODULES:
+domain_policy, adapter_contract, production_adapter, human_mac_adapter,
+evidence_redaction, workflow_migrate, adapter_monitor; interactive/governed/
+guard/policy wired. TESTS: test_m17_26_production_browser.py (90+). Critical
+checks +5 browser.* production. Docs: M17_26_PRODUCTION_BROWSER_AUDIT.md,
+ARCHITECTURE, DOMAIN_POLICY, EVIDENCE_REDACTION.
+**Verdict: PRODUCTION BROWSER ADAPTERS, DOMAIN POLICY, WORKFLOW MIGRATION, AND EVIDENCE REDACTION GOVERNED**
+— NOT full production deploy (live CDP still needs managed loopback endpoint +
+binary; human signed-queue workflows remain isolated; pixel OCR not required).

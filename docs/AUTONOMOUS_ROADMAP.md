@@ -354,6 +354,20 @@ sessions; +5 blocking critical checks; 34 focused tests. Trading Guardian
 isolation preserved. No live external side effects, no push/deploy. Verdict:
 **INTERACTIVE BROWSER SESSIONS, ACTIONS, AND HUMAN HANDOFFS GOVERNED**.
 
+## M17.26 — Production Browser Adapter, Domain Policy, Evidence Redaction, Workflow Migration (DONE)
+Autonomous-loop milestone (start `7b21915` / M17.25). Connects governed sessions
+to real adapter boundary: `ProductionBrowserAdapter` (sandbox/CDP) +
+`HumanMacAdapter` under `adapter_contract` (attach/validate/health/act/reconcile);
+environment-specific `DomainPolicyService` (production deny-by-default, HTTPS,
+no localhost/private/file/javascript, deceptive-domain normalization, redirect/
+popup revalidation); `EvidenceRedactionPipeline` (classification, deterministic
+masks, suppress secrets, OCR optional-only); workflow step schema +
+`execute_workflow_step` → `InteractiveBrowser.act`; adapter health/reconnect/
+kill-switch; Control Center privacy-safe snapshot; +5 blocking critical checks;
+90+ focused M17.26 tests. Trading Guardian isolation preserved; no live trading,
+no real external browser actions, no push/deploy. Verdict:
+**PRODUCTION BROWSER ADAPTERS, DOMAIN POLICY, WORKFLOW MIGRATION, AND EVIDENCE REDACTION GOVERNED**.
+
 ## Blocked / deferred (need user action or larger scope)
 - authenticated browser / cloud connector workflow — needs a safe staging account.
 - native Finder/TextEdit actuation — macOS Accessibility (TCC) not granted.

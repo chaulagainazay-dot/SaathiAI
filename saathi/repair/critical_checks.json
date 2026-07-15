@@ -2099,6 +2099,61 @@
       ],
       "subsystem": "browser",
       "blocking": true
+    },
+    {
+      "id": "browser.production_adapter_ownership",
+      "targets": [
+        "tests/test_m17_26_production_browser.py::test_01_attach_sandbox_session",
+        "tests/test_m17_26_production_browser.py::test_03_wrong_actor_denied",
+        "tests/test_m17_26_production_browser.py::test_05_stale_lease_denied",
+        "tests/test_m17_26_production_browser.py::test_10_closure_blocks_actions"
+      ],
+      "subsystem": "browser",
+      "blocking": true
+    },
+    {
+      "id": "browser.domain_policy_production",
+      "targets": [
+        "tests/test_m17_26_production_browser.py::test_21_production_denies_unknown",
+        "tests/test_m17_26_production_browser.py::test_23_attacker_suffix_denied",
+        "tests/test_m17_26_production_browser.py::test_29_localhost_denied_in_production",
+        "tests/test_m17_26_production_browser.py::test_32_file_scheme_denied",
+        "tests/test_m17_26_production_browser.py::test_62_production_rejects_empty_domain_policy"
+      ],
+      "subsystem": "browser",
+      "blocking": true
+    },
+    {
+      "id": "browser.evidence_redaction",
+      "targets": [
+        "tests/test_m17_26_production_browser.py::test_44_password_field_masked",
+        "tests/test_m17_26_production_browser.py::test_48_sensitive_page_suppresses_screenshot",
+        "tests/test_m17_26_production_browser.py::test_50_raw_never_persisted_before_mask",
+        "tests/test_m17_26_production_browser.py::test_60_alert_payload_no_secrets"
+      ],
+      "subsystem": "browser",
+      "blocking": true
+    },
+    {
+      "id": "browser.workflow_migration",
+      "targets": [
+        "tests/test_m17_26_production_browser.py::test_38_migrated_workflow_uses_act",
+        "tests/test_m17_26_production_browser.py::test_42_legacy_raw_workflow_fail_closed",
+        "tests/test_m17_26_production_browser.py::test_43_forbidden_workflow_fields"
+      ],
+      "subsystem": "browser",
+      "blocking": true
+    },
+    {
+      "id": "browser.adapter_reconnect_reconcile",
+      "targets": [
+        "tests/test_m17_26_production_browser.py::test_07_disconnect_updates_state",
+        "tests/test_m17_26_production_browser.py::test_71_uncertain_submit",
+        "tests/test_m17_26_production_browser.py::test_72_uncertain_not_blindly_retried",
+        "tests/test_m17_26_production_browser.py::test_79_kill_switch_blocks_reconnect"
+      ],
+      "subsystem": "browser",
+      "blocking": true
     }
   ]
 }

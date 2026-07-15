@@ -15,6 +15,10 @@ through governance. Low-level drivers are allowlisted in ``guard.py``.
 M17.25: interactive sessions, actions, and human handoffs use
 ``saathi.browser.interactive.InteractiveBrowser`` (session ownership + action
 classes + handoffs → GovernedBrowser → ExecutionGateway).
+
+M17.26: production adapters (``ProductionBrowserAdapter`` / ``HumanMacAdapter``),
+environment-specific domain policy, evidence redaction, and workflow migration
+onto ``InteractiveBrowser.act``.
 """
 from .types import Page, SearchResult, Tier, BrowserError
 from .service import BrowserService, browser

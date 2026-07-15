@@ -338,14 +338,52 @@ class InteractiveBrowser:
         allowed_hosts: Optional[list[str]] = None,
         mode: str = "fake",
         environment: str = "dev",
+        production_adapter=None,
+        evidence_pipeline=None,
+        human_mac_adapter=None,
+        browser_monitor=None,
     ):
         self.store = store or default_session_store()
         self.environment = environment
         self.allowed_hosts = allowed_hosts
+        # M17.26 production adapter (sandbox by default — never live user browser in tests)
+        if production_adapter is not None:
+            self.production_adapter = production_adapter
+        else:
+            from saathi.browser.production_adapter import ProductionBrowserAdapter
+            from saathi.browser.domain_policy import DomainPolicyService
+            self.production_adapter = ProductionBrowserAdapter(
+                allow_live=False,
+                domain_policy=DomainPolicyService.for_environment(
+                    environment, allowed_hosts=allowed_hosts,
+                ),
+            )
+        if evidence_pipeline is not None:
+            self.evidence = evidence_pipeline
+        else:
+            from saathi.browser.evidence_redaction import EvidenceRedactionPipeline
+            self.evidence = EvidenceRedactionPipeline()
+        self.human_mac = human_mac_adapter
+        if browser_monitor is not None:
+            self.monitor = browser_monitor
+        else:
+            from saathi.browser.adapter_monitor import default_browser_monitor
+            self.monitor = default_browser_monitor()
         if governed is not None:
             self.gb = governed
+            # Ensure interactive path can use production adapter when bound
+            if getattr(self.gb.adapter, "bind_production_adapter", None):
+                self.gb.adapter.bind_production_adapter(self.production_adapter)
+            elif getattr(self.gb.adapter, "_production_adapter", None) is None:
+                try:
+                    self.gb.adapter._production_adapter = self.production_adapter
+                except Exception:
+                    pass
         else:
-            adapter = BrowserAdapter(mode=mode, workspace=workspace, allowed_hosts=allowed_hosts)
+            adapter = BrowserAdapter(
+                mode=mode, workspace=workspace, allowed_hosts=allowed_hosts,
+                production_adapter=self.production_adapter,
+            )
             if boundary is not None:
                 self.gb = GovernedBrowser(
                     boundary=boundary, adapter=adapter, mode=mode,
@@ -389,7 +427,8 @@ class InteractiveBrowser:
             mission_id=mission_id,
             mission_run_id=mission_run_id,
             request_source=request_source,
-            browser_adapter=self.gb.adapter.mode,
+            browser_adapter=getattr(self.production_adapter, "adapter_type", None)
+            or self.gb.adapter.mode,
             allowed_domains=domains,
             allowed_action_classes=classes,
             risk_tier=risk_tier,
@@ -398,6 +437,27 @@ class InteractiveBrowser:
             target_scope=origin_of(url) if url else "",
             lease_owner=worker or actor_id,
         )
+        # M17.26: bind production adapter to governed session (sandbox attach)
+        try:
+            self.production_adapter.attach_session(
+                sess.session_id,
+                actor_id=actor_id,
+                mission_id=mission_id,
+                mission_run_id=mission_run_id,
+                lease_owner=worker or actor_id,
+                metadata={"request_source": request_source},
+            )
+            if url and hasattr(self.production_adapter, "configure_sandbox_page"):
+                self.production_adapter.configure_sandbox_page(
+                    sess.session_id, url, title="Session start",
+                )
+            # Also bind to gateway adapter for interactive dispatch
+            if getattr(self.gb.adapter, "bind_production_adapter", None):
+                self.gb.adapter.bind_production_adapter(self.production_adapter)
+            else:
+                self.gb.adapter._production_adapter = self.production_adapter
+        except Exception:
+            pass  # attach is best-effort for fake-only harnesses
         if url:
             # initial navigate through gateway
             res = self.act(
@@ -869,20 +929,34 @@ class InteractiveBrowser:
                 summary="financial browser action requires Trading Guardian authorization",
             )
 
-        # domain
+        # domain (M17.26 environment-aware)
         target_url = url or s.current_url or (s.current_origin + "/" if s.current_origin else "")
         if target_url:
-            dom = check_domain(target_url, allowed_hosts=s.allowed_domains or self.allowed_hosts)
+            dom = check_domain(
+                target_url,
+                allowed_hosts=s.allowed_domains or self.allowed_hosts,
+                environment=self.environment,
+            )
             if not dom.allowed:
+                try:
+                    self.monitor.record_domain_denial(
+                        session_id=session_id, actor_id=actor_id,
+                        mission_id=s.mission_id, mission_run_id=s.mission_run_id,
+                        message=f"domain denied: {dom.reason}",
+                        error_category=dom.reason,
+                    )
+                except Exception:
+                    pass
                 return InteractiveResult(
                     status="denied", session_id=session_id, action_id=aid,
                     action_type=action_key, failure_category=dom.reason,
                     summary=f"domain denied: {dom.reason}",
                 )
-            # session target scope
+            # session target scope — exact or subdomain-of listed root only
             if s.allowed_domains:
                 host_ok = any(
-                    dom.host == d or dom.host.endswith("." + d)
+                    dom.host == d.lstrip(".").rstrip(".")
+                    or dom.host.endswith("." + d.lstrip(".").rstrip("."))
                     for d in s.allowed_domains
                 ) if dom.host else False
                 if not host_ok and dom.host:
@@ -1062,7 +1136,50 @@ class InteractiveBrowser:
                     summary="upload path outside workspace",
                 )
 
-        # execute via governed gateway
+        # M17.26: evidence classification before action (metadata only; no secrets)
+        evidence_id = ""
+        try:
+            ev = self.evidence.capture(
+                session_id=session_id,
+                action_id=aid,
+                mission_run_id=s.mission_run_id or session_id,
+                evidence_type="screenshot",
+                image_bytes=b"" if sensitive or aclass == ActionClass.FINANCIAL else b"pre-action-stub",
+                action_type=action_key,
+                action_class=aclass.value,
+                selector=selector,
+                field_name=name,
+                page_elements=self._page_elements.get(session_id),
+                mission_sensitivity=s.sensitivity_classification or "general",
+                trading_classified=(aclass == ActionClass.FINANCIAL),
+            )
+            evidence_id = ev.evidence_id
+            if ev.suppression_reason == "redaction_failed" and aclass in (
+                ActionClass.SENSITIVE_INPUT, ActionClass.FINANCIAL, ActionClass.EXTERNAL_EFFECT,
+            ):
+                try:
+                    self.monitor.record_redaction_failure(
+                        session_id=session_id, actor_id=actor_id,
+                        mission_id=s.mission_id, message="redaction failed; fail closed",
+                        error_category="redaction_failed",
+                    )
+                except Exception:
+                    pass
+                self.store.update_action(
+                    aid, status="failed", failure_category="redaction_failed",
+                    result_summary="sensitive evidence redaction failed",
+                )
+                return InteractiveResult(
+                    status="failed", session_id=session_id, action_id=aid,
+                    action_type=action_key, action_class=aclass.value,
+                    failure_category="redaction_failed",
+                    summary="sensitive evidence redaction failed; action blocked",
+                    evidence_id=evidence_id,
+                )
+        except Exception:
+            evidence_id = ""
+
+        # execute via governed gateway (production adapter bound for interactive)
         try:
             rec: ExecutionRecord = self.gb.execute(
                 action=gw_action,
@@ -1076,6 +1193,13 @@ class InteractiveBrowser:
                     "expected_effect": expected_effect,
                     "target_digest": target.digest,
                     "action_class": aclass.value,
+                    "action_id": aid,
+                    "actor_id": actor_id,
+                    "mission_id": s.mission_id,
+                    "mission_run_id": s.mission_run_id,
+                    "lease_owner": worker or actor_id,
+                    "page_fingerprint": s.page_fingerprint,
+                    "trading_authorized": trading_authorized,
                 },
                 file_path=file_path,
                 environment=self.environment,
@@ -1149,12 +1273,32 @@ class InteractiveBrowser:
                 )
             except SessionError:
                 self.store.touch(session_id, reconciliation_status="pending")
+            try:
+                self.monitor.record_uncertain(
+                    session_id=session_id, actor_id=actor_id,
+                    mission_id=s.mission_id, mission_run_id=s.mission_run_id,
+                    message="uncertain external effect; no blind retry",
+                    error_category="outcome_uncertain",
+                )
+            except Exception:
+                pass
 
         if final_status == "succeeded" and s.status_enum == SessionStatus.PAUSED_FOR_APPROVAL:
             try:
                 self.store.transition(session_id, SessionStatus.ACTIVE, reason="approved_exec")
             except SessionError:
                 pass
+
+        # Sync page state from production adapter when available
+        try:
+            b = self.production_adapter.get_binding(session_id)
+            if b and b.active_page_id and b.pages.get(b.active_page_id):
+                pg = b.pages[b.active_page_id]
+                if pg.url and action_key in ("navigate", "open") and final_status == "succeeded":
+                    page_url = pg.url
+                    page_origin = pg.origin or origin_of(pg.url)
+        except Exception:
+            pass
 
         self.store.update_action(
             aid,
@@ -1174,12 +1318,15 @@ class InteractiveBrowser:
             checkpoint_id=checkpoint_id,
             summary=safe_summary(rec.result_summary or final_status),
             failure_category=rec.failure_category or "",
+            evidence_id=evidence_id,
             page_url=page_url or "",
             page_origin=page_origin or "",
             details={
                 "target_digest": target.digest,
                 "sensitive": sensitive,
                 "gateway_status": st,
+                "adapter_id": getattr(self.production_adapter, "adapter_id", ""),
+                "raw_page_exposed": False,
             },
         )
 
