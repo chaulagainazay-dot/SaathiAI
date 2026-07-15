@@ -4,8 +4,13 @@
 
 External Capability Program **ECP M17.24** completed: SES-000E Part 6 register for
 all Priority 1–3 repositories, project Grok skills (GSAP + loop engineering +
-audit/health), MCP inventory. **No runtime services.** Next ECP milestone only
-when explicitly authorized: **M17.25 Continuum** (license gate).
+audit/health), initial MCP inventory. **No runtime services.**
+
+**M17.25 (MCP Governance)** completed: authoritative `docs/MCP_INVENTORY.md`,
+canonical `saathi-codebase-memory`, provider-neutral memory contract,
+namespace isolation, health/degradation, write governance, Continuum remains
+**BLOCKED_LICENSE**. Next Continuum pilot only when licence is clarified
+and explicitly authorized (do not auto-install).
 
 Do not auto-start Priority 2/3 installs on the 8 GB Mac.
 

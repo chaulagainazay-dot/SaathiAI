@@ -201,6 +201,23 @@ class CEOService:
         except Exception:
             pass
 
+        # M17.25 MCP codebase-memory — only when degraded/unavailable (not when healthy)
+        try:
+            from saathi.mcp_governance.health import ceo_mcp_summary
+            ms = ceo_mcp_summary()
+            if ms and ms.get("include_in_ceo_brief"):
+                add(
+                    "MCP Memory",
+                    f"status={ms.get('status')} "
+                    f"reachable={ms.get('reachable')} "
+                    f"reason={ms.get('degraded_reason') or ms.get('last_error_category') or 'n/a'} "
+                    f"continuum={ms.get('continuum_status')}",
+                    EvidenceTier.OBSERVED.value,
+                    ["mcp.governance.health"],
+                )
+        except Exception:
+            pass
+
         brief = {"owner": owner, "generated_at": time.time(),
                 "items": items, "sections": sorted({i["section"] for i in items})}
         if persist:

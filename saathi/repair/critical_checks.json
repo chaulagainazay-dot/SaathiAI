@@ -2154,6 +2154,62 @@
       ],
       "subsystem": "browser",
       "blocking": true
+    },
+    {
+      "id": "mcp.inventory_complete",
+      "targets": [
+        "tests/test_m17_25_mcp_governance.py::test_01_inventory_contains_detected_mcps",
+        "tests/test_m17_25_mcp_governance.py::test_02_canonical_codebase_memory_identity"
+      ],
+      "subsystem": "mcp_governance",
+      "blocking": true
+    },
+    {
+      "id": "mcp.canonical_identity_unique",
+      "targets": [
+        "tests/test_m17_25_mcp_governance.py::test_03_duplicate_names_detected",
+        "tests/test_m17_25_mcp_governance.py::test_04_conflicting_backends_require_human_decision"
+      ],
+      "subsystem": "mcp_governance",
+      "blocking": true
+    },
+    {
+      "id": "mcp.namespace_isolated",
+      "targets": [
+        "tests/test_m17_25_mcp_governance.py::test_05_project_namespace_deterministic",
+        "tests/test_m17_25_mcp_governance.py::test_06_namespace_traversal_rejected",
+        "tests/test_m17_25_mcp_governance.py::test_07_cross_project_namespace_denied"
+      ],
+      "subsystem": "mcp_governance",
+      "blocking": true
+    },
+    {
+      "id": "mcp.failure_degrades_safely",
+      "targets": [
+        "tests/test_m17_25_mcp_governance.py::test_09_unavailable_backend_degrades",
+        "tests/test_m17_25_mcp_governance.py::test_10_unavailable_does_not_break_core"
+      ],
+      "subsystem": "mcp_governance",
+      "blocking": true
+    },
+    {
+      "id": "mcp.write_governance_enforced",
+      "targets": [
+        "tests/test_m17_25_mcp_governance.py::test_12_write_requires_governance",
+        "tests/test_m17_25_mcp_governance.py::test_13_speculative_lesson_rejected",
+        "tests/test_m17_25_mcp_governance.py::test_14_verified_lesson_write"
+      ],
+      "subsystem": "mcp_governance",
+      "blocking": true
+    },
+    {
+      "id": "mcp.secrets_redacted",
+      "targets": [
+        "tests/test_m17_25_mcp_governance.py::test_15_secret_like_lesson_rejected",
+        "tests/test_m17_25_mcp_governance.py::test_16_mcp_response_untrusted"
+      ],
+      "subsystem": "mcp_governance",
+      "blocking": true
     }
   ]
 }

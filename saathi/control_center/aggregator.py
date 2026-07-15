@@ -198,6 +198,13 @@ class ControlCenterAggregator:
             }
         return guarded("browser.execution", _be)
 
+    def mcp_health(self) -> Cell:
+        """M17.25 MCP governance health (codebase-memory; Continuum blocked)."""
+        def _mh():
+            from saathi.mcp_governance.health import health_snapshot
+            return health_snapshot()
+        return guarded("mcp.governance.health", _mh)
+
     def harnesses(self) -> Cell:
         """M17.3/M17.4 application-harness platform state (registry + discovery)
         plus the M17.9 durable run-ledger read model (active runs, heartbeats,
@@ -287,7 +294,8 @@ class ControlCenterAggregator:
         reg_h = self.registry_health()
         egw = self.execution_gateway()
         brw = self.browser_execution()
-        attention = self._attention(sec, appr, rel, health, harn, reg_h, egw, brw)
+        mcp_h = self.mcp_health()
+        attention = self._attention(sec, appr, rel, health, harn, reg_h, egw, brw, mcp_h)
         return {
             "owner": self.owner,
             "generated_at": _now(),
@@ -300,9 +308,10 @@ class ControlCenterAggregator:
             "registry_health": reg_h.to_dict(),
             "execution_gateway": egw.to_dict(),
             "browser_execution": brw.to_dict(),
+            "mcp_health": mcp_h.to_dict(),
             "requires_attention": attention,
             "degraded_sources": [c.source for c in (
-                health, sec, appr, rel, metrics, events, reg_h, egw, brw)
+                health, sec, appr, rel, metrics, events, reg_h, egw, brw, mcp_h)
                                  if c.status != "ok"],
         }
 
@@ -310,9 +319,23 @@ class ControlCenterAggregator:
                    harn: Cell | None = None,
                    reg_h: Cell | None = None,
                    egw: Cell | None = None,
-                   brw: Cell | None = None) -> list[dict]:
+                   brw: Cell | None = None,
+                   mcp_h: Cell | None = None) -> list[dict]:
         """Rank what needs the user NOW. Real, actionable, honest."""
         items = []
+        # M17.25 MCP memory degradation (operational attention only)
+        if mcp_h is not None and mcp_h.status == "ok" and mcp_h.value:
+            mv = mcp_h.value
+            st = (mv.get("status") or "").lower()
+            if st in ("degraded", "unavailable"):
+                items.append({
+                    "severity": "medium", "kind": "mcp_health",
+                    "message": (
+                        f"codebase-memory MCP {st}: "
+                        f"{(mv.get('degraded_reason') or mv.get('last_error_category') or '')[:80]}"
+                    ),
+                    "link": "/control/mcp",
+                })
         # M17.23 browser execution attention (failures / uncertain / policy)
         if brw is not None and brw.status == "ok" and brw.value:
             bv = brw.value

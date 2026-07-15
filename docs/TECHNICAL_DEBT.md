@@ -146,6 +146,7 @@
 
 - SES-000E still Draft L1; AC-001 cross-ref vs requirements incomplete historically.
 - OpenMontage / OpenJarvis / claude-video adapters are **stubs** (documented as discovery-only after ECP M17.24 correction).
-- Home MCP: duplicate codebase-memory entries; **headroom enabled but binary missing**.
-- Continuum / CodeFlow / Fincept / blotato-skills licenses unclear — pilot gates.
+- Home MCP: alias duplicate `codebase-memory` / `codebase-memory-mcp` (same backend — documented in M17.25; optional human disable of alias); **headroom enabled but binary missing**.
+- Continuum remains **BLOCKED_LICENSE** (M17.25); CodeFlow / Fincept / blotato-skills licenses unclear — pilot gates.
 - Priority 2/3 services not installed (intentional); Traceway vs OpenObserve decision open.
+- Live end-to-end codebase-memory CLI search under ExecutionGateway still partial (governance + connector health present; full product search UX deferred).

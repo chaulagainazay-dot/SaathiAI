@@ -1,7 +1,11 @@
-# SaathiOS Project MCP Inventory (Authoritative for ECP)
+# SaathiOS Project MCP Inventory (ECP M17.24 historical)
+
+> **Authoritative inventory moved to `docs/MCP_INVENTORY.md` (M17.25).**
+> Operational status: `docs/EXTERNAL_CAPABILITY_STATUS.md`.
+> Machine-readable: `saathi/mcp_governance/inventory.py`.
 
 **Date:** 2026-07-15
-**Milestone:** ECP M17.24 — External Repository Register & Skills Foundation
+**Milestone:** ECP M17.24 — External Repository Register & Skills Foundation (superseded for authority by M17.25)
 **Scope:** Document what exists; do not invent runtime integrations.
 
 ---

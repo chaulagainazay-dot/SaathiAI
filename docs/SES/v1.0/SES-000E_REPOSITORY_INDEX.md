@@ -24,6 +24,7 @@ Next Review         : 2026-10-02
 |---------|------|--------|--------------------|
 | 0.1.0 | 2026-07-02 | Ajay Chaulagain | Initial draft — master index of integrated and evaluated repositories |
 | 0.2.0 | 2026-07-15 | Ajay Chaulagain / ECP M17.24 | External Capability Program register (Priority 1–3); honest non-integrated status; skills foundation |
+| 0.2.1 | 2026-07-15 | Ajay Chaulagain / M17.25 | MCP governance; Continuum remains BLOCKED_LICENSE; saathi-codebase-memory canonical |
 
 ---
 
@@ -371,7 +372,7 @@ None of the following repositories is `INTEGRATED` as of 2026-07-15. Maximum sta
 | Repository | Priority | Integration type | Current status | Local Mac suitability | Program pilot |
 |------------|----------|------------------|----------------|----------------------|---------------|
 | greensock/gsap-skills | P1 | Skill | REGISTERED | ON_DEMAND_LOCAL (skill only) | Skills foundation |
-| pouyahasanamreji/continuum | P1 | MCP Server | REGISTERED | ON_DEMAND_LOCAL | ECP M17.25 |
+| pouyahasanamreji/continuum | P1 | MCP Server | REGISTERED + **BLOCKED_LICENSE** | ON_DEMAND_LOCAL | Deferred (licence); M17.25 governance uses saathi-codebase-memory |
 | braedonsaunders/codeflow | P1 | CLI Tool | REGISTERED | ON_DEMAND_LOCAL | ECP M17.26 |
 | cobusgreyling/loop-engineering | P1 | Skill | REGISTERED | ON_DEMAND_LOCAL (skill only) | Skills foundation |
 | tracewayapp/traceway | P2 | External Service | REGISTERED | OPTIONAL_EXPERIMENT / evaluate vs OpenObserve | ECP M17.27 |
@@ -427,9 +428,9 @@ Each record uses the ECP required fields. **Test evidence / adapter / health** a
 | Repository | github.com/pouyahasanamreji/continuum |
 | Priority | 1 |
 | Capability | Shared engineering knowledge memory for coding agents |
-| Current status | REGISTERED (BOUNDARY: not run ledger / CEO / TG memory) |
+| Current status | REGISTERED + **BLOCKED_LICENSE** (BOUNDARY: not run ledger / CEO / TG memory; not installed) |
 | Integration type | MCP Server |
-| Authoritative role | **Non-authoritative** engineering lessons only |
+| Authoritative role | **Non-authoritative** engineering lessons only (when/if licensed) |
 | What it must not replace | Run ledger, CEO OS memory, SecurityStore, Trading Guardian ledger, user personal memory |
 | License | **Unclear / not declared on GitHub API** — pilot blocked until clarified |
 | Commercial-use implications | `REQUIRES_HUMAN_DECISION` before commercial redistribute |
@@ -439,12 +440,13 @@ Each record uses the ECP required fields. **Test evidence / adapter / health** a
 | Security classification | Medium (memory poisoning risk) |
 | Local Mac suitability | ON_DEMAND_LOCAL |
 | Deployment model | Project MCP pilot |
-| SaathiOS adapter | Planned ECP M17.25 |
-| Health check | Planned |
-| Test evidence | None yet |
-| Rollback / disable method | MCP `enabled = false` |
+| SaathiOS adapter | **Not installed** — M17.25 keeps BLOCKED_LICENSE; governance uses saathi-codebase-memory only |
+| Health check | N/A until licence cleared |
+| Test evidence | `tests/test_m17_25_mcp_governance.py` asserts BLOCKED_LICENSE / no dependency |
+| Rollback / disable method | Do not enable; keep out of project MCP config |
 | Owner | SaathiOS Architecture |
 | Deferred risks | Missing license; namespace isolation; secret leakage |
+| Operational status | **BLOCKED_LICENSE** (see docs/EXTERNAL_CAPABILITY_STATUS.md) |
 
 #### braedonsaunders/codeflow
 
