@@ -160,10 +160,17 @@ def m20_console_status() -> dict[str, Any]:
         "inference": inf,
         "trading_guardian": trading_guardian_snapshot(),
         "series": {
-            "completed": ["M20.0", "M20.1", "M20.2", "M20.3", "M20.4", "M20.5", "M20.6"],
-            "current": "M20.7",
-            "next": "M20.8",
+            "completed": [
+                "M20.0", "M20.1", "M20.2", "M20.3", "M20.4", "M20.5",
+                "M20.7", "M20.9", "M20.10",
+            ],
+            "blocked": ["M20.6_live"],
+            "intentionally_skipped": ["M20.8"],
+            "current": None,
+            "next": "M21_not_started",
+            "verdict": "M20 COMPLETE WITH LIMITATIONS",
             "plan": "docs/M20_SERIES_PLAN_M20_5_TO_M20_10.md",
+            "closure": "docs/M20_10_CLOSURE.md",
             "master_loop": "docs/M20_MASTER_AUTONOMOUS_ENGINEERING_LOOP.md",
         },
     }

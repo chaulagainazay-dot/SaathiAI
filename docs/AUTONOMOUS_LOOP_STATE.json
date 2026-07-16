@@ -2,7 +2,7 @@
   "schema_version": "1",
   "repository": "SaathiOS",
   "branch": "milestone/m7-security-engine",
-  "current_head": "pending_m20_6",
+  "current_head": "pending_m20_10",
   "active_milestone": null,
   "completed_milestones": [
     "M20.0",
@@ -10,11 +10,16 @@
     "M20.2",
     "M20.3",
     "M20.4",
-    "M20.5"
+    "M20.5",
+    "M20.7",
+    "M20.9",
+    "M20.10"
   ],
-  "milestone_verdict": "M20.6 BLOCKED — NO APPROVED INSTALLED SMALL MODEL OR LIVE LOCAL ENGINE AVAILABLE",
-  "session_verdict": "M20.6 CERTIFICATION SUITE LANDED; LIVE BLOCKED ENVIRONMENT",
-  "next_milestone": "M20.7 consolidation OR operator unblocks live model then re-run cert",
-  "stop_reason": "no installed small model; no automatic download",
-  "unrelated_untouched": "Trading Guardian; chat default; no merge/deploy"
+  "intentionally_skipped": ["M20.8"],
+  "environment_blocked": ["M20.6_live_local_model"],
+  "milestone_verdict": "M20 COMPLETE WITH LIMITATIONS — PILOT PLATFORM CLOSED; LIVE LOCAL INFERENCE REMAINS ENVIRONMENT-BLOCKED",
+  "session_verdict": "M20 SERIES CLOSED",
+  "next_milestone": "M21 not started — operator chooses M21.0 focus",
+  "stop_reason": "M20.10 closure complete; do not auto-start M21",
+  "unrelated_untouched": "Trading Guardian; no merge/deploy; chat default legacy"
 }
