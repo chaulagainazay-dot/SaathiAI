@@ -21,6 +21,8 @@ canonical `saathi-codebase-memory`, provider-neutral memory contract,
 namespace isolation, health/degradation, write governance, Continuum remains
 **BLOCKED_LICENSE**.
 
+**M19.6 (CI Critical Manifest Environment Honesty)** completed: fixed Gate-C Critical Manifest failures that misclassified Linux/CI environment limits as security or product regressions (studio quota vs free-disk order, native permission summary schema on non-macOS, multi-app harness/redteam probes requiring ffmpeg when absent). CI installs ffmpeg/jq/sqlite3 for live pilot coverage. Not a product promotion; TG/InsForge untouched.
+
 **M19.5 (Incremental knowledge refresh + change awareness)** completed: commit/fingerprint-aware refresh over M18.2 indexer; git change detection; leases; cache epoch; multi-repo isolation; durable evidence; runtime.refresh() wired. Not production-ready.
 
 **M19.4 (Context Composer + mission context quality)** completed: structured budgeted composer over M19.0 results; profiles coding/repair/audit/architecture/incident; provenance/trust/injection boundaries; mission+repair facades attach `composed` on unified path only; TG/InsForge untouched. Not production-ready.

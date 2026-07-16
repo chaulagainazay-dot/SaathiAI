@@ -151,3 +151,10 @@
 - Priority 2/3 services not installed (intentional); Traceway vs OpenObserve decision open.
 - M18.2 delivered local-first index+CLI+hybrid retrieval; optional home alias cleanup and Continuum licence still open.
 - Full-repo eval quality is good but not perfect (lexical ranking; embeddings optional local-det only).
+
+## CI Critical Manifest (M19.6 — 2026-07-16)
+- FIXED: Linux CI Critical Manifest false failures from env-coupled checks
+  (studio quota vs free-disk, native summary key shape, multi-app ffmpeg
+  requirements in tests + SQLITE-TWOAPP/JQ-THREEAPP probes). reliability.yml
+  now installs ffmpeg/jq/sqlite3. Remaining: native AX tests still skip
+  honestly off-macOS; full suite may still hit other optional-capability skips.

@@ -1026,9 +1026,21 @@ def sqlite_identifier_injection_rejected(t: SaathiTarget):
 
 @probe("SQLITE-TWOAPP-001")
 def sqlite_second_live_app(t: SaathiTarget):
-    """The platform now exposes a SECOND executable application harness."""
+    """When host tools are present, sqlite is executable alongside ffmpeg.
+    Missing binaries are environment-blocked (boundary held with note) — never
+    a confirmed vulnerability on hosts without ffmpeg."""
     from saathi.application_harness import registry
+    from saathi.application_harness.pilots import ffmpeg as F, sqlite_harness as SQ
     execs = {h.harness_id for h in registry.all_harnesses() if h.executable()}
+    sq_ok = SQ.available()["available"]
+    ff_ok = F.available()["available"]
+    if not sq_ok:
+        return True, {"note": "sqlite CLI absent; multi-app contract env-blocked",
+                      "executable_apps": sorted(execs)}
+    if not ff_ok:
+        held = "sqlite" in execs
+        return held, {"note": "ffmpeg absent; sqlite live alone is honest",
+                      "executable_apps": sorted(execs)}
     held = "ffmpeg" in execs and "sqlite" in execs
     return held, {"executable_apps": sorted(execs)}
 
@@ -1045,10 +1057,23 @@ def jq_env_and_file_filters_rejected(t: SaathiTarget):
 
 @probe("JQ-THREEAPP-001")
 def jq_third_live_app(t: SaathiTarget):
+    """Three-app live set only when ffmpeg+sqlite+jq are on PATH. Partial
+    installs must report honest executable census, not a security failure."""
     from saathi.application_harness import registry
+    from saathi.application_harness.pilots import ffmpeg as F, sqlite_harness as SQ, jq_harness as JQ
     execs = {h.harness_id for h in registry.all_harnesses() if h.executable()}
-    held = {"ffmpeg", "sqlite", "jq"} <= execs
-    return held, {"executable_apps": sorted(execs)}
+    required = set()
+    if F.available()["available"]:
+        required.add("ffmpeg")
+    if SQ.available()["available"]:
+        required.add("sqlite")
+    if JQ.available()["available"]:
+        required.add("jq")
+    if not required:
+        return True, {"note": "no host pilot CLIs; three-app contract env-blocked",
+                      "executable_apps": sorted(execs)}
+    held = required <= execs
+    return held, {"executable_apps": sorted(execs), "required_for_host": sorted(required)}
 
 
 @probe("JQ-FAKEOUT-001")

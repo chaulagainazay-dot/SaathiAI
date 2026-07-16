@@ -110,8 +110,12 @@ def test_disk_preflight_passes_small_job(store):
     S.preflight(pid, S.DiskEstimate(1, 2, 1))  # no raise
 
 
-def test_quota_enforced(store):
+def test_quota_enforced(store, monkeypatch):
+    """Quota is independent of host free-disk: force ample free space so a
+    large estimate fails on project_quota_gb, not MIN_FREE_GB (CI runners
+    often have <50GB free and would raise InsufficientDisk first)."""
     pid = store.create_project(owner="ajay", spec={})
+    monkeypatch.setattr(S, "free_gb", lambda path=None: 100.0)
     with pytest.raises(S.QuotaExceeded):
         S.preflight(pid, S.DiskEstimate(0, 0, 50_000), project_quota_gb=1.0)
 

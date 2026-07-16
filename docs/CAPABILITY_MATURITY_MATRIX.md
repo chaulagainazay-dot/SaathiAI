@@ -52,3 +52,4 @@ permissions (macOS TCC actuation), or credentials (authenticated cloud/browser).
 | Real-index campaign + pilot promotion (M19.3) | deterministic-tested | real CBM index eval; codebase_memory_search → unified_with_fallback; not prod |
 | Mission context composer (M19.4) | deterministic-tested | structured sections/budgets/trust/injection; not prod |
 | Incremental knowledge refresh (M19.5) | deterministic-tested | commit/fingerprint refresh, leases, cache epoch; not prod |
+| CI Critical Manifest honesty (M19.6) | deterministic-tested | quota mock, native summary schema, env-honest multi-app probes; CI host tools |

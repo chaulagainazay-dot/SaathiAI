@@ -93,9 +93,19 @@ def check() -> dict:
 
 
 def summary() -> dict:
+    """Always expose readiness keys so Control Center / CI can read a stable
+    schema. On non-macOS, readiness is False with an honest reason — never
+    omit keys (that made Linux CI treat honesty as a failure)."""
     c = check()
     if c.get("status") == "unsupported":
-        return {"native_ready": False, "reason": "not macOS", "detail": c}
+        return {
+            "native_ready": False,
+            "reason": "not macOS",
+            "native_accessibility_ready": False,
+            "screen_recording_ready": False,
+            "native_actuation_ready": False,
+            "detail": c,
+        }
     ax = c["accessibility"]["status"] == "granted"
     return {
         "native_accessibility_ready": ax,
