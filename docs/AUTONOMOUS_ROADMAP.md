@@ -1,5 +1,33 @@
 # SaathiOS Autonomous Roadmap
 
+## M21–M39 Master Program (2026-07-16) — INITIALIZED
+
+**Platform program status:** `M21–M39 PROGRAM INITIALIZED — AUDIT AND ROADMAP ONLY`  
+**No platform M21 implementation started.** Do not auto-run M21–M39 in one unattended block.
+
+Canonical docs:
+
+| Doc | Role |
+|-----|------|
+| `docs/M21_39_MASTER_PROGRAM_AUDIT.md` | Intake, conflict map, asset→phase map |
+| `docs/M21_39_MASTER_PROGRAM_ROADMAP.md` | Canonical platform M21–M39 roadmap |
+| `docs/M21_39_GATE_MATRIX.md` | Per-milestone exit gates + evidence tiers |
+
+### Milestone-number namespaces (mandatory)
+
+| Namespace | Meaning |
+|-----------|---------|
+| **Platform M21–M39** | This monorepo production program (runtime → governed execution → studio → public → cert) |
+| **PRODUCT/IELTSAlert M21.x** | Separate product repo `/Users/macbookpro/Saathi/apps/pielts` — **not** platform M21 |
+| **M20.10 options A/B/C** | Historical handoff choices; remapped in program roadmap (A→env unlock/M24 evidence; B→M21.0 slice; C→M30/PRODUCT) |
+
+Platform Phase 1 target: **M21** Runtime Consolidation → **M22** Voice/durable agents → **M23** Multi-user isolation → **M24** Core runtime certification.  
+Next recommended platform work (operator must authorize coding): **M21.0** production-config inventory + provider policy formalization.
+
+Prior series: **M20 COMPLETE WITH LIMITATIONS** (live local inference still environment-blocked). Post-M20 code: CI repair `44f263a` only.
+
+---
+
 ## ECP / MCP memory note (2026-07-15)
 
 External Capability Program **ECP M17.24** completed: SES-000E Part 6 register for
@@ -450,3 +478,8 @@ no real external browser actions, no push/deploy. Verdict:
 - staging deploy + live rollback drill — needs a deploy target (no push/deploy).
 - pause/resume/checkpoint, workflow intelligence, production monitoring — larger,
   next candidates once a deploy/credential path or a bounded design exists.
+
+## PRODUCT/IELTSAlert track (not platform M21)
+
+IELTSAlert revenue work lives in **`/Users/macbookpro/Saathi/apps/pielts`** under **product** milestone labels (`docs/M21_*` in that repo).  
+In SaathiAI docs, refer to it as **PRODUCT/IELTSAlert M21.x** so it never collides with **platform M21** (Runtime Consolidation). Not a SaathiOS platform rewrite.

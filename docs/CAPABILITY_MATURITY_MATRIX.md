@@ -63,3 +63,5 @@ permissions (macOS TCC actuation), or credentials (authenticated cloud/browser).
 | M20 console consolidation (orchestrator + inference) | deterministic-tested | `saathi/m20_console` flags/status/CLI; CC facets; domain isolation asserted; no execution; not production |
 | M20 final certification (M20.9) | deterministic-tested; live model **blocked** | authority/flags/ledger/approval/TG suite; M20.8 skipped; not production |
 | M20 series closed (M20.10) | documented pilot close | runbook + M21 handoff; not production; live inference still env-blocked |
+| M21–M39 master program init | documented (SOURCE_INSPECTED) | `docs/M21_39_MASTER_PROGRAM_*` + gate matrix; platform M21 code **not started**; not production |
+| PRODUCT/IELTSAlert revenue (pielts M21.x) | product-repo pilot (out of band) | Separate repo `/Users/macbookpro/Saathi/apps/pielts`; **not** platform M21 |

@@ -1,10 +1,17 @@
 # SaathiOS Technical Debt / Known Gaps
 
+## Program note (M21–M39 init, 2026-07-16)
+
+Platform M21–M39 master program is **initialized (docs only)** — see `docs/M21_39_*`.
+Platform M21 code not started. Product IELTSAlert work in the pielts repo uses
+**PRODUCT/IELTSAlert** numbering and is not platform debt.
+
 ## Environment-blocked (need user action — NOT debt)
 - macOS Accessibility grant → native Finder/TextEdit actuation.
 - Cloud connector credentials (Gmail/Calendar/Telegram) → live connector ops.
 - Safe staging account → authenticated browser workflow.
-- GUI app installs (LibreOffice/Blender/Kdenlive) → more harness apps.
+- GUI app installs (LibreOffice/Blender/Kdenlive) → not installed.
+- Ollama + ≤3B local model for M20.6 live cert (still blocked on pilot host).
 
 ## Real debt (actionable without approval)
 - Engineering Orchestrator (M20.0–M20.5) PILOT BUILT: supervision layer + Control Center facet
