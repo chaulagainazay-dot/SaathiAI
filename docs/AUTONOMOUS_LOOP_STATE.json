@@ -2,7 +2,7 @@
   "schema_version": "1",
   "repository": "SaathiOS",
   "branch": "milestone/m7-security-engine",
-  "current_head": "pending_m20_10",
+  "current_head": "2720077",
   "active_milestone": null,
   "completed_milestones": [
     "M20.0",
@@ -15,11 +15,15 @@
     "M20.9",
     "M20.10"
   ],
-  "intentionally_skipped": ["M20.8"],
-  "environment_blocked": ["M20.6_live_local_model"],
-  "milestone_verdict": "M20 COMPLETE WITH LIMITATIONS — PILOT PLATFORM CLOSED; LIVE LOCAL INFERENCE REMAINS ENVIRONMENT-BLOCKED",
+  "intentionally_skipped": [
+    "M20.8"
+  ],
+  "environment_blocked": [
+    "M20.6_live_local_model"
+  ],
+  "milestone_verdict": "M20 COMPLETE WITH LIMITATIONS \u2014 PILOT PLATFORM CLOSED; LIVE LOCAL INFERENCE REMAINS ENVIRONMENT-BLOCKED",
   "session_verdict": "M20 SERIES CLOSED",
-  "next_milestone": "M21 not started — operator chooses M21.0 focus",
+  "next_milestone": "M21 not started \u2014 operator chooses M21.0 focus",
   "stop_reason": "M20.10 closure complete; do not auto-start M21",
   "unrelated_untouched": "Trading Guardian; no merge/deploy; chat default legacy"
 }
