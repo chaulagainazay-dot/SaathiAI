@@ -23,6 +23,10 @@ namespace isolation, health/degradation, write governance, Continuum remains
 
 **M20.5–M20.10 (series plan)** authorized: session ledger/recovery (M20.5) → live small-model cert (M20.6) → orchestrator/inference consolidation (M20.7) → bounded extra callers (M20.8) → integration/security/resource cert (M20.9) → closure + M21 handoff (M20.10). Plan: `docs/M20_SERIES_PLAN_M20_5_TO_M20_10.md`. Master loop: `docs/M20_MASTER_AUTONOMOUS_ENGINEERING_LOOP.md`. **Do not auto-run the whole series in one unattended block.**
 
+**M20.9 (Integration / Regression / Security / Operational Certification)** completed with limitations: M20.8 INTENTIONALLY_SKIPPED; authority-boundary + flag + ledger/recovery/approval + TG tests; M20.6 remains environment-BLOCKED; callers stay legacy default; no production claim. Docs: `docs/M20_9_*`, `docs/M20_8_STATUS.md`.
+
+**M20.8 (Bounded Additional Caller Adoption)** **INTENTIONALLY_SKIPPED** at finalization: no live-certified local model (M20.6 BLOCKED); certify M20.3 pair only. Status: `docs/M20_8_STATUS.md`.
+
 **M20.7 (Engineering Orchestrator + Governed Inference Consolidation)** completed: shared read-only `saathi/m20_console` (flags inventory, unified status, CLI discovery, disable procedure); Control Center cells `governed_inference` + `m20_console`; domains remain separate (no second gateway/router/ledger/store merge); defaults still off/legacy; TG unengaged. Docs: `docs/M20_7_*`.
 
 **M20.6 (Live Local Inference Certification)** **BLOCKED** on pilot host: certification suite + 10-case corpus + discovery/selection implemented (`saathi/inference/certification.py`); live run found no usable Ollama binary and zero installed models (no auto-download); defaults remain legacy; TG unengaged. Docs: `docs/M20_6_*`. Unblock: operator-install Ollama + ≤3B model, re-run `python -m saathi.inference.certification run`.

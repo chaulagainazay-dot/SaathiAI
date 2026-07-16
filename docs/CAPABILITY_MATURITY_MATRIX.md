@@ -61,3 +61,4 @@ permissions (macOS TCC actuation), or credentials (authenticated cloud/browser).
 | Engineering session ledger + integrity evidence + recovery (M20.5) | deterministic-tested | append-only hash chain; evidence baselines/violations; lease/PID recovery; resume plan no auto-launch; not harness run_ledger; not production |
 | Live local model certification suite (M20.6) | deterministic-tested; live **environment-blocked** | cert corpus+runner; no download; live BLOCKED without installed ≤3B model; injected quality path tested; callers stay legacy |
 | M20 console consolidation (orchestrator + inference) | deterministic-tested | `saathi/m20_console` flags/status/CLI; CC facets; domain isolation asserted; no execution; not production |
+| M20 final certification (M20.9) | deterministic-tested; live model **blocked** | authority/flags/ledger/approval/TG suite; M20.8 skipped; not production |
