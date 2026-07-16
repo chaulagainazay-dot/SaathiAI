@@ -1,8 +1,11 @@
-"""M20.0 — Governed Engineering Orchestrator.
+"""M20.0–M20.5 — Governed Engineering Orchestrator + session ledger.
 
 Control and supervision layer over coding-agent work. Does **not** replace
 Mission Engine, ExecutionGateway, Approval Engine, Knowledge Service, Run Ledger,
 Event Bus, Scheduler, Repair Loops, or Trading Guardian.
+
+M20.5 adds an engineering-only session ledger + integrity evidence + recovery
+(not a second harness run ledger).
 
 Disabled by default. See ``saathi.engineering.settings``.
 """
@@ -19,6 +22,8 @@ from saathi.engineering.orchestrator import (
     OrchestratorResult,
     default_orchestrator,
 )
+from saathi.engineering.recovery import SessionRecovery, recover_store
+from saathi.engineering.session_ledger import SessionLedger
 from saathi.engineering.settings import EngineeringSettings, load_settings
 from saathi.engineering.store import EngineeringStore
 
@@ -30,7 +35,10 @@ __all__ = [
     "EngineeringTask",
     "ItemStatus",
     "OrchestratorResult",
+    "SessionLedger",
+    "SessionRecovery",
     "Verdict",
     "default_orchestrator",
     "load_settings",
+    "recover_store",
 ]

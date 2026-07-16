@@ -19,6 +19,10 @@
   control-center         Control Center engineering facet (read-only)
   approve-readonly       create bound read-only approval for Claude launch
   integrity              capture/verify repository integrity snapshot
+  ledger [session_id]    M20.5 session ledger census / timeline
+  recover [--dry-run]    M20.5 reconcile stale/crashed sessions
+  evidence <session_id>  M20.5 integrity evidence for session
+  resume-plan <session>  M20.5 operator resume plan (no auto-launch)
   launch <item> --mode readonly [--adapter mock|claude_code] [--approval ID]
 
 Writes/commits/pushes remain disabled unless explicit env flags are set.
@@ -275,6 +279,40 @@ def main(argv: list[str] | None = None) -> int:
             _emit(diff.to_dict())
             return EXIT_OK if diff.ok else EXIT_FAIL
         _emit(snap.to_dict())
+        return EXIT_OK
+
+    if cmd == "ledger":
+        o = _orch()
+        led = o.store.ledger()
+        if rest:
+            _emit({
+                "session_id": rest[0],
+                "timeline": led.session_timeline(rest[0]),
+                "chain": led.verify_chain(),
+            })
+        else:
+            _emit(led.census())
+        return EXIT_OK
+
+    if cmd == "recover":
+        from saathi.engineering.recovery import recover_store
+        dry = "--dry-run" in rest
+        o = _orch()
+        _emit(recover_store(o.store, apply=not dry))
+        return EXIT_OK
+
+    if cmd == "evidence" and rest:
+        from saathi.engineering.evidence import IntegrityEvidenceStore
+        o = _orch()
+        store = IntegrityEvidenceStore(o.store.root, o.store.ledger())
+        items = [e.to_dict() for e in store.list_for_session(rest[0])]
+        _emit({"session_id": rest[0], "evidence": items})
+        return EXIT_OK
+
+    if cmd == "resume-plan" and rest:
+        from saathi.engineering.recovery import SessionRecovery
+        o = _orch()
+        _emit(SessionRecovery(o.store).resume_plan(rest[0]))
         return EXIT_OK
 
     _emit({"error": "unknown_or_bad_command", "cmd": cmd, "hint": "help"})

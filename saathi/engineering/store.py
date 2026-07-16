@@ -38,6 +38,7 @@ class EngineeringStore:
         self.approvals_path = self.root / "approvals.json"
         self.history_path = self.root / "history.jsonl"
         self.lock_path = self.root / ".store.lock"
+        self._ledger = None  # lazy SessionLedger
         self._ensure()
 
     def _ensure(self) -> None:
@@ -157,6 +158,13 @@ class EngineeringStore:
         return (len(missing) == 0, missing)
 
     # ---- sessions ----
+    def ledger(self):
+        """M20.5 canonical session ledger (lazy)."""
+        if self._ledger is None:
+            from saathi.engineering.session_ledger import SessionLedger
+            self._ledger = SessionLedger(self.root)
+        return self._ledger
+
     def put_session(self, session: dict[str, Any]) -> dict[str, Any]:
         with self.lock():
             data = self._read_json(self.sessions_path)
@@ -164,18 +172,44 @@ class EngineeringStore:
                 raise RuntimeError("sessions_store_corrupt")
             sessions = data.setdefault("sessions", {})
             sid = session.get("session_id") or new_id("sess")
+            prev = sessions.get(sid) or {}
             session["session_id"] = sid
             session["updated_at"] = time.time()
             # lease ownership
             if "owner_pid" not in session:
                 session["owner_pid"] = os.getpid()
             if "lease_until" not in session and session.get("status") in {
-                "pending", "starting", "running", "stalled", "awaiting_approval",
+                "pending", "starting", "running", "stalled", "awaiting_approval", "paused",
             }:
                 session["lease_until"] = time.time() + 600
             sessions[sid] = session
             self._write_json(self.sessions_path, data)
-            return session
+        # Ledger outside lock (append-only file)
+        try:
+            led = self.ledger()
+            if not prev:
+                led.append(
+                    "session_created",
+                    session_id=sid,
+                    task_id=str(session.get("task_id") or ""),
+                    item_id=str(session.get("item_id") or ""),
+                    payload={"status": session.get("status"), "adapter": session.get("adapter")},
+                )
+            elif prev.get("status") != session.get("status"):
+                led.append(
+                    "session_status",
+                    session_id=sid,
+                    task_id=str(session.get("task_id") or ""),
+                    item_id=str(session.get("item_id") or ""),
+                    payload={
+                        "from": prev.get("status"),
+                        "to": session.get("status"),
+                        "stop_reason": session.get("stop_reason"),
+                    },
+                )
+        except Exception:
+            pass  # ledger must not break session writes
+        return session
 
     def get_session(self, session_id: str) -> dict[str, Any] | None:
         data = self._read_json(self.sessions_path)

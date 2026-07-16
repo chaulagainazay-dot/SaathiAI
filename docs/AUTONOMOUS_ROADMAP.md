@@ -21,6 +21,10 @@ canonical `saathi-codebase-memory`, provider-neutral memory contract,
 namespace isolation, health/degradation, write governance, Continuum remains
 **BLOCKED_LICENSE**.
 
+**M20.5–M20.10 (series plan)** authorized: session ledger/recovery (M20.5) → live small-model cert (M20.6) → orchestrator/inference consolidation (M20.7) → bounded extra callers (M20.8) → integration/security/resource cert (M20.9) → closure + M21 handoff (M20.10). Plan: `docs/M20_SERIES_PLAN_M20_5_TO_M20_10.md`. Master loop: `docs/M20_MASTER_AUTONOMOUS_ENGINEERING_LOOP.md`. **Do not auto-run the whole series in one unattended block.**
+
+**M20.5 (Canonical Engineering Session Ledger, Integrity Evidence, Recovery)** completed: append-only hash-chained `session_ledger.jsonl`; integrity evidence store; recovery for stale leases / missing PID / resume plans (no auto-launch); CLI `ledger|recover|evidence|resume-plan`. Not a second harness run ledger. Docs: `docs/M20_5_*`.
+
 **M20.3 (Opt-In LLM Caller Migration + Live Small-Model Validation)** completed: inventory of direct `llm.generate` sites; selected exactly two low-risk callers (`cheap_ask`, `prose_clean`); rollout modes `legacy|shadow|governed_local_with_fallback|governed_local_only` (default legacy); compatibility adapter over M20.2 path; shadow metrics; security denials never fall back; chat default unchanged; live Ollama validation harness (honest `unavailable` when no Ollama/model); TG isolated. Docs: `docs/M20_3_*`.
 
 **M20.4 (Engineering Control Center + supervised read-only sessions)** completed: Control Center engineering facet (versioned read model, redacted); repository integrity snapshots + quarantine; bound read-only approvals for real Claude; store locking/leases; CLI control-center/approve-readonly/integrity; mock pilot green; live Claude optional/dry_run if binary missing. Writes/commits/pushes remain disabled. Docs: `docs/M20_4_ENGINEERING_*`.
