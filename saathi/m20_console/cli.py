@@ -7,6 +7,7 @@
   domains      isolation guarantees
   engineering  engineering snapshot only
   inference    inference snapshot only
+  prod-config  M21.0 production config bundle (read-only)
 
 Never launches agents, never generates, never pushes.
 """
@@ -53,6 +54,10 @@ def main(argv: list[str] | None = None) -> int:
     if cmd == "inference":
         from saathi.m20_console.status import inference_snapshot
         _emit(inference_snapshot())
+        return 0
+    if cmd in ("prod-config", "prod_config", "m21"):
+        from saathi.inference.prod_config import production_config_bundle
+        _emit(production_config_bundle())
         return 0
     _emit({"error": "unknown_command", "cmd": cmd, "hint": "help"})
     return 2

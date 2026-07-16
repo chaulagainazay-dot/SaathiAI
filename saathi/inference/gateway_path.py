@@ -234,6 +234,32 @@ class GovernedLocalInferencePath:
                 t0,
             )
 
+        # M21.0 provider policy kill switches (fail closed; no second router)
+        try:
+            from saathi.inference.provider_policy import (
+                is_master_killed,
+                is_provider_killed,
+            )
+
+            if is_master_killed():
+                return self._fail(
+                    req,
+                    InferenceErrorCategory.PROVIDER_UNAVAILABLE,
+                    "SAATHI_INFERENCE_KILL_ALL is active",
+                    fp,
+                    t0,
+                )
+            if is_provider_killed("ollama"):
+                return self._fail(
+                    req,
+                    InferenceErrorCategory.PROVIDER_UNAVAILABLE,
+                    "provider ollama killed via SAATHI_PROVIDER_KILL_OLLAMA",
+                    fp,
+                    t0,
+                )
+        except Exception as e:  # pragma: no cover — import always present in package
+            logger.debug("provider policy check skipped: %s", e)
+
         # Idempotency
         if req.idempotency_key:
             with _IDEM_LOCK:
@@ -369,6 +395,25 @@ class GovernedLocalInferencePath:
         # Engine resolution — ollama first for local
         engine_ids = engine_ids_for_providers([selected])
         engine_id = engine_ids[0] if engine_ids else "ollama"
+        # M21.0: per-engine family kill after router selection
+        try:
+            from saathi.inference.provider_policy import (
+                family_for_model_router_name,
+                is_provider_killed,
+            )
+
+            fam = family_for_model_router_name(selected.name) or engine_id
+            if is_provider_killed(fam) or is_provider_killed(engine_id):
+                return self._fail(
+                    req,
+                    InferenceErrorCategory.PROVIDER_UNAVAILABLE,
+                    f"provider {fam} killed by policy kill switch",
+                    fp,
+                    t0,
+                    router_chain=chain_names,
+                )
+        except Exception as e:  # pragma: no cover
+            logger.debug("post-route kill check skipped: %s", e)
         if engine_id not in settings.local_engine_allowlist:
             return self._fail(
                 req,

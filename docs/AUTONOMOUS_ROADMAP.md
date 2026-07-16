@@ -1,9 +1,9 @@
 # SaathiOS Autonomous Roadmap
 
-## M21–M39 Master Program (2026-07-16) — INITIALIZED
+## M21–M39 Master Program (2026-07-16)
 
-**Platform program status:** `M21–M39 PROGRAM INITIALIZED — AUDIT AND ROADMAP ONLY`  
-**No platform M21 implementation started.** Do not auto-run M21–M39 in one unattended block.
+**Platform program status:** Phase 1 active — **M21.0 COMPLETE** (inventory + provider policy); full M21 not closed.
+Do not auto-run M21–M39 in one unattended block.
 
 Canonical docs:
 
@@ -12,6 +12,13 @@ Canonical docs:
 | `docs/M21_39_MASTER_PROGRAM_AUDIT.md` | Intake, conflict map, asset→phase map |
 | `docs/M21_39_MASTER_PROGRAM_ROADMAP.md` | Canonical platform M21–M39 roadmap |
 | `docs/M21_39_GATE_MATRIX.md` | Per-milestone exit gates + evidence tiers |
+| `docs/M21_0_RUNTIME_PRODUCTION_CONFIG.md` | M21.0 architecture + ops |
+| `docs/M21_0_VALIDATION.md` | M21.0 validation |
+
+### M21.0 (Runtime Production-Configuration Inventory + Provider Policy) — COMPLETE
+
+Path inventory, production config validator, provider policy + kill switches, gateway kill enforcement, console `prod-config`. Tests: `tests/test_m21_0_production_config.py`.
+**Not** M21.1 caller migration; **not** production certified; live model still env-blocked.
 
 ### Milestone-number namespaces (mandatory)
 
@@ -21,10 +28,10 @@ Canonical docs:
 | **PRODUCT/IELTSAlert M21.x** | Separate product repo `/Users/macbookpro/Saathi/apps/pielts` — **not** platform M21 |
 | **M20.10 options A/B/C** | Historical handoff choices; remapped in program roadmap (A→env unlock/M24 evidence; B→M21.0 slice; C→M30/PRODUCT) |
 
-Platform Phase 1 target: **M21** Runtime Consolidation → **M22** Voice/durable agents → **M23** Multi-user isolation → **M24** Core runtime certification.  
-Next recommended platform work (operator must authorize coding): **M21.0** production-config inventory + provider policy formalization.
+Platform Phase 1 target: **M21** Runtime Consolidation → **M22** Voice/durable agents → **M23** Multi-user isolation → **M24** Core runtime certification.
+Next recommended: **M21.1** canonical request contract / residual path migration (bounded).
 
-Prior series: **M20 COMPLETE WITH LIMITATIONS** (live local inference still environment-blocked). Post-M20 code: CI repair `44f263a` only.
+Prior series: **M20 COMPLETE WITH LIMITATIONS** (live local inference still environment-blocked).
 
 ---
 
@@ -481,5 +488,5 @@ no real external browser actions, no push/deploy. Verdict:
 
 ## PRODUCT/IELTSAlert track (not platform M21)
 
-IELTSAlert revenue work lives in **`/Users/macbookpro/Saathi/apps/pielts`** under **product** milestone labels (`docs/M21_*` in that repo).  
+IELTSAlert revenue work lives in **`/Users/macbookpro/Saathi/apps/pielts`** under **product** milestone labels (`docs/M21_*` in that repo).
 In SaathiAI docs, refer to it as **PRODUCT/IELTSAlert M21.x** so it never collides with **platform M21** (Runtime Consolidation). Not a SaathiOS platform rewrite.

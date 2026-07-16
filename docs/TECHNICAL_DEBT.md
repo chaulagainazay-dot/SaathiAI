@@ -1,10 +1,13 @@
 # SaathiOS Technical Debt / Known Gaps
 
-## Program note (M21–M39 init, 2026-07-16)
+## Program note (M21–M39 / M21.0, 2026-07-16)
 
-Platform M21–M39 master program is **initialized (docs only)** — see `docs/M21_39_*`.
-Platform M21 code not started. Product IELTSAlert work in the pielts repo uses
-**PRODUCT/IELTSAlert** numbering and is not platform debt.
+Platform M21–M39 program initialized; **M21.0 COMPLETE** (prod-config inventory +
+provider policy + kill switches). Remaining M21 gates (caller migration, cost
+ceilings, release-check hook) are M21.1–M21.3. Product IELTSAlert work in the
+pielts repo uses **PRODUCT/IELTSAlert** numbering and is not platform debt.
+- MEDIUM: residual direct paths (`chat_engine`, openjarvis adapter) inventoried
+  only — migration/guards deferred to M21.1.
 
 ## Environment-blocked (need user action — NOT debt)
 - macOS Accessibility grant → native Finder/TextEdit actuation.

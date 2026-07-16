@@ -49,7 +49,7 @@ NOT READY — CRITICAL GAPS REMAIN
 
 | ID | Title | Status | Entry criteria | Exit verdict target |
 |----|-------|--------|----------------|---------------------|
-| **M21** | Runtime Consolidation and Production Configuration | **NOT STARTED** (program init only) | M20 closed; audit done | `M21 COMPLETE — RUNTIME CONFIGURATION AND MODEL ROUTING CONSOLIDATED` |
+| **M21** | Runtime Consolidation and Production Configuration | **IN PROGRESS** — **M21.0 COMPLETE** | M20 closed; audit done | `M21 COMPLETE — RUNTIME CONFIGURATION AND MODEL ROUTING CONSOLIDATED` |
 | **M22** | Voice, Durable Agents, Recovery, and Observability | NOT STARTED | M21 complete or WITH LIMITATIONS accepted | `M22 COMPLETE — VOICE AND DURABLE AGENT EXECUTION CERTIFIED` |
 | **M23** | Multi-User Identity, Isolation, Permissions, and Security | NOT STARTED | M22 complete / accepted limitations | `M23 COMPLETE — MULTI-USER CORE SECURITY AND ISOLATION CERTIFIED` |
 | **M24** | Core Runtime Staging and Production Certification | NOT STARTED | M21–M23 evidence present | `CORE RUNTIME PRODUCTION CERTIFIED` **or** `CORE RUNTIME STAGING CERTIFIED — PRODUCTION BLOCKERS REMAIN` |
@@ -130,10 +130,10 @@ Do **not** implement all of M21 in one invocation. Suggested slices:
 
 | Field | Value |
 |-------|--------|
-| Program phase | Initialization complete → **Phase 1 ready** |
-| Active platform milestone | **none** (do not auto-start M21 code) |
-| Last checkpoint | M21–M39 program audit + roadmap + gate matrix |
-| Recommended next | **M21.0** runtime production-config inventory (operator may instead prioritize PRODUCT/IELTSAlert outside this numbering) |
+| Program phase | Phase 1 — M21 in progress |
+| Active platform milestone | **M21.0 COMPLETE**; do not auto-start M21.1 |
+| Last checkpoint | M21.0 production-config inventory + provider policy |
+| Recommended next | **M21.1** request contract enforcement / residual path controls |
 | M20.6 live model | Still **ENVIRONMENT_BLOCKED** until operator installs Ollama + ≤3B |
 
 ---

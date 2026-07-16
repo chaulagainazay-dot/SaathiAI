@@ -70,6 +70,19 @@ def inference_snapshot() -> dict[str, Any]:
             "suite": "m20.6.cert.suite.v1",
             "cli": "python -m saathi.inference.certification run",
         }
+        m21 = {}
+        try:
+            from saathi.inference.prod_config import validate_production_config
+            from saathi.inference.provider_policy import provider_policy_snapshot
+
+            m21 = {
+                "prod_config_posture": validate_production_config(settings).posture,
+                "prod_config_ok": validate_production_config(settings).ok,
+                "provider_kill_all": provider_policy_snapshot().get("kill_all_active"),
+                "cli": "python -m saathi.inference.prod_config bundle",
+            }
+        except Exception as e:
+            m21 = {"error": type(e).__name__}
         return {
             "domain": "inference",
             "ok": True,
@@ -91,6 +104,7 @@ def inference_snapshot() -> dict[str, Any]:
             "models_installed_count": len(models),
             "models_sample": models[:8],
             "certification": cert,
+            "m21_0": m21,
         }
     except Exception as e:
         return {"domain": "inference", "ok": False, "error": type(e).__name__}
@@ -118,6 +132,7 @@ def cli_discovery() -> dict[str, Any]:
         "engineering_control_center": "python -m saathi.engineering control-center",
         "inference_cert": "python -m saathi.inference.certification",
         "inference_discover": "python -m saathi.inference.certification discover",
+        "inference_prod_config": "python -m saathi.inference.prod_config",
         "ops": "python -m saathi.ops",
         "control_center": "python -m saathi.control_center.cli",
     }

@@ -55,6 +55,19 @@ FLAG_CATALOG: tuple[FlagSpec, ...] = (
     FlagSpec("SAATHI_INF_ROLLOUT_CHEAP_ASK", "inference", "legacy", "cheap_ask mode"),
     FlagSpec("SAATHI_INF_ROLLOUT_PROSE_CLEAN", "inference", "legacy", "prose_clean mode"),
     FlagSpec("SAATHI_OPENJARVIS_COMPAT", "inference", "0", "OJ concepts flag (no OJ process)"),
+    # M21.0 provider kill switches (1 = killed / disabled)
+    FlagSpec("SAATHI_INFERENCE_KILL_ALL", "inference", "0", "Hard-kill all providers via policy", True),
+    FlagSpec("SAATHI_PROVIDER_KILL_OLLAMA", "inference", "0", "Kill local ollama provider", True),
+    FlagSpec("SAATHI_PROVIDER_KILL_FAKE", "inference", "0", "Kill fake test engine"),
+    FlagSpec("SAATHI_PROVIDER_KILL_OPENAI_COMPAT", "inference", "0", "Kill openai-compat engine"),
+    FlagSpec("SAATHI_PROVIDER_KILL_ANTHROPIC", "inference", "0", "Kill anthropic cloud family", True),
+    FlagSpec("SAATHI_PROVIDER_KILL_OPENAI", "inference", "0", "Kill openai cloud family", True),
+    FlagSpec("SAATHI_PROVIDER_KILL_GROQ", "inference", "0", "Kill groq cloud family", True),
+    FlagSpec("SAATHI_PROVIDER_KILL_GEMINI", "inference", "0", "Kill gemini cloud family", True),
+    FlagSpec("SAATHI_PROVIDER_KILL_OPENROUTER", "inference", "0", "Kill openrouter multiproxy", True),
+    FlagSpec("SAATHI_PROVIDER_KILL_DEEPSEEK", "inference", "0", "Kill deepseek family", True),
+    FlagSpec("SAATHI_PROVIDER_KILL_GLM", "inference", "0", "Kill glm family", True),
+    FlagSpec("SAATHI_PROVIDER_KILL_QWEN", "inference", "0", "Kill qwen family", True),
 )
 
 
@@ -116,13 +129,30 @@ def disable_procedure() -> dict[str, Any]:
         "SAATHI_INF_ROLLOUT_CHEAP_ASK",
         "SAATHI_INF_ROLLOUT_PROSE_CLEAN",
     ]
+    provider_kills = [
+        "SAATHI_INFERENCE_KILL_ALL",
+        "SAATHI_PROVIDER_KILL_OLLAMA",
+        "SAATHI_PROVIDER_KILL_ANTHROPIC",
+        "SAATHI_PROVIDER_KILL_OPENAI",
+        "SAATHI_PROVIDER_KILL_GROQ",
+        "SAATHI_PROVIDER_KILL_GEMINI",
+        "SAATHI_PROVIDER_KILL_OPENROUTER",
+        "SAATHI_PROVIDER_KILL_DEEPSEEK",
+        "SAATHI_PROVIDER_KILL_GLM",
+        "SAATHI_PROVIDER_KILL_QWEN",
+        "SAATHI_PROVIDER_KILL_OPENAI_COMPAT",
+        "SAATHI_PROVIDER_KILL_FAKE",
+    ]
     return {
         "engineering_keys": eng,
         "inference_keys": inf,
+        "provider_kill_keys": provider_kills,
         "unset_commands": [
             "unset " + " ".join(eng),
             "unset " + " ".join(inf),
-            "# or set each to 0 / legacy",
+            "unset " + " ".join(provider_kills),
+            "# or set masters to 0 / legacy; set kills to 0 to re-enable after deliberate kill",
+            "# emergency: export SAATHI_INFERENCE_KILL_ALL=1",
         ],
         "hard_denials_always_false": [
             "merge_allowed",
@@ -132,7 +162,7 @@ def disable_procedure() -> dict[str, Any]:
             "unrestricted_shell",
             "unrestricted_mcp",
         ],
-        "note": "Defaults are already off/legacy; unsetting is sufficient.",
+        "note": "Defaults are already off/legacy; unsetting is sufficient. M21.0 kill switches default off (not killed).",
     }
 
 

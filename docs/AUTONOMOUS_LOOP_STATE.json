@@ -2,8 +2,8 @@
   "schema_version": "1",
   "repository": "SaathiOS",
   "branch": "milestone/m7-security-engine",
-  "current_head": "8bedf77",
-  "active_milestone": "M21-39-PROGRAM-INIT",
+  "current_head": "pending_m21_0",
+  "active_milestone": null,
   "completed_milestones": [
     "M20.0",
     "M20.1",
@@ -14,7 +14,8 @@
     "M20.7",
     "M20.9",
     "M20.10",
-    "M21_39_PROGRAM_INIT"
+    "M21_39_PROGRAM_INIT",
+    "M21.0"
   ],
   "intentionally_skipped": [
     "M20.8"
@@ -22,31 +23,33 @@
   "environment_blocked": [
     "M20.6_live_local_model"
   ],
-  "milestone_verdict": "M21-M39 PROGRAM INITIALIZED \u2014 AUDIT AND ROADMAP ONLY; PLATFORM M21 NOT STARTED",
-  "session_verdict": "PROGRAM INIT CHECKPOINT COMPLETE",
-  "next_milestone": "M21.0 Runtime production-config inventory (operator authorize) OR PRODUCT/IELTSAlert out-of-band",
-  "stop_reason": "First master-loop invocation: audit+roadmap+gate matrix only; no multi-milestone implementation",
+  "milestone_verdict": "M21.0 COMPLETE — RUNTIME PRODUCTION-CONFIGURATION INVENTORY AND PROVIDER POLICY FORMALIZED",
+  "session_verdict": "M21.0 COMPLETE WITH LIMITATIONS — NOT FULL M21; NOT PRODUCTION",
+  "next_milestone": "M21.1 request contract / residual path controls (operator authorize)",
+  "stop_reason": "M21.0 bounded slice complete; do not auto-start M21.1",
   "program_docs": [
     "docs/M21_39_MASTER_PROGRAM_AUDIT.md",
     "docs/M21_39_MASTER_PROGRAM_ROADMAP.md",
-    "docs/M21_39_GATE_MATRIX.md"
+    "docs/M21_39_GATE_MATRIX.md",
+    "docs/M21_0_RUNTIME_PRODUCTION_CONFIG.md",
+    "docs/M21_0_VALIDATION.md"
   ],
+  "m21_0": {
+    "modules": [
+      "saathi/inference/path_inventory.py",
+      "saathi/inference/provider_policy.py",
+      "saathi/inference/prod_config.py"
+    ],
+    "tests": "tests/test_m21_0_production_config.py",
+    "cli": "python -m saathi.inference.prod_config"
+  },
   "numbering": {
     "platform_m21": "Runtime Consolidation and Production Configuration",
-    "product_ielts_m21": "pielts repo only \u2014 namespace PRODUCT/IELTSAlert",
+    "product_ielts_m21": "pielts repo only — namespace PRODUCT/IELTSAlert",
     "m20_10_options_remapped": true
   },
-  "unrelated_untouched": "Trading Guardian; no merge/deploy; chat default legacy; no model download; no application code in this checkpoint",
-  "session_id": "m21-39-init-2026-07-16",
+  "unrelated_untouched": "Trading Guardian; chat default legacy; no merge/deploy; no model download; no M21.1/M22",
+  "session_id": "m21-0-2026-07-16",
   "actor": "grok-master-controller",
-  "start_commit": "44f263a",
-  "allowed_paths": [
-    "docs/M21_39_*",
-    "docs/AUTONOMOUS_ROADMAP.md",
-    "docs/AUTONOMOUS_LOOP_STATE.json",
-    "docs/CAPABILITY_MATURITY_MATRIX.md",
-    "docs/M20_10_M21_HANDOFF.md",
-    ".saathi-agent-state/*"
-  ],
-  "program_init_commit": "26ea1d2"
+  "start_commit": "2022a19"
 }
