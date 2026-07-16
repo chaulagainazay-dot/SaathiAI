@@ -1,8 +1,9 @@
 # ADR: OpenJarvis as Local AI Runtime Adapter
 
-**Date:** 2026-07-10  
-**Status:** DISCOVERY IN PROGRESS (awaiting OpenJarvis discovery agent completion)  
-**Context:** Local-first AI strategy for SaathiOS; Ollama integration; device-aware model selection  
+**Date:** 2026-07-10
+**Status:** SUPERSEDED IN PART by M20.1 Slice A (2026-07-16)
+**Update:** OpenJarvis is **not** the SaathiOS runtime. SaathiOS-native `saathi.inference` implements the engine contract + catalogue + hardware profile; ModelRouter remains authoritative. Upstream OJ remains Apache-2.0 conceptual reference only.
+**Context:** Local-first AI strategy for SaathiOS; Ollama integration; device-aware model selection
 
 ---
 
@@ -130,22 +131,22 @@ ModelGateway (policy-driven provider selection)
   ├─ Check cloud availability (offline? use Ollama)
   ↓
 Selected provider adapter:
-  
+
   If Ollama:
     → OllamaEngine (local, M2-friendly model)
     → OrchestratorAgent executes
     → Result sanitized, no network required
-  
+
   If OpenJarvis:
     → OpenJarvis Skill registry
     → OrchestratorAgent executes
     → Cloud fallback if Ollama unavailable
-  
+
   If Claude/OpenAI/Gemini:
     → Cloud SDK adapter
     → Credential leased by ExecutionGateway
     → Result sanitized, no secrets exposed
-  
+
   ↓
 Result + Evidence
 ```
@@ -181,6 +182,6 @@ Hard rules:
 
 ---
 
-**Status:** ✅ APPROVED FOR IMPLEMENTATION  
-**Documents:** OPENJARVIS_DISCOVERY.md, INTEGRATION_SUMMARY.json  
+**Status:** ✅ APPROVED FOR IMPLEMENTATION
+**Documents:** OPENJARVIS_DISCOVERY.md, INTEGRATION_SUMMARY.json
 **Next:** Begin Phase 1 implementation (2026-07-15)

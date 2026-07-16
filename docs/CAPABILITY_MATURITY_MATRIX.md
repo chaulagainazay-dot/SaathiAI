@@ -53,3 +53,4 @@ permissions (macOS TCC actuation), or credentials (authenticated cloud/browser).
 | Mission context composer (M19.4) | deterministic-tested | structured sections/budgets/trust/injection; not prod |
 | Incremental knowledge refresh (M19.5) | deterministic-tested | commit/fingerprint refresh, leases, cache epoch; not prod |
 | CI Critical Manifest honesty (M19.6) | deterministic-tested | quota mock, native summary schema, env-honest multi-app probes; CI host tools |
+| Unified inference runtime + model catalogue (M20.1 OJ Slice A) | deterministic-tested | `saathi/inference` engines/registry/catalogue/hardware/bench/router_bridge; default-off; ModelRouter authoritative; OJ concepts only; TG isolation tests |

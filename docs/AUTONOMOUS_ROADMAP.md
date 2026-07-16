@@ -21,6 +21,8 @@ canonical `saathi-codebase-memory`, provider-neutral memory contract,
 namespace isolation, health/degradation, write governance, Continuum remains
 **BLOCKED_LICENSE**.
 
+**M20.1 (Selective OpenJarvis Primitive Integration — Slice A)** completed: SaathiOS-native `saathi/inference` (engine contract, registry/discovery, catalogue+provenance, M2 8 GB hardware profile, Ollama/OpenAI-compat/cloud/fake adapters, bounded benchmarks, ModelRouter observation bridge, skill/sandbox gates). OpenJarvis audited as Apache-2.0 **reference only** — no OJ source copied, no OJ process, default-off. ModelRouter remains authoritative; TG unengaged. Not production-ready; normal `llm.generate` path unchanged by default. Docs: `docs/M20_1_OPENJARVIS_*`.
+
 **M19.6 (CI Critical Manifest Environment Honesty)** completed: fixed Gate-C Critical Manifest failures that misclassified Linux/CI environment limits as security or product regressions (studio quota vs free-disk order, native permission summary schema on non-macOS, multi-app harness/redteam probes requiring ffmpeg when absent). CI installs ffmpeg/jq/sqlite3 for live pilot coverage. Not a product promotion; TG/InsForge untouched.
 
 **M19.5 (Incremental knowledge refresh + change awareness)** completed: commit/fingerprint-aware refresh over M18.2 indexer; git change detection; leases; cache epoch; multi-repo isolation; durable evidence; runtime.refresh() wired. Not production-ready.
