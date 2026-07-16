@@ -190,20 +190,36 @@ def concat_clips(project_id: str, clip_paths: list[str], *,
     return r
 
 
-def extract_thumbnail(project_id: str, video_path: str, *, at_sec: float = 0.5,
+def extract_thumbnail(project_id: str, video_path: str, *, at_sec: float = 0.0,
                       out_rel: str = "thumbnails/frame.png") -> RenderResult:
+    """Grab one frame. Default seek is 0.0 so short muxed clips (e.g. audio
+    shorter than video with -shortest) still yield a frame; mid-clip seeks
+    often produced empty output with rc=0 on sub-second media."""
     if not ffmpeg_available():
         return RenderResult(ok=False, provider="unavailable", detail="ffmpeg not installed")
     out = safe_path(project_id, out_rel)
     out.parent.mkdir(parents=True, exist_ok=True)
-    args = ["-ss", str(at_sec), "-i", str(video_path), "-frames:v", "1", str(out)]
-    res = _run(args, timeout=30)
-    if res.returncode != 0:
-        return RenderResult(ok=False, detail=f"thumbnail extract failed: {res.stderr[:200]}")
-    if not out.exists() or out.stat().st_size == 0:
-        return RenderResult(ok=False, detail="thumbnail missing")
-    return RenderResult(ok=True, path=str(out), checksum=checksum_file(out),
-                        size_bytes=out.stat().st_size)
+    attempts = [at_sec]
+    if at_sec != 0.0:
+        attempts.append(0.0)
+    last_err = ""
+    for ss in attempts:
+        if out.exists():
+            try:
+                out.unlink()
+            except OSError:
+                pass
+        args = ["-ss", str(ss), "-i", str(video_path), "-frames:v", "1",
+                "-y", str(out)]
+        res = _run(args, timeout=30)
+        if res.returncode != 0:
+            last_err = f"thumbnail extract failed: {res.stderr[:200]}"
+            continue
+        if out.exists() and out.stat().st_size > 0:
+            return RenderResult(ok=True, path=str(out), checksum=checksum_file(out),
+                                size_bytes=out.stat().st_size)
+        last_err = "thumbnail missing"
+    return RenderResult(ok=False, detail=last_err or "thumbnail missing")
 
 
 def mux_audio(project_id: str, video_path: str, audio_path: str, *,

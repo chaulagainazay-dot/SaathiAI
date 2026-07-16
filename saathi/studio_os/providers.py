@@ -12,11 +12,25 @@ and is checksummed.
 """
 from __future__ import annotations
 
+import io
 import time
+import wave
 from dataclasses import dataclass
 from pathlib import Path
 
 from saathi.studio_os.storage import safe_path, checksum_file
+
+
+def _silent_wav_bytes(*, duration_sec: float = 0.5, rate: int = 8000) -> bytes:
+    """Minimal mono 16-bit PCM silence — ffmpeg-muxable without host TTS."""
+    nframes = max(1, int(rate * duration_sec))
+    buf = io.BytesIO()
+    with wave.open(buf, "wb") as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(rate)
+        w.writeframes(b"\x00\x00" * nframes)
+    return buf.getvalue()
 
 
 @dataclass
@@ -145,6 +159,8 @@ class NarrationProvider:
 
 
 class DeterministicNarrationProvider(NarrationProvider):
+    """Credential-free offline narration: minimal valid silent WAV so assemble
+    mux works on Linux CI (no macOS `say`) without claiming real TTS quality."""
     name = "deterministic"
 
     def available(self) -> bool:
@@ -152,11 +168,16 @@ class DeterministicNarrationProvider(NarrationProvider):
 
     def generate(self, project_id, *, text, out_rel, voice="default"):
         out = safe_path(project_id, out_rel)
+        # Always emit .wav — writing text to .aiff broke ffmpeg mux on Linux CI.
+        if out.suffix.lower() not in (".wav", ".wave"):
+            out = out.with_suffix(".wav")
         out.parent.mkdir(parents=True, exist_ok=True)
-        out.write_bytes(f"AUDIO:{voice}:{text}".encode())
+        # ≥2s so mux -shortest keeps a usable video length for thumbnail seeks
+        out.write_bytes(_silent_wav_bytes(duration_sec=2.0))
         return GenResult(ok=True, kind="voice", path=str(out),
                         checksum=checksum_file(out), size_bytes=out.stat().st_size,
-                        provider=self.name)
+                        provider=self.name,
+                        detail=f"silent_wav voice={voice} text_len={len(text or '')}")
 
 
 class SayNarrationProvider(NarrationProvider):

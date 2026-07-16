@@ -13,6 +13,18 @@ GitHub Actions `reliability` on `ubuntu-latest` failed Critical Manifest with:
 
 Local macOS (ffmpeg present, ample disk) stayed green — failures were CI-environment honesty, not product security regressions.
 
+## Fix (bounded) — slice 2 (post-push residual)
+
+After M19.6.1 cleared 7/8 Gate C failures, residual was only
+`studio.studio_os_m13` → `test_full_short_video_workflow_produces_real_artifacts`
+on Linux: no macOS `say`, deterministic narration wrote non-audio bytes,
+ffmpeg mux produced short/invalid media, thumbnail seek at 0.5s missed frames.
+
+Additional fixes:
+* Deterministic narration emits muxable silent WAV (≥2s)
+* Assemble falls back to video-only if mux fails (honest detail)
+* Thumbnail seek defaults to 0.0 with retry; Pillow fallback if grab fails
+
 ## Fix (bounded)
 
 1. **Quota test** — monkeypatch `free_gb` so quota failure is independent of host free space.
