@@ -13,6 +13,9 @@
   auto-scheduling of engineering backlog (must not become a second OS scheduler); optional
   SQLite migration of session ledger. Must not duplicate Mission Engine / harness run ledger.
   Series close path: M20.6–M20.10 (see `docs/M20_SERIES_PLAN_M20_5_TO_M20_10.md`).
+- M20.6 live cert **environment-blocked** on current Mac: Ollama.app missing (broken
+  `/usr/local/bin/ollama` symlink), no local model weights, free RAM ~1.3 GB. Suite is
+  ready; operator must install runtime + ≤3B model manually before COMPLETE.
 - Scheduled graph mission recovery (M17.17) BUILT: scheduled/trusted-event graph-backed
   missions launch through the MissionEngine, resume through the EXISTING graph + recovery
   layers, and settle mission+occurrence exactly once; honest graph→mission→occurrence
