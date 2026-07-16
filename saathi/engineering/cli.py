@@ -23,6 +23,7 @@
   recover [--dry-run]    M20.5 reconcile stale/crashed sessions
   evidence <session_id>  M20.5 integrity evidence for session
   resume-plan <session>  M20.5 operator resume plan (no auto-launch)
+  m20                    M20.7 unified console status (read-only)
   launch <item> --mode readonly [--adapter mock|claude_code] [--approval ID]
 
 Writes/commits/pushes remain disabled unless explicit env flags are set.
@@ -313,6 +314,11 @@ def main(argv: list[str] | None = None) -> int:
         from saathi.engineering.recovery import SessionRecovery
         o = _orch()
         _emit(SessionRecovery(o.store).resume_plan(rest[0]))
+        return EXIT_OK
+
+    if cmd == "m20":
+        from saathi.m20_console.status import m20_console_status
+        _emit(m20_console_status())
         return EXIT_OK
 
     _emit({"error": "unknown_or_bad_command", "cmd": cmd, "hint": "help"})

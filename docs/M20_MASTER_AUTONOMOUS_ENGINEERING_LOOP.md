@@ -81,7 +81,7 @@ The loop **coordinates** existing systems. It does **not** replace:
 | **M20.4** | Control Center facet + read-only agent | read model, integrity, approvals | Off / read-only | Control Center pilot | `docs/M20_4_*` |
 | **M20.5** | Session ledger + integrity evidence + recovery | append-only ledger, evidence store, reconcile | Local store | ENGINEERING SESSION LEDGER PILOT READY | `docs/M20_5_*` |
 | **M20.6** | Live small-model certification | cert suite + corpus; live needs installed ≤3B | Off / env-gated | **BLOCKED** on pilot host (no model) | `docs/M20_6_*` |
-| **M20.7** | Orchestrator ↔ inference consolidation | shared ops surface, no domain merge | Defaults hold | planned | series plan |
+| **M20.7** | Orchestrator ↔ inference consolidation | `saathi/m20_console` shared status/flags | Defaults hold | **READY** (obs only) | `docs/M20_7_*` |
 | **M20.8** | Bounded extra caller adoption | ≤1–2 callers, shadow-first | legacy default | planned | series plan |
 | **M20.9** | Integration / security / resource cert | cross-package evidence | Evidence-only | planned | series plan |
 | **M20.10** | Closure + M21 handoff | freeze M20, runbook | Series closed | planned | series plan |

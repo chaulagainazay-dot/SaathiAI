@@ -307,6 +307,20 @@ class ControlCenterAggregator:
             return engineering_control_center_status()
         return guarded("engineering.orchestrator", _eng)
 
+    def governed_inference(self) -> Cell:
+        """M20.7 read-only governed inference facet (never generates)."""
+        def _inf():
+            from saathi.m20_console.status import inference_control_center_facet
+            return inference_control_center_facet()
+        return guarded("inference.governed", _inf)
+
+    def m20_console(self) -> Cell:
+        """M20.7 unified console rollup (read-only)."""
+        def _m20():
+            from saathi.m20_console.status import m20_console_status
+            return m20_console_status()
+        return guarded("m20.console", _m20)
+
     # ── composed read models ────────────────────────────────────────────────
     def overview(self) -> dict:
         health = self.platform_health()
