@@ -21,6 +21,8 @@ canonical `saathi-codebase-memory`, provider-neutral memory contract,
 namespace isolation, health/degradation, write governance, Continuum remains
 **BLOCKED_LICENSE**.
 
+**M20.3 (Opt-In LLM Caller Migration + Live Small-Model Validation)** completed: inventory of direct `llm.generate` sites; selected exactly two low-risk callers (`cheap_ask`, `prose_clean`); rollout modes `legacy|shadow|governed_local_with_fallback|governed_local_only` (default legacy); compatibility adapter over M20.2 path; shadow metrics; security denials never fall back; chat default unchanged; live Ollama validation harness (honest `unavailable` when no Ollama/model); TG isolated. Docs: `docs/M20_3_*`.
+
 **M20.2 (Governed Local Inference Execution Path)** completed: ToolIntent/`ModelGateway` path → authoritative ModelRouter → M20.1 runtime → Ollama-first local engine; structured result + evidence events; hardware/concurrency/timeout/host allowlist; default-off (`SAATHI_INFERENCE_ENABLED` + `SAATHI_INFERENCE_GATEWAY_ENABLED`); no global `llm.generate`/chat switch; no OJ process; TG isolated. Docs: `docs/M20_2_GOVERNED_LOCAL_INFERENCE_EXECUTION.md`.
 
 **M20.1 (Selective OpenJarvis Primitive Integration — Slice A)** completed: SaathiOS-native `saathi/inference` (engine contract, registry/discovery, catalogue+provenance, M2 8 GB hardware profile, Ollama/OpenAI-compat/cloud/fake adapters, bounded benchmarks, ModelRouter observation bridge, skill/sandbox gates). OpenJarvis audited as Apache-2.0 **reference only** — no OJ source copied, no OJ process, default-off. ModelRouter remains authoritative; TG unengaged. Not production-ready; normal `llm.generate` path unchanged by default. Docs: `docs/M20_1_OPENJARVIS_*`.

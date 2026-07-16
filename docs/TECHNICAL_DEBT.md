@@ -151,7 +151,7 @@
 ## External Capability Program debt (2026-07-15)
 
 - SES-000E still Draft L1; AC-001 cross-ref vs requirements incomplete historically.
-- OpenMontage / claude-video adapters remain **stubs**. OpenJarvis concepts: M20.1 runtime + M20.2 governed local path exist (default-off). Residual: no global `llm.generate`/chat migration; streaming/NDJSON deferred; live Ollama generation not required for pilot green; ModelGateway chat-llm override still separate.
+- OpenMontage / claude-video adapters remain **stubs**. OpenJarvis concepts: M20.1 runtime + M20.2 governed path + M20.3 opt-in adoption for **exactly two** callers (`cheap_ask`, `prose_clean`) exist (default legacy / inference flags off). Residual: no global `llm.generate`/chat migration; `_llm_helper` fan-out still legacy; streaming/NDJSON deferred; live Ollama not present on pilot host (harness honest-unavailable); ModelGateway chat-llm override still separate; no auto cloud fallback.
 - Home MCP: alias duplicate `codebase-memory` / `codebase-memory-mcp` (same backend — documented in M17.25; optional human disable of alias); **headroom enabled but binary missing**.
 - Continuum remains **BLOCKED_LICENSE** (M17.25); CodeFlow / Fincept / blotato-skills licenses unclear — pilot gates.
 - Priority 2/3 services not installed (intentional); Traceway vs OpenObserve decision open.
