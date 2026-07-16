@@ -7,6 +7,12 @@
 - GUI app installs (LibreOffice/Blender/Kdenlive) → more harness apps.
 
 ## Real debt (actionable without approval)
+- Engineering Orchestrator (M20.0) PILOT BUILT: governed supervision layer over coding agents
+  (`saathi/engineering/`), disabled by default, mock pilot + Claude adapter scaffold, 61 tests.
+  Remaining (deferred): Control Center status cell; live Claude write pilot under explicit
+  approval; CI status adapter; multi-provider adapters; cost/token tracking; auto-scheduling of
+  engineering backlog (must not become a second OS scheduler). Must not grow into an ungoverned
+  coding agent or duplicate Mission Engine / run ledger.
 - Scheduled graph mission recovery (M17.17) BUILT: scheduled/trusted-event graph-backed
   missions launch through the MissionEngine, resume through the EXISTING graph + recovery
   layers, and settle mission+occurrence exactly once; honest graph→mission→occurrence

@@ -4,10 +4,10 @@
   "branch": "milestone/m7-security-engine",
   "loop_started_at": "2026-07-15",
   "initial_head": "f40ee27",
-  "current_head": "M19.6 (pending commit)",
-  "iterations_completed": 4,
+  "current_head": "pending_m20_0",
+  "iterations_completed": 5,
   "iteration_limit": 3,
-  "active_milestone": "M19.6 CI Critical Manifest Environment Honesty",
+  "active_milestone": null,
   "completed_milestones": [
     "M19.0 Unified Knowledge Service",
     "M19.1 Knowledge Service adoption",
@@ -15,22 +15,24 @@
     "M19.3 Real-Index Knowledge Campaign and Controlled Promotion",
     "M19.4 Context Composer and Mission Context Quality",
     "M19.5 Incremental Knowledge Refresh and Repository Change Awareness",
-    "M19.6 CI Critical Manifest Environment Honesty"
+    "M19.6 CI Critical Manifest Environment Honesty",
+    "M20.1 Selective OpenJarvis Primitive Integration Slice A",
+    "M20.0 Governed Engineering Orchestrator"
   ],
   "blocked_items": [
     "native Finder/TextEdit actuation",
     "GUI harness apps not installed",
     "authenticated browser/cloud workflow",
     "staging deploy + live rollback drill",
-    "Continuum license unclear (BLOCKED_LICENSE \u2014 no install)"
+    "Continuum license unclear (BLOCKED_LICENSE — no install)"
   ],
-  "last_full_suite": "M19.6 related: 166 pass; redteam 0 confirmed",
-  "milestone_verdict": "M19.6 CI CRITICAL MANIFEST HONESTY READY",
-  "session_verdict": "MASTER ENGINEERING SESSION IN PROGRESS",
+  "last_full_suite": "M20.0 focused: 61 passed; full monorepo suite not reclaimed this slice",
+  "milestone_verdict": "ENGINEERING ORCHESTRATOR PILOT READY",
+  "session_verdict": "M20.0 PILOT COMPLETE",
   "promoted_caller": "codebase_memory_search",
   "promoted_mode": "unified_with_fallback",
-  "next_milestone": "M20 only when authorized \u2014 not auto-started",
-  "stop_reason": "three-milestone overnight limit reached (M19.3\u2013M19.5); useful approved work complete",
+  "next_milestone": "M20.2 Control Center engineering facet / supervised Claude read-only (optional)",
+  "stop_reason": "M20.0 pilot complete; orchestrator disabled by default; no merge/deploy",
   "unrelated_untouched": "Trading Guardian unchanged; InsForge not expanded; no merge/deploy",
-  "ci_disposition": "M19.6 should clear Gate C env misclassifications; watch post-push"
+  "ci_disposition": "push M20.0 then watch reliability if desired"
 }
