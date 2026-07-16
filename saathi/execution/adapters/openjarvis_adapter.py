@@ -2,7 +2,8 @@
 
 M20.1 Slice A: real inference lives in ``saathi.inference`` (SaathiOS-native).
 This adapter optionally delegates to OllamaEngine when
-``SAATHI_INFERENCE_ENABLED=1``; otherwise it remains a non-production stub.
+``SAATHI_INFERENCE_ENABLED=1``; otherwise it returns a non-production offline
+SUCCESS stub (historical gateway contract — zero cost, ``stub: true``).
 OpenJarvis the upstream project is **not** started as a runtime.
 """
 
@@ -48,22 +49,42 @@ class OpenJarvisAdapter:
             return False
 
     async def execute(self, intent: ToolIntent) -> ExecutionResult:
-        """Execute local generation when inference is enabled; else stub fail-closed."""
+        """Execute local generation when inference is enabled.
+
+        When SAATHI_INFERENCE_ENABLED is off, return the historical offline
+        SUCCESS stub so ExecutionGateway reference paths (and chat tool
+        wiring) remain auditable without live Ollama. Fail-closed applies
+        when inference *is* enabled but the engine errors — not when the
+        pilot flag is simply unset. Stub is never claimed as live model.
+        """
         if not self._inference_enabled():
-            logger.info("OpenJarvisAdapter execute stub (inference disabled): %s", intent.intent_id)
+            logger.info(
+                "OpenJarvisAdapter offline SUCCESS stub (inference disabled): %s",
+                intent.intent_id,
+            )
             return ExecutionResult(
-                status=ExecutionStatus.FAILED,
-                data={"output": "", "stub": True, "reason": "SAATHI_INFERENCE_ENABLED not set"},
+                status=ExecutionStatus.SUCCESS,
+                data={
+                    "output": "model inference result",
+                    "stub": True,
+                    "reason": "SAATHI_INFERENCE_ENABLED not set; offline gateway stub",
+                },
                 cost_usd=0.0,
                 duration_sec=0,
-                connector_trace={"engine": "stub", "openjarvis_runtime": False},
+                connector_trace={
+                    "engine": "stub",
+                    "openjarvis_runtime": False,
+                    "saathi_inference": False,
+                    "inference_enabled": False,
+                },
             )
 
         try:
             from saathi.inference.adapters.ollama import OllamaEngine
             payload = getattr(intent, "payload", None) or {}
-            if not isinstance(payload, dict):
-                payload = {}
+            if not isinstance(payload, dict) or not payload:
+                params = getattr(intent, "parameters", None) or {}
+                payload = params if isinstance(params, dict) else {}
             prompt = str(payload.get("prompt") or payload.get("input") or "")
             system = str(payload.get("system") or "You are a helpful assistant.")
             model = str(payload.get("model") or os.getenv("OLLAMA_MODEL", "qwen2.5:3b"))
