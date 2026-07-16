@@ -54,4 +54,5 @@ permissions (macOS TCC actuation), or credentials (authenticated cloud/browser).
 | Incremental knowledge refresh (M19.5) | deterministic-tested | commit/fingerprint refresh, leases, cache epoch; not prod |
 | CI Critical Manifest honesty (M19.6) | deterministic-tested | quota mock, native summary schema, env-honest multi-app probes; CI host tools |
 | Unified inference runtime + model catalogue (M20.1 OJ Slice A) | deterministic-tested | `saathi/inference` engines/registry/catalogue/hardware/bench/router_bridge; default-off; ModelRouter authoritative; OJ concepts only; TG isolation tests |
+| Governed local inference gateway path (M20.2) | deterministic-tested | ExecutionGateway/ModelGateway → ModelRouter → Ollama engine; structured result; hardware/concurrency gates; dual flags default-off; no global llm switch; TG isolation |
 | Governed Engineering Orchestrator (M20.0) | deterministic-tested | `saathi/engineering` control plane; selector/readiness/prompt/adapter/monitor/validation/retry/stop/commit-push/handoff; mock pilot; disabled-by-default; 61 tests; TG isolation; not production |

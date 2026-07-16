@@ -151,7 +151,7 @@
 ## External Capability Program debt (2026-07-15)
 
 - SES-000E still Draft L1; AC-001 cross-ref vs requirements incomplete historically.
-- OpenMontage / claude-video adapters remain **stubs**. OpenJarvis: M20.1 Slice A delivered SaathiOS-native `saathi/inference` (concepts only, default-off); `OpenJarvisAdapter` / ModelGateway live path still stub until wired to InferenceEngine under ExecutionGateway.
+- OpenMontage / claude-video adapters remain **stubs**. OpenJarvis concepts: M20.1 runtime + M20.2 governed local path exist (default-off). Residual: no global `llm.generate`/chat migration; streaming/NDJSON deferred; live Ollama generation not required for pilot green; ModelGateway chat-llm override still separate.
 - Home MCP: alias duplicate `codebase-memory` / `codebase-memory-mcp` (same backend — documented in M17.25; optional human disable of alias); **headroom enabled but binary missing**.
 - Continuum remains **BLOCKED_LICENSE** (M17.25); CodeFlow / Fincept / blotato-skills licenses unclear — pilot gates.
 - Priority 2/3 services not installed (intentional); Traceway vs OpenObserve decision open.

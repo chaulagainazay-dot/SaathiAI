@@ -147,13 +147,27 @@ class SaathiExecutionSystem:
     def _get_model_policy(self, intent: ToolIntent) -> Dict[str, Any]:
         """Evaluate ModelGateway policy for LLM inference.
 
-        TODO: Implement actual policy engine
+        M20.2: when the governed gateway path is enabled, prefer governed-local
+        (ModelRouter + saathi.inference). Cloud is never in the default fallback
+        chain. Chat may still override this method for chat-llm.
         """
-        # Stub: return default policy (prefer local)
+        sensitivity = (intent.metadata or {}).get("data_sensitivity", "public")
+        try:
+            from saathi.inference.config import load_inference_settings
+
+            s = load_inference_settings()
+            if s.enabled and s.gateway_enabled:
+                return {
+                    "provider_choice": "governed-local",
+                    "fallback_chain": [],  # only ModelRouter-approved plans inside path
+                    "data_sensitivity": sensitivity,
+                }
+        except Exception:
+            pass
         return {
             "provider_choice": "openjarvis",
-            "fallback_chain": ["claude"],
-            "data_sensitivity": intent.metadata.get("data_sensitivity", "public"),
+            "fallback_chain": [],
+            "data_sensitivity": sensitivity,
         }
 
 

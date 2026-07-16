@@ -55,6 +55,21 @@ class InferenceSettings:
     max_retries: int = 1  # bounded; 0 = no retry after first attempt
     discovery_enabled: bool = False
 
+    # [inference.gateway] — M20.2 governed ExecutionGateway path
+    gateway_enabled: bool = False
+    ollama_base_url: str = "http://127.0.0.1:11434"
+    local_engine_allowlist: tuple[str, ...] = ("ollama",)
+    max_prompt_chars: int = 16000
+    max_output_tokens: int = 1024
+    min_available_memory_gb: float = 1.5
+    max_concurrent_local: int = 1
+    live_health_probe_enabled: bool = False
+    allowed_ollama_hosts: tuple[str, ...] = (
+        "127.0.0.1",
+        "localhost",
+        "::1",
+    )
+
     # [hardware]
     auto_detect_hardware: bool = True
     disk_warning_gb: float = 25.0
@@ -84,6 +99,18 @@ def load_inference_settings() -> InferenceSettings:
     if mode not in {"advisory", "off"}:
         # Never default to active self-learned routing
         mode = "advisory"
+    allowlist_raw = (os.getenv("SAATHI_LOCAL_ENGINE_ALLOWLIST") or "ollama").strip()
+    allowlist = tuple(x.strip() for x in allowlist_raw.split(",") if x.strip()) or ("ollama",)
+    hosts_raw = (os.getenv("SAATHI_OLLAMA_ALLOWED_HOSTS") or "127.0.0.1,localhost,::1").strip()
+    hosts = tuple(x.strip() for x in hosts_raw.split(",") if x.strip()) or ("127.0.0.1", "localhost", "::1")
+    ollama_url = (
+        os.getenv("SAATHI_OLLAMA_BASE_URL")
+        or os.getenv("OLLAMA_HOST")
+        or "http://127.0.0.1:11434"
+    ).strip().rstrip("/")
+    if ollama_url.endswith("/v1"):
+        ollama_url = ollama_url[:-3]
+
     return InferenceSettings(
         openjarvis_compat_enabled=_env_bool("SAATHI_OPENJARVIS_COMPAT", False),
         enabled=_env_bool("SAATHI_INFERENCE_ENABLED", False),
@@ -93,6 +120,15 @@ def load_inference_settings() -> InferenceSettings:
         request_timeout_seconds=_env_float("SAATHI_INFERENCE_TIMEOUT", 60.0),
         max_retries=max(0, min(_env_int("SAATHI_INFERENCE_MAX_RETRIES", 1), 3)),
         discovery_enabled=_env_bool("SAATHI_ENGINE_DISCOVERY", False),
+        gateway_enabled=_env_bool("SAATHI_INFERENCE_GATEWAY_ENABLED", False),
+        ollama_base_url=ollama_url,
+        local_engine_allowlist=allowlist,
+        max_prompt_chars=max(256, min(_env_int("SAATHI_INFERENCE_MAX_PROMPT_CHARS", 16000), 200_000)),
+        max_output_tokens=max(16, min(_env_int("SAATHI_INFERENCE_MAX_OUTPUT_TOKENS", 1024), 8192)),
+        min_available_memory_gb=_env_float("SAATHI_INFERENCE_MIN_AVAILABLE_MEMORY_GB", 1.5),
+        max_concurrent_local=max(1, min(_env_int("SAATHI_INFERENCE_MAX_CONCURRENT", 1), 2)),
+        live_health_probe_enabled=_env_bool("SAATHI_INFERENCE_LIVE_HEALTH", False),
+        allowed_ollama_hosts=hosts,
         auto_detect_hardware=_env_bool("SAATHI_HARDWARE_AUTO_DETECT", True),
         disk_warning_gb=_env_float("SAATHI_DISK_WARNING_GB", 25.0),
         memory_safety_margin_gb=_env_float("SAATHI_MEMORY_SAFETY_MARGIN_GB", 2.0),

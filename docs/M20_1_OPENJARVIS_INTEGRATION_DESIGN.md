@@ -138,4 +138,4 @@ Never overridden by learning: safety, privacy, Trading Guardian, approvals, budg
 
 ## Next bounded milestone (recommended)
 
-**M20.2 — Wire `llm.generate` + ModelGateway to InferenceEngine under ExecutionGateway**, with live Ollama health on the M2 host and optional stored benchmark runs — still default-local, no OJ process.
+**M20.2 delivered:** governed ExecutionGateway/ModelGateway local path (see `docs/M20_2_GOVERNED_LOCAL_INFERENCE_EXECUTION.md`). **Next:** optional opt-in caller migration from direct `llm.generate` (not global chat default); streaming deferred.
