@@ -2,7 +2,7 @@
   "schema_version": "1",
   "repository": "SaathiOS",
   "branch": "milestone/m7-security-engine",
-  "current_head": "pending_m21_0",
+  "current_head": "2e7b36c",
   "active_milestone": null,
   "completed_milestones": [
     "M20.0",
@@ -23,8 +23,8 @@
   "environment_blocked": [
     "M20.6_live_local_model"
   ],
-  "milestone_verdict": "M21.0 COMPLETE — RUNTIME PRODUCTION-CONFIGURATION INVENTORY AND PROVIDER POLICY FORMALIZED",
-  "session_verdict": "M21.0 COMPLETE WITH LIMITATIONS — NOT FULL M21; NOT PRODUCTION",
+  "milestone_verdict": "M21.0 COMPLETE \u2014 RUNTIME PRODUCTION-CONFIGURATION INVENTORY AND PROVIDER POLICY FORMALIZED",
+  "session_verdict": "M21.0 COMPLETE WITH LIMITATIONS \u2014 NOT FULL M21; NOT PRODUCTION",
   "next_milestone": "M21.1 request contract / residual path controls (operator authorize)",
   "stop_reason": "M21.0 bounded slice complete; do not auto-start M21.1",
   "program_docs": [
@@ -45,7 +45,7 @@
   },
   "numbering": {
     "platform_m21": "Runtime Consolidation and Production Configuration",
-    "product_ielts_m21": "pielts repo only — namespace PRODUCT/IELTSAlert",
+    "product_ielts_m21": "pielts repo only \u2014 namespace PRODUCT/IELTSAlert",
     "m20_10_options_remapped": true
   },
   "unrelated_untouched": "Trading Guardian; chat default legacy; no merge/deploy; no model download; no M21.1/M22",
