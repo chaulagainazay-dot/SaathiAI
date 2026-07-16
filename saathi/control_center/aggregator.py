@@ -298,6 +298,15 @@ class ControlCenterAggregator:
                     "restore_verified": (gates.get("backup_restore") or {}).get("restore_verified")}
         return guarded("ops.release_gate", _rel)
 
+    def engineering_orchestrator(self) -> Cell:
+        """M20.4 read-only Engineering Orchestrator facet (never executes)."""
+        def _eng():
+            from saathi.engineering.control_center_facet import (
+                engineering_control_center_status,
+            )
+            return engineering_control_center_status()
+        return guarded("engineering.orchestrator", _eng)
+
     # ── composed read models ────────────────────────────────────────────────
     def overview(self) -> dict:
         health = self.platform_health()
@@ -311,7 +320,24 @@ class ControlCenterAggregator:
         egw = self.execution_gateway()
         brw = self.browser_execution()
         mcp_h = self.mcp_health()
+        eng = self.engineering_orchestrator()
         attention = self._attention(sec, appr, rel, health, harn, reg_h, egw, brw, mcp_h)
+        # Engineering attention (quarantine / stall)
+        if eng.status == "ok" and isinstance(eng.value, dict):
+            ff = eng.value.get("facet_fields") or {}
+            if ff.get("stall_status"):
+                attention.append({
+                    "severity": "medium", "kind": "engineering",
+                    "message": "engineering session heartbeat stalled",
+                    "link": "/control/engineering",
+                })
+            if (eng.value.get("lifecycle_state") == "quarantined"
+                    or ff.get("final_session_status") == "quarantined"):
+                attention.append({
+                    "severity": "high", "kind": "engineering",
+                    "message": "engineering session quarantined (integrity)",
+                    "link": "/control/engineering",
+                })
         return {
             "owner": self.owner,
             "generated_at": _now(),
@@ -325,9 +351,10 @@ class ControlCenterAggregator:
             "execution_gateway": egw.to_dict(),
             "browser_execution": brw.to_dict(),
             "mcp_health": mcp_h.to_dict(),
+            "engineering_orchestrator": eng.to_dict(),
             "requires_attention": attention,
             "degraded_sources": [c.source for c in (
-                health, sec, appr, rel, metrics, events, reg_h, egw, brw, mcp_h)
+                health, sec, appr, rel, metrics, events, reg_h, egw, brw, mcp_h, eng)
                                  if c.status != "ok"],
         }
 

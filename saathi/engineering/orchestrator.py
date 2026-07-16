@@ -185,15 +185,52 @@ class EngineeringOrchestrator:
         adapter_name: str = "mock",
         knowledge_context: str = "",
         write_enabled: bool = False,
+        mode: str = "readonly",
+        approval_id: str = "",
         poll_until_done: bool = True,
         max_polls: int = 5,
     ) -> OrchestratorResult:
+        """Launch supervised agent session.
+
+        M20.4: mode=readonly is the pilot path. write_enabled remains hard-gated.
+        Real claude_code launches require a bound approval_id.
+        """
         if not self.settings.orchestrator_enabled:
             return OrchestratorResult(
                 ok=False,
                 verdict=Verdict.BLOCKED.value,
                 item_id=item_id,
                 details={"error": "orchestrator_disabled"},
+            )
+
+        # M20.4: reclaim stale leases before counting sessions
+        try:
+            self.store.reclaim_stale_leases()
+        except Exception:
+            pass
+
+        mode = (mode or "readonly").lower()
+        if mode not in ("readonly", "write"):
+            return OrchestratorResult(
+                ok=False,
+                verdict=Verdict.BLOCKED.value,
+                item_id=item_id,
+                details={"error": f"invalid_mode:{mode}"},
+            )
+        if mode == "write":
+            write_enabled = True
+        if write_enabled:
+            mode = "write"
+
+        # Hard block: write mode requires both launch + writes; still never auto-merge/deploy
+        if write_enabled and not (
+            self.settings.agent_launching_enabled and self.settings.repository_writes_enabled
+        ):
+            return OrchestratorResult(
+                ok=False,
+                verdict=Verdict.BLOCKED.value,
+                item_id=item_id,
+                details={"error": "write_mode_disabled"},
             )
 
         action = "launch_write_agent" if write_enabled else "launch_readonly_agent"
@@ -230,7 +267,8 @@ class EngineeringOrchestrator:
                 details={"error": "item_not_found"},
             )
 
-        if item.approval_requirement:
+        # item.approval_requirement still blocks unless approval_id provided
+        if item.approval_requirement and not approval_id and adapter_name != "mock":
             return OrchestratorResult(
                 ok=False,
                 verdict=Verdict.BLOCKED.value,
@@ -251,6 +289,10 @@ class EngineeringOrchestrator:
                     item_id=item_id,
                     details={"error": "readiness_blocked", "readiness": ready.to_dict()},
                 )
+
+        # Integrity baseline before any agent work (readonly pilot)
+        from saathi.engineering.integrity import capture_snapshot, verify_unchanged
+        baseline = capture_snapshot(self.root)
 
         # mark selected → in_progress
         if item.status in (ItemStatus.PROPOSED.value, ItemStatus.READY.value):
@@ -283,14 +325,70 @@ class EngineeringOrchestrator:
         prompt = build_engineering_prompt(
             item, task, knowledge_context=knowledge_context
         )
+        if mode == "readonly":
+            body = (
+                "MODE: READ-ONLY SUPERVISED SESSION.\n"
+                "You may inspect and plan only. Do NOT create, modify, delete, "
+                "rename, stage, commit, push, merge, rebase, checkout, install "
+                "packages, deploy, or trade.\n\n"
+                + prompt.body
+            )
+        else:
+            body = prompt.body
+
+        # Approval binding for non-mock adapters (M20.4)
+        if adapter_name != "mock":
+            if not approval_id:
+                return OrchestratorResult(
+                    ok=False,
+                    verdict=Verdict.BLOCKED.value,
+                    item_id=item_id,
+                    task_id=task.task_id,
+                    details={"error": "approval_required_for_real_adapter"},
+                )
+            if mode != "readonly":
+                return OrchestratorResult(
+                    ok=False,
+                    verdict=Verdict.BLOCKED.value,
+                    item_id=item_id,
+                    details={"error": "write_sessions_require_future_approval_type"},
+                )
+            from saathi.engineering.approval import consume_approval, validate_approval
+
+            ok_a, reason_a, _appr = validate_approval(
+                self.store,
+                approval_id,
+                repository=str(self.root.resolve()),
+                branch=ready.branch,
+                starting_commit=ready.head,
+                backlog_item_id=item_id,
+                provider=adapter_name,
+                prompt=body,
+                mode="readonly",
+            )
+            if not ok_a:
+                return OrchestratorResult(
+                    ok=False,
+                    verdict=Verdict.BLOCKED.value,
+                    item_id=item_id,
+                    task_id=task.task_id,
+                    details={"error": f"approval_invalid:{reason_a}"},
+                )
+            consume_approval(self.store, approval_id)
+
         self.checkpoint(
             task.task_id, "prelaunch", SessionPhase.INTAKE,
             head=ready.head, next_action="launch_agent",
         )
 
+        import shutil
         adapter = get_adapter(adapter_name)
+        if adapter_name == "claude_code" and not shutil.which("claude"):
+            from saathi.engineering.adapters.claude_code import ClaudeCodeAdapter
+            adapter = ClaudeCodeAdapter(dry_run=True)
+
         req = LaunchRequest(
-            prompt=prompt.body,
+            prompt=body,
             working_directory=str(self.root),
             timeout_sec=self.settings.session_timeout_sec,
         )
@@ -306,17 +404,29 @@ class EngineeringOrchestrator:
                 details={"error": f"launch_failed:{exc}"},
             )
 
+        from saathi.engineering.approval import prompt_fingerprint as _pf
+
         session = {
             "session_id": started.session_id,
             "status": started.status,
             "item_id": item_id,
             "task_id": task.task_id,
             "adapter": adapter_name,
+            "provider": adapter_name,
             "started_at": started.started_at or time.time(),
             "branch": ready.branch,
             "head": ready.head,
+            "start_commit": ready.head,
+            "current_commit": ready.head,
             "pid": started.process_id,
             "write_enabled": write_enabled,
+            "mode": mode,
+            "approval_id": approval_id or "",
+            "prompt_fingerprint": _pf(body),
+            "integrity_baseline": baseline.to_dict(),
+            "integrity_ok": True,
+            "mutations": [],
+            "lease_until": time.time() + max(600.0, self.settings.stall_timeout_sec),
         }
         self.store.put_session(session)
         self.monitor.heartbeat(started.session_id, phase=SessionPhase.IMPLEMENTATION_PLAN.value)
@@ -335,6 +445,35 @@ class EngineeringOrchestrator:
                     last_output=last.stdout_tail,
                     last_output_time=time.time(),
                 )
+                # Integrity check during session (readonly)
+                if mode == "readonly":
+                    idiff = verify_unchanged(self.root, baseline)
+                    if not idiff.ok:
+                        adapter.request_stop(started.session_id, force=True)
+                        session.update({
+                            "status": SessionStatus.QUARANTINED.value,
+                            "integrity_ok": False,
+                            "mutations": idiff.mutations,
+                            "quarantine_reason": "repository_mutated_during_readonly",
+                            "stop_reason": "integrity_violation",
+                        })
+                        self.store.put_session(session)
+                        try:
+                            self.store.set_status(item_id, ItemStatus.STOPPED)
+                        except ValueError:
+                            pass
+                        return OrchestratorResult(
+                            ok=False,
+                            verdict=Verdict.BLOCKED.value,
+                            item_id=item_id,
+                            task_id=task.task_id,
+                            session_id=started.session_id,
+                            details={
+                                "error": "quarantined_mutation",
+                                "integrity": idiff.to_dict(),
+                                "operator_review_required": True,
+                            },
+                        )
                 snap = self.monitor.snapshot(
                     started.session_id,
                     expected_branch=ready.branch,
@@ -374,6 +513,36 @@ class EngineeringOrchestrator:
                     SessionStatus.STOPPED.value,
                 ):
                     break
+
+        # Final integrity verification (readonly must remain clean)
+        if mode == "readonly":
+            idiff_final = verify_unchanged(self.root, baseline)
+            if not idiff_final.ok:
+                session.update({
+                    "status": SessionStatus.QUARANTINED.value,
+                    "integrity_ok": False,
+                    "mutations": idiff_final.mutations,
+                    "quarantine_reason": "repository_mutated",
+                })
+                self.store.put_session(session)
+                try:
+                    self.store.set_status(item_id, ItemStatus.STOPPED)
+                except ValueError:
+                    pass
+                return OrchestratorResult(
+                    ok=False,
+                    verdict=Verdict.BLOCKED.value,
+                    item_id=item_id,
+                    task_id=task.task_id,
+                    session_id=started.session_id,
+                    details={
+                        "error": "cannot_complete_with_integrity_failure",
+                        "integrity": idiff_final.to_dict(),
+                        "operator_review_required": True,
+                    },
+                )
+            session["integrity_ok"] = True
+            session["current_commit"] = baseline.head
 
         # validation phase
         try:
@@ -449,6 +618,10 @@ class EngineeringOrchestrator:
         self.store.put_session({
             **session,
             "status": SessionStatus.COMPLETED.value,
+            "handoff_ready": True,
+            "validation_summary": vresult.to_dict(),
+            "mode": mode,
+            "integrity_ok": True if mode == "readonly" else session.get("integrity_ok"),
         })
         self.checkpoint(
             task.task_id, started.session_id, SessionPhase.HANDOFF_UPDATED,
@@ -460,7 +633,11 @@ class EngineeringOrchestrator:
             tests="required validations passed",
             failures=[],
             next_action="review pilot evidence; do not auto-merge",
-            completed=["orchestrated pilot session completed"],
+            completed=[
+                "orchestrated pilot session completed",
+                f"mode={mode}",
+                "writes_disabled" if not write_enabled else "writes_enabled",
+            ],
         )
         return OrchestratorResult(
             ok=True,
@@ -474,6 +651,10 @@ class EngineeringOrchestrator:
                 "prompt_version": prompt.prompt_version,
                 "task_fingerprint": task.fingerprint(),
                 "handoff": handoff,
+                "mode": mode,
+                "writes_enabled": write_enabled,
+                "commits_enabled": False,
+                "pushes_enabled": False,
                 "trading_guardian": trading_guardian_isolation_report(),
             },
         )

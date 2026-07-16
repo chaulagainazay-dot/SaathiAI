@@ -23,7 +23,7 @@ from saathi.control_center import search as _search
 def main(argv=None) -> int:
     argv = argv if argv is not None else sys.argv[1:]
     if not argv:
-        print("usage: overview|attention|health|security|release|timeline|search",
+        print("usage: overview|attention|health|security|release|timeline|engineering|search",
               file=sys.stderr)
         return 2
     cmd, rest = argv[0], argv[1:]
@@ -53,6 +53,8 @@ def main(argv=None) -> int:
         print(json.dumps(agg.release_readiness().to_dict(), indent=2, default=str)); return 0
     if cmd == "timeline":
         print(json.dumps(agg.recent_events().to_dict(), indent=2, default=str)); return 0
+    if cmd == "engineering":
+        print(json.dumps(agg.engineering_orchestrator().to_dict(), indent=2, default=str)); return 0
     print(f"unknown command {cmd}", file=sys.stderr)
     return 2
 

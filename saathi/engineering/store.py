@@ -1,10 +1,15 @@
-"""M20.0 — JSON engineering store (not a second run ledger / mission DB)."""
+"""M20.0/M20.4 — JSON engineering store (not a second run ledger / mission DB).
+
+M20.4 adds process-safe file locking, lease ownership helpers, and approvals.
+"""
 from __future__ import annotations
 
 import json
+import os
 import time
+from contextlib import contextmanager
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterator
 
 from saathi.engineering.models import (
     Checkpoint,
@@ -14,6 +19,11 @@ from saathi.engineering.models import (
     can_transition,
     new_id,
 )
+
+try:
+    import fcntl  # type: ignore
+except ImportError:  # pragma: no cover — non-Unix
+    fcntl = None  # type: ignore
 
 
 class EngineeringStore:
@@ -25,7 +35,9 @@ class EngineeringStore:
         self.backlog_path = self.root / "backlog.json"
         self.sessions_path = self.root / "sessions.json"
         self.checkpoints_path = self.root / "checkpoints.json"
+        self.approvals_path = self.root / "approvals.json"
         self.history_path = self.root / "history.jsonl"
+        self.lock_path = self.root / ".store.lock"
         self._ensure()
 
     def _ensure(self) -> None:
@@ -35,19 +47,56 @@ class EngineeringStore:
             self._write_json(self.sessions_path, {"sessions": {}})
         if not self.checkpoints_path.exists():
             self._write_json(self.checkpoints_path, {"checkpoints": []})
+        if not self.approvals_path.exists():
+            self._write_json(self.approvals_path, {"approvals": {}})
 
-    @staticmethod
-    def _write_json(path: Path, data: dict) -> None:
+    @contextmanager
+    def lock(self, *, exclusive: bool = True) -> Iterator[None]:
+        """Process-safe coordination for multi-writer hosts."""
+        self.lock_path.parent.mkdir(parents=True, exist_ok=True)
+        fh = open(self.lock_path, "a+", encoding="utf-8")
+        try:
+            if fcntl is not None:
+                fcntl.flock(
+                    fh.fileno(),
+                    fcntl.LOCK_EX if exclusive else fcntl.LOCK_SH,
+                )
+            yield
+        finally:
+            try:
+                if fcntl is not None:
+                    fcntl.flock(fh.fileno(), fcntl.LOCK_UN)
+            except Exception:
+                pass
+            fh.close()
+
+    def _write_json(self, path: Path, data: dict) -> None:
         path.parent.mkdir(parents=True, exist_ok=True)
+        # backup previous for corruption recovery
+        if path.exists() and path.stat().st_size > 0:
+            bak = path.with_suffix(path.suffix + ".bak")
+            try:
+                bak.write_bytes(path.read_bytes())
+            except Exception:
+                pass
         tmp = path.with_suffix(".tmp")
-        tmp.write_text(json.dumps(data, indent=2, default=str), encoding="utf-8")
-        tmp.replace(path)
+        payload = json.dumps(data, indent=2, default=str)
+        tmp.write_text(payload, encoding="utf-8")
+        os.replace(tmp, path)
 
-    @staticmethod
-    def _read_json(path: Path) -> dict:
+    def _read_json(self, path: Path) -> dict:
         if not path.exists():
             return {}
-        return json.loads(path.read_text(encoding="utf-8"))
+        try:
+            return json.loads(path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            bak = path.with_suffix(path.suffix + ".bak")
+            if bak.exists():
+                try:
+                    return json.loads(bak.read_text(encoding="utf-8"))
+                except Exception:
+                    pass
+            return {"_corrupt": True, "path": str(path)}
 
     # ---- backlog ----
     def list_items(self) -> list[EngineeringBacklogItem]:
@@ -109,29 +158,94 @@ class EngineeringStore:
 
     # ---- sessions ----
     def put_session(self, session: dict[str, Any]) -> dict[str, Any]:
-        data = self._read_json(self.sessions_path)
-        sessions = data.setdefault("sessions", {})
-        sid = session.get("session_id") or new_id("sess")
-        session["session_id"] = sid
-        session["updated_at"] = time.time()
-        sessions[sid] = session
-        self._write_json(self.sessions_path, data)
-        return session
+        with self.lock():
+            data = self._read_json(self.sessions_path)
+            if data.get("_corrupt"):
+                raise RuntimeError("sessions_store_corrupt")
+            sessions = data.setdefault("sessions", {})
+            sid = session.get("session_id") or new_id("sess")
+            session["session_id"] = sid
+            session["updated_at"] = time.time()
+            # lease ownership
+            if "owner_pid" not in session:
+                session["owner_pid"] = os.getpid()
+            if "lease_until" not in session and session.get("status") in {
+                "pending", "starting", "running", "stalled", "awaiting_approval",
+            }:
+                session["lease_until"] = time.time() + 600
+            sessions[sid] = session
+            self._write_json(self.sessions_path, data)
+            return session
 
     def get_session(self, session_id: str) -> dict[str, Any] | None:
         data = self._read_json(self.sessions_path)
+        if data.get("_corrupt"):
+            return None
         return data.get("sessions", {}).get(session_id)
 
     def list_sessions(self, active_only: bool = False) -> list[dict[str, Any]]:
         data = self._read_json(self.sessions_path)
+        if data.get("_corrupt"):
+            return []
         out = list(data.get("sessions", {}).values())
         if active_only:
-            active = {"pending", "starting", "running", "stalled", "awaiting_approval"}
+            active = {
+                "pending", "starting", "running", "stalled", "awaiting_approval",
+                "paused",
+            }
             out = [s for s in out if s.get("status") in active]
         return out
 
     def active_session_count(self) -> int:
         return len(self.list_sessions(active_only=True))
+
+    def reclaim_stale_leases(self, *, now: float | None = None) -> list[str]:
+        """Mark sessions with expired leases as terminated (stale-owner recovery)."""
+        now = now if now is not None else time.time()
+        reclaimed = []
+        with self.lock():
+            data = self._read_json(self.sessions_path)
+            sessions = data.get("sessions") or {}
+            for sid, s in list(sessions.items()):
+                if s.get("status") not in {
+                    "pending", "starting", "running", "stalled", "awaiting_approval", "paused",
+                }:
+                    continue
+                lease = float(s.get("lease_until") or 0)
+                if lease and lease < now:
+                    s["status"] = "terminated"
+                    s["stop_reason"] = "stale_lease"
+                    s["updated_at"] = now
+                    sessions[sid] = s
+                    reclaimed.append(sid)
+            if reclaimed:
+                self._write_json(self.sessions_path, data)
+        return reclaimed
+
+    # ---- approvals (M20.4) ----
+    def put_approval(self, approval: dict[str, Any]) -> dict[str, Any]:
+        with self.lock():
+            data = self._read_json(self.approvals_path)
+            if data.get("_corrupt"):
+                raise RuntimeError("approvals_store_corrupt")
+            apps = data.setdefault("approvals", {})
+            aid = approval.get("approval_id") or new_id("appr")
+            approval["approval_id"] = aid
+            apps[aid] = approval
+            self._write_json(self.approvals_path, data)
+            return approval
+
+    def get_approval(self, approval_id: str) -> dict[str, Any] | None:
+        data = self._read_json(self.approvals_path)
+        if data.get("_corrupt"):
+            return None
+        return (data.get("approvals") or {}).get(approval_id)
+
+    def list_approvals(self) -> list[dict[str, Any]]:
+        data = self._read_json(self.approvals_path)
+        if data.get("_corrupt"):
+            return []
+        return list((data.get("approvals") or {}).values())
 
     # ---- checkpoints ----
     def add_checkpoint(self, cp: Checkpoint) -> Checkpoint:

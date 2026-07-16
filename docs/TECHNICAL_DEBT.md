@@ -164,3 +164,4 @@
   requirements in tests + SQLITE-TWOAPP/JQ-THREEAPP probes). reliability.yml
   now installs ffmpeg/jq/sqlite3. Remaining: native AX tests still skip
   honestly off-macOS; full suite may still hit other optional-capability skips.
+- Engineering store remains JSON+flock (M20.4); optional future CAS ledger migration. Live Claude Code native read-only not guaranteed—integrity wrapper + dry_run fallback.

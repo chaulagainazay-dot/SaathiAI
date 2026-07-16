@@ -117,6 +117,11 @@ class SessionStatus(str, Enum):
     FAILED = "failed"
     USAGE_LIMIT = "usage_limit"
     AWAITING_APPROVAL = "awaiting_approval"
+    # M20.4 supervised lifecycle outcomes
+    PAUSED = "paused"
+    BLOCKED = "blocked"
+    TERMINATED = "terminated"
+    QUARANTINED = "quarantined"
 
 
 class ReadinessState(str, Enum):

@@ -16,7 +16,12 @@
   history                recent orchestrator events
   pilot                  run harmless mock pilot
   security               trading-guardian isolation report
+  control-center         Control Center engineering facet (read-only)
+  approve-readonly       create bound read-only approval for Claude launch
+  integrity              capture/verify repository integrity snapshot
+  launch <item> --mode readonly [--adapter mock|claude_code] [--approval ID]
 
+Writes/commits/pushes remain disabled unless explicit env flags are set.
 No --unsafe, --skip-approval, --force-push, --deploy, or free-form shell.
 """
 from __future__ import annotations
@@ -78,19 +83,46 @@ def main(argv: list[str] | None = None) -> int:
         item = rest[0]
         adapter = "mock"
         write = False
+        mode = "readonly"
+        approval = ""
         if "--adapter" in rest:
             i = rest.index("--adapter")
             if i + 1 < len(rest):
                 adapter = rest[i + 1]
+        if "--mode" in rest:
+            i = rest.index("--mode")
+            if i + 1 < len(rest):
+                mode = rest[i + 1]
+        if "--approval" in rest:
+            i = rest.index("--approval")
+            if i + 1 < len(rest):
+                approval = rest[i + 1]
         if "--write" in rest:
             write = True
+            mode = "write"
         # Forbidden flags
-        for bad in ("--unsafe", "--skip-approval", "--force-push", "--deploy"):
+        for bad in (
+            "--unsafe", "--skip-approval", "--force-push", "--deploy",
+            "--force", "--merge", "--write-anywhere",
+        ):
             if bad in rest:
                 _emit({"error": f"forbidden_flag:{bad}"})
                 return EXIT_BAD
-        r = _orch().launch(item, adapter_name=adapter, write_enabled=write)
-        _emit(r.to_dict())
+        r = _orch().launch(
+            item,
+            adapter_name=adapter,
+            write_enabled=write,
+            mode=mode,
+            approval_id=approval,
+        )
+        out = r.to_dict()
+        out["safety_display"] = {
+            "writes": "DISABLED" if not write else "REQUESTED",
+            "commits": "DISABLED",
+            "pushes": "DISABLED",
+            "mode": mode,
+        }
+        _emit(out)
         if r.ok:
             return EXIT_OK
         if r.verdict in ("blocked", "validation_pending"):
@@ -173,6 +205,76 @@ def main(argv: list[str] | None = None) -> int:
             "trading_guardian": trading_guardian_isolation_report(),
             "import_violations": assert_no_trading_imports(pkg),
         })
+        return EXIT_OK
+
+    if cmd in ("control-center", "control_center"):
+        from saathi.engineering.control_center_facet import engineering_control_center_status
+        _emit(engineering_control_center_status())
+        return EXIT_OK
+
+    if cmd == "approve-readonly":
+        # usage: approve-readonly <item_id> [--adapter claude_code]
+        if not rest:
+            _emit({"error": "item_id_required"})
+            return EXIT_BAD
+        item_id = rest[0]
+        adapter = "claude_code"
+        if "--adapter" in rest:
+            i = rest.index("--adapter")
+            if i + 1 < len(rest):
+                adapter = rest[i + 1]
+        o = _orch()
+        item = o.store.get_item(item_id)
+        if not item:
+            _emit({"error": "item_not_found"})
+            return EXIT_BAD
+        ready = o.readiness()
+        plan = o.plan(item_id)
+        p = plan.get("prompt") or {}
+        # Approval binds the same body prefix used at launch for readonly mode
+        raw_body = p.get("body") if isinstance(p, dict) else str(p)
+        raw_body = raw_body or item.title
+        prompt_body = (
+            "MODE: READ-ONLY SUPERVISED SESSION.\n"
+            "You may inspect and plan only. Do NOT create, modify, delete, "
+            "rename, stage, commit, push, merge, rebase, checkout, install "
+            "packages, deploy, or trade.\n\n"
+            + str(raw_body)
+        )
+        from saathi.engineering.approval import create_readonly_approval
+        from saathi.config import ROOT
+        appr = create_readonly_approval(
+            o.store,
+            repository=str(Path(ROOT).resolve()),
+            branch=str(ready.get("branch") or ""),
+            starting_commit=str(ready.get("head") or ""),
+            backlog_item_id=item_id,
+            provider=adapter,
+            prompt=prompt_body,
+            validation_plan=list(item.required_validations or []),
+        )
+        _emit({
+            "approval_id": appr.approval_id,
+            "mode": "readonly",
+            "expires_at": appr.expires_at,
+            "prompt_fingerprint": appr.prompt_fingerprint,
+            "writes": "DISABLED",
+            "commits": "DISABLED",
+            "pushes": "DISABLED",
+        })
+        return EXIT_OK
+
+    if cmd == "integrity":
+        from saathi.engineering.integrity import capture_snapshot, verify_unchanged, RepoSnapshot
+        from saathi.config import ROOT
+        snap = capture_snapshot(ROOT)
+        if rest and rest[0] == "verify" and len(rest) > 1:
+            # verify against JSON path
+            base = json.loads(Path(rest[1]).read_text(encoding="utf-8"))
+            diff = verify_unchanged(ROOT, RepoSnapshot.from_dict(base))
+            _emit(diff.to_dict())
+            return EXIT_OK if diff.ok else EXIT_FAIL
+        _emit(snap.to_dict())
         return EXIT_OK
 
     _emit({"error": "unknown_or_bad_command", "cmd": cmd, "hint": "help"})

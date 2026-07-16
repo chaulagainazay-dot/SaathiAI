@@ -92,6 +92,12 @@ def approvals(request: Request):
     return ControlCenterAggregator(_user(request)).pending_approvals().to_dict()
 
 
+@router.get("/engineering")
+def engineering(request: Request):
+    """M20.4 Engineering Orchestrator facet — read-only, redacted."""
+    return ControlCenterAggregator(_user(request)).engineering_orchestrator().to_dict()
+
+
 @router.get("/search")
 def search(request: Request, q: str = "", types: str = "", limit: int = 30):
     et = [t for t in types.split(",") if t] or None
