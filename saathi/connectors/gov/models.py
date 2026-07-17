@@ -122,6 +122,14 @@ class ConnectorManifest:
         )
 
 
+# M28 caller classes (identity only — never authority)
+CALLER_CLASSES = frozenset({
+    "mission", "automation", "scheduler", "agent", "api", "cli",
+    "control_center", "system_recovery", "test", "connector_framework",
+    "compat", "unknown",
+})
+
+
 @dataclass
 class ConnectorRequest:
     connector_id: str
@@ -134,6 +142,19 @@ class ConnectorRequest:
     request_id: str = ""
     approval_token: str = ""  # optional explicit approval
     dry_run: bool = False
+    # M28 governance fields (secrets never belong here)
+    actor_id: str = ""
+    caller_class: str = "connector_framework"
+    capability: str = ""
+    resource_target: str = ""
+    idempotency_key: str = ""
+    correlation_id: str = ""
+    timeout_seconds: float = 0.0
+    evidence_classification: str = "redacted"
+    # Caller-supplied side_effect_class is IGNORED for policy (recorded only)
+    claimed_side_effect_class: str = ""
+    # Internal: set only by framework after registry resolve
+    _resolved_side_effect_class: str = ""
 
 
 @dataclass
@@ -152,6 +173,18 @@ class ConnectorResult:
     latency_ms: float = 0.0
     privacy_safe: bool = True
     bypass: bool = False  # always False when framework used
+    # M28 stable result contract
+    request_id: str = ""
+    executed: bool = False
+    side_effect_class: str = ""
+    approval_state: str = ""  # not_required|required|granted|denied|missing
+    policy_state: str = ""  # pass|deny|…
+    rollout_state: str = ""
+    idempotency_state: str = ""  # new|replay|conflict|none
+    safe_output: dict[str, Any] = field(default_factory=dict)
+    evidence_refs: list[str] = field(default_factory=list)
+    error_code: str = ""
+    safe_message: str = ""
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -188,6 +221,14 @@ CONNECTOR_INCIDENT_TYPES = frozenset({
     "unavailable",
     "policy_violation",
     "permission_denied",
+    # M28
+    "connector_bypass_attempt",
+    "approval_mismatch",
+    "legacy_path_blocked",
+    "intent_validation_failed",
+    "adapter_direct_access",
+    "idempotency_conflict",
+    "unauthorized_caller",
 })
 
 FORBIDDEN_PAYLOAD_KEYS = frozenset({

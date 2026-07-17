@@ -63,6 +63,8 @@ Default mode OFF. No live accounts. No cloud enablement.
         if len(argv) < 3:
             print("usage: exec <connector_id> <operation>", file=sys.stderr)
             return 2
+        from saathi.connectors.gov.gateway_bridge import emit_deprecation, execute_via_gateway
+
         rt = get_runtime()
         if not rt.registry.list_ids():
             rt.register_builtin_adapters()
@@ -74,8 +76,18 @@ Default mode OFF. No live accounts. No cloud enablement.
             operation=argv[2],
             url=url,
             method="GET",
+            caller_id="cli.connectors.gov",
+            caller_class="cli",
+            actor_id="cli",
         )
-        _emit(rt.execute(req).to_dict())
+        emit_deprecation(
+            legacy_path="python -m saathi.connectors.gov exec",
+            canonical_path="execute_via_gateway",
+            caller_id="cli",
+            detail=f"{argv[1]}.{argv[2]}",
+        )
+        # M28: CLI routes through ExecutionGateway → runtime (no direct adapter)
+        _emit(execute_via_gateway(req, runtime=rt).to_dict())
         return 0
 
     print(f"unknown: {cmd}", file=sys.stderr)

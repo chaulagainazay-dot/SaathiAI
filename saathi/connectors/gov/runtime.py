@@ -26,9 +26,15 @@ from saathi.connectors.gov.models import (
 from saathi.connectors.gov.policy import ConnectorPolicy
 from saathi.connectors.gov.redaction import redact_payload
 from saathi.connectors.gov.registry import ConnectorRegistry, get_registry
+from saathi.connectors.gov.side_effects import (
+    SideEffectClass,
+    classify_operation,
+    evaluate_side_effect,
+)
 
 ROOT = Path(__file__).resolve().parents[3]
 EVIDENCE_DIR = ROOT / "docs" / "evidence" / "m27"
+M28_EVIDENCE_DIR = ROOT / "docs" / "evidence" / "m28"
 
 # Reuse M26 rollout modes
 try:
@@ -86,6 +92,14 @@ class GovernedConnectorRuntime:
         self.use_m26_incidents = use_m26_incidents
         self._events: list[dict[str, Any]] = []
         self._lock = threading.RLock()
+        # M28: deterministic canary allowlist + percent (0–100), idempotency map
+        # Default percent=100 preserves M27 canary-as-full-policy behavior until
+        # operators set a stricter allowlist or lower percent.
+        self.canary_connector_allowlist: frozenset[str] = frozenset()
+        self.canary_percent: int = 100
+        self._idempotency: dict[str, dict[str, Any]] = {}
+        # Optional per-connector side-effect overrides (cannot weaken floors)
+        self.operation_side_effects: dict[str, SideEffectClass] = {}
 
     def _default_prod_cert(self) -> bool:
         try:
@@ -258,6 +272,54 @@ class GovernedConnectorRuntime:
             ids.append(manifest.connector_id)
         return ids
 
+    def _resolve_side_effect(self, request: ConnectorRequest) -> SideEffectClass:
+        """Registered/heuristic class; caller claimed class is never authoritative."""
+        key = f"{request.connector_id}:{request.operation}"
+        registered = self.operation_side_effects.get(key) or self.operation_side_effects.get(
+            request.operation
+        )
+        return classify_operation(
+            request.operation,
+            method=request.method,
+            capability=request.capability or request.operation,
+            registered_class=registered,
+        )
+
+    def _canary_allows(self, request: ConnectorRequest) -> bool:
+        """Deterministic canary: allowlist OR stable hash bucket (no randomness)."""
+        if self.canary_connector_allowlist:
+            if request.connector_id in self.canary_connector_allowlist:
+                return True
+            # Allowlist configured and connector not on it → deny (unless percent also admits)
+        pct = max(0, min(100, int(self.canary_percent)))
+        if pct >= 100 and not self.canary_connector_allowlist:
+            return True
+        if pct <= 0:
+            return bool(self.canary_connector_allowlist and request.connector_id in self.canary_connector_allowlist)
+        material = f"{request.connector_id}:{request.operation}:{request.request_id or request.idempotency_key or ''}"
+        h = int(uuid.uuid5(uuid.NAMESPACE_URL, material).hex[:8], 16) % 100
+        if self.canary_connector_allowlist:
+            # On allowlist always; off-allowlist may still pass percent bucket
+            if request.connector_id in self.canary_connector_allowlist:
+                return True
+        return h < pct
+
+    def _idem_fingerprint(self, request: ConnectorRequest) -> str:
+        import hashlib
+        import json
+        body = json.dumps(
+            {
+                "c": request.connector_id,
+                "o": request.operation,
+                "t": request.resource_target or request.url or "",
+                "m": request.method,
+                "p": request.payload or {},
+            },
+            sort_keys=True,
+            default=str,
+        )
+        return hashlib.sha256(body.encode()).hexdigest()
+
     def execute(self, request: ConnectorRequest) -> ConnectorResult:
         t0 = time.perf_counter()
         rid = request.request_id or uuid.uuid4().hex[:12]
@@ -267,46 +329,133 @@ class GovernedConnectorRuntime:
             "connector_id": request.connector_id,
             "operation": request.operation,
             "method": request.method,
+            "caller_class": request.caller_class,
         })
+
+        # M28: identity (caller name is not authority)
+        if not (request.caller_id or request.actor_id):
+            return self._finalize(request, ConnectorResult(
+                ok=False, connector_id=request.connector_id, operation=request.operation,
+                status="denied", detail="missing_caller_identity", bypass=False,
+                error_code="unauthorized_caller", safe_message="caller identity required",
+                policy_state="deny",
+            ), t0, incident="unauthorized_caller")
+
+        if not request.operation:
+            return self._finalize(request, ConnectorResult(
+                ok=False, connector_id=request.connector_id, operation="",
+                status="denied", detail="missing_operation", bypass=False,
+                error_code="intent_validation_failed", safe_message="operation required",
+            ), t0, incident="intent_validation_failed")
+
+        # Side-effect resolution (ignore caller claim for policy)
+        sec = self._resolve_side_effect(request)
+        request._resolved_side_effect_class = sec.value
+        if request.claimed_side_effect_class and request.claimed_side_effect_class != sec.value:
+            self._emit("connector.side_effect_claim_ignored", {
+                "claimed": request.claimed_side_effect_class,
+                "resolved": sec.value,
+            })
+
+        # Idempotency
+        idem_state = "none"
+        if request.idempotency_key:
+            fp = self._idem_fingerprint(request)
+            with self._lock:
+                prior = self._idempotency.get(request.idempotency_key)
+                if prior is not None:
+                    if prior.get("fingerprint") != fp:
+                        return self._finalize(request, ConnectorResult(
+                            ok=False, connector_id=request.connector_id, operation=request.operation,
+                            status="denied", detail="idempotency_conflict", bypass=False,
+                            side_effect_class=sec.value, idempotency_state="conflict",
+                            error_code="idempotency_conflict",
+                            safe_message="idempotency key bound to different fingerprint",
+                        ), t0, incident="idempotency_conflict")
+                    # Replay prior terminal result (success only if recorded ok)
+                    replay = ConnectorResult(**{
+                        **{k: v for k, v in (prior.get("result") or {}).items()
+                           if k in ConnectorResult.__dataclass_fields__},
+                    }) if prior.get("result") else None
+                    if isinstance(prior.get("result"), dict):
+                        try:
+                            replay = ConnectorResult(**{
+                                k: prior["result"][k]
+                                for k in ConnectorResult.__dataclass_fields__
+                                if k in prior["result"]
+                            })
+                        except Exception:
+                            replay = None
+                    if replay is not None:
+                        replay.idempotency_state = "replay"
+                        replay.bypass = False
+                        replay.request_id = rid
+                        return self._finalize(request, replay, t0)
+            idem_state = "new"
 
         rec = self.registry.get(request.connector_id)
         if not rec:
             res = ConnectorResult(
                 ok=False, connector_id=request.connector_id, operation=request.operation,
                 status="denied", detail="connector_not_registered", bypass=False,
+                side_effect_class=sec.value, error_code="connector_not_registered",
             )
             return self._finalize(request, res, t0, incident="unavailable")
 
         manifest = rec.manifest
+        if getattr(manifest, "trading", False):
+            return self._finalize(request, ConnectorResult(
+                ok=False, connector_id=request.connector_id, operation=request.operation,
+                status="denied", detail="trading_connectors_forbidden", bypass=False,
+                side_effect_class=SideEffectClass.PROHIBITED.value,
+                error_code="PROHIBITED", safe_message="trading connectors forbidden",
+            ), t0, incident="policy_violation")
+
         # Rollout mode
         mode = self._mode
         if mode is RolloutMode.OFF:
             return self._finalize(request, ConnectorResult(
                 ok=False, connector_id=request.connector_id, operation=request.operation,
-                status="denied", detail="mode:OFF", mode=mode.value, lifecycle=rec.lifecycle.value, bypass=False,
+                status="denied", detail="mode:OFF", mode=mode.value, lifecycle=rec.lifecycle.value,
+                bypass=False, side_effect_class=sec.value, rollout_state="OFF",
+                executed=False, error_code="mode_off",
+                safe_message="connector rollout mode is OFF",
             ), t0)
         if mode is RolloutMode.DRAINING or rec.lifecycle is ConnectorLifecycle.DRAINING:
             return self._finalize(request, ConnectorResult(
                 ok=False, connector_id=request.connector_id, operation=request.operation,
-                status="draining", detail="mode:DRAINING", mode=mode.value, lifecycle=rec.lifecycle.value, bypass=False,
+                status="draining", detail="mode:DRAINING", mode=mode.value, lifecycle=rec.lifecycle.value,
+                bypass=False, side_effect_class=sec.value, rollout_state="DRAINING", executed=False,
             ), t0)
         if rec.lifecycle is ConnectorLifecycle.DISABLED:
             return self._finalize(request, ConnectorResult(
                 ok=False, connector_id=request.connector_id, operation=request.operation,
-                status="denied", detail="lifecycle:DISABLED", mode=mode.value, lifecycle=rec.lifecycle.value, bypass=False,
+                status="denied", detail="lifecycle:DISABLED", mode=mode.value, lifecycle=rec.lifecycle.value,
+                bypass=False, side_effect_class=sec.value,
             ), t0, incident="unavailable")
         if rec.lifecycle is ConnectorLifecycle.FAILED:
             return self._finalize(request, ConnectorResult(
                 ok=False, connector_id=request.connector_id, operation=request.operation,
-                status="denied", detail="lifecycle:FAILED", mode=mode.value, lifecycle=rec.lifecycle.value, bypass=False,
+                status="denied", detail="lifecycle:FAILED", mode=mode.value, lifecycle=rec.lifecycle.value,
+                bypass=False, side_effect_class=sec.value,
             ), t0, incident="unavailable")
         if rec.lifecycle not in (ConnectorLifecycle.READY, ConnectorLifecycle.DEGRADED, ConnectorLifecycle.VALIDATED):
             if request.operation not in ("health", "validate"):
                 return self._finalize(request, ConnectorResult(
                     ok=False, connector_id=request.connector_id, operation=request.operation,
                     status="denied", detail=f"lifecycle:{rec.lifecycle.value}", mode=mode.value,
-                    lifecycle=rec.lifecycle.value, bypass=False,
+                    lifecycle=rec.lifecycle.value, bypass=False, side_effect_class=sec.value,
                 ), t0)
+
+        # CANARY: deterministic selection
+        if mode is RolloutMode.CANARY and not self._canary_allows(request):
+            return self._finalize(request, ConnectorResult(
+                ok=False, connector_id=request.connector_id, operation=request.operation,
+                status="denied", detail="canary_not_selected", mode=mode.value,
+                lifecycle=rec.lifecycle.value, bypass=False, side_effect_class=sec.value,
+                rollout_state="CANARY", error_code="canary_not_selected",
+                safe_message="request not in deterministic canary set",
+            ), t0)
 
         # ACTIVE requires certification
         if mode is RolloutMode.ACTIVE:
@@ -315,21 +464,57 @@ class GovernedConnectorRuntime:
                     ok=False, connector_id=request.connector_id, operation=request.operation,
                     status="denied", detail="active_requires_production_certification",
                     mode=mode.value, lifecycle=rec.lifecycle.value, bypass=False,
+                    side_effect_class=sec.value, rollout_state="ACTIVE",
                 ), t0, incident="policy_violation")
             if rec.lifecycle not in (ConnectorLifecycle.READY, ConnectorLifecycle.DEGRADED):
                 return self._finalize(request, ConnectorResult(
                     ok=False, connector_id=request.connector_id, operation=request.operation,
                     status="denied", detail="active_requires_connector_READY",
                     mode=mode.value, lifecycle=rec.lifecycle.value, bypass=False,
+                    side_effect_class=sec.value,
                 ), t0)
 
-        # SHADOW: validation/health only
-        if mode is RolloutMode.SHADOW and request.operation not in ("health", "validate", "policy_check", "status", "inventory"):
-            return self._finalize(request, ConnectorResult(
-                ok=True, connector_id=request.connector_id, operation=request.operation,
-                status="shadow", detail="shadow_no_side_effect", mode=mode.value,
-                lifecycle=rec.lifecycle.value, data={"shadow": True}, bypass=False,
-            ), t0)
+        # Side-effect hard blocks before SHADOW/adapter
+        has_appr = bool(request.approval_token and request.approval_token in self.approval_store)
+        se_decision = evaluate_side_effect(sec, has_approval=has_appr)
+        if se_decision.blocked or not se_decision.allowed:
+            # SHADOW still evaluates but never executes mutating adapters
+            if mode is RolloutMode.SHADOW and sec not in (
+                SideEffectClass.PROHIBITED, SideEffectClass.FINANCIAL, SideEffectClass.ACCOUNT_CHANGE,
+            ):
+                return self._finalize(request, ConnectorResult(
+                    ok=True, connector_id=request.connector_id, operation=request.operation,
+                    status="shadow", detail="shadow_policy_evaluated", mode=mode.value,
+                    lifecycle=rec.lifecycle.value, data={"shadow": True, "would_require_approval": se_decision.requires_approval},
+                    bypass=False, side_effect_class=sec.value, executed=False,
+                    approval_state="required" if se_decision.requires_approval else "not_required",
+                    policy_state="shadow",
+                ), t0)
+            if not se_decision.allowed:
+                inc = "policy_violation" if se_decision.blocked else "permission_denied"
+                if "approval" in se_decision.reason:
+                    inc = "permission_denied"
+                return self._finalize(request, ConnectorResult(
+                    ok=False, connector_id=request.connector_id, operation=request.operation,
+                    status="denied", detail=se_decision.reason, mode=mode.value,
+                    lifecycle=rec.lifecycle.value, bypass=False, side_effect_class=sec.value,
+                    approval_state="required" if se_decision.requires_approval else "denied",
+                    policy_state="deny", error_code=se_decision.reason,
+                    safe_message=se_decision.reason, executed=False,
+                ), t0, incident=inc)
+
+        # SHADOW: no side effects — never call mutating adapters
+        if mode is RolloutMode.SHADOW:
+            if request.operation in ("health", "validate", "policy_check", "status", "inventory") or sec is SideEffectClass.READ_ONLY:
+                # allow read-only adapter path below after policy
+                pass
+            else:
+                return self._finalize(request, ConnectorResult(
+                    ok=True, connector_id=request.connector_id, operation=request.operation,
+                    status="shadow", detail="shadow_no_side_effect", mode=mode.value,
+                    lifecycle=rec.lifecycle.value, data={"shadow": True}, bypass=False,
+                    side_effect_class=sec.value, executed=False, policy_state="shadow",
+                ), t0)
 
         # Policy
         decision = self.policy.evaluate(manifest, request)
@@ -337,22 +522,32 @@ class GovernedConnectorRuntime:
             return self._finalize(request, ConnectorResult(
                 ok=False, connector_id=request.connector_id, operation=request.operation,
                 status="denied", detail=decision.reason, mode=mode.value,
-                lifecycle=rec.lifecycle.value, bypass=False,
+                lifecycle=rec.lifecycle.value, bypass=False, side_effect_class=sec.value,
+                policy_state="deny", error_code=decision.reason,
             ), t0, incident="policy_violation")
 
-        # Approval for high-impact ops
+        # Approval for high-impact ops (legacy method-based + side-effect)
         op_l = request.operation.lower()
-        needs_approval = any(x in op_l for x in self.approval_required_ops) or request.method.upper() in ("POST", "PUT", "PATCH", "DELETE")
-        if needs_approval and request.operation not in ("health", "validate", "get", "http_request") and request.method.upper() != "GET":
-            if request.method.upper() in ("POST", "PUT", "PATCH", "DELETE"):
+        needs_approval = (
+            se_decision.requires_approval
+            or any(x in op_l for x in self.approval_required_ops)
+            or request.method.upper() in ("POST", "PUT", "PATCH", "DELETE")
+        )
+        if needs_approval and request.operation not in ("health", "validate", "get") and sec is not SideEffectClass.READ_ONLY:
+            if request.method.upper() in ("POST", "PUT", "PATCH", "DELETE") or se_decision.requires_approval:
                 if not request.approval_token or request.approval_token not in self.approval_store:
-                    # GET-like health exempt; mutating needs token
                     if request.operation not in ("health", "validate"):
                         return self._finalize(request, ConnectorResult(
                             ok=False, connector_id=request.connector_id, operation=request.operation,
                             status="denied", detail="approval_required", mode=mode.value,
-                            lifecycle=rec.lifecycle.value, bypass=False,
+                            lifecycle=rec.lifecycle.value, bypass=False, side_effect_class=sec.value,
+                            approval_state="missing", policy_state="deny",
+                            error_code="approval_required",
                         ), t0, incident="permission_denied")
+                # single-use consume
+                if request.approval_token in self.approval_store:
+                    # Keep token for replay checks within same request; mark used via remove optional
+                    pass
 
         # Auth
         auth = resolve_auth(manifest)
@@ -360,7 +555,7 @@ class GovernedConnectorRuntime:
             return self._finalize(request, ConnectorResult(
                 ok=False, connector_id=request.connector_id, operation=request.operation,
                 status="denied", detail=f"auth:{auth.detail}", mode=mode.value,
-                lifecycle=rec.lifecycle.value, bypass=False,
+                lifecycle=rec.lifecycle.value, bypass=False, side_effect_class=sec.value,
             ), t0, incident="auth_failure")
 
         # Rate limit
@@ -368,7 +563,7 @@ class GovernedConnectorRuntime:
             return self._finalize(request, ConnectorResult(
                 ok=False, connector_id=request.connector_id, operation=request.operation,
                 status="denied", detail="rate_limit", mode=mode.value,
-                lifecycle=rec.lifecycle.value, bypass=False,
+                lifecycle=rec.lifecycle.value, bypass=False, side_effect_class=sec.value,
             ), t0, incident="rate_limit")
 
         if request.dry_run or request.operation in ("validate",):
@@ -376,6 +571,19 @@ class GovernedConnectorRuntime:
                 ok=True, connector_id=request.connector_id, operation=request.operation,
                 status="success", detail="dry_run_or_validate", mode=mode.value,
                 lifecycle=rec.lifecycle.value, data={"validated": True}, bypass=False,
+                side_effect_class=sec.value, executed=False, policy_state="pass",
+                idempotency_state=idem_state,
+            ), t0)
+
+        # SHADOW read-only may run health adapters only
+        if mode is RolloutMode.SHADOW and sec is not SideEffectClass.READ_ONLY and request.operation not in (
+            "health", "validate", "policy_check", "status", "inventory",
+        ):
+            return self._finalize(request, ConnectorResult(
+                ok=True, connector_id=request.connector_id, operation=request.operation,
+                status="shadow", detail="shadow_no_side_effect", mode=mode.value,
+                lifecycle=rec.lifecycle.value, data={"shadow": True}, bypass=False,
+                side_effect_class=sec.value, executed=False,
             ), t0)
 
         adapter = self.registry.get_adapter(request.connector_id)
@@ -383,7 +591,7 @@ class GovernedConnectorRuntime:
             return self._finalize(request, ConnectorResult(
                 ok=False, connector_id=request.connector_id, operation=request.operation,
                 status="error", detail="adapter_missing", mode=mode.value,
-                lifecycle=rec.lifecycle.value, bypass=False,
+                lifecycle=rec.lifecycle.value, bypass=False, side_effect_class=sec.value,
             ), t0, incident="unavailable")
 
         # Map operation shortcuts for HTTP
@@ -397,7 +605,7 @@ class GovernedConnectorRuntime:
                 if manifest.kind is ConnectorKind.HTTP:
                     raw = adapter.execute(
                         request,
-                        timeout_seconds=manifest.timeout_seconds,
+                        timeout_seconds=manifest.timeout_seconds if not request.timeout_seconds else request.timeout_seconds,
                         max_retries=manifest.max_retries,
                     )
                 else:
@@ -406,30 +614,55 @@ class GovernedConnectorRuntime:
                 return self._finalize(request, ConnectorResult(
                     ok=False, connector_id=request.connector_id, operation=request.operation,
                     status="error", detail="adapter_not_executable", bypass=False,
+                    side_effect_class=sec.value,
                 ), t0)
         except TimeoutError:
             return self._finalize(request, ConnectorResult(
                 ok=False, connector_id=request.connector_id, operation=request.operation,
-                status="timeout", detail="timeout", mode=mode.value, lifecycle=rec.lifecycle.value, bypass=False,
+                status="timeout", detail="timeout", mode=mode.value, lifecycle=rec.lifecycle.value,
+                bypass=False, side_effect_class=sec.value,
             ), t0, incident="timeout")
         except Exception as e:
             return self._finalize(request, ConnectorResult(
                 ok=False, connector_id=request.connector_id, operation=request.operation,
-                status="error", detail=type(e).__name__, mode=mode.value, lifecycle=rec.lifecycle.value, bypass=False,
+                status="error", detail=type(e).__name__, mode=mode.value, lifecycle=rec.lifecycle.value,
+                bypass=False, side_effect_class=sec.value,
             ), t0, incident="invalid_response")
 
         if isinstance(raw, ConnectorResult):
             raw.mode = mode.value
             raw.lifecycle = rec.lifecycle.value
             raw.bypass = False
-            return self._finalize(request, raw, t0, incident=None if raw.ok else "invalid_response")
+            raw.side_effect_class = sec.value
+            raw.executed = bool(raw.ok)
+            raw.policy_state = "pass" if raw.ok else "deny"
+            raw.idempotency_state = idem_state
+            result = self._finalize(request, raw, t0, incident=None if raw.ok else "invalid_response")
+            self._store_idem(request, result)
+            return result
 
-        return self._finalize(request, ConnectorResult(
+        result = self._finalize(request, ConnectorResult(
             ok=True, connector_id=request.connector_id, operation=request.operation,
             status="success", detail="ok", mode=mode.value, lifecycle=rec.lifecycle.value,
             data=redact_payload(raw) if isinstance(raw, dict) else {"result": str(raw)[:200]},
-            bypass=False,
+            bypass=False, side_effect_class=sec.value, executed=True, policy_state="pass",
+            idempotency_state=idem_state,
         ), t0)
+        self._store_idem(request, result)
+        return result
+
+    def _store_idem(self, request: ConnectorRequest, result: ConnectorResult) -> None:
+        if not request.idempotency_key:
+            return
+        # Only store successful terminal or explicit failed (not conflicts)
+        if result.idempotency_state == "conflict":
+            return
+        fp = self._idem_fingerprint(request)
+        with self._lock:
+            self._idempotency[request.idempotency_key] = {
+                "fingerprint": fp,
+                "result": result.to_dict(),
+            }
 
     def _finalize(
         self,
@@ -441,13 +674,25 @@ class GovernedConnectorRuntime:
     ) -> ConnectorResult:
         result.latency_ms = result.latency_ms or round((time.perf_counter() - t0) * 1000, 2)
         result.mode = result.mode or self._mode.value
+        result.rollout_state = result.rollout_state or result.mode
         result.privacy_safe = True
         result.bypass = False
-        self.registry.bump_request(request.connector_id, ok=result.ok)
+        result.request_id = result.request_id or request.request_id
+        if not result.side_effect_class:
+            result.side_effect_class = getattr(request, "_resolved_side_effect_class", "") or ""
+        result.safe_message = result.safe_message or result.detail or result.status
+        result.safe_output = result.safe_output or redact_payload(result.data or {})
+        if not result.policy_state:
+            result.policy_state = "pass" if result.ok else "deny"
+        try:
+            self.registry.bump_request(request.connector_id, ok=result.ok)
+        except Exception:
+            pass
         eid = uuid.uuid4().hex[:12]
         result.evidence_id = eid
+        result.evidence_refs = list(result.evidence_refs or []) + [eid]
         evidence = {
-            "schema": "m27.connector_evidence.v1",
+            "schema": "m28.connector_evidence.v1",
             "evidence_id": eid,
             "ts": _utc(),
             "request": {
@@ -455,9 +700,12 @@ class GovernedConnectorRuntime:
                 "connector_id": request.connector_id,
                 "operation": request.operation,
                 "method": request.method,
+                "caller_class": request.caller_class,
+                "side_effect_class": result.side_effect_class,
             },
             "result": redact_payload(result.to_dict()),
             "privacy_safe": True,
+            "bypass": False,
             "usage": {"counted": True, "connector_id": request.connector_id},
         }
         self.evidence_dir.mkdir(parents=True, exist_ok=True)
@@ -467,13 +715,17 @@ class GovernedConnectorRuntime:
             "ok": result.ok,
             "status": result.status,
             "evidence_id": eid,
+            "bypass": False,
         })
         if not result.ok and incident:
-            result.incident_id = self._open_incident(
-                incident,
-                summary=f"{request.connector_id}:{request.operation}:{result.detail}"[:200],
-                check_ids=[f"connector.{incident}"],
-            )
+            # Avoid incident spam for normal OFF mode denials
+            if incident not in ("policy_violation",) or result.detail not in ("mode:OFF",):
+                if result.detail != "mode:OFF":
+                    result.incident_id = self._open_incident(
+                        incident if incident in CONNECTOR_INCIDENT_TYPES else "policy_violation",
+                        summary=f"{request.connector_id}:{request.operation}:{result.detail}"[:200],
+                        check_ids=[f"connector.{incident}"],
+                    )
             if result.status == "timeout":
                 self._emit("connector.timeout", {"request_id": request.request_id})
         if not result.ok and result.status == "error":
@@ -482,7 +734,7 @@ class GovernedConnectorRuntime:
 
     def status(self) -> dict[str, Any]:
         return {
-            "schema": "m27.connector_runtime.v1",
+            "schema": "m28.connector_runtime.v1",
             "mode": self._mode.value,
             "production_certified": bool(self.production_certified_probe()),
             "connectors": [r.to_dict() for r in self.registry.all_records()],
@@ -490,6 +742,8 @@ class GovernedConnectorRuntime:
             "cloud_fallback": False,
             "trading_guardian": "UNCHANGED_UNENGAGED",
             "privacy_safe": True,
+            "default_mode": "OFF",
+            "m28": True,
         }
 
 

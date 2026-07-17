@@ -168,6 +168,13 @@ class UniversalBoundary:
         # Register default local handler
         if "local" not in self.handlers:
             self.handlers["local"] = self._default_local_handler
+        # M28: default connector family → governed connector runtime
+        if "connector" not in self.handlers:
+            try:
+                from saathi.connectors.gov.gateway_bridge import governed_connector_handler
+                self.handlers["connector"] = governed_connector_handler
+            except Exception:  # pragma: no cover
+                pass
 
     # ── public API ────────────────────────────────────────────────────────
 

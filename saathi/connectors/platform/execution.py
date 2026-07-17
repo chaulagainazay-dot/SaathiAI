@@ -118,9 +118,19 @@ class ExecutionEngine:
             except Exception as e:
                 self.store.event("connector.gateway_submit_error",
                                  {"error": self._redact(str(e)), "tool": req.tool_id})
-                # fall through to substrate-only path (still governed checks below)
+                # M28: no temporary dual-transport fallback for production-capable work
+                return self._fail(
+                    req, FailureClass.INTERNAL,
+                    f"gateway_submit_error:{self._redact(str(e))}",
+                    extra={"gateway_ref": "gateway-error", "m28_fail_closed": True},
+                )
 
-        return self._execute_substrate(req, tool, conn, gw_ref="gateway-unavailable")
+        # M28: fail closed when ExecutionGateway is unavailable (no substrate-only bypass)
+        return self._fail(
+            req, FailureClass.UNAVAILABLE,
+            "execution_gateway_unavailable",
+            extra={"gateway_ref": "gateway-unavailable", "m28_fail_closed": True},
+        )
 
     def _preflight_substrate(self, req: ExecRequest, tool, conn) -> Optional[ToolResult]:
         """Lifecycle / ownership / scope / circuit before approval or adapter.
