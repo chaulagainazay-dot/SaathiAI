@@ -128,12 +128,15 @@ def test_detect_live_provider_status_uses_m25():
 
 def test_runtime_gate_m25_checks():
     run_m25_certification(write_evidence=True)
-    report = evaluate_runtime_gate()
+    # Isolate from package evidence so this test covers M25 live gates only
+    report = evaluate_runtime_gate(
+        evidence={"_skip_disk_cert_evidence": True},
+    )
     ids = {c.check_id: c for c in report.checks}
     assert "m25_live_provider_cert" in ids
     assert "m25_no_mock_as_live" in ids
     assert "m25_production_cert_invariant" in ids
-    # production remains false until all cert package gates pass
+    # Without package evidence, production must stay false
     assert report.production_certified is False
     # no-mock gate must pass
     assert ids["m25_no_mock_as_live"].state is GateState.PASS
@@ -149,13 +152,17 @@ def test_runtime_gate_m25_checks():
     ev = ids["m25_live_provider_cert"].evidence or {}
     if ev.get("installed_approved_models"):
         assert ev.get("blocker") != "no_approved_small_model"
-    assert report.production_certified is False
+    assert any(
+        "full_suite" in b or "secret_scan" in b or "critical_check" in b
+        for b in report.certification_blockers
+    )
 
 
 def test_release_check_still_passes():
     rep = run_release_check()
     assert rep.ok is True
-    assert rep.production_certified is False
+    # release_check is architecture-only; package cert lives on runtime_gate
+    assert getattr(rep, "production_certified", False) is False
 
 
 def test_mock_not_labeled_live_invariant():

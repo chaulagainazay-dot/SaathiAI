@@ -1,0 +1,20 @@
+{
+  "evidence_id": "focused_suite_evidence",
+  "schema": "m25.cert_evidence.v1",
+  "status": "PASS",
+  "producer": "saathi.inference.cert_evidence",
+  "producer_version": "m25.cert_evidence.1",
+  "created_at": "2026-07-17T12:03:57+00:00",
+  "expires_at": "2026-07-31T12:03:57+00:00",
+  "ttl_seconds": 1209600,
+  "package_fingerprint": "sha256:1b1ee176c373c15ab406ef8fffec3cd6",
+  "tip_commit": "8ac0b48c06b37c0e7b59636f4c04c8d354f9ddeb",
+  "detail": "focused m25+memory exit=0",
+  "metrics": {
+    "passed": 65,
+    "failed": 0,
+    "duration_s": 16.04,
+    "returncode": 0
+  },
+  "privacy_safe": true
+}

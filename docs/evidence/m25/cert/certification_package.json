@@ -1,0 +1,188 @@
+{
+  "schema": "m25.certification_package.v1",
+  "created_at": "2026-07-17T12:03:57+00:00",
+  "package_fingerprint": "sha256:1b1ee176c373c15ab406ef8fffec3cd6",
+  "tip_commit": "8ac0b48c06b37c0e7b59636f4c04c8d354f9ddeb",
+  "artifacts": {
+    "secret_scan_evidence": {
+      "evidence_id": "secret_scan_evidence",
+      "schema": "m25.cert_evidence.v1",
+      "status": "PASS",
+      "producer": "saathi.inference.cert_evidence",
+      "producer_version": "m25.cert_evidence.1",
+      "created_at": "2026-07-17T12:01:53+00:00",
+      "expires_at": "2026-07-31T12:01:53+00:00",
+      "ttl_seconds": 1209600,
+      "package_fingerprint": "sha256:1b1ee176c373c15ab406ef8fffec3cd6",
+      "tip_commit": "8ac0b48c06b37c0e7b59636f4c04c8d354f9ddeb",
+      "detail": "strong-credential rules only; tests/docs excluded",
+      "metrics": {
+        "files_scanned": 774,
+        "strong_hits": 0,
+        "clean": true
+      },
+      "privacy_safe": true
+    },
+    "critical_check_evidence": {
+      "evidence_id": "critical_check_evidence",
+      "schema": "m25.cert_evidence.v1",
+      "status": "PASS",
+      "producer": "saathi.inference.cert_evidence",
+      "producer_version": "m25.cert_evidence.1",
+      "created_at": "2026-07-17T12:03:41+00:00",
+      "expires_at": "2026-07-31T12:03:41+00:00",
+      "ttl_seconds": 1209600,
+      "package_fingerprint": "sha256:1b1ee176c373c15ab406ef8fffec3cd6",
+      "tip_commit": "8ac0b48c06b37c0e7b59636f4c04c8d354f9ddeb",
+      "detail": "checks=23+server.import",
+      "metrics": {
+        "all_ok": true,
+        "checks_run": 24,
+        "failed_ids": [],
+        "results": {
+          "security.redteam_prod_block": {
+            "ok": true,
+            "blocking": true
+          },
+          "security.redteam_cloud_off": {
+            "ok": true,
+            "blocking": true
+          },
+          "security.redteam_redaction": {
+            "ok": true,
+            "blocking": true
+          },
+          "security.redteam_judge_advisory": {
+            "ok": true,
+            "blocking": true
+          },
+          "security.redteam_no_blocking": {
+            "ok": true,
+            "blocking": true
+          },
+          "security.iso_cross_user": {
+            "ok": true,
+            "blocking": true
+          },
+          "security.approval_binding": {
+            "ok": true,
+            "blocking": true
+          },
+          "security.secret_extraction": {
+            "ok": true,
+            "blocking": true
+          },
+          "security.mcp_clamp": {
+            "ok": true,
+            "blocking": true
+          },
+          "security.unsafe_retry": {
+            "ok": true,
+            "blocking": true
+          },
+          "security.baseline": {
+            "ok": true,
+            "blocking": true
+          },
+          "security.redteam_secretleak": {
+            "ok": true,
+            "blocking": true
+          },
+          "m21.4.runtime_consolidation": {
+            "ok": true,
+            "blocking": true
+          },
+          "m21.4.production_configuration_gate": {
+            "ok": true,
+            "blocking": true
+          },
+          "m21.4.release_check_integration": {
+            "ok": true,
+            "blocking": true
+          },
+          "m21.4.residual_manifest_consistency": {
+            "ok": true,
+            "blocking": true
+          },
+          "m21.4.production_certification_invariant": {
+            "ok": true,
+            "blocking": true
+          },
+          "m22.provider_migration": {
+            "ok": true,
+            "blocking": true
+          },
+          "m22.release_check_facades": {
+            "ok": true,
+            "blocking": true
+          },
+          "m22.residual_manifest": {
+            "ok": true,
+            "blocking": true
+          },
+          "m23.governed_chat_default": {
+            "ok": true,
+            "blocking": true
+          },
+          "m23.release_check_chat": {
+            "ok": true,
+            "blocking": true
+          },
+          "m23.residual_manifest": {
+            "ok": true,
+            "blocking": true
+          },
+          "server.import": {
+            "ok": true,
+            "blocking": true
+          }
+        }
+      },
+      "privacy_safe": true
+    },
+    "full_suite_evidence": {
+      "evidence_id": "full_suite_evidence",
+      "schema": "m25.cert_evidence.v1",
+      "status": "PASS",
+      "producer": "saathi.inference.cert_evidence",
+      "producer_version": "m25.cert_evidence.1",
+      "created_at": "2026-07-17T12:03:41+00:00",
+      "expires_at": "2026-07-31T12:03:41+00:00",
+      "ttl_seconds": 1209600,
+      "package_fingerprint": "sha256:1b1ee176c373c15ab406ef8fffec3cd6",
+      "tip_commit": "8ac0b48c06b37c0e7b59636f4c04c8d354f9ddeb",
+      "detail": "3113 passed, 0 failed, 1 skipped",
+      "metrics": {
+        "passed": 3113,
+        "failed": 0,
+        "skipped": 1,
+        "source": "log:/tmp/m25_final_suite2.log"
+      },
+      "privacy_safe": true
+    },
+    "focused_suite_evidence": {
+      "evidence_id": "focused_suite_evidence",
+      "schema": "m25.cert_evidence.v1",
+      "status": "PASS",
+      "producer": "saathi.inference.cert_evidence",
+      "producer_version": "m25.cert_evidence.1",
+      "created_at": "2026-07-17T12:03:57+00:00",
+      "expires_at": "2026-07-31T12:03:57+00:00",
+      "ttl_seconds": 1209600,
+      "package_fingerprint": "sha256:1b1ee176c373c15ab406ef8fffec3cd6",
+      "tip_commit": "8ac0b48c06b37c0e7b59636f4c04c8d354f9ddeb",
+      "detail": "focused m25+memory exit=0",
+      "metrics": {
+        "passed": 65,
+        "failed": 0,
+        "duration_s": 16.04,
+        "returncode": 0
+      },
+      "privacy_safe": true
+    }
+  },
+  "all_pass": true,
+  "privacy_safe": true,
+  "cloud_fallback": false,
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

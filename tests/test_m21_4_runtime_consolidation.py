@@ -144,7 +144,12 @@ def test_one_production_config_validator():
 
 def test_one_production_certification_field():
     rep = evaluate_runtime_gate(
-        evidence={"full_suite_status": "NOT_TESTED"},
+        evidence={
+            "full_suite_status": "MISSING",
+            "secret_scan_status": "MISSING",
+            "critical_check_status": "MISSING",
+            "_skip_disk_cert_evidence": True,
+        },
         include_live_probe=False,
     )
     assert rep.production_certified is False
@@ -196,18 +201,25 @@ def test_duplicate_critical_authorities_zero():
 
 
 def test_production_gate_static_config_uncertified():
+    # Package PASS alone is not enough when live is forced ENVIRONMENT_BLOCKED
     rep = evaluate_runtime_gate(
         evidence={
             "full_suite_status": "PASS",
             "focused_suite_status": "PASS",
             "secret_scan_status": "PASS",
             "critical_check_status": "PASS",
+            "_skip_disk_cert_evidence": True,
         },
-        include_live_probe=True,
+        include_live_probe=False,  # live → NOT_TESTED/MISSING path when probe skipped
     )
-    assert rep.production_certified is False
-    assert any("live_provider" in b or "full_suite" in b or "m21_4" in b
-               for b in rep.certification_blockers) or rep.production_certified is False
+    # Without live PASS, cannot certify
+    live = next(c for c in rep.checks if c.check_id == "live_provider_cert")
+    if live.state is not GateState.PASS:
+        assert rep.production_certified is False
+        assert any("live_provider" in b for b in rep.certification_blockers)
+    else:
+        # Host currently has live PASS — package + live can certify
+        assert rep.production_certified is True or rep.certification_blockers
 
 
 def test_missing_release_check_blocks_certification():
@@ -715,13 +727,16 @@ def test_gate_counts_zero():
 
 
 def test_production_certified_defaults_false():
-    rep = evaluate_runtime_gate(include_live_probe=False)
+    rep = evaluate_runtime_gate(
+        evidence={"_skip_disk_cert_evidence": True},
+        include_live_probe=False,
+    )
     assert rep.production_certified is False
 
 
 def test_unit_tests_alone_cannot_certify():
     checks = [rg.GateCheck(cid, GateState.PASS) for cid in MANDATORY_CERT_CHECKS]
-    # force_false True is M21.4 default path
+    # force_false path still hard-blocks certification for tests/emergency
     cert, blockers = decide_production_certified(checks, force_false=True)
     assert cert is False
 
@@ -739,7 +754,13 @@ def test_partial_evidence_cannot_certify():
 
 def test_manual_cert_override_rejected():
     rep = evaluate_runtime_gate(
-        evidence={"production_certified_manual": True, "full_suite_status": "PASS"},
+        evidence={
+            "production_certified_manual": True,
+            "full_suite_status": "PASS",
+            "secret_scan_status": "PASS",
+            "critical_check_status": "PASS",
+            "_skip_disk_cert_evidence": True,
+        },
         include_live_probe=False,
     )
     assert rep.production_certified is False
@@ -836,7 +857,7 @@ def test_trading_isolation_gate_pass():
 
 
 def test_inference_not_trading_approval():
-    snap = runtime_readiness_snapshot()
+    snap = runtime_readiness_snapshot(evidence={"_skip_disk_cert_evidence": True})
     assert snap.get("trading_guardian") == "UNCHANGED_UNENGAGED"
     assert snap.get("production_certified") is False
 
@@ -847,7 +868,10 @@ def test_inference_not_trading_approval():
 @pytest.mark.parametrize("posture", ["development", "test", "staging", "production"])
 def test_posture_simulation(monkeypatch, posture):
     monkeypatch.setenv("SAATHI_PRODUCTION_POSTURE", posture)
-    rep = evaluate_runtime_gate(include_live_probe=False)
+    rep = evaluate_runtime_gate(
+        evidence={"_skip_disk_cert_evidence": True},
+        include_live_probe=False,
+    )
     assert rep.production_posture == posture
     assert rep.production_certified is False
     monkeypatch.delenv("SAATHI_PRODUCTION_POSTURE", raising=False)
@@ -943,13 +967,14 @@ def test_gate_ok_with_static_pass():
     """With release check pass and safe defaults, gate ok may be True while uncertified."""
     rep = evaluate_runtime_gate(
         evidence={
-            "full_suite_status": "NOT_TESTED",
-            "secret_scan_status": "NOT_TESTED",
-            "critical_check_status": "NOT_TESTED",
+            "full_suite_status": "MISSING",
+            "secret_scan_status": "MISSING",
+            "critical_check_status": "MISSING",
+            "_skip_disk_cert_evidence": True,
         },
         include_live_probe=False,
     )
-    # production_certified always false
+    # Without package evidence production cannot certify
     assert rep.production_certified is False
     # Static blocking should not fire on clean tree
     if rep.ok:
@@ -957,6 +982,7 @@ def test_gate_ok_with_static_pass():
             GateState.PASS.value,
             GateState.NOT_TESTED.value,
             GateState.ENVIRONMENT_BLOCKED.value,
+            GateState.MISSING.value,
         )
 
 

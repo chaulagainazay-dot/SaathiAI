@@ -616,8 +616,12 @@ def test_safe_telemetry_no_raw():
 
 def test_production_certified_false():
     snap = chat_runtime_snapshot()
+    # Chat snapshot never claims production certification
     assert snap["production_certified"] is False
-    report = evaluate_runtime_gate(run_release_check=True)
+    report = evaluate_runtime_gate(
+        evidence={"_skip_disk_cert_evidence": True},
+        run_release_check=True,
+    )
     assert report.production_certified is False
 
 
@@ -722,7 +726,10 @@ def test_chat_engine_canonical_control():
 
 
 def test_runtime_gate_m23_checks():
-    report = evaluate_runtime_gate(run_release_check=True)
+    report = evaluate_runtime_gate(
+        evidence={"_skip_disk_cert_evidence": True},
+        run_release_check=True,
+    )
     assert report.production_certified is False
     ids = {c.check_id: c for c in report.checks}
     assert "chat_governed_default" in ids
@@ -785,7 +792,10 @@ def test_no_exchange_sdk_in_chat():
 
 
 def test_chat_migration_cannot_certify():
-    report = evaluate_runtime_gate(run_release_check=True)
+    report = evaluate_runtime_gate(
+        evidence={"_skip_disk_cert_evidence": True},
+        run_release_check=True,
+    )
     assert report.production_certified is False
 
 

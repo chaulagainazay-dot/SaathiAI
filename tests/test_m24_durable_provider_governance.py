@@ -644,7 +644,8 @@ def test_release_check_m24():
 
 
 def test_runtime_gate_m24_checks():
-    report = evaluate_runtime_gate()
+    # Isolate package disk evidence so this test covers M24 durable gates only
+    report = evaluate_runtime_gate(evidence={"_skip_disk_cert_evidence": True})
     ids = {c.check_id: c for c in report.checks}
     for cid in (
         "durable_circuit_store_ready",
@@ -659,6 +660,7 @@ def test_runtime_gate_m24_checks():
     ):
         assert cid in ids, cid
         assert ids[cid].state.value == "PASS", (cid, ids[cid].detail)
+    # Without package evidence, production cannot certify
     assert report.production_certified is False
 
 

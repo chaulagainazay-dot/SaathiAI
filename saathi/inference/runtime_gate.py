@@ -7,9 +7,10 @@ M21.0–M21.3 modules. Does not replace:
 * ``release_check.run_release_check`` (static architecture)
 * ``provider_decision`` / availability / cost / circuit (runtime selection)
 
-Does **not** set ``production_certified=true`` without complete mandatory
-evidence. Does **not** enable providers, download models, or engage Trading
-Guardian. Offline-safe by default (no network for static gates).
+Sets ``production_certified=true`` only when every mandatory check is PASS
+(including package evidence loaded from ``docs/evidence/m25/cert/``).
+Does **not** enable providers, download models, or engage Trading Guardian.
+Offline-safe by default (no network for static gates).
 
 CLI::
 
@@ -64,7 +65,7 @@ EXPIRED_MILESTONES_AT_M21_4 = frozenset({"M20", "M21", "M21.0", "M21.1", "M21.2"
 
 
 class GateState(str, Enum):
-    """Per-check outcome. NOT_TESTED / ENVIRONMENT_BLOCKED must never collapse to PASS."""
+    """Per-check outcome. NOT_TESTED / STALE / MISSING / ENVIRONMENT_BLOCKED never collapse to PASS."""
 
     PASS = "PASS"
     FAIL = "FAIL"
@@ -72,6 +73,8 @@ class GateState(str, Enum):
     NOT_APPLICABLE = "NOT_APPLICABLE"
     NOT_TESTED = "NOT_TESTED"
     ENVIRONMENT_BLOCKED = "ENVIRONMENT_BLOCKED"
+    STALE = "STALE"
+    MISSING = "MISSING"
 
 
 # States that cannot satisfy a mandatory certification requirement.
@@ -80,6 +83,8 @@ NON_PASSING = frozenset({
     GateState.BLOCKED,
     GateState.NOT_TESTED,
     GateState.ENVIRONMENT_BLOCKED,
+    GateState.STALE,
+    GateState.MISSING,
 })
 
 
@@ -521,14 +526,18 @@ MANDATORY_CERT_CHECKS = (
 def decide_production_certified(
     checks: Sequence[GateCheck],
     *,
-    force_false: bool = True,
+    force_false: bool = False,
     manual_override: bool = False,
 ) -> tuple[bool, list[str]]:
     """Return (certified, blockers).
 
-    Partial evidence can never certify. Manual override cannot force true when
-    any mandatory gate is non-PASS. force_false keeps M21.4 default false even
-    if all static checks pass without live evidence (live is mandatory).
+    Certified only when every mandatory check is PASS. Partial / STALE / MISSING
+    / NOT_TESTED evidence can never certify. Manual override cannot force true
+    when any mandatory gate is non-PASS.
+
+    ``force_false=True`` is retained for tests that assert the hard-false path;
+    the evaluate_runtime_gate path uses force_false=False so complete package
+    evidence can set production_certified=true.
     """
     by_id = {c.check_id: c for c in checks}
     blockers: list[str] = []
@@ -553,18 +562,61 @@ def decide_production_certified(
     if manual_override and blockers:
         blockers.append("manual_override_rejected_with_blockers")
 
-    # M21.4: never certify production without complete live + suite evidence.
+    # Optional hard-false (tests / emergency). Live remains mandatory via checks.
     if force_false and not blockers:
-        # Even if somehow all PASS, M21.4 still expects live cert — double-check
         live = by_id.get("live_provider_cert")
         if live is None or live.state != GateState.PASS:
-            blockers.append("m21_4_force_false_without_live")
+            blockers.append("force_false_without_live")
 
     certified = len(blockers) == 0 and not force_false
-    # Absolute invariant: if any blocker, false
     if blockers:
         certified = False
     return certified, blockers
+
+
+def _package_status_to_state(status: str) -> GateState:
+    """Map package evidence status strings to GateState (never invent PASS)."""
+    s = (status or "MISSING").upper()
+    if s == "PASS":
+        return GateState.PASS
+    if s == "FAIL":
+        return GateState.FAIL
+    if s == "STALE":
+        return GateState.STALE
+    if s == "MISSING":
+        return GateState.MISSING
+    if s in ("ENVIRONMENT_BLOCKED", "MEMORY_BLOCKED"):
+        return GateState.ENVIRONMENT_BLOCKED
+    if s in ("NOT_COMPLETED", "INCOMPLETE", "NOT_TESTED"):
+        return GateState.NOT_TESTED
+    if s in GateState.__members__:
+        return GateState[s]
+    return GateState.MISSING
+
+
+def _merge_disk_package_evidence(evidence: dict[str, Any]) -> dict[str, Any]:
+    """Load canonical package evidence from disk for any unset status keys."""
+    status_keys = (
+        "full_suite_status",
+        "secret_scan_status",
+        "critical_check_status",
+        "focused_suite_status",
+    )
+    if evidence.get("_skip_disk_cert_evidence"):
+        return evidence
+    try:
+        from saathi.inference.cert_evidence import inject_evidence_dict
+
+        disk = inject_evidence_dict()
+    except Exception:
+        return evidence
+    for k in status_keys:
+        if k not in evidence and k in disk:
+            evidence[k] = disk[k]
+        meta_k = f"{k}_meta"
+        if meta_k in disk and meta_k not in evidence:
+            evidence[meta_k] = disk[meta_k]
+    return evidence
 
 
 # ── Main gate evaluation ───────────────────────────────────────────────────
@@ -595,20 +647,25 @@ def evaluate_runtime_gate(
     run_prod_config: bool = True,
     include_live_probe: bool = True,
 ) -> RuntimeGateReport:
-    """Evaluate the consolidated M21.4 production-configuration gate.
+    """Evaluate the consolidated production-configuration gate (M21.4–M25).
 
-    ``evidence`` may inject suite/scan outcomes for certification (defaults:
-    NOT_TESTED). Keys (optional)::
+    ``evidence`` may inject suite/scan outcomes for certification. When a status
+    key is omitted, canonical on-disk package evidence under
+    ``docs/evidence/m25/cert/`` is loaded (see ``saathi.inference.cert_evidence``).
+    Unset and missing artifacts map to MISSING (never silent PASS).
 
-        full_suite_status: PASS|FAIL|NOT_TESTED|ENVIRONMENT_BLOCKED|NOT_COMPLETED
-        focused_suite_status: PASS|FAIL|NOT_TESTED
-        secret_scan_status: PASS|FAIL|NOT_TESTED
-        critical_check_status: PASS|FAIL|NOT_TESTED
+    Keys (optional)::
+
+        full_suite_status: PASS|FAIL|STALE|MISSING|NOT_TESTED|ENVIRONMENT_BLOCKED
+        focused_suite_status: PASS|FAIL|STALE|MISSING|NOT_TESTED
+        secret_scan_status: PASS|FAIL|STALE|MISSING|NOT_TESTED
+        critical_check_status: PASS|FAIL|STALE|MISSING|NOT_TESTED
         release_check_ok: bool (override)
         production_certified_manual: bool (cannot force true with blockers)
+        _skip_disk_cert_evidence: bool (tests — ignore on-disk package artifacts)
     """
     t0 = time.perf_counter()
-    evidence = dict(evidence or {})
+    evidence = _merge_disk_package_evidence(dict(evidence or {}))
     report = RuntimeGateReport(
         production_posture=_posture_from_env(),
         authorities=canonical_authorities(),
@@ -1248,63 +1305,60 @@ def evaluate_runtime_gate(
             evidence_d=live,
         )
 
-    # 11) Full suite evidence (injected or NOT_TESTED)
-    fs = (evidence.get("full_suite_status") or "NOT_TESTED").upper()
-    try:
-        fs_state = GateState(fs) if fs in GateState.__members__ else GateState.NOT_TESTED
-    except Exception:
-        fs_state = GateState.NOT_TESTED
-    if fs in ("NOT_COMPLETED", "INCOMPLETE"):
-        fs_state = GateState.NOT_TESTED
-    if fs == "PASS":
-        fs_state = GateState.PASS
-    elif fs == "FAIL":
-        fs_state = GateState.FAIL
+    # 11) Full suite evidence (disk / inject → PASS|FAIL|STALE|MISSING)
+    fs = (evidence.get("full_suite_status") or "MISSING").upper()
+    fs_state = _package_status_to_state(fs)
     add(
         "full_suite_evidence",
         fs_state,
-        f"status={fs}",
-        blocking=False,
-        evidence_d={"full_suite_status": fs},
+        f"status={fs_state.value}",
+        blocking=fs_state is GateState.FAIL,
+        evidence_d={
+            "full_suite_status": fs_state.value,
+            **(evidence.get("full_suite_status_meta") or {}),
+        },
     )
 
     # 12) Secret scan evidence
-    ss = (evidence.get("secret_scan_status") or "NOT_TESTED").upper()
-    ss_state = GateState.PASS if ss == "PASS" else (
-        GateState.FAIL if ss == "FAIL" else GateState.NOT_TESTED
-    )
+    ss = (evidence.get("secret_scan_status") or "MISSING").upper()
+    ss_state = _package_status_to_state(ss)
     add(
         "secret_scan_evidence",
         ss_state,
-        f"status={ss}",
-        blocking=ss == "FAIL",
-        evidence_d={"secret_scan_status": ss},
+        f"status={ss_state.value}",
+        blocking=ss_state is GateState.FAIL,
+        evidence_d={
+            "secret_scan_status": ss_state.value,
+            **(evidence.get("secret_scan_status_meta") or {}),
+        },
     )
 
     # 13) Critical check evidence
-    cc = (evidence.get("critical_check_status") or "NOT_TESTED").upper()
-    cc_state = GateState.PASS if cc == "PASS" else (
-        GateState.FAIL if cc == "FAIL" else GateState.NOT_TESTED
-    )
+    cc = (evidence.get("critical_check_status") or "MISSING").upper()
+    cc_state = _package_status_to_state(cc)
     add(
         "critical_check_evidence",
         cc_state,
-        f"status={cc}",
-        blocking=cc == "FAIL",
-        evidence_d={"critical_check_status": cc},
+        f"status={cc_state.value}",
+        blocking=cc_state is GateState.FAIL,
+        evidence_d={
+            "critical_check_status": cc_state.value,
+            **(evidence.get("critical_check_status_meta") or {}),
+        },
     )
 
     # 14) Focused suite (informational for certification narrative)
-    foc = (evidence.get("focused_suite_status") or "NOT_TESTED").upper()
-    foc_state = GateState.PASS if foc == "PASS" else (
-        GateState.FAIL if foc == "FAIL" else GateState.NOT_TESTED
-    )
+    foc = (evidence.get("focused_suite_status") or "MISSING").upper()
+    foc_state = _package_status_to_state(foc)
     add(
         "focused_suite_evidence",
         foc_state,
-        f"status={foc}",
+        f"status={foc_state.value}",
         blocking=False,
-        evidence_d={"focused_suite_status": foc},
+        evidence_d={
+            "focused_suite_status": foc_state.value,
+            **(evidence.get("focused_suite_status_meta") or {}),
+        },
     )
 
     # 15) Raw tracing in production
@@ -1340,12 +1394,10 @@ def evaluate_runtime_gate(
     report.checks = checks
     certified, cert_blockers = decide_production_certified(
         checks,
-        force_false=True,
+        force_false=False,
         manual_override=manual,
     )
-    # force_false always true in M21.4 evaluate path — production_certified stays false
-    # unless decide is called with force_false=False AND all gates PASS (tests cover that)
-    report.production_certified = False  # hard default for evaluate_runtime_gate
+    report.production_certified = certified
     report.certification_blockers = cert_blockers
 
     blocking_fail = any(
@@ -1357,7 +1409,11 @@ def evaluate_runtime_gate(
         report.overall_state = GateState.FAIL.value
     elif any(c.state is GateState.ENVIRONMENT_BLOCKED for c in checks):
         report.overall_state = GateState.ENVIRONMENT_BLOCKED.value
-    elif any(c.state is GateState.NOT_TESTED for c in checks if c.check_id in MANDATORY_CERT_CHECKS):
+    elif any(
+        c.state in (GateState.NOT_TESTED, GateState.MISSING, GateState.STALE)
+        for c in checks
+        if c.check_id in MANDATORY_CERT_CHECKS
+    ):
         report.overall_state = GateState.NOT_TESTED.value
     elif report.ok:
         report.overall_state = GateState.PASS.value
@@ -1365,14 +1421,25 @@ def evaluate_runtime_gate(
         report.overall_state = GateState.BLOCKED.value
 
     # Recommended action
-    if not report.ok:
+    if report.production_certified:
+        report.recommended_action = (
+            "Production certified: all mandatory evidence PASS and fresh; "
+            "do not start M26 until operator authorizes"
+        )
+    elif not report.ok:
         report.recommended_action = (
             "Fix blocking FAIL checks; re-run python -m saathi.inference.runtime_gate"
         )
-    elif report.live_provider.get("certification") != GateState.PASS.value:
+    elif cert_blockers:
         report.recommended_action = (
-            "Runtime gates static-OK; unlock live Ollama (operator) before certification; "
-            "do not start M22 until operator authorizes"
+            "Production certification blocked: "
+            + "; ".join(cert_blockers[:12])
+            + (
+                f" (+{len(cert_blockers) - 12} more)"
+                if len(cert_blockers) > 12
+                else ""
+            )
+            + " — record package evidence via python -m saathi.inference.cert_evidence record-package"
         )
     else:
         report.recommended_action = (
