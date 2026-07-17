@@ -39,10 +39,10 @@
 | M21-G11 | Provider health / availability state | UNIT | **COMPLETE WITH LIMITATIONS** (deterministic states; live probe optional/injectable) |
 | M21-G12 | Per-provider kill switches | UNIT + disable procedure | **COMPLETE** (M21.0 + M21.2 precedence) |
 | M21-G13 | Failover taxonomy deterministic | UNIT | **COMPLETE** (M21.2 taxonomy + retry/failover; defaults off) |
-| M21-G14 | Production configuration validation gate | UNIT + release-check hook | **COMPLETE WITH LIMITATIONS** (M21.0 validator + M21.3 `release_check`; production_certified=false) |
+| M21-G14 | Production configuration validation gate | UNIT + release-check hook | **COMPLETE WITH LIMITATIONS** (M21.0 + M21.3 + M21.4 `runtime_gate`; production_certified=false) |
 | M21-G15 | Privacy-safe metrics | SOURCE + UNIT | **COMPLETE WITH LIMITATIONS** (decision/contract telemetry; full metrics platform deferred) |
 | M21-G16 | Trading Guardian unengaged by M21 changes | UNIT isolation | **COMPLETE** (M21.0–M21.3 isolation tests) |
-| M21-G17 | Rollback + disable documented | SOURCE | **COMPLETE** (M21.0 + M21.2 + M21.3) |
+| M21-G17 | Rollback + disable documented | SOURCE | **COMPLETE** (M21.0 + M21.2 + M21.3 + M21.4) |
 
 **Exit verdict forms:**
 

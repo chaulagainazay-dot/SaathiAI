@@ -2,7 +2,7 @@
   "schema_version": "1",
   "repository": "SaathiOS",
   "branch": "milestone/m7-security-engine",
-  "current_head": "ea7a0e8",
+  "current_head": "fa783ad",
   "active_milestone": null,
   "completed_milestones": [
     "M20.0",
@@ -18,48 +18,41 @@
     "M21.0",
     "M21.1",
     "M21.2",
-    "M21.3"
+    "M21.3",
+    "M21.4"
   ],
   "intentionally_skipped": [
     "M20.8"
   ],
   "environment_blocked": [
-    "M20.6_live_local_model"
+    "M20.6_live_local_model",
+    "M21.4_live_ollama_cert"
   ],
-  "milestone_verdict": "M21.3 COMPLETE WITH LIMITATIONS \u2014 RESIDUAL PATHS CLASSIFIED AND RELEASE-CHECK ENFORCED; LIVE CERTIFICATION BLOCKED",
-  "session_verdict": "M21.3 COMPLETE WITH LIMITATIONS \u2014 NOT FULL M21; NOT PRODUCTION",
-  "next_milestone": "M21.4 (operator authorize only) \u2014 program roadmap next slice",
-  "stop_reason": "M21.3 bounded slice complete; do not auto-start M21.4 or M22",
-  "m21_3": {
+  "milestone_verdict": "M21.4 COMPLETE WITH LIMITATIONS — RUNTIME GATES READY; LIVE PROVIDER CERTIFICATION BLOCKED",
+  "session_verdict": "M21.4 COMPLETE WITH LIMITATIONS — NOT PRODUCTION CERTIFIED",
+  "next_milestone": "M22 (operator authorize only) — provider/SDK migration",
+  "stop_reason": "M21.4 bounded slice complete; do not auto-start M22/M23/M24",
+  "m21_4": {
     "modules": [
-      "saathi/inference/legacy_facade.py",
-      "saathi/inference/chat_adapter.py",
-      "saathi/inference/release_check.py",
-      "saathi/inference/residual_paths.py",
-      "saathi/llm.py",
-      "saathi/tools/_llm_helper.py",
-      "saathi/chat/engine.py"
+      "saathi/inference/runtime_gate.py",
+      "saathi/ops/release_gate.py",
+      "saathi/m20_console/cli.py",
+      "saathi/repair/critical_checks.json",
+      "saathi/inference/prod_config.py"
     ],
-    "tests": "tests/test_m21_3_residual_path_migration.py",
-    "docs": "docs/M21_3_*",
+    "tests": "tests/test_m21_4_runtime_consolidation.py",
+    "docs": "docs/M21_4_*",
+    "full_suite": "2929 passed, 1 skipped, 0 failed",
     "limitations": [
-      "llm.generate HTTP sink expires M22",
-      "agent SDK residual expires M22",
-      "research grounding expires M22",
-      "chat compatibility-wrapped not full migrate",
-      "live Ollama env-blocked",
-      "full suite not run",
-      "production_certified=false"
+      "live Ollama ENVIRONMENT_BLOCKED",
+      "production_certified=false",
+      "legacy exceptions expire M22/M23/M24",
+      "process-local circuit and cost"
     ]
   },
-  "unrelated_untouched": "Trading Guardian; no merge/deploy; no model download; no M21.4/M22",
-  "session_id": "m21-3-2026-07-17",
+  "unrelated_untouched": "Trading Guardian; no merge/deploy; no model download; no M22",
+  "session_id": "m21-4-2026-07-17",
   "actor": "grok-master-controller",
-  "start_commit": "32f0d31",
-  "m21_3_commits": [
-    "30eb5bc",
-    "f27bbf1",
-    "692e4e7",
-    "ea7a0e8"
-  ]
+  "start_commit": "fa783ad",
+  "production_certified": false
 }

@@ -49,7 +49,7 @@ NOT READY — CRITICAL GAPS REMAIN
 
 | ID | Title | Status | Entry criteria | Exit verdict target |
 |----|-------|--------|----------------|---------------------|
-| **M21** | Runtime Consolidation and Production Configuration | **IN PROGRESS** — M21.0–**M21.2 COMPLETE WITH LIMITATIONS** | M20 closed; audit done | `M21 COMPLETE — RUNTIME CONFIGURATION AND MODEL ROUTING CONSOLIDATED` |
+| **M21** | Runtime Consolidation and Production Configuration | **IN PROGRESS** — M21.0–**M21.4 COMPLETE WITH LIMITATIONS** (not production-certified) | M20 closed; audit done | `M21 COMPLETE — RUNTIME CONFIGURATION AND MODEL ROUTING CONSOLIDATED` |
 | **M22** | Voice, Durable Agents, Recovery, and Observability | NOT STARTED | M21 complete or WITH LIMITATIONS accepted | `M22 COMPLETE — VOICE AND DURABLE AGENT EXECUTION CERTIFIED` |
 | **M23** | Multi-User Identity, Isolation, Permissions, and Security | NOT STARTED | M22 complete / accepted limitations | `M23 COMPLETE — MULTI-USER CORE SECURITY AND ISOLATION CERTIFIED` |
 | **M24** | Core Runtime Staging and Production Certification | NOT STARTED | M21–M23 evidence present | `CORE RUNTIME PRODUCTION CERTIFIED` **or** `CORE RUNTIME STAGING CERTIFIED — PRODUCTION BLOCKERS REMAIN` |

@@ -1,5 +1,13 @@
 # SaathiOS — Business
 
+## Runtime readiness gate (M21.4)
+
+* Consolidated production-configuration gate answers readiness without claiming production certification.
+* Release and critical paths block on inference architecture failures — reduces silent config drift risk.
+* Live provider certification and full-suite evidence remain mandatory for any true production claim; absent Ollama → ENVIRONMENT_BLOCKED, not PASS.
+* Process-local circuit/cost state remains an operational limitation (not multi-tenant durable billing).
+* No deployment in M21.4; no paid provider enablement; `production_certified=false`.
+
 ## Inference path governance (M21.3)
 
 * Residual inference bypasses are inventory-classified and release-check blocked — reduces unauthorized cloud and cost leakage risk.

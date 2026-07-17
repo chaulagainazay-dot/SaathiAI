@@ -28,6 +28,17 @@ If the answer is the latter, the feature belongs in the product layer, not the p
 
 ## 3. Current Platform State
 
+### Platform M21.4 runtime consolidation & production gate (2026-07-17)
+
+* **Canonical production-configuration gate:** `python -m saathi.inference.runtime_gate` (also `python -m saathi.m20_console runtime-readiness`).
+* **One authority map** for request contract, caller policy, provider descriptors, availability, cost, failure taxonomy, retry/failover, circuit breaker, kill switches, residual paths/manifest, bypass guard, release check, production config, certification decision.
+* **Release-check integrated** into `saathi.ops.release_gate` — inference architecture failure blocks canonical release.
+* **Certification invariant:** `production_certified=false` unless every mandatory gate is genuinely PASS (live provider, full suite, secret scan, critical checks included). Partial/static evidence cannot certify.
+* **Gate states** include PASS/FAIL/BLOCKED/NOT_TESTED/ENVIRONMENT_BLOCKED — never collapse NOT_TESTED or ENVIRONMENT_BLOCKED to PASS.
+* **Residual exceptions** frozen at 7; validated structure; not expanded.
+* **Kill-switch matrix** covers chat, llm.generate, agent, server/research tools, cheap_ask, prose_clean, gateway.
+* **Local-first**; cloud fallback default off; live Ollama typically ENVIRONMENT_BLOCKED without operator install; Trading Guardian unengaged.
+
 ### Platform M21.3 residual inference paths (2026-07-17)
 
 * **Canonical path authority:** product caller → approved adapter → `InferenceRequest` / preflight → contract + caller policy → M21.2 provider governance → ModelRouter → governed adapter or explicit legacy sink.

@@ -1,19 +1,29 @@
 # SaathiOS Technical Debt / Known Gaps
 
-## Program note (M21–M39 / M21.3, 2026-07-17)
+## Program note (M21–M39 / M21.4, 2026-07-17)
 
-Platform M21–M39 program; **M21.0–M21.3 COMPLETE WITH LIMITATIONS**.
-Remaining: M21.4+ runtime consolidation / cert path (operator authorize).
+Platform M21–M39 program; **M21.0–M21.4 COMPLETE WITH LIMITATIONS** (gates ready; live cert / production cert blocked).
+Next: **M22** only with operator authorize (provider/SDK migration). Not production certified.
 Product IELTSAlert work uses **PRODUCT/IELTSAlert** numbering — not platform debt.
 
-### M21.3 deferred debt
+### M21.4 deferred / classified debt
+- DEFERRED_BY_SCOPE / MEDIUM: `llm.generate` HTTP DEFAULT_CALLERS EXPLICIT_LEGACY_EXCEPTION → **M22** (exit: adapters unify sink).
+- DEFERRED_BY_SCOPE / MEDIUM: agent SDK clients residual → **M22**.
+- DEFERRED_BY_SCOPE / MEDIUM: research Gemini grounding residual → **M22**.
+- DEFERRED_BY_SCOPE / MEDIUM: chat COMPATIBILITY_WRAPPED not full governed default → **M23**.
+- MEDIUM: process-local circuit breaker only → **M24**.
+- MEDIUM: process-local daily cost accounting → **M24**.
+- ENVIRONMENT_BLOCKED: live Ollama certification (binary absent on pilot host) — operator unlock.
+- LOW: full-suite outcome recorded in M21.4 validation docs (see `docs/M21_4_FULL_SUITE_VALIDATION.md`).
+
+### M21.3 deferred debt (carry-forward)
 - HIGH→MEDIUM: `llm.generate` HTTP DEFAULT_CALLERS still EXPLICIT_LEGACY_EXCEPTION — unify under governed adapters → **M22**.
 - MEDIUM: agent.py multi-provider SDK clients residual — preflight-gated only → **M22**.
 - MEDIUM: research.py Gemini google_search grounding residual → **M22**.
 - MEDIUM: chat still COMPATIBILITY_WRAPPED (not fully governed default) → **M23**.
 - MEDIUM: process-local circuit breaker only — durable store → **M24**.
 - MEDIUM: daily cost accounting not durable → **M24**.
-- LOW: full repository test suite not run this session → next validation slice.
+- ~~LOW: full repository test suite not run~~ — **M21.4 attempted**; see full-suite validation doc.
 - LOW: live Ollama still env-blocked (operator install).
 
 ### M21.2 deferred debt (carry-forward)

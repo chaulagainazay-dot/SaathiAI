@@ -2,7 +2,7 @@
 
 ## M21–M39 Master Program (2026-07-16)
 
-**Platform program status:** Phase 1 active — **M21.0–M21.3 COMPLETE WITH LIMITATIONS**; full M21 not closed.
+**Platform program status:** Phase 1 active — **M21.0–M21.4 COMPLETE WITH LIMITATIONS**; full M21 not production-certified.
 Do not auto-run M21–M39 in one unattended block.
 
 Canonical docs:
@@ -31,6 +31,10 @@ Canonical provider descriptors, availability/readiness model, Decimal cost polic
 
 Residual inventory UNKNOWN=0; chat compatibility adapter; `llm.generate` deprecated preflight facade; `_llm_helper` HTTP chain removed; agent/research preflight; transitional unknown FORBIDDEN; `python -m saathi.inference.release_check`. Tests: `tests/test_m21_3_residual_path_migration.py`. Docs: `docs/M21_3_*`. Legacy sinks expire M22/M23; production_certified=false.
 
+### M21.4 (Runtime Consolidation + Production-Configuration Gate) — COMPLETE WITH LIMITATIONS
+
+Canonical `runtime_gate`; release_check integrated into ops release gate; residual manifest validated (count frozen 7); kill-switch matrix; fake/test isolation; certification invariant (`production_certified=false` without live+suite evidence); full suite attempted. Tests: `tests/test_m21_4_runtime_consolidation.py`. Docs: `docs/M21_4_*`. Live Ollama ENVIRONMENT_BLOCKED; do not start M22 without operator authorize.
+
 ### Milestone-number namespaces (mandatory)
 
 | Namespace | Meaning |
@@ -40,7 +44,7 @@ Residual inventory UNKNOWN=0; chat compatibility adapter; `llm.generate` depreca
 | **M20.10 options A/B/C** | Historical handoff choices; remapped in program roadmap (A→env unlock/M24 evidence; B→M21.0 slice; C→M30/PRODUCT) |
 
 Platform Phase 1 target: **M21** Runtime Consolidation → **M22** Voice/durable agents → **M23** Multi-user isolation → **M24** Core runtime certification.
-Next recommended: **M21.4** next runtime consolidation slice (bounded; operator authorize). Do not auto-start M22.
+Next recommended: **M22** provider implementation / legacy SDK migration (operator authorize only). Do not auto-start M22/M23/M24.
 
 Prior series: **M20 COMPLETE WITH LIMITATIONS** (live local inference still environment-blocked).
 

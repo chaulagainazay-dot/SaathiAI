@@ -5,6 +5,7 @@ Levels: implemented < deterministic-tested < security/red-team-tested < live-tes
 | capability | maturity | evidence |
 |-----------|----------|----------|
 | Governed residual inference paths + release-check (M21.3) | deterministic-tested | residual inventory UNKNOWN=0; release_check pass; chat adapter; unknown caller fail-closed; live cert blocked |
+| Runtime consolidation + production-configuration gate (M21.4) | deterministic-tested | runtime_gate; release integrated; cert invariant false; kill matrix; live Ollama env-blocked |
 | ExecutionGateway / approval binding | live+red-team | M15/M15.2 gateway-routed, 78/78 red-team |
 | Universal ExecutionGateway (Phase 1 boundary) | deterministic-tested | M17.22 submit path, states/idempotency/approval/retry, connector via gateway, 25 tests, +5 checks |
 | Governed browser actions via ExecutionGateway | deterministic-tested | M17.23 domain/risk/approval/idempotency/injection isolation, 46 tests, +6 checks; residual ungoverned open() |
