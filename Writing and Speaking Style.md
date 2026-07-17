@@ -1,5 +1,16 @@
 # Writing and Speaking Style
 
+## Inference operations (M26) operator messages
+
+When reporting inference ops status or incidents:
+
+- Distinguish **production certification** (package PASS) from **current readiness** (can accept work now).
+- Distinguish **health** (ops process up) from **readiness** (safe for new governed requests).
+- Prefer exact check IDs: `resource.memory:avail=1.2 need=1.8` not "system overloaded."
+- Temporary low RAM: say readiness is ENVIRONMENT_BLOCKED; do **not** say certification was revoked.
+- Never claim Ollama process ownership; say "external provider" when the runtime is operator-managed.
+- Never put prompts, model outputs, tokens, or secrets in incident summaries or events.
+
 ## Repair & status messages
 
 Repair messages — to users and to developers — follow these rules:

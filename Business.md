@@ -1,5 +1,13 @@
 # SaathiOS — Business
 
+## Production inference operations (M26)
+
+* Local inference can be operated safely on the pilot 8 GB Mac with explicit rollout modes (default OFF).
+* Temporary RAM pressure blocks *current readiness* without erasing *production certification* or historical live PASS.
+* Controlled canary/active modes reduce risk of accidental production load; rollback is one command to OFF.
+* No cloud spend path; no Trading Guardian engagement; no automatic destructive cleanup.
+* Honest capacity: not cloud-scale HA — single-host constrained operations.
+
 ## Production certification (M25 closeout)
 
 * Runtime gate can set `production_certified=true` when live (historical) + full suite + secret scan + critical checks are all PASS and fresh.

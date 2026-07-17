@@ -28,6 +28,19 @@ If the answer is the latter, the feature belongs in the product layer, not the p
 
 ## 3. Current Platform State
 
+### Platform M26 production inference operations (2026-07-17)
+
+* **Canonical lifecycle:** `python -m saathi.inference.ops` — start/status/readiness/health/drain/stop/restart/recover.
+* **Health ≠ readiness:** health = ops process; readiness = safe to accept governed work now (typed READY/DEGRADED/ENVIRONMENT_BLOCKED/POLICY_BLOCKED/DRAINING).
+* **Resource guardian:** reuses M25 memory rule (`available >= 0.8 + model_budget`); concurrency cap default 1; no auto model delete; idle unload off by default.
+* **Rollout modes:** OFF (default) / SHADOW / CANARY / ACTIVE / DRAINING; ACTIVE requires computed production certification; rollback → OFF.
+* **Provider supervision:** session-level states; does **not** claim Ollama PID ownership.
+* **Incidents + events:** privacy-safe, deduplicated; no raw prompts/outputs.
+* **M25 certification package preserved** under dual evidence + package artifacts.
+* **Cloud fallback disabled**; Trading Guardian unengaged; residual exceptions 0.
+* **M27:** operator authorize only — do not auto-start.
+* **Roadmap note:** M21.39 “connectors M26” deferred; this M26 is ops per operator authorization.
+
 ### Platform M25 production certification closeout (2026-07-17)
 
 * **Live local provider:** historically certified (dual evidence); current host may be MEMORY_BLOCKED without erasing PASS.

@@ -1,11 +1,18 @@
 # SaathiOS Technical Debt / Known Gaps
 
-## Program note (M21–M39 / M25, 2026-07-17)
+## Program note (M21–M39 / M26, 2026-07-17)
 
-Platform M21–M39 program; **M21.0–M21.4**, **M22**, **M23**, **M24**, and **M25 (live cert harness)**.
-M25 verdict: **BLOCKED — LIVE LOCAL PROVIDER ENVIRONMENT UNAVAILABLE**. Not production certified.
-Next: **M26** only with operator authorize (or operator unlock for live Ollama then re-run M25).
+Platform program through **M26 production inference operations** (operator-authorized).
+M25 closed with package evidence + historical live PASS; `production_certified` computed by runtime_gate.
+M26 delivers ops lifecycle/readiness/rollout (default OFF). **Do not auto-start M27.**
+M21.39 roadmap “M26 connectors (Gmail/browser)” is **deferred** (not this ops milestone).
 Product IELTSAlert work uses **PRODUCT/IELTSAlert** numbering — not platform debt.
+
+### M26 residual / deferred
+- Live smoke on 8 GB may be ENVIRONMENT_BLOCKED under concurrent suite load.
+- Idle model unload remains disabled by default (operator-mediated only).
+- SaathiOS does not own external Ollama process lifecycle.
+- Connector/browser/Gmail scope (M21.39 M26 label) still open as future work.
 
 ### M25 closed / harness
 - Live certification harness `live_cert_m25` + evidence bundle + runtime-gate M25 checks.

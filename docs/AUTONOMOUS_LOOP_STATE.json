@@ -2,7 +2,8 @@
   "schema_version": "1",
   "repository": "SaathiOS",
   "branch": "milestone/m7-security-engine",
-  "current_head": "8ac0b48",
+  "current_head": "d543c9e",
+  "full_suite": "3163 passed, 1 skipped, 0 failed",
   "completed_milestones": [
     "M20.0",
     "M20.1",
@@ -22,27 +23,25 @@
     "M22",
     "M23",
     "M24",
-    "M25"
+    "M25",
+    "M26"
   ],
-  "milestone_verdict": "M25 COMPLETE — PRODUCTION CERTIFIED (package evidence + historical live PASS)",
+  "milestone_verdict": "M26 COMPLETE WITH LIMITATIONS — inference ops lifecycle, readiness, resource guardian, rollout modes",
   "production_certified": true,
-  "full_suite": "3113 passed, 1 skipped, 0 failed",
-  "m25_closeout": {
-    "memory_isolation": "deterministic embedder fixture + auto readiness gate",
-    "nomic_embed_text_pulled": false,
-    "dual_evidence": true,
-    "live_provider_certified": true,
-    "historical_live": "PASS",
-    "current_environment": "ENVIRONMENT_BLOCKED (insufficient_model_memory_headroom when low RAM)",
-    "full_suite_evidence": "PASS",
-    "secret_scan_evidence": "PASS",
-    "critical_check_evidence": "PASS",
-    "package_evidence_dir": "docs/evidence/m25/cert/",
-    "production_certified": true
+  "m26": {
+    "lifecycle": "saathi.inference.ops",
+    "default_rollout_mode": "OFF",
+    "health_vs_readiness": true,
+    "resource_guardian": true,
+    "m25_memory_rule_reused": true,
+    "owns_ollama_process": false,
+    "cloud_fallback": false,
+    "trading_guardian": "UNCHANGED / UNENGAGED"
   },
-  "next_milestone": "M26 (operator authorize only)",
-  "stop_reason": "M25 production certification complete; do not auto-start M26",
+  "next_milestone": "M27 (operator authorize only)",
+  "stop_reason": "M26 complete; do not auto-start M27",
   "trading_guardian": "UNCHANGED / UNENGAGED",
   "cloud_fallback": false,
-  "residual_exceptions": 0
+  "residual_exceptions": 0,
+  "roadmap_note": "M21.39 connector-scope M26 deferred; operator-authorized ops M26 delivered"
 }
