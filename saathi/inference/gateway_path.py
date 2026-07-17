@@ -272,21 +272,75 @@ class GovernedLocalInferencePath:
                     )
                     return cached
 
-        # Validation
-        v_errors = validate_inference_request(req, settings)
-        if v_errors:
-            cat = InferenceErrorCategory.INVALID_REQUEST
-            if any("stream" in e for e in v_errors):
-                cat = InferenceErrorCategory.STREAMING_UNSUPPORTED
-            if any("tool" in e for e in v_errors):
-                cat = InferenceErrorCategory.CAPABILITY_DENIED
-            if any("override" in e or "bypass" in e or "URL" in e for e in v_errors):
-                cat = InferenceErrorCategory.SECURITY_POLICY_DENIED
-            if any("prompt exceeds" in e for e in v_errors):
-                cat = InferenceErrorCategory.PROMPT_TOO_LARGE
-            if any("max_output_tokens" in e for e in v_errors):
-                cat = InferenceErrorCategory.OUTPUT_LIMIT_INVALID
-            return self._fail(req, cat, "; ".join(v_errors), fp, t0)
+        # M21.1 contract validation (includes M20.2 structural checks + caller/kill)
+        try:
+            from saathi.inference.contract import (
+                emit_contract_telemetry,
+                ensure_idempotency_key,
+                request_fingerprint,
+                validate_contract,
+            )
+
+            creq = validate_contract(req, settings, governed=True, provider_family="ollama")
+            emit_contract_telemetry(
+                req,
+                stage="validate",
+                ok=creq.ok,
+                violation_count=len(creq.violations),
+                request_fingerprint=creq.request_fingerprint,
+            )
+            if not creq.ok:
+                cat = InferenceErrorCategory.INVALID_REQUEST
+                primary = creq.primary_category()
+                mapping = {
+                    InferenceErrorCategory.STREAMING_UNSUPPORTED.value: InferenceErrorCategory.STREAMING_UNSUPPORTED,
+                    InferenceErrorCategory.CAPABILITY_DENIED.value: InferenceErrorCategory.CAPABILITY_DENIED,
+                    InferenceErrorCategory.SECURITY_POLICY_DENIED.value: InferenceErrorCategory.SECURITY_POLICY_DENIED,
+                    InferenceErrorCategory.PROMPT_TOO_LARGE.value: InferenceErrorCategory.PROMPT_TOO_LARGE,
+                    InferenceErrorCategory.OUTPUT_LIMIT_INVALID.value: InferenceErrorCategory.OUTPUT_LIMIT_INVALID,
+                    InferenceErrorCategory.CLOUD_FALLBACK_DENIED.value: InferenceErrorCategory.CLOUD_FALLBACK_DENIED,
+                    InferenceErrorCategory.PROVIDER_UNAVAILABLE.value: InferenceErrorCategory.PROVIDER_UNAVAILABLE,
+                    "kill_switch": InferenceErrorCategory.PROVIDER_UNAVAILABLE,
+                    "unknown_caller": InferenceErrorCategory.SECURITY_POLICY_DENIED,
+                    "caller_disabled": InferenceErrorCategory.SECURITY_POLICY_DENIED,
+                    "caller_forbidden": InferenceErrorCategory.SECURITY_POLICY_DENIED,
+                    "privacy_denial": InferenceErrorCategory.SECURITY_POLICY_DENIED,
+                    "cost_denial": InferenceErrorCategory.SECURITY_POLICY_DENIED,
+                    "trading_isolation": InferenceErrorCategory.SECURITY_POLICY_DENIED,
+                    "tool_denial": InferenceErrorCategory.CAPABILITY_DENIED,
+                    "streaming_denial": InferenceErrorCategory.STREAMING_UNSUPPORTED,
+                    "legacy_not_governed": InferenceErrorCategory.SECURITY_POLICY_DENIED,
+                }
+                cat = mapping.get(primary, InferenceErrorCategory.INVALID_REQUEST)
+                return self._fail(req, cat, "; ".join(creq.error_messages()), fp, t0)
+            # Attach privacy-safe fingerprints into event stream only
+            _emit(
+                self.event_sink,
+                "inference.contract_ok",
+                {
+                    "request_id": req.request_id,
+                    "request_fingerprint": creq.request_fingerprint or request_fingerprint(req),
+                    "idempotency_derived": ensure_idempotency_key(req)[:16],
+                    "caller": req.caller_component,
+                },
+            )
+        except Exception as e:
+            # Fall back to M20.2 validator if contract import fails
+            logger.debug("contract validation fallback: %s", e)
+            v_errors = validate_inference_request(req, settings)
+            if v_errors:
+                cat = InferenceErrorCategory.INVALID_REQUEST
+                if any("stream" in e for e in v_errors):
+                    cat = InferenceErrorCategory.STREAMING_UNSUPPORTED
+                if any("tool" in e for e in v_errors):
+                    cat = InferenceErrorCategory.CAPABILITY_DENIED
+                if any("override" in e or "bypass" in e or "URL" in e for e in v_errors):
+                    cat = InferenceErrorCategory.SECURITY_POLICY_DENIED
+                if any("prompt exceeds" in e for e in v_errors):
+                    cat = InferenceErrorCategory.PROMPT_TOO_LARGE
+                if any("max_output_tokens" in e for e in v_errors):
+                    cat = InferenceErrorCategory.OUTPUT_LIMIT_INVALID
+                return self._fail(req, cat, "; ".join(v_errors), fp, t0)
 
         # Cloud fallback policy
         if req.cloud_fallback_permitted and not settings.allow_cloud_fallback:

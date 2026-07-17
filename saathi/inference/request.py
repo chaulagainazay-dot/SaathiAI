@@ -1,7 +1,10 @@
-"""M20.2 governed local inference request contract.
+"""M20.2 + M21.1 governed inference request contract.
 
 Callers express requirements; they cannot force an unapproved model.
 ModelRouter remains the sole selection authority.
+
+M21.1 extends fields with safe defaults. Structural validation remains here;
+full caller/kill/fingerprint enforcement is in ``saathi.inference.contract``.
 """
 from __future__ import annotations
 
@@ -43,6 +46,11 @@ class InferenceErrorCategory(str, Enum):
     SECURITY_POLICY_DENIED = "security_policy_denied"
     CONCURRENCY_LIMIT = "concurrency_limit"
     INTERNAL = "internal_inference_error"
+    # M21.1
+    UNKNOWN_CALLER = "unknown_caller"
+    KILL_SWITCH = "kill_switch"
+    PRIVACY_DENIED = "privacy_denial"
+    COST_DENIED = "cost_denial"
 
 
 class InferenceRequestError(ValueError):
@@ -64,7 +72,11 @@ _LABEL_MAP = {
 
 @dataclass(frozen=True)
 class InferenceRequest:
-    """Typed inference request for the governed gateway path."""
+    """Typed inference request for the governed gateway path (M20.2 + M21.1).
+
+    Safe defaults: local-only, no cloud/tools/streaming, no raw logging.
+    Callers may *hint* model/engine but cannot force unapproved selection.
+    """
 
     request_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     mission_id: str = ""
@@ -92,12 +104,35 @@ class InferenceRequest:
     workspace_id: str = ""
     idempotency_key: str = ""
     metadata: dict[str, Any] = field(default_factory=dict)
+    # ── M21.1 extended scope / policy fields (safe defaults) ────────────
+    tenant_id: str = ""
+    project_id: str = ""
+    session_id: str = ""
+    trace_id: str = ""
+    correlation_id: str = ""
+    cloud_allowed: bool = False
+    max_input_tokens: int = 0  # 0 = derive from settings/chars
+    max_retries: int = 0
+    max_concurrency: int = 1
+    retention_policy: str = "metadata_only"
+    log_prompt: bool = False
+    log_output: bool = False
+    request_cost_ceiling: float = 0.0
+    structured_output_schema: str = ""
+    allowed_tools: tuple[str, ...] = ()
+    fallback_policy: str = "none"  # none | soft_local | soft_legacy
+    contract_version: str = "m21.1"
 
     def prompt_fingerprint(self) -> str:
         raw = (self.system or "") + "\n" + (self.prompt or "")
         if self.messages:
             raw += "\n" + repr(self.messages)
         return "sha256:" + hashlib.sha256(raw.encode("utf-8")).hexdigest()
+
+    @property
+    def caller_id(self) -> str:
+        """Alias for caller_component (M21.1 naming)."""
+        return self.caller_component
 
     def label(self) -> ModelLabel:
         key = (self.preferred_capability or self.task_type or "standard").lower()

@@ -26,15 +26,15 @@
 
 | Gate ID | Requirement | Min evidence | Status |
 |---------|-------------|--------------|--------|
-| M21-G1 | One canonical inference request contract | UNIT + integration on path | OPEN (M21.1) |
+| M21-G1 | One canonical inference request contract | UNIT + integration on path | **COMPLETE** (M21.1 `validate_contract`) |
 | M21-G2 | One canonical model-selection path (`ModelRouter`) | SOURCE + tests; no second router | **COMPLETE** (asserted M21.0; pre-existing) |
 | M21-G3 | One canonical provider registry | UNIT | **PARTIAL** (M21.0 policy table; engine registry pre-existing) |
-| M21-G4 | One canonical execution policy for inference | UNIT | **PARTIAL** (M21.0 policy + settings validator) |
-| M21-G5 | No new direct caller→provider paths; inventory residual legacy | SOURCE inventory + guards | **PARTIAL** (inventory COMPLETE; migration → M21.1) |
-| M21-G6 | No silent cloud escape (default-off cloud) | UNIT negative tests | **PARTIAL** (policy default off + cloud warning) |
-| M21-G7 | Local/cloud policies explicit | SOURCE + UNIT | **COMPLETE** (M21.0) |
-| M21-G8 | Streaming/tool capability explicit on contract | UNIT | **PARTIAL** (policy rows; full contract → M21.1) |
-| M21-G9 | Timeout and token limits explicit | UNIT | **PARTIAL** (validator caps; settings pre-existing) |
+| M21-G4 | One canonical execution policy for inference | UNIT | **PARTIAL** (M21.0/M21.1 policy + contract) |
+| M21-G5 | No new direct caller→provider paths; inventory residual legacy | SOURCE inventory + guards | **PARTIAL** (AST guard + residual allowlist; legacy remain) |
+| M21-G6 | No silent cloud escape (default-off cloud) | UNIT negative tests | **COMPLETE** (contract + hard denials) |
+| M21-G7 | Local/cloud policies explicit | SOURCE + UNIT | **COMPLETE** (M21.0/M21.1) |
+| M21-G8 | Streaming/tool capability explicit on contract | UNIT | **COMPLETE** (M21.1 caller policy) |
+| M21-G9 | Timeout and token limits explicit | UNIT | **COMPLETE** (caller + settings bounds) |
 | M21-G10 | Cost ceilings / cost metadata | UNIT | **PARTIAL** (M21.0 cost placeholders; ceilings → M21.2) |
 | M21-G11 | Provider health / availability state | UNIT | **PARTIAL** (M21.0 policy availability; live health → M21.2) |
 | M21-G12 | Per-provider kill switches | UNIT + disable procedure | **COMPLETE** (M21.0) |

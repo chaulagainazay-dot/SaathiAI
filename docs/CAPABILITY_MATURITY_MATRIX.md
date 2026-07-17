@@ -65,4 +65,5 @@ permissions (macOS TCC actuation), or credentials (authenticated cloud/browser).
 | M20 series closed (M20.10) | documented pilot close | runbook + M21 handoff; not production; live inference still env-blocked |
 | M21–M39 master program init | documented (SOURCE_INSPECTED) | `docs/M21_39_MASTER_PROGRAM_*` + gate matrix; not production |
 | M21.0 runtime prod-config + provider policy | deterministic-tested | path inventory; prod_config validator; provider kill switches; gateway kill; `tests/test_m21_0_*`; not production; not full M21 |
+| M21.1 canonical request contract + residual controls | deterministic-tested | `validate_contract`; caller_policy; residual_paths; bypass_guard AST; gateway enforcement; legacy chat allowlisted; `tests/test_m21_1_*`; not production |
 | PRODUCT/IELTSAlert revenue (pielts M21.x) | product-repo pilot (out of band) | Separate repo `/Users/macbookpro/Saathi/apps/pielts`; **not** platform M21 |

@@ -19,6 +19,24 @@ from saathi.inference.provider_policy import (
 )
 
 
+def _m21_1_bundle() -> dict:
+    try:
+        from saathi.inference.bypass_guard import scan_repository
+        from saathi.inference.caller_policy import caller_policy_snapshot
+        from saathi.inference.residual_paths import residual_paths_snapshot
+
+        return {
+            "caller_policy": caller_policy_snapshot(),
+            "residual_paths": residual_paths_snapshot(),
+            "bypass_guard": {
+                "cli": "python -m saathi.inference.bypass_guard",
+                "ok_hint": "run scan in CI/tests",
+            },
+        }
+    except Exception as e:
+        return {"error": type(e).__name__}
+
+
 SCHEMA_VERSION = "m21.0.prod_config.v1"
 
 
@@ -297,12 +315,14 @@ def production_config_bundle(
             "second_inference_package": False,
             "trading_guardian_engaged": False,
         },
+        "m21_1": _m21_1_bundle(),
         "cli": {
             "validate": "python -m saathi.inference.prod_config validate",
             "inventory": "python -m saathi.inference.prod_config inventory",
             "policy": "python -m saathi.inference.prod_config policy",
             "bundle": "python -m saathi.inference.prod_config bundle",
             "disable": "python -m saathi.inference.prod_config disable",
+            "bypass_guard": "python -m saathi.inference.bypass_guard",
         },
     }
 
@@ -334,6 +354,22 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         return 0
     if cmd == "bundle":
         print(json.dumps(production_config_bundle(), indent=1, default=str))
+        return 0
+    if cmd in ("guard", "bypass-guard", "bypass_guard"):
+        from saathi.inference.bypass_guard import scan_repository
+
+        rep = scan_repository()
+        print(json.dumps(rep, indent=1))
+        return 0 if rep.get("ok") else 2
+    if cmd in ("callers", "caller-policy"):
+        from saathi.inference.caller_policy import caller_policy_snapshot
+
+        print(json.dumps(caller_policy_snapshot(), indent=1))
+        return 0
+    if cmd in ("residual", "residuals"):
+        from saathi.inference.residual_paths import residual_paths_snapshot
+
+        print(json.dumps(residual_paths_snapshot(), indent=1))
         return 0
     print(json.dumps({"error": "unknown_command", "cmd": cmd}))
     return 2

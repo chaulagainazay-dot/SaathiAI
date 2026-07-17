@@ -181,11 +181,25 @@ def build_inference_request(
     actor_id: str = "",
     extra_metadata: Optional[dict[str, Any]] = None,
 ) -> InferenceRequest:
-    """Build a bounded InferenceRequest for a selected caller."""
+    """Build a bounded canonical InferenceRequest for a selected caller (M21.1)."""
     limits = CALLER_LIMITS.get(caller) or CALLER_LIMITS[CALLER_CHEAP_ASK]
     max_chars = int(limits["max_prompt_chars"])
+    # Prefer M21.1 caller policy bounds when registered
+    try:
+        from saathi.inference.caller_policy import get_caller_policy
+
+        cpol = get_caller_policy(caller)
+        if cpol is not None:
+            max_chars = min(max_chars, int(cpol.max_input_chars))
+    except Exception:
+        cpol = None
     body = _bound_text(prompt, max_chars)
     sys = _bound_text(system or "You are a helpful assistant.", 2000)
+    max_out = int(limits["max_output_tokens"])
+    timeout = float(limits["timeout_seconds"])
+    if cpol is not None:
+        max_out = min(max_out, int(cpol.max_output_tokens))
+        timeout = min(timeout, float(cpol.timeout_seconds))
     # Reject tool/authorization expansion phrases in system (data stays data)
     return InferenceRequest(
         mission_id=mission_id,
@@ -197,17 +211,26 @@ def build_inference_request(
         task_type=str(limits["task_type"]),
         sensitivity=limits["sensitivity"],
         preferred_capability=str(limits["task_type"]),
-        max_output_tokens=int(limits["max_output_tokens"]),
-        timeout_seconds=float(limits["timeout_seconds"]),
+        max_output_tokens=max_out,
+        timeout_seconds=timeout,
         temperature=0.0,
-        local_only=True,
+        local_only=True if cpol is None else bool(cpol.local_only),
         cloud_fallback_permitted=False,
+        cloud_allowed=False,
         tool_use_permitted=False,
         streaming_requested=False,
         evidence_required=True,
         prefer="cost" if limits["prefer"] == Prefer.COST else "quality",
+        max_retries=0,
+        log_prompt=False,
+        log_output=False,
+        retention_policy="metadata_only",
+        request_cost_ceiling=0.0,
+        fallback_policy="none",
+        contract_version="m21.1",
         metadata={
             "m20_3_caller": caller,
+            "m21_1_contract": True,
             "prompt_chars": len(body),
             **(extra_metadata or {}),
         },

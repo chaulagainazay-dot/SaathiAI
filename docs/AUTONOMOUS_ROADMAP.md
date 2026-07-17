@@ -18,7 +18,10 @@ Canonical docs:
 ### M21.0 (Runtime Production-Configuration Inventory + Provider Policy) — COMPLETE
 
 Path inventory, production config validator, provider policy + kill switches, gateway kill enforcement, console `prod-config`. Tests: `tests/test_m21_0_production_config.py`.
-**Not** M21.1 caller migration; **not** production certified; live model still env-blocked.
+
+### M21.1 (Canonical Request Contract + Residual Path Controls) — COMPLETE WITH LIMITATIONS
+
+Extended `InferenceRequest`, `validate_contract`, caller policy registry, residual allowlist, AST bypass guard, gateway enforcement, compat builds contract requests. Legacy chat/llm paths remain allowlisted (not fully migrated). Tests: `tests/test_m21_1_request_contract.py`. Docs: `docs/M21_1_*`. **Not** production certified; live model still env-blocked; M21.2 not started.
 
 ### Milestone-number namespaces (mandatory)
 
