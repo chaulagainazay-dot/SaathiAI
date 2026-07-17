@@ -13,7 +13,7 @@ Evidence-backed. Live certification was **not** claimed. `production_certified=f
 | Item | Value |
 |------|-------|
 | Start HEAD | `e9571f3` |
-| Tip HEAD | `a9eee41` |
+| Tip HEAD | `85a5f36` |
 | Branch | `milestone/m7-security-engine` |
 | Worktree | clean at start |
 | Remote | 0/0 |
@@ -149,7 +149,7 @@ See `docs/M25_ROLLBACK.md`.
 
 ## 40. Commit and push
 
-Recorded at close.
+Pushed to `origin/milestone/m7-security-engine`; ahead/behind 0/0; clean tree.
 
 ## 41. Production impact
 
