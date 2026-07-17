@@ -1,5 +1,12 @@
 # SaathiOS — Business
 
+## Canonical connector execution (M28)
+
+* Production-capable connector calls must pass ExecutionGateway + governed runtime — reduces silent bypass risk.
+* Legacy manager path is a deprecating shim (simulation only); live adapters cannot fire without governed ACTIVE path.
+* Side-effect policy blocks financial/trading/account-change classes by default.
+* Still no live SaaS OAuth or paid API enablement in this milestone.
+
 ## Governed connectors (M27)
 
 * External system access gains a single governance path before live SaaS expansion.

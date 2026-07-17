@@ -28,6 +28,16 @@ If the answer is the latter, the feature belongs in the product layer, not the p
 
 ## 3. Current Platform State
 
+### Platform M28 canonical connector migration (2026-07-17)
+
+* **Canonical path:** Caller → ToolIntent → ExecutionGateway → GovernedConnectorRuntime → adapter.
+* **M28 modules:** `gateway_bridge`, `side_effects`, `compat`, `bypass_guard`; default connector family handler on UniversalBoundary.
+* **Legacy:** `manager.execute` wrapped (simulated only; live adapters fail closed); platform ExecutionEngine fail-closed without gateway.
+* **Side-effect classes:** READ_ONLY … PROHIBITED; FINANCIAL/ACCOUNT_CHANGE/trading blocked; caller cannot override class/rollout/adapter/approval.
+* **Bypass:** production connector bypasses = 0 (AST scan + allowlist).
+* **Does not** enable live SaaS, OAuth, cloud inference, or Trading Guardian.
+* **M29:** operator authorize only.
+
 ### Platform M27 governed connector framework (2026-07-17)
 
 * **Canonical module:** `saathi.connectors.gov` — single governed execute path for connector kinds.
@@ -36,7 +46,7 @@ If the answer is the latter, the feature belongs in the product layer, not the p
 * **Rollout:** inherits M26 modes; default OFF; ACTIVE requires production certification + READY connector.
 * **Security:** domain/op allowlists, secret redaction, no API keys in code, trading connectors forbidden.
 * **Does not** enable cloud inference, live OAuth, or new SaaS accounts.
-* **M28:** operator authorize only.
+* **M28:** completed (migration + gateway enforcement).
 
 ### Platform M26 production inference operations (2026-07-17)
 

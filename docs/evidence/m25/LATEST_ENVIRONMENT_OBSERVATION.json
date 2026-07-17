@@ -1,6 +1,6 @@
 {
   "schema": "m25.latest_environment_observation.v1",
-  "recorded_at": "2026-07-17T12:26:25+00:00",
+  "recorded_at": "2026-07-17T13:18:53+00:00",
   "verdict": "M25 BLOCKED \u2014 LIVE LOCAL PROVIDER ENVIRONMENT UNAVAILABLE",
   "live": false,
   "live_provider_certified": false,
@@ -11,7 +11,7 @@
   ],
   "environment": {
     "schema": "m25.environment_audit.v1",
-    "timestamp": "2026-07-17T12:26:24+00:00",
+    "timestamp": "2026-07-17T13:18:53+00:00",
     "provider": "ollama",
     "binary_path": "/usr/local/bin/ollama",
     "binary_present": true,
@@ -43,13 +43,13 @@
     "platform": "Darwin",
     "cpu": "Apple M2",
     "total_memory_gb": 8.0,
-    "available_memory_gb": 1.13,
+    "available_memory_gb": 1.69,
     "required_available_memory_gb": 1.8,
-    "shortfall_gb": 0.67,
+    "shortfall_gb": 0.11,
     "memory_safety_margin_gb": 0.8,
     "minimum_model_budget_gb": 1.0,
     "memory_ok": false,
-    "free_disk_gb": 70.1,
+    "free_disk_gb": 72.8,
     "install_performed": false,
     "service_started_by_m25": false,
     "models_pulled_by_m25": false,
@@ -83,15 +83,15 @@
     {
       "gate_id": "env_model",
       "status": "ENVIRONMENT_BLOCKED",
-      "detail": "installed_approved=['qwen2.5:1.5b']; available(1.16) < safety_margin(0.8) + model_budget(1.0) = 1.8",
+      "detail": "installed_approved=['qwen2.5:1.5b']; available(1.69) < safety_margin(0.8) + model_budget(1.0) = 1.8",
       "evidence": {
         "count": 1,
         "installed_approved_models": [
           "qwen2.5:1.5b"
         ],
-        "available_memory_gb": 1.16,
+        "available_memory_gb": 1.69,
         "required_available_memory_gb": 1.8,
-        "shortfall_gb": 0.64,
+        "shortfall_gb": 0.11,
         "safety_margin_gb": 0.8,
         "minimum_model_budget_gb": 1.0,
         "production_safe_formula": "available_memory_gb >= safety_margin_gb + minimum_model_budget_gb"
@@ -101,7 +101,7 @@
     {
       "gate_id": "resource_memory",
       "status": "ENVIRONMENT_BLOCKED",
-      "detail": "available_gb=1.13 margin=0.8",
+      "detail": "available_gb=1.69 margin=0.8",
       "evidence": {},
       "blocking": true
     },
@@ -205,8 +205,8 @@
     }
   ],
   "live_cases": [],
-  "tip_commit": "d543c9ea749992fc147c2c2d1142f1ff003a5231",
-  "run_id": "8dcfb3803d154a25ba781100c89886b9",
-  "certification_fingerprint": "sha256:6273b2e4f0d1bebe56575051",
+  "tip_commit": "0a25728d9b551c1d86f6e57a2e43beb5aec708b7",
+  "run_id": "aed168e407d241409587c1d7ea17fe65",
+  "certification_fingerprint": "sha256:b9521e643334c3c4758b7d08",
   "privacy_status": "redacted_no_raw_prompts_or_outputs"
 }

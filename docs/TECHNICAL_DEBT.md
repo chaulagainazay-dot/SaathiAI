@@ -1,16 +1,26 @@
 # SaathiOS Technical Debt / Known Gaps
 
-## Program note (M21–M39 / M27, 2026-07-17)
+## Program note (M21–M39 / M28, 2026-07-17)
 
-Platform program through **M27 governed connector framework** (operator-authorized).
-M25 cert package + M26 inference ops remain canonical. **Do not auto-start M28.**
+Platform program through **M28 canonical connector migration + ExecutionGateway enforcement**
+(operator-authorized). M25 cert + M26 ops + M27 gov framework remain canonical.
+**Do not auto-start M29.**
 Product IELTSAlert work uses **PRODUCT/IELTSAlert** numbering — not platform debt.
 
-### M27 residual / deferred
-- Legacy `connectors.manager` / `infrastructure.connectors` not fully migrated onto `connectors.gov`.
-- Live SaaS (Gmail/Calendar/GitHub OAuth) still deferred — framework only.
-- ExecutionGateway integration is optional path; full ToolIntent wire-up is future work.
-- No live credentials in CI.
+### M28 residual / deferred
+- Infrastructure drivers under `saathi/infrastructure/connectors/drivers/*` not fully
+  on `connectors.gov` manifests (OUT_OF_SCOPE for M28 bounded slice).
+- Live SaaS OAuth / real Gmail-GitHub-Calendar accounts still deferred.
+- Manager catalog simulation remains a compatibility shim (deprecation events); remove
+  when all callers use ToolIntent + ExecutionGateway.
+- Ad-hoc HTTP clients outside the connectors tree are not counted as M28 connector
+  bypasses (tracked separately; not a second ExecutionGateway).
+- No live credentials in CI; connector rollout default remains OFF.
+
+### M27 residual / deferred (partially closed by M28)
+- ~~ExecutionGateway integration optional~~ — **M28** default connector family handler + bridge.
+- ~~manager.execute ungoverned live path~~ — **M28** wrapped; live adapters fail closed.
+- Remaining: full infrastructure driver migration; live SaaS.
 
 ### M26 residual / deferred
 - Live smoke on 8 GB may be ENVIRONMENT_BLOCKED under concurrent suite load.

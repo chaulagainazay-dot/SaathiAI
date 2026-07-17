@@ -2,7 +2,7 @@
   "schema_version": "1",
   "repository": "SaathiOS",
   "branch": "milestone/m7-security-engine",
-  "current_head": "dfebb1d8fe5b525714a75b884170aed340aefdf5",
+  "current_head": "0a25728d9b551c1d86f6e57a2e43beb5aec708b7",
   "completed_milestones": [
     "M20.0",
     "M20.1",
@@ -24,10 +24,20 @@
     "M24",
     "M25",
     "M26",
-    "M27"
+    "M27",
+    "M28"
   ],
-  "milestone_verdict": "M27 COMPLETE \u2014 governed connector framework (HTTP/MCP/browser/local_tool)",
+  "milestone_verdict": "M28 COMPLETE — ExecutionGateway connector enforcement + legacy migration wrap",
   "production_certified": true,
+  "m28": {
+    "canonical_path": "Caller → ToolIntent → ExecutionGateway → GovernedConnectorRuntime → adapter",
+    "default_mode": "OFF",
+    "connector_bypasses": 0,
+    "live_accounts": false,
+    "cloud_enabled": false,
+    "trading_guardian": "UNCHANGED / UNENGAGED",
+    "full_suite": "3221 passed, 1 skipped, 0 failed"
+  },
   "m27": {
     "module": "saathi.connectors.gov",
     "default_mode": "OFF",
@@ -35,10 +45,10 @@
     "cloud_enabled": false,
     "trading_guardian": "UNCHANGED / UNENGAGED"
   },
-  "next_milestone": "M28 (operator authorize only)",
-  "stop_reason": "M27 complete; do not auto-start M28",
+  "next_milestone": "M29 (operator authorize only)",
+  "stop_reason": "M28 complete; do not auto-start M29",
   "trading_guardian": "UNCHANGED / UNENGAGED",
   "cloud_fallback": false,
   "residual_exceptions": 0,
-  "full_suite": "3195 passed, 1 skipped, 0 failed"
+  "full_suite": "3221 passed, 1 skipped, 0 failed"
 }
