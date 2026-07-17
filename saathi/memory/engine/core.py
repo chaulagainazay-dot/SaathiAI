@@ -80,6 +80,10 @@ class MemoryEngine:
         self.store = store or MemoryStore()
         self.embedder = embedder or emb.select_provider("auto")
         self.weights = weights or ret.Weights()
+        # Degraded embedding state (observable; never pretends success)
+        self.last_embed_error: str = ""
+        self.embedding_degraded: bool = False
+        self.embedding_degrade_reason: str = ""
 
     # ── store + embed (Phases 3/4) ────────────────────────────────────────
     def remember(self, *, namespace: str, content: str, memory_type: str = "semantic",
@@ -110,15 +114,47 @@ class MemoryEngine:
             self._detect_conflicts(mid, namespace, content)
         return mid
 
-    def _embed_one(self, mid: str, content: str) -> None:
+    def _embed_one(self, mid: str, content: str) -> bool:
+        """Persist embedding only on valid success. Never store None/empty as success.
+
+        Returns True if embedding was stored. Failures leave keyword-only and
+        mark ``embedding_degraded`` with a precise reason.
+        """
         try:
             res = self.embedder.embed([content])
+            if res is None or not getattr(res, "vectors", None):
+                self.last_embed_error = "empty_embed_result"
+                self.embedding_degraded = True
+                self.embedding_degrade_reason = "empty_embed_result"
+                return False
             vec = res.vectors[0]
-            self.store.set_embedding(mid, emb.to_bytes(vec), res.dim, res.version,
-                                     float((vec ** 2).sum() ** 0.5))
-        except Exception:
-            # embedding failure must not corrupt the memory; leave it keyword-only
-            pass
+            if vec is None:
+                self.last_embed_error = "null_vector"
+                self.embedding_degraded = True
+                self.embedding_degrade_reason = "null_vector"
+                return False
+            dim = int(getattr(res, "dim", 0) or 0)
+            if dim <= 0 or int(getattr(vec, "size", len(vec))) != dim:
+                # Reject invalid dimension metadata
+                self.last_embed_error = "invalid_dimension"
+                self.embedding_degraded = True
+                self.embedding_degrade_reason = "invalid_dimension"
+                return False
+            self.store.set_embedding(
+                mid,
+                emb.to_bytes(vec),
+                dim,
+                res.version,
+                float((vec ** 2).sum() ** 0.5),
+            )
+            self.last_embed_error = ""
+            return True
+        except Exception as e:
+            # Must not corrupt memory row; leave keyword-only with observable reason
+            self.last_embed_error = f"{type(e).__name__}:{e}"[:200]
+            self.embedding_degraded = True
+            self.embedding_degrade_reason = type(e).__name__
+            return False
 
     # ── extraction pipeline (Phase 7) ─────────────────────────────────────
     def observe(self, text: str, *, namespace: str, project_id: str = "",
@@ -249,10 +285,21 @@ class MemoryEngine:
         if plan.memory_types:
             items = [i for i in items if i["memory_type"] in plan.memory_types]
         qvec = None
+        embed_query_failed = False
         try:
-            qvec = self.embedder.embed([query]).vectors[0]
-        except Exception:
-            qvec = None  # → keyword-only
+            eres = self.embedder.embed([query])
+            if eres and eres.vectors:
+                qvec = eres.vectors[0]
+            else:
+                embed_query_failed = True
+                self.embedding_degraded = True
+                self.embedding_degrade_reason = self.embedding_degrade_reason or "empty_query_embed"
+        except Exception as e:
+            qvec = None  # → keyword-only (explicit degrade)
+            embed_query_failed = True
+            self.embedding_degraded = True
+            self.embedding_degrade_reason = type(e).__name__
+            self.last_embed_error = f"{type(e).__name__}:{e}"[:200]
         # bulk-load embeddings + feedback once (no per-item queries in ranking)
         ids = [i["id"] for i in items]
         emb_map = self.store.embeddings_for(ids) if qvec is not None else {}
@@ -277,6 +324,18 @@ class MemoryEngine:
                                  weights=self.weights, context=plan.context,
                                  top_k=plan.top_k, threshold=plan.threshold,
                                  emb_map=emb_map, fb_map=fb_map, sem_map=sem_map)
+        # Explicit degradation markers (never silent)
+        if embed_query_failed or (qvec is None and not emb_map):
+            if mode in ("hybrid", ""):
+                mode = "keyword-only"
+            if self.embedding_degraded and "degraded" not in mode:
+                # keep mode machine-readable; reason is on engine fields
+                pass
+        elif not emb_map and qvec is not None:
+            # query embedded but no stored vectors → keyword-only degrade
+            mode = "keyword-only" if mode == "hybrid" else mode
+            self.embedding_degraded = True
+            self.embedding_degrade_reason = self.embedding_degrade_reason or "no_stored_embeddings"
         # token-budget trim
         budget, kept = plan.token_budget, []
         for r in results:

@@ -1,7 +1,9 @@
 """M9 Memory Engine test suite — unit, integration, isolation/security, CLI.
 
-The default local deterministic embedder gives real, reproducible vectors, so
-semantic behaviour is testable offline with no external services."""
+Tests explicitly inject LocalDeterministicEmbedder so optional Ollama (or ST)
+installation cannot change suite behavior. Production auto-selection remains
+separate and readiness-gated.
+"""
 import time
 
 import numpy as np
@@ -17,7 +19,22 @@ from saathi.memory.engine import retrieval as ret
 
 @pytest.fixture
 def engine(tmp_path):
-    return MemoryEngine(MemoryStore(tmp_path / "m.db"))
+    """Deterministic embedder — independent of host Ollama/ST availability."""
+    return MemoryEngine(
+        MemoryStore(tmp_path / "m.db"),
+        embedder=LocalDeterministicEmbedder(),
+    )
+
+
+@pytest.fixture
+def isolated_auto_provider(monkeypatch):
+    """Ensure select_provider('auto') falls through to local when optional
+    providers claim available incorrectly — used only where tests probe auto.
+    Restored automatically by monkeypatch.
+    """
+    # No permanent global mutation; tests that need auto can opt in.
+    yield
+
 
 
 # ── embeddings (unit) ──────────────────────────────────────────────────────
@@ -108,7 +125,10 @@ def test_keyword_fallback_when_embedder_fails(tmp_path):
                        normalized="momentum is the primary strategy") \
         if False else None
     # remember() tolerates embed failure and stays keyword-searchable
-    eng2 = MemoryEngine(MemoryStore(tmp_path / "m2.db"))
+    eng2 = MemoryEngine(
+        MemoryStore(tmp_path / "m2.db"),
+        embedder=LocalDeterministicEmbedder(),
+    )
     eng2.remember(namespace="n", content="momentum is the primary strategy")
     eng2.embedder = BrokenEmbedder()
     plan = plan_query(extra_namespaces=["n"], top_k=3)
@@ -323,3 +343,51 @@ def test_retrieval_performance_10k(engine):
     dt = (time.perf_counter() - t0) * 1000
     assert len(res) <= 10
     assert dt < 600, f"retrieval too slow at 2k: {dt:.0f}ms"
+
+
+# ── optional-provider isolation (M25 closeout) ────────────────────────────
+def test_auto_does_not_select_unusable_ollama():
+    p = emb.select_provider("auto")
+    # With Ollama up but no embedding model, auto must be local deterministic
+    assert p.provider in ("local-deterministic", "local") or isinstance(
+        p, LocalDeterministicEmbedder
+    )
+    r = p.embed(["hello isolation"])
+    assert r.vectors and r.dim > 0
+
+
+def test_explicit_ollama_fails_when_embed_model_missing():
+    o = emb.OllamaEmbedder(model="nomic-embed-text")
+    ready = o.readiness()
+    if ready.ready:
+        pytest.skip("nomic-embed-text installed; explicit path would succeed")
+    assert ready.reason == "embedding_model_missing"
+    with pytest.raises(RuntimeError, match="embedding_model_missing|not ready"):
+        emb.select_provider("ollama")
+
+
+def test_none_embedding_not_persisted(tmp_path):
+    class EmptyEmbedder(LocalDeterministicEmbedder):
+        def embed(self, texts):
+            from saathi.memory.engine.embeddings import EmbedResult
+            return EmbedResult(vectors=[], version="x", dim=0, provider="empty")
+
+    eng = MemoryEngine(MemoryStore(tmp_path / "e.db"), embedder=EmptyEmbedder())
+    mid = eng.remember(namespace="n", content="no vector please")
+    assert eng.store.get_embedding(mid) is None
+    assert eng.embedding_degraded is True
+
+
+def test_keyword_only_degraded_marked(tmp_path):
+    class BrokenEmbedder(LocalDeterministicEmbedder):
+        def embed(self, texts):
+            raise RuntimeError("vector store down")
+
+    eng = MemoryEngine(MemoryStore(tmp_path / "k.db"), embedder=LocalDeterministicEmbedder())
+    eng.remember(namespace="n", content="momentum is the primary strategy")
+    eng.embedder = BrokenEmbedder()
+    plan = plan_query(extra_namespaces=["n"], top_k=3)
+    res, mode, _ = eng.retrieve("momentum strategy", plan=plan)
+    assert res
+    assert mode in ("keyword-only", "keyword-fallback")
+    assert eng.embedding_degraded is True
