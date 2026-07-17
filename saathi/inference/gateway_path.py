@@ -342,6 +342,58 @@ class GovernedLocalInferencePath:
                     cat = InferenceErrorCategory.OUTPUT_LIMIT_INVALID
                 return self._fail(req, cat, "; ".join(v_errors), fp, t0)
 
+        # M21.2 — provider governance decision (before ModelRouter attempt)
+        try:
+            from saathi.inference.provider_decision import (
+                decide_providers,
+                privacy_safe_decision_telemetry,
+            )
+
+            pdec = decide_providers(
+                req,
+                production_context=False,
+                allow_cloud_fallback=bool(settings.allow_cloud_fallback),
+                master_inference_enabled=bool(settings.enabled),
+            )
+            _emit(
+                self.event_sink,
+                "inference.provider_decision",
+                privacy_safe_decision_telemetry(pdec),
+            )
+            if not pdec.ok:
+                cat = InferenceErrorCategory.PROVIDER_UNAVAILABLE
+                code = pdec.reason_code
+                if code in ("kill_switch_active",):
+                    cat = InferenceErrorCategory.PROVIDER_UNAVAILABLE
+                elif code in ("unknown_caller",):
+                    cat = InferenceErrorCategory.SECURITY_POLICY_DENIED
+                elif "privacy" in code:
+                    cat = InferenceErrorCategory.SECURITY_POLICY_DENIED
+                elif "cost" in code:
+                    cat = InferenceErrorCategory.SECURITY_POLICY_DENIED
+                elif "cloud" in code:
+                    cat = InferenceErrorCategory.CLOUD_FALLBACK_DENIED
+                return self._fail(
+                    req,
+                    cat,
+                    pdec.explanation or code,
+                    fp,
+                    t0,
+                )
+            # Prefer governance-selected local family; ModelRouter still chooses model
+            if pdec.selected_provider_id and pdec.selected_provider_id != "ollama":
+                # M21.2 pilot: governed path remains local engines only
+                if pdec.selected_provider_id not in {"ollama", "fake"}:
+                    return self._fail(
+                        req,
+                        InferenceErrorCategory.CLOUD_FALLBACK_DENIED,
+                        f"provider {pdec.selected_provider_id} not executable on governed local pilot",
+                        fp,
+                        t0,
+                    )
+        except Exception as e:
+            logger.debug("provider decision skipped: %s", e)
+
         # Cloud fallback policy
         if req.cloud_fallback_permitted and not settings.allow_cloud_fallback:
             # request may continue local-only; if local fails, no cloud

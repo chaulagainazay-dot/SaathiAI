@@ -208,13 +208,39 @@ def validate_contract(
         )
 
     caller = (req.caller_component or "").strip() or "unknown"
-    # Empty caller is coerced to transitional "unknown" (registered pilot).
-    # New production code should set an explicit registered caller_id.
+    # Empty caller is coerced to transitional "unknown" (test-only under M21.2).
+    # New production code must set an explicit registered caller_id.
     pol = require_caller_policy(caller)
     decisions["caller_certification"] = pol.certification.value
     decisions["caller_enabled"] = pol.enabled
 
     if governed:
+        # M21.2: transitional unknown blocked under production/staging posture
+        if caller == "unknown":
+            import os
+            import sys
+
+            prod = os.getenv("SAATHI_PRODUCTION_POSTURE", "").strip().lower() in {
+                "1", "true", "yes", "on",
+            }
+            env = os.getenv("SAATHI_ENV", "").strip().lower()
+            in_pytest = "pytest" in sys.modules or bool(os.getenv("PYTEST_CURRENT_TEST"))
+            if prod or env in {"production", "prod", "staging"}:
+                deny(
+                    "unknown_caller_production",
+                    "unknown_caller",
+                    "transitional unknown caller denied in production/staging posture",
+                )
+            elif not in_pytest and os.getenv("SAATHI_ALLOW_UNKNOWN_CALLER", "").strip().lower() not in {
+                "1", "true", "yes", "on",
+            }:
+                # Non-test runtime without explicit allow: deny (tests set pytest module)
+                deny(
+                    "unknown_caller_runtime",
+                    "unknown_caller",
+                    "transitional unknown caller restricted to tests",
+                )
+
         if get_caller_policy(caller) is None:
             deny(
                 "unknown_caller",

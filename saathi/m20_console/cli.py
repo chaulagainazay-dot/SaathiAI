@@ -8,6 +8,7 @@
   engineering  engineering snapshot only
   inference    inference snapshot only
   prod-config  M21.0 production config bundle (read-only)
+  provider-governance  M21.2 provider availability/cost/circuit snapshot (read-only)
 
 Never launches agents, never generates, never pushes.
 """
@@ -58,6 +59,10 @@ def main(argv: list[str] | None = None) -> int:
     if cmd in ("prod-config", "prod_config", "m21"):
         from saathi.inference.prod_config import production_config_bundle
         _emit(production_config_bundle())
+        return 0
+    if cmd in ("provider-governance", "provider_governance", "m21_2"):
+        from saathi.inference.provider_governance import governance_snapshot
+        _emit(governance_snapshot())
         return 0
     _emit({"error": "unknown_command", "cmd": cmd, "hint": "help"})
     return 2

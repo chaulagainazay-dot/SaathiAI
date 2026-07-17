@@ -35,7 +35,7 @@ ALLOWLIST_PREFIXES = (
     "saathi/inference/adapters/",
     "saathi/inference/bypass_guard.py",
     "saathi/tools/_llm_helper.py",
-    "saathi/tools/cheap_llm.py",  # residual proxy — classified, not expanded
+    "saathi/tools/cheap_llm.py",  # status health check only after M21.2; no invoke
     "saathi/agent.py",
     "saathi/vision.py",
     "saathi/tools/voice.py",
@@ -48,11 +48,35 @@ ALLOWLIST_PREFIXES = (
     "saathi/server.py",  # residual HTTP surfaces; DEFER_WITH_GUARD (no new copies)
     "saathi/infrastructure/human_browser/",
     "saathi/inference/provider_policy.py",
+    "saathi/inference/provider_descriptor.py",
+    "saathi/inference/provider_decision.py",
+    "saathi/inference/provider_governance.py",
+    "saathi/inference/availability.py",
+    "saathi/inference/cost_policy.py",
+    "saathi/inference/failure_taxonomy.py",
+    "saathi/inference/circuit_breaker.py",
     "saathi/inference/path_inventory.py",
     "saathi/inference/residual_paths.py",
     "saathi/inference/contract.py",
     "saathi/inference/caller_policy.py",
     "saathi/inference/bypass_guard.py",
+    "saathi/inference/gateway_path.py",
+)
+
+# M21.2: patterns that must stay inside governance modules
+GOVERNANCE_ONLY_PREFIXES = (
+    "saathi/inference/provider_decision.py",
+    "saathi/inference/provider_governance.py",
+    "saathi/inference/circuit_breaker.py",
+    "saathi/inference/cost_policy.py",
+    "saathi/inference/availability.py",
+    "saathi/inference/failure_taxonomy.py",
+    "saathi/inference/provider_descriptor.py",
+    "saathi/inference/provider_policy.py",
+    "saathi/inference/gateway_path.py",
+    "saathi/inference/runtime.py",
+    "saathi/inference/bypass_guard.py",
+    "saathi/inference/residual_paths.py",
 )
 
 # Second InferenceRequest-like class definitions outside request.py are flagged
@@ -142,6 +166,49 @@ class _Visitor(ast.NodeVisitor):
                         detail=f"request model {node.name} outside canonical package",
                     )
                 )
+        # M21.2: second circuit breaker / cost table classes outside governance
+        if node.name in {
+            "ProviderCircuitBreakerRegistry",
+            "CanonicalCostTable",
+            "ProviderCostTable",
+        }:
+            if not any(
+                self.rel_path == p or self.rel_path.startswith(p)
+                for p in GOVERNANCE_ONLY_PREFIXES
+            ) and "test" not in self.rel_path:
+                self.findings.append(
+                    GuardFinding(
+                        rule="duplicate_governance_type",
+                        path=self.rel_path,
+                        line=getattr(node, "lineno", 0),
+                        detail=f"{node.name} outside canonical governance modules",
+                    )
+                )
+        self.generic_visit(node)
+
+    def visit_Attribute(self, node: ast.Attribute) -> None:
+        # Flag random.choice / random.shuffle used for provider selection outside tests
+        if (
+            isinstance(node.value, ast.Name)
+            and node.value.id == "random"
+            and node.attr in {"choice", "shuffle", "sample"}
+            and "test" not in self.rel_path
+            and self.rel_path.startswith("saathi/inference/")
+            and not any(
+                self.rel_path == p or self.rel_path.startswith(p.rstrip("/"))
+                for p in GOVERNANCE_ONLY_PREFIXES
+            )
+        ):
+            # Only warn if not already in governance decision (ranking is deterministic)
+            self.findings.append(
+                GuardFinding(
+                    rule="random_provider_selection",
+                    path=self.rel_path,
+                    line=getattr(node, "lineno", 0),
+                    detail=f"random.{node.attr} in inference package",
+                    severity="blocking",
+                )
+            )
         self.generic_visit(node)
 
 
@@ -189,8 +256,8 @@ def scan_repository(
         findings.extend(scan_file(p))
     blocking = [f for f in findings if f.severity == "blocking"]
     return {
-        "schema": "m21.1.bypass_guard.v1",
-        "milestone": "M21.1",
+        "schema": "m21.2.bypass_guard.v1",
+        "milestone": "M21.2",
         "files_scanned": files,
         "finding_count": len(findings),
         "blocking_count": len(blocking),
@@ -201,6 +268,8 @@ def scan_repository(
             "direct_provider_url",
             "direct_sdk_constructor",
             "duplicate_request_model",
+            "duplicate_governance_type",
+            "random_provider_selection",
         ],
     }
 

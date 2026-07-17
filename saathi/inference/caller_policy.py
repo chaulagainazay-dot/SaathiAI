@@ -150,20 +150,23 @@ _CALLER_POLICIES: dict[str, CallerPolicy] = {
         max_output_tokens=128,
         timeout_seconds=15.0,
     ),
-    # Transitional default for InferenceRequest() without caller set (M20 tests).
-    # New production code must set an explicit registered caller_id.
+    # Transitional unlabeled caller — TEST-only under M21.2.
+    # Production / staging posture must fail closed (see contract + provider_decision).
     "unknown": CallerPolicy(
         caller_id="unknown",
-        description="Transitional unlabeled caller — do not use in new code",
-        product_area="transitional",
-        certification=CallerCertification.PILOT,
+        description="Transitional unlabeled caller — test environments only",
+        product_area="test",
+        certification=CallerCertification.TEST,
         max_input_chars=16000,
         max_output_tokens=1024,
         timeout_seconds=60.0,
         allowed_capabilities=frozenset(
             {"screening", "standard", "fast", "private", "reasoning", "long", "multimodal"}
         ),
-        notes="M21.1: registered for backward compatibility only; expire migration by M21.3",
+        notes=(
+            "M21.2: restricted to pytest/test; denied when SAATHI_PRODUCTION_POSTURE=1 "
+            "or SAATHI_ENV=production|staging. Expiry: remove in M21.3"
+        ),
     ),
     "chat_engine": CallerPolicy(
         caller_id="chat_engine",

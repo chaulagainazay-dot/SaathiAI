@@ -74,12 +74,24 @@ def inference_snapshot() -> dict[str, Any]:
         try:
             from saathi.inference.prod_config import validate_production_config
             from saathi.inference.provider_policy import provider_policy_snapshot
+            try:
+                from saathi.inference.provider_governance import governance_snapshot
+                m21_2_gov = governance_snapshot()
+            except Exception:
+                m21_2_gov = {"ok": False}
 
             m21 = {
                 "prod_config_posture": validate_production_config(settings).posture,
                 "prod_config_ok": validate_production_config(settings).ok,
                 "provider_kill_all": provider_policy_snapshot().get("kill_all_active"),
                 "cli": "python -m saathi.inference.prod_config bundle",
+            }
+            m21["provider_governance"] = {
+                "schema": m21_2_gov.get("schema"),
+                "kill_all": m21_2_gov.get("kill_all"),
+                "production_certified": False,
+                "provider_count": len(m21_2_gov.get("providers") or []),
+                "cli": "python -m saathi.inference.provider_governance",
             }
         except Exception as e:
             m21 = {"error": type(e).__name__}
@@ -105,6 +117,8 @@ def inference_snapshot() -> dict[str, Any]:
             "models_sample": models[:8],
             "certification": cert,
             "m21_0": m21,
+            "m21_2": m21.get("provider_governance") if isinstance(m21, dict) else None,
+            "production_certified": False,
         }
     except Exception as e:
         return {"domain": "inference", "ok": False, "error": type(e).__name__}
