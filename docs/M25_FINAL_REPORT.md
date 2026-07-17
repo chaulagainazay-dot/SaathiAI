@@ -13,7 +13,7 @@ Evidence-backed. Live certification was **not** claimed. `production_certified=f
 | Item | Value |
 |------|-------|
 | Start HEAD | `e9571f3` |
-| Tip HEAD | `c194554` |
+| Tip HEAD | `a9eee41` |
 | Branch | `milestone/m7-security-engine` |
 | Worktree | clean at start |
 | Remote | 0/0 |
