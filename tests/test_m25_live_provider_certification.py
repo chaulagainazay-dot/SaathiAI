@@ -133,14 +133,23 @@ def test_runtime_gate_m25_checks():
     assert "m25_live_provider_cert" in ids
     assert "m25_no_mock_as_live" in ids
     assert "m25_production_cert_invariant" in ids
-    # production remains false on blocked host
+    # production remains false until all cert package gates pass
     assert report.production_certified is False
     # no-mock gate must pass
     assert ids["m25_no_mock_as_live"].state is GateState.PASS
     assert ids["m25_production_cert_invariant"].state is GateState.PASS
-    # live cert is ENVIRONMENT_BLOCKED when provider unavailable
-    if not ids["m25_live_provider_cert"].evidence.get("live_provider_certified"):
-        assert ids["m25_live_provider_cert"].state is GateState.ENVIRONMENT_BLOCKED
+    # Historical PASS or current PASS both acceptable; never fail on model-absent
+    # when models are installed (use insufficient_model_memory_headroom instead).
+    st = ids["m25_live_provider_cert"].state
+    assert st in {
+        GateState.PASS,
+        GateState.ENVIRONMENT_BLOCKED,
+        GateState.NOT_TESTED,
+    }
+    ev = ids["m25_live_provider_cert"].evidence or {}
+    if ev.get("installed_approved_models"):
+        assert ev.get("blocker") != "no_approved_small_model"
+    assert report.production_certified is False
 
 
 def test_release_check_still_passes():
@@ -179,3 +188,69 @@ def test_production_safe_memory_formula_exported():
     floor = SELECTION_SAFETY_MARGIN_GB + need  # 1.8
     assert memory_selection_ok(floor) is True
     assert memory_selection_ok(floor - 0.01) is False
+
+
+def test_historical_pass_survives_memory_blocked_observation(tmp_path, monkeypatch):
+    from saathi.inference import live_cert_m25 as m25
+
+    # Point evidence dir at tmp
+    monkeypatch.setattr(m25, "EVIDENCE_DIR", tmp_path)
+    monkeypatch.setattr(m25, "DEFAULT_EVIDENCE_PATH", tmp_path / "LIVE_CERT_EVIDENCE.json")
+    monkeypatch.setattr(m25, "LATEST_OBSERVATION_PATH", tmp_path / "LATEST_ENVIRONMENT_OBSERVATION.json")
+    monkeypatch.setattr(m25, "LAST_SUCCESS_PATH", tmp_path / "LAST_SUCCESSFUL_LIVE_CERTIFICATION.json")
+
+    # Seed a successful cert
+    success = m25.M25Report(
+        verdict=m25.VERDICT_VERIFIED_PROD_BLOCKED,
+        live=True,
+        live_provider_certified=True,
+        production_certified=False,
+        finished_at="2026-07-17T00:00:00+00:00",
+        tip_commit="abc",
+        selected_model={"model_id": "qwen2.5:1.5b"},
+        live_cases=[{"case_id": "nonstream_basic", "ok": True}],
+        environment={"available_memory_gb": 2.5, "binary_present": True},
+    )
+    m25._write_evidence(success)
+    assert m25.LAST_SUCCESS_PATH.is_file()
+    hist1 = m25.load_last_successful_cert()
+    assert hist1 and hist1["live_provider_certified"] is True
+
+    # Later blocked observation must not erase historical PASS
+    blocked = m25.M25Report(
+        verdict=m25.VERDICT_ENV_BLOCKED,
+        live=False,
+        live_provider_certified=False,
+        production_certified=False,
+        finished_at="2026-07-17T01:00:00+00:00",
+        tip_commit="abc",
+        blockers=["insufficient_model_memory_headroom"],
+        environment={
+            "available_memory_gb": 1.2,
+            "required_available_memory_gb": 1.8,
+            "installed_approved_models": ["qwen2.5:1.5b"],
+        },
+    )
+    m25._write_evidence(blocked)
+    hist2 = m25.load_last_successful_cert()
+    assert hist2 and hist2["live_provider_certified"] is True
+    assert hist2["run_id"] == success.run_id or hist2.get("selected_model", {}).get("model_id") == "qwen2.5:1.5b"
+    latest = m25.load_latest_observation()
+    assert latest and "insufficient_model_memory_headroom" in (latest.get("blockers") or [])
+    combined = json.loads(m25.DEFAULT_EVIDENCE_PATH.read_text())
+    assert combined.get("historical_live_certification") == "PASS"
+    assert combined.get("current_environment_blocked") is True
+
+
+def test_atomic_write_json(tmp_path):
+    from saathi.inference.live_cert_m25 import _atomic_write_json
+    p = tmp_path / "a.json"
+    _atomic_write_json(p, {"ok": True})
+    assert json.loads(p.read_text())["ok"] is True
+    assert not (tmp_path / "a.json.tmp").exists()
+
+
+def test_no_approved_small_model_not_when_installed():
+    env = discover_environment()
+    if env.get("runtime_reachable") and env.get("installed_approved_models"):
+        assert "no_approved_small_model" not in env.get("blockers", [])

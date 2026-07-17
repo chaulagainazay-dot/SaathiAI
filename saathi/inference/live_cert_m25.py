@@ -41,6 +41,9 @@ from saathi.inference.hardware import profile_local_hardware
 ROOT = Path(__file__).resolve().parents[2]
 EVIDENCE_DIR = ROOT / "docs" / "evidence" / "m25"
 DEFAULT_EVIDENCE_PATH = EVIDENCE_DIR / "LIVE_CERT_EVIDENCE.json"
+# Dual evidence: latest observation must not erase historical PASS
+LATEST_OBSERVATION_PATH = EVIDENCE_DIR / "LATEST_ENVIRONMENT_OBSERVATION.json"
+LAST_SUCCESS_PATH = EVIDENCE_DIR / "LAST_SUCCESSFUL_LIVE_CERTIFICATION.json"
 SUITE_VERSION = "m25.live_cert.suite.v1"
 SCHEMA = "m25.live_cert_report.v1"
 MILESTONE = "M25"
@@ -249,6 +252,27 @@ def discover_environment(
     hw = profile_local_hardware()
     mem_ok = float(hw.available_memory_gb or 0) >= float(settings.min_available_memory_gb)
 
+    # Installed models via API when runtime up (prefer API over FS-only)
+    installed_approved: list[str] = []
+    if runtime_reachable:
+        try:
+            from saathi.inference.certification import discover_models
+
+            models = discover_models(settings)
+            installed_approved = [m.model_id for m in models if m.resource_safe]
+        except Exception:
+            models = []
+            installed_approved = []
+    else:
+        models = []
+
+    # Production-safe memory gate for preferred small model
+    need = minimum_model_budget_gb("qwen2.5:1.5b")
+    required_available = float(SELECTION_SAFETY_MARGIN_GB + need)
+    avail = float(hw.available_memory_gb or 0.0)
+    shortfall = max(0.0, required_available - avail)
+    mem_selection_ok = avail >= required_available
+
     blockers: list[str] = []
     if broken_symlink:
         blockers.append("ollama_broken_symlink")
@@ -258,10 +282,23 @@ def discover_environment(
         blockers.append("ollama_runtime_unreachable")
     if not endpoint_allowlisted:
         blockers.append("endpoint_not_allowlisted")
-    if not mem_ok:
+    # Prefer precise memory blocker over generic pressure when models exist
+    if installed_approved and not mem_selection_ok:
+        blockers.append("insufficient_model_memory_headroom")
+    elif not mem_ok and not installed_approved:
         blockers.append("memory_pressure")
-    if not models_fs and not runtime_reachable:
+    elif not mem_ok and mem_selection_ok:
+        # discover min_available stricter/looser edge — keep selection-based if models ok
+        pass
+    elif not mem_ok:
+        blockers.append("memory_pressure")
+    if not models_fs and not runtime_reachable and not installed_approved:
         blockers.append("no_installed_models_observed")
+    if runtime_reachable and not installed_approved and not models_fs:
+        blockers.append("no_installed_models_observed")
+    # Do NOT say no_approved_small_model when installed models exist but memory blocks
+    if runtime_reachable and models and not installed_approved:
+        blockers.append("no_resource_safe_model")
 
     return {
         "schema": "m25.environment_audit.v1",
@@ -284,13 +321,17 @@ def discover_environment(
         "startup_mechanism": "LaunchAgent com.ajay.ollama (not started by M25)",
         "data_directory": str(ollama_home) if ollama_home.exists() else "",
         "filesystem_model_manifests": models_fs[:50],
+        "installed_approved_models": installed_approved,
         "architecture": platform.machine(),
         "platform": platform.system(),
         "cpu": getattr(hw, "cpu_brand", "") or "",
         "total_memory_gb": hw.total_memory_gb,
-        "available_memory_gb": hw.available_memory_gb,
-        "memory_safety_margin_gb": hw.memory_safety_margin_gb,
-        "memory_ok": mem_ok,
+        "available_memory_gb": avail,
+        "required_available_memory_gb": required_available,
+        "shortfall_gb": round(shortfall, 3),
+        "memory_safety_margin_gb": SELECTION_SAFETY_MARGIN_GB,
+        "minimum_model_budget_gb": need,
+        "memory_ok": mem_ok and mem_selection_ok,
         "free_disk_gb": hw.free_disk_gb,
         "install_performed": False,
         "service_started_by_m25": False,
@@ -521,34 +562,46 @@ def run_m25_certification(
             )
         )
     elif models:
-        # Explain closest failure for operator
-        sample = min(models, key=lambda m: minimum_model_budget_gb(m.model_id) if m.resource_safe else 99.0)
-        need = minimum_model_budget_gb(sample.model_id) if sample.resource_safe else 0.5
+        # Models installed; selection blocked by memory or resource_safe filter
+        sample = min(
+            models,
+            key=lambda m: minimum_model_budget_gb(m.model_id) if m.resource_safe else 99.0,
+        )
+        need = minimum_model_budget_gb(sample.model_id) if sample.resource_safe else 1.0
         required = SELECTION_SAFETY_MARGIN_GB + need
+        installed_ids = [m.model_id for m in models]
+        if any(m.resource_safe for m in models):
+            blocker = "insufficient_model_memory_headroom"
+            detail = (
+                f"installed_approved={installed_ids}; "
+                f"available({avail}) < safety_margin({SELECTION_SAFETY_MARGIN_GB})"
+                f" + model_budget({need}) = {required}"
+            )
+        else:
+            blocker = "no_resource_safe_model"
+            detail = "models_listed_but_none_resource_safe"
         gates.append(
             _gate(
                 "env_model",
                 "ENVIRONMENT_BLOCKED",
-                (
-                    "no model passes production-safe memory gate: "
-                    f"available({avail}) < safety_margin({SELECTION_SAFETY_MARGIN_GB})"
-                    f" + model_budget({need}) = {required}"
-                    if any(m.resource_safe for m in models)
-                    else "models_listed_but_none_resource_safe"
-                ),
+                detail,
                 evidence={
                     "count": len(models),
+                    "installed_approved_models": [
+                        m.model_id for m in models if m.resource_safe
+                    ],
                     "available_memory_gb": avail,
+                    "required_available_memory_gb": required,
+                    "shortfall_gb": round(max(0.0, required - avail), 3),
                     "safety_margin_gb": SELECTION_SAFETY_MARGIN_GB,
                     "minimum_model_budget_gb": need,
-                    "required_available_gb": required,
                     "production_safe_formula": (
                         "available_memory_gb >= safety_margin_gb + minimum_model_budget_gb"
                     ),
                 },
             )
         )
-        report.blockers.append("no_approved_small_model")
+        report.blockers.append(blocker)
     else:
         gates.append(_gate("env_model", "ENVIRONMENT_BLOCKED", "no_models"))
         if "no_installed_models_observed" not in report.blockers:
@@ -921,37 +974,192 @@ def _run_live_cases(
     return cases, all_ok, (not all_ok and any(c.get("ok") for c in cases))
 
 
+def _atomic_write_json(path: Path, payload: dict[str, Any]) -> None:
+    """Atomic JSON write (tmp + replace). No partial evidence files on crash."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    data = json.dumps(payload, indent=2, default=str) + "\n"
+    tmp.write_text(data, encoding="utf-8")
+    os.replace(str(tmp), str(path))
+
+
+def certification_fingerprint(
+    *,
+    tip_commit: str,
+    model_id: str,
+    suite_version: str = SUITE_VERSION,
+    schema: str = SCHEMA,
+) -> str:
+    """Fingerprint for material cert identity (invalidates reuse on change)."""
+    import hashlib
+
+    raw = f"{schema}|{suite_version}|{tip_commit}|{model_id}|ollama|local_only"
+    return "sha256:" + hashlib.sha256(raw.encode()).hexdigest()[:24]
+
+
+def load_last_successful_cert() -> Optional[dict[str, Any]]:
+    if not LAST_SUCCESS_PATH.is_file():
+        return None
+    try:
+        return json.loads(LAST_SUCCESS_PATH.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+
+
+def load_latest_observation() -> Optional[dict[str, Any]]:
+    if not LATEST_OBSERVATION_PATH.is_file():
+        # Fall back to combined evidence file for older runs
+        if DEFAULT_EVIDENCE_PATH.is_file():
+            try:
+                return json.loads(DEFAULT_EVIDENCE_PATH.read_text(encoding="utf-8"))
+            except Exception:
+                return None
+        return None
+    try:
+        return json.loads(LATEST_OBSERVATION_PATH.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+
+
 def _write_evidence(report: M25Report) -> Path:
+    """Write dual evidence stores atomically.
+
+    * LATEST_ENVIRONMENT_OBSERVATION — always overwritten with this run
+    * LAST_SUCCESSFUL_LIVE_CERTIFICATION — only updated on live PASS
+    * LIVE_CERT_EVIDENCE.json — combined view for compatibility
+    """
     EVIDENCE_DIR.mkdir(parents=True, exist_ok=True)
-    path = DEFAULT_EVIDENCE_PATH
-    # Strip any accidental secrets
     payload = report.to_dict()
     payload["privacy_status"] = "redacted_no_raw_prompts_or_outputs"
-    path.write_text(json.dumps(payload, indent=2, default=str) + "\n", encoding="utf-8")
-    # Also write a short summary markdown
-    summary = EVIDENCE_DIR / "LIVE_CERT_SUMMARY.md"
-    summary.write_text(
-        f"""# M25 Live Certification Evidence Summary
+    model_id = (report.selected_model or {}).get("model_id") or ""
+    fp = certification_fingerprint(
+        tip_commit=report.tip_commit or "",
+        model_id=model_id,
+    )
+    payload["certification_fingerprint"] = fp
 
-- **Verdict:** `{report.verdict}`
-- **Live:** {report.live}
-- **Live provider certified:** {report.live_provider_certified}
+    # 1) Always record latest observation
+    observation = {
+        "schema": "m25.latest_environment_observation.v1",
+        "recorded_at": report.finished_at or _utc_now_iso(),
+        "verdict": report.verdict,
+        "live": report.live,
+        "live_provider_certified": report.live_provider_certified,
+        "production_certified": report.production_certified,
+        "blockers": list(report.blockers),
+        "environment": report.environment,
+        "selected_model": report.selected_model,
+        "gates": report.gates,
+        "live_cases": report.live_cases,
+        "tip_commit": report.tip_commit,
+        "run_id": report.run_id,
+        "certification_fingerprint": fp,
+        "privacy_status": "redacted_no_raw_prompts_or_outputs",
+    }
+    _atomic_write_json(LATEST_OBSERVATION_PATH, observation)
+
+    # 2) Preserve / update last successful live certification
+    historical = load_last_successful_cert()
+    if report.live and report.live_provider_certified:
+        success_payload = {
+            "schema": "m25.last_successful_live_certification.v1",
+            "recorded_at": report.finished_at or _utc_now_iso(),
+            "verdict": report.verdict,
+            "live": True,
+            "live_provider_certified": True,
+            "production_certified": False,  # never auto-promote
+            "selected_model": report.selected_model,
+            "live_cases": report.live_cases,
+            "environment_at_success": {
+                k: report.environment.get(k)
+                for k in (
+                    "binary_path",
+                    "version",
+                    "endpoint",
+                    "available_memory_gb",
+                    "installed_approved_models",
+                )
+            },
+            "tip_commit": report.tip_commit,
+            "run_id": report.run_id,
+            "suite_version": report.suite_version,
+            "certification_fingerprint": fp,
+            "privacy_status": "redacted_no_raw_prompts_or_outputs",
+            "trading_guardian": report.trading_guardian,
+            "cloud_fallback": report.cloud_fallback,
+            "downloads_performed": report.downloads_performed,
+        }
+        _atomic_write_json(LAST_SUCCESS_PATH, success_payload)
+        historical = success_payload
+
+    # 3) Combined compatibility view (does not drop historical on blocked runs)
+    def _rel(p: Path) -> str:
+        try:
+            return str(p.relative_to(ROOT))
+        except ValueError:
+            return str(p)
+
+    combined = dict(payload)
+    combined["latest_environment_observation"] = {
+        "path": _rel(LATEST_OBSERVATION_PATH),
+        "verdict": observation["verdict"],
+        "blockers": observation["blockers"],
+        "recorded_at": observation["recorded_at"],
+    }
+    if historical:
+        combined["last_successful_live_certification"] = {
+            "path": _rel(LAST_SUCCESS_PATH),
+            "recorded_at": historical.get("recorded_at"),
+            "live_provider_certified": historical.get("live_provider_certified"),
+            "selected_model": (historical.get("selected_model") or {}).get("model_id"),
+            "certification_fingerprint": historical.get("certification_fingerprint"),
+            "tip_commit": historical.get("tip_commit"),
+            "run_id": historical.get("run_id"),
+        }
+        # Surface historical PASS even when this run is environment-blocked
+        if not report.live_provider_certified and historical.get("live_provider_certified"):
+            combined["historical_live_certification"] = "PASS"
+            combined["current_environment_blocked"] = True
+            combined["fresh_live_cert_required"] = True
+    else:
+        combined["historical_live_certification"] = "NONE"
+        combined["fresh_live_cert_required"] = True
+
+    _atomic_write_json(DEFAULT_EVIDENCE_PATH, combined)
+
+    summary = EVIDENCE_DIR / "LIVE_CERT_SUMMARY.md"
+    hist_line = (
+        f"- **Historical live cert:** PASS at {historical.get('recorded_at')} "
+        f"model={(historical.get('selected_model') or {}).get('model_id')}"
+        if historical and historical.get("live_provider_certified")
+        else "- **Historical live cert:** none"
+    )
+    summary_body = f"""# M25 Live Certification Evidence Summary
+
+- **Latest verdict:** `{report.verdict}`
+- **Latest live:** {report.live}
+- **Latest live_provider_certified:** {report.live_provider_certified}
 - **Production certified:** {report.production_certified}
+{hist_line}
 - **Run ID:** `{report.run_id}`
 - **Commit:** `{report.tip_commit}`
 - **Timestamp:** {report.finished_at}
-- **Blockers:** {', '.join(report.blockers) or '(none)'}
+- **Blockers (latest):** {', '.join(report.blockers) or '(none)'}
 - **Downloads performed:** {report.downloads_performed}
 - **Cloud calls:** {report.cloud_calls}
 - **Trading Guardian:** {report.trading_guardian}
 
-Full JSON: `{path.relative_to(ROOT) if path.is_relative_to(ROOT) else path}`
+Files:
+- `{_rel(DEFAULT_EVIDENCE_PATH)}` (combined)
+- `{_rel(LATEST_OBSERVATION_PATH)}`
+- `{_rel(LAST_SUCCESS_PATH)}` (preserved across blocked observations)
 
 Privacy: no raw prompts/outputs/secrets in this bundle.
-""",
-        encoding="utf-8",
-    )
-    return path
+"""
+    tmp_sum = summary.with_suffix(".md.tmp")
+    tmp_sum.write_text(summary_body, encoding="utf-8")
+    os.replace(str(tmp_sum), str(summary))
+    return DEFAULT_EVIDENCE_PATH
 
 
 def main(argv: Optional[list[str]] = None) -> int:

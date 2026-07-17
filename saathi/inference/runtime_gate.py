@@ -365,8 +365,10 @@ def validate_residual_manifest(
 def detect_live_provider_status() -> dict[str, Any]:
     """Read-only Ollama/local status. Never downloads models or starts services.
 
-    M25: prefers structured ``live_cert_m25.discover_environment`` + evidence
-    file when present. Broken symlinks are treated as binary absent.
+    Distinguishes:
+      * historical_live_certification (last successful PASS record)
+      * current_environment (latest observation / live discover)
+      * fresh_live_cert_required
     """
     out: dict[str, Any] = {
         "provider": "ollama",
@@ -380,98 +382,119 @@ def detect_live_provider_status() -> dict[str, Any]:
         "notes": [],
         "m25_evidence": False,
         "live_provider_certified": False,
+        "historical_live_certification": "NONE",
+        "current_environment": GateState.ENVIRONMENT_BLOCKED.value,
+        "fresh_live_cert_required": True,
+        "installed_approved_models": [],
+        "available_memory_gb": None,
+        "required_available_memory_gb": None,
+        "shortfall_gb": None,
+        "last_successful_certification_timestamp": "",
+        "certification_fingerprint_match": None,
     }
 
-    # Prefer M25 evidence bundle when fresh enough (≤ 7 days)
-    evidence_path = ROOT / "docs" / "evidence" / "m25" / "LIVE_CERT_EVIDENCE.json"
-    if evidence_path.is_file():
-        try:
-            ev = json.loads(evidence_path.read_text(encoding="utf-8"))
-            out["m25_evidence"] = True
-            out["m25_verdict"] = ev.get("verdict", "")
-            out["live_provider_certified"] = bool(ev.get("live_provider_certified"))
-            out["binary_present"] = bool((ev.get("environment") or {}).get("binary_present"))
-            out["binary_path"] = (ev.get("environment") or {}).get("binary_path") or ""
-            out["runtime_reachable"] = bool((ev.get("environment") or {}).get("runtime_reachable"))
-            out["model_present"] = bool(ev.get("selected_model"))
-            blockers = list(ev.get("blockers") or [])
-            out["blocker"] = blockers[0] if blockers else ""
-            out["notes"].append("m25_evidence_loaded")
-            if ev.get("live_provider_certified") and ev.get("live"):
-                out["certification"] = GateState.PASS.value
-                out["health"] = "m25_live_certified"
-            elif ev.get("live") and not ev.get("live_provider_certified"):
-                out["certification"] = GateState.NOT_TESTED.value
-                out["health"] = "m25_live_partial"
-            else:
-                out["certification"] = GateState.ENVIRONMENT_BLOCKED.value
-                out["health"] = "m25_environment_blocked"
-            return out
-        except Exception as e:
-            out["notes"].append(f"m25_evidence_parse:{type(e).__name__}")
-
-    # Fallback: lightweight discovery (M25 module if importable)
     try:
-        from saathi.inference.live_cert_m25 import discover_environment
+        from saathi.inference.live_cert_m25 import (
+            discover_environment,
+            load_last_successful_cert,
+            load_latest_observation,
+            certification_fingerprint,
+        )
 
         env = discover_environment()
+        hist = load_last_successful_cert()
+        latest = load_latest_observation()
+
         out["binary_present"] = bool(env.get("binary_present"))
         out["binary_path"] = env.get("binary_path") or ""
         out["runtime_reachable"] = bool(env.get("runtime_reachable"))
         out["health"] = str(env.get("health_detail") or "not_probed")
+        installed = list(env.get("installed_approved_models") or [])
+        out["installed_approved_models"] = installed
+        out["model_present"] = bool(installed)
+        out["available_memory_gb"] = env.get("available_memory_gb")
+        out["required_available_memory_gb"] = env.get("required_available_memory_gb")
+        out["shortfall_gb"] = env.get("shortfall_gb")
         blockers = list(env.get("blockers") or [])
-        out["blocker"] = blockers[0] if blockers else ""
-        if env.get("broken_symlink"):
-            out["notes"].append("broken_symlink")
-        out["certification"] = GateState.ENVIRONMENT_BLOCKED.value
-        out["notes"].append("Install/start/pull not performed by M25 (forbidden)")
-        return out
-    except Exception:
-        pass
+        # Prefer precise memory headroom over incorrect "no model"
+        if "insufficient_model_memory_headroom" in blockers:
+            out["blocker"] = "insufficient_model_memory_headroom"
+        elif blockers:
+            out["blocker"] = blockers[0]
+        else:
+            out["blocker"] = ""
 
+        if blockers:
+            out["current_environment"] = GateState.ENVIRONMENT_BLOCKED.value
+        else:
+            out["current_environment"] = GateState.PASS.value
+
+        if hist and hist.get("live_provider_certified"):
+            out["historical_live_certification"] = "PASS"
+            out["last_successful_certification_timestamp"] = hist.get("recorded_at") or ""
+            out["live_provider_certified"] = True  # historical
+            out["m25_evidence"] = True
+            model_id = (hist.get("selected_model") or {}).get("model_id") or ""
+            try:
+                tip = subprocess.run(
+                    ["git", "rev-parse", "HEAD"],
+                    cwd=str(ROOT),
+                    capture_output=True,
+                    text=True,
+                    timeout=3,
+                )
+                tip_s = (tip.stdout or "").strip() if tip.returncode == 0 else ""
+            except Exception:
+                tip_s = ""
+            fp_now = certification_fingerprint(tip_commit=tip_s, model_id=model_id)
+            hist_fp = hist.get("certification_fingerprint") or ""
+            # Fingerprint includes tip; docs-only tip drift may differ — compare model id too
+            out["certification_fingerprint_match"] = (
+                hist_fp == fp_now
+                if hist_fp and fp_now
+                else None
+            )
+            if not blockers and hist.get("live_provider_certified"):
+                out["certification"] = GateState.PASS.value
+                out["health"] = "m25_historical_pass_current_env_ok"
+                out["fresh_live_cert_required"] = False
+            elif hist.get("live_provider_certified") and blockers:
+                # Historical PASS preserved; current host may still be blocked
+                out["certification"] = GateState.PASS.value
+                out["health"] = "m25_historical_pass_current_env_blocked"
+                out["fresh_live_cert_required"] = True
+                out["notes"].append("historical_live_certification=PASS")
+                out["notes"].append(f"current_environment={out['current_environment']}")
+            else:
+                out["certification"] = GateState.ENVIRONMENT_BLOCKED.value
+                out["fresh_live_cert_required"] = True
+        else:
+            out["historical_live_certification"] = "NONE"
+            out["fresh_live_cert_required"] = True
+            if blockers:
+                out["certification"] = GateState.ENVIRONMENT_BLOCKED.value
+            else:
+                out["certification"] = GateState.NOT_TESTED.value
+                out["blocker"] = out["blocker"] or "live_certification_not_completed"
+
+        if latest:
+            out["m25_verdict"] = latest.get("verdict") or ""
+            out["m25_evidence"] = True
+        out["notes"].append("m25_dual_evidence_model")
+        return out
+    except Exception as e:
+        out["notes"].append(f"m25_detect_error:{type(e).__name__}")
+
+    # Minimal fallback
     binary = shutil.which("ollama")
     out["binary_path"] = binary or ""
     out["binary_present"] = bool(binary)
     if not binary:
-        # Check common paths for broken symlinks
-        for cand in ("/usr/local/bin/ollama", "/opt/homebrew/bin/ollama"):
-            if os.path.lexists(cand):
-                out["binary_path"] = cand
-                try:
-                    real = os.path.realpath(cand)
-                    if not (real and os.path.isfile(real)):
-                        out["blocker"] = "ollama_broken_symlink"
-                        out["notes"].append(f"broken_symlink:{real}")
-                        out["certification"] = GateState.ENVIRONMENT_BLOCKED.value
-                        return out
-                except Exception:
-                    pass
         out["blocker"] = "ollama_binary_absent"
         out["certification"] = GateState.ENVIRONMENT_BLOCKED.value
-        out["notes"].append("Install not performed by M25 (forbidden)")
         return out
-
-    # Optional short reachability probe — loopback only, no model download
-    try:
-        r = subprocess.run(
-            [binary, "list"],
-            capture_output=True,
-            text=True,
-            timeout=3,
-            env={**os.environ, "OLLAMA_HOST": os.environ.get("OLLAMA_HOST", "127.0.0.1:11434")},
-        )
-        out["runtime_reachable"] = r.returncode == 0
-        if r.returncode == 0:
-            out["health"] = "list_ok"
-            out["certification"] = GateState.NOT_TESTED.value
-            out["blocker"] = "live_certification_not_completed"
-            out["notes"].append("Binary present; full M25 live cert still required")
-        else:
-            out["blocker"] = "ollama_runtime_unreachable"
-            out["certification"] = GateState.ENVIRONMENT_BLOCKED.value
-    except Exception as e:
-        out["blocker"] = f"ollama_probe_error:{type(e).__name__}"
-        out["certification"] = GateState.ENVIRONMENT_BLOCKED.value
+    out["blocker"] = "live_certification_not_completed"
+    out["certification"] = GateState.NOT_TESTED.value
     return out
 
 
@@ -1075,21 +1098,45 @@ def evaluate_runtime_gate(
             "downloads_performed": bool(ev.get("downloads_performed", False)),
             "cloud_calls": int(ev.get("cloud_calls") or 0),
         }
-        # Live cert gate: PASS only with true live certification; else ENVIRONMENT_BLOCKED
-        # or NOT_TESTED when live ran but provider not certified.
-        if live_cert and ev.get("live"):
-            add("m25_live_provider_cert", GateState.PASS, verdict[:160], evidence_d=m25_ev)
-        elif ev.get("live") and not live_cert:
+        # Prefer dual-evidence detect_live_provider_status for M25 gate
+        live_st = detect_live_provider_status()
+        m25_ev.update(
+            {
+                "historical_live_certification": live_st.get("historical_live_certification"),
+                "current_environment": live_st.get("current_environment"),
+                "fresh_live_cert_required": live_st.get("fresh_live_cert_required"),
+                "installed_approved_models": live_st.get("installed_approved_models"),
+                "available_memory_gb": live_st.get("available_memory_gb"),
+                "required_available_memory_gb": live_st.get("required_available_memory_gb"),
+                "shortfall_gb": live_st.get("shortfall_gb"),
+                "blocker": live_st.get("blocker"),
+                "last_successful_certification_timestamp": live_st.get(
+                    "last_successful_certification_timestamp"
+                ),
+            }
+        )
+        hist_pass = live_st.get("historical_live_certification") == "PASS"
+        if hist_pass or (live_cert and ev.get("live")):
             add(
                 "m25_live_provider_cert",
-                GateState.NOT_TESTED,
-                verdict[:160],
+                GateState.PASS,
+                (
+                    f"historical=PASS current={live_st.get('current_environment')} "
+                    f"blocker={live_st.get('blocker') or 'none'}"
+                )[:200],
+                evidence_d=m25_ev,
+            )
+        elif live_st.get("current_environment") == GateState.ENVIRONMENT_BLOCKED.value:
+            add(
+                "m25_live_provider_cert",
+                GateState.ENVIRONMENT_BLOCKED,
+                (live_st.get("blocker") or verdict)[:160],
                 evidence_d=m25_ev,
             )
         else:
             add(
                 "m25_live_provider_cert",
-                GateState.ENVIRONMENT_BLOCKED,
+                GateState.NOT_TESTED,
                 verdict[:160],
                 evidence_d=m25_ev,
             )

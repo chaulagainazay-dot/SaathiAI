@@ -1,17 +1,14 @@
 {
-  "schema": "m25.live_cert_report.v1",
-  "suite_version": "m25.live_cert.suite.v1",
-  "milestone": "M25",
-  "run_id": "828756b6d1db490fad629ba3111a28d7",
-  "started_at": "2026-07-17T11:18:00+00:00",
-  "finished_at": "2026-07-17T11:18:01+00:00",
-  "starting_commit": "285d95b5f2ee97fda172f1c136e0ee60a3b0ecba",
-  "tip_commit": "285d95b5f2ee97fda172f1c136e0ee60a3b0ecba",
+  "schema": "m25.latest_environment_observation.v1",
+  "recorded_at": "2026-07-17T11:18:01+00:00",
   "verdict": "M25 BLOCKED \u2014 LIVE LOCAL PROVIDER ENVIRONMENT UNAVAILABLE",
   "live": false,
   "live_provider_certified": false,
-  "configured_model_certified": false,
   "production_certified": false,
+  "blockers": [
+    "insufficient_model_memory_headroom",
+    "memory_pressure"
+  ],
   "environment": {
     "schema": "m25.environment_audit.v1",
     "timestamp": "2026-07-17T11:18:00+00:00",
@@ -67,103 +64,7 @@
       "notes": "M25 absolute rules forbid install/start/pull without explicit operator permission. LaunchAgent exists but service was not started."
     }
   },
-  "engines": [
-    {
-      "engine_id": "ollama",
-      "binary_path": "/usr/local/bin/ollama",
-      "endpoint": "http://127.0.0.1:11434",
-      "version": "",
-      "installed": true,
-      "running": true,
-      "classification": "CANONICAL_LOCAL",
-      "notes": []
-    },
-    {
-      "engine_id": "ollama",
-      "binary_path": "/opt/homebrew/bin/ollama",
-      "endpoint": "http://127.0.0.1:11434",
-      "version": "",
-      "installed": true,
-      "running": true,
-      "classification": "CANONICAL_LOCAL",
-      "notes": []
-    },
-    {
-      "engine_id": "llama.cpp",
-      "binary_path": "",
-      "endpoint": "",
-      "version": "",
-      "installed": false,
-      "running": false,
-      "classification": "UNAVAILABLE",
-      "notes": []
-    },
-    {
-      "engine_id": "mlx",
-      "binary_path": "",
-      "endpoint": "",
-      "version": "",
-      "installed": false,
-      "running": false,
-      "classification": "UNAVAILABLE",
-      "notes": []
-    }
-  ],
-  "models": [
-    {
-      "model_id": "qwen2.5:1.5b",
-      "engine_id": "ollama",
-      "digest": "",
-      "size_bytes": 0,
-      "family": "",
-      "parameter_scale": "~1.5B",
-      "quantization": "",
-      "context_limit": 0,
-      "resource_safe": true,
-      "selection_rank": 1,
-      "notes": []
-    }
-  ],
   "selected_model": {},
-  "hardware": {
-    "architecture": "arm64",
-    "platform_system": "Darwin",
-    "cpu_brand": "Apple M2",
-    "total_memory_gb": 8.0,
-    "available_memory_gb": 1.42,
-    "free_disk_gb": 79.17,
-    "total_disk_gb": 228.27,
-    "supported_runtimes": [
-      "ollama"
-    ],
-    "recommended_max_model_size_b": 3.0,
-    "safe_context_tokens": 4096,
-    "memory_safety_margin_gb": 2.0,
-    "disk_warning_gb": 25.0,
-    "unified_memory": true,
-    "dedicated_vram_gb": null,
-    "warnings": [
-      "memory pressure: available 1.42 GB is near safety margin 2.0 GB",
-      "8 GB class device: prefer \u22643B Q4 local models; avoid concurrent large loads"
-    ],
-    "source": "detected",
-    "downloads_performed": false
-  },
-  "durable_governance": {
-    "schema_ready": true,
-    "store_available": true,
-    "process_local_authority": false,
-    "daily_authority": "canonical_durable",
-    "daily_is_durable": true,
-    "ok": true
-  },
-  "residual": {
-    "exception_count": 0,
-    "expected": 0,
-    "unknown_count": 0,
-    "direct_provider_bypass_count": 0,
-    "production_certified_field": false
-  },
   "gates": [
     {
       "gate_id": "env_binary",
@@ -304,85 +205,8 @@
     }
   ],
   "live_cases": [],
-  "performance": {
-    "status": "ENVIRONMENT_BLOCKED",
-    "samples": 0,
-    "note": "no live measurements without provider"
-  },
-  "privacy": {
-    "raw_prompt_in_telemetry": false,
-    "raw_output_in_telemetry": false,
-    "canary_search_live": "NOT_RUN_ENV_BLOCKED",
-    "design": "privacy-safe events only; canary live check requires live path"
-  },
-  "security": {
-    "cloud_fallback_default": false,
-    "local_only_default_endpoint": true,
-    "allowed_hosts": [
-      "127.0.0.1",
-      "localhost",
-      "::1"
-    ],
-    "ssrf_openai_compat_policy": true,
-    "no_credentials_added": true
-  },
-  "chat": {
-    "status": "ENVIRONMENT_BLOCKED",
-    "governed_default": true,
-    "note": "M23 governed chat preserved; live e2e requires local provider"
-  },
-  "agent_research": {
-    "agent": "ENVIRONMENT_BLOCKED",
-    "research_grounding": "NOT_REQUIRED",
-    "note": "no live smoke without provider; cloud grounding not enabled"
-  },
-  "capability_matrix": {
-    "text": "ENVIRONMENT_BLOCKED",
-    "streaming": "ENVIRONMENT_BLOCKED",
-    "structured_output": "ENVIRONMENT_BLOCKED",
-    "tools": "ENVIRONMENT_BLOCKED",
-    "multilingual": "ENVIRONMENT_BLOCKED",
-    "context": "ENVIRONMENT_BLOCKED",
-    "stop_handling": "ENVIRONMENT_BLOCKED",
-    "output_limits": "ENVIRONMENT_BLOCKED"
-  },
-  "blockers": [
-    "insufficient_model_memory_headroom",
-    "memory_pressure"
-  ],
-  "notes": [
-    "no_automatic_download",
-    "no_automatic_install",
-    "no_automatic_service_start",
-    "duration_s=0.149"
-  ],
-  "downloads_performed": false,
-  "cloud_calls": 0,
-  "cloud_fallback": false,
-  "trading_guardian": "UNCHANGED / UNENGAGED / LIVE TRADING NOT AUTHORIZED",
-  "evidence_path": "",
-  "evidence_expires_at": "",
-  "privacy_status": "redacted_no_raw_prompts_or_outputs",
+  "tip_commit": "285d95b5f2ee97fda172f1c136e0ee60a3b0ecba",
+  "run_id": "828756b6d1db490fad629ba3111a28d7",
   "certification_fingerprint": "sha256:cfef06632b417882cdd6d074",
-  "latest_environment_observation": {
-    "path": "docs/evidence/m25/LATEST_ENVIRONMENT_OBSERVATION.json",
-    "verdict": "M25 BLOCKED \u2014 LIVE LOCAL PROVIDER ENVIRONMENT UNAVAILABLE",
-    "blockers": [
-      "insufficient_model_memory_headroom",
-      "memory_pressure"
-    ],
-    "recorded_at": "2026-07-17T11:18:01+00:00"
-  },
-  "last_successful_live_certification": {
-    "path": "docs/evidence/m25/LAST_SUCCESSFUL_LIVE_CERTIFICATION.json",
-    "recorded_at": "2026-07-17T11:07:02+00:00",
-    "live_provider_certified": true,
-    "selected_model": "qwen2.5:1.5b",
-    "certification_fingerprint": "sha256:3e3f2dc38a03ac2385f0b431",
-    "tip_commit": "285d95b5f2ee97fda172f1c136e0ee60a3b0ecba",
-    "run_id": "c555d2d6b26a446ea6610a3da5aeb3a8"
-  },
-  "historical_live_certification": "PASS",
-  "current_environment_blocked": true,
-  "fresh_live_cert_required": true
+  "privacy_status": "redacted_no_raw_prompts_or_outputs"
 }
