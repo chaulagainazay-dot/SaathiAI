@@ -2,7 +2,7 @@
 
 ## M21–M39 Master Program (2026-07-16)
 
-**Platform program status:** Phase 1 active — **M21.0–M21.4 COMPLETE WITH LIMITATIONS**; full M21 not production-certified.
+**Platform program status:** Phase 1 active — **M21.0–M21.4** and **M22 provider migration COMPLETE WITH LIMITATIONS**; not production-certified.
 Do not auto-run M21–M39 in one unattended block.
 
 Canonical docs:
@@ -33,7 +33,11 @@ Residual inventory UNKNOWN=0; chat compatibility adapter; `llm.generate` depreca
 
 ### M21.4 (Runtime Consolidation + Production-Configuration Gate) — COMPLETE WITH LIMITATIONS
 
-Canonical `runtime_gate`; release_check integrated into ops release gate; residual manifest validated (count frozen 7); kill-switch matrix; fake/test isolation; certification invariant (`production_certified=false` without live+suite evidence); full suite attempted. Tests: `tests/test_m21_4_runtime_consolidation.py`. Docs: `docs/M21_4_*`. Live Ollama ENVIRONMENT_BLOCKED; do not start M22 without operator authorize.
+Canonical `runtime_gate`; release_check integrated into ops release gate; residual manifest validated (count frozen 7 at close); kill-switch matrix; fake/test isolation; certification invariant (`production_certified=false` without live+suite evidence); full suite attempted. Tests: `tests/test_m21_4_runtime_consolidation.py`. Docs: `docs/M21_4_*`. Live Ollama ENVIRONMENT_BLOCKED.
+
+### M22 (Governed Provider Implementation + Legacy SDK Migration) — COMPLETE WITH LIMITATIONS
+
+Provider HTTP/SDK moved under `saathi.inference.adapters` (`http_providers`, `grounding`, `agent_provider`). `llm.generate` pure facade; agent/research facades thin; residual EXPLICIT_LEGACY_EXCEPTION=0; manifest exceptions=3 (chat M23, engines M24). Release-check facade purity. Tests: `tests/test_m22_provider_migration.py`. Docs: `docs/M22_*`. Cloud fallback off; production_certified=false; do not start M23 without operator authorize.
 
 ### Milestone-number namespaces (mandatory)
 
@@ -43,8 +47,8 @@ Canonical `runtime_gate`; release_check integrated into ops release gate; residu
 | **PRODUCT/IELTSAlert M21.x** | Separate product repo `/Users/macbookpro/Saathi/apps/pielts` — **not** platform M21 |
 | **M20.10 options A/B/C** | Historical handoff choices; remapped in program roadmap (A→env unlock/M24 evidence; B→M21.0 slice; C→M30/PRODUCT) |
 
-Platform Phase 1 target: **M21** Runtime Consolidation → **M22** Voice/durable agents → **M23** Multi-user isolation → **M24** Core runtime certification.
-Next recommended: **M22** provider implementation / legacy SDK migration (operator authorize only). Do not auto-start M22/M23/M24.
+Platform Phase 1 target: **M21** Runtime Consolidation → **M22** Provider migration (done) → **M23** Chat governed default → **M24** Durable governance + certification evidence.
+Next recommended: **M23** chat full governed default (operator authorize only). Do not auto-start M23/M24.
 
 Prior series: **M20 COMPLETE WITH LIMITATIONS** (live local inference still environment-blocked).
 

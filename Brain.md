@@ -28,6 +28,16 @@ If the answer is the latter, the feature belongs in the product layer, not the p
 
 ## 3. Current Platform State
 
+### Platform M22 governed provider implementation (2026-07-17)
+
+* **Provider HTTP/SDK execution** confined to `saathi/inference/adapters/` (`http_providers`, `grounding`, `agent_provider`, existing engines).
+* **`llm.generate`** is a pure compatibility facade (ModelRouter + `invoke_family`); no provider URLs or keys in `saathi/llm.py`.
+* **Agent** constructs no OpenAI/Anthropic clients; uses `build_agent_session`.
+* **Research grounding** uses `adapters.grounding.grounded_generate` only.
+* **Residual EXPLICIT_LEGACY_EXCEPTION count:** 0 in path table; manifest exceptions reduced to **3** (chat M23; cloud/openai_compat M24).
+* **Release-check** enforces facade purity + M22 credential scan; `production_certified=false`.
+* **Local-first**; cloud fallback off; Trading Guardian unengaged; no live provider cert in M22.
+
 ### Platform M21.4 runtime consolidation & production gate (2026-07-17)
 
 * **Canonical production-configuration gate:** `python -m saathi.inference.runtime_gate` (also `python -m saathi.m20_console runtime-readiness`).
@@ -35,7 +45,7 @@ If the answer is the latter, the feature belongs in the product layer, not the p
 * **Release-check integrated** into `saathi.ops.release_gate` — inference architecture failure blocks canonical release.
 * **Certification invariant:** `production_certified=false` unless every mandatory gate is genuinely PASS (live provider, full suite, secret scan, critical checks included). Partial/static evidence cannot certify.
 * **Gate states** include PASS/FAIL/BLOCKED/NOT_TESTED/ENVIRONMENT_BLOCKED — never collapse NOT_TESTED or ENVIRONMENT_BLOCKED to PASS.
-* **Residual exceptions** frozen at 7; validated structure; not expanded.
+* **Residual exceptions** (post-M22): 3 remaining compatibility wraps; M21.4 freeze was 7.
 * **Kill-switch matrix** covers chat, llm.generate, agent, server/research tools, cheap_ask, prose_clean, gateway.
 * **Local-first**; cloud fallback default off; live Ollama typically ENVIRONMENT_BLOCKED without operator install; Trading Guardian unengaged.
 

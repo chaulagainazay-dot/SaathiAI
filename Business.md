@@ -1,5 +1,12 @@
 # SaathiOS — Business
 
+## Governed providers (M22)
+
+* Provider HTTP/SDK execution for core inference facades is confined to adapter modules — reduces credential scatter and unauthorized direct cloud calls.
+* `llm.generate`, agent, and research remain publicly compatible while transports are governed.
+* Residual legacy exception surface shrunk (chat still M23; durable cost/circuit M24).
+* No deployment in M22; no paid provider enablement; `production_certified=false`.
+
 ## Runtime readiness gate (M21.4)
 
 * Consolidated production-configuration gate answers readiness without claiming production certification.
@@ -14,7 +21,7 @@
 * Compatibility adapters keep chat/tools behavior stable while request construction is governed.
 * Transitional unlabeled callers no longer accepted in any environment.
 * No paid provider enablement; no production deployment; `production_certified=false`.
-* Remaining operational limitation: some legacy sinks (HTTP generate, agent SDK, research grounding) expire M22/M23.
+* ~~HTTP generate / agent SDK / research grounding residuals~~ closed in **M22**; chat remains M23.
 
 ## Inference cost containment (M21.2)
 
