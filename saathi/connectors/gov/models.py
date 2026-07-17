@@ -65,12 +65,16 @@ class AuthMode(str, Enum):
 
 @dataclass
 class ConnectorManifest:
-    """Declarative connector contract — no hidden behavior."""
+    """Declarative connector contract — no hidden behavior (M27 + M29 identity).
+
+    M29 adds trust, capability classes, health/readiness, dependencies,
+    versioning/deprecation, and explicit side-effect/incident/auth metadata.
+    """
 
     connector_id: str
     version: str = "1"
     kind: ConnectorKind = ConnectorKind.HTTP
-    capabilities: tuple[str, ...] = ()
+    capabilities: tuple[str, ...] = ()  # often operation aliases (M27 compat)
     permissions: tuple[str, ...] = ()
     auth_mode: AuthMode = AuthMode.NONE
     auth_env_names: tuple[str, ...] = ()  # names only — never values
@@ -87,6 +91,61 @@ class ConnectorManifest:
     cloud: bool = False
     trading: bool = False
     description: str = ""
+    # ── M29 identity / trust ─────────────────────────────────────────────
+    display_name: str = ""
+    owner: str = "saathi"
+    adapter_type: str = ""  # defaults from kind
+    trust_level: str = "INTERNAL"
+    capability_classes: tuple[str, ...] = ()  # READ, WRITE, HTTP, …
+    side_effect_classes: tuple[str, ...] = ()
+    required_approvals: tuple[str, ...] = ()
+    secret_references: tuple[str, ...] = ()  # names/refs only — never values
+    retry_policy: dict[str, Any] = field(default_factory=dict)
+    incident_policy: str = "m26"  # m26 | default
+    health_policy: dict[str, Any] = field(default_factory=dict)
+    readiness_policy: dict[str, Any] = field(default_factory=dict)
+    dependencies: tuple[str, ...] = ()
+    supported_environments: tuple[str, ...] = ("local", "dev", "test")
+    created_at: str = ""
+    updated_at: str = ""
+    deprecated: bool = False
+    deprecated_at: str = ""
+    replacement_connector: str = ""
+    lifecycle_state: str = ""  # optional declared target; runtime owns actual lifecycle
+
+    def __post_init__(self) -> None:
+        if not self.adapter_type:
+            self.adapter_type = self.kind.value if isinstance(self.kind, ConnectorKind) else str(self.kind or "http")
+        if not self.display_name:
+            self.display_name = self.connector_id
+        if not self.retry_policy:
+            self.retry_policy = {"max_retries": int(self.max_retries)}
+        if not self.health_policy:
+            self.health_policy = {
+                "startup_check": "validate",
+                "health_check": "health",
+            }
+        if not self.readiness_policy:
+            self.readiness_policy = {
+                "readiness_check": "health",
+                "requires_lifecycle": ["READY", "DEGRADED"],
+            }
+        if not self.supported_operations and self.capabilities:
+            self.supported_operations = tuple(self.capabilities)
+        if isinstance(self.capability_classes, list):
+            self.capability_classes = tuple(self.capability_classes)
+        if isinstance(self.dependencies, list):
+            self.dependencies = tuple(self.dependencies)
+        if isinstance(self.side_effect_classes, list):
+            self.side_effect_classes = tuple(self.side_effect_classes)
+        if isinstance(self.required_approvals, list):
+            self.required_approvals = tuple(self.required_approvals)
+        if isinstance(self.secret_references, list):
+            self.secret_references = tuple(self.secret_references)
+        if isinstance(self.supported_environments, list):
+            self.supported_environments = tuple(self.supported_environments)
+        if isinstance(self.trust_level, Enum):
+            self.trust_level = self.trust_level.value
 
     def to_dict(self) -> dict[str, Any]:
         d = asdict(self)
@@ -96,7 +155,7 @@ class ConnectorManifest:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "ConnectorManifest":
-        kind = data.get("kind") or "http"
+        kind = data.get("kind") or data.get("adapter_type") or "http"
         auth = data.get("auth_mode") or "none"
         return cls(
             connector_id=str(data["connector_id"]),
@@ -119,6 +178,26 @@ class ConnectorManifest:
             cloud=bool(data.get("cloud")),
             trading=bool(data.get("trading")),
             description=str(data.get("description") or ""),
+            display_name=str(data.get("display_name") or ""),
+            owner=str(data.get("owner") or "saathi"),
+            adapter_type=str(data.get("adapter_type") or ""),
+            trust_level=str(data.get("trust_level") or "INTERNAL"),
+            capability_classes=tuple(data.get("capability_classes") or ()),
+            side_effect_classes=tuple(data.get("side_effect_classes") or ()),
+            required_approvals=tuple(data.get("required_approvals") or ()),
+            secret_references=tuple(data.get("secret_references") or ()),
+            retry_policy=dict(data.get("retry_policy") or {}),
+            incident_policy=str(data.get("incident_policy") or "m26"),
+            health_policy=dict(data.get("health_policy") or {}),
+            readiness_policy=dict(data.get("readiness_policy") or {}),
+            dependencies=tuple(data.get("dependencies") or ()),
+            supported_environments=tuple(data.get("supported_environments") or ("local", "dev", "test")),
+            created_at=str(data.get("created_at") or ""),
+            updated_at=str(data.get("updated_at") or ""),
+            deprecated=bool(data.get("deprecated")),
+            deprecated_at=str(data.get("deprecated_at") or ""),
+            replacement_connector=str(data.get("replacement_connector") or ""),
+            lifecycle_state=str(data.get("lifecycle_state") or ""),
         )
 
 

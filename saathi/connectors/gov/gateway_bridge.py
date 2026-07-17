@@ -328,6 +328,26 @@ def governed_connector_handler(intent, rec) -> dict:
         request.approval_token = rec.approval_id
 
     rt = get_runtime()
+    # M29: resolve connector identity only through registry (never import/path/filename)
+    try:
+        rt.registry.resolve(request.connector_id)
+    except KeyError:
+        cr = ConnectorResult(
+            ok=False,
+            connector_id=request.connector_id,
+            operation=request.operation,
+            status="denied",
+            detail="connector_not_registered",
+            bypass=False,
+            request_id=request.request_id,
+            executed=False,
+            side_effect_class=sec.value,
+            error_code="connector_not_registered",
+            safe_message="unknown or unregistered connector",
+            policy_state="deny",
+        )
+        return _result_from_connector(cr)
+
     # Grant approval token into runtime store when gateway already approved
     if request.approval_token:
         try:
@@ -338,6 +358,30 @@ def governed_connector_handler(intent, rec) -> dict:
     appr = getattr(rec, "approval", "") or ""
     if appr in ("automatic", "approved") and not request.approval_token:
         # For EXTERNAL_MUTATION the gateway would not auto-approve without binding
+        pass
+
+    # Trust-aware approval floor (caller cannot lower)
+    try:
+        from saathi.connectors.registry.trust import approval_floor_for_trust
+        insp = rt.registry.inspect(request.connector_id)
+        floor = approval_floor_for_trust(insp.get("trust_level") or "INTERNAL")
+        if floor == "DENIED":
+            cr = ConnectorResult(
+                ok=False,
+                connector_id=request.connector_id,
+                operation=request.operation,
+                status="denied",
+                detail="trust:PROHIBITED",
+                bypass=False,
+                request_id=request.request_id,
+                executed=False,
+                side_effect_class=SideEffectClass.PROHIBITED.value,
+                error_code="PROHIBITED",
+                safe_message="connector trust level PROHIBITED",
+                policy_state="deny",
+            )
+            return _result_from_connector(cr)
+    except Exception:
         pass
 
     cr = rt.execute(request)

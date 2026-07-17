@@ -19,7 +19,6 @@ from saathi.connectors.gov.models import (
     AuthMode,
     ConnectorKind,
     ConnectorLifecycle,
-    ConnectorManifest,
     ConnectorRequest,
     ConnectorResult,
 )
@@ -203,71 +202,36 @@ class GovernedConnectorRuntime:
         return True
 
     def register_builtin_adapters(self) -> list[str]:
-        """Register default HTTP/MCP/browser/local_tool connectors (no live accounts)."""
+        """Bind static M29 manifests to adapters (identity is not runtime-generated)."""
         from saathi.connectors.gov.adapters.browser import BrowserAdapter
         from saathi.connectors.gov.adapters.http import HttpAdapter
         from saathi.connectors.gov.adapters.local_tool import LocalToolAdapter
         from saathi.connectors.gov.adapters.mcp import McpAdapter
+        from saathi.connectors.registry.builtins import builtin_manifests
 
-        specs = [
-            (
-                ConnectorManifest(
-                    connector_id="gov.http",
-                    kind=ConnectorKind.HTTP,
-                    capabilities=(
-                        "http_request", "get", "post", "put", "patch", "delete",
-                        "health", "validate",
-                    ),
-                    supported_operations=(
-                        "http_request", "get", "post", "put", "patch", "delete",
-                        "health", "validate",
-                    ),
-                    allowed_domains=("127.0.0.1", "localhost", "example.com"),
-                    timeout_seconds=10.0,
-                    max_retries=1,
-                    description="Governed HTTP adapter",
-                ),
-                HttpAdapter(),
-            ),
-            (
-                ConnectorManifest(
-                    connector_id="gov.mcp",
-                    kind=ConnectorKind.MCP,
-                    capabilities=("health", "validate", "status", "inventory"),
-                    supported_operations=("health", "validate", "status", "inventory"),
-                    auth_mode=AuthMode.NONE,
-                    description="MCP governance reuse",
-                ),
-                McpAdapter(),
-            ),
-            (
-                ConnectorManifest(
-                    connector_id="gov.browser",
-                    kind=ConnectorKind.BROWSER,
-                    capabilities=("health", "validate", "policy_check", "navigate"),
-                    supported_operations=("health", "validate", "policy_check", "navigate"),
-                    description="Browser governance reuse",
-                ),
-                BrowserAdapter(),
-            ),
-            (
-                ConnectorManifest(
-                    connector_id="gov.local_tool",
-                    kind=ConnectorKind.LOCAL_TOOL,
-                    capabilities=("git_rev_parse", "git_status_short", "python_version", "echo_safe", "health", "validate"),
-                    supported_operations=("git_rev_parse", "git_status_short", "python_version", "echo_safe", "health", "validate"),
-                    auth_mode=AuthMode.NONE,
-                    description="Allowlisted local tools",
-                ),
-                LocalToolAdapter(),
-            ),
-        ]
+        adapters = {
+            "gov.http": HttpAdapter(),
+            "gov.mcp": McpAdapter(),
+            "gov.browser": BrowserAdapter(),
+            "gov.local_tool": LocalToolAdapter(),
+        }
         ids = []
-        for manifest, adapter in specs:
-            self.registry.register(manifest, adapter=adapter)
+        for manifest in builtin_manifests():
+            adapter = adapters.get(manifest.connector_id)
+            # allow_replace so re-bootstrap is idempotent in CLI/tests
+            self.registry.register(manifest, adapter=adapter, allow_replace=True)
             self.registry.validate(manifest.connector_id)
             self.registry.mark_ready(manifest.connector_id)
-            self._emit("connector.registered", {"connector_id": manifest.connector_id, "kind": manifest.kind.value})
+            self._emit(
+                "connector.registered",
+                {
+                    "connector_id": manifest.connector_id,
+                    "kind": manifest.kind.value,
+                    "trust_level": getattr(manifest, "trust_level", "INTERNAL"),
+                    "version": manifest.version,
+                    "identity_source": "registry_manifest",
+                },
+            )
             self._emit("connector.ready", {"connector_id": manifest.connector_id})
             ids.append(manifest.connector_id)
         return ids
@@ -393,16 +357,41 @@ class GovernedConnectorRuntime:
                         return self._finalize(request, replay, t0)
             idem_state = "new"
 
-        rec = self.registry.get(request.connector_id)
-        if not rec:
+        # M29: identity only via registry resolve (never import path / filename)
+        try:
+            rec = self.registry.resolve(request.connector_id)
+        except KeyError:
             res = ConnectorResult(
                 ok=False, connector_id=request.connector_id, operation=request.operation,
                 status="denied", detail="connector_not_registered", bypass=False,
                 side_effect_class=sec.value, error_code="connector_not_registered",
+                safe_message="unknown or unregistered connector",
             )
             return self._finalize(request, res, t0, incident="unavailable")
 
         manifest = rec.manifest
+        # Trust PROHIBITED fails closed regardless of caller
+        if str(getattr(manifest, "trust_level", "")).upper() == "PROHIBITED":
+            return self._finalize(request, ConnectorResult(
+                ok=False, connector_id=request.connector_id, operation=request.operation,
+                status="denied", detail="trust:PROHIBITED", bypass=False,
+                side_effect_class=SideEffectClass.PROHIBITED.value,
+                error_code="PROHIBITED", safe_message="connector trust level PROHIBITED",
+            ), t0, incident="policy_violation")
+        if getattr(manifest, "deprecated", False) and request.operation not in (
+            "health", "validate", "status",
+        ):
+            # Deprecated connectors: read-only health only; mutations denied
+            if sec is not SideEffectClass.READ_ONLY:
+                return self._finalize(request, ConnectorResult(
+                    ok=False, connector_id=request.connector_id, operation=request.operation,
+                    status="denied", detail="connector_deprecated", bypass=False,
+                    side_effect_class=sec.value, error_code="connector_deprecated",
+                    safe_message=(
+                        f"deprecated; use {getattr(manifest, 'replacement_connector', '') or 'replacement'}"
+                    ),
+                ), t0)
+
         if getattr(manifest, "trading", False):
             return self._finalize(request, ConnectorResult(
                 ok=False, connector_id=request.connector_id, operation=request.operation,
@@ -734,16 +723,19 @@ class GovernedConnectorRuntime:
 
     def status(self) -> dict[str, Any]:
         return {
-            "schema": "m28.connector_runtime.v1",
+            "schema": "m29.connector_runtime.v1",
             "mode": self._mode.value,
             "production_certified": bool(self.production_certified_probe()),
             "connectors": [r.to_dict() for r in self.registry.all_records()],
+            "registry_ids": self.registry.list_ids(),
             "events_buffered": len(self._events),
             "cloud_fallback": False,
             "trading_guardian": "UNCHANGED_UNENGAGED",
             "privacy_safe": True,
             "default_mode": "OFF",
             "m28": True,
+            "m29": True,
+            "identity_resolution": "registry_only",
         }
 
 
