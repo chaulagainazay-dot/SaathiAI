@@ -2,8 +2,8 @@
   "schema_version": "1",
   "repository": "SaathiOS",
   "branch": "milestone/m7-security-engine",
-  "current_head": "232ff78",
-  "active_milestone": "M23",
+  "current_head": "dfb85b5",
+  "active_milestone": null,
   "completed_milestones": [
     "M20.0",
     "M20.1",
@@ -32,9 +32,9 @@
     "M22_live_ollama_cert",
     "M23_live_ollama_cert"
   ],
-  "milestone_verdict": "M23 COMPLETE WITH LIMITATIONS — GOVERNED CHAT DEFAULT; PRODUCTION NOT CERTIFIED",
-  "session_verdict": "M23 COMPLETE WITH LIMITATIONS — NOT PRODUCTION CERTIFIED",
-  "next_milestone": "M24 (operator authorize only) — durable circuit/cost + engine residuals",
+  "milestone_verdict": "M23 COMPLETE WITH LIMITATIONS \u2014 GOVERNED CHAT DEFAULT; PRODUCTION NOT CERTIFIED",
+  "session_verdict": "M23 COMPLETE WITH LIMITATIONS \u2014 NOT PRODUCTION CERTIFIED",
+  "next_milestone": "M24 (operator authorize only) \u2014 durable circuit/cost + engine residuals",
   "stop_reason": "M23 bounded slice complete; do not auto-start M24/M25",
   "m23": {
     "modules": [
@@ -65,5 +65,10 @@
   "session_id": "m23-2026-07-17",
   "actor": "grok-master-controller",
   "start_commit": "232ff78",
-  "production_certified": false
+  "production_certified": false,
+  "m23_commits": [
+    "ecc7ae1",
+    "dfb85b5"
+  ],
+  "m23_tip": "dfb85b5b183447e0033ad14ce8e5eb43c969b48b"
 }
