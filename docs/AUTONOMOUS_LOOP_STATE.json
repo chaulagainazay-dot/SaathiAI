@@ -2,7 +2,7 @@
   "schema_version": "1",
   "repository": "SaathiOS",
   "branch": "milestone/m7-security-engine",
-  "current_head": "PENDING_TIP",
+  "current_head": "c194554",
   "active_milestone": null,
   "completed_milestones": [
     "M20.0",
@@ -36,8 +36,8 @@
     "M24_live_ollama_cert",
     "M25_live_ollama_cert"
   ],
-  "milestone_verdict": "M25 BLOCKED — LIVE LOCAL PROVIDER ENVIRONMENT UNAVAILABLE",
-  "session_verdict": "M25 BLOCKED — ENVIRONMENT; PRODUCTION NOT CERTIFIED",
+  "milestone_verdict": "M25 BLOCKED \u2014 LIVE LOCAL PROVIDER ENVIRONMENT UNAVAILABLE",
+  "session_verdict": "M25 BLOCKED \u2014 ENVIRONMENT; PRODUCTION NOT CERTIFIED",
   "next_milestone": "M26 (operator authorize only) or operator unlock Ollama then re-run M25",
   "stop_reason": "M25 bounded slice complete with ENVIRONMENT_BLOCKED live cert; do not auto-start M26",
   "m25": {
@@ -63,5 +63,10 @@
   "session_id": "m25-2026-07-17",
   "actor": "grok-master-controller",
   "start_commit": "e9571f3",
-  "production_certified": false
+  "production_certified": false,
+  "m25_tip": "c194554e35deb1a0069bf0c3ad118180fe83614d",
+  "m25_commits": [
+    "c194554"
+  ],
+  "full_suite": "3085 passed, 1 skipped, 0 failed"
 }
