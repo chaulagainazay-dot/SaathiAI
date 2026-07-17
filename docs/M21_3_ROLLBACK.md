@@ -2,12 +2,17 @@
 
 Restore **M21.2 checkpoint** content (`32f0d31`) by reverting **only** M21.3 commits (newest first).
 
+M21.3 tip at close: `32b7a1d` (includes this rollback doc). Feature commit: `30eb5bc`.
+
 ```bash
 cd /Users/macbookpro/SaathiAI
 git checkout milestone/m7-security-engine
 git pull --ff-only origin milestone/m7-security-engine
 
-# M21.3 commits newest-first (feature + docs):
+# Revert every commit after M21.2 tip (newest first). Adjust tip SHA if more
+# M21.3 docs commits land after this file.
+git log --oneline 32f0d31..HEAD
+git revert --no-edit 32b7a1d
 git revert --no-edit 739192e
 git revert --no-edit ea7a0e8
 git revert --no-edit 692e4e7
