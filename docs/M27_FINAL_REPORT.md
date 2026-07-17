@@ -14,7 +14,7 @@ adapters, focused tests, and documentation. No live accounts, no cloud enablemen
 | Item | Value |
 |------|-------|
 | Start HEAD | `8d938c3` |
-| Ending HEAD | `dfebb1d` |
+| Ending HEAD | `cef4b6b` |
 | Branch | `milestone/m7-security-engine` |
 | Full suite | 3195 passed, 1 skipped, 0 failed |
 | production_certified | true (computed) |
