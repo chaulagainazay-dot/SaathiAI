@@ -1,0 +1,3 @@
+{"ts": "2026-07-17T12:15:17+00:00", "from": "DRAINING", "to": "OFF", "reason": "operator_rollback", "privacy_safe": true}
+{"ts": "2026-07-17T12:27:28+00:00", "from": "OFF", "to": "DRAINING", "reason": "drain_while_stopped", "privacy_safe": true}
+{"ts": "2026-07-17T12:27:28+00:00", "from": "DRAINING", "to": "OFF", "reason": "operator_rollback", "privacy_safe": true}

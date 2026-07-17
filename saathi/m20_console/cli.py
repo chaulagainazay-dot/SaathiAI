@@ -98,6 +98,11 @@ def main(argv: list[str] | None = None) -> int:
 
         _emit(runtime_readiness_snapshot())
         return 0
+    if cmd in ("inference-ops", "inference_ops", "m26-ops", "m26"):
+        from saathi.inference.ops.service import get_ops_service
+
+        _emit(get_ops_service().status())
+        return 0
     _emit({"error": "unknown_command", "cmd": cmd, "hint": "help"})
     return 2
 
