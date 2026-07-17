@@ -1,0 +1,10 @@
+{
+  "connector_id": "gov.browser",
+  "limitations": [
+    "dry_run_navigate",
+    "no_live_login",
+    "fake_session_path",
+    "sandbox_not_live_provider"
+  ],
+  "privacy_safe": true
+}

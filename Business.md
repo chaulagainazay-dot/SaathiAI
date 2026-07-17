@@ -1,6 +1,13 @@
 # SaathiOS — Business
 
+## Connector certification as trust prerequisite (M30)
+
+* Live customer integrations (Gmail, Calendar, GitHub, Slack, payments) remain **deferred** until connectors pass behavioral conformance and operators enable rollout deliberately.
+* **Connector certification** proves sandbox behavior matches declared manifests and governance — it is a prerequisite for trustworthy automation, not a go-live for external accounts.
+* Operational implication: product features that need connectors must not claim production integration readiness from M30 alone; M30 is infrastructure validation.
+
 ## Connector identity and trust (M29)
+
 
 * Every connector has a declared identity, trust level, and capability ceiling before any future SaaS work.
 * Unknown/unregistered connectors fail closed; trust is not caller-controlled.

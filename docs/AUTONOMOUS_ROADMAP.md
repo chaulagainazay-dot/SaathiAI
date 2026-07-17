@@ -57,7 +57,15 @@ M26 inference ops; M27 governed connector framework; M28 ExecutionGateway connec
 
 ### M29 — Connector identity + trust registry (COMPLETE)
 
-Canonical manifests, trust levels, capability ceilings, registry resolve-only identity, docs CLI. Tests: `tests/test_m29_connector_identity.py`. Docs: `docs/M29_*`. No live SaaS. **Do not auto-start M30.**
+Canonical manifests, trust levels, capability ceilings, registry resolve-only identity, docs CLI. Tests: `tests/test_m29_connector_identity.py`. Docs: `docs/M29_*`. No live SaaS.
+
+### M30 — Connector conformance + certification (COMPLETE WITH LIMITATIONS)
+
+Canonical conformance specification, certification state model, fingerprint/drift/revoke,
+credential-free sandbox harness, built-in assessments for `gov.http|mcp|browser|local_tool`.
+ACTIVE/CANARY require fresh connector certification (distinct from M25 production cert).
+Tests: `tests/test_m30_connector_conformance.py`. Docs: `docs/M30_*`. Evidence: `docs/evidence/m30/`.
+Default connector rollout remains OFF. No live SaaS/OAuth. **Do not auto-start M31.**
 
 ### Milestone-number namespaces (mandatory)
 

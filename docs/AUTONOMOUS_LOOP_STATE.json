@@ -26,9 +26,10 @@
     "M26",
     "M27",
     "M28",
-    "M29"
+    "M29",
+    "M30"
   ],
-  "milestone_verdict": "M29 COMPLETE \u2014 connector identity, trust model, and registry",
+  "milestone_verdict": "M30 COMPLETE WITH LIMITATIONS \u2014 connector conformance + certification",
   "production_certified": true,
   "m29": {
     "module": "saathi.connectors.registry",
@@ -55,10 +56,27 @@
     "cloud_enabled": false,
     "trading_guardian": "UNCHANGED / UNENGAGED"
   },
-  "next_milestone": "M30 (operator authorize only)",
-  "stop_reason": "M29 complete; do not auto-start M30",
+  "next_milestone": "M31 (operator authorize only)",
+  "stop_reason": "M30 complete; do not auto-start M31",
   "trading_guardian": "UNCHANGED / UNENGAGED",
   "cloud_fallback": false,
   "residual_exceptions": 0,
-  "full_suite": "3247 passed, 1 skipped, 0 failed"
+  "full_suite": "3287 passed, 1 skipped, 0 failed",
+  "m30": {
+    "module": "saathi.connectors.conformance",
+    "states": {
+      "gov.http": "CERTIFIED_WITH_LIMITATIONS",
+      "gov.mcp": "CERTIFIED_WITH_LIMITATIONS",
+      "gov.browser": "CERTIFIED_WITH_LIMITATIONS",
+      "gov.local_tool": "CERTIFIED_WITH_LIMITATIONS"
+    },
+    "default_mode": "OFF",
+    "live_accounts": false,
+    "cloud_enabled": false,
+    "connector_bypasses": 0,
+    "connector_conformance_bypasses": 0,
+    "live_credentials_used": 0,
+    "trading_guardian": "UNCHANGED / UNENGAGED",
+    "full_suite": "3287 passed, 1 skipped, 0 failed"
+  }
 }

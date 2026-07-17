@@ -1,0 +1,9 @@
+{
+  "connector_id": "gov.local_tool",
+  "limitations": [
+    "allowlisted_ops_only",
+    "no_arbitrary_os_tools",
+    "sandbox_not_live_provider"
+  ],
+  "privacy_safe": true
+}

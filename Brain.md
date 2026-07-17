@@ -28,6 +28,18 @@ If the answer is the latter, the feature belongs in the product layer, not the p
 
 ## 3. Current Platform State
 
+### Platform M30 connector conformance and certification (2026-07-17)
+
+* **Module:** `saathi.connectors.conformance` — specification, sandbox harness, fingerprint, drift, revoke, CLI.
+* **Platform production certification (M25)** ≠ **connector behavioral certification (M30)**; both may be required for ACTIVE.
+* **States:** UNASSESSED → ASSESSING → CERTIFIED | CERTIFIED_WITH_LIMITATIONS | FAILED | ENVIRONMENT_BLOCKED; also STALE, REVOKED.
+* **Eligibility:** ACTIVE/CANARY require fresh CERTIFIED*; unassessed/failed/stale/revoked/env-blocked cannot activate.
+* **Built-ins assessed:** `gov.http`, `gov.mcp`, `gov.browser`, `gov.local_tool` → CERTIFIED_WITH_LIMITATIONS (sandbox ≠ live provider).
+* **Activation eligibility:** certification + production cert + readiness + policy + approval; default rollout remains OFF.
+* **Drift/revoke:** fingerprint change → STALE; revoke preserves evidence and blocks ACTIVE.
+* **Does not** enable live SaaS, OAuth, API keys, cloud inference, or Trading Guardian.
+* **M31:** operator authorize only.
+
 ### Platform M29 connector identity and trust registry (2026-07-17)
 
 * **What a connector is:** deterministic `ConnectorManifest` + registry resolve — never import path/filename.
@@ -36,7 +48,7 @@ If the answer is the latter, the feature belongs in the product layer, not the p
 * **Capability classes:** READ/WRITE/EXECUTE/HTTP/MCP/BROWSER/… cannot exceed trust.
 * **CLI:** `python -m saathi.connectors.registry docs` — catalog + trust/capability/rollout summaries.
 * **Does not** enable live SaaS, OAuth, API keys, cloud inference, or Trading Guardian.
-* **M30:** operator authorize only.
+* **M30:** completed (conformance + certification).
 
 ### Platform M28 canonical connector migration (2026-07-17)
 
@@ -53,7 +65,7 @@ If the answer is the latter, the feature belongs in the product layer, not the p
 * **Canonical module:** `saathi.connectors.gov` — single governed execute path for connector kinds.
 * **Lifecycle:** REGISTERED → VALIDATED → READY / DEGRADED / DISABLED / DRAINING / FAILED.
 * **Adapters:** HTTP (GET/POST/PUT/PATCH/DELETE), MCP (reuses `mcp_governance`), browser (reuses `saathi.browser`), local tools (allowlist only).
-* **Rollout:** inherits M26 modes; default OFF; ACTIVE requires production certification + READY connector.
+* **Rollout:** inherits M26 modes; default OFF; ACTIVE requires production certification + connector certification (M30) + READY connector.
 * **Security:** domain/op allowlists, secret redaction, no API keys in code, trading connectors forbidden.
 * **Does not** enable cloud inference, live OAuth, or new SaaS accounts.
 * **M28:** completed (migration + gateway enforcement).

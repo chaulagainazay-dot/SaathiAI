@@ -1,0 +1,9 @@
+{
+  "connector_id": "gov.mcp",
+  "limitations": [
+    "policy_inventory_only",
+    "no_external_mcp_server",
+    "sandbox_not_live_provider"
+  ],
+  "privacy_safe": true
+}

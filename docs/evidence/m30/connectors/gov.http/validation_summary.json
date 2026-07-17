@@ -1,0 +1,13 @@
+{
+  "schema": "m30.validation_summary.v1",
+  "connector_id": "gov.http",
+  "state": "CERTIFIED_WITH_LIMITATIONS",
+  "mandatory_passed": true,
+  "check_count": 45,
+  "failure_codes": [],
+  "bypass": false,
+  "live_credentials_used": 0,
+  "live_external_accounts": 0,
+  "trading_guardian": "UNCHANGED / UNENGAGED",
+  "privacy_safe": true
+}

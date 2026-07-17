@@ -1,0 +1,33 @@
+{
+  "schema": "m30.fingerprint_report.v1",
+  "connector_id": "gov.mcp",
+  "fingerprint": "28f7d49111fc7c8d80d774472ced2d3a98b5a51e142489a1042bd32686a4bfee",
+  "spec_version": "m30.conformance.v1",
+  "surface_paths": [
+    "saathi/connectors/gov/models.py",
+    "saathi/connectors/gov/runtime.py",
+    "saathi/connectors/gov/gateway_bridge.py",
+    "saathi/connectors/gov/policy.py",
+    "saathi/connectors/gov/side_effects.py",
+    "saathi/connectors/gov/redaction.py",
+    "saathi/connectors/gov/auth.py",
+    "saathi/connectors/gov/registry.py",
+    "saathi/connectors/gov/bypass_guard.py",
+    "saathi/connectors/gov/adapters/http.py",
+    "saathi/connectors/gov/adapters/mcp.py",
+    "saathi/connectors/gov/adapters/browser.py",
+    "saathi/connectors/gov/adapters/local_tool.py",
+    "saathi/connectors/registry/builtins.py",
+    "saathi/connectors/registry/trust.py",
+    "saathi/connectors/registry/capabilities.py",
+    "saathi/connectors/registry/validation.py",
+    "saathi/connectors/registry/deps.py",
+    "saathi/connectors/conformance/models.py",
+    "saathi/connectors/conformance/specification.py",
+    "saathi/connectors/conformance/assessor.py",
+    "saathi/connectors/conformance/sandbox.py",
+    "saathi/connectors/conformance/eligibility.py"
+  ],
+  "docs_excluded": true,
+  "privacy_safe": true
+}

@@ -1,0 +1,184 @@
+{
+  "schema": "m30.certification_registry.v1",
+  "connectors": {
+    "gov.browser": {
+      "connector_id": "gov.browser",
+      "state": "CERTIFIED_WITH_LIMITATIONS",
+      "fingerprint": "eefafd24400f690b5577b5c75059831e3b1e7a49b8bddf35d8b598c4806bd598",
+      "assessed_at": "2026-07-17T14:02:26+00:00",
+      "revoked_at": "",
+      "revoke_reason": "",
+      "limitations": [
+        "dry_run_navigate",
+        "no_live_login",
+        "fake_session_path",
+        "sandbox_not_live_provider"
+      ],
+      "failure_codes": [],
+      "evidence_dir": "/Users/macbookpro/SaathiAI/docs/evidence/m30/connectors/gov.browser",
+      "lease_id": "",
+      "lease_expires_at": 0.0,
+      "fixture": false,
+      "history": [
+        {
+          "event": "begin_assessment",
+          "from": "UNASSESSED",
+          "lease_id": "3ff3d67d5939",
+          "ts": 1784296866.5837362
+        },
+        {
+          "event": "complete_assessment",
+          "state": "CERTIFIED_WITH_LIMITATIONS",
+          "fingerprint": "eefafd24400f690b",
+          "ts": 1784296866.8059552
+        },
+        {
+          "event": "begin_assessment",
+          "from": "CERTIFIED_WITH_LIMITATIONS",
+          "lease_id": "c464a9d1754d",
+          "ts": 1784296945.931884
+        },
+        {
+          "event": "complete_assessment",
+          "state": "CERTIFIED_WITH_LIMITATIONS",
+          "fingerprint": "eefafd24400f690b",
+          "ts": 1784296946.158317
+        }
+      ]
+    },
+    "gov.http": {
+      "connector_id": "gov.http",
+      "state": "CERTIFIED_WITH_LIMITATIONS",
+      "fingerprint": "457f0f6afb86db6501497d145e20e3a6e304f805e2d5b8fddc80c9a304a681a2",
+      "assessed_at": "2026-07-17T14:02:25+00:00",
+      "revoked_at": "",
+      "revoke_reason": "",
+      "limitations": [
+        "fake_transport_only",
+        "no_public_internet_certification",
+        "sandbox_not_live_provider"
+      ],
+      "failure_codes": [],
+      "evidence_dir": "/Users/macbookpro/SaathiAI/docs/evidence/m30/connectors/gov.http",
+      "lease_id": "",
+      "lease_expires_at": 0.0,
+      "fixture": false,
+      "history": [
+        {
+          "event": "begin_assessment",
+          "from": "UNASSESSED",
+          "lease_id": "1b42edda1a67",
+          "ts": 1784296866.141152
+        },
+        {
+          "event": "complete_assessment",
+          "state": "CERTIFIED_WITH_LIMITATIONS",
+          "fingerprint": "457f0f6afb86db65",
+          "ts": 1784296866.3632052
+        },
+        {
+          "event": "begin_assessment",
+          "from": "CERTIFIED_WITH_LIMITATIONS",
+          "lease_id": "5dcbaa3ba787",
+          "ts": 1784296945.489656
+        },
+        {
+          "event": "complete_assessment",
+          "state": "CERTIFIED_WITH_LIMITATIONS",
+          "fingerprint": "457f0f6afb86db65",
+          "ts": 1784296945.711731
+        }
+      ]
+    },
+    "gov.local_tool": {
+      "connector_id": "gov.local_tool",
+      "state": "CERTIFIED_WITH_LIMITATIONS",
+      "fingerprint": "a8d04bab4abfe0d1e81bd13093413e5d0a56ea3c7bab517edf0b7fe545d371cf",
+      "assessed_at": "2026-07-17T14:02:26+00:00",
+      "revoked_at": "",
+      "revoke_reason": "",
+      "limitations": [
+        "allowlisted_ops_only",
+        "no_arbitrary_os_tools",
+        "sandbox_not_live_provider"
+      ],
+      "failure_codes": [],
+      "evidence_dir": "/Users/macbookpro/SaathiAI/docs/evidence/m30/connectors/gov.local_tool",
+      "lease_id": "",
+      "lease_expires_at": 0.0,
+      "fixture": false,
+      "history": [
+        {
+          "event": "begin_assessment",
+          "from": "UNASSESSED",
+          "lease_id": "9f82945f7ea0",
+          "ts": 1784296866.8075168
+        },
+        {
+          "event": "complete_assessment",
+          "state": "CERTIFIED_WITH_LIMITATIONS",
+          "fingerprint": "a8d04bab4abfe0d1",
+          "ts": 1784296867.025533
+        },
+        {
+          "event": "begin_assessment",
+          "from": "CERTIFIED_WITH_LIMITATIONS",
+          "lease_id": "9bcea2dfae23",
+          "ts": 1784296946.159949
+        },
+        {
+          "event": "complete_assessment",
+          "state": "CERTIFIED_WITH_LIMITATIONS",
+          "fingerprint": "a8d04bab4abfe0d1",
+          "ts": 1784296946.380784
+        }
+      ]
+    },
+    "gov.mcp": {
+      "connector_id": "gov.mcp",
+      "state": "CERTIFIED_WITH_LIMITATIONS",
+      "fingerprint": "28f7d49111fc7c8d80d774472ced2d3a98b5a51e142489a1042bd32686a4bfee",
+      "assessed_at": "2026-07-17T14:02:25+00:00",
+      "revoked_at": "",
+      "revoke_reason": "",
+      "limitations": [
+        "policy_inventory_only",
+        "no_external_mcp_server",
+        "sandbox_not_live_provider"
+      ],
+      "failure_codes": [],
+      "evidence_dir": "/Users/macbookpro/SaathiAI/docs/evidence/m30/connectors/gov.mcp",
+      "lease_id": "",
+      "lease_expires_at": 0.0,
+      "fixture": false,
+      "history": [
+        {
+          "event": "begin_assessment",
+          "from": "UNASSESSED",
+          "lease_id": "2e9d13dcba55",
+          "ts": 1784296866.364971
+        },
+        {
+          "event": "complete_assessment",
+          "state": "CERTIFIED_WITH_LIMITATIONS",
+          "fingerprint": "28f7d49111fc7c8d",
+          "ts": 1784296866.58227
+        },
+        {
+          "event": "begin_assessment",
+          "from": "CERTIFIED_WITH_LIMITATIONS",
+          "lease_id": "690c3da98d07",
+          "ts": 1784296945.7134771
+        },
+        {
+          "event": "complete_assessment",
+          "state": "CERTIFIED_WITH_LIMITATIONS",
+          "fingerprint": "28f7d49111fc7c8d",
+          "ts": 1784296945.930288
+        }
+      ]
+    }
+  },
+  "privacy_safe": true,
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

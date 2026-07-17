@@ -1,0 +1,9 @@
+{
+  "connector_id": "gov.http",
+  "limitations": [
+    "fake_transport_only",
+    "no_public_internet_certification",
+    "sandbox_not_live_provider"
+  ],
+  "privacy_safe": true
+}

@@ -1,11 +1,19 @@
 # SaathiOS Technical Debt / Known Gaps
 
-## Program note (M21–M39 / M29, 2026-07-17)
+## Program note (M21–M39 / M30, 2026-07-17)
 
-Platform program through **M29 connector identity + trust registry** (operator-authorized).
-M25 cert + M26 ops + M27 gov + M28 gateway enforcement remain canonical.
-**Do not auto-start M30.**
+Platform program through **M30 connector conformance + certification** (operator-authorized).
+M25 cert + M26 ops + M27 gov + M28 gateway + M29 identity remain canonical.
+**Do not auto-start M31.**
 Product IELTSAlert work uses **PRODUCT/IELTSAlert** numbering — not platform debt.
+
+### M30 residual / deferred
+- Sandbox certification ≠ live-provider certification (explicit limitation on all built-ins).
+- Live OAuth / SaaS accounts still deferred.
+- Infrastructure drivers outside M29/M30 built-in scope remain deferred.
+- Platform-wide HTTP scanning outside connector-owned paths remains future work.
+- Browser validation uses governed dry-run / policy path, not real external logins.
+- Host connector rollout remains OFF (by design).
 
 ### M29 residual / deferred
 - Live SaaS connector implementations (Gmail, GitHub, Calendar, Slack, Discord, Stripe)
