@@ -4,6 +4,7 @@ Levels: implemented < deterministic-tested < security/red-team-tested < live-tes
 
 | capability | maturity | evidence |
 |-----------|----------|----------|
+| Durable provider governance (M24) | deterministic-tested | SQLite circuit/cost/reservation; multi-process budget; residual exceptions=0; release/runtime M24 gates; production_certified=false |
 | Governed residual inference paths + release-check (M21.3) | deterministic-tested | residual inventory UNKNOWN=0; release_check pass; chat adapter; unknown caller fail-closed; live cert blocked |
 | Runtime consolidation + production-configuration gate (M21.4) | deterministic-tested | runtime_gate; release integrated; cert invariant false; kill matrix; live Ollama env-blocked |
 | ExecutionGateway / approval binding | live+red-team | M15/M15.2 gateway-routed, 78/78 red-team |
@@ -68,5 +69,6 @@ permissions (macOS TCC actuation), or credentials (authenticated cloud/browser).
 | M21–M39 master program init | documented (SOURCE_INSPECTED) | `docs/M21_39_MASTER_PROGRAM_*` + gate matrix; not production |
 | M21.0 runtime prod-config + provider policy | deterministic-tested | path inventory; prod_config validator; provider kill switches; gateway kill; `tests/test_m21_0_*`; not production; not full M21 |
 | M21.1 canonical request contract + residual controls | deterministic-tested | `validate_contract`; caller_policy; residual_paths; bypass_guard AST; gateway enforcement; legacy chat allowlisted; `tests/test_m21_1_*`; not production |
-| M21.2 provider availability / cost / failover / circuit | deterministic-tested | descriptors; availability; Decimal cost; failure taxonomy; circuit (process-local); cheap_ask proxy blocked; `tests/test_m21_2_*`; live Ollama blocked; not production |
+| M21.2 provider availability / cost / failover / circuit | deterministic-tested | descriptors; availability; Decimal cost; failure taxonomy; circuit (durable as of M24); cheap_ask proxy blocked; `tests/test_m21_2_*`; live Ollama blocked; not production |
+| M24 durable circuit/cost + engine consolidation | deterministic-tested | `governance_store`/`governance_service`; reservation protocol; recovery; cloud+openai_compat CANONICAL; `tests/test_m24_*`; residual exceptions=0 |
 | PRODUCT/IELTSAlert revenue (pielts M21.x) | product-repo pilot (out of band) | Separate repo `/Users/macbookpro/Saathi/apps/pielts`; **not** platform M21 |

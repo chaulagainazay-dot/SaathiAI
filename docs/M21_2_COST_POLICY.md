@@ -30,7 +30,6 @@ Local ollama: `ZERO_MARGINAL`.
 
 ## Daily budget
 
-`DailyCostStore` protocol + process-local `InMemoryDailyCostStore`.  
-**Not durable.** Durable accounting deferred (technical debt → M21.x/M24).
+`DailyCostStore` protocol. **M24:** production authority is `DurableDailyCostStore` over the governance store (reservations + settled usage). `InMemoryDailyCostStore` remains TEST_FAKE only.
 
-Do not claim durable daily budget enforcement.
+Reservation-before-execution and settle/release are the durable accounting path.

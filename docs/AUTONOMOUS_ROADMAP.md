@@ -41,7 +41,11 @@ Provider HTTP/SDK moved under `saathi.inference.adapters` (`http_providers`, `gr
 
 ### M23 — Full governed chat default (COMPLETE WITH LIMITATIONS)
 
-Canonical `saathi.chat.runtime` sole production chat path; ChatRequest + context builder + stream events; chat residual exception removed (manifest exceptions=2 → cloud/openai_compat M24); release/runtime M23 gates. Tests: `tests/test_m23_governed_chat_default.py`. Docs: `docs/M23_*`. production_certified=false; do not start M24 without operator authorize.
+Canonical `saathi.chat.runtime` sole production chat path; ChatRequest + context builder + stream events; chat residual exception removed (manifest exceptions=2 → cloud/openai_compat M24); release/runtime M23 gates. Tests: `tests/test_m23_governed_chat_default.py`. Docs: `docs/M23_*`. production_certified=false.
+
+### M24 — Durable circuit/cost + engine consolidation (COMPLETE WITH LIMITATIONS)
+
+Canonical `DurableGovernanceStore` (SQLite): circuit state, usage ledger, budget reservations, recovery, operator audit. Process-local circuit/cost no longer production authority. Cloud + OpenAI-compat residual exceptions removed (manifest exceptions=0). Tests: `tests/test_m24_durable_provider_governance.py`. Docs: `docs/M24_*`. production_certified=false; live Ollama still ENVIRONMENT_BLOCKED. Do not start M25 without operator authorize.
 
 ### Milestone-number namespaces (mandatory)
 
@@ -51,8 +55,8 @@ Canonical `saathi.chat.runtime` sole production chat path; ChatRequest + context
 | **PRODUCT/IELTSAlert M21.x** | Separate product repo `/Users/macbookpro/Saathi/apps/pielts` — **not** platform M21 |
 | **M20.10 options A/B/C** | Historical handoff choices; remapped in program roadmap (A→env unlock/M24 evidence; B→M21.0 slice; C→M30/PRODUCT) |
 
-Platform Phase 1 target: **M21** Runtime Consolidation → **M22** Provider migration (done) → **M23** Chat governed default (done) → **M24** Durable governance + certification evidence.
-Next recommended: **M24** durable circuit/cost + remaining engine residuals (operator authorize only). Do not auto-start M24/M25.
+Platform Phase 1 target: **M21** Runtime Consolidation → **M22** Provider migration (done) → **M23** Chat governed default (done) → **M24** Durable governance (done).
+Next recommended: **M25** only with operator authorize. Do not auto-start M25.
 
 Prior series: **M20 COMPLETE WITH LIMITATIONS** (live local inference still environment-blocked).
 

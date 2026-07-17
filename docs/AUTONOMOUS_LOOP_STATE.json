@@ -2,7 +2,7 @@
   "schema_version": "1",
   "repository": "SaathiOS",
   "branch": "milestone/m7-security-engine",
-  "current_head": "cb95a79",
+  "current_head": "a7c63c4",
   "active_milestone": null,
   "completed_milestones": [
     "M20.0",
@@ -21,7 +21,8 @@
     "M21.3",
     "M21.4",
     "M22",
-    "M23"
+    "M23",
+    "M24"
   ],
   "intentionally_skipped": [
     "M20.8"
@@ -30,48 +31,46 @@
     "M20.6_live_local_model",
     "M21.4_live_ollama_cert",
     "M22_live_ollama_cert",
-    "M23_live_ollama_cert"
+    "M23_live_ollama_cert",
+    "M24_live_ollama_cert"
   ],
-  "milestone_verdict": "M23 COMPLETE WITH LIMITATIONS \u2014 GOVERNED CHAT DEFAULT; PRODUCTION NOT CERTIFIED",
-  "session_verdict": "M23 COMPLETE WITH LIMITATIONS \u2014 NOT PRODUCTION CERTIFIED",
-  "next_milestone": "M24 (operator authorize only) \u2014 durable circuit/cost + engine residuals",
-  "stop_reason": "M23 bounded slice complete; do not auto-start M24/M25",
-  "m23": {
+  "milestone_verdict": "M24 COMPLETE WITH LIMITATIONS \u2014 DURABLE GOVERNANCE; PRODUCTION NOT CERTIFIED",
+  "session_verdict": "M24 COMPLETE WITH LIMITATIONS \u2014 NOT PRODUCTION CERTIFIED",
+  "next_milestone": "M25 (operator authorize only)",
+  "stop_reason": "M24 bounded slice complete; do not auto-start M25",
+  "m24": {
     "modules": [
-      "saathi/chat/request.py",
-      "saathi/chat/context.py",
-      "saathi/chat/stream_events.py",
-      "saathi/chat/runtime.py",
-      "saathi/inference/chat_adapter.py",
-      "saathi/chat/engine.py",
-      "saathi/chat/api.py",
-      "saathi/inference/release_check.py",
+      "saathi/inference/governance_store.py",
+      "saathi/inference/governance_service.py",
+      "saathi/inference/governance_clock.py",
+      "saathi/inference/governance_errors.py",
+      "saathi/inference/circuit_breaker.py",
+      "saathi/inference/cost_policy.py",
+      "saathi/inference/provider_governance.py",
       "saathi/inference/residual_paths.py",
+      "saathi/inference/release_check.py",
       "saathi/inference/runtime_gate.py",
-      "saathi/inference/caller_policy.py",
-      "saathi/repair/critical_checks.json"
+      "saathi/inference/adapters/cloud.py",
+      "saathi/inference/adapters/openai_compat.py"
     ],
-    "tests": "tests/test_m23_governed_chat_default.py",
-    "docs": "docs/M23_*",
-    "full_suite": "3034 passed, 1 skipped, 0 failed",
+    "tests": "tests/test_m24_durable_provider_governance.py",
+    "docs": "docs/M24_*",
+    "residual_exceptions_before": 2,
+    "residual_exceptions_after": 0,
     "limitations": [
-      "process-local circuit and cost (M24)",
-      "cloud + openai_compat residual engines (M24)",
       "live Ollama ENVIRONMENT_BLOCKED",
-      "production_certified=false"
+      "production_certified=false",
+      "single-host SQLite governance (not multi-region billing)",
+      "non-inference media/eval SDKs out of scope"
     ]
   },
-  "unrelated_untouched": "Trading Guardian; no merge/deploy; no model download; no M24",
-  "session_id": "m23-2026-07-17",
+  "unrelated_untouched": "Trading Guardian; no merge/deploy; no model download; no M25",
+  "session_id": "m24-2026-07-17",
   "actor": "grok-master-controller",
-  "start_commit": "232ff78",
+  "start_commit": "00bfae9",
   "production_certified": false,
-  "m23_commits": [
-    "ecc7ae1",
-    "dfb85b5",
-    "1879c7b",
-    "4d22208",
-    "cb95a79"
-  ],
-  "m23_tip": "cb95a7927f4bcb64303a1aaceeb352839a8bf4b7"
+  "m24_tip": "a7c63c473bbebccb0fffd4622e0226cd9f0e9e66",
+  "m24_commits": [
+    "a7c63c4"
+  ]
 }

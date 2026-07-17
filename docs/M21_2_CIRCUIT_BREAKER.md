@@ -21,4 +21,4 @@
 
 ## Persistence
 
-**Process-local only.** Restart clears state. Documented limitation (durable store deferred).
+**M24:** authoritative state is durable SQLite (`saathi.inference.governance_store`). Restart preserves OPEN/HALF_OPEN/CLOSED and failure counts. Process-local dicts are no longer production authority.

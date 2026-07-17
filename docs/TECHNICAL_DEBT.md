@@ -1,19 +1,32 @@
 # SaathiOS Technical Debt / Known Gaps
 
-## Program note (M21–M39 / M23, 2026-07-17)
+## Program note (M21–M39 / M24, 2026-07-17)
 
-Platform M21–M39 program; **M21.0–M21.4**, **M22**, and **M23 (governed chat default) COMPLETE WITH LIMITATIONS**.
-Next: **M24** (durable circuit/cost + remaining engine residuals) only with operator authorize. Not production certified.
+Platform M21–M39 program; **M21.0–M21.4**, **M22**, **M23**, and **M24 (durable governance) COMPLETE WITH LIMITATIONS**.
+Next: **M25** only with operator authorize. Not production certified.
 Product IELTSAlert work uses **PRODUCT/IELTSAlert** numbering — not platform debt.
+
+### M24 closed debt
+- ~~process-local circuit breaker authority~~ — **M24** `DurableGovernanceStore` / durable circuit rows.
+- ~~process-local daily cost authority~~ — **M24** reservations + `daily_spend_agg` + usage ledger.
+- ~~cloud engine residual exception~~ — **M24** CANONICAL adapter.
+- ~~openai_compat residual exception~~ — **M24** CANONICAL adapter + SSRF URL policy.
+- Inference residual exceptions **2 → 0**.
+
+### M24 residual / deferred
+- LOW: non-inference media/eval tools still hold provider SDKs (vision, voice, speaking_eval) — out of M24 scope.
+- LOW: distributed multi-region billing not in scope (single-host SQLite authority).
+- ENVIRONMENT_BLOCKED: live Ollama certification (binary absent on pilot host) — operator unlock.
+- `production_certified=false` until live + full suite certification evidence.
 
 ### M23 closed debt
 - ~~chat COMPATIBILITY_WRAPPED / legacy llm.generate sink~~ — **M23** canonical `saathi.chat.runtime`.
-- ~~chat residual exception `chat_engine_legacy_sink`~~ — **M23 removed** (exceptions 3→2).
+- ~~chat residual exception `chat_engine_legacy_sink`~~ — **M23 removed** (exceptions 3→2; M24 → 0).
 
-### M23 residual / deferred
-- MEDIUM: process-local circuit breaker only → **M24**.
-- MEDIUM: process-local daily cost accounting → **M24**.
-- MEDIUM: cloud + openai_compat engine residuals → **M24**.
+### M23 residual / deferred (updated by M24)
+- ~~MEDIUM: process-local circuit breaker only~~ → **M24 done**.
+- ~~MEDIUM: process-local daily cost accounting~~ → **M24 done**.
+- ~~MEDIUM: cloud + openai_compat engine residuals~~ → **M24 done**.
 - LOW: non-inference media/eval tools still hold provider SDKs (vision, voice, speaking_eval) — out of M23 scope.
 - ENVIRONMENT_BLOCKED: live Ollama certification (binary absent on pilot host) — operator unlock.
 
@@ -22,10 +35,10 @@ Product IELTSAlert work uses **PRODUCT/IELTSAlert** numbering — not platform d
 - ~~agent SDK clients residual~~ — **M22** moved to `adapters/agent_provider`.
 - ~~research Gemini grounding residual~~ — **M22** moved to `adapters/grounding`.
 
-### M22 residual / deferred (updated by M23)
+### M22 residual / deferred (updated by M24)
 - ~~DEFERRED_BY_SCOPE / MEDIUM: chat COMPATIBILITY_WRAPPED~~ → **M23 done**.
-- MEDIUM: process-local circuit breaker only → **M24**.
-- MEDIUM: process-local daily cost accounting → **M24**.
+- ~~MEDIUM: process-local circuit breaker only~~ → **M24 done**.
+- ~~MEDIUM: process-local daily cost accounting~~ → **M24 done**.
 - LOW: non-inference media/eval tools still hold provider SDKs (vision, voice, speaking_eval) — out of M22 scope.
 - ENVIRONMENT_BLOCKED: live Ollama certification (binary absent on pilot host) — operator unlock.
 
@@ -34,25 +47,25 @@ Product IELTSAlert work uses **PRODUCT/IELTSAlert** numbering — not platform d
 - ~~DEFERRED_BY_SCOPE / MEDIUM: agent SDK clients residual~~ → **M22 done**.
 - ~~DEFERRED_BY_SCOPE / MEDIUM: research Gemini grounding residual~~ → **M22 done**.
 - ~~DEFERRED_BY_SCOPE / MEDIUM: chat COMPATIBILITY_WRAPPED~~ → **M23 done**.
-- MEDIUM: process-local circuit breaker only → **M24**.
-- MEDIUM: process-local daily cost accounting → **M24**.
+- ~~MEDIUM: process-local circuit breaker only~~ → **M24 done**.
+- ~~MEDIUM: process-local daily cost accounting~~ → **M24 done**.
 - ENVIRONMENT_BLOCKED: live Ollama certification (binary absent on pilot host) — operator unlock.
-- LOW: full-suite outcome recorded in M21.4/M22/M23 validation docs.
+- LOW: full-suite outcome recorded in M21.4/M22/M23/M24 validation docs.
 
 ### M21.3 deferred debt (carry-forward)
 - ~~HIGH→MEDIUM: `llm.generate` HTTP DEFAULT_CALLERS~~ — **M22 done**.
 - ~~MEDIUM: agent.py multi-provider SDK clients~~ — **M22 done**.
 - ~~MEDIUM: research.py Gemini google_search grounding~~ — **M22 done**.
 - ~~MEDIUM: chat still COMPATIBILITY_WRAPPED~~ — **M23 done**.
-- MEDIUM: process-local circuit breaker only — durable store → **M24**.
-- MEDIUM: daily cost accounting not durable → **M24**.
-- ~~LOW: full repository test suite not run~~ — **M21.4/M22/M23 attempted**.
+- ~~MEDIUM: process-local circuit breaker only~~ — **M24 done**.
+- ~~MEDIUM: daily cost accounting not durable~~ — **M24 done**.
+- ~~LOW: full repository test suite not run~~ — **M21.4/M22/M23/M24 attempted**.
 - LOW: live Ollama still env-blocked (operator install).
 
 ### M21.2 deferred debt (carry-forward)
-- MEDIUM: process-local circuit breaker only — durable provider circuit store → M21.x/M24.
-- MEDIUM: daily cost accounting interface only — durable budget store → M21.x/M24.
-- ~~MEDIUM: residual direct paths~~ — **M21.3 classified/wrapped**; remaining exceptions expire M22/M23.
+- ~~MEDIUM: process-local circuit breaker only~~ — **M24 done**.
+- ~~MEDIUM: daily cost accounting interface only~~ — **M24 done**.
+- ~~MEDIUM: residual direct paths~~ — **M21.3 classified/wrapped**; remaining exceptions expire M22/M23/M24.
 - ~~LOW: transitional unknown~~ — **M21.3 FORBIDDEN/disabled**.
 - LOW: live health probes optional/injectable — live cert remains env-blocked (Ollama).
 
