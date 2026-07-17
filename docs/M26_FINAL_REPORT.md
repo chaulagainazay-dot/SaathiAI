@@ -15,6 +15,7 @@ may be ENVIRONMENT_BLOCKED while `production_certified` remains true and mode st
 | Item | Value |
 |------|-------|
 | Start HEAD | `d543c9e` |
+| Ending HEAD | `6e78496` |
 | Branch | `milestone/m7-security-engine` |
 | Full suite | 3163 passed, 1 skipped, 0 failed |
 | M25 package | production_certified when evidence fresh |
