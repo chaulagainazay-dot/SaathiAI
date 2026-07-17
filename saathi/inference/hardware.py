@@ -86,8 +86,13 @@ class HardwareProfile:
     ) -> ModelFitResult:
         """Estimate whether a model is safe on this profile.
 
-        Memory estimate (if missing): rough Q4 ~0.6 GB per billion params + 0.5 OS overhead,
-        then caller compares against available memory minus safety margin.
+        Production-safe memory requirement (measured free/available memory)::
+
+            available_memory_gb >= safety_margin_gb + model_memory_estimate_gb
+
+        ``memory_safety_margin_gb`` is post-load headroom that must remain free
+        after the model working set is reserved. Algebraically equivalent to
+        ``model_memory <= available - safety_margin``.
         """
         mem = memory_estimate_gb
         if mem is None:
@@ -96,8 +101,10 @@ class HardwareProfile:
             mem = round(parameter_count_b * factor + 0.5, 2)
         disk = disk_estimate_gb if disk_estimate_gb is not None else round(mem * 1.05, 2)
 
-        budget = max(0.0, self.available_memory_gb - self.memory_safety_margin_gb)
-        fits_mem = mem <= budget
+        # Production-safe: available >= safety_margin + model_budget
+        required = float(self.memory_safety_margin_gb) + float(mem)
+        fits_mem = float(self.available_memory_gb) >= required
+        budget = max(0.0, float(self.available_memory_gb) - float(self.memory_safety_margin_gb))
         fits_disk = disk + self.disk_warning_gb <= self.free_disk_gb + disk  # download leaves margin
         # clearer: free disk after download should stay above disk_warning_gb
         free_after = self.free_disk_gb - disk
@@ -106,9 +113,10 @@ class HardwareProfile:
         warnings: list[str] = []
         if not fits_mem:
             warnings.append(
-                f"memory pressure risk: model needs ~{mem} GB, "
-                f"safe budget ~{budget:.1f} GB (available {self.available_memory_gb:.1f} "
-                f"minus margin {self.memory_safety_margin_gb})"
+                f"memory pressure risk: need available>={required:.1f} GB "
+                f"(safety_margin {self.memory_safety_margin_gb} + model ~{mem} GB); "
+                f"have {self.available_memory_gb:.1f} GB "
+                f"(residual budget after margin ~{budget:.1f} GB)"
             )
         if not fits_disk:
             warnings.append(

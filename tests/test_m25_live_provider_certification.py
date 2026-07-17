@@ -92,8 +92,12 @@ def test_decide_verdict_matrix():
         partial=False,
         production_gates_pass=True,
     )
-    assert v2 == VERDICT_CERTIFIED
-    assert live_c2 and prod2
+    # Live verified; production_certified stays false without full evidence package
+    from saathi.inference.live_cert_m25 import VERDICT_VERIFIED_PROD_BLOCKED
+
+    assert v2 == VERDICT_VERIFIED_PROD_BLOCKED
+    assert live_c2 is True
+    assert prod2 is False
 
     v3, live_c3, prod3 = decide_verdict(
         live=False,
@@ -159,3 +163,19 @@ def test_residual_still_zero():
     )
     assert data["exceptions"] == []
     assert data.get("production_certified") is False
+
+
+def test_production_safe_memory_formula_exported():
+    from saathi.inference.certification import (
+        SELECTION_SAFETY_MARGIN_GB,
+        memory_selection_ok,
+        minimum_model_budget_gb,
+    )
+
+    # Keep production-safe: available >= safety_margin + model_budget
+    need = minimum_model_budget_gb("qwen2.5:1.5b")
+    assert SELECTION_SAFETY_MARGIN_GB == 0.8
+    assert need == 1.0
+    floor = SELECTION_SAFETY_MARGIN_GB + need  # 1.8
+    assert memory_selection_ok(floor) is True
+    assert memory_selection_ok(floor - 0.01) is False

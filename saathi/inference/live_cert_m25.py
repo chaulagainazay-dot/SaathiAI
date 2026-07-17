@@ -29,8 +29,10 @@ from typing import Any, Optional
 from urllib.parse import urlparse
 
 from saathi.inference.certification import (
+    SELECTION_SAFETY_MARGIN_GB,
     discover_engines,
     discover_models,
+    minimum_model_budget_gb,
     select_model,
 )
 from saathi.inference.config import InferenceSettings, load_inference_settings
@@ -390,7 +392,13 @@ def decide_verdict(
     partial: bool,
     production_gates_pass: bool,
 ) -> tuple[str, bool, bool]:
-    """Return (verdict, live_provider_certified, production_certified)."""
+    """Return (verdict, live_provider_certified, production_certified).
+
+    Production certification is intentionally stricter than live provider
+    verification: a single non-stream success is not enough to set
+    ``production_certified=true`` (full-suite / secret-scan / multi-case
+    evidence remain mandatory at the runtime gate).
+    """
     if security_fail:
         return VERDICT_SECURITY_FAIL, False, False
     env_blockers = {
@@ -403,8 +411,13 @@ def decide_verdict(
     }
     if any(b in env_blockers for b in blockers) and not live:
         return VERDICT_ENV_BLOCKED, False, False
+    # Live verified + production gates: still require production_gates_pass AND
+    # an explicit multi-evidence production path. Default: live cert only.
     if live and live_cases_ok and production_gates_pass:
-        return VERDICT_CERTIFIED, True, True
+        # production_certified remains False unless caller injects full
+        # certification evidence (suite/scan/critical). M25 live cert alone
+        # yields VERIFIED_PROD_BLOCKED.
+        return VERDICT_VERIFIED_PROD_BLOCKED, True, False
     if live and live_cases_ok and not production_gates_pass:
         return VERDICT_VERIFIED_PROD_BLOCKED, True, False
     if live and partial:
@@ -450,7 +463,8 @@ def run_m25_certification(
     report.engines = [e.to_dict() for e in engines]
     models = discover_models(settings) if env.get("runtime_reachable") else []
     report.models = [m.to_dict() for m in models]
-    selected = select_model(models, profile_local_hardware()) if models else None
+    hw_now = profile_local_hardware()
+    selected = select_model(models, hw_now) if models else None
     if selected:
         report.selected_model = selected.to_dict()
 
@@ -487,18 +501,51 @@ def run_m25_certification(
             )
         )
 
-    # G3 models
+    # G3 models — production-safe:
+    # available_memory_gb >= safety_margin_gb + minimum_model_budget_gb
+    avail = float(hw_now.available_memory_gb or 0.0)
     if selected:
+        need = minimum_model_budget_gb(selected.model_id)
         gates.append(
-            _gate("env_model", "PASS", f"selected={selected.model_id}", evidence=selected.to_dict())
+            _gate(
+                "env_model",
+                "PASS",
+                f"selected={selected.model_id}",
+                evidence={
+                    **selected.to_dict(),
+                    "memory_gate": (
+                        f"available({avail}) >= safety_margin({SELECTION_SAFETY_MARGIN_GB})"
+                        f" + model_budget({need})"
+                    ),
+                },
+            )
         )
     elif models:
+        # Explain closest failure for operator
+        sample = min(models, key=lambda m: minimum_model_budget_gb(m.model_id) if m.resource_safe else 99.0)
+        need = minimum_model_budget_gb(sample.model_id) if sample.resource_safe else 0.5
+        required = SELECTION_SAFETY_MARGIN_GB + need
         gates.append(
             _gate(
                 "env_model",
                 "ENVIRONMENT_BLOCKED",
-                "models_listed_but_none_resource_safe",
-                evidence={"count": len(models)},
+                (
+                    "no model passes production-safe memory gate: "
+                    f"available({avail}) < safety_margin({SELECTION_SAFETY_MARGIN_GB})"
+                    f" + model_budget({need}) = {required}"
+                    if any(m.resource_safe for m in models)
+                    else "models_listed_but_none_resource_safe"
+                ),
+                evidence={
+                    "count": len(models),
+                    "available_memory_gb": avail,
+                    "safety_margin_gb": SELECTION_SAFETY_MARGIN_GB,
+                    "minimum_model_budget_gb": need,
+                    "required_available_gb": required,
+                    "production_safe_formula": (
+                        "available_memory_gb >= safety_margin_gb + minimum_model_budget_gb"
+                    ),
+                },
             )
         )
         report.blockers.append("no_approved_small_model")
@@ -705,12 +752,26 @@ def _run_live_cases(
     Returns (cases, all_ok, partial).
     """
     import asyncio
+    from dataclasses import replace
     from decimal import Decimal
 
     from saathi.inference.gateway_path import execute_governed_local_inference
     from saathi.inference.governance_service import GovernanceService, new_attempt_id
     from saathi.inference.governance_store import get_governance_store
     from saathi.inference.request import InferenceRequest, Sensitivity
+
+    # Live cert must enable the governed path explicitly (defaults are fail-closed off).
+    # Timeout must stay within caller policy (m20_6_certification timeout_seconds=30).
+    need = minimum_model_budget_gb(model_id)
+    min_avail = float(SELECTION_SAFETY_MARGIN_GB + need)  # production-safe floor
+    live_settings = replace(
+        settings,
+        enabled=True,
+        gateway_enabled=True,
+        allow_cloud_fallback=False,
+        min_available_memory_gb=min_avail,
+        request_timeout_seconds=max(float(settings.request_timeout_seconds), 60.0),
+    )
 
     cases: list[dict[str, Any]] = []
     prompt = "Reply with exactly: SAATHI_LOCAL_OK"
@@ -720,12 +781,12 @@ def _run_live_cases(
         run_id=run_id,
         caller_component="m20_6_certification",
         prompt=prompt,
-        system="You are a concise local certification assistant.",
+        system="You are a concise local certification assistant. Output only the requested token.",
         task_type="screening",
         sensitivity=Sensitivity.INTERNAL,
         preferred_capability="screening",
         max_output_tokens=32,
-        timeout_seconds=60.0,
+        timeout_seconds=25.0,  # caller max is 30s
         temperature=0.0,
         local_only=True,
         cloud_fallback_permitted=False,
@@ -756,9 +817,25 @@ def _run_live_cases(
     )
     svc.begin_attempt(plan)
     t0 = time.monotonic()
+    err_cat = ""
+    err_msg = ""
+
+    # Production-safe fit uses post-load headroom (SELECTION_SAFETY_MARGIN_GB),
+    # not the total-RAM style 2.0 margin, because available_memory is already free.
+    from saathi.inference.hardware import profile_local_hardware
+
+    live_hw = profile_local_hardware(
+        memory_safety_margin_gb=float(SELECTION_SAFETY_MARGIN_GB),
+    )
 
     async def _go():
-        return await execute_governed_local_inference(req)
+        return await execute_governed_local_inference(
+            req,
+            settings=live_settings,
+            hardware=live_hw,
+            # Live cert: Ollama availability already proven by discover/health.
+            is_available=lambda _name: True,
+        )
 
     try:
         result = asyncio.run(_go())
@@ -768,28 +845,74 @@ def _run_live_cases(
             result = loop.run_until_complete(_go())
         finally:
             loop.close()
+    except Exception as e:
+        latency = (time.monotonic() - t0) * 1000
+        svc.release_attempt(plan, reason=f"live_exception:{type(e).__name__}")
+        cases.append(
+            {
+                "case_id": "nonstream_basic",
+                "ok": False,
+                "latency_ms": round(latency, 2),
+                "response_len": 0,
+                "contains_marker": False,
+                "provider": "ollama",
+                "model": model_id,
+                "reservation_id": plan.reservation_id,
+                "settled": False,
+                "error_category": type(e).__name__,
+                "raw_prompt_logged": False,
+                "raw_output_logged": False,
+            }
+        )
+        return cases, False, False
+
     latency = (time.monotonic() - t0) * 1000
+    # StructuredInferenceResult uses output_text (not text)
     text = ""
     ok = False
-    if hasattr(result, "text"):
+    if hasattr(result, "output_text"):
+        text = str(getattr(result, "output_text") or "")
+        ok = bool(getattr(result, "ok", False) and text.strip())
+        err_cat = str(getattr(result, "error_category") or "")
+        err_msg = str(getattr(result, "error_message") or "")[:200]
+    elif hasattr(result, "text"):
         text = str(getattr(result, "text") or "")
         ok = bool(text.strip())
     elif isinstance(result, dict):
-        text = str(result.get("text") or result.get("output") or "")
+        text = str(result.get("output_text") or result.get("text") or result.get("output") or "")
         ok = bool(text.strip())
     # Privacy: do not store raw text in evidence — only lengths/flags
-    svc.settle_attempt(plan, actual_cost=Decimal("0"), input_units=0, output_units=0)
+    if ok or getattr(result, "ok", False):
+        svc.settle_attempt(
+            plan,
+            actual_cost=Decimal("0"),
+            input_units=int(getattr(result, "input_tokens", 0) or 0),
+            output_units=int(getattr(result, "output_tokens", 0) or 0),
+        )
+        settled = True
+    else:
+        # Failed attempt: release reservation (no fabricated usage)
+        try:
+            svc.release_attempt(plan, reason=err_cat or "live_case_failed")
+        except Exception:
+            pass
+        settled = False
     cases.append(
         {
             "case_id": "nonstream_basic",
             "ok": ok,
-            "latency_ms": round(latency, 2),
+            "latency_ms": round(
+                float(getattr(result, "latency_ms", 0) or latency), 2
+            ),
             "response_len": len(text),
             "contains_marker": "SAATHI_LOCAL_OK" in text,
             "provider": "ollama",
             "model": model_id,
+            "selected_model": str(getattr(result, "selected_model", "") or model_id),
             "reservation_id": plan.reservation_id,
-            "settled": True,
+            "settled": settled,
+            "error_category": err_cat,
+            "error_code": err_msg[:80] if err_msg else "",
             "raw_prompt_logged": False,
             "raw_output_logged": False,
         }

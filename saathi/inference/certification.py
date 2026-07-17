@@ -284,22 +284,90 @@ def discover_models(
     return [c for c in candidates if c.model_id]
 
 
+# Production-safe selection on *measured free/available* memory:
+#   available_memory_gb >= safety_margin_gb + minimum_model_budget_gb
+#
+# safety_margin_gb = headroom that must remain free *after* model load
+#   (post-load OS headroom; available is already free, so do not use total-RAM
+#   style 2.0 GB margins here).
+# minimum_model_budget_gb = model working set (aligned with catalogue estimates).
+SELECTION_SAFETY_MARGIN_GB = 0.8
+MINIMUM_MODEL_BUDGET_GB_1_5B = 1.0   # qwen2.5:1.5b class (catalogue mem_est)
+MINIMUM_MODEL_BUDGET_GB_3B = 2.2     # qwen2.5:3b class
+
+
+def minimum_model_budget_gb(model_id: str) -> float:
+    """Minimum working-set budget (GB) for selection of an installed local model."""
+    p = _estimate_params(model_id)
+    if p <= 1.5:
+        return float(MINIMUM_MODEL_BUDGET_GB_1_5B)
+    if p <= 3.5:
+        return float(MINIMUM_MODEL_BUDGET_GB_3B)
+    # Non-resource-safe sizes should not reach selection; fail closed with high budget
+    return max(1.5, p * 0.4)
+
+
+def memory_selection_ok(
+    available_memory_gb: float,
+    *,
+    safety_margin_gb: float = SELECTION_SAFETY_MARGIN_GB,
+    minimum_model_budget_gb: float = MINIMUM_MODEL_BUDGET_GB_1_5B,
+) -> bool:
+    """Production-safe host gate for selecting an installed model.
+
+    ``available_memory_gb >= safety_margin_gb + minimum_model_budget_gb``
+    """
+    try:
+        avail = float(available_memory_gb)
+        margin = float(safety_margin_gb)
+        budget = float(minimum_model_budget_gb)
+    except (TypeError, ValueError):
+        return False
+    if margin < 0 or budget < 0:
+        return False
+    return avail >= (margin + budget)
+
+
 def select_model(
     models: list[ModelCandidate],
     hardware: HardwareProfile,
+    *,
+    safety_margin_gb: float = SELECTION_SAFETY_MARGIN_GB,
 ) -> Optional[ModelCandidate]:
+    """Pick best resource-safe model under production-safe memory gate.
+
+    Production-safe requirement (do not weaken)::
+
+        available_memory_gb >= safety_margin_gb + minimum_model_budget_gb
+    """
     safe = [m for m in models if m.resource_safe]
     if not safe:
         return None
-    # memory gate
-    budget = hardware.available_memory_gb - hardware.memory_safety_margin_gb
-    if budget < 0.5:
-        return None  # resource-unsafe host
-    safe.sort(key=lambda m: (m.selection_rank, _estimate_params(m.model_id), m.model_id))
-    best = safe[0]
+    avail = float(hardware.available_memory_gb or 0.0)
+    eligible: list[ModelCandidate] = []
+    for m in safe:
+        need = minimum_model_budget_gb(m.model_id)
+        if memory_selection_ok(
+            avail,
+            safety_margin_gb=safety_margin_gb,
+            minimum_model_budget_gb=need,
+        ):
+            eligible.append(m)
+    if not eligible:
+        return None  # resource-unsafe host for all candidates
+    eligible.sort(key=lambda m: (m.selection_rank, _estimate_params(m.model_id), m.model_id))
+    best = eligible[0]
+    need = minimum_model_budget_gb(best.model_id)
     best.notes = list(best.notes) + [
         f"selected_for_footprint_rank={best.selection_rank}",
-        f"available_memory_gb={hardware.available_memory_gb}",
+        f"available_memory_gb={avail}",
+        f"safety_margin_gb={safety_margin_gb}",
+        f"minimum_model_budget_gb={need}",
+        (
+            "memory_gate="
+            f"available({avail}) >= safety_margin({safety_margin_gb})"
+            f" + model_budget({need})"
+        ),
     ]
     return best
 

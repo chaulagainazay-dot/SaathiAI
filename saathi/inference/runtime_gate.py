@@ -1076,13 +1076,21 @@ def evaluate_runtime_gate(
             "cloud_calls": int(ev.get("cloud_calls") or 0),
         }
         # Live cert gate: PASS only with true live certification; else ENVIRONMENT_BLOCKED
+        # or NOT_TESTED when live ran but provider not certified.
         if live_cert and ev.get("live"):
-            add("m25_live_provider_cert", GateState.PASS, verdict, evidence_d=m25_ev)
+            add("m25_live_provider_cert", GateState.PASS, verdict[:160], evidence_d=m25_ev)
+        elif ev.get("live") and not live_cert:
+            add(
+                "m25_live_provider_cert",
+                GateState.NOT_TESTED,
+                verdict[:160],
+                evidence_d=m25_ev,
+            )
         else:
             add(
                 "m25_live_provider_cert",
                 GateState.ENVIRONMENT_BLOCKED,
-                verdict[:120],
+                verdict[:160],
                 evidence_d=m25_ev,
             )
         add(

@@ -4,10 +4,10 @@
 - **Live:** False
 - **Live provider certified:** False
 - **Production certified:** False
-- **Run ID:** `d0d9d0e455084417bd33d5eca29a87ed`
-- **Commit:** `e9571f3ffe5d701beef1a082bd663984e0526e51`
-- **Timestamp:** 2026-07-17T09:39:53+00:00
-- **Blockers:** no_installed_models_observed, ollama_broken_symlink, ollama_binary_absent_or_unusable, ollama_runtime_unreachable
+- **Run ID:** `5cd51497f8b64b3aaa2db966bafe33f3`
+- **Commit:** `c876fcedcf95d6da055886bf65795b39d161d6cd`
+- **Timestamp:** 2026-07-17T10:44:38+00:00
+- **Blockers:** no_approved_small_model, memory_pressure
 - **Downloads performed:** False
 - **Cloud calls:** 0
 - **Trading Guardian:** UNCHANGED / UNENGAGED / LIVE TRADING NOT AUTHORIZED

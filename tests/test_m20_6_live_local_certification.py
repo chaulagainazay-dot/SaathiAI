@@ -83,6 +83,42 @@ def test_select_model_none_under_memory_pressure():
     assert select_model(models, hw) is None
 
 
+def test_memory_selection_production_safe_formula():
+    """available_memory_gb >= safety_margin_gb + minimum_model_budget_gb."""
+    from saathi.inference.certification import (
+        SELECTION_SAFETY_MARGIN_GB,
+        memory_selection_ok,
+        minimum_model_budget_gb,
+    )
+
+    need = minimum_model_budget_gb("qwen2.5:1.5b")
+    assert need == 1.0
+    assert SELECTION_SAFETY_MARGIN_GB == 0.8
+    # Boundary: exactly margin + budget → ok
+    assert memory_selection_ok(
+        SELECTION_SAFETY_MARGIN_GB + need,
+        safety_margin_gb=SELECTION_SAFETY_MARGIN_GB,
+        minimum_model_budget_gb=need,
+    )
+    # Just under → fail closed
+    assert not memory_selection_ok(
+        SELECTION_SAFETY_MARGIN_GB + need - 0.01,
+        safety_margin_gb=SELECTION_SAFETY_MARGIN_GB,
+        minimum_model_budget_gb=need,
+    )
+
+
+def test_select_model_at_two_gb_available_allows_1_5b():
+    """~1.8+ GB free satisfies 0.8 safety + 1.0 model budget for 1.5B class."""
+    from saathi.inference.certification import ModelCandidate
+
+    hw = m2_8gb_reference_profile(available_memory_gb=1.8, free_disk_gb=50.0)
+    models = [ModelCandidate(model_id="qwen2.5:1.5b", resource_safe=True, selection_rank=1)]
+    sel = select_model(models, hw)
+    assert sel is not None
+    assert sel.model_id == "qwen2.5:1.5b"
+
+
 def test_live_cert_blocked_without_model():
     rep = run_certification(starting_commit="test", force_blocked=True)
     assert rep.status == "BLOCKED"
