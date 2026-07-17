@@ -1,5 +1,13 @@
 # SaathiOS — Business
 
+## Production certification (M25 closeout)
+
+* Runtime gate can set `production_certified=true` when live (historical) + full suite + secret scan + critical checks are all PASS and fresh.
+* Package evidence is first-class JSON under `docs/evidence/m25/cert/` — operators re-record after material code/policy changes.
+* Temporary RAM pressure does not invalidate suite/scan certification; dual live evidence keeps historical PASS.
+* Cloud fallback remains off; Trading Guardian unengaged; no automatic M26.
+* Business risk reduced: production claim is evidence-backed with exact blocker list when false.
+
 ## Governed providers (M22)
 
 * Provider HTTP/SDK execution for core inference facades is confined to adapter modules — reduces credential scatter and unauthorized direct cloud calls.

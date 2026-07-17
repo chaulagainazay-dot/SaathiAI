@@ -1,12 +1,33 @@
 # M25 Final Report — Live Local Provider Certification and Production Inference Readiness
 
-## 1. Verdict
+## 0. Closeout verdict (package evidence)
+
+```text
+M25 COMPLETE — production_certified=true
+READY TO START M26 (operator authorize only)
+```
+
+Canonical package evidence under `docs/evidence/m25/cert/` + historical live PASS.
+Architecture: `docs/M25_PRODUCTION_CERTIFICATION.md`.
+
+| Gate | Status |
+|------|--------|
+| Historical live certification | PASS |
+| Current environment | PASS or MEMORY_BLOCKED (RAM-dependent) |
+| Full suite evidence | PASS (3113 passed, 1 skipped) |
+| Secret scan evidence | PASS |
+| Critical check evidence | PASS |
+| Release check | PASS |
+| Production certification | TRUE |
+
+## 1. Earlier blocked baseline (pre-unlock)
 
 ```text
 M25 BLOCKED — LIVE LOCAL PROVIDER ENVIRONMENT UNAVAILABLE
 ```
 
-Evidence-backed. Live certification was **not** claimed. `production_certified=false`.
+Initial M25 start: live certification was **not** claimed. Later unlock + package
+evidence closeout set `production_certified=true` when all mandatory gates PASS.
 
 ## 2. Baseline
 

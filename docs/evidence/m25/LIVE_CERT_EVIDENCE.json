@@ -2,11 +2,11 @@
   "schema": "m25.live_cert_report.v1",
   "suite_version": "m25.live_cert.suite.v1",
   "milestone": "M25",
-  "run_id": "828756b6d1db490fad629ba3111a28d7",
-  "started_at": "2026-07-17T11:18:00+00:00",
-  "finished_at": "2026-07-17T11:18:01+00:00",
-  "starting_commit": "285d95b5f2ee97fda172f1c136e0ee60a3b0ecba",
-  "tip_commit": "285d95b5f2ee97fda172f1c136e0ee60a3b0ecba",
+  "run_id": "0094e09f5478428eae82f52397a837e7",
+  "started_at": "2026-07-17T12:03:43+00:00",
+  "finished_at": "2026-07-17T12:03:43+00:00",
+  "starting_commit": "8ac0b48c06b37c0e7b59636f4c04c8d354f9ddeb",
+  "tip_commit": "8ac0b48c06b37c0e7b59636f4c04c8d354f9ddeb",
   "verdict": "M25 BLOCKED \u2014 LIVE LOCAL PROVIDER ENVIRONMENT UNAVAILABLE",
   "live": false,
   "live_provider_certified": false,
@@ -14,7 +14,7 @@
   "production_certified": false,
   "environment": {
     "schema": "m25.environment_audit.v1",
-    "timestamp": "2026-07-17T11:18:00+00:00",
+    "timestamp": "2026-07-17T12:03:43+00:00",
     "provider": "ollama",
     "binary_path": "/usr/local/bin/ollama",
     "binary_present": true,
@@ -46,13 +46,13 @@
     "platform": "Darwin",
     "cpu": "Apple M2",
     "total_memory_gb": 8.0,
-    "available_memory_gb": 1.42,
+    "available_memory_gb": 0.99,
     "required_available_memory_gb": 1.8,
-    "shortfall_gb": 0.38,
+    "shortfall_gb": 0.81,
     "memory_safety_margin_gb": 0.8,
     "minimum_model_budget_gb": 1.0,
     "memory_ok": false,
-    "free_disk_gb": 79.17,
+    "free_disk_gb": 77.3,
     "install_performed": false,
     "service_started_by_m25": false,
     "models_pulled_by_m25": false,
@@ -130,8 +130,8 @@
     "platform_system": "Darwin",
     "cpu_brand": "Apple M2",
     "total_memory_gb": 8.0,
-    "available_memory_gb": 1.42,
-    "free_disk_gb": 79.17,
+    "available_memory_gb": 1.0,
+    "free_disk_gb": 77.3,
     "total_disk_gb": 228.27,
     "supported_runtimes": [
       "ollama"
@@ -143,7 +143,7 @@
     "unified_memory": true,
     "dedicated_vram_gb": null,
     "warnings": [
-      "memory pressure: available 1.42 GB is near safety margin 2.0 GB",
+      "memory pressure: available 1.0 GB is near safety margin 2.0 GB",
       "8 GB class device: prefer \u22643B Q4 local models; avoid concurrent large loads"
     ],
     "source": "detected",
@@ -182,15 +182,15 @@
     {
       "gate_id": "env_model",
       "status": "ENVIRONMENT_BLOCKED",
-      "detail": "installed_approved=['qwen2.5:1.5b']; available(1.42) < safety_margin(0.8) + model_budget(1.0) = 1.8",
+      "detail": "installed_approved=['qwen2.5:1.5b']; available(1.0) < safety_margin(0.8) + model_budget(1.0) = 1.8",
       "evidence": {
         "count": 1,
         "installed_approved_models": [
           "qwen2.5:1.5b"
         ],
-        "available_memory_gb": 1.42,
+        "available_memory_gb": 1.0,
         "required_available_memory_gb": 1.8,
-        "shortfall_gb": 0.38,
+        "shortfall_gb": 0.8,
         "safety_margin_gb": 0.8,
         "minimum_model_budget_gb": 1.0,
         "production_safe_formula": "available_memory_gb >= safety_margin_gb + minimum_model_budget_gb"
@@ -200,7 +200,7 @@
     {
       "gate_id": "resource_memory",
       "status": "ENVIRONMENT_BLOCKED",
-      "detail": "available_gb=1.42 margin=0.8",
+      "detail": "available_gb=0.99 margin=0.8",
       "evidence": {},
       "blocking": true
     },
@@ -354,7 +354,7 @@
     "no_automatic_download",
     "no_automatic_install",
     "no_automatic_service_start",
-    "duration_s=0.149"
+    "duration_s=0.106"
   ],
   "downloads_performed": false,
   "cloud_calls": 0,
@@ -363,7 +363,7 @@
   "evidence_path": "",
   "evidence_expires_at": "",
   "privacy_status": "redacted_no_raw_prompts_or_outputs",
-  "certification_fingerprint": "sha256:cfef06632b417882cdd6d074",
+  "certification_fingerprint": "sha256:bb403b8c8a62f7bedef807f9",
   "latest_environment_observation": {
     "path": "docs/evidence/m25/LATEST_ENVIRONMENT_OBSERVATION.json",
     "verdict": "M25 BLOCKED \u2014 LIVE LOCAL PROVIDER ENVIRONMENT UNAVAILABLE",
@@ -371,16 +371,16 @@
       "insufficient_model_memory_headroom",
       "memory_pressure"
     ],
-    "recorded_at": "2026-07-17T11:18:01+00:00"
+    "recorded_at": "2026-07-17T12:03:43+00:00"
   },
   "last_successful_live_certification": {
     "path": "docs/evidence/m25/LAST_SUCCESSFUL_LIVE_CERTIFICATION.json",
-    "recorded_at": "2026-07-17T11:07:02+00:00",
+    "recorded_at": "2026-07-17T11:33:35+00:00",
     "live_provider_certified": true,
     "selected_model": "qwen2.5:1.5b",
-    "certification_fingerprint": "sha256:3e3f2dc38a03ac2385f0b431",
-    "tip_commit": "285d95b5f2ee97fda172f1c136e0ee60a3b0ecba",
-    "run_id": "c555d2d6b26a446ea6610a3da5aeb3a8"
+    "certification_fingerprint": "sha256:d9247ed7ab4712fcdd2400bd",
+    "tip_commit": "8ac0b48c06b37c0e7b59636f4c04c8d354f9ddeb",
+    "run_id": "df207ed419fe4ed78c23c50983d03988"
   },
   "historical_live_certification": "PASS",
   "current_environment_blocked": true,

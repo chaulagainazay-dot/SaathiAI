@@ -28,6 +28,18 @@ If the answer is the latter, the feature belongs in the product layer, not the p
 
 ## 3. Current Platform State
 
+### Platform M25 production certification closeout (2026-07-17)
+
+* **Live local provider:** historically certified (dual evidence); current host may be MEMORY_BLOCKED without erasing PASS.
+* **Package evidence store:** `saathi.inference.cert_evidence` → `docs/evidence/m25/cert/` (full suite, secret scan, critical checks).
+* **Runtime gate states:** PASS / FAIL / STALE / MISSING / ENVIRONMENT_BLOCKED (no NOT_TESTED placeholders for package gates when disk is empty → MISSING).
+* **production_certified=true** when every mandatory gate is PASS and package evidence is fresh for the package fingerprint.
+* **Fingerprint policy:** code/policy/schema/model identity — not temporary RAM or discover re-runs.
+* **Freshness:** 14-day TTL; STALE requires re-record.
+* **Architecture:** `docs/M25_PRODUCTION_CERTIFICATION.md`.
+* **Residual exceptions = 0**; cloud fallback disabled; Trading Guardian unengaged.
+* **M26:** operator authorize only — do not auto-start.
+
 ### Platform M22 governed provider implementation (2026-07-17)
 
 * **Provider HTTP/SDK execution** confined to `saathi/inference/adapters/` (`http_providers`, `grounding`, `agent_provider`, existing engines).

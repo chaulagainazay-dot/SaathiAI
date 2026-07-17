@@ -4,10 +4,10 @@
 - **Latest live:** False
 - **Latest live_provider_certified:** False
 - **Production certified:** False
-- **Historical live cert:** PASS at 2026-07-17T11:07:02+00:00 model=qwen2.5:1.5b
-- **Run ID:** `828756b6d1db490fad629ba3111a28d7`
-- **Commit:** `285d95b5f2ee97fda172f1c136e0ee60a3b0ecba`
-- **Timestamp:** 2026-07-17T11:18:01+00:00
+- **Historical live cert:** PASS at 2026-07-17T11:33:35+00:00 model=qwen2.5:1.5b
+- **Run ID:** `0094e09f5478428eae82f52397a837e7`
+- **Commit:** `8ac0b48c06b37c0e7b59636f4c04c8d354f9ddeb`
+- **Timestamp:** 2026-07-17T12:03:43+00:00
 - **Blockers (latest):** insufficient_model_memory_headroom, memory_pressure
 - **Downloads performed:** False
 - **Cloud calls:** 0

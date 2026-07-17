@@ -36,11 +36,24 @@ ollama stop qwen2.5:1.5b
 * `docs/evidence/m25/LATEST_ENVIRONMENT_OBSERVATION.json`
 * `docs/evidence/m25/LAST_SUCCESSFUL_LIVE_CERTIFICATION.json`
 * `docs/evidence/m25/LIVE_CERT_EVIDENCE.json` (combined)
+* `docs/evidence/m25/cert/full_suite_evidence.json`
+* `docs/evidence/m25/cert/secret_scan_evidence.json`
+* `docs/evidence/m25/cert/critical_check_evidence.json`
+* `docs/evidence/m25/cert/certification_package.json`
+
+## Package certification
+
+```bash
+.venv/bin/python -m saathi.inference.cert_evidence record-package --from-log /tmp/pytest.log
+.venv/bin/python -m saathi.inference.cert_evidence status
+.venv/bin/python -m saathi.inference.runtime_gate --json
+# expect production_certified=true when all package + live mandatory checks PASS
+```
 
 ## Invariants
 
 ```text
-production_certified = false until full package gates pass
+production_certified = true only when all mandatory gates PASS and evidence fresh
 cloud fallback = disabled
 Trading Guardian = UNCHANGED / UNENGAGED
 ```
