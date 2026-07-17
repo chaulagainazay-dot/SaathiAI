@@ -11,7 +11,7 @@ M24 COMPLETE WITH LIMITATIONS — DURABLE GOVERNANCE; PRODUCTION NOT CERTIFIED
 | Item | Value |
 |------|-------|
 | Start HEAD | `00bfae9` |
-| Tip HEAD | `789aa76` |
+| Tip HEAD | `920a662` |
 | Branch | `milestone/m7-security-engine` |
 | Worktree at start | clean |
 | Remote ahead/behind | 0/0 |
@@ -126,7 +126,7 @@ Upgrade/downgrade covered in focused suite.
 
 ## 26. Full repository suite
 
-Recorded at close (see validation section / commit message).
+**3075 passed, 1 skipped, 0 failed** in 674.83s.
 
 ## 27. Critical checks
 
