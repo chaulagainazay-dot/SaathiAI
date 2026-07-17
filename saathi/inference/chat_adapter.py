@@ -1,17 +1,20 @@
-"""M21.3 — Chat compatibility adapter.
+"""M23 — Chat compatibility adapter (thin facade).
 
-Preserves chat public behavior while constructing a canonical InferenceRequest
-and applying kill-switch / caller-policy preflight before provider execution.
-
-Execution path (prefer governed when enabled; else single legacy sink):
+Preserves public return shape for ChatEngine / ChatLLMAdapter while routing
+**only** through the canonical governed chat runtime.
 
   ChatEngine._default_llm
     → chat_generate (this module)
-      → preflight (chat_engine caller)
-      → optional governed local path
-      → EXPLICIT_LEGACY_EXCEPTION: saathi.llm.generate (ModelRouter chain)
+      → saathi.chat.runtime.run_chat_completion
+        → preflight → InferenceRequest → ModelRouter / governed local
+        → governed adapter transport
 
-Does not rewrite ChatEngine. Does not create a second gateway.
+Does not:
+  * Call the legacy llm facade generate path
+  * Select providers
+  * Read credentials
+  * Implement retries or fallback
+  * Log raw prompts/outputs
 """
 from __future__ import annotations
 
@@ -21,7 +24,10 @@ from typing import Any, Optional
 logger = logging.getLogger(__name__)
 
 CALLER_CHAT_ENGINE = "chat_engine"
-PATH_ID = "chat_engine"
+PATH_ID = "chat_runtime"
+# M23: governed default is mandatory
+GOVERNED_CHAT_DEFAULT = True
+LEGACY_CHAT_EXECUTION = False
 
 
 def chat_generate(
@@ -34,149 +40,53 @@ def chat_generate(
 ) -> dict[str, Any]:
     """Return ``{"text", "provider", "tokens"}`` matching ChatLLMAdapter contract.
 
-    Public chat API shape is preserved. Raw prompt/output are never logged.
+    ``legacy_fn`` is accepted only as a **test inject** alias (path_used=test_injected).
+    It does not enable a production legacy execution path.
     """
-    from saathi.inference.legacy_facade import preflight_inference
+    from saathi.chat.runtime import run_chat_completion
+    from saathi.chat.request import build_chat_request, ChatRequestError
 
-    pf = preflight_inference(
-        caller_id=CALLER_CHAT_ENGINE,
-        path_id=PATH_ID,
+    try:
+        req = build_chat_request(
+            # Use prompt as message body for validation (may be history-assembled)
+            message=prompt or " ",
+            system=system or "",
+            caller_id=CALLER_CHAT_ENGINE,
+            token_budget=int(max_tokens),
+            timeout_seconds=float(timeout),
+            validate=True,
+        )
+    except ChatRequestError:
+        # History-assembled prompts may be long; re-validate with bounds only
+        from saathi.chat.request import ChatRequest, validate_chat_request
+
+        req = ChatRequest(
+            caller_id=CALLER_CHAT_ENGINE,
+            message=(prompt or " ")[:32000] if (prompt or "").strip() else " ",
+            system=system or "",
+            token_budget=int(max(1, min(max_tokens, 8192))),
+            timeout_seconds=float(max(1, min(timeout, 300))),
+        )
+        # Empty still denied
+        if not (prompt or "").strip():
+            raise RuntimeError("empty_message")
+        try:
+            validate_chat_request(req)
+        except ChatRequestError as e:
+            raise RuntimeError(e.message or e.code) from e
+
+    # For pre-built prompt (engine already assembled context), pass as prompt
+    # and skip re-assembly. inject_fn maps legacy_fn for tests only.
+    inject = legacy_fn if legacy_fn is not None else None
+    result = run_chat_completion(
         prompt=prompt or "",
         system=system or "",
-        max_tokens=max_tokens,
-        timeout=float(timeout),
+        chat_request=req,
+        inject_fn=inject,
+        skip_validation=True,  # already validated above
     )
-    if not pf.ok:
-        # Honest error — chat engine converts empty/error into user-facing failure
-        raise RuntimeError(pf.error_message or pf.reason_code or "chat_preflight_denied")
-
-    # Bound inputs (policy)
-    try:
-        from saathi.inference.caller_policy import get_caller_policy
-
-        pol = get_caller_policy(CALLER_CHAT_ENGINE)
-        max_in = int(pol.max_input_chars) if pol else 32000
-    except Exception:
-        max_in = 32000
-    prompt_b = (prompt or "")[:max_in]
-    system_b = (system or "You are Saathi, Ajay's AI operating system. Be direct and useful.")[:4000]
-    max_out = int(pf.max_output_tokens)
-    timeout_s = int(max(1, min(pf.timeout_seconds, 300)))
-
-    # Optional governed path when dual flags are on (M20.2) — never silent cloud
-    try:
-        from saathi.inference.config import load_inference_settings
-
-        settings = load_inference_settings()
-        if settings.enabled and settings.gateway_enabled:
-            from saathi.inference.compat import build_inference_request, _run_governed
-            from saathi.inference.caller_rollout import CALLER_CHEAP_ASK
-
-            # Reuse compat builder bounds; force chat caller via request fields
-            req = build_inference_request(
-                CALLER_CHEAP_ASK,  # limits table fallback
-                prompt_b,
-                system_b,
-            )
-            # Rebuild with chat caller (compat limits for chat registered separately)
-            from saathi.inference.request import InferenceRequest, Sensitivity
-
-            req = InferenceRequest(
-                request_id=pf.request_id,
-                prompt=prompt_b,
-                system=system_b,
-                caller_component=CALLER_CHAT_ENGINE,
-                max_output_tokens=max_out,
-                timeout_seconds=float(timeout_s),
-                local_only=True,
-                cloud_allowed=False,
-                cloud_fallback_permitted=False,
-                task_type="standard",
-                preferred_capability="standard",
-                sensitivity=Sensitivity.INTERNAL,
-                max_retries=0,
-                fallback_policy="none",
-                tool_use_permitted=False,
-                streaming_requested=False,
-                log_prompt=False,
-                log_output=False,
-                retention_policy="metadata_only",
-                request_cost_ceiling=0.0,
-                contract_version="m21.3",
-                metadata={
-                    "m21_3_chat_adapter": True,
-                    "path_id": PATH_ID,
-                    "prompt_chars": len(prompt_b),
-                    "prompt_fingerprint": pf.prompt_fingerprint,
-                },
-            )
-            # Chat is LEGACY certification — governed path may deny legacy callers.
-            # Only attempt governed if policy allows; otherwise skip to legacy sink.
-            from saathi.inference.caller_policy import is_governed_callable
-
-            if is_governed_callable(CALLER_CHAT_ENGINE):
-                gov = _run_governed(req)
-                if gov.ok and (gov.output_text or "").strip():
-                    return {
-                        "text": gov.output_text or "",
-                        "provider": gov.selected_provider or gov.selected_model or "governed_local",
-                        "tokens": getattr(gov, "output_tokens", 0) or 0,
-                        "path_used": "governed_local",
-                        "request_id": pf.request_id,
-                    }
-    except Exception:
-        pass
-
-    # Single allowed legacy sink: ModelRouter via saathi.llm.generate
-    from saathi.model_router import ModelLabel, Prefer, Privacy
-
-    if legacy_fn is not None:
-        res = legacy_fn(prompt_b, system_b)
-        if isinstance(res, dict):
-            res.setdefault("path_used", "legacy_injected")
-            res.setdefault("request_id", pf.request_id)
-            return res
-        return {
-            "text": str(res),
-            "provider": "legacy_injected",
-            "tokens": 0,
-            "path_used": "legacy_injected",
-            "request_id": pf.request_id,
-        }
-
-    from saathi.llm import generate
-
-    # Privacy: chat policy allows historical cloud via router only when not killed.
-    # Cloud fallback at provider-governance layer remains default-off.
-    privacy = Privacy.CLOUD_OK if pf.cloud_allowed else Privacy.LOCAL_ONLY
-    try:
-        out = generate(
-            ModelLabel.STANDARD,
-            prompt_b,
-            system=system_b,
-            privacy=privacy,
-            prefer=Prefer.QUALITY,
-            max_tokens=max_out,
-            timeout=timeout_s,
-            caller_id=CALLER_CHAT_ENGINE,
-            skip_preflight=False,
+    if not result.ok and not result.text:
+        raise RuntimeError(
+            result.error_message or result.error_code or "chat_preflight_denied"
         )
-    except TypeError:
-        # Older signature tests
-        out = generate(
-            ModelLabel.STANDARD,
-            prompt_b,
-            system=system_b,
-            privacy=privacy,
-            prefer=Prefer.QUALITY,
-            max_tokens=max_out,
-            timeout=timeout_s,
-        )
-    return {
-        "text": out.text or "",
-        "provider": out.provider or "",
-        "tokens": getattr(out, "tokens", 0) or 0,
-        "path_used": "legacy_llm_generate",
-        "request_id": pf.request_id,
-        "model": getattr(out, "model", "") or "",
-    }
+    return result.to_llm_dict()

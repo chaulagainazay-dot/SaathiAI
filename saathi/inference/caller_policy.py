@@ -173,18 +173,20 @@ _CALLER_POLICIES: dict[str, CallerPolicy] = {
     ),
     "chat_engine": CallerPolicy(
         caller_id="chat_engine",
-        description="Chat path via chat_adapter (M21.3 compatibility wrap)",
+        description="Chat path via canonical governed chat runtime (M23)",
         product_area="chat",
-        certification=CallerCertification.LEGACY,
-        local_only=False,  # historical cloud-ok via router after preflight
-        cloud_allowed=True,  # legacy sink only — governed path remains local-first
-        cloud_fallback_allowed=False,  # M21.3: no silent cloud fallback
+        certification=CallerCertification.PILOT,
+        local_only=False,  # multi-family router after preflight when not sensitive
+        cloud_allowed=True,  # historical cloud-ok via ModelRouter; no silent fallback
+        cloud_fallback_allowed=False,  # never silent cloud fallback
         max_input_chars=32000,
         max_output_tokens=2048,
         timeout_seconds=120.0,
         max_retries=0,
-        legacy=True,
-        notes="COMPATIBILITY_WRAPPED; expiry M23; uses chat_adapter → llm.generate sink",
+        tools_allowed=False,  # tools only via ExecutionGateway, not chat inference
+        streaming_allowed=True,  # delivery-layer stream; engines remain non-stream
+        legacy=False,
+        notes="M23 CANONICAL; chat.runtime → InferenceRequest → ModelRouter/adapters; no llm.generate",
     ),
     "legacy_llm_generate": CallerPolicy(
         caller_id="legacy_llm_generate",

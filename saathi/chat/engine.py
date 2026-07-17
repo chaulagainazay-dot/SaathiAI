@@ -4,7 +4,7 @@ Pipeline for one message:
   user text → memory retrieval (Layer 5) → knowledge/RAG (Layer 6)
   → context assembly (project-aware, Layer 8) → ToolIntent
   → ExecutionGateway (validate/authorize/risk/approve/queue — Layer 3)
-  → ChatLLMAdapter (real multi-provider llm.generate) → sanitize → evidence
+  → ChatLLMAdapter (governed chat runtime) → sanitize → evidence
   → persist message + execution record + citations + auto-summary (Layer 4)
 
 Models are NEVER called directly by the API layer: every inference travels
@@ -31,7 +31,7 @@ LLMFn = Callable[[str, str], dict]
 
 
 def _default_llm(prompt: str, system: str) -> dict:
-    """M21.3: chat compatibility adapter → preflight → ModelRouter/legacy sink.
+    """M23: chat compatibility adapter → canonical governed chat runtime only.
 
     Public return shape unchanged: ``{text, provider, tokens}``.
     Raises if preflight denies or no provider is available — the engine converts
@@ -262,24 +262,25 @@ class ChatEngine:
         citation_specs = citation_specs + mem_citations
         project = self._project_context(conv)
 
-        history = self.store.list_messages(cid, limit=20)
-        convo = "\n".join(f"{m['role']}: {m['content'][:500]}"
-                          for m in history[-12:-1])
-        base_system = (AGENT_ROLES.get(agent, "") or system
-                       or "You are Saathi, Ajay's AI operating system. Be direct and useful.")
-        parts = [base_system]
-        if project:
-            parts.append(project)
-        if conv.get("summary"):
-            parts.append(f"Conversation summary so far: {conv['summary']}")
-        if mem_context:
-            parts.append("Relevant memory (scope-checked; cite [mem:…] you use):\n" + mem_context)
-        if knowledge:
-            parts.append("Relevant knowledge (cite [chunk refs] you use):\n" + knowledge)
-        full_system = "\n\n".join(parts)
-        prompt = (convo + "\nuser: " + text) if convo else text
+        # M23: canonical context builder owns history + system layering
+        from saathi.chat.context import build_chat_context
 
-        # Layer 3 — through the gateway, never direct
+        history = self.store.list_messages(cid, limit=20)
+        ctx = build_chat_context(
+            conversation_id=cid,
+            user_message=text,
+            history_messages=history,
+            agent_role=AGENT_ROLES.get(agent, ""),
+            system_override=system if not agent else "",
+            project_context=project,
+            summary=conv.get("summary") or "",
+            memory_context=mem_context,
+            knowledge_context=knowledge,
+        )
+        full_system = ctx.system
+        prompt = ctx.prompt
+
+        # Layer 3 — through the gateway → ChatLLMAdapter → governed chat runtime
         data, meta = self._run_gateway(cid, prompt, full_system)
         if meta["status"] != "success" or not data.get("text"):
             err = meta.get("error") or "no provider available"

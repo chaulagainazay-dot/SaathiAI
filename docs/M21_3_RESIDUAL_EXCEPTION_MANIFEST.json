@@ -1,33 +1,22 @@
 {
-  "schema": "m22.residual_exception_manifest.v1",
-  "milestone": "M22",
-  "supersedes": "m21.3.residual_exception_manifest.v1",
+  "schema": "m23.residual_exception_manifest.v1",
+  "milestone": "M23",
+  "supersedes": "m22.residual_exception_manifest.v1",
   "production_certified": false,
   "unknown_count": 0,
   "direct_provider_bypass_count": 0,
   "unclassified_count": 0,
+  "chat_residual_exception_count": 0,
   "m22_migrated_path_ids": [
     "legacy_llm_generate_execution",
     "agent_sdk_clients",
     "tools_research_grounding",
     "openjarvis_execution_adapter"
   ],
+  "m23_migrated_path_ids": [
+    "chat_engine_legacy_sink"
+  ],
   "exceptions": [
-    {
-      "path_id": "chat_engine_legacy_sink",
-      "file": "saathi/chat/engine.py",
-      "symbol": "ChatEngine / ChatLLMAdapter",
-      "reason": "Chat public API preserved; outermost path uses chat_adapter; legacy sink is llm.generate only",
-      "owner": "platform-chat",
-      "classification": "COMPATIBILITY_WRAPPED",
-      "allowed_behavior": "chat_adapter.chat_generate → preflight → optional governed → llm.generate",
-      "forbidden_behavior": "direct provider SDK in chat package; new llm.generate calls outside chat_adapter",
-      "caller_id": "chat_engine",
-      "production_reachability": true,
-      "expiry_milestone": "M23",
-      "tests": ["tests/test_m21_3_residual_path_migration.py", "tests/test_m22_provider_migration.py"],
-      "release_guard": "chat_engine_uses_adapter"
-    },
     {
       "path_id": "engine_cloud_caller",
       "file": "saathi/inference/adapters/cloud.py",
@@ -74,6 +63,23 @@
       "path_id": "agent_provider_adapter",
       "file": "saathi/inference/adapters/agent_provider.py",
       "classification": "CANONICAL_ADAPTER"
+    }
+  ],
+  "canonical_chat_m23": [
+    {
+      "path_id": "chat_runtime",
+      "file": "saathi/chat/runtime.py",
+      "classification": "CANONICAL"
+    },
+    {
+      "path_id": "chat_context",
+      "file": "saathi/chat/context.py",
+      "classification": "CANONICAL"
+    },
+    {
+      "path_id": "chat_request",
+      "file": "saathi/chat/request.py",
+      "classification": "CANONICAL"
     }
   ]
 }

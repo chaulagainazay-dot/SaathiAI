@@ -509,10 +509,13 @@ def test_m20_console_residual_cmd():
 # ── Residual control spot checks ──────────────────────────────────────────
 
 
-def test_chat_path_compatibility_wrapped():
+def test_chat_path_canonical_after_m23():
     c = get_residual_control("chat_engine")
     assert c is not None
-    assert c.disposition is ResidualDisposition.COMPATIBILITY_WRAPPED
+    assert c.disposition is ResidualDisposition.CANONICAL
+    rt = get_residual_control("chat_runtime")
+    assert rt is not None
+    assert rt.disposition is ResidualDisposition.CANONICAL
 
 
 def test_llm_helper_wrapped():

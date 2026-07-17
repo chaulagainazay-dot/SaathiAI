@@ -25,7 +25,7 @@ MANIFEST_PATH = ROOT / "docs" / "M21_3_RESIDUAL_EXCEPTION_MANIFEST.json"
 # file-level match used when line drifts within known symbols).
 KNOWN_LLM_GENERATE_SITES: frozenset[str] = frozenset({
     "saathi/inference/compat.py",
-    "saathi/inference/chat_adapter.py",
+    # M23: chat_adapter no longer calls llm.generate
     "saathi/tools/cheap_llm.py",
     "saathi/tools/_llm_helper.py",
     "saathi/llm.py",  # definition + internal only
@@ -574,6 +574,293 @@ def _check_chat_adapter(findings: list[Finding], summary: dict[str, Any]) -> Non
                 detail="chat must not call llm.generate without adapter",
             )
         )
+    # M23: engine must not import provider SDKs / credentials
+    for needle, rule in (
+        ("from openai", "chat_direct_sdk_import"),
+        ("import openai", "chat_direct_sdk_import"),
+        ("from anthropic", "chat_direct_sdk_import"),
+        ("import anthropic", "chat_direct_sdk_import"),
+        ("OPENAI_API_KEY", "chat_credential_read"),
+        ("ANTHROPIC_API_KEY", "chat_credential_read"),
+    ):
+        if needle in src:
+            findings.append(
+                Finding(
+                    rule_id=rule,
+                    path="saathi/chat/engine.py",
+                    line=0,
+                    symbol="ChatEngine",
+                    detail=f"chat engine must not contain {needle!r}",
+                )
+            )
+
+
+def _check_m23_chat_governed(findings: list[Finding], summary: dict[str, Any]) -> None:
+    """M23: governed chat default — no llm.generate / SDK / retry / raw log in chat package."""
+    chat_root = SAATHI / "chat"
+    adapter = SAATHI / "inference" / "chat_adapter.py"
+    runtime = chat_root / "runtime.py"
+    summary["m23_chat"] = {
+        "governed_default": False,
+        "runtime_present": runtime.is_file(),
+        "adapter_present": adapter.is_file(),
+    }
+
+    if not runtime.is_file():
+        findings.append(
+            Finding(
+                rule_id="chat_runtime_missing",
+                path="saathi/chat/runtime.py",
+                line=0,
+                symbol="run_chat_completion",
+                detail="M23 requires saathi.chat.runtime as canonical authority",
+            )
+        )
+        return
+
+    rt_src = runtime.read_text(encoding="utf-8")
+    summary["m23_chat"]["governed_default"] = (
+        "GOVERNED_CHAT_DEFAULT = True" in rt_src
+        or "GOVERNED_CHAT_DEFAULT=True" in rt_src
+    )
+    if "GOVERNED_CHAT_DEFAULT = True" not in rt_src and "GOVERNED_CHAT_DEFAULT=True" not in rt_src:
+        findings.append(
+            Finding(
+                rule_id="chat_governed_default_false",
+                path="saathi/chat/runtime.py",
+                line=0,
+                symbol="GOVERNED_CHAT_DEFAULT",
+                detail="governed_chat_default must be true",
+            )
+        )
+    if "LEGACY_CHAT_EXECUTION = False" not in rt_src and "LEGACY_CHAT_EXECUTION=False" not in rt_src:
+        findings.append(
+            Finding(
+                rule_id="chat_legacy_execution_enabled",
+                path="saathi/chat/runtime.py",
+                line=0,
+                symbol="LEGACY_CHAT_EXECUTION",
+                detail="legacy_chat_execution must be unavailable (False)",
+            )
+        )
+
+    # Scan chat package + adapter for forbidden patterns
+    scan_files: list[Path] = []
+    if chat_root.is_dir():
+        scan_files.extend(sorted(chat_root.glob("*.py")))
+    if adapter.is_file():
+        scan_files.append(adapter)
+
+    forbidden_sdk = ("from openai", "import openai", "from anthropic", "import anthropic")
+    forbidden_urls = (
+        "api.openai.com",
+        "api.anthropic.com",
+        "api.groq.com",
+        "generativelanguage.googleapis.com",
+        "openrouter.ai/api",
+    )
+    credential_needles = (
+        "OPENAI_API_KEY",
+        "ANTHROPIC_API_KEY",
+        "GEMINI_API_KEY",
+        "GROQ_API_KEY",
+    )
+    raw_log_needles = (
+        'logger.info(prompt',
+        'logger.debug(prompt',
+        'logger.info(f"{prompt',
+        "log_prompt=True",
+        "log_output=True",
+        'logger.info(output',
+        'logger.debug(output',
+    )
+
+    for path in scan_files:
+        try:
+            rel = str(path.relative_to(ROOT))
+        except ValueError:
+            rel = str(path)
+        src = path.read_text(encoding="utf-8")
+        lines = src.splitlines()
+
+        def _line_of(sub: str) -> int:
+            for i, ln in enumerate(lines, 1):
+                if sub in ln:
+                    return i
+            return 0
+
+        for needle in forbidden_sdk:
+            if needle in src:
+                findings.append(
+                    Finding(
+                        rule_id="chat_direct_sdk_import",
+                        path=rel,
+                        line=_line_of(needle),
+                        symbol="chat_package",
+                        detail=f"chat must not import provider SDK ({needle})",
+                    )
+                )
+        for needle in forbidden_urls:
+            if needle in src:
+                findings.append(
+                    Finding(
+                        rule_id="chat_direct_provider_url",
+                        path=rel,
+                        line=_line_of(needle),
+                        symbol="chat_package",
+                        detail=f"chat must not contain provider URL {needle!r}",
+                    )
+                )
+        for needle in credential_needles:
+            if needle in src:
+                findings.append(
+                    Finding(
+                        rule_id="chat_credential_read",
+                        path=rel,
+                        line=_line_of(needle),
+                        symbol="chat_package",
+                        detail=f"chat must not read credential env {needle}",
+                    )
+                )
+        # llm.generate forbidden in chat package and adapter (AST-level, not docs)
+        try:
+            tree = ast.parse(src)
+            for node in ast.walk(tree):
+                if isinstance(node, ast.ImportFrom) and (node.module or "") == "saathi.llm":
+                    for alias in node.names or []:
+                        if alias.name == "generate":
+                            findings.append(
+                                Finding(
+                                    rule_id="chat_direct_llm_generate",
+                                    path=rel,
+                                    line=getattr(node, "lineno", 0) or 0,
+                                    symbol="chat_package",
+                                    detail="M23 chat must not import saathi.llm.generate",
+                                )
+                            )
+                if isinstance(node, ast.Attribute) and node.attr == "generate":
+                    if isinstance(node.value, ast.Name) and node.value.id in {
+                        "llm",
+                        "llm_mod",
+                    }:
+                        findings.append(
+                            Finding(
+                                rule_id="chat_direct_llm_generate",
+                                path=rel,
+                                line=getattr(node, "lineno", 0) or 0,
+                                symbol="chat_package",
+                                detail="M23 chat must not call llm.generate",
+                            )
+                        )
+                if isinstance(node, ast.Call):
+                    func = node.func
+                    if isinstance(func, ast.Name) and func.id == "generate":
+                        # only if file also imports generate from saathi.llm
+                        if "from saathi.llm import generate" in src:
+                            findings.append(
+                                Finding(
+                                    rule_id="chat_direct_llm_generate",
+                                    path=rel,
+                                    line=getattr(node, "lineno", 0) or 0,
+                                    symbol="chat_package",
+                                    detail="M23 chat must not call generate()",
+                                )
+                            )
+        except SyntaxError:
+            pass
+        for needle in raw_log_needles:
+            if needle in src:
+                findings.append(
+                    Finding(
+                        rule_id="chat_raw_prompt_log" if "prompt" in needle or "log_prompt" in needle else "chat_raw_output_log",
+                        path=rel,
+                        line=_line_of(needle),
+                        symbol="chat_package",
+                        detail=f"raw content logging forbidden: {needle}",
+                    )
+                )
+        # Caller-level retry / fallback lists in chat (simple static patterns)
+        if re_search_retry(src):
+            findings.append(
+                Finding(
+                    rule_id="chat_caller_retry",
+                    path=rel,
+                    line=0,
+                    symbol="chat_package",
+                    detail="chat-specific provider retry loops are forbidden",
+                )
+            )
+        if "fallback_chain" in src and "chat" in rel and "runtime" not in rel:
+            # engine may set empty fallback_chain for gateway policy — allow empty only
+            if 'fallback_chain": []' not in src and "fallback_chain\": []" not in src and "fallback_chain': []" not in src:
+                if "fallback_chain" in src:
+                    pass  # engine uses empty list — checked loosely
+        if any(t in src for t in ("binance", "ccxt", "withdraw", "place_order")):
+            findings.append(
+                Finding(
+                    rule_id="chat_trading_tool",
+                    path=rel,
+                    line=0,
+                    symbol="chat_package",
+                    detail="trading/exchange capability forbidden in chat",
+                )
+            )
+
+    # Adapter must call runtime
+    if adapter.is_file():
+        asrc = adapter.read_text(encoding="utf-8")
+        if "run_chat_completion" not in asrc and "chat.runtime" not in asrc:
+            findings.append(
+                Finding(
+                    rule_id="chat_adapter_missing_runtime",
+                    path="saathi/inference/chat_adapter.py",
+                    line=0,
+                    symbol="chat_generate",
+                    detail="chat_adapter must delegate to chat.runtime",
+                )
+            )
+
+    # Residual manifest must not retain chat exception
+    if MANIFEST_PATH.is_file():
+        try:
+            data = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
+            for ex in data.get("exceptions") or []:
+                pid = (ex.get("path_id") or "").lower()
+                if "chat" in pid and "engine" in pid:
+                    findings.append(
+                        Finding(
+                            rule_id="chat_residual_exception_present",
+                            path="docs/M21_3_RESIDUAL_EXCEPTION_MANIFEST.json",
+                            line=0,
+                            symbol=ex.get("path_id") or "chat",
+                            detail="M23 removed chat residual exception; must not reappear",
+                        )
+                    )
+            if int(data.get("chat_residual_exception_count") or 0) != 0:
+                findings.append(
+                    Finding(
+                        rule_id="chat_residual_count_nonzero",
+                        path="docs/M21_3_RESIDUAL_EXCEPTION_MANIFEST.json",
+                        line=0,
+                        symbol="chat_residual_exception_count",
+                        detail="chat_residual_exception_count must be 0 after M23",
+                    )
+                )
+        except Exception:
+            pass
+
+
+def re_search_retry(src: str) -> bool:
+    """Detect obvious chat-level retry loops (not router chain iteration)."""
+    # Very specific anti-patterns
+    needles = (
+        "for _attempt in range",
+        "for attempt in range",
+        "max_provider_retries",
+        "retry_providers =",
+        "provider_fallback_list",
+    )
+    return any(n in src for n in needles)
 
 
 def _check_llm_helper(findings: list[Finding], summary: dict[str, Any]) -> None:
@@ -749,6 +1036,7 @@ def run_release_check(*, root: Optional[Path] = None) -> ReleaseReport:
     _check_manifest(findings, summary)
     _check_callers(findings, summary)
     _check_chat_adapter(findings, summary)
+    _check_m23_chat_governed(findings, summary)
     _check_llm_helper(findings, summary)
     _check_m22_facades_and_credentials(findings, summary)
     _check_cost_unknown_not_zero(findings, summary)

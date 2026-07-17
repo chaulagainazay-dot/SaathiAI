@@ -118,22 +118,31 @@ def send_message(cid: str, req: SendMessage):
     eng = default_engine()
     if req.stream:
         def _gen():
-            yield f"data: {json.dumps({'event': 'start'})}\n\n"
+            # M23: wire events via canonical stream model (legacy names preserved)
+            from saathi.chat.stream_events import stream_lifecycle
+
+            request_id = ""
             try:
                 r = eng.send(cid, req.text, system=req.system, agent=req.agent)
                 text = r.message["content"]
-                # incremental delivery in word groups (Layer 10 streaming)
-                words = text.split(" ")
-                for i in range(0, len(words), 8):
-                    yield ("data: " + json.dumps(
-                        {"event": "delta", "text": " ".join(words[i:i + 8]) + " "}) + "\n\n")
-                yield ("data: " + json.dumps(
-                    {"event": "done", "message": r.message,
-                     "citations": r.citations,
-                     "execution": r.execution}) + "\n\n")
+                request_id = (r.execution or {}).get("intent_id") or ""
+                for ev in stream_lifecycle(
+                    request_id=request_id,
+                    conversation_id=cid,
+                    full_text=text,
+                    message=r.message,
+                    execution=r.execution,
+                    citations=r.citations,
+                    words_per_chunk=8,
+                ):
+                    yield f"data: {json.dumps(ev.to_wire())}\n\n"
             except Exception as exc:
-                yield ("data: " + json.dumps(
-                    {"event": "error", "detail": str(exc)[:300]}) + "\n\n")
+                for ev in stream_lifecycle(
+                    request_id=request_id,
+                    conversation_id=cid,
+                    error=exc,
+                ):
+                    yield f"data: {json.dumps(ev.to_wire())}\n\n"
         return StreamingResponse(_gen(), media_type="text/event-stream")
     try:
         r = eng.send(cid, req.text, system=req.system, agent=req.agent)

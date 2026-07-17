@@ -51,7 +51,8 @@ def test_caller_policy_registry():
     assert get_caller_policy(CALLER_CHEAP_ASK) is not None
     assert get_caller_policy("prose_clean").certification is CallerCertification.CERTIFIED_OPT_IN
     assert is_governed_callable(CALLER_CHEAP_ASK) is True
-    assert is_governed_callable("chat_engine") is False
+    # M23: chat_engine is pilot / governed-callable
+    assert is_governed_callable("chat_engine") is True
     assert is_governed_callable("trading_guardian") is False
     assert require_caller_policy("no_such_caller_xyz").certification is CallerCertification.UNKNOWN
 
@@ -63,11 +64,18 @@ def test_contract_rejects_unknown_caller():
     assert any(v.code == "unknown_caller" for v in res.violations)
 
 
-def test_contract_rejects_legacy_chat_on_governed():
-    req = InferenceRequest(prompt="x", caller_component="chat_engine", max_output_tokens=32)
+def test_contract_rejects_legacy_caller_on_governed():
+    # M23: chat_engine is governed; use tools_llm_helper as remaining LEGACY example
+    req = InferenceRequest(prompt="x", caller_component="tools_llm_helper", max_output_tokens=32)
     res = validate_contract(req, InferenceSettings(), governed=True)
     assert res.ok is False
     assert any(v.code == "legacy_not_governed" for v in res.violations)
+
+
+def test_contract_accepts_chat_engine_on_governed():
+    req = InferenceRequest(prompt="x", caller_component="chat_engine", max_output_tokens=32)
+    res = validate_contract(req, InferenceSettings(), governed=True)
+    assert res.ok is True
 
 
 def test_contract_rejects_tools_and_streaming():
@@ -200,15 +208,16 @@ def test_trading_caller_blocked():
 
 def test_residual_paths_classified():
     snap = residual_paths_snapshot()
-    # Schema advanced with M21.3 / M22 residual migration
+    # Schema advanced with M21.3 / M22 / M23 residual migration
     assert snap["schema"] in {
         "m21.1.residual_paths.v1",
         "m21.3.residual_paths.v1",
         "m22.residual_paths.v1",
+        "m23.residual_paths.v1",
     }
     ids = {p["path_id"] for p in snap["paths"]}
     assert "chat_engine" in ids
-    # chat may be compatibility-wrapped (M21.3) rather than legacy_allowed list
+    # M23: chat is CANONICAL (or still listed); legacy list optional
     assert "chat_engine" in legacy_allowed_path_ids() or any(
         p.get("path_id") == "chat_engine"
         and p.get("disposition")
@@ -216,6 +225,8 @@ def test_residual_paths_classified():
             "legacy_allowed_temporarily",
             "compatibility_wrapped",
             "explicit_legacy_exception",
+            "canonical",
+            "compatibility_adapter",
         }
         for p in snap["paths"]
     )

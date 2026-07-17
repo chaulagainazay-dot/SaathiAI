@@ -52,10 +52,16 @@ def test_path_inventory_schema_and_authorities():
 
 def test_residual_direct_inventoried_not_migrated():
     residual = residual_direct_paths()
-    assert any(p.path_id == "chat_engine" for p in residual)
+    # M23: chat_engine is CANONICAL_GOVERNED; remaining residual_direct still inventoried
+    assert not any(p.path_id == "chat_engine" for p in residual)
     for p in residual:
         assert p.classification is PathClass.RESIDUAL_DIRECT
         assert p.migration.value == "inventoried"
+    # chat path still inventoried as governed
+    from saathi.inference.path_inventory import CALL_PATH_INVENTORY
+
+    chat = next(p for p in CALL_PATH_INVENTORY if p.path_id == "chat_engine")
+    assert chat.classification is PathClass.CANONICAL_GOVERNED
 
 
 # ── Provider policy + kill switches ───────────────────────────────────────

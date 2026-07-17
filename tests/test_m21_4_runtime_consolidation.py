@@ -129,7 +129,11 @@ def test_one_residual_exception_manifest():
     assert MANIFEST.is_file()
     data = json.loads(MANIFEST.read_text(encoding="utf-8"))
     schema = data.get("schema", "")
-    assert schema.startswith("m21.3") or schema.startswith("m22")
+    assert (
+        schema.startswith("m21.3")
+        or schema.startswith("m22")
+        or schema.startswith("m23")
+    )
 
 
 def test_one_production_config_validator():
@@ -396,7 +400,7 @@ def _kill_blocks(monkeypatch, caller_id: str, path_id: str):
 
 
 def test_global_kill_blocks_chat(monkeypatch):
-    res = _kill_blocks(monkeypatch, "chat_engine", "chat_engine_legacy_sink")
+    res = _kill_blocks(monkeypatch, "chat_engine", "chat_runtime")
     assert res.ok is False
     assert res.kill_all is True or "kill" in (res.reason_code or "").lower() or not res.ok
 

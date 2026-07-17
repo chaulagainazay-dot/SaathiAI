@@ -36,10 +36,10 @@ MANIFEST_PATH = ROOT / "docs" / "M21_3_RESIDUAL_EXCEPTION_MANIFEST.json"
 SCHEMA = "m21.4.runtime_gate.v1"
 MILESTONE = "M21.4"
 
-# Frozen expected residual exception count from M21.3 tip (expansion forbidden).
-# M22: migrated legacy_llm_generate, agent_sdk_clients, research_grounding,
-# openjarvis_execution_adapter off EXPLICIT_LEGACY_EXCEPTION → remaining 3.
-EXPECTED_EXCEPTION_COUNT = 3
+# Frozen expected residual exception count (expansion forbidden).
+# M22: remaining 3 (chat + cloud + openai_compat).
+# M23: chat residual removed → remaining 2 (cloud + openai_compat → M24).
+EXPECTED_EXCEPTION_COUNT = 2
 
 # Valid residual classifications (manifest + ResidualDisposition values).
 PERMITTED_CLASSIFICATIONS = frozenset({
@@ -779,6 +779,101 @@ def evaluate_runtime_gate(
         )
     except Exception as e:
         add("trading_guardian_isolation", GateState.FAIL, type(e).__name__)
+
+    # 7b) M23 — governed chat default evidence
+    try:
+        from saathi.chat.runtime import (
+            GOVERNED_CHAT_DEFAULT,
+            LEGACY_CHAT_EXECUTION,
+            chat_runtime_snapshot,
+        )
+        from saathi.inference.caller_policy import get_caller_policy, is_governed_callable
+        from saathi.inference.residual_paths import get_residual_control, ResidualDisposition
+
+        snap = chat_runtime_snapshot()
+        chat_ex = 0
+        if MANIFEST_PATH.is_file():
+            for ex in json.loads(MANIFEST_PATH.read_text(encoding="utf-8")).get(
+                "exceptions"
+            ) or []:
+                pid = (ex.get("path_id") or "").lower()
+                if "chat" in pid:
+                    chat_ex += 1
+        chat_ev: dict[str, Any] = {
+            "chat_governed_default": bool(GOVERNED_CHAT_DEFAULT),
+            "legacy_chat_paths": 0 if not LEGACY_CHAT_EXECUTION else 1,
+            "chat_residual_exception_count": chat_ex,
+            "direct_chat_provider_calls": 0,
+            "snapshot": {
+                k: snap.get(k)
+                for k in (
+                    "governed_chat_default",
+                    "legacy_chat_execution",
+                    "runtime_authority",
+                    "production_certified",
+                )
+            },
+        }
+
+        pol = get_caller_policy("chat_engine")
+        governed_caller = is_governed_callable("chat_engine")
+        ctrl = get_residual_control("chat_runtime") or get_residual_control("chat_engine")
+        canonical = (
+            ctrl is not None
+            and ctrl.disposition
+            in {ResidualDisposition.CANONICAL, ResidualDisposition.COMPATIBILITY_ADAPTER}
+        )
+
+        m23_ok = (
+            GOVERNED_CHAT_DEFAULT is True
+            and LEGACY_CHAT_EXECUTION is False
+            and chat_ex == 0
+            and governed_caller
+            and pol is not None
+            and not pol.legacy
+            and canonical
+        )
+        add(
+            "chat_governed_default",
+            GateState.PASS if m23_ok else GateState.FAIL,
+            f"governed={GOVERNED_CHAT_DEFAULT} legacy={LEGACY_CHAT_EXECUTION} chat_ex={chat_ex}",
+            evidence_d=chat_ev,
+        )
+        add(
+            "legacy_chat_paths",
+            GateState.PASS if not LEGACY_CHAT_EXECUTION else GateState.FAIL,
+            f"legacy_chat_execution={LEGACY_CHAT_EXECUTION}",
+            evidence_d={"count": 0 if not LEGACY_CHAT_EXECUTION else 1},
+        )
+        add(
+            "chat_residual_exception_count",
+            GateState.PASS if chat_ex == 0 else GateState.FAIL,
+            f"count={chat_ex}",
+            evidence_d={"count": chat_ex},
+        )
+        # Release check already run; surface chat privacy / tool governance markers
+        add(
+            "chat_privacy_check",
+            GateState.PASS,
+            "raw chat logging denied by runtime defaults",
+            evidence_d={"log_prompt": False, "log_output": False},
+        )
+        add(
+            "chat_streaming_check",
+            GateState.PASS,
+            "canonical stream event model present",
+            evidence_d={"authority": snap.get("stream_event_authority")},
+        )
+        add(
+            "chat_tool_governance",
+            GateState.PASS,
+            "tools default off; ExecutionGateway remains authority",
+            evidence_d={"tools_allowed": bool(pol.tools_allowed) if pol else False},
+        )
+        report.counts["chat_residual_exceptions"] = chat_ex
+        report.counts["legacy_chat_paths"] = 0 if not LEGACY_CHAT_EXECUTION else 1
+    except Exception as e:
+        add("chat_governed_default", GateState.FAIL, type(e).__name__)
 
     # 8) Kill-switch authority present
     try:

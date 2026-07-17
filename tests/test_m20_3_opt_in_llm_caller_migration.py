@@ -91,13 +91,10 @@ def test_forbidden_callers_stay_legacy():
 
 
 def test_chat_engine_still_uses_llm_generate():
-    # M21.3: chat routes via chat_adapter (compatibility wrap); may still sink to llm.generate
+    # M23: chat routes via chat_adapter → governed runtime (no llm.generate in engine)
     src = (ROOT / "saathi" / "chat" / "engine.py").read_text(encoding="utf-8")
-    assert (
-        "llm_mod.generate" in src
-        or "chat_generate" in src
-        or "chat_adapter" in src
-    )
+    assert "chat_generate" in src or "chat_adapter" in src
+    assert "llm_mod.generate" not in src
     assert "adopt_generate" not in src
 
 
