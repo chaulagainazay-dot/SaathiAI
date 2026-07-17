@@ -1,5 +1,12 @@
 # SaathiOS — Business
 
+## Governed connectors (M27)
+
+* External system access gains a single governance path before live SaaS expansion.
+* Reduces silent bypass risk; secrets stay out of logs/evidence.
+* Default OFF rollout prevents accidental external calls after install.
+* No live account connection or paid API enablement in this milestone.
+
 ## Production inference operations (M26)
 
 * Local inference can be operated safely on the pilot 8 GB Mac with explicit rollout modes (default OFF).

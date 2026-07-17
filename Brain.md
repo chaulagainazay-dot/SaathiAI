@@ -28,6 +28,16 @@ If the answer is the latter, the feature belongs in the product layer, not the p
 
 ## 3. Current Platform State
 
+### Platform M27 governed connector framework (2026-07-17)
+
+* **Canonical module:** `saathi.connectors.gov` — single governed execute path for connector kinds.
+* **Lifecycle:** REGISTERED → VALIDATED → READY / DEGRADED / DISABLED / DRAINING / FAILED.
+* **Adapters:** HTTP (GET/POST/PUT/PATCH/DELETE), MCP (reuses `mcp_governance`), browser (reuses `saathi.browser`), local tools (allowlist only).
+* **Rollout:** inherits M26 modes; default OFF; ACTIVE requires production certification + READY connector.
+* **Security:** domain/op allowlists, secret redaction, no API keys in code, trading connectors forbidden.
+* **Does not** enable cloud inference, live OAuth, or new SaaS accounts.
+* **M28:** operator authorize only.
+
 ### Platform M26 production inference operations (2026-07-17)
 
 * **Canonical lifecycle:** `python -m saathi.inference.ops` — start/status/readiness/health/drain/stop/restart/recover.

@@ -2,8 +2,7 @@
   "schema_version": "1",
   "repository": "SaathiOS",
   "branch": "milestone/m7-security-engine",
-  "current_head": "d543c9e",
-  "full_suite": "3163 passed, 1 skipped, 0 failed",
+  "current_head": "8d938c3",
   "completed_milestones": [
     "M20.0",
     "M20.1",
@@ -24,24 +23,21 @@
     "M23",
     "M24",
     "M25",
-    "M26"
+    "M26",
+    "M27"
   ],
-  "milestone_verdict": "M26 COMPLETE WITH LIMITATIONS — inference ops lifecycle, readiness, resource guardian, rollout modes",
+  "milestone_verdict": "M27 COMPLETE — governed connector framework (HTTP/MCP/browser/local_tool)",
   "production_certified": true,
-  "m26": {
-    "lifecycle": "saathi.inference.ops",
-    "default_rollout_mode": "OFF",
-    "health_vs_readiness": true,
-    "resource_guardian": true,
-    "m25_memory_rule_reused": true,
-    "owns_ollama_process": false,
-    "cloud_fallback": false,
+  "m27": {
+    "module": "saathi.connectors.gov",
+    "default_mode": "OFF",
+    "live_accounts": false,
+    "cloud_enabled": false,
     "trading_guardian": "UNCHANGED / UNENGAGED"
   },
-  "next_milestone": "M27 (operator authorize only)",
-  "stop_reason": "M26 complete; do not auto-start M27",
+  "next_milestone": "M28 (operator authorize only)",
+  "stop_reason": "M27 complete; do not auto-start M28",
   "trading_guardian": "UNCHANGED / UNENGAGED",
   "cloud_fallback": false,
-  "residual_exceptions": 0,
-  "roadmap_note": "M21.39 connector-scope M26 deferred; operator-authorized ops M26 delivered"
+  "residual_exceptions": 0
 }

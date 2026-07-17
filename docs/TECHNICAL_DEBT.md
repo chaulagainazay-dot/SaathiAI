@@ -1,18 +1,21 @@
 # SaathiOS Technical Debt / Known Gaps
 
-## Program note (M21–M39 / M26, 2026-07-17)
+## Program note (M21–M39 / M27, 2026-07-17)
 
-Platform program through **M26 production inference operations** (operator-authorized).
-M25 closed with package evidence + historical live PASS; `production_certified` computed by runtime_gate.
-M26 delivers ops lifecycle/readiness/rollout (default OFF). **Do not auto-start M27.**
-M21.39 roadmap “M26 connectors (Gmail/browser)” is **deferred** (not this ops milestone).
+Platform program through **M27 governed connector framework** (operator-authorized).
+M25 cert package + M26 inference ops remain canonical. **Do not auto-start M28.**
 Product IELTSAlert work uses **PRODUCT/IELTSAlert** numbering — not platform debt.
+
+### M27 residual / deferred
+- Legacy `connectors.manager` / `infrastructure.connectors` not fully migrated onto `connectors.gov`.
+- Live SaaS (Gmail/Calendar/GitHub OAuth) still deferred — framework only.
+- ExecutionGateway integration is optional path; full ToolIntent wire-up is future work.
+- No live credentials in CI.
 
 ### M26 residual / deferred
 - Live smoke on 8 GB may be ENVIRONMENT_BLOCKED under concurrent suite load.
 - Idle model unload remains disabled by default (operator-mediated only).
 - SaathiOS does not own external Ollama process lifecycle.
-- Connector/browser/Gmail scope (M21.39 M26 label) still open as future work.
 
 ### M25 closed / harness
 - Live certification harness `live_cert_m25` + evidence bundle + runtime-gate M25 checks.

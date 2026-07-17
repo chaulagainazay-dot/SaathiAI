@@ -1,5 +1,12 @@
 # Writing and Speaking Style
 
+## Connector framework (M27) operator messages
+
+- Say **governed connector path** for `saathi.connectors.gov` — not "we called the API" unless evidence exists.
+- Distinguish **framework ready** from **live account connected** (M27 has no live accounts).
+- Prefer `connector_id` + `operation` + `status` + `detail` check language.
+- Never paste API keys, tokens, cookies, or Authorization headers into status text.
+
 ## Inference operations (M26) operator messages
 
 When reporting inference ops status or incidents:
