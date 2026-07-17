@@ -11,7 +11,7 @@ M30 COMPLETE WITH LIMITATIONS
 | Item | Value |
 |------|-------|
 | Starting HEAD | `9c4770fc004e9e9185cc5a0e20e137d3b67970e2` |
-| Ending HEAD | `6679a8f517840b0021f2faa0c4607f4dd12d2eb6` |
+| Ending HEAD | `9de95a944f7fcb770402f4b258f7feff8656c883` |
 | Branch | `milestone/m7-security-engine` |
 | Worktree at start | clean tracked (untracked m27 runtime evidence left untouched) |
 | Remote divergence at start | `0/0` |
@@ -166,7 +166,7 @@ Trading Guardian = UNCHANGED / UNENGAGED
 1. `863bd75` — feat(m30): implement connector conformance certification
 2. `659b8e3` — test(m30): validate built-in connector conformance
 3. `2abd567` — docs(m30): document connector certification architecture
-4. pin commit for loop state tip
+4. `9de95a9` — docs(m30): pin loop state to tip
 
 Push: origin/milestone/m7-security-engine only. Do not merge. Do not start M31.
 
