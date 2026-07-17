@@ -2,7 +2,7 @@
   "schema_version": "1",
   "repository": "SaathiOS",
   "branch": "milestone/m7-security-engine",
-  "current_head": "4d22208",
+  "current_head": "cb95a79",
   "active_milestone": null,
   "completed_milestones": [
     "M20.0",
@@ -70,7 +70,8 @@
     "ecc7ae1",
     "dfb85b5",
     "1879c7b",
-    "4d22208"
+    "4d22208",
+    "cb95a79"
   ],
-  "m23_tip": "4d22208e66833f0fab59e514b5f4fec70736b45a"
+  "m23_tip": "cb95a7927f4bcb64303a1aaceeb352839a8bf4b7"
 }

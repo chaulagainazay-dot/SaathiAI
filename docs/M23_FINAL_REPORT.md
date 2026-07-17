@@ -11,7 +11,7 @@ M23 COMPLETE WITH LIMITATIONS — GOVERNED CHAT DEFAULT; PRODUCTION NOT CERTIFIE
 | Item | Value |
 |------|-------|
 | Start HEAD | `232ff78` |
-| Tip HEAD | `4d22208` |
+| Tip HEAD | `cb95a79` |
 | Branch | `milestone/m7-security-engine` |
 | Worktree at start | clean |
 | Remote ahead/behind | 0/0 |
@@ -207,7 +207,12 @@ See `docs/M23_ROLLBACK.md` — `git revert` of M23 commits; soft-disable via kil
 
 ## 35. Commit and push
 
-Recorded at close (implementation + docs commits; push non-force).
+* Implementation: `ecc7ae1`
+* Docs: `dfb85b5` + tip bookkeeping commits
+* Tip HEAD: `cb95a79` (cb95a7927f4bcb64303a1aaceeb352839a8bf4b7)
+* Push: origin/milestone/m7-security-engine (non-force)
+* Ahead/behind: 0/0 after push
+* Worktree: clean after final tip sync
 
 ## 36. Production impact
 
