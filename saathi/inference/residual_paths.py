@@ -1,7 +1,7 @@
-"""M21.1 — Residual inference path controls and allowlist.
+"""M21.3 — Residual inference path controls and classification.
 
 Every non-canonical path must be classified. New copies of legacy patterns
-are blocked by the static bypass guard (see bypass_guard.py).
+are blocked by the static bypass guard and release_check.
 """
 from __future__ import annotations
 
@@ -14,12 +14,16 @@ class ResidualDisposition(str, Enum):
     CANONICAL = "canonical"
     MIGRATE_NOW = "migrate_now"
     COMPATIBILITY_ADAPTER = "compatibility_adapter"
+    COMPATIBILITY_WRAPPED = "compatibility_wrapped"
     LEGACY_ALLOWED_TEMPORARILY = "legacy_allowed_temporarily"
+    EXPLICIT_LEGACY_EXCEPTION = "explicit_legacy_exception"
     TEST_ONLY = "test_only"
     FAKE_PROVIDER = "fake_provider"
     DIRECT_PROVIDER_BYPASS = "direct_provider_bypass"
     BLOCK = "block"
+    BLOCKED = "blocked"
     DEFER_WITH_GUARD = "defer_with_guard"
+    DEAD_CODE_REMOVE = "dead_code_remove"
     UNKNOWN = "unknown"
 
 
@@ -34,6 +38,8 @@ class ResidualPathControl:
     allowed_behavior: str
     telemetry_tag: str
     new_callers_forbidden: bool = True
+    caller_id: str = ""
+    production_reachability: bool = False
 
     def to_dict(self) -> dict[str, Any]:
         d = asdict(self)
@@ -52,6 +58,7 @@ RESIDUAL_PATH_CONTROLS: tuple[ResidualPathControl, ...] = (
         allowed_behavior="selection only",
         telemetry_tag="canonical_selection",
         new_callers_forbidden=False,
+        production_reachability=True,
     ),
     ResidualPathControl(
         path_id="governed_local_gateway",
@@ -63,6 +70,8 @@ RESIDUAL_PATH_CONTROLS: tuple[ResidualPathControl, ...] = (
         allowed_behavior="contract-validated local inference",
         telemetry_tag="canonical_governed",
         new_callers_forbidden=False,
+        caller_id="execution_gateway",
+        production_reachability=True,
     ),
     ResidualPathControl(
         path_id="model_gateway_orchestrator",
@@ -74,26 +83,31 @@ RESIDUAL_PATH_CONTROLS: tuple[ResidualPathControl, ...] = (
         allowed_behavior="ToolIntent → governed or OJ stub",
         telemetry_tag="canonical_gateway",
         new_callers_forbidden=False,
+        production_reachability=True,
     ),
     ResidualPathControl(
         path_id="legacy_llm_generate",
         module="saathi.llm",
         symbol="generate",
-        disposition=ResidualDisposition.LEGACY_ALLOWED_TEMPORARILY,
-        reason="Default multi-provider execution for unmigrated callers",
-        expiry_milestone="M21.3",
-        allowed_behavior="ModelRouter chain + DEFAULT_CALLERS; no new direct SDKs",
+        disposition=ResidualDisposition.EXPLICIT_LEGACY_EXCEPTION,
+        reason="Deprecated facade; preflight-gated; HTTP callers until M22",
+        expiry_milestone="M22",
+        allowed_behavior="preflight + ModelRouter chain; frozen call sites",
         telemetry_tag="legacy_llm",
+        caller_id="legacy_llm_generate",
+        production_reachability=True,
     ),
     ResidualPathControl(
         path_id="cheap_ask",
         module="saathi.tools.cheap_llm",
         symbol="cheap_ask",
         disposition=ResidualDisposition.COMPATIBILITY_ADAPTER,
-        reason="M20.3 adopted; M21.2 routes via provider decision + compat/legacy",
-        expiry_milestone="M21.3",
+        reason="M20.3 adopted; M21.2/M21.3 routes via provider decision + compat",
+        expiry_milestone="M22",
         allowed_behavior="compat + legacy generate; no direct proxy",
         telemetry_tag="compat_cheap_ask",
+        caller_id="cheap_ask",
+        production_reachability=True,
     ),
     ResidualPathControl(
         path_id="prose_clean",
@@ -101,20 +115,36 @@ RESIDUAL_PATH_CONTROLS: tuple[ResidualPathControl, ...] = (
         symbol="clean_prose",
         disposition=ResidualDisposition.COMPATIBILITY_ADAPTER,
         reason="M20.3 adopted",
-        expiry_milestone="M21.3",
+        expiry_milestone="M22",
         allowed_behavior="compat adapter + legacy generate",
         telemetry_tag="compat_prose",
+        caller_id="prose_clean",
+        production_reachability=True,
     ),
     ResidualPathControl(
         path_id="compat_adopt_generate",
         module="saathi.inference.compat",
         symbol="adopt_generate",
         disposition=ResidualDisposition.COMPATIBILITY_ADAPTER,
-        reason="M20.3/M21.1 compatibility layer",
+        reason="M20.3/M21 compatibility layer",
         expiry_milestone="n/a",
         allowed_behavior="build canonical request + rollout",
         telemetry_tag="compat_core",
         new_callers_forbidden=False,
+        production_reachability=True,
+    ),
+    ResidualPathControl(
+        path_id="chat_adapter",
+        module="saathi.inference.chat_adapter",
+        symbol="chat_generate",
+        disposition=ResidualDisposition.COMPATIBILITY_WRAPPED,
+        reason="M21.3 chat outermost adapter",
+        expiry_milestone="M23",
+        allowed_behavior="preflight + optional governed + single legacy sink",
+        telemetry_tag="chat_adapter",
+        new_callers_forbidden=False,
+        caller_id="chat_engine",
+        production_reachability=True,
     ),
     ResidualPathControl(
         path_id="engine_ollama",
@@ -126,26 +156,29 @@ RESIDUAL_PATH_CONTROLS: tuple[ResidualPathControl, ...] = (
         allowed_behavior="adapter under registry/gateway",
         telemetry_tag="engine_ollama",
         new_callers_forbidden=False,
+        production_reachability=True,
     ),
     ResidualPathControl(
         path_id="engine_cloud_caller",
         module="saathi.inference.adapters.cloud",
         symbol="CloudCallerEngine",
-        disposition=ResidualDisposition.DEFER_WITH_GUARD,
-        reason="Cloud wrapper; production_supported=false; M21.2 cost/availability governed",
-        expiry_milestone="M21.3",
+        disposition=ResidualDisposition.COMPATIBILITY_WRAPPED,
+        reason="Cloud wrapper; production_supported=false; M21.2 governed",
+        expiry_milestone="M24",
         allowed_behavior="behind allow_cloud_fallback + provider decision only",
         telemetry_tag="engine_cloud",
+        production_reachability=False,
     ),
     ResidualPathControl(
         path_id="engine_openai_compat",
         module="saathi.inference.adapters.openai_compat",
         symbol="OpenAICompatEngine",
-        disposition=ResidualDisposition.DEFER_WITH_GUARD,
+        disposition=ResidualDisposition.COMPATIBILITY_WRAPPED,
         reason="Generic HTTP; policy-disabled by default",
-        expiry_milestone="M21.3",
+        expiry_milestone="M24",
         allowed_behavior="policy-disabled unless explicitly enabled via decision layer",
         telemetry_tag="engine_compat",
+        production_reachability=False,
     ),
     ResidualPathControl(
         path_id="engine_fake",
@@ -157,6 +190,8 @@ RESIDUAL_PATH_CONTROLS: tuple[ResidualPathControl, ...] = (
         allowed_behavior="deterministic tests",
         telemetry_tag="engine_fake",
         new_callers_forbidden=False,
+        caller_id="fake_engine",
+        production_reachability=False,
     ),
     ResidualPathControl(
         path_id="runtime_generate_with_fallback",
@@ -168,26 +203,30 @@ RESIDUAL_PATH_CONTROLS: tuple[ResidualPathControl, ...] = (
         allowed_behavior="settings-gated multi-engine",
         telemetry_tag="runtime_fallback",
         new_callers_forbidden=False,
+        production_reachability=True,
     ),
     ResidualPathControl(
         path_id="chat_engine",
         module="saathi.chat.engine",
         symbol="ChatLLMAdapter / _default_llm",
-        disposition=ResidualDisposition.LEGACY_ALLOWED_TEMPORARILY,
-        reason="Chat default remains legacy; full migration out of M21.1 scope",
+        disposition=ResidualDisposition.COMPATIBILITY_WRAPPED,
+        reason="M21.3 routes through chat_adapter; public API preserved",
         expiry_milestone="M23",
-        allowed_behavior="llm.generate via ModelRouter; no silent unauthorized cloud kill bypass",
-        telemetry_tag="legacy_chat",
+        allowed_behavior="chat_adapter only; no direct provider in chat package",
+        telemetry_tag="chat_wrapped",
+        caller_id="chat_engine",
+        production_reachability=True,
     ),
     ResidualPathControl(
         path_id="openjarvis_execution_adapter",
         module="saathi.execution.adapters.openjarvis_adapter",
         symbol="OpenJarvisAdapter",
-        disposition=ResidualDisposition.LEGACY_ALLOWED_TEMPORARILY,
+        disposition=ResidualDisposition.EXPLICIT_LEGACY_EXCEPTION,
         reason="Offline SUCCESS stub when inference disabled",
-        expiry_milestone="M21.3",
+        expiry_milestone="M22",
         allowed_behavior="no OJ process; stub only",
         telemetry_tag="oj_stub",
+        production_reachability=False,
     ),
     ResidualPathControl(
         path_id="m20_console_inference",
@@ -199,8 +238,8 @@ RESIDUAL_PATH_CONTROLS: tuple[ResidualPathControl, ...] = (
         allowed_behavior="no generation",
         telemetry_tag="console",
         new_callers_forbidden=False,
+        production_reachability=True,
     ),
-    # Additional residual found beyond M21.0 inventory
     ResidualPathControl(
         path_id="cheap_ask_legacy_proxy",
         module="saathi.tools.cheap_llm",
@@ -210,6 +249,7 @@ RESIDUAL_PATH_CONTROLS: tuple[ResidualPathControl, ...] = (
         expiry_milestone="n/a",
         allowed_behavior="blocked; cheap_proxy_status remains read-only health check only",
         telemetry_tag="legacy_proxy_blocked",
+        production_reachability=False,
     ),
     ResidualPathControl(
         path_id="provider_governance",
@@ -221,46 +261,91 @@ RESIDUAL_PATH_CONTROLS: tuple[ResidualPathControl, ...] = (
         allowed_behavior="availability, cost, failover, circuit governance",
         telemetry_tag="provider_governance",
         new_callers_forbidden=False,
+        production_reachability=True,
     ),
     ResidualPathControl(
         path_id="tools_llm_helper",
         module="saathi.tools._llm_helper",
         symbol="ask_llm",
-        disposition=ResidualDisposition.DEFER_WITH_GUARD,
-        reason="Hardcoded provider chain pre-router era residual",
-        expiry_milestone="M21.3",
-        allowed_behavior="existing tools only; static guard blocks new api.openai copies outside allowlist",
+        disposition=ResidualDisposition.COMPATIBILITY_WRAPPED,
+        reason="M21.3 removed direct HTTP chain; delegates to llm.generate",
+        expiry_milestone="M22",
+        allowed_behavior="preflight + generate only",
         telemetry_tag="tools_llm_helper",
+        caller_id="tools_llm_helper",
+        production_reachability=True,
     ),
     ResidualPathControl(
         path_id="agent_sdk_clients",
         module="saathi.agent",
-        symbol="OpenAI/Anthropic client construction",
-        disposition=ResidualDisposition.DEFER_WITH_GUARD,
-        reason="Legacy agent multi-provider clients; out of M21.1 migration scope",
+        symbol="SaathiAgent complete/respond",
+        disposition=ResidualDisposition.EXPLICIT_LEGACY_EXCEPTION,
+        reason="Legacy agent multi-provider clients; preflight-gated M21.3",
         expiry_milestone="M22",
-        allowed_behavior="existing agent.py only",
+        allowed_behavior="existing agent.py only; kill blocks complete/respond",
         telemetry_tag="legacy_agent",
+        caller_id="agent_runtime",
+        production_reachability=True,
     ),
     ResidualPathControl(
         path_id="server_direct_http",
         module="saathi.server",
-        symbol="direct provider HTTP (e.g. groq)",
-        disposition=ResidualDisposition.DEFER_WITH_GUARD,
-        reason="Legacy server surfaces; static guard allowlisted only this file",
-        expiry_milestone="M21.3",
-        allowed_behavior="existing server.py only; no new provider URL copies",
+        symbol="groq health probe / ask_llm routes",
+        disposition=ResidualDisposition.COMPATIBILITY_WRAPPED,
+        reason="Server uses ask_llm (tools helper); health probe is non-generate",
+        expiry_milestone="M22",
+        allowed_behavior="no new provider URL copies; inference via tools_llm_helper",
         telemetry_tag="legacy_server",
+        caller_id="server_tools",
+        production_reachability=True,
     ),
     ResidualPathControl(
         path_id="tools_research",
         module="saathi.tools.research",
-        symbol="generativelanguage URL",
-        disposition=ResidualDisposition.DEFER_WITH_GUARD,
-        reason="Research tool residual",
-        expiry_milestone="M21.3",
+        symbol="_grounded / research",
+        disposition=ResidualDisposition.EXPLICIT_LEGACY_EXCEPTION,
+        reason="Gemini google_search grounding; preflight-gated M21.3",
+        expiry_milestone="M22",
         allowed_behavior="existing research.py only",
         telemetry_tag="tools_research",
+        caller_id="research_tools",
+        production_reachability=True,
+    ),
+    ResidualPathControl(
+        path_id="legacy_facade_preflight",
+        module="saathi.inference.legacy_facade",
+        symbol="preflight_inference",
+        disposition=ResidualDisposition.CANONICAL,
+        reason="Shared residual preflight gate",
+        expiry_milestone="n/a",
+        allowed_behavior="kill + caller policy; no provider execution",
+        telemetry_tag="legacy_preflight",
+        new_callers_forbidden=False,
+        production_reachability=True,
+    ),
+    ResidualPathControl(
+        path_id="release_check",
+        module="saathi.inference.release_check",
+        symbol="run_release_check",
+        disposition=ResidualDisposition.CANONICAL,
+        reason="M21.3 release architecture enforcement",
+        expiry_milestone="n/a",
+        allowed_behavior="static offline checks",
+        telemetry_tag="release_check",
+        new_callers_forbidden=False,
+        production_reachability=False,
+    ),
+    ResidualPathControl(
+        path_id="transitional_unknown_caller",
+        module="saathi.inference.caller_policy",
+        symbol="unknown",
+        disposition=ResidualDisposition.BLOCK,
+        reason="M21.3 disabled FORBIDDEN; production acceptance removed",
+        expiry_milestone="n/a",
+        allowed_behavior="denied in all environments",
+        telemetry_tag="unknown_blocked",
+        caller_id="unknown",
+        production_reachability=False,
     ),
 )
 
@@ -276,14 +361,19 @@ def residual_paths_snapshot() -> dict[str, Any]:
     by_disp: dict[str, list[str]] = {}
     for p in RESIDUAL_PATH_CONTROLS:
         by_disp.setdefault(p.disposition.value, []).append(p.path_id)
+    unknown = by_disp.get(ResidualDisposition.UNKNOWN.value, [])
+    bypass = by_disp.get(ResidualDisposition.DIRECT_PROVIDER_BYPASS.value, [])
     return {
-        "schema": "m21.1.residual_paths.v1",
-        "milestone": "M21.1",
+        "schema": "m21.3.residual_paths.v1",
+        "milestone": "M21.3",
         "path_count": len(RESIDUAL_PATH_CONTROLS),
         "by_disposition": by_disp,
         "paths": [p.to_dict() for p in RESIDUAL_PATH_CONTROLS],
+        "unknown_count": len(unknown),
+        "direct_provider_bypass_count": len(bypass),
         "unclassified_forbidden": True,
         "new_legacy_copies_forbidden": True,
+        "production_certified": False,
     }
 
 
@@ -291,5 +381,21 @@ def legacy_allowed_path_ids() -> list[str]:
     return [
         p.path_id
         for p in RESIDUAL_PATH_CONTROLS
-        if p.disposition is ResidualDisposition.LEGACY_ALLOWED_TEMPORARILY
+        if p.disposition
+        in {
+            ResidualDisposition.LEGACY_ALLOWED_TEMPORARILY,
+            ResidualDisposition.EXPLICIT_LEGACY_EXCEPTION,
+        }
     ]
+
+
+def main() -> int:
+    import json
+    import sys
+
+    print(json.dumps(residual_paths_snapshot(), indent=1, default=str))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

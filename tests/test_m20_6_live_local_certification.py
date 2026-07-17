@@ -154,8 +154,13 @@ def test_no_direct_ollama_in_selected_callers():
 
 
 def test_chat_not_migrated():
+    # M21.3 wraps chat via adapter; full chat rewrite still out of M20.6 scope
     t = (ROOT / "saathi" / "chat" / "engine.py").read_text(encoding="utf-8")
-    assert "llm_mod.generate" in t
+    assert (
+        "llm_mod.generate" in t
+        or "chat_generate" in t
+        or "chat_adapter" in t
+    )
     assert "m20_6" not in t.lower()
 
 

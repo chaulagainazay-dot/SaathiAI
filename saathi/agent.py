@@ -247,7 +247,11 @@ class SaathiAgent:
             self.model = config.CLAUDE_MODEL
 
     def complete(self, system: str, prompt: str, max_tokens: int = 400) -> str:
-        """One simple no-tools completion — used by the self-improvement engine."""
+        """One simple no-tools completion — used by the self-improvement engine.
+
+        M21.3: preflight kill/caller checks before any provider SDK call.
+        """
+        self._m21_preflight(prompt or "", system or "", max_tokens)
         if self.provider in ("gemini", "ollama", "shimmy", "groq"):
             resp = self._create_with_retry(
                 messages=[{"role": "system", "content": system},
@@ -259,10 +263,37 @@ class SaathiAgent:
             messages=[{"role": "user", "content": prompt}])
         return "".join(b.text for b in resp.content if b.type == "text").strip()
 
+    def _m21_preflight(self, prompt: str, system: str, max_tokens: int = 400) -> None:
+        """M21.3 agent path gate — does not select providers or log raw content."""
+        try:
+            from saathi.inference.legacy_facade import preflight_inference
+
+            pf = preflight_inference(
+                caller_id="agent_runtime",
+                path_id="agent_sdk_clients",
+                prompt=prompt,
+                system=system,
+                max_tokens=int(max_tokens),
+                timeout=120.0,
+            )
+            if not pf.ok:
+                raise RuntimeError(pf.error_message or pf.reason_code or "agent_preflight_denied")
+        except RuntimeError:
+            raise
+        except Exception:
+            # Fail closed on master kill even if facade import fails
+            import os
+            if os.getenv("SAATHI_INFERENCE_KILL_ALL", "").strip().lower() in {
+                "1", "true", "yes", "on",
+            }:
+                raise RuntimeError("SAATHI_INFERENCE_KILL_ALL is active")
+
     # ---------- public ----------
 
     def respond(self, user_text: str, session_id: str = "default",
                 speaker_verified: bool = False) -> str:
+        # M21.3: kill / caller preflight before provider tool loop
+        self._m21_preflight(user_text or "", "agent_respond", max_tokens=2048)
         # smaller context = faster replies; 6 turns + 4 facts is plenty for voice
         history = self.memory.recent_turns(session_id, limit=6)
         facts = self.memory.relevant_facts(user_text, limit=4)

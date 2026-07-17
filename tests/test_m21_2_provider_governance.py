@@ -897,9 +897,12 @@ def test_cheap_ask_no_silent_cloud():
 
 
 def test_unknown_caller_test_cert():
+    # M21.3: transitional unknown is FORBIDDEN/disabled (no production acceptance)
     pol = get_caller_policy("unknown")
     assert pol is not None
-    assert pol.certification.value == "test"
+    assert pol.certification.value in {"test", "forbidden"}
+    if pol.certification.value == "forbidden":
+        assert pol.enabled is False
 
 
 def test_unknown_caller_production_denied(monkeypatch):

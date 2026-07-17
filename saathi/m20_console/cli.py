@@ -9,6 +9,7 @@
   inference    inference snapshot only
   prod-config  M21.0 production config bundle (read-only)
   provider-governance  M21.2 provider availability/cost/circuit snapshot (read-only)
+  residual-inference   M21.3 residual path + release-check snapshot (read-only)
 
 Never launches agents, never generates, never pushes.
 """
@@ -63,6 +64,33 @@ def main(argv: list[str] | None = None) -> int:
     if cmd in ("provider-governance", "provider_governance", "m21_2"):
         from saathi.inference.provider_governance import governance_snapshot
         _emit(governance_snapshot())
+        return 0
+    if cmd in ("residual-inference", "residual_inference", "m21_3"):
+        from saathi.inference.residual_paths import residual_paths_snapshot
+        from saathi.inference.release_check import run_release_check
+
+        snap = residual_paths_snapshot()
+        rep = run_release_check()
+        _emit(
+            {
+                "domain": "residual_inference",
+                "milestone": "M21.3",
+                "production_certified": False,
+                "residual": {
+                    "path_count": snap.get("path_count"),
+                    "by_disposition": snap.get("by_disposition"),
+                    "unknown_count": snap.get("unknown_count"),
+                    "direct_provider_bypass_count": snap.get("direct_provider_bypass_count"),
+                },
+                "release_check": {
+                    "ok": rep.ok,
+                    "blocking_count": rep.blocking_count,
+                    "files_scanned": rep.files_scanned,
+                    "cli": "python -m saathi.inference.release_check",
+                },
+                "transitional_unknown": "disabled_forbidden",
+            }
+        )
         return 0
     _emit({"error": "unknown_command", "cmd": cmd, "hint": "help"})
     return 2

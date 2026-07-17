@@ -118,10 +118,35 @@ def inference_snapshot() -> dict[str, Any]:
             "certification": cert,
             "m21_0": m21,
             "m21_2": m21.get("provider_governance") if isinstance(m21, dict) else None,
+            "m21_3": _m21_3_residual_facet(),
             "production_certified": False,
         }
     except Exception as e:
         return {"domain": "inference", "ok": False, "error": type(e).__name__}
+
+
+def _m21_3_residual_facet() -> dict[str, Any]:
+    """M21.3 residual-path + release-check summary (read-only, no generation)."""
+    try:
+        from saathi.inference.residual_paths import residual_paths_snapshot
+        from saathi.inference.release_check import run_release_check
+
+        snap = residual_paths_snapshot()
+        rep = run_release_check()
+        return {
+            "schema": "m21.3.console.v1",
+            "path_count": snap.get("path_count"),
+            "unknown_count": snap.get("unknown_count"),
+            "direct_provider_bypass_count": snap.get("direct_provider_bypass_count"),
+            "by_disposition": snap.get("by_disposition"),
+            "release_check_ok": rep.ok,
+            "release_check_blocking": rep.blocking_count,
+            "transitional_unknown": "disabled_forbidden",
+            "production_certified": False,
+            "cli": "python -m saathi.inference.release_check",
+        }
+    except Exception as e:
+        return {"ok": False, "error": type(e).__name__, "production_certified": False}
 
 
 def trading_guardian_snapshot() -> dict[str, Any]:

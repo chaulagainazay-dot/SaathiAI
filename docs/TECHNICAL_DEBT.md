@@ -1,16 +1,26 @@
 # SaathiOS Technical Debt / Known Gaps
 
-## Program note (M21–M39 / M21.2, 2026-07-17)
+## Program note (M21–M39 / M21.3, 2026-07-17)
 
-Platform M21–M39 program; **M21.0–M21.2 COMPLETE WITH LIMITATIONS**.
-Remaining: M21.3 residual migration / release-check; M21.4+ cert path.
+Platform M21–M39 program; **M21.0–M21.3 COMPLETE WITH LIMITATIONS**.
+Remaining: M21.4+ runtime consolidation / cert path (operator authorize).
 Product IELTSAlert work uses **PRODUCT/IELTSAlert** numbering — not platform debt.
 
-### M21.2 deferred debt
+### M21.3 deferred debt
+- HIGH→MEDIUM: `llm.generate` HTTP DEFAULT_CALLERS still EXPLICIT_LEGACY_EXCEPTION — unify under governed adapters → **M22**.
+- MEDIUM: agent.py multi-provider SDK clients residual — preflight-gated only → **M22**.
+- MEDIUM: research.py Gemini google_search grounding residual → **M22**.
+- MEDIUM: chat still COMPATIBILITY_WRAPPED (not fully governed default) → **M23**.
+- MEDIUM: process-local circuit breaker only — durable store → **M24**.
+- MEDIUM: daily cost accounting not durable → **M24**.
+- LOW: full repository test suite not run this session → next validation slice.
+- LOW: live Ollama still env-blocked (operator install).
+
+### M21.2 deferred debt (carry-forward)
 - MEDIUM: process-local circuit breaker only — durable provider circuit store → M21.x/M24.
 - MEDIUM: daily cost accounting interface only — durable budget store → M21.x/M24.
-- MEDIUM: residual direct paths (`chat_engine`, `llm.generate`, agent/server/research) — M21.3+.
-- LOW: transitional `unknown` caller still registered for tests — remove M21.3.
+- ~~MEDIUM: residual direct paths~~ — **M21.3 classified/wrapped**; remaining exceptions expire M22/M23.
+- ~~LOW: transitional unknown~~ — **M21.3 FORBIDDEN/disabled**.
 - LOW: live health probes optional/injectable — live cert remains env-blocked (Ollama).
 
 ## Environment-blocked (need user action — NOT debt)

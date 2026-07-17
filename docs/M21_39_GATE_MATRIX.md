@@ -29,8 +29,8 @@
 | M21-G1 | One canonical inference request contract | UNIT + integration on path | **COMPLETE** (M21.1 `validate_contract`) |
 | M21-G2 | One canonical model-selection path (`ModelRouter`) | SOURCE + tests; no second router | **COMPLETE** (asserted M21.0; pre-existing) |
 | M21-G3 | One canonical provider registry | UNIT | **COMPLETE WITH LIMITATIONS** (M21.0 policy + M21.2 descriptors; no second registry) |
-| M21-G4 | One canonical execution policy for inference | UNIT | **COMPLETE WITH LIMITATIONS** (M21.0–M21.2 decision layer; residual legacy remain) |
-| M21-G5 | No new direct caller→provider paths; inventory residual legacy | SOURCE inventory + guards | **COMPLETE WITH LIMITATIONS** (cheap_ask proxy blocked M21.2; chat/llm legacy remain) |
+| M21-G4 | One canonical execution policy for inference | UNIT | **COMPLETE WITH LIMITATIONS** (M21.0–M21.3; residual exceptions expire M22/M23) |
+| M21-G5 | No new direct caller→provider paths; inventory residual legacy | SOURCE inventory + guards | **COMPLETE WITH LIMITATIONS** (M21.3 release_check + residual inventory UNKNOWN=0; legacy sinks expire M22/M23) |
 | M21-G6 | No silent cloud escape (default-off cloud) | UNIT negative tests | **COMPLETE** (contract + hard denials + decision) |
 | M21-G7 | Local/cloud policies explicit | SOURCE + UNIT | **COMPLETE** (M21.0–M21.2) |
 | M21-G8 | Streaming/tool capability explicit on contract | UNIT | **COMPLETE** (M21.1 caller policy + M21.2 capability match) |
@@ -39,10 +39,10 @@
 | M21-G11 | Provider health / availability state | UNIT | **COMPLETE WITH LIMITATIONS** (deterministic states; live probe optional/injectable) |
 | M21-G12 | Per-provider kill switches | UNIT + disable procedure | **COMPLETE** (M21.0 + M21.2 precedence) |
 | M21-G13 | Failover taxonomy deterministic | UNIT | **COMPLETE** (M21.2 taxonomy + retry/failover; defaults off) |
-| M21-G14 | Production configuration validation gate | UNIT + release-check hook | **PARTIAL** (M21.0 validator; release-check → M21.3) |
+| M21-G14 | Production configuration validation gate | UNIT + release-check hook | **COMPLETE WITH LIMITATIONS** (M21.0 validator + M21.3 `release_check`; production_certified=false) |
 | M21-G15 | Privacy-safe metrics | SOURCE + UNIT | **COMPLETE WITH LIMITATIONS** (decision/contract telemetry; full metrics platform deferred) |
-| M21-G16 | Trading Guardian unengaged by M21 changes | UNIT isolation | **COMPLETE** (M21.0–M21.2 isolation tests) |
-| M21-G17 | Rollback + disable documented | SOURCE | **COMPLETE** (M21.0 + M21.2) |
+| M21-G16 | Trading Guardian unengaged by M21 changes | UNIT isolation | **COMPLETE** (M21.0–M21.3 isolation tests) |
+| M21-G17 | Rollback + disable documented | SOURCE | **COMPLETE** (M21.0 + M21.2 + M21.3) |
 
 **Exit verdict forms:**
 

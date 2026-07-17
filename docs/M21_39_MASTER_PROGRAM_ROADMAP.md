@@ -106,7 +106,8 @@ Do **not** implement all of M21 in one invocation. Suggested slices:
 | **M21.0** | Inventory residual inference/call paths; production config schema; provider policy doc + tests; kill-switch matrix extension | Preferred first code milestone (aligns with M20.10-B) |
 | **M21.1** | Canonical request contract enforcement; no direct caller→provider | Extend `saathi.inference`, not a second router |
 | **M21.2** | Cost metadata, availability state, failover taxonomy | **COMPLETE WITH LIMITATIONS** — see `docs/M21_2_*` |
-| **M21.3** | Production configuration gate + Critical Manifest / release-check hooks | Fail closed |
+| **M21.3** | Residual path migration + release-check enforcement | **COMPLETE WITH LIMITATIONS** — see `docs/M21_3_*` |
+| **M21.4+** | Further runtime consolidation / config gate as needed | Operator authorize; fail closed |
 | **M21.x** | Closure + validation docs | Honest evidence tiers |
 
 **Reuse only:** `ModelRouter`, `saathi.inference`, ExecutionGateway/ModelGateway path, `m20_console` flags.  
@@ -131,9 +132,9 @@ Do **not** implement all of M21 in one invocation. Suggested slices:
 | Field | Value |
 |-------|--------|
 | Program phase | Phase 1 — M21 in progress |
-| Active platform milestone | **M21.2 COMPLETE WITH LIMITATIONS**; do not auto-start M21.3 |
-| Last checkpoint | M21.2 provider governance (availability/cost/failover/circuit) |
-| Recommended next | **M21.3** residual migration / release-check (operator authorize) |
+| Active platform milestone | **M21.3 COMPLETE WITH LIMITATIONS**; do not auto-start M21.4 or M22 |
+| Last checkpoint | M21.3 residual path migration + release-check |
+| Recommended next | **M21.4** (operator authorize) — next runtime consolidation slice |
 | M20.6 live model | Still **ENVIRONMENT_BLOCKED** until operator installs Ollama + ≤3B |
 
 ---

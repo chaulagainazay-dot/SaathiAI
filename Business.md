@@ -1,5 +1,13 @@
 # SaathiOS — Business
 
+## Inference path governance (M21.3)
+
+* Residual inference bypasses are inventory-classified and release-check blocked — reduces unauthorized cloud and cost leakage risk.
+* Compatibility adapters keep chat/tools behavior stable while request construction is governed.
+* Transitional unlabeled callers no longer accepted in any environment.
+* No paid provider enablement; no production deployment; `production_certified=false`.
+* Remaining operational limitation: some legacy sinks (HTTP generate, agent SDK, research grounding) expire M22/M23.
+
 ## Inference cost containment (M21.2)
 
 * Paid cloud fallback remains **default off**; unknown or stale pricing cannot authorize automatic paid fallback.

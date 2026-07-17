@@ -28,6 +28,17 @@ If the answer is the latter, the feature belongs in the product layer, not the p
 
 ## 3. Current Platform State
 
+### Platform M21.3 residual inference paths (2026-07-17)
+
+* **Canonical path authority:** product caller → approved adapter → `InferenceRequest` / preflight → contract + caller policy → M21.2 provider governance → ModelRouter → governed adapter or explicit legacy sink.
+* **Residual-path elimination policy:** every path is CANONICAL / COMPATIBILITY_WRAPPED / TEST_ONLY / FAKE / BLOCKED / EXPLICIT_LEGACY_EXCEPTION — never UNKNOWN or DIRECT_PROVIDER_BYPASS.
+* **Compatibility adapters** preserve public APIs (`chat_adapter`, `cheap_ask`, `prose_clean`, `ask_llm`) without second gateways.
+* **Release-check authority:** `python -m saathi.inference.release_check` fails closed on new bypasses, new `llm.generate` sites, duplicate request models, enabled trading callers, raw log flags.
+* **Caller identity required;** transitional `unknown` is FORBIDDEN/disabled in all environments.
+* **Chat** is COMPATIBILITY_WRAPPED (not full rewrite); legacy sink expiry M23.
+* **Provider bypass prohibited** outside exact allowlisted adapters/residuals.
+* **Local-first**; cloud fallback default off; `production_certified=false`; Trading Guardian unengaged.
+
 ### Platform M21.2 inference governance (2026-07-17)
 
 * **Canonical provider decision** before any governed attempt: capability → availability → cost/privacy → kill/circuit → ranked selection.

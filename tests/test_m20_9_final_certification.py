@@ -107,8 +107,13 @@ def test_no_direct_ollama_in_selected_callers():
 
 
 def test_chat_still_legacy_generate():
+    # M21.3: chat compatibility adapter; legacy sink remains llm.generate inside adapter
     t = (ROOT / "saathi" / "chat" / "engine.py").read_text(encoding="utf-8")
-    assert "llm_mod.generate" in t
+    assert (
+        "llm_mod.generate" in t
+        or "chat_generate" in t
+        or "chat_adapter" in t
+    )
 
 
 def test_domains_isolated_machine_checkable():

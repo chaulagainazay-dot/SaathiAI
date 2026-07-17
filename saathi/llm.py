@@ -1,11 +1,15 @@
 """LLM execution via the Model Router (SES-002) — the capability-based path.
 
-`generate(label, prompt)` routes to an ordered provider chain and executes with
-fallback. Agents ask for a capability label; they never name a model. This is
-the execution path the Model Router was built for — no agent selects models
-directly.
+M21.3: ``generate`` is a **deprecated compatibility facade**.
 
-    request → label → ModelRouter → ordered chain → try each → result
+  * Builds / attaches caller identity + preflight governance
+  * Kill switches checked before any provider network call
+  * ModelRouter remains the sole selection authority
+  * Provider HTTP callers remain an EXPLICIT_LEGACY_EXCEPTION (expiry M22)
+  * New call sites are frozen by ``saathi.inference.release_check``
+  * Does not log raw prompts/outputs in preflight telemetry
+
+    request → preflight → label → ModelRouter → ordered chain → try each → result
 
 Provider identity lives only in the router registry + the caller table here.
 Testable in isolation (AP-12): availability + callers are injected; no network.
@@ -14,13 +18,16 @@ from __future__ import annotations
 
 import os
 import time
+import warnings
 from dataclasses import dataclass
-from typing import Callable
+from typing import Callable, Optional
 
 from saathi.model_router import ModelRouter, ModelLabel, Privacy, Prefer, ProviderSpec
 
 # caller signature: (prompt, system, max_tokens, timeout) -> (text, model_name, usage)
 Caller = Callable[[str, str, int, int], "tuple[str, str, dict]"]
+
+_DEPRECATION_EMITTED = False
 
 
 @dataclass
@@ -53,7 +60,8 @@ def env_availability(name: str) -> bool:
     return False
 
 
-# ── real provider callers (compact; mirror tools/_llm_helper) ────────────
+# ── real provider callers (compact; mirror historical _llm_helper) ────────
+# M21.3: EXPLICIT_LEGACY_EXCEPTION — only reachable via generate() after preflight.
 def _call_anthropic(prompt, system, max_tokens, timeout):
     import httpx
     model = os.getenv("CLAUDE_MODEL", "claude-sonnet-5")
@@ -177,8 +185,76 @@ def generate(
     router: ModelRouter | None = None,
     callers: dict[str, Caller] | None = None,
     trace: bool = True,
+    *,
+    caller_id: str = "legacy_llm_generate",
+    skip_preflight: bool = False,
 ) -> LLMResult:
-    """Route to a provider by capability and execute, falling back down the chain."""
+    """Route to a provider by capability and execute, falling back down the chain.
+
+    .. deprecated:: M21.3
+        Prefer governed ``InferenceRequest`` + ``execute_governed_local_inference``
+        or an approved compatibility adapter (``chat_adapter``, ``cheap_ask``,
+        ``prose_clean``). This facade remains for residual callers until M22.
+    """
+    global _DEPRECATION_EMITTED
+    if not _DEPRECATION_EMITTED and os.getenv("SAATHI_ENV", "").strip().lower() in {
+        "dev",
+        "development",
+        "",
+    }:
+        if os.getenv("SAATHI_LLM_GENERATE_DEPRECATION_WARN", "1").strip().lower() in {
+            "1",
+            "true",
+            "yes",
+            "on",
+        }:
+            # Once per process; never includes prompt
+            warnings.warn(
+                "saathi.llm.generate is deprecated (M21.3); use governed InferenceRequest "
+                "or an approved compatibility adapter. Expiry: M22.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            _DEPRECATION_EMITTED = True
+
+    cid = (caller_id or "").strip() or "legacy_llm_generate"
+    max_tok = int(max_tokens)
+    timeout_i = int(timeout)
+
+    if not skip_preflight:
+        try:
+            from saathi.inference.legacy_facade import preflight_inference
+
+            pf = preflight_inference(
+                caller_id=cid,
+                path_id="legacy_llm_generate",
+                prompt=prompt or "",
+                system=system or "",
+                max_tokens=max_tok,
+                timeout=float(timeout_i),
+            )
+            if not pf.ok:
+                raise RuntimeError(pf.error_message or pf.reason_code or "preflight_denied")
+            max_tok = int(pf.max_output_tokens)
+            timeout_i = int(max(1, min(pf.timeout_seconds, 300)))
+            # If caller policy disallows cloud, force LOCAL_ONLY privacy
+            if not pf.cloud_allowed and privacy is Privacy.CLOUD_OK:
+                try:
+                    privacy = Privacy.LOCAL_ONLY
+                except Exception:
+                    pass
+        except RuntimeError:
+            raise
+        except Exception:
+            # Preflight module unavailable: still honor master kill
+            if os.getenv("SAATHI_INFERENCE_KILL_ALL", "").strip().lower() in {
+                "1",
+                "true",
+                "yes",
+                "on",
+            }:
+                raise RuntimeError("SAATHI_INFERENCE_KILL_ALL is active")
+
     router = router or ModelRouter(is_available=env_availability)
     callers = callers or DEFAULT_CALLERS
     chain = router.route(label, privacy=privacy, prefer=prefer)
@@ -187,43 +263,128 @@ def generate(
 
     last_err: Exception | None = None
     for spec in chain:
+        # Provider-level kill before network
+        try:
+            from saathi.inference.provider_policy import is_provider_killed
+
+            if is_provider_killed(_family(spec.name)):
+                last_err = RuntimeError(f"provider {_family(spec.name)} killed")
+                _event(
+                    "model.fallback",
+                    {
+                        "label": label.value,
+                        "provider": spec.name,
+                        "error": "provider_killed",
+                        "caller_id": cid,
+                    },
+                )
+                continue
+        except Exception:
+            pass
         caller = callers.get(_family(spec.name))
         if caller is None:
             continue
         try:
             t0 = time.monotonic()
-            text, model, usage = caller(prompt, system, max_tokens, timeout)
+            text, model, usage = caller(prompt, system, max_tok, timeout_i)
             if trace:
                 _trace(spec, model, prompt, system, text, (time.monotonic() - t0) * 1000, usage)
-            _event("model.selected", {"label": label.value, "provider": spec.name, "model": model})
+            _event(
+                "model.selected",
+                {
+                    "label": label.value,
+                    "provider": spec.name,
+                    "model": model,
+                    "caller_id": cid,
+                },
+            )
             return LLMResult(text=text, provider=spec.name, model=model)
         except Exception as e:  # fall through to the next provider in the chain
             last_err = e
-            _event("model.fallback", {"label": label.value, "provider": spec.name, "error": str(e)})
+            # Redact: never put full exception bodies that may contain prompts
+            err_name = type(e).__name__
+            _event(
+                "model.fallback",
+                {
+                    "label": label.value,
+                    "provider": spec.name,
+                    "error": err_name,
+                    "caller_id": cid,
+                },
+            )
             continue
-    _event("model.failed", {"label": label.value, "error": str(last_err)})
-    raise RuntimeError(f"All providers failed for '{label.value}': {last_err}")
+    _event("model.failed", {"label": label.value, "error": type(last_err).__name__ if last_err else "none", "caller_id": cid})
+    raise RuntimeError(f"All providers failed for '{label.value}': {type(last_err).__name__ if last_err else 'none'}")
 
 
 def _event(name: str, payload: dict) -> None:
     """Publish a Model Router event to the platform Event Fabric (best-effort)."""
     try:
         from saathi.events import bus
-        bus.publish_sync(name, payload)
+        # Strip any accidental sensitive keys
+        safe = {
+            k: v
+            for k, v in payload.items()
+            if k not in ("prompt", "output", "text", "system", "api_key")
+        }
+        bus.publish_sync(name, safe)
     except Exception:
         pass
 
 
 def _trace(spec: ProviderSpec, model, prompt, system, output, ms, usage):
+    # Historical Opik tracer may log content — best-effort only; do not expand.
     try:
         from saathi.tools.opik_tracer import trace_llm_call
-        trace_llm_call(_family(spec.name), model, prompt, system, output, ms,
-                       {"prompt_tokens": usage.get("prompt_tokens"),
-                        "completion_tokens": usage.get("completion_tokens")},
-                       tags=["router", label_tag(spec)])
+        # Prefer fingerprint-only if tracer supports it; keep call shape for compat
+        if os.getenv("SAATHI_TRACE_RAW_LLM", "").strip().lower() not in {
+            "1",
+            "true",
+            "yes",
+            "on",
+        }:
+            # Privacy-safe: pass empty strings for content; metadata only
+            trace_llm_call(
+                _family(spec.name),
+                model,
+                "",
+                "",
+                "",
+                ms,
+                {
+                    "prompt_tokens": usage.get("prompt_tokens"),
+                    "completion_tokens": usage.get("completion_tokens"),
+                    "raw_content_suppressed": True,
+                },
+                tags=["router", label_tag(spec), "m21_3_privacy"],
+            )
+        else:
+            trace_llm_call(
+                _family(spec.name),
+                model,
+                prompt,
+                system,
+                output,
+                ms,
+                {
+                    "prompt_tokens": usage.get("prompt_tokens"),
+                    "completion_tokens": usage.get("completion_tokens"),
+                },
+                tags=["router", label_tag(spec)],
+            )
     except Exception:
         pass
 
 
 def label_tag(spec: ProviderSpec) -> str:
     return "routed"
+
+
+# Deprecation metadata for release checks / docs
+LLM_GENERATE_DEPRECATION = {
+    "deprecated": True,
+    "since": "M21.3",
+    "expiry_milestone": "M22",
+    "replacement": "saathi.inference.gateway_path.execute_governed_local_inference",
+    "classification": "EXPLICIT_LEGACY_EXCEPTION",
+}

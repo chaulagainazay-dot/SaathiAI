@@ -200,9 +200,24 @@ def test_trading_caller_blocked():
 
 def test_residual_paths_classified():
     snap = residual_paths_snapshot()
-    assert snap["schema"] == "m21.1.residual_paths.v1"
-    assert "chat_engine" in legacy_allowed_path_ids()
+    # Schema advanced with M21.3 residual migration
+    assert snap["schema"] in {
+        "m21.1.residual_paths.v1",
+        "m21.3.residual_paths.v1",
+    }
     ids = {p["path_id"] for p in snap["paths"]}
+    assert "chat_engine" in ids
+    # chat may be compatibility-wrapped (M21.3) rather than legacy_allowed list
+    assert "chat_engine" in legacy_allowed_path_ids() or any(
+        p.get("path_id") == "chat_engine"
+        and p.get("disposition")
+        in {
+            "legacy_allowed_temporarily",
+            "compatibility_wrapped",
+            "explicit_legacy_exception",
+        }
+        for p in snap["paths"]
+    )
     assert "cheap_ask_legacy_proxy" in ids
     assert "governed_local_gateway" in ids
     # every path has disposition

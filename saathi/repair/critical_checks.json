@@ -2247,6 +2247,15 @@
       ],
       "subsystem": "codebase_memory",
       "blocking": true
+    },
+    {
+      "id": "m21.3.residual_release_check",
+      "targets": [
+        "tests/test_m21_3_residual_path_migration.py"
+      ],
+      "subsystem": "inference",
+      "blocking": true,
+      "notes": "M21.3 residual path migration + release-check enforcement"
     }
   ]
 }

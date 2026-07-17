@@ -137,9 +137,13 @@ _CALLER_POLICIES: dict[str, CallerPolicy] = {
         description="M20 deterministic tests",
         product_area="test",
         certification=CallerCertification.TEST,
-        max_input_chars=8000,
-        max_output_tokens=512,
-        timeout_seconds=30.0,
+        max_input_chars=16000,
+        max_output_tokens=2048,
+        timeout_seconds=120.0,
+        allowed_capabilities=frozenset(
+            {"screening", "standard", "fast", "private", "reasoning", "long", "multimodal"}
+        ),
+        notes="M21.3: expanded bounds for historical M20.2 suite after unknown default removed",
     ),
     "test_m21_0": CallerPolicy(
         caller_id="test_m21_0",
@@ -150,51 +154,114 @@ _CALLER_POLICIES: dict[str, CallerPolicy] = {
         max_output_tokens=128,
         timeout_seconds=15.0,
     ),
-    # Transitional unlabeled caller — TEST-only under M21.2.
-    # Production / staging posture must fail closed (see contract + provider_decision).
+    # M21.3: transitional "unknown" disabled — fail closed everywhere.
+    # Entry retained only so require_caller_policy can resolve and deny.
     "unknown": CallerPolicy(
         caller_id="unknown",
-        description="Transitional unlabeled caller — test environments only",
+        description="Disabled transitional unlabeled caller (M21.3 fail-closed)",
         product_area="test",
-        certification=CallerCertification.TEST,
-        max_input_chars=16000,
-        max_output_tokens=1024,
-        timeout_seconds=60.0,
-        allowed_capabilities=frozenset(
-            {"screening", "standard", "fast", "private", "reasoning", "long", "multimodal"}
-        ),
+        certification=CallerCertification.FORBIDDEN,
+        enabled=False,
+        max_input_chars=1,
+        max_output_tokens=1,
+        timeout_seconds=1.0,
+        allowed_capabilities=frozenset(),
         notes=(
-            "M21.2: restricted to pytest/test; denied when SAATHI_PRODUCTION_POSTURE=1 "
-            "or SAATHI_ENV=production|staging. Expiry: remove in M21.3"
+            "M21.3: production acceptance removed; all environments deny. "
+            "Use explicit test_m21 / test_m20 callers in tests."
         ),
     ),
     "chat_engine": CallerPolicy(
         caller_id="chat_engine",
-        description="Chat default residual path (legacy llm.generate)",
+        description="Chat path via chat_adapter (M21.3 compatibility wrap)",
         product_area="chat",
         certification=CallerCertification.LEGACY,
-        local_only=False,  # historical cloud-ok via router
-        cloud_allowed=True,  # legacy only — not governed path
-        cloud_fallback_allowed=True,
+        local_only=False,  # historical cloud-ok via router after preflight
+        cloud_allowed=True,  # legacy sink only — governed path remains local-first
+        cloud_fallback_allowed=False,  # M21.3: no silent cloud fallback
         max_input_chars=32000,
         max_output_tokens=2048,
         timeout_seconds=120.0,
+        max_retries=0,
         legacy=True,
-        notes="LEGACY_ALLOWED_TEMPORARILY until chat migration (target M21.x/M23)",
+        notes="COMPATIBILITY_WRAPPED; expiry M23; uses chat_adapter → llm.generate sink",
     ),
     "legacy_llm_generate": CallerPolicy(
         caller_id="legacy_llm_generate",
-        description="saathi.llm.generate default execution path",
+        description="saathi.llm.generate deprecated compatibility facade",
         product_area="llm",
         certification=CallerCertification.LEGACY,
         local_only=False,
         cloud_allowed=True,
-        cloud_fallback_allowed=True,
+        cloud_fallback_allowed=False,
         max_input_chars=32000,
         max_output_tokens=4096,
         timeout_seconds=120.0,
+        max_retries=0,
         legacy=True,
-        notes="Canonical legacy execution; ModelRouter still selects",
+        notes="EXPLICIT_LEGACY_EXCEPTION expiry M22; preflight-gated; new call sites frozen",
+    ),
+    "tools_llm_helper": CallerPolicy(
+        caller_id="tools_llm_helper",
+        description="Studio tools ask_llm facade (M21.3)",
+        product_area="tools",
+        certification=CallerCertification.LEGACY,
+        local_only=False,
+        cloud_allowed=True,
+        cloud_fallback_allowed=False,
+        max_input_chars=16000,
+        max_output_tokens=2048,
+        timeout_seconds=90.0,
+        max_retries=0,
+        legacy=True,
+        notes="Delegates to llm.generate only; direct HTTP chain removed",
+    ),
+    "research_tools": CallerPolicy(
+        caller_id="research_tools",
+        description="Research grounding helper (Gemini google_search)",
+        product_area="research",
+        certification=CallerCertification.LEGACY,
+        local_only=False,
+        cloud_allowed=True,
+        cloud_fallback_allowed=False,
+        max_input_chars=12000,
+        max_output_tokens=1200,
+        timeout_seconds=90.0,
+        max_retries=0,
+        privacy_default="public_web",
+        legacy=True,
+        notes="EXPLICIT_LEGACY_EXCEPTION expiry M22; grounding not on ModelRouter",
+    ),
+    "agent_runtime": CallerPolicy(
+        caller_id="agent_runtime",
+        description="Legacy SaathiAgent multi-provider clients",
+        product_area="agent",
+        certification=CallerCertification.LEGACY,
+        local_only=False,
+        cloud_allowed=True,
+        cloud_fallback_allowed=False,
+        max_input_chars=16000,
+        max_output_tokens=2048,
+        timeout_seconds=120.0,
+        max_retries=0,
+        tools_allowed=True,
+        legacy=True,
+        notes="EXPLICIT_LEGACY_EXCEPTION expiry M22; preflight on complete/respond",
+    ),
+    "server_tools": CallerPolicy(
+        caller_id="server_tools",
+        description="Server routes that call ask_llm / tools helpers",
+        product_area="server",
+        certification=CallerCertification.LEGACY,
+        local_only=False,
+        cloud_allowed=True,
+        cloud_fallback_allowed=False,
+        max_input_chars=16000,
+        max_output_tokens=2048,
+        timeout_seconds=90.0,
+        max_retries=0,
+        legacy=True,
+        notes="Indirect via tools_llm_helper; no direct provider from server routes",
     ),
     "fake_engine": CallerPolicy(
         caller_id="fake_engine",
@@ -266,11 +333,13 @@ def is_governed_callable(caller_id: str) -> bool:
 
 def caller_policy_snapshot() -> dict[str, Any]:
     return {
-        "schema": "m21.1.caller_policy.v1",
-        "milestone": "M21.1",
+        "schema": "m21.3.caller_policy.v1",
+        "milestone": "M21.3",
         "selected_m20_3": sorted(SELECTED_CALLERS),
         "callers": {k: v.to_dict() for k, v in sorted(_CALLER_POLICIES.items())},
         "count": len(_CALLER_POLICIES),
+        "transitional_unknown": "disabled_forbidden",
+        "production_certified": False,
     }
 
 

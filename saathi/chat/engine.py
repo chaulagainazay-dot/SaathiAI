@@ -31,14 +31,20 @@ LLMFn = Callable[[str, str], dict]
 
 
 def _default_llm(prompt: str, system: str) -> dict:
-    """Real multi-provider call via the Model Router (Anthropic/OpenAI/DeepSeek/
-    Qwen/GLM/Groq/Gemini/Ollama…). Raises if no provider is available — the
-    engine converts that into an honest error message, never a fabricated reply."""
-    from saathi import llm as llm_mod
-    from saathi.model_router import ModelLabel
-    res = llm_mod.generate(ModelLabel.STANDARD, prompt, system=system)
-    return {"text": res.text, "provider": res.provider,
-            "tokens": getattr(res, "tokens", 0) or 0}
+    """M21.3: chat compatibility adapter → preflight → ModelRouter/legacy sink.
+
+    Public return shape unchanged: ``{text, provider, tokens}``.
+    Raises if preflight denies or no provider is available — the engine converts
+    that into an honest error message, never a fabricated reply.
+    """
+    from saathi.inference.chat_adapter import chat_generate
+
+    out = chat_generate(prompt, system)
+    return {
+        "text": out.get("text", ""),
+        "provider": out.get("provider", ""),
+        "tokens": out.get("tokens", 0) or 0,
+    }
 
 
 class ChatLLMAdapter:

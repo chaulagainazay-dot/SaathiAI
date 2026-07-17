@@ -61,6 +61,9 @@ ALLOWLIST_PREFIXES = (
     "saathi/inference/caller_policy.py",
     "saathi/inference/bypass_guard.py",
     "saathi/inference/gateway_path.py",
+    "saathi/inference/legacy_facade.py",
+    "saathi/inference/chat_adapter.py",
+    "saathi/inference/release_check.py",
 )
 
 # M21.2: patterns that must stay inside governance modules

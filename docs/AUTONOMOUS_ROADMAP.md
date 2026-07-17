@@ -2,7 +2,7 @@
 
 ## M21–M39 Master Program (2026-07-16)
 
-**Platform program status:** Phase 1 active — **M21.0 + M21.1 + M21.2 COMPLETE WITH LIMITATIONS**; full M21 not closed.
+**Platform program status:** Phase 1 active — **M21.0–M21.3 COMPLETE WITH LIMITATIONS**; full M21 not closed.
 Do not auto-run M21–M39 in one unattended block.
 
 Canonical docs:
@@ -27,6 +27,10 @@ Extended `InferenceRequest`, `validate_contract`, caller policy registry, residu
 
 Canonical provider descriptors, availability/readiness model, Decimal cost policy, failure taxonomy, deterministic retry/failover (defaults off), process-local circuit breaker, kill precedence, cheap_ask proxy blocked, unknown caller test-only. Tests: `tests/test_m21_2_provider_governance.py`. Docs: `docs/M21_2_*`. Live Ollama still env-blocked; production_certified=false.
 
+### M21.3 (Residual Inference Path Migration + Release-Check) — COMPLETE WITH LIMITATIONS
+
+Residual inventory UNKNOWN=0; chat compatibility adapter; `llm.generate` deprecated preflight facade; `_llm_helper` HTTP chain removed; agent/research preflight; transitional unknown FORBIDDEN; `python -m saathi.inference.release_check`. Tests: `tests/test_m21_3_residual_path_migration.py`. Docs: `docs/M21_3_*`. Legacy sinks expire M22/M23; production_certified=false.
+
 ### Milestone-number namespaces (mandatory)
 
 | Namespace | Meaning |
@@ -36,7 +40,7 @@ Canonical provider descriptors, availability/readiness model, Decimal cost polic
 | **M20.10 options A/B/C** | Historical handoff choices; remapped in program roadmap (A→env unlock/M24 evidence; B→M21.0 slice; C→M30/PRODUCT) |
 
 Platform Phase 1 target: **M21** Runtime Consolidation → **M22** Voice/durable agents → **M23** Multi-user isolation → **M24** Core runtime certification.
-Next recommended: **M21.3** residual path migration / release-check hook (bounded; operator authorize).
+Next recommended: **M21.4** next runtime consolidation slice (bounded; operator authorize). Do not auto-start M22.
 
 Prior series: **M20 COMPLETE WITH LIMITATIONS** (live local inference still environment-blocked).
 

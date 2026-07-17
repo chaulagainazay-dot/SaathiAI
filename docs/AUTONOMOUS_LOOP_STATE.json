@@ -2,7 +2,7 @@
   "schema_version": "1",
   "repository": "SaathiOS",
   "branch": "milestone/m7-security-engine",
-  "current_head": "1824d88",
+  "current_head": "PENDING_M21_3_COMMIT",
   "active_milestone": null,
   "completed_milestones": [
     "M20.0",
@@ -17,7 +17,8 @@
     "M21_39_PROGRAM_INIT",
     "M21.0",
     "M21.1",
-    "M21.2"
+    "M21.2",
+    "M21.3"
   ],
   "intentionally_skipped": [
     "M20.8"
@@ -25,31 +26,34 @@
   "environment_blocked": [
     "M20.6_live_local_model"
   ],
-  "milestone_verdict": "M21.2 COMPLETE WITH LIMITATIONS — PROVIDER GOVERNANCE READY; LIVE CERTIFICATION BLOCKED",
-  "session_verdict": "M21.2 COMPLETE WITH LIMITATIONS — NOT FULL M21; NOT PRODUCTION",
-  "next_milestone": "M21.3 residual path migration / release-check (operator authorize)",
-  "stop_reason": "M21.2 bounded slice complete; do not auto-start M21.3",
-  "m21_2": {
+  "milestone_verdict": "M21.3 COMPLETE WITH LIMITATIONS — RESIDUAL PATHS CLASSIFIED AND RELEASE-CHECK ENFORCED; LIVE CERTIFICATION BLOCKED",
+  "session_verdict": "M21.3 COMPLETE WITH LIMITATIONS — NOT FULL M21; NOT PRODUCTION",
+  "next_milestone": "M21.4 (operator authorize only) — program roadmap next slice",
+  "stop_reason": "M21.3 bounded slice complete; do not auto-start M21.4 or M22",
+  "m21_3": {
     "modules": [
-      "saathi/inference/availability.py",
-      "saathi/inference/cost_policy.py",
-      "saathi/inference/failure_taxonomy.py",
-      "saathi/inference/circuit_breaker.py",
-      "saathi/inference/provider_descriptor.py",
-      "saathi/inference/provider_decision.py",
-      "saathi/inference/provider_governance.py"
+      "saathi/inference/legacy_facade.py",
+      "saathi/inference/chat_adapter.py",
+      "saathi/inference/release_check.py",
+      "saathi/inference/residual_paths.py",
+      "saathi/llm.py",
+      "saathi/tools/_llm_helper.py",
+      "saathi/chat/engine.py"
     ],
-    "tests": "tests/test_m21_2_provider_governance.py",
+    "tests": "tests/test_m21_3_residual_path_migration.py",
+    "docs": "docs/M21_3_*",
     "limitations": [
+      "llm.generate HTTP sink expires M22",
+      "agent SDK residual expires M22",
+      "research grounding expires M22",
+      "chat compatibility-wrapped not full migrate",
       "live Ollama env-blocked",
-      "circuit process-local",
-      "daily cost not durable",
-      "legacy chat/llm remain",
+      "full suite not run",
       "production_certified=false"
     ]
   },
-  "unrelated_untouched": "Trading Guardian; chat default legacy; no merge/deploy; no model download; no M21.3/M22",
-  "session_id": "m21-2-2026-07-17",
+  "unrelated_untouched": "Trading Guardian; no merge/deploy; no model download; no M21.4/M22",
+  "session_id": "m21-3-2026-07-17",
   "actor": "grok-master-controller",
-  "start_commit": "2aace04"
+  "start_commit": "32f0d31"
 }
