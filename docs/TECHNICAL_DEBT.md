@@ -1,10 +1,20 @@
 # SaathiOS Technical Debt / Known Gaps
 
-## Program note (M21–M39 / M24, 2026-07-17)
+## Program note (M21–M39 / M25, 2026-07-17)
 
-Platform M21–M39 program; **M21.0–M21.4**, **M22**, **M23**, and **M24 (durable governance) COMPLETE WITH LIMITATIONS**.
-Next: **M25** only with operator authorize. Not production certified.
+Platform M21–M39 program; **M21.0–M21.4**, **M22**, **M23**, **M24**, and **M25 (live cert harness)**.
+M25 verdict: **BLOCKED — LIVE LOCAL PROVIDER ENVIRONMENT UNAVAILABLE**. Not production certified.
+Next: **M26** only with operator authorize (or operator unlock for live Ollama then re-run M25).
 Product IELTSAlert work uses **PRODUCT/IELTSAlert** numbering — not platform debt.
+
+### M25 closed / harness
+- Live certification harness `live_cert_m25` + evidence bundle + runtime-gate M25 checks.
+- Correct ENVIRONMENT_BLOCKED when Ollama broken/missing; never mock-as-live.
+
+### M25 residual / deferred
+- ENVIRONMENT_BLOCKED: Ollama.app missing (broken `/usr/local/bin/ollama` symlink); no models; runtime down; memory pressure.
+- Operator unlock: repair Ollama.app, start service, pull ≤3B model, free RAM, re-run `python -m saathi.inference.live_cert_m25`.
+- `production_certified=false` until live certification evidence PASS.
 
 ### M24 closed debt
 - ~~process-local circuit breaker authority~~ — **M24** `DurableGovernanceStore` / durable circuit rows.
@@ -16,7 +26,7 @@ Product IELTSAlert work uses **PRODUCT/IELTSAlert** numbering — not platform d
 ### M24 residual / deferred
 - LOW: non-inference media/eval tools still hold provider SDKs (vision, voice, speaking_eval) — out of M24 scope.
 - LOW: distributed multi-region billing not in scope (single-host SQLite authority).
-- ENVIRONMENT_BLOCKED: live Ollama certification (binary absent on pilot host) — operator unlock.
+- ~~ENVIRONMENT_BLOCKED: live Ollama certification~~ — **M25 harness**; still ENVIRONMENT_BLOCKED on pilot host.
 - `production_certified=false` until live + full suite certification evidence.
 
 ### M23 closed debt

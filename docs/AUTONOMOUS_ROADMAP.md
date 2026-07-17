@@ -47,6 +47,10 @@ Canonical `saathi.chat.runtime` sole production chat path; ChatRequest + context
 
 Canonical `DurableGovernanceStore` (SQLite): circuit state, usage ledger, budget reservations, recovery, operator audit. Process-local circuit/cost no longer production authority. Cloud + OpenAI-compat residual exceptions removed (manifest exceptions=0). Tests: `tests/test_m24_durable_provider_governance.py`. Docs: `docs/M24_*`. production_certified=false; live Ollama still ENVIRONMENT_BLOCKED. Do not start M25 without operator authorize.
 
+### M25 — Live local provider certification (BLOCKED — ENVIRONMENT)
+
+Harness `saathi.inference.live_cert_m25` + evidence under `docs/evidence/m25/`. Discovery proves Ollama.app missing (broken symlink), runtime down, no models, memory pressure. No install/start/pull performed. Verdict: `M25 BLOCKED — LIVE LOCAL PROVIDER ENVIRONMENT UNAVAILABLE`. Tests: `tests/test_m25_live_provider_certification.py`. Docs: `docs/M25_*`. production_certified=false. Do not start M26 without operator authorize.
+
 ### Milestone-number namespaces (mandatory)
 
 | Namespace | Meaning |
@@ -55,8 +59,8 @@ Canonical `DurableGovernanceStore` (SQLite): circuit state, usage ledger, budget
 | **PRODUCT/IELTSAlert M21.x** | Separate product repo `/Users/macbookpro/Saathi/apps/pielts` — **not** platform M21 |
 | **M20.10 options A/B/C** | Historical handoff choices; remapped in program roadmap (A→env unlock/M24 evidence; B→M21.0 slice; C→M30/PRODUCT) |
 
-Platform Phase 1 target: **M21** Runtime Consolidation → **M22** Provider migration (done) → **M23** Chat governed default (done) → **M24** Durable governance (done).
-Next recommended: **M25** only with operator authorize. Do not auto-start M25.
+Platform Phase 1 target: **M21** Runtime Consolidation → **M22** Provider migration (done) → **M23** Chat governed default (done) → **M24** Durable governance (done) → **M25** Live cert (BLOCKED env).
+Next recommended: operator unlock Ollama **or** **M26** with authorize only. Do not auto-start M26.
 
 Prior series: **M20 COMPLETE WITH LIMITATIONS** (live local inference still environment-blocked).
 

@@ -4,6 +4,7 @@ Levels: implemented < deterministic-tested < security/red-team-tested < live-tes
 
 | capability | maturity | evidence |
 |-----------|----------|----------|
+| Live local provider certification (M25) | environment-blocked | harness+evidence; Ollama broken symlink/app missing; no models; production_certified=false; never mock-as-live |
 | Durable provider governance (M24) | deterministic-tested | SQLite circuit/cost/reservation; multi-process budget; residual exceptions=0; release/runtime M24 gates; production_certified=false |
 | Governed residual inference paths + release-check (M21.3) | deterministic-tested | residual inventory UNKNOWN=0; release_check pass; chat adapter; unknown caller fail-closed; live cert blocked |
 | Runtime consolidation + production-configuration gate (M21.4) | deterministic-tested | runtime_gate; release integrated; cert invariant false; kill matrix; live Ollama env-blocked |

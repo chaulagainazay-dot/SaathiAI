@@ -363,29 +363,98 @@ def validate_residual_manifest(
 
 
 def detect_live_provider_status() -> dict[str, Any]:
-    """Read-only Ollama/local status. Never downloads models or starts services."""
-    binary = shutil.which("ollama")
+    """Read-only Ollama/local status. Never downloads models or starts services.
+
+    M25: prefers structured ``live_cert_m25.discover_environment`` + evidence
+    file when present. Broken symlinks are treated as binary absent.
+    """
     out: dict[str, Any] = {
         "provider": "ollama",
-        "binary_present": bool(binary),
-        "binary_path": binary or "",
+        "binary_present": False,
+        "binary_path": "",
         "runtime_reachable": False,
         "model_present": False,
         "health": "not_probed",
         "certification": GateState.ENVIRONMENT_BLOCKED.value,
         "blocker": "",
         "notes": [],
+        "m25_evidence": False,
+        "live_provider_certified": False,
     }
+
+    # Prefer M25 evidence bundle when fresh enough (≤ 7 days)
+    evidence_path = ROOT / "docs" / "evidence" / "m25" / "LIVE_CERT_EVIDENCE.json"
+    if evidence_path.is_file():
+        try:
+            ev = json.loads(evidence_path.read_text(encoding="utf-8"))
+            out["m25_evidence"] = True
+            out["m25_verdict"] = ev.get("verdict", "")
+            out["live_provider_certified"] = bool(ev.get("live_provider_certified"))
+            out["binary_present"] = bool((ev.get("environment") or {}).get("binary_present"))
+            out["binary_path"] = (ev.get("environment") or {}).get("binary_path") or ""
+            out["runtime_reachable"] = bool((ev.get("environment") or {}).get("runtime_reachable"))
+            out["model_present"] = bool(ev.get("selected_model"))
+            blockers = list(ev.get("blockers") or [])
+            out["blocker"] = blockers[0] if blockers else ""
+            out["notes"].append("m25_evidence_loaded")
+            if ev.get("live_provider_certified") and ev.get("live"):
+                out["certification"] = GateState.PASS.value
+                out["health"] = "m25_live_certified"
+            elif ev.get("live") and not ev.get("live_provider_certified"):
+                out["certification"] = GateState.NOT_TESTED.value
+                out["health"] = "m25_live_partial"
+            else:
+                out["certification"] = GateState.ENVIRONMENT_BLOCKED.value
+                out["health"] = "m25_environment_blocked"
+            return out
+        except Exception as e:
+            out["notes"].append(f"m25_evidence_parse:{type(e).__name__}")
+
+    # Fallback: lightweight discovery (M25 module if importable)
+    try:
+        from saathi.inference.live_cert_m25 import discover_environment
+
+        env = discover_environment()
+        out["binary_present"] = bool(env.get("binary_present"))
+        out["binary_path"] = env.get("binary_path") or ""
+        out["runtime_reachable"] = bool(env.get("runtime_reachable"))
+        out["health"] = str(env.get("health_detail") or "not_probed")
+        blockers = list(env.get("blockers") or [])
+        out["blocker"] = blockers[0] if blockers else ""
+        if env.get("broken_symlink"):
+            out["notes"].append("broken_symlink")
+        out["certification"] = GateState.ENVIRONMENT_BLOCKED.value
+        out["notes"].append("Install/start/pull not performed by M25 (forbidden)")
+        return out
+    except Exception:
+        pass
+
+    binary = shutil.which("ollama")
+    out["binary_path"] = binary or ""
+    out["binary_present"] = bool(binary)
     if not binary:
+        # Check common paths for broken symlinks
+        for cand in ("/usr/local/bin/ollama", "/opt/homebrew/bin/ollama"):
+            if os.path.lexists(cand):
+                out["binary_path"] = cand
+                try:
+                    real = os.path.realpath(cand)
+                    if not (real and os.path.isfile(real)):
+                        out["blocker"] = "ollama_broken_symlink"
+                        out["notes"].append(f"broken_symlink:{real}")
+                        out["certification"] = GateState.ENVIRONMENT_BLOCKED.value
+                        return out
+                except Exception:
+                    pass
         out["blocker"] = "ollama_binary_absent"
         out["certification"] = GateState.ENVIRONMENT_BLOCKED.value
-        out["notes"].append("Install not performed by M21.4 (forbidden)")
+        out["notes"].append("Install not performed by M25 (forbidden)")
         return out
 
     # Optional short reachability probe — loopback only, no model download
     try:
         r = subprocess.run(
-            ["ollama", "list"],
+            [binary, "list"],
             capture_output=True,
             text=True,
             timeout=3,
@@ -394,10 +463,9 @@ def detect_live_provider_status() -> dict[str, Any]:
         out["runtime_reachable"] = r.returncode == 0
         if r.returncode == 0:
             out["health"] = "list_ok"
-            # Do not claim model certification without approved model evidence
             out["certification"] = GateState.NOT_TESTED.value
             out["blocker"] = "live_certification_not_completed"
-            out["notes"].append("Binary present; full M20.6 live cert still required")
+            out["notes"].append("Binary present; full M25 live cert still required")
         else:
             out["blocker"] = "ollama_runtime_unreachable"
             out["certification"] = GateState.ENVIRONMENT_BLOCKED.value
@@ -969,6 +1037,86 @@ def evaluate_runtime_gate(
         add("stale_reservation_recovery_ready", GateState.FAIL, type(e).__name__)
         add("governance_schema_ready", GateState.FAIL, type(e).__name__)
         add("residual_exception_count", GateState.FAIL, type(e).__name__)
+
+    # 7d) M25 — live local provider certification evidence (never mock-as-live)
+    try:
+        from saathi.inference.live_cert_m25 import (
+            VERDICT_ENV_BLOCKED,
+            discover_environment,
+        )
+
+        env = discover_environment()
+        ev_path = ROOT / "docs" / "evidence" / "m25" / "LIVE_CERT_EVIDENCE.json"
+        ev: dict[str, Any] = {}
+        if ev_path.is_file():
+            try:
+                ev = json.loads(ev_path.read_text(encoding="utf-8"))
+            except Exception:
+                ev = {}
+        # Prefer on-disk evidence; do not re-run live transport inside gate
+        live_cert = bool(ev.get("live_provider_certified"))
+        prod_cert_field = bool(ev.get("production_certified"))
+        verdict = ev.get("verdict") or (
+            VERDICT_ENV_BLOCKED if env.get("blockers") else "M25_EVIDENCE_MISSING"
+        )
+        m25_ev = {
+            "verdict": verdict,
+            "live": bool(ev.get("live")),
+            "live_provider_certified": live_cert,
+            "production_certified_field": prod_cert_field,
+            "blockers": list(ev.get("blockers") or env.get("blockers") or []),
+            "evidence_path": str(ev_path.relative_to(ROOT)) if ev_path.is_file() else "",
+            "environment": {
+                "binary_present": env.get("binary_present"),
+                "broken_symlink": env.get("broken_symlink"),
+                "runtime_reachable": env.get("runtime_reachable"),
+                "memory_ok": env.get("memory_ok"),
+            },
+            "downloads_performed": bool(ev.get("downloads_performed", False)),
+            "cloud_calls": int(ev.get("cloud_calls") or 0),
+        }
+        # Live cert gate: PASS only with true live certification; else ENVIRONMENT_BLOCKED
+        if live_cert and ev.get("live"):
+            add("m25_live_provider_cert", GateState.PASS, verdict, evidence_d=m25_ev)
+        else:
+            add(
+                "m25_live_provider_cert",
+                GateState.ENVIRONMENT_BLOCKED,
+                verdict[:120],
+                evidence_d=m25_ev,
+            )
+        add(
+            "m25_no_mock_as_live",
+            GateState.PASS if not (ev.get("live") is False and live_cert) else GateState.FAIL,
+            "live flag consistent with certification claim",
+            evidence_d={"live": ev.get("live"), "certified": live_cert},
+        )
+        # production_certified may be true only with live + live_provider_certified
+        prod_ok = (not prod_cert_field) or (bool(ev.get("live")) and live_cert and prod_cert_field)
+        add(
+            "m25_production_cert_guard",
+            GateState.PASS if prod_ok else GateState.FAIL,
+            (
+                "production_certified consistent with live evidence"
+                if prod_ok
+                else "production_certified=true without live certification"
+            ),
+            evidence_d={
+                "production_certified": prod_cert_field,
+                "live": ev.get("live"),
+                "live_provider_certified": live_cert,
+            },
+        )
+        add(
+            "m25_production_cert_invariant",
+            GateState.PASS if prod_ok else GateState.FAIL,
+            "production certification invariant held" if prod_ok else "invariant violated",
+            evidence_d={"production_certified": prod_cert_field},
+        )
+        report.counts["m25_live_certified"] = 1 if live_cert else 0
+    except Exception as e:
+        add("m25_live_provider_cert", GateState.ENVIRONMENT_BLOCKED, type(e).__name__)
+        add("m25_no_mock_as_live", GateState.FAIL, type(e).__name__)
 
     # 8) Kill-switch authority present
     try:

@@ -2,7 +2,7 @@
   "schema_version": "1",
   "repository": "SaathiOS",
   "branch": "milestone/m7-security-engine",
-  "current_head": "920a662",
+  "current_head": "PENDING_TIP",
   "active_milestone": null,
   "completed_milestones": [
     "M20.0",
@@ -22,7 +22,8 @@
     "M21.4",
     "M22",
     "M23",
-    "M24"
+    "M24",
+    "M25"
   ],
   "intentionally_skipped": [
     "M20.8"
@@ -32,50 +33,35 @@
     "M21.4_live_ollama_cert",
     "M22_live_ollama_cert",
     "M23_live_ollama_cert",
-    "M24_live_ollama_cert"
+    "M24_live_ollama_cert",
+    "M25_live_ollama_cert"
   ],
-  "milestone_verdict": "M24 COMPLETE WITH LIMITATIONS \u2014 DURABLE GOVERNANCE; PRODUCTION NOT CERTIFIED",
-  "session_verdict": "M24 COMPLETE WITH LIMITATIONS \u2014 NOT PRODUCTION CERTIFIED",
-  "next_milestone": "M25 (operator authorize only)",
-  "stop_reason": "M24 bounded slice complete; do not auto-start M25",
-  "m24": {
+  "milestone_verdict": "M25 BLOCKED — LIVE LOCAL PROVIDER ENVIRONMENT UNAVAILABLE",
+  "session_verdict": "M25 BLOCKED — ENVIRONMENT; PRODUCTION NOT CERTIFIED",
+  "next_milestone": "M26 (operator authorize only) or operator unlock Ollama then re-run M25",
+  "stop_reason": "M25 bounded slice complete with ENVIRONMENT_BLOCKED live cert; do not auto-start M26",
+  "m25": {
     "modules": [
-      "saathi/inference/governance_store.py",
-      "saathi/inference/governance_service.py",
-      "saathi/inference/governance_clock.py",
-      "saathi/inference/governance_errors.py",
-      "saathi/inference/circuit_breaker.py",
-      "saathi/inference/cost_policy.py",
-      "saathi/inference/provider_governance.py",
-      "saathi/inference/residual_paths.py",
-      "saathi/inference/release_check.py",
-      "saathi/inference/runtime_gate.py",
-      "saathi/inference/adapters/cloud.py",
-      "saathi/inference/adapters/openai_compat.py"
+      "saathi/inference/live_cert_m25.py",
+      "saathi/inference/runtime_gate.py"
     ],
-    "tests": "tests/test_m24_durable_provider_governance.py",
-    "docs": "docs/M24_*",
-    "residual_exceptions_before": 2,
-    "residual_exceptions_after": 0,
-    "limitations": [
-      "live Ollama ENVIRONMENT_BLOCKED",
-      "production_certified=false",
-      "single-host SQLite governance (not multi-region billing)",
-      "non-inference media/eval SDKs out of scope"
+    "tests": "tests/test_m25_live_provider_certification.py",
+    "docs": "docs/M25_*",
+    "evidence": "docs/evidence/m25/LIVE_CERT_EVIDENCE.json",
+    "live": false,
+    "live_provider_certified": false,
+    "production_certified": false,
+    "blockers": [
+      "ollama_broken_symlink",
+      "ollama_binary_absent_or_unusable",
+      "ollama_runtime_unreachable",
+      "no_installed_models_observed",
+      "memory_pressure"
     ]
   },
-  "unrelated_untouched": "Trading Guardian; no merge/deploy; no model download; no M25",
-  "session_id": "m24-2026-07-17",
+  "unrelated_untouched": "Trading Guardian; no merge/deploy; no model download; no M26",
+  "session_id": "m25-2026-07-17",
   "actor": "grok-master-controller",
-  "start_commit": "00bfae9",
-  "production_certified": false,
-  "m24_tip": "920a662246b8943a8e5b524655b2b598bcd674d2",
-  "m24_commits": [
-    "a7c63c4",
-    "265c2fe",
-    "8e9241c",
-    "789aa76",
-    "920a662"
-  ],
-  "full_suite": "3075 passed, 1 skipped, 0 failed"
+  "start_commit": "e9571f3",
+  "production_certified": false
 }
