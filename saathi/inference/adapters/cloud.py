@@ -1,8 +1,13 @@
-"""Cloud engine adapter wrapping canonical HTTP provider transports (M22).
+"""Cloud engine adapter wrapping canonical HTTP provider transports (M22/M24).
 
-Cloud traffic must still pass privacy/cost/approval policy at the router and
+M24: canonical governed adapter (not a residual exception). Cloud traffic must
+still pass privacy/cost/approval policy at the router, provider decision, and
 ExecutionGateway layers. This adapter only normalizes the engine interface.
-Provider HTTP lives in ``http_providers`` — not in product callers.
+
+* No independent retries, fallback, cost accounting, or circuit state.
+* Provider HTTP lives in ``http_providers`` — not in product callers.
+* Credentials stay in transport/config modules.
+* Durable circuit/cost authorities are outside this adapter.
 """
 from __future__ import annotations
 
@@ -40,9 +45,12 @@ def _split_messages(messages: Sequence[dict[str, Any]]) -> tuple[str, str]:
 
 
 class CloudCallerEngine(InferenceEngine):
-    """Wraps family callers from ``saathi.llm`` without replacing them."""
+    """Governed cloud family adapter (M24 canonical). Wraps http_providers callers."""
 
     is_cloud = True
+    # M24 markers: no residual exception; no independent governance authority
+    governance_authority = "durable_governance_store"
+    residual_exception = False
 
     def __init__(
         self,
@@ -57,6 +65,7 @@ class CloudCallerEngine(InferenceEngine):
         self.engine_id = engine_id
         self._caller = caller
         self._available = available or (lambda: True)
+        # cost_per_1k retained for engine.estimate_cost display only — not durable ledger
         self._cost_per_1k = cost_per_1k
         self.default_model = default_model
         self._caps = capabilities or EngineCapabilities(
@@ -64,7 +73,7 @@ class CloudCallerEngine(InferenceEngine):
             tool_calling=True,
             structured_output=True,
             local=False,
-            notes=f"cloud family {engine_id}",
+            notes=f"cloud family {engine_id} (M24 governed adapter)",
         )
 
     async def generate(

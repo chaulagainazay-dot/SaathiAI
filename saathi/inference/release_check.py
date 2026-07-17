@@ -999,6 +999,273 @@ def _check_cost_unknown_not_zero(findings: list[Finding], summary: dict[str, Any
         )
 
 
+def _check_m24_durable_governance(findings: list[Finding], summary: dict[str, Any]) -> None:
+    """M24: durable governance authority, zero residual exceptions, no process-local production authority."""
+    m24: dict[str, Any] = {
+        "residual_exception_count": None,
+        "durable_store": False,
+        "process_local_authority": False,
+        "cloud_engine_governed": False,
+        "openai_compat_engine_governed": False,
+    }
+
+    # Manifest: zero inference residual exceptions
+    if MANIFEST_PATH.is_file():
+        try:
+            data = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
+            ex_count = len(data.get("exceptions") or [])
+            m24["residual_exception_count"] = ex_count
+            if ex_count != 0:
+                findings.append(
+                    Finding(
+                        rule_id="m24_residual_exceptions_nonzero",
+                        path=_rel(MANIFEST_PATH),
+                        line=0,
+                        symbol="exceptions",
+                        detail=f"M24 requires 0 residual exceptions; found {ex_count}",
+                    )
+                )
+            if int(data.get("inference_residual_exception_count") or 0) != 0:
+                findings.append(
+                    Finding(
+                        rule_id="m24_inference_residual_count_nonzero",
+                        path=_rel(MANIFEST_PATH),
+                        line=0,
+                        symbol="inference_residual_exception_count",
+                        detail="inference_residual_exception_count must be 0 after M24",
+                    )
+                )
+            for ex in data.get("exceptions") or []:
+                pid = (ex.get("path_id") or "").lower()
+                if pid in {"engine_cloud_caller", "engine_openai_compat"}:
+                    findings.append(
+                        Finding(
+                            rule_id="m24_engine_residual_reintroduced",
+                            path=_rel(MANIFEST_PATH),
+                            line=0,
+                            symbol=ex.get("path_id") or "",
+                            detail="M24 removed engine residual exceptions; must not reappear",
+                        )
+                    )
+        except Exception as e:
+            findings.append(
+                Finding(
+                    rule_id="m24_manifest_parse_error",
+                    path=_rel(MANIFEST_PATH),
+                    line=0,
+                    symbol="",
+                    detail=type(e).__name__,
+                )
+            )
+
+    # Durable modules present
+    gov_store = ROOT / "saathi" / "inference" / "governance_store.py"
+    gov_svc = ROOT / "saathi" / "inference" / "governance_service.py"
+    if not gov_store.is_file() or not gov_svc.is_file():
+        findings.append(
+            Finding(
+                rule_id="m24_governance_modules_missing",
+                path="saathi/inference/",
+                line=0,
+                symbol="governance_store",
+                detail="M24 durable governance modules required",
+            )
+        )
+    else:
+        m24["durable_store"] = True
+        src = gov_store.read_text(encoding="utf-8")
+        for needle in (
+            "provider_circuit",
+            "budget_reservation",
+            "cost_usage",
+            "BEGIN IMMEDIATE",
+            "reserved_amount",
+        ):
+            if needle not in src:
+                findings.append(
+                    Finding(
+                        rule_id="m24_schema_marker_missing",
+                        path="saathi/inference/governance_store.py",
+                        line=0,
+                        symbol=needle,
+                        detail=f"expected schema/protocol marker missing: {needle}",
+                    )
+                )
+
+    # Residual path dispositions for engines
+    try:
+        from saathi.inference.residual_paths import ResidualDisposition, get_residual_control
+
+        for pid in ("engine_cloud_caller", "engine_openai_compat"):
+            ctrl = get_residual_control(pid)
+            if ctrl is None:
+                findings.append(
+                    Finding(
+                        rule_id="m24_engine_control_missing",
+                        path="saathi/inference/residual_paths.py",
+                        line=0,
+                        symbol=pid,
+                        detail="engine residual control missing",
+                    )
+                )
+                continue
+            if ctrl.disposition is not ResidualDisposition.CANONICAL:
+                findings.append(
+                    Finding(
+                        rule_id="m24_engine_not_canonical",
+                        path="saathi/inference/residual_paths.py",
+                        line=0,
+                        symbol=pid,
+                        detail=f"expected CANONICAL, got {ctrl.disposition.value}",
+                    )
+                )
+            else:
+                if pid == "engine_cloud_caller":
+                    m24["cloud_engine_governed"] = True
+                else:
+                    m24["openai_compat_engine_governed"] = True
+    except Exception as e:
+        findings.append(
+            Finding(
+                rule_id="m24_residual_path_error",
+                path="saathi/inference/residual_paths.py",
+                line=0,
+                symbol="",
+                detail=type(e).__name__,
+            )
+        )
+
+    # Circuit breaker must not claim process-local authority in production path
+    cb = ROOT / "saathi" / "inference" / "circuit_breaker.py"
+    if cb.is_file():
+        csrc = cb.read_text(encoding="utf-8")
+        if "DurableGovernanceStore" not in csrc and "governance_store" not in csrc:
+            findings.append(
+                Finding(
+                    rule_id="m24_circuit_not_durable",
+                    path="saathi/inference/circuit_breaker.py",
+                    line=0,
+                    symbol="ProviderCircuitBreakerRegistry",
+                    detail="circuit breaker must use durable governance store",
+                )
+            )
+        if '"process_local": True' in csrc or "'process_local': True" in csrc:
+            # only ok if marked as non-production; flag if default snapshot still True
+            if "persistent\": True" not in csrc and "persistent': True" not in csrc:
+                findings.append(
+                    Finding(
+                        rule_id="m24_process_local_circuit_authority",
+                        path="saathi/inference/circuit_breaker.py",
+                        line=0,
+                        symbol="process_local",
+                        detail="process-local must not be production circuit authority",
+                    )
+                )
+                m24["process_local_authority"] = True
+
+    # Cost policy: process_daily_store must not return InMemory as default authority claim
+    cp = ROOT / "saathi" / "inference" / "cost_policy.py"
+    if cp.is_file():
+        cpsrc = cp.read_text(encoding="utf-8")
+        if "DurableDailyCostStore" not in cpsrc:
+            findings.append(
+                Finding(
+                    rule_id="m24_cost_not_durable",
+                    path="saathi/inference/cost_policy.py",
+                    line=0,
+                    symbol="process_daily_store",
+                    detail="daily cost must use durable store",
+                )
+            )
+        if "def process_daily_store" in cpsrc and "durable_daily_store" not in cpsrc:
+            findings.append(
+                Finding(
+                    rule_id="m24_process_daily_not_durable",
+                    path="saathi/inference/cost_policy.py",
+                    line=0,
+                    symbol="process_daily_store",
+                    detail="process_daily_store must delegate to durable authority",
+                )
+            )
+
+    # Adapters must not call circuit/cost mutation APIs
+    for rel, label in (
+        ("saathi/inference/adapters/cloud.py", "CloudCallerEngine"),
+        ("saathi/inference/adapters/openai_compat.py", "OpenAICompatEngine"),
+        ("saathi/inference/adapters/http_providers.py", "http_providers"),
+    ):
+        p = ROOT / rel
+        if not p.is_file():
+            continue
+        src = p.read_text(encoding="utf-8")
+        for banned, rule in (
+            ("record_failure(", "m24_adapter_circuit_mutation"),
+            ("record_success(", "m24_adapter_circuit_mutation"),
+            ("add_spend(", "m24_adapter_budget_mutation"),
+            ("reserve_budget(", "m24_adapter_budget_mutation"),
+            ("settle_reservation(", "m24_adapter_budget_mutation"),
+        ):
+            if banned in src:
+                findings.append(
+                    Finding(
+                        rule_id=rule,
+                        path=rel,
+                        line=0,
+                        symbol=label,
+                        detail=f"adapter must not call {banned.rstrip('(')}",
+                    )
+                )
+
+    # OpenAI-compat SSRF policy present
+    oc = ROOT / "saathi" / "inference" / "adapters" / "openai_compat.py"
+    if oc.is_file():
+        osrc = oc.read_text(encoding="utf-8")
+        if "validate_openai_compat_base_url" not in osrc:
+            findings.append(
+                Finding(
+                    rule_id="m24_openai_compat_ssrf_missing",
+                    path="saathi/inference/adapters/openai_compat.py",
+                    line=0,
+                    symbol="validate_openai_compat_base_url",
+                    detail="SSRF URL policy required for openai_compat",
+                )
+            )
+
+    # Float money enforcement marker in governance_store
+    if gov_store.is_file():
+        gsrc = gov_store.read_text(encoding="utf-8")
+        if "FLOAT_MONEY_REJECTED" not in gsrc and "binary float" not in gsrc.lower():
+            findings.append(
+                Finding(
+                    rule_id="m24_float_money_not_rejected",
+                    path="saathi/inference/governance_store.py",
+                    line=0,
+                    symbol="_money",
+                    detail="must reject binary float money",
+                )
+            )
+
+    # Production certified must stay false in gate/manifest
+    if MANIFEST_PATH.is_file():
+        try:
+            data = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
+            if data.get("production_certified") is True:
+                findings.append(
+                    Finding(
+                        rule_id="m24_production_certified_true",
+                        path=_rel(MANIFEST_PATH),
+                        line=0,
+                        symbol="production_certified",
+                        detail="M24 must not set production_certified=true",
+                    )
+                )
+        except Exception:
+            pass
+
+    summary["m24"] = m24
+    summary["m24_residual_exception_count"] = m24.get("residual_exception_count")
+
+
 def run_release_check(*, root: Optional[Path] = None) -> ReleaseReport:
     findings: list[Finding] = []
     summary: dict[str, Any] = {
@@ -1024,7 +1291,7 @@ def run_release_check(*, root: Optional[Path] = None) -> ReleaseReport:
             "facade_direct_sdk_import",
             "caller_credential_read",
         ],
-        "milestone": "M22",
+        "milestone": "M24",
     }
     base = (root / "saathi") if root else SAATHI
     files = 0
@@ -1040,6 +1307,7 @@ def run_release_check(*, root: Optional[Path] = None) -> ReleaseReport:
     _check_llm_helper(findings, summary)
     _check_m22_facades_and_credentials(findings, summary)
     _check_cost_unknown_not_zero(findings, summary)
+    _check_m24_durable_governance(findings, summary)
 
     # Cloud fallback default
     try:

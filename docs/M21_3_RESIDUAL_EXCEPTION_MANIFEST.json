@@ -1,12 +1,13 @@
 {
-  "schema": "m23.residual_exception_manifest.v1",
-  "milestone": "M23",
-  "supersedes": "m22.residual_exception_manifest.v1",
+  "schema": "m24.residual_exception_manifest.v1",
+  "milestone": "M24",
+  "supersedes": "m23.residual_exception_manifest.v1",
   "production_certified": false,
   "unknown_count": 0,
   "direct_provider_bypass_count": 0,
   "unclassified_count": 0,
   "chat_residual_exception_count": 0,
+  "inference_residual_exception_count": 0,
   "m22_migrated_path_ids": [
     "legacy_llm_generate_execution",
     "agent_sdk_clients",
@@ -16,38 +17,13 @@
   "m23_migrated_path_ids": [
     "chat_engine_legacy_sink"
   ],
-  "exceptions": [
-    {
-      "path_id": "engine_cloud_caller",
-      "file": "saathi/inference/adapters/cloud.py",
-      "symbol": "CloudCallerEngine",
-      "reason": "Cloud engine adapter behind allow_cloud_fallback + provider decision; wraps http_providers",
-      "owner": "platform-inference",
-      "classification": "COMPATIBILITY_WRAPPED",
-      "allowed_behavior": "adapter under registry only; production_supported=false default",
-      "forbidden_behavior": "direct product-caller import",
-      "caller_id": "legacy_llm_generate",
-      "production_reachability": false,
-      "expiry_milestone": "M24",
-      "tests": ["tests/test_m21_2_provider_governance.py", "tests/test_m22_provider_migration.py"],
-      "release_guard": "adapter_package_only"
-    },
-    {
-      "path_id": "engine_openai_compat",
-      "file": "saathi/inference/adapters/openai_compat.py",
-      "symbol": "OpenAICompatEngine",
-      "reason": "Generic HTTP engine; policy-disabled by default",
-      "owner": "platform-inference",
-      "classification": "COMPATIBILITY_WRAPPED",
-      "allowed_behavior": "policy-disabled unless decision layer enables",
-      "forbidden_behavior": "product direct use",
-      "caller_id": "legacy_llm_generate",
-      "production_reachability": false,
-      "expiry_milestone": "M24",
-      "tests": ["tests/test_m21_2_provider_governance.py"],
-      "release_guard": "adapter_package_only"
-    }
+  "m24_migrated_path_ids": [
+    "engine_cloud_caller",
+    "engine_openai_compat",
+    "process_local_circuit_authority",
+    "process_local_daily_cost_authority"
   ],
+  "exceptions": [],
   "canonical_transports_m22": [
     {
       "path_id": "http_providers_transport",
@@ -81,5 +57,31 @@
       "file": "saathi/chat/request.py",
       "classification": "CANONICAL"
     }
+  ],
+  "canonical_governance_m24": [
+    {
+      "path_id": "durable_governance_store",
+      "file": "saathi/inference/governance_store.py",
+      "classification": "CANONICAL"
+    },
+    {
+      "path_id": "governance_service",
+      "file": "saathi/inference/governance_service.py",
+      "classification": "CANONICAL"
+    },
+    {
+      "path_id": "engine_cloud_caller",
+      "file": "saathi/inference/adapters/cloud.py",
+      "classification": "CANONICAL_ADAPTER"
+    },
+    {
+      "path_id": "engine_openai_compat",
+      "file": "saathi/inference/adapters/openai_compat.py",
+      "classification": "CANONICAL_ADAPTER"
+    }
+  ],
+  "out_of_scope_non_inference": [
+    "media providers (not inference residuals)",
+    "evaluation providers (not inference residuals)"
   ]
 }

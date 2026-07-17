@@ -1,6 +1,12 @@
-"""M21.2 — Bounded provider-scoped circuit breaker.
+"""M21.2 / M24 — Provider-scoped circuit breaker.
 
-Process-local by default (not durable across restarts — documented limitation).
+M24: authoritative state is the durable governance store (SQLite).
+Process-local dicts are no longer production authority.
+
+Public API preserved:
+  CircuitState, CircuitConfig, CircuitSnapshot, ProviderCircuitBreakerRegistry,
+  get_circuit_registry, record via registry methods.
+
 Policy denials and invalid requests must not call record_failure.
 Kill switch takes precedence over circuit state (evaluated by callers first).
 
@@ -10,10 +16,18 @@ States: CLOSED → OPEN (threshold) → HALF_OPEN (cooldown) → CLOSED (success
 from __future__ import annotations
 
 import threading
-import time
 from dataclasses import asdict, dataclass, field
 from enum import Enum
+from pathlib import Path
 from typing import Any, Callable, Optional
+
+from saathi.inference.governance_clock import Clock as GovClock
+from saathi.inference.governance_store import (
+    DurableGovernanceStore,
+    get_governance_store,
+)
+
+Clock = Callable[[], float]
 
 
 class CircuitState(str, Enum):
@@ -23,11 +37,8 @@ class CircuitState(str, Enum):
     DISABLED = "disabled"
 
 
-Clock = Callable[[], float]
-
-
 def _default_clock() -> float:
-    return time.time()
+    return get_governance_store().now()
 
 
 @dataclass
@@ -59,23 +70,31 @@ class CircuitSnapshot:
         return d
 
 
-@dataclass
-class _Breaker:
-    provider_id: str
-    state: CircuitState = CircuitState.CLOSED
-    failure_count: int = 0
-    success_count: int = 0
-    opened_at: Optional[float] = None
-    last_failure_at: Optional[float] = None
-    last_success_at: Optional[float] = None
-    last_transition_at: Optional[float] = None
-    last_reason: str = ""
-    half_open_probes: int = 0
-    config: CircuitConfig = field(default_factory=CircuitConfig)
+def _snap_from_store(d: dict[str, Any]) -> CircuitSnapshot:
+    st = CircuitState(d.get("state") or CircuitState.CLOSED.value)
+    cfg = dict(d.get("config") or {})
+    cfg.setdefault("process_local", False)
+    cfg.setdefault("persistent", True)
+    return CircuitSnapshot(
+        provider_id=d["provider_id"],
+        state=st,
+        failure_count=int(d.get("failure_count") or 0),
+        success_count=int(d.get("success_count") or 0),
+        opened_at=d.get("opened_at"),
+        last_failure_at=d.get("last_failure_at"),
+        last_success_at=d.get("last_success_at"),
+        last_transition_at=d.get("last_transition_at"),
+        last_reason=d.get("last_reason") or "",
+        config=cfg,
+    )
 
 
 class ProviderCircuitBreakerRegistry:
-    """Provider-scoped circuit breakers with injectable clock."""
+    """Provider-scoped circuit breakers backed by durable governance store.
+
+    Optional ``store`` injection for tests. When ``enabled=False``, all
+    requests are allowed (DISABLED semantics) without mutating durable state.
+    """
 
     def __init__(
         self,
@@ -83,16 +102,57 @@ class ProviderCircuitBreakerRegistry:
         config: Optional[CircuitConfig] = None,
         clock: Optional[Clock] = None,
         enabled: bool = True,
+        store: Optional[DurableGovernanceStore] = None,
+        use_global_store: bool = False,
     ) -> None:
         self._config = config or CircuitConfig()
-        self._clock = clock or _default_clock
         self._enabled = enabled
+        self._clock = clock
         self._lock = threading.RLock()
-        self._breakers: dict[str, _Breaker] = {}
         self._telemetry: list[dict[str, Any]] = []
+        # Non-authoritative local hint only (never production source of truth)
+        self._cache: dict[str, str] = {}
+        self._use_global = use_global_store
+        if store is not None:
+            self._store = store
+        elif use_global_store:
+            self._store = None  # resolve via get_governance_store()
+        else:
+            # Private durable SQLite (in-memory) — still durable-semantics +
+            # transactional; not process-dict authority. Used by unit tests /
+            # isolated registries. Production global uses get_circuit_registry().
+            self._store = DurableGovernanceStore(
+                ":memory:",
+                clock=clock,  # type: ignore[arg-type]
+                failure_threshold=self._config.failure_threshold,
+                cooldown_seconds=self._config.cooldown_seconds,
+                half_open_max_probes=self._config.half_open_max_probes,
+            )
+        if self._store is not None:
+            if clock is not None:
+                self._store.set_clock(clock)  # type: ignore[arg-type]
+            self._store.failure_threshold = self._config.failure_threshold
+            self._store.cooldown_seconds = self._config.cooldown_seconds
+            self._store.half_open_max_probes = self._config.half_open_max_probes
+
+    def _gov(self) -> DurableGovernanceStore:
+        if self._store is not None:
+            if self._clock is not None:
+                self._store.set_clock(self._clock)  # type: ignore[arg-type]
+            self._store.failure_threshold = self._config.failure_threshold
+            self._store.cooldown_seconds = self._config.cooldown_seconds
+            self._store.half_open_max_probes = self._config.half_open_max_probes
+            return self._store
+        store = get_governance_store(clock=self._clock)  # type: ignore[arg-type]
+        store.failure_threshold = self._config.failure_threshold
+        store.cooldown_seconds = self._config.cooldown_seconds
+        store.half_open_max_probes = self._config.half_open_max_probes
+        return store
 
     def set_clock(self, clock: Clock) -> None:
         self._clock = clock
+        if self._store is not None:
+            self._store.set_clock(clock)  # type: ignore[arg-type]
 
     def set_enabled(self, enabled: bool) -> None:
         self._enabled = enabled
@@ -100,19 +160,13 @@ class ProviderCircuitBreakerRegistry:
     def _key(self, provider_id: str) -> str:
         return (provider_id or "").strip().lower() or "unknown"
 
-    def _get(self, provider_id: str) -> _Breaker:
-        k = self._key(provider_id)
-        if k not in self._breakers:
-            self._breakers[k] = _Breaker(provider_id=k, config=self._config)
-        return self._breakers[k]
-
     def _emit(self, event: str, provider_id: str, **extra: Any) -> None:
-        # Privacy-safe: no prompts, secrets, raw errors
         row = {
             "schema": "m21.2.circuit_telemetry.v1",
             "event": event,
             "provider_id": provider_id,
-            "ts": self._clock(),
+            "ts": (self._clock or self._gov().now)(),
+            "persistent": True,
         }
         for k, v in extra.items():
             if k in ("prompt", "output", "api_key", "token", "error_raw"):
@@ -122,25 +176,13 @@ class ProviderCircuitBreakerRegistry:
         if len(self._telemetry) > 200:
             self._telemetry = self._telemetry[-100:]
 
-    def _maybe_half_open(self, b: _Breaker) -> None:
-        if b.state is not CircuitState.OPEN:
-            return
-        if b.opened_at is None:
-            return
-        if (self._clock() - b.opened_at) >= b.config.cooldown_seconds:
-            b.state = CircuitState.HALF_OPEN
-            b.half_open_probes = 0
-            b.last_transition_at = self._clock()
-            b.last_reason = "cooldown_elapsed"
-            self._emit("half_open", b.provider_id, reason="cooldown_elapsed")
-
     def state(self, provider_id: str) -> CircuitState:
         if not self._enabled:
             return CircuitState.DISABLED
-        with self._lock:
-            b = self._get(provider_id)
-            self._maybe_half_open(b)
-            return b.state
+        snap = self._gov().circuit_snapshot(provider_id)
+        st = CircuitState(snap["state"])
+        self._cache[self._key(provider_id)] = st.value
+        return st
 
     def is_open(self, provider_id: str) -> bool:
         st = self.state(provider_id)
@@ -150,36 +192,14 @@ class ProviderCircuitBreakerRegistry:
         """Whether a provider attempt may proceed under circuit rules."""
         if not self._enabled:
             return True, "circuit_disabled"
-        with self._lock:
-            b = self._get(provider_id)
-            self._maybe_half_open(b)
-            if b.state is CircuitState.CLOSED:
-                return True, "closed"
-            if b.state is CircuitState.OPEN:
-                return False, "circuit_open"
-            if b.state is CircuitState.HALF_OPEN:
-                if b.half_open_probes >= b.config.half_open_max_probes:
-                    return False, "half_open_probe_exhausted"
-                b.half_open_probes += 1
-                return True, "half_open_probe"
-            return True, "disabled"
+        ok, reason, snap = self._gov().allow_request(provider_id)
+        self._cache[self._key(provider_id)] = snap.get("state", "")
+        return ok, reason
 
     def record_success(self, provider_id: str) -> CircuitSnapshot:
-        with self._lock:
-            b = self._get(provider_id)
-            b.success_count += 1
-            b.last_success_at = self._clock()
-            b.failure_count = 0
-            if b.state in {CircuitState.HALF_OPEN, CircuitState.OPEN, CircuitState.CLOSED}:
-                prev = b.state
-                b.state = CircuitState.CLOSED
-                b.opened_at = None
-                b.half_open_probes = 0
-                b.last_transition_at = self._clock()
-                b.last_reason = "success"
-                if prev is not CircuitState.CLOSED:
-                    self._emit("close", b.provider_id, reason="success", previous=prev.value)
-            return self.snapshot(provider_id)
+        d = self._gov().record_success(provider_id)
+        self._emit("close", provider_id, reason="success", previous=d.get("state"))
+        return _snap_from_store(d)
 
     def record_failure(
         self,
@@ -189,73 +209,24 @@ class ProviderCircuitBreakerRegistry:
         counts: bool = True,
     ) -> CircuitSnapshot:
         """Record a provider failure. Callers must not count policy denials."""
-        with self._lock:
-            b = self._get(provider_id)
-            if not counts:
-                b.last_reason = f"ignored:{reason}"
-                return self.snapshot(provider_id)
-            b.failure_count += 1
-            b.last_failure_at = self._clock()
-            b.last_reason = reason
-            if b.state is CircuitState.HALF_OPEN:
-                b.state = CircuitState.OPEN
-                b.opened_at = self._clock()
-                b.last_transition_at = self._clock()
-                b.last_reason = f"half_open_failed:{reason}"
-                self._emit("reopen", b.provider_id, reason=reason)
-            elif b.failure_count >= b.config.failure_threshold:
-                if b.state is not CircuitState.OPEN:
-                    b.state = CircuitState.OPEN
-                    b.opened_at = self._clock()
-                    b.last_transition_at = self._clock()
-                    self._emit(
-                        "open",
-                        b.provider_id,
-                        reason=reason,
-                        failure_count=b.failure_count,
-                    )
-            return self.snapshot(provider_id)
+        d = self._gov().record_failure(provider_id, reason=reason, counts=counts)
+        if counts and d.get("state") == CircuitState.OPEN.value:
+            self._emit("open", provider_id, reason=reason, failure_count=d.get("failure_count"))
+        return _snap_from_store(d)
 
     def manual_reset(self, provider_id: str) -> CircuitSnapshot:
-        with self._lock:
-            b = self._get(provider_id)
-            b.state = CircuitState.CLOSED
-            b.failure_count = 0
-            b.half_open_probes = 0
-            b.opened_at = None
-            b.last_transition_at = self._clock()
-            b.last_reason = "manual_reset"
-            self._emit("manual_reset", b.provider_id)
-            return self.snapshot(provider_id)
+        d = self._gov().manual_reset(
+            provider_id, confirm=True, reason_code="manual_reset"
+        )
+        self._emit("manual_reset", provider_id)
+        return _snap_from_store(d)
 
     def snapshot(self, provider_id: str) -> CircuitSnapshot:
-        with self._lock:
-            b = self._get(provider_id)
-            self._maybe_half_open(b)
-            return CircuitSnapshot(
-                provider_id=b.provider_id,
-                state=b.state,
-                failure_count=b.failure_count,
-                success_count=b.success_count,
-                opened_at=b.opened_at,
-                last_failure_at=b.last_failure_at,
-                last_success_at=b.last_success_at,
-                last_transition_at=b.last_transition_at,
-                last_reason=b.last_reason,
-                config={
-                    "failure_threshold": b.config.failure_threshold,
-                    "cooldown_seconds": b.config.cooldown_seconds,
-                    "half_open_max_probes": b.config.half_open_max_probes,
-                    "process_local": True,
-                    "persistent": False,
-                },
-            )
+        d = self._gov().circuit_snapshot(provider_id)
+        return _snap_from_store(d)
 
     def all_snapshots(self) -> list[CircuitSnapshot]:
-        with self._lock:
-            keys = sorted(self._breakers.keys()) or []
-            # Also expose known empty for ollama if never touched
-            return [self.snapshot(k) for k in keys]
+        return [_snap_from_store(d) for d in self._gov().all_circuit_snapshots()]
 
     def drain_telemetry(self) -> list[dict[str, Any]]:
         with self._lock:
@@ -273,11 +244,24 @@ def get_circuit_registry(
     reset: bool = False,
     config: Optional[CircuitConfig] = None,
     clock: Optional[Clock] = None,
+    store: Optional[DurableGovernanceStore] = None,
+    db_path: str | Path | None = None,
 ) -> ProviderCircuitBreakerRegistry:
+    """Global circuit registry — durable by default (M24)."""
     global _GLOBAL
     with _GLOBAL_LOCK:
         if reset or _GLOBAL is None:
-            _GLOBAL = ProviderCircuitBreakerRegistry(config=config, clock=clock)
+            s = store
+            if s is None and db_path is not None:
+                from saathi.inference.governance_store import reset_governance_store_for_tests
+
+                s = reset_governance_store_for_tests(db_path, clock=clock)  # type: ignore[arg-type]
+            _GLOBAL = ProviderCircuitBreakerRegistry(
+                config=config,
+                clock=clock,
+                store=s,
+                use_global_store=(s is None),
+            )
         elif clock is not None:
             _GLOBAL.set_clock(clock)
         return _GLOBAL

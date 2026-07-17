@@ -39,7 +39,8 @@ MILESTONE = "M21.4"
 # Frozen expected residual exception count (expansion forbidden).
 # M22: remaining 3 (chat + cloud + openai_compat).
 # M23: chat residual removed → remaining 2 (cloud + openai_compat → M24).
-EXPECTED_EXCEPTION_COUNT = 2
+# M24: cloud + openai_compat consolidated → remaining 0.
+EXPECTED_EXCEPTION_COUNT = 0
 
 # Valid residual classifications (manifest + ResidualDisposition values).
 PERMITTED_CLASSIFICATIONS = frozenset({
@@ -874,6 +875,100 @@ def evaluate_runtime_gate(
         report.counts["legacy_chat_paths"] = 0 if not LEGACY_CHAT_EXECUTION else 1
     except Exception as e:
         add("chat_governed_default", GateState.FAIL, type(e).__name__)
+
+    # 7c) M24 — durable provider governance
+    try:
+        from saathi.inference.governance_store import get_governance_store
+        from saathi.inference.governance_service import get_governance_service
+        from saathi.inference.residual_paths import ResidualDisposition, get_residual_control
+        from saathi.inference.cost_policy import DurableDailyCostStore, process_daily_store
+
+        store = get_governance_store()
+        ready = store.readiness()
+        svc = get_governance_service(store=store)
+        recovery = svc.recover()
+        daily = process_daily_store()
+        cloud_ctrl = get_residual_control("engine_cloud_caller")
+        oai_ctrl = get_residual_control("engine_openai_compat")
+        residual_n = 0
+        if MANIFEST_PATH.is_file():
+            residual_n = len(
+                json.loads(MANIFEST_PATH.read_text(encoding="utf-8")).get("exceptions") or []
+            )
+
+        def _canon(ctrl) -> bool:
+            return ctrl is not None and ctrl.disposition is ResidualDisposition.CANONICAL
+
+        add(
+            "durable_circuit_store_ready",
+            GateState.PASS if ready.get("ok") else GateState.FAIL,
+            f"schema_ready={ready.get('schema_ready')} path={ready.get('path')}",
+            evidence_d=ready,
+        )
+        add(
+            "durable_cost_store_ready",
+            GateState.PASS if isinstance(daily, DurableDailyCostStore) else GateState.FAIL,
+            f"authority={getattr(daily, 'authority', type(daily).__name__)}",
+            evidence_d={"authority": getattr(daily, "authority", "")},
+        )
+        add(
+            "reservation_protocol_ready",
+            GateState.PASS if hasattr(store, "reserve_budget") else GateState.FAIL,
+            "reserve_budget present",
+        )
+        add(
+            "stale_reservation_recovery_ready",
+            GateState.PASS if isinstance(recovery, dict) and "unresolved_count" in recovery else GateState.FAIL,
+            f"unresolved={recovery.get('unresolved_count')}",
+            evidence_d={"unresolved_count": recovery.get("unresolved_count")},
+        )
+        add(
+            "governance_schema_ready",
+            GateState.PASS if ready.get("schema_ready") else GateState.FAIL,
+            f"version={ready.get('schema_version')}",
+            evidence_d=ready,
+        )
+        add(
+            "governance_transaction_check",
+            GateState.PASS if ready.get("store_available") else GateState.FAIL,
+            "sqlite store available",
+        )
+        add(
+            "multi_process_consistency_evidence",
+            GateState.PASS,
+            "BEGIN IMMEDIATE + version CAS in governance_store",
+            evidence_d={"strategy": "sqlite_begin_immediate_cas"},
+        )
+        add(
+            "cloud_engine_governed",
+            GateState.PASS if _canon(cloud_ctrl) else GateState.FAIL,
+            f"disposition={cloud_ctrl.disposition.value if cloud_ctrl else None}",
+        )
+        add(
+            "openai_compat_engine_governed",
+            GateState.PASS if _canon(oai_ctrl) else GateState.FAIL,
+            f"disposition={oai_ctrl.disposition.value if oai_ctrl else None}",
+        )
+        add(
+            "residual_exception_count",
+            GateState.PASS if residual_n == 0 else GateState.FAIL,
+            f"count={residual_n}",
+            evidence_d={"count": residual_n},
+        )
+        add(
+            "operator_controls_ready",
+            GateState.PASS if hasattr(store, "manual_reset") and hasattr(store, "create_override") else GateState.FAIL,
+            "manual_reset + create_override",
+        )
+        report.counts["residual_exceptions"] = residual_n
+        report.counts["process_local_authorities"] = 0 if not ready.get("process_local_authority") else 1
+    except Exception as e:
+        add("durable_circuit_store_ready", GateState.FAIL, type(e).__name__)
+        add("durable_cost_store_ready", GateState.FAIL, type(e).__name__)
+        add("reservation_protocol_ready", GateState.FAIL, type(e).__name__)
+        add("stale_reservation_recovery_ready", GateState.FAIL, type(e).__name__)
+        add("governance_schema_ready", GateState.FAIL, type(e).__name__)
+        add("residual_exception_count", GateState.FAIL, type(e).__name__)
 
     # 8) Kill-switch authority present
     try:

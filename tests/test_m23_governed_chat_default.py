@@ -676,17 +676,21 @@ def test_chat_residual_exception_removed():
         assert "chat" not in ex["path_id"].lower()
 
 
-def test_residual_count_decreased_to_two():
+def test_residual_count_decreased_to_zero_m24():
+    """M23 left 2 engine residuals; M24 consolidates them to zero."""
     data = json.loads(MANIFEST.read_text(encoding="utf-8"))
-    assert len(data["exceptions"]) == EXPECTED_EXCEPTION_COUNT == 2
+    assert len(data["exceptions"]) == EXPECTED_EXCEPTION_COUNT == 0
     ids = {ex["path_id"] for ex in data["exceptions"]}
-    assert ids == {"engine_cloud_caller", "engine_openai_compat"}
+    assert ids == set()
+    migrated = set(data.get("m24_migrated_path_ids") or [])
+    assert "engine_cloud_caller" in migrated
+    assert "engine_openai_compat" in migrated
 
 
 def test_validate_residual_manifest_m23():
     st, ev, blockers = validate_residual_manifest()
     assert st is GateState.PASS, blockers
-    assert ev["exception_count"] == 2
+    assert ev["exception_count"] == 0
 
 
 def test_release_check_pass():

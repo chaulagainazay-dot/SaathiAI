@@ -1,4 +1,10 @@
-"""OpenAI-compatible local endpoint adapter (Shimmy, llama.cpp server, LM Studio, etc.)."""
+"""OpenAI-compatible local endpoint adapter (Shimmy, llama.cpp server, LM Studio).
+
+M24: treated as a governed provider *transport* capability — not a separate
+governance authority. Base URL must come from configuration / allowlist.
+Callers cannot inject arbitrary production URLs. SSRF protections enforced.
+Cost and circuit state use durable governance authorities (callers/decision).
+"""
 from __future__ import annotations
 
 import json
@@ -7,6 +13,7 @@ import time
 from collections.abc import AsyncIterator
 from typing import Any, Callable, Optional, Sequence
 from urllib.error import HTTPError, URLError
+from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 
 from saathi.inference.engine import (
@@ -18,10 +25,65 @@ from saathi.inference.engine import (
 )
 from saathi.inference.errors import EngineError, EngineTimeoutError, EngineUnhealthyError, normalize_error
 
+# Local / loopback endpoints only by default. Expand via OPENAI_COMPAT_ALLOWED_HOSTS.
+_DEFAULT_ALLOWED_HOSTS = frozenset({
+    "127.0.0.1",
+    "localhost",
+    "::1",
+    "0.0.0.0",
+})
+
+
+def allowed_openai_compat_hosts() -> frozenset[str]:
+    raw = os.getenv("OPENAI_COMPAT_ALLOWED_HOSTS") or os.getenv("SAATHI_OPENAI_COMPAT_HOSTS") or ""
+    extra = {h.strip().lower() for h in raw.split(",") if h.strip()}
+    return frozenset(_DEFAULT_ALLOWED_HOSTS | extra)
+
+
+def validate_openai_compat_base_url(
+    base_url: str,
+    *,
+    production_context: bool = False,
+    allowed_hosts: Optional[frozenset[str]] = None,
+) -> tuple[bool, str]:
+    """SSRF-safe URL policy. Rejects non-http(s), credentials-in-URL, remote hosts in prod."""
+    if not base_url or not str(base_url).strip():
+        return False, "empty_base_url"
+    try:
+        parsed = urlparse(str(base_url).strip())
+    except Exception:
+        return False, "invalid_url"
+    if parsed.scheme not in {"http", "https"}:
+        return False, "scheme_not_http"
+    if parsed.username or parsed.password:
+        return False, "userinfo_forbidden"
+    host = (parsed.hostname or "").lower()
+    if not host:
+        return False, "missing_host"
+    # Block link-local / metadata-style hosts
+    if host in {"metadata.google.internal", "metadata"} or host.endswith(".internal"):
+        return False, "metadata_host_blocked"
+    if host.startswith("169.254."):
+        return False, "link_local_blocked"
+    hosts = allowed_hosts if allowed_hosts is not None else allowed_openai_compat_hosts()
+    # Production: must be allowlisted. Non-production: still prefer allowlist; remote needs explicit env.
+    if host not in hosts:
+        if production_context:
+            return False, f"host_not_allowlisted:{host}"
+        # Non-prod: allow only if SAATHI_OPENAI_COMPAT_ALLOW_REMOTE=1
+        if os.getenv("SAATHI_OPENAI_COMPAT_ALLOW_REMOTE", "").strip() not in {"1", "true", "yes"}:
+            return False, f"host_not_allowlisted:{host}"
+    return True, "ok"
+
 
 class OpenAICompatEngine(InferenceEngine):
+    """Governed OpenAI-compatible HTTP transport (M24 canonical adapter)."""
+
     engine_id = "openai_compat"
     is_cloud = False
+    # M24 marker: no independent cost/circuit/retry authority
+    governance_authority = "durable_governance_store"
+    residual_exception = False
 
     def __init__(
         self,
@@ -32,8 +94,16 @@ class OpenAICompatEngine(InferenceEngine):
         engine_id: str = "openai_compat",
         is_cloud: bool = False,
         transport: Optional[Callable[..., Any]] = None,
+        production_context: bool = False,
+        skip_url_validation: bool = False,
     ):
         base = base_url or os.getenv("OPENAI_COMPAT_BASE_URL") or os.getenv("SHIMMY_URL") or "http://127.0.0.1:11435/v1"
+        if not skip_url_validation:
+            ok, reason = validate_openai_compat_base_url(
+                base, production_context=production_context
+            )
+            if not ok:
+                raise EngineError(f"openai_compat base_url rejected: {reason}")
         self.base_url = base.rstrip("/")
         self.api_key = api_key if api_key is not None else (
             os.getenv("OPENAI_COMPAT_API_KEY") or os.getenv("SHIMMY_API_KEY") or "sk-local"
@@ -42,6 +112,7 @@ class OpenAICompatEngine(InferenceEngine):
         self.engine_id = engine_id
         self.is_cloud = is_cloud
         self._transport = transport
+        self._production_context = production_context
 
     def _request(
         self,
@@ -51,6 +122,12 @@ class OpenAICompatEngine(InferenceEngine):
         *,
         timeout: float = 30.0,
     ) -> Any:
+        # Re-validate on each request (config may change; defense in depth)
+        ok, reason = validate_openai_compat_base_url(
+            self.base_url, production_context=self._production_context
+        )
+        if not ok:
+            raise EngineError(f"openai_compat base_url rejected: {reason}")
         url = f"{self.base_url}{path}"
         if self._transport is not None:
             return self._transport(method, url, body=body, timeout=timeout)
@@ -133,9 +210,9 @@ class OpenAICompatEngine(InferenceEngine):
         try:
             data = self._request("GET", "/models", timeout=3.0)
             ok = isinstance(data, dict)
-            return {"ok": ok, "engine_id": self.engine_id, "base_url": self.base_url}
+            return {"ok": ok, "engine_id": self.engine_id, "base_url_host": urlparse(self.base_url).hostname}
         except Exception as e:
-            return {"ok": False, "engine_id": self.engine_id, "error": str(e)}
+            return {"ok": False, "engine_id": self.engine_id, "error": type(e).__name__}
 
     async def list_models(self) -> list[str]:
         data = self._request("GET", "/models", timeout=5.0)
@@ -155,6 +232,7 @@ class OpenAICompatEngine(InferenceEngine):
         prompt_tokens: int = 0,
         completion_tokens: int = 0,
     ) -> CostEstimate:
+        # Transport-only estimate; authoritative cost is durable governance ledger.
         if self.is_cloud:
             return CostEstimate(known=False, notes="cloud openai-compat cost not configured")
         return CostEstimate(amount=0.0, known=True, notes="local openai-compatible endpoint")
@@ -165,5 +243,5 @@ class OpenAICompatEngine(InferenceEngine):
             tool_calling=True,
             structured_output=True,
             local=not self.is_cloud,
-            notes="OpenAI-compatible HTTP API",
+            notes="OpenAI-compatible HTTP API (M24 governed transport)",
         )

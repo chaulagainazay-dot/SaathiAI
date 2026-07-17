@@ -133,6 +133,7 @@ def test_one_residual_exception_manifest():
         schema.startswith("m21.3")
         or schema.startswith("m22")
         or schema.startswith("m23")
+        or schema.startswith("m24")
     )
 
 

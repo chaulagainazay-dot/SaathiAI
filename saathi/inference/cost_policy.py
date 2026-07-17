@@ -1,8 +1,11 @@
-"""M21.2 — Deterministic cost metadata, estimation, and policy enforcement.
+"""M21.2 / M24 — Deterministic cost metadata, estimation, and policy enforcement.
 
 Uses Decimal for enforcement arithmetic (no binary float ceilings).
-Does not fetch live pricing. Does not implement durable billing.
-Daily budget: interface only + process-local optional store (not durable).
+Does not fetch live pricing.
+
+M24: daily budget authority is the durable governance store.
+``InMemoryDailyCostStore`` remains for isolated unit tests only — not
+production authority (see ``process_daily_store`` / ``durable_daily_store``).
 """
 from __future__ import annotations
 
@@ -130,7 +133,7 @@ class CostPolicyVerdict:
 
 
 class DailyCostStore(Protocol):
-    """Testable accounting interface — durable store deferred (M21.x debt)."""
+    """Testable accounting interface — M24 durable authority via DurableDailyCostStore."""
 
     def get_daily_spend(self, caller_id: str, day_key: str) -> Decimal: ...
 
@@ -138,7 +141,14 @@ class DailyCostStore(Protocol):
 
 
 class InMemoryDailyCostStore:
-    """Process-local only — not durable across restarts."""
+    """TEST_FAKE only — process-local, not production authority (M24).
+
+    Production and default paths must use ``DurableDailyCostStore`` /
+    ``durable_daily_store()``. Release checks flag any production import of
+    this class as authoritative spend mutation.
+    """
+
+    authority = "test_fake_process_local"
 
     def __init__(self) -> None:
         self._spend: dict[tuple[str, str], Decimal] = {}
@@ -147,15 +157,73 @@ class InMemoryDailyCostStore:
         return self._spend.get((caller_id, day_key), Decimal("0"))
 
     def add_spend(self, caller_id: str, day_key: str, amount: Decimal) -> None:
+        if isinstance(amount, float):
+            raise TypeError("binary float money rejected")
         key = (caller_id, day_key)
-        self._spend[key] = self.get_daily_spend(caller_id, day_key) + amount
+        self._spend[key] = self.get_daily_spend(caller_id, day_key) + Decimal(str(amount))
 
 
-_PROCESS_STORE = InMemoryDailyCostStore()
+class DurableDailyCostStore:
+    """M24 authoritative daily cost view over the durable governance store."""
+
+    authority = "canonical_durable"
+
+    def __init__(self, store: Any = None) -> None:
+        self._store = store
+
+    def _gov(self) -> Any:
+        if self._store is not None:
+            return self._store
+        from saathi.inference.governance_store import get_governance_store
+
+        return get_governance_store()
+
+    def get_daily_spend(self, caller_id: str, day_key: str) -> Decimal:
+        return self._gov().get_daily_spend(caller_id, day_key)
+
+    def add_spend(self, caller_id: str, day_key: str, amount: Decimal) -> None:
+        """Direct add_spend is not the production path — use reservations.
+
+        Provided for protocol compatibility in tests that settle via ledger;
+        production must reserve → settle through governance_store.
+        """
+        if isinstance(amount, float):
+            raise TypeError("binary float money rejected")
+        # Record as a zero-scope settled usage only when explicitly invoked.
+        # Prefer reserve/settle. This path creates a synthetic settled entry.
+        from saathi.inference.governance_store import ACTUAL
+
+        gov = self._gov()
+        attempt_id = f"legacy_add:{caller_id}:{day_key}:{amount}:{gov.now()}"
+        rsv = gov.reserve_budget(
+            request_id=f"legacy_add:{caller_id}",
+            attempt_id=attempt_id,
+            caller_id=caller_id,
+            provider_id="system",
+            amount=Decimal(str(amount)),
+            zero_cost=Decimal(str(amount)) == 0,
+            daily_budget=None,
+        )
+        gov.mark_attempt_started(rsv["reservation_id"])
+        gov.settle_reservation(
+            rsv["reservation_id"],
+            actual_cost=Decimal(str(amount)),
+            usage_status=ACTUAL,
+            notes="legacy_add_spend",
+        )
 
 
-def process_daily_store() -> InMemoryDailyCostStore:
-    return _PROCESS_STORE
+def durable_daily_store() -> DurableDailyCostStore:
+    """Canonical production daily cost store (M24)."""
+    return DurableDailyCostStore()
+
+
+def process_daily_store() -> DailyCostStore:
+    """Return the production daily cost authority (durable as of M24).
+
+    Name preserved for compatibility. No longer returns process-local state.
+    """
+    return durable_daily_store()
 
 
 def estimate_input_tokens(text: str, *, chars_per_token: int = 4) -> int:
@@ -373,7 +441,7 @@ def enforce_cost_policy(
             return CostPolicyVerdict(
                 False,
                 "daily_budget",
-                "Daily caller budget would be exceeded (process-local accounting only)",
+                "Daily caller budget would be exceeded (durable accounting)",
                 estimate=estimate,
                 ceiling_applied=str(bud),
             )

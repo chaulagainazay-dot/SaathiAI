@@ -1,4 +1,4 @@
-"""M21.2 — Provider governance facade and CLI.
+"""M21.2 / M24 — Provider governance facade and CLI.
 
   python -m saathi.inference.provider_governance providers
   python -m saathi.inference.provider_governance availability
@@ -7,6 +7,11 @@
   python -m saathi.inference.provider_governance circuits
   python -m saathi.inference.provider_governance decide
   python -m saathi.inference.provider_governance reset-circuit <provider_id> --confirm
+  python -m saathi.inference.provider_governance force-open <provider_id> --confirm
+  python -m saathi.inference.provider_governance reservations
+  python -m saathi.inference.provider_governance recover-reservations
+  python -m saathi.inference.provider_governance resolve-reservation <id> release|settle --confirm [--amount N]
+  python -m saathi.inference.provider_governance readiness
   python -m saathi.inference.provider_governance disable
 
 Never executes live inference. Never prints secrets.
@@ -21,6 +26,9 @@ from saathi.inference.availability import AvailabilityState, evaluate_availabili
 from saathi.inference.circuit_breaker import get_circuit_registry
 from saathi.inference.cost_policy import estimate_cost, estimate_input_tokens
 from saathi.inference.failure_taxonomy import taxonomy_snapshot
+from saathi.inference.governance_errors import GovernanceError
+from saathi.inference.governance_service import get_governance_service
+from saathi.inference.governance_store import get_governance_store
 from saathi.inference.provider_decision import decide_providers, privacy_safe_decision_telemetry
 from saathi.inference.provider_descriptor import (
     descriptor_snapshot,
@@ -39,6 +47,7 @@ from saathi.inference.request import InferenceRequest
 
 def governance_snapshot() -> dict[str, Any]:
     circuits = get_circuit_registry()
+    store = get_governance_store()
     providers = []
     for d in list_descriptors():
         killed = is_provider_killed(d.provider_id)
@@ -82,14 +91,17 @@ def governance_snapshot() -> dict[str, Any]:
                 "production_certified": False,
             }
         )
+    ready = store.readiness()
     return {
-        "schema": "m21.2.provider_governance.v1",
-        "milestone": "M21.2",
+        "schema": "m24.provider_governance.v1",
+        "milestone": "M24",
         "production_certified": False,
         "kill_all": is_master_killed(),
         "cloud_fallback_default": False,
         "providers": providers,
-        "circuit_process_local": True,
+        "circuit_process_local": False,
+        "circuit_persistent": True,
+        "durable_governance": ready,
         "cli": "python -m saathi.inference.provider_governance",
     }
 
@@ -143,19 +155,21 @@ def main(argv: Optional[list[str]] = None) -> int:
                     "validation_errors": validate_descriptor(d),
                 }
             )
-        emit({"schema": "m21.2.costs.v1", "providers": rows})
+        emit({"schema": "m24.costs.v1", "providers": rows, "durable": True})
         return 0
     if cmd == "failures":
         emit(taxonomy_snapshot())
         return 0
     if cmd == "circuits":
         reg = get_circuit_registry()
+        store = get_governance_store()
         emit(
             {
-                "schema": "m21.2.circuits.v1",
-                "process_local": True,
-                "persistent": False,
+                "schema": "m24.circuits.v1",
+                "process_local": False,
+                "persistent": True,
                 "circuits": [s.to_dict() for s in reg.all_snapshots()],
+                "store": store.readiness(),
                 "note": "Empty list means no provider has been attempted yet",
             }
         )
@@ -180,8 +194,80 @@ def main(argv: Optional[list[str]] = None) -> int:
                 }
             )
             return 2
-        snap = get_circuit_registry().manual_reset(pid)
-        emit({"ok": True, "circuit": snap.to_dict()})
+        try:
+            snap = get_governance_store().manual_reset(
+                pid, confirm=True, actor_id="cli", reason_code="manual_reset"
+            )
+            emit({"ok": True, "circuit": snap})
+            return 0
+        except GovernanceError as e:
+            emit({"ok": False, **e.to_dict()})
+            return 2
+    if cmd in ("force-open", "force_open"):
+        if len(argv) < 2:
+            emit({"ok": False, "error": "usage: force-open <provider_id> --confirm"})
+            return 2
+        pid = argv[1]
+        if "--confirm" not in argv:
+            emit({"ok": False, "error": "refusing mutate without --confirm"})
+            return 2
+        try:
+            snap = get_governance_store().force_open(
+                pid, confirm=True, actor_id="cli", reason_code="force_open"
+            )
+            emit({"ok": True, "circuit": snap})
+            return 0
+        except GovernanceError as e:
+            emit({"ok": False, **e.to_dict()})
+            return 2
+    if cmd == "reservations":
+        store = get_governance_store()
+        emit(
+            {
+                "schema": "m24.reservations.v1",
+                "unresolved": store.list_unresolved_reservations(),
+                "readiness": store.readiness(),
+            }
+        )
+        return 0
+    if cmd in ("recover-reservations", "recover_reservations"):
+        emit(get_governance_service().recover())
+        return 0
+    if cmd in ("resolve-reservation", "resolve_reservation"):
+        if len(argv) < 3:
+            emit(
+                {
+                    "ok": False,
+                    "error": "usage: resolve-reservation <id> release|settle --confirm [--amount N]",
+                }
+            )
+            return 2
+        rid = argv[1]
+        resolution = argv[2]
+        if "--confirm" not in argv:
+            emit({"ok": False, "error": "refusing mutate without --confirm"})
+            return 2
+        amount = None
+        if "--amount" in argv:
+            i = argv.index("--amount")
+            if i + 1 < len(argv):
+                amount = argv[i + 1]
+        try:
+            out = get_governance_store().operator_resolve_reservation(
+                rid,
+                resolution=resolution,
+                actor_id="cli",
+                reason_code="operator_cli",
+                actual_cost=amount,
+                confirm=True,
+            )
+            emit({"ok": True, "result": out})
+            return 0
+        except GovernanceError as e:
+            emit({"ok": False, **e.to_dict()})
+            return 2
+    if cmd == "readiness":
+        emit(get_governance_store().readiness())
         return 0
     if cmd == "disable":
         emit(disable_provider_commands())
