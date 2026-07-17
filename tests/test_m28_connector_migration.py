@@ -43,6 +43,12 @@ def reg():
 
 @pytest.fixture()
 def runtime(tmp_path, reg):
+    from saathi.connectors.conformance.store import CertificationStore
+    cert_store = CertificationStore(
+        path=tmp_path / "m30_certs.json",
+        auto_fixture=True,
+        persist=False,
+    )
     return GovernedConnectorRuntime(
         registry=reg,
         rollout_mode=RolloutMode.OFF,
@@ -50,6 +56,8 @@ def runtime(tmp_path, reg):
         evidence_dir=tmp_path / "ev",
         use_m26_incidents=False,
         clock=lambda: 1000.0,
+        certification_store=cert_store,
+        require_connector_certification=True,
     )
 
 
