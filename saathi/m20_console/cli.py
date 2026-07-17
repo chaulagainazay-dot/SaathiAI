@@ -10,6 +10,7 @@
   prod-config  M21.0 production config bundle (read-only)
   provider-governance  M21.2 provider availability/cost/circuit snapshot (read-only)
   residual-inference   M21.3 residual path + release-check snapshot (read-only)
+  runtime-readiness    M21.4 consolidated runtime / production-config gate (read-only)
 
 Never launches agents, never generates, never pushes.
 """
@@ -91,6 +92,11 @@ def main(argv: list[str] | None = None) -> int:
                 "transitional_unknown": "disabled_forbidden",
             }
         )
+        return 0
+    if cmd in ("runtime-readiness", "runtime_readiness", "m21_4", "runtime-gate"):
+        from saathi.inference.runtime_gate import runtime_readiness_snapshot
+
+        _emit(runtime_readiness_snapshot())
         return 0
     _emit({"error": "unknown_command", "cmd": cmd, "hint": "help"})
     return 2

@@ -115,5 +115,62 @@ def release_check(*, run_secret_scan: bool = True, run_db: bool = True,
     if strict_dirty and dirty:
         return EXIT_DIRTY, report
 
+    # M21.3/M21.4 — inference architecture release check (offline, no secrets)
+    # Failure blocks the canonical release gate. Does not set production_certified.
+    try:
+        from saathi.inference.release_check import run_release_check as _inf_release
+
+        inf = _inf_release()
+        report["gates"]["inference_release_check"] = {
+            "ok": inf.ok,
+            "blocking_count": inf.blocking_count,
+            "files_scanned": inf.files_scanned,
+            "production_certified": False,
+            "cli": "python -m saathi.inference.release_check",
+            "milestone": "M21.3/M21.4",
+        }
+        if not inf.ok:
+            report["verdict"] = "inference release check failed"
+            return EXIT_PROVIDER, report
+    except Exception as exc:
+        report["gates"]["inference_release_check"] = {
+            "ok": False,
+            "error": type(exc).__name__,
+            "detail": repr(exc)[:160],
+        }
+        return EXIT_PROVIDER, report
+
+    # M21.4 runtime consolidation gate (static portion; live suite evidence separate)
+    try:
+        from saathi.inference.runtime_gate import evaluate_runtime_gate
+
+        rg = evaluate_runtime_gate(
+            evidence={
+                "full_suite_status": "NOT_TESTED",
+                "secret_scan_status": "NOT_TESTED",
+                "critical_check_status": "NOT_TESTED",
+            },
+            run_release_check=True,
+            include_live_probe=True,
+        )
+        report["gates"]["m21_4_runtime_gate"] = {
+            "ok": rg.ok,
+            "overall_state": rg.overall_state,
+            "production_certified": False,
+            "blocking_reasons": list(rg.blocking_reasons)[:12],
+            "cli": "python -m saathi.inference.runtime_gate",
+        }
+        if not rg.ok:
+            report["verdict"] = "m21.4 runtime gate failed"
+            return EXIT_PROVIDER, report
+    except Exception as exc:
+        report["gates"]["m21_4_runtime_gate"] = {
+            "ok": False,
+            "error": type(exc).__name__,
+            "detail": repr(exc)[:160],
+        }
+        return EXIT_PROVIDER, report
+
     report["verdict"] = "gates passed (test-suite + browser gates run separately)"
+    report["production_certified"] = False
     return EXIT_READY, report

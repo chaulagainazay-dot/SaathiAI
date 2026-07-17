@@ -2256,6 +2256,58 @@
       "subsystem": "inference",
       "blocking": true,
       "notes": "M21.3 residual path migration + release-check enforcement"
+    },
+    {
+      "id": "m21.4.runtime_consolidation",
+      "targets": [
+        "tests/test_m21_4_runtime_consolidation.py"
+      ],
+      "subsystem": "inference",
+      "blocking": true,
+      "notes": "M21.4 runtime authority consolidation + production-configuration gate"
+    },
+    {
+      "id": "m21.4.production_configuration_gate",
+      "targets": [
+        "tests/test_m21_4_runtime_consolidation.py::test_production_gate_static_config_uncertified",
+        "tests/test_m21_4_runtime_consolidation.py::test_production_certified_defaults_false",
+        "tests/test_m21_4_runtime_consolidation.py::test_partial_evidence_cannot_certify"
+      ],
+      "subsystem": "inference",
+      "blocking": true,
+      "notes": "M21.4 production-configuration gate + certification invariant"
+    },
+    {
+      "id": "m21.4.release_check_integration",
+      "targets": [
+        "tests/test_m21_4_runtime_consolidation.py::test_canonical_release_gate_invokes_inference_release_check",
+        "tests/test_m21_4_runtime_consolidation.py::test_release_check_failure_blocks_canonical_gate"
+      ],
+      "subsystem": "inference",
+      "blocking": true,
+      "notes": "M21.4 release-check integrated into ops.release_gate"
+    },
+    {
+      "id": "m21.4.residual_manifest_consistency",
+      "targets": [
+        "tests/test_m21_4_runtime_consolidation.py::test_manifest_every_file_exists",
+        "tests/test_m21_4_runtime_consolidation.py::test_exception_count_not_expanded",
+        "tests/test_m21_4_runtime_consolidation.py::test_manifest_required_fields"
+      ],
+      "subsystem": "inference",
+      "blocking": true,
+      "notes": "M21.4 residual exception manifest validation"
+    },
+    {
+      "id": "m21.4.production_certification_invariant",
+      "targets": [
+        "tests/test_m21_4_runtime_consolidation.py::test_unit_tests_alone_cannot_certify",
+        "tests/test_m21_4_runtime_consolidation.py::test_manual_cert_override_rejected",
+        "tests/test_m21_4_runtime_consolidation.py::test_not_tested_does_not_count_as_pass"
+      ],
+      "subsystem": "inference",
+      "blocking": true,
+      "notes": "M21.4 production_certified remains false without full evidence"
     }
   ]
 }

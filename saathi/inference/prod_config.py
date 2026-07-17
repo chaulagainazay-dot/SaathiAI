@@ -316,6 +316,10 @@ def production_config_bundle(
             "trading_guardian_engaged": False,
         },
         "m21_1": _m21_1_bundle(),
+        "m21_4": {
+            "runtime_gate": "python -m saathi.inference.runtime_gate",
+            "note": "M21.4 consolidated production-configuration gate; production_certified remains false without live evidence",
+        },
         "cli": {
             "validate": "python -m saathi.inference.prod_config validate",
             "inventory": "python -m saathi.inference.prod_config inventory",
@@ -323,6 +327,7 @@ def production_config_bundle(
             "bundle": "python -m saathi.inference.prod_config bundle",
             "disable": "python -m saathi.inference.prod_config disable",
             "bypass_guard": "python -m saathi.inference.bypass_guard",
+            "runtime_gate": "python -m saathi.inference.runtime_gate",
         },
     }
 
