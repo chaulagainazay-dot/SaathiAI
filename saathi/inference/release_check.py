@@ -32,10 +32,10 @@ KNOWN_LLM_GENERATE_SITES: frozenset[str] = frozenset({
     "saathi/inference/adapters/cloud.py",
 })
 
-# Files allowed to construct OpenAI/Anthropic SDKs or provider URLs
+# Files allowed to construct OpenAI/Anthropic SDKs or provider URLs.
+# M22: llm.py / agent.py / research.py removed — transports live in adapters only.
+# Remaining non-adapter entries are non-inference media/eval paths (out of M22 scope).
 PROVIDER_SDK_ALLOWLIST: frozenset[str] = frozenset({
-    "saathi/llm.py",
-    "saathi/agent.py",
     "saathi/vision.py",
     "saathi/tools/voice.py",
     "saathi/tools/mr_yeti_voice.py",
@@ -43,7 +43,6 @@ PROVIDER_SDK_ALLOWLIST: frozenset[str] = frozenset({
     "saathi/tools/speaking_eval.py",
     "saathi/tools/writing_eval.py",
     "saathi/tools/auto_dev.py",
-    "saathi/tools/research.py",
     "saathi/tools/cheap_llm.py",
     "saathi/server.py",
     "saathi/inference/bypass_guard.py",
@@ -53,6 +52,34 @@ PROVIDER_SDK_ALLOWLIST: frozenset[str] = frozenset({
 PROVIDER_SDK_ALLOWLIST_PREFIXES: tuple[str, ...] = (
     "saathi/inference/adapters/",
     "saathi/infrastructure/human_browser/",
+)
+
+# Credential env reads allowed only in these modules (exact paths) for M22 inference keys
+CREDENTIAL_READ_ALLOWLIST: frozenset[str] = frozenset({
+    "saathi/config.py",
+    "saathi/inference/adapters/http_providers.py",
+    "saathi/inference/adapters/grounding.py",
+    "saathi/inference/adapters/agent_provider.py",
+    "saathi/inference/adapters/cloud.py",
+    "saathi/inference/adapters/openai_compat.py",
+    "saathi/inference/adapters/ollama.py",
+    "saathi/inference/provider_descriptor.py",
+    "saathi/inference/provider_policy.py",
+    "saathi/inference/availability.py",
+    "saathi/inference/release_check.py",
+    "saathi/inference/bypass_guard.py",
+    "saathi/codebase_memory/secrets_scan.py",
+})
+
+CREDENTIAL_ENV_NEEDLES: tuple[str, ...] = (
+    "OPENAI_API_KEY",
+    "ANTHROPIC_API_KEY",
+    "GEMINI_API_KEY",
+    "GROQ_API_KEY",
+    "OPENROUTER_API_KEY",
+    "DEEPSEEK_API_KEY",
+    "GLM_API_KEY",
+    "QWEN_API_KEY",
 )
 
 FORBIDDEN_URLS = (
@@ -95,8 +122,8 @@ class Finding:
 
 @dataclass
 class ReleaseReport:
-    schema: str = "m21.3.release_check.v1"
-    milestone: str = "M21.3"
+    schema: str = "m22.release_check.v1"
+    milestone: str = "M22"
     ok: bool = True
     production_certified: bool = False
     files_scanned: int = 0
@@ -569,6 +596,89 @@ def _check_llm_helper(findings: list[Finding], summary: dict[str, Any]) -> None:
     summary["llm_helper_delegates"] = "generate(" in src or "llm.generate" in src
 
 
+def _check_m22_facades_and_credentials(
+    findings: list[Finding], summary: dict[str, Any]
+) -> None:
+    """M22: product facades must not own provider HTTP/SDK; credentials isolated."""
+    facade_files = {
+        "saathi/llm.py": "legacy_llm_generate",
+        "saathi/agent.py": "agent_runtime",
+        "saathi/tools/research.py": "research_tools",
+    }
+    for rel, symbol in facade_files.items():
+        p = ROOT / rel
+        if not p.is_file():
+            continue
+        src = p.read_text(encoding="utf-8")
+        for sub in FORBIDDEN_URLS:
+            if sub in src:
+                findings.append(
+                    Finding(
+                        rule_id="facade_direct_provider_url",
+                        path=rel,
+                        line=0,
+                        symbol=symbol,
+                        detail=f"M22 facade must not contain provider URL {sub!r}",
+                    )
+                )
+        for needle in ("from openai", "import openai", "import anthropic", "from anthropic"):
+            if needle in src:
+                findings.append(
+                    Finding(
+                        rule_id="facade_direct_sdk_import",
+                        path=rel,
+                        line=0,
+                        symbol=symbol,
+                        detail=f"M22 facade must not import provider SDK ({needle})",
+                    )
+                )
+
+    # Credential isolation for M22-migrated inference facades / paths only
+    # (broader product media tools remain out of M22 scope).
+    m22_credential_scan_targets = (
+        "saathi/llm.py",
+        "saathi/agent.py",
+        "saathi/tools/research.py",
+        "saathi/tools/_llm_helper.py",
+        "saathi/tools/cheap_llm.py",
+        "saathi/inference/chat_adapter.py",
+        "saathi/inference/compat.py",
+        "saathi/inference/legacy_facade.py",
+        "saathi/chat/engine.py",
+    )
+    cred_hits = 0
+    for rel in m22_credential_scan_targets:
+        if rel in CREDENTIAL_READ_ALLOWLIST:
+            continue
+        p = ROOT / rel
+        if not p.is_file():
+            continue
+        try:
+            src = p.read_text(encoding="utf-8")
+        except Exception:
+            continue
+        for i, line in enumerate(src.splitlines(), 1):
+            stripped = line.strip()
+            if stripped.startswith("#"):
+                continue
+            for needle in CREDENTIAL_ENV_NEEDLES:
+                if needle not in line:
+                    continue
+                if "getenv" in line or "environ" in line or "os.environ" in line:
+                    cred_hits += 1
+                    findings.append(
+                        Finding(
+                            rule_id="caller_credential_read",
+                            path=rel,
+                            line=i,
+                            symbol=needle,
+                            detail="provider credential env read outside adapter allowlist",
+                        )
+                    )
+    summary["m22_credential_scan_hits"] = cred_hits
+    summary["m22_facade_check"] = True
+
+
 def _check_cost_unknown_not_zero(findings: list[Finding], summary: dict[str, Any]) -> None:
     try:
         from saathi.inference.cost_policy import CostStatus, validate_pricing
@@ -623,7 +733,11 @@ def run_release_check(*, root: Optional[Path] = None) -> ReleaseReport:
             "llm_helper_direct_provider",
             "legacy_without_expiry",
             "manifest_exception_no_expiry",
-        ]
+            "facade_direct_provider_url",
+            "facade_direct_sdk_import",
+            "caller_credential_read",
+        ],
+        "milestone": "M22",
     }
     base = (root / "saathi") if root else SAATHI
     files = 0
@@ -636,6 +750,7 @@ def run_release_check(*, root: Optional[Path] = None) -> ReleaseReport:
     _check_callers(findings, summary)
     _check_chat_adapter(findings, summary)
     _check_llm_helper(findings, summary)
+    _check_m22_facades_and_credentials(findings, summary)
     _check_cost_unknown_not_zero(findings, summary)
 
     # Cloud fallback default

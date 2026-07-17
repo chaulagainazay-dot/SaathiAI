@@ -1,17 +1,14 @@
 """Research tools — Baadar searches the live web (Gemini google_search grounding)
 and builds plans that combine research with everything it knows about Ajay.
 
-M21.3: EXPLICIT_LEGACY_EXCEPTION for Gemini grounding (unique capability not on
-ModelRouter). Entry points apply kill-switch + registered caller preflight.
-No raw source content logging. Expiry: M22.
+M22: Direct Gemini HTTP removed. Grounding executes only via
+``saathi.inference.adapters.grounding``. Entry points apply kill-switch +
+registered caller preflight. No raw source content logging.
 """
 from __future__ import annotations
 
-import httpx
-
 from .. import config
 
-_API = "https://generativelanguage.googleapis.com/v1beta/models"
 CALLER_ID = "research_tools"
 PATH_ID = "tools_research"
 
@@ -32,39 +29,12 @@ def _preflight(prompt: str, max_tokens: int) -> None:
 
 
 def _grounded(prompt: str, max_tokens: int = 800) -> str:
-    """Ask Gemini WITH live Google Search grounding (tries models in quota order)."""
+    """Ask Gemini WITH live Google Search grounding via governed adapter."""
     _preflight(prompt, max_tokens)
-    last = None
-    for model in ("gemini-2.5-flash-lite", "gemini-2.5-flash"):
-        # Provider kill for gemini
-        try:
-            from saathi.inference.provider_policy import is_provider_killed
+    from saathi.inference.adapters.grounding import grounded_generate
 
-            if is_provider_killed("gemini"):
-                raise RuntimeError("provider gemini killed")
-        except RuntimeError:
-            raise
-        except Exception:
-            pass
-        r = httpx.post(
-            f"{_API}/{model}:generateContent",
-            params={"key": config.GOOGLE_API_KEY},
-            json={
-                "contents": [{"parts": [{"text": prompt}]}],
-                "tools": [{"google_search": {}}],
-                "generationConfig": {"maxOutputTokens": max_tokens},
-            },
-            timeout=90,
-        )
-        if r.status_code == 429:
-            last = r
-            continue
-        r.raise_for_status()
-        parts = r.json()["candidates"][0]["content"]["parts"]
-        return " ".join(p.get("text", "") for p in parts).strip()
-    if last is not None:
-        last.raise_for_status()
-    raise RuntimeError("research_grounding_failed")
+    result = grounded_generate(prompt, max_tokens=max_tokens, timeout=90.0)
+    return result.text
 
 
 def research(topic: str, depth: str = "quick") -> dict:
@@ -79,7 +49,13 @@ def research(topic: str, depth: str = "quick") -> dict:
         answer = _grounded(
             f"Research this for Ajay (canteen owner in Kathmandu, Nepal): {topic}\n{style}"
         )
-        return {"topic": topic, "findings": answer, "caller_id": CALLER_ID, "path_id": PATH_ID}
+        return {
+            "topic": topic,
+            "findings": answer,
+            "caller_id": CALLER_ID,
+            "path_id": PATH_ID,
+            "privacy": "public_web",
+        }
     except Exception as e:
         # Redacted error — no full provider body
         return {
@@ -113,6 +89,7 @@ def deep_plan(goal: str) -> dict:
             "used_memory": facts,
             "caller_id": CALLER_ID,
             "path_id": PATH_ID,
+            "privacy": "public_web",
         }
     except Exception as e:
         return {"error": type(e).__name__, "caller_id": CALLER_ID}

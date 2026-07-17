@@ -199,7 +199,7 @@ _CALLER_POLICIES: dict[str, CallerPolicy] = {
         timeout_seconds=120.0,
         max_retries=0,
         legacy=True,
-        notes="EXPLICIT_LEGACY_EXCEPTION expiry M22; preflight-gated; new call sites frozen",
+        notes="M22 COMPATIBILITY_FACADE; HTTP in adapters.http_providers; call sites frozen",
     ),
     "tools_llm_helper": CallerPolicy(
         caller_id="tools_llm_helper",
@@ -230,11 +230,11 @@ _CALLER_POLICIES: dict[str, CallerPolicy] = {
         max_retries=0,
         privacy_default="public_web",
         legacy=True,
-        notes="EXPLICIT_LEGACY_EXCEPTION expiry M22; grounding not on ModelRouter",
+        notes="M22: grounding via adapters.grounding; research.py is thin facade",
     ),
     "agent_runtime": CallerPolicy(
         caller_id="agent_runtime",
-        description="Legacy SaathiAgent multi-provider clients",
+        description="SaathiAgent orchestration via governed agent_provider",
         product_area="agent",
         certification=CallerCertification.LEGACY,
         local_only=False,
@@ -246,7 +246,7 @@ _CALLER_POLICIES: dict[str, CallerPolicy] = {
         max_retries=0,
         tools_allowed=True,
         legacy=True,
-        notes="EXPLICIT_LEGACY_EXCEPTION expiry M22; preflight on complete/respond",
+        notes="M22: SDK clients in adapters.agent_provider; preflight on complete/respond",
     ),
     "server_tools": CallerPolicy(
         caller_id="server_tools",

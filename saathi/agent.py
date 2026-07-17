@@ -1,9 +1,13 @@
 """SaathiAI agent core — tool-use loop with memory.
 
-Two interchangeable brains:
-  - Gemini (free tier) via its OpenAI-compatible endpoint  ← default if GOOGLE_API_KEY set
+M22: Provider SDK clients and credentials live in
+``saathi.inference.adapters.agent_provider``. This module owns agent
+orchestration, tools, and memory — not provider transport.
+
+Brains (selected by config.LLM_PROVIDER via governed session):
+  - Gemini (free tier) via OpenAI-compatible endpoint
   - Claude via the Anthropic API
-  - Shimmy via its local OpenAI-compatible endpoint
+  - Groq / Shimmy / Ollama via OpenAI-compatible endpoints
 """
 import json
 from pathlib import Path
@@ -214,63 +218,35 @@ def _openai_tools() -> list[dict]:
 class SaathiAgent:
     def __init__(self):
         self.memory = Memory(config.DB_PATH)
-        self.provider = config.LLM_PROVIDER
-        if self.provider == "groq":
-            from openai import OpenAI
-            self.client = OpenAI(api_key=config.GROQ_API_KEY,
-                                 base_url="https://api.groq.com/openai/v1")
-            self.model = config.GROQ_MODEL
-        elif self.provider == "gemini":
-            from openai import OpenAI
-            self.client = OpenAI(
-                api_key=config.GOOGLE_API_KEY,
-                base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
-            )
-            self.model = config.GEMINI_MODEL
-        elif self.provider == "ollama":
-            from openai import OpenAI
-            self.client = OpenAI(api_key="ollama", base_url=config.OLLAMA_URL)
-            self.model = config.OLLAMA_MODEL
-        elif self.provider == "shimmy":
-            from openai import OpenAI
-            self.client = OpenAI(api_key=config.SHIMMY_API_KEY,
-                                 base_url=config.SHIMMY_URL)
-            self.model = config.SHIMMY_MODEL
-        else:
-            import anthropic
-            raw_client = anthropic.Anthropic(api_key=config.ANTHROPIC_API_KEY)
-            try:
-                from opik.integrations.anthropic import track_anthropic
-                self.client = track_anthropic(raw_client)
-            except Exception:
-                self.client = raw_client
-            self.model = config.CLAUDE_MODEL
+        # M22: SDK clients + credentials live only in agent_provider adapter
+        from saathi.inference.adapters.agent_provider import build_agent_session
+
+        self._session = build_agent_session(config.LLM_PROVIDER)
+        self.provider = self._session.provider
+        self.model = self._session.model
+        # Compat attributes for any historical introspection (no credential surfaces)
+        self.client = self._session.client
 
     def complete(self, system: str, prompt: str, max_tokens: int = 400) -> str:
         """One simple no-tools completion — used by the self-improvement engine.
 
-        M21.3: preflight kill/caller checks before any provider SDK call.
+        M21.3/M22: preflight kill/caller checks; execution via governed adapter.
         """
         self._m21_preflight(prompt or "", system or "", max_tokens)
-        if self.provider in ("gemini", "ollama", "shimmy", "groq"):
-            resp = self._create_with_retry(
-                messages=[{"role": "system", "content": system},
-                          {"role": "user", "content": prompt}],
-                max_tokens=max_tokens)
-            return (resp.choices[0].message.content or "").strip()
-        resp = self.client.messages.create(
-            model=self.model, max_tokens=max_tokens, system=system,
-            messages=[{"role": "user", "content": prompt}])
-        return "".join(b.text for b in resp.content if b.type == "text").strip()
+        text = self._session.simple_complete(system, prompt, max_tokens=max_tokens)
+        self.provider = self._session.provider
+        self.model = self._session.model
+        self.client = self._session.client
+        return text
 
     def _m21_preflight(self, prompt: str, system: str, max_tokens: int = 400) -> None:
-        """M21.3 agent path gate — does not select providers or log raw content."""
+        """Agent path gate — does not select providers or log raw content."""
         try:
             from saathi.inference.legacy_facade import preflight_inference
 
             pf = preflight_inference(
                 caller_id="agent_runtime",
-                path_id="agent_sdk_clients",
+                path_id="agent_runtime_governed",
                 prompt=prompt,
                 system=system,
                 max_tokens=int(max_tokens),
@@ -316,10 +292,13 @@ class SaathiAgent:
 
         activity.clear(session_id)
         activity.log(session_id, "start", "💭 Understanding your request…")
-        if self.provider in ("gemini", "ollama", "shimmy", "groq"):
+        if self._session.is_openai_compat:
             reply = self._respond_openai(system, history, user_text, speaker_verified, session_id)
         else:
             reply = self._respond_anthropic(system, history, user_text, speaker_verified, session_id)
+        self.provider = self._session.provider
+        self.model = self._session.model
+        self.client = self._session.client
         activity.log(session_id, "done", "✅ Done")
 
         self.memory.save_turn(session_id, "user", user_text)
@@ -340,95 +319,15 @@ class SaathiAgent:
 
         threading.Thread(target=task, daemon=True).start()
 
-    # ---------- Gemini (OpenAI-compatible) ----------
-
-    FALLBACK_MODELS = ["gemini-2.5-flash"]
+    # ---------- OpenAI-compatible tool loop (via agent_provider) ----------
 
     def _create_with_retry(self, **kwargs):
-        """Retry on transient free-tier errors (503 overload, 429 rate limit),
-        falling back to alternate Gemini models if the primary stays busy."""
-        import time
-        from openai import APIStatusError
-        if self.provider == "gemini":
-            # only Gemini understands these alternate model names
-            models = [self.model] + [m for m in self.FALLBACK_MODELS if m != self.model]
-        else:
-            # groq / ollama / shimmy: one model, then provider-level fallback below
-            models = [self.model]
-        # Groq rate-limits on tokens/min — don't stall on long backoffs, fail
-        # fast to the fallback brain so a reply still comes quickly.
-        attempts, backoff = (2, 1.0) if self.provider == "groq" else (4, 3.0)
-        last_err = None
-        for model in models:
-            for attempt in range(attempts):
-                try:
-                    return self.client.chat.completions.create(model=model, **kwargs)
-                except APIStatusError as e:
-                    # Groq's llama sometimes emits malformed tool-call syntax
-                    # (400 tool_use_failed) — retrying usually fixes it
-                    transient = (e.status_code in (429, 500, 503)
-                                 or "tool_use_failed" in str(e))
-                    if not transient:
-                        raise
-                    last_err = e
-                    # "limit: 0" = model has no free quota; daily-quota errors
-                    # won't recover by waiting — skip to next model/fallback
-                    if "limit: 0" in str(e) or "PerDay" in str(e):
-                        break
-                    if attempt < attempts - 1:
-                        time.sleep(backoff * (attempt + 1))
-                except Exception as e:
-                    # Network offline or DNS failure — go straight to Ollama
-                    err_s = str(e).lower()
-                    if any(k in err_s for k in ("connect", "network", "name or service",
-                                                "nodename", "timeout", "unreachable")):
-                        last_err = e
-                        break  # skip remaining attempts, fall through to Ollama
-                    raise
-        # busy/exhausted/offline — fall back so a reply still comes.
-        # Groq → Gemini (fast cloud) → local Shimmy/Ollama; Gemini → local Shimmy/Ollama.
-        if self.provider == "groq" and config.GOOGLE_API_KEY:
-            try:
-                from openai import OpenAI
-                self.client = OpenAI(api_key=config.GOOGLE_API_KEY,
-                    base_url="https://generativelanguage.googleapis.com/v1beta/openai/")
-                self.model = config.GEMINI_MODEL
-                self.provider = "gemini"
-                return self.client.chat.completions.create(model=self.model, **kwargs)
-            except Exception:
-                pass
-        if self.provider in ("gemini", "groq"):
-            try:
-                self._fallback_to_shimmy()
-                return self.client.chat.completions.create(model=self.model, **kwargs)
-            except Exception:
-                pass
-            try:
-                self._fallback_to_ollama()
-                return self.client.chat.completions.create(model=self.model, **kwargs)
-            except Exception:
-                pass
-        raise last_err
-
-    def _fallback_to_shimmy(self):
-        """When cloud brains are exhausted, switch to the local Shimmy brain."""
-        import httpx
-        from openai import OpenAI
-        base = config.SHIMMY_URL.rsplit("/v1", 1)[0]
-        httpx.get(f"{base}/v1/models", timeout=3)  # raises if Shimmy isn't running
-        self.client = OpenAI(api_key=config.SHIMMY_API_KEY, base_url=config.SHIMMY_URL)
-        self.model = config.SHIMMY_MODEL
-        self.provider = "shimmy"
-
-    def _fallback_to_ollama(self):
-        """When Gemini's free quota is exhausted, switch to the local brain."""
-        import httpx
-        from openai import OpenAI
-        base = config.OLLAMA_URL.rsplit("/v1", 1)[0]
-        httpx.get(base, timeout=3)  # raises if Ollama isn't running
-        self.client = OpenAI(api_key="ollama", base_url=config.OLLAMA_URL)
-        self.model = config.OLLAMA_MODEL
-        self.provider = "ollama"
+        """Delegate completion to governed agent_provider session."""
+        resp = self._session.create_with_retry(**kwargs)
+        self.provider = self._session.provider
+        self.model = self._session.model
+        self.client = self._session.client
+        return resp
 
     def _respond_openai(self, system, history, user_text, speaker_verified,
                         session_id="default") -> str:
@@ -498,14 +397,14 @@ class SaathiAgent:
                                                        default=str)})
         return (msg.content or "I ran out of tool steps — try asking again.").strip()
 
-    # ---------- Claude ----------
+    # ---------- Claude (via agent_provider) ----------
 
     def _respond_anthropic(self, system, history, user_text, speaker_verified,
                            session_id="default") -> str:
         messages = history + [{"role": "user", "content": user_text}]
         for _ in range(MAX_TOOL_ITERATIONS):
-            resp = self.client.messages.create(
-                model=self.model, max_tokens=1500, system=system,
+            resp = self._session.create_anthropic_message(
+                max_tokens=1500, system=system,
                 tools=TOOL_SCHEMAS, messages=messages)
             if resp.stop_reason != "tool_use":
                 break

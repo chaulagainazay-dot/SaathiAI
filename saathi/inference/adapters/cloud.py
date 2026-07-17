@@ -1,7 +1,8 @@
-"""Cloud engine adapter wrapping existing SaathiOS LLM callers.
+"""Cloud engine adapter wrapping canonical HTTP provider transports (M22).
 
 Cloud traffic must still pass privacy/cost/approval policy at the router and
 ExecutionGateway layers. This adapter only normalizes the engine interface.
+Provider HTTP lives in ``http_providers`` — not in product callers.
 """
 from __future__ import annotations
 
@@ -143,9 +144,9 @@ class CloudCallerEngine(InferenceEngine):
 
 
 def register_builtin_cloud_engines(registry) -> None:
-    """Optional helper: register cloud engines from saathi.llm when available."""
+    """Optional helper: register cloud engines from canonical HTTP transports."""
     try:
-        from saathi import llm as llm_mod
+        from saathi.inference.adapters import http_providers as hp
     except Exception:
         return
 
@@ -158,7 +159,7 @@ def register_builtin_cloud_engines(registry) -> None:
         ("glm", "glm", 0.5),
         ("qwen", "qwen", 0.4),
     ]
-    callers = getattr(llm_mod, "DEFAULT_CALLERS", {})
+    callers = getattr(hp, "DEFAULT_FAMILY_CALLERS", {})
     for engine_id, family, cost in mapping:
         caller = callers.get(family)
         if caller is None:
@@ -166,7 +167,7 @@ def register_builtin_cloud_engines(registry) -> None:
 
         def _avail(name=engine_id):
             try:
-                return bool(llm_mod.env_availability(f"{name}/x"))
+                return bool(hp.env_availability(f"{name}/x"))
             except Exception:
                 return False
 

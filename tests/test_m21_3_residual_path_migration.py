@@ -138,7 +138,14 @@ def test_default_llm_via_adapter():
 
 def test_llm_generate_deprecation_metadata():
     assert LLM_GENERATE_DEPRECATION["deprecated"] is True
-    assert LLM_GENERATE_DEPRECATION["expiry_milestone"] == "M22"
+    # M22: facade remains deprecated compatibility; provider HTTP migrated
+    assert LLM_GENERATE_DEPRECATION.get("classification") in {
+        "COMPATIBILITY_FACADE",
+        "EXPLICIT_LEGACY_EXCEPTION",
+    }
+    assert LLM_GENERATE_DEPRECATION.get("migrated") == "M22" or LLM_GENERATE_DEPRECATION.get(
+        "expiry_milestone"
+    ) in {"M22", "n/a"}
 
 
 def test_llm_generate_preflight_kill(monkeypatch):

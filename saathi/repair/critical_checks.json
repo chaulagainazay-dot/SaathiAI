@@ -2308,6 +2308,38 @@
       "subsystem": "inference",
       "blocking": true,
       "notes": "M21.4 production_certified remains false without full evidence"
+    },
+    {
+      "id": "m22.provider_migration",
+      "targets": [
+        "tests/test_m22_provider_migration.py"
+      ],
+      "subsystem": "inference",
+      "blocking": true,
+      "notes": "M22 governed provider transports; facade purity; residual shrink"
+    },
+    {
+      "id": "m22.release_check_facades",
+      "targets": [
+        "tests/test_m22_provider_migration.py::test_release_check_pass",
+        "tests/test_m22_provider_migration.py::test_llm_py_has_no_provider_urls",
+        "tests/test_m22_provider_migration.py::test_agent_py_has_no_sdk_imports",
+        "tests/test_m22_provider_migration.py::test_research_py_has_no_direct_gemini_http"
+      ],
+      "subsystem": "inference",
+      "blocking": true,
+      "notes": "M22 release-check facade purity and credential isolation"
+    },
+    {
+      "id": "m22.residual_manifest",
+      "targets": [
+        "tests/test_m22_provider_migration.py::test_manifest_exception_count_shrunk",
+        "tests/test_m22_provider_migration.py::test_validate_residual_manifest_pass",
+        "tests/test_m22_provider_migration.py::test_m22_migrated_paths_not_legacy_exception"
+      ],
+      "subsystem": "inference",
+      "blocking": true,
+      "notes": "M22 residual exceptions reduced; M22-expiry paths migrated"
     }
   ]
 }

@@ -1,26 +1,18 @@
 {
-  "schema": "m21.3.residual_exception_manifest.v1",
-  "milestone": "M21.3",
+  "schema": "m22.residual_exception_manifest.v1",
+  "milestone": "M22",
+  "supersedes": "m21.3.residual_exception_manifest.v1",
   "production_certified": false,
   "unknown_count": 0,
   "direct_provider_bypass_count": 0,
   "unclassified_count": 0,
+  "m22_migrated_path_ids": [
+    "legacy_llm_generate_execution",
+    "agent_sdk_clients",
+    "tools_research_grounding",
+    "openjarvis_execution_adapter"
+  ],
   "exceptions": [
-    {
-      "path_id": "legacy_llm_generate_execution",
-      "file": "saathi/llm.py",
-      "symbol": "generate / DEFAULT_CALLERS",
-      "reason": "Historical multi-provider execution sink used by chat/tools/compat; preflight-gated in M21.3 but HTTP callers remain until M22 adapter unification",
-      "owner": "platform-inference",
-      "classification": "EXPLICIT_LEGACY_EXCEPTION",
-      "allowed_behavior": "ModelRouter chain after preflight; caller_id required; kill switch before network; no raw prompt logging in preflight telemetry",
-      "forbidden_behavior": "new call sites outside allowlist; skip preflight in production; silent cloud fallback loops; unbounded retries",
-      "caller_id": "legacy_llm_generate",
-      "production_reachability": true,
-      "expiry_milestone": "M22",
-      "tests": ["tests/test_m21_3_residual_path_migration.py"],
-      "release_guard": "llm_generate_call_sites_frozen"
-    },
     {
       "path_id": "chat_engine_legacy_sink",
       "file": "saathi/chat/engine.py",
@@ -33,59 +25,14 @@
       "caller_id": "chat_engine",
       "production_reachability": true,
       "expiry_milestone": "M23",
-      "tests": ["tests/test_m21_3_residual_path_migration.py"],
+      "tests": ["tests/test_m21_3_residual_path_migration.py", "tests/test_m22_provider_migration.py"],
       "release_guard": "chat_engine_uses_adapter"
-    },
-    {
-      "path_id": "agent_sdk_clients",
-      "file": "saathi/agent.py",
-      "symbol": "SaathiAgent.__init__ / complete / respond",
-      "reason": "Legacy multi-provider agent clients; preflight on complete/respond; full migration deferred",
-      "owner": "platform-agent",
-      "classification": "EXPLICIT_LEGACY_EXCEPTION",
-      "allowed_behavior": "existing agent.py only; kill switch blocks complete/respond; registered caller agent_runtime",
-      "forbidden_behavior": "new OpenAI/Anthropic constructors outside allowlist; trading tools",
-      "caller_id": "agent_runtime",
-      "production_reachability": true,
-      "expiry_milestone": "M22",
-      "tests": ["tests/test_m21_3_residual_path_migration.py"],
-      "release_guard": "agent_sdk_allowlist"
-    },
-    {
-      "path_id": "tools_research_grounding",
-      "file": "saathi/tools/research.py",
-      "symbol": "_grounded / research / deep_plan",
-      "reason": "Gemini google_search grounding is not available via ModelRouter; wrapped with caller + kill preflight",
-      "owner": "platform-tools",
-      "classification": "EXPLICIT_LEGACY_EXCEPTION",
-      "allowed_behavior": "existing research.py only; caller research_tools; no raw source logging",
-      "forbidden_behavior": "new generativelanguage URL copies; expand source access",
-      "caller_id": "research_tools",
-      "production_reachability": true,
-      "expiry_milestone": "M22",
-      "tests": ["tests/test_m21_3_residual_path_migration.py"],
-      "release_guard": "research_url_allowlist"
-    },
-    {
-      "path_id": "openjarvis_execution_adapter",
-      "file": "saathi/execution/adapters/openjarvis_adapter.py",
-      "symbol": "OpenJarvisAdapter",
-      "reason": "Offline SUCCESS stub when inference disabled; no OJ process",
-      "owner": "platform-execution",
-      "classification": "EXPLICIT_LEGACY_EXCEPTION",
-      "allowed_behavior": "stub only; no network",
-      "forbidden_behavior": "spawn OJ process; direct provider call",
-      "caller_id": "execution_gateway",
-      "production_reachability": false,
-      "expiry_milestone": "M22",
-      "tests": ["tests/test_m20_1_openjarvis_inference.py"],
-      "release_guard": "oj_stub_only"
     },
     {
       "path_id": "engine_cloud_caller",
       "file": "saathi/inference/adapters/cloud.py",
       "symbol": "CloudCallerEngine",
-      "reason": "Cloud engine adapter behind allow_cloud_fallback + provider decision",
+      "reason": "Cloud engine adapter behind allow_cloud_fallback + provider decision; wraps http_providers",
       "owner": "platform-inference",
       "classification": "COMPATIBILITY_WRAPPED",
       "allowed_behavior": "adapter under registry only; production_supported=false default",
@@ -93,7 +40,7 @@
       "caller_id": "legacy_llm_generate",
       "production_reachability": false,
       "expiry_milestone": "M24",
-      "tests": ["tests/test_m21_2_provider_governance.py"],
+      "tests": ["tests/test_m21_2_provider_governance.py", "tests/test_m22_provider_migration.py"],
       "release_guard": "adapter_package_only"
     },
     {
@@ -110,6 +57,23 @@
       "expiry_milestone": "M24",
       "tests": ["tests/test_m21_2_provider_governance.py"],
       "release_guard": "adapter_package_only"
+    }
+  ],
+  "canonical_transports_m22": [
+    {
+      "path_id": "http_providers_transport",
+      "file": "saathi/inference/adapters/http_providers.py",
+      "classification": "CANONICAL_TRANSPORT"
+    },
+    {
+      "path_id": "research_grounding_adapter",
+      "file": "saathi/inference/adapters/grounding.py",
+      "classification": "CANONICAL_ADAPTER"
+    },
+    {
+      "path_id": "agent_provider_adapter",
+      "file": "saathi/inference/adapters/agent_provider.py",
+      "classification": "CANONICAL_ADAPTER"
     }
   ]
 }

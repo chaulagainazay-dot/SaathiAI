@@ -37,7 +37,9 @@ SCHEMA = "m21.4.runtime_gate.v1"
 MILESTONE = "M21.4"
 
 # Frozen expected residual exception count from M21.3 tip (expansion forbidden).
-EXPECTED_EXCEPTION_COUNT = 7
+# M22: migrated legacy_llm_generate, agent_sdk_clients, research_grounding,
+# openjarvis_execution_adapter off EXPLICIT_LEGACY_EXCEPTION → remaining 3.
+EXPECTED_EXCEPTION_COUNT = 3
 
 # Valid residual classifications (manifest + ResidualDisposition values).
 PERMITTED_CLASSIFICATIONS = frozenset({

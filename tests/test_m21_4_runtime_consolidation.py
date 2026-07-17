@@ -128,7 +128,8 @@ def test_one_residual_path_registry():
 def test_one_residual_exception_manifest():
     assert MANIFEST.is_file()
     data = json.loads(MANIFEST.read_text(encoding="utf-8"))
-    assert data.get("schema", "").startswith("m21.3")
+    schema = data.get("schema", "")
+    assert schema.startswith("m21.3") or schema.startswith("m22")
 
 
 def test_one_production_config_validator():

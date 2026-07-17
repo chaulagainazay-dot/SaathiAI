@@ -200,10 +200,11 @@ def test_trading_caller_blocked():
 
 def test_residual_paths_classified():
     snap = residual_paths_snapshot()
-    # Schema advanced with M21.3 residual migration
+    # Schema advanced with M21.3 / M22 residual migration
     assert snap["schema"] in {
         "m21.1.residual_paths.v1",
         "m21.3.residual_paths.v1",
+        "m22.residual_paths.v1",
     }
     ids = {p["path_id"] for p in snap["paths"]}
     assert "chat_engine" in ids
