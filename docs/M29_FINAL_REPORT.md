@@ -23,7 +23,7 @@ production_certified=true · connector rollout OFF · inference rollout OFF
 ## 3. Ending HEAD
 
 ```text
-98af339 (docs tip; feature 1eae4e8, tests 0092a92)
+e71cbee84ecf72022abcfe6be55451f98b71fcb0
 ```
 
 ## 4. Repository evidence
