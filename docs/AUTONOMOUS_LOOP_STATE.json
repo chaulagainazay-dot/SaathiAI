@@ -2,7 +2,7 @@
   "schema_version": "1",
   "repository": "SaathiOS",
   "branch": "milestone/m7-security-engine",
-  "current_head": "e71cbee84ecf72022abcfe6be55451f98b71fcb0",
+  "current_head": "0713a3336de9da9480023eb5cecdf6669294e3fa",
   "completed_milestones": [
     "M20.0",
     "M20.1",
@@ -28,7 +28,7 @@
     "M28",
     "M29"
   ],
-  "milestone_verdict": "M29 COMPLETE — connector identity, trust model, and registry",
+  "milestone_verdict": "M29 COMPLETE \u2014 connector identity, trust model, and registry",
   "production_certified": true,
   "m29": {
     "module": "saathi.connectors.registry",
@@ -41,7 +41,7 @@
     "connector_bypasses": 0
   },
   "m28": {
-    "canonical_path": "Caller → ToolIntent → ExecutionGateway → GovernedConnectorRuntime → adapter",
+    "canonical_path": "Caller \u2192 ToolIntent \u2192 ExecutionGateway \u2192 GovernedConnectorRuntime \u2192 adapter",
     "default_mode": "OFF",
     "connector_bypasses": 0,
     "live_accounts": false,
