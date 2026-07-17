@@ -2,7 +2,7 @@
   "schema_version": "1",
   "repository": "SaathiOS",
   "branch": "milestone/m7-security-engine",
-  "current_head": "pending_m21_1",
+  "current_head": "17bea43",
   "active_milestone": null,
   "completed_milestones": [
     "M20.0",
@@ -24,8 +24,8 @@
   "environment_blocked": [
     "M20.6_live_local_model"
   ],
-  "milestone_verdict": "M21.1 COMPLETE WITH LIMITATIONS — REQUEST CONTRACT READY; LEGACY PATHS REMAIN",
-  "session_verdict": "M21.1 COMPLETE WITH LIMITATIONS — NOT FULL M21; NOT PRODUCTION",
+  "milestone_verdict": "M21.1 COMPLETE WITH LIMITATIONS \u2014 REQUEST CONTRACT READY; LEGACY PATHS REMAIN",
+  "session_verdict": "M21.1 COMPLETE WITH LIMITATIONS \u2014 NOT FULL M21; NOT PRODUCTION",
   "next_milestone": "M21.2 cost metadata / availability / failover (operator authorize)",
   "stop_reason": "M21.1 bounded slice complete; do not auto-start M21.2",
   "m21_1": {
