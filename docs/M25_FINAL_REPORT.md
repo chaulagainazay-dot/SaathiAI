@@ -172,3 +172,26 @@ python -m saathi.inference.live_cert_m25
 ```text
 M25 BLOCKED — LIVE LOCAL PROVIDER ENVIRONMENT UNAVAILABLE
 ```
+
+## Closeout repair (post 285d95b)
+
+**Root cause of suite regressions:** Ollama installation made `select_provider("auto")`
+select `OllamaEmbedder` without an embedding model → no stored vectors → keyword-only.
+
+**Why not pull nomic-embed-text:** operator policy / M25 closeout forbids new model
+dependencies to green the suite; readiness must fail closed and fall back to
+deterministic local for auto mode.
+
+**Test isolation:** `tests/test_memory_engine.py` injects `LocalDeterministicEmbedder`.
+
+**Production auto:** Ollama embedder ready only when model present in `/api/tags`.
+
+**Evidence durability:** `LAST_SUCCESSFUL_LIVE_CERTIFICATION.json` preserved across
+later memory-blocked observations; latest observation is separate.
+
+**Full suite after repair:** 3095 passed, 1 skipped, 0 failed.
+
+**Live recert:** `M25 COMPLETE WITH LIMITATIONS — LIVE LOCAL PROVIDER VERIFIED; PRODUCTION CERTIFICATION BLOCKED` (`production_certified=false`).
+
+**Trading Guardian:** UNCHANGED / UNENGAGED
+

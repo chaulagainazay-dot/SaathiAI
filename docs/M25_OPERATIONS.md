@@ -25,3 +25,15 @@ UNCHANGED
 UNENGAGED
 LIVE TRADING NOT AUTHORIZED
 ```
+
+
+## Evidence durability
+
+```bash
+ls docs/evidence/m25/
+# LAST_SUCCESSFUL_LIVE_CERTIFICATION.json — preserved across blocked re-runs
+# LATEST_ENVIRONMENT_OBSERVATION.json — current host snapshot
+# LIVE_CERT_EVIDENCE.json — combined compatibility view
+```
+
+A later low-memory observation does **not** erase a historical live PASS.

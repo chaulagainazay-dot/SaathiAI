@@ -2,8 +2,7 @@
   "schema_version": "1",
   "repository": "SaathiOS",
   "branch": "milestone/m7-security-engine",
-  "current_head": "85a5f36",
-  "active_milestone": null,
+  "current_head": "PENDING",
   "completed_milestones": [
     "M20.0",
     "M20.1",
@@ -25,50 +24,17 @@
     "M24",
     "M25"
   ],
-  "intentionally_skipped": [
-    "M20.8"
-  ],
-  "environment_blocked": [
-    "M20.6_live_local_model",
-    "M21.4_live_ollama_cert",
-    "M22_live_ollama_cert",
-    "M23_live_ollama_cert",
-    "M24_live_ollama_cert",
-    "M25_live_ollama_cert"
-  ],
-  "milestone_verdict": "M25 BLOCKED \u2014 LIVE LOCAL PROVIDER ENVIRONMENT UNAVAILABLE",
-  "session_verdict": "M25 BLOCKED \u2014 ENVIRONMENT; PRODUCTION NOT CERTIFIED",
-  "next_milestone": "M26 (operator authorize only) or operator unlock Ollama then re-run M25",
-  "stop_reason": "M25 bounded slice complete with ENVIRONMENT_BLOCKED live cert; do not auto-start M26",
-  "m25": {
-    "modules": [
-      "saathi/inference/live_cert_m25.py",
-      "saathi/inference/runtime_gate.py"
-    ],
-    "tests": "tests/test_m25_live_provider_certification.py",
-    "docs": "docs/M25_*",
-    "evidence": "docs/evidence/m25/LIVE_CERT_EVIDENCE.json",
-    "live": false,
-    "live_provider_certified": false,
-    "production_certified": false,
-    "blockers": [
-      "ollama_broken_symlink",
-      "ollama_binary_absent_or_unusable",
-      "ollama_runtime_unreachable",
-      "no_installed_models_observed",
-      "memory_pressure"
-    ]
-  },
-  "unrelated_untouched": "Trading Guardian; no merge/deploy; no model download; no M26",
-  "session_id": "m25-2026-07-17",
-  "actor": "grok-master-controller",
-  "start_commit": "e9571f3",
+  "milestone_verdict": "M25 COMPLETE WITH LIMITATIONS \u2014 LIVE LOCAL PROVIDER VERIFIED; PRODUCTION CERTIFICATION BLOCKED",
   "production_certified": false,
-  "m25_tip": "85a5f360a97cc661a8f969bf56d3c00e4eb596d1",
-  "m25_commits": [
-    "c194554",
-    "a9eee41",
-    "85a5f36"
-  ],
-  "full_suite": "3085 passed, 1 skipped, 0 failed"
+  "full_suite": "3095 passed, 1 skipped, 0 failed",
+  "m25_closeout": {
+    "memory_isolation": "deterministic embedder fixture + auto readiness gate",
+    "nomic_embed_text_pulled": false,
+    "dual_evidence": true,
+    "live_provider_certified": true,
+    "production_certified": false
+  },
+  "next_milestone": "M26 (operator authorize only)",
+  "stop_reason": "M25 closeout complete; do not auto-start M26",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
 }

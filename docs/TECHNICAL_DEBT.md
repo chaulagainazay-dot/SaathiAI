@@ -11,6 +11,11 @@ Product IELTSAlert work uses **PRODUCT/IELTSAlert** numbering — not platform d
 - Live certification harness `live_cert_m25` + evidence bundle + runtime-gate M25 checks.
 - Correct ENVIRONMENT_BLOCKED when Ollama broken/missing; never mock-as-live.
 
+
+### M25 closeout — embedding auto-selection
+- ~~Ollama daemon presence alone selected unusable OllamaEmbedder in auto mode~~ — **fixed**: readiness requires embedding model; tests inject deterministic embedder.
+- No `nomic-embed-text` download required for suite green.
+
 ### M25 residual / deferred
 - ENVIRONMENT_BLOCKED: Ollama.app missing (broken `/usr/local/bin/ollama` symlink); no models; runtime down; memory pressure.
 - Operator unlock: repair Ollama.app, start service, pull ≤3B model, free RAM, re-run `python -m saathi.inference.live_cert_m25`.

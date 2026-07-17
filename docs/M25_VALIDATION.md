@@ -1,46 +1,46 @@
 # M25 Validation
 
+## Closeout repair (embedding isolation)
+
+Root cause of suite regressions after Ollama install: `select_provider("auto")`
+chose `OllamaEmbedder` when the daemon answered `/api/tags` even though the
+embedding model (`nomic-embed-text`) was **not** installed. Embeddings were not
+persisted; retrieval fell back to keyword-only. Deterministic memory tests
+expect stored hybrid vectors.
+
+**Fixes (no nomic-embed-text pull):**
+
+* Tests inject `LocalDeterministicEmbedder` explicitly.
+* Production `auto` requires Ollama **embedding model present** (readiness).
+* Explicit `select_provider("ollama")` fails with `embedding_model_missing`.
+* Dual evidence: historical PASS preserved separately from latest observation.
+
 ## Focused
 
 ```bash
-python -m pytest tests/test_m25_live_provider_certification.py -q
-python -m saathi.inference.live_cert_m25
-python -m saathi.inference.release_check
-python -m saathi.inference.runtime_gate
+.venv/bin/python -m pytest tests/test_memory_engine.py -q
+.venv/bin/python -m pytest tests/test_m25_live_provider_certification.py -q
 ```
 
-## Live cases (this host)
-
-All live cases: **ENVIRONMENT_BLOCKED** (provider unavailable).
-
-| Case | Status |
-|------|--------|
-| Non-stream | ENVIRONMENT_BLOCKED |
-| Stream | ENVIRONMENT_BLOCKED |
-| Cancel | ENVIRONMENT_BLOCKED |
-| Timeout | ENVIRONMENT_BLOCKED |
-| Circuit | ENVIRONMENT_BLOCKED |
-| Settlement | ENVIRONMENT_BLOCKED |
-| Chat e2e | ENVIRONMENT_BLOCKED |
-| Kill switch live | ENVIRONMENT_BLOCKED |
-| Privacy canary live | ENVIRONMENT_BLOCKED |
-| Performance | ENVIRONMENT_BLOCKED |
-
-## Non-live gates (this host)
-
-| Gate | Status |
-|------|--------|
-| residual_exceptions | PASS (0) |
-| durable_governance | PASS |
-| cloud_fallback_disabled | PASS |
-| endpoint_allowlist | PASS |
-| m25_no_mock_as_live | PASS |
-| production_certified | false |
-
-## Full suite
+## Live
 
 ```bash
-python -m pytest -q
+ollama stop qwen2.5:1.5b
+.venv/bin/python -m saathi.inference.live_cert_m25 discover
+.venv/bin/python -m saathi.inference.live_cert_m25
+.venv/bin/python -m saathi.inference.runtime_gate --explain
 ```
 
-**3085 passed, 1 skipped, 0 failed** (670.81s).
+## Evidence files
+
+* `docs/evidence/m25/LATEST_ENVIRONMENT_OBSERVATION.json`
+* `docs/evidence/m25/LAST_SUCCESSFUL_LIVE_CERTIFICATION.json`
+* `docs/evidence/m25/LIVE_CERT_EVIDENCE.json` (combined)
+
+## Invariants
+
+```text
+production_certified = false until full package gates pass
+cloud fallback = disabled
+Trading Guardian = UNCHANGED / UNENGAGED
+```
