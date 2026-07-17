@@ -2,7 +2,7 @@
   "schema_version": "1",
   "repository": "SaathiOS",
   "branch": "milestone/m7-security-engine",
-  "current_head": "8d938c3",
+  "current_head": "dfebb1d8fe5b525714a75b884170aed340aefdf5",
   "completed_milestones": [
     "M20.0",
     "M20.1",
@@ -26,7 +26,7 @@
     "M26",
     "M27"
   ],
-  "milestone_verdict": "M27 COMPLETE — governed connector framework (HTTP/MCP/browser/local_tool)",
+  "milestone_verdict": "M27 COMPLETE \u2014 governed connector framework (HTTP/MCP/browser/local_tool)",
   "production_certified": true,
   "m27": {
     "module": "saathi.connectors.gov",
@@ -39,5 +39,6 @@
   "stop_reason": "M27 complete; do not auto-start M28",
   "trading_guardian": "UNCHANGED / UNENGAGED",
   "cloud_fallback": false,
-  "residual_exceptions": 0
+  "residual_exceptions": 0,
+  "full_suite": "3195 passed, 1 skipped, 0 failed"
 }
