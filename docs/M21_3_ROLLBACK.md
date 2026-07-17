@@ -8,7 +8,7 @@ git checkout milestone/m7-security-engine
 git pull --ff-only origin milestone/m7-security-engine
 
 # Replace with actual M21.3 SHAs after push (newest first):
-git revert --no-edit <newest-M21.3-commit>
+git revert --no-edit 30eb5bc
 git revert --no-edit <previous-M21.3-commit>
 # …repeat for each M21.3 commit…
 
