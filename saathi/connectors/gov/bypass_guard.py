@@ -20,6 +20,7 @@ SCAN_ROOT = ROOT / "saathi"
 # Paths relative to repo root that may call adapters / runtime.execute directly
 ALLOWLIST_PREFIXES: tuple[str, ...] = (
     "saathi/connectors/gov/",  # framework internals
+    "saathi/connectors/conformance/",  # M30 sandbox/assessor (credential-free)
     "saathi/connectors/platform/execution.py",  # substrate under gateway handler only
     "saathi/connectors/platform/adapters.py",  # adapter implementations
     "saathi/connectors/adapters/",  # legacy adapter defs (not free call sites)

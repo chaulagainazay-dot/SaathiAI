@@ -55,6 +55,18 @@ class HttpAdapter:
         timeout_seconds: float = 30.0,
         max_retries: int = 1,
     ) -> ConnectorResult:
+        # Health/validate are local adapter probes — no network / URL required
+        if request.operation in ("health", "validate"):
+            return ConnectorResult(
+                ok=True,
+                connector_id=request.connector_id,
+                operation=request.operation,
+                status="success",
+                detail="http_adapter_healthy",
+                data={"transport": "injectable", "live_network": False},
+                privacy_safe=True,
+                bypass=False,
+            )
         method = (request.method or "GET").upper()
         if method not in ALLOWED_METHODS:
             return ConnectorResult(

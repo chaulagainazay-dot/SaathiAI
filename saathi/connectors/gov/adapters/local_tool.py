@@ -14,6 +14,8 @@ DEFAULT_ALLOWLIST: frozenset[str] = frozenset({
     "git_status_short",
     "python_version",
     "echo_safe",
+    "health",
+    "validate",
 })
 
 
@@ -32,6 +34,19 @@ class LocalToolAdapter:
                 operation=op,
                 status="denied",
                 detail=f"command_not_allowlisted:{op}",
+                bypass=False,
+            )
+
+        # Local health/validate — no subprocess
+        if op in ("health", "validate"):
+            return ConnectorResult(
+                ok=True,
+                connector_id=request.connector_id,
+                operation=op,
+                status="success",
+                detail="local_tool_healthy",
+                data={"allowlist_size": len(self.allowlist), "shell": False},
+                privacy_safe=True,
                 bypass=False,
             )
 

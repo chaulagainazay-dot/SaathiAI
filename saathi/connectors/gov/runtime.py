@@ -76,6 +76,10 @@ class GovernedConnectorRuntime:
         rate_window: Optional[dict[str, list[float]]] = None,
         clock: Optional[Callable[[], float]] = None,
         use_m26_incidents: bool = True,
+        # M30 — connector behavioral certification (distinct from production cert)
+        certification_store: Any = None,
+        require_connector_certification: bool = True,
+        certification_resolver: Optional[Callable[[str], Any]] = None,
     ):
         self.registry = registry or get_registry()
         self.policy = policy or ConnectorPolicy()
@@ -99,6 +103,10 @@ class GovernedConnectorRuntime:
         self._idempotency: dict[str, dict[str, Any]] = {}
         # Optional per-connector side-effect overrides (cannot weaken floors)
         self.operation_side_effects: dict[str, SideEffectClass] = {}
+        # M30 connector certification
+        self.certification_store = certification_store
+        self.require_connector_certification = bool(require_connector_certification)
+        self.certification_resolver = certification_resolver
 
     def _default_prod_cert(self) -> bool:
         try:
@@ -127,6 +135,51 @@ class GovernedConnectorRuntime:
 
     def grant_approval(self, token: str) -> None:
         self.approval_store.add(token)
+
+    def _connector_certification_error(self, connector_id: str) -> Optional[str]:
+        """Return denial detail if connector certification blocks ACTIVE/CANARY; else None.
+
+        Platform production certification (M25) is separate and checked elsewhere.
+        """
+        if not self.require_connector_certification:
+            return None
+        if self.certification_resolver is not None:
+            try:
+                view = self.certification_resolver(connector_id)
+                if hasattr(view, "allowed"):
+                    return None if view.allowed else (getattr(view, "reason", None) or "connector_certification_denied")
+                if isinstance(view, dict):
+                    return None if view.get("allowed") else str(view.get("reason") or "connector_certification_denied")
+                if view in ("CERTIFIED", "CERTIFIED_WITH_LIMITATIONS"):
+                    return None
+                return f"connector_certification:{view}"
+            except Exception as e:
+                return f"connector_certification_error:{type(e).__name__}"
+        try:
+            from saathi.connectors.conformance.eligibility import resolve_eligibility
+            elig = resolve_eligibility(
+                connector_id,
+                store=self.certification_store,
+                registry=self.registry,
+            )
+            if elig.allowed:
+                return None
+            return elig.reason or f"connector_certification:{elig.state}"
+        except Exception as e:
+            return f"connector_certification_error:{type(e).__name__}"
+
+    def install_test_certification(self, connector_id: str, *, state: str = "CERTIFIED") -> None:
+        """Isolated test helper — not a production authority."""
+        from saathi.connectors.conformance.store import CertificationStore, install_test_certification
+        if self.certification_store is None:
+            self.certification_store = CertificationStore(
+                path=self.evidence_dir / "m30_test_certs.json",
+                auto_fixture=True,
+                persist=True,
+            )
+        install_test_certification(
+            self.certification_store, connector_id, registry=self.registry, state=state,
+        )
 
     def _emit(self, event_type: str, payload: Optional[dict[str, Any]] = None) -> dict[str, Any]:
         ev = {
@@ -446,7 +499,7 @@ class GovernedConnectorRuntime:
                 safe_message="request not in deterministic canary set",
             ), t0)
 
-        # ACTIVE requires certification
+        # ACTIVE requires platform production certification + connector readiness
         if mode is RolloutMode.ACTIVE:
             if not self.production_certified_probe():
                 return self._finalize(request, ConnectorResult(
@@ -462,6 +515,33 @@ class GovernedConnectorRuntime:
                     mode=mode.value, lifecycle=rec.lifecycle.value, bypass=False,
                     side_effect_class=sec.value,
                 ), t0)
+
+        # M30: ACTIVE and CANARY require fresh connector behavioral certification
+        if mode in (RolloutMode.ACTIVE, RolloutMode.CANARY) and self.require_connector_certification:
+            # Caller cannot forge certification via payload keys
+            meta = request.payload or {}
+            for forge_key in (
+                "force_certified", "bypass_certification", "connector_certified",
+                "skip_connector_cert", "certification_override",
+            ):
+                if forge_key in meta:
+                    return self._finalize(request, ConnectorResult(
+                        ok=False, connector_id=request.connector_id, operation=request.operation,
+                        status="denied", detail="caller_cannot_override_certification",
+                        mode=mode.value, lifecycle=rec.lifecycle.value, bypass=False,
+                        side_effect_class=sec.value, error_code="certification_override_denied",
+                        safe_message="caller payload cannot override connector certification",
+                    ), t0, incident="policy_violation")
+            cert_err = self._connector_certification_error(request.connector_id)
+            if cert_err:
+                return self._finalize(request, ConnectorResult(
+                    ok=False, connector_id=request.connector_id, operation=request.operation,
+                    status="denied", detail=cert_err,
+                    mode=mode.value, lifecycle=rec.lifecycle.value, bypass=False,
+                    side_effect_class=sec.value, rollout_state=mode.value,
+                    error_code="connector_certification_required",
+                    safe_message=cert_err,
+                ), t0, incident="policy_violation")
 
         # Side-effect hard blocks before SHADOW/adapter
         has_appr = bool(request.approval_token and request.approval_token in self.approval_store)

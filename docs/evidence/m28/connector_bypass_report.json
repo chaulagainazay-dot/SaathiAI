@@ -27,7 +27,7 @@
     },
     {
       "path": "saathi/connectors/gov/runtime.py",
-      "line": 606,
+      "line": 675,
       "symbol": "adapter.execute",
       "classification": "allowlisted",
       "allowlist_rule": "file:saathi/connectors/gov/runtime.py",
@@ -35,14 +35,22 @@
     },
     {
       "path": "saathi/connectors/gov/runtime.py",
-      "line": 612,
+      "line": 681,
       "symbol": "adapter.execute",
       "classification": "allowlisted",
       "allowlist_rule": "file:saathi/connectors/gov/runtime.py",
       "reason": "allowlisted: adapter execute call"
+    },
+    {
+      "path": "saathi/connectors/conformance/assessor.py",
+      "line": 597,
+      "symbol": "HttpAdapter.execute",
+      "classification": "allowlisted",
+      "allowlist_rule": "prefix:saathi/connectors/conformance/",
+      "reason": "allowlisted: adapter execute call"
     }
   ],
   "production_bypasses": 0,
-  "scanned_files": 80,
+  "scanned_files": 100,
   "ok": true
 }
