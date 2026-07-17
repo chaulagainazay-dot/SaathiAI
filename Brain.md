@@ -1777,3 +1777,12 @@ flagged broken.
 
 **Verdict: ECP FOUNDATION REGISTERED — NOT runtime integration**
 **Next permitted:** ECP M17.25 Continuum pilot (explicit authorization only; license gate).
+
+## M23 — Chat system prompt layering authority (2026-07-17)
+
+Chat system prompts are composed only by `saathi.chat.context.compose_system_prompt`
+with deterministic layer order: CANONICAL_BASE → AGENT_ROLE → PRODUCT_POLICY →
+USER_STYLE → CONVERSATION_OVERRIDE → PROJECT → SUMMARY → MEMORY → KNOWLEDGE →
+TOOL_POLICY. Callers must not build provider-specific message lists. Raw composed
+system prompts are not emitted in logs. Tool and trading authority are never
+granted by prompt text alone.

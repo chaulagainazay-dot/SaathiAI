@@ -37,7 +37,11 @@ Canonical `runtime_gate`; release_check integrated into ops release gate; residu
 
 ### M22 (Governed Provider Implementation + Legacy SDK Migration) — COMPLETE WITH LIMITATIONS
 
-Provider HTTP/SDK moved under `saathi.inference.adapters` (`http_providers`, `grounding`, `agent_provider`). `llm.generate` pure facade; agent/research facades thin; residual EXPLICIT_LEGACY_EXCEPTION=0; manifest exceptions=3 (chat M23, engines M24). Release-check facade purity. Tests: `tests/test_m22_provider_migration.py`. Docs: `docs/M22_*`. Cloud fallback off; production_certified=false; do not start M23 without operator authorize.
+Provider HTTP/SDK moved under `saathi.inference.adapters` (`http_providers`, `grounding`, `agent_provider`). `llm.generate` pure facade; agent/research facades thin; residual EXPLICIT_LEGACY_EXCEPTION=0; manifest exceptions reduced in M23. Release-check facade purity. Tests: `tests/test_m22_provider_migration.py`. Docs: `docs/M22_*`. Cloud fallback off; production_certified=false.
+
+### M23 — Full governed chat default (COMPLETE WITH LIMITATIONS)
+
+Canonical `saathi.chat.runtime` sole production chat path; ChatRequest + context builder + stream events; chat residual exception removed (manifest exceptions=2 → cloud/openai_compat M24); release/runtime M23 gates. Tests: `tests/test_m23_governed_chat_default.py`. Docs: `docs/M23_*`. production_certified=false; do not start M24 without operator authorize.
 
 ### Milestone-number namespaces (mandatory)
 
@@ -47,8 +51,8 @@ Provider HTTP/SDK moved under `saathi.inference.adapters` (`http_providers`, `gr
 | **PRODUCT/IELTSAlert M21.x** | Separate product repo `/Users/macbookpro/Saathi/apps/pielts` — **not** platform M21 |
 | **M20.10 options A/B/C** | Historical handoff choices; remapped in program roadmap (A→env unlock/M24 evidence; B→M21.0 slice; C→M30/PRODUCT) |
 
-Platform Phase 1 target: **M21** Runtime Consolidation → **M22** Provider migration (done) → **M23** Chat governed default → **M24** Durable governance + certification evidence.
-Next recommended: **M23** chat full governed default (operator authorize only). Do not auto-start M23/M24.
+Platform Phase 1 target: **M21** Runtime Consolidation → **M22** Provider migration (done) → **M23** Chat governed default (done) → **M24** Durable governance + certification evidence.
+Next recommended: **M24** durable circuit/cost + remaining engine residuals (operator authorize only). Do not auto-start M24/M25.
 
 Prior series: **M20 COMPLETE WITH LIMITATIONS** (live local inference still environment-blocked).
 

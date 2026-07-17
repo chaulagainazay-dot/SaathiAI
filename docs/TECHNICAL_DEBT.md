@@ -1,18 +1,29 @@
 # SaathiOS Technical Debt / Known Gaps
 
-## Program note (M21–M39 / M22, 2026-07-17)
+## Program note (M21–M39 / M23, 2026-07-17)
 
-Platform M21–M39 program; **M21.0–M21.4** and **M22 (provider migration) COMPLETE WITH LIMITATIONS**.
-Next: **M23** (chat governed default) only with operator authorize. Not production certified.
+Platform M21–M39 program; **M21.0–M21.4**, **M22**, and **M23 (governed chat default) COMPLETE WITH LIMITATIONS**.
+Next: **M24** (durable circuit/cost + remaining engine residuals) only with operator authorize. Not production certified.
 Product IELTSAlert work uses **PRODUCT/IELTSAlert** numbering — not platform debt.
+
+### M23 closed debt
+- ~~chat COMPATIBILITY_WRAPPED / legacy llm.generate sink~~ — **M23** canonical `saathi.chat.runtime`.
+- ~~chat residual exception `chat_engine_legacy_sink`~~ — **M23 removed** (exceptions 3→2).
+
+### M23 residual / deferred
+- MEDIUM: process-local circuit breaker only → **M24**.
+- MEDIUM: process-local daily cost accounting → **M24**.
+- MEDIUM: cloud + openai_compat engine residuals → **M24**.
+- LOW: non-inference media/eval tools still hold provider SDKs (vision, voice, speaking_eval) — out of M23 scope.
+- ENVIRONMENT_BLOCKED: live Ollama certification (binary absent on pilot host) — operator unlock.
 
 ### M22 closed debt
 - ~~`llm.generate` HTTP DEFAULT_CALLERS~~ — **M22** moved to `adapters/http_providers`.
 - ~~agent SDK clients residual~~ — **M22** moved to `adapters/agent_provider`.
 - ~~research Gemini grounding residual~~ — **M22** moved to `adapters/grounding`.
 
-### M22 residual / deferred
-- DEFERRED_BY_SCOPE / MEDIUM: chat COMPATIBILITY_WRAPPED not full governed default → **M23**.
+### M22 residual / deferred (updated by M23)
+- ~~DEFERRED_BY_SCOPE / MEDIUM: chat COMPATIBILITY_WRAPPED~~ → **M23 done**.
 - MEDIUM: process-local circuit breaker only → **M24**.
 - MEDIUM: process-local daily cost accounting → **M24**.
 - LOW: non-inference media/eval tools still hold provider SDKs (vision, voice, speaking_eval) — out of M22 scope.
@@ -22,20 +33,20 @@ Product IELTSAlert work uses **PRODUCT/IELTSAlert** numbering — not platform d
 - ~~DEFERRED_BY_SCOPE / MEDIUM: `llm.generate` HTTP DEFAULT_CALLERS~~ → **M22 done**.
 - ~~DEFERRED_BY_SCOPE / MEDIUM: agent SDK clients residual~~ → **M22 done**.
 - ~~DEFERRED_BY_SCOPE / MEDIUM: research Gemini grounding residual~~ → **M22 done**.
-- DEFERRED_BY_SCOPE / MEDIUM: chat COMPATIBILITY_WRAPPED not full governed default → **M23**.
+- ~~DEFERRED_BY_SCOPE / MEDIUM: chat COMPATIBILITY_WRAPPED~~ → **M23 done**.
 - MEDIUM: process-local circuit breaker only → **M24**.
 - MEDIUM: process-local daily cost accounting → **M24**.
 - ENVIRONMENT_BLOCKED: live Ollama certification (binary absent on pilot host) — operator unlock.
-- LOW: full-suite outcome recorded in M21.4/M22 validation docs.
+- LOW: full-suite outcome recorded in M21.4/M22/M23 validation docs.
 
 ### M21.3 deferred debt (carry-forward)
 - ~~HIGH→MEDIUM: `llm.generate` HTTP DEFAULT_CALLERS~~ — **M22 done**.
 - ~~MEDIUM: agent.py multi-provider SDK clients~~ — **M22 done**.
 - ~~MEDIUM: research.py Gemini google_search grounding~~ — **M22 done**.
-- MEDIUM: chat still COMPATIBILITY_WRAPPED (not fully governed default) → **M23**.
+- ~~MEDIUM: chat still COMPATIBILITY_WRAPPED~~ — **M23 done**.
 - MEDIUM: process-local circuit breaker only — durable store → **M24**.
 - MEDIUM: daily cost accounting not durable → **M24**.
-- ~~LOW: full repository test suite not run~~ — **M21.4/M22 attempted**.
+- ~~LOW: full repository test suite not run~~ — **M21.4/M22/M23 attempted**.
 - LOW: live Ollama still env-blocked (operator install).
 
 ### M21.2 deferred debt (carry-forward)
