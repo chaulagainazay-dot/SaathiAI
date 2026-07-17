@@ -1,13 +1,17 @@
 # SaathiOS Technical Debt / Known Gaps
 
-## Program note (M21–M39 / M21.0, 2026-07-16)
+## Program note (M21–M39 / M21.2, 2026-07-17)
 
-Platform M21–M39 program initialized; **M21.0 COMPLETE** (prod-config inventory +
-provider policy + kill switches). Remaining M21 gates (caller migration, cost
-ceilings, release-check hook) are M21.1–M21.3. Product IELTSAlert work in the
-pielts repo uses **PRODUCT/IELTSAlert** numbering and is not platform debt.
-- MEDIUM: residual direct paths (`chat_engine`, openjarvis adapter) inventoried
-  only — migration/guards deferred to M21.1.
+Platform M21–M39 program; **M21.0–M21.2 COMPLETE WITH LIMITATIONS**.
+Remaining: M21.3 residual migration / release-check; M21.4+ cert path.
+Product IELTSAlert work uses **PRODUCT/IELTSAlert** numbering — not platform debt.
+
+### M21.2 deferred debt
+- MEDIUM: process-local circuit breaker only — durable provider circuit store → M21.x/M24.
+- MEDIUM: daily cost accounting interface only — durable budget store → M21.x/M24.
+- MEDIUM: residual direct paths (`chat_engine`, `llm.generate`, agent/server/research) — M21.3+.
+- LOW: transitional `unknown` caller still registered for tests — remove M21.3.
+- LOW: live health probes optional/injectable — live cert remains env-blocked (Ollama).
 
 ## Environment-blocked (need user action — NOT debt)
 - macOS Accessibility grant → native Finder/TextEdit actuation.

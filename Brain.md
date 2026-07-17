@@ -28,6 +28,16 @@ If the answer is the latter, the feature belongs in the product layer, not the p
 
 ## 3. Current Platform State
 
+### Platform M21.2 inference governance (2026-07-17)
+
+* **Canonical provider decision** before any governed attempt: capability → availability → cost/privacy → kill/circuit → ranked selection.
+* **Availability states** are explicit (KILLED…AVAILABLE); adapter existence ≠ available.
+* **Failure taxonomy** drives hard vs soft, retry, failover, circuit impact.
+* **Failover defaults off**; no implicit cloud; unknown paid price fails closed.
+* **Circuit breaker** is provider-scoped, process-local (restart clears).
+* **Local-first**; `production_certified=false`; Trading Guardian unengaged.
+* Modules: `saathi.inference.provider_decision`, `availability`, `cost_policy`, `circuit_breaker`, `failure_taxonomy`.
+
 **As of 2026-07-02**
 
 | Layer | Status | Key Documents |

@@ -2,7 +2,7 @@
 
 ## M21–M39 Master Program (2026-07-16)
 
-**Platform program status:** Phase 1 active — **M21.0 + M21.1 COMPLETE WITH LIMITATIONS**; full M21 not closed.
+**Platform program status:** Phase 1 active — **M21.0 + M21.1 + M21.2 COMPLETE WITH LIMITATIONS**; full M21 not closed.
 Do not auto-run M21–M39 in one unattended block.
 
 Canonical docs:
@@ -21,7 +21,11 @@ Path inventory, production config validator, provider policy + kill switches, ga
 
 ### M21.1 (Canonical Request Contract + Residual Path Controls) — COMPLETE WITH LIMITATIONS
 
-Extended `InferenceRequest`, `validate_contract`, caller policy registry, residual allowlist, AST bypass guard, gateway enforcement, compat builds contract requests. Legacy chat/llm paths remain allowlisted (not fully migrated). Tests: `tests/test_m21_1_request_contract.py`. Docs: `docs/M21_1_*`. **Not** production certified; live model still env-blocked; M21.2 not started.
+Extended `InferenceRequest`, `validate_contract`, caller policy registry, residual allowlist, AST bypass guard, gateway enforcement, compat builds contract requests. Legacy chat/llm paths remain allowlisted (not fully migrated). Tests: `tests/test_m21_1_request_contract.py`. Docs: `docs/M21_1_*`. **Not** production certified; live model still env-blocked.
+
+### M21.2 (Provider Availability, Cost, Failover, Circuit Governance) — COMPLETE WITH LIMITATIONS
+
+Canonical provider descriptors, availability/readiness model, Decimal cost policy, failure taxonomy, deterministic retry/failover (defaults off), process-local circuit breaker, kill precedence, cheap_ask proxy blocked, unknown caller test-only. Tests: `tests/test_m21_2_provider_governance.py`. Docs: `docs/M21_2_*`. Live Ollama still env-blocked; production_certified=false.
 
 ### Milestone-number namespaces (mandatory)
 
@@ -32,7 +36,7 @@ Extended `InferenceRequest`, `validate_contract`, caller policy registry, residu
 | **M20.10 options A/B/C** | Historical handoff choices; remapped in program roadmap (A→env unlock/M24 evidence; B→M21.0 slice; C→M30/PRODUCT) |
 
 Platform Phase 1 target: **M21** Runtime Consolidation → **M22** Voice/durable agents → **M23** Multi-user isolation → **M24** Core runtime certification.
-Next recommended: **M21.2** cost metadata, availability state, and failover taxonomy (bounded).
+Next recommended: **M21.3** residual path migration / release-check hook (bounded; operator authorize).
 
 Prior series: **M20 COMPLETE WITH LIMITATIONS** (live local inference still environment-blocked).
 

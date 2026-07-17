@@ -1,5 +1,13 @@
 # SaathiOS — Business
 
+## Inference cost containment (M21.2)
+
+* Paid cloud fallback remains **default off**; unknown or stale pricing cannot authorize automatic paid fallback.
+* Request/caller cost ceilings enforced with Decimal-safe arithmetic where configured.
+* Local providers classified zero-marginal; no silent spend escalation via failover.
+* No paid credentials added in M21.2; operational risk reduced by kill switches and pre-invocation provider decisions.
+* Durable multi-tenant billing is **not** claimed — process-local cost accounting only until a later milestone.
+
 ## Reliability goals (Auto-Repair Loop)
 
 SaathiOS is a daily-use operating system; silent breakage erodes trust faster

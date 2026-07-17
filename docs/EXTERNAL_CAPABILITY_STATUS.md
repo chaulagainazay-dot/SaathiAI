@@ -1,6 +1,6 @@
 # External Capability Status (Operational Source of Truth)
 
-**Updated:** 2026-07-15 (M18.4 governed migration pilot; M18.3 read-only base)
+**Updated:** 2026-07-17 (M21.2 provider governance; cloud providers remain disabled; no new paid credentials)
 **Register detail:** `docs/SES/v1.0/SES-000E_REPOSITORY_INDEX.md` Part 6
 **MCP detail:** `docs/MCP_INVENTORY.md`
 

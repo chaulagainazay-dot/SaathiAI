@@ -49,7 +49,7 @@ NOT READY — CRITICAL GAPS REMAIN
 
 | ID | Title | Status | Entry criteria | Exit verdict target |
 |----|-------|--------|----------------|---------------------|
-| **M21** | Runtime Consolidation and Production Configuration | **IN PROGRESS** — M21.0 + **M21.1 COMPLETE WITH LIMITATIONS** | M20 closed; audit done | `M21 COMPLETE — RUNTIME CONFIGURATION AND MODEL ROUTING CONSOLIDATED` |
+| **M21** | Runtime Consolidation and Production Configuration | **IN PROGRESS** — M21.0–**M21.2 COMPLETE WITH LIMITATIONS** | M20 closed; audit done | `M21 COMPLETE — RUNTIME CONFIGURATION AND MODEL ROUTING CONSOLIDATED` |
 | **M22** | Voice, Durable Agents, Recovery, and Observability | NOT STARTED | M21 complete or WITH LIMITATIONS accepted | `M22 COMPLETE — VOICE AND DURABLE AGENT EXECUTION CERTIFIED` |
 | **M23** | Multi-User Identity, Isolation, Permissions, and Security | NOT STARTED | M22 complete / accepted limitations | `M23 COMPLETE — MULTI-USER CORE SECURITY AND ISOLATION CERTIFIED` |
 | **M24** | Core Runtime Staging and Production Certification | NOT STARTED | M21–M23 evidence present | `CORE RUNTIME PRODUCTION CERTIFIED` **or** `CORE RUNTIME STAGING CERTIFIED — PRODUCTION BLOCKERS REMAIN` |
@@ -105,7 +105,7 @@ Do **not** implement all of M21 in one invocation. Suggested slices:
 |-------|--------|------|
 | **M21.0** | Inventory residual inference/call paths; production config schema; provider policy doc + tests; kill-switch matrix extension | Preferred first code milestone (aligns with M20.10-B) |
 | **M21.1** | Canonical request contract enforcement; no direct caller→provider | Extend `saathi.inference`, not a second router |
-| **M21.2** | Cost metadata, availability state, failover taxonomy | Safe defaults; unsupported disabled |
+| **M21.2** | Cost metadata, availability state, failover taxonomy | **COMPLETE WITH LIMITATIONS** — see `docs/M21_2_*` |
 | **M21.3** | Production configuration gate + Critical Manifest / release-check hooks | Fail closed |
 | **M21.x** | Closure + validation docs | Honest evidence tiers |
 
@@ -131,9 +131,9 @@ Do **not** implement all of M21 in one invocation. Suggested slices:
 | Field | Value |
 |-------|--------|
 | Program phase | Phase 1 — M21 in progress |
-| Active platform milestone | **M21.1 COMPLETE WITH LIMITATIONS**; do not auto-start M21.2 |
-| Last checkpoint | M21.1 canonical request contract + residual controls |
-| Recommended next | **M21.2** cost metadata / availability / failover taxonomy |
+| Active platform milestone | **M21.2 COMPLETE WITH LIMITATIONS**; do not auto-start M21.3 |
+| Last checkpoint | M21.2 provider governance (availability/cost/failover/circuit) |
+| Recommended next | **M21.3** residual migration / release-check (operator authorize) |
 | M20.6 live model | Still **ENVIRONMENT_BLOCKED** until operator installs Ollama + ≤3B |
 
 ---

@@ -2,7 +2,7 @@
   "schema_version": "1",
   "repository": "SaathiOS",
   "branch": "milestone/m7-security-engine",
-  "current_head": "17bea43",
+  "current_head": "2aace04",
   "active_milestone": null,
   "completed_milestones": [
     "M20.0",
@@ -16,7 +16,8 @@
     "M20.10",
     "M21_39_PROGRAM_INIT",
     "M21.0",
-    "M21.1"
+    "M21.1",
+    "M21.2"
   ],
   "intentionally_skipped": [
     "M20.8"
@@ -24,26 +25,31 @@
   "environment_blocked": [
     "M20.6_live_local_model"
   ],
-  "milestone_verdict": "M21.1 COMPLETE WITH LIMITATIONS \u2014 REQUEST CONTRACT READY; LEGACY PATHS REMAIN",
-  "session_verdict": "M21.1 COMPLETE WITH LIMITATIONS \u2014 NOT FULL M21; NOT PRODUCTION",
-  "next_milestone": "M21.2 cost metadata / availability / failover (operator authorize)",
-  "stop_reason": "M21.1 bounded slice complete; do not auto-start M21.2",
-  "m21_1": {
+  "milestone_verdict": "M21.2 COMPLETE WITH LIMITATIONS — PROVIDER GOVERNANCE READY; LIVE CERTIFICATION BLOCKED",
+  "session_verdict": "M21.2 COMPLETE WITH LIMITATIONS — NOT FULL M21; NOT PRODUCTION",
+  "next_milestone": "M21.3 residual path migration / release-check (operator authorize)",
+  "stop_reason": "M21.2 bounded slice complete; do not auto-start M21.3",
+  "m21_2": {
     "modules": [
-      "saathi/inference/contract.py",
-      "saathi/inference/caller_policy.py",
-      "saathi/inference/residual_paths.py",
-      "saathi/inference/bypass_guard.py"
+      "saathi/inference/availability.py",
+      "saathi/inference/cost_policy.py",
+      "saathi/inference/failure_taxonomy.py",
+      "saathi/inference/circuit_breaker.py",
+      "saathi/inference/provider_descriptor.py",
+      "saathi/inference/provider_decision.py",
+      "saathi/inference/provider_governance.py"
     ],
-    "tests": "tests/test_m21_1_request_contract.py",
+    "tests": "tests/test_m21_2_provider_governance.py",
     "limitations": [
-      "chat_engine legacy allowlisted",
-      "cheap_ask proxy residual",
-      "unknown caller transitional"
+      "live Ollama env-blocked",
+      "circuit process-local",
+      "daily cost not durable",
+      "legacy chat/llm remain",
+      "production_certified=false"
     ]
   },
-  "unrelated_untouched": "Trading Guardian; chat default legacy; no merge/deploy; no model download; no M21.2/M22",
-  "session_id": "m21-1-2026-07-16",
+  "unrelated_untouched": "Trading Guardian; chat default legacy; no merge/deploy; no model download; no M21.3/M22",
+  "session_id": "m21-2-2026-07-17",
   "actor": "grok-master-controller",
-  "start_commit": "65e59d7"
+  "start_commit": "2aace04"
 }
