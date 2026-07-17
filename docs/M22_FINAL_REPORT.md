@@ -11,6 +11,7 @@ M22 COMPLETE WITH LIMITATIONS — PROVIDER IMPLEMENTATIONS GOVERNED; LIVE CERTIF
 * Start HEAD: `cc7fceb`
 * Branch: `milestone/m7-security-engine`
 * Worktree clean at start; remote synchronized 0/0
+* Tip HEAD (post-push): `24b0e81` (implementation `f2b8382`, docs `aabbe03`+)
 
 ## Delivered
 
