@@ -2,7 +2,7 @@
   "schema_version": "1",
   "repository": "SaathiOS",
   "branch": "milestone/m7-security-engine",
-  "current_head": "f27bbf1",
+  "current_head": "692e4e7",
   "active_milestone": null,
   "completed_milestones": [
     "M20.0",
@@ -55,5 +55,10 @@
   "unrelated_untouched": "Trading Guardian; no merge/deploy; no model download; no M21.4/M22",
   "session_id": "m21-3-2026-07-17",
   "actor": "grok-master-controller",
-  "start_commit": "32f0d31"
+  "start_commit": "32f0d31",
+  "m21_3_commits": [
+    "30eb5bc",
+    "f27bbf1",
+    "692e4e7"
+  ]
 }
