@@ -2,7 +2,7 @@
   "schema_version": "1",
   "repository": "SaathiOS",
   "branch": "milestone/m7-security-engine",
-  "current_head": "9adc213f87972b13d91a6475d90c316c188724dd",
+  "current_head": "3a73b62314c47d9b31d7f5659b865cb4cb6825ad",
   "completed_milestones": [
     "M20.0",
     "M20.1",
@@ -27,10 +27,10 @@
     "M27",
     "M28"
   ],
-  "milestone_verdict": "M28 COMPLETE — ExecutionGateway connector enforcement + legacy migration wrap",
+  "milestone_verdict": "M28 COMPLETE \u2014 ExecutionGateway connector enforcement + legacy migration wrap",
   "production_certified": true,
   "m28": {
-    "canonical_path": "Caller → ToolIntent → ExecutionGateway → GovernedConnectorRuntime → adapter",
+    "canonical_path": "Caller \u2192 ToolIntent \u2192 ExecutionGateway \u2192 GovernedConnectorRuntime \u2192 adapter",
     "default_mode": "OFF",
     "connector_bypasses": 0,
     "live_accounts": false,
