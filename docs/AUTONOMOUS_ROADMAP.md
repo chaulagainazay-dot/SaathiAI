@@ -2,7 +2,7 @@
 
 ## M21–M39 Master Program (2026-07-16)
 
-**Platform program status:** Phase 1 active — **M21.0 COMPLETE** (inventory + provider policy); full M21 not closed.
+**Platform program status:** Phase 1 active — **M21.0 + M21.1 COMPLETE WITH LIMITATIONS**; full M21 not closed.
 Do not auto-run M21–M39 in one unattended block.
 
 Canonical docs:
@@ -32,7 +32,7 @@ Extended `InferenceRequest`, `validate_contract`, caller policy registry, residu
 | **M20.10 options A/B/C** | Historical handoff choices; remapped in program roadmap (A→env unlock/M24 evidence; B→M21.0 slice; C→M30/PRODUCT) |
 
 Platform Phase 1 target: **M21** Runtime Consolidation → **M22** Voice/durable agents → **M23** Multi-user isolation → **M24** Core runtime certification.
-Next recommended: **M21.1** canonical request contract / residual path migration (bounded).
+Next recommended: **M21.2** cost metadata, availability state, and failover taxonomy (bounded).
 
 Prior series: **M20 COMPLETE WITH LIMITATIONS** (live local inference still environment-blocked).
 
