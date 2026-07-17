@@ -23,7 +23,7 @@ production_certified=true · connector rollout OFF · inference rollout OFF
 ## 3. Ending HEAD
 
 ```text
-(see commits section — tip after push)
+98af339 (docs tip; feature 1eae4e8, tests 0092a92)
 ```
 
 ## 4. Repository evidence
@@ -110,12 +110,9 @@ Trading Guardian = UNCHANGED / UNENGAGED
 
 ## 15. Commits
 
-Suggested set (see git log for SHAs):
-
-1. `feat(m29): implement connector manifest registry`
-2. `feat(m29): add connector trust model`
-3. `test(m29): validate connector registry`
-4. `docs(m29): document connector identity architecture`
+1. `1eae4e8` — feat(m29): implement connector manifest registry (includes trust model)
+2. `0092a92` — test(m29): validate connector registry
+3. `98af339` — docs(m29): document connector identity architecture
 
 ## 16. Push
 
