@@ -2,7 +2,7 @@
   "schema_version": "1",
   "repository": "SaathiOS",
   "branch": "milestone/m7-security-engine",
-  "current_head": "PENDING_AFTER_COMMIT",
+  "current_head": "aabbe03",
   "active_milestone": null,
   "completed_milestones": [
     "M20.0",
@@ -30,9 +30,9 @@
     "M21.4_live_ollama_cert",
     "M22_live_ollama_cert"
   ],
-  "milestone_verdict": "M22 COMPLETE WITH LIMITATIONS — PROVIDER IMPLEMENTATIONS GOVERNED; LIVE CERTIFICATION BLOCKED",
-  "session_verdict": "M22 COMPLETE WITH LIMITATIONS — NOT PRODUCTION CERTIFIED",
-  "next_milestone": "M23 (operator authorize only) — chat full governed default",
+  "milestone_verdict": "M22 COMPLETE WITH LIMITATIONS \u2014 PROVIDER IMPLEMENTATIONS GOVERNED; LIVE CERTIFICATION BLOCKED",
+  "session_verdict": "M22 COMPLETE WITH LIMITATIONS \u2014 NOT PRODUCTION CERTIFIED",
+  "next_milestone": "M23 (operator authorize only) \u2014 chat full governed default",
   "stop_reason": "M22 bounded slice complete; do not auto-start M23/M24",
   "m22": {
     "modules": [
@@ -62,5 +62,10 @@
   "session_id": "m22-2026-07-17",
   "actor": "grok-master-controller",
   "start_commit": "cc7fceb",
-  "production_certified": false
+  "production_certified": false,
+  "m22_commits": [
+    "f2b8382",
+    "aabbe03"
+  ],
+  "m22_tip": "aabbe03c3916584999b4811f4226b02c0618ff81"
 }
