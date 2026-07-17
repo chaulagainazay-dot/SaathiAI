@@ -1,11 +1,21 @@
 # SaathiOS Technical Debt / Known Gaps
 
-## Program note (M21–M39 / M28, 2026-07-17)
+## Program note (M21–M39 / M29, 2026-07-17)
 
-Platform program through **M28 canonical connector migration + ExecutionGateway enforcement**
-(operator-authorized). M25 cert + M26 ops + M27 gov framework remain canonical.
-**Do not auto-start M29.**
+Platform program through **M29 connector identity + trust registry** (operator-authorized).
+M25 cert + M26 ops + M27 gov + M28 gateway enforcement remain canonical.
+**Do not auto-start M30.**
 Product IELTSAlert work uses **PRODUCT/IELTSAlert** numbering — not platform debt.
+
+### M29 residual / deferred
+- Live SaaS connector implementations (Gmail, GitHub, Calendar, Slack, Discord, Stripe)
+  not started — identity schema only.
+- Infrastructure drivers under `saathi/infrastructure/connectors/drivers/*` not fully
+  on M29 manifests (still deferred).
+- Logical dependency stubs (browser gateway / MCP runtime as separate registered nodes)
+  optional hardening for graph completeness.
+- Manager catalog simulation remains a compatibility shim (M28 deprecation path).
+- No live credentials in CI; connector rollout default remains OFF.
 
 ### M28 residual / deferred
 - Infrastructure drivers under `saathi/infrastructure/connectors/drivers/*` not fully

@@ -28,6 +28,16 @@ If the answer is the latter, the feature belongs in the product layer, not the p
 
 ## 3. Current Platform State
 
+### Platform M29 connector identity and trust registry (2026-07-17)
+
+* **What a connector is:** deterministic `ConnectorManifest` + registry resolve — never import path/filename.
+* **Modules:** `saathi.connectors.registry` (trust, capabilities, validation, deps, docs CLI, builtins, persistence); extended gov registry/runtime.
+* **Trust levels:** INTERNAL … PROHIBITED; approval floor + rollout eligibility + capability ceiling are registry-owned.
+* **Capability classes:** READ/WRITE/EXECUTE/HTTP/MCP/BROWSER/… cannot exceed trust.
+* **CLI:** `python -m saathi.connectors.registry docs` — catalog + trust/capability/rollout summaries.
+* **Does not** enable live SaaS, OAuth, API keys, cloud inference, or Trading Guardian.
+* **M30:** operator authorize only.
+
 ### Platform M28 canonical connector migration (2026-07-17)
 
 * **Canonical path:** Caller → ToolIntent → ExecutionGateway → GovernedConnectorRuntime → adapter.
@@ -36,7 +46,7 @@ If the answer is the latter, the feature belongs in the product layer, not the p
 * **Side-effect classes:** READ_ONLY … PROHIBITED; FINANCIAL/ACCOUNT_CHANGE/trading blocked; caller cannot override class/rollout/adapter/approval.
 * **Bypass:** production connector bypasses = 0 (AST scan + allowlist).
 * **Does not** enable live SaaS, OAuth, cloud inference, or Trading Guardian.
-* **M29:** operator authorize only.
+* **M29:** completed (identity + trust registry).
 
 ### Platform M27 governed connector framework (2026-07-17)
 

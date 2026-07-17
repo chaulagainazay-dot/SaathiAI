@@ -2,7 +2,7 @@
   "schema_version": "1",
   "repository": "SaathiOS",
   "branch": "milestone/m7-security-engine",
-  "current_head": "3a73b62314c47d9b31d7f5659b865cb4cb6825ad",
+  "current_head": "28e45e6cd7475e1e3f68e6a49a07a904f0d6bdb4",
   "completed_milestones": [
     "M20.0",
     "M20.1",
@@ -25,18 +25,28 @@
     "M25",
     "M26",
     "M27",
-    "M28"
+    "M28",
+    "M29"
   ],
-  "milestone_verdict": "M28 COMPLETE \u2014 ExecutionGateway connector enforcement + legacy migration wrap",
+  "milestone_verdict": "M29 COMPLETE — connector identity, trust model, and registry",
   "production_certified": true,
+  "m29": {
+    "module": "saathi.connectors.registry",
+    "identity": "ConnectorManifest + ConnectorRegistry resolve-only",
+    "default_mode": "OFF",
+    "live_accounts": false,
+    "cloud_enabled": false,
+    "trading_guardian": "UNCHANGED / UNENGAGED",
+    "full_suite": "3247 passed, 1 skipped, 0 failed",
+    "connector_bypasses": 0
+  },
   "m28": {
-    "canonical_path": "Caller \u2192 ToolIntent \u2192 ExecutionGateway \u2192 GovernedConnectorRuntime \u2192 adapter",
+    "canonical_path": "Caller → ToolIntent → ExecutionGateway → GovernedConnectorRuntime → adapter",
     "default_mode": "OFF",
     "connector_bypasses": 0,
     "live_accounts": false,
     "cloud_enabled": false,
-    "trading_guardian": "UNCHANGED / UNENGAGED",
-    "full_suite": "3221 passed, 1 skipped, 0 failed"
+    "trading_guardian": "UNCHANGED / UNENGAGED"
   },
   "m27": {
     "module": "saathi.connectors.gov",
@@ -45,10 +55,10 @@
     "cloud_enabled": false,
     "trading_guardian": "UNCHANGED / UNENGAGED"
   },
-  "next_milestone": "M29 (operator authorize only)",
-  "stop_reason": "M28 complete; do not auto-start M29",
+  "next_milestone": "M30 (operator authorize only)",
+  "stop_reason": "M29 complete; do not auto-start M30",
   "trading_guardian": "UNCHANGED / UNENGAGED",
   "cloud_fallback": false,
   "residual_exceptions": 0,
-  "full_suite": "3221 passed, 1 skipped, 0 failed"
+  "full_suite": "3247 passed, 1 skipped, 0 failed"
 }

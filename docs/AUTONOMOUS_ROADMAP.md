@@ -51,6 +51,14 @@ Canonical `DurableGovernanceStore` (SQLite): circuit state, usage ledger, budget
 
 Harness `saathi.inference.live_cert_m25` + evidence under `docs/evidence/m25/`. Discovery proves Ollama.app missing (broken symlink), runtime down, no models, memory pressure. No install/start/pull performed. Verdict: `M25 BLOCKED — LIVE LOCAL PROVIDER ENVIRONMENT UNAVAILABLE`. Tests: `tests/test_m25_live_provider_certification.py`. Docs: `docs/M25_*`. production_certified=false. Do not start M26 without operator authorize.
 
+### M26–M28 — Ops + connectors (COMPLETE)
+
+M26 inference ops; M27 governed connector framework; M28 ExecutionGateway connector enforcement. Default connector/inference rollout OFF; production_certified=true (computed package). Do not auto-start next without authorize.
+
+### M29 — Connector identity + trust registry (COMPLETE)
+
+Canonical manifests, trust levels, capability ceilings, registry resolve-only identity, docs CLI. Tests: `tests/test_m29_connector_identity.py`. Docs: `docs/M29_*`. No live SaaS. **Do not auto-start M30.**
+
 ### Milestone-number namespaces (mandatory)
 
 | Namespace | Meaning |

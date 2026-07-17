@@ -1,5 +1,12 @@
 # SaathiOS — Business
 
+## Connector identity and trust (M29)
+
+* Every connector has a declared identity, trust level, and capability ceiling before any future SaaS work.
+* Unknown/unregistered connectors fail closed; trust is not caller-controlled.
+* Documentation catalog is generatable (`python -m saathi.connectors.registry docs`) for operator inventory.
+* Still no live SaaS OAuth, API keys, or paid connector enablement in this milestone.
+
 ## Canonical connector execution (M28)
 
 * Production-capable connector calls must pass ExecutionGateway + governed runtime — reduces silent bypass risk.
