@@ -2,7 +2,7 @@
   "schema_version": "1",
   "repository": "SaathiOS",
   "branch": "milestone/m7-security-engine",
-  "current_head": "8e9241c",
+  "current_head": "789aa76",
   "active_milestone": null,
   "completed_milestones": [
     "M20.0",
@@ -69,10 +69,11 @@
   "actor": "grok-master-controller",
   "start_commit": "00bfae9",
   "production_certified": false,
-  "m24_tip": "8e9241c9db1b7e3e8ad17a40b0ff52ba949f1479",
+  "m24_tip": "789aa76d15fc924121da5c829d7036ac91b83173",
   "m24_commits": [
     "a7c63c4",
     "265c2fe",
-    "8e9241c"
+    "8e9241c",
+    "789aa76"
   ]
 }
