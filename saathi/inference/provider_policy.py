@@ -8,7 +8,7 @@ Provider *selection* remains ``ModelRouter``; this module states policy:
 * default enabled posture
 * kill switches
 * streaming / tool capability flags
-* cost metadata placeholders (full cost ceilings → M21.2)
+* cost metadata (enforced in M21.2 via provider_descriptor + cost_policy)
 
 Kill switch env pattern (set to 1/true/on to disable):
 
@@ -371,7 +371,7 @@ def provider_policy_snapshot() -> dict[str, Any]:
         "notes": [
             "Kill switches disable policy use; they do not uninstall models",
             "Cloud remains behind SAATHI_ALLOW_CLOUD_FALLBACK (default off)",
-            "Live health / cost ceilings formalized further in M21.2",
+            "Live health / cost ceilings / circuit / failover: saathi.inference.provider_decision (M21.2)",
         ],
     }
 
