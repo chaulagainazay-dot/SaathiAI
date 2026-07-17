@@ -11,7 +11,7 @@ M30 COMPLETE WITH LIMITATIONS
 | Item | Value |
 |------|-------|
 | Starting HEAD | `9c4770fc004e9e9185cc5a0e20e137d3b67970e2` |
-| Ending HEAD | `2abd5677b8cf6561e50cf464c5f61b1041d57945` |
+| Ending HEAD | `6679a8f517840b0021f2faa0c4607f4dd12d2eb6` |
 | Branch | `milestone/m7-security-engine` |
 | Worktree at start | clean tracked (untracked m27 runtime evidence left untouched) |
 | Remote divergence at start | `0/0` |
