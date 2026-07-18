@@ -33,6 +33,52 @@ def _print(obj: Any) -> None:
     print(json.dumps(obj, indent=2, default=str))
 
 
+_M35_BANNER = (
+    "SANDBOX GOVERNANCE\nNON-PRODUCTION\nNO LIVE SECRET LOADED\n"
+    "NO EXTERNAL CALL\nNO WRITE AUTHORITY\nROLLOUT REMAINS OFF"
+)
+
+
+def run_m35_synthetic_session() -> dict[str, Any]:
+    """Deterministic, offline synthetic sandbox-governance session. No raw secret
+    is accepted from the caller; a synthetic value is minted in-process only."""
+    from saathi.credentials import m35
+    from saathi.connectors.providers.external.profiles import resolve_external_profile
+
+    clock = lambda: 1752800000.0  # noqa: E731
+    profile = resolve_external_profile("github_meta")
+    broker = CredentialBroker(persist=False, clock=clock)
+    registry = m35.SandboxAccountRegistry(clock=clock)
+    leases = m35.SessionLeaseStore(clock=clock)
+    cred = broker.create_reference(
+        owner_scope="user:synthetic", provider_id="github_meta", credential_type="api_key",
+        secret_fields={"api_key": "SYNTHETIC_SECRET_VALUE"}, scopes=("metadata:read",),
+        connector_ids=("gov.http",),
+    )
+    acct = registry.register_sandbox(
+        provider_id="github_meta", environment_class="SANDBOX", subject="SYNTHETIC_ACCOUNT_SUBJECT",
+        display_alias="synthetic-sandbox", declared_scopes=("metadata:read",),
+    )
+    registry.verify(acct.account_ref_id, observed_scopes=("metadata:read",))
+    approval = m35.build_approval(
+        purpose="m35_sandbox_governance_verification", provider_id="github_meta",
+        account_ref_id=acct.account_ref_id, credential_ref_id=cred.credential_ref_id,
+        operation="get_meta", environment_class="SANDBOX", approved_scopes=("metadata:read",),
+        read_only_acknowledged=True, sandbox_acknowledged=True, secret_access_acknowledged=True,
+        non_production_acknowledged=True, write_prohibited=True,
+    )
+    result = m35.run_sandbox_session(
+        provider_id="github_meta", profile=profile, account_registry=registry,
+        account_ref_id=acct.account_ref_id, broker=broker, credential_ref_id=cred.credential_ref_id,
+        approval=approval, lease_store=leases, environment_class="SANDBOX",
+        requested_scopes=("metadata:read",), observed_scopes=("metadata:read",),
+        synthetic=True, clock=clock,
+    )
+    state, _lims = m35.assess_sandbox_certification(governance_ok=result["ok"], synthetic_session_ok=result["ok"])
+    return {"session_result": result, "sandbox_certification": state,
+            "max_certification_state": m35.M35_MAX_CERTIFICATION_STATE}
+
+
 def run_demo(*, persist: bool = False, seed: int = 1) -> dict[str, Any]:
     """Deterministic end-to-end lifecycle against a fake provider only.
 
@@ -142,7 +188,48 @@ def main(argv: Optional[list[str]] = None) -> int:
         sub.add_parser(name)
     ic = sub.add_parser("inspect-credential"); ic.add_argument("id")
     il = sub.add_parser("inspect-link"); il.add_argument("id")
+    # ── M35 sandbox-credential governance (metadata only; no raw secret) ──────
+    for name in ("m35-verify", "m35-drift", "m35-scope-policy",
+                 "m35-secret-source-policy", "emit-m35-evidence"):
+        sub.add_parser(name)
     args = p.parse_args(argv)
+
+    if args.cmd in ("m35-verify", "m35-drift", "m35-scope-policy",
+                    "m35-secret-source-policy", "emit-m35-evidence"):
+        from saathi.credentials import m35
+        from saathi.connectors.providers.external.profiles import resolve_external_profile
+        print(_M35_BANNER)
+        if args.cmd == "m35-verify":
+            out = run_m35_synthetic_session()
+            summary = m35.validation_summary_body(
+                session_result=out["session_result"], certification=out["sandbox_certification"])
+            res = {"ok": out["session_result"]["ok"], "sandbox_certification": out["sandbox_certification"],
+                   "max_certification_state": out["max_certification_state"],
+                   "real_sandbox_session": "NOT_EXERCISED", "validation_summary": summary}
+            if not leakscan.is_clean(res):
+                _print({"ok": False, "error": "leak_detected"}); return 2
+            _print(res)
+            return 0 if out["session_result"]["ok"] else 3
+        if args.cmd == "m35-drift":
+            _print({"provider_id": "github_meta",
+                    "fingerprint": m35.compute_m35_fingerprint(resolve_external_profile("github_meta")),
+                    "schema_version": m35.SCHEMA_VERSION})
+            return 0
+        if args.cmd == "m35-scope-policy":
+            _print({"allowed_classes": sorted(m35.ALLOWED_SCOPE_CLASSES),
+                    "forbidden_classes": sorted(m35.FORBIDDEN_SCOPE_CLASSES),
+                    "unknown_fails_closed": True})
+            return 0
+        if args.cmd == "m35-secret-source-policy":
+            _print({"retrievable": sorted(m35._RETRIEVABLE_SOURCES),
+                    "prohibited": sorted(m35.PROHIBITED_SECRET_SOURCES),
+                    "fallback_permitted": False})
+            return 0
+        if args.cmd == "emit-m35-evidence":
+            import subprocess
+            import sys as _sys
+            rc = subprocess.call([_sys.executable, "scripts/m35_generate_evidence.py"])
+            return rc
 
     if args.cmd == "profiles":
         _print(list_profiles())
