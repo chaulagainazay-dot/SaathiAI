@@ -1,0 +1,102 @@
+{
+  "body": {
+    "authorities": {
+      "ACTIVE_authorization": "NOT GRANTED",
+      "CANARY_authorization": "NOT GRANTED",
+      "production_authorization": "NOT GRANTED",
+      "rollout_authorization": "NOT GRANTED",
+      "write_authority": "NOT GRANTED"
+    },
+    "cases": [
+      {
+        "authority_unchanged": true,
+        "cleanup_state": "CLEANED",
+        "final_state": "CLEANED",
+        "handle_closed": true,
+        "injection": "before_handle",
+        "leak_clean": true,
+        "pass": true
+      },
+      {
+        "authority_unchanged": true,
+        "cleanup_state": "CLEANED",
+        "final_state": "CLEANED",
+        "handle_closed": true,
+        "injection": "before_sender",
+        "leak_clean": true,
+        "pass": true
+      },
+      {
+        "authority_unchanged": true,
+        "cleanup_state": "CLEANED",
+        "final_state": "CLEANED",
+        "handle_closed": true,
+        "injection": "during_sender",
+        "leak_clean": true,
+        "pass": true
+      },
+      {
+        "authority_unchanged": true,
+        "cleanup_state": "CLEANED",
+        "final_state": "CLEANED",
+        "handle_closed": true,
+        "injection": "after_response",
+        "leak_clean": true,
+        "pass": true
+      },
+      {
+        "authority_unchanged": true,
+        "cleanup_state": "CLEANED_AFTER_PARTIAL",
+        "final_state": "CLEANED",
+        "handle_closed": true,
+        "injection": "cleanup_exception",
+        "leak_clean": true,
+        "pass": true
+      },
+      {
+        "authority_unchanged": true,
+        "cleanup_state": "LEASE_REVOKE_FAILED_LOCAL_ONLY",
+        "final_state": "CLEANED",
+        "handle_closed": true,
+        "injection": "lease_revoke_failure",
+        "leak_clean": true,
+        "pass": true
+      },
+      {
+        "authority_unchanged": true,
+        "cleanup_state": "CLEANED",
+        "final_state": "CLEANED",
+        "handle_closed": true,
+        "injection": "timeout",
+        "leak_clean": true,
+        "pass": true
+      },
+      {
+        "authority_unchanged": true,
+        "cleanup_state": "CLEANED",
+        "final_state": "CLEANED",
+        "handle_closed": true,
+        "injection": "429",
+        "leak_clean": true,
+        "pass": true
+      },
+      {
+        "final_state": "CLEANED",
+        "handle_closed": true,
+        "injection": "provider_500",
+        "leak_clean": true,
+        "pass": true
+      }
+    ],
+    "contains_secret_values": false,
+    "failed": 0,
+    "passed": 9,
+    "schema": "m38.failure_injection.v1",
+    "total": 9
+  },
+  "fingerprint": "00702ac6394914f521a725ba59893fff786c0060a5675320bf28ef0e2fe65557",
+  "privacy_safe": true,
+  "schema": "m38.failure_injection_results.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

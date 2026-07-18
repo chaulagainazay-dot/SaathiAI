@@ -1,0 +1,118 @@
+{
+  "body": {
+    "cases": [
+      {
+        "expected": "RETRYABLE",
+        "got": "RETRYABLE",
+        "pass": true,
+        "reason": "timeout"
+      },
+      {
+        "expected": "RETRYABLE",
+        "got": "RETRYABLE",
+        "pass": true,
+        "reason": "http_429"
+      },
+      {
+        "expected": "RETRYABLE",
+        "got": "RETRYABLE",
+        "pass": true,
+        "reason": "http_500"
+      },
+      {
+        "expected": "RETRYABLE",
+        "got": "RETRYABLE",
+        "pass": true,
+        "reason": "http_503"
+      },
+      {
+        "expected": "NON_RETRYABLE",
+        "got": "NON_RETRYABLE",
+        "pass": true,
+        "reason": "http_401"
+      },
+      {
+        "expected": "NON_RETRYABLE",
+        "got": "NON_RETRYABLE",
+        "pass": true,
+        "reason": "http_403"
+      },
+      {
+        "expected": "NON_RETRYABLE",
+        "got": "NON_RETRYABLE",
+        "pass": true,
+        "reason": "secret_empty"
+      },
+      {
+        "expected": "NON_RETRYABLE",
+        "got": "NON_RETRYABLE",
+        "pass": true,
+        "reason": "authorization_expired"
+      },
+      {
+        "expected": "NON_RETRYABLE",
+        "got": "NON_RETRYABLE",
+        "pass": true,
+        "reason": "call_budget_exhausted"
+      },
+      {
+        "expected": "NON_RETRYABLE",
+        "got": "NON_RETRYABLE",
+        "pass": true,
+        "reason": "concurrency_limit"
+      },
+      {
+        "expected": "NON_RETRYABLE",
+        "got": "NON_RETRYABLE",
+        "pass": true,
+        "reason": "identity:http_401"
+      },
+      {
+        "expected": "RETRYABLE",
+        "got": "RETRYABLE",
+        "pass": true,
+        "reason": "identity:http_503"
+      },
+      {
+        "delay": 1000,
+        "pass": true,
+        "reason": "retry_after_bounded"
+      },
+      {
+        "pass": true,
+        "reason": "retry_schedule_deterministic"
+      },
+      {
+        "pass": true,
+        "reason": "retry_exhausted_raises"
+      },
+      {
+        "pass": true,
+        "reason": "coordinator_retries_503",
+        "retry_attempts": 1,
+        "state": "CLEANED"
+      }
+    ],
+    "contains_secret_values": false,
+    "failed": 0,
+    "passed": 16,
+    "policy": {
+      "max_attempts": 3,
+      "max_retry_after_ms": 1000,
+      "probabilistic": false,
+      "schedule_ms": [
+        50,
+        100,
+        200
+      ],
+      "unbounded": false
+    },
+    "schema": "m38.retry_matrix.v1",
+    "total": 16
+  },
+  "fingerprint": "d07a093bc16f021a92533c3e0d72add7b987251f416bceafe52b01b0cbfbea72",
+  "privacy_safe": true,
+  "schema": "m38.retry_matrix.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

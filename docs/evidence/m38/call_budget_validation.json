@@ -1,0 +1,12 @@
+{
+  "body": {
+    "aggregate_default": 6,
+    "per_session_max": 3,
+    "scenarios_passed": true
+  },
+  "fingerprint": "a58c274b3322f9afcd6f26397a328e3882410cfa31cf362d4600bdea3cb4db9a",
+  "privacy_safe": true,
+  "schema": "m38.call_budget_validation.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

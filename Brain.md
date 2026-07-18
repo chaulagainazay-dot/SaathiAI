@@ -1912,3 +1912,13 @@ READ_ONLY, credential-free, OFF/SHADOW only.
 * **Live sandbox** remains operator-gated; default certification is `SECURITY_CERTIFIED_WITH_LIMITATIONS` when live is not exercised.
 * **Negative paths** must close handles, leave no secret residue, and produce leak-clean evidence.
 * **M38 not started.** Trading Guardian UNENGAGED. Authorities remain NOT GRANTED.
+
+---
+
+## M38 — Multi-session reliability & canary readiness evaluation (2026-07-18)
+
+* **Module:** `saathi.credentials.m38` — MultiSessionCoordinator, deterministic retry, recovery/reconcile, failure injection, canary readiness evaluator.
+* **Canary readiness is not canary authorization.** Max without live: `READY_WITH_LIMITATIONS`.
+* **No shared SecretHandles**; aggregate and per-session budgets; concurrency ceiling.
+* **Recovery never reopens secrets from evidence.**
+* **M39 not started.** Authorities remain NOT GRANTED. Trading Guardian UNENGAGED.

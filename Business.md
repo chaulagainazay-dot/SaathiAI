@@ -629,3 +629,11 @@ external risk.
 * Security certification of the credential *framework* is distinct from business authorization to use production credentials or enable rollout.
 * Disposable sandbox exercise still requires human ownership of account lifecycle and manual token revocation.
 * One offline success path does not establish production SLO or canary readiness.
+
+---
+
+## M38 business notes (2026-07-18)
+
+* Multi-session reliability evaluation does not authorize production traffic or canary.
+* Live multi-session validation still requires disposable credentials and operator ownership.
+* READY_WITH_LIMITATIONS is a technical signal for operators, not a go-live decision.

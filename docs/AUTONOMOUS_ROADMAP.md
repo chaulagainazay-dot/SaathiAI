@@ -581,3 +581,15 @@ UNCHANGED / UNENGAGED. Verdict: **GOVERNED PROVIDER-ADAPTER PILOT — SIMULATION
 - Evidence: docs/evidence/m37/
 - Modules: saathi/credentials/sandbox_provider.py, saathi/credentials/m37.py
 - M38 not started
+
+## M38 — Multi-Session Reliability, Recovery, Canary Readiness Evaluation (2026-07-18)
+
+**Status:** READY_WITH_LIMITATIONS (live multi-session not exercised; CANARY not granted).
+
+- MultiSessionCoordinator with explicit state machine
+- Bounded concurrency, aggregate budgets, deterministic retry
+- Recovery/reconcile without secret reopen from evidence
+- Canary readiness evaluator (read-only)
+- Evidence: docs/evidence/m38/
+- Module: saathi/credentials/m38.py
+- M39 not started

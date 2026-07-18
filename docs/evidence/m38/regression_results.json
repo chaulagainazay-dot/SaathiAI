@@ -1,0 +1,11 @@
+{
+  "body": {
+    "m37_ok": true,
+    "m38_ok": true
+  },
+  "fingerprint": "08c017fc2fdc6029e1fff560c10fd94b6af2a64c242a97f7766d81c594e70ffd",
+  "privacy_safe": true,
+  "schema": "m38.regression_results.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

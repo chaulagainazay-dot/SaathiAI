@@ -48,6 +48,11 @@ _M37_BANNER = (
     "ROLLOUT OFF\nNO CANARY\nNO ACTIVE\nTRADING GUARDIAN UNENGAGED"
 )
 
+_M38_BANNER = (
+    "M38 MULTI-SESSION RELIABILITY\nNON-PRODUCTION\nREAD-ONLY\nBOUNDED CONCURRENCY\n"
+    "ROLLOUT OFF\nNO CANARY\nNO ACTIVE\nTRADING GUARDIAN UNENGAGED"
+)
+
 
 def run_m35_synthetic_session() -> dict[str, Any]:
     """Deterministic, offline synthetic sandbox-governance session. No raw secret
@@ -246,6 +251,12 @@ def main(argv: Optional[list[str]] = None) -> int:
     # ── M37 security certification / provider contract ───────────────────────
     for name in ("m37-preflight", "m37-validate", "m37-negative", "m37-certify",
                  "m37-provider-model", "emit-m37-evidence"):
+        sub.add_parser(name)
+    # ── M38 multi-session reliability / canary readiness (no grant) ──────────
+    for name in ("m38-preflight", "m38-run-offline-multisession", "m38-list-sessions",
+                 "m38-session-status", "m38-reconcile", "m38-recover-session",
+                 "m38-run-failure-matrix", "m38-evaluate-canary-readiness",
+                 "emit-m38-evidence"):
         sub.add_parser(name)
     args = p.parse_args(argv)
 
@@ -466,6 +477,51 @@ def main(argv: Optional[list[str]] = None) -> int:
             import subprocess
             import sys as _sys
             rc = subprocess.call([_sys.executable, "scripts/m37_generate_evidence.py", "--offline"])
+            return rc
+
+    if args.cmd in (
+        "m38-preflight", "m38-run-offline-multisession", "m38-list-sessions",
+        "m38-session-status", "m38-reconcile", "m38-recover-session",
+        "m38-run-failure-matrix", "m38-evaluate-canary-readiness", "emit-m38-evidence",
+    ):
+        from saathi.credentials import m38
+        print(_M38_BANNER)
+        if args.cmd == "m38-preflight":
+            _print(m38.preflight_summary())
+            return 0
+        if args.cmd == "m38-run-offline-multisession":
+            rep = m38.run_offline_multisession_validation()
+            _print({"ok": rep["failed"] == 0, "report": {
+                "total": rep["total"], "passed": rep["passed"], "failed": rep["failed"],
+                "leak_clean": rep["leak_clean"],
+            }})
+            return 0 if rep["failed"] == 0 else 3
+        if args.cmd == "m38-list-sessions":
+            _print({"sessions": [], "note": "ephemeral_coordinator_no_persisted_sessions"})
+            return 0
+        if args.cmd == "m38-session-status":
+            _print({"found": False, "note": "ephemeral_coordinator_no_persisted_sessions"})
+            return 0
+        if args.cmd == "m38-reconcile":
+            c = m38.MultiSessionCoordinator()
+            _print(c.reconcile())
+            return 0
+        if args.cmd == "m38-recover-session":
+            c = m38.MultiSessionCoordinator()
+            _print(c.recover_session("none"))
+            return 0
+        if args.cmd == "m38-run-failure-matrix":
+            rep = m38.run_failure_injection_matrix()
+            _print({"ok": rep["failed"] == 0, "passed": rep["passed"], "total": rep["total"]})
+            return 0 if rep["failed"] == 0 else 3
+        if args.cmd == "m38-evaluate-canary-readiness":
+            out = m38.run_m38_validation(live_exercised=False)
+            _print(out["canary_readiness"])
+            return 0
+        if args.cmd == "emit-m38-evidence":
+            import subprocess
+            import sys as _sys
+            rc = subprocess.call([_sys.executable, "scripts/m38_generate_evidence.py", "--offline"])
             return rc
 
     if args.cmd == "profiles":

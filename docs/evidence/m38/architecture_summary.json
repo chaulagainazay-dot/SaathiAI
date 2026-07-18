@@ -1,0 +1,22 @@
+{
+  "body": {
+    "composed": [
+      "M31",
+      "M32",
+      "M33",
+      "M34",
+      "M35",
+      "M36",
+      "M37"
+    ],
+    "coordinator": "MultiSessionCoordinator",
+    "module": "saathi/credentials/m38.py",
+    "no_parallel_lease_store": true,
+    "no_parallel_session_engine": true
+  },
+  "fingerprint": "bbe56a8c31973e427836caa0bb703a555bb0e96957f427ebdd276bec89f42d00",
+  "privacy_safe": true,
+  "schema": "m38.architecture_summary.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

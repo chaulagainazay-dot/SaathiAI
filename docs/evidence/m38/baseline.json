@@ -1,0 +1,14 @@
+{
+  "body": {
+    "fingerprint": "b57c4b34b82fef58d092fe4c4030916d49b81bb5e6b48c8513d6b1b0236ab194",
+    "live_network": false,
+    "milestone": "M38",
+    "mode": "offline_synthetic_fixture",
+    "schema": "m38.multi_session_reliability.v1"
+  },
+  "fingerprint": "96752d5eebf0e106a441767cc2506d38685efa8fcf57d935ba617fc8cc0d1aeb",
+  "privacy_safe": true,
+  "schema": "m38.baseline.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

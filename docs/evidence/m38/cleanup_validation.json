@@ -1,0 +1,11 @@
+{
+  "body": {
+    "handle_closed_on_all_paths": true,
+    "idempotent": true
+  },
+  "fingerprint": "b49d4b42326421e59aee0454a33305418ce820b4f323fca3315f7d0809676125",
+  "privacy_safe": true,
+  "schema": "m38.cleanup_validation.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

@@ -1,0 +1,56 @@
+{
+  "body": {
+    "banner": "M38 MULTI-SESSION RELIABILITY\nNON-PRODUCTION\nREAD-ONLY\nBOUNDED CONCURRENCY\nROLLOUT OFF\nNO CANARY\nNO ACTIVE\nTRADING GUARDIAN UNENGAGED",
+    "blockers": [],
+    "contains_secret_values": false,
+    "grants_active": false,
+    "grants_canary": false,
+    "grants_production": false,
+    "grants_rollout": false,
+    "limitations": [
+      "live_sandbox_session_not_exercised",
+      "live_multi_session_not_exercised"
+    ],
+    "live_validation_status": {
+      "live_multi_session_exercised": false,
+      "live_sandbox_exercised": false
+    },
+    "m39_started": false,
+    "operational_readiness": {
+      "cleanup_idempotent": true,
+      "evidence_complete": true,
+      "stale_leases": 0,
+      "unresolved_terminal_failures": 0
+    },
+    "operator_authorization": {
+      "canary": "NOT GRANTED",
+      "note": "readiness_is_not_authorization",
+      "production": "NOT GRANTED",
+      "rollout": "NOT GRANTED",
+      "write": "NOT GRANTED"
+    },
+    "schema": "m38.canary_readiness.v1",
+    "security_readiness": {
+      "authority_non_escalation": true,
+      "handle_isolation": true,
+      "leak_clean": true,
+      "no_plaintext_secrets": true
+    },
+    "technical_readiness": {
+      "failure_injection_pass": true,
+      "m37_regression": true,
+      "multi_session_pass": true,
+      "provider_contract": true,
+      "recovery_pass": true,
+      "retry_pass": true,
+      "state_machine_defined": true
+    },
+    "trading_guardian": "UNENGAGED",
+    "verdict": "READY_WITH_LIMITATIONS"
+  },
+  "fingerprint": "21a84a2d51a289fce13814e9d2d78ae05c214e62730961544b349ad746e3fe60",
+  "privacy_safe": true,
+  "schema": "m38.canary_readiness_evaluation.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

@@ -1,0 +1,11 @@
+{
+  "body": {
+    "note": "covered_in_recovery_matrix",
+    "ok": true
+  },
+  "fingerprint": "ab8cb9513aae71c64c3a8720af2c8002516f166d910c88c96195dc3193b660b4",
+  "privacy_safe": true,
+  "schema": "m38.reconciliation_results.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

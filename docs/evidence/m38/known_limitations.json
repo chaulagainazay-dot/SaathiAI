@@ -1,0 +1,13 @@
+{
+  "body": {
+    "live_multi_session_not_exercised": true,
+    "live_sandbox_not_exercised": true,
+    "max_canary_verdict_without_live": "READY_WITH_LIMITATIONS",
+    "single_provider": "github_meta"
+  },
+  "fingerprint": "12b0a5d1e0cc92c57c9a781d6a025901403282f75b36874b541dcb7ce33b18ac",
+  "privacy_safe": true,
+  "schema": "m38.known_limitations.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}
