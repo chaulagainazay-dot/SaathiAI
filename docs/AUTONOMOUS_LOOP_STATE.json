@@ -27,10 +27,30 @@
     "M27",
     "M28",
     "M29",
-    "M30"
+    "M30",
+    "M31",
+    "M32"
   ],
-  "milestone_verdict": "M30 COMPLETE WITH LIMITATIONS \u2014 connector conformance + certification",
+  "milestone_verdict": "M32 COMPLETE WITH LIMITATIONS \u2014 governed provider-adapter pilot (simulation-verified)",
   "production_certified": true,
+  "m32": {
+    "module": "saathi.connectors.providers",
+    "pilot_provider": "saathi.echo.v1 (local deterministic simulator)",
+    "connector_id": "gov.http",
+    "default_mode": "OFF",
+    "modes_exercised": ["DRY_RUN", "SIMULATION", "SHADOW"],
+    "highest_verification": "SIMULATION_VERIFIED",
+    "canary_providers": 0,
+    "active_providers": 0,
+    "provider_adapter_bypasses": 0,
+    "direct_provider_bypasses": 0,
+    "production_provider_writes": 0,
+    "real_credentials": 0,
+    "real_oauth_flows": 0,
+    "live_account_links": 0,
+    "focused_tests": "128 passed",
+    "trading_guardian": "UNCHANGED / UNENGAGED"
+  },
   "m29": {
     "module": "saathi.connectors.registry",
     "identity": "ConnectorManifest + ConnectorRegistry resolve-only",
@@ -56,8 +76,8 @@
     "cloud_enabled": false,
     "trading_guardian": "UNCHANGED / UNENGAGED"
   },
-  "next_milestone": "M31 (operator authorize only)",
-  "stop_reason": "M30 complete; do not auto-start M31",
+  "next_milestone": "M33 (operator authorize only)",
+  "stop_reason": "M32 complete; do not auto-start M33",
   "trading_guardian": "UNCHANGED / UNENGAGED",
   "cloud_fallback": false,
   "residual_exceptions": 0,

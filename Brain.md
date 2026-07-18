@@ -1853,3 +1853,36 @@ USER_STYLE → CONVERSATION_OVERRIDE → PROJECT → SUMMARY → MEMORY → KNOW
 TOOL_POLICY. Callers must not build provider-specific message lists. Raw composed
 system prompts are not emitted in logs. Tool and trading authority are never
 granted by prompt text alone.
+
+## M32 — Governed provider-adapter pilot (2026-07-18)
+
+`saathi/connectors/providers/` adds a **provider-adapter boundary** that sits
+ABOVE the M27 connector adapter transport and NEVER decides authority. The pilot
+is `saathi.echo.v1` (local deterministic simulator) bound to connector `gov.http`,
+READ_ONLY, credential-free, OFF/SHADOW only.
+
+- **Provider verification vs connector certification**: provider verification is an
+  *additional* eligibility layer, never a replacement. Execution eligibility ANDs
+  M25 production cert + M30 connector cert + M32 provider verification + provider
+  config readiness + M31 account/credential readiness + rollout + approval.
+- **Normalized contracts**: `normalize_request` rejects injection fields
+  (headers/endpoint/auth/retry/timeout/cookie/api_key); `normalize_response` strips
+  tokens/cookies/authorization/stack traces and bounds size. Raw provider responses
+  never escape the adapter boundary.
+- **Retry & idempotency**: deterministic retry taxonomy; retry only when idempotent
+  + budget + deadline + credential + approval + not-quarantined + rollout +
+  unchanged fingerprint. Idempotency binds to a request fingerprint scoped by
+  connector|provider|account|key; cross-scope reuse and changed payloads fail closed.
+  Non-idempotent writes never auto-retry.
+- **Provider health & quarantine** are distinct from connector health, account
+  readiness, and credential quarantine. 3 consecutive malformed → auto-quarantine;
+  recovery is explicit only.
+- **SHADOW semantics**: full governance over the local simulator; output is
+  `authoritative=False`; cannot activate rollout, create account links, or store
+  credentials. CANARY/ACTIVE prohibited and rejected. Highest verification claimed =
+  `SIMULATION_VERIFIED` (local ≠ live).
+- **Eligibility reads never mutate evidence state** (M31 correction preserved):
+  `resolve_provider_verification` reports STALE on drift but never writes; only
+  explicit `verify_provider` / `check_provider_drift(mark_stale=True)` mutate.
+- The M32 provider runtime is an allowlisted governed call site in
+  `gov/bypass_guard.py` (like `gov/runtime.py`); provider-adapter bypasses = 0.

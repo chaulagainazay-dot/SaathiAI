@@ -586,3 +586,28 @@ as **non-authoritative** capabilities behind SaathiOS governance. Live trading i
 not authorized. Human PM tools (Leantime) and file browsers must not replace
 missions, approvals, run ledger, or CEO OS. Marketing publishers (Blotato) remain
 external services unless a dedicated governed connector exists.
+
+## M32 — Provider adapter pilot (business constraint, 2026-07-18)
+
+SaathiOS can now integrate an external provider **without bypassing** any M27–M31
+control. The M32 pilot deliberately uses a **deterministic local simulator**
+(credential-free, no network, read-only) to prove the full governed path at zero
+external risk.
+
+- **Simulation vs shadow vs canary vs active**: simulation = local deterministic;
+  shadow = safe non-authoritative path (here still over the simulator); canary /
+  active = production rollout, both **deferred and prohibited** in M32.
+- **Why live accounts and writes stay deferred**: no real credential, OAuth,
+  account link, or write operation is introduced. A provider must clear provider
+  verification + config readiness + connector certification + production
+  certification + account/credential readiness + rollout + approval before any live
+  use — deferred to a future milestone with an authorized sandbox/account.
+- **Provider onboarding requirements**: canonical identity in the provider
+  registry, a config passing endpoint/side-effect/data-class policy, an adapter
+  satisfying the contract, deterministic simulation verification, and leak-scanned
+  evidence — before any SHADOW, and long before any CANARY/ACTIVE.
+- **Operational implications**: rate limits degrade provider health (bounded
+  Retry-After, no retry storms); provider outages surface as bounded canonical
+  errors; repeated malformed responses auto-quarantine the provider pending
+  explicit operator recovery. No financial/trading provider can be onboarded
+  (Trading Guardian unchanged/unengaged).

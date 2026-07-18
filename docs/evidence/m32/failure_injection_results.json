@@ -1,0 +1,102 @@
+{
+  "body": {
+    "scenarios": {
+      "auth_failure": {
+        "attempts": 1,
+        "authoritative": false,
+        "error_code": "AUTHENTICATION_FAILED",
+        "retryability": "REAUTH_REQUIRED",
+        "status": "error"
+      },
+      "authz_failure": {
+        "attempts": 1,
+        "authoritative": false,
+        "error_code": "AUTHORIZATION_FAILED",
+        "retryability": "NO_RETRY",
+        "status": "error"
+      },
+      "cancellation": {
+        "attempts": 1,
+        "authoritative": false,
+        "error_code": "CANCELLED",
+        "retryability": "CANCELLED",
+        "status": "cancelled"
+      },
+      "connection_failure": {
+        "attempts": 2,
+        "authoritative": false,
+        "error_code": "CONNECTION_FAILED",
+        "retryability": "SAFE_RETRY",
+        "status": "error"
+      },
+      "forbidden_headers": {
+        "attempts": 1,
+        "authoritative": false,
+        "error_code": "",
+        "retryability": "NO_RETRY",
+        "status": "success"
+      },
+      "malformed_json": {
+        "attempts": 1,
+        "authoritative": false,
+        "error_code": "MALFORMED_RESPONSE",
+        "retryability": "NO_RETRY",
+        "status": "error"
+      },
+      "oversized": {
+        "attempts": 1,
+        "authoritative": false,
+        "error_code": "MALFORMED_RESPONSE",
+        "retryability": "NO_RETRY",
+        "status": "error"
+      },
+      "partial_success": {
+        "attempts": 1,
+        "authoritative": false,
+        "error_code": "PARTIAL_SUCCESS",
+        "retryability": "NO_RETRY",
+        "status": "partial"
+      },
+      "rate_limited": {
+        "attempts": 2,
+        "authoritative": false,
+        "error_code": "RATE_LIMITED",
+        "retryability": "RATE_LIMITED",
+        "status": "rate_limited"
+      },
+      "scope_failure": {
+        "attempts": 1,
+        "authoritative": false,
+        "error_code": "AUTHORIZATION_FAILED",
+        "retryability": "NO_RETRY",
+        "status": "error"
+      },
+      "server_error": {
+        "attempts": 2,
+        "authoritative": false,
+        "error_code": "PROVIDER_UNAVAILABLE",
+        "retryability": "PROVIDER_UNAVAILABLE",
+        "status": "error"
+      },
+      "success": {
+        "attempts": 1,
+        "authoritative": false,
+        "error_code": "",
+        "retryability": "NO_RETRY",
+        "status": "success"
+      },
+      "timeout": {
+        "attempts": 2,
+        "authoritative": false,
+        "error_code": "TIMEOUT",
+        "retryability": "SAFE_RETRY",
+        "status": "timeout"
+      }
+    }
+  },
+  "fingerprint": "8f419288103e410197a916093b681a5cd91533e0c4fbbe6e312cebd5c8b0a763",
+  "privacy_safe": true,
+  "schema": "m32.failure_injection_results.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

@@ -296,3 +296,15 @@ Product IELTSAlert work uses **PRODUCT/IELTSAlert** numbering — not platform d
   now installs ffmpeg/jq/sqlite3. Remaining: native AX tests still skip
   honestly off-macOS; full suite may still hit other optional-capability skips.
 - Engineering store remains JSON+flock (M20.4); optional future CAS ledger migration. Live Claude Code native read-only not guaranteed—integrity wrapper + dry_run fallback.
+
+## M32 — Provider adapter pilot (2026-07-18)
+- Pilot is **simulation-only** (local deterministic provider); highest verification
+  = `SIMULATION_VERIFIED`. Does NOT prove live-provider compatibility; network
+  reliability and provider-specific semantics remain unverified.
+- Optional public read-only verification (Capability 18) NOT exercised — deferred,
+  requires separate operator authorization; deterministic milestone does not depend on it.
+- No official provider sandbox, no real OAuth, no account-linked provider, no write
+  operations, no CANARY, no ACTIVE rollout (all intentionally deferred).
+- Editing `gov/bypass_guard.py` (allowlisting the M32 provider runtime) drifted the
+  4 gov connector certifications; they were re-assessed to CERTIFIED_WITH_LIMITATIONS
+  (fresh). Future edits to that file require the same explicit re-assess.

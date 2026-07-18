@@ -1,0 +1,29 @@
+{
+  "body": {
+    "identity": {
+      "adapter_version": "1.0.0",
+      "auth_profile": "none",
+      "base_endpoint_class": "inprocess",
+      "capabilities": [
+        "echo",
+        "read_item",
+        "list_items",
+        "health"
+      ],
+      "connector_id": "gov.http",
+      "data_classification": "PUBLIC",
+      "display_name": "Saathi Echo (deterministic simulator)",
+      "environment": "test",
+      "provider_id": "saathi.echo.v1",
+      "provider_version": "1.0.0",
+      "rate_limit_profile": "default",
+      "side_effect_class": "READ_ONLY",
+      "transport": "local_simulator"
+    }
+  },
+  "fingerprint": "f1eac345e097b7ab0ad7b6e5c7173de68b0b6f8357e911f9d16cf7dcfd073d63",
+  "privacy_safe": true,
+  "schema": "m32.provider_manifest.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

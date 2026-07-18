@@ -1,0 +1,12 @@
+{
+  "body": {
+    "non_idempotent_attempts": 1,
+    "server_error_attempts": 3,
+    "timeout_status": "timeout"
+  },
+  "fingerprint": "e39b35ef599c5f9f8b821f23cad15b34a137d14dbd980ed0fe00eea8dc70a295",
+  "privacy_safe": true,
+  "schema": "m32.timeout_retry_results.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

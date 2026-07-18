@@ -246,3 +246,14 @@ the existing text-response rules (still authoritative for typed chat):
 - **finished the missing record**: "The system restarted after the graph completed and safely finished the missing mission record."
 - **when vs how**: "Scheduling decides when the mission is due; MissionEngine and the governed pipeline still decide how it runs."
 - **reconciled, not duplicated**: "The recovery coordinator reconciled existing records instead of creating duplicate work."
+
+## M32 — provider operator-facing language
+
+- **provider unavailable**: "The provider is temporarily unavailable; the call was bounded and no state changed."
+- **provider rate-limited**: "The provider rate-limited us; I backed off within the deadline rather than retrying blindly."
+- **shadow result**: "This is a shadow result over the local simulator — non-authoritative, not production data."
+- **provider verification stale**: "The provider changed, so its verification is stale; it needs an explicit reassessment before use."
+- **provider quarantined**: "The provider adapter is quarantined after repeated bad responses; it needs explicit recovery."
+- **simulation-only**: "This is simulation-verified only — local deterministic behaviour, not proof of live-provider compatibility."
+- **read-only pilot**: "The pilot is read-only; no write, financial, or account-changing operation is in scope."
+- **production activation blocked**: "Production activation stays blocked; connector rollout is OFF and CANARY/ACTIVE are prohibited here."

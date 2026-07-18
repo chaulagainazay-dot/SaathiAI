@@ -537,3 +537,26 @@ no real external browser actions, no push/deploy. Verdict:
 
 IELTSAlert revenue work lives in **`/Users/macbookpro/Saathi/apps/pielts`** under **product** milestone labels (`docs/M21_*` in that repo).
 In SaathiAI docs, refer to it as **PRODUCT/IELTSAlert M21.x** so it never collides with **platform M21** (Runtime Consolidation). Not a SaathiOS platform rewrite.
+
+## M32 — Governed Provider-Adapter Pilot, End-to-End Connector Validation, Shadow Operations (DONE)
+Autonomous-loop milestone (start `206795f` / M31 credentials complete). Adds one
+bounded, governed provider-adapter pilot proving the full path: intent → manifest/
+registry → connector certification → provider config → account/credential readiness
+→ policy → approval → ExecutionGateway → connector runtime → provider adapter →
+normalized result → redaction → evidence → incident/health — WITHOUT bypassing any
+M27–M31 control. New `saathi/connectors/providers/`: canonical `ProviderAdapter`
+contract; provider identity registry (canonical alias resolution, fail-closed
+prohibition of financial/trading/social-write providers); secret-free config with
+endpoint/side-effect/data-class policy; request/response normalization (injection
+rejection, sensitive-data stripping, raw-response containment); canonical error
+taxonomy; deterministic bounded retry; fingerprint-bound idempotency; bounded
+rate-limit awareness; provider health + quarantine (distinct from connector/account/
+credential); provider verification fingerprint + drift + NON-mutating eligibility
+read (M31 correction preserved); composed execution eligibility (M25+M30+M32+M31+
+rollout+approval); leak-scanned evidence; CLI; `EchoProviderAdapter` pilot over a
+deterministic in-process `provider_simulator` (loopback only). Pilot: `saathi.echo.v1`
+on `gov.http`, READ_ONLY, credential-free, OFF/SHADOW only. Highest verification =
+`SIMULATION_VERIFIED`. 128 focused tests; M27–M31 regression green; gov connector
+certs re-assessed fresh after allowlisting the provider runtime. No CANARY/ACTIVE,
+no real credentials/accounts/writes, no financial/trading provider. Trading Guardian
+UNCHANGED / UNENGAGED. Verdict: **GOVERNED PROVIDER-ADAPTER PILOT — SIMULATION-VERIFIED**.

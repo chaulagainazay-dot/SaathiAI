@@ -1,0 +1,23 @@
+{
+  "body": {
+    "can_activate_rollout": false,
+    "determines_authority": false,
+    "missing": [],
+    "required_methods": [
+      "prepare",
+      "validate_request",
+      "execute",
+      "normalize_response",
+      "classify_error",
+      "health",
+      "capabilities",
+      "close"
+    ],
+    "satisfied": true
+  },
+  "fingerprint": "1a3ef17473cdf3d12cfa01b2549b7b662e18014908635d8381679629c1a9bd03",
+  "privacy_safe": true,
+  "schema": "m32.adapter_contract_results.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

@@ -1,0 +1,14 @@
+{
+  "body": {
+    "first_ok": true,
+    "replay_limitations": [
+      "idempotent_replay"
+    ],
+    "request_fingerprint_present": true
+  },
+  "fingerprint": "07f07e5b48cd2df0ae4ce7dfce51355dc53a00ec666db0b3b29519cd83a4a81b",
+  "privacy_safe": true,
+  "schema": "m32.idempotency_results.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

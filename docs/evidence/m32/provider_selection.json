@@ -1,0 +1,23 @@
+{
+  "body": {
+    "accounts_used": false,
+    "category": "A_local_deterministic_simulator",
+    "credentials_used": false,
+    "m32_safe": true,
+    "network_used": false,
+    "rejected_categories": [
+      "financial",
+      "trading",
+      "payment",
+      "social_write",
+      "gmail",
+      "slack"
+    ],
+    "selected": "saathi.echo.v1"
+  },
+  "fingerprint": "6fdc9c18a9e082c827aef087de2905b532b4c47c70ca16352617ae209fcb57e9",
+  "privacy_safe": true,
+  "schema": "m32.provider_selection.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

@@ -1,0 +1,27 @@
+{
+  "body": {
+    "malformed_health": "QUARANTINED",
+    "readiness_layers": {
+      "layers": {
+        "account_ready": true,
+        "approval_valid": true,
+        "config_enabled": true,
+        "connector_certified": true,
+        "credential_ready": true,
+        "operation_supported": true,
+        "provider_health": "HEALTHY",
+        "provider_verified": true,
+        "rollout_permits_production": false,
+        "scope_sufficient": true
+      },
+      "provider_id": "saathi.echo.v1",
+      "ready": true,
+      "reason": "ready_shadow_only"
+    }
+  },
+  "fingerprint": "a2cf8044c8bf7b97583a4a51e93af5cda755d996b7f4294660478ddacf744c31",
+  "privacy_safe": true,
+  "schema": "m32.provider_health_results.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

@@ -1,0 +1,39 @@
+{
+  "schema": "m32.provider_verification_registry.v1",
+  "providers": {
+    "saathi.echo.v1": {
+      "provider_id": "saathi.echo.v1",
+      "state": "SIMULATION_VERIFIED",
+      "fingerprint": "a588d617d2480f9e8e8ba4d39475864a004544f1ed07a80ac8ad2c16bed824cc",
+      "verified_at": "1784336109",
+      "limitations": [
+        "simulation_only_no_live_provider"
+      ],
+      "evidence_dir": "",
+      "lease_id": "",
+      "fixture": false,
+      "history": [
+        {
+          "event": "verify",
+          "state": "SIMULATION_VERIFIED",
+          "fp": "a588d617d2480f9e",
+          "ts": 1784336033.6811688
+        },
+        {
+          "event": "verify",
+          "state": "SIMULATION_VERIFIED",
+          "fp": "a588d617d2480f9e",
+          "ts": 1784336109.921995
+        },
+        {
+          "event": "verify",
+          "state": "SIMULATION_VERIFIED",
+          "fp": "a588d617d2480f9e",
+          "ts": 1784336109.923297
+        }
+      ]
+    }
+  },
+  "privacy_safe": true,
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

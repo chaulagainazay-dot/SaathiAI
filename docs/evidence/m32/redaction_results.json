@@ -1,0 +1,12 @@
+{
+  "body": {
+    "no_bearer": true,
+    "no_set_cookie": true,
+    "no_synthetic_token": true
+  },
+  "fingerprint": "35be59b2b085ac24940ca16827b7a8b33b4951014904bc903bc12062cdaf5178",
+  "privacy_safe": true,
+  "schema": "m32.redaction_results.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

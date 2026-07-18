@@ -1,0 +1,22 @@
+{
+  "body": {
+    "canary_denied": "denied",
+    "dry_run_status": "dry_run",
+    "modes_exercised": [
+      "DRY_RUN",
+      "SIMULATION",
+      "SHADOW"
+    ],
+    "modes_prohibited": [
+      "CANARY",
+      "ACTIVE"
+    ],
+    "shadow_authoritative": false,
+    "shadow_status": "success"
+  },
+  "fingerprint": "710c4cccad9aa508fbd953b56d8c041a8554d5da0d32dbe6ae5fffbb4919a74e",
+  "privacy_safe": true,
+  "schema": "m32.shadow_execution_results.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}
