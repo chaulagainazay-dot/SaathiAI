@@ -1,0 +1,63 @@
+{
+  "body": {
+    "capabilities": {
+      "auth_required_for_identity": true,
+      "auth_required_for_operation": false,
+      "data_classifications": [
+        "PUBLIC",
+        "INTERNAL"
+      ],
+      "financial": false,
+      "max_call_budget": 3,
+      "methods": [
+        "GET"
+      ],
+      "operations": [
+        "get_authenticated_user",
+        "get_meta"
+      ],
+      "provider_id": "github_meta",
+      "side_effect_class": "READ_ONLY",
+      "supports_identity": true,
+      "supports_scope_headers": true,
+      "trading": false,
+      "write_capable": false
+    },
+    "contract_methods": [
+      "identity",
+      "health",
+      "operation",
+      "capabilities",
+      "qualification",
+      "cleanup"
+    ],
+    "contract_ok": true,
+    "health": {
+      "classification": "STRUCTURAL_HEALTHY",
+      "contains_raw_identity": false,
+      "contains_secret_values": false,
+      "detail": {
+        "hostname_allowlist": [
+          "api.github.com"
+        ],
+        "identity_path": "/user",
+        "operation_path": "/meta",
+        "transport_injected": false
+      },
+      "failure_code": "",
+      "http_status": 0,
+      "ok": true,
+      "operation": "health",
+      "privacy_safe": true,
+      "provider_id": "github_meta"
+    },
+    "registered": [
+      "github_meta"
+    ]
+  },
+  "fingerprint": "a4af91b5d82a6b4aa670ccc1572e127908ab831f6fb3e642dd0ace79e4d936b1",
+  "privacy_safe": true,
+  "schema": "m37.provider_model.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

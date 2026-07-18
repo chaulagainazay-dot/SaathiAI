@@ -31,7 +31,8 @@
     "M31",
     "M32",
     "M35",
-    "M36"
+    "M36",
+    "M37"
   ],
   "milestone_verdict": "M32 COMPLETE WITH LIMITATIONS \u2014 governed provider-adapter pilot (simulation-verified)",
   "production_certified": true,
@@ -82,7 +83,7 @@
     "cloud_enabled": false,
     "trading_guardian": "UNCHANGED / UNENGAGED"
   },
-  "next_milestone": "M37",
+  "next_milestone": "M38",
   "stop_reason": "M32 complete; do not auto-start M33",
   "trading_guardian": "UNCHANGED / UNENGAGED",
   "cloud_fallback": false,
@@ -105,7 +106,9 @@
     "trading_guardian": "UNCHANGED / UNENGAGED",
     "full_suite": "3287 passed, 1 skipped, 0 failed"
   },
-  "current_milestone": "M36",
+  "current_milestone": "M37",
   "m36_status": "IMPLEMENTATION_COMPLETE_REAL_SESSION_NOT_EXERCISED",
-  "notes_m36": "Offline governance complete; real disposable sandbox credential not supplied"
+  "notes_m36": "Offline governance complete; real disposable sandbox credential not supplied",
+  "m37_status": "SECURITY_CERTIFIED_WITH_LIMITATIONS",
+  "notes_m37": "Provider contract + offline lifecycle + negatives; live sandbox not exercised"
 }

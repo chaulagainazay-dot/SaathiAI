@@ -1,0 +1,13 @@
+{
+  "body": {
+    "m36_ok": true,
+    "m37_ok": true,
+    "negative_passed": 13,
+    "negative_total": 13
+  },
+  "fingerprint": "f009b6f66e0a75d4ac86c7b224bd4b4c4350795ac7e9bff2b3ae8fb8890cfaac",
+  "privacy_safe": true,
+  "schema": "m37.regression.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

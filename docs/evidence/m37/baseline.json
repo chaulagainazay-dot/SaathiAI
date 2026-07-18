@@ -1,0 +1,15 @@
+{
+  "body": {
+    "fingerprint": "34463fcb90932527283a5e3ebc2caecf04b4c4886f08d63fa0d787d5492dc1c8",
+    "live_network": false,
+    "milestone": "M37",
+    "mode": "offline_synthetic_fixture",
+    "schema": "m37.security_certification.v1",
+    "starting_head_note": "see M37_FINAL_REPORT"
+  },
+  "fingerprint": "e8f3398b6a2198aab64aa0ce0f956bd514059e5d84fb9fc93670bec62ebc9cbd",
+  "privacy_safe": true,
+  "schema": "m37.baseline.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

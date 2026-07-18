@@ -577,6 +577,9 @@ def retrieve_secret_handle(
         raise M36Error("secret_retrieval_failed", e.code) from e
     if not fields:
         raise M36Error("secret_empty")
+    # Empty field values are not valid credentials (fail closed).
+    if not any(str(v).strip() for v in fields.values()):
+        raise M36Error("secret_empty")
     handle = SecretHandle(
         fields, session_id=session_id, lease_id=lease_id,
         provider_id=provider_id, account_ref_id=account_ref_id,

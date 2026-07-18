@@ -1,0 +1,213 @@
+{
+  "body": {
+    "authorities": {
+      "ACTIVE_authorization": "NOT GRANTED",
+      "CANARY_authorization": "NOT GRANTED",
+      "production_authorization": "NOT GRANTED",
+      "rollout_authorization": "NOT GRANTED",
+      "write_authority": "NOT GRANTED"
+    },
+    "banner": "M37 SECURITY CERTIFICATION\nNON-PRODUCTION\nREAD-ONLY\nBOUNDED SANDBOX\nROLLOUT OFF\nNO CANARY\nNO ACTIVE\nTRADING GUARDIAN UNENGAGED",
+    "call_budget": {
+      "consumed": 2,
+      "financial_calls": 0,
+      "identity_calls": 1,
+      "max_calls": 3,
+      "operation_calls": 1,
+      "redirect_calls": 0,
+      "remaining": 1,
+      "retries": 0,
+      "trading_calls": 0,
+      "writes": 0
+    },
+    "certification": "SECURITY_CERTIFIED_WITH_LIMITATIONS",
+    "cleanup_disposition": "LEASE_REVOKED",
+    "contains_raw_identity": false,
+    "contains_secret_values": false,
+    "credential_fingerprint": "dbf8ffdf8f40cdedaffdba7c7743e241",
+    "events": [
+      {
+        "contains_secret_values": false,
+        "event_type": "m37.capabilities_checked",
+        "operations": [
+          "get_authenticated_user",
+          "get_meta"
+        ],
+        "privacy_safe": true,
+        "session_id": "sess_m37_synth_0001"
+      },
+      {
+        "classification": "DISPOSABLE_SANDBOX",
+        "contains_secret_values": false,
+        "event_type": "m37.qualification_ok",
+        "privacy_safe": true,
+        "session_id": "sess_m37_synth_0001"
+      },
+      {
+        "contains_secret_values": false,
+        "event_type": "m37.health_ok",
+        "privacy_safe": true,
+        "session_id": "sess_m37_synth_0001"
+      },
+      {
+        "authorization_id": "authz_m36_0001",
+        "contains_secret_values": false,
+        "event_type": "m37.authorization_created",
+        "privacy_safe": true,
+        "session_id": "sess_m37_synth_0001"
+      },
+      {
+        "contains_secret_values": false,
+        "event_type": "m37.lease_issued",
+        "lease_id": "lease_m35_0001",
+        "privacy_safe": true,
+        "session_id": "sess_m37_synth_0001"
+      },
+      {
+        "contains_secret_values": false,
+        "event_type": "m36.secret_handle_opened",
+        "lease_id": "lease_m35_0001",
+        "privacy_safe": true,
+        "provider_id": "github_meta",
+        "session_id": "sess_m37_synth_0001",
+        "source_kind": "IN_MEMORY_TEST"
+      },
+      {
+        "contains_secret_values": false,
+        "event_type": "m37.fingerprint_derived",
+        "fingerprint": "dbf8ffdf8f40cdedaffdba7c7743e241",
+        "privacy_safe": true,
+        "session_id": "sess_m37_synth_0001"
+      },
+      {
+        "classification": "IDENTITY_OK",
+        "contains_secret_values": false,
+        "event_type": "m37.identity_completed",
+        "ok": true,
+        "privacy_safe": true,
+        "session_id": "sess_m37_synth_0001"
+      },
+      {
+        "classification": "OPERATION_OK",
+        "contains_secret_values": false,
+        "event_type": "m37.operation_completed",
+        "ok": true,
+        "privacy_safe": true,
+        "session_id": "sess_m37_synth_0001"
+      },
+      {
+        "contains_secret_values": false,
+        "event_type": "m37.lease_revoked",
+        "privacy_safe": true,
+        "session_id": "sess_m37_synth_0001"
+      },
+      {
+        "contains_secret_values": false,
+        "event_type": "m37.secret_handle_closed",
+        "privacy_safe": true,
+        "session_id": "sess_m37_synth_0001"
+      },
+      {
+        "classification": "CLEANUP_RECORDED",
+        "contains_secret_values": false,
+        "event_type": "m37.cleanup",
+        "privacy_safe": true,
+        "session_id": "sess_m37_synth_0001"
+      }
+    ],
+    "handle_closed": true,
+    "identity_result": {
+      "classification": "IDENTITY_OK",
+      "contains_raw_identity": false,
+      "contains_secret_values": false,
+      "detail": {
+        "identity": {
+          "account_match": true,
+          "account_subject_fingerprint": "a00ace2982cabc7827a9c19c706cb784",
+          "contains_raw_identity": false,
+          "contains_secret_values": false,
+          "content_type_match": true,
+          "environment_class": "SANDBOX",
+          "http_status_class": "2xx",
+          "observed_scopes": [
+            "read:user"
+          ],
+          "privacy_safe": true,
+          "provider_id": "github_meta",
+          "response_schema_version": "github_user.v1.minimized",
+          "response_size_bucket": "UNDER_4_KIB",
+          "safe_status": "OK",
+          "schema_valid": true,
+          "scope_metadata_present": true,
+          "tls_verified": true,
+          "verification_time_bucket": "UNDER_250_MS"
+        },
+        "scope": {
+          "allowed_scope_classes": [],
+          "declared": [
+            "identity:read",
+            "metadata:read"
+          ],
+          "extra_read": [
+            "read:user"
+          ],
+          "observed": [
+            "read:user"
+          ],
+          "reason": "extra_read_scopes",
+          "result": "VERIFIED_WITH_EXTRA_READ_SCOPE"
+        }
+      },
+      "failure_code": "",
+      "http_status": 200,
+      "ok": true,
+      "operation": "get_authenticated_user",
+      "privacy_safe": true,
+      "provider_id": "github_meta"
+    },
+    "lease_revoked": true,
+    "limitations": [
+      "live_sandbox_not_exercised"
+    ],
+    "live_exercised": false,
+    "m38_started": false,
+    "ok": true,
+    "operation_result": {
+      "classification": "OPERATION_OK",
+      "contains_raw_identity": false,
+      "contains_secret_values": false,
+      "detail": {
+        "result": {
+          "contains_secret_values": false,
+          "content_type_match": true,
+          "http_status_class": "2xx",
+          "latency_bucket": "UNDER_250_MS",
+          "operation": "get_meta",
+          "privacy_safe": true,
+          "raw_body_persisted": false,
+          "response_size_bucket": "UNDER_4_KIB",
+          "safe_result_classification": "META_READ_OK",
+          "schema_valid": true,
+          "tls_verified": true,
+          "transport_ok": true
+        }
+      },
+      "failure_code": "",
+      "http_status": 200,
+      "ok": true,
+      "operation": "get_meta",
+      "privacy_safe": true,
+      "provider_id": "github_meta"
+    },
+    "provider_id": "github_meta",
+    "reason": "ok",
+    "schema": "m37.session_record.v1",
+    "session_id": "sess_m37_synth_0001",
+    "trading_guardian": "UNCHANGED / UNENGAGED"
+  },
+  "fingerprint": "fee055e3c2c41b9c0ea611e40dc82bfc0a419e94d342253a7eae1469c735dce1",
+  "privacy_safe": true,
+  "schema": "m37.lifecycle.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

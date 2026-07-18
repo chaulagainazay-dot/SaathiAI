@@ -1,0 +1,10 @@
+{
+  "body": {
+    "ok": true
+  },
+  "fingerprint": "4062edaf750fb8074e7e83e0c9028c94e32468a8b6f1614774328ef045150f93",
+  "privacy_safe": true,
+  "schema": "m37.m36_regression.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

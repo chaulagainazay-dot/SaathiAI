@@ -1,0 +1,130 @@
+{
+  "body": {
+    "all_handles_closed": true,
+    "all_leak_clean": true,
+    "cases": [
+      {
+        "classification": "FAILED",
+        "handle_closed": true,
+        "leak_clean": true,
+        "name": "missing_credential",
+        "ok": false,
+        "pass": true,
+        "reason": "secret_retrieval_failed"
+      },
+      {
+        "detail": {
+          "code": "authorization_expired",
+          "pass": true
+        },
+        "leak_clean": true,
+        "name": "expired_authorization",
+        "pass": true
+      },
+      {
+        "detail": {
+          "code": "missing_acknowledgement",
+          "pass": true
+        },
+        "leak_clean": true,
+        "name": "authorization_denied",
+        "pass": true
+      },
+      {
+        "classification": "FAILED",
+        "handle_closed": true,
+        "leak_clean": true,
+        "name": "provider_401",
+        "ok": false,
+        "pass": true,
+        "reason": "identity:http_401"
+      },
+      {
+        "classification": "FAILED",
+        "handle_closed": true,
+        "leak_clean": true,
+        "name": "provider_403",
+        "ok": false,
+        "pass": true,
+        "reason": "identity:http_403"
+      },
+      {
+        "classification": "FAILED",
+        "handle_closed": true,
+        "leak_clean": true,
+        "name": "provider_429",
+        "ok": false,
+        "pass": true,
+        "reason": "identity:http_429"
+      },
+      {
+        "classification": "FAILED",
+        "handle_closed": true,
+        "leak_clean": true,
+        "name": "provider_500",
+        "ok": false,
+        "pass": true,
+        "reason": "identity:http_500"
+      },
+      {
+        "classification": "FAILED",
+        "handle_closed": true,
+        "leak_clean": true,
+        "name": "network_timeout",
+        "ok": false,
+        "pass": true,
+        "reason": "identity:NETWORK_TIMEOUT"
+      },
+      {
+        "classification": "FAILED",
+        "handle_closed": true,
+        "leak_clean": true,
+        "name": "network_unavailable",
+        "ok": false,
+        "pass": true,
+        "reason": "identity:CONNECTION_REFUSED"
+      },
+      {
+        "classification": "FAILED",
+        "handle_closed": true,
+        "leak_clean": true,
+        "name": "interrupted_after_secret",
+        "ok": false,
+        "pass": true,
+        "reason": "interrupted_after_secret"
+      },
+      {
+        "classification": "FAILED",
+        "handle_closed": true,
+        "leak_clean": true,
+        "name": "interrupted_after_identity",
+        "ok": false,
+        "pass": true,
+        "reason": "interrupted_after_identity"
+      },
+      {
+        "handle_closed": true,
+        "leak_clean": true,
+        "name": "empty_credential_material",
+        "ok": false,
+        "pass": true,
+        "reason": "secret_empty"
+      },
+      {
+        "leak_clean": true,
+        "name": "cli_raw_token_rejected",
+        "pass": true
+      }
+    ],
+    "contains_secret_values": false,
+    "failed": 0,
+    "passed": 13,
+    "schema": "m37.negative_validation.v1",
+    "total": 13
+  },
+  "fingerprint": "51c8e19ae350760be23fd360c6ec73cff608e3d2c0cb74622eac0447631816de",
+  "privacy_safe": true,
+  "schema": "m37.negative_validation.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

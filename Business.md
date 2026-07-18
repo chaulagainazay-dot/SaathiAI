@@ -621,3 +621,11 @@ external risk.
 * **Account lifecycle ownership** sits with the operator who creates the disposable sandbox identity — SaathiOS cannot independently prove disposability.
 * **One successful call does not establish production reliability**, uptime, scale, or rollout readiness. M36 proves the governed path, not production SLO.
 * **CANARY requires a separate milestone and authorization** (M37+). M36 certification must never be read as canary readiness activation.
+
+---
+
+## M37 business notes (2026-07-18)
+
+* Security certification of the credential *framework* is distinct from business authorization to use production credentials or enable rollout.
+* Disposable sandbox exercise still requires human ownership of account lifecycle and manual token revocation.
+* One offline success path does not establish production SLO or canary readiness.

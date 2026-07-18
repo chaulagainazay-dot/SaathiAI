@@ -43,6 +43,11 @@ _M36_BANNER = (
     "ROLLOUT OFF\nNO CANARY\nNO ACTIVE\nTRADING GUARDIAN UNENGAGED"
 )
 
+_M37_BANNER = (
+    "M37 SECURITY CERTIFICATION\nNON-PRODUCTION\nREAD-ONLY\nBOUNDED SANDBOX\n"
+    "ROLLOUT OFF\nNO CANARY\nNO ACTIVE\nTRADING GUARDIAN UNENGAGED"
+)
+
 
 def run_m35_synthetic_session() -> dict[str, Any]:
     """Deterministic, offline synthetic sandbox-governance session. No raw secret
@@ -238,6 +243,10 @@ def main(argv: Optional[list[str]] = None) -> int:
     sub.add_parser("m36-revoke-session")
     sub.add_parser("m36-cleanup-status")
     sub.add_parser("emit-m36-evidence")
+    # ── M37 security certification / provider contract ───────────────────────
+    for name in ("m37-preflight", "m37-validate", "m37-negative", "m37-certify",
+                 "m37-provider-model", "emit-m37-evidence"):
+        sub.add_parser(name)
     args = p.parse_args(argv)
 
     # Reject raw secret CLI carriers globally for any m36 command
@@ -408,6 +417,55 @@ def main(argv: Optional[list[str]] = None) -> int:
             import subprocess
             import sys as _sys
             rc = subprocess.call([_sys.executable, "scripts/m36_generate_evidence.py", "--offline"])
+            return rc
+
+    if args.cmd in (
+        "m37-preflight", "m37-validate", "m37-negative", "m37-certify",
+        "m37-provider-model", "emit-m37-evidence",
+    ):
+        from saathi.credentials import m37
+        print(_M37_BANNER)
+        if args.cmd == "m37-preflight":
+            _print(m37.preflight_summary())
+            return 0
+        if args.cmd == "m37-validate":
+            out = m37.run_m37_validation(live_exercised=False)
+            if not leakscan.is_clean(out):
+                _print({"ok": False, "error": "leak_detected"}); return 2
+            _print({
+                "ok": out["ok"],
+                "certification": out["certification"]["state"],
+                "live_exercised": False,
+                "m36_regression_ok": out["m36_regression_ok"],
+                "negative_passed": out["negative"]["passed"],
+                "negative_total": out["negative"]["total"],
+                "fingerprint": out["fingerprint"],
+                "authorities": out["authorities"],
+                "m38_started": False,
+            })
+            return 0 if out["ok"] else 3
+        if args.cmd == "m37-negative":
+            rep = m37.run_negative_validation()
+            _print({"ok": rep["failed"] == 0, "report": rep})
+            return 0 if rep["failed"] == 0 else 3
+        if args.cmd == "m37-certify":
+            out = m37.run_m37_validation(live_exercised=False)
+            _print(out["certification"])
+            return 0 if out["ok"] else 3
+        if args.cmd == "m37-provider-model":
+            from saathi.credentials.sandbox_provider import resolve_sandbox_provider, list_sandbox_providers
+            pvd = resolve_sandbox_provider("github_meta")
+            _print({
+                "registered": list_sandbox_providers(),
+                "capabilities": pvd.capabilities().to_dict(),
+                "health": pvd.health().to_dict(),
+                "contract": ["identity", "health", "operation", "capabilities", "qualification", "cleanup"],
+            })
+            return 0
+        if args.cmd == "emit-m37-evidence":
+            import subprocess
+            import sys as _sys
+            rc = subprocess.call([_sys.executable, "scripts/m37_generate_evidence.py", "--offline"])
             return rc
 
     if args.cmd == "profiles":

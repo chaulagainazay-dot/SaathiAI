@@ -1901,3 +1901,14 @@ READ_ONLY, credential-free, OFF/SHADOW only.
 * **Cleanup and revocation are part of session completion** — lease revoked, handle closed; external PAT revocation is operator-attested.
 * **Default ending if no disposable credential:** `M36 IMPLEMENTATION COMPLETE — REAL SANDBOX SESSION NOT EXERCISED`.
 * **M37 not started.** Trading Guardian UNCHANGED / UNENGAGED.
+
+---
+
+## M37 — Security certification & provider contract (2026-07-18)
+
+* **Modules:** `saathi.credentials.sandbox_provider` (contract) + `saathi.credentials.m37` (validation/certification).
+* **Provider contract:** `identity` / `health` / `operation` / `capabilities` / `qualification` / `cleanup` — no upward provider branching; `github_meta` is the sole reference implementation.
+* **Security certification** proves framework controls offline; it is **not** production authorization, rollout readiness, CANARY, or ACTIVE.
+* **Live sandbox** remains operator-gated; default certification is `SECURITY_CERTIFIED_WITH_LIMITATIONS` when live is not exercised.
+* **Negative paths** must close handles, leave no secret residue, and produce leak-clean evidence.
+* **M38 not started.** Trading Guardian UNENGAGED. Authorities remain NOT GRANTED.

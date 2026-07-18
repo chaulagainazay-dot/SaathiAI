@@ -1,0 +1,27 @@
+{
+  "body": {
+    "active": 0,
+    "canary": 0,
+    "certification_state": "SECURITY_CERTIFIED_WITH_LIMITATIONS",
+    "external_writes": 0,
+    "financial_calls": 0,
+    "fingerprint": "34463fcb90932527283a5e3ebc2caecf04b4c4886f08d63fa0d787d5492dc1c8",
+    "live_exercised": false,
+    "m36_regression_ok": true,
+    "m38_started": false,
+    "milestone": "M37",
+    "negative_passed": 13,
+    "negative_total": 13,
+    "ok": true,
+    "production_authorization": "NOT GRANTED",
+    "provider_contract_ok": true,
+    "rollout": "OFF",
+    "trading_calls": 0,
+    "trading_guardian": "UNCHANGED / UNENGAGED"
+  },
+  "fingerprint": "251975286a5518e3b50e6fab3c8c1055471666bd85c379210071762db9cf99a4",
+  "privacy_safe": true,
+  "schema": "m37.validation_summary.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

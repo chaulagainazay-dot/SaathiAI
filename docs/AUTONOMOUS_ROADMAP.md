@@ -570,3 +570,14 @@ UNCHANGED / UNENGAGED. Verdict: **GOVERNED PROVIDER-ADAPTER PILOT — SIMULATION
 - Call budget 3; rollout remains OFF; M37 not started
 - Evidence: `docs/evidence/m36/`
 - Module: `saathi/credentials/m36.py`
+
+## M37 — Real Sandbox Verification, Provider Generalization, Security Certification (2026-07-18)
+
+**Status:** `SECURITY_CERTIFIED_WITH_LIMITATIONS` (live sandbox not exercised).
+
+- Provider contract: identity/health/operation/capabilities/qualification/cleanup
+- Reference provider: github_meta only
+- Negative matrix: 13/13 offline
+- Evidence: docs/evidence/m37/
+- Modules: saathi/credentials/sandbox_provider.py, saathi/credentials/m37.py
+- M38 not started
