@@ -61,6 +61,11 @@ _NON_PRODUCTION_BANNER = (
     "=== NOT PRODUCTION AUTHORITY — rollout stays OFF; no writes; no account ==="
 )
 
+_M34_BANNER = (
+    "=== LIVE EXTERNAL READ-ONLY VERIFICATION ===\n"
+    "=== NON-PRODUCTION — ROLLOUT REMAINS OFF — NO WRITE AUTHORITY ==="
+)
+
 
 def _print(obj: Any) -> None:
     print(json.dumps(obj, indent=2, sort_keys=True, default=str))
@@ -100,13 +105,22 @@ def main(argv: list[str] | None = None) -> int:
     p_ev = sub.add_parser("external-verify"); p_ev.add_argument("provider_id")
     p_ev.add_argument("--ack-read-only", action="store_true")
     p_ev.add_argument("--ack-network", action="store_true")
+    p_ev.add_argument("--ack-non-production", action="store_true")
+    p_ev.add_argument("--ack-call-budget", action="store_true")
     p_ev.add_argument("--budget", type=int, default=1)
+    p_ev.add_argument("--max-calls", type=int, default=None)
+    p_ev.add_argument("--m33", action="store_true", help="use the legacy M33 single-call path")
     p_es = sub.add_parser("external-status"); p_es.add_argument("provider_id")
     p_ed = sub.add_parser("external-drift"); p_ed.add_argument("provider_id")
     p_erv = sub.add_parser("external-revoke"); p_erv.add_argument("provider_id")
     p_eq = sub.add_parser("external-quarantine"); p_eq.add_argument("provider_id")
     p_eq.add_argument("--reason", required=True)
     p_erc = sub.add_parser("external-recover"); p_erc.add_argument("provider_id")
+
+    # ── M34 live external verification / reliability / canary-readiness ───────
+    p_rs = sub.add_parser("reliability-status"); p_rs.add_argument("provider_id")
+    p_cr = sub.add_parser("canary-readiness"); p_cr.add_argument("provider_id")
+    p_eld = sub.add_parser("external-live-drift"); p_eld.add_argument("provider_id")
 
     args = parser.parse_args(argv)
     registry = ProviderRegistry()
@@ -229,13 +243,47 @@ def main(argv: list[str] | None = None) -> int:
             return 0 if plan.get("allowed") else 3
 
         if args.cmd == "external-verify":
-            print(_NON_PRODUCTION_BANNER)
-            res = run_live_verification(
-                args.provider_id, ack_read_only=args.ack_read_only,
-                ack_network=args.ack_network, call_budget=args.budget,
+            if args.m33:
+                # legacy M33 single-call path (kept for compatibility)
+                print(_NON_PRODUCTION_BANNER)
+                res = run_live_verification(
+                    args.provider_id, ack_read_only=args.ack_read_only,
+                    ack_network=args.ack_network, call_budget=args.budget,
+                )
+                _print(res)
+                return 0 if res.get("ok") else 3
+            # M34 governed live verification (default)
+            from saathi.connectors.providers.external.m34 import (
+                M34_DEFAULT_CALL_BUDGET, run_m34_live_verification, write_m34_evidence,
             )
+            print(_M34_BANNER)
+            max_calls = args.max_calls if args.max_calls is not None else M34_DEFAULT_CALL_BUDGET
+            res = run_m34_live_verification(
+                args.provider_id,
+                ack_read_only=args.ack_read_only, ack_network=args.ack_network,
+                ack_non_production=args.ack_non_production, ack_call_budget=args.ack_call_budget,
+                max_calls=max_calls,
+            )
+            if res.get("live_call"):
+                write_m34_evidence(res, evidence_dir="docs/evidence/m34")
+            res.pop("_calls_internal", None)
             _print(res)
             return 0 if res.get("ok") else 3
+
+        if args.cmd == "reliability-status":
+            from saathi.connectors.providers.external.m34 import reliability_status
+            _print(reliability_status(args.provider_id))
+            return 0
+
+        if args.cmd == "canary-readiness":
+            from saathi.connectors.providers.external.m34 import canary_readiness_status
+            _print(canary_readiness_status(args.provider_id))
+            return 0
+
+        if args.cmd == "external-live-drift":
+            from saathi.connectors.providers.external.m34 import check_m34_drift
+            _print(check_m34_drift(args.provider_id, mark_stale=False))
+            return 0
 
         if args.cmd == "external-status":
             p = resolve_external_profile(args.provider_id)

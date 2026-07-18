@@ -1,0 +1,16 @@
+{
+  "body": {
+    "active_providers": 0,
+    "canary_providers": 0,
+    "connector_rollout": "OFF",
+    "inference_rollout": "OFF",
+    "note": "verification and canary assessment never mutate rollout",
+    "provider_rollout": "OFF",
+    "trading_guardian": "UNCHANGED / UNENGAGED"
+  },
+  "fingerprint": "52df0ddff2fa59b603e8e479cc3dbdfd6e4522d65d21a6f5060e88daad88a0ba",
+  "privacy_safe": true,
+  "schema": "m34.rollout_state.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

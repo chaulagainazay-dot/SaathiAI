@@ -1,0 +1,13 @@
+{
+  "body": {
+    "mode": "LIVE_RELIABILITY_VERIFY",
+    "operation": "get_meta",
+    "provider_id": "github_meta",
+    "verification_state": "EXTERNAL_READ_ONLY_VERIFIED_WITH_LIMITATIONS"
+  },
+  "fingerprint": "2638740191f0384572580b3caa78015b42c1a2a6050923abc37a3cb55b4ea0fb",
+  "privacy_safe": true,
+  "schema": "m34.provider_identity.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

@@ -1,0 +1,14 @@
+{
+  "body": {
+    "actual_call_count": 3,
+    "approved_call_budget": 3,
+    "max_call_budget": 5,
+    "note": "actual_call_count never exceeds approved_call_budget, retries included",
+    "retries_consume_budget": true
+  },
+  "fingerprint": "e0a49d99c63095e2182d81815e05a1b3a6d0eed0ae9699da037ea80df5118476",
+  "privacy_safe": true,
+  "schema": "m34.live_call_budget.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

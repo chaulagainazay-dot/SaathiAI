@@ -1,0 +1,29 @@
+{
+  "body": {
+    "call_count_on_network": 0,
+    "harness_exercised": "OFFLINE_FIXTURE_SIMULATION",
+    "limitations": [
+      "on_network_live_call_not_exercised",
+      "external_read_only",
+      "single_endpoint_only",
+      "non_production",
+      "no_write_authority",
+      "no_account_link",
+      "no_credential"
+    ],
+    "max_possible_state": "EXTERNAL_READ_ONLY_VERIFIED_WITH_LIMITATIONS",
+    "mode": "SHADOW",
+    "on_network_live_call": false,
+    "operation": "get_meta",
+    "operator_command": "python -m saathi.connectors.providers external-verify github_meta --ack-read-only --ack-network --ack-non-production --ack-call-budget",
+    "operator_env_flag": "SAATHI_M34_LIVE_VERIFY_ENABLED=1",
+    "provider": "github_meta",
+    "success_or_failure": "not_exercised",
+    "verification_state_from_simulation": "EXTERNAL_READ_ONLY_VERIFIED_WITH_LIMITATIONS"
+  },
+  "fingerprint": "ac54a41b73001e91e9c4c05ce83661640a3794c69c6cf220e7c8256093bd5931",
+  "privacy_safe": true,
+  "schema": "m34.live_external_call_result.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

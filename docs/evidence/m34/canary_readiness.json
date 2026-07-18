@@ -1,0 +1,22 @@
+{
+  "body": {
+    "active_providers": 0,
+    "assessment": "CANARY_READY_WITH_LIMITATIONS",
+    "canary_providers": 0,
+    "detail": [
+      "operation_specific",
+      "single_read_only_operation",
+      "future_operator_authorization_required",
+      "rollout_remains_off",
+      "no_canary_activated",
+      "no_active_activated"
+    ],
+    "note": "assessment_only_no_activation",
+    "provider_rollout": "OFF"
+  },
+  "fingerprint": "64c0e8ab0059b09b82922cc9ed85aee4d7ed498d8dae673b320fbdaf0b726e13",
+  "privacy_safe": true,
+  "schema": "m34.canary_readiness.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

@@ -1,0 +1,16 @@
+{
+  "body": {
+    "absolute_paths_present": false,
+    "authorization_present": false,
+    "cookie_present": false,
+    "personal_data_present": false,
+    "raw_body_present": false,
+    "raw_headers_present": false,
+    "token_present": false
+  },
+  "fingerprint": "4135a31693d3dc89b92b956ba440c24d6445ee0401bf5e76b68ad5c12d26a55d",
+  "privacy_safe": true,
+  "schema": "m34.redaction_results.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

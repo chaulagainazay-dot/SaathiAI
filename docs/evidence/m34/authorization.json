@@ -1,0 +1,22 @@
+{
+  "body": {
+    "approved_call_budget": 3,
+    "approved_data_classification": "PUBLIC",
+    "approved_deadline": 5.0,
+    "approved_redirect_limit": 0,
+    "approved_response_limit": 262144,
+    "authorization_time": "1752800000",
+    "call_budget_acknowledged": true,
+    "network_acknowledged": true,
+    "non_production_acknowledged": true,
+    "operation": "get_meta",
+    "operator_authorized": true,
+    "provider_id": "github_meta",
+    "read_only_acknowledged": true
+  },
+  "fingerprint": "1813b0402915ed78411bddaf724adc2955fd57cdf1ab5192836f860e82bfdbcc",
+  "privacy_safe": true,
+  "schema": "m34.authorization.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

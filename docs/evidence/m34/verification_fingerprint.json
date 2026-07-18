@@ -1,0 +1,12 @@
+{
+  "body": {
+    "command_version": "m34.live_external_verify.v1",
+    "fingerprint": "5b29b329b8933865059a62e6f03a867ffada27f965bb438d8131728e236a800e",
+    "provider_id": "github_meta"
+  },
+  "fingerprint": "088a2a0b5f3d3a637fc8210badded97e8664a66ed549c3f798af5fe56a98c679",
+  "privacy_safe": true,
+  "schema": "m34.verification_fingerprint.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}
