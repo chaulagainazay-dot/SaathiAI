@@ -1,0 +1,37 @@
+{
+  "body": {
+    "active_providers": 0,
+    "canary_providers": 0,
+    "connector_rollout": "OFF",
+    "credentials_committed_to_git": 0,
+    "external_write_calls": 0,
+    "financial_provider_calls": 0,
+    "focused_tests": [
+      "test_m33_external_provider_security",
+      "test_m33_external_provider_runtime",
+      "test_m33_external_provider_verification"
+    ],
+    "inference_rollout": "OFF",
+    "live_production_account_links": 0,
+    "max_verification_state": "EXTERNAL_READ_ONLY_VERIFIED_WITH_LIMITATIONS",
+    "network_calls_in_tests": 0,
+    "offline_ok": true,
+    "private_network_calls": 0,
+    "production_credentials": 0,
+    "provider": "github_meta",
+    "provider_rollout": "OFF",
+    "raw_responses_committed": 0,
+    "sandbox_account_links": 0,
+    "sandbox_credentials": 0,
+    "secret_leaks": 0,
+    "tls_verification_bypasses": 0,
+    "trading_guardian": "UNCHANGED / UNENGAGED",
+    "trading_provider_calls": 0,
+    "unsafe_redirects_followed": 0
+  },
+  "fingerprint": "bed20cb53158b4a00e02f38879ca4f872abfbf3457daa19b44e74a5ddd77524c",
+  "privacy_safe": true,
+  "schema": "m32.validation_summary.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

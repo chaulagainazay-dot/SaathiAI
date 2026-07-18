@@ -1,0 +1,38 @@
+{
+  "body": {
+    "cases": [
+      {
+        "case": "valid",
+        "result": "PASS"
+      },
+      {
+        "case": "oversized",
+        "code": "RESPONSE_TOO_LARGE",
+        "result": "BLOCK"
+      },
+      {
+        "case": "decompress_bomb",
+        "code": "DECOMPRESSION_LIMIT_EXCEEDED",
+        "result": "BLOCK"
+      },
+      {
+        "case": "unsupported_type",
+        "code": "UNSUPPORTED_CONTENT_TYPE",
+        "result": "BLOCK"
+      },
+      {
+        "case": "malformed",
+        "code": "MALFORMED_ENCODING",
+        "result": "BLOCK"
+      }
+    ],
+    "sensitive_headers_stripped": {
+      "content-type": "application/json"
+    }
+  },
+  "fingerprint": "e36299956894116b40044e084d25707db41bac5951f548b198f48d155ba74ec3",
+  "privacy_safe": true,
+  "schema": "m32.response_contract_results.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

@@ -1,0 +1,22 @@
+{
+  "body": {
+    "allowed": true,
+    "blockers": [],
+    "call_budget": 1,
+    "deadline_seconds": 5.0,
+    "label": "EXTERNAL READ-ONLY SHADOW VERIFICATION \u2014 NOT PRODUCTION AUTHORITY",
+    "method": "GET",
+    "mode": "SHADOW",
+    "operation": "get_meta",
+    "privacy_safe": true,
+    "provider_id": "github_meta",
+    "response_limit_bytes": 262144,
+    "rollout": "OFF (unchanged by verification)",
+    "schema": "m33.external_verification_plan.v1"
+  },
+  "fingerprint": "14bde54f719de405917e5565e61c8f51827d1232533e6b0cb95826b395adc050",
+  "privacy_safe": true,
+  "schema": "m32.external_verification_plan.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

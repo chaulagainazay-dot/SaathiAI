@@ -37,7 +37,29 @@ from saathi.connectors.providers.verification import (
     resolve_provider_verification,
     verify_provider,
 )
+from saathi.connectors.providers.external.models import ExternalProfileError
+from saathi.connectors.providers.external.profiles import (
+    list_external_profiles,
+    resolve_external_profile,
+    schema_for,
+)
+from saathi.connectors.providers.external.verification import (
+    ExternalVerificationStore,
+    check_external_drift,
+    resolve_external_verification,
+)
+from saathi.connectors.providers.external.verify import (
+    fixture_hash_for,
+    plan_external_verification,
+    run_live_verification,
+)
 from saathi.connectors.testing.provider_simulator import SIMULATOR_VERSION, SCENARIOS
+
+
+_NON_PRODUCTION_BANNER = (
+    "=== EXTERNAL READ-ONLY SHADOW VERIFICATION ===\n"
+    "=== NOT PRODUCTION AUTHORITY — rollout stays OFF; no writes; no account ==="
+)
 
 
 def _print(obj: Any) -> None:
@@ -67,6 +89,24 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("drift", help="Provider verification drift check")
     p_q = sub.add_parser("quarantine"); p_q.add_argument("provider_id"); p_q.add_argument("--reason", required=True)
     p_r = sub.add_parser("recover"); p_r.add_argument("provider_id")
+
+    # ── M33 external read-only provider commands ─────────────────────────────
+    sub.add_parser("candidates", help="List external read-only provider candidates")
+    p_ep = sub.add_parser("external-profile"); p_ep.add_argument("provider_id")
+    p_epl = sub.add_parser("external-plan"); p_epl.add_argument("provider_id")
+    p_epl.add_argument("--ack-read-only", action="store_true")
+    p_epl.add_argument("--ack-network", action="store_true")
+    p_epl.add_argument("--budget", type=int, default=1)
+    p_ev = sub.add_parser("external-verify"); p_ev.add_argument("provider_id")
+    p_ev.add_argument("--ack-read-only", action="store_true")
+    p_ev.add_argument("--ack-network", action="store_true")
+    p_ev.add_argument("--budget", type=int, default=1)
+    p_es = sub.add_parser("external-status"); p_es.add_argument("provider_id")
+    p_ed = sub.add_parser("external-drift"); p_ed.add_argument("provider_id")
+    p_erv = sub.add_parser("external-revoke"); p_erv.add_argument("provider_id")
+    p_eq = sub.add_parser("external-quarantine"); p_eq.add_argument("provider_id")
+    p_eq.add_argument("--reason", required=True)
+    p_erc = sub.add_parser("external-recover"); p_erc.add_argument("provider_id")
 
     args = parser.parse_args(argv)
     registry = ProviderRegistry()
@@ -161,6 +201,84 @@ def main(argv: list[str] | None = None) -> int:
             _print({"recovered": rec.to_dict()})
             return 0
 
+        # ── M33 external commands ────────────────────────────────────────────
+        if args.cmd == "candidates":
+            out = []
+            for pid in list_external_profiles():
+                p = resolve_external_profile(pid)
+                out.append({
+                    "provider_id": p.provider_id, "owner": p.provider_owner,
+                    "documentation": p.official_documentation_reference,
+                    "operation": p.operation, "method": p.method,
+                    "side_effect_class": p.side_effect_class, "auth_profile": p.auth_profile,
+                })
+            _print({"candidates": out})
+            return 0
+
+        if args.cmd == "external-profile":
+            p = resolve_external_profile(args.provider_id)
+            _print({"external_profile": p.to_dict(), "schema": schema_for(p.provider_id).to_dict()})
+            return 0
+
+        if args.cmd == "external-plan":
+            plan = plan_external_verification(
+                args.provider_id, ack_read_only=args.ack_read_only,
+                ack_network=args.ack_network, call_budget=args.budget,
+            )
+            _print(plan)
+            return 0 if plan.get("allowed") else 3
+
+        if args.cmd == "external-verify":
+            print(_NON_PRODUCTION_BANNER)
+            res = run_live_verification(
+                args.provider_id, ack_read_only=args.ack_read_only,
+                ack_network=args.ack_network, call_budget=args.budget,
+            )
+            _print(res)
+            return 0 if res.get("ok") else 3
+
+        if args.cmd == "external-status":
+            p = resolve_external_profile(args.provider_id)
+            vstore = ExternalVerificationStore()
+            rec = vstore.get(args.provider_id)
+            dec = resolve_external_verification(
+                args.provider_id, profile=p, schema=schema_for(p.provider_id),
+                fixture_hash=fixture_hash_for(p.provider_id), store=vstore,
+            )
+            _print({"record": rec.to_dict(), "decision": dec.to_dict()})
+            return 0
+
+        if args.cmd == "external-drift":
+            p = resolve_external_profile(args.provider_id)
+            rep = check_external_drift(
+                args.provider_id, profile=p, schema=schema_for(p.provider_id),
+                fixture_hash=fixture_hash_for(p.provider_id), mark_stale=False,
+            )
+            _print(rep)
+            return 0
+
+        if args.cmd == "external-revoke":
+            vstore = ExternalVerificationStore()
+            rec = vstore.revoke(args.provider_id, reason="operator_revoke")
+            _print({"revoked": rec.to_dict()})
+            return 0
+
+        if args.cmd == "external-quarantine":
+            resolve_external_profile(args.provider_id)  # unknown fails closed
+            store = ProviderQuarantineStore()
+            rec = store.quarantine(args.provider_id, reason=args.reason)
+            _print({"external_quarantine": rec.to_dict()})
+            return 0
+
+        if args.cmd == "external-recover":
+            store = ProviderQuarantineStore()
+            rec = store.recover(args.provider_id)
+            _print({"external_recovered": rec.to_dict()})
+            return 0
+
+    except ExternalProfileError as e:
+        _print({"error": f"external:{e}"})
+        return 2
     except ProviderRegistryError as e:
         _print({"error": str(e)})
         return 2

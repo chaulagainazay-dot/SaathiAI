@@ -1,0 +1,66 @@
+{
+  "body": {
+    "cases": [
+      {
+        "case": "public",
+        "ips": [
+          "140.82.112.3"
+        ],
+        "result": "PASS"
+      },
+      {
+        "case": "private_v4",
+        "code": "SSRF_POLICY_BLOCKED",
+        "result": "BLOCK"
+      },
+      {
+        "case": "private_v6",
+        "code": "SSRF_POLICY_BLOCKED",
+        "result": "BLOCK"
+      },
+      {
+        "case": "link_local",
+        "code": "SSRF_POLICY_BLOCKED",
+        "result": "BLOCK"
+      },
+      {
+        "case": "metadata",
+        "code": "SSRF_POLICY_BLOCKED",
+        "result": "BLOCK"
+      },
+      {
+        "case": "loopback",
+        "code": "SSRF_POLICY_BLOCKED",
+        "result": "BLOCK"
+      },
+      {
+        "case": "reserved",
+        "code": "SSRF_POLICY_BLOCKED",
+        "result": "BLOCK"
+      },
+      {
+        "case": "mixed",
+        "code": "SSRF_POLICY_BLOCKED",
+        "result": "BLOCK"
+      },
+      {
+        "case": "resolution_failed",
+        "code": "DNS_RESOLUTION_FAILED",
+        "result": "BLOCK"
+      }
+    ],
+    "classifications": {
+      "10.0.0.5": "private",
+      "127.0.0.1": "loopback",
+      "140.82.112.3": "public",
+      "169.254.169.254": "metadata",
+      "240.0.0.1": "reserved",
+      "::1": "loopback"
+    }
+  },
+  "fingerprint": "e791915df07fcb7f6d09b0aa34ddce5aceb14d8b75c1216294d2e0b552b3f3a9",
+  "privacy_safe": true,
+  "schema": "m32.dns_ssrf_results.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

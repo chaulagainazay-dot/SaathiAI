@@ -1,0 +1,17 @@
+{
+  "body": {
+    "current_fingerprint": "a659a6fedc43cce4",
+    "drifted": false,
+    "ok": true,
+    "prior_state": "SIMULATION_VERIFIED",
+    "privacy_safe": true,
+    "provider_id": "github_meta",
+    "schema": "m33.external_drift_report.v1",
+    "stored_fingerprint": "a659a6fedc43cce4"
+  },
+  "fingerprint": "21fe2bb62283fa55b53dc457ebcfc1196c2bff4dfbff306cd41edb4bda458d3e",
+  "privacy_safe": true,
+  "schema": "m32.external_drift_results.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

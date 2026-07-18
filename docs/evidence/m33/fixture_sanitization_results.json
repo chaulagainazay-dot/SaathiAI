@@ -1,0 +1,19 @@
+{
+  "body": {
+    "bounded": true,
+    "leak_scan_findings": [],
+    "provenance": {
+      "capture_method": "synthesized_from_public_documentation_sanitized",
+      "official_documentation_reference": "https://docs.github.com/en/rest/meta/meta#get-github-meta-information",
+      "operation": "get_meta",
+      "privacy_safe": true,
+      "provider_id": "github_meta"
+    },
+    "raw_response_committed": false
+  },
+  "fingerprint": "bab029c6a07943b105b6b21aa55ad6971ac0645fac333fdf6093eb962df28fa6",
+  "privacy_safe": true,
+  "schema": "m32.fixture_sanitization_results.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

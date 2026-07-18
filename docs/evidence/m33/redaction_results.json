@@ -1,0 +1,23 @@
+{
+  "body": {
+    "body_redaction": {
+      "ok": true,
+      "privacy_safe": true
+    },
+    "headers_in": [
+      "set-cookie",
+      "authorization",
+      "content-type",
+      "x-github-request-id"
+    ],
+    "headers_out": [
+      "content-type",
+      "x-github-request-id"
+    ]
+  },
+  "fingerprint": "851a38cb456e7e21905ab3dfe079d6a27481b6ba804f0bbb4526b102a9c42100",
+  "privacy_safe": true,
+  "schema": "m32.redaction_results.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

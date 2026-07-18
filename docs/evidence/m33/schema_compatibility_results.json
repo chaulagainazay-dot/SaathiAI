@@ -1,0 +1,92 @@
+{
+  "body": {
+    "additive": {
+      "compatible": true,
+      "findings": [
+        {
+          "detail": "unknown_additive_field",
+          "drift": "COMPATIBLE_ADDITIVE",
+          "field": "new_field"
+        }
+      ],
+      "overall": "COMPATIBLE_ADDITIVE",
+      "privacy_safe": true,
+      "provider_id": "github_meta",
+      "schema_version": "v1"
+    },
+    "expected": {
+      "compatible": true,
+      "findings": [],
+      "overall": "COMPATIBLE_EXACT",
+      "privacy_safe": true,
+      "provider_id": "github_meta",
+      "schema_version": "v1"
+    },
+    "missing_required": {
+      "compatible": false,
+      "findings": [
+        {
+          "detail": "required_field_absent",
+          "drift": "INCOMPATIBLE_MISSING_FIELD",
+          "field": "verifiable_password_authentication"
+        },
+        {
+          "detail": "required_field_absent",
+          "drift": "INCOMPATIBLE_MISSING_FIELD",
+          "field": "hooks"
+        }
+      ],
+      "overall": "INCOMPATIBLE_MISSING_FIELD",
+      "privacy_safe": true,
+      "provider_id": "github_meta",
+      "schema_version": "v1"
+    },
+    "not_object": {
+      "compatible": false,
+      "findings": [
+        {
+          "detail": "response_not_object",
+          "drift": "INCOMPATIBLE_TYPE_CHANGE",
+          "field": "$"
+        }
+      ],
+      "overall": "INCOMPATIBLE_TYPE_CHANGE",
+      "privacy_safe": true,
+      "provider_id": "github_meta",
+      "schema_version": "v1"
+    },
+    "oversized_array": {
+      "compatible": false,
+      "findings": [
+        {
+          "detail": "oversized_array",
+          "drift": "INCOMPATIBLE_TYPE_CHANGE",
+          "field": "hooks"
+        }
+      ],
+      "overall": "INCOMPATIBLE_TYPE_CHANGE",
+      "privacy_safe": true,
+      "provider_id": "github_meta",
+      "schema_version": "v1"
+    },
+    "type_change": {
+      "compatible": false,
+      "findings": [
+        {
+          "detail": "expected_array",
+          "drift": "INCOMPATIBLE_TYPE_CHANGE",
+          "field": "hooks"
+        }
+      ],
+      "overall": "INCOMPATIBLE_TYPE_CHANGE",
+      "privacy_safe": true,
+      "provider_id": "github_meta",
+      "schema_version": "v1"
+    }
+  },
+  "fingerprint": "4a6119887026d14bc6a0375157e454de6a3027dc48f7097a6979cab4caef12c8",
+  "privacy_safe": true,
+  "schema": "m32.schema_compatibility_results.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}
