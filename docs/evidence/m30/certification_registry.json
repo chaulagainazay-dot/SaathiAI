@@ -4,8 +4,8 @@
     "gov.browser": {
       "connector_id": "gov.browser",
       "state": "CERTIFIED_WITH_LIMITATIONS",
-      "fingerprint": "eefafd24400f690b5577b5c75059831e3b1e7a49b8bddf35d8b598c4806bd598",
-      "assessed_at": "2026-07-17T14:02:26+00:00",
+      "fingerprint": "67f70db7a317e4f31e56cb4ec35b7e8d59fa43ac5039ba9ef1402b0da0f9c979",
+      "assessed_at": "2026-07-18T00:49:26+00:00",
       "revoked_at": "",
       "revoke_reason": "",
       "limitations": [
@@ -43,14 +43,33 @@
           "state": "CERTIFIED_WITH_LIMITATIONS",
           "fingerprint": "eefafd24400f690b",
           "ts": 1784296946.158317
+        },
+        {
+          "event": "stale",
+          "from": "CERTIFIED_WITH_LIMITATIONS",
+          "reason": "fingerprint_mismatch",
+          "prior_fingerprint": "eefafd24400f690b",
+          "ts": 1784335744.3875809
+        },
+        {
+          "event": "begin_assessment",
+          "from": "STALE",
+          "lease_id": "ce786a871185",
+          "ts": 1784335765.996143
+        },
+        {
+          "event": "complete_assessment",
+          "state": "CERTIFIED_WITH_LIMITATIONS",
+          "fingerprint": "67f70db7a317e4f3",
+          "ts": 1784335766.246119
         }
       ]
     },
     "gov.http": {
       "connector_id": "gov.http",
       "state": "CERTIFIED_WITH_LIMITATIONS",
-      "fingerprint": "457f0f6afb86db6501497d145e20e3a6e304f805e2d5b8fddc80c9a304a681a2",
-      "assessed_at": "2026-07-17T14:02:25+00:00",
+      "fingerprint": "f5c93abbb375ef081f6aac934357292a8a8fcd224bd14bf429a8d7d895ffc26d",
+      "assessed_at": "2026-07-18T00:49:25+00:00",
       "revoked_at": "",
       "revoke_reason": "",
       "limitations": [
@@ -87,14 +106,33 @@
           "state": "CERTIFIED_WITH_LIMITATIONS",
           "fingerprint": "457f0f6afb86db65",
           "ts": 1784296945.711731
+        },
+        {
+          "event": "stale",
+          "from": "CERTIFIED_WITH_LIMITATIONS",
+          "reason": "fingerprint_mismatch",
+          "prior_fingerprint": "457f0f6afb86db65",
+          "ts": 1784335744.385004
+        },
+        {
+          "event": "begin_assessment",
+          "from": "STALE",
+          "lease_id": "8ec6108bb029",
+          "ts": 1784335765.482708
+        },
+        {
+          "event": "complete_assessment",
+          "state": "CERTIFIED_WITH_LIMITATIONS",
+          "fingerprint": "f5c93abbb375ef08",
+          "ts": 1784335765.753589
         }
       ]
     },
     "gov.local_tool": {
       "connector_id": "gov.local_tool",
       "state": "CERTIFIED_WITH_LIMITATIONS",
-      "fingerprint": "a8d04bab4abfe0d1e81bd13093413e5d0a56ea3c7bab517edf0b7fe545d371cf",
-      "assessed_at": "2026-07-17T14:02:26+00:00",
+      "fingerprint": "c7a891155f48e2d411bc293ab785c7e7ca95259e48ace77202f82bf27ad451b3",
+      "assessed_at": "2026-07-18T00:49:26+00:00",
       "revoked_at": "",
       "revoke_reason": "",
       "limitations": [
@@ -131,14 +169,33 @@
           "state": "CERTIFIED_WITH_LIMITATIONS",
           "fingerprint": "a8d04bab4abfe0d1",
           "ts": 1784296946.380784
+        },
+        {
+          "event": "stale",
+          "from": "CERTIFIED_WITH_LIMITATIONS",
+          "reason": "fingerprint_mismatch",
+          "prior_fingerprint": "a8d04bab4abfe0d1",
+          "ts": 1784335744.388542
+        },
+        {
+          "event": "begin_assessment",
+          "from": "STALE",
+          "lease_id": "6fd0f827dec7",
+          "ts": 1784335766.2478988
+        },
+        {
+          "event": "complete_assessment",
+          "state": "CERTIFIED_WITH_LIMITATIONS",
+          "fingerprint": "c7a891155f48e2d4",
+          "ts": 1784335766.4861598
         }
       ]
     },
     "gov.mcp": {
       "connector_id": "gov.mcp",
       "state": "CERTIFIED_WITH_LIMITATIONS",
-      "fingerprint": "28f7d49111fc7c8d80d774472ced2d3a98b5a51e142489a1042bd32686a4bfee",
-      "assessed_at": "2026-07-17T14:02:25+00:00",
+      "fingerprint": "e29f59594308af4d0a35167a9707361d2230ab5015ff5c2936aeb2bd5d35835b",
+      "assessed_at": "2026-07-18T00:49:25+00:00",
       "revoked_at": "",
       "revoke_reason": "",
       "limitations": [
@@ -175,6 +232,25 @@
           "state": "CERTIFIED_WITH_LIMITATIONS",
           "fingerprint": "28f7d49111fc7c8d",
           "ts": 1784296945.930288
+        },
+        {
+          "event": "stale",
+          "from": "CERTIFIED_WITH_LIMITATIONS",
+          "reason": "fingerprint_mismatch",
+          "prior_fingerprint": "28f7d49111fc7c8d",
+          "ts": 1784335744.386552
+        },
+        {
+          "event": "begin_assessment",
+          "from": "STALE",
+          "lease_id": "60cdc3cfd2ea",
+          "ts": 1784335765.755573
+        },
+        {
+          "event": "complete_assessment",
+          "state": "CERTIFIED_WITH_LIMITATIONS",
+          "fingerprint": "e29f59594308af4d",
+          "ts": 1784335765.994508
         }
       ]
     }

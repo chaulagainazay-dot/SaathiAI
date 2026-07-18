@@ -38,6 +38,9 @@ ALLOWLIST_FILES: frozenset[str] = frozenset({
     "saathi/connectors/gov/compat.py",
     "saathi/connectors/gov/gateway_bridge.py",
     "saathi/connectors/gov/runtime.py",
+    # M32 governed provider-adapter orchestrator (bounded execution under governance;
+    # sits above the M27 adapter boundary, never bypasses the gateway).
+    "saathi/connectors/providers/runtime.py",
     "saathi/connectors/__init__.py",
     # Server API uses manager.execute which is the governed compatibility shim
     "saathi/server.py",

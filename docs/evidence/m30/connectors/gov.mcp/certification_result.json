@@ -2,7 +2,7 @@
   "schema": "m30.certification_result.v1",
   "connector_id": "gov.mcp",
   "state": "CERTIFIED_WITH_LIMITATIONS",
-  "fingerprint": "28f7d49111fc7c8d80d774472ced2d3a98b5a51e142489a1042bd32686a4bfee",
+  "fingerprint": "e29f59594308af4d0a35167a9707361d2230ab5015ff5c2936aeb2bd5d35835b",
   "prior_fingerprint": "",
   "spec_version": "m30.conformance.v1",
   "checks": [
@@ -587,8 +587,8 @@
     "sandbox_not_live_provider"
   ],
   "failure_codes": [],
-  "assessed_at": "2026-07-17T14:02:25+00:00",
-  "lease_id": "690c3da98d07",
+  "assessed_at": "2026-07-18T00:49:25+00:00",
+  "lease_id": "60cdc3cfd2ea",
   "evidence_dir": "",
   "privacy_safe": true,
   "bypass": false,

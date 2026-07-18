@@ -1,7 +1,7 @@
 {
   "schema": "m30.fingerprint_report.v1",
   "connector_id": "gov.mcp",
-  "fingerprint": "28f7d49111fc7c8d80d774472ced2d3a98b5a51e142489a1042bd32686a4bfee",
+  "fingerprint": "e29f59594308af4d0a35167a9707361d2230ab5015ff5c2936aeb2bd5d35835b",
   "spec_version": "m30.conformance.v1",
   "surface_paths": [
     "saathi/connectors/gov/models.py",
