@@ -22,7 +22,7 @@ acknowledgements.
 | Item | Value |
 |------|-------|
 | Starting HEAD | `233faa578a1b33fe2ede5f69f16c0801d8db4b3d` (M35 tip) |
-| Ending HEAD | `f97155b4ae1bd50cc330795d4a35c501bd2434b5` |
+| Ending HEAD | `96f5b3a12a94aa2632b884cf49652211886a015e` |
 | Branch | `milestone/m7-security-engine` |
 | Preflight remote divergence | `0 0` |
 | Worktree noise (preserved, unstaged) | `docs/evidence/m25/*`, `docs/evidence/m27/connector_events.jsonl`, `docs/evidence/m28/deprecation_events.jsonl` |
@@ -236,7 +236,7 @@ M37 = NOT STARTED
 | Item | Value |
 |------|-------|
 | Commit | `4e825f37ff06913132943b17e0dba67629e6b3f8` — `feat(m36): operator-controlled real sandbox session governance` |
-| Ending HEAD | `f97155b4ae1bd50cc330795d4a35c501bd2434b5` |
+| Ending HEAD | `96f5b3a12a94aa2632b884cf49652211886a015e` |
 | Push target | `origin/milestone/m7-security-engine` |
 | Pre-push readiness re-check | `test_readiness_clean_repo` **passed** after commit |
 | Known unstaged noise | m25/m27/m28 evidence only |
