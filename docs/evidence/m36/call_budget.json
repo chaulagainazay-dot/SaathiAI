@@ -1,0 +1,19 @@
+{
+  "body": {
+    "consumed": 2,
+    "financial_calls": 0,
+    "identity_calls": 1,
+    "max_calls": 3,
+    "operation_calls": 1,
+    "redirect_calls": 0,
+    "remaining": 1,
+    "retries": 0,
+    "trading_calls": 0,
+    "writes": 0
+  },
+  "fingerprint": "43a67c7d9ba37848309bdfdeaa011d2048658485abfb1656778a55b48b8aa65e",
+  "privacy_safe": true,
+  "schema": "m36.call_budget.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

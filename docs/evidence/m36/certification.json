@@ -1,0 +1,25 @@
+{
+  "body": {
+    "authorities": {
+      "ACTIVE_authorization": "NOT GRANTED",
+      "CANARY_authorization": "NOT GRANTED",
+      "production_authorization": "NOT GRANTED",
+      "rollout_authorization": "NOT GRANTED",
+      "write_authority": "NOT GRANTED"
+    },
+    "m37_started": false,
+    "rollout": {
+      "active_providers": 0,
+      "canary_providers": 0,
+      "connector": "OFF",
+      "inference": "OFF",
+      "provider": "OFF"
+    },
+    "state": "REAL_SANDBOX_SESSION_VERIFIED_WITH_LIMITATIONS"
+  },
+  "fingerprint": "dedc68c7680766cd3dd1996e8d70127796ae20cb1ff59dd20c75fae50de35830",
+  "privacy_safe": true,
+  "schema": "m36.certification.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

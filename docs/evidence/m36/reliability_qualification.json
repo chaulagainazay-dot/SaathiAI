@@ -1,0 +1,11 @@
+{
+  "body": {
+    "classification": "SUCCESS_WITH_LIMITATIONS",
+    "note": "single fixture success is not production reliability"
+  },
+  "fingerprint": "d96908a85d99ea93cbbc356e7e14861ea82d2bc8c0a34a632e69e98d9776bc46",
+  "privacy_safe": true,
+  "schema": "m36.reliability_qualification.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

@@ -29,7 +29,9 @@
     "M29",
     "M30",
     "M31",
-    "M32"
+    "M32",
+    "M35",
+    "M36"
   ],
   "milestone_verdict": "M32 COMPLETE WITH LIMITATIONS \u2014 governed provider-adapter pilot (simulation-verified)",
   "production_certified": true,
@@ -38,7 +40,11 @@
     "pilot_provider": "saathi.echo.v1 (local deterministic simulator)",
     "connector_id": "gov.http",
     "default_mode": "OFF",
-    "modes_exercised": ["DRY_RUN", "SIMULATION", "SHADOW"],
+    "modes_exercised": [
+      "DRY_RUN",
+      "SIMULATION",
+      "SHADOW"
+    ],
     "highest_verification": "SIMULATION_VERIFIED",
     "canary_providers": 0,
     "active_providers": 0,
@@ -76,7 +82,7 @@
     "cloud_enabled": false,
     "trading_guardian": "UNCHANGED / UNENGAGED"
   },
-  "next_milestone": "M33 (operator authorize only)",
+  "next_milestone": "M37",
   "stop_reason": "M32 complete; do not auto-start M33",
   "trading_guardian": "UNCHANGED / UNENGAGED",
   "cloud_fallback": false,
@@ -98,5 +104,8 @@
     "live_credentials_used": 0,
     "trading_guardian": "UNCHANGED / UNENGAGED",
     "full_suite": "3287 passed, 1 skipped, 0 failed"
-  }
+  },
+  "current_milestone": "M36",
+  "m36_status": "IMPLEMENTATION_COMPLETE_REAL_SESSION_NOT_EXERCISED",
+  "notes_m36": "Offline governance complete; real disposable sandbox credential not supplied"
 }

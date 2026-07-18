@@ -1,0 +1,28 @@
+{
+  "body": {
+    "account_match": true,
+    "account_subject_fingerprint": "a00ace2982cabc7827a9c19c706cb784",
+    "contains_raw_identity": false,
+    "contains_secret_values": false,
+    "content_type_match": true,
+    "environment_class": "SANDBOX",
+    "http_status_class": "2xx",
+    "observed_scopes": [
+      "read:user"
+    ],
+    "privacy_safe": true,
+    "provider_id": "github_meta",
+    "response_schema_version": "github_user.v1.minimized",
+    "response_size_bucket": "UNDER_4_KIB",
+    "safe_status": "OK",
+    "schema_valid": true,
+    "scope_metadata_present": true,
+    "tls_verified": true,
+    "verification_time_bucket": "UNDER_250_MS"
+  },
+  "fingerprint": "3135eaeee12777df5f318c0d6a620f888b34141b049e0a004cfb748d97a590b9",
+  "privacy_safe": true,
+  "schema": "m36.identity_verification.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

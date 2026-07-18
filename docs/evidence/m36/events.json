@@ -1,0 +1,123 @@
+{
+  "body": {
+    "count": 16,
+    "events": [
+      {
+        "authorization_id": "authz_m36_synth_0001",
+        "contains_secret_values": false,
+        "event_type": "m36.authorization_created",
+        "privacy_safe": true,
+        "session_id": "sess_m36_synth_0001"
+      },
+      {
+        "classification": "DISPOSABLE_SANDBOX",
+        "contains_secret_values": false,
+        "event_type": "m36.sandbox_identity_qualified",
+        "privacy_safe": true,
+        "session_id": "sess_m36_synth_0001"
+      },
+      {
+        "contains_secret_values": false,
+        "event_type": "m36.secret_handle_opened",
+        "lease_id": "lease_m35_0001",
+        "privacy_safe": true,
+        "provider_id": "github_meta",
+        "session_id": "sess_m36_synth_0001",
+        "source_kind": "IN_MEMORY_TEST"
+      },
+      {
+        "contains_secret_values": false,
+        "event_type": "m36.credential_fingerprint_derived",
+        "fingerprint": "43d5f7e080137a2ebdbd225f949fd108",
+        "privacy_safe": true,
+        "session_id": "sess_m36_synth_0001"
+      },
+      {
+        "contains_secret_values": false,
+        "event_type": "m36.account_verification_started",
+        "privacy_safe": true,
+        "session_id": "sess_m36_synth_0001"
+      },
+      {
+        "contains_secret_values": false,
+        "event_type": "m36.account_verification_completed",
+        "privacy_safe": true,
+        "safe_status": "OK",
+        "session_id": "sess_m36_synth_0001"
+      },
+      {
+        "contains_secret_values": false,
+        "event_type": "m36.scope_verification_completed",
+        "privacy_safe": true,
+        "result": "VERIFIED_WITH_EXTRA_READ_SCOPE",
+        "session_id": "sess_m36_synth_0001"
+      },
+      {
+        "blockers": [],
+        "contains_secret_values": false,
+        "eligible": true,
+        "event_type": "m36.eligibility_evaluated",
+        "privacy_safe": true,
+        "session_id": "sess_m36_synth_0001"
+      },
+      {
+        "contains_secret_values": false,
+        "event_type": "m36.session_started",
+        "privacy_safe": true,
+        "session_id": "sess_m36_synth_0001"
+      },
+      {
+        "contains_secret_values": false,
+        "event_type": "m36.transport_call_started",
+        "operation": "get_meta",
+        "privacy_safe": true,
+        "session_id": "sess_m36_synth_0001"
+      },
+      {
+        "contains_secret_values": false,
+        "event_type": "m36.transport_call_completed",
+        "ok": true,
+        "privacy_safe": true,
+        "session_id": "sess_m36_synth_0001",
+        "status_class": "2xx"
+      },
+      {
+        "contains_secret_values": false,
+        "event_type": "m36.lease_consumed",
+        "privacy_safe": true,
+        "session_id": "sess_m36_synth_0001"
+      },
+      {
+        "contains_secret_values": false,
+        "event_type": "m36.lease_revoked",
+        "privacy_safe": true,
+        "reason": "m36_session_completed",
+        "session_id": "sess_m36_synth_0001"
+      },
+      {
+        "contains_secret_values": false,
+        "event_type": "m36.secret_handle_closed",
+        "privacy_safe": true,
+        "session_id": "sess_m36_synth_0001"
+      },
+      {
+        "contains_secret_values": false,
+        "event_type": "m36.session_completed",
+        "privacy_safe": true,
+        "session_id": "sess_m36_synth_0001"
+      },
+      {
+        "contains_secret_values": false,
+        "event_type": "m36.certification_updated",
+        "privacy_safe": true,
+        "session_id": "sess_m36_synth_0001",
+        "state": "REAL_SANDBOX_SESSION_VERIFIED_WITH_LIMITATIONS"
+      }
+    ]
+  },
+  "fingerprint": "9d6754de037e83e8f9e21e00adb96acd8b573123e1c2b2d3df24e7aadd09b342",
+  "privacy_safe": true,
+  "schema": "m36.events.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

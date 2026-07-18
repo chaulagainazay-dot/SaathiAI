@@ -1886,3 +1886,18 @@ READ_ONLY, credential-free, OFF/SHADOW only.
   explicit `verify_provider` / `check_provider_drift(mark_stale=True)` mutate.
 - The M32 provider runtime is an allowlisted governed call site in
   `gov/bypass_guard.py` (like `gov/runtime.py`); provider-adapter bypasses = 0.
+
+---
+
+## M36 — Real sandbox credential verification (2026-07-18)
+
+* **Module:** `saathi.credentials.m36` — operator-controlled real sandbox session coordinator.
+* **Composes (does not replace):** M31 broker/backends/leases, M32 evidence/quarantine patterns, M33 `github_meta` + `ExternalTransport`, M34 call-budget semantics, M35 SecretHandle / sandbox registry / session leases / scope ceilings.
+* **Identity vs operation:** `GET /user` (authenticated identity; auth injected only at sender) + `GET /meta` (approved public operation). `/meta` does not require auth; credential is not loaded solely for `/meta`.
+* **Real sandbox verification is not production authorization.** Certification is provider/account/fingerprint/operation-specific and does not enable rollout, CANARY, or ACTIVE.
+* **Credential fingerprints are identity-bound evidence, not authentication.**
+* **Verification-only execution is not a rollout bypass** — milestone/session/lease/time/use bounded exception only while rollout remains OFF.
+* **Live evidence differs from deterministic offline evidence.** Offline fixture evidence is reproducible; live evidence (if exercised) is sanitized and nondeterministic.
+* **Cleanup and revocation are part of session completion** — lease revoked, handle closed; external PAT revocation is operator-attested.
+* **Default ending if no disposable credential:** `M36 IMPLEMENTATION COMPLETE — REAL SANDBOX SESSION NOT EXERCISED`.
+* **M37 not started.** Trading Guardian UNCHANGED / UNENGAGED.

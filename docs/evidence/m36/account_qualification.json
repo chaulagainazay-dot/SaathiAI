@@ -1,0 +1,18 @@
+{
+  "body": {
+    "classification": "DISPOSABLE_SANDBOX",
+    "contains_raw_identity": false,
+    "disclaimer": "saathios_cannot_independently_guarantee_disposability",
+    "environment_class": "SANDBOX",
+    "expiration_or_deletion_plan": "delete_after_m36",
+    "qualified": true,
+    "reasons": [],
+    "revocation_plan": "manual_github_pat_delete",
+    "safe_alias": "synthetic-sandbox"
+  },
+  "fingerprint": "ba009d18bba7d3adba5a69b1b6c2b219e473ab54c0a2839b22f8638cfee834f6",
+  "privacy_safe": true,
+  "schema": "m36.account_qualification.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

@@ -38,6 +38,11 @@ _M35_BANNER = (
     "NO EXTERNAL CALL\nNO WRITE AUTHORITY\nROLLOUT REMAINS OFF"
 )
 
+_M36_BANNER = (
+    "REAL SANDBOX VERIFICATION\nNON-PRODUCTION\nREAD-ONLY\nBOUNDED SESSION\n"
+    "ROLLOUT OFF\nNO CANARY\nNO ACTIVE\nTRADING GUARDIAN UNENGAGED"
+)
+
 
 def run_m35_synthetic_session() -> dict[str, Any]:
     """Deterministic, offline synthetic sandbox-governance session. No raw secret
@@ -182,6 +187,17 @@ def _fresh_broker_registry() -> tuple[CredentialBroker, AccountLinkRegistry]:
 
 
 def main(argv: Optional[list[str]] = None) -> int:
+    # Fail closed on raw secret carriers before argparse (so --token is never a
+    # silent "unrecognized arguments" only).
+    raw_argv = list(argv if argv is not None else sys.argv[1:])
+    if any(str(a).split("=")[0].lower() in (
+        "--token", "--api-key", "--apikey", "--password", "--secret",
+        "--authorization-header", "--authorization", "--bearer",
+    ) for a in raw_argv):
+        print(_M36_BANNER)
+        _print({"ok": False, "error": "raw_secret_cli_rejected"})
+        return 2
+
     p = argparse.ArgumentParser(prog="python -m saathi.credentials")
     sub = p.add_subparsers(dest="cmd")
     for name in ("status", "readiness", "profiles", "list-credentials", "list-links", "demo", "emit-evidence", "verify"):
@@ -192,7 +208,46 @@ def main(argv: Optional[list[str]] = None) -> int:
     for name in ("m35-verify", "m35-drift", "m35-scope-policy",
                  "m35-secret-source-policy", "emit-m35-evidence"):
         sub.add_parser(name)
+    # ── M36 real sandbox verification (offline preflight / evidence; live gated) ─
+    m36_pre = sub.add_parser("m36-preflight")
+    m36_auth = sub.add_parser("m36-authorize")
+    m36_auth.add_argument("--account-ref", required=False, default="")
+    m36_auth.add_argument("--credential-ref", required=False, default="")
+    m36_auth.add_argument("--ack", action="append", default=[], dest="acks")
+    m36_qual = sub.add_parser("m36-qualify-account")
+    m36_qual.add_argument("--alias", default="sbx-readonly")
+    m36_qual.add_argument("--purpose", default="m36 disposable sandbox verification")
+    m36_qual.add_argument("--revocation-plan", default="manual_github_pat_delete")
+    m36_qual.add_argument("--deletion-plan", default="delete_after_m36")
+    m36_qual.add_argument("--disposable-ack", action="store_true")
+    sub.add_parser("m36-verify-secret-reference")
+    sub.add_parser("m36-verify-scope")
+    sub.add_parser("m36-eligibility")
+    m36_run = sub.add_parser("m36-run-session")
+    m36_run.add_argument("--authorization-id", default="")
+    m36_run.add_argument("--account-ref", default="")
+    m36_run.add_argument("--credential-ref", default="")
+    m36_run.add_argument("--secret-source", default="OS_KEYCHAIN_REFERENCE")
+    m36_run.add_argument("--secret-locator", default="")
+    m36_run.add_argument("--operation", default="get_meta")
+    m36_run.add_argument("--call-budget", type=int, default=3)
+    m36_run.add_argument("--ack", action="append", default=[], dest="acks")
+    m36_run.add_argument("--live", action="store_true",
+                         help="require SAATHI_M36_ALLOW_LIVE_SANDBOX_VERIFICATION=1")
+    sub.add_parser("m36-session-status")
+    sub.add_parser("m36-revoke-session")
+    sub.add_parser("m36-cleanup-status")
+    sub.add_parser("emit-m36-evidence")
     args = p.parse_args(argv)
+
+    # Reject raw secret CLI carriers globally for any m36 command
+    if args.cmd and str(args.cmd).startswith("m36"):
+        from saathi.credentials.m36 import reject_forbidden_cli_argv, M36Error as _M36E
+        try:
+            reject_forbidden_cli_argv(list(argv or sys.argv[1:]))
+        except _M36E as e:
+            _print({"ok": False, "error": e.code, "banner": _M36_BANNER})
+            return 2
 
     if args.cmd in ("m35-verify", "m35-drift", "m35-scope-policy",
                     "m35-secret-source-policy", "emit-m35-evidence"):
@@ -229,6 +284,130 @@ def main(argv: Optional[list[str]] = None) -> int:
             import subprocess
             import sys as _sys
             rc = subprocess.call([_sys.executable, "scripts/m35_generate_evidence.py"])
+            return rc
+
+    if args.cmd in (
+        "m36-preflight", "m36-authorize", "m36-qualify-account",
+        "m36-verify-secret-reference", "m36-verify-scope", "m36-eligibility",
+        "m36-run-session", "m36-session-status", "m36-revoke-session",
+        "m36-cleanup-status", "emit-m36-evidence",
+    ):
+        import os
+        from saathi.credentials import m36
+        print(_M36_BANNER)
+        if args.cmd == "m36-preflight":
+            _print(m36.preflight_summary())
+            return 0
+        if args.cmd == "m36-authorize":
+            # Structural authorize demo only when refs supplied; otherwise policy dump
+            if not args.account_ref or not args.credential_ref:
+                _print({
+                    "ok": False,
+                    "error": "account_ref_and_credential_ref_required_for_live_authorize",
+                    "required_acks": list(m36.M36_ACK_TOKENS),
+                    "note": "offline authorize needs refs + all 8 acknowledgements",
+                })
+                return 1
+            store = m36.AuthorizationStore()
+            try:
+                auth = store.create(
+                    provider_id="github_meta",
+                    account_ref_id=args.account_ref,
+                    credential_ref_id=args.credential_ref,
+                    acknowledgements=tuple(args.acks),
+                )
+            except m36.M36Error as e:
+                _print({"ok": False, "error": e.code, "detail": e.detail})
+                return 3
+            out = auth.to_safe_dict()
+            if not leakscan.is_clean(out):
+                _print({"ok": False, "error": "leak_detected"}); return 2
+            _print({"ok": True, "authorization": out})
+            return 0
+        if args.cmd == "m36-qualify-account":
+            q = m36.qualify_sandbox_identity(
+                provider_id="github_meta",
+                account_alias=args.alias,
+                environment_class="SANDBOX",
+                declared_purpose=args.purpose,
+                revocation_plan=args.revocation_plan,
+                expiration_or_deletion_plan=args.deletion_plan,
+                operator_disposable_ack=bool(args.disposable_ack),
+            )
+            _print(q)
+            return 0 if q.get("qualified") else 3
+        if args.cmd == "m36-verify-secret-reference":
+            _print({
+                "keychain": m36.validate_m36_secret_reference(source_kind="OS_KEYCHAIN_REFERENCE"),
+                "env": m36.validate_m36_secret_reference(source_kind="ENV_REFERENCE"),
+                "raw_token_rejected": True,
+            })
+            return 0
+        if args.cmd == "m36-verify-scope":
+            _print({
+                "read_only": m36.classify_observed_scopes(("identity:read",), ("read:user",)),
+                "write_fails": m36.classify_observed_scopes(("identity:read",), ("repo",)),
+                "unobserved": m36.classify_observed_scopes(("identity:read",), None),
+            })
+            return 0
+        if args.cmd == "m36-eligibility":
+            ok, blockers = m36.compose_m36_eligibility(
+                production_certified=True, connector_certified=True, m30_drift_fresh=True,
+                m31_credential_governance=True, m32_provider_adapter_verified=True,
+                m33_external_profile_verified=True, m34_live_controls=True,
+                m35_sandbox_governance=True, m36_authorization_valid=True,
+                sandbox_identity_qualified=True, credential_healthy=True,
+                credential_fingerprint_present=True, account_verified=True,
+                scope_verified=True, approval_valid=True, lease_valid=True,
+                call_budget_remaining=True, provider_healthy=True, quarantined=False,
+                rollout_off=True, verification_only_exception=True,
+            )
+            _print({"eligible": ok, "blockers": blockers, "rollout": "OFF",
+                    "verification_only_exception": "session_specific"})
+            return 0 if ok else 3
+        if args.cmd == "m36-run-session":
+            live_flag = os.environ.get(m36.ENV_LIVE_FLAG, "") == "1"
+            if not args.live or not live_flag:
+                _print({
+                    "ok": False,
+                    "error": "live_session_not_enabled",
+                    "blocker": (
+                        "Real sandbox session requires --live AND "
+                        f"{m36.ENV_LIVE_FLAG}=1 plus a disposable Keychain/env "
+                        "secret reference, all 8 acknowledgements, and offline "
+                        "gates green. Offline path: emit-m36-evidence."
+                    ),
+                    "real_sandbox_session": "NOT_EXERCISED",
+                    "banner": _M36_BANNER,
+                })
+                return 4
+            # Live path: still reject if no secret locator (never accept raw token)
+            if not args.secret_locator or not args.authorization_id:
+                _print({"ok": False, "error": "authorization_id_and_secret_locator_required"})
+                return 3
+            _print({
+                "ok": False,
+                "error": "live_session_requires_operator_wired_backends",
+                "blocker": (
+                    "Live Keychain backend and operator session wiring are "
+                    "intentionally operator-run; use documented runbook. "
+                    "No credential was loaded in this CLI invocation."
+                ),
+                "real_sandbox_session": "NOT_EXERCISED",
+            })
+            return 5
+        if args.cmd in ("m36-session-status", "m36-revoke-session", "m36-cleanup-status"):
+            _print({
+                "ok": True,
+                "status": "NO_ACTIVE_M36_SESSION",
+                "real_sandbox_session": "NOT_EXERCISED",
+                "cleanup": "N/A",
+            })
+            return 0
+        if args.cmd == "emit-m36-evidence":
+            import subprocess
+            import sys as _sys
+            rc = subprocess.call([_sys.executable, "scripts/m36_generate_evidence.py", "--offline"])
             return rc
 
     if args.cmd == "profiles":

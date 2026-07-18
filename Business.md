@@ -611,3 +611,13 @@ external risk.
   errors; repeated malformed responses auto-quarantine the provider pending
   explicit operator recovery. No financial/trading provider can be onboarded
   (Trading Guardian unchanged/unengaged).
+
+---
+
+## M36 business notes — sandbox credentials (2026-07-18)
+
+* **Operational cost:** Disposable sandbox accounts and short-lived PATs require ownership, rotation, and manual revocation. Leaving tokens active is an operational risk even when local leases expire.
+* **Manual revocation is required** for external GitHub PATs unless a separate write-authorized revoke path is approved (not authorized in M36).
+* **Account lifecycle ownership** sits with the operator who creates the disposable sandbox identity — SaathiOS cannot independently prove disposability.
+* **One successful call does not establish production reliability**, uptime, scale, or rollout readiness. M36 proves the governed path, not production SLO.
+* **CANARY requires a separate milestone and authorization** (M37+). M36 certification must never be read as canary readiness activation.

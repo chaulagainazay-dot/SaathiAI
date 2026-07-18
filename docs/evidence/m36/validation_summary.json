@@ -1,0 +1,41 @@
+{
+  "body": {
+    "active_providers": 0,
+    "authorities": {
+      "ACTIVE_authorization": "NOT GRANTED",
+      "CANARY_authorization": "NOT GRANTED",
+      "production_authorization": "NOT GRANTED",
+      "rollout_authorization": "NOT GRANTED",
+      "write_authority": "NOT GRANTED"
+    },
+    "canary_providers": 0,
+    "connector_rollout": "OFF",
+    "credentials_committed_to_git": 0,
+    "external_network_calls": 2,
+    "external_provider_writes": 0,
+    "financial_provider_calls": 0,
+    "inference_rollout": "OFF",
+    "m36_certification": "REAL_SANDBOX_SESSION_VERIFIED_WITH_LIMITATIONS",
+    "m37_started": false,
+    "milestone": "M36",
+    "production_accounts_linked": 0,
+    "production_credentials_loaded": 0,
+    "production_oauth_flows": 0,
+    "provider_rollout": "OFF",
+    "raw_secrets_in_events": 0,
+    "raw_secrets_in_evidence": 0,
+    "raw_secrets_in_logs": 0,
+    "real_sandbox_accounts_linked": 0,
+    "real_sandbox_credentials_loaded": 0,
+    "real_sandbox_oauth_flows": 0,
+    "real_sandbox_session": "NOT_EXERCISED",
+    "synthetic_sessions_used": 1,
+    "trading_guardian": "UNCHANGED / UNENGAGED",
+    "trading_provider_calls": 0
+  },
+  "fingerprint": "468b202434fbd8cb4a15b4bfec934e82073188aa1cae7470c4de910e48a809c6",
+  "privacy_safe": true,
+  "schema": "m36.validation_summary.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

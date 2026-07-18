@@ -1,0 +1,29 @@
+{
+  "body": {
+    "fingerprint": "8e3e326de6b00cb805c256b8a02a2bf9a4c82b9bd92699a2661478f26df88d2c",
+    "preflight": {
+      "active": 0,
+      "authentication_required_for_identity": true,
+      "authentication_required_for_meta": false,
+      "banner": "REAL SANDBOX VERIFICATION\nNON-PRODUCTION\nREAD-ONLY\nBOUNDED SESSION\nROLLOUT OFF\nNO CANARY\nNO ACTIVE\nTRADING GUARDIAN UNENGAGED",
+      "canary": 0,
+      "endpoint": "/meta",
+      "fingerprint": "8e3e326de6b00cb805c256b8a02a2bf9a4c82b9bd92699a2661478f26df88d2c",
+      "identity_endpoint": "/user",
+      "identity_operation": "get_authenticated_user",
+      "live_flag": "SAATHI_M36_ALLOW_LIVE_SANDBOX_VERIFICATION",
+      "max_calls": 3,
+      "method": "GET",
+      "milestone": "M36",
+      "operation": "get_meta",
+      "provider": "github_meta",
+      "rollout": "OFF",
+      "trading_guardian": "UNENGAGED"
+    }
+  },
+  "fingerprint": "6f3d510c9e0c3bec8a19802817e46c33cfda8ea2786f0a7e7e8555c392529e33",
+  "privacy_safe": true,
+  "schema": "m36.verification_fingerprint.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

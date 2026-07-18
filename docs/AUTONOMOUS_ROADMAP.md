@@ -560,3 +560,13 @@ on `gov.http`, READ_ONLY, credential-free, OFF/SHADOW only. Highest verification
 certs re-assessed fresh after allowlisting the provider runtime. No CANARY/ACTIVE,
 no real credentials/accounts/writes, no financial/trading provider. Trading Guardian
 UNCHANGED / UNENGAGED. Verdict: **GOVERNED PROVIDER-ADAPTER PILOT — SIMULATION-VERIFIED**.
+
+## M36 — Operator-Controlled Real Sandbox Credential Verification (2026-07-18)
+
+**Status:** Implementation complete offline; real sandbox session **not exercised** (no disposable credential reference supplied).
+
+- Composition of M31–M35 + M33/M34 transport
+- Identity: `GET /user`; operation: `GET /meta` on `github_meta`
+- Call budget 3; rollout remains OFF; M37 not started
+- Evidence: `docs/evidence/m36/`
+- Module: `saathi/credentials/m36.py`
