@@ -14,7 +14,7 @@ financial/trading provider.
 
 - Starting HEAD: `206795f` (M31 credentials complete).
 - Branch: `milestone/m7-security-engine`; worktree: `/Users/macbookpro/SaathiAI`.
-- Divergence at start: 0/0. Ending HEAD + divergence: see §18.
+- Divergence at start: 0/0. Ending HEAD: `f398405`. Divergence vs remote: 0/0.
 - Pre-existing runtime noise `docs/evidence/m27/` left untracked and untouched.
 - The loop-state `current_head` field was stale M30 text; corrected as part of §18.
 
@@ -177,7 +177,16 @@ Trading Guardian                         = UNCHANGED / UNENGAGED
 
 ## 18. Commits & push
 
-See §18 update after commit/push (commit list, remote push result, final divergence).
+Commits (on `206795f`):
+
+- `35ebfad` feat(m32): governed provider adapter contract, simulator, and runtime
+- `bea989e` test(m32): validate provider governance and failure handling
+- `f398405` docs(m32): document provider adapter pilot, evidence, and state
+
+Push: `206795f..f398405 milestone/m7-security-engine -> milestone/m7-security-engine`
+(origin `github.com/chaulagainazay-dot/SaathiAI`). Final divergence vs remote: **0/0**.
+Pre-existing runtime noise `docs/evidence/m27/` left untracked and untouched.
+No merge, no deploy, no history rewrite, no M33.
 
 ## 19. Limitations & technical debt
 
