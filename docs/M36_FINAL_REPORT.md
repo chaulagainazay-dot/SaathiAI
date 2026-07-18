@@ -233,7 +233,13 @@ M37 = NOT STARTED
 
 ## 18. Commits and push
 
-Recorded after commit/push in the validation footer of this report (see git log).
+| Item | Value |
+|------|-------|
+| Commit | `4e825f37ff06913132943b17e0dba67629e6b3f8` — `feat(m36): operator-controlled real sandbox session governance` |
+| Ending HEAD | `4e825f37ff06913132943b17e0dba67629e6b3f8` |
+| Push target | `origin/milestone/m7-security-engine` |
+| Pre-push readiness re-check | `test_readiness_clean_repo` **passed** after commit |
+| Known unstaged noise | m25/m27/m28 evidence only |
 
 ---
 
