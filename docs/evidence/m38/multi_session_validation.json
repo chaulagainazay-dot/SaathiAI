@@ -1,0 +1,55 @@
+{
+  "body": {
+    "contains_secret_values": false,
+    "failed": 0,
+    "leak_clean": true,
+    "passed": 9,
+    "results": [
+      {
+        "name": "two_sessions_different_refs",
+        "pass": true,
+        "s1": "CLEANED",
+        "s2": "CLEANED"
+      },
+      {
+        "name": "two_sessions_same_ref",
+        "pass": true
+      },
+      {
+        "name": "success_and_failure_isolation",
+        "pass": true
+      },
+      {
+        "name": "interrupt_while_other_completes",
+        "pass": true
+      },
+      {
+        "name": "concurrency_limit_rejection",
+        "pass": true
+      },
+      {
+        "name": "aggregate_budget_exhaustion",
+        "pass": true
+      },
+      {
+        "name": "session_id_collision",
+        "pass": true
+      },
+      {
+        "name": "duplicate_cleanup_idempotent",
+        "pass": true
+      },
+      {
+        "name": "invalid_transition_rejected",
+        "pass": true
+      }
+    ],
+    "schema": "m38.multi_session_validation.v1",
+    "total": 9
+  },
+  "fingerprint": "90490fc484b39a8fa94d22bbeb7d498db0c454ebb2e49986ea754f621b3be63c",
+  "privacy_safe": true,
+  "schema": "m38.multi_session_validation.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

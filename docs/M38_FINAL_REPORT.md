@@ -133,7 +133,7 @@ No rollout path enabled.
 | Item | Value |
 |------|-------|
 | Starting | `823eea9a548daf5dd4df1e47a58e8224e15324bc` |
-| Ending | (post-commit tip) |
+| Ending | `855e45bb1dfab14aa633f6676788b1969fc4379b` |
 | Rollback | return to starting commit (no force-push) |
 
 ## 21. Exact Next Recommended Milestone
