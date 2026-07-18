@@ -110,8 +110,9 @@ Framework is security-certified offline with limitations. Production use is **no
 | Item | Value |
 |------|-------|
 | Starting HEAD | `2ea8c2a33b614ea2462af0836224b66b4e3c23eb` (M36 tip) |
-| Ending HEAD | (post-commit tip) |
-| Rollback | `git reset --hard 2ea8c2a33b614ea2462af0836224b66b4e3c23eb` (operator only; do not force-push shared history without policy) |
+| Ending HEAD | `989648be32a2ce9aafe1724b176dc24eb62db9f9` |
+| Push | `origin/milestone/m7-security-engine` (divergence `0 0`) |
+| Rollback | `git revert` or operator reset to `2ea8c2a33b614ea2462af0836224b66b4e3c23eb` (no force-push) |
 
 ## 13. Exact Next Recommended Milestone
 
