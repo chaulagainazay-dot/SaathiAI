@@ -1,0 +1,16 @@
+{
+  "body": {
+    "drift_check": {
+      "account_ref_id": "acct_m35_synth_0001",
+      "current_fingerprint": "7801fb1139ec8dd770ef3802137668f4",
+      "drift_state": "FRESH",
+      "drifted": false
+    },
+    "fingerprint": "7801fb1139ec8dd770ef3802137668f4"
+  },
+  "fingerprint": "b140d844c74a4a526f15f869385e865b7156c0bbdca93b0bbdf9f175556f8868",
+  "privacy_safe": true,
+  "schema": "m35.account_drift.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

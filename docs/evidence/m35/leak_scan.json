@@ -1,0 +1,12 @@
+{
+  "body": {
+    "clean": true,
+    "findings": [],
+    "scanner": "m31.leakscan + m35 defence-in-depth"
+  },
+  "fingerprint": "4a8f2ca699ebd66f374f345b9a67c13f6c8a2034f959a768e8f0c7155bed690a",
+  "privacy_safe": true,
+  "schema": "m35.leak_scan.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

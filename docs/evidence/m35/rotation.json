@@ -1,0 +1,20 @@
+{
+  "body": {
+    "contacts_provider": false,
+    "detects": [
+      "same_secret_reuse",
+      "provider_mismatch",
+      "account_mismatch",
+      "environment_mismatch",
+      "scope_broadening",
+      "expired_replacement",
+      "invalid_replacement"
+    ],
+    "old_leases_invalidated": true
+  },
+  "fingerprint": "49cb48d232cf3d569c5679d7a446d74e5c285801f96dc5cc008d4db6541f846c",
+  "privacy_safe": true,
+  "schema": "m35.rotation.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

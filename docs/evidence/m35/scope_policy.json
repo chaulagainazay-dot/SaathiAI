@@ -1,0 +1,42 @@
+{
+  "body": {
+    "allowed_classes": [
+      "IDENTITY_READ",
+      "METADATA_READ",
+      "PUBLIC_DATA_READ",
+      "SANDBOX_RESOURCE_READ"
+    ],
+    "forbidden_classes": [
+      "ADMIN",
+      "BILLING",
+      "CALENDAR_WRITE",
+      "CLOUD_ADMIN",
+      "EMAIL_SEND",
+      "ORDER_ENTRY",
+      "OWNER",
+      "PAYMENT",
+      "PORTFOLIO_CONTROL",
+      "REPOSITORY_WRITE",
+      "SECRET_MANAGEMENT",
+      "SOCIAL_PUBLISH",
+      "TRADING",
+      "TRANSFER",
+      "USER_MANAGEMENT",
+      "WITHDRAWAL",
+      "WRITE"
+    ],
+    "unknown_fails_closed": true,
+    "verification_states": [
+      "DECLARED",
+      "OBSERVED",
+      "VERIFIED",
+      "MISMATCHED",
+      "UNKNOWN"
+    ]
+  },
+  "fingerprint": "32b724da18f2dc3052f77c1ccc662f5926c78d3395ee1500a8da94f2574863f4",
+  "privacy_safe": true,
+  "schema": "m35.scope_policy.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

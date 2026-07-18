@@ -1,0 +1,23 @@
+{
+  "body": {
+    "limitations": [
+      "synthetic_credentials_only",
+      "no_live_secret_source",
+      "no_real_sandbox_account",
+      "no_oauth",
+      "no_live_provider_session",
+      "no_write_authority"
+    ],
+    "live_provider_session": "NOT_EXERCISED",
+    "max_state": "SANDBOX_GOVERNANCE_VERIFIED",
+    "real_sandbox_account_link": "NOT_EXERCISED",
+    "real_sandbox_credential_verification": "NOT_EXERCISED",
+    "sandbox_session_certified": false,
+    "state": "SANDBOX_GOVERNANCE_VERIFIED"
+  },
+  "fingerprint": "101da4683b6bd17244fb4bc60e6d06f028bd80cf56fe8238808593b884d8fd58",
+  "privacy_safe": true,
+  "schema": "m35.sandbox_certification.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}
