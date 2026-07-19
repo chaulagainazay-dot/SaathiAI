@@ -136,6 +136,7 @@
     "m39_7_status": "REPRODUCIBLE_AND_SELF_CONTAINED",
     "m39_8_status": "OPERATOR_PACKAGE_COMPLETE",
     "series_status": "PRE_M40_OFFLINE_READINESS_COMPLETE",
+    "full_suite_2026_07_19": "4335 passed, 1 skipped, 0 failed",
     "next_offline_milestone": "NONE_REMAINING_LIVE_OPERATOR_ACTION_REQUIRED"
   }
 }
