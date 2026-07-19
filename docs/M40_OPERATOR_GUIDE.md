@@ -19,7 +19,7 @@ sandbox** credential as a reference. Never paste a raw token.
 export SAATHI_M39_ALLOW_LIVE_SANDBOX_VALIDATION=1   # live window only
 python -m saathi.credentials.cli m40-certify \
   --source-kind OS_KEYCHAIN_REFERENCE --locator <service>:<account> \
-  --authorization --environment-confirmed --live-flag \
+  --operator-authorized --environment-confirmed --live-flag \
   --ack I_CONFIRM_CREDENTIAL_IS_DISPOSABLE \
   --ack I_CONFIRM_SANDBOX_ACCOUNT_WHERE_POSSIBLE \
   --ack I_CONFIRM_MINIMUM_READ_ONLY_PERMISSIONS \

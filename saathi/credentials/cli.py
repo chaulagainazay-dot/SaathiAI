@@ -375,7 +375,7 @@ def main(argv: Optional[list[str]] = None) -> int:
     m40_cert.add_argument("--locator", default="")
     m40_cert.add_argument("--env-var-name", default="")
     m40_cert.add_argument("--ack", action="append", default=[], dest="acks")
-    m40_cert.add_argument("--authorization", action="store_true")
+    m40_cert.add_argument("--operator-authorized", action="store_true", dest="operator_authorized")
     m40_cert.add_argument("--environment-confirmed", action="store_true")
     m40_cert.add_argument("--live-flag", action="store_true")
     m40_cert.add_argument("--branch", default="")
@@ -1053,7 +1053,7 @@ def main(argv: Optional[list[str]] = None) -> int:
                     secret_locator=args.locator,
                     env_var_name=args.env_var_name,
                     acknowledgements=tuple(args.acks),
-                    authorization_present=bool(args.authorization),
+                    authorization_present=bool(args.operator_authorized),
                     environment_confirmed=bool(args.environment_confirmed),
                     live_flag=bool(args.live_flag),
                     branch=args.branch,
