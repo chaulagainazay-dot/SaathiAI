@@ -1,0 +1,55 @@
+{
+  "authority_state": {
+    "active": "NOT GRANTED",
+    "canary_execution": "bounded read-only only (completed as reported)",
+    "production": "NOT AUTHORIZED",
+    "rollout_full": "NOT GRANTED",
+    "scope_expansion": "FORBIDDEN",
+    "write": "NOT GRANTED"
+  },
+  "contains_secret_values": false,
+  "fingerprint": "89a422e815865fdf673486f4",
+  "graduation": {
+    "graduation_decision": "NOT MADE",
+    "graduation_to_active_or_production": "FORBIDDEN by M41 constraints",
+    "requires": "explicit operator graduation decision (separate) AND is not permitted beyond bounded read-only canary under current constraints"
+  },
+  "grants_active": false,
+  "grants_production": false,
+  "grants_write": false,
+  "m32_canary_execution_mode": "PROHIBITION_UNCHANGED",
+  "machine_reevaluation": {
+    "consistent_with_report": true,
+    "m39_5_alerts_fired": 0,
+    "m39_5_highest_severity": "NONE",
+    "m41_rollback_triggers": [],
+    "m41_should_rollback": false
+  },
+  "machine_verified_live": false,
+  "milestone": "M41",
+  "mode": "read_only_canary",
+  "note": "Operator-run bounded canary result, reported to this session. Not executed or independently verified here (no credential accessed). Reported signals re-evaluated through the existing M39.5 alert detector and M41 rollback evaluator for consistency only.",
+  "operator_reported_signals": {
+    "approval_record": "still_valid",
+    "automatic_rollback": "armed",
+    "budget": "compliant",
+    "cleanup_failures": 0,
+    "identity": "unchanged",
+    "kill_switch": "tested",
+    "leak_findings": 0,
+    "m39_5_alerts": "none",
+    "provider_errors": 0,
+    "scope": "unchanged"
+  },
+  "post_canary_operator_actions": [
+    "revoke the disposable canary credential externally; confirm 401",
+    "delete the local Keychain reference",
+    "retain this attestation; no active/production authority is implied"
+  ],
+  "provider": "github_meta",
+  "schema": "m41.operator_attested_canary_completion.v1",
+  "session_executed_live": false,
+  "source": "OPERATOR_ATTESTED",
+  "trading_guardian": "UNCHANGED / UNENGAGED",
+  "verdict_reported_by_operator": "CANARY_ACTIVE_BOUNDED"
+}
