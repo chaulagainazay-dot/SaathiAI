@@ -72,6 +72,7 @@ class M40StageStatus(str, Enum):
 class LiveCertificationVerdict(str, Enum):
     LIVE_CERTIFIED = "LIVE_CERTIFIED"
     LIVE_FAILED = "LIVE_FAILED"
+    LIVE_STAGES_PASSED_PENDING_REVOCATION = "LIVE_STAGES_PASSED_PENDING_REVOCATION"
     LIVE_BLOCKED_OPERATOR_SECRET_REQUIRED = "LIVE_BLOCKED_OPERATOR_SECRET_REQUIRED"
     LIVE_BLOCKED = "LIVE_BLOCKED"
 
@@ -103,6 +104,10 @@ class M40Config:
     live_flag: bool = False
     environ: Optional[dict[str, str]] = None
     revocation_plan: str = "manual_github_pat_delete"
+    # operator-confirmed subject fingerprint binding the authorized sandbox account
+    expected_subject_fingerprint: str = ""
+    # when True, stage 5 performs the real post-revocation retry (expects 401)
+    post_revocation_retry: bool = False
 
 
 def _stage(name: str, status: M40StageStatus, **details: Any) -> dict[str, Any]:
@@ -215,7 +220,9 @@ def stage3_single_session(cfg: M40Config, *, rehearsal: bool = False) -> dict[st
         r = run_live_single_session(
             secret_source_kind=cfg.secret_source_kind, secret_locator=cfg.secret_locator,
             acknowledgements=cfg.acknowledgements, env_var_name=cfg.env_var_name,
-            environ=cfg.environ, live_flag=cfg.live_flag, session_id="m40_single",
+            environ=cfg.environ, live_flag=cfg.live_flag,
+            expected_subject_fingerprint=cfg.expected_subject_fingerprint,
+            session_id="m40_single",
         )
     status = _classify_single(r)
     return _stage(
@@ -241,7 +248,9 @@ def stage4_multi_session(cfg: M40Config, *, rehearsal: bool = False) -> dict[str
         r = run_live_multisession(
             secret_source_kind=cfg.secret_source_kind, secret_locator=cfg.secret_locator,
             acknowledgements=cfg.acknowledgements, env_var_name=cfg.env_var_name,
-            environ=cfg.environ, live_flag=cfg.live_flag, sequential=True,
+            environ=cfg.environ, live_flag=cfg.live_flag,
+            expected_subject_fingerprint=cfg.expected_subject_fingerprint,
+            sequential=True,
         )
     sessions = r.get("sessions", [])
     st = r.get("status")
@@ -305,20 +314,45 @@ def stage5_external_revocation(
             failure_classification=classification,
             audit_event="m39.single_session_failed",
         )
-    # live mode: revocation must be operator-confirmed; retry result is a real call
-    rev = record_external_revocation(
-        confirmed=operator_confirmed,
-        operator_note="live external revocation",
-    )
-    if not operator_confirmed:
+    # live mode: the post-revocation retry is a REAL call that must fail with 401.
+    if not cfg.post_revocation_retry:
+        # validation-only run: revocation not yet performed by operator
         return _stage(
-            "stage5_external_revocation", M40StageStatus.BLOCKED,
-            revocation_recorded=False, reason="operator_revocation_not_confirmed",
+            "stage5_external_revocation", M40StageStatus.NOT_EXERCISED,
+            revocation_recorded=False,
+            reason="pending_operator_revocation_then_post_revocation_retry",
         )
+    retry = run_live_single_session(
+        secret_source_kind=cfg.secret_source_kind, secret_locator=cfg.secret_locator,
+        acknowledgements=cfg.acknowledgements, env_var_name=cfg.env_var_name,
+        environ=cfg.environ, live_flag=cfg.live_flag,
+        expected_subject_fingerprint=cfg.expected_subject_fingerprint,
+        session_id="m40_revoke_retry",
+    )
+    reason = str(retry.get("reason", ""))
+    got_401 = (not retry.get("ok")) and ("401" in reason)
+    still_valid = bool(retry.get("ok"))  # token still authenticates -> NOT revoked
+    rev = record_external_revocation(
+        confirmed=True, operator_note="live external revocation confirmed by post-revocation retry",
+        verification_call_authorized=True,
+        verification_result=("http_401" if got_401 else reason[:60]),
+    )
+    if still_valid:
+        return _stage(
+            "stage5_external_revocation", M40StageStatus.FAILED,
+            revocation_recorded=rev["confirmed"], retry_still_authenticates=True,
+            reason="revocation_not_effective_token_still_valid",
+            failure_classification="revocation_ineffective",
+        )
+    status = M40StageStatus.PASSED if (got_401 and retry.get("handle_closed")) else M40StageStatus.FAILED
     return _stage(
-        "stage5_external_revocation", M40StageStatus.NOT_EXERCISED,
-        revocation_recorded=True,
-        reason="live_retry_requires_live_pipeline",
+        "stage5_external_revocation", status,
+        revocation_recorded=rev["confirmed"],
+        retry_failed_401=got_401,
+        cleanup_ok=bool(retry.get("handle_closed")),
+        failure_classification="authorization_failure_401" if got_401 else reason[:60],
+        audit_event="m39.single_session_failed",
+        live_network=bool(retry.get("live_network")),
     )
 
 
@@ -376,6 +410,13 @@ def _decide(stages: list[dict[str, Any]], *, live_exercised: bool,
         return LiveCertificationVerdict.LIVE_BLOCKED.value
     if all_passed_live and live_exercised:
         return LiveCertificationVerdict.LIVE_CERTIFIED.value
+    # stages 1-4 + 6 passed live, only external revocation still pending
+    non_stage5 = [s for s in stages if s["stage"] != "stage5_external_revocation"]
+    stage5 = next((s for s in stages if s["stage"] == "stage5_external_revocation"), None)
+    if (live_exercised and stage5 is not None
+            and stage5["status"] == M40StageStatus.NOT_EXERCISED.value
+            and all(s["status"] == M40StageStatus.PASSED.value for s in non_stage5)):
+        return LiveCertificationVerdict.LIVE_STAGES_PASSED_PENDING_REVOCATION.value
     return LiveCertificationVerdict.LIVE_BLOCKED.value
 
 

@@ -125,10 +125,18 @@ def test_stage5_rehearsal_revocation_401_cleanup():
     assert s["audit_event"] == "m39.single_session_failed"
 
 
-def test_stage5_live_without_operator_confirmation_blocks():
-    s = m40.stage5_external_revocation(_live_cfg(), operator_confirmed=False)
-    assert s["status"] == "BLOCKED"
+def test_stage5_live_validation_only_pending_revocation():
+    # live mode, no post-revocation retry requested -> NOT_EXERCISED (pending operator)
+    s = m40.stage5_external_revocation(_live_cfg(), operator_confirmed=True)
+    assert s["status"] == "NOT_EXERCISED"
     assert s["revocation_recorded"] is False
+    assert "pending_operator_revocation" in s["reason"]
+
+
+def test_expected_fingerprint_threads_into_config():
+    cfg = _live_cfg(expected_subject_fingerprint="deadbeef", post_revocation_retry=False)
+    assert cfg.expected_subject_fingerprint == "deadbeef"
+    assert cfg.post_revocation_retry is False
 
 
 # ── Stage 6 — evidence completeness ──────────────────────────────────────────

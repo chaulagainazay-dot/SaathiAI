@@ -378,6 +378,8 @@ def main(argv: Optional[list[str]] = None) -> int:
     m40_cert.add_argument("--operator-authorized", action="store_true", dest="operator_authorized")
     m40_cert.add_argument("--environment-confirmed", action="store_true")
     m40_cert.add_argument("--live-flag", action="store_true")
+    m40_cert.add_argument("--expected-subject-fp", default="", dest="expected_subject_fp")
+    m40_cert.add_argument("--post-revocation", action="store_true", dest="post_revocation")
     m40_cert.add_argument("--branch", default="")
     m40_cert.add_argument("--head", default="")
     sub.add_parser("m40-rehearsal")
@@ -1056,6 +1058,8 @@ def main(argv: Optional[list[str]] = None) -> int:
                     authorization_present=bool(args.operator_authorized),
                     environment_confirmed=bool(args.environment_confirmed),
                     live_flag=bool(args.live_flag),
+                    expected_subject_fingerprint=args.expected_subject_fp,
+                    post_revocation_retry=bool(args.post_revocation),
                     branch=args.branch,
                     head=args.head,
                     working_tree_class="DIRTY",
