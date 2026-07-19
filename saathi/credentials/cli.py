@@ -59,6 +59,13 @@ _M39_BANNER = (
     "TRADING GUARDIAN UNENGAGED"
 )
 
+_M40_BANNER = (
+    "M40 LIVE VALIDATION & PRODUCTION CERTIFICATION\nNON-PRODUCTION\nREAD-ONLY\n"
+    "FAIL-CLOSED\nNO CANARY GRANT\nNO ACTIVE\nNO PRODUCTION DEPLOY\n"
+    "LIVE CERTIFICATION REQUIRES REAL PROVIDER + OPERATOR SECRET\n"
+    "TRADING GUARDIAN UNENGAGED"
+)
+
 
 def run_m35_synthetic_session() -> dict[str, Any]:
     """Deterministic, offline synthetic sandbox-governance session. No raw secret
@@ -361,6 +368,20 @@ def main(argv: Optional[list[str]] = None) -> int:
     # ── M39.8 final operator package (offline; machine-readable manifest) ──────
     sub.add_parser("m39-8-operator-package")
     sub.add_parser("m39-8-emit-evidence")
+
+    # ── M40 live validation & production certification (fail-closed) ──────────
+    m40_cert = sub.add_parser("m40-certify")
+    m40_cert.add_argument("--source-kind", default="")
+    m40_cert.add_argument("--locator", default="")
+    m40_cert.add_argument("--env-var-name", default="")
+    m40_cert.add_argument("--ack", action="append", default=[], dest="acks")
+    m40_cert.add_argument("--authorization", action="store_true")
+    m40_cert.add_argument("--environment-confirmed", action="store_true")
+    m40_cert.add_argument("--live-flag", action="store_true")
+    m40_cert.add_argument("--branch", default="")
+    m40_cert.add_argument("--head", default="")
+    sub.add_parser("m40-rehearsal")
+    sub.add_parser("m40-emit-evidence")
     args = p.parse_args(argv)
 
     # Reject raw secret CLI carriers globally for any m36 command
@@ -1014,6 +1035,53 @@ def main(argv: Optional[list[str]] = None) -> int:
                 _print({"ok": False, "error": e.code, "detail": getattr(e, "detail", ""),
                         "banner": _M39_BANNER})
                 return 2
+
+    # ── M40 live validation & production certification (fail-closed) ──────────
+    if args.cmd and str(args.cmd).startswith("m40"):
+        from saathi.credentials import m39, m40
+        print(_M40_BANNER)
+        try:
+            m39.reject_m39_forbidden_argv(list(argv or sys.argv[1:]))
+        except m39.M39Error as e:
+            _print({"ok": False, "error": e.code, "banner": _M40_BANNER})
+            return 2
+        try:
+            if args.cmd == "m40-certify":
+                cfg = m40.M40Config(
+                    mode="live",
+                    secret_source_kind=args.source_kind,
+                    secret_locator=args.locator,
+                    env_var_name=args.env_var_name,
+                    acknowledgements=tuple(args.acks),
+                    authorization_present=bool(args.authorization),
+                    environment_confirmed=bool(args.environment_confirmed),
+                    live_flag=bool(args.live_flag),
+                    branch=args.branch,
+                    head=args.head,
+                    working_tree_class="DIRTY",
+                )
+                out = m40.run_live_certification(cfg)
+                if out.get("live_certified") and not out.get("live_exercised"):
+                    _print({"ok": False, "error": "invariant_violation_certified_without_live"})
+                    return 2
+                if not leakscan.is_clean(out):
+                    _print({"ok": False, "error": "leak_detected"}); return 2
+                _print(out)
+                return 0 if out.get("verdict") == "LIVE_CERTIFIED" else 5
+            if args.cmd == "m40-rehearsal":
+                out = m40.run_stage_rehearsal()
+                if not leakscan.is_clean(out):
+                    _print({"ok": False, "error": "leak_detected"}); return 2
+                _print(out)
+                return 0
+            if args.cmd == "m40-emit-evidence":
+                res = m40.emit_m40_evidence("docs/evidence/m40")
+                _print(res)
+                return 0
+        except m39.M39Error as e:
+            _print({"ok": False, "error": e.code, "detail": getattr(e, "detail", ""),
+                    "banner": _M40_BANNER})
+            return 2
 
     if args.cmd == "profiles":
         _print(list_profiles())
