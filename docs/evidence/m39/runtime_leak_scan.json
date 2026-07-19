@@ -1,0 +1,14 @@
+{
+  "body": {
+    "clean": true,
+    "contains_secret_values": false,
+    "finding_count": 0,
+    "findings": [],
+    "schema": "m39.runtime_leak_scan.v1"
+  },
+  "fingerprint": "c51fbce3fca61cbbb1415d146f4972d106fbe3679e6d037dd5c1c47e0603539e",
+  "privacy_safe": true,
+  "schema": "m39.runtime_leak_scan.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

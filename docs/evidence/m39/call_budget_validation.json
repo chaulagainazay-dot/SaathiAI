@@ -1,0 +1,13 @@
+{
+  "body": {
+    "aggregate_default": 6,
+    "live_status": "NOT_EXERCISED",
+    "offline_gates_passed": true,
+    "per_session_max": 3
+  },
+  "fingerprint": "f980f60284dfa6c6f6c4418a34ab0e2b16e73d718a9f90440ce06287d18fab12",
+  "privacy_safe": true,
+  "schema": "m39.call_budget_validation.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

@@ -592,4 +592,25 @@ UNCHANGED / UNENGAGED. Verdict: **GOVERNED PROVIDER-ADAPTER PILOT — SIMULATION
 - Canary readiness evaluator (read-only)
 - Evidence: docs/evidence/m38/
 - Module: saathi/credentials/m38.py
-- M39 not started
+- M39 authorized for implementation after M38 tip
+
+## M39 — Live Disposable Sandbox Validation & Canary Authorization Decision (2026-07-18)
+
+**Status:** M39 IMPLEMENTATION COMPLETE — OFFLINE CERTIFIED, LIVE VALIDATION BLOCKED (operator disposable secret reference required; CANARY not granted).
+
+- Live preflight fail-closed; feature flag `SAATHI_M39_ALLOW_LIVE_SANDBOX_VALIDATION`
+- Secret reference only (Keychain / env name / approved store); 10 runtime acks
+- Live single + multi-session runners composed from M36–M38 (github_meta GET /user + /meta only)
+- Canary eligibility evaluator (read-only; never grants CANARY)
+- Evidence: docs/evidence/m39/ (live statuses NOT_EXERCISED)
+- Module: saathi/credentials/m39.py
+
+**Explicit live-dependent state (offline checkpoint):**
+- live single-session: NOT_EXERCISED
+- live multi-session: NOT_EXERCISED
+- external credential revocation: NOT_EXERCISED
+- live encrypted-store wiring: NOT_EXERCISED
+- CANARY: NOT GRANTED
+- ACTIVE: NOT GRANTED
+- M40 production authorization: NOT GRANTED
+- M40 not started

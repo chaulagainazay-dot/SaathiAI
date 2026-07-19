@@ -1,0 +1,11 @@
+{
+  "body": {
+    "live_status": "NOT_EXERCISED",
+    "offline_paths_revoke": true
+  },
+  "fingerprint": "c6fe302b648655708c63d45a8e4115e6be63824b900a2d71a88c0613a46bbe93",
+  "privacy_safe": true,
+  "schema": "m39.lease_revocation.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

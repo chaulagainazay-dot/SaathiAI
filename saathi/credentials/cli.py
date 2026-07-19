@@ -53,6 +53,12 @@ _M38_BANNER = (
     "ROLLOUT OFF\nNO CANARY\nNO ACTIVE\nTRADING GUARDIAN UNENGAGED"
 )
 
+_M39_BANNER = (
+    "M39 LIVE DISPOSABLE SANDBOX VALIDATION\nNON-PRODUCTION\nREAD-ONLY\n"
+    "BOUNDED LIVE VALIDATION ONLY\nROLLOUT OFF\nNO CANARY GRANT\nNO ACTIVE\n"
+    "TRADING GUARDIAN UNENGAGED"
+)
+
 
 def run_m35_synthetic_session() -> dict[str, Any]:
     """Deterministic, offline synthetic sandbox-governance session. No raw secret
@@ -258,6 +264,38 @@ def main(argv: Optional[list[str]] = None) -> int:
                  "m38-run-failure-matrix", "m38-evaluate-canary-readiness",
                  "emit-m38-evidence"):
         sub.add_parser(name)
+    # ── M39 live disposable sandbox validation / canary eligibility (no grant) ─
+    sub.add_parser("m39-preflight")
+    m39_auth = sub.add_parser("m39-authorize-live-validation")
+    m39_auth.add_argument("--account-ref", default="")
+    m39_auth.add_argument("--credential-ref", default="")
+    m39_auth.add_argument("--source-kind", default="OS_KEYCHAIN_REFERENCE")
+    m39_auth.add_argument("--ack", action="append", default=[], dest="acks")
+    m39_qual = sub.add_parser("m39-qualify-secret-reference")
+    m39_qual.add_argument("--source-kind", default="OS_KEYCHAIN_REFERENCE")
+    m39_qual.add_argument("--locator", default="")
+    m39_qual.add_argument("--env-var-name", default="")
+    m39_single = sub.add_parser("m39-run-live-single-session")
+    m39_single.add_argument("--source-kind", default="OS_KEYCHAIN_REFERENCE")
+    m39_single.add_argument("--locator", default="")
+    m39_single.add_argument("--env-var-name", default="")
+    m39_single.add_argument("--expected-subject-fp", default="")
+    m39_single.add_argument("--ack", action="append", default=[], dest="acks")
+    m39_multi = sub.add_parser("m39-run-live-multisession")
+    m39_multi.add_argument("--source-kind", default="OS_KEYCHAIN_REFERENCE")
+    m39_multi.add_argument("--locator", default="")
+    m39_multi.add_argument("--env-var-name", default="")
+    m39_multi.add_argument("--expected-subject-fp", default="")
+    m39_multi.add_argument("--ack", action="append", default=[], dest="acks")
+    m39_int = sub.add_parser("m39-interrupt-session")
+    m39_int.add_argument("--session-id", default="")
+    m39_rec = sub.add_parser("m39-recover-session")
+    m39_rec.add_argument("--session-id", default="")
+    m39_rev = sub.add_parser("m39-confirm-external-revocation")
+    m39_rev.add_argument("--confirmed", action="store_true")
+    m39_rev.add_argument("--note", default="")
+    sub.add_parser("m39-evaluate-canary-eligibility")
+    sub.add_parser("emit-m39-evidence")
     args = p.parse_args(argv)
 
     # Reject raw secret CLI carriers globally for any m36 command
@@ -522,6 +560,159 @@ def main(argv: Optional[list[str]] = None) -> int:
             import subprocess
             import sys as _sys
             rc = subprocess.call([_sys.executable, "scripts/m38_generate_evidence.py", "--offline"])
+            return rc
+
+    if args.cmd and str(args.cmd).startswith("m39"):
+        import os
+        from saathi.credentials import m39
+        print(_M39_BANNER)
+        try:
+            m39.reject_m39_forbidden_argv(list(argv or sys.argv[1:]))
+        except m39.M39Error as e:
+            _print({"ok": False, "error": e.code, "banner": _M39_BANNER})
+            return 2
+
+        if args.cmd == "m39-preflight":
+            _print(m39.preflight_summary())
+            return 0
+
+        if args.cmd == "m39-authorize-live-validation":
+            if not args.account_ref or not args.credential_ref:
+                _print({
+                    "ok": False,
+                    "error": "account_ref_and_credential_ref_required",
+                    "required_acks": list(m39.M39_ACK_TOKENS),
+                    "note": "all 10 M39 acknowledgements required at runtime",
+                })
+                return 1
+            from saathi.credentials.m36 import AuthorizationStore
+            store = AuthorizationStore()
+            try:
+                auth = m39.create_live_authorization(
+                    store,
+                    account_ref_id=args.account_ref,
+                    credential_ref_id=args.credential_ref,
+                    acknowledgements=tuple(args.acks),
+                    secret_source_kind=args.source_kind,
+                )
+            except m39.M39Error as e:
+                _print({"ok": False, "error": e.code, "detail": e.detail})
+                return 3
+            out = auth.to_safe_dict()
+            if not leakscan.is_clean(out):
+                _print({"ok": False, "error": "leak_detected"}); return 2
+            _print({"ok": True, "authorization": out, "grants_canary": False})
+            return 0
+
+        if args.cmd == "m39-qualify-secret-reference":
+            if not args.locator:
+                _print({
+                    "ok": False,
+                    "error": "locator_required",
+                    "blocker": "approved disposable secret reference required",
+                    "status": "NOT_EXERCISED",
+                })
+                return 4
+            try:
+                q = m39.qualify_secret_reference(
+                    source_kind=args.source_kind,
+                    locator=args.locator,
+                    env_var_name=args.env_var_name,
+                    require_exists=True,
+                )
+            except m39.M39Error as e:
+                _print({"ok": False, "error": e.code, "status": "BLOCKED"})
+                return 3
+            if not leakscan.is_clean(q):
+                _print({"ok": False, "error": "leak_detected"}); return 2
+            _print({"ok": q.get("qualified"), "qualification": q})
+            return 0 if q.get("qualified") else 3
+
+        if args.cmd in ("m39-run-live-single-session", "m39-run-live-multisession"):
+            live_flag = os.environ.get(m39.ENV_LIVE_FLAG, "") == "1"
+            if not live_flag:
+                _print({
+                    "ok": False,
+                    "error": "live_session_not_enabled",
+                    "blocker": (
+                        f"Live validation requires {m39.ENV_LIVE_FLAG}=1, "
+                        "approved secret reference, all 10 acknowledgements, "
+                        "and successful preflight. Offline path: emit-m39-evidence."
+                    ),
+                    "live_single_session": "NOT_EXERCISED",
+                    "live_multi_session": "NOT_EXERCISED",
+                    "banner": _M39_BANNER,
+                    "grants_canary": False,
+                })
+                return 4
+            if not args.locator or not args.acks:
+                _print({
+                    "ok": False,
+                    "error": "locator_and_acknowledgements_required",
+                    "required_acks": list(m39.M39_ACK_TOKENS),
+                })
+                return 3
+            if args.cmd == "m39-run-live-single-session":
+                out = m39.run_live_single_session(
+                    secret_source_kind=args.source_kind,
+                    secret_locator=args.locator,
+                    acknowledgements=tuple(args.acks),
+                    expected_subject_fingerprint=args.expected_subject_fp,
+                    env_var_name=args.env_var_name,
+                    live_flag=True,
+                )
+            else:
+                out = m39.run_live_multisession(
+                    secret_source_kind=args.source_kind,
+                    secret_locator=args.locator,
+                    acknowledgements=tuple(args.acks),
+                    expected_subject_fingerprint=args.expected_subject_fp,
+                    env_var_name=args.env_var_name,
+                    live_flag=True,
+                )
+            if not leakscan.is_clean(out):
+                _print({"ok": False, "error": "leak_detected"}); return 2
+            _print(out)
+            return 0 if out.get("ok") else 3
+
+        if args.cmd == "m39-interrupt-session":
+            ks = m39.LiveKillSwitch()
+            ks.trip("cli_interrupt")
+            _print({
+                "ok": True,
+                "kill_switch": ks.to_dict(),
+                "session_id": args.session_id or None,
+                "note": "new_provider_calls_blocked; local cleanup required",
+                "grants_authority": False,
+            })
+            return 0
+
+        if args.cmd == "m39-recover-session":
+            from saathi.credentials import m38 as _m38
+            c = _m38.MultiSessionCoordinator()
+            out = c.recover_session(args.session_id or "none")
+            _print(out)
+            return 0
+
+        if args.cmd == "m39-confirm-external-revocation":
+            out = m39.record_external_revocation(
+                confirmed=bool(args.confirmed),
+                operator_note=args.note or "",
+            )
+            _print(out)
+            return 0 if out.get("confirmed") else 5
+
+        if args.cmd == "m39-evaluate-canary-eligibility":
+            out = m39.run_m39_validation()
+            if not leakscan.is_clean(out["canary_eligibility"]):
+                _print({"ok": False, "error": "leak_detected"}); return 2
+            _print(out["canary_eligibility"])
+            return 0
+
+        if args.cmd == "emit-m39-evidence":
+            import subprocess
+            import sys as _sys
+            rc = subprocess.call([_sys.executable, "scripts/m39_generate_evidence.py", "--offline"])
             return rc
 
     if args.cmd == "profiles":

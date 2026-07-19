@@ -84,8 +84,8 @@
     "cloud_enabled": false,
     "trading_guardian": "UNCHANGED / UNENGAGED"
   },
-  "next_milestone": "M39",
-  "stop_reason": "M32 complete; do not auto-start M33",
+  "next_milestone": "OPERATOR_DISPOSABLE_SECRET_REF_THEN_M39_LIVE",
+  "stop_reason": "M39 blocked on operator disposable secret reference; do not start M40",
   "trading_guardian": "UNCHANGED / UNENGAGED",
   "cloud_fallback": false,
   "residual_exceptions": 0,
@@ -107,11 +107,22 @@
     "trading_guardian": "UNCHANGED / UNENGAGED",
     "full_suite": "3287 passed, 1 skipped, 0 failed"
   },
-  "current_milestone": "M38",
+  "current_milestone": "M39",
   "m36_status": "IMPLEMENTATION_COMPLETE_REAL_SESSION_NOT_EXERCISED",
   "notes_m36": "Offline governance complete; real disposable sandbox credential not supplied",
   "m37_status": "SECURITY_CERTIFIED_WITH_LIMITATIONS",
   "notes_m37": "Provider contract + offline lifecycle + negatives; live sandbox not exercised",
   "m38_status": "READY_WITH_LIMITATIONS",
-  "notes_m38": "Multi-session offline complete; canary not granted; live multi-session not exercised"
+  "notes_m38": "Multi-session offline complete; canary not granted; live multi-session not exercised",
+  "m39_status": "IMPLEMENTATION_COMPLETE_OFFLINE_CERTIFIED_LIVE_VALIDATION_BLOCKED",
+  "notes_m39": "Non-live prep complete; live single/multi NOT_EXERCISED; canary not granted; M40 not started",
+  "m39_live_state": {
+    "live_single_session": "NOT_EXERCISED",
+    "live_multi_session": "NOT_EXERCISED",
+    "external_credential_revocation": "NOT_EXERCISED",
+    "live_encrypted_store_wiring": "NOT_EXERCISED",
+    "canary": "NOT GRANTED",
+    "active": "NOT GRANTED",
+    "m40_production_authorization": "NOT GRANTED"
+  }
 }

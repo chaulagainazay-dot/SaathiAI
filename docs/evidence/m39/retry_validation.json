@@ -1,0 +1,12 @@
+{
+  "body": {
+    "live_status": "NOT_EXERCISED",
+    "m38_retry_ok": true,
+    "status": "COVERED_BY_M38_OFFLINE"
+  },
+  "fingerprint": "a2ba3eb0267856326dd589d6a373a8c05799f98cfa1534898da9f15ce56f8474",
+  "privacy_safe": true,
+  "schema": "m39.retry_validation.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

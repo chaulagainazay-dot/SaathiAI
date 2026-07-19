@@ -1921,4 +1921,14 @@ READ_ONLY, credential-free, OFF/SHADOW only.
 * **Canary readiness is not canary authorization.** Max without live: `READY_WITH_LIMITATIONS`.
 * **No shared SecretHandles**; aggregate and per-session budgets; concurrency ceiling.
 * **Recovery never reopens secrets from evidence.**
-* **M39 not started.** Authorities remain NOT GRANTED. Trading Guardian UNENGAGED.
+* Authorities remain NOT GRANTED. Trading Guardian UNENGAGED.
+
+---
+
+## M39 — Live disposable sandbox validation & canary eligibility (2026-07-18)
+
+* **Module:** `saathi.credentials.m39` — live preflight, secret-reference qualification, single/multi live runners, kill switch, external revocation record, canary **eligibility** evaluator.
+* **Live sandbox** requires operator disposable secret **reference** + `SAATHI_M39_ALLOW_LIVE_SANDBOX_VALIDATION=1` + all 10 runtime acks. Default offline verdict: `BLOCKED_OPERATOR_SECRET_REQUIRED`.
+* **Never** accepts plaintext tokens in CLI/evidence/Git. Never grants CANARY/ACTIVE/rollout/production/write.
+* **Provider:** `github_meta` only — `GET /user`, `GET /meta`. Per-session budget ≤ 3.
+* **M40 not started.** Trading Guardian UNENGAGED.

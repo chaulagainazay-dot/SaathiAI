@@ -1,0 +1,12 @@
+{
+  "body": {
+    "handle_close_required": true,
+    "live_status": "NOT_EXERCISED",
+    "offline_idempotent": true
+  },
+  "fingerprint": "898ff50a8d6b63b25ccf08e4a39184df7d8810643456a4f69eaff20f823691c6",
+  "privacy_safe": true,
+  "schema": "m39.cleanup_validation.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

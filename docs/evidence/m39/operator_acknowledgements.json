@@ -1,0 +1,24 @@
+{
+  "body": {
+    "contains_secret_values": false,
+    "inferred_from_docs": false,
+    "required": [
+      "I_CONFIRM_CREDENTIAL_IS_DISPOSABLE",
+      "I_CONFIRM_SANDBOX_ACCOUNT_WHERE_POSSIBLE",
+      "I_CONFIRM_MINIMUM_READ_ONLY_PERMISSIONS",
+      "I_CONFIRM_NO_REPOSITORY_WRITE_PERMISSION",
+      "I_CONFIRM_NO_ORG_ADMIN_PERMISSION",
+      "I_CONFIRM_NO_BILLING_PERMISSION",
+      "I_CONFIRM_NO_PACKAGE_DEPLOY_WORKFLOW_SECRET_WRITE",
+      "I_CONFIRM_REVOKE_IMMEDIATELY_AFTER_VALIDATION",
+      "I_CONFIRM_READINESS_IS_NOT_AUTHORIZATION",
+      "I_CONFIRM_NO_PRODUCTION_ROLLOUT_CANARY_ACTIVE_WRITE"
+    ],
+    "status": "NOT_PROVIDED"
+  },
+  "fingerprint": "6a9ebe7c532cc8574338cb61f2ff9c0eb3ed189146a3887912afe92d5ced4ea4",
+  "privacy_safe": true,
+  "schema": "m39.operator_acknowledgements.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

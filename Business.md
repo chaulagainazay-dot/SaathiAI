@@ -637,3 +637,13 @@ external risk.
 * Multi-session reliability evaluation does not authorize production traffic or canary.
 * Live multi-session validation still requires disposable credentials and operator ownership.
 * READY_WITH_LIMITATIONS is a technical signal for operators, not a go-live decision.
+
+---
+
+## M39 business notes (2026-07-18)
+
+* Live disposable sandbox validation is the final gate before a **separately authorized** canary milestone may be considered.
+* Without an operator-supplied disposable secret **reference**, M39 remains **BLOCKED** — no live evidence may be fabricated.
+* Canary **eligibility** is not canary **authorization**. M39 never sets CANARY = GRANTED.
+* External token revocation remains a manual operator duty after any live exercise.
+* Production, rollout, ACTIVE, and write authority remain NOT GRANTED. Trading Guardian remains unengaged.

@@ -1,0 +1,19 @@
+{
+  "body": {
+    "automated_token_deletion": false,
+    "confirmed": false,
+    "contains_secret_values": false,
+    "operator_note": "pending_operator_action",
+    "saathios_has_token_delete_authority": false,
+    "schema": "m39.external_revocation_confirmation.v1",
+    "status": "PENDING",
+    "timestamp_bucket": "recorded",
+    "verification_call_authorized": false,
+    "verification_result": ""
+  },
+  "fingerprint": "75ffa3cbf6fe674be9e34a552be3b9e1ea86c0c815dc5b5dfebe6c17d17aa5b2",
+  "privacy_safe": true,
+  "schema": "m39.external_revocation_confirmation.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

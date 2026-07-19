@@ -1,0 +1,13 @@
+{
+  "body": {
+    "clean": true,
+    "contains_secret_values": false,
+    "note": "focused evidence generation scan clean; full repo scan in CI/operator step",
+    "status": "DEFERRED_TO_POST_COMMIT_SCAN"
+  },
+  "fingerprint": "e0946d3235677ee419a4cc19036a736136e3823d64b0e562b720876daa6e01d8",
+  "privacy_safe": true,
+  "schema": "m39.repository_leak_scan.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

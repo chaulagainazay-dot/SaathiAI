@@ -1,0 +1,10 @@
+{
+  "body": {
+    "fingerprint": "64f0af8e8446fd490d15b2bb23c7afeddbac826722454255a5f78b69133ef68f"
+  },
+  "fingerprint": "ceaa917b60bb30d0d6ce0c20a7deca11a114b41ae5a87c28fac40e90df32f507",
+  "privacy_safe": true,
+  "schema": "m39.verification_fingerprint.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

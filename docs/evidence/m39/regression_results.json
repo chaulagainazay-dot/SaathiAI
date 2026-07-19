@@ -1,0 +1,13 @@
+{
+  "body": {
+    "m38_ok": true,
+    "m39_offline_gates_failed": 0,
+    "m39_offline_gates_passed": 23,
+    "m39_ok": true
+  },
+  "fingerprint": "7396ea3a3bc4208f62f1d3d3dfd54b5530b528c5d4ac317a9fb639f419117ae3",
+  "privacy_safe": true,
+  "schema": "m39.regression_results.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

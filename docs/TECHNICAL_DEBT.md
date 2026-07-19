@@ -7,6 +7,12 @@ M25 cert + M26 ops + M27 gov + M28 gateway + M29 identity remain canonical.
 **Do not auto-start M31.**
 Product IELTSAlert work uses **PRODUCT/IELTSAlert** numbering — not platform debt.
 
+### M39 residual / blocked
+- Live single-session and live multi-session sandbox validation **blocked** pending operator disposable secret **reference** (Keychain/env/approved store only).
+- External credential revocation confirmation pending until live exercise occurs.
+- Canary authorization remains NOT GRANTED; M40 not started.
+- Encrypted store live wiring still operator-dependent.
+
 ### M30 residual / deferred
 - Sandbox certification ≠ live-provider certification (explicit limitation on all built-ins).
 - Live OAuth / SaaS accounts still deferred.
