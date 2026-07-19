@@ -697,3 +697,16 @@ UNCHANGED / UNENGAGED. Verdict: **GOVERNED PROVIDER-ADAPTER PILOT — SIMULATION
 - Tests: 17 passed; evidence `docs/evidence/m39_5/` (deterministic, leak-clean)
 - Authorities unchanged: CANARY / ACTIVE / M40 production authorization NOT GRANTED
 - Next: M39.6 (security & adversarial test expansion)
+
+## M39.6 — Security & Adversarial Test Expansion (2026-07-19)
+
+**Status:** ADVERSARIAL_COVERAGE_EXPANDED (test-only; synthetic credentials only).
+
+- No production code changed; `tests/test_m39_6_adversarial.py` — 37 passed
+- Vectors: raw-secret injection, env value-vs-name confusion, command injection,
+  endpoint/traversal/SSRF/method escape, provider substitution, scope/rollout
+  escalation, canary escalation (forged live inputs still cannot grant),
+  kill-switch bypass, budget bypass, unsafe defaults, evidence tampering,
+  exception/output leakage, redaction, non-live guarantee
+- Authorities unchanged: CANARY / ACTIVE / M40 production authorization NOT GRANTED
+- Next: M39.7 (reproducibility & clean-environment validation)
