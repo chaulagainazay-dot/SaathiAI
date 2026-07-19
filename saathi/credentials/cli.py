@@ -296,6 +296,27 @@ def main(argv: Optional[list[str]] = None) -> int:
     m39_rev.add_argument("--note", default="")
     sub.add_parser("m39-evaluate-canary-eligibility")
     sub.add_parser("emit-m39-evidence")
+
+    # ── M39.1 operator dry-run tooling (offline; no secret resolution) ─────────
+    m391_plan = sub.add_parser("m39-1-plan")
+    m391_plan.add_argument("--mode", default="single", choices=["single", "multi"])
+    m391_plan.add_argument("--source-kind", default="OS_KEYCHAIN_REFERENCE")
+    m391_plan.add_argument("--locator", default="")
+    m391_plan.add_argument("--env-var-name", default="")
+    m391_preview = sub.add_parser("m39-1-preview")
+    m391_preview.add_argument("--mode", default="single", choices=["single", "multi"])
+    m391_preview.add_argument("--source-kind", default="OS_KEYCHAIN_REFERENCE")
+    m391_preview.add_argument("--locator", default="")
+    m391_preview.add_argument("--env-var-name", default="")
+    m391_avail = sub.add_parser("m39-1-backend-availability")
+    m391_avail.add_argument("--source-kind", default="OS_KEYCHAIN_REFERENCE")
+    m391_avail.add_argument("--locator", default="")
+    m391_avail.add_argument("--env-var-name", default="")
+    m391_rev = sub.add_parser("m39-1-revocation-checklist")
+    m391_rev.add_argument("--source-kind", default="OS_KEYCHAIN_REFERENCE")
+    m391_rev.add_argument("--locator", default="")
+    sub.add_parser("m39-1-diagnostics")
+    sub.add_parser("m39-1-emit-evidence")
     args = p.parse_args(argv)
 
     # Reject raw secret CLI carriers globally for any m36 command
@@ -714,6 +735,58 @@ def main(argv: Optional[list[str]] = None) -> int:
             import sys as _sys
             rc = subprocess.call([_sys.executable, "scripts/m39_generate_evidence.py", "--offline"])
             return rc
+
+        # ── M39.1 operator dry-run tooling (offline; never resolves a secret) ──
+        if args.cmd and str(args.cmd).startswith("m39-1-"):
+            from saathi.credentials import m39_1
+            try:
+                if args.cmd == "m39-1-plan":
+                    out = m39_1.build_execution_plan(
+                        mode=args.mode, source_kind=args.source_kind,
+                        locator=args.locator, env_var_name=args.env_var_name,
+                    )
+                    if not leakscan.is_clean(out):
+                        _print({"ok": False, "error": "leak_detected"}); return 2
+                    _print(out)
+                    return 0 if out.get("plan_valid") else 5
+                if args.cmd == "m39-1-preview":
+                    plan = m39_1.build_execution_plan(
+                        mode=args.mode, source_kind=args.source_kind,
+                        locator=args.locator, env_var_name=args.env_var_name,
+                    )
+                    print(m39_1.render_command_preview(plan))
+                    return 0 if plan.get("plan_valid") else 5
+                if args.cmd == "m39-1-backend-availability":
+                    out = m39_1.check_backend_availability(
+                        source_kind=args.source_kind, locator=args.locator,
+                        env_var_name=args.env_var_name,
+                    )
+                    if not leakscan.is_clean(out):
+                        _print({"ok": False, "error": "leak_detected"}); return 2
+                    _print(out)
+                    return 0 if out.get("ready") else 5
+                if args.cmd == "m39-1-revocation-checklist":
+                    out = m39_1.generate_revocation_checklist(
+                        source_kind=args.source_kind, locator=args.locator,
+                    )
+                    if not leakscan.is_clean(out):
+                        _print({"ok": False, "error": "leak_detected"}); return 2
+                    print(m39_1.render_revocation_checklist(out))
+                    return 0
+                if args.cmd == "m39-1-diagnostics":
+                    out = m39_1.collect_offline_diagnostics()
+                    if not leakscan.is_clean(out):
+                        _print({"ok": False, "error": "leak_detected"}); return 2
+                    _print(out)
+                    return 0
+                if args.cmd == "m39-1-emit-evidence":
+                    res = m39_1.emit_m39_1_evidence("docs/evidence/m39_1")
+                    _print(res)
+                    return 0
+            except m39.M39Error as e:
+                _print({"ok": False, "error": e.code, "detail": getattr(e, "detail", ""),
+                        "banner": _M39_BANNER})
+                return 2
 
     if args.cmd == "profiles":
         _print(list_profiles())

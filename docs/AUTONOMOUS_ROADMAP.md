@@ -614,3 +614,16 @@ UNCHANGED / UNENGAGED. Verdict: **GOVERNED PROVIDER-ADAPTER PILOT — SIMULATION
 - ACTIVE: NOT GRANTED
 - M40 production authorization: NOT GRANTED
 - M40 not started
+
+## M39.1 — Operator Live-Validation Dry-Run Tooling (2026-07-19)
+
+**Status:** OFFLINE OPERATOR TOOLING COMPLETE (PRE-M40 offline readiness extension).
+
+- Module `saathi/credentials/m39_1.py` composes M39; introduces no new subsystem
+- CLI: `m39-1-plan`, `m39-1-preview`, `m39-1-backend-availability`,
+  `m39-1-revocation-checklist`, `m39-1-diagnostics`, `m39-1-emit-evidence`
+- Dry-run execution plan, command preview, secret-backend availability (no `get()`),
+  revocation checklist, redacted diagnostics — all offline, no secret resolution
+- Tests: 25 passed; evidence `docs/evidence/m39_1/` (deterministic, leak-clean)
+- Authorities unchanged: CANARY / ACTIVE / M40 production authorization NOT GRANTED
+- Plan: `docs/PRE_M40_OFFLINE_READINESS_PLAN.md`; next: M39.2

@@ -1,0 +1,53 @@
+{
+  "authorities": {
+    "ACTIVE_authorization": "NOT GRANTED",
+    "CANARY_authorization": "NOT GRANTED",
+    "production_authorization": "NOT GRANTED",
+    "rollout_authorization": "NOT GRANTED",
+    "write_authority": "NOT GRANTED"
+  },
+  "contains_secret_values": false,
+  "current_state": {
+    "external_credential_revocation": "NOT_EXERCISED",
+    "reason": "no live credential exercised; checklist is preparatory"
+  },
+  "fingerprint": "369de16ed4e14c4577f07bcb",
+  "kind": "revocation_checklist",
+  "locator_fingerprint": "",
+  "provider": "github_meta",
+  "schema": "m39_1.revocation_checklist.v1",
+  "source_kind": "OS_KEYCHAIN_REFERENCE",
+  "steps": [
+    {
+      "action": "Revoke the disposable GitHub PAT at GitHub \u2192 Settings \u2192 Developer settings \u2192 Personal access tokens \u2192 Delete.",
+      "id": "REV-1",
+      "operator_only": true,
+      "verifies": "external_token_revocation"
+    },
+    {
+      "action": "Confirm the token no longer authenticates: `curl -sS -o /dev/null -w '%{http_code}' -H 'Authorization: token <TOKEN>' https://api.github.com/user` must return 401.",
+      "id": "REV-2",
+      "note": "Operator runs this outside SaathiOS; SaathiOS never handles the token value.",
+      "operator_only": true,
+      "verifies": "revocation_effective"
+    },
+    {
+      "action": "Remove the local secret reference from the backend (source_kind=OS_KEYCHAIN_REFERENCE, fingerprint=<none>).",
+      "id": "REV-3",
+      "operator_only": true,
+      "verifies": "local_reference_removed"
+    },
+    {
+      "action": "Record revocation via `m39-confirm-external-revocation` so evidence reflects it.",
+      "id": "REV-4",
+      "operator_only": false,
+      "verifies": "external_revocation_confirmation_recorded"
+    },
+    {
+      "action": "Run `m39-cleanup` / verify SecretHandle and session leases are closed; confirm no SecretHandle remains open.",
+      "id": "REV-5",
+      "operator_only": false,
+      "verifies": "lease_and_handle_cleanup"
+    }
+  ]
+}

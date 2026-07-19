@@ -124,5 +124,10 @@
     "canary": "NOT GRANTED",
     "active": "NOT GRANTED",
     "m40_production_authorization": "NOT GRANTED"
+  },
+  "pre_m40_offline_series": {
+    "plan": "docs/PRE_M40_OFFLINE_READINESS_PLAN.md",
+    "m39_1_status": "OFFLINE_OPERATOR_TOOLING_COMPLETE",
+    "next_offline_milestone": "M39.2"
   }
 }

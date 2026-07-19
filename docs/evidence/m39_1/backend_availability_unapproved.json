@@ -1,0 +1,18 @@
+{
+  "authorities": {
+    "ACTIVE_authorization": "NOT GRANTED",
+    "CANARY_authorization": "NOT GRANTED",
+    "production_authorization": "NOT GRANTED",
+    "rollout_authorization": "NOT GRANTED",
+    "write_authority": "NOT GRANTED"
+  },
+  "available": "UNAVAILABLE",
+  "contains_secret_values": false,
+  "kind": "backend_availability",
+  "provider": "github_meta",
+  "ready": false,
+  "reason": "unapproved_secret_backend",
+  "resolves_plaintext": false,
+  "schema": "m39_1.backend_availability.v1",
+  "source_kind": "FORBIDDEN_KIND"
+}

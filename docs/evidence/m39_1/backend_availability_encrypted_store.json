@@ -1,0 +1,18 @@
+{
+  "authorities": {
+    "ACTIVE_authorization": "NOT GRANTED",
+    "CANARY_authorization": "NOT GRANTED",
+    "production_authorization": "NOT GRANTED",
+    "rollout_authorization": "NOT GRANTED",
+    "write_authority": "NOT GRANTED"
+  },
+  "available": "BLOCKED_OPERATOR_ACTION_REQUIRED",
+  "contains_secret_values": false,
+  "kind": "backend_availability",
+  "provider": "github_meta",
+  "ready": false,
+  "reason": "encrypted_store_requires_operator_wiring",
+  "resolves_plaintext": false,
+  "schema": "m39_1.backend_availability.v1",
+  "source_kind": "ENCRYPTED_STORE_REFERENCE"
+}
