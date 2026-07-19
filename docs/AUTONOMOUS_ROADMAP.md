@@ -740,3 +740,24 @@ UNCHANGED / UNENGAGED. Verdict: **GOVERNED PROVIDER-ADAPTER PILOT — SIMULATION
 - Tests: 10 passed; evidence `docs/evidence/m39_8/` (deterministic, leak-clean)
 - **PRE-M40 offline readiness series complete.** M40 remains blocked on operator
   live validation.
+
+## M40 — Live Validation & Production Certification (2026-07-19)
+
+**Status:** LIVE-VALIDATION LAYER COMPLETE — LIVE CERTIFICATION BLOCKED (operator
+disposable secret reference required).
+
+- Module `saathi/credentials/m40.py` composes M31–M39 runners only; no new
+  subsystem, provider capability, product feature, or production path
+- Real gated 6-stage pipeline `run_live_certification` (acks → preflight → single →
+  multi → revocation → evidence); fail-closed; LIVE_CERTIFIED reachable only with a
+  real provider exercised. `run_stage_rehearsal` proves stage wiring offline
+  (SIMULATED_NOT_LIVE, never certifies)
+- Verdicts: LIVE_CERTIFIED / LIVE_FAILED / LIVE_BLOCKED_OPERATOR_SECRET_REQUIRED /
+  LIVE_BLOCKED. This session: LIVE_BLOCKED_OPERATOR_SECRET_REQUIRED (no credential)
+- CLI: `m40-certify`, `m40-rehearsal`, `m40-emit-evidence` (inherit forbidden-argv guard)
+- Docs: M40_IMPLEMENTATION / M40_SECURITY_AUDIT / M40_OPERATOR_GUIDE /
+  M40_TEST_REPORT / M40_FINAL_REPORT
+- Tests: 25 passed; evidence `docs/evidence/m40/` (deterministic, leak-clean);
+  backward-compat 11/11 intact
+- Authorities unchanged: LIVE PROVIDER CERTIFICATION / CANARY / ACTIVE NOT GRANTED;
+  PRODUCTION DEPLOYMENT NOT AUTHORIZED; Trading Guardian UNENGAGED

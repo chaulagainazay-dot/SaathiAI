@@ -84,8 +84,8 @@
     "cloud_enabled": false,
     "trading_guardian": "UNCHANGED / UNENGAGED"
   },
-  "next_milestone": "OPERATOR_DISPOSABLE_SECRET_REF_THEN_M39_LIVE",
-  "stop_reason": "M39 blocked on operator disposable secret reference; do not start M40",
+  "next_milestone": "OPERATOR_DISPOSABLE_SECRET_REF_THEN_M40_LIVE_CERTIFICATION",
+  "stop_reason": "M40 live-validation layer complete; live certification blocked on operator disposable secret reference",
   "trading_guardian": "UNCHANGED / UNENGAGED",
   "cloud_fallback": false,
   "residual_exceptions": 0,
@@ -138,5 +138,18 @@
     "series_status": "PRE_M40_OFFLINE_READINESS_COMPLETE",
     "full_suite_2026_07_19": "4335 passed, 1 skipped, 0 failed",
     "next_offline_milestone": "NONE_REMAINING_LIVE_OPERATOR_ACTION_REQUIRED"
+  },
+  "m40": {
+    "module": "saathi.credentials.m40",
+    "status": "LIVE_VALIDATION_LAYER_COMPLETE_CERTIFICATION_BLOCKED",
+    "certification_verdict": "LIVE_BLOCKED_OPERATOR_SECRET_REQUIRED",
+    "live_certified": false,
+    "rehearsal_verdict": "LIVE_BLOCKED",
+    "stages": 6,
+    "composes_only": true,
+    "canary": "NOT GRANTED",
+    "active": "NOT GRANTED",
+    "production_deployment": "NOT AUTHORIZED",
+    "trading_guardian": "UNCHANGED / UNENGAGED"
   }
 }
