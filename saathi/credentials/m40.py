@@ -106,8 +106,10 @@ class M40Config:
     revocation_plan: str = "manual_github_pat_delete"
     # operator-confirmed subject fingerprint binding the authorized sandbox account
     expected_subject_fingerprint: str = ""
-    # when True, stage 5 performs the real post-revocation retry (expects 401)
+    # when True, run the revocation-phase pipeline (stage 5 real 401 retry, skip 3-4)
     post_revocation_retry: bool = False
+    # attestation that the earlier validation phase (stages 1-4 + 6) passed live
+    validation_phase_passed: bool = False
 
 
 def _stage(name: str, status: M40StageStatus, **details: Any) -> dict[str, Any]:
@@ -432,6 +434,31 @@ def run_live_certification(config: Optional[M40Config] = None) -> dict[str, Any]
 
     secret_supplied = _secret_reference_supplied(cfg)
     stages: list[dict[str, Any]] = []
+
+    # ── revocation phase: run ONLY the 401 retry, composed with the prior
+    # validation phase. Stages 3-4 are intentionally skipped (the token is dead;
+    # re-running them would 401 by design, which is not a validation failure).
+    if cfg.post_revocation_retry:
+        s1 = stage1_operator_acknowledgement(cfg)
+        stages.append(s1)
+        s2 = stage2_provider_preflight(cfg)
+        stages.append(s2)
+        s5 = stage5_external_revocation(cfg)  # real 401 retry
+        stages.append(s5)
+        s6 = stage6_evidence_verification(stages)
+        stages.append(s6)
+        if s5["status"] == M40StageStatus.FAILED.value:
+            verdict = LiveCertificationVerdict.LIVE_FAILED.value
+        elif (cfg.validation_phase_passed and s1["ok"] and s2["ok"]
+              and s5["status"] == M40StageStatus.PASSED.value):
+            verdict = LiveCertificationVerdict.LIVE_CERTIFIED.value
+        else:
+            verdict = LiveCertificationVerdict.LIVE_BLOCKED.value
+        body = _certification_body(
+            stages, verdict=verdict, live_exercised=True, secret_supplied=secret_supplied)
+        body["phase"] = "revocation"
+        body["validation_phase_passed_attested"] = bool(cfg.validation_phase_passed)
+        return body
 
     s1 = stage1_operator_acknowledgement(cfg)
     stages.append(s1)

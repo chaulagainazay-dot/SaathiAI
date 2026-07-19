@@ -743,8 +743,15 @@ UNCHANGED / UNENGAGED. Verdict: **GOVERNED PROVIDER-ADAPTER PILOT — SIMULATION
 
 ## M40 — Live Validation & Production Certification (2026-07-19)
 
-**Status:** LIVE-VALIDATION LAYER COMPLETE — LIVE CERTIFICATION BLOCKED (operator
-disposable secret reference required).
+**Status:** LIVE CERTIFIED — provider `github_meta` (read-only, sandbox), 2026-07-19.
+Completed with an operator-supplied disposable PAT (Keychain reference): validation
+phase stages 1–4 + 6 PASSED live (identity bound, GET /user + /meta 2xx, SecretHandle
+destroyed, isolated, budget-bounded); revocation phase stage 5 PASSED (post-revocation
+HTTP 401 confirmed). Evidence `docs/evidence/m40/live_certification_record.json`. Live
+certification is evidence only — CANARY / ACTIVE / ROLLOUT NOT GRANTED, PRODUCTION
+DEPLOYMENT NOT AUTHORIZED, operator M39.3 approval still mandatory. Trading Guardian
+UNENGAGED. (Original layer completed offline as fail-closed LIVE_BLOCKED before the
+operator supplied the credential.)
 
 - Module `saathi/credentials/m40.py` composes M31–M39 runners only; no new
   subsystem, provider capability, product feature, or production path

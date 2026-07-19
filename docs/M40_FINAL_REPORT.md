@@ -78,16 +78,31 @@ acknowledgements; externally revoke the credential afterward and confirm 401.
 
 ## 10. Certification decision
 
-**Provider `github_meta`: NOT LIVE CERTIFIED — LIVE_BLOCKED_OPERATOR_SECRET_REQUIRED.**
+**Provider `github_meta`: LIVE CERTIFIED (read-only, sandbox) — 2026-07-19.**
 
-Live certification is impossible without operator-controlled live access. The
-validation layer is complete and correct; the certification verdict is honestly
-withheld.
+Completed with an operator-supplied disposable sandbox PAT (macOS Keychain
+reference `saathi_m40:github_meta`), executed live against real GitHub:
+
+- **Validation phase** (token valid): stages 1–4 + 6 PASSED live — identity bound to
+  subject fingerprint `c7cd7f4d6bee55c2847614692022af73`, `GET /user` + `GET /meta`
+  2xx + TLS verified, `OPERATION_OK`, SecretHandle destroyed, budget-bounded,
+  multi-session isolated. Verdict `LIVE_STAGES_PASSED_PENDING_REVOCATION`.
+- **Revocation phase** (operator revoked the PAT): stage 5 PASSED — post-revocation
+  retry returned **HTTP 401** (`authorization_failure_401`), SecretHandle cleaned up,
+  revocation confirmed effective. Verdict `LIVE_CERTIFIED`.
+
+Evidence: `docs/evidence/m40/live_certification_record.json` (+ validation and
+revocation phase bodies). All leak-clean, fingerprint-only.
+
+**Live certification is evidence only — it grants nothing.** Canary/active/rollout/
+production remain NOT GRANTED; the operator's explicit M39.3 approval remains
+mandatory for any canary decision.
 
 ## Explicit authority state
 
-- LIVE PROVIDER CERTIFICATION: **NOT GRANTED**
+- LIVE PROVIDER CERTIFICATION: **GRANTED** — `github_meta`, read-only, sandbox
 - CANARY: **NOT GRANTED**
 - ACTIVE: **NOT GRANTED**
+- ROLLOUT: **NOT GRANTED**
 - PRODUCTION DEPLOYMENT: **NOT AUTHORIZED**
 - Trading Guardian: **UNCHANGED / UNENGAGED**

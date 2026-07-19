@@ -380,6 +380,7 @@ def main(argv: Optional[list[str]] = None) -> int:
     m40_cert.add_argument("--live-flag", action="store_true")
     m40_cert.add_argument("--expected-subject-fp", default="", dest="expected_subject_fp")
     m40_cert.add_argument("--post-revocation", action="store_true", dest="post_revocation")
+    m40_cert.add_argument("--validation-passed", action="store_true", dest="validation_passed")
     m40_cert.add_argument("--branch", default="")
     m40_cert.add_argument("--head", default="")
     sub.add_parser("m40-rehearsal")
@@ -1060,6 +1061,7 @@ def main(argv: Optional[list[str]] = None) -> int:
                     live_flag=bool(args.live_flag),
                     expected_subject_fingerprint=args.expected_subject_fp,
                     post_revocation_retry=bool(args.post_revocation),
+                    validation_phase_passed=bool(args.validation_passed),
                     branch=args.branch,
                     head=args.head,
                     working_tree_class="DIRTY",

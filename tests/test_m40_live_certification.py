@@ -139,6 +139,33 @@ def test_expected_fingerprint_threads_into_config():
     assert cfg.post_revocation_retry is False
 
 
+def test_post_revocation_without_credential_never_certifies():
+    # revocation phase with no reachable secret -> stage5 cannot pass -> not certified
+    cfg = _live_cfg(secret_locator="svc:absent_m40", post_revocation_retry=True,
+                    validation_phase_passed=True)
+    c = m40.run_live_certification(cfg)
+    assert c["live_certified"] is False
+    assert c["verdict"] != "LIVE_CERTIFIED"
+
+
+def test_post_revocation_without_validation_attestation_not_certified():
+    # even if a 401 were observed, without the validation-phase attestation -> not certified
+    cfg = _live_cfg(secret_locator="svc:absent_m40", post_revocation_retry=True,
+                    validation_phase_passed=False)
+    c = m40.run_live_certification(cfg)
+    assert c["live_certified"] is False
+
+
+def test_live_certified_requires_live_exercised_invariant():
+    # the only verdict that sets live_certified true is LIVE_CERTIFIED, and it is
+    # produced only on the revocation path with live_exercised true
+    for body in (m40.run_live_certification(m40.M40Config()), m40.run_stage_rehearsal()):
+        if body["live_certified"]:
+            assert body["verdict"] == "LIVE_CERTIFIED" and body["live_exercised"] is True
+        else:
+            assert body["verdict"] != "LIVE_CERTIFIED"
+
+
 # ── Stage 6 — evidence completeness ──────────────────────────────────────────
 def test_stage6_evidence_complete_and_clean():
     r = m40.run_stage_rehearsal()
