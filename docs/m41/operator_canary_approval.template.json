@@ -1,0 +1,47 @@
+{
+  "approval_id": "",
+  "approver_id": "",
+  "milestone": "M41",
+  "provider": "github_meta",
+  "endpoints": [
+    "user",
+    "meta"
+  ],
+  "methods": [
+    "GET"
+  ],
+  "rollout_percent": 1,
+  "expires_at": "",
+  "explicit_acknowledgements": [],
+  "record_hash": "",
+  "_operator_authorization_constraints": {
+    "capability": "read-only metadata validation",
+    "environment": "sandbox/canary",
+    "initial_rollout_percent": 1,
+    "maximum_rollout_percent": 5,
+    "writes": "forbidden",
+    "scope_expansion": "forbidden",
+    "active_authority": "not granted",
+    "production_authority": "not granted",
+    "trading_guardian": "unengaged",
+    "automatic_rollback": "mandatory",
+    "kill_switch": "mandatory",
+    "error_budget": 0,
+    "note": "annotation block; the M39.3 validator ignores non-required fields. Enforcement lives in the validator (allowlist/bounds/acks) and the M41 controller (auto-rollback, kill switch, read-only, ceiling)."
+  },
+  "_required_acknowledgement_tokens_to_paste": [
+    "I_AUTHORIZE_BOUNDED_CANARY",
+    "I_CONFIRM_LIVE_M39_EVIDENCE_REVIEWED",
+    "I_CONFIRM_ROLLBACK_TRIGGERS_ACCEPTED",
+    "I_CONFIRM_READ_ONLY_SCOPE",
+    "I_ACCEPT_ACCOUNTABILITY_FOR_THIS_AUTHORIZATION"
+  ],
+  "_operator_fill_fields": [
+    "approval_id",
+    "approver_id",
+    "expires_at",
+    "explicit_acknowledgements",
+    "record_hash"
+  ],
+  "contains_secret_values": false
+}
