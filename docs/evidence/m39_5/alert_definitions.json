@@ -1,0 +1,73 @@
+{
+  "alerts": [
+    {
+      "condition": ">= stuck_threshold_seconds",
+      "id": "ALT-1",
+      "name": "stuck_run",
+      "severity": "SEV2",
+      "signal": "session_age_seconds"
+    },
+    {
+      "condition": ">= aggregate_budget",
+      "id": "ALT-2",
+      "name": "budget_exhaustion",
+      "severity": "SEV3",
+      "signal": "aggregate_calls_used"
+    },
+    {
+      "condition": ">= 1",
+      "id": "ALT-3",
+      "name": "authorization_denial",
+      "severity": "SEV2",
+      "signal": "auth_denials"
+    },
+    {
+      "condition": ">= 1",
+      "id": "ALT-4",
+      "name": "secret_resolution_failure",
+      "severity": "SEV1",
+      "signal": "secret_resolution_failures"
+    },
+    {
+      "condition": ">= 1",
+      "id": "ALT-5",
+      "name": "lease_leak",
+      "severity": "SEV1",
+      "signal": "open_leases_after_cleanup"
+    },
+    {
+      "condition": ">= 1",
+      "id": "ALT-6",
+      "name": "leak_finding",
+      "severity": "SEV1",
+      "signal": "leak_findings"
+    },
+    {
+      "condition": "== true",
+      "id": "ALT-7",
+      "name": "kill_switch_tripped",
+      "severity": "SEV2",
+      "signal": "kill_switch_active"
+    },
+    {
+      "condition": ">= 0.5",
+      "id": "ALT-8",
+      "name": "provider_failure_rate",
+      "severity": "SEV2",
+      "signal": "provider_failure_rate"
+    },
+    {
+      "condition": ">= 1",
+      "id": "ALT-9",
+      "name": "canary_escalation_attempt",
+      "severity": "SEV1",
+      "signal": "canary_grant_attempts"
+    }
+  ],
+  "contains_secret_values": false,
+  "default_thresholds": {
+    "aggregate_budget": 12,
+    "stuck_threshold_seconds": 300
+  },
+  "schema": "m39_5.alert_definitions.v1"
+}

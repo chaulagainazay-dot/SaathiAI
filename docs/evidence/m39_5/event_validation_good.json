@@ -1,0 +1,7 @@
+{
+  "contains_secret_values": false,
+  "event_type": "m39.single_session_blocked",
+  "problems": [],
+  "schema": "m39_5.event_validation.v1",
+  "valid": true
+}

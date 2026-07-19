@@ -1,0 +1,28 @@
+{
+  "common_required": [
+    "event_type",
+    "session_id",
+    "privacy_safe",
+    "contains_secret_values"
+  ],
+  "contains_secret_values": false,
+  "event_types": [
+    "m39.budget_exhausted",
+    "m39.external_revocation_recorded",
+    "m39.kill_switch_tripped",
+    "m39.leak_detected",
+    "m39.multi_session_complete",
+    "m39.single_session_blocked",
+    "m39.single_session_complete",
+    "m39.single_session_failed"
+  ],
+  "forbidden_fields": [
+    "secret",
+    "token",
+    "api_key",
+    "authorization",
+    "password",
+    "value"
+  ],
+  "schema": "m39_5.audit_contracts.v1"
+}

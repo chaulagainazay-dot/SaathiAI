@@ -1,0 +1,31 @@
+{
+  "contains_secret_values": false,
+  "escalation": "page operator for any SEV1; Trading Guardian remains unengaged",
+  "schema": "m39_5.incident_runbook.v1",
+  "steps": [
+    {
+      "action": "Trip kill switch (SAATHI_M39_KILL_SWITCH=1)",
+      "id": "INC-1"
+    },
+    {
+      "action": "Classify severity via incident_severity_definitions",
+      "id": "INC-2"
+    },
+    {
+      "action": "For SEV1 secret risk: run leak scans; quarantine evidence",
+      "id": "INC-3"
+    },
+    {
+      "action": "Halt affected sessions; confirm SecretHandle/lease closure",
+      "id": "INC-4"
+    },
+    {
+      "action": "Operator revokes disposable credential externally",
+      "id": "INC-5"
+    },
+    {
+      "action": "Record incident; attach redacted audit events only",
+      "id": "INC-6"
+    }
+  ]
+}

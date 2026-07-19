@@ -1,0 +1,31 @@
+{
+  "contains_secret_values": false,
+  "evidence_retention": "retain redacted incident evidence; never store secret values",
+  "schema": "m39_5.recovery_runbook.v1",
+  "steps": [
+    {
+      "action": "Confirm kill switch state and no open leases",
+      "id": "REC-1"
+    },
+    {
+      "action": "Reconcile sessions from evidence (never reopen secrets)",
+      "id": "REC-2"
+    },
+    {
+      "action": "Re-run M31\u2013M39.x regression + offline gates",
+      "id": "REC-3"
+    },
+    {
+      "action": "Re-run leak scans; confirm clean",
+      "id": "REC-4"
+    },
+    {
+      "action": "Reset breakers only after root-cause documented",
+      "id": "REC-5"
+    },
+    {
+      "action": "Resume only with explicit operator authorization",
+      "id": "REC-6"
+    }
+  ]
+}

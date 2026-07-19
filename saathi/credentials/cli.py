@@ -340,6 +340,17 @@ def main(argv: Optional[list[str]] = None) -> int:
     sub.add_parser("m39-4-rollback-plan")
     sub.add_parser("m39-4-backward-compat")
     sub.add_parser("m39-4-emit-evidence")
+
+    # ── M39.5 monitoring & incident response (offline; synthetic signals) ─────
+    sub.add_parser("m39-5-audit-contracts")
+    m395_ev = sub.add_parser("m39-5-validate-event")
+    m395_ev.add_argument("--event-file", default="")
+    sub.add_parser("m39-5-alert-definitions")
+    m395_det = sub.add_parser("m39-5-detect-alerts")
+    m395_det.add_argument("--signals-file", default="")
+    sub.add_parser("m39-5-incident-runbook")
+    sub.add_parser("m39-5-recovery-runbook")
+    sub.add_parser("m39-5-emit-evidence")
     args = p.parse_args(argv)
 
     # Reject raw secret CLI carriers globally for any m36 command
@@ -901,6 +912,47 @@ def main(argv: Optional[list[str]] = None) -> int:
                     return 0 if out.get("all_present") else 5
                 if args.cmd == "m39-4-emit-evidence":
                     res = m39_4.emit_m39_4_evidence("docs/evidence/m39_4")
+                    _print(res)
+                    return 0
+            except m39.M39Error as e:
+                _print({"ok": False, "error": e.code, "detail": getattr(e, "detail", ""),
+                        "banner": _M39_BANNER})
+                return 2
+
+        # ── M39.5 monitoring & incident response (offline; synthetic signals) ──
+        if args.cmd and str(args.cmd).startswith("m39-5-"):
+            from saathi.credentials import m39_5
+            import json as _json5
+            try:
+                if args.cmd == "m39-5-audit-contracts":
+                    _print(m39_5.audit_event_contracts())
+                    return 0
+                if args.cmd == "m39-5-validate-event":
+                    event = None
+                    if args.event_file:
+                        with open(args.event_file) as fh:
+                            event = _json5.load(fh)
+                    out = m39_5.validate_audit_event(event)
+                    _print(out)
+                    return 0 if out.get("valid") else 5
+                if args.cmd == "m39-5-alert-definitions":
+                    _print(m39_5.alert_definitions())
+                    return 0
+                if args.cmd == "m39-5-detect-alerts":
+                    signals = None
+                    if args.signals_file:
+                        with open(args.signals_file) as fh:
+                            signals = _json5.load(fh)
+                    _print(m39_5.detect_alerts(signals))
+                    return 0
+                if args.cmd == "m39-5-incident-runbook":
+                    _print(m39_5.incident_runbook())
+                    return 0
+                if args.cmd == "m39-5-recovery-runbook":
+                    _print(m39_5.recovery_runbook())
+                    return 0
+                if args.cmd == "m39-5-emit-evidence":
+                    res = m39_5.emit_m39_5_evidence("docs/evidence/m39_5")
                     _print(res)
                     return 0
             except m39.M39Error as e:

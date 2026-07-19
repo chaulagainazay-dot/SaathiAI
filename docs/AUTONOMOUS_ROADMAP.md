@@ -680,3 +680,20 @@ UNCHANGED / UNENGAGED. Verdict: **GOVERNED PROVIDER-ADAPTER PILOT — SIMULATION
 - Tests: 11 passed; evidence `docs/evidence/m39_4/` (deterministic, leak-clean)
 - Authorities unchanged: CANARY / ACTIVE / M40 production authorization NOT GRANTED
 - Next: M39.5 (monitoring & incident response)
+
+## M39.5 — Monitoring & Incident Response (2026-07-19)
+
+**Status:** MONITORING_INCIDENT_SURFACE_COMPLETE_OFFLINE.
+
+- Module `saathi/credentials/m39_5.py`; no new subsystem; local/synthetic signals only
+- CLI: `m39-5-audit-contracts`, `m39-5-validate-event`, `m39-5-alert-definitions`,
+  `m39-5-detect-alerts`, `m39-5-incident-runbook`, `m39-5-recovery-runbook`,
+  `m39-5-emit-evidence`
+- 8 audit-event contracts + fail-closed validator (rejects unknown type, missing
+  fields, non-privacy-safe, secret-claiming, forbidden fields, leak); ALT-1..ALT-9
+  alert definitions + deterministic detector (SEV1-3); 8-metric contract; incident
+  severity defs; INC-1..INC-6 incident runbook; REC-1..REC-6 recovery runbook
+- Canary-grant attempt is a SEV1 alert; no secret ever accepted in an event
+- Tests: 17 passed; evidence `docs/evidence/m39_5/` (deterministic, leak-clean)
+- Authorities unchanged: CANARY / ACTIVE / M40 production authorization NOT GRANTED
+- Next: M39.6 (security & adversarial test expansion)
