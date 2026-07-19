@@ -1,0 +1,172 @@
+{
+  "architecture_summary": "M39 composes M31-M38 (SecretHandle, leases, authorization, registry, sandbox isolation, provider abstraction, M33/M34 transport) to exercise a bounded read-only external provider under operator control. M39.1-M39.7 add offline operator tooling, simulation, canary framework, deploy/rollback prep, monitoring, adversarial coverage, and reproducibility.",
+  "authority_state": {
+    "ACTIVE": "NOT GRANTED",
+    "ACTIVE_authorization": "NOT GRANTED",
+    "CANARY": "NOT GRANTED",
+    "CANARY_authorization": "NOT GRANTED",
+    "LIVE_PROVIDER_CERTIFICATION": "NOT GRANTED",
+    "PRODUCTION_DEPLOYMENT": "NOT AUTHORIZED",
+    "production_authorization": "NOT GRANTED",
+    "rollout_authorization": "NOT GRANTED",
+    "write_authority": "NOT GRANTED"
+  },
+  "banner": "M39 LIVE DISPOSABLE SANDBOX VALIDATION\nNON-PRODUCTION\nREAD-ONLY\nBOUNDED LIVE VALIDATION ONLY\nROLLOUT OFF\nNO CANARY GRANT\nNO ACTIVE\nTRADING GUARDIAN UNENGAGED",
+  "contains_secret_values": false,
+  "environment_flags": {
+    "kill_switch": "SAATHI_M39_KILL_SWITCH",
+    "live_flag": "SAATHI_M39_ALLOW_LIVE_SANDBOX_VALIDATION"
+  },
+  "evidence_interpretation": {
+    "canary_verdict": "BLOCKED_OPERATOR_SECRET_REQUIRED until live evidence + operator authorization",
+    "fingerprints": "deterministic; identical across runs proves reproducibility",
+    "live_statuses": "NOT_EXERCISED means the live path was never run (fail-closed)"
+  },
+  "fingerprint": "fff70ddfe1718fe6d769d0f5",
+  "go_live_checklist": [
+    "M31-M39.7 regression green",
+    "offline failure gates pass",
+    "leak scans clean",
+    "deployment config validates (fail-closed)",
+    "operator supplies disposable secret REFERENCE (never a raw secret)",
+    "export SAATHI_M39_ALLOW_LIVE_SANDBOX_VALIDATION=1 for the live window only",
+    "all 10 runtime acknowledgements provided",
+    "run bounded live single + multi session (github_meta GET /user,/meta)",
+    "confirm external credential revocation",
+    "evaluate canary ELIGIBILITY (separate explicit operator authorization required)",
+    "trip SAATHI_M39_KILL_SWITCH to stop at any time"
+  ],
+  "known_limitations": [
+    "live single-session: NOT_EXERCISED",
+    "live multi-session: NOT_EXERCISED",
+    "external credential revocation: NOT_EXERCISED",
+    "live encrypted-store wiring: NOT_EXERCISED",
+    "SIMULATION covers transport faults but not real provider behavior"
+  ],
+  "m39_fingerprint": "64f0af8e8446fd490d15b2bb23c7afeddbac826722454255a5f78b69133ef68f",
+  "milestone": "M39.8",
+  "milestones": [
+    {
+      "doc": "docs/M39_LIVE_VALIDATION_RUNBOOK.md",
+      "evidence": "docs/evidence/m39/",
+      "id": "M39",
+      "title": "Live disposable sandbox validation (offline certified, live blocked)"
+    },
+    {
+      "doc": "docs/M39_1_OPERATOR_TOOLING.md",
+      "evidence": "docs/evidence/m39_1/",
+      "id": "M39.1",
+      "title": "Operator dry-run tooling"
+    },
+    {
+      "doc": "docs/M39_2_FAILURE_SIMULATION.md",
+      "evidence": "docs/evidence/m39_2/",
+      "id": "M39.2",
+      "title": "Failure-mode simulation"
+    },
+    {
+      "doc": "docs/M39_3_CANARY_FRAMEWORK.md",
+      "evidence": "docs/evidence/m39_3/",
+      "id": "M39.3",
+      "title": "Canary-readiness framework (never grants)"
+    },
+    {
+      "doc": "docs/M39_4_DEPLOY_ROLLBACK.md",
+      "evidence": "docs/evidence/m39_4/",
+      "id": "M39.4",
+      "title": "Deployment & rollback preparation"
+    },
+    {
+      "doc": "docs/M39_5_MONITORING_INCIDENT.md",
+      "evidence": "docs/evidence/m39_5/",
+      "id": "M39.5",
+      "title": "Monitoring & incident response"
+    },
+    {
+      "doc": "docs/M39_6_ADVERSARIAL_TESTS.md",
+      "evidence": "",
+      "id": "M39.6",
+      "title": "Adversarial / negative security coverage"
+    },
+    {
+      "doc": "docs/M39_7_REPRODUCIBILITY.md",
+      "evidence": "docs/evidence/m39_7/",
+      "id": "M39.7",
+      "title": "Reproducibility & clean-environment validation"
+    },
+    {
+      "doc": "docs/M39_8_OPERATOR_PACKAGE.md",
+      "evidence": "docs/evidence/m39_8/",
+      "id": "M39.8",
+      "title": "Final operator package"
+    }
+  ],
+  "permission_model": {
+    "disposable_token_requirements": [
+      "disposable / revocable",
+      "sandbox account where possible",
+      "minimum read-only permissions",
+      "revoked immediately after validation"
+    ],
+    "minimum_required": {
+      "endpoints": [
+        "meta",
+        "user"
+      ],
+      "methods": [
+        "GET"
+      ],
+      "scope": "read-only identity + metadata"
+    },
+    "prohibited": [
+      "repository write",
+      "organization admin",
+      "billing",
+      "package / deploy / workflow secret write",
+      "any non-GET method",
+      "any endpoint outside /user, /meta"
+    ],
+    "provider": "github_meta"
+  },
+  "procedures": {
+    "canary_decision": "docs/M39_3_CANARY_FRAMEWORK.md",
+    "deployment": "docs/M39_4_DEPLOY_ROLLBACK.md",
+    "incident_response": "docs/M39_5_MONITORING_INCIDENT.md",
+    "interruption_recovery": "docs/M39_INTERRUPTION_AND_RECOVERY.md",
+    "live_validation": "docs/M39_LIVE_VALIDATION_RUNBOOK.md",
+    "reference_setup": "docs/M39_SECRET_REFERENCE_SETUP.md",
+    "revocation": "M39.1 revocation checklist (m39-1-revocation-checklist)",
+    "rollback": "docs/M39_4_DEPLOY_ROLLBACK.md (m39-4-rollback-plan)"
+  },
+  "reproducibility": {
+    "all_clean": true,
+    "all_reproducible": true
+  },
+  "required_acknowledgements": [
+    "I_CONFIRM_CREDENTIAL_IS_DISPOSABLE",
+    "I_CONFIRM_SANDBOX_ACCOUNT_WHERE_POSSIBLE",
+    "I_CONFIRM_MINIMUM_READ_ONLY_PERMISSIONS",
+    "I_CONFIRM_NO_REPOSITORY_WRITE_PERMISSION",
+    "I_CONFIRM_NO_ORG_ADMIN_PERMISSION",
+    "I_CONFIRM_NO_BILLING_PERMISSION",
+    "I_CONFIRM_NO_PACKAGE_DEPLOY_WORKFLOW_SECRET_WRITE",
+    "I_CONFIRM_REVOKE_IMMEDIATELY_AFTER_VALIDATION",
+    "I_CONFIRM_READINESS_IS_NOT_AUTHORIZATION",
+    "I_CONFIRM_NO_PRODUCTION_ROLLOUT_CANARY_ACTIVE_WRITE"
+  ],
+  "residual_risks": [
+    "operator supplies a non-disposable or over-scoped token (mitigated by acks + preflight)",
+    "operator forgets external revocation (mitigated by M39.1 checklist + M39.5 alert)",
+    "encrypted-store backend requires operator wiring before live use"
+  ],
+  "schema": "m39_8.operator_package.v1",
+  "session_budget_ceiling": 3,
+  "title": "SaathiOS M39 Live-Validation Operator Package",
+  "trading_guardian": "UNENGAGED",
+  "trust_boundaries": [
+    "secret VALUE never enters CLI, evidence, events, or logs (reference only)",
+    "external network only after preflight + flag + acks + secret ref",
+    "read-only provider surface; no writes; no financial/trading provider",
+    "authority (CANARY/ACTIVE/rollout/production/write) applied out-of-band only"
+  ]
+}

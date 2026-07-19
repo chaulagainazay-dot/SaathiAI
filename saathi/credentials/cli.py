@@ -357,6 +357,10 @@ def main(argv: Optional[list[str]] = None) -> int:
     sub.add_parser("m39-7-dependencies")
     sub.add_parser("m39-7-cli-contract")
     sub.add_parser("m39-7-emit-evidence")
+
+    # ── M39.8 final operator package (offline; machine-readable manifest) ──────
+    sub.add_parser("m39-8-operator-package")
+    sub.add_parser("m39-8-emit-evidence")
     args = p.parse_args(argv)
 
     # Reject raw secret CLI carriers globally for any m36 command
@@ -983,6 +987,27 @@ def main(argv: Optional[list[str]] = None) -> int:
                     return 0
                 if args.cmd == "m39-7-emit-evidence":
                     res = m39_7.emit_m39_7_evidence("docs/evidence/m39_7")
+                    _print(res)
+                    return 0
+            except m39.M39Error as e:
+                _print({"ok": False, "error": e.code, "detail": getattr(e, "detail", ""),
+                        "banner": _M39_BANNER})
+                return 2
+
+        # ── M39.8 final operator package (offline; machine-readable manifest) ──
+        if args.cmd and str(args.cmd).startswith("m39-8-"):
+            from saathi.credentials import m39_8
+            try:
+                if args.cmd == "m39-8-operator-package":
+                    out = m39_8.build_operator_package()
+                    if not leakscan.is_clean(out):
+                        _print({"ok": False, "error": "leak_detected"}); return 2
+                    if out["authority_state"].get("CANARY") != "NOT GRANTED":
+                        _print({"ok": False, "error": "invariant_violation"}); return 2
+                    _print(out)
+                    return 0
+                if args.cmd == "m39-8-emit-evidence":
+                    res = m39_8.emit_m39_8_evidence("docs/evidence/m39_8")
                     _print(res)
                     return 0
             except m39.M39Error as e:

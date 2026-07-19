@@ -1,0 +1,18 @@
+{
+  "authority_state": {
+    "ACTIVE": "NOT GRANTED",
+    "ACTIVE_authorization": "NOT GRANTED",
+    "CANARY": "NOT GRANTED",
+    "CANARY_authorization": "NOT GRANTED",
+    "LIVE_PROVIDER_CERTIFICATION": "NOT GRANTED",
+    "PRODUCTION_DEPLOYMENT": "NOT AUTHORIZED",
+    "production_authorization": "NOT GRANTED",
+    "rollout_authorization": "NOT GRANTED",
+    "write_authority": "NOT GRANTED"
+  },
+  "contains_secret_values": false,
+  "milestone": "M39.8",
+  "schema": "m39_8.summary.v1",
+  "trading_guardian": "UNENGAGED",
+  "verdict": "OPERATOR_PACKAGE_COMPLETE"
+}

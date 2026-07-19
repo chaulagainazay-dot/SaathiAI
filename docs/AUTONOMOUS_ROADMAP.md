@@ -723,3 +723,20 @@ UNCHANGED / UNENGAGED. Verdict: **GOVERNED PROVIDER-ADAPTER PILOT — SIMULATION
 - Tests: 28 passed; evidence `docs/evidence/m39_7/` (deterministic, leak-clean)
 - Authorities unchanged: CANARY / ACTIVE / M40 production authorization NOT GRANTED
 - Next: M39.8 (final operator package)
+
+## M39.8 — Final Operator Package (2026-07-19)
+
+**Status:** OPERATOR_PACKAGE_COMPLETE — PRE-M40 offline readiness series COMPLETE.
+
+- Doc `docs/M39_8_OPERATOR_PACKAGE.md` (human handbook) + module
+  `saathi/credentials/m39_8.py` (machine-readable manifest)
+- CLI: `m39-8-operator-package`, `m39-8-emit-evidence`
+- Consolidates architecture, trust boundaries, credential-reference setup,
+  supported backends, disposable-token requirements, minimum/prohibited
+  permissions, 10 acknowledgements, all procedures, evidence interpretation,
+  known limitations, residual risks, and the go-live checklist
+- Authority state recorded: LIVE PROVIDER CERTIFICATION / CANARY / ACTIVE NOT
+  GRANTED; PRODUCTION DEPLOYMENT NOT AUTHORIZED; Trading Guardian UNENGAGED
+- Tests: 10 passed; evidence `docs/evidence/m39_8/` (deterministic, leak-clean)
+- **PRE-M40 offline readiness series complete.** M40 remains blocked on operator
+  live validation.

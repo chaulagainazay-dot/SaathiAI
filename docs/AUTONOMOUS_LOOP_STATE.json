@@ -134,6 +134,8 @@
     "m39_5_status": "MONITORING_INCIDENT_SURFACE_COMPLETE_OFFLINE",
     "m39_6_status": "ADVERSARIAL_COVERAGE_EXPANDED",
     "m39_7_status": "REPRODUCIBLE_AND_SELF_CONTAINED",
-    "next_offline_milestone": "M39.8"
+    "m39_8_status": "OPERATOR_PACKAGE_COMPLETE",
+    "series_status": "PRE_M40_OFFLINE_READINESS_COMPLETE",
+    "next_offline_milestone": "NONE_REMAINING_LIVE_OPERATOR_ACTION_REQUIRED"
   }
 }
