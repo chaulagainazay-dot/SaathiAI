@@ -68,3 +68,7 @@ Rehearse first (no credential): `python -m saathi.credentials.cli m41-rehearsal`
 
 CANARY EXECUTION: bounded read-only only, never persisted as ACTIVE. ACTIVE / PRODUCTION
 / ROLLOUT(full) / WRITE: **NOT GRANTED**. Trading Guardian **UNENGAGED**.
+
+## Post-canary — credential lifecycle CLOSED (operator-attested, 2026-07-19)
+
+One bounded read-only canary was run by the operator (result CANARY_ACTIVE_BOUNDED, all signals clean — recorded in `docs/evidence/m41/operator_attested_canary_completion.json`, OPERATOR_ATTESTED, not machine-verified here). Credential lifecycle now CLOSED: disposable PAT externally revoked, Keychain reference removed in the owning environment, absent in this environment, no raw credential in chat. Canary NOT active. ACTIVE / PRODUCTION / WRITE / full rollout NOT GRANTED; scope expansion FORBIDDEN; M32 prohibition unchanged; Trading Guardian UNENGAGED.

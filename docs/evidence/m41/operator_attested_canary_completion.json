@@ -7,8 +7,20 @@
     "scope_expansion": "FORBIDDEN",
     "write": "NOT GRANTED"
   },
+  "canary_status": "NOT_ACTIVE",
   "contains_secret_values": false,
-  "fingerprint": "89a422e815865fdf673486f4",
+  "credential_lifecycle": {
+    "disposable_pat_externally_revoked": true,
+    "followup_lookup": "not_found",
+    "keychain_reference_removed_in_owning_environment": true,
+    "keychain_reference_this_environment": "absent (confirmed via find; not found)",
+    "machine_verified_here": false,
+    "note": "External revocation + owning-environment Keychain removal are operator-attested (the canary credential lived in the operator's environment, not this session). This environment independently confirms saathi_m41:github_meta is absent.",
+    "raw_credential_in_chat": false,
+    "source": "OPERATOR_ATTESTED",
+    "status": "CLOSED"
+  },
+  "fingerprint": "ff8a6e5752353cb9e289afe1",
   "graduation": {
     "graduation_decision": "NOT MADE",
     "graduation_to_active_or_production": "FORBIDDEN by M41 constraints",
