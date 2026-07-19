@@ -644,3 +644,22 @@ UNCHANGED / UNENGAGED. Verdict: **GOVERNED PROVIDER-ADAPTER PILOT — SIMULATION
 - Tests: 22 passed; evidence `docs/evidence/m39_2/` (deterministic, leak-clean)
 - Authorities unchanged: CANARY / ACTIVE / M40 production authorization NOT GRANTED
 - Next: M39.3 (canary-readiness framework completion)
+
+## M39.3 — Canary-Readiness Framework (2026-07-19)
+
+**Status:** CANARY_FRAMEWORK_COMPLETE — CANARY NOT GRANTED (offline).
+
+- Module `saathi/credentials/m39_3.py` composes `m39.evaluate_canary_eligibility`;
+  no new subsystem
+- CLI: `m39-3-prerequisites`, `m39-3-framework`, `m39-3-approval-schema`,
+  `m39-3-validate-approval`, `m39-3-canary-decision`, `m39-3-emit-evidence`
+- Immutable prerequisites PRQ-1..PRQ-13 (deny-by-default); rollback triggers
+  RBK-1..RBK-7; circuit breakers CBK-1..CBK-3; rollout bound 1–5%; allowlist
+  github_meta / user,meta / GET; graduate/abort exit criteria; operator
+  approval-record schema + validator (deny-by-default)
+- Hard invariant: `evaluate_canary_decision` ALWAYS returns CANARY_NOT_GRANTED,
+  every grants_* false — even with all prerequisites met and a valid approval
+  record — because live evidence is NOT_EXERCISED; CLI aborts on any grant
+- Tests: 16 passed; evidence `docs/evidence/m39_3/` (deterministic, leak-clean)
+- Authorities unchanged: CANARY / ACTIVE / M40 production authorization NOT GRANTED
+- Next: M39.4 (deployment & rollback preparation)

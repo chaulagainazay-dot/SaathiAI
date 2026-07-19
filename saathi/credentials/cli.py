@@ -323,6 +323,15 @@ def main(argv: Optional[list[str]] = None) -> int:
     m392_sim.add_argument("--mode", required=True)
     sub.add_parser("m39-2-simulation-matrix")
     sub.add_parser("m39-2-emit-evidence")
+
+    # ── M39.3 canary-readiness framework (offline; CANARY never granted) ──────
+    sub.add_parser("m39-3-prerequisites")
+    sub.add_parser("m39-3-framework")
+    sub.add_parser("m39-3-approval-schema")
+    m393_val = sub.add_parser("m39-3-validate-approval")
+    m393_val.add_argument("--record-file", default="")
+    sub.add_parser("m39-3-canary-decision")
+    sub.add_parser("m39-3-emit-evidence")
     args = p.parse_args(argv)
 
     # Reject raw secret CLI carriers globally for any m36 command
@@ -812,6 +821,46 @@ def main(argv: Optional[list[str]] = None) -> int:
                     return 0 if out.get("verdict") == "ALL_FAULTS_FAIL_CLOSED" else 5
                 if args.cmd == "m39-2-emit-evidence":
                     res = m39_2.emit_m39_2_evidence("docs/evidence/m39_2")
+                    _print(res)
+                    return 0
+            except m39.M39Error as e:
+                _print({"ok": False, "error": e.code, "detail": getattr(e, "detail", ""),
+                        "banner": _M39_BANNER})
+                return 2
+
+        # ── M39.3 canary-readiness framework (offline; CANARY never granted) ──
+        if args.cmd and str(args.cmd).startswith("m39-3-"):
+            from saathi.credentials import m39_3
+            import json as _json
+            try:
+                if args.cmd == "m39-3-prerequisites":
+                    _print(m39_3.evaluate_prerequisites())
+                    return 0
+                if args.cmd == "m39-3-framework":
+                    _print(m39_3.framework_definitions())
+                    return 0
+                if args.cmd == "m39-3-approval-schema":
+                    _print(m39_3.approval_record_schema())
+                    return 0
+                if args.cmd == "m39-3-validate-approval":
+                    record = None
+                    if args.record_file:
+                        with open(args.record_file) as fh:
+                            record = _json.load(fh)
+                    out = m39_3.validate_operator_approval_record(record)
+                    _print(out)
+                    return 0 if out.get("valid") else 5
+                if args.cmd == "m39-3-canary-decision":
+                    out = m39_3.evaluate_canary_decision()
+                    if out.get("grants_canary") is not False:
+                        _print({"ok": False, "error": "invariant_violation_canary_granted"})
+                        return 2
+                    if not leakscan.is_clean(out):
+                        _print({"ok": False, "error": "leak_detected"}); return 2
+                    _print(out)
+                    return 0
+                if args.cmd == "m39-3-emit-evidence":
+                    res = m39_3.emit_m39_3_evidence("docs/evidence/m39_3")
                     _print(res)
                     return 0
             except m39.M39Error as e:

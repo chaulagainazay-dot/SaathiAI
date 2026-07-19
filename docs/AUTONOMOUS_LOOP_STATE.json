@@ -129,6 +129,7 @@
     "plan": "docs/PRE_M40_OFFLINE_READINESS_PLAN.md",
     "m39_1_status": "OFFLINE_OPERATOR_TOOLING_COMPLETE",
     "m39_2_status": "ALL_FAULTS_FAIL_CLOSED_SIMULATED_NOT_LIVE",
-    "next_offline_milestone": "M39.3"
+    "m39_3_status": "CANARY_FRAMEWORK_COMPLETE_CANARY_NOT_GRANTED",
+    "next_offline_milestone": "M39.4"
   }
 }
