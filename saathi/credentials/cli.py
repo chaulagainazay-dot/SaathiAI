@@ -66,6 +66,13 @@ _M40_BANNER = (
     "TRADING GUARDIAN UNENGAGED"
 )
 
+_M41_BANNER = (
+    "M41 BOUNDED READ-ONLY CANARY ROLLOUT\nNON-PRODUCTION\nREAD-ONLY\nFAIL-CLOSED\n"
+    "github_meta ONLY\nOPERATOR APPROVAL MANDATORY\nAUTO-ROLLBACK MANDATORY\n"
+    "KILL SWITCH MANDATORY\nNO ACTIVE\nNO PRODUCTION\nNO WRITE\nNO SCOPE EXPANSION\n"
+    "TRADING GUARDIAN UNENGAGED"
+)
+
 
 def run_m35_synthetic_session() -> dict[str, Any]:
     """Deterministic, offline synthetic sandbox-governance session. No raw secret
@@ -385,6 +392,21 @@ def main(argv: Optional[list[str]] = None) -> int:
     m40_cert.add_argument("--head", default="")
     sub.add_parser("m40-rehearsal")
     sub.add_parser("m40-emit-evidence")
+
+    # ── M41 bounded read-only canary rollout (fail-closed) ────────────────────
+    sub.add_parser("m41-authorization-status")
+    sub.add_parser("m41-rehearsal")
+    m41_run = sub.add_parser("m41-run-canary")
+    m41_run.add_argument("--approval-file", default="")
+    m41_run.add_argument("--cert-file", default="docs/evidence/m40/live_certification_record.json")
+    m41_run.add_argument("--source-kind", default="")
+    m41_run.add_argument("--locator", default="")
+    m41_run.add_argument("--env-var-name", default="")
+    m41_run.add_argument("--expected-subject-fp", default="", dest="expected_subject_fp")
+    m41_run.add_argument("--rollout-percent", type=int, default=1, dest="rollout_percent")
+    m41_run.add_argument("--live-flag", action="store_true")
+    m41_run.add_argument("--ack", action="append", default=[], dest="acks")
+    sub.add_parser("m41-emit-evidence")
     args = p.parse_args(argv)
 
     # Reject raw secret CLI carriers globally for any m36 command
@@ -1087,6 +1109,64 @@ def main(argv: Optional[list[str]] = None) -> int:
         except m39.M39Error as e:
             _print({"ok": False, "error": e.code, "detail": getattr(e, "detail", ""),
                     "banner": _M40_BANNER})
+            return 2
+
+    # ── M41 bounded read-only canary rollout (fail-closed) ────────────────────
+    if args.cmd and str(args.cmd).startswith("m41"):
+        from saathi.credentials import m39, m41
+        import json as _json41
+        print(_M41_BANNER)
+        try:
+            m39.reject_m39_forbidden_argv(list(argv or sys.argv[1:]))
+        except m39.M39Error as e:
+            _print({"ok": False, "error": e.code, "banner": _M41_BANNER})
+            return 2
+        try:
+            if args.cmd == "m41-authorization-status":
+                out = m41.validate_canary_authorization(m41.M41Config())
+                _print(out)
+                return 0 if out.get("authorized") else 5
+            if args.cmd == "m41-rehearsal":
+                out = m41.run_canary_rehearsal()
+                if not leakscan.is_clean(out):
+                    _print({"ok": False, "error": "leak_detected"}); return 2
+                _print(out)
+                return 0
+            if args.cmd == "m41-run-canary":
+                approval = None
+                if args.approval_file:
+                    with open(args.approval_file) as fh:
+                        approval = _json41.load(fh)
+                cert = None
+                try:
+                    with open(args.cert_file) as fh:
+                        cert = _json41.load(fh)
+                except Exception:
+                    cert = None
+                cfg = m41.M41Config(
+                    mode="live", approval_record=approval, m40_cert_record=cert,
+                    rollout_percent=args.rollout_percent,
+                    secret_source_kind=args.source_kind, secret_locator=args.locator,
+                    env_var_name=args.env_var_name,
+                    expected_subject_fingerprint=args.expected_subject_fp,
+                    acknowledgements=tuple(args.acks), live_flag=bool(args.live_flag),
+                )
+                out = m41.run_canary_rollout(cfg)
+                # hard invariant guard: canary must never grant active/production/write
+                if out.get("grants_active") or out.get("grants_production") or out.get("grants_write"):
+                    _print({"ok": False, "error": "invariant_violation_canary_grant"})
+                    return 2
+                if not leakscan.is_clean(out):
+                    _print({"ok": False, "error": "leak_detected"}); return 2
+                _print(out)
+                return 0 if out.get("verdict") == "CANARY_ACTIVE_BOUNDED" else 5
+            if args.cmd == "m41-emit-evidence":
+                res = m41.emit_m41_evidence("docs/evidence/m41")
+                _print(res)
+                return 0
+        except m41.M41Error as e:
+            _print({"ok": False, "error": e.code, "detail": getattr(e, "detail", ""),
+                    "banner": _M41_BANNER})
             return 2
 
     if args.cmd == "profiles":

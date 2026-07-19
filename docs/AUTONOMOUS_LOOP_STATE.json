@@ -1,7 +1,7 @@
 {
   "schema_version": "1",
   "repository": "SaathiOS",
-  "branch": "milestone/m7-security-engine",
+  "branch": "milestone/m41-canary-rollout",
   "current_head": "e670334de96a6727ef017640828e3d5467407779",
   "completed_milestones": [
     "M20.0",
@@ -158,6 +158,33 @@
     "canary": "NOT GRANTED",
     "active": "NOT GRANTED",
     "rollout": "NOT GRANTED",
+    "production_deployment": "NOT AUTHORIZED",
+    "trading_guardian": "UNCHANGED / UNENGAGED"
+  },
+  "m41": {
+    "module": "saathi.credentials.m41",
+    "status": "LAYER_COMPLETE_CANARY_NOT_ACTIVATED",
+    "verdict_default": "CANARY_NOT_ACTIVATED",
+    "provider": "github_meta",
+    "mode": "read_only_canary",
+    "requires": [
+      "valid_M39.3_operator_approval_record",
+      "M40_LIVE_CERTIFIED_evidence",
+      "disposable_credential_reference"
+    ],
+    "mandatory": [
+      "automatic_rollback",
+      "kill_switch",
+      "operator_approval"
+    ],
+    "rollout_ceiling_percent": 5,
+    "m32_canary_execution_mode": "PROHIBITION_UNCHANGED",
+    "grants_active": false,
+    "grants_production": false,
+    "grants_write": false,
+    "scope_expansion": "FORBIDDEN",
+    "canary": "NOT ACTIVATED (deny-by-default)",
+    "active": "NOT GRANTED",
     "production_deployment": "NOT AUTHORIZED",
     "trading_guardian": "UNCHANGED / UNENGAGED"
   }

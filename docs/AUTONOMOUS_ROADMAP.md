@@ -768,3 +768,27 @@ operator supplied the credential.)
   backward-compat 11/11 intact
 - Authorities unchanged: LIVE PROVIDER CERTIFICATION / CANARY / ACTIVE NOT GRANTED;
   PRODUCTION DEPLOYMENT NOT AUTHORIZED; Trading Guardian UNENGAGED
+
+## M41 — Bounded Read-Only Canary Rollout (2026-07-19)
+
+**Status:** LAYER COMPLETE — CANARY_NOT_ACTIVATED (deny-by-default). Branch
+`milestone/m41-canary-rollout`.
+
+- Module `saathi/credentials/m41.py` composes M39.3 (approval + rollback triggers) +
+  M40 (live cert + read-only runner) + M39.5 (alerts). No new subsystem.
+- Operator-authorized bounded read-only canary for `github_meta` only. Deny-by-default:
+  requires a valid M39.3 approval record + M40 LIVE_CERTIFIED evidence + disposable
+  credential reference. Rollout ceiling 5%, read-only /user + /meta, GET only.
+- Mandatory automatic rollback (any M39.5 alert or kill switch → halt + rollback,
+  SecretHandles closed), mandatory kill switch (SAATHI_M39_KILL_SWITCH), zero error budget.
+- State machine: CANARY_NOT_ACTIVATED / CANARY_BLOCKED / CANARY_ACTIVE_BOUNDED /
+  CANARY_ROLLED_BACK.
+- **Does NOT modify the M32 ExecutionMode.CANARY/ACTIVE prohibition** (verified intact).
+  Never grants active/production/write; scope expansion FORBIDDEN.
+- CLI: `m41-authorization-status`, `m41-rehearsal`, `m41-run-canary`, `m41-emit-evidence`
+  (inherit forbidden-argv guard).
+- Tests: 17 passed; evidence `docs/evidence/m41/` (deterministic, leak-clean);
+  backward-compat 11/11 intact.
+- Authorities: CANARY NOT ACTIVATED · ACTIVE / PRODUCTION / WRITE NOT GRANTED · Trading
+  Guardian UNENGAGED. Activation requires operator approval record + fresh disposable
+  credential.

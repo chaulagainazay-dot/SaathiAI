@@ -1,0 +1,93 @@
+{
+  "authorities": {
+    "ACTIVE_authorization": "NOT GRANTED",
+    "CANARY_authorization": "NOT GRANTED",
+    "production_authorization": "NOT GRANTED",
+    "rollout_authorization": "NOT GRANTED",
+    "write_authority": "NOT GRANTED"
+  },
+  "authorization": {
+    "approval_valid": true,
+    "authorized": true,
+    "blockers": [],
+    "contains_secret_values": false,
+    "grants_active": false,
+    "grants_production": false,
+    "grants_write": false,
+    "m40_certified": true,
+    "schema": "m41.authorization.v1"
+  },
+  "automatic_rollback": true,
+  "banner": "M39 LIVE DISPOSABLE SANDBOX VALIDATION\nNON-PRODUCTION\nREAD-ONLY\nBOUNDED LIVE VALIDATION ONLY\nROLLOUT OFF\nNO CANARY GRANT\nNO ACTIVE\nTRADING GUARDIAN UNENGAGED",
+  "contains_secret_values": false,
+  "controller": {
+    "all_handles_closed": true,
+    "errors": 1,
+    "increments": [
+      {
+        "handle_closed": true,
+        "index": 0,
+        "live_network": false,
+        "ok": true,
+        "reason": "ok"
+      },
+      {
+        "handle_closed": true,
+        "index": 1,
+        "live_network": false,
+        "ok": false,
+        "reason": "identity:http_401"
+      }
+    ],
+    "increments_run": 2,
+    "last_rollback_eval": {
+      "contains_secret_values": false,
+      "highest_severity": "SEV2",
+      "schema": "m41.rollback_eval.v1",
+      "should_rollback": true,
+      "triggers": [
+        {
+          "id": "ALT-3",
+          "name": "authorization_denial",
+          "severity": "SEV2"
+        },
+        {
+          "id": "ALT-8",
+          "name": "provider_failure_rate",
+          "severity": "SEV2"
+        }
+      ]
+    },
+    "live_network": false,
+    "rollback_reason": "authorization_denial",
+    "state": "ROLLED_BACK",
+    "verdict": "CANARY_ROLLED_BACK"
+  },
+  "fingerprint": "1be7abf9796bc4a0d8e5e163",
+  "grants_active": false,
+  "grants_canary_execution": false,
+  "grants_production": false,
+  "grants_rollout_full": false,
+  "grants_write": false,
+  "kill_switch_env": "SAATHI_M39_KILL_SWITCH",
+  "m32_canary_execution_mode": "PROHIBITION_UNCHANGED",
+  "milestone": "M41",
+  "mode": "rehearsal",
+  "note": "SIMULATED_NOT_LIVE; proves authorization + bounded rollout + rollback wiring",
+  "provider": "github_meta",
+  "rollback_triggers_armed": [
+    "RBK-1",
+    "RBK-2",
+    "RBK-3",
+    "RBK-4",
+    "RBK-5",
+    "RBK-6",
+    "RBK-7"
+  ],
+  "rollout_ceiling_percent": 5,
+  "rollout_percent": 1,
+  "schema": "m41.canary_rollout.v1",
+  "scope_expansion": "FORBIDDEN",
+  "trading_guardian": "UNENGAGED",
+  "verdict": "CANARY_ROLLED_BACK"
+}
