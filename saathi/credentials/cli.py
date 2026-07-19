@@ -317,6 +317,12 @@ def main(argv: Optional[list[str]] = None) -> int:
     m391_rev.add_argument("--locator", default="")
     sub.add_parser("m39-1-diagnostics")
     sub.add_parser("m39-1-emit-evidence")
+
+    # ── M39.2 failure-mode simulation (offline; SIMULATED_NOT_LIVE) ────────────
+    m392_sim = sub.add_parser("m39-2-simulate-fault")
+    m392_sim.add_argument("--mode", required=True)
+    sub.add_parser("m39-2-simulation-matrix")
+    sub.add_parser("m39-2-emit-evidence")
     args = p.parse_args(argv)
 
     # Reject raw secret CLI carriers globally for any m36 command
@@ -781,6 +787,31 @@ def main(argv: Optional[list[str]] = None) -> int:
                     return 0
                 if args.cmd == "m39-1-emit-evidence":
                     res = m39_1.emit_m39_1_evidence("docs/evidence/m39_1")
+                    _print(res)
+                    return 0
+            except m39.M39Error as e:
+                _print({"ok": False, "error": e.code, "detail": getattr(e, "detail", ""),
+                        "banner": _M39_BANNER})
+                return 2
+
+        # ── M39.2 failure-mode simulation (offline; SIMULATED_NOT_LIVE) ────────
+        if args.cmd and str(args.cmd).startswith("m39-2-"):
+            from saathi.credentials import m39_2
+            try:
+                if args.cmd == "m39-2-simulate-fault":
+                    out = m39_2.simulate_fault(args.mode)
+                    if not leakscan.is_clean(out):
+                        _print({"ok": False, "error": "leak_detected"}); return 2
+                    _print(out)
+                    return 0 if out.get("fails_closed") else 5
+                if args.cmd == "m39-2-simulation-matrix":
+                    out = m39_2.run_simulation_matrix()
+                    if not leakscan.is_clean(out):
+                        _print({"ok": False, "error": "leak_detected"}); return 2
+                    _print(out)
+                    return 0 if out.get("verdict") == "ALL_FAULTS_FAIL_CLOSED" else 5
+                if args.cmd == "m39-2-emit-evidence":
+                    res = m39_2.emit_m39_2_evidence("docs/evidence/m39_2")
                     _print(res)
                     return 0
             except m39.M39Error as e:

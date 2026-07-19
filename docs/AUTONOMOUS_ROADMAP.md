@@ -627,3 +627,20 @@ UNCHANGED / UNENGAGED. Verdict: **GOVERNED PROVIDER-ADAPTER PILOT — SIMULATION
 - Tests: 25 passed; evidence `docs/evidence/m39_1/` (deterministic, leak-clean)
 - Authorities unchanged: CANARY / ACTIVE / M40 production authorization NOT GRANTED
 - Plan: `docs/PRE_M40_OFFLINE_READINESS_PLAN.md`; next: M39.2
+
+## M39.2 — Live-Test Failure-Mode Simulation (2026-07-19)
+
+**Status:** ALL_FAULTS_FAIL_CLOSED (offline; SIMULATED_NOT_LIVE).
+
+- Module `saathi/credentials/m39_2.py` composes the M39 single-session runner,
+  M37 transport testkit, and M38 retry classifier; no new subsystem
+- CLI: `m39-2-simulate-fault`, `m39-2-simulation-matrix`, `m39-2-emit-evidence`
+- 11 fault modes injected via runner seams: throttle_429, auth_denied_401/403,
+  server_error_500, malformed_response, network_timeout, connection_reset,
+  connection_refused, dns_resolution_failure, secret_resolution_failure,
+  kill_switch_tripped — every one fails closed, closes the SecretHandle, and
+  matches its M38 retry classification; baseline fixture passes; no live network
+- Multi-session partial-failure already covered by M38 failure matrix (not duplicated)
+- Tests: 22 passed; evidence `docs/evidence/m39_2/` (deterministic, leak-clean)
+- Authorities unchanged: CANARY / ACTIVE / M40 production authorization NOT GRANTED
+- Next: M39.3 (canary-readiness framework completion)
