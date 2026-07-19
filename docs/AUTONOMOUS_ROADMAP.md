@@ -663,3 +663,20 @@ UNCHANGED / UNENGAGED. Verdict: **GOVERNED PROVIDER-ADAPTER PILOT — SIMULATION
 - Tests: 16 passed; evidence `docs/evidence/m39_3/` (deterministic, leak-clean)
 - Authorities unchanged: CANARY / ACTIVE / M40 production authorization NOT GRANTED
 - Next: M39.4 (deployment & rollback preparation)
+
+## M39.4 — Deployment & Rollback Preparation (2026-07-19)
+
+**Status:** DEPLOY_ROLLBACK_PREP_COMPLETE (offline; executes nothing).
+
+- Module `saathi/credentials/m39_4.py`; no new subsystem
+- CLI: `m39-4-validate-config`, `m39-4-release-checklist`, `m39-4-rollback-plan`,
+  `m39-4-backward-compat`, `m39-4-emit-evidence`
+- Fail-closed deployment-config validator; REL-1..REL-10 release checklist;
+  reversible rollback plan RB-1..RB-6 + TEXT-ONLY script (no push/--force/reset
+  --hard; git revert preferred; Trading Guardian untouched); backward-compat proof
+  (11/11 M31–M39 entry points present, additive-only); artifact-integrity
+  fingerprint stability; SMK-1..SMK-4 smoke tests; post-deploy verification plan
+- Nothing is executed; no production deployment authorized
+- Tests: 11 passed; evidence `docs/evidence/m39_4/` (deterministic, leak-clean)
+- Authorities unchanged: CANARY / ACTIVE / M40 production authorization NOT GRANTED
+- Next: M39.5 (monitoring & incident response)

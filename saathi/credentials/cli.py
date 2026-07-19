@@ -332,6 +332,14 @@ def main(argv: Optional[list[str]] = None) -> int:
     m393_val.add_argument("--record-file", default="")
     sub.add_parser("m39-3-canary-decision")
     sub.add_parser("m39-3-emit-evidence")
+
+    # ── M39.4 deployment & rollback preparation (offline; executes nothing) ────
+    m394_cfg = sub.add_parser("m39-4-validate-config")
+    m394_cfg.add_argument("--config-file", default="")
+    sub.add_parser("m39-4-release-checklist")
+    sub.add_parser("m39-4-rollback-plan")
+    sub.add_parser("m39-4-backward-compat")
+    sub.add_parser("m39-4-emit-evidence")
     args = p.parse_args(argv)
 
     # Reject raw secret CLI carriers globally for any m36 command
@@ -861,6 +869,38 @@ def main(argv: Optional[list[str]] = None) -> int:
                     return 0
                 if args.cmd == "m39-3-emit-evidence":
                     res = m39_3.emit_m39_3_evidence("docs/evidence/m39_3")
+                    _print(res)
+                    return 0
+            except m39.M39Error as e:
+                _print({"ok": False, "error": e.code, "detail": getattr(e, "detail", ""),
+                        "banner": _M39_BANNER})
+                return 2
+
+        # ── M39.4 deployment & rollback preparation (offline; executes nothing) ─
+        if args.cmd and str(args.cmd).startswith("m39-4-"):
+            from saathi.credentials import m39_4
+            import json as _json4
+            try:
+                if args.cmd == "m39-4-validate-config":
+                    config = None
+                    if args.config_file:
+                        with open(args.config_file) as fh:
+                            config = _json4.load(fh)
+                    out = m39_4.validate_deployment_config(config)
+                    _print(out)
+                    return 0 if out.get("valid") else 5
+                if args.cmd == "m39-4-release-checklist":
+                    _print(m39_4.release_checklist())
+                    return 0
+                if args.cmd == "m39-4-rollback-plan":
+                    _print(m39_4.rollback_plan())
+                    return 0
+                if args.cmd == "m39-4-backward-compat":
+                    out = m39_4.backward_compatibility_check()
+                    _print(out)
+                    return 0 if out.get("all_present") else 5
+                if args.cmd == "m39-4-emit-evidence":
+                    res = m39_4.emit_m39_4_evidence("docs/evidence/m39_4")
                     _print(res)
                     return 0
             except m39.M39Error as e:

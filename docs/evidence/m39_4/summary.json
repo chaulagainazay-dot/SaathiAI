@@ -1,0 +1,17 @@
+{
+  "authorities": {
+    "ACTIVE_authorization": "NOT GRANTED",
+    "CANARY_authorization": "NOT GRANTED",
+    "production_authorization": "NOT GRANTED",
+    "rollout_authorization": "NOT GRANTED",
+    "write_authority": "NOT GRANTED"
+  },
+  "banner": "M39 LIVE DISPOSABLE SANDBOX VALIDATION\nNON-PRODUCTION\nREAD-ONLY\nBOUNDED LIVE VALIDATION ONLY\nROLLOUT OFF\nNO CANARY GRANT\nNO ACTIVE\nTRADING GUARDIAN UNENGAGED",
+  "contains_secret_values": false,
+  "executes_nothing": true,
+  "fingerprint": "1fec4d09368a7dc185dfc971",
+  "milestone": "M39.4",
+  "schema": "m39_4.summary.v1",
+  "trading_guardian": "UNENGAGED",
+  "verdict": "DEPLOY_ROLLBACK_PREP_COMPLETE"
+}

@@ -1,0 +1,24 @@
+{
+  "authorities": {
+    "ACTIVE_authorization": "NOT GRANTED",
+    "CANARY_authorization": "NOT GRANTED",
+    "production_authorization": "NOT GRANTED",
+    "rollout_authorization": "NOT GRANTED",
+    "write_authority": "NOT GRANTED"
+  },
+  "canonical": {
+    "active": "NOT GRANTED",
+    "aggregate_budget_max": 12,
+    "canary": "NOT GRANTED",
+    "concurrency_max": 2,
+    "kill_switch_env": "SAATHI_M39_KILL_SWITCH",
+    "live_flag_default": "off",
+    "per_session_budget_max": 3,
+    "provider": "github_meta",
+    "rollout": "OFF"
+  },
+  "contains_secret_values": false,
+  "problems": [],
+  "schema": "m39_4.config_validation.v1",
+  "valid": true
+}

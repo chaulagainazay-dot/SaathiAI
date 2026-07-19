@@ -1,0 +1,26 @@
+{
+  "contains_secret_values": false,
+  "schema": "m39_4.smoke_tests.v1",
+  "tests": [
+    {
+      "cmd": "python -m saathi.credentials.cli m39-preflight",
+      "expect": "fail-closed preflight spec printed",
+      "id": "SMK-1"
+    },
+    {
+      "cmd": "python -m saathi.credentials.cli m39-1-diagnostics",
+      "expect": "live_flag_set false; authorities NOT GRANTED",
+      "id": "SMK-2"
+    },
+    {
+      "cmd": "python -m saathi.credentials.cli m39-2-simulation-matrix",
+      "expect": "ALL_FAULTS_FAIL_CLOSED",
+      "id": "SMK-3"
+    },
+    {
+      "cmd": "python -m saathi.credentials.cli m39-3-canary-decision",
+      "expect": "CANARY_NOT_GRANTED",
+      "id": "SMK-4"
+    }
+  ]
+}

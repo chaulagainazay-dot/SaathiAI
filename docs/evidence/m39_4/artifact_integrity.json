@@ -1,0 +1,13 @@
+{
+  "authorities_in_fingerprint": {
+    "ACTIVE_authorization": "NOT GRANTED",
+    "CANARY_authorization": "NOT GRANTED",
+    "production_authorization": "NOT GRANTED",
+    "rollout_authorization": "NOT GRANTED",
+    "write_authority": "NOT GRANTED"
+  },
+  "contains_secret_values": false,
+  "m39_fingerprint": "64f0af8e8446fd490d15b2bb23c7afeddbac826722454255a5f78b69133ef68f",
+  "schema": "m39_4.artifact_integrity.v1",
+  "stable": true
+}

@@ -1,0 +1,13 @@
+{
+  "contains_secret_values": false,
+  "live_dependent": "OFFLINE_ONLY until operator supplies disposable secret reference",
+  "schema": "m39_4.post_deploy_plan.v1",
+  "steps": [
+    "confirm live flag state matches intent",
+    "confirm kill switch reachable",
+    "confirm no writes attempted (read-only invariant)",
+    "confirm SecretHandle/lease cleanup after each session",
+    "confirm evidence written and leak-clean",
+    "confirm external revocation recorded"
+  ]
+}

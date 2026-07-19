@@ -1,0 +1,41 @@
+{
+  "authorities": {
+    "ACTIVE_authorization": "NOT GRANTED",
+    "CANARY_authorization": "NOT GRANTED",
+    "production_authorization": "NOT GRANTED",
+    "rollout_authorization": "NOT GRANTED",
+    "write_authority": "NOT GRANTED"
+  },
+  "contains_secret_values": false,
+  "executes": false,
+  "reversible": true,
+  "schema": "m39_4.rollback_plan.v1",
+  "script_template": "#!/usr/bin/env bash\n# M39.4 ROLLBACK TEMPLATE \u2014 review before running; nothing here auto-executes.\nset -euo pipefail\nunset SAATHI_M39_ALLOW_LIVE_SANDBOX_VALIDATION 2>/dev/null || true\nexport SAATHI_M39_KILL_SWITCH=1\n# Operator: revoke the disposable PAT externally (GitHub settings).\n# Code rollback (only if needed) \u2014 prefer revert over reset, no force-push:\n#   git revert <m39x-commit-range>\npython -m pytest tests/ -k 'm31 or m32 or m33 or m34 or m35 or m36 or m37 or m38 or m39' -q\necho 'M39 surface disabled; baseline regression re-run.'",
+  "steps": [
+    {
+      "action": "Unset live flag: unset SAATHI_M39_ALLOW_LIVE_SANDBOX_VALIDATION",
+      "id": "RB-1"
+    },
+    {
+      "action": "Trip kill switch: export SAATHI_M39_KILL_SWITCH=1",
+      "id": "RB-2"
+    },
+    {
+      "action": "Operator revokes disposable PAT externally (see M39.1 checklist)",
+      "id": "RB-3"
+    },
+    {
+      "action": "Confirm no open SecretHandle / lease (m39 cleanup status)",
+      "id": "RB-4"
+    },
+    {
+      "action": "If code rollback needed: git revert the M39.x commit range (no force-push)",
+      "id": "RB-5"
+    },
+    {
+      "action": "Re-run M31\u2013M39.x regression to confirm restored baseline",
+      "id": "RB-6"
+    }
+  ],
+  "trading_guardian_untouched": true
+}
