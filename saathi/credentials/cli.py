@@ -351,6 +351,12 @@ def main(argv: Optional[list[str]] = None) -> int:
     sub.add_parser("m39-5-incident-runbook")
     sub.add_parser("m39-5-recovery-runbook")
     sub.add_parser("m39-5-emit-evidence")
+
+    # ── M39.7 reproducibility & clean-environment validation (offline) ────────
+    sub.add_parser("m39-7-reproduce")
+    sub.add_parser("m39-7-dependencies")
+    sub.add_parser("m39-7-cli-contract")
+    sub.add_parser("m39-7-emit-evidence")
     args = p.parse_args(argv)
 
     # Reject raw secret CLI carriers globally for any m36 command
@@ -953,6 +959,30 @@ def main(argv: Optional[list[str]] = None) -> int:
                     return 0
                 if args.cmd == "m39-5-emit-evidence":
                     res = m39_5.emit_m39_5_evidence("docs/evidence/m39_5")
+                    _print(res)
+                    return 0
+            except m39.M39Error as e:
+                _print({"ok": False, "error": e.code, "detail": getattr(e, "detail", ""),
+                        "banner": _M39_BANNER})
+                return 2
+
+        # ── M39.7 reproducibility & clean-environment validation (offline) ────
+        if args.cmd and str(args.cmd).startswith("m39-7-"):
+            from saathi.credentials import m39_7
+            try:
+                if args.cmd == "m39-7-reproduce":
+                    out = m39_7.reproduce_all()
+                    _print(out)
+                    return 0 if (out.get("all_reproducible") and out.get("all_clean")) else 5
+                if args.cmd == "m39-7-dependencies":
+                    out = m39_7.validate_dependencies()
+                    _print(out)
+                    return 0 if out.get("self_contained") else 5
+                if args.cmd == "m39-7-cli-contract":
+                    _print(m39_7.cli_contract())
+                    return 0
+                if args.cmd == "m39-7-emit-evidence":
+                    res = m39_7.emit_m39_7_evidence("docs/evidence/m39_7")
                     _print(res)
                     return 0
             except m39.M39Error as e:

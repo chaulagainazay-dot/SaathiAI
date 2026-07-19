@@ -710,3 +710,16 @@ UNCHANGED / UNENGAGED. Verdict: **GOVERNED PROVIDER-ADAPTER PILOT — SIMULATION
   exception/output leakage, redaction, non-live guarantee
 - Authorities unchanged: CANARY / ACTIVE / M40 production authorization NOT GRANTED
 - Next: M39.7 (reproducibility & clean-environment validation)
+
+## M39.7 — Reproducibility & Clean-Environment Validation (2026-07-19)
+
+**Status:** REPRODUCIBLE_AND_SELF_CONTAINED (offline).
+
+- Module `saathi/credentials/m39_7.py`; no new subsystem
+- CLI: `m39-7-reproduce`, `m39-7-dependencies`, `m39-7-cli-contract`, `m39-7-emit-evidence`
+- Byte-for-byte reproducibility of all 5 M39.x evidence builders (double-build +
+  file emit/re-emit); AST dependency self-containment (stdlib + saathi only, no
+  network lib); 29-command CLI contract with a read-only subset executed via cli.main
+- Tests: 28 passed; evidence `docs/evidence/m39_7/` (deterministic, leak-clean)
+- Authorities unchanged: CANARY / ACTIVE / M40 production authorization NOT GRANTED
+- Next: M39.8 (final operator package)

@@ -133,6 +133,7 @@
     "m39_4_status": "DEPLOY_ROLLBACK_PREP_COMPLETE",
     "m39_5_status": "MONITORING_INCIDENT_SURFACE_COMPLETE_OFFLINE",
     "m39_6_status": "ADVERSARIAL_COVERAGE_EXPANDED",
-    "next_offline_milestone": "M39.7"
+    "m39_7_status": "REPRODUCIBLE_AND_SELF_CONTAINED",
+    "next_offline_milestone": "M39.8"
   }
 }

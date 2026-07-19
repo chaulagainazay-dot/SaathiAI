@@ -1,0 +1,34 @@
+{
+  "allowed_roots": [
+    "__future__",
+    "ast",
+    "dataclasses",
+    "enum",
+    "hashlib",
+    "hmac",
+    "importlib",
+    "json",
+    "os",
+    "pathlib",
+    "re",
+    "saathi",
+    "subprocess",
+    "sys",
+    "threading",
+    "time",
+    "typing"
+  ],
+  "checked": [
+    "m39",
+    "m39_1",
+    "m39_2",
+    "m39_3",
+    "m39_4",
+    "m39_5",
+    "m39_7"
+  ],
+  "contains_secret_values": false,
+  "schema": "m39_7.dependencies.v1",
+  "self_contained": true,
+  "violations": []
+}
