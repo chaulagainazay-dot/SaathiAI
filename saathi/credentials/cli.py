@@ -216,6 +216,18 @@ def _fresh_broker_registry() -> tuple[CredentialBroker, AccountLinkRegistry]:
     return b, r
 
 
+def _read_json_file(path: str):
+    """Fail-closed JSON file read. Returns (data, error_code). Never raises."""
+    import json as _j
+    try:
+        with open(path) as fh:
+            return _j.load(fh), None
+    except FileNotFoundError:
+        return None, "file_not_found"
+    except (ValueError, OSError) as e:
+        return None, f"unreadable:{type(e).__name__}"
+
+
 def main(argv: Optional[list[str]] = None) -> int:
     # Fail closed on raw secret carriers before argparse (so --token is never a
     # silent "unrecognized arguments" only).
@@ -944,8 +956,11 @@ def main(argv: Optional[list[str]] = None) -> int:
                 if args.cmd == "m39-3-validate-approval":
                     record = None
                     if args.record_file:
-                        with open(args.record_file) as fh:
-                            record = _json.load(fh)
+                        record, ferr = _read_json_file(args.record_file)
+                        if ferr:
+                            _print({"ok": False, "valid": False, "error": ferr,
+                                    "record_file": args.record_file})
+                            return 5
                     out = m39_3.validate_operator_approval_record(record)
                     _print(out)
                     return 0 if out.get("valid") else 5
@@ -975,8 +990,10 @@ def main(argv: Optional[list[str]] = None) -> int:
                 if args.cmd == "m39-4-validate-config":
                     config = None
                     if args.config_file:
-                        with open(args.config_file) as fh:
-                            config = _json4.load(fh)
+                        config, ferr = _read_json_file(args.config_file)
+                        if ferr:
+                            _print({"ok": False, "valid": False, "error": ferr,
+                                    "config_file": args.config_file}); return 5
                     out = m39_4.validate_deployment_config(config)
                     _print(out)
                     return 0 if out.get("valid") else 5
@@ -1010,8 +1027,10 @@ def main(argv: Optional[list[str]] = None) -> int:
                 if args.cmd == "m39-5-validate-event":
                     event = None
                     if args.event_file:
-                        with open(args.event_file) as fh:
-                            event = _json5.load(fh)
+                        event, ferr = _read_json_file(args.event_file)
+                        if ferr:
+                            _print({"ok": False, "valid": False, "error": ferr,
+                                    "event_file": args.event_file}); return 5
                     out = m39_5.validate_audit_event(event)
                     _print(out)
                     return 0 if out.get("valid") else 5
@@ -1021,8 +1040,10 @@ def main(argv: Optional[list[str]] = None) -> int:
                 if args.cmd == "m39-5-detect-alerts":
                     signals = None
                     if args.signals_file:
-                        with open(args.signals_file) as fh:
-                            signals = _json5.load(fh)
+                        signals, ferr = _read_json_file(args.signals_file)
+                        if ferr:
+                            _print({"ok": False, "error": ferr,
+                                    "signals_file": args.signals_file}); return 5
                     _print(m39_5.detect_alerts(signals))
                     return 0
                 if args.cmd == "m39-5-incident-runbook":
@@ -1159,14 +1180,11 @@ def main(argv: Optional[list[str]] = None) -> int:
             if args.cmd == "m41-run-canary":
                 approval = None
                 if args.approval_file:
-                    with open(args.approval_file) as fh:
-                        approval = _json41.load(fh)
-                cert = None
-                try:
-                    with open(args.cert_file) as fh:
-                        cert = _json41.load(fh)
-                except Exception:
-                    cert = None
+                    approval, ferr = _read_json_file(args.approval_file)
+                    if ferr:
+                        _print({"ok": False, "error": ferr, "approval_file": args.approval_file})
+                        return 5
+                cert, _ = _read_json_file(args.cert_file)
                 cfg = m41.M41Config(
                     mode="live", approval_record=approval, m40_cert_record=cert,
                     rollout_percent=args.rollout_percent,
@@ -1256,14 +1274,11 @@ def main(argv: Optional[list[str]] = None) -> int:
             if args.cmd in ("m43-run-validation", "m43-run-revocation"):
                 approval = None
                 if args.approval_file:
-                    with open(args.approval_file) as fh:
-                        approval = _json43.load(fh)
-                cert = None
-                try:
-                    with open(args.cert_file) as fh:
-                        cert = _json43.load(fh)
-                except Exception:
-                    cert = None
+                    approval, ferr = _read_json_file(args.approval_file)
+                    if ferr:
+                        _print({"ok": False, "error": ferr, "approval_file": args.approval_file})
+                        return 5
+                cert, _ = _read_json_file(args.cert_file)
                 cfg = m43.M43Config(
                     mode="live", approval_record=approval, m40_cert_record=cert,
                     secret_source_kind=args.source_kind, secret_locator=args.locator,
