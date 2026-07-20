@@ -62,6 +62,9 @@ REQUIRED_ARTIFACTS: tuple[dict[str, Any], ...] = (
     {"key": "m40_revocation", "path": "m40/live_certification_revocation_phase.json",
      "mandatory": True, "expected_provenance": Provenance.MACHINE_PROOF},
     {"key": "m41_bounded_canary", "path": "m41/operator_attested_canary_completion.json",
+     # M43 provenance strengthening: prefer a machine-verified record when present.
+     # This changes the evidence SOURCE only; graduation criteria/logic are unchanged.
+     "machine_override": "m43/machine_verified_canary_completion.json",
      "mandatory": True, "expected_provenance": Provenance.MACHINE_PROOF},
     {"key": "m41_rehearsal", "path": "m41/canary_rehearsal_bounded.json",
      "mandatory": False, "expected_provenance": Provenance.SIMULATED},
@@ -92,6 +95,11 @@ def load_evidence(base: str | Path = EVIDENCE_BASE) -> dict[str, Any]:
     loaded: dict[str, Any] = {}
     for spec in REQUIRED_ARTIFACTS:
         p = base / spec["path"]
+        # provenance strengthening: a machine-verified record supersedes the default
+        # (attested) artifact for the same key when it exists on disk.
+        override = spec.get("machine_override")
+        if override and (base / override).exists():
+            p = base / override
         entry: dict[str, Any] = {"path": str(p), "spec": spec["key"]}
         try:
             entry["body"] = json.loads(p.read_text())

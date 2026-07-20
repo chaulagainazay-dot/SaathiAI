@@ -413,6 +413,24 @@ def main(argv: Optional[list[str]] = None) -> int:
     sub.add_parser("m42-evaluate-criteria")
     sub.add_parser("m42-review-graduation")
     sub.add_parser("m42-emit-evidence")
+
+    # ── M43 machine-verified bounded canary (fail-closed; grants nothing) ─────
+    sub.add_parser("m43-status")
+    sub.add_parser("m43-rehearsal")
+    for name in ("m43-run-validation", "m43-run-revocation"):
+        sp = sub.add_parser(name)
+        sp.add_argument("--approval-file", default="")
+        sp.add_argument("--cert-file", default="docs/evidence/m40/live_certification_record.json")
+        sp.add_argument("--source-kind", default="")
+        sp.add_argument("--locator", default="")
+        sp.add_argument("--env-var-name", default="")
+        sp.add_argument("--expected-subject-fp", default="", dest="expected_subject_fp")
+        sp.add_argument("--rollout-percent", type=int, default=1, dest="rollout_percent")
+        sp.add_argument("--live-flag", action="store_true")
+        sp.add_argument("--validation-passed", action="store_true", dest="validation_passed")
+        sp.add_argument("--ack", action="append", default=[], dest="acks")
+    sub.add_parser("m43-revalidate")
+    sub.add_parser("m43-emit-evidence")
     args = p.parse_args(argv)
 
     # Reject raw secret CLI carriers globally for any m36 command
@@ -1211,6 +1229,75 @@ def main(argv: Optional[list[str]] = None) -> int:
             res = m42.emit_m42_evidence("docs/evidence/m42")
             _print(res)
             return 0
+
+    # ── M43 machine-verified bounded canary (fail-closed; grants nothing) ─────
+    if args.cmd and str(args.cmd).startswith("m43"):
+        from saathi.credentials import m39, m43
+        import json as _json43
+        print("M43 MACHINE-VERIFIED BOUNDED CANARY\nNON-PRODUCTION\nREAD-ONLY\nFAIL-CLOSED\n"
+              "STRENGTHENS PROVENANCE ONLY\nGRANTS NOTHING\nNO ACTIVE\nNO PRODUCTION\n"
+              "NO SCOPE EXPANSION\nTRADING GUARDIAN UNENGAGED")
+        try:
+            m39.reject_m39_forbidden_argv(list(argv or sys.argv[1:]))
+        except m39.M39Error as e:
+            _print({"ok": False, "error": e.code})
+            return 2
+        try:
+            if args.cmd == "m43-status":
+                out = m43.run_machine_verified_canary(m43.M43Config())
+                _print(out)
+                return 0 if out.get("machine_verified") else 5
+            if args.cmd == "m43-rehearsal":
+                out = m43.run_rehearsal()
+                if not leakscan.is_clean(out):
+                    _print({"ok": False, "error": "leak_detected"}); return 2
+                _print(out)
+                return 0
+            if args.cmd in ("m43-run-validation", "m43-run-revocation"):
+                approval = None
+                if args.approval_file:
+                    with open(args.approval_file) as fh:
+                        approval = _json43.load(fh)
+                cert = None
+                try:
+                    with open(args.cert_file) as fh:
+                        cert = _json43.load(fh)
+                except Exception:
+                    cert = None
+                cfg = m43.M43Config(
+                    mode="live", approval_record=approval, m40_cert_record=cert,
+                    secret_source_kind=args.source_kind, secret_locator=args.locator,
+                    env_var_name=args.env_var_name,
+                    expected_subject_fingerprint=args.expected_subject_fp,
+                    rollout_percent=args.rollout_percent, acknowledgements=tuple(args.acks),
+                    live_flag=bool(args.live_flag),
+                    post_revocation=(args.cmd == "m43-run-revocation"),
+                    validation_phase_passed=bool(args.validation_passed),
+                )
+                out = m43.run_machine_verified_canary(cfg)
+                if out.get("grants_anything") or out.get("grants_active") or out.get("grants_production"):
+                    _print({"ok": False, "error": "invariant_violation_m43_grant"}); return 2
+                if not leakscan.is_clean(out):
+                    _print({"ok": False, "error": "leak_detected"}); return 2
+                # persist the machine record on a fully verified run only
+                rec = out.get("machine_record")
+                if (args.cmd == "m43-run-revocation" and rec and rec.get("machine_verified")
+                        and rec.get("machine_verified_live")):
+                    path = m43.write_machine_record(rec)
+                    out["machine_record_written"] = path
+                _print(out)
+                return 0 if out.get("machine_verified") else 5
+            if args.cmd == "m43-revalidate":
+                out = m43.run_revalidation()
+                _print(out)
+                return 0 if out.get("recommendation") == "GRADUATION_RECOMMENDED" else 5
+            if args.cmd == "m43-emit-evidence":
+                res = m43.emit_m43_evidence("docs/evidence/m43")
+                _print(res)
+                return 0
+        except m43.M43Error as e:
+            _print({"ok": False, "error": e.code, "detail": getattr(e, "detail", "")})
+            return 2
 
     if args.cmd == "profiles":
         _print(list_profiles())
