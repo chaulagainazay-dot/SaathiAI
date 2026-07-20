@@ -1,0 +1,16 @@
+{
+  "contains_secret_values": false,
+  "explicitly_not_granted": [
+    "ACTIVE",
+    "PRODUCTION",
+    "WRITE",
+    "FULL_ROLLOUT",
+    "SCOPE_EXPANSION",
+    "TRADING_GUARDIAN"
+  ],
+  "grants_anything": false,
+  "milestone": "M42",
+  "recommendation": "GRADUATION_NOT_RECOMMENDED",
+  "schema": "m42.summary.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

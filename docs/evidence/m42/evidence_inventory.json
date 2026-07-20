@@ -1,0 +1,65 @@
+{
+  "any_invalid": false,
+  "artifacts": [
+    {
+      "expected_provenance": "MACHINE_PROOF",
+      "key": "m40_live_cert",
+      "mandatory": true,
+      "observed_provenance": "MACHINE_PROOF",
+      "path": "docs/evidence/m40/live_certification_record.json",
+      "status": "PRESENT_VALID"
+    },
+    {
+      "expected_provenance": "MACHINE_PROOF",
+      "key": "m40_validation",
+      "mandatory": true,
+      "observed_provenance": "MACHINE_PROOF",
+      "path": "docs/evidence/m40/live_certification_validation_phase.json",
+      "status": "PRESENT_VALID"
+    },
+    {
+      "expected_provenance": "MACHINE_PROOF",
+      "key": "m40_revocation",
+      "mandatory": true,
+      "observed_provenance": "MACHINE_PROOF",
+      "path": "docs/evidence/m40/live_certification_revocation_phase.json",
+      "status": "PRESENT_VALID"
+    },
+    {
+      "expected_provenance": "MACHINE_PROOF",
+      "key": "m41_bounded_canary",
+      "mandatory": true,
+      "observed_provenance": "OPERATOR_ATTESTED",
+      "path": "docs/evidence/m41/operator_attested_canary_completion.json",
+      "status": "INCONSISTENT"
+    },
+    {
+      "expected_provenance": "SIMULATED_NOT_LIVE",
+      "key": "m41_rehearsal",
+      "mandatory": false,
+      "observed_provenance": "SIMULATED_NOT_LIVE",
+      "path": "docs/evidence/m41/canary_rehearsal_bounded.json",
+      "status": "PRESENT_VALID"
+    },
+    {
+      "expected_provenance": "SIMULATED_NOT_LIVE",
+      "key": "m41_rollback_proof",
+      "mandatory": false,
+      "observed_provenance": "SIMULATED_NOT_LIVE",
+      "path": "docs/evidence/m41/canary_rehearsal_auto_rollback.json",
+      "status": "PRESENT_VALID"
+    },
+    {
+      "expected_provenance": "SIMULATED_NOT_LIVE",
+      "key": "m41_summary",
+      "mandatory": false,
+      "observed_provenance": "REFERENCE",
+      "path": "docs/evidence/m41/summary.json",
+      "status": "PRESENT_VALID"
+    }
+  ],
+  "blocked": false,
+  "contains_secret_values": false,
+  "mandatory_missing": [],
+  "schema": "m42.evidence_inventory.v1"
+}

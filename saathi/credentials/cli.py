@@ -407,6 +407,12 @@ def main(argv: Optional[list[str]] = None) -> int:
     m41_run.add_argument("--live-flag", action="store_true")
     m41_run.add_argument("--ack", action="append", default=[], dest="acks")
     sub.add_parser("m41-emit-evidence")
+
+    # ── M42 graduation review (evidence-only; grants nothing) ─────────────────
+    sub.add_parser("m42-evidence-inventory")
+    sub.add_parser("m42-evaluate-criteria")
+    sub.add_parser("m42-review-graduation")
+    sub.add_parser("m42-emit-evidence")
     args = p.parse_args(argv)
 
     # Reject raw secret CLI carriers globally for any m36 command
@@ -1168,6 +1174,43 @@ def main(argv: Optional[list[str]] = None) -> int:
             _print({"ok": False, "error": e.code, "detail": getattr(e, "detail", ""),
                     "banner": _M41_BANNER})
             return 2
+
+    # ── M42 graduation review (evidence-only; grants nothing; fail-closed) ────
+    if args.cmd and str(args.cmd).startswith("m42"):
+        from saathi.credentials import m39, m42
+        print("M42 GRADUATION REVIEW\nEVIDENCE-ONLY\nGRANTS NOTHING\nFAIL-CLOSED\n"
+              "NO NETWORK\nNO CREDENTIAL\nNO RUNTIME AUTHORITY CHANGE\n"
+              "TRADING GUARDIAN UNENGAGED")
+        try:
+            m39.reject_m39_forbidden_argv(list(argv or sys.argv[1:]))
+        except m39.M39Error as e:
+            _print({"ok": False, "error": e.code})
+            return 2
+        loaded = m42.load_evidence()
+        if args.cmd == "m42-evidence-inventory":
+            out = m42.build_inventory(loaded)
+            if not leakscan.is_clean(out):
+                _print({"ok": False, "error": "leak_detected"}); return 2
+            _print(out)
+            return 0 if not out["blocked"] else 5
+        if args.cmd == "m42-evaluate-criteria":
+            out = m42.evaluate_criteria(loaded)
+            _print(out)
+            return 0 if out["all_pass"] else 5
+        if args.cmd == "m42-review-graduation":
+            out = m42.run_graduation_review(loaded=loaded)
+            # hard invariant: the review must never grant anything
+            if out.get("grants_anything") or out.get("alters_runtime_authority"):
+                _print({"ok": False, "error": "invariant_violation_review_granted"})
+                return 2
+            if not leakscan.is_clean(out):
+                _print({"ok": False, "error": "leak_detected"}); return 2
+            _print(out)
+            return 0 if out["recommendation"] == "GRADUATION_RECOMMENDED" else 5
+        if args.cmd == "m42-emit-evidence":
+            res = m42.emit_m42_evidence("docs/evidence/m42")
+            _print(res)
+            return 0
 
     if args.cmd == "profiles":
         _print(list_profiles())
