@@ -812,3 +812,19 @@ Branch `milestone/m42-graduation-review`.
 - Explicitly NOT granted: ACTIVE / PRODUCTION / WRITE / FULL_ROLLOUT / SCOPE_EXPANSION
   / TRADING_GUARDIAN. Trading Guardian UNENGAGED.
 - To reach RECOMMENDED: supply machine-verified M41 bounded-canary evidence.
+
+## M43 — Machine-Verified Bounded Canary & Graduation Revalidation (2026-07-20)
+
+**Status:** LAYER COMPLETE — machine-verified live run PENDING operator disposable credential.
+
+- Module `saathi/credentials/m43.py` composes M39.3 + M40 + M41 + M42; grants nothing;
+  strengthens provenance only. Two-phase (validation live canary + revocation 401),
+  machine-verified, fail-closed. Re-runs M42 automatically.
+- Additive M42 hook: bounded-canary artifact prefers a machine record at
+  `docs/evidence/m43/machine_verified_canary_completion.json` (criteria unchanged).
+- Without a live run, no machine record exists → M42 stays GRADUATION_NOT_RECOMMENDED
+  (no fabrication). SIMULATED rehearsal proves flow but does not clear AB-PROV.
+- CLI: m43-status, m43-rehearsal, m43-run-validation, m43-run-revocation,
+  m43-revalidate, m43-emit-evidence. Tests: 15 passed (40 with M42); M39-M43 282.
+  Leak-clean, deterministic, no network, backward-compat 11/11, M32 prohibition intact.
+- Authorities NOT GRANTED; Trading Guardian UNENGAGED.

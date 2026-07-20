@@ -208,5 +208,21 @@
     "evidence": "docs/evidence/m42/",
     "m32_canary_execution_mode": "PROHIBITION_UNCHANGED",
     "trading_guardian": "UNCHANGED / UNENGAGED"
+  },
+  "m43": {
+    "module": "saathi.credentials.m43",
+    "status": "LAYER_COMPLETE_MACHINE_LIVE_RUN_PENDING",
+    "objective": "replace M41 operator-attested canary with machine-generated proof to clear M42 AB-PROV",
+    "default_verdict": "MACHINE_CANARY_BLOCKED",
+    "machine_verified_live": false,
+    "m42_after_layer": "GRADUATION_NOT_RECOMMENDED (no machine record yet)",
+    "requires": [
+      "fresh_disposable_credential_reference",
+      "valid_M39.3_approval_record",
+      "operator_revocation_between_phases"
+    ],
+    "grants_anything": false,
+    "m32_canary_execution_mode": "PROHIBITION_UNCHANGED",
+    "trading_guardian": "UNCHANGED / UNENGAGED"
   }
 }
