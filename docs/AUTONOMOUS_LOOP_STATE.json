@@ -1,7 +1,7 @@
 {
   "schema_version": "1",
   "repository": "SaathiOS",
-  "branch": "milestone/m41-canary-rollout",
+  "branch": "milestone/m42-graduation-review",
   "current_head": "e670334de96a6727ef017640828e3d5467407779",
   "completed_milestones": [
     "M20.0",
@@ -186,6 +186,27 @@
     "canary": "NOT ACTIVATED (deny-by-default)",
     "active": "NOT GRANTED",
     "production_deployment": "NOT AUTHORIZED",
+    "trading_guardian": "UNCHANGED / UNENGAGED"
+  },
+  "m42": {
+    "module": "saathi.credentials.m42",
+    "status": "REVIEW_COMPLETE",
+    "recommendation": "GRADUATION_NOT_RECOMMENDED",
+    "reason": "M41 bounded-canary completion is OPERATOR_ATTESTED, not machine-verified in-repo (AB-PROV)",
+    "criteria": "14/14 pass on content; 6 rest on operator attestation",
+    "m40_chain": "MACHINE_PROOF (clean)",
+    "grants_anything": false,
+    "alters_runtime_authority": false,
+    "explicitly_not_granted": [
+      "ACTIVE",
+      "PRODUCTION",
+      "WRITE",
+      "FULL_ROLLOUT",
+      "SCOPE_EXPANSION",
+      "TRADING_GUARDIAN"
+    ],
+    "evidence": "docs/evidence/m42/",
+    "m32_canary_execution_mode": "PROHIBITION_UNCHANGED",
     "trading_guardian": "UNCHANGED / UNENGAGED"
   }
 }

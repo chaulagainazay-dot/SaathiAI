@@ -792,3 +792,23 @@ operator supplied the credential.)
 - Authorities: CANARY NOT ACTIVATED · ACTIVE / PRODUCTION / WRITE NOT GRANTED · Trading
   Guardian UNENGAGED. Activation requires operator approval record + fresh disposable
   credential.
+
+## M42 — Canary Evidence Review & Graduation Decision (2026-07-20)
+
+**Status:** REVIEW COMPLETE — recommendation `GRADUATION_NOT_RECOMMENDED` (advisory only).
+Branch `milestone/m42-graduation-review`.
+
+- Module `saathi/credentials/m42.py` composes M40/M41 evidence + M39.3 criteria +
+  M39.5 alert contracts. Grants nothing; no network/credential/provider mutation; no
+  runtime authority change.
+- Evidence inventory + consistency + GC-1..GC-14 criteria + AB-1..AB-11 & AB-PROV abort
+  evaluators + deterministic recommendation (RECOMMENDED / NOT_RECOMMENDED / BLOCKED).
+- Verdict on committed evidence: NOT_RECOMMENDED. M40 chain is machine-proven and
+  clean; M41 bounded-canary completion is OPERATOR_ATTESTED, not machine-verified
+  in-repo (AB-PROV). 14/14 criteria pass on content, 6 rest on attestation.
+- CLI: `m42-evidence-inventory`, `m42-evaluate-criteria`, `m42-review-graduation`,
+  `m42-emit-evidence`. Tests: 25 passed; evidence `docs/evidence/m42/` deterministic,
+  leak-clean; backward-compat 11/11; M32 prohibition intact.
+- Explicitly NOT granted: ACTIVE / PRODUCTION / WRITE / FULL_ROLLOUT / SCOPE_EXPANSION
+  / TRADING_GUARDIAN. Trading Guardian UNENGAGED.
+- To reach RECOMMENDED: supply machine-verified M41 bounded-canary evidence.
