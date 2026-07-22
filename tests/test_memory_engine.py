@@ -357,12 +357,19 @@ def test_auto_does_not_select_unusable_ollama():
 
 
 def test_explicit_ollama_fails_when_embed_model_missing():
+    """Fail closed when Ollama is not usable for the requested embed model.
+
+    CI runners typically have no Ollama daemon (runtime_unreachable). Local
+    machines may have Ollama up but lack nomic-embed-text (embedding_model_missing).
+    Both are valid not-ready outcomes; neither may report ready=True.
+    """
     o = emb.OllamaEmbedder(model="nomic-embed-text")
     ready = o.readiness()
     if ready.ready:
         pytest.skip("nomic-embed-text installed; explicit path would succeed")
-    assert ready.reason == "embedding_model_missing"
-    with pytest.raises(RuntimeError, match="embedding_model_missing|not ready"):
+    assert ready.ready is False
+    assert ready.reason in ("embedding_model_missing", "runtime_unreachable")
+    with pytest.raises(RuntimeError, match="embedding_model_missing|not ready|runtime_unreachable"):
         emb.select_provider("ollama")
 
 
