@@ -1,0 +1,43 @@
+{
+  "contains_secret_values": false,
+  "credential_lifecycle": {
+    "disposable_pat_externally_revoked": true,
+    "http_401_confirmed": true,
+    "machine_verified_here": true,
+    "status": "CLOSED"
+  },
+  "evidence_binding": {
+    "contract_machine_record": "docs/evidence/m43/machine_verified_canary_completion.json",
+    "contract_machine_record_fingerprint": "8ecd04d34d2efb5b68dc6671",
+    "m40_certification_record": "docs/evidence/m40/live_certification_record.json",
+    "m40_certification_record_hash": "sha256:1a419050e785be18eb9ae2e0f162e48d5ef0602edcd9a0bb4818975df69a1338",
+    "m41_approval_record": "docs/m41/operator_canary_approval.local.json (operator-local, git-ignored)",
+    "phase5_validation_record": "docs/evidence/m43_1/validation_phase_pending_revocation.json",
+    "phase5_validation_record_hash": "sha256:bc3c4b2592f3e721efef04a94f0be0bf909f1952e6fdb4ac2281191590e42a72"
+  },
+  "grants_active": false,
+  "grants_production": false,
+  "grants_write": false,
+  "identity_binding": {
+    "credential_locator": "saathi_m43:github_meta",
+    "expected_subject_fingerprint": "c7cd7f4d6bee55c2847614692022af73",
+    "source_kind": "OS_KEYCHAIN_REFERENCE"
+  },
+  "live_revocation": {
+    "http_401_confirmed": true,
+    "live_network": true,
+    "revocation_effective": true,
+    "secret_handle_destroyed": true
+  },
+  "m32_canary_execution_mode": "PROHIBITION_UNCHANGED",
+  "machine_verified": true,
+  "milestone": "M43.1",
+  "phase": "revocation",
+  "remaining_actions": {
+    "phase7_m42_revalidation": "NOT_RUN_THIS_TURN (operator scoped Phase 6 only)",
+    "phase8_keychain_cleanup": "PENDING (operator deletes saathi_m43:github_meta)"
+  },
+  "schema": "m43_1.revocation_phase.verified_pending_cleanup.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED",
+  "verdict": "MACHINE_CANARY_VERIFIED_PENDING_CLEANUP"
+}
