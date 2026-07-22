@@ -1,6 +1,6 @@
 "use client";
 import { motion, useMotionValue, useTransform, animate } from "framer-motion";
-import { useEffect } from "react";
+import { useEffect, useId, useRef } from "react";
 
 export function Panel({ className = "", children, delay = 0, soft = false, style, onClick, ...rest }) {
   return (
@@ -522,5 +522,123 @@ export function BlockedState({ title = "Blocked", reason, description, action, c
       {description && <Text tone="muted" size="sm" style={{ maxWidth: 420 }}>{description}</Text>}
       {action && <div style={{ marginTop: 6 }}>{action}</div>}
     </div>
+  );
+}
+
+/* ---- ConfirmDialog / DestructiveDialog (M47.3) ---- */
+
+/**
+ * Accessible modal confirmation. No silent auto-confirm.
+ * Focus moves to primary action; Escape cancels when not busy.
+ */
+export function ConfirmDialog({
+  open,
+  title = "Confirm",
+  description,
+  confirmLabel = "Confirm",
+  cancelLabel = "Cancel",
+  onConfirm,
+  onCancel,
+  loading = false,
+  destructive = false,
+  children,
+}) {
+  const titleId = useId();
+  const descId = useId();
+  const panelRef = useRef(null);
+  const previouslyFocused = useRef(null);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    previouslyFocused.current = document.activeElement;
+    const t = setTimeout(() => {
+      const btn = panelRef.current?.querySelector("[data-dialog-confirm]");
+      btn?.focus();
+    }, 20);
+    const onKey = (e) => {
+      if (e.key === "Escape" && !loading) {
+        e.preventDefault();
+        onCancel?.();
+      }
+      if (e.key === "Tab" && panelRef.current) {
+        const focusables = panelRef.current.querySelectorAll(
+          'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        );
+        const list = Array.from(focusables);
+        if (!list.length) return;
+        const first = list[0];
+        const last = list[list.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      clearTimeout(t);
+      window.removeEventListener("keydown", onKey);
+      if (previouslyFocused.current && typeof previouslyFocused.current.focus === "function") {
+        previouslyFocused.current.focus();
+      }
+    };
+  }, [open, loading, onCancel]);
+
+  if (!open) return null;
+
+  return (
+    <div
+      className="saathi-dialog-scrim"
+      role="presentation"
+      onClick={() => !loading && onCancel?.()}
+    >
+      <div
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        aria-describedby={description ? descId : undefined}
+        className="saathi-dialog surface-raised"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <Heading level={2} size="md" id={titleId}>
+          {title}
+        </Heading>
+        {description && (
+          <Text tone="muted" size="sm" id={descId} as="p">
+            {description}
+          </Text>
+        )}
+        {children && <div className="saathi-dialog-body">{children}</div>}
+        <div className="saathi-dialog-actions">
+          <Button variant="ghost" size="sm" onClick={onCancel} disabled={loading}>
+            {cancelLabel}
+          </Button>
+          <Button
+            variant={destructive ? "danger" : "primary"}
+            size="sm"
+            loading={loading}
+            onClick={onConfirm}
+            data-dialog-confirm
+          >
+            {confirmLabel}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function DestructiveDialog(props) {
+  return (
+    <ConfirmDialog
+      {...props}
+      destructive
+      confirmLabel={props.confirmLabel || "Delete"}
+      title={props.title || "Destructive action"}
+    />
   );
 }
