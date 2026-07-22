@@ -907,6 +907,246 @@ html, body {
   }
 }
 
+/* ============================================================================
+   M47.3 — Home / Approvals / dialogs / migrated page layout
+   ========================================================================= */
+.home-page { max-width: 1200px; }
+.home-header { margin-bottom: var(--space-5); }
+.home-intro { max-width: 640px; margin-top: var(--space-2); }
+.home-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+  margin-top: var(--space-3);
+}
+.home-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+.home-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--rad-md);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  text-decoration: none;
+  color: inherit;
+  min-height: 72px;
+  transition: background var(--motion-fast);
+}
+.home-metric:hover { background: var(--surface-hover); }
+.home-metric-value {
+  font-family: var(--font-display);
+  font-size: var(--fs-xl);
+  font-weight: 300;
+  color: var(--text-primary);
+}
+.home-metric-unavail { opacity: 0.92; }
+.home-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.9fr);
+  gap: var(--space-4);
+  align-items: start;
+}
+@media (max-width: 960px) {
+  .home-grid { grid-template-columns: 1fr; }
+}
+.home-side { display: flex; flex-direction: column; gap: var(--space-4); }
+.home-card { margin-bottom: 0; }
+.home-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+.home-attention-list { display: flex; flex-direction: column; gap: 8px; }
+.home-attention-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px 12px;
+  padding: 12px;
+  border-radius: var(--rad-sm);
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-subtle);
+  text-decoration: none;
+  color: inherit;
+}
+.home-attention-row:hover { background: var(--surface-hover); }
+.home-attention-badges {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+.home-attention-title { font-weight: 500; font-size: var(--fs-sm); color: var(--text-primary); }
+.home-attention-body { min-width: 0; }
+.home-continue-list {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.home-continue-list a {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-primary);
+  text-decoration: none;
+  font-size: var(--fs-sm);
+}
+.home-continue-list a:hover { color: var(--accent); }
+.home-source-list {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.home-source-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: var(--fs-sm);
+  color: var(--text-secondary);
+}
+.home-section-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: var(--space-4);
+}
+.home-section-actions-col { flex-direction: column; align-items: flex-start; }
+.home-system-extra { margin-top: var(--space-3); }
+
+.approvals-layout { align-items: start; }
+.approvals-main { grid-column: span 1; }
+@media (min-width: 900px) {
+  .approvals-layout { grid-template-columns: 280px 1fr; }
+}
+.approvals-filters {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+@media (min-width: 700px) {
+  .approvals-filters { grid-template-columns: 1.4fr repeat(3, minmax(100px, 0.6fr)); }
+}
+.approvals-select {
+  height: var(--input-h);
+  border-radius: var(--input-radius);
+  border: 1px solid var(--input-border);
+  background: var(--input-bg);
+  color: var(--input-fg);
+  font-family: var(--font-ui);
+  font-size: var(--fs-sm);
+  padding: 0 10px;
+}
+.approvals-row { align-items: flex-start; }
+.approvals-row-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.missions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--space-4);
+}
+.missions-card { cursor: pointer; display: flex; flex-direction: column; gap: 8px; }
+.missions-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+.missions-objectives {
+  margin: 4px 0 0;
+  padding-left: 16px;
+  color: var(--text-secondary);
+}
+
+.projects-journey {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+}
+.projects-journey-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 64px;
+}
+
+/* Dialogs */
+.saathi-dialog-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  background: var(--dialog-scrim);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.saathi-dialog {
+  width: min(440px, 100%);
+  padding: var(--space-5);
+  border: 1px solid var(--dialog-border);
+  border-radius: var(--dialog-radius);
+  background: var(--dialog-bg);
+  box-shadow: var(--elev-3);
+}
+.saathi-dialog-body { margin-top: 12px; }
+.saathi-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 20px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .saathi-dialog-scrim { transition: none; }
+}
+
+/* Light theme polish for shell chrome (certification) */
+:root[data-theme="light"] .shell-sidebar {
+  background: var(--surface);
+  border-right-color: var(--border);
+}
+:root[data-theme="light"] .shell-topbar {
+  background: var(--surface);
+  border-bottom-color: var(--border);
+}
+:root[data-theme="light"] .shell-statusbar {
+  background: var(--surface-sunken);
+}
+:root[data-theme="light"] .home-metric,
+:root[data-theme="light"] .home-attention-row {
+  background: var(--surface);
+  border-color: var(--border);
+}
+:root[data-theme="light"] .m-tabs {
+  background: rgba(245, 247, 252, 0.92);
+  border-top-color: var(--border);
+}
+:root[data-theme="light"] .m-tab { color: var(--text-muted); }
+:root[data-theme="light"] .m-tab[data-active="true"] { color: var(--text-primary); }
+
+
 
 /* ---- primitive animations (spinner + skeleton shimmer) ---- */
 @keyframes saathiSpin { to { transform: rotate(360deg); } }
