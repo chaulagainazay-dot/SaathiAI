@@ -1,0 +1,104 @@
+{
+  "connector_id": "gov.http",
+  "version": "1.0.0",
+  "kind": "http",
+  "capabilities": [
+    "http_request",
+    "get",
+    "post",
+    "put",
+    "patch",
+    "delete",
+    "health",
+    "validate"
+  ],
+  "permissions": [],
+  "auth_mode": "***REDACTED***",
+  "auth_env_names": "***REDACTED***",
+  "timeout_seconds": 10.0,
+  "max_retries": 1,
+  "rate_limit_per_minute": 60,
+  "evidence_policy": "redacted",
+  "supported_operations": [
+    "http_request",
+    "get",
+    "post",
+    "put",
+    "patch",
+    "delete",
+    "health",
+    "validate"
+  ],
+  "allowed_domains": [
+    "127.0.0.1",
+    "localhost",
+    "example.com"
+  ],
+  "denied_domains": [],
+  "allowed_operations": [],
+  "denied_operations": [],
+  "rollout_compatible": [
+    "OFF",
+    "SHADOW",
+    "CANARY",
+    "ACTIVE",
+    "DRAINING"
+  ],
+  "cloud": false,
+  "trading": false,
+  "description": "Governed HTTP adapter (injectable transport; no live SaaS)",
+  "display_name": "Governed HTTP",
+  "owner": "saathi.connectors.gov",
+  "adapter_type": "http",
+  "trust_level": "LOCAL_NETWORK",
+  "capability_classes": [
+    "HTTP",
+    "READ",
+    "WRITE"
+  ],
+  "side_effect_classes": [
+    "READ_ONLY",
+    "EXTERNAL_MUTATION"
+  ],
+  "required_approvals": [
+    "post",
+    "put",
+    "patch",
+    "delete"
+  ],
+  "retry_policy": {
+    "max_retries": 1,
+    "backoff": "none",
+    "privacy_safe": true
+  },
+  "incident_policy": "m26",
+  "health_policy": {
+    "startup_check": "validate",
+    "health_check": "health",
+    "interval_seconds": 60,
+    "privacy_safe": true
+  },
+  "readiness_policy": {
+    "readiness_check": "health",
+    "requires_lifecycle": [
+      "READY",
+      "DEGRADED"
+    ],
+    "privacy_safe": true
+  },
+  "dependencies": [],
+  "supported_environments": [
+    "local",
+    "dev",
+    "test",
+    "staging",
+    "production"
+  ],
+  "created_at": "2026-07-18T00:49:25+00:00",
+  "updated_at": "2026-07-18T00:49:25+00:00",
+  "deprecated": false,
+  "deprecated_at": "",
+  "replacement_connector": "",
+  "lifecycle_state": "",
+  "privacy_safe": true
+}

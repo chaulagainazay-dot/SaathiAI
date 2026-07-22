@@ -1,0 +1,33 @@
+{
+  "body": {
+    "drift_detected_on_change": true,
+    "eligibility_read_is_non_mutating": true,
+    "eligible_shadow": {
+      "allowed": true,
+      "connector_id": "gov.http",
+      "layers": {
+        "approval_valid": true,
+        "config_valid": true,
+        "connector_certified": true,
+        "needs_account": false,
+        "production_certified": true,
+        "provider_verification": {
+          "allowed": true,
+          "fresh": true,
+          "reason": "ok",
+          "state": "SIMULATION_VERIFIED"
+        },
+        "rollout_permits_production": false
+      },
+      "mode": "SHADOW",
+      "provider_id": "saathi.echo.v1",
+      "reason": "eligible_shadow_only"
+    },
+    "verification_state": "SIMULATION_VERIFIED"
+  },
+  "fingerprint": "38c83425cbee6844854cd6d95aabff909cb2d528108bc5a0ef2797490031bc00",
+  "privacy_safe": true,
+  "schema": "m32.runtime_eligibility_results.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

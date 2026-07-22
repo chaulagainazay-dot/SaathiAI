@@ -1,0 +1,49 @@
+{
+  "body": {
+    "candidates": [
+      {
+        "auth": "none",
+        "id": "github_meta",
+        "owner": "GitHub, Inc.",
+        "side_effect": "READ_ONLY",
+        "verdict": "SELECTED"
+      },
+      {
+        "id": "cloudflare_trace",
+        "reason": "echoes caller egress IP",
+        "verdict": "REJECTED"
+      },
+      {
+        "id": "ipify",
+        "reason": "returns caller IP; non-official",
+        "verdict": "REJECTED"
+      },
+      {
+        "id": "worldtimeapi",
+        "reason": "uptime/terms",
+        "verdict": "REJECTED"
+      },
+      {
+        "id": "restcountries",
+        "reason": "community ownership; large response",
+        "verdict": "REJECTED"
+      },
+      {
+        "id": "date.nager.at",
+        "reason": "third-party; uptime",
+        "verdict": "REJECTED"
+      },
+      {
+        "id": "httpbin",
+        "reason": "non-official; echoes request",
+        "verdict": "REJECTED"
+      }
+    ],
+    "selected": "github_meta"
+  },
+  "fingerprint": "1fd3b453ae9c46a99e21ea4d55766696adb15b6666111a9e1106b3180fc24250",
+  "privacy_safe": true,
+  "schema": "m32.provider_candidate_review.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

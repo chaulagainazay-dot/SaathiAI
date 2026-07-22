@@ -15,7 +15,9 @@ meal.sold, video.published, booking.confirmed, invoice.paid, telegram.message.
 """
 from __future__ import annotations
 
+import asyncio
 import fnmatch
+import inspect
 import json
 import sqlite3
 import time
@@ -94,6 +96,43 @@ class EventBus:
     # ── in-process subscriptions (glob pattern on type) ───────────────────────
     def subscribe(self, pattern: str, handler) -> None:
         self._subscribers.append((pattern, handler))
+
+    # ── lightweight publish API (for tests + legacy fabric consumers) ───────────
+    async def publish(self, name: str, payload: dict | None = None) -> "PublishReport":
+        """Publish an event through the bus (legacy fabric API). Returns PublishReport."""
+        from saathi.events import Event as _FabricEvent
+        import saathi.events
+        _FabricPublishReport = saathi.events.PublishReport
+        event = _FabricEvent(name=name, payload=payload or {})
+        report = _FabricPublishReport(event=event, delivered=0)
+        for handler in self._subscribers:
+            if fnmatch.fnmatch(name, handler[0]):
+                try:
+                    result = handler[1](event)
+                    if inspect.isawaitable(result):
+                        await result
+                    report.delivered += 1
+                except Exception as exc:
+                    report.errors.append((handler[1], exc))
+        return report
+
+    def publish_sync(self, name: str, payload: dict | None = None) -> "PublishReport":
+        """Synchronous publish (legacy fabric API). Returns PublishReport."""
+        from saathi.events import Event as _FabricEvent
+        import saathi.events
+        _FabricPublishReport = saathi.events.PublishReport
+        event = _FabricEvent(name=name, payload=payload or {})
+        report = _FabricPublishReport(event=event, delivered=0)
+        for handler in self._subscribers:
+            if fnmatch.fnmatch(name, handler[0]):
+                try:
+                    result = handler[1](event)
+                    if inspect.isawaitable(result):
+                        asyncio.run(result)
+                    report.delivered += 1
+                except Exception as exc:
+                    report.errors.append((handler[1], exc))
+        return report
 
     # ── reads ─────────────────────────────────────────────────────────────────
     def query(self, *, type: str | None = None, source: str | None = None,

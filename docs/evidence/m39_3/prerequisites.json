@@ -1,0 +1,90 @@
+{
+  "all_met": false,
+  "checks": [
+    {
+      "held": false,
+      "id": "PRQ-1",
+      "requirement": "M31\u2013M39 regression green"
+    },
+    {
+      "held": false,
+      "id": "PRQ-2",
+      "requirement": "M39 offline failure gates pass"
+    },
+    {
+      "held": false,
+      "id": "PRQ-3",
+      "requirement": "live single-session PASSED (operator-exercised)"
+    },
+    {
+      "held": false,
+      "id": "PRQ-4",
+      "requirement": "live multi-session PASSED (operator-exercised)"
+    },
+    {
+      "held": false,
+      "id": "PRQ-5",
+      "requirement": "identity qualification confirmed"
+    },
+    {
+      "held": false,
+      "id": "PRQ-6",
+      "requirement": "scope qualification confirmed (read-only)"
+    },
+    {
+      "held": false,
+      "id": "PRQ-7",
+      "requirement": "call budget compliance"
+    },
+    {
+      "held": false,
+      "id": "PRQ-8",
+      "requirement": "SecretHandle + lease cleanup complete"
+    },
+    {
+      "held": false,
+      "id": "PRQ-9",
+      "requirement": "external credential revocation confirmed"
+    },
+    {
+      "held": false,
+      "id": "PRQ-10",
+      "requirement": "repository + runtime leak scans clean"
+    },
+    {
+      "held": false,
+      "id": "PRQ-11",
+      "requirement": "no unresolved terminal failures"
+    },
+    {
+      "held": false,
+      "id": "PRQ-12",
+      "requirement": "evidence complete and reproducible"
+    },
+    {
+      "held": false,
+      "id": "PRQ-13",
+      "requirement": "valid explicit operator canary approval record"
+    }
+  ],
+  "contains_secret_values": false,
+  "held": 0,
+  "immutable": true,
+  "schema": "m39_3.prerequisites.v1",
+  "total": 13,
+  "unmet": [
+    "PRQ-1",
+    "PRQ-2",
+    "PRQ-3",
+    "PRQ-4",
+    "PRQ-5",
+    "PRQ-6",
+    "PRQ-7",
+    "PRQ-8",
+    "PRQ-9",
+    "PRQ-10",
+    "PRQ-11",
+    "PRQ-12",
+    "PRQ-13"
+  ]
+}

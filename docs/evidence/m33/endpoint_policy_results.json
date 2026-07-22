@@ -1,0 +1,59 @@
+{
+  "body": {
+    "cases": [
+      {
+        "input": "https://api.github.com/meta",
+        "result": "PASS"
+      },
+      {
+        "code": "ENDPOINT_POLICY_BLOCKED",
+        "input": "http://api.github.com/meta",
+        "result": "BLOCK"
+      },
+      {
+        "code": "ENDPOINT_POLICY_BLOCKED",
+        "input": "https://evil.example.com/meta",
+        "result": "BLOCK"
+      },
+      {
+        "code": "ENDPOINT_POLICY_BLOCKED",
+        "input": "https://api.github.com.attacker.com/meta",
+        "result": "BLOCK"
+      },
+      {
+        "code": "ENDPOINT_POLICY_BLOCKED",
+        "input": "https://api.github.com:8443/meta",
+        "result": "BLOCK"
+      },
+      {
+        "code": "ENDPOINT_POLICY_BLOCKED",
+        "input": "https://user:pw@api.github.com/meta",
+        "result": "BLOCK"
+      },
+      {
+        "code": "ENDPOINT_POLICY_BLOCKED",
+        "input": "ftp://api.github.com/meta",
+        "result": "BLOCK"
+      },
+      {
+        "code": "ENDPOINT_POLICY_BLOCKED",
+        "input": "https://*.github.com/meta",
+        "result": "BLOCK"
+      },
+      {
+        "code": "SSRF_POLICY_BLOCKED",
+        "input": "https://localhost/meta",
+        "result": "BLOCK"
+      },
+      {
+        "input": "https://api.github.com/other",
+        "result": "PASS"
+      }
+    ]
+  },
+  "fingerprint": "6030126a251aae165e0ffa35aff371bca5ec7176e2027ebd8d766c4425e1b1f0",
+  "privacy_safe": true,
+  "schema": "m32.endpoint_policy_results.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

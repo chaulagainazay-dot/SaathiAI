@@ -1,0 +1,25 @@
+{
+  "body": {
+    "allowed_scope_classes": [
+      "IDENTITY_READ",
+      "METADATA_READ"
+    ],
+    "declared": [
+      "identity:read",
+      "metadata:read"
+    ],
+    "extra_read": [
+      "read:user"
+    ],
+    "observed": [
+      "read:user"
+    ],
+    "reason": "extra_read_scopes",
+    "result": "VERIFIED_WITH_EXTRA_READ_SCOPE"
+  },
+  "fingerprint": "4fb546f77cb443c80c6d466db13ee4609cb136e009fd32c00c4c3a5f33b859bb",
+  "privacy_safe": true,
+  "schema": "m36.scope_verification.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

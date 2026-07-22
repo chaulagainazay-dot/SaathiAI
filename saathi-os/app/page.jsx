@@ -1,7 +1,6 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { DREAM_TARGET } from "@/lib/data";
 import { DEPARTMENTS, color } from "@/lib/departments";
 import { Panel, Eyebrow, Pill, Dot, Bar, Ring, Counter } from "@/components/ui";
 import MobileHome from "@/components/mobile/MobileHome";
@@ -11,8 +10,20 @@ const usd = (n) => "$" + n.toLocaleString("en-US");
 
 export default function CeoHome() {
   const router = useRouter();
-  const { data: home, live } = useCeoHome();
-  const dreamFrac = home.dreamCurrent / DREAM_TARGET;
+  const { data: home, live, loading } = useCeoHome();
+  if (!home) {
+    return (
+      <div className="only-desktop" style={{ maxWidth: 1620, margin: "0 auto", padding: 40 }}>
+        <Panel style={{ padding: 60, textAlign: "center" }}>
+          <Eyebrow>Loading Executive Intelligence...</Eyebrow>
+          <div style={{ marginTop: 20, color: "var(--color-ink-400)", fontSize: 14 }}>
+            {loading ? "Connecting to SaathiOS..." : "Unable to load data. The platform may be offline."}
+          </div>
+        </Panel>
+      </div>
+    );
+  }
+  const dreamFrac = (home.dreamCurrent || 0) / (home.dreamTarget || 1);
 
   return (
     <>
@@ -62,10 +73,10 @@ export default function CeoHome() {
           <div style={{ height: 1, background: "var(--color-line)", margin: "18px 0" }} />
           <Eyebrow>Dream Progress</Eyebrow>
           <div style={{ marginTop: 12 }}>
-            <Bar frac={0.05} color={color("FINANCE")} label={`${usd(home.dreamCurrent)} / ${usd(Math.round(DREAM_TARGET))}`}
+            <Bar frac={dreamFrac} color={color("FINANCE")} label={`${usd(home.dreamCurrent || 0)} / ${usd(Math.round(home.dreamTarget || 0))}`}
               value={`${(dreamFrac * 100).toFixed(2)}%`} />
           </div>
-          <div className="mono" style={{ fontSize: 10, color: "var(--color-ink-500)" }}>+$1,842 today · pace to goal: on trend</div>
+          <div className="mono" style={{ fontSize: 10, color: "var(--color-ink-500)" }}>{home.revenueSplit || "Revenue data unavailable"}</div>
         </Panel>
       </div>
 
@@ -124,7 +135,7 @@ export default function CeoHome() {
         <Eyebrow>Saathi · Executive Briefing</Eyebrow>
         <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "16px 0 4px" }}>
           <span className="pulse" style={{ width: 9, height: 9, borderRadius: "50%", background: "#8FB4FF", boxShadow: "0 0 12px #8FB4FF" }} />
-          <span style={{ color: "var(--color-ink-400)", fontSize: 13 }}>Good morning, Ajay.</span>
+          <span style={{ color: "var(--color-ink-400)", fontSize: 13 }}>{home.greeting || "Welcome back, Ajay."}</span>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 16, marginTop: 14 }}>
           {home.briefing.map((b, i) => (

@@ -1,0 +1,54 @@
+{
+  "authorities": {
+    "ACTIVE_authorization": "NOT GRANTED",
+    "CANARY_authorization": "NOT GRANTED",
+    "production_authorization": "NOT GRANTED",
+    "rollout_authorization": "NOT GRANTED",
+    "write_authority": "NOT GRANTED"
+  },
+  "authorization": {
+    "approval_valid": false,
+    "authorized": false,
+    "blockers": [
+      "operator_approval_invalid_or_absent",
+      "m40_live_certification_required"
+    ],
+    "contains_secret_values": false,
+    "grants_active": false,
+    "grants_production": false,
+    "grants_write": false,
+    "m40_certified": false,
+    "schema": "m41.authorization.v1"
+  },
+  "automatic_rollback": true,
+  "banner": "M39 LIVE DISPOSABLE SANDBOX VALIDATION\nNON-PRODUCTION\nREAD-ONLY\nBOUNDED LIVE VALIDATION ONLY\nROLLOUT OFF\nNO CANARY GRANT\nNO ACTIVE\nTRADING GUARDIAN UNENGAGED",
+  "contains_secret_values": false,
+  "controller": null,
+  "fingerprint": "1f1ed3142da81432aed297d3",
+  "grants_active": false,
+  "grants_canary_execution": false,
+  "grants_production": false,
+  "grants_rollout_full": false,
+  "grants_write": false,
+  "kill_switch_env": "SAATHI_M39_KILL_SWITCH",
+  "m32_canary_execution_mode": "PROHIBITION_UNCHANGED",
+  "milestone": "M41",
+  "mode": "read_only_canary",
+  "note": "M41 canary is bounded read-only verification, operator-authorized, auto-rollback + kill switch mandatory. Never ACTIVE/production/write. Does not modify the M32 ExecutionMode.CANARY prohibition.",
+  "provider": "github_meta",
+  "rollback_triggers_armed": [
+    "RBK-1",
+    "RBK-2",
+    "RBK-3",
+    "RBK-4",
+    "RBK-5",
+    "RBK-6",
+    "RBK-7"
+  ],
+  "rollout_ceiling_percent": 5,
+  "rollout_percent": 1,
+  "schema": "m41.canary_rollout.v1",
+  "scope_expansion": "FORBIDDEN",
+  "trading_guardian": "UNENGAGED",
+  "verdict": "CANARY_NOT_ACTIVATED"
+}

@@ -55,21 +55,39 @@ def clean_prose(text: str, context: str = "") -> dict:
     Args:
         text: The prose to clean (email copy, blog post, social post, etc.)
         context: Optional context hint — e.g. "ielts email", "facebook post", "blog intro"
-    """
-    api_key = os.getenv("ANTHROPIC_API_KEY", "")
-    if not api_key:
-        return {"error": "ANTHROPIC_API_KEY not set"}
 
-    prompt = text
-    if context:
-        prompt = f"Context: {context}\n\n---\n\n{text}"
+    M20.3: opt-in governed local path via ``saathi.inference.compat`` when rollout
+    mode is not ``legacy``. Default remains legacy ``llm.generate``.
+    """
+    # Legacy path historically required Anthropic key presence; keep that gate only
+    # for pure-legacy so local rollout can work without cloud keys.
+    from saathi.inference.caller_rollout import CALLER_PROSE_CLEAN, InfRolloutMode, resolve_mode
+
+    mode = resolve_mode(CALLER_PROSE_CLEAN)
+    if mode == InfRolloutMode.LEGACY:
+        api_key = os.getenv("ANTHROPIC_API_KEY", "")
+        if not api_key:
+            # Still allow injected/router path if other providers exist via llm.generate
+            pass
 
     try:
+        from saathi.inference.compat import prose_clean_adopted
         from saathi.infrastructure.llm import generate
         from saathi.infrastructure.model_router import ModelLabel
-        cleaned = generate(ModelLabel.STANDARD, prompt, _STOP_SLOP_SYSTEM,
-                           max_tokens=2048).text.strip()
-        return {"cleaned": cleaned, "original_length": len(text), "cleaned_length": len(cleaned)}
+
+        def _legacy(**kwargs):
+            return generate(
+                kwargs.get("label", ModelLabel.STANDARD),
+                kwargs["prompt"],
+                system=kwargs.get("system", _STOP_SLOP_SYSTEM),
+                prefer=kwargs.get("prefer"),
+                max_tokens=min(int(kwargs.get("max_tokens") or 1024), 1024),
+                timeout=int(kwargs.get("timeout") or 60),
+            )
+
+        return prose_clean_adopted(
+            text, context=context, system=_STOP_SLOP_SYSTEM, legacy_fn=_legacy,
+        )
     except Exception as e:
         return {"error": type(e).__name__, "message": str(e)[:300]}
 

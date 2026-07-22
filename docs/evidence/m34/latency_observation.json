@@ -1,0 +1,23 @@
+{
+  "body": {
+    "per_call": [
+      {
+        "bucket": "UNDER_250_MS",
+        "call": 1
+      },
+      {
+        "bucket": "UNDER_250_MS",
+        "call": 2
+      },
+      {
+        "bucket": "UNDER_250_MS",
+        "call": 3
+      }
+    ]
+  },
+  "fingerprint": "0f856a39ba5ca85a3a992ad84e32db185ae2e4fb338ec541b33e12bcb5293963",
+  "privacy_safe": true,
+  "schema": "m34.latency_observation.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

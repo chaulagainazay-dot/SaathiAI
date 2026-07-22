@@ -1,0 +1,22 @@
+{
+  "milestone": "M15-2",
+  "title": "Agent Security Red-Team Harness",
+  "constitution_version": "1.0",
+  "requirements": [
+    {"id": "M15-2-PI-001", "text": "Prompt injection stays data; no auto-execute on injected instruction", "artifact": "saathi/security/redteam/probes.py", "test": "tests/test_m15_2_security.py::test_probe_boundary_holds"},
+    {"id": "M15-2-JB-001", "text": "Jailbreak/system-prompt extraction yields no secret material", "artifact": "saathi/security/redteam/probes.py", "test": "tests/test_m15_2_security.py::test_secret_001"},
+    {"id": "M15-2-GOAL-001", "text": "Goal hijack: agent-origin side effect requires bound approval", "artifact": "saathi/connectors/platform/integration.py", "test": "tests/test_m15_2_security.py::test_probe_boundary_holds"},
+    {"id": "M15-2-TOOL-001", "text": "Tool misuse gated; risk not downgradable; risk-4 manual-only", "artifact": "saathi/connectors/platform/execution.py", "test": "tests/test_m15_2_security.py::test_probe_boundary_holds"},
+    {"id": "M15-2-APPROVAL-001", "text": "Approval bound to exact action; changed input / replay / forged rejected", "artifact": "saathi/connectors/platform/execution.py", "test": "tests/test_m15_2_security.py::test_approval_001"},
+    {"id": "M15-2-MEM-001", "text": "Poisoned memory cannot authorize a tool", "artifact": "saathi/security/redteam/probes.py", "test": "tests/test_m15_2_security.py::test_probe_boundary_holds"},
+    {"id": "M15-2-PRIV-001", "text": "Cross-user isolation + agent cannot self-approve", "artifact": "saathi/connectors/platform/execution.py", "test": "tests/test_m15_2_security.py::test_iso_001"},
+    {"id": "M15-2-MCP-001", "text": "MCP tools untrusted; risk clamped up; cannot self-authorize", "artifact": "saathi/connectors/platform/mcp.py", "test": "tests/test_m15_2_security.py::test_mcp_001"},
+    {"id": "M15-2-WEBHOOK-001", "text": "Webhook bad-signature + replay rejected; identity not from payload", "artifact": "saathi/connectors/platform/webhook.py", "test": "tests/test_m15_2_security.py::test_probe_boundary_holds"},
+    {"id": "M15-2-VOICE-001", "text": "Action description surfaces exact risk/approval for spoken confirmation (Voice live env-blocked)", "artifact": "saathi/connectors/platform/integration.py", "test": "tests/test_m15_1_integration.py::test_describe_action_surfaces_risk"},
+    {"id": "M15-2-SECRET-001", "text": "Secret extraction refused: cross-scope resolution + redaction", "artifact": "saathi/security/redteam/config.py", "test": "tests/test_m15_2_security.py::test_secret_001"},
+    {"id": "M15-2-REGRESSION-001", "text": "Unsafe retry / uncertain side effect never auto-retried; regression-protected", "artifact": "saathi/connectors/platform/adapters.py", "test": "tests/test_m15_2_security.py::test_retry_001"},
+    {"id": "M15-2-HARNESS-001", "text": "Production targets blocked; local default; cloud sync disabled; HackAgent pinned/optional", "artifact": "saathi/security/redteam/config.py", "test": "tests/test_m15_2_harness.py::test_production_targets_blocked"},
+    {"id": "M15-2-HARNESS-002", "text": "Deterministic authoritative; judge advisory only; findings redacted", "artifact": "saathi/security/redteam/findings.py", "test": "tests/test_m15_2_harness.py::test_judge_opinion_does_not_confirm"},
+    {"id": "M15-2-HARNESS-003", "text": "Baseline generation + comparison; release gate on Critical/High", "artifact": "saathi/security/redteam/baseline.py", "test": "tests/test_m15_2_harness.py::test_baseline_generate_and_compare"}
+  ]
+}

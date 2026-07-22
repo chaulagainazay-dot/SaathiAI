@@ -1,8 +1,29 @@
 "use client";
 import { motion } from "framer-motion";
-import { universe, flows } from "@/lib/data";
 import { DEPARTMENTS, color } from "@/lib/departments";
 import { useLive } from "./live/LiveProvider";
+
+// Visual layout: department positions on 3 orbital rings (not data — pure geometry)
+const UNIVERSE = [
+  { dept: "EXECUTIVE", ring: 1, angle: 90 },
+  { dept: "FINANCE", ring: 1, angle: 210 },
+  { dept: "MISSION", ring: 1, angle: 330 },
+  { dept: "AI STUDIO", ring: 2, angle: 40 },
+  { dept: "KNOWLEDGE", ring: 2, angle: 130 },
+  { dept: "LEARNING", ring: 2, angle: 220 },
+  { dept: "DISCOVERY", ring: 2, angle: 315 },
+  { dept: "CRYPTO", ring: 3, angle: 15 },
+  { dept: "TRAVEL", ring: 3, angle: 100 },
+  { dept: "CAFETERIA", ring: 3, angle: 200 },
+  { dept: "OPPORTUNITY", ring: 3, angle: 270 },
+  { dept: "BUSINESS", ring: 3, angle: 335 },
+];
+
+const FLOWS = [
+  { from: "LEARNING", to: "AI STUDIO", color: "#B78CFF" },
+  { from: "AI STUDIO", to: "FINANCE", color: "#FFB25A" },
+  { from: "KNOWLEDGE", to: "EXECUTIVE", color: "#6E9BFF" },
+];
 
 const SIZE = 720;
 const CX = SIZE / 2, CY = SIZE / 2;
@@ -12,7 +33,7 @@ function pos(ring, angle) {
   const a = (angle * Math.PI) / 180;
   return { x: CX + RADII[ring] * Math.cos(a), y: CY - RADII[ring] * Math.sin(a) };
 }
-const P = Object.fromEntries(universe.map((n) => [n.dept, pos(n.ring, n.angle)]));
+const P = Object.fromEntries(UNIVERSE.map((n) => [n.dept, pos(n.ring, n.angle)]));
 
 export default function Universe() {
   const { isActive } = useLive();
@@ -23,12 +44,12 @@ export default function Universe() {
           <circle key={r} cx={CX} cy={CY} r={RADII[r]} fill="none" stroke="rgba(110,125,154,0.22)" strokeWidth="1" />
         ))}
         {/* filaments */}
-        {universe.map((n) => (
+        {UNIVERSE.map((n) => (
           <line key={n.dept} x1={CX} y1={CY} x2={P[n.dept].x} y2={P[n.dept].y}
             stroke={color(n.dept)} strokeOpacity="0.16" strokeWidth="1" />
         ))}
         {/* living flows */}
-        {flows.map((f, i) => {
+        {FLOWS.map((f, i) => {
           const a = P[f.from], b = P[f.to];
           return (
             <g key={i}>
@@ -40,7 +61,7 @@ export default function Universe() {
       </svg>
 
       {/* nodes */}
-      {universe.map((n, i) => {
+      {UNIVERSE.map((n, i) => {
         const p = P[n.dept], c = color(n.dept);
         const cosd = Math.cos((n.angle * Math.PI) / 180);
         const right = cosd > 0.25, left = cosd < -0.25;

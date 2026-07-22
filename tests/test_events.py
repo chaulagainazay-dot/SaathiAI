@@ -6,7 +6,8 @@ Disk Watchdog publishing storage_critical/storage_warning through a bus.
 """
 import pytest
 
-from saathi.events import EventBus, STORAGE_CRITICAL, STORAGE_WARNING, WILDCARD
+from saathi.events import EventBus, WILDCARD
+from saathi.events import STORAGE_WARNING, STORAGE_CRITICAL
 from saathi.storage import StorageDB, DiskWatchdog, DiskUsage
 
 

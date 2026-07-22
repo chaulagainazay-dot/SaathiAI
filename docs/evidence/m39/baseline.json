@@ -1,0 +1,18 @@
+{
+  "body": {
+    "branch": "milestone/m7-security-engine",
+    "fingerprint": "64f0af8e8446fd490d15b2bb23c7afeddbac826722454255a5f78b69133ef68f",
+    "live_network": false,
+    "m38_status": "READY_WITH_LIMITATIONS",
+    "milestone": "M39",
+    "mode": "offline_preparation_live_not_exercised",
+    "schema": "m39.live_sandbox_validation.v1",
+    "security_baseline": "M37 SECURITY_CERTIFIED_WITH_LIMITATIONS",
+    "starting_commit_expected": "6ca33f790c8cd83cf82cb0d0d246c77fa4679a76"
+  },
+  "fingerprint": "6a18021db338fa9fa3af5d90617ae91637db82de68c30b9362eac6279bbd90d1",
+  "privacy_safe": true,
+  "schema": "m39.baseline.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

@@ -1,0 +1,15 @@
+{
+  "body": {
+    "contains_secret_values": false,
+    "live_network": false,
+    "ok": false,
+    "reason": "operator_secret_reference_required",
+    "schema": "m39.live_single_session.v1",
+    "status": "NOT_EXERCISED"
+  },
+  "fingerprint": "1616ea86bd56635ea3d045f7e25d95a90f7a2e718afc4a617c78992924c0070b",
+  "privacy_safe": true,
+  "schema": "m39.live_single_session.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

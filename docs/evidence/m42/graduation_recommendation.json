@@ -1,0 +1,52 @@
+{
+  "abort_conditions_present": [
+    "AB-PROV"
+  ],
+  "alters_runtime_authority": false,
+  "capability": "read-only metadata validation",
+  "consistency": {
+    "consistent": true,
+    "contains_secret_values": false,
+    "identity_fingerprint_present": true,
+    "mismatches": [],
+    "provider": "github_meta",
+    "schema": "m42.consistency.v1"
+  },
+  "contains_secret_values": false,
+  "criteria_blocked": 0,
+  "criteria_failed": 0,
+  "criteria_passed": 14,
+  "criteria_total": 14,
+  "evidence_digest": "6103d6c298c13325f5b4433836d29889",
+  "explicitly_not_granted": [
+    "ACTIVE",
+    "PRODUCTION",
+    "WRITE",
+    "FULL_ROLLOUT",
+    "SCOPE_EXPANSION",
+    "TRADING_GUARDIAN"
+  ],
+  "fingerprint": "46b1ebf02e16bf8b57b6b5b6",
+  "grants_anything": false,
+  "milestone": "M42",
+  "provider": "github_meta",
+  "recommendation": "GRADUATION_NOT_RECOMMENDED",
+  "recommended_maximum_future_authority": "Operator may SEPARATELY consider a future read-only limited rollout for github_meta, only after machine-verified bounded-canary evidence exists.",
+  "required_operator_actions": [
+    "produce MACHINE-verified M41 bounded-canary evidence (re-run the bounded canary in-session capturing machine evidence, as M40 did) to lift the operator-attestation provenance gap",
+    "any future rollout requires a SEPARATE explicit operator authorization; M42 grants nothing"
+  ],
+  "residual_risks": [
+    "M41 bounded-canary completion is operator-attested, not machine-verified in-repo",
+    "external credential revocation is operator-attested (ran in operator environment)",
+    "recommendation is advisory only; no runtime authority is changed"
+  ],
+  "review_id": "67689ee92328a426",
+  "review_timestamp": "deterministic:evidence-digest-derived",
+  "reviewed_baseline": {
+    "m40": "LIVE_CERTIFIED",
+    "m41": "bounded_canary_attested"
+  },
+  "schema": "m42.graduation_review.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

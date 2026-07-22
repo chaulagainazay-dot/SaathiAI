@@ -2,7 +2,6 @@
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { notices, DREAM_TARGET } from "@/lib/data";
 import { DEPARTMENTS, color } from "@/lib/departments";
 import { Eyebrow, Counter } from "@/components/ui";
 import { useCeoHome } from "@/lib/useCeoHome";
@@ -13,23 +12,35 @@ const TEAL = "#00BFA5";
 
 export default function MobileHome() {
   const router = useRouter();
-  const { data: home, live } = useCeoHome();
-  const dreamFrac = home.dreamCurrent / DREAM_TARGET;
+  const { data: home, live, loading } = useCeoHome();
   const [mission, setMission] = useState(null);
   useEffect(() => { fetchMission().then(setMission).catch(() => {}); }, []);
   const tick = (key) => completeMission(key).then((r) => r.mission && setMission(r.mission)).catch(() => {});
+
+  if (!home) {
+    return (
+      <div className="m-page" style={{ padding: 40, textAlign: "center" }}>
+        <Eyebrow>Loading...</Eyebrow>
+        <div style={{ marginTop: 16, color: "var(--color-ink-400)", fontSize: 14 }}>
+          {loading ? "Connecting to SaathiOS..." : "Unable to load. Platform may be offline."}
+        </div>
+      </div>
+    );
+  }
+
+  const dreamFrac = (home.dreamCurrent || 0) / (home.dreamTarget || 1);
   return (
     <div className="m-page">
       {/* dream + score + revenue */}
       <div className="m-card">
         <Eyebrow>Dream Progress</Eyebrow>
-        <div className="display" style={{ fontSize: 20, margin: "8px 0 10px" }}>{usd(Math.round(DREAM_TARGET))}</div>
+        <div className="display" style={{ fontSize: 20, margin: "8px 0 10px" }}>{usd(Math.round(home.dreamTarget || 0))}</div>
         <div style={{ height: 8, borderRadius: 6, background: "rgba(255,255,255,0.08)", overflow: "hidden" }}>
-          <motion.div initial={{ width: 0 }} animate={{ width: "6%" }} transition={{ duration: 1, ease: [0.22,1,0.36,1] }}
+          <motion.div initial={{ width: 0 }} animate={{ width: `${Math.min(dreamFrac * 100, 100)}%` }} transition={{ duration: 1, ease: [0.22,1,0.36,1] }}
             style={{ height: "100%", background: color("FINANCE"), boxShadow: `0 0 12px ${color("FINANCE")}` }} />
         </div>
         <div className="mono" style={{ fontSize: 10.5, color: "var(--color-ink-500)", marginTop: 8 }}>
-          {usd(home.dreamCurrent)} · {(dreamFrac * 100).toFixed(2)}% · on trend
+          {usd(home.dreamCurrent || 0)} · {(dreamFrac * 100).toFixed(2)}% · {home.dreamPct ? "on trend" : "tracking"}
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginTop: 18 }}>
           <div style={{ minWidth: 0, textAlign: "center", padding: "14px 6px", borderRadius: 16, background: "rgba(255,255,255,0.04)" }}>
@@ -130,17 +141,15 @@ export default function MobileHome() {
       <div>
         <Eyebrow style={{ padding: "0 4px 10px" }}>Notifications</Eyebrow>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {notices.map((n) => (
-            <div key={n.title} className="m-card" style={{ display: "flex", alignItems: "center", gap: 12, padding: 14 }}>
+          {home.notifications?.map((n) => (
+            <div key={n.text} className="m-card" style={{ display: "flex", alignItems: "center", gap: 12, padding: 14 }}>
               <span style={{ width: 8, height: 8, borderRadius: "50%", background: color(n.dept), boxShadow: `0 0 8px ${color(n.dept)}` }} />
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 9, letterSpacing: "0.1em", color: color(n.dept), fontFamily: "var(--font-mono)" }}>
-                  {DEPARTMENTS[n.dept]?.name.toUpperCase()}
+                  {DEPARTMENTS[n.dept]?.name?.toUpperCase()}
                 </div>
-                <div style={{ fontSize: 13.5, color: "var(--color-ink-200)", marginTop: 2 }}>{n.title}</div>
+                <div style={{ fontSize: 13.5, color: "var(--color-ink-200)", marginTop: 2 }}>{n.text}</div>
               </div>
-              <button style={{ padding: "7px 14px", borderRadius: 999, fontSize: 11, cursor: "pointer",
-                color: color(n.dept), background: `${color(n.dept)}22`, border: `1px solid ${color(n.dept)}55` }}>{n.action}</button>
             </div>
           ))}
         </div>

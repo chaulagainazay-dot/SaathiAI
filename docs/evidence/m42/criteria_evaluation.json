@@ -1,0 +1,216 @@
+{
+  "all_pass": true,
+  "blocked": 0,
+  "contains_secret_values": false,
+  "criteria": [
+    {
+      "description": "M40 real-provider live certification passed",
+      "evidence_source": "m40_live_cert",
+      "expected": "LIVE_CERTIFIED",
+      "id": "GC-1",
+      "machine_proof_required": true,
+      "observed": "LIVE_CERTIFIED",
+      "provenance": "MACHINE_PROOF",
+      "rationale": "M40 executed the real provider in-session",
+      "severity": "SEV1",
+      "status": "PASS"
+    },
+    {
+      "description": "M40 proved real live execution",
+      "evidence_source": "m40_live_cert",
+      "expected": true,
+      "id": "GC-2",
+      "machine_proof_required": true,
+      "observed": true,
+      "provenance": "MACHINE_PROOF",
+      "rationale": "live_exercised true",
+      "severity": "SEV1",
+      "status": "PASS"
+    },
+    {
+      "description": "External revocation effective (http 401)",
+      "evidence_source": "m40_revocation",
+      "expected": true,
+      "id": "GC-3",
+      "machine_proof_required": true,
+      "observed": true,
+      "provenance": "MACHINE_PROOF",
+      "rationale": "post-revocation retry returned 401",
+      "severity": "SEV1",
+      "status": "PASS"
+    },
+    {
+      "description": "Provider is github_meta, read-only",
+      "evidence_source": "m40_live_cert",
+      "expected": [
+        "github_meta",
+        true
+      ],
+      "id": "GC-4",
+      "machine_proof_required": false,
+      "observed": [
+        "github_meta",
+        true
+      ],
+      "provenance": "MACHINE_PROOF",
+      "rationale": "allowlisted read-only provider",
+      "severity": "SEV1",
+      "status": "PASS"
+    },
+    {
+      "description": "No write operations",
+      "evidence_source": "m40_live_cert",
+      "expected": [],
+      "id": "GC-5",
+      "machine_proof_required": false,
+      "observed": [],
+      "provenance": "MACHINE_PROOF",
+      "rationale": "writes empty",
+      "severity": "SEV1",
+      "status": "PASS"
+    },
+    {
+      "description": "M41 bounded canary completed",
+      "evidence_source": "m41_bounded_canary",
+      "expected": "CANARY_ACTIVE_BOUNDED",
+      "id": "GC-6",
+      "machine_proof_required": true,
+      "observed": "CANARY_ACTIVE_BOUNDED",
+      "provenance": "OPERATOR_ATTESTED",
+      "rationale": "operator-reported bounded completion",
+      "severity": "SEV1",
+      "status": "PASS"
+    },
+    {
+      "description": "No unresolved M39.5 alerts during canary",
+      "evidence_source": "m41_bounded_canary",
+      "expected": 0,
+      "id": "GC-7",
+      "machine_proof_required": false,
+      "observed": 0,
+      "provenance": "OPERATOR_ATTESTED",
+      "rationale": "machine re-evaluation of reported signals",
+      "severity": "SEV2",
+      "status": "PASS"
+    },
+    {
+      "description": "No rollback-triggering condition",
+      "evidence_source": "m41_bounded_canary",
+      "expected": false,
+      "id": "GC-8",
+      "machine_proof_required": false,
+      "observed": false,
+      "provenance": "OPERATOR_ATTESTED",
+      "rationale": "rollback evaluator",
+      "severity": "SEV2",
+      "status": "PASS"
+    },
+    {
+      "description": "Identity + scope stable",
+      "evidence_source": "m41_bounded_canary",
+      "expected": [
+        "unchanged",
+        "unchanged"
+      ],
+      "id": "GC-9",
+      "machine_proof_required": false,
+      "observed": [
+        "unchanged",
+        "unchanged"
+      ],
+      "provenance": "OPERATOR_ATTESTED",
+      "rationale": "operator-reported identity/scope",
+      "severity": "SEV2",
+      "status": "PASS"
+    },
+    {
+      "description": "Credential lifecycle closed",
+      "evidence_source": "m41_bounded_canary",
+      "expected": "CLOSED",
+      "id": "GC-10",
+      "machine_proof_required": false,
+      "observed": "CLOSED",
+      "provenance": "OPERATOR_ATTESTED",
+      "rationale": "operator-attested closure",
+      "severity": "SEV1",
+      "status": "PASS"
+    },
+    {
+      "description": "No prohibited authority granted",
+      "evidence_source": "chain",
+      "expected": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "id": "GC-11",
+      "machine_proof_required": false,
+      "observed": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "provenance": "MACHINE_PROOF",
+      "rationale": "all grants_* false",
+      "severity": "SEV1",
+      "status": "PASS"
+    },
+    {
+      "description": "Trading Guardian unengaged",
+      "evidence_source": "chain",
+      "expected": "UNCHANGED / UNENGAGED",
+      "id": "GC-12",
+      "machine_proof_required": false,
+      "observed": "UNCHANGED / UNENGAGED",
+      "provenance": "MACHINE_PROOF",
+      "rationale": "TG unengaged in cert + canary",
+      "severity": "SEV1",
+      "status": "PASS"
+    },
+    {
+      "description": "M32 CANARY/ACTIVE prohibition unchanged",
+      "evidence_source": "runtime",
+      "expected": true,
+      "id": "GC-13",
+      "machine_proof_required": false,
+      "observed": true,
+      "provenance": "MACHINE_PROOF",
+      "rationale": "ExecutionMode.CANARY/ACTIVE still prohibited",
+      "severity": "SEV1",
+      "status": "PASS"
+    },
+    {
+      "description": "Kill switch + auto-rollback available",
+      "evidence_source": "m41_bounded_canary",
+      "expected": [
+        "tested",
+        "armed"
+      ],
+      "id": "GC-14",
+      "machine_proof_required": false,
+      "observed": [
+        "tested",
+        "armed"
+      ],
+      "provenance": "OPERATOR_ATTESTED",
+      "rationale": "operator-reported",
+      "severity": "SEV2",
+      "status": "PASS"
+    }
+  ],
+  "failed": 0,
+  "graduate_requires_all": [
+    "zero rollback triggers fired",
+    "error_budget_consumed < 25%",
+    "all sessions within call budget",
+    "identity + scope stable across window",
+    "explicit operator graduation decision"
+  ],
+  "passed": 14,
+  "schema": "m42.criteria_evaluation.v1",
+  "total": 14
+}

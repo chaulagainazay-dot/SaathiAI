@@ -1,0 +1,132 @@
+{
+  "authorities": {
+    "ACTIVE_authorization": "NOT GRANTED",
+    "CANARY_authorization": "NOT GRANTED",
+    "production_authorization": "NOT GRANTED",
+    "rollout_authorization": "NOT GRANTED",
+    "write_authority": "NOT GRANTED"
+  },
+  "banner": "M39 LIVE DISPOSABLE SANDBOX VALIDATION\nNON-PRODUCTION\nREAD-ONLY\nBOUNDED LIVE VALIDATION ONLY\nROLLOUT OFF\nNO CANARY GRANT\nNO ACTIVE\nTRADING GUARDIAN UNENGAGED",
+  "contains_secret_values": false,
+  "fingerprint": "94de0c5981490a4c04c77c6a",
+  "grants_active": false,
+  "grants_canary": false,
+  "grants_production": false,
+  "grants_rollout": false,
+  "grants_write": false,
+  "live_certified": false,
+  "live_exercised": true,
+  "m39_fingerprint": "64f0af8e8446fd490d15b2bb23c7afeddbac826722454255a5f78b69133ef68f",
+  "milestone": "M40",
+  "note": "M40 never grants canary/active/production; live certification requires a real provider exercised and all stages passed.",
+  "provider_id": "github_meta",
+  "schema": "m40.live_certification.v1",
+  "secret_reference_supplied": true,
+  "stages": [
+    {
+      "acknowledgements_count": 10,
+      "authority": {
+        "ACTIVE_authorization": "NOT GRANTED",
+        "CANARY_authorization": "NOT GRANTED",
+        "production_authorization": "NOT GRANTED",
+        "rollout_authorization": "NOT GRANTED",
+        "write_authority": "NOT GRANTED"
+      },
+      "blockers": [],
+      "contains_secret_values": false,
+      "ok": true,
+      "stage": "stage1_operator_acknowledgement",
+      "status": "PASSED"
+    },
+    {
+      "blockers": [],
+      "contains_secret_values": false,
+      "network_calls_performed": 0,
+      "ok": true,
+      "preflight_status": "PASSED",
+      "provider_id": "github_meta",
+      "stage": "stage2_provider_preflight",
+      "status": "PASSED"
+    },
+    {
+      "call_budget_max": 3,
+      "call_budget_used": 2,
+      "cleanup_ok": true,
+      "contains_secret_values": false,
+      "handle_closed": true,
+      "lease_revoked": true,
+      "live_network": true,
+      "ok": true,
+      "reason": "ok",
+      "stage": "stage3_single_session",
+      "status": "PASSED"
+    },
+    {
+      "contains_secret_values": false,
+      "distinct_session_ids": true,
+      "lease_isolation_ok": true,
+      "no_stale_handles": true,
+      "ok": true,
+      "reason": "",
+      "result_isolation": true,
+      "session_count": 2,
+      "stage": "stage4_multi_session",
+      "status": "PASSED"
+    },
+    {
+      "contains_secret_values": false,
+      "ok": false,
+      "reason": "pending_operator_revocation_then_post_revocation_retry",
+      "revocation_recorded": false,
+      "stage": "stage5_external_revocation",
+      "status": "NOT_EXERCISED"
+    },
+    {
+      "contains_secret_values": false,
+      "evidence": {
+        "budget": {
+          "per_session": 3,
+          "single_used": 2
+        },
+        "classification": "n/a",
+        "cleanup": {
+          "multi_no_stale": true,
+          "single": true
+        },
+        "identity": "subject_fingerprint_only",
+        "lease_ids": [
+          "fingerprint_bound_lease"
+        ],
+        "provider": "github_meta",
+        "revocation": {
+          "classification": null,
+          "recorded": false
+        },
+        "scopes": [
+          "read:user",
+          "read:meta"
+        ],
+        "timestamps": "bucketed"
+      },
+      "leak_clean": true,
+      "missing_fields": [],
+      "ok": true,
+      "required_fields": [
+        "identity",
+        "provider",
+        "scopes",
+        "budget",
+        "lease_ids",
+        "timestamps",
+        "cleanup",
+        "revocation",
+        "classification"
+      ],
+      "stage": "stage6_evidence_verification",
+      "status": "PASSED"
+    }
+  ],
+  "stages_completed": 6,
+  "trading_guardian": "UNENGAGED",
+  "verdict": "LIVE_STAGES_PASSED_PENDING_REVOCATION"
+}

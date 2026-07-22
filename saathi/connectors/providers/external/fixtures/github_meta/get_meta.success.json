@@ -1,0 +1,23 @@
+{
+  "schema": "m33.external_fixture.v1",
+  "provider_id": "github_meta",
+  "operation": "get_meta",
+  "capture_method": "synthesized_from_public_documentation_sanitized",
+  "capture_note": "Representative subset of the public GitHub /meta response, synthesized from official documentation and truncated to a small deterministic sample. Contains only public infrastructure CIDR ranges and boolean/enum flags. No credentials, cookies, tokens, personal data, request ids, or timestamps.",
+  "official_documentation_reference": "https://docs.github.com/en/rest/meta/meta#get-github-meta-information",
+  "privacy_safe": true,
+  "trading_guardian": "UNCHANGED / UNENGAGED",
+  "body": {
+    "verifiable_password_authentication": false,
+    "packages": ["140.82.112.0/20"],
+    "web": ["140.82.112.0/20", "143.55.64.0/20"],
+    "api": ["140.82.112.0/20"],
+    "git": ["140.82.112.0/20"],
+    "hooks": ["192.30.252.0/22"],
+    "pages": ["185.199.108.0/22"],
+    "importer": ["54.158.161.132"],
+    "actions": ["4.148.0.0/16"],
+    "dependabot": ["54.158.161.132"],
+    "domains": {"website": ["github.com"]}
+  }
+}

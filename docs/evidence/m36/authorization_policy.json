@@ -1,0 +1,62 @@
+{
+  "body": {
+    "m37_authorized": false,
+    "max_auth_ttl_sec": 1800.0,
+    "max_call_budget": 3,
+    "required_acknowledgements": [
+      "I_CONFIRM_DISPOSABLE_SANDBOX_ACCOUNT",
+      "I_CONFIRM_READ_ONLY_SCOPE",
+      "I_CONFIRM_NO_PRODUCTION_DATA",
+      "I_CONFIRM_SECRET_REFERENCE_ONLY",
+      "I_CONFIRM_CALL_BUDGET",
+      "I_CONFIRM_NO_WRITES",
+      "I_CONFIRM_REVOCATION_PLAN",
+      "I_CONFIRM_ROLLOUT_REMAINS_OFF"
+    ],
+    "sample_authorization": {
+      "account_ref_id": "acct_m36_synth_0001",
+      "approved_call_budget": 3,
+      "approved_duration": 900.0,
+      "approved_lease_uses": 2,
+      "approved_scope_classes": [
+        "IDENTITY_READ",
+        "METADATA_READ"
+      ],
+      "authorization_id": "authz_m36_synth_0001",
+      "cleanup_plan": "LEASE_REVOKED_AND_EXTERNAL_ATTEST",
+      "contains_raw_identity": false,
+      "contains_secret_values": false,
+      "created_at": 1752800100.0,
+      "credential_ref_id": "cred_m36_synth_0001",
+      "endpoint": "/meta",
+      "environment_class": "SANDBOX",
+      "expires_at": 1752801000.0,
+      "identity_endpoint": "/user",
+      "identity_operation": "get_authenticated_user",
+      "m37_authorized": false,
+      "method": "GET",
+      "milestone": "M36",
+      "operation": "get_meta",
+      "operator_acknowledgements": [
+        "I_CONFIRM_DISPOSABLE_SANDBOX_ACCOUNT",
+        "I_CONFIRM_READ_ONLY_SCOPE",
+        "I_CONFIRM_NO_PRODUCTION_DATA",
+        "I_CONFIRM_SECRET_REFERENCE_ONLY",
+        "I_CONFIRM_CALL_BUDGET",
+        "I_CONFIRM_NO_WRITES",
+        "I_CONFIRM_REVOCATION_PLAN",
+        "I_CONFIRM_ROLLOUT_REMAINS_OFF"
+      ],
+      "provider_id": "github_meta",
+      "schema": "m36.authorization.v1",
+      "source_kind": "IN_MEMORY_TEST",
+      "status": "CONSUMED",
+      "uses_remaining": 0
+    }
+  },
+  "fingerprint": "68c84f2ab497a93552ae607a4c9d005b2c34cf56525c8c125d259f171a2f2929",
+  "privacy_safe": true,
+  "schema": "m36.authorization_policy.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

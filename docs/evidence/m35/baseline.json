@@ -1,0 +1,17 @@
+{
+  "body": {
+    "environment": "SANDBOX",
+    "extends": "M31 credential architecture",
+    "milestone": "M35",
+    "network_calls": 0,
+    "offline": true,
+    "operation": "get_meta",
+    "provider": "github_meta",
+    "starting_head": "ff1022d"
+  },
+  "fingerprint": "7360d60a2e5a9ff29bd215b08c661c9625f773b8be274da402da2d780dce1334",
+  "privacy_safe": true,
+  "schema": "m35.baseline.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

@@ -28,6 +28,29 @@ from saathi.investment_learning import LearningResult
 DREAM_TARGET = 7_938_838.98
 
 
+def dream_progress_pct(revenue_usd, target: float = DREAM_TARGET) -> float:
+    """Canonical dream progress — a PERCENTAGE in [0, 100+], rounded to 4 dp.
+
+    Single source of truth for dream/revenue progress. Semantics:
+    - 1.0 means 1% of the dream target (NOT a 0..1 ratio).
+    - Negative or non-numeric revenue counts as 0 (no negative progress).
+    - Zero/negative/invalid target yields 0.0 (never ZeroDivisionError).
+    - Values above 100 are allowed (target exceeded); display layers may cap.
+    Callers needing a 0..1 ratio divide by 100 at the edge; the calculation
+    itself lives only here.
+    """
+    try:
+        rev = float(revenue_usd)
+        tgt = float(target)
+    except (TypeError, ValueError):
+        return 0.0
+    if tgt <= 0 or rev != rev or tgt != tgt:  # NaN guards
+        return 0.0
+    if rev < 0:
+        rev = 0.0
+    return round(rev / tgt * 100, 4)
+
+
 # ── Input funnel (from the pipeline; Mission Control only displays it) ───────
 @dataclass
 class PipelineFunnel:

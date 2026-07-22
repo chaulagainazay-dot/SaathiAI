@@ -1,0 +1,7 @@
+version: 1
+targets:
+  - {name: inproc, kind: in_process, mode: local, isolated_user: redteam-tester, isolated_project: redteam-project, namespace: redteam, note: "isolated temp connectors.db; deterministic adapters; no live creds"}
+policies:
+  cloud_sync: false
+  hackagent_default: disabled
+  production_targets: blocked

@@ -1,0 +1,44 @@
+{
+  "body": {
+    "authorities": {
+      "ACTIVE_authorization": "NOT GRANTED",
+      "CANARY_authorization": "NOT GRANTED",
+      "production_authorization": "NOT GRANTED",
+      "rollout_authorization": "NOT GRANTED",
+      "write_authority": "NOT GRANTED"
+    },
+    "banner": "M37 SECURITY CERTIFICATION\nNON-PRODUCTION\nREAD-ONLY\nBOUNDED SANDBOX\nROLLOUT OFF\nNO CANARY\nNO ACTIVE\nTRADING GUARDIAN UNENGAGED",
+    "contains_secret_values": false,
+    "fingerprint": "34463fcb90932527283a5e3ebc2caecf04b4c4886f08d63fa0d787d5492dc1c8",
+    "limitations": [
+      "live_sandbox_session_not_exercised"
+    ],
+    "m38_started": false,
+    "proofs": {
+      "authorization_gates": true,
+      "budget_enforcement": true,
+      "credential_isolation": true,
+      "fingerprint_correctness": true,
+      "live_sandbox_session": false,
+      "memory_cleanup": true,
+      "negative_paths": true,
+      "provider_abstraction": true,
+      "reference_only_loading": true,
+      "scope_validation": true,
+      "sender_isolation": true,
+      "session_lifecycle": true
+    },
+    "provider_id": "github_meta",
+    "providers_registered": [
+      "github_meta"
+    ],
+    "schema": "m37.security_certification.v1",
+    "state": "SECURITY_CERTIFIED_WITH_LIMITATIONS",
+    "trading_guardian": "UNCHANGED / UNENGAGED"
+  },
+  "fingerprint": "cad284a67b95c53c5ec2b11c51df7ee87322ca2d8312eb7de2109899c3d305d1",
+  "privacy_safe": true,
+  "schema": "m37.security_certification.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

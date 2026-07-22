@@ -1,0 +1,15 @@
+{
+  "authorities": {
+    "ACTIVE_authorization": "NOT GRANTED",
+    "CANARY_authorization": "NOT GRANTED",
+    "production_authorization": "NOT GRANTED",
+    "rollout_authorization": "NOT GRANTED",
+    "write_authority": "NOT GRANTED"
+  },
+  "banner": "M39 LIVE DISPOSABLE SANDBOX VALIDATION\nNON-PRODUCTION\nREAD-ONLY\nBOUNDED LIVE VALIDATION ONLY\nROLLOUT OFF\nNO CANARY GRANT\nNO ACTIVE\nTRADING GUARDIAN UNENGAGED",
+  "contains_secret_values": false,
+  "milestone": "M39.5",
+  "schema": "m39_5.summary.v1",
+  "trading_guardian": "UNENGAGED",
+  "verdict": "MONITORING_INCIDENT_SURFACE_COMPLETE_OFFLINE"
+}

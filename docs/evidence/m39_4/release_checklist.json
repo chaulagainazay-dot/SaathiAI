@@ -1,0 +1,54 @@
+{
+  "authorities": {
+    "ACTIVE_authorization": "NOT GRANTED",
+    "CANARY_authorization": "NOT GRANTED",
+    "production_authorization": "NOT GRANTED",
+    "rollout_authorization": "NOT GRANTED",
+    "write_authority": "NOT GRANTED"
+  },
+  "contains_secret_values": false,
+  "gates": [
+    {
+      "gate": "M31\u2013M39.x regression green",
+      "id": "REL-1"
+    },
+    {
+      "gate": "M39 offline failure gates pass",
+      "id": "REL-2"
+    },
+    {
+      "gate": "repository + working-tree leak scans clean",
+      "id": "REL-3"
+    },
+    {
+      "gate": "deployment config validates (fail-closed posture)",
+      "id": "REL-4"
+    },
+    {
+      "gate": "backward-compatibility check passes",
+      "id": "REL-5"
+    },
+    {
+      "gate": "artifact integrity (fingerprints) verified",
+      "id": "REL-6"
+    },
+    {
+      "gate": "rollback plan reviewed and reversible",
+      "id": "REL-7"
+    },
+    {
+      "gate": "kill switch wired and tested",
+      "id": "REL-8"
+    },
+    {
+      "gate": "operator disposable secret reference supplied (live only)",
+      "id": "REL-9"
+    },
+    {
+      "gate": "explicit operator authorization (canary is separate)",
+      "id": "REL-10"
+    }
+  ],
+  "note": "REL-9/REL-10 are operator/live steps; all others are offline-verifiable.",
+  "schema": "m39_4.release_checklist.v1"
+}

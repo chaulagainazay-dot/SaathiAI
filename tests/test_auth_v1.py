@@ -9,24 +9,55 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
-# Clear session/passkey/reset stores before each test class
+
+# Clear session/passkey/reset stores + Security Store singleton before each test
 @pytest.fixture(autouse=True)
-def _clean_stores():
+def _clean_stores(tmp_path, monkeypatch):
     from saathi import sessions, passkey, authsec
+    from saathi.security import store as _store_mod
+    from saathi.security.registry import close_registry
+    from saathi.security.timeline import close_timeline
+
+    # 1. Close and reset all security singletons
+    _store_mod.close_store()
+    _store_mod._default_store = None
+    close_registry()
+    close_timeline()
+
+    # 2. Create a fresh temp Security Store and wire all singletons to it
+    fresh = _store_mod.SecurityStore(db_path=tmp_path / "security.db")
+    fresh.migrate_from_legacy()
+    # Set the module-level singleton directly — all imported get_store()
+    # references execute the same code that checks _default_store
+    _store_mod._default_store = fresh
+
+    # 3. Clean legacy JSON files (for tests that still touch them)
     stores = [
         Path.home() / ".saathi" / "sessions.json",
         Path.home() / ".saathi" / "passkeys.json",
         Path.home() / ".saathi" / "reset_tokens.json",
         Path.home() / ".saathi" / "auth_audit.log",
+        Path.home() / ".saathi" / "security.db",
+        Path.home() / ".saathi" / "oauth_states.json",
     ]
     for p in stores:
         try:
             p.unlink(missing_ok=True)
         except Exception:
             pass
+
+    # 4. Clear in-memory rate-limit windows
     authsec._WINDOWS.clear()
     passkey._pending.clear()
+
     yield
+
+    # 5. Cleanup after test
+    fresh.close()
+    _store_mod.close_store()
+    _store_mod._default_store = None
+    close_registry()
+    close_timeline()
 
 
 @pytest.fixture

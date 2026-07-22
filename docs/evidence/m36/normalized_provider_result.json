@@ -1,0 +1,21 @@
+{
+  "body": {
+    "contains_secret_values": false,
+    "content_type_match": true,
+    "http_status_class": "2xx",
+    "latency_bucket": "UNDER_250_MS",
+    "operation": "get_meta",
+    "privacy_safe": true,
+    "raw_body_persisted": false,
+    "response_size_bucket": "UNDER_4_KIB",
+    "safe_result_classification": "META_READ_OK",
+    "schema_valid": true,
+    "tls_verified": true,
+    "transport_ok": true
+  },
+  "fingerprint": "2f12957cfa0ca415ecdee71e0e01ff7b0a55e96261e67122575fa9e1333db52a",
+  "privacy_safe": true,
+  "schema": "m36.normalized_provider_result.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

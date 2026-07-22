@@ -1,0 +1,55 @@
+{
+  "body": {
+    "cases": [
+      {
+        "case": "get_ok",
+        "result": "PASS"
+      },
+      {
+        "case": "authorization_injection",
+        "code": "REQUEST_CONTRACT_VIOLATION",
+        "result": "BLOCK"
+      },
+      {
+        "case": "cookie_injection",
+        "code": "REQUEST_CONTRACT_VIOLATION",
+        "result": "BLOCK"
+      },
+      {
+        "case": "host_injection",
+        "code": "REQUEST_CONTRACT_VIOLATION",
+        "result": "BLOCK"
+      },
+      {
+        "case": "xforwarded_injection",
+        "code": "REQUEST_CONTRACT_VIOLATION",
+        "result": "BLOCK"
+      },
+      {
+        "case": "crlf_header",
+        "code": "REQUEST_CONTRACT_VIOLATION",
+        "result": "BLOCK"
+      },
+      {
+        "case": "query_amplification",
+        "code": "REQUEST_CONTRACT_VIOLATION",
+        "result": "BLOCK"
+      },
+      {
+        "case": "unbounded_list",
+        "code": "REQUEST_CONTRACT_VIOLATION",
+        "result": "BLOCK"
+      },
+      {
+        "case": "oversized_field",
+        "code": "REQUEST_CONTRACT_VIOLATION",
+        "result": "BLOCK"
+      }
+    ]
+  },
+  "fingerprint": "10c3030da58e1173253a505a5bf9811e96756c35cf6dd2528d06c361a9160ef3",
+  "privacy_safe": true,
+  "schema": "m32.request_contract_results.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

@@ -1,0 +1,52 @@
+{
+  "alters_runtime_authority": false,
+  "authorities": {
+    "ACTIVE_authorization": "NOT GRANTED",
+    "CANARY_authorization": "NOT GRANTED",
+    "production_authorization": "NOT GRANTED",
+    "rollout_authorization": "NOT GRANTED",
+    "write_authority": "NOT GRANTED"
+  },
+  "authority_state": {
+    "active": "NOT GRANTED",
+    "autonomous_execution": "NOT GRANTED",
+    "deployment": "NOT GRANTED",
+    "framework": "IMPLEMENTED (AWAITING OPERATOR AUTHORIZATION)",
+    "production": "NOT AUTHORIZED",
+    "rollout_execution": "NOT GRANTED (awaiting separate operator authorization)",
+    "scope_expansion": "FORBIDDEN",
+    "trading_guardian": "UNENGAGED",
+    "write": "NOT GRANTED"
+  },
+  "authorizes_execution": false,
+  "bindings": {
+    "m42_review_fingerprint": "dbc63fd79889f5714dd9ae32",
+    "m43_1_closure_fingerprint": "3c20f07d58a91779d5bc917a",
+    "m43_machine_fingerprint": "8ecd04d34d2efb5b68dc6671",
+    "m44_completion_fingerprint": "624d928ae61321c65503f8a3",
+    "m44_module_fingerprint": "624d928ae61321c65503f8a3",
+    "m45_completion_fingerprint": "c5d1aa33f9a6180d61cf050a",
+    "m45_module_fingerprint": "c5d1aa33f9a6180d61cf050a",
+    "m46_module_fingerprint": "c03d61766949eee3a53feafd",
+    "repository_commit": "4675b200bf205c32ba3f293e1f33cae382fc6d58"
+  },
+  "contains_secret_values": false,
+  "deployment": false,
+  "execution_class": "READ_ONLY_DISPOSABLE_CANARY",
+  "framework_ready": true,
+  "grants_active": false,
+  "grants_anything": false,
+  "grants_deployment": false,
+  "grants_production": false,
+  "grants_write": false,
+  "live_canary_occurred": false,
+  "live_execution_authorized": false,
+  "m32_prohibition": "UNCHANGED",
+  "milestone": "M46",
+  "module_fingerprint": "c03d61766949eee3a53feafd",
+  "note": "M46_IMPLEMENTED_AWAITING_OPERATOR_AUTHORIZATION \u2014 offline controller implemented, tested, documented. No live canary. Grants nothing.",
+  "push": false,
+  "schema": "m46.implementation_completion.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED",
+  "verdict": "M46_IMPLEMENTED_AWAITING_OPERATOR_AUTHORIZATION"
+}

@@ -1,9 +1,15 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
-import { saathiExamples } from "@/lib/data";
 import { Eyebrow } from "@/components/ui";
 import { sendChat, login } from "@/lib/api";
 import { useVoice } from "@/lib/useVoice";
+
+const EXAMPLE_PROMPTS = [
+  "Today's cafeteria sold 171 Dal Bhat.",
+  "Approve the AI Studio campaign.",
+  "How much revenue did we make today?",
+  "Show today's priorities.",
+];
 
 export default function MobileSaathi() {
   const [chat, setChat] = useState([]);   // {role:"you"|"saathi", text}
@@ -69,12 +75,12 @@ export default function MobileSaathi() {
         {chat.length === 0 && (
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             <Eyebrow style={{ padding: "0 4px 4px" }}>Try asking</Eyebrow>
-            {(saathiExamples || []).map((ex) => (
+            {EXAMPLE_PROMPTS.map((ex) => (
               <button key={ex} onClick={() => send(ex)}
                 style={{ textAlign: "left", padding: "13px 15px", borderRadius: 14, cursor: "pointer",
                   background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)",
                   color: "var(--color-ink-200)", fontSize: 14 }}>
-                “{ex}”
+                "{ex}"
               </button>
             ))}
           </div>

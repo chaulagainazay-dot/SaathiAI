@@ -1,0 +1,83 @@
+{
+  "authorities": {
+    "ACTIVE_authorization": "NOT GRANTED",
+    "CANARY_authorization": "NOT GRANTED",
+    "production_authorization": "NOT GRANTED",
+    "rollout_authorization": "NOT GRANTED",
+    "write_authority": "NOT GRANTED"
+  },
+  "authorization": {
+    "approval_valid": true,
+    "authorized": true,
+    "blockers": [],
+    "contains_secret_values": false,
+    "grants_active": false,
+    "grants_production": false,
+    "grants_write": false,
+    "m40_certified": true,
+    "schema": "m41.authorization.v1"
+  },
+  "automatic_rollback": true,
+  "banner": "M39 LIVE DISPOSABLE SANDBOX VALIDATION\nNON-PRODUCTION\nREAD-ONLY\nBOUNDED LIVE VALIDATION ONLY\nROLLOUT OFF\nNO CANARY GRANT\nNO ACTIVE\nTRADING GUARDIAN UNENGAGED",
+  "contains_secret_values": false,
+  "controller": {
+    "all_handles_closed": true,
+    "errors": 0,
+    "increments": [
+      {
+        "handle_closed": true,
+        "index": 0,
+        "live_network": false,
+        "ok": true,
+        "reason": "ok"
+      },
+      {
+        "handle_closed": true,
+        "index": 1,
+        "live_network": false,
+        "ok": true,
+        "reason": "ok"
+      },
+      {
+        "handle_closed": true,
+        "index": 2,
+        "live_network": false,
+        "ok": true,
+        "reason": "ok"
+      }
+    ],
+    "increments_run": 3,
+    "last_rollback_eval": null,
+    "live_network": false,
+    "rollback_reason": "",
+    "state": "COMPLETED",
+    "verdict": "CANARY_ACTIVE_BOUNDED"
+  },
+  "fingerprint": "336f72b9b3208d75ab4c4bb7",
+  "grants_active": false,
+  "grants_canary_execution": true,
+  "grants_production": false,
+  "grants_rollout_full": false,
+  "grants_write": false,
+  "kill_switch_env": "SAATHI_M39_KILL_SWITCH",
+  "m32_canary_execution_mode": "PROHIBITION_UNCHANGED",
+  "milestone": "M41",
+  "mode": "rehearsal",
+  "note": "SIMULATED_NOT_LIVE; proves authorization + bounded rollout + rollback wiring",
+  "provider": "github_meta",
+  "rollback_triggers_armed": [
+    "RBK-1",
+    "RBK-2",
+    "RBK-3",
+    "RBK-4",
+    "RBK-5",
+    "RBK-6",
+    "RBK-7"
+  ],
+  "rollout_ceiling_percent": 5,
+  "rollout_percent": 1,
+  "schema": "m41.canary_rollout.v1",
+  "scope_expansion": "FORBIDDEN",
+  "trading_guardian": "UNENGAGED",
+  "verdict": "CANARY_ACTIVE_BOUNDED"
+}

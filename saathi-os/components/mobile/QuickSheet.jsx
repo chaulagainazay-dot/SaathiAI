@@ -1,8 +1,18 @@
 "use client";
 import { AnimatePresence, motion } from "framer-motion";
-import { quickActions } from "@/lib/data";
 import { color } from "@/lib/departments";
 import { Eyebrow } from "@/components/ui";
+
+const QUICK_ACTIONS = [
+  { label: "Record Revenue", icon: "💰", dept: "CAFETERIA" },
+  { label: "Add Expense", icon: "🧾", dept: "FINANCE" },
+  { label: "Approve Trade", icon: "✅", dept: "FINANCE" },
+  { label: "Publish Video", icon: "🎬", dept: "AI STUDIO" },
+  { label: "Cafeteria Sales", icon: "🍚", dept: "CAFETERIA" },
+  { label: "Capture Idea", icon: "💡", dept: "KNOWLEDGE" },
+  { label: "Scan Receipt", icon: "📸", dept: "BUSINESS" },
+  { label: "Voice Note", icon: "🎤", dept: "MEMORY" },
+];
 
 export default function QuickSheet({ open, onClose }) {
   return (
@@ -17,7 +27,7 @@ export default function QuickSheet({ open, onClose }) {
               margin: "0 auto 18px" }} />
             <Eyebrow>Quick Actions</Eyebrow>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 14, marginTop: 16 }}>
-              {quickActions.map((a) => (
+              {QUICK_ACTIONS.map((a) => (
                 <button key={a.label} onClick={onClose}
                   style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8,
                     background: "none", border: "none", cursor: "pointer" }}>

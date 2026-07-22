@@ -1,0 +1,18 @@
+{
+  "body": {
+    "forbidden_headers_stripped": {
+      "headers": {
+        "content-type": "application/json",
+        "x-ratelimit-limit": "60",
+        "x-ratelimit-remaining": "59",
+        "x-request-id": "sim-req-0001"
+      },
+      "status_code": 200
+    }
+  },
+  "fingerprint": "e350f0f05cc51adb4e7ee382d3eb3234aef743a58076207330cca32e601ab171",
+  "privacy_safe": true,
+  "schema": "m32.response_normalization_results.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

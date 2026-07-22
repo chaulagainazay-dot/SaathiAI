@@ -1,0 +1,15 @@
+{
+  "body": {
+    "preferred": [
+      "LEASE_REVOKED",
+      "EXTERNAL_REVOCATION_OPERATOR_ATTESTED"
+    ],
+    "session_lease_revoked_on_complete": true,
+    "silent_active_forbidden": true
+  },
+  "fingerprint": "f2bf9506c35865708e1b0b6dc38db29ebf1c538185169d0783755b41dc33ff40",
+  "privacy_safe": true,
+  "schema": "m36.cleanup_and_revocation.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

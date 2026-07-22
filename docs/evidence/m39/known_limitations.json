@@ -1,0 +1,16 @@
+{
+  "body": {
+    "canary_not_granted": true,
+    "external_revocation_pending_until_live": true,
+    "live_multi_session_not_exercised": true,
+    "live_single_session_not_exercised": true,
+    "m40_not_started": true,
+    "operator_secret_reference_required": true,
+    "single_provider": "github_meta"
+  },
+  "fingerprint": "808b2993d6b734e6ee7eec12a473d3e8dbda001ddbb36fd05ca118dd525e208b",
+  "privacy_safe": true,
+  "schema": "m39.known_limitations.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

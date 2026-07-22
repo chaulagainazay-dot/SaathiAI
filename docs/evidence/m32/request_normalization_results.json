@@ -1,0 +1,25 @@
+{
+  "body": {
+    "rejects": [
+      "headers",
+      "authorization",
+      "endpoint",
+      "retry_policy",
+      "max_retries",
+      "cookie"
+    ],
+    "sample_valid": {
+      "echo": {
+        "msg": "hello",
+        "privacy_safe": true
+      },
+      "ok": true,
+      "privacy_safe": true
+    }
+  },
+  "fingerprint": "6c9f995dadf763abf3cd6642c9de073289008873cabac9620978b22c4fba3853",
+  "privacy_safe": true,
+  "schema": "m32.request_normalization_results.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

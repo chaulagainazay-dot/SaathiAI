@@ -1,0 +1,19 @@
+{
+  "body": {
+    "external_state_persisted": "EXTERNAL_READ_ONLY_VERIFIED_WITH_LIMITATIONS",
+    "fingerprint": "5b29b329b8933865059a62e6f03a867ffada27f965bb438d8131728e236a800e",
+    "operation_scope": "get_meta",
+    "state": "EXTERNAL_READ_ONLY_VERIFIED_WITH_LIMITATIONS",
+    "unsupported_scope": [
+      "writes",
+      "other_endpoints",
+      "authenticated_operations",
+      "account_linked_operations"
+    ]
+  },
+  "fingerprint": "c17bf37371b8cef918f0d4bd8e05c2a14fcf41d431901b58db278c31943400ad",
+  "privacy_safe": true,
+  "schema": "m34.verification_state.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

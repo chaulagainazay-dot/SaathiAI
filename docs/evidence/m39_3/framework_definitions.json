@@ -1,0 +1,98 @@
+{
+  "allowlist": {
+    "endpoints": [
+      "meta",
+      "user"
+    ],
+    "methods": [
+      "GET"
+    ],
+    "provider": "github_meta"
+  },
+  "circuit_breakers": [
+    {
+      "cooldown": "manual_reset_only",
+      "id": "CBK-1",
+      "name": "consecutive_failure_breaker",
+      "open_condition": "consecutive_failures >= 3"
+    },
+    {
+      "cooldown": "backoff_then_manual_review",
+      "id": "CBK-2",
+      "name": "rate_limit_breaker",
+      "open_condition": "http_429 observed"
+    },
+    {
+      "cooldown": "manual_reset_only",
+      "id": "CBK-3",
+      "name": "secret_resolution_breaker",
+      "open_condition": "secret_resolution_failure"
+    }
+  ],
+  "contains_secret_values": false,
+  "exit_criteria": {
+    "abort_if_any": [
+      "any rollback trigger fired",
+      "any circuit breaker open",
+      "any leak finding",
+      "operator abort"
+    ],
+    "graduate_requires_all": [
+      "zero rollback triggers fired",
+      "error_budget_consumed < 25%",
+      "all sessions within call budget",
+      "identity + scope stable across window",
+      "explicit operator graduation decision"
+    ]
+  },
+  "rollback_triggers": [
+    {
+      "action": "halt_canary_and_rollback",
+      "condition": "error_rate_exceeds_budget",
+      "id": "RBK-1",
+      "threshold": "error_budget_consumed >= 100%"
+    },
+    {
+      "action": "halt_canary_and_rollback",
+      "condition": "auth_denial_spike",
+      "id": "RBK-2",
+      "threshold": "auth_denials >= 1 (401/403)"
+    },
+    {
+      "action": "halt_and_reconcile",
+      "condition": "budget_exhaustion",
+      "id": "RBK-3",
+      "threshold": "aggregate_calls >= aggregate_budget"
+    },
+    {
+      "action": "immediate_halt",
+      "condition": "kill_switch_tripped",
+      "id": "RBK-4",
+      "threshold": "SAATHI_M39_KILL_SWITCH active"
+    },
+    {
+      "action": "immediate_halt_and_quarantine",
+      "condition": "leak_detected",
+      "id": "RBK-5",
+      "threshold": "any leak-scan finding"
+    },
+    {
+      "action": "halt_canary",
+      "condition": "circuit_breaker_open",
+      "id": "RBK-6",
+      "threshold": "consecutive_failures >= CBK threshold"
+    },
+    {
+      "action": "immediate_halt_and_alert",
+      "condition": "write_attempt_detected",
+      "id": "RBK-7",
+      "threshold": "any non-GET / non-allowlisted operation"
+    }
+  ],
+  "rollout_bounds": {
+    "max_percent": 5,
+    "min_percent": 1
+  },
+  "schema": "m39_3.framework_definitions.v1",
+  "session_budget_ceiling": 3
+}

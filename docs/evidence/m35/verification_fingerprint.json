@@ -1,0 +1,12 @@
+{
+  "body": {
+    "fingerprint": "2514ded3413d48bf26156b4ddc3e1e2e7cb9e44da51a20970f7fabd6b0bb3d17",
+    "provider_id": "github_meta",
+    "schema_version": "m35.sandbox_credentials.v1"
+  },
+  "fingerprint": "c2e6fe25b5af89bdb42d3912e7724a8a3bae1dd907d6ce26d3de719ca4a6237f",
+  "privacy_safe": true,
+  "schema": "m35.verification_fingerprint.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

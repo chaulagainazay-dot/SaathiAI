@@ -1,0 +1,56 @@
+{
+  "schema": "m28.connector_bypass_guard.v1",
+  "findings": [
+    {
+      "path": "saathi/server.py",
+      "line": 398,
+      "symbol": "from manager import execute",
+      "classification": "allowlisted",
+      "allowlist_rule": "file:saathi/server.py",
+      "reason": "allowlisted: prefer gov.compat or gateway_bridge"
+    },
+    {
+      "path": "saathi/connectors/__init__.py",
+      "line": 7,
+      "symbol": "from manager import execute",
+      "classification": "allowlisted",
+      "allowlist_rule": "file:saathi/connectors/__init__.py",
+      "reason": "allowlisted: prefer gov.compat or gateway_bridge"
+    },
+    {
+      "path": "saathi/connectors/platform/execution.py",
+      "line": 407,
+      "symbol": "adapter.execute",
+      "classification": "allowlisted",
+      "allowlist_rule": "prefix:saathi/connectors/platform/execution.py",
+      "reason": "allowlisted: adapter execute call"
+    },
+    {
+      "path": "saathi/connectors/gov/runtime.py",
+      "line": 675,
+      "symbol": "adapter.execute",
+      "classification": "allowlisted",
+      "allowlist_rule": "file:saathi/connectors/gov/runtime.py",
+      "reason": "allowlisted: adapter execute call"
+    },
+    {
+      "path": "saathi/connectors/gov/runtime.py",
+      "line": 681,
+      "symbol": "adapter.execute",
+      "classification": "allowlisted",
+      "allowlist_rule": "file:saathi/connectors/gov/runtime.py",
+      "reason": "allowlisted: adapter execute call"
+    },
+    {
+      "path": "saathi/connectors/conformance/assessor.py",
+      "line": 597,
+      "symbol": "HttpAdapter.execute",
+      "classification": "allowlisted",
+      "allowlist_rule": "prefix:saathi/connectors/conformance/",
+      "reason": "allowlisted: adapter execute call"
+    }
+  ],
+  "production_bypasses": 0,
+  "scanned_files": 100,
+  "ok": true
+}

@@ -1,0 +1,32 @@
+{
+  "body": {
+    "account_events": [
+      {
+        "contains_secret_values": false,
+        "event_type": "account.sandbox_registered",
+        "payload": {
+          "account_ref_id": "acct_m35_synth_0001",
+          "provider_id": "github_meta"
+        },
+        "privacy_safe": true,
+        "schema": "m35.account_event.v1"
+      },
+      {
+        "contains_secret_values": false,
+        "event_type": "account.verified",
+        "payload": {
+          "account_ref_id": "acct_m35_synth_0001",
+          "state": "VERIFIED"
+        },
+        "privacy_safe": true,
+        "schema": "m35.account_event.v1"
+      }
+    ],
+    "count": 2
+  },
+  "fingerprint": "87a01fadfaa4cdd48f06daae531d595a2c757f7fe13f952a18383c45d96e0967",
+  "privacy_safe": true,
+  "schema": "m35.events.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

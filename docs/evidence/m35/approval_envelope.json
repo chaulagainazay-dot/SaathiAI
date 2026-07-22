@@ -1,0 +1,30 @@
+{
+  "body": {
+    "account_ref_id": "acct_m35_synth_0001",
+    "approval_id": "appr_m35_synth_0001",
+    "approved_duration": 300.0,
+    "approved_scopes": [
+      "metadata:read"
+    ],
+    "approved_uses": 1,
+    "contains_secret_values": false,
+    "created_at": "1752800000",
+    "credential_ref_id": "cred_m35_synth_0001",
+    "environment_class": "SANDBOX",
+    "expires_at": "",
+    "non_production_acknowledged": true,
+    "operation": "get_meta",
+    "provider_id": "github_meta",
+    "purpose": "m35_sandbox_governance_verification",
+    "read_only_acknowledged": true,
+    "sandbox_acknowledged": true,
+    "secret_access_acknowledged": true,
+    "status": "APPROVED",
+    "write_prohibited": true
+  },
+  "fingerprint": "debbdb319455a458f2d0ef51a3b36ab53c5b54483ba55d9b410aa5e405afcd5f",
+  "privacy_safe": true,
+  "schema": "m35.approval_envelope.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

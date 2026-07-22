@@ -1,0 +1,53 @@
+{
+  "contains_secret_values": false,
+  "schema": "m46.authorization_template_status.v1",
+  "template_is_valid_approval": false,
+  "template_path": "docs/m46/operator_canary_approval.template.json",
+  "validate_template": {
+    "approval_id": "",
+    "authorizes_execution": false,
+    "blockers": [
+      "missing:approval_id",
+      "missing:operator_id",
+      "missing:issued_at",
+      "missing:expires_at",
+      "missing:provider_identity_fingerprint",
+      "missing:credential_reference_locator_fingerprint",
+      "missing:request_id",
+      "missing:rollout_id",
+      "missing:kill_switch_owner",
+      "missing:incident_owner",
+      "missing:approval_integrity_fingerprint",
+      "missing:acknowledgements",
+      "acknowledgements_incomplete",
+      "timestamp_unparseable",
+      "approval_unsigned"
+    ],
+    "checks": {
+      "acknowledgements_complete": false,
+      "all_fields_present": false,
+      "autonomous_execution_allowed_false": true,
+      "calls_ok": true,
+      "deployment_allowed_false": true,
+      "duration_ok": true,
+      "endpoint_ok": true,
+      "integrity_valid": false,
+      "milestone_ok": true,
+      "operation_ok": true,
+      "present": true,
+      "production_allowed_false": true,
+      "provider_ok": true,
+      "rollout_percent_ok": true,
+      "timestamps_parseable": false,
+      "trading_guardian_allowed_false": true,
+      "writes_allowed_false": true
+    },
+    "contains_secret_values": false,
+    "fingerprint": "1f7c4e5fc7303b6b9130ac956ac4dfa8",
+    "grants_anything": false,
+    "milestone": "M46",
+    "note": "Approval validation only. Never executes.",
+    "schema": "m46.approval_validation.v1",
+    "valid": false
+  }
+}

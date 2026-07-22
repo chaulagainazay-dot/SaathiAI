@@ -1,0 +1,26 @@
+{
+  "body": {
+    "docs_excluded": true,
+    "fingerprint": "a659a6fedc43cce4a445854de9c7cd8cce2f3c34ecc4631fc165c9c6d14e1a98",
+    "fixture_hash": "d6b868a8fa35ec07203bc6e622267e3bc08610e84ff49e0bf1b2b8ae0f926c39",
+    "provider_id": "github_meta",
+    "surface_paths": [
+      "saathi/connectors/providers/external/models.py",
+      "saathi/connectors/providers/external/endpoint_policy.py",
+      "saathi/connectors/providers/external/dns_ssrf.py",
+      "saathi/connectors/providers/external/tls_policy.py",
+      "saathi/connectors/providers/external/transport.py",
+      "saathi/connectors/providers/external/request_envelope.py",
+      "saathi/connectors/providers/external/response_envelope.py",
+      "saathi/connectors/providers/external/schema.py",
+      "saathi/connectors/providers/external/fixtures.py",
+      "saathi/connectors/providers/external/profiles.py",
+      "saathi/connectors/providers/external/adapters/github_meta.py"
+    ]
+  },
+  "fingerprint": "41dd5e1265919bbce4175ad38dd71cbb1e8cdb93b8889dce34d06811652bd35a",
+  "privacy_safe": true,
+  "schema": "m32.external_verification_fingerprint.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

@@ -1,0 +1,61 @@
+{
+  "alters_runtime_authority": false,
+  "authorities": {
+    "ACTIVE_authorization": "NOT GRANTED",
+    "CANARY_authorization": "NOT GRANTED",
+    "production_authorization": "NOT GRANTED",
+    "rollout_authorization": "NOT GRANTED",
+    "write_authority": "NOT GRANTED"
+  },
+  "authority_state": {
+    "active": "NOT GRANTED",
+    "framework": "READY (ADVISORY ONLY)",
+    "production": "NOT AUTHORIZED",
+    "provider_permissions": "UNCHANGED",
+    "rollout_execution": "NOT GRANTED",
+    "rollout_full": "NOT GRANTED",
+    "scope_expansion": "FORBIDDEN",
+    "write": "NOT GRANTED"
+  },
+  "authorizes_execution": false,
+  "contains_secret_values": false,
+  "default_request_denied": true,
+  "deployment": false,
+  "evidence_resolution": {
+    "graduation_recommended_advisory": true,
+    "m42_evidence_base": "docs/evidence",
+    "m42_recommendation": "GRADUATION_RECOMMENDED",
+    "m42_review_fingerprint": "dbc63fd79889f5714dd9ae32",
+    "machine_record_fingerprint": "8ecd04d34d2efb5b68dc6671",
+    "machine_record_reasons": [],
+    "machine_record_verified": true,
+    "precedence": [
+      "ignore docs/evidence/m42/graduation_recommendation.json (stale string)",
+      "prefer docs/evidence/m43/machine_verified_canary_completion.json via m42 machine_override",
+      "independently verify_machine_record (source/live/CLOSED/401/provider)",
+      "require BOTH live GRADUATION_RECOMMENDED AND verified machine record"
+    ],
+    "provenance": "MACHINE_PROOF",
+    "stale_static_file_not_trusted": "docs/evidence/m42/graduation_recommendation.json"
+  },
+  "framework_ready": true,
+  "grants_anything": false,
+  "m32_prohibition": "UNCHANGED",
+  "m43_1_closure_binding": {
+    "machine_record_fingerprint": "8ecd04d34d2efb5b68dc6671",
+    "machine_record_path": "docs/evidence/m43/machine_verified_canary_completion.json",
+    "note": "M43.1 records are audit bindings; M44 verifies the live M43 machine record + M42 review.",
+    "phase7_record": "docs/evidence/m43_1/m42_revalidation_phase_graduation_recommended_pending_cleanup.json",
+    "phase8_record": "docs/evidence/m43_1/final_cleanup_closure.json"
+  },
+  "milestone": "M44",
+  "module_fingerprint": "624d928ae61321c65503f8a3",
+  "note": "M44_CLOSED_FRAMEWORK_READY_ADVISORY_ONLY \u2014 authorization framework implemented, integrated with post-M43.1 machine-proof evidence, tested, documented. Grants no rollout execution authority.",
+  "push": false,
+  "runtime_execution_authority": false,
+  "schema": "m44.framework_completion.v1",
+  "state_legacy_alias": "ROLL_OUT_AUTHORIZATION_FRAMEWORK_READY",
+  "submilestone": "M44.1",
+  "trading_guardian": "UNCHANGED / UNENGAGED",
+  "verdict": "ROLLOUT_AUTHORIZATION_FRAMEWORK_READY"
+}

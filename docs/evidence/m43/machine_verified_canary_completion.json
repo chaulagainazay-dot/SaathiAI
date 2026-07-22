@@ -1,0 +1,66 @@
+{
+  "authorities": {
+    "ACTIVE_authorization": "NOT GRANTED",
+    "CANARY_authorization": "NOT GRANTED",
+    "production_authorization": "NOT GRANTED",
+    "rollout_authorization": "NOT GRANTED",
+    "write_authority": "NOT GRANTED"
+  },
+  "authority_state": {
+    "active": "NOT GRANTED",
+    "production": "NOT AUTHORIZED",
+    "rollout_full": "NOT GRANTED",
+    "scope_expansion": "FORBIDDEN",
+    "write": "NOT GRANTED"
+  },
+  "contains_secret_values": false,
+  "credential_lifecycle": {
+    "disposable_pat_externally_revoked": true,
+    "http_401_confirmed": true,
+    "machine_verified_here": true,
+    "status": "CLOSED"
+  },
+  "fingerprint": "8ecd04d34d2efb5b68dc6671",
+  "grants_active": false,
+  "grants_production": false,
+  "grants_write": false,
+  "live_exercised": true,
+  "m32_canary_execution_mode": "PROHIBITION_UNCHANGED",
+  "machine_reevaluation": {
+    "m39_5_alerts_fired": 0,
+    "m41_should_rollback": false
+  },
+  "machine_signals": {
+    "automatic_rollback": "armed",
+    "identity": "unchanged",
+    "kill_switch": "tested",
+    "scope": "unchanged"
+  },
+  "machine_verified": true,
+  "machine_verified_live": true,
+  "milestone": "M43",
+  "mode": "read_only_canary",
+  "operator_reported_signals": {
+    "automatic_rollback": "armed",
+    "identity": "unchanged",
+    "kill_switch": "tested",
+    "scope": "unchanged"
+  },
+  "phase_verifications": {
+    "revocation": {
+      "http_401_confirmed": true,
+      "revocation_effective": true,
+      "secret_handle_destroyed": true
+    },
+    "validation": {
+      "bounded_read_only_completed": true
+    }
+  },
+  "provider": "github_meta",
+  "schema": "m41.machine_verified_canary_completion.v1",
+  "session_executed_live": true,
+  "source": "MACHINE",
+  "trading_guardian": "UNCHANGED / UNENGAGED",
+  "verdict": "CANARY_ACTIVE_BOUNDED",
+  "verdict_reported_by_operator": "CANARY_ACTIVE_BOUNDED"
+}

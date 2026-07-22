@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Eyebrow, Panel } from "@/components/ui";
 import { resetPassword } from "@/lib/api";
+import { Suspense } from "react";
 
 const ACCENT = "#9B6BFF", TEAL = "#00BFA5", RED = "#FF5A5A", AMBER = "#FFB800";
 
@@ -18,7 +19,7 @@ function strengthColor(score) {
   return [RED, RED, AMBER, TEAL, "#4ade80"][Math.max(0, Math.min(4, score))];
 }
 
-export default function ResetPasswordPage() {
+function ResetPasswordForm() {
   const router = useRouter();
   const params = useSearchParams();
   const token = params.get("token") || "";
@@ -120,5 +121,13 @@ export default function ResetPasswordPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={<div style={{ minHeight: "100dvh", display: "flex", alignItems: "center", justifyContent: "center" }}><div>Loading…</div></div>}>
+      <ResetPasswordForm />
+    </Suspense>
   );
 }

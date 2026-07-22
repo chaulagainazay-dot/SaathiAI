@@ -49,3 +49,7 @@
 
 ## Auto-learned 2026-07-08
 * Prioritize providing daily performance summaries that combine canteen sales
+
+
+## Auto-learned 2026-07-09
+* Require speaker verification before executing sensitive actions, such as running

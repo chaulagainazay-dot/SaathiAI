@@ -1,0 +1,36 @@
+{
+  "body": {
+    "accounts": [
+      {
+        "account_ref_id": "acct_m35_synth_0001",
+        "account_subject_fingerprint": "9bfc9e44a91547fba582301e4581269e",
+        "capability_ceiling": {},
+        "contains_secret_values": false,
+        "declared_scopes": [
+          "metadata:read"
+        ],
+        "display_alias": "synthetic-sandbox",
+        "drift_state": "FRESH",
+        "environment_class": "SANDBOX",
+        "expires_at": "",
+        "metadata_safe": {},
+        "provider_id": "github_meta",
+        "revoked_at": "",
+        "schema": "m35.sandbox_account.v1",
+        "verification_state": "VERIFIED",
+        "verified_at": "1752800000",
+        "verified_scopes": [
+          "metadata:read"
+        ]
+      }
+    ],
+    "identity_protection": "subject_fingerprinted_never_raw",
+    "production_link": "fails_closed",
+    "real_accounts_linked": 0
+  },
+  "fingerprint": "98a4d32189bc66003063acc3b44327c34f4f0a5e07cc481027c0b9fb5611ad7f",
+  "privacy_safe": true,
+  "schema": "m35.sandbox_account_registry.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

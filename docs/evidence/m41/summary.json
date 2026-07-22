@@ -1,0 +1,19 @@
+{
+  "authorities": {
+    "ACTIVE_authorization": "NOT GRANTED",
+    "CANARY_authorization": "NOT GRANTED",
+    "production_authorization": "NOT GRANTED",
+    "rollout_authorization": "NOT GRANTED",
+    "write_authority": "NOT GRANTED"
+  },
+  "contains_secret_values": false,
+  "default_verdict": "CANARY_NOT_ACTIVATED",
+  "grants_active": false,
+  "grants_production": false,
+  "milestone": "M41",
+  "rehearsal_killswitch_verdict": "CANARY_BLOCKED",
+  "rehearsal_rollback_verdict": "CANARY_ROLLED_BACK",
+  "rehearsal_verdict": "CANARY_ACTIVE_BOUNDED",
+  "schema": "m41.summary.v1",
+  "trading_guardian": "UNENGAGED"
+}

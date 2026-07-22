@@ -1,0 +1,12 @@
+{
+  "body": {
+    "default_limit": 2,
+    "hard_max": 4,
+    "validation_passed": true
+  },
+  "fingerprint": "7aeac942cfb5acf89dd67509e3a7f6b3951728691e09628edfd37ed28b71dc18",
+  "privacy_safe": true,
+  "schema": "m38.concurrency_isolation.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

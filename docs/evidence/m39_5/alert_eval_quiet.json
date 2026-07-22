@@ -1,0 +1,11 @@
+{
+  "contains_secret_values": false,
+  "fired": [],
+  "fired_count": 0,
+  "highest_severity": "NONE",
+  "schema": "m39_5.alert_evaluation.v1",
+  "thresholds": {
+    "aggregate_budget": 12,
+    "stuck_threshold_seconds": 300
+  }
+}

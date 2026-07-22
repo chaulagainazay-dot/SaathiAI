@@ -1,0 +1,15 @@
+{
+  "body": {
+    "all_pass": true,
+    "results": [
+      "COMPATIBLE_EXACT",
+      "COMPATIBLE_EXACT",
+      "COMPATIBLE_EXACT"
+    ]
+  },
+  "fingerprint": "a720c913b768b47c9931003dcd745dd2000a73ea6d446b7b9e7e92bb330015a3",
+  "privacy_safe": true,
+  "schema": "m34.schema_compatibility.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

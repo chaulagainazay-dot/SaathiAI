@@ -1,0 +1,28 @@
+{
+  "body": {
+    "docs_excluded": true,
+    "fingerprint": "d7e38fe5471faeb7f41401cd25be4e1e0af462a03c4c2f1ed3bcdf3461a10193",
+    "privacy_safe": true,
+    "provider_id": "saathi.echo.v1",
+    "schema": "m32.provider_fingerprint_report.v1",
+    "spec_version": "m32.provider.v1",
+    "surface_paths": [
+      "saathi/connectors/providers/models.py",
+      "saathi/connectors/providers/contract.py",
+      "saathi/connectors/providers/config.py",
+      "saathi/connectors/providers/normalization.py",
+      "saathi/connectors/providers/errors.py",
+      "saathi/connectors/providers/retry.py",
+      "saathi/connectors/providers/idempotency.py",
+      "saathi/connectors/providers/ratelimit.py",
+      "saathi/connectors/providers/registry.py",
+      "saathi/connectors/providers/adapters/echo_provider.py",
+      "saathi/connectors/testing/provider_simulator.py"
+    ]
+  },
+  "fingerprint": "523753b58f8cff791ce1fbab32a29fbef0831dd49ea3d0a715bd1c411852c450",
+  "privacy_safe": true,
+  "schema": "m32.provider_manifest_fingerprint.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

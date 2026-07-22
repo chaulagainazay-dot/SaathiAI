@@ -1,0 +1,14 @@
+{
+  "body": {
+    "authorization_headers_found": 0,
+    "clean": true,
+    "findings": [],
+    "personal_identities_found": 0,
+    "raw_secrets_found": 0
+  },
+  "fingerprint": "27a3ec1047a562ff397d2cac37eea0d0a0ee864403f549ea2502c4eb0d98bb91",
+  "privacy_safe": true,
+  "schema": "m36.leak_scan.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

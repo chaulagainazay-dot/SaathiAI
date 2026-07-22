@@ -1,0 +1,54 @@
+{
+  "body": {
+    "assessments": {
+      "ACTIVE_authorization": "NOT GRANTED",
+      "CANARY_authorization": "NOT GRANTED",
+      "call_budget_compliance": true,
+      "cleanup_completion": true,
+      "evidence_completeness": true,
+      "external_token_revocation": false,
+      "identity_qualification": false,
+      "leak_scan": true,
+      "lease_revocation": true,
+      "live_multi_session": "NOT_EXERCISED",
+      "live_single_session": "NOT_EXERCISED",
+      "m31_m39_regression": true,
+      "production_authorization": "NOT GRANTED",
+      "recovery_result": true,
+      "retry_compliance": true,
+      "rollout_authorization": "NOT GRANTED",
+      "scope_qualification": false,
+      "unresolved_manual_review": 0,
+      "unresolved_terminal_failures": 0,
+      "write_authority": "NOT GRANTED"
+    },
+    "banner": "M39 LIVE DISPOSABLE SANDBOX VALIDATION\nNON-PRODUCTION\nREAD-ONLY\nBOUNDED LIVE VALIDATION ONLY\nROLLOUT OFF\nNO CANARY GRANT\nNO ACTIVE\nTRADING GUARDIAN UNENGAGED",
+    "blockers": [
+      "operator_secret_reference_required"
+    ],
+    "contains_secret_values": false,
+    "grants_active": false,
+    "grants_canary": false,
+    "grants_production": false,
+    "grants_rollout": false,
+    "grants_write": false,
+    "limitations": [],
+    "m40_started": false,
+    "operator_authorization": {
+      "active": "NOT GRANTED",
+      "canary": "NOT GRANTED",
+      "note": "readiness_is_not_authorization; M39 never grants CANARY",
+      "production": "NOT GRANTED",
+      "rollout": "NOT GRANTED",
+      "write": "NOT GRANTED"
+    },
+    "schema": "m39.canary_eligibility.v1",
+    "trading_guardian": "UNENGAGED",
+    "verdict": "BLOCKED_OPERATOR_SECRET_REQUIRED"
+  },
+  "fingerprint": "7077136b1b3b4e99ec86da9b391e049f1e5328832051e1f4e07a2c2b6030f953",
+  "privacy_safe": true,
+  "schema": "m39.canary_eligibility_evaluation.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

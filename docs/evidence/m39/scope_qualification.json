@@ -1,0 +1,12 @@
+{
+  "body": {
+    "contains_secret_values": false,
+    "qualified": false,
+    "status": "NOT_EXERCISED"
+  },
+  "fingerprint": "5b826b995bed9a9663e63b752ec4f2c76263a0fd66f1dba514971ab5c42834dc",
+  "privacy_safe": true,
+  "schema": "m39.scope_qualification.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

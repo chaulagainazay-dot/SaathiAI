@@ -1,0 +1,148 @@
+{
+  "authorities": {
+    "ACTIVE_authorization": "NOT GRANTED",
+    "CANARY_authorization": "NOT GRANTED",
+    "production_authorization": "NOT GRANTED",
+    "rollout_authorization": "NOT GRANTED",
+    "write_authority": "NOT GRANTED"
+  },
+  "banner": "M39 LIVE DISPOSABLE SANDBOX VALIDATION\nNON-PRODUCTION\nREAD-ONLY\nBOUNDED LIVE VALIDATION ONLY\nROLLOUT OFF\nNO CANARY GRANT\nNO ACTIVE\nTRADING GUARDIAN UNENGAGED",
+  "blockers": [
+    "eligibility_not_ready",
+    "prerequisites_unmet",
+    "operator_approval_record_invalid_or_absent"
+  ],
+  "contains_secret_values": false,
+  "decision": "CANARY_NOT_GRANTED",
+  "eligibility_verdict": "BLOCKED_OPERATOR_SECRET_REQUIRED",
+  "fingerprint": "6d264b9bec8dbb60847d82b0",
+  "framework": {
+    "allowlist": {
+      "endpoints": [
+        "meta",
+        "user"
+      ],
+      "methods": [
+        "GET"
+      ],
+      "provider": "github_meta"
+    },
+    "circuit_breakers": [
+      {
+        "cooldown": "manual_reset_only",
+        "id": "CBK-1",
+        "name": "consecutive_failure_breaker",
+        "open_condition": "consecutive_failures >= 3"
+      },
+      {
+        "cooldown": "backoff_then_manual_review",
+        "id": "CBK-2",
+        "name": "rate_limit_breaker",
+        "open_condition": "http_429 observed"
+      },
+      {
+        "cooldown": "manual_reset_only",
+        "id": "CBK-3",
+        "name": "secret_resolution_breaker",
+        "open_condition": "secret_resolution_failure"
+      }
+    ],
+    "contains_secret_values": false,
+    "exit_criteria": {
+      "abort_if_any": [
+        "any rollback trigger fired",
+        "any circuit breaker open",
+        "any leak finding",
+        "operator abort"
+      ],
+      "graduate_requires_all": [
+        "zero rollback triggers fired",
+        "error_budget_consumed < 25%",
+        "all sessions within call budget",
+        "identity + scope stable across window",
+        "explicit operator graduation decision"
+      ]
+    },
+    "rollback_triggers": [
+      {
+        "action": "halt_canary_and_rollback",
+        "condition": "error_rate_exceeds_budget",
+        "id": "RBK-1",
+        "threshold": "error_budget_consumed >= 100%"
+      },
+      {
+        "action": "halt_canary_and_rollback",
+        "condition": "auth_denial_spike",
+        "id": "RBK-2",
+        "threshold": "auth_denials >= 1 (401/403)"
+      },
+      {
+        "action": "halt_and_reconcile",
+        "condition": "budget_exhaustion",
+        "id": "RBK-3",
+        "threshold": "aggregate_calls >= aggregate_budget"
+      },
+      {
+        "action": "immediate_halt",
+        "condition": "kill_switch_tripped",
+        "id": "RBK-4",
+        "threshold": "SAATHI_M39_KILL_SWITCH active"
+      },
+      {
+        "action": "immediate_halt_and_quarantine",
+        "condition": "leak_detected",
+        "id": "RBK-5",
+        "threshold": "any leak-scan finding"
+      },
+      {
+        "action": "halt_canary",
+        "condition": "circuit_breaker_open",
+        "id": "RBK-6",
+        "threshold": "consecutive_failures >= CBK threshold"
+      },
+      {
+        "action": "immediate_halt_and_alert",
+        "condition": "write_attempt_detected",
+        "id": "RBK-7",
+        "threshold": "any non-GET / non-allowlisted operation"
+      }
+    ],
+    "rollout_bounds": {
+      "max_percent": 5,
+      "min_percent": 1
+    },
+    "schema": "m39_3.framework_definitions.v1",
+    "session_budget_ceiling": 3
+  },
+  "grants_active": false,
+  "grants_canary": false,
+  "grants_production": false,
+  "grants_rollout": false,
+  "grants_write": false,
+  "milestone": "M39.3",
+  "note": "Readiness is not authorization. Authority is applied out-of-band by the operator only after live M39 evidence exists. M39.3 never grants.",
+  "operator_approval": {
+    "present": false,
+    "valid": false
+  },
+  "prerequisites": {
+    "all_met": false,
+    "unmet": [
+      "PRQ-1",
+      "PRQ-2",
+      "PRQ-3",
+      "PRQ-4",
+      "PRQ-5",
+      "PRQ-6",
+      "PRQ-7",
+      "PRQ-8",
+      "PRQ-9",
+      "PRQ-10",
+      "PRQ-11",
+      "PRQ-12",
+      "PRQ-13"
+    ]
+  },
+  "schema": "m39_3.canary_framework.v1",
+  "trading_guardian": "UNENGAGED"
+}

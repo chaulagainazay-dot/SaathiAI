@@ -15,7 +15,9 @@ import asyncio
 import json
 import time
 
-from saathi.events import bus
+from saathi.events import _events_py
+
+bus = _events_py.bus
 
 # event-name → (department, tone). Anything unmapped is routed to MISSION.
 _DEPT = {

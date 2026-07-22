@@ -92,24 +92,72 @@ async def human_complete(request: Request):
 async def human_test(request: Request):
     """Click-to-test: enqueue a benign 'open a page' job and wait for the Mac
     Agent's result. Proves the whole VM→signed-queue→agent→Chrome loop live.
-    Token-gated (not whitelisted)."""
+    Token-gated (not whitelisted).
+
+    M17.24: records a governed browser intent first; raw human-browser enqueue
+    requires SAATHI_ALLOW_RAW_BROWSER=1 or an explicit approval_id.
+    """
     import asyncio
     import json as _json
     import os as _osenv
     from saathi.infrastructure.human_browser import HumanBrowserProxy, default_queue
+    from saathi.browser.guard import raw_browser_env_enabled
     raw = await request.body()
     body = _json.loads(raw) if raw else {}
     url = body.get("url", "https://example.com")
+    actor = body.get("actor") or "user:api"
+    approval_id = body.get("approval_id") or ""
+    # Governed intent (domain policy + risk + ledger)
+    try:
+        from saathi.browser.governed import default_governed_browser
+        rec = default_governed_browser().execute(
+            action="navigate",
+            url=url,
+            actor=actor,
+            approval_id=approval_id,
+            approval_pre_resolved=bool(approval_id),
+            request_source="api",
+            mission_id=body.get("mission_id") or "human_browser_test",
+            mission_run_id=body.get("mission_run_id") or "human-test",
+            environment=body.get("environment") or "dev",
+        )
+        if rec.status in ("denied", "failed") and rec.failure_category in (
+            "domain", "domain_not_allowlisted", "dangerous_or_unsupported_scheme",
+            "missing_actor", "mission_cancelled",
+        ):
+            return {
+                "ok": False,
+                "error": "governance_denied",
+                "status": rec.status,
+                "execution_id": rec.execution_id,
+                "failure_category": rec.failure_category,
+                "governed": True,
+            }
+        gov_exec_id = rec.execution_id
+    except Exception as e:
+        return {"ok": False, "error": f"governance_error: {e}", "governed": True}
+
+    if not raw_browser_env_enabled() and not approval_id:
+        return {
+            "ok": False,
+            "error": "raw_human_browser_disabled",
+            "execution_id": gov_exec_id,
+            "message": "Human-browser enqueue requires approval_id or "
+                       "SAATHI_ALLOW_RAW_BROWSER=1 after governed intent succeeds",
+            "governed": True,
+        }
+
     secret = _osenv.getenv("HUMAN_BROWSER_SECRET", "")
     if not secret:
-        return {"ok": False, "error": "HUMAN_BROWSER_SECRET not set on the VM"}
+        return {"ok": False, "error": "HUMAN_BROWSER_SECRET not set on the VM",
+                "execution_id": gov_exec_id, "governed": True}
     proxy = HumanBrowserProxy(default_queue, secret=secret, timeout=15)
     try:
         result = await asyncio.to_thread(proxy.execute, "open",
                                          profile=body.get("profile", ""), url=url)
-        return {"ok": True, "result": result}
+        return {"ok": True, "result": result, "execution_id": gov_exec_id, "governed": True}
     except Exception as e:
-        return {"ok": False, "error": str(e),
+        return {"ok": False, "error": str(e), "execution_id": gov_exec_id, "governed": True,
                 "hint": "start the Mac Agent: bash ~/SaathiAI/run_human_agent.sh"}
 
 
@@ -1511,6 +1559,70 @@ try:
 except Exception as _e:
     print(f"[saathi] hcg_voice router unavailable: {_e}")
 
+try:
+    from .repair.api import router as repair_router
+    app.include_router(repair_router)
+except Exception as _e:
+    print(f"[saathi] repair router unavailable: {_e}")
+
+try:
+    from .chat.api import router as chat_router
+    app.include_router(chat_router)
+except Exception as _e:
+    print(f"[saathi] chat router unavailable: {_e}")
+
+try:
+    from .memory.api import router as memory_router
+    app.include_router(memory_router)
+except Exception as _e:
+    print(f"[saathi] memory router unavailable: {_e}")
+
+try:
+    from .agent_runtime.api import router as agents_router
+    app.include_router(agents_router)
+except Exception as _e:
+    print(f"[saathi] agent-runtime router unavailable: {_e}")
+
+try:
+    from .voice_os.api import router as voice_router
+    app.include_router(voice_router)
+except Exception as _e:
+    print(f"[saathi] voice-os router unavailable: {_e}")
+
+try:
+    from .studio_os.api import router as studio_os_router
+    app.include_router(studio_os_router)
+except Exception as _e:
+    print(f"[saathi] studio-os router unavailable: {_e}")
+
+try:
+    from .ceo.api import router as ceo_router
+    app.include_router(ceo_router)
+except Exception as _e:
+    print(f"[saathi] ceo router unavailable: {_e}")
+
+try:
+    from .connectors.platform.api import router as connectors_platform_router
+    app.include_router(connectors_platform_router)
+except Exception as _e:
+    print(f"[saathi] connectors-platform router unavailable: {_e}")
+
+# M15.2 red-team report API — read-only, authenticated, disabled in production.
+try:
+    import os as _os2
+    if _os2.getenv("SAATHI_ENV", "local").lower() != "production":
+        from .security.redteam.api import router as redteam_router
+        app.include_router(redteam_router)
+except Exception as _e:
+    print(f"[saathi] redteam router unavailable: {_e}")
+
+# M16 Control Center — read-only aggregation API (authenticated).
+try:
+    from .control_center.api import router as control_center_router
+    app.include_router(control_center_router)
+except Exception as _e:
+    print(f"[saathi] control-center router unavailable: {_e}")
+
 # Simple access key for remote/tunnel use. Local requests (the Mac itself)
 # are always allowed; remote requests must send X-Saathi-Token.
 import os as _os
@@ -1717,20 +1829,6 @@ def login(body: LoginIn, request: Request):
                    "Android" if "Android" in ua else
                    "Windows" if "Windows" in ua else
                    "Linux" if "Linux" in ua else "Unknown")
-    risk = RiskEngine()
-    risk_score = risk.score(_owner_id(), browser=browser, ip=ip,
-                            device_name=device_name, failed_attempts=0)
-    token = sessions.create(ua=ua, ip=ip, kind="password", remember_me=body.remember_me)
-    sid = sessions.session_id(token)
-    authsec.audit("login", ok=True, ip=ip, ua=ua, detail=f"session_{sid}")
-    # Record security event
-    from saathi.security.timeline import get_timeline
-    get_timeline().record(_owner_id(), "login_success",
-        title="Signed in with password",
-        detail=f"{browser} on {device_name}",
-        meta={"browser": browser, "os": os_name, "ip": ip, "risk_score": risk_score},
-        ip=ip, ua=ua)
-    from saathi.security.risk import RiskEngine
     risk = RiskEngine()
     risk_score = risk.score(_owner_id(), browser=browser, ip=ip,
                             device_name=device_name, failed_attempts=0)
@@ -2340,7 +2438,33 @@ async def oauth_callback(request: Request, code: str = "", state: str = "", erro
     return JSONResponse({"ok": True, "message": f"OAuth callback received for {provider}. "
                          "Token exchange not yet implemented — enable the provider and add the exchange logic."})
 
-agent = SaathiAgent()
+# Lazy agent — avoid import-time API key requirements so pytest collection
+# and CI ``--collect-only`` can import the app without ANTHROPIC_API_KEY /.env.
+_agent_singleton: "SaathiAgent | None" = None
+
+
+def get_agent() -> SaathiAgent:
+    """Return the process-wide SaathiAgent, constructing it on first use."""
+    global _agent_singleton
+    if _agent_singleton is None:
+        _agent_singleton = SaathiAgent()
+    return _agent_singleton
+
+
+class _LazyAgentProxy:
+    """Module-level ``agent`` proxy preserved for existing call sites."""
+
+    def __getattr__(self, name: str):
+        return getattr(get_agent(), name)
+
+    def __setattr__(self, name: str, value) -> None:
+        if name.startswith("_"):
+            object.__setattr__(self, name, value)
+            return
+        setattr(get_agent(), name, value)
+
+
+agent = _LazyAgentProxy()
 
 FILES_DIR = config.ROOT / "data" / "files"
 FILES_DIR.mkdir(parents=True, exist_ok=True)
@@ -4974,6 +5098,31 @@ def dashboard_trigger(body: TriggerIn, request: Request):
 
 
 # ── System monitoring ─────────────────────────────────────────────────────────
+
+_PROCESS_START = time.time()
+
+
+@app.get("/api/v1/system/version")
+async def system_version():
+    """Runtime-build identity (M12 Phase 24, strengthened M13.5 Phase 3) — lets
+    the frontend detect a stale/incompatible backend (the bug that broke M11's
+    first live smoke). No secrets/paths/env — only counts + a commit hash."""
+    from .ops.identity import identity
+    return identity(route_count=len(app.routes))
+
+
+class _VersionCompat(BaseModel):
+    api_version: str = ""
+    route_manifest_version: str = ""
+
+
+@app.post("/api/v1/system/version/compat")
+async def system_version_compat(body: _VersionCompat):
+    """Frontend posts its build's API + route-manifest version; backend replies
+    whether they are compatible so the UI can warn on a version mismatch."""
+    from .ops.identity import compatible
+    return compatible(body.api_version, body.route_manifest_version)
+
 
 @app.get("/api/v1/system/disk")
 async def system_disk(request: Request):

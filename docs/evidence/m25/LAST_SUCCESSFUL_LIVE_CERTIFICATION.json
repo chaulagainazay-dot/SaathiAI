@@ -1,0 +1,62 @@
+{
+  "schema": "m25.last_successful_live_certification.v1",
+  "recorded_at": "2026-07-17T11:33:35+00:00",
+  "verdict": "M25 COMPLETE WITH LIMITATIONS \u2014 LIVE LOCAL PROVIDER VERIFIED; PRODUCTION CERTIFICATION BLOCKED",
+  "live": true,
+  "live_provider_certified": true,
+  "production_certified": false,
+  "selected_model": {
+    "model_id": "qwen2.5:1.5b",
+    "engine_id": "ollama",
+    "digest": "",
+    "size_bytes": 0,
+    "family": "",
+    "parameter_scale": "~1.5B",
+    "quantization": "",
+    "context_limit": 0,
+    "resource_safe": true,
+    "selection_rank": 1,
+    "notes": [
+      "selected_for_footprint_rank=1",
+      "available_memory_gb=2.15",
+      "safety_margin_gb=0.8",
+      "minimum_model_budget_gb=1.0",
+      "memory_gate=available(2.15) >= safety_margin(0.8) + model_budget(1.0)"
+    ]
+  },
+  "live_cases": [
+    {
+      "case_id": "nonstream_basic",
+      "ok": true,
+      "latency_ms": 2157.85,
+      "response_len": 15,
+      "contains_marker": true,
+      "provider": "ollama",
+      "model": "qwen2.5:1.5b",
+      "selected_model": "qwen2.5:1.5b",
+      "reservation_id": "rsv_50e7dcdf398a464fa4be83824892830b",
+      "settled": true,
+      "error_category": "",
+      "error_code": "",
+      "raw_prompt_logged": false,
+      "raw_output_logged": false
+    }
+  ],
+  "environment_at_success": {
+    "binary_path": "/usr/local/bin/ollama",
+    "version": "ollama version is 0.32.1",
+    "endpoint": "http://127.0.0.1:11434",
+    "available_memory_gb": 2.16,
+    "installed_approved_models": [
+      "qwen2.5:1.5b"
+    ]
+  },
+  "tip_commit": "8ac0b48c06b37c0e7b59636f4c04c8d354f9ddeb",
+  "run_id": "df207ed419fe4ed78c23c50983d03988",
+  "suite_version": "m25.live_cert.suite.v1",
+  "certification_fingerprint": "sha256:d9247ed7ab4712fcdd2400bd",
+  "privacy_status": "redacted_no_raw_prompts_or_outputs",
+  "trading_guardian": "UNCHANGED / UNENGAGED / LIVE TRADING NOT AUTHORIZED",
+  "cloud_fallback": false,
+  "downloads_performed": false
+}

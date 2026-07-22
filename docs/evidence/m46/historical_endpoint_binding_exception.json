@@ -1,0 +1,19 @@
+{
+  "actual_network_path": "GET /user",
+  "actual_operation": "IDENTITY_READ",
+  "authorizes_execution": false,
+  "classification": "M46_ENDPOINT_BINDING_EXCEPTION",
+  "contains_secret_values": false,
+  "grants_anything": false,
+  "identity_read_endpoint_required": "user",
+  "live_canary_evidence_fingerprint": "1c988393b7e2b9e39199b5ec",
+  "live_canary_evidence_path": "docs/m46/live_canary_result.local.json",
+  "milestone": "M46",
+  "not_fully_policy_conformant": true,
+  "note": "Historical successful canary remains valid as machine proof of one-call identity bind, but is classified with ENDPOINT_BINDING_EXCEPTION because signed allowed_endpoint=meta while runtime used GET /user. Do not rewrite the old signed approval. Fresh canary required for policy-conformant cert.",
+  "policy_model_now": "exact_endpoint_authorization_v1",
+  "recorded_at": "2026-07-22T05:52:05+00:00",
+  "schema": "m46.historical_canary_classification.v1",
+  "signed_allowed_endpoint": "meta",
+  "signed_allowed_operation": "IDENTITY_READ"
+}

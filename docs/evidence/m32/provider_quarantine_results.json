@@ -1,0 +1,11 @@
+{
+  "body": {
+    "quarantined_after_malformed": true,
+    "recovery_requires_explicit": true
+  },
+  "fingerprint": "03b24d53338f04104d017d10997a88b2dda0e236b90982756cdfc8b990949536",
+  "privacy_safe": true,
+  "schema": "m32.provider_quarantine_results.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

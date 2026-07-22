@@ -1,0 +1,31 @@
+# SaathiOS project-scoped Grok configuration (requires folder trust).
+# Authoritative MCP policy: docs/MCP_INVENTORY.md (M17.25).
+# Product path: saathi.mcp_governance (canonical id saathi-codebase-memory).
+# Home-level binaries remain session tools; Continuum is BLOCKED_LICENSE.
+
+[mcp]
+# Cap large MCP payloads (bytes) for 8 GB Mac sessions
+max_output_bytes = 40000
+
+# Project MCP servers — intentionally empty / disabled for Continuum/CodeFlow.
+# Codebase memory is governed in-process via saathi.mcp_governance + optional
+# home session MCP aliases (codebase-memory / codebase-memory-mcp → same binary).
+#
+# Allowed (documented):
+#   saathi-codebase-memory (product adapter; disable via SAATHI_MCP_CODEBASE_MEMORY_DISABLED)
+#   documentation lookup (context7-class) at user level
+#   github read-only (session)
+#   filesystem restricted to SaathiAI (future, gateway-routed)
+#
+# Forbidden here:
+#   continuum (BLOCKED_LICENSE — do not enable)
+#   unrestricted shell MCP
+#   live trading MCP
+#   production DB write MCP
+#   unrestricted Gmail write / cloud deploy
+#   home-directory filesystem MCP
+
+# Continuum remains disabled / absent until licence cleared:
+# [mcp_servers.continuum]
+# command = "..."
+# enabled = false

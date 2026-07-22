@@ -1,0 +1,87 @@
+{
+  "schema": "m24.residual_exception_manifest.v1",
+  "milestone": "M24",
+  "supersedes": "m23.residual_exception_manifest.v1",
+  "production_certified": false,
+  "unknown_count": 0,
+  "direct_provider_bypass_count": 0,
+  "unclassified_count": 0,
+  "chat_residual_exception_count": 0,
+  "inference_residual_exception_count": 0,
+  "m22_migrated_path_ids": [
+    "legacy_llm_generate_execution",
+    "agent_sdk_clients",
+    "tools_research_grounding",
+    "openjarvis_execution_adapter"
+  ],
+  "m23_migrated_path_ids": [
+    "chat_engine_legacy_sink"
+  ],
+  "m24_migrated_path_ids": [
+    "engine_cloud_caller",
+    "engine_openai_compat",
+    "process_local_circuit_authority",
+    "process_local_daily_cost_authority"
+  ],
+  "exceptions": [],
+  "canonical_transports_m22": [
+    {
+      "path_id": "http_providers_transport",
+      "file": "saathi/inference/adapters/http_providers.py",
+      "classification": "CANONICAL_TRANSPORT"
+    },
+    {
+      "path_id": "research_grounding_adapter",
+      "file": "saathi/inference/adapters/grounding.py",
+      "classification": "CANONICAL_ADAPTER"
+    },
+    {
+      "path_id": "agent_provider_adapter",
+      "file": "saathi/inference/adapters/agent_provider.py",
+      "classification": "CANONICAL_ADAPTER"
+    }
+  ],
+  "canonical_chat_m23": [
+    {
+      "path_id": "chat_runtime",
+      "file": "saathi/chat/runtime.py",
+      "classification": "CANONICAL"
+    },
+    {
+      "path_id": "chat_context",
+      "file": "saathi/chat/context.py",
+      "classification": "CANONICAL"
+    },
+    {
+      "path_id": "chat_request",
+      "file": "saathi/chat/request.py",
+      "classification": "CANONICAL"
+    }
+  ],
+  "canonical_governance_m24": [
+    {
+      "path_id": "durable_governance_store",
+      "file": "saathi/inference/governance_store.py",
+      "classification": "CANONICAL"
+    },
+    {
+      "path_id": "governance_service",
+      "file": "saathi/inference/governance_service.py",
+      "classification": "CANONICAL"
+    },
+    {
+      "path_id": "engine_cloud_caller",
+      "file": "saathi/inference/adapters/cloud.py",
+      "classification": "CANONICAL_ADAPTER"
+    },
+    {
+      "path_id": "engine_openai_compat",
+      "file": "saathi/inference/adapters/openai_compat.py",
+      "classification": "CANONICAL_ADAPTER"
+    }
+  ],
+  "out_of_scope_non_inference": [
+    "media providers (not inference residuals)",
+    "evaluation providers (not inference residuals)"
+  ]
+}

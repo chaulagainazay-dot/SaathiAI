@@ -1,0 +1,19 @@
+{
+  "body": {
+    "acceptable": true,
+    "classification": "STABLE_EXACT",
+    "ignored_dynamic_fields": [
+      "counter",
+      "date",
+      "request_id",
+      "server_time",
+      "timestamp",
+      "x_request_id"
+    ]
+  },
+  "fingerprint": "b513aab720c88fa5310e42127a7aca55d45a90ff56ffbd9f7e67282e883b70cb",
+  "privacy_safe": true,
+  "schema": "m34.repeatability.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

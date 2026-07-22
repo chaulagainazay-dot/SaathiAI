@@ -1,0 +1,43 @@
+{
+  "body": {
+    "active_providers": 0,
+    "canary_providers": 0,
+    "direct_provider_bypasses": 0,
+    "evidence_files": [
+      "docs/evidence/m32/adapter_contract_results.json",
+      "docs/evidence/m32/failure_injection_results.json",
+      "docs/evidence/m32/idempotency_results.json",
+      "docs/evidence/m32/provider_health_results.json",
+      "docs/evidence/m32/provider_manifest.json",
+      "docs/evidence/m32/provider_manifest_fingerprint.json",
+      "docs/evidence/m32/provider_quarantine_results.json",
+      "docs/evidence/m32/provider_selection.json",
+      "docs/evidence/m32/rate_limit_results.json",
+      "docs/evidence/m32/redaction_results.json",
+      "docs/evidence/m32/request_normalization_results.json",
+      "docs/evidence/m32/response_normalization_results.json",
+      "docs/evidence/m32/runtime_eligibility_results.json",
+      "docs/evidence/m32/shadow_execution_results.json",
+      "docs/evidence/m32/timeout_retry_results.json"
+    ],
+    "highest_verification": "SIMULATION_VERIFIED",
+    "live_account_links": 0,
+    "modes_exercised": [
+      "DRY_RUN",
+      "SIMULATION",
+      "SHADOW"
+    ],
+    "production_provider_writes": 0,
+    "provider": "saathi.echo.v1",
+    "provider_adapter_bypasses": 0,
+    "real_credentials": 0,
+    "real_oauth_flows": 0,
+    "trading_guardian": "UNCHANGED / UNENGAGED",
+    "verification_state": "SIMULATION_VERIFIED"
+  },
+  "fingerprint": "9946bbc27af81330b45234c03badad5b3456a5e62c3f460a5f773f280e64dc38",
+  "privacy_safe": true,
+  "schema": "m32.validation_summary.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

@@ -1,0 +1,82 @@
+{
+  "account_subject_fingerprint": "c7cd7f4d6bee55c2847614692022af73",
+  "authority_state": {
+    "ACTIVE": "NOT GRANTED",
+    "CANARY": "NOT GRANTED",
+    "LIVE_PROVIDER_CERTIFICATION": "GRANTED (github_meta, read-only, sandbox)",
+    "PRODUCTION_DEPLOYMENT": "NOT AUTHORIZED",
+    "ROLLOUT": "NOT GRANTED",
+    "WRITE": "NOT GRANTED"
+  },
+  "contains_secret_values": false,
+  "decision": "LIVE_CERTIFIED",
+  "grants_active": false,
+  "grants_canary": false,
+  "grants_production": false,
+  "live_certified": true,
+  "live_exercised": true,
+  "milestone": "M40",
+  "note": "Live certification is evidence only; it does not grant canary/active/production. Operator approval (M39.3) remains mandatory for any canary decision.",
+  "operations": [
+    "GET /user",
+    "GET /meta"
+  ],
+  "provider": "github_meta",
+  "read_only": true,
+  "revocation_phase": {
+    "fingerprint": "f0aa4e87dd278f89c3bfa791",
+    "http_401_confirmed": true,
+    "stages": [
+      [
+        "stage1_operator_acknowledgement",
+        "PASSED"
+      ],
+      [
+        "stage2_provider_preflight",
+        "PASSED"
+      ],
+      [
+        "stage5_external_revocation",
+        "PASSED"
+      ],
+      [
+        "stage6_evidence_verification",
+        "PASSED"
+      ]
+    ],
+    "verdict": "LIVE_CERTIFIED"
+  },
+  "schema": "m40.live_certification_record.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED",
+  "validation_phase": {
+    "fingerprint": "94de0c5981490a4c04c77c6a",
+    "stages": [
+      [
+        "stage1_operator_acknowledgement",
+        "PASSED"
+      ],
+      [
+        "stage2_provider_preflight",
+        "PASSED"
+      ],
+      [
+        "stage3_single_session",
+        "PASSED"
+      ],
+      [
+        "stage4_multi_session",
+        "PASSED"
+      ],
+      [
+        "stage5_external_revocation",
+        "NOT_EXERCISED"
+      ],
+      [
+        "stage6_evidence_verification",
+        "PASSED"
+      ]
+    ],
+    "verdict": "LIVE_STAGES_PASSED_PENDING_REVOCATION"
+  },
+  "writes": []
+}

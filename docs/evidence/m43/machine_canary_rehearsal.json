@@ -1,0 +1,140 @@
+{
+  "activates_production": false,
+  "authorities": {
+    "ACTIVE_authorization": "NOT GRANTED",
+    "CANARY_authorization": "NOT GRANTED",
+    "production_authorization": "NOT GRANTED",
+    "rollout_authorization": "NOT GRANTED",
+    "write_authority": "NOT GRANTED"
+  },
+  "banner": "M39 LIVE DISPOSABLE SANDBOX VALIDATION\nNON-PRODUCTION\nREAD-ONLY\nBOUNDED LIVE VALIDATION ONLY\nROLLOUT OFF\nNO CANARY GRANT\nNO ACTIVE\nTRADING GUARDIAN UNENGAGED",
+  "contains_secret_values": false,
+  "expands_scope": false,
+  "fingerprint": "84cf031e25fea4aaa295a7f9",
+  "grants_active": false,
+  "grants_anything": false,
+  "grants_production": false,
+  "grants_write": false,
+  "m32_canary_execution_mode": "PROHIBITION_UNCHANGED",
+  "machine_record": {
+    "authorities": {
+      "ACTIVE_authorization": "NOT GRANTED",
+      "CANARY_authorization": "NOT GRANTED",
+      "production_authorization": "NOT GRANTED",
+      "rollout_authorization": "NOT GRANTED",
+      "write_authority": "NOT GRANTED"
+    },
+    "authority_state": {
+      "active": "NOT GRANTED",
+      "production": "NOT AUTHORIZED",
+      "rollout_full": "NOT GRANTED",
+      "scope_expansion": "FORBIDDEN",
+      "write": "NOT GRANTED"
+    },
+    "contains_secret_values": false,
+    "credential_lifecycle": {
+      "disposable_pat_externally_revoked": true,
+      "http_401_confirmed": true,
+      "machine_verified_here": true,
+      "status": "CLOSED"
+    },
+    "fingerprint": "c4be6531a9e8d84c76e1397b",
+    "grants_active": false,
+    "grants_production": false,
+    "grants_write": false,
+    "live_exercised": false,
+    "m32_canary_execution_mode": "PROHIBITION_UNCHANGED",
+    "machine_reevaluation": {
+      "m39_5_alerts_fired": 0,
+      "m41_should_rollback": false
+    },
+    "machine_signals": {
+      "automatic_rollback": "armed",
+      "identity": "unchanged",
+      "kill_switch": "tested",
+      "scope": "unchanged"
+    },
+    "machine_verified": true,
+    "machine_verified_live": false,
+    "milestone": "M43",
+    "mode": "read_only_canary",
+    "operator_reported_signals": {
+      "automatic_rollback": "armed",
+      "identity": "unchanged",
+      "kill_switch": "tested",
+      "scope": "unchanged"
+    },
+    "phase_verifications": {
+      "revocation": {
+        "http_401_confirmed": true,
+        "revocation_effective": true,
+        "secret_handle_destroyed": true
+      },
+      "validation": {
+        "bounded_read_only_completed": true,
+        "budget_compliant": true,
+        "cleanup_complete": true,
+        "endpoint_identity_bound": true,
+        "no_rollback_triggered": true,
+        "rollback_state_clean": true,
+        "secret_handle_destroyed": true,
+        "zero_error_budget_held": true
+      }
+    },
+    "provider": "github_meta",
+    "schema": "m41.machine_verified_canary_completion.v1",
+    "session_executed_live": true,
+    "source": "SIMULATED_REHEARSAL",
+    "trading_guardian": "UNCHANGED / UNENGAGED",
+    "verdict": "CANARY_ACTIVE_BOUNDED",
+    "verdict_reported_by_operator": "CANARY_ACTIVE_BOUNDED"
+  },
+  "machine_verified": false,
+  "milestone": "M43",
+  "mode": "rehearsal",
+  "note": "SIMULATED_NOT_LIVE; proves the machine-verified flow wiring. A real in-session live run is required to produce MACHINE_PROOF that clears AB-PROV.",
+  "phase": "revocation",
+  "provider": "github_meta",
+  "revocation_phase": {
+    "blockers": [],
+    "contains_secret_values": false,
+    "credential_destroyed": true,
+    "http_401_confirmed": true,
+    "live_network": false,
+    "ok": true,
+    "phase": "revocation",
+    "revocation_effective": true,
+    "secret_handle_destroyed": true,
+    "verdict": "MACHINE_CANARY_VERIFIED"
+  },
+  "schema": "m43.machine_verified_canary.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED",
+  "validation_phase": {
+    "blockers": [],
+    "contains_secret_values": false,
+    "increments_run": 2,
+    "live_network": false,
+    "ok": true,
+    "phase": "validation",
+    "rollout": {
+      "all_handles_closed": true,
+      "errors": 0,
+      "increments_run": 2,
+      "live_network": false,
+      "state": "COMPLETED",
+      "verdict": "CANARY_ACTIVE_BOUNDED"
+    },
+    "verdict": "MACHINE_CANARY_VALIDATED_PENDING_REVOCATION",
+    "verifications": {
+      "bounded_read_only_completed": true,
+      "budget_compliant": true,
+      "cleanup_complete": true,
+      "endpoint_identity_bound": true,
+      "no_rollback_triggered": true,
+      "rollback_state_clean": true,
+      "secret_handle_destroyed": true,
+      "zero_error_budget_held": true
+    }
+  },
+  "verdict": "MACHINE_CANARY_VERIFIED"
+}

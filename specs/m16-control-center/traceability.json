@@ -1,0 +1,17 @@
+{
+  "milestone": "M16",
+  "title": "Unified Control Center, Observatory, and Mission Command",
+  "constitution_version": "1.0",
+  "requirements": [
+    {"id": "M16-OVERVIEW-001", "text": "Overview reads real subsystem data with source + freshness", "artifact": "saathi/control_center/aggregator.py", "test": "tests/test_m16_control_center.py::test_overview_real_sources"},
+    {"id": "M16-AGG-001", "text": "Partial subsystem failure degrades to typed cell, never crashes the page", "artifact": "saathi/control_center/aggregator.py", "test": "tests/test_m16_control_center.py::test_partial_failure_degrades_not_crash"},
+    {"id": "M16-AGG-002", "text": "Every cell carries source + freshness (provenance)", "artifact": "saathi/control_center/aggregator.py", "test": "tests/test_m16_control_center.py::test_cell_freshness_present"},
+    {"id": "M16-ATTENTION-001", "text": "Attention items ranked, real, actionable", "artifact": "saathi/control_center/aggregator.py", "test": "tests/test_m16_control_center.py::test_attention_ranking_orders_critical_first"},
+    {"id": "M16-SEARCH-001", "text": "Federated search owner-scoped (cross-user isolation)", "artifact": "saathi/control_center/search.py", "test": "tests/test_m16_control_center.py::test_search_owner_scoped_executions"},
+    {"id": "M16-SEARCH-002", "text": "Search never returns secrets", "artifact": "saathi/control_center/search.py", "test": "tests/test_m16_control_center.py::test_search_no_secret_in_results"},
+    {"id": "M16-ACTION-001", "text": "Action descriptors point at canonical APIs; no Control Center execution bypass", "artifact": "saathi/control_center/actions.py", "test": "tests/test_m16_control_center.py::test_actions_point_at_canonical_apis"},
+    {"id": "M16-API-001", "text": "Control Center API is read-only (no POST/PUT/DELETE)", "artifact": "saathi/control_center/api.py", "test": "tests/test_m16_control_center.py::test_control_api_is_read_only"},
+    {"id": "M16-AUTH-001", "text": "Control Center API enforces authentication", "artifact": "saathi/control_center/api.py", "test": "tests/test_m16_control_center.py::test_control_api_requires_auth"},
+    {"id": "M16-UI-001", "text": "Overview UI consumes the real control API with honest degraded states + bounded refresh", "artifact": "saathi-os/app/control/page.jsx", "test": "tests/test_m16_control_center.py::test_ui_uses_control_api"}
+  ]
+}

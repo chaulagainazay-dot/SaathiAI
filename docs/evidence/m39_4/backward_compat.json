@@ -1,0 +1,8 @@
+{
+  "additive_only": true,
+  "all_present": true,
+  "checked": 11,
+  "contains_secret_values": false,
+  "missing": [],
+  "schema": "m39_4.backward_compat.v1"
+}

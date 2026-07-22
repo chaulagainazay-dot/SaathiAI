@@ -1,0 +1,1935 @@
+"""M31 — Credential control-plane CLI.
+
+    python -m saathi.credentials <command>
+
+Commands:
+    status                     broker + account-link status (metadata only)
+    readiness                  broker readiness probe
+    profiles                   list auth profiles + scope governance
+    list-credentials           list credential references (no values)
+    list-links                 list account links (no values)
+    inspect-credential <id>    one credential reference (no values)
+    inspect-link <id>          one account link (no values)
+    demo                       run a full deterministic fake-provider lifecycle
+    emit-evidence              run demo + write leak-scanned evidence pack
+    verify                     assert M31 invariants (0 real creds/oauth/links)
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+from typing import Any, Optional
+
+from saathi.credentials import evidence, leakscan
+from saathi.credentials.account_links import AccountLinkRegistry
+from saathi.credentials.broker import CredentialBroker, get_broker
+from saathi.credentials.oauth import OAuthLifecycle
+from saathi.credentials.scopes import list_profiles
+from saathi.credentials.testing.sandbox_oauth import FakeOAuthProvider
+
+
+def _print(obj: Any) -> None:
+    print(json.dumps(obj, indent=2, default=str))
+
+
+_M35_BANNER = (
+    "SANDBOX GOVERNANCE\nNON-PRODUCTION\nNO LIVE SECRET LOADED\n"
+    "NO EXTERNAL CALL\nNO WRITE AUTHORITY\nROLLOUT REMAINS OFF"
+)
+
+_M36_BANNER = (
+    "REAL SANDBOX VERIFICATION\nNON-PRODUCTION\nREAD-ONLY\nBOUNDED SESSION\n"
+    "ROLLOUT OFF\nNO CANARY\nNO ACTIVE\nTRADING GUARDIAN UNENGAGED"
+)
+
+_M37_BANNER = (
+    "M37 SECURITY CERTIFICATION\nNON-PRODUCTION\nREAD-ONLY\nBOUNDED SANDBOX\n"
+    "ROLLOUT OFF\nNO CANARY\nNO ACTIVE\nTRADING GUARDIAN UNENGAGED"
+)
+
+_M38_BANNER = (
+    "M38 MULTI-SESSION RELIABILITY\nNON-PRODUCTION\nREAD-ONLY\nBOUNDED CONCURRENCY\n"
+    "ROLLOUT OFF\nNO CANARY\nNO ACTIVE\nTRADING GUARDIAN UNENGAGED"
+)
+
+_M39_BANNER = (
+    "M39 LIVE DISPOSABLE SANDBOX VALIDATION\nNON-PRODUCTION\nREAD-ONLY\n"
+    "BOUNDED LIVE VALIDATION ONLY\nROLLOUT OFF\nNO CANARY GRANT\nNO ACTIVE\n"
+    "TRADING GUARDIAN UNENGAGED"
+)
+
+_M40_BANNER = (
+    "M40 LIVE VALIDATION & PRODUCTION CERTIFICATION\nNON-PRODUCTION\nREAD-ONLY\n"
+    "FAIL-CLOSED\nNO CANARY GRANT\nNO ACTIVE\nNO PRODUCTION DEPLOY\n"
+    "LIVE CERTIFICATION REQUIRES REAL PROVIDER + OPERATOR SECRET\n"
+    "TRADING GUARDIAN UNENGAGED"
+)
+
+_M41_BANNER = (
+    "M41 BOUNDED READ-ONLY CANARY ROLLOUT\nNON-PRODUCTION\nREAD-ONLY\nFAIL-CLOSED\n"
+    "github_meta ONLY\nOPERATOR APPROVAL MANDATORY\nAUTO-ROLLBACK MANDATORY\n"
+    "KILL SWITCH MANDATORY\nNO ACTIVE\nNO PRODUCTION\nNO WRITE\nNO SCOPE EXPANSION\n"
+    "TRADING GUARDIAN UNENGAGED"
+)
+
+
+def run_m35_synthetic_session() -> dict[str, Any]:
+    """Deterministic, offline synthetic sandbox-governance session. No raw secret
+    is accepted from the caller; a synthetic value is minted in-process only."""
+    from saathi.credentials import m35
+    from saathi.connectors.providers.external.profiles import resolve_external_profile
+
+    clock = lambda: 1752800000.0  # noqa: E731
+    profile = resolve_external_profile("github_meta")
+    broker = CredentialBroker(persist=False, clock=clock)
+    registry = m35.SandboxAccountRegistry(clock=clock)
+    leases = m35.SessionLeaseStore(clock=clock)
+    cred = broker.create_reference(
+        owner_scope="user:synthetic", provider_id="github_meta", credential_type="api_key",
+        secret_fields={"api_key": "SYNTHETIC_SECRET_VALUE"}, scopes=("metadata:read",),
+        connector_ids=("gov.http",),
+    )
+    acct = registry.register_sandbox(
+        provider_id="github_meta", environment_class="SANDBOX", subject="SYNTHETIC_ACCOUNT_SUBJECT",
+        display_alias="synthetic-sandbox", declared_scopes=("metadata:read",),
+    )
+    registry.verify(acct.account_ref_id, observed_scopes=("metadata:read",))
+    approval = m35.build_approval(
+        purpose="m35_sandbox_governance_verification", provider_id="github_meta",
+        account_ref_id=acct.account_ref_id, credential_ref_id=cred.credential_ref_id,
+        operation="get_meta", environment_class="SANDBOX", approved_scopes=("metadata:read",),
+        read_only_acknowledged=True, sandbox_acknowledged=True, secret_access_acknowledged=True,
+        non_production_acknowledged=True, write_prohibited=True,
+    )
+    result = m35.run_sandbox_session(
+        provider_id="github_meta", profile=profile, account_registry=registry,
+        account_ref_id=acct.account_ref_id, broker=broker, credential_ref_id=cred.credential_ref_id,
+        approval=approval, lease_store=leases, environment_class="SANDBOX",
+        requested_scopes=("metadata:read",), observed_scopes=("metadata:read",),
+        synthetic=True, clock=clock,
+    )
+    state, _lims = m35.assess_sandbox_certification(governance_ok=result["ok"], synthetic_session_ok=result["ok"])
+    return {"session_result": result, "sandbox_certification": state,
+            "max_certification_state": m35.M35_MAX_CERTIFICATION_STATE}
+
+
+def run_demo(*, persist: bool = False, seed: int = 1) -> dict[str, Any]:
+    """Deterministic end-to-end lifecycle against a fake provider only.
+
+    Exercises: request link → begin OAuth (PKCE) → provider authorize → callback
+    (state + PKCE verified) → token exchange → store via broker → complete link →
+    lease + inject (scrubbed) → refresh → revoke. No network, no real provider.
+    """
+    tick = {"t": 1_000_000.0}
+
+    def clock() -> float:
+        tick["t"] += 1.0
+        return tick["t"]
+
+    counter = {"n": seed}
+
+    def rng(n: int) -> bytes:
+        counter["n"] += 1
+        return (str(counter["n"]).encode() * n)[:n]
+
+    broker = CredentialBroker(persist=persist, clock=clock)
+    registry = AccountLinkRegistry(broker=broker, persist=persist)
+    provider = FakeOAuthProvider(clock=clock)
+    oauth = OAuthLifecycle(clock=clock, rng=rng, provider=provider)
+
+    owner = "user:test"
+    provider_id = "fakemail"
+    connector_id = "gov.http"
+    requested = ("mail.read", "mail.send")
+    allowed = ("mail.read", "mail.send", "mail.admin")
+
+    link = registry.request_link(
+        owner_scope=owner, provider_id=provider_id, connector_ids=(connector_id,),
+        auth_profile="oauth2_pkce", requested_scopes=requested, allowed_scopes=allowed,
+    )
+
+    begin = oauth.begin_link(
+        provider_id=provider_id, owner_scope=owner, redirect_uri="https://app.local/cb",
+        requested_scopes=requested, connector_ids=(connector_id,),
+        account_link_id=link.account_link_id, approval_token="approval-demo",
+    )
+    registry.mark_authorization_pending(link.account_link_id, oauth_session_id=begin["session_id"])
+
+    auth = begin["authorization"]
+    prov_resp = provider.authorize(
+        state=auth["state"], code_challenge=auth["code_challenge"],
+        redirect_uri="https://app.local/cb", provider_id=provider_id,
+        scopes=list(requested),
+    )
+    cb = oauth.handle_callback(
+        state=prov_resp["state"], code=prov_resp["code"],
+        redirect_uri="https://app.local/cb", provider_id=provider_id, owner_scope=owner,
+    )
+    tokens = oauth.take_tokens_for_broker(begin["session_id"])
+    cred = broker.create_reference(
+        owner_scope=owner, provider_id=provider_id, credential_type="oauth_token_set",
+        secret_fields=tokens, scopes=tuple(cb["granted_scopes"]), connector_ids=(connector_id,),
+        account_link_id=link.account_link_id,
+    )
+    registry.complete_link(
+        link.account_link_id, granted_scopes=tuple(cb["granted_scopes"]),
+        credential_ref_id=cred.credential_ref_id,
+    )
+
+    # Lease + inject (scrubbed inside the boundary)
+    from saathi.credentials.injection import SecretInjectionContext
+    injected_fields: list[str] = []
+    with SecretInjectionContext(
+        broker, credential_ref_id=cred.credential_ref_id, request_id="req-demo-1",
+        connector_id=connector_id, operation="send", actor="agent", owner_scope=owner,
+    ) as secrets:
+        injected_fields = sorted(secrets.keys())
+
+    refresh = oauth.refresh(begin["session_id"])
+    readiness = registry.readiness(link.account_link_id, connector_id=connector_id, owner_scope=owner)
+    revoked = registry.revoke(link.account_link_id, reason="demo_complete", owner_scope=owner)
+
+    scenario = {
+        "owner_scope": owner,
+        "provider_id": provider_id,
+        "connector_id": connector_id,
+        "account_link_id": link.account_link_id,
+        "credential_ref_id": cred.credential_ref_id,
+        "oauth_session_id": begin["session_id"],
+        "granted_scopes": list(cb["granted_scopes"]),
+        "callback_state_after": cb["status"],
+        "injected_fields": injected_fields,
+        "refresh_state_after": refresh["status"],
+        "readiness_when_linked": readiness["readiness"],
+        "final_link_status": revoked.status,
+        "final_credential_status": broker.get_ref(cred.credential_ref_id).status,
+        "provider": "FakeOAuthProvider (in-process, no network)",
+        "real_oauth_endpoints_contacted": 0,
+    }
+    return {"broker": broker, "registry": registry, "scenario": scenario}
+
+
+def _fresh_broker_registry() -> tuple[CredentialBroker, AccountLinkRegistry]:
+    b = get_broker()
+    r = AccountLinkRegistry(broker=b)
+    return b, r
+
+
+def _read_json_file(path: str):
+    """Fail-closed JSON file read. Returns (data, error_code). Never raises."""
+    import json as _j
+    try:
+        with open(path) as fh:
+            return _j.load(fh), None
+    except FileNotFoundError:
+        return None, "file_not_found"
+    except (ValueError, OSError) as e:
+        return None, f"unreadable:{type(e).__name__}"
+
+
+def main(argv: Optional[list[str]] = None) -> int:
+    # Fail closed on raw secret carriers before argparse (so --token is never a
+    # silent "unrecognized arguments" only).
+    raw_argv = list(argv if argv is not None else sys.argv[1:])
+    if any(str(a).split("=")[0].lower() in (
+        "--token", "--api-key", "--apikey", "--password", "--secret",
+        "--authorization-header", "--authorization", "--bearer",
+    ) for a in raw_argv):
+        print(_M36_BANNER)
+        _print({"ok": False, "error": "raw_secret_cli_rejected"})
+        return 2
+
+    p = argparse.ArgumentParser(prog="python -m saathi.credentials")
+    sub = p.add_subparsers(dest="cmd")
+    for name in ("status", "readiness", "profiles", "list-credentials", "list-links", "demo", "emit-evidence", "verify"):
+        sub.add_parser(name)
+    ic = sub.add_parser("inspect-credential"); ic.add_argument("id")
+    il = sub.add_parser("inspect-link"); il.add_argument("id")
+    # ── M35 sandbox-credential governance (metadata only; no raw secret) ──────
+    for name in ("m35-verify", "m35-drift", "m35-scope-policy",
+                 "m35-secret-source-policy", "emit-m35-evidence"):
+        sub.add_parser(name)
+    # ── M36 real sandbox verification (offline preflight / evidence; live gated) ─
+    m36_pre = sub.add_parser("m36-preflight")
+    m36_auth = sub.add_parser("m36-authorize")
+    m36_auth.add_argument("--account-ref", required=False, default="")
+    m36_auth.add_argument("--credential-ref", required=False, default="")
+    m36_auth.add_argument("--ack", action="append", default=[], dest="acks")
+    m36_qual = sub.add_parser("m36-qualify-account")
+    m36_qual.add_argument("--alias", default="sbx-readonly")
+    m36_qual.add_argument("--purpose", default="m36 disposable sandbox verification")
+    m36_qual.add_argument("--revocation-plan", default="manual_github_pat_delete")
+    m36_qual.add_argument("--deletion-plan", default="delete_after_m36")
+    m36_qual.add_argument("--disposable-ack", action="store_true")
+    sub.add_parser("m36-verify-secret-reference")
+    sub.add_parser("m36-verify-scope")
+    sub.add_parser("m36-eligibility")
+    m36_run = sub.add_parser("m36-run-session")
+    m36_run.add_argument("--authorization-id", default="")
+    m36_run.add_argument("--account-ref", default="")
+    m36_run.add_argument("--credential-ref", default="")
+    m36_run.add_argument("--secret-source", default="OS_KEYCHAIN_REFERENCE")
+    m36_run.add_argument("--secret-locator", default="")
+    m36_run.add_argument("--operation", default="get_meta")
+    m36_run.add_argument("--call-budget", type=int, default=3)
+    m36_run.add_argument("--ack", action="append", default=[], dest="acks")
+    m36_run.add_argument("--live", action="store_true",
+                         help="require SAATHI_M36_ALLOW_LIVE_SANDBOX_VERIFICATION=1")
+    sub.add_parser("m36-session-status")
+    sub.add_parser("m36-revoke-session")
+    sub.add_parser("m36-cleanup-status")
+    sub.add_parser("emit-m36-evidence")
+    # ── M37 security certification / provider contract ───────────────────────
+    for name in ("m37-preflight", "m37-validate", "m37-negative", "m37-certify",
+                 "m37-provider-model", "emit-m37-evidence"):
+        sub.add_parser(name)
+    # ── M38 multi-session reliability / canary readiness (no grant) ──────────
+    for name in ("m38-preflight", "m38-run-offline-multisession", "m38-list-sessions",
+                 "m38-session-status", "m38-reconcile", "m38-recover-session",
+                 "m38-run-failure-matrix", "m38-evaluate-canary-readiness",
+                 "emit-m38-evidence"):
+        sub.add_parser(name)
+    # ── M39 live disposable sandbox validation / canary eligibility (no grant) ─
+    sub.add_parser("m39-preflight")
+    m39_auth = sub.add_parser("m39-authorize-live-validation")
+    m39_auth.add_argument("--account-ref", default="")
+    m39_auth.add_argument("--credential-ref", default="")
+    m39_auth.add_argument("--source-kind", default="OS_KEYCHAIN_REFERENCE")
+    m39_auth.add_argument("--ack", action="append", default=[], dest="acks")
+    m39_qual = sub.add_parser("m39-qualify-secret-reference")
+    m39_qual.add_argument("--source-kind", default="OS_KEYCHAIN_REFERENCE")
+    m39_qual.add_argument("--locator", default="")
+    m39_qual.add_argument("--env-var-name", default="")
+    m39_single = sub.add_parser("m39-run-live-single-session")
+    m39_single.add_argument("--source-kind", default="OS_KEYCHAIN_REFERENCE")
+    m39_single.add_argument("--locator", default="")
+    m39_single.add_argument("--env-var-name", default="")
+    m39_single.add_argument("--expected-subject-fp", default="")
+    m39_single.add_argument("--ack", action="append", default=[], dest="acks")
+    m39_multi = sub.add_parser("m39-run-live-multisession")
+    m39_multi.add_argument("--source-kind", default="OS_KEYCHAIN_REFERENCE")
+    m39_multi.add_argument("--locator", default="")
+    m39_multi.add_argument("--env-var-name", default="")
+    m39_multi.add_argument("--expected-subject-fp", default="")
+    m39_multi.add_argument("--ack", action="append", default=[], dest="acks")
+    m39_int = sub.add_parser("m39-interrupt-session")
+    m39_int.add_argument("--session-id", default="")
+    m39_rec = sub.add_parser("m39-recover-session")
+    m39_rec.add_argument("--session-id", default="")
+    m39_rev = sub.add_parser("m39-confirm-external-revocation")
+    m39_rev.add_argument("--confirmed", action="store_true")
+    m39_rev.add_argument("--note", default="")
+    sub.add_parser("m39-evaluate-canary-eligibility")
+    sub.add_parser("emit-m39-evidence")
+
+    # ── M39.1 operator dry-run tooling (offline; no secret resolution) ─────────
+    m391_plan = sub.add_parser("m39-1-plan")
+    m391_plan.add_argument("--mode", default="single", choices=["single", "multi"])
+    m391_plan.add_argument("--source-kind", default="OS_KEYCHAIN_REFERENCE")
+    m391_plan.add_argument("--locator", default="")
+    m391_plan.add_argument("--env-var-name", default="")
+    m391_preview = sub.add_parser("m39-1-preview")
+    m391_preview.add_argument("--mode", default="single", choices=["single", "multi"])
+    m391_preview.add_argument("--source-kind", default="OS_KEYCHAIN_REFERENCE")
+    m391_preview.add_argument("--locator", default="")
+    m391_preview.add_argument("--env-var-name", default="")
+    m391_avail = sub.add_parser("m39-1-backend-availability")
+    m391_avail.add_argument("--source-kind", default="OS_KEYCHAIN_REFERENCE")
+    m391_avail.add_argument("--locator", default="")
+    m391_avail.add_argument("--env-var-name", default="")
+    m391_rev = sub.add_parser("m39-1-revocation-checklist")
+    m391_rev.add_argument("--source-kind", default="OS_KEYCHAIN_REFERENCE")
+    m391_rev.add_argument("--locator", default="")
+    sub.add_parser("m39-1-diagnostics")
+    sub.add_parser("m39-1-emit-evidence")
+
+    # ── M39.2 failure-mode simulation (offline; SIMULATED_NOT_LIVE) ────────────
+    m392_sim = sub.add_parser("m39-2-simulate-fault")
+    m392_sim.add_argument("--mode", required=True)
+    sub.add_parser("m39-2-simulation-matrix")
+    sub.add_parser("m39-2-emit-evidence")
+
+    # ── M39.3 canary-readiness framework (offline; CANARY never granted) ──────
+    sub.add_parser("m39-3-prerequisites")
+    sub.add_parser("m39-3-framework")
+    sub.add_parser("m39-3-approval-schema")
+    m393_val = sub.add_parser("m39-3-validate-approval")
+    m393_val.add_argument("--record-file", default="")
+    sub.add_parser("m39-3-canary-decision")
+    sub.add_parser("m39-3-emit-evidence")
+
+    # ── M39.4 deployment & rollback preparation (offline; executes nothing) ────
+    m394_cfg = sub.add_parser("m39-4-validate-config")
+    m394_cfg.add_argument("--config-file", default="")
+    sub.add_parser("m39-4-release-checklist")
+    sub.add_parser("m39-4-rollback-plan")
+    sub.add_parser("m39-4-backward-compat")
+    sub.add_parser("m39-4-emit-evidence")
+
+    # ── M39.5 monitoring & incident response (offline; synthetic signals) ─────
+    sub.add_parser("m39-5-audit-contracts")
+    m395_ev = sub.add_parser("m39-5-validate-event")
+    m395_ev.add_argument("--event-file", default="")
+    sub.add_parser("m39-5-alert-definitions")
+    m395_det = sub.add_parser("m39-5-detect-alerts")
+    m395_det.add_argument("--signals-file", default="")
+    sub.add_parser("m39-5-incident-runbook")
+    sub.add_parser("m39-5-recovery-runbook")
+    sub.add_parser("m39-5-emit-evidence")
+
+    # ── M39.7 reproducibility & clean-environment validation (offline) ────────
+    sub.add_parser("m39-7-reproduce")
+    sub.add_parser("m39-7-dependencies")
+    sub.add_parser("m39-7-cli-contract")
+    sub.add_parser("m39-7-emit-evidence")
+
+    # ── M39.8 final operator package (offline; machine-readable manifest) ──────
+    sub.add_parser("m39-8-operator-package")
+    sub.add_parser("m39-8-emit-evidence")
+
+    # ── M40 live validation & production certification (fail-closed) ──────────
+    m40_cert = sub.add_parser("m40-certify")
+    m40_cert.add_argument("--source-kind", default="")
+    m40_cert.add_argument("--locator", default="")
+    m40_cert.add_argument("--env-var-name", default="")
+    m40_cert.add_argument("--ack", action="append", default=[], dest="acks")
+    m40_cert.add_argument("--operator-authorized", action="store_true", dest="operator_authorized")
+    m40_cert.add_argument("--environment-confirmed", action="store_true")
+    m40_cert.add_argument("--live-flag", action="store_true")
+    m40_cert.add_argument("--expected-subject-fp", default="", dest="expected_subject_fp")
+    m40_cert.add_argument("--post-revocation", action="store_true", dest="post_revocation")
+    m40_cert.add_argument("--validation-passed", action="store_true", dest="validation_passed")
+    m40_cert.add_argument("--branch", default="")
+    m40_cert.add_argument("--head", default="")
+    sub.add_parser("m40-rehearsal")
+    sub.add_parser("m40-emit-evidence")
+
+    # ── M41 bounded read-only canary rollout (fail-closed) ────────────────────
+    sub.add_parser("m41-authorization-status")
+    sub.add_parser("m41-rehearsal")
+    m41_run = sub.add_parser("m41-run-canary")
+    m41_run.add_argument("--approval-file", default="")
+    m41_run.add_argument("--cert-file", default="docs/evidence/m40/live_certification_record.json")
+    m41_run.add_argument("--source-kind", default="")
+    m41_run.add_argument("--locator", default="")
+    m41_run.add_argument("--env-var-name", default="")
+    m41_run.add_argument("--expected-subject-fp", default="", dest="expected_subject_fp")
+    m41_run.add_argument("--rollout-percent", type=int, default=1, dest="rollout_percent")
+    m41_run.add_argument("--live-flag", action="store_true")
+    m41_run.add_argument("--ack", action="append", default=[], dest="acks")
+    sub.add_parser("m41-emit-evidence")
+
+    # ── M42 graduation review (evidence-only; grants nothing) ─────────────────
+    sub.add_parser("m42-evidence-inventory")
+    sub.add_parser("m42-evaluate-criteria")
+    sub.add_parser("m42-review-graduation")
+    sub.add_parser("m42-emit-evidence")
+
+    # ── M43 machine-verified bounded canary (fail-closed; grants nothing) ─────
+    sub.add_parser("m43-status")
+    sub.add_parser("m43-rehearsal")
+    for name in ("m43-run-validation", "m43-run-revocation"):
+        sp = sub.add_parser(name)
+        sp.add_argument("--approval-file", default="")
+        sp.add_argument("--cert-file", default="docs/evidence/m40/live_certification_record.json")
+        sp.add_argument("--source-kind", default="")
+        sp.add_argument("--locator", default="")
+        sp.add_argument("--env-var-name", default="")
+        sp.add_argument("--expected-subject-fp", default="", dest="expected_subject_fp")
+        sp.add_argument("--rollout-percent", type=int, default=1, dest="rollout_percent")
+        sp.add_argument("--live-flag", action="store_true")
+        sp.add_argument("--validation-passed", action="store_true", dest="validation_passed")
+        sp.add_argument("--ack", action="append", default=[], dest="acks")
+    sub.add_parser("m43-revalidate")
+    sub.add_parser("m43-emit-evidence")
+
+    # ── M44 limited rollout authorization framework (fail-closed; grants nothing) ─
+    sub.add_parser("m44-status")
+    sub.add_parser("m44-list-policies")
+    for name in ("m44-create-rollout", "m44-validate-rollout", "m44-review-rollout"):
+        sp = sub.add_parser(name)
+        sp.add_argument("--request-file", default="", dest="request_file")
+        sp.add_argument("--now", default="")
+        sp.add_argument("--persist", action="store_true")
+        sp.add_argument("--ledger", default="docs/evidence/m44/rollout_ledger.jsonl")
+    sp_show = sub.add_parser("m44-show-rollout")
+    sp_show.add_argument("rollout_id")
+    sp_show.add_argument("--ledger", default="docs/evidence/m44/rollout_ledger.jsonl")
+    sp_exp = sub.add_parser("m44-expire-rollout")
+    sp_exp.add_argument("rollout_id")
+    sp_exp.add_argument("--reason", default="operator_requested_expiry")
+    sp_exp.add_argument("--ledger", default="docs/evidence/m44/rollout_ledger.jsonl")
+    sp_list = sub.add_parser("m44-list-rollouts")
+    sp_list.add_argument("--ledger", default="docs/evidence/m44/rollout_ledger.jsonl")
+    sp_sim = sub.add_parser("m44-simulate")
+    sp_sim.add_argument("--policy", default="Simulation")
+    sp_verify = sub.add_parser("m44-verify-ledger")
+    sp_verify.add_argument("--ledger", default="docs/evidence/m44/rollout_ledger.jsonl")
+    sub.add_parser("m44-emit-evidence")
+
+    # ── M45 runtime attestation (fail-closed; grants nothing; no execution) ─
+    sub.add_parser("m45-status")
+    sp_cs = sub.add_parser("m45-create-snapshot")
+    sp_cs.add_argument("--mode", default="observe",
+                       choices=("observe", "simulate", "self_report"))
+    sp_cs.add_argument("--scope", default="read_only:github_meta:/meta")
+    sp_cs.add_argument("--percent", type=int, default=0)
+    sp_cs.add_argument("--max-percent", type=int, default=5)
+    sp_cs.add_argument("--persist", action="store_true")
+    sp_cs.add_argument("--ledger", default="docs/evidence/m45/snapshot_ledger.jsonl")
+    sp_cs.add_argument("--out-file", default="", dest="out_file")
+    for name in ("m45-validate-snapshot", "m45-verify-snapshot"):
+        sp = sub.add_parser(name)
+        sp.add_argument("--snapshot-file", default="", dest="snapshot_file")
+        sp.add_argument("--now", default="")
+        sp.add_argument("--require-clean-repo", action="store_true")
+    sp_show = sub.add_parser("m45-show-snapshot")
+    sp_show.add_argument("snapshot_id")
+    sp_show.add_argument("--ledger", default="docs/evidence/m45/snapshot_ledger.jsonl")
+    sp_list = sub.add_parser("m45-list-snapshots")
+    sp_list.add_argument("--ledger", default="docs/evidence/m45/snapshot_ledger.jsonl")
+    sp_exp = sub.add_parser("m45-expire-snapshot")
+    sp_exp.add_argument("snapshot_id")
+    sp_exp.add_argument("--reason", default="operator_requested_expiry")
+    sp_exp.add_argument("--ledger", default="docs/evidence/m45/snapshot_ledger.jsonl")
+    sp_inv = sub.add_parser("m45-invalidate-snapshot")
+    sp_inv.add_argument("snapshot_id")
+    sp_inv.add_argument("--reason", default="operator_invalidated")
+    sp_inv.add_argument("--ledger", default="docs/evidence/m45/snapshot_ledger.jsonl")
+    sp_ready = sub.add_parser("m45-check-request-readiness")
+    sp_ready.add_argument("--request-file", default="", dest="request_file")
+    sp_ready.add_argument("--snapshot-file", default="", dest="snapshot_file")
+    sp_ready.add_argument("--now", default="")
+    sp_ready.add_argument("--require-clean-repo", action="store_true")
+    sub.add_parser("m45-simulate")
+    sub.add_parser("m45-emit-evidence")
+
+    # ── M46 bounded read-only disposable canary (deny-by-default; no auto-live) ─
+    sub.add_parser("m46-status")
+    for name in ("m46-create-plan", "m46-validate-approval", "m46-preflight"):
+        sp = sub.add_parser(name)
+        sp.add_argument("--approval-file", default="", dest="approval_file")
+        sp.add_argument("--request-file", default="", dest="request_file")
+        sp.add_argument("--snapshot-file", default="", dest="snapshot_file")
+        sp.add_argument("--now", default="")
+    sp_show = sub.add_parser("m46-show-plan")
+    sp_show.add_argument("--plan-file", default="", dest="plan_file")
+    sub.add_parser("m46-simulate")
+    sp_run = sub.add_parser("m46-run-canary")
+    sp_run.add_argument("--mode", default="simulate", choices=("simulate", "live"))
+    sp_run.add_argument("--approval-file", default="", dest="approval_file")
+    sp_run.add_argument("--request-file", default="", dest="request_file")
+    sp_run.add_argument("--snapshot-file", default="", dest="snapshot_file")
+    sp_run.add_argument("--live-flag", action="store_true")
+    sp_run.add_argument("--secret-source-kind", default="")
+    sp_run.add_argument("--secret-locator", default="")
+    sp_run.add_argument("--expected-subject-fp", default="")
+    sp_run.add_argument("--now", default="")
+    sp_rev = sub.add_parser("m46-run-revocation")
+    sp_rev.add_argument("--mode", default="simulate", choices=("simulate", "live"))
+    sp_rev.add_argument("--live-flag", action="store_true")
+    sp_rev.add_argument("--secret-source-kind", default="",
+                        help="Reference kind only (e.g. OS_KEYCHAIN_REFERENCE). Never a raw PAT.")
+    sp_rev.add_argument("--secret-locator", default="",
+                        help="Secret *reference* locator only (service\\x1faccount). Never the PAT.")
+    sp_rev.add_argument("--live-canary-evidence-file", default="", dest="live_canary_evidence_file",
+                        help="Optional prior live canary evidence JSON (sanitized).")
+    sp_rev.add_argument("--cleanup-after-401", action="store_true",
+                        help="If set and HTTP 401 proven, delete Keychain ref (service/account from locator).")
+    sp_cl = sub.add_parser("m46-verify-cleanup")
+    sp_cl.add_argument("--synthetic-absent", default="", dest="synthetic_absent",
+                       help="test-only: true|false")
+    sp_cl.add_argument("--service", default="")
+    sp_cl.add_argument("--account", default="")
+    sp_led = sub.add_parser("m46-show-ledger")
+    sp_led.add_argument("--ledger", default="docs/evidence/m46/execution_ledger.jsonl")
+    sub.add_parser("m46-emit-evidence")
+    args = p.parse_args(argv)
+
+    # Reject raw secret CLI carriers globally for any m36 command
+    if args.cmd and str(args.cmd).startswith("m36"):
+        from saathi.credentials.m36 import reject_forbidden_cli_argv, M36Error as _M36E
+        try:
+            reject_forbidden_cli_argv(list(argv or sys.argv[1:]))
+        except _M36E as e:
+            _print({"ok": False, "error": e.code, "banner": _M36_BANNER})
+            return 2
+
+    if args.cmd in ("m35-verify", "m35-drift", "m35-scope-policy",
+                    "m35-secret-source-policy", "emit-m35-evidence"):
+        from saathi.credentials import m35
+        from saathi.connectors.providers.external.profiles import resolve_external_profile
+        print(_M35_BANNER)
+        if args.cmd == "m35-verify":
+            out = run_m35_synthetic_session()
+            summary = m35.validation_summary_body(
+                session_result=out["session_result"], certification=out["sandbox_certification"])
+            res = {"ok": out["session_result"]["ok"], "sandbox_certification": out["sandbox_certification"],
+                   "max_certification_state": out["max_certification_state"],
+                   "real_sandbox_session": "NOT_EXERCISED", "validation_summary": summary}
+            if not leakscan.is_clean(res):
+                _print({"ok": False, "error": "leak_detected"}); return 2
+            _print(res)
+            return 0 if out["session_result"]["ok"] else 3
+        if args.cmd == "m35-drift":
+            _print({"provider_id": "github_meta",
+                    "fingerprint": m35.compute_m35_fingerprint(resolve_external_profile("github_meta")),
+                    "schema_version": m35.SCHEMA_VERSION})
+            return 0
+        if args.cmd == "m35-scope-policy":
+            _print({"allowed_classes": sorted(m35.ALLOWED_SCOPE_CLASSES),
+                    "forbidden_classes": sorted(m35.FORBIDDEN_SCOPE_CLASSES),
+                    "unknown_fails_closed": True})
+            return 0
+        if args.cmd == "m35-secret-source-policy":
+            _print({"retrievable": sorted(m35._RETRIEVABLE_SOURCES),
+                    "prohibited": sorted(m35.PROHIBITED_SECRET_SOURCES),
+                    "fallback_permitted": False})
+            return 0
+        if args.cmd == "emit-m35-evidence":
+            import subprocess
+            import sys as _sys
+            rc = subprocess.call([_sys.executable, "scripts/m35_generate_evidence.py"])
+            return rc
+
+    if args.cmd in (
+        "m36-preflight", "m36-authorize", "m36-qualify-account",
+        "m36-verify-secret-reference", "m36-verify-scope", "m36-eligibility",
+        "m36-run-session", "m36-session-status", "m36-revoke-session",
+        "m36-cleanup-status", "emit-m36-evidence",
+    ):
+        import os
+        from saathi.credentials import m36
+        print(_M36_BANNER)
+        if args.cmd == "m36-preflight":
+            _print(m36.preflight_summary())
+            return 0
+        if args.cmd == "m36-authorize":
+            # Structural authorize demo only when refs supplied; otherwise policy dump
+            if not args.account_ref or not args.credential_ref:
+                _print({
+                    "ok": False,
+                    "error": "account_ref_and_credential_ref_required_for_live_authorize",
+                    "required_acks": list(m36.M36_ACK_TOKENS),
+                    "note": "offline authorize needs refs + all 8 acknowledgements",
+                })
+                return 1
+            store = m36.AuthorizationStore()
+            try:
+                auth = store.create(
+                    provider_id="github_meta",
+                    account_ref_id=args.account_ref,
+                    credential_ref_id=args.credential_ref,
+                    acknowledgements=tuple(args.acks),
+                )
+            except m36.M36Error as e:
+                _print({"ok": False, "error": e.code, "detail": e.detail})
+                return 3
+            out = auth.to_safe_dict()
+            if not leakscan.is_clean(out):
+                _print({"ok": False, "error": "leak_detected"}); return 2
+            _print({"ok": True, "authorization": out})
+            return 0
+        if args.cmd == "m36-qualify-account":
+            q = m36.qualify_sandbox_identity(
+                provider_id="github_meta",
+                account_alias=args.alias,
+                environment_class="SANDBOX",
+                declared_purpose=args.purpose,
+                revocation_plan=args.revocation_plan,
+                expiration_or_deletion_plan=args.deletion_plan,
+                operator_disposable_ack=bool(args.disposable_ack),
+            )
+            _print(q)
+            return 0 if q.get("qualified") else 3
+        if args.cmd == "m36-verify-secret-reference":
+            _print({
+                "keychain": m36.validate_m36_secret_reference(source_kind="OS_KEYCHAIN_REFERENCE"),
+                "env": m36.validate_m36_secret_reference(source_kind="ENV_REFERENCE"),
+                "raw_token_rejected": True,
+            })
+            return 0
+        if args.cmd == "m36-verify-scope":
+            _print({
+                "read_only": m36.classify_observed_scopes(("identity:read",), ("read:user",)),
+                "write_fails": m36.classify_observed_scopes(("identity:read",), ("repo",)),
+                "unobserved": m36.classify_observed_scopes(("identity:read",), None),
+            })
+            return 0
+        if args.cmd == "m36-eligibility":
+            ok, blockers = m36.compose_m36_eligibility(
+                production_certified=True, connector_certified=True, m30_drift_fresh=True,
+                m31_credential_governance=True, m32_provider_adapter_verified=True,
+                m33_external_profile_verified=True, m34_live_controls=True,
+                m35_sandbox_governance=True, m36_authorization_valid=True,
+                sandbox_identity_qualified=True, credential_healthy=True,
+                credential_fingerprint_present=True, account_verified=True,
+                scope_verified=True, approval_valid=True, lease_valid=True,
+                call_budget_remaining=True, provider_healthy=True, quarantined=False,
+                rollout_off=True, verification_only_exception=True,
+            )
+            _print({"eligible": ok, "blockers": blockers, "rollout": "OFF",
+                    "verification_only_exception": "session_specific"})
+            return 0 if ok else 3
+        if args.cmd == "m36-run-session":
+            live_flag = os.environ.get(m36.ENV_LIVE_FLAG, "") == "1"
+            if not args.live or not live_flag:
+                _print({
+                    "ok": False,
+                    "error": "live_session_not_enabled",
+                    "blocker": (
+                        "Real sandbox session requires --live AND "
+                        f"{m36.ENV_LIVE_FLAG}=1 plus a disposable Keychain/env "
+                        "secret reference, all 8 acknowledgements, and offline "
+                        "gates green. Offline path: emit-m36-evidence."
+                    ),
+                    "real_sandbox_session": "NOT_EXERCISED",
+                    "banner": _M36_BANNER,
+                })
+                return 4
+            # Live path: still reject if no secret locator (never accept raw token)
+            if not args.secret_locator or not args.authorization_id:
+                _print({"ok": False, "error": "authorization_id_and_secret_locator_required"})
+                return 3
+            _print({
+                "ok": False,
+                "error": "live_session_requires_operator_wired_backends",
+                "blocker": (
+                    "Live Keychain backend and operator session wiring are "
+                    "intentionally operator-run; use documented runbook. "
+                    "No credential was loaded in this CLI invocation."
+                ),
+                "real_sandbox_session": "NOT_EXERCISED",
+            })
+            return 5
+        if args.cmd in ("m36-session-status", "m36-revoke-session", "m36-cleanup-status"):
+            _print({
+                "ok": True,
+                "status": "NO_ACTIVE_M36_SESSION",
+                "real_sandbox_session": "NOT_EXERCISED",
+                "cleanup": "N/A",
+            })
+            return 0
+        if args.cmd == "emit-m36-evidence":
+            import subprocess
+            import sys as _sys
+            rc = subprocess.call([_sys.executable, "scripts/m36_generate_evidence.py", "--offline"])
+            return rc
+
+    if args.cmd in (
+        "m37-preflight", "m37-validate", "m37-negative", "m37-certify",
+        "m37-provider-model", "emit-m37-evidence",
+    ):
+        from saathi.credentials import m37
+        print(_M37_BANNER)
+        if args.cmd == "m37-preflight":
+            _print(m37.preflight_summary())
+            return 0
+        if args.cmd == "m37-validate":
+            out = m37.run_m37_validation(live_exercised=False)
+            if not leakscan.is_clean(out):
+                _print({"ok": False, "error": "leak_detected"}); return 2
+            _print({
+                "ok": out["ok"],
+                "certification": out["certification"]["state"],
+                "live_exercised": False,
+                "m36_regression_ok": out["m36_regression_ok"],
+                "negative_passed": out["negative"]["passed"],
+                "negative_total": out["negative"]["total"],
+                "fingerprint": out["fingerprint"],
+                "authorities": out["authorities"],
+                "m38_started": False,
+            })
+            return 0 if out["ok"] else 3
+        if args.cmd == "m37-negative":
+            rep = m37.run_negative_validation()
+            _print({"ok": rep["failed"] == 0, "report": rep})
+            return 0 if rep["failed"] == 0 else 3
+        if args.cmd == "m37-certify":
+            out = m37.run_m37_validation(live_exercised=False)
+            _print(out["certification"])
+            return 0 if out["ok"] else 3
+        if args.cmd == "m37-provider-model":
+            from saathi.credentials.sandbox_provider import resolve_sandbox_provider, list_sandbox_providers
+            pvd = resolve_sandbox_provider("github_meta")
+            _print({
+                "registered": list_sandbox_providers(),
+                "capabilities": pvd.capabilities().to_dict(),
+                "health": pvd.health().to_dict(),
+                "contract": ["identity", "health", "operation", "capabilities", "qualification", "cleanup"],
+            })
+            return 0
+        if args.cmd == "emit-m37-evidence":
+            import subprocess
+            import sys as _sys
+            rc = subprocess.call([_sys.executable, "scripts/m37_generate_evidence.py", "--offline"])
+            return rc
+
+    if args.cmd in (
+        "m38-preflight", "m38-run-offline-multisession", "m38-list-sessions",
+        "m38-session-status", "m38-reconcile", "m38-recover-session",
+        "m38-run-failure-matrix", "m38-evaluate-canary-readiness", "emit-m38-evidence",
+    ):
+        from saathi.credentials import m38
+        print(_M38_BANNER)
+        if args.cmd == "m38-preflight":
+            _print(m38.preflight_summary())
+            return 0
+        if args.cmd == "m38-run-offline-multisession":
+            rep = m38.run_offline_multisession_validation()
+            _print({"ok": rep["failed"] == 0, "report": {
+                "total": rep["total"], "passed": rep["passed"], "failed": rep["failed"],
+                "leak_clean": rep["leak_clean"],
+            }})
+            return 0 if rep["failed"] == 0 else 3
+        if args.cmd == "m38-list-sessions":
+            _print({"sessions": [], "note": "ephemeral_coordinator_no_persisted_sessions"})
+            return 0
+        if args.cmd == "m38-session-status":
+            _print({"found": False, "note": "ephemeral_coordinator_no_persisted_sessions"})
+            return 0
+        if args.cmd == "m38-reconcile":
+            c = m38.MultiSessionCoordinator()
+            _print(c.reconcile())
+            return 0
+        if args.cmd == "m38-recover-session":
+            c = m38.MultiSessionCoordinator()
+            _print(c.recover_session("none"))
+            return 0
+        if args.cmd == "m38-run-failure-matrix":
+            rep = m38.run_failure_injection_matrix()
+            _print({"ok": rep["failed"] == 0, "passed": rep["passed"], "total": rep["total"]})
+            return 0 if rep["failed"] == 0 else 3
+        if args.cmd == "m38-evaluate-canary-readiness":
+            out = m38.run_m38_validation(live_exercised=False)
+            _print(out["canary_readiness"])
+            return 0
+        if args.cmd == "emit-m38-evidence":
+            import subprocess
+            import sys as _sys
+            rc = subprocess.call([_sys.executable, "scripts/m38_generate_evidence.py", "--offline"])
+            return rc
+
+    if args.cmd and str(args.cmd).startswith("m39"):
+        import os
+        from saathi.credentials import m39
+        print(_M39_BANNER)
+        try:
+            m39.reject_m39_forbidden_argv(list(argv or sys.argv[1:]))
+        except m39.M39Error as e:
+            _print({"ok": False, "error": e.code, "banner": _M39_BANNER})
+            return 2
+
+        if args.cmd == "m39-preflight":
+            _print(m39.preflight_summary())
+            return 0
+
+        if args.cmd == "m39-authorize-live-validation":
+            if not args.account_ref or not args.credential_ref:
+                _print({
+                    "ok": False,
+                    "error": "account_ref_and_credential_ref_required",
+                    "required_acks": list(m39.M39_ACK_TOKENS),
+                    "note": "all 10 M39 acknowledgements required at runtime",
+                })
+                return 1
+            from saathi.credentials.m36 import AuthorizationStore
+            store = AuthorizationStore()
+            try:
+                auth = m39.create_live_authorization(
+                    store,
+                    account_ref_id=args.account_ref,
+                    credential_ref_id=args.credential_ref,
+                    acknowledgements=tuple(args.acks),
+                    secret_source_kind=args.source_kind,
+                )
+            except m39.M39Error as e:
+                _print({"ok": False, "error": e.code, "detail": e.detail})
+                return 3
+            out = auth.to_safe_dict()
+            if not leakscan.is_clean(out):
+                _print({"ok": False, "error": "leak_detected"}); return 2
+            _print({"ok": True, "authorization": out, "grants_canary": False})
+            return 0
+
+        if args.cmd == "m39-qualify-secret-reference":
+            if not args.locator:
+                _print({
+                    "ok": False,
+                    "error": "locator_required",
+                    "blocker": "approved disposable secret reference required",
+                    "status": "NOT_EXERCISED",
+                })
+                return 4
+            try:
+                q = m39.qualify_secret_reference(
+                    source_kind=args.source_kind,
+                    locator=args.locator,
+                    env_var_name=args.env_var_name,
+                    require_exists=True,
+                )
+            except m39.M39Error as e:
+                _print({"ok": False, "error": e.code, "status": "BLOCKED"})
+                return 3
+            if not leakscan.is_clean(q):
+                _print({"ok": False, "error": "leak_detected"}); return 2
+            _print({"ok": q.get("qualified"), "qualification": q})
+            return 0 if q.get("qualified") else 3
+
+        if args.cmd in ("m39-run-live-single-session", "m39-run-live-multisession"):
+            live_flag = os.environ.get(m39.ENV_LIVE_FLAG, "") == "1"
+            if not live_flag:
+                _print({
+                    "ok": False,
+                    "error": "live_session_not_enabled",
+                    "blocker": (
+                        f"Live validation requires {m39.ENV_LIVE_FLAG}=1, "
+                        "approved secret reference, all 10 acknowledgements, "
+                        "and successful preflight. Offline path: emit-m39-evidence."
+                    ),
+                    "live_single_session": "NOT_EXERCISED",
+                    "live_multi_session": "NOT_EXERCISED",
+                    "banner": _M39_BANNER,
+                    "grants_canary": False,
+                })
+                return 4
+            if not args.locator or not args.acks:
+                _print({
+                    "ok": False,
+                    "error": "locator_and_acknowledgements_required",
+                    "required_acks": list(m39.M39_ACK_TOKENS),
+                })
+                return 3
+            if args.cmd == "m39-run-live-single-session":
+                out = m39.run_live_single_session(
+                    secret_source_kind=args.source_kind,
+                    secret_locator=args.locator,
+                    acknowledgements=tuple(args.acks),
+                    expected_subject_fingerprint=args.expected_subject_fp,
+                    env_var_name=args.env_var_name,
+                    live_flag=True,
+                )
+            else:
+                out = m39.run_live_multisession(
+                    secret_source_kind=args.source_kind,
+                    secret_locator=args.locator,
+                    acknowledgements=tuple(args.acks),
+                    expected_subject_fingerprint=args.expected_subject_fp,
+                    env_var_name=args.env_var_name,
+                    live_flag=True,
+                )
+            if not leakscan.is_clean(out):
+                _print({"ok": False, "error": "leak_detected"}); return 2
+            _print(out)
+            return 0 if out.get("ok") else 3
+
+        if args.cmd == "m39-interrupt-session":
+            ks = m39.LiveKillSwitch()
+            ks.trip("cli_interrupt")
+            _print({
+                "ok": True,
+                "kill_switch": ks.to_dict(),
+                "session_id": args.session_id or None,
+                "note": "new_provider_calls_blocked; local cleanup required",
+                "grants_authority": False,
+            })
+            return 0
+
+        if args.cmd == "m39-recover-session":
+            from saathi.credentials import m38 as _m38
+            c = _m38.MultiSessionCoordinator()
+            out = c.recover_session(args.session_id or "none")
+            _print(out)
+            return 0
+
+        if args.cmd == "m39-confirm-external-revocation":
+            out = m39.record_external_revocation(
+                confirmed=bool(args.confirmed),
+                operator_note=args.note or "",
+            )
+            _print(out)
+            return 0 if out.get("confirmed") else 5
+
+        if args.cmd == "m39-evaluate-canary-eligibility":
+            out = m39.run_m39_validation()
+            if not leakscan.is_clean(out["canary_eligibility"]):
+                _print({"ok": False, "error": "leak_detected"}); return 2
+            _print(out["canary_eligibility"])
+            return 0
+
+        if args.cmd == "emit-m39-evidence":
+            import subprocess
+            import sys as _sys
+            rc = subprocess.call([_sys.executable, "scripts/m39_generate_evidence.py", "--offline"])
+            return rc
+
+        # ── M39.1 operator dry-run tooling (offline; never resolves a secret) ──
+        if args.cmd and str(args.cmd).startswith("m39-1-"):
+            from saathi.credentials import m39_1
+            try:
+                if args.cmd == "m39-1-plan":
+                    out = m39_1.build_execution_plan(
+                        mode=args.mode, source_kind=args.source_kind,
+                        locator=args.locator, env_var_name=args.env_var_name,
+                    )
+                    if not leakscan.is_clean(out):
+                        _print({"ok": False, "error": "leak_detected"}); return 2
+                    _print(out)
+                    return 0 if out.get("plan_valid") else 5
+                if args.cmd == "m39-1-preview":
+                    plan = m39_1.build_execution_plan(
+                        mode=args.mode, source_kind=args.source_kind,
+                        locator=args.locator, env_var_name=args.env_var_name,
+                    )
+                    print(m39_1.render_command_preview(plan))
+                    return 0 if plan.get("plan_valid") else 5
+                if args.cmd == "m39-1-backend-availability":
+                    out = m39_1.check_backend_availability(
+                        source_kind=args.source_kind, locator=args.locator,
+                        env_var_name=args.env_var_name,
+                    )
+                    if not leakscan.is_clean(out):
+                        _print({"ok": False, "error": "leak_detected"}); return 2
+                    _print(out)
+                    return 0 if out.get("ready") else 5
+                if args.cmd == "m39-1-revocation-checklist":
+                    out = m39_1.generate_revocation_checklist(
+                        source_kind=args.source_kind, locator=args.locator,
+                    )
+                    if not leakscan.is_clean(out):
+                        _print({"ok": False, "error": "leak_detected"}); return 2
+                    print(m39_1.render_revocation_checklist(out))
+                    return 0
+                if args.cmd == "m39-1-diagnostics":
+                    out = m39_1.collect_offline_diagnostics()
+                    if not leakscan.is_clean(out):
+                        _print({"ok": False, "error": "leak_detected"}); return 2
+                    _print(out)
+                    return 0
+                if args.cmd == "m39-1-emit-evidence":
+                    res = m39_1.emit_m39_1_evidence("docs/evidence/m39_1")
+                    _print(res)
+                    return 0
+            except m39.M39Error as e:
+                _print({"ok": False, "error": e.code, "detail": getattr(e, "detail", ""),
+                        "banner": _M39_BANNER})
+                return 2
+
+        # ── M39.2 failure-mode simulation (offline; SIMULATED_NOT_LIVE) ────────
+        if args.cmd and str(args.cmd).startswith("m39-2-"):
+            from saathi.credentials import m39_2
+            try:
+                if args.cmd == "m39-2-simulate-fault":
+                    out = m39_2.simulate_fault(args.mode)
+                    if not leakscan.is_clean(out):
+                        _print({"ok": False, "error": "leak_detected"}); return 2
+                    _print(out)
+                    return 0 if out.get("fails_closed") else 5
+                if args.cmd == "m39-2-simulation-matrix":
+                    out = m39_2.run_simulation_matrix()
+                    if not leakscan.is_clean(out):
+                        _print({"ok": False, "error": "leak_detected"}); return 2
+                    _print(out)
+                    return 0 if out.get("verdict") == "ALL_FAULTS_FAIL_CLOSED" else 5
+                if args.cmd == "m39-2-emit-evidence":
+                    res = m39_2.emit_m39_2_evidence("docs/evidence/m39_2")
+                    _print(res)
+                    return 0
+            except m39.M39Error as e:
+                _print({"ok": False, "error": e.code, "detail": getattr(e, "detail", ""),
+                        "banner": _M39_BANNER})
+                return 2
+
+        # ── M39.3 canary-readiness framework (offline; CANARY never granted) ──
+        if args.cmd and str(args.cmd).startswith("m39-3-"):
+            from saathi.credentials import m39_3
+            import json as _json
+            try:
+                if args.cmd == "m39-3-prerequisites":
+                    _print(m39_3.evaluate_prerequisites())
+                    return 0
+                if args.cmd == "m39-3-framework":
+                    _print(m39_3.framework_definitions())
+                    return 0
+                if args.cmd == "m39-3-approval-schema":
+                    _print(m39_3.approval_record_schema())
+                    return 0
+                if args.cmd == "m39-3-validate-approval":
+                    record = None
+                    if args.record_file:
+                        record, ferr = _read_json_file(args.record_file)
+                        if ferr:
+                            _print({"ok": False, "valid": False, "error": ferr,
+                                    "record_file": args.record_file})
+                            return 5
+                    out = m39_3.validate_operator_approval_record(record)
+                    _print(out)
+                    return 0 if out.get("valid") else 5
+                if args.cmd == "m39-3-canary-decision":
+                    out = m39_3.evaluate_canary_decision()
+                    if out.get("grants_canary") is not False:
+                        _print({"ok": False, "error": "invariant_violation_canary_granted"})
+                        return 2
+                    if not leakscan.is_clean(out):
+                        _print({"ok": False, "error": "leak_detected"}); return 2
+                    _print(out)
+                    return 0
+                if args.cmd == "m39-3-emit-evidence":
+                    res = m39_3.emit_m39_3_evidence("docs/evidence/m39_3")
+                    _print(res)
+                    return 0
+            except m39.M39Error as e:
+                _print({"ok": False, "error": e.code, "detail": getattr(e, "detail", ""),
+                        "banner": _M39_BANNER})
+                return 2
+
+        # ── M39.4 deployment & rollback preparation (offline; executes nothing) ─
+        if args.cmd and str(args.cmd).startswith("m39-4-"):
+            from saathi.credentials import m39_4
+            import json as _json4
+            try:
+                if args.cmd == "m39-4-validate-config":
+                    config = None
+                    if args.config_file:
+                        config, ferr = _read_json_file(args.config_file)
+                        if ferr:
+                            _print({"ok": False, "valid": False, "error": ferr,
+                                    "config_file": args.config_file}); return 5
+                    out = m39_4.validate_deployment_config(config)
+                    _print(out)
+                    return 0 if out.get("valid") else 5
+                if args.cmd == "m39-4-release-checklist":
+                    _print(m39_4.release_checklist())
+                    return 0
+                if args.cmd == "m39-4-rollback-plan":
+                    _print(m39_4.rollback_plan())
+                    return 0
+                if args.cmd == "m39-4-backward-compat":
+                    out = m39_4.backward_compatibility_check()
+                    _print(out)
+                    return 0 if out.get("all_present") else 5
+                if args.cmd == "m39-4-emit-evidence":
+                    res = m39_4.emit_m39_4_evidence("docs/evidence/m39_4")
+                    _print(res)
+                    return 0
+            except m39.M39Error as e:
+                _print({"ok": False, "error": e.code, "detail": getattr(e, "detail", ""),
+                        "banner": _M39_BANNER})
+                return 2
+
+        # ── M39.5 monitoring & incident response (offline; synthetic signals) ──
+        if args.cmd and str(args.cmd).startswith("m39-5-"):
+            from saathi.credentials import m39_5
+            import json as _json5
+            try:
+                if args.cmd == "m39-5-audit-contracts":
+                    _print(m39_5.audit_event_contracts())
+                    return 0
+                if args.cmd == "m39-5-validate-event":
+                    event = None
+                    if args.event_file:
+                        event, ferr = _read_json_file(args.event_file)
+                        if ferr:
+                            _print({"ok": False, "valid": False, "error": ferr,
+                                    "event_file": args.event_file}); return 5
+                    out = m39_5.validate_audit_event(event)
+                    _print(out)
+                    return 0 if out.get("valid") else 5
+                if args.cmd == "m39-5-alert-definitions":
+                    _print(m39_5.alert_definitions())
+                    return 0
+                if args.cmd == "m39-5-detect-alerts":
+                    signals = None
+                    if args.signals_file:
+                        signals, ferr = _read_json_file(args.signals_file)
+                        if ferr:
+                            _print({"ok": False, "error": ferr,
+                                    "signals_file": args.signals_file}); return 5
+                    _print(m39_5.detect_alerts(signals))
+                    return 0
+                if args.cmd == "m39-5-incident-runbook":
+                    _print(m39_5.incident_runbook())
+                    return 0
+                if args.cmd == "m39-5-recovery-runbook":
+                    _print(m39_5.recovery_runbook())
+                    return 0
+                if args.cmd == "m39-5-emit-evidence":
+                    res = m39_5.emit_m39_5_evidence("docs/evidence/m39_5")
+                    _print(res)
+                    return 0
+            except m39.M39Error as e:
+                _print({"ok": False, "error": e.code, "detail": getattr(e, "detail", ""),
+                        "banner": _M39_BANNER})
+                return 2
+
+        # ── M39.7 reproducibility & clean-environment validation (offline) ────
+        if args.cmd and str(args.cmd).startswith("m39-7-"):
+            from saathi.credentials import m39_7
+            try:
+                if args.cmd == "m39-7-reproduce":
+                    out = m39_7.reproduce_all()
+                    _print(out)
+                    return 0 if (out.get("all_reproducible") and out.get("all_clean")) else 5
+                if args.cmd == "m39-7-dependencies":
+                    out = m39_7.validate_dependencies()
+                    _print(out)
+                    return 0 if out.get("self_contained") else 5
+                if args.cmd == "m39-7-cli-contract":
+                    _print(m39_7.cli_contract())
+                    return 0
+                if args.cmd == "m39-7-emit-evidence":
+                    res = m39_7.emit_m39_7_evidence("docs/evidence/m39_7")
+                    _print(res)
+                    return 0
+            except m39.M39Error as e:
+                _print({"ok": False, "error": e.code, "detail": getattr(e, "detail", ""),
+                        "banner": _M39_BANNER})
+                return 2
+
+        # ── M39.8 final operator package (offline; machine-readable manifest) ──
+        if args.cmd and str(args.cmd).startswith("m39-8-"):
+            from saathi.credentials import m39_8
+            try:
+                if args.cmd == "m39-8-operator-package":
+                    out = m39_8.build_operator_package()
+                    if not leakscan.is_clean(out):
+                        _print({"ok": False, "error": "leak_detected"}); return 2
+                    if out["authority_state"].get("CANARY") != "NOT GRANTED":
+                        _print({"ok": False, "error": "invariant_violation"}); return 2
+                    _print(out)
+                    return 0
+                if args.cmd == "m39-8-emit-evidence":
+                    res = m39_8.emit_m39_8_evidence("docs/evidence/m39_8")
+                    _print(res)
+                    return 0
+            except m39.M39Error as e:
+                _print({"ok": False, "error": e.code, "detail": getattr(e, "detail", ""),
+                        "banner": _M39_BANNER})
+                return 2
+
+    # ── M40 live validation & production certification (fail-closed) ──────────
+    if args.cmd and str(args.cmd).startswith("m40"):
+        from saathi.credentials import m39, m40
+        print(_M40_BANNER)
+        try:
+            m39.reject_m39_forbidden_argv(list(argv or sys.argv[1:]))
+        except m39.M39Error as e:
+            _print({"ok": False, "error": e.code, "banner": _M40_BANNER})
+            return 2
+        try:
+            if args.cmd == "m40-certify":
+                cfg = m40.M40Config(
+                    mode="live",
+                    secret_source_kind=args.source_kind,
+                    secret_locator=args.locator,
+                    env_var_name=args.env_var_name,
+                    acknowledgements=tuple(args.acks),
+                    authorization_present=bool(args.operator_authorized),
+                    environment_confirmed=bool(args.environment_confirmed),
+                    live_flag=bool(args.live_flag),
+                    expected_subject_fingerprint=args.expected_subject_fp,
+                    post_revocation_retry=bool(args.post_revocation),
+                    validation_phase_passed=bool(args.validation_passed),
+                    branch=args.branch,
+                    head=args.head,
+                    working_tree_class="DIRTY",
+                )
+                out = m40.run_live_certification(cfg)
+                if out.get("live_certified") and not out.get("live_exercised"):
+                    _print({"ok": False, "error": "invariant_violation_certified_without_live"})
+                    return 2
+                if not leakscan.is_clean(out):
+                    _print({"ok": False, "error": "leak_detected"}); return 2
+                _print(out)
+                return 0 if out.get("verdict") == "LIVE_CERTIFIED" else 5
+            if args.cmd == "m40-rehearsal":
+                out = m40.run_stage_rehearsal()
+                if not leakscan.is_clean(out):
+                    _print({"ok": False, "error": "leak_detected"}); return 2
+                _print(out)
+                return 0
+            if args.cmd == "m40-emit-evidence":
+                res = m40.emit_m40_evidence("docs/evidence/m40")
+                _print(res)
+                return 0
+        except m39.M39Error as e:
+            _print({"ok": False, "error": e.code, "detail": getattr(e, "detail", ""),
+                    "banner": _M40_BANNER})
+            return 2
+
+    # ── M41 bounded read-only canary rollout (fail-closed) ────────────────────
+    if args.cmd and str(args.cmd).startswith("m41"):
+        from saathi.credentials import m39, m41
+        import json as _json41
+        print(_M41_BANNER)
+        try:
+            m39.reject_m39_forbidden_argv(list(argv or sys.argv[1:]))
+        except m39.M39Error as e:
+            _print({"ok": False, "error": e.code, "banner": _M41_BANNER})
+            return 2
+        try:
+            if args.cmd == "m41-authorization-status":
+                out = m41.validate_canary_authorization(m41.M41Config())
+                _print(out)
+                return 0 if out.get("authorized") else 5
+            if args.cmd == "m41-rehearsal":
+                out = m41.run_canary_rehearsal()
+                if not leakscan.is_clean(out):
+                    _print({"ok": False, "error": "leak_detected"}); return 2
+                _print(out)
+                return 0
+            if args.cmd == "m41-run-canary":
+                approval = None
+                if args.approval_file:
+                    approval, ferr = _read_json_file(args.approval_file)
+                    if ferr:
+                        _print({"ok": False, "error": ferr, "approval_file": args.approval_file})
+                        return 5
+                cert, _ = _read_json_file(args.cert_file)
+                cfg = m41.M41Config(
+                    mode="live", approval_record=approval, m40_cert_record=cert,
+                    rollout_percent=args.rollout_percent,
+                    secret_source_kind=args.source_kind, secret_locator=args.locator,
+                    env_var_name=args.env_var_name,
+                    expected_subject_fingerprint=args.expected_subject_fp,
+                    acknowledgements=tuple(args.acks), live_flag=bool(args.live_flag),
+                )
+                out = m41.run_canary_rollout(cfg)
+                # hard invariant guard: canary must never grant active/production/write
+                if out.get("grants_active") or out.get("grants_production") or out.get("grants_write"):
+                    _print({"ok": False, "error": "invariant_violation_canary_grant"})
+                    return 2
+                if not leakscan.is_clean(out):
+                    _print({"ok": False, "error": "leak_detected"}); return 2
+                _print(out)
+                return 0 if out.get("verdict") == "CANARY_ACTIVE_BOUNDED" else 5
+            if args.cmd == "m41-emit-evidence":
+                res = m41.emit_m41_evidence("docs/evidence/m41")
+                _print(res)
+                return 0
+        except m41.M41Error as e:
+            _print({"ok": False, "error": e.code, "detail": getattr(e, "detail", ""),
+                    "banner": _M41_BANNER})
+            return 2
+
+    # ── M42 graduation review (evidence-only; grants nothing; fail-closed) ────
+    if args.cmd and str(args.cmd).startswith("m42"):
+        from saathi.credentials import m39, m42
+        print("M42 GRADUATION REVIEW\nEVIDENCE-ONLY\nGRANTS NOTHING\nFAIL-CLOSED\n"
+              "NO NETWORK\nNO CREDENTIAL\nNO RUNTIME AUTHORITY CHANGE\n"
+              "TRADING GUARDIAN UNENGAGED")
+        try:
+            m39.reject_m39_forbidden_argv(list(argv or sys.argv[1:]))
+        except m39.M39Error as e:
+            _print({"ok": False, "error": e.code})
+            return 2
+        loaded = m42.load_evidence()
+        if args.cmd == "m42-evidence-inventory":
+            out = m42.build_inventory(loaded)
+            if not leakscan.is_clean(out):
+                _print({"ok": False, "error": "leak_detected"}); return 2
+            _print(out)
+            return 0 if not out["blocked"] else 5
+        if args.cmd == "m42-evaluate-criteria":
+            out = m42.evaluate_criteria(loaded)
+            _print(out)
+            return 0 if out["all_pass"] else 5
+        if args.cmd == "m42-review-graduation":
+            out = m42.run_graduation_review(loaded=loaded)
+            # hard invariant: the review must never grant anything
+            if out.get("grants_anything") or out.get("alters_runtime_authority"):
+                _print({"ok": False, "error": "invariant_violation_review_granted"})
+                return 2
+            if not leakscan.is_clean(out):
+                _print({"ok": False, "error": "leak_detected"}); return 2
+            _print(out)
+            return 0 if out["recommendation"] == "GRADUATION_RECOMMENDED" else 5
+        if args.cmd == "m42-emit-evidence":
+            res = m42.emit_m42_evidence("docs/evidence/m42")
+            _print(res)
+            return 0
+
+    # ── M43 machine-verified bounded canary (fail-closed; grants nothing) ─────
+    if args.cmd and str(args.cmd).startswith("m43"):
+        from saathi.credentials import m39, m43
+        import json as _json43
+        print("M43 MACHINE-VERIFIED BOUNDED CANARY\nNON-PRODUCTION\nREAD-ONLY\nFAIL-CLOSED\n"
+              "STRENGTHENS PROVENANCE ONLY\nGRANTS NOTHING\nNO ACTIVE\nNO PRODUCTION\n"
+              "NO SCOPE EXPANSION\nTRADING GUARDIAN UNENGAGED")
+        try:
+            m39.reject_m39_forbidden_argv(list(argv or sys.argv[1:]))
+        except m39.M39Error as e:
+            _print({"ok": False, "error": e.code})
+            return 2
+        try:
+            if args.cmd == "m43-status":
+                out = m43.run_machine_verified_canary(m43.M43Config())
+                _print(out)
+                return 0 if out.get("machine_verified") else 5
+            if args.cmd == "m43-rehearsal":
+                out = m43.run_rehearsal()
+                if not leakscan.is_clean(out):
+                    _print({"ok": False, "error": "leak_detected"}); return 2
+                _print(out)
+                return 0
+            if args.cmd in ("m43-run-validation", "m43-run-revocation"):
+                approval = None
+                if args.approval_file:
+                    approval, ferr = _read_json_file(args.approval_file)
+                    if ferr:
+                        _print({"ok": False, "error": ferr, "approval_file": args.approval_file})
+                        return 5
+                cert, _ = _read_json_file(args.cert_file)
+                cfg = m43.M43Config(
+                    mode="live", approval_record=approval, m40_cert_record=cert,
+                    secret_source_kind=args.source_kind, secret_locator=args.locator,
+                    env_var_name=args.env_var_name,
+                    expected_subject_fingerprint=args.expected_subject_fp,
+                    rollout_percent=args.rollout_percent, acknowledgements=tuple(args.acks),
+                    live_flag=bool(args.live_flag),
+                    post_revocation=(args.cmd == "m43-run-revocation"),
+                    validation_phase_passed=bool(args.validation_passed),
+                )
+                out = m43.run_machine_verified_canary(cfg)
+                if out.get("grants_anything") or out.get("grants_active") or out.get("grants_production"):
+                    _print({"ok": False, "error": "invariant_violation_m43_grant"}); return 2
+                if not leakscan.is_clean(out):
+                    _print({"ok": False, "error": "leak_detected"}); return 2
+                # persist the machine record on a fully verified run only
+                rec = out.get("machine_record")
+                if (args.cmd == "m43-run-revocation" and rec and rec.get("machine_verified")
+                        and rec.get("machine_verified_live")):
+                    path = m43.write_machine_record(rec)
+                    out["machine_record_written"] = path
+                _print(out)
+                return 0 if out.get("machine_verified") else 5
+            if args.cmd == "m43-revalidate":
+                out = m43.run_revalidation()
+                _print(out)
+                return 0 if out.get("recommendation") == "GRADUATION_RECOMMENDED" else 5
+            if args.cmd == "m43-emit-evidence":
+                res = m43.emit_m43_evidence("docs/evidence/m43")
+                _print(res)
+                return 0
+        except m43.M43Error as e:
+            _print({"ok": False, "error": e.code, "detail": getattr(e, "detail", "")})
+            return 2
+
+    if args.cmd and str(args.cmd).startswith("m44"):
+        from saathi.credentials import m44
+        print("M44 LIMITED ROLLOUT AUTHORIZATION FRAMEWORK\nNON-PRODUCTION\nREAD-ONLY\n"
+              "FAIL-CLOSED\nDENY-BY-DEFAULT\nAUTHORIZATION FRAMEWORK ONLY\nGRANTS NOTHING\n"
+              "NO ACTIVE\nNO PRODUCTION\nNO WRITE\nNO ROLLOUT EXECUTION\nNO SCOPE EXPANSION\n"
+              "SEPARATE OPERATOR AUTHORIZATION REQUIRED TO EXECUTE\nTRADING GUARDIAN UNENGAGED")
+
+        def _load_request(path: str):
+            data, ferr = _read_json_file(path)
+            if ferr:
+                return None, ferr
+            allowed = {f.name for f in __import__("dataclasses").fields(m44.RolloutRequest)}
+            clean = {k: v for k, v in (data or {}).items() if k in allowed}
+            for key in ("approval_fingerprints", "evidence_fingerprints", "acknowledgements"):
+                if key in clean and isinstance(clean[key], list):
+                    clean[key] = tuple(clean[key])
+            return m44.RolloutRequest(**clean), None
+
+        try:
+            if args.cmd == "m44-status":
+                out = m44.framework_status()
+                if not leakscan.is_clean(out):
+                    _print({"ok": False, "error": "leak_detected"}); return 2
+                _print(out)
+                return 0 if out.get("framework_ready") else 5
+            if args.cmd == "m44-list-policies":
+                _print({"policies": {n: {"max_percent": pol.max_percent,
+                                         "allowed_percents": list(pol.allowed_percents),
+                                         "permits_live_execution": pol.permits_live_execution,
+                                         "fingerprint": pol.fingerprint()}
+                                     for n, pol in m44.POLICIES.items()},
+                        "contains_secret_values": False})
+                return 0
+            if args.cmd == "m44-simulate":
+                out = m44.simulate(args.policy)
+                if not leakscan.is_clean(out):
+                    _print({"ok": False, "error": "leak_detected"}); return 2
+                _print(out)
+                return 0
+            if args.cmd == "m44-list-rollouts":
+                ids = sorted({e.get("payload", {}).get("rollout_id")
+                              for e in m44.read_ledger(args.ledger)
+                              if e.get("payload", {}).get("rollout_id")})
+                _print({"rollout_ids": ids, "count": len(ids), "contains_secret_values": False})
+                return 0
+            if args.cmd == "m44-show-rollout":
+                _print(m44.audit_show_rollout(args.rollout_id, args.ledger))
+                return 0
+            if args.cmd == "m44-verify-ledger":
+                out = m44.verify_ledger_chain(args.ledger)
+                _print(out)
+                return 0 if out.get("intact") else 5
+            if args.cmd == "m44-expire-rollout":
+                entry = m44.append_ledger(m44.LedgerEvent.EXPIRED,
+                                          {"rollout_id": args.rollout_id, "reason": args.reason},
+                                          args.ledger)
+                _print({"expired": True, "rollout_id": args.rollout_id,
+                        "authorizes_execution": False, "ledger_entry": entry})
+                return 0
+            if args.cmd == "m44-emit-evidence":
+                res = m44.emit_m44_evidence("docs/evidence/m44")
+                _print(res)
+                return 0
+            if args.cmd in ("m44-create-rollout", "m44-validate-rollout", "m44-review-rollout"):
+                if not args.request_file:
+                    _print({"ok": False, "error": "request_file_required"}); return 2
+                req, ferr = _load_request(args.request_file)
+                if ferr:
+                    _print({"ok": False, "error": ferr, "request_file": args.request_file})
+                    return 5
+                if not leakscan.is_clean(req.to_public()):
+                    _print({"ok": False, "error": "leak_detected_in_request"}); return 2
+                now = args.now or None
+                if args.cmd == "m44-create-rollout":
+                    out = m44.create_rollout(req, path=args.ledger, persist=bool(args.persist))
+                else:
+                    out = m44.review_rollout(req, path=args.ledger, persist=bool(args.persist),
+                                             now=now)
+                if out.get("authorizes_execution") or out.get("grants_anything"):
+                    _print({"ok": False, "error": "invariant_violation_m44_grant"}); return 2
+                if not leakscan.is_clean(out):
+                    _print({"ok": False, "error": "leak_detected"}); return 2
+                _print(out)
+                if args.cmd == "m44-create-rollout":
+                    return 0
+                return 0 if out.get("verdict") == \
+                    m44.M44Verdict.ROLLOUT_AUTHORIZATION_VALIDATED_ADVISORY_ONLY.value else 5
+        except m44.M44Error as e:
+            _print({"ok": False, "error": e.code, "detail": getattr(e, "detail", "")})
+            return 2
+
+    if args.cmd and str(args.cmd).startswith("m45"):
+        from saathi.credentials import m45
+        print(m45.NON_PRODUCTION_BANNER)
+
+        def _load_snapshot(path: str):
+            data, ferr = _read_json_file(path)
+            if ferr:
+                return None, ferr
+            # allow nested {"snapshot": {...}}
+            if isinstance(data, dict) and "snapshot" in data and isinstance(data["snapshot"], dict):
+                data = data["snapshot"]
+            try:
+                return m45._from_public(data or {}), None
+            except (TypeError, ValueError) as e:
+                return None, f"snapshot_parse_error:{type(e).__name__}"
+
+        def _load_m44_request(path: str):
+            from saathi.credentials import m44
+            data, ferr = _read_json_file(path)
+            if ferr:
+                return None, ferr
+            allowed = {f.name for f in __import__("dataclasses").fields(m44.RolloutRequest)}
+            clean = {k: v for k, v in (data or {}).items() if k in allowed}
+            for key in ("approval_fingerprints", "evidence_fingerprints", "acknowledgements"):
+                if key in clean and isinstance(clean[key], list):
+                    clean[key] = tuple(clean[key])
+            return m44.RolloutRequest(**clean), None
+
+        try:
+            if args.cmd == "m45-status":
+                out = m45.framework_status()
+                if not leakscan.is_clean(out):
+                    _print({"ok": False, "error": "leak_detected"}); return 2
+                _print(out)
+                return 0 if out.get("framework_ready") else 5
+            if args.cmd == "m45-simulate":
+                out = m45.simulate()
+                if not leakscan.is_clean(out):
+                    _print({"ok": False, "error": "leak_detected"}); return 2
+                _print(out)
+                return 0
+            if args.cmd == "m45-emit-evidence":
+                res = m45.emit_m45_evidence("docs/evidence/m45")
+                _print(res)
+                return 0
+            if args.cmd == "m45-list-snapshots":
+                _print(m45.list_snapshots(args.ledger))
+                return 0
+            if args.cmd == "m45-show-snapshot":
+                _print(m45.show_snapshot_history(args.snapshot_id, args.ledger))
+                return 0
+            if args.cmd == "m45-expire-snapshot":
+                _print(m45.expire_snapshot(args.snapshot_id, reason=args.reason,
+                                           path=args.ledger))
+                return 0
+            if args.cmd == "m45-invalidate-snapshot":
+                _print(m45.invalidate_snapshot(args.snapshot_id, reason=args.reason,
+                                               path=args.ledger))
+                return 0
+            if args.cmd == "m45-create-snapshot":
+                cfg = m45.CollectorConfig(
+                    mode=args.mode,
+                    approved_scope=args.scope,
+                    requested_rollout_percent=args.percent,
+                    maximum_policy_percent=args.max_percent,
+                )
+                out = m45.create_snapshot(cfg, path=args.ledger, persist=bool(args.persist))
+                if not leakscan.is_clean(out):
+                    _print({"ok": False, "error": "leak_detected"}); return 2
+                if args.out_file:
+                    Path = __import__("pathlib").Path
+                    Path(args.out_file).write_text(
+                        __import__("json").dumps(out["snapshot"], indent=2, sort_keys=True) + "\n")
+                _print(out)
+                return 0
+            if args.cmd in ("m45-validate-snapshot", "m45-verify-snapshot"):
+                if not args.snapshot_file:
+                    _print({"ok": False, "error": "snapshot_file_required"}); return 2
+                snap, ferr = _load_snapshot(args.snapshot_file)
+                if ferr:
+                    _print({"ok": False, "error": ferr}); return 5
+                if args.cmd == "m45-verify-snapshot":
+                    out = m45.verify_snapshot_integrity(snap)
+                    out = {"schema": "m45.verify.v1", **out,
+                           "authorizes_execution": False, "grants_anything": False,
+                           "contains_secret_values": False}
+                else:
+                    out = m45.validate_snapshot(
+                        snap, now=args.now or None,
+                        require_clean_repo=bool(args.require_clean_repo))
+                if not leakscan.is_clean(out):
+                    _print({"ok": False, "error": "leak_detected"}); return 2
+                _print(out)
+                ok = (out.get("valid") if args.cmd == "m45-verify-snapshot"
+                      else out.get("verdict") ==
+                      m45.M45Verdict.SNAPSHOT_VALIDATED_ADVISORY_ONLY.value)
+                return 0 if ok else 5
+            if args.cmd == "m45-check-request-readiness":
+                if not args.request_file or not args.snapshot_file:
+                    _print({"ok": False, "error": "request_and_snapshot_required"}); return 2
+                req, ferr = _load_m44_request(args.request_file)
+                if ferr:
+                    _print({"ok": False, "error": ferr}); return 5
+                snap, ferr = _load_snapshot(args.snapshot_file)
+                if ferr:
+                    _print({"ok": False, "error": ferr}); return 5
+                if not leakscan.is_clean(req.to_public()) or not leakscan.is_clean(snap.to_public()):
+                    _print({"ok": False, "error": "leak_detected"}); return 2
+                out = m45.check_request_readiness(
+                    req, snap, now=args.now or None,
+                    require_clean_repo=bool(args.require_clean_repo))
+                if out.get("authorizes_execution") or out.get("grants_anything"):
+                    _print({"ok": False, "error": "invariant_violation_m45_grant"}); return 2
+                if not leakscan.is_clean(out):
+                    _print({"ok": False, "error": "leak_detected"}); return 2
+                _print(out)
+                return 0 if out.get("ready_for_separate_operator_authorization") else 5
+        except m45.M45Error as e:
+            _print({"ok": False, "error": e.code, "detail": getattr(e, "detail", "")})
+            return 2
+
+    if args.cmd and str(args.cmd).startswith("m46"):
+        from saathi.credentials import m46
+        print(m46.NON_PRODUCTION_BANNER)
+
+        def _load_json(path: str):
+            return _read_json_file(path)
+
+        def _load_approval(path: str):
+            data, ferr = _load_json(path)
+            if ferr:
+                return None, ferr
+            return data, None
+
+        def _load_req(path: str):
+            from saathi.credentials import m44
+            data, ferr = _load_json(path)
+            if ferr:
+                return None, ferr
+            allowed = {f.name for f in __import__("dataclasses").fields(m44.RolloutRequest)}
+            clean = {k: v for k, v in (data or {}).items() if k in allowed}
+            for key in ("approval_fingerprints", "evidence_fingerprints", "acknowledgements"):
+                if key in clean and isinstance(clean[key], list):
+                    clean[key] = tuple(clean[key])
+            return m44.RolloutRequest(**clean), None
+
+        def _load_snap(path: str):
+            from saathi.credentials import m45
+            data, ferr = _load_json(path)
+            if ferr:
+                return None, ferr
+            if isinstance(data, dict) and "snapshot" in data:
+                data = data["snapshot"]
+            try:
+                return m45._from_public(data or {}), None
+            except (TypeError, ValueError) as e:
+                return None, f"snapshot_parse:{type(e).__name__}"
+
+        try:
+            if args.cmd == "m46-status":
+                out = m46.framework_status()
+                if not leakscan.is_clean(out):
+                    _print({"ok": False, "error": "leak_detected"}); return 2
+                _print(out)
+                return 0 if out.get("framework_ready") else 5
+            if args.cmd == "m46-simulate":
+                out = m46.simulate()
+                if not leakscan.is_clean(out):
+                    _print({"ok": False, "error": "leak_detected"}); return 2
+                _print(out)
+                return 0
+            if args.cmd == "m46-emit-evidence":
+                _print(m46.emit_m46_evidence("docs/evidence/m46"))
+                return 0
+            if args.cmd == "m46-show-ledger":
+                out = m46.verify_ledger_chain(args.ledger)
+                out["entries"] = m46.read_ledger(args.ledger)
+                _print(out)
+                return 0 if out.get("intact") else 5
+            if args.cmd == "m46-show-plan":
+                if not args.plan_file:
+                    _print({"ok": False, "error": "plan_file_required"}); return 2
+                data, ferr = _load_json(args.plan_file)
+                if ferr:
+                    _print({"ok": False, "error": ferr}); return 5
+                plan = m46._plan_from_public(data or {})
+                v = m46.verify_plan_integrity(plan)
+                _print({"plan": plan.to_public(), "integrity": v,
+                        "authorizes_execution": False, "contains_secret_values": False})
+                return 0 if v.get("valid") else 5
+            if args.cmd == "m46-validate-approval":
+                if not args.approval_file:
+                    _print({"ok": False, "error": "approval_file_required"}); return 2
+                appr, ferr = _load_approval(args.approval_file)
+                if ferr:
+                    _print({"ok": False, "error": ferr}); return 5
+                out = m46.validate_approval(appr, now=args.now or None)
+                _print(out)
+                return 0 if out.get("valid") else 5
+            if args.cmd in ("m46-create-plan", "m46-preflight", "m46-run-canary"):
+                appr = req = snap = None
+                if args.approval_file:
+                    appr, ferr = _load_approval(args.approval_file)
+                    if ferr:
+                        _print({"ok": False, "error": ferr}); return 5
+                if args.request_file:
+                    req, ferr = _load_req(args.request_file)
+                    if ferr:
+                        _print({"ok": False, "error": ferr}); return 5
+                if args.snapshot_file:
+                    snap, ferr = _load_snap(args.snapshot_file)
+                    if ferr:
+                        _print({"ok": False, "error": ferr}); return 5
+                if args.cmd == "m46-create-plan":
+                    if not appr or req is None or snap is None:
+                        _print({"ok": False, "error": "approval_request_snapshot_required"})
+                        return 2
+                    from saathi.credentials import m44 as m44mod, m45 as m45mod
+                    plan = m46.create_plan(
+                        approval=appr,
+                        m44_request_fingerprint=m44mod.request_fingerprint(req),
+                        m45_snapshot_fingerprint=m45mod.snapshot_fingerprint(snap),
+                        expected_identity_fingerprint=str(
+                            appr.get("provider_identity_fingerprint") or ""),
+                    )
+                    out = {"plan": plan.to_public(), "integrity": m46.verify_plan_integrity(plan),
+                           "authorizes_execution": False, "contains_secret_values": False}
+                    if not leakscan.is_clean(out):
+                        _print({"ok": False, "error": "leak_detected"}); return 2
+                    _print(out)
+                    return 0 if out["integrity"]["valid"] else 5
+                if args.cmd == "m46-preflight":
+                    out = m46.preflight(m46.PreflightInput(
+                        approval=appr, m44_request=req, m45_snapshot=snap,
+                        now=args.now or None,
+                        live_gate_requested=False,
+                    ))
+                    if not leakscan.is_clean(out):
+                        _print({"ok": False, "error": "leak_detected"}); return 2
+                    _print(out)
+                    return 0 if out.get("passed") else 5
+                # m46-run-canary
+                out = m46.run_canary(m46.CanaryConfig(
+                    mode=getattr(args, "mode", "simulate"),
+                    approval=appr, m44_request=req, m45_snapshot=snap,
+                    now=args.now or None,
+                    live_flag=bool(getattr(args, "live_flag", False)),
+                    secret_source_kind=getattr(args, "secret_source_kind", "") or "",
+                    secret_locator=getattr(args, "secret_locator", "") or "",
+                    expected_subject_fingerprint=getattr(args, "expected_subject_fp", "") or "",
+                ))
+                if out.get("authorizes_execution") or out.get("grants_anything"):
+                    _print({"ok": False, "error": "invariant_violation_m46_grant"}); return 2
+                if not leakscan.is_clean(out):
+                    _print({"ok": False, "error": "leak_detected"}); return 2
+                _print(out)
+                # live success still exits 0 but does not grant authority
+                if out.get("verdict") in (
+                    m46.M46Verdict.BLOCKED.value,
+                    m46.M46Verdict.DENIED.value,
+                    m46.M46Verdict.FAILED.value,
+                ):
+                    return 5
+                return 0
+            if args.cmd == "m46-run-revocation":
+                sk = getattr(args, "secret_source_kind", "") or ""
+                loc = getattr(args, "secret_locator", "") or ""
+                # Reject token-shaped locator (raw PAT)
+                if loc and (
+                    loc.startswith("ghp_") or loc.startswith("github_pat_")
+                    or loc.startswith("gho_") or len(loc) > 200
+                ):
+                    _print({"ok": False, "error": "raw_secret_locator_rejected",
+                            "contains_secret_values": False})
+                    return 2
+                if getattr(args, "live_canary_evidence_file", ""):
+                    ev, ferr = _read_json_file(args.live_canary_evidence_file)
+                    if ferr:
+                        _print({"ok": False, "error": f"live_canary_evidence:{ferr}",
+                                "contains_secret_values": False})
+                        return 5
+                    if not leakscan.is_clean(ev or {}):
+                        _print({"ok": False, "error": "leak_in_live_canary_evidence"})
+                        return 2
+                    ev_val = m46.validate_live_canary_evidence(ev)
+                    if not ev_val.get("valid") or not ev_val.get(
+                            "authorizes_revocation_verification"):
+                        _print({
+                            "ok": False,
+                            "error": "live_canary_evidence_invalid",
+                            "validation": ev_val,
+                            "contains_secret_values": False,
+                        })
+                        return 5
+                out = m46.run_revocation(
+                    mode=args.mode,
+                    live_flag=bool(args.live_flag),
+                    secret_source_kind=sk,
+                    secret_locator=loc,
+                )
+                if not leakscan.is_clean(out):
+                    _print({"ok": False, "error": "leak_detected"}); return 2
+                # Optional Keychain cleanup only after conclusive 401 + explicit flag.
+                if (bool(getattr(args, "cleanup_after_401", False))
+                        and out.get("http_401_confirmed") is True
+                        and sk == "OS_KEYCHAIN_REFERENCE" and loc):
+                    parts = loc.split("\x1f") if "\x1f" in loc else loc.split(":")
+                    if len(parts) >= 2:
+                        svc, acct = parts[0], parts[1]
+                        import subprocess as _sp
+                        # metadata-only existence check first
+                        pre = _sp.run(
+                            ["security", "find-generic-password", "-s", svc, "-a", acct],
+                            capture_output=True, text=True)
+                        if pre.returncode != 0:
+                            out["cleanup"] = {
+                                "deleted": False, "reason": "keychain_item_absent",
+                                "contains_secret_values": False}
+                        else:
+                            delr = _sp.run(
+                                ["security", "delete-generic-password",
+                                 "-s", svc, "-a", acct],
+                                capture_output=True, text=True)
+                            post = _sp.run(
+                                ["security", "find-generic-password", "-s", svc, "-a", acct],
+                                capture_output=True, text=True)
+                            out["cleanup"] = {
+                                "deleted": delr.returncode == 0 and post.returncode != 0,
+                                "delete_exit": delr.returncode,
+                                "find_after_exit": post.returncode,
+                                "service": svc,
+                                "account": acct,
+                                "contains_secret_values": False,
+                            }
+                    else:
+                        out["cleanup"] = {
+                            "deleted": False, "reason": "locator_parse_failed",
+                            "contains_secret_values": False}
+                _print(out)
+                if out.get("http_401_confirmed"):
+                    return 0
+                if out.get("verdict") in (
+                    m46.M46Verdict.SIMULATED_NOT_LIVE.value,
+                    m46.M46Verdict.AWAITING_OPERATOR_AUTHORIZATION.value,
+                ):
+                    return 0
+                return 5
+            if args.cmd == "m46-verify-cleanup":
+                syn = getattr(args, "synthetic_absent", "") or ""
+                kw = {}
+                if syn.lower() in ("true", "1", "yes"):
+                    kw["synthetic_absent"] = True
+                elif syn.lower() in ("false", "0", "no"):
+                    kw["synthetic_absent"] = False
+                svc = getattr(args, "service", "") or ""
+                acct = getattr(args, "account", "") or ""
+                if svc and acct and "synthetic_absent" not in kw:
+                    import subprocess as _sp
+
+                    def _lookup():
+                        r = _sp.run(
+                            ["security", "find-generic-password", "-s", svc, "-a", acct],
+                            capture_output=True, text=True)
+                        absent = r.returncode != 0
+                        return {"absent": absent, "match_count": 0 if absent else 1}
+                    kw["reference_lookup"] = _lookup
+                out = m46.verify_cleanup(**kw)
+                _print(out)
+                return 0 if out.get("cleanup_verified") else 5
+        except m46.M46Error as e:
+            _print({"ok": False, "error": e.code, "detail": getattr(e, "detail", "")})
+            return 2
+
+    if args.cmd == "profiles":
+        _print(list_profiles())
+        return 0
+
+    if args.cmd == "demo":
+        out = run_demo(persist=False)
+        _print(out["scenario"])
+        return 0
+
+    if args.cmd == "emit-evidence":
+        out = run_demo(persist=True)
+        try:
+            path = evidence.generate_evidence(out["broker"], out["registry"], scenario=out["scenario"])
+        except leakscan.LeakDetected as e:
+            _print({"ok": False, "error": "leak_detected", "findings": [f.to_dict() for f in e.findings]})
+            return 2
+        _print({"ok": True, "evidence": str(path), "scenario": out["scenario"]})
+        return 0
+
+    if args.cmd == "verify":
+        b, r = _fresh_broker_registry()
+        rep = {**b.status_report(), "account_links_report": r.status_report()}
+        inv_ok = (
+            rep.get("real_credentials_stored") == 0
+            and rep.get("real_oauth_flows_completed") == 0
+            and rep.get("live_accounts_linked") == 0
+            and rep.get("trading_guardian") == "UNCHANGED / UNENGAGED"
+        )
+        clean = leakscan.is_clean(rep)
+        _print({"invariants_ok": inv_ok, "leak_clean": clean, "trading_guardian": rep.get("trading_guardian")})
+        return 0 if (inv_ok and clean) else 1
+
+    b, r = _fresh_broker_registry()
+    if args.cmd == "status":
+        _print({"broker": b.status_report(), "account_links": r.status_report()})
+    elif args.cmd == "readiness":
+        _print(b.readiness())
+    elif args.cmd == "list-credentials":
+        _print(b.list_metadata())
+    elif args.cmd == "list-links":
+        _print(r.list_metadata())
+    elif args.cmd == "inspect-credential":
+        _print(b.inspect(args.id))
+    elif args.cmd == "inspect-link":
+        _print(r.inspect(args.id))
+    else:
+        p.print_help()
+        return 1
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

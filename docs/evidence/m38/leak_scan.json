@@ -1,0 +1,12 @@
+{
+  "body": {
+    "clean": true,
+    "findings": [],
+    "raw_secrets_found": 0
+  },
+  "fingerprint": "c5434413ccbfa37ca4822f15e63617839227c280c30d2f86da333f2a3f4ec288",
+  "privacy_safe": true,
+  "schema": "m38.leak_scan.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

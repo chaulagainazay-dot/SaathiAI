@@ -1,0 +1,25 @@
+{
+  "body": {
+    "actual_call_count": 3,
+    "approved_call_budget": 3,
+    "failed_calls": 0,
+    "limitations": [
+      "external_read_only",
+      "no_account_link",
+      "no_credential",
+      "no_sla_established",
+      "no_write_authority",
+      "non_production",
+      "provider_uptime_external",
+      "single_endpoint_only",
+      "small_live_sample"
+    ],
+    "qualification": "QUALIFIED_WITH_LIMITATIONS",
+    "successful_calls": 3
+  },
+  "fingerprint": "f4e8459c381d6a6d49d12902be507770de401b6a0f463708bbb1529a8f89e406",
+  "privacy_safe": true,
+  "schema": "m34.reliability_qualification.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

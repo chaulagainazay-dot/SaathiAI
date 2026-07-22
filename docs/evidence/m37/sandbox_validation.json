@@ -1,0 +1,15 @@
+{
+  "body": {
+    "handle_closed": true,
+    "identity_ok": true,
+    "lease_revoked": true,
+    "live_exercised": false,
+    "operation_ok": true,
+    "provider_id": "github_meta"
+  },
+  "fingerprint": "8f8aacde6d42144f571848de8d5eb0afb71d3b7e4f6a0a3414a61c019964c9c2",
+  "privacy_safe": true,
+  "schema": "m37.sandbox_validation.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

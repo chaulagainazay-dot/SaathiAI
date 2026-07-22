@@ -1,0 +1,84 @@
+{
+  "connector_id": "gov.browser",
+  "version": "1.0.0",
+  "kind": "browser",
+  "capabilities": [
+    "health",
+    "validate",
+    "policy_check",
+    "navigate"
+  ],
+  "permissions": [],
+  "auth_mode": "***REDACTED***",
+  "auth_env_names": "***REDACTED***",
+  "timeout_seconds": 30.0,
+  "max_retries": 0,
+  "rate_limit_per_minute": 20,
+  "evidence_policy": "redacted",
+  "supported_operations": [
+    "health",
+    "validate",
+    "policy_check",
+    "navigate"
+  ],
+  "allowed_domains": [],
+  "denied_domains": [],
+  "allowed_operations": [],
+  "denied_operations": [],
+  "rollout_compatible": [
+    "OFF",
+    "SHADOW",
+    "CANARY",
+    "ACTIVE",
+    "DRAINING"
+  ],
+  "cloud": false,
+  "trading": false,
+  "description": "Browser governance reuse (domain policy; no live automation accounts)",
+  "display_name": "Governed Browser",
+  "owner": "saathi.connectors.gov",
+  "adapter_type": "browser",
+  "trust_level": "LOCAL_NETWORK",
+  "capability_classes": [
+    "BROWSER",
+    "READ"
+  ],
+  "side_effect_classes": [
+    "READ_ONLY",
+    "EXTERNAL_MUTATION"
+  ],
+  "required_approvals": [
+    "navigate"
+  ],
+  "retry_policy": {
+    "max_retries": 0,
+    "privacy_safe": true
+  },
+  "incident_policy": "m26",
+  "health_policy": {
+    "startup_check": "validate",
+    "health_check": "health",
+    "privacy_safe": true
+  },
+  "readiness_policy": {
+    "readiness_check": "health",
+    "requires_lifecycle": [
+      "READY",
+      "DEGRADED"
+    ],
+    "privacy_safe": true
+  },
+  "dependencies": [],
+  "supported_environments": [
+    "local",
+    "dev",
+    "test"
+  ],
+  "created_at": "2026-07-18T00:49:25+00:00",
+  "updated_at": "2026-07-18T00:49:25+00:00",
+  "deprecated": false,
+  "deprecated_at": "",
+  "replacement_connector": "",
+  "lifecycle_state": "",
+  "privacy_safe": true
+}

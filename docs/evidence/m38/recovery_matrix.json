@@ -1,0 +1,58 @@
+{
+  "body": {
+    "cases": [
+      {
+        "name": "interrupt_authorization",
+        "pass": true,
+        "recovery_attempts": 1,
+        "state": "CLEANED"
+      },
+      {
+        "name": "interrupt_qualification",
+        "pass": true,
+        "recovery_attempts": 1,
+        "state": "CLEANED"
+      },
+      {
+        "name": "interrupt_identity",
+        "pass": true,
+        "recovery_attempts": 1,
+        "state": "CLEANED"
+      },
+      {
+        "name": "interrupt_before_cleanup",
+        "pass": true,
+        "recovery_attempts": 1,
+        "state": "CLEANED"
+      },
+      {
+        "a": "CLEANED",
+        "b": "CLEANED",
+        "name": "duplicate_recovery_idempotent",
+        "pass": true
+      },
+      {
+        "name": "orphan_missing_session",
+        "pass": true
+      },
+      {
+        "name": "reconcile_ok",
+        "pass": true
+      },
+      {
+        "name": "recovery_exhausted_terminal",
+        "pass": true
+      }
+    ],
+    "contains_secret_values": false,
+    "failed": 0,
+    "passed": 8,
+    "schema": "m38.recovery_matrix.v1",
+    "total": 8
+  },
+  "fingerprint": "1716264555f218b47bea21ef83d4ce279c224d0702a1eb5a29b5f67088b04dd4",
+  "privacy_safe": true,
+  "schema": "m38.recovery_matrix.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

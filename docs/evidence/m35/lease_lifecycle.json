@@ -1,0 +1,21 @@
+{
+  "body": {
+    "default_max_uses": 1,
+    "default_ttl_seconds": 300.0,
+    "eligibility_read_consumes_use": false,
+    "max_ttl_seconds": 900.0,
+    "states": [
+      "ISSUED",
+      "CONSUMED",
+      "EXHAUSTED",
+      "EXPIRED",
+      "REVOKED",
+      "INVALID"
+    ]
+  },
+  "fingerprint": "06d3892ddfa1186d774bc395b6e70ad01d0db2638c3ddfa726e4ffea6b45041e",
+  "privacy_safe": true,
+  "schema": "m35.lease_lifecycle.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

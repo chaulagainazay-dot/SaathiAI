@@ -1,0 +1,35 @@
+{
+  "schema": "m33.external_verification_registry.v1",
+  "providers": {
+    "github_meta": {
+      "provider_id": "github_meta",
+      "state": "SIMULATION_VERIFIED",
+      "fingerprint": "a659a6fedc43cce4a445854de9c7cd8cce2f3c34ecc4631fc165c9c6d14e1a98",
+      "verified_at": "1752800000",
+      "limitations": [
+        "offline_fixture_backed",
+        "no_live_call",
+        "single_endpoint_only"
+      ],
+      "evidence_dir": "docs/evidence/m33",
+      "live_call_count": 0,
+      "mode": "OFFLINE",
+      "history": [
+        {
+          "event": "verify",
+          "state": "SIMULATION_VERIFIED",
+          "fp": "a659a6fedc43cce4",
+          "ts": 1752800000.0
+        },
+        {
+          "event": "verify",
+          "state": "SIMULATION_VERIFIED",
+          "fp": "a659a6fedc43cce4",
+          "ts": 1752800000.0
+        }
+      ]
+    }
+  },
+  "privacy_safe": true,
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

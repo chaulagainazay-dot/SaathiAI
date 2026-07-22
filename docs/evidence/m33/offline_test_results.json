@@ -1,0 +1,31 @@
+{
+  "body": {
+    "fixture_backed": true,
+    "injected_dns": true,
+    "injected_tls": true,
+    "injected_transport": true,
+    "no_network": true,
+    "offline": {
+      "fingerprint": "a659a6fedc43cce4a445854de9c7cd8cce2f3c34ecc4631fc165c9c6d14e1a98",
+      "label": "EXTERNAL READ-ONLY SHADOW VERIFICATION \u2014 NOT PRODUCTION AUTHORITY",
+      "live_call": false,
+      "mode": "OFFLINE",
+      "ok": true,
+      "provider_id": "github_meta",
+      "schema_result": {
+        "compatible": true,
+        "findings": [],
+        "overall": "COMPATIBLE_EXACT",
+        "privacy_safe": true,
+        "provider_id": "github_meta",
+        "schema_version": "v1"
+      },
+      "status": "success"
+    }
+  },
+  "fingerprint": "5c88afe6bb21ed8c2c7c056565b85e0d7709adf495f61eaffdf1e80900d5c737",
+  "privacy_safe": true,
+  "schema": "m32.offline_test_results.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

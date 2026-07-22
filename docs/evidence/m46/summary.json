@@ -1,0 +1,30 @@
+{
+  "authorities": {
+    "ACTIVE_authorization": "NOT GRANTED",
+    "CANARY_authorization": "NOT GRANTED",
+    "production_authorization": "NOT GRANTED",
+    "rollout_authorization": "NOT GRANTED",
+    "write_authority": "NOT GRANTED"
+  },
+  "authority_state": {
+    "active": "NOT GRANTED",
+    "autonomous_execution": "NOT GRANTED",
+    "deployment": "NOT GRANTED",
+    "framework": "IMPLEMENTED (AWAITING OPERATOR AUTHORIZATION)",
+    "production": "NOT AUTHORIZED",
+    "rollout_execution": "NOT GRANTED (awaiting separate operator authorization)",
+    "scope_expansion": "FORBIDDEN",
+    "trading_guardian": "UNENGAGED",
+    "write": "NOT GRANTED"
+  },
+  "authorizes_execution": false,
+  "contains_secret_values": false,
+  "grants_anything": false,
+  "live_canary_occurred": false,
+  "m32_prohibition": "UNCHANGED",
+  "milestone": "M46",
+  "module_fingerprint": "c03d61766949eee3a53feafd",
+  "schema": "m46.summary.v1",
+  "state": "M46_IMPLEMENTED_AWAITING_OPERATOR_AUTHORIZATION",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

@@ -1,0 +1,109 @@
+{
+  "milestone": "M17",
+  "title": "Universal Computer Agent",
+  "constitution_version": "1.0",
+  "requirements": [
+    {
+      "id": "M17-PERCEPTION-001",
+      "text": "Canonical UIElement/Screen perception model",
+      "artifact": "saathi/computer_agent/perception.py",
+      "test": "tests/test_m17_computer_agent.py::test_perceive_returns_canonical_screen"
+    },
+    {
+      "id": "M17-OPS-001",
+      "text": "Computer operations registered as M15 connectors; gateway-routed, no bypass",
+      "artifact": "saathi/computer_agent/operations.py",
+      "test": "tests/test_m17_computer_agent.py::test_read_op_no_approval"
+    },
+    {
+      "id": "M17-RISK-001",
+      "text": "Risk classification: read L0, click L2, destructive L4 manual-only",
+      "artifact": "saathi/computer_agent/operations.py",
+      "test": "tests/test_m17_computer_agent.py::test_ops_registered_as_connectors"
+    },
+    {
+      "id": "M17-VERIFY-001",
+      "text": "Post-action visual verification; unverified action is uncertain, never success",
+      "artifact": "saathi/computer_agent/operations.py",
+      "test": "tests/test_m17_computer_agent.py::test_unverified_action_is_uncertain"
+    },
+    {
+      "id": "M17-SEC-001",
+      "text": "Destructive/side-effect ops require approval or are blocked",
+      "artifact": "saathi/computer_agent/operations.py",
+      "test": "tests/test_m17_computer_agent.py::test_delete_requires_approval_or_blocked"
+    },
+    {
+      "id": "M17-SEC-002",
+      "text": "Replays never contain passwords/OTP/secrets",
+      "artifact": "saathi/computer_agent/replay.py",
+      "test": "tests/test_m17_computer_agent.py::test_replay_redacts_credentials"
+    },
+    {
+      "id": "M17-SEC-003",
+      "text": "Cross-user desktop history isolation",
+      "artifact": "saathi/computer_agent/agent.py",
+      "test": "tests/test_m17_computer_agent.py::test_cross_user_desktop_history_isolated"
+    },
+    {
+      "id": "M17-PROVIDER-001",
+      "text": "Provider availability honest; live desktop control environment-blocked",
+      "artifact": "saathi/computer_agent/providers.py",
+      "test": "tests/test_m17_computer_agent.py::test_provider_availability_honest"
+    },
+    {
+      "id": "M17-REPLAY-001",
+      "text": "Replayable sanitized timeline",
+      "artifact": "saathi/computer_agent/replay.py",
+      "test": "tests/test_m17_computer_agent.py::test_agent_replay_timeline"
+    },
+    {
+      "id": "M17-REDTEAM-001",
+      "text": "Red-team computer-agent probes (destructive/password/self-approve/cross-user) 34/34 hold",
+      "artifact": "saathi/security/redteam/probes.py",
+      "test": "tests/test_m15_2_security.py::test_full_suite_no_release_blocking"
+    },
+    {
+      "id": "M17-SESSION-001",
+      "text": "Active computer session required; app/origin allow-list; emergency stop halts control",
+      "artifact": "saathi/computer_agent/session.py",
+      "test": "tests/test_m17_hardening.py::test_emergency_stop_halts_control"
+    },
+    {
+      "id": "M17-SEC-008",
+      "text": "Sensitive fields paused for user; never read/recorded",
+      "artifact": "saathi/computer_agent/sensitive.py",
+      "test": "tests/test_m17_hardening.py::test_sensitive_field_pauses_and_not_recorded"
+    },
+    {
+      "id": "M17-SEC-005",
+      "text": "Download/upload/file-root confinement; traversal + symlink escape blocked",
+      "artifact": "saathi/computer_agent/policy.py",
+      "test": "tests/test_m17_hardening.py::test_file_root_traversal_blocked"
+    },
+    {
+      "id": "M17-SEC-006",
+      "text": "Shell + AppleScript injection guards",
+      "artifact": "saathi/computer_agent/policy.py",
+      "test": "tests/test_m17_hardening.py::test_shell_and_applescript_guards"
+    },
+    {
+      "id": "M17-SEC-007",
+      "text": "CAPTCHA/MFA bypass refused; pause for user",
+      "artifact": "saathi/computer_agent/sensitive.py",
+      "test": "tests/test_m17_hardening.py::test_captcha_mfa_detection_and_refusal"
+    },
+    {
+      "id": "M17-VERIFY-002",
+      "text": "Mutation requires postcondition; coordinate never default with structured element",
+      "artifact": "saathi/computer_agent/intent.py",
+      "test": "tests/test_m17_hardening.py::test_coordinate_not_default_with_structured_element"
+    },
+    {
+      "id": "M17-RECOVERY-001",
+      "text": "Recovery pauses for CAPTCHA/MFA; no unsafe retry on irreversible-uncertain",
+      "artifact": "saathi/computer_agent/recovery.py",
+      "test": "tests/test_m17_hardening.py::test_recovery_irreversible_uncertain_stops"
+    }
+  ]
+}

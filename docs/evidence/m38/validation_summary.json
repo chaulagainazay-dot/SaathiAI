@@ -1,0 +1,29 @@
+{
+  "body": {
+    "authorities": {
+      "ACTIVE_authorization": "NOT GRANTED",
+      "CANARY_authorization": "NOT GRANTED",
+      "production_authorization": "NOT GRANTED",
+      "rollout_authorization": "NOT GRANTED",
+      "write_authority": "NOT GRANTED"
+    },
+    "canary_verdict": "READY_WITH_LIMITATIONS",
+    "failure_injection_passed": 9,
+    "fingerprint": "b57c4b34b82fef58d092fe4c4030916d49b81bb5e6b48c8513d6b1b0236ab194",
+    "grants_canary": false,
+    "live_exercised": false,
+    "m37_regression_ok": true,
+    "m39_started": false,
+    "milestone": "M38",
+    "multi_session_passed": 9,
+    "ok": true,
+    "recovery_passed": 8,
+    "retry_passed": 16,
+    "trading_guardian": "UNENGAGED"
+  },
+  "fingerprint": "95f5b145fb0249167a26ab2360448a0cce1c1220c50b1fc0b2d088060762d745",
+  "privacy_safe": true,
+  "schema": "m38.validation_summary.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

@@ -1,0 +1,21 @@
+{
+  "contains_secret_values": false,
+  "levels": [
+    {
+      "level": "SEV1",
+      "meaning": "secret exposure risk, lease leak, or canary escalation attempt",
+      "response": "immediate halt + kill switch + operator page"
+    },
+    {
+      "level": "SEV2",
+      "meaning": "stuck run, auth denial, kill-switch trip, provider failure",
+      "response": "halt affected sessions + investigate"
+    },
+    {
+      "level": "SEV3",
+      "meaning": "budget exhaustion / degraded but contained",
+      "response": "reconcile + throttle"
+    }
+  ],
+  "schema": "m39_5.incident_severity.v1"
+}

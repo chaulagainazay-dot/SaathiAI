@@ -1,0 +1,36 @@
+{
+  "body": {
+    "cases": [
+      {
+        "name": "interrupt_after_provider_before_cleanup",
+        "pass": true,
+        "state": "CLEANED"
+      },
+      {
+        "name": "cancel_before_second_provider_call",
+        "pass": true,
+        "status": "FAILED"
+      },
+      {
+        "name": "kill_switch_blocks_provider_call",
+        "pass": true
+      },
+      {
+        "name": "recovery_no_secret_reopen",
+        "pass": true
+      }
+    ],
+    "contains_secret_values": false,
+    "failed": 0,
+    "mode": "offline_safe",
+    "passed": 4,
+    "schema": "m39.interruption_recovery.v1",
+    "status": "PASSED",
+    "total": 4
+  },
+  "fingerprint": "dddbef120822ab0d2891417e519fad1a50cc135403044cbd9d253db66531fc23",
+  "privacy_safe": true,
+  "schema": "m39.interruption_recovery.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

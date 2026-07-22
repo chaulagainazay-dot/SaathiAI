@@ -1,0 +1,17 @@
+{
+  "approval_id": "",
+  "authorizes_execution": false,
+  "blockers": [
+    "approval_absent"
+  ],
+  "checks": {
+    "present": false
+  },
+  "contains_secret_values": false,
+  "fingerprint": "",
+  "grants_anything": false,
+  "milestone": "M46",
+  "note": "Approval validation only. Never executes.",
+  "schema": "m46.approval_validation.v1",
+  "valid": false
+}

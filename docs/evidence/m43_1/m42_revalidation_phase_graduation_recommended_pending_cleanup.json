@@ -1,0 +1,68 @@
+{
+  "advisory_only": true,
+  "advisory_recommendation": "GRADUATION_RECOMMENDED",
+  "advisory_recommendation_limitations": [
+    "advisory evidence only; alters no runtime authority, flag, policy, or execution mode",
+    "grants no ACTIVE status",
+    "grants no production readiness or deployment authority",
+    "grants no write authority",
+    "grants no rollout expansion or scope expansion",
+    "grants no autonomous execution",
+    "does not engage Trading Guardian",
+    "any future rollout requires a SEPARATE explicit operator authorization"
+  ],
+  "contains_secret_values": false,
+  "credential_lifecycle": {
+    "disposable_pat_externally_revoked": true,
+    "http_401_confirmed": true,
+    "machine_verified_here": true,
+    "status": "CLOSED"
+  },
+  "evidence_binding": {
+    "contract_machine_record": "docs/evidence/m43/machine_verified_canary_completion.json",
+    "contract_machine_record_fingerprint": "8ecd04d34d2efb5b68dc6671",
+    "contract_machine_record_hash": "sha256:a7fed36293dcb4685efdfde6d9390b96ea60d4a9ed188078ad32651998f5542f",
+    "m40_certification_record": "docs/evidence/m40/live_certification_record.json",
+    "m40_certification_record_hash": "sha256:1a419050e785be18eb9ae2e0f162e48d5ef0602edcd9a0bb4818975df69a1338",
+    "m41_approval_record": "docs/m41/operator_canary_approval.local.json (operator-local, git-ignored)",
+    "phase5_validation_record": "docs/evidence/m43_1/validation_phase_pending_revocation.json",
+    "phase5_validation_record_hash": "sha256:bc3c4b2592f3e721efef04a94f0be0bf909f1952e6fdb4ac2281191590e42a72",
+    "phase6_revocation_record": "docs/evidence/m43_1/revocation_phase_verified_pending_cleanup.json",
+    "phase6_revocation_record_hash": "sha256:f557658390a5906379ba6a273e094566f4d40d665ffb7838d85ff80022f6ed11"
+  },
+  "graduation_review": {
+    "abort_conditions_present": [],
+    "ab_prov_after_machine_proof": "CLEARED",
+    "ab_prov_before_machine_proof": "PRESENT",
+    "canary_provenance": "MACHINE_PROOF",
+    "criteria_blocked": 0,
+    "criteria_failed": 0,
+    "criteria_passed": 14,
+    "criteria_total": 14,
+    "evidence_digest": "05bc01ee4aedec68b0e221a4beb5230e",
+    "recommendation": "GRADUATION_RECOMMENDED",
+    "review_fingerprint": "dbc63fd79889f5714dd9ae32",
+    "schema": "m42.graduation_review.v1"
+  },
+  "grants_active": false,
+  "grants_anything": false,
+  "grants_production": false,
+  "grants_write": false,
+  "identity_binding": {
+    "credential_locator": "saathi_m43:github_meta",
+    "expected_subject_fingerprint": "c7cd7f4d6bee55c2847614692022af73",
+    "source_kind": "OS_KEYCHAIN_REFERENCE"
+  },
+  "m32_canary_execution_mode": "PROHIBITION_UNCHANGED",
+  "machine_verified": true,
+  "milestone": "M43.1",
+  "phase": "m42_revalidation",
+  "provider": "github_meta",
+  "remaining_actions": {
+    "phase8_keychain_cleanup": "PENDING (operator deletes saathi_m43:github_meta)"
+  },
+  "schema": "m43_1.m42_revalidation_phase.graduation_recommended_pending_cleanup.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED",
+  "verdict": "GRADUATION_RECOMMENDED_PENDING_CLEANUP",
+  "workflow": "python -m saathi.credentials.cli m43-revalidate"
+}

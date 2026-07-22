@@ -1,0 +1,45 @@
+{
+  "body": {
+    "cases": [
+      {
+        "case": "valid",
+        "result": "PASS"
+      },
+      {
+        "case": "unverified",
+        "code": "TLS_CERTIFICATE_FAILED",
+        "result": "BLOCK"
+      },
+      {
+        "case": "expired",
+        "code": "TLS_CERTIFICATE_FAILED",
+        "result": "BLOCK"
+      },
+      {
+        "case": "hostname_mismatch",
+        "code": "TLS_HOSTNAME_FAILED",
+        "result": "BLOCK"
+      },
+      {
+        "case": "low_version",
+        "code": "TLS_POLICY_BLOCKED",
+        "result": "BLOCK"
+      },
+      {
+        "case": "insecure_policy",
+        "code": "TLS_POLICY_BLOCKED",
+        "result": "BLOCK"
+      },
+      {
+        "case": "verification_disabled",
+        "code": "TLS_POLICY_BLOCKED",
+        "result": "BLOCK"
+      }
+    ]
+  },
+  "fingerprint": "fa4d4594713dcf32e2b6ad481c082e52eb58d6d2725a1a666e647a6ba0c043d4",
+  "privacy_safe": true,
+  "schema": "m32.tls_policy_results.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

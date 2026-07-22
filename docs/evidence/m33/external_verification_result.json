@@ -1,0 +1,28 @@
+{
+  "body": {
+    "call_count": 0,
+    "label": "EXTERNAL READ-ONLY SHADOW VERIFICATION \u2014 NOT PRODUCTION AUTHORITY",
+    "limitations": [
+      "live_network_verification_not_exercised_in_ci",
+      "external_read_only",
+      "single_endpoint_only",
+      "non_production",
+      "no_write_authority",
+      "no_account_link",
+      "no_credential"
+    ],
+    "live_call": false,
+    "max_possible_state": "EXTERNAL_READ_ONLY_VERIFIED_WITH_LIMITATIONS",
+    "mode": "SHADOW",
+    "offline_state": "SIMULATION_VERIFIED",
+    "operation": "get_meta",
+    "provider_id": "github_meta",
+    "success_or_failure": "not_exercised",
+    "verification_state": "SIMULATION_VERIFIED"
+  },
+  "fingerprint": "8cef066c9fc1d9b35c183f43f51d6c00402f1762a421dba6d5ebe2694e2dd7cb",
+  "privacy_safe": true,
+  "schema": "m32.external_verification_result.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

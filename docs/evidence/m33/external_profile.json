@@ -1,0 +1,140 @@
+{
+  "body": {
+    "profile": {
+      "adapter_version": "1.0.0",
+      "allowed_ports": [
+        443
+      ],
+      "auth_profile": "none",
+      "canonical_path": "/meta",
+      "connector_id": "gov.http",
+      "data_classification": "PUBLIC",
+      "deadline_seconds": 5.0,
+      "endpoint_class": "https_external",
+      "endpoint_reference": "https://api.github.com/meta",
+      "environment": "sandbox",
+      "hostname_allowlist": [
+        "api.github.com"
+      ],
+      "method": "GET",
+      "network_required": true,
+      "official_documentation_reference": "https://docs.github.com/en/rest/meta/meta#get-github-meta-information",
+      "operation": "get_meta",
+      "operation_set": [
+        "get_meta"
+      ],
+      "provider_display_name": "GitHub Meta (public infrastructure metadata)",
+      "provider_id": "github_meta",
+      "provider_owner": "GitHub, Inc.",
+      "rate_limit_profile": "github_unauth",
+      "redirect_limit": 0,
+      "response_limit_bytes": 262144,
+      "schema_version": "v1",
+      "side_effect_class": "READ_ONLY",
+      "terms_review_status": "REVIEWED_ACCEPTABLE",
+      "verification_mode": "SHADOW"
+    },
+    "schema": {
+      "fields": [
+        {
+          "enum": [],
+          "name": "verifiable_password_authentication",
+          "nullable": false,
+          "required": true,
+          "type": "bool"
+        },
+        {
+          "enum": [],
+          "name": "hooks",
+          "nullable": false,
+          "required": true,
+          "type": "array<str>"
+        },
+        {
+          "enum": [],
+          "name": "pages",
+          "nullable": false,
+          "required": true,
+          "type": "array<str>"
+        },
+        {
+          "enum": [],
+          "name": "api",
+          "nullable": false,
+          "required": false,
+          "type": "array<str>"
+        },
+        {
+          "enum": [],
+          "name": "web",
+          "nullable": false,
+          "required": false,
+          "type": "array<str>"
+        },
+        {
+          "enum": [],
+          "name": "git",
+          "nullable": false,
+          "required": false,
+          "type": "array<str>"
+        },
+        {
+          "enum": [],
+          "name": "packages",
+          "nullable": false,
+          "required": false,
+          "type": "array<str>"
+        },
+        {
+          "enum": [],
+          "name": "importer",
+          "nullable": false,
+          "required": false,
+          "type": "array<str>"
+        },
+        {
+          "enum": [],
+          "name": "actions",
+          "nullable": false,
+          "required": false,
+          "type": "array<str>"
+        },
+        {
+          "enum": [],
+          "name": "dependabot",
+          "nullable": false,
+          "required": false,
+          "type": "array<str>"
+        },
+        {
+          "enum": [],
+          "name": "ssh_key_fingerprints",
+          "nullable": false,
+          "required": false,
+          "type": "object"
+        },
+        {
+          "enum": [],
+          "name": "ssh_keys",
+          "nullable": false,
+          "required": false,
+          "type": "array<str>"
+        },
+        {
+          "enum": [],
+          "name": "domains",
+          "nullable": false,
+          "required": false,
+          "type": "object"
+        }
+      ],
+      "provider_id": "github_meta",
+      "schema_version": "v1"
+    }
+  },
+  "fingerprint": "0ac26d73f3d46a575c494b24fb968793eae288bbd5a55dee8384e8c36d1dbbb5",
+  "privacy_safe": true,
+  "schema": "m32.external_profile.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

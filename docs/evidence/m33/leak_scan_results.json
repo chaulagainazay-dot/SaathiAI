@@ -1,0 +1,12 @@
+{
+  "body": {
+    "clean": true,
+    "summary_scan_findings": [],
+    "token_detected_example": true
+  },
+  "fingerprint": "32bdf749926644d06a4f330491c9a268c9c4a8a7488a8b687c304555e9538478",
+  "privacy_safe": true,
+  "schema": "m32.leak_scan_results.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

@@ -1,0 +1,60 @@
+{
+  "body": {
+    "contains_secret_values": false,
+    "network_calls_performed": 0,
+    "policy": {
+      "aggregate_budget_default": 6,
+      "allowed_endpoints": [
+        "/meta",
+        "/user",
+        "meta",
+        "user"
+      ],
+      "allowed_methods": [
+        "GET"
+      ],
+      "approved_source_kinds": [
+        "ENCRYPTED_STORE_REFERENCE",
+        "ENV_REFERENCE",
+        "OS_KEYCHAIN_REFERENCE"
+      ],
+      "authorities": {
+        "ACTIVE_authorization": "NOT GRANTED",
+        "CANARY_authorization": "NOT GRANTED",
+        "production_authorization": "NOT GRANTED",
+        "rollout_authorization": "NOT GRANTED",
+        "write_authority": "NOT GRANTED"
+      },
+      "banner": "M39 LIVE DISPOSABLE SANDBOX VALIDATION\nNON-PRODUCTION\nREAD-ONLY\nBOUNDED LIVE VALIDATION ONLY\nROLLOUT OFF\nNO CANARY GRANT\nNO ACTIVE\nTRADING GUARDIAN UNENGAGED",
+      "default_live": false,
+      "fingerprint": "64f0af8e8446fd490d15b2bb23c7afeddbac826722454255a5f78b69133ef68f",
+      "grants_canary": false,
+      "kill_switch": "SAATHI_M39_KILL_SWITCH",
+      "live_flag": "SAATHI_M39_ALLOW_LIVE_SANDBOX_VALIDATION",
+      "m40_started": false,
+      "max_concurrent_sessions": 2,
+      "milestone": "M39",
+      "per_session_budget": 3,
+      "provider": "github_meta",
+      "required_acks": [
+        "I_CONFIRM_CREDENTIAL_IS_DISPOSABLE",
+        "I_CONFIRM_SANDBOX_ACCOUNT_WHERE_POSSIBLE",
+        "I_CONFIRM_MINIMUM_READ_ONLY_PERMISSIONS",
+        "I_CONFIRM_NO_REPOSITORY_WRITE_PERMISSION",
+        "I_CONFIRM_NO_ORG_ADMIN_PERMISSION",
+        "I_CONFIRM_NO_BILLING_PERMISSION",
+        "I_CONFIRM_NO_PACKAGE_DEPLOY_WORKFLOW_SECRET_WRITE",
+        "I_CONFIRM_REVOKE_IMMEDIATELY_AFTER_VALIDATION",
+        "I_CONFIRM_READINESS_IS_NOT_AUTHORIZATION",
+        "I_CONFIRM_NO_PRODUCTION_ROLLOUT_CANARY_ACTIVE_WRITE"
+      ]
+    },
+    "reason": "operator_secret_reference_required",
+    "status": "NOT_EXERCISED"
+  },
+  "fingerprint": "3525a76acdbdb0b05a739404c821ece9627c5b78b25035332275225558a7a50e",
+  "privacy_safe": true,
+  "schema": "m39.live_preflight.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

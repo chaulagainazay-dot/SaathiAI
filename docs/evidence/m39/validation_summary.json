@@ -1,0 +1,28 @@
+{
+  "body": {
+    "authorities": {
+      "ACTIVE_authorization": "NOT GRANTED",
+      "CANARY_authorization": "NOT GRANTED",
+      "production_authorization": "NOT GRANTED",
+      "rollout_authorization": "NOT GRANTED",
+      "write_authority": "NOT GRANTED"
+    },
+    "canary_verdict": "BLOCKED_OPERATOR_SECRET_REQUIRED",
+    "executive_verdict": "M39 BLOCKED \u2014 OPERATOR SECRET REFERENCE REQUIRED",
+    "external_revocation": "PENDING",
+    "fingerprint": "64f0af8e8446fd490d15b2bb23c7afeddbac826722454255a5f78b69133ef68f",
+    "grants_canary": false,
+    "live_multi_status": "NOT_EXERCISED",
+    "live_single_status": "NOT_EXERCISED",
+    "m38_regression_ok": true,
+    "m40_started": false,
+    "milestone": "M39",
+    "ok": true,
+    "trading_guardian": "UNENGAGED"
+  },
+  "fingerprint": "4bf3d348f016b62f1cf98571fd68a5e2b0b0736034ffdee7520aeeb74083ad9d",
+  "privacy_safe": true,
+  "schema": "m39.validation_summary.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

@@ -1,0 +1,16 @@
+{
+  "authorities": {
+    "ACTIVE_authorization": "NOT GRANTED",
+    "CANARY_authorization": "NOT GRANTED",
+    "production_authorization": "NOT GRANTED",
+    "rollout_authorization": "NOT GRANTED",
+    "write_authority": "NOT GRANTED"
+  },
+  "contains_secret_values": false,
+  "decision": "CANARY_NOT_GRANTED",
+  "grants_canary": false,
+  "milestone": "M39.3",
+  "schema": "m39_3.summary.v1",
+  "trading_guardian": "UNENGAGED",
+  "verdict": "CANARY_FRAMEWORK_COMPLETE_CANARY_NOT_GRANTED"
+}

@@ -1,0 +1,16 @@
+{
+  "body": {
+    "fingerprint": "8e3e326de6b00cb805c256b8a02a2bf9a4c82b9bd92699a2661478f26df88d2c",
+    "live_network": false,
+    "milestone": "M36",
+    "mode": "offline_synthetic_fixture",
+    "provider_id": "github_meta",
+    "schema": "m36.real_sandbox_session.v1",
+    "starting_head_note": "see M36_FINAL_REPORT"
+  },
+  "fingerprint": "08d895f5e3bf85ddcbf0e00685491b29386e98c5bcbcd9de6305915bbec630df",
+  "privacy_safe": true,
+  "schema": "m36.baseline.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

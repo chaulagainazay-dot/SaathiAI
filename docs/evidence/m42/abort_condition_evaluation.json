@@ -1,0 +1,82 @@
+{
+  "any_present": true,
+  "conditions": [
+    {
+      "description": "M41 bounded-canary completion is operator-attested, not machine-proven",
+      "id": "AB-PROV",
+      "present": true,
+      "severity": "SEV1"
+    },
+    {
+      "description": "Unresolved M39.5 alert",
+      "id": "AB-1",
+      "present": false,
+      "severity": "SEV2"
+    },
+    {
+      "description": "Rollback-triggering condition present",
+      "id": "AB-2",
+      "present": false,
+      "severity": "SEV1"
+    },
+    {
+      "description": "Identity drift",
+      "id": "AB-3",
+      "present": false,
+      "severity": "SEV1"
+    },
+    {
+      "description": "Scope drift",
+      "id": "AB-4",
+      "present": false,
+      "severity": "SEV1"
+    },
+    {
+      "description": "Write / production / active authority observed",
+      "id": "AB-5",
+      "present": false,
+      "severity": "SEV1"
+    },
+    {
+      "description": "Revocation proof missing",
+      "id": "AB-6",
+      "present": false,
+      "severity": "SEV1"
+    },
+    {
+      "description": "Credential lifecycle not closed",
+      "id": "AB-7",
+      "present": false,
+      "severity": "SEV1"
+    },
+    {
+      "description": "Evidence inconsistent",
+      "id": "AB-8",
+      "present": false,
+      "severity": "SEV1"
+    },
+    {
+      "description": "Mandatory evidence missing or invalid",
+      "id": "AB-9",
+      "present": false,
+      "severity": "SEV1"
+    },
+    {
+      "description": "Simulated result substituted for live proof (M40)",
+      "id": "AB-10",
+      "present": false,
+      "severity": "SEV1"
+    },
+    {
+      "description": "Trading Guardian engaged",
+      "id": "AB-11",
+      "present": false,
+      "severity": "SEV1"
+    }
+  ],
+  "contains_secret_values": false,
+  "present": [
+    "AB-PROV"
+  ],
+  "schema": "m42.abort_evaluation.v1"
+}

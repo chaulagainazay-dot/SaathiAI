@@ -1,0 +1,18 @@
+{
+  "body": {
+    "allowed_scopes": [
+      "metadata:read"
+    ],
+    "data_classification": "PUBLIC",
+    "environment_class": "SANDBOX",
+    "method": "GET",
+    "operation": "get_meta",
+    "provider_id": "github_meta",
+    "side_effect_class": "READ_ONLY"
+  },
+  "fingerprint": "1cb1aeb4fd3c0ec3f350aa185d59228ceec8084de1b0b78c731c8111ecbb7957",
+  "privacy_safe": true,
+  "schema": "m35.capability_ceiling.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

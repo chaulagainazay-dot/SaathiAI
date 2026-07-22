@@ -1,0 +1,15 @@
+{
+  "body": {
+    "identity_operation": "get_authenticated_user",
+    "method": "GET",
+    "operation": "get_meta",
+    "provider_id": "github_meta",
+    "rollout_exception": "session_specific_m36_only",
+    "side_effect_class": "READ_ONLY"
+  },
+  "fingerprint": "f04e867d927c53af41f888ca8a3c56b59c1f3d2d53412b93a88d920aa420ed39",
+  "privacy_safe": true,
+  "schema": "m36.capability_intersection.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

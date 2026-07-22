@@ -1,0 +1,13 @@
+{
+  "body": {
+    "allowed": true,
+    "blockers": [],
+    "provider_rollout": "OFF",
+    "real_sandbox_session": "blocked"
+  },
+  "fingerprint": "fe2233636b8db0fabd07f29d0b3e74c7ab252e021ae213d83350d0ca8dbe981e",
+  "privacy_safe": true,
+  "schema": "m35.eligibility_composition.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

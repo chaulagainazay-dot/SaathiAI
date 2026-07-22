@@ -1,0 +1,19 @@
+{
+  "body": {
+    "auth_profile": "none",
+    "data_classification": "PUBLIC",
+    "documentation": "https://docs.github.com/en/rest/meta/meta#get-github-meta-information",
+    "endpoint": "https://api.github.com/meta",
+    "method": "GET",
+    "operation": "get_meta",
+    "owner": "GitHub, Inc.",
+    "provider_id": "github_meta",
+    "side_effect_class": "READ_ONLY",
+    "terms_review_status": "REVIEWED_ACCEPTABLE"
+  },
+  "fingerprint": "6c67d48a935c835a5364ac8eb0cc70569ca73200de01efe39d35fcb79105da89",
+  "privacy_safe": true,
+  "schema": "m32.provider_selection.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

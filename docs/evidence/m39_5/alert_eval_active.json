@@ -1,0 +1,27 @@
+{
+  "contains_secret_values": false,
+  "fired": [
+    {
+      "id": "ALT-2",
+      "name": "budget_exhaustion",
+      "severity": "SEV3"
+    },
+    {
+      "id": "ALT-3",
+      "name": "authorization_denial",
+      "severity": "SEV2"
+    },
+    {
+      "id": "ALT-4",
+      "name": "secret_resolution_failure",
+      "severity": "SEV1"
+    }
+  ],
+  "fired_count": 3,
+  "highest_severity": "SEV1",
+  "schema": "m39_5.alert_evaluation.v1",
+  "thresholds": {
+    "aggregate_budget": 12,
+    "stuck_threshold_seconds": 300
+  }
+}

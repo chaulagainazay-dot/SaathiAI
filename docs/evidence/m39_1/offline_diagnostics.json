@@ -1,0 +1,43 @@
+{
+  "allowed_endpoints": [
+    "meta",
+    "user"
+  ],
+  "allowed_methods": [
+    "GET"
+  ],
+  "approved_secret_backends": [
+    "ENCRYPTED_STORE_REFERENCE",
+    "ENV_REFERENCE",
+    "IN_MEMORY_TEST",
+    "OS_KEYCHAIN_REFERENCE"
+  ],
+  "authorities": {
+    "ACTIVE_authorization": "NOT GRANTED",
+    "CANARY_authorization": "NOT GRANTED",
+    "production_authorization": "NOT GRANTED",
+    "rollout_authorization": "NOT GRANTED",
+    "write_authority": "NOT GRANTED"
+  },
+  "budgets": {
+    "aggregate_default": 6,
+    "hard_max_aggregate": 12,
+    "max_concurrency": 2,
+    "per_session": 3
+  },
+  "contains_secret_values": false,
+  "flags": {
+    "kill_switch_active": false,
+    "live_flag_set": false
+  },
+  "kind": "offline_diagnostics",
+  "live_state": {
+    "external_revocation": "NOT_EXERCISED",
+    "multi_session": "NOT_EXERCISED",
+    "single_session": "NOT_EXERCISED"
+  },
+  "m39_fingerprint": "64f0af8e8446fd490d15b2bb23c7afeddbac826722454255a5f78b69133ef68f",
+  "provider": "github_meta",
+  "schema": "m39_1.diagnostics.v1",
+  "trading_guardian": "UNENGAGED"
+}

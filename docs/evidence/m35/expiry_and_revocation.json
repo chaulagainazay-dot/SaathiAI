@@ -1,0 +1,22 @@
+{
+  "body": {
+    "audit_evidence_preserved": true,
+    "expiry": "deterministic_clock_injectable",
+    "revocation_targets": [
+      "credential",
+      "account",
+      "lease",
+      "session",
+      "approval",
+      "provider",
+      "operation"
+    ],
+    "rollout_unchanged": true,
+    "unrelated_identities_unchanged": true
+  },
+  "fingerprint": "fc86923b79151833de82d1cb642350692286418392d06dcda31b093d85839c44",
+  "privacy_safe": true,
+  "schema": "m35.expiry_and_revocation.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

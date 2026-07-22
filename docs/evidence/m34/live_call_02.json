@@ -1,0 +1,37 @@
+{
+  "body": {
+    "call_number": 2,
+    "latency_bucket": "UNDER_250_MS",
+    "limitations": [
+      "external_read_only",
+      "single_endpoint_only",
+      "non_production"
+    ],
+    "mode": "LIVE_RELIABILITY_VERIFY",
+    "normalized_result_fingerprint": "c25e3c49f95cf1bc53df87ac48c24551",
+    "operation": "get_meta",
+    "provider_id": "github_meta",
+    "rate_limit_summary": {
+      "confidence": "high",
+      "limit_present": true,
+      "rate_limit_visibility": "EXPOSED",
+      "remaining_bucket": "AMPLE",
+      "remaining_present": true,
+      "retry_after_present": false,
+      "source": "header"
+    },
+    "redirect_count": 0,
+    "response_size_bucket": "UNDER_4_KIB",
+    "retry_of": 0,
+    "safe_error_classification": "none",
+    "schema_result": "COMPATIBLE_EXACT",
+    "status_class": "200",
+    "success_or_failure": "success",
+    "tls_verified": true
+  },
+  "fingerprint": "00623df04bb343f49869c8946a7a0de3e76b7104d63328c11476b35d9a2aeaae",
+  "privacy_safe": true,
+  "schema": "m34.live_call_02.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

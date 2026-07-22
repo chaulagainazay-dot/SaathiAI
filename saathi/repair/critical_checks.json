@@ -1,0 +1,2376 @@
+{
+  "critical_checks": [
+    {
+      "id": "events.public_bus_api",
+      "targets": [
+        "tests/test_events_bus_api.py"
+      ],
+      "subsystem": "events",
+      "blocking": true
+    },
+    {
+      "id": "events.infra_emission",
+      "targets": [
+        "tests/test_infra_events.py"
+      ],
+      "subsystem": "events",
+      "blocking": true
+    },
+    {
+      "id": "events.stream_delivery",
+      "targets": [
+        "tests/test_eventstream.py"
+      ],
+      "subsystem": "events",
+      "blocking": true
+    },
+    {
+      "id": "studio.prompt_tracking",
+      "targets": [
+        "tests/test_ai_lab.py::test_studio_tracks_prompt_only_with_default_gen"
+      ],
+      "subsystem": "ai_lab",
+      "blocking": true
+    },
+    {
+      "id": "intake.project_tagging",
+      "targets": [
+        "tests/test_client_intake.py::test_studio_run_tags_project"
+      ],
+      "subsystem": "client_intake",
+      "blocking": true
+    },
+    {
+      "id": "bff.payload_contract",
+      "targets": [
+        "tests/test_bff.py::test_payload_has_full_contract"
+      ],
+      "subsystem": "bff",
+      "blocking": true
+    },
+    {
+      "id": "bff.dream_pct",
+      "targets": [
+        "tests/test_bff.py::test_dream_pct_tracks_revenue"
+      ],
+      "subsystem": "bff",
+      "blocking": true
+    },
+    {
+      "id": "bff.regression_pack",
+      "targets": [
+        "tests/test_bff_contract.py"
+      ],
+      "subsystem": "bff",
+      "blocking": true
+    },
+    {
+      "id": "execution.gateway_reference_path",
+      "targets": [
+        "tests/test_execution_gateway.py"
+      ],
+      "subsystem": "execution_gateway",
+      "blocking": true
+    },
+    {
+      "id": "execution.finance_trade_layer",
+      "targets": [
+        "tests/test_execution.py",
+        "tests/test_trade_journal.py"
+      ],
+      "subsystem": "execution_gateway",
+      "blocking": true
+    },
+    {
+      "id": "repair.loop_self_tests",
+      "targets": [
+        "tests/test_auto_repair.py"
+      ],
+      "subsystem": "repair",
+      "blocking": true
+    },
+    {
+      "id": "chat.saathi_chat_m8",
+      "targets": [
+        "tests/test_chat.py"
+      ],
+      "subsystem": "chat",
+      "blocking": true
+    },
+    {
+      "id": "memory.engine_m9",
+      "targets": [
+        "tests/test_memory_engine.py"
+      ],
+      "subsystem": "memory",
+      "blocking": true
+    },
+    {
+      "id": "agents.runtime_m10",
+      "targets": [
+        "tests/test_agent_runtime.py"
+      ],
+      "subsystem": "agent_runtime",
+      "blocking": true
+    },
+    {
+      "id": "voice.voice_os_m12",
+      "targets": [
+        "tests/test_voice_os.py"
+      ],
+      "subsystem": "voice_os",
+      "blocking": true
+    },
+    {
+      "id": "studio.studio_os_m13",
+      "targets": [
+        "tests/test_studio_os.py"
+      ],
+      "subsystem": "studio_os",
+      "blocking": true
+    },
+    {
+      "id": "ops.hardening_m13_5",
+      "targets": [
+        "tests/test_ops.py"
+      ],
+      "subsystem": "ops",
+      "blocking": true
+    },
+    {
+      "id": "ceo.ceo_os_m14",
+      "targets": [
+        "tests/test_ceo_os_m14.py"
+      ],
+      "subsystem": "ceo",
+      "blocking": true
+    },
+    {
+      "id": "bff.contract_pack",
+      "targets": [
+        "tests/test_bff.py",
+        "tests/test_bff_contract.py"
+      ],
+      "subsystem": "bff",
+      "blocking": true
+    },
+    {
+      "id": "connectors.gateway_governed",
+      "targets": [
+        "tests/test_m15_connectors.py::test_gateway_governed"
+      ],
+      "subsystem": "connectors",
+      "blocking": true
+    },
+    {
+      "id": "connectors.approval_binding",
+      "targets": [
+        "tests/test_m15_connectors.py::test_approval_binding"
+      ],
+      "subsystem": "connectors",
+      "blocking": true
+    },
+    {
+      "id": "connectors.idempotency",
+      "targets": [
+        "tests/test_m15_connectors.py::test_idempotency_replay"
+      ],
+      "subsystem": "connectors",
+      "blocking": true
+    },
+    {
+      "id": "connectors.uncertain_no_retry",
+      "targets": [
+        "tests/test_m15_connectors.py::test_uncertain_not_retryable"
+      ],
+      "subsystem": "connectors",
+      "blocking": true
+    },
+    {
+      "id": "connectors.secret_redaction",
+      "targets": [
+        "tests/test_m15_connectors.py::test_secret_redaction"
+      ],
+      "subsystem": "connectors",
+      "blocking": true
+    },
+    {
+      "id": "connectors.webhook_security",
+      "targets": [
+        "tests/test_m15_connectors.py::test_webhook_security"
+      ],
+      "subsystem": "connectors",
+      "blocking": true
+    },
+    {
+      "id": "specs.convergence_gate",
+      "targets": [
+        "tests/test_m15_specs.py::test_convergence_gate"
+      ],
+      "subsystem": "specs",
+      "blocking": true
+    },
+    {
+      "id": "connectors.api_auth",
+      "targets": [
+        "tests/test_m15_1_api.py::test_unauthenticated_rejected"
+      ],
+      "subsystem": "connectors",
+      "blocking": true
+    },
+    {
+      "id": "connectors.api_cross_user",
+      "targets": [
+        "tests/test_m15_1_api.py::test_account_lifecycle_owner_scoped"
+      ],
+      "subsystem": "connectors",
+      "blocking": true
+    },
+    {
+      "id": "connectors.api_secret_redaction",
+      "targets": [
+        "tests/test_m15_1_api.py::test_no_secret_in_error_body"
+      ],
+      "subsystem": "connectors",
+      "blocking": true
+    },
+    {
+      "id": "connectors.api_approval_binding",
+      "targets": [
+        "tests/test_m15_1_api.py::test_side_effect_needs_bound_approval_via_api"
+      ],
+      "subsystem": "connectors",
+      "blocking": true
+    },
+    {
+      "id": "connectors.credential_scope",
+      "targets": [
+        "tests/test_m15_1_integration.py::test_credential_scope_mismatch_rejected"
+      ],
+      "subsystem": "connectors",
+      "blocking": true
+    },
+    {
+      "id": "connectors.direct_call_scan",
+      "targets": [
+        "tests/test_m15_1_integration.py::test_no_direct_provider_calls_in_platform"
+      ],
+      "subsystem": "connectors",
+      "blocking": true
+    },
+    {
+      "id": "connectors.funnel_gateway",
+      "targets": [
+        "tests/test_m15_1_integration.py::test_funnel_routes_through_gateway"
+      ],
+      "subsystem": "connectors",
+      "blocking": true
+    },
+    {
+      "id": "connectors.agent_no_self_approve",
+      "targets": [
+        "tests/test_m15_1_integration.py::test_agent_cannot_self_approve"
+      ],
+      "subsystem": "connectors",
+      "blocking": true
+    },
+    {
+      "id": "connectors.ceo_evidence_tier",
+      "targets": [
+        "tests/test_m15_1_integration.py::test_ceo_evidence_tier_never_fakes_success"
+      ],
+      "subsystem": "connectors",
+      "blocking": true
+    },
+    {
+      "id": "connectors.live_local",
+      "targets": [
+        "tests/test_m15_1_live_local.py::test_live_local_git_inspect"
+      ],
+      "subsystem": "connectors",
+      "blocking": true
+    },
+    {
+      "id": "connectors.ui_real_api",
+      "targets": [
+        "tests/test_m15_1_ui.py::test_ui_uses_real_platform_api"
+      ],
+      "subsystem": "connectors",
+      "blocking": true
+    },
+    {
+      "id": "connectors.backup_refs",
+      "targets": [
+        "tests/test_m15_1_integration.py::test_backup_preserves_references_not_secrets"
+      ],
+      "subsystem": "connectors",
+      "blocking": true
+    },
+    {
+      "id": "security.redteam_prod_block",
+      "targets": [
+        "tests/test_m15_2_harness.py::test_production_targets_blocked"
+      ],
+      "subsystem": "security",
+      "blocking": true
+    },
+    {
+      "id": "security.redteam_cloud_off",
+      "targets": [
+        "tests/test_m15_2_harness.py::test_cloud_sync_cannot_be_enabled"
+      ],
+      "subsystem": "security",
+      "blocking": true
+    },
+    {
+      "id": "security.redteam_redaction",
+      "targets": [
+        "tests/test_m15_2_harness.py::test_redaction_of_secrets"
+      ],
+      "subsystem": "security",
+      "blocking": true
+    },
+    {
+      "id": "security.redteam_judge_advisory",
+      "targets": [
+        "tests/test_m15_2_harness.py::test_judge_opinion_does_not_confirm"
+      ],
+      "subsystem": "security",
+      "blocking": true
+    },
+    {
+      "id": "security.redteam_no_blocking",
+      "targets": [
+        "tests/test_m15_2_security.py::test_full_suite_no_release_blocking"
+      ],
+      "subsystem": "security",
+      "blocking": true
+    },
+    {
+      "id": "security.iso_cross_user",
+      "targets": [
+        "tests/test_m15_2_security.py::test_iso_001"
+      ],
+      "subsystem": "security",
+      "blocking": true
+    },
+    {
+      "id": "security.approval_binding",
+      "targets": [
+        "tests/test_m15_2_security.py::test_approval_001"
+      ],
+      "subsystem": "security",
+      "blocking": true
+    },
+    {
+      "id": "security.secret_extraction",
+      "targets": [
+        "tests/test_m15_2_security.py::test_secret_001"
+      ],
+      "subsystem": "security",
+      "blocking": true
+    },
+    {
+      "id": "security.mcp_clamp",
+      "targets": [
+        "tests/test_m15_2_security.py::test_mcp_001"
+      ],
+      "subsystem": "security",
+      "blocking": true
+    },
+    {
+      "id": "security.unsafe_retry",
+      "targets": [
+        "tests/test_m15_2_security.py::test_retry_001"
+      ],
+      "subsystem": "security",
+      "blocking": true
+    },
+    {
+      "id": "security.baseline",
+      "targets": [
+        "tests/test_m15_2_harness.py::test_baseline_generate_and_compare"
+      ],
+      "subsystem": "security",
+      "blocking": true
+    },
+    {
+      "id": "connectors.scope_exact",
+      "targets": [
+        "tests/test_m15_3_enterprise.py::test_scope_exact_match_missing"
+      ],
+      "subsystem": "connectors",
+      "blocking": true
+    },
+    {
+      "id": "connectors.scope_engine_denies",
+      "targets": [
+        "tests/test_m15_3_enterprise.py::test_engine_denies_missing_scope"
+      ],
+      "subsystem": "connectors",
+      "blocking": true
+    },
+    {
+      "id": "connectors.oauth_state",
+      "targets": [
+        "tests/test_m15_3_enterprise.py::test_oauth_state_mismatch_blocked"
+      ],
+      "subsystem": "connectors",
+      "blocking": true
+    },
+    {
+      "id": "connectors.oauth_wrong_user",
+      "targets": [
+        "tests/test_m15_3_enterprise.py::test_oauth_wrong_user_blocked"
+      ],
+      "subsystem": "connectors",
+      "blocking": true
+    },
+    {
+      "id": "connectors.oauth_refresh_no_widen",
+      "targets": [
+        "tests/test_m15_3_enterprise.py::test_oauth_refresh_no_widen"
+      ],
+      "subsystem": "connectors",
+      "blocking": true
+    },
+    {
+      "id": "connectors.account_substitution",
+      "targets": [
+        "tests/test_m15_3_enterprise.py::test_engine_account_substitution_after_approval"
+      ],
+      "subsystem": "connectors",
+      "blocking": true
+    },
+    {
+      "id": "connectors.circuit_breaker",
+      "targets": [
+        "tests/test_m15_3_enterprise.py::test_circuit_opens_and_half_open_recovers"
+      ],
+      "subsystem": "connectors",
+      "blocking": true
+    },
+    {
+      "id": "connectors.error_redaction",
+      "targets": [
+        "tests/test_m15_3_enterprise.py::test_error_taxonomy_redacts_and_classifies"
+      ],
+      "subsystem": "connectors",
+      "blocking": true
+    },
+    {
+      "id": "connectors.live_matrix_honest",
+      "targets": [
+        "tests/test_m15_3_enterprise.py::test_verification_matrix_no_fake_live"
+      ],
+      "subsystem": "connectors",
+      "blocking": true
+    },
+    {
+      "id": "security.redteam_secretleak",
+      "targets": [
+        "tests/test_m15_2_security.py::test_full_suite_no_release_blocking"
+      ],
+      "subsystem": "security",
+      "blocking": true
+    },
+    {
+      "id": "control.overview_real",
+      "targets": [
+        "tests/test_m16_control_center.py::test_overview_real_sources"
+      ],
+      "subsystem": "control_center",
+      "blocking": true
+    },
+    {
+      "id": "control.partial_failure",
+      "targets": [
+        "tests/test_m16_control_center.py::test_partial_failure_degrades_not_crash"
+      ],
+      "subsystem": "control_center",
+      "blocking": true
+    },
+    {
+      "id": "control.read_only_api",
+      "targets": [
+        "tests/test_m16_control_center.py::test_control_api_is_read_only"
+      ],
+      "subsystem": "control_center",
+      "blocking": true
+    },
+    {
+      "id": "control.auth",
+      "targets": [
+        "tests/test_m16_control_center.py::test_control_api_requires_auth"
+      ],
+      "subsystem": "control_center",
+      "blocking": true
+    },
+    {
+      "id": "control.search_isolation",
+      "targets": [
+        "tests/test_m16_control_center.py::test_search_owner_scoped_executions"
+      ],
+      "subsystem": "control_center",
+      "blocking": true
+    },
+    {
+      "id": "control.no_bypass",
+      "targets": [
+        "tests/test_m16_control_center.py::test_actions_point_at_canonical_apis"
+      ],
+      "subsystem": "control_center",
+      "blocking": true
+    },
+    {
+      "id": "control.ui_real_api",
+      "targets": [
+        "tests/test_m16_control_center.py::test_ui_uses_control_api"
+      ],
+      "subsystem": "control_center",
+      "blocking": true
+    },
+    {
+      "id": "computer.ops_gateway_routed",
+      "targets": [
+        "tests/test_m17_computer_agent.py::test_read_op_no_approval"
+      ],
+      "subsystem": "computer_agent",
+      "blocking": true
+    },
+    {
+      "id": "computer.destructive_gated",
+      "targets": [
+        "tests/test_m17_computer_agent.py::test_delete_requires_approval_or_blocked"
+      ],
+      "subsystem": "computer_agent",
+      "blocking": true
+    },
+    {
+      "id": "computer.never_assume_success",
+      "targets": [
+        "tests/test_m17_computer_agent.py::test_unverified_action_is_uncertain"
+      ],
+      "subsystem": "computer_agent",
+      "blocking": true
+    },
+    {
+      "id": "computer.replay_redacts",
+      "targets": [
+        "tests/test_m17_computer_agent.py::test_replay_redacts_credentials"
+      ],
+      "subsystem": "computer_agent",
+      "blocking": true
+    },
+    {
+      "id": "computer.provider_honesty",
+      "targets": [
+        "tests/test_m17_computer_agent.py::test_provider_availability_honest"
+      ],
+      "subsystem": "computer_agent",
+      "blocking": true
+    },
+    {
+      "id": "computer.cross_user_isolation",
+      "targets": [
+        "tests/test_m17_computer_agent.py::test_cross_user_desktop_history_isolated"
+      ],
+      "subsystem": "computer_agent",
+      "blocking": true
+    },
+    {
+      "id": "computer.redteam",
+      "targets": [
+        "tests/test_m15_2_security.py::test_full_suite_no_release_blocking"
+      ],
+      "subsystem": "computer_agent",
+      "blocking": true
+    },
+    {
+      "id": "computer.active_session",
+      "targets": [
+        "tests/test_m17_hardening.py::test_emergency_stop_halts_control"
+      ],
+      "subsystem": "computer_agent",
+      "blocking": true
+    },
+    {
+      "id": "computer.app_allowlist",
+      "targets": [
+        "tests/test_m17_hardening.py::test_app_allowlist_enforced"
+      ],
+      "subsystem": "computer_agent",
+      "blocking": true
+    },
+    {
+      "id": "computer.origin_allowlist",
+      "targets": [
+        "tests/test_m17_hardening.py::test_origin_allowlist_enforced"
+      ],
+      "subsystem": "computer_agent",
+      "blocking": true
+    },
+    {
+      "id": "computer.sensitive_not_recorded",
+      "targets": [
+        "tests/test_m17_hardening.py::test_sensitive_field_pauses_and_not_recorded"
+      ],
+      "subsystem": "computer_agent",
+      "blocking": true
+    },
+    {
+      "id": "computer.file_root_confinement",
+      "targets": [
+        "tests/test_m17_hardening.py::test_file_root_traversal_blocked"
+      ],
+      "subsystem": "computer_agent",
+      "blocking": true
+    },
+    {
+      "id": "computer.injection_guards",
+      "targets": [
+        "tests/test_m17_hardening.py::test_shell_and_applescript_guards"
+      ],
+      "subsystem": "computer_agent",
+      "blocking": true
+    },
+    {
+      "id": "computer.mfa_captcha_refuse",
+      "targets": [
+        "tests/test_m17_hardening.py::test_captcha_mfa_detection_and_refusal"
+      ],
+      "subsystem": "computer_agent",
+      "blocking": true
+    },
+    {
+      "id": "computer.postcondition_required",
+      "targets": [
+        "tests/test_m17_hardening.py::test_intent_requires_postcondition_for_mutation"
+      ],
+      "subsystem": "computer_agent",
+      "blocking": true
+    },
+    {
+      "id": "computer.coord_not_default",
+      "targets": [
+        "tests/test_m17_hardening.py::test_coordinate_not_default_with_structured_element"
+      ],
+      "subsystem": "computer_agent",
+      "blocking": true
+    },
+    {
+      "id": "computer.recovery_no_unsafe_retry",
+      "targets": [
+        "tests/test_m17_hardening.py::test_recovery_irreversible_uncertain_stops"
+      ],
+      "subsystem": "computer_agent",
+      "blocking": true
+    },
+    {
+      "id": "computer.perm_readiness",
+      "targets": [
+        "tests/test_m17_1_live.py::test_permission_summary_honest"
+      ],
+      "subsystem": "computer_agent",
+      "blocking": true
+    },
+    {
+      "id": "computer.workspace_confined",
+      "targets": [
+        "tests/test_m17_1_live.py::test_workspace_confined_and_gitignored"
+      ],
+      "subsystem": "computer_agent",
+      "blocking": true
+    },
+    {
+      "id": "computer.live_report_honest",
+      "targets": [
+        "tests/test_m17_1_live.py::test_live_report_classifies_honestly"
+      ],
+      "subsystem": "computer_agent",
+      "blocking": true
+    },
+    {
+      "id": "computer.cdp_loopback",
+      "targets": [
+        "tests/test_m15_2_security.py::test_full_suite_no_release_blocking"
+      ],
+      "subsystem": "computer_agent",
+      "blocking": true
+    },
+    {
+      "id": "native.perm_honest",
+      "targets": [
+        "tests/test_m17_2_native.py::test_permission_summary_honest"
+      ],
+      "subsystem": "computer_agent",
+      "blocking": true
+    },
+    {
+      "id": "native.exec_identity",
+      "targets": [
+        "tests/test_m17_2_native.py::test_executable_identity_stable"
+      ],
+      "subsystem": "computer_agent",
+      "blocking": true
+    },
+    {
+      "id": "native.ops_gateway",
+      "targets": [
+        "tests/test_m17_2_native.py::test_native_ops_registered_gateway_routed"
+      ],
+      "subsystem": "computer_agent",
+      "blocking": true
+    },
+    {
+      "id": "native.workspace_confined",
+      "targets": [
+        "tests/test_m17_2_native.py::test_native_workspace_confined_no_symlink"
+      ],
+      "subsystem": "computer_agent",
+      "blocking": true
+    },
+    {
+      "id": "native.report_honest",
+      "targets": [
+        "tests/test_m17_2_native.py::test_native_report_classifies_honestly"
+      ],
+      "subsystem": "computer_agent",
+      "blocking": true
+    },
+    {
+      "id": "native.spoof_pid",
+      "targets": [
+        "tests/test_m17_2_native.py::test_live_identity_verification_rejects_spoofed_pid"
+      ],
+      "subsystem": "computer_agent",
+      "blocking": true
+    },
+    {
+      "id": "harness.untrusted_blocked",
+      "targets": [
+        "tests/test_m17_3_harness.py::test_untrusted_cannot_execute"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "harness.adapter_argv_only",
+      "targets": [
+        "tests/test_m17_3_harness.py::test_adapter_rejects_shell_string"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "harness.shell_inject",
+      "targets": [
+        "tests/test_m17_3_harness.py::test_shell_injection_arg_rejected"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "harness.source_resets_trust",
+      "targets": [
+        "tests/test_m17_3_harness.py::test_source_change_resets_trust"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "harness.agent_no_promote",
+      "targets": [
+        "tests/test_m17_3_harness.py::test_agent_cannot_promote_to_approved"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "harness.import_untrusted",
+      "targets": [
+        "tests/test_m17_3_harness.py::test_importer_untrusted_and_rejects_bad"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "harness.independent_verify",
+      "targets": [
+        "tests/test_m17_3_harness.py::test_live_ffmpeg_probe_and_transcode_verified"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "harness.xxe_zipslip",
+      "targets": [
+        "tests/test_m17_3_harness.py::test_xxe_rejected"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "harness.cross_user",
+      "targets": [
+        "tests/test_m17_3_harness.py::test_service_cross_user_blocked"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "harness.discovery_honest",
+      "targets": [
+        "tests/test_m17_4_multiapp.py::test_discovery_honest"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "harness.install_path_hijack",
+      "targets": [
+        "tests/test_m17_4_multiapp.py::test_install_path_hijack_rejected"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "harness.install_no_url",
+      "targets": [
+        "tests/test_m17_4_multiapp.py::test_install_embedded_command_refused"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "harness.update_resets_trust4",
+      "targets": [
+        "tests/test_m17_4_multiapp.py::test_update_resets_trust_and_backup"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "harness.revoke_blocks",
+      "targets": [
+        "tests/test_m17_4_multiapp.py::test_revoke_and_uninstall_block"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "harness.zip_bomb",
+      "targets": [
+        "tests/test_m17_4_multiapp.py::test_zip_bomb_rejected"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "harness.resource_limits",
+      "targets": [
+        "tests/test_m17_4_multiapp.py::test_resource_limits_preexec"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "harness.dep_blocked_not_exec",
+      "targets": [
+        "tests/test_m17_4_multiapp.py::test_registry_has_multiapp_defs"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "sqlite.two_live_apps",
+      "targets": [
+        "tests/test_m17_5_sqlite.py::test_two_live_applications_registered"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "sqlite.injection_rejected",
+      "targets": [
+        "tests/test_m17_5_sqlite.py::test_forbidden_sql_rejected"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "sqlite.readonly_no_write",
+      "targets": [
+        "tests/test_m17_5_sqlite.py::test_live_query_readonly_cannot_write"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "sqlite.cross_user",
+      "targets": [
+        "tests/test_m17_5_sqlite.py::test_cross_user_blocked"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "jq.three_live_apps",
+      "targets": [
+        "tests/test_m17_6_jq.py::test_three_live_applications"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "jq.filter_injection",
+      "targets": [
+        "tests/test_m17_6_jq.py::test_forbidden_filters_rejected"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "jq.invalid_not_success",
+      "targets": [
+        "tests/test_m17_6_jq.py::test_invalid_output_not_success"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "jq.cross_user",
+      "targets": [
+        "tests/test_m17_6_jq.py::test_cross_user_blocked"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "ledger.import_and_migration_safe",
+      "targets": [
+        "tests/test_m17_9_run_ledger.py::test_migration_preserves_provenance_and_backs_up",
+        "tests/test_m17_9_run_ledger.py::test_migration_is_idempotent_and_reversible",
+        "tests/test_m17_9_run_ledger.py::test_migration_never_overwrites_live_ledger_run"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "ledger.valid_transitions_enforced",
+      "targets": [
+        "tests/test_m17_9_run_ledger.py::test_illegal_edge_fails_closed",
+        "tests/test_m17_9_run_ledger.py::test_valid_lifecycle"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "ledger.terminal_immutable",
+      "targets": [
+        "tests/test_m17_9_run_ledger.py::test_terminal_state_is_immutable",
+        "tests/test_m17_9_redteam.py::test_probe_terminal_resurrection"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "ledger.one_claimant_per_run",
+      "targets": [
+        "tests/test_m17_9_concurrency.py::test_concurrent_claim_exactly_one_winner",
+        "tests/test_m17_9_redteam.py::test_probe_duplicate_claim"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "ledger.ownership_safe_cancel",
+      "targets": [
+        "tests/test_m17_9_run_ledger.py::test_cross_user_cancel_denied",
+        "tests/test_m17_9_integration.py::test_cli_mutations_and_reads_require_admin_mode",
+        "tests/test_m17_9_integration.py::test_cli_no_requester_or_owner_flag_is_trusted"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "ledger.crash_recovery_idempotent",
+      "targets": [
+        "tests/test_m17_9_live.py::test_live_crash_reconciled",
+        "tests/test_m17_9_run_ledger.py::test_reconcile_dead_pid_once_and_idempotent"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "ledger.stale_run_reconciliation",
+      "targets": [
+        "tests/test_m17_9_run_ledger.py::test_reconcile_stale_recovers_and_reports_attention",
+        "tests/test_m17_9_redteam.py::test_probe_recovery_of_live_process"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "ledger.no_process_control_bypass",
+      "targets": [
+        "tests/test_m17_9_redteam.py::test_probe_no_process_control_in_ledger"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "ledger.idempotency_uniqueness",
+      "targets": [
+        "tests/test_m17_9_run_ledger.py::test_idempotency_key_prevents_duplicate_run",
+        "tests/test_m17_9_redteam.py::test_probe_idempotency_collision"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "ledger.database_integrity",
+      "targets": [
+        "tests/test_m17_9_run_ledger.py::test_health_reports_integrity_and_census",
+        "tests/test_m17_9_live.py::test_restart_persistence"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "ledger.control_center_contract",
+      "targets": [
+        "tests/test_m17_9_integration.py::test_control_center_shows_ledger",
+        "tests/test_m17_9_integration.py::test_control_center_scoped_to_owner"
+      ],
+      "subsystem": "control_center",
+      "blocking": true
+    },
+    {
+      "id": "ledger.monitor_alerting",
+      "targets": [
+        "tests/test_m17_10_run_monitor.py::test_repeated_sweep_does_not_duplicate_alert",
+        "tests/test_m17_10_run_monitor.py::test_terminal_auto_resolves_open_alerts",
+        "tests/test_m17_10_run_monitor.py::test_concurrent_sweeps_no_duplicate_alerts",
+        "tests/test_m17_10_run_monitor.py::test_open_alerts_owner_scoped_and_safe",
+        "tests/test_m17_10_run_monitor.py::test_acknowledge_alert_audited_and_fail_closed"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "ledger.monitor_control_center_contract",
+      "targets": [
+        "tests/test_m17_10_run_monitor.py::test_control_center_attention_surfaces_alerts",
+        "tests/test_m17_10_run_monitor.py::test_cli_monitor_commands_admin_gated"
+      ],
+      "subsystem": "control_center",
+      "blocking": true
+    },
+    {
+      "id": "notification.delivery_dedup_and_local",
+      "targets": [
+        "tests/test_m17_11_notification_delivery.py::test_alert_creates_one_delivery",
+        "tests/test_m17_11_notification_delivery.py::test_repeated_enqueue_no_duplicate",
+        "tests/test_m17_11_notification_delivery.py::test_successful_local_delivery_writes_durable_evidence",
+        "tests/test_m17_11_notification_delivery.py::test_local_transport_idempotent"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "notification.retry_and_terminal",
+      "targets": [
+        "tests/test_m17_11_notification_delivery.py::test_first_failure_schedules_retry_deterministically",
+        "tests/test_m17_11_notification_delivery.py::test_max_attempts_then_terminal_failed",
+        "tests/test_m17_11_notification_delivery.py::test_delivered_is_never_retried",
+        "tests/test_m17_11_notification_delivery.py::test_restart_resumes_retry_wait"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "notification.suppression",
+      "targets": [
+        "tests/test_m17_11_notification_delivery.py::test_resolved_alert_suppresses_pending_delivery",
+        "tests/test_m17_11_notification_delivery.py::test_acknowledged_alert_suppresses_pending_delivery",
+        "tests/test_m17_11_notification_delivery.py::test_acknowledged_alert_creates_no_new_delivery"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "notification.concurrency",
+      "targets": [
+        "tests/test_m17_11_notification_delivery.py::test_concurrent_delivery_creation_dedups",
+        "tests/test_m17_11_notification_delivery.py::test_concurrent_claim_single_winner",
+        "tests/test_m17_11_notification_delivery.py::test_concurrent_dispatch_single_delivery_line",
+        "tests/test_m17_11_notification_delivery.py::test_stale_claim_reclaimed"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "notification.security",
+      "targets": [
+        "tests/test_m17_11_notification_delivery.py::test_open_deliveries_owner_scoped",
+        "tests/test_m17_11_notification_delivery.py::test_admin_retry_forged_empty_identity_rejected",
+        "tests/test_m17_11_notification_delivery.py::test_error_summary_bounded_and_no_secret_dump",
+        "tests/test_m17_11_notification_delivery.py::test_cli_notification_commands_admin_gated",
+        "tests/test_m17_11_notification_delivery.py::test_malicious_alert_content_is_data_not_executed"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "notification.scheduler_integration",
+      "targets": [
+        "tests/test_m17_11_notification_delivery.py::test_scheduler_registration_is_idempotent",
+        "tests/test_m17_11_notification_delivery.py::test_scheduler_disabled_by_default",
+        "tests/test_m17_11_notification_delivery.py::test_scheduler_overlap_is_skipped",
+        "tests/test_m17_11_notification_delivery.py::test_scheduler_sweep_failure_isolated_from_delivery"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "notification.control_center_contract",
+      "targets": [
+        "tests/test_m17_11_notification_delivery.py::test_control_center_exposes_delivery_health"
+      ],
+      "subsystem": "control_center",
+      "blocking": true
+    },
+    {
+      "id": "pipeline.live_chain_and_wiring",
+      "targets": [
+        "tests/test_m17_12_harness_pipeline.py::test_live_sqlite_then_zip_pipeline_succeeds",
+        "tests/test_m17_12_harness_pipeline.py::test_pipeline_artifact_wiring_uses_prior_output"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "pipeline.fail_closed_short_circuit",
+      "targets": [
+        "tests/test_m17_12_harness_pipeline.py::test_pipeline_fail_closed_short_circuits",
+        "tests/test_m17_12_harness_pipeline.py::test_pipeline_unknown_harness_operation_fails_closed",
+        "tests/test_m17_12_harness_pipeline.py::test_pipeline_non_executable_harness_fails_closed",
+        "tests/test_m17_12_harness_pipeline.py::test_pipeline_step_builder_error_fails_closed"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "pipeline.workspace_confinement",
+      "targets": [
+        "tests/test_m17_12_harness_pipeline.py::test_pipeline_confinement_rejects_escaping_produces",
+        "tests/test_m17_12_harness_pipeline.py::test_pipeline_confinement_rejects_absolute_produces",
+        "tests/test_m17_12_harness_pipeline.py::test_pipeline_confinement_rejects_escaping_verify_target"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "pipeline.approval_and_shell_safety",
+      "targets": [
+        "tests/test_m17_12_harness_pipeline.py::test_pipeline_approval_gated_step_halts",
+        "tests/test_m17_12_harness_pipeline.py::test_pipeline_approved_step_proceeds",
+        "tests/test_m17_12_harness_pipeline.py::test_pipeline_argv_control_char_blocked_not_shelled"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "pipeline.owner_scope_and_safe_records",
+      "targets": [
+        "tests/test_m17_12_harness_pipeline.py::test_pipeline_owner_scoped_inspect",
+        "tests/test_m17_12_harness_pipeline.py::test_pipeline_records_are_owner_safe",
+        "tests/test_m17_12_harness_pipeline.py::test_pipeline_secret_shaped_name_rejected"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "pipeline.ledger_invariants_and_concurrency",
+      "targets": [
+        "tests/test_m17_12_harness_pipeline.py::test_pipeline_duplicate_id_rejected",
+        "tests/test_m17_12_harness_pipeline.py::test_pipeline_terminal_immutable",
+        "tests/test_m17_12_harness_pipeline.py::test_concurrent_pipeline_create_dedups"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "pipeline.control_center_contract",
+      "targets": [
+        "tests/test_m17_12_harness_pipeline.py::test_control_center_surfaces_failed_pipeline"
+      ],
+      "subsystem": "control_center",
+      "blocking": true
+    },
+    {
+      "id": "mission.completes_via_delegated_pipeline",
+      "targets": [
+        "tests/test_m17_13_mission_engine.py::test_mission_completes_via_delegated_pipeline",
+        "tests/test_m17_13_mission_engine.py::test_mission_never_executes_tools_directly"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "mission.fail_closed_no_partial_success",
+      "targets": [
+        "tests/test_m17_13_mission_engine.py::test_pipeline_failure_fails_the_mission",
+        "tests/test_m17_13_mission_engine.py::test_template_that_raises_fails_closed",
+        "tests/test_m17_13_mission_engine.py::test_template_producing_no_steps_fails_closed"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "mission.owner_isolation",
+      "targets": [
+        "tests/test_m17_13_mission_engine.py::test_owner_mismatch_is_rejected_everywhere"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "mission.approval_gates_honoured",
+      "targets": [
+        "tests/test_m17_13_mission_engine.py::test_approval_required_mission_cannot_queue_without_approval",
+        "tests/test_m17_13_mission_engine.py::test_approval_required_mission_runs_after_approval",
+        "tests/test_m17_13_mission_engine.py::test_no_approval_mission_auto_approves_on_enqueue"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "mission.state_machine_and_immutability",
+      "targets": [
+        "tests/test_m17_13_mission_engine.py::test_cannot_run_a_draft_mission",
+        "tests/test_m17_13_mission_engine.py::test_terminal_mission_is_immutable",
+        "tests/test_m17_13_mission_engine.py::test_invalid_transition_rejected",
+        "tests/test_m17_13_mission_engine.py::test_begin_run_is_idempotent_guarded"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "mission.retry_and_ledger_invariants",
+      "targets": [
+        "tests/test_m17_13_mission_engine.py::test_retry_rejected_for_completed_mission",
+        "tests/test_m17_13_mission_engine.py::test_retry_rejected_for_draft_mission",
+        "tests/test_m17_13_mission_engine.py::test_retry_of_failed_mission_clones_new_instance",
+        "tests/test_m17_13_mission_engine.py::test_duplicate_mission_id_rejected",
+        "tests/test_m17_13_mission_engine.py::test_secret_shaped_params_rejected",
+        "tests/test_m17_13_mission_engine.py::test_create_rejects_invalid_parameters_before_execution"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "mission.control_center_contract",
+      "targets": [
+        "tests/test_m17_13_mission_engine.py::test_control_center_surfaces_failed_and_pending_missions"
+      ],
+      "subsystem": "control_center",
+      "blocking": true
+    },
+    {
+      "id": "scheduler.due_idempotency",
+      "targets": [
+        "tests/test_m17_14_mission_scheduler.py::test_no_duplicate_occurrence_for_same_due_time",
+        "tests/test_m17_14_mission_scheduler.py::test_one_time_schedule_runs_exactly_once",
+        "tests/test_m17_14_mission_scheduler.py::test_interval_produces_expected_due_times",
+        "tests/test_m17_14_mission_scheduler.py::test_no_duplicate_mission_after_crash_window"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "scheduler.claim_concurrency",
+      "targets": [
+        "tests/test_m17_14_mission_scheduler.py::test_multithread_duplicate_occurrence_creation_one_winner",
+        "tests/test_m17_14_mission_scheduler.py::test_multiprocess_duplicate_occurrence_creation_one_winner",
+        "tests/test_m17_14_mission_scheduler.py::test_exactly_one_claim_winner_and_active_lease_not_stealable",
+        "tests/test_m17_14_mission_scheduler.py::test_expired_lease_can_be_reclaimed"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "scheduler.restart_recovery",
+      "targets": [
+        "tests/test_m17_14_mission_scheduler.py::test_crash_after_claim_no_mission_requeues",
+        "tests/test_m17_14_mission_scheduler.py::test_crash_after_mission_creation_reconciles_existing_mission",
+        "tests/test_m17_14_mission_scheduler.py::test_crash_after_mission_completion_finalizes_occurrence"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "scheduler.mission_delegation",
+      "targets": [
+        "tests/test_m17_14_mission_scheduler.py::test_scheduler_module_has_no_execution_shortcut",
+        "tests/test_m17_14_mission_scheduler.py::test_dispatch_delegates_through_missionengine_to_pipeline"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "scheduler.approval_and_owner_safety",
+      "targets": [
+        "tests/test_m17_14_mission_scheduler.py::test_approval_required_scheduled_mission_stops_at_approval_required",
+        "tests/test_m17_14_mission_scheduler.py::test_owner_mismatch_executes_nothing",
+        "tests/test_m17_14_mission_scheduler.py::test_invalid_template_at_dispatch_executes_nothing",
+        "tests/test_m17_14_mission_scheduler.py::test_no_retry_for_approval_owner_or_param_failures"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "scheduler.event_trigger_dedup",
+      "targets": [
+        "tests/test_m17_14_mission_scheduler.py::test_allowlisted_event_creates_exactly_one_mission",
+        "tests/test_m17_14_mission_scheduler.py::test_unknown_event_rejected",
+        "tests/test_m17_14_mission_scheduler.py::test_duplicate_source_event_deduplicated",
+        "tests/test_m17_14_mission_scheduler.py::test_unexpected_payload_field_rejected",
+        "tests/test_m17_14_mission_scheduler.py::test_owner_approval_risk_cannot_be_overridden_by_payload"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "scheduler.control_center_owner_scope",
+      "targets": [
+        "tests/test_m17_14_mission_scheduler.py::test_control_center_scheduler_attention_and_owner_scope",
+        "tests/test_m17_14_mission_scheduler.py::test_control_center_stale_lease_attention"
+      ],
+      "subsystem": "control_center",
+      "blocking": true
+    },
+    {
+      "id": "scheduler.database_backup_restore",
+      "targets": [
+        "tests/test_m17_14_mission_scheduler.py::test_scheduler_ledger_survives_backup_restore"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "pipeline_recovery.checkpoint_integrity",
+      "targets": [
+        "tests/test_m17_15_pipeline_recovery.py::test_verified_step_creates_valid_checkpoint",
+        "tests/test_m17_15_pipeline_recovery.py::test_missing_artifact_invalidates",
+        "tests/test_m17_15_pipeline_recovery.py::test_modified_artifact_invalidates",
+        "tests/test_m17_15_pipeline_recovery.py::test_path_escape_artifact_rejected"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "pipeline_recovery.resume_contiguous_prefix",
+      "targets": [
+        "tests/test_m17_15_pipeline_recovery.py::test_unchanged_prefix_reusable",
+        "tests/test_m17_15_pipeline_recovery.py::test_changed_step_definition_invalidates",
+        "tests/test_m17_15_pipeline_recovery.py::test_resume_reuses_prefix_and_completes",
+        "tests/test_m17_15_pipeline_recovery.py::test_resume_does_not_rerun_verified_step",
+        "tests/test_m17_15_pipeline_recovery.py::test_resume_starts_at_first_invalid_middle_step"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "pipeline_recovery.retry_policy",
+      "targets": [
+        "tests/test_m17_15_pipeline_recovery.py::test_retry_eligibility_allowlist",
+        "tests/test_m17_15_pipeline_recovery.py::test_eligible_transient_retry_succeeds_after_backoff",
+        "tests/test_m17_15_pipeline_recovery.py::test_retry_bounded_and_backoff_then_exhausted",
+        "tests/test_m17_15_pipeline_recovery.py::test_non_retryable_failure_does_not_retry"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "pipeline_recovery.crash_reconciliation",
+      "targets": [
+        "tests/test_m17_15_pipeline_recovery.py::test_reconcile_avoids_duplicate_execution",
+        "tests/test_m17_15_pipeline_recovery.py::test_uncertain_execution_fails_closed_stop_uncertain"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "pipeline_recovery.concurrency_dedup",
+      "targets": [
+        "tests/test_m17_15_pipeline_recovery.py::test_active_recovery_lease_not_stealable_expired_reclaimable",
+        "tests/test_m17_15_pipeline_recovery.py::test_duplicate_resume_deduplicated"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "pipeline_recovery.approval_owner_safety",
+      "targets": [
+        "tests/test_m17_15_pipeline_recovery.py::test_increased_risk_invalidates_checkpoint_reuse",
+        "tests/test_m17_15_pipeline_recovery.py::test_resume_stops_closed_at_approval_required",
+        "tests/test_m17_15_pipeline_recovery.py::test_approval_required_failure_does_not_retry",
+        "tests/test_m17_15_pipeline_recovery.py::test_resume_owner_mismatch_rejected",
+        "tests/test_m17_15_pipeline_recovery.py::test_recovery_module_has_no_execution_shortcut"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "pipeline_recovery.mission_scheduler_integration",
+      "targets": [
+        "tests/test_m17_15_pipeline_recovery.py::test_mission_pipeline_resume_no_duplicate_mission"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "pipeline_recovery.control_center_owner_scope",
+      "targets": [
+        "tests/test_m17_15_pipeline_recovery.py::test_control_center_recovery_attention_owner_safe"
+      ],
+      "subsystem": "control_center",
+      "blocking": true
+    },
+    {
+      "id": "pipeline_recovery.database_backup_restore",
+      "targets": [
+        "tests/test_m17_15_pipeline_recovery.py::test_recovery_ledger_survives_backup_restore"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "pipeline_graph.validation",
+      "targets": [
+        "tests/test_m17_16_parallel_pipeline.py::test_valid_diamond_graph",
+        "tests/test_m17_16_parallel_pipeline.py::test_valid_three_branch_graph",
+        "tests/test_m17_16_parallel_pipeline.py::test_duplicate_step_id_rejected",
+        "tests/test_m17_16_parallel_pipeline.py::test_missing_dependency_rejected",
+        "tests/test_m17_16_parallel_pipeline.py::test_self_dependency_rejected",
+        "tests/test_m17_16_parallel_pipeline.py::test_cycle_rejected",
+        "tests/test_m17_16_parallel_pipeline.py::test_owner_mismatch_rejected",
+        "tests/test_m17_16_parallel_pipeline.py::test_graph_size_limit_enforced",
+        "tests/test_m17_16_parallel_pipeline.py::test_concurrency_limit_enforced",
+        "tests/test_m17_16_parallel_pipeline.py::test_nested_fork_rejected",
+        "tests/test_m17_16_parallel_pipeline.py::test_second_join_rejected",
+        "tests/test_m17_16_parallel_pipeline.py::test_branch_width_exceeded_rejected",
+        "tests/test_m17_16_parallel_pipeline.py::test_artifact_collision_rejected",
+        "tests/test_m17_16_parallel_pipeline.py::test_secret_shaped_name_rejected",
+        "tests/test_m17_16_parallel_pipeline.py::test_path_escape_rejected",
+        "tests/test_m17_16_parallel_pipeline.py::test_unknown_harness_rejected",
+        "tests/test_m17_16_parallel_pipeline.py::test_invalid_graph_executes_nothing"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "pipeline_graph.ready_queue",
+      "targets": [
+        "tests/test_m17_16_parallel_pipeline.py::test_diamond_runs_and_join_receives_both_branches",
+        "tests/test_m17_16_parallel_pipeline.py::test_branch_sees_only_declared_dependency_artifacts"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "pipeline_graph.parallel_execution",
+      "targets": [
+        "tests/test_m17_16_parallel_pipeline.py::test_two_branches_execute_concurrently_under_bound",
+        "tests/test_m17_16_parallel_pipeline.py::test_worker_bound_serializes_when_limit_one",
+        "tests/test_m17_16_parallel_pipeline.py::test_each_step_passes_through_run_harness_action"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "pipeline_graph.join_barrier",
+      "targets": [
+        "tests/test_m17_16_parallel_pipeline.py::test_diamond_runs_and_join_receives_both_branches",
+        "tests/test_m17_16_parallel_pipeline.py::test_branch_failure_prevents_join"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "pipeline_graph.fail_closed",
+      "targets": [
+        "tests/test_m17_16_parallel_pipeline.py::test_branch_failure_prevents_join",
+        "tests/test_m17_16_parallel_pipeline.py::test_approval_required_branch_blocks_join",
+        "tests/test_m17_16_parallel_pipeline.py::test_risk4_branch_needs_approval_and_blocks_join"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "pipeline_graph.checkpoint_resume",
+      "targets": [
+        "tests/test_m17_16_parallel_pipeline.py::test_partial_reuse_reruns_only_failed_branch_and_descendants",
+        "tests/test_m17_16_parallel_pipeline.py::test_invalid_root_invalidates_all_downstream",
+        "tests/test_m17_16_parallel_pipeline.py::test_artifact_tamper_invalidates_branch_and_join_only",
+        "tests/test_m17_16_parallel_pipeline.py::test_reusable_subgraph_is_dependency_closed",
+        "tests/test_m17_16_parallel_pipeline.py::test_duplicate_resume_deduplicated"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "pipeline_graph.retry_isolation",
+      "targets": [
+        "tests/test_m17_16_parallel_pipeline.py::test_retryable_failure_reruns_only_that_branch",
+        "tests/test_m17_16_parallel_pipeline.py::test_non_retryable_categories_are_not_retried"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "pipeline_graph.crash_reconciliation",
+      "targets": [
+        "tests/test_m17_16_parallel_pipeline.py::test_stale_step_claim_reclaimed",
+        "tests/test_m17_16_parallel_pipeline.py::test_crash_before_join_no_duplicate_branch_work"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "pipeline_graph.concurrency_dedup",
+      "targets": [
+        "tests/test_m17_16_parallel_pipeline.py::test_duplicate_graph_launch_deduplicated",
+        "tests/test_m17_16_parallel_pipeline.py::test_exactly_one_claim_per_step_and_not_stealable",
+        "tests/test_m17_16_parallel_pipeline.py::test_each_step_claimed_exactly_once_during_run"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "pipeline_graph.approval_owner_safety",
+      "targets": [
+        "tests/test_m17_16_parallel_pipeline.py::test_owner_mismatch_executes_nothing",
+        "tests/test_m17_16_parallel_pipeline.py::test_cross_owner_graph_inspection_hidden",
+        "tests/test_m17_16_parallel_pipeline.py::test_risk_increase_changes_step_fingerprint",
+        "tests/test_m17_16_parallel_pipeline.py::test_graph_layer_opens_no_trading_surface"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "pipeline_graph.mission_scheduler_integration",
+      "targets": [
+        "tests/test_m17_16_parallel_pipeline.py::test_mission_launches_graph_through_pipeline_runner"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "pipeline_graph.control_center_owner_scope",
+      "targets": [
+        "tests/test_m17_16_parallel_pipeline.py::test_control_center_graph_cell_owner_safe"
+      ],
+      "subsystem": "control_center",
+      "blocking": true
+    },
+    {
+      "id": "pipeline_graph.database_backup_restore",
+      "targets": [
+        "tests/test_m17_16_parallel_pipeline.py::test_graph_ledger_survives_backup_restore"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "scheduled_graph.template_safety",
+      "targets": [
+        "tests/test_m17_17_scheduled_graph_recovery.py::test_graph_backed_template_registered",
+        "tests/test_m17_17_scheduled_graph_recovery.py::test_register_is_idempotent_and_additive",
+        "tests/test_m17_17_scheduled_graph_recovery.py::test_ordinary_sequential_template_unchanged",
+        "tests/test_m17_17_scheduled_graph_recovery.py::test_schedule_cannot_supply_graph_definition",
+        "tests/test_m17_17_scheduled_graph_recovery.py::test_unknown_template_rejected"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "scheduled_graph.launch_idempotency",
+      "targets": [
+        "tests/test_m17_17_scheduled_graph_recovery.py::test_due_occurrence_launches_one_graph_mission",
+        "tests/test_m17_17_scheduled_graph_recovery.py::test_repeated_dispatch_creates_no_duplicate"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "scheduled_graph.state_propagation",
+      "targets": [
+        "tests/test_m17_17_scheduled_graph_recovery.py::test_graph_success_completes_mission_and_occurrence",
+        "tests/test_m17_17_scheduled_graph_recovery.py::test_graph_approval_required_propagates",
+        "tests/test_m17_17_scheduled_graph_recovery.py::test_graph_stop_uncertain_fails_closed",
+        "tests/test_m17_17_scheduled_graph_recovery.py::test_retryable_failure_defers_not_settles_success",
+        "tests/test_m17_17_scheduled_graph_recovery.py::test_non_retryable_failure_is_terminal_not_deferred"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "scheduled_graph.restart_reconciliation",
+      "targets": [
+        "tests/test_m17_17_scheduled_graph_recovery.py::test_crash_after_graph_terminal_before_mission_settlement",
+        "tests/test_m17_17_scheduled_graph_recovery.py::test_crash_after_mission_terminal_before_occurrence_settlement"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "scheduled_graph.graph_recovery_reuse",
+      "targets": [
+        "tests/test_m17_17_scheduled_graph_recovery.py::test_recover_reuses_checkpoint_and_reruns_only_interrupted_branch",
+        "tests/test_m17_17_scheduled_graph_recovery.py::test_recover_is_idempotent",
+        "tests/test_m17_17_scheduled_graph_recovery.py::test_original_failed_mission_stays_immutable_after_recovery"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "scheduled_graph.retry_policy",
+      "targets": [
+        "tests/test_m17_17_scheduled_graph_recovery.py::test_retryable_failure_defers_not_settles_success",
+        "tests/test_m17_17_scheduled_graph_recovery.py::test_non_retryable_failure_is_terminal_not_deferred",
+        "tests/test_m17_17_scheduled_graph_recovery.py::test_approval_required_does_not_auto_recover"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "scheduled_graph.approval_owner_safety",
+      "targets": [
+        "tests/test_m17_17_scheduled_graph_recovery.py::test_graph_approval_required_propagates",
+        "tests/test_m17_17_scheduled_graph_recovery.py::test_approval_required_does_not_auto_recover",
+        "tests/test_m17_17_scheduled_graph_recovery.py::test_owner_mismatch_recover_fails_closed",
+        "tests/test_m17_17_scheduled_graph_recovery.py::test_health_is_owner_scoped"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "scheduled_graph.event_trigger_safety",
+      "targets": [
+        "tests/test_m17_17_scheduled_graph_recovery.py::test_trusted_event_launches_graph_mission_and_dedups",
+        "tests/test_m17_17_scheduled_graph_recovery.py::test_event_cannot_override_owner_or_template"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "scheduled_graph.concurrency_dedup",
+      "targets": [
+        "tests/test_m17_17_scheduled_graph_recovery.py::test_concurrent_dispatch_creates_one_mission_and_graph",
+        "tests/test_m17_17_scheduled_graph_recovery.py::test_concurrent_recover_creates_one_resumed_graph"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "scheduled_graph.mission_scheduler_layering",
+      "targets": [
+        "tests/test_m17_17_scheduled_graph_recovery.py::test_scheduler_does_not_call_graph_executor_or_recovery_directly",
+        "tests/test_m17_17_scheduled_graph_recovery.py::test_coordinator_fresh_launch_only_through_missionengine",
+        "tests/test_m17_17_scheduled_graph_recovery.py::test_graph_recovery_flag_defaults_off_for_scheduler",
+        "tests/test_m17_17_scheduled_graph_recovery.py::test_ordinary_sequential_scheduled_mission_still_works"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "scheduled_graph.control_center_owner_scope",
+      "targets": [
+        "tests/test_m17_17_scheduled_graph_recovery.py::test_control_center_attention_for_approval_and_owner_scope",
+        "tests/test_m17_17_scheduled_graph_recovery.py::test_health_is_owner_scoped"
+      ],
+      "subsystem": "control_center",
+      "blocking": true
+    },
+    {
+      "id": "scheduled_graph.trading_boundary",
+      "targets": [
+        "tests/test_m17_17_scheduled_graph_recovery.py::test_integration_module_opens_no_trading_surface",
+        "tests/test_m17_17_scheduled_graph_recovery.py::test_engine_recovery_methods_open_no_trading_surface"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "registry.boot_load_persists",
+      "targets": [
+        "tests/test_m17_18_registry_persistence.py::test_persist_then_reload_restores_non_pilot",
+        "tests/test_m17_18_registry_persistence.py::test_import_records_persists"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "registry.fail_closed_corrupt",
+      "targets": [
+        "tests/test_m17_18_registry_persistence.py::test_corrupt_json_fail_closed",
+        "tests/test_m17_18_registry_persistence.py::test_invalid_schema_fail_closed",
+        "tests/test_m17_18_registry_persistence.py::test_oversized_store_rejected"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "registry.no_trust_elevation",
+      "targets": [
+        "tests/test_m17_18_registry_persistence.py::test_external_trusted_on_disk_is_demoted",
+        "tests/test_m17_18_registry_persistence.py::test_secret_key_in_store_skipped",
+        "tests/test_m17_18_registry_persistence.py::test_shell_chain_in_entrypoint_skipped"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "registry.pilot_restrictive_overlay",
+      "targets": [
+        "tests/test_m17_18_registry_persistence.py::test_pilot_restrictive_overlay_from_disk"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "registry.trading_boundary",
+      "targets": [
+        "tests/test_m17_18_registry_persistence.py::test_registry_opens_no_trading_surface",
+        "tests/test_m17_18_registry_persistence.py::test_no_second_registry_module"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "registry.schema_version_supported",
+      "targets": [
+        "tests/test_m17_19_registry_untrusted_persistence.py::test_valid_versioned_registry_loads",
+        "tests/test_m17_19_registry_untrusted_persistence.py::test_unsupported_future_schema_rejected",
+        "tests/test_m17_19_registry_untrusted_persistence.py::test_legacy_entries_alias_migrates_deterministically"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "registry.persisted_payload_bounded",
+      "targets": [
+        "tests/test_m17_19_registry_untrusted_persistence.py::test_oversized_file_rejected_before_normal_loading",
+        "tests/test_m17_19_registry_untrusted_persistence.py::test_too_many_entries_rejected",
+        "tests/test_m17_19_registry_untrusted_persistence.py::test_overlong_name_or_description_rejected"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "registry.builtin_integrity_preserved",
+      "targets": [
+        "tests/test_m17_19_registry_untrusted_persistence.py::test_persisted_entry_cannot_replace_builtin_pilot",
+        "tests/test_m17_19_registry_untrusted_persistence.py::test_restrictive_trust_overlay_accepted",
+        "tests/test_m17_19_registry_untrusted_persistence.py::test_persisted_trust_cannot_broaden_builtin_trust"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "registry.atomic_write_verified",
+      "targets": [
+        "tests/test_m17_19_registry_untrusted_persistence.py::test_atomic_write_preserves_previous_on_failure",
+        "tests/test_m17_19_registry_untrusted_persistence.py::test_successful_write_produces_valid_parseable_json",
+        "tests/test_m17_19_registry_untrusted_persistence.py::test_temporary_files_cleaned_after_success"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "registry.untrusted_input_fail_closed",
+      "targets": [
+        "tests/test_m17_19_registry_untrusted_persistence.py::test_malformed_json_fail_closed",
+        "tests/test_m17_19_registry_untrusted_persistence.py::test_invalid_utf8_fail_closed",
+        "tests/test_m17_19_registry_untrusted_persistence.py::test_duplicate_harness_identifiers_rejected",
+        "tests/test_m17_19_registry_untrusted_persistence.py::test_unknown_security_sensitive_field_rejected",
+        "tests/test_m17_19_registry_untrusted_persistence.py::test_failed_import_leaves_memory_unchanged",
+        "tests/test_m17_19_registry_untrusted_persistence.py::test_registry_loading_cannot_engage_trading_guardian"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "registry.concurrent_write_serialized",
+      "targets": [
+        "tests/test_m17_20_registry_concurrency.py::test_two_writers_different_ids_both_survive",
+        "tests/test_m17_20_registry_concurrency.py::test_second_writer_times_out_safely",
+        "tests/test_m17_20_registry_concurrency.py::test_concurrent_imports_do_not_overwrite"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "registry.stale_revision_rejected",
+      "targets": [
+        "tests/test_m17_20_registry_concurrency.py::test_stale_revision_cannot_overwrite",
+        "tests/test_m17_20_registry_concurrency.py::test_revision_increments_after_success",
+        "tests/test_m17_20_registry_concurrency.py::test_failed_mutation_does_not_increment_revision"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "registry.lock_timeout_fail_closed",
+      "targets": [
+        "tests/test_m17_20_registry_concurrency.py::test_second_writer_times_out_safely",
+        "tests/test_m17_20_registry_concurrency.py::test_active_lock_not_stolen",
+        "tests/test_m17_20_registry_concurrency.py::test_lock_released_after_persist_failure"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "registry.in_memory_disk_consistent",
+      "targets": [
+        "tests/test_m17_20_registry_concurrency.py::test_restart_loads_latest_revision",
+        "tests/test_m17_20_registry_concurrency.py::test_failed_import_leaves_disk_unchanged",
+        "tests/test_m17_20_registry_concurrency.py::test_failed_import_leaves_memory_unchanged"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "registry.crash_recovery_preserves_valid_state",
+      "targets": [
+        "tests/test_m17_20_registry_concurrency.py::test_crash_before_persistence_leaves_previous_valid",
+        "tests/test_m17_20_registry_concurrency.py::test_crash_during_temp_write_leaves_previous",
+        "tests/test_m17_20_registry_concurrency.py::test_reader_never_observes_partial_json"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "registry.health_green",
+      "targets": [
+        "tests/test_m17_21_registry_health.py::test_health_score_perfect_on_clean_bootstrap",
+        "tests/test_m17_21_registry_health.py::test_score_function_pure"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "registry.health_score_valid",
+      "targets": [
+        "tests/test_m17_21_registry_health.py::test_failed_validation_lowers_score",
+        "tests/test_m17_21_registry_health.py::test_critical_failures_become_red",
+        "tests/test_m17_21_registry_health.py::test_health_deterministic"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "registry.health_metrics_complete",
+      "targets": [
+        "tests/test_m17_21_registry_health.py::test_health_metrics_complete",
+        "tests/test_m17_21_registry_health.py::test_critical_check_aggregation"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "registry.control_center_visible",
+      "targets": [
+        "tests/test_m17_21_registry_health.py::test_control_center_registry_cell",
+        "tests/test_m17_21_registry_health.py::test_control_center_overview_includes_registry_health",
+        "tests/test_m17_21_registry_health.py::test_attention_includes_registry_when_red"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "registry.ceo_summary_available",
+      "targets": [
+        "tests/test_m17_21_registry_health.py::test_ceo_summary_suppressed_when_green",
+        "tests/test_m17_21_registry_health.py::test_ceo_summary_shown_when_unhealthy",
+        "tests/test_m17_21_registry_health.py::test_safe_diagnostics_only"
+      ],
+      "subsystem": "application_harness",
+      "blocking": true
+    },
+    {
+      "id": "execution.gateway_present",
+      "targets": [
+        "tests/test_m17_22_execution_gateway.py::test_gateway_reuse_singleton_api",
+        "tests/test_m17_22_execution_gateway.py::test_successful_execution"
+      ],
+      "subsystem": "execution",
+      "blocking": true
+    },
+    {
+      "id": "execution.single_boundary",
+      "targets": [
+        "tests/test_m17_22_execution_gateway.py::test_state_transitions_valid_and_invalid",
+        "tests/test_m17_22_execution_gateway.py::test_connector_path_sets_gateway_ref"
+      ],
+      "subsystem": "execution",
+      "blocking": true
+    },
+    {
+      "id": "execution.approval_enforced",
+      "targets": [
+        "tests/test_m17_22_execution_gateway.py::test_approval_required_and_approve",
+        "tests/test_m17_22_execution_gateway.py::test_approval_binds_to_digest"
+      ],
+      "subsystem": "execution",
+      "blocking": true
+    },
+    {
+      "id": "execution.idempotent",
+      "targets": [
+        "tests/test_m17_22_execution_gateway.py::test_idempotency_same_toolintent",
+        "tests/test_m17_22_execution_gateway.py::test_duplicate_toolintent_digest"
+      ],
+      "subsystem": "execution",
+      "blocking": true
+    },
+    {
+      "id": "execution.evidence_generated",
+      "targets": [
+        "tests/test_m17_22_execution_gateway.py::test_evidence_generated",
+        "tests/test_m17_22_execution_gateway.py::test_no_secret_leakage"
+      ],
+      "subsystem": "execution",
+      "blocking": true
+    },
+    {
+      "id": "browser.gateway_boundary_present",
+      "targets": [
+        "tests/test_m17_23_browser_execution_gateway.py::test_navigate_through_gateway",
+        "tests/test_m17_23_browser_execution_gateway.py::test_m17_22_gateway_still_works"
+      ],
+      "subsystem": "browser",
+      "blocking": true
+    },
+    {
+      "id": "browser.domain_policy_enforced",
+      "targets": [
+        "tests/test_m17_23_browser_execution_gateway.py::test_disallowed_domain_rejected",
+        "tests/test_m17_23_browser_execution_gateway.py::test_metadata_blocked",
+        "tests/test_m17_23_browser_execution_gateway.py::test_dangerous_scheme_rejected"
+      ],
+      "subsystem": "browser",
+      "blocking": true
+    },
+    {
+      "id": "browser.high_risk_approval_enforced",
+      "targets": [
+        "tests/test_m17_23_browser_execution_gateway.py::test_submit_requires_approval",
+        "tests/test_m17_23_browser_execution_gateway.py::test_approved_submit_once"
+      ],
+      "subsystem": "browser",
+      "blocking": true
+    },
+    {
+      "id": "browser.idempotent_submission",
+      "targets": [
+        "tests/test_m17_23_browser_execution_gateway.py::test_duplicate_toolintent_no_double_submit",
+        "tests/test_m17_23_browser_execution_gateway.py::test_uncertain_submit_not_retried"
+      ],
+      "subsystem": "browser",
+      "blocking": true
+    },
+    {
+      "id": "browser.prompt_injection_isolated",
+      "targets": [
+        "tests/test_m17_23_browser_execution_gateway.py::test_page_content_not_new_intent",
+        "tests/test_m17_23_browser_execution_gateway.py::test_prompt_injection_isolated"
+      ],
+      "subsystem": "browser",
+      "blocking": true
+    },
+    {
+      "id": "browser.evidence_generated",
+      "targets": [
+        "tests/test_m17_23_browser_execution_gateway.py::test_screenshot_creates_evidence",
+        "tests/test_m17_23_browser_execution_gateway.py::test_no_secrets_in_evidence_or_logs"
+      ],
+      "subsystem": "browser",
+      "blocking": true
+    },
+    {
+      "id": "browser.dispatch_guard_present",
+      "targets": [
+        "tests/test_m17_24_browser_dispatch_governance.py::test_direct_low_level_import_blocked",
+        "tests/test_m17_24_browser_dispatch_governance.py::test_production_singleton_defaults_governed"
+      ],
+      "subsystem": "browser",
+      "blocking": true
+    },
+    {
+      "id": "browser.no_ungoverned_driver_imports",
+      "targets": [
+        "tests/test_m17_24_browser_dispatch_governance.py::test_direct_low_level_import_blocked",
+        "tests/test_m17_24_browser_dispatch_governance.py::test_subprocess_browser_outside_allowlist_detected"
+      ],
+      "subsystem": "browser",
+      "blocking": true
+    },
+    {
+      "id": "browser.direct_dispatch_blocked",
+      "targets": [
+        "tests/test_m17_24_browser_dispatch_governance.py::test_direct_dispatch_outside_gateway_blocked",
+        "tests/test_m17_24_browser_dispatch_governance.py::test_agent_tool_no_raw_driver",
+        "tests/test_m17_24_browser_dispatch_governance.py::test_legacy_debug_path_fails_closed"
+      ],
+      "subsystem": "browser",
+      "blocking": true
+    },
+    {
+      "id": "browser.context_attribution_enforced",
+      "targets": [
+        "tests/test_m17_24_browser_dispatch_governance.py::test_missing_actor_denied",
+        "tests/test_m17_24_browser_dispatch_governance.py::test_missing_mission_run_denied_for_agent",
+        "tests/test_m17_24_browser_dispatch_governance.py::test_api_cannot_forge_mission",
+        "tests/test_m17_24_browser_dispatch_governance.py::test_cancelled_mission_cannot_dispatch"
+      ],
+      "subsystem": "browser",
+      "blocking": true
+    },
+    {
+      "id": "browser.trading_isolation",
+      "targets": [
+        "tests/test_m17_24_browser_dispatch_governance.py::test_trading_classified_defers_to_guardian",
+        "tests/test_m17_24_browser_dispatch_governance.py::test_generic_browser_approval_not_trading",
+        "tests/test_m17_24_browser_dispatch_governance.py::test_trading_guardian_unengaged_for_browser"
+      ],
+      "subsystem": "browser",
+      "blocking": true
+    },
+    {
+      "id": "browser.interactive_session_ownership",
+      "targets": [
+        "tests/test_m17_25_interactive_browser.py::test_cross_actor_denied",
+        "tests/test_m17_25_interactive_browser.py::test_cross_mission_denied",
+        "tests/test_m17_25_interactive_browser.py::test_expired_session_denied",
+        "tests/test_m17_25_interactive_browser.py::test_stale_lease_blocks_other_worker"
+      ],
+      "subsystem": "browser",
+      "blocking": true
+    },
+    {
+      "id": "browser.interactive_commit_boundary",
+      "targets": [
+        "tests/test_m17_25_interactive_browser.py::test_navigate_approval_does_not_authorize_submit",
+        "tests/test_m17_25_interactive_browser.py::test_submit_with_dedicated_approval",
+        "tests/test_m17_25_interactive_browser.py::test_commit_requires_idempotency_key"
+      ],
+      "subsystem": "browser",
+      "blocking": true
+    },
+    {
+      "id": "browser.human_handoff_resume",
+      "targets": [
+        "tests/test_m17_25_interactive_browser.py::test_handoff_pauses_and_blocks_agent",
+        "tests/test_m17_25_interactive_browser.py::test_handoff_claim_and_complete_resume",
+        "tests/test_m17_25_interactive_browser.py::test_resume_page_mismatch_denied"
+      ],
+      "subsystem": "browser",
+      "blocking": true
+    },
+    {
+      "id": "browser.raw_blocked_in_production",
+      "targets": [
+        "tests/test_m17_25_interactive_browser.py::test_raw_browser_blocked_in_production",
+        "tests/test_m17_25_interactive_browser.py::test_guard_still_clean"
+      ],
+      "subsystem": "browser",
+      "blocking": true
+    },
+    {
+      "id": "browser.interactive_idempotency",
+      "targets": [
+        "tests/test_m17_25_interactive_browser.py::test_submit_idempotent_no_double",
+        "tests/test_m17_25_interactive_browser.py::test_uncertain_submit_not_retried",
+        "tests/test_m17_25_interactive_browser.py::test_sensitive_values_not_in_action_ledger"
+      ],
+      "subsystem": "browser",
+      "blocking": true
+    },
+    {
+      "id": "browser.production_adapter_ownership",
+      "targets": [
+        "tests/test_m17_26_production_browser.py::test_01_attach_sandbox_session",
+        "tests/test_m17_26_production_browser.py::test_03_wrong_actor_denied",
+        "tests/test_m17_26_production_browser.py::test_05_stale_lease_denied",
+        "tests/test_m17_26_production_browser.py::test_10_closure_blocks_actions"
+      ],
+      "subsystem": "browser",
+      "blocking": true
+    },
+    {
+      "id": "browser.domain_policy_production",
+      "targets": [
+        "tests/test_m17_26_production_browser.py::test_21_production_denies_unknown",
+        "tests/test_m17_26_production_browser.py::test_23_attacker_suffix_denied",
+        "tests/test_m17_26_production_browser.py::test_29_localhost_denied_in_production",
+        "tests/test_m17_26_production_browser.py::test_32_file_scheme_denied",
+        "tests/test_m17_26_production_browser.py::test_62_production_rejects_empty_domain_policy"
+      ],
+      "subsystem": "browser",
+      "blocking": true
+    },
+    {
+      "id": "browser.evidence_redaction",
+      "targets": [
+        "tests/test_m17_26_production_browser.py::test_44_password_field_masked",
+        "tests/test_m17_26_production_browser.py::test_48_sensitive_page_suppresses_screenshot",
+        "tests/test_m17_26_production_browser.py::test_50_raw_never_persisted_before_mask",
+        "tests/test_m17_26_production_browser.py::test_60_alert_payload_no_secrets"
+      ],
+      "subsystem": "browser",
+      "blocking": true
+    },
+    {
+      "id": "browser.workflow_migration",
+      "targets": [
+        "tests/test_m17_26_production_browser.py::test_38_migrated_workflow_uses_act",
+        "tests/test_m17_26_production_browser.py::test_42_legacy_raw_workflow_fail_closed",
+        "tests/test_m17_26_production_browser.py::test_43_forbidden_workflow_fields"
+      ],
+      "subsystem": "browser",
+      "blocking": true
+    },
+    {
+      "id": "browser.adapter_reconnect_reconcile",
+      "targets": [
+        "tests/test_m17_26_production_browser.py::test_07_disconnect_updates_state",
+        "tests/test_m17_26_production_browser.py::test_71_uncertain_submit",
+        "tests/test_m17_26_production_browser.py::test_72_uncertain_not_blindly_retried",
+        "tests/test_m17_26_production_browser.py::test_79_kill_switch_blocks_reconnect"
+      ],
+      "subsystem": "browser",
+      "blocking": true
+    },
+    {
+      "id": "mcp.inventory_complete",
+      "targets": [
+        "tests/test_m17_25_mcp_governance.py::test_01_inventory_contains_detected_mcps",
+        "tests/test_m17_25_mcp_governance.py::test_02_canonical_codebase_memory_identity"
+      ],
+      "subsystem": "mcp_governance",
+      "blocking": true
+    },
+    {
+      "id": "mcp.canonical_identity_unique",
+      "targets": [
+        "tests/test_m17_25_mcp_governance.py::test_03_duplicate_names_detected",
+        "tests/test_m17_25_mcp_governance.py::test_04_conflicting_backends_require_human_decision"
+      ],
+      "subsystem": "mcp_governance",
+      "blocking": true
+    },
+    {
+      "id": "mcp.namespace_isolated",
+      "targets": [
+        "tests/test_m17_25_mcp_governance.py::test_05_project_namespace_deterministic",
+        "tests/test_m17_25_mcp_governance.py::test_06_namespace_traversal_rejected",
+        "tests/test_m17_25_mcp_governance.py::test_07_cross_project_namespace_denied"
+      ],
+      "subsystem": "mcp_governance",
+      "blocking": true
+    },
+    {
+      "id": "mcp.failure_degrades_safely",
+      "targets": [
+        "tests/test_m17_25_mcp_governance.py::test_09_unavailable_backend_degrades",
+        "tests/test_m17_25_mcp_governance.py::test_10_unavailable_does_not_break_core"
+      ],
+      "subsystem": "mcp_governance",
+      "blocking": true
+    },
+    {
+      "id": "mcp.write_governance_enforced",
+      "targets": [
+        "tests/test_m17_25_mcp_governance.py::test_12_write_requires_governance",
+        "tests/test_m17_25_mcp_governance.py::test_13_speculative_lesson_rejected",
+        "tests/test_m17_25_mcp_governance.py::test_14_verified_lesson_write"
+      ],
+      "subsystem": "mcp_governance",
+      "blocking": true
+    },
+    {
+      "id": "mcp.secrets_redacted",
+      "targets": [
+        "tests/test_m17_25_mcp_governance.py::test_15_secret_like_lesson_rejected",
+        "tests/test_m17_25_mcp_governance.py::test_16_mcp_response_untrusted"
+      ],
+      "subsystem": "mcp_governance",
+      "blocking": true
+    },
+    {
+      "id": "cbm.identity_isolated",
+      "targets": [
+        "tests/test_m18_2_codebase_memory.py::test_01_identity_isolation",
+        "tests/test_m18_2_codebase_memory.py::test_02_non_git_fail_closed",
+        "tests/test_m18_2_codebase_memory.py::test_06_namespace_isolation"
+      ],
+      "subsystem": "codebase_memory",
+      "blocking": true
+    },
+    {
+      "id": "cbm.secret_safe_index",
+      "targets": [
+        "tests/test_m18_2_codebase_memory.py::test_04_secret_scan_rejects_keys_keeps_docs",
+        "tests/test_m18_2_codebase_memory.py::test_12_no_vendored_or_env_in_hits"
+      ],
+      "subsystem": "codebase_memory",
+      "blocking": true
+    },
+    {
+      "id": "cbm.retrieval_provenance",
+      "targets": [
+        "tests/test_m18_2_codebase_memory.py::test_07_retrieval_provenance_and_freshness",
+        "tests/test_m18_2_codebase_memory.py::test_08_live_verification_stale"
+      ],
+      "subsystem": "codebase_memory",
+      "blocking": true
+    },
+    {
+      "id": "cbm.incremental_index",
+      "targets": [
+        "tests/test_m18_2_codebase_memory.py::test_05_index_and_incremental",
+        "tests/test_m18_2_codebase_memory.py::test_11_rebuild_and_schema"
+      ],
+      "subsystem": "codebase_memory",
+      "blocking": true
+    },
+    {
+      "id": "m21.3.residual_release_check",
+      "targets": [
+        "tests/test_m21_3_residual_path_migration.py"
+      ],
+      "subsystem": "inference",
+      "blocking": true,
+      "notes": "M21.3 residual path migration + release-check enforcement"
+    },
+    {
+      "id": "m21.4.runtime_consolidation",
+      "targets": [
+        "tests/test_m21_4_runtime_consolidation.py"
+      ],
+      "subsystem": "inference",
+      "blocking": true,
+      "notes": "M21.4 runtime authority consolidation + production-configuration gate"
+    },
+    {
+      "id": "m21.4.production_configuration_gate",
+      "targets": [
+        "tests/test_m21_4_runtime_consolidation.py::test_production_gate_static_config_uncertified",
+        "tests/test_m21_4_runtime_consolidation.py::test_production_certified_defaults_false",
+        "tests/test_m21_4_runtime_consolidation.py::test_partial_evidence_cannot_certify"
+      ],
+      "subsystem": "inference",
+      "blocking": true,
+      "notes": "M21.4 production-configuration gate + certification invariant"
+    },
+    {
+      "id": "m21.4.release_check_integration",
+      "targets": [
+        "tests/test_m21_4_runtime_consolidation.py::test_canonical_release_gate_invokes_inference_release_check",
+        "tests/test_m21_4_runtime_consolidation.py::test_release_check_failure_blocks_canonical_gate"
+      ],
+      "subsystem": "inference",
+      "blocking": true,
+      "notes": "M21.4 release-check integrated into ops.release_gate"
+    },
+    {
+      "id": "m21.4.residual_manifest_consistency",
+      "targets": [
+        "tests/test_m21_4_runtime_consolidation.py::test_manifest_every_file_exists",
+        "tests/test_m21_4_runtime_consolidation.py::test_exception_count_not_expanded",
+        "tests/test_m21_4_runtime_consolidation.py::test_manifest_required_fields"
+      ],
+      "subsystem": "inference",
+      "blocking": true,
+      "notes": "M21.4 residual exception manifest validation"
+    },
+    {
+      "id": "m21.4.production_certification_invariant",
+      "targets": [
+        "tests/test_m21_4_runtime_consolidation.py::test_unit_tests_alone_cannot_certify",
+        "tests/test_m21_4_runtime_consolidation.py::test_manual_cert_override_rejected",
+        "tests/test_m21_4_runtime_consolidation.py::test_not_tested_does_not_count_as_pass"
+      ],
+      "subsystem": "inference",
+      "blocking": true,
+      "notes": "M21.4 production_certified remains false without full evidence"
+    },
+    {
+      "id": "m22.provider_migration",
+      "targets": [
+        "tests/test_m22_provider_migration.py"
+      ],
+      "subsystem": "inference",
+      "blocking": true,
+      "notes": "M22 governed provider transports; facade purity; residual shrink"
+    },
+    {
+      "id": "m22.release_check_facades",
+      "targets": [
+        "tests/test_m22_provider_migration.py::test_release_check_pass",
+        "tests/test_m22_provider_migration.py::test_llm_py_has_no_provider_urls",
+        "tests/test_m22_provider_migration.py::test_agent_py_has_no_sdk_imports",
+        "tests/test_m22_provider_migration.py::test_research_py_has_no_direct_gemini_http"
+      ],
+      "subsystem": "inference",
+      "blocking": true,
+      "notes": "M22 release-check facade purity and credential isolation"
+    },
+    {
+      "id": "m22.residual_manifest",
+      "targets": [
+        "tests/test_m22_provider_migration.py::test_manifest_exception_count_shrunk",
+        "tests/test_m22_provider_migration.py::test_validate_residual_manifest_pass",
+        "tests/test_m22_provider_migration.py::test_m22_migrated_paths_not_legacy_exception"
+      ],
+      "subsystem": "inference",
+      "blocking": true,
+      "notes": "M22 residual exceptions reduced; M22-expiry paths migrated"
+    },
+    {
+      "id": "m23.governed_chat_default",
+      "targets": [
+        "tests/test_m23_governed_chat_default.py"
+      ],
+      "subsystem": "chat",
+      "blocking": true,
+      "notes": "M23 governed chat default; residual chat exception removed; release/runtime gates"
+    },
+    {
+      "id": "m23.release_check_chat",
+      "targets": [
+        "tests/test_m23_governed_chat_default.py::test_release_check_pass",
+        "tests/test_m23_governed_chat_default.py::test_no_llm_generate_ast_in_chat_package",
+        "tests/test_m23_governed_chat_default.py::test_main_chat_entry_uses_governed_runtime"
+      ],
+      "subsystem": "chat",
+      "blocking": true,
+      "notes": "M23 chat package purity and release-check"
+    },
+    {
+      "id": "m23.residual_manifest",
+      "targets": [
+        "tests/test_m23_governed_chat_default.py::test_chat_residual_exception_removed",
+        "tests/test_m23_governed_chat_default.py::test_residual_count_decreased_to_zero_m24",
+        "tests/test_m23_governed_chat_default.py::test_validate_residual_manifest_m23"
+      ],
+      "subsystem": "inference",
+      "blocking": true,
+      "notes": "M23 chat residual removed; M24 engine residuals consolidated to zero"
+    }
+  ]
+}

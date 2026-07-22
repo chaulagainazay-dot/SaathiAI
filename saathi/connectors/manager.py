@@ -48,62 +48,31 @@ def _rate_ok(account_id: str, capability: str) -> bool:
 
 
 def execute(account_id: str, capability: str, params: dict | None = None, *,
-            mission: str = "", store=None) -> dict:
-    """The single entry point for any external action."""
-    from saathi.connectors.accounts import default_store
-    st = store or default_store()
-    acct = st.get(account_id)
-    if not acct:
-        return {"ok": False, "error": "account not found"}
-    provider = acct["provider"]
-    verb = capability.split(".", 1)[-1]
-    category = PROVIDERS.get(provider, ("", ""))[0]
-    if verb not in capabilities_for(provider):
-        return {"ok": False, "error": f"{provider} has no capability '{verb}' ({category})"}
-    if acct["status"] != "connected":
-        return {"ok": False, "error": f"account status is '{acct['status']}' — reconnect first"}
+            mission: str = "", store=None,
+            caller_id: str = "legacy.manager",
+            caller_class: str = "compat",
+            actor_id: str = "",
+            approval_token: str = "") -> dict:
+    """Compatibility entry for external actions (M28).
+
+    Routes through ``saathi.connectors.gov.compat.governed_manager_execute`` —
+    no second transport. Live adapters fail closed without governed ACTIVE path.
+    Simulated catalog capabilities remain metadata-only (no external side effect).
+    """
     if not _rate_ok(account_id, capability):
-        return {"ok": False, "error": "rate limited"}
-
-    adapter = _LIVE_ADAPTERS.get(provider)
-    try:
-        if adapter and hasattr(adapter, verb):
-            acct_full = st.get(account_id, with_secret=True)   # live adapters get the decrypted secret
-            result = getattr(adapter, verb)(acct_full, params or {})
-            mode = "live"
-        else:
-            result = {"simulated": True, "capability": capability, "params_keys": list((params or {}).keys())}
-            mode = "simulated"
-    except Exception as e:
-        result = {"error": str(e)[:150]}
-        mode = "error"
-
-    st.touch(account_id)
-    ok = mode != "error"
-
-    # emit the event → Event Bus routes it into Evidence + Mission Timeline
-    evt_type = _EVENT.get(f"{category}.{verb}") or _EVENT.get(capability) or f"{category}.{verb}"
-    try:
-        from saathi.events.bus import default_bus
-        default_bus().emit(evt_type, source="connector",
-                           payload={"provider": provider, "account": account_id, "capability": capability,
-                                    "mode": mode, "ok": ok, "result": result},
-                           project=mission, subject=account_id)
-    except Exception:
-        pass
-    if mission:
-        try:
-            from saathi.missions.store import default_store as m_store
-            from saathi.missions.timeline import default_store as tl
-            m = m_store().get_by_key(mission) or m_store().get(mission)
-            if m:
-                tl().record(m["id"], "note", f"Connector: {provider} {capability} ({mode})",
-                            detail=f"account {acct['display_name']}")
-        except Exception:
-            pass
-
-    return {"ok": ok, "mode": mode, "provider": provider, "event": evt_type,
-            "capability": capability, "result": result, "at": time.time()}
+        return {"ok": False, "error": "rate limited", "bypass": False, "governed": True}
+    from saathi.connectors.gov.compat import governed_manager_execute
+    return governed_manager_execute(
+        account_id,
+        capability,
+        params,
+        mission=mission,
+        store=store,
+        caller_id=caller_id,
+        caller_class=caller_class,
+        actor_id=actor_id or caller_id,
+        approval_token=approval_token,
+    )
 
 
 def provider_health() -> dict:

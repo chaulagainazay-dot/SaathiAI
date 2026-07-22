@@ -1,0 +1,86 @@
+{
+  "advisory_only": true,
+  "allowed_rollout_percents": [
+    0,
+    1,
+    2,
+    5,
+    10,
+    25,
+    50,
+    100
+  ],
+  "alters_runtime_authority": false,
+  "authorities": {
+    "ACTIVE_authorization": "NOT GRANTED",
+    "CANARY_authorization": "NOT GRANTED",
+    "production_authorization": "NOT GRANTED",
+    "rollout_authorization": "NOT GRANTED",
+    "write_authority": "NOT GRANTED"
+  },
+  "authority_state": {
+    "active": "NOT GRANTED",
+    "framework": "READY (ADVISORY ONLY)",
+    "production": "NOT AUTHORIZED",
+    "provider_permissions": "UNCHANGED",
+    "rollout_execution": "NOT GRANTED",
+    "rollout_full": "NOT GRANTED",
+    "scope_expansion": "FORBIDDEN",
+    "write": "NOT GRANTED"
+  },
+  "authorizes_execution": false,
+  "banner": "M44 LIMITED ROLLOUT AUTHORIZATION FRAMEWORK\nNON-PRODUCTION\nREAD-ONLY\nFAIL-CLOSED\nDENY-BY-DEFAULT\nAUTHORIZATION FRAMEWORK ONLY\nGRANTS NOTHING\nNO ACTIVE\nNO PRODUCTION\nNO WRITE\nNO ROLLOUT EXECUTION\nNO SCOPE EXPANSION\nSEPARATE OPERATOR AUTHORIZATION REQUIRED TO EXECUTE\nTRADING GUARDIAN UNENGAGED",
+  "components": {
+    "audit_api": true,
+    "authorization_engine": true,
+    "percentage_guard": true,
+    "rollback_engine": 8,
+    "rollout_ledger": true,
+    "rollout_policies": 7,
+    "runtime_safety_gates": true,
+    "validator": true
+  },
+  "contains_secret_values": false,
+  "current_graduation_state": {
+    "graduation_recommended_advisory": true,
+    "m42_review_fingerprint": "dbc63fd79889f5714dd9ae32",
+    "machine_record_fingerprint": "8ecd04d34d2efb5b68dc6671",
+    "machine_record_verified": true,
+    "provenance": "MACHINE_PROOF",
+    "recommendation": "GRADUATION_RECOMMENDED"
+  },
+  "default_request_denied": true,
+  "expands_scope": false,
+  "framework_ready": true,
+  "grants_active": false,
+  "grants_anything": false,
+  "grants_production": false,
+  "grants_write": false,
+  "m32_prohibition": "UNCHANGED",
+  "milestone": "M44",
+  "note": "Framework infrastructure is ready. This state is advisory and grants no ACTIVE / PRODUCTION / WRITE / ROLLOUT EXECUTION. A graduation recommendation is advisory only \u2014 not authorization. Any future rollout requires a completely separate operator authorization.",
+  "policies": [
+    "DryRun",
+    "EmergencyRollback",
+    "IncidentRecovery",
+    "ProductionCandidate",
+    "ReadOnlyExtended",
+    "ReadOnlyLimited",
+    "Simulation"
+  ],
+  "requires_separate_execution_authorization": true,
+  "rollback_triggers": [
+    "identity_mismatch",
+    "provider_changed",
+    "unexpected_response",
+    "error_budget_exceeded",
+    "policy_violation",
+    "kill_switch",
+    "security_alert",
+    "manual_operator_stop"
+  ],
+  "schema": "m44.rollout_authorization.v1",
+  "state": "ROLLOUT_AUTHORIZATION_FRAMEWORK_READY",
+  "state_legacy_alias": "ROLL_OUT_AUTHORIZATION_FRAMEWORK_READY",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

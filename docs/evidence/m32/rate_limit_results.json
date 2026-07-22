@@ -1,0 +1,19 @@
+{
+  "body": {
+    "rate_limit": {
+      "confidence": "high",
+      "limit": 60,
+      "privacy_safe": true,
+      "remaining": 0,
+      "reset_at": null,
+      "retry_after": 2.0,
+      "source": "header"
+    },
+    "status": "rate_limited"
+  },
+  "fingerprint": "e42fcb17c2c85c1734ca174176b0b80a247c902e98983d84272632555fba8703",
+  "privacy_safe": true,
+  "schema": "m32.rate_limit_results.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

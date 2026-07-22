@@ -1,0 +1,14 @@
+{
+  "body": {
+    "ACTIVE_authorization": "NOT GRANTED",
+    "CANARY_authorization": "NOT GRANTED",
+    "production_authorization": "NOT GRANTED",
+    "rollout_authorization": "NOT GRANTED",
+    "write_authority": "NOT GRANTED"
+  },
+  "fingerprint": "63f25db00fc3fe2e31db00c46d4f6190ad6385dc43619f57602079fa646bbf11",
+  "privacy_safe": true,
+  "schema": "m38.authority_state.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

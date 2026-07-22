@@ -1,0 +1,46 @@
+{
+  "alters_runtime_authority": false,
+  "authorities": {
+    "ACTIVE_authorization": "NOT GRANTED",
+    "CANARY_authorization": "NOT GRANTED",
+    "production_authorization": "NOT GRANTED",
+    "rollout_authorization": "NOT GRANTED",
+    "write_authority": "NOT GRANTED"
+  },
+  "authority_state": {
+    "active": "NOT GRANTED",
+    "deployment": "NOT GRANTED",
+    "framework": "READY (ADVISORY ONLY)",
+    "production": "NOT AUTHORIZED",
+    "provider_permissions": "UNCHANGED",
+    "rollout_execution": "NOT GRANTED",
+    "scope_expansion": "FORBIDDEN",
+    "write": "NOT GRANTED"
+  },
+  "authorizes_execution": false,
+  "bindings": {
+    "m42_review_fingerprint": "dbc63fd79889f5714dd9ae32",
+    "m43_1_closure_fingerprint": "2277d1e9792145588c09a2f1",
+    "m43_machine_fingerprint": "8ecd04d34d2efb5b68dc6671",
+    "m44_completion_fingerprint": "624d928ae61321c65503f8a3",
+    "m44_module_fingerprint": "624d928ae61321c65503f8a3",
+    "m45_module_fingerprint": "c5d1aa33f9a6180d61cf050a",
+    "repository_commit": "dba7c477899be7accc8d679b858571d521a5253c"
+  },
+  "contains_secret_values": false,
+  "default_snapshot_denied": true,
+  "deployment": false,
+  "framework_ready": true,
+  "grants_anything": false,
+  "hardware_attestation_supported": false,
+  "m32_prohibition": "UNCHANGED",
+  "milestone": "M45",
+  "module_fingerprint": "c5d1aa33f9a6180d61cf050a",
+  "note": "M45_RUNTIME_ATTESTATION_READY_ADVISORY_ONLY \u2014 runtime attestation implemented, tested, integrated with M44. Grants no rollout authority.",
+  "push": false,
+  "ready_verdict_name": "BOUNDED_ROLLOUT_READY_FOR_SEPARATE_OPERATOR_AUTHORIZATION",
+  "runtime_execution_authority": false,
+  "schema": "m45.runtime_attestation_completion.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED",
+  "verdict": "M45_RUNTIME_ATTESTATION_READY_ADVISORY_ONLY"
+}

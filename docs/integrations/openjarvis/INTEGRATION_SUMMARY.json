@@ -1,0 +1,468 @@
+{
+  "repository": {
+    "name": "OpenJarvis",
+    "url": "https://github.com/open-jarvis/OpenJarvis.git",
+    "license": "Apache-2.0",
+    "python_version": ">=3.10,<3.14",
+    "status": "Alpha (active development)",
+    "organization": "Stanford SAIL (Hazy Research + Scaling Intelligence Lab)",
+    "analysis_date": "2026-07-10"
+  },
+  "high_level_summary": {
+    "purpose": "Local-first personal AI framework with five core primitives (Intelligence, Engine, Agents, Memory, Learning)",
+    "design_principles": [
+      "Run locally by default, cloud fallback only",
+      "Energy efficiency + latency constraints as first-class",
+      "Trace-driven optimization loop",
+      "Extensible via registry pattern (no config changes needed)"
+    ],
+    "suitability_for_saathios": "Excellent foundation (60-70% of required infrastructure); 4-month integration path to M5.1 readiness"
+  },
+  "core_capabilities": {
+    "intelligence_primitive": {
+      "purpose": "Model definition and catalog",
+      "components": [
+        "BUILTIN_MODELS with metadata (param count, context length, VRAM, quantization)",
+        "Runtime model discovery from engines",
+        "Fallback chains per model"
+      ],
+      "classification": "REPLACE",
+      "reason": "Animation models have different metadata schema than LLMs"
+    },
+    "engine_primitive": {
+      "purpose": "Inference runtime (multiple backends)",
+      "backends": [
+        "Ollama (default, consumer GPUs)",
+        "vLLM (NVIDIA datacenter)",
+        "SGLang (structured generation)",
+        "llama.cpp (CPU-only)",
+        "MLX (Apple Silicon)",
+        "Cloud (OpenAI, Anthropic, Google)"
+      ],
+      "classification": "WRAP",
+      "reason": "Extend OllamaEngine for custom animation model endpoints (Wav2Lip, Runway, ComfyUI)",
+      "effort": "High (custom payload formatting, long-running job pooling)"
+    },
+    "agents_primitive": {
+      "purpose": "Multi-turn agentic logic with tools",
+      "built_in_agents": [
+        "simple (single-turn)",
+        "orchestrator (multi-turn tool loop)",
+        "native_react (Thought-Action-Observation)",
+        "native_openhands (CodeAct)",
+        "operative (persistent state)",
+        "monitor_operative (long-horizon)",
+        "morning_digest (scheduled)",
+        "deep_research (multi-hop)"
+      ],
+      "classification": "REUSE + WRAP",
+      "reuse_components": [
+        "OrchestratorAgent as AnimationCoordinator base",
+        "Tool system (BaseTool, ToolSpec, ToolExecutor)",
+        "Parallel tool execution"
+      ],
+      "wrap_components": [
+        "Custom AnimationAgent for video workflow",
+        "Animation-specific state management"
+      ]
+    },
+    "memory_primitive": {
+      "purpose": "Persistent searchable document storage",
+      "backends": [
+        "SQLite/FTS5 (default, zero-dependency)",
+        "FAISS (dense vector)",
+        "ColBERTv2 (late interaction, highest recall)",
+        "BM25 (term frequency)",
+        "Hybrid (RRF fusion of sparse+dense)"
+      ],
+      "classification": "REUSE + WRAP",
+      "reuse_components": [
+        "Hybrid backend for scene/character context",
+        "Chunking pipeline (with sensitive file filtering)"
+      ],
+      "wrap_components": [
+        "Custom embeddings for animation asset similarity",
+        "Frame/pose chunking strategy"
+      ]
+    },
+    "learning_primitive": {
+      "purpose": "Trace-driven optimization (router policies, rewards)",
+      "policies": [
+        "Heuristic (6 rule-based priority rules)",
+        "TraceDrivenPolicy (learns from traces)",
+        "SFT/GRPO (future RL training)"
+      ],
+      "classification": "REUSE + FUTURE",
+      "reuse_components": [
+        "TraceStore for animation generation audit",
+        "TraceAnalyzer for quality metrics by model/agent",
+        "EventBus for pipeline coordination"
+      ],
+      "future_components": [
+        "Learn optimal (scene_type → model, agent) mapping",
+        "Cost-aware routing (minimize $/frame)"
+      ],
+      "timeline": "Q1 2027 (after collecting 100+ animation traces)"
+    }
+  },
+  "critical_subsystems": {
+    "skills_system": {
+      "purpose": "Reusable workflow composition",
+      "format": "SKILL.md with agentskills.io frontmatter + pipeline steps",
+      "features": [
+        "Manifest validation + dependency graph",
+        "Skill composition (skills can call skills)",
+        "Optimization overlay (per-skill tuning)",
+        "Source resolvers (Hermes, OpenClaw, GitHub)"
+      ],
+      "classification": "REUSE + WRAP",
+      "use_case": "Animation skills (pose-to-video, character-sync, scene-compose)",
+      "effort": "Medium (skill definitions custom, framework reusable)"
+    },
+    "scheduling": {
+      "purpose": "Cron/interval/one-time task execution",
+      "features": [
+        "Background thread (no external daemon)",
+        "SQLite persistence + run logs",
+        "Preset agents (morning_digest, operative, monitor_operative)"
+      ],
+      "classification": "WRAP",
+      "use_case": "Daily/hourly animation generation (briefing videos, content calendar)",
+      "effort": "Low (extend for animation-specific job states)"
+    },
+    "security": {
+      "purpose": "Guardrails + audit logging",
+      "features": [
+        "GuardrailsEngine wrapper (composable scanner pipeline)",
+        "Built-in scanners: SecretScanner, PIIScanner",
+        "Redaction modes: WARN, REDACT, BLOCK",
+        "File policy + sensitive file blocking",
+        "AuditLogger (SQLite append-only)",
+        "Sandbox (Docker/Podman container isolation)"
+      ],
+      "classification": "WRAP",
+      "use_case": "Prompt injection prevention, audit trail, code sandbox",
+      "effort": "Low (existing integrations work)"
+    },
+    "telemetry": {
+      "purpose": "Metrics recording (latency, tokens, energy)",
+      "features": [
+        "InstrumentedEngine wrapper",
+        "Energy monitoring (NVIDIA, AMD, Apple Silicon)",
+        "EventBus subscription (TraceCollector, TelemetryStore)",
+        "PostHog analytics (optional)"
+      ],
+      "classification": "REUSE + WRAP",
+      "use_case": "GPU memory + time-to-video tracking, render farm node health",
+      "effort": "Low (extend for animation-specific metrics)"
+    },
+    "channels": {
+      "purpose": "Multi-platform messaging integration",
+      "supported": [
+        "Telegram, Discord, Slack, Gmail, WhatsApp",
+        "Twitter, Mastodon, Reddit, Twitch, Matrix",
+        "iMessage, Messenger, Signal, SMS (Twilio), Teams",
+        "Custom webhook, generic email"
+      ],
+      "classification": "WRAP",
+      "use_case": "Animate on-demand via Telegram, deliver via Discord",
+      "effort": "Low (extend existing Telegram channel)"
+    }
+  },
+  "infrastructure": {
+    "dependencies": {
+      "direct_count": 13,
+      "optional_count": 30,
+      "licenses": [
+        "All permissive (BSD, MIT, Apache 2.0)",
+        "No GPL/AGPL transitive dependencies"
+      ],
+      "classification": "REUSE",
+      "licensing_compliance": "Apache-2.0 license + attribution required (no restrictions)"
+    },
+    "runtime": {
+      "requirements": [
+        "Python 3.10-3.13",
+        "8GB+ RAM (4GB minimum without embeddings)",
+        "GPU optional (NVIDIA/AMD/Apple Silicon auto-detected)",
+        "One inference backend (Ollama, vLLM, cloud, etc.)"
+      ],
+      "assumptions": [
+        "No external service required (all local)",
+        "Optional: Docker/Podman for sandboxing",
+        "Optional: Internet for cloud API fallback"
+      ]
+    },
+    "configuration": {
+      "format": "TOML at ~/.openjarvis/config.toml",
+      "sections": [
+        "intelligence (model catalog, routing policy)",
+        "engine (Ollama, vLLM, cloud, etc.)",
+        "agent (default agent, turn limits, tools)",
+        "memory (backend, chunk size, embedding model)",
+        "learning (router policy, reward weights)",
+        "security (scanner mode, audit path)",
+        "telemetry (GPU metrics, energy tracking)"
+      ]
+    }
+  },
+  "classification_matrix": {
+    "REUSE": [
+      {
+        "component": "OrchestratorAgent",
+        "reason": "Multi-turn tool loop directly applicable to animation workflow",
+        "effort": "Low (subclass + override step logic)"
+      },
+      {
+        "component": "Tool system (BaseTool, ToolExecutor)",
+        "reason": "Proven interface for tool-calling agents",
+        "effort": "Low (implement animation tools)"
+      },
+      {
+        "component": "Memory (Hybrid FAISS+BM25)",
+        "reason": "Scene/character context retrieval",
+        "effort": "Medium (adapt embeddings for animation)"
+      },
+      {
+        "component": "TraceStore + TraceAnalyzer",
+        "reason": "Quality feedback loop for animation",
+        "effort": "Low (extend schema for animation metrics)"
+      },
+      {
+        "component": "EventBus (Pub/Sub)",
+        "reason": "Pipeline orchestration events",
+        "effort": "Low (publish animation events)"
+      },
+      {
+        "component": "Skills system",
+        "reason": "Reusable animation workflows + composition",
+        "effort": "Medium (define animation skills)"
+      }
+    ],
+    "WRAP": [
+      {
+        "component": "OllamaEngine",
+        "reason": "Support custom animation model endpoints",
+        "effort": "High (custom payloads, pooling for long-running jobs)"
+      },
+      {
+        "component": "Scheduler",
+        "reason": "Animation-specific job states + load balancing",
+        "effort": "Medium (extend for render farm integration)"
+      },
+      {
+        "component": "Channels (Telegram, Discord)",
+        "reason": "Animation delivery + team collaboration",
+        "effort": "Low (extend existing channels)"
+      },
+      {
+        "component": "HybridSearch",
+        "reason": "Custom embeddings + re-ranking for animation assets",
+        "effort": "Medium (replace embedding model)"
+      },
+      {
+        "component": "Learning/Router",
+        "reason": "Scene-type → model routing, cost-aware routing",
+        "effort": "High (requires training data + policy tuning)"
+      },
+      {
+        "component": "Security (GuardrailsEngine)",
+        "reason": "Prompt injection prevention",
+        "effort": "Low (existing interface works)"
+      },
+      {
+        "component": "Telemetry",
+        "reason": "GPU memory + frame rate tracking",
+        "effort": "Low (extend EnergyMonitor)"
+      }
+    ],
+    "REPLACE": [
+      {
+        "component": "Intelligence.model_catalog",
+        "reason": "Animation models have different metadata (resolution, fps, character count)",
+        "effort": "High (custom dataclass + registry)"
+      },
+      {
+        "component": "Cloud fallback strategy",
+        "reason": "Use internal Gemini bridge (cost control, latency SLAs)",
+        "effort": "High (implement custom cloud backend)"
+      },
+      {
+        "component": "Agent types",
+        "reason": "AnimationCoordinator, CharacterAnimator, SceneComposer (animation-specific state)",
+        "effort": "High (custom agents + workflow logic)"
+      },
+      {
+        "component": "Voice/audio integration",
+        "reason": "Bespoke voice sync (Faster-Whisper, OmniVoice, Wav2Lip)",
+        "effort": "Very High (custom pipeline)"
+      },
+      {
+        "component": "Sandbox",
+        "reason": "Animation-specific containerization (ComfyUI isolation, GPU limits)",
+        "effort": "Very High (custom runner)"
+      }
+    ],
+    "IGNORE": [
+      {
+        "component": "Desktop GUI (Tauri-based)",
+        "reason": "SaathiOS has custom web frontend"
+      },
+      {
+        "component": "Benchmarking framework",
+        "reason": "Not relevant to character animation"
+      },
+      {
+        "component": "Hermes/OpenClaw skill sources",
+        "reason": "Animation skills custom-built"
+      },
+      {
+        "component": "Morning digest agent",
+        "reason": "Use case irrelevant to animation"
+      }
+    ],
+    "FUTURE": [
+      {
+        "component": "TraceDrivenPolicy (learning routing)",
+        "reason": "Requires 2+ months animation data; learn (scene_type → model) mapping",
+        "timeline": "Q1 2027",
+        "effort": "Medium (data collection + policy tuning)"
+      },
+      {
+        "component": "GRPO training pipeline",
+        "reason": "Fine-tune animator agents on best traces",
+        "timeline": "Q2 2027",
+        "effort": "Very High (RL infrastructure)"
+      },
+      {
+        "component": "SkillOrchestra (complex multi-character)",
+        "reason": "Parallel skill execution for multi-scene animations",
+        "timeline": "Q2 2027",
+        "effort": "High (DAG executor + dependency tracking)"
+      }
+    ]
+  },
+  "integration_roadmap": {
+    "phase_1_foundation": {
+      "duration": "4 weeks (Q3 2026)",
+      "effort": "1-2 engineers",
+      "tasks": [
+        "Clone + integrate OpenJarvis core (engine, agents, tools)",
+        "Extend OllamaEngine for Wav2Lip/ComfyUI endpoints",
+        "Build AnimationCoordinator agent",
+        "Implement animation tools (character-generator, scene-composer)",
+        "Connect TaskScheduler for video jobs",
+        "Basic telemetry (latency, GPU memory, frames)"
+      ],
+      "deliverable": "E2E animation generation workflow via Jarvis-based coordinator"
+    },
+    "phase_2_observability": {
+      "duration": "3 weeks (Q4 2026)",
+      "effort": "1-2 engineers",
+      "tasks": [
+        "Integrate TraceStore for audit trail",
+        "Build quality feedback loop (user ratings → traces)",
+        "Connect TelemetryStore for dashboards",
+        "Extend Telegram channel for delivery"
+      ],
+      "deliverable": "Observable, feedback-driven pipeline"
+    },
+    "phase_3_learning": {
+      "duration": "6 weeks (Q1 2027)",
+      "effort": "2 engineers",
+      "tasks": [
+        "Collect 100+ animation traces",
+        "Build TraceDrivenPolicy for scene-type routing",
+        "Implement cost-aware routing",
+        "A/B test routing policies"
+      ],
+      "deliverable": "Learned routing model for optimal animator selection"
+    },
+    "phase_4_scale": {
+      "duration": "4 weeks (Q2 2027)",
+      "effort": "2-3 engineers",
+      "tasks": [
+        "Implement SkillOrchestra for complex videos",
+        "Add render farm load balancing",
+        "Parallel skill execution",
+        "Performance profiling"
+      ],
+      "deliverable": "Production-ready (10x throughput)"
+    },
+    "total_effort": "16 weeks, 2-3 engineers"
+  },
+  "risks_and_mitigations": {
+    "risks": [
+      {
+        "risk": "Ollama optimized for LLMs, not animation models",
+        "mitigation": "Extend engine for custom API payloads; test with Wav2Lip/Runway early"
+      },
+      {
+        "risk": "Model catalog schema mismatch (LLM vs. animation)",
+        "mitigation": "Replace Intelligence primitive; design custom schema in Phase 1"
+      },
+      {
+        "risk": "Learning/trace system requires large dataset",
+        "mitigation": "Defer to Q1 2027; use heuristic routing initially"
+      },
+      {
+        "risk": "Security scanners designed for text, not prompts",
+        "mitigation": "Adapt RegEx patterns for animation domains (style keywords, etc.)"
+      },
+      {
+        "risk": "Channels designed for text messaging, not video delivery",
+        "mitigation": "Extend with video URL handling; test with Telegram File API"
+      }
+    ],
+    "mitigations": [
+      "Prototype Phase 1 (4 weeks) before committing to full integration",
+      "Separate animation-specific layers from OpenJarvis core",
+      "Build extensive test suite for custom engine endpoints",
+      "Maintain compatibility with upstream OpenJarvis (security patches, etc.)"
+    ]
+  },
+  "dependency_audit": {
+    "direct_dependencies": {
+      "count": 13,
+      "all_permissive": true,
+      "licenses": [
+        "click (BSD)",
+        "datasets (Apache 2.0)",
+        "httpx (BSD)",
+        "openai (MIT)",
+        "anthropic (MIT)",
+        "google-genai (Apache 2.0)",
+        "fastapi (MIT)",
+        "uvicorn (BSD)",
+        "pydantic (MIT)"
+      ]
+    },
+    "transitive_licenses": [
+      "No GPL/AGPL detected",
+      "All permissive licenses (BSD, MIT, Apache 2.0)"
+    ],
+    "compliance": {
+      "can_use_commercially": true,
+      "can_distribute": true,
+      "restrictions": "Include Apache 2.0 license file + NOTICE with attribution",
+      "patent_clause": "Explicit non-revocable (unless licensee sues)"
+    }
+  },
+  "recommendation": {
+    "verdict": "PROCEED with Phase 1",
+    "confidence": "High (90%)",
+    "reasoning": [
+      "OpenJarvis provides 60-70% of required infrastructure",
+      "No architectural conflicts between animation + OpenJarvis",
+      "Permissive licensing enables commercial deployment",
+      "Four-month integration path to M5.1 readiness is achievable",
+      "Extensibility via registry pattern aligns with SaathiOS design"
+    ],
+    "next_steps": [
+      "1. Spike Phase 1 prototype (2 weeks)",
+      "2. Validate OllamaEngine extension for animation models",
+      "3. Build AnimationCoordinator POC",
+      "4. Make go/no-go decision before allocating 4-month team commitment"
+    ]
+  }
+}

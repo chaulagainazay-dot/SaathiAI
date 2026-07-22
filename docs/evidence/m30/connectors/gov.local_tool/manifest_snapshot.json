@@ -1,0 +1,87 @@
+{
+  "connector_id": "gov.local_tool",
+  "version": "1.0.0",
+  "kind": "local_tool",
+  "capabilities": [
+    "git_rev_parse",
+    "git_status_short",
+    "python_version",
+    "echo_safe",
+    "health",
+    "validate"
+  ],
+  "permissions": [],
+  "auth_mode": "***REDACTED***",
+  "auth_env_names": "***REDACTED***",
+  "timeout_seconds": 15.0,
+  "max_retries": 0,
+  "rate_limit_per_minute": 60,
+  "evidence_policy": "redacted",
+  "supported_operations": [
+    "git_rev_parse",
+    "git_status_short",
+    "python_version",
+    "echo_safe",
+    "health",
+    "validate"
+  ],
+  "allowed_domains": [],
+  "denied_domains": [],
+  "allowed_operations": [],
+  "denied_operations": [],
+  "rollout_compatible": [
+    "OFF",
+    "SHADOW",
+    "CANARY",
+    "ACTIVE",
+    "DRAINING"
+  ],
+  "cloud": false,
+  "trading": false,
+  "description": "Allowlisted local tools only",
+  "display_name": "Governed Local Tool",
+  "owner": "saathi.connectors.gov",
+  "adapter_type": "local_tool",
+  "trust_level": "LOCAL_SYSTEM",
+  "capability_classes": [
+    "LOCAL_TOOL",
+    "EXECUTE",
+    "READ"
+  ],
+  "side_effect_classes": [
+    "READ_ONLY",
+    "LOCAL_MUTATION"
+  ],
+  "required_approvals": [],
+  "retry_policy": {
+    "max_retries": 0,
+    "privacy_safe": true
+  },
+  "incident_policy": "m26",
+  "health_policy": {
+    "startup_check": "validate",
+    "health_check": "health",
+    "privacy_safe": true
+  },
+  "readiness_policy": {
+    "readiness_check": "health",
+    "requires_lifecycle": [
+      "READY",
+      "DEGRADED"
+    ],
+    "privacy_safe": true
+  },
+  "dependencies": [],
+  "supported_environments": [
+    "local",
+    "dev",
+    "test"
+  ],
+  "created_at": "2026-07-18T00:49:26+00:00",
+  "updated_at": "2026-07-18T00:49:26+00:00",
+  "deprecated": false,
+  "deprecated_at": "",
+  "replacement_connector": "",
+  "lifecycle_state": "",
+  "privacy_safe": true
+}

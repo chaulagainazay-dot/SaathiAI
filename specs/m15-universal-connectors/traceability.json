@@ -1,0 +1,26 @@
+{
+  "milestone": "M15",
+  "title": "Universal Tool and Connector Platform",
+  "constitution_version": "1.0",
+  "requirements": [
+    {"id": "M15-CONN-001", "text": "Canonical connector + tool + result models with risk floor enforcement", "artifact": "saathi/connectors/platform/models.py", "test": "tests/test_m15_connectors.py::test_risk_floor_not_downgradable"},
+    {"id": "M15-CONN-002", "text": "Provider-neutral capability catalog with default risk", "artifact": "saathi/connectors/platform/catalog.py", "test": "tests/test_m15_connectors.py::test_capability_catalog"},
+    {"id": "M15-CONN-003", "text": "Connector/tool registry seeded with honest integration-status labels", "artifact": "saathi/connectors/platform/registry.py", "test": "tests/test_m15_connectors.py::test_registry_seeded"},
+    {"id": "M15-CONN-004", "text": "Credential-reference system stores metadata only; secrets resolved in-process", "artifact": "saathi/connectors/platform/credentials.py", "test": "tests/test_m15_connectors.py::test_credentials_metadata_only"},
+    {"id": "M15-CONN-005", "text": "Connection lifecycle state machine; only executable states run", "artifact": "saathi/connectors/platform/models.py", "test": "tests/test_m15_connectors.py::test_lifecycle_gate"},
+    {"id": "M15-CONN-006", "text": "All execution routed through ExecutionGateway; no bypass", "artifact": "saathi/connectors/platform/execution.py", "test": "tests/test_m15_connectors.py::test_gateway_governed"},
+    {"id": "M15-CONN-007", "text": "Approval bound to exact action, single-use, expiring", "artifact": "saathi/connectors/platform/execution.py", "test": "tests/test_m15_connectors.py::test_approval_binding"},
+    {"id": "M15-CONN-008", "text": "Idempotency replay of completed executions", "artifact": "saathi/connectors/platform/execution.py", "test": "tests/test_m15_connectors.py::test_idempotency_replay"},
+    {"id": "M15-CONN-009", "text": "Uncertain / non-idempotent failures never auto-retry", "artifact": "saathi/connectors/platform/execution.py", "test": "tests/test_m15_connectors.py::test_uncertain_not_retryable"},
+    {"id": "M15-CONN-010", "text": "Deterministic test adapters with fixtures", "artifact": "saathi/connectors/platform/adapters.py", "test": "tests/test_m15_connectors.py::test_deterministic_fixtures"},
+    {"id": "M15-CONN-011", "text": "Health platform with honest labels", "artifact": "saathi/connectors/platform/health.py", "test": "tests/test_m15_connectors.py::test_health_honest"},
+    {"id": "M15-CONN-012", "text": "Webhook signature + freshness + replay defense", "artifact": "saathi/connectors/platform/webhook.py", "test": "tests/test_m15_connectors.py::test_webhook_security"},
+    {"id": "M15-CONN-013", "text": "Resumable checkpointed sync", "artifact": "saathi/connectors/platform/sync.py", "test": "tests/test_m15_connectors.py::test_sync_resumable"},
+    {"id": "M15-CONN-014", "text": "MCP tools untrusted; risk clamped up; gateway-routed", "artifact": "saathi/connectors/platform/mcp.py", "test": "tests/test_m15_connectors.py::test_mcp_untrusted_clamp"},
+    {"id": "M15-CONN-015", "text": "Secrets never surface in errors/results", "artifact": "saathi/connectors/platform/execution.py", "test": "tests/test_m15_connectors.py::test_secret_redaction"},
+    {"id": "M15-SPEC-001", "text": "SaathiOS constitution present and versioned", "artifact": ".specify/memory/constitution.md", "test": "tests/test_m15_specs.py::test_constitution_present"},
+    {"id": "M15-SPEC-002", "text": "Spec Kit wrapper CLI: version/health/init/validate/converge", "artifact": "saathi/specs/cli.py", "test": "tests/test_m15_specs.py::test_cli_commands"},
+    {"id": "M15-SPEC-003", "text": "Traceability validator: every requirement mapped + tested", "artifact": "saathi/specs/traceability.py", "test": "tests/test_m15_specs.py::test_traceability_complete"},
+    {"id": "M15-SPEC-004", "text": "Convergence gate fails on unmapped/untested requirement", "artifact": "saathi/specs/traceability.py", "test": "tests/test_m15_specs.py::test_convergence_gate"}
+  ]
+}

@@ -1,0 +1,48 @@
+{
+  "activates_production": false,
+  "authorities": {
+    "ACTIVE_authorization": "NOT GRANTED",
+    "CANARY_authorization": "NOT GRANTED",
+    "production_authorization": "NOT GRANTED",
+    "rollout_authorization": "NOT GRANTED",
+    "write_authority": "NOT GRANTED"
+  },
+  "banner": "M39 LIVE DISPOSABLE SANDBOX VALIDATION\nNON-PRODUCTION\nREAD-ONLY\nBOUNDED LIVE VALIDATION ONLY\nROLLOUT OFF\nNO CANARY GRANT\nNO ACTIVE\nTRADING GUARDIAN UNENGAGED",
+  "contains_secret_values": false,
+  "expands_scope": false,
+  "fingerprint": "8f3237f356196f3022b1e41f",
+  "grants_active": false,
+  "grants_anything": false,
+  "grants_production": false,
+  "grants_write": false,
+  "m32_canary_execution_mode": "PROHIBITION_UNCHANGED",
+  "machine_record": null,
+  "machine_verified": false,
+  "milestone": "M43",
+  "mode": "read_only_canary",
+  "note": "M43 strengthens provenance only; grants nothing. LIVE machine proof requires an operator disposable credential + valid approval record.",
+  "phase": "validation",
+  "provider": "github_meta",
+  "revocation_phase": null,
+  "schema": "m43.machine_verified_canary.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED",
+  "validation_phase": {
+    "blockers": [
+      "operator_approval_invalid_or_absent",
+      "m40_live_certification_required"
+    ],
+    "contains_secret_values": false,
+    "ok": false,
+    "phase": "validation",
+    "rollout": {
+      "all_handles_closed": null,
+      "errors": null,
+      "increments_run": null,
+      "live_network": null,
+      "state": null,
+      "verdict": "CANARY_NOT_ACTIVATED"
+    },
+    "verdict": "MACHINE_CANARY_BLOCKED"
+  },
+  "verdict": "MACHINE_CANARY_BLOCKED"
+}

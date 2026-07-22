@@ -1,0 +1,13 @@
+{
+  "body": {
+    "contains_raw_identity": false,
+    "contains_secret_values": false,
+    "qualified": false,
+    "status": "NOT_EXERCISED"
+  },
+  "fingerprint": "c3161ddefc38fd6e6fb35313de81cdf19da1820fe2440292b895f137e4288191",
+  "privacy_safe": true,
+  "schema": "m39.identity_qualification.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

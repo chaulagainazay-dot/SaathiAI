@@ -1,0 +1,38 @@
+{
+  "allowlist": {
+    "endpoints": [
+      "meta",
+      "user"
+    ],
+    "methods": [
+      "GET"
+    ],
+    "provider": "github_meta"
+  },
+  "contains_secret_values": false,
+  "note": "A valid record is a necessary operator input; it does NOT itself grant CANARY. Authority is applied out-of-band by the operator.",
+  "required_acknowledgements": [
+    "I_AUTHORIZE_BOUNDED_CANARY",
+    "I_CONFIRM_LIVE_M39_EVIDENCE_REVIEWED",
+    "I_CONFIRM_ROLLBACK_TRIGGERS_ACCEPTED",
+    "I_CONFIRM_READ_ONLY_SCOPE",
+    "I_ACCEPT_ACCOUNTABILITY_FOR_THIS_AUTHORIZATION"
+  ],
+  "required_fields": [
+    "approval_id",
+    "approver_id",
+    "milestone",
+    "provider",
+    "endpoints",
+    "methods",
+    "rollout_percent",
+    "expires_at",
+    "explicit_acknowledgements",
+    "record_hash"
+  ],
+  "rollout_bounds": {
+    "max_percent": 5,
+    "min_percent": 1
+  },
+  "schema": "m39_3.operator_canary_approval.v1"
+}

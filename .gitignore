@@ -34,3 +34,43 @@ assets/logo.png
 # credentials / env backups — never commit
 secrets/
 .env.bak
+
+# pattern-based secret exclusions — never commit (Repair 0)
+.env.*
+!.env.example
+*-admin.json
+!*-admin.example.json
+*serviceAccount*.json
+*service-account*.json
+*.pem
+*.key
+*.p12
+*.pfx
+*-credentials.json
+*_credentials.json
+*.token
+token.json
+oauth*.json
+*session*.json
+!*.example.json
+
+# Local AI-agent runtime state
+.saathi-agent-state/
+
+# Local runtime databases
+storage/*.db
+storage/*.db-shm
+storage/*.db-wal
+
+# M43 operator-local canary approval record — operator-specific, never commit
+docs/m41/operator_canary_approval.local.json
+docs/m41/*.local.json
+
+# M46 operator-local approval / live records — never commit
+docs/m46/*.local.json
+docs/m46/operator_canary_approval.local.json
+docs/evidence/m46/*.local.jsonl
+docs/evidence/m46/consumed_authorization.local.jsonl
+docs/evidence/m46/*.local.jsonl.lock
+docs/m46/*.local.json.save
+docs/m46/*.save

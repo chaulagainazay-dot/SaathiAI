@@ -1,0 +1,64 @@
+{
+  "ok": true,
+  "sampling_policy": "full",
+  "query_count": 18,
+  "successful_comparison_count": 18,
+  "top1_agreement": 1.0,
+  "top3_overlap": 1.0,
+  "top5_overlap": 1.0,
+  "path_jaccard_mean": 1.0,
+  "canonical_source_hit_rate": 1.0,
+  "exact_symbol_hit_rate": 1.0,
+  "primary_evidence_ratio_mean": 0.5,
+  "generated_summary_ratio_mean": 0.0,
+  "duplicate_rate_mean": 0.0,
+  "no_result_rate_legacy": 0.0,
+  "no_result_rate_unified": 0.0,
+  "partial_result_rate": 0.0,
+  "permission_denial_correctness": 1.0,
+  "context_budget_compliance": 1.0,
+  "deterministic_repeatability": 1.0,
+  "p50_legacy_latency_ms": 0.0,
+  "p95_legacy_latency_ms": 0.0,
+  "p50_unified_latency_ms": 0.0,
+  "p95_unified_latency_ms": 0.01,
+  "p50_shadow_overhead_ms": 0.0,
+  "insufficient_sample_for_p95": true,
+  "profiles": {
+    "FAST_LOOKUP": {
+      "case_count": 5,
+      "mean_top5_overlap": 1.0,
+      "mean_legacy_latency_ms": 0.0,
+      "mean_unified_latency_ms": 0.004
+    },
+    "CODE_EXPLAIN": {
+      "case_count": 8,
+      "mean_top5_overlap": 1.0,
+      "mean_legacy_latency_ms": 0.0,
+      "mean_unified_latency_ms": 0.0
+    },
+    "AUDIT_EVIDENCE": {
+      "case_count": 2,
+      "mean_top5_overlap": 1.0,
+      "mean_legacy_latency_ms": 0.0,
+      "mean_unified_latency_ms": 0.0
+    },
+    "MULTI_REPO_COMPARE": {
+      "case_count": 1,
+      "mean_top5_overlap": 1.0,
+      "mean_legacy_latency_ms": 0.0,
+      "mean_unified_latency_ms": 0.0
+    },
+    "MISSION_CONTEXT": {
+      "case_count": 2,
+      "mean_top5_overlap": 1.0,
+      "mean_legacy_latency_ms": 0.0,
+      "mean_unified_latency_ms": 0.0
+    }
+  },
+  "warnings": [
+    "insufficient_sample_for_p95:n=18<min=20"
+  ],
+  "result_fingerprint": "3f339ac10777ce00",
+  "case_count": 18
+}

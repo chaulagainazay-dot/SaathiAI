@@ -1,0 +1,212 @@
+{
+  "schema": "m25.latest_environment_observation.v1",
+  "recorded_at": "2026-07-17T13:18:53+00:00",
+  "verdict": "M25 BLOCKED \u2014 LIVE LOCAL PROVIDER ENVIRONMENT UNAVAILABLE",
+  "live": false,
+  "live_provider_certified": false,
+  "production_certified": false,
+  "blockers": [
+    "insufficient_model_memory_headroom",
+    "memory_pressure"
+  ],
+  "environment": {
+    "schema": "m25.environment_audit.v1",
+    "timestamp": "2026-07-17T13:18:53+00:00",
+    "provider": "ollama",
+    "binary_path": "/usr/local/bin/ollama",
+    "binary_present": true,
+    "broken_symlink": false,
+    "binary_real_target": "/Applications/Ollama.app/Contents/Resources/ollama",
+    "version": "ollama version is 0.32.1",
+    "endpoint": "http://127.0.0.1:11434",
+    "endpoint_source": "InferenceSettings.ollama_base_url",
+    "endpoint_allowlisted": true,
+    "allowed_hosts": [
+      "127.0.0.1",
+      "localhost",
+      "::1"
+    ],
+    "runtime_reachable": true,
+    "health_detail": "ok",
+    "authentication_mode": "none_local",
+    "launch_agent_path": "/Users/macbookpro/Library/LaunchAgents/com.ajay.ollama.plist",
+    "launch_agent_state": "99306\t0\tcom.ollama.ollama",
+    "startup_mechanism": "LaunchAgent com.ajay.ollama (not started by M25)",
+    "data_directory": "/Users/macbookpro/.ollama",
+    "filesystem_model_manifests": [
+      "registry.ollama.ai/library/qwen2.5/1.5b"
+    ],
+    "installed_approved_models": [
+      "qwen2.5:1.5b"
+    ],
+    "architecture": "arm64",
+    "platform": "Darwin",
+    "cpu": "Apple M2",
+    "total_memory_gb": 8.0,
+    "available_memory_gb": 1.69,
+    "required_available_memory_gb": 1.8,
+    "shortfall_gb": 0.11,
+    "memory_safety_margin_gb": 0.8,
+    "minimum_model_budget_gb": 1.0,
+    "memory_ok": false,
+    "free_disk_gb": 72.8,
+    "install_performed": false,
+    "service_started_by_m25": false,
+    "models_pulled_by_m25": false,
+    "blockers": [
+      "insufficient_model_memory_headroom"
+    ],
+    "operator_permission": {
+      "auto_install": false,
+      "auto_start_service": false,
+      "auto_pull_models": false,
+      "documented_start_permission": false,
+      "notes": "M25 absolute rules forbid install/start/pull without explicit operator permission. LaunchAgent exists but service was not started."
+    }
+  },
+  "selected_model": {},
+  "gates": [
+    {
+      "gate_id": "env_binary",
+      "status": "PASS",
+      "detail": "path=/usr/local/bin/ollama",
+      "evidence": {},
+      "blocking": true
+    },
+    {
+      "gate_id": "env_runtime",
+      "status": "PASS",
+      "detail": "ok",
+      "evidence": {},
+      "blocking": true
+    },
+    {
+      "gate_id": "env_model",
+      "status": "ENVIRONMENT_BLOCKED",
+      "detail": "installed_approved=['qwen2.5:1.5b']; available(1.69) < safety_margin(0.8) + model_budget(1.0) = 1.8",
+      "evidence": {
+        "count": 1,
+        "installed_approved_models": [
+          "qwen2.5:1.5b"
+        ],
+        "available_memory_gb": 1.69,
+        "required_available_memory_gb": 1.8,
+        "shortfall_gb": 0.11,
+        "safety_margin_gb": 0.8,
+        "minimum_model_budget_gb": 1.0,
+        "production_safe_formula": "available_memory_gb >= safety_margin_gb + minimum_model_budget_gb"
+      },
+      "blocking": true
+    },
+    {
+      "gate_id": "resource_memory",
+      "status": "ENVIRONMENT_BLOCKED",
+      "detail": "available_gb=1.69 margin=0.8",
+      "evidence": {},
+      "blocking": true
+    },
+    {
+      "gate_id": "residual_exceptions",
+      "status": "PASS",
+      "detail": "count=0",
+      "evidence": {},
+      "blocking": true
+    },
+    {
+      "gate_id": "durable_governance",
+      "status": "PASS",
+      "detail": "store+daily durable",
+      "evidence": {},
+      "blocking": true
+    },
+    {
+      "gate_id": "cloud_fallback_disabled",
+      "status": "PASS",
+      "detail": "allow_cloud_fallback=false",
+      "evidence": {},
+      "blocking": true
+    },
+    {
+      "gate_id": "endpoint_allowlist",
+      "status": "PASS",
+      "detail": "http://127.0.0.1:11434",
+      "evidence": {},
+      "blocking": true
+    },
+    {
+      "gate_id": "live_nonstream",
+      "status": "ENVIRONMENT_BLOCKED",
+      "detail": "live path not available; see environment.blockers",
+      "evidence": {},
+      "blocking": true
+    },
+    {
+      "gate_id": "live_stream",
+      "status": "ENVIRONMENT_BLOCKED",
+      "detail": "live path not available; see environment.blockers",
+      "evidence": {},
+      "blocking": true
+    },
+    {
+      "gate_id": "live_cancel",
+      "status": "ENVIRONMENT_BLOCKED",
+      "detail": "live path not available; see environment.blockers",
+      "evidence": {},
+      "blocking": true
+    },
+    {
+      "gate_id": "live_timeout",
+      "status": "ENVIRONMENT_BLOCKED",
+      "detail": "live path not available; see environment.blockers",
+      "evidence": {},
+      "blocking": true
+    },
+    {
+      "gate_id": "live_circuit",
+      "status": "ENVIRONMENT_BLOCKED",
+      "detail": "live path not available; see environment.blockers",
+      "evidence": {},
+      "blocking": true
+    },
+    {
+      "gate_id": "live_settlement",
+      "status": "ENVIRONMENT_BLOCKED",
+      "detail": "live path not available; see environment.blockers",
+      "evidence": {},
+      "blocking": true
+    },
+    {
+      "gate_id": "live_chat_e2e",
+      "status": "ENVIRONMENT_BLOCKED",
+      "detail": "live path not available; see environment.blockers",
+      "evidence": {},
+      "blocking": true
+    },
+    {
+      "gate_id": "live_kill_switch",
+      "status": "ENVIRONMENT_BLOCKED",
+      "detail": "live path not available; see environment.blockers",
+      "evidence": {},
+      "blocking": true
+    },
+    {
+      "gate_id": "live_privacy_canary",
+      "status": "ENVIRONMENT_BLOCKED",
+      "detail": "live path not available; see environment.blockers",
+      "evidence": {},
+      "blocking": true
+    },
+    {
+      "gate_id": "live_performance",
+      "status": "ENVIRONMENT_BLOCKED",
+      "detail": "live path not available; see environment.blockers",
+      "evidence": {},
+      "blocking": true
+    }
+  ],
+  "live_cases": [],
+  "tip_commit": "0a25728d9b551c1d86f6e57a2e43beb5aec708b7",
+  "run_id": "aed168e407d241409587c1d7ea17fe65",
+  "certification_fingerprint": "sha256:b9521e643334c3c4758b7d08",
+  "privacy_status": "redacted_no_raw_prompts_or_outputs"
+}

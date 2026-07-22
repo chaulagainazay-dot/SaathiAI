@@ -1,0 +1,39 @@
+{
+  "all_clean": true,
+  "all_reproducible": true,
+  "contains_secret_values": false,
+  "count": 5,
+  "results": [
+    {
+      "clean": true,
+      "fingerprint": "04f1caa83777ed8089f0ca37",
+      "name": "m39_1",
+      "reproducible": true
+    },
+    {
+      "clean": true,
+      "fingerprint": "2653f541fb1ce8b969c7ff0b",
+      "name": "m39_2",
+      "reproducible": true
+    },
+    {
+      "clean": true,
+      "fingerprint": "1dd5a4931af4db54db14dbc9",
+      "name": "m39_3",
+      "reproducible": true
+    },
+    {
+      "clean": true,
+      "fingerprint": "638dbf346552be847f95cfd1",
+      "name": "m39_4",
+      "reproducible": true
+    },
+    {
+      "clean": true,
+      "fingerprint": "9b369226837866faf3494620",
+      "name": "m39_5",
+      "reproducible": true
+    }
+  ],
+  "schema": "m39_7.reproduce_all.v1"
+}

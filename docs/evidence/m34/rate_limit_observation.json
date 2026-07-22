@@ -1,0 +1,38 @@
+{
+  "body": {
+    "per_call": [
+      {
+        "confidence": "high",
+        "limit_present": true,
+        "rate_limit_visibility": "EXPOSED",
+        "remaining_bucket": "AMPLE",
+        "remaining_present": true,
+        "retry_after_present": false,
+        "source": "header"
+      },
+      {
+        "confidence": "high",
+        "limit_present": true,
+        "rate_limit_visibility": "EXPOSED",
+        "remaining_bucket": "AMPLE",
+        "remaining_present": true,
+        "retry_after_present": false,
+        "source": "header"
+      },
+      {
+        "confidence": "high",
+        "limit_present": true,
+        "rate_limit_visibility": "EXPOSED",
+        "remaining_bucket": "AMPLE",
+        "remaining_present": true,
+        "retry_after_present": false,
+        "source": "header"
+      }
+    ]
+  },
+  "fingerprint": "996651d60742e5f1d6e5de9d2e846bc8376057daded48785f43cbb51513514a2",
+  "privacy_safe": true,
+  "schema": "m34.rate_limit_observation.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

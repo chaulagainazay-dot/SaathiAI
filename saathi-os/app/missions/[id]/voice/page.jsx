@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { Panel, Eyebrow } from "@/components/ui";
+import MissionNav from "@/components/MissionNav";
 import { fetchBrand, registerVoice, activateVoice, fetchVoicePackage,
   fetchVoiceExperiments, createVoiceExperiment } from "@/lib/api";
 
@@ -45,9 +46,10 @@ export default function VoicePage() {
   const av = b.active_voice;
 
   return (
-    <div className="page" style={{ maxWidth: 760, margin: "0 auto", paddingBottom: 60 }}>
-      <a href={`/missions/${id}`} style={{ fontSize: 12, opacity: 0.5, textDecoration: "none", color: "inherit" }}>← Mission</a>
-      <Eyebrow style={{ color: ACCENT, marginTop: 8 }}>Brand Identity · Voice Studio</Eyebrow>
+    <div>
+      <MissionNav />
+      <div className="page" style={{ maxWidth: 760, margin: "0 auto", paddingBottom: 60 }}>
+        <Eyebrow style={{ color: ACCENT, marginTop: 8 }}>Brand Identity · Voice Studio</Eyebrow>
       <div style={{ fontSize: 26, fontWeight: 600, margin: "4px 0 4px" }}>Voice Studio</div>
       <div style={{ fontSize: 13, opacity: 0.5, marginBottom: 16 }}>
         A reusable per-Mission asset every Director reads. Register a profile now; the audio recording +
@@ -161,5 +163,6 @@ export default function VoicePage() {
         </div>
       </Panel>
     </div>
+  </div>
   );
 }

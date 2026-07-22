@@ -58,11 +58,45 @@ end tell
         return None
 
 
-def ask_chatgpt(prompt: str, timeout: int = 90) -> dict:
+def ask_chatgpt(prompt: str, timeout: int = 90, *, actor: str = "user:system") -> dict:
     """
     Send a prompt to ChatGPT in Brave and return the response.
-    Returns {"ok": True, "response": "..."} or {"ok": False, "error": "..."}
+    Returns {"ok": True, "response": "..."} or {"ok": False, "error": "..."}.
+
+    M17.24: raw AppleScript browser control is fail-closed unless
+    SAATHI_ALLOW_RAW_BROWSER=1. Prefer LLM connectors via ExecutionGateway.
     """
+    from saathi.browser.guard import deny_raw_production_dispatch, raw_browser_env_enabled
+
+    # Record governed intent for audit (read/type against chatgpt.com is medium+)
+    try:
+        from saathi.browser.governed import default_governed_browser
+        rec = default_governed_browser().execute(
+            action="fill",
+            url="https://chatgpt.com/",
+            actor=actor,
+            request_source="tool",
+            mission_id="chatgpt_browser",
+            mission_run_id="chatgpt-ask",
+            environment="dev",
+            payload={"prompt_digest": "redacted"},
+        )
+        if rec.status == "denied":
+            return {"ok": False, "error": "governance_denied",
+                    "status": rec.status, "governed": True}
+    except Exception as e:
+        return {"ok": False, "error": f"governance_error: {str(e)[:160]}", "governed": True}
+
+    if not raw_browser_env_enabled():
+        return {
+            "ok": False,
+            **deny_raw_production_dispatch(
+                source="saathi.tools.chatgpt_browser.ask_chatgpt",
+                action="ask_chatgpt",
+            ),
+            "hint": "Use model-router / connector LLM path; raw Brave AppleScript disabled.",
+        }
+
     # ── 1. Find / focus ChatGPT tab ──────────────────────────────────────────
     tab = _find_chatgpt_tab()
     if tab is None:

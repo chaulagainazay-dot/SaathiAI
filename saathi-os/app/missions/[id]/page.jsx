@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { Panel, Eyebrow } from "@/components/ui";
 import { fetchMissionDetail, setTaskStatus } from "@/lib/api";
+import MissionNav from "@/components/MissionNav";
 
 const DEPT_COLOR = {
   ai_studio: "#FF8A3D", pielts: "#6C3FCF", travel: "#5FC8FF", hcg: "#FF5A5A", cafeteria: "#4FD07A",
@@ -29,15 +30,17 @@ export default function MissionDetail() {
   const pct = (x) => `${Math.round((x || 0) * 100)}%`;
 
   return (
-    <div className="page" style={{ maxWidth: 1080, margin: "0 auto", paddingBottom: 60 }}>
-      <a href="/missions" style={{ fontSize: 12, opacity: 0.5, textDecoration: "none", color: "inherit" }}>← Missions</a>
-      <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 8 }}>
-        <div style={{ width: 12, height: 12, borderRadius: "50%", background: color }} />
-        <div style={{ fontSize: 28, fontWeight: 600 }}>{m.name}</div>
-        <span className="mono" style={{ fontSize: 11, padding: "2px 10px", borderRadius: 999,
-          background: `${color}22`, color }}>{m.type}</span>
-      </div>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 4 }}>
+    <div>
+      <MissionNav missionName={m.name} missionType={m.type} />
+      <div className="page" style={{ maxWidth: 1080, margin: "0 auto", paddingBottom: 60 }}>
+        <a href="/missions" style={{ fontSize: 12, opacity: 0.5, textDecoration: "none", color: "inherit" }}>← Missions</a>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 8 }}>
+          <div style={{ width: 12, height: 12, borderRadius: "50%", background: color }} />
+          <div style={{ fontSize: 28, fontWeight: 600 }}>{m.name}</div>
+          <span className="mono" style={{ fontSize: 11, padding: "2px 10px", borderRadius: 999,
+            background: `${color}22`, color }}>{m.type}</span>
+        </div>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 4 }}>
         <div className="mono" style={{ fontSize: 11.5, opacity: 0.5 }}>
           {m.key} · {m.department} · {m.status}
         </div>
@@ -376,5 +379,6 @@ export default function MissionDetail() {
         </div>
       </Panel>
     </div>
+  </div>
   );
 }

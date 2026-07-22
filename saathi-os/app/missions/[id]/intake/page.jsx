@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useParams } from "next/navigation";
 import { Panel, Eyebrow } from "@/components/ui";
+import MissionNav from "@/components/MissionNav";
 import { applyIntake, extractDocument } from "@/lib/api";
 
 const ACCENT = "#9B6BFF", TEAL = "#00BFA5", RED = "#FF5A5A";
@@ -40,9 +41,10 @@ export default function IntakePage() {
     border: "1px solid rgba(255,255,255,0.12)", background: "rgba(255,255,255,0.04)", color: "inherit" };
 
   return (
-    <div className="page" style={{ maxWidth: 720, margin: "0 auto", paddingBottom: 60 }}>
-      <a href={`/missions/${id}`} style={{ fontSize: 12, opacity: 0.5, textDecoration: "none", color: "inherit" }}>← Mission</a>
-      <Eyebrow style={{ color: ACCENT, marginTop: 8 }}>Mission Intake</Eyebrow>
+    <div>
+      <MissionNav />
+      <div className="page" style={{ maxWidth: 720, margin: "0 auto", paddingBottom: 60 }}>
+        <Eyebrow style={{ color: ACCENT, marginTop: 8 }}>Mission Intake</Eyebrow>
       <div style={{ fontSize: 26, fontWeight: 600, margin: "4px 0 4px" }}>Fill the business memory</div>
       <div style={{ fontSize: 13, opacity: 0.5, marginBottom: 16 }}>
         Every field becomes a Knowledge Graph node and raises coverage immediately — no OAuth. Two minutes here
@@ -95,5 +97,6 @@ export default function IntakePage() {
           fontWeight: 600, color: "#fff", background: ACCENT, opacity: busy ? 0.6 : 1, width: "100%" }}>
         {busy ? "Saving to business memory…" : "Save Intake → raise coverage"}</button>
     </div>
+  </div>
   );
 }

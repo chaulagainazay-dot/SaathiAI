@@ -30,15 +30,9 @@ class TokenRegistry:
         self.store = store or get_store()
         self._now = now
 
-    # ── lifecycle ────────────────────────────────────────────────────────────
     def create(self, user_id: str, name: str, purpose: str = "",
                permissions: list[str] | None = None,
                expires_in_days: int | None = None) -> tuple[str, str]:
-        """Create a new API token. Returns (token_id, raw_token).
-
-        The raw token is shown ONCE to the caller. After that only the hash
-        is stored.
-        """
         raw = "tk_" + secrets.token_urlsafe(32)
         token_hash = hashlib.sha256(raw.encode()).hexdigest()
         expires_at = None
@@ -51,7 +45,6 @@ class TokenRegistry:
         return tid, raw
 
     def verify(self, raw_token: str) -> dict | None:
-        """Validate a raw token and update last_used. Returns record or None."""
         if not raw_token or not raw_token.startswith("tk_"):
             return None
         token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
@@ -66,9 +59,7 @@ class TokenRegistry:
     def list(self, user_id: str) -> list[dict]:
         return self.store.api_token_list(user_id)
 
-    # ── permission checking ──────────────────────────────────────────────────
     def check_permission(self, token_record: dict, path: str, method: str = "GET") -> bool:
-        """Does this token have permission for the given endpoint + method?"""
         perms = token_record.get("permissions", [])
         if isinstance(perms, str):
             import json
@@ -85,26 +76,20 @@ class TokenRegistry:
 
     @staticmethod
     def _match_perm(perm: str, path: str, method: str) -> bool:
-        """Match a permission pattern against path + method."""
-        # Parse optional method prefix
         perm_method = ""
         perm_path = perm
         if " " in perm:
             parts = perm.split(" ", 1)
             perm_method = parts[0].upper()
             perm_path = parts[1]
-        # Method must match if specified
         if perm_method and perm_method != method.upper():
             return False
-        # Wildcard suffix
         if perm_path.endswith("*"):
             prefix = perm_path[:-1]
             return path.startswith(prefix)
         return path == perm_path
 
-    # ── legacy migration ─────────────────────────────────────────────────────
     def migrate_legacy_token(self, user_id: str, raw_token: str, name: str = "legacy-admin") -> str:
-        """Migrate a raw SAATHI_TOKEN into the registry. Idempotent."""
         token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
         existing = self.store.api_token_by_hash(token_hash)
         if existing:
@@ -116,7 +101,6 @@ class TokenRegistry:
         )
 
 
-# ── process-wide singleton ───────────────────────────────────────────────────
 _default_registry: TokenRegistry | None = None
 
 
@@ -125,3 +109,8 @@ def get_registry() -> TokenRegistry:
     if _default_registry is None:
         _default_registry = TokenRegistry()
     return _default_registry
+
+
+def close_registry() -> None:
+    global _default_registry
+    _default_registry = None

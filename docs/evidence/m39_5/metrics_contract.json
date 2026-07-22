@@ -1,0 +1,39 @@
+{
+  "contains_secret_values": false,
+  "metrics": [
+    {
+      "name": "m39_sessions_total",
+      "type": "counter"
+    },
+    {
+      "name": "m39_sessions_failed_total",
+      "type": "counter"
+    },
+    {
+      "name": "m39_calls_used",
+      "type": "gauge"
+    },
+    {
+      "name": "m39_auth_denials_total",
+      "type": "counter"
+    },
+    {
+      "name": "m39_secret_resolution_failures_total",
+      "type": "counter"
+    },
+    {
+      "name": "m39_open_leases",
+      "type": "gauge"
+    },
+    {
+      "name": "m39_leak_findings_total",
+      "type": "counter"
+    },
+    {
+      "name": "m39_kill_switch_active",
+      "type": "gauge"
+    }
+  ],
+  "redaction": "no labels may carry secret values; provider/reason only",
+  "schema": "m39_5.metrics_contract.v1"
+}

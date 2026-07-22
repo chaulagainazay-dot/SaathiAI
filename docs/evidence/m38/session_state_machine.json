@@ -1,0 +1,106 @@
+{
+  "body": {
+    "states": [
+      "CREATED",
+      "AUTHORIZATION_PENDING",
+      "AUTHORIZED",
+      "QUALIFYING",
+      "QUALIFIED",
+      "RUNNING",
+      "RETRY_WAIT",
+      "CLEANUP_PENDING",
+      "COMPLETED",
+      "FAILED",
+      "INTERRUPTED",
+      "RECOVERY_REQUIRED",
+      "CLEANED",
+      "TERMINAL_FAILED"
+    ],
+    "terminal": [
+      "CLEANED",
+      "TERMINAL_FAILED"
+    ],
+    "transitions": {
+      "AUTHORIZATION_PENDING": [
+        "AUTHORIZED",
+        "FAILED",
+        "INTERRUPTED",
+        "TERMINAL_FAILED"
+      ],
+      "AUTHORIZED": [
+        "FAILED",
+        "INTERRUPTED",
+        "QUALIFYING",
+        "RECOVERY_REQUIRED"
+      ],
+      "CLEANED": [],
+      "CLEANUP_PENDING": [
+        "CLEANED",
+        "COMPLETED",
+        "FAILED",
+        "TERMINAL_FAILED"
+      ],
+      "COMPLETED": [
+        "CLEANED",
+        "CLEANUP_PENDING"
+      ],
+      "CREATED": [
+        "AUTHORIZATION_PENDING",
+        "FAILED",
+        "TERMINAL_FAILED"
+      ],
+      "FAILED": [
+        "CLEANED",
+        "CLEANUP_PENDING",
+        "RECOVERY_REQUIRED",
+        "TERMINAL_FAILED"
+      ],
+      "INTERRUPTED": [
+        "CLEANUP_PENDING",
+        "RECOVERY_REQUIRED",
+        "TERMINAL_FAILED"
+      ],
+      "QUALIFIED": [
+        "FAILED",
+        "INTERRUPTED",
+        "RECOVERY_REQUIRED",
+        "RUNNING"
+      ],
+      "QUALIFYING": [
+        "FAILED",
+        "INTERRUPTED",
+        "QUALIFIED",
+        "RECOVERY_REQUIRED"
+      ],
+      "RECOVERY_REQUIRED": [
+        "CLEANED",
+        "CLEANUP_PENDING",
+        "FAILED",
+        "TERMINAL_FAILED"
+      ],
+      "RETRY_WAIT": [
+        "CLEANUP_PENDING",
+        "FAILED",
+        "INTERRUPTED",
+        "RUNNING",
+        "TERMINAL_FAILED"
+      ],
+      "RUNNING": [
+        "CLEANUP_PENDING",
+        "COMPLETED",
+        "FAILED",
+        "INTERRUPTED",
+        "RECOVERY_REQUIRED",
+        "RETRY_WAIT"
+      ],
+      "TERMINAL_FAILED": [
+        "CLEANED"
+      ]
+    }
+  },
+  "fingerprint": "12548c590eb805ac1a22810f434a64f5a75066435d5429c6f23ec4b7ea1eb65c",
+  "privacy_safe": true,
+  "schema": "m38.session_state_machine.v1",
+  "spec_version": "m32.provider.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}
