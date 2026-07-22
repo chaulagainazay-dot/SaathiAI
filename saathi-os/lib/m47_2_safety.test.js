@@ -45,13 +45,16 @@ describe("Approvals honesty", () => {
   const src = read("app/approvals/page.jsx");
 
   it("does not treat unavailable as zero", () => {
-    assert.match(src, /not treated as zero|not displayed as 0|not counted as zero/i);
+    assert.match(src, /not shown as zero|not displayed as zero|unavailable ≠ 0|not treated as zero/i);
     assert.match(src, /Unavailable|unavailable/);
-    assert.match(src, /Not yet integrated|not yet integrated/i);
+    assert.match(src, /not_integrated|Not yet integrated|not yet integrated/i);
   });
 
-  it("does not call decide from the list UI", () => {
-    assert.doesNotMatch(src, /platformDecideApproval/);
+  it("gates decide behind ConfirmDialog (no silent decide)", () => {
+    // M47.3: authorized decide allowed only after ConfirmDialog confirmation
+    assert.match(src, /ConfirmDialog/);
+    assert.match(src, /platformDecideApproval/);
+    assert.match(src, /explicit confirmation|Confirm approval/i);
   });
 });
 
