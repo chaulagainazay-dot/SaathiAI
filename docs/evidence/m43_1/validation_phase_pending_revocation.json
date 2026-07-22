@@ -1,0 +1,42 @@
+{
+  "body_fingerprint": "f0c3bc3de563de8d7a636b27",
+  "contains_secret_values": false,
+  "credential_locator": "saathi_m43:github_meta",
+  "expected_subject_fingerprint_bound": "c7cd7f4d6bee55c2847614692022af73",
+  "grants_active": false,
+  "grants_anything": false,
+  "grants_production": false,
+  "grants_write": false,
+  "increments_run": 2,
+  "live_network": true,
+  "m32_canary_execution_mode": "PROHIBITION_UNCHANGED",
+  "machine_record_written": false,
+  "machine_verified": false,
+  "milestone": "M43.1",
+  "mode": "read_only_canary",
+  "phase": "validation",
+  "provider": "github_meta",
+  "revocation_phase": "NOT_EXERCISED_PENDING_OPERATOR_EXTERNAL_REVOCATION",
+  "rollout": {
+    "all_handles_closed": true,
+    "errors": 0,
+    "increments_run": 2,
+    "live_network": true,
+    "state": "COMPLETED",
+    "verdict": "CANARY_ACTIVE_BOUNDED"
+  },
+  "schema": "m43_1.validation_phase.pending_revocation.v1",
+  "source_kind": "OS_KEYCHAIN_REFERENCE",
+  "trading_guardian": "UNCHANGED / UNENGAGED",
+  "verdict": "MACHINE_CANARY_VALIDATED_PENDING_REVOCATION",
+  "verifications": {
+    "bounded_read_only_completed": true,
+    "budget_compliant": true,
+    "cleanup_complete": true,
+    "endpoint_identity_bound": true,
+    "no_rollback_triggered": true,
+    "rollback_state_clean": true,
+    "secret_handle_destroyed": true,
+    "zero_error_budget_held": true
+  }
+}
