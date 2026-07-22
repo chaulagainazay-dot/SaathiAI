@@ -169,7 +169,26 @@ def test_backward_compat_intact():
     assert m39_4.backward_compatibility_check()["all_present"] is True
 
 
-def test_real_repo_m42_still_not_recommended():
-    # no machine record on disk -> M42 must remain NOT_RECOMMENDED (no fabrication)
-    assert not Path("docs/evidence/m43/machine_verified_canary_completion.json").exists()
-    assert m42.run_graduation_review()["recommendation"] == "GRADUATION_NOT_RECOMMENDED"
+def test_real_repo_m42_recommended_with_machine_record():
+    # M43.1 Phase 6 produced a genuine, live, bound machine record now on disk. It is
+    # not fabricated: source == MACHINE and machine_verified_live is True. Its presence
+    # lifts AB-PROV in M42 -> RECOMMENDED (advisory only, grants nothing).
+    mr_path = Path("docs/evidence/m43/machine_verified_canary_completion.json")
+    assert mr_path.exists()
+    mr = json.loads(mr_path.read_text())
+    assert mr["source"] == "MACHINE" and mr["machine_verified_live"] is True
+    r = m42.run_graduation_review()
+    assert r["recommendation"] == "GRADUATION_RECOMMENDED"
+    assert r["abort_conditions_present"] == []
+    assert r["grants_anything"] is False and r["alters_runtime_authority"] is False
+
+
+def test_no_machine_record_on_disk_not_recommended(tmp_path):
+    # Negative guard preserved deterministically: with NO machine record present the
+    # operator-attested default must remain NOT_RECOMMENDED (no fabrication permitted).
+    shutil.copytree("docs/evidence/m40", tmp_path / "m40")
+    shutil.copytree("docs/evidence/m41", tmp_path / "m41")
+    # no m43 machine record written
+    r = m42.run_graduation_review(base=str(tmp_path))
+    assert r["recommendation"] == "GRADUATION_NOT_RECOMMENDED"
+    assert "AB-PROV" in r["abort_conditions_present"]

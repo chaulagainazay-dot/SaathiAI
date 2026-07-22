@@ -116,11 +116,35 @@ def test_operator_attested_canary_not_recommended():
     assert "AB-PROV" in r["abort_conditions_present"]
 
 
-def test_real_repo_evidence_not_recommended():
-    # the actual committed evidence -> M41 canary is operator-attested
+def test_real_repo_evidence_recommended_post_machine_proof():
+    # Post M43.1 Phase 6: a genuine machine-verified canary record is committed at
+    # docs/evidence/m43/machine_verified_canary_completion.json. It supersedes the
+    # operator-attested default (machine_override), so provenance is MACHINE_PROOF,
+    # AB-PROV is lifted, and the review is RECOMMENDED. Advisory only — grants nothing.
+    from pathlib import Path
+    assert Path("docs/evidence/m43/machine_verified_canary_completion.json").exists()
     r = m42.run_graduation_review()
+    assert r["recommendation"] == "GRADUATION_RECOMMENDED"
+    assert r["abort_conditions_present"] == []
+    assert "AB-PROV" not in r["abort_conditions_present"]
+    # recommendation grants no operational authority
+    assert r["grants_anything"] is False
+    assert r["alters_runtime_authority"] is False
+    assert r["explicitly_not_granted"] == list(FORBIDDEN)
+
+
+def test_real_repo_without_machine_record_not_recommended(tmp_path):
+    # Negative guard preserved from the pre-proof state: with the machine record ABSENT,
+    # the operator-attested default must NOT graduate (AB-PROV present). Built
+    # deterministically from real m40/m41 evidence, omitting docs/evidence/m43.
+    import shutil
+    for d in ("m40", "m41"):
+        shutil.copytree(f"docs/evidence/{d}", tmp_path / d)
+    # deliberately do NOT copy docs/evidence/m43 (no machine record on disk)
+    r = m42.run_graduation_review(base=str(tmp_path))
     assert r["recommendation"] == "GRADUATION_NOT_RECOMMENDED"
     assert "AB-PROV" in r["abort_conditions_present"]
+    assert r["grants_anything"] is False
 
 
 # ── missing evidence -> BLOCKED ──────────────────────────────────────────────
