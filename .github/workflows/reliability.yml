@@ -3,6 +3,14 @@ name: reliability
 # Diagnose-only CI: collection check, critical regression manifest, server
 # import + route count, full suite, report artifact. CI never commits or
 # pushes production-code changes — it diagnoses, classifies, and fails clearly.
+#
+# Timing (observed on dd252fb, runs 29902034517 / 29902036748):
+#   deps+collection+server  ~1–2 min
+#   critical regression     ~17 min (PASS)
+#   full suite              >12 min remaining budget under single 30m job → cancelled
+# Design: split mandatory critical phase from full suite with independent budgets.
+# Full suite runs on pull_request / workflow_dispatch / master|release push only,
+# so a PR branch push does not double-run the long suite for the same SHA.
 
 on:
   push:
@@ -10,10 +18,18 @@ on:
   pull_request:
   workflow_dispatch:
 
+concurrency:
+  # One active reliability pipeline per branch (PR head_ref or push ref_name).
+  # Newer commits cancel superseded runs; push+PR for the same branch share a group.
+  group: reliability-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
 jobs:
-  reliability:
+  critical-regressions:
+    name: critical-regressions
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    # Observed critical path ~18–20 min including setup; 40 min leaves margin.
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
 
@@ -72,6 +88,54 @@ jobs:
               sys.exit(f"blocking critical checks failed: {failed}")
           PY
 
+      - name: Upload repair/diagnostic reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reliability-critical-reports
+          path: |
+            artifacts/repairs/
+            data/repair_baseline.json
+          if-no-files-found: ignore
+
+  full-suite:
+    name: full-suite
+    needs: critical-regressions
+    runs-on: ubuntu-latest
+    # Full suite previously starved under a shared 30m budget after ~17m critical.
+    # Independent 60m job budget after critical success.
+    timeout-minutes: 60
+    # Avoid duplicate full-suite work for the same SHA on PR branches:
+    # pull_request is the authoritative PR gate; workflow_dispatch is manual;
+    # push still runs full suite on master/release integration branches.
+    # Milestone/feature branch pushes with an open PR only run critical-regressions
+    # (the PR event supplies full-suite). Fail-closed: non-zero pytest exits still fail.
+    if: >
+      github.event_name == 'pull_request' ||
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'push' &&
+       (github.ref == 'refs/heads/master' ||
+        startsWith(github.ref, 'refs/heads/release/')))
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install host pilot tools (ffmpeg/jq/sqlite3)
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg jq sqlite3
+
+      - name: Install dependencies
+        run: |
+          python -m pip install -U pip
+          pip install -e . pytest pytest-asyncio httpx
+          pip install -r requirements.txt
+          pip install "pyyaml>=6.0" "PyJWT>=2.0" "cryptography>=41.0"
+
       - name: Full test suite
         run: python -m pytest tests/ -q -p no:cacheprovider
 
@@ -79,7 +143,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: reliability-reports
+          name: reliability-full-suite-reports
           path: |
             artifacts/repairs/
             data/repair_baseline.json
