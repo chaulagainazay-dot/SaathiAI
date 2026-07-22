@@ -34,7 +34,7 @@
     "I_ACCEPT_ACCOUNTABILITY_FOR_THIS_BOUNDED_CANARY"
   ],
   "acknowledgements": [],
-  "allowed_endpoint": "meta",
+  "allowed_endpoint": "user",
   "allowed_operation": "IDENTITY_READ",
   "approval_id": "",
   "approval_integrity_fingerprint": "",

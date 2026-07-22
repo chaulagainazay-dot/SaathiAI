@@ -529,9 +529,19 @@ def main(argv: Optional[list[str]] = None) -> int:
     sp_rev = sub.add_parser("m46-run-revocation")
     sp_rev.add_argument("--mode", default="simulate", choices=("simulate", "live"))
     sp_rev.add_argument("--live-flag", action="store_true")
+    sp_rev.add_argument("--secret-source-kind", default="",
+                        help="Reference kind only (e.g. OS_KEYCHAIN_REFERENCE). Never a raw PAT.")
+    sp_rev.add_argument("--secret-locator", default="",
+                        help="Secret *reference* locator only (service\\x1faccount). Never the PAT.")
+    sp_rev.add_argument("--live-canary-evidence-file", default="", dest="live_canary_evidence_file",
+                        help="Optional prior live canary evidence JSON (sanitized).")
+    sp_rev.add_argument("--cleanup-after-401", action="store_true",
+                        help="If set and HTTP 401 proven, delete Keychain ref (service/account from locator).")
     sp_cl = sub.add_parser("m46-verify-cleanup")
     sp_cl.add_argument("--synthetic-absent", default="", dest="synthetic_absent",
                        help="test-only: true|false")
+    sp_cl.add_argument("--service", default="")
+    sp_cl.add_argument("--account", default="")
     sp_led = sub.add_parser("m46-show-ledger")
     sp_led.add_argument("--ledger", default="docs/evidence/m46/execution_ledger.jsonl")
     sub.add_parser("m46-emit-evidence")
@@ -1762,10 +1772,82 @@ def main(argv: Optional[list[str]] = None) -> int:
                     return 5
                 return 0
             if args.cmd == "m46-run-revocation":
+                sk = getattr(args, "secret_source_kind", "") or ""
+                loc = getattr(args, "secret_locator", "") or ""
+                # Reject token-shaped locator (raw PAT)
+                if loc and (
+                    loc.startswith("ghp_") or loc.startswith("github_pat_")
+                    or loc.startswith("gho_") or len(loc) > 200
+                ):
+                    _print({"ok": False, "error": "raw_secret_locator_rejected",
+                            "contains_secret_values": False})
+                    return 2
+                if getattr(args, "live_canary_evidence_file", ""):
+                    ev, ferr = _read_json_file(args.live_canary_evidence_file)
+                    if ferr:
+                        _print({"ok": False, "error": f"live_canary_evidence:{ferr}",
+                                "contains_secret_values": False})
+                        return 5
+                    if not isinstance(ev, dict) or not ev.get("live_canary_occurred"):
+                        _print({"ok": False, "error": "live_canary_evidence_invalid",
+                                "contains_secret_values": False})
+                        return 5
+                    if not leakscan.is_clean(ev):
+                        _print({"ok": False, "error": "leak_in_live_canary_evidence"})
+                        return 2
                 out = m46.run_revocation(
-                    mode=args.mode, live_flag=bool(args.live_flag))
+                    mode=args.mode,
+                    live_flag=bool(args.live_flag),
+                    secret_source_kind=sk,
+                    secret_locator=loc,
+                )
+                if not leakscan.is_clean(out):
+                    _print({"ok": False, "error": "leak_detected"}); return 2
+                # Optional Keychain cleanup only after conclusive 401 + explicit flag.
+                if (bool(getattr(args, "cleanup_after_401", False))
+                        and out.get("http_401_confirmed") is True
+                        and sk == "OS_KEYCHAIN_REFERENCE" and loc):
+                    parts = loc.split("\x1f") if "\x1f" in loc else loc.split(":")
+                    if len(parts) >= 2:
+                        svc, acct = parts[0], parts[1]
+                        import subprocess as _sp
+                        # metadata-only existence check first
+                        pre = _sp.run(
+                            ["security", "find-generic-password", "-s", svc, "-a", acct],
+                            capture_output=True, text=True)
+                        if pre.returncode != 0:
+                            out["cleanup"] = {
+                                "deleted": False, "reason": "keychain_item_absent",
+                                "contains_secret_values": False}
+                        else:
+                            delr = _sp.run(
+                                ["security", "delete-generic-password",
+                                 "-s", svc, "-a", acct],
+                                capture_output=True, text=True)
+                            post = _sp.run(
+                                ["security", "find-generic-password", "-s", svc, "-a", acct],
+                                capture_output=True, text=True)
+                            out["cleanup"] = {
+                                "deleted": delr.returncode == 0 and post.returncode != 0,
+                                "delete_exit": delr.returncode,
+                                "find_after_exit": post.returncode,
+                                "service": svc,
+                                "account": acct,
+                                "contains_secret_values": False,
+                            }
+                    else:
+                        out["cleanup"] = {
+                            "deleted": False, "reason": "locator_parse_failed",
+                            "contains_secret_values": False}
                 _print(out)
-                return 0
+                if out.get("http_401_confirmed"):
+                    return 0
+                if out.get("verdict") in (
+                    m46.M46Verdict.SIMULATED_NOT_LIVE.value,
+                    m46.M46Verdict.AWAITING_OPERATOR_AUTHORIZATION.value,
+                ):
+                    return 0
+                return 5
             if args.cmd == "m46-verify-cleanup":
                 syn = getattr(args, "synthetic_absent", "") or ""
                 kw = {}
@@ -1773,6 +1855,18 @@ def main(argv: Optional[list[str]] = None) -> int:
                     kw["synthetic_absent"] = True
                 elif syn.lower() in ("false", "0", "no"):
                     kw["synthetic_absent"] = False
+                svc = getattr(args, "service", "") or ""
+                acct = getattr(args, "account", "") or ""
+                if svc and acct and "synthetic_absent" not in kw:
+                    import subprocess as _sp
+
+                    def _lookup():
+                        r = _sp.run(
+                            ["security", "find-generic-password", "-s", svc, "-a", acct],
+                            capture_output=True, text=True)
+                        absent = r.returncode != 0
+                        return {"absent": absent, "match_count": 0 if absent else 1}
+                    kw["reference_lookup"] = _lookup
                 out = m46.verify_cleanup(**kw)
                 _print(out)
                 return 0 if out.get("cleanup_verified") else 5

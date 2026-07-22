@@ -34,6 +34,25 @@ def _signed_approval(**kw):
     return sign_approval(_filled_synthetic_approval(**kw))
 
 
+def _live_cfg(tmp_path, **kw):
+    """Live CanaryConfig with isolated durable consume ledger."""
+    defaults = dict(
+        mode="live",
+        live_flag=True,
+        environ={"SAATHI_M46_LIVE_GATE": "1"},
+        approval=_signed_approval(),
+        m44_request=_m44_req(),
+        m45_snapshot=_m45_snap(),
+        now="2026-07-22T12:00:00+00:00",
+        secret_source_kind="OS_KEYCHAIN_REFERENCE",
+        secret_locator="svc\x1facct",
+        expected_subject_fingerprint="SYN_SUBJECT_FP",
+        consumed_ledger_path=tmp_path / "consumed.local.jsonl",
+        enforce_durable_consume=True,
+    )
+    defaults.update(kw)
+    return CanaryConfig(**defaults)
+
 def _m45_snap(**kw):
     cfg = m45.CollectorConfig(
         mode="observe",
@@ -340,26 +359,14 @@ def test_live_without_env_gate_awaits():
     assert out["verdict"] == M46Verdict.AWAITING_OPERATOR_AUTHORIZATION.value
 
 
-def test_synthetic_live_success_stops_pending_revocation():
+def test_synthetic_live_success_stops_pending_revocation(tmp_path):
     """Hermetic synthetic live result — does not call network."""
-    out = run_canary(CanaryConfig(
-        mode="live",
-        live_flag=True,
-        environ={"SAATHI_M46_LIVE_GATE": "1"},
-        approval=_signed_approval(),
-        m44_request=_m44_req(),
-        m45_snapshot=_m45_snap(),
-        now="2026-07-22T12:00:00+00:00",
-        secret_source_kind="OS_KEYCHAIN_REFERENCE",
-        secret_locator="svc:acct",
-        expected_subject_fingerprint="SYN_SUBJECT_FP",
-        synthetic_live_result={
-            "ok": True, "live_network": True, "handle_closed": True,
-            "identity_bound": True, "http_status": 200, "reason": "ok",
-            "provider_network_calls": 1, "call_budget_used": 1,
-            "observed_subject_fingerprint": "SYN_SUBJECT_FP",
-        },
-    ))
+    out = run_canary(_live_cfg(tmp_path, synthetic_live_result={
+        "ok": True, "live_network": True, "handle_closed": True,
+        "identity_bound": True, "http_status": 200, "reason": "ok",
+        "provider_network_calls": 1, "call_budget_used": 1,
+        "observed_subject_fingerprint": "SYN_SUBJECT_FP",
+    }))
     # preflight may still block if m44+m45 composition imperfect; if it passes:
     if out["preflight_passed"]:
         assert out["verdict"] == M46Verdict.CANARY_COMPLETED_PENDING_REVOCATION.value
@@ -367,34 +374,22 @@ def test_synthetic_live_success_stops_pending_revocation():
         assert out["authorizes_execution"] is False
         assert out["grants_active"] is False
         assert (out.get("live_result") or {}).get("provider_network_calls") == 1
+        assert out.get("authorization_consumed_durable") is True
     else:
         # fail closed is acceptable if composition gates not fully green
         assert out["authorizes_execution"] is False
 
 
-def test_secret_handle_not_destroyed_fails():
-    out = run_canary(CanaryConfig(
-        mode="live",
-        live_flag=True,
-        environ={"SAATHI_M46_LIVE_GATE": "1"},
-        approval=_signed_approval(),
-        m44_request=_m44_req(),
-        m45_snapshot=_m45_snap(),
-        now="2026-07-22T12:00:00+00:00",
-        secret_source_kind="OS_KEYCHAIN_REFERENCE",
-        secret_locator="svc:acct",
-        expected_subject_fingerprint="SYN_SUBJECT_FP",
-        synthetic_live_result={
-            "ok": True, "live_network": True, "handle_closed": False,
-            "identity_bound": True, "http_status": 200,
-            "provider_network_calls": 1, "call_budget_used": 1,
-            "observed_subject_fingerprint": "SYN_SUBJECT_FP",
-        },
-    ))
+def test_secret_handle_not_destroyed_fails(tmp_path):
+    out = run_canary(_live_cfg(tmp_path, synthetic_live_result={
+        "ok": True, "live_network": True, "handle_closed": False,
+        "identity_bound": True, "http_status": 200,
+        "provider_network_calls": 1, "call_budget_used": 1,
+        "observed_subject_fingerprint": "SYN_SUBJECT_FP",
+    }))
     if out["preflight_passed"]:
         assert out["verdict"] == M46Verdict.FAILED.value
         assert "secret_handle_not_destroyed" in out["extra_blockers"]
-
 
 # ── revocation / cleanup lifecycle ───────────────────────────────────────────
 def test_revocation_simulate_not_live():
@@ -460,7 +455,7 @@ def test_outputs_leak_clean():
 
 
 # ── M39 live-runner integration + one-call ceiling ───────────────────────────
-def test_m46_live_passes_m39_acknowledgements(monkeypatch):
+def test_m46_live_passes_m39_acknowledgements(monkeypatch, tmp_path):
     """M46 must supply M39_ACK_TOKENS; missing acks must not be silent."""
     from saathi.credentials import m39 as m39mod
     captured = {}
@@ -476,19 +471,8 @@ def test_m46_live_passes_m39_acknowledgements(monkeypatch):
         }
 
     monkeypatch.setattr(m39mod, "run_live_single_session", _fake)
-    out = run_canary(CanaryConfig(
-        mode="live", live_flag=True,
-        environ={"SAATHI_M46_LIVE_GATE": "1"},
-        approval=_signed_approval(allowed_operation="IDENTITY_READ",
-                                  allowed_endpoint="meta", maximum_calls=1),
-        m44_request=_m44_req(), m45_snapshot=_m45_snap(),
-        now="2026-07-22T12:00:00+00:00",
-        secret_source_kind="OS_KEYCHAIN_REFERENCE",
-        secret_locator="svc\x1facct",
-        expected_subject_fingerprint="SYN_SUBJECT_FP",
-    ))
+    out = run_canary(_live_cfg(tmp_path))
     if not out["preflight_passed"]:
-        # composition may fail hermetically; still assert wiring if runner reached
         if "acknowledgements" in captured:
             assert set(captured["acknowledgements"]) == set(m39mod.M39_ACK_TOKENS)
             assert captured.get("max_provider_network_calls") == 1
@@ -503,108 +487,118 @@ def test_m46_live_passes_m39_acknowledgements(monkeypatch):
     assert is_clean(out)
 
 
-def test_m46_rejects_two_provider_calls_in_result():
-    out = run_canary(CanaryConfig(
-        mode="live", live_flag=True,
-        environ={"SAATHI_M46_LIVE_GATE": "1"},
-        approval=_signed_approval(),
-        m44_request=_m44_req(), m45_snapshot=_m45_snap(),
-        now="2026-07-22T12:00:00+00:00",
-        secret_source_kind="OS_KEYCHAIN_REFERENCE",
-        secret_locator="svc:acct",
-        expected_subject_fingerprint="SYN_SUBJECT_FP",
-        synthetic_live_result={
-            "ok": True, "live_network": True, "handle_closed": True,
-            "identity_bound": True, "provider_network_calls": 2,
-            "call_budget_used": 2,
-            "observed_subject_fingerprint": "SYN_SUBJECT_FP",
-        },
-    ))
+def test_m46_rejects_two_provider_calls_in_result(tmp_path):
+    out = run_canary(_live_cfg(tmp_path, synthetic_live_result={
+        "ok": True, "live_network": True, "handle_closed": True,
+        "identity_bound": True, "provider_network_calls": 2,
+        "call_budget_used": 2,
+        "observed_subject_fingerprint": "SYN_SUBJECT_FP",
+    }))
     if out["preflight_passed"]:
         assert out["verdict"] == M46Verdict.FAILED.value
         assert "provider_call_budget_violated" in out["extra_blockers"]
 
 
-def test_m46_identity_mismatch_fails_closed():
-    out = run_canary(CanaryConfig(
-        mode="live", live_flag=True,
-        environ={"SAATHI_M46_LIVE_GATE": "1"},
-        approval=_signed_approval(),
-        m44_request=_m44_req(), m45_snapshot=_m45_snap(),
-        now="2026-07-22T12:00:00+00:00",
-        secret_source_kind="OS_KEYCHAIN_REFERENCE",
-        secret_locator="svc:acct",
-        expected_subject_fingerprint="SYN_SUBJECT_FP",
-        synthetic_live_result={
-            "ok": True, "live_network": True, "handle_closed": True,
-            "identity_bound": False, "provider_network_calls": 1,
-            "call_budget_used": 1,
-            "observed_subject_fingerprint": "OTHER_FP",
-        },
-    ))
+def test_m46_identity_mismatch_fails_closed(tmp_path):
+    out = run_canary(_live_cfg(tmp_path, synthetic_live_result={
+        "ok": True, "live_network": True, "handle_closed": True,
+        "identity_bound": False, "provider_network_calls": 1,
+        "call_budget_used": 1,
+        "observed_subject_fingerprint": "OTHER_FP",
+    }))
     if out["preflight_passed"]:
         assert out["verdict"] == M46Verdict.FAILED.value
         assert "identity_mismatch" in out["extra_blockers"]
 
 
-def test_m46_rejects_non_identity_operation():
-    a = _signed_approval(allowed_operation="METADATA_READ")
-    out = run_canary(CanaryConfig(
-        mode="live", live_flag=True,
-        environ={"SAATHI_M46_LIVE_GATE": "1"},
-        approval=a, m44_request=_m44_req(), m45_snapshot=_m45_snap(),
-        now="2026-07-22T12:00:00+00:00",
-        secret_source_kind="OS_KEYCHAIN_REFERENCE",
-        secret_locator="svc:acct",
-        expected_subject_fingerprint="SYN_SUBJECT_FP",
-        synthetic_live_result={
-            "ok": True, "live_network": True, "handle_closed": True,
-            "provider_network_calls": 1, "observed_subject_fingerprint": "SYN_SUBJECT_FP",
-        },
-    ))
+def test_m46_rejects_non_identity_operation(tmp_path):
+    a = _signed_approval(allowed_operation="METADATA_READ", allowed_endpoint="meta")
+    out = run_canary(_live_cfg(tmp_path, approval=a, synthetic_live_result={
+        "ok": True, "live_network": True, "handle_closed": True,
+        "provider_network_calls": 1, "observed_subject_fingerprint": "SYN_SUBJECT_FP",
+    }))
     if out["preflight_passed"]:
         assert "m46_operation_must_be_identity_read" in out["extra_blockers"]
 
 
-def test_m46_rejects_non_allowlisted_endpoint():
-    a = _signed_approval(allowed_endpoint="admin")
-    # re-sign after field change
-    a = sign_approval({k: v for k, v in a.items() if k != "approval_integrity_fingerprint"})
-    # force admin after sign for live scope check (validate_approval would fail preflight)
+def test_m46_rejects_meta_endpoint_for_identity_read():
+    """Model A: signed meta is not an alias for /user."""
+    body = _filled_synthetic_approval(allowed_endpoint="meta", allowed_operation="IDENTITY_READ")
+    a = sign_approval(body)
+    r = validate_approval(a, now="2026-07-22T12:00:00+00:00")
+    assert r["valid"] is False
+    assert "identity_read_requires_endpoint_user" in r["blockers"]
+
+
+def test_m46_rejects_non_allowlisted_endpoint(tmp_path):
     body = _filled_synthetic_approval(allowed_endpoint="admin", allowed_operation="IDENTITY_READ")
     a = sign_approval(body)
-    out = run_canary(CanaryConfig(
-        mode="live", live_flag=True,
-        environ={"SAATHI_M46_LIVE_GATE": "1"},
-        approval=a, m44_request=_m44_req(), m45_snapshot=_m45_snap(),
-        now="2026-07-22T12:00:00+00:00",
-        secret_source_kind="OS_KEYCHAIN_REFERENCE",
-        secret_locator="svc:acct",
-        expected_subject_fingerprint="SYN_SUBJECT_FP",
-        synthetic_live_result={"ok": True, "live_network": True, "handle_closed": True,
-                               "provider_network_calls": 1},
-    ))
-    # either preflight endpoint_not_allowlisted or live scope block
+    out = run_canary(_live_cfg(tmp_path, approval=a, synthetic_live_result={
+        "ok": True, "live_network": True, "handle_closed": True,
+        "provider_network_calls": 1,
+    }))
     assert out["live_canary_occurred"] is False
     assert out["authorizes_execution"] is False
 
 
-def test_m46_failure_before_provider_leaves_unused():
-    """TypeError/signature failure path must not claim live occurred."""
-    out = run_canary(CanaryConfig(
-        mode="live", live_flag=True,
-        environ={"SAATHI_M46_LIVE_GATE": "1"},
-        approval=_signed_approval(),
-        m44_request=_m44_req(), m45_snapshot=_m45_snap(),
-        now="2026-07-22T12:00:00+00:00",
-        secret_source_kind="OS_KEYCHAIN_REFERENCE",
-        secret_locator="svc:acct",
-        # no synthetic result and no secret → live error or preflight; never live success
-    ))
+def test_m46_failure_before_provider_leaves_unused(tmp_path):
+    """Missing secret path must not claim live occurred."""
+    out = run_canary(_live_cfg(tmp_path))  # no synthetic → keychain miss or error
     assert out["live_canary_occurred"] is False
     assert out["authorizes_execution"] is False
     assert out.get("requires_external_revocation") is False
 
+
+def test_durable_consume_blocks_replay(tmp_path):
+    syn = {
+        "ok": True, "live_network": True, "handle_closed": True,
+        "identity_bound": True, "provider_network_calls": 1, "call_budget_used": 1,
+        "observed_subject_fingerprint": "SYN_SUBJECT_FP",
+    }
+    out1 = run_canary(_live_cfg(tmp_path, synthetic_live_result=syn))
+    if not out1["preflight_passed"]:
+        return  # hermetic composition may block; skip assert
+    assert out1["verdict"] == M46Verdict.CANARY_COMPLETED_PENDING_REVOCATION.value
+    out2 = run_canary(_live_cfg(tmp_path, synthetic_live_result=syn))
+    assert out2["live_canary_occurred"] is False
+    assert (
+        "authorization_already_consumed" in (out2.get("blockers") or [])
+        or any("consume" in b for b in (out2.get("extra_blockers") or []))
+        or any("consumed" in b for b in (out2.get("preflight_blockers") or []))
+    )
+
+
+def test_corrupted_consume_ledger_fails_closed(tmp_path):
+    p = tmp_path / "bad.local.jsonl"
+    p.write_text("{not-json\n")
+    a = _signed_approval()
+    r = m46.is_authorization_consumed(
+        approval_id=a["approval_id"],
+        approval_integrity_fingerprint=a["approval_integrity_fingerprint"],
+        path=p,
+    )
+    assert r["consumed"] is True
+    assert r["fail_closed"] is True
+
+
+def test_consume_ledger_no_secrets(tmp_path):
+    syn = {
+        "ok": True, "live_network": True, "handle_closed": True,
+        "identity_bound": True, "provider_network_calls": 1, "call_budget_used": 1,
+        "observed_subject_fingerprint": "SYN_SUBJECT_FP",
+    }
+    out = run_canary(_live_cfg(tmp_path, synthetic_live_result=syn))
+    if not out.get("preflight_passed"):
+        return
+    text = (tmp_path / "consumed.local.jsonl").read_text()
+    assert "ghp_" not in text
+    assert "SYN_SUBJECT_FP" in text or "approval_id" in text
+    for line in text.splitlines():
+        assert is_clean(json.loads(line))
+
+
+def test_historical_endpoint_exception_constant():
+    assert m46.HISTORICAL_ENDPOINT_BINDING_EXCEPTION == "M46_ENDPOINT_BINDING_EXCEPTION"
 
 def test_m39_one_call_ceiling_blocks_second_send():
     """Transport wrapper raises before a second network send when ceiling=1."""

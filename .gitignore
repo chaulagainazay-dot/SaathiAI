@@ -69,3 +69,5 @@ docs/m41/*.local.json
 # M46 operator-local approval / live records — never commit
 docs/m46/*.local.json
 docs/m46/operator_canary_approval.local.json
+docs/evidence/m46/*.local.jsonl
+docs/evidence/m46/consumed_authorization.local.jsonl

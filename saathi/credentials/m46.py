@@ -58,9 +58,16 @@ DEFAULT_ERROR_BUDGET = 0
 LIVE_ENV_GATE = "SAATHI_M46_LIVE_GATE"
 
 LEDGER_PATH = "docs/evidence/m46/execution_ledger.jsonl"
+# Durable one-shot consume registry (operator-local; gitignored *.local.jsonl).
+CONSUMED_LEDGER_PATH = "docs/evidence/m46/consumed_authorization.local.jsonl"
 EVIDENCE_DIR = "docs/evidence/m46"
 APPROVAL_TEMPLATE_PATH = "docs/m46/operator_canary_approval.template.json"
 APPROVAL_LOCAL_GLOB = "docs/m46/*.local.json"
+
+# Exact endpoint policy (Model A): IDENTITY_READ binds only to GET /user.
+IDENTITY_READ_ENDPOINT = "user"
+# Historical M46 canary (approval meta + live /user) classification.
+HISTORICAL_ENDPOINT_BINDING_EXCEPTION = "M46_ENDPOINT_BINDING_EXCEPTION"
 
 M43_MACHINE_PATH = "docs/evidence/m43/machine_verified_canary_completion.json"
 M43_1_CLOSURE_PATH = "docs/evidence/m43_1/final_cleanup_closure.json"
@@ -242,7 +249,7 @@ def approval_template() -> dict[str, Any]:
         "request_id": "",
         "rollout_id": "",
         "allowed_operation": "IDENTITY_READ",
-        "allowed_endpoint": "meta",
+        "allowed_endpoint": IDENTITY_READ_ENDPOINT,
         "maximum_calls": 1,
         "maximum_duration_seconds": 60,
         "rollout_percent": 1,
@@ -364,6 +371,14 @@ def validate_approval(
     if op not in ("IDENTITY_READ", "METADATA_READ", "PUBLIC_DATA_READ"):
         blockers.append("operation_not_read_only")
     checks["operation_ok"] = op in ("IDENTITY_READ", "METADATA_READ", "PUBLIC_DATA_READ")
+    # Model A: IDENTITY_READ requires exact endpoint user (no silent meta→user map).
+    if op == "IDENTITY_READ" and endpoint != IDENTITY_READ_ENDPOINT:
+        blockers.append("identity_read_requires_endpoint_user")
+        checks["identity_endpoint_exact"] = False
+    else:
+        checks["identity_endpoint_exact"] = (
+            op != "IDENTITY_READ" or endpoint == IDENTITY_READ_ENDPOINT
+        )
 
     # acks
     have = set(record.get("acknowledgements") or [])
@@ -550,8 +565,10 @@ def create_plan(
         provider=str(approval.get("provider") or PROVIDER_ID),
         expected_identity_fingerprint=expected_identity_fingerprint or str(
             approval.get("provider_identity_fingerprint") or ""),
-        endpoint=str(approval.get("allowed_endpoint") or "meta").lstrip("/"),
-        exact_read_only_action=f"GET /{str(approval.get('allowed_endpoint') or 'meta').lstrip('/')}",
+        endpoint=str(approval.get("allowed_endpoint") or IDENTITY_READ_ENDPOINT).lstrip("/"),
+        exact_read_only_action=(
+            f"GET /{str(approval.get('allowed_endpoint') or IDENTITY_READ_ENDPOINT).lstrip('/')}"
+        ),
         maximum_call_count=int(approval.get("maximum_calls") or 1),
         maximum_duration_seconds=int(approval.get("maximum_duration_seconds") or 60),
         rollout_percentage=int(approval.get("rollout_percent") or 1),
@@ -738,6 +755,34 @@ def preflight(inp: PreflightInput) -> dict[str, Any]:
         blockers.append("m32_changed")
     checks["m32_unchanged"] = _m32_ok()
 
+    # durable replay / one-shot consume registry
+    if inp.approval:
+        try:
+            from saathi.credentials import m44 as m44mod
+            req_fp = ""
+            if inp.m44_request is not None:
+                req_fp = m44mod.request_fingerprint(inp.m44_request)
+            plan_fp = plan.plan_integrity_fingerprint if plan else ""
+            exec_id = plan.execution_id if plan else ""
+            cchk = is_authorization_consumed(
+                approval_id=str(inp.approval.get("approval_id") or ""),
+                approval_integrity_fingerprint=str(
+                    inp.approval.get("approval_integrity_fingerprint") or ""),
+                request_id=str(inp.approval.get("request_id") or ""),
+                request_fingerprint=req_fp,
+                rollout_id=str(inp.approval.get("rollout_id") or ""),
+                execution_id=exec_id,
+                plan_integrity_fingerprint=plan_fp,
+            )
+            checks["authorization_not_consumed"] = not cchk.get("consumed")
+            if cchk.get("consumed"):
+                blockers.append("authorization_already_consumed")
+                if cchk.get("fail_closed"):
+                    blockers.append("consumed_ledger_fail_closed")
+        except ConsumedAuthorizationError as e:
+            blockers.append(f"consumed_ledger_error:{e.code}")
+            checks["authorization_not_consumed"] = False
+
     # evidence chain
     m43 = _file_fp(Path(inp.base) / M43_MACHINE_PATH)
     m43_1 = _file_fp(Path(inp.base) / M43_1_CLOSURE_PATH)
@@ -833,6 +878,8 @@ class CanaryConfig:
     seen_plan_ids: Optional[set[str]] = None
     persist_ledger: bool = False
     ledger_path: str | Path = LEDGER_PATH
+    consumed_ledger_path: str | Path = CONSUMED_LEDGER_PATH
+    enforce_durable_consume: bool = True
 
 
 def run_canary(cfg: Optional[CanaryConfig] = None) -> dict[str, Any]:
@@ -903,10 +950,9 @@ def run_canary(cfg: Optional[CanaryConfig] = None) -> dict[str, Any]:
     if op != "IDENTITY_READ":
         extra_scope.append("m46_operation_must_be_identity_read")
     endpoint = str(appr.get("allowed_endpoint") or "").lstrip("/")
-    # IDENTITY_READ one-call path binds subject via GET /user. Approval may list
-    # meta as the canary resource class; both are allowlisted. Reject anything else.
-    if endpoint not in ("meta", "user"):
-        extra_scope.append("m46_endpoint_not_allowlisted")
+    # Model A: exact endpoint authorization — IDENTITY_READ requires user only.
+    if endpoint != IDENTITY_READ_ENDPOINT:
+        extra_scope.append("m46_endpoint_must_be_user_for_identity_read")
     try:
         max_dur = int(appr.get("maximum_duration_seconds") or 0)
     except (TypeError, ValueError):
@@ -929,6 +975,30 @@ def run_canary(cfg: Optional[CanaryConfig] = None) -> dict[str, Any]:
             M46Verdict.BLOCKED, state=ExecutionState.BLOCKED, preflight=pf,
             extra_blockers=extra_scope,
         )
+
+    # Durable one-shot: reserve before any provider call (blocks crash-window replay).
+    plan_obj = None
+    if pf.get("plan"):
+        try:
+            plan_obj = _plan_from_public(pf["plan"])
+        except Exception:
+            plan_obj = cfg.plan
+    else:
+        plan_obj = cfg.plan
+    if cfg.enforce_durable_consume:
+        try:
+            reserve_authorization_attempt(
+                approval=appr,
+                plan=plan_obj,
+                m44_request=cfg.m44_request,
+                repository_commit=_git_head(),
+                path=cfg.consumed_ledger_path,
+            )
+        except ConsumedAuthorizationError as e:
+            return _body(
+                M46Verdict.BLOCKED, state=ExecutionState.BLOCKED, preflight=pf,
+                extra_blockers=[f"consume_reserve:{e.code}"],
+            )
 
     # Live runner — compose M39; secrets stay inside SecretHandle path.
     # Hard ceiling: exactly one provider network call (identity / subject bind).
@@ -958,6 +1028,17 @@ def run_canary(cfg: Optional[CanaryConfig] = None) -> dict[str, Any]:
             )
         except TypeError as e:
             # Missing required kwargs (e.g. acknowledgements) or one-call knobs.
+            if cfg.enforce_durable_consume and plan_obj:
+                try:
+                    finalize_authorization_consume(
+                        approval_id=str(appr.get("approval_id") or ""),
+                        execution_id=plan_obj.execution_id,
+                        success=False,
+                        terminal_state=ExecutionState.FAILED.value,
+                        path=cfg.consumed_ledger_path,
+                    )
+                except ConsumedAuthorizationError:
+                    pass
             return _body(
                 M46Verdict.FAILED, state=ExecutionState.FAILED, preflight=pf,
                 extra_blockers=[
@@ -965,6 +1046,17 @@ def run_canary(cfg: Optional[CanaryConfig] = None) -> dict[str, Any]:
                 ],
             )
         except Exception as e:
+            if cfg.enforce_durable_consume and plan_obj:
+                try:
+                    finalize_authorization_consume(
+                        approval_id=str(appr.get("approval_id") or ""),
+                        execution_id=plan_obj.execution_id,
+                        success=False,
+                        terminal_state=ExecutionState.FAILED.value,
+                        path=cfg.consumed_ledger_path,
+                    )
+                except ConsumedAuthorizationError:
+                    pass
             return _body(
                 M46Verdict.FAILED, state=ExecutionState.FAILED, preflight=pf,
                 extra_blockers=[f"live_error:{type(e).__name__}:{getattr(e, 'code', '')}"],
@@ -1005,26 +1097,35 @@ def run_canary(cfg: Optional[CanaryConfig] = None) -> dict[str, Any]:
         "observed_subject_fingerprint": observed_fp,
         "retries": 0,
     }
-    if not is_clean(sanitized):
+    def _finalize_fail(extra: list[str]) -> dict[str, Any]:
+        if cfg.enforce_durable_consume and plan_obj:
+            try:
+                finalize_authorization_consume(
+                    approval_id=str(appr.get("approval_id") or ""),
+                    execution_id=plan_obj.execution_id,
+                    success=False,
+                    terminal_state=ExecutionState.FAILED.value,
+                    path=cfg.consumed_ledger_path,
+                )
+            except ConsumedAuthorizationError:
+                pass
         return _body(M46Verdict.FAILED, state=ExecutionState.FAILED, preflight=pf,
-                     extra_blockers=["leak_in_live_result"])
+                     live_result=sanitized, extra_blockers=extra)
+
+    if not is_clean(sanitized):
+        return _finalize_fail(["leak_in_live_result"])
 
     if calls_used < 0 or calls_used > 1:
-        return _body(M46Verdict.FAILED, state=ExecutionState.FAILED, preflight=pf,
-                     live_result=sanitized,
-                     extra_blockers=["provider_call_budget_violated"])
+        return _finalize_fail(["provider_call_budget_violated"])
 
     if not sanitized["ok"]:
-        return _body(M46Verdict.FAILED, state=ExecutionState.FAILED, preflight=pf,
-                     live_result=sanitized, extra_blockers=["live_call_failed"])
+        return _finalize_fail(["live_call_failed"])
 
     if expected_fp and not identity_bound:
-        return _body(M46Verdict.FAILED, state=ExecutionState.FAILED, preflight=pf,
-                     live_result=sanitized, extra_blockers=["identity_mismatch"])
+        return _finalize_fail(["identity_mismatch"])
 
     if not sanitized.get("handle_closed", True):
-        return _body(M46Verdict.FAILED, state=ExecutionState.FAILED, preflight=pf,
-                     live_result=sanitized, extra_blockers=["secret_handle_not_destroyed"])
+        return _finalize_fail(["secret_handle_not_destroyed"])
 
     out = _body(
         M46Verdict.CANARY_COMPLETED_PENDING_REVOCATION,
@@ -1034,11 +1135,32 @@ def run_canary(cfg: Optional[CanaryConfig] = None) -> dict[str, Any]:
         note=("Live canary completed. STOP. Operator must externally revoke the "
               "disposable credential, then run m46-run-revocation. Success grants nothing."),
     )
+    # Evidence fingerprint of sanitized live result (no secrets).
+    evidence_fp = _hmac(_EXEC_DOMAIN, _canonical(sanitized), length=24)
+    out["canary_evidence_fingerprint"] = evidence_fp
+    if cfg.enforce_durable_consume and plan_obj:
+        try:
+            finalize_authorization_consume(
+                approval_id=str(appr.get("approval_id") or ""),
+                execution_id=plan_obj.execution_id,
+                success=True,
+                canary_evidence_fingerprint=evidence_fp,
+                terminal_state=ExecutionState.CANARY_COMPLETED_PENDING_REVOCATION.value,
+                path=cfg.consumed_ledger_path,
+            )
+            out["authorization_consumed_durable"] = True
+        except ConsumedAuthorizationError as e:
+            # Provider already ran — still return success but flag ledger fault.
+            out["authorization_consumed_durable"] = False
+            out["extra_blockers"] = list(out.get("extra_blockers") or []) + [
+                f"consume_finalize:{e.code}"
+            ]
     if cfg.persist_ledger:
         append_ledger(
             "canary_completed_pending_revocation",
             {"execution_id": (pf.get("plan") or {}).get("execution_id"),
-             "verdict": out["verdict"]},
+             "verdict": out["verdict"],
+             "canary_evidence_fingerprint": evidence_fp},
             cfg.ledger_path,
         )
     return out
@@ -1193,12 +1315,52 @@ def run_revocation(
     elif synthetic_http_status is not None:
         result = {"ok": synthetic_http_status != 401, "http_status": synthetic_http_status,
                   "live_network": True, "handle_closed": True}
+    elif secret_source_kind and secret_locator:
+        # Default M39 one-call identity probe (no retries). Reference only.
+        try:
+            from saathi.credentials import m39
+            out = m39.run_live_single_session(
+                secret_source_kind=secret_source_kind,
+                secret_locator=secret_locator,
+                acknowledgements=tuple(m39.M39_ACK_TOKENS),
+                live_flag=True,
+                environ=env,
+                max_provider_network_calls=1,
+                disable_retries=True,
+                session_id="sess_m46_revocation",
+            )
+            id_res = out.get("identity_result") or {}
+            http_status = out.get("http_status") or id_res.get("http_status")
+            fc = str(id_res.get("failure_code") or "")
+            if http_status is None and "401" in fc:
+                http_status = 401
+            result = {
+                "ok": bool(out.get("ok")),
+                "live_network": bool(out.get("live_network")),
+                "http_status": http_status,
+                "handle_closed": bool(out.get("handle_closed")),
+                "provider_network_calls": int(
+                    out.get("provider_network_calls") or out.get("call_budget_used") or 0),
+                "reason": str(out.get("reason") or "")[:200],
+                "contains_secret_values": False,
+            }
+        except Exception as e:
+            return {
+                "schema": "m46.revocation.v1",
+                "verdict": M46Verdict.FAILED.value,
+                "http_401_confirmed": False,
+                "blockers": [f"revocation_runner_error:{type(e).__name__}"],
+                "authorizes_execution": False,
+                "grants_anything": False,
+                "contains_secret_values": False,
+            }
     else:
         return {
             "schema": "m46.revocation.v1",
             "verdict": M46Verdict.BLOCKED.value,
             "http_401_confirmed": False,
-            "blockers": ["revocation_runner_not_configured"],
+            "blockers": ["revocation_runner_not_configured",
+                         "secret_reference_required"],
             "authorizes_execution": False,
             "grants_anything": False,
             "contains_secret_values": False,
@@ -1300,6 +1462,282 @@ def verify_cleanup(
         "note": "Local reference still present or matches>0. Cleanup not proven.",
         "contains_secret_values": False,
     }
+
+
+# ── Durable one-shot consumed-authorization registry ─────────────────────────
+# Crash model (fail-closed):
+#   * preflight fail → no record
+#   * before provider call → write ATTEMPTED under exclusive lock (blocks replay)
+#   * provider success → CONSUMED_SUCCESS with evidence fingerprint
+#   * provider fail after ATTEMPTED → ATTEMPTED_FAILED (still blocks replay)
+#   * crash after ATTEMPTED with no terminal update → treat as consumed (no retry)
+
+
+class ConsumedAuthorizationError(M46Error):
+    pass
+
+
+def _consumed_lock_path(path: str | Path) -> Path:
+    return Path(str(path) + ".lock")
+
+
+def _with_consumed_lock(path: str | Path, fn: Callable[[], Any]) -> Any:
+    """Exclusive file lock around durable consume registry mutations."""
+    import fcntl
+    lock_p = _consumed_lock_path(path)
+    lock_p.parent.mkdir(parents=True, exist_ok=True)
+    with lock_p.open("a+") as lf:
+        fcntl.flock(lf.fileno(), fcntl.LOCK_EX)
+        try:
+            return fn()
+        finally:
+            fcntl.flock(lf.fileno(), fcntl.LOCK_UN)
+
+
+def read_consumed_ledger(path: str | Path = CONSUMED_LEDGER_PATH) -> list[dict[str, Any]]:
+    p = Path(path)
+    if not p.exists():
+        return []
+    try:
+        lines = p.read_text(encoding="utf-8").splitlines()
+    except OSError as e:
+        raise ConsumedAuthorizationError("consumed_ledger_unreadable", str(e)) from e
+    out: list[dict[str, Any]] = []
+    for i, line in enumerate(lines):
+        if not line.strip():
+            continue
+        try:
+            rec = json.loads(line)
+        except ValueError as e:
+            raise ConsumedAuthorizationError(
+                "consumed_ledger_corrupted", f"line={i+1}") from e
+        if not isinstance(rec, dict):
+            raise ConsumedAuthorizationError("consumed_ledger_corrupted", f"line={i+1}")
+        out.append(rec)
+    return out
+
+
+def verify_consumed_ledger_integrity(
+    path: str | Path = CONSUMED_LEDGER_PATH,
+) -> dict[str, Any]:
+    """Fail closed if ledger is unreadable or any record fails integrity."""
+    try:
+        entries = read_consumed_ledger(path)
+    except ConsumedAuthorizationError as e:
+        return {"intact": False, "reason": e.code, "detail": e.detail,
+                "entries": 0, "contains_secret_values": False}
+    for i, e in enumerate(entries):
+        expected = _hmac(
+            _LEDGER_DOMAIN,
+            _canonical({k: v for k, v in e.items() if k != "record_fingerprint"}),
+            length=24,
+        )
+        if e.get("record_fingerprint") != expected:
+            return {"intact": False, "reason": "record_fingerprint_mismatch",
+                    "broken_at": i, "entries": len(entries),
+                    "contains_secret_values": False}
+        if not is_clean(e):
+            return {"intact": False, "reason": "leak_detected", "broken_at": i,
+                    "entries": len(entries), "contains_secret_values": False}
+    return {"intact": True, "entries": len(entries), "contains_secret_values": False}
+
+
+def _ids_from_consumed_entry(e: dict[str, Any]) -> dict[str, str]:
+    return {
+        "approval_id": str(e.get("approval_id") or ""),
+        "approval_integrity_fingerprint": str(
+            e.get("approval_integrity_fingerprint") or ""),
+        "request_id": str(e.get("request_id") or ""),
+        "request_fingerprint": str(e.get("request_fingerprint") or ""),
+        "rollout_id": str(e.get("rollout_id") or ""),
+        "execution_id": str(e.get("execution_id") or ""),
+        "plan_integrity_fingerprint": str(e.get("plan_integrity_fingerprint") or ""),
+    }
+
+
+def is_authorization_consumed(
+    *,
+    approval_id: str = "",
+    approval_integrity_fingerprint: str = "",
+    request_id: str = "",
+    request_fingerprint: str = "",
+    rollout_id: str = "",
+    execution_id: str = "",
+    plan_integrity_fingerprint: str = "",
+    path: str | Path = CONSUMED_LEDGER_PATH,
+) -> dict[str, Any]:
+    """Return whether any durable consume record matches the given identifiers."""
+    integ = verify_consumed_ledger_integrity(path)
+    if Path(path).exists() and not integ.get("intact"):
+        return {
+            "consumed": True,  # fail closed
+            "fail_closed": True,
+            "reason": integ.get("reason") or "consumed_ledger_invalid",
+            "matches": [],
+            "contains_secret_values": False,
+        }
+    if not Path(path).exists():
+        return {"consumed": False, "fail_closed": False, "matches": [],
+                "contains_secret_values": False}
+    keys = {
+        "approval_id": approval_id,
+        "approval_integrity_fingerprint": approval_integrity_fingerprint,
+        "request_id": request_id,
+        "request_fingerprint": request_fingerprint,
+        "rollout_id": rollout_id,
+        "execution_id": execution_id,
+        "plan_integrity_fingerprint": plan_integrity_fingerprint,
+    }
+    matches: list[str] = []
+    for e in read_consumed_ledger(path):
+        ids = _ids_from_consumed_entry(e)
+        for k, v in keys.items():
+            if v and ids.get(k) == v:
+                matches.append(f"{k}:{e.get('consume_state') or 'UNKNOWN'}")
+                break
+    return {
+        "consumed": bool(matches),
+        "fail_closed": False,
+        "matches": matches,
+        "contains_secret_values": False,
+    }
+
+
+def reserve_authorization_attempt(
+    *,
+    approval: dict[str, Any],
+    plan: Optional[ExecutionPlan],
+    m44_request: Any = None,
+    repository_commit: str = "",
+    path: str | Path = CONSUMED_LEDGER_PATH,
+) -> dict[str, Any]:
+    """Atomically record ATTEMPTED before any provider call. Blocks if already used."""
+    from saathi.credentials import m44 as m44mod
+
+    appr_id = str(approval.get("approval_id") or "")
+    appr_fp = str(approval.get("approval_integrity_fingerprint") or "")
+    req_id = str(approval.get("request_id") or "")
+    rollout_id = str(approval.get("rollout_id") or "")
+    req_fp = ""
+    if m44_request is not None:
+        req_fp = m44mod.request_fingerprint(m44_request)
+        rollout_id = rollout_id or str(getattr(m44_request, "rollout_id", "") or "")
+    exec_id = plan.execution_id if plan else ""
+    plan_fp = plan.plan_integrity_fingerprint if plan else ""
+    loc_fp = str(approval.get("credential_reference_locator_fingerprint") or "")
+    subj_fp = str(approval.get("provider_identity_fingerprint") or "")
+
+    def _do() -> dict[str, Any]:
+        chk = is_authorization_consumed(
+            approval_id=appr_id,
+            approval_integrity_fingerprint=appr_fp,
+            request_id=req_id,
+            request_fingerprint=req_fp,
+            rollout_id=rollout_id,
+            execution_id=exec_id,
+            plan_integrity_fingerprint=plan_fp,
+            path=path,
+        )
+        if chk.get("consumed"):
+            raise ConsumedAuthorizationError(
+                "authorization_already_consumed",
+                ",".join(chk.get("matches") or [])[:200],
+            )
+        rec = {
+            "schema": "m46.consumed_authorization.v1",
+            "consume_state": "ATTEMPTED",
+            "approval_id": appr_id,
+            "approval_integrity_fingerprint": appr_fp,
+            "request_id": req_id,
+            "request_fingerprint": req_fp,
+            "rollout_id": rollout_id,
+            "execution_id": exec_id,
+            "plan_integrity_fingerprint": plan_fp,
+            "repository_commit": repository_commit or _git_head(),
+            "provider": str(approval.get("provider") or PROVIDER_ID),
+            "credential_locator_fingerprint": loc_fp,
+            "expected_subject_fingerprint": subj_fp,
+            "canary_evidence_fingerprint": "",
+            "execution_timestamp": _now_iso(),
+            "terminal_state": ExecutionState.CANARY_RUNNING.value,
+            "contains_secret_values": False,
+        }
+        if not is_clean(rec):
+            raise ConsumedAuthorizationError("leak_in_consume_record")
+        rec["record_fingerprint"] = _hmac(
+            _LEDGER_DOMAIN,
+            _canonical({k: v for k, v in rec.items() if k != "record_fingerprint"}),
+            length=24,
+        )
+        p = Path(path)
+        p.parent.mkdir(parents=True, exist_ok=True)
+        with p.open("a", encoding="utf-8") as f:
+            f.write(json.dumps(rec, sort_keys=True) + "\n")
+            f.flush()
+            os.fsync(f.fileno())
+        return rec
+
+    return _with_consumed_lock(path, _do)
+
+
+def finalize_authorization_consume(
+    *,
+    approval_id: str,
+    execution_id: str,
+    success: bool,
+    canary_evidence_fingerprint: str = "",
+    terminal_state: str = "",
+    path: str | Path = CONSUMED_LEDGER_PATH,
+) -> dict[str, Any]:
+    """Append terminal consume state after provider outcome (append-only)."""
+    def _do() -> dict[str, Any]:
+        entries = read_consumed_ledger(path)
+        base = None
+        for e in reversed(entries):
+            if (e.get("approval_id") == approval_id
+                    and e.get("execution_id") == execution_id):
+                base = e
+                break
+        if base is None:
+            raise ConsumedAuthorizationError("consume_attempt_missing")
+        rec = {
+            "schema": "m46.consumed_authorization.v1",
+            "consume_state": "CONSUMED_SUCCESS" if success else "ATTEMPTED_FAILED",
+            "approval_id": base.get("approval_id"),
+            "approval_integrity_fingerprint": base.get("approval_integrity_fingerprint"),
+            "request_id": base.get("request_id"),
+            "request_fingerprint": base.get("request_fingerprint"),
+            "rollout_id": base.get("rollout_id"),
+            "execution_id": base.get("execution_id"),
+            "plan_integrity_fingerprint": base.get("plan_integrity_fingerprint"),
+            "repository_commit": base.get("repository_commit"),
+            "provider": base.get("provider"),
+            "credential_locator_fingerprint": base.get("credential_locator_fingerprint"),
+            "expected_subject_fingerprint": base.get("expected_subject_fingerprint"),
+            "canary_evidence_fingerprint": canary_evidence_fingerprint or "",
+            "execution_timestamp": _now_iso(),
+            "terminal_state": terminal_state or (
+                ExecutionState.CANARY_COMPLETED_PENDING_REVOCATION.value
+                if success else ExecutionState.FAILED.value
+            ),
+            "prior_record_fingerprint": base.get("record_fingerprint"),
+            "contains_secret_values": False,
+        }
+        if not is_clean(rec):
+            raise ConsumedAuthorizationError("leak_in_consume_record")
+        rec["record_fingerprint"] = _hmac(
+            _LEDGER_DOMAIN,
+            _canonical({k: v for k, v in rec.items() if k != "record_fingerprint"}),
+            length=24,
+        )
+        p = Path(path)
+        with p.open("a", encoding="utf-8") as f:
+            f.write(json.dumps(rec, sort_keys=True) + "\n")
+            f.flush()
+            os.fsync(f.fileno())
+        return rec
+
+    return _with_consumed_lock(path, _do)
 
 
 # ── ledger ───────────────────────────────────────────────────────────────────
@@ -1445,7 +1883,7 @@ def _filled_synthetic_approval(**overrides) -> dict[str, Any]:
         "request_id": "REQ-SYN-1",
         "rollout_id": "R-SYN-1",
         "allowed_operation": "IDENTITY_READ",
-        "allowed_endpoint": "meta",
+        "allowed_endpoint": IDENTITY_READ_ENDPOINT,
         "maximum_calls": 1,
         "maximum_duration_seconds": 60,
         "rollout_percent": 1,
