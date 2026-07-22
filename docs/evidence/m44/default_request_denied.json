@@ -1,0 +1,64 @@
+{
+  "advisory_only": true,
+  "alters_runtime_authority": false,
+  "authorities": {
+    "ACTIVE_authorization": "NOT GRANTED",
+    "CANARY_authorization": "NOT GRANTED",
+    "production_authorization": "NOT GRANTED",
+    "rollout_authorization": "NOT GRANTED",
+    "write_authority": "NOT GRANTED"
+  },
+  "authority_state": {
+    "active": "NOT GRANTED",
+    "framework": "READY (ADVISORY ONLY)",
+    "production": "NOT AUTHORIZED",
+    "provider_permissions": "UNCHANGED",
+    "rollout_execution": "NOT GRANTED",
+    "rollout_full": "NOT GRANTED",
+    "scope_expansion": "FORBIDDEN",
+    "write": "NOT GRANTED"
+  },
+  "authorizes_execution": false,
+  "blockers": [
+    "missing:approval_fingerprints",
+    "missing:approval_timestamp",
+    "missing:evidence_fingerprints",
+    "missing:expiration",
+    "missing:incident_owner",
+    "missing:operator_identity",
+    "missing:policy",
+    "missing:provider",
+    "missing:purpose",
+    "missing:resource",
+    "missing:risk_level",
+    "missing:rollback_owner",
+    "missing:rollout_id",
+    "missing:rollout_percent",
+    "missing:scope"
+  ],
+  "checks": {
+    "all_mandatory_fields_present": false
+  },
+  "contains_secret_values": false,
+  "evidence_provenance": [
+    "ABSENT"
+  ],
+  "expands_scope": false,
+  "fingerprint": "3c41594887684c2cd491e561",
+  "grants_active": false,
+  "grants_anything": false,
+  "grants_production": false,
+  "grants_write": false,
+  "m32_prohibition": "UNCHANGED",
+  "milestone": "M44",
+  "note": "Fail-closed: request denied / invalid. Nothing authorized.",
+  "policy": "",
+  "policy_fingerprint": "",
+  "provider": "github_meta",
+  "request_fingerprint": "1d2045568dff14dd0da51500",
+  "requires_separate_execution_authorization": true,
+  "rollout_id": "",
+  "schema": "m44.rollout_authorization.v1",
+  "trading_guardian": "UNCHANGED / UNENGAGED",
+  "verdict": "ROLLOUT_REQUEST_INCOMPLETE"
+}

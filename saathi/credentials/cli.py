@@ -443,6 +443,30 @@ def main(argv: Optional[list[str]] = None) -> int:
         sp.add_argument("--ack", action="append", default=[], dest="acks")
     sub.add_parser("m43-revalidate")
     sub.add_parser("m43-emit-evidence")
+
+    # ── M44 limited rollout authorization framework (fail-closed; grants nothing) ─
+    sub.add_parser("m44-status")
+    sub.add_parser("m44-list-policies")
+    for name in ("m44-create-rollout", "m44-validate-rollout", "m44-review-rollout"):
+        sp = sub.add_parser(name)
+        sp.add_argument("--request-file", default="", dest="request_file")
+        sp.add_argument("--now", default="")
+        sp.add_argument("--persist", action="store_true")
+        sp.add_argument("--ledger", default="docs/evidence/m44/rollout_ledger.jsonl")
+    sp_show = sub.add_parser("m44-show-rollout")
+    sp_show.add_argument("rollout_id")
+    sp_show.add_argument("--ledger", default="docs/evidence/m44/rollout_ledger.jsonl")
+    sp_exp = sub.add_parser("m44-expire-rollout")
+    sp_exp.add_argument("rollout_id")
+    sp_exp.add_argument("--reason", default="operator_requested_expiry")
+    sp_exp.add_argument("--ledger", default="docs/evidence/m44/rollout_ledger.jsonl")
+    sp_list = sub.add_parser("m44-list-rollouts")
+    sp_list.add_argument("--ledger", default="docs/evidence/m44/rollout_ledger.jsonl")
+    sp_sim = sub.add_parser("m44-simulate")
+    sp_sim.add_argument("--policy", default="Simulation")
+    sp_verify = sub.add_parser("m44-verify-ledger")
+    sp_verify.add_argument("--ledger", default="docs/evidence/m44/rollout_ledger.jsonl")
+    sub.add_parser("m44-emit-evidence")
     args = p.parse_args(argv)
 
     # Reject raw secret CLI carriers globally for any m36 command
@@ -1311,6 +1335,97 @@ def main(argv: Optional[list[str]] = None) -> int:
                 _print(res)
                 return 0
         except m43.M43Error as e:
+            _print({"ok": False, "error": e.code, "detail": getattr(e, "detail", "")})
+            return 2
+
+    if args.cmd and str(args.cmd).startswith("m44"):
+        from saathi.credentials import m44
+        print("M44 LIMITED ROLLOUT AUTHORIZATION FRAMEWORK\nNON-PRODUCTION\nREAD-ONLY\n"
+              "FAIL-CLOSED\nDENY-BY-DEFAULT\nAUTHORIZATION FRAMEWORK ONLY\nGRANTS NOTHING\n"
+              "NO ACTIVE\nNO PRODUCTION\nNO WRITE\nNO ROLLOUT EXECUTION\nNO SCOPE EXPANSION\n"
+              "SEPARATE OPERATOR AUTHORIZATION REQUIRED TO EXECUTE\nTRADING GUARDIAN UNENGAGED")
+
+        def _load_request(path: str):
+            data, ferr = _read_json_file(path)
+            if ferr:
+                return None, ferr
+            allowed = {f.name for f in __import__("dataclasses").fields(m44.RolloutRequest)}
+            clean = {k: v for k, v in (data or {}).items() if k in allowed}
+            for key in ("approval_fingerprints", "evidence_fingerprints", "acknowledgements"):
+                if key in clean and isinstance(clean[key], list):
+                    clean[key] = tuple(clean[key])
+            return m44.RolloutRequest(**clean), None
+
+        try:
+            if args.cmd == "m44-status":
+                out = m44.framework_status()
+                if not leakscan.is_clean(out):
+                    _print({"ok": False, "error": "leak_detected"}); return 2
+                _print(out)
+                return 0 if out.get("framework_ready") else 5
+            if args.cmd == "m44-list-policies":
+                _print({"policies": {n: {"max_percent": pol.max_percent,
+                                         "allowed_percents": list(pol.allowed_percents),
+                                         "permits_live_execution": pol.permits_live_execution,
+                                         "fingerprint": pol.fingerprint()}
+                                     for n, pol in m44.POLICIES.items()},
+                        "contains_secret_values": False})
+                return 0
+            if args.cmd == "m44-simulate":
+                out = m44.simulate(args.policy)
+                if not leakscan.is_clean(out):
+                    _print({"ok": False, "error": "leak_detected"}); return 2
+                _print(out)
+                return 0
+            if args.cmd == "m44-list-rollouts":
+                ids = sorted({e.get("payload", {}).get("rollout_id")
+                              for e in m44.read_ledger(args.ledger)
+                              if e.get("payload", {}).get("rollout_id")})
+                _print({"rollout_ids": ids, "count": len(ids), "contains_secret_values": False})
+                return 0
+            if args.cmd == "m44-show-rollout":
+                _print(m44.audit_show_rollout(args.rollout_id, args.ledger))
+                return 0
+            if args.cmd == "m44-verify-ledger":
+                out = m44.verify_ledger_chain(args.ledger)
+                _print(out)
+                return 0 if out.get("intact") else 5
+            if args.cmd == "m44-expire-rollout":
+                entry = m44.append_ledger(m44.LedgerEvent.EXPIRED,
+                                          {"rollout_id": args.rollout_id, "reason": args.reason},
+                                          args.ledger)
+                _print({"expired": True, "rollout_id": args.rollout_id,
+                        "authorizes_execution": False, "ledger_entry": entry})
+                return 0
+            if args.cmd == "m44-emit-evidence":
+                res = m44.emit_m44_evidence("docs/evidence/m44")
+                _print(res)
+                return 0
+            if args.cmd in ("m44-create-rollout", "m44-validate-rollout", "m44-review-rollout"):
+                if not args.request_file:
+                    _print({"ok": False, "error": "request_file_required"}); return 2
+                req, ferr = _load_request(args.request_file)
+                if ferr:
+                    _print({"ok": False, "error": ferr, "request_file": args.request_file})
+                    return 5
+                if not leakscan.is_clean(req.to_public()):
+                    _print({"ok": False, "error": "leak_detected_in_request"}); return 2
+                now = args.now or None
+                if args.cmd == "m44-create-rollout":
+                    out = m44.create_rollout(req, path=args.ledger, persist=bool(args.persist))
+                else:
+                    out = m44.review_rollout(req, path=args.ledger, persist=bool(args.persist),
+                                             now=now)
+                if out.get("authorizes_execution") or out.get("grants_anything"):
+                    _print({"ok": False, "error": "invariant_violation_m44_grant"}); return 2
+                if not leakscan.is_clean(out):
+                    _print({"ok": False, "error": "leak_detected"}); return 2
+                _print(out)
+                if args.cmd == "m44-create-rollout":
+                    return 0
+                return 0 if out.get("verdict") == \
+                    m44.M44Verdict.ROLLOUT_AUTHORIZATION_VALIDATED_ADVISORY_ONLY.value else 5
+        except m44.M44Error as e:
             _print({"ok": False, "error": e.code, "detail": getattr(e, "detail", "")})
             return 2
 

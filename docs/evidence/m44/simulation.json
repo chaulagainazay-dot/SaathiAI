@@ -1,0 +1,86 @@
+{
+  "advisory_only": true,
+  "alters_runtime_authority": false,
+  "authorizes_execution": false,
+  "contains_secret_values": false,
+  "grants_anything": false,
+  "milestone": "M44",
+  "mode": "SIMULATED_NOT_LIVE",
+  "note": "SIMULATED. Proves the framework wiring; no live rollout, no authority.",
+  "policy": "Simulation",
+  "policy_fingerprint": "59a0cd76fd23e012dfcdc588",
+  "rollback_example": {
+    "deterministic": true,
+    "rollback_kind": "automatic",
+    "rollback_required": true,
+    "triggers_fired": [
+      "unexpected_response"
+    ]
+  },
+  "schema": "m44.simulation.v1",
+  "validation": {
+    "advisory_only": true,
+    "alters_runtime_authority": false,
+    "authorities": {
+      "ACTIVE_authorization": "NOT GRANTED",
+      "CANARY_authorization": "NOT GRANTED",
+      "production_authorization": "NOT GRANTED",
+      "rollout_authorization": "NOT GRANTED",
+      "write_authority": "NOT GRANTED"
+    },
+    "authority_state": {
+      "active": "NOT GRANTED",
+      "framework": "READY (ADVISORY ONLY)",
+      "production": "NOT AUTHORIZED",
+      "provider_permissions": "UNCHANGED",
+      "rollout_execution": "NOT GRANTED",
+      "rollout_full": "NOT GRANTED",
+      "scope_expansion": "FORBIDDEN",
+      "write": "NOT GRANTED"
+    },
+    "authorizes_execution": false,
+    "blockers": [],
+    "checks": {
+      "acknowledgements_complete": true,
+      "all_mandatory_fields_present": true,
+      "approval_before_expiration": true,
+      "approval_parseable": true,
+      "approval_reference_present": true,
+      "evidence_fingerprints_resolve": true,
+      "expiration_parseable": true,
+      "not_expired": true,
+      "operator_signature_valid": true,
+      "percentage_within_policy": true,
+      "policy_grants_no_live_execution": true,
+      "policy_known": true,
+      "provider_allowed_by_policy": true,
+      "provider_matches": true,
+      "risk_level_allowed_by_policy": true,
+      "risk_level_known": true,
+      "runtime_gates_clear": true,
+      "scope_allowed": true
+    },
+    "contains_secret_values": false,
+    "evidence_provenance": [
+      "MACHINE_PROOF"
+    ],
+    "expands_scope": false,
+    "fingerprint": "eaa3630e8f697b3af0ea29f0",
+    "grants_active": false,
+    "grants_anything": false,
+    "grants_production": false,
+    "grants_write": false,
+    "m32_prohibition": "UNCHANGED",
+    "milestone": "M44",
+    "note": "Advisory only. A VALIDATED verdict means the request is well-formed, bounded, and evidence-backed; it does NOT authorize any rollout to run. Execution requires a completely separate operator authorization.",
+    "policy": "Simulation",
+    "policy_fingerprint": "59a0cd76fd23e012dfcdc588",
+    "provider": "github_meta",
+    "request_fingerprint": "8ca871653805bfccad2e33a7",
+    "requires_separate_execution_authorization": true,
+    "rollout_id": "SIM-0001",
+    "schema": "m44.rollout_authorization.v1",
+    "trading_guardian": "UNCHANGED / UNENGAGED",
+    "verdict": "ROLLOUT_AUTHORIZATION_VALIDATED_ADVISORY_ONLY"
+  }
+}
