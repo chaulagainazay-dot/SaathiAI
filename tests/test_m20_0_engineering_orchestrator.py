@@ -192,13 +192,40 @@ def test_selector_explanation(store):
 
 # ── Repository readiness ─────────────────────────────────────────────────
 
-def test_readiness_clean_repo(settings):
+def test_readiness_clean_repo(tmp_path, settings):
+    """Clean named-branch repo is ready/degraded/blocked — never env-dependent.
+
+    Uses a controlled git_runner so GHA detached HEAD / dirty monorepo
+    checkout cannot force UNSAFE (that path is covered by
+    test_readiness_detached_head).
+    """
     settings.repository_writes_enabled = True
-    # allow current branch pattern
     settings.allowed_branches = ["*"]
-    rep = check_repository_readiness(ROOT, settings, expected_branch=None)
+    settings.allowed_repositories = [str(tmp_path), "saathiai"]
+    (tmp_path / ".git").mkdir()
+
+    def fake_git(*args, **kwargs):
+        if args[:2] == ("rev-parse", "--abbrev-ref"):
+            return 0, "milestone/m20-readiness", ""
+        if args[:2] == ("rev-parse", "HEAD"):
+            return 0, "abc123def456", ""
+        if args[0] == "status":
+            return 0, "", ""  # clean working tree
+        if args[0] == "rev-list":
+            return 0, "0\t0", ""
+        if args[0] == "ls-remote":
+            return 0, "", ""
+        return 0, "", ""
+
+    rep = check_repository_readiness(
+        tmp_path,
+        settings,
+        expected_branch=None,
+        git_runner=lambda *a, **k: fake_git(*a),
+    )
     assert rep.checks.get("git") is True
-    assert rep.state in ("ready", "degraded", "blocked")  # may be dirty from untracked
+    assert "detached_HEAD" not in rep.blockers
+    assert rep.state in ("ready", "degraded", "blocked")
 
 
 def test_readiness_dirty_blocks_writes(tmp_path, settings):

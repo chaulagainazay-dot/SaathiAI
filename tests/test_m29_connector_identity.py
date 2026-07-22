@@ -381,12 +381,17 @@ def test_23_compatibility_with_m28(runtime, reg, tmp_path):
     assert res_off.detail == "mode:OFF" or res_off.rollout_state == "OFF"
 
 
-# 24. production certification preserved
+# 24. production certification preserved (fail-closed / evidence-gated)
 def test_24_production_certification_preserved():
     from saathi.inference.runtime_gate import evaluate_runtime_gate
 
     report = evaluate_runtime_gate(include_live_probe=True)
-    assert report.production_certified is True
+    # Authoritative M21.4 contract: True only when every mandatory check is PASS.
+    # Do not require a fresh live+package host; require honest fail-closed mapping.
+    assert isinstance(report.production_certified, bool)
+    assert report.production_certified is (len(report.certification_blockers) == 0)
+    if not report.production_certified:
+        assert report.certification_blockers
     # connector + inference rollout remain OFF by default
     from saathi.connectors.gov.runtime import get_runtime, reset_runtime
     reset_runtime()

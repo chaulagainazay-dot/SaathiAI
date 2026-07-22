@@ -32,6 +32,8 @@ from saathi.credentials.m45 import (
 
 
 def _observed_cfg(**kw) -> CollectorConfig:
+    # Pin git/host fields: GHA uses detached HEAD (branch UNKNOWN → SNAPSHOT_BLOCKED).
+    # Validation still exercises integrity, expiry, provenance, and safety gates.
     base = dict(
         mode="observe",
         open_security_alerts=0,
@@ -43,6 +45,11 @@ def _observed_cfg(**kw) -> CollectorConfig:
         maximum_policy_percent=5,
         approved_scope="read_only:github_meta:/meta",
         fixed_now="2026-07-22T12:00:00+00:00",
+        fixed_branch="milestone/m45-attestation",
+        fixed_commit="0123456789abcdef0123456789abcdef01234567",
+        fixed_dirty="clean",
+        fixed_machine_fp="m45-test-machine",
+        fixed_process_fp="m45-test-process",
     )
     base.update(kw)
     return CollectorConfig(**base)

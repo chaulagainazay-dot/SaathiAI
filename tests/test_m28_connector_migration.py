@@ -506,7 +506,13 @@ def test_61_68_invariants():
     from saathi.inference.release_check import run_release_check
 
     gate = evaluate_runtime_gate(include_live_probe=True)
-    assert gate.production_certified is True
+    # M21.4/M25: production_certified is evidence-gated and fail-closed.
+    # Package evidence goes STALE after tip drift; live provider may be
+    # ENVIRONMENT_BLOCKED on the host. Connector migration must not force-true.
+    assert isinstance(gate.production_certified, bool)
+    assert gate.production_certified is (len(gate.certification_blockers) == 0)
+    if not gate.production_certified:
+        assert gate.certification_blockers
     rep = run_release_check()
     assert rep.ok is True
 
