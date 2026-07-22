@@ -65,3 +65,7 @@ storage/*.db-wal
 # M43 operator-local canary approval record — operator-specific, never commit
 docs/m41/operator_canary_approval.local.json
 docs/m41/*.local.json
+
+# M46 operator-local approval / live records — never commit
+docs/m46/*.local.json
+docs/m46/operator_canary_approval.local.json

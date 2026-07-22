@@ -504,6 +504,37 @@ def main(argv: Optional[list[str]] = None) -> int:
     sp_ready.add_argument("--require-clean-repo", action="store_true")
     sub.add_parser("m45-simulate")
     sub.add_parser("m45-emit-evidence")
+
+    # ── M46 bounded read-only disposable canary (deny-by-default; no auto-live) ─
+    sub.add_parser("m46-status")
+    for name in ("m46-create-plan", "m46-validate-approval", "m46-preflight"):
+        sp = sub.add_parser(name)
+        sp.add_argument("--approval-file", default="", dest="approval_file")
+        sp.add_argument("--request-file", default="", dest="request_file")
+        sp.add_argument("--snapshot-file", default="", dest="snapshot_file")
+        sp.add_argument("--now", default="")
+    sp_show = sub.add_parser("m46-show-plan")
+    sp_show.add_argument("--plan-file", default="", dest="plan_file")
+    sub.add_parser("m46-simulate")
+    sp_run = sub.add_parser("m46-run-canary")
+    sp_run.add_argument("--mode", default="simulate", choices=("simulate", "live"))
+    sp_run.add_argument("--approval-file", default="", dest="approval_file")
+    sp_run.add_argument("--request-file", default="", dest="request_file")
+    sp_run.add_argument("--snapshot-file", default="", dest="snapshot_file")
+    sp_run.add_argument("--live-flag", action="store_true")
+    sp_run.add_argument("--secret-source-kind", default="")
+    sp_run.add_argument("--secret-locator", default="")
+    sp_run.add_argument("--expected-subject-fp", default="")
+    sp_run.add_argument("--now", default="")
+    sp_rev = sub.add_parser("m46-run-revocation")
+    sp_rev.add_argument("--mode", default="simulate", choices=("simulate", "live"))
+    sp_rev.add_argument("--live-flag", action="store_true")
+    sp_cl = sub.add_parser("m46-verify-cleanup")
+    sp_cl.add_argument("--synthetic-absent", default="", dest="synthetic_absent",
+                       help="test-only: true|false")
+    sp_led = sub.add_parser("m46-show-ledger")
+    sp_led.add_argument("--ledger", default="docs/evidence/m46/execution_ledger.jsonl")
+    sub.add_parser("m46-emit-evidence")
     args = p.parse_args(argv)
 
     # Reject raw secret CLI carriers globally for any m36 command
@@ -1584,6 +1615,168 @@ def main(argv: Optional[list[str]] = None) -> int:
                 _print(out)
                 return 0 if out.get("ready_for_separate_operator_authorization") else 5
         except m45.M45Error as e:
+            _print({"ok": False, "error": e.code, "detail": getattr(e, "detail", "")})
+            return 2
+
+    if args.cmd and str(args.cmd).startswith("m46"):
+        from saathi.credentials import m46
+        print(m46.NON_PRODUCTION_BANNER)
+
+        def _load_json(path: str):
+            return _read_json_file(path)
+
+        def _load_approval(path: str):
+            data, ferr = _load_json(path)
+            if ferr:
+                return None, ferr
+            return data, None
+
+        def _load_req(path: str):
+            from saathi.credentials import m44
+            data, ferr = _load_json(path)
+            if ferr:
+                return None, ferr
+            allowed = {f.name for f in __import__("dataclasses").fields(m44.RolloutRequest)}
+            clean = {k: v for k, v in (data or {}).items() if k in allowed}
+            for key in ("approval_fingerprints", "evidence_fingerprints", "acknowledgements"):
+                if key in clean and isinstance(clean[key], list):
+                    clean[key] = tuple(clean[key])
+            return m44.RolloutRequest(**clean), None
+
+        def _load_snap(path: str):
+            from saathi.credentials import m45
+            data, ferr = _load_json(path)
+            if ferr:
+                return None, ferr
+            if isinstance(data, dict) and "snapshot" in data:
+                data = data["snapshot"]
+            try:
+                return m45._from_public(data or {}), None
+            except (TypeError, ValueError) as e:
+                return None, f"snapshot_parse:{type(e).__name__}"
+
+        try:
+            if args.cmd == "m46-status":
+                out = m46.framework_status()
+                if not leakscan.is_clean(out):
+                    _print({"ok": False, "error": "leak_detected"}); return 2
+                _print(out)
+                return 0 if out.get("framework_ready") else 5
+            if args.cmd == "m46-simulate":
+                out = m46.simulate()
+                if not leakscan.is_clean(out):
+                    _print({"ok": False, "error": "leak_detected"}); return 2
+                _print(out)
+                return 0
+            if args.cmd == "m46-emit-evidence":
+                _print(m46.emit_m46_evidence("docs/evidence/m46"))
+                return 0
+            if args.cmd == "m46-show-ledger":
+                out = m46.verify_ledger_chain(args.ledger)
+                out["entries"] = m46.read_ledger(args.ledger)
+                _print(out)
+                return 0 if out.get("intact") else 5
+            if args.cmd == "m46-show-plan":
+                if not args.plan_file:
+                    _print({"ok": False, "error": "plan_file_required"}); return 2
+                data, ferr = _load_json(args.plan_file)
+                if ferr:
+                    _print({"ok": False, "error": ferr}); return 5
+                plan = m46._plan_from_public(data or {})
+                v = m46.verify_plan_integrity(plan)
+                _print({"plan": plan.to_public(), "integrity": v,
+                        "authorizes_execution": False, "contains_secret_values": False})
+                return 0 if v.get("valid") else 5
+            if args.cmd == "m46-validate-approval":
+                if not args.approval_file:
+                    _print({"ok": False, "error": "approval_file_required"}); return 2
+                appr, ferr = _load_approval(args.approval_file)
+                if ferr:
+                    _print({"ok": False, "error": ferr}); return 5
+                out = m46.validate_approval(appr, now=args.now or None)
+                _print(out)
+                return 0 if out.get("valid") else 5
+            if args.cmd in ("m46-create-plan", "m46-preflight", "m46-run-canary"):
+                appr = req = snap = None
+                if args.approval_file:
+                    appr, ferr = _load_approval(args.approval_file)
+                    if ferr:
+                        _print({"ok": False, "error": ferr}); return 5
+                if args.request_file:
+                    req, ferr = _load_req(args.request_file)
+                    if ferr:
+                        _print({"ok": False, "error": ferr}); return 5
+                if args.snapshot_file:
+                    snap, ferr = _load_snap(args.snapshot_file)
+                    if ferr:
+                        _print({"ok": False, "error": ferr}); return 5
+                if args.cmd == "m46-create-plan":
+                    if not appr or req is None or snap is None:
+                        _print({"ok": False, "error": "approval_request_snapshot_required"})
+                        return 2
+                    from saathi.credentials import m44 as m44mod, m45 as m45mod
+                    plan = m46.create_plan(
+                        approval=appr,
+                        m44_request_fingerprint=m44mod.request_fingerprint(req),
+                        m45_snapshot_fingerprint=m45mod.snapshot_fingerprint(snap),
+                        expected_identity_fingerprint=str(
+                            appr.get("provider_identity_fingerprint") or ""),
+                    )
+                    out = {"plan": plan.to_public(), "integrity": m46.verify_plan_integrity(plan),
+                           "authorizes_execution": False, "contains_secret_values": False}
+                    if not leakscan.is_clean(out):
+                        _print({"ok": False, "error": "leak_detected"}); return 2
+                    _print(out)
+                    return 0 if out["integrity"]["valid"] else 5
+                if args.cmd == "m46-preflight":
+                    out = m46.preflight(m46.PreflightInput(
+                        approval=appr, m44_request=req, m45_snapshot=snap,
+                        now=args.now or None,
+                        live_gate_requested=False,
+                    ))
+                    if not leakscan.is_clean(out):
+                        _print({"ok": False, "error": "leak_detected"}); return 2
+                    _print(out)
+                    return 0 if out.get("passed") else 5
+                # m46-run-canary
+                out = m46.run_canary(m46.CanaryConfig(
+                    mode=getattr(args, "mode", "simulate"),
+                    approval=appr, m44_request=req, m45_snapshot=snap,
+                    now=args.now or None,
+                    live_flag=bool(getattr(args, "live_flag", False)),
+                    secret_source_kind=getattr(args, "secret_source_kind", "") or "",
+                    secret_locator=getattr(args, "secret_locator", "") or "",
+                    expected_subject_fingerprint=getattr(args, "expected_subject_fp", "") or "",
+                ))
+                if out.get("authorizes_execution") or out.get("grants_anything"):
+                    _print({"ok": False, "error": "invariant_violation_m46_grant"}); return 2
+                if not leakscan.is_clean(out):
+                    _print({"ok": False, "error": "leak_detected"}); return 2
+                _print(out)
+                # live success still exits 0 but does not grant authority
+                if out.get("verdict") in (
+                    m46.M46Verdict.BLOCKED.value,
+                    m46.M46Verdict.DENIED.value,
+                    m46.M46Verdict.FAILED.value,
+                ):
+                    return 5
+                return 0
+            if args.cmd == "m46-run-revocation":
+                out = m46.run_revocation(
+                    mode=args.mode, live_flag=bool(args.live_flag))
+                _print(out)
+                return 0
+            if args.cmd == "m46-verify-cleanup":
+                syn = getattr(args, "synthetic_absent", "") or ""
+                kw = {}
+                if syn.lower() in ("true", "1", "yes"):
+                    kw["synthetic_absent"] = True
+                elif syn.lower() in ("false", "0", "no"):
+                    kw["synthetic_absent"] = False
+                out = m46.verify_cleanup(**kw)
+                _print(out)
+                return 0 if out.get("cleanup_verified") else 5
+        except m46.M46Error as e:
             _print({"ok": False, "error": e.code, "detail": getattr(e, "detail", "")})
             return 2
 
