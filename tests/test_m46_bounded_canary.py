@@ -356,6 +356,8 @@ def test_synthetic_live_success_stops_pending_revocation():
         synthetic_live_result={
             "ok": True, "live_network": True, "handle_closed": True,
             "identity_bound": True, "http_status": 200, "reason": "ok",
+            "provider_network_calls": 1, "call_budget_used": 1,
+            "observed_subject_fingerprint": "SYN_SUBJECT_FP",
         },
     ))
     # preflight may still block if m44+m45 composition imperfect; if it passes:
@@ -364,6 +366,7 @@ def test_synthetic_live_success_stops_pending_revocation():
         assert out["requires_external_revocation"] is True
         assert out["authorizes_execution"] is False
         assert out["grants_active"] is False
+        assert (out.get("live_result") or {}).get("provider_network_calls") == 1
     else:
         # fail closed is acceptable if composition gates not fully green
         assert out["authorizes_execution"] is False
@@ -380,9 +383,12 @@ def test_secret_handle_not_destroyed_fails():
         now="2026-07-22T12:00:00+00:00",
         secret_source_kind="OS_KEYCHAIN_REFERENCE",
         secret_locator="svc:acct",
+        expected_subject_fingerprint="SYN_SUBJECT_FP",
         synthetic_live_result={
             "ok": True, "live_network": True, "handle_closed": False,
             "identity_bound": True, "http_status": 200,
+            "provider_network_calls": 1, "call_budget_used": 1,
+            "observed_subject_fingerprint": "SYN_SUBJECT_FP",
         },
     ))
     if out["preflight_passed"]:
@@ -451,6 +457,212 @@ def test_ledger_chain(tmp_path):
 def test_outputs_leak_clean():
     assert is_clean(m46.framework_status())
     assert is_clean(m46.simulate())
+
+
+# ── M39 live-runner integration + one-call ceiling ───────────────────────────
+def test_m46_live_passes_m39_acknowledgements(monkeypatch):
+    """M46 must supply M39_ACK_TOKENS; missing acks must not be silent."""
+    from saathi.credentials import m39 as m39mod
+    captured = {}
+
+    def _fake(**kwargs):
+        captured.update(kwargs)
+        return {
+            "ok": True, "live_network": True, "handle_closed": True,
+            "identity_bound": True, "call_budget_used": 1,
+            "provider_network_calls": 1,
+            "observed_subject_fingerprint": "SYN_SUBJECT_FP",
+            "reason": "ok_one_provider_call",
+        }
+
+    monkeypatch.setattr(m39mod, "run_live_single_session", _fake)
+    out = run_canary(CanaryConfig(
+        mode="live", live_flag=True,
+        environ={"SAATHI_M46_LIVE_GATE": "1"},
+        approval=_signed_approval(allowed_operation="IDENTITY_READ",
+                                  allowed_endpoint="meta", maximum_calls=1),
+        m44_request=_m44_req(), m45_snapshot=_m45_snap(),
+        now="2026-07-22T12:00:00+00:00",
+        secret_source_kind="OS_KEYCHAIN_REFERENCE",
+        secret_locator="svc\x1facct",
+        expected_subject_fingerprint="SYN_SUBJECT_FP",
+    ))
+    if not out["preflight_passed"]:
+        # composition may fail hermetically; still assert wiring if runner reached
+        if "acknowledgements" in captured:
+            assert set(captured["acknowledgements"]) == set(m39mod.M39_ACK_TOKENS)
+            assert captured.get("max_provider_network_calls") == 1
+            assert captured.get("disable_retries") is True
+        return
+    assert "acknowledgements" in captured
+    assert set(captured["acknowledgements"]) == set(m39mod.M39_ACK_TOKENS)
+    assert captured.get("max_provider_network_calls") == 1
+    assert captured.get("disable_retries") is True
+    assert out["verdict"] == M46Verdict.CANARY_COMPLETED_PENDING_REVOCATION.value
+    assert out["live_result"]["provider_network_calls"] == 1
+    assert is_clean(out)
+
+
+def test_m46_rejects_two_provider_calls_in_result():
+    out = run_canary(CanaryConfig(
+        mode="live", live_flag=True,
+        environ={"SAATHI_M46_LIVE_GATE": "1"},
+        approval=_signed_approval(),
+        m44_request=_m44_req(), m45_snapshot=_m45_snap(),
+        now="2026-07-22T12:00:00+00:00",
+        secret_source_kind="OS_KEYCHAIN_REFERENCE",
+        secret_locator="svc:acct",
+        expected_subject_fingerprint="SYN_SUBJECT_FP",
+        synthetic_live_result={
+            "ok": True, "live_network": True, "handle_closed": True,
+            "identity_bound": True, "provider_network_calls": 2,
+            "call_budget_used": 2,
+            "observed_subject_fingerprint": "SYN_SUBJECT_FP",
+        },
+    ))
+    if out["preflight_passed"]:
+        assert out["verdict"] == M46Verdict.FAILED.value
+        assert "provider_call_budget_violated" in out["extra_blockers"]
+
+
+def test_m46_identity_mismatch_fails_closed():
+    out = run_canary(CanaryConfig(
+        mode="live", live_flag=True,
+        environ={"SAATHI_M46_LIVE_GATE": "1"},
+        approval=_signed_approval(),
+        m44_request=_m44_req(), m45_snapshot=_m45_snap(),
+        now="2026-07-22T12:00:00+00:00",
+        secret_source_kind="OS_KEYCHAIN_REFERENCE",
+        secret_locator="svc:acct",
+        expected_subject_fingerprint="SYN_SUBJECT_FP",
+        synthetic_live_result={
+            "ok": True, "live_network": True, "handle_closed": True,
+            "identity_bound": False, "provider_network_calls": 1,
+            "call_budget_used": 1,
+            "observed_subject_fingerprint": "OTHER_FP",
+        },
+    ))
+    if out["preflight_passed"]:
+        assert out["verdict"] == M46Verdict.FAILED.value
+        assert "identity_mismatch" in out["extra_blockers"]
+
+
+def test_m46_rejects_non_identity_operation():
+    a = _signed_approval(allowed_operation="METADATA_READ")
+    out = run_canary(CanaryConfig(
+        mode="live", live_flag=True,
+        environ={"SAATHI_M46_LIVE_GATE": "1"},
+        approval=a, m44_request=_m44_req(), m45_snapshot=_m45_snap(),
+        now="2026-07-22T12:00:00+00:00",
+        secret_source_kind="OS_KEYCHAIN_REFERENCE",
+        secret_locator="svc:acct",
+        expected_subject_fingerprint="SYN_SUBJECT_FP",
+        synthetic_live_result={
+            "ok": True, "live_network": True, "handle_closed": True,
+            "provider_network_calls": 1, "observed_subject_fingerprint": "SYN_SUBJECT_FP",
+        },
+    ))
+    if out["preflight_passed"]:
+        assert "m46_operation_must_be_identity_read" in out["extra_blockers"]
+
+
+def test_m46_rejects_non_allowlisted_endpoint():
+    a = _signed_approval(allowed_endpoint="admin")
+    # re-sign after field change
+    a = sign_approval({k: v for k, v in a.items() if k != "approval_integrity_fingerprint"})
+    # force admin after sign for live scope check (validate_approval would fail preflight)
+    body = _filled_synthetic_approval(allowed_endpoint="admin", allowed_operation="IDENTITY_READ")
+    a = sign_approval(body)
+    out = run_canary(CanaryConfig(
+        mode="live", live_flag=True,
+        environ={"SAATHI_M46_LIVE_GATE": "1"},
+        approval=a, m44_request=_m44_req(), m45_snapshot=_m45_snap(),
+        now="2026-07-22T12:00:00+00:00",
+        secret_source_kind="OS_KEYCHAIN_REFERENCE",
+        secret_locator="svc:acct",
+        expected_subject_fingerprint="SYN_SUBJECT_FP",
+        synthetic_live_result={"ok": True, "live_network": True, "handle_closed": True,
+                               "provider_network_calls": 1},
+    ))
+    # either preflight endpoint_not_allowlisted or live scope block
+    assert out["live_canary_occurred"] is False
+    assert out["authorizes_execution"] is False
+
+
+def test_m46_failure_before_provider_leaves_unused():
+    """TypeError/signature failure path must not claim live occurred."""
+    out = run_canary(CanaryConfig(
+        mode="live", live_flag=True,
+        environ={"SAATHI_M46_LIVE_GATE": "1"},
+        approval=_signed_approval(),
+        m44_request=_m44_req(), m45_snapshot=_m45_snap(),
+        now="2026-07-22T12:00:00+00:00",
+        secret_source_kind="OS_KEYCHAIN_REFERENCE",
+        secret_locator="svc:acct",
+        # no synthetic result and no secret → live error or preflight; never live success
+    ))
+    assert out["live_canary_occurred"] is False
+    assert out["authorizes_execution"] is False
+    assert out.get("requires_external_revocation") is False
+
+
+def test_m39_one_call_ceiling_blocks_second_send():
+    """Transport wrapper raises before a second network send when ceiling=1."""
+    from saathi.credentials import m39 as m39mod
+    from saathi.credentials.m37 import SUBJECT_FP
+    from saathi.connectors.providers.external.transport import ExternalTransport
+    from saathi.connectors.providers.external.testkit import (
+        good_tls_prober, public_resolver,
+    )
+
+    sends = {"n": 0}
+
+    def counting_sender(ctx):
+        sends["n"] += 1
+        # Return a minimal success-like body for /user; second call should not reach here
+        body = b'{"id": 424242, "type": "User"}'
+        return {
+            "status_code": 200,
+            "headers": {"content-type": "application/json", "x-oauth-scopes": "read:user"},
+            "body_bytes": body,
+            "decompressed_size": len(body),
+            "content_type": "application/json",
+            "location": "",
+        }
+
+    # Use IN_MEMORY_TEST fixture path with a transport that still hits ceiling wrapper
+    # via max_provider_network_calls=1 in offline fixture mode.
+    out = m39mod.run_live_single_session(
+        secret_source_kind="IN_MEMORY_TEST",
+        secret_locator="ceiling-test",
+        acknowledgements=tuple(m39mod.M39_ACK_TOKENS),
+        allow_offline_fixture=True,
+        expected_subject_fingerprint=SUBJECT_FP,
+        max_provider_network_calls=1,
+        disable_retries=True,
+        transport=ExternalTransport(
+            resolver=public_resolver(["1.2.3.4"]),
+            tls_prober=good_tls_prober(),
+            sender=counting_sender,
+        ),
+    )
+    assert out["ok"] is True
+    assert out["call_budget_used"] == 1
+    assert sends["n"] == 1
+    assert is_clean(out)
+
+
+def test_m39_default_two_calls_unchanged():
+    from saathi.credentials import m39 as m39mod
+    out = m39mod.run_live_single_session(
+        secret_source_kind="IN_MEMORY_TEST",
+        secret_locator="default-two",
+        acknowledgements=tuple(m39mod.M39_ACK_TOKENS),
+        allow_offline_fixture=True,
+    )
+    assert out["ok"] is True
+    assert out["call_budget_used"] == 2
+    assert out.get("max_provider_network_calls") is None
     assert is_clean(m46.build_implementation_completion())
     assert is_clean(validate_approval(_signed_approval()))
 

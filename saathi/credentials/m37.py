@@ -247,8 +247,16 @@ def run_provider_lifecycle(
     expected_subject_fingerprint: str = SUBJECT_FP,
     live_exercised: bool = False,
     interrupt_after: str = "",  # "", "identity", "secret", "operation"
+    max_provider_network_calls: Optional[int] = None,
 ) -> M37SessionRecord:
-    """Drive full lifecycle through the provider contract + M36 primitives."""
+    """Drive full lifecycle through the provider contract + M36 primitives.
+
+    ``max_provider_network_calls`` is optional and defaults to None (existing
+    behaviour: identity then meta operation, two provider network calls).
+    When set to 1, only the identity provider call is performed and the session
+    can still complete successfully — used by M46's one-call ceiling. Health
+    remains structural (no network). Values other than None/1/2 are rejected.
+    """
     clk = clock or time.time
     provider = provider or resolve_sandbox_provider(PROVIDER_ID)
     transport = transport or fixture_transport()
@@ -393,15 +401,34 @@ def run_provider_lifecycle(
         if interrupt_after == "operation":
             raise M37Error("interrupted_after_identity")
 
-        budget.consume(kind="operation")
-        op_res = provider.operation(
-            transport=transport, handle=handle, session_id=session_id,
-            operation=m36.OPERATION_META,
-        )
-        rec.operation_result = op_res.to_dict()
-        _emit("m37.operation_completed", ok=op_res.ok, classification=op_res.classification)
-        if not op_res.ok:
-            raise M37Error(f"operation:{op_res.failure_code or op_res.classification}")
+        if max_provider_network_calls is not None and max_provider_network_calls not in (1, 2):
+            raise M37Error("invalid_max_provider_network_calls")
+
+        # M46 one-call ceiling: after successful identity (GET /user), skip meta.
+        # Default (None or 2) preserves historical identity + meta behaviour.
+        one_call = max_provider_network_calls == 1
+        if not one_call:
+            budget.consume(kind="operation")
+            op_res = provider.operation(
+                transport=transport, handle=handle, session_id=session_id,
+                operation=m36.OPERATION_META,
+            )
+            rec.operation_result = op_res.to_dict()
+            _emit("m37.operation_completed", ok=op_res.ok, classification=op_res.classification)
+            if not op_res.ok:
+                raise M37Error(f"operation:{op_res.failure_code or op_res.classification}")
+            done_reason = "m37_session_completed"
+            cleanup_reason = "session_complete"
+            ok_reason = "ok"
+            lease_scopes = ("identity:read", "metadata:read")
+        else:
+            # Lease was issued for OPERATION_META; consume still uses that
+            # operation id even though the second network call is suppressed.
+            done_reason = "m37_session_completed_one_call"
+            cleanup_reason = "session_complete_one_call"
+            ok_reason = "ok_one_provider_call"
+            lease_scopes = ("identity:read",)
+            _emit("m37.second_provider_call_suppressed", max_provider_network_calls=1)
 
         # consume + revoke lease
         leases.consume(
@@ -411,9 +438,9 @@ def run_provider_lifecycle(
             provider_id=provider.provider_id,
             operation=m36.OPERATION_META,
             session_id=session_id,
-            requested_scopes=("identity:read", "metadata:read"),
+            requested_scopes=lease_scopes,
         )
-        leases.revoke(lease.lease_id, reason="m37_session_completed")
+        leases.revoke(lease.lease_id, reason=done_reason)
         rec.lease_revoked = True
         auth_store.consume(auth.authorization_id)
         _emit("m37.lease_revoked")
@@ -421,13 +448,13 @@ def run_provider_lifecycle(
         # close secret before cleanup
         _close()
 
-        cleanup = provider.cleanup(session_id=session_id, reason="session_complete")
+        cleanup = provider.cleanup(session_id=session_id, reason=cleanup_reason)
         rec.cleanup_disposition = CleanupDisposition.LEASE_REVOKED.value
         _emit("m37.cleanup", classification=cleanup.classification)
 
         rec.call_budget = budget.to_dict()
         rec.ok = True
-        rec.reason = "ok"
+        rec.reason = ok_reason
         rec.certification = (
             SecurityCertificationState.SECURITY_CERTIFIED.value
             if live_exercised

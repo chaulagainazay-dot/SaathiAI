@@ -846,12 +846,20 @@ def run_live_single_session(
     cancel_before_second_call: bool = False,
     allow_offline_fixture: bool = False,
     session_id: str = "sess_m39_single",
+    max_provider_network_calls: Optional[int] = None,
+    disable_retries: bool = False,
 ) -> dict[str, Any]:
     """Run one bounded live (or offline-fixture) session through M37 lifecycle.
 
     Live network requires feature flag + acks + approved backend + secret ref.
     When ``allow_offline_fixture`` is True and source is IN_MEMORY_TEST, uses
     fixture transport (tests only).
+
+    ``max_provider_network_calls`` defaults to None (existing identity+meta
+    behaviour). Pass 1 for a hard one-call ceiling (M46). When set, a counting
+    transport wrapper rejects any further provider send before transmission.
+    ``disable_retries`` is recorded for callers; the urllib sender does not
+    retry by default.
     """
     ks = kill_switch or LiveKillSwitch()
     env = environ if environ is not None else os.environ
@@ -904,6 +912,27 @@ def run_live_single_session(
             else:
                 transport = fixture_transport()
 
+        # Optional hard network-call ceiling (defence in depth for M46).
+        network_sends = {"n": 0}
+        ceiling = max_provider_network_calls
+        if ceiling is not None:
+            if ceiling not in (1, 2):
+                raise M39Error("invalid_max_provider_network_calls")
+            base_sender = transport.sender
+
+            def _ceiling_sender(ctx):  # type: ignore[no-untyped-def]
+                if network_sends["n"] >= ceiling:
+                    raise M39Error("provider_call_ceiling_exceeded")
+                network_sends["n"] += 1
+                return base_sender(ctx)
+
+            transport = ExternalTransport(
+                resolver=transport.resolver,
+                tls_prober=transport.tls_prober,
+                sender=_ceiling_sender,
+                clock=transport.clock,
+            )
+
         ks.assert_allows_provider_call()
 
         if cancel_before_second_call:
@@ -922,6 +951,7 @@ def run_live_single_session(
             ),
             live_exercised=live_network,
             interrupt_after=interrupt_after,
+            max_provider_network_calls=max_provider_network_calls,
         )
         handle_closed = life.handle_closed
         lease_revoked = life.lease_revoked
@@ -934,7 +964,20 @@ def run_live_single_session(
         if call_budget_used > PER_SESSION_CALL_BUDGET:
             ok = False
             reason = "call_budget_exceeded"
-        _emit("m39.single_session_complete", ok=ok, reason=reason[:100])
+        if ceiling is not None and network_sends["n"] > ceiling:
+            ok = False
+            reason = "provider_call_ceiling_exceeded"
+        if ceiling is not None and call_budget_used > ceiling:
+            ok = False
+            reason = "provider_call_ceiling_exceeded"
+        _emit(
+            "m39.single_session_complete",
+            ok=ok,
+            reason=reason[:100],
+            network_sends=network_sends["n"],
+            max_provider_network_calls=ceiling,
+            disable_retries=bool(disable_retries),
+        )
     except M39Error as e:
         reason = e.code
         ok = False
@@ -955,6 +998,19 @@ def run_live_single_session(
     ):
         status = LiveExerciseStatus.BLOCKED.value
 
+    # Observed subject fingerprint (sanitized) for identity bind reporting.
+    observed_subject_fp = ""
+    identity_bound = False
+    try:
+        idetail = (identity_result or {}).get("detail") or {}
+        inorm = idetail.get("identity") if isinstance(idetail, dict) else {}
+        if isinstance(inorm, dict):
+            observed_subject_fp = str(inorm.get("account_subject_fingerprint") or "")
+            identity_bound = bool(inorm.get("account_match"))
+    except Exception:
+        observed_subject_fp = ""
+        identity_bound = False
+
     out = {
         "schema": "m39.live_single_session.v1",
         "ok": ok,
@@ -968,9 +1024,15 @@ def run_live_single_session(
         "lease_revoked": lease_revoked,
         "call_budget_used": call_budget_used,
         "call_budget_max": PER_SESSION_CALL_BUDGET,
+        "provider_network_calls": int(call_budget_used),
+        "max_provider_network_calls": max_provider_network_calls,
+        "disable_retries": bool(disable_retries),
         "identity_result": identity_result,
         "operation_result": operation_result,
         "scope_result": scope_result,
+        "observed_subject_fingerprint": observed_subject_fp,
+        "identity_bound": identity_bound,
+        "endpoint_identity_bound": identity_bound,
         "reason": reason,
         "events": events,
         "kill_switch": ks.to_dict(),

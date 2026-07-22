@@ -890,7 +890,48 @@ def run_canary(cfg: Optional[CanaryConfig] = None) -> dict[str, Any]:
         return _body(M46Verdict.ABORTED, state=ExecutionState.ABORTED, preflight=pf,
                      extra_blockers=["kill_switch"])
 
-    # Live runner — compose M39; secrets stay inside SecretHandle path
+    # Enforce M46 live scope before any secret resolution / network.
+    appr = cfg.approval or {}
+    extra_scope: list[str] = []
+    try:
+        max_calls = int(appr.get("maximum_calls") or 0)
+    except (TypeError, ValueError):
+        max_calls = 0
+    if max_calls != 1:
+        extra_scope.append("m46_requires_exactly_one_call")
+    op = str(appr.get("allowed_operation") or "")
+    if op != "IDENTITY_READ":
+        extra_scope.append("m46_operation_must_be_identity_read")
+    endpoint = str(appr.get("allowed_endpoint") or "").lstrip("/")
+    # IDENTITY_READ one-call path binds subject via GET /user. Approval may list
+    # meta as the canary resource class; both are allowlisted. Reject anything else.
+    if endpoint not in ("meta", "user"):
+        extra_scope.append("m46_endpoint_not_allowlisted")
+    try:
+        max_dur = int(appr.get("maximum_duration_seconds") or 0)
+    except (TypeError, ValueError):
+        max_dur = 0
+    if max_dur < 1 or max_dur > MAX_DURATION_SECONDS:
+        extra_scope.append("m46_duration_out_of_bounds")
+    if appr.get("read_only") is not True:
+        extra_scope.append("m46_not_read_only")
+    for flag, name in (
+        ("writes_allowed", "m46_writes_enabled"),
+        ("deployment_allowed", "m46_deployment_enabled"),
+        ("production_allowed", "m46_production_enabled"),
+        ("autonomous_execution_allowed", "m46_autonomous_enabled"),
+        ("trading_guardian_allowed", "m46_trading_guardian_enabled"),
+    ):
+        if appr.get(flag) is True:
+            extra_scope.append(name)
+    if extra_scope:
+        return _body(
+            M46Verdict.BLOCKED, state=ExecutionState.BLOCKED, preflight=pf,
+            extra_blockers=extra_scope,
+        )
+
+    # Live runner — compose M39; secrets stay inside SecretHandle path.
+    # Hard ceiling: exactly one provider network call (identity / subject bind).
     result: dict[str, Any]
     if cfg.synthetic_live_result is not None:
         result = dict(cfg.synthetic_live_result)
@@ -899,47 +940,87 @@ def run_canary(cfg: Optional[CanaryConfig] = None) -> dict[str, Any]:
     else:
         try:
             from saathi.credentials import m39
-            # Use M39 live single session with reference-only inputs
+            # Required M39 contract: acknowledgements + hard one-call ceiling.
+            # Do not fall back to multi-call behaviour — M46 forbids a second
+            # provider network request.
             result = m39.run_live_single_session(
                 secret_source_kind=cfg.secret_source_kind,
                 secret_locator=cfg.secret_locator,
-                expected_subject_fingerprint=cfg.expected_subject_fingerprint
-                    or str((cfg.approval or {}).get("provider_identity_fingerprint") or ""),
+                acknowledgements=tuple(m39.M39_ACK_TOKENS),
+                expected_subject_fingerprint=(
+                    cfg.expected_subject_fingerprint
+                    or str(appr.get("provider_identity_fingerprint") or "")
+                ),
                 live_flag=True,
                 environ=cfg.environ,
+                max_provider_network_calls=1,
+                disable_retries=True,
             )
-        except TypeError:
-            # signature variance across m39 versions — fail closed rather than invent
+        except TypeError as e:
+            # Missing required kwargs (e.g. acknowledgements) or one-call knobs.
             return _body(
                 M46Verdict.FAILED, state=ExecutionState.FAILED, preflight=pf,
-                extra_blockers=["live_runner_signature_incompatible"],
+                extra_blockers=[
+                    f"live_runner_signature_incompatible:{type(e).__name__}:{e}",
+                ],
             )
         except Exception as e:
             return _body(
                 M46Verdict.FAILED, state=ExecutionState.FAILED, preflight=pf,
-                extra_blockers=[f"live_error:{type(e).__name__}"],
+                extra_blockers=[f"live_error:{type(e).__name__}:{getattr(e, 'code', '')}"],
             )
 
     # sanitize result — never include secrets
+    try:
+        calls_used = int(result.get("provider_network_calls")
+                         or result.get("call_budget_used") or 0)
+    except (TypeError, ValueError):
+        calls_used = -1
+    expected_fp = (
+        cfg.expected_subject_fingerprint
+        or str(appr.get("provider_identity_fingerprint") or "")
+    )
+    observed_fp = str(result.get("observed_subject_fingerprint") or "")
+    identity_bound = bool(result.get("identity_bound",
+                                     result.get("endpoint_identity_bound", False)))
+    if expected_fp and observed_fp:
+        identity_bound = identity_bound or (observed_fp == expected_fp)
+
     sanitized = {
         "ok": bool(result.get("ok")),
         "live_network": bool(result.get("live_network")),
         "reason": str(result.get("reason") or result.get("verdict") or "")[:200],
         "handle_closed": bool(result.get("handle_closed",
                                          result.get("secret_handle_destroyed", False))),
-        "identity_bound": bool(result.get("identity_bound",
-                                          result.get("endpoint_identity_bound", False))),
+        "identity_bound": identity_bound,
         "http_status": result.get("http_status"),
         "provider": PROVIDER_ID,
         "read_only": True,
+        "provider_network_calls": calls_used,
+        "max_provider_network_calls": 1,
+        "disable_retries": True,
+        "endpoint": "user",  # IDENTITY_READ one-call path (subject bind)
+        "operation": "IDENTITY_READ",
+        "expected_subject_fingerprint": expected_fp,
+        "observed_subject_fingerprint": observed_fp,
+        "retries": 0,
     }
     if not is_clean(sanitized):
         return _body(M46Verdict.FAILED, state=ExecutionState.FAILED, preflight=pf,
                      extra_blockers=["leak_in_live_result"])
 
+    if calls_used < 0 or calls_used > 1:
+        return _body(M46Verdict.FAILED, state=ExecutionState.FAILED, preflight=pf,
+                     live_result=sanitized,
+                     extra_blockers=["provider_call_budget_violated"])
+
     if not sanitized["ok"]:
         return _body(M46Verdict.FAILED, state=ExecutionState.FAILED, preflight=pf,
                      live_result=sanitized, extra_blockers=["live_call_failed"])
+
+    if expected_fp and not identity_bound:
+        return _body(M46Verdict.FAILED, state=ExecutionState.FAILED, preflight=pf,
+                     live_result=sanitized, extra_blockers=["identity_mismatch"])
 
     if not sanitized.get("handle_closed", True):
         return _body(M46Verdict.FAILED, state=ExecutionState.FAILED, preflight=pf,
@@ -1363,7 +1444,7 @@ def _filled_synthetic_approval(**overrides) -> dict[str, Any]:
         "credential_reference_locator_fingerprint": "SYN_LOCATOR_FP",
         "request_id": "REQ-SYN-1",
         "rollout_id": "R-SYN-1",
-        "allowed_operation": "METADATA_READ",
+        "allowed_operation": "IDENTITY_READ",
         "allowed_endpoint": "meta",
         "maximum_calls": 1,
         "maximum_duration_seconds": 60,
