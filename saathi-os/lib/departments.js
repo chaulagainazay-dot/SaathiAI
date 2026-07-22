@@ -1,4 +1,6 @@
-// The immutable color system — each department owns one hue, forever.
+// Department hues — visual accents only (M47.2). Not primary navigation.
+// Primary navigation lives in lib/navigation.js (NAV_GROUPS).
+
 export const DEPARTMENTS = {
   EXECUTIVE:   { name: "Executive",   color: "#F4F6FB", route: "/",          short: "Executive" },
   MISSION:     { name: "Mission",     color: "#C7CEDA", route: "/mission",   short: "Mission" },
@@ -24,22 +26,36 @@ export const DEPARTMENTS = {
   SKILLS:      { name: "Skill Library",   color: "#22D3EE", route: "/skills",     short: "Skills" },
   LIBRARY:     { name: "Knowledge Library", color: "#3E7BFF", route: "/knowledge/library", short: "Library" },
   PRODUCTION:  { name: "Production",      color: "#FF8A3D", route: "/automation/production", short: "Production" },
-  CONTROL:     { name: "Control Room",    color: "#FF8A3D", route: "/studio/control-room", short: "Control" },
+  // M47.2: duplicate CONTROL key removed. Studio control-room and Control Center are distinct keys.
+  STUDIO_CONTROL: { name: "Studio Control Room", color: "#FF8A3D", route: "/studio/control-room", short: "Studio Ctrl" },
+  CONTROL_CENTER: { name: "Control Center", color: "#7CF5E4", route: "/control", short: "Control" },
+  // Compat alias — single CONTROL maps to Control Center (last-wins was this historically)
+  CONTROL:     { name: "Control Center",   color: "#7CF5E4", route: "/control",    short: "Control" },
   VOICE:       { name: "Voice",           color: "#00BFA5", route: "/voice",      short: "Voice" },
   WORKSPACE:   { name: "Workspace",       color: "#9B6BFF", route: "/workspace",  short: "Chat" },
   CHAT:        { name: "Saathi Chat",     color: "#00BFA5", route: "/chat",       short: "Chat" },
   STUDIO_OS:   { name: "AI Studio",       color: "#FF8A3D", route: "/studio-os",  short: "Studio" },
   CEO_OS:      { name: "CEO OS",          color: "#F4F6FB", route: "/ceo",        short: "CEO" },
   UNLOCK:      { name: "Unlock",           color: "#7CF5E4", route: "/unlock",     short: "Unlock" },
-  CONTROL:     { name: "Control Center",   color: "#7CF5E4", route: "/control",    short: "Control" },
   CONNECTORS:  { name: "Connectors",       color: "#7CF5E4", route: "/connectors", short: "Connect" },
   SECURITY:    { name: "Security",         color: "#FF5A5A", route: "/security",   short: "Security" },
+  // Canonical IA accents
+  COMMAND:     { name: "Command Center",  color: "#C7CEDA", route: "/command",    short: "Command" },
+  AGENTS:      { name: "Agents",          color: "#22D3EE", route: "/agents",     short: "Agents" },
+  TRADING:     { name: "Trading Guardian", color: "#FF5A5A", route: "/trading",   short: "Trading" },
+  MONITORING:  { name: "Monitoring",      color: "#7CF5E4", route: "/monitoring", short: "Monitor" },
+  APPROVALS:   { name: "Approvals",       color: "#E8B84B", route: "/approvals",  short: "Approvals" },
+  SETTINGS:    { name: "Settings",        color: "#8B98B4", route: "/settings",   short: "Settings" },
 };
 
 export const color = (key) => DEPARTMENTS[key]?.color ?? "#8FA0C4";
 
-// Dock = the REAL, working subsystems (scaffold department pages removed).
+/**
+ * @deprecated M47.2 — desktop uses Sidebar from navigation.js.
+ * Kept for any residual import; maps to a short compatibility set.
+ */
 export const DOCK = [
-  "OS", "CEO_OS", "CHAT", "STUDIO_OS", "WORKSPACE", "EXECUTIVE", "MISSIONS", "VOICE", "AI STUDIO", "CONTROL", "PRODUCTION",
-  "EVIDENCE", "LEARNING", "SKILLS", "LIBRARY", "CONNECTORS", "PROJECTS", "LAB", "INFRA", "UNLOCK",
+  "EXECUTIVE", "MISSIONS", "COMMAND", "STUDIO_OS", "PROJECTS",
+  "KNOWLEDGE", "AUTOMATION", "BUSINESS", "TRADING", "MONITORING",
+  "SECURITY", "APPROVALS", "SETTINGS", "EVIDENCE", "CONNECTORS",
 ];
