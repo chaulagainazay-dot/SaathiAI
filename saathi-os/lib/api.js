@@ -711,6 +711,8 @@ async function _ccj(path) {
 }
 export const controlOverview = () => _ccj(`/api/v1/control/overview`);
 export const controlAttention = () => _ccj(`/api/v1/control/attention`);
+/** Read-only pending-approvals cell (honest partial status). Does not decide. */
+export const controlApprovals = () => _ccj(`/api/v1/control/approvals`);
 export const controlSecurity = () => _ccj(`/api/v1/control/security`);
 export const controlRelease = () => _ccj(`/api/v1/control/release`);
 export const controlTimeline = (limit = 25) => _ccj(`/api/v1/control/timeline?limit=${limit}`);
