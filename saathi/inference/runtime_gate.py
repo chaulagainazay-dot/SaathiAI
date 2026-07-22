@@ -459,13 +459,21 @@ def detect_live_provider_status() -> dict[str, Any]:
                 if hist_fp and fp_now
                 else None
             )
-            if not blockers and hist.get("live_provider_certified"):
+            if (
+                not blockers
+                and hist.get("live_provider_certified")
+                and out["binary_present"]
+            ):
+                # Current host is live-capable and historical M25 PASS exists.
                 out["certification"] = GateState.PASS.value
                 out["health"] = "m25_historical_pass_current_env_ok"
                 out["fresh_live_cert_required"] = False
             elif hist.get("live_provider_certified") and blockers:
-                # Historical PASS preserved; current host may still be blocked
-                out["certification"] = GateState.PASS.value
+                # Dual-evidence: historical PASS stays in
+                # historical_live_certification only. Current certification must
+                # not claim PASS when the host is blocked (e.g. CI without
+                # Ollama binary) — binary_absent / env blockers are not live.
+                out["certification"] = GateState.ENVIRONMENT_BLOCKED.value
                 out["health"] = "m25_historical_pass_current_env_blocked"
                 out["fresh_live_cert_required"] = True
                 out["notes"].append("historical_live_certification=PASS")

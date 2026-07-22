@@ -2365,12 +2365,12 @@
       "id": "m23.residual_manifest",
       "targets": [
         "tests/test_m23_governed_chat_default.py::test_chat_residual_exception_removed",
-        "tests/test_m23_governed_chat_default.py::test_residual_count_decreased_to_two",
+        "tests/test_m23_governed_chat_default.py::test_residual_count_decreased_to_zero_m24",
         "tests/test_m23_governed_chat_default.py::test_validate_residual_manifest_m23"
       ],
       "subsystem": "inference",
       "blocking": true,
-      "notes": "M23 residual exceptions = cloud + openai_compat only"
+      "notes": "M23 chat residual removed; M24 engine residuals consolidated to zero"
     }
   ]
 }
