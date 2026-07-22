@@ -2438,7 +2438,33 @@ async def oauth_callback(request: Request, code: str = "", state: str = "", erro
     return JSONResponse({"ok": True, "message": f"OAuth callback received for {provider}. "
                          "Token exchange not yet implemented — enable the provider and add the exchange logic."})
 
-agent = SaathiAgent()
+# Lazy agent — avoid import-time API key requirements so pytest collection
+# and CI ``--collect-only`` can import the app without ANTHROPIC_API_KEY /.env.
+_agent_singleton: "SaathiAgent | None" = None
+
+
+def get_agent() -> SaathiAgent:
+    """Return the process-wide SaathiAgent, constructing it on first use."""
+    global _agent_singleton
+    if _agent_singleton is None:
+        _agent_singleton = SaathiAgent()
+    return _agent_singleton
+
+
+class _LazyAgentProxy:
+    """Module-level ``agent`` proxy preserved for existing call sites."""
+
+    def __getattr__(self, name: str):
+        return getattr(get_agent(), name)
+
+    def __setattr__(self, name: str, value) -> None:
+        if name.startswith("_"):
+            object.__setattr__(self, name, value)
+            return
+        setattr(get_agent(), name, value)
+
+
+agent = _LazyAgentProxy()
 
 FILES_DIR = config.ROOT / "data" / "files"
 FILES_DIR.mkdir(parents=True, exist_ok=True)
