@@ -1788,13 +1788,19 @@ def main(argv: Optional[list[str]] = None) -> int:
                         _print({"ok": False, "error": f"live_canary_evidence:{ferr}",
                                 "contains_secret_values": False})
                         return 5
-                    if not isinstance(ev, dict) or not ev.get("live_canary_occurred"):
-                        _print({"ok": False, "error": "live_canary_evidence_invalid",
-                                "contains_secret_values": False})
-                        return 5
-                    if not leakscan.is_clean(ev):
+                    if not leakscan.is_clean(ev or {}):
                         _print({"ok": False, "error": "leak_in_live_canary_evidence"})
                         return 2
+                    ev_val = m46.validate_live_canary_evidence(ev)
+                    if not ev_val.get("valid") or not ev_val.get(
+                            "authorizes_revocation_verification"):
+                        _print({
+                            "ok": False,
+                            "error": "live_canary_evidence_invalid",
+                            "validation": ev_val,
+                            "contains_secret_values": False,
+                        })
+                        return 5
                 out = m46.run_revocation(
                     mode=args.mode,
                     live_flag=bool(args.live_flag),

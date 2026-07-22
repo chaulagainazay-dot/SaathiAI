@@ -600,6 +600,141 @@ def test_consume_ledger_no_secrets(tmp_path):
 def test_historical_endpoint_exception_constant():
     assert m46.HISTORICAL_ENDPOINT_BINDING_EXCEPTION == "M46_ENDPOINT_BINDING_EXCEPTION"
 
+
+# ── Live canary evidence contract (revocation prerequisite) ──────────────────
+def test_evidence_absent_live_canary_occurred_fails_closed():
+    """Missing live_canary_occurred must never authorize revocation."""
+    rec = {
+        "schema": "m46.fresh_policy_canary.local.v1",
+        "resulting_state": "SOMETHING_ELSE",
+        "provider_network_calls": 1,
+        "authorized_endpoint": "user",
+        "actual_request_endpoint": "/user",
+        "operation": "IDENTITY_READ",
+        "subject_match": True,
+        "contains_secret_values": False,
+    }
+    v = m46.validate_live_canary_evidence(rec)
+    assert v["valid"] is False
+    assert v["authorizes_revocation_verification"] is False
+    assert "live_canary_occurred_absent" in v["blockers"] or not v["checks"].get(
+        "live_success_proven")
+
+
+def test_evidence_explicit_false_fails():
+    v = m46.validate_live_canary_evidence({
+        "schema": "m46.canary_result.v1",
+        "live_canary_occurred": False,
+        "contains_secret_values": False,
+    })
+    assert v["valid"] is False
+    assert "live_canary_occurred_false" in v["blockers"]
+
+
+def test_evidence_string_true_fails_closed():
+    """String 'true' must not be treated as boolean True."""
+    v = m46.validate_live_canary_evidence({
+        "schema": "m46.canary_result.v1",
+        "live_canary_occurred": "true",
+        "contains_secret_values": False,
+    })
+    assert v["valid"] is False
+
+
+def test_evidence_controller_explicit_true_ok():
+    v = m46.validate_live_canary_evidence({
+        "schema": "m46.canary_result.v1",
+        "live_canary_occurred": True,
+        "contains_secret_values": False,
+    })
+    assert v["valid"] is True
+    assert v["authorizes_revocation_verification"] is True
+
+
+def test_evidence_policy_v1_success_fields_ok_without_flag():
+    """v1 policy records omitted the flag; explicit success fields may prove live."""
+    v = m46.validate_live_canary_evidence({
+        "schema": "m46.fresh_policy_canary.local.v1",
+        "resulting_state": "M46_FRESH_POLICY_CANARY_VALIDATED_PENDING_EXTERNAL_REVOCATION",
+        "provider_network_calls": 1,
+        "authorized_endpoint": "user",
+        "actual_request_endpoint": "/user",
+        "operation": "IDENTITY_READ",
+        "subject_match": True,
+        "contains_secret_values": False,
+    })
+    assert v["valid"] is True
+    assert v["checks"].get("policy_schema_success_proven") is True
+
+
+def test_evidence_policy_v1_meta_endpoint_fails():
+    v = m46.validate_live_canary_evidence({
+        "schema": "m46.fresh_policy_canary.local.v1",
+        "resulting_state": "M46_FRESH_POLICY_CANARY_VALIDATED_PENDING_EXTERNAL_REVOCATION",
+        "provider_network_calls": 1,
+        "authorized_endpoint": "meta",
+        "actual_request_endpoint": "/user",
+        "operation": "IDENTITY_READ",
+        "subject_match": True,
+        "contains_secret_values": False,
+    })
+    assert v["valid"] is False
+
+
+def test_build_policy_canary_evidence_includes_explicit_flag():
+    a = _signed_approval()
+    canary = {
+        "verdict": M46Verdict.CANARY_COMPLETED_PENDING_REVOCATION.value,
+        "state": "CANARY_COMPLETED_PENDING_REVOCATION",
+        "live_canary_occurred": True,
+        "requires_external_revocation": True,
+        "authorization_consumed_durable": True,
+        "canary_evidence_fingerprint": "abc",
+        "live_result": {
+            "provider_network_calls": 1,
+            "retries": 0,
+            "expected_subject_fingerprint": "SYN_SUBJECT_FP",
+            "observed_subject_fingerprint": "SYN_SUBJECT_FP",
+            "identity_bound": True,
+        },
+        "contains_secret_values": False,
+    }
+    rec = m46.build_policy_canary_evidence(canary_result=canary, approval=a)
+    assert rec["schema"] == m46.LIVE_CANARY_EVIDENCE_SCHEMA_POLICY_V2
+    assert rec["live_canary_occurred"] is True
+    assert rec["authorized_endpoint"] == "user"
+    v = m46.validate_live_canary_evidence(rec)
+    assert v["valid"] is True
+
+
+def test_http_200_never_implies_cleanup_in_revocation_api():
+    out = m46.run_revocation(
+        mode="live", live_flag=True,
+        environ={"SAATHI_M46_LIVE_GATE": "1"},
+        synthetic_http_status=200,
+    )
+    assert out.get("http_401_confirmed") is False
+    assert out.get("http_status") == 200
+
+
+def test_http_401_confirms_without_auto_cleanup():
+    out = m46.run_revocation(
+        mode="live", live_flag=True,
+        environ={"SAATHI_M46_LIVE_GATE": "1"},
+        synthetic_http_status=401,
+    )
+    assert out.get("http_401_confirmed") is True
+    assert "cleanup" not in out or out.get("cleanup") is None
+
+
+def test_http_403_not_conclusive_cleanup():
+    out = m46.run_revocation(
+        mode="live", live_flag=True,
+        environ={"SAATHI_M46_LIVE_GATE": "1"},
+        synthetic_http_status=403,
+    )
+    assert out.get("http_401_confirmed") is False
+
 def test_m39_one_call_ceiling_blocks_second_send():
     """Transport wrapper raises before a second network send when ceiling=1."""
     from saathi.credentials import m39 as m39mod

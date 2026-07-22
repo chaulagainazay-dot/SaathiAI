@@ -1253,6 +1253,243 @@ def _body(verdict: M46Verdict, *, state: ExecutionState | str,
     return body
 
 
+# ── Live canary evidence contract (revocation prerequisite) ──────────────────
+# Schema versions accepted for --live-canary-evidence-file. Absent security
+# flags are NEVER treated as true.
+LIVE_CANARY_EVIDENCE_SCHEMA_CONTROLLER = "m46.canary_result.v1"
+LIVE_CANARY_EVIDENCE_SCHEMA_LOCAL = "m46.live_canary_evidence.local.v1"
+LIVE_CANARY_EVIDENCE_SCHEMA_POLICY = "m46.fresh_policy_canary.local.v1"
+LIVE_CANARY_EVIDENCE_SCHEMA_POLICY_V2 = "m46.fresh_policy_canary.local.v2"
+
+POLICY_CANARY_SUCCESS_STATES = frozenset({
+    "M46_FRESH_POLICY_CANARY_VALIDATED_PENDING_EXTERNAL_REVOCATION",
+    "M46_CANARY_COMPLETED_PENDING_EXTERNAL_REVOCATION",
+    ExecutionState.CANARY_COMPLETED_PENDING_REVOCATION.value,
+    M46Verdict.CANARY_COMPLETED_PENDING_REVOCATION.value,
+})
+
+
+def validate_live_canary_evidence(record: Optional[dict[str, Any]]) -> dict[str, Any]:
+    """Fail-closed validation of live-canary evidence for revocation CLI.
+
+    Rules:
+      * ``live_canary_occurred`` may only authorize when **explicitly True**
+        (boolean). Absent / null / string / missing ⇒ not accepted via that field.
+      * Versioned policy schemas may prove live success via explicit success
+        state + call/endpoint fields without inventing ``live_canary_occurred``.
+      * Historical endpoint-exception evidence is NOT accepted as
+        policy-conformant success (must not certify wrong endpoint path).
+    """
+    blockers: list[str] = []
+    checks: dict[str, bool] = {}
+    if not isinstance(record, dict) or not record:
+        return {
+            "valid": False,
+            "blockers": ["evidence_absent"],
+            "checks": {"present": False},
+            "schema": "",
+            "authorizes_revocation_verification": False,
+            "contains_secret_values": False,
+        }
+    checks["present"] = True
+    if not is_clean(record):
+        return {
+            "valid": False,
+            "blockers": ["leak_detected_in_evidence"],
+            "checks": checks,
+            "schema": str(record.get("schema") or ""),
+            "authorizes_revocation_verification": False,
+            "contains_secret_values": False,
+        }
+    schema = str(record.get("schema") or "")
+    checks["schema_known"] = schema in {
+        LIVE_CANARY_EVIDENCE_SCHEMA_CONTROLLER,
+        LIVE_CANARY_EVIDENCE_SCHEMA_LOCAL,
+        LIVE_CANARY_EVIDENCE_SCHEMA_POLICY,
+        LIVE_CANARY_EVIDENCE_SCHEMA_POLICY_V2,
+        "m46.fresh_policy_canary_cli_wrapper.local.v1",
+    }
+    if not checks["schema_known"] and schema:
+        # Unknown schema: only accept explicit live_canary_occurred is True
+        checks["schema_known"] = False
+        blockers.append("evidence_schema_unknown")
+    elif not schema:
+        blockers.append("evidence_schema_missing")
+
+    # Explicit flag path (never treat missing as true)
+    flag = record.get("live_canary_occurred", None)
+    checks["live_canary_occurred_explicit_true"] = flag is True
+    checks["live_canary_occurred_absent"] = flag is None or "live_canary_occurred" not in record
+    if flag is True:
+        checks["live_success_proven"] = True
+    elif flag is False:
+        checks["live_success_proven"] = False
+        blockers.append("live_canary_occurred_false")
+    else:
+        # absent or wrong type — not proof via flag
+        checks["live_success_proven"] = False
+        if flag is not None and flag is not False:
+            blockers.append("live_canary_occurred_not_boolean")
+
+    # Versioned policy path (v1 lacked live_canary_occurred; accept only with
+    # explicit success state + endpoint/operation/call invariants).
+    if not checks["live_success_proven"] and schema in (
+            LIVE_CANARY_EVIDENCE_SCHEMA_POLICY,
+            LIVE_CANARY_EVIDENCE_SCHEMA_POLICY_V2):
+        state = str(record.get("resulting_state") or record.get("state")
+                    or record.get("verdict") or "")
+        calls = record.get("provider_network_calls")
+        try:
+            calls_i = int(calls) if calls is not None else -1
+        except (TypeError, ValueError):
+            calls_i = -1
+        ep = str(record.get("authorized_endpoint")
+                 or record.get("allowed_endpoint") or "").lstrip("/")
+        actual = str(record.get("actual_request_endpoint")
+                     or record.get("actual_endpoint") or "").lstrip("/")
+        op = str(record.get("operation") or record.get("allowed_operation") or "")
+        policy_ok = (
+            state in POLICY_CANARY_SUCCESS_STATES
+            and calls_i == 1
+            and ep == IDENTITY_READ_ENDPOINT
+            and actual in (IDENTITY_READ_ENDPOINT, f"/{IDENTITY_READ_ENDPOINT}", "user")
+            and op == "IDENTITY_READ"
+            and record.get("subject_match") is True
+        )
+        checks["policy_schema_success_proven"] = policy_ok
+        if policy_ok:
+            checks["live_success_proven"] = True
+        else:
+            blockers.append("policy_canary_evidence_incomplete")
+    else:
+        checks["policy_schema_success_proven"] = False
+
+    # Wrapper schema must point to proven live with explicit true only
+    if schema == "m46.fresh_policy_canary_cli_wrapper.local.v1":
+        if flag is not True:
+            blockers.append("wrapper_requires_explicit_live_canary_occurred_true")
+            checks["live_success_proven"] = False
+        else:
+            checks["live_success_proven"] = True
+
+    # Controller / local schemas require explicit True
+    if schema in (LIVE_CANARY_EVIDENCE_SCHEMA_CONTROLLER, LIVE_CANARY_EVIDENCE_SCHEMA_LOCAL):
+        if flag is not True:
+            if checks["live_canary_occurred_absent"]:
+                blockers.append("live_canary_occurred_absent")
+            checks["live_success_proven"] = False
+
+    # Historical endpoint exception must never authorize revocation of a
+    # policy-conformant path by itself.
+    if str(record.get("classification") or "") == HISTORICAL_ENDPOINT_BINDING_EXCEPTION:
+        if schema not in (LIVE_CANARY_EVIDENCE_SCHEMA_POLICY,
+                          LIVE_CANARY_EVIDENCE_SCHEMA_POLICY_V2,
+                          LIVE_CANARY_EVIDENCE_SCHEMA_CONTROLLER,
+                          LIVE_CANARY_EVIDENCE_SCHEMA_LOCAL):
+            blockers.append("historical_endpoint_exception_not_revocation_proof")
+            checks["live_success_proven"] = False
+
+    if not checks.get("live_success_proven"):
+        if "live_canary_occurred_absent" not in blockers and flag is not True:
+            if checks.get("live_canary_occurred_absent"):
+                blockers.append("live_canary_occurred_absent")
+            elif "policy_canary_evidence_incomplete" not in blockers:
+                blockers.append("live_canary_not_proven")
+
+    # de-dupe blockers
+    blockers = list(dict.fromkeys(blockers))
+    # If success proven, drop pure "not proven" noise from alternate paths
+    if checks.get("live_success_proven"):
+        blockers = [b for b in blockers if b not in (
+            "live_canary_not_proven", "live_canary_occurred_absent",
+            "policy_canary_evidence_incomplete", "evidence_schema_unknown",
+            "evidence_schema_missing",
+        )]
+        # unknown schema still blocked even with flag? Allow explicit True on unknown
+        if flag is True:
+            blockers = [b for b in blockers if b != "evidence_schema_unknown"]
+
+    valid = bool(checks.get("live_success_proven")) and not blockers
+    body = {
+        "schema": "m46.live_canary_evidence_validation.v1",
+        "valid": valid,
+        "blockers": blockers,
+        "checks": checks,
+        "evidence_schema": schema,
+        "authorizes_revocation_verification": valid,
+        "authorizes_execution": False,
+        "grants_anything": False,
+        "contains_secret_values": False,
+        "note": ("Evidence validation only. Never executes. Absent "
+                 "live_canary_occurred is never treated as true."),
+    }
+    assert is_clean(body)
+    return body
+
+
+def build_policy_canary_evidence(
+    *,
+    canary_result: dict[str, Any],
+    approval: dict[str, Any],
+    plan: Optional[ExecutionPlan] = None,
+    extra: Optional[dict[str, Any]] = None,
+) -> dict[str, Any]:
+    """Build a v2 local policy canary evidence record with explicit live flag."""
+    lr = canary_result.get("live_result") or {}
+    live_ok = bool(canary_result.get("live_canary_occurred"))
+    body: dict[str, Any] = {
+        "schema": LIVE_CANARY_EVIDENCE_SCHEMA_POLICY_V2,
+        "milestone": MILESTONE,
+        "live_canary_occurred": live_ok,
+        "resulting_state": (
+            "M46_FRESH_POLICY_CANARY_VALIDATED_PENDING_EXTERNAL_REVOCATION"
+            if live_ok else str(canary_result.get("verdict") or "FAILED")
+        ),
+        "verdict": canary_result.get("verdict"),
+        "state": canary_result.get("state"),
+        "approval_id": str(approval.get("approval_id") or ""),
+        "approval_integrity_fingerprint": str(
+            approval.get("approval_integrity_fingerprint") or ""),
+        "request_id": str(approval.get("request_id") or ""),
+        "rollout_id": str(approval.get("rollout_id") or ""),
+        "execution_id": (plan.execution_id if plan else
+                         str((canary_result.get("plan") or {}).get("execution_id") or "")),
+        "plan_integrity_fingerprint": (
+            plan.plan_integrity_fingerprint if plan else ""),
+        "authorized_endpoint": IDENTITY_READ_ENDPOINT,
+        "actual_request_endpoint": "/user",
+        "operation": "IDENTITY_READ",
+        "provider_network_calls": int(lr.get("provider_network_calls") or 0),
+        "retries": int(lr.get("retries") or 0),
+        "expected_subject_fingerprint": str(
+            lr.get("expected_subject_fingerprint") or ""),
+        "observed_subject_fingerprint": str(
+            lr.get("observed_subject_fingerprint") or ""),
+        "subject_match": bool(
+            lr.get("expected_subject_fingerprint")
+            and lr.get("expected_subject_fingerprint")
+            == lr.get("observed_subject_fingerprint")
+        ),
+        "identity_bound": bool(lr.get("identity_bound")),
+        "canary_evidence_fingerprint": str(
+            canary_result.get("canary_evidence_fingerprint") or ""),
+        "authorization_consumed_durable": bool(
+            canary_result.get("authorization_consumed_durable")),
+        "requires_external_revocation": bool(
+            canary_result.get("requires_external_revocation")),
+        "authorizes_execution": False,
+        "grants_anything": False,
+        "contains_secret_values": False,
+        "classification": "POLICY_CONFORMANT_FRESH_CANARY",
+    }
+    if extra:
+        for k, v in extra.items():
+            if k not in body:
+                body[k] = v
+    assert is_clean(body)
+    return body
+
+
 # ── G. Revocation & cleanup ──────────────────────────────────────────────────
 def run_revocation(
     *,

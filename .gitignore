@@ -71,3 +71,6 @@ docs/m46/*.local.json
 docs/m46/operator_canary_approval.local.json
 docs/evidence/m46/*.local.jsonl
 docs/evidence/m46/consumed_authorization.local.jsonl
+docs/evidence/m46/*.local.jsonl.lock
+docs/m46/*.local.json.save
+docs/m46/*.save
