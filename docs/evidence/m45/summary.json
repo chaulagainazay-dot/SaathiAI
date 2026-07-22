@@ -1,0 +1,31 @@
+{
+  "alters_runtime_authority": false,
+  "authorities": {
+    "ACTIVE_authorization": "NOT GRANTED",
+    "CANARY_authorization": "NOT GRANTED",
+    "production_authorization": "NOT GRANTED",
+    "rollout_authorization": "NOT GRANTED",
+    "write_authority": "NOT GRANTED"
+  },
+  "authority_state": {
+    "active": "NOT GRANTED",
+    "deployment": "NOT GRANTED",
+    "framework": "READY (ADVISORY ONLY)",
+    "production": "NOT AUTHORIZED",
+    "provider_permissions": "UNCHANGED",
+    "rollout_execution": "NOT GRANTED",
+    "scope_expansion": "FORBIDDEN",
+    "write": "NOT GRANTED"
+  },
+  "authorizes_execution": false,
+  "contains_secret_values": false,
+  "default_snapshot_denied": true,
+  "framework_ready": true,
+  "grants_anything": false,
+  "m32_prohibition": "UNCHANGED",
+  "milestone": "M45",
+  "module_fingerprint": "c5d1aa33f9a6180d61cf050a",
+  "schema": "m45.summary.v1",
+  "state": "M45_RUNTIME_ATTESTATION_READY_ADVISORY_ONLY",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

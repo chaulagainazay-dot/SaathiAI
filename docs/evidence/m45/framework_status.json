@@ -1,0 +1,69 @@
+{
+  "advisory_only": true,
+  "alters_runtime_authority": false,
+  "attestation_provenance_classes": [
+    "SELF_REPORTED",
+    "LOCAL_MACHINE_OBSERVED",
+    "MACHINE_ATTESTED",
+    "HARDWARE_ATTESTED",
+    "SIMULATED",
+    "ABSENT"
+  ],
+  "authorities": {
+    "ACTIVE_authorization": "NOT GRANTED",
+    "CANARY_authorization": "NOT GRANTED",
+    "production_authorization": "NOT GRANTED",
+    "rollout_authorization": "NOT GRANTED",
+    "write_authority": "NOT GRANTED"
+  },
+  "authority_state": {
+    "active": "NOT GRANTED",
+    "deployment": "NOT GRANTED",
+    "framework": "READY (ADVISORY ONLY)",
+    "production": "NOT AUTHORIZED",
+    "provider_permissions": "UNCHANGED",
+    "rollout_execution": "NOT GRANTED",
+    "scope_expansion": "FORBIDDEN",
+    "write": "NOT GRANTED"
+  },
+  "authorizes_execution": false,
+  "banner": "M45 RUNTIME ATTESTATION FRAMEWORK\nNON-PRODUCTION\nREAD-ONLY\nFAIL-CLOSED\nDENY-BY-DEFAULT\nRUNTIME ATTESTATION ONLY\nGRANTS NOTHING\nNO ACTIVE\nNO PRODUCTION\nNO WRITE\nNO ROLLOUT EXECUTION\nNO DEPLOYMENT\nSEPARATE OPERATOR AUTHORIZATION REQUIRED TO EXECUTE\nTRADING GUARDIAN UNENGAGED",
+  "components": {
+    "cli": true,
+    "collector": true,
+    "eligibility_validator": true,
+    "lifecycle_ledger": true,
+    "m44_integration": true,
+    "machine_attestation": true,
+    "runtime_snapshot_contract": true
+  },
+  "contains_secret_values": false,
+  "default_snapshot_denied": true,
+  "framework_ready": true,
+  "grants_active": false,
+  "grants_anything": false,
+  "grants_deployment": false,
+  "grants_production": false,
+  "grants_rollout_execution": false,
+  "grants_write": false,
+  "hardware_attestation_supported": false,
+  "lifecycle_states": [
+    "CREATED",
+    "VALIDATED",
+    "ELIGIBLE_ADVISORY_ONLY",
+    "EXPIRED",
+    "INVALIDATED",
+    "SUPERSEDED",
+    "REVOKED",
+    "TAMPERED",
+    "BLOCKED"
+  ],
+  "m32_prohibition": "UNCHANGED",
+  "milestone": "M45",
+  "note": "Runtime attestation infrastructure is ready. Advisory only. No rollout execution, production, write, or deployment authority.",
+  "ready_verdict": "BOUNDED_ROLLOUT_READY_FOR_SEPARATE_OPERATOR_AUTHORIZATION",
+  "requires_separate_execution_authorization": true,
+  "schema": "m45.runtime_attestation.v1",
+  "state": "M45_RUNTIME_ATTESTATION_READY_ADVISORY_ONLY",
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

@@ -467,6 +467,43 @@ def main(argv: Optional[list[str]] = None) -> int:
     sp_verify = sub.add_parser("m44-verify-ledger")
     sp_verify.add_argument("--ledger", default="docs/evidence/m44/rollout_ledger.jsonl")
     sub.add_parser("m44-emit-evidence")
+
+    # ── M45 runtime attestation (fail-closed; grants nothing; no execution) ─
+    sub.add_parser("m45-status")
+    sp_cs = sub.add_parser("m45-create-snapshot")
+    sp_cs.add_argument("--mode", default="observe",
+                       choices=("observe", "simulate", "self_report"))
+    sp_cs.add_argument("--scope", default="read_only:github_meta:/meta")
+    sp_cs.add_argument("--percent", type=int, default=0)
+    sp_cs.add_argument("--max-percent", type=int, default=5)
+    sp_cs.add_argument("--persist", action="store_true")
+    sp_cs.add_argument("--ledger", default="docs/evidence/m45/snapshot_ledger.jsonl")
+    sp_cs.add_argument("--out-file", default="", dest="out_file")
+    for name in ("m45-validate-snapshot", "m45-verify-snapshot"):
+        sp = sub.add_parser(name)
+        sp.add_argument("--snapshot-file", default="", dest="snapshot_file")
+        sp.add_argument("--now", default="")
+        sp.add_argument("--require-clean-repo", action="store_true")
+    sp_show = sub.add_parser("m45-show-snapshot")
+    sp_show.add_argument("snapshot_id")
+    sp_show.add_argument("--ledger", default="docs/evidence/m45/snapshot_ledger.jsonl")
+    sp_list = sub.add_parser("m45-list-snapshots")
+    sp_list.add_argument("--ledger", default="docs/evidence/m45/snapshot_ledger.jsonl")
+    sp_exp = sub.add_parser("m45-expire-snapshot")
+    sp_exp.add_argument("snapshot_id")
+    sp_exp.add_argument("--reason", default="operator_requested_expiry")
+    sp_exp.add_argument("--ledger", default="docs/evidence/m45/snapshot_ledger.jsonl")
+    sp_inv = sub.add_parser("m45-invalidate-snapshot")
+    sp_inv.add_argument("snapshot_id")
+    sp_inv.add_argument("--reason", default="operator_invalidated")
+    sp_inv.add_argument("--ledger", default="docs/evidence/m45/snapshot_ledger.jsonl")
+    sp_ready = sub.add_parser("m45-check-request-readiness")
+    sp_ready.add_argument("--request-file", default="", dest="request_file")
+    sp_ready.add_argument("--snapshot-file", default="", dest="snapshot_file")
+    sp_ready.add_argument("--now", default="")
+    sp_ready.add_argument("--require-clean-repo", action="store_true")
+    sub.add_parser("m45-simulate")
+    sub.add_parser("m45-emit-evidence")
     args = p.parse_args(argv)
 
     # Reject raw secret CLI carriers globally for any m36 command
@@ -1426,6 +1463,127 @@ def main(argv: Optional[list[str]] = None) -> int:
                 return 0 if out.get("verdict") == \
                     m44.M44Verdict.ROLLOUT_AUTHORIZATION_VALIDATED_ADVISORY_ONLY.value else 5
         except m44.M44Error as e:
+            _print({"ok": False, "error": e.code, "detail": getattr(e, "detail", "")})
+            return 2
+
+    if args.cmd and str(args.cmd).startswith("m45"):
+        from saathi.credentials import m45
+        print(m45.NON_PRODUCTION_BANNER)
+
+        def _load_snapshot(path: str):
+            data, ferr = _read_json_file(path)
+            if ferr:
+                return None, ferr
+            # allow nested {"snapshot": {...}}
+            if isinstance(data, dict) and "snapshot" in data and isinstance(data["snapshot"], dict):
+                data = data["snapshot"]
+            try:
+                return m45._from_public(data or {}), None
+            except (TypeError, ValueError) as e:
+                return None, f"snapshot_parse_error:{type(e).__name__}"
+
+        def _load_m44_request(path: str):
+            from saathi.credentials import m44
+            data, ferr = _read_json_file(path)
+            if ferr:
+                return None, ferr
+            allowed = {f.name for f in __import__("dataclasses").fields(m44.RolloutRequest)}
+            clean = {k: v for k, v in (data or {}).items() if k in allowed}
+            for key in ("approval_fingerprints", "evidence_fingerprints", "acknowledgements"):
+                if key in clean and isinstance(clean[key], list):
+                    clean[key] = tuple(clean[key])
+            return m44.RolloutRequest(**clean), None
+
+        try:
+            if args.cmd == "m45-status":
+                out = m45.framework_status()
+                if not leakscan.is_clean(out):
+                    _print({"ok": False, "error": "leak_detected"}); return 2
+                _print(out)
+                return 0 if out.get("framework_ready") else 5
+            if args.cmd == "m45-simulate":
+                out = m45.simulate()
+                if not leakscan.is_clean(out):
+                    _print({"ok": False, "error": "leak_detected"}); return 2
+                _print(out)
+                return 0
+            if args.cmd == "m45-emit-evidence":
+                res = m45.emit_m45_evidence("docs/evidence/m45")
+                _print(res)
+                return 0
+            if args.cmd == "m45-list-snapshots":
+                _print(m45.list_snapshots(args.ledger))
+                return 0
+            if args.cmd == "m45-show-snapshot":
+                _print(m45.show_snapshot_history(args.snapshot_id, args.ledger))
+                return 0
+            if args.cmd == "m45-expire-snapshot":
+                _print(m45.expire_snapshot(args.snapshot_id, reason=args.reason,
+                                           path=args.ledger))
+                return 0
+            if args.cmd == "m45-invalidate-snapshot":
+                _print(m45.invalidate_snapshot(args.snapshot_id, reason=args.reason,
+                                               path=args.ledger))
+                return 0
+            if args.cmd == "m45-create-snapshot":
+                cfg = m45.CollectorConfig(
+                    mode=args.mode,
+                    approved_scope=args.scope,
+                    requested_rollout_percent=args.percent,
+                    maximum_policy_percent=args.max_percent,
+                )
+                out = m45.create_snapshot(cfg, path=args.ledger, persist=bool(args.persist))
+                if not leakscan.is_clean(out):
+                    _print({"ok": False, "error": "leak_detected"}); return 2
+                if args.out_file:
+                    Path = __import__("pathlib").Path
+                    Path(args.out_file).write_text(
+                        __import__("json").dumps(out["snapshot"], indent=2, sort_keys=True) + "\n")
+                _print(out)
+                return 0
+            if args.cmd in ("m45-validate-snapshot", "m45-verify-snapshot"):
+                if not args.snapshot_file:
+                    _print({"ok": False, "error": "snapshot_file_required"}); return 2
+                snap, ferr = _load_snapshot(args.snapshot_file)
+                if ferr:
+                    _print({"ok": False, "error": ferr}); return 5
+                if args.cmd == "m45-verify-snapshot":
+                    out = m45.verify_snapshot_integrity(snap)
+                    out = {"schema": "m45.verify.v1", **out,
+                           "authorizes_execution": False, "grants_anything": False,
+                           "contains_secret_values": False}
+                else:
+                    out = m45.validate_snapshot(
+                        snap, now=args.now or None,
+                        require_clean_repo=bool(args.require_clean_repo))
+                if not leakscan.is_clean(out):
+                    _print({"ok": False, "error": "leak_detected"}); return 2
+                _print(out)
+                ok = (out.get("valid") if args.cmd == "m45-verify-snapshot"
+                      else out.get("verdict") ==
+                      m45.M45Verdict.SNAPSHOT_VALIDATED_ADVISORY_ONLY.value)
+                return 0 if ok else 5
+            if args.cmd == "m45-check-request-readiness":
+                if not args.request_file or not args.snapshot_file:
+                    _print({"ok": False, "error": "request_and_snapshot_required"}); return 2
+                req, ferr = _load_m44_request(args.request_file)
+                if ferr:
+                    _print({"ok": False, "error": ferr}); return 5
+                snap, ferr = _load_snapshot(args.snapshot_file)
+                if ferr:
+                    _print({"ok": False, "error": ferr}); return 5
+                if not leakscan.is_clean(req.to_public()) or not leakscan.is_clean(snap.to_public()):
+                    _print({"ok": False, "error": "leak_detected"}); return 2
+                out = m45.check_request_readiness(
+                    req, snap, now=args.now or None,
+                    require_clean_repo=bool(args.require_clean_repo))
+                if out.get("authorizes_execution") or out.get("grants_anything"):
+                    _print({"ok": False, "error": "invariant_violation_m45_grant"}); return 2
+                if not leakscan.is_clean(out):
+                    _print({"ok": False, "error": "leak_detected"}); return 2
+                _print(out)
+                return 0 if out.get("ready_for_separate_operator_authorization") else 5
+        except m45.M45Error as e:
             _print({"ok": False, "error": e.code, "detail": getattr(e, "detail", "")})
             return 2
 

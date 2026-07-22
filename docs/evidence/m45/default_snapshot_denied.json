@@ -1,0 +1,38 @@
+{
+  "alters_runtime_authority": false,
+  "attestation_provenance": "ABSENT",
+  "authorities": {
+    "ACTIVE_authorization": "NOT GRANTED",
+    "CANARY_authorization": "NOT GRANTED",
+    "production_authorization": "NOT GRANTED",
+    "rollout_authorization": "NOT GRANTED",
+    "write_authority": "NOT GRANTED"
+  },
+  "authority_state": {
+    "active": "NOT GRANTED",
+    "deployment": "NOT GRANTED",
+    "framework": "READY (ADVISORY ONLY)",
+    "production": "NOT AUTHORIZED",
+    "provider_permissions": "UNCHANGED",
+    "rollout_execution": "NOT GRANTED",
+    "scope_expansion": "FORBIDDEN",
+    "write": "NOT GRANTED"
+  },
+  "authorizes_execution": false,
+  "blockers": [
+    "missing_snapshot"
+  ],
+  "checks": {
+    "present": false
+  },
+  "contains_secret_values": false,
+  "grants_anything": false,
+  "lifecycle": "BLOCKED",
+  "m32_prohibition": "UNCHANGED",
+  "milestone": "M45",
+  "note": "Advisory only. Snapshot validation never authorizes rollout execution.",
+  "schema": "m45.snapshot_validation.v1",
+  "snapshot_id": "",
+  "trading_guardian": "UNCHANGED / UNENGAGED",
+  "verdict": "SNAPSHOT_INCOMPLETE"
+}
