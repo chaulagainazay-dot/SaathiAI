@@ -8,15 +8,13 @@ import {
   Button,
   LoadingState,
   ErrorState,
+  EmptyState,
   StatusBadge,
   EnvironmentBadge,
 } from "@/components/ui";
 import { fetchInfraHealth, API_BASE } from "@/lib/api";
 import { inferEnvironment } from "@/lib/navigation";
 
-/**
- * Monitoring — observation only. Command actions live under /command.
- */
 export default function MonitoringPage() {
   const [health, setHealth] = useState(null);
   const [err, setErr] = useState(null);
@@ -49,10 +47,10 @@ export default function MonitoringPage() {
         <Heading level={1} size="xl">
           Monitoring
         </Heading>
-        <Text tone="muted" size="sm" style={{ maxWidth: 560, marginTop: 8, display: "block" }}>
+        <Text tone="muted" size="sm" as="p" className="home-intro">
           Observability surface. No privileged execution controls here.
         </Text>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 12 }}>
+        <div className="home-header-actions">
           <EnvironmentBadge env={env} />
           <StatusBadge status="info" label="Observe only" />
         </div>
@@ -76,15 +74,16 @@ export default function MonitoringPage() {
               }
             />
           )}
-          {!loading && health && (
-            <pre className="shell-json mono">{JSON.stringify(health, null, 2).slice(0, 2000)}</pre>
+          {!loading && !err && !health && (
+            <EmptyState title="No health payload" description="Endpoint returned empty." />
           )}
+          {!loading && health && <pre className="shell-json mono">{JSON.stringify(health, null, 2).slice(0, 2000)}</pre>}
         </Card>
         <Card>
           <Heading level={2} size="md">
             Related surfaces
           </Heading>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 12 }}>
+          <div className="home-section-actions home-section-actions-col">
             <Link href="/infrastructure">
               <Button variant="secondary" size="sm">
                 Infrastructure
@@ -92,12 +91,12 @@ export default function MonitoringPage() {
             </Link>
             <Link href="/control">
               <Button variant="outline" size="sm">
-                Legacy Control (read aggregation)
+                Legacy Control
               </Button>
             </Link>
             <Link href="/command">
               <Button variant="outline" size="sm">
-                Command Center (actions)
+                Command Center
               </Button>
             </Link>
             <Link href="/evidence">
