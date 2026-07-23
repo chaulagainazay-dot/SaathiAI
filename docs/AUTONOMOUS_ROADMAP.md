@@ -2,6 +2,19 @@
 
 
 
+
+## M49.2 — Tool Migration, Connector Convergence, Durable Idempotency (2026-07-23)
+
+| Item | State |
+|---|---|
+| Durable SQLite idempotency | ENFORCED for tool service default |
+| saathi.tools Wave A/B slice | PARTIAL migrated |
+| Connector fixtures | PARTIAL (gmail/gcal read + send stub) |
+| Subprocess cancel helper | ACTIVE for allowlisted diag |
+| Trading Guardian | UNENGAGED_ADVISORY_ONLY |
+
+Evidence: `docs/tool-runtime/M49_2_*.md`. **M49.3 not started.**
+
 ## M49.1 — Canonical Tool Execution Framework (2026-07-23)
 
 | Item | State |
