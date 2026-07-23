@@ -74,3 +74,5 @@ docs/evidence/m46/consumed_authorization.local.jsonl
 docs/evidence/m46/*.local.jsonl.lock
 docs/m46/*.local.json.save
 docs/m46/*.save
+docs/ui-ux/m47_4_evidence/screenshots/
+docs/ui-ux/m47_7_evidence/screenshots/

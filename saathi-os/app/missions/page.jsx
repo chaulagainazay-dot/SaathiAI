@@ -1,69 +1,126 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Panel, Eyebrow } from "@/components/ui";
+import {
+  Card,
+  Heading,
+  Text,
+  Button,
+  LoadingState,
+  EmptyState,
+  ErrorState,
+  StatusBadge,
+} from "@/components/ui";
 import { fetchMissions } from "@/lib/api";
 
-const ACCENT = "#F4F6FB";
-const DEPT_COLOR = {
-  ai_studio: "#FF8A3D", pielts: "#6C3FCF", travel: "#5FC8FF", hcg: "#FF5A5A", cafeteria: "#4FD07A",
-};
 const TYPE_LABEL = {
-  business: "Business", client: "Client", product: "Product", startup: "Startup",
-  internal: "Internal", education: "Education", personal: "Personal",
+  business: "Business",
+  client: "Client",
+  product: "Product",
+  startup: "Startup",
+  internal: "Internal",
+  education: "Education",
+  personal: "Personal",
 };
+
+function statusBadge(status) {
+  const s = String(status || "").toLowerCase();
+  if (s === "active") return { status: "success", label: s };
+  if (s === "blocked" || s === "failed" || s === "error") return { status: "danger", label: s };
+  if (s === "paused" || s === "pending") return { status: "pending", label: s };
+  return { status: "neutral", label: s || "unknown" };
+}
 
 export default function MissionsPage() {
   const router = useRouter();
-  const [missions, setMissions] = useState([]);
+  const [missions, setMissions] = useState(null);
   const [err, setErr] = useState(null);
-  useEffect(() => { fetchMissions().then((d) => setMissions(d.missions || [])).catch((e) => setErr(String(e))); }, []);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchMissions()
+      .then((d) => setMissions(d.missions || []))
+      .catch((e) => setErr(String(e)))
+      .finally(() => setLoading(false));
+  }, []);
 
   return (
-    <div className="page" style={{ maxWidth: 1080, margin: "0 auto", paddingBottom: 60 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-        <Eyebrow style={{ color: "#9B6BFF" }}>SaathiOS · Missions</Eyebrow>
-        <button onClick={() => router.push("/missions/new")}
-          style={{ padding: "9px 18px", borderRadius: 12, border: "none", cursor: "pointer",
-            fontWeight: 600, color: "#fff", background: "#9B6BFF" }}>＋ New Mission</button>
-      </div>
-      <div style={{ fontSize: 28, fontWeight: 600, margin: "4px 0 4px" }}>Mission Control</div>
-      <div style={{ fontSize: 13, opacity: 0.5, marginBottom: 20 }}>
-        Every business is a Mission — the root object. Directors work inside it · events, evidence and learning
-        all share its namespace. One operating system, five instances.
+    <div className="page shell-page">
+      <div className="shell-page-header home-header">
+        <Text tone="muted" size="xs" mono>
+          Operate · Missions
+        </Text>
+        <div className="home-header-actions" style={{ justifyContent: "space-between", width: "100%" }}>
+          <Heading level={1} size="xl">
+            Missions
+          </Heading>
+          <Button variant="primary" size="sm" onClick={() => router.push("/missions/new")}>
+            New Mission
+          </Button>
+        </div>
+        <Text tone="muted" size="sm" as="p" className="home-intro">
+          Bounded work with lifecycle. Open a mission for intake, proposal, and evidence.
+        </Text>
       </div>
 
-      {err && <div style={{ fontSize: 12, color: "#FF5A5A", marginBottom: 10 }}>{err}</div>}
+      {loading && <LoadingState label="Loading missions…" />}
+      {!loading && err && (
+        <ErrorState title="Missions unavailable" description="Could not load mission list." detail={err} />
+      )}
+      {!loading && !err && Array.isArray(missions) && missions.length === 0 && (
+        <EmptyState
+          title="No missions yet"
+          description="Create a mission to start a bounded workstream."
+          action={
+            <Button size="sm" variant="primary" onClick={() => router.push("/missions/new")}>
+              New Mission
+            </Button>
+          }
+        />
+      )}
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-        {missions.map((m) => {
-          const color = DEPT_COLOR[m.department] || "#9B6BFF";
-          return (
-            <Panel key={m.id} onClick={() => router.push(`/missions/${m.id}`)}
-              style={{ padding: 18, cursor: "pointer", borderLeft: `3px solid ${color}` }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                <div style={{ fontSize: 17, fontWeight: 600 }}>{m.name}</div>
-                <span className="mono" style={{ fontSize: 10, padding: "2px 8px", borderRadius: 999,
-                  background: `${color}22`, color }}>{TYPE_LABEL[m.type] || m.type}</span>
-              </div>
-              <div className="mono" style={{ fontSize: 11, opacity: 0.5, marginTop: 3 }}>
-                {m.key} · {m.department || "—"} · <span style={{ color: m.status === "active" ? "#00BFA5" : "#E8B84B" }}>{m.status}</span>
-              </div>
-              {m.objectives?.length > 0 && (
-                <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 3 }}>
-                  {m.objectives.slice(0, 3).map((o, i) => (
-                    <div key={i} style={{ fontSize: 12, opacity: 0.7 }}>◦ {o}</div>
-                  ))}
+      {!loading && !err && missions?.length > 0 && (
+        <div className="missions-grid">
+          {missions.map((m) => {
+            const st = statusBadge(m.status);
+            return (
+              <Card
+                key={m.id}
+                interactive
+                className="missions-card"
+                onClick={() => router.push(`/missions/${m.id}`)}
+              >
+                <div className="missions-card-head">
+                  <Heading level={2} size="md">
+                    {m.name}
+                  </Heading>
+                  <StatusBadge status="info" label={TYPE_LABEL[m.type] || m.type || "mission"} />
                 </div>
-              )}
-              <div style={{ marginTop: 10, fontSize: 10.5, opacity: 0.4 }}>
-                {(m.directors || []).length} directors · open executive dashboard →
-              </div>
-            </Panel>
-          );
-        })}
-      </div>
-      {missions.length === 0 && !err && <div style={{ opacity: 0.4, fontSize: 13 }}>Seeding missions…</div>}
+                <Text tone="muted" size="xs" mono>
+                  {m.key} · {m.department || "—"}
+                </Text>
+                <div className="home-attention-badges">
+                  <StatusBadge status={st.status} label={st.label} />
+                </div>
+                {m.objectives?.length > 0 && (
+                  <ul className="missions-objectives">
+                    {m.objectives.slice(0, 3).map((o, i) => (
+                      <li key={i}>
+                        <Text tone="secondary" size="sm">
+                          {o}
+                        </Text>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <Text tone="disabled" size="xs">
+                  {(m.directors || []).length} directors · open dashboard →
+                </Text>
+              </Card>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

@@ -50,7 +50,11 @@ const S = {
   },
 };
 
-export default function ChatWorkspace() {
+/**
+ * @param {{ compact?: boolean }} props
+ * compact=true → Ask Saathi panel mode: same transport, reduced chrome.
+ */
+export default function ChatWorkspace({ compact = false } = {}) {
   const [convs, setConvs] = useState([]);
   const [active, setActive] = useState(null);
   const [detail, setDetail] = useState(null);
@@ -65,6 +69,7 @@ export default function ChatWorkspace() {
   const [teamRunId, setTeamRunId] = useState(null);
   const [voiceOpen, setVoiceOpen] = useState(false);
   const bottomRef = useRef(null);
+  const abortRef = useRef(null);
 
   const loadConvs = useCallback(async () => {
     try {
@@ -112,6 +117,17 @@ export default function ChatWorkspace() {
     setActive(c.id);
   }
 
+  function stopStream() {
+    try {
+      abortRef.current?.abort();
+    } catch {
+      /* ignore */
+    }
+    abortRef.current = null;
+    setBusy(false);
+    setStreamText("");
+  }
+
   async function send() {
     const t = text.trim();
     if (!t || busy) return;
@@ -121,17 +137,19 @@ export default function ChatWorkspace() {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title: "", project_id: project }),
       });
+      if (!r.ok) {
+        setError(`Create conversation failed (${r.status})`);
+        return;
+      }
       cid = (await r.json()).id;
       setActive(cid);
     }
-    setText(""); setBusy(true); setStreamText("");
+    setText(""); setBusy(true); setStreamText(""); setError("");
     setDetail((d) => d ? { ...d, messages: [...(d.messages || []),
       { id: "tmp", role: "user", content: t, status: "complete" }] } : d);
 
-    if (teamMode) {
+    if (teamMode && !compact) {
       // Real M10 orchestration — multi-agent, task graph, approvals.
-      // Not a mock: this call executes the run synchronously and returns
-      // its genuine outcome; the panel then polls the live run state.
       try {
         const r = await afetch(`${API_BASE}/api/v1/chat/conversations/${cid}/team-run`, {
           method: "POST", headers: { "Content-Type": "application/json" },
@@ -146,11 +164,19 @@ export default function ChatWorkspace() {
       return;
     }
 
+    const ac = new AbortController();
+    abortRef.current = ac;
     try {
       const r = await afetch(`${API_BASE}/api/v1/chat/conversations/${cid}/messages`, {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: t, agent, stream: true }),
+        body: JSON.stringify({ text: t, agent: compact ? "" : agent, stream: true }),
+        signal: ac.signal,
       });
+      if (!r.ok) {
+        setError(`Send failed (${r.status}) — not shown as success.`);
+        setBusy(false);
+        return;
+      }
       const reader = r.body.getReader();
       const dec = new TextDecoder();
       let buf = "";
@@ -161,12 +187,20 @@ export default function ChatWorkspace() {
         const frames = buf.split("\n\n"); buf = frames.pop();
         for (const f of frames) {
           if (!f.startsWith("data: ")) continue;
-          const ev = JSON.parse(f.slice(6));
-          if (ev.event === "delta") setStreamText((s) => s + ev.text);
-          if (ev.event === "error") setError(ev.detail || "stream error");
+          try {
+            const ev = JSON.parse(f.slice(6));
+            if (ev.event === "delta") setStreamText((s) => s + ev.text);
+            if (ev.event === "error") setError(ev.detail || "stream error");
+          } catch {
+            /* ignore partial JSON */
+          }
         }
       }
-    } catch { setError("Send failed — network or auth."); }
+    } catch (e) {
+      if (e?.name === "AbortError") setError("Stream stopped.");
+      else setError("Send failed — network or auth.");
+    }
+    abortRef.current = null;
     setStreamText(""); setBusy(false);
     await loadDetail(cid); await loadConvs();
   }
@@ -184,9 +218,14 @@ export default function ChatWorkspace() {
   const recent = useMemo(() => convs.filter((c) => !c.pinned), [convs]);
   const conv = detail?.conversation;
 
+  const wrapStyle = compact
+    ? { display: "flex", flexDirection: "column", height: "100%", minHeight: 320, color: "var(--text-primary, #e8ecf5)" }
+    : S.wrap;
+
   return (
-    <div style={S.wrap}>
-      {/* ── sidebar ── */}
+    <div style={wrapStyle} data-chat-mode={compact ? "compact" : "full"}>
+      {/* ── sidebar (full workspace only) ── */}
+      {!compact && (
       <aside style={S.side}>
         <button style={S.btn} onClick={newConversation}>＋ New chat</button>
         <input style={S.input} placeholder="Search conversations…" value={query}
@@ -207,16 +246,19 @@ export default function ChatWorkspace() {
           </div>))}
         {convs.length === 0 && <div style={{ fontSize: 12, opacity: .5 }}>No conversations yet.</div>}
       </aside>
+      )}
 
       {/* ── main ── */}
-      <main style={S.main}>
+      <main style={compact ? { ...S.main, minHeight: 280 } : S.main}>
         <header style={{ display: "flex", gap: 10, alignItems: "center",
                          padding: "12px 16px", borderBottom: "1px solid rgba(255,255,255,.08)" }}>
           <strong style={{ fontSize: 14, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-            {conv?.title || "Saathi Chat"}
+            {compact ? "Ask Saathi" : (conv?.title || "Saathi Chat")}
           </strong>
-          {conv && <span style={S.tag}>{(detail?.memory_links?.length || 0)} memories</span>}
-          {conv && <span style={S.tag}>{conv.tokens_in + conv.tokens_out} tok</span>}
+          {!compact && conv && <span style={S.tag}>{(detail?.memory_links?.length || 0)} memories</span>}
+          {!compact && conv && <span style={S.tag}>{conv.tokens_in + conv.tokens_out} tok</span>}
+          {!compact && (
+            <>
           <select value={agent} onChange={(e) => setAgent(e.target.value)}
                   disabled={teamMode}
                   style={{ ...S.input, width: 130, opacity: teamMode ? .4 : 1 }}>
@@ -242,6 +284,13 @@ export default function ChatWorkspace() {
             }}>
             🎙
           </button>
+            </>
+          )}
+          {compact && (
+            <button type="button" style={S.btn} onClick={newConversation} title="New conversation">
+              New
+            </button>
+          )}
         </header>
 
         <section style={{ flex: 1, overflowY: "auto", display: "flex",
@@ -268,9 +317,9 @@ export default function ChatWorkspace() {
           <div ref={bottomRef} />
         </section>
 
-        {error && <div style={{ padding: "6px 16px", color: "#ff8c8c", fontSize: 12 }}>{error}</div>}
+        {error && <div role="alert" style={{ padding: "6px 16px", color: "#ff8c8c", fontSize: 12 }}>{error}</div>}
 
-        {voiceOpen && (
+        {!compact && voiceOpen && (
           <div style={{ padding: "0 14px 10px" }}>
             <VoiceControl
               conversationId={active}
@@ -286,19 +335,27 @@ export default function ChatWorkspace() {
 
         <footer style={{ display: "flex", gap: 8, padding: 14,
                          borderTop: "1px solid rgba(255,255,255,.08)" }}>
-          <textarea style={{ ...S.input, resize: "none", height: 56 }} value={text}
-            placeholder={teamMode ? "Describe the objective for the agent team…"
-                        : agent ? `Message @${agent}…` : "Message Saathi…"}
+          <textarea style={{ ...S.input, resize: "none", height: compact ? 48 : 56 }} value={text}
+            placeholder={teamMode && !compact ? "Describe the objective for the agent team…"
+                        : agent && !compact ? `Message @${agent}…` : "Message Saathi…"}
             onChange={(e) => setText(e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }} />
-          <button style={{ ...S.btn, alignSelf: "stretch" }} disabled={busy} onClick={send}>
-            {busy ? "…" : teamMode ? "Run team" : "Send"}
-          </button>
+            onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
+            aria-label="Message Saathi" />
+          {busy ? (
+            <button type="button" style={{ ...S.btn, alignSelf: "stretch", background: "rgba(255,90,90,.15)", color: "#ff8c8c" }}
+              onClick={stopStream} aria-label="Stop streaming">
+              Stop
+            </button>
+          ) : (
+            <button type="button" style={{ ...S.btn, alignSelf: "stretch" }} onClick={send}>
+              {teamMode && !compact ? "Run team" : "Send"}
+            </button>
+          )}
         </footer>
       </main>
 
-      {/* ── context panel ── */}
-      {conv && (
+      {/* ── context panel (full workspace only) ── */}
+      {!compact && conv && (
         <aside style={S.panel} className="only-desktop">
           {teamRunId && (
             <>

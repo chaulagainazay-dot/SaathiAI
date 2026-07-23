@@ -18,15 +18,22 @@ from . import config, voice
 from .agent import SaathiAgent
 
 app = FastAPI(title="SaathiAI")
-# CORS — strict origin whitelist from env. NO wildcard, NO regex.
-# Default covers common local dev ports; production sets SAATHI_CORS_ORIGINS.
-_cors_origins = _os.getenv("SAATHI_CORS_ORIGINS", "")
-if _cors_origins:
-    _origins = [o.strip() for o in _cors_origins.split(",") if o.strip()]
-else:
-    _origins = ["http://localhost:3000", "http://127.0.0.1:3000", "http://localhost:8765"]
-app.add_middleware(CORSMiddleware, allow_origins=_origins, allow_credentials=True,
-                   allow_methods=["*"], allow_headers=["*"])
+# CORS — strict origin whitelist (M47.6). NO wildcard with credentials.
+# Production/staging fail closed unless SAATHI_CORS_ORIGINS is set.
+from .cors_policy import (  # noqa: E402
+    CORS_ALLOW_HEADERS,
+    CORS_ALLOW_METHODS,
+    resolve_cors_origins,
+)
+
+_origins = resolve_cors_origins()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=_origins,
+    allow_credentials=True,
+    allow_methods=CORS_ALLOW_METHODS,
+    allow_headers=CORS_ALLOW_HEADERS,
+)
 
 
 # ── Security Headers Middleware (Phase 7) ───────────────────────────────────
