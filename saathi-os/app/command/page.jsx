@@ -94,7 +94,7 @@ export default function CommandCenterPage() {
               </Link>
               <Link href="/control">
                 <Button variant="secondary" size="sm">
-                  Legacy Control
+                  Legacy Control (full M16)
                 </Button>
               </Link>
               <Link href="/monitoring">
@@ -102,7 +102,16 @@ export default function CommandCenterPage() {
                   Monitoring
                 </Button>
               </Link>
+              <Link href="/control/computer">
+                <Button variant="outline" size="sm">
+                  Computer agent
+                </Button>
+              </Link>
             </div>
+            <Text tone="disabled" size="xs" mono as="p">
+              Control workflows split: search/timeline stay on /control · attention also on Home ·
+              approvals on /approvals · health on /monitoring. /control is kept for deep links.
+            </Text>
           </Card>
 
           <Card>

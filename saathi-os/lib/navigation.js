@@ -89,7 +89,7 @@ export const NAV_GROUPS = [
         label: "Studio",
         href: "/studio",
         icon: "▶",
-        description: "Content production",
+        description: "Production queue · OS workspace at /studio-os · control-room ops",
         shortcut: "g s",
         aliases: ["/studio-os", "/studio/control-room"],
         accent: "#FF8A3D",

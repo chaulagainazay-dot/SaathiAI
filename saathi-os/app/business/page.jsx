@@ -7,11 +7,14 @@ import {
   Button,
   StatusBadge,
   EmptyState,
+  AuthorityBadge,
 } from "@/components/ui";
+import MobileFinance from "@/components/mobile/MobileFinance";
 
 /**
- * Business OS entry — composes links to real surfaces.
- * Does not claim a unified business backend.
+ * Business OS entry — read-only compose.
+ * Finance remains a compatibility surface until a unified metrics API exists.
+ * No transaction, payment, or accounting authority is introduced here.
  */
 export default function BusinessPage() {
   return (
@@ -23,24 +26,26 @@ export default function BusinessPage() {
         <Heading level={1} size="xl">
           Business
         </Heading>
-        <Text tone="muted" size="sm" style={{ maxWidth: 560, marginTop: 8, display: "block" }}>
-          Venture and finance entry points. Unified Business OS metrics are partial —
-          each surface below is only as real as its own API.
+        <Text tone="muted" size="sm" as="p" className="home-intro">
+          Venture and finance visibility. No fabricated revenue. No payment or trade execution from this
+          surface.
         </Text>
-        <div style={{ marginTop: 12 }}>
+        <div className="home-header-actions">
           <StatusBadge status="pending" label="Partial backend" />
+          <AuthorityBadge authority="advisory" label="Read-only compose" />
         </div>
       </div>
 
       <div className="shell-page-grid">
         <Card>
           <Heading level={2} size="md">
-            Finance
+            Finance (compatibility)
           </Heading>
-          <Text tone="muted" size="sm" style={{ display: "block", marginTop: 8 }}>
-            Existing finance surface. Not reimplemented here.
+          <Text tone="muted" size="sm" as="p">
+            Finance modules exist (portfolio / trade journal / revenue) but are not wired to a unified
+            dashboard API. This panel does not invent balances or forecasts.
           </Text>
-          <div style={{ marginTop: 12 }}>
+          <div className="home-section-actions">
             <Link href="/finance">
               <Button size="sm" variant="secondary">
                 Open Finance
@@ -52,10 +57,10 @@ export default function BusinessPage() {
           <Heading level={2} size="md">
             Projects
           </Heading>
-          <Text tone="muted" size="sm" style={{ display: "block", marginTop: 8 }}>
+          <Text tone="muted" size="sm" as="p">
             Intake and venture projects.
           </Text>
-          <div style={{ marginTop: 12 }}>
+          <div className="home-section-actions">
             <Link href="/projects">
               <Button size="sm" variant="secondary">
                 Open Projects
@@ -65,12 +70,23 @@ export default function BusinessPage() {
         </Card>
         <Card>
           <Heading level={2} size="md">
+            Mobile finance companion
+          </Heading>
+          <div className="only-desktop">
+            <MobileFinance />
+          </div>
+          <div className="only-mobile">
+            <MobileFinance />
+          </div>
+        </Card>
+        <Card>
+          <Heading level={2} size="md">
             Venture scaffolds
           </Heading>
           <EmptyState
             title="Per-venture dashboards not unified"
-            description="Department routes (cafeteria, travel, etc.) remain available as legacy scaffolds. Business OS will compose real metrics when endpoints exist."
-            note="No fabricated revenue or KPI tiles."
+            description="Department routes remain available as legacy scaffolds when they exist."
+            note="No fabricated KPI tiles · /finance kept for compatibility"
           />
         </Card>
       </div>
