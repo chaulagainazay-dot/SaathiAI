@@ -42,6 +42,14 @@ Workflow design notes (`.github/workflows/reliability.yml`):
 - Pending critical-regressions: **wait for completion** on final pushed SHA  
 - Optional missing checks: N/A  
 
-## Final classification (filled at close)
+## Final classification (close)
 
-See `M47_8_FINAL_REPORT.md` for post-push check outcome.
+| Check | Result |
+|---|---|
+| `critical-regressions` | **PASSING** (17m21s) · run 29973950371 |
+| `full-suite` | **PASSING** (15m56s) · same run |
+| mergeable | **MERGEABLE** |
+| mergeStateStatus | **CLEAN** |
+| Overall | **PASSING** |
+
+Head SHA at draft exit: `920ef07c14b3c170efb806022f94e03bcf82ed6c`

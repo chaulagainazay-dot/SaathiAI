@@ -9,7 +9,7 @@
 
 | Decision | Value |
 |---|---|
-| Draft exit | `PR2_MARKED_READY_FOR_REVIEW` (when gates complete on final SHA) |
+| Draft exit | `PR2_MARKED_READY_FOR_REVIEW` |
 | Merge | `MERGE_NOT_AUTHORIZED` |
 | Milestone state | `M47_8_COMPLETE_PR2_MARKED_READY` |
 
@@ -22,6 +22,21 @@ UNMERGED
 head = 7dfd74d
 mergeable = MERGEABLE
 ```
+
+## Final PR state
+
+```text
+OPEN
+READY FOR REVIEW (isDraft = false)
+UNMERGED
+head = 920ef07c14b3c170efb806022f94e03bcf82ed6c
+mergeable = MERGEABLE
+mergeStateStatus = CLEAN
+critical-regressions = SUCCESS
+full-suite = SUCCESS
+```
+
+`gh pr ready 2` succeeded. **Merge was not performed.**
 
 ## Review outcomes
 
