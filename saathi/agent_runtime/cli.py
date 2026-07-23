@@ -46,8 +46,21 @@ def main(argv: list[str] | None = None) -> int:
     orch = default_orchestrator()
 
     if cmd == "inspect" or cmd == "health":
-        _emit({"agents": [a.agent_id for a in registry.all_agents()],
-               "recent_runs": orch.store.list_runs(limit=10)})
+        from saathi.agent_runtime.contracts import contract_summary
+
+        _emit(
+            {
+                "agents": [a.agent_id for a in registry.all_agents()],
+                "recent_runs": orch.store.list_runs(limit=10),
+                "m48_1_contract": contract_summary(),
+            }
+        )
+        return EXIT_OK
+    if cmd == "contract":
+        # Read-only M48.1 contract inventory (never executes agents/tools).
+        from saathi.agent_runtime.contracts import contract_summary
+
+        _emit(contract_summary())
         return EXIT_OK
     if cmd == "list":
         _emit({"agents": [a.to_dict() for a in registry.all_agents()]})
