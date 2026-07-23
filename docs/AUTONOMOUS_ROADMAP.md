@@ -1,6 +1,18 @@
 # SaathiOS Autonomous Roadmap
 
 
+
+## M49.1 — Canonical Tool Execution Framework (2026-07-23)
+
+| Item | State |
+|---|---|
+| ToolExecutionService + ToolRegistry | ACTIVE (bounded builtins) |
+| ExecutionGateway integration | PARTIAL→enforced for registered tools |
+| Full monorepo tool migration | DEFERRED |
+| Trading Guardian | UNENGAGED_ADVISORY_ONLY |
+
+Evidence: `docs/tool-runtime/M49_1_*.md`. Draft PR for M49 branch. **M49.2 not started.**
+
 ## M48 — Agent Runtime Baseline (2026-07-23)
 
 | Slice | State |
