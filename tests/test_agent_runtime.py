@@ -318,12 +318,15 @@ def test_no_direct_provider_calls_in_runtime():
 def test_unknown_tool_not_faked(store):
     ex = AgentExecutor(execute_fn=_fake_exec)
     rid = store.create_run(objective="x", strategy="c", actor="u")
-    # researcher may use file.read (risk 0) but there is no gateway op → no-op, not faked
+    # researcher may use file.read (risk 0) but no M49 registry / gateway op
+    # → fail-closed (M49.1: rejected, never fabricated success)
     out = ex.request_tool(registry.get("researcher"), "file.read", {}, store, rid)
-    assert out["status"] == "no-op" and "no gateway op" in out["reason"]
-    # recorded as no-op in the store, never fabricated as success
+    assert out["status"] in ("no-op", "rejected")
+    assert out["status"] != "success"
+    assert "no gateway" in (out.get("reason") or "").lower() or out.get("error_code") == "TOOL_NOT_FOUND"
     tr = [t for t in store.tool_requests(rid) if t["tool"] == "file.read"]
-    assert tr and tr[0]["status"] == "no-op"
+    assert tr and tr[0]["status"] in ("no-op", "rejected")
+    assert tr[0]["status"] != "success"
 
 
 # ── memory scope isolation (security) ──────────────────────────────────────
