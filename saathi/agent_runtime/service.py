@@ -299,6 +299,7 @@ def start_agent_run(
     timeout_sec: float = 60.0,
     max_retries: int = 2,
     idempotency_key: str = "",
+    agent_id: str = "",
     provider_available: bool | None = None,
     provider_configured: bool = True,
     provider_prohibited: bool = False,
@@ -322,6 +323,9 @@ def start_agent_run(
             if raise_on_reject:
                 raise AgentRunError(rec.error_code, rec.message)
             return rec
+        if agent_id:
+            budget["force_agent"] = agent_id
+            budget["agent_id"] = agent_id
         request = request_from_objective(
             objective,
             strategy=strategy,
@@ -337,6 +341,7 @@ def start_agent_run(
             timeout_sec=timeout_sec,
             max_retries=max_retries,
             idempotency_key=idempotency_key,
+            agent_id=agent_id,
         )
     else:
         request.requested_capability = normalize_capability(
@@ -418,6 +423,9 @@ def start_agent_run(
     if request.approval_token:
         # store only presence flag, never the raw token
         budget["approval_present"] = True
+    if request.agent_id:
+        budget["force_agent"] = request.agent_id
+        budget["agent_id"] = request.agent_id
 
     strat = choose_strategy(request.objective, requested=strategy)
     events = ["validation.passed", "capability.resolved", "authority.resolved"]

@@ -376,24 +376,147 @@ class ChatEngine:
             self.store.finish_tool(rec["id"], status="failed", result=repr(exc)[:500])
             return {**rec, "status": "failed"}
 
-    # ── Layer 9: agent collaboration ──────────────────────────────────────
+    # ── Layer 9: agent collaboration (M48.4 → canonical runtime wrapper) ──
+    # Chat role → agent_runtime registry id (coder maps to builder)
+    _RUNTIME_AGENT_MAP = {
+        "planner": "planner",
+        "researcher": "researcher",
+        "coder": "builder",
+        "reviewer": "reviewer",
+        "architect": "architect",
+        "writer": "writer",
+        "ceo": "ceo",
+    }
+    _AGENT_CAPABILITY = {
+        "planner": "plan",
+        "researcher": "research",
+        "coder": "code",
+        "reviewer": "review",
+        "architect": "architect",
+        "writer": "write",
+        "ceo": "ceo_brief",
+    }
+
     def run_agent(self, cid: str, agent: str, task: str, *,
                   delegated_by: str = "") -> dict:
+        """M8 single-agent API preserved; execution via start_agent_run + lifecycle.
+
+        WRAP_CANONICAL_RUNTIME (M48.4): contracts, durable RunStore run, lease,
+        and orchestrator task path — chat agent_run rows still recorded for UI.
+        """
         if agent not in AGENT_ROLES:
             raise ValueError(f"unknown agent: {agent}")
         run = self.store.record_agent_run(cid, agent=agent, task=task,
                                           delegated_by=delegated_by)
-        try:
-            result = self.send(cid, task, agent=agent)
-            ok = result.message["status"] != "error"
-            self.store.finish_agent_run(run["id"],
-                                        status="done" if ok else "failed",
-                                        result_message_id=result.message["id"])
-            return {**run, "status": "done" if ok else "failed",
-                    "message": result.message}
-        except Exception as exc:
+        conv = self.store.get_conversation(cid)
+        if not conv:
             self.store.finish_agent_run(run["id"], status="failed")
-            return {**run, "status": "failed", "error": repr(exc)[:300]}
+            return {**run, "status": "failed", "error": "conversation not found"}
+
+        from saathi.agent_runtime.gateway_exec import AgentExecutor
+        from saathi.agent_runtime.orchestrator import Orchestrator, default_orchestrator
+        from saathi.agent_runtime.service import start_agent_run
+
+        runtime_agent = self._RUNTIME_AGENT_MAP.get(agent, agent)
+        capability = self._AGENT_CAPABILITY.get(agent, "plan")
+        role_system = AGENT_ROLES[agent]
+
+        def _exec(role: str, prompt: str, system: str) -> dict:
+            # Prefer chat-injected llm_fn (tests); keep role system from M8 map
+            out = self.llm_fn(prompt, role_system or system)
+            return {
+                "text": out.get("text", ""),
+                "provider": out.get("provider", "test"),
+                "tokens": out.get("tokens", 0),
+                "status": "success" if out.get("text") else "failed",
+            }
+
+        base = default_orchestrator()
+        orch = Orchestrator(
+            store=base.store,
+            executor=AgentExecutor(execute_fn=_exec),
+            memory=False,
+        )
+        rec = start_agent_run(
+            objective=task,
+            strategy="single",
+            actor="user:ajay",
+            project_id=conv.get("project_id", "") or "",
+            conversation_id=cid,
+            execute=True,
+            orchestrator=orch,
+            authority_class="READ_ONLY",
+            requested_capability=capability,
+            agent_id=runtime_agent,
+            budget={
+                "force_agent": runtime_agent,
+                "legacy_m8": True,
+                "chat_agent": agent,
+                "delegated_by": delegated_by,
+            },
+            max_wall_sec=90,
+        )
+        if not rec.ok:
+            self.store.finish_agent_run(run["id"], status="failed")
+            return {
+                **run,
+                "status": "failed",
+                "error": rec.message[:300],
+                "error_code": rec.error_code,
+                "canonical_run_id": "",
+            }
+
+        state = (rec.outcome or {}).get("state") or rec.state or ""
+        ok = state == "completed" or (
+            rec.ok and (rec.outcome or {}).get("tasks_done", 0) > 0
+            and state not in ("failed", "cancelled", "timed_out")
+        )
+        # Prefer completed single-agent runs; partial with work still "done" for M8
+        if state in ("cancelled", "timed_out", "failed"):
+            ok = False
+        # If orchestrator completed the single task
+        if rec.outcome and rec.outcome.get("tasks_done", 0) >= 1 and state not in (
+            "cancelled",
+            "timed_out",
+        ):
+            ok = True
+
+        # Mirror assistant content into chat for continuity (legacy shape)
+        text = ""
+        try:
+            arts = orch.store.artifacts(rec.run_id)
+            if arts:
+                text = (arts[-1].get("content") or "")[:4000]
+        except Exception:
+            text = ""
+        if not text and rec.outcome:
+            text = f"Agent {agent} finished ({state})."
+        msg = None
+        if text:
+            msg = self.store.add_message(
+                cid,
+                "assistant",
+                text,
+                model=f"agent:{agent}",
+                meta={
+                    "agent": agent,
+                    "canonical_run_id": rec.run_id,
+                    "legacy_m8_bridge": True,
+                },
+            )
+
+        self.store.finish_agent_run(
+            run["id"],
+            status="done" if ok else "failed",
+            result_message_id=(msg or {}).get("id", ""),
+        )
+        return {
+            **run,
+            "status": "done" if ok else "failed",
+            "message": msg,
+            "canonical_run_id": rec.run_id,
+            "canonical_state": state,
+        }
 
     def delegate(self, cid: str, from_agent: str, to_agent: str, task: str) -> dict:
         """One agent hands a subtask to another; both runs are recorded."""

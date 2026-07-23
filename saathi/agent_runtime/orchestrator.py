@@ -67,6 +67,15 @@ class Orchestrator:
         budget = dict(budget or {})
         strat = choose_strategy(objective, requested=strategy)
 
+        if skip_contract:
+            # M48.4: escape hatch only under pytest (never from API/chat/CLI).
+            import os
+            if not os.environ.get("PYTEST_CURRENT_TEST"):
+                from saathi.agent_runtime.errors import AgentRunError, AgentRuntimeErrorCode
+                raise AgentRunError(
+                    AgentRuntimeErrorCode.VALIDATION_FAILED,
+                    "skip_contract is test-only and cannot be used in production paths",
+                )
         if not skip_contract:
             from saathi.agent_runtime.service import (
                 ensure_run_request_allowed,
@@ -131,12 +140,24 @@ class Orchestrator:
             },
         )
         self.store.transition(rid, RunState.PLANNING, actor=actor)
-        self._build_tasks(rid, objective, strat, project_id)
+        self._build_tasks(rid, objective, strat, project_id, budget=budget)
         self.store.transition(rid, RunState.QUEUED, actor=actor)
         return rid
 
-    def _build_tasks(self, rid: str, objective: str, strat: str, project_id: str) -> None:
+    def _build_tasks(
+        self,
+        rid: str,
+        objective: str,
+        strat: str,
+        project_id: str,
+        budget: dict | None = None,
+    ) -> None:
+        budget = budget or {}
         roles = STRATEGIES.get(strat, ["planner"])
+        # M48.4: single-agent force (chat M8 bridge / explicit agent_id)
+        force = (budget.get("force_agent") or budget.get("agent_id") or "").strip()
+        if force:
+            roles = [force]
         prev = None
         for i, role in enumerate(roles):
             defn = registry.get(role)
@@ -270,10 +291,26 @@ class Orchestrator:
         # Layer 10: scoped memory retrieval (never widens beyond task scope)
         context = self._retrieve_scoped(rid, task, defn)
 
+        from saathi.agent_runtime.gateway_exec import CancellationToken
+
+        cancel_token = CancellationToken(run_id=rid, store=self.store)
         try:
-            result = self.executor.run_turn(defn, task.objective, context=context)
+            result = self.executor.run_turn(
+                defn, task.objective, context=context, cancel_token=cancel_token
+            )
+        except RuntimeError as exc:
+            if "CANCELLATION" in str(exc).upper():
+                self.store.update_task(task.task_id, status="cancelled")
+                self.store.finish_agent_run(arid, "cancelled")
+                return
+            result = {"text": "", "status": "failed", "error": repr(exc)[:200]}
         except Exception as exc:
             result = {"text": "", "status": "failed", "error": repr(exc)[:200]}
+
+        if result.get("status") == "cancelled":
+            self.store.update_task(task.task_id, status="cancelled")
+            self.store.finish_agent_run(arid, "cancelled")
+            return
 
         budget.charge(tokens=result.get("tokens", 0), tool_calls=0)
 
