@@ -212,7 +212,11 @@ class PlatformService:
         sess = self.store.session_by_token(token)
         if not sess:
             raise PlatformContextError("SESSION_INVALID", "session expired, revoked, or unknown")
-        self.store.touch_session(sess.session_id)
+        sec = self.store.get_config("security", {}) or {}
+        idle = float(sec.get("idle_ttl_sec", 3600))
+        self.store.touch_session(sess.session_id, idle_sec=idle)
+        if sec.get("login_enabled") is False:
+            raise PlatformContextError("LOGIN_DISABLED", "owner disabled login")
         # membership still valid?
         role = self.store.membership_role(sess.org_id, sess.user_id)
         if not role:
@@ -461,6 +465,11 @@ class PlatformService:
         """Execute a registered M49 tool through ExecutionGateway only."""
         ctx.require_permission(PlatformPermission.RUNTIME_EXECUTE)
         ctx.validate()
+        sec = self.store.get_config("security", {}) or {}
+        if sec.get("execution_enabled") is False:
+            raise PlatformContextError("EXECUTION_DISABLED", "owner disabled execution")
+        if sec.get("approvals_enabled") is False and approval_id:
+            raise PlatformContextError("APPROVALS_DISABLED", "owner disabled approvals")
         from saathi.execution import ExecutionGateway
         from saathi.tool_runtime.contracts import ToolApprovalReference, ToolOutcomeClass
         from saathi.tool_runtime.registry import default_registry
@@ -652,19 +661,24 @@ class PlatformService:
 
     def health(self) -> dict[str, Any]:
         return {
-            "platform": "M50",
+            "platform": "M51",
             "identity": "ACTIVE",
             "rbac": "ACTIVE",
             "approval_center": "ACTIVE",
             "workspace_model": "ACTIVE",
             "project_model": "ACTIVE",
             "mission_model": "ACTIVE",
+            "private_alpha": "PRODUCTIZED",
+            "authentication": "LOCAL_PASSWORD_AND_FIXTURE",
+            "session_security": "HARDENED",
+            "invitations": "ACTIVE",
             "runtime": {
                 "framework": "CANONICAL_TOOL_FRAMEWORK_ACTIVE",
                 "gateway": "TOOL_GATEWAY_ENFORCED",
                 "authority": "AUTHORITY_FAIL_CLOSED",
                 "connectors": "CONNECTOR_MUTATIONS_DRY_RUN_ONLY",
                 "trading_guardian": "TRADING_GUARDIAN_UNENGAGED_ADVISORY_ONLY",
+                "production": "PRODUCTION_NOT_AUTHORIZED",
             },
             "users": len(self.store.list_users()),
             "db": str(self.store.db_path),

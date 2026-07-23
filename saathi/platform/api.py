@@ -9,6 +9,8 @@ from typing import Any
 from fastapi import APIRouter, Header, HTTPException, Request
 from pydantic import BaseModel, Field
 
+# Request used by login / invite accept for client key
+
 from saathi.platform.context import PlatformContextError
 from saathi.platform.service import default_platform
 
@@ -44,12 +46,71 @@ class BootstrapBody(BaseModel):
     name: str = "Owner"
     org_name: str = "Default Org"
     workspace_name: str = "Default Workspace"
+    password: str = ""
 
 
 class LoginBody(BaseModel):
     email: str
+    password: str = ""
+    method: str = "LOCAL_PASSWORD"
+    magic_code: str = ""
     org_id: str = ""
     workspace_id: str = ""
+    # legacy M50: passwordless email login still allowed when no password set
+
+
+class PasswordChangeBody(BaseModel):
+    current: str
+    new_password: str
+
+
+class InviteBody(BaseModel):
+    email: str
+    role: str = "viewer"
+    workspace_id: str = ""
+    ttl_sec: float = 604800
+
+
+class AcceptInviteBody(BaseModel):
+    invite_code: str
+    name: str = ""
+    password: str = ""
+
+
+class WorkspaceSelectBody(BaseModel):
+    org_id: str
+    workspace_id: str
+
+
+class MemberRoleBody(BaseModel):
+    user_id: str
+    role: str
+
+
+class MemberUserBody(BaseModel):
+    user_id: str
+
+
+class LegacyMissionLinkBody(BaseModel):
+    mission_id: str
+    legacy_key: str
+
+
+class SafetyBody(BaseModel):
+    updates: dict[str, Any] = Field(default_factory=dict)
+
+
+class AgentExecuteBody(BaseModel):
+    tool_id: str
+    arguments: dict[str, Any] = Field(default_factory=dict)
+    approval_id: str = ""
+    project_id: str = ""
+    mission_id: str = ""
+    run_id: str = ""
+    # spoof fields intentionally ignored
+    user_id: str = ""
+    org_id: str = ""
+    role: str = ""
 
 
 class ProjectBody(BaseModel):
@@ -108,20 +169,51 @@ def platform_health():
 
 @router.post("/bootstrap")
 def platform_bootstrap(body: BootstrapBody):
-    return _svc().bootstrap_owner(
-        email=body.email,
-        name=body.name,
-        org_name=body.org_name,
-        workspace_name=body.workspace_name,
-    )
+    try:
+        if body.password:
+            return _svc().bootstrap_owner_secure(
+                email=body.email,
+                name=body.name,
+                password=body.password,
+                org_name=body.org_name,
+                workspace_name=body.workspace_name,
+            )
+        # M50 compatibility: passwordless bootstrap
+        return _svc().bootstrap_owner(
+            email=body.email,
+            name=body.name,
+            org_name=body.org_name,
+            workspace_name=body.workspace_name,
+        )
+    except PlatformContextError as e:
+        raise _err(e) from e
 
 
 @router.post("/auth/login")
-def platform_login(body: LoginBody):
+def platform_login(body: LoginBody, request: Request):
     try:
-        return _svc().login(email=body.email, org_id=body.org_id, workspace_id=body.workspace_id)
+        client = request.client.host if request.client else ""
+        if body.password or body.magic_code or body.method != "LOCAL_PASSWORD":
+            return _svc().authenticate_login(
+                email=body.email,
+                password=body.password,
+                method=body.method,
+                magic_code=body.magic_code,
+                org_id=body.org_id,
+                workspace_id=body.workspace_id,
+                client_key=f"{client}:{body.email}",
+            )
+        # M50 passwordless path (existing users without credentials)
+        return _svc().login(
+            email=body.email, org_id=body.org_id, workspace_id=body.workspace_id
+        )
     except PlatformContextError as e:
         raise _err(e) from e
+
+
+@router.get("/private-alpha")
+def private_alpha_banner():
+    return _svc().private_alpha_banner()
 
 
 @router.post("/auth/logout")
@@ -444,3 +536,236 @@ def revoke_session(
         return {"ok": ok}
     except PlatformContextError as e:
         raise _err(e) from e
+
+
+# ── M51 private-alpha surfaces ────────────────────────────────────────────
+
+@router.post("/auth/password/change")
+def change_password(
+    body: PasswordChangeBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx = _svc().require_context(_token(authorization, x_platform_token))
+        return _svc().change_password(ctx, current=body.current, new_password=body.new_password)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/auth/session/rotate")
+def rotate_session(
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return _svc().rotate_session(_token(authorization, x_platform_token))
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/context/workspace")
+def select_workspace(
+    body: WorkspaceSelectBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return _svc().select_workspace(
+            _token(authorization, x_platform_token),
+            org_id=body.org_id,
+            workspace_id=body.workspace_id,
+        )
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/invitations")
+def create_invitation(
+    body: InviteBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx = _svc().require_context(_token(authorization, x_platform_token))
+        return {
+            "invitation": _svc().create_invitation(
+                ctx,
+                email=body.email,
+                role=body.role,
+                workspace_id=body.workspace_id,
+                ttl_sec=body.ttl_sec,
+            )
+        }
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/invitations")
+def list_invitations(
+    status: str = "pending",
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx = _svc().require_context(_token(authorization, x_platform_token))
+        from saathi.platform.models import PlatformPermission
+
+        ctx.require_permission(PlatformPermission.USER_MANAGE)
+        return {"invitations": _svc().store.list_invitations(ctx.org_id, status=status)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/invitations/accept")
+def accept_invitation(body: AcceptInviteBody, request: Request):
+    try:
+        client = request.client.host if request.client else ""
+        return _svc().accept_invitation(
+            invite_code=body.invite_code,
+            name=body.name,
+            password=body.password,
+            client_key=client,
+        )
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/invitations/{invite_id}/revoke")
+def revoke_invitation(
+    invite_id: str,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx = _svc().require_context(_token(authorization, x_platform_token))
+        return _svc().revoke_invitation(ctx, invite_id)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/members")
+def list_members(
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx = _svc().require_context(_token(authorization, x_platform_token))
+        return {"members": _svc().list_members(ctx)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/members/role")
+def change_member_role(
+    body: MemberRoleBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx = _svc().require_context(_token(authorization, x_platform_token))
+        return _svc().change_member_role(ctx, body.user_id, body.role)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/members/remove")
+def remove_member(
+    body: MemberUserBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx = _svc().require_context(_token(authorization, x_platform_token))
+        return _svc().remove_member(ctx, body.user_id)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/members/suspend")
+def suspend_member(
+    body: MemberUserBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx = _svc().require_context(_token(authorization, x_platform_token))
+        return _svc().suspend_member(ctx, body.user_id)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/missions/legacy-link")
+def legacy_mission_link(
+    body: LegacyMissionLinkBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx = _svc().require_context(_token(authorization, x_platform_token))
+        return _svc().link_legacy_mission(ctx, body.mission_id, body.legacy_key)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/owner/safety")
+def owner_safety(
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx = _svc().require_context(_token(authorization, x_platform_token))
+        return _svc().owner_safety_flags(ctx)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.patch("/owner/safety")
+def owner_safety_patch(
+    body: SafetyBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx = _svc().require_context(_token(authorization, x_platform_token))
+        return _svc().owner_set_safety(ctx, body.updates)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/agent/execute")
+def agent_execute(
+    body: AgentExecuteBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    """Trusted platform-context agent execution — ignores spoofed user/org/role."""
+    try:
+        from saathi.platform.agent_binding import PlatformAgentBinding
+
+        result = PlatformAgentBinding(_svc()).execute(
+            token=_token(authorization, x_platform_token),
+            tool_id=body.tool_id,
+            arguments=body.arguments,
+            project_id=body.project_id,
+            mission_id=body.mission_id,
+            approval_id=body.approval_id,
+            run_id=body.run_id,
+        )
+        return {
+            "ok": result.ok,
+            "outcome_class": result.outcome_class.value,
+            "error_code": result.error_code or "",
+            "safe_message": result.safe_message,
+            "data": result.data,
+            "spoof_fields_ignored": ["user_id", "org_id", "role"],
+        }
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/agent/callers")
+def agent_callers():
+    from saathi.platform.agent_binding import inventory_agent_callers
+
+    return {"callers": inventory_agent_callers()}

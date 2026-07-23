@@ -190,7 +190,103 @@ class PlatformStore:
         self._conn.execute("PRAGMA foreign_keys = ON")
         self._conn.executescript(_SCHEMA)
         self._conn.executescript(_INDEXES)
+        self._migrate_m51()
         self._conn.commit()
+
+    def _migrate_m51(self) -> None:
+        """Idempotent M51 schema extensions (single-host SQLite)."""
+        # sessions hardening columns
+        sess_cols = {
+            r[1] for r in self._conn.execute("PRAGMA table_info(sessions)").fetchall()
+        }
+        for col, decl in (
+            ("auth_method", "TEXT NOT NULL DEFAULT ''"),
+            ("idle_expires_at", "REAL NOT NULL DEFAULT 0"),
+            ("revoked_at", "REAL NOT NULL DEFAULT 0"),
+            ("revocation_reason", "TEXT NOT NULL DEFAULT ''"),
+            ("session_version", "INTEGER NOT NULL DEFAULT 1"),
+            ("ua_hash", "TEXT NOT NULL DEFAULT ''"),
+            ("absolute_expires_at", "REAL NOT NULL DEFAULT 0"),
+        ):
+            if col not in sess_cols:
+                self._conn.execute(f"ALTER TABLE sessions ADD COLUMN {col} {decl}")
+
+        mem_cols = {
+            r[1] for r in self._conn.execute("PRAGMA table_info(memberships)").fetchall()
+        }
+        if "status" not in mem_cols:
+            self._conn.execute(
+                "ALTER TABLE memberships ADD COLUMN status TEXT NOT NULL DEFAULT 'active'"
+            )
+
+        self._conn.executescript(
+            """
+            CREATE TABLE IF NOT EXISTS credentials (
+                user_id TEXT PRIMARY KEY,
+                password_hash TEXT NOT NULL DEFAULT '',
+                force_reset INTEGER NOT NULL DEFAULT 0,
+                failed_logins INTEGER NOT NULL DEFAULT 0,
+                locked_until REAL NOT NULL DEFAULT 0,
+                last_verified_at REAL NOT NULL DEFAULT 0,
+                created_at REAL NOT NULL,
+                updated_at REAL NOT NULL,
+                FOREIGN KEY (user_id) REFERENCES users(user_id)
+            );
+            CREATE TABLE IF NOT EXISTS recovery_codes (
+                code_hash TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                label TEXT NOT NULL DEFAULT 'PRIVATE_ALPHA_ONLY',
+                created_at REAL NOT NULL,
+                expires_at REAL NOT NULL,
+                used INTEGER NOT NULL DEFAULT 0,
+                FOREIGN KEY (user_id) REFERENCES users(user_id)
+            );
+            CREATE TABLE IF NOT EXISTS invitations (
+                invite_id TEXT PRIMARY KEY,
+                org_id TEXT NOT NULL,
+                workspace_id TEXT NOT NULL DEFAULT '',
+                email TEXT NOT NULL,
+                role TEXT NOT NULL DEFAULT 'viewer',
+                inviter_id TEXT NOT NULL,
+                token_hash TEXT NOT NULL UNIQUE,
+                status TEXT NOT NULL DEFAULT 'pending',
+                created_at REAL NOT NULL,
+                expires_at REAL NOT NULL,
+                accepted_at REAL NOT NULL DEFAULT 0,
+                accepted_user_id TEXT NOT NULL DEFAULT '',
+                FOREIGN KEY (org_id) REFERENCES organizations(org_id)
+            );
+            CREATE TABLE IF NOT EXISTS rate_limits (
+                surface TEXT NOT NULL,
+                key TEXT NOT NULL,
+                failures INTEGER NOT NULL DEFAULT 0,
+                window_start REAL NOT NULL DEFAULT 0,
+                locked_until REAL NOT NULL DEFAULT 0,
+                PRIMARY KEY (surface, key)
+            );
+            CREATE TABLE IF NOT EXISTS external_identity_links (
+                link_id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                provider TEXT NOT NULL,
+                external_subject TEXT NOT NULL,
+                created_at REAL NOT NULL,
+                last_verified_at REAL NOT NULL DEFAULT 0,
+                revoked INTEGER NOT NULL DEFAULT 0,
+                UNIQUE (provider, external_subject),
+                FOREIGN KEY (user_id) REFERENCES users(user_id)
+            );
+            CREATE TABLE IF NOT EXISTS mission_legacy_links (
+                mission_id TEXT NOT NULL,
+                legacy_mission_key TEXT NOT NULL,
+                org_id TEXT NOT NULL,
+                workspace_id TEXT NOT NULL,
+                created_at REAL NOT NULL,
+                PRIMARY KEY (mission_id, legacy_mission_key)
+            );
+            CREATE INDEX IF NOT EXISTS idx_plat_invite_org ON invitations(org_id, status);
+            CREATE INDEX IF NOT EXISTS idx_plat_invite_hash ON invitations(token_hash);
+            """
+        )
 
     def close(self) -> None:
         self._conn.close()
@@ -238,17 +334,43 @@ class PlatformStore:
         workspace_id: str = "",
         role: str = PlatformRole.VIEWER.value,
         ttl_sec: float = 86400.0,
+        idle_sec: float = 3600.0,
         label: str = "",
+        auth_method: str = "",
+        ua_hash: str = "",
+        session_version: int = 1,
     ) -> tuple[SessionRecord, str]:
-        """Returns (session, raw_token). Raw token shown once."""
+        """Returns (session, raw_token). Raw token shown once — never log it."""
         now = self._now()
         th = hash_token(token)
         sid = new_id("ses_")
-        exp = now + float(ttl_sec)
+        abs_exp = now + float(ttl_sec)
+        idle_exp = now + float(idle_sec)
         self._conn.execute(
             "INSERT INTO sessions (session_id, user_id, token_hash, org_id, workspace_id, role,"
-            " created_at, last_seen, expires_at, revoked, label) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
-            (sid, user_id, th, org_id, workspace_id, role, now, now, exp, 0, label),
+            " created_at, last_seen, expires_at, revoked, label, auth_method, idle_expires_at,"
+            " revoked_at, revocation_reason, session_version, ua_hash, absolute_expires_at)"
+            " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            (
+                sid,
+                user_id,
+                th,
+                org_id,
+                workspace_id,
+                role,
+                now,
+                now,
+                abs_exp,
+                0,
+                label,
+                auth_method,
+                idle_exp,
+                0,
+                "",
+                int(session_version),
+                ua_hash,
+                abs_exp,
+            ),
         )
         self._conn.commit()
         rec = SessionRecord(
@@ -260,9 +382,14 @@ class PlatformStore:
             role=role,
             created_at=now,
             last_seen=now,
-            expires_at=exp,
+            expires_at=abs_exp,
             revoked=False,
             label=label,
+            auth_method=auth_method,
+            idle_expires_at=idle_exp,
+            session_version=int(session_version),
+            ua_hash=ua_hash,
+            absolute_expires_at=abs_exp,
         )
         return rec, token
 
@@ -278,30 +405,62 @@ class PlatformStore:
             return None
         return rec
 
-    def touch_session(self, session_id: str) -> None:
+    def touch_session(self, session_id: str, *, idle_sec: float = 3600.0) -> None:
+        now = self._now()
         self._conn.execute(
-            "UPDATE sessions SET last_seen=? WHERE session_id=?",
-            (self._now(), session_id),
+            "UPDATE sessions SET last_seen=?, idle_expires_at=? WHERE session_id=?",
+            (now, now + float(idle_sec), session_id),
         )
         self._conn.commit()
 
-    def revoke_session(self, session_id: str) -> bool:
+    def rotate_session_token(
+        self, session_id: str, new_token: str, *, idle_sec: float = 3600.0
+    ) -> bool:
+        """Replace token hash and bump version; old token becomes unusable."""
+        now = self._now()
+        th = hash_token(new_token)
         cur = self._conn.execute(
-            "UPDATE sessions SET revoked=1 WHERE session_id=?", (session_id,)
+            "UPDATE sessions SET token_hash=?, session_version=session_version+1,"
+            " last_seen=?, idle_expires_at=? WHERE session_id=? AND revoked=0",
+            (th, now, now + float(idle_sec), session_id),
         )
         self._conn.commit()
         return cur.rowcount > 0
 
-    def revoke_user_sessions(self, user_id: str, *, except_session: str = "") -> int:
+    def update_session_context(
+        self, session_id: str, *, org_id: str, workspace_id: str, role: str
+    ) -> bool:
+        cur = self._conn.execute(
+            "UPDATE sessions SET org_id=?, workspace_id=?, role=? WHERE session_id=? AND revoked=0",
+            (org_id, workspace_id, role, session_id),
+        )
+        self._conn.commit()
+        return cur.rowcount > 0
+
+    def revoke_session(self, session_id: str, *, reason: str = "logout") -> bool:
+        now = self._now()
+        cur = self._conn.execute(
+            "UPDATE sessions SET revoked=1, revoked_at=?, revocation_reason=? WHERE session_id=?",
+            (now, reason[:200], session_id),
+        )
+        self._conn.commit()
+        return cur.rowcount > 0
+
+    def revoke_user_sessions(
+        self, user_id: str, *, except_session: str = "", reason: str = "bulk_revoke"
+    ) -> int:
+        now = self._now()
         if except_session:
             cur = self._conn.execute(
-                "UPDATE sessions SET revoked=1 WHERE user_id=? AND session_id!=? AND revoked=0",
-                (user_id, except_session),
+                "UPDATE sessions SET revoked=1, revoked_at=?, revocation_reason=?"
+                " WHERE user_id=? AND session_id!=? AND revoked=0",
+                (now, reason[:200], user_id, except_session),
             )
         else:
             cur = self._conn.execute(
-                "UPDATE sessions SET revoked=1 WHERE user_id=? AND revoked=0",
-                (user_id,),
+                "UPDATE sessions SET revoked=1, revoked_at=?, revocation_reason=?"
+                " WHERE user_id=? AND revoked=0",
+                (now, reason[:200], user_id),
             )
         self._conn.commit()
         return cur.rowcount
@@ -309,12 +468,20 @@ class PlatformStore:
     def list_sessions(self, user_id: str) -> list[SessionRecord]:
         now = self._now()
         rows = self._conn.execute(
-            "SELECT * FROM sessions WHERE user_id=? AND revoked=0 AND expires_at > ? ORDER BY last_seen DESC",
+            "SELECT * FROM sessions WHERE user_id=? AND revoked=0 AND expires_at > ?"
+            " ORDER BY last_seen DESC",
             (user_id, now),
         ).fetchall()
         return [self._session_row(r) for r in rows]
 
+    def get_session(self, session_id: str) -> SessionRecord | None:
+        row = self._conn.execute(
+            "SELECT * FROM sessions WHERE session_id=?", (session_id,)
+        ).fetchone()
+        return self._session_row(row) if row else None
+
     def _session_row(self, row: sqlite3.Row) -> SessionRecord:
+        keys = row.keys()
         return SessionRecord(
             session_id=row["session_id"],
             user_id=row["user_id"],
@@ -327,6 +494,16 @@ class PlatformStore:
             expires_at=row["expires_at"],
             revoked=bool(row["revoked"]),
             label=row["label"] or "",
+            auth_method=(row["auth_method"] if "auth_method" in keys else "") or "",
+            idle_expires_at=float(row["idle_expires_at"] if "idle_expires_at" in keys else 0) or 0.0,
+            revoked_at=float(row["revoked_at"] if "revoked_at" in keys else 0) or 0.0,
+            revocation_reason=(row["revocation_reason"] if "revocation_reason" in keys else "") or "",
+            session_version=int(row["session_version"] if "session_version" in keys else 1) or 1,
+            ua_hash=(row["ua_hash"] if "ua_hash" in keys else "") or "",
+            absolute_expires_at=float(
+                row["absolute_expires_at"] if "absolute_expires_at" in keys else 0
+            )
+            or 0.0,
         )
 
     # ── orgs / membership ─────────────────────────────────────────────────
@@ -362,13 +539,6 @@ class PlatformStore:
             (org_id, user_id, role, self._now()),
         )
         self._conn.commit()
-
-    def membership_role(self, org_id: str, user_id: str) -> str | None:
-        row = self._conn.execute(
-            "SELECT role FROM memberships WHERE org_id=? AND user_id=?",
-            (org_id, user_id),
-        ).fetchone()
-        return row["role"] if row else None
 
     def list_orgs_for_user(self, user_id: str) -> list[OrganizationRecord]:
         rows = self._conn.execute(
@@ -783,3 +953,248 @@ class PlatformStore:
             except Exception:
                 out[r["key"]] = r["value"]
         return out
+
+
+    # ── M51 credentials ───────────────────────────────────────────────────
+    def set_password_hash(self, user_id: str, password_hash: str, *, force_reset: bool = False) -> None:
+        now = self._now()
+        self._conn.execute(
+            "INSERT INTO credentials (user_id, password_hash, force_reset, failed_logins,"
+            " locked_until, last_verified_at, created_at, updated_at)"
+            " VALUES (?,?,?,0,0,0,?,?)"
+            " ON CONFLICT(user_id) DO UPDATE SET password_hash=excluded.password_hash,"
+            " force_reset=excluded.force_reset, updated_at=excluded.updated_at,"
+            " failed_logins=0, locked_until=0",
+            (user_id, password_hash, 1 if force_reset else 0, now, now),
+        )
+        self._conn.commit()
+
+    def get_credential(self, user_id: str) -> dict | None:
+        row = self._conn.execute(
+            "SELECT * FROM credentials WHERE user_id=?", (user_id,)
+        ).fetchone()
+        return dict(row) if row else None
+
+    def mark_credential_verified(self, user_id: str) -> None:
+        self._conn.execute(
+            "UPDATE credentials SET last_verified_at=?, failed_logins=0, locked_until=0"
+            " WHERE user_id=?",
+            (self._now(), user_id),
+        )
+        self._conn.commit()
+
+    def set_force_reset(self, user_id: str, force: bool = True) -> None:
+        self._conn.execute(
+            "UPDATE credentials SET force_reset=?, updated_at=? WHERE user_id=?",
+            (1 if force else 0, self._now(), user_id),
+        )
+        self._conn.commit()
+
+    def save_recovery_code(self, user_id: str, code_hash: str, *, ttl_sec: float = 86400) -> None:
+        now = self._now()
+        self._conn.execute(
+            "INSERT INTO recovery_codes (code_hash, user_id, label, created_at, expires_at, used)"
+            " VALUES (?,?,?,?,?,0)",
+            (code_hash, user_id, "PRIVATE_ALPHA_ONLY", now, now + float(ttl_sec)),
+        )
+        self._conn.commit()
+
+    def consume_recovery_code(self, code_hash: str) -> str | None:
+        now = self._now()
+        row = self._conn.execute(
+            "SELECT * FROM recovery_codes WHERE code_hash=? AND used=0 AND expires_at > ?",
+            (code_hash, now),
+        ).fetchone()
+        if not row:
+            return None
+        self._conn.execute(
+            "UPDATE recovery_codes SET used=1 WHERE code_hash=?", (code_hash,)
+        )
+        self._conn.commit()
+        return row["user_id"]
+
+    # ── M51 invitations ───────────────────────────────────────────────────
+    def create_invitation(
+        self,
+        *,
+        org_id: str,
+        email: str,
+        role: str,
+        inviter_id: str,
+        token_hash: str,
+        workspace_id: str = "",
+        ttl_sec: float = 604800,
+        invite_id: str = "",
+    ) -> dict:
+        iid = invite_id or new_id("inv_")
+        now = self._now()
+        exp = now + float(ttl_sec)
+        self._conn.execute(
+            "INSERT INTO invitations (invite_id, org_id, workspace_id, email, role, inviter_id,"
+            " token_hash, status, created_at, expires_at) VALUES (?,?,?,?,?,?,?,?,?,?)",
+            (
+                iid,
+                org_id,
+                workspace_id,
+                email.lower().strip(),
+                role,
+                inviter_id,
+                token_hash,
+                "pending",
+                now,
+                exp,
+            ),
+        )
+        self._conn.commit()
+        return {
+            "invite_id": iid,
+            "org_id": org_id,
+            "workspace_id": workspace_id,
+            "email": email.lower().strip(),
+            "role": role,
+            "status": "pending",
+            "expires_at": exp,
+            "created_at": now,
+        }
+
+    def get_invitation_by_token_hash(self, token_hash: str) -> dict | None:
+        row = self._conn.execute(
+            "SELECT * FROM invitations WHERE token_hash=?", (token_hash,)
+        ).fetchone()
+        return dict(row) if row else None
+
+    def get_invitation(self, invite_id: str) -> dict | None:
+        row = self._conn.execute(
+            "SELECT * FROM invitations WHERE invite_id=?", (invite_id,)
+        ).fetchone()
+        return dict(row) if row else None
+
+    def update_invitation_status(
+        self,
+        invite_id: str,
+        status: str,
+        *,
+        accepted_user_id: str = "",
+    ) -> bool:
+        now = self._now()
+        cur = self._conn.execute(
+            "UPDATE invitations SET status=?, accepted_at=?, accepted_user_id=? WHERE invite_id=?",
+            (status, now if status == "accepted" else 0, accepted_user_id, invite_id),
+        )
+        self._conn.commit()
+        return cur.rowcount > 0
+
+    def list_invitations(self, org_id: str, *, status: str = "") -> list[dict]:
+        if status:
+            rows = self._conn.execute(
+                "SELECT * FROM invitations WHERE org_id=? AND status=? ORDER BY created_at DESC",
+                (org_id, status),
+            ).fetchall()
+        else:
+            rows = self._conn.execute(
+                "SELECT * FROM invitations WHERE org_id=? ORDER BY created_at DESC",
+                (org_id,),
+            ).fetchall()
+        return [dict(r) for r in rows]
+
+    # ── M51 membership admin ──────────────────────────────────────────────
+    def list_members(self, org_id: str) -> list[dict]:
+        rows = self._conn.execute(
+            "SELECT m.org_id, m.user_id, m.role, m.created_at,"
+            " COALESCE(m.status, 'active') AS status, u.email, u.name"
+            " FROM memberships m LEFT JOIN users u ON u.user_id=m.user_id"
+            " WHERE m.org_id=? ORDER BY m.created_at",
+            (org_id,),
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+    def set_member_role(self, org_id: str, user_id: str, role: str) -> bool:
+        cur = self._conn.execute(
+            "UPDATE memberships SET role=? WHERE org_id=? AND user_id=?",
+            (role, org_id, user_id),
+        )
+        self._conn.commit()
+        return cur.rowcount > 0
+
+    def set_member_status(self, org_id: str, user_id: str, status: str) -> bool:
+        cur = self._conn.execute(
+            "UPDATE memberships SET status=? WHERE org_id=? AND user_id=?",
+            (status, org_id, user_id),
+        )
+        self._conn.commit()
+        return cur.rowcount > 0
+
+    def remove_member(self, org_id: str, user_id: str) -> bool:
+        cur = self._conn.execute(
+            "DELETE FROM memberships WHERE org_id=? AND user_id=?",
+            (org_id, user_id),
+        )
+        self._conn.commit()
+        return cur.rowcount > 0
+
+    def count_owners(self, org_id: str) -> int:
+        row = self._conn.execute(
+            "SELECT COUNT(*) AS n FROM memberships WHERE org_id=? AND role='owner'"
+            " AND COALESCE(status,'active')='active'",
+            (org_id,),
+        ).fetchone()
+        return int(row["n"] if row else 0)
+
+    def membership_role(self, org_id: str, user_id: str) -> str | None:
+        row = self._conn.execute(
+            "SELECT role, COALESCE(status,'active') AS status FROM memberships"
+            " WHERE org_id=? AND user_id=?",
+            (org_id, user_id),
+        ).fetchone()
+        if not row:
+            return None
+        if row["status"] != "active":
+            return None
+        return row["role"]
+
+    # ── M51 rate limits ───────────────────────────────────────────────────
+    def get_rate_limit(self, surface: str, key: str) -> dict | None:
+        row = self._conn.execute(
+            "SELECT * FROM rate_limits WHERE surface=? AND key=?", (surface, key)
+        ).fetchone()
+        return dict(row) if row else None
+
+    def put_rate_limit(self, row: dict) -> None:
+        self._conn.execute(
+            "INSERT INTO rate_limits (surface, key, failures, window_start, locked_until)"
+            " VALUES (?,?,?,?,?)"
+            " ON CONFLICT(surface, key) DO UPDATE SET failures=excluded.failures,"
+            " window_start=excluded.window_start, locked_until=excluded.locked_until",
+            (
+                row["surface"],
+                row["key"],
+                int(row.get("failures") or 0),
+                float(row.get("window_start") or 0),
+                float(row.get("locked_until") or 0),
+            ),
+        )
+        self._conn.commit()
+
+    def clear_rate_limit(self, surface: str, key: str) -> None:
+        self._conn.execute(
+            "DELETE FROM rate_limits WHERE surface=? AND key=?", (surface, key)
+        )
+        self._conn.commit()
+
+    # ── M51 mission legacy link ───────────────────────────────────────────
+    def link_legacy_mission(
+        self, mission_id: str, legacy_key: str, org_id: str, workspace_id: str
+    ) -> None:
+        self._conn.execute(
+            "INSERT OR REPLACE INTO mission_legacy_links"
+            " (mission_id, legacy_mission_key, org_id, workspace_id, created_at)"
+            " VALUES (?,?,?,?,?)",
+            (mission_id, legacy_key, org_id, workspace_id, self._now()),
+        )
+        self._conn.commit()
+
+    def get_legacy_mission_links(self, org_id: str) -> list[dict]:
+        rows = self._conn.execute(
+            "SELECT * FROM mission_legacy_links WHERE org_id=?", (org_id,)
+        ).fetchall()
+        return [dict(r) for r in rows]

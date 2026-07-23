@@ -3,6 +3,22 @@
 
 
 
+## M51 — Private Alpha Productization (2026-07-23)
+
+| Item | State |
+|---|---|
+| Auth | LOCAL_PASSWORD (scrypt) + fixtures |
+| Sessions | hardened (rotate, idle, absolute) |
+| Invitations | LOCAL_PRIVATE_ALPHA_INVITE |
+| Membership admin | ACTIVE |
+| Workspace context | ACTIVE + token rotate on switch |
+| Agent binding | PlatformAgentBinding |
+| Milestone | M51_COMPLETE_WITH_LIMITATIONS |
+| Production | NOT_AUTHORIZED |
+
+Evidence: `docs/platform/M51_*.md`. **M52 not started.**
+
+
 ## M50 — Platform Integration, Identity Foundation, Private Alpha Readiness (2026-07-23)
 
 | Item | State |
