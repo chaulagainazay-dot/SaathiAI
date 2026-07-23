@@ -80,4 +80,3 @@ Financial execution prohibited · secrets rejected · authority fail-closed
 2. Wire connector platform tools through ToolExecutionService  
 3. Durable idempotency in ExecutionStore  
 4. Stronger subprocess cancel for shell tools  
-"""
