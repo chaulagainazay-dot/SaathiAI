@@ -178,18 +178,124 @@ class AgentExecutor:
             return {"allowed": True, "requires_approval": True,
                     "status": "awaiting_approval", "approval_id": aid,
                     "reason": decision.reason}
-        # Risk 0/1 auto-permitted → execute via gateway (only known operations)
-        return self._gateway_execute(agent, tool, args, store, run_id, risk)
+        # Risk 0/1 auto-permitted → execute via gateway / M49.1 tool service
+        return self._gateway_execute(
+            agent, tool, args, store, run_id, risk, cancel_token=token
+        )
 
-    def _gateway_execute(self, agent, tool, args, store, run_id, risk) -> dict:
+    def _gateway_execute(
+        self,
+        agent,
+        tool,
+        args,
+        store,
+        run_id,
+        risk,
+        cancel_token: CancellationToken | None = None,
+    ) -> dict:
+        """Execute tool via ExecutionGateway (+ M49.1 registered tools).
+
+        Paths:
+        - M49.1 registered tool_id → gateway.execute_registered_tool
+        - local-llm-inference / video-generation → SaathiExecutionSystem
+        - unknown → fail-closed (not faked success)
+        """
+        # M49.1 canonical registered tools (code-owned manifests)
+        try:
+            from saathi.tool_runtime.registry import default_registry
+
+            reg = default_registry()
+            if reg.get_manifest(tool):
+                from saathi.execution import ExecutionGateway
+
+                gw = ExecutionGateway()
+                events_buf: list[tuple[str, dict]] = []
+
+                def _rec(ev: str, payload: dict) -> None:
+                    events_buf.append((ev, payload))
+                    try:
+                        store.event(run_id, ev, payload)
+                    except Exception:
+                        pass
+
+                result = gw.execute_registered_tool(
+                    tool_id=tool,
+                    arguments=dict(args or {}),
+                    run_id=run_id,
+                    requested_by=f"agent:{agent.agent_id}",
+                    cancel_check=(cancel_token.should_cancel if cancel_token else None),
+                    event_recorder=_rec,
+                )
+                status = (
+                    "success"
+                    if result.ok
+                    else (
+                        "cancelled"
+                        if result.cancellation_confirmed
+                        else "failed"
+                        if result.status in ("failed", "rejected", "timed_out", "blocked")
+                        else result.status
+                    )
+                )
+                rid_ = store.add_tool_request(
+                    run_id,
+                    agent=agent.agent_id,
+                    tool=tool,
+                    risk=risk,
+                    status=status,
+                    result=(result.safe_message or result.error_code or "")[:500],
+                )
+                return {
+                    "allowed": result.ok,
+                    "requires_approval": False,
+                    "status": status,
+                    "request_id": rid_,
+                    "outcome_class": result.outcome_class.value,
+                    "error_code": result.error_code,
+                    "call_id": result.call_id,
+                    "adapter_invoked": result.adapter_invoked,
+                }
+        except Exception as exc:
+            rid_ = store.add_tool_request(
+                run_id,
+                agent=agent.agent_id,
+                tool=tool,
+                risk=risk,
+                status="failed",
+                result=repr(exc)[:300],
+            )
+            return {
+                "allowed": False,
+                "requires_approval": False,
+                "status": "failed",
+                "request_id": rid_,
+                "reason": "tool_runtime_error",
+            }
+
         known = {"local-llm-inference", "video-generation"}
         if tool not in known:
-            # read-only/local tools without a gateway op are recorded, not faked
-            rid_ = store.add_tool_request(run_id, agent=agent.agent_id, tool=tool,
-                                          risk=risk, status="no-op",
-                                          result="no gateway operation; not executed")
-            return {"allowed": True, "requires_approval": False, "status": "no-op",
-                    "request_id": rid_, "reason": "no gateway op for tool"}
+            # Fail-closed: do not pretend success for unknown tools
+            rid_ = store.add_tool_request(
+                run_id,
+                agent=agent.agent_id,
+                tool=tool,
+                risk=risk,
+                status="rejected",
+                result="unknown tool; not executed",
+            )
+            store.event(
+                run_id,
+                "tool.blocked",
+                {"agent": agent.agent_id, "tool": tool, "reason": "TOOL_NOT_FOUND"},
+            )
+            return {
+                "allowed": False,
+                "requires_approval": False,
+                "status": "rejected",
+                "request_id": rid_,
+                "reason": "no gateway op for tool",
+                "error_code": "TOOL_NOT_FOUND",
+            }
         from saathi.execution.integration import SaathiExecutionSystem
         from saathi.execution.queue.memory import MemoryQueue
         from saathi.execution import ToolIntent, ExecutionContext

@@ -179,6 +179,65 @@ class ExecutionGateway:
     def get_execution(self, execution_id: str):
         return self._ub().store.get(execution_id)
 
+    def execute_registered_tool(
+        self,
+        *,
+        tool_id: str,
+        arguments: dict | None = None,
+        run_id: str = "",
+        requested_by: str = "user:ajay",
+        capability: str = "",
+        tool_version: str = "",
+        idempotency_key: str = "",
+        approval_reference=None,
+        deadline: float = 0.0,
+        timeout_sec: float | None = None,
+        cancel_check=None,
+        event_recorder=None,
+        attempt: int = 1,
+        parent_task_id: str = "",
+        trace_id: str = "",
+        scratch: dict | None = None,
+    ):
+        """M49.1: route a registered tool through ToolExecutionService.
+
+        Does not replace ``submit`` / universal boundary. Strengthens the
+        gateway with a fail-closed manifest path for code-owned tools.
+        Callers must not invoke adapters directly.
+        """
+        from saathi.tool_runtime.contracts import ToolExecutionRequest
+        from saathi.tool_runtime.service import default_tool_service
+
+        req = ToolExecutionRequest(
+            run_id=run_id or "gw",
+            tool_id=tool_id,
+            tool_version=tool_version,
+            arguments=dict(arguments or {}),
+            capability=capability,
+            requested_by=requested_by,
+            idempotency_key=idempotency_key,
+            approval_reference=approval_reference,
+            deadline=deadline,
+            timeout_sec=timeout_sec,
+            attempt=attempt,
+            parent_task_id=parent_task_id,
+            trace_id=trace_id or (getattr(arguments, "get", lambda *_: "")("trace_id") if False else ""),
+        )
+        svc = default_tool_service()
+        result = svc.execute_tool(
+            req,
+            cancel_check=cancel_check,
+            event_recorder=event_recorder,
+            scratch=scratch,
+        )
+        logger.info(
+            "execute_registered_tool %s → %s (%s)",
+            tool_id,
+            result.outcome_class.value,
+            result.error_code or "ok",
+        )
+        return result
+
     def receive_intent(self, intent: ToolIntent) -> StateHistory:
         """Receive new intent and begin execution flow.
 

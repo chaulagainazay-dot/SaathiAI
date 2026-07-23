@@ -98,6 +98,40 @@ def main(argv: list[str] | None = None) -> int:
     if cmd == "list":
         _emit({"agents": [a.to_dict() for a in registry.all_agents()]})
         return EXIT_OK
+    # M49.1 read-only tool diagnostics (never executes arbitrary tools)
+    if cmd == "tools":
+        from saathi.tool_runtime.registry import default_registry
+
+        reg = default_registry()
+        sub = rest[0] if rest else "list"
+        if sub == "list":
+            _emit(
+                {
+                    "tools": [m.to_public_dict() for m in reg.list_manifests(include_disabled=True)],
+                    "count": len(reg.list_manifests(include_disabled=True)),
+                }
+            )
+            return EXIT_OK
+        if sub == "inspect" and len(rest) >= 2:
+            m = reg.get_manifest(rest[1])
+            if not m:
+                _emit({"error": "tool not found", "tool_id": rest[1]})
+                return EXIT_BAD
+            _emit(m.to_public_dict())
+            return EXIT_OK
+        if sub == "validate":
+            _emit(reg.validate_all())
+            return EXIT_OK
+        if sub == "capability-matrix":
+            _emit({"matrix": reg.capability_matrix()})
+            return EXIT_OK
+        _emit(
+            {
+                "error": "usage: tools list|inspect <id>|validate|capability-matrix",
+                "note": "read-only; no generic tool execute command",
+            }
+        )
+        return EXIT_BAD
     if cmd == "run":
         if len(rest) >= 4 and rest[0] == "--agent" and rest[2] == "--input":
             from saathi.agent_runtime.service import start_agent_run
