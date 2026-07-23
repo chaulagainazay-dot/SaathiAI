@@ -58,6 +58,7 @@ API / Agent / CLI / Scheduler / Compatibility Wrapper
 | Server import `saathi.server` | ok, **308** routes |
 | Secret scan (M49.4 paths) | no secrets found |
 | PR #3–#6 latest CI | critical + full-suite **pass** |
+| PR #7 CI run 30007407120 | critical **pass**; full-suite **1 unrelated fail** (`test_m17_1_live`) |
 | Deployment | **not performed** |
 | Merge | **not performed** |
 

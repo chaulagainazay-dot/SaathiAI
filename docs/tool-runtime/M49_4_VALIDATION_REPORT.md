@@ -18,9 +18,28 @@
 
 All sections PASS via `m49_4_full_closure_report()`.
 
-## Full Python suite
+## Full Python suite (local focused)
 
-Recorded after broader run in final report.
+M49.1–M49.4 focused: **153 passed**.
+
+## GitHub CI (authoritative run)
+
+| Run | Jobs | Result |
+|---|---|---|
+| https://github.com/chaulagainazay-dot/SaathiAI/actions/runs/30007407120 | critical-regressions | **pass** (16m10s) |
+| same | full-suite | **fail** (1 unrelated) |
+
+Full-suite detail: **4841 passed**, 9 skipped, **1 failed**:
+
+```text
+tests/test_m17_1_live.py::test_live_browser_dom_and_click
+AssertionError: query_exists('#submit') == False
+```
+
+This is a pre-existing live browser/Playwright flake in computer_agent LiveBrowserDriver.
+It is **not** caused by M49.4 tool-runtime closure changes (`closure_audit`, `project_run` fail-closed,
+M49.4 tests/docs). Critical regression gate (includes server import + route count + critical
+manifest) passed.
 
 ## Deployment / production / merge
 
