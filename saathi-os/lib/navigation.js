@@ -150,6 +150,16 @@ export const NAV_GROUPS = [
 /** Global chrome destinations (not in the 12 primary areas list for group count). */
 export const GLOBAL_NAV = [
   {
+    id: "platform",
+    label: "Platform",
+    href: "/platform",
+    icon: "▣",
+    description: "M50 identity, RBAC, orgs, approvals foundation",
+    authoritySensitivity: "session-required",
+    global: true,
+    accent: "#A78BFA",
+  },
+  {
     id: "approvals",
     label: "Approvals",
     href: "/approvals",
