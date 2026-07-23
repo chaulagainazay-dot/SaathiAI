@@ -3,6 +3,25 @@
 
 
 
+## M50 — Platform Integration, Identity Foundation, Private Alpha Readiness (2026-07-23)
+
+| Item | State |
+|---|---|
+| Identity / sessions | ACTIVE (platform store) |
+| RBAC | viewer · operator · owner · admin · system |
+| Organizations / workspaces | ACTIVE |
+| Projects / mission links | ACTIVE |
+| Approval Center | ACTIVE (pending→decided→consumed) |
+| Platform API | `/api/v1/platform/*` |
+| UI | `/platform` foundation console |
+| Runtime | Reuses M49 ExecutionGateway only |
+| Connectors | DRY_RUN_ONLY |
+| Trading Guardian | ADVISORY_ONLY |
+| Milestone | M50_COMPLETE_WITH_LIMITATIONS |
+| Production | NOT_AUTHORIZED |
+
+Evidence: `docs/platform/M50_*.md`. **M51 not started.**
+
 ## M49.4 — Tool Runtime Closure Review and Merge Readiness (2026-07-23)
 
 | Item | State |
