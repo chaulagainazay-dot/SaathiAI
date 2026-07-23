@@ -1,8 +1,10 @@
 """Full-access system tools — shell, file writing, AppleScript app control.
 
-All privileged (Ajay's verified voice only). The persona additionally requires
-spoken confirmation before destructive actions; this module hard-blocks only
-the catastrophic ones.
+M49.3: freeform shell is PROHIBITED at runtime. Use allowlisted command
+manifests via ExecutionGateway (m49.allowlisted_command). AppleScript and
+arbitrary write_file remain deferred/privileged and are blocked by legacy
+policy at execute_tool for deferred tools; direct imports also fail closed
+for freeform shell.
 """
 import subprocess
 from pathlib import Path
@@ -15,20 +17,39 @@ CATASTROPHIC = ("rm -rf /", "rm -rf ~", "rm -rf $HOME", "mkfs", "diskutil eraseD
 
 
 def run_shell(command: str, timeout_sec: int = 60) -> dict:
-    """Run a shell command and return its output."""
-    flat = " ".join(command.split())
-    if any(bad in flat for bad in CATASTROPHIC):
-        return {"blocked": True,
-                "reason": "This command could destroy the system — refused."}
-    p = subprocess.run(command, shell=True, capture_output=True, text=True,
-                       timeout=min(timeout_sec, 300), cwd=str(HOME))
-    out = (p.stdout or "")[-4000:]
-    err = (p.stderr or "")[-2000:]
-    return {"exit_code": p.returncode, "stdout": out, "stderr": err}
+    """M49.3: freeform shell execution is blocked.
+
+    Callers must use ``m49.allowlisted_command`` through ExecutionGateway with
+    a code-owned command_id. Arbitrary shell invocation is never used.
+    """
+    return {
+        "error": "freeform_shell_blocked",
+        "blocked": True,
+        "reason": (
+            "M49.3: freeform shell / arbitrary command strings are prohibited. "
+            "Use allowlisted command manifests via ExecutionGateway "
+            "(tool_id=m49.allowlisted_command, command_id=...)."
+        ),
+        "message": (
+            "Freeform shell blocked. Allowed path: "
+            "ExecutionGateway.execute_registered_tool("
+            "tool_id='m49.allowlisted_command', arguments={'command_id': '...'})"
+        ),
+        "outcome_class": "PROHIBITED",
+        "shell": False,
+        "command_rejected": True,
+        "timeout_sec_ignored": timeout_sec,
+        "command_preview": str(command)[:80] if command else "",
+    }
 
 
 def write_file(path: str, content: str, append: bool = False) -> dict:
-    """Create or edit a file under Ajay's home folder."""
+    """Create or edit a file under Ajay's home folder.
+
+    M49.3: deferred from generic agent runtime (legacy policy). Direct call
+    still validates home root for compatibility with tests that import this
+    helper intentionally.
+    """
     p = Path(path).expanduser().resolve()
     if not str(p).startswith(str(HOME)):
         return {"error": "outside_home", "note": "Can only write inside your home folder."}
@@ -49,7 +70,8 @@ def get_mobile_link() -> dict:
     import os
     import re
     token = os.getenv("SAATHI_TOKEN", "")
-    suffix = f"/#token={token}" if token else ""
+    # Never return raw token in M49.3 evidence-facing path — mask presence only
+    suffix = "/#token=***" if token else ""
     log = HOME / "SaathiAI" / "data" / "tunnel.log"
     if log.exists():
         urls = re.findall(r"https://[a-z0-9-]+\.trycloudflare\.com", log.read_text())
@@ -57,16 +79,25 @@ def get_mobile_link() -> dict:
             return {"mobile_link": urls[-1] + suffix,
                     "type": "public (no VPN needed)",
                     "note": "Works on any phone over normal internet. URL changes if "
-                            "the Mac reboots — just ask me again for the new one."}
+                            "the Mac reboots — just ask me again for the new one.",
+                    "token_embedded": bool(token)}
     return {"mobile_link": TAILSCALE_ADDRESS + suffix,
             "type": "tailscale (needs VPN app)",
-            "note": "Cloudflare tunnel not running; this needs Tailscale on the phone."}
+            "note": "Cloudflare tunnel not running; this needs Tailscale on the phone.",
+            "token_embedded": bool(token)}
 
 
 def applescript(script: str) -> dict:
-    """Control any Mac app via AppleScript (Notes, Mail, Music, Finder, ...)."""
-    p = subprocess.run(["osascript", "-e", script], capture_output=True,
-                       text=True, timeout=60)
-    if p.returncode != 0:
-        return {"ok": False, "error": p.stderr.strip()}
-    return {"ok": True, "output": p.stdout.strip()}
+    """Control any Mac app via AppleScript.
+
+    M49.3: freeform AppleScript is treated as privileged deferred runtime.
+    Direct invocation is blocked to prevent arbitrary script execution.
+    """
+    return {
+        "error": "freeform_shell_blocked",
+        "blocked": True,
+        "ok": False,
+        "reason": "M49.3: freeform AppleScript is prohibited at runtime (deferred privileged Mac).",
+        "outcome_class": "PROHIBITED",
+        "script_preview": str(script)[:80] if script else "",
+    }

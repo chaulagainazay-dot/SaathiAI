@@ -212,16 +212,41 @@ def gcal_list_fake(args: dict, ctx: BoundedToolContext) -> dict:
 
 
 def gmail_send_stub(args: dict, ctx: BoundedToolContext) -> dict:
-    """Approval-gated external mutation stub — never sends email."""
+    """Approval-gated external mutation dry-run — never sends email (M49.3)."""
     ctx.raise_if_cancelled()
-    # Even if invoked, do not perform network I/O
+    # Even if invoked, do not perform network I/O or mutation
     return {
         "data": {
             "queued": False,
             "sent": False,
             "stub": True,
             "to_domain": "example.test",
-            "note": "M49.2 stub — live send prohibited in this milestone",
+            "note": "M49.3 dry-run only — live send prohibited",
+            "network_performed": False,
+            "mutation_performed": False,
+            "execution_mode": "DRY_RUN_ONLY",
+            "validated_action": "gmail.send_message",
+            "validated_arguments": {
+                k: v
+                for k, v in (args or {}).items()
+                if k.lower()
+                not in (
+                    "access_token",
+                    "refresh_token",
+                    "password",
+                    "cookie",
+                    "authorization",
+                    "api_key",
+                    "private_key",
+                )
+            },
+            "resolved_authority": "EXTERNAL_MUTATION",
+            "required_approval": True,
+            "target_connector": "gmail",
+            "expected_side_effect_class": "EXTERNAL_IRREVERSIBLE",
+            "idempotency_requirement": True,
+            "safe_preview": "DRY_RUN: would perform gmail.send_message",
+            "fixture": True,
         },
         "side_effect_confirmed": True,
     }
@@ -458,8 +483,12 @@ def migrated_manifests() -> list[tuple[ToolManifest, Any]]:
                 "stub": {"type": "boolean"},
                 "to_domain": {"type": "string"},
                 "note": {"type": "string"},
+                "network_performed": {"type": "boolean"},
+                "mutation_performed": {"type": "boolean"},
+                "execution_mode": {"type": "string"},
+                "validated_action": {"type": "string"},
             },
-            "required": ["sent", "stub"],
+            "required": ["sent", "stub", "network_performed", "mutation_performed"],
         },
         idempotency_policy=IdempotencyPolicy(
             klass=ToolIdempotencyClass.IDEMPOTENCY_KEY_REQUIRED, require_key=True
@@ -480,9 +509,17 @@ def migrated_manifests() -> list[tuple[ToolManifest, Any]]:
     ]
 
 
-# Legacy name aliases for compatibility bridge
+# Legacy name aliases for compatibility bridge (M49.2 + M49.3)
 LEGACY_NAME_MAP = {
     "system_health": "m49.system_health",
     "my_files": "m49.my_files_list",  # list-only path
     "manage_tasks": "m49.list_open_tasks",  # list-only via action=list
+    "list_projects": "m49.list_projects",
+    "list_reminders": "m49.list_reminders",
+    "list_social_connections": "m49.list_social_connections",
+    "list_blueprints": "m49.list_blueprints",
+    "performance_report": "m49.performance_report",
+    "todays_events": "m49.todays_events",
+    "check_email": "m49.connector.gmail.search_messages",
+    "send_email": "m49.connector.gmail.send_message",
 }
