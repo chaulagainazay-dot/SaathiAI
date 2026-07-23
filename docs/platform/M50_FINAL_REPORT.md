@@ -1,5 +1,15 @@
 # M50 Final Report — Platform Integration & Identity Foundation
 
+## Git
+
+| Item | Value |
+|---|---|
+| Start | `e024c0c` (M49.4 tip) |
+| End | `aae66184d193d1a06a01cfcc85eef12076f90ca2` |
+| Branch | `milestone/m50-platform-foundation` |
+| Draft PR | **#8** https://github.com/chaulagainazay-dot/SaathiAI/pull/8 |
+| Base | `milestone/m49-4-runtime-closure` |
+
 ## Overall result
 
 `M50_COMPLETE_WITH_LIMITATIONS`
