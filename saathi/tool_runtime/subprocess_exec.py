@@ -10,14 +10,24 @@ from typing import Callable, Sequence
 
 
 class SubprocessCancelState:
+    """M49.3 state vocabulary for subprocess lifecycle."""
+
+    STARTING = "STARTING"
+    RUNNING = "RUNNING"
     CANCELLATION_REQUESTED = "CANCELLATION_REQUESTED"
-    TERMINATION_SENT = "TERMINATION_SENT"
-    KILL_SENT = "KILL_SENT"
-    PROCESS_EXIT_CONFIRMED = "PROCESS_EXIT_CONFIRMED"
+    SIGTERM_SENT = "SIGTERM_SENT"
+    TERMINATION_SENT = "TERMINATION_SENT"  # alias of SIGTERM_SENT
+    GRACE_WAIT = "GRACE_WAIT"
+    SIGKILL_SENT = "SIGKILL_SENT"
+    KILL_SENT = "KILL_SENT"  # alias of SIGKILL_SENT
+    EXIT_CONFIRMED = "EXIT_CONFIRMED"
+    PROCESS_EXIT_CONFIRMED = "PROCESS_EXIT_CONFIRMED"  # alias
     PROCESS_STILL_RUNNING = "PROCESS_STILL_RUNNING"
     CANCELLATION_UNCONFIRMED = "CANCELLATION_UNCONFIRMED"
+    TIMEOUT_CONFIRMED = "TIMEOUT_CONFIRMED"
+    TIMEOUT = "TIMEOUT"  # alias
+    OUTCOME_UNKNOWN = "OUTCOME_UNKNOWN"
     COMPLETED = "COMPLETED"
-    TIMEOUT = "TIMEOUT"
 
 
 @dataclass
@@ -55,9 +65,12 @@ def run_bounded(
     CANCELLED_CONFIRMED equivalent requires PROCESS_EXIT_CONFIRMED after signal.
     """
     if shell:
-        raise ValueError("shell=True is not allowed in M49.2 bounded helper")
+        raise ValueError("shell=True is not allowed in M49.2/M49.3 bounded helper")
     if not argv:
         raise ValueError("argv required")
+    # Reject shell wrappers even if passed as argv
+    if argv and str(argv[0]) in ("/bin/sh", "/bin/bash", "/bin/zsh", "sh", "bash", "zsh"):
+        raise ValueError("shell executable is not allowed in bounded helper")
     start = time.time()
     # Minimal env: do not dump full environment secrets
     base_env = {
@@ -70,6 +83,7 @@ def run_bounded(
             if k.upper() in ("PATH", "HOME", "LANG", "LC_ALL", "TMPDIR"):
                 base_env[k] = str(v)
 
+    cancel_state = SubprocessCancelState.STARTING
     proc = subprocess.Popen(
         list(argv),
         stdout=subprocess.PIPE,
@@ -77,10 +91,10 @@ def run_bounded(
         text=True,
         cwd=cwd,
         env=base_env,
-        start_new_session=True,
+        start_new_session=True,  # process-group ownership
     )
     pid = proc.pid
-    cancel_state = SubprocessCancelState.COMPLETED
+    cancel_state = SubprocessCancelState.RUNNING
     cancellation_confirmed = False
     timeout_detected = False
     deadline = start + max(0.05, float(timeout_sec))
@@ -92,17 +106,19 @@ def run_bounded(
         if cancel_check and cancel_check():
             cancel_state = SubprocessCancelState.CANCELLATION_REQUESTED
             _signal_group(proc, signal.SIGTERM)
-            cancel_state = SubprocessCancelState.TERMINATION_SENT
+            cancel_state = SubprocessCancelState.SIGTERM_SENT
+            cancel_state = SubprocessCancelState.GRACE_WAIT
             grace_end = time.time() + grace_sec
             while time.time() < grace_end and not _poll_done():
                 time.sleep(0.02)
             if not _poll_done() and allow_kill:
                 _signal_group(proc, signal.SIGKILL)
-                cancel_state = SubprocessCancelState.KILL_SENT
+                cancel_state = SubprocessCancelState.SIGKILL_SENT
                 kill_end = time.time() + grace_sec
                 while time.time() < kill_end and not _poll_done():
                     time.sleep(0.02)
             if _poll_done():
+                # M49.2-compatible token + M49.3 EXIT_CONFIRMED alias value
                 cancel_state = SubprocessCancelState.PROCESS_EXIT_CONFIRMED
                 cancellation_confirmed = True
             else:
@@ -112,14 +128,17 @@ def run_bounded(
             timeout_detected = True
             cancel_state = SubprocessCancelState.TIMEOUT
             _signal_group(proc, signal.SIGTERM)
+            cancel_state = SubprocessCancelState.SIGTERM_SENT
+            cancel_state = SubprocessCancelState.GRACE_WAIT
             grace_end = time.time() + grace_sec
             while time.time() < grace_end and not _poll_done():
                 time.sleep(0.02)
             if not _poll_done() and allow_kill:
                 _signal_group(proc, signal.SIGKILL)
+                cancel_state = SubprocessCancelState.SIGKILL_SENT
                 time.sleep(0.05)
             if _poll_done():
-                cancel_state = SubprocessCancelState.PROCESS_EXIT_CONFIRMED
+                cancel_state = SubprocessCancelState.TIMEOUT_CONFIRMED
             else:
                 cancel_state = SubprocessCancelState.PROCESS_STILL_RUNNING
             break
@@ -136,7 +155,11 @@ def run_bounded(
             proc.kill()
         except Exception:
             pass
-        if cancel_state == SubprocessCancelState.COMPLETED:
+        if cancel_state in (
+            SubprocessCancelState.COMPLETED,
+            SubprocessCancelState.RUNNING,
+            SubprocessCancelState.STARTING,
+        ):
             cancel_state = SubprocessCancelState.CANCELLATION_UNCONFIRMED
 
     code = proc.poll()
@@ -144,7 +167,11 @@ def run_bounded(
     if cancellation_confirmed and not finished:
         cancellation_confirmed = False
         cancel_state = SubprocessCancelState.CANCELLATION_UNCONFIRMED
-    if finished and cancel_state == SubprocessCancelState.COMPLETED:
+    if finished and cancel_state in (
+        SubprocessCancelState.COMPLETED,
+        SubprocessCancelState.RUNNING,
+        SubprocessCancelState.STARTING,
+    ):
         cancel_state = SubprocessCancelState.COMPLETED
 
     ok = (

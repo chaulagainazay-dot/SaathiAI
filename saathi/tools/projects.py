@@ -129,18 +129,28 @@ def plan_project_work(name: str, goal: str) -> dict:
 
 
 def project_run(name: str, command: str) -> dict:
-    """Run a shell command INSIDE the project directory (npm run build, git diff…)."""
+    """M49.3: freeform project shell is blocked.
+
+    Use allowlisted command manifests via ExecutionGateway
+    (m49.allowlisted_command) or a future project-scoped command_id catalog.
+    shell=True is never used.
+    """
     root = _resolve(name)
     if not root:
         return {"error": f"project '{name}' not registered"}
-    flat = " ".join(command.split())
-    for bad in ("rm -rf /", "rm -rf ~", ":(){", "mkfs", "git push --force"):
-        if bad in flat:
-            return {"blocked": True, "reason": "refused dangerous command"}
-    p = subprocess.run(command, shell=True, cwd=str(root),
-                       capture_output=True, text=True, timeout=180)
-    return {"exit_code": p.returncode,
-            "stdout": (p.stdout or "")[-3000:], "stderr": (p.stderr or "")[-1500:]}
+    return {
+        "error": "freeform_shell_blocked",
+        "blocked": True,
+        "reason": (
+            "M49.3: freeform project shell (shell=True / arbitrary command strings) "
+            "is prohibited. Use m49.allowlisted_command via ExecutionGateway."
+        ),
+        "message": "Freeform project_run blocked — no shell execution.",
+        "outcome_class": "PROHIBITED",
+        "project": name,
+        "command_preview": str(command)[:80] if command else "",
+        "shell": False,
+    }
 
 
 def project_edit_file(name: str, relpath: str, content: str) -> dict:
