@@ -9,6 +9,7 @@ import {
   StatusBadge,
 } from "@/components/ui";
 import { useShellChrome } from "@/components/shell/ShellChromeContext";
+import MobileMe from "@/components/mobile/MobileMe";
 
 const THEMES = [
   { id: "dark", label: "Dark" },
@@ -26,8 +27,8 @@ const EXPERIENCE = [
 ];
 
 /**
- * Shell preferences only. Credentials/security policy live under Security.
- * Experience mode never changes authority.
+ * Settings — shell prefs + profile (M47.5 absorbs /me).
+ * Experience mode never changes authority. Credentials stay under Security.
  */
 export default function SettingsPage() {
   const { prefs, updatePref, sidebarExpanded, setSidebarExpanded } = useShellChrome();
@@ -41,12 +42,13 @@ export default function SettingsPage() {
         <Heading level={1} size="xl">
           Settings
         </Heading>
-        <Text tone="muted" size="sm" style={{ maxWidth: 560, marginTop: 8, display: "block" }}>
-          Appearance and explanation density. Authority and credentials are not controlled here.
+        <Text tone="muted" size="sm" as="p" className="home-intro">
+          Appearance, density, and profile shortcuts. Authority and credentials are not controlled here.
         </Text>
-        <div style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap" }}>
+        <div className="home-header-actions">
           <AuthorityBadge authority="advisory" label="Authority unchanged by these prefs" />
           <StatusBadge status="info" label={`Experience · ${prefs.experience}`} />
+          <StatusBadge status="success" label="Includes Profile" />
         </div>
       </div>
 
@@ -93,7 +95,7 @@ export default function SettingsPage() {
           <Heading level={2} size="md">
             Experience mode
           </Heading>
-          <Text tone="muted" size="sm" style={{ display: "block", marginBottom: 12 }}>
+          <Text tone="muted" size="sm" as="p">
             Changes copy density only. Does not unlock actions or bypass approvals.
           </Text>
           <div className="shell-pref-row">
@@ -135,7 +137,7 @@ export default function SettingsPage() {
           <Heading level={2} size="md">
             Security & credentials
           </Heading>
-          <Text tone="muted" size="sm" style={{ display: "block", marginBottom: 12 }}>
+          <Text tone="muted" size="sm" as="p">
             Sensitive settings stay on the Security surface.
           </Text>
           <Link href="/security">
@@ -143,15 +145,18 @@ export default function SettingsPage() {
               Open Security
             </Button>
           </Link>
-          <div style={{ marginTop: 8 }}>
-            <Link href="/me">
-              <Button size="sm" variant="ghost">
-                Legacy profile (/me)
-              </Button>
-            </Link>
-          </div>
         </Card>
       </div>
+
+      <section className="settings-profile" aria-label="Profile">
+        <Heading level={2} size="md" style={{ marginTop: 24, marginBottom: 12 }}>
+          Profile
+        </Heading>
+        <Text tone="disabled" size="xs" mono as="p">
+          Legacy /me soft-redirects here (M47.5).
+        </Text>
+        <MobileMe />
+      </section>
     </div>
   );
 }

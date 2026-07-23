@@ -22,13 +22,15 @@ describe("M47.4 parity matrix integrity", () => {
     assert.deepEqual(validateParityMatrix(), []);
   });
 
-  it("no READY_TO_REDIRECT in M47.4", () => {
-    assert.ok(LEGACY_PARITY.every((r) => r.classification !== "READY_TO_REDIRECT"));
+  it("READY_TO_REDIRECT only for M47.5 implemented soft redirects", () => {
+    const ready = LEGACY_PARITY.filter((r) => r.classification === "READY_TO_REDIRECT");
+    assert.deepEqual(ready.map((r) => r.legacy).sort(), ["/infrastructure", "/me"].sort());
+    assert.ok(ready.every((r) => r.parityPct >= 90));
   });
 
-  it("redirect readiness summary shows zero ready", () => {
+  it("redirect readiness summary counts ready routes", () => {
     const s = redirectReadinessSummary();
-    assert.equal(s.readyToRedirect, 0);
+    assert.equal(s.readyToRedirect, 2);
   });
 });
 

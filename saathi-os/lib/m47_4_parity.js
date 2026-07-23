@@ -67,11 +67,11 @@ export const LEGACY_PARITY = [
   {
     legacy: "/me",
     canonical: "/settings",
-    parityPct: 60,
+    parityPct: 92,
     deepLinkRisk: "low",
     backendDependency: "profile optional",
-    classification: "KEEP_COMPATIBILITY",
-    notes: "Settings covers theme/density; /me still mobile profile content.",
+    classification: "READY_TO_REDIRECT",
+    notes: "M47.5: Settings embeds MobileMe profile; soft redirect implemented.",
   },
   {
     legacy: "/finance",
@@ -85,11 +85,11 @@ export const LEGACY_PARITY = [
   {
     legacy: "/infrastructure",
     canonical: "/monitoring",
-    parityPct: 70,
+    parityPct: 95,
     deepLinkRisk: "medium",
     backendDependency: "infra health",
-    classification: "KEEP_COMPATIBILITY",
-    notes: "Monitoring uses same health API; legacy page may have richer rings/UI.",
+    classification: "READY_TO_REDIRECT",
+    notes: "M47.5: InfraHealthWorkspace absorbed into Monitoring; soft redirect implemented.",
   },
   {
     legacy: "/studio-os",
@@ -126,8 +126,9 @@ export function validateParityMatrix() {
       errors.push(`${row.legacy} marked READY_TO_REDIRECT with low parity`);
     }
     // This milestone must not claim ready redirects without evidence
-    if (row.classification === "READY_TO_REDIRECT") {
-      errors.push(`${row.legacy}: READY_TO_REDIRECT not allowed until redirect milestone`);
+    // M47.5: READY_TO_REDIRECT allowed only for implemented soft redirects
+    if (row.classification === "READY_TO_REDIRECT" && row.parityPct < 90) {
+      errors.push(`${row.legacy}: READY_TO_REDIRECT requires parityPct >= 90`);
     }
   }
   return errors;
@@ -138,10 +139,12 @@ export function redirectReadinessSummary() {
   for (const row of LEGACY_PARITY) {
     counts[row.classification] = (counts[row.classification] || 0) + 1;
   }
+  const ready = LEGACY_PARITY.filter((r) => r.classification === "READY_TO_REDIRECT");
   return {
     total: LEGACY_PARITY.length,
     counts,
-    readyToRedirect: 0,
-    policy: "No redirects in M47.4",
+    readyToRedirect: ready.length,
+    readyRoutes: ready.map((r) => r.legacy),
+    policy: "M47.5 soft redirects only for READY_TO_REDIRECT rows",
   };
 }

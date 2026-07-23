@@ -14,7 +14,12 @@ import {
 } from "@/components/ui";
 import { fetchInfraHealth, API_BASE } from "@/lib/api";
 import { inferEnvironment } from "@/lib/navigation";
+import InfraHealthWorkspace from "@/components/infra/InfraHealthWorkspace";
 
+/**
+ * Canonical Monitoring — observe-only.
+ * M47.5: includes full infrastructure health workspace (legacy /infrastructure redirects here).
+ */
 export default function MonitoringPage() {
   const [health, setHealth] = useState(null);
   const [err, setErr] = useState(null);
@@ -48,50 +53,48 @@ export default function MonitoringPage() {
           Monitoring
         </Heading>
         <Text tone="muted" size="sm" as="p" className="home-intro">
-          Observability surface. No privileged execution controls here.
+          Observability surface — infrastructure health, raw diagnostics, and related ops links. No
+          privileged execution controls here.
         </Text>
         <div className="home-header-actions">
           <EnvironmentBadge env={env} />
           <StatusBadge status="info" label="Observe only" />
+          <StatusBadge status="success" label="Includes Infrastructure" />
         </div>
       </div>
 
-      <div className="shell-page-grid">
+      <section className="home-card" aria-label="Infrastructure health">
+        <InfraHealthWorkspace />
+      </section>
+
+      <div className="shell-page-grid" style={{ marginTop: 20 }}>
         <Card>
           <Heading level={2} size="md">
-            Infrastructure health
+            Raw health payload
           </Heading>
           {loading && <LoadingState label="Loading infrastructure health…" />}
           {!loading && err && (
             <ErrorState
               title="Health endpoint unavailable"
-              description="Honest failure — not shown as healthy."
+              description="Honest failure — not shown as healthy. Engine warning light above may still poll separately."
               detail={err}
-              action={
-                <Link href="/infrastructure">
-                  <Button size="sm">Open legacy Infrastructure</Button>
-                </Link>
-              }
             />
           )}
           {!loading && !err && !health && (
             <EmptyState title="No health payload" description="Endpoint returned empty." />
           )}
-          {!loading && health && <pre className="shell-json mono">{JSON.stringify(health, null, 2).slice(0, 2000)}</pre>}
+          {!loading && health && (
+            <pre className="shell-json mono">{JSON.stringify(health, null, 2).slice(0, 2000)}</pre>
+          )}
         </Card>
         <Card>
           <Heading level={2} size="md">
             Related surfaces
           </Heading>
           <div className="home-section-actions home-section-actions-col">
-            <Link href="/infrastructure">
-              <Button variant="secondary" size="sm">
-                Infrastructure
-              </Button>
-            </Link>
             <Link href="/control">
               <Button variant="outline" size="sm">
-                Legacy Control
+                Legacy Control Center
               </Button>
             </Link>
             <Link href="/command">
@@ -104,7 +107,15 @@ export default function MonitoringPage() {
                 Evidence
               </Button>
             </Link>
+            <Link href="/security">
+              <Button variant="secondary" size="sm">
+                Security
+              </Button>
+            </Link>
           </div>
+          <Text tone="disabled" size="xs" mono as="p">
+            Legacy /infrastructure soft-redirects here (M47.5).
+          </Text>
         </Card>
       </div>
     </div>
