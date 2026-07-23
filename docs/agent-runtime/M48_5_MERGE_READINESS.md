@@ -2,7 +2,8 @@
 
 **Date:** 2026-07-23  
 **Branch:** `milestone/m48-agent-runtime-baseline`  
-**HEAD:** `68de21690c257c961a483c85c0c086db197e61d1`  
+**Implementation HEAD (CI-certified):** `68de21690c257c961a483c85c0c086db197e61d1`  
+**Docs HEAD after M48.5:** `8af7c79e7a8a72ffe46c9f351b3e2c4eab3aff7e`  
 **PR:** [Draft #3](https://github.com/chaulagainazay-dot/SaathiAI/pull/3) — OPEN, draft, **NOT merged**
 
 ---
