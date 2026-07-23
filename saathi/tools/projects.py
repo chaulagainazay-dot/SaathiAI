@@ -129,21 +129,18 @@ def plan_project_work(name: str, goal: str) -> dict:
 
 
 def project_run(name: str, command: str) -> dict:
-    """M49.3: freeform project shell is blocked.
+    """M49.3/M49.4: freeform project shell is always blocked.
 
-    Use allowlisted command manifests via ExecutionGateway
-    (m49.allowlisted_command) or a future project-scoped command_id catalog.
-    shell=True is never used.
+    Fail closed before project resolution so unregistered names cannot
+    become an alternate execution path. Use allowlisted command manifests
+    via ExecutionGateway (m49.allowlisted_command). shell=True is never used.
     """
-    root = _resolve(name)
-    if not root:
-        return {"error": f"project '{name}' not registered"}
     return {
         "error": "freeform_shell_blocked",
         "blocked": True,
         "reason": (
-            "M49.3: freeform project shell (shell=True / arbitrary command strings) "
-            "is prohibited. Use m49.allowlisted_command via ExecutionGateway."
+            "M49.3/M49.4: freeform project shell (shell=True / arbitrary command "
+            "strings) is prohibited. Use m49.allowlisted_command via ExecutionGateway."
         ),
         "message": "Freeform project_run blocked — no shell execution.",
         "outcome_class": "PROHIBITED",
