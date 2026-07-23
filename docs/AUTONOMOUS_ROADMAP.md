@@ -3,6 +3,24 @@
 
 
 
+## M49.4 — Tool Runtime Closure Review and Merge Readiness (2026-07-23)
+
+| Item | State |
+|---|---|
+| Program | M49 tool-runtime closure + certification |
+| Core question | YES_WITH_LIMITATIONS (safe to integrate with residual bounds) |
+| Gateway | TOOL_GATEWAY_ENFORCED |
+| Legacy | LEGACY_RUNTIME_BOUNDED (59 retained; not eliminated) |
+| Shell | FREEFORM_SHELL_BLOCKED (`project_run` always blocked) |
+| Connectors | DRY_RUN_ONLY; generic execution ABSENT |
+| Idempotency | SINGLE_HOST_SAFE / MULTI_HOST_UNSAFE |
+| Merge readiness | MERGE_READY_WITH_LIMITATIONS (no merges performed) |
+| Production | PRODUCTION_NOT_AUTHORIZED |
+| Trading Guardian | UNENGAGED_ADVISORY_ONLY |
+| Milestone | M49_4_COMPLETE_WITH_LIMITATIONS |
+
+Evidence: `docs/tool-runtime/M49_4_*.md`. **M50 not started.**
+
 ## M49.3 — Legacy Runtime Elimination, Gateway Completion, Connector Hardening (2026-07-23)
 
 | Item | State |
@@ -16,7 +34,7 @@
 | Trading Guardian | UNENGAGED_ADVISORY_ONLY |
 | Milestone | COMPLETE_WITH_LIMITATIONS |
 
-Evidence: `docs/tool-runtime/M49_3_*.md`. **M49.4 not started.**
+Evidence: `docs/tool-runtime/M49_3_*.md`. Superseded for closure certification by M49.4.
 
 ## M49.2 — Tool Migration, Connector Convergence, Durable Idempotency (2026-07-23)
 
