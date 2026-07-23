@@ -4,8 +4,8 @@
 **Date:** 2026-07-23  
 **Repository:** `chaulagainazay-dot/SaathiAI` (`~/SaathiAI`)  
 **Branch:** `milestone/m48-agent-runtime-baseline`  
-**Implementation HEAD reviewed:** `68de21690c257c961a483c85c0c086db197e61d1`  
-**Final commit (includes M48.5 docs):** `8af7c79e7a8a72ffe46c9f351b3e2c4eab3aff7e`  
+**Implementation HEAD reviewed (CI green):** `68de21690c257c961a483c85c0c086db197e61d1`  
+**M48.5 documentation commits:** `8af7c79` (cert pack), `278b0d7` (SHA notes); tip may advance with doc-only follow-ups  
 **Mode:** Review / documentation only — **no merge, no deploy, no live trading, no M49 implementation**
 
 ---
@@ -52,7 +52,7 @@ Limitations: partial tool cancellation, single-host leases, deferred domain runt
 | Working tree at review start | Clean |
 | Branch | `milestone/m48-agent-runtime-baseline` |
 | Implementation HEAD (CI-certified) | `68de21690c257c961a483c85c0c086db197e61d1` |
-| Final HEAD after M48.5 docs | `8af7c79e7a8a72ffe46c9f351b3e2c4eab3aff7e` |
+| M48.5 docs commits | `8af7c79`, `278b0d7` (+ any doc-only tip on branch) |
 | Prompt “expected HEAD” | `370ef40` (M48.3) — **ancestor**; advanced by M48.4 to `68de216` |
 | Unknown local mods | none at Phase 0 |
 
@@ -224,7 +224,7 @@ docs/agent-runtime/M48_5_FINAL_REPORT.md
 | Action | Status |
 |---|---|
 | Implementation code | **none** (review only) |
-| Documentation commit | `8af7c79` docs(agent-runtime): certify M48.5… |
+| Documentation commits | `8af7c79` cert pack; `278b0d7` SHA notes |
 | Push | documentation only (authorized) |
 | Merge PR | **not performed** |
 | Deploy | **not performed** |
