@@ -155,10 +155,23 @@ class SessionRecord:
     expires_at: float = 0.0
     revoked: bool = False
     label: str = ""
+    # M51 session hardening
+    auth_method: str = ""
+    idle_expires_at: float = 0.0
+    revoked_at: float = 0.0
+    revocation_reason: str = ""
+    session_version: int = 1
+    ua_hash: str = ""
+    absolute_expires_at: float = 0.0
 
     def is_active(self, now: float | None = None) -> bool:
         now = now if now is not None else time.time()
         if self.revoked:
+            return False
+        abs_exp = self.absolute_expires_at or self.expires_at
+        if abs_exp and abs_exp < now:
+            return False
+        if self.idle_expires_at and self.idle_expires_at < now:
             return False
         if self.expires_at and self.expires_at < now:
             return False
