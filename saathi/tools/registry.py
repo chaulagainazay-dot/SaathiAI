@@ -1463,6 +1463,16 @@ def execute_tool(name: str, args: dict, speaker_verified: bool = False) -> dict:
                 "message": f"Action '{name}' classified {decision.level.name} was blocked by "
                            f"the governance engine: " + "; ".join(decision.reasons)}
 
+    # M49.2: prefer canonical path for migrated read-only tools (after governance)
+    try:
+        from saathi.tool_runtime.compat import try_canonical_legacy_tool
+
+        canonical = try_canonical_legacy_tool(name, args or {})
+        if canonical is not None:
+            return canonical
+    except Exception:
+        pass  # fall through to legacy handler
+
     try:
         return handler(**args)
     except Exception as e:  # surface errors to the model so it can explain

@@ -125,10 +125,18 @@ def main(argv: list[str] | None = None) -> int:
         if sub == "capability-matrix":
             _emit({"matrix": reg.capability_matrix()})
             return EXIT_OK
+        if sub == "reconcile-idempotency":
+            # Read/repair stale durable idempotency leases only — no tool execute
+            from saathi.tool_runtime.durable_idempotency import (
+                default_durable_idempotency_store,
+            )
+
+            _emit(default_durable_idempotency_store().reconcile_stale())
+            return EXIT_OK
         _emit(
             {
-                "error": "usage: tools list|inspect <id>|validate|capability-matrix",
-                "note": "read-only; no generic tool execute command",
+                "error": "usage: tools list|inspect <id>|validate|capability-matrix|reconcile-idempotency",
+                "note": "read-only diagnostics; no generic tool execute command",
             }
         )
         return EXIT_BAD
