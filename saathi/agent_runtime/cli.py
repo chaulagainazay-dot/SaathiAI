@@ -62,6 +62,39 @@ def main(argv: list[str] | None = None) -> int:
 
         _emit(contract_summary())
         return EXIT_OK
+    if cmd == "lifecycle-health":
+        from saathi.agent_runtime.lifecycle import provider_health_evidence
+
+        _emit({"providers": [p.to_dict() for p in provider_health_evidence()]})
+        return EXIT_OK
+    if cmd == "recover" and rest:
+        from saathi.agent_runtime.lifecycle import RunLifecycleController
+
+        _emit(RunLifecycleController(orch.store).recover_run(rest[0]))
+        return EXIT_OK
+    if cmd == "recover-all":
+        from saathi.agent_runtime.lifecycle import RunLifecycleController
+
+        _emit(RunLifecycleController(orch.store).recover_all())
+        return EXIT_OK
+    if cmd == "reconcile-all":
+        from saathi.agent_runtime.lifecycle import RunLifecycleController
+
+        _emit(RunLifecycleController(orch.store).reconcile_all())
+        return EXIT_OK
+    if cmd == "kill-switch":
+        from saathi.agent_runtime.lifecycle import RunLifecycleController
+
+        scope = rest[0] if rest else "all"
+        rid = rest[1] if len(rest) > 1 else ""
+        lc = RunLifecycleController(orch.store)
+        if scope == "run":
+            _emit(lc.kill_switch(scope="run", run_id=rid))
+        elif scope == "mission":
+            _emit(lc.kill_switch(scope="mission", mission_id=rid))
+        else:
+            _emit(lc.kill_switch(scope="all"))
+        return EXIT_OK
     if cmd == "list":
         _emit({"agents": [a.to_dict() for a in registry.all_agents()]})
         return EXIT_OK

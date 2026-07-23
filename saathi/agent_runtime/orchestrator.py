@@ -14,7 +14,7 @@ from saathi.agent_runtime import registry
 from saathi.agent_runtime.gateway_exec import AgentExecutor
 from saathi.agent_runtime.graph import TaskGraph
 from saathi.agent_runtime.models import (
-    RunState, Task, RiskClass, validate_output, MessageType,
+    RunState, Task, RiskClass, validate_output, MessageType, is_terminal,
 )
 from saathi.agent_runtime import policy as pol
 from saathi.agent_runtime.store import RunStore
@@ -175,49 +175,82 @@ class Orchestrator:
     # ── execution ─────────────────────────────────────────────────────────
     def run(self, rid: str, *, max_wall_sec: float = 60.0) -> dict:
         """Execute ready tasks until done / blocked / budget / paused / cancelled."""
+        from saathi.agent_runtime.lifecycle import RunLifecycleController
+
         run = self.store.get_run(rid)
         if not run:
             raise KeyError(rid)
+        lc = RunLifecycleController(self.store)
+        if lc.is_cancel_requested(rid):
+            lc.request_cancel(rid, reason="pre_run_cancel")
+            return self._outcome(rid, partial=True, note="cancelled")
+        if lc.check_deadline(rid):
+            lc.enforce_timeout(rid)
+            return self._outcome(rid, partial=True, note="timed_out")
+
         budget = pol.Budget(**{k: v for k, v in (run["budget"] or {}).items()
                                if k in pol.Budget.__annotations__})
+        owner = None
+        lease = lc.acquire_lease(rid)
+        if lease.ok:
+            owner = lease.owner
         self._safe_transition(rid, RunState.RUNNING)
         start = time.time()
         last_fp: dict[str, str] = {}
 
-        while True:
-            run = self.store.get_run(rid)
-            state = RunState(run["state"])
-            if state in (RunState.PAUSED, RunState.CANCELLED):
-                break
-            if time.time() - start > max_wall_sec:
-                self._safe_transition(rid, RunState.TIMED_OUT)
-                break
-            over = budget.exhausted()
-            if over:
-                self.store.event(rid, "run.budget", {"reason": over})
-                self._finalize(rid, budget, partial=True, note=over)
-                return self._outcome(rid, partial=True, note=over)
+        try:
+            while True:
+                run = self.store.get_run(rid)
+                state = RunState(run["state"])
+                if state in (RunState.PAUSED, RunState.CANCELLED, RunState.TIMED_OUT):
+                    break
+                if lc.is_cancel_requested(rid):
+                    lc.request_cancel(rid, reason="mid_run_cancel")
+                    break
+                if lc.check_deadline(rid) or (time.time() - start > max_wall_sec):
+                    lc.enforce_timeout(rid)
+                    # also respect wall clock if deadline missing
+                    if RunState(self.store.get_run(rid)["state"]) != RunState.TIMED_OUT:
+                        self._safe_transition(rid, RunState.TIMED_OUT)
+                    break
+                if owner:
+                    lc.heartbeat(rid, owner=owner)
+                over = budget.exhausted()
+                if over:
+                    self.store.event(rid, "run.budget", {"reason": over})
+                    self._finalize(rid, budget, partial=True, note=over)
+                    return self._outcome(rid, partial=True, note=over)
 
-            graph = TaskGraph(self._tasks(rid))
-            if graph.all_done():
-                break
-            ready = graph.ready()
-            if not ready:
-                if graph.blocked():
-                    self._safe_transition(rid, RunState.BLOCKED)
-                break
-
-            for task in ready:
-                self._run_task(rid, task, budget, last_fp)
-                budget.charge(steps=1)
-                if budget.exhausted():
+                graph = TaskGraph(self._tasks(rid))
+                if graph.all_done():
+                    break
+                ready = graph.ready()
+                if not ready:
+                    if graph.blocked():
+                        self._safe_transition(rid, RunState.BLOCKED)
                     break
 
-        # verify + review handled inside _run_task; finalize
-        return self._finalize(rid, budget)
+                for task in ready:
+                    if lc.is_cancel_requested(rid):
+                        break
+                    self._run_task(rid, task, budget, last_fp)
+                    budget.charge(steps=1)
+                    if budget.exhausted():
+                        break
+
+            # verify + review handled inside _run_task; finalize
+            return self._finalize(rid, budget)
+        finally:
+            if owner:
+                lc.release_lease(rid, owner=owner)
 
     def _run_task(self, rid: str, task: Task, budget: pol.Budget,
                   last_fp: dict) -> None:
+        from saathi.agent_runtime.lifecycle import RunLifecycleController
+
+        if RunLifecycleController(self.store).is_cancel_requested(rid):
+            self.store.update_task(task.task_id, status="cancelled")
+            return
         defn = registry.get(task.agent)
         if not defn:
             self.store.update_task(task.task_id, status="skipped")
@@ -380,15 +413,32 @@ class Orchestrator:
         return self.run(rid)
 
     def cancel(self, rid: str, actor: str = "user:ajay") -> None:
-        self.store.transition(rid, RunState.CANCELLED, actor=actor)
-        self.store.event(rid, "run.cancelled", {"actor": actor})
+        """Durable cancellation via lifecycle controller (idempotent)."""
+        from saathi.agent_runtime.lifecycle import RunLifecycleController
+
+        RunLifecycleController(self.store).request_cancel(
+            rid, actor=actor, reason="orchestrator_cancel"
+        )
 
     def retry_task(self, rid: str, task_id: str) -> dict:
+        from saathi.agent_runtime.lifecycle import RunLifecycleController
+
+        lc = RunLifecycleController(self.store)
+        if lc.is_cancel_requested(rid):
+            return self._outcome(rid, partial=True, note="cancelled")
+        if lc.check_deadline(rid):
+            lc.enforce_timeout(rid)
+            return self._outcome(rid, partial=True, note="timed_out")
+        run = self.store.get_run(rid)
+        if run and is_terminal(RunState(run["state"])):
+            # do not silently revive terminal runs — new attempt only via new run
+            return self._outcome(rid, partial=True, note="terminal_no_retry_in_place")
         self.store.update_task(task_id, status="pending")
         run = self.store.get_run(rid)
         if RunState(run["state"]) in (RunState.FAILED, RunState.PARTIALLY_COMPLETED,
                                       RunState.BLOCKED):
             self.store.transition(rid, RunState.RUNNING)
+        lc.bump_attempt(rid)
         return self.run(rid)
 
     # ── finalize ──────────────────────────────────────────────────────────
