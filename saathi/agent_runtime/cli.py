@@ -67,20 +67,41 @@ def main(argv: list[str] | None = None) -> int:
         return EXIT_OK
     if cmd == "run":
         if len(rest) >= 4 and rest[0] == "--agent" and rest[2] == "--input":
+            from saathi.agent_runtime.service import start_agent_run
+
             agent, text = rest[1], rest[3]
             if not registry.get(agent):
                 _emit({"error": f"unknown agent {agent}"})
                 return EXIT_BAD
-            rid = orch.create_run(text, strategy="build")  # single dominated by chosen
-            out = orch.run(rid)
+            rec = start_agent_run(
+                objective=text,
+                strategy="build",
+                execute=True,
+                orchestrator=orch,
+                authority_class="READ_ONLY",
+            )
+            if not rec.ok:
+                _emit(rec.to_dict())
+                return EXIT_FAIL
+            out = rec.outcome or {"run_id": rec.run_id, "state": rec.state}
             _emit(out)
             return _run_exit(out)
         _emit({"error": "usage: run --agent <id> --input \"...\""})
         return EXIT_BAD
     if cmd == "run-team":
         if len(rest) >= 2 and rest[0] == "--input":
-            rid = orch.create_run(rest[1])
-            out = orch.run(rid)
+            from saathi.agent_runtime.service import start_agent_run
+
+            rec = start_agent_run(
+                objective=rest[1],
+                execute=True,
+                orchestrator=orch,
+                authority_class="READ_ONLY",
+            )
+            if not rec.ok:
+                _emit(rec.to_dict())
+                return EXIT_FAIL
+            out = rec.outcome or {"run_id": rec.run_id, "state": rec.state}
             _emit(out)
             return _run_exit(out)
         _emit({"error": "usage: run-team --input \"...\""})

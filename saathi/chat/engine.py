@@ -402,26 +402,49 @@ class ChatEngine:
     # ── M10: multi-agent orchestration from chat ──────────────────────────
     def start_orchestration(self, cid: str, objective: str, *, strategy: str = "",
                             execute: bool = True) -> dict:
-        """Spawn an M10 orchestration run linked to this conversation. Simple
-        questions should still use send(); this activates only when the user
-        selects multi-agent mode or the objective clearly warrants a team."""
+        """Spawn an M10 orchestration run linked to this conversation via the
+        M48.2 canonical ``start_agent_run`` façade (contracts fail-closed).
+        Simple questions should still use send(); multi-agent activates when
+        the user selects team mode or the objective warrants a team."""
         conv = self.store.get_conversation(cid)
         if not conv:
             raise KeyError(cid)
-        from saathi.agent_runtime.orchestrator import default_orchestrator
-        orch = default_orchestrator()
-        run_id = orch.create_run(objective, actor="user:ajay", strategy=strategy,
-                                 project_id=conv.get("project_id", ""),
-                                 conversation_id=cid)
-        outcome = orch.run(run_id) if execute else {"run_id": run_id,
-                                                    "state": "queued"}
+        from saathi.agent_runtime.service import start_agent_run
+
+        rec = start_agent_run(
+            objective=objective,
+            strategy=strategy,
+            actor="user:ajay",
+            project_id=conv.get("project_id", ""),
+            conversation_id=cid,
+            execute=execute,
+            authority_class="READ_ONLY",
+            requested_capability="",
+        )
+        if not rec.ok:
+            self.store.add_message(
+                cid, "assistant",
+                f"Multi-agent run rejected ({rec.error_code}): {rec.message}",
+                model="agent-runtime",
+                meta={"agent_run_rejected": True, "error": rec.error_code},
+            )
+            return {
+                "run_id": "",
+                "outcome": None,
+                "ok": False,
+                "error": rec.error_code,
+                "message": rec.message,
+                "violations": rec.violations,
+            }
+        run_id = rec.run_id
+        outcome = rec.outcome if execute else {"run_id": run_id, "state": rec.state or "queued"}
         # record a chat message pointing at the run (evidence-linked)
         self.store.add_message(
             cid, "assistant",
-            f"Started multi-agent run ({outcome.get('state', 'queued')}): "
-            f"{outcome.get('tasks_done', 0)} tasks completed. Run {run_id[:8]}.",
+            f"Started multi-agent run ({(outcome or {}).get('state', rec.state or 'queued')}): "
+            f"{(outcome or {}).get('tasks_done', 0)} tasks completed. Run {run_id[:8]}.",
             model="agent-runtime", meta={"agent_run_id": run_id})
-        return {"run_id": run_id, "outcome": outcome}
+        return {"run_id": run_id, "outcome": outcome, "ok": True}
 
 
 _default_engine: ChatEngine | None = None

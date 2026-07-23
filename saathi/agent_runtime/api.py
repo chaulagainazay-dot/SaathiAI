@@ -9,7 +9,9 @@ from fastapi import APIRouter
 from pydantic import BaseModel
 
 from saathi.agent_runtime import registry
+from saathi.agent_runtime.errors import AgentRunError
 from saathi.agent_runtime.orchestrator import default_orchestrator
+from saathi.agent_runtime.service import start_agent_run
 
 router = APIRouter(prefix="/api/v1/agents", tags=["agents"])
 
@@ -20,6 +22,11 @@ class CreateRun(BaseModel):
     project_id: str = ""
     conversation_id: str = ""
     budget: dict = {}
+    # M48.2 optional contract fields (fail-closed when elevated)
+    authority_class: str = "READ_ONLY"
+    requested_capability: str = ""
+    approval_token: str | None = None
+    idempotency_key: str = ""
 
 
 class Approve(BaseModel):
@@ -40,12 +47,29 @@ def definition(agent_id: str):
 
 @router.post("/runs")
 def create_run(req: CreateRun):
+    """Canonical path: validate via start_agent_run before persistence."""
     orch = default_orchestrator()
-    rid = orch.create_run(req.objective, strategy=req.strategy,
-                          project_id=req.project_id,
-                          conversation_id=req.conversation_id,
-                          budget=req.budget or None)
-    return {"run_id": rid}
+    rec = start_agent_run(
+        objective=req.objective,
+        strategy=req.strategy,
+        project_id=req.project_id,
+        conversation_id=req.conversation_id,
+        budget=req.budget or None,
+        authority_class=req.authority_class or "READ_ONLY",
+        requested_capability=req.requested_capability or "",
+        approval_token=req.approval_token,
+        idempotency_key=req.idempotency_key or "",
+        execute=False,
+        orchestrator=orch,
+    )
+    if not rec.ok:
+        return {
+            "error": rec.error_code,
+            "message": rec.message,
+            "violations": rec.violations,
+            "ok": False,
+        }
+    return {"run_id": rec.run_id, "ok": True, "state": rec.state}
 
 
 @router.post("/runs/{rid}/execute")

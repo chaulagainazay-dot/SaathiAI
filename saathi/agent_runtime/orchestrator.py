@@ -43,13 +43,93 @@ class Orchestrator:
         return self._memory or None
 
     # ── planning → task DAG ───────────────────────────────────────────────
-    def create_run(self, objective: str, *, actor: str = "user:ajay",
-                   strategy: str = "", project_id: str = "",
-                   conversation_id: str = "", budget: dict | None = None) -> str:
+    def create_run(
+        self,
+        objective: str,
+        *,
+        actor: str = "user:ajay",
+        strategy: str = "",
+        project_id: str = "",
+        conversation_id: str = "",
+        budget: dict | None = None,
+        contract_request=None,
+        provider_status=None,
+        skip_contract: bool = False,
+    ) -> str:
+        """Create a durable run after M48.1 contract validation (fail-closed).
+
+        Prefer :func:`saathi.agent_runtime.service.start_agent_run` for new
+        callers. Direct ``create_run`` still validates unless
+        ``skip_contract=True`` (low-level tests only).
+
+        Validation runs **before** any RunStore persistence.
+        """
+        budget = dict(budget or {})
         strat = choose_strategy(objective, requested=strategy)
-        rid = self.store.create_run(objective=objective, strategy=strat, actor=actor,
-                                    project_id=project_id,
-                                    conversation_id=conversation_id, budget=budget)
+
+        if not skip_contract:
+            from saathi.agent_runtime.service import (
+                ensure_run_request_allowed,
+                request_from_objective,
+            )
+            from saathi.agent_runtime.errors import AgentRunError
+
+            req = contract_request or request_from_objective(
+                objective,
+                strategy=strategy,
+                actor=actor,
+                project_id=project_id,
+                conversation_id=conversation_id,
+                budget=budget,
+                authority_class=str(
+                    budget.get("authority_class") or "READ_ONLY"
+                ),
+                requested_capability=str(budget.get("capability") or ""),
+                approval_token=budget.get("approval_token"),
+                approval_expires_at=budget.get("approval_expires_at"),
+                approval_revoked=bool(budget.get("approval_revoked")),
+                timeout_sec=float(budget.get("timeout_sec") or 60.0),
+                max_retries=int(budget.get("max_retries") if budget.get("max_retries") is not None else 2),
+            )
+            violations = ensure_run_request_allowed(
+                req, provider_status=provider_status
+            )
+            if violations:
+                from saathi.agent_runtime.errors import public_code_for_contract
+
+                v0 = violations[0]
+                code = public_code_for_contract(
+                    v0.code.value if hasattr(v0.code, "value") else str(v0.code)
+                )
+                raise AgentRunError(
+                    code,
+                    v0.message,
+                    violations=[v.to_dict() for v in violations],
+                )
+            # Persist capability metadata for audit (never store raw tokens)
+            budget.setdefault("capability", req.requested_capability)
+            budget.setdefault("authority_class", req.authority_class)
+            if req.approval_token:
+                budget["approval_present"] = True
+                budget.pop("approval_token", None)
+
+        rid = self.store.create_run(
+            objective=objective,
+            strategy=strat,
+            actor=actor,
+            project_id=project_id,
+            conversation_id=conversation_id,
+            budget=budget,
+        )
+        self.store.event(
+            rid,
+            "validation.passed",
+            {
+                "capability": budget.get("capability"),
+                "authority_class": budget.get("authority_class"),
+                "provider_status": budget.get("provider_status"),
+            },
+        )
         self.store.transition(rid, RunState.PLANNING, actor=actor)
         self._build_tasks(rid, objective, strat, project_id)
         self.store.transition(rid, RunState.QUEUED, actor=actor)
