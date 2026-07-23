@@ -34,6 +34,18 @@ from saathi.tool_runtime.schema import validate_against_schema
 from saathi.tool_runtime.secrets import find_secret_violations, redact
 
 
+def _default_idemp_store():
+    """Prefer durable SQLite store; fall back to process-local if import fails."""
+    try:
+        from saathi.tool_runtime.durable_idempotency import (
+            default_durable_idempotency_store,
+        )
+
+        return default_durable_idempotency_store()
+    except Exception:
+        return default_idempotency_store()
+
+
 class ToolExecutionService:
     """Fail-closed tool execution. Does not replace ExecutionGateway."""
 
@@ -43,7 +55,7 @@ class ToolExecutionService:
         idempotency: IdempotencyStore | None = None,
     ):
         self.registry = registry or default_registry()
-        self.idempotency = idempotency or default_idempotency_store()
+        self.idempotency = idempotency if idempotency is not None else _default_idemp_store()
 
     def execute_tool(
         self,
@@ -322,7 +334,23 @@ class ToolExecutionService:
         )
         scope = request.run_id or "global"
         if idemp_key:
-            st = self.idempotency.begin(scope, idemp_key, fp)
+            begin_kwargs = {}
+            # Durable store accepts metadata; process-local ignores via ** not supported — try signature
+            try:
+                st = self.idempotency.begin(
+                    scope,
+                    idemp_key,
+                    fp,
+                    tool_id=manifest.tool_id,
+                    tool_version=manifest.version,
+                    run_id=request.run_id,
+                    call_id=call_id,
+                    authority=authority.value,
+                    side_effect_class=side_effect.value,
+                    attempt=request.attempt,
+                )
+            except TypeError:
+                st = self.idempotency.begin(scope, idemp_key, fp)
             if st["status"] == "conflict":
                 return _terminal(
                     status="rejected",
@@ -331,15 +359,17 @@ class ToolExecutionService:
                     message="idempotency key conflict",
                     manifest=manifest,
                 )
+            if st["status"] == "in_progress":
+                return _terminal(
+                    status="rejected",
+                    outcome=ToolOutcomeClass.BLOCKED,
+                    error=ToolErrorCode.TOOL_IDEMPOTENCY_CONFLICT,
+                    message="idempotency key in progress",
+                    manifest=manifest,
+                )
             if st["status"] == "replay" and st.get("result"):
                 prior = st["result"]
-                prior["call_id"] = call_id
-                events.append("tool.completed")
-                return ToolExecutionResult(**{
-                    **{k: prior[k] for k in ToolExecutionResult.__dataclass_fields__ if k in prior},
-                    "events": events,
-                    "adapter_invoked": False,
-                }) if False else _replay_result(prior, events, call_id, started)
+                return _replay_result(prior, events, call_id, started)
 
         # 13 accepted
         events.append("tool.started")
