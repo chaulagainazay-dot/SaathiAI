@@ -1435,13 +1435,42 @@ def recent_governance_decisions(limit: int = 50) -> list:
 
 
 def execute_tool(name: str, args: dict, speaker_verified: bool = False) -> dict:
+    """Legacy dispatcher — M49.3 enforces disposition before any freeform path.
+
+    Order:
+      1. unknown name → reject (no generic fallback)
+      2. freeform shell / prohibited / deferred → block
+      3. privileged speaker check
+      4. governance gate
+      5. canonical gateway for migrated tools
+      6. legacy bounded handlers only when policy allows
+    """
+    from saathi.tool_runtime.legacy_policy import (
+        LegacyDisposition,
+        block_payload,
+        classify_legacy_tool,
+        is_runtime_executable,
+    )
+
+    handler = _HANDLERS.get(name)
+    if not handler:
+        return {
+            "error": f"unknown tool: {name}",
+            "blocked": True,
+            "disposition": LegacyDisposition.DEPRECATED_AND_BLOCKED.value,
+            "message": "M49.3: unknown tools are rejected; no generic legacy fallback.",
+            "outcome_class": "BLOCKED",
+        }
+
+    disposition = classify_legacy_tool(name)
+    # Hard-block freeform shell and explicit prohibitions before any handler runs
+    if disposition == LegacyDisposition.PROHIBITED:
+        return block_payload(name, disposition)
+
     if name in PRIVILEGED and not speaker_verified:
         return {"error": "speaker_not_verified",
                 "message": "This action is only allowed for Ajay's verified voice. "
                            "Ask him to re-verify (say the wake phrase clearly) or use the app."}
-    handler = _HANDLERS.get(name)
-    if not handler:
-        return {"error": f"unknown tool: {name}"}
 
     # ── Runtime Governance Engine gate — classify, govern, audit ──────────────
     # Ajay's verified voice counts as operator approval (human + code confirm);
@@ -1463,7 +1492,11 @@ def execute_tool(name: str, args: dict, speaker_verified: bool = False) -> dict:
                 "message": f"Action '{name}' classified {decision.level.name} was blocked by "
                            f"the governance engine: " + "; ".join(decision.reasons)}
 
-    # M49.2: prefer canonical path for migrated read-only tools (after governance)
+    # Deferred domains remain non-executable after governance audit
+    if disposition == LegacyDisposition.DEFERRED_AND_DISABLED:
+        return block_payload(name, disposition)
+
+    # M49.3: prefer canonical path for migrated tools (after governance)
     try:
         from saathi.tool_runtime.compat import try_canonical_legacy_tool
 
@@ -1471,9 +1504,39 @@ def execute_tool(name: str, args: dict, speaker_verified: bool = False) -> dict:
         if canonical is not None:
             return canonical
     except Exception:
-        pass  # fall through to legacy handler
+        pass  # fall through only for LEGACY_BOUNDED
 
+    if disposition == LegacyDisposition.MIGRATED_CANONICAL:
+        # Mapped but bridge returned None (e.g. non-list action) — do not run legacy mutate
+        return {
+            "error": "canonical_only",
+            "blocked": True,
+            "disposition": disposition.value,
+            "tool": name,
+            "message": (
+                f"M49.3: tool '{name}' is migrated; only the canonical gateway path "
+                "is executable (unsupported action or arguments for this wrapper)."
+            ),
+            "outcome_class": "BLOCKED",
+        }
+
+    if not is_runtime_executable(name):
+        return block_payload(name, disposition)
+
+    # LEGACY_BOUNDED only — retained temporary path with deprecation note
     try:
-        return handler(**args)
+        result = handler(**args)
+        # Stamp deprecation only for inventory-listed production tools
+        from saathi.tool_runtime.legacy_policy import LEGACY_BOUNDED_TOOLS
+
+        if isinstance(result, dict) and name in LEGACY_BOUNDED_TOOLS:
+            result = dict(result)
+            result.setdefault("_legacy_bounded", True)
+            result.setdefault("_disposition", disposition.value)
+            result.setdefault(
+                "_deprecation",
+                "M49.3 LEGACY_BOUNDED — planned removal; prefer ExecutionGateway",
+            )
+        return result
     except Exception as e:  # surface errors to the model so it can explain
         return {"error": type(e).__name__, "message": str(e)}

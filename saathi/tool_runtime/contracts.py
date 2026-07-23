@@ -233,15 +233,25 @@ class ToolManifest:
 
 @dataclass
 class ToolApprovalReference:
-    """Server-side approval reference — never UI-only authority."""
+    """Server-side approval reference — never UI-only authority.
+
+    M49.3: action-specific and target-aware. Approval for gmail.create_draft
+    must not authorize gmail.send_message. Approval for one target must not
+    authorize another unless target_resource is empty (unscoped) or matches.
+    """
 
     approval_id: str = ""
     actor: str = ""
     capability: str = ""
     tool_id: str = ""
+    tool_version: str = ""
     run_id: str = ""
     mission_id: str = ""
     side_effect_class: str = ""
+    authority: str = ""
+    connector: str = ""
+    action: str = ""
+    target_resource: str = ""
     expires_at: float = 0.0
     revoked: bool = False
     active: bool = True
@@ -254,6 +264,13 @@ class ToolApprovalReference:
         run_id: str,
         side_effect: ToolSideEffectClass,
         now: float | None = None,
+        tool_version: str = "",
+        authority: str = "",
+        connector: str = "",
+        action: str = "",
+        target_resource: str = "",
+        mission_id: str = "",
+        actor: str = "",
     ) -> tuple[bool, ToolErrorCode | None]:
         now = now if now is not None else time.time()
         if not self.approval_id or not self.active:
@@ -264,12 +281,28 @@ class ToolApprovalReference:
             return False, ToolErrorCode.TOOL_APPROVAL_EXPIRED
         if self.tool_id and self.tool_id != tool_id:
             return False, ToolErrorCode.TOOL_APPROVAL_REQUIRED
+        if self.tool_version and tool_version and self.tool_version != tool_version:
+            return False, ToolErrorCode.TOOL_APPROVAL_REQUIRED
         if self.capability and capability and self.capability != capability:
             return False, ToolErrorCode.TOOL_APPROVAL_REQUIRED
         if self.run_id and run_id and self.run_id != run_id:
             return False, ToolErrorCode.TOOL_APPROVAL_REQUIRED
+        if self.mission_id and mission_id and self.mission_id != mission_id:
+            return False, ToolErrorCode.TOOL_APPROVAL_REQUIRED
+        if self.actor and actor and self.actor != actor:
+            return False, ToolErrorCode.TOOL_APPROVAL_REQUIRED
         if self.side_effect_class and self.side_effect_class != side_effect.value:
             return False, ToolErrorCode.TOOL_APPROVAL_REQUIRED
+        if self.authority and authority and self.authority != authority:
+            return False, ToolErrorCode.TOOL_APPROVAL_REQUIRED
+        if self.connector and connector and self.connector != connector:
+            return False, ToolErrorCode.TOOL_APPROVAL_REQUIRED
+        if self.action and action and self.action != action:
+            return False, ToolErrorCode.TOOL_APPROVAL_REQUIRED
+        # Target scope: if approval binds a target, request target must match
+        if self.target_resource:
+            if not target_resource or self.target_resource != target_resource:
+                return False, ToolErrorCode.TOOL_APPROVAL_REQUIRED
         return True, None
 
 

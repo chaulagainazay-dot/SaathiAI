@@ -133,9 +133,39 @@ def main(argv: list[str] | None = None) -> int:
 
             _emit(default_durable_idempotency_store().reconcile_stale())
             return EXIT_OK
+        # M49.3 read-only audits (never execute tools / no secrets / no network)
+        if sub == "audit-gateway":
+            from saathi.tool_runtime.gateway_audit import validate_tool_gateway_coverage
+
+            _emit(validate_tool_gateway_coverage())
+            return EXIT_OK
+        if sub == "audit-legacy":
+            from saathi.tool_runtime.gateway_audit import audit_legacy_execution
+
+            _emit(audit_legacy_execution())
+            return EXIT_OK
+        if sub == "audit-connectors":
+            from saathi.tool_runtime.gateway_audit import audit_connectors
+
+            _emit(audit_connectors())
+            return EXIT_OK
+        if sub == "audit-cancellation":
+            from saathi.tool_runtime.gateway_audit import audit_cancellation
+
+            _emit(audit_cancellation())
+            return EXIT_OK
+        if sub == "audit-approvals":
+            from saathi.tool_runtime.gateway_audit import audit_approvals
+
+            _emit(audit_approvals())
+            return EXIT_OK
         _emit(
             {
-                "error": "usage: tools list|inspect <id>|validate|capability-matrix|reconcile-idempotency",
+                "error": (
+                    "usage: tools list|inspect <id>|validate|capability-matrix|"
+                    "reconcile-idempotency|audit-gateway|audit-legacy|"
+                    "audit-connectors|audit-cancellation|audit-approvals"
+                ),
                 "note": "read-only diagnostics; no generic tool execute command",
             }
         )

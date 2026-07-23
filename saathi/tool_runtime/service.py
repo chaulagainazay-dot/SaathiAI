@@ -247,36 +247,58 @@ class ToolExecutionService:
         authority = manifest.authority_class
         side_effect = manifest.side_effect_class
 
-        # 7 approval
+        # 7 approval (M49.3: action/target/authority scoped; revalidated immediately)
         need = manifest.approval_requirement
-        if need in (
-            ToolApprovalRequirement.EXPLICIT_APPROVAL_REQUIRED,
-            ToolApprovalRequirement.OWNER_AUTHORIZATION_REQUIRED,
-            ToolApprovalRequirement.USER_CONFIRMATION_REQUIRED,
-        ):
-            ref = request.approval_reference
+        connector_hint = ""
+        action_hint = ""
+        if manifest.tool_id.startswith("m49.connector."):
+            parts = manifest.tool_id.split(".")
+            # m49.connector.<connector>.<action...>
+            if len(parts) >= 4:
+                connector_hint = parts[2]
+                action_hint = ".".join(parts[3:])
+        target_hint = ""
+        args_for_target = request.arguments or {}
+        for key in ("to", "repo", "event_id", "message_id", "target", "url"):
+            if args_for_target.get(key):
+                target_hint = str(args_for_target.get(key))[:300]
+                break
+
+        def _validate_approval(ref: ToolApprovalReference | None) -> tuple[bool, ToolErrorCode | None, str]:
             if not ref:
-                return _terminal(
-                    status="rejected",
-                    outcome=ToolOutcomeClass.BLOCKED,
-                    error=ToolErrorCode.TOOL_APPROVAL_REQUIRED,
-                    message="approval required",
-                    manifest=manifest,
-                )
+                return False, ToolErrorCode.TOOL_APPROVAL_REQUIRED, "approval required"
             ok, err = ref.is_valid_for(
                 tool_id=manifest.tool_id,
                 capability=cap,
                 run_id=request.run_id,
                 side_effect=side_effect,
+                tool_version=manifest.version,
+                authority=authority.value,
+                connector=connector_hint,
+                action=action_hint or cap,
+                target_resource=target_hint,
+                mission_id=getattr(request, "parent_task_id", "") or "",
+                actor=request.requested_by or "",
             )
             if not ok:
+                return False, err or ToolErrorCode.TOOL_APPROVAL_REQUIRED, "approval invalid"
+            return True, None, ""
+
+        if need in (
+            ToolApprovalRequirement.EXPLICIT_APPROVAL_REQUIRED,
+            ToolApprovalRequirement.OWNER_AUTHORIZATION_REQUIRED,
+            ToolApprovalRequirement.USER_CONFIRMATION_REQUIRED,
+        ):
+            ok_ap, err_ap, msg_ap = _validate_approval(request.approval_reference)
+            if not ok_ap:
                 return _terminal(
                     status="rejected",
                     outcome=ToolOutcomeClass.BLOCKED,
-                    error=err or ToolErrorCode.TOOL_APPROVAL_REQUIRED,
-                    message="approval invalid",
+                    error=err_ap or ToolErrorCode.TOOL_APPROVAL_REQUIRED,
+                    message=msg_ap,
                     manifest=manifest,
                 )
+            events.append("tool.approval_validated")
 
         # 10 cancellation pre-check
         if cancel_check and cancel_check():
@@ -370,6 +392,22 @@ class ToolExecutionService:
             if st["status"] == "replay" and st.get("result"):
                 prior = st["result"]
                 return _replay_result(prior, events, call_id, started)
+
+        # 12b M49.3: revalidate approval immediately before adapter (retry/delay safety)
+        if need in (
+            ToolApprovalRequirement.EXPLICIT_APPROVAL_REQUIRED,
+            ToolApprovalRequirement.OWNER_AUTHORIZATION_REQUIRED,
+            ToolApprovalRequirement.USER_CONFIRMATION_REQUIRED,
+        ):
+            ok_ap2, err_ap2, msg_ap2 = _validate_approval(request.approval_reference)
+            if not ok_ap2:
+                return _terminal(
+                    status="rejected",
+                    outcome=ToolOutcomeClass.BLOCKED,
+                    error=err_ap2 or ToolErrorCode.TOOL_APPROVAL_REQUIRED,
+                    message=msg_ap2 or "approval revalidation failed",
+                    manifest=manifest,
+                )
 
         # 13 accepted
         events.append("tool.started")
