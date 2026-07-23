@@ -3,6 +3,21 @@
 
 
 
+## M49.3 — Legacy Runtime Elimination, Gateway Completion, Connector Hardening (2026-07-23)
+
+| Item | State |
+|---|---|
+| Freeform shell | BLOCKED (allowlisted command manifests only) |
+| ExecutionGateway for supported tools | ENFORCED |
+| saathi.tools | Migrated map + deferred disabled + LEGACY_BOUNDED residual |
+| Connector actions | Action-specific; mutations DRY_RUN_ONLY |
+| Approval scope | Action + target aware |
+| Cancellation | No UNKNOWN on supported tools |
+| Trading Guardian | UNENGAGED_ADVISORY_ONLY |
+| Milestone | COMPLETE_WITH_LIMITATIONS |
+
+Evidence: `docs/tool-runtime/M49_3_*.md`. **M49.4 not started.**
+
 ## M49.2 — Tool Migration, Connector Convergence, Durable Idempotency (2026-07-23)
 
 | Item | State |
@@ -13,7 +28,7 @@
 | Subprocess cancel helper | ACTIVE for allowlisted diag |
 | Trading Guardian | UNENGAGED_ADVISORY_ONLY |
 
-Evidence: `docs/tool-runtime/M49_2_*.md`. **M49.3 not started.**
+Evidence: `docs/tool-runtime/M49_2_*.md`. Superseded in-scope by M49.3 on branch `milestone/m49-3-gateway-completion`.
 
 ## M49.1 — Canonical Tool Execution Framework (2026-07-23)
 
