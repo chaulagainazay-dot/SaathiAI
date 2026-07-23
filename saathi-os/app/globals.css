@@ -451,11 +451,10 @@ html, body {
 .only-mobile { display: none; }
 .only-desktop { display: block; }
 /* phones only (< 700px) get the mobile companion */
+/* NOTE: do NOT set .m-top / .m-tabs display here — base rules below would override (cascade order). */
 @media (max-width: 699px) {
   .only-mobile { display: block; }
   .only-desktop { display: none !important; }
-  .m-top { display: block; }
-  .m-tabs { display: grid; }
 }
 /* tablet (iPad, 700–1200px): show the FULL desktop dashboard, collapse grids to fit */
 @media (min-width: 700px) and (max-width: 1200px) {
@@ -500,6 +499,12 @@ html, body {
   display: flex; align-items: center; justify-content: center; cursor: pointer; border: none;
   background: radial-gradient(circle at 38% 35%, #ffffff, #9fc0ff); color: #0A1120; font-size: 28px; font-weight: 300;
   box-shadow: 0 0 30px rgba(143,180,255,0.6); }
+
+/* phone companion chrome — MUST follow base .m-top/.m-tabs rules so display wins */
+@media (max-width: 699px) {
+  .m-top { display: block; }
+  .m-tabs { display: grid; }
+}
 
 /* bottom sheet */
 .m-sheet-back { position: fixed; inset: 0; z-index: 60; background: rgba(3,5,11,0.6); backdrop-filter: blur(6px); }
