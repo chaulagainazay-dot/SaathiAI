@@ -22,8 +22,10 @@ M49.4 — Tool Runtime Closure Review, Residual Legacy Retirement (partial), and
 |---|---|
 | Starting branch | `milestone/m49-3-gateway-completion` |
 | Starting commit | `0eb1592caa207ca61b250ec50a8fc9c6a3d1ba3c` |
+| Ending tip (docs commit) | `f392b36b8b1908acb8820de5968df78087c7f25d` |
 | Working branch | `milestone/m49-4-runtime-closure` |
-| PR base preferred | `milestone/m49-3-gateway-completion` |
+| Draft PR | **#7** — https://github.com/chaulagainazay-dot/SaathiAI/pull/7 |
+| PR base | `milestone/m49-3-gateway-completion` |
 
 ## 4. Files changed (summary)
 
