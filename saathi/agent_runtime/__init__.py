@@ -18,11 +18,21 @@ from saathi.agent_runtime.store import RunStore
 from saathi.agent_runtime.gateway_exec import AgentExecutor
 from saathi.agent_runtime.orchestrator import Orchestrator, default_orchestrator
 from saathi.agent_runtime.strategies import STRATEGIES, choose_strategy
+from saathi.agent_runtime import contracts as contracts  # M48.1 fail-closed layer
+from saathi.agent_runtime.service import start_agent_run, AgentRunRecord  # M48.2 façade
+from saathi.agent_runtime.errors import AgentRunError, AgentRuntimeErrorCode
+from saathi.agent_runtime.lifecycle import (  # M48.3 lifecycle
+    RunLifecycleController,
+    default_lifecycle,
+    provider_health_evidence,
+)
 
 __all__ = [
     "AgentDefinition", "RunState", "RiskClass", "Task", "MessageType",
     "validate_transition", "can_transition", "is_terminal", "validate_output",
     "IllegalTransition", "registry", "TaskGraph", "CycleError", "policy",
     "RunStore", "AgentExecutor", "Orchestrator", "default_orchestrator",
-    "STRATEGIES", "choose_strategy",
+    "STRATEGIES", "choose_strategy", "contracts",
+    "start_agent_run", "AgentRunRecord", "AgentRunError", "AgentRuntimeErrorCode",
+    "RunLifecycleController", "default_lifecycle", "provider_health_evidence",
 ]

@@ -1,5 +1,18 @@
 # SaathiOS Autonomous Roadmap
 
+
+## M48 — Agent Runtime Baseline (2026-07-23)
+
+| Slice | State |
+|---|---|
+| M48.1 contracts + inventory | COMPLETE |
+| M48.2 start_agent_run façade | COMPLETE |
+| M48.3 durable lifecycle | COMPLETE |
+| M48.4 M8 wrap + entry enforcement | COMPLETE_WITH_LIMITATIONS |
+| M48.5 runtime closure review | COMPLETE_WITH_LIMITATIONS |
+
+Evidence pack: `docs/agent-runtime/M48_5_*.md`. Draft PR #3 OPEN unmerged. **M49 not started.**
+
 ## M21–M39 Master Program (2026-07-16)
 
 **Platform program status:** Phase 1 active — **M21.0–M21.4** and **M22 provider migration COMPLETE WITH LIMITATIONS**; not production-certified.
