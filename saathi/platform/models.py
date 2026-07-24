@@ -64,6 +64,105 @@ class ApprovalStatus(str, Enum):
     CONSUMED = "consumed"
 
 
+class PlatformExecutionState(str, Enum):
+    """Externally meaningful M52 platform-agent lifecycle states."""
+
+    CREATED = "CREATED"
+    QUEUED = "QUEUED"
+    READY = "READY"
+    WAITING_APPROVAL = "WAITING_APPROVAL"
+    RUNNING = "RUNNING"
+    PAUSED = "PAUSED"
+    RECOVERING = "RECOVERING"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
+    CANCELLED = "CANCELLED"
+    TIMED_OUT = "TIMED_OUT"
+
+
+PLATFORM_EXECUTION_TERMINAL_STATES = frozenset(
+    {
+        PlatformExecutionState.COMPLETED,
+        PlatformExecutionState.FAILED,
+        PlatformExecutionState.CANCELLED,
+        PlatformExecutionState.TIMED_OUT,
+    }
+)
+
+
+PLATFORM_EXECUTION_TRANSITIONS: dict[
+    PlatformExecutionState, frozenset[PlatformExecutionState]
+] = {
+    PlatformExecutionState.CREATED: frozenset(
+        {
+            PlatformExecutionState.QUEUED,
+            PlatformExecutionState.CANCELLED,
+            PlatformExecutionState.TIMED_OUT,
+            PlatformExecutionState.FAILED,
+            PlatformExecutionState.RECOVERING,
+        }
+    ),
+    PlatformExecutionState.QUEUED: frozenset(
+        {
+            PlatformExecutionState.READY,
+            PlatformExecutionState.WAITING_APPROVAL,
+            PlatformExecutionState.CANCELLED,
+            PlatformExecutionState.TIMED_OUT,
+            PlatformExecutionState.FAILED,
+            PlatformExecutionState.RECOVERING,
+        }
+    ),
+    PlatformExecutionState.READY: frozenset(
+        {
+            PlatformExecutionState.RUNNING,
+            PlatformExecutionState.CANCELLED,
+            PlatformExecutionState.TIMED_OUT,
+            PlatformExecutionState.RECOVERING,
+            PlatformExecutionState.FAILED,
+        }
+    ),
+    PlatformExecutionState.WAITING_APPROVAL: frozenset(
+        {
+            PlatformExecutionState.READY,
+            PlatformExecutionState.CANCELLED,
+            PlatformExecutionState.TIMED_OUT,
+            PlatformExecutionState.FAILED,
+        }
+    ),
+    PlatformExecutionState.RUNNING: frozenset(
+        {
+            PlatformExecutionState.COMPLETED,
+            PlatformExecutionState.FAILED,
+            PlatformExecutionState.CANCELLED,
+            PlatformExecutionState.TIMED_OUT,
+            PlatformExecutionState.PAUSED,
+            PlatformExecutionState.RECOVERING,
+        }
+    ),
+    PlatformExecutionState.PAUSED: frozenset(
+        {
+            PlatformExecutionState.READY,
+            PlatformExecutionState.CANCELLED,
+            PlatformExecutionState.TIMED_OUT,
+            PlatformExecutionState.RECOVERING,
+        }
+    ),
+    PlatformExecutionState.RECOVERING: frozenset(
+        {
+            PlatformExecutionState.READY,
+            PlatformExecutionState.PAUSED,
+            PlatformExecutionState.FAILED,
+            PlatformExecutionState.CANCELLED,
+            PlatformExecutionState.TIMED_OUT,
+        }
+    ),
+    PlatformExecutionState.COMPLETED: frozenset(),
+    PlatformExecutionState.FAILED: frozenset(),
+    PlatformExecutionState.CANCELLED: frozenset(),
+    PlatformExecutionState.TIMED_OUT: frozenset(),
+}
+
+
 # Role → permission sets (inheritance: higher roles include lower)
 ROLE_PERMISSIONS: dict[PlatformRole, frozenset[PlatformPermission]] = {
     PlatformRole.VIEWER: frozenset(
@@ -320,6 +419,66 @@ class ApprovalRecord:
             "consumed_at": self.consumed_at,
             "run_id": self.run_id,
             "connector": self.connector,
+        }
+
+
+@dataclass
+class PlatformExecutionRecord:
+    """Durable orchestration metadata; tool idempotency remains M49 authority."""
+
+    execution_id: str
+    state: str
+    user_id: str
+    session_id: str
+    org_id: str
+    workspace_id: str
+    project_id: str
+    mission_id: str
+    agent_id: str
+    run_id: str
+    tool_id: str
+    request_fingerprint: str
+    arguments_json: str = "{}"
+    capability: str = ""
+    idempotency_key: str = ""
+    approval_id: str = ""
+    authority: str = ""
+    created_at: float = field(default_factory=time.time)
+    updated_at: float = field(default_factory=time.time)
+    deadline_at: float = 0.0
+    cancel_requested: bool = False
+    dispatch_started: bool = False
+    adapter_invoked: bool = False
+    result_json: str = ""
+    error_code: str = ""
+    recovery_count: int = 0
+    version: int = 1
+
+    def is_terminal(self) -> bool:
+        return PlatformExecutionState(self.state) in PLATFORM_EXECUTION_TERMINAL_STATES
+
+    def to_public(self) -> dict[str, Any]:
+        return {
+            "execution_id": self.execution_id,
+            "state": self.state,
+            "org_id": self.org_id,
+            "workspace_id": self.workspace_id,
+            "project_id": self.project_id,
+            "mission_id": self.mission_id,
+            "agent_id": self.agent_id,
+            "run_id": self.run_id,
+            "tool_id": self.tool_id,
+            "capability": self.capability,
+            "approval_id": self.approval_id,
+            "authority": self.authority,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at,
+            "deadline_at": self.deadline_at,
+            "cancel_requested": self.cancel_requested,
+            "dispatch_started": self.dispatch_started,
+            "adapter_invoked": self.adapter_invoked,
+            "error_code": self.error_code,
+            "recovery_count": self.recovery_count,
         }
 
 

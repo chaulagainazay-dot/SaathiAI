@@ -107,8 +107,16 @@ def gateway_llm(agent_role: str, prompt: str, system: str) -> dict:
 class AgentExecutor:
     """Runs a single agent turn + gates every tool through policy + gateway."""
 
-    def __init__(self, execute_fn: ExecuteFn | None = None):
+    def __init__(
+        self,
+        execute_fn: ExecuteFn | None = None,
+        *,
+        platform_runtime=None,
+        platform_token: str = "",
+    ):
         self.execute_fn = execute_fn or gateway_llm
+        self.platform_runtime = platform_runtime
+        self.platform_token = platform_token
 
     def run_turn(
         self,
@@ -193,68 +201,68 @@ class AgentExecutor:
         risk,
         cancel_token: CancellationToken | None = None,
     ) -> dict:
-        """Execute tool via ExecutionGateway (+ M49.1 registered tools).
-
-        Paths:
-        - M49.1 registered tool_id → gateway.execute_registered_tool
-        - local-llm-inference / video-generation → SaathiExecutionSystem
-        - unknown → fail-closed (not faked success)
-        """
-        # M49.1 canonical registered tools (code-owned manifests)
+        """M52 compatibility shell; no tool dispatch without platform binding."""
+        if not self.platform_runtime or not self.platform_token:
+            rid_ = store.add_tool_request(
+                run_id,
+                agent=agent.agent_id,
+                tool=tool,
+                risk=risk,
+                status="rejected",
+                result="PLATFORM_RUNTIME_REQUIRED",
+            )
+            store.event(
+                run_id,
+                "tool.blocked",
+                {
+                    "agent": agent.agent_id,
+                    "tool": tool,
+                    "reason": "PLATFORM_RUNTIME_REQUIRED",
+                },
+            )
+            return {
+                "allowed": False,
+                "requires_approval": False,
+                "status": "rejected",
+                "request_id": rid_,
+                "reason": "platform runtime binding required",
+                "error_code": "PLATFORM_RUNTIME_REQUIRED",
+            }
         try:
-            from saathi.tool_runtime.registry import default_registry
-
-            reg = default_registry()
-            if reg.get_manifest(tool):
-                from saathi.execution import ExecutionGateway
-
-                gw = ExecutionGateway()
-                events_buf: list[tuple[str, dict]] = []
-
-                def _rec(ev: str, payload: dict) -> None:
-                    events_buf.append((ev, payload))
-                    try:
-                        store.event(run_id, ev, payload)
-                    except Exception:
-                        pass
-
-                result = gw.execute_registered_tool(
-                    tool_id=tool,
-                    arguments=dict(args or {}),
-                    run_id=run_id,
-                    requested_by=f"agent:{agent.agent_id}",
-                    cancel_check=(cancel_token.should_cancel if cancel_token else None),
-                    event_recorder=_rec,
-                )
-                status = (
-                    "success"
-                    if result.ok
-                    else (
-                        "cancelled"
-                        if result.cancellation_confirmed
-                        else "failed"
-                        if result.status in ("failed", "rejected", "timed_out", "blocked")
-                        else result.status
-                    )
-                )
-                rid_ = store.add_tool_request(
-                    run_id,
-                    agent=agent.agent_id,
-                    tool=tool,
-                    risk=risk,
-                    status=status,
-                    result=(result.safe_message or result.error_code or "")[:500],
-                )
-                return {
-                    "allowed": result.ok,
-                    "requires_approval": False,
-                    "status": status,
-                    "request_id": rid_,
-                    "outcome_class": result.outcome_class.value,
-                    "error_code": result.error_code,
-                    "call_id": result.call_id,
-                    "adapter_invoked": result.adapter_invoked,
-                }
+            result = self.platform_runtime.execute_token(
+                token=self.platform_token,
+                tool_id=tool,
+                arguments=dict(args or {}),
+                run_id=run_id,
+            )
+            status = (
+                "success"
+                if result.ok
+                else "cancelled"
+                if result.cancellation_confirmed
+                else "failed"
+            )
+            rid_ = store.add_tool_request(
+                run_id,
+                agent=agent.agent_id,
+                tool=tool,
+                risk=risk,
+                status=status,
+                result=(result.safe_message or result.error_code or "")[:500],
+            )
+            return {
+                "allowed": result.ok,
+                "requires_approval": False,
+                "status": status,
+                "request_id": rid_,
+                "outcome_class": result.outcome_class.value,
+                "error_code": result.error_code,
+                "call_id": result.call_id,
+                "adapter_invoked": result.adapter_invoked,
+                "platform_execution_id": getattr(
+                    result, "platform_execution_id", ""
+                ),
+            }
         except Exception as exc:
             rid_ = store.add_tool_request(
                 run_id,
@@ -262,7 +270,7 @@ class AgentExecutor:
                 tool=tool,
                 risk=risk,
                 status="failed",
-                result=repr(exc)[:300],
+                result=type(exc).__name__,
             )
             return {
                 "allowed": False,
@@ -271,55 +279,3 @@ class AgentExecutor:
                 "request_id": rid_,
                 "reason": "tool_runtime_error",
             }
-
-        known = {"local-llm-inference", "video-generation"}
-        if tool not in known:
-            # Fail-closed: do not pretend success for unknown tools
-            rid_ = store.add_tool_request(
-                run_id,
-                agent=agent.agent_id,
-                tool=tool,
-                risk=risk,
-                status="rejected",
-                result="unknown tool; not executed",
-            )
-            store.event(
-                run_id,
-                "tool.blocked",
-                {"agent": agent.agent_id, "tool": tool, "reason": "TOOL_NOT_FOUND"},
-            )
-            return {
-                "allowed": False,
-                "requires_approval": False,
-                "status": "rejected",
-                "request_id": rid_,
-                "reason": "no gateway op for tool",
-                "error_code": "TOOL_NOT_FOUND",
-            }
-        from saathi.execution.integration import SaathiExecutionSystem
-        from saathi.execution.queue.memory import MemoryQueue
-        from saathi.execution import ToolIntent, ExecutionContext
-        sysm = SaathiExecutionSystem(MemoryQueue())
-        intent = ToolIntent(intent_id=f"agent-tool-{uuid.uuid4().hex[:10]}",
-                            operation=tool, business_unit="agent-runtime",
-                            actor_id=f"agent:{agent.agent_id}", parameters=args,
-                            metadata={"data_sensitivity": "internal"})
-        ctx = ExecutionContext(actor_id=f"agent:{agent.agent_id}",
-                               business_unit="agent-runtime",
-                               timestamp=datetime.utcnow(), current_time=datetime.utcnow())
-        try:
-            res = asyncio.run(sysm.execute_intent(intent, ctx))
-            status = getattr(res.status, "value", "failed")
-            rid_ = store.add_tool_request(run_id, agent=agent.agent_id, tool=tool,
-                                          risk=risk, status=status,
-                                          intent_id=intent.intent_id,
-                                          result=str(res.data or "")[:500])
-            store.event(run_id, "tool.approved" if status == "success" else "tool.denied",
-                        {"agent": agent.agent_id, "tool": tool})
-            return {"allowed": True, "requires_approval": False, "status": status,
-                    "request_id": rid_, "intent_id": intent.intent_id}
-        except Exception as exc:
-            rid_ = store.add_tool_request(run_id, agent=agent.agent_id, tool=tool,
-                                          risk=risk, status="failed", result=repr(exc)[:300])
-            return {"allowed": True, "requires_approval": False, "status": "failed",
-                    "request_id": rid_}

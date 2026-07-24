@@ -19,6 +19,7 @@ from saathi.platform.models import (
 )
 from saathi.platform.service import PlatformService, default_platform, reset_platform_for_tests
 from saathi.platform.context import PlatformExecutionContext
+from saathi.platform.runtime import PlatformAgentRuntime
 # M51 private-alpha methods
 import saathi.platform.alpha  # noqa: F401
 
@@ -27,6 +28,7 @@ __all__ = [
     "default_platform",
     "reset_platform_for_tests",
     "PlatformExecutionContext",
+    "PlatformAgentRuntime",
     "PlatformRole",
     "PlatformPermission",
     "MembershipRole",

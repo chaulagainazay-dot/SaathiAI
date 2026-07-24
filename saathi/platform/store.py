@@ -7,6 +7,7 @@ from __future__ import annotations
 import hashlib
 import json
 import sqlite3
+import threading
 import time
 from pathlib import Path
 from typing import Any, Callable
@@ -16,6 +17,10 @@ from saathi.platform.models import (
     ApprovalStatus,
     MissionLinkRecord,
     OrganizationRecord,
+    PLATFORM_EXECUTION_TERMINAL_STATES,
+    PLATFORM_EXECUTION_TRANSITIONS,
+    PlatformExecutionRecord,
+    PlatformExecutionState,
     PlatformRole,
     ProjectRecord,
     SessionRecord,
@@ -187,10 +192,12 @@ class PlatformStore:
         self._now = now
         self._conn = sqlite3.connect(str(self.db_path), check_same_thread=False)
         self._conn.row_factory = sqlite3.Row
+        self._runtime_lock = threading.RLock()
         self._conn.execute("PRAGMA foreign_keys = ON")
         self._conn.executescript(_SCHEMA)
         self._conn.executescript(_INDEXES)
         self._migrate_m51()
+        self._migrate_m52()
         self._conn.commit()
 
     def _migrate_m51(self) -> None:
@@ -285,6 +292,49 @@ class PlatformStore:
             );
             CREATE INDEX IF NOT EXISTS idx_plat_invite_org ON invitations(org_id, status);
             CREATE INDEX IF NOT EXISTS idx_plat_invite_hash ON invitations(token_hash);
+            """
+        )
+
+    def _migrate_m52(self) -> None:
+        """Add platform-agent orchestration metadata to the existing platform DB."""
+        self._conn.executescript(
+            """
+            CREATE TABLE IF NOT EXISTS platform_executions (
+                execution_id TEXT PRIMARY KEY,
+                state TEXT NOT NULL,
+                user_id TEXT NOT NULL,
+                session_id TEXT NOT NULL,
+                org_id TEXT NOT NULL,
+                workspace_id TEXT NOT NULL,
+                project_id TEXT NOT NULL DEFAULT '',
+                mission_id TEXT NOT NULL DEFAULT '',
+                agent_id TEXT NOT NULL,
+                run_id TEXT NOT NULL,
+                tool_id TEXT NOT NULL,
+                request_fingerprint TEXT NOT NULL,
+                arguments_json TEXT NOT NULL DEFAULT '{}',
+                capability TEXT NOT NULL DEFAULT '',
+                idempotency_key TEXT NOT NULL DEFAULT '',
+                approval_id TEXT NOT NULL DEFAULT '',
+                authority TEXT NOT NULL DEFAULT '',
+                created_at REAL NOT NULL,
+                updated_at REAL NOT NULL,
+                deadline_at REAL NOT NULL DEFAULT 0,
+                cancel_requested INTEGER NOT NULL DEFAULT 0,
+                dispatch_started INTEGER NOT NULL DEFAULT 0,
+                adapter_invoked INTEGER NOT NULL DEFAULT 0,
+                result_json TEXT NOT NULL DEFAULT '',
+                error_code TEXT NOT NULL DEFAULT '',
+                recovery_count INTEGER NOT NULL DEFAULT 0,
+                version INTEGER NOT NULL DEFAULT 1
+            );
+            CREATE INDEX IF NOT EXISTS idx_platform_exec_scope
+                ON platform_executions(org_id, workspace_id, updated_at DESC);
+            CREATE INDEX IF NOT EXISTS idx_platform_exec_state
+                ON platform_executions(state, updated_at);
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_platform_exec_idempotency
+                ON platform_executions(org_id, workspace_id, idempotency_key)
+                WHERE idempotency_key != '';
             """
         )
 
@@ -1198,3 +1248,227 @@ class PlatformStore:
             "SELECT * FROM mission_legacy_links WHERE org_id=?", (org_id,)
         ).fetchall()
         return [dict(r) for r in rows]
+
+    # ── M52 platform-agent runtime ────────────────────────────────────────
+    def create_platform_execution(
+        self, record: PlatformExecutionRecord
+    ) -> PlatformExecutionRecord:
+        with self._runtime_lock:
+            self._conn.execute(
+                "INSERT INTO platform_executions ("
+                "execution_id,state,user_id,session_id,org_id,workspace_id,project_id,"
+                "mission_id,agent_id,run_id,tool_id,request_fingerprint,idempotency_key,"
+                "arguments_json,capability,approval_id,authority,created_at,updated_at,deadline_at,cancel_requested,"
+                "dispatch_started,adapter_invoked,result_json,error_code,recovery_count,version"
+                ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                (
+                    record.execution_id,
+                    record.state,
+                    record.user_id,
+                    record.session_id,
+                    record.org_id,
+                    record.workspace_id,
+                    record.project_id,
+                    record.mission_id,
+                    record.agent_id,
+                    record.run_id,
+                    record.tool_id,
+                    record.request_fingerprint,
+                    record.idempotency_key,
+                    record.arguments_json,
+                    record.capability,
+                    record.approval_id,
+                    record.authority,
+                    record.created_at,
+                    record.updated_at,
+                    record.deadline_at,
+                    int(record.cancel_requested),
+                    int(record.dispatch_started),
+                    int(record.adapter_invoked),
+                    record.result_json,
+                    record.error_code,
+                    record.recovery_count,
+                    record.version,
+                ),
+            )
+            self._conn.commit()
+        return record
+
+    def get_platform_execution(
+        self, execution_id: str
+    ) -> PlatformExecutionRecord | None:
+        row = self._conn.execute(
+            "SELECT * FROM platform_executions WHERE execution_id=?", (execution_id,)
+        ).fetchone()
+        return self._platform_execution_row(row) if row else None
+
+    def consume_approval_if_approved(
+        self, approval_id: str, *, consumed_at: float | None = None
+    ) -> bool:
+        """Atomically claim an approved M50/M51 approval for one dispatch."""
+        with self._runtime_lock:
+            cur = self._conn.execute(
+                "UPDATE approvals SET status=?, consumed_at=?"
+                " WHERE approval_id=? AND status=?",
+                (
+                    ApprovalStatus.CONSUMED.value,
+                    consumed_at if consumed_at is not None else self._now(),
+                    approval_id,
+                    ApprovalStatus.APPROVED.value,
+                ),
+            )
+            self._conn.commit()
+            return cur.rowcount == 1
+
+    def find_platform_execution_by_idempotency(
+        self, org_id: str, workspace_id: str, idempotency_key: str
+    ) -> PlatformExecutionRecord | None:
+        if not idempotency_key:
+            return None
+        row = self._conn.execute(
+            "SELECT * FROM platform_executions"
+            " WHERE org_id=? AND workspace_id=? AND idempotency_key=?",
+            (org_id, workspace_id, idempotency_key),
+        ).fetchone()
+        return self._platform_execution_row(row) if row else None
+
+    def transition_platform_execution(
+        self,
+        execution_id: str,
+        new_state: PlatformExecutionState | str,
+        *,
+        expected_states: set[PlatformExecutionState | str] | None = None,
+        **updates: Any,
+    ) -> PlatformExecutionRecord:
+        """CAS-like single-host transition with explicit legal edges."""
+        target = PlatformExecutionState(new_state)
+        allowed_updates = {
+            "approval_id",
+            "authority",
+            "deadline_at",
+            "cancel_requested",
+            "dispatch_started",
+            "adapter_invoked",
+            "result_json",
+            "error_code",
+            "recovery_count",
+        }
+        unknown = set(updates) - allowed_updates
+        if unknown:
+            raise ValueError(f"unsupported execution updates: {sorted(unknown)}")
+        with self._runtime_lock:
+            current = self.get_platform_execution(execution_id)
+            if not current:
+                raise KeyError(execution_id)
+            source = PlatformExecutionState(current.state)
+            if expected_states is not None:
+                expected = {PlatformExecutionState(s) for s in expected_states}
+                if source not in expected:
+                    raise ValueError(
+                        f"execution {execution_id} state {source.value} not in expected"
+                    )
+            if source in PLATFORM_EXECUTION_TERMINAL_STATES:
+                raise ValueError(f"terminal execution {execution_id} is immutable")
+            if target not in PLATFORM_EXECUTION_TRANSITIONS[source]:
+                raise ValueError(
+                    f"illegal execution transition {source.value}->{target.value}"
+                )
+            columns = ["state=?", "updated_at=?", "version=version+1"]
+            values: list[Any] = [target.value, self._now()]
+            for key, value in updates.items():
+                columns.append(f"{key}=?")
+                if key in {"cancel_requested", "dispatch_started", "adapter_invoked"}:
+                    value = int(bool(value))
+                values.append(value)
+            values.extend([execution_id, current.version])
+            cur = self._conn.execute(
+                f"UPDATE platform_executions SET {','.join(columns)}"
+                " WHERE execution_id=? AND version=?",
+                values,
+            )
+            if cur.rowcount != 1:
+                self._conn.rollback()
+                raise RuntimeError("execution transition conflict")
+            self._conn.commit()
+            updated = self.get_platform_execution(execution_id)
+            if not updated:
+                raise RuntimeError("execution disappeared after transition")
+            return updated
+
+    def mark_platform_execution_cancel_requested(
+        self, execution_id: str
+    ) -> PlatformExecutionRecord:
+        with self._runtime_lock:
+            rec = self.get_platform_execution(execution_id)
+            if not rec:
+                raise KeyError(execution_id)
+            if rec.is_terminal():
+                return rec
+            self._conn.execute(
+                "UPDATE platform_executions SET cancel_requested=1, updated_at=?,"
+                " version=version+1 WHERE execution_id=?",
+                (self._now(), execution_id),
+            )
+            self._conn.commit()
+            return self.get_platform_execution(execution_id)  # type: ignore[return-value]
+
+    def list_recoverable_platform_executions(self) -> list[PlatformExecutionRecord]:
+        terminals = tuple(s.value for s in PLATFORM_EXECUTION_TERMINAL_STATES)
+        placeholders = ",".join("?" for _ in terminals)
+        rows = self._conn.execute(
+            f"SELECT * FROM platform_executions WHERE state NOT IN ({placeholders})"
+            " ORDER BY updated_at",
+            terminals,
+        ).fetchall()
+        return [self._platform_execution_row(row) for row in rows]
+
+    def list_platform_executions(
+        self, *, org_id: str = "", workspace_id: str = "", limit: int = 100
+    ) -> list[PlatformExecutionRecord]:
+        clauses: list[str] = []
+        args: list[Any] = []
+        if org_id:
+            clauses.append("org_id=?")
+            args.append(org_id)
+        if workspace_id:
+            clauses.append("workspace_id=?")
+            args.append(workspace_id)
+        where = f" WHERE {' AND '.join(clauses)}" if clauses else ""
+        args.append(max(1, min(int(limit), 500)))
+        rows = self._conn.execute(
+            f"SELECT * FROM platform_executions{where} ORDER BY created_at DESC LIMIT ?",
+            args,
+        ).fetchall()
+        return [self._platform_execution_row(row) for row in rows]
+
+    @staticmethod
+    def _platform_execution_row(row: sqlite3.Row) -> PlatformExecutionRecord:
+        return PlatformExecutionRecord(
+            execution_id=row["execution_id"],
+            state=row["state"],
+            user_id=row["user_id"],
+            session_id=row["session_id"],
+            org_id=row["org_id"],
+            workspace_id=row["workspace_id"],
+            project_id=row["project_id"] or "",
+            mission_id=row["mission_id"] or "",
+            agent_id=row["agent_id"],
+            run_id=row["run_id"],
+            tool_id=row["tool_id"],
+            request_fingerprint=row["request_fingerprint"],
+            arguments_json=row["arguments_json"] or "{}",
+            capability=row["capability"] or "",
+            idempotency_key=row["idempotency_key"] or "",
+            approval_id=row["approval_id"] or "",
+            authority=row["authority"] or "",
+            created_at=float(row["created_at"]),
+            updated_at=float(row["updated_at"]),
+            deadline_at=float(row["deadline_at"] or 0),
+            cancel_requested=bool(row["cancel_requested"]),
+            dispatch_started=bool(row["dispatch_started"]),
+            adapter_invoked=bool(row["adapter_invoked"]),
+            result_json=row["result_json"] or "",
+            error_code=row["error_code"] or "",
+            recovery_count=int(row["recovery_count"] or 0),
+            version=int(row["version"] or 1),
+        )
