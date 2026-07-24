@@ -19,10 +19,13 @@ from saathi.platform.models import (
     OrganizationRecord,
     PLATFORM_EXECUTION_TERMINAL_STATES,
     PLATFORM_EXECUTION_TRANSITIONS,
+    PlatformAgentBindingRecord,
+    PlatformAgentBindingState,
     PlatformExecutionRecord,
     PlatformExecutionState,
     PlatformRole,
     ProjectRecord,
+    RuntimeReconciliationRecord,
     SessionRecord,
     UserRecord,
     WorkspaceRecord,
@@ -198,6 +201,7 @@ class PlatformStore:
         self._conn.executescript(_INDEXES)
         self._migrate_m51()
         self._migrate_m52()
+        self._migrate_m53()
         self._conn.commit()
 
     def _migrate_m51(self) -> None:
@@ -335,6 +339,80 @@ class PlatformStore:
             CREATE UNIQUE INDEX IF NOT EXISTS idx_platform_exec_idempotency
                 ON platform_executions(org_id, workspace_id, idempotency_key)
                 WHERE idempotency_key != '';
+            """
+        )
+
+    def _migrate_m53(self) -> None:
+        """Add binding administration and runtime-operations evidence in-place."""
+        execution_cols = {
+            row[1]
+            for row in self._conn.execute(
+                "PRAGMA table_info(platform_executions)"
+            ).fetchall()
+        }
+        for column, declaration in (
+            ("binding_id", "TEXT NOT NULL DEFAULT ''"),
+            ("binding_version", "INTEGER NOT NULL DEFAULT 1"),
+        ):
+            if column not in execution_cols:
+                self._conn.execute(
+                    f"ALTER TABLE platform_executions ADD COLUMN {column} {declaration}"
+                )
+
+        audit_cols = {
+            row[1]
+            for row in self._conn.execute("PRAGMA table_info(audit_events)").fetchall()
+        }
+        if "execution_id" not in audit_cols:
+            self._conn.execute(
+                "ALTER TABLE audit_events ADD COLUMN execution_id TEXT NOT NULL DEFAULT ''"
+            )
+
+        self._conn.executescript(
+            """
+            CREATE TABLE IF NOT EXISTS platform_agent_bindings (
+                binding_id TEXT PRIMARY KEY,
+                agent_id TEXT NOT NULL,
+                name TEXT NOT NULL,
+                description TEXT NOT NULL DEFAULT '',
+                org_id TEXT NOT NULL,
+                workspace_id TEXT NOT NULL,
+                project_id TEXT NOT NULL DEFAULT '',
+                mission_id TEXT NOT NULL DEFAULT '',
+                allowed_tools_json TEXT NOT NULL DEFAULT '[]',
+                allowed_capabilities_json TEXT NOT NULL DEFAULT '[]',
+                authority_ceiling TEXT NOT NULL DEFAULT 'READ_ONLY',
+                state TEXT NOT NULL DEFAULT 'ACTIVE',
+                version INTEGER NOT NULL DEFAULT 1,
+                created_by TEXT NOT NULL,
+                updated_by TEXT NOT NULL,
+                created_at REAL NOT NULL,
+                updated_at REAL NOT NULL,
+                UNIQUE (org_id, workspace_id, agent_id)
+            );
+            CREATE INDEX IF NOT EXISTS idx_agent_binding_scope
+                ON platform_agent_bindings(org_id, workspace_id, state, updated_at DESC);
+            CREATE INDEX IF NOT EXISTS idx_platform_exec_binding
+                ON platform_executions(binding_id, binding_version, updated_at DESC);
+            CREATE INDEX IF NOT EXISTS idx_plat_audit_execution
+                ON audit_events(execution_id, ts);
+            CREATE TABLE IF NOT EXISTS runtime_reconciliations (
+                reconciliation_id TEXT PRIMARY KEY,
+                execution_id TEXT NOT NULL,
+                org_id TEXT NOT NULL,
+                workspace_id TEXT NOT NULL,
+                action TEXT NOT NULL,
+                actor_id TEXT NOT NULL,
+                actor_role TEXT NOT NULL,
+                note TEXT NOT NULL DEFAULT '',
+                evidence_reference TEXT NOT NULL DEFAULT '',
+                outcome TEXT NOT NULL DEFAULT '',
+                idempotency_key TEXT NOT NULL DEFAULT '',
+                created_at REAL NOT NULL,
+                UNIQUE (execution_id, idempotency_key)
+            );
+            CREATE INDEX IF NOT EXISTS idx_runtime_reconcile_execution
+                ON runtime_reconciliations(execution_id, created_at);
             """
         )
 
@@ -915,6 +993,7 @@ class PlatformStore:
         self,
         event: str,
         *,
+        execution_id: str = "",
         user_id: str = "",
         role: str = "",
         org_id: str = "",
@@ -931,8 +1010,8 @@ class PlatformStore:
     ) -> None:
         self._conn.execute(
             "INSERT INTO audit_events (ts, event, user_id, role, org_id, workspace_id, project_id,"
-            " mission_id, run_id, tool_id, approval_id, authority, outcome, evidence, detail)"
-            " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            " mission_id, run_id, tool_id, approval_id, authority, outcome, evidence, detail,"
+            " execution_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             (
                 self._now(),
                 event,
@@ -949,6 +1028,7 @@ class PlatformStore:
                 outcome,
                 evidence,
                 json.dumps(detail or {}, default=str)[:4000],
+                execution_id,
             ),
         )
         self._conn.commit()
@@ -974,6 +1054,29 @@ class PlatformStore:
                 pass
             out.append(d)
         return out
+
+    def list_execution_audit(
+        self,
+        execution_id: str,
+        *,
+        org_id: str,
+        workspace_id: str,
+        limit: int = 500,
+    ) -> list[dict[str, Any]]:
+        rows = self._conn.execute(
+            "SELECT * FROM audit_events WHERE execution_id=? AND org_id=?"
+            " AND workspace_id=? ORDER BY ts, id LIMIT ?",
+            (execution_id, org_id, workspace_id, max(1, min(int(limit), 1000))),
+        ).fetchall()
+        events: list[dict[str, Any]] = []
+        for row in rows:
+            item = dict(row)
+            try:
+                item["detail"] = json.loads(item.get("detail") or "{}")
+            except Exception:
+                item["detail"] = {}
+            events.append(item)
+        return events
 
     # ── config ────────────────────────────────────────────────────────────
     def set_config(self, key: str, value: Any, *, updated_by: str = "") -> None:
@@ -1249,6 +1352,150 @@ class PlatformStore:
         ).fetchall()
         return [dict(r) for r in rows]
 
+    # ── M53 platform-agent bindings ──────────────────────────────────────
+    def create_agent_binding(
+        self, record: PlatformAgentBindingRecord
+    ) -> PlatformAgentBindingRecord:
+        try:
+            self._conn.execute(
+                "INSERT INTO platform_agent_bindings ("
+                "binding_id,agent_id,name,description,org_id,workspace_id,project_id,"
+                "mission_id,allowed_tools_json,allowed_capabilities_json,"
+                "authority_ceiling,state,version,created_by,updated_by,created_at,updated_at"
+                ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                (
+                    record.binding_id,
+                    record.agent_id,
+                    record.name,
+                    record.description,
+                    record.org_id,
+                    record.workspace_id,
+                    record.project_id,
+                    record.mission_id,
+                    record.allowed_tools_json,
+                    record.allowed_capabilities_json,
+                    record.authority_ceiling,
+                    record.state,
+                    record.version,
+                    record.created_by,
+                    record.updated_by,
+                    record.created_at,
+                    record.updated_at,
+                ),
+            )
+            self._conn.commit()
+        except sqlite3.IntegrityError as exc:
+            raise ValueError("binding identity already exists in workspace") from exc
+        return record
+
+    def get_agent_binding(
+        self, binding_id: str
+    ) -> PlatformAgentBindingRecord | None:
+        row = self._conn.execute(
+            "SELECT * FROM platform_agent_bindings WHERE binding_id=?",
+            (binding_id,),
+        ).fetchone()
+        return self._agent_binding_row(row) if row else None
+
+    def find_agent_binding(
+        self, *, org_id: str, workspace_id: str, agent_id: str
+    ) -> PlatformAgentBindingRecord | None:
+        row = self._conn.execute(
+            "SELECT * FROM platform_agent_bindings WHERE org_id=? AND workspace_id=?"
+            " AND agent_id=?",
+            (org_id, workspace_id, agent_id),
+        ).fetchone()
+        return self._agent_binding_row(row) if row else None
+
+    def list_agent_bindings(
+        self,
+        *,
+        org_id: str,
+        workspace_id: str,
+        state: str = "",
+        limit: int = 200,
+    ) -> list[PlatformAgentBindingRecord]:
+        sql = (
+            "SELECT * FROM platform_agent_bindings WHERE org_id=? AND workspace_id=?"
+        )
+        args: list[Any] = [org_id, workspace_id]
+        if state:
+            sql += " AND state=?"
+            args.append(state)
+        sql += " ORDER BY created_at, binding_id LIMIT ?"
+        args.append(max(1, min(int(limit), 500)))
+        rows = self._conn.execute(sql, args).fetchall()
+        return [self._agent_binding_row(row) for row in rows]
+
+    def update_agent_binding(
+        self,
+        binding_id: str,
+        *,
+        updates: dict[str, Any],
+        updated_by: str,
+        bump_version: bool = False,
+    ) -> PlatformAgentBindingRecord:
+        allowed = {
+            "name",
+            "description",
+            "project_id",
+            "mission_id",
+            "allowed_tools_json",
+            "allowed_capabilities_json",
+            "authority_ceiling",
+            "state",
+        }
+        unknown = set(updates) - allowed
+        if unknown:
+            raise ValueError(f"unsupported binding updates: {sorted(unknown)}")
+        with self._runtime_lock:
+            current = self.get_agent_binding(binding_id)
+            if not current:
+                raise KeyError(binding_id)
+            columns = ["updated_by=?", "updated_at=?"]
+            values: list[Any] = [updated_by, self._now()]
+            for key, value in updates.items():
+                columns.append(f"{key}=?")
+                values.append(value)
+            if bump_version:
+                columns.append("version=version+1")
+            values.extend([binding_id, current.version])
+            cur = self._conn.execute(
+                f"UPDATE platform_agent_bindings SET {','.join(columns)}"
+                " WHERE binding_id=? AND version=?",
+                values,
+            )
+            if cur.rowcount != 1:
+                self._conn.rollback()
+                raise RuntimeError("binding update conflict")
+            self._conn.commit()
+            updated = self.get_agent_binding(binding_id)
+            if not updated:
+                raise RuntimeError("binding disappeared after update")
+            return updated
+
+    @staticmethod
+    def _agent_binding_row(row: sqlite3.Row) -> PlatformAgentBindingRecord:
+        return PlatformAgentBindingRecord(
+            binding_id=row["binding_id"],
+            agent_id=row["agent_id"],
+            name=row["name"],
+            description=row["description"] or "",
+            org_id=row["org_id"],
+            workspace_id=row["workspace_id"],
+            project_id=row["project_id"] or "",
+            mission_id=row["mission_id"] or "",
+            allowed_tools_json=row["allowed_tools_json"] or "[]",
+            allowed_capabilities_json=row["allowed_capabilities_json"] or "[]",
+            authority_ceiling=row["authority_ceiling"],
+            state=row["state"],
+            version=int(row["version"]),
+            created_by=row["created_by"],
+            updated_by=row["updated_by"],
+            created_at=float(row["created_at"]),
+            updated_at=float(row["updated_at"]),
+        )
+
     # ── M52 platform-agent runtime ────────────────────────────────────────
     def create_platform_execution(
         self, record: PlatformExecutionRecord
@@ -1257,10 +1504,11 @@ class PlatformStore:
             self._conn.execute(
                 "INSERT INTO platform_executions ("
                 "execution_id,state,user_id,session_id,org_id,workspace_id,project_id,"
-                "mission_id,agent_id,run_id,tool_id,request_fingerprint,idempotency_key,"
+                "mission_id,agent_id,binding_id,binding_version,run_id,tool_id,"
+                "request_fingerprint,idempotency_key,"
                 "arguments_json,capability,approval_id,authority,created_at,updated_at,deadline_at,cancel_requested,"
                 "dispatch_started,adapter_invoked,result_json,error_code,recovery_count,version"
-                ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                 (
                     record.execution_id,
                     record.state,
@@ -1271,6 +1519,8 @@ class PlatformStore:
                     record.project_id,
                     record.mission_id,
                     record.agent_id,
+                    record.binding_id,
+                    record.binding_version,
                     record.run_id,
                     record.tool_id,
                     record.request_fingerprint,
@@ -1412,6 +1662,40 @@ class PlatformStore:
             self._conn.commit()
             return self.get_platform_execution(execution_id)  # type: ignore[return-value]
 
+    def update_platform_execution_metadata(
+        self, execution_id: str, **updates: Any
+    ) -> PlatformExecutionRecord:
+        """Update bounded non-state orchestration metadata with a version guard."""
+        allowed = {"approval_id", "error_code", "deadline_at"}
+        unknown = set(updates) - allowed
+        if unknown:
+            raise ValueError(f"unsupported execution metadata: {sorted(unknown)}")
+        with self._runtime_lock:
+            current = self.get_platform_execution(execution_id)
+            if not current:
+                raise KeyError(execution_id)
+            if current.is_terminal():
+                raise ValueError(f"terminal execution {execution_id} is immutable")
+            columns = ["updated_at=?", "version=version+1"]
+            values: list[Any] = [self._now()]
+            for key, value in updates.items():
+                columns.append(f"{key}=?")
+                values.append(value)
+            values.extend([execution_id, current.version])
+            cur = self._conn.execute(
+                f"UPDATE platform_executions SET {','.join(columns)}"
+                " WHERE execution_id=? AND version=?",
+                values,
+            )
+            if cur.rowcount != 1:
+                self._conn.rollback()
+                raise RuntimeError("execution metadata conflict")
+            self._conn.commit()
+            updated = self.get_platform_execution(execution_id)
+            if not updated:
+                raise RuntimeError("execution disappeared after metadata update")
+            return updated
+
     def list_recoverable_platform_executions(self) -> list[PlatformExecutionRecord]:
         terminals = tuple(s.value for s in PLATFORM_EXECUTION_TERMINAL_STATES)
         placeholders = ",".join("?" for _ in terminals)
@@ -1423,7 +1707,19 @@ class PlatformStore:
         return [self._platform_execution_row(row) for row in rows]
 
     def list_platform_executions(
-        self, *, org_id: str = "", workspace_id: str = "", limit: int = 100
+        self,
+        *,
+        org_id: str = "",
+        workspace_id: str = "",
+        project_id: str = "",
+        mission_id: str = "",
+        binding_id: str = "",
+        user_id: str = "",
+        tool_id: str = "",
+        state: str = "",
+        created_after: float = 0.0,
+        created_before: float = 0.0,
+        limit: int = 100,
     ) -> list[PlatformExecutionRecord]:
         clauses: list[str] = []
         args: list[Any] = []
@@ -1433,6 +1729,23 @@ class PlatformStore:
         if workspace_id:
             clauses.append("workspace_id=?")
             args.append(workspace_id)
+        for column, value in (
+            ("project_id", project_id),
+            ("mission_id", mission_id),
+            ("binding_id", binding_id),
+            ("user_id", user_id),
+            ("tool_id", tool_id),
+            ("state", state),
+        ):
+            if value:
+                clauses.append(f"{column}=?")
+                args.append(value)
+        if created_after:
+            clauses.append("created_at>=?")
+            args.append(float(created_after))
+        if created_before:
+            clauses.append("created_at<=?")
+            args.append(float(created_before))
         where = f" WHERE {' AND '.join(clauses)}" if clauses else ""
         args.append(max(1, min(int(limit), 500)))
         rows = self._conn.execute(
@@ -1440,6 +1753,91 @@ class PlatformStore:
             args,
         ).fetchall()
         return [self._platform_execution_row(row) for row in rows]
+
+    def create_runtime_reconciliation(
+        self, record: RuntimeReconciliationRecord
+    ) -> RuntimeReconciliationRecord:
+        try:
+            self._conn.execute(
+                "INSERT INTO runtime_reconciliations ("
+                "reconciliation_id,execution_id,org_id,workspace_id,action,actor_id,"
+                "actor_role,note,evidence_reference,outcome,idempotency_key,created_at"
+                ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+                (
+                    record.reconciliation_id,
+                    record.execution_id,
+                    record.org_id,
+                    record.workspace_id,
+                    record.action,
+                    record.actor_id,
+                    record.actor_role,
+                    record.note,
+                    record.evidence_reference,
+                    record.outcome,
+                    record.idempotency_key,
+                    record.created_at,
+                ),
+            )
+            self._conn.commit()
+        except sqlite3.IntegrityError as exc:
+            raise ValueError("duplicate reconciliation request") from exc
+        return record
+
+    def list_runtime_reconciliations(
+        self, execution_id: str
+    ) -> list[RuntimeReconciliationRecord]:
+        rows = self._conn.execute(
+            "SELECT * FROM runtime_reconciliations WHERE execution_id=?"
+            " ORDER BY created_at, reconciliation_id",
+            (execution_id,),
+        ).fetchall()
+        return [
+            RuntimeReconciliationRecord(
+                reconciliation_id=row["reconciliation_id"],
+                execution_id=row["execution_id"],
+                org_id=row["org_id"],
+                workspace_id=row["workspace_id"],
+                action=row["action"],
+                actor_id=row["actor_id"],
+                actor_role=row["actor_role"],
+                note=row["note"] or "",
+                evidence_reference=row["evidence_reference"] or "",
+                outcome=row["outcome"] or "",
+                idempotency_key=row["idempotency_key"] or "",
+                created_at=float(row["created_at"]),
+            )
+            for row in rows
+        ]
+
+    def update_runtime_reconciliation_outcome(
+        self, reconciliation_id: str, outcome: str
+    ) -> RuntimeReconciliationRecord:
+        self._conn.execute(
+            "UPDATE runtime_reconciliations SET outcome=?"
+            " WHERE reconciliation_id=?",
+            (str(outcome)[:120], reconciliation_id),
+        )
+        self._conn.commit()
+        row = self._conn.execute(
+            "SELECT * FROM runtime_reconciliations WHERE reconciliation_id=?",
+            (reconciliation_id,),
+        ).fetchone()
+        if not row:
+            raise KeyError(reconciliation_id)
+        return RuntimeReconciliationRecord(
+            reconciliation_id=row["reconciliation_id"],
+            execution_id=row["execution_id"],
+            org_id=row["org_id"],
+            workspace_id=row["workspace_id"],
+            action=row["action"],
+            actor_id=row["actor_id"],
+            actor_role=row["actor_role"],
+            note=row["note"] or "",
+            evidence_reference=row["evidence_reference"] or "",
+            outcome=row["outcome"] or "",
+            idempotency_key=row["idempotency_key"] or "",
+            created_at=float(row["created_at"]),
+        )
 
     @staticmethod
     def _platform_execution_row(row: sqlite3.Row) -> PlatformExecutionRecord:
@@ -1453,6 +1851,8 @@ class PlatformStore:
             project_id=row["project_id"] or "",
             mission_id=row["mission_id"] or "",
             agent_id=row["agent_id"],
+            binding_id=row["binding_id"] or "",
+            binding_version=int(row["binding_version"] or 1),
             run_id=row["run_id"],
             tool_id=row["tool_id"],
             request_fingerprint=row["request_fingerprint"],

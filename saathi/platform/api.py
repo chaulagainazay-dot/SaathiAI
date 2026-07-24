@@ -36,7 +36,12 @@ def _err(exc: PlatformContextError) -> HTTPException:
     status = 403
     if exc.code in ("ANONYMOUS_PROHIBITED", "SESSION_INVALID", "AUTH_FAILED"):
         status = 401
-    if exc.code in ("APPROVAL_NOT_FOUND", "TOOL_NOT_FOUND"):
+    if exc.code in (
+        "APPROVAL_NOT_FOUND",
+        "TOOL_NOT_FOUND",
+        "BINDING_NOT_FOUND",
+        "EXECUTION_NOT_FOUND",
+    ):
         status = 404
     return HTTPException(status_code=status, detail={"code": exc.code, "message": exc.message})
 
@@ -110,6 +115,8 @@ class AgentExecuteBody(BaseModel):
     idempotency_key: str = ""
     capability: str = ""
     agent_id: str = "platform-agent"
+    binding_id: str = ""
+    binding_version: int | None = None
     timeout_sec: float | None = None
     # spoof fields intentionally ignored
     user_id: str = ""
@@ -174,6 +181,30 @@ class ExecuteBody(BaseModel):
 class RuntimeResumeBody(BaseModel):
     approval_id: str = ""
     timeout_sec: float | None = None
+
+
+class AgentBindingCreateBody(BaseModel):
+    agent_id: str
+    name: str
+    description: str = ""
+    workspace_id: str = ""
+    project_id: str = ""
+    mission_id: str = ""
+    allowed_tools: list[str] = Field(default_factory=list)
+    allowed_capabilities: list[str] = Field(default_factory=list)
+    authority_ceiling: str = "READ_ONLY"
+
+
+class AgentBindingUpdateBody(BaseModel):
+    updates: dict[str, Any] = Field(default_factory=dict)
+
+
+class RuntimeReconcileBody(BaseModel):
+    action: str
+    idempotency_key: str
+    note: str = ""
+    evidence_reference: str = ""
+    approval_id: str = ""
 
 
 class ConfigBody(BaseModel):
@@ -774,6 +805,8 @@ def agent_execute(
             idempotency_key=body.idempotency_key,
             capability=body.capability,
             agent_id=body.agent_id,
+            binding_id=body.binding_id,
+            binding_version=body.binding_version,
             timeout_sec=body.timeout_sec,
         )
         return {
@@ -803,6 +836,186 @@ def agent_callers():
     return {"callers": inventory_agent_callers()}
 
 
+@router.post("/agent-bindings")
+def agent_binding_create(
+    body: AgentBindingCreateBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        from saathi.platform.bindings import BindingAdministrationService
+
+        svc = _svc()
+        ctx = svc.require_context(_token(authorization, x_platform_token))
+        record = BindingAdministrationService(svc).create(
+            ctx, **body.model_dump()
+        )
+        return {"binding": record.to_public()}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/agent-bindings")
+def agent_binding_list(
+    state: str = "",
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        from saathi.platform.bindings import BindingAdministrationService
+
+        svc = _svc()
+        ctx = svc.require_context(_token(authorization, x_platform_token))
+        records = BindingAdministrationService(svc).list(ctx, state=state)
+        return {"bindings": [record.to_public() for record in records]}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/agent-bindings/{binding_id}")
+def agent_binding_inspect(
+    binding_id: str,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        from saathi.platform.bindings import BindingAdministrationService
+
+        svc = _svc()
+        ctx = svc.require_context(_token(authorization, x_platform_token))
+        return {
+            "binding": BindingAdministrationService(svc)
+            .inspect(ctx, binding_id)
+            .to_public()
+        }
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.patch("/agent-bindings/{binding_id}")
+def agent_binding_update(
+    binding_id: str,
+    body: AgentBindingUpdateBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        from saathi.platform.bindings import BindingAdministrationService
+
+        svc = _svc()
+        ctx = svc.require_context(_token(authorization, x_platform_token))
+        return {
+            "binding": BindingAdministrationService(svc)
+            .update(ctx, binding_id, body.updates)
+            .to_public()
+        }
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+def _binding_transition(
+    action: str,
+    binding_id: str,
+    authorization: str | None,
+    x_platform_token: str | None,
+):
+    from saathi.platform.bindings import BindingAdministrationService
+
+    svc = _svc()
+    ctx = svc.require_context(_token(authorization, x_platform_token))
+    method = getattr(BindingAdministrationService(svc), action)
+    return {"binding": method(ctx, binding_id).to_public()}
+
+
+@router.post("/agent-bindings/{binding_id}/suspend")
+def agent_binding_suspend(
+    binding_id: str,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return _binding_transition(
+            "suspend", binding_id, authorization, x_platform_token
+        )
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/agent-bindings/{binding_id}/activate")
+def agent_binding_activate(
+    binding_id: str,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return _binding_transition(
+            "activate", binding_id, authorization, x_platform_token
+        )
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/agent-bindings/{binding_id}/revoke")
+def agent_binding_revoke(
+    binding_id: str,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return _binding_transition("revoke", binding_id, authorization, x_platform_token)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/agent-bindings/{binding_id}/rotate")
+def agent_binding_rotate(
+    binding_id: str,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return _binding_transition("rotate", binding_id, authorization, x_platform_token)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/runtime/executions")
+def runtime_executions(
+    state: str = "",
+    project_id: str = "",
+    mission_id: str = "",
+    binding_id: str = "",
+    user_id: str = "",
+    tool_id: str = "",
+    created_after: float = 0,
+    created_before: float = 0,
+    limit: int = 100,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        from saathi.platform.operations import RuntimeOperationsService
+
+        ops = RuntimeOperationsService(_svc())
+        ctx = ops.context(_token(authorization, x_platform_token))
+        return {
+            "executions": ops.list_executions(
+                ctx,
+                state=state,
+                project_id=project_id,
+                mission_id=mission_id,
+                binding_id=binding_id,
+                user_id=user_id,
+                tool_id=tool_id,
+                created_after=created_after,
+                created_before=created_before,
+                limit=limit,
+            )
+        }
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
 @router.get("/runtime/executions/{execution_id}")
 def runtime_execution(
     execution_id: str,
@@ -810,13 +1023,11 @@ def runtime_execution(
     x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
 ):
     try:
-        from saathi.platform.runtime import PlatformAgentRuntime
+        from saathi.platform.operations import RuntimeOperationsService
 
-        runtime = PlatformAgentRuntime(_svc())
-        rec = runtime._scoped_record(
-            _token(authorization, x_platform_token), execution_id
-        )
-        return {"execution": rec.to_public()}
+        ops = RuntimeOperationsService(_svc())
+        ctx = ops.context(_token(authorization, x_platform_token))
+        return {"execution": ops.inspect(ctx, execution_id)}
     except PlatformContextError as e:
         raise _err(e) from e
 
@@ -828,13 +1039,85 @@ def runtime_cancel(
     x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
 ):
     try:
-        from saathi.platform.runtime import PlatformAgentRuntime
+        from saathi.platform.operations import RuntimeOperationsService
 
-        rec = PlatformAgentRuntime(_svc()).cancel(
-            token=_token(authorization, x_platform_token),
+        token = _token(authorization, x_platform_token)
+        ops = RuntimeOperationsService(_svc())
+        ctx = ops.context(token)
+        return {
+            "execution": ops.cancel(
+                ctx, token=token, execution_id=execution_id
+            )
+        }
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/runtime/executions/{execution_id}/timeline")
+def runtime_timeline(
+    execution_id: str,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        from saathi.platform.operations import RuntimeOperationsService
+
+        ops = RuntimeOperationsService(_svc())
+        ctx = ops.context(_token(authorization, x_platform_token))
+        return {"timeline": ops.timeline(ctx, execution_id)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/runtime/attention")
+def runtime_attention(
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        from saathi.platform.operations import RuntimeOperationsService
+
+        ops = RuntimeOperationsService(_svc())
+        ctx = ops.context(_token(authorization, x_platform_token))
+        return {"attention": ops.attention(ctx)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/runtime/metrics")
+def runtime_metrics(
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        from saathi.platform.operations import RuntimeOperationsService
+
+        ops = RuntimeOperationsService(_svc())
+        ctx = ops.context(_token(authorization, x_platform_token))
+        return {"metrics": ops.metrics(ctx)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/runtime/executions/{execution_id}/reconcile")
+def runtime_reconcile(
+    execution_id: str,
+    body: RuntimeReconcileBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        from saathi.platform.operations import RuntimeOperationsService
+
+        token = _token(authorization, x_platform_token)
+        ops = RuntimeOperationsService(_svc())
+        ctx = ops.context(token)
+        return ops.reconcile(
+            ctx,
+            token=token,
             execution_id=execution_id,
+            **body.model_dump(),
         )
-        return {"execution": rec.to_public()}
     except PlatformContextError as e:
         raise _err(e) from e
 

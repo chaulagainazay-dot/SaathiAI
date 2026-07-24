@@ -15,6 +15,11 @@ import {
   StatusBadge,
 } from "@/components/ui";
 import { API_BASE } from "@/lib/api";
+import {
+  canCancelExecution,
+  requiresDestructiveConfirmation,
+  runtimeTone,
+} from "@/lib/platform-ops";
 
 const TOKEN_KEY = "saathi_platform_token";
 
@@ -46,6 +51,12 @@ export default function PlatformPage() {
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
   const [echo, setEcho] = useState(null);
+  const [bindings, setBindings] = useState([]);
+  const [executions, setExecutions] = useState([]);
+  const [attention, setAttention] = useState([]);
+  const [metrics, setMetrics] = useState(null);
+  const [selectedExecution, setSelectedExecution] = useState(null);
+  const [timeline, setTimeline] = useState([]);
 
   useEffect(() => {
     const t = typeof window !== "undefined" ? localStorage.getItem(TOKEN_KEY) || "" : "";
@@ -66,18 +77,26 @@ export default function PlatformPage() {
     setBusy(true);
     setError(null);
     try {
-      const [m, p, a, c, h] = await Promise.all([
+      const [m, p, a, c, h, b, x, q, r] = await Promise.all([
         plat("/me", { token: tok }),
         plat("/projects", { token: tok }),
         plat("/approvals?status=pending", { token: tok }),
         plat("/config", { token: tok }),
         plat("/health"),
+        plat("/agent-bindings", { token: tok }),
+        plat("/runtime/executions?limit=50", { token: tok }),
+        plat("/runtime/attention", { token: tok }),
+        plat("/runtime/metrics", { token: tok }),
       ]);
       setMe(m);
       setProjects(p.projects || []);
       setApprovals(a.approvals || []);
       setConfig(c.config || null);
       setHealth(h);
+      setBindings(b.bindings || []);
+      setExecutions(x.executions || []);
+      setAttention(q.attention || []);
+      setMetrics(r.metrics || null);
     } catch (e) {
       setError(String(e.message || e));
     } finally {
@@ -129,6 +148,12 @@ export default function PlatformPage() {
     setMe(null);
     setProjects([]);
     setApprovals([]);
+    setBindings([]);
+    setExecutions([]);
+    setAttention([]);
+    setMetrics(null);
+    setSelectedExecution(null);
+    setTimeline([]);
   };
 
   const createProject = async () => {
@@ -164,12 +189,60 @@ export default function PlatformPage() {
     }
   };
 
+  const inspectExecution = async (execution) => {
+    setSelectedExecution(execution);
+    setError(null);
+    try {
+      const result = await plat(`/runtime/executions/${execution.execution_id}/timeline`, {
+        token,
+      });
+      setTimeline(result.timeline || []);
+    } catch (e) {
+      setError(String(e.message || e));
+    }
+  };
+
+  const cancelExecution = async (execution) => {
+    if (!canCancelExecution(execution) || !window.confirm("Cancel this eligible execution?")) return;
+    setBusy(true);
+    try {
+      await plat(`/runtime/executions/${execution.execution_id}/cancel`, {
+        method: "POST",
+        token,
+      });
+      await refresh(token);
+    } catch (e) {
+      setError(String(e.message || e));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const bindingAction = async (binding, action) => {
+    if (
+      requiresDestructiveConfirmation(action === "revoke" ? "REVOKE_BINDING" : action) &&
+      !window.confirm("This binding cannot be reactivated after revocation. Continue?")
+    ) {
+      return;
+    }
+    setBusy(true);
+    try {
+      await plat(`/agent-bindings/${binding.binding_id}/${action}`, { method: "POST", token });
+      await refresh(token);
+    } catch (e) {
+      setError(String(e.message || e));
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <div className="page-stack" style={{ maxWidth: 960, margin: "0 auto", padding: "1.5rem" }}>
       <Heading level={1}>Platform foundation</Heading>
       <Text tone="muted">
-        M50 identity · RBAC · workspaces · projects · missions · approval center. Executes only
-        through the M49 gateway. Connectors remain dry-run. Trading Guardian advisory only.
+        Private-alpha runtime operations · tenant-scoped bindings · lifecycle evidence. Executes
+        only through PlatformAgentRuntime and ExecutionGateway. Connectors remain dry-run.
+        Production and trading are disabled.
       </Text>
 
       {error && <ErrorState title="Platform error" message={error} />}
@@ -228,6 +301,101 @@ export default function PlatformPage() {
 
       {token && (
         <>
+          <Card>
+            <Heading level={2}>Runtime summary</Heading>
+            {metrics ? (
+              <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+                <Text>Total {metrics.total_executions}</Text>
+                <Text>Active {metrics.active_executions}</Text>
+                <Text>Waiting approval {metrics.waiting_approvals}</Text>
+                <Text>Attention {metrics.executions_requiring_attention}</Text>
+                <Text>Failed {metrics.failed_executions}</Text>
+              </div>
+            ) : (
+              <Text tone="muted">No runtime metrics available</Text>
+            )}
+          </Card>
+
+          <Card>
+            <Heading level={2}>Agent bindings</Heading>
+            <ul>
+              {bindings.map((binding) => (
+                <li key={binding.binding_id} style={{ marginBottom: 10 }}>
+                  <StatusBadge status={runtimeTone(binding.state)}>{binding.state}</StatusBadge>{" "}
+                  {binding.name} · {binding.agent_id} · v{binding.version} · ceiling{" "}
+                  {binding.authority_ceiling}
+                  {binding.state === "ACTIVE" && (
+                    <Button onClick={() => bindingAction(binding, "suspend")} variant="ghost">
+                      Suspend
+                    </Button>
+                  )}
+                  {binding.state === "SUSPENDED" && (
+                    <Button onClick={() => bindingAction(binding, "activate")} variant="ghost">
+                      Activate
+                    </Button>
+                  )}
+                  {binding.state !== "REVOKED" && (
+                    <Button onClick={() => bindingAction(binding, "revoke")} variant="ghost">
+                      Revoke
+                    </Button>
+                  )}
+                </li>
+              ))}
+              {!bindings.length && <Text tone="muted">No bindings in this workspace</Text>}
+            </ul>
+          </Card>
+
+          <Card>
+            <Heading level={2}>Runtime attention queue</Heading>
+            <ul>
+              {attention.map((execution) => (
+                <li key={execution.execution_id}>
+                  <StatusBadge status="warn">{execution.state}</StatusBadge>{" "}
+                  {execution.tool_id} · {execution.attention_reasons.join(", ")}
+                  <Button onClick={() => inspectExecution(execution)} variant="ghost">
+                    Inspect
+                  </Button>
+                </li>
+              ))}
+              {!attention.length && <Text tone="muted">No executions require attention</Text>}
+            </ul>
+          </Card>
+
+          <Card>
+            <Heading level={2}>Recent runtime executions</Heading>
+            <ul>
+              {executions.map((execution) => (
+                <li key={execution.execution_id} style={{ marginBottom: 8 }}>
+                  <StatusBadge status={runtimeTone(execution.state)}>{execution.state}</StatusBadge>{" "}
+                  {execution.tool_id} · {execution.execution_id}
+                  <Button onClick={() => inspectExecution(execution)} variant="ghost">
+                    Timeline
+                  </Button>
+                  {canCancelExecution(execution) && (
+                    <Button onClick={() => cancelExecution(execution)} variant="ghost">
+                      Cancel
+                    </Button>
+                  )}
+                </li>
+              ))}
+              {!executions.length && <Text tone="muted">No runtime executions</Text>}
+            </ul>
+            {selectedExecution && (
+              <div style={{ marginTop: 12 }}>
+                <Heading level={3}>Lifecycle timeline</Heading>
+                <Text tone="muted">{selectedExecution.execution_id}</Text>
+                <ol>
+                  {timeline.map((entry, index) => (
+                    <li key={`${entry.timestamp}-${entry.event_type}-${index}`}>
+                      {entry.event_type} · {entry.previous_state || "—"} →{" "}
+                      {entry.new_state || "—"} · {entry.reason_code || "no reason code"}
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            )}
+          </Card>
+
           <Card>
             <Heading level={2}>Projects</Heading>
             <Button onClick={createProject}>New project</Button>

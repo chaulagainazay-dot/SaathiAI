@@ -31,6 +31,7 @@ DEFAULT_CONFIG = {
         "session_ttl_sec": 86400,
         "approval_ttl_sec": 3600,
         "require_approval_for_mutations": True,
+        "authority_ceiling": "SECURITY_SENSITIVE",
     },
     "trading_guardian": "ADVISORY_ONLY",
 }
@@ -46,8 +47,14 @@ class PlatformService:
         base = ctx.to_audit_dict() if ctx else {}
         # extras override context (e.g. explicit approval_id / tool_id / outcome)
         payload = {**base, **extra}
+        detail = payload.get("detail") if isinstance(payload.get("detail"), dict) else None
         self.store.append_audit(
             event,
+            execution_id=str(
+                payload.get("execution_id")
+                or (detail or {}).get("execution_id")
+                or ""
+            ),
             user_id=str(payload.get("user_id") or ""),
             role=str(payload.get("role") or ""),
             org_id=str(payload.get("org_id") or ""),
@@ -60,7 +67,7 @@ class PlatformService:
             authority=str(payload.get("authority") or ""),
             outcome=str(payload.get("outcome") or ""),
             evidence=str(payload.get("evidence") or ""),
-            detail=payload.get("detail") if isinstance(payload.get("detail"), dict) else None,
+            detail=detail,
         )
 
     def _ensure_default_config(self) -> None:
@@ -85,6 +92,10 @@ class PlatformService:
             orgs = self.store.list_orgs_for_user(u.user_id)
             org = orgs[0] if orgs else None
             ws = self.store.list_workspaces(org.org_id)[0] if org else None
+            if org and ws:
+                from saathi.platform.bindings import ensure_default_binding
+
+                ensure_default_binding(self, org.org_id, ws.workspace_id, u.user_id)
             return {
                 "bootstrapped": False,
                 "user": u.to_public(),
@@ -94,6 +105,9 @@ class PlatformService:
         user = self.store.create_user(email=email, name=name)
         org = self.store.create_org(org_name, user.user_id)
         ws = self.store.create_workspace(org.org_id, workspace_name, user.user_id)
+        from saathi.platform.bindings import ensure_default_binding
+
+        ensure_default_binding(self, org.org_id, ws.workspace_id, user.user_id)
         self._audit(
             "platform.bootstrap",
             user_id=user.user_id,

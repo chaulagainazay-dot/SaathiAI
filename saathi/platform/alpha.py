@@ -533,6 +533,9 @@ class PrivateAlphaMixin:
             "execution_enabled": cfg.get("security", {}).get("execution_enabled", True),
             "mutations_enabled": False,  # always dry-run connectors
             "approvals_enabled": cfg.get("security", {}).get("approvals_enabled", True),
+            "authority_ceiling": cfg.get("security", {}).get(
+                "authority_ceiling", "SECURITY_SENSITIVE"
+            ),
             "private_alpha": self.private_alpha_banner(),
             "trading_guardian": "ADVISORY_ONLY",
             "connectors": "DRY_RUN_ONLY",
@@ -546,6 +549,16 @@ class PrivateAlphaMixin:
         for k in ("login_enabled", "execution_enabled", "approvals_enabled"):
             if k in updates:
                 sec[k] = bool(updates[k])
+        if "authority_ceiling" in updates:
+            from saathi.platform.bindings import SAFE_AUTHORITY_ORDER
+
+            ceiling = str(updates["authority_ceiling"])
+            if ceiling not in SAFE_AUTHORITY_ORDER:
+                raise PlatformContextError(
+                    "AUTHORITY_CEILING_INVALID",
+                    "financial or unknown authority ceiling is prohibited",
+                )
+            sec["authority_ceiling"] = ceiling
         # never allow enabling live connectors via safety
         self.store.set_config("security", sec, updated_by=ctx.user_id)
         self._audit("owner.safety_updated", ctx, outcome="ok", detail=updates)
