@@ -31,7 +31,17 @@ enforcement, connector dry-run, and Trading Guardian status.
 
 ## CI / browser / deployment
 
-- CI: not run for the unpushed M52 branch.
+- CI: `reliability` pull-request run
+  [30056416160](https://github.com/chaulagainazay-dot/SaathiAI/actions/runs/30056416160)
+  passed for certified implementation SHA
+  `db3e603cf4b7d7d2126b43f32e986f6fcb68ea1d`.
+- `critical-regressions`: success; 262 manifest gates passed, zero failed.
+- `full-suite`: success; 4,888 passed, 9 skipped, 315 warnings in 901.34s.
+- The push-triggered run
+  [30056398043](https://github.com/chaulagainazay-dot/SaathiAI/actions/runs/30056398043)
+  was cancelled by the workflow concurrency policy in favor of the
+  pull-request run. It is not a test failure and is not used as certification.
+- CI-only fixes: none.
 - Browser certification: not run; no browser claim.
 - Deployment: not performed.
 - Production authorization: not granted.

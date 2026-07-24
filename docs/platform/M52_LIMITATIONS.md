@@ -15,6 +15,6 @@
    connector activity is enabled.
 6. Financial execution remains prohibited. Trading Guardian is unengaged and
    advisory-only.
-7. CI, browser certification, distributed recovery, deployment, and production
-   authorization are outside this local milestone.
+7. Pull-request CI is green. Browser certification, distributed recovery,
+   deployment, and production authorization remain outside this milestone.
 8. The repository has no `CAPABILITY_MATRIX.md` or `HANDOFF.md` to update.

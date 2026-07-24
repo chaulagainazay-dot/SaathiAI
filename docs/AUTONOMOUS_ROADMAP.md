@@ -11,12 +11,16 @@
 | Lifecycle | durable explicit transitions + terminal immutability |
 | Recovery | no automatic replay after recorded dispatch |
 | Legacy AgentExecutor | direct dispatch removed; platform binding required |
+| Remote delivery | draft PR #10; base M51; head M52 |
+| CI | reliability run 30056416160 GREEN |
 | Connectors | DRY_RUN_ONLY |
 | Trading Guardian | UNENGAGED_ADVISORY_ONLY |
 | Milestone | M52_COMPLETE_WITH_LIMITATIONS |
+| Remote certification | M52_REMOTE_CERTIFIED_WITH_LIMITATIONS |
 | Production | NOT_AUTHORIZED |
 
-Evidence: `docs/platform/M52_*.md`. CI/browser/deployment are not claimed.
+Evidence: `docs/platform/M52_*.md`. Local and CI validation are recorded.
+Browser certification and deployment are not claimed.
 
 
 
