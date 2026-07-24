@@ -1,6 +1,27 @@
 # SaathiOS Autonomous Roadmap
 
 
+## M52 — Platform Agent Runtime Consolidation (2026-07-23)
+
+| Item | State |
+|---|---|
+| Platform runtime | `PlatformAgentRuntime` canonical |
+| Gateway | ExecutionGateway retained as sole registered-tool authority |
+| Context | token/session/membership/tenant/binding enforced |
+| Lifecycle | durable explicit transitions + terminal immutability |
+| Recovery | no automatic replay after recorded dispatch |
+| Legacy AgentExecutor | direct dispatch removed; platform binding required |
+| Remote delivery | draft PR #10; base M51; head M52 |
+| CI | reliability run 30056416160 GREEN |
+| Connectors | DRY_RUN_ONLY |
+| Trading Guardian | UNENGAGED_ADVISORY_ONLY |
+| Milestone | M52_COMPLETE_WITH_LIMITATIONS |
+| Remote certification | M52_REMOTE_CERTIFIED_WITH_LIMITATIONS |
+| Production | NOT_AUTHORIZED |
+
+Evidence: `docs/platform/M52_*.md`. Local and CI validation are recorded.
+Browser certification and deployment are not claimed.
+
 
 
 ## M51 — Private Alpha Productization (2026-07-23)
@@ -16,7 +37,7 @@
 | Milestone | M51_COMPLETE_WITH_LIMITATIONS |
 | Production | NOT_AUTHORIZED |
 
-Evidence: `docs/platform/M51_*.md`. **M52 not started.**
+Evidence: `docs/platform/M51_*.md`. Superseded in runtime scope by M52.
 
 
 ## M50 — Platform Integration, Identity Foundation, Private Alpha Readiness (2026-07-23)

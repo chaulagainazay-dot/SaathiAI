@@ -1,5 +1,16 @@
 # SaathiOS Technical Debt / Known Gaps
 
+## M52 residual / deferred (2026-07-23)
+
+- Platform-agent execution is consolidated through `PlatformAgentRuntime` and
+  M49 `ExecutionGateway`; unbound legacy `AgentExecutor` dispatch is closed.
+- Single-host SQLite lifecycle coordination is not a distributed guarantee.
+- Recorded-dispatch restart recovery pauses for manual reconciliation and never
+  auto-replays a mutation.
+- Multi-agent administrative binding, live connector mutations, CI/browser
+  certification, deployment, and production authorization remain deferred.
+- Trading Guardian remains unengaged and advisory-only.
+
 ## Program note (M21–M39 / M30, 2026-07-17)
 
 Platform program through **M30 connector conformance + certification** (operator-authorized).

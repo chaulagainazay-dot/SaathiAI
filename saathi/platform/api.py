@@ -107,10 +107,16 @@ class AgentExecuteBody(BaseModel):
     project_id: str = ""
     mission_id: str = ""
     run_id: str = ""
+    idempotency_key: str = ""
+    capability: str = ""
+    agent_id: str = "platform-agent"
+    timeout_sec: float | None = None
     # spoof fields intentionally ignored
     user_id: str = ""
     org_id: str = ""
+    workspace_id: str = ""
     role: str = ""
+    authority: str = ""
 
 
 class ProjectBody(BaseModel):
@@ -156,6 +162,18 @@ class ExecuteBody(BaseModel):
     run_id: str = ""
     idempotency_key: str = ""
     capability: str = ""
+    timeout_sec: float | None = None
+    # compatibility fields are accepted but never trusted
+    user_id: str = ""
+    org_id: str = ""
+    workspace_id: str = ""
+    role: str = ""
+    authority: str = ""
+
+
+class RuntimeResumeBody(BaseModel):
+    approval_id: str = ""
+    timeout_sec: float | None = None
 
 
 class ConfigBody(BaseModel):
@@ -428,19 +446,19 @@ def platform_execute(
     x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
 ):
     try:
-        ctx = _svc().require_context(
-            _token(authorization, x_platform_token),
+        from saathi.platform.runtime import PlatformAgentRuntime
+
+        result = PlatformAgentRuntime(_svc()).execute_token(
+            token=_token(authorization, x_platform_token),
+            tool_id=body.tool_id,
+            arguments=body.arguments,
             project_id=body.project_id,
             mission_id=body.mission_id,
             run_id=body.run_id,
-        )
-        result = _svc().execute_tool(
-            ctx,
-            tool_id=body.tool_id,
-            arguments=body.arguments,
             approval_id=body.approval_id,
             idempotency_key=body.idempotency_key,
             capability=body.capability,
+            timeout_sec=body.timeout_sec,
         )
         return {
             "ok": result.ok,
@@ -448,8 +466,10 @@ def platform_execute(
             "error_code": result.error_code or "",
             "safe_message": result.safe_message,
             "data": result.data,
-            "run_id": ctx.run_id,
+            "run_id": getattr(result, "platform_run_id", body.run_id),
             "tool_id": body.tool_id,
+            "execution_id": getattr(result, "platform_execution_id", ""),
+            "execution_state": getattr(result, "platform_execution_state", ""),
         }
     except PlatformContextError as e:
         raise _err(e) from e
@@ -751,6 +771,10 @@ def agent_execute(
             mission_id=body.mission_id,
             approval_id=body.approval_id,
             run_id=body.run_id,
+            idempotency_key=body.idempotency_key,
+            capability=body.capability,
+            agent_id=body.agent_id,
+            timeout_sec=body.timeout_sec,
         )
         return {
             "ok": result.ok,
@@ -758,7 +782,15 @@ def agent_execute(
             "error_code": result.error_code or "",
             "safe_message": result.safe_message,
             "data": result.data,
-            "spoof_fields_ignored": ["user_id", "org_id", "role"],
+            "execution_id": getattr(result, "platform_execution_id", ""),
+            "execution_state": getattr(result, "platform_execution_state", ""),
+            "spoof_fields_ignored": [
+                "user_id",
+                "org_id",
+                "workspace_id",
+                "role",
+                "authority",
+            ],
         }
     except PlatformContextError as e:
         raise _err(e) from e
@@ -769,3 +801,68 @@ def agent_callers():
     from saathi.platform.agent_binding import inventory_agent_callers
 
     return {"callers": inventory_agent_callers()}
+
+
+@router.get("/runtime/executions/{execution_id}")
+def runtime_execution(
+    execution_id: str,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        from saathi.platform.runtime import PlatformAgentRuntime
+
+        runtime = PlatformAgentRuntime(_svc())
+        rec = runtime._scoped_record(
+            _token(authorization, x_platform_token), execution_id
+        )
+        return {"execution": rec.to_public()}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/runtime/executions/{execution_id}/cancel")
+def runtime_cancel(
+    execution_id: str,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        from saathi.platform.runtime import PlatformAgentRuntime
+
+        rec = PlatformAgentRuntime(_svc()).cancel(
+            token=_token(authorization, x_platform_token),
+            execution_id=execution_id,
+        )
+        return {"execution": rec.to_public()}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/runtime/executions/{execution_id}/resume")
+def runtime_resume(
+    execution_id: str,
+    body: RuntimeResumeBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        from saathi.platform.runtime import PlatformAgentRuntime
+
+        result = PlatformAgentRuntime(_svc()).resume(
+            token=_token(authorization, x_platform_token),
+            execution_id=execution_id,
+            approval_id=body.approval_id,
+            timeout_sec=body.timeout_sec,
+        )
+        return {
+            "ok": result.ok,
+            "outcome_class": result.outcome_class.value,
+            "error_code": result.error_code or "",
+            "safe_message": result.safe_message,
+            "data": result.data,
+            "execution_id": getattr(result, "platform_execution_id", ""),
+            "execution_state": getattr(result, "platform_execution_state", ""),
+        }
+    except PlatformContextError as e:
+        raise _err(e) from e

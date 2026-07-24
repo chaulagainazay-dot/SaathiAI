@@ -462,162 +462,17 @@ class PlatformService:
         idempotency_key: str = "",
         capability: str = "",
     ):
-        """Execute a registered M49 tool through ExecutionGateway only."""
-        ctx.require_permission(PlatformPermission.RUNTIME_EXECUTE)
-        ctx.validate()
-        sec = self.store.get_config("security", {}) or {}
-        if sec.get("execution_enabled") is False:
-            raise PlatformContextError("EXECUTION_DISABLED", "owner disabled execution")
-        if sec.get("approvals_enabled") is False and approval_id:
-            raise PlatformContextError("APPROVALS_DISABLED", "owner disabled approvals")
-        from saathi.execution import ExecutionGateway
-        from saathi.tool_runtime.contracts import ToolApprovalReference, ToolOutcomeClass
-        from saathi.tool_runtime.registry import default_registry
+        """M50 compatibility wrapper; M52 runtime is the sole platform entry."""
+        from saathi.platform.runtime import PlatformAgentRuntime
 
-        reg = default_registry()
-        manifest = reg.get_manifest(tool_id)
-        if not manifest:
-            self._audit(
-                "runtime.execute",
-                ctx,
-                tool_id=tool_id,
-                outcome="BLOCKED",
-                detail={"error": "TOOL_NOT_FOUND"},
-            )
-            raise PlatformContextError("TOOL_NOT_FOUND", tool_id)
-
-        approval_ref = None
-        aid = approval_id or ctx.approval_id
-        needs_approval = manifest.approval_requirement.value not in (
-            "NO_APPROVAL_REQUIRED",
-            "PROHIBITED",
-        )
-        if needs_approval or aid:
-            if not aid:
-                raise PlatformContextError(
-                    "APPROVAL_REQUIRED",
-                    f"tool {tool_id} requires approval_id",
-                )
-            self.store.expire_stale_approvals()
-            rec = self.store.get_approval(aid)
-            if not rec:
-                raise PlatformContextError("APPROVAL_NOT_FOUND", aid)
-            # Scope binding — cannot reuse outside scope
-            if rec.org_id != ctx.org_id or rec.workspace_id != ctx.workspace_id:
-                raise PlatformContextError("APPROVAL_SCOPE", "org/workspace mismatch")
-            if rec.user_id and rec.user_id != ctx.user_id:
-                # approvals are org-scoped for decide, but consume must be for requester or owner/admin
-                if ctx.role not in (
-                    PlatformRole.OWNER.value,
-                    PlatformRole.ADMIN.value,
-                    PlatformRole.SYSTEM.value,
-                ):
-                    if rec.user_id != ctx.user_id:
-                        raise PlatformContextError(
-                            "APPROVAL_USER_MISMATCH", "approval not for this user"
-                        )
-            if rec.tool_id != tool_id:
-                raise PlatformContextError("APPROVAL_TOOL_MISMATCH", "approval tool mismatch")
-            if rec.project_id and ctx.project_id and rec.project_id != ctx.project_id:
-                raise PlatformContextError("APPROVAL_PROJECT_MISMATCH", "project mismatch")
-            if rec.mission_id and ctx.mission_id and rec.mission_id != ctx.mission_id:
-                raise PlatformContextError("APPROVAL_MISSION_MISMATCH", "mission mismatch")
-            if rec.status == ApprovalStatus.REVOKED.value:
-                raise PlatformContextError("APPROVAL_REVOKED", aid)
-            if rec.status == ApprovalStatus.EXPIRED.value:
-                raise PlatformContextError("APPROVAL_EXPIRED", aid)
-            if rec.status == ApprovalStatus.REJECTED.value:
-                raise PlatformContextError("APPROVAL_REJECTED", aid)
-            if rec.status == ApprovalStatus.CONSUMED.value:
-                raise PlatformContextError("APPROVAL_REPLAY", "approval already consumed")
-            if rec.status != ApprovalStatus.APPROVED.value:
-                raise PlatformContextError("APPROVAL_NOT_APPROVED", rec.status)
-            now = time.time()
-            if rec.expires_at and rec.expires_at < now:
-                rec.status = ApprovalStatus.EXPIRED.value
-                self.store.save_approval(rec)
-                raise PlatformContextError("APPROVAL_EXPIRED", aid)
-
-            # Bind approval run only if the record was scoped to a run;
-            # otherwise leave empty so ToolApprovalReference does not
-            # reject a different execute run_id.
-            bound_run = rec.run_id or ""
-            # Actor must match ToolExecutionRequest.requested_by (user:<id>).
-            # Action: leave empty unless connector tools — service uses cap as action_hint.
-            action_for_ref = rec.action
-            if not rec.tool_id.startswith("m49.connector."):
-                # Non-connector: service validates action against capability string
-                action_for_ref = rec.capability or capability or rec.action or ""
-            approval_ref = ToolApprovalReference(
-                approval_id=rec.approval_id,
-                actor=ctx.requested_by(),
-                capability=rec.capability or capability or "",
-                tool_id=rec.tool_id,
-                tool_version=rec.tool_version or "",
-                run_id=bound_run,
-                mission_id=ctx.mission_id or rec.mission_id,
-                side_effect_class=rec.side_effect_class or manifest.side_effect_class.value,
-                connector=rec.connector,
-                action=action_for_ref,
-                target_resource=rec.target_resource,
-                authority=rec.authority or manifest.authority_class.value,
-                expires_at=rec.expires_at,
-                revoked=False,
-                active=True,
-            )
-
-        idemp = (idempotency_key or "").strip()
-        if not idemp:
-            # Mutations typically require a key; derive a scoped one if absent.
-            from saathi.tool_runtime.contracts import ToolIdempotencyClass
-
-            klass = getattr(
-                getattr(manifest, "idempotency_policy", None), "klass", None
-            )
-            if klass in (
-                ToolIdempotencyClass.IDEMPOTENCY_KEY_REQUIRED,
-                ToolIdempotencyClass.NON_IDEMPOTENT,
-            ):
-                idemp = f"m50:{ctx.org_id}:{ctx.run_id}:{tool_id}:{new_id()}"
-
-        result = ExecutionGateway().execute_registered_tool(
-            tool_id=tool_id,
-            arguments=dict(arguments or {}),
-            run_id=ctx.run_id,
-            requested_by=ctx.requested_by(),
-            capability=capability,
-            idempotency_key=idemp,
-            approval_reference=approval_ref,
-        )
-
-        # Consume approval on terminal mutation success or attempt (prevent replay)
-        if aid and approval_ref:
-            rec = self.store.get_approval(aid)
-            if rec and rec.status == ApprovalStatus.APPROVED.value:
-                rec.status = ApprovalStatus.CONSUMED.value
-                rec.consumed_at = time.time()
-                self.store.save_approval(rec)
-
-        outcome = (
-            result.outcome_class.value
-            if hasattr(result.outcome_class, "value")
-            else str(result.outcome_class)
-        )
-        self._audit(
-            "runtime.execute",
+        return PlatformAgentRuntime(self).execute_context(
             ctx,
             tool_id=tool_id,
-            approval_id=aid or "",
-            authority=manifest.authority_class.value,
-            outcome=outcome,
-            evidence=",".join(result.evidence_references or [])[:500],
-            detail={
-                "ok": result.ok,
-                "error_code": result.error_code or "",
-                "adapter_invoked": getattr(result, "adapter_invoked", None),
-            },
+            arguments=arguments,
+            approval_id=approval_id,
+            idempotency_key=idempotency_key,
+            capability=capability,
         )
-        return result
 
     def configuration(self, ctx: PlatformExecutionContext) -> dict[str, Any]:
         ctx.require_permission(PlatformPermission.SETTINGS_READ)

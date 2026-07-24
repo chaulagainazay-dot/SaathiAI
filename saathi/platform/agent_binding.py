@@ -18,6 +18,8 @@ class BoundAgentCall:
     tool_id: str
     arguments: dict
     approval_id: str = ""
+    agent_id: str = "platform-agent"
+    binding_id: str = ""
 
 
 class PlatformAgentBinding:
@@ -36,6 +38,7 @@ class PlatformAgentBinding:
         mission_id: str = "",
         approval_id: str = "",
         run_id: str = "",
+        agent_id: str = "platform-agent",
     ) -> BoundAgentCall:
         if not token:
             raise PlatformContextError("ANONYMOUS_PROHIBITED", "token required")
@@ -51,19 +54,22 @@ class PlatformAgentBinding:
         sec = self.platform.store.get_config("security", {}) or {}
         if sec.get("execution_enabled") is False:
             raise PlatformContextError("EXECUTION_DISABLED", "owner disabled execution")
+        from saathi.platform.runtime import binding_fingerprint
+
         return BoundAgentCall(
             ctx=ctx,
             tool_id=tool_id,
             arguments=dict(arguments or {}),
             approval_id=approval_id,
+            agent_id=agent_id,
+            binding_id=binding_fingerprint(ctx, agent_id),
         )
 
-    def execute_bound(self, call: BoundAgentCall):
-        return self.platform.execute_tool(
-            call.ctx,
-            tool_id=call.tool_id,
-            arguments=call.arguments,
-            approval_id=call.approval_id,
+    def execute_bound(self, call: BoundAgentCall, **runtime_options):
+        from saathi.platform.runtime import PlatformAgentRuntime
+
+        return PlatformAgentRuntime(self.platform).execute_bound(
+            call, **runtime_options
         )
 
     def execute(
@@ -76,6 +82,10 @@ class PlatformAgentBinding:
         mission_id: str = "",
         approval_id: str = "",
         run_id: str = "",
+        idempotency_key: str = "",
+        capability: str = "",
+        agent_id: str = "platform-agent",
+        timeout_sec: float | None = None,
     ):
         call = self.bind(
             token=token,
@@ -85,39 +95,52 @@ class PlatformAgentBinding:
             mission_id=mission_id,
             approval_id=approval_id,
             run_id=run_id,
+            agent_id=agent_id,
         )
-        return self.execute_bound(call)
+        return self.execute_bound(
+            call,
+            idempotency_key=idempotency_key,
+            capability=capability,
+            timeout_sec=timeout_sec,
+        )
 
 
 def inventory_agent_callers() -> list[dict[str, Any]]:
     """Static inventory of known user-originated tool dispatch surfaces."""
     return [
         {
-            "caller": "saathi.agent.AgentExecutor",
-            "entry": "execute_tool (legacy saathi.tools)",
+            "caller": "saathi.agent_runtime.gateway_exec.AgentExecutor",
+            "entry": "request_tool",
             "platform_bound": False,
-            "migration": "M51_PARTIAL — use PlatformAgentBinding for m49 tools",
+            "migration": "M52_BLOCKED_UNLESS_PLATFORM_RUNTIME_BOUND",
             "residual": True,
         },
         {
             "caller": "saathi.agent_runtime.gateway_exec",
             "entry": "execute_registered_tool",
-            "platform_bound": "optional",
-            "migration": "prefer PlatformAgentBinding when session present",
+            "platform_bound": False,
+            "migration": "M52 compatibility shell; direct dispatch removed",
             "residual": True,
         },
         {
             "caller": "saathi.platform.service.PlatformService.execute_tool",
-            "entry": "ExecutionGateway",
+            "entry": "PlatformAgentRuntime compatibility delegate",
             "platform_bound": True,
-            "migration": "canonical",
-            "residual": False,
+            "migration": "compatibility-only; removal after callers migrate",
+            "residual": True,
         },
         {
             "caller": "saathi.platform.agent_binding.PlatformAgentBinding",
-            "entry": "execute",
+            "entry": "PlatformAgentRuntime.execute_bound",
             "platform_bound": True,
-            "migration": "canonical agent path",
+            "migration": "canonical binding path",
+            "residual": False,
+        },
+        {
+            "caller": "saathi.platform.runtime.PlatformAgentRuntime",
+            "entry": "execute_token / execute_bound",
+            "platform_bound": True,
+            "migration": "M52 canonical platform-agent path",
             "residual": False,
         },
     ]

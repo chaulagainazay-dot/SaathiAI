@@ -28,6 +28,24 @@ If the answer is the latter, the feature belongs in the product layer, not the p
 
 ## 3. Current Platform State
 
+### M52 platform-agent runtime consolidation (2026-07-23)
+
+* **Canonical path:** token-trusted identity/session/tenant context →
+  `PlatformAgentBinding` → `PlatformAgentRuntime` → Approval Center →
+  M49 `ExecutionGateway` → tool service/registry/adapter/audit.
+* **One execution authority:** the runtime orchestrates lifecycle and context;
+  it does not replace or weaken ExecutionGateway.
+* **Lifecycle:** durable explicit states, legal transitions, cancellation,
+  timeout, scoped idempotency, terminal replay, and restart reconciliation in
+  the existing platform SQLite database.
+* **Recovery safety:** a recorded dispatch is never automatically replayed
+  after restart; uncertain work pauses for review.
+* **Legacy closure:** `AgentExecutor` direct gateway and special local/video
+  tool dispatch were removed; an unbound agent fails closed.
+* **Safety:** connector mutations remain dry-run, financial execution remains
+  prohibited, Trading Guardian remains unengaged/advisory-only, and production
+  is not authorized.
+
 ### Platform M30 connector conformance and certification (2026-07-17)
 
 * **Module:** `saathi.connectors.conformance` — specification, sandbox harness, fingerprint, drift, revoke, CLI.

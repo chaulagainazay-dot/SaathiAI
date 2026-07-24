@@ -318,12 +318,12 @@ def test_no_direct_provider_calls_in_runtime():
 def test_unknown_tool_not_faked(store):
     ex = AgentExecutor(execute_fn=_fake_exec)
     rid = store.create_run(objective="x", strategy="c", actor="u")
-    # researcher may use file.read (risk 0) but no M49 registry / gateway op
-    # → fail-closed (M49.1: rejected, never fabricated success)
+    # M52: legacy AgentExecutor has no trusted platform session/binding, so even
+    # a risk-0 tool is rejected before any legacy or gateway dispatch.
     out = ex.request_tool(registry.get("researcher"), "file.read", {}, store, rid)
     assert out["status"] in ("no-op", "rejected")
     assert out["status"] != "success"
-    assert "no gateway" in (out.get("reason") or "").lower() or out.get("error_code") == "TOOL_NOT_FOUND"
+    assert out.get("error_code") == "PLATFORM_RUNTIME_REQUIRED"
     tr = [t for t in store.tool_requests(rid) if t["tool"] == "file.read"]
     assert tr and tr[0]["status"] in ("no-op", "rejected")
     assert tr[0]["status"] != "success"
