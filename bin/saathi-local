@@ -1,0 +1,309 @@
+#!/usr/bin/env bash
+# saathi-local — SaathiOS localhost daily-use process manager (M57).
+#
+# Localhost-only, fail-closed, reversible. Manages exactly two owned processes:
+#   backend  — uvicorn saathi.server:app on 127.0.0.1:8765
+#   frontend — Next.js dev on localhost:3000 (NEXT_PUBLIC_SAATHI_API=127.0.0.1:8765)
+#
+# Ownership is tracked via PID files AND a command-signature check, so this never
+# stops or reuses an unrelated Node/Python/npm/uvicorn/Next.js process. It never
+# binds to 0.0.0.0, never uses tunnels, never enables production/connectors/
+# financial/trading/multi-host, and never requires sudo.
+#
+# Subcommands: start stop restart status open logs doctor
+#              install-login uninstall-login  (LaunchAgent; disabled by default)
+set -euo pipefail
+
+# ── paths ────────────────────────────────────────────────────────────────────
+_resolve_repo() {
+  if [ -n "${SAATHI_REPO:-}" ] && [ -d "$SAATHI_REPO/saathi-os" ]; then
+    printf '%s\n' "$SAATHI_REPO"; return 0
+  fi
+  local src="${BASH_SOURCE[0]}"
+  while [ -h "$src" ]; do
+    local dir; dir="$(cd -P "$(dirname "$src")" >/dev/null 2>&1 && pwd)"
+    src="$(readlink "$src")"; [[ $src != /* ]] && src="$dir/$src"
+  done
+  local bindir; bindir="$(cd -P "$(dirname "$src")" >/dev/null 2>&1 && pwd)"
+  # bin/ lives at repo root
+  cd "$bindir/.." && pwd
+}
+
+REPO="$(_resolve_repo)"
+SAATHI_HOME="${SAATHI_LOCAL_HOME:-$HOME/.saathi}"
+RUN_DIR="$SAATHI_HOME/run"
+LOG_DIR="$SAATHI_HOME/logs"
+BACKEND_PID="$RUN_DIR/backend.pid"
+FRONTEND_PID="$RUN_DIR/frontend.pid"
+LOCK_FILE="$RUN_DIR/launcher.lock"
+BACKEND_LOG="$LOG_DIR/backend.log"
+FRONTEND_LOG="$LOG_DIR/frontend.log"
+LAUNCHER_LOG="$LOG_DIR/launcher.log"
+
+BFF_HOST="127.0.0.1"; BFF_PORT="8765"
+UI_HOST="localhost"; UI_PORT="3000"
+API_BASE="http://127.0.0.1:8765"
+UI_URL="http://localhost:3000"
+LOG_MAX_BYTES="1048576"   # 1 MiB per log, rotated to .1
+PY="$REPO/.venv/bin/python"
+
+mkdir -p "$RUN_DIR" "$LOG_DIR"
+
+# ── logging (bounded, no secrets) ────────────────────────────────────────────
+_rotate() { local f="$1"; [ -f "$f" ] && [ "$(wc -c <"$f" 2>/dev/null || echo 0)" -gt "$LOG_MAX_BYTES" ] && mv -f "$f" "$f.1" || true; }
+_log() { _rotate "$LAUNCHER_LOG"; printf '%s %s\n' "$(date '+%Y-%m-%dT%H:%M:%S')" "$*" >>"$LAUNCHER_LOG"; }
+say() { printf '%s\n' "$*"; }
+
+# ── ownership: pid alive AND command signature matches ───────────────────────
+# Signatures recognize a SaathiOS process (either launch style). Ownership for
+# *stopping* additionally requires a launcher PID file (see _stop_owned): the
+# launcher reuses any healthy SaathiOS backend/frontend but only stops the ones
+# it started, never an unrelated or externally-managed process.
+_sig_backend='uvicorn +saathi\.server:app|-m +saathi\.server'
+_sig_frontend='next(-server| dev)'
+_alive() { local pid="$1"; [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; }
+_cmd_of() { ps -o command= -p "$1" 2>/dev/null || true; }
+_cwd_of() { lsof -a -p "$1" -d cwd -Fn 2>/dev/null | grep '^n' | head -n1 | sed 's/^n//'; }
+_is_saathi() {  # _is_saathi <pid> <role> — recognizes a SaathiOS process
+  local pid="$1" role="$2" cmd
+  _alive "$pid" || return 1
+  cmd="$(_cmd_of "$pid")"
+  case "$role" in
+    backend)  printf '%s' "$cmd" | grep -Eq "$_sig_backend" ;;
+    # Next.js worker command is "next-server ..." (no path); confirm via cwd.
+    frontend) printf '%s' "$cmd" | grep -Eq "$_sig_frontend" && printf '%s' "$(_cwd_of "$pid")" | grep -q "saathi-os" ;;
+    *) return 1 ;;
+  esac
+}
+# Owned == recognized SaathiOS process AND recorded in the launcher's PID file.
+_owned() {  # _owned <pid> <role>
+  local pid="$1" role="$2" pf
+  _is_saathi "$pid" "$role" || return 1
+  case "$role" in backend) pf="$BACKEND_PID";; frontend) pf="$FRONTEND_PID";; *) return 1;; esac
+  [ "$(_read_pid "$pf")" = "$pid" ]
+}
+_read_pid() { [ -f "$1" ] && head -n1 "$1" 2>/dev/null | tr -dc '0-9' || true; }
+_listener_pid() { lsof -nP -iTCP:"$1" -sTCP:LISTEN -t 2>/dev/null | head -n1 || true; }
+
+# ── readiness probes ─────────────────────────────────────────────────────────
+_http_code() { curl -s -o /dev/null -w '%{http_code}' --max-time 4 "$1" 2>/dev/null || echo "000"; }
+_backend_ready() { [ "$(_http_code "$API_BASE/api/v1/platform/health")" = "200" ]; }
+_frontend_ready() { [ "$(_http_code "$UI_URL/platform")" = "200" ]; }
+
+_wait_ready() {  # _wait_ready <fn> <label> <timeout_sec>
+  local fn="$1" label="$2" t="${3:-60}" i=0
+  while [ "$i" -lt "$t" ]; do "$fn" && return 0; sleep 1; i=$((i+1)); done
+  say "  ! $label did not become ready within ${t}s"; return 1
+}
+
+# ── environment checks ───────────────────────────────────────────────────────
+_check_env() {
+  local ok=0
+  [ -x "$PY" ] || { say "  ! python venv missing at .venv (run: python -m venv .venv && pip install -e .)"; ok=1; }
+  [ -d "$REPO/saathi-os/node_modules" ] || { say "  ! frontend deps missing (run: cd saathi-os && npm install)"; ok=1; }
+  command -v curl >/dev/null 2>&1 || { say "  ! curl not found"; ok=1; }
+  return $ok
+}
+
+# ── start ────────────────────────────────────────────────────────────────────
+cmd_start() {
+  _log "start requested"
+  # single-flight lock (idempotent; avoids duplicate start storms)
+  if ! ( set -o noclobber; printf '%s' "$$" >"$LOCK_FILE" ) 2>/dev/null; then
+    if _alive "$(_read_pid "$LOCK_FILE")"; then say "start already in progress (lock held); aborting"; return 0; fi
+    rm -f "$LOCK_FILE"; ( set -o noclobber; printf '%s' "$$" >"$LOCK_FILE" ) 2>/dev/null || true
+  fi
+  trap 'rm -f "$LOCK_FILE"' EXIT
+  _check_env || { say "environment not ready; see doctor"; return 1; }
+
+  # backend — reuse any healthy SaathiOS backend; start our own only if free.
+  local occ; occ="$(_listener_pid "$BFF_PORT")"
+  if [ -n "$occ" ]; then
+    if _is_saathi "$occ" backend; then
+      if _backend_ready; then say "backend: reusing healthy SaathiOS backend PID $occ on $BFF_HOST:$BFF_PORT (not launcher-owned; left as-is)";
+      else say "backend: PID $occ is a SaathiOS backend but not ready — leaving it (not launcher-owned)"; fi
+    else
+      say "backend: port $BFF_PORT occupied by UNRELATED PID $occ — refusing to kill it (fail-closed)"; _log "port $BFF_PORT occupied by $occ (unrelated)"; return 1
+    fi
+  else
+    _rotate "$BACKEND_LOG"
+    ( cd "$REPO" && exec "$PY" -m uvicorn saathi.server:app --host "$BFF_HOST" --port "$BFF_PORT" ) >>"$BACKEND_LOG" 2>&1 &
+    local pid=$!; printf '%s\nbackend\n' "$pid" >"$BACKEND_PID"
+    say "backend: starting PID $pid on $BFF_HOST:$BFF_PORT"
+    _wait_ready _backend_ready backend 60 || { say "backend failed to start (see: saathi-local logs --backend)"; return 1; }
+  fi
+
+  # frontend — reuse any healthy SaathiOS frontend; start our own only if free.
+  occ="$(_listener_pid "$UI_PORT")"
+  if [ -n "$occ" ]; then
+    if _is_saathi "$occ" frontend; then
+      if _frontend_ready; then say "frontend: reusing healthy SaathiOS frontend PID $occ on $UI_URL (not launcher-owned; left as-is)";
+      else say "frontend: PID $occ is a SaathiOS frontend but not ready — leaving it (not launcher-owned)"; fi
+    else
+      say "frontend: port $UI_PORT occupied by UNRELATED PID $occ — refusing to kill it (fail-closed)"; _log "port $UI_PORT occupied by $occ (unrelated)"; return 1
+    fi
+  else
+    _rotate "$FRONTEND_LOG"
+    ( cd "$REPO/saathi-os" && NEXT_PUBLIC_SAATHI_API="$API_BASE" exec npm run dev -- -p "$UI_PORT" ) >>"$FRONTEND_LOG" 2>&1 &
+    local pid=$!; printf '%s\nfrontend\n' "$pid" >"$FRONTEND_PID"
+    say "frontend: starting PID $pid on $UI_URL (API=$API_BASE)"
+    _wait_ready _frontend_ready frontend 90 || { say "frontend failed to start (see: saathi-local logs --frontend)"; return 1; }
+  fi
+
+  rm -f "$LOCK_FILE"; trap - EXIT
+  say "SaathiOS localhost is ready → $UI_URL"
+  _log "start complete"
+}
+
+# ── stop ─────────────────────────────────────────────────────────────────────
+cmd_stop_one() {  # cmd_stop_one <role> <pid>
+  local role="$1" pid="$2"
+  _owned "$pid" "$role" || { say "$role: PID $pid not owned/alive — skipping"; return 0; }
+  say "$role: stopping PID $pid (graceful)"
+  kill -TERM "$pid" 2>/dev/null || true
+  local i=0; while [ "$i" -lt 10 ] && _alive "$pid"; do sleep 1; i=$((i+1)); done
+  if _alive "$pid"; then
+    if _owned "$pid" "$role"; then say "$role: forcing PID $pid"; kill -KILL "$pid" 2>/dev/null || true; fi
+  fi
+}
+cmd_stop() {
+  _log "stop requested"
+  local bpid fpid
+  bpid="$(_read_pid "$BACKEND_PID")"; fpid="$(_read_pid "$FRONTEND_PID")"
+  [ -n "$fpid" ] && cmd_stop_one frontend "$fpid"; rm -f "$FRONTEND_PID"
+  [ -n "$bpid" ] && cmd_stop_one backend "$bpid";  rm -f "$BACKEND_PID"
+  rm -f "$LOCK_FILE"
+  say "SaathiOS localhost stopped (owned processes only)"
+  _log "stop complete"
+}
+
+cmd_restart() { cmd_stop || true; sleep 1; cmd_start; }
+
+# ── status ───────────────────────────────────────────────────────────────────
+_status_line() {  # _status_line <role> <pidfile> <port> <ready_fn>
+  local role="$1" pf="$2" port="$3" fn="$4" pid own="—" state="stopped" ready="no"
+  pid="$(_listener_pid "$port")"
+  if [ -n "$pid" ] && _is_saathi "$pid" "$role"; then
+    state="running"; "$fn" && ready="yes"
+    if _owned "$pid" "$role"; then own="launcher"; else own="external"; fi
+  else
+    pid=""
+  fi
+  printf '  %-9s %-8s pid=%-7s port=%-5s ready=%-3s owner=%s\n' "$role" "$state" "${pid:-—}" "$port" "$ready" "$own"
+}
+cmd_status() {
+  say "SaathiOS localhost status"
+  _status_line backend "$BACKEND_PID" "$BFF_PORT" _backend_ready
+  _status_line frontend "$FRONTEND_PID" "$UI_PORT" _frontend_ready
+  say "  frontend url  $UI_URL"
+  say "  api url       $API_BASE"
+  say "  api base cfg  NEXT_PUBLIC_SAATHI_API=$API_BASE"
+  say "  binding       localhost-only (127.0.0.1 / localhost)"
+  say "  production     NOT_AUTHORIZED"
+  say "  connectors     DRY_RUN_ONLY"
+  say "  financial      DISABLED"
+  say "  trading        DISABLED"
+  say "  multi-host     DISABLED"
+}
+
+# ── open ─────────────────────────────────────────────────────────────────────
+cmd_open() {
+  if _backend_ready && _frontend_ready; then :; else
+    say "SaathiOS not fully ready — starting…"; cmd_start || { say "start failed; not opening"; return 1; }
+  fi
+  say "opening $UI_URL"
+  if command -v open >/dev/null 2>&1; then open "$UI_URL"; else say "  (open the URL manually: $UI_URL)"; fi
+}
+
+# ── logs ─────────────────────────────────────────────────────────────────────
+cmd_logs() {
+  local which="all"
+  case "${1:-}" in --backend) which=backend;; --frontend) which=frontend;; --launcher) which=launcher;; esac
+  case "$which" in
+    backend)  say "== backend ($BACKEND_LOG) =="; tail -n 60 "$BACKEND_LOG" 2>/dev/null || say "(no backend log)";;
+    frontend) say "== frontend ($FRONTEND_LOG) =="; tail -n 60 "$FRONTEND_LOG" 2>/dev/null || say "(no frontend log)";;
+    launcher) say "== launcher ($LAUNCHER_LOG) =="; tail -n 60 "$LAUNCHER_LOG" 2>/dev/null || say "(no launcher log)";;
+    *) for f in "$BACKEND_LOG" "$FRONTEND_LOG" "$LAUNCHER_LOG"; do say "== $f =="; tail -n 20 "$f" 2>/dev/null || say "(none)"; done;;
+  esac
+}
+
+# ── doctor ───────────────────────────────────────────────────────────────────
+cmd_doctor() {
+  say "SaathiOS localhost doctor"
+  local warn=0
+  say "  repo            $REPO"
+  [ -x "$PY" ] && say "  python venv     OK" || { say "  python venv     MISSING"; warn=1; }
+  command -v node >/dev/null 2>&1 && say "  node            $(node -v)" || { say "  node            MISSING"; warn=1; }
+  command -v npm  >/dev/null 2>&1 && say "  npm             $(npm -v)" || { say "  npm             MISSING"; warn=1; }
+  [ -d "$REPO/saathi-os/node_modules" ] && say "  frontend deps   OK" || { say "  frontend deps   MISSING"; warn=1; }
+  # port ownership
+  local bocc focc; bocc="$(_listener_pid "$BFF_PORT")"; focc="$(_listener_pid "$UI_PORT")"
+  if [ -z "$bocc" ]; then say "  port $BFF_PORT       free";
+  elif _owned "$bocc" backend; then say "  port $BFF_PORT       owned by launcher (backend PID $bocc)";
+  elif _is_saathi "$bocc" backend; then say "  port $BFF_PORT       external SaathiOS backend (PID $bocc; left as-is)";
+  else say "  port $BFF_PORT       OCCUPIED by unrelated PID $bocc"; warn=1; fi
+  if [ -z "$focc" ]; then say "  port $UI_PORT       free";
+  elif _owned "$focc" frontend; then say "  port $UI_PORT       owned by launcher (frontend PID $focc)";
+  elif _is_saathi "$focc" frontend; then say "  port $UI_PORT       external SaathiOS frontend (PID $focc; left as-is)";
+  else say "  port $UI_PORT       OCCUPIED by unrelated PID $focc"; warn=1; fi
+  # stale pid files
+  for pf in "$BACKEND_PID:backend" "$FRONTEND_PID:frontend"; do
+    local f="${pf%:*}" r="${pf#*:}" p; p="$(_read_pid "$f")"
+    if [ -n "$p" ] && ! _owned "$p" "$r"; then say "  stale pid file  $f (PID $p not owned) — safe to clean"; warn=1; fi
+  done
+  # health
+  [ "$(_http_code "$API_BASE/api/v1/platform/health")" = "200" ] && say "  backend health  200" || { say "  backend health  DOWN"; warn=1; }
+  [ "$(_http_code "$UI_URL/platform")" = "200" ] && say "  frontend        200" || { say "  frontend        DOWN"; warn=1; }
+  # CORS preflight (X-Platform-Token from :3000)
+  local cors; cors="$(curl -s -o /dev/null -w '%{http_code}' --max-time 4 -X OPTIONS "$API_BASE/api/v1/platform/release/health" -H "Origin: $UI_URL" -H 'Access-Control-Request-Method: GET' -H 'Access-Control-Request-Headers: x-platform-token' 2>/dev/null || echo 000)"
+  [ "$cors" = "200" ] && say "  CORS preflight  200" || say "  CORS preflight  $cors (backend may be down)"
+  # release/local readiness gate (advisory; never prints secrets)
+  if [ -x "$PY" ]; then
+    say "  local gate      $("$PY" -m saathi.platform.local_readiness --oneline 2>/dev/null || echo 'unavailable')"
+  fi
+  say "  safety          production NOT_AUTHORIZED · connectors DRY_RUN · financial/trading DISABLED · multi-host DISABLED"
+  [ "$warn" = "0" ] && say "  => healthy" || say "  => attention needed (see items above)"
+  return 0
+}
+
+# ── LaunchAgent (prepared; disabled by default) ──────────────────────────────
+# Distinct label — never clobbers a pre-existing com.saathi.local agent.
+_agent_label="com.saathi.local-launcher"
+_agent_plist="$HOME/Library/LaunchAgents/$_agent_label.plist"
+cmd_install_login() {
+  local target; target="$(command -v saathi-local || echo "$REPO/bin/saathi-local")"
+  mkdir -p "$HOME/Library/LaunchAgents"
+  cat >"$_agent_plist" <<PLIST
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+  <key>Label</key><string>$_agent_label</string>
+  <key>ProgramArguments</key><array><string>$target</string><string>start</string></array>
+  <key>RunAtLoad</key><true/>
+  <key>StandardOutPath</key><string>$LAUNCHER_LOG</string>
+  <key>StandardErrorPath</key><string>$LAUNCHER_LOG</string>
+</dict></plist>
+PLIST
+  say "LaunchAgent written (DISABLED): $_agent_plist"
+  say "To enable at login (explicit opt-in): launchctl load $_agent_plist"
+  say "To disable: launchctl unload $_agent_plist  (or: saathi-local uninstall-login)"
+}
+cmd_uninstall_login() {
+  [ -f "$_agent_plist" ] && launchctl unload "$_agent_plist" 2>/dev/null || true
+  rm -f "$_agent_plist"; say "LaunchAgent removed: $_agent_plist"
+}
+
+# ── dispatch ─────────────────────────────────────────────────────────────────
+case "${1:-}" in
+  start) cmd_start ;;
+  stop) cmd_stop ;;
+  restart) cmd_restart ;;
+  status) cmd_status ;;
+  open) cmd_open ;;
+  logs) shift || true; cmd_logs "${1:-}" ;;
+  doctor) cmd_doctor ;;
+  install-login) cmd_install_login ;;
+  uninstall-login) cmd_uninstall_login ;;
+  ""|help|-h|--help) say "usage: saathi-local {start|stop|restart|status|open|logs|doctor|install-login|uninstall-login}" ;;
+  *) say "unknown subcommand: $1"; say "usage: saathi-local {start|stop|restart|status|open|logs|doctor|install-login|uninstall-login}"; exit 2 ;;
+esac

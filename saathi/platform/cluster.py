@@ -238,6 +238,30 @@ class ClusterCoordinator:
             ).to_public()
             self._save_workers(workers)
 
+    def beat_local_node(self) -> float:
+        """M57: refresh node-local (and worker-local) heartbeat to now. The
+        smallest safe single-host liveness signal — no network, no execution or
+        lease authority, no dispatcher. Keeps node-local health accurate while
+        the process runs; health goes stale after a bounded timeout once beats
+        stop. Returns the heartbeat timestamp."""
+        self.ensure_local()
+        now = self.clock.now()
+        nodes = self._nodes()
+        node = nodes.get(LOCAL_NODE_ID)
+        if node is not None:
+            node["last_heartbeat"] = now
+            node["status"] = "ACTIVE"
+            nodes[LOCAL_NODE_ID] = node
+            self._save_nodes(nodes)
+        workers = self._workers()
+        w = workers.get(LOCAL_WORKER_ID)
+        if w is not None:
+            w["last_heartbeat"] = now
+            w["last_health_check"] = now
+            workers[LOCAL_WORKER_ID] = w
+            self._save_workers(workers)
+        return now
+
     # ── worker registry (Objective 2) ────────────────────────────────────
     def register_worker(
         self, ctx: PlatformExecutionContext, *, worker_id: str = "",
@@ -850,3 +874,57 @@ def _to_full(self) -> dict[str, Any]:
 
 
 ExecutionLeaseRecord.to_full = _to_full
+
+
+# ── M57 single-host heartbeat runner ────────────────────────────────────────
+DEFAULT_HEARTBEAT_INTERVAL_SEC = 30.0
+_heartbeat_task = None
+
+
+def local_heartbeat_enabled() -> bool:
+    """Enabled by default; disabled only via SAATHI_LOCAL_HEARTBEAT=0. Localhost
+    single-host only — this never runs multi-host and grants no authority."""
+    return os.environ.get("SAATHI_LOCAL_HEARTBEAT", "1").strip() not in ("0", "false", "False")
+
+
+async def run_local_heartbeat(interval: float = DEFAULT_HEARTBEAT_INTERVAL_SEC) -> None:
+    """Beat node-local on a bounded interval until cancelled. Best-effort: a beat
+    failure never crashes the loop."""
+    import asyncio
+
+    coord = ClusterCoordinator()
+    while True:
+        try:
+            coord.beat_local_node()
+        except Exception:
+            pass
+        await asyncio.sleep(max(1.0, float(interval)))
+
+
+def start_local_heartbeat() -> None:
+    """Start the heartbeat task on the running event loop (idempotent)."""
+    global _heartbeat_task
+    if not local_heartbeat_enabled():
+        return
+    import asyncio
+
+    if _heartbeat_task is not None and not _heartbeat_task.done():
+        return
+    try:
+        loop = asyncio.get_event_loop()
+        # Beat once immediately so health is accurate right away.
+        try:
+            ClusterCoordinator().beat_local_node()
+        except Exception:
+            pass
+        _heartbeat_task = loop.create_task(run_local_heartbeat())
+    except RuntimeError:
+        _heartbeat_task = None
+
+
+def stop_local_heartbeat() -> None:
+    """Cancel the heartbeat task (graceful shutdown)."""
+    global _heartbeat_task
+    if _heartbeat_task is not None:
+        _heartbeat_task.cancel()
+        _heartbeat_task = None

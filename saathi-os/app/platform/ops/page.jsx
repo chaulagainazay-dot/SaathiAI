@@ -50,6 +50,7 @@ export default function OperatorConsolePage() {
   const [clusterRecovery, setClusterRecovery] = useState(null);
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const t = typeof window !== "undefined" ? localStorage.getItem(TOKEN_KEY) || "" : "";
@@ -59,24 +60,42 @@ export default function OperatorConsolePage() {
   const refresh = useCallback(async (tok) => {
     if (!tok) return;
     setBusy(true);
+    setLoading(true);
     setError(null);
-    // Resilient: a single failing endpoint must not blank the whole console.
-    const load = async (path, key, setter) => {
-      try {
-        const r = await plat(path, { token: tok });
-        setter(r[key] || null);
-      } catch (e) {
-        setError((prev) => prev || String(e.message || e));
+    // Cold-start hardening: during first Next.js route compilation, concurrent
+    // cross-origin fetches can transiently fail. Retry each with bounded backoff
+    // so a cold race shows "Loading…" then data — never a misleading fatal.
+    const loadWithRetry = async (path, key, setter, attempts = 4) => {
+      for (let i = 0; i < attempts; i += 1) {
+        try {
+          const r = await plat(path, { token: tok });
+          setter(r[key] || null);
+          return true;
+        } catch (e) {
+          const transient = /Failed to fetch|NetworkError|load failed|ECONNREFUSED/i.test(
+            String(e.message || e),
+          );
+          if (i === attempts - 1 || !transient) {
+            // Only surface a genuine error after retries are exhausted, or on a
+            // non-transient error (e.g. 401/403). Cold-start races stay quiet.
+            if (!transient) setError((prev) => prev || String(e.message || e));
+            else setError((prev) => prev || `Some data unavailable (${path})`);
+            return false;
+          }
+          await new Promise((res) => setTimeout(res, 400 * (i + 1))); // 400/800/1200ms
+        }
       }
+      return false;
     };
     await Promise.allSettled([
-      load("/release/health", "health", setHealth),
-      load("/release/metrics", "metrics", setMetrics),
-      load("/cluster/topology", "topology", setTopology),
-      load("/cluster/node-health", "node_health", setNodeHealth),
-      load("/cluster/metrics", "metrics", setClusterMetrics),
-      load("/cluster/scheduler", "scheduler", setScheduler),
+      loadWithRetry("/release/health", "health", setHealth),
+      loadWithRetry("/release/metrics", "metrics", setMetrics),
+      loadWithRetry("/cluster/topology", "topology", setTopology),
+      loadWithRetry("/cluster/node-health", "node_health", setNodeHealth),
+      loadWithRetry("/cluster/metrics", "metrics", setClusterMetrics),
+      loadWithRetry("/cluster/scheduler", "scheduler", setScheduler),
     ]);
+    setLoading(false);
     setBusy(false);
   }, []);
 
@@ -106,8 +125,13 @@ export default function OperatorConsolePage() {
         DISABLED · TRADING DISABLED
       </Text>
 
-      {error && <ErrorState title="Console error" message={error} />}
-      {busy && <LoadingState label="Working…" />}
+      {loading && (
+        <div data-testid="ops-loading">
+          <LoadingState label="Loading operator console…" />
+        </div>
+      )}
+      {!loading && error && <ErrorState title="Console notice" message={error} />}
+      {!loading && busy && <LoadingState label="Working…" />}
       {!token && <Text tone="muted">Sign in on the Platform page first.</Text>}
 
       <Card>

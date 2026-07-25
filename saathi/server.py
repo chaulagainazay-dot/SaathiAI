@@ -5317,3 +5317,24 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+# ── M57 single-host heartbeat (localhost-only; advisory; no authority) ───────
+@app.on_event("startup")
+def _saathi_start_local_heartbeat():
+    """Keep node-local health accurate while the BFF runs. Cancelled on shutdown
+    so health goes stale after a bounded timeout once the process stops."""
+    try:
+        from saathi.platform.cluster import start_local_heartbeat
+        start_local_heartbeat()
+    except Exception:
+        pass
+
+
+@app.on_event("shutdown")
+def _saathi_stop_local_heartbeat():
+    try:
+        from saathi.platform.cluster import stop_local_heartbeat
+        stop_local_heartbeat()
+    except Exception:
+        pass

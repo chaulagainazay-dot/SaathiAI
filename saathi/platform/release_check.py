@@ -105,6 +105,20 @@ def build_report() -> dict:
             )
         except Exception as exc:  # pragma: no cover - defensive
             sections.append(_status("distributed_runtime", UNKNOWN, str(exc)[:120]))
+        # M57 localhost daily-use readiness (advisory).
+        try:
+            from saathi.platform import local_readiness
+
+            lr = local_readiness.report()
+            sections.append(
+                _status(
+                    "localhost_readiness",
+                    WARNING if lr["overall"] != "READY" else PASS,
+                    f"{lr['overall']} ({lr['passed']}/{lr['total']})",
+                )
+            )
+        except Exception as exc:  # pragma: no cover - defensive
+            sections.append(_status("localhost_readiness", UNKNOWN, str(exc)[:120]))
         sections.append(_status("diagnostics", by.get("diagnostics", UNKNOWN)))
         sections.append(_status("metrics", PASS if metrics["schema_version"] else UNKNOWN))
         sections.append(_status("evidence", by.get("evidence_export", UNKNOWN)))
