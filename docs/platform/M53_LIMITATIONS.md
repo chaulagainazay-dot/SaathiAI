@@ -12,7 +12,9 @@
   tools through ExecutionGateway.
 - The frontend is a bounded private-alpha operator surface, not browser
   certified in this milestone.
-- No CI result exists until the local M53 branch is explicitly pushed.
+- CI certified: authoritative PR-head `reliability` run 30108250805 passed
+  (`critical-regressions` + `full-suite`). Browser certification still not
+  performed in this milestone.
 - No deployment, production OAuth/email, live connector mutation, financial
   execution, trading execution, or production authority.
 - Trading Guardian is unengaged and advisory-only.

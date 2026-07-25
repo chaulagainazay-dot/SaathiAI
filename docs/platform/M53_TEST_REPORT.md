@@ -38,7 +38,11 @@ reports the final uninterrupted run against the current implementation.
 
 - Implemented: yes.
 - Locally validated: yes.
-- CI validated: no M53 CI run; branch was not pushed.
+- CI validated: yes. Authoritative PR-head `reliability` run 30108250805
+  (pull_request, SHA `1f54ac9`) passed: `critical-regressions` (job
+  89531015628) and `full-suite` (job 89534581661) both success. The push-event
+  run 30108173420 was concurrency-cancelled by design. See
+  `M53_REMOTE_VERIFICATION.md`.
 - Browser certified: no.
 - Deployed: no.
 - Production authorized: no.

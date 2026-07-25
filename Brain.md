@@ -43,6 +43,10 @@ If the answer is the latter, the feature belongs in the product layer, not the p
 * **Safety:** connector mutations remain dry-run, financial/trading execution
   remains disabled, Trading Guardian remains unengaged/advisory-only, and
   production is not authorized.
+* **Remote status:** `M53_REMOTE_CERTIFIED_WITH_LIMITATIONS`. Draft PR #11 (base
+  M52), CI-certified — reliability PR-head run 30108250805 passed
+  (critical-regressions + full-suite). Not merged; no deployment. Evidence:
+  `docs/platform/M53_REMOTE_VERIFICATION.md`.
 
 ### M52 platform-agent runtime consolidation (2026-07-23)
 
