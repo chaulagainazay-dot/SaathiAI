@@ -108,8 +108,13 @@ def test_launcher_localhost_only_and_failclosed_guards():
     assert "com.saathi.local-launcher" in src
 
 
-def _run(args, home):
-    env = {**os.environ, "SAATHI_LOCAL_HOME": str(home), "PATH": os.environ.get("PATH", "")}
+def _run(args, home, extra_env=None, path_prefix=None):
+    path = os.environ.get("PATH", "")
+    if path_prefix:
+        path = f"{path_prefix}:{path}"
+    env = {**os.environ, "SAATHI_LOCAL_HOME": str(home), "PATH": path}
+    if extra_env:
+        env.update(extra_env)
     return subprocess.run(
         ["bash", LAUNCHER, *args], capture_output=True, text=True, env=env, timeout=30
     )
@@ -148,3 +153,132 @@ def test_launcher_logs_have_no_secrets(tmp_path):
         content = launcher_log.read_text().lower()
         for forbidden in ("token", "password", "secret", "authorization"):
             assert forbidden not in content
+
+
+# ── M57.1 readiness-contract fail-closed regressions ──────────────────────────
+# The canonical classifier (_assess) is exercised via the test-only overrides
+# SAATHI_LOCAL_ASSESS_BACKEND / SAATHI_LOCAL_ASSESS_FRONTEND so the decision
+# layer (start / open / status) can be driven deterministically without
+# spawning real servers. Live defect reproduced: healthy external backend +
+# unhealthy external frontend must NOT report ready and must NOT open a browser.
+
+
+@pytest.fixture()
+def dummy_process():
+    """A real, alive PID standing in for an external frontend listener.
+
+    Lets a test assert the launcher never kills an external process."""
+    import time
+
+    p = subprocess.Popen(["sleep", "60"])
+    time.sleep(0.1)
+    try:
+        yield p
+    finally:
+        p.terminate()
+        try:
+            p.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            p.kill()
+
+
+def _fake_open_bin(tmp_path):
+    """A directory holding a fake `open` that records invocations to a sentinel."""
+    bindir = tmp_path / "fakebin"
+    bindir.mkdir()
+    sentinel = tmp_path / "opened.txt"
+    (bindir / "open").write_text(
+        "#!/usr/bin/env bash\n" f'echo "$@" >> "{sentinel}"\n'
+    )
+    (bindir / "open").chmod(0o755)
+    return bindir, sentinel
+
+
+def _env_backend_healthy_frontend_unhealthy(frontend_pid):
+    return {
+        "SAATHI_LOCAL_ASSESS_BACKEND": "external-healthy 1782",
+        "SAATHI_LOCAL_ASSESS_FRONTEND": f"external-unhealthy {frontend_pid}",
+    }
+
+
+def test_start_fails_closed_on_unhealthy_external_frontend(tmp_path, dummy_process):
+    home = tmp_path / "saathi-home"
+    r = _run(["start"], home, extra_env=_env_backend_healthy_frontend_unhealthy(dummy_process.pid))
+    # 1. non-zero exit (fail-closed)
+    assert r.returncode != 0
+    # 2. accurate message: never claims ready; names the frontend blocker
+    assert "is ready" not in r.stdout
+    assert "BLOCKER" in r.stdout and "NOT ready" in r.stdout
+    assert str(dummy_process.pid) in r.stdout
+    # 3. exact operator remediation instructions present
+    assert "saathi-local doctor" in r.stdout
+    assert "no external process was killed" in r.stdout
+    # 4. healthy external backend reused, left untouched
+    assert "reusing healthy external SaathiOS backend PID 1782" in r.stdout
+    # 5. no external PID is killed
+    assert dummy_process.poll() is None, "external frontend PID must never be killed"
+
+
+def test_open_does_not_launch_browser_when_frontend_unready(tmp_path, dummy_process):
+    home = tmp_path / "saathi-home"
+    bindir, sentinel = _fake_open_bin(tmp_path)
+    r = _run(
+        ["open"], home,
+        extra_env=_env_backend_healthy_frontend_unhealthy(dummy_process.pid),
+        path_prefix=str(bindir),
+    )
+    assert r.returncode != 0
+    assert not sentinel.exists(), "browser must not be launched when frontend is not ready"
+    assert "not opening browser" in r.stdout
+    assert dummy_process.poll() is None
+
+
+def test_open_launches_browser_when_both_ready(tmp_path):
+    home = tmp_path / "saathi-home"
+    bindir, sentinel = _fake_open_bin(tmp_path)
+    r = _run(
+        ["open"], home,
+        extra_env={
+            "SAATHI_LOCAL_ASSESS_BACKEND": "external-healthy 1782",
+            "SAATHI_LOCAL_ASSESS_FRONTEND": "external-healthy 48062",
+        },
+        path_prefix=str(bindir),
+    )
+    assert r.returncode == 0
+    assert "opening http://localhost:3000" in r.stdout
+    assert sentinel.exists(), "browser must launch when both roles are ready"
+    assert "http://localhost:3000" in sentinel.read_text()
+
+
+def test_start_reports_ready_only_when_both_healthy(tmp_path):
+    home = tmp_path / "saathi-home"
+    r = _run(
+        ["start"], home,
+        extra_env={
+            "SAATHI_LOCAL_ASSESS_BACKEND": "external-healthy 1782",
+            "SAATHI_LOCAL_ASSESS_FRONTEND": "external-healthy 48062",
+        },
+    )
+    assert r.returncode == 0
+    assert "SaathiOS localhost is ready" in r.stdout
+
+
+def test_status_distinguishes_external_unhealthy_from_healthy(tmp_path, dummy_process):
+    home = tmp_path / "saathi-home"
+    r = _run(["status"], home, extra_env=_env_backend_healthy_frontend_unhealthy(dummy_process.pid))
+    assert r.returncode == 0
+    # backend: external + ready; frontend: external + not ready — no disagreement.
+    assert "backend" in r.stdout and "ready=yes owner=external" in r.stdout
+    assert "ready=no  owner=external" in r.stdout
+
+
+def test_start_fails_closed_on_unrelated_backend_occupant(tmp_path):
+    home = tmp_path / "saathi-home"
+    r = _run(
+        ["start"], home,
+        extra_env={"SAATHI_LOCAL_ASSESS_BACKEND": "unrelated 99999"},
+    )
+    assert r.returncode != 0
+    assert "UNRELATED PID 99999" in r.stdout
+    assert "refusing to kill" in r.stdout
+    assert "is ready" not in r.stdout
