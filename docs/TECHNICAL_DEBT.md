@@ -1,5 +1,19 @@
 # SaathiOS Technical Debt / Known Gaps
 
+## M56 residual / deferred (2026-07-25)
+
+- Distributed runtime is a single-host foundation: workers/leases/nodes/scheduler
+  are advisory and implemented on one host; no networking, remote execution, or
+  multi-host coordination backend is enabled.
+- Cluster state is config-backed single-writer (no schema migration); multi-host
+  concurrent writes need a coordination backend (deferred).
+- No distributed consensus/quorum/exactly-once; recovery proves single-host
+  invariants only.
+- Operator-console cluster surfaces are browser-certified locally; backend
+  contract tests are the CI-side guarantee.
+- Deployment, production mode, connector mutation, financial/trading execution
+  remain deferred. Trading Guardian advisory-only.
+
 ## M55 residual / deferred (2026-07-25)
 
 - Release readiness is advisory/structural (`READY_WITH_LIMITATIONS`), not a

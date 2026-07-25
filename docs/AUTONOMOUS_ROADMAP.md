@@ -1,5 +1,28 @@
 # SaathiOS Autonomous Roadmap
 
+## M56 — Distributed Runtime Foundation (Single-Host Compatible) (2026-07-25)
+
+| Item | State |
+|---|---|
+| Abstractions | RuntimeNode/Cluster, WorkerLease/ExecutionLease, RuntimeHeartbeat, DistributedClock |
+| Worker registry | register/heartbeat/drain/pause/resume/retire (RUNTIME_OPERATE) |
+| Lease coordination | acquire/renew/verify/transfer/recover; single-owner, fail-closed |
+| Scheduler | advisory single-host plan (FIFO/priority, round-robin); pause/resume |
+| Topology / node health / metrics | read-only, tenant-scoped, no secrets |
+| Recovery certification | 7 scenarios (worker/lease/heartbeat/scheduler/drain/retire/reassign) |
+| Operator console | /platform/ops cluster/topology/node-health/scheduler/recovery cards |
+| Browser certification | see docs/platform/m56_evidence/ |
+| Persistence | config-backed (m56_*); NO schema migration; backwards compatible |
+| Runtime/Gateway | PlatformAgentRuntime canonical; ExecutionGateway sole authority |
+| Connectors DRY_RUN_ONLY · Financial/Trading | DISABLED |
+| Trading Guardian | UNENGAGED_ADVISORY_ONLY |
+| Milestone | M56_COMPLETE_WITH_LIMITATIONS (local) |
+| Production | NOT_AUTHORIZED |
+
+Evidence: `docs/platform/M56_*.md`. Single-host only; multi-host foundation
+prepared, not enabled. No deployment, no production authorization.
+
+
 ## M55 — Platform Release Candidate & Operational Excellence (2026-07-25)
 
 | Item | State |

@@ -28,6 +28,25 @@ If the answer is the latter, the feature belongs in the product layer, not the p
 
 ## 3. Current Platform State
 
+### M56 distributed runtime foundation (single-host compatible) (2026-07-25)
+
+* **Distributed foundation** (`saathi/platform/cluster.py`): RuntimeNode/Cluster,
+  WorkerLease/ExecutionLease, RuntimeHeartbeat, DistributedClock; WorkerRegistry
+  (register/heartbeat/drain/pause/resume/retire), LeaseCoordinator (single-owner
+  acquire/renew/verify/transfer/recover, fail-closed), SchedulerFoundation
+  (advisory FIFO/priority plan, pause/resume), Topology, NodeHealth, Distributed
+  Metrics, and a 7-scenario recovery certifier. Config-backed (m56_*), NO schema
+  migration, backwards compatible.
+* **Advisory only**: PlatformAgentRuntime stays canonical; ExecutionGateway stays
+  the sole registered-tool authority; leases/scheduler never execute or dispatch.
+  Single-host; multi-host prepared, not enabled.
+* **Operator console** (`/platform/ops`): cluster/topology/node-health/scheduler/
+  distributed-metrics/recovery cards. APIs under `/cluster/*`.
+* **Safety**: tenant isolation, no duplicate ownership/execution, no replay,
+  connectors dry-run, financial/trading disabled, Trading Guardian advisory-only,
+  production not authorized. `M56_COMPLETE_WITH_LIMITATIONS` (local; not pushed,
+  not merged, not deployed).
+
 ### M55 platform release candidate & operational excellence (2026-07-25)
 
 * **Release-excellence layer** (`saathi/platform/release.py`): expanded health,
