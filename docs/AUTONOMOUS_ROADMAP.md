@@ -1,5 +1,27 @@
 # SaathiOS Autonomous Roadmap
 
+## M57 — Localhost Daily-Use Hardening, Process Control & Launcher (2026-07-25)
+
+| Item | State |
+|---|---|
+| Launcher | bin/saathi-local: start/stop/restart/status/open/logs/doctor (~/.local/bin symlink) |
+| Ownership | PID-file + command-signature; reuse healthy, stop only own; fail-closed on unrelated |
+| Heartbeat | single-host beat on 30s BFF task; node-local healthy while running, stale after stop |
+| Cold-load UI | loading state + bounded retry/backoff; transient vs fatal distinguished |
+| macOS shortcut | PREPARED (scripts/macos/saathi-open.sh → saathi-local open); operator assigns ⌥⌘B |
+| Login startup | LaunchAgent com.saathi.local-launcher prepared, DISABLED by default |
+| Local readiness | saathi.platform.local_readiness; wired into doctor + release gate |
+| Browser certification | see docs/platform/m57_evidence/ |
+| Binding | localhost-only (127.0.0.1 / localhost); never 0.0.0.0; no tunnels |
+| Runtime/Gateway | PlatformAgentRuntime canonical; ExecutionGateway sole authority |
+| Connectors DRY_RUN_ONLY · Financial/Trading/Multi-host | DISABLED |
+| Milestone | M57_COMPLETE_WITH_LIMITATIONS (local) |
+| Production | NOT_AUTHORIZED |
+
+Evidence: `docs/platform/M57_*.md`. Localhost-only daily-use hardening; no
+deployment, no production, no multi-host.
+
+
 ## M56 — Distributed Runtime Foundation (Single-Host Compatible) (2026-07-25)
 
 | Item | State |

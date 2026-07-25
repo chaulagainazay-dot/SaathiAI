@@ -1,5 +1,17 @@
 # SaathiOS Technical Debt / Known Gaps
 
+## M57 residual / deferred (2026-07-25)
+
+- macOS ⌥⌘B is PREPARED, not auto-assigned (cannot safely enumerate system
+  bindings); operator assigns + verifies. Login LaunchAgent prepared, disabled.
+- A pre-existing com.saathi.local LaunchAgent may hold *:8765 (all interfaces);
+  M57 never modifies it and fails closed around it. Clean single-launcher daily
+  use requires the operator to unload it (or bind it to 127.0.0.1).
+- Heartbeat is single-host (30s); no multi-host coordination.
+- Cold-load retry mitigates first-compile races but a genuinely down backend
+  still surfaces after retries.
+- No deployment, production, connectors, financial/trading, or multi-host.
+
 ## M56 residual / deferred (2026-07-25)
 
 - Distributed runtime is a single-host foundation: workers/leases/nodes/scheduler

@@ -1,0 +1,430 @@
+{
+  "schema": "m57.browser_cert.v1",
+  "bff": "http://127.0.0.1:8810",
+  "ui": "http://127.0.0.1:3170",
+  "isolated_db": "/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m54-cert-63054/platform.db",
+  "mode": "dev",
+  "flows": {
+    "seed": {
+      "ok": true
+    },
+    "auth_anonymous_denied": true,
+    "diagnostics": {
+      "schema_version": "m54.readiness.v1",
+      "environment": {
+        "classification": "LOCAL_OR_TEST",
+        "private_alpha": true,
+        "production_authorized": false,
+        "labels": [
+          "PRIVATE_ALPHA",
+          "LOCAL_OR_TEST_ENVIRONMENT",
+          "NON_PRODUCTION",
+          "CONNECTOR_MUTATIONS_DRY_RUN",
+          "FINANCIAL_EXECUTION_DISABLED",
+          "TRADING_DISABLED",
+          "SINGLE_HOST_LOCAL_DATA"
+        ]
+      },
+      "health": {
+        "api": "ok",
+        "frontend": "served_separately",
+        "database": "available",
+        "platform_schema": "m53"
+      },
+      "runtime": {
+        "total_recent_executions": 1,
+        "queue_state": {
+          "COMPLETED": 1
+        },
+        "attention_count": 0,
+        "waiting_approval": 0,
+        "paused": 0,
+        "recovering": 0,
+        "reconciliation_records": 0
+      },
+      "bindings": {
+        "total": 2,
+        "by_state": {
+          "ACTIVE": 2,
+          "SUSPENDED": 0,
+          "REVOKED": 0
+        }
+      },
+      "safety": {
+        "connector_mutations": "DRY_RUN_ONLY",
+        "financial_execution": "DISABLED",
+        "trading_execution": "DISABLED",
+        "trading_guardian": "UNENGAGED_ADVISORY_ONLY",
+        "registered_tool_authority": "ExecutionGateway",
+        "canonical_runtime": "PlatformAgentRuntime"
+      },
+      "certification": {
+        "latest_certification_at": 0
+      }
+    },
+    "export": {
+      "record_count": 1,
+      "content_hash": "sha256:11d55c162f47d6aaeed05642f3d8a26043656fafc477185cd759519d1fdee8ac",
+      "production_data": false,
+      "leaked": []
+    },
+    "retention": {
+      "schema_version": "m54.readiness.v1",
+      "mode": "DRY_RUN",
+      "purge_executed": false,
+      "retention_days": 90,
+      "cutoff_at": 1777204695.892458,
+      "scope": {
+        "org_id": "org_69c5d6ea42394ecd",
+        "workspace_id": "ws_a9703698d59d4c52"
+      },
+      "eligible_for_purge": 0,
+      "eligible_execution_ids": [],
+      "protected": {
+        "non_terminal": 0,
+        "recent_within_retention": 1,
+        "legal_or_operator_hold": 0
+      },
+      "covered_record_classes": [
+        "runtime_executions",
+        "runtime_timelines",
+        "audit_events",
+        "reconciliation_records",
+        "approval_metadata",
+        "browser_certification_artifacts",
+        "exported_evidence"
+      ],
+      "irreversible": true,
+      "confirmation_required": true
+    },
+    "release": {
+      "overall": "READY_WITH_LIMITATIONS",
+      "score": 93.3,
+      "summary": {
+        "PASS": 26,
+        "WARNING": 4
+      }
+    },
+    "health": {
+      "schema_version": "m55.release.v1",
+      "runtime_health": "ok",
+      "uptime_seconds": 0.010467052459716797,
+      "memory_rss_kib": 131872,
+      "queue_depth": 0,
+      "pending_approvals": 0,
+      "attention_count": 0,
+      "running_executions": 0,
+      "waiting_executions": 0,
+      "failed_executions": 0,
+      "recovered_executions": 0,
+      "storage_bytes": 294912,
+      "database_status": "available",
+      "scheduler_state": "single_host_inline_no_external_scheduler",
+      "api_latency_ms": 0.009,
+      "tenant_counts": 1,
+      "workspace_counts": 1,
+      "active_sessions": 2,
+      "environment": "LOCAL_OR_TEST",
+      "production_authorized": false,
+      "safety": {
+        "connector_mutations": "DRY_RUN_ONLY",
+        "financial_execution": "DISABLED",
+        "trading_execution": "DISABLED",
+        "trading_guardian": "UNENGAGED_ADVISORY_ONLY",
+        "registered_tool_authority": "ExecutionGateway",
+        "canonical_runtime": "PlatformAgentRuntime"
+      }
+    },
+    "metrics": [
+      "schema_version",
+      "scope",
+      "execution_totals",
+      "execution_duration_seconds",
+      "approval_counts",
+      "approval_latency_seconds",
+      "retention_previews",
+      "evidence_exports",
+      "login_activity",
+      "binding_actions",
+      "runtime_attention_reasons",
+      "recovery_operations",
+      "restart_count",
+      "error_categories"
+    ],
+    "backup": {
+      "schema_version": "m55.release.v1",
+      "database_name": "platform.db",
+      "size_bytes": 294912,
+      "checksum": "sha256:45fcda34fc0929a0192aae75366b7d0f3ddc7453937210e2ebf27c0515a5691e",
+      "integrity_check": "ok",
+      "restore_simulation": "PASS",
+      "restore_verified_tables": [
+        "organizations",
+        "platform_executions",
+        "sessions",
+        "workspaces"
+      ],
+      "restore_error": "",
+      "destructive_restore": false,
+      "mode": "SIMULATION_ONLY",
+      "history_count": 1
+    },
+    "recovery": {
+      "schema_version": "m55.release.v1",
+      "overall": "PASS",
+      "invariants": [
+        "no_duplicate_execution",
+        "no_authority_escalation",
+        "no_replay",
+        "no_data_corruption"
+      ],
+      "scenarios": [
+        {
+          "scenario": "process_restart",
+          "status": "PASS",
+          "detail": "waiting execution preserved; recoverable; no duplicate"
+        },
+        {
+          "scenario": "restart_before_dispatch",
+          "status": "PASS",
+          "detail": "no recorded dispatch; safe resume eligible; no replay risk"
+        },
+        {
+          "scenario": "restart_after_dispatch_recorded",
+          "status": "PASS",
+          "detail": "recorded dispatch cannot replay; manual resolution only"
+        },
+        {
+          "scenario": "binding_interruption",
+          "status": "PASS",
+          "detail": "suspended binding invalidates stale context; no dispatch"
+        }
+      ],
+      "isolation": "each scenario runs against a fresh temp store; operator data untouched"
+    },
+    "topology": {
+      "nodes": 1,
+      "workers": 1
+    },
+    "node_health": [
+      "node-local"
+    ],
+    "cluster_metrics": [
+      "schema_version",
+      "scope",
+      "per_node",
+      "per_worker",
+      "per_lease",
+      "per_queue",
+      "per_scheduler",
+      "per_recovery",
+      "execution_ownership",
+      "worker_utilization",
+      "lease_churn",
+      "queue_latency_seconds"
+    ],
+    "worker_registry": {
+      "worker_id": "wrk_3a45b457c6664c23",
+      "status": "ACTIVE"
+    },
+    "lease": {
+      "lease_id": "lease_8718578f745b4393",
+      "execution_id": "pex_e53bedbfff52446f",
+      "owner_worker_id": "wrk_3a45b457c6664c23",
+      "node_id": "node-local",
+      "state": "HELD",
+      "acquired_at": 1784980696.338732,
+      "renewed_at": 1784980696.338732,
+      "expires_at": 1784980996.338732,
+      "version": 1
+    },
+    "cluster_recovery": {
+      "schema_version": "m56.cluster.v1",
+      "overall": "PASS",
+      "invariants": [
+        "no_replay",
+        "no_duplicate_execution",
+        "no_authority_escalation",
+        "single_owner_lease"
+      ],
+      "scenarios": [
+        {
+          "scenario": "worker_restart",
+          "status": "PASS",
+          "detail": "lease survived worker restart; single owner; no duplicate"
+        },
+        {
+          "scenario": "lease_expiration",
+          "status": "PASS",
+          "detail": "expired lease recovered; execution re-eligible; no replay"
+        },
+        {
+          "scenario": "heartbeat_timeout",
+          "status": "PASS",
+          "detail": "stale heartbeat → lease recovered; no duplicate execution"
+        },
+        {
+          "scenario": "scheduler_restart",
+          "status": "PASS",
+          "detail": "scheduler state durable across restart; deterministic ordering"
+        },
+        {
+          "scenario": "worker_drain",
+          "status": "PASS",
+          "detail": "drain released leases; recoverable; no duplicate"
+        },
+        {
+          "scenario": "worker_retirement",
+          "status": "PASS",
+          "detail": "worker retired; leases released; no escalation"
+        },
+        {
+          "scenario": "lease_reassignment",
+          "status": "PASS",
+          "detail": "lease reassigned to single new owner; stale owner rejected"
+        }
+      ],
+      "isolation": "each scenario runs against a fresh temp platform; operator data untouched"
+    },
+    "node_local_health": {
+      "healthy": true,
+      "age": 1.5018630027770996
+    },
+    "launcher": {
+      "opensUi": true,
+      "apiBase": true,
+      "shortcutCallsOpen": true,
+      "noZeroBind": true
+    },
+    "post_logout_protected": true,
+    "ops_banner": "Private-alpha operations · read-only except already-approved operations · LOCAL OR TEST ENVIRONMENT · NON-PRODUCTION · CONNECTOR MUTATIONS DRY-RUN · FINANCIAL EXECUTION DISABLED · TRADING DISABLED",
+    "ops_health": "○\nNEUTRAL\nRuntime ok\nUptime 9s · DB available · Latency 0.031ms · Sessions 2 · Tenants 1 · Workspaces 1\nQueue 0 · Waiting 0 · Failed 0 · Recovered 0 · Production authorized false\nConnectors: DRY_RUN_O",
+    "ops_metrics": "Executions 1 · Approvals 0 · Exports 1 · Retention previews 1 · Recovery ops 0 · Restart count UNKNOWN",
+    "ops_release": "○\nNEUTRAL\nOverall READY_WITH_LIMITATIONS · score 93.3\nPASS 26 · WARNING 4 · FAIL 0 · production authorized false",
+    "ops_recovery": "PASS · scenarios process_restart:PASS · restart_before_dispatch:PASS · restart_after_dispatch_recorded:PASS · binding_interruption:PASS",
+    "ops_backup": "SIMULATION_ONLY · integrity ok · restore PASS · destructive false",
+    "ops_topology": "Runtime single_host_active · nodes 0 · workers 2 · active leases 1 · ownership single_owner_advisory_lease · logical clock 0 · runtime PlatformAgentRuntime · authority ExecutionGateway",
+    "ops_nodehealth": "Node node-local · ACTIVE · healthy true · workers 1 · leases 0 · heartbeat age 10s · restarts 0",
+    "ops_scheduler": "Scheduler paused false · pending 0 · mode single_host_inline · fair round_robin_over_active_workers",
+    "ops_cluster_recovery": "PASS · invariants no_replay, no_duplicate_execution, no_authority_escalation, single_owner_lease · worker_restart:PASS · lease_expiration:PASS · heartbeat_timeout:PASS · scheduler_restart:PASS · worke",
+    "cold_load": {
+      "filledCards": 5,
+      "fatalBanner": false
+    },
+    "unsafe_actions": []
+  },
+  "screenshots": [
+    "/Users/macbookpro/SaathiAI/docs/platform/m57_evidence/screenshots/operator_console.png",
+    "/Users/macbookpro/SaathiAI/docs/platform/m57_evidence/screenshots/release_readiness.png",
+    "/Users/macbookpro/SaathiAI/docs/platform/m57_evidence/screenshots/backup_recovery.png",
+    "/Users/macbookpro/SaathiAI/docs/platform/m57_evidence/screenshots/cluster_recovery.png"
+  ],
+  "hardGates": {
+    "auth": {
+      "ok": true
+    },
+    "safety_boundaries": {
+      "ok": true
+    },
+    "export_redaction": {
+      "ok": true
+    },
+    "retention_dry_run": {
+      "ok": true
+    },
+    "release_validation": {
+      "ok": true
+    },
+    "health": {
+      "ok": true
+    },
+    "metrics": {
+      "ok": true
+    },
+    "backup_simulation": {
+      "ok": true
+    },
+    "recovery_certification": {
+      "ok": true
+    },
+    "topology": {
+      "ok": true
+    },
+    "node_health": {
+      "ok": true
+    },
+    "distributed_metrics": {
+      "ok": true
+    },
+    "worker_registry": {
+      "ok": true
+    },
+    "lease_coordination": {
+      "ok": true
+    },
+    "cluster_recovery": {
+      "ok": true
+    },
+    "node_local_healthy": {
+      "ok": true
+    },
+    "launcher_contract": {
+      "ok": true
+    },
+    "logout": {
+      "ok": true
+    },
+    "ops_console": {
+      "ok": true
+    },
+    "ops_health": {
+      "ok": true
+    },
+    "ops_metrics": {
+      "ok": true
+    },
+    "ops_release": {
+      "ok": true
+    },
+    "ops_recovery": {
+      "ok": true
+    },
+    "ops_backup": {
+      "ok": true
+    },
+    "ops_topology": {
+      "ok": true
+    },
+    "ops_node_health": {
+      "ok": true
+    },
+    "ops_scheduler_metrics": {
+      "ok": true
+    },
+    "ops_cluster_recovery": {
+      "ok": true
+    },
+    "cold_load_recovery": {
+      "ok": true
+    },
+    "no_unsafe_actions": {
+      "ok": true
+    }
+  },
+  "softGates": {},
+  "browserErrors": {
+    "console": [
+      "Access to fetch at 'http://127.0.0.1:8810/api/v1/connectors/approvals/pending' from origin 'http://127.0.0.1:3170' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present o",
+      "Failed to load resource: net::ERR_FAILED",
+      "Access to fetch at 'http://127.0.0.1:8810/api/v1/connectors/approvals/pending' from origin 'http://127.0.0.1:3170' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present o",
+      "Failed to load resource: net::ERR_FAILED",
+      "Access to fetch at 'http://127.0.0.1:8810/api/v1/platform/cluster/node-health' from origin 'http://127.0.0.1:3170' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present o",
+      "Failed to load resource: net::ERR_FAILED"
+    ],
+    "pageErrors": [],
+    "apiFailures": [
+      "net::ERR_FAILED http://127.0.0.1:8810/api/v1/platform/cluster/node-health"
+    ]
+  },
+  "verdict": "M57_BROWSER_CERTIFIED"
+}

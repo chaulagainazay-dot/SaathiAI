@@ -28,6 +28,22 @@ If the answer is the latter, the feature belongs in the product layer, not the p
 
 ## 3. Current Platform State
 
+### M57 localhost daily-use hardening & operator launcher (2026-07-25)
+
+* **Launcher** (`bin/saathi-local`, symlinked ~/.local/bin): start/stop/restart/
+  status/open/logs/doctor. PID-file + command-signature ownership — reuses any
+  healthy SaathiOS process, stops only what it started, fails closed on unrelated
+  listeners. Localhost-only (127.0.0.1/localhost), never 0.0.0.0, no tunnels, no sudo.
+* **Single-host heartbeat** (`ClusterCoordinator.beat_local_node` on a 30s BFF
+  task): node-local health accurate while running, stale after stop. No authority.
+* **Cold-load UI hardening** (/platform/ops): loading state + bounded retry/backoff;
+  transient cold-compile races no longer show a fatal error.
+* **local_readiness** module wired into doctor + release gate. macOS ⌥⌘B shortcut
+  PREPARED (scripts/macos/saathi-open.sh → saathi-local open), operator-assigned.
+  Login LaunchAgent `com.saathi.local-launcher` prepared, DISABLED.
+* **Safety**: no production/connectors/financial/trading/multi-host; existing
+  `com.saathi.local` agent never modified. `M57_COMPLETE_WITH_LIMITATIONS` (local).
+
 ### M56 distributed runtime foundation (single-host compatible) (2026-07-25)
 
 * **Distributed foundation** (`saathi/platform/cluster.py`): RuntimeNode/Cluster,
