@@ -17,8 +17,12 @@ import {
 import { API_BASE } from "@/lib/api";
 import {
   canCancelExecution,
+  canPreviewRetention,
+  canExportEvidence,
+  EVIDENCE_EXPORT_KINDS,
   requiresDestructiveConfirmation,
   runtimeTone,
+  safetyBadges,
 } from "@/lib/platform-ops";
 
 const TOKEN_KEY = "saathi_platform_token";
@@ -57,6 +61,9 @@ export default function PlatformPage() {
   const [metrics, setMetrics] = useState(null);
   const [selectedExecution, setSelectedExecution] = useState(null);
   const [timeline, setTimeline] = useState([]);
+  const [diagnostics, setDiagnostics] = useState(null);
+  const [retentionPlan, setRetentionPlan] = useState(null);
+  const [exportManifest, setExportManifest] = useState(null);
 
   useEffect(() => {
     const t = typeof window !== "undefined" ? localStorage.getItem(TOKEN_KEY) || "" : "";
@@ -77,7 +84,7 @@ export default function PlatformPage() {
     setBusy(true);
     setError(null);
     try {
-      const [m, p, a, c, h, b, x, q, r] = await Promise.all([
+      const [m, p, a, c, h, b, x, q, r, d] = await Promise.all([
         plat("/me", { token: tok }),
         plat("/projects", { token: tok }),
         plat("/approvals?status=pending", { token: tok }),
@@ -87,6 +94,7 @@ export default function PlatformPage() {
         plat("/runtime/executions?limit=50", { token: tok }),
         plat("/runtime/attention", { token: tok }),
         plat("/runtime/metrics", { token: tok }),
+        plat("/runtime/diagnostics", { token: tok }),
       ]);
       setMe(m);
       setProjects(p.projects || []);
@@ -97,6 +105,7 @@ export default function PlatformPage() {
       setExecutions(x.executions || []);
       setAttention(q.attention || []);
       setMetrics(r.metrics || null);
+      setDiagnostics(d.diagnostics || null);
     } catch (e) {
       setError(String(e.message || e));
     } finally {
@@ -154,6 +163,38 @@ export default function PlatformPage() {
     setMetrics(null);
     setSelectedExecution(null);
     setTimeline([]);
+    setDiagnostics(null);
+    setRetentionPlan(null);
+    setExportManifest(null);
+  };
+
+  const exportEvidence = async (kind) => {
+    setBusy(true);
+    setExportManifest(null);
+    try {
+      const r = await plat(`/runtime/export?kind=${encodeURIComponent(kind)}&format=json`, {
+        token,
+      });
+      setExportManifest(r.manifest || null);
+    } catch (e) {
+      setError(String(e.message || e));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const previewRetention = async () => {
+    if (!window.confirm("Preview a dry-run retention purge? Nothing will be deleted.")) return;
+    setBusy(true);
+    setRetentionPlan(null);
+    try {
+      const r = await plat("/runtime/retention/preview", { method: "POST", token, body: {} });
+      setRetentionPlan(r.retention || null);
+    } catch (e) {
+      setError(String(e.message || e));
+    } finally {
+      setBusy(false);
+    }
   };
 
   const createProject = async () => {
@@ -314,6 +355,75 @@ export default function PlatformPage() {
             ) : (
               <Text tone="muted">No runtime metrics available</Text>
             )}
+          </Card>
+
+          <Card>
+            <Heading level={2}>Operational readiness</Heading>
+            <div data-testid="readiness-panel" style={{ display: "grid", gap: 10 }}>
+              <Text data-testid="env-classification" tone="muted">
+                {(diagnostics?.environment?.classification || "LOCAL_OR_TEST")} · PRIVATE
+                ALPHA · NON-PRODUCTION · CONNECTOR MUTATIONS DRY-RUN · FINANCIAL
+                EXECUTION DISABLED · TRADING DISABLED
+              </Text>
+              <div
+                data-testid="safety-badges"
+                style={{ display: "flex", gap: 8, flexWrap: "wrap" }}
+              >
+                {safetyBadges(diagnostics).map((badge) => (
+                  <Text key={badge.key} tone="muted">
+                    {badge.label}
+                  </Text>
+                ))}
+              </div>
+              {diagnostics && (
+                <Text tone="muted">
+                  Attention {diagnostics.runtime?.attention_count} · Waiting approval{" "}
+                  {diagnostics.runtime?.waiting_approval} · Paused{" "}
+                  {diagnostics.runtime?.paused} · Reconciliations{" "}
+                  {diagnostics.runtime?.reconciliation_records} · Production authorized{" "}
+                  {String(diagnostics.environment?.production_authorized)}
+                </Text>
+              )}
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                {canExportEvidence(me?.context?.role) &&
+                  EVIDENCE_EXPORT_KINDS.filter(
+                    (k) => k !== "lifecycle_timeline",
+                  ).map((kind) => (
+                    <Button
+                      key={kind}
+                      data-testid={`export-${kind}`}
+                      variant="ghost"
+                      onClick={() => exportEvidence(kind)}
+                    >
+                      Export {kind}
+                    </Button>
+                  ))}
+              </div>
+              {exportManifest && (
+                <Text data-testid="export-manifest" tone="muted">
+                  Exported {exportManifest.kind}: {exportManifest.record_count} records ·{" "}
+                  {exportManifest.content_hash} · production_data{" "}
+                  {String(exportManifest.production_data)}
+                </Text>
+              )}
+              {canPreviewRetention(me?.context?.role) && (
+                <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                  <Button
+                    data-testid="retention-preview"
+                    variant="secondary"
+                    onClick={previewRetention}
+                  >
+                    Preview retention (dry-run)
+                  </Button>
+                  {retentionPlan && (
+                    <Text data-testid="retention-plan" tone="muted">
+                      {retentionPlan.mode} · eligible {retentionPlan.eligible_for_purge} ·
+                      purge_executed {String(retentionPlan.purge_executed)}
+                    </Text>
+                  )}
+                </div>
+              )}
+            </div>
           </Card>
 
           <Card>

@@ -211,6 +211,15 @@ class ConfigBody(BaseModel):
     updates: dict[str, Any] = Field(default_factory=dict)
 
 
+class RetentionPreviewBody(BaseModel):
+    retention_days: int | None = None
+
+
+class RetentionHoldBody(BaseModel):
+    execution_id: str
+    held: bool = True
+
+
 @router.get("/health")
 def platform_health():
     return _svc().health()
@@ -1146,6 +1155,77 @@ def runtime_resume(
             "data": result.data,
             "execution_id": getattr(result, "platform_execution_id", ""),
             "execution_state": getattr(result, "platform_execution_state", ""),
+        }
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+# ── M54 private-alpha operational readiness ─────────────────────────────────
+def _readiness():
+    from saathi.platform.readiness import OperationalReadinessService
+
+    return OperationalReadinessService(_svc())
+
+
+@router.get("/runtime/diagnostics")
+def runtime_diagnostics(
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        svc = _readiness()
+        ctx = svc.context(_token(authorization, x_platform_token))
+        return {"diagnostics": svc.diagnostics(ctx)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/runtime/export")
+def runtime_export(
+    kind: str = "execution_summary",
+    format: str = "json",
+    limit: int = 200,
+    execution_id: str = "",
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        svc = _readiness()
+        ctx = svc.context(_token(authorization, x_platform_token))
+        return svc.export(
+            ctx, kind=kind, fmt=format, limit=limit, execution_id=execution_id
+        )
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/runtime/retention/preview")
+def runtime_retention_preview(
+    body: RetentionPreviewBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        svc = _readiness()
+        ctx = svc.context(_token(authorization, x_platform_token))
+        return {"retention": svc.retention_preview(ctx, retention_days=body.retention_days)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/runtime/retention/hold")
+def runtime_retention_hold(
+    body: RetentionHoldBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        svc = _readiness()
+        ctx = svc.context(_token(authorization, x_platform_token))
+        return {
+            "hold": svc.set_hold(
+                ctx, execution_id=body.execution_id, held=body.held
+            )
         }
     except PlatformContextError as e:
         raise _err(e) from e

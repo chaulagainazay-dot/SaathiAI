@@ -13,7 +13,10 @@
     "test:browser-cert": "node scripts/m47_4_browser_cert.mjs",
     "test:browser-cert:dev": "M47_4_USE_DEV=1 node scripts/m47_4_browser_cert.mjs",
     "test:browser-cert:m47.7": "node scripts/m47_7_browser_cert.mjs",
-    "test:browser-cert:m47.7:dev": "M47_7_USE_DEV=1 node scripts/m47_7_browser_cert.mjs"
+    "test:browser-cert:m47.7:dev": "M47_7_USE_DEV=1 node scripts/m47_7_browser_cert.mjs",
+    "cert:m54": "node scripts/m54_browser_cert.mjs",
+    "cert:m54:build": "M54_BUILD=1 node scripts/m54_browser_cert.mjs",
+    "cert:m54:soft": "node scripts/m54_browser_cert.mjs --allow-limitations"
   },
   "dependencies": {
     "framer-motion": "^11.15.0",

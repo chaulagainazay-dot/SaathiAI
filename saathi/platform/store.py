@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import sqlite3
 import threading
 import time
@@ -190,7 +191,12 @@ def hash_token(token: str) -> str:
 
 class PlatformStore:
     def __init__(self, db_path: Path | str | None = None, *, now: Callable[[], float] = time.time):
-        self.db_path = Path(db_path) if db_path else DEFAULT_DB
+        # Explicit path wins; else an env override (used by the M54 isolated
+        # certification environment); else the default single-host location.
+        env_db = os.environ.get("SAATHI_PLATFORM_DB", "").strip()
+        self.db_path = Path(db_path) if db_path else (
+            Path(env_db) if env_db else DEFAULT_DB
+        )
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self._now = now
         self._conn = sqlite3.connect(str(self.db_path), check_same_thread=False)
