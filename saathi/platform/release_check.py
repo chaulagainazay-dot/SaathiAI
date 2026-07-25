@@ -24,16 +24,19 @@ REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 
 # Documentation / evidence expected for the release gate.
 _EXPECTED_DOCS = [
-    "docs/platform/M55_ARCHITECTURE.md",
     "docs/platform/M55_RELEASE_GATE.md",
-    "docs/platform/M55_HEALTH_MONITORING.md",
-    "docs/platform/M55_BACKUP_VALIDATION.md",
-    "docs/platform/M55_RECOVERY.md",
     "docs/platform/M55_SECURITY_REVIEW.md",
-    "docs/platform/M55_BROWSER_CERTIFICATION.md",
-    "docs/platform/M55_LIMITATIONS.md",
+    "docs/platform/M56_DISTRIBUTED_RUNTIME.md",
+    "docs/platform/M56_WORKER_REGISTRY.md",
+    "docs/platform/M56_LEASE_COORDINATION.md",
+    "docs/platform/M56_SCHEDULER.md",
+    "docs/platform/M56_TOPOLOGY.md",
+    "docs/platform/M56_RECOVERY.md",
+    "docs/platform/M56_BROWSER_CERTIFICATION.md",
+    "docs/platform/M56_SECURITY_REVIEW.md",
+    "docs/platform/M56_LIMITATIONS.md",
 ]
-_BROWSER_EVIDENCE = "docs/platform/m55_evidence/m55_browser_cert.json"
+_BROWSER_EVIDENCE = "docs/platform/m56_evidence/m56_browser_cert.json"
 
 
 def _status(section: str, status: str, detail: str = "") -> dict:
@@ -83,6 +86,25 @@ def build_report() -> dict:
         sections.append(_status("approval", by.get("approval_system", UNKNOWN)))
         sections.append(_status("bindings", by.get("bindings", UNKNOWN)))
         sections.append(_status("recovery", recovery["overall"]))
+        # M56 distributed-runtime foundation.
+        try:
+            from saathi.platform.cluster import ClusterCoordinator
+
+            coord = ClusterCoordinator(svc)
+            cluster_recovery = coord.recovery_certify(ctx)
+            cluster_checks = coord.release_checks(ctx)
+            has_fail = any(c["status"] == FAIL for c in cluster_checks)
+            sections.append(
+                _status(
+                    "distributed_runtime",
+                    FAIL if (has_fail or cluster_recovery["overall"] == FAIL)
+                    else (WARNING if cluster_recovery["overall"] != PASS else PASS),
+                    f"cluster recovery {cluster_recovery['overall']}; "
+                    f"{len(cluster_checks)} checks",
+                )
+            )
+        except Exception as exc:  # pragma: no cover - defensive
+            sections.append(_status("distributed_runtime", UNKNOWN, str(exc)[:120]))
         sections.append(_status("diagnostics", by.get("diagnostics", UNKNOWN)))
         sections.append(_status("metrics", PASS if metrics["schema_version"] else UNKNOWN))
         sections.append(_status("evidence", by.get("evidence_export", UNKNOWN)))

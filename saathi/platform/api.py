@@ -1301,3 +1301,222 @@ def release_recovery(
         return {"recovery": svc.recovery_certify(ctx)}
     except PlatformContextError as e:
         raise _err(e) from e
+
+
+# ── M56 distributed runtime foundation ──────────────────────────────────────
+class WorkerRegisterBody(BaseModel):
+    worker_id: str = ""
+    node_id: str = "node-local"
+    capabilities: list[str] = Field(default_factory=list)
+
+
+class WorkerActionBody(BaseModel):
+    worker_id: str
+    action: str = ""  # heartbeat | drain | pause | resume | retire
+
+
+class LeaseBody(BaseModel):
+    execution_id: str
+    worker_id: str = "worker-local"
+    ttl_sec: float = 300.0
+
+
+class LeaseTransferBody(BaseModel):
+    execution_id: str
+    to_worker_id: str
+
+
+class SchedulerControlBody(BaseModel):
+    action: str  # pause | resume
+
+
+def _cluster():
+    from saathi.platform.cluster import ClusterCoordinator
+
+    return ClusterCoordinator(_svc())
+
+
+@router.get("/cluster/topology")
+def cluster_topology(
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        c = _cluster()
+        ctx = c.read_context(_token(authorization, x_platform_token))
+        return {"topology": c.topology(ctx)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/cluster/node-health")
+def cluster_node_health(
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        c = _cluster()
+        ctx = c.read_context(_token(authorization, x_platform_token))
+        return {"node_health": c.node_health(ctx)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/cluster/metrics")
+def cluster_metrics(
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        c = _cluster()
+        ctx = c.read_context(_token(authorization, x_platform_token))
+        return {"metrics": c.distributed_metrics(ctx)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/cluster/scheduler")
+def cluster_scheduler(
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        c = _cluster()
+        ctx = c.read_context(_token(authorization, x_platform_token))
+        return {"scheduler": c.scheduler_plan(ctx)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/cluster/scheduler/control")
+def cluster_scheduler_control(
+    body: SchedulerControlBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        c = _cluster()
+        ctx = _svc().require_context(_token(authorization, x_platform_token))
+        return {"scheduler": c.scheduler_control(ctx, action=body.action)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/cluster/workers/register")
+def cluster_worker_register(
+    body: WorkerRegisterBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        c = _cluster()
+        ctx = _svc().require_context(_token(authorization, x_platform_token))
+        return {"worker": c.register_worker(
+            ctx, worker_id=body.worker_id, node_id=body.node_id, capabilities=body.capabilities
+        )}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/cluster/workers/action")
+def cluster_worker_action(
+    body: WorkerActionBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        c = _cluster()
+        ctx = _svc().require_context(_token(authorization, x_platform_token))
+        if body.action == "heartbeat":
+            return {"heartbeat": c.heartbeat(ctx, worker_id=body.worker_id)}
+        return {"worker": c.set_worker_state(ctx, worker_id=body.worker_id, action=body.action)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/cluster/leases/acquire")
+def cluster_lease_acquire(
+    body: LeaseBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        c = _cluster()
+        ctx = _svc().require_context(_token(authorization, x_platform_token))
+        return {"lease": c.acquire_lease(
+            ctx, execution_id=body.execution_id, worker_id=body.worker_id, ttl_sec=body.ttl_sec
+        )}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/cluster/leases/renew")
+def cluster_lease_renew(
+    body: LeaseBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        c = _cluster()
+        ctx = _svc().require_context(_token(authorization, x_platform_token))
+        return {"lease": c.renew_lease(
+            ctx, execution_id=body.execution_id, worker_id=body.worker_id, ttl_sec=body.ttl_sec
+        )}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/cluster/leases/transfer")
+def cluster_lease_transfer(
+    body: LeaseTransferBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        c = _cluster()
+        ctx = _svc().require_context(_token(authorization, x_platform_token))
+        return {"lease": c.transfer_lease(
+            ctx, execution_id=body.execution_id, to_worker_id=body.to_worker_id
+        )}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/cluster/leases/verify")
+def cluster_lease_verify(
+    execution_id: str,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        c = _cluster()
+        ctx = c.read_context(_token(authorization, x_platform_token))
+        return {"lease": c.verify_lease(ctx, execution_id=execution_id)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/cluster/leases/recover")
+def cluster_lease_recover(
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        c = _cluster()
+        ctx = _svc().require_context(_token(authorization, x_platform_token))
+        return {"recovery": c.recover_leases(ctx)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/cluster/recovery")
+def cluster_recovery(
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        c = _cluster()
+        ctx = _svc().require_context(_token(authorization, x_platform_token))
+        return {"recovery": c.recovery_certify(ctx)}
+    except PlatformContextError as e:
+        raise _err(e) from e

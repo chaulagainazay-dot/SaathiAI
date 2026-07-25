@@ -43,6 +43,11 @@ export default function OperatorConsolePage() {
   const [release, setRelease] = useState(null);
   const [recovery, setRecovery] = useState(null);
   const [backup, setBackup] = useState(null);
+  const [topology, setTopology] = useState(null);
+  const [nodeHealth, setNodeHealth] = useState(null);
+  const [clusterMetrics, setClusterMetrics] = useState(null);
+  const [scheduler, setScheduler] = useState(null);
+  const [clusterRecovery, setClusterRecovery] = useState(null);
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
 
@@ -55,18 +60,24 @@ export default function OperatorConsolePage() {
     if (!tok) return;
     setBusy(true);
     setError(null);
-    try {
-      const [h, m] = await Promise.all([
-        plat("/release/health", { token: tok }),
-        plat("/release/metrics", { token: tok }),
-      ]);
-      setHealth(h.health || null);
-      setMetrics(m.metrics || null);
-    } catch (e) {
-      setError(String(e.message || e));
-    } finally {
-      setBusy(false);
-    }
+    // Resilient: a single failing endpoint must not blank the whole console.
+    const load = async (path, key, setter) => {
+      try {
+        const r = await plat(path, { token: tok });
+        setter(r[key] || null);
+      } catch (e) {
+        setError((prev) => prev || String(e.message || e));
+      }
+    };
+    await Promise.allSettled([
+      load("/release/health", "health", setHealth),
+      load("/release/metrics", "metrics", setMetrics),
+      load("/cluster/topology", "topology", setTopology),
+      load("/cluster/node-health", "node_health", setNodeHealth),
+      load("/cluster/metrics", "metrics", setClusterMetrics),
+      load("/cluster/scheduler", "scheduler", setScheduler),
+    ]);
+    setBusy(false);
   }, []);
 
   useEffect(() => {
@@ -200,11 +211,78 @@ export default function OperatorConsolePage() {
       </Card>
 
       <Card>
+        <Heading level={2}>Cluster & topology</Heading>
+        {topology ? (
+          <Text data-testid="ops-topology" tone="muted">
+            Runtime {topology.runtime_status} · nodes {topology.cluster?.nodes} · workers{" "}
+            {topology.cluster?.workers} · active leases {topology.queue_status?.active_leases} ·
+            ownership {topology.execution_ownership} · logical clock {topology.logical_clock} ·
+            runtime {topology.canonical_runtime} · authority {topology.registered_tool_authority}
+          </Text>
+        ) : (
+          <Text tone="muted">No topology</Text>
+        )}
+      </Card>
+
+      <Card>
+        <Heading level={2}>Node & worker health</Heading>
+        {nodeHealth ? (
+          <div data-testid="ops-nodehealth" style={{ display: "grid", gap: 4 }}>
+            {Object.values(nodeHealth.nodes || {}).map((n) => (
+              <Text key={n.node_id} tone="muted">
+                Node {n.node_id} · {n.status} · healthy {String(n.healthy)} · workers{" "}
+                {n.worker_count} · leases {n.lease_count} · heartbeat age{" "}
+                {Math.round(n.heartbeat_age_seconds)}s · restarts {n.restart_count}
+              </Text>
+            ))}
+          </div>
+        ) : (
+          <Text tone="muted">No node health</Text>
+        )}
+      </Card>
+
+      <Card>
+        <Heading level={2}>Leases, scheduler & distributed metrics</Heading>
+        {scheduler && (
+          <Text data-testid="ops-scheduler" tone="muted" style={{ display: "block" }}>
+            Scheduler paused {String(scheduler.paused)} · pending {scheduler.pending} · mode{" "}
+            {scheduler.execution_mode} · fair {scheduler.fair_scheduling}
+          </Text>
+        )}
+        {clusterMetrics && (
+          <Text data-testid="ops-cluster-metrics" tone="muted" style={{ display: "block", marginTop: 6 }}>
+            Active leases {clusterMetrics.per_lease?.active} · ownership{" "}
+            {clusterMetrics.execution_ownership} · worker utilization{" "}
+            {clusterMetrics.worker_utilization} · lease churn {clusterMetrics.lease_churn} · queue
+            latency {clusterMetrics.queue_latency_seconds}s
+          </Text>
+        )}
+      </Card>
+
+      <Card>
+        <Heading level={2}>Runtime ownership & recovery timeline</Heading>
+        <Button
+          data-testid="run-cluster-recovery"
+          variant="secondary"
+          onClick={() => run("/cluster/recovery", setClusterRecovery)}
+        >
+          Certify cluster recovery
+        </Button>
+        {clusterRecovery && (
+          <Text data-testid="ops-cluster-recovery" tone="muted" style={{ display: "block", marginTop: 8 }}>
+            {clusterRecovery.overall} · invariants{" "}
+            {(clusterRecovery.invariants || []).join(", ")} ·{" "}
+            {(clusterRecovery.scenarios || []).map((s) => `${s.scenario}:${s.status}`).join(" · ")}
+          </Text>
+        )}
+      </Card>
+
+      <Card>
         <Heading level={2}>Security status</Heading>
         <Text data-testid="ops-security" tone="muted">
           RBAC fail-closed · tenant isolation enforced · approval single-use · uncertain dispatch
-          non-replay · connectors DRY_RUN_ONLY · financial/trading DISABLED · Trading Guardian
-          UNENGAGED_ADVISORY_ONLY · production NOT AUTHORIZED
+          non-replay · single-owner leases · connectors DRY_RUN_ONLY · financial/trading DISABLED ·
+          Trading Guardian UNENGAGED_ADVISORY_ONLY · production NOT AUTHORIZED
         </Text>
       </Card>
     </div>

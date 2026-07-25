@@ -409,6 +409,15 @@ class ReleaseOperationsService:
             "production not authorized (by design in M55 private-alpha RC)",
         )
 
+        # M56 distributed-runtime foundation checks (advisory).
+        try:
+            from saathi.platform.cluster import ClusterCoordinator
+
+            for c in ClusterCoordinator(self.platform).release_checks(ctx):
+                checks.append(c)
+        except Exception as exc:  # pragma: no cover - defensive
+            add("distributed_runtime", UNKNOWN, f"cluster checks unavailable: {exc}")
+
         counts = Counter(c["status"] for c in checks)
         total = len(checks)
         score = round(
