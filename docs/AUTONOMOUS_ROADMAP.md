@@ -1,5 +1,28 @@
 # SaathiOS Autonomous Roadmap
 
+## M55 — Platform Release Candidate & Operational Excellence (2026-07-25)
+
+| Item | State |
+|---|---|
+| Release validator | 20 checks PASS/WARNING/FAIL/UNKNOWN + score; advisory only |
+| Release gate CLI | `python -m saathi.platform.release_check`; READY_WITH_LIMITATIONS |
+| Health service | uptime/memory/queue/sessions/tenant counts/latency; tenant-safe |
+| Metrics service | executions/approvals/exports/attention/recovery/errors; no PII |
+| Backup validation | manifest+checksum+integrity+restore SIMULATION (non-destructive) |
+| Recovery certification | restart/dispatch/binding scenarios; no dup/escalation/replay |
+| Operator console | read-only `/platform/ops` dashboard |
+| Browser certification | `M55_BROWSER_CERTIFIED` (local, isolated DB) |
+| Runtime/Gateway | PlatformAgentRuntime canonical; ExecutionGateway sole authority |
+| Connectors DRY_RUN_ONLY · Financial/Trading | DISABLED |
+| Trading Guardian | UNENGAGED_ADVISORY_ONLY |
+| Milestone | M55_COMPLETE_WITH_LIMITATIONS (local) |
+| Production | NOT_AUTHORIZED |
+
+Evidence: `docs/platform/M55_*.md`, browser evidence in
+`docs/platform/m55_evidence/`. Advisory release readiness only — no deployment,
+no production authorization.
+
+
 ## M54 — Private-Alpha Operational Readiness and Browser Certification (2026-07-25)
 
 | Item | State |

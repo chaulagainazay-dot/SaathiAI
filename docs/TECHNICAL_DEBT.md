@@ -1,5 +1,20 @@
 # SaathiOS Technical Debt / Known Gaps
 
+## M55 residual / deferred (2026-07-25)
+
+- Release readiness is advisory/structural (`READY_WITH_LIMITATIONS`), not a
+  deployment authorization; production/connectors/cloud intentionally disabled.
+- Backup restore and retention purge remain simulations/dry-run; real destructive
+  operations deferred behind owner confirmation + backup rehearsal.
+- Metrics are single-host snapshots; `restart_count` is UNKNOWN (no cross-process
+  tracking); no distributed telemetry.
+- Recovery certification covers single-host restart/dispatch/binding invariants;
+  multi-host coordination out of scope.
+- Operator-console browser certification is local; backend contract tests are the
+  CI-side guarantee.
+- Deployment, production mode, OAuth, live connector mutation, and
+  financial/trading execution remain deferred. Trading Guardian advisory-only.
+
 ## M54 residual / deferred (2026-07-25)
 
 - Private-alpha operational readiness (diagnostics, evidence export, dry-run

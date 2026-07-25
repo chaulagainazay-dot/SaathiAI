@@ -28,6 +28,24 @@ If the answer is the latter, the feature belongs in the product layer, not the p
 
 ## 3. Current Platform State
 
+### M55 platform release candidate & operational excellence (2026-07-25)
+
+* **Release-excellence layer** (`saathi/platform/release.py`): expanded health,
+  dashboard metrics, backup validation (checksum + integrity + non-destructive
+  restore simulation), recovery certification (restart/dispatch/binding scenarios
+  proving no duplicate/escalation/replay/corruption), and a release validator
+  (PASS/WARNING/FAIL/UNKNOWN + readiness score). Additive; no new runtime,
+  gateway, RBAC, identity, or database.
+* **Release gate CLI** (`python -m saathi.platform.release_check`): deterministic
+  RC report over an isolated platform; verdict `READY_WITH_LIMITATIONS` (score
+  92.5) — advisory only, enables nothing.
+* **Operator console** (`/platform/ops`): read-only health/metrics/release/
+  recovery/backup/security dashboard. Browser-certified: `M55_BROWSER_CERTIFIED`.
+* **APIs**: `/release/health|metrics|validate|backup|recovery`.
+* **Safety**: production not authorized, connectors dry-run, financial/trading
+  disabled, Trading Guardian unengaged/advisory-only, backup/purge non-destructive.
+  `M55_COMPLETE_WITH_LIMITATIONS` (local; not pushed, not merged, not deployed).
+
 ### M54 private-alpha operational readiness & browser certification (2026-07-25)
 
 * **Operational readiness layer** (`saathi/platform/readiness.py`): tenant-scoped
