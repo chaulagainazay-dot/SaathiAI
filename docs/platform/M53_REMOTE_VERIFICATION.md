@@ -19,8 +19,8 @@ authorization are out of scope.
 | Base branch | `milestone/m52-platform-agent-runtime` |
 | Base SHA (origin tip) | `7edb6094de38a6141800b28e95f65c2f697049c2` |
 | Merge base HEAD..M52 | `7edb6094de38a6141800b28e95f65c2f697049c2` (exact M52 tip) |
-| Commits ahead of M52 | 1 (`1f54ac9`) |
-| Final evidence SHA | recorded in the docs evidence commit on this branch |
+| Commits ahead of M52 | implementation `1f54ac9` + evidence commit(s) |
+| Final evidence SHA | `deba4fd8b590e9ab7bcde59f1ceec861fc4fd801` (plus this recording commit) |
 
 Baseline discrepancies: none. HEAD, base, and merge base matched the handoff
 exactly. Only unrelated untracked content (`docs/design-spec/`, a separate design
@@ -59,23 +59,37 @@ Workflow: `reliability` (`.github/workflows/reliability.yml`).
 | Run | Event | SHA | Status | Conclusion |
 |---|---|---|---|---|
 | 30108173420 | push | `1f54ac9` | completed | cancelled (concurrency; superseded by PR run) |
-| 30108250805 | pull_request | `1f54ac9` | completed | **success** (authoritative PR-head run) |
+| 30108250805 | pull_request | `1f54ac9` | completed | **success** (implementation-SHA PR-head run) |
+| 30135784684 | push | `deba4fd` | completed | cancelled (concurrency; superseded by PR run) |
+| 30135786407 | pull_request | `deba4fd` | completed | **success** (evidence-SHA PR-head run) |
 
-Authoritative PR-head run 30108250805
-(https://github.com/chaulagainazay-dot/SaathiAI/actions/runs/30108250805):
+Authoritative PR-head run 30108250805 (SHA `1f54ac9`,
+https://github.com/chaulagainazay-dot/SaathiAI/actions/runs/30108250805):
 
 | Job | Job ID | Conclusion | Duration |
 |---|---|---|---|
 | critical-regressions | 89531015628 | success | ~1105s |
 | full-suite | 89534581661 | success | ~1009s |
 
-The push-event run was concurrency-cancelled by design (the workflow's
+Confirmation PR-head run 30135786407 (SHA `deba4fd`, evidence commit,
+https://github.com/chaulagainazay-dot/SaathiAI/actions/runs/30135786407):
+
+| Job | Job ID | Conclusion |
+|---|---|---|
+| critical-regressions | 89619234770 | success |
+| full-suite | 89621792848 | success |
+
+The push-event runs were concurrency-cancelled by design (the workflow's
 `cancel-in-progress` group shares push and PR events per branch; the PR event
 supplies the authoritative full-suite gate). No test failures, setup failures,
 infrastructure failures, or browser flakes occurred. The only annotation was the
 non-blocking Node.js 20 runner deprecation notice.
 
-CI fixes: none required — CI was green on the first authoritative run.
+CI fixes: none required — CI was green on both authoritative runs.
+
+This recording commit and any further evidence-only commits change documentation
+only (no source, test, or workflow change) and therefore inherit the identical
+green CI profile; they are not separately gated for the M53.1 verdict.
 
 ## Certification status
 
