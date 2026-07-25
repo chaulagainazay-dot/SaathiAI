@@ -1,5 +1,21 @@
 # SaathiOS Technical Debt / Known Gaps
 
+## M54 residual / deferred (2026-07-25)
+
+- Private-alpha operational readiness (diagnostics, evidence export, dry-run
+  retention) and browser certification are local single-host only.
+- Retention purge is dry-run only; real deletion is deferred behind explicit
+  owner confirmation and a backup rehearsal.
+- Browser certification is certified locally; the full managed BFF+UI+Chromium
+  run is not run in CI (backend contract tests cover the CI side). No distributed
+  telemetry.
+- Recorded-dispatch uncertainty remains manual and non-replayable by design.
+- Compatibility wrappers remain until external callers migrate.
+- Deployment, production OAuth/email, live connector mutation, and
+  financial/trading execution remain deferred. Trading Guardian advisory-only.
+- Split-origin browser access requires `X-Platform-Token` in the CORS allowlist
+  (added in M54) and a scoped `SAATHI_CORS_ORIGINS`.
+
 ## M53 residual / deferred (2026-07-24)
 
 - Runtime operations and multi-identity binding administration are available

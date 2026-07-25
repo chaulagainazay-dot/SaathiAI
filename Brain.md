@@ -28,6 +28,24 @@ If the answer is the latter, the feature belongs in the product layer, not the p
 
 ## 3. Current Platform State
 
+### M54 private-alpha operational readiness & browser certification (2026-07-25)
+
+* **Operational readiness layer** (`saathi/platform/readiness.py`): tenant-scoped
+  diagnostics, bounded evidence export (allowlist + forbidden-key scrub +
+  deterministic content hash + audit), and dry-run retention preview with
+  legal/operator holds. No new runtime, gateway, RBAC, identity, or database.
+* **Browser certification** (`saathi-os/scripts/m54_browser_cert.mjs`): managed
+  BFF+UI+Chromium over an isolated `SAATHI_PLATFORM_DB`, certifying the
+  authenticated `/platform` operator workflow — auth/tenancy, binding admin,
+  governed execution, export, dry-run retention, logout — plus API safety gates.
+* **Recovery rehearsals** (`tests/test_m54_readiness.py`): restart preserves
+  waiting executions; recorded-dispatch resume is refused (non-replay).
+* **CORS**: `X-Platform-Token` added to the allowlist so the split-origin
+  private-alpha browser workflow works; scoped `SAATHI_CORS_ORIGINS`.
+* **Safety**: connectors dry-run, financial/trading execution disabled, Trading
+  Guardian unengaged/advisory-only, production not authorized. Retention never
+  deletes. `M54_COMPLETE_WITH_LIMITATIONS` (local; not merged, not deployed).
+
 ### M53 runtime operations and binding administration (2026-07-24)
 
 * **Multiple bounded identities:** durable, workspace-scoped platform-agent

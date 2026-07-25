@@ -1,5 +1,27 @@
 # SaathiOS Autonomous Roadmap
 
+## M54 — Private-Alpha Operational Readiness and Browser Certification (2026-07-25)
+
+| Item | State |
+|---|---|
+| Diagnostics | tenant-scoped bounded health + private-alpha safety labels |
+| Evidence export | JSON/CSV, allowlist + forbidden-key scrub, deterministic hash, audit |
+| Retention | dry-run purge preview, holds, owner/admin-gated (never deletes) |
+| Recovery drills | restart/approval/dispatch/cancellation/binding races (single-host) |
+| Operator UI | `/platform` readiness panel: diagnostics, export, dry-run retention |
+| Browser certification | local managed BFF+UI+Chromium; isolated DB; evidence JSON |
+| CORS | `X-Platform-Token` allowed; scoped `SAATHI_CORS_ORIGINS` for split-origin |
+| Runtime/Gateway | PlatformAgentRuntime canonical; ExecutionGateway sole authority |
+| Connectors | DRY_RUN_ONLY · Financial/Trading | DISABLED |
+| Trading Guardian | UNENGAGED_ADVISORY_ONLY |
+| Milestone | M54_COMPLETE_WITH_LIMITATIONS (local) |
+| Production | NOT_AUTHORIZED |
+
+Evidence: `docs/platform/M54_*.md`, browser evidence in
+`docs/platform/m54_evidence/`. Deployment, distributed telemetry, real retention
+purge, and production authorization are not claimed.
+
+
 ## M53 — Platform Runtime Operations and Binding Administration (2026-07-24)
 
 | Item | State |
