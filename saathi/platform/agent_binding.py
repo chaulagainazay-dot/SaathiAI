@@ -20,6 +20,8 @@ class BoundAgentCall:
     approval_id: str = ""
     agent_id: str = "platform-agent"
     binding_id: str = ""
+    binding_version: int = 1
+    binding_fingerprint: str = ""
 
 
 class PlatformAgentBinding:
@@ -39,6 +41,8 @@ class PlatformAgentBinding:
         approval_id: str = "",
         run_id: str = "",
         agent_id: str = "platform-agent",
+        binding_id: str = "",
+        binding_version: int | None = None,
     ) -> BoundAgentCall:
         if not token:
             raise PlatformContextError("ANONYMOUS_PROHIBITED", "token required")
@@ -54,15 +58,30 @@ class PlatformAgentBinding:
         sec = self.platform.store.get_config("security", {}) or {}
         if sec.get("execution_enabled") is False:
             raise PlatformContextError("EXECUTION_DISABLED", "owner disabled execution")
+        from saathi.platform.bindings import BindingAdministrationService
         from saathi.platform.runtime import binding_fingerprint
+
+        binding = BindingAdministrationService(self.platform).resolve_for_execution(
+            ctx,
+            binding_id=binding_id,
+            agent_id=agent_id,
+            binding_version=binding_version,
+        )
 
         return BoundAgentCall(
             ctx=ctx,
             tool_id=tool_id,
             arguments=dict(arguments or {}),
             approval_id=approval_id,
-            agent_id=agent_id,
-            binding_id=binding_fingerprint(ctx, agent_id),
+            agent_id=binding.agent_id,
+            binding_id=binding.binding_id,
+            binding_version=binding.version,
+            binding_fingerprint=binding_fingerprint(
+                ctx,
+                binding.agent_id,
+                binding.binding_id,
+                binding.version,
+            ),
         )
 
     def execute_bound(self, call: BoundAgentCall, **runtime_options):
@@ -85,6 +104,8 @@ class PlatformAgentBinding:
         idempotency_key: str = "",
         capability: str = "",
         agent_id: str = "platform-agent",
+        binding_id: str = "",
+        binding_version: int | None = None,
         timeout_sec: float | None = None,
     ):
         call = self.bind(
@@ -96,6 +117,8 @@ class PlatformAgentBinding:
             approval_id=approval_id,
             run_id=run_id,
             agent_id=agent_id,
+            binding_id=binding_id,
+            binding_version=binding_version,
         )
         return self.execute_bound(
             call,

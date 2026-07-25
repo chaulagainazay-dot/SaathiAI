@@ -28,6 +28,26 @@ If the answer is the latter, the feature belongs in the product layer, not the p
 
 ## 3. Current Platform State
 
+### M53 runtime operations and binding administration (2026-07-24)
+
+* **Multiple bounded identities:** durable, workspace-scoped platform-agent
+  bindings with lifecycle, versioning, optional project/mission scope,
+  tool/capability allowlists, and authority ceilings.
+* **Private-alpha operations:** tenant-scoped execution list/detail, lifecycle
+  timelines, attention classification, bounded metrics, cancellation, and
+  permission-controlled reconciliation.
+* **Non-replay recovery:** dispatch uncertainty remains paused for manual review;
+  recorded dispatch can never be resumed through administrative action.
+* **Canonical authority retained:** resumable work returns through
+  `PlatformAgentRuntime`; only `ExecutionGateway` may execute a registered tool.
+* **Safety:** connector mutations remain dry-run, financial/trading execution
+  remains disabled, Trading Guardian remains unengaged/advisory-only, and
+  production is not authorized.
+* **Remote status:** `M53_REMOTE_CERTIFIED_WITH_LIMITATIONS`. Draft PR #11 (base
+  M52), CI-certified — reliability PR-head run 30108250805 passed
+  (critical-regressions + full-suite). Not merged; no deployment. Evidence:
+  `docs/platform/M53_REMOTE_VERIFICATION.md`.
+
 ### M52 platform-agent runtime consolidation (2026-07-23)
 
 * **Canonical path:** token-trusted identity/session/tenant context →

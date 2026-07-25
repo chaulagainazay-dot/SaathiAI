@@ -1,5 +1,27 @@
 # SaathiOS Autonomous Roadmap
 
+## M53 — Platform Runtime Operations and Binding Administration (2026-07-24)
+
+| Item | State |
+|---|---|
+| Bindings | multiple durable tenant-scoped identities; ACTIVE/SUSPENDED/REVOKED |
+| Binding policy | tool/capability scope + role/owner authority ceilings |
+| Runtime operations | list, inspect, timeline, attention, bounded metrics |
+| Reconciliation | permissioned/idempotent; uncertain dispatch never replayed |
+| Runtime/Gateway | PlatformAgentRuntime canonical; ExecutionGateway authority unchanged |
+| UI | bounded private-alpha `/platform` operator views |
+| Connectors | DRY_RUN_ONLY |
+| Trading Guardian | UNENGAGED_ADVISORY_ONLY |
+| Milestone | M53_REMOTE_CERTIFIED_WITH_LIMITATIONS |
+| Draft PR | #11 (base M52) — draft, not merged |
+| CI | reliability PR-head run 30108250805 success (critical-regressions + full-suite) |
+| Production | NOT_AUTHORIZED |
+
+Evidence: `docs/platform/M53_*.md`, remote evidence in
+`docs/platform/M53_REMOTE_VERIFICATION.md`. Draft PR #11 pushed and CI-certified;
+not merged. Browser certification, deployment, and production authorization are
+not claimed.
+
 
 ## M52 — Platform Agent Runtime Consolidation (2026-07-23)
 

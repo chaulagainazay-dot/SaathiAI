@@ -1,5 +1,18 @@
 # SaathiOS Technical Debt / Known Gaps
 
+## M53 residual / deferred (2026-07-24)
+
+- Runtime operations and multi-identity binding administration are available
+  for private-alpha use, but coordination remains single-host SQLite.
+- Recorded-dispatch uncertainty remains manual and non-replayable by design.
+- Operational metrics are bounded persisted snapshots, not distributed or
+  real-time telemetry.
+- Compatibility wrappers remain gateway/runtime enforced until their external
+  callers migrate.
+- Browser certification, CI, deployment, production authority, live connector
+  mutation, financial/trading execution, and multi-host workers remain deferred.
+- Trading Guardian remains unengaged and advisory-only.
+
 ## M52 residual / deferred (2026-07-23)
 
 - Platform-agent execution is consolidated through `PlatformAgentRuntime` and
@@ -7,8 +20,8 @@
 - Single-host SQLite lifecycle coordination is not a distributed guarantee.
 - Recorded-dispatch restart recovery pauses for manual reconciliation and never
   auto-replays a mutation.
-- Multi-agent administrative binding, live connector mutations, CI/browser
-  certification, deployment, and production authorization remain deferred.
+- Multi-agent binding administration is closed by M53. Live connector mutations,
+  deployment, and production authorization remain deferred.
 - Trading Guardian remains unengaged and advisory-only.
 
 ## Program note (M21–M39 / M30, 2026-07-17)

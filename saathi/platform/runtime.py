@@ -24,7 +24,12 @@ from saathi.platform.models import (
 CANONICAL_PLATFORM_AGENT_ID = "platform-agent"
 
 
-def binding_fingerprint(ctx: PlatformExecutionContext, agent_id: str) -> str:
+def binding_fingerprint(
+    ctx: PlatformExecutionContext,
+    agent_id: str,
+    binding_id: str = "",
+    binding_version: int = 1,
+) -> str:
     payload = "|".join(
         (
             ctx.session_id,
@@ -34,6 +39,8 @@ def binding_fingerprint(ctx: PlatformExecutionContext, agent_id: str) -> str:
             ctx.project_id,
             ctx.mission_id,
             agent_id,
+            binding_id,
+            str(binding_version),
         )
     )
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
@@ -64,6 +71,8 @@ class PlatformAgentRuntime:
         idempotency_key: str = "",
         capability: str = "",
         agent_id: str = CANONICAL_PLATFORM_AGENT_ID,
+        binding_id: str = "",
+        binding_version: int | None = None,
         timeout_sec: float | None = None,
     ):
         from saathi.platform.agent_binding import PlatformAgentBinding
@@ -77,6 +86,8 @@ class PlatformAgentRuntime:
             approval_id=approval_id,
             run_id=run_id,
             agent_id=agent_id,
+            binding_id=binding_id,
+            binding_version=binding_version,
         )
         return self.execute_bound(
             call,
@@ -95,18 +106,34 @@ class PlatformAgentRuntime:
         idempotency_key: str = "",
         capability: str = "",
         agent_id: str = CANONICAL_PLATFORM_AGENT_ID,
+        binding_id: str = "",
+        binding_version: int | None = None,
         timeout_sec: float | None = None,
     ):
         """Compatibility entry; revalidates the persisted session before dispatch."""
         from saathi.platform.agent_binding import BoundAgentCall
+        from saathi.platform.bindings import BindingAdministrationService
 
+        binding = BindingAdministrationService(self.platform).resolve_for_execution(
+            ctx,
+            binding_id=binding_id,
+            agent_id=agent_id,
+            binding_version=binding_version,
+        )
         call = BoundAgentCall(
             ctx=ctx,
             tool_id=tool_id,
             arguments=dict(arguments or {}),
             approval_id=approval_id,
-            agent_id=agent_id,
-            binding_id=binding_fingerprint(ctx, agent_id),
+            agent_id=binding.agent_id,
+            binding_id=binding.binding_id,
+            binding_version=binding.version,
+            binding_fingerprint=binding_fingerprint(
+                ctx,
+                binding.agent_id,
+                binding.binding_id,
+                binding.version,
+            ),
         )
         return self.execute_bound(
             call,
@@ -127,7 +154,7 @@ class PlatformAgentRuntime:
         ctx = call.ctx
         self._audit("runtime.execution_requested", ctx, tool_id=call.tool_id)
         try:
-            self._validate_bound_call(call)
+            binding = self._validate_bound_call(call)
         except PlatformContextError as exc:
             self._audit(
                 "runtime.context_rejected",
@@ -144,6 +171,8 @@ class PlatformAgentRuntime:
         fingerprint = self._request_fingerprint(
             ctx,
             agent_id=call.agent_id,
+            binding_id=call.binding_id,
+            binding_version=call.binding_version,
             tool_id=call.tool_id,
             arguments=args,
             capability=capability,
@@ -183,6 +212,8 @@ class PlatformAgentRuntime:
                 project_id=ctx.project_id,
                 mission_id=ctx.mission_id,
                 agent_id=call.agent_id,
+                binding_id=call.binding_id,
+                binding_version=call.binding_version,
                 run_id=ctx.run_id,
                 tool_id=call.tool_id,
                 request_fingerprint=fingerprint,
@@ -213,6 +244,35 @@ class PlatformAgentRuntime:
         if not authority or authority == "UNKNOWN":
             self._fail_before_dispatch(record.execution_id, ctx, "AUTHORITY_UNKNOWN")
             raise PlatformContextError("AUTHORITY_UNKNOWN", "tool authority is not declared")
+        # Explicitly prohibited manifests still reach the gateway's canonical
+        # denial path so compatibility callers receive a structured, audited
+        # non-execution result. This grants no authority and invokes no adapter.
+        if manifest.approval_requirement.value != "PROHIBITED":
+            try:
+                from saathi.platform.bindings import BindingAdministrationService
+
+                BindingAdministrationService(self.platform).validate_execution_policy(
+                    ctx,
+                    binding,
+                    tool_id=call.tool_id,
+                    capability=capability,
+                    authority=authority,
+                )
+            except PlatformContextError as exc:
+                self._fail_before_dispatch(record.execution_id, ctx, exc.code)
+                self._audit(
+                    "runtime.binding_policy_rejected",
+                    ctx,
+                    tool_id=call.tool_id,
+                    authority=authority,
+                    outcome="BLOCKED",
+                    detail={
+                        "execution_id": record.execution_id,
+                        "binding_id": call.binding_id,
+                        "error": exc.code,
+                    },
+                )
+                raise
 
         needs_approval = manifest.approval_requirement.value not in (
             "NO_APPROVAL_REQUIRED",
@@ -480,7 +540,14 @@ class PlatformAgentRuntime:
             arguments=json.loads(rec.arguments_json or "{}"),
             approval_id=approval_id or rec.approval_id,
             agent_id=rec.agent_id,
-            binding_id=binding_fingerprint(ctx, rec.agent_id),
+            binding_id=rec.binding_id,
+            binding_version=rec.binding_version,
+            binding_fingerprint=binding_fingerprint(
+                ctx,
+                rec.agent_id,
+                rec.binding_id,
+                rec.binding_version,
+            ),
         )
         # A resume is a new orchestration attempt only when no dispatch occurred.
         # M49 still owns tool idempotency for the preserved key.
@@ -542,13 +609,23 @@ class PlatformAgentRuntime:
             )
         return decisions
 
-    def _validate_bound_call(self, call) -> None:
+    def _validate_bound_call(self, call):
         ctx = call.ctx
-        if call.agent_id != CANONICAL_PLATFORM_AGENT_ID:
-            raise PlatformContextError(
-                "AGENT_BINDING_MISMATCH", "unrecognized platform agent binding"
-            )
-        if call.binding_id != binding_fingerprint(ctx, call.agent_id):
+        from saathi.platform.bindings import BindingAdministrationService
+
+        binding = BindingAdministrationService(self.platform).resolve_for_execution(
+            ctx,
+            binding_id=call.binding_id,
+            agent_id=call.agent_id,
+            binding_version=call.binding_version,
+        )
+        expected_fingerprint = binding_fingerprint(
+            ctx,
+            binding.agent_id,
+            binding.binding_id,
+            binding.version,
+        )
+        if call.binding_fingerprint != expected_fingerprint:
             raise PlatformContextError(
                 "AGENT_BINDING_MISMATCH", "platform agent binding scope mismatch"
             )
@@ -621,6 +698,7 @@ class PlatformAgentRuntime:
             raise PlatformContextError("EXECUTION_DISABLED", "owner disabled execution")
         if sec.get("approvals_enabled") is False and call.approval_id:
             raise PlatformContextError("APPROVALS_DISABLED", "owner disabled approvals")
+        return binding
 
     def _approval_reference(self, ctx, *, manifest, approval_id: str, capability: str):
         if not approval_id:
@@ -729,6 +807,7 @@ class PlatformAgentRuntime:
         return rec.cancel_requested
 
     def _transition(self, execution_id, state, ctx, **updates):
+        before = self.store.get_platform_execution(execution_id)
         rec = self.store.transition_platform_execution(execution_id, state, **updates)
         self._audit(
             "runtime.lifecycle_transition",
@@ -737,7 +816,12 @@ class PlatformAgentRuntime:
             approval_id=rec.approval_id,
             authority=rec.authority,
             outcome=rec.state,
-            detail={"execution_id": rec.execution_id, "state": rec.state},
+            detail={
+                "execution_id": rec.execution_id,
+                "previous_state": before.state if before else "",
+                "new_state": rec.state,
+                "reason_code": rec.error_code or "",
+            },
         )
         return rec
 
@@ -775,6 +859,8 @@ class PlatformAgentRuntime:
         ctx,
         *,
         agent_id,
+        binding_id,
+        binding_version,
         tool_id,
         arguments,
         capability,
@@ -787,6 +873,8 @@ class PlatformAgentRuntime:
             "project_id": ctx.project_id,
             "mission_id": ctx.mission_id,
             "agent_id": agent_id,
+            "binding_id": binding_id,
+            "binding_version": binding_version,
             "tool_id": tool_id,
             "arguments": arguments,
             "capability": capability,

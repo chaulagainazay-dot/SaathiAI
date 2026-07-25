@@ -7,6 +7,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
+import json
 import time
 import uuid
 
@@ -52,6 +53,11 @@ class PlatformPermission(str, Enum):
     CONNECTOR_LINK = "connector.link"
     AUDIT_READ = "audit.read"
     RUNTIME_EXECUTE = "runtime.execute"
+    RUNTIME_READ = "runtime.read"
+    RUNTIME_OPERATE = "runtime.operate"
+    AGENT_BINDING_READ = "agent_binding.read"
+    AGENT_BINDING_USE = "agent_binding.use"
+    AGENT_BINDING_MANAGE = "agent_binding.manage"
     SESSION_MANAGE = "session.manage"
 
 
@@ -78,6 +84,12 @@ class PlatformExecutionState(str, Enum):
     FAILED = "FAILED"
     CANCELLED = "CANCELLED"
     TIMED_OUT = "TIMED_OUT"
+
+
+class PlatformAgentBindingState(str, Enum):
+    ACTIVE = "ACTIVE"
+    SUSPENDED = "SUSPENDED"
+    REVOKED = "REVOKED"
 
 
 PLATFORM_EXECUTION_TERMINAL_STATES = frozenset(
@@ -142,6 +154,7 @@ PLATFORM_EXECUTION_TRANSITIONS: dict[
     PlatformExecutionState.PAUSED: frozenset(
         {
             PlatformExecutionState.READY,
+            PlatformExecutionState.FAILED,
             PlatformExecutionState.CANCELLED,
             PlatformExecutionState.TIMED_OUT,
             PlatformExecutionState.RECOVERING,
@@ -175,6 +188,8 @@ ROLE_PERMISSIONS: dict[PlatformRole, frozenset[PlatformPermission]] = {
             PlatformPermission.SETTINGS_READ,
             PlatformPermission.CONNECTOR_READ,
             PlatformPermission.AUDIT_READ,
+            PlatformPermission.RUNTIME_READ,
+            PlatformPermission.AGENT_BINDING_READ,
         }
     ),
     PlatformRole.OPERATOR: frozenset(),  # filled below
@@ -194,6 +209,7 @@ ROLE_PERMISSIONS[PlatformRole.OPERATOR] = ROLE_PERMISSIONS[PlatformRole.VIEWER] 
         PlatformPermission.APPROVAL_REQUEST,
         PlatformPermission.CONNECTOR_LINK,
         PlatformPermission.RUNTIME_EXECUTE,
+        PlatformPermission.AGENT_BINDING_USE,
         PlatformPermission.SESSION_MANAGE,
     }
 )
@@ -203,6 +219,8 @@ ROLE_PERMISSIONS[PlatformRole.OWNER] = ROLE_PERMISSIONS[PlatformRole.OPERATOR] |
         PlatformPermission.SETTINGS_WRITE,
         PlatformPermission.ORG_MANAGE,
         PlatformPermission.USER_MANAGE,
+        PlatformPermission.RUNTIME_OPERATE,
+        PlatformPermission.AGENT_BINDING_MANAGE,
     }
 )
 ROLE_PERMISSIONS[PlatformRole.ADMIN] = ROLE_PERMISSIONS[PlatformRole.OWNER] | frozenset(
@@ -438,6 +456,10 @@ class PlatformExecutionRecord:
     run_id: str
     tool_id: str
     request_fingerprint: str
+    # M53 adds durable binding identity while retaining compatibility with
+    # persisted/pre-M53 records and test fixtures.
+    binding_id: str = ""
+    binding_version: int = 1
     arguments_json: str = "{}"
     capability: str = ""
     idempotency_key: str = ""
@@ -466,6 +488,8 @@ class PlatformExecutionRecord:
             "project_id": self.project_id,
             "mission_id": self.mission_id,
             "agent_id": self.agent_id,
+            "binding_id": self.binding_id,
+            "binding_version": self.binding_version,
             "run_id": self.run_id,
             "tool_id": self.tool_id,
             "capability": self.capability,
@@ -479,6 +503,95 @@ class PlatformExecutionRecord:
             "adapter_invoked": self.adapter_invoked,
             "error_code": self.error_code,
             "recovery_count": self.recovery_count,
+        }
+
+
+@dataclass
+class PlatformAgentBindingRecord:
+    """Durable, tenant-scoped platform-agent identity and policy boundary."""
+
+    binding_id: str
+    agent_id: str
+    name: str
+    description: str
+    org_id: str
+    workspace_id: str
+    project_id: str = ""
+    mission_id: str = ""
+    allowed_tools_json: str = "[]"
+    allowed_capabilities_json: str = "[]"
+    authority_ceiling: str = "READ_ONLY"
+    state: str = PlatformAgentBindingState.ACTIVE.value
+    version: int = 1
+    created_by: str = ""
+    updated_by: str = ""
+    created_at: float = field(default_factory=time.time)
+    updated_at: float = field(default_factory=time.time)
+
+    @property
+    def allowed_tools(self) -> list[str]:
+        try:
+            value = json.loads(self.allowed_tools_json or "[]")
+        except Exception:
+            value = []
+        return sorted({str(item) for item in value if str(item)})
+
+    @property
+    def allowed_capabilities(self) -> list[str]:
+        try:
+            value = json.loads(self.allowed_capabilities_json or "[]")
+        except Exception:
+            value = []
+        return sorted({str(item) for item in value if str(item)})
+
+    def to_public(self) -> dict[str, Any]:
+        return {
+            "binding_id": self.binding_id,
+            "agent_id": self.agent_id,
+            "name": self.name,
+            "description": self.description,
+            "org_id": self.org_id,
+            "workspace_id": self.workspace_id,
+            "project_id": self.project_id,
+            "mission_id": self.mission_id,
+            "allowed_tools": self.allowed_tools,
+            "allowed_capabilities": self.allowed_capabilities,
+            "authority_ceiling": self.authority_ceiling,
+            "state": self.state,
+            "version": self.version,
+            "created_by": self.created_by,
+            "updated_by": self.updated_by,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at,
+        }
+
+
+@dataclass
+class RuntimeReconciliationRecord:
+    reconciliation_id: str
+    execution_id: str
+    org_id: str
+    workspace_id: str
+    action: str
+    actor_id: str
+    actor_role: str
+    note: str = ""
+    evidence_reference: str = ""
+    outcome: str = ""
+    idempotency_key: str = ""
+    created_at: float = field(default_factory=time.time)
+
+    def to_public(self) -> dict[str, Any]:
+        return {
+            "reconciliation_id": self.reconciliation_id,
+            "execution_id": self.execution_id,
+            "action": self.action,
+            "actor_id": self.actor_id,
+            "actor_role": self.actor_role,
+            "note": self.note,
+            "evidence_reference": self.evidence_reference,
+            "outcome": self.outcome,
+            "created_at": self.created_at,
         }
 
 
