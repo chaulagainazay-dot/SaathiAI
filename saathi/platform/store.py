@@ -608,6 +608,24 @@ class PlatformStore:
         ).fetchall()
         return [self._session_row(r) for r in rows]
 
+    def count_active_sessions(self) -> int:
+        """Bounded count of non-revoked, unexpired sessions (no data exposed)."""
+        row = self._conn.execute(
+            "SELECT COUNT(*) FROM sessions WHERE revoked=0 AND expires_at > ?",
+            (self._now(),),
+        ).fetchone()
+        return int(row[0]) if row else 0
+
+    def count_tenants(self) -> int:
+        """Bounded count of organizations."""
+        row = self._conn.execute("SELECT COUNT(*) FROM organizations").fetchone()
+        return int(row[0]) if row else 0
+
+    def count_workspaces(self) -> int:
+        """Bounded count of workspaces."""
+        row = self._conn.execute("SELECT COUNT(*) FROM workspaces").fetchone()
+        return int(row[0]) if row else 0
+
     def get_session(self, session_id: str) -> SessionRecord | None:
         row = self._conn.execute(
             "SELECT * FROM sessions WHERE session_id=?", (session_id,)

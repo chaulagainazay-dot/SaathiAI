@@ -1229,3 +1229,75 @@ def runtime_retention_hold(
         }
     except PlatformContextError as e:
         raise _err(e) from e
+
+
+# ── M55 release-candidate operational excellence ────────────────────────────
+def _release():
+    from saathi.platform.release import ReleaseOperationsService
+
+    return ReleaseOperationsService(_svc())
+
+
+@router.get("/release/health")
+def release_health(
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        svc = _release()
+        ctx = svc.context(_token(authorization, x_platform_token))
+        return {"health": svc.health(ctx)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/release/metrics")
+def release_metrics(
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        svc = _release()
+        ctx = svc.context(_token(authorization, x_platform_token))
+        return {"metrics": svc.metrics(ctx)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/release/validate")
+def release_validate(
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        svc = _release()
+        ctx = svc.context(_token(authorization, x_platform_token))
+        return {"release": svc.release_validate(ctx)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/release/backup")
+def release_backup(
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        svc = _release()
+        ctx = svc.context(_token(authorization, x_platform_token))
+        return {"backup": svc.backup_validate(ctx)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/release/recovery")
+def release_recovery(
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        svc = _release()
+        ctx = svc.context(_token(authorization, x_platform_token))
+        return {"recovery": svc.recovery_certify(ctx)}
+    except PlatformContextError as e:
+        raise _err(e) from e
