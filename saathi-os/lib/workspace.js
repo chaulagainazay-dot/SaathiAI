@@ -373,10 +373,17 @@ export function groupAttentionBySeverity(items) {
 
 const ROUTE_COMMANDS = [
   { id: "go-home", label: "Go to Home", route: "/platform", keywords: "home core spatial" },
+  { id: "go-workflows", label: "Go to Workflows", route: "/platform/workflows", keywords: "workflow template guided journey" },
   { id: "go-missions", label: "Go to Missions", route: "/platform/missions", keywords: "mission control" },
+  { id: "go-mission-new", label: "Create a mission", route: "/platform/missions/new", keywords: "new mission create guided" },
   { id: "go-agents", label: "Go to Agents", route: "/platform/agents", keywords: "agent constellation binding" },
   { id: "go-approvals", label: "Go to Approvals", route: "/platform/approvals", keywords: "approval authority" },
   { id: "go-attention", label: "Go to Attention", route: "/platform/attention", keywords: "attention runtime alert" },
+  { id: "go-actions", label: "Go to Action queue", route: "/platform/actions", keywords: "operator action queue todo" },
+  { id: "go-notifications", label: "Go to Notifications", route: "/platform/notifications", keywords: "notification center events" },
+  { id: "go-evidence", label: "Go to Evidence", route: "/platform/evidence", keywords: "evidence timeline audit export" },
+  { id: "go-search", label: "Go to Search", route: "/platform/search", keywords: "search find cross-workspace" },
+  { id: "go-onboarding", label: "Open onboarding", route: "/platform/onboarding", keywords: "onboarding first-run help" },
   { id: "go-ops", label: "Go to Operations", route: "/platform/ops", keywords: "operations constellation" },
 ];
 

@@ -1,5 +1,21 @@
 # SaathiOS Technical Debt / Known Gaps
 
+## M60 residual / deferred (2026-07-26)
+
+- **Missing backend APIs (M61 targets):** mission plan persistence, attention
+  acknowledge/resolve, durable notifications, saved-view persistence, workflow-template
+  persistence, server-side authorized search, mission update, onboarding-progress
+  persistence. M60 implements these as DRAFT_ONLY / BLOCKED / DERIVED / LOCAL_ONLY /
+  authorized-loaded-records with honest in-UI labels.
+- **Cold-start session race:** in the isolated cert env, a concurrent cold request can
+  briefly 401 ("session expired, revoked, or unknown") and show a transient banner that
+  self-heals on reconcile. This makes `mission_creation_live`/`mission_scope_select`
+  SOFT gates (the `/projects` fetch races). One-off page fetches (`/projects` in
+  mission-new, approval-new, search) do not yet share `usePlatformData`'s retry.
+- **axe serious (6, pre-existing):** global TopBar status glyph contrast — carried from
+  M58/M59, needs a chrome-a11y pass.
+- Local perf only; no real-user CWV.
+
 ## M59 residual / deferred (2026-07-26)
 
 - **Resolved from M58:** standalone Mission/Agents/Approval/Attention spatial screens

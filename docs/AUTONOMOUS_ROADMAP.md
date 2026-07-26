@@ -1,5 +1,22 @@
 # SaathiOS Autonomous Roadmap
 
+## M60 — Guided Operator Workflows & Safe Action Orchestration (2026-07-26)
+
+| Field | Value |
+| --- | --- |
+| Milestone | M60_COMPLETE_WITH_LIMITATIONS |
+| Scope | Guided operator journeys: onboarding, mission create/plan, agent selection, approval prep, execution readiness, action queue, notifications, evidence, saved views, search, templates, role-aware actions |
+| Backend | Unchanged (no Python files touched) |
+| New | `lib/operator.js` (+tests), `lib/local-store.js`, `components/spatial/GuidedWorkflow.jsx`, 13 routes under `app/platform/`, `scripts/m60_browser_cert.mjs` |
+| LIVE APIs | mission/project/approval create, governed execution (POST /missions,/projects,/approvals,/execute) |
+| Bounded | plan DRAFT_ONLY, notifications DERIVED, saved-views/templates LOCAL_ONLY, search authorized-loaded-records, attention ack/resolve BLOCKED |
+| Certification | Production browser cert PASS (25 hard gates); dev regression PASS; axe 0 critical; M59 cert re-run PASS |
+| Tests | 130/130 frontend unit (18 new); lint clean; build clean |
+| Safety | All M57-M59 boundaries retained; approvals server-owned; no browser-direct execution; production not authorized |
+| Deferred (M61) | Backend mutation APIs: plan/notification/saved-view/template persistence, attention resolution, server search |
+
+Evidence: `docs/platform/M60_*.md`, `docs/platform/m60_evidence/`. No push/merge/deploy.
+
 ## M59 — Spatial Workspaces, Command Interface & UI Certification (2026-07-26)
 
 | Field | Value |

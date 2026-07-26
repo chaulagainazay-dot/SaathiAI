@@ -14,12 +14,15 @@ import { buildCommands } from "@/lib/workspace";
 
 const NAV = [
   { id: "home", label: "Home", route: "/platform", glyph: "◈" },
+  { id: "workflows", label: "Workflows", route: "/platform/workflows", glyph: "❖" },
   { id: "missions", label: "Missions", route: "/platform/missions", glyph: "◎" },
   { id: "agents", label: "Agents", route: "/platform/agents", glyph: "✦" },
   { id: "approvals", label: "Approvals", route: "/platform/approvals", glyph: "⎈" },
   { id: "attention", label: "Attention", route: "/platform/attention", glyph: "△" },
+  { id: "actions", label: "Actions", route: "/platform/actions", glyph: "◇" },
+  { id: "notifications", label: "Notifications", route: "/platform/notifications", glyph: "◐" },
+  { id: "evidence", label: "Evidence", route: "/platform/evidence", glyph: "❑" },
   { id: "operations", label: "Operations", route: "/platform/ops", glyph: "▤" },
-  { id: "evidence", label: "Evidence", route: "/evidence", glyph: "❑" },
   { id: "settings", label: "Settings", route: "/settings", glyph: "⚙" },
 ];
 

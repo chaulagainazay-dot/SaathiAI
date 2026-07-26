@@ -28,6 +28,32 @@ If the answer is the latter, the feature belongs in the product layer, not the p
 
 ## 3. Current Platform State
 
+### M60 Guided operator workflows & safe action orchestration (2026-07-26)
+
+* **What:** turned the M59 spatial workspaces into guided operator journeys —
+  first-run onboarding, mission creation, mission planning + execution readiness,
+  agent selection, approval-request preparation, operator action queue, notification
+  center, evidence timeline, saved views, cross-workspace search, workflow templates,
+  role-aware actions, and server reconciliation. 13 new `/platform/*` routes.
+* **How:** `lib/operator.js` (pure, 18 tests) with an authoritative CAPABILITY_MATRIX
+  deciding LIVE / READ_ONLY / DRAFT_ONLY / DERIVED / LOCAL_ONLY / BLOCKED per workflow;
+  `lib/local-store.js` (non-sensitive local state); `components/spatial/GuidedWorkflow.jsx`
+  (stepper, stage, role notice, draft banner, reconciliation chip). Reuses the M59
+  SpatialWorkspaceShell. No backend change.
+* **LIVE paths (real APIs):** mission create (POST /missions), project create
+  (POST /projects), approval request (POST /approvals), governed execution
+  (POST /execute, read-only tool). Bounded states elsewhere: plan DRAFT_ONLY,
+  notifications DERIVED, saved views/templates LOCAL_ONLY, search over authorized
+  loaded records, attention ack/resolve BLOCKED (no API).
+* **Verified:** production browser cert PASS (25 hard gates, 0 page/hydration errors);
+  dev regression PASS; axe 0 critical (6 serious pre-existing chrome); responsive/
+  reduced-motion PASS; 130/130 unit; lint/build clean; M59 cert re-run PASS. Soft:
+  live UI mission-submit races a cold-start backend session 401 in the isolated cert
+  env (create path proven by fixtures + tests).
+* **Safety:** all M57–M59 boundaries retained; approvals server-owned; no browser-
+  direct execution; production not authorized. `M60_COMPLETE_WITH_LIMITATIONS`.
+  Evidence: `docs/platform/M60_*`, `m60_evidence/`.
+
 ### M59 Spatial workspaces, command interface & UI certification (2026-07-26)
 
 * **What:** completed the four standalone spatial operator workspaces deferred from
