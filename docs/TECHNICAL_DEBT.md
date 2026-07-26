@@ -1,5 +1,23 @@
 # SaathiOS Technical Debt / Known Gaps
 
+## M59 residual / deferred (2026-07-26)
+
+- **Resolved from M58:** standalone Mission/Agents/Approval/Attention spatial screens
+  now exist; spatial command palette shipped; prod-build cert + axe-core added.
+- **No per-mission API** — mission detail composes list record + runtime records by
+  `mission_id`; last-operator-action / final-result fields unavailable.
+- **No attention acknowledge/resolve API** — attention workspace is inspect + navigate
+  + governed cancel only; resume/reconcile stay on Operations.
+- **Mission actions read-only** — no lifecycle-transition API beyond create.
+- **axe serious (10, pre-existing, not M59):** global TopBar status glyph contrast
+  ("Local"/"Alerts") and M58 `/platform` module-panel `<ul>` non-`<li>` children
+  (`list` rule). Needs a dedicated chrome-a11y pass (M60).
+- **Global vs spatial ⌘K:** spatial palette wins via capture-phase suppression; the
+  global app-shell palette still mounts (closed) on workspace routes.
+- **Perf is local-lab only** — no real-user Core Web Vitals yet.
+- Dev-mode cert can flake on first-hit on-demand route compilation under load;
+  production (precompiled) build is the authoritative gate.
+
 ## M58 residual / deferred (2026-07-26)
 
 - Spatial scope applied to `/platform` + `/platform/ops` only; other `/platform/*`

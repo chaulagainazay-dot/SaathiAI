@@ -28,6 +28,29 @@ If the answer is the latter, the feature belongs in the product layer, not the p
 
 ## 3. Current Platform State
 
+### M59 Spatial workspaces, command interface & UI certification (2026-07-26)
+
+* **What:** completed the four standalone spatial operator workspaces deferred from
+  M58 — Mission Control, Agent Constellation, Approval Authority Center, Runtime
+  Attention Center — each with a list + detail route, plus a global ⌘K command
+  palette, a unified focus-trapped context drawer, and a shared `SpatialWorkspaceShell`.
+* **How:** `saathi-os/lib/workspace.js` (pure normalizers: mission/agent/approval/
+  attention view-models, lifecycle + severity mapping, command generation) +
+  `lib/platform-client.js` (shared authenticated `/api/v1/platform/*` hook) +
+  `components/spatial/{SpatialWorkspaceShell,SpatialCommandPalette,SpatialContextDrawer,
+  RequireSession,primitives}` + 8 routes under `app/platform/`. No backend change.
+* **API truth:** no per-mission API → detail composed by `mission_id` matching;
+  approvals decided via server `POST /approvals/{id}/decide` (never optimistic);
+  attention = flagged executions, cancel-only (no acknowledge/resolve API invented).
+* **Verified:** production-build browser cert PASS (21 hard gates, 0 page/hydration
+  errors); dev regression PASS; axe-core 0 critical (10 serious, all pre-existing
+  chrome/M58); responsive 390px PASS; reduced-motion PASS; 112/112 unit; lint/build
+  clean. 15 cert screenshots. Fixed a real critical a11y bug (palette aria-required-
+  parent) + a double-⌘K-palette conflict with the global shell.
+* **Safety:** all M57/M58 boundaries retained. `M59_COMPLETE_WITH_LIMITATIONS`.
+  Limits: axe≠full WCAG, lab perf≠field CWV, mission/attention actions read-only
+  where no safe API exists. Evidence: `docs/platform/M59_*`, `m59_evidence/`.
+
 ### M58 Glass Frame interface & central AI command center (2026-07-26)
 
 * **What:** `/platform` and `/platform/ops` transformed from card-grid dashboards into

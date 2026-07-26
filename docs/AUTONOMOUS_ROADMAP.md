@@ -1,5 +1,20 @@
 # SaathiOS Autonomous Roadmap
 
+## M59 — Spatial Workspaces, Command Interface & UI Certification (2026-07-26)
+
+| Field | Value |
+| --- | --- |
+| Milestone | M59_COMPLETE_WITH_LIMITATIONS |
+| Scope | Four standalone spatial workspaces (Mission Control, Agent Constellation, Approval Authority Center, Runtime Attention Center) + command palette + context drawer + shared shell |
+| Backend | Unchanged (no Python files touched) |
+| New | `lib/workspace.js` (+tests), `lib/platform-client.js`, `components/spatial/{SpatialWorkspaceShell,SpatialCommandPalette,SpatialContextDrawer,RequireSession,primitives}`, 8 routes under `app/platform/`, `scripts/m59_browser_cert.mjs` |
+| Certification | Production-build browser cert PASS (21 hard gates); dev regression PASS; axe 0 critical (10 serious pre-existing); responsive 390px PASS; reduced-motion PASS |
+| Tests | 112/112 frontend unit (18 new); lint clean; build clean |
+| Safety | All M57/M58 boundaries retained; approvals server-authorized; production not authorized; connectors dry-run; financial/trading disabled; localhost-only |
+| Deferred (M60) | Governed mission/approval creation; operator-safe retry/cancel; evidence-export workflow; notifications; saved views; onboarding; chrome-a11y pass |
+
+Evidence: `docs/platform/M59_*.md`, `docs/platform/m59_evidence/`. No push/merge/deploy.
+
 ## M58 — Glass Frame Interface & Central AI Command Center (2026-07-26)
 
 | Field | Value |
