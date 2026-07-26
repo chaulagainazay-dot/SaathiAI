@@ -1779,3 +1779,198 @@ def wf_search(q: str = "", type: str = "all", limit: int = 50, authorization: st
         return _wf().search(_ctx(authorization, x_platform_token), q, type_filter=type, limit=max(1, min(int(limit), 200)))
     except PlatformContextError as e:
         raise _err(e) from e
+
+
+# ══════════════════════════════════════════════════════════════════════════
+# M62.2 — market-data foundation endpoints (READ-ONLY + ingestion management).
+# Authenticated, tenant-scoped, bounded. NO order/broker/execution actions.
+# ══════════════════════════════════════════════════════════════════════════
+_MD_REPLAYS: dict[str, Any] = {}   # in-memory replay registry: id -> (org_id, engine)
+
+
+def _md():
+    from saathi.platform.market_data import FixtureProvider, MarketDataStore, IngestionService
+    prov = FixtureProvider()
+    store = MarketDataStore()
+    return prov, store, IngestionService(prov, store)
+
+
+def _md_now():
+    from datetime import datetime, timezone
+    return datetime.now(timezone.utc)
+
+
+class MDIngestBody(BaseModel):
+    symbol: str
+    timeframe: str = "1d"
+
+
+class MDReplayBody(BaseModel):
+    symbol: str
+    timeframe: str = "1d"
+
+
+class MDReplayStepBody(BaseModel):
+    count: int = 1
+
+
+def _tf(value: str):
+    from saathi.platform.market_data import Timeframe
+    try:
+        return Timeframe(value)
+    except ValueError as exc:
+        raise PlatformContextError("VALIDATION_FAILED", f"unsupported timeframe {value}") from exc
+
+
+@router.get("/market-data/instruments")
+def md_instruments(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _svc().require_context(_token(authorization, x_platform_token))
+        ctx.require_permission(PlatformPermission.WORKFLOW_READ)
+        _, store, _ = _md()
+        return {"instruments": store.list_instruments(ctx.org_id)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/market-data/instruments/{symbol}")
+def md_instrument(symbol: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _svc().require_context(_token(authorization, x_platform_token))
+        ctx.require_permission(PlatformPermission.WORKFLOW_READ)
+        _, store, _ = _md()
+        rec = store.get_instrument(ctx.org_id, symbol)
+        if not rec:
+            raise PlatformContextError("NOT_FOUND", "instrument not ingested for this tenant")
+        return {"instrument": rec}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/market-data/quotes/{symbol}")
+def md_quote(symbol: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        from saathi.platform.market_data import classify_quote
+        ctx = _svc().require_context(_token(authorization, x_platform_token))
+        ctx.require_permission(PlatformPermission.WORKFLOW_READ)
+        prov, _, _ = _md()
+        now = _md_now()
+        res = prov.get_quote(symbol, now=now)
+        if not res.ok or res.data is None:
+            raise PlatformContextError("NOT_FOUND", f"quote unavailable ({res.status.value})")
+        q = res.data
+        classify_quote(q, now=now)
+        return {"quote": q.to_public()}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/market-data/bars/{symbol}")
+def md_bars(symbol: str, timeframe: str = "1d", authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _svc().require_context(_token(authorization, x_platform_token))
+        ctx.require_permission(PlatformPermission.WORKFLOW_READ)
+        tf = _tf(timeframe)
+        _, store, _ = _md()
+        rows = store.query_bars(ctx.org_id, symbol, tf, 0, _md_now().timestamp(), limit=1000)
+        return {"bars": rows, "count": len(rows)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/market-data/fixtures/manifest")
+def md_fixture_manifest(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        from saathi.platform.market_data import fixture_manifest
+        ctx = _svc().require_context(_token(authorization, x_platform_token))
+        ctx.require_permission(PlatformPermission.WORKFLOW_READ)
+        return {"manifest": fixture_manifest()}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/market-data/fixtures/ingest")
+def md_ingest(body: MDIngestBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from datetime import timedelta
+        from saathi.platform.models import PlatformPermission
+        ctx = _svc().require_context(_token(authorization, x_platform_token))
+        ctx.require_permission(PlatformPermission.WORKFLOW_WRITE)
+        tf = _tf(body.timeframe)
+        prov, store, ing = _md()
+        now = _md_now()
+        ing.ingest_instrument(ctx.org_id, body.symbol)
+        rep = ing.ingest_bars(ctx.org_id, body.symbol, tf, now - timedelta(days=3650), now + timedelta(days=1),
+                              now=now, correlation_id=f"ingest:{ctx.org_id}:{body.symbol}")
+        _svc().store.append_audit("market_data.ingested", org_id=ctx.org_id, workspace_id=ctx.workspace_id,
+                                  user_id=ctx.user_id, role=ctx.role, outcome="ok",
+                                  detail={"symbol": body.symbol, "timeframe": tf.value, "accepted": rep.accepted, "rejected": rep.rejected})
+        return {"report": rep.to_public()}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/market-data/replays")
+def md_replay_create(body: MDReplayBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission, new_id
+        from saathi.platform.market_data import build_bars, fixture_manifest, ReplayEngine
+        ctx = _svc().require_context(_token(authorization, x_platform_token))
+        ctx.require_permission(PlatformPermission.WORKFLOW_WRITE)
+        tf = _tf(body.timeframe)
+        bars = build_bars(body.symbol, tf)
+        rid = new_id("mdrep_")
+        eng = ReplayEngine(bars, correlation_id=rid, dataset_version=fixture_manifest()["version"])
+        _MD_REPLAYS[rid] = (ctx.org_id, eng)
+        return {"replay": eng.checkpoint(), "replay_id": rid}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+def _replay_for(ctx, rid):
+    entry = _MD_REPLAYS.get(rid)
+    if not entry or entry[0] != ctx.org_id:
+        raise PlatformContextError("NOT_FOUND", "replay not found for tenant")
+    return entry[1]
+
+
+@router.get("/market-data/replays/{rid}")
+def md_replay_get(rid: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _svc().require_context(_token(authorization, x_platform_token))
+        ctx.require_permission(PlatformPermission.WORKFLOW_READ)
+        return {"replay": _replay_for(ctx, rid).checkpoint()}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/market-data/replays/{rid}/step")
+def md_replay_step(rid: str, body: MDReplayStepBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _svc().require_context(_token(authorization, x_platform_token))
+        ctx.require_permission(PlatformPermission.WORKFLOW_WRITE)
+        eng = _replay_for(ctx, rid)
+        events = eng.step(max(1, min(int(body.count), 500)))
+        return {"replay": eng.checkpoint(), "events": [{"index": e.index, "bar": e.bar.to_public()} for e in events]}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/market-data/replays/{rid}/stop")
+def md_replay_stop(rid: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _svc().require_context(_token(authorization, x_platform_token))
+        ctx.require_permission(PlatformPermission.WORKFLOW_WRITE)
+        eng = _replay_for(ctx, rid)
+        eng.stop()
+        return {"replay": eng.checkpoint()}
+    except PlatformContextError as e:
+        raise _err(e) from e

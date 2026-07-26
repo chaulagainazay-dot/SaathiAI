@@ -1,0 +1,4 @@
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+35 passed, 7 warnings in 0.98s
+M62.2 market-data: 16 tests | M62.1 models/guardian: 19 tests | regression M61+M50: pass
+Safety scan: no order-submit, broker, network, subprocess, secret, or execution import in market_data/.
