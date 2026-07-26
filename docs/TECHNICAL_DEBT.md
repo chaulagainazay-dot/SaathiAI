@@ -1,5 +1,22 @@
 # SaathiOS Technical Debt / Known Gaps
 
+## M58 residual / deferred (2026-07-26)
+
+- Spatial scope applied to `/platform` + `/platform/ops` only; other `/platform/*`
+  and app routes still use the prior presentation. Shared app shell (rail, top clock)
+  unchanged.
+- Screens 3–6 (Mission Control execution graph, Agents constellation, full Approval
+  Center, standalone Attention field) are live glass panels/nodes on the home, not yet
+  separate full spatial screens → M59.
+- Ops constellation node **cards** carry the certified `data-testid`s inline; the
+  detail drawer deliberately carries none (to keep values unique). Any future cert must
+  assert against the card, not the drawer.
+- M58 cert runs in dev mode; `cert:m58:build` (prod build) not yet run.
+- No axe-core / Lighthouse-CWV assertions in the cert; mono micro-label contrast sweep
+  pending. Accessibility is AA-targeted + label-verified, not tool-audited.
+- Cold-start resilience relies on a warm-up fetch + patient retry; if the BFF is truly
+  down (not merely cold) cards show explicit "Unavailable", by design.
+
 ## M57 residual / deferred (2026-07-25)
 
 - macOS ⌥⌘B is PREPARED, not auto-assigned (cannot safely enumerate system

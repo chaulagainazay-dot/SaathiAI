@@ -2,7 +2,7 @@
   "schema": "m55.browser_cert.v1",
   "bff": "http://127.0.0.1:8795",
   "ui": "http://127.0.0.1:3150",
-  "isolated_db": "/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m54-cert-17194/platform.db",
+  "isolated_db": "/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m54-cert-3645/platform.db",
   "mode": "dev",
   "flows": {
     "seed": {
@@ -64,7 +64,7 @@
     },
     "export": {
       "record_count": 1,
-      "content_hash": "sha256:be8bc62599ef7111c090d15c6ab6b6029d7b08c389bb8032ceae7bc5c916b344",
+      "content_hash": "sha256:991a5956c25befb44957e0c06ca0e75f9653ff4d12c4003728f54c754c466105",
       "production_data": false,
       "leaked": []
     },
@@ -73,10 +73,10 @@
       "mode": "DRY_RUN",
       "purge_executed": false,
       "retention_days": 90,
-      "cutoff_at": 1777181895.735272,
+      "cutoff_at": 1777250291.264767,
       "scope": {
-        "org_id": "org_fdb16be8af6d4d9f",
-        "workspace_id": "ws_f1a10c5f5ed34bc5"
+        "org_id": "org_2291a144a9874710",
+        "workspace_id": "ws_70cc80c42b4f4bfb"
       },
       "eligible_for_purge": 0,
       "eligible_execution_ids": [],
@@ -99,17 +99,17 @@
     },
     "release": {
       "overall": "READY_WITH_LIMITATIONS",
-      "score": 92.5,
+      "score": 93.3,
       "summary": {
-        "PASS": 17,
-        "WARNING": 3
+        "PASS": 26,
+        "WARNING": 4
       }
     },
     "health": {
       "schema_version": "m55.release.v1",
       "runtime_health": "ok",
-      "uptime_seconds": 0.006045818328857422,
-      "memory_rss_kib": 131072,
+      "uptime_seconds": 0.0068438053131103516,
+      "memory_rss_kib": 129424,
       "queue_depth": 0,
       "pending_approvals": 0,
       "attention_count": 0,
@@ -120,7 +120,7 @@
       "storage_bytes": 294912,
       "database_status": "available",
       "scheduler_state": "single_host_inline_no_external_scheduler",
-      "api_latency_ms": 0.008,
+      "api_latency_ms": 0.01,
       "tenant_counts": 1,
       "workspace_counts": 1,
       "active_sessions": 2,
@@ -155,7 +155,7 @@
       "schema_version": "m55.release.v1",
       "database_name": "platform.db",
       "size_bytes": 294912,
-      "checksum": "sha256:1a08f5682fe937a18dc3af594683f1d4b247da5faf9958ac21a584feeaf83373",
+      "checksum": "sha256:3c30fffc9bbadf2a735652fc74ac6c08aadd48f95f951749146b9f1e480422df",
       "integrity_check": "ok",
       "restore_simulation": "PASS",
       "restore_verified_tables": [
@@ -204,9 +204,9 @@
     },
     "post_logout_protected": true,
     "ops_banner": "Private-alpha operations · read-only except already-approved operations · LOCAL OR TEST ENVIRONMENT · NON-PRODUCTION · CONNECTOR MUTATIONS DRY-RUN · FINANCIAL EXECUTION DISABLED · TRADING DISABLED",
-    "ops_health": "○\nNEUTRAL\nRuntime ok\nUptime 9s · DB available · Latency 0.01ms · Sessions 2 · Tenants 1 · Workspaces 1\nQueue 0 · Waiting 0 · Failed 0 · Recovered 0 · Production authorized false\nConnectors: DRY_RUN_ON",
-    "ops_metrics": "Executions 0 · Approvals 0 · Exports 1 · Retention previews 1 · Recovery ops 0 · Restart count UNKNOWN",
-    "ops_release": "○\nNEUTRAL\nOverall READY_WITH_LIMITATIONS · score 92.5\nPASS 17 · WARNING 3 · FAIL 0 · production authorized false",
+    "ops_health": "○\nNEUTRAL\nRuntime ok\nUptime 8s · DB available · Latency 0.01ms · Sessions 2 · Tenants 1 · Workspaces 1\nQueue 0 · Waiting 0 · Failed 0 · Recovered 0 · Production authorized false\nCONNECTORS: DRY_RUN_ON",
+    "ops_metrics": "Executions 1 · Approvals 0 · Exports 1 · Retention previews 1 · Recovery ops 0 · Restart count UNKNOWN",
+    "ops_release": "○\nNEUTRAL\nOverall READY_WITH_LIMITATIONS · score 93.3\nPASS 26 · WARNING 4 · FAIL 0 · production authorized false",
     "ops_recovery": "PASS · scenarios process_restart:PASS · restart_before_dispatch:PASS · restart_after_dispatch_recorded:PASS · binding_interruption:PASS",
     "ops_backup": "SIMULATION_ONLY · integrity ok · restore PASS · destructive false",
     "unsafe_actions": []
@@ -275,7 +275,8 @@
       "Access to fetch at 'http://127.0.0.1:8795/api/v1/connectors/approvals/pending' from origin 'http://127.0.0.1:3150' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present o",
       "Failed to load resource: net::ERR_FAILED",
       "Access to fetch at 'http://127.0.0.1:8795/api/v1/connectors/approvals/pending' from origin 'http://127.0.0.1:3150' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present o",
-      "Failed to load resource: net::ERR_FAILED"
+      "Failed to load resource: net::ERR_FAILED",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
     ],
     "pageErrors": [],
     "apiFailures": []

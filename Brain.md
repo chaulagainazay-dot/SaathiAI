@@ -28,6 +28,27 @@ If the answer is the latter, the feature belongs in the product layer, not the p
 
 ## 3. Current Platform State
 
+### M58 Glass Frame interface & central AI command center (2026-07-26)
+
+* **What:** `/platform` and `/platform/ops` transformed from card-grid dashboards into
+  a spatial Glass Frame AI operating system — a central animated `SaathiCore`, a
+  floating 12-module ring connected by luminous curved paths, and glass detail panels.
+* **How:** `saathi-os/lib/spatial.js` (pure semantics: module registry, signal mapping,
+  ring geometry, hydration-stable rounding) + `saathi-os/components/spatial/*`
+  (SaathiCore, SpatialMap, GlassFrame, StatusPulse, ContextDrawer, SpatialIcon, …) +
+  additive Glass Frame token layer in `globals.css`. No backend change.
+* **Semantics:** cyan=active, amber=authority/attention, red=blocked, blue-grey=idle,
+  green=verified. Every connection maps to a real relationship; counts are live or
+  explicit "Unavailable" (never fabricated).
+* **Verified:** M58_BROWSER_CERTIFIED (13 gates, 0 hydration/page errors); M54–M57
+  re-run all CERTIFIED; 94/94 unit; lint/build clean. Two real bugs caught via
+  screenshot/console review and fixed (core false-BLOCKED on healthy gateway; SSR
+  float-precision hydration mismatch).
+* **Safety:** PlatformAgentRuntime canonical; ExecutionGateway sole tool authority;
+  connectors DRY_RUN_ONLY; financial/trading disabled; multi-host disabled; production
+  not authorized — all labels visible + truthful. `M58_COMPLETE_WITH_LIMITATIONS`.
+  Deferred to M59: standalone Mission/Agents/Approval/Attention spatial screens.
+
 ### M57 localhost daily-use hardening & operator launcher (2026-07-25)
 
 * **Launcher** (`bin/saathi-local`, symlinked ~/.local/bin): start/stop/restart/

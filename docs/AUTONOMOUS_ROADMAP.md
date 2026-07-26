@@ -1,5 +1,20 @@
 # SaathiOS Autonomous Roadmap
 
+## M58 — Glass Frame Interface & Central AI Command Center (2026-07-26)
+
+| Field | Value |
+| --- | --- |
+| Milestone | M58_COMPLETE_WITH_LIMITATIONS |
+| Scope | UI/UX transformation of `/platform` + `/platform/ops` into a spatial Glass Frame AI OS |
+| Backend | Unchanged (no Python files touched) |
+| New | `lib/spatial.js` (+tests), `components/spatial/*`, `scripts/m58_browser_cert.mjs` |
+| Certification | M58_BROWSER_CERTIFIED (13 gates); M54/M55/M56/M57 re-run CERTIFIED |
+| Tests | 94/94 frontend unit; lint clean; build clean |
+| Safety | PlatformAgentRuntime canonical; ExecutionGateway sole tool authority; connectors DRY_RUN_ONLY; financial/trading disabled; multi-host disabled; production not authorized |
+| Deferred (M59) | Standalone Mission Control / Agents / Approval / Attention spatial screens; spatial command palette; prod-build cert; axe-core + CWV budget |
+
+Evidence: `docs/platform/M58_*.md`, `docs/platform/m58_evidence/`. No push/merge/deploy.
+
 ## M57 — Localhost Daily-Use Hardening, Process Control & Launcher (2026-07-25)
 
 | Item | State |

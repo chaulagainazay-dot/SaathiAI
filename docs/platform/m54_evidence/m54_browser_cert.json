@@ -2,7 +2,7 @@
   "schema": "m54.browser_cert.v1",
   "bff": "http://127.0.0.1:8790",
   "ui": "http://127.0.0.1:3140",
-  "isolated_db": "/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m54-cert-7392/platform.db",
+  "isolated_db": "/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m54-cert-3487/platform.db",
   "mode": "dev",
   "flows": {
     "seed": {
@@ -64,7 +64,7 @@
     },
     "export": {
       "record_count": 1,
-      "content_hash": "sha256:bd2952914976cb17ac261a020f1cdfea436d157deec28c8ea0a3fa07b4060517",
+      "content_hash": "sha256:a49e18871f3fb0bebd09f6241a36cf9d337c0564e418a4b2e4ddfe7e78d8042c",
       "production_data": false,
       "leaked": []
     },
@@ -73,10 +73,10 @@
       "mode": "DRY_RUN",
       "purge_executed": false,
       "retention_days": 90,
-      "cutoff_at": 1777180062.2752068,
+      "cutoff_at": 1777250266.491804,
       "scope": {
-        "org_id": "org_3079b203e1fc4e3c",
-        "workspace_id": "ws_7a0b5ff3b7ee41ea"
+        "org_id": "org_7b3fc6b1358541ea",
+        "workspace_id": "ws_d96e6b4400ea48e4"
       },
       "eligible_for_purge": 0,
       "eligible_execution_ids": [],
@@ -101,11 +101,11 @@
     "ui_readiness": {
       "panel": 1,
       "env": "LOCAL_OR_TEST · PRIVATE ALPHA · NON-PRODUCTION · CONNECTOR MUTATIONS DRY-RUN · FINANCIAL EXECUTION DISABLED · TRADING DISABLED",
-      "badges": "Connectors: DRY_RUN_ONLY\nFinancial: DISABLED\nTrading: DISABLED\nGuardian: UNENGAGED_ADVISORY_ONLY"
+      "badges": "CONNECTORS: DRY_RUN_ONLY\nFINANCIAL: DISABLED\nTRADING: DISABLED\nGUARDIAN: UNENGAGED_ADVISORY_ONLY"
     },
-    "body_snippet": "S\nSaathiOS\n«\nOPERATE\n⌂\nHome\n⌘\nCommand Center\n◎\nMissions\n⬡\nAgents\n⟳\nAutomation\nWORK\n▦\nProjects\n◈\nKnowledge\n▶\nStudio\nRUN THE BUSINESS\n◈\nBusiness\n⚠\nTrading Guardian\nRISK\nSYSTEM\n◉\nMonitoring\n⬡\nSecurity\nGLOBAL\n▣\nPlatform\n!\nApprovals\n⚙\nSettings\n❖\nEvidence\n◍\nLOCAL\nGLOBAL\n/\nPlatform\n10:52 KTM\n⌘K\n+ Create\n△\nAPPROVALS UNAVAILABLE\n○\nALERTS\nAsk Saathi\n◎\nOWNER · ADVISORY DEFAULT\nA\n✓\nLIVE CONNECTED\n◍\nLOCAL\n◎\nOPERATOR · ADVISORY DEFAULT\n△\nAPPROVALS UNAVAILABLE\nmode expert · density standard\napi 127.0.0.1:8790\nPlatform foundation\nPrivate-alpha runtime operations · tenant-scoped bindings · lifecycle evidence. ",
+    "body_snippet": "S\nSaathiOS\n«\nOPERATE\n⌂\nHome\n⌘\nCommand Center\n◎\nMissions\n⬡\nAgents\n⟳\nAutomation\nWORK\n▦\nProjects\n◈\nKnowledge\n▶\nStudio\nRUN THE BUSINESS\n◈\nBusiness\n⚠\nTrading Guardian\nRISK\nSYSTEM\n◉\nMonitoring\n⬡\nSecurity\nGLOBAL\n▣\nPlatform\n!\nApprovals\n⚙\nSettings\n❖\nEvidence\n◍\nLOCAL\nGLOBAL\n/\nPlatform\n06:22 KTM\n⌘K\n+ Create\n△\nAPPROVALS UNAVAILABLE\n○\nALERTS\nAsk Saathi\n◎\nOWNER · ADVISORY DEFAULT\nA\n✓\nLIVE CONNECTED\n◍\nLOCAL\n◎\nOPERATOR · ADVISORY DEFAULT\n△\nAPPROVALS UNAVAILABLE\nmode expert · density standard\napi 127.0.0.1:8790\nSAATHIOS\nIdentity ACTIVE · RBAC ACTIVE · Gateway TOOL_GATEWAY_ENFORCED\nPRIVATE ALPHA\nNON-PRODUCTION\n",
     "ui_binding": true,
-    "ui_export": "Exported execution_summary: 1 records · sha256:bd2952914976cb17ac261a020f1cdfea436d157deec28c8ea0a3fa07b4060517 · production_data false",
+    "ui_export": "Exported execution_summary: 1 records · sha256:a49e18871f3fb0bebd09f6241a36cf9d337c0564e418a4b2e4ddfe7e78d8042c · production_data false",
     "ui_retention": "DRY_RUN · eligible 0 · purge_executed false",
     "unsafe_actions": [],
     "ui_logout": true
@@ -153,13 +153,20 @@
   "softGates": {},
   "browserErrors": {
     "console": [
+      "A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client bran",
       "Access to fetch at 'http://127.0.0.1:8790/api/v1/connectors/approvals/pending' from origin 'http://127.0.0.1:3140' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present o",
       "Failed to load resource: net::ERR_FAILED",
+      "A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client bran",
       "Access to fetch at 'http://127.0.0.1:8790/api/v1/connectors/approvals/pending' from origin 'http://127.0.0.1:3140' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present o",
+      "Failed to load resource: net::ERR_FAILED",
+      "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+      "Access to fetch at 'http://127.0.0.1:8790/api/v1/platform/runtime/executions?limit=50' from origin 'http://127.0.0.1:3140' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is p",
       "Failed to load resource: net::ERR_FAILED"
     ],
     "pageErrors": [],
-    "apiFailures": []
+    "apiFailures": [
+      "net::ERR_FAILED //127.0.0.1:8790/api/v1/platform/runtime/executions?limit=50"
+    ]
   },
   "verdict": "M54_BROWSER_CERTIFIED"
 }

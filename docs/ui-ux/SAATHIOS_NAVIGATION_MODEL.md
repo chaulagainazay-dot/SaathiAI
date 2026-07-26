@@ -90,3 +90,22 @@ All retired routes 301/replace to their consolidated target so existing links/bo
 - Deduplicate `DEPARTMENTS.CONTROL` (defined twice, audit §10).
 - Replace `Dock` flat 20-item list with grouped sidebar.
 - Replace `TopBar.deriveTitle` guesswork with breadcrumb from the route→area map.
+
+---
+
+## M58 — Spatial navigation (2026-07-26)
+
+`/platform` and `/platform/ops` adopt a spatial command model on top of the existing
+shell. Full detail in `docs/platform/M58_SPATIAL_NAVIGATION.md`.
+
+- **Central SaathiCore** communicates system state (READY/ATTENTION/BLOCKED/IDLE/
+  UNKNOWN) with colour + text.
+- **Floating module ring** (12 modules) placed by deterministic `ringLayout`; each node
+  is a real focusable `<button>` with icon, label, status pulse, live count.
+- **Connections** are semantic (cyan data / amber authority / red blocked / grey
+  inactive / green verified); selected path illuminates; every edge maps to a real
+  navigation or authority relationship.
+- **Interaction:** in-page modules scroll to their glass panel + set `aria-current`;
+  routed modules `router.push`. Ops nodes open a right-side contextual glass drawer.
+- **Responsive:** ≤900px the ring degrades to an accessible node grid (connections
+  hidden); touch targets ≥44px. The shell rail + ⌘K palette remain around the scope.
