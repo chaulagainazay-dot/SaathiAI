@@ -196,7 +196,7 @@ async function main() {
     // ---- notifications ----
     const nc = await go("/platform/notifications", "Notification Center");
     await shot("notifications");
-    if (/Notification Center/.test(nc) && /DERIVED_NOTIFICATION_VIEW/.test(nc)) pass("notification_center_loads"); else fail("notification_center_loads", "not rendered/derived label missing");
+    if (/Notification Center/.test(nc)) pass("notification_center_loads"); else fail("notification_center_loads", "not rendered");  // M61: notifications now SERVER_PERSISTED
 
     // ---- evidence ----
     const ev = await go("/platform/evidence", "Evidence timeline");
@@ -206,12 +206,12 @@ async function main() {
     // ---- saved views ----
     const sv = await go("/platform/saved-views", "Saved views");
     await shot("saved_views");
-    if (/SAVED_VIEWS_LOCAL_ONLY/.test(sv)) pass("saved_views_loads"); else fail("saved_views_loads", "not rendered");
+    if (/Saved views/.test(sv)) pass("saved_views_loads"); else fail("saved_views_loads", "not rendered");  // M61: SERVER_PERSISTED
 
     // ---- search ----
     const se = await go("/platform/search", "Cross-workspace search");
     await shot("search");
-    if (/SEARCHING_AUTHORIZED_LOADED_RECORDS/.test(se)) pass("search_loads"); else fail("search_loads", "not rendered");
+    if (/Cross-workspace search/.test(se)) pass("search_loads"); else fail("search_loads", "not rendered");  // M61: SERVER_AUTHORIZED
 
     // ---- templates + workflows ----
     const tp = await go("/platform/templates", "Workflow templates");

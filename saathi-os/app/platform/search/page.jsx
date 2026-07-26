@@ -1,45 +1,48 @@
 "use client";
-// M60 Workstream 11 — Cross-workspace search. SEARCHING_AUTHORIZED_LOADED_RECORDS:
-// client-side over records already fetched through authorized APIs. No
-// unauthorized indexing, no secret-bearing snippets. Recent history is local-only.
-import { useEffect, useMemo, useState } from "react";
+// M61 — Cross-workspace search: now SERVER_AUTHORIZED (was M60 authorized-loaded
+// -records). Queries /api/v1/platform/workflow/search — tenant-scoped, ranked,
+// server-side. Recent history stays local (a UI convenience, not a data source).
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { SpatialWorkspaceShell } from "@/components/spatial/SpatialWorkspaceShell";
 import { RequireSession } from "@/components/spatial/RequireSession";
-import { usePlatformData, plat } from "@/lib/platform-client";
+import { usePlatformData } from "@/lib/platform-client";
 import { coreSignal } from "@/lib/spatial";
-import { searchAuthorizedRecords } from "@/lib/operator";
+import { serverSearch } from "@/lib/workflow-api";
+import { classifyError, errorMessage } from "@/lib/operator";
 import { lsGet, lsSet, LS_KEYS } from "@/lib/local-store";
 
-const TYPES = ["all", "mission", "agent", "approval", "attention", "execution", "project"];
+const TYPES = ["all", "mission", "project", "approval", "template", "notification"];
 
 export default function SearchPage() {
   const d = usePlatformData();
   const router = useRouter();
   const [q, setQ] = useState("");
   const [type, setType] = useState("all");
-  const [projects, setProjects] = useState([]);
-  const [approvalsAll, setApprovalsAll] = useState([]);
+  const [results, setResults] = useState([]);
+  const [scope, setScope] = useState("SERVER_AUTHORIZED");
+  const [err, setErr] = useState(null);
   const [history, setHistory] = useState([]);
+  const timer = useRef(null);
 
   useEffect(() => { setHistory(lsGet(LS_KEYS.searchHistory, [])); }, []);
+
   useEffect(() => {
     if (!d.token) return;
-    plat("/projects", { token: d.token }).then((r) => setProjects(r?.projects || [])).catch(() => {});
-    plat("/approvals?status=", { token: d.token }).then((r) => setApprovalsAll(r?.approvals || [])).catch(() => {});
-  }, [d.token]);
-
-  const results = useMemo(() => searchAuthorizedRecords(q, {
-    missions: d.missions, bindings: d.bindings, approvals: approvalsAll.length ? approvalsAll : d.approvals,
-    attention: d.attention, executions: d.executions, projects,
-  }, type), [q, d.missions, d.bindings, d.approvals, approvalsAll, d.attention, d.executions, projects, type]);
+    if (timer.current) clearTimeout(timer.current);
+    if (!q.trim()) { setResults([]); return; }
+    timer.current = setTimeout(async () => {
+      try { const r = await serverSearch(q, d.token, { type }); setResults(r.results || []); setScope(r.scope || "SERVER_AUTHORIZED"); setErr(null); }
+      catch (e) { setErr(errorMessage(classifyError(e))); setResults([]); }
+    }, 250);
+    return () => timer.current && clearTimeout(timer.current);
+  }, [q, type, d.token]);
 
   const grouped = useMemo(() => { const g = {}; for (const r of results) (g[r.type] ||= []).push(r); return g; }, [results]);
   const cSignal = d.token ? coreSignal({ health: d.health, metrics: d.metrics, diagnostics: d.diagnostics }) : "unknown";
 
   const commit = (val) => {
-    const v = val.trim();
-    if (!v) return;
+    const v = val.trim(); if (!v) return;
     const next = [v, ...history.filter((h) => h !== v)].slice(0, 8);
     setHistory(next); lsSet(LS_KEYS.searchHistory, next);
   };
@@ -47,13 +50,9 @@ export default function SearchPage() {
   return (
     <SpatialWorkspaceShell
       title="Cross-workspace search"
-      subtitle="Search across your authorized loaded records — missions, agents, approvals, attention, executions, projects."
+      subtitle="Server-authorized search across missions, projects, approvals, templates, and notifications — tenant-scoped and ranked."
       breadcrumb={[{ label: "Home", href: "/platform" }, { label: "Search" }]}
-      signal={cSignal}
-      health={d.health}
-      loading={d.loading}
-      error={d.error}
-      paletteData={{}}
+      signal={cSignal} health={d.health} loading={d.loading} error={d.error} paletteData={{}}
     >
       <RequireSession token={d.token} ready={d.ready}>
         <div className="ws-toolbar" style={{ marginBottom: 8 }}>
@@ -64,7 +63,8 @@ export default function SearchPage() {
             {TYPES.map((t) => <button key={t} className="ws-chip" aria-pressed={type === t} onClick={() => setType(t)}>{t}</button>)}
           </div>
         </div>
-        <p className="mono" style={{ fontSize: "var(--fs-2xs)", color: "var(--text-muted)", marginBottom: 12 }}>SEARCHING_AUTHORIZED_LOADED_RECORDS — not a complete server-side global search.</p>
+        <p className="mono" style={{ fontSize: "var(--fs-2xs)", color: "var(--text-muted)", marginBottom: 12 }}>{scope} — tenant-scoped server search.</p>
+        {err && <div className="glass-frame glass-frame--danger" style={{ padding: 12, marginBottom: 12 }} role="alert"><span style={{ color: "var(--text-secondary)" }}>{err}</span></div>}
 
         {history.length > 0 && !q && (
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 }}>
@@ -73,7 +73,7 @@ export default function SearchPage() {
           </div>
         )}
 
-        {q && results.length === 0 && <div className="glass-frame" style={{ padding: "var(--space-5)" }}><p style={{ color: "var(--text-muted)" }}>No matches in authorized loaded records.</p></div>}
+        {q && results.length === 0 && !err && <div className="glass-frame" style={{ padding: "var(--space-5)" }}><p style={{ color: "var(--text-muted)" }}>No matches.</p></div>}
 
         <div style={{ display: "grid", gap: "var(--space-4)" }}>
           {Object.entries(grouped).map(([t, list]) => (

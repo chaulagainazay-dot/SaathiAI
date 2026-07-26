@@ -1,18 +1,20 @@
 "use client";
-// M59 Workstream 4 — Attention detail + workflow.
+// M59/M61 — Attention detail + workflow.
 // An attention item IS a runtime execution; detail = GET /runtime/executions/{id}
-// + its lifecycle timeline. There is no acknowledge/resolve API, so actions are
-// inspect + navigate + a single governed cancel (only when the execution state
-// is eligible). No remediation control is invented.
+// + its lifecycle timeline. M61 adds SERVER_AUTHORIZED acknowledge / resolve /
+// reopen (persisted + audited) alongside the governed cancel.
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { SpatialWorkspaceShell } from "@/components/spatial/SpatialWorkspaceShell";
 import { RequireSession } from "@/components/spatial/RequireSession";
 import { Field, SectionPanel } from "@/components/spatial/primitives";
+import { ServerReconciliationState } from "@/components/spatial/GuidedWorkflow";
 import { usePlatformData, plat } from "@/lib/platform-client";
 import { coreSignal } from "@/lib/spatial";
 import { normalizeAttention } from "@/lib/workspace";
 import { canCancelExecution } from "@/lib/platform-ops";
+import { actionPermission, classifyError, errorMessage } from "@/lib/operator";
+import { attentionState, attentionAction, isConflict } from "@/lib/workflow-api";
 
 export default function AttentionDetailPage() {
   const d = usePlatformData();
@@ -23,23 +25,39 @@ export default function AttentionDetailPage() {
   const [loaded, setLoaded] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState(null);
+  const [attn, setAttn] = useState(null); // M61 server attention state
+  const [recon, setRecon] = useState("idle");
 
   const load = useCallback(async () => {
     if (!d.token) return;
     setErr(null);
     try {
-      const [exec, tl] = await Promise.all([
+      const [exec, tl, st] = await Promise.all([
         plat(`/runtime/executions/${attentionId}`, { token: d.token }).catch(() => null),
         plat(`/runtime/executions/${attentionId}/timeline`, { token: d.token }).catch(() => ({ timeline: [] })),
+        attentionState(attentionId, d.token).catch(() => null),
       ]);
       setExecution(exec?.execution || exec || null);
       setTimeline(tl?.timeline || []);
+      setAttn(st || null);
     } catch (e) {
       setErr(String(e.message || e));
     } finally {
       setLoaded(true);
     }
   }, [d.token, attentionId]);
+
+  const triage = async (action) => {
+    setBusy(true); setRecon("submitting"); setErr(null);
+    try {
+      const next = await attentionAction(attentionId, action, d.token, { expectedVersion: attn?.version });
+      setAttn(next); setRecon("reconciled");
+    } catch (e) {
+      setRecon(isConflict(e) ? "conflict" : "server_rejected");
+      setErr(errorMessage(classifyError(e)));
+      await load(); // reconcile authoritative state
+    } finally { setBusy(false); }
+  };
 
   useEffect(() => {
     if (d.token) load();
@@ -56,6 +74,7 @@ export default function AttentionDetailPage() {
   const cSignal = coreSignal({ health: d.health, metrics: d.metrics, diagnostics: d.diagnostics });
   const notFound = d.ready && d.token && loaded && !execution;
   const cancellable = rawWithReasons ? canCancelExecution(rawWithReasons) : false;
+  const attnPerm = actionPermission(d.me?.context?.role, "cancel_execution"); // operator+ may triage
 
   const cancel = async () => {
     if (!cancellable || !window.confirm("Cancel this eligible execution through the governed runtime path?")) return;
@@ -146,6 +165,19 @@ export default function AttentionDetailPage() {
                   </li>
                 ))}
               </ol>
+            </SectionPanel>
+
+            <SectionPanel title="Triage" meta={attn ? `${attn.state} · v${attn.version}` : "open"} signal={attn?.state === "resolved" ? "active" : attn?.state === "acknowledged" ? "attention" : "idle"}>
+              <p style={{ color: "var(--text-secondary)", fontSize: "var(--fs-sm)" }}>
+                Server-authorized triage — acknowledge / resolve / reopen. Persisted and audited (M61); the runtime execution itself is unchanged.
+              </p>
+              <div style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 10, flexWrap: "wrap" }}>
+                {attn?.state !== "acknowledged" && attn?.state !== "resolved" && <button className="ws-chip" disabled={busy || attnPerm !== "permitted"} onClick={() => triage("acknowledge")}>Acknowledge</button>}
+                {attn?.state !== "resolved" && <button className="ws-chip" disabled={busy || attnPerm !== "permitted"} onClick={() => triage("resolve")}>Resolve</button>}
+                {attn?.state === "resolved" && <button className="ws-chip" disabled={busy || attnPerm !== "permitted"} onClick={() => triage("reopen")}>Reopen</button>}
+                <ServerReconciliationState state={recon} />
+              </div>
+              {attnPerm !== "permitted" && <p className="mono" style={{ fontSize: "var(--fs-2xs)", color: "var(--text-muted)", marginTop: 6 }}>Triage requires operator permission (role {d.me?.context?.role || "unknown"}).</p>}
             </SectionPanel>
 
             <SectionPanel title="Governed action" signal={cancellable ? "attention" : "idle"}>

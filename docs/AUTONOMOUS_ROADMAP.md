@@ -1,5 +1,20 @@
 # SaathiOS Autonomous Roadmap
 
+## M61 — Backend Workflow Persistence & Safe Mutation APIs (2026-07-26)
+
+| Field | Value |
+| --- | --- |
+| Milestone | M61_COMPLETE_WITH_LIMITATIONS |
+| Scope | Server-authoritative persistence for plans, notifications, saved views, templates, attention mutations, drafts, and search; optimistic concurrency + audit |
+| Backend | CHANGED — models.py (5 permissions), store.py (_migrate_m61 + CRUD, 6 tables), workflow_service.py (new), api.py (20 endpoints) |
+| Frontend | Adapters only (lib/workflow-api.js); M60 pages rewired, no UX redesign |
+| Capability | plan/notifications/saved-views/templates/attention/search now SERVER_PERSISTED/AUTHORIZED/AUDITED |
+| Certification | 11 backend tests; 53 existing platform tests pass; M61 cert proves fresh-browser persistence; FE 130 unit + lint + build green |
+| Safety | Execution authority unchanged; approvals server-owned; tenant isolation; localhost-only; production not authorized |
+| Deferred (M62) | Distributed persistence, event streaming, multi-node coordination |
+
+Evidence: `docs/platform/M61_*.md`, `docs/platform/m61_evidence/`. No push/merge/deploy.
+
 ## M60 — Guided Operator Workflows & Safe Action Orchestration (2026-07-26)
 
 | Field | Value |

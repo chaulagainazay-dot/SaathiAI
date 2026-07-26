@@ -41,8 +41,13 @@ def _err(exc: PlatformContextError) -> HTTPException:
         "TOOL_NOT_FOUND",
         "BINDING_NOT_FOUND",
         "EXECUTION_NOT_FOUND",
+        "NOT_FOUND",
     ):
         status = 404
+    if exc.code == "STALE_STATE":
+        status = 409  # optimistic-concurrency conflict
+    if exc.code in ("VALIDATION_FAILED", "UNSAFE_CONFIG"):
+        status = 400
     return HTTPException(status_code=status, detail={"code": exc.code, "message": exc.message})
 
 
@@ -1518,5 +1523,259 @@ def cluster_recovery(
         c = _cluster()
         ctx = _svc().require_context(_token(authorization, x_platform_token))
         return {"recovery": c.recovery_certify(ctx)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+# ══════════════════════════════════════════════════════════════════════════
+# M61 — workflow persistence endpoints (plans, notifications, saved views,
+# templates, drafts, attention mutations, server search). Server-authoritative,
+# permission-gated, audited, optimistic-concurrency checked. No execution path.
+# ══════════════════════════════════════════════════════════════════════════
+def _wf():
+    from saathi.platform.workflow_service import WorkflowService
+    return WorkflowService(_svc().store)
+
+
+class PlanBody(BaseModel):
+    mission_id: str
+    body: dict[str, Any] = Field(default_factory=dict)
+    state: str | None = None
+    expected_version: int | None = None
+
+
+class PublishPlanBody(BaseModel):
+    mission_id: str
+    expected_version: int
+
+
+class NotificationBody(BaseModel):
+    type: str
+    title: str
+    summary: str = ""
+    severity: str = "info"
+    related_object: str = ""
+    related_type: str = ""
+    evidence: str = ""
+    dedupe_key: str = ""
+
+
+class NotificationFlagBody(BaseModel):
+    read: bool | None = None
+    archived: bool | None = None
+
+
+class SavedViewBody(BaseModel):
+    name: str
+    route: str
+    config: dict[str, Any] = Field(default_factory=dict)
+    is_default: bool = False
+
+
+class SavedViewUpdateBody(BaseModel):
+    expected_version: int
+    name: str | None = None
+    route: str | None = None
+    config: dict[str, Any] | None = None
+    is_default: bool | None = None
+
+
+class TemplateBody(BaseModel):
+    name: str
+    body: dict[str, Any] = Field(default_factory=dict)
+
+
+class TemplateUpdateBody(BaseModel):
+    expected_version: int
+    name: str | None = None
+    body: dict[str, Any] | None = None
+    state: str | None = None
+
+
+class DraftBody(BaseModel):
+    kind: str
+    body: dict[str, Any] = Field(default_factory=dict)
+
+
+class AttentionActionBody(BaseModel):
+    action: str
+    note: str = ""
+    expected_version: int | None = None
+
+
+def _ctx(authorization, x_platform_token):
+    return _svc().require_context(_token(authorization, x_platform_token))
+
+
+# ── mission plans ──────────────────────────────────────────────────────────
+@router.get("/workflow/plans/{mission_id}")
+def wf_get_plan(mission_id: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"plan": _wf().get_plan(_ctx(authorization, x_platform_token), mission_id=mission_id)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.put("/workflow/plans")
+def wf_upsert_plan(body: PlanBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"plan": _wf().upsert_plan(_ctx(authorization, x_platform_token), mission_id=body.mission_id, body=body.body, state=body.state, expected_version=body.expected_version)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/workflow/plans/publish")
+def wf_publish_plan(body: PublishPlanBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"plan": _wf().publish_plan(_ctx(authorization, x_platform_token), mission_id=body.mission_id, expected_version=body.expected_version)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/workflow/plans/{mission_id}/revisions")
+def wf_plan_revisions(mission_id: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        wf = _wf()
+        ctx = _ctx(authorization, x_platform_token)
+        plan = wf.get_plan(ctx, mission_id=mission_id)
+        if not plan:
+            return {"revisions": []}
+        return {"revisions": wf.plan_revisions(ctx, plan_id=plan["plan_id"])}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+# ── notifications ──────────────────────────────────────────────────────────
+@router.get("/workflow/notifications")
+def wf_list_notifications(include_archived: bool = False, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"notifications": _wf().list_notifications(_ctx(authorization, x_platform_token), include_archived=include_archived)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/workflow/notifications")
+def wf_create_notification(body: NotificationBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"notification": _wf().create_notification(_ctx(authorization, x_platform_token), type=body.type, title=body.title, summary=body.summary, severity=body.severity, related_object=body.related_object, related_type=body.related_type, evidence=body.evidence, dedupe_key=body.dedupe_key)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.patch("/workflow/notifications/{notification_id}")
+def wf_flag_notification(notification_id: str, body: NotificationFlagBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"notification": _wf().set_notification(_ctx(authorization, x_platform_token), notification_id, read=body.read, archived=body.archived)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+# ── saved views ────────────────────────────────────────────────────────────
+@router.get("/workflow/saved-views")
+def wf_list_views(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"views": _wf().list_views(_ctx(authorization, x_platform_token))}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/workflow/saved-views")
+def wf_create_view(body: SavedViewBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"view": _wf().create_view(_ctx(authorization, x_platform_token), name=body.name, route=body.route, config=body.config, is_default=body.is_default)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.patch("/workflow/saved-views/{view_id}")
+def wf_update_view(view_id: str, body: SavedViewUpdateBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"view": _wf().update_view(_ctx(authorization, x_platform_token), view_id, expected_version=body.expected_version, name=body.name, route=body.route, config=body.config, is_default=body.is_default)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.delete("/workflow/saved-views/{view_id}")
+def wf_delete_view(view_id: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        _wf().delete_view(_ctx(authorization, x_platform_token), view_id)
+        return {"ok": True}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+# ── templates ──────────────────────────────────────────────────────────────
+@router.get("/workflow/templates")
+def wf_list_templates(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"templates": _wf().list_templates(_ctx(authorization, x_platform_token))}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/workflow/templates")
+def wf_create_template(body: TemplateBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"template": _wf().create_template(_ctx(authorization, x_platform_token), name=body.name, body=body.body)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.patch("/workflow/templates/{template_id}")
+def wf_update_template(template_id: str, body: TemplateUpdateBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"template": _wf().update_template(_ctx(authorization, x_platform_token), template_id, expected_version=body.expected_version, name=body.name, body=body.body, state=body.state)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+# ── drafts ─────────────────────────────────────────────────────────────────
+@router.get("/workflow/drafts/{kind}")
+def wf_get_draft(kind: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"draft": _wf().get_draft(_ctx(authorization, x_platform_token), kind=kind)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.put("/workflow/drafts")
+def wf_save_draft(body: DraftBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"draft": _wf().save_draft(_ctx(authorization, x_platform_token), kind=body.kind, body=body.body)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.delete("/workflow/drafts/{kind}")
+def wf_discard_draft(kind: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        _wf().discard_draft(_ctx(authorization, x_platform_token), kind=kind)
+        return {"ok": True}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+# ── attention mutations ────────────────────────────────────────────────────
+@router.get("/workflow/attention/{execution_id}/state")
+def wf_attention_state(execution_id: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"attention": _wf().attention_state(_ctx(authorization, x_platform_token), execution_id)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/workflow/attention/{execution_id}/action")
+def wf_attention_action(execution_id: str, body: AttentionActionBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"attention": _wf().attention_transition(_ctx(authorization, x_platform_token), execution_id, action=body.action, note=body.note, expected_version=body.expected_version)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+# ── server search ──────────────────────────────────────────────────────────
+@router.get("/workflow/search")
+def wf_search(q: str = "", type: str = "all", limit: int = 50, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return _wf().search(_ctx(authorization, x_platform_token), q, type_filter=type, limit=max(1, min(int(limit), 200)))
     except PlatformContextError as e:
         raise _err(e) from e

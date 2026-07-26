@@ -34,7 +34,10 @@
     "cert:m59:soft": "node scripts/m59_browser_cert.mjs --allow-limitations",
     "cert:m60": "node scripts/m60_browser_cert.mjs",
     "cert:m60:build": "M60_BUILD=1 node scripts/m60_browser_cert.mjs",
-    "cert:m60:soft": "node scripts/m60_browser_cert.mjs --allow-limitations"
+    "cert:m60:soft": "node scripts/m60_browser_cert.mjs --allow-limitations",
+    "cert:m61": "node scripts/m61_browser_cert.mjs",
+    "cert:m61:build": "M61_BUILD=1 node scripts/m61_browser_cert.mjs",
+    "cert:m61:soft": "node scripts/m61_browser_cert.mjs --allow-limitations"
   },
   "dependencies": {
     "framer-motion": "^11.15.0",

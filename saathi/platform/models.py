@@ -59,6 +59,12 @@ class PlatformPermission(str, Enum):
     AGENT_BINDING_USE = "agent_binding.use"
     AGENT_BINDING_MANAGE = "agent_binding.manage"
     SESSION_MANAGE = "session.manage"
+    # M61 — workflow persistence
+    WORKFLOW_READ = "workflow.read"
+    WORKFLOW_WRITE = "workflow.write"
+    NOTIFICATION_READ = "notification.read"
+    NOTIFICATION_WRITE = "notification.write"
+    ATTENTION_WRITE = "attention.write"
 
 
 class ApprovalStatus(str, Enum):
@@ -190,6 +196,8 @@ ROLE_PERMISSIONS: dict[PlatformRole, frozenset[PlatformPermission]] = {
             PlatformPermission.AUDIT_READ,
             PlatformPermission.RUNTIME_READ,
             PlatformPermission.AGENT_BINDING_READ,
+            PlatformPermission.WORKFLOW_READ,
+            PlatformPermission.NOTIFICATION_READ,
         }
     ),
     PlatformRole.OPERATOR: frozenset(),  # filled below
@@ -211,6 +219,9 @@ ROLE_PERMISSIONS[PlatformRole.OPERATOR] = ROLE_PERMISSIONS[PlatformRole.VIEWER] 
         PlatformPermission.RUNTIME_EXECUTE,
         PlatformPermission.AGENT_BINDING_USE,
         PlatformPermission.SESSION_MANAGE,
+        PlatformPermission.WORKFLOW_WRITE,
+        PlatformPermission.NOTIFICATION_WRITE,
+        PlatformPermission.ATTENTION_WRITE,
     }
 )
 ROLE_PERMISSIONS[PlatformRole.OWNER] = ROLE_PERMISSIONS[PlatformRole.OPERATOR] | frozenset(

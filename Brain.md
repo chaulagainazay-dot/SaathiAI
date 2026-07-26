@@ -28,6 +28,28 @@ If the answer is the latter, the feature belongs in the product layer, not the p
 
 ## 3. Current Platform State
 
+### M61 Backend workflow persistence & safe mutation APIs (2026-07-26)
+
+* **What:** first backend milestone since M56. Replaced every M60 frontend-only
+  placeholder with durable, server-authoritative APIs: mission plans, notifications,
+  saved views, workflow templates, attention acknowledge/resolve/reopen, drafts, and
+  server search — all permission-gated, audited, tenant-scoped, and optimistic-
+  concurrency checked. Execution authority unchanged.
+* **How:** `saathi/platform/models.py` (5 new permissions), `store.py` (`_migrate_m61`
+  + CRUD for 6 tables + revisions + search, versioned), `workflow_service.py`
+  (ctx-gated + audit + concurrency mapping + secret rejection), 20 endpoints in
+  `api.py` under `/api/v1/platform/workflow/*` (409 on stale writes, 400 on secret
+  payloads). Client adapter `saathi-os/lib/workflow-api.js`; M60 pages rewired
+  (saved-views/notifications/search/attention/plan/templates) with no UX redesign.
+* **Capability shift:** plan DRAFT_ONLY→SERVER_PERSISTED; notifications DERIVED→
+  SERVER_PERSISTED+AUDITED; saved-views/templates LOCAL_ONLY→SERVER_PERSISTED;
+  attention BLOCKED→SERVER_AUTHORIZED+AUDITED; search loaded-records→SERVER_AUTHORIZED.
+* **Verified:** 11 M61 backend tests (service+HTTP+concurrency+RBAC+isolation+audit);
+  53 existing platform tests pass (no regression); FE 130 unit + lint + build green;
+  M61 cert proves server data survives a FRESH browser (no localStorage). `M61_COMPLETE_WITH_LIMITATIONS`.
+* **Limits:** single-host SQLite; incremental UI draft adoption; notification synthesis
+  client-triggered; production unauthorized. Evidence: `docs/platform/M61_*`, `m61_evidence/`.
+
 ### M60 Guided operator workflows & safe action orchestration (2026-07-26)
 
 * **What:** turned the M59 spatial workspaces into guided operator journeys —

@@ -1,5 +1,21 @@
 # SaathiOS Technical Debt / Known Gaps
 
+## M61 residual / deferred (2026-07-26)
+
+- **Resolved from M60:** plan/notifications/saved-views/templates now SERVER_PERSISTED;
+  attention ack/resolve SERVER_AUTHORIZED+AUDITED; search SERVER_AUTHORIZED; drafts +
+  optimistic concurrency added.
+- **Single-host SQLite** — persistence is single-host (no distributed store / streaming
+  / multi-node); that is M62.
+- **UI draft adoption incremental** — server draft APIs exist + tested, but the M60
+  mission/onboarding pages still autosave locally (server draft wiring deferred).
+- **Notification synthesis is client-triggered** (operator+ syncs derived events into
+  durable records); no server-side background event producer yet.
+- **Search** covers missions/projects/approvals/templates/notifications; execution +
+  evidence full-text deferred.
+- Cold-start session race persists in the isolated cert env; page loads (e.g. saved
+  views) now retry transient 401/network on cold start to compensate.
+
 ## M60 residual / deferred (2026-07-26)
 
 - **Missing backend APIs (M61 targets):** mission plan persistence, attention

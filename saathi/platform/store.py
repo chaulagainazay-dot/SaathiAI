@@ -208,6 +208,7 @@ class PlatformStore:
         self._migrate_m51()
         self._migrate_m52()
         self._migrate_m53()
+        self._migrate_m61()
         self._conn.commit()
 
     def _migrate_m51(self) -> None:
@@ -1078,6 +1079,425 @@ class PlatformStore:
                 pass
             out.append(d)
         return out
+
+    # ══════════════════════════════════════════════════════════════════════
+    # M61 — workflow persistence (plans, notifications, saved views, templates,
+    # drafts, attention states). Server-authoritative, tenant-scoped, versioned
+    # for optimistic concurrency. All SQL lives here; permission + audit live in
+    # WorkflowService. Idempotent migration; single-host SQLite.
+    # ══════════════════════════════════════════════════════════════════════
+    def _migrate_m61(self) -> None:
+        self._conn.executescript(
+            """
+            CREATE TABLE IF NOT EXISTS workflow_plans (
+                plan_id TEXT PRIMARY KEY,
+                mission_id TEXT NOT NULL,
+                org_id TEXT NOT NULL,
+                workspace_id TEXT NOT NULL,
+                project_id TEXT NOT NULL DEFAULT '',
+                owner_id TEXT NOT NULL,
+                state TEXT NOT NULL DEFAULT 'draft',
+                body_json TEXT NOT NULL DEFAULT '{}',
+                version INTEGER NOT NULL DEFAULT 1,
+                created_at REAL NOT NULL,
+                updated_at REAL NOT NULL,
+                updated_by TEXT NOT NULL DEFAULT ''
+            );
+            CREATE TABLE IF NOT EXISTS workflow_plan_revisions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                plan_id TEXT NOT NULL,
+                version INTEGER NOT NULL,
+                state TEXT NOT NULL,
+                body_json TEXT NOT NULL,
+                updated_by TEXT NOT NULL DEFAULT '',
+                ts REAL NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS notifications (
+                notification_id TEXT PRIMARY KEY,
+                org_id TEXT NOT NULL,
+                workspace_id TEXT NOT NULL,
+                user_id TEXT NOT NULL DEFAULT '',
+                type TEXT NOT NULL,
+                title TEXT NOT NULL,
+                summary TEXT NOT NULL DEFAULT '',
+                severity TEXT NOT NULL DEFAULT 'info',
+                actor TEXT NOT NULL DEFAULT '',
+                related_object TEXT NOT NULL DEFAULT '',
+                related_type TEXT NOT NULL DEFAULT '',
+                evidence TEXT NOT NULL DEFAULT '',
+                read INTEGER NOT NULL DEFAULT 0,
+                archived INTEGER NOT NULL DEFAULT 0,
+                dedupe_key TEXT NOT NULL DEFAULT '',
+                created_at REAL NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS saved_views (
+                view_id TEXT PRIMARY KEY,
+                org_id TEXT NOT NULL,
+                workspace_id TEXT NOT NULL,
+                user_id TEXT NOT NULL,
+                name TEXT NOT NULL,
+                route TEXT NOT NULL,
+                config_json TEXT NOT NULL DEFAULT '{}',
+                is_default INTEGER NOT NULL DEFAULT 0,
+                version INTEGER NOT NULL DEFAULT 1,
+                created_at REAL NOT NULL,
+                updated_at REAL NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS workflow_templates (
+                template_id TEXT PRIMARY KEY,
+                org_id TEXT NOT NULL,
+                workspace_id TEXT NOT NULL,
+                owner_id TEXT NOT NULL,
+                name TEXT NOT NULL,
+                body_json TEXT NOT NULL DEFAULT '{}',
+                state TEXT NOT NULL DEFAULT 'active',
+                version INTEGER NOT NULL DEFAULT 1,
+                created_at REAL NOT NULL,
+                updated_at REAL NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS workflow_drafts (
+                draft_id TEXT PRIMARY KEY,
+                org_id TEXT NOT NULL,
+                workspace_id TEXT NOT NULL,
+                user_id TEXT NOT NULL,
+                kind TEXT NOT NULL,
+                body_json TEXT NOT NULL DEFAULT '{}',
+                version INTEGER NOT NULL DEFAULT 1,
+                created_at REAL NOT NULL,
+                updated_at REAL NOT NULL,
+                expires_at REAL NOT NULL DEFAULT 0,
+                UNIQUE (org_id, workspace_id, user_id, kind)
+            );
+            CREATE TABLE IF NOT EXISTS attention_states (
+                execution_id TEXT NOT NULL,
+                org_id TEXT NOT NULL,
+                workspace_id TEXT NOT NULL,
+                state TEXT NOT NULL DEFAULT 'open',
+                actor TEXT NOT NULL DEFAULT '',
+                note TEXT NOT NULL DEFAULT '',
+                version INTEGER NOT NULL DEFAULT 1,
+                updated_at REAL NOT NULL,
+                PRIMARY KEY (execution_id, org_id, workspace_id)
+            );
+            CREATE INDEX IF NOT EXISTS idx_m61_plans_mission ON workflow_plans(mission_id, org_id);
+            CREATE INDEX IF NOT EXISTS idx_m61_notif ON notifications(org_id, workspace_id, created_at DESC);
+            CREATE INDEX IF NOT EXISTS idx_m61_notif_dedupe ON notifications(org_id, workspace_id, dedupe_key);
+            CREATE INDEX IF NOT EXISTS idx_m61_views ON saved_views(org_id, workspace_id, user_id);
+            CREATE INDEX IF NOT EXISTS idx_m61_tpl ON workflow_templates(org_id, workspace_id);
+            CREATE INDEX IF NOT EXISTS idx_m61_drafts ON workflow_drafts(org_id, workspace_id, user_id);
+            """
+        )
+
+    @staticmethod
+    def _json(v: str) -> dict:
+        try:
+            return json.loads(v or "{}")
+        except Exception:
+            return {}
+
+    # ── workflow plans (versioned) ────────────────────────────────────────
+    def create_plan(self, *, mission_id, org_id, workspace_id, project_id, owner_id, body: dict, state="draft") -> dict:
+        pid = new_id("plan_")
+        ts = self._now()
+        self._conn.execute(
+            "INSERT INTO workflow_plans (plan_id, mission_id, org_id, workspace_id, project_id,"
+            " owner_id, state, body_json, version, created_at, updated_at, updated_by)"
+            " VALUES (?,?,?,?,?,?,?,?,1,?,?,?)",
+            (pid, mission_id, org_id, workspace_id, project_id, owner_id, state, json.dumps(body)[:60000], ts, ts, owner_id),
+        )
+        self._conn.execute(
+            "INSERT INTO workflow_plan_revisions (plan_id, version, state, body_json, updated_by, ts) VALUES (?,?,?,?,?,?)",
+            (pid, 1, state, json.dumps(body)[:60000], owner_id, ts),
+        )
+        self._conn.commit()
+        return self.get_plan(pid, org_id=org_id, workspace_id=workspace_id)
+
+    def get_plan(self, plan_id, *, org_id, workspace_id) -> dict | None:
+        r = self._conn.execute(
+            "SELECT * FROM workflow_plans WHERE plan_id=? AND org_id=? AND workspace_id=?",
+            (plan_id, org_id, workspace_id),
+        ).fetchone()
+        if not r:
+            return None
+        d = dict(r)
+        d["body"] = self._json(d.pop("body_json"))
+        return d
+
+    def get_plan_for_mission(self, mission_id, *, org_id, workspace_id) -> dict | None:
+        r = self._conn.execute(
+            "SELECT plan_id FROM workflow_plans WHERE mission_id=? AND org_id=? AND workspace_id=?"
+            " ORDER BY updated_at DESC LIMIT 1",
+            (mission_id, org_id, workspace_id),
+        ).fetchone()
+        return self.get_plan(r["plan_id"], org_id=org_id, workspace_id=workspace_id) if r else None
+
+    def update_plan(self, plan_id, *, org_id, workspace_id, expected_version, body=None, state=None, updated_by="") -> tuple[str, dict | None]:
+        cur = self.get_plan(plan_id, org_id=org_id, workspace_id=workspace_id)
+        if not cur:
+            return ("not_found", None)
+        if int(expected_version) != int(cur["version"]):
+            return ("conflict", cur)
+        new_body = body if body is not None else cur["body"]
+        new_state = state if state is not None else cur["state"]
+        nv = int(cur["version"]) + 1
+        ts = self._now()
+        self._conn.execute(
+            "UPDATE workflow_plans SET body_json=?, state=?, version=?, updated_at=?, updated_by=? WHERE plan_id=?",
+            (json.dumps(new_body)[:60000], new_state, nv, ts, updated_by, plan_id),
+        )
+        self._conn.execute(
+            "INSERT INTO workflow_plan_revisions (plan_id, version, state, body_json, updated_by, ts) VALUES (?,?,?,?,?,?)",
+            (plan_id, nv, new_state, json.dumps(new_body)[:60000], updated_by, ts),
+        )
+        self._conn.commit()
+        return ("ok", self.get_plan(plan_id, org_id=org_id, workspace_id=workspace_id))
+
+    def list_plan_revisions(self, plan_id, *, org_id, workspace_id, limit=50) -> list[dict]:
+        if not self.get_plan(plan_id, org_id=org_id, workspace_id=workspace_id):
+            return []
+        rows = self._conn.execute(
+            "SELECT version, state, updated_by, ts FROM workflow_plan_revisions WHERE plan_id=? ORDER BY version DESC LIMIT ?",
+            (plan_id, int(limit)),
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+    # ── notifications ─────────────────────────────────────────────────────
+    def create_notification(self, *, org_id, workspace_id, user_id="", type, title, summary="", severity="info", actor="", related_object="", related_type="", evidence="", dedupe_key="") -> dict:
+        if dedupe_key:
+            ex = self._conn.execute(
+                "SELECT notification_id FROM notifications WHERE org_id=? AND workspace_id=? AND dedupe_key=? AND archived=0",
+                (org_id, workspace_id, dedupe_key),
+            ).fetchone()
+            if ex:
+                return self.get_notification(ex["notification_id"], org_id=org_id, workspace_id=workspace_id)
+        nid = new_id("ntf_")
+        self._conn.execute(
+            "INSERT INTO notifications (notification_id, org_id, workspace_id, user_id, type, title, summary,"
+            " severity, actor, related_object, related_type, evidence, read, archived, dedupe_key, created_at)"
+            " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,0,0,?,?)",
+            (nid, org_id, workspace_id, user_id, type, title, summary, severity, actor, related_object, related_type, evidence, dedupe_key, self._now()),
+        )
+        self._conn.commit()
+        return self.get_notification(nid, org_id=org_id, workspace_id=workspace_id)
+
+    def get_notification(self, nid, *, org_id, workspace_id) -> dict | None:
+        r = self._conn.execute(
+            "SELECT * FROM notifications WHERE notification_id=? AND org_id=? AND workspace_id=?",
+            (nid, org_id, workspace_id),
+        ).fetchone()
+        return dict(r) if r else None
+
+    def list_notifications(self, *, org_id, workspace_id, include_archived=False, limit=200) -> list[dict]:
+        sql = "SELECT * FROM notifications WHERE org_id=? AND workspace_id=?"
+        args = [org_id, workspace_id]
+        if not include_archived:
+            sql += " AND archived=0"
+        sql += " ORDER BY created_at DESC LIMIT ?"
+        args.append(int(limit))
+        return [dict(r) for r in self._conn.execute(sql, args).fetchall()]
+
+    def set_notification_flags(self, nid, *, org_id, workspace_id, read=None, archived=None) -> dict | None:
+        cur = self.get_notification(nid, org_id=org_id, workspace_id=workspace_id)
+        if not cur:
+            return None
+        r = cur["read"] if read is None else (1 if read else 0)
+        a = cur["archived"] if archived is None else (1 if archived else 0)
+        self._conn.execute(
+            "UPDATE notifications SET read=?, archived=? WHERE notification_id=?", (r, a, nid)
+        )
+        self._conn.commit()
+        return self.get_notification(nid, org_id=org_id, workspace_id=workspace_id)
+
+    # ── saved views (versioned, user+workspace scoped) ────────────────────
+    def create_saved_view(self, *, org_id, workspace_id, user_id, name, route, config: dict, is_default=False) -> dict:
+        vid = new_id("view_")
+        ts = self._now()
+        if is_default:
+            self._conn.execute("UPDATE saved_views SET is_default=0 WHERE org_id=? AND workspace_id=? AND user_id=?", (org_id, workspace_id, user_id))
+        self._conn.execute(
+            "INSERT INTO saved_views (view_id, org_id, workspace_id, user_id, name, route, config_json, is_default, version, created_at, updated_at)"
+            " VALUES (?,?,?,?,?,?,?,?,1,?,?)",
+            (vid, org_id, workspace_id, user_id, name, route, json.dumps(config)[:20000], 1 if is_default else 0, ts, ts),
+        )
+        self._conn.commit()
+        return self.get_saved_view(vid, org_id=org_id, workspace_id=workspace_id, user_id=user_id)
+
+    def get_saved_view(self, vid, *, org_id, workspace_id, user_id) -> dict | None:
+        r = self._conn.execute(
+            "SELECT * FROM saved_views WHERE view_id=? AND org_id=? AND workspace_id=? AND user_id=?",
+            (vid, org_id, workspace_id, user_id),
+        ).fetchone()
+        if not r:
+            return None
+        d = dict(r)
+        d["config"] = self._json(d.pop("config_json"))
+        return d
+
+    def list_saved_views(self, *, org_id, workspace_id, user_id, limit=200) -> list[dict]:
+        rows = self._conn.execute(
+            "SELECT * FROM saved_views WHERE org_id=? AND workspace_id=? AND user_id=? ORDER BY updated_at DESC LIMIT ?",
+            (org_id, workspace_id, user_id, int(limit)),
+        ).fetchall()
+        out = []
+        for r in rows:
+            d = dict(r)
+            d["config"] = self._json(d.pop("config_json"))
+            out.append(d)
+        return out
+
+    def update_saved_view(self, vid, *, org_id, workspace_id, user_id, expected_version, name=None, route=None, config=None, is_default=None) -> tuple[str, dict | None]:
+        cur = self.get_saved_view(vid, org_id=org_id, workspace_id=workspace_id, user_id=user_id)
+        if not cur:
+            return ("not_found", None)
+        if int(expected_version) != int(cur["version"]):
+            return ("conflict", cur)
+        nn = name if name is not None else cur["name"]
+        nr = route if route is not None else cur["route"]
+        nc = config if config is not None else cur["config"]
+        nd = cur["is_default"] if is_default is None else (1 if is_default else 0)
+        if nd:
+            self._conn.execute("UPDATE saved_views SET is_default=0 WHERE org_id=? AND workspace_id=? AND user_id=?", (org_id, workspace_id, user_id))
+        self._conn.execute(
+            "UPDATE saved_views SET name=?, route=?, config_json=?, is_default=?, version=?, updated_at=? WHERE view_id=?",
+            (nn, nr, json.dumps(nc)[:20000], nd, int(cur["version"]) + 1, self._now(), vid),
+        )
+        self._conn.commit()
+        return ("ok", self.get_saved_view(vid, org_id=org_id, workspace_id=workspace_id, user_id=user_id))
+
+    def delete_saved_view(self, vid, *, org_id, workspace_id, user_id) -> bool:
+        cur = self.get_saved_view(vid, org_id=org_id, workspace_id=workspace_id, user_id=user_id)
+        if not cur:
+            return False
+        self._conn.execute("DELETE FROM saved_views WHERE view_id=?", (vid,))
+        self._conn.commit()
+        return True
+
+    # ── workflow templates (versioned, workspace scoped) ──────────────────
+    def create_template(self, *, org_id, workspace_id, owner_id, name, body: dict, state="active") -> dict:
+        tid = new_id("tpl_")
+        ts = self._now()
+        self._conn.execute(
+            "INSERT INTO workflow_templates (template_id, org_id, workspace_id, owner_id, name, body_json, state, version, created_at, updated_at)"
+            " VALUES (?,?,?,?,?,?,?,1,?,?)",
+            (tid, org_id, workspace_id, owner_id, name, json.dumps(body)[:40000], state, ts, ts),
+        )
+        self._conn.commit()
+        return self.get_template(tid, org_id=org_id, workspace_id=workspace_id)
+
+    def get_template(self, tid, *, org_id, workspace_id) -> dict | None:
+        r = self._conn.execute(
+            "SELECT * FROM workflow_templates WHERE template_id=? AND org_id=? AND workspace_id=?",
+            (tid, org_id, workspace_id),
+        ).fetchone()
+        if not r:
+            return None
+        d = dict(r)
+        d["body"] = self._json(d.pop("body_json"))
+        return d
+
+    def list_templates(self, *, org_id, workspace_id, limit=200) -> list[dict]:
+        rows = self._conn.execute(
+            "SELECT * FROM workflow_templates WHERE org_id=? AND workspace_id=? AND state!='archived' ORDER BY updated_at DESC LIMIT ?",
+            (org_id, workspace_id, int(limit)),
+        ).fetchall()
+        out = []
+        for r in rows:
+            d = dict(r)
+            d["body"] = self._json(d.pop("body_json"))
+            out.append(d)
+        return out
+
+    def update_template(self, tid, *, org_id, workspace_id, expected_version, name=None, body=None, state=None) -> tuple[str, dict | None]:
+        cur = self.get_template(tid, org_id=org_id, workspace_id=workspace_id)
+        if not cur:
+            return ("not_found", None)
+        if int(expected_version) != int(cur["version"]):
+            return ("conflict", cur)
+        nn = name if name is not None else cur["name"]
+        nb = body if body is not None else cur["body"]
+        ns = state if state is not None else cur["state"]
+        self._conn.execute(
+            "UPDATE workflow_templates SET name=?, body_json=?, state=?, version=?, updated_at=? WHERE template_id=?",
+            (nn, json.dumps(nb)[:40000], ns, int(cur["version"]) + 1, self._now(), tid),
+        )
+        self._conn.commit()
+        return ("ok", self.get_template(tid, org_id=org_id, workspace_id=workspace_id))
+
+    # ── drafts (one per kind per user/workspace, expiring) ────────────────
+    def upsert_draft(self, *, org_id, workspace_id, user_id, kind, body: dict, ttl_sec=604800) -> dict:
+        ts = self._now()
+        exp = ts + float(ttl_sec) if ttl_sec else 0
+        ex = self._conn.execute(
+            "SELECT draft_id, version FROM workflow_drafts WHERE org_id=? AND workspace_id=? AND user_id=? AND kind=?",
+            (org_id, workspace_id, user_id, kind),
+        ).fetchone()
+        if ex:
+            self._conn.execute(
+                "UPDATE workflow_drafts SET body_json=?, version=?, updated_at=?, expires_at=? WHERE draft_id=?",
+                (json.dumps(body)[:40000], int(ex["version"]) + 1, ts, exp, ex["draft_id"]),
+            )
+            did = ex["draft_id"]
+        else:
+            did = new_id("dft_")
+            self._conn.execute(
+                "INSERT INTO workflow_drafts (draft_id, org_id, workspace_id, user_id, kind, body_json, version, created_at, updated_at, expires_at)"
+                " VALUES (?,?,?,?,?,?,1,?,?,?)",
+                (did, org_id, workspace_id, user_id, kind, json.dumps(body)[:40000], ts, ts, exp),
+            )
+        self._conn.commit()
+        return self.get_draft(org_id=org_id, workspace_id=workspace_id, user_id=user_id, kind=kind)
+
+    def get_draft(self, *, org_id, workspace_id, user_id, kind) -> dict | None:
+        r = self._conn.execute(
+            "SELECT * FROM workflow_drafts WHERE org_id=? AND workspace_id=? AND user_id=? AND kind=?",
+            (org_id, workspace_id, user_id, kind),
+        ).fetchone()
+        if not r:
+            return None
+        d = dict(r)
+        if d.get("expires_at") and float(d["expires_at"]) < self._now():
+            self._conn.execute("DELETE FROM workflow_drafts WHERE draft_id=?", (d["draft_id"],))
+            self._conn.commit()
+            return None
+        d["body"] = self._json(d.pop("body_json"))
+        return d
+
+    def delete_draft(self, *, org_id, workspace_id, user_id, kind) -> bool:
+        cur = self._conn.execute(
+            "SELECT draft_id FROM workflow_drafts WHERE org_id=? AND workspace_id=? AND user_id=? AND kind=?",
+            (org_id, workspace_id, user_id, kind),
+        ).fetchone()
+        if not cur:
+            return False
+        self._conn.execute("DELETE FROM workflow_drafts WHERE draft_id=?", (cur["draft_id"],))
+        self._conn.commit()
+        return True
+
+    # ── attention states (acknowledge / resolve / reopen) ─────────────────
+    def get_attention_state(self, execution_id, *, org_id, workspace_id) -> dict:
+        r = self._conn.execute(
+            "SELECT * FROM attention_states WHERE execution_id=? AND org_id=? AND workspace_id=?",
+            (execution_id, org_id, workspace_id),
+        ).fetchone()
+        if r:
+            return dict(r)
+        return {"execution_id": execution_id, "org_id": org_id, "workspace_id": workspace_id, "state": "open", "actor": "", "note": "", "version": 0, "updated_at": 0}
+
+    def set_attention_state(self, execution_id, *, org_id, workspace_id, state, actor, note="", expected_version=None) -> tuple[str, dict | None]:
+        cur = self.get_attention_state(execution_id, org_id=org_id, workspace_id=workspace_id)
+        if expected_version is not None and int(expected_version) != int(cur["version"]):
+            return ("conflict", cur)
+        nv = int(cur["version"]) + 1
+        ts = self._now()
+        self._conn.execute(
+            "INSERT INTO attention_states (execution_id, org_id, workspace_id, state, actor, note, version, updated_at)"
+            " VALUES (?,?,?,?,?,?,?,?)"
+            " ON CONFLICT(execution_id, org_id, workspace_id) DO UPDATE SET state=excluded.state,"
+            " actor=excluded.actor, note=excluded.note, version=excluded.version, updated_at=excluded.updated_at",
+            (execution_id, org_id, workspace_id, state, actor, note, nv, ts),
+        )
+        self._conn.commit()
+        return ("ok", self.get_attention_state(execution_id, org_id=org_id, workspace_id=workspace_id))
 
     def list_execution_audit(
         self,

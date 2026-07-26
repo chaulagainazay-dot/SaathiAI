@@ -17,6 +17,7 @@ import {
   buildMissionPlan, validateMissionPlan, agentSelectionBlockers, isAgentSelectable,
   classifyExecutionReadiness, READINESS, readinessSignal, actionPermission, classifyError, errorMessage,
 } from "@/lib/operator";
+import { getPlan, upsertPlan, publishPlan, isConflict } from "@/lib/workflow-api";
 
 const READONLY_TOOL = "m49.echo_readonly";
 
@@ -28,6 +29,12 @@ export default function MissionPlanPage() {
   const [recon, setRecon] = useState("idle");
   const [execResult, setExecResult] = useState(null);
   const [err, setErr] = useState(null);
+  const [persisted, setPersisted] = useState(null); // M61 server-persisted plan
+  const [planRecon, setPlanRecon] = useState("idle");
+
+  useEffect(() => {
+    if (d.token && missionId) getPlan(missionId, d.token).then(setPersisted).catch(() => {});
+  }, [d.token, missionId]);
 
   const raw = useMemo(() => d.missions.find((m) => m.mission_id === missionId), [d.missions, missionId]);
   const bindings = useMemo(() => d.bindings.filter((b) => !b.mission_id || b.mission_id === missionId || b.workspace_id === d.me?.context?.workspace_id), [d.bindings, missionId, d.me]);
@@ -56,6 +63,21 @@ export default function MissionPlanPage() {
 
   const cSignal = coreSignal({ health: d.health, metrics: d.metrics, diagnostics: d.diagnostics });
   const notFound = d.ready && d.token && !d.loading && !raw;
+
+  const savePlan = async () => {
+    setPlanRecon("submitting"); setErr(null);
+    try {
+      const body = { stages: plan.stages, blocked: plan.blocked, selectedBinding };
+      const saved = await upsertPlan(missionId, body, d.token, persisted?.version);
+      setPersisted(saved); setPlanRecon("reconciled");
+    } catch (e) { setPlanRecon(isConflict(e) ? "conflict" : "server_rejected"); setErr(errorMessage(classifyError(e))); if (isConflict(e)) getPlan(missionId, d.token).then(setPersisted).catch(() => {}); }
+  };
+  const doPublish = async () => {
+    if (!persisted) return;
+    setPlanRecon("submitting"); setErr(null);
+    try { const p = await publishPlan(missionId, persisted.version, d.token); setPersisted(p); setPlanRecon("reconciled"); }
+    catch (e) { setPlanRecon(isConflict(e) ? "conflict" : "server_rejected"); setErr(errorMessage(classifyError(e))); }
+  };
 
   const runGoverned = async () => {
     if (!readiness.executeAllowed) return;
@@ -94,7 +116,12 @@ export default function MissionPlanPage() {
 
         {raw && (
           <div style={{ display: "grid", gap: "var(--space-5)" }}>
-            <SectionPanel title="Plan (draft)" meta="DRAFT_ONLY — no plan API" signal={plan.blocked ? "attention" : "active"}>
+            <SectionPanel title="Plan" meta={persisted ? `SERVER_PERSISTED · v${persisted.version} · ${persisted.state}` : "Not yet saved"} signal={plan.blocked ? "attention" : "active"}>
+              <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginBottom: 12 }}>
+                <button className="ws-chip" disabled={execPerm !== "permitted"} onClick={savePlan}>Save plan</button>
+                {persisted && persisted.state !== "published" && <button className="ws-chip" disabled={execPerm !== "permitted"} onClick={doPublish}>Publish</button>}
+                <ServerReconciliationState state={planRecon} />
+              </div>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
                 {plan.stages.map((s, i) => (
                   <span key={s.id} style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
