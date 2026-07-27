@@ -1,0 +1,221 @@
+{
+  "engine_version": "paper-broker/1.0.0",
+  "broker_state_matrix": {
+    "PENDING_VALIDATION": [
+      "ACCEPTED",
+      "FAILED",
+      "REJECTED"
+    ],
+    "ACCEPTED": [
+      "CANCEL_PENDING",
+      "EXPIRED",
+      "FAILED",
+      "FILLED",
+      "OPEN",
+      "PARTIALLY_FILLED",
+      "REJECTED"
+    ],
+    "OPEN": [
+      "CANCELLED",
+      "CANCEL_PENDING",
+      "EXPIRED",
+      "FAILED",
+      "FILLED",
+      "PARTIALLY_FILLED"
+    ],
+    "PARTIALLY_FILLED": [
+      "CANCELLED",
+      "CANCEL_PENDING",
+      "EXPIRED",
+      "FAILED",
+      "FILLED",
+      "PARTIALLY_FILLED"
+    ],
+    "CANCEL_PENDING": [
+      "CANCELLED",
+      "FAILED",
+      "FILLED",
+      "PARTIALLY_FILLED"
+    ],
+    "FILLED": [],
+    "CANCELLED": [],
+    "REJECTED": [],
+    "EXPIRED": [],
+    "FAILED": []
+  },
+  "broker_terminal_states": [
+    "CANCELLED",
+    "EXPIRED",
+    "FAILED",
+    "FILLED",
+    "REJECTED"
+  ],
+  "account_state_matrix": {
+    "DRAFT": [
+      "ACTIVE",
+      "CLOSED"
+    ],
+    "ACTIVE": [
+      "CLOSED",
+      "HALTED"
+    ],
+    "HALTED": [
+      "ACTIVE",
+      "CLOSED"
+    ],
+    "CLOSED": []
+  },
+  "permission_matrix": {
+    "viewer": [
+      "paper_account.read",
+      "paper_order.read"
+    ],
+    "operator": [
+      "paper_account.create",
+      "paper_account.read",
+      "paper_order.cancel",
+      "paper_order.propose",
+      "paper_order.read",
+      "paper_order.submit"
+    ],
+    "owner": [
+      "paper_account.create",
+      "paper_account.halt",
+      "paper_account.read",
+      "paper_order.cancel",
+      "paper_order.propose",
+      "paper_order.read",
+      "paper_order.submit"
+    ],
+    "admin": [
+      "paper_account.create",
+      "paper_account.halt",
+      "paper_account.read",
+      "paper_order.cancel",
+      "paper_order.propose",
+      "paper_order.read",
+      "paper_order.submit"
+    ],
+    "system": [
+      "paper_account.create",
+      "paper_account.halt",
+      "paper_account.read",
+      "paper_order.cancel",
+      "paper_order.propose",
+      "paper_order.read",
+      "paper_order.submit"
+    ]
+  },
+  "paper_permissions": [
+    "paper_account.create",
+    "paper_account.halt",
+    "paper_account.read",
+    "paper_order.cancel",
+    "paper_order.propose",
+    "paper_order.read",
+    "paper_order.submit"
+  ],
+  "registered_tools": [
+    {
+      "tool_id": "paper.order.submit",
+      "authority": "LOCAL_MUTATION",
+      "side_effect": "LOCAL_IRREVERSIBLE",
+      "approval": "EXPLICIT_APPROVAL_REQUIRED",
+      "idempotency": "IDEMPOTENCY_KEY_REQUIRED"
+    },
+    {
+      "tool_id": "paper.order.cancel",
+      "authority": "LOCAL_MUTATION",
+      "side_effect": "LOCAL_REVERSIBLE",
+      "approval": "NO_APPROVAL_REQUIRED",
+      "idempotency": "NATURALLY_IDEMPOTENT"
+    },
+    {
+      "tool_id": "paper.order.process_event",
+      "authority": "LOCAL_MUTATION",
+      "side_effect": "LOCAL_IRREVERSIBLE",
+      "approval": "NO_APPROVAL_REQUIRED",
+      "idempotency": "NATURALLY_IDEMPOTENT"
+    }
+  ],
+  "fixtures": {
+    "version": "paper-fixtures/1.0.0",
+    "engine": "paper-broker/1.0.0",
+    "events": {
+      "VALID_TIGHT": {
+        "symbol": "TRENDING",
+        "bid": "99.98",
+        "ask": "100.02",
+        "last": "100.00",
+        "liquidity": "1000000",
+        "quality": "VALID",
+        "market_state": "OPEN",
+        "ts": 1000.0,
+        "ref": "fx:valid:1"
+      },
+      "VALID_LOW_LIQUIDITY": {
+        "symbol": "TRENDING",
+        "bid": "99.98",
+        "ask": "100.02",
+        "last": "100.02",
+        "liquidity": "40",
+        "quality": "VALID",
+        "market_state": "OPEN",
+        "ts": 1000.0,
+        "ref": "fx:lowliq:1"
+      },
+      "STALE": {
+        "symbol": "TRENDING",
+        "bid": "99.98",
+        "ask": "100.02",
+        "last": "100.02",
+        "liquidity": "1000000",
+        "quality": "STALE",
+        "market_state": "OPEN",
+        "ts": 1000.0,
+        "ref": "fx:stale:1"
+      },
+      "INVALID_PRICE": {
+        "symbol": "TRENDING",
+        "bid": "-1.00",
+        "ask": "100.02",
+        "last": "100.02",
+        "liquidity": "1000000",
+        "quality": "UNVERIFIED",
+        "market_state": "OPEN",
+        "ts": 1000.0,
+        "ref": "fx:invalid:1"
+      },
+      "MARKET_CLOSED": {
+        "symbol": "TRENDING",
+        "bid": "99.98",
+        "ask": "100.02",
+        "last": "100.02",
+        "liquidity": "1000000",
+        "quality": "VALID",
+        "market_state": "CLOSED",
+        "ts": 1000.0,
+        "ref": "fx:closed:1"
+      },
+      "CROSS_UP": {
+        "symbol": "TRENDING",
+        "bid": "104.98",
+        "ask": "105.02",
+        "last": "105.00",
+        "liquidity": "1000000",
+        "quality": "VALID",
+        "market_state": "OPEN",
+        "ts": 1000.0,
+        "ref": "fx:crossup:1"
+      }
+    },
+    "hash": "5274daa09c48e6119204688c9e8a18ae5a71d6fd64325fb753937c3e3c5c4715"
+  },
+  "determinism_proof": {
+    "run1_hash": "e2ed96ff3a464a8ac6698814b1e9a4408048ece53d6b8d345701d64b9d989446",
+    "run2_hash": "e2ed96ff3a464a8ac6698814b1e9a4408048ece53d6b8d345701d64b9d989446",
+    "identical": true,
+    "fill_price": "100.09",
+    "note": "ask 100.02 + 5bps + half-spread = 100.09"
+  }
+}

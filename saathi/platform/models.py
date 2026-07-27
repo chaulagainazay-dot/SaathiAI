@@ -79,6 +79,14 @@ class PlatformPermission(str, Enum):
     BACKTEST_RUN = "backtest.run"
     BACKTEST_REVIEW = "backtest.review"
     STRATEGY_VALIDATE = "strategy.validate"
+    # M62.5 — paper broker + durable order lifecycle (PAPER only, NO live execution)
+    PAPER_ACCOUNT_READ = "paper_account.read"
+    PAPER_ACCOUNT_CREATE = "paper_account.create"
+    PAPER_ORDER_READ = "paper_order.read"
+    PAPER_ORDER_PROPOSE = "paper_order.propose"
+    PAPER_ORDER_SUBMIT = "paper_order.submit"
+    PAPER_ORDER_CANCEL = "paper_order.cancel"
+    PAPER_ACCOUNT_HALT = "paper_account.halt"
 
 
 class ApprovalStatus(str, Enum):
@@ -214,6 +222,8 @@ ROLE_PERMISSIONS: dict[PlatformRole, frozenset[PlatformPermission]] = {
             PlatformPermission.NOTIFICATION_READ,
             PlatformPermission.RESEARCH_READ,
             PlatformPermission.STRATEGY_READ,
+            PlatformPermission.PAPER_ACCOUNT_READ,
+            PlatformPermission.PAPER_ORDER_READ,
         }
     ),
     PlatformRole.OPERATOR: frozenset(),  # filled below
@@ -245,6 +255,10 @@ ROLE_PERMISSIONS[PlatformRole.OPERATOR] = ROLE_PERMISSIONS[PlatformRole.VIEWER] 
         PlatformPermission.STRATEGY_EDIT,
         PlatformPermission.BACKTEST_RUN,
         PlatformPermission.BACKTEST_REVIEW,
+        PlatformPermission.PAPER_ACCOUNT_CREATE,
+        PlatformPermission.PAPER_ORDER_PROPOSE,
+        PlatformPermission.PAPER_ORDER_SUBMIT,
+        PlatformPermission.PAPER_ORDER_CANCEL,
     }
 )
 ROLE_PERMISSIONS[PlatformRole.OWNER] = ROLE_PERMISSIONS[PlatformRole.OPERATOR] | frozenset(
@@ -252,6 +266,7 @@ ROLE_PERMISSIONS[PlatformRole.OWNER] = ROLE_PERMISSIONS[PlatformRole.OPERATOR] |
         PlatformPermission.RESEARCH_REVIEW,
         PlatformPermission.RESEARCH_PUBLISH,
         PlatformPermission.STRATEGY_VALIDATE,
+        PlatformPermission.PAPER_ACCOUNT_HALT,
         PlatformPermission.APPROVAL_DECIDE,
         PlatformPermission.SETTINGS_WRITE,
         PlatformPermission.ORG_MANAGE,

@@ -20,4 +20,11 @@ def register_builtins(registry: ToolRegistry) -> list[str]:
         except Exception as exc:
             if "duplicate" not in str(exc).lower():
                 raise
+    # M62.5 — registered paper-trading tools (PAPER only, LOCAL_MUTATION, no live broker)
+    try:
+        from saathi.platform.paper_trading.execution_tool import register_paper_tools
+        keys.extend(register_paper_tools(registry))
+    except Exception as exc:
+        if "duplicate" not in str(exc).lower():
+            raise
     return keys

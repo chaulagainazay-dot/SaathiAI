@@ -2322,3 +2322,227 @@ router.add_api_route("/strategies/{sid}/backtests/{rid}/validation", _bt_evidenc
 router.add_api_route("/strategies/{sid}/backtests/{rid}/stress", _bt_evidence("stress"), methods=["GET"])
 router.add_api_route("/strategies/{sid}/backtests/{rid}/sensitivity", _bt_evidence("sensitivity"), methods=["GET"])
 router.add_api_route("/strategies/{sid}/backtests/{rid}/manifest", _bt_evidence("manifest"), methods=["GET"])
+
+
+# ══════════════════════════════════════════════════════════════════════════
+# M62.5 — deterministic paper broker + durable order lifecycle. Authenticated,
+# tenant-scoped, audited. PAPER environment ONLY, long-only. Broker MUTATIONS go
+# through PlatformAgentRuntime → ExecutionGateway → registered paper-trading tool;
+# NO API route invokes the broker directly. NO live execution, NO leverage/margin/
+# short/derivatives. A paper fill is a simulation event, not a live trade.
+# ══════════════════════════════════════════════════════════════════════════
+def _ppsvc():
+    from saathi.platform.paper_trading import default_paper_service
+    return default_paper_service()
+
+
+def _ppctx(a, x):
+    return _svc().require_context(_token(a, x))
+
+
+def _pp_gateway_result(r):
+    """Translate a ToolExecutionResult from the paper-broker tool into an API result."""
+    from saathi.tool_runtime.contracts import ToolOutcomeClass
+    if r.outcome_class == ToolOutcomeClass.SUCCESS_CONFIRMED:
+        return r.data
+    status = 400
+    if r.outcome_class in (ToolOutcomeClass.PROHIBITED,):
+        status = 403
+    raise HTTPException(status_code=status, detail={"code": r.error_code or "PAPER_SUBMIT_FAILED",
+                                                    "message": r.safe_message or "paper broker action rejected"})
+
+
+class PaperAccountBody(BaseModel):
+    name: str = "paper account"
+    starting_cash: str = "100000"
+    base_currency: str = "USD"
+    project_id: str = ""
+
+
+class PaperHaltBody(BaseModel):
+    expected_version: int
+    reason: str = "manual halt"
+
+
+class PaperMarket(BaseModel):
+    symbol: str
+    bid: str
+    ask: str
+    last: str | None = None
+    liquidity: str = "1000000"
+    quality: str = "VALID"
+    market_state: str = "OPEN"
+    ts: float = 0.0
+    ref: str = ""
+
+
+class PaperIntentBody(BaseModel):
+    account_id: str
+    symbol: str
+    side: str
+    order_type: str = "MARKET"
+    quantity: str
+    limit_price: str | None = None
+    time_in_force: str = "DAY"
+    idempotency_key: str = ""
+    reason: str = ""
+    strategy_ref: str = ""
+    thesis_ref: str = ""
+    market_data_ref: str = ""
+
+
+class PaperSubmitBody(BaseModel):
+    market: PaperMarket
+    approval_id: str = ""
+    idempotency_key: str = ""
+
+
+class PaperCancelBody(BaseModel):
+    idempotency_key: str = ""
+
+
+class PaperProcessBody(BaseModel):
+    market: PaperMarket
+
+
+@router.post("/paper/accounts")
+def paper_acct_create(body: PaperAccountBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"account": _ppsvc().create_account(_ppctx(authorization, x_platform_token), name=body.name, starting_cash=body.starting_cash, base_currency=body.base_currency, project_id=body.project_id)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/paper/accounts")
+def paper_acct_list(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"accounts": _ppsvc().list_accounts(_ppctx(authorization, x_platform_token))}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/paper/accounts/{account_id}")
+def paper_acct_get(account_id: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"account": _ppsvc().get_account(_ppctx(authorization, x_platform_token), account_id)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/paper/accounts/{account_id}/halt")
+def paper_acct_halt(account_id: str, body: PaperHaltBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"account": _ppsvc().halt_account(_ppctx(authorization, x_platform_token), account_id, expected_version=body.expected_version, reason=body.reason)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/paper/accounts/{account_id}/positions")
+def paper_positions(account_id: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"positions": _ppsvc().list_positions(_ppctx(authorization, x_platform_token), account_id)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/paper/accounts/{account_id}/ledger")
+def paper_ledger(account_id: str, limit: int = 500, offset: int = 0, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"ledger": _ppsvc().ledger(_ppctx(authorization, x_platform_token), account_id, limit=limit, offset=offset)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/paper/accounts/{account_id}/summary")
+def paper_summary(account_id: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"summary": _ppsvc().summary(_ppctx(authorization, x_platform_token), account_id)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/paper/order-intents")
+def paper_intent_create(body: PaperIntentBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"intent": _ppsvc().create_intent(_ppctx(authorization, x_platform_token), account_id=body.account_id, symbol=body.symbol, side=body.side, order_type=body.order_type, quantity=body.quantity, limit_price=body.limit_price, time_in_force=body.time_in_force, idempotency_key=body.idempotency_key, reason=body.reason, strategy_ref=body.strategy_ref, thesis_ref=body.thesis_ref, market_data_ref=body.market_data_ref)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/paper/order-intents")
+def paper_intent_list(account_id: str = "", authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"intents": _ppsvc().list_intents(_ppctx(authorization, x_platform_token), account_id=account_id or None)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/paper/order-intents/{intent_id}")
+def paper_intent_get(intent_id: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"intent": _ppsvc().get_intent(_ppctx(authorization, x_platform_token), intent_id)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/paper/order-intents/{intent_id}/submit")
+def paper_intent_submit(intent_id: str, body: PaperSubmitBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    from saathi.platform.paper_trading import orchestration
+    from saathi.platform.models import PlatformPermission
+    try:
+        ctx = _ppctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_ORDER_SUBMIT)
+        r = orchestration.submit_via_gateway(ctx, intent_id=intent_id, market=body.market.model_dump(), approval_id=body.approval_id, idempotency_key=body.idempotency_key)
+        return {"result": _pp_gateway_result(r)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/paper/orders/{order_id}/cancel")
+def paper_order_cancel(order_id: str, body: PaperCancelBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    from saathi.platform.paper_trading import orchestration
+    from saathi.platform.models import PlatformPermission
+    try:
+        ctx = _ppctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_ORDER_CANCEL)
+        r = orchestration.cancel_via_gateway(ctx, order_id=order_id, idempotency_key=body.idempotency_key)
+        return {"result": _pp_gateway_result(r)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/paper/orders/{order_id}/process-event")
+def paper_order_process(order_id: str, body: PaperProcessBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    from saathi.platform.paper_trading import orchestration
+    from saathi.platform.models import PlatformPermission
+    try:
+        ctx = _ppctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_ORDER_SUBMIT)
+        r = orchestration.process_event_via_gateway(ctx, order_id=order_id, market=body.market.model_dump())
+        return {"result": _pp_gateway_result(r)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/paper/orders")
+def paper_orders_list(account_id: str = "", limit: int = 200, offset: int = 0, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"orders": _ppsvc().list_orders(_ppctx(authorization, x_platform_token), account_id=account_id or None, limit=limit, offset=offset)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/paper/orders/{order_id}")
+def paper_order_get(order_id: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"order": _ppsvc().get_order(_ppctx(authorization, x_platform_token), order_id)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/paper/orders/{order_id}/fills")
+def paper_order_fills(order_id: str, limit: int = 1000, offset: int = 0, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"fills": _ppsvc().list_fills(_ppctx(authorization, x_platform_token), order_id, limit=limit, offset=offset)}
+    except PlatformContextError as e:
+        raise _err(e) from e
