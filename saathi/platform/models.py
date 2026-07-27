@@ -93,6 +93,16 @@ class PlatformPermission(str, Enum):
     RECONCILE_RUN = "reconciliation.run"
     REPAIR_PLAN_ACKNOWLEDGE = "reconciliation.repair_acknowledge"
     REPAIR_PLAN_AUTHORIZE = "reconciliation.repair_authorize"
+    # M62.7 — automated paper safety circuit breakers, sweeps, alerts, reset
+    # (halt/freeze/reject/acknowledge/reset only; NO financial mutation, NO repair,
+    # NO live/production/broker/credential capability)
+    PAPER_SAFETY_READ = "paper_safety.read"
+    PAPER_SAFETY_CONFIGURE = "paper_safety.configure"
+    PAPER_SAFETY_SWEEP = "paper_safety.sweep"
+    PAPER_SAFETY_TRIP = "paper_safety.trip"
+    PAPER_SAFETY_ACKNOWLEDGE = "paper_safety.acknowledge"
+    PAPER_SAFETY_RESET_REQUEST = "paper_safety.reset_request"
+    PAPER_SAFETY_RESET = "paper_safety.reset"
 
 
 class ApprovalStatus(str, Enum):
@@ -231,6 +241,7 @@ ROLE_PERMISSIONS: dict[PlatformRole, frozenset[PlatformPermission]] = {
             PlatformPermission.PAPER_ACCOUNT_READ,
             PlatformPermission.PAPER_ORDER_READ,
             PlatformPermission.RECONCILE_READ,
+            PlatformPermission.PAPER_SAFETY_READ,
         }
     ),
     PlatformRole.OPERATOR: frozenset(),  # filled below
@@ -267,6 +278,10 @@ ROLE_PERMISSIONS[PlatformRole.OPERATOR] = ROLE_PERMISSIONS[PlatformRole.VIEWER] 
         PlatformPermission.PAPER_ORDER_SUBMIT,
         PlatformPermission.PAPER_ORDER_CANCEL,
         PlatformPermission.RECONCILE_RUN,
+        PlatformPermission.PAPER_SAFETY_SWEEP,
+        PlatformPermission.PAPER_SAFETY_TRIP,
+        PlatformPermission.PAPER_SAFETY_ACKNOWLEDGE,
+        PlatformPermission.PAPER_SAFETY_RESET_REQUEST,
     }
 )
 ROLE_PERMISSIONS[PlatformRole.OWNER] = ROLE_PERMISSIONS[PlatformRole.OPERATOR] | frozenset(
@@ -277,6 +292,8 @@ ROLE_PERMISSIONS[PlatformRole.OWNER] = ROLE_PERMISSIONS[PlatformRole.OPERATOR] |
         PlatformPermission.PAPER_ACCOUNT_HALT,
         PlatformPermission.REPAIR_PLAN_ACKNOWLEDGE,
         PlatformPermission.REPAIR_PLAN_AUTHORIZE,
+        PlatformPermission.PAPER_SAFETY_CONFIGURE,
+        PlatformPermission.PAPER_SAFETY_RESET,
         PlatformPermission.APPROVAL_DECIDE,
         PlatformPermission.SETTINGS_WRITE,
         PlatformPermission.ORG_MANAGE,

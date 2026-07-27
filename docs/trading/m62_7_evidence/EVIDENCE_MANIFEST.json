@@ -1,0 +1,73 @@
+{
+  "milestone": "M62.7",
+  "title": "Automated paper-trading circuit breakers, safety sweeps, alerts, acknowledgement, and fail-closed reset controls",
+  "verdict": "M62_7_COMPLETE",
+  "engine_version": "paper-safety/1.0.0",
+  "date": "2026-07-27",
+  "authority": {
+    "runtime": "PlatformAgentRuntime remains canonical",
+    "gateway": "ExecutionGateway remains sole authority for registered mutation tools",
+    "guardian": "Trading Guardian independent fail-closed veto; now consumes breaker posture",
+    "reconciliation": "M62.6 remains authoritative integrity verifier; may halt, never repairs",
+    "breakers": "M62.7 may halt/freeze/reject/ack/reset only; never repairs financial state"
+  },
+  "new_modules": [
+    "saathi/platform/safety/__init__.py",
+    "saathi/platform/safety/models.py",
+    "saathi/platform/safety/store.py",
+    "saathi/platform/safety/metrics.py",
+    "saathi/platform/safety/evaluator.py",
+    "saathi/platform/safety/service.py",
+    "saathi/platform/safety/execution_tool.py",
+    "saathi/platform/safety/orchestration.py"
+  ],
+  "modified": [
+    "saathi/platform/models.py (7 PAPER_SAFETY_* permissions + role wiring)",
+    "saathi/platform/paper_trading/service.py (bind_safety + breaker-posture veto in submit)",
+    "saathi/tool_runtime/bootstrap.py (register paper_safety.* tools)",
+    "saathi/platform/api.py (M62.7 /paper/safety/* endpoints)"
+  ],
+  "registered_tools": [
+    "paper_safety.trip", "paper_safety.acknowledge", "paper_safety.request_reset",
+    "paper_safety.reset", "paper_safety.run_sweep"
+  ],
+  "breaker_types": [
+    "DAILY_REALIZED_LOSS", "DAILY_TOTAL_LOSS", "MAX_DRAWDOWN", "GROSS_EXPOSURE",
+    "POSITION_CONCENTRATION", "OPEN_ORDER_COUNT", "ORDER_REJECTION_RATE",
+    "PROCESSING_FAILURE", "RECONCILIATION_CRITICAL", "RECONCILIATION_ERROR_STREAK",
+    "STALE_MARKET_DATA", "INVALID_MARKET_DATA", "ACCOUNTING_INVARIANT", "MANUAL_KILL_SWITCH"
+  ],
+  "scopes": [
+    "GLOBAL_PAPER", "TENANT", "WORKSPACE", "PAPER_ACCOUNT", "STRATEGY_VERSION",
+    "INSTRUMENT", "MARKET_DATA_SOURCE", "PAPER_BROKER_PROCESSOR"
+  ],
+  "permissions": [
+    "PAPER_SAFETY_READ (viewer+)", "PAPER_SAFETY_SWEEP (operator+)",
+    "PAPER_SAFETY_TRIP (operator+)", "PAPER_SAFETY_ACKNOWLEDGE (operator+)",
+    "PAPER_SAFETY_RESET_REQUEST (operator+)", "PAPER_SAFETY_CONFIGURE (owner+)",
+    "PAPER_SAFETY_RESET (owner+)"
+  ],
+  "tests": {
+    "m62_7_suite": "tests/test_m62_7_safety.py",
+    "m62_7_count": 41,
+    "m62_7_result": "41 passed",
+    "regression": "1476 passed, 0 failed across m62/m50/m49/runtime/registry/approval/identity/auth/tool selection (208s)"
+  },
+  "fault_injection": {
+    "corrupted_replay": "observe_market_event with INVALID quality + sequence regression + hash mismatch → INVALID_MARKET_DATA trip, source blocked, no repair",
+    "sqlite_interruption": "injected failure inside persist_trip transaction → full rollback, no partial halt, no orphan trip/alert"
+  },
+  "safety_scan": "no eval/exec/subprocess/network/socket/requests/httpx/credential/execute_repair/apply_repair in saathi/platform/safety/; no 0.0.0.0 binding; token mentions only in prohibited-token lists and docstrings",
+  "limitations": [
+    "single-host SQLite", "local interval scheduler only (disabled by default)",
+    "local durable alerts only; no external notification delivery",
+    "no distributed scheduler / multi-node coordination",
+    "paper-only, long-only, fixture/replay market data only",
+    "no browser operator workspace (M62.8)", "no live broker", "no automated repair",
+    "no production deployment"
+  ],
+  "not_claimed": [
+    "PAPER_TRADING_CERTIFIED", "OPERATIONALLY_CERTIFIED", "LIVE_TRADING_READY",
+    "PRODUCTION_READY", "REAL_MONEY_READY", "AUTONOMOUS_TRADING_READY"
+  ]
+}

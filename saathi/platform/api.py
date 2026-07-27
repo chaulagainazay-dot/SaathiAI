@@ -2546,3 +2546,201 @@ def paper_order_fills(order_id: str, limit: int = 1000, offset: int = 0, authori
         return {"fills": _ppsvc().list_fills(_ppctx(authorization, x_platform_token), order_id, limit=limit, offset=offset)}
     except PlatformContextError as e:
         raise _err(e) from e
+
+
+# ══════════════════════════════════════════════════════════════════════════
+# M62.7 — automated paper-safety circuit breakers, sweeps, alerts, acknowledgement,
+# and fail-closed reset controls. Authenticated, tenant-scoped, audited. Breaker
+# MUTATIONS (trip/acknowledge/request-reset/reset/sweep) route through
+# PlatformAgentRuntime → ExecutionGateway → registered paper_safety.* tool; NO API
+# route mutates breaker state directly. PAPER only; no live/production/repair path.
+# ══════════════════════════════════════════════════════════════════════════
+def _safesvc():
+    from saathi.platform.safety import default_safety_service
+    return default_safety_service()
+
+
+class SafetyBreakerBody(BaseModel):
+    breaker_type: str
+    scope: str
+    scope_ref: str = ""
+    threshold: str = "0"
+    warning_threshold: str | None = None
+    window_seconds: int = 0
+    min_samples: int = 0
+    severity: str = "ERROR"
+    open_order_policy: str | None = None
+    timezone: str = "UTC"
+    requires_config: bool = False
+
+
+class SafetyBreakerPatch(BaseModel):
+    expected_version: int
+    updates: dict = {}
+
+
+class SafetyManualTripBody(BaseModel):
+    scope: str
+    scope_ref: str = ""
+    reason: str = "manual kill switch"
+
+
+class SafetyAckBody(BaseModel):
+    note: str = ""
+    evidence_reviewed: bool = False
+
+
+class SafetyResetRequestBody(BaseModel):
+    reason: str
+    approval_id: str = ""
+    idempotency_key: str = ""
+
+
+class SafetyResetExecBody(BaseModel):
+    approval_id: str = ""
+    expires_at: float = 0.0
+
+
+@router.get("/paper/safety/breakers")
+def safety_breakers_list(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"breakers": _safesvc().list_breakers(_ppctx(authorization, x_platform_token))}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/paper/safety/breakers")
+def safety_breaker_create(body: SafetyBreakerBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"breaker": _safesvc().create_breaker(_ppctx(authorization, x_platform_token), **body.model_dump())}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/paper/safety/breakers/{definition_id}")
+def safety_breaker_get(definition_id: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"breaker": _safesvc().get_breaker(_ppctx(authorization, x_platform_token), definition_id)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.patch("/paper/safety/breakers/{definition_id}")
+def safety_breaker_patch(definition_id: str, body: SafetyBreakerPatch, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"breaker": _safesvc().update_breaker(_ppctx(authorization, x_platform_token), definition_id, expected_version=body.expected_version, updates=body.updates)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/paper/safety/states")
+def safety_states(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"states": _safesvc().list_states(_ppctx(authorization, x_platform_token))}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/paper/safety/trips")
+def safety_trips(definition_id: str = "", limit: int = 200, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"trips": _safesvc().list_trips(_ppctx(authorization, x_platform_token), definition_id=definition_id or None, limit=limit)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/paper/safety/trips/{trip_id}")
+def safety_trip_get(trip_id: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"trip": _safesvc().get_trip(_ppctx(authorization, x_platform_token), trip_id)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/paper/safety/alerts")
+def safety_alerts(limit: int = 200, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"alerts": _safesvc().list_alerts(_ppctx(authorization, x_platform_token), limit=limit)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/paper/safety/sweeps")
+def safety_sweeps(limit: int = 100, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"sweeps": _safesvc().list_sweeps(_ppctx(authorization, x_platform_token), limit=limit)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/paper/safety/sweeps/{sweep_id}")
+def safety_sweep_get(sweep_id: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"sweep": _safesvc().get_sweep(_ppctx(authorization, x_platform_token), sweep_id)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/paper/safety/sweeps")
+def safety_sweep_run(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    from saathi.platform.safety import orchestration
+    from saathi.platform.models import PlatformPermission
+    try:
+        ctx = _ppctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_SWEEP)
+        r = orchestration.run_sweep_via_gateway(ctx)
+        return {"result": _pp_gateway_result(r)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/paper/safety/trips/manual")
+def safety_manual_trip(body: SafetyManualTripBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    from saathi.platform.safety import orchestration
+    from saathi.platform.models import PlatformPermission
+    try:
+        ctx = _ppctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_TRIP)
+        r = orchestration.trip_via_gateway(ctx, scope=body.scope, scope_ref=body.scope_ref, reason=body.reason)
+        return {"result": _pp_gateway_result(r)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/paper/safety/trips/{trip_id}/acknowledge")
+def safety_acknowledge(trip_id: str, body: SafetyAckBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    from saathi.platform.safety import orchestration
+    from saathi.platform.models import PlatformPermission
+    try:
+        ctx = _ppctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_ACKNOWLEDGE)
+        r = orchestration.acknowledge_via_gateway(ctx, trip_id=trip_id, note=body.note, evidence_reviewed=body.evidence_reviewed)
+        return {"result": _pp_gateway_result(r)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/paper/safety/trips/{trip_id}/reset-requests")
+def safety_reset_request(trip_id: str, body: SafetyResetRequestBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    from saathi.platform.safety import orchestration
+    from saathi.platform.models import PlatformPermission
+    try:
+        ctx = _ppctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_RESET_REQUEST)
+        r = orchestration.request_reset_via_gateway(ctx, trip_id=trip_id, reason=body.reason, approval_id=body.approval_id, idempotency_key=body.idempotency_key)
+        return {"result": _pp_gateway_result(r)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/paper/safety/reset-requests/{request_id}/execute")
+def safety_reset_execute(request_id: str, body: SafetyResetExecBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    from saathi.platform.safety import orchestration
+    from saathi.platform.models import PlatformPermission
+    try:
+        ctx = _ppctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_RESET)
+        r = orchestration.reset_via_gateway(ctx, request_id=request_id, approval_id=body.approval_id, expires_at=body.expires_at)
+        return {"result": _pp_gateway_result(r)}
+    except PlatformContextError as e:
+        raise _err(e) from e

@@ -27,4 +27,12 @@ def register_builtins(registry: ToolRegistry) -> list[str]:
     except Exception as exc:
         if "duplicate" not in str(exc).lower():
             raise
+    # M62.7 — registered paper-safety circuit-breaker tools (PAPER only, LOCAL_MUTATION,
+    # halt/ack/reset only; never FINANCIAL_EXECUTION, never a repair path)
+    try:
+        from saathi.platform.safety.execution_tool import register_safety_tools
+        keys.extend(register_safety_tools(registry))
+    except Exception as exc:
+        if "duplicate" not in str(exc).lower():
+            raise
     return keys

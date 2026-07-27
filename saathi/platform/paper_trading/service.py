@@ -50,6 +50,13 @@ class PaperTradingService:
         self._guardian_limits = guardian_limits
         self.broker = PaperBroker(fee_model=self.fee_model, slippage_model=self.slippage_model, seed=seed)
         self._audit_sink = None
+        self._safety = None   # optional M62.7 SafetyService (breaker posture veto)
+
+    def bind_safety(self, safety_service):
+        """Attach the M62.7 SafetyService so submissions consult breaker posture.
+        Kept optional + injected to avoid a hard dependency / circular import."""
+        self._safety = safety_service
+        return self
 
     def bind_audit(self, platform_store):
         self._audit_sink = platform_store
@@ -215,6 +222,24 @@ class PaperTradingService:
                                      reason="guardian veto: " + "; ".join(guardian.get("reasons", [])[:3]))
             self._audit(ctx, "paper.guardian.veto", intent_id=intent_id, reasons=guardian.get("reasons"))
             raise PlatformContextError("VALIDATION_FAILED", "guardian veto: " + "; ".join(guardian.get("reasons", [])[:3]))
+
+        # 1b) M62.7 safety breaker posture (independent, fail-closed). Any active
+        # blocking breaker relevant to this account/instrument/source vetoes submission.
+        if self._safety is not None:
+            try:
+                posture = self._safety.breaker_posture(
+                    ctx, account_id=acct.id, symbol=intent.symbol, source=event.ref,
+                    workspace_id=ctx.workspace_id)
+            except Exception:
+                posture = {"blocked": True, "breakers": [{"breaker_type": "posture_unavailable"}]}  # fail closed
+            if posture.get("blocked"):
+                brk = posture.get("breakers", [])
+                reason = "safety breaker veto: " + "; ".join(
+                    f"{b.get('breaker_type', '?')}@{b.get('scope', '?')}:{b.get('scope_ref', '')}" for b in brk[:3])
+                self.store.update_intent(ctx.org_id, intent_id, state=OrderState.REJECTED.value,
+                                         guardian=guardian, reason=reason[:200])
+                self._audit(ctx, "paper.safety.veto", intent_id=intent_id, breakers=brk)
+                raise PlatformContextError("VALIDATION_FAILED", reason)
 
         # 2) reservation + broker validation
         ref_price = D(event.ask) if intent.side == OrderSide.BUY else D(event.bid)
