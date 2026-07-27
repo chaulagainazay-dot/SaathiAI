@@ -1,0 +1,60 @@
+{
+  "milestone": "M62.9",
+  "title": "End-to-End Paper Trading Operational Certification",
+  "verdict": "M62_9_INCOMPLETE_BLOCKED",
+  "date": "2026-07-27",
+  "starting_sha": "ae7b6807149f75bb6c38e92e17210c81470bca1e",
+  "ending_sha": "ae7b6807149f75bb6c38e92e17210c81470bca1e",
+  "branch": "milestone/m61-backend-workflow-persistence",
+  "code_changed": false,
+  "environment": {
+    "python": "3.12.13",
+    "pytest": "9.1.1",
+    "isolation": "purpose-built venv (trading path deps not in system python)"
+  },
+  "tests": {
+    "total_passed": 146,
+    "total_failed": 0,
+    "suites": {
+      "test_m62_trading_models.py": 19,
+      "test_m62_2_market_data.py": 16,
+      "test_m62_3_research.py": 14,
+      "test_m62_4_strategy.py": 47,
+      "test_m62_5_paper_broker.py": 46,
+      "test_m49_3_trading_boundary.py": 4
+    }
+  },
+  "long_duration": {
+    "tenants": 3,
+    "accounts": 9,
+    "orders": 1620,
+    "fills": 1620,
+    "market_events": 4860,
+    "invariant_violations": 0,
+    "duplicate_fills": 0
+  },
+  "recovery": {
+    "invariants_hold_after_restart": true,
+    "duplicate_fills_after_restart_replay": 0,
+    "no_duplicate_accounting": true,
+    "silent_repair": false
+  },
+  "security_scan": "clean",
+  "prerequisites_complete": ["M62.0", "M62.1", "M62.2", "M62.3", "M62.4", "M62.5"],
+  "prerequisites_incomplete": {
+    "M62.6": "partial — recovery primitives + invariant checker; no dedicated reconciliation engine",
+    "M62.7": "partial — manual Guardian trip + halt; no automated breaker triggers",
+    "M62.8": "absent — advisory placeholder page only; no operator surfaces"
+  },
+  "browser_certification": "not_passed_operator_workspace_absent",
+  "artifacts": [
+    "M62_9_OPERATIONAL_CERTIFICATION.md",
+    "m62_9_evidence/TEST_RESULTS.md",
+    "m62_9_evidence/SECURITY_SCAN.md",
+    "m62_9_evidence/RECOVERY_AND_PERFORMANCE.md",
+    "m62_9_evidence/PERFORMANCE.json",
+    "m62_9_evidence/long_duration_harness.py",
+    "m62_9_evidence/EVIDENCE_MANIFEST.json"
+  ],
+  "forbidden_claims_not_made": ["LIVE_TRADING_READY", "PRODUCTION_READY", "REAL_MONEY_READY"]
+}
