@@ -1,0 +1,108 @@
+{
+  "TRENDING": {
+    "status": "COMPLETE",
+    "reason": "ok",
+    "blocking": 0,
+    "total_return": "0.04",
+    "max_drawdown": "0.00",
+    "trade_count": 2,
+    "look_ahead_ok": true
+  },
+  "MEAN_REVERTING": {
+    "status": "COMPLETE",
+    "reason": "ok",
+    "blocking": 0,
+    "total_return": "-0.01",
+    "max_drawdown": "0.02",
+    "trade_count": 4,
+    "look_ahead_ok": true
+  },
+  "FLAT": {
+    "status": "COMPLETE",
+    "reason": "ok",
+    "blocking": 0,
+    "total_return": "0.00",
+    "max_drawdown": "0.00",
+    "trade_count": 0,
+    "look_ahead_ok": true
+  },
+  "HIGH_VOLATILITY": {
+    "status": "COMPLETE",
+    "reason": "ok",
+    "blocking": 0,
+    "total_return": "-0.01",
+    "max_drawdown": "0.09",
+    "trade_count": 6,
+    "look_ahead_ok": true
+  },
+  "GAP_DOWN": {
+    "status": "COMPLETE",
+    "reason": "ok",
+    "blocking": 0,
+    "total_return": "-0.00",
+    "max_drawdown": "0.00",
+    "trade_count": 2,
+    "look_ahead_ok": true
+  },
+  "ILLIQUID": {
+    "status": "COMPLETE",
+    "reason": "ok",
+    "blocking": 0,
+    "total_return": "-0.00",
+    "max_drawdown": "0.00",
+    "trade_count": 2,
+    "look_ahead_ok": true
+  },
+  "FLASH_CRASH_LIKE": {
+    "status": "COMPLETE",
+    "reason": "ok",
+    "blocking": 0,
+    "total_return": "-0.00",
+    "max_drawdown": "0.00",
+    "trade_count": 2,
+    "look_ahead_ok": true
+  },
+  "MISSING_BARS": {
+    "status": "COMPLETE",
+    "reason": "ok",
+    "blocking": 0,
+    "total_return": "0.00",
+    "max_drawdown": "0.00",
+    "trade_count": 0,
+    "look_ahead_ok": true
+  },
+  "OUT_OF_ORDER_BARS": {
+    "status": "REJECTED",
+    "reason": "data quality blocking=1",
+    "blocking": 1,
+    "total_return": null,
+    "max_drawdown": null,
+    "trade_count": 0,
+    "look_ahead_ok": true
+  },
+  "INVALID_OHLC": {
+    "status": "REJECTED",
+    "reason": "data quality blocking=1",
+    "blocking": 1,
+    "total_return": null,
+    "max_drawdown": null,
+    "trade_count": 0,
+    "look_ahead_ok": true
+  },
+  "_summary": {
+    "blocked_invalid": [
+      "OUT_OF_ORDER_BARS",
+      "INVALID_OHLC"
+    ],
+    "completed": [
+      "TRENDING",
+      "MEAN_REVERTING",
+      "FLAT",
+      "HIGH_VOLATILITY",
+      "GAP_DOWN",
+      "ILLIQUID",
+      "FLASH_CRASH_LIKE",
+      "MISSING_BARS"
+    ]
+  }
+}

@@ -72,6 +72,13 @@ class PlatformPermission(str, Enum):
     RESEARCH_CHALLENGE = "research.challenge"
     RESEARCH_REVIEW = "research.review"
     RESEARCH_PUBLISH = "research.publish"
+    # M62.4 — strategy + backtesting (simulation only, NO execution authority)
+    STRATEGY_READ = "strategy.read"
+    STRATEGY_CREATE = "strategy.create"
+    STRATEGY_EDIT = "strategy.edit"
+    BACKTEST_RUN = "backtest.run"
+    BACKTEST_REVIEW = "backtest.review"
+    STRATEGY_VALIDATE = "strategy.validate"
 
 
 class ApprovalStatus(str, Enum):
@@ -206,6 +213,7 @@ ROLE_PERMISSIONS: dict[PlatformRole, frozenset[PlatformPermission]] = {
             PlatformPermission.WORKFLOW_READ,
             PlatformPermission.NOTIFICATION_READ,
             PlatformPermission.RESEARCH_READ,
+            PlatformPermission.STRATEGY_READ,
         }
     ),
     PlatformRole.OPERATOR: frozenset(),  # filled below
@@ -233,12 +241,17 @@ ROLE_PERMISSIONS[PlatformRole.OPERATOR] = ROLE_PERMISSIONS[PlatformRole.VIEWER] 
         PlatformPermission.RESEARCH_CREATE,
         PlatformPermission.RESEARCH_EDIT,
         PlatformPermission.RESEARCH_CHALLENGE,
+        PlatformPermission.STRATEGY_CREATE,
+        PlatformPermission.STRATEGY_EDIT,
+        PlatformPermission.BACKTEST_RUN,
+        PlatformPermission.BACKTEST_REVIEW,
     }
 )
 ROLE_PERMISSIONS[PlatformRole.OWNER] = ROLE_PERMISSIONS[PlatformRole.OPERATOR] | frozenset(
     {
         PlatformPermission.RESEARCH_REVIEW,
         PlatformPermission.RESEARCH_PUBLISH,
+        PlatformPermission.STRATEGY_VALIDATE,
         PlatformPermission.APPROVAL_DECIDE,
         PlatformPermission.SETTINGS_WRITE,
         PlatformPermission.ORG_MANAGE,

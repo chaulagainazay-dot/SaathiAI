@@ -1,0 +1,6 @@
+{
+  "status": "REJECTED",
+  "look_ahead_ok": false,
+  "reason": "look-ahead: accessed ts 1767657600.0 > decision ts 1767571200.0",
+  "max_accessed_epoch": -1.0
+}

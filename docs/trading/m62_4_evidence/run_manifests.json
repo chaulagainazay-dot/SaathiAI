@@ -1,0 +1,733 @@
+{
+  "momentum": {
+    "status": "COMPLETE",
+    "result_hash": "afafdb6491685d342a6b58e10b6bcf03c3f47a8ed846591e742bf06e8b8247ed",
+    "manifest": {
+      "strategy_hash": "026b415f497758e90c2a34beef0b94328a36cfd6c652a596d485db81db98f89d",
+      "dataset_hash": "a4c2425d7431617b15d29a7777911f1b5bea1cfcb251d37c2fe450f0ae244fe5",
+      "engine_version": "m62_4.engine.v1",
+      "feature_version": "m62_4.features.v1",
+      "cost_model": {
+        "fixed_fee": "0",
+        "pct_fee": "0.0005",
+        "per_unit_fee": "0",
+        "min_fee": "1",
+        "slippage_bps": "5",
+        "spread_slippage": false,
+        "max_volume_participation": "0.1"
+      },
+      "slippage_model": {
+        "slippage_bps": "5",
+        "spread": false
+      },
+      "calendar": "DEFAULT_24_5",
+      "seed": 0,
+      "parameters": {},
+      "starting_cash": "100000",
+      "timeframe": "1d",
+      "instrument": "TRENDING",
+      "bar_count": 30,
+      "result_hash": "afafdb6491685d342a6b58e10b6bcf03c3f47a8ed846591e742bf06e8b8247ed"
+    },
+    "invariant_errors": [],
+    "metrics": {
+      "number_of_observations": {
+        "name": "number_of_observations",
+        "value": "31.00",
+        "status": "OK",
+        "required_samples": 0,
+        "observed_samples": 31,
+        "warnings": [],
+        "version": "m62_4.metrics.v1"
+      },
+      "total_return": {
+        "name": "total_return",
+        "value": "0.04",
+        "status": "OK",
+        "required_samples": 0,
+        "observed_samples": 31,
+        "warnings": [],
+        "version": "m62_4.metrics.v1"
+      },
+      "annualized_return": {
+        "name": "annualized_return",
+        "value": "0.35",
+        "status": "OK",
+        "required_samples": 0,
+        "observed_samples": 31,
+        "warnings": [],
+        "version": "m62_4.metrics.v1"
+      },
+      "annualized_volatility": {
+        "name": "annualized_volatility",
+        "value": "0.02",
+        "status": "OK",
+        "required_samples": 0,
+        "observed_samples": 31,
+        "warnings": [],
+        "version": "m62_4.metrics.v1"
+      },
+      "sharpe_ratio": {
+        "name": "sharpe_ratio",
+        "value": "14.78",
+        "status": "OK",
+        "required_samples": 20,
+        "observed_samples": 31,
+        "warnings": [],
+        "version": "m62_4.metrics.v1"
+      },
+      "sortino_ratio": {
+        "name": "sortino_ratio",
+        "value": "12.52",
+        "status": "OK",
+        "required_samples": 0,
+        "observed_samples": 31,
+        "warnings": [],
+        "version": "m62_4.metrics.v1"
+      },
+      "max_drawdown": {
+        "name": "max_drawdown",
+        "value": "0.00",
+        "status": "OK",
+        "required_samples": 0,
+        "observed_samples": 31,
+        "warnings": [],
+        "version": "m62_4.metrics.v1"
+      },
+      "calmar_ratio": {
+        "name": "calmar_ratio",
+        "value": null,
+        "status": "UNDEFINED",
+        "required_samples": 0,
+        "observed_samples": 31,
+        "warnings": [
+          "zero drawdown"
+        ],
+        "version": "m62_4.metrics.v1"
+      },
+      "trade_count": {
+        "name": "trade_count",
+        "value": "1.00",
+        "status": "INSUFFICIENT_SAMPLE",
+        "required_samples": 5,
+        "observed_samples": 1,
+        "warnings": [],
+        "version": "m62_4.metrics.v1"
+      },
+      "win_rate": {
+        "name": "win_rate",
+        "value": "1.00",
+        "status": "OK",
+        "required_samples": 0,
+        "observed_samples": 1,
+        "warnings": [],
+        "version": "m62_4.metrics.v1"
+      },
+      "loss_rate": {
+        "name": "loss_rate",
+        "value": "0.00",
+        "status": "OK",
+        "required_samples": 0,
+        "observed_samples": 1,
+        "warnings": [],
+        "version": "m62_4.metrics.v1"
+      },
+      "profit_factor": {
+        "name": "profit_factor",
+        "value": null,
+        "status": "UNDEFINED",
+        "required_samples": 0,
+        "observed_samples": 1,
+        "warnings": [
+          "no losing trades"
+        ],
+        "version": "m62_4.metrics.v1"
+      },
+      "expectancy": {
+        "name": "expectancy",
+        "value": "4279.38",
+        "status": "OK",
+        "required_samples": 0,
+        "observed_samples": 1,
+        "warnings": [],
+        "version": "m62_4.metrics.v1"
+      },
+      "average_win": {
+        "name": "average_win",
+        "value": "4279.38",
+        "status": "OK",
+        "required_samples": 0,
+        "observed_samples": 1,
+        "warnings": [],
+        "version": "m62_4.metrics.v1"
+      },
+      "average_loss": {
+        "name": "average_loss",
+        "value": "0.00",
+        "status": "OK",
+        "required_samples": 0,
+        "observed_samples": 0,
+        "warnings": [],
+        "version": "m62_4.metrics.v1"
+      },
+      "largest_win": {
+        "name": "largest_win",
+        "value": "4279.38",
+        "status": "OK",
+        "required_samples": 0,
+        "observed_samples": 31,
+        "warnings": [],
+        "version": "m62_4.metrics.v1"
+      },
+      "largest_loss": {
+        "name": "largest_loss",
+        "value": "0.00",
+        "status": "OK",
+        "required_samples": 0,
+        "observed_samples": 31,
+        "warnings": [],
+        "version": "m62_4.metrics.v1"
+      },
+      "average_holding_period": {
+        "name": "average_holding_period",
+        "value": "1555200.00",
+        "status": "OK",
+        "required_samples": 0,
+        "observed_samples": 1,
+        "warnings": [],
+        "version": "m62_4.metrics.v1"
+      },
+      "fee_impact": {
+        "name": "fee_impact",
+        "value": "52.18",
+        "status": "OK",
+        "required_samples": 0,
+        "observed_samples": 31,
+        "warnings": [],
+        "version": "m62_4.metrics.v1"
+      },
+      "slippage_impact": {
+        "name": "slippage_impact",
+        "value": "52.17",
+        "status": "OK",
+        "required_samples": 0,
+        "observed_samples": 31,
+        "warnings": [],
+        "version": "m62_4.metrics.v1"
+      },
+      "turnover": {
+        "name": "turnover",
+        "value": "1.00",
+        "status": "OK",
+        "required_samples": 0,
+        "observed_samples": 31,
+        "warnings": [],
+        "version": "m62_4.metrics.v1"
+      },
+      "benchmark_return": {
+        "name": "benchmark_return",
+        "value": "0.15",
+        "status": "OK",
+        "required_samples": 0,
+        "observed_samples": 31,
+        "warnings": [],
+        "version": "m62_4.metrics.v1"
+      },
+      "active_return": {
+        "name": "active_return",
+        "value": "-0.10",
+        "status": "OK",
+        "required_samples": 0,
+        "observed_samples": 31,
+        "warnings": [],
+        "version": "m62_4.metrics.v1"
+      }
+    }
+  },
+  "mean_reversion": {
+    "status": "COMPLETE",
+    "result_hash": "333b15c7c5ca321d0122aad9c8b60e84cdfddf31c98ed9dc34478a248a8653df",
+    "manifest": {
+      "strategy_hash": "387188f84c10b1d7f4a9522c136d6b4db16b1a7ce91ed6c7b548f5f62daedb6d",
+      "dataset_hash": "ac8061f84cc978a644ae2b3cf489d9cb3225e6ce6554704faa03aa82997fe231",
+      "engine_version": "m62_4.engine.v1",
+      "feature_version": "m62_4.features.v1",
+      "cost_model": {
+        "fixed_fee": "0",
+        "pct_fee": "0.0005",
+        "per_unit_fee": "0",
+        "min_fee": "1",
+        "slippage_bps": "5",
+        "spread_slippage": false,
+        "max_volume_participation": "0.1"
+      },
+      "slippage_model": {
+        "slippage_bps": "5",
+        "spread": false
+      },
+      "calendar": "DEFAULT_24_5",
+      "seed": 0,
+      "parameters": {},
+      "starting_cash": "100000",
+      "timeframe": "1d",
+      "instrument": "MEAN_REVERTING",
+      "bar_count": 30,
+      "result_hash": "333b15c7c5ca321d0122aad9c8b60e84cdfddf31c98ed9dc34478a248a8653df"
+    },
+    "invariant_errors": [],
+    "metrics": {
+      "number_of_observations": {
+        "name": "number_of_observations",
+        "value": "30.00",
+        "status": "OK",
+        "required_samples": 0,
+        "observed_samples": 30,
+        "warnings": [],
+        "version": "m62_4.metrics.v1"
+      },
+      "total_return": {
+        "name": "total_return",
+        "value": "0.02",
+        "status": "OK",
+        "required_samples": 0,
+        "observed_samples": 30,
+        "warnings": [],
+        "version": "m62_4.metrics.v1"
+      },
+      "annualized_return": {
+        "name": "annualized_return",
+        "value": "0.15",
+        "status": "OK",
+        "required_samples": 0,
+        "observed_samples": 30,
+        "warnings": [],
+        "version": "m62_4.metrics.v1"
+      },
+      "annualized_volatility": {
+        "name": "annualized_volatility",
+        "value": "0.05",
+        "status": "OK",
+        "required_samples": 0,
+        "observed_samples": 30,
+        "warnings": [],
+        "version": "m62_4.metrics.v1"
+      },
+      "sharpe_ratio": {
+        "name": "sharpe_ratio",
+        "value": "2.79",
+        "status": "OK",
+        "required_samples": 20,
+        "observed_samples": 30,
+        "warnings": [],
+        "version": "m62_4.metrics.v1"
+      },
+      "sortino_ratio": {
+        "name": "sortino_ratio",
+        "value": "3.09",
+        "status": "OK",
+        "required_samples": 0,
+        "observed_samples": 30,
+        "warnings": [],
+        "version": "m62_4.metrics.v1"
+      },
+      "max_drawdown": {
+        "name": "max_drawdown",
+        "value": "0.01",
+        "status": "OK",
+        "required_samples": 0,
+        "observed_samples": 30,
+        "warnings": [],
+        "version": "m62_4.metrics.v1"
+      },
+      "calmar_ratio": {
+        "name": "calmar_ratio",
+        "value": "14.55",
+        "status": "OK",
+        "required_samples": 0,
+        "observed_samples": 30,
+        "warnings": [],
+        "version": "m62_4.metrics.v1"
+      },
+      "trade_count": {
+        "name": "trade_count",
+        "value": "2.00",
+        "status": "INSUFFICIENT_SAMPLE",
+        "required_samples": 5,
+        "observed_samples": 2,
+        "warnings": [],
+        "version": "m62_4.metrics.v1"
+      },
+      "win_rate": {
+        "name": "win_rate",
+        "value": "1.00",
+        "status": "OK",
+        "required_samples": 0,
+        "observed_samples": 2,
+        "warnings": [],
+        "version": "m62_4.metrics.v1"
+      },
+      "loss_rate": {
+        "name": "loss_rate",
+        "value": "0.00",
+        "status": "OK",
+        "required_samples": 0,
+        "observed_samples": 2,
+        "warnings": [],
+        "version": "m62_4.metrics.v1"
+      },
+      "profit_factor": {
+        "name": "profit_factor",
+        "value": null,
+        "status": "UNDEFINED",
+        "required_samples": 0,
+        "observed_samples": 2,
+        "warnings": [
+          "no losing trades"
+        ],
+        "version": "m62_4.metrics.v1"
+      },
+      "expectancy": {
+        "name": "expectancy",
+        "value": "856.15",
+        "status": "OK",
+        "required_samples": 0,
+        "observed_samples": 2,
+        "warnings": [],
+        "version": "m62_4.metrics.v1"
+      },
+      "average_win": {
+        "name": "average_win",
+        "value": "856.15",
+        "status": "OK",
+        "required_samples": 0,
+        "observed_samples": 2,
+        "warnings": [],
+        "version": "m62_4.metrics.v1"
+      },
+      "average_loss": {
+        "name": "average_loss",
+        "value": "0.00",
+        "status": "OK",
+        "required_samples": 0,
+        "observed_samples": 0,
+        "warnings": [],
+        "version": "m62_4.metrics.v1"
+      },
+      "largest_win": {
+        "name": "largest_win",
+        "value": "930.44",
+        "status": "OK",
+        "required_samples": 0,
+        "observed_samples": 30,
+        "warnings": [],
+        "version": "m62_4.metrics.v1"
+      },
+      "largest_loss": {
+        "name": "largest_loss",
+        "value": "0.00",
+        "status": "OK",
+        "required_samples": 0,
+        "observed_samples": 30,
+        "warnings": [],
+        "version": "m62_4.metrics.v1"
+      },
+      "average_holding_period": {
+        "name": "average_holding_period",
+        "value": "388800.00",
+        "status": "OK",
+        "required_samples": 0,
+        "observed_samples": 2,
+        "warnings": [],
+        "version": "m62_4.metrics.v1"
+      },
+      "fee_impact": {
+        "name": "fee_impact",
+        "value": "81.22",
+        "status": "OK",
+        "required_samples": 0,
+        "observed_samples": 30,
+        "warnings": [],
+        "version": "m62_4.metrics.v1"
+      },
+      "slippage_impact": {
+        "name": "slippage_impact",
+        "value": "81.34",
+        "status": "OK",
+        "required_samples": 0,
+        "observed_samples": 30,
+        "warnings": [],
+        "version": "m62_4.metrics.v1"
+      },
+      "turnover": {
+        "name": "turnover",
+        "value": "1.60",
+        "status": "OK",
+        "required_samples": 0,
+        "observed_samples": 30,
+        "warnings": [],
+        "version": "m62_4.metrics.v1"
+      },
+      "benchmark_return": {
+        "name": "benchmark_return",
+        "value": "-0.01",
+        "status": "OK",
+        "required_samples": 0,
+        "observed_samples": 30,
+        "warnings": [],
+        "version": "m62_4.metrics.v1"
+      },
+      "active_return": {
+        "name": "active_return",
+        "value": "0.03",
+        "status": "OK",
+        "required_samples": 0,
+        "observed_samples": 30,
+        "warnings": [],
+        "version": "m62_4.metrics.v1"
+      }
+    }
+  },
+  "buy_and_hold": {
+    "status": "COMPLETE",
+    "result_hash": "e11e55d678af5680ae275833b075a5979e3d3274dd35d22868cc092576808406",
+    "manifest": {
+      "strategy_hash": "1a3e04d41c7c55ad60d99c9079791a9f4f67e922a9a34796c75d99b31c5c458d",
+      "dataset_hash": "a4c2425d7431617b15d29a7777911f1b5bea1cfcb251d37c2fe450f0ae244fe5",
+      "engine_version": "m62_4.engine.v1",
+      "feature_version": "m62_4.features.v1",
+      "cost_model": {
+        "fixed_fee": "0",
+        "pct_fee": "0.0005",
+        "per_unit_fee": "0",
+        "min_fee": "1",
+        "slippage_bps": "5",
+        "spread_slippage": false,
+        "max_volume_participation": "0.1"
+      },
+      "slippage_model": {
+        "slippage_bps": "5",
+        "spread": false
+      },
+      "calendar": "DEFAULT_24_5",
+      "seed": 0,
+      "parameters": {},
+      "starting_cash": "100000",
+      "timeframe": "1d",
+      "instrument": "TRENDING",
+      "bar_count": 30,
+      "result_hash": "e11e55d678af5680ae275833b075a5979e3d3274dd35d22868cc092576808406"
+    },
+    "invariant_errors": [],
+    "metrics": {
+      "number_of_observations": {
+        "name": "number_of_observations",
+        "value": "31.00",
+        "status": "OK",
+        "required_samples": 0,
+        "observed_samples": 31,
+        "warnings": [],
+        "version": "m62_4.metrics.v1"
+      },
+      "total_return": {
+        "name": "total_return",
+        "value": "0.12",
+        "status": "OK",
+        "required_samples": 0,
+        "observed_samples": 31,
+        "warnings": [],
+        "version": "m62_4.metrics.v1"
+      },
+      "annualized_return": {
+        "name": "annualized_return",
+        "value": "0.94",
+        "status": "OK",
+        "required_samples": 0,
+        "observed_samples": 31,
+        "warnings": [],
+        "version": "m62_4.metrics.v1"
+      },
+      "annualized_volatility": {
+        "name": "annualized_volatility",
+        "value": "0.03",
+        "status": "OK",
+        "required_samples": 0,
+        "observed_samples": 31,
+        "warnings": [],
+        "version": "m62_4.metrics.v1"
+      },
+      "sharpe_ratio": {
+        "name": "sharpe_ratio",
+        "value": "27.14",
+        "status": "OK",
+        "required_samples": 20,
+        "observed_samples": 31,
+        "warnings": [],
+        "version": "m62_4.metrics.v1"
+      },
+      "sortino_ratio": {
+        "name": "sortino_ratio",
+        "value": "19.48",
+        "status": "OK",
+        "required_samples": 0,
+        "observed_samples": 31,
+        "warnings": [],
+        "version": "m62_4.metrics.v1"
+      },
+      "max_drawdown": {
+        "name": "max_drawdown",
+        "value": "0.01",
+        "status": "OK",
+        "required_samples": 0,
+        "observed_samples": 31,
+        "warnings": [],
+        "version": "m62_4.metrics.v1"
+      },
+      "calmar_ratio": {
+        "name": "calmar_ratio",
+        "value": "94.25",
+        "status": "OK",
+        "required_samples": 0,
+        "observed_samples": 31,
+        "warnings": [],
+        "version": "m62_4.metrics.v1"
+      },
+      "trade_count": {
+        "name": "trade_count",
+        "value": "1.00",
+        "status": "INSUFFICIENT_SAMPLE",
+        "required_samples": 5,
+        "observed_samples": 1,
+        "warnings": [],
+        "version": "m62_4.metrics.v1"
+      },
+      "win_rate": {
+        "name": "win_rate",
+        "value": "1.00",
+        "status": "OK",
+        "required_samples": 0,
+        "observed_samples": 1,
+        "warnings": [],
+        "version": "m62_4.metrics.v1"
+      },
+      "loss_rate": {
+        "name": "loss_rate",
+        "value": "0.00",
+        "status": "OK",
+        "required_samples": 0,
+        "observed_samples": 1,
+        "warnings": [],
+        "version": "m62_4.metrics.v1"
+      },
+      "profit_factor": {
+        "name": "profit_factor",
+        "value": null,
+        "status": "UNDEFINED",
+        "required_samples": 0,
+        "observed_samples": 1,
+        "warnings": [
+          "no losing trades"
+        ],
+        "version": "m62_4.metrics.v1"
+      },
+      "expectancy": {
+        "name": "expectancy",
+        "value": "11887.93",
+        "status": "OK",
+        "required_samples": 0,
+        "observed_samples": 1,
+        "warnings": [],
+        "version": "m62_4.metrics.v1"
+      },
+      "average_win": {
+        "name": "average_win",
+        "value": "11887.93",
+        "status": "OK",
+        "required_samples": 0,
+        "observed_samples": 1,
+        "warnings": [],
+        "version": "m62_4.metrics.v1"
+      },
+      "average_loss": {
+        "name": "average_loss",
+        "value": "0.00",
+        "status": "OK",
+        "required_samples": 0,
+        "observed_samples": 0,
+        "warnings": [],
+        "version": "m62_4.metrics.v1"
+      },
+      "largest_win": {
+        "name": "largest_win",
+        "value": "11887.93",
+        "status": "OK",
+        "required_samples": 0,
+        "observed_samples": 31,
+        "warnings": [],
+        "version": "m62_4.metrics.v1"
+      },
+      "largest_loss": {
+        "name": "largest_loss",
+        "value": "0.00",
+        "status": "OK",
+        "required_samples": 0,
+        "observed_samples": 31,
+        "warnings": [],
+        "version": "m62_4.metrics.v1"
+      },
+      "average_holding_period": {
+        "name": "average_holding_period",
+        "value": "2332800.00",
+        "status": "OK",
+        "required_samples": 0,
+        "observed_samples": 1,
+        "warnings": [],
+        "version": "m62_4.metrics.v1"
+      },
+      "fee_impact": {
+        "name": "fee_impact",
+        "value": "96.01",
+        "status": "OK",
+        "required_samples": 0,
+        "observed_samples": 31,
+        "warnings": [],
+        "version": "m62_4.metrics.v1"
+      },
+      "slippage_impact": {
+        "name": "slippage_impact",
+        "value": "97.93",
+        "status": "OK",
+        "required_samples": 0,
+        "observed_samples": 31,
+        "warnings": [],
+        "version": "m62_4.metrics.v1"
+      },
+      "turnover": {
+        "name": "turnover",
+        "value": "1.72",
+        "status": "OK",
+        "required_samples": 0,
+        "observed_samples": 31,
+        "warnings": [],
+        "version": "m62_4.metrics.v1"
+      },
+      "benchmark_return": {
+        "name": "benchmark_return",
+        "value": "0.15",
+        "status": "OK",
+        "required_samples": 0,
+        "observed_samples": 31,
+        "warnings": [],
+        "version": "m62_4.metrics.v1"
+      },
+      "active_return": {
+        "name": "active_return",
+        "value": "-0.03",
+        "status": "OK",
+        "required_samples": 0,
+        "observed_samples": 31,
+        "warnings": [],
+        "version": "m62_4.metrics.v1"
+      }
+    }
+  }
+}

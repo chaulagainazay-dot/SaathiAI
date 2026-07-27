@@ -2119,3 +2119,206 @@ def r_thesis_versions(pid: str, authorization: str | None = Header(default=None)
         return {"versions": _rsvc().thesis_versions(_rctx(authorization, x_platform_token), pid)}
     except PlatformContextError as e:
         raise _err(e) from e
+
+
+# ══════════════════════════════════════════════════════════════════════════
+# M62.4 — strategy + deterministic backtesting endpoints. Authenticated,
+# tenant-scoped, audited, bounded. SIMULATION ONLY — NO order/broker/execution
+# actions, NO leverage, NO buy/sell. A passing backtest is NOT trade approval.
+# ══════════════════════════════════════════════════════════════════════════
+def _ssvc():
+    from saathi.platform.strategy import StrategyService, StrategyStore
+    from saathi.platform.research import ResearchStore
+    return StrategyService(StrategyStore(), research_store=ResearchStore()).bind_audit(_svc().store)
+
+
+def _sctx(a, x):
+    return _svc().require_context(_token(a, x))
+
+
+class StrategyBody(BaseModel):
+    name: str
+    strategy_type: str = "MOMENTUM"
+    instrument: str = "TRENDING"
+    instrument_universe: list[str] = Field(default_factory=list)
+    timeframe: str = "1d"
+    description: str = ""
+    features: list[dict[str, Any]] = Field(default_factory=list)
+    signals: list[dict[str, Any]] = Field(default_factory=list)
+    sizing: dict[str, Any] = Field(default_factory=dict)
+    benchmark: str = ""
+    cost_tier: str = "realistic"
+    warmup_bars: int = 0
+    risk_max_position_fraction: str = "1"
+
+
+class StrategyUpdateBody(StrategyBody):
+    expected_version: int
+
+
+class StrategyStatusBody(BaseModel):
+    status: str
+    expected_version: int
+
+
+class ResearchLinkBody(BaseModel):
+    project_id: str
+    thesis_version: int | None = None
+    expected_version: int
+
+
+class VersionBody(BaseModel):
+    parameters: dict[str, Any] = Field(default_factory=dict)
+    rationale: str = ""
+
+
+class BacktestBody(BaseModel):
+    dataset: str = "TRENDING"
+    cost_tier: str = "realistic"
+    seed: int = 0
+    n: int = 30
+
+
+class CertifyBody(BaseModel):
+    decision: str = "validate"        # validate | reject
+    expected_version: int
+
+
+@router.post("/strategies")
+def strat_create(body: StrategyBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"strategy": _ssvc().create_strategy(_sctx(authorization, x_platform_token), body.model_dump())}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/strategies")
+def strat_list(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"strategies": _ssvc().list_strategies(_sctx(authorization, x_platform_token))}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/strategies/{sid}")
+def strat_get(sid: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"strategy": _ssvc().get_strategy(_sctx(authorization, x_platform_token), sid)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.patch("/strategies/{sid}")
+def strat_update(sid: str, body: StrategyUpdateBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        data = body.model_dump(); ev = data.pop("expected_version")
+        return {"strategy": _ssvc().update_strategy(_sctx(authorization, x_platform_token), sid, data, expected_version=ev)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/strategies/{sid}/status")
+def strat_status(sid: str, body: StrategyStatusBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"strategy": _ssvc().set_status(_sctx(authorization, x_platform_token), sid, body.status, expected_version=body.expected_version)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/strategies/{sid}/research-link")
+def strat_research_link(sid: str, body: ResearchLinkBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"result": _ssvc().link_research(_sctx(authorization, x_platform_token), sid, project_id=body.project_id, thesis_version=body.thesis_version, expected_version=body.expected_version)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/strategies/{sid}/versions")
+def strat_version_create(sid: str, body: VersionBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"version": _ssvc().create_version(_sctx(authorization, x_platform_token), sid, parameters=body.parameters, rationale=body.rationale)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/strategies/{sid}/versions")
+def strat_versions(sid: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"versions": _ssvc().list_versions(_sctx(authorization, x_platform_token), sid)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/strategies/{sid}/versions/{version}")
+def strat_version_get(sid: str, version: int, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"version": _ssvc().get_version(_sctx(authorization, x_platform_token), sid, version)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/strategies/{sid}/certify")
+def strat_certify(sid: str, body: CertifyBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"strategy": _ssvc().certify_strategy(_sctx(authorization, x_platform_token), sid, expected_version=body.expected_version, decision=body.decision)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/strategies/{sid}/backtests")
+def strat_bt_create(sid: str, body: BacktestBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"backtest": _ssvc().create_backtest(_sctx(authorization, x_platform_token), sid, dataset=body.dataset, cost_tier=body.cost_tier, seed=body.seed, n=body.n)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/strategies/{sid}/backtests")
+def strat_bt_list(sid: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"backtests": _ssvc().list_backtests(_sctx(authorization, x_platform_token), sid)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/backtests/{rid}")
+def bt_get(rid: str, sid: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"backtest": _ssvc().get_backtest(_sctx(authorization, x_platform_token), sid, rid)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/strategies/{sid}/backtests/{rid}/run")
+def bt_run(sid: str, rid: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"backtest": _ssvc().run_backtest(_sctx(authorization, x_platform_token), sid, rid)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/strategies/{sid}/backtests/{rid}/cancel")
+def bt_cancel(sid: str, rid: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"backtest": _ssvc().cancel_backtest(_sctx(authorization, x_platform_token), sid, rid)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+def _bt_evidence(kind):
+    def handler(sid: str, rid: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+        try:
+            svc = _ssvc(); ctx = _sctx(authorization, x_platform_token)
+            return {kind: getattr(svc, kind)(ctx, sid, rid)}
+        except PlatformContextError as e:
+            raise _err(e) from e
+    return handler
+
+
+router.add_api_route("/strategies/{sid}/backtests/{rid}/metrics", _bt_evidence("metrics"), methods=["GET"])
+router.add_api_route("/strategies/{sid}/backtests/{rid}/trades", _bt_evidence("trades"), methods=["GET"])
+router.add_api_route("/strategies/{sid}/backtests/{rid}/equity", _bt_evidence("equity"), methods=["GET"])
+router.add_api_route("/strategies/{sid}/backtests/{rid}/validation", _bt_evidence("validation"), methods=["GET"])
+router.add_api_route("/strategies/{sid}/backtests/{rid}/stress", _bt_evidence("stress"), methods=["GET"])
+router.add_api_route("/strategies/{sid}/backtests/{rid}/sensitivity", _bt_evidence("sensitivity"), methods=["GET"])
+router.add_api_route("/strategies/{sid}/backtests/{rid}/manifest", _bt_evidence("manifest"), methods=["GET"])

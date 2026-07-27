@@ -1,0 +1,13 @@
+{
+  "m62_4_tests": 47,
+  "regression_suites": {
+    "test_m62_3_research": "pass",
+    "test_m62_2_market_data": "pass",
+    "test_m62_trading_models": "pass",
+    "test_m49_3_trading_boundary": "pass",
+    "test_m61_workflow_persistence": "pass",
+    "test_m50_platform_identity": "pass",
+    "platform/m61/workflow (-k)": "95 passed"
+  },
+  "combined_run": "113 passed (m62.4 + m62.3 + m62.2 + m62.1 + m61 + m50)"
+}
