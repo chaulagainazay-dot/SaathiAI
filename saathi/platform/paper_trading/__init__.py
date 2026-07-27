@@ -20,6 +20,10 @@ from saathi.platform.paper_trading.execution_tool import (
     register_paper_tools, paper_trading_manifests, default_paper_service, set_paper_service_for_tests,
 )
 from saathi.platform.paper_trading import fixtures
+from saathi.platform.paper_trading.reconciliation import (
+    ReconciliationEngine, ReconStore, ReconciliationReport, DriftFinding, RepairPlan,
+    DriftSeverity, ReconDimension, RepairPlanStatus,
+)
 
 __all__ = [
     "PaperAccount", "PaperPosition", "PaperOrder", "PaperFill", "AccountStatus", "BrokerOrderState",
@@ -30,4 +34,6 @@ __all__ = [
     "PaperStore", "IdempotencyConflict", "PaperTradingService", "APPROVAL_NOTIONAL_THRESHOLD",
     "orchestration", "register_paper_tools", "paper_trading_manifests", "default_paper_service",
     "set_paper_service_for_tests", "fixtures",
+    "ReconciliationEngine", "ReconStore", "ReconciliationReport", "DriftFinding", "RepairPlan",
+    "DriftSeverity", "ReconDimension", "RepairPlanStatus",
 ]

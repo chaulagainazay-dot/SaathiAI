@@ -1,0 +1,57 @@
+{
+  "milestone": "M62.6",
+  "title": "Durable Reconciliation, Drift Detection, Recovery Orchestration, and Controlled Repair Planning",
+  "verdict": "M62_6_COMPLETE",
+  "date": "2026-07-27",
+  "starting_sha": "59fb1e81b5541e870111c5b9c87488291be8a485",
+  "branch": "milestone/m61-backend-workflow-persistence",
+  "environment": {"python": "3.12.13", "pytest": "9.1.1"},
+  "implementation": {
+    "engine": "saathi/platform/paper_trading/reconciliation.py",
+    "engine_loc": 720,
+    "rbac": "saathi/platform/models.py (RECONCILE_READ/RUN, REPAIR_PLAN_ACKNOWLEDGE/AUTHORIZE)",
+    "tests": "tests/test_m62_6_reconciliation.py",
+    "test_loc": 313
+  },
+  "tests": {
+    "m62_6_reconciliation": {"passed": 22, "failed": 0},
+    "regression_trading": {"passed": 168, "failed": 0},
+    "regression_platform": {"passed": 80, "failed": 0}
+  },
+  "reconciliation_dimensions": [
+    "orders_fills", "fills_positions", "positions_ledger", "ledger_cash",
+    "cash_equity", "reservations_balances", "audit_runtime"
+  ],
+  "drift_severities": ["INFO", "WARNING", "ERROR", "CRITICAL"],
+  "failure_injection": {
+    "position_corruption": "CRITICAL+halt",
+    "cash_corruption": "CRITICAL+halt",
+    "tampered_fill": "CRITICAL+halt",
+    "reserved_exceeds_cash": "CRITICAL+halt",
+    "ledger_corruption": "ERROR",
+    "reservation_corruption": "ERROR",
+    "order_fill_mismatch": "ERROR",
+    "interrupted_transaction": "rollback_clean",
+    "duplicate_recovery": "idempotent",
+    "replay_ordering": "deterministic"
+  },
+  "guarantees": {
+    "silent_repair": false,
+    "auto_execute_repair": false,
+    "critical_drift_halts_account": true,
+    "reports_immutable": true,
+    "recovery_deterministic": true,
+    "tenant_scoped": true,
+    "new_execution_path": false
+  },
+  "security_scan": "clean",
+  "docs": [
+    "M62_6_FINAL_REPORT.md",
+    "RECONCILIATION_ENGINE.md",
+    "RECOVERY_ORCHESTRATION.md",
+    "REPAIR_PLANNING.md",
+    "m62_6_evidence/EVIDENCE_MANIFEST.json",
+    "m62_6_evidence/TEST_RESULTS.txt"
+  ],
+  "forbidden_claims_not_made": ["LIVE_TRADING_READY", "PRODUCTION_READY", "REAL_MONEY_READY"]
+}

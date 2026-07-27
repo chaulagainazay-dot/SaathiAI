@@ -87,6 +87,12 @@ class PlatformPermission(str, Enum):
     PAPER_ORDER_SUBMIT = "paper_order.submit"
     PAPER_ORDER_CANCEL = "paper_order.cancel"
     PAPER_ACCOUNT_HALT = "paper_account.halt"
+    # M62.6 — reconciliation, drift detection, recovery, repair planning
+    # (integrity verification only; NO financial mutation, NO execution authority)
+    RECONCILE_READ = "reconciliation.read"
+    RECONCILE_RUN = "reconciliation.run"
+    REPAIR_PLAN_ACKNOWLEDGE = "reconciliation.repair_acknowledge"
+    REPAIR_PLAN_AUTHORIZE = "reconciliation.repair_authorize"
 
 
 class ApprovalStatus(str, Enum):
@@ -224,6 +230,7 @@ ROLE_PERMISSIONS: dict[PlatformRole, frozenset[PlatformPermission]] = {
             PlatformPermission.STRATEGY_READ,
             PlatformPermission.PAPER_ACCOUNT_READ,
             PlatformPermission.PAPER_ORDER_READ,
+            PlatformPermission.RECONCILE_READ,
         }
     ),
     PlatformRole.OPERATOR: frozenset(),  # filled below
@@ -259,6 +266,7 @@ ROLE_PERMISSIONS[PlatformRole.OPERATOR] = ROLE_PERMISSIONS[PlatformRole.VIEWER] 
         PlatformPermission.PAPER_ORDER_PROPOSE,
         PlatformPermission.PAPER_ORDER_SUBMIT,
         PlatformPermission.PAPER_ORDER_CANCEL,
+        PlatformPermission.RECONCILE_RUN,
     }
 )
 ROLE_PERMISSIONS[PlatformRole.OWNER] = ROLE_PERMISSIONS[PlatformRole.OPERATOR] | frozenset(
@@ -267,6 +275,8 @@ ROLE_PERMISSIONS[PlatformRole.OWNER] = ROLE_PERMISSIONS[PlatformRole.OPERATOR] |
         PlatformPermission.RESEARCH_PUBLISH,
         PlatformPermission.STRATEGY_VALIDATE,
         PlatformPermission.PAPER_ACCOUNT_HALT,
+        PlatformPermission.REPAIR_PLAN_ACKNOWLEDGE,
+        PlatformPermission.REPAIR_PLAN_AUTHORIZE,
         PlatformPermission.APPROVAL_DECIDE,
         PlatformPermission.SETTINGS_WRITE,
         PlatformPermission.ORG_MANAGE,
