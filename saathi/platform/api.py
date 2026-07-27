@@ -1974,3 +1974,148 @@ def md_replay_stop(rid: str, authorization: str | None = Header(default=None), x
         return {"replay": eng.checkpoint()}
     except PlatformContextError as e:
         raise _err(e) from e
+
+
+# ══════════════════════════════════════════════════════════════════════════
+# M62.3 — research pipeline endpoints. Authenticated, tenant-scoped, audited.
+# NO trading/order/broker/execution actions. Source text is untrusted data.
+# ══════════════════════════════════════════════════════════════════════════
+def _rsvc():
+    from saathi.platform.research import ResearchService
+    return ResearchService().bind_audit(_svc().store)
+
+
+class ResearchProjectBody(BaseModel):
+    title: str
+    question: str = ""
+    scope: str = ""
+    mission_id: str = ""
+
+
+class ResearchPlanBody(BaseModel):
+    plan: dict[str, Any] = Field(default_factory=dict)
+    expected_version: int
+
+
+class ResearchSourceBody(BaseModel):
+    source_type: str
+    title: str
+    content: str = ""
+    locator: str = ""
+    author: str = ""
+    publisher: str = ""
+    published_at: float = 0.0
+    trust: str = "UNVERIFIED"
+
+
+class ResearchStageBody(BaseModel):
+    expected_version: int
+    rationale: str = ""
+
+
+def _rctx(a, x):
+    return _svc().require_context(_token(a, x))
+
+
+@router.post("/research/projects")
+def r_create(body: ResearchProjectBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"project": _rsvc().create_project(_rctx(authorization, x_platform_token), title=body.title, question=body.question, scope=body.scope, mission_id=body.mission_id)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/research/projects")
+def r_list(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"projects": _rsvc().list_projects(_rctx(authorization, x_platform_token))}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/research/projects/{pid}")
+def r_get(pid: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"project": _rsvc().get_project(_rctx(authorization, x_platform_token), pid)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/research/projects/{pid}/plan")
+def r_plan(pid: str, body: ResearchPlanBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"project": _rsvc().set_plan(_rctx(authorization, x_platform_token), pid, plan=body.plan, expected_version=body.expected_version)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/research/projects/{pid}/sources")
+def r_add_source(pid: str, body: ResearchSourceBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"source": _rsvc().add_source(_rctx(authorization, x_platform_token), pid, source_type=body.source_type, title=body.title, content=body.content, locator=body.locator, author=body.author, publisher=body.publisher, published_at=body.published_at, trust=body.trust)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/research/projects/{pid}/sources")
+def r_sources(pid: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"sources": _rsvc().list_sources(_rctx(authorization, x_platform_token), pid)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+def _stage(fn_name):
+    def handler(pid: str, body: ResearchStageBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+        try:
+            svc = _rsvc()
+            ctx = _rctx(authorization, x_platform_token)
+            fn = getattr(svc, fn_name)
+            if fn_name == "revise":
+                return fn(ctx, pid, expected_version=body.expected_version, rationale=body.rationale)
+            return fn(ctx, pid, expected_version=body.expected_version)
+        except PlatformContextError as e:
+            raise _err(e) from e
+    return handler
+
+
+router.add_api_route("/research/projects/{pid}/validate", _stage("validate_sources"), methods=["POST"])
+router.add_api_route("/research/projects/{pid}/claims/extract", _stage("extract_claims"), methods=["POST"])
+router.add_api_route("/research/projects/{pid}/citations/verify", _stage("verify_citations"), methods=["POST"])
+router.add_api_route("/research/projects/{pid}/contradictions/search", _stage("search_contradictions"), methods=["POST"])
+router.add_api_route("/research/projects/{pid}/synthesize", _stage("synthesize"), methods=["POST"])
+router.add_api_route("/research/projects/{pid}/challenge", _stage("challenge"), methods=["POST"])
+router.add_api_route("/research/projects/{pid}/revise", _stage("revise"), methods=["POST"])
+router.add_api_route("/research/projects/{pid}/publish", _stage("publish"), methods=["POST"])
+
+
+@router.get("/research/projects/{pid}/claims")
+def r_claims(pid: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"claims": _rsvc().list_claims(_rctx(authorization, x_platform_token), pid)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/research/projects/{pid}/contradictions")
+def r_contradictions(pid: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"contradictions": _rsvc().list_contradictions(_rctx(authorization, x_platform_token), pid)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/research/projects/{pid}/thesis")
+def r_thesis(pid: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"thesis": _rsvc().get_thesis(_rctx(authorization, x_platform_token), pid)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/research/projects/{pid}/thesis/versions")
+def r_thesis_versions(pid: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"versions": _rsvc().thesis_versions(_rctx(authorization, x_platform_token), pid)}
+    except PlatformContextError as e:
+        raise _err(e) from e

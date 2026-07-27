@@ -65,6 +65,13 @@ class PlatformPermission(str, Enum):
     NOTIFICATION_READ = "notification.read"
     NOTIFICATION_WRITE = "notification.write"
     ATTENTION_WRITE = "attention.write"
+    # M62.3 — research pipeline (no trading authority)
+    RESEARCH_READ = "research.read"
+    RESEARCH_CREATE = "research.create"
+    RESEARCH_EDIT = "research.edit"
+    RESEARCH_CHALLENGE = "research.challenge"
+    RESEARCH_REVIEW = "research.review"
+    RESEARCH_PUBLISH = "research.publish"
 
 
 class ApprovalStatus(str, Enum):
@@ -198,6 +205,7 @@ ROLE_PERMISSIONS: dict[PlatformRole, frozenset[PlatformPermission]] = {
             PlatformPermission.AGENT_BINDING_READ,
             PlatformPermission.WORKFLOW_READ,
             PlatformPermission.NOTIFICATION_READ,
+            PlatformPermission.RESEARCH_READ,
         }
     ),
     PlatformRole.OPERATOR: frozenset(),  # filled below
@@ -222,10 +230,15 @@ ROLE_PERMISSIONS[PlatformRole.OPERATOR] = ROLE_PERMISSIONS[PlatformRole.VIEWER] 
         PlatformPermission.WORKFLOW_WRITE,
         PlatformPermission.NOTIFICATION_WRITE,
         PlatformPermission.ATTENTION_WRITE,
+        PlatformPermission.RESEARCH_CREATE,
+        PlatformPermission.RESEARCH_EDIT,
+        PlatformPermission.RESEARCH_CHALLENGE,
     }
 )
 ROLE_PERMISSIONS[PlatformRole.OWNER] = ROLE_PERMISSIONS[PlatformRole.OPERATOR] | frozenset(
     {
+        PlatformPermission.RESEARCH_REVIEW,
+        PlatformPermission.RESEARCH_PUBLISH,
         PlatformPermission.APPROVAL_DECIDE,
         PlatformPermission.SETTINGS_WRITE,
         PlatformPermission.ORG_MANAGE,
