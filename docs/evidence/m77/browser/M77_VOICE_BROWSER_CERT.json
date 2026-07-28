@@ -1,0 +1,101 @@
+{
+  "schema": "m77.voice_browser_cert.v1",
+  "capturedAt": "2026-07-28T10:12:51.388Z",
+  "mode": "production-build-loopback",
+  "hardGates": {
+    "api_port_available": {
+      "ok": true,
+      "detail": ""
+    },
+    "ui_port_available": {
+      "ok": true,
+      "detail": ""
+    },
+    "backend_loopback": {
+      "ok": true,
+      "detail": ""
+    },
+    "local_bootstrap": {
+      "ok": true,
+      "detail": ""
+    },
+    "authenticated_sign_in": {
+      "ok": true,
+      "detail": ""
+    },
+    "ielts_feedback_seeded": {
+      "ok": true,
+      "detail": ""
+    },
+    "production_build": {
+      "ok": true,
+      "detail": ""
+    },
+    "frontend_loopback": {
+      "ok": true,
+      "detail": ""
+    },
+    "agent_browser_page_content": {
+      "ok": true,
+      "detail": ""
+    },
+    "agent_browser_no_overlay": {
+      "ok": true,
+      "detail": ""
+    },
+    "agent_browser_interactive_snapshot": {
+      "ok": true,
+      "detail": ""
+    },
+    "chat_http_200": {
+      "ok": true,
+      "detail": ""
+    },
+    "chat_fixtures_isolated": {
+      "ok": true,
+      "detail": ""
+    },
+    "assistant_speak_actions": {
+      "ok": true,
+      "detail": ""
+    }
+  },
+  "responsive": {},
+  "accessibility": {
+    "assistant_speak_visible_focus": {
+      "ok": true,
+      "detail": ""
+    }
+  },
+  "security": {},
+  "regressions": {
+    "m64_shell_browser_regression": {
+      "ok": true,
+      "detail": ""
+    },
+    "m64HardGates": 21,
+    "m64StateGates": 12,
+    "m64ResponsiveGates": 6
+  },
+  "browserErrors": {
+    "page": [],
+    "console": [],
+    "overlay": 0
+  },
+  "network": {
+    "chatFixtureRequests": 2,
+    "voiceRequests": 1,
+    "tokensInUrls": 0,
+    "privatePathsInResponses": 0,
+    "tokenInResponses": 0,
+    "privateLearnerTextInSpeech": 0
+  },
+  "screenshots": [
+    "screenshots/m77_agent_browser_unlock.png"
+  ],
+  "timings": {},
+  "fatal": "locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.voice-output-dock[data-voice-state=\"completed\"]') to be visible\u001b[22m\n\n    at certifyVoiceJourney (/Users/macbookpro/SaathiAI/saathi-os/scripts/m77_voice_browser_cert.mjs:390:6)\n    at async main (/Users/macbookpro/SaathiAI/saathi-os/scripts/m77_voice_browser_cert.mjs:702:51)\n    at async file:///Users/macbookpro/SaathiAI/saathi-os/scripts/m77_voice_browser_cert.mjs:804:1",
+  "verdict": "FAIL",
+  "generatedAudioRetained": false,
+  "tempDatabaseRetained": false
+}

@@ -1,9 +1,13 @@
-# SaathiOS Capability Maturity Matrix (as of M72 implementation e39b1bb)
+# SaathiOS Capability Maturity Matrix (as of M77 certification)
 
 Levels: implemented < deterministic-tested < security/red-team-tested < live-tested < production.
 
 | capability | maturity | evidence |
 |-----------|----------|----------|
+| Provider-neutral Voice Output Foundation (M73–M77) | deterministic+native-runtime-tested; browser-limited | Central persisted SpeechService, bounded lifecycle/queue/cancel/recovery, authenticated scoped API, evidence/audit, shell and IELTS controls; 15 voice backend, full 5,272 passed/1 skipped, 189 frontend, lint/build, real macOS English artifact/fallback/cancel; dedicated M77 browser journey FAIL before completed client state |
+| macOS system speech provider | native-runtime-tested (English backend) | `/usr/bin/say` AIFF: cold 4.539s, warm 1.663s, ~48.3MB max RSS, cancel 46.04ms; authenticated range API; no network; production/browser playback not certified |
+| VoxCPM optional speech adapter | implemented; configured-not-installed | Explicit disabled GGUF/Metal or loopback-service modes; no import/start/download; model paths required; no package/model present; inference/quality/languages not verified or certified |
+| Voice cloning | capability-disabled | Profile/reference validation rejects enrollment and active consent; providers report cloning false; no clone API; future consent/rights/labeling/revocation/deletion controls required |
 | Autonomous Mission Runtime (M69–M72) | deterministic+live-browser-tested | Durable hierarchy/DAG/budgets/checkpoints/evidence/reviews; bounded role orchestration via PlatformAgentRuntime→ExecutionGateway; authenticated dashboard; atomic final certification; 18 focused, 138 related, full 5,257 passed/1 skipped; production browser 33+3+2 PASS; single-host, not production |
 | Live local provider certification (M25) | environment-blocked | harness+evidence; Ollama broken symlink/app missing; no models; production_certified=false; never mock-as-live |
 | Durable provider governance (M24) | deterministic-tested | SQLite circuit/cost/reservation; multi-process budget; residual exceptions=0; release/runtime M24 gates; production_certified=false |

@@ -1,5 +1,26 @@
 # SaathiOS Autonomous Roadmap
 
+## M77 — Voice Output Foundation Certification (2026-07-28)
+
+| Field | Value |
+| --- | --- |
+| Milestone | `M77_COMPLETE_WITH_LIMITATIONS` |
+| Verdict | `VOICE_FOUNDATION_COMPLETE_WITH_LIMITATIONS` |
+| Speech | Authenticated provider-neutral service can synthesize local English through the macOS system provider |
+| Providers | macOS runtime-verified; Unavailable truthful; VoxCPM adapter implemented but disabled/not installed/not configured/not runtime-verified |
+| Lifecycle | Persisted queue, bounded workers, heavy concurrency 1, cancel, timeout, cleanup, restart reconciliation, evidence/audit |
+| UI | Shared shell Speak/Play/Stop, provider/fallback state, profile/rate controls, no autoplay; IELTS feedback-only Yeti read-aloud |
+| Regression | Voice backend 15; full backend 5,272 passed/1 skipped; frontend 189; ESLint/build pass |
+| Browser | Dedicated M77 production journey FAIL after 14 hard + 1 accessibility gates; M64 regression PASS (21 hard/12 state/6 responsive/3 accessibility); no browser certification claim |
+| Security | 19 changed production files secret-clean; Python dependencies consistent; production npm audit zero; cloning disabled |
+| Resources | M2/8 GiB; cold 4.539s, warm 1.663s, ~48.3MB max RSS, cancel 46.04ms; no VoxCPM/model download |
+| Languages | English backend/native provider only; browser playback not certified; Nepali unsupported-not-verified |
+| Production | Not authorized; no push, merge, PR, deploy, public listener, paid call, or production mutation |
+| Next | Diagnose/re-certify the browser client transition before any VoxCPM download or voice expansion |
+
+Evidence: `docs/autonomous/milestones/M77_VOICE_CERTIFICATION.md` and
+`docs/evidence/m77/`. This milestone does not authorize production use.
+
 ## M72 — Autonomous Mission Runtime Final Certification (2026-07-28)
 
 | Field | Value |

@@ -2054,6 +2054,43 @@ ARCHITECTURE, DOMAIN_POLICY, EVIDENCE_REDACTION.
 — NOT full production deploy (live CDP still needs managed loopback endpoint +
 binary; human signed-queue workflows remain isolated; pixel OCR not required).
 
+## M73–M77 — Voice Output Foundation (2026-07-28)
+
+SaathiOS speech output is centralized in `saathi.platform.voice.SpeechService`.
+It composes existing PlatformStore identity/context/RBAC, audit, evidence,
+notifications, module health, and runtime lifecycle patterns. Modules and browser
+surfaces do not call provider executables or VoxCPM directly.
+
+The canonical speech layer persists metadata and artifact references, not request
+text or raw reference audio. It bounds text, queue depth, concurrency, timeouts,
+artifact bytes, retention, retries, and recovery. States are queued, preparing,
+synthesizing, streaming, playing, completed, cancelled, failed, unavailable, and
+expired. Heavy-provider concurrency defaults to one.
+
+Providers:
+
+- macOS system speech is the lightweight local English baseline, executed through
+  safe argument arrays and process-group cancellation;
+- VoxCPM is an optional disabled adapter for explicit GGUF/Metal CLI or loopback
+  service configuration, with no application-start import, process start, model
+  discovery download, or weight download;
+- the unavailable provider makes absence an explicit platform state.
+
+Voice profiles remain provider-neutral. `saathi_default` and the written
+`yeti_teacher` design are built in. Cloning/reference enrollment is rejected until
+the complete rights, consent, audit, labeling, revocation, deletion, and
+public-figure safety system exists.
+
+The unified shell exposes explicit Speak, Play, and Stop controls, provider/fallback
+state, profile and rate selection, and safe local preferences. There is no autoplay.
+IELTS speaks only bounded backend feedback through the Yeti profile and excludes the
+learner submission.
+
+M77 closes with limitations: backend/native English synthesis is runtime-verified,
+but the dedicated production browser speech journey did not pass its bounded retry
+budget. VoxCPM is not installed or runtime-verified, Nepali is unsupported-not-
+verified, cloning is disabled, and production use remains unauthorized.
+
 ## ECP M17.24 — External Capability Program foundation (2026-07-15)
 
 **Scope:** Register Priority 1–3 external repositories in SES-000E Part 6; adapt

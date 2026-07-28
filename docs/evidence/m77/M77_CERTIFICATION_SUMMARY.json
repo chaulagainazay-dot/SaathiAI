@@ -1,0 +1,96 @@
+{
+  "milestone": "M77",
+  "captured_at": "2026-07-28",
+  "verdict": "VOICE_FOUNDATION_COMPLETE_WITH_LIMITATIONS",
+  "browser": {
+    "dedicated_voice_certificate": "FAIL",
+    "attempts": 3,
+    "bounded_retry_cycles": 2,
+    "final_failure": "client did not expose completed speech state within 30 seconds",
+    "passed_before_failure": {
+      "hard_gates": 14,
+      "accessibility_gates": 1,
+      "page_errors": 0,
+      "console_errors": 0,
+      "framework_overlays": 0
+    },
+    "m64_regression": {
+      "verdict": "PASS",
+      "hard_gates": 21,
+      "state_gates": 12,
+      "responsive_gates": 6,
+      "accessibility_gates": 3
+    },
+    "ielts_voice_journey_certified": false,
+    "responsive_voice_journey_certified": false,
+    "evidence": "docs/evidence/m77/browser/M77_VOICE_BROWSER_CERT.json"
+  },
+  "backend_diagnostic": {
+    "request_provider": "voxcpm",
+    "voxcpm_enabled": false,
+    "terminal_state": "completed",
+    "provider": "macos_system",
+    "fallback_used": true,
+    "audio_available": true,
+    "artifact_bytes": 113700,
+    "private_path_exposed": false
+  },
+  "verification": {
+    "voice_backend": {
+      "passed": 15,
+      "failed": 0
+    },
+    "full_backend": {
+      "passed": 5272,
+      "skipped": 1,
+      "failed": 0,
+      "warnings": 341,
+      "duration_seconds": 875.34
+    },
+    "frontend": {
+      "passed": 189,
+      "failed": 0
+    },
+    "eslint": "PASS",
+    "production_build": "PASS",
+    "static_routes": 82,
+    "typecheck": "NOT_CONFIGURED",
+    "python_dependency_consistency": "PASS",
+    "python_cve_audit": "NOT_INSTALLED",
+    "production_npm_audit_vulnerabilities": 0,
+    "development_npm_audit_high": 9,
+    "production_secret_scan_files": 19,
+    "production_secret_scan_findings": 0
+  },
+  "machine": {
+    "architecture": "arm64",
+    "chip": "Apple M2",
+    "unified_memory_bytes": 8589934592,
+    "free_disk_kib": 75868772
+  },
+  "native_provider_measurements": {
+    "cold_artifact_ready_ms": 4539.2,
+    "warm_artifact_ready_ms": 1663.31,
+    "process_max_resident_bytes": 48332800,
+    "cancel_confirmed_ms": 46.04,
+    "sample_rate": 22050,
+    "artifact_bytes": 149684
+  },
+  "voxcpm": {
+    "implemented": true,
+    "installed": false,
+    "configured": false,
+    "model_available": false,
+    "runtime_verified": false,
+    "quality_reviewed": false,
+    "certified": false
+  },
+  "languages": {
+    "english_backend": "CERTIFIED_MACOS_SYSTEM_PROVIDER",
+    "english_browser_playback": "NOT_CERTIFIED",
+    "nepali": "UNSUPPORTED_NOT_VERIFIED"
+  },
+  "cloning": "CAPABILITY_DISABLED",
+  "production_authorized": false,
+  "push_merge_deploy_performed": false
+}

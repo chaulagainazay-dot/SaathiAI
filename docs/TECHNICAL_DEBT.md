@@ -1,5 +1,36 @@
 # SaathiOS Technical Debt / Known Gaps
 
+## M73–M77 Voice Output Foundation residual debt (2026-07-28)
+
+- HIGH / CERTIFICATION: the dedicated M77 production browser speech journey did
+  not pass within its initial run plus two bounded retry cycles. The harness
+  reached a real authenticated synthesis request but did not observe the client
+  `completed` state within 30 seconds. Backend replication completed through the
+  macOS fallback, and unit/regression/build gates pass, but browser playback,
+  browser Stop/cancel, IELTS browser read-aloud, responsive voice views, context
+  invalidation, and logout cleanup must be re-certified before the UI is described
+  as browser-certified.
+- MEDIUM / INTENTIONAL: VoxCPM is an implemented optional adapter, not an installed
+  runtime. No package, executable, GGUF, or weights are present; runtime, quality,
+  latency, memory, English, and Nepali inference remain unverified. Any future
+  evaluation needs an isolated environment and an explicit resource/download
+  decision for the 8 GiB machine.
+- MEDIUM / PERFORMANCE: native macOS cold artifact readiness measured 4.539 seconds,
+  above the suggested 2-second target. Warm readiness measured 1.663 seconds.
+  Provider-native chunk streaming is not implemented; authenticated range delivery
+  begins only after the complete artifact exists.
+- MEDIUM / SAFETY-INTENTIONAL: voice cloning remains disabled below the provider
+  boundary. Verified rights/consent, public-figure restrictions, immutable consent
+  evidence, synthetic labeling, revocation/deletion, and reference-artifact
+  lifecycle controls must all exist before activation.
+- LOW: English is the only certified synthesis language and only at the backend/native
+  provider layer. Nepali is `UNSUPPORTED_NOT_VERIFIED`; Hindi or Devanagari
+  acceptance must never be relabeled as Nepali quality.
+- LOW / DEV-ONLY: production npm audit remains zero-vulnerability. The full
+  development audit reports the pre-existing nine high advisories in the
+  ESLint/minimatch/brace-expansion tree; the registry proposes a breaking ESLint
+  major upgrade.
+
 ## M69–M72 Autonomous Mission Runtime residual debt (2026-07-28)
 
 - MEDIUM / INTENTIONAL: the certified runtime is single-host, SQLite-backed, and
