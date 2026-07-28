@@ -2,14 +2,18 @@
 
 ## Active
 
-- None.
+- M73 — voice recovery audit and machine-fit decision.
 
 ## Pending
 
-- None.
+- M74 — provider-neutral persisted SpeechService, profiles, RBAC, providers and API.
+- M75 — unified-shell speak experience and IELTS read-aloud.
+- M76 — voice browser, resource, security and full-regression certification.
 
 ## Completed
 
+- Prior goal retained: M69–M72 Autonomous Mission Runtime, terminal verdict
+  `MISSION_RUNTIME_COMPLETE`, final repository checkpoint `7873586`.
 - Repository intake/recovery audit at
   `a4cb5c4d872a3edf048d52b7cd62bf9346703613`; protected pre-existing evidence/design
   changes identified and excluded.
@@ -48,5 +52,7 @@
 
 ## Deferred
 
+- VoxCPM package/model installation and runtime/quality verification; Nepali quality
+  review; voice cloning activation; cloud speech; production activation.
 - Future application modules, multi-host/distributed mission scheduling, cloud
-  deployment, production activation, and any live financial/trading authority.
+  deployment, and any live financial/trading authority.

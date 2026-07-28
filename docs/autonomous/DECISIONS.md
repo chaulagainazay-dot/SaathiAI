@@ -1,5 +1,39 @@
 # Autonomous Architecture Decisions
 
+## ADR-VOICE-001 — platform speech extends existing authorities
+
+- Decision: add the canonical provider-neutral speech service under
+  `saathi.platform`, backed by `PlatformStore`, platform context/RBAC, audit and
+  evidence references. Legacy `voice_os` remains compatibility-only.
+- Alternatives: promote the separate VoiceStore/API; let each module call TTS;
+  create a standalone voice service and identity layer.
+- Evidence: the legacy voice layer has useful provider/segmentation vocabulary but
+  lacks organization/workspace isolation and canonical platform authority.
+- Consequences: all new assistant and IELTS speech uses one service and API; no
+  duplicate RBAC, approval center, event bus, mission runtime or execution gateway.
+
+## ADR-VOICE-002 — certify macOS TTS before VoxCPM
+
+- Decision: certify local macOS `say` first, retain unavailable as fail-closed, and
+  expose VoxCPM only as disabled explicit adapters until separately installed and
+  resource-certified.
+- Alternatives: install VoxCPM2 Python/MPS now; download GGUF weights; use browser
+  speech synthesis as the authoritative provider.
+- Evidence: the M2 has 8 GB unified memory; upstream reports about 8 GB CUDA VRAM for
+  VoxCPM2 and no M2/8 GB benchmark. System TTS needs no model download.
+- Consequences: SaathiOS can speak now without cloud traffic or swap risk; VoxCPM
+  status remains implemented-but-not-installed, never implied ready.
+
+## ADR-VOICE-003 — cloning is disabled, design metadata is separate
+
+- Decision: reject cloning/reference-audio synthesis by default. Store only bounded
+  provider-neutral design metadata and artifact references.
+- Alternatives: expose upstream cloning; accept a consent checkbox only.
+- Evidence: verified subject rights, audited consent, anti-impersonation checks,
+  synthetic labeling and revocation/deletion controls are incomplete.
+- Consequences: the Yeti voice is a written synthetic design, never a real-person
+  clone. Future cloning activation requires a separate safety milestone.
+
 ## ADR-IELTS-001 — SaathiOS platform owns the bounded IELTS module
 
 - Decision: implement IELTSAlert under `saathi.platform` and the existing SaathiOS
