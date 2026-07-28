@@ -4,10 +4,11 @@ Read-safe by default. Mutation routes require session + RBAC. No live connectors
 """
 from __future__ import annotations
 
+import re
 from typing import Any
 
-from fastapi import APIRouter, Header, HTTPException, Request
-from pydantic import BaseModel, Field
+from fastapi import APIRouter, Header, HTTPException, Request, Response
+from pydantic import BaseModel, ConfigDict, Field
 
 # Request used by login / invite accept for client key
 
@@ -313,6 +314,60 @@ class IELTSPaymentBody(BaseModel):
 class IELTSPaymentReviewBody(BaseModel):
     approve: bool
     reason: str
+
+
+# ── M74 provider-neutral local speech bodies ────────────────────────────────
+class VoiceSpeechBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    request_id: str = Field(default="", max_length=160)
+    source: str = Field(default="assistant", max_length=80)
+    text: str = Field(min_length=1, max_length=4_000)
+    language: str = Field(default="en-US", max_length=16)
+    voice_id: str = Field(default="", max_length=120)
+    voice_profile_id: str = Field(default="", max_length=160)
+    speaking_rate: float = Field(default=1.0, ge=0.5, le=2.0)
+    style: str = Field(default="", max_length=500)
+    output_format: str = Field(default="aiff", max_length=8)
+    streaming: bool = False
+    priority: int = Field(default=50, ge=0, le=100)
+    correlation_id: str = Field(default="", max_length=160)
+    provider: str = Field(default="auto", max_length=32)
+    idempotency_key: str = Field(default="", max_length=120)
+
+
+class VoiceProfileBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    display_name: str = Field(min_length=1, max_length=100)
+    provider: str = Field(default="auto", max_length=32)
+    provider_voice_id: str = Field(default="", max_length=120)
+    language: str = Field(default="en-US", max_length=16)
+    style: str = Field(default="", max_length=500)
+    rate: float = Field(default=1.0, ge=0.5, le=2.0)
+    pitch: float = Field(default=0.0, ge=-12.0, le=12.0)
+    reference_artifact_id: str = Field(default="", max_length=160)
+    cloning_consent_state: str = Field(default="not_requested", max_length=32)
+    module_preference: str = Field(default="", max_length=80)
+    accessibility_rate: float = Field(default=1.0, ge=0.5, le=2.0)
+    status: str = Field(default="active", max_length=20)
+
+
+class VoiceProfilePatchBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    display_name: str | None = Field(default=None, min_length=1, max_length=100)
+    provider: str | None = Field(default=None, max_length=32)
+    provider_voice_id: str | None = Field(default=None, max_length=120)
+    language: str | None = Field(default=None, max_length=16)
+    style: str | None = Field(default=None, max_length=500)
+    rate: float | None = Field(default=None, ge=0.5, le=2.0)
+    pitch: float | None = Field(default=None, ge=-12.0, le=12.0)
+    reference_artifact_id: str | None = Field(default=None, max_length=160)
+    cloning_consent_state: str | None = Field(default=None, max_length=32)
+    module_preference: str | None = Field(default=None, max_length=80)
+    accessibility_rate: float | None = Field(default=None, ge=0.5, le=2.0)
+    status: str | None = Field(default=None, max_length=20)
 
 
 class RuntimeResumeBody(BaseModel):
@@ -3364,6 +3419,281 @@ def ielts_search(q: str = "", limit: int = 50, authorization: str | None = Heade
         )}
     except Exception as exc:
         raise _ielts_failure(exc) from exc
+
+
+# ── M74 authenticated provider-neutral voice output ─────────────────────────
+def _voicesvc():
+    from saathi.platform.voice import default_speech_service
+
+    return default_speech_service(_svc())
+
+
+def _voice_context(
+    authorization: str | None,
+    x_platform_token: str | None,
+):
+    return _svc().require_context(_token(authorization, x_platform_token))
+
+
+def _voice_failure(exc: Exception) -> HTTPException:
+    if isinstance(exc, PlatformContextError):
+        return _err(exc)
+    return HTTPException(
+        status_code=500,
+        detail={
+            "code": "VOICE_INTERNAL_FAILURE",
+            "message": "Voice output could not complete safely.",
+        },
+    )
+
+
+@router.get("/voice/health")
+def voice_health(
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return {
+            "health": _voicesvc().health(
+                _voice_context(authorization, x_platform_token)
+            )
+        }
+    except Exception as exc:
+        raise _voice_failure(exc) from exc
+
+
+@router.get("/voice/providers")
+def voice_providers(
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return {
+            "providers": _voicesvc().provider_states(
+                _voice_context(authorization, x_platform_token)
+            )
+        }
+    except Exception as exc:
+        raise _voice_failure(exc) from exc
+
+
+@router.get("/voice/profiles")
+def voice_profiles(
+    all_owners: bool = False,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return {
+            "profiles": _voicesvc().list_profiles(
+                _voice_context(authorization, x_platform_token),
+                all_owners=all_owners,
+            )
+        }
+    except Exception as exc:
+        raise _voice_failure(exc) from exc
+
+
+@router.post("/voice/profiles")
+def voice_profile_create(
+    body: VoiceProfileBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return {
+            "profile": _voicesvc().create_profile(
+                _voice_context(authorization, x_platform_token),
+                body.model_dump(),
+            )
+        }
+    except Exception as exc:
+        raise _voice_failure(exc) from exc
+
+
+@router.patch("/voice/profiles/{profile_id}")
+def voice_profile_update(
+    profile_id: str,
+    body: VoiceProfilePatchBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        updates = {
+            key: value
+            for key, value in body.model_dump().items()
+            if value is not None
+        }
+        return {
+            "profile": _voicesvc().update_profile(
+                _voice_context(authorization, x_platform_token),
+                profile_id,
+                updates,
+            )
+        }
+    except Exception as exc:
+        raise _voice_failure(exc) from exc
+
+
+@router.delete("/voice/profiles/{profile_id}")
+def voice_profile_delete(
+    profile_id: str,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return {
+            "deleted": _voicesvc().delete_profile(
+                _voice_context(authorization, x_platform_token), profile_id
+            )
+        }
+    except Exception as exc:
+        raise _voice_failure(exc) from exc
+
+
+@router.get("/voice/speech")
+def voice_speech_list(
+    all_owners: bool = False,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return {
+            "operations": _voicesvc().list_operations(
+                _voice_context(authorization, x_platform_token),
+                all_owners=all_owners,
+            )
+        }
+    except Exception as exc:
+        raise _voice_failure(exc) from exc
+
+
+@router.post("/voice/speech")
+def voice_speech_create(
+    body: VoiceSpeechBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return {
+            "operation": _voicesvc().create_speech(
+                _voice_context(authorization, x_platform_token),
+                body.model_dump(),
+            )
+        }
+    except Exception as exc:
+        raise _voice_failure(exc) from exc
+
+
+@router.get("/voice/speech/{operation_id}")
+def voice_speech_get(
+    operation_id: str,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        operation = _voicesvc().get_operation(
+            _voice_context(authorization, x_platform_token), operation_id
+        )
+        return {"operation": operation.to_public()}
+    except Exception as exc:
+        raise _voice_failure(exc) from exc
+
+
+@router.post("/voice/speech/{operation_id}/cancel")
+def voice_speech_cancel(
+    operation_id: str,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return {
+            "operation": _voicesvc().cancel(
+                _voice_context(authorization, x_platform_token), operation_id
+            )
+        }
+    except Exception as exc:
+        raise _voice_failure(exc) from exc
+
+
+_BYTE_RANGE = re.compile(r"^bytes=(\d*)-(\d*)$")
+
+
+@router.get("/voice/speech/{operation_id}/audio")
+def voice_speech_audio(
+    operation_id: str,
+    request: Request,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        operation, path = _voicesvc().artifact(
+            _voice_context(authorization, x_platform_token), operation_id
+        )
+        data = path.read_bytes()
+        status = 200
+        headers = {
+            "Accept-Ranges": "bytes",
+            "Cache-Control": "private, no-store, max-age=0",
+            "Content-Security-Policy": "default-src 'none'",
+            "X-Content-Type-Options": "nosniff",
+        }
+        range_header = request.headers.get("range", "").strip()
+        if range_header:
+            match = _BYTE_RANGE.fullmatch(range_header)
+            if not match:
+                raise HTTPException(
+                    status_code=416,
+                    detail={"code": "INVALID_RANGE", "message": "Invalid audio range."},
+                    headers={"Content-Range": f"bytes */{len(data)}"},
+                )
+            start_text, end_text = match.groups()
+            if not start_text and not end_text:
+                raise HTTPException(status_code=416)
+            if start_text:
+                start = int(start_text)
+                end = int(end_text) if end_text else len(data) - 1
+            else:
+                suffix = int(end_text)
+                start = max(0, len(data) - suffix)
+                end = len(data) - 1
+            if start >= len(data) or start > end:
+                raise HTTPException(
+                    status_code=416,
+                    detail={"code": "INVALID_RANGE", "message": "Invalid audio range."},
+                    headers={"Content-Range": f"bytes */{len(data)}"},
+                )
+            end = min(end, len(data) - 1)
+            data = data[start : end + 1]
+            status = 206
+            headers["Content-Range"] = f"bytes {start}-{end}/{operation.artifact_bytes}"
+        media_type = (
+            "audio/aiff" if operation.output_format == "aiff" else "audio/wav"
+        )
+        return Response(
+            content=data, status_code=status, media_type=media_type, headers=headers
+        )
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise _voice_failure(exc) from exc
+
+
+@router.get("/voice/evidence")
+def voice_evidence(
+    all_owners: bool = False,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return {
+            "evidence": _voicesvc().evidence(
+                _voice_context(authorization, x_platform_token),
+                all_owners=all_owners,
+            )
+        }
+    except Exception as exc:
+        raise _voice_failure(exc) from exc
 
 
 # ── M63/M64 module registry (read-only; authoritative source for browser discovery) ──

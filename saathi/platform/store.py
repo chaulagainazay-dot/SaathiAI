@@ -268,6 +268,7 @@ class PlatformStore:
         self._migrate_m61()
         self._migrate_m65()
         self._migrate_m69()
+        self._migrate_m74()
         self._conn.commit()
         # Serialize all shared-connection access (auth/session/approval/audit reads
         # run under FastAPI's threadpool concurrently). Reentrant so existing
@@ -1469,6 +1470,100 @@ class PlatformStore:
             );
             CREATE INDEX IF NOT EXISTS idx_m69_cert_mission
                 ON mission_runtime_certifications(mission_id, created_at DESC);
+            """
+        )
+
+    def _migrate_m74(self) -> None:
+        """Provider-neutral speech operations, profiles, and evidence.
+
+        Speech text and provider-native values are intentionally absent. Audio is
+        stored as a bounded artifact outside SQLite and addressed by opaque IDs.
+        """
+        self._conn.executescript(
+            """
+            CREATE TABLE IF NOT EXISTS voice_speech_operations (
+                operation_id TEXT PRIMARY KEY,
+                org_id TEXT NOT NULL,
+                workspace_id TEXT NOT NULL,
+                user_id TEXT NOT NULL,
+                state TEXT NOT NULL,
+                requested_provider TEXT NOT NULL DEFAULT 'auto',
+                provider TEXT NOT NULL DEFAULT '',
+                request_json TEXT NOT NULL DEFAULT '{}',
+                text_sha256 TEXT NOT NULL DEFAULT '',
+                text_length INTEGER NOT NULL DEFAULT 0,
+                artifact_id TEXT NOT NULL DEFAULT '',
+                artifact_name TEXT NOT NULL DEFAULT '',
+                output_format TEXT NOT NULL DEFAULT 'aiff',
+                sample_rate INTEGER NOT NULL DEFAULT 0,
+                duration_seconds REAL NOT NULL DEFAULT 0,
+                artifact_bytes INTEGER NOT NULL DEFAULT 0,
+                streaming_state TEXT NOT NULL DEFAULT 'not_started',
+                fallback_used INTEGER NOT NULL DEFAULT 0,
+                fallback_reason TEXT NOT NULL DEFAULT '',
+                error_category TEXT NOT NULL DEFAULT '',
+                idempotency_key TEXT NOT NULL DEFAULT '',
+                cancel_requested INTEGER NOT NULL DEFAULT 0,
+                created_at REAL NOT NULL,
+                started_at REAL NOT NULL DEFAULT 0,
+                completed_at REAL NOT NULL DEFAULT 0,
+                expires_at REAL NOT NULL DEFAULT 0,
+                updated_at REAL NOT NULL,
+                version INTEGER NOT NULL DEFAULT 1
+            );
+            CREATE INDEX IF NOT EXISTS idx_m74_speech_scope
+                ON voice_speech_operations(org_id, workspace_id, created_at DESC);
+            CREATE INDEX IF NOT EXISTS idx_m74_speech_state
+                ON voice_speech_operations(org_id, workspace_id, state);
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_m74_speech_idempotency
+                ON voice_speech_operations(
+                    org_id, workspace_id, user_id, idempotency_key
+                ) WHERE idempotency_key <> '';
+
+            CREATE TABLE IF NOT EXISTS voice_profiles (
+                profile_id TEXT PRIMARY KEY,
+                org_id TEXT NOT NULL,
+                workspace_id TEXT NOT NULL,
+                owner_id TEXT NOT NULL,
+                display_name TEXT NOT NULL,
+                provider TEXT NOT NULL DEFAULT 'auto',
+                provider_voice_id TEXT NOT NULL DEFAULT '',
+                language TEXT NOT NULL DEFAULT 'en-US',
+                style TEXT NOT NULL DEFAULT '',
+                rate REAL NOT NULL DEFAULT 1,
+                pitch REAL NOT NULL DEFAULT 0,
+                reference_artifact_id TEXT NOT NULL DEFAULT '',
+                cloning_consent_state TEXT NOT NULL DEFAULT 'not_requested',
+                module_preference TEXT NOT NULL DEFAULT '',
+                accessibility_rate REAL NOT NULL DEFAULT 1,
+                status TEXT NOT NULL DEFAULT 'active',
+                version INTEGER NOT NULL DEFAULT 1,
+                created_at REAL NOT NULL,
+                updated_at REAL NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS idx_m74_profile_scope
+                ON voice_profiles(org_id, workspace_id, owner_id, updated_at DESC);
+
+            CREATE TABLE IF NOT EXISTS voice_evidence_events (
+                evidence_id TEXT PRIMARY KEY,
+                operation_id TEXT NOT NULL,
+                org_id TEXT NOT NULL,
+                workspace_id TEXT NOT NULL,
+                user_id TEXT NOT NULL,
+                event_type TEXT NOT NULL,
+                artifact_id TEXT NOT NULL DEFAULT '',
+                summary TEXT NOT NULL,
+                metadata_json TEXT NOT NULL DEFAULT '{}',
+                created_at REAL NOT NULL,
+                FOREIGN KEY (operation_id)
+                    REFERENCES voice_speech_operations(operation_id)
+            );
+            CREATE INDEX IF NOT EXISTS idx_m74_evidence_scope
+                ON voice_evidence_events(
+                    org_id, workspace_id, created_at DESC
+                );
+            CREATE INDEX IF NOT EXISTS idx_m74_evidence_operation
+                ON voice_evidence_events(operation_id, created_at);
             """
         )
 

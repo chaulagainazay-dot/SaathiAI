@@ -568,6 +568,10 @@ def reset_platform_for_tests(db_path: Path | str | None = None) -> PlatformServi
     global _DEFAULT
     import tempfile
 
+    if _DEFAULT is not None:
+        speech_service = getattr(_DEFAULT, "_speech_service", None)
+        if speech_service is not None:
+            speech_service.shutdown()
     path = db_path or (Path(tempfile.mkdtemp()) / "platform-test.db")
     _DEFAULT = PlatformService(PlatformStore(path))
     return _DEFAULT
