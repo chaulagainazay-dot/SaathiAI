@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button, Card, EmptyState, ErrorState, Heading, Spinner, Text } from "@/components/ui";
 import { IELTS_NOTICE, ieltsActions, useIELTSData } from "@/lib/ielts";
 
@@ -76,6 +76,9 @@ function FormStatus({ busy, message, error }) {
 export default function IELTSWorkspace({ view = "dashboard" }) {
   const d = useIELTSData({ allOwners: view === "payments" });
   const router = useRouter();
+  const pathname = usePathname() || "/ielts";
+  const routeSkill = ["reading", "listening", "writing", "speaking"]
+    .find((skill) => pathname.endsWith(`/practice/${skill}`)) || "reading";
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [formError, setFormError] = useState("");
@@ -100,7 +103,7 @@ export default function IELTSWorkspace({ view = "dashboard" }) {
     dashboard: <Dashboard d={d} />,
     onboarding: <ProfileForm act={act} busy={busy} />,
     goals: <GoalForm act={act} busy={busy} records={d.records} />,
-    practice: <PracticeForm act={act} busy={busy} />,
+    practice: <PracticeForm act={act} busy={busy} initialSkill={routeSkill} />,
     submissions: <FeedbackView records={d.records} />,
     alerts: <AlertsView act={act} busy={busy} records={d.records} token={d.token} />,
     payments: <PaymentsView act={act} busy={busy} records={d.records} token={d.token}
@@ -171,10 +174,11 @@ function GoalForm({ act, busy, records }) {
     </form></Card><RecordList records={goals} empty="No exam goals yet." /></div>;
 }
 
-function PracticeForm({ act, busy }) {
-  const [skill, setSkill] = useState("reading"), [task, setTask] = useState("original_local_fixture");
+function PracticeForm({ act, busy, initialSkill }) {
+  const [skill, setSkill] = useState(initialSkill), [task, setTask] = useState("original_local_fixture");
   const [prompt, setPrompt] = useState("Summarize the main idea of this original local practice prompt.");
   const [response, setResponse] = useState("");
+  useEffect(() => setSkill(initialSkill), [initialSkill]);
   return <Card><Heading level={2}>Structured practice</Heading>
     <Text as="p" tone="muted" size="sm">Use your own or original content. No copyrighted question bank is included.</Text>
     <form onSubmit={(e) => { e.preventDefault(); act(() => ieltsActions.practice({

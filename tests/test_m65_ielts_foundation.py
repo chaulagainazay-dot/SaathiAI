@@ -4,7 +4,11 @@ import pytest
 
 from saathi.platform.context import PlatformContextError, PlatformExecutionContext
 from saathi.platform.ielts.models import IELTSValidationError, validate_goal, validate_payment
-from saathi.platform.ielts.scoring import LocalHeuristicScorer
+from saathi.platform.ielts.scoring import (
+    LocalHeuristicScorer,
+    SafeFallbackScorer,
+    UnavailableScoringProvider,
+)
 from saathi.platform.ielts.service import IELTSService
 from saathi.platform.models import PlatformPermission, PlatformRole, role_has_permission
 from saathi.platform.store import PlatformStore
@@ -112,6 +116,22 @@ def test_local_scoring_is_repeatable_transparent_and_pronunciation_not_assessed(
     assert first["official"] is False
     assert first["criteria"]["pronunciation"]["level"] == "not_assessed"
     assert first["audio_analysis_performed"] is False
+
+
+def test_unavailable_or_failed_provider_uses_labelled_deterministic_fallback():
+    unavailable = SafeFallbackScorer(UnavailableScoringProvider())
+    args = {
+        "prompt": "Describe a place",
+        "response": "This original response is calm because it uses local text.",
+        "task_type": "task_2",
+    }
+    first = unavailable.score_writing(**args)
+    assert first == unavailable.score_writing(**args)
+    assert first["source"] == "local_heuristic_v1"
+    assert first["official"] is False
+    assert first["provider_assisted"] is False
+    assert first["fallback"] == {"used": True, "reason": "provider_unavailable"}
+    assert unavailable.health()["provider_assisted"] == "unavailable"
 
 
 def test_fixture_alert_is_labelled_and_deduplicated(service):

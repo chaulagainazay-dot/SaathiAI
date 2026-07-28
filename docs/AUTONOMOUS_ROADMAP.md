@@ -1152,3 +1152,29 @@ Branch `milestone/m42-graduation-review`.
   dynamic installation, focused accessibility sweep, and unrelated TopBar approvals
   CORS debt.
 - No push, merge, deployment, production change, or external rollout.
+
+## M65–M68 — Bounded IELTSAlert Platform Module (2026-07-28)
+
+**Status:** `IELTS_MODULE_COMPLETE_WITH_LIMITATIONS`.
+
+- M65 established the tenant/workspace/owner-scoped IELTS domain, additive
+  PlatformStore persistence, canonical `ielts.*` permissions, deterministic local
+  practice feedback, fixture alert lifecycle, and manual payment-review boundary.
+- M66 exposed authenticated platform APIs for profile, goal, four-skill practice,
+  alerts, payments, dashboard, evidence, health, and search.
+- M67 delivered the learner/reviewer workspace and truthfully enabled IELTSAlert as
+  the second backend-authoritative module after focused API, RBAC, isolation, UI,
+  build, and browser gates passed.
+- M68 adds an explicit provider-unavailable/fallback adapter, route-specific skill
+  initialization, dependency remediation, retained M64 shell regression, and final
+  certification.
+- Operational boundaries remain localhost/single-host SQLite, deterministic local
+  estimates, fixture availability, in-app notifications, evidence references, and
+  manual payment verification. No official scoring, live provider, settlement,
+  external notification, deployment, or production authority is claimed.
+- Certification: focused backend 62 pass; full backend 5,239 pass / 1 skip;
+  frontend 180 pass; ESLint/build pass; production npm audit 0 vulnerabilities;
+  retained M64 browser shell 21 hard + 12 state + 6 responsive + 3 accessibility
+  gates; bounded IELTS learner/reviewer journey pass.
+- No push, merge, deployment, production change, paid provider call, payment
+  settlement, or external rollout.

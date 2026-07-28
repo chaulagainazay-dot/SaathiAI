@@ -478,3 +478,28 @@ Product IELTSAlert work uses **PRODUCT/IELTSAlert** numbering — not platform d
   the checkout-local production browser. M64 module requests have zero unexpected
   console errors and are unaffected; fix the connector/TopBar CORS contract in its
   own bounded milestone.
+
+## M65–M68 — IELTSAlert residual debt (2026-07-28)
+
+- MEDIUM / INTENTIONAL: provider-assisted scoring is not configured. The explicit
+  unavailable adapter falls back to a deterministic local practice estimate with
+  local provenance; no official band score is produced.
+- MEDIUM / INTENTIONAL: test-center availability is a labelled Kathmandu/Pokhara
+  fixture source. Live provider contracting, legal terms, freshness/reconciliation,
+  and notification delivery remain external work.
+- MEDIUM / INTENTIONAL: payment is a manual evidence-verification record only. It
+  performs no settlement, automatic approval, entitlement activation, refund, or
+  financial reconciliation.
+- LOW: artifacts are bounded centralized evidence references; IELTS-specific upload,
+  antivirus/media processing, transcription, and retention UI were not duplicated.
+- LOW: persistence is single-host PlatformStore SQLite and module enablement remains
+  process-global as recorded under M64.
+- LOW: the separate `pielts` product repository was audited as EXTERNAL and not
+  migrated. Any future adapter must preserve platform identity/RBAC/audit authority.
+- LOW: focused browser accessibility passed; exhaustive screen-reader and
+  assistive-technology certification is deferred.
+- LOW / DEV-ONLY: production npm audit is zero-vulnerability after patching
+  Next/PostCSS/Sharp and Playwright. ESLint's dependency tree retains minimatch
+  advisories whose registry remediation requires incompatible major versions;
+  lint receives trusted checkout-local source only. Revisit with a coordinated
+  ESLint/Next config major upgrade.

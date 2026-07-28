@@ -12,7 +12,7 @@ import { chromium } from "playwright";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, "..", "..");
-const OUT = join(ROOT, "docs", "platform", "m64_evidence");
+const OUT = process.env.M64_EVIDENCE_DIR || join(ROOT, "docs", "platform", "m64_evidence");
 const UI = "http://127.0.0.1:3000";
 const API = "http://127.0.0.1:8765";
 const MODULES_URL = "**/api/v1/platform/modules";
@@ -140,12 +140,14 @@ async function certifyHealthy(browser, token) {
 
   const appNav = page.locator(".shell-sidebar-nav");
   check("backend_navigation_trading", await appNav.getByRole("button", { name: "Trading", exact: true }).isEnabled());
-  for (const name of ["IELTSAlert", "HCG POS", "Travel", "Finance"]) {
+  check("backend_navigation_ielts", await appNav.getByRole("button", { name: "IELTSAlert", exact: true }).isEnabled());
+  for (const name of ["HCG POS", "Travel", "Finance"]) {
     check(`placeholder_${name.toLowerCase().replaceAll(" ", "_")}`, await appNav.getByRole("button", { name, exact: true }).isDisabled());
   }
   check("trading_actionable_card", await page.locator('main a[href="/trading"]').count() === 1);
-  check("no_placeholder_card_links", await page.locator('main a[href="/finance"], main a[href="/ielts"], main a[href="/pos"], main a[href="/travel"]').count() === 0);
-  check("truthful_placeholder_statuses", await page.getByText("Coming soon", { exact: true }).count() === 4);
+  check("ielts_actionable_card", await page.locator('main a[href="/ielts"]').count() === 1);
+  check("no_placeholder_card_links", await page.locator('main a[href="/finance"], main a[href="/pos"], main a[href="/travel"]').count() === 0);
+  check("truthful_placeholder_statuses", await page.getByText("Coming soon", { exact: true }).count() === 3);
 
   await page.getByRole("button", { name: "Open command palette" }).click();
   await page.getByRole("textbox", { name: "Search commands" }).fill("Trading");
@@ -296,9 +298,9 @@ async function certifyFailureStates(browser, token) {
 async function certifyLogout(browser, token) {
   const context = await authContext(browser, token, { width: 1280, height: 900 });
   const page = await context.newPage();
-  await page.goto(`${UI}/platform`, { waitUntil: "domcontentloaded" });
-  await page.getByRole("button", { name: "Logout", exact: true }).waitFor();
-  await page.getByRole("button", { name: "Logout", exact: true }).click();
+  await page.goto(`${UI}/security`, { waitUntil: "domcontentloaded" });
+  await page.getByRole("button", { name: /Sign out$/ }).waitFor();
+  await page.getByRole("button", { name: /Sign out$/ }).click();
   await page.waitForFunction(
     () => !localStorage.getItem("saathi_platform_token"),
     undefined,

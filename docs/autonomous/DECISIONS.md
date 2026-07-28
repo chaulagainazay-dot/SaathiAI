@@ -52,3 +52,27 @@
   the complete minimum operational contract.
 - Consequences: IELTSAlert is actionable in navigation, dashboard, and command search
   only when returned by backend discovery; registration itself grants no permission.
+
+## ADR-IELTS-006 — unavailable provider is an explicit adapter state
+
+- Decision: compose the local heuristic through `SafeFallbackScorer` with an explicit
+  unavailable provider adapter when no governed scorer is configured.
+- Alternatives: call legacy provider helpers; invoke the local scorer directly without
+  provider-state provenance; return no feedback.
+- Evidence: no safe configured provider exists and paid/network provider use is not
+  authorized.
+- Consequences: provider failure details stay private, local fallback is repeatable
+  and visibly labelled, and module capability remains provider-assisted `false`.
+
+## ADR-IELTS-007 — remediate runtime dependencies without framework migration
+
+- Decision: move Next.js to the compatible 15.5.22 patch line and override its
+  vulnerable production PostCSS/Sharp transitive versions; update Playwright and
+  local PostCSS for the test/build toolchain.
+- Alternatives: accept production high-severity advisories; perform an unrelated
+  Next/ESLint major migration.
+- Evidence: production `npm audit` initially reported three high vulnerabilities;
+  the bounded update yields zero production vulnerabilities and passes all frontend,
+  build, and browser gates.
+- Consequences: runtime audit is clean. ESLint-only minimatch advisories remain
+  documented until a coordinated major toolchain upgrade.

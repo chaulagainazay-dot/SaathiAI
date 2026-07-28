@@ -43,6 +43,7 @@ describe("IELTSAlert frontend contract", () => {
     assert.ok(source.includes('aria-label="IELTSAlert workspace"'));
     assert.ok(source.includes('aria-live="polite"'));
     assert.ok(source.includes("p.owner_id !== userId"), "self-review controls must stay hidden");
+    assert.ok(source.includes("pathname.endsWith(`/practice/${skill}`)"));
   });
 
   it("global sign out clears the centralized platform context", () => {

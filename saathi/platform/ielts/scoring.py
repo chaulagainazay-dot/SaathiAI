@@ -19,6 +19,39 @@ class ScoringProvider(Protocol):
     def score_speaking(self, *, prompt: str, transcript: str, part: str, has_audio: bool) -> dict: ...
 
 
+class ScoringProviderUnavailable(RuntimeError):
+    """Safe provider-boundary error; never includes upstream details."""
+
+
+@dataclass(frozen=True)
+class UnavailableScoringProvider:
+    """Explicit no-provider adapter used when no governed integration is configured."""
+
+    provider_id: str = "provider_not_configured"
+
+    def health(self) -> dict:
+        return {
+            "status": "unavailable",
+            "provider": self.provider_id,
+            "reason": "not_configured",
+            "network_required": False,
+        }
+
+    def capabilities(self) -> dict:
+        return {
+            "writing": False,
+            "speaking_transcript": False,
+            "audio_analysis": False,
+            "official_scoring": False,
+        }
+
+    def score_writing(self, **_kwargs) -> dict:
+        raise ScoringProviderUnavailable("provider-assisted scoring is unavailable")
+
+    def score_speaking(self, **_kwargs) -> dict:
+        raise ScoringProviderUnavailable("provider-assisted scoring is unavailable")
+
+
 @dataclass(frozen=True)
 class LocalHeuristicScorer:
     provider_id: str = "local_heuristic_v1"
@@ -88,3 +121,71 @@ class LocalHeuristicScorer:
             "limitations": [LIMITATION, "Pronunciation and acoustic fluency were not assessed."],
         }
 
+
+@dataclass(frozen=True)
+class SafeFallbackScorer:
+    """Use a provider when safe, otherwise return explicitly labelled local output."""
+
+    primary: ScoringProvider
+    fallback: LocalHeuristicScorer = LocalHeuristicScorer()
+
+    def health(self) -> dict:
+        try:
+            primary_status = str(self.primary.health().get("status", "unavailable"))
+        except Exception:
+            primary_status = "unavailable"
+        return {
+            "status": "available_with_local_fallback",
+            "provider_assisted": primary_status,
+            "fallback": self.fallback.health(),
+            "official_scoring": False,
+        }
+
+    def capabilities(self) -> dict:
+        return {
+            **self.fallback.capabilities(),
+            "provider_assisted": self.health()["provider_assisted"] == "available",
+        }
+
+    @staticmethod
+    def _safe_local(result: dict) -> dict:
+        return {
+            **result,
+            "official": False,
+            "provider_assisted": False,
+            "fallback": {"used": True, "reason": "provider_unavailable"},
+        }
+
+    def score_writing(self, *, prompt: str, response: str, task_type: str) -> dict:
+        try:
+            result = dict(self.primary.score_writing(
+                prompt=prompt, response=response, task_type=task_type
+            ))
+            return {
+                **result,
+                "label": "provider-assisted estimate",
+                "official": False,
+                "provider_assisted": True,
+            }
+        except Exception:
+            return self._safe_local(self.fallback.score_writing(
+                prompt=prompt, response=response, task_type=task_type
+            ))
+
+    def score_speaking(
+        self, *, prompt: str, transcript: str, part: str, has_audio: bool
+    ) -> dict:
+        try:
+            result = dict(self.primary.score_speaking(
+                prompt=prompt, transcript=transcript, part=part, has_audio=has_audio
+            ))
+            return {
+                **result,
+                "label": "provider-assisted estimate",
+                "official": False,
+                "provider_assisted": True,
+            }
+        except Exception:
+            return self._safe_local(self.fallback.score_speaking(
+                prompt=prompt, transcript=transcript, part=part, has_audio=has_audio
+            ))

@@ -26,7 +26,7 @@ from .models import (
     validate_profile,
 )
 from .repository import IELTSRepository
-from .scoring import LocalHeuristicScorer
+from .scoring import SafeFallbackScorer, UnavailableScoringProvider
 
 
 LOCAL_CENTERS = (
@@ -41,7 +41,7 @@ class IELTSService:
     def __init__(self, platform_store, *, scorer=None):
         self.store = platform_store
         self.repo = IELTSRepository(platform_store)
-        self.scorer = scorer or LocalHeuristicScorer()
+        self.scorer = scorer or SafeFallbackScorer(UnavailableScoringProvider())
 
     @staticmethod
     def _human(ctx) -> None:
