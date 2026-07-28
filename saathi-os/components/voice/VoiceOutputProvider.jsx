@@ -234,9 +234,18 @@ export function VoiceOutputProvider({ children }) {
           controller.signal
         );
         const operation = payload.operation;
+        // Surface terminal backend state immediately so the dock can update
+        // even while audio preparation is still in flight.
         dispatch({ type: "OPERATION", operation });
         if (operation.state === "completed" && operation.audio_available) {
-          await prepareAudio(operation, activeToken, controller.signal);
+          try {
+            await prepareAudio(operation, activeToken, controller.signal);
+          } catch (error) {
+            // Synthesis completed; keep that state if only playback prep failed.
+            if (error?.name !== "AbortError") {
+              dispatch({ type: "OPERATION", operation });
+            }
+          }
           return;
         }
         if (TERMINAL.has(operation.state)) return;
@@ -272,7 +281,8 @@ export function VoiceOutputProvider({ children }) {
             language,
             voice_profile_id: profileId || preferences.profileId,
             speaking_rate: preferences.speakingRate,
-            output_format: "aiff",
+            // WAV is Chromium-playable; macOS provider converts from native AIFF.
+            output_format: "wav",
             provider: "auto",
             idempotency_key: `voice-ui-${Date.now()}`,
           },

@@ -79,6 +79,14 @@ class SpeechService:
             for provider_id, provider in self.providers.items()
         }
         self.reconciled_operations = self.repo.reconcile_interrupted()
+        # Warm native voice discovery once so concurrent shell mounts do not
+        # stampede `/usr/bin/say -v ?` on first authenticated page load.
+        macos = self.providers.get("macos_system")
+        if macos is not None:
+            try:
+                macos.health()
+            except Exception:
+                pass
         if start_workers:
             for index in range(max(1, min(int(worker_count), 4))):
                 worker = threading.Thread(
@@ -472,8 +480,14 @@ class SpeechService:
                 if health["state"] not in {"ready", "ready_unverified"}:
                     continue
                 provider_request = request
-                if provider.provider_id == "macos_system" and request.output_format != "aiff":
-                    provider_request = replace(request, output_format="aiff", streaming=False)
+                if provider.provider_id == "macos_system":
+                    # Prefer browser-playable WAV; AIFF remains available when requested.
+                    if request.output_format not in {"aiff", "wav"}:
+                        provider_request = replace(
+                            request, output_format="wav", streaming=False
+                        )
+                    else:
+                        provider_request = replace(request, streaming=False)
                 if provider.provider_id == "voxcpm" and request.output_format != "wav":
                     provider_request = replace(request, output_format="wav")
                 operation = self.repo.get_operation_unscoped(operation_id) or current

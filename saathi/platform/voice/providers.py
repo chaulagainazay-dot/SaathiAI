@@ -149,6 +149,7 @@ class UnavailableSpeechProvider(SpeechProvider):
 
 class MacOSSystemSpeechProvider(SpeechProvider):
     provider_id = "macos_system"
+    _AFCONVERT = Path("/usr/bin/afconvert")
 
     def __init__(
         self,
@@ -156,13 +157,16 @@ class MacOSSystemSpeechProvider(SpeechProvider):
         executable: Path | str = "/usr/bin/say",
         runner: Callable[..., Any] = run_bounded,
         system_name: str | None = None,
+        converter: Path | str | None = None,
     ):
         self.executable = Path(executable)
+        self.converter = Path(converter) if converter else self._AFCONVERT
         self.runner = runner
         self.system_name = system_name or platform.system()
         self._cancel: dict[str, threading.Event] = {}
         self._lock = threading.RLock()
         self._voice_cache: tuple[dict[str, Any], ...] | None = None
+        self._voice_discovery_failed = False
 
     def _valid_executable(self) -> bool:
         return (
@@ -172,37 +176,54 @@ class MacOSSystemSpeechProvider(SpeechProvider):
             and os.access(self.executable, os.X_OK)
         )
 
-    def _voices(self) -> tuple[dict[str, Any], ...]:
-        if self._voice_cache is not None:
-            return self._voice_cache
-        if self.system_name != "Darwin" or not self._valid_executable():
-            self._voice_cache = ()
-            return self._voice_cache
-        result = self.runner(
-            [str(self.executable), "-v", "?"],
-            timeout_sec=5.0,
-            max_stdout=64_000,
-            max_stderr=1_000,
+    def _valid_converter(self) -> bool:
+        return (
+            self.converter.is_absolute()
+            and self.converter.name == "afconvert"
+            and self.converter.is_file()
+            and os.access(self.converter, os.X_OK)
         )
-        voices: list[dict[str, Any]] = []
-        if result.ok:
-            for line in result.stdout.splitlines():
-                head = line.split("#", 1)[0].rstrip()
-                if not head:
-                    continue
-                parts = head.rsplit(None, 1)
-                if len(parts) != 2 or "_" not in parts[1]:
-                    continue
-                name, locale = parts
-                voices.append(
-                    {
-                        "voice_id": name.strip(),
-                        "language": locale.replace("_", "-"),
-                        "installed": True,
-                    }
-                )
-        self._voice_cache = tuple(voices[:500])
-        return self._voice_cache
+
+    def _voices(self) -> tuple[dict[str, Any], ...]:
+        # Single-flight discovery under lock. Never permanently cache a failed
+        # empty probe — concurrent shell mounts can race `say -v ?` under load.
+        with self._lock:
+            if self._voice_cache is not None:
+                return self._voice_cache
+            if self.system_name != "Darwin" or not self._valid_executable():
+                self._voice_cache = ()
+                return self._voice_cache
+            result = self.runner(
+                [str(self.executable), "-v", "?"],
+                timeout_sec=5.0,
+                max_stdout=64_000,
+                max_stderr=1_000,
+            )
+            voices: list[dict[str, Any]] = []
+            if result.ok:
+                for line in result.stdout.splitlines():
+                    head = line.split("#", 1)[0].rstrip()
+                    if not head:
+                        continue
+                    parts = head.rsplit(None, 1)
+                    if len(parts) != 2 or "_" not in parts[1]:
+                        continue
+                    name, locale = parts
+                    voices.append(
+                        {
+                            "voice_id": name.strip(),
+                            "language": locale.replace("_", "-"),
+                            "installed": True,
+                        }
+                    )
+            discovered = tuple(voices[:500])
+            if discovered:
+                self._voice_cache = discovered
+                self._voice_discovery_failed = False
+                return self._voice_cache
+            # Transient empty/failed discovery: do not poison the cache.
+            self._voice_discovery_failed = True
+            return ()
 
     def capabilities(self) -> dict[str, Any]:
         voices = list(self._voices())
@@ -215,7 +236,8 @@ class MacOSSystemSpeechProvider(SpeechProvider):
             "languages": languages,
             "certified_languages": ["en"] if any(x.startswith("en-") for x in languages) else [],
             "voices": voices,
-            "output_formats": ["aiff"],
+            # WAV is preferred for authenticated browser playback; AIFF remains supported.
+            "output_formats": ["wav", "aiff"],
             "cloning": False,
             "voice_design": False,
             "local_only": True,
@@ -224,20 +246,36 @@ class MacOSSystemSpeechProvider(SpeechProvider):
 
     def health(self) -> dict[str, Any]:
         voices = self._voices()
-        ready = self.system_name == "Darwin" and self._valid_executable() and bool(voices)
+        ready = (
+            self.system_name == "Darwin"
+            and self._valid_executable()
+            and self._valid_converter()
+            and bool(voices)
+        )
+        if (
+            not ready
+            and self.system_name == "Darwin"
+            and self._valid_executable()
+            and self._valid_converter()
+            and self._voice_discovery_failed
+        ):
+            detail = "Native macOS speech voice discovery is temporarily unavailable."
+            state = "unavailable"
+        elif ready:
+            detail = "Native local speech is ready."
+            state = "ready"
+        else:
+            detail = "Native macOS speech is not available."
+            state = "unavailable"
         return {
             "provider_id": self.provider_id,
-            "state": "ready" if ready else "unavailable",
+            "state": state,
             "configured": True,
             "installed": self._valid_executable(),
             "model_available": False,
             "runtime_verified": ready,
             "voice_count": len(voices),
-            "detail": (
-                "Native local speech is ready."
-                if ready
-                else "Native macOS speech is not available."
-            ),
+            "detail": detail,
         }
 
     def synthesize(
@@ -249,8 +287,10 @@ class MacOSSystemSpeechProvider(SpeechProvider):
     ) -> ProviderSynthesis:
         if self.health()["state"] != "ready":
             raise ProviderError("provider_unavailable", "macOS system speech is unavailable")
-        if request.output_format != "aiff":
-            raise ProviderError("format_unsupported", "macOS provider outputs AIFF")
+        if request.output_format not in {"aiff", "wav"}:
+            raise ProviderError(
+                "format_unsupported", "macOS provider outputs AIFF or WAV"
+            )
         available = {v["voice_id"]: v for v in self._voices()}
         if request.voice_id and request.voice_id not in available:
             raise ProviderError("voice_unavailable", "requested system voice is unavailable")
@@ -259,7 +299,13 @@ class MacOSSystemSpeechProvider(SpeechProvider):
         with self._lock:
             self._cancel[operation_id] = event
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        argv = [str(self.executable), "-o", str(output_path)]
+        # `say` always writes AIFF/AIFF-C; convert to browser-playable WAV when requested.
+        aiff_path = (
+            output_path
+            if request.output_format == "aiff"
+            else output_path.with_name(f".{operation_id}.aiff.tmp")
+        )
+        argv = [str(self.executable), "-o", str(aiff_path)]
         if request.voice_id:
             argv.extend(["-v", request.voice_id])
         argv.extend(["-r", str(int(175 * request.speaking_rate)), request.text])
@@ -278,16 +324,42 @@ class MacOSSystemSpeechProvider(SpeechProvider):
                 raise ProviderError("timeout", "system speech synthesis timed out")
             if not result.ok:
                 raise ProviderError("provider_failed", "system speech synthesis failed")
-            if not output_path.is_file():
+            if not aiff_path.is_file():
                 raise ProviderError("artifact_missing", "speech artifact was not produced")
-            size = output_path.stat().st_size
+            final_path = aiff_path
+            final_format = "aiff"
+            if request.output_format == "wav":
+                convert = self.runner(
+                    [
+                        str(self.converter),
+                        "-f",
+                        "WAVE",
+                        "-d",
+                        "LEI16@22050",
+                        str(aiff_path),
+                        str(output_path),
+                    ],
+                    timeout_sec=10.0,
+                    cancel_check=lambda: event.is_set() or cancel_check(),
+                    max_stdout=1_000,
+                    max_stderr=2_000,
+                )
+                if convert.cancellation_confirmed or event.is_set() or cancel_check():
+                    raise ProviderCancelled()
+                if convert.timeout_detected or not convert.ok or not output_path.is_file():
+                    raise ProviderError(
+                        "provider_failed", "system speech WAV conversion failed"
+                    )
+                final_path = output_path
+                final_format = "wav"
+            size = final_path.stat().st_size
             if size <= 0 or size > MAX_AUDIO_BYTES:
                 raise ProviderError("output_limit", "speech artifact size is invalid")
             total_ms = (time.monotonic() - started) * 1000
-            sample_rate, duration = _audio_metadata(output_path, 22_050)
+            sample_rate, duration = _audio_metadata(final_path, 22_050)
             return ProviderSynthesis(
                 provider=self.provider_id,
-                output_format="aiff",
+                output_format=final_format,
                 sample_rate=sample_rate,
                 artifact_bytes=size,
                 duration_seconds=duration,
@@ -297,8 +369,12 @@ class MacOSSystemSpeechProvider(SpeechProvider):
         except ProviderError:
             if output_path.is_file():
                 output_path.unlink()
+            if aiff_path != output_path and aiff_path.is_file():
+                aiff_path.unlink()
             raise
         finally:
+            if aiff_path != output_path and aiff_path.is_file():
+                aiff_path.unlink()
             with self._lock:
                 self._cancel.pop(operation_id, None)
 

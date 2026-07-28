@@ -254,12 +254,15 @@ async function routeVoxFallback(page, token) {
       if (String(body.text || "").includes(privateLearnerResponse)) {
         report.network.privateLearnerTextInSpeech += 1;
       }
+      // Drop inherited Content-Length: rewritten body length differs from the
+      // original "auto" provider field and a stale length can hang the POST.
+      const headers = { ...route.request().headers() };
+      delete headers["content-length"];
+      delete headers["Content-Length"];
+      headers["content-type"] = "application/json";
       const response = await route.fetch({
         postData: JSON.stringify({ ...body, provider: "voxcpm" }),
-        headers: {
-          ...route.request().headers(),
-          "content-type": "application/json",
-        },
+        headers,
       });
       const responseText = await response.text();
       if (/\/Users\/|\/private\/var\/|voice-artifacts\//.test(responseText)) {
@@ -385,9 +388,37 @@ async function certifyVoiceJourney(browser, token) {
   gate("assistant_speak_visible_focus", focusVisible, "", report.accessibility);
 
   await speakButtons.first().click();
-  await page
-    .locator('.voice-output-dock[data-voice-state="completed"]')
-    .waitFor({ timeout: 30000 });
+  try {
+    await page
+      .locator('.voice-output-dock[data-voice-state="completed"]')
+      .waitFor({ timeout: 45000 });
+  } catch (error) {
+    const dockState = await page
+      .locator(".voice-output-dock")
+      .evaluate((el) => ({
+        state: el.getAttribute("data-voice-state"),
+        text: el.innerText.slice(0, 400),
+      }))
+      .catch(() => null);
+    let apiOps = null;
+    try {
+      apiOps = await api("/voice/speech", { token });
+    } catch (e) {
+      apiOps = { error: String(e) };
+    }
+    let health = null;
+    try {
+      health = await api("/voice/health", { token });
+    } catch (e) {
+      health = { error: String(e) };
+    }
+    report.timings.completedWaitDiagnostics = {
+      dock: dockState,
+      apiOps: apiOps?.payload || apiOps,
+      health: health?.payload || health,
+    };
+    throw error;
+  }
   gate(
     "no_autoplay_after_synthesis",
     await page
@@ -693,12 +724,13 @@ async function main() {
     gate("frontend_loopback", true);
 
     await certifyAgentBrowser();
-    await certifyM64Regression();
 
     browser = await chromium.launch({
       headless: true,
       args: ["--autoplay-policy=user-gesture-required"],
     });
+    // Run the dedicated voice journey before the broad M64 shell regression so
+    // multi-page shell mounts cannot race native voice discovery under load.
     ({ context: voiceContext, page: voicePage } = await certifyVoiceJourney(
       browser,
       token
@@ -718,6 +750,7 @@ async function main() {
       { width: 390, height: 844 },
       "reduce"
     );
+    await certifyM64Regression();
 
     gate(
       "voice_urls_have_no_tokens",

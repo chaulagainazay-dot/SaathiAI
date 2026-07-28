@@ -398,8 +398,20 @@ def test_macos_provider_uses_safe_argv_and_voxcpm_is_explicit_and_offline(
 
     def runner(argv, **kwargs):
         calls.append((argv, kwargs))
-        if argv[-1] == "?":
+        # Voice discovery: `say -v ?`
+        if len(argv) >= 3 and argv[1] == "-v" and argv[2] == "?":
             return SimpleNamespace(ok=True, stdout="Daniel en_GB # fixture\n")
+        # afconvert WAVE conversion path used for browser-playable artifacts
+        if Path(argv[0]).name == "afconvert":
+            output = Path(argv[-1])
+            output.write_bytes(b"RIFF\x04\x00\x00\x00WAVE")
+            return SimpleNamespace(
+                ok=True,
+                stdout="",
+                stderr="",
+                cancellation_confirmed=False,
+                timeout_detected=False,
+            )
         output = Path(argv[argv.index("-o") + 1])
         output.write_bytes(b"FORM\x00\x00\x00\x04AIFF")
         return SimpleNamespace(
@@ -425,10 +437,28 @@ def test_macos_provider_uses_safe_argv_and_voxcpm_is_explicit_and_offline(
         request, tmp_path / "speech_fixture.aiff", cancel_check=lambda: False
     )
     assert result.artifact_bytes == 12
-    synthesis_argv = calls[-1][0]
+    assert result.output_format == "aiff"
+    synthesis_argv = [argv for argv, _ in calls if Path(argv[0]).name == "say" and "-o" in argv][-1]
     assert synthesis_argv[0] == str(say)
     assert synthesis_argv[-1] == request.text
     assert all("shell" not in kwargs for _, kwargs in calls)
+
+    wav_request = SpeechRequest.from_payload(
+        ctx,
+        {
+            "text": "Browser playable speech.",
+            "voice_id": "Daniel",
+            "provider": "macos_system",
+            "output_format": "wav",
+        },
+    )
+    wav_result = system.synthesize(
+        wav_request, tmp_path / "speech_fixture.wav", cancel_check=lambda: False
+    )
+    assert wav_result.output_format == "wav"
+    assert wav_result.artifact_bytes == 12
+    assert any(Path(argv[0]).name == "afconvert" for argv, _ in calls)
+    assert "wav" in system.capabilities()["output_formats"]
 
     monkeypatch.setenv("SAATHI_VOXCPM_STARTUP_TIMEOUT", "not-a-number")
     config = VoxCPMConfig.from_env()
