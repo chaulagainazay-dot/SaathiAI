@@ -1,6 +1,6 @@
 # M73 — Voice Architecture and Machine-Fit Audit
 
-Status: complete pending checkpoint commit.
+Status: complete.
 
 ## Scope completed
 
@@ -23,4 +23,6 @@ Status: complete pending checkpoint commit.
 - No model download.
 - No production, public listener, paid call, push, merge, deploy or PR.
 - No `docs/design-spec/` modification or staging.
+## Commits
 
+- Implementation/audit: `0f43acd`

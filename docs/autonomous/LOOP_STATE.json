@@ -1,11 +1,24 @@
 {
-  "goal_id": "AUTONOMOUS_MISSION_RUNTIME",
-  "baseline_sha": "a4cb5c4d872a3edf048d52b7cd62bf9346703613",
-  "current_sha": "e39b1bbd4ea5b3f4672b14aee119a62ee40a6370",
-  "current_milestone": "M72",
-  "status": "complete",
-  "completed_milestones": ["M69", "M70", "M71", "M72"],
-  "next_action": "Await an explicitly authorized future platform or application mission.",
+  "goal_id": "SAATHIOS_VOICE_OUTPUT_FOUNDATION",
+  "historical_baseline_sha": "a4cb5c4d872a3edf048d52b7cd62bf9346703613",
+  "baseline_sha": "7873586aea6066d9e1d51b1d60f85ca413127907",
+  "current_sha": "0f43acd6addc4e0edc8d3a0a61070bb4763618a5",
+  "current_milestone": "M74",
+  "status": "in_progress",
+  "completed_milestones": ["M73"],
+  "prior_completed_goals": [
+    {
+      "goal_id": "IELTS_ALERT",
+      "terminal_sha": "a4cb5c4d872a3edf048d52b7cd62bf9346703613",
+      "status": "complete"
+    },
+    {
+      "goal_id": "AUTONOMOUS_MISSION_RUNTIME",
+      "terminal_sha": "7873586aea6066d9e1d51b1d60f85ca413127907",
+      "status": "complete"
+    }
+  ],
+  "next_action": "Implement and certify M74 provider-neutral speech backend.",
   "last_verified_at": "2026-07-28",
-  "stop_reason": "MISSION_RUNTIME_COMPLETE"
+  "stop_reason": null
 }

@@ -2,16 +2,18 @@
 
 ## Active
 
-- M73 — voice recovery audit and machine-fit decision.
+- M74 — provider-neutral persisted SpeechService, profiles, RBAC, providers and API.
 
 ## Pending
 
-- M74 — provider-neutral persisted SpeechService, profiles, RBAC, providers and API.
 - M75 — unified-shell speak experience and IELTS read-aloud.
 - M76 — voice browser, resource, security and full-regression certification.
 
 ## Completed
 
+- M73 — recovery audit, classified voice inventory, M2/8 GB machine-fit assessment,
+  adapter-first provider decision, macOS-first certification plan, VoxCPM kept
+  uninstalled, and cloning kept disabled (`0f43acd`).
 - Prior goal retained: M69–M72 Autonomous Mission Runtime, terminal verdict
   `MISSION_RUNTIME_COMPLETE`, final repository checkpoint `7873586`.
 - Repository intake/recovery audit at

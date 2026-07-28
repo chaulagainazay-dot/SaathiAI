@@ -1,7 +1,7 @@
 # SaathiOS Voice Backend Decision
 
-Date: 2026-07-28  
-Milestone: M73  
+Date: 2026-07-28
+Milestone: M73
 Target: Apple M2 MacBook, 8 GB unified memory, 256 GB SSD, localhost-first
 
 ## Decision
@@ -149,4 +149,3 @@ downloading weights or adding a large environment. It must record:
 - English human quality review;
 - bounded experimental Nepali review only if accepted by the selected backend;
 - no public listener, auto-download, hidden external traffic, or cloning activation.
-
