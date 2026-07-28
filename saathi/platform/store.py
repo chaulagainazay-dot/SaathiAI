@@ -267,6 +267,7 @@ class PlatformStore:
         self._migrate_m53()
         self._migrate_m61()
         self._migrate_m65()
+        self._migrate_m69()
         self._conn.commit()
         # Serialize all shared-connection access (auth/session/approval/audit reads
         # run under FastAPI's threadpool concurrently). Reentrant so existing
@@ -1290,6 +1291,184 @@ class PlatformStore:
             );
             CREATE INDEX IF NOT EXISTS idx_ielts_evidence_scope
                 ON ielts_evidence_events(org_id, workspace_id, created_at DESC);
+            """
+        )
+
+    def _migrate_m69(self) -> None:
+        """Idempotent Autonomous Mission Runtime schema.
+
+        The existing ``missions`` table remains the platform mission authority.
+        These tables add its resumable hierarchy, DAG, evidence, decisions,
+        checkpoints, reviews, and certifications; they are not a second mission
+        store or an execution path.
+        """
+        self._conn.executescript(
+            """
+            CREATE TABLE IF NOT EXISTS mission_runtimes (
+                mission_id TEXT PRIMARY KEY,
+                org_id TEXT NOT NULL,
+                workspace_id TEXT NOT NULL,
+                project_id TEXT NOT NULL,
+                owner_id TEXT NOT NULL,
+                objective TEXT NOT NULL,
+                state TEXT NOT NULL DEFAULT 'DRAFT',
+                active_phase_id TEXT NOT NULL DEFAULT '',
+                active_task_id TEXT NOT NULL DEFAULT '',
+                active_agent TEXT NOT NULL DEFAULT '',
+                max_parallel_tasks INTEGER NOT NULL DEFAULT 1,
+                budget_json TEXT NOT NULL DEFAULT '{}',
+                usage_json TEXT NOT NULL DEFAULT '{}',
+                latest_commit TEXT NOT NULL DEFAULT '',
+                rollback_sha TEXT NOT NULL DEFAULT '',
+                test_status TEXT NOT NULL DEFAULT 'NOT_RUN',
+                browser_status TEXT NOT NULL DEFAULT 'NOT_RUN',
+                known_blockers_json TEXT NOT NULL DEFAULT '[]',
+                warning_json TEXT NOT NULL DEFAULT '[]',
+                stop_reason TEXT NOT NULL DEFAULT '',
+                cancel_requested INTEGER NOT NULL DEFAULT 0,
+                started_at REAL NOT NULL DEFAULT 0,
+                finished_at REAL NOT NULL DEFAULT 0,
+                last_checkpoint_at REAL NOT NULL DEFAULT 0,
+                version INTEGER NOT NULL DEFAULT 1,
+                created_at REAL NOT NULL,
+                updated_at REAL NOT NULL,
+                FOREIGN KEY (mission_id) REFERENCES missions(mission_id)
+            );
+            CREATE INDEX IF NOT EXISTS idx_m69_runtime_scope
+                ON mission_runtimes(org_id, workspace_id, updated_at DESC);
+            CREATE INDEX IF NOT EXISTS idx_m69_runtime_state
+                ON mission_runtimes(org_id, workspace_id, state);
+
+            CREATE TABLE IF NOT EXISTS mission_runtime_nodes (
+                node_id TEXT PRIMARY KEY,
+                mission_id TEXT NOT NULL,
+                parent_id TEXT NOT NULL DEFAULT '',
+                node_type TEXT NOT NULL,
+                title TEXT NOT NULL,
+                objective TEXT NOT NULL DEFAULT '',
+                status TEXT NOT NULL DEFAULT 'PENDING',
+                priority INTEGER NOT NULL DEFAULT 50,
+                position INTEGER NOT NULL DEFAULT 0,
+                agent_type TEXT NOT NULL DEFAULT '',
+                tool_id TEXT NOT NULL DEFAULT '',
+                capability TEXT NOT NULL DEFAULT '',
+                arguments_json TEXT NOT NULL DEFAULT '{}',
+                approval_id TEXT NOT NULL DEFAULT '',
+                estimated_effort REAL NOT NULL DEFAULT 0,
+                token_estimate INTEGER NOT NULL DEFAULT 0,
+                max_retries INTEGER NOT NULL DEFAULT 0,
+                attempt INTEGER NOT NULL DEFAULT 0,
+                not_before REAL NOT NULL DEFAULT 0,
+                requires_review INTEGER NOT NULL DEFAULT 0,
+                concurrency_safe INTEGER NOT NULL DEFAULT 1,
+                verification_json TEXT NOT NULL DEFAULT '[]',
+                execution_id TEXT NOT NULL DEFAULT '',
+                outcome_summary TEXT NOT NULL DEFAULT '',
+                error_code TEXT NOT NULL DEFAULT '',
+                started_at REAL NOT NULL DEFAULT 0,
+                finished_at REAL NOT NULL DEFAULT 0,
+                created_at REAL NOT NULL,
+                updated_at REAL NOT NULL,
+                FOREIGN KEY (mission_id) REFERENCES mission_runtimes(mission_id)
+            );
+            CREATE INDEX IF NOT EXISTS idx_m69_node_mission
+                ON mission_runtime_nodes(mission_id, node_type, position);
+            CREATE INDEX IF NOT EXISTS idx_m69_node_queue
+                ON mission_runtime_nodes(mission_id, status, priority, not_before);
+
+            CREATE TABLE IF NOT EXISTS mission_runtime_dependencies (
+                mission_id TEXT NOT NULL,
+                task_id TEXT NOT NULL,
+                depends_on_task_id TEXT NOT NULL,
+                created_at REAL NOT NULL,
+                PRIMARY KEY (mission_id, task_id, depends_on_task_id),
+                FOREIGN KEY (task_id) REFERENCES mission_runtime_nodes(node_id),
+                FOREIGN KEY (depends_on_task_id) REFERENCES mission_runtime_nodes(node_id)
+            );
+
+            CREATE TABLE IF NOT EXISTS mission_runtime_evidence (
+                evidence_id TEXT PRIMARY KEY,
+                mission_id TEXT NOT NULL,
+                task_id TEXT NOT NULL DEFAULT '',
+                evidence_type TEXT NOT NULL,
+                status TEXT NOT NULL,
+                summary TEXT NOT NULL,
+                reference TEXT NOT NULL DEFAULT '',
+                check_name TEXT NOT NULL DEFAULT '',
+                collected_by TEXT NOT NULL DEFAULT '',
+                metadata_json TEXT NOT NULL DEFAULT '{}',
+                created_at REAL NOT NULL,
+                FOREIGN KEY (mission_id) REFERENCES mission_runtimes(mission_id)
+            );
+            CREATE INDEX IF NOT EXISTS idx_m69_evidence_mission
+                ON mission_runtime_evidence(mission_id, created_at DESC);
+
+            CREATE TABLE IF NOT EXISTS mission_runtime_decisions (
+                decision_id TEXT PRIMARY KEY,
+                mission_id TEXT NOT NULL,
+                task_id TEXT NOT NULL DEFAULT '',
+                decision_type TEXT NOT NULL,
+                outcome TEXT NOT NULL,
+                reason TEXT NOT NULL,
+                policy TEXT NOT NULL,
+                human_approval_required INTEGER NOT NULL DEFAULT 0,
+                actor TEXT NOT NULL DEFAULT '',
+                created_at REAL NOT NULL,
+                FOREIGN KEY (mission_id) REFERENCES mission_runtimes(mission_id)
+            );
+            CREATE INDEX IF NOT EXISTS idx_m69_decision_mission
+                ON mission_runtime_decisions(mission_id, created_at DESC);
+
+            CREATE TABLE IF NOT EXISTS mission_runtime_checkpoints (
+                checkpoint_id TEXT PRIMARY KEY,
+                mission_id TEXT NOT NULL,
+                current_phase_id TEXT NOT NULL DEFAULT '',
+                active_task_id TEXT NOT NULL DEFAULT '',
+                active_agent TEXT NOT NULL DEFAULT '',
+                completed_tasks_json TEXT NOT NULL DEFAULT '[]',
+                pending_tasks_json TEXT NOT NULL DEFAULT '[]',
+                resource_usage_json TEXT NOT NULL DEFAULT '{}',
+                latest_commit TEXT NOT NULL DEFAULT '',
+                rollback_sha TEXT NOT NULL DEFAULT '',
+                test_status TEXT NOT NULL DEFAULT 'NOT_RUN',
+                browser_status TEXT NOT NULL DEFAULT 'NOT_RUN',
+                known_blockers_json TEXT NOT NULL DEFAULT '[]',
+                snapshot_hash TEXT NOT NULL,
+                created_by TEXT NOT NULL DEFAULT '',
+                created_at REAL NOT NULL,
+                FOREIGN KEY (mission_id) REFERENCES mission_runtimes(mission_id)
+            );
+            CREATE INDEX IF NOT EXISTS idx_m69_checkpoint_mission
+                ON mission_runtime_checkpoints(mission_id, created_at DESC);
+
+            CREATE TABLE IF NOT EXISTS mission_runtime_reviews (
+                review_id TEXT PRIMARY KEY,
+                mission_id TEXT NOT NULL,
+                task_id TEXT NOT NULL DEFAULT '',
+                reviewer_agent TEXT NOT NULL,
+                verdict TEXT NOT NULL,
+                findings_json TEXT NOT NULL DEFAULT '[]',
+                evidence_ids_json TEXT NOT NULL DEFAULT '[]',
+                created_at REAL NOT NULL,
+                FOREIGN KEY (mission_id) REFERENCES mission_runtimes(mission_id)
+            );
+            CREATE INDEX IF NOT EXISTS idx_m69_review_mission
+                ON mission_runtime_reviews(mission_id, created_at DESC);
+
+            CREATE TABLE IF NOT EXISTS mission_runtime_certifications (
+                certification_id TEXT PRIMARY KEY,
+                mission_id TEXT NOT NULL,
+                verdict TEXT NOT NULL,
+                summary TEXT NOT NULL,
+                evidence_ids_json TEXT NOT NULL DEFAULT '[]',
+                limitations_json TEXT NOT NULL DEFAULT '[]',
+                certified_by TEXT NOT NULL,
+                snapshot_hash TEXT NOT NULL,
+                created_at REAL NOT NULL,
+                FOREIGN KEY (mission_id) REFERENCES mission_runtimes(mission_id)
+            );
+            CREATE INDEX IF NOT EXISTS idx_m69_cert_mission
+                ON mission_runtime_certifications(mission_id, created_at DESC);
             """
         )
 

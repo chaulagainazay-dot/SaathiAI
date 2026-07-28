@@ -1,5 +1,21 @@
 # SaathiOS Autonomous Roadmap
 
+## M69 — Autonomous Mission Runtime Foundation (2026-07-28)
+
+| Field | Value |
+| --- | --- |
+| Milestone | M69_COMPLETE |
+| Scope | Durable Mission → Goal → Phase → Milestone → Task → Subtask hierarchy, DAG, lifecycle, budgets, evidence/review gates, checkpoints, dashboard read model |
+| Authority | Existing platform `missions`, identity/context, RBAC, project/workspace scope, audit, and PlatformStore |
+| Execution | No new execution path; M70 must use PlatformAgentRuntime → ExecutionGateway only |
+| Persistence | Additive single-host SQLite runtime/nodes/dependencies/evidence/decisions/checkpoints/reviews/certifications |
+| Certification | 4 focused + 124 related backend tests; 180 frontend tests; retained M64 browser PASS; production-code secret scan clean |
+| Safety | Bounded plans/resources/retries; nested secret fields rejected; no production or trading authority |
+| Next | M70 bounded decision/retry/recovery and governed role-agent dispatch |
+
+Evidence: `docs/autonomous/M69_MISSION_RUNTIME_FOUNDATION.md`. No push, merge,
+deployment, or production change.
+
 ## M61 — Backend Workflow Persistence & Safe Mutation APIs (2026-07-26)
 
 | Field | Value |

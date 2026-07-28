@@ -76,3 +76,30 @@
   build, and browser gates.
 - Consequences: runtime audit is clean. ESLint-only minimatch advisories remain
   documented until a coordinated major toolchain upgrade.
+
+## ADR-MISSION-001 — compose mission control over existing platform authorities
+
+- Decision: keep `missions` in `PlatformStore` authoritative, add additive
+  mission-runtime tables and a tenant-scoped service, and reserve all external tool
+  dispatch for `PlatformAgentRuntime` through the sole `ExecutionGateway`.
+- Alternatives: extend the legacy M10 executor directly; create another mission
+  database, queue daemon, identity layer, or execution engine.
+- Evidence: M17 already proves graph execution concepts, M20 provides engineering
+  checkpoint semantics, M52 makes `PlatformAgentRuntime` canonical, and the platform
+  store/context/RBAC/audit services already own durable tenant state and authority.
+- Consequences: M69 adds no tool execution path. M70 may schedule and coordinate tasks
+  but can dispatch them only through the canonical runtime/gateway and cannot infer or
+  bypass approval.
+
+## ADR-MISSION-002 — persist an explicit hierarchy and immutable evidence trail
+
+- Decision: model Goal → Phase → Milestone → Task → Subtask as bounded nodes, task
+  dependencies as a validated DAG, and evidence/decisions/checkpoints/reviews/
+  certifications as append-only mission artifacts.
+- Alternatives: store an opaque plan JSON blob; infer progress from logs; overwrite
+  checkpoints.
+- Evidence: restart recovery requires deterministic task identity, explicit
+  transitions, dependency status, budget counters, and a snapshot hash.
+- Consequences: plan replacement is allowed only before any task attempt and clears
+  stale plan artifacts atomically. Completion is gated by passing named evidence and
+  independent review where configured.
