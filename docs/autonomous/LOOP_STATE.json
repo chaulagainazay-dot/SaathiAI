@@ -3,10 +3,17 @@
   "historical_baseline_sha": "a4cb5c4d872a3edf048d52b7cd62bf9346703613",
   "baseline_sha": "7873586aea6066d9e1d51b1d60f85ca413127907",
   "session_start_sha": "285ffbbaa9d4180301d31bb1cd1a8bd8526e8d1a",
-  "current_sha": "PENDING_M78_DOCS_COMMIT",
+  "current_sha": "4896c0a102c7cd8606616b708a93508add1fe4a9",
   "current_milestone": "M78",
   "status": "complete_with_limitations",
-  "completed_milestones": ["M73", "M74", "M75", "M76", "M77", "M78"],
+  "completed_milestones": [
+    "M73",
+    "M74",
+    "M75",
+    "M76",
+    "M77",
+    "M78"
+  ],
   "prior_completed_goals": [
     {
       "goal_id": "IELTS_ALERT",
@@ -21,5 +28,6 @@
   ],
   "next_action": "Await a separately authorized VoxCPM resource decision or production-hardening goal; do not install VoxCPM automatically.",
   "last_verified_at": "2026-07-28",
-  "stop_reason": "VOICE_FOUNDATION_COMPLETE_WITH_LIMITATIONS: macOS English backend and browser playback certified; VoxCPM remains optional/uninstalled; cloning disabled; production not authorized."
+  "stop_reason": "VOICE_FOUNDATION_COMPLETE_WITH_LIMITATIONS: macOS English backend and browser playback certified; VoxCPM remains optional/uninstalled; cloning disabled; production not authorized.",
+  "m78_implementation_sha": "d3c4987c3f472a491e4b78c54dfc1e012d79e426"
 }
