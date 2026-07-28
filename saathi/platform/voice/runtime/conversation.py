@@ -13,15 +13,15 @@ from .models import (
     InterruptionRecord,
     TranscriptEntry,
     TranscriptRole,
-    yeti_system_preamble,
 )
 
 
 class ConversationRuntime:
     """Maintains ConversationSession lifecycle and transcript history.
 
-    Chat generation is injected so production can use ChatEngine while tests
-    stay deterministic. Never owns identity, RBAC, or SpeechService.
+    Intelligence is provided by ConversationService (preferred) or explicit
+    inject hooks for tests. Deterministic templates are NOT used as model
+    intelligence on the default production path.
     """
 
     def __init__(
@@ -29,9 +29,14 @@ class ConversationRuntime:
         *,
         chat_fn: Callable[[ConversationSession, str], str] | None = None,
         stream_fn: Callable[[ConversationSession, str], Any] | None = None,
+        conversation_service=None,
+        platform_ctx_fn: Callable[[], Any] | None = None,
     ):
         self._chat_fn = chat_fn
         self._stream_fn = stream_fn
+        self._conversation_service = conversation_service
+        self._platform_ctx_fn = platform_ctx_fn
+        self._active_request_ids: list[str] = []
 
     def transition(
         self, session: ConversationSession, target: ConversationState
@@ -127,66 +132,40 @@ class ConversationRuntime:
         session.interruptions.append(record)
         return record
 
+    def bind_conversation_service(self, service, platform_ctx_fn=None) -> None:
+        self._conversation_service = service
+        if platform_ctx_fn is not None:
+            self._platform_ctx_fn = platform_ctx_fn
+
+    def cancel_active_generation(self) -> None:
+        service = self._conversation_service
+        if service is None:
+            return
+        for request_id in list(self._active_request_ids):
+            try:
+                service.cancel(request_id)
+            except Exception:
+                pass
+        self._active_request_ids.clear()
+
     def generate_reply(self, session: ConversationSession, user_text: str) -> str:
         if self._chat_fn is not None:
             return (self._chat_fn(session, user_text) or "").strip()
-        return self._default_yeti_reply(session, user_text)
+        parts = list(self.stream_reply(session, user_text))
+        return (parts[-1] if parts else "").strip()
 
     def stream_reply(self, session: ConversationSession, user_text: str):
         if self._stream_fn is not None:
             yield from self._stream_fn(session, user_text)
             return
-        # Deterministic chunked fallback for tests / offline hosts.
-        full = self.generate_reply(session, user_text)
-        if not full:
+        service = self._conversation_service
+        if service is not None and self._platform_ctx_fn is not None:
+            ctx = self._platform_ctx_fn()
+            last = ""
+            for assembled in service.stream_for_voice(ctx, session, user_text):
+                if assembled and assembled != last:
+                    last = assembled
+                    yield assembled
             return
-        words = full.split()
-        buf: list[str] = []
-        for word in words:
-            buf.append(word)
-            if len(buf) >= 6 or word[-1:] in ".!?":
-                yield " ".join(buf)
-                buf = []
-        if buf:
-            yield " ".join(buf)
-
-    @staticmethod
-    def _default_yeti_reply(session: ConversationSession, user_text: str) -> str:
-        mode = session.yeti_mode or "general"
-        text = (user_text or "").strip()
-        lowered = text.lower()
-        if not text:
-            return "I'm listening. What would you like to talk about?"
-        if any(g in lowered for g in ("hello", "hi yeti", "hey yeti", "good morning")):
-            return (
-                "Hi, I'm Yeti. I'm here with you in this conversation. "
-                "How can I help?"
-            )
-        if mode == "ielts":
-            return (
-                f"For IELTS practice, I heard: {text}. "
-                "Let's keep the answer clear and structured. "
-                "Would you like band tips for fluency or vocabulary next?"
-            )
-        if mode == "saathios_help":
-            return (
-                f"About SaathiOS: {text}. I can guide you through shell modules, "
-                "approvals, and local workflows. What should we open first?"
-            )
-        if mode == "hcg":
-            return (
-                f"On HCG: {text}. I'll keep this practical and local-first. "
-                "What outcome do you want next?"
-            )
-        if mode == "trading_guidance":
-            return (
-                f"Trading guidance only — not an order. You said: {text}. "
-                "I can discuss risk education and process, but live trading stays "
-                "under Trading Guardian with human approval."
-            )
-        # Include mode preamble influence without emotional manipulation.
-        _ = yeti_system_preamble(mode)
-        return (
-            f"I heard you: {text}. I'm staying with this conversation and can "
-            "continue naturally. What should we do next?"
-        )
+        # Fail closed — never present deterministic templates as model intelligence.
+        return

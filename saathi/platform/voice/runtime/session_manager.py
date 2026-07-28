@@ -49,18 +49,25 @@ class VoiceSessionManager:
         *,
         speech_service=None,
         conversation: ConversationRuntime | None = None,
+        conversation_service=None,
         stt_providers=None,
     ):
         self.store = platform_store
         self.repo = VoiceRuntimeRepository(platform_store)
         self.speech_service = speech_service
-        self.conversation = conversation or ConversationRuntime()
+        self.conversation_service = conversation_service
+        self.conversation = conversation or ConversationRuntime(
+            conversation_service=conversation_service
+        )
+        if conversation_service is not None:
+            self.conversation.bind_conversation_service(conversation_service)
         self.stt_providers = stt_providers
         self._lock = threading.RLock()
         self._inputs: dict[str, VoiceInputService] = {}
         self._playback: dict[str, AudioPlaybackController] = {}
         self._speech_runtimes: dict[str, SpeechRuntime] = {}
         self._spoken_partial: dict[str, str] = {}
+        self._turn_ctx = None
 
     # ── RBAC helpers ─────────────────────────────────────────────────────
     def _require(self, ctx, permission: PlatformPermission) -> None:
@@ -263,6 +270,10 @@ class VoiceSessionManager:
                 self._hard_stop_audio(ctx, session)
             except Exception:
                 pass
+            try:
+                self.conversation.cancel_active_generation()
+            except Exception:
+                pass
             session.state = ConversationState.FINISHED.value
             session.input_state = InputState.IDLE.value
             session.playback_state = PlaybackState.IDLE.value
@@ -271,6 +282,11 @@ class VoiceSessionManager:
             self.repo.save_session(session)
             self._cleanup_runtime(session.session_id)
             cleared += 1
+        if self.conversation_service is not None:
+            try:
+                self.conversation_service.clear_user(ctx)
+            except Exception:
+                pass
         if cleared:
             self._audit(
                 ctx,
@@ -486,16 +502,33 @@ class VoiceSessionManager:
             self.conversation.transition(session, ConversationState.LISTENING)
         self.conversation.transition(session, ConversationState.THINKING)
         self._persist(session)
+        # Bind platform context for ConversationService generation
+        self._turn_ctx = ctx
+        if self.conversation_service is not None:
+            self.conversation.bind_conversation_service(
+                self.conversation_service,
+                platform_ctx_fn=lambda: self._turn_ctx,
+            )
         spoken_so_far = ""
         partial_ops: list[dict[str, Any]] = []
         assembled = ""
+        last_emitted = ""
+        intelligence_kind = "unavailable"
         try:
             for chunk in self.conversation.stream_reply(session, user_text):
                 if not chunk:
                     continue
-                assembled = (assembled + " " + chunk).strip() if assembled else chunk
+                # stream_for_voice yields full assembled text; avoid double-append
+                if chunk.startswith(assembled) or not assembled:
+                    assembled = chunk
+                else:
+                    assembled = (assembled + " " + chunk).strip()
+                if assembled == last_emitted:
+                    continue
+                last_emitted = assembled
                 session.partial_assistant_response = assembled
                 self.conversation.transition(session, ConversationState.RESPONDING)
+                intelligence_kind = "model"
                 # Incremental speech when SpeechService is bound
                 if self.speech_service is not None:
                     self._require(ctx, PlatformPermission.VOICE_SPEAK)
@@ -512,15 +545,41 @@ class VoiceSessionManager:
                         partial_ops.append(op)
                         play = self._playback_for(session).play(
                             speech_operation_id=op.get("operation_id", ""),
-                            text=chunk,
+                            text=chunk[-200:] if isinstance(chunk, str) else "",
                         )
                         session.active_speech_operation_id = op.get("operation_id", "")
                         session.active_playback_id = play.playback_id
                         session.playback_state = PlaybackState.PLAYING.value
                 self._persist(session)
 
-            # Speak any remainder not covered by sentence boundaries
-            final_text = assembled or self.conversation.generate_reply(session, user_text)
+            final_text = assembled
+            if not final_text:
+                # Truthful model-unavailable path — never invent intelligence
+                session.error_category = "MODEL_NOT_AVAILABLE"
+                session.error_message = "No configured conversational model generated a response."
+                self.conversation.transition(session, ConversationState.FAILED)
+                self._persist(session)
+                evidence = self.repo.create_evidence(
+                    session,
+                    event_type="voice.turn.model_unavailable",
+                    summary="Conversational model unavailable; no template reply emitted.",
+                    metadata={"user_chars": len(user_text or "")},
+                )
+                self._audit(
+                    ctx,
+                    "voice.turn.model_unavailable",
+                    session=session,
+                    evidence=evidence,
+                    outcome="failure",
+                )
+                return {
+                    "assistant_text": "",
+                    "speech_operations": [],
+                    "evidence_id": evidence,
+                    "intelligence_kind": "unavailable",
+                    "error_code": "MODEL_NOT_AVAILABLE",
+                }
+
             if self.speech_service is not None and final_text:
                 remainder = final_text
                 if spoken_so_far and final_text.startswith(spoken_so_far):
@@ -562,11 +621,12 @@ class VoiceSessionManager:
             evidence = self.repo.create_evidence(
                 session,
                 event_type="voice.turn.completed",
-                summary="Voice turn completed with optional streamed speech.",
+                summary="Voice turn completed with model-backed streamed speech.",
                 metadata={
                     "user_chars": len(user_text or ""),
                     "assistant_chars": len(final_text or ""),
                     "speech_ops": len(partial_ops),
+                    "intelligence_kind": intelligence_kind,
                 },
             )
             self._audit(
@@ -579,6 +639,7 @@ class VoiceSessionManager:
                 "assistant_text": final_text,
                 "speech_operations": partial_ops,
                 "evidence_id": evidence,
+                "intelligence_kind": intelligence_kind,
             }
         except PlatformContextError:
             raise
@@ -595,6 +656,8 @@ class VoiceSessionManager:
                 detail={"error_category": session.error_category},
             )
             raise PlatformContextError("VOICE_TURN_FAILED", "voice turn failed") from exc
+        finally:
+            self._turn_ctx = None
 
     def interrupt(
         self, ctx, session_id: str, *, reason: str = "barge_in"
@@ -603,6 +666,18 @@ class VoiceSessionManager:
         session = self._get_owned(ctx, session_id)
         from_state = session.state
         preserved = session.partial_assistant_response
+        # Cancel model generation first so late chunks are rejected.
+        # Do NOT clear multi-turn memory on barge-in — only generation/speech.
+        try:
+            self.conversation.cancel_active_generation()
+        except Exception:
+            pass
+        if self.conversation_service is not None:
+            try:
+                for rid in list(getattr(self.conversation_service, "_active", {}) or {}):
+                    self.conversation_service.cancel(rid)
+            except Exception:
+                pass
         # Preserve completed transcript entries; mark latest assistant partial if any
         if preserved:
             entry = self.conversation.append_assistant(
@@ -757,11 +832,15 @@ def default_voice_runtime(platform_service) -> VoiceSessionManager:
         existing = getattr(platform_service, "_voice_runtime", None)
         if existing is not None:
             return existing
+        from saathi.platform.conversation import default_conversation_service
         from saathi.platform.voice.service import default_speech_service
 
         speech = default_speech_service(platform_service)
+        conversation = default_conversation_service(platform_service)
         runtime = VoiceSessionManager(
-            platform_service.store, speech_service=speech
+            platform_service.store,
+            speech_service=speech,
+            conversation_service=conversation,
         )
         setattr(platform_service, "_voice_runtime", runtime)
         return runtime
@@ -773,3 +852,12 @@ def reset_voice_runtime_for_tests(platform_service=None) -> None:
         _DEFAULT_RUNTIME = None
         if platform_service is not None and hasattr(platform_service, "_voice_runtime"):
             delattr(platform_service, "_voice_runtime")
+        if platform_service is not None:
+            try:
+                from saathi.platform.conversation import (
+                    reset_conversation_service_for_tests,
+                )
+
+                reset_conversation_service_for_tests(platform_service)
+            except Exception:
+                pass

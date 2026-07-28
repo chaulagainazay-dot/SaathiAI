@@ -1,0 +1,42 @@
+{
+  "milestone": "M86",
+  "verdict": "LIVE_CONVERSATIONAL_INTELLIGENCE_COMPLETE_WITH_LIMITATIONS",
+  "real_model_used": true,
+  "provider": "ollama_local",
+  "model": "qwen2.5:1.5b",
+  "ollama_health": {
+    "provider_id": "ollama_local",
+    "adapter_implemented": true,
+    "executable_available": true,
+    "model_configured": true,
+    "model_loaded": true,
+    "generation_healthy": true,
+    "streaming_healthy": true,
+    "tool_calling_supported": false,
+    "certified": true,
+    "model": "qwen2.5:1.5b",
+    "detail": "Ollama reachable; model=qwen2.5:1.5b",
+    "auto_download": false,
+    "state": "ready"
+  },
+  "partial_transcript": "What is SaathiOS",
+  "turn1": {
+    "assistant_text_chars": 144,
+    "intelligence_kind": "model",
+    "latency_ms": 731.87,
+    "sample": "SaathiOS is a platform designed to help users manage their financial transactions efficiently, making it easier to save, spend, and track money."
+  },
+  "interrupt": {
+    "state": "LISTENING",
+    "interruptions": 1
+  },
+  "turn2": {
+    "assistant_text_chars": 137,
+    "latency_ms": 601.38,
+    "sample": "Sure! SaathiOS is an app for organizing finances where you can easily keep track of your spending, saving, and overall budget management."
+  },
+  "logout_cleared": 1,
+  "stt_certified": "browser",
+  "streaming": "provider_ndjson",
+  "production_authorized": false
+}

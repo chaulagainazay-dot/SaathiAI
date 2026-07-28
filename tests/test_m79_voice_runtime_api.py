@@ -4,7 +4,8 @@ from __future__ import annotations
 from fastapi.testclient import TestClient
 
 from saathi.platform.service import reset_platform_for_tests
-from saathi.platform.voice.runtime import reset_voice_runtime_for_tests
+from saathi.platform.conversation import make_test_conversation_service
+from saathi.platform.voice.runtime import VoiceSessionManager, reset_voice_runtime_for_tests
 from saathi.platform.voice.service import SpeechService, reset_speech_service_for_tests
 from saathi.tool_runtime.registry import reset_registry_for_tests
 from test_m74_voice_foundation import FakeProvider
@@ -37,6 +38,14 @@ def client_and_headers(tmp_path, monkeypatch):
         artifact_root=tmp_path / "api-artifacts",
     )
     platform._speech_service = speech
+    conv = make_test_conversation_service(
+        platform.store,
+        reply_fn=lambda messages: "Hello from injected intelligence for API tests.",
+    )
+    platform._conversation_service = conv
+    platform._voice_runtime = VoiceSessionManager(
+        platform.store, speech_service=speech, conversation_service=conv
+    )
     return client, {"X-Platform-Token": token}, platform, speech
 
 

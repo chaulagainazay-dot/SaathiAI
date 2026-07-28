@@ -1,14 +1,19 @@
 {
-  "goal_id": "SAATHIOS_REALTIME_VOICE_RUNTIME",
-  "historical_baseline_sha": "70d08932cc4e4c473f7af1db898c74bd6fd25c13",
-  "baseline_sha": "70d08932cc4e4c473f7af1db898c74bd6fd25c13",
-  "session_start_sha": "70d08932cc4e4c473f7af1db898c74bd6fd25c13",
-  "current_sha": "50804023bb06635b880cb9150fc9c591071c2cf7",
-  "m79_implementation_sha": "50804023bb06635b880cb9150fc9c591071c2cf7",
-  "current_milestone": "M79",
+  "goal_id": "SAATHIOS_LIVE_CONVERSATIONAL_INTELLIGENCE",
+  "historical_baseline_sha": "1ea69436b40ba68f19f941f8e0d104df587651b3",
+  "baseline_sha": "1ea69436b40ba68f19f941f8e0d104df587651b3",
+  "session_start_sha": "1ea69436b40ba68f19f941f8e0d104df587651b3",
+  "current_sha": "1ea69436b40ba68f19f941f8e0d104df587651b3",
+  "current_milestone": "M86",
   "status": "complete_with_limitations",
   "completed_milestones": [
-    "M79"
+    "M80",
+    "M81",
+    "M82",
+    "M83",
+    "M84",
+    "M85",
+    "M86"
   ],
   "prior_completed_goals": [
     {
@@ -25,9 +30,14 @@
       "goal_id": "SAATHIOS_VOICE_OUTPUT_FOUNDATION",
       "terminal_sha": "70d08932cc4e4c473f7af1db898c74bd6fd25c13",
       "status": "complete_with_limitations"
+    },
+    {
+      "goal_id": "SAATHIOS_REALTIME_VOICE_RUNTIME",
+      "terminal_sha": "1ea69436b40ba68f19f941f8e0d104df587651b3",
+      "status": "complete_with_limitations"
     }
   ],
-  "next_action": "Optional human browser mic certification or chat_fn production binding; do not auto-install Whisper; production not authorized.",
+  "next_action": "Optional human mic recording, persona grounding improvements for small models, production hardening — do not auto-download models; production not authorized.",
   "last_verified_at": "2026-07-28",
-  "stop_reason": "REALTIME_VOICE_RUNTIME_COMPLETE_WITH_LIMITATIONS: centralized runtime, barge-in, browser STT path, SpeechService speak, shell UI, tests PASS; live automation mic not fully certified; production not authorized."
+  "stop_reason": "LIVE_CONVERSATIONAL_INTELLIGENCE_COMPLETE_WITH_LIMITATIONS: Ollama qwen2.5:1.5b real streaming multi-turn; barge-in cancel; browser STT + synthetic media cert; templates removed from default path; production not authorized."
 }

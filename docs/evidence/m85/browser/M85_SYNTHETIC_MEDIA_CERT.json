@@ -1,0 +1,18 @@
+{
+  "schema": "m85.synthetic_media.v1",
+  "certification_class": "synthetic_browser_media",
+  "human_microphone_verified": false,
+  "hardGates": {
+    "synthetic_getUserMedia": {
+      "ok": true,
+      "detail": "{\"ok\":true,\"tracks\":1}"
+    },
+    "speechRecognition_present": {
+      "ok": true,
+      "detail": "present"
+    }
+  },
+  "note": "Playwright fake media on secure origin; not human mic verification",
+  "result": "PASS",
+  "stt_browser_contract": "certified_via_platform_voice_runtime_partial_final_api"
+}

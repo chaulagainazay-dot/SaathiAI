@@ -2,34 +2,27 @@
 
 ## Active
 
-- None. Real-time voice goal closed with limitations after M79.
+- None. Live Conversational Intelligence closed with limitations after M86.
 
 ## Pending
 
-- Optional: bind production ChatEngine as ConversationRuntime `chat_fn`
-- Optional: human browser mic + interrupt journey recording
-- Optional: local macOS STT helper packaging (no auto-install)
+- Optional human microphone verification recording
+- Optional persona grounding / retrieval for small-model factual accuracy
+- Optional full ESLint/build/full-suite re-run on CI capacity
 
 ## Completed
 
-- M79 — Real-Time Voice Runtime: VoiceSessionManager, VoiceInputService, VAD,
-  provider-neutral STT (macOS helper / Whisper-compatible / browser / unavailable),
-  ConversationRuntime, SpeechRuntime over SpeechService, AudioPlaybackController,
-  RBAC (`voice.listen`, `voice.transcribe`, `voice.session.read`), authenticated
-  platform APIs, shell Live Voice dock, logout cleanup, 17 backend + 10 frontend
-  tests, M74 regression retained.
-- M78 — browser re-certification and playback hardening for voice output foundation.
-- M73–M77 — Voice Output Foundation.
-- M69–M72 — Autonomous Mission Runtime.
-
-## Blocked
-
-- None for local real-time voice foundation.
+- M80–M86 Live Conversational Intelligence (ConversationService, Ollama stream,
+  cancel/late-chunk, Yeti persona, memory, intent router, Voice Runtime wire,
+  synthetic browser media, certification evidence).
+- M79 Real-Time Voice Runtime.
+- M73–M78 Voice Output Foundation.
+- M69–M72 Autonomous Mission Runtime.
 
 ## Deferred
 
-- Automatic Whisper model download (forbidden)
-- Paid STT/TTS providers
-- Voice cloning
+- Auto model download (forbidden)
+- Paid providers / credentials
 - Production activation
+- Voice cloning
 - Trading Guardian changes

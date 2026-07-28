@@ -4069,6 +4069,99 @@ def voice_runtime_finish(
         raise _voice_failure(exc) from exc
 
 
+# ── M80+ centralized conversational intelligence ────────────────────────────
+class ConversationCompleteBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    message: str = Field(min_length=1, max_length=4_000)
+    session_id: str = Field(default="", max_length=160)
+    conversation_id: str = Field(default="", max_length=160)
+    yeti_mode: str = Field(default="general", max_length=40)
+    locale: str = Field(default="en-US", max_length=16)
+    project_id: str = Field(default="", max_length=160)
+    mission_id: str = Field(default="", max_length=160)
+    module_context: str = Field(default="", max_length=400)
+    provider: str = Field(default="auto", max_length=40)
+    max_tokens: int = Field(default=512, ge=16, le=1024)
+    timeout_seconds: float = Field(default=60.0, ge=5.0, le=120.0)
+    stream: bool = True
+
+
+class ConversationCancelBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    request_id: str = Field(min_length=1, max_length=160)
+
+
+def _conversation_svc():
+    from saathi.platform.conversation import default_conversation_service
+
+    return default_conversation_service(_svc())
+
+
+@router.get("/conversation/health")
+def conversation_health(
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return {
+            "health": _conversation_svc().health(
+                _voice_context(authorization, x_platform_token)
+            )
+        }
+    except Exception as exc:
+        raise _voice_failure(exc) from exc
+
+
+@router.get("/conversation/providers")
+def conversation_providers(
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return {
+            "providers": _conversation_svc().provider_health(
+                _voice_context(authorization, x_platform_token)
+            )
+        }
+    except Exception as exc:
+        raise _voice_failure(exc) from exc
+
+
+@router.post("/conversation/complete")
+def conversation_complete(
+    body: ConversationCompleteBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        result = _conversation_svc().complete(
+            _voice_context(authorization, x_platform_token),
+            body.model_dump(),
+        )
+        return {"result": result.to_public()}
+    except Exception as exc:
+        raise _voice_failure(exc) from exc
+
+
+@router.post("/conversation/cancel")
+def conversation_cancel(
+    body: ConversationCancelBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        from saathi.platform.models import PlatformPermission
+
+        ctx = _voice_context(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.VOICE_LISTEN)
+        _conversation_svc().cancel(body.request_id)
+        return {"ok": True, "request_id": body.request_id}
+    except Exception as exc:
+        raise _voice_failure(exc) from exc
+
+
 # ── M63/M64 module registry (read-only; authoritative source for browser discovery) ──
 def _module_registry():
     from saathi.platform.module_registry import get_registry

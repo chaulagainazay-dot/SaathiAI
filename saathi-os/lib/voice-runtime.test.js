@@ -68,4 +68,31 @@ describe("voice-runtime client", () => {
   it("prefers browser STT only when available", () => {
     assert.equal(typeof prefersBrowserStt(), "boolean");
   });
+
+  it("represents thinking speaking interrupted states", () => {
+    let state = voiceRuntimeReducer(INITIAL_VOICE_RUNTIME, {
+      type: "SESSION",
+      session: {
+        session_id: "vses_3",
+        state: "THINKING",
+        input_state: "idle",
+        playback_state: "idle",
+        transcript: [],
+        interruptions: [],
+      },
+    });
+    assert.match(state.message, /Thinking/);
+    state = voiceRuntimeReducer(state, {
+      type: "SESSION",
+      session: {
+        session_id: "vses_3",
+        state: "INTERRUPTED",
+        input_state: "listening",
+        playback_state: "cancelled",
+        transcript: [],
+        interruptions: [{ reason: "barge_in" }],
+      },
+    });
+    assert.equal(state.interrupted, true);
+  });
 });

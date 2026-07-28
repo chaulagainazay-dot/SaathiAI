@@ -28,6 +28,19 @@ If the answer is the latter, the feature belongs in the product layer, not the p
 
 ## 3. Current Platform State
 
+### M80–M86 Live Conversational Intelligence (2026-07-28)
+
+* **What:** Live Voice now uses real model-backed multi-turn conversation via
+  centralized `ConversationService` (Ollama localhost NDJSON streaming when
+  available). Deterministic template replies are no longer the default
+  intelligence path. Barge-in cancels generation and speech; logout clears
+  session memory.
+* **Model fit:** Prefers already-installed `qwen2.5:1.5b` on M2/8 GB; no auto
+  download. Tools are never executable by the model.
+* **Evidence:** `docs/evidence/m86/M86_CERTIFICATION_SUMMARY.json`.
+* **Limits:** Small-model factual drift; synthetic browser media (not human mic);
+  production not authorized.
+
 ### M79 Real-Time Voice Runtime (2026-07-28)
 
 * **What:** SaathiOS can hold a live, interruptible voice conversation: one mic

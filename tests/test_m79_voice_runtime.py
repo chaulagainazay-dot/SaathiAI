@@ -28,6 +28,7 @@ from saathi.platform.voice.runtime.stt import (
     discover_stt_providers,
     select_stt_provider,
 )
+from saathi.platform.conversation import make_test_conversation_service
 from saathi.platform.voice.service import SpeechService, reset_speech_service_for_tests
 from test_m74_voice_foundation import FakeProvider
 
@@ -48,7 +49,21 @@ def platform(tmp_path):
         start_workers=True,
     )
     service._speech_service = speech
-    runtime = VoiceSessionManager(service.store, speech_service=speech)
+    # Injected conversation intelligence — not presented as a real model provider
+    conv = make_test_conversation_service(
+        service.store,
+        reply_fn=lambda messages: (
+            "Following up with context. "
+            + next(
+                (m["content"] for m in reversed(messages) if m.get("role") == "user"),
+                "hello",
+            )
+        ),
+    )
+    service._conversation_service = conv
+    runtime = VoiceSessionManager(
+        service.store, speech_service=speech, conversation_service=conv
+    )
     service._voice_runtime = runtime
     yield service, ctx, runtime, boot["token"]
     speech.shutdown()
@@ -251,7 +266,8 @@ def test_transcript_persistence_and_history(platform):
     assert any(t["role"] == "assistant" for t in got["transcript"])
 
 
-def test_conversation_modes_and_no_manipulation():
+def test_conversation_runtime_fail_closed_without_service():
+    """Default path must not emit deterministic templates as intelligence."""
     conv = ConversationRuntime()
     session = ConversationSession(
         session_id="s",
@@ -260,11 +276,7 @@ def test_conversation_modes_and_no_manipulation():
         user_id="u",
         yeti_mode="trading_guidance",
     )
-    reply = conv.generate_reply(session, "Should I leverage 10x?")
-    assert "Trading Guardian" in reply or "trading" in reply.lower()
-    lower = reply.lower()
-    assert "must buy now" not in lower
-    assert "guaranteed profit" not in lower
+    assert conv.generate_reply(session, "Should I leverage 10x?") == ""
 
 
 def test_audio_upload_path_without_stt_text(platform):

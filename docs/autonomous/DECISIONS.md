@@ -336,3 +336,21 @@
 - Consequences: SaathiOS can hold interruptible live voice conversations on the
   authenticated path with intentional STT/browser-automation limitations. Production
   remains unauthorized; Trading Guardian unengaged; cloning disabled.
+
+## ADR-VOICE-013 — Live Conversational Intelligence (M80–M86)
+
+- Decision: introduce centralized `saathi.platform.conversation.ConversationService`
+  as the sole model path for Live Voice (and reusable by text surfaces). Voice
+  Runtime ConversationRuntime fails closed without it; deterministic templates
+  are not presented as model intelligence.
+- Decision: prefer already-installed local Ollama `qwen2.5:1.5b` on M2/8 GB;
+  localhost-only; NDJSON streaming; no auto-download; no paid providers.
+- Decision: tool intents are proposed or blocked only; PlatformAgentRuntime and
+  ExecutionGateway remain the sole execution authorities.
+- Decision: certify browser microphone path with Playwright fake media streams
+  (synthetic class) and browser STT partial/final contracts; do not claim human
+  microphone verification from automation alone.
+- Evidence: M80 tests; M86 live Ollama two-turn + barge-in evidence; M85
+  synthetic media cert.
+- Consequences: SaathiOS can hold real model-backed interruptible multi-turn
+  voice conversations locally. Production remains unauthorized.

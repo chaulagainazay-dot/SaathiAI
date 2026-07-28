@@ -1,5 +1,24 @@
 # SaathiOS Autonomous Roadmap
 
+## M80–M86 — Live Conversational Intelligence (2026-07-28)
+
+| Field | Value |
+| --- | --- |
+| Verdict | `LIVE_CONVERSATIONAL_INTELLIGENCE_COMPLETE_WITH_LIMITATIONS` |
+| Service | Central `ConversationService` under `saathi/platform/conversation/` |
+| Provider | Local Ollama `qwen2.5:1.5b` (NDJSON stream); unavailable fail-closed |
+| Voice | Voice Runtime calls ConversationService; templates removed from default path |
+| Context | Multi-turn SessionMemory; second turn retains prior context |
+| Interrupt | Cancels generation + speech; late chunks rejected |
+| Intent | Propose/block only; ExecutionGateway remains sole executor |
+| STT | Browser path certified for partial/final contract |
+| Browser media | Playwright synthetic getUserMedia PASS |
+| Tests | M80 11; M79 17; M74 15; M72 cert subset; frontend voice 11 |
+| Production | Not authorized |
+
+Evidence: `docs/autonomous/milestones/M80_M86_LIVE_CONVERSATIONAL_INTELLIGENCE.md`,
+`docs/evidence/m86/`, `docs/evidence/m85/`.
+
 ## M79 — Real-Time Voice Runtime (2026-07-28)
 
 | Field | Value |
