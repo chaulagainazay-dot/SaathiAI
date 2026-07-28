@@ -1,7 +1,8 @@
-"""Canonical SaathiOS voice-output foundation.
+"""Canonical SaathiOS voice foundation.
 
-The package extends the platform identity/store/audit authorities. It does not own
-authentication, approvals, general tool execution, microphone capture, or STT.
+Speech output is owned by SpeechService (M74). Real-time bidirectional voice
+(live mic, STT, barge-in, conversation) is owned by Voice Runtime (M79+).
+Neither replaces Platform identity, RBAC, approvals, or ExecutionGateway.
 """
 
 from .models import (
@@ -18,6 +19,11 @@ from .providers import (
     VoxCPMConfig,
     VoxCPMSpeechProvider,
 )
+from .runtime import (
+    VoiceSessionManager,
+    default_voice_runtime,
+    reset_voice_runtime_for_tests,
+)
 from .service import SpeechService, default_speech_service, reset_speech_service_for_tests
 
 __all__ = [
@@ -29,9 +35,12 @@ __all__ = [
     "SpeechState",
     "UnavailableSpeechProvider",
     "VoiceProfile",
+    "VoiceSessionManager",
     "VoiceValidationError",
     "VoxCPMConfig",
     "VoxCPMSpeechProvider",
     "default_speech_service",
+    "default_voice_runtime",
     "reset_speech_service_for_tests",
+    "reset_voice_runtime_for_tests",
 ]

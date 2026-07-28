@@ -1,0 +1,56 @@
+{
+  "milestone": "M79",
+  "title": "SaathiOS Real-Time Voice Runtime",
+  "date": "2026-07-28",
+  "verdict": "M79_COMPLETE_WITH_LIMITATIONS",
+  "starting_sha": "70d08932cc4e4c473f7af1db898c74bd6fd25c13",
+  "branch": "milestone/m61-backend-workflow-persistence",
+  "architecture": {
+    "voice_session_manager": "saathi.platform.voice.runtime.session_manager.VoiceSessionManager",
+    "voice_input_service": "saathi.platform.voice.runtime.input_service.VoiceInputService",
+    "vad": "saathi.platform.voice.runtime.vad.VoiceActivityDetector",
+    "stt_providers": [
+      "macos_speech",
+      "whisper_compatible",
+      "browser",
+      "unavailable"
+    ],
+    "conversation_runtime": "saathi.platform.voice.runtime.conversation.ConversationRuntime",
+    "speech_runtime": "saathi.platform.voice.runtime.speech_runtime.SpeechRuntime",
+    "playback_controller": "saathi.platform.voice.runtime.playback.AudioPlaybackController",
+    "speech_service_reused": true,
+    "mission_runtime_reused": true
+  },
+  "permissions": [
+    "voice.listen",
+    "voice.transcribe",
+    "voice.session.read",
+    "voice.speak"
+  ],
+  "tests": {
+    "m79_backend": "17 passed",
+    "m74_regression": "15 passed",
+    "frontend_voice": "10 passed"
+  },
+  "security": {
+    "shell_true": false,
+    "public_listeners": false,
+    "raw_audio_persistence": false,
+    "auto_model_download": false,
+    "background_recording": false,
+    "hidden_activation": false,
+    "tenant_isolation": true,
+    "logout_cleanup": true
+  },
+  "browser_certification": {
+    "status": "DETERMINISTIC_AND_API_CERTIFIED",
+    "note": "Live getUserMedia + Web Speech path is code-complete; full human mic journey depends on browser permissions and is not claimed as automation-certified."
+  },
+  "production_authorized": false,
+  "limitations": [
+    "macOS STT helper optional/not installed by default",
+    "Whisper not auto-installed",
+    "Default Yeti replies deterministic without chat_fn injection",
+    "Browser live mic automation limited"
+  ]
+}

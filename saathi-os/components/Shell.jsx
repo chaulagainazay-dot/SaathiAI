@@ -22,6 +22,8 @@ import { useModuleDiscoveryContext } from "@/lib/modules/ModuleDiscoveryContext"
 import ModuleRouteBoundary from "./modules/ModuleRouteBoundary";
 import { VoiceOutputProvider } from "./voice/VoiceOutputProvider";
 import VoiceOutputDock from "./voice/VoiceOutputDock";
+import { VoiceRuntimeProvider } from "./voice/VoiceRuntimeProvider";
+import VoiceRuntimeDock from "./voice/VoiceRuntimeDock";
 
 function ShellInner({ children }) {
   const pathname = usePathname();
@@ -166,6 +168,7 @@ function ShellInner({ children }) {
       )}
 
       <LiveToasts />
+      <VoiceRuntimeDock />
       <VoiceOutputDock />
       <CommandPalette
         open={paletteOpen}
@@ -182,7 +185,9 @@ export default function Shell({ children }) {
     <ShellChromeProvider>
       <ModuleDiscoveryProvider>
         <VoiceOutputProvider>
-          <ShellInner>{children}</ShellInner>
+          <VoiceRuntimeProvider>
+            <ShellInner>{children}</ShellInner>
+          </VoiceRuntimeProvider>
         </VoiceOutputProvider>
       </ModuleDiscoveryProvider>
     </ShellChromeProvider>

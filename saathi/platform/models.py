@@ -86,6 +86,10 @@ class PlatformPermission(str, Enum):
     VOICE_CLONE_REQUEST = "voice.clone.request"
     VOICE_CLONE_APPROVE = "voice.clone.approve"
     VOICE_AUDIT_READ = "voice.audit.read"
+    # M79 — real-time voice runtime (listen / STT / session read)
+    VOICE_LISTEN = "voice.listen"
+    VOICE_TRANSCRIBE = "voice.transcribe"
+    VOICE_SESSION_READ = "voice.session.read"
     # M62.3 — research pipeline (no trading authority)
     RESEARCH_READ = "research.read"
     RESEARCH_CREATE = "research.create"
@@ -261,6 +265,9 @@ ROLE_PERMISSIONS: dict[PlatformRole, frozenset[PlatformPermission]] = {
             PlatformPermission.IELTS_FEEDBACK_READ,
             PlatformPermission.VOICE_READ,
             PlatformPermission.VOICE_SPEAK,
+            PlatformPermission.VOICE_LISTEN,
+            PlatformPermission.VOICE_TRANSCRIBE,
+            PlatformPermission.VOICE_SESSION_READ,
             PlatformPermission.RESEARCH_READ,
             PlatformPermission.STRATEGY_READ,
             PlatformPermission.PAPER_ACCOUNT_READ,

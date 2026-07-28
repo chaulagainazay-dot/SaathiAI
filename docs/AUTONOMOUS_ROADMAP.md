@@ -1,5 +1,24 @@
 # SaathiOS Autonomous Roadmap
 
+## M79 — Real-Time Voice Runtime (2026-07-28)
+
+| Field | Value |
+| --- | --- |
+| Milestone | `M79_COMPLETE_WITH_LIMITATIONS` |
+| Verdict | `REALTIME_VOICE_RUNTIME_COMPLETE_WITH_LIMITATIONS` |
+| Runtime | Centralized VoiceSessionManager + input/VAD/STT/conversation/SpeechRuntime/playback |
+| Speech | Reuses certified SpeechService; incremental segment speak; exclusive playback |
+| STT | browser (streaming partials), whisper_compatible (if installed), macos_speech (helper), unavailable |
+| UI | Unified-shell Live Voice dock: mic, indicators, transcript, interrupt, history |
+| RBAC | `voice.listen`, `voice.transcribe`, `voice.session.read` (+ existing speak) |
+| Regression | M79 backend 17; M74 15; frontend voice 10 |
+| Browser | Code-complete explicit-mic path; automation getUserMedia not fully certified |
+| Production | Not authorized; no push/merge/deploy/model download/cloning |
+| Next | Optional ChatEngine binding and human mic certification |
+
+Evidence: `docs/autonomous/milestones/M79_REALTIME_VOICE_RUNTIME.md` and
+`docs/evidence/m79/`.
+
 ## M77 — Voice Output Foundation Certification (2026-07-28)
 
 | Field | Value |

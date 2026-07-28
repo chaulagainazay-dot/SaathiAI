@@ -269,6 +269,7 @@ class PlatformStore:
         self._migrate_m65()
         self._migrate_m69()
         self._migrate_m74()
+        self._migrate_m79()
         self._conn.commit()
         # Serialize all shared-connection access (auth/session/approval/audit reads
         # run under FastAPI's threadpool concurrently). Reentrant so existing
@@ -1564,6 +1565,100 @@ class PlatformStore:
                 );
             CREATE INDEX IF NOT EXISTS idx_m74_evidence_operation
                 ON voice_evidence_events(operation_id, created_at);
+            """
+        )
+
+    def _migrate_m79(self) -> None:
+        """Real-time voice runtime sessions, transcripts, interruptions, evidence.
+
+        Raw audio is never stored. Transcript ownership is user-scoped.
+        """
+        self._conn.executescript(
+            """
+            CREATE TABLE IF NOT EXISTS voice_runtime_sessions (
+                session_id TEXT PRIMARY KEY,
+                org_id TEXT NOT NULL,
+                workspace_id TEXT NOT NULL,
+                user_id TEXT NOT NULL,
+                conversation_id TEXT NOT NULL DEFAULT '',
+                state TEXT NOT NULL,
+                input_mode TEXT NOT NULL DEFAULT 'toggle',
+                input_state TEXT NOT NULL DEFAULT 'idle',
+                playback_state TEXT NOT NULL DEFAULT 'idle',
+                stt_provider TEXT NOT NULL DEFAULT 'auto',
+                voice_profile_id TEXT NOT NULL DEFAULT 'yeti_teacher',
+                sample_rate INTEGER NOT NULL DEFAULT 16000,
+                max_recording_seconds REAL NOT NULL DEFAULT 30,
+                silence_timeout_ms REAL NOT NULL DEFAULT 900,
+                min_speech_ms REAL NOT NULL DEFAULT 150,
+                partial_user_transcript TEXT NOT NULL DEFAULT '',
+                partial_assistant_response TEXT NOT NULL DEFAULT '',
+                active_speech_operation_id TEXT NOT NULL DEFAULT '',
+                active_playback_id TEXT NOT NULL DEFAULT '',
+                error_category TEXT NOT NULL DEFAULT '',
+                error_message TEXT NOT NULL DEFAULT '',
+                evidence_id TEXT NOT NULL DEFAULT '',
+                project_id TEXT NOT NULL DEFAULT '',
+                locale TEXT NOT NULL DEFAULT 'en-US',
+                yeti_mode TEXT NOT NULL DEFAULT 'general',
+                version INTEGER NOT NULL DEFAULT 1,
+                created_at REAL NOT NULL,
+                updated_at REAL NOT NULL,
+                last_activity_at REAL NOT NULL,
+                expires_at REAL NOT NULL DEFAULT 0
+            );
+            CREATE INDEX IF NOT EXISTS idx_m79_voice_session_scope
+                ON voice_runtime_sessions(org_id, workspace_id, user_id, updated_at DESC);
+            CREATE INDEX IF NOT EXISTS idx_m79_voice_session_state
+                ON voice_runtime_sessions(org_id, workspace_id, state);
+
+            CREATE TABLE IF NOT EXISTS voice_runtime_transcripts (
+                entry_id TEXT PRIMARY KEY,
+                session_id TEXT NOT NULL,
+                role TEXT NOT NULL,
+                text TEXT NOT NULL DEFAULT '',
+                is_partial INTEGER NOT NULL DEFAULT 0,
+                is_final INTEGER NOT NULL DEFAULT 1,
+                provider TEXT NOT NULL DEFAULT '',
+                confidence REAL NOT NULL DEFAULT 0,
+                speech_operation_id TEXT NOT NULL DEFAULT '',
+                interrupted INTEGER NOT NULL DEFAULT 0,
+                created_at REAL NOT NULL,
+                FOREIGN KEY (session_id)
+                    REFERENCES voice_runtime_sessions(session_id)
+            );
+            CREATE INDEX IF NOT EXISTS idx_m79_voice_transcript_session
+                ON voice_runtime_transcripts(session_id, created_at ASC);
+
+            CREATE TABLE IF NOT EXISTS voice_runtime_interruptions (
+                interruption_id TEXT PRIMARY KEY,
+                session_id TEXT NOT NULL,
+                reason TEXT NOT NULL DEFAULT '',
+                from_state TEXT NOT NULL DEFAULT '',
+                to_state TEXT NOT NULL DEFAULT '',
+                preserved_text TEXT NOT NULL DEFAULT '',
+                created_at REAL NOT NULL,
+                FOREIGN KEY (session_id)
+                    REFERENCES voice_runtime_sessions(session_id)
+            );
+            CREATE INDEX IF NOT EXISTS idx_m79_voice_interrupt_session
+                ON voice_runtime_interruptions(session_id, created_at ASC);
+
+            CREATE TABLE IF NOT EXISTS voice_runtime_evidence (
+                evidence_id TEXT PRIMARY KEY,
+                session_id TEXT NOT NULL,
+                org_id TEXT NOT NULL,
+                workspace_id TEXT NOT NULL,
+                user_id TEXT NOT NULL,
+                event_type TEXT NOT NULL,
+                summary TEXT NOT NULL,
+                metadata_json TEXT NOT NULL DEFAULT '{}',
+                created_at REAL NOT NULL,
+                FOREIGN KEY (session_id)
+                    REFERENCES voice_runtime_sessions(session_id)
+            );
+            CREATE INDEX IF NOT EXISTS idx_m79_voice_evidence_scope
+                ON voice_runtime_evidence(org_id, workspace_id, created_at DESC);
             """
         )
 

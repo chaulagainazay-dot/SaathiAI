@@ -1,18 +1,13 @@
 {
-  "goal_id": "SAATHIOS_VOICE_OUTPUT_FOUNDATION",
-  "historical_baseline_sha": "a4cb5c4d872a3edf048d52b7cd62bf9346703613",
-  "baseline_sha": "7873586aea6066d9e1d51b1d60f85ca413127907",
-  "session_start_sha": "285ffbbaa9d4180301d31bb1cd1a8bd8526e8d1a",
-  "current_sha": "4896c0a102c7cd8606616b708a93508add1fe4a9",
-  "current_milestone": "M78",
+  "goal_id": "SAATHIOS_REALTIME_VOICE_RUNTIME",
+  "historical_baseline_sha": "70d08932cc4e4c473f7af1db898c74bd6fd25c13",
+  "baseline_sha": "70d08932cc4e4c473f7af1db898c74bd6fd25c13",
+  "session_start_sha": "70d08932cc4e4c473f7af1db898c74bd6fd25c13",
+  "current_sha": "70d08932cc4e4c473f7af1db898c74bd6fd25c13",
+  "current_milestone": "M79",
   "status": "complete_with_limitations",
   "completed_milestones": [
-    "M73",
-    "M74",
-    "M75",
-    "M76",
-    "M77",
-    "M78"
+    "M79"
   ],
   "prior_completed_goals": [
     {
@@ -24,12 +19,14 @@
       "goal_id": "AUTONOMOUS_MISSION_RUNTIME",
       "terminal_sha": "7873586aea6066d9e1d51b1d60f85ca413127907",
       "status": "complete"
+    },
+    {
+      "goal_id": "SAATHIOS_VOICE_OUTPUT_FOUNDATION",
+      "terminal_sha": "70d08932cc4e4c473f7af1db898c74bd6fd25c13",
+      "status": "complete_with_limitations"
     }
   ],
-  "next_action": "Await a separately authorized VoxCPM resource decision or production-hardening goal; do not install VoxCPM automatically.",
+  "next_action": "Optional human browser mic certification or chat_fn production binding; do not auto-install Whisper; production not authorized.",
   "last_verified_at": "2026-07-28",
-  "stop_reason": "VOICE_FOUNDATION_COMPLETE_WITH_LIMITATIONS: macOS English backend and browser playback certified; VoxCPM remains optional/uninstalled; cloning disabled; production not authorized.",
-  "m78_implementation_sha": "d3c4987c3f472a491e4b78c54dfc1e012d79e426",
-  "m78_certification_sha": "4896c0a102c7cd8606616b708a93508add1fe4a9",
-  "terminal_docs_note": "Tip may include LOOP_STATE pin commits after certification SHA."
+  "stop_reason": "REALTIME_VOICE_RUNTIME_COMPLETE_WITH_LIMITATIONS: centralized runtime, barge-in, browser STT path, SpeechService speak, shell UI, tests PASS; live automation mic not fully certified; production not authorized."
 }

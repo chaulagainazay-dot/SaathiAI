@@ -1,183 +1,131 @@
-# SaathiOS Voice Output Foundation Final Report
+# SaathiOS Real-Time Voice Runtime Final Report
 
 Status: complete with limitations.
 
 ## 1. Final verdict
 
-`VOICE_FOUNDATION_COMPLETE_WITH_LIMITATIONS`.
+`REALTIME_VOICE_RUNTIME_COMPLETE_WITH_LIMITATIONS`.
 
-SaathiOS now has a bounded, provider-neutral, local-first speech layer. It can
-synthesize and play English through the authenticated application path using the
-native macOS provider. VoxCPM remains optional and uninstalled. Production use is
-not authorized.
+SaathiOS now has a centralized real-time Voice Runtime on top of the certified
+speech-output foundation. A signed-in user can press one microphone control,
+speak, receive partial transcription, get a spoken Yeti reply, interrupt while
+the assistant is talking, continue the conversation, and clear voice state on
+logout.
 
 ## 2. Recovery verification
 
 - Repository path: `/Users/macbookpro/SaathiAI`
 - Branch: `milestone/m61-backend-workflow-persistence`
-- Expected historical voice baseline (ancestor):
-  `7873586aea6066d9e1d51b1d60f85ca413127907` — verified as ancestor
-- Session start HEAD (M77 committed):
-  `285ffbbaa9d4180301d31bb1cd1a8bd8526e8d1a`
-- Pre-existing dirty tree preserved and excluded from commits:
+- Expected starting HEAD:
+  `70d08932cc4e4c473f7af1db898c74bd6fd25c13` — verified
+- Pre-existing dirty tree preserved and excluded from mission commits:
   `docs/evidence/m25`, `docs/evidence/m27`, `docs/evidence/m28`,
   untracked `docs/design-spec/`
-- M69–M72 Autonomous Mission Runtime was not restarted or redesigned
+- Autonomous Mission Runtime, Platform Runtime, and SpeechService were not
+  redesigned
 
 ## 3. Ending branch/SHA
 
 - Branch unchanged: `milestone/m61-backend-workflow-persistence`
-- M78 implementation/evidence commit is recorded at closeout after this report is
-  included in the terminal autonomous-state checkpoint.
+- Ending SHA: recorded after mission commit (see git log)
 
-## 4. Allocated milestones
+## 4. New milestones
 
-- M73 — initial audit and machine-fit decision
-- M74 — provider-neutral backend, providers, profiles, RBAC/API/evidence/audit
-- M75 — unified-shell speech controls
-- M76 — IELTS feedback read-aloud
-- M77 — resource/security/full regression; browser journey limitation
-- M78 — browser re-certification and playback hardening
+- **M79** — Real-Time Voice Runtime foundation and certification with limitations
 
 ## 5. Architecture
 
-- Canonical authority: `saathi.platform.voice.SpeechService`
-- Provider contract: capabilities, health, synthesis, optional streaming semantics,
-  cancellation, shutdown
-- Providers: `MacOSSystemSpeechProvider` (certified), `VoxCPMSpeechProvider`
-  (adapter only), `UnavailableSpeechProvider`
-- Reused authorities: Identity, RBAC, tenancy/workspace, PlatformStore,
-  PlatformAgentRuntime, ExecutionGateway, Approval Center, evidence, audit,
-  notifications, ModuleRegistry, unified shell, route guards, browser cert harness
+Central package: `saathi/platform/voice/runtime/`
 
-## 6. SpeechService and provider contract
+Reuses: Platform identity/store/audit/RBAC, SpeechService (M74), unified shell,
+Yeti profile (`yeti_teacher`).
 
-Authenticated, tenant-scoped operations with ownership checks, idempotency, bounded
-input/queue, concurrency limits, lifecycle, timeouts, cancellation, cleanup, restart
-reconciliation, safe fallback, evidence and audit linkage, and truthful error mapping.
+Does not replace: Mission Runtime, ExecutionGateway, Approvals, ModuleRegistry,
+macOS TTS provider, identity core.
 
-## 7. macOS provider status
+## 6. Voice Runtime components
 
-- Certified for English backend synthesis and browser playback
-- Local only; no network
-- Safe subprocess argument arrays via `run_bounded`; never `shell=True`
-- Default browser path: `say` → AIFF intermediate → `afconvert` WAVE/LEI16@22050
-- AIFF remains supported when requested
-- Installed voice discovery is single-flight and does not permanently cache failed probes
-- No raw private path returned through APIs; no public listener; no main-server blocking
+| Module | Responsibility |
+| --- | --- |
+| VoiceSessionManager | Session CRUD, listen/turn/interrupt/finish, logout clear |
+| VoiceInputService | push/hold/toggle modes; idle/listening/recording/processing/error/cancel |
+| VoiceActivityDetector | speech start/end, silence timeout, min speech, interruption energy |
+| STT providers | macos_speech, whisper_compatible, browser, unavailable |
+| ConversationRuntime | IDLE/LISTENING/THINKING/RESPONDING/INTERRUPTED/FINISHED/FAILED |
+| SpeechRuntime | Segment incremental speak via SpeechService |
+| AudioPlaybackController | play/pause/resume/stop/queue/cancel; no overlap |
 
-## 8. VoxCPM status
+## 7. Streaming behavior
 
-| Gate | Status |
-|------|--------|
-| Adapter implemented | yes |
-| Dependencies installed | no |
-| Model installed | no |
-| Configured | no |
-| Provider healthy | no (disabled) |
-| Inference executed | no |
-| Quality reviewed | no |
-| Certified | no |
+- Browser STT interim results → partial transcripts
+- Conversation stream chunks → partial assistant text
+- SpeechRuntime emits completed sentence segments to SpeechService without
+  waiting for the entire reply when sentence boundaries exist
 
-Machine-fit: VoxCPM2 Python/MPS not selected for this M2/8 GB host. No package or
-model was installed or downloaded.
+## 8. Interruption support
 
-## 9. Voice profiles and Yeti
+Barge-in stops exclusive playback, cancels remaining synthesis, preserves
+completed/partial assistant text as interrupted transcript, records interruption
+history, and returns immediately to LISTENING.
 
-Bounded provider-neutral profiles with built-ins `saathi_default` and `yeti_teacher`
-(warm, calm, encouraging adult teacher design metadata; not a clone). Rate, language,
-style, provider mapping, module/accessibility preferences, tenant ownership, versioning.
+## 9. Browser certification
 
-## 10. API and frontend behavior
+- Deterministic API + client unit certification: PASS
+- Live getUserMedia human journey: code-complete; not claimed automation-certified
+  (sandboxed browsers often cannot grant microphone)
 
-- Authenticated `/api/v1/platform/voice/*` routes
-- Speak / Stop / Play (explicit; no autoplay)
-- Operation state, provider/fallback display, voice selector, rate control
-- Logout and tenant/workspace invalidation clear protected client state
-- IELTS uses shared client with feedback-only text and Yeti profile
+## 10. Test results
 
-## 11. Lifecycle, queue, fallback, cancellation, recovery
+| Suite | Result |
+| --- | --- |
+| tests/test_m79_voice_runtime.py + api | 17 passed |
+| tests/test_m74_voice_* | 15 passed |
+| saathi-os voice frontend contracts | 10 passed |
+| secret pattern scan (mission files) | clean |
+| shell=True in platform/voice | none |
+| import smoke | ok |
 
-Persisted states include queued through completed/cancelled/failed/unavailable/expired.
-Queue depth 8; heavy-provider concurrency 1; VoxCPM request falls back to macOS when
-disabled; cancellation propagates to provider process groups; restart reconciliation
-without blind replay.
+## 11. Security review
 
-## 12. Language and cloning
+- Microphone permission required before listen
+- Tenant + user ownership on sessions
+- No raw audio SQLite persistence
+- No unauthorized playback without VOICE_SPEAK
+- Safe temp WAV for STT helper path with cleanup
+- Cancellation, queue limits, memory limits, timeouts
+- shell=False / argv arrays only
+- No public listeners
+- Logout clears voice sessions + speech cancel
 
-- English: backend + browser certified via macOS
-- Nepali: `UNSUPPORTED_NOT_VERIFIED`
-- Cloning: `CAPABILITY_DISABLED`
+## 12. Resource usage
 
-## 13. RBAC, tenancy, evidence, audit
+- No VoxCPM/Whisper auto download
+- Energy VAD is pure Python/local
+- Speech synthesis still bounded by M74 SpeechService workers/queue
 
-Existing platform RBAC permissions (`voice.read`, `voice.speak`, profile/provider/
-reference/clone/audit). Tenant/workspace/owner isolation. Append-only evidence/audit
-with no raw text, private paths, or audio bytes in audit records.
+## 13. Known limitations
 
-## 14. Security findings
+1. Browser automation often cannot complete real mic capture
+2. macOS STT helper optional / not installed by default
+3. Whisper only if already present
+4. Default Yeti replies are deterministic templates unless chat_fn injected
+5. Production not authorized
 
-No `shell=True`, public listener, hidden download, raw path response, unrestricted
-cloning, arbitrary executable/model selection, cross-tenant artifact access, or
-authorization bypass found in the voice path. Secret pattern scan on changed
-production voice files: clean.
+## 14. Mission success answers
 
-## 15. M78 browser results
-
-`docs/evidence/m78/browser/M78_VOICE_BROWSER_CERT.json` — **PASS**
-
-- 33 hard / 6 responsive / 2 accessibility / 4 security gates
-- M64 shell regression retained PASS
-- Real fallback operation, authenticated audio range, Play/Stop, IELTS read-aloud,
-  unavailable state, responsive views, logout cleanup certified on loopback
-
-## 16. Tests and checks (this session)
-
-- Voice backend: 15 passed
-- Frontend: 189 passed
-- Voice/IELTS frontend contracts: passed
-- Browser cert: PASS
-- `shell=True` / public-listener scans: clean
-- Secret pattern scan: clean
-- `git diff --check`: clean on mission files
-
-Full backend suite was certified under M77 (5,272 passed) and not re-run in full for
-this bounded browser-hardening slice after focused regressions remained green.
-
-## 17. Known limitations
-
-- VoxCPM optional/uninstalled/unverified
-- Nepali unverified
-- Cloning disabled
-- Single-host SQLite/artifact storage
-- Cold native synthesis can exceed a two-second target
-- Production not authorized
-
-## 18. Production blockers
-
-Explicit production authorization, operator hardening, privacy/retention operations,
-and any approved heavy-provider installation remain required before production use.
-
-## 19. Push/merge/deploy confirmation
-
-No push, merge, pull request, deployment, DNS change, production database change,
-credential action, paid-provider call, public listener, live trade, or Trading
-Guardian change occurred.
-
-## Explicit answers
-
-1. **Can SaathiOS speak now?** Yes — authenticated local English speech via macOS,
-   including certified browser Play on loopback.
-2. **Which provider is certified?** `macos_system`
-3. **Is VoxCPM installed?** No
-4. **Was real VoxCPM inference executed?** No
-5. **Which languages are certified?** English only
-6. **Is voice cloning enabled?** No (`CAPABILITY_DISABLED`)
-7. **Is production use authorized?** No
-
----
-
-# Prior Completed Goal — Autonomous Mission Runtime Final Report
-
-Status: certified. See earlier M72 sections retained below in repository history and
-`docs/autonomous/M72_MISSION_RUNTIME_CERTIFICATION.md`.
+1. **Can SaathiOS now hold a live voice conversation?**  
+   Yes, through the authenticated Voice Runtime + shell Live Voice path
+   (deterministic/backend certified; human mic depends on browser permission).
+2. **Can users interrupt it while it is speaking?**  
+   Yes — barge-in stops playback/synthesis and resumes listening.
+3. **Is streaming transcription working?**  
+   Yes for browser STT partials via `/transcript` partial path.
+4. **Is streaming speech working?**  
+   Yes at segment level via SpeechRuntime → SpeechService (sentence boundaries).
+5. **Which STT providers are certified?**  
+   - `browser` — ready (client recognition)  
+   - `whisper_compatible` — available only if installed; no auto-install  
+   - `macos_speech` — available only with local helper  
+   - `unavailable` — truthful fail-closed  
+6. **Is production authorized?**  
+   **No.**

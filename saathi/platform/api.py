@@ -370,6 +370,57 @@ class VoiceProfilePatchBody(BaseModel):
     status: str | None = Field(default=None, max_length=20)
 
 
+class VoiceRuntimeSessionBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    input_mode: str = Field(default="toggle", max_length=40)
+    stt_provider: str = Field(default="auto", max_length=40)
+    voice_profile_id: str = Field(default="yeti_teacher", max_length=160)
+    sample_rate: int = Field(default=16000, ge=8000, le=48000)
+    max_recording_seconds: float = Field(default=30.0, ge=1.0, le=60.0)
+    silence_timeout_ms: float = Field(default=900.0, ge=200.0, le=5000.0)
+    min_speech_ms: float = Field(default=150.0, ge=50.0, le=2000.0)
+    conversation_id: str = Field(default="", max_length=160)
+    project_id: str = Field(default="", max_length=160)
+    locale: str = Field(default="en-US", max_length=16)
+    yeti_mode: str = Field(default="general", max_length=40)
+
+
+class VoiceRuntimeListenBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    mode: str = Field(default="toggle", max_length=40)
+    permission_granted: bool = True
+
+
+class VoiceRuntimeTranscriptBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    text: str = Field(default="", max_length=8_000)
+    is_final: bool = True
+    partial: bool = False
+    confidence: float = Field(default=0.85, ge=0.0, le=1.0)
+    language: str = Field(default="en", max_length=16)
+
+
+class VoiceRuntimePermissionBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    granted: bool = False
+
+
+class VoiceRuntimePlaybackBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    action: str = Field(min_length=1, max_length=20)
+
+
+class VoiceRuntimePlaybackCompleteBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    playback_id: str = Field(min_length=1, max_length=160)
+
+
 class RuntimeResumeBody(BaseModel):
     approval_id: str = ""
     timeout_sec: float | None = None
@@ -474,7 +525,12 @@ def platform_logout(
     tok = _token(authorization, x_platform_token)
     service = _svc()
     cancelled = _cancel_user_speech(service, tok)
-    return {"ok": service.logout(tok), "speech_cancelled": cancelled}
+    voice_cleared = _clear_user_voice_runtime(service, tok)
+    return {
+        "ok": service.logout(tok),
+        "speech_cancelled": cancelled,
+        "voice_sessions_cleared": voice_cleared,
+    }
 
 
 def _cancel_user_speech(service, token: str) -> int:
@@ -496,6 +552,20 @@ def _cancel_user_speech(service, token: str) -> int:
         except PlatformContextError:
             pass
     return cancelled
+
+
+def _clear_user_voice_runtime(service, token: str) -> int:
+    """Finish live voice sessions on logout/context switch."""
+    if not token:
+        return 0
+    try:
+        from saathi.platform.voice.runtime import default_voice_runtime
+
+        runtime = default_voice_runtime(service)
+        ctx = service.require_context(token)
+        return int(runtime.clear_user_sessions(ctx) or 0)
+    except Exception:
+        return 0
 
 
 @router.get("/me")
@@ -1119,6 +1189,7 @@ def select_workspace(
         service = _svc()
         token = _token(authorization, x_platform_token)
         _cancel_user_speech(service, token)
+        _clear_user_voice_runtime(service, token)
         return service.select_workspace(
             token,
             org_id=body.org_id,
@@ -3716,6 +3787,282 @@ def voice_evidence(
             "evidence": _voicesvc().evidence(
                 _voice_context(authorization, x_platform_token),
                 all_owners=all_owners,
+            )
+        }
+    except Exception as exc:
+        raise _voice_failure(exc) from exc
+
+
+# ── M79 real-time voice runtime (listen / STT / barge-in / conversation) ────
+def _voice_runtime():
+    from saathi.platform.voice.runtime import default_voice_runtime
+
+    return default_voice_runtime(_svc())
+
+
+@router.get("/voice/runtime/health")
+def voice_runtime_health(
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return {
+            "health": _voice_runtime().health(
+                _voice_context(authorization, x_platform_token)
+            )
+        }
+    except Exception as exc:
+        raise _voice_failure(exc) from exc
+
+
+@router.get("/voice/runtime/stt-providers")
+def voice_runtime_stt_providers(
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return {
+            "providers": _voice_runtime().stt_provider_states(
+                _voice_context(authorization, x_platform_token)
+            )
+        }
+    except Exception as exc:
+        raise _voice_failure(exc) from exc
+
+
+@router.post("/voice/runtime/sessions")
+def voice_runtime_create_session(
+    body: VoiceRuntimeSessionBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return {
+            "session": _voice_runtime().create_session(
+                _voice_context(authorization, x_platform_token),
+                body.model_dump(),
+            )
+        }
+    except Exception as exc:
+        raise _voice_failure(exc) from exc
+
+
+@router.get("/voice/runtime/sessions")
+def voice_runtime_list_sessions(
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return {
+            "sessions": _voice_runtime().list_sessions(
+                _voice_context(authorization, x_platform_token)
+            )
+        }
+    except Exception as exc:
+        raise _voice_failure(exc) from exc
+
+
+@router.get("/voice/runtime/sessions/{session_id}")
+def voice_runtime_get_session(
+    session_id: str,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return {
+            "session": _voice_runtime().get_session(
+                _voice_context(authorization, x_platform_token), session_id
+            )
+        }
+    except Exception as exc:
+        raise _voice_failure(exc) from exc
+
+
+def _runtime_session_payload(payload: dict) -> dict:
+    """Normalize manager snapshots to a stable {session: ...} wire shape."""
+    if isinstance(payload, dict) and "session" in payload and "session_id" not in payload:
+        return payload
+    return {"session": payload}
+
+
+@router.post("/voice/runtime/sessions/{session_id}/listen")
+def voice_runtime_listen(
+    session_id: str,
+    body: VoiceRuntimeListenBody | None = None,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        payload = body.model_dump() if body else {}
+        return _runtime_session_payload(
+            _voice_runtime().start_listening(
+                _voice_context(authorization, x_platform_token),
+                session_id,
+                mode=payload.get("mode"),
+                permission_granted=bool(payload.get("permission_granted", True)),
+            )
+        )
+    except Exception as exc:
+        raise _voice_failure(exc) from exc
+
+
+@router.post("/voice/runtime/sessions/{session_id}/stop")
+def voice_runtime_stop(
+    session_id: str,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return _runtime_session_payload(
+            _voice_runtime().stop_listening(
+                _voice_context(authorization, x_platform_token), session_id
+            )
+        )
+    except Exception as exc:
+        raise _voice_failure(exc) from exc
+
+
+@router.post("/voice/runtime/sessions/{session_id}/cancel")
+def voice_runtime_cancel(
+    session_id: str,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return _runtime_session_payload(
+            _voice_runtime().cancel_input(
+                _voice_context(authorization, x_platform_token), session_id
+            )
+        )
+    except Exception as exc:
+        raise _voice_failure(exc) from exc
+
+
+@router.post("/voice/runtime/sessions/{session_id}/permission")
+def voice_runtime_permission(
+    session_id: str,
+    body: VoiceRuntimePermissionBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return _runtime_session_payload(
+            _voice_runtime().set_microphone_permission(
+                _voice_context(authorization, x_platform_token),
+                session_id,
+                granted=body.granted,
+            )
+        )
+    except Exception as exc:
+        raise _voice_failure(exc) from exc
+
+
+@router.post("/voice/runtime/sessions/{session_id}/transcript")
+def voice_runtime_transcript(
+    session_id: str,
+    body: VoiceRuntimeTranscriptBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return _voice_runtime().submit_transcript(
+            _voice_context(authorization, x_platform_token),
+            session_id,
+            body.model_dump(),
+        )
+    except Exception as exc:
+        raise _voice_failure(exc) from exc
+
+
+@router.post("/voice/runtime/sessions/{session_id}/audio")
+async def voice_runtime_audio(
+    session_id: str,
+    request: Request,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        content_type = request.headers.get("content-type", "application/octet-stream")
+        audio = await request.body()
+        sample_rate_header = request.headers.get("x-sample-rate")
+        sample_rate = int(sample_rate_header) if sample_rate_header else None
+        return _voice_runtime().submit_audio(
+            _voice_context(authorization, x_platform_token),
+            session_id,
+            audio,
+            content_type=content_type,
+            sample_rate=sample_rate,
+        )
+    except Exception as exc:
+        raise _voice_failure(exc) from exc
+
+
+@router.post("/voice/runtime/sessions/{session_id}/interrupt")
+def voice_runtime_interrupt(
+    session_id: str,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return _runtime_session_payload(
+            _voice_runtime().interrupt(
+                _voice_context(authorization, x_platform_token),
+                session_id,
+                reason="barge_in",
+            )
+        )
+    except Exception as exc:
+        raise _voice_failure(exc) from exc
+
+
+@router.post("/voice/runtime/sessions/{session_id}/playback")
+def voice_runtime_playback(
+    session_id: str,
+    body: VoiceRuntimePlaybackBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return _runtime_session_payload(
+            _voice_runtime().playback_control(
+                _voice_context(authorization, x_platform_token),
+                session_id,
+                body.action,
+            )
+        )
+    except Exception as exc:
+        raise _voice_failure(exc) from exc
+
+
+@router.post("/voice/runtime/sessions/{session_id}/playback/complete")
+def voice_runtime_playback_complete(
+    session_id: str,
+    body: VoiceRuntimePlaybackCompleteBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return _runtime_session_payload(
+            _voice_runtime().mark_playback_complete(
+                _voice_context(authorization, x_platform_token),
+                session_id,
+                body.playback_id,
+            )
+        )
+    except Exception as exc:
+        raise _voice_failure(exc) from exc
+
+
+@router.post("/voice/runtime/sessions/{session_id}/finish")
+def voice_runtime_finish(
+    session_id: str,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return {
+            "session": _voice_runtime().finish_session(
+                _voice_context(authorization, x_platform_token), session_id
             )
         }
     except Exception as exc:

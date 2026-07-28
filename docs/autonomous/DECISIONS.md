@@ -314,3 +314,25 @@
 - Consequences: English speech is certified through the authenticated app path on
   macOS. VoxCPM remains uninstalled; Nepali and cloning stay non-certified; production
   is not authorized.
+
+## ADR-VOICE-012 — Real-Time Voice Runtime over SpeechService (M79)
+
+- Decision: implement real-time bidirectional voice as `saathi.platform.voice.runtime`
+  (VoiceSessionManager, VoiceInputService, VAD, STT providers, ConversationRuntime,
+  SpeechRuntime, AudioPlaybackController) extending M74 SpeechService rather than
+  replacing it or promoting M12 `voice_os` to platform authority.
+- Decision: browser Web Speech API is the preferred streaming STT path for partial
+  transcripts; Whisper-compatible and macOS STT helpers remain optional and never
+  auto-install models or packages.
+- Decision: barge-in is mandatory — exclusive playback cancel, preserve interrupted
+  assistant text, resume LISTENING immediately.
+- Decision: microphone capture is client-side only (explicit gesture, loopback, no
+  background recording); server owns lifecycle state, RBAC, and transcript persistence
+  without raw audio storage.
+- Alternatives: full server-side continuous capture; WebSocket-only duplex audio;
+  automatic Whisper download; parallel second speech stack.
+- Evidence: M79 17 backend tests, 15 M74 regression, 10 frontend voice contracts;
+  authenticated `/api/v1/platform/voice/runtime/*` routes; shell Live Voice dock.
+- Consequences: SaathiOS can hold interruptible live voice conversations on the
+  authenticated path with intentional STT/browser-automation limitations. Production
+  remains unauthorized; Trading Guardian unengaged; cloning disabled.

@@ -28,6 +28,25 @@ If the answer is the latter, the feature belongs in the product layer, not the p
 
 ## 3. Current Platform State
 
+### M79 Real-Time Voice Runtime (2026-07-28)
+
+* **What:** SaathiOS can hold a live, interruptible voice conversation: one mic
+  button, explicit permission, partial transcripts, conversational Yeti replies,
+  spoken responses via the existing SpeechService, and barge-in that stops
+  playback and resumes listening. Logout clears voice sessions.
+* **How:** `saathi/platform/voice/runtime/` centralizes VoiceSessionManager,
+  VoiceInputService, VAD, provider-neutral STT (browser streaming, optional
+  Whisper-compatible if installed, optional macOS helper, unavailable),
+  ConversationRuntime, SpeechRuntime (segments → SpeechService), and exclusive
+  AudioPlaybackController. Shell Live Voice dock is in the unified shell.
+* **Does not replace:** SpeechService, Platform/Mission runtime, Identity, RBAC
+  core, ExecutionGateway, Approvals, ModuleRegistry.
+* **Verified:** 17 M79 backend tests, 15 M74 regression, 10 frontend voice
+  contracts; shell=False; no public listeners; no raw audio persistence; no auto
+  model download.
+* **Limits:** automation cannot always grant getUserMedia; production not
+  authorized; Whisper/macOS STT not auto-installed.
+
 ### M69–M72 Autonomous Mission Runtime (2026-07-28)
 
 * **What:** SaathiOS can now plan, decompose, schedule, execute, review, recover,

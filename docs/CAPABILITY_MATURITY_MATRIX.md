@@ -1,10 +1,11 @@
-# SaathiOS Capability Maturity Matrix (as of M77 certification)
+# SaathiOS Capability Maturity Matrix (as of M79 certification)
 
 Levels: implemented < deterministic-tested < security/red-team-tested < live-tested < production.
 
 | capability | maturity | evidence |
 |-----------|----------|----------|
-| Provider-neutral Voice Output Foundation (M73–M77) | deterministic+native-runtime-tested; browser-limited | Central persisted SpeechService, bounded lifecycle/queue/cancel/recovery, authenticated scoped API, evidence/audit, shell and IELTS controls; 15 voice backend, full 5,272 passed/1 skipped, 189 frontend, lint/build, real macOS English artifact/fallback/cancel; dedicated M77 browser journey FAIL before completed client state |
+| Real-Time Voice Runtime (M79) | deterministic-tested; browser-path code-complete | Central VoiceSessionManager + input/VAD/STT/conversation/SpeechRuntime/playback; barge-in; RBAC voice.listen/transcribe/session.read; platform APIs; shell Live Voice dock; 17 backend + 10 frontend; M74 regression 15; no auto Whisper; production not authorized |
+| Provider-neutral Voice Output Foundation (M73–M78) | deterministic+native-runtime-tested; browser-certified (M78) | Central persisted SpeechService, bounded lifecycle/queue/cancel/recovery, authenticated scoped API, evidence/audit, shell and IELTS controls; M78 browser re-cert PASS for explicit Play path |
 | macOS system speech provider | native-runtime-tested (English backend) | `/usr/bin/say` AIFF: cold 4.539s, warm 1.663s, ~48.3MB max RSS, cancel 46.04ms; authenticated range API; no network; production/browser playback not certified |
 | VoxCPM optional speech adapter | implemented; configured-not-installed | Explicit disabled GGUF/Metal or loopback-service modes; no import/start/download; model paths required; no package/model present; inference/quality/languages not verified or certified |
 | Voice cloning | capability-disabled | Profile/reference validation rejects enrollment and active consent; providers report cloning false; no clone API; future consent/rights/labeling/revocation/deletion controls required |
