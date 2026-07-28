@@ -1,0 +1,193 @@
+{
+  "milestone": "M62.9R",
+  "title": "End-to-End Paper Trading Operational Re-certification",
+  "certification_type": "operational_recertification",
+  "starting_sha": "918b079f684d1c92f6d25de1516443d92fc84685",
+  "ending_sha": "918b079f684d1c92f6d25de1516443d92fc84685_plus_docs_only",
+  "branch": "milestone/m61-backend-workflow-persistence",
+  "code_changes_required": false,
+  "note": "Certification passed with zero code changes. Only documentation and evidence artifacts were added.",
+  "module_hashes_sha256_16": {
+    "saathi/platform/trading_models.py": "11d36cd3b072e2b5",
+    "saathi/platform/trading_guardian.py": "7d611def7b8d1f1e",
+    "saathi/platform/paper_trading/broker.py": "e6b4436befb586b4",
+    "saathi/platform/paper_trading/service.py": "2f3cbf8b79865269",
+    "saathi/platform/paper_trading/reconciliation.py": "e748f37934ddbcfc",
+    "saathi/platform/paper_trading/orchestration.py": "84f9bf44f7058a3e",
+    "saathi/platform/paper_trading/execution_tool.py": "3ec74e147a481181",
+    "saathi/platform/safety/service.py": "4132482a3d1fa5b8",
+    "saathi/platform/safety/evaluator.py": "543a756aa3e24da4",
+    "saathi/platform/safety/orchestration.py": "e94dd0a745c0ba21",
+    "saathi/platform/market_data/replay.py": "3ae8f6eab1903a8d",
+    "saathi/platform/strategy/engine.py": "35929a3b0e03c600"
+  },
+  "authority_path": [
+    "Research thesis (immutable version)",
+    "Immutable strategy version",
+    "Deterministic backtest",
+    "OrderIntent",
+    "Trading Guardian (independent fail-closed veto)",
+    "Approval (where required)",
+    "PlatformAgentRuntime",
+    "ExecutionGateway.execute_registered_tool",
+    "Registered paper tool",
+    "PaperTradingService",
+    "PaperBroker",
+    "PaperOrder",
+    "Immutable fills",
+    "Accounting",
+    "ReconciliationEngine",
+    "Safety evaluation (circuit breakers)",
+    "Alert + halt when necessary",
+    "Acknowledgement (human-only, awareness only)",
+    "Reset request",
+    "Approval Center",
+    "Runtime + Gateway",
+    "Technical re-verification battery",
+    "Bounded reset (no financial mutation)",
+    "Immutable audit evidence",
+    "Browser visibility (read-only operator interface)"
+  ],
+  "registered_tools": {
+    "count": 8,
+    "paper_trading": [
+      "paper.order.submit",
+      "paper.order.cancel",
+      "paper.order.process_event"
+    ],
+    "paper_safety": [
+      "paper_safety.trip",
+      "paper_safety.acknowledge",
+      "paper_safety.request_reset",
+      "paper_safety.reset",
+      "paper_safety.run_sweep"
+    ],
+    "assertion": "All financial and protective-state mutations flow ONLY through these registered tools via ExecutionGateway.execute_registered_tool. HTTP endpoints call orchestration.*_via_gateway helpers, never the service directly."
+  },
+  "api_routes": {
+    "trading_related_count": 77,
+    "mutation_endpoints_gateway_routed": [
+      "POST /paper/order-intents/{intent_id}/submit -> submit_via_gateway",
+      "POST /paper/orders/{order_id}/cancel -> cancel_via_gateway",
+      "POST /paper/orders/{order_id}/process-event -> process_event_via_gateway",
+      "POST /paper/safety/trips/manual -> gateway",
+      "POST /paper/safety/trips/{trip_id}/acknowledge -> gateway (human-only)",
+      "POST /paper/safety/trips/{trip_id}/reset-requests -> gateway (human-only)",
+      "POST /paper/safety/reset-requests/{request_id}/execute -> reset_via_gateway (human-only)",
+      "POST /paper/safety/sweeps -> gateway (system actor permitted)"
+    ]
+  },
+  "permission_inventory": {
+    "paper_safety_reconcile_count": 36,
+    "read_permissions": [
+      "paper_account.read", "paper_order.read", "reconciliation.read", "paper_safety.read"
+    ],
+    "operator_mutation_permissions": [
+      "paper_account.create", "paper_order.propose", "paper_order.submit",
+      "paper_order.cancel", "reconciliation.run", "paper_safety.sweep",
+      "paper_safety.trip", "paper_safety.acknowledge", "paper_safety.reset_request"
+    ],
+    "owner_only_permissions": [
+      "paper_account.halt", "reconciliation.repair_acknowledge",
+      "reconciliation.repair_authorize", "paper_safety.configure", "paper_safety.reset"
+    ],
+    "human_only_actor_gate": "is_agent_actor(ctx) blocks agents from configure, trip, acknowledge, request_reset, and reset. Sweeps do not require a human actor (SYSTEM scheduled)."
+  },
+  "frontend_routes": {
+    "count": 11,
+    "routes": [
+      "/trading", "/trading/accounts", "/trading/accounts/[accountId]",
+      "/trading/orders", "/trading/orders/[orderId]", "/trading/positions",
+      "/trading/strategies", "/trading/reconciliation", "/trading/safety",
+      "/trading/approvals", "/trading/evidence"
+    ],
+    "authority_assertion": "No client-side financial calculation in the trading UI. The browser is a read-only operator interface; all values are server-computed with Decimal precision."
+  },
+  "prohibited_capability_assertions": {
+    "live_broker": false,
+    "real_money": false,
+    "external_execution_path": false,
+    "credentials_or_secrets_in_trading_code": false,
+    "leverage": false,
+    "margin": false,
+    "short_selling": false,
+    "options_futures_perpetuals_derivatives": false,
+    "borrowing": false,
+    "withdrawals": false,
+    "autonomous_capital_allocation": false,
+    "automatic_financial_repair": false,
+    "executable_eval_exec_subprocess_socket_in_trading_modules": false,
+    "network_egress_in_trading_modules": false,
+    "note": "All prohibited terms present in trading modules occur only in rejection lists, Guardian constants, docstrings, or clamping/validation logic. No executable prohibited capability exists."
+  },
+  "repair_non_execution": {
+    "no_execute_repair_symbol": true,
+    "no_apply_repair_symbol": true,
+    "no_repair_account_symbol": true,
+    "no_auto_repair_financial_symbol": true,
+    "no_fix_financial_state_symbol": true,
+    "authorize_repair_plan_marks_intent_only": true,
+    "audit_outcome_on_authorize": "authorized_not_executed"
+  },
+  "database": {
+    "engine": "sqlite3",
+    "isolation": "per-tenant org_id scoping on every query; temporary DBs used for all certification tests",
+    "trading_tables_examples": [
+      "paper_accounts", "paper_orders", "paper_fills", "paper_positions",
+      "paper_ledger", "recon_runs", "recon_repair_plans", "breaker_*", "reset_requests"
+    ]
+  },
+  "test_suite_inventory": {
+    "full_platform_suite": {"passed": 5182, "skipped": 1, "failed": 0, "duration_s": 798.45},
+    "trading_suites": {
+      "test_m62_trading_models": 19,
+      "test_m62_2_market_data": 16,
+      "test_m62_3_research": 14,
+      "test_m62_4_strategy": 47,
+      "test_m62_5_paper_broker": 46,
+      "test_m62_6_reconciliation": 22,
+      "test_m62_7_safety": 41,
+      "test_m62_8_workspace": 4,
+      "test_m49_3_trading_boundary": 4
+    },
+    "runtime_gateway_authz": {"passed": 150},
+    "frontend_node_tests": {"passed": 130, "failed": 0},
+    "skip_reason": "1 skip is an environment-gated non-trading test (browser binary / sqlite+zip dependency)."
+  },
+  "determinism": {
+    "market_data_replay_hash_stable": true,
+    "backtest_result_hash_three_run_equal": true,
+    "simulation_financial_outputs_two_run_identical": true
+  },
+  "long_duration_simulation": {
+    "tenants": 4,
+    "accounts": 16,
+    "orders": 2240,
+    "fills": 2240,
+    "market_events": 6720,
+    "invariants_clean": true,
+    "duplicate_fills": 0,
+    "restart_recovery_no_duplicate_accounting": true,
+    "order_latency_p95_ms": 1.567,
+    "order_latency_p99_ms": 1.801,
+    "orders_per_sec": 376.5,
+    "max_rss_mb": 38.9
+  },
+  "localhost_bindings": {
+    "launcher": "scripts/start_local.sh sets SAATHI_HOST=127.0.0.1 and starts the UI with -H 127.0.0.1",
+    "backend_runtime_port": 8765,
+    "frontend_port": 3000,
+    "config_default_fallback": "saathi/config.py HOST defaults to 0.0.0.0 as an env fallback; the canonical launcher overrides to 127.0.0.1. Listed as a known limitation.",
+    "external_network_dependency": false
+  },
+  "known_limitations": [
+    "Single-host SQLite storage.",
+    "Localhost-only exposure; no distributed scheduler.",
+    "Market data is fixture/replay-based only; no live feed.",
+    "Alerts are local/durable only; no external notification transport certified here.",
+    "config.py HOST env default is 0.0.0.0; localhost-only binding depends on the launcher setting SAATHI_HOST=127.0.0.1.",
+    "Reset approval creation remains server-side; the browser surfaces but does not mint approvals.",
+    "Manual breaker-configuration UI is limited.",
+    "No production deployment, live broker, real funds, or autonomous capital allocation."
+  ]
+}
