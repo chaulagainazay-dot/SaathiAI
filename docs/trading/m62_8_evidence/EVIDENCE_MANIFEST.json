@@ -1,0 +1,51 @@
+{
+  "milestone": "M62.8",
+  "title": "SaathiOS Trading Operator Workspace, backend integration, and browser certification",
+  "verdict": "M62_8_COMPLETE",
+  "date": "2026-07-28",
+  "starting_sha": "0ecd72d",
+  "frontend_app": "saathi-os (Next.js 15 app router)",
+  "localhost": {"frontend": "127.0.0.1:3000", "backend": "127.0.0.1:8765", "no_0_0_0_0": true},
+  "old_placeholder": {
+    "location": "saathi-os/app/trading/page.jsx (M54 advisory-only)",
+    "disposition": "REPLACE — real paper workspace; truthful paper-only safety frame retained (PAPER / SIMULATION ONLY / LIVE EXECUTION UNAVAILABLE / LONG-ONLY / LOCALHOST)",
+    "stale_text_scan": "no 'Trading execution is not available' / 'NO_TRADING_AUTHORITY' / 'NOT EXERCISED' in active UI; remaining references are updated M47 safety tests asserting the new truthful posture"
+  },
+  "routes": [
+    "/trading", "/trading/accounts", "/trading/accounts/[accountId]", "/trading/orders",
+    "/trading/orders/[orderId]", "/trading/positions", "/trading/strategies",
+    "/trading/reconciliation", "/trading/safety", "/trading/approvals", "/trading/evidence"
+  ],
+  "backend_additions": [
+    "GET /paper/reconciliation/runs", "GET /paper/reconciliation/runs/{id}",
+    "GET /paper/reconciliation/repair-plans", "GET /paper/reconciliation/repair-plans/{id}",
+    "POST /paper/reconciliation/runs (integrated reconcile->auto-trip, never repairs)",
+    "account detail halt_reason + mark_source",
+    "_SerializedConn concurrency wrapper on PaperStore + PlatformStore connections"
+  ],
+  "browser_certification": {
+    "overview": "real metrics; PAPER banner; ENVIRONMENT PAPER / AUTHORITY SIMULATION ONLY / LIVE EXECUTION UNAVAILABLE; POSTURE ACTION REQUIRED with 1 halted account",
+    "accounts": "Research Paper B HALTED, Momentum Paper A ACTIVE; server decimals",
+    "safety": "breaker states (ACKNOWLEDGED sorted first), trips, sweep action, reset workflow with 8 server-enforced prerequisites + 'approval cannot override failing checks' warning",
+    "reset_denied_no_approval": "400 approval required; halt retained",
+    "reset_success": "approval-backed reset via Runtime/Gateway -> account ACTIVE, cash unchanged $49,038.40, financial_state_modified=false",
+    "reconciliation": "run history (INFO); repair plans PLAN ONLY — NEVER AUTOMATICALLY EXECUTED; no execute/apply control",
+    "approvals": "APPROVED + CONSUMED paper_safety.reset rows; scope-binding payload hash; single-use column; 'approval does not remove a halt' notice",
+    "evidence": "timeline across trip/sweep/reconciliation/alert/order; type filters; read-only; 'no automatic repair path exists'",
+    "tenant_safe_404": "unknown account/trip -> 404",
+    "screenshots": "docs/trading/m62_8_evidence/screenshots/*.jpg"
+  },
+  "role_and_tenant_isolation": "backend-enforced (ctx.require_permission + is_agent_actor); UI hides controls via hasPerm; covered by tests/test_m62_8_workspace.py + M62.7 adversarial suite",
+  "tests": {
+    "frontend_unit": "130 passed, 0 failed (node --test)",
+    "frontend_lint": "eslint clean (--max-warnings 5)",
+    "frontend_build": "next build OK — all 11 /trading routes compiled",
+    "m62_8_backend": "tests/test_m62_8_workspace.py 4 passed (concurrency + recon read + halt_reason + tenant isolation)",
+    "backend_regression": "1270 passed, 0 failed across m62/m50/m61/auth/approval/identity/runtime/store/workflow/platform (205s)"
+  },
+  "not_claimed": [
+    "PAPER_TRADING_OPERATIONALLY_CERTIFIED", "LIVE_TRADING_READY",
+    "PRODUCTION_READY", "REAL_MONEY_READY", "AUTONOMOUS_TRADING_READY"
+  ],
+  "push_merge_deploy": "none"
+}

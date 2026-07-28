@@ -139,11 +139,12 @@ describe("environment inference", () => {
 });
 
 describe("trading safety in nav model", () => {
-  it("trading item is risk-flagged and advisory-only", () => {
+  it("trading item is risk-flagged and paper-only (M62.8: no live authority)", () => {
     const t = getPrimaryAreas().find((i) => i.id === "trading");
     assert.ok(t);
     assert.equal(t.riskFlag, true);
-    assert.equal(t.authoritySensitivity, "advisory-only");
+    assert.equal(t.authoritySensitivity, "paper-only");
+    assert.equal(t.environmentSensitivity, "never-imply-production");
     assert.equal(t.href, "/trading");
   });
 });

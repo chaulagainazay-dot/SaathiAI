@@ -189,6 +189,63 @@ def hash_token(token: str) -> str:
     return hashlib.sha256(token.encode("utf-8")).hexdigest()
 
 
+class _LockedResult:
+    """SELECT rows are materialized under the lock at execute time so a concurrent
+    threadpool worker cannot invalidate the cursor before fetch. lastrowid/rowcount
+    are captured at execute time too, so they stay stable after the lock releases."""
+    __slots__ = ("_rows", "lastrowid", "rowcount")
+
+    def __init__(self, rows, lastrowid, rowcount):
+        self._rows = rows
+        self.lastrowid = lastrowid
+        self.rowcount = rowcount
+
+    def fetchall(self):
+        return list(self._rows or [])
+
+    def fetchone(self):
+        return self._rows.pop(0) if self._rows else None
+
+
+class _SerializedConn:
+    """Thread-safe facade over one shared sqlite3 connection: every statement (and,
+    for SELECTs, its fetch) runs under a single reentrant lock, so FastAPI's
+    threadpool can read concurrently without sqlite3.InterfaceError."""
+
+    def __init__(self, raw, lock):
+        object.__setattr__(self, "_raw", raw)
+        object.__setattr__(self, "_lock", lock)
+
+    def execute(self, sql, params=()):
+        with self._lock:
+            cur = self._raw.execute(sql, params)
+            rows = cur.fetchall() if cur.description is not None else None
+            return _LockedResult(rows, cur.lastrowid, cur.rowcount)
+
+    def executescript(self, script):
+        with self._lock:
+            return self._raw.executescript(script)
+
+    def cursor(self):
+        return self._raw.cursor()
+
+    def commit(self):
+        with self._lock:
+            return self._raw.commit()
+
+    def __enter__(self):
+        return self._raw.__enter__()
+
+    def __exit__(self, *a):
+        return self._raw.__exit__(*a)
+
+    def __getattr__(self, name):
+        return getattr(self._raw, name)
+
+    def __setattr__(self, name, value):
+        setattr(self._raw, name, value)
+
+
 class PlatformStore:
     def __init__(self, db_path: Path | str | None = None, *, now: Callable[[], float] = time.time):
         # Explicit path wins; else an env override (used by the M54 isolated
@@ -199,9 +256,9 @@ class PlatformStore:
         )
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self._now = now
+        self._runtime_lock = threading.RLock()
         self._conn = sqlite3.connect(str(self.db_path), check_same_thread=False)
         self._conn.row_factory = sqlite3.Row
-        self._runtime_lock = threading.RLock()
         self._conn.execute("PRAGMA foreign_keys = ON")
         self._conn.executescript(_SCHEMA)
         self._conn.executescript(_INDEXES)
@@ -210,6 +267,10 @@ class PlatformStore:
         self._migrate_m53()
         self._migrate_m61()
         self._conn.commit()
+        # Serialize all shared-connection access (auth/session/approval/audit reads
+        # run under FastAPI's threadpool concurrently). Reentrant so existing
+        # ``with self._runtime_lock, self._conn:`` write blocks still work.
+        self._conn = _SerializedConn(self._conn, self._runtime_lock)
 
     def _migrate_m51(self) -> None:
         """Idempotent M51 schema extensions (single-host SQLite)."""

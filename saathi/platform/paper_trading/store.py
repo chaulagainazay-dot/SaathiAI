@@ -101,18 +101,79 @@ class IdempotencyConflict(Exception):
     """Same key, different payload."""
 
 
+class _LockedResult:
+    """Result shim: SELECT rows AND lastrowid/rowcount are captured under the lock at
+    execute time, so a concurrent thread cannot invalidate the cursor before fetch."""
+    __slots__ = ("_rows", "lastrowid", "rowcount")
+
+    def __init__(self, rows, lastrowid, rowcount):
+        self._rows = rows
+        self.lastrowid = lastrowid
+        self.rowcount = rowcount
+
+    def fetchall(self):
+        return list(self._rows or [])
+
+    def fetchone(self):
+        return self._rows.pop(0) if self._rows else None
+
+
+class _SerializedConn:
+    """Thread-safe facade over one shared sqlite3 connection. ``execute`` serializes
+    each statement AND (for SELECTs) its fetch under a single reentrant lock, so the
+    connection can be used from FastAPI's threadpool without ``InterfaceError`` from
+    interleaved cursors. Write blocks that hold ``with lock, conn:`` keep using the
+    raw cursor and are unaffected (the lock is reentrant)."""
+
+    def __init__(self, raw, lock):
+        object.__setattr__(self, "_raw", raw)
+        object.__setattr__(self, "_lock", lock)
+
+    def execute(self, sql, params=()):
+        with self._lock:
+            cur = self._raw.execute(sql, params)
+            rows = cur.fetchall() if cur.description is not None else None
+            return _LockedResult(rows, cur.lastrowid, cur.rowcount)
+
+    def executescript(self, script):
+        with self._lock:
+            return self._raw.executescript(script)
+
+    def cursor(self):
+        return self._raw.cursor()
+
+    def commit(self):
+        with self._lock:
+            return self._raw.commit()
+
+    def __enter__(self):
+        return self._raw.__enter__()
+
+    def __exit__(self, *a):
+        return self._raw.__exit__(*a)
+
+    def __getattr__(self, name):
+        return getattr(self._raw, name)
+
+    def __setattr__(self, name, value):
+        setattr(self._raw, name, value)
+
+
 class PaperStore:
     def __init__(self, db_path: str | Path | None = None):
         env = os.environ.get("SAATHI_PAPER_DB") or os.environ.get("SAATHI_PLATFORM_DB", "")
         default = Path(__file__).resolve().parents[3] / "data" / "platform" / "platform.db"
         self.db_path = Path(db_path) if db_path else (Path(env) if env else default)
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
-        self._conn = sqlite3.connect(str(self.db_path), check_same_thread=False)
-        self._conn.row_factory = sqlite3.Row
-        self._conn.execute("PRAGMA foreign_keys=ON")
-        self._conn.executescript(_SCHEMA)
-        self._conn.commit()
+        raw = sqlite3.connect(str(self.db_path), check_same_thread=False)
+        raw.row_factory = sqlite3.Row
+        raw.execute("PRAGMA foreign_keys=ON")
+        raw.executescript(_SCHEMA)
+        raw.commit()
         self._lock = threading.RLock()
+        # Serialize all shared-connection access (reads materialized under the lock).
+        # SafetyStore/ReconStore reuse this same wrapped connection + lock.
+        self._conn = _SerializedConn(raw, self._lock)
 
     def _now(self) -> float:
         return _time.time()

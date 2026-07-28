@@ -98,6 +98,8 @@ class PaperTradingService:
         upnl = Decimal("0")
         out = acct.to_public(unrealized_pnl=upnl, positions_value=pv)
         out["positions"] = [p.to_public(mark=p.avg_cost) for p in positions if p.quantity != 0]
+        out["halt_reason"] = self.store.account_halt_reason(ctx.org_id, account_id)
+        out["mark_source"] = "replay/fixture"  # marks derive from avg_cost; no live feed
         return out
 
     def list_accounts(self, ctx) -> list[dict]:

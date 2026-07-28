@@ -2744,3 +2744,60 @@ def safety_reset_execute(request_id: str, body: SafetyResetExecBody, authorizati
         return {"result": _pp_gateway_result(r)}
     except PlatformContextError as e:
         raise _err(e) from e
+
+
+# ── M62.6 reconciliation read + integrated run (surfaced for the M62.8 workspace) ──
+# Read-only run/finding/repair-plan views; the run action uses the M62.7 integrated
+# reconcile_and_guard path (reconcile → auto-trip on CRITICAL). NEVER executes repairs.
+def _reconsvc():
+    from saathi.platform.paper_trading import ReconciliationEngine
+    svc = _ppsvc()
+    eng = ReconciliationEngine(svc.store, platform_store=getattr(svc, "_platform_store", None))
+    return eng
+
+
+class ReconRunBody(BaseModel):
+    account_id: str
+
+
+@router.get("/paper/reconciliation/runs")
+def recon_runs_list(account_id: str = "", limit: int = 100, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"runs": _reconsvc().list_runs(_ppctx(authorization, x_platform_token), account_id=account_id or None, limit=limit)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/paper/reconciliation/runs/{run_id}")
+def recon_run_get(run_id: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"run": _reconsvc().get_run(_ppctx(authorization, x_platform_token), run_id)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/paper/reconciliation/repair-plans")
+def recon_plans_list(account_id: str = "", limit: int = 100, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"repair_plans": _reconsvc().list_repair_plans(_ppctx(authorization, x_platform_token), account_id=account_id or None, limit=limit)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/paper/reconciliation/repair-plans/{plan_id}")
+def recon_plan_get(plan_id: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"repair_plan": _reconsvc().get_repair_plan(_ppctx(authorization, x_platform_token), plan_id)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/paper/reconciliation/runs")
+def recon_run(body: ReconRunBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    # Integrated M62.7 path: reconcile the account and auto-trip a breaker on CRITICAL
+    # drift. Never executes a repair. Requires PAPER_SAFETY_SWEEP (may trip a breaker).
+    try:
+        ctx = _ppctx(authorization, x_platform_token)
+        return {"result": _safesvc().reconcile_and_guard(ctx, body.account_id)}
+    except PlatformContextError as e:
+        raise _err(e) from e

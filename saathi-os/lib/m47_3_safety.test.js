@@ -30,12 +30,18 @@ describe("dialogs exist", () => {
   });
 });
 
-describe("Trading Guardian still advisory", () => {
+describe("Trading operator workspace safety boundary (M62.8)", () => {
   const src = read("app/trading/page.jsx");
-  it("keeps advisory-only boundary", () => {
-    assert.match(src, /Advisory only/i);
-    assert.match(src, /NO_TRADING_AUTHORITY/);
-    assert.doesNotMatch(src, /executeTrade|submitOrder/);
+  it("is paper-only with live execution unavailable and no live-order entry", () => {
+    // The M54 advisory-only placeholder is replaced by the real paper workspace.
+    // The safety boundary is now TRUTHFUL: paper simulation available, live disabled.
+    assert.match(src, /PAPER/);
+    assert.match(src, /LIVE EXECUTION: UNAVAILABLE|Live execution unavailable/i);
+    assert.match(src, /SIMULATION ONLY|Simulation-only/i);
+    // never a live-order / live-broker control
+    assert.doesNotMatch(src, /executeTrade|submitLiveOrder|liveBroker/);
+    // must not resurrect the misleading "execution is not available" placeholder
+    assert.doesNotMatch(src, /Trading execution is not available/);
   });
 });
 

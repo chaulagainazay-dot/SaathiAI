@@ -44,10 +44,11 @@ describe("M47.4 browser cert harness exists", () => {
   });
 });
 
-describe("Trading still advisory after M47.3", () => {
-  it("trading page boundary intact", () => {
+describe("Trading paper workspace boundary after M62.8", () => {
+  it("trading page is paper-only, live execution unavailable", () => {
     const src = readFileSync(join(root, "app/trading/page.jsx"), "utf8");
-    assert.match(src, /Advisory only/i);
-    assert.match(src, /NO_TRADING_AUTHORITY/);
+    assert.match(src, /PAPER/);
+    assert.match(src, /LIVE EXECUTION: UNAVAILABLE|Live execution unavailable/i);
+    assert.doesNotMatch(src, /Trading execution is not available/);
   });
 });
