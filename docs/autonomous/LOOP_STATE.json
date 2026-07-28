@@ -3,7 +3,8 @@
   "historical_baseline_sha": "1ea69436b40ba68f19f941f8e0d104df587651b3",
   "baseline_sha": "1ea69436b40ba68f19f941f8e0d104df587651b3",
   "session_start_sha": "1ea69436b40ba68f19f941f8e0d104df587651b3",
-  "current_sha": "1ea69436b40ba68f19f941f8e0d104df587651b3",
+  "current_sha": "6014b73f8e32b424d67970d980f55a42eb77d375",
+  "m80_m86_implementation_sha": "6014b73f8e32b424d67970d980f55a42eb77d375",
   "current_milestone": "M86",
   "status": "complete_with_limitations",
   "completed_milestones": [
