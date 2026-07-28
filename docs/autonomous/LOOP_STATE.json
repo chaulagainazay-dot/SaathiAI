@@ -2,10 +2,10 @@
   "goal_id": "SAATHIOS_VOICE_OUTPUT_FOUNDATION",
   "historical_baseline_sha": "a4cb5c4d872a3edf048d52b7cd62bf9346703613",
   "baseline_sha": "7873586aea6066d9e1d51b1d60f85ca413127907",
-  "current_sha": "0f43acd6addc4e0edc8d3a0a61070bb4763618a5",
-  "current_milestone": "M74",
+  "current_sha": "c13bb78a5eaca12d069bb4226d9584ab4bd351e2",
+  "current_milestone": "M75",
   "status": "in_progress",
-  "completed_milestones": ["M73"],
+  "completed_milestones": ["M73", "M74"],
   "prior_completed_goals": [
     {
       "goal_id": "IELTS_ALERT",
@@ -18,7 +18,7 @@
       "status": "complete"
     }
   ],
-  "next_action": "Implement and certify M74 provider-neutral speech backend.",
+  "next_action": "Implement and certify M75 unified-shell speech controls.",
   "last_verified_at": "2026-07-28",
   "stop_reason": null
 }

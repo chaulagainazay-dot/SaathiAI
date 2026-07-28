@@ -197,3 +197,59 @@
 - Consequences: certification is tenant-scoped, authenticated, independently reviewed,
   snapshot-hashed, restart-persistent, and immutable. Any mismatch fails closed with
   no partial certificate or state transition.
+
+## ADR-VOICE-004 — centralize speech in one bounded platform service
+
+- Decision: all new platform modules call `SpeechService`, which owns lifecycle,
+  queueing, provider selection, persistence, artifact references, cancellation,
+  evidence, audit, and restart reconciliation.
+- Alternatives: let shell and IELTS call `/usr/bin/say` or VoxCPM directly; extend the
+  legacy `VoiceStore` into a second platform authority.
+- Evidence: the legacy voice subsystem predates platform RBAC and tenant/workspace
+  scope, while `PlatformStore` and `PlatformExecutionContext` already provide the
+  required serialized state and authority.
+- Consequences: legacy voice input remains compatible but is not authoritative for
+  platform output. Heavy-provider concurrency is one, queue depth is eight, text is
+  memory-only, and a provider grants no permission.
+
+## ADR-VOICE-005 — certify asynchronous macOS artifacts before model inference
+
+- Decision: certify native macOS AIFF synthesis and authenticated browser playback as
+  the lightweight English baseline. Provider-native chunk streaming is not claimed;
+  authenticated HTTP range delivery begins after artifact completion.
+- Alternatives: install a multi-gigabyte model first; claim CLI `--stream` as an API
+  stream; allow automatic local playback.
+- Evidence: the warm native artifact path measured 1.663 seconds and about 48 MB
+  process maximum RSS, while the VoxCPM2 Python route approaches the entire 8 GB
+  machine budget before the application workload.
+- Consequences: UI work stays non-blocking and user-controlled. The 4.539-second cold
+  artifact result is a declared limitation rather than hidden by an unsupported
+  streaming claim.
+
+## ADR-VOICE-006 — VoxCPM remains an explicit out-of-process optional boundary
+
+- Decision: support only explicit GGUF/Metal CLI and loopback-service adapter modes.
+  Keep both disabled until an executable/service and model paths are configured;
+  never import, start, or download VoxCPM during application startup.
+- Alternatives: add VoxCPM/Torch to core dependencies; auto-download weights; run
+  inference inside FastAPI; treat adapter presence as runtime integration.
+- Evidence: upstream resource/compatibility evidence and local disk/Python/Torch
+  inventory show that the full model route is unsafe to certify on M2/8 GB without a
+  separately approved resource evaluation.
+- Consequences: provider health distinguishes implemented, installed, configured,
+  model available, runtime verified, quality reviewed, and certified. VoxCPM is
+  currently `CONFIGURED_NOT_INSTALLED`, English is certified only through macOS, and
+  Nepali remains unsupported-not-verified.
+
+## ADR-VOICE-007 — disable cloning below the provider boundary
+
+- Decision: profile validation rejects reference artifacts and active cloning consent,
+  providers report cloning false, and no cloning or enrollment API is exposed.
+- Alternatives: expose dormant cloning fields; rely on a provider flag; enroll
+  reference audio before consent/evidence deletion controls exist.
+- Evidence: the current platform lacks the complete verified-rights, consent audit,
+  synthetic labeling, revocation, deletion, public-figure restriction, and reference
+  artifact governance required by the goal.
+- Consequences: `voice.clone.request` and `voice.clone.approve` reserve stronger future
+  authority but cannot activate cloning. The Yeti profile is written voice-design
+  metadata only and never clones a person.

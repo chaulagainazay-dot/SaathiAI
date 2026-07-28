@@ -2,18 +2,23 @@
 
 ## Active
 
-- M74 — provider-neutral persisted SpeechService, profiles, RBAC, providers and API.
+- M75 — unified-shell speak controls, playback lifecycle and preferences.
 
 ## Pending
 
-- M75 — unified-shell speak experience and IELTS read-aloud.
-- M76 — voice browser, resource, security and full-regression certification.
+- M76 — IELTS feedback read-aloud through the canonical SpeechService.
+- M77 — voice browser, resource, security and full-regression certification.
 
 ## Completed
 
 - M73 — recovery audit, classified voice inventory, M2/8 GB machine-fit assessment,
   adapter-first provider decision, macOS-first certification plan, VoxCPM kept
   uninstalled, and cloning kept disabled (`0f43acd`).
+- M74 — canonical persisted SpeechService, provider/profile contracts, lifecycle,
+  queue/concurrency/cancellation/recovery, macOS provider, optional disabled VoxCPM
+  adapter, unavailable provider, voice permissions, authenticated scoped APIs,
+  evidence/audit, cloning fail-closed safety, 14 focused tests, and real native
+  English/cancellation measurements (`c13bb78`).
 - Prior goal retained: M69–M72 Autonomous Mission Runtime, terminal verdict
   `MISSION_RUNTIME_COMPLETE`, final repository checkpoint `7873586`.
 - Repository intake/recovery audit at
