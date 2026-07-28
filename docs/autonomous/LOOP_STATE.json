@@ -29,5 +29,7 @@
   "next_action": "Await a separately authorized VoxCPM resource decision or production-hardening goal; do not install VoxCPM automatically.",
   "last_verified_at": "2026-07-28",
   "stop_reason": "VOICE_FOUNDATION_COMPLETE_WITH_LIMITATIONS: macOS English backend and browser playback certified; VoxCPM remains optional/uninstalled; cloning disabled; production not authorized.",
-  "m78_implementation_sha": "d3c4987c3f472a491e4b78c54dfc1e012d79e426"
+  "m78_implementation_sha": "d3c4987c3f472a491e4b78c54dfc1e012d79e426",
+  "m78_certification_sha": "4896c0a102c7cd8606616b708a93508add1fe4a9",
+  "terminal_docs_note": "Tip may include LOOP_STATE pin commits after certification SHA."
 }
