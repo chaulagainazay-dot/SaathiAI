@@ -2,11 +2,11 @@
 
 ## Active
 
-- M76 — IELTS feedback read-aloud through the canonical SpeechService.
+- M77 — voice browser, resource, security and full-regression certification.
 
 ## Pending
 
-- M77 — voice browser, resource, security and full-regression certification.
+- None after M77 certification and closeout.
 
 ## Completed
 
@@ -22,6 +22,10 @@
   global Stop, provider/fallback state, profile/rate preferences, no autoplay,
   context/logout cleanup, accessible responsive controls, 188 frontend tests,
   lint/build, and 15 backend tests (`b206db8`).
+- M76 — IELTS feedback-only read-aloud through the shared client, provider-neutral
+  Yeti profile selection, bounded transparent text, private response exclusion,
+  no browser speech synthesis/autoplay, 189 frontend tests, lint/build
+  (`0886609`).
 - Prior goal retained: M69–M72 Autonomous Mission Runtime, terminal verdict
   `MISSION_RUNTIME_COMPLETE`, final repository checkpoint `7873586`.
 - Repository intake/recovery audit at

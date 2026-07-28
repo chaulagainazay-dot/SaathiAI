@@ -2,10 +2,10 @@
   "goal_id": "SAATHIOS_VOICE_OUTPUT_FOUNDATION",
   "historical_baseline_sha": "a4cb5c4d872a3edf048d52b7cd62bf9346703613",
   "baseline_sha": "7873586aea6066d9e1d51b1d60f85ca413127907",
-  "current_sha": "b206db8f31090aefa70258fc578099b4f91f5d35",
-  "current_milestone": "M76",
+  "current_sha": "0886609e06261411ad8a0d35fa53a497b8ef3a75",
+  "current_milestone": "M77",
   "status": "in_progress",
-  "completed_milestones": ["M73", "M74", "M75"],
+  "completed_milestones": ["M73", "M74", "M75", "M76"],
   "prior_completed_goals": [
     {
       "goal_id": "IELTS_ALERT",
@@ -18,7 +18,7 @@
       "status": "complete"
     }
   ],
-  "next_action": "Implement and certify M76 IELTS feedback read-aloud.",
+  "next_action": "Run M77 voice browser, resource, security, and full-regression certification.",
   "last_verified_at": "2026-07-28",
   "stop_reason": null
 }

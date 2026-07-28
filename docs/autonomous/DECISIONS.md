@@ -266,3 +266,16 @@
 - Consequences: user intent is unambiguous, audio never starts on navigation or data
   refresh, and every platform module can reuse one shell client. The extra Play action
   is a deliberate safety/usability tradeoff and is visibly communicated.
+
+## ADR-VOICE-009 — IELTS speaks feedback, not the learner submission
+
+- Decision: project only the persisted backend feedback, criteria, limitations, and
+  non-official label into bounded Yeti-profile speech.
+- Alternatives: speak the entire record including the learner response; create an
+  IELTS-specific TTS path; use browser speech synthesis.
+- Evidence: learner submissions can contain private content unrelated to feedback,
+  and a second speech implementation would bypass the canonical audit, cancellation,
+  provider health, and artifact controls.
+- Consequences: Read aloud is English-only, transparent about limitations, bounded to
+  4,000 characters, and routed through the same SpeechService. IELTS scoring and
+  pronunciation limitations remain unchanged.
