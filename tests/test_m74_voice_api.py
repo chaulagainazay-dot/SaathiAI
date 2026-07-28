@@ -215,3 +215,31 @@ def test_cancel_evidence_and_logout_revocation(tmp_path, monkeypatch):
     assert client.get(
         "/api/v1/platform/voice/health", headers=headers
     ).status_code == 401
+
+
+def test_logout_cancels_active_speech_before_session_revocation(
+    tmp_path, monkeypatch
+):
+    client, headers, platform, speech = client_and_headers(tmp_path, monkeypatch)
+    blocking = FakeProvider(block=True)
+    speech.shutdown()
+    replacement = SpeechService(
+        platform.store,
+        providers=[blocking],
+        artifact_root=tmp_path / "logout-artifacts",
+    )
+    platform._speech_service = replacement
+    created = client.post(
+        "/api/v1/platform/voice/speech",
+        headers=headers,
+        json={"text": "Logout cancellation fixture."},
+    ).json()["operation"]
+    assert blocking.started.wait(1)
+    logged_out = client.post("/api/v1/platform/auth/logout", headers=headers)
+    assert logged_out.status_code == 200
+    assert logged_out.json()["speech_cancelled"] == 1
+    assert replacement.wait(created["operation_id"]).state == "cancelled"
+    assert client.get(
+        f"/api/v1/platform/voice/speech/{created['operation_id']}",
+        headers=headers,
+    ).status_code == 401

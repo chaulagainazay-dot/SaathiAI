@@ -472,7 +472,30 @@ def platform_logout(
     x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
 ):
     tok = _token(authorization, x_platform_token)
-    return {"ok": _svc().logout(tok)}
+    service = _svc()
+    cancelled = _cancel_user_speech(service, tok)
+    return {"ok": service.logout(tok), "speech_cancelled": cancelled}
+
+
+def _cancel_user_speech(service, token: str) -> int:
+    cancelled = 0
+    speech_service = getattr(service, "_speech_service", None)
+    if token and speech_service is not None:
+        try:
+            ctx = service.require_context(token)
+            for operation in speech_service.list_operations(ctx):
+                if not operation["state"] in {
+                    "completed",
+                    "cancelled",
+                    "failed",
+                    "unavailable",
+                    "expired",
+                }:
+                    speech_service.cancel(ctx, operation["operation_id"])
+                    cancelled += 1
+        except PlatformContextError:
+            pass
+    return cancelled
 
 
 @router.get("/me")
@@ -1093,8 +1116,11 @@ def select_workspace(
     x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
 ):
     try:
-        return _svc().select_workspace(
-            _token(authorization, x_platform_token),
+        service = _svc()
+        token = _token(authorization, x_platform_token)
+        _cancel_user_speech(service, token)
+        return service.select_workspace(
+            token,
             org_id=body.org_id,
             workspace_id=body.workspace_id,
         )

@@ -20,6 +20,8 @@ import { GO_SHORTCUTS } from "@/lib/navigation";
 import { ModuleDiscoveryProvider } from "@/lib/modules/ModuleDiscoveryContext";
 import { useModuleDiscoveryContext } from "@/lib/modules/ModuleDiscoveryContext";
 import ModuleRouteBoundary from "./modules/ModuleRouteBoundary";
+import { VoiceOutputProvider } from "./voice/VoiceOutputProvider";
+import VoiceOutputDock from "./voice/VoiceOutputDock";
 
 function ShellInner({ children }) {
   const pathname = usePathname();
@@ -164,6 +166,7 @@ function ShellInner({ children }) {
       )}
 
       <LiveToasts />
+      <VoiceOutputDock />
       <CommandPalette
         open={paletteOpen}
         onClose={() => setPaletteOpen(false)}
@@ -178,7 +181,9 @@ export default function Shell({ children }) {
   return (
     <ShellChromeProvider>
       <ModuleDiscoveryProvider>
-        <ShellInner>{children}</ShellInner>
+        <VoiceOutputProvider>
+          <ShellInner>{children}</ShellInner>
+        </VoiceOutputProvider>
       </ModuleDiscoveryProvider>
     </ShellChromeProvider>
   );

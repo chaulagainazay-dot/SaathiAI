@@ -7,6 +7,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { API_BASE, afetch } from "@/lib/api";
 import AgentRunPanel from "./AgentRunPanel";
 import VoiceControl from "./VoiceControl";
+import { useVoiceOutput } from "../voice/VoiceOutputProvider";
 
 const AGENTS = ["", "planner", "researcher", "coder", "reviewer", "architect", "writer", "ceo"];
 
@@ -70,6 +71,7 @@ export default function ChatWorkspace({ compact = false } = {}) {
   const [voiceOpen, setVoiceOpen] = useState(false);
   const bottomRef = useRef(null);
   const abortRef = useRef(null);
+  const voiceOutput = useVoiceOutput();
 
   const loadConvs = useCallback(async () => {
     try {
@@ -308,6 +310,24 @@ export default function ChatWorkspace({ compact = false } = {}) {
                   {m.model ? `⚡ ${m.model}` : "saathi"}{m.status === "error" ? " · error" : ""}
                 </div>)}
               {m.content}
+              {m.role !== "user" && m.status !== "error" && m.content ? (
+                <div className="voice-message-actions">
+                  <button
+                    type="button"
+                    className="voice-message-speak"
+                    onClick={() =>
+                      voiceOutput.speak(m.content, {
+                        source: "assistant",
+                        language: "en-US",
+                      })
+                    }
+                    disabled={!voiceOutput.enabled || voiceOutput.busy}
+                    aria-label="Speak assistant response"
+                  >
+                    Speak
+                  </button>
+                </div>
+              ) : null}
             </div>))}
           {busy && (
             <div style={S.bubble("assistant")}>
