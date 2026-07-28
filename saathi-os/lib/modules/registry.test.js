@@ -9,6 +9,7 @@ import {
   buildDefaultRegistry,
   getRegistry,
   TRADING_MODULE,
+  IELTS_MODULE,
   PLACEHOLDER_MODULES,
 } from "./registry.js";
 import {
@@ -95,23 +96,31 @@ describe("module registry", () => {
 });
 
 describe("default registry", () => {
-  it("has Trading enabled as the only enabled module", () => {
+  it("has Trading and IELTSAlert enabled", () => {
     const r = buildDefaultRegistry();
     assert.equal(r.get("trading").status, "enabled");
     assert.equal(r.get("trading").health, "healthy");
-    assert.deepEqual(r.listEnabled().map((m) => m.id), ["trading"]);
+    assert.deepEqual(r.listEnabled().map((m) => m.id).sort(), ["ielts", "trading"]);
   });
 
-  it("registers 4 metadata-only placeholders", () => {
+  it("registers 3 remaining metadata-only placeholders", () => {
     const r = buildDefaultRegistry();
-    for (const pid of ["ielts", "hcgpos", "travel", "finance"]) {
+    for (const pid of ["hcgpos", "travel", "finance"]) {
       const m = r.get(pid);
       assert.ok(m, pid);
       assert.equal(m.status, "placeholder");
       assert.equal(m.health, "not_implemented");
       assert.equal(m.featureFlags.implemented, false);
     }
-    assert.equal(PLACEHOLDER_MODULES.length, 4);
+    assert.equal(PLACEHOLDER_MODULES.length, 3);
+  });
+
+  it("IELTS fallback metadata cannot claim external capabilities", () => {
+    assert.equal(IELTS_MODULE.status, "enabled");
+    assert.equal(IELTS_MODULE.featureFlags.provider_assisted_scoring, false);
+    assert.equal(IELTS_MODULE.featureFlags.official_scoring, false);
+    assert.equal(IELTS_MODULE.featureFlags.live_availability, false);
+    assert.equal(IELTS_MODULE.featureFlags.payment_settlement, false);
   });
 
   it("Trading declares no live capability", () => {
@@ -137,13 +146,13 @@ describe("shell composition", () => {
     const trading = nav.applications.items.find((i) => i.id === "trading");
     assert.equal(trading.href, "/trading");
     const ielts = nav.applications.items.find((i) => i.id === "ielts");
-    assert.equal(ielts.badge, "soon");
+    assert.equal(ielts.badge, undefined);
   });
 
   it("dashboard is module-driven", () => {
     const d = getDashboard(buildDefaultRegistry());
     assert.equal(d.installedCount, 5);
-    assert.equal(d.enabledCount, 1);
+    assert.equal(d.enabledCount, 2);
     assert.ok(d.cards.some((c) => c.moduleId === "trading"));
   });
 

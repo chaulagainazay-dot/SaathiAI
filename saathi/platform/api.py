@@ -178,6 +178,9 @@ class ExecuteBody(BaseModel):
     # compatibility fields are accepted but never trusted
     user_id: str = ""
     org_id: str = ""
+    workspace_id: str = ""
+    role: str = ""
+    authority: str = ""
 
 
 # ── M66 IELTSAlert bounded workflow bodies ──────────────────────────────────
@@ -236,9 +239,6 @@ class IELTSPaymentBody(BaseModel):
 class IELTSPaymentReviewBody(BaseModel):
     approve: bool
     reason: str
-    workspace_id: str = ""
-    role: str = ""
-    authority: str = ""
 
 
 class RuntimeResumeBody(BaseModel):

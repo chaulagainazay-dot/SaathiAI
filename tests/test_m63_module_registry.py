@@ -117,7 +117,7 @@ def test_health_report():
     assert hr["b"] == ModuleHealth.NOT_IMPLEMENTED.value
 
 
-# ── default registry: trading + placeholders ───────────────────────────────────
+# ── default registry: Trading + IELTSAlert + placeholders ──────────────────────
 def test_default_registry_has_trading_enabled():
     r = build_default_registry()
     t = r.get("trading")
@@ -130,7 +130,7 @@ def test_default_registry_has_trading_enabled():
 
 def test_default_registry_placeholders_metadata_only():
     r = build_default_registry()
-    for pid in ("ielts", "hcgpos", "travel", "finance"):
+    for pid in ("hcgpos", "travel", "finance"):
         m = r.get(pid)
         assert m is not None, pid
         assert m.status == ModuleStatus.PLACEHOLDER
@@ -138,9 +138,20 @@ def test_default_registry_placeholders_metadata_only():
         assert m.feature_flags.get("implemented") is False
 
 
-def test_trading_is_only_enabled_module_by_default():
+def test_trading_and_ielts_are_enabled_modules_by_default():
     r = build_default_registry()
-    assert [m.id for m in r.list_enabled()] == ["trading"]
+    assert {m.id for m in r.list_enabled()} == {"trading", "ielts"}
+
+
+def test_ielts_descriptor_is_truthful_and_provider_safe():
+    ielts = build_default_registry().get("ielts")
+    assert ielts.status == ModuleStatus.ENABLED
+    assert ielts.health() == ModuleHealth.HEALTHY
+    assert ielts.feature_flags["provider_assisted_scoring"] is False
+    assert ielts.feature_flags["official_scoring"] is False
+    assert ielts.feature_flags["live_availability"] is False
+    assert ielts.feature_flags["payment_settlement"] is False
+    assert "deterministic_local_feedback" in ielts.capabilities
 
 
 def test_trading_declares_no_live_capability():
@@ -154,7 +165,7 @@ def test_trading_declares_no_live_capability():
 def test_to_public_is_serializable_shape():
     r = build_default_registry()
     pub = r.to_public()
-    assert pub["enabled_count"] == 1
+    assert pub["enabled_count"] == 2
     assert pub["navigation"]["group"] == "applications"
     assert len(pub["dashboard_cards"]) == len(r.list_installed())
 

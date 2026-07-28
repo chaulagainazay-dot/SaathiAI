@@ -42,3 +42,13 @@
 - Consequences: owner/admin review is required; self-approval is denied; records are
   explicitly labelled manual verification.
 
+## ADR-IELTS-005 — activate only through the backend module authority
+
+- Decision: enable IELTSAlert in the authenticated ModuleRegistry only after the
+  bounded API, permission, tenant-isolation, UI, and browser contracts pass. The
+  frontend descriptor remains a non-authoritative metadata mirror.
+- Alternatives: keep the module as a placeholder; make frontend routing authoritative.
+- Evidence: M64 established backend discovery as browser authority, and M67 verifies
+  the complete minimum operational contract.
+- Consequences: IELTSAlert is actionable in navigation, dashboard, and command search
+  only when returned by backend discovery; registration itself grants no permission.

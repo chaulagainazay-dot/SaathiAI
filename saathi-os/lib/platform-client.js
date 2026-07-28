@@ -8,7 +8,7 @@
 // compile + CORS window, then the rest fan out so one straggler can't wipe the
 // authenticated surface.
 import { useCallback, useEffect, useState } from "react";
-import { API_BASE } from "./api";
+import { API_BASE } from "./api.js";
 
 export const TOKEN_KEY = "saathi_platform_token";
 export const PLATFORM_CONTEXT_EVENT = "saathi:platform-context";

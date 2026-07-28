@@ -218,6 +218,42 @@ export const TRADING_MODULE = defineModule({
   health: "healthy",
 });
 
+/** IELTSAlert fallback descriptor. Backend remains authoritative for actionability. */
+export const IELTS_MODULE = defineModule({
+  id: "ielts",
+  name: "IELTSAlert",
+  version: "1.0.0-local",
+  description: "Bounded IELTS preparation with local practice feedback, fixture alerts, and manual verification.",
+  icon: "✦",
+  category: "education",
+  status: "enabled",
+  permissions: ["ielts"],
+  routes: ["/ielts", "/ielts/onboarding", "/ielts/goals", "/ielts/practice",
+    "/ielts/submissions", "/ielts/alerts", "/ielts/payments", "/ielts/evidence", "/ielts/settings"],
+  navItems: [
+    { id: "ielts-home", label: "Dashboard", href: "/ielts", icon: "✦" },
+    { id: "ielts-practice", label: "Practice", href: "/ielts/practice", icon: "▤" },
+    { id: "ielts-alerts", label: "Alerts", href: "/ielts/alerts", icon: "◉" },
+    { id: "ielts-payments", label: "Manual payments", href: "/ielts/payments", icon: "◇" },
+  ],
+  widgets: [
+    { id: "ielts-goal", title: "Exam Goal", kind: "metric", href: "/ielts/goals" },
+    { id: "ielts-next-practice", title: "Next Practice", kind: "action", href: "/ielts/practice" },
+    { id: "ielts-active-alerts", title: "Active Alerts", kind: "alert", href: "/ielts/alerts" },
+  ],
+  searchProvider: { providerId: "ielts", objectTypes: ["profile", "goal", "practice", "submission", "feedback", "alert", "payment"] },
+  workspaceViews: [
+    { id: "ielts-learner", label: "IELTS Learner", scope: "application", href: "/ielts" },
+    { id: "ielts-reviewer", label: "IELTS Reviewer", scope: "application", href: "/ielts/payments" },
+  ],
+  capabilities: ["local_practice", "deterministic_local_feedback", "fixture_availability_alerts", "manual_payment_verification"],
+  featureFlags: {
+    provider_assisted_scoring: false, official_scoring: false, live_availability: false,
+    external_notifications: false, payment_settlement: false, local_scoring_fallback: true,
+  },
+  health: "healthy",
+});
+
 function placeholder(id, name, icon, category, description, routes, widgetTitles, searchTypes) {
   return defineModule({
     id,
@@ -242,8 +278,6 @@ function placeholder(id, name, icon, category, description, routes, widgetTitles
 }
 
 export const PLACEHOLDER_MODULES = [
-  placeholder("ielts", "IELTSAlert", "✦", "education", "IELTS exam alerting and preparation.",
-    ["/ielts"], ["Upcoming Exams", "Alerts", "Students"], ["test", "student", "alert"]),
   placeholder("hcgpos", "HCG POS", "▣", "retail", "Canteen point-of-sale and kitchen operations.",
     ["/pos"], ["Sales", "Kitchen", "Orders"], ["order", "inventory", "customer"]),
   placeholder("travel", "Travel", "✈", "travel", "Trip, itinerary, and booking management.",
@@ -256,6 +290,7 @@ export const PLACEHOLDER_MODULES = [
 export function buildDefaultRegistry() {
   const r = new ModuleRegistry();
   r.register(TRADING_MODULE);
+  r.register(IELTS_MODULE);
   for (const p of PLACEHOLDER_MODULES) r.register(p);
   return r;
 }

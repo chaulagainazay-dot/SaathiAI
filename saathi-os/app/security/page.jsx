@@ -9,8 +9,20 @@ import {
   fetchSecurityTimeline, fetchSecurityHealth, fetchSecurityTokens,
   createSecurityToken, revokeSecurityToken,
 } from "@/lib/api";
+import { getToken, plat, setToken } from "@/lib/platform-client";
 
 const ACCENT = "#9B6BFF", TEAL = "#00BFA5", RED = "#FF5A5A", AMBER = "#FFB800";
+
+async function clearPlatformSession() {
+  const token = getToken();
+  try {
+    if (token) await plat("/auth/logout", { method: "POST", token });
+  } catch {
+    // Local cleanup remains mandatory even when server revocation is unavailable.
+  } finally {
+    setToken("");
+  }
+}
 
 function friendly(e) {
   const s = String(e && e.message ? e.message : e);
@@ -129,7 +141,11 @@ export default function SecurityPage() {
   const doRevokeAll = () => wrap(async () => {
     if (!confirm("Sign out all devices? You'll need to sign in again on this device.")) return;
     const r = await revokeAllSessions();
-    if (r && r.ok) { setMsg("✓ Signed out everywhere."); router.push("/unlock"); }
+    if (r && r.ok) {
+      await clearPlatformSession();
+      setMsg("✓ Signed out everywhere.");
+      router.push("/unlock");
+    }
   });
 
   const doDeletePasskey = (pid) => wrap(async () => {
@@ -149,7 +165,11 @@ export default function SecurityPage() {
   });
 
   const doLogout = () => wrap(async () => {
-    await logout();
+    try {
+      await logout();
+    } finally {
+      await clearPlatformSession();
+    }
     router.push("/unlock");
   });
 

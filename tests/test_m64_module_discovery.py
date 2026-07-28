@@ -66,11 +66,11 @@ def test_read_permission_map_covers_trading_namespaces():
         PlatformPermission(p)  # valid permission
 
 
-# ── placeholders remain non-operational ────────────────────────────────────────
+# ── remaining placeholders remain non-operational ─────────────────────────────
 def test_placeholders_not_implemented_and_not_actionable():
     d = build_default_registry().discovery(can_read=_can_read("owner"))
     cards = {c["module_id"]: c for c in d["dashboard_cards"]}
-    for pid in ("ielts", "hcgpos", "travel", "finance"):
+    for pid in ("hcgpos", "travel", "finance"):
         c = cards[pid]
         assert c["state"] == ModuleState.NOT_IMPLEMENTED.value
         assert c["actionable"] is False
@@ -82,6 +82,7 @@ def test_only_available_module_exposes_primary_route():
     d = build_default_registry().discovery(can_read=_can_read("owner"))
     cards = {c["module_id"]: c for c in d["dashboard_cards"]}
     assert cards["trading"]["primary_route"] == "/trading"
+    assert cards["ielts"]["primary_route"] == "/ielts"
     # restricted caller: trading loses its live route
     d2 = build_default_registry().discovery(can_read=lambda p: False)
     assert {c["module_id"]: c for c in d2["dashboard_cards"]}["trading"]["primary_route"] == ""
@@ -92,7 +93,15 @@ def test_navigation_marks_actionable_only_for_available():
     d = build_default_registry().discovery(can_read=_can_read("owner"))
     nav = {m["id"]: m for m in d["navigation"]["modules"]}
     assert nav["trading"]["actionable"] is True
-    assert nav["ielts"]["actionable"] is False
+    assert nav["ielts"]["actionable"] is True
+
+
+def test_ielts_requires_canonical_read_permission_and_blocks_agents():
+    module = build_default_registry().get("ielts")
+    assert module.candidate_read_permissions() == ["ielts.read"]
+    assert module.resolve_state(can_read=lambda p: p == "ielts.read") == ModuleState.AVAILABLE
+    assert module.resolve_state(can_read=lambda p: False) == ModuleState.PERMISSION_RESTRICTED
+    assert module.resolve_state(can_read=lambda p: True, is_agent=True) == ModuleState.PERMISSION_RESTRICTED
 
 
 # ── safe serialization (no internal leakage) ───────────────────────────────────

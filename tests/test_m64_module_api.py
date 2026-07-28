@@ -47,10 +47,11 @@ def test_authenticated_discovery_is_authoritative(tmp_path, monkeypatch):
     trading = next(m for m in body["installed"] if m["id"] == "trading")
     assert trading["state"] == "available"
     assert trading["enabled"] is True and trading["implemented"] is True
-    # placeholders present but non-operational
+    # IELTSAlert is now the second implemented module.
     ielts = next(m for m in body["installed"] if m["id"] == "ielts")
-    assert ielts["state"] == "not_implemented"
-    assert ielts["operational"] is False
+    assert ielts["state"] == "available"
+    assert ielts["operational"] is True
+    assert ielts["feature_flags"]["provider_assisted_scoring"] is False
 
 
 def test_dashboard_and_navigation_endpoints(tmp_path, monkeypatch):

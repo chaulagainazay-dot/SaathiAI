@@ -71,6 +71,7 @@ READ_PERMISSION_BY_NAMESPACE = {
     "paper_order": "paper_order.read",
     "reconciliation": "reconciliation.read",
     "paper_safety": "paper_safety.read",
+    "ielts": "ielts.read",
 }
 
 
@@ -442,6 +443,58 @@ def _trading_module() -> ModuleDescriptor:
     )
 
 
+def _ielts_module() -> ModuleDescriptor:
+    """IELTSAlert — bounded local preparation and manual-review application."""
+    routes = (
+        "/ielts", "/ielts/onboarding", "/ielts/dashboard", "/ielts/goals",
+        "/ielts/practice", "/ielts/practice/reading", "/ielts/practice/listening",
+        "/ielts/practice/writing", "/ielts/practice/speaking",
+        "/ielts/submissions", "/ielts/alerts", "/ielts/payments",
+        "/ielts/evidence", "/ielts/settings",
+    )
+    return ModuleDescriptor(
+        id="ielts", name="IELTSAlert", version="1.0.0-local",
+        description="Bounded IELTS preparation with transparent local practice feedback, "
+                    "fixture availability alerts, and manual payment verification.",
+        icon="✦", category=ModuleCategory.EDUCATION, status=ModuleStatus.ENABLED,
+        permissions=("ielts",), routes=routes,
+        nav_items=(
+            NavItemSpec("ielts-home", "Dashboard", "/ielts", "✦", "Preparation summary"),
+            NavItemSpec("ielts-goals", "Exam goals", "/ielts/goals", "◎", "Target and date"),
+            NavItemSpec("ielts-practice", "Practice", "/ielts/practice", "▤", "Four skills"),
+            NavItemSpec("ielts-alerts", "Availability alerts", "/ielts/alerts", "◉", "Fixture-labelled alerts"),
+            NavItemSpec("ielts-payments", "Manual payments", "/ielts/payments", "◇", "Human verification"),
+            NavItemSpec("ielts-evidence", "Evidence", "/ielts/evidence", "▧", "Activity timeline"),
+        ),
+        dashboard_widgets=(
+            DashboardWidgetSpec("ielts-goal", "Exam Goal", "metric", "/ielts/goals"),
+            DashboardWidgetSpec("ielts-next-practice", "Next Practice", "action", "/ielts/practice"),
+            DashboardWidgetSpec("ielts-active-alerts", "Active Alerts", "alert", "/ielts/alerts"),
+            DashboardWidgetSpec("ielts-progress", "Progress Summary", "metric", "/ielts"),
+        ),
+        search_provider=SearchProviderSpec(
+            "ielts", ("profile", "goal", "practice", "submission", "feedback", "alert", "payment")),
+        workspace_views=(
+            WorkspaceViewSpec("ielts-learner", "IELTS Learner", "application", "/ielts"),
+            WorkspaceViewSpec("ielts-reviewer", "IELTS Reviewer", "application", "/ielts/payments"),
+            WorkspaceViewSpec("ielts-evidence", "IELTS Evidence", "evidence", "/ielts/evidence"),
+        ),
+        capabilities=(
+            "local_practice", "reading_listening_records", "writing_submission",
+            "speaking_submission", "deterministic_local_feedback",
+            "fixture_availability_alerts", "manual_payment_submission",
+            "manual_payment_review", "in_app_notifications", "evidence_timeline",
+        ),
+        feature_flags={
+            "provider_assisted_scoring": False, "official_scoring": False,
+            "live_availability": False, "external_notifications": False,
+            "payment_settlement": False, "manual_payment_verification": True,
+            "local_scoring_fallback": True,
+        },
+        health_fn=lambda: ModuleHealth.HEALTHY,
+    )
+
+
 def _placeholder(id_, name, icon, category, description, routes, widgets, search_types) -> ModuleDescriptor:
     """Metadata-only registration for a future application. Exposes contract
     surface but no business logic. status=PLACEHOLDER, health=NOT_IMPLEMENTED."""
@@ -464,14 +517,11 @@ def _placeholder(id_, name, icon, category, description, routes, widgets, search
 
 
 def build_default_registry() -> ModuleRegistry:
-    """Construct the platform's default module registry: Trading (enabled) plus
-    metadata-only placeholders for future applications."""
+    """Construct the platform's default registry: Trading and IELTSAlert enabled,
+    with remaining future applications retained as metadata-only placeholders."""
     reg = ModuleRegistry()
     reg.register(_trading_module())
-    reg.register(_placeholder(
-        "ielts", "IELTSAlert", "✦", ModuleCategory.EDUCATION,
-        "IELTS exam alerting and preparation.",
-        ["/ielts"], ["Upcoming Exams", "Alerts", "Students"], ["test", "student", "alert"]))
+    reg.register(_ielts_module())
     reg.register(_placeholder(
         "hcgpos", "HCG POS", "▣", ModuleCategory.RETAIL,
         "Canteen point-of-sale and kitchen operations.",
