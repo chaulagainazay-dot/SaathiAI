@@ -1,0 +1,771 @@
+{
+  "installed": [
+    {
+      "id": "ielts",
+      "name": "IELTSAlert",
+      "version": "0.0.0",
+      "description": "IELTS exam alerting and preparation.",
+      "icon": "\u2726",
+      "category": "education",
+      "status": "placeholder",
+      "permissions": [
+        "ielts"
+      ],
+      "routes": [
+        "/ielts"
+      ],
+      "nav_items": [
+        {
+          "id": "ielts-home",
+          "label": "IELTSAlert",
+          "href": "/ielts",
+          "icon": "\u2726",
+          "description": "IELTSAlert (coming soon)"
+        }
+      ],
+      "dashboard_widgets": [
+        {
+          "id": "ielts-upcoming-exams",
+          "title": "Upcoming Exams",
+          "kind": "metric",
+          "href": "",
+          "description": "IELTSAlert Upcoming Exams"
+        },
+        {
+          "id": "ielts-alerts",
+          "title": "Alerts",
+          "kind": "metric",
+          "href": "",
+          "description": "IELTSAlert Alerts"
+        },
+        {
+          "id": "ielts-students",
+          "title": "Students",
+          "kind": "metric",
+          "href": "",
+          "description": "IELTSAlert Students"
+        }
+      ],
+      "search_provider": {
+        "provider_id": "ielts",
+        "object_types": [
+          "test",
+          "student",
+          "alert"
+        ]
+      },
+      "workspace_views": [
+        {
+          "id": "ielts-app",
+          "label": "IELTSAlert",
+          "scope": "application",
+          "href": "/ielts"
+        }
+      ],
+      "capabilities": [],
+      "feature_flags": {
+        "implemented": false
+      },
+      "health": "not_implemented"
+    },
+    {
+      "id": "finance",
+      "name": "Finance",
+      "version": "0.0.0",
+      "description": "Personal and business finance tracking.",
+      "icon": "$",
+      "category": "finance",
+      "status": "placeholder",
+      "permissions": [
+        "finance"
+      ],
+      "routes": [
+        "/finance"
+      ],
+      "nav_items": [
+        {
+          "id": "finance-home",
+          "label": "Finance",
+          "href": "/finance",
+          "icon": "$",
+          "description": "Finance (coming soon)"
+        }
+      ],
+      "dashboard_widgets": [
+        {
+          "id": "finance-cashflow",
+          "title": "Cashflow",
+          "kind": "metric",
+          "href": "",
+          "description": "Finance Cashflow"
+        },
+        {
+          "id": "finance-budgets",
+          "title": "Budgets",
+          "kind": "metric",
+          "href": "",
+          "description": "Finance Budgets"
+        }
+      ],
+      "search_provider": {
+        "provider_id": "finance",
+        "object_types": [
+          "account",
+          "transaction",
+          "budget"
+        ]
+      },
+      "workspace_views": [
+        {
+          "id": "finance-app",
+          "label": "Finance",
+          "scope": "application",
+          "href": "/finance"
+        }
+      ],
+      "capabilities": [],
+      "feature_flags": {
+        "implemented": false
+      },
+      "health": "not_implemented"
+    },
+    {
+      "id": "hcgpos",
+      "name": "HCG POS",
+      "version": "0.0.0",
+      "description": "Canteen point-of-sale and kitchen operations.",
+      "icon": "\u25a3",
+      "category": "retail",
+      "status": "placeholder",
+      "permissions": [
+        "hcgpos"
+      ],
+      "routes": [
+        "/pos"
+      ],
+      "nav_items": [
+        {
+          "id": "hcgpos-home",
+          "label": "HCG POS",
+          "href": "/pos",
+          "icon": "\u25a3",
+          "description": "HCG POS (coming soon)"
+        }
+      ],
+      "dashboard_widgets": [
+        {
+          "id": "hcgpos-sales",
+          "title": "Sales",
+          "kind": "metric",
+          "href": "",
+          "description": "HCG POS Sales"
+        },
+        {
+          "id": "hcgpos-kitchen",
+          "title": "Kitchen",
+          "kind": "metric",
+          "href": "",
+          "description": "HCG POS Kitchen"
+        },
+        {
+          "id": "hcgpos-orders",
+          "title": "Orders",
+          "kind": "metric",
+          "href": "",
+          "description": "HCG POS Orders"
+        }
+      ],
+      "search_provider": {
+        "provider_id": "hcgpos",
+        "object_types": [
+          "order",
+          "inventory",
+          "customer"
+        ]
+      },
+      "workspace_views": [
+        {
+          "id": "hcgpos-app",
+          "label": "HCG POS",
+          "scope": "application",
+          "href": "/pos"
+        }
+      ],
+      "capabilities": [],
+      "feature_flags": {
+        "implemented": false
+      },
+      "health": "not_implemented"
+    },
+    {
+      "id": "trading",
+      "name": "Trading",
+      "version": "62.9",
+      "description": "Bounded paper-trading platform: research \u2192 strategy \u2192 paper orders \u2192 reconciliation \u2192 safety. Simulation-only, long-only, localhost.",
+      "icon": "\u25c8",
+      "category": "trading",
+      "status": "enabled",
+      "permissions": [
+        "paper_account",
+        "paper_order",
+        "reconciliation",
+        "paper_safety"
+      ],
+      "routes": [
+        "/trading",
+        "/trading/accounts",
+        "/trading/orders",
+        "/trading/positions",
+        "/trading/strategies",
+        "/trading/reconciliation",
+        "/trading/safety",
+        "/trading/approvals",
+        "/trading/evidence"
+      ],
+      "nav_items": [
+        {
+          "id": "trading-home",
+          "label": "Overview",
+          "href": "/trading",
+          "icon": "\u25c8",
+          "description": "Trading overview"
+        },
+        {
+          "id": "trading-accounts",
+          "label": "Accounts",
+          "href": "/trading/accounts",
+          "icon": "\u25a4",
+          "description": "Paper accounts"
+        },
+        {
+          "id": "trading-orders",
+          "label": "Orders",
+          "href": "/trading/orders",
+          "icon": "\u25a6",
+          "description": "Order lifecycle"
+        },
+        {
+          "id": "trading-safety",
+          "label": "Safety",
+          "href": "/trading/safety",
+          "icon": "\u26ca",
+          "description": "Circuit breakers"
+        },
+        {
+          "id": "trading-recon",
+          "label": "Reconciliation",
+          "href": "/trading/reconciliation",
+          "icon": "\u2696",
+          "description": "Integrity"
+        }
+      ],
+      "dashboard_widgets": [
+        {
+          "id": "trading-active-accounts",
+          "title": "Active Accounts",
+          "kind": "metric",
+          "href": "/trading/accounts",
+          "description": "Active paper accounts"
+        },
+        {
+          "id": "trading-open-orders",
+          "title": "Open Orders",
+          "kind": "metric",
+          "href": "/trading/orders",
+          "description": "Orders in flight"
+        },
+        {
+          "id": "trading-safety-alerts",
+          "title": "Safety Alerts",
+          "kind": "alert",
+          "href": "/trading/safety",
+          "description": "Active breaker trips + alerts"
+        }
+      ],
+      "search_provider": {
+        "provider_id": "trading",
+        "object_types": [
+          "order",
+          "account",
+          "strategy",
+          "reconciliation"
+        ]
+      },
+      "workspace_views": [
+        {
+          "id": "trading-app",
+          "label": "Trading",
+          "scope": "application",
+          "href": "/trading"
+        },
+        {
+          "id": "trading-evidence",
+          "label": "Trading Evidence",
+          "scope": "evidence",
+          "href": "/trading/evidence"
+        }
+      ],
+      "capabilities": [
+        "paper_trading",
+        "reconciliation",
+        "circuit_breakers",
+        "deterministic_backtest",
+        "fixture_replay_market_data"
+      ],
+      "feature_flags": {
+        "live_trading": false,
+        "real_money": false,
+        "external_broker": false
+      },
+      "health": "healthy"
+    },
+    {
+      "id": "travel",
+      "name": "Travel",
+      "version": "0.0.0",
+      "description": "Trip, itinerary, and booking management.",
+      "icon": "\u2708",
+      "category": "travel",
+      "status": "placeholder",
+      "permissions": [
+        "travel"
+      ],
+      "routes": [
+        "/travel"
+      ],
+      "nav_items": [
+        {
+          "id": "travel-home",
+          "label": "Travel",
+          "href": "/travel",
+          "icon": "\u2708",
+          "description": "Travel (coming soon)"
+        }
+      ],
+      "dashboard_widgets": [
+        {
+          "id": "travel-trips",
+          "title": "Trips",
+          "kind": "metric",
+          "href": "",
+          "description": "Travel Trips"
+        },
+        {
+          "id": "travel-bookings",
+          "title": "Bookings",
+          "kind": "metric",
+          "href": "",
+          "description": "Travel Bookings"
+        }
+      ],
+      "search_provider": {
+        "provider_id": "travel",
+        "object_types": [
+          "booking",
+          "itinerary",
+          "client"
+        ]
+      },
+      "workspace_views": [
+        {
+          "id": "travel-app",
+          "label": "Travel",
+          "scope": "application",
+          "href": "/travel"
+        }
+      ],
+      "capabilities": [],
+      "feature_flags": {
+        "implemented": false
+      },
+      "health": "not_implemented"
+    }
+  ],
+  "enabled_count": 1,
+  "navigation": {
+    "group": "applications",
+    "label": "Applications",
+    "modules": [
+      {
+        "id": "ielts",
+        "label": "IELTSAlert",
+        "icon": "\u2726",
+        "status": "placeholder",
+        "category": "education",
+        "items": [
+          {
+            "id": "ielts-home",
+            "label": "IELTSAlert",
+            "href": "/ielts",
+            "icon": "\u2726",
+            "description": "IELTSAlert (coming soon)"
+          }
+        ]
+      },
+      {
+        "id": "finance",
+        "label": "Finance",
+        "icon": "$",
+        "status": "placeholder",
+        "category": "finance",
+        "items": [
+          {
+            "id": "finance-home",
+            "label": "Finance",
+            "href": "/finance",
+            "icon": "$",
+            "description": "Finance (coming soon)"
+          }
+        ]
+      },
+      {
+        "id": "hcgpos",
+        "label": "HCG POS",
+        "icon": "\u25a3",
+        "status": "placeholder",
+        "category": "retail",
+        "items": [
+          {
+            "id": "hcgpos-home",
+            "label": "HCG POS",
+            "href": "/pos",
+            "icon": "\u25a3",
+            "description": "HCG POS (coming soon)"
+          }
+        ]
+      },
+      {
+        "id": "trading",
+        "label": "Trading",
+        "icon": "\u25c8",
+        "status": "enabled",
+        "category": "trading",
+        "items": [
+          {
+            "id": "trading-home",
+            "label": "Overview",
+            "href": "/trading",
+            "icon": "\u25c8",
+            "description": "Trading overview"
+          },
+          {
+            "id": "trading-accounts",
+            "label": "Accounts",
+            "href": "/trading/accounts",
+            "icon": "\u25a4",
+            "description": "Paper accounts"
+          },
+          {
+            "id": "trading-orders",
+            "label": "Orders",
+            "href": "/trading/orders",
+            "icon": "\u25a6",
+            "description": "Order lifecycle"
+          },
+          {
+            "id": "trading-safety",
+            "label": "Safety",
+            "href": "/trading/safety",
+            "icon": "\u26ca",
+            "description": "Circuit breakers"
+          },
+          {
+            "id": "trading-recon",
+            "label": "Reconciliation",
+            "href": "/trading/reconciliation",
+            "icon": "\u2696",
+            "description": "Integrity"
+          }
+        ]
+      },
+      {
+        "id": "travel",
+        "label": "Travel",
+        "icon": "\u2708",
+        "status": "placeholder",
+        "category": "travel",
+        "items": [
+          {
+            "id": "travel-home",
+            "label": "Travel",
+            "href": "/travel",
+            "icon": "\u2708",
+            "description": "Travel (coming soon)"
+          }
+        ]
+      }
+    ]
+  },
+  "dashboard_cards": [
+    {
+      "module_id": "ielts",
+      "title": "IELTSAlert",
+      "icon": "\u2726",
+      "category": "education",
+      "status": "placeholder",
+      "health": "not_implemented",
+      "description": "IELTS exam alerting and preparation.",
+      "widgets": [
+        {
+          "id": "ielts-upcoming-exams",
+          "title": "Upcoming Exams",
+          "kind": "metric",
+          "href": "",
+          "description": "IELTSAlert Upcoming Exams"
+        },
+        {
+          "id": "ielts-alerts",
+          "title": "Alerts",
+          "kind": "metric",
+          "href": "",
+          "description": "IELTSAlert Alerts"
+        },
+        {
+          "id": "ielts-students",
+          "title": "Students",
+          "kind": "metric",
+          "href": "",
+          "description": "IELTSAlert Students"
+        }
+      ],
+      "primary_route": "/ielts"
+    },
+    {
+      "module_id": "finance",
+      "title": "Finance",
+      "icon": "$",
+      "category": "finance",
+      "status": "placeholder",
+      "health": "not_implemented",
+      "description": "Personal and business finance tracking.",
+      "widgets": [
+        {
+          "id": "finance-cashflow",
+          "title": "Cashflow",
+          "kind": "metric",
+          "href": "",
+          "description": "Finance Cashflow"
+        },
+        {
+          "id": "finance-budgets",
+          "title": "Budgets",
+          "kind": "metric",
+          "href": "",
+          "description": "Finance Budgets"
+        }
+      ],
+      "primary_route": "/finance"
+    },
+    {
+      "module_id": "hcgpos",
+      "title": "HCG POS",
+      "icon": "\u25a3",
+      "category": "retail",
+      "status": "placeholder",
+      "health": "not_implemented",
+      "description": "Canteen point-of-sale and kitchen operations.",
+      "widgets": [
+        {
+          "id": "hcgpos-sales",
+          "title": "Sales",
+          "kind": "metric",
+          "href": "",
+          "description": "HCG POS Sales"
+        },
+        {
+          "id": "hcgpos-kitchen",
+          "title": "Kitchen",
+          "kind": "metric",
+          "href": "",
+          "description": "HCG POS Kitchen"
+        },
+        {
+          "id": "hcgpos-orders",
+          "title": "Orders",
+          "kind": "metric",
+          "href": "",
+          "description": "HCG POS Orders"
+        }
+      ],
+      "primary_route": "/pos"
+    },
+    {
+      "module_id": "trading",
+      "title": "Trading",
+      "icon": "\u25c8",
+      "category": "trading",
+      "status": "enabled",
+      "health": "healthy",
+      "description": "Bounded paper-trading platform: research \u2192 strategy \u2192 paper orders \u2192 reconciliation \u2192 safety. Simulation-only, long-only, localhost.",
+      "widgets": [
+        {
+          "id": "trading-active-accounts",
+          "title": "Active Accounts",
+          "kind": "metric",
+          "href": "/trading/accounts",
+          "description": "Active paper accounts"
+        },
+        {
+          "id": "trading-open-orders",
+          "title": "Open Orders",
+          "kind": "metric",
+          "href": "/trading/orders",
+          "description": "Orders in flight"
+        },
+        {
+          "id": "trading-safety-alerts",
+          "title": "Safety Alerts",
+          "kind": "alert",
+          "href": "/trading/safety",
+          "description": "Active breaker trips + alerts"
+        }
+      ],
+      "primary_route": "/trading"
+    },
+    {
+      "module_id": "travel",
+      "title": "Travel",
+      "icon": "\u2708",
+      "category": "travel",
+      "status": "placeholder",
+      "health": "not_implemented",
+      "description": "Trip, itinerary, and booking management.",
+      "widgets": [
+        {
+          "id": "travel-trips",
+          "title": "Trips",
+          "kind": "metric",
+          "href": "",
+          "description": "Travel Trips"
+        },
+        {
+          "id": "travel-bookings",
+          "title": "Bookings",
+          "kind": "metric",
+          "href": "",
+          "description": "Travel Bookings"
+        }
+      ],
+      "primary_route": "/travel"
+    }
+  ],
+  "search_providers": [
+    {
+      "module_id": "ielts",
+      "provider_id": "ielts",
+      "object_types": [
+        "test",
+        "student",
+        "alert"
+      ]
+    },
+    {
+      "module_id": "finance",
+      "provider_id": "finance",
+      "object_types": [
+        "account",
+        "transaction",
+        "budget"
+      ]
+    },
+    {
+      "module_id": "hcgpos",
+      "provider_id": "hcgpos",
+      "object_types": [
+        "order",
+        "inventory",
+        "customer"
+      ]
+    },
+    {
+      "module_id": "trading",
+      "provider_id": "trading",
+      "object_types": [
+        "order",
+        "account",
+        "strategy",
+        "reconciliation"
+      ]
+    },
+    {
+      "module_id": "travel",
+      "provider_id": "travel",
+      "object_types": [
+        "booking",
+        "itinerary",
+        "client"
+      ]
+    }
+  ],
+  "workspace_views": [
+    {
+      "module_id": "ielts",
+      "id": "ielts-app",
+      "label": "IELTSAlert",
+      "scope": "application",
+      "href": "/ielts"
+    },
+    {
+      "module_id": "finance",
+      "id": "finance-app",
+      "label": "Finance",
+      "scope": "application",
+      "href": "/finance"
+    },
+    {
+      "module_id": "hcgpos",
+      "id": "hcgpos-app",
+      "label": "HCG POS",
+      "scope": "application",
+      "href": "/pos"
+    },
+    {
+      "module_id": "trading",
+      "id": "trading-app",
+      "label": "Trading",
+      "scope": "application",
+      "href": "/trading"
+    },
+    {
+      "module_id": "trading",
+      "id": "trading-evidence",
+      "label": "Trading Evidence",
+      "scope": "evidence",
+      "href": "/trading/evidence"
+    },
+    {
+      "module_id": "travel",
+      "id": "travel-app",
+      "label": "Travel",
+      "scope": "application",
+      "href": "/travel"
+    }
+  ],
+  "health": [
+    {
+      "module_id": "ielts",
+      "status": "placeholder",
+      "health": "not_implemented"
+    },
+    {
+      "module_id": "finance",
+      "status": "placeholder",
+      "health": "not_implemented"
+    },
+    {
+      "module_id": "hcgpos",
+      "status": "placeholder",
+      "health": "not_implemented"
+    },
+    {
+      "module_id": "trading",
+      "status": "enabled",
+      "health": "healthy"
+    },
+    {
+      "module_id": "travel",
+      "status": "placeholder",
+      "health": "not_implemented"
+    }
+  ]
+}

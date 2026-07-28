@@ -2801,3 +2801,69 @@ def recon_run(body: ReconRunBody, authorization: str | None = Header(default=Non
         return {"result": _safesvc().reconcile_and_guard(ctx, body.account_id)}
     except PlatformContextError as e:
         raise _err(e) from e
+
+
+# ── M63 module registry (read-only; single source of truth for platform modules) ──
+def _module_registry():
+    from saathi.platform.module_registry import get_registry
+    return get_registry()
+
+
+@router.get("/modules")
+def modules_list(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    """Installed platform modules + composed navigation/dashboard/search surfaces."""
+    try:
+        ctx = _ppctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PLATFORM_READ)
+        return _module_registry().to_public()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/modules/{module_id}")
+def module_get(module_id: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        ctx = _ppctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PLATFORM_READ)
+        m = _module_registry().get(module_id)
+        if not m:
+            raise PlatformContextError("NOT_FOUND", "module not found")
+        return {"module": m.to_public()}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/dashboard")
+def platform_dashboard(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    """Module-driven dashboard: one card per installed application."""
+    try:
+        ctx = _ppctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PLATFORM_READ)
+        reg = _module_registry()
+        return {"cards": reg.dashboard_cards(), "health": reg.health_report()}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/navigation")
+def platform_navigation(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    """Data-driven Applications navigation group derived from module registrations."""
+    try:
+        ctx = _ppctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PLATFORM_READ)
+        return _module_registry().navigation()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/modules/{module_id}/health")
+def module_health(module_id: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        ctx = _ppctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PLATFORM_READ)
+        m = _module_registry().get(module_id)
+        if not m:
+            raise PlatformContextError("NOT_FOUND", "module not found")
+        return {"module_id": module_id, "status": m.status.value, "health": m.health().value}
+    except PlatformContextError as e:
+        raise _err(e) from e
