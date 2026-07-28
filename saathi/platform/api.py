@@ -178,6 +178,64 @@ class ExecuteBody(BaseModel):
     # compatibility fields are accepted but never trusted
     user_id: str = ""
     org_id: str = ""
+
+
+# ── M66 IELTSAlert bounded workflow bodies ──────────────────────────────────
+class IELTSProfileBody(BaseModel):
+    display_name: str
+    timezone: str = "Asia/Kathmandu"
+    preferred_language: str = "en"
+    idempotency_key: str = ""
+
+
+class IELTSGoalBody(BaseModel):
+    exam_type: str
+    target_band: float
+    planned_test_date: str
+    daily_minutes: int = 30
+    idempotency_key: str = ""
+
+
+class IELTSPracticeBody(BaseModel):
+    skill: str
+    task_type: str
+    prompt: str
+    response: str
+    duration_seconds: int = 0
+    artifact_ref: str = ""
+    transcript_ref: str = ""
+    idempotency_key: str = ""
+
+
+class IELTSAlertBody(BaseModel):
+    exam_type: str
+    test_format: str = "computer"
+    preferred_locations: list[str] = Field(default_factory=list)
+    date_from: str
+    date_to: str
+    expires_on: str
+    notification_channel: str = "in_app"
+    idempotency_key: str = ""
+
+
+class IELTSStateBody(BaseModel):
+    status: str
+
+
+class IELTSPaymentBody(BaseModel):
+    product: str
+    amount: str
+    currency: str = "NPR"
+    payment_method_label: str
+    transaction_reference: str
+    evidence_ref: str
+    submission_note: str = ""
+    idempotency_key: str = ""
+
+
+class IELTSPaymentReviewBody(BaseModel):
+    approve: bool
+    reason: str
     workspace_id: str = ""
     role: str = ""
     authority: str = ""
@@ -2801,6 +2859,167 @@ def recon_run(body: ReconRunBody, authorization: str | None = Header(default=Non
         return {"result": _safesvc().reconcile_and_guard(ctx, body.account_id)}
     except PlatformContextError as e:
         raise _err(e) from e
+
+
+# ── M66 IELTSAlert authenticated workflows ──────────────────────────────────
+def _ieltssvc():
+    from saathi.platform.ielts.service import IELTSService
+    return IELTSService(_svc().store)
+
+
+def _ielts_failure(exc: Exception) -> HTTPException:
+    if isinstance(exc, PlatformContextError):
+        return _err(exc)
+    return HTTPException(
+        status_code=400,
+        detail={"code": "VALIDATION_FAILED", "message": str(exc)[:500]},
+    )
+
+
+def _body(body: BaseModel, *, omit: set[str] | None = None) -> dict:
+    data = body.model_dump()
+    for key in omit or set():
+        data.pop(key, None)
+    return data
+
+
+@router.get("/ielts/dashboard")
+def ielts_dashboard(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"dashboard": _ieltssvc().dashboard(_ppctx(authorization, x_platform_token))}
+    except Exception as exc:
+        raise _ielts_failure(exc) from exc
+
+
+@router.get("/ielts/health")
+def ielts_health(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"health": _ieltssvc().health(_ppctx(authorization, x_platform_token))}
+    except Exception as exc:
+        raise _ielts_failure(exc) from exc
+
+
+@router.get("/ielts/records")
+def ielts_records(record_type: str = "", all_owners: bool = False, limit: int = 200, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"records": _ieltssvc().list(
+            _ppctx(authorization, x_platform_token), record_type=record_type,
+            all_owners=all_owners, limit=limit,
+        )}
+    except Exception as exc:
+        raise _ielts_failure(exc) from exc
+
+
+@router.get("/ielts/records/{record_id}")
+def ielts_record_get(record_id: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"record": _ieltssvc().get(_ppctx(authorization, x_platform_token), record_id)}
+    except Exception as exc:
+        raise _ielts_failure(exc) from exc
+
+
+@router.post("/ielts/profile")
+def ielts_profile(body: IELTSProfileBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"profile": _ieltssvc().upsert_profile(
+            _ppctx(authorization, x_platform_token), _body(body, omit={"idempotency_key"}),
+            idempotency_key=body.idempotency_key,
+        )}
+    except Exception as exc:
+        raise _ielts_failure(exc) from exc
+
+
+@router.post("/ielts/goals")
+def ielts_goal_create(body: IELTSGoalBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"goal": _ieltssvc().create_goal(
+            _ppctx(authorization, x_platform_token), _body(body, omit={"idempotency_key"}),
+            idempotency_key=body.idempotency_key,
+        )}
+    except Exception as exc:
+        raise _ielts_failure(exc) from exc
+
+
+@router.post("/ielts/practice")
+def ielts_practice_create(body: IELTSPracticeBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"practice": _ieltssvc().create_practice(
+            _ppctx(authorization, x_platform_token), _body(body, omit={"idempotency_key"}),
+            idempotency_key=body.idempotency_key,
+        )}
+    except Exception as exc:
+        raise _ielts_failure(exc) from exc
+
+
+@router.post("/ielts/alerts")
+def ielts_alert_create(body: IELTSAlertBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"alert": _ieltssvc().create_alert(
+            _ppctx(authorization, x_platform_token), _body(body, omit={"idempotency_key"}),
+            idempotency_key=body.idempotency_key,
+        )}
+    except Exception as exc:
+        raise _ielts_failure(exc) from exc
+
+
+@router.patch("/ielts/alerts/{alert_id}")
+def ielts_alert_transition(alert_id: str, body: IELTSStateBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"alert": _ieltssvc().transition_alert(
+            _ppctx(authorization, x_platform_token), alert_id, body.status,
+        )}
+    except Exception as exc:
+        raise _ielts_failure(exc) from exc
+
+
+@router.post("/ielts/alerts/evaluate")
+def ielts_alert_evaluate(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return _ieltssvc().evaluate_alerts(_ppctx(authorization, x_platform_token))
+    except Exception as exc:
+        raise _ielts_failure(exc) from exc
+
+
+@router.post("/ielts/payments")
+def ielts_payment_submit(body: IELTSPaymentBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"payment": _ieltssvc().submit_payment(
+            _ppctx(authorization, x_platform_token), _body(body, omit={"idempotency_key"}),
+            idempotency_key=body.idempotency_key,
+        )}
+    except Exception as exc:
+        raise _ielts_failure(exc) from exc
+
+
+@router.post("/ielts/payments/{payment_id}/review")
+def ielts_payment_review(payment_id: str, body: IELTSPaymentReviewBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"payment": _ieltssvc().review_payment(
+            _ppctx(authorization, x_platform_token), payment_id,
+            approve=body.approve, reason=body.reason,
+        )}
+    except Exception as exc:
+        raise _ielts_failure(exc) from exc
+
+
+@router.get("/ielts/evidence")
+def ielts_evidence(all_owners: bool = False, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"evidence": _ieltssvc().evidence_timeline(
+            _ppctx(authorization, x_platform_token), all_owners=all_owners,
+        )}
+    except Exception as exc:
+        raise _ielts_failure(exc) from exc
+
+
+@router.get("/ielts/search")
+def ielts_search(q: str = "", limit: int = 50, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        return {"results": _ieltssvc().search(
+            _ppctx(authorization, x_platform_token), q, limit=limit,
+        )}
+    except Exception as exc:
+        raise _ielts_failure(exc) from exc
 
 
 # ── M63/M64 module registry (read-only; authoritative source for browser discovery) ──
