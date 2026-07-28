@@ -28,6 +28,33 @@ If the answer is the latter, the feature belongs in the product layer, not the p
 
 ## 3. Current Platform State
 
+### M69–M72 Autonomous Mission Runtime (2026-07-28)
+
+* **What:** SaathiOS can now plan, decompose, schedule, execute, review, recover,
+  resume, and certify bounded engineering missions through a durable platform
+  runtime. The explicit model is Mission → Goal → Phase → Milestone → Task →
+  Subtask, followed by append-only Evidence, Decision, Checkpoint, Review, and
+  Certification artifacts.
+* **How:** `saathi/platform/mission_runtime/` composes the existing platform mission,
+  store, identity/context, RBAC, project/workspace, audit, approval, evidence,
+  `PlatformAgentRuntime`, and `ExecutionGateway` authorities. It adds a validated
+  priority DAG, finite decision/scheduling cycles, bounded parallel batches, eight
+  orchestration roles, resource budgets, confirmed-failure-only retry, no-replay
+  recovery, authenticated APIs, and a backend-driven Mission Dashboard in the
+  existing shell.
+* **Certification:** final certification is server-authored and atomic. It requires
+  completed tasks, no blockers, passing mission-owned evidence, independent approved
+  review, passing test/browser states, valid commit references, and a fresh durable
+  checkpoint whose task/resource/status snapshot matches. The runtime and immutable
+  certificate transition together to `CERTIFIED`.
+* **Verified:** 18 M69–M72 tests, 138 related platform tests, full backend 5,257
+  passed/1 skipped, frontend 183, lint/build clean, production browser PASS (33 hard,
+  3 responsive, 2 accessibility; zero page/console/hydration errors), production
+  dependency audit clean, and changed production source secret-clean.
+* **Boundaries:** single-host SQLite/local execution; no distributed worker service,
+  background mission daemon, production activation, cloud deployment, or financial/
+  trading authority. `MISSION_RUNTIME_COMPLETE`.
+
 ### M61 Backend workflow persistence & safe mutation APIs (2026-07-26)
 
 * **What:** first backend milestone since M56. Replaced every M60 frontend-only

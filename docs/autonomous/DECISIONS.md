@@ -147,3 +147,19 @@
 - Consequences: every displayed health/progress/evidence/checkpoint value comes from
   the backend, missing state fails closed, and execution continues only through the
   authenticated orchestrator → PlatformAgentRuntime → ExecutionGateway path.
+
+## ADR-MISSION-006 — certification is an atomic, server-authored terminal transition
+
+- Decision: allow final certification only from a fully completed runtime whose
+  tasks, budgets, evidence, independent review, latest checkpoint, commit references,
+  browser state, and test state agree. Insert the immutable certificate and transition
+  the runtime to `CERTIFIED` in one repository transaction.
+- Alternatives: let the UI mark a mission certified; accept a client-provided
+  certifier; write a certificate before transitioning state; infer certification
+  solely from task completion.
+- Evidence: task completion alone does not prove verification, checkpoint freshness,
+  evidence ownership, or durable terminality. A split write can leave a certificate
+  without a certified runtime, or a certified runtime without a certificate.
+- Consequences: certification is tenant-scoped, authenticated, independently reviewed,
+  snapshot-hashed, restart-persistent, and immutable. Any mismatch fails closed with
+  no partial certificate or state transition.

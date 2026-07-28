@@ -2,8 +2,7 @@
 
 ## Active
 
-- M72 — fail-closed final certification, end-to-end security/full regression review,
-  architecture and capability documentation, and terminal verdict.
+- None.
 
 ## Pending
 
@@ -34,6 +33,14 @@
   lint and optimized build pass; isolated authenticated production browser PASS
   (21 hard, 2 responsive, 2 accessibility; zero page/console/hydration errors);
   changed production-code secret scan clean.
+- M72 — fail-closed atomic certification, independent passing-evidence review,
+  checkpoint-consistency validation, authenticated certification API, persistent
+  final certificate UI, full regression/security review, and terminal documentation.
+- M72 certification: 3 new tests; 18 M69–M72 tests; 138 related backend tests; full
+  backend 5,257 passed and 1 skipped; 183 frontend tests; lint/build pass;
+  authenticated production browser PASS (33 hard, 3 responsive, 2 accessibility;
+  zero page/console/hydration errors); 16 changed production files secret-clean;
+  production npm audit zero vulnerabilities.
 
 ## Blocked
 

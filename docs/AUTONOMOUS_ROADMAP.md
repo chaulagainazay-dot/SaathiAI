@@ -1,5 +1,24 @@
 # SaathiOS Autonomous Roadmap
 
+## M72 — Autonomous Mission Runtime Final Certification (2026-07-28)
+
+| Field | Value |
+| --- | --- |
+| Milestone | M72_COMPLETE |
+| Verdict | `MISSION_RUNTIME_COMPLETE` |
+| Certification | Server-authored, authenticated, tenant-scoped, immutable, snapshot-hashed, and atomic with the `CERTIFIED` transition |
+| Required gates | Complete DAG; no blockers; PASS test/browser and mission evidence; independent approved review; current matching checkpoint; valid commit/rollback SHAs |
+| Persistence | Certificate and runtime terminal state survive restart; duplicate or stale certification fails closed |
+| Dashboard | Final verdict, certifier, summary, evidence count, snapshot hash, and limitations render from backend state after reload |
+| Regression | 3 new; 18 M69–M72; 138 related; full backend 5,257 passed/1 skipped; frontend 183 |
+| Browser | Production PASS: 33 hard, 3 responsive, 2 accessibility; zero page/console/hydration errors |
+| Security | 16 changed production files secret-clean; Python packages consistent; production npm audit zero vulnerabilities |
+| Limits | Single-host/local; internal deterministic attestation; exhaustive AT and production activation deferred |
+| Next | Await a separately authorized platform/application mission |
+
+Evidence: `docs/autonomous/M72_MISSION_RUNTIME_CERTIFICATION.md` and
+`docs/platform/m72_evidence/`. No push, merge, deployment, or production change.
+
 ## M71 — Authenticated Mission Runtime API and Dashboard (2026-07-28)
 
 | Field | Value |

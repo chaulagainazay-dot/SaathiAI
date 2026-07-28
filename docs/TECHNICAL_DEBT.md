@@ -1,5 +1,28 @@
 # SaathiOS Technical Debt / Known Gaps
 
+## M69–M72 Autonomous Mission Runtime residual debt (2026-07-28)
+
+- MEDIUM / INTENTIONAL: the certified runtime is single-host, SQLite-backed, and
+  synchronously driven. Multi-host leases, distributed queue ownership, remote
+  workers, and an always-on background mission daemon are not enabled or certified.
+- MEDIUM / INTENTIONAL: final certification is a server-authored deterministic
+  snapshot over internal evidence, review, checkpoint, budget, and commit references.
+  It is not a cryptographic signature, independent remote attestation, or proof that
+  a referenced Git object exists outside the bounded checkout contract.
+- LOW: checkpoint and recovery contracts are durable, but cross-host checkpoint
+  transfer, external artifact retention/verification, and distributed exactly-once
+  coordination remain future work.
+- LOW: Mission Control browser certification covers authenticated desktop/mobile
+  rendering, semantics, overflow, reload persistence, and browser errors; exhaustive
+  screen-reader and assistive-technology certification remains deferred.
+- LOW / DEV-ONLY: production npm audit is zero-vulnerability. The full development
+  audit reports nine high advisories in ESLint's minimatch/brace-expansion tree; the
+  registry's complete remediation requires a breaking ESLint major upgrade. Keep lint
+  input trusted and address this through a coordinated Next/ESLint toolchain milestone.
+- RESOLVED from M59/M60: mission runtime now has authenticated per-mission detail,
+  lifecycle controls, durable backend checkpoints/evidence, and server-derived
+  Mission Control state. Browser controls remain intentionally observational.
+
 ## M61 residual / deferred (2026-07-26)
 
 - **Resolved from M60:** plan/notifications/saved-views/templates now SERVER_PERSISTED;

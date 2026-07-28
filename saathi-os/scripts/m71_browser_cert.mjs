@@ -504,6 +504,15 @@ async function main() {
     const detailShot = join(OUT, "screenshots", detailName);
     await page.screenshot({ path: detailShot, fullPage: true });
     report.screenshots.push(`screenshots/${detailName}`);
+    if (FINAL_CERT) {
+      await page.getByText("Final certification", { exact: true }).scrollIntoViewIfNeeded();
+      const certificationName = `${MILESTONE.toLowerCase()}_final_certification.png`;
+      await page.screenshot({
+        path: join(OUT, "screenshots", certificationName),
+        fullPage: false,
+      });
+      report.screenshots.push(`screenshots/${certificationName}`);
+    }
 
     const mobile = await browser.newContext({ viewport: { width: 390, height: 844 } });
     await mobile.addInitScript((value) => {
@@ -532,10 +541,13 @@ async function main() {
         "",
         report.responsive
       );
+      await mobilePage
+        .getByText("Final certification", { exact: true })
+        .scrollIntoViewIfNeeded();
     }
     const mobileName = `${MILESTONE.toLowerCase()}_mission_mobile.png`;
     const mobileShot = join(OUT, "screenshots", mobileName);
-    await mobilePage.screenshot({ path: mobileShot, fullPage: true });
+    await mobilePage.screenshot({ path: mobileShot, fullPage: !FINAL_CERT });
     report.screenshots.push(`screenshots/${mobileName}`);
     await mobile.close();
 

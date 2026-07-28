@@ -1,9 +1,10 @@
-# SaathiOS Capability Maturity Matrix (as of HEAD 0a77882)
+# SaathiOS Capability Maturity Matrix (as of M72 implementation e39b1bb)
 
 Levels: implemented < deterministic-tested < security/red-team-tested < live-tested < production.
 
 | capability | maturity | evidence |
 |-----------|----------|----------|
+| Autonomous Mission Runtime (M69–M72) | deterministic+live-browser-tested | Durable hierarchy/DAG/budgets/checkpoints/evidence/reviews; bounded role orchestration via PlatformAgentRuntime→ExecutionGateway; authenticated dashboard; atomic final certification; 18 focused, 138 related, full 5,257 passed/1 skipped; production browser 33+3+2 PASS; single-host, not production |
 | Live local provider certification (M25) | environment-blocked | harness+evidence; Ollama broken symlink/app missing; no models; production_certified=false; never mock-as-live |
 | Durable provider governance (M24) | deterministic-tested | SQLite circuit/cost/reservation; multi-process budget; residual exceptions=0; release/runtime M24 gates; production_certified=false |
 | Governed residual inference paths + release-check (M21.3) | deterministic-tested | residual inventory UNKNOWN=0; release_check pass; chat adapter; unknown caller fail-closed; live cert blocked |

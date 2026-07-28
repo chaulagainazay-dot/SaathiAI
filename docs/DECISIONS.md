@@ -18,6 +18,7 @@ This file records every significant architectural decision made during the desig
 | ADR-008 | OmniVoice over ElevenLabs for TTS | 2026-07 | Accepted |
 | ADR-009 | Versioned documentation (v1.x/) over single rolling file | 2026-07 | Accepted |
 | ADR-010 | HyperFrames for video assembly over FFmpeg-direct | 2026-07 | Accepted |
+| ADR-011 | Mission certification is atomic and evidence-gated | 2026-07 | Accepted |
 
 ---
 
@@ -222,6 +223,33 @@ This file records every significant architectural decision made during the desig
 **Rejected alternatives:**
 - **FFmpeg direct (drawtext, overlay filters):** Powerful but extremely verbose for text-heavy videos; hard to maintain
 - **MoviePy:** Python wrapper over FFmpeg; adds abstraction without solving the layout problem
+
+---
+
+## ADR-011: Mission certification is atomic and evidence-gated
+
+**Date:** 2026-07
+**Status:** Accepted
+
+**Context:** Autonomous mission task completion alone does not prove that evidence,
+independent review, browser/tests, resource accounting, commit references, and the
+latest durable checkpoint agree.
+
+**Decision:** The platform server is the only certification author. It verifies the
+completed mission snapshot and writes the immutable certificate plus the runtime's
+`CERTIFIED` transition in one transaction. Client-supplied certifier identity and
+partial certification are rejected.
+
+**Rationale:**
+- prevents UI or agent self-certification;
+- prevents certificate/runtime split-brain after interruption;
+- binds the verdict to tenant-owned passing evidence and independent review;
+- ensures recovery state, resource usage, commits, tests, and browser status match.
+
+**Rejected alternatives:**
+- **Client certification:** would make browser state authoritative.
+- **Task-completion-only certification:** omits verification and checkpoint freshness.
+- **Separate certificate/state writes:** permits partial terminal state after failure.
 
 ---
 

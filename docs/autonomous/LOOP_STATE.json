@@ -1,11 +1,11 @@
 {
   "goal_id": "AUTONOMOUS_MISSION_RUNTIME",
   "baseline_sha": "a4cb5c4d872a3edf048d52b7cd62bf9346703613",
-  "current_sha": "fb338d46341390db685155b7c3ff60a12af33bae",
+  "current_sha": "e39b1bbd4ea5b3f4672b14aee119a62ee40a6370",
   "current_milestone": "M72",
-  "status": "in_progress",
-  "completed_milestones": ["M69", "M70", "M71"],
-  "next_action": "Implement the fail-closed final certification gate, run full security/regression/browser verification, and publish the terminal mission-runtime certification.",
+  "status": "complete",
+  "completed_milestones": ["M69", "M70", "M71", "M72"],
+  "next_action": "Await an explicitly authorized future platform or application mission.",
   "last_verified_at": "2026-07-28",
-  "stop_reason": ""
+  "stop_reason": "MISSION_RUNTIME_COMPLETE"
 }
