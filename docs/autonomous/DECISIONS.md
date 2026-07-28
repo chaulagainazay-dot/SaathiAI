@@ -279,3 +279,38 @@
 - Consequences: Read aloud is English-only, transparent about limitations, bounded to
   4,000 characters, and routed through the same SpeechService. IELTS scoring and
   pronunciation limitations remain unchanged.
+
+## ADR-VOICE-010 — a partial browser run is a limitation, not a certificate
+
+- Decision: close the provider-neutral/native foundation as
+  `VOICE_FOUNDATION_COMPLETE_WITH_LIMITATIONS` while retaining the dedicated M77
+  browser result as `FAIL`.
+- Alternatives: infer browser success from unit/API/native evidence; exceed the
+  browser skill's bounded retry ceiling; call the whole foundation failed despite
+  passing backend/native evidence.
+- Evidence: the final browser attempt passed 14 hard and 1 accessibility gates and
+  issued a speech request, but did not observe the completed client state within
+  30 seconds. A separate real-provider API diagnostic completed the same fallback
+  request. The M64 production browser regression passed independently.
+- Consequences: SaathiOS may truthfully claim local backend English synthesis and an
+  implemented deterministic-tested UI, but not certified browser playback,
+  browser cancellation, browser IELTS read-aloud, or production readiness.
+  Superseded for browser playback by ADR-VOICE-011 / M78.
+
+## ADR-VOICE-011 — certify browser-playable WAV and isolate discovery races
+
+- Decision: default shell synthesis to browser-playable WAV via macOS `say` +
+  `afconvert`, keep AIFF supported, single-flight voice discovery without empty-cache
+  poison, and run the dedicated voice browser journey before multi-page M64 shell
+  regression. Close the foundation as
+  `VOICE_FOUNDATION_COMPLETE_WITH_LIMITATIONS` with browser PASS and VoxCPM still
+  optional/uninstalled.
+- Alternatives: keep AIFF-only artifacts; claim browser success from M77 unit/API
+  evidence alone; install VoxCPM to “fix” playback.
+- Evidence: M78 isolated three independent failures — Content-Length rewrite hang,
+  Chromium AIFF incompatibility, and concurrent `say -v ?` discovery races after M64
+  multi-page loads. After the fixes, the managed loopback cert passed 33 hard, 6
+  responsive, 2 accessibility, and 4 security gates.
+- Consequences: English speech is certified through the authenticated app path on
+  macOS. VoxCPM remains uninstalled; Nepali and cloning stay non-certified; production
+  is not authorized.

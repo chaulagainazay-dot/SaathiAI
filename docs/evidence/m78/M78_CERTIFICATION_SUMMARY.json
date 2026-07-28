@@ -1,0 +1,44 @@
+{
+  "milestone": "M78",
+  "captured_at": "2026-07-28",
+  "verdict": "VOICE_FOUNDATION_COMPLETE_WITH_LIMITATIONS",
+  "browser": {
+    "dedicated_voice_certificate": "PASS",
+    "hard_gates": 33,
+    "responsive_gates": 6,
+    "accessibility_gates": 2,
+    "security_gates": 4,
+    "m64_regression": "PASS",
+    "ielts_voice_journey_certified": true,
+    "responsive_voice_journey_certified": true,
+    "evidence": "docs/evidence/m78/browser/M78_VOICE_BROWSER_CERT.json"
+  },
+  "fixes": [
+    "browser cert Content-Length rewrite hang",
+    "macOS say→afconvert WAV for Chromium playback",
+    "single-flight voice discovery without empty-cache poison",
+    "voice journey ordered before M64 shell regression"
+  ],
+  "macos_provider": {
+    "certified": true,
+    "output_formats": ["wav", "aiff"],
+    "browser_playable_default": "wav"
+  },
+  "voxcpm": {
+    "implemented": true,
+    "installed": false,
+    "configured": false,
+    "model_available": false,
+    "runtime_verified": false,
+    "quality_reviewed": false,
+    "certified": false
+  },
+  "languages": {
+    "english_backend": "CERTIFIED_MACOS_SYSTEM_PROVIDER",
+    "english_browser_playback": "CERTIFIED",
+    "nepali": "UNSUPPORTED_NOT_VERIFIED"
+  },
+  "cloning": "CAPABILITY_DISABLED",
+  "production_authorized": false,
+  "push_merge_deploy_performed": false
+}

@@ -13,9 +13,15 @@
   `a4cb5c4d872a3edf048d52b7cd62bf9346703613` (M68 IELTS closeout).
 - Recovered voice-goal starting HEAD:
   `7873586aea6066d9e1d51b1d60f85ca413127907` (M69–M72 already complete).
-- Current phase: M73–M76 complete; M77 final voice certification active.
-- Completion criteria: certified English speech through macOS system TTS; truthful
-  unavailable/fallback states; optional VoxCPM adapter with no hidden install or
-  download; authenticated tenant-scoped API; profile and cloning safety; shell and
-  IELTS controls; focused/full/browser/security/resource evidence.
-- Terminal verdict: pending.
+- This session recovered from committed M77 HEAD
+  `285ffbbaa9d4180301d31bb1cd1a8bd8526e8d1a` and allocated M78.
+- Current phase: M73–M78 complete with intentional VoxCPM/production limitations.
+- Completion criteria: certified English speech through macOS system TTS including
+  authenticated browser playback; truthful unavailable/fallback states; optional
+  VoxCPM adapter with no hidden install or download; authenticated tenant-scoped
+  API; profile and cloning safety; shell and IELTS controls; focused/full/browser/
+  security/resource evidence.
+- Terminal verdict: `VOICE_FOUNDATION_COMPLETE_WITH_LIMITATIONS`.
+- Browser status: dedicated production voice journey **PASS** (M78).
+- Remaining intentional limitations: VoxCPM not installed/verified; Nepali not
+  verified; cloning disabled; production use not authorized.
