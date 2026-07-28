@@ -2,10 +2,10 @@
   "goal_id": "AUTONOMOUS_MISSION_RUNTIME",
   "baseline_sha": "a4cb5c4d872a3edf048d52b7cd62bf9346703613",
   "current_sha": "5d356b65fc5938047d597e3e0cd704562b318dbb",
-  "current_milestone": "M70",
+  "current_milestone": "M71",
   "status": "in_progress",
-  "completed_milestones": ["M69"],
-  "next_action": "Implement bounded decisions, retries, pause/resume/cancel, restart recovery, and PlatformAgentRuntime-only dispatch.",
+  "completed_milestones": ["M69", "M70"],
+  "next_action": "Expose authenticated mission-runtime APIs and integrate the backend-driven Mission Dashboard into the unified shell.",
   "last_verified_at": "2026-07-28",
   "stop_reason": ""
 }

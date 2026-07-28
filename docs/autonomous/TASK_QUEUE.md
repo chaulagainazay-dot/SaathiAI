@@ -2,13 +2,11 @@
 
 ## Active
 
-- M70 — bounded decision engine, role-agent orchestration, governed dispatch, retries,
-  pause/resume/cancel, budget stops, and interruption recovery.
+- M71 — authenticated mission-runtime API and backend-driven Mission Dashboard in the
+  existing unified shell.
 
 ## Pending
 
-- M71 — authenticated mission-runtime API and backend-driven Mission Dashboard in the
-  existing unified shell.
 - M72 — end-to-end certification, security/full regression review, architecture and
   capability documentation, and terminal verdict.
 
@@ -24,6 +22,13 @@
 - M69 focused/regression certification: 4 new tests; 124 related backend tests; 180
   frontend tests; retained M64 shell browser certificate (21 hard, 12 state, 6
   responsive, 3 accessibility gates); production-code secret scan clean.
+- M70 — eight bounded role agents, deterministic scheduling decisions, safe parallel
+  batches, PlatformAgentRuntime-only dispatch, approval resume, confirmed-failure
+  retry, pause/resume/cancel, resource stops, and interruption reconciliation without
+  replay after recorded dispatch.
+- M70 certification: 8 new tests; 132 related backend tests; 180 frontend tests;
+  retained M64 shell browser certificate (21 hard, 12 state, 6 responsive, 3
+  accessibility gates); changed production-code secret scan clean.
 
 ## Blocked
 

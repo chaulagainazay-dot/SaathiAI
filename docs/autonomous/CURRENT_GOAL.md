@@ -10,7 +10,8 @@
   infrastructure, a second execution engine, or weakened approval boundaries.
 - Baseline: branch `milestone/m61-backend-workflow-persistence`, commit
   `a4cb5c4d872a3edf048d52b7cd62bf9346703613`.
-- Current phase: M69 complete; M70 decision, recovery, and governed dispatch is next.
+- Current phase: M69–M70 complete; M71 authenticated API and Mission Dashboard is
+  next.
 - Completion criteria: M69–M72 locally committed and certified, with every tool
   dispatch routed through `PlatformAgentRuntime` and `ExecutionGateway`, deterministic
   restart recovery, authenticated Mission Control UI, full regression, and final

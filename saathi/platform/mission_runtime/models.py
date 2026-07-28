@@ -110,6 +110,7 @@ TASK_TRANSITIONS: dict[TaskStatus, frozenset[TaskStatus]] = {
             TaskStatus.READY,
             TaskStatus.BLOCKED,
             TaskStatus.FAILED,
+            TaskStatus.COMPLETED,
             TaskStatus.CANCELLED,
             TaskStatus.SKIPPED,
         }
@@ -122,7 +123,9 @@ TASK_TRANSITIONS: dict[TaskStatus, frozenset[TaskStatus]] = {
             TaskStatus.SKIPPED,
         }
     ),
-    TaskStatus.FAILED: frozenset(),
+    # FAILED->READY is reserved for the bounded retry policy. Public lifecycle
+    # callers cannot use it directly.
+    TaskStatus.FAILED: frozenset({TaskStatus.READY}),
     TaskStatus.COMPLETED: frozenset(),
     TaskStatus.CANCELLED: frozenset(),
     TaskStatus.SKIPPED: frozenset(),
@@ -245,6 +248,7 @@ class ResourceBudget:
 DEFAULT_USAGE: dict[str, int | float] = {
     "elapsed_seconds": 0.0,
     "token_estimate": 0,
+    "effort_used": 0.0,
     "commit_count": 0,
     "test_count": 0,
     "browser_runs": 0,

@@ -277,6 +277,7 @@ class MissionRuntimeRepository:
             "stop_reason",
             "last_checkpoint_at",
             "max_parallel_tasks",
+            "cancel_requested",
         }
         json_fields = {
             "budget": "budget_json",
@@ -292,7 +293,12 @@ class MissionRuntimeRepository:
         for key, value in fields.items():
             column = json_fields.get(key, key)
             assignments.append(f"{column}=?")
-            values.append(canonical_json(value) if key in json_fields else value)
+            if key in json_fields:
+                values.append(canonical_json(value))
+            elif key == "cancel_requested":
+                values.append(int(bool(value)))
+            else:
+                values.append(value)
         values.append(mission_id)
         with self.store._runtime_lock, self.store._conn:
             result = self.store._conn.execute(
@@ -339,6 +345,37 @@ class MissionRuntimeRepository:
                 "WHERE mission_id=? AND node_id=?",
                 tuple(values),
             )
+        return self.get_node(mission_id, task_id)
+
+    def update_task(
+        self, mission_id: str, task_id: str, **fields: Any
+    ) -> dict[str, Any]:
+        allowed = {
+            "approval_id",
+            "execution_id",
+            "outcome_summary",
+            "error_code",
+            "not_before",
+            "attempt",
+        }
+        unknown = set(fields) - allowed
+        if unknown:
+            raise ValueError(f"unsupported task fields: {sorted(unknown)}")
+        assignments = ["updated_at=?"]
+        values: list[Any] = [self.store._now()]
+        for key, value in fields.items():
+            assignments.append(f"{key}=?")
+            values.append(value)
+        values.extend([mission_id, task_id])
+        with self.store._runtime_lock, self.store._conn:
+            result = self.store._conn.execute(
+                f"UPDATE mission_runtime_nodes SET {','.join(assignments)} "
+                "WHERE mission_id=? AND node_id=? "
+                "AND node_type IN ('TASK','SUBTASK')",
+                tuple(values),
+            )
+            if result.rowcount != 1:
+                raise KeyError(task_id)
         return self.get_node(mission_id, task_id)
 
     def add_evidence(

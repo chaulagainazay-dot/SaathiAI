@@ -1,5 +1,22 @@
 # SaathiOS Autonomous Roadmap
 
+## M70 — Mission Decisions, Agents, Dispatch, and Recovery (2026-07-28)
+
+| Field | Value |
+| --- | --- |
+| Milestone | M70_COMPLETE |
+| Agents | 8 bounded orchestration roles; no identity, permission, connector, or executor authority |
+| Scheduling | Priority + dependency readiness; safe bounded parallel batch; finite cycles and no-progress stops |
+| Dispatch | PlatformAgentRuntime only; ExecutionGateway remains sole registered-tool executor |
+| Decisions | Continue/wait/review/approval/stop/complete; predicted resource gates |
+| Recovery | Same-execution approval resume; confirmed-failure retry; no replay after uncertain recorded dispatch |
+| Control | Pause, resume, cancellation intent/confirmation, checkpoints |
+| Certification | 8 new + 132 related backend tests; 180 frontend; retained M64 browser PASS; production secret scan clean |
+| Next | M71 authenticated API and unified-shell Mission Dashboard |
+
+Evidence: `docs/autonomous/M70_MISSION_RUNTIME_ORCHESTRATION.md`. No push, merge,
+deployment, or production change.
+
 ## M69 — Autonomous Mission Runtime Foundation (2026-07-28)
 
 | Field | Value |

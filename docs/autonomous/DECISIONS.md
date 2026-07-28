@@ -103,3 +103,33 @@
 - Consequences: plan replacement is allowed only before any task attempt and clears
   stale plan artifacts atomically. Completion is gated by passing named evidence and
   independent review where configured.
+
+## ADR-MISSION-003 — role agents delegate; they never grant or execute
+
+- Decision: represent Planner, Architect, Implementer, Reviewer, Test, Browser,
+  Documentation, and Certification agents as a fixed orchestration-role directory.
+  A role may submit one declared task only to `PlatformAgentRuntime.execute_context`
+  or resume an existing platform execution through the canonical runtime.
+- Alternatives: give every role its own executor, connector client, credential set,
+  or implicit permission map.
+- Evidence: PlatformAgentRuntime already owns identity/binding/session validation,
+  approvals, idempotency and runtime state; ExecutionGateway is the sole registered
+  tool boundary.
+- Consequences: agent selection grants nothing. Runtime binding policy and RBAC can
+  deny any role task, approval requirements remain human-controlled, and no
+  mission-runtime module imports or invokes ExecutionGateway.
+
+## ADR-MISSION-004 — retry only confirmed failure; never replay uncertainty
+
+- Decision: retry only a small allowlist of transient error codes paired with
+  `FAILURE_CONFIRMED`, within each task's retry ceiling and mission resource budget.
+  Approval waits resume the original platform execution. Recorded dispatch with
+  unknown outcome is blocked for review and never replayed automatically.
+- Alternatives: retry every exception; create a fresh execution after approval;
+  assume interrupted dispatch failed.
+- Evidence: M52 recovery explicitly classifies recorded dispatch as requiring manual
+  review, while the gateway's outcome contract distinguishes confirmed failure from
+  unknown side effects.
+- Consequences: exponential retry backoff is finite; unexpected errors fail closed;
+  recovery needs fresh authenticated context and preserves the original idempotency
+  and platform execution record.

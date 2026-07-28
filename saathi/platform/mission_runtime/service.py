@@ -493,9 +493,18 @@ class MissionRuntimeService:
             raise PlatformContextError("INVALID_STATE", "mission is not running")
         try:
             destination = TaskStatus(target).value
+            current = self.repo.get_node(mission_id, task_id)
+            if not current:
+                raise KeyError(task_id)
+            if (
+                current["status"] == TaskStatus.FAILED.value
+                and destination == TaskStatus.READY.value
+            ):
+                raise ValueError("failed tasks may retry only through bounded policy")
             fields: dict[str, Any] = {}
             if destination == TaskStatus.RUNNING.value:
                 fields["started_at"] = self.store._now()
+                fields["attempt"] = int(current["attempt"]) + 1
             if destination in {status.value for status in TASK_TERMINAL}:
                 fields["finished_at"] = self.store._now()
             if summary:
@@ -686,6 +695,22 @@ class MissionRuntimeService:
         )
         if task_id and not self.repo.get_node(mission_id, task_id):
             raise PlatformContextError("NOT_FOUND", "task not found")
+        normalized_type = str(evidence_type or "").lower()
+        usage = dict(runtime["usage"])
+        counter = {
+            "test": ("test_count", "max_tests"),
+            "browser": ("browser_runs", "max_browser_runs"),
+            "commit": ("commit_count", "max_commits"),
+        }.get(normalized_type)
+        if counter:
+            usage_key, budget_key = counter
+            projected = int(usage.get(usage_key, 0)) + 1
+            if projected > int(runtime["budget"].get(budget_key, 0)):
+                raise PlatformContextError(
+                    "RESOURCE_BUDGET_EXHAUSTED",
+                    f"{usage_key} would exceed {budget_key}",
+                )
+            usage[usage_key] = projected
         try:
             reject_secret_fields(metadata or {})
             state = EvidenceStatus(status).value
@@ -712,15 +737,8 @@ class MissionRuntimeService:
             )
         except ValueError as exc:
             raise PlatformContextError("VALIDATION_FAILED", str(exc)) from exc
-        usage = dict(runtime["usage"])
-        normalized_type = evidence_type.lower()
-        if normalized_type == "test":
-            usage["test_count"] = int(usage.get("test_count", 0)) + 1
-        elif normalized_type == "browser":
-            usage["browser_runs"] = int(usage.get("browser_runs", 0)) + 1
-        elif normalized_type == "commit":
-            usage["commit_count"] = int(usage.get("commit_count", 0)) + 1
-        self.repo.update_runtime(mission_id, usage=usage)
+        if counter:
+            self.repo.update_runtime(mission_id, usage=usage)
         self._audit(
             "mission_runtime.evidence_recorded",
             ctx,

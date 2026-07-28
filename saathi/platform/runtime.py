@@ -496,6 +496,49 @@ class PlatformAgentRuntime:
             )
         return rec
 
+    def reconcile_execution(
+        self, *, token: str, execution_id: str
+    ) -> PlatformExecutionRecord:
+        """Scope and classify one interrupted execution without replaying it."""
+
+        rec = self._scoped_record(token, execution_id)
+        if rec.is_terminal() or PlatformExecutionState(rec.state) == (
+            PlatformExecutionState.WAITING_APPROVAL
+        ):
+            return rec
+        now = self.store._now()
+        if rec.cancel_requested:
+            target = PlatformExecutionState.CANCELLED
+            reason = "cancel_requested"
+        elif rec.deadline_at and now >= rec.deadline_at:
+            target = PlatformExecutionState.TIMED_OUT
+            reason = "deadline_expired"
+        else:
+            recovering = self.store.transition_platform_execution(
+                rec.execution_id, PlatformExecutionState.RECOVERING
+            )
+            target = PlatformExecutionState.PAUSED
+            reason = (
+                "dispatch_recorded_manual_review"
+                if recovering.dispatch_started
+                else "safe_to_resume_before_dispatch"
+            )
+        updated = self.store.transition_platform_execution(
+            rec.execution_id,
+            target,
+            error_code=reason,
+            recovery_count=rec.recovery_count + 1,
+        )
+        ctx = self._context_for_record(token, rec)
+        self._audit(
+            "runtime.recovery_decision",
+            ctx,
+            tool_id=updated.tool_id,
+            outcome=updated.state,
+            detail={"execution_id": updated.execution_id, "reason": reason},
+        )
+        return updated
+
     def resume(
         self,
         *,
