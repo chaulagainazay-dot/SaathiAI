@@ -253,3 +253,16 @@
 - Consequences: `voice.clone.request` and `voice.clone.approve` reserve stronger future
   authority but cannot activate cloning. The Yeti profile is written voice-design
   metadata only and never clones a person.
+
+## ADR-VOICE-008 — separate synthesis from explicit browser playback
+
+- Decision: a completed assistant response exposes `Speak` to request synthesis; when
+  authenticated audio is ready, a separate user action invokes `Play`.
+- Alternatives: autoplay every response; call browser `speechSynthesis`; play
+  immediately after an asynchronous synthesis request.
+- Evidence: the goal prohibits autoplay, browser gesture policies are inconsistent
+  across delayed network work, and browser speech synthesis would bypass the canonical
+  provider/evidence/audit layer.
+- Consequences: user intent is unambiguous, audio never starts on navigation or data
+  refresh, and every platform module can reuse one shell client. The extra Play action
+  is a deliberate safety/usability tradeoff and is visibly communicated.
