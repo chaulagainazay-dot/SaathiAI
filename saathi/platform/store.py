@@ -266,6 +266,7 @@ class PlatformStore:
         self._migrate_m52()
         self._migrate_m53()
         self._migrate_m61()
+        self._migrate_m65()
         self._conn.commit()
         # Serialize all shared-connection access (auth/session/approval/audit reads
         # run under FastAPI's threadpool concurrently). Reentrant so existing
@@ -1246,6 +1247,49 @@ class PlatformStore:
             CREATE INDEX IF NOT EXISTS idx_m61_views ON saved_views(org_id, workspace_id, user_id);
             CREATE INDEX IF NOT EXISTS idx_m61_tpl ON workflow_templates(org_id, workspace_id);
             CREATE INDEX IF NOT EXISTS idx_m61_drafts ON workflow_drafts(org_id, workspace_id, user_id);
+            """
+        )
+
+    def _migrate_m65(self) -> None:
+        """Idempotent IELTSAlert schema in the authoritative platform database."""
+        self._conn.executescript(
+            """
+            CREATE TABLE IF NOT EXISTS ielts_records (
+                record_id TEXT PRIMARY KEY,
+                record_type TEXT NOT NULL,
+                org_id TEXT NOT NULL,
+                workspace_id TEXT NOT NULL,
+                owner_id TEXT NOT NULL,
+                project_id TEXT NOT NULL DEFAULT '',
+                mission_id TEXT NOT NULL DEFAULT '',
+                status TEXT NOT NULL,
+                body_json TEXT NOT NULL DEFAULT '{}',
+                idempotency_key TEXT NOT NULL DEFAULT '',
+                version INTEGER NOT NULL DEFAULT 1,
+                created_at REAL NOT NULL,
+                updated_at REAL NOT NULL,
+                archived_at REAL NOT NULL DEFAULT 0
+            );
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_ielts_idempotency
+                ON ielts_records(org_id, workspace_id, owner_id, record_type, idempotency_key)
+                WHERE idempotency_key != '';
+            CREATE INDEX IF NOT EXISTS idx_ielts_scope
+                ON ielts_records(org_id, workspace_id, record_type, updated_at DESC);
+            CREATE INDEX IF NOT EXISTS idx_ielts_owner
+                ON ielts_records(org_id, workspace_id, owner_id, record_type);
+            CREATE TABLE IF NOT EXISTS ielts_evidence_events (
+                event_id TEXT PRIMARY KEY,
+                org_id TEXT NOT NULL,
+                workspace_id TEXT NOT NULL,
+                owner_id TEXT NOT NULL,
+                record_id TEXT NOT NULL,
+                event_type TEXT NOT NULL,
+                evidence_ref TEXT NOT NULL DEFAULT '',
+                summary TEXT NOT NULL DEFAULT '',
+                created_at REAL NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS idx_ielts_evidence_scope
+                ON ielts_evidence_events(org_id, workspace_id, created_at DESC);
             """
         )
 

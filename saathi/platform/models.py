@@ -65,6 +65,18 @@ class PlatformPermission(str, Enum):
     NOTIFICATION_READ = "notification.read"
     NOTIFICATION_WRITE = "notification.write"
     ATTENTION_WRITE = "attention.write"
+    # M65 — IELTSAlert bounded education module
+    IELTS_READ = "ielts.read"
+    IELTS_PROFILE_MANAGE = "ielts.profile.manage"
+    IELTS_GOAL_MANAGE = "ielts.goal.manage"
+    IELTS_PRACTICE_CREATE = "ielts.practice.create"
+    IELTS_SUBMISSION_CREATE = "ielts.submission.create"
+    IELTS_FEEDBACK_READ = "ielts.feedback.read"
+    IELTS_ALERT_MANAGE = "ielts.alert.manage"
+    IELTS_PAYMENT_SUBMIT = "ielts.payment.submit"
+    IELTS_PAYMENT_REVIEW = "ielts.payment.review"
+    IELTS_ADMIN = "ielts.admin"
+    IELTS_AUDIT_READ = "ielts.audit.read"
     # M62.3 — research pipeline (no trading authority)
     RESEARCH_READ = "research.read"
     RESEARCH_CREATE = "research.create"
@@ -236,6 +248,8 @@ ROLE_PERMISSIONS: dict[PlatformRole, frozenset[PlatformPermission]] = {
             PlatformPermission.AGENT_BINDING_READ,
             PlatformPermission.WORKFLOW_READ,
             PlatformPermission.NOTIFICATION_READ,
+            PlatformPermission.IELTS_READ,
+            PlatformPermission.IELTS_FEEDBACK_READ,
             PlatformPermission.RESEARCH_READ,
             PlatformPermission.STRATEGY_READ,
             PlatformPermission.PAPER_ACCOUNT_READ,
@@ -266,6 +280,12 @@ ROLE_PERMISSIONS[PlatformRole.OPERATOR] = ROLE_PERMISSIONS[PlatformRole.VIEWER] 
         PlatformPermission.WORKFLOW_WRITE,
         PlatformPermission.NOTIFICATION_WRITE,
         PlatformPermission.ATTENTION_WRITE,
+        PlatformPermission.IELTS_PROFILE_MANAGE,
+        PlatformPermission.IELTS_GOAL_MANAGE,
+        PlatformPermission.IELTS_PRACTICE_CREATE,
+        PlatformPermission.IELTS_SUBMISSION_CREATE,
+        PlatformPermission.IELTS_ALERT_MANAGE,
+        PlatformPermission.IELTS_PAYMENT_SUBMIT,
         PlatformPermission.RESEARCH_CREATE,
         PlatformPermission.RESEARCH_EDIT,
         PlatformPermission.RESEARCH_CHALLENGE,
@@ -300,6 +320,9 @@ ROLE_PERMISSIONS[PlatformRole.OWNER] = ROLE_PERMISSIONS[PlatformRole.OPERATOR] |
         PlatformPermission.USER_MANAGE,
         PlatformPermission.RUNTIME_OPERATE,
         PlatformPermission.AGENT_BINDING_MANAGE,
+        PlatformPermission.IELTS_PAYMENT_REVIEW,
+        PlatformPermission.IELTS_ADMIN,
+        PlatformPermission.IELTS_AUDIT_READ,
     }
 )
 ROLE_PERMISSIONS[PlatformRole.ADMIN] = ROLE_PERMISSIONS[PlatformRole.OWNER] | frozenset(

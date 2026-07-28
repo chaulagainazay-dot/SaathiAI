@@ -1,0 +1,11 @@
+{
+  "goal_id": "IELTS_MODULE_INTEGRATION",
+  "baseline_sha": "e0632460a12d3401146c12a1e79eac950a29682e",
+  "current_sha": "e0632460a12d3401146c12a1e79eac950a29682e",
+  "current_milestone": "M66",
+  "status": "running",
+  "completed_milestones": ["M65"],
+  "next_action": "Expose authenticated IELTS workflows through the platform API and verify lifecycle integrations.",
+  "last_verified_at": "2026-07-28",
+  "stop_reason": null
+}
