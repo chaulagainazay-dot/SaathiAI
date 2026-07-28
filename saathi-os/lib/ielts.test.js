@@ -1,7 +1,7 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { IELTS_NOTICE, ieltsActions } from "./ielts.js";
+import { IELTS_NOTICE, ieltsActions, ieltsFeedbackSpeech } from "./ielts.js";
 
 describe("IELTSAlert frontend contract", () => {
   it("labels bounded limitations explicitly", () => {
@@ -39,11 +39,40 @@ describe("IELTSAlert frontend contract", () => {
       "Sign in required", "Permission restricted", "Retry", "No exam goal yet",
       "Structured practice", "pronunciation will not be assessed",
       "Fixture alerts evaluated", "manual payment", "evidence timeline",
+      "Read aloud", "Read IELTS feedback aloud", 'profileId: "yeti_teacher"',
     ]) assert.ok(source.includes(text), text);
     assert.ok(source.includes('aria-label="IELTSAlert workspace"'));
     assert.ok(source.includes('aria-live="polite"'));
     assert.ok(source.includes("p.owner_id !== userId"), "self-review controls must stay hidden");
     assert.ok(source.includes("pathname.endsWith(`/practice/${skill}`)"));
+    assert.ok(source.includes("voiceOutput.speak(ieltsFeedbackSpeech(r)"));
+    assert.equal(source.includes("speechSynthesis"), false);
+  });
+
+  it("turns only bounded backend feedback into transparent speech text", () => {
+    assert.equal(ieltsFeedbackSpeech({ body: { response: "private answer" } }), "");
+    const text = ieltsFeedbackSpeech({
+      body: {
+        response: "private answer must not be repeated",
+        feedback: {
+          label: "practice estimate",
+          official: false,
+          overall_level: "developing",
+          criteria: {
+            task_response: {
+              level: "developing",
+              feedback: "Connect each claim to the prompt.",
+            },
+          },
+          limitations: ["Manual review is still required."],
+        },
+      },
+    });
+    assert.match(text, /practice estimate/i);
+    assert.match(text, /task response/i);
+    assert.match(text, /never an official IELTS score/i);
+    assert.equal(text.includes("private answer"), false);
+    assert.ok(text.length <= 4_000);
   });
 
   it("global sign out clears the centralized platform context", () => {

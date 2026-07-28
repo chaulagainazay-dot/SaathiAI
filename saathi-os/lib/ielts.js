@@ -8,6 +8,38 @@ export const IELTS_NOTICE = {
   payment: "Manual verification only — no payment settlement is performed.",
 };
 
+const boundedSpeechText = (value, maximum = 500) =>
+  String(value || "").replace(/\s+/g, " ").trim().slice(0, maximum);
+
+export function ieltsFeedbackSpeech(record) {
+  const feedback = record?.body?.feedback;
+  if (!feedback || typeof feedback !== "object") return "";
+  const parts = [
+    `IELTS ${boundedSpeechText(feedback.label || "practice feedback", 80)}.`,
+  ];
+  if (feedback.overall_level) {
+    parts.push(
+      `Overall practice level: ${boundedSpeechText(feedback.overall_level, 80)}.`
+    );
+  } else if (Number.isFinite(Number(feedback.answers_recorded))) {
+    parts.push(`${Number(feedback.answers_recorded)} answers were recorded.`);
+  }
+  for (const [criterion, value] of Object.entries(feedback.criteria || {})) {
+    const title = boundedSpeechText(criterion.replaceAll("_", " "), 80);
+    const level = boundedSpeechText(value?.level, 80);
+    const note = boundedSpeechText(value?.feedback, 500);
+    if (title && (level || note)) {
+      parts.push(`${title}.${level ? ` Level ${level}.` : ""}${note ? ` ${note}` : ""}`);
+    }
+  }
+  const limitations = Array.isArray(feedback.limitations)
+    ? feedback.limitations.map((item) => boundedSpeechText(item, 300)).filter(Boolean)
+    : [];
+  if (limitations.length) parts.push(`Limitations. ${limitations.join(" ")}`);
+  parts.push("This is practice feedback, never an official IELTS score.");
+  return parts.join(" ").slice(0, 4_000);
+}
+
 export async function ielts(path, { method = "GET", body, token, signal } = {}) {
   return plat(`/ielts${path}`, { method, body, token: token || getToken(), signal });
 }

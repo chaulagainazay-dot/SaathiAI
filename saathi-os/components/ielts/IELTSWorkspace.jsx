@@ -3,7 +3,13 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button, Card, EmptyState, ErrorState, Heading, Spinner, Text } from "@/components/ui";
-import { IELTS_NOTICE, ieltsActions, useIELTSData } from "@/lib/ielts";
+import {
+  IELTS_NOTICE,
+  ieltsActions,
+  ieltsFeedbackSpeech,
+  useIELTSData,
+} from "@/lib/ielts";
+import { useVoiceOutput } from "@/components/voice/VoiceOutputProvider";
 
 const TABS = [
   ["/ielts", "Dashboard"], ["/ielts/onboarding", "Profile"], ["/ielts/goals", "Goal"],
@@ -29,7 +35,12 @@ function Field({ label, children }) {
   return <label style={{ display: "block", color: "var(--text-secondary)", fontSize: 12 }}>{label}{children}</label>;
 }
 
-function RecordList({ records, empty = "Nothing here yet." }) {
+function RecordList({
+  records,
+  empty = "Nothing here yet.",
+  readAloud = false,
+}) {
+  const voiceOutput = useVoiceOutput();
   if (!records.length) return <EmptyState title={empty} />;
   return <div style={{ display: "grid", gap: 8 }}>{records.map((r) => (
     <Card key={r.record_id} style={{ padding: 12 }}>
@@ -41,6 +52,26 @@ function RecordList({ records, empty = "Nothing here yet." }) {
         {r.body.feedback.label}: {r.body.feedback.overall_level || `${r.body.feedback.answers_recorded || 0} answers recorded`}
       </Text>}
       {r.body?.disclaimer && <Text as="p" tone="muted" size="xs">{r.body.disclaimer}</Text>}
+      {readAloud && r.body?.feedback ? (
+        <div className="voice-message-actions">
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            disabled={!voiceOutput.enabled || voiceOutput.busy}
+            onClick={() =>
+              voiceOutput.speak(ieltsFeedbackSpeech(r), {
+                source: "ielts_feedback",
+                language: "en-US",
+                profileId: "yeti_teacher",
+              })
+            }
+            aria-label="Read IELTS feedback aloud"
+          >
+            Read aloud
+          </Button>
+        </div>
+      ) : null}
     </Card>
   ))}</div>;
 }
@@ -199,7 +230,11 @@ function FeedbackView({ records }) {
   const submissions = records.filter((r) => ["practice", "submission"].includes(r.record_type));
   return <><Banner>{IELTS_NOTICE.scoring} Speaking pronunciation is not assessed from transcripts.</Banner>
     <Heading level={2} style={{ marginBottom: 10 }}>Practice history and feedback</Heading>
-    <RecordList records={submissions} empty="No practice submissions yet." /></>;
+    <RecordList
+      records={submissions}
+      empty="No practice submissions yet."
+      readAloud
+    /></>;
 }
 
 function AlertsView({ act, busy, records, token }) {
