@@ -9,7 +9,7 @@
     "start": "next start -p 3000",
     "lint": "eslint . --max-warnings 5",
     "lint:fix": "eslint . --fix",
-    "test": "node --test lib/navigation.test.js lib/m47_2_safety.test.js lib/attention.test.js lib/approvals.test.js lib/m47_3_safety.test.js lib/m47_4_parity.test.js lib/redirects.test.js lib/platform-ops.test.js lib/spatial.test.js lib/workspace.test.js lib/operator.test.js lib/modules/registry.test.js",
+    "test": "node --test lib/navigation.test.js lib/m47_2_safety.test.js lib/attention.test.js lib/approvals.test.js lib/m47_3_safety.test.js lib/m47_4_parity.test.js lib/redirects.test.js lib/platform-ops.test.js lib/spatial.test.js lib/workspace.test.js lib/operator.test.js lib/modules/registry.test.js lib/modules/discovery.test.js",
     "test:browser-cert": "node scripts/m47_4_browser_cert.mjs",
     "test:browser-cert:dev": "M47_4_USE_DEV=1 node scripts/m47_4_browser_cert.mjs",
     "test:browser-cert:m47.7": "node scripts/m47_7_browser_cert.mjs",
@@ -37,7 +37,8 @@
     "cert:m60:soft": "node scripts/m60_browser_cert.mjs --allow-limitations",
     "cert:m61": "node scripts/m61_browser_cert.mjs",
     "cert:m61:build": "M61_BUILD=1 node scripts/m61_browser_cert.mjs",
-    "cert:m61:soft": "node scripts/m61_browser_cert.mjs --allow-limitations"
+    "cert:m61:soft": "node scripts/m61_browser_cert.mjs --allow-limitations",
+    "cert:m64": "node scripts/m64_browser_cert.mjs"
   },
   "dependencies": {
     "framer-motion": "^11.15.0",

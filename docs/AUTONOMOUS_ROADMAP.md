@@ -1129,3 +1129,26 @@ Branch `milestone/m42-graduation-review`.
   m43-revalidate, m43-emit-evidence. Tests: 15 passed (40 with M42); M39-M43 282.
   Leak-clean, deterministic, no network, backward-compat 11/11, M32 prohibition intact.
 - Authorities NOT GRANTED; Trading Guardian UNENGAGED.
+
+## M64 — Authenticated Backend Module Authority (2026-07-28)
+
+**Status:** `M64_COMPLETE_WITH_LIMITATIONS`.
+
+- Reused the M63 backend `ModuleRegistry` as the authoritative source for browser
+  discovery, availability, health, Applications navigation, dashboard composition,
+  and route presentation.
+- Reused platform context/RBAC and required authenticated `PLATFORM_READ`; module
+  registration remains a permission directory, never a grant.
+- Added one shell-wide discovery owner, production Sidebar/CommandPalette wiring,
+  truthful route boundary, bounded retry, abort/generation safety, context/logout
+  invalidation, safe icon allowlist, and drift diagnostics.
+- Trading remains the sole implemented bounded module; paper-only business logic and
+  authority are unchanged. IELTSAlert, HCG POS, Travel, and Finance remain
+  non-operational placeholders.
+- Validation: backend targeted 176 pass; retained full backend 5221 pass / 1 skip;
+  frontend 175 pass; ESLint/build pass; browser certificate 20 hard + 12 state + 6
+  responsive + 3 accessibility gates.
+- Limitations: fallback skeleton, global enablement, no module cache/global search/
+  dynamic installation, focused accessibility sweep, and unrelated TopBar approvals
+  CORS debt.
+- No push, merge, deployment, production change, or external rollout.

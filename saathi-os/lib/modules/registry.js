@@ -1,11 +1,18 @@
 /**
- * M63 — Platform Module Registry (frontend).
+ * M63/M64 — Platform Module Registry (frontend static MIRROR).
  *
- * The shell-side single source of truth for platform applications. Mirrors the
- * backend contract in saathi/platform/module_registry.py. The shell composes its
- * data-driven Applications navigation, unified dashboard cards, widgets, search
- * providers, and workspace views from module registrations — no application is
- * hard-coded into the shell.
+ * ⚠ NON-AUTHORITATIVE as of M64. The authoritative source for browser module
+ * discovery, availability, health, navigation, and dashboard composition is the
+ * backend ModuleRegistry via GET /api/v1/platform/modules (see client.js). This
+ * static mirror exists ONLY for:
+ *   - shell bootstrapping / route skeletons before the authenticated fetch resolves
+ *   - safe offline presentation
+ *   - drift-detection comparison (drift.js)
+ *   - tests
+ *
+ * It must never be treated as operational truth: it does not grant access, does
+ * not mark unavailable modules active, and does not override backend feature flags
+ * or capability/permission state. `SOURCE` marks it explicitly as a fallback.
  *
  * This is metadata + composition ONLY. Modules never manipulate shell internals
  * directly and never own evidence, notifications, or RBAC — those stay
@@ -47,6 +54,9 @@
  * @property {Object} featureFlags
  * @property {ModuleHealth} health
  */
+
+/** Marks this module data as a non-authoritative fallback skeleton (never backend truth). */
+export const SOURCE = "fallback";
 
 /** @param {Partial<ModuleDescriptor>} m @returns {ModuleDescriptor} */
 export function defineModule(m) {

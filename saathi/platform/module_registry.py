@@ -45,8 +45,33 @@ class ModuleStatus(str, Enum):
 class ModuleHealth(str, Enum):
     HEALTHY = "healthy"
     DEGRADED = "degraded"
+    UNAVAILABLE = "unavailable"
     UNKNOWN = "unknown"
     NOT_IMPLEMENTED = "not_implemented"
+    DISABLED = "disabled"
+
+
+class ModuleState(str, Enum):
+    """Truthful, per-caller module state combining status + health + access. This is
+    what the shell renders. It is presentation only — backend routes and RBAC remain
+    authoritative regardless of what state a caller is shown."""
+    AVAILABLE = "available"                        # enabled, implemented, healthy, permitted
+    DEGRADED = "degraded"                          # enabled but health degraded
+    UNAVAILABLE = "unavailable"                    # enabled but a dependency is unavailable
+    DISABLED = "disabled"                          # installed but turned off
+    NOT_IMPLEMENTED = "not_implemented"            # placeholder / metadata-only
+    PERMISSION_RESTRICTED = "permission_restricted"  # caller lacks read permission (or agent actor)
+
+
+# Read-permission required to *see* a module's operational surface, by namespace.
+# Placeholders declare a bare namespace (their own id) with no ".read" permission;
+# they are never operational, so they are not gated on a read permission here.
+READ_PERMISSION_BY_NAMESPACE = {
+    "paper_account": "paper_account.read",
+    "paper_order": "paper_order.read",
+    "reconciliation": "reconciliation.read",
+    "paper_safety": "paper_safety.read",
+}
 
 
 # ── contract sub-specs ────────────────────────────────────────────────────────
@@ -133,7 +158,41 @@ class ModuleDescriptor:
     def is_enabled(self) -> bool:
         return self.status == ModuleStatus.ENABLED
 
-    def to_public(self) -> dict:
+    def candidate_read_permissions(self) -> list[str]:
+        """The read permissions that grant visibility of this module's operational
+        surface. Empty for placeholders (no operational surface to gate)."""
+        out = []
+        for ns in self.permissions:
+            perm = READ_PERMISSION_BY_NAMESPACE.get(ns)
+            if perm:
+                out.append(perm)
+        return out
+
+    def resolve_state(self, *, can_read=None, is_agent: bool = False) -> ModuleState:
+        """Compute the truthful state for a caller. `can_read(perm_str) -> bool` is a
+        non-raising permission predicate; `is_agent` marks autonomous/agent actors,
+        which never receive human operational shell access. Fail-closed: any actor
+        without an explicit read grant to an operational module is PERMISSION_RESTRICTED."""
+        if self.status == ModuleStatus.PLACEHOLDER:
+            return ModuleState.NOT_IMPLEMENTED
+        if self.status == ModuleStatus.DISABLED:
+            return ModuleState.DISABLED
+        # enabled + implemented → gate on read permission
+        reads = self.candidate_read_permissions()
+        if is_agent:
+            return ModuleState.PERMISSION_RESTRICTED
+        if reads and can_read is not None and not any(can_read(p) for p in reads):
+            return ModuleState.PERMISSION_RESTRICTED
+        h = self.health()
+        if h == ModuleHealth.HEALTHY:
+            return ModuleState.AVAILABLE
+        if h == ModuleHealth.DEGRADED:
+            return ModuleState.DEGRADED
+        if h == ModuleHealth.UNAVAILABLE:
+            return ModuleState.UNAVAILABLE
+        return ModuleState.AVAILABLE if self.is_enabled else ModuleState.UNAVAILABLE
+
+    def to_public(self, *, can_read=None, is_agent: bool = False) -> dict:
         return {
             "id": self.id,
             "name": self.name,
@@ -151,6 +210,10 @@ class ModuleDescriptor:
             "capabilities": list(self.capabilities),
             "feature_flags": dict(self.feature_flags),
             "health": self.health().value,
+            "enabled": self.is_enabled,
+            "implemented": self.status != ModuleStatus.PLACEHOLDER,
+            "state": self.resolve_state(can_read=can_read, is_agent=is_agent).value,
+            "operational": self.resolve_state(can_read=can_read, is_agent=is_agent) == ModuleState.AVAILABLE,
         }
 
 
@@ -262,8 +325,67 @@ class ModuleRegistry:
         return [{"module_id": m.id, "status": m.status.value, "health": m.health().value}
                 for m in self.list_installed()]
 
+    # ── caller-aware, permission-filtered discovery (M64 authoritative payload) ──
+    CONTRACT_VERSION = "m64.1"
+
+    def discovery(self, *, can_read=None, is_agent: bool = False) -> dict:
+        """The authoritative browser module-discovery payload. Every module carries a
+        truthful, caller-scoped `state`; navigation and dashboard cards carry the same.
+        Permission filtering is advisory for RENDERING only — backend routes and RBAC
+        stay authoritative, so a PERMISSION_RESTRICTED module is still returned (shown
+        locked) rather than silently dropped, and its real routes remain protected."""
+        installed = []
+        for m in self.list_installed():
+            pub = m.to_public(can_read=can_read, is_agent=is_agent)
+            installed.append(pub)
+        nav_modules = []
+        for m in self.list_installed():
+            state = m.resolve_state(can_read=can_read, is_agent=is_agent)
+            nav_modules.append({
+                "id": m.id,
+                "label": m.name,
+                "icon": m.icon,
+                "category": m.category.value,
+                "state": state.value,
+                "enabled": m.is_enabled,
+                "implemented": m.status != ModuleStatus.PLACEHOLDER,
+                "actionable": state == ModuleState.AVAILABLE,
+                "items": [n.to_public() for n in m.nav_items],
+            })
+        cards = []
+        for m in self.list_installed():
+            state = m.resolve_state(can_read=can_read, is_agent=is_agent)
+            cards.append({
+                "module_id": m.id,
+                "title": m.name,
+                "icon": m.icon,
+                "category": m.category.value,
+                "description": m.description,
+                "version": m.version,
+                "state": state.value,
+                "health": m.health().value,
+                "enabled": m.is_enabled,
+                "implemented": m.status != ModuleStatus.PLACEHOLDER,
+                "actionable": state == ModuleState.AVAILABLE,
+                "capabilities": list(m.capabilities),
+                # only an actionable (available) module exposes a live primary route
+                "primary_route": (m.routes[0] if (m.routes and state == ModuleState.AVAILABLE) else ""),
+                "widgets": [w.to_public() for w in m.dashboard_widgets],
+            })
+        return {
+            "contract_version": self.CONTRACT_VERSION,
+            "installed": installed,
+            "enabled_count": len(self.list_enabled()),
+            "navigation": {"group": "applications", "label": "Applications", "modules": nav_modules},
+            "dashboard_cards": cards,
+            "search_providers": self.search_providers(),
+            "workspace_views": self.workspace_views(),
+            "health": self.health_report(),
+        }
+
     def to_public(self) -> dict:
         return {
+            "contract_version": self.CONTRACT_VERSION,
             "installed": [m.to_public() for m in self.list_installed()],
             "enabled_count": len(self.list_enabled()),
             "navigation": self.navigation(),

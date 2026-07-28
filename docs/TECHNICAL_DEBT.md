@@ -462,3 +462,19 @@ Product IELTSAlert work uses **PRODUCT/IELTSAlert** numbering — not platform d
 - Editing `gov/bypass_guard.py` (allowlisting the M32 provider runtime) drifted the
   4 gov connector certifications; they were re-assessed to CERTIFIED_WITH_LIMITATIONS
   (fresh). Future edits to that file require the same explicit re-assess.
+
+## M64 — Module shell residual debt (2026-07-28)
+
+- LOW: frontend static module metadata remains as a non-operational loading/route
+  skeleton and drift-test fixture. It cannot grant capability; remove only after a
+  backend-derived skeleton/migration path is proven.
+- LOW: module enablement is process-global, not tenant-specific. Do not imply tenant
+  enablement until an authoritative persistence model exists.
+- LOW: no module discovery cache, global search index, or dynamic installation.
+- LOW: focused keyboard/semantic/status accessibility passed; exhaustive assistive-
+  technology certification remains deferred.
+- MEDIUM / PRE-EXISTING: the global TopBar approvals request
+  (`/api/v1/connectors/approvals/pending`) emits a CORS plus failed-resource pair in
+  the checkout-local production browser. M64 module requests have zero unexpected
+  console errors and are unaffected; fix the connector/TopBar CORS contract in its
+  own bounded milestone.

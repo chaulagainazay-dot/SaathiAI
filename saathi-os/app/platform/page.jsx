@@ -30,6 +30,7 @@ import {
 import { coreSignal, coreMetrics, SIGNAL, SIGNAL_TOKENS } from "@/lib/spatial";
 import { SpatialMap } from "@/components/spatial/SpatialMap";
 import { GlassFrame, SystemStatusStrip, StatusPulse, SafetyBoundaryBadge } from "@/components/spatial/frame";
+import { setToken as setPlatformToken } from "@/lib/platform-client";
 
 const TOKEN_KEY = "saathi_platform_token";
 
@@ -112,10 +113,7 @@ export default function PlatformPage() {
 
   const persist = (t) => {
     setToken(t);
-    if (typeof window !== "undefined") {
-      if (t) localStorage.setItem(TOKEN_KEY, t);
-      else localStorage.removeItem(TOKEN_KEY);
-    }
+    setPlatformToken(t);
   };
 
   const refresh = useCallback(async (tok) => {

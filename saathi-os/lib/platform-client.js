@@ -11,6 +11,7 @@ import { useCallback, useEffect, useState } from "react";
 import { API_BASE } from "./api";
 
 export const TOKEN_KEY = "saathi_platform_token";
+export const PLATFORM_CONTEXT_EVENT = "saathi:platform-context";
 
 export function getToken() {
   if (typeof window === "undefined") return "";
@@ -26,12 +27,27 @@ export function setToken(t) {
   try {
     if (t) localStorage.setItem(TOKEN_KEY, t);
     else localStorage.removeItem(TOKEN_KEY);
+    window.dispatchEvent(
+      new CustomEvent(PLATFORM_CONTEXT_EVENT, {
+        detail: { token: t || "", orgId: "", workspaceId: "" },
+      })
+    );
   } catch {
     /* ignore */
   }
 }
 
-export async function plat(path, { method = "GET", body, token } = {}) {
+/** Notify shell consumers after a server-authorized org/workspace selection. */
+export function notifyPlatformContextChanged({ orgId = "", workspaceId = "" } = {}) {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(
+    new CustomEvent(PLATFORM_CONTEXT_EVENT, {
+      detail: { token: getToken(), orgId, workspaceId },
+    })
+  );
+}
+
+export async function plat(path, { method = "GET", body, token, signal } = {}) {
   const headers = { "Content-Type": "application/json" };
   if (token) headers["X-Platform-Token"] = token;
   const res = await fetch(`${API_BASE}/api/v1/platform${path}`, {
@@ -39,6 +55,7 @@ export async function plat(path, { method = "GET", body, token } = {}) {
     headers,
     body: body ? JSON.stringify(body) : undefined,
     credentials: "include",
+    signal,
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {

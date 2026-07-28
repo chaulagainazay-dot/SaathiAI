@@ -1,0 +1,21 @@
+M64 listener verification — 2026-07-28, Asia/Kathmandu
+
+lsof -nP -iTCP:8765 -sTCP:LISTEN
+Python: 127.0.0.1:8765 (one listener; cwd is the SaathiAI checkout)
+
+lsof -nP -iTCP:3000 -sTCP:LISTEN
+node: 127.0.0.1:3000 (one Next 15.5.20 listener; cwd is saathi-os)
+
+ps verification:
+- backend: python -m saathi.server
+- frontend: npm run start -H 127.0.0.1 → next-server
+- no stale duplicate Next process
+
+Negative gate:
+- no 0.0.0.0 listener on 8765 or 3000
+
+Build/runtime provenance:
+- fresh Next production build served from this checkout
+- frontend compiled with SAATHI_OS_DATA=http://127.0.0.1:8765
+- backend and frontend HTTP health checks returned 200
+- saathi/config.py default host is 127.0.0.1

@@ -10,6 +10,7 @@
  */
 import { NAV_GROUPS } from "../navigation.js";
 import { getRegistry } from "./registry.js";
+import { safeIcon } from "./icons.js";
 
 /** Administration group (platform-owned; centralized services). */
 export const ADMIN_GROUP = {
@@ -50,6 +51,64 @@ export function getShellNavigation(registry = getRegistry()) {
     administration: ADMIN_GROUP,
     groups: [...NAV_GROUPS, applicationsGroup, ADMIN_GROUP],
   };
+}
+
+/**
+ * M64 — Applications navigation group built from the AUTHORITATIVE backend
+ * discovery `navigation` payload (client.js). Icons pass through the safe
+ * allowlist; only backend-`actionable` modules get a live href. Placeholders /
+ * restricted modules are shown non-actionable with a truthful badge.
+ * @param {{modules: Array}} backendNav  discovery.navigation
+ */
+export function applicationsGroupFromBackend(backendNav) {
+  const modules = (backendNav && Array.isArray(backendNav.modules)) ? backendNav.modules : [];
+  return {
+    id: "applications",
+    label: "Applications",
+    source: "backend",
+    items: modules.map((m) => {
+      const firstRoute = (m.items && m.items[0] && m.items[0].href) || `/${m.id}`;
+      const actionable = m.actionable === true;
+      return {
+        id: m.id,
+        label: m.label,
+        href: actionable ? firstRoute : null, // non-actionable → not a live link
+        icon: safeIcon(m.icon),
+        state: m.state,
+        actionable,
+        badge:
+          m.state === "not_implemented" ? "soon"
+          : m.state === "permission_restricted" ? "locked"
+          : m.state === "disabled" ? "off"
+          : m.state === "degraded" ? "degraded"
+          : undefined,
+      };
+    }),
+  };
+}
+
+/** Full backend-driven shell navigation: platform groups + backend Applications + Admin. */
+export function getShellNavigationFromBackend(backendNav) {
+  const applicationsGroup = applicationsGroupFromBackend(backendNav);
+  return {
+    platform: NAV_GROUPS,
+    applications: applicationsGroup,
+    administration: ADMIN_GROUP,
+    groups: [...NAV_GROUPS, applicationsGroup, ADMIN_GROUP],
+  };
+}
+
+/** Actionable command-palette entries from backend Applications navigation. */
+export function applicationCommandsFromBackend(backendNav) {
+  return applicationsGroupFromBackend(backendNav).items
+    .filter((item) => item.actionable && item.href)
+    .map((item) => ({
+      id: `module-${item.id}`,
+      label: `Open ${item.label}`,
+      group: "Applications",
+      route: item.href,
+      kind: "navigate",
+    }));
 }
 
 /** Module-driven unified dashboard payload. */

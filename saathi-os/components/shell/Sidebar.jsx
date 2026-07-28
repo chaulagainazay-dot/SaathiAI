@@ -3,6 +3,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { NAV_GROUPS, GLOBAL_NAV, matchNavItem } from "@/lib/navigation";
 import { useShellChrome } from "./ShellChromeContext";
 import { IconButton } from "@/components/ui";
+import { applicationsGroupFromBackend } from "@/lib/modules/shell";
 
 function NavLink({ item, expanded, active, onNavigate }) {
   const accent = item.accent || "var(--accent)";
@@ -10,6 +11,8 @@ function NavLink({ item, expanded, active, onNavigate }) {
     <button
       type="button"
       onClick={() => onNavigate(item.href)}
+      disabled={!item.href}
+      aria-disabled={!item.href || undefined}
       aria-current={active ? "page" : undefined}
       aria-label={item.label}
       title={item.label}
@@ -24,6 +27,9 @@ function NavLink({ item, expanded, active, onNavigate }) {
       {expanded && (
         <span className="shell-nav-label">
           {item.label}
+          {item.badge && (
+            <span className="shell-nav-risk">{item.badge}</span>
+          )}
           {item.riskFlag && (
             <span className="shell-nav-risk" title="Risk-flagged surface">
               risk
@@ -36,11 +42,14 @@ function NavLink({ item, expanded, active, onNavigate }) {
   );
 }
 
-export default function Sidebar() {
+export default function Sidebar({ moduleDiscovery }) {
   const router = useRouter();
   const pathname = usePathname();
   const { sidebarExpanded, toggleSidebar } = useShellChrome();
   const active = matchNavItem(pathname);
+  const groups = moduleDiscovery?.isReady
+    ? [...NAV_GROUPS, applicationsGroupFromBackend(moduleDiscovery.navigation)]
+    : NAV_GROUPS;
 
   const go = (href) => {
     if (href) router.push(href);
@@ -74,7 +83,7 @@ export default function Sidebar() {
       </div>
 
       <nav className="shell-sidebar-nav" aria-label="Product areas">
-        {NAV_GROUPS.map((group) => (
+        {groups.map((group) => (
           <div key={group.id} className="shell-nav-group">
             {sidebarExpanded && (
               <div className="shell-nav-group-label" id={`nav-g-${group.id}`}>

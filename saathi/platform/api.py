@@ -2803,19 +2803,37 @@ def recon_run(body: ReconRunBody, authorization: str | None = Header(default=Non
         raise _err(e) from e
 
 
-# ── M63 module registry (read-only; single source of truth for platform modules) ──
+# ── M63/M64 module registry (read-only; authoritative source for browser discovery) ──
 def _module_registry():
     from saathi.platform.module_registry import get_registry
     return get_registry()
 
 
+def _module_caller(ctx):
+    """Build the caller-scoped predicate + agent flag for permission-filtered
+    module discovery. RBAC stays authoritative — this only shapes what the shell
+    RENDERS; backend routes still enforce their own permissions."""
+    from saathi.platform.models import role_has_permission
+    from saathi.platform.safety.models import is_agent_actor
+    def can_read(perm: str) -> bool:
+        try:
+            return role_has_permission(ctx.role, perm)
+        except Exception:
+            return False
+    return can_read, is_agent_actor(ctx)
+
+
 @router.get("/modules")
 def modules_list(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
-    """Installed platform modules + composed navigation/dashboard/search surfaces."""
+    """Authoritative, permission-filtered module discovery for the browser shell:
+    installed modules + composed navigation/dashboard/search surfaces, each carrying
+    a truthful caller-scoped state."""
     try:
+        from saathi.platform.models import PlatformPermission
         ctx = _ppctx(authorization, x_platform_token)
         ctx.require_permission(PlatformPermission.PLATFORM_READ)
-        return _module_registry().to_public()
+        can_read, is_agent = _module_caller(ctx)
+        return _module_registry().discovery(can_read=can_read, is_agent=is_agent)
     except PlatformContextError as e:
         raise _err(e) from e
 
@@ -2823,35 +2841,42 @@ def modules_list(authorization: str | None = Header(default=None), x_platform_to
 @router.get("/modules/{module_id}")
 def module_get(module_id: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
     try:
+        from saathi.platform.models import PlatformPermission
         ctx = _ppctx(authorization, x_platform_token)
         ctx.require_permission(PlatformPermission.PLATFORM_READ)
         m = _module_registry().get(module_id)
         if not m:
             raise PlatformContextError("NOT_FOUND", "module not found")
-        return {"module": m.to_public()}
+        can_read, is_agent = _module_caller(ctx)
+        return {"module": m.to_public(can_read=can_read, is_agent=is_agent)}
     except PlatformContextError as e:
         raise _err(e) from e
 
 
 @router.get("/dashboard")
 def platform_dashboard(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
-    """Module-driven dashboard: one card per installed application."""
+    """Module-driven dashboard: one card per installed application, caller-scoped state."""
     try:
+        from saathi.platform.models import PlatformPermission
         ctx = _ppctx(authorization, x_platform_token)
         ctx.require_permission(PlatformPermission.PLATFORM_READ)
-        reg = _module_registry()
-        return {"cards": reg.dashboard_cards(), "health": reg.health_report()}
+        can_read, is_agent = _module_caller(ctx)
+        disc = _module_registry().discovery(can_read=can_read, is_agent=is_agent)
+        return {"contract_version": disc["contract_version"], "cards": disc["dashboard_cards"],
+                "health": disc["health"]}
     except PlatformContextError as e:
         raise _err(e) from e
 
 
 @router.get("/navigation")
 def platform_navigation(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
-    """Data-driven Applications navigation group derived from module registrations."""
+    """Data-driven, permission-filtered Applications navigation group."""
     try:
+        from saathi.platform.models import PlatformPermission
         ctx = _ppctx(authorization, x_platform_token)
         ctx.require_permission(PlatformPermission.PLATFORM_READ)
-        return _module_registry().navigation()
+        can_read, is_agent = _module_caller(ctx)
+        return _module_registry().discovery(can_read=can_read, is_agent=is_agent)["navigation"]
     except PlatformContextError as e:
         raise _err(e) from e
 
@@ -2859,11 +2884,14 @@ def platform_navigation(authorization: str | None = Header(default=None), x_plat
 @router.get("/modules/{module_id}/health")
 def module_health(module_id: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
     try:
+        from saathi.platform.models import PlatformPermission
         ctx = _ppctx(authorization, x_platform_token)
         ctx.require_permission(PlatformPermission.PLATFORM_READ)
         m = _module_registry().get(module_id)
         if not m:
             raise PlatformContextError("NOT_FOUND", "module not found")
-        return {"module_id": module_id, "status": m.status.value, "health": m.health().value}
+        can_read, is_agent = _module_caller(ctx)
+        return {"module_id": module_id, "status": m.status.value, "health": m.health().value,
+                "state": m.resolve_state(can_read=can_read, is_agent=is_agent).value}
     except PlatformContextError as e:
         raise _err(e) from e

@@ -89,7 +89,11 @@ TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "")
 
 # --- Server ---
-HOST = os.getenv("SAATHI_HOST", "0.0.0.0")
+# Default to loopback (localhost-only). Deployments that intentionally bind all
+# interfaces set SAATHI_HOST explicitly (e.g. Dockerfile ENV SAATHI_HOST=0.0.0.0);
+# the local launcher sets 127.0.0.1. A bare run now fails safe to loopback instead
+# of silently exposing the server on the LAN. (M64 security hardening.)
+HOST = os.getenv("SAATHI_HOST", "127.0.0.1")
 PORT = int(os.getenv("PORT", os.getenv("SAATHI_PORT", "8765")))
 
 # --- Memory ---
