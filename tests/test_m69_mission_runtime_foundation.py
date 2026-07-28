@@ -294,8 +294,9 @@ def test_invalid_transition_and_safe_replan_reset(runtime_env):
     service.transition_task(
         ctx, mission["mission_id"], current_design["node_id"], "RUNNING"
     )
-    with pytest.raises(ValueError, match="immutable"):
+    with pytest.raises(PlatformContextError) as immutable:
         service.plan(ctx, mission["mission_id"], _plan())
+    assert immutable.value.code == "INVALID_STATE"
 
     bad_budget = _plan()
     bad_budget["budget"]["max_magic_loops"] = 1

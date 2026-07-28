@@ -156,21 +156,24 @@ class MissionRuntimeService:
             raise PlatformContextError("VALIDATION_FAILED", str(exc)) from exc
 
         now = self.store._now()
-        runtime = self.repo.replace_plan(
-            runtime={
-                "mission_id": mission_id,
-                "org_id": ctx.org_id,
-                "workspace_id": ctx.workspace_id,
-                "project_id": mission.project_id,
-                "owner_id": mission.owner_id,
-                "objective": objective,
-                "max_parallel_tasks": max_parallel,
-                "budget": budget.to_dict(),
-                "updated_at": now,
-            },
-            nodes=nodes,
-            dependencies=dependencies,
-        )
+        try:
+            runtime = self.repo.replace_plan(
+                runtime={
+                    "mission_id": mission_id,
+                    "org_id": ctx.org_id,
+                    "workspace_id": ctx.workspace_id,
+                    "project_id": mission.project_id,
+                    "owner_id": mission.owner_id,
+                    "objective": objective,
+                    "max_parallel_tasks": max_parallel,
+                    "budget": budget.to_dict(),
+                    "updated_at": now,
+                },
+                nodes=nodes,
+                dependencies=dependencies,
+            )
+        except ValueError as exc:
+            raise PlatformContextError("INVALID_STATE", str(exc)) from exc
         self._refresh_ready(mission_id)
         checkpoint = self.create_checkpoint(
             ctx, mission_id, created_by=AgentType.PLANNER.value
@@ -775,10 +778,16 @@ class MissionRuntimeService:
         safe_findings = [
             _text(item, name="review finding", maximum=1000) for item in findings
         ]
+        try:
+            reviewer = AgentType(reviewer_agent).value
+        except ValueError as exc:
+            raise PlatformContextError(
+                "VALIDATION_FAILED", "invalid reviewer agent"
+            ) from exc
         review = self.repo.add_review(
             mission_id=mission_id,
             task_id=task_id,
-            reviewer_agent=AgentType(reviewer_agent).value,
+            reviewer_agent=reviewer,
             verdict=verdict,
             findings=safe_findings,
             evidence_ids=list(evidence_ids or []),
@@ -1011,6 +1020,9 @@ class MissionRuntimeService:
                 TaskStatus.CANCELLED.value,
             }
         )
+        node_by_id = {node["node_id"]: node for node in nodes}
+        active_phase = node_by_id.get(runtime["active_phase_id"])
+        active_task = node_by_id.get(runtime["active_task_id"])
         if runtime["state"] in {
             MissionRuntimeState.FAILED.value,
             MissionRuntimeState.BLOCKED.value,
@@ -1036,7 +1048,9 @@ class MissionRuntimeService:
             "state": runtime["state"],
             "progress_percent": round((complete / total) * 100, 1) if total else 0.0,
             "active_phase": runtime["active_phase_id"] or None,
+            "active_phase_title": active_phase["title"] if active_phase else None,
             "active_task": runtime["active_task_id"] or None,
+            "active_task_title": active_task["title"] if active_task else None,
             "current_agent": runtime["active_agent"] or None,
             "task_counts": {
                 "total": total,

@@ -89,6 +89,7 @@ const EMPTY = {
   health: null,
   me: null,
   missions: [],
+  missionRuntimes: [],
   approvals: [],
   bindings: [],
   executions: [],
@@ -121,8 +122,9 @@ export function usePlatformData() {
     const onErr = (e) => setError((prev) => prev || String(e?.message || e));
     const get = (p) => getWithRetry(p, t, onErr);
     const m = await get("/me");
-    const [missions, approvals, health, bindings, executions, attention, metrics, diagnostics] = await Promise.all([
+    const [missions, missionRuntimes, approvals, health, bindings, executions, attention, metrics, diagnostics] = await Promise.all([
       get("/missions"),
+      get("/mission-runtimes/dashboard"),
       get("/approvals?status=pending"),
       get("/health"),
       get("/agent-bindings"),
@@ -135,6 +137,7 @@ export function usePlatformData() {
       health: health || null,
       me: m || null,
       missions: missions?.missions || [],
+      missionRuntimes: missionRuntimes?.mission_runtimes || [],
       approvals: approvals?.approvals || [],
       bindings: bindings?.bindings || [],
       executions: executions?.executions || [],
@@ -157,4 +160,40 @@ export function usePlatformData() {
   }, []);
 
   return { token, persist, loading, error, ready, ...data, refresh };
+}
+
+/** Load the authoritative hierarchy/evidence/checkpoint view for one mission. */
+export function useMissionRuntime(missionId, token) {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (!missionId || !token) {
+      setData(null);
+      setError(null);
+      setLoading(false);
+      return undefined;
+    }
+    const controller = new AbortController();
+    setData(null);
+    setError(null);
+    setLoading(true);
+    plat(`/missions/${encodeURIComponent(missionId)}/runtime`, {
+      token,
+      signal: controller.signal,
+    })
+      .then((payload) => setData(payload))
+      .catch((reason) => {
+        if (reason?.name !== "AbortError") {
+          setError(String(reason?.message || reason));
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
+    return () => controller.abort();
+  }, [missionId, token]);
+
+  return { data, loading, error };
 }

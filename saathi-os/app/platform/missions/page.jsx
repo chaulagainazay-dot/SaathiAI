@@ -1,8 +1,8 @@
 "use client";
 // M59 Workstream 1 — Standalone Mission Control (list).
-// Real /api/v1/platform/missions, with active-execution / pending-approval /
-// attention counts derived by matching mission_id on runtime records. No
-// per-mission API exists, so those counts are the honest composed truth.
+// Real mission records plus the backend-authoritative M71 runtime dashboard.
+// Legacy execution/approval counts remain visible; runtime health/progress is
+// never inferred in the browser.
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { SpatialWorkspaceShell } from "@/components/spatial/SpatialWorkspaceShell";
@@ -11,6 +11,7 @@ import { SpatialContextDrawer } from "@/components/spatial/SpatialContextDrawer"
 import { StatusPulse } from "@/components/spatial/frame";
 import { usePlatformData } from "@/lib/platform-client";
 import { coreSignal } from "@/lib/spatial";
+import { normalizeMissionRuntimeSummary } from "@/lib/mission-runtime";
 import { normalizeMission, filterMissions, sortMissions, missionStatusLabel } from "@/lib/workspace";
 
 const STATUS_FILTERS = ["all", "active", "blocked", "completed", "failed", "draft"];
@@ -23,10 +24,18 @@ export default function MissionsPage() {
   const [sort, setSort] = useState("activity");
   const [selected, setSelected] = useState(null);
 
-  const missions = useMemo(
-    () => d.missions.map((m) => normalizeMission(m, { executions: d.executions, approvals: d.approvals, attention: d.attention })),
-    [d.missions, d.executions, d.approvals, d.attention]
-  );
+  const missions = useMemo(() => {
+    const runtimeByMission = new Map(
+      d.missionRuntimes
+        .map(normalizeMissionRuntimeSummary)
+        .filter(Boolean)
+        .map((runtime) => [runtime.missionId, runtime])
+    );
+    return d.missions.map((raw) => ({
+      ...normalizeMission(raw, { executions: d.executions, approvals: d.approvals, attention: d.attention }),
+      runtime: runtimeByMission.get(raw.mission_id) || null,
+    }));
+  }, [d.missions, d.missionRuntimes, d.executions, d.approvals, d.attention]);
   const visible = useMemo(() => sortMissions(filterMissions(missions, { status, q }), sort), [missions, status, q, sort]);
   const cSignal = d.token ? coreSignal({ health: d.health, metrics: d.metrics, diagnostics: d.diagnostics }) : "unknown";
 
@@ -78,15 +87,33 @@ export default function MissionsPage() {
           <ul className="ws-grid" aria-label="Missions" style={{ listStyle: "none", margin: 0, padding: 0 }}>
             {visible.map((m) => (
               <li key={m.id}>
-                <div className={`glass-frame ${m.signal === "danger" ? "glass-frame--danger" : m.signal === "attention" ? "glass-frame--authority" : m.signal === "active" ? "glass-frame--active" : ""}`}>
+                <div className={`glass-frame ${(m.runtime?.signal || m.signal) === "danger" ? "glass-frame--danger" : (m.runtime?.signal || m.signal) === "attention" ? "glass-frame--authority" : (m.runtime?.signal || m.signal) === "active" ? "glass-frame--active" : ""}`}>
                   <button className="ws-card" onClick={() => router.push(`/platform/missions/${m.id}`)} aria-label={`Open mission ${m.name}`}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                      <StatusPulse signal={m.signal} size={9} />
+                      <StatusPulse signal={m.runtime?.signal || m.signal} size={9} />
                       <span style={{ fontWeight: 500, color: "var(--text-primary)" }}>{m.name}</span>
-                      <span className="mono" style={{ marginLeft: "auto", fontSize: "var(--fs-2xs)", color: "var(--text-muted)" }}>{m.statusLabel}</span>
+                      <span className="mono" style={{ marginLeft: "auto", fontSize: "var(--fs-2xs)", color: "var(--text-muted)" }}>{m.runtime?.state || m.statusLabel}</span>
                     </div>
                     <div className="mono" style={{ fontSize: "var(--fs-2xs)", color: "var(--text-muted)" }}>{m.key} · {m.id}</div>
+                    {m.runtime && (
+                      <div style={{ marginTop: 10 }}>
+                        <div
+                          role="progressbar"
+                          aria-label={`${m.name} mission progress`}
+                          aria-valuemin={0}
+                          aria-valuemax={100}
+                          aria-valuenow={m.runtime.progress}
+                          style={{ height: 5, borderRadius: 999, background: "var(--glass-frame-border)", overflow: "hidden" }}
+                        >
+                          <div style={{ width: `${m.runtime.progress}%`, height: "100%", background: "var(--signal-active)" }} />
+                        </div>
+                        <div className="mono" style={{ marginTop: 5, fontSize: "var(--fs-2xs)", color: "var(--text-muted)" }}>
+                          {m.runtime.health} · {m.runtime.progress}% · {m.runtime.currentAgent || "No active agent"}
+                        </div>
+                      </div>
+                    )}
                     <div style={{ display: "flex", gap: 14, marginTop: 10 }}>
+                      {m.runtime && <Metric label="Progress" value={`${m.runtime.progress}%`} tone={m.runtime.signal === "active" ? "active" : "idle"} />}
                       <Metric label="Active" value={m.activeExecutions} tone={m.activeExecutions > 0 ? "active" : "idle"} />
                       <Metric label="Approvals" value={m.pendingApprovals} tone={m.pendingApprovals > 0 ? "attention" : "idle"} />
                       <Metric label="Attention" value={m.attentionCount} tone={m.attentionCount > 0 ? "attention" : "idle"} />
@@ -111,6 +138,10 @@ export default function MissionsPage() {
             <div style={{ display: "grid", gap: 10 }}>
               <Field label="Name" value={selected.name} />
               <Field label="Status" value={selected.statusLabel} />
+              <Field label="Runtime" value={selected.runtime?.state || "Not planned"} />
+              <Field label="Health" value={selected.runtime?.health || "Not available"} />
+              <Field label="Progress" value={selected.runtime ? `${selected.runtime.progress}%` : "Not available"} />
+              <Field label="Current agent" value={selected.runtime?.currentAgent || "None"} />
               <Field label="Key" value={selected.key} mono />
               <Field label="Project" value={selected.projectId} mono />
               <Field label="Owner" value={selected.owner} mono />

@@ -133,3 +133,17 @@
 - Consequences: exponential retry backoff is finite; unexpected errors fail closed;
   recovery needs fresh authenticated context and preserves the original idempotency
   and platform execution record.
+
+## ADR-MISSION-005 — backend state drives a read-only Mission Dashboard
+
+- Decision: expose the runtime through the existing authenticated platform router and
+  render its tenant-scoped read model in the existing Mission Control shell. The UI
+  is observational and contains no direct execution or automatic approval authority.
+- Alternatives: infer mission state from browser data; add a separate mission-control
+  service/design system; let the client call the gateway.
+- Evidence: M69 already owns persisted mission state, M70 owns bounded orchestration,
+  and the existing shell/platform client already enforce one identity, workspace,
+  navigation, and status vocabulary.
+- Consequences: every displayed health/progress/evidence/checkpoint value comes from
+  the backend, missing state fails closed, and execution continues only through the
+  authenticated orchestrator → PlatformAgentRuntime → ExecutionGateway path.

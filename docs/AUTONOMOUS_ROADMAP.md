@@ -1,5 +1,20 @@
 # SaathiOS Autonomous Roadmap
 
+## M71 — Authenticated Mission Runtime API and Dashboard (2026-07-28)
+
+| Field | Value |
+| --- | --- |
+| Milestone | M71_COMPLETE |
+| API | Authenticated plan/run/control/recovery/approval/evidence/review/checkpoint plus dashboard/detail reads |
+| Scope | Existing platform context, RBAC, tenant/project visibility, audit, and approval authority |
+| Dashboard | Backend-driven Mission Control cards/detail with health, progress, phase/task/agent, DAG, evidence, blockers, ETA, budgets, and checkpoints |
+| Browser authority | Read-only; no direct run, gateway, or automatic approval control |
+| Certification | 3 new + 135 related backend tests; 183 frontend; lint/build pass; production browser PASS (21 hard, 2 responsive, 2 accessibility); secret scan clean |
+| Next | M72 final certification, full regression/security review, and authoritative capability documentation |
+
+Evidence: `docs/autonomous/M71_MISSION_RUNTIME_DASHBOARD.md` and
+`docs/platform/m71_evidence/`. No push, merge, deployment, or production change.
+
 ## M70 — Mission Decisions, Agents, Dispatch, and Recovery (2026-07-28)
 
 | Field | Value |

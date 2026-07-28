@@ -12,6 +12,10 @@ from pydantic import BaseModel, Field
 # Request used by login / invite accept for client key
 
 from saathi.platform.context import PlatformContextError
+from saathi.platform.mission_runtime import (
+    MissionRuntimeOrchestrator,
+    MissionRuntimeService,
+)
 from saathi.platform.service import default_platform
 
 router = APIRouter(prefix="/api/v1/platform", tags=["platform-m50"])
@@ -32,6 +36,17 @@ def _svc():
     return default_platform()
 
 
+def _mission_runtime_auth(
+    mission_id: str,
+    authorization: str | None,
+    x_platform_token: str | None,
+):
+    token = _token(authorization, x_platform_token)
+    # MissionRuntimeService performs the existence and tenant/project check so a
+    # missing or cross-scope identifier has one non-enumerating NOT_FOUND path.
+    return token, _svc().require_context(token)
+
+
 def _err(exc: PlatformContextError) -> HTTPException:
     status = 403
     if exc.code in ("ANONYMOUS_PROHIBITED", "SESSION_INVALID", "AUTH_FAILED"):
@@ -46,6 +61,14 @@ def _err(exc: PlatformContextError) -> HTTPException:
         status = 404
     if exc.code == "STALE_STATE":
         status = 409  # optimistic-concurrency conflict
+    if exc.code in (
+        "APPROVAL_REQUIRED",
+        "INVALID_STATE",
+        "RESOURCE_BUDGET_EXHAUSTED",
+        "REVIEW_REQUIRED",
+        "VERIFICATION_REQUIRED",
+    ):
+        status = 409
     if exc.code in ("VALIDATION_FAILED", "UNSAFE_CONFIG"):
         status = 400
     return HTTPException(status_code=status, detail={"code": exc.code, "message": exc.message})
@@ -140,6 +163,50 @@ class MissionBody(BaseModel):
     project_id: str
     key: str
     name: str
+
+
+class MissionRuntimePlanBody(BaseModel):
+    definition: dict[str, Any] = Field(default_factory=dict)
+
+
+class MissionRuntimeRunBody(BaseModel):
+    max_cycles: int = Field(default=1, ge=1, le=50)
+    timeout_sec: float | None = Field(default=None, gt=0, le=3600)
+
+
+class MissionRuntimeControlBody(BaseModel):
+    reason: str = ""
+
+
+class MissionRuntimeApprovalBody(BaseModel):
+    approval_id: str
+
+
+class MissionRuntimeEvidenceBody(BaseModel):
+    task_id: str = ""
+    evidence_type: str
+    status: str
+    summary: str
+    reference: str = ""
+    check_name: str = ""
+    collected_by: str = ""
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+class MissionRuntimeReviewBody(BaseModel):
+    task_id: str
+    verdict: str
+    findings: list[str] = Field(default_factory=list)
+    evidence_ids: list[str] = Field(default_factory=list)
+    reviewer_agent: str = "ReviewerAgent"
+
+
+class MissionRuntimeCheckpointBody(BaseModel):
+    latest_commit: str | None = None
+    rollback_sha: str | None = None
+    test_status: str | None = None
+    browser_status: str | None = None
+    known_blockers: list[str] | None = None
 
 
 class MemberBody(BaseModel):
@@ -451,6 +518,253 @@ def create_mission(
         )
         return {
             "mission": _svc().create_mission(ctx, body.project_id, body.key, body.name)
+        }
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+# ── M71 Autonomous Mission Runtime ─────────────────────────────────────────
+@router.get("/mission-runtimes/dashboard")
+def mission_runtime_dashboard(
+    limit: int = 100,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx = _svc().require_context(_token(authorization, x_platform_token))
+        return {
+            "mission_runtimes": MissionRuntimeService(_svc()).list_dashboard(
+                ctx, limit=max(1, min(int(limit), 500))
+            )
+        }
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/missions/{mission_id}/runtime")
+def mission_runtime_detail(
+    mission_id: str,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        _, ctx = _mission_runtime_auth(
+            mission_id, authorization, x_platform_token
+        )
+        return MissionRuntimeService(_svc()).get(ctx, mission_id)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.put("/missions/{mission_id}/runtime/plan")
+def mission_runtime_plan(
+    mission_id: str,
+    body: MissionRuntimePlanBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        _, ctx = _mission_runtime_auth(
+            mission_id, authorization, x_platform_token
+        )
+        return MissionRuntimeService(_svc()).plan(
+            ctx, mission_id, body.definition
+        )
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/missions/{mission_id}/runtime/run")
+def mission_runtime_run(
+    mission_id: str,
+    body: MissionRuntimeRunBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        token, ctx = _mission_runtime_auth(
+            mission_id, authorization, x_platform_token
+        )
+        return MissionRuntimeOrchestrator(_svc()).run_until_stop(
+            ctx,
+            mission_id,
+            token=token,
+            max_cycles=body.max_cycles,
+            timeout_sec=body.timeout_sec,
+        )
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/missions/{mission_id}/runtime/pause")
+def mission_runtime_pause(
+    mission_id: str,
+    body: MissionRuntimeControlBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        _, ctx = _mission_runtime_auth(
+            mission_id, authorization, x_platform_token
+        )
+        return {
+            "runtime": MissionRuntimeOrchestrator(_svc()).pause(
+                ctx, mission_id, reason=body.reason or "operator pause"
+            )
+        }
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/missions/{mission_id}/runtime/resume")
+def mission_runtime_resume(
+    mission_id: str,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        _, ctx = _mission_runtime_auth(
+            mission_id, authorization, x_platform_token
+        )
+        return {
+            "runtime": MissionRuntimeOrchestrator(_svc()).resume(ctx, mission_id)
+        }
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/missions/{mission_id}/runtime/cancel")
+def mission_runtime_cancel(
+    mission_id: str,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        token, ctx = _mission_runtime_auth(
+            mission_id, authorization, x_platform_token
+        )
+        return MissionRuntimeOrchestrator(_svc()).cancel(
+            ctx, mission_id, token=token
+        )
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/missions/{mission_id}/runtime/recover")
+def mission_runtime_recover(
+    mission_id: str,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        token, ctx = _mission_runtime_auth(
+            mission_id, authorization, x_platform_token
+        )
+        return MissionRuntimeOrchestrator(_svc()).recover(
+            ctx, mission_id, token=token
+        )
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/missions/{mission_id}/runtime/tasks/{task_id}/approval")
+def mission_runtime_attach_approval(
+    mission_id: str,
+    task_id: str,
+    body: MissionRuntimeApprovalBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        _, ctx = _mission_runtime_auth(
+            mission_id, authorization, x_platform_token
+        )
+        return {
+            "task": MissionRuntimeOrchestrator(_svc()).attach_approval(
+                ctx, mission_id, task_id, body.approval_id
+            )
+        }
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/missions/{mission_id}/runtime/evidence")
+def mission_runtime_evidence(
+    mission_id: str,
+    body: MissionRuntimeEvidenceBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        _, ctx = _mission_runtime_auth(
+            mission_id, authorization, x_platform_token
+        )
+        return {
+            "evidence": MissionRuntimeService(_svc()).record_evidence(
+                ctx,
+                mission_id,
+                task_id=body.task_id,
+                evidence_type=body.evidence_type,
+                status=body.status,
+                summary=body.summary,
+                reference=body.reference,
+                check_name=body.check_name,
+                collected_by=body.collected_by,
+                metadata=body.metadata,
+            )
+        }
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/missions/{mission_id}/runtime/reviews")
+def mission_runtime_review(
+    mission_id: str,
+    body: MissionRuntimeReviewBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        _, ctx = _mission_runtime_auth(
+            mission_id, authorization, x_platform_token
+        )
+        return {
+            "review": MissionRuntimeService(_svc()).record_review(
+                ctx,
+                mission_id,
+                task_id=body.task_id,
+                verdict=body.verdict,
+                findings=body.findings,
+                evidence_ids=body.evidence_ids,
+                reviewer_agent=body.reviewer_agent,
+            )
+        }
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/missions/{mission_id}/runtime/checkpoints")
+def mission_runtime_checkpoint(
+    mission_id: str,
+    body: MissionRuntimeCheckpointBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        _, ctx = _mission_runtime_auth(
+            mission_id, authorization, x_platform_token
+        )
+        return {
+            "checkpoint": MissionRuntimeService(_svc()).create_checkpoint(
+                ctx,
+                mission_id,
+                created_by=ctx.requested_by(),
+                latest_commit=body.latest_commit,
+                rollback_sha=body.rollback_sha,
+                test_status=body.test_status,
+                browser_status=body.browser_status,
+                known_blockers=body.known_blockers,
+            )
         }
     except PlatformContextError as e:
         raise _err(e) from e

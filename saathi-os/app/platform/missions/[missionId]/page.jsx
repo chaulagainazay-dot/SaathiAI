@@ -1,18 +1,16 @@
 "use client";
-// M59 Workstream 1 — Mission detail + execution graph.
-// No per-mission API; the record is located in the authorized mission list and
-// enriched from runtime executions, approvals, attention, and agent bindings
-// that carry this mission_id. Absent data renders as explicit sentinels.
+// M71 Mission Dashboard: platform mission context plus the authenticated,
+// backend-authoritative runtime hierarchy, evidence, and checkpoints.
 import { useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { SpatialWorkspaceShell } from "@/components/spatial/SpatialWorkspaceShell";
 import { RequireSession } from "@/components/spatial/RequireSession";
 import { StatusPulse } from "@/components/spatial/frame";
-import { Field, Metric, SectionPanel, frameClass } from "@/components/spatial/primitives";
-import { usePlatformData } from "@/lib/platform-client";
+import { Field, Metric, SectionPanel } from "@/components/spatial/primitives";
+import { useMissionRuntime, usePlatformData } from "@/lib/platform-client";
+import { formatMissionEta, normalizeMissionRuntime } from "@/lib/mission-runtime";
 import { coreSignal } from "@/lib/spatial";
-import { normalizeMission, normalizeAgent, normalizeApproval, normalizeAttention, UNAVAILABLE } from "@/lib/workspace";
-import { runtimeTone } from "@/lib/platform-ops";
+import { normalizeMission, normalizeAgent, normalizeApproval, normalizeAttention } from "@/lib/workspace";
 
 /* The canonical mission → runtime lineage, rendered as a real dependency chain. */
 const LINEAGE = ["Objective", "Stages", "Agents", "Approvals", "PlatformAgentRuntime", "ExecutionGateway", "Registered Tools", "Evidence"];
@@ -21,6 +19,11 @@ export default function MissionDetailPage() {
   const d = usePlatformData();
   const router = useRouter();
   const { missionId } = useParams();
+  const runtimeRequest = useMissionRuntime(missionId, d.token);
+  const missionRuntime = useMemo(
+    () => normalizeMissionRuntime(runtimeRequest.data),
+    [runtimeRequest.data]
+  );
 
   const raw = useMemo(() => d.missions.find((m) => m.mission_id === missionId), [d.missions, missionId]);
   const mission = useMemo(
@@ -42,10 +45,10 @@ export default function MissionDetailPage() {
       title={mission ? mission.name : "Mission"}
       subtitle={mission ? `${mission.key} · ${mission.statusLabel}` : undefined}
       breadcrumb={[{ label: "Home", href: "/platform" }, { label: "Missions", href: "/platform/missions" }, { label: mission?.name || missionId }]}
-      signal={mission?.signal || cSignal}
+      signal={missionRuntime.summary?.signal || mission?.signal || cSignal}
       health={d.health}
-      loading={d.loading}
-      error={d.error}
+      loading={d.loading || runtimeRequest.loading}
+      error={d.error || runtimeRequest.error}
       paletteData={{ missions: d.missions.map((m) => normalizeMission(m, {})) }}
     >
       <RequireSession token={d.token} ready={d.ready}>
@@ -76,6 +79,106 @@ export default function MissionDetailPage() {
               </p>
             </SectionPanel>
 
+            {!missionRuntime.planned && !runtimeRequest.loading && (
+              <SectionPanel title="Autonomous runtime" signal="idle" meta="Not planned">
+                <p style={{ color: "var(--text-muted)", margin: 0 }}>
+                  This platform mission has no Autonomous Mission Runtime plan yet.
+                  No progress, ETA, agent, or verification state is inferred.
+                </p>
+              </SectionPanel>
+            )}
+
+            {missionRuntime.planned && (
+              <>
+                <SectionPanel
+                  title="Autonomous runtime"
+                  signal={missionRuntime.summary.signal}
+                  meta={`${missionRuntime.summary.health} · ${missionRuntime.summary.state}`}
+                >
+                  <div
+                    role="progressbar"
+                    aria-label="Mission completion"
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-valuenow={missionRuntime.summary.progress}
+                    style={{ height: 8, borderRadius: 999, background: "var(--glass-frame-border)", overflow: "hidden" }}
+                  >
+                    <div style={{ width: `${missionRuntime.summary.progress}%`, height: "100%", background: "var(--signal-active)" }} />
+                  </div>
+                  <div style={{ display: "flex", gap: 22, flexWrap: "wrap", marginTop: 14 }}>
+                    <Metric label="Complete" value={`${missionRuntime.summary.progress}%`} tone={missionRuntime.summary.signal === "active" ? "active" : "idle"} />
+                    <Metric label="Tasks" value={`${missionRuntime.summary.taskCounts.completed || 0}/${missionRuntime.summary.taskCounts.total || 0}`} tone="idle" />
+                    <Metric label="ETA" value={formatMissionEta(missionRuntime.summary.etaSeconds)} tone="idle" />
+                    <Metric label="Cycles" value={missionRuntime.summary.resourceUsage.cycles || 0} tone="idle" />
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 8, marginTop: 16 }}>
+                    <Field label="Objective" value={missionRuntime.objective || "Not recorded"} />
+                    <Field label="Active phase" value={missionRuntime.summary.activePhaseTitle || missionRuntime.summary.activePhase || "None"} />
+                    <Field label="Active task" value={missionRuntime.summary.activeTaskTitle || missionRuntime.summary.activeTask || "None"} />
+                    <Field label="Current agent" value={missionRuntime.summary.currentAgent || "None"} />
+                    <Field label="Tests" value={missionRuntime.summary.testStatus} />
+                    <Field label="Browser" value={missionRuntime.summary.browserStatus} />
+                    <Field label="Latest commit" value={missionRuntime.summary.latestCommit || "Not recorded"} mono />
+                    <Field label="Rollback SHA" value={missionRuntime.summary.rollbackSha || "Not recorded"} mono />
+                  </div>
+                  {(missionRuntime.summary.warnings.length > 0 || missionRuntime.summary.blockers.length > 0) && (
+                    <div role="alert" style={{ marginTop: 14, padding: 12, border: "1px solid var(--signal-attention)", borderRadius: 10 }}>
+                      {missionRuntime.summary.warnings.map((warning) => <div key={`w-${warning}`} style={{ color: "var(--signal-attention)" }}>Warning: {warning}</div>)}
+                      {missionRuntime.summary.blockers.map((blocker) => <div key={`b-${blocker}`} style={{ color: "var(--signal-danger)" }}>Blocker: {blocker}</div>)}
+                    </div>
+                  )}
+                </SectionPanel>
+
+                <SectionPanel title="Dependency-aware task graph" meta={`${missionRuntime.tasks.length} tasks`}>
+                  <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gap: 8 }}>
+                    {missionRuntime.tasks.map((task) => {
+                      const dependencies = missionRuntime.dependencies.filter((edge) => edge.task_id === task.node_id);
+                      return (
+                        <li key={task.node_id} style={{ border: "1px solid var(--glass-frame-border)", borderRadius: 10, padding: 10 }}>
+                          <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                            <StatusPulse signal={task.status === "COMPLETED" ? "active" : task.status === "FAILED" || task.status === "BLOCKED" ? "danger" : task.status === "WAITING" ? "attention" : "idle"} size={8} />
+                            <strong style={{ color: "var(--text-primary)" }}>{task.title}</strong>
+                            <span className="ws-chip" style={{ cursor: "default" }}>{task.status}</span>
+                            <span className="mono" style={{ marginLeft: "auto", fontSize: "var(--fs-2xs)", color: "var(--text-muted)" }}>
+                              {task.agent_type || "No agent"} · priority {task.priority} · attempt {task.attempt}/{Number(task.max_retries || 0) + 1}
+                            </span>
+                          </div>
+                          <div className="mono" style={{ marginTop: 6, fontSize: "var(--fs-2xs)", color: "var(--text-muted)", wordBreak: "break-all" }}>
+                            Depends on: {dependencies.length ? dependencies.map((edge) => edge.depends_on_task_id).join(", ") : "None"}
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </SectionPanel>
+
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "var(--space-4)" }}>
+                  <SectionPanel title="Mission evidence" meta={`${missionRuntime.evidence.length}`}>
+                    {missionRuntime.evidence.length === 0 && <p style={{ color: "var(--text-muted)" }}>No mission evidence recorded.</p>}
+                    <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gap: 8 }}>
+                      {missionRuntime.evidence.slice(0, 12).map((item) => (
+                        <li key={item.evidence_id} style={{ color: "var(--text-secondary)", fontSize: "var(--fs-sm)" }}>
+                          <span className="mono">{item.status} · {item.evidence_type}</span>
+                          <div>{item.summary}</div>
+                          {item.reference && <div className="mono" style={{ color: "var(--text-muted)", fontSize: "var(--fs-2xs)", wordBreak: "break-all" }}>{item.reference}</div>}
+                        </li>
+                      ))}
+                    </ul>
+                  </SectionPanel>
+                  <SectionPanel title="Recovery checkpoints" meta={`${missionRuntime.checkpoints.length}`}>
+                    {missionRuntime.checkpoints.length === 0 && <p style={{ color: "var(--text-muted)" }}>No checkpoint recorded.</p>}
+                    {missionRuntime.checkpoints.slice(0, 5).map((checkpoint) => (
+                      <div key={checkpoint.checkpoint_id} style={{ marginBottom: 10 }}>
+                        <Field label="Checkpoint" value={checkpoint.checkpoint_id} mono />
+                        <Field label="Completed / pending" value={`${checkpoint.completed_tasks?.length || 0} / ${checkpoint.pending_tasks?.length || 0}`} />
+                        <Field label="Snapshot" value={checkpoint.snapshot_hash} mono />
+                      </div>
+                    ))}
+                  </SectionPanel>
+                </div>
+              </>
+            )}
+
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "var(--space-4)" }}>
               <SectionPanel title="Mission" signal={mission.signal}>
                 <div style={{ display: "grid", gap: 8 }}>
@@ -88,7 +191,7 @@ export default function MissionDetailPage() {
                   <Field label="Created" value={mission.createdAt} mono />
                 </div>
               </SectionPanel>
-              <SectionPanel title="Runtime state" signal={mission.attentionCount > 0 ? "attention" : "active"}>
+              <SectionPanel title="Platform execution state" signal={missionRuntime.summary?.signal || (mission.attentionCount > 0 ? "attention" : "active")}>
                 <div style={{ display: "flex", gap: 18, flexWrap: "wrap" }}>
                   <Metric label="Active" value={mission.activeExecutions} tone={mission.activeExecutions > 0 ? "active" : "idle"} />
                   <Metric label="Total runs" value={mission.executionCount} tone="idle" />
@@ -96,7 +199,7 @@ export default function MissionDetailPage() {
                   <Metric label="Attention" value={mission.attentionCount} tone={mission.attentionCount > 0 ? "attention" : "idle"} />
                 </div>
                 <p style={{ color: "var(--text-muted)", fontSize: "var(--fs-2xs)", marginTop: 12 }}>
-                  Last operator action and final result are not exposed by a per-mission API; execution timelines carry the authoritative lifecycle.
+                  Mission-runtime lifecycle comes from the dedicated authenticated API; individual tool execution timelines remain authoritative for dispatch outcomes.
                 </p>
               </SectionPanel>
             </div>
