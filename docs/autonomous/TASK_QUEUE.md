@@ -2,8 +2,7 @@
 
 ## Active
 
-- M68 — end-to-end browser, security, regression, documentation, and final
-  certification.
+- None.
 
 ## Pending
 
@@ -18,6 +17,8 @@
   regression).
 - M67 — learner/reviewer frontend, backend-authoritative registry transition,
   shell integration, responsive browser journey, and centralized logout cleanup.
+- M68 — explicit provider-unavailable fallback, route-specific skills, dependency
+  remediation, browser/security certification, and full 5,239-pass regression.
 
 ## Blocked
 

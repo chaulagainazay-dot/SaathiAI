@@ -1,11 +1,11 @@
 {
   "goal_id": "IELTS_MODULE_INTEGRATION",
   "baseline_sha": "e0632460a12d3401146c12a1e79eac950a29682e",
-  "current_sha": "c3f998dfdd1c3d3e0051202c61c025eb0ae5d5e0",
+  "current_sha": "3cd750e26756cc1cc4cff24d32f25772b3d6830a",
   "current_milestone": "M68",
-  "status": "running",
-  "completed_milestones": ["M65", "M66", "M67"],
-  "next_action": "Run full regression, security, localhost, documentation, and final browser certification.",
+  "status": "complete_with_limitations",
+  "completed_milestones": ["M65", "M66", "M67", "M68"],
+  "next_action": "Consider centralized artifact hardening and the pre-existing TopBar approvals CORS debt.",
   "last_verified_at": "2026-07-28",
-  "stop_reason": null
+  "stop_reason": "IELTS_MODULE_COMPLETE_WITH_LIMITATIONS"
 }

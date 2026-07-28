@@ -12,7 +12,7 @@
   `docs/design-spec/`.
 - Baseline: branch `milestone/m61-backend-workflow-persistence`, commit
   `e0632460a12d3401146c12a1e79eac950a29682e`.
-- Current phase: M67 learner/reviewer workspace complete; M68 final certification.
+- Current phase: complete — `IELTS_MODULE_COMPLETE_WITH_LIMITATIONS`.
 - Completion criteria: authenticated and RBAC-governed backend plus coherent frontend
   journey; tenant/workspace isolation; deterministic practice feedback; safe provider
   posture; bounded alerts and manual review; centralized platform integrations;

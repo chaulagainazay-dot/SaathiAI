@@ -14,8 +14,8 @@ Status: certified.
   implementation commit and state-closure commit are recorded in the final handoff.
 - Milestones: M65 domain/persistence; M66 authenticated workflows/API; M67 shell/UI;
   M68 certification.
-- Committed milestone SHAs: `97b2ad6`, `11fc60f`, `c3f998d`, `e1c199e`; final M68
-  commit pending.
+- Committed milestone SHAs: `97b2ad6`, `11fc60f`, `c3f998d`, `e1c199e`, and
+  certified M68 implementation `3cd750e`.
 - Working tree: scoped certification changes only, plus the protected pre-existing
   untracked `docs/design-spec/` and an unstaged M28 test-generated evidence-log
   append. Neither is part of IELTS commits.
