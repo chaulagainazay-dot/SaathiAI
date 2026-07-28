@@ -2,13 +2,12 @@
 
 ## Active
 
-- M67 — learner/reviewer frontend, registry transition, navigation, command palette,
-  dashboard, and UI state coverage.
+- M68 — end-to-end browser, security, regression, documentation, and final
+  certification.
 
 ## Pending
 
-- M68 — end-to-end browser, security, regression, documentation, and final
-  certification.
+- None.
 
 ## Completed
 
@@ -17,6 +16,8 @@
   foundation (9 focused tests; 113-test focused regression).
 - M66 — authenticated learner workflows and platform APIs (21-test workflow/API
   regression).
+- M67 — learner/reviewer frontend, backend-authoritative registry transition,
+  shell integration, responsive browser journey, and centralized logout cleanup.
 
 ## Blocked
 
