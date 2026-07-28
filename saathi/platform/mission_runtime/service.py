@@ -28,6 +28,10 @@ MAX_MILESTONES = 100
 MAX_TASKS = 300
 MAX_NODES = 500
 ID_RE = re.compile(r"^[A-Za-z0-9_.:-]{1,80}$")
+SHA_RE = re.compile(r"^[0-9a-fA-F]{7,64}$")
+CERTIFICATION_VERDICTS = frozenset(
+    {"MISSION_COMPLETE", "MISSION_RUNTIME_COMPLETE"}
+)
 
 
 def _text(value: Any, *, name: str, maximum: int, required: bool = True) -> str:
@@ -775,22 +779,63 @@ class MissionRuntimeService:
             raise PlatformContextError(
                 "VALIDATION_FAILED", "findings must be a bounded list"
             )
-        safe_findings = [
-            _text(item, name="review finding", maximum=1000) for item in findings
-        ]
+        try:
+            safe_findings = [
+                _text(item, name="review finding", maximum=1000)
+                for item in findings
+            ]
+        except ValueError as exc:
+            raise PlatformContextError("VALIDATION_FAILED", str(exc)) from exc
         try:
             reviewer = AgentType(reviewer_agent).value
         except ValueError as exc:
             raise PlatformContextError(
                 "VALIDATION_FAILED", "invalid reviewer agent"
             ) from exc
+        raw_evidence_ids = [] if evidence_ids is None else evidence_ids
+        if not isinstance(raw_evidence_ids, list) or len(raw_evidence_ids) > 100:
+            raise PlatformContextError(
+                "VALIDATION_FAILED", "review evidence_ids must be a bounded list"
+            )
+        try:
+            safe_evidence_ids = [
+                _text(item, name="evidence_id", maximum=120)
+                for item in raw_evidence_ids
+            ]
+        except ValueError as exc:
+            raise PlatformContextError("VALIDATION_FAILED", str(exc)) from exc
+        if len(safe_evidence_ids) != len(set(safe_evidence_ids)):
+            raise PlatformContextError(
+                "VALIDATION_FAILED", "review evidence_ids must be unique"
+            )
+        available = {
+            item["evidence_id"]: item for item in self.repo.evidence(mission_id)
+        }
+        if any(item not in available for item in safe_evidence_ids):
+            raise PlatformContextError(
+                "VALIDATION_FAILED", "review evidence is not part of this mission"
+            )
+        if verdict == "APPROVED":
+            if not safe_evidence_ids:
+                raise PlatformContextError(
+                    "VERIFICATION_REQUIRED",
+                    "approved review must reference mission evidence",
+                )
+            if any(
+                available[item]["status"] != EvidenceStatus.PASS.value
+                for item in safe_evidence_ids
+            ):
+                raise PlatformContextError(
+                    "VERIFICATION_REQUIRED",
+                    "approved review may reference only passing evidence",
+                )
         review = self.repo.add_review(
             mission_id=mission_id,
             task_id=task_id,
             reviewer_agent=reviewer,
             verdict=verdict,
             findings=safe_findings,
-            evidence_ids=list(evidence_ids or []),
+            evidence_ids=safe_evidence_ids,
         )
         self._audit(
             "mission_runtime.review_recorded",
@@ -799,6 +844,233 @@ class MissionRuntimeService:
             detail={"task_id": task_id, "verdict": verdict},
         )
         return review
+
+    # ---------------------------------------------------------- certification
+    def certify(
+        self,
+        ctx: PlatformExecutionContext,
+        mission_id: str,
+        *,
+        verdict: str,
+        summary: str,
+        evidence_ids: list[str],
+        limitations: list[str] | None = None,
+    ) -> dict[str, Any]:
+        runtime = self._runtime(
+            ctx, mission_id, permission=PlatformPermission.MISSION_RUN
+        )
+        if runtime["state"] != MissionRuntimeState.COMPLETED.value:
+            raise PlatformContextError(
+                "INVALID_STATE", "only a completed mission can be certified"
+            )
+        if self.repo.certifications(mission_id):
+            raise PlatformContextError(
+                "INVALID_STATE", "mission already has a final certification"
+            )
+
+        normalized_verdict = str(verdict or "").strip().upper()
+        if normalized_verdict not in CERTIFICATION_VERDICTS:
+            raise PlatformContextError(
+                "VALIDATION_FAILED", "invalid certification verdict"
+            )
+        try:
+            safe_summary = _text(
+                summary, name="certification summary", maximum=4000
+            )
+        except ValueError as exc:
+            raise PlatformContextError("VALIDATION_FAILED", str(exc)) from exc
+        if not isinstance(evidence_ids, list) or not 1 <= len(evidence_ids) <= 100:
+            raise PlatformContextError(
+                "VALIDATION_FAILED",
+                "certification evidence_ids must contain 1 to 100 items",
+            )
+        try:
+            safe_evidence_ids = [
+                _text(item, name="evidence_id", maximum=120)
+                for item in evidence_ids
+            ]
+        except ValueError as exc:
+            raise PlatformContextError("VALIDATION_FAILED", str(exc)) from exc
+        if len(safe_evidence_ids) != len(set(safe_evidence_ids)):
+            raise PlatformContextError(
+                "VALIDATION_FAILED", "certification evidence_ids must be unique"
+            )
+        raw_limitations = limitations or []
+        if not isinstance(raw_limitations, list) or len(raw_limitations) > 50:
+            raise PlatformContextError(
+                "VALIDATION_FAILED", "limitations must be a bounded list"
+            )
+        try:
+            safe_limitations = [
+                _text(item, name="limitation", maximum=1000)
+                for item in raw_limitations
+            ]
+        except ValueError as exc:
+            raise PlatformContextError("VALIDATION_FAILED", str(exc)) from exc
+
+        nodes = self.repo.list_nodes(mission_id)
+        tasks = [
+            node
+            for node in nodes
+            if node["node_type"] in {NodeType.TASK.value, NodeType.SUBTASK.value}
+        ]
+        if not tasks or any(
+            task["status"]
+            not in {TaskStatus.COMPLETED.value, TaskStatus.SKIPPED.value}
+            for task in tasks
+        ):
+            raise PlatformContextError(
+                "VERIFICATION_REQUIRED",
+                "all mission tasks must be completed or explicitly skipped",
+            )
+        if runtime["known_blockers"]:
+            raise PlatformContextError(
+                "VERIFICATION_REQUIRED",
+                "known blockers must be resolved before certification",
+            )
+        if str(runtime["test_status"]).upper() != EvidenceStatus.PASS.value:
+            raise PlatformContextError(
+                "VERIFICATION_REQUIRED",
+                "passing test status is required for certification",
+            )
+        if str(runtime["browser_status"]).upper() != EvidenceStatus.PASS.value:
+            raise PlatformContextError(
+                "VERIFICATION_REQUIRED",
+                "passing browser status is required for certification",
+            )
+        if not SHA_RE.fullmatch(str(runtime["latest_commit"] or "")):
+            raise PlatformContextError(
+                "VERIFICATION_REQUIRED",
+                "a valid latest commit SHA is required for certification",
+            )
+        if not SHA_RE.fullmatch(str(runtime["rollback_sha"] or "")):
+            raise PlatformContextError(
+                "VERIFICATION_REQUIRED",
+                "a valid rollback SHA is required for certification",
+            )
+
+        all_evidence = {
+            item["evidence_id"]: item for item in self.repo.evidence(mission_id)
+        }
+        if any(item not in all_evidence for item in safe_evidence_ids):
+            raise PlatformContextError(
+                "VALIDATION_FAILED",
+                "certification evidence is not part of this mission",
+            )
+        if any(
+            all_evidence[item]["status"] != EvidenceStatus.PASS.value
+            for item in safe_evidence_ids
+        ):
+            raise PlatformContextError(
+                "VERIFICATION_REQUIRED",
+                "certification may reference only passing evidence",
+            )
+        approved_reviews = [
+            item
+            for item in self.repo.reviews(mission_id)
+            if item["verdict"] == "APPROVED" and item["evidence_ids"]
+        ]
+        selected_ids = set(safe_evidence_ids)
+        accepted_reviews = [
+            item
+            for item in approved_reviews
+            if set(item["evidence_ids"]).issubset(selected_ids)
+        ]
+        if not accepted_reviews:
+            raise PlatformContextError(
+                "REVIEW_REQUIRED",
+                "an approved review of selected evidence is required",
+            )
+
+        checkpoints = self.repo.checkpoints(mission_id)
+        if not checkpoints:
+            raise PlatformContextError(
+                "VERIFICATION_REQUIRED",
+                "a durable completion checkpoint is required",
+            )
+        checkpoint = checkpoints[0]
+        completed_ids = sorted(task["node_id"] for task in tasks)
+        checkpoint_matches = (
+            sorted(checkpoint["completed_tasks"]) == completed_ids
+            and not checkpoint["pending_tasks"]
+            and checkpoint["resource_usage"] == runtime["usage"]
+            and checkpoint["latest_commit"] == runtime["latest_commit"]
+            and checkpoint["rollback_sha"] == runtime["rollback_sha"]
+            and str(checkpoint["test_status"]).upper()
+            == EvidenceStatus.PASS.value
+            and str(checkpoint["browser_status"]).upper()
+            == EvidenceStatus.PASS.value
+            and not checkpoint["known_blockers"]
+            and bool(checkpoint["snapshot_hash"])
+        )
+        if not checkpoint_matches:
+            raise PlatformContextError(
+                "VERIFICATION_REQUIRED",
+                "latest checkpoint does not match completed mission state",
+            )
+
+        certified_by = _text(
+            f"{AgentType.CERTIFICATION.value}:{ctx.requested_by()}",
+            name="certified_by",
+            maximum=120,
+        )
+        certificate_snapshot = {
+            "mission_id": mission_id,
+            "runtime_version": runtime["version"],
+            "from_state": runtime["state"],
+            "target_state": MissionRuntimeState.CERTIFIED.value,
+            "tasks": [
+                {
+                    "node_id": task["node_id"],
+                    "status": task["status"],
+                    "execution_id": task["execution_id"],
+                    "outcome_summary": task["outcome_summary"],
+                }
+                for task in sorted(tasks, key=lambda item: item["node_id"])
+            ],
+            "budget": runtime["budget"],
+            "usage": runtime["usage"],
+            "latest_commit": runtime["latest_commit"],
+            "rollback_sha": runtime["rollback_sha"],
+            "test_status": runtime["test_status"],
+            "browser_status": runtime["browser_status"],
+            "checkpoint_id": checkpoint["checkpoint_id"],
+            "checkpoint_hash": checkpoint["snapshot_hash"],
+            "evidence_ids": sorted(safe_evidence_ids),
+            "approved_review_ids": sorted(
+                item["review_id"] for item in accepted_reviews
+            ),
+            "verdict": normalized_verdict,
+            "summary": safe_summary,
+            "limitations": safe_limitations,
+        }
+        try:
+            certification, certified_runtime = self.repo.certify_runtime(
+                mission_id=mission_id,
+                verdict=normalized_verdict,
+                summary=safe_summary,
+                evidence_ids=sorted(safe_evidence_ids),
+                limitations=safe_limitations,
+                certified_by=certified_by,
+                snapshot_hash=snapshot_hash(certificate_snapshot),
+            )
+        except (KeyError, ValueError) as exc:
+            raise PlatformContextError("INVALID_STATE", str(exc)) from exc
+        self._audit(
+            "mission_runtime.certified",
+            ctx,
+            mission_id,
+            detail={
+                "certification_id": certification["certification_id"],
+                "verdict": normalized_verdict,
+                "snapshot_hash": certification["snapshot_hash"],
+            },
+        )
+        return {
+            "certification": certification,
+            "runtime": certified_runtime,
+            "dashboard": self._dashboard(certified_runtime, nodes),
+        }
 
     # -------------------------------------------------------------- checkpoint
     def create_checkpoint(

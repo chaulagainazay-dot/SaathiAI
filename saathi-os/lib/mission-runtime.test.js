@@ -53,6 +53,7 @@ test("mission runtime clamps presentation values and preserves evidence arrays",
     },
     tasks: [{ node_id: "task_1", status: "COMPLETED" }],
     evidence: [{ evidence_id: "ev_1", status: "PASS" }],
+    certifications: [{ certification_id: "mcert_1", verdict: "MISSION_COMPLETE" }],
   });
   assert.equal(runtime.planned, true);
   assert.equal(runtime.summary.progress, 100);
@@ -60,4 +61,5 @@ test("mission runtime clamps presentation values and preserves evidence arrays",
   assert.equal(runtime.summary.signal, "active");
   assert.equal(runtime.tasks.length, 1);
   assert.equal(runtime.evidence.length, 1);
+  assert.equal(runtime.certifications[0].verdict, "MISSION_COMPLETE");
 });

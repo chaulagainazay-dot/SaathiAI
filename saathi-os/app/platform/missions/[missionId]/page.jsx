@@ -24,6 +24,7 @@ export default function MissionDetailPage() {
     () => normalizeMissionRuntime(runtimeRequest.data),
     [runtimeRequest.data]
   );
+  const finalCertification = missionRuntime.certifications[0] || null;
 
   const raw = useMemo(() => d.missions.find((m) => m.mission_id === missionId), [d.missions, missionId]);
   const mission = useMemo(
@@ -174,6 +175,32 @@ export default function MissionDetailPage() {
                         <Field label="Snapshot" value={checkpoint.snapshot_hash} mono />
                       </div>
                     ))}
+                  </SectionPanel>
+                  <SectionPanel
+                    title="Final certification"
+                    signal={finalCertification ? "active" : "idle"}
+                    meta={finalCertification?.verdict || "Not certified"}
+                  >
+                    {!finalCertification && (
+                      <p style={{ color: "var(--text-muted)", margin: 0 }}>
+                        No final mission certificate has been issued.
+                      </p>
+                    )}
+                    {finalCertification && (
+                      <div style={{ display: "grid", gap: 8 }}>
+                        <Field label="Verdict" value={finalCertification.verdict} />
+                        <Field label="Certified by" value={finalCertification.certified_by} mono />
+                        <Field label="Summary" value={finalCertification.summary} />
+                        <Field label="Evidence" value={`${finalCertification.evidence_ids?.length || 0} passing records`} />
+                        <Field label="Snapshot" value={finalCertification.snapshot_hash} mono />
+                        <Field
+                          label="Limitations"
+                          value={finalCertification.limitations?.length
+                            ? finalCertification.limitations.join("; ")
+                            : "None recorded"}
+                        />
+                      </div>
+                    )}
                   </SectionPanel>
                 </div>
               </>

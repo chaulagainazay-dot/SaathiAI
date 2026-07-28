@@ -533,7 +533,7 @@ class MissionRuntimeRepository:
     def checkpoints(self, mission_id: str, *, limit: int = 100) -> list[dict[str, Any]]:
         rows = self.store._conn.execute(
             "SELECT * FROM mission_runtime_checkpoints WHERE mission_id=? "
-            "ORDER BY created_at DESC LIMIT ?",
+            "ORDER BY created_at DESC, rowid DESC LIMIT ?",
             (mission_id, max(1, min(int(limit), 500))),
         ).fetchall()
         out = []
@@ -602,7 +602,7 @@ class MissionRuntimeRepository:
             out.append(item)
         return out
 
-    def add_certification(
+    def certify_runtime(
         self,
         *,
         mission_id: str,
@@ -612,28 +612,57 @@ class MissionRuntimeRepository:
         limitations: list[str],
         certified_by: str,
         snapshot_hash: str,
-    ) -> dict[str, Any]:
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
+        """Append one certificate and make COMPLETED → CERTIFIED atomic."""
+
         certification_id = new_id("mcert_")
         created_at = self.store._now()
-        self.store._conn.execute(
-            "INSERT INTO mission_runtime_certifications "
-            "(certification_id,mission_id,verdict,summary,evidence_ids_json,"
-            "limitations_json,certified_by,snapshot_hash,created_at) "
-            "VALUES (?,?,?,?,?,?,?,?,?)",
-            (
-                certification_id,
-                mission_id,
-                verdict,
-                summary,
-                canonical_json(evidence_ids),
-                canonical_json(limitations),
-                certified_by,
-                snapshot_hash,
-                created_at,
-            ),
-        )
-        self.store._conn.commit()
-        return {
+        with self.store._runtime_lock, self.store._conn:
+            current = self.store._conn.execute(
+                "SELECT state FROM mission_runtimes WHERE mission_id=?",
+                (mission_id,),
+            ).fetchone()
+            if not current:
+                raise KeyError(mission_id)
+            validate_mission_transition(
+                current["state"], MissionRuntimeState.CERTIFIED.value
+            )
+            existing = self.store._conn.execute(
+                "SELECT certification_id FROM mission_runtime_certifications "
+                "WHERE mission_id=? LIMIT 1",
+                (mission_id,),
+            ).fetchone()
+            if existing:
+                raise ValueError("mission is already certified")
+            self.store._conn.execute(
+                "INSERT INTO mission_runtime_certifications "
+                "(certification_id,mission_id,verdict,summary,evidence_ids_json,"
+                "limitations_json,certified_by,snapshot_hash,created_at) "
+                "VALUES (?,?,?,?,?,?,?,?,?)",
+                (
+                    certification_id,
+                    mission_id,
+                    verdict,
+                    summary,
+                    canonical_json(evidence_ids),
+                    canonical_json(limitations),
+                    certified_by,
+                    snapshot_hash,
+                    created_at,
+                ),
+            )
+            self.store._conn.execute(
+                "UPDATE mission_runtimes SET state=?,finished_at=?,updated_at=?,"
+                "stop_reason=?,version=version+1 WHERE mission_id=?",
+                (
+                    MissionRuntimeState.CERTIFIED.value,
+                    created_at,
+                    created_at,
+                    verdict,
+                    mission_id,
+                ),
+            )
+        certification = {
             "certification_id": certification_id,
             "mission_id": mission_id,
             "verdict": verdict,
@@ -644,11 +673,12 @@ class MissionRuntimeRepository:
             "snapshot_hash": snapshot_hash,
             "created_at": created_at,
         }
+        return certification, self.get_runtime(mission_id)
 
     def certifications(self, mission_id: str) -> list[dict[str, Any]]:
         rows = self.store._conn.execute(
             "SELECT * FROM mission_runtime_certifications WHERE mission_id=? "
-            "ORDER BY created_at DESC",
+            "ORDER BY created_at DESC, rowid DESC",
             (mission_id,),
         ).fetchall()
         out = []

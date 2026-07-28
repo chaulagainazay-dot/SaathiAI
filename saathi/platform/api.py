@@ -209,6 +209,13 @@ class MissionRuntimeCheckpointBody(BaseModel):
     known_blockers: list[str] | None = None
 
 
+class MissionRuntimeCertificationBody(BaseModel):
+    verdict: str
+    summary: str
+    evidence_ids: list[str] = Field(min_length=1, max_length=100)
+    limitations: list[str] = Field(default_factory=list, max_length=50)
+
+
 class MemberBody(BaseModel):
     user_id: str
     role: str = "viewer"
@@ -766,6 +773,29 @@ def mission_runtime_checkpoint(
                 known_blockers=body.known_blockers,
             )
         }
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/missions/{mission_id}/runtime/certifications")
+def mission_runtime_certification(
+    mission_id: str,
+    body: MissionRuntimeCertificationBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        _, ctx = _mission_runtime_auth(
+            mission_id, authorization, x_platform_token
+        )
+        return MissionRuntimeService(_svc()).certify(
+            ctx,
+            mission_id,
+            verdict=body.verdict,
+            summary=body.summary,
+            evidence_ids=body.evidence_ids,
+            limitations=body.limitations,
+        )
     except PlatformContextError as e:
         raise _err(e) from e
 
