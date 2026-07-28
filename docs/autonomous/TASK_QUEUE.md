@@ -2,13 +2,12 @@
 
 ## Active
 
-- M71 — authenticated mission-runtime API and backend-driven Mission Dashboard in the
-  existing unified shell.
+- M72 — fail-closed final certification, end-to-end security/full regression review,
+  architecture and capability documentation, and terminal verdict.
 
 ## Pending
 
-- M72 — end-to-end certification, security/full regression review, architecture and
-  capability documentation, and terminal verdict.
+- None.
 
 ## Completed
 
@@ -29,6 +28,12 @@
 - M70 certification: 8 new tests; 132 related backend tests; 180 frontend tests;
   retained M64 shell browser certificate (21 hard, 12 state, 6 responsive, 3
   accessibility gates); changed production-code secret scan clean.
+- M71 — authenticated runtime planning/control/recovery/evidence/review/checkpoint
+  APIs and backend-driven Mission Control summaries/details in the unified shell.
+- M71 certification: 3 new tests; 135 related backend tests; 183 frontend tests;
+  lint and optimized build pass; isolated authenticated production browser PASS
+  (21 hard, 2 responsive, 2 accessibility; zero page/console/hydration errors);
+  changed production-code secret scan clean.
 
 ## Blocked
 

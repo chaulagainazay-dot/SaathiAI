@@ -2,7 +2,7 @@
 
 Date: 2026-07-28
 Baseline: `072fea7` (M70 certification state)
-Implementation commit: pending local commit
+Implementation commit: `fb338d46341390db685155b7c3ff60a12af33bae`
 Verdict: `M71_COMPLETE`
 
 ## Result
