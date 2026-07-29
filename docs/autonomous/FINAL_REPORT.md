@@ -15,8 +15,11 @@ Status: complete with limitations.
 
 ## Ending
 
-- Implementation and certification commits follow on this branch.
-- LOOP_STATE updated for M103–M111.
+- Implementation: `6a068ecda8ebb3d5c111fd4edd7e12aa29b6491e`
+- LOOP_STATE pin follows.
+- Full backend suite: 5369 passed, 1 skipped.
+- Frontend suite: 193 passed. ESLint pass. Next build pass.
+- Browser: `FLEET_BROWSER_CERT_PASSED`
 
 ## Architecture
 
