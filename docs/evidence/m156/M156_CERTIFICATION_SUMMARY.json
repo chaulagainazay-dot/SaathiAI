@@ -2,7 +2,17 @@
   "schema": "m156.saathios_core_cert.v1",
   "verdict": "SAATHIOS_CORE_COMPLETE_WITH_LIMITATIONS",
   "date": "2026-07-29",
-  "milestones": ["M148", "M149", "M150", "M151", "M152", "M153", "M154", "M155", "M156"],
+  "milestones": [
+    "M148",
+    "M149",
+    "M150",
+    "M151",
+    "M152",
+    "M153",
+    "M154",
+    "M155",
+    "M156"
+  ],
   "browser": "SAATHIOS_CORE_BROWSER_CERT_PASSED",
   "backend_focused": "8 passed",
   "backend_full": "5438 passed, 1 skipped, 0 failed",
@@ -12,5 +22,7 @@
   "production_authorized": false,
   "trading_guardian": "UNCHANGED / UNENGAGED",
   "starting_sha": "e0ba73aec4653d04fbd7662ee52ed6d8ae309964",
-  "architecture": "composition_layer_only"
+  "architecture": "composition_layer_only",
+  "ending_sha": "0ab95a1683b58050dee0cfca2b3c150831740bbb",
+  "implementation_sha": "0ab95a1683b58050dee0cfca2b3c150831740bbb"
 }
