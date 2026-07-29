@@ -1,5 +1,19 @@
 # SaathiOS Autonomous Roadmap
 
+## M184–M191 — Historical Market Data & Strategy Qualification (2026-07-29)
+
+| Field | Value |
+| --- | --- |
+| Verdict | `TRADING_GUARDIAN_HISTORICAL_RESEARCH_CERTIFIED_WITH_LIMITATIONS` |
+| Historical adapters | Local CSV/Parquet, Binance public (file-first), NEPSE local, Yahoo local |
+| Quality / CA | Strict gates; raw preserved; quarantine non-promotable |
+| Research | Multi-period + regime matrix + WF + stress + Monte Carlo |
+| Qualification | 26-gate PAPER_ELIGIBLE; fixture never promotes |
+| Browser | M191 historical browser cert (automated; owner sign-off not claimed) |
+| Live / production | Not authorized |
+
+Evidence: `docs/trading/M184_M191_HISTORICAL_RESEARCH.md`, `docs/trading/m184_m191_evidence/`.
+
 ## M176–M183 — Trading Guardian Paper Validation (2026-07-29)
 
 | Field | Value |
