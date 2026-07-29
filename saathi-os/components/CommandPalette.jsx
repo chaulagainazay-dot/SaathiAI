@@ -66,6 +66,49 @@ function buildCommands(pathname, moduleNavigation) {
       group: "Actions",
       route: "/settings",
       kind: "navigate",
+    },
+    // M148+ SaathiOS Core unification destinations
+    {
+      id: "core-home",
+      label: "Operator Home (unified dashboard)",
+      group: "Core",
+      route: "/platform/home",
+      kind: "navigate",
+    },
+    {
+      id: "core-search",
+      label: "Universal Search",
+      group: "Core",
+      route: "/platform/search",
+      kind: "navigate",
+    },
+    {
+      id: "core-hcg",
+      label: "Launch HCG Operations",
+      group: "Applications",
+      route: "/apps/hcg",
+      kind: "navigate",
+    },
+    {
+      id: "core-ielts",
+      label: "Launch IELTSAlert",
+      group: "Applications",
+      route: "/apps/ielts",
+      kind: "navigate",
+    },
+    {
+      id: "core-apps",
+      label: "Application Launcher",
+      group: "Applications",
+      route: "/apps",
+      kind: "navigate",
+    },
+    {
+      id: "core-notifications",
+      label: "Notification Center",
+      group: "Core",
+      route: "/platform/notifications",
+      kind: "navigate",
     }
   );
 

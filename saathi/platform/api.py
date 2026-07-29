@@ -5945,6 +5945,267 @@ def ielts_reminder(
         raise _ielts_failure(exc) from exc
 
 
+# ══════════════════════════════════════════════════════════════════════════
+# M148–M156 SaathiOS Core unification (compose certified runtimes only)
+# ══════════════════════════════════════════════════════════════════════════
+class CoreYetiBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    question: str = Field(min_length=1, max_length=800)
+
+
+class CorePrefsBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    preferences: dict[str, Any] = Field(default_factory=dict)
+
+
+class CorePinBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    item_type: str = Field(min_length=1, max_length=40)
+    item_id: str = Field(min_length=1, max_length=120)
+    label: str = Field(default="", max_length=200)
+
+
+class CoreAutomationBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    name: str = Field(min_length=1, max_length=120)
+    schedule: str = Field(default="daily_morning", max_length=40)
+    action: str = Field(default="summarize", max_length=80)
+    app_scope: str = Field(default="platform", max_length=40)
+    requires_approval: bool = True
+
+
+class CoreWorkflowGraphBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    name: str = Field(min_length=1, max_length=120)
+    nodes: list[dict[str, Any]] = Field(default_factory=list)
+    edges: list[dict[str, Any]] = Field(default_factory=list)
+    graph_id: str = Field(default="", max_length=80)
+
+
+def _core_svc():
+    from saathi.platform.core_os import default_core_service
+
+    return default_core_service(_svc())
+
+
+def _core_ctx(authorization: str | None, x_platform_token: str | None):
+    return _svc().require_context(_token(authorization, x_platform_token))
+
+
+@router.get("/core/home")
+def core_home(
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return {"home": _core_svc().operator_home(_core_ctx(authorization, x_platform_token))}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/core/health")
+def core_health(
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return {"health": _core_svc().health(_core_ctx(authorization, x_platform_token))}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/core/search")
+def core_search(
+    q: str = "",
+    limit: int = 40,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return _core_svc().universal_search(
+            _core_ctx(authorization, x_platform_token), q, limit=limit,
+        )
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/core/yeti")
+def core_yeti(
+    body: CoreYetiBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return _core_svc().yeti_ask(_core_ctx(authorization, x_platform_token), body.question)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/core/memory")
+def core_memory(
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return _core_svc().get_memory(_core_ctx(authorization, x_platform_token))
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/core/memory/preferences")
+def core_prefs(
+    body: CorePrefsBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return _core_svc().update_preferences(
+            _core_ctx(authorization, x_platform_token), body.preferences,
+        )
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/core/memory/pin")
+def core_pin(
+    body: CorePinBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return _core_svc().pin_item(
+            _core_ctx(authorization, x_platform_token),
+            item_type=body.item_type, item_id=body.item_id, label=body.label,
+        )
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/core/notifications")
+def core_notifications(
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return _core_svc().notification_center(_core_ctx(authorization, x_platform_token))
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/core/activity")
+def core_activity(
+    limit: int = 50,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return _core_svc().activity_feed(
+            _core_ctx(authorization, x_platform_token), limit=limit,
+        )
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/core/timeline")
+def core_timeline(
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return _core_svc().timeline(_core_ctx(authorization, x_platform_token))
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/core/context")
+def core_context(
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return _core_svc().cross_app_context(_core_ctx(authorization, x_platform_token))
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/core/commands")
+def core_commands(
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return _core_svc().command_catalog(_core_ctx(authorization, x_platform_token))
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/core/automations")
+def core_automations_list(
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return _core_svc().list_automations(_core_ctx(authorization, x_platform_token))
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/core/automations")
+def core_automations_create(
+    body: CoreAutomationBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return _core_svc().create_automation(
+            _core_ctx(authorization, x_platform_token),
+            name=body.name, schedule=body.schedule, action=body.action,
+            app_scope=body.app_scope, requires_approval=body.requires_approval,
+        )
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/core/automations/{automation_id}/dry-run")
+def core_automation_dry(
+    automation_id: str,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return _core_svc().run_automation_dry(
+            _core_ctx(authorization, x_platform_token), automation_id,
+        )
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/core/workflows")
+def core_workflows_list(
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return _core_svc().list_workflow_graphs(_core_ctx(authorization, x_platform_token))
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/core/workflows")
+def core_workflows_save(
+    body: CoreWorkflowGraphBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return _core_svc().save_workflow_graph(
+            _core_ctx(authorization, x_platform_token),
+            name=body.name, nodes=body.nodes, edges=body.edges, graph_id=body.graph_id,
+        )
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
 # ── M74 authenticated provider-neutral voice output ─────────────────────────
 def _voicesvc():
     from saathi.platform.voice import default_speech_service

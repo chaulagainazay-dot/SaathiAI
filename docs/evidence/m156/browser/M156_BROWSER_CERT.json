@@ -1,0 +1,91 @@
+{
+  "schema": "m156.core_browser_cert.v1",
+  "capturedAt": "2026-07-29T05:42:29.154Z",
+  "hardGates": {
+    "home_unified": {
+      "ok": true,
+      "detail": "home"
+    },
+    "apps_enabled": {
+      "ok": true,
+      "detail": "2"
+    },
+    "search": {
+      "ok": true,
+      "detail": "search"
+    },
+    "yeti_readonly": {
+      "ok": true,
+      "detail": "yeti"
+    },
+    "automation_dry": {
+      "ok": true,
+      "detail": "auto"
+    },
+    "workflow_gateway": {
+      "ok": true,
+      "detail": "wf"
+    },
+    "commands": {
+      "ok": true,
+      "detail": "13"
+    },
+    "notifications": {
+      "ok": true,
+      "detail": "ntf"
+    },
+    "memory_restart": {
+      "ok": true,
+      "detail": "mem"
+    },
+    "no_production": {
+      "ok": true,
+      "detail": "prod"
+    },
+    "ui_home": {
+      "ok": true,
+      "detail": "home"
+    },
+    "ui_search": {
+      "ok": true,
+      "detail": "search"
+    },
+    "ui_yeti": {
+      "ok": true,
+      "detail": "yeti"
+    },
+    "hcg_launch": {
+      "ok": true,
+      "detail": "hcg"
+    },
+    "ielts_launch": {
+      "ok": true,
+      "detail": "ielts"
+    },
+    "launcher": {
+      "ok": true,
+      "detail": "apps"
+    },
+    "logout": {
+      "ok": true,
+      "detail": "logout"
+    }
+  },
+  "result": "SAATHIOS_CORE_BROWSER_CERT_PASSED",
+  "production_authorized": false,
+  "trading_guardian_changed": false,
+  "api": {
+    "token": "V_ymbT9r-mYeYcy6Dy6y6ey6-KRBT930g4_wTZGCDHc",
+    "home_unified": true,
+    "apps_enabled": 2,
+    "search_ok": true,
+    "yeti_readonly": true,
+    "automation_dry": true,
+    "workflow_gateway": true,
+    "commands": 13,
+    "notifications_unified": true,
+    "memory_restart": true,
+    "no_production": true
+  },
+  "browser_certified": true
+}

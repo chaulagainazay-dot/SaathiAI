@@ -1,26 +1,30 @@
 {
-  "goal_id": "SAATHIOS_IELTS_NATIVE_COACHING_APPLICATION",
-  "historical_baseline_sha": "c6265f67c84d14d1e124066f1121098ceca869bb",
-  "baseline_sha": "c6265f67c84d14d1e124066f1121098ceca869bb",
-  "session_start_sha": "c6265f67c84d14d1e124066f1121098ceca869bb",
-  "current_sha": "b488551d990c3e7bf8d2a0737b890af769d7263a",
-  "current_milestone": "M147",
+  "goal_id": "SAATHIOS_CORE_COMPLETION",
+  "historical_baseline_sha": "e0ba73aec4653d04fbd7662ee52ed6d8ae309964",
+  "baseline_sha": "e0ba73aec4653d04fbd7662ee52ed6d8ae309964",
+  "session_start_sha": "e0ba73aec4653d04fbd7662ee52ed6d8ae309964",
+  "current_sha": "PENDING_COMMIT",
+  "current_milestone": "M156",
   "status": "complete_with_limitations",
   "completed_milestones": [
-    "M139",
-    "M140",
-    "M141",
-    "M142",
-    "M143",
-    "M144",
-    "M145",
-    "M146",
-    "M147"
+    "M148",
+    "M149",
+    "M150",
+    "M151",
+    "M152",
+    "M153",
+    "M154",
+    "M155",
+    "M156"
   ],
   "prior_completed_goals": [
     {
+      "goal_id": "SAATHIOS_IELTS_NATIVE_COACHING_APPLICATION",
+      "terminal_sha": "e0ba73aec4653d04fbd7662ee52ed6d8ae309964",
+      "status": "complete_with_limitations"
+    },
+    {
       "goal_id": "SAATHIOS_HCG_NATIVE_OPERATIONS_APPLICATION",
-      "terminal_sha": "c6265f67c84d14d1e124066f1121098ceca869bb",
       "status": "complete_with_limitations"
     },
     {
@@ -28,15 +32,14 @@
       "status": "complete_with_limitations"
     }
   ],
-  "next_action": "Optional richer mock-test timing UI and local STT adapter \u2014 production/Gemini/Firebase not authorized.",
+  "next_action": "Extend via Applications, Skills, Plugins, AI Providers, and Business Products — not core OS architecture.",
   "last_verified_at": "2026-07-29",
-  "stop_reason": "IELTS_NATIVE_APP_COMPLETE_WITH_LIMITATIONS: diagnostic, plan, 4 skills, readiness, Yeti read-only, AppRuntime host, browser cert; local deterministic scoring only.",
+  "stop_reason": "SAATHIOS_CORE_COMPLETE_WITH_LIMITATIONS: unified home, search, yeti, memory, automations, workflow graphs, notification center, cross-app context; composition-only; browser cert.",
   "evidence": {
-    "backend_full": "5430 passed, 1 skipped, 0 failed",
-    "frontend_full": "200 passed",
-    "browser": "IELTS_NATIVE_APP_BROWSER_CERT_PASSED",
+    "backend_full": "5438 passed, 1 skipped, 0 failed",
+    "frontend_full": "204 passed",
+    "browser": "SAATHIOS_CORE_BROWSER_CERT_PASSED",
     "eslint": "passed",
     "next_build": "passed"
-  },
-  "m139_m147_implementation_sha": "0fee16dbf80072331588d2ec2a66a0fb9df9652e"
+  }
 }
