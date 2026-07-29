@@ -1,29 +1,21 @@
-# SaathiOS Skill Ecosystem Runtime — Final Report
+# SaathiOS Universal Application Runtime — Final Report
 
 Status: complete with limitations.
 
 ## Terminal verdict
 
-`SKILL_ECOSYSTEM_RUNTIME_COMPLETE_WITH_LIMITATIONS`
+`APPLICATION_RUNTIME_COMPLETE_WITH_LIMITATIONS`
 
 ## Recovery
 
-- Path: `/Users/macbookpro/SaathiAI`
+- Starting HEAD: `21560785e668e8c0edae5bab026147d3e257c10c` — verified
 - Branch: `milestone/m61-backend-workflow-persistence`
-- Starting HEAD: `013af0241251e4fbe5636351e0acd086b42ba40c` — verified
-- Preserved unstaged: m25/m27/m28 evidence, `docs/design-spec/`
-
-## Ending
-
-- Implementation: 
-- Full backend: 5386 passed, 1 skipped
-- Frontend: 194 passed. ESLint pass. Next build pass.
-- Browser: `SKILL_BROWSER_CERT_PASSED`
+- Preserved unstaged: m25/m27/m28, `docs/design-spec/`
 
 ## Architecture
 
-`saathi/platform/skills/` manages skill lifecycle. ToolRegistry and ModuleRegistry
-are extended by reference, not replaced. ExecutionGateway remains sole tool path.
+`saathi/platform/apps/` AppRuntime extends ModuleRegistry. Applications use
+Conversation, Knowledge, Skills, Workers, ExecutionGateway, Approvals — never bypass.
 
 ## Production
 

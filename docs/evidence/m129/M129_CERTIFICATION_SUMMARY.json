@@ -1,0 +1,28 @@
+{
+  "schema": "m129.universal_application_runtime_certification.v1",
+  "captured_at": "2026-07-29",
+  "terminal_verdict": "APPLICATION_RUNTIME_COMPLETE_WITH_LIMITATIONS",
+  "branch": "milestone/m61-backend-workflow-persistence",
+  "starting_sha": "21560785e668e8c0edae5bab026147d3e257c10c",
+  "milestones": ["M121", "M122", "M123", "M124", "M125", "M126", "M127", "M128", "M129"],
+  "architecture": {
+    "package": "saathi/platform/apps",
+    "extends": ["ModuleRegistry", "SkillRuntime", "ExecutionGateway"],
+    "replaces_module_registry": false,
+    "apps_may_bypass_gateway": false,
+    "marketplace_authorized": false,
+    "production_authorized": false
+  },
+  "tests": {
+    "focused": "tests/test_m121_app_runtime.py",
+    "focused_count": 17
+  },
+  "browser": {
+    "script": "saathi-os/scripts/m129_app_browser_cert.mjs",
+    "evidence": "docs/evidence/m129/browser/M129_BROWSER_CERT.json",
+    "result": "APP_BROWSER_CERT_PASSED"
+  },
+  "push": false,
+  "merge": false,
+  "deploy": false
+}

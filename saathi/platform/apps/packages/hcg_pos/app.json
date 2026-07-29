@@ -1,0 +1,94 @@
+{
+  "app_id": "saathi.hcg_pos",
+  "app_type": "operations",
+  "approval_requirements": [
+    "NO_APPROVAL_REQUIRED"
+  ],
+  "backup_strategy": "workspace_snapshot",
+  "capabilities": [
+    "tables",
+    "dashboards",
+    "workflows",
+    "approvals",
+    "skills"
+  ],
+  "category": "retail",
+  "content_hash": "",
+  "dashboards": [
+    {
+      "id": "kitchen",
+      "title": "Kitchen"
+    }
+  ],
+  "description": "Canteen POS operations planning (no production DB mutation).",
+  "display_name": "HCG POS",
+  "entrypoint_type": "declarative",
+  "extension": {},
+  "feature_flags": {
+    "bypass_gateway": false,
+    "marketplace": false
+  },
+  "forms": [
+    {
+      "id": "order_note",
+      "title": "Order Note"
+    }
+  ],
+  "health_check_contract": "manifest_and_workspace",
+  "icon": "\u25a3",
+  "knowledge_sources": [],
+  "local_trust_status": "BUILT_IN",
+  "manifest_schema_version": "app.manifest.v1",
+  "migration_strategy": "config_only_no_schema_break",
+  "minimum_saathios_version": "1.0.0-local",
+  "module_registry_id": "hcgpos",
+  "name": "hcg_pos",
+  "navigation": [
+    {
+      "href": "/apps/hcg",
+      "id": "ops",
+      "label": "Operations"
+    }
+  ],
+  "network_requirements": "none",
+  "notifications": {
+    "channels": [
+      "in_app"
+    ]
+  },
+  "optional_permissions": [],
+  "package_hash": "2156ea38d199e8e9f2564e4e11d06e08faf6e08c2bb800c8aff602f7efbfcbbf",
+  "pages": [
+    {
+      "id": "ops",
+      "path": "/apps/hcg",
+      "title": "Operations"
+    }
+  ],
+  "production_posture": "not_authorized",
+  "publisher": "saathios.builtin",
+  "required_permissions": [
+    "runtime.read"
+  ],
+  "restore_strategy": "replace_workspace_snapshot",
+  "skills": [
+    "saathi.hcg_ops_review"
+  ],
+  "storage": {
+    "max_mb": 32,
+    "type": "workspace_isolated"
+  },
+  "trading_guardian_posture": "unengaged",
+  "upgrade_strategy": "install_side_by_side_then_switch",
+  "version": "1.0.0",
+  "worker_requirements": [
+    "planning"
+  ],
+  "workflows": [
+    {
+      "capability": "hcg.operations.plan",
+      "id": "ops_plan",
+      "skill_id": "saathi.hcg_ops_review"
+    }
+  ]
+}

@@ -2158,6 +2158,354 @@ def skills_certify(
         raise _err(e) from e
 
 
+# ══════════════════════════════════════════════════════════════════════════
+# M121–M129 Universal Application Runtime — local apps only, no marketplace
+# ══════════════════════════════════════════════════════════════════════════
+class AppPackageBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    package_id: str = Field(min_length=1, max_length=120)
+
+
+class AppVersionBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    version: str = Field(default="", max_length=40)
+
+
+class AppFavoriteBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    favorite: bool = True
+
+
+class AppWorkflowBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    workflow_id: str = Field(default="", max_length=80)
+    approval_reference: str = Field(default="", max_length=160)
+    arguments: dict[str, Any] = Field(default_factory=dict)
+
+
+class AppUpgradeBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    to_version: str = Field(min_length=1, max_length=40)
+    package_id: str = Field(min_length=1, max_length=120)
+
+
+class AppRestoreBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    backup_id: str = Field(min_length=1, max_length=160)
+
+
+class AppReasonBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    reason: str = Field(default="operator", max_length=300)
+    version: str = Field(default="", max_length=40)
+
+
+def _app_svc():
+    from saathi.platform.apps import default_app_runtime
+
+    return default_app_runtime(_svc())
+
+
+def _app_ctx(authorization: str | None, x_platform_token: str | None):
+    token = _token(authorization, x_platform_token)
+    return _svc().require_context(token), token
+
+
+@router.get("/apps/health")
+def apps_health(
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _app_ctx(authorization, x_platform_token)
+        return {"health": _app_svc().health(ctx)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/apps/launcher")
+def apps_launcher(
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _app_ctx(authorization, x_platform_token)
+        return _app_svc().launcher(ctx)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/apps")
+def apps_list(
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _app_ctx(authorization, x_platform_token)
+        return _app_svc().list_apps(ctx)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/apps/discover")
+def apps_discover(
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _app_ctx(authorization, x_platform_token)
+        return _app_svc().discover(ctx)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/apps/validate")
+def apps_validate(
+    body: AppPackageBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _app_ctx(authorization, x_platform_token)
+        return _app_svc().validate_package(ctx, package_id=body.package_id)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/apps/register")
+def apps_register(
+    body: AppPackageBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _app_ctx(authorization, x_platform_token)
+        return _app_svc().register(ctx, package_id=body.package_id)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/apps/{app_id}")
+def apps_get(
+    app_id: str,
+    version: str = "",
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _app_ctx(authorization, x_platform_token)
+        return _app_svc().get_app(ctx, app_id, version=version)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/apps/{app_id}/enable")
+def apps_enable(
+    app_id: str,
+    body: AppVersionBody | None = None,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _app_ctx(authorization, x_platform_token)
+        v = body.version if body else ""
+        return _app_svc().enable(ctx, app_id, version=v)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/apps/{app_id}/disable")
+def apps_disable(
+    app_id: str,
+    body: AppVersionBody | None = None,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _app_ctx(authorization, x_platform_token)
+        v = body.version if body else ""
+        return _app_svc().disable(ctx, app_id, version=v)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/apps/{app_id}/launch")
+def apps_launch(
+    app_id: str,
+    body: AppVersionBody | None = None,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _app_ctx(authorization, x_platform_token)
+        v = body.version if body else ""
+        return _app_svc().launch(ctx, app_id, version=v)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/apps/{app_id}/favorite")
+def apps_favorite(
+    app_id: str,
+    body: AppFavoriteBody | None = None,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _app_ctx(authorization, x_platform_token)
+        fav = body.favorite if body else True
+        return _app_svc().set_favorite(ctx, app_id, favorite=fav)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/apps/{app_id}/workflow")
+def apps_workflow(
+    app_id: str,
+    body: AppWorkflowBody | None = None,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _app_ctx(authorization, x_platform_token)
+        b = body or AppWorkflowBody()
+        return _app_svc().run_workflow(
+            ctx,
+            app_id,
+            workflow_id=b.workflow_id,
+            approval_reference=b.approval_reference,
+            arguments=b.arguments,
+        )
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/apps/{app_id}/backup")
+def apps_backup(
+    app_id: str,
+    body: AppReasonBody | None = None,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _app_ctx(authorization, x_platform_token)
+        reason = body.reason if body else "operator"
+        return _app_svc().backup(ctx, app_id, reason=reason)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/apps/{app_id}/backups")
+def apps_backups(
+    app_id: str,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _app_ctx(authorization, x_platform_token)
+        return _app_svc().list_backups(ctx, app_id)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/apps/{app_id}/restore")
+def apps_restore(
+    app_id: str,
+    body: AppRestoreBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _app_ctx(authorization, x_platform_token)
+        return _app_svc().restore(ctx, app_id, backup_id=body.backup_id)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/apps/{app_id}/upgrade")
+def apps_upgrade(
+    app_id: str,
+    body: AppUpgradeBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _app_ctx(authorization, x_platform_token)
+        return _app_svc().upgrade(
+            ctx, app_id, to_version=body.to_version, package_id=body.package_id
+        )
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/apps/{app_id}/rollback")
+def apps_rollback(
+    app_id: str,
+    body: AppReasonBody | None = None,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _app_ctx(authorization, x_platform_token)
+        reason = body.reason if body else "operator"
+        return _app_svc().rollback(ctx, app_id, reason=reason)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/apps/{app_id}/quarantine")
+def apps_quarantine(
+    app_id: str,
+    body: AppReasonBody | None = None,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _app_ctx(authorization, x_platform_token)
+        b = body or AppReasonBody()
+        return _app_svc().quarantine(ctx, app_id, reason=b.reason, version=b.version)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/apps/{app_id}/health")
+def apps_app_health(
+    app_id: str,
+    version: str = "",
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _app_ctx(authorization, x_platform_token)
+        return _app_svc().check_health(ctx, app_id, version=version)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/apps/recover")
+def apps_recover(
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _app_ctx(authorization, x_platform_token)
+        return _app_svc().recover(ctx)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/apps/certify")
+def apps_certify(
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _app_ctx(authorization, x_platform_token)
+        return _app_svc().certify(ctx)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
 @router.post("/members")
 def add_member(
     body: MemberBody,

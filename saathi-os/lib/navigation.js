@@ -172,6 +172,17 @@ export const GLOBAL_NAV = [
     aliases: ["/skills-runtime", "/capability-skills"],
   },
   {
+    id: "apps",
+    label: "Apps",
+    href: "/apps",
+    icon: "▦",
+    description: "Universal application launcher — local apps only",
+    authoritySensitivity: "runtime-operate",
+    global: true,
+    accent: "#10C98A",
+    aliases: ["/applications", "/app-launcher"],
+  },
+  {
     id: "platform",
     label: "Platform",
     href: "/platform",

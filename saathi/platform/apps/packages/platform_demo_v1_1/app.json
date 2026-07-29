@@ -1,0 +1,90 @@
+{
+  "app_id": "saathi.platform_demo",
+  "app_type": "internal_platform",
+  "approval_requirements": [
+    "APPROVAL_REQUIRED_FOR_MUTATION"
+  ],
+  "backup_strategy": "workspace_snapshot",
+  "capabilities": [
+    "forms",
+    "approvals",
+    "activity_history",
+    "skills",
+    "workflows"
+  ],
+  "category": "platform",
+  "content_hash": "",
+  "dashboards": [
+    {
+      "id": "metrics",
+      "title": "Metrics"
+    }
+  ],
+  "description": "Certification demo application v1.1.",
+  "display_name": "Platform Demo App",
+  "entrypoint_type": "declarative",
+  "extension": {},
+  "feature_flags": {
+    "bypass_gateway": false,
+    "marketplace": false
+  },
+  "forms": [
+    {
+      "id": "request",
+      "title": "Request"
+    }
+  ],
+  "health_check_contract": "manifest_and_workspace",
+  "icon": "\u27e1",
+  "local_trust_status": "BUILT_IN",
+  "manifest_schema_version": "app.manifest.v1",
+  "migration_strategy": "config_only_no_schema_break",
+  "minimum_saathios_version": "1.0.0-local",
+  "name": "platform_demo",
+  "navigation": [
+    {
+      "href": "/apps/demo",
+      "id": "home",
+      "label": "Home"
+    }
+  ],
+  "network_requirements": "none",
+  "notifications": {
+    "channels": [
+      "in_app"
+    ]
+  },
+  "optional_permissions": [],
+  "package_hash": "4f3c097753b973fed2c2ad5670e2ee339412be41758532243af23adc253897c6",
+  "pages": [
+    {
+      "id": "home",
+      "path": "/apps/demo",
+      "title": "Home"
+    }
+  ],
+  "production_posture": "not_authorized",
+  "publisher": "saathios.builtin",
+  "required_permissions": [
+    "runtime.read"
+  ],
+  "restore_strategy": "replace_workspace_snapshot",
+  "skills": [
+    "saathi.mutation_safe"
+  ],
+  "storage": {
+    "max_mb": 32,
+    "type": "workspace_isolated"
+  },
+  "trading_guardian_posture": "unengaged",
+  "upgrade_strategy": "install_side_by_side_then_switch",
+  "version": "1.1.0",
+  "workflows": [
+    {
+      "approval_required": true,
+      "capability": "mutation.safe_test",
+      "id": "safe_mutation",
+      "skill_id": "saathi.mutation_safe"
+    }
+  ]
+}
