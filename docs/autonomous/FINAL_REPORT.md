@@ -15,7 +15,8 @@ Status: complete with limitations.
 
 ## Ending
 
-- Implementation commit SHA recorded after commit; LOOP_STATE pin follows.
+- Implementation: `081b321a0b0b6c24aa84daf7c38e34772630ed0a`
+- LOOP_STATE pin: `178741ac4d9e676ab6e53b4475c3a01d01d3f54c`
 
 ## Milestones
 
