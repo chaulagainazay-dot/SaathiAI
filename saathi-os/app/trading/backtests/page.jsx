@@ -49,12 +49,31 @@ export default function TradingBacktestsPage() {
         {result ? (
           <Card style={{ marginTop: 16 }}>
             <Heading level={2} size="md">Result · {result.evaluation_verdict}</Heading>
-            <Text mono size="sm">status {result.run?.status} · split {result.run?.split_kind}</Text>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", margin: "8px 0" }}>
+              <span className="mono" data-testid="data-classification" style={{ fontSize: 11, border: "1px solid #F5A623", color: "#F5A623", borderRadius: 6, padding: "2px 8px" }}>
+                DATA: {result.data_classification || "UNKNOWN"}
+              </span>
+              <span className="mono" style={{ fontSize: 11, border: "1px solid #8FA0C4", color: "#8FA0C4", borderRadius: 6, padding: "2px 8px" }}>
+                AUTHORITATIVE: {String(result.authoritative === true)}
+              </span>
+              <span className="mono" style={{ fontSize: 11, border: "1px solid #5B8CFF", color: "#5B8CFF", borderRadius: 6, padding: "2px 8px" }}>
+                FIXTURE METRICS USED: {String(result.fixture_metrics_used === true)}
+              </span>
+            </div>
+            <Text mono size="sm">status {result.status || result.run?.status} · split {result.run?.split_kind}</Text>
+            <Text mono size="xs" as="p">
+              strategy v{result.provenance?.strategy_version || "—"} · policy {result.provenance?.policy_version || "—"} ·
+              fees {result.provenance?.fee_bps || "—"} bps · slip {result.provenance?.slippage_bps || "—"} bps ·
+              range {result.provenance?.date_range_start || "—"} → {result.provenance?.date_range_end || "—"}
+            </Text>
             <pre className="mono" style={{ fontSize: 11, overflow: "auto" }}>
               {JSON.stringify(result.metrics, null, 2)}
             </pre>
             <Text tone="muted" size="sm" as="p">
               {(result.limitations || []).join(" · ")}
+            </Text>
+            <Text tone="muted" size="xs" as="p">
+              Synthetic and fixture results are not market evidence. Historical results do not predict future results.
             </Text>
           </Card>
         ) : null}

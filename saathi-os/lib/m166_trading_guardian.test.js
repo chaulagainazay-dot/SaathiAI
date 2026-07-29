@@ -14,6 +14,7 @@ const PAGES = [
   "app/trading/regime/page.jsx",
   "app/trading/proposals/page.jsx",
   "app/trading/backtests/page.jsx",
+  "app/trading/research/page.jsx",
   "app/trading/comparison/page.jsx",
   "app/trading/journal/page.jsx",
   "app/trading/policy/page.jsx",
@@ -42,12 +43,20 @@ describe("M166 TG UI paper-only labels", () => {
       "/trading/regime",
       "/trading/proposals",
       "/trading/backtests",
+      "/trading/research",
       "/trading/comparison",
       "/trading/journal",
       "/trading/policy",
     ]) {
       assert.match(src, new RegExp(href.replace(/\//g, "\\/")));
     }
+  });
+
+  it("backtest page surfaces data classification labels", () => {
+    const src = read("app/trading/backtests/page.jsx");
+    assert.match(src, /data-classification|DATA:/);
+    assert.match(src, /authoritative/i);
+    assert.match(src, /not market evidence/i);
   });
 
   it("module registry keeps live_trading feature flag false", () => {

@@ -7303,3 +7303,122 @@ def tg_strategy_suspend(slug: str, authorization: str | None = Header(default=No
         return {"strategy": svc.registry.suspend(s.id).to_public(), "paper_only": True}
     except PlatformContextError as e:
         raise _err(e) from e
+
+
+# ══════════════════════════════════════════════════════════════════════════
+# M176–M183 — Paper validation, walk-forward, stress, portfolio, recovery
+# ══════════════════════════════════════════════════════════════════════════
+class TgWalkForwardBody(BaseModel):
+    strategy_slug: str = "trend_following"
+    dataset: str = "TRENDING"
+    n: int = 60
+    mode: str = "expanding"
+    n_folds: int = 3
+    is_test_context: bool = False
+
+
+@router.post("/tg/walk-forward")
+def tg_walk_forward(body: TgWalkForwardBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.BACKTEST_RUN)
+        return _tg_svc().run_walk_forward(
+            strategy_slug=body.strategy_slug,
+            dataset=body.dataset,
+            n=min(body.n, 200),
+            mode=body.mode,
+            n_folds=min(body.n_folds, 8),
+            is_test_context=body.is_test_context,
+        )
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+class TgStressBody(BaseModel):
+    strategy_slug: str = "trend_following"
+    dataset: str = "TRENDING"
+    n: int = 40
+    is_test_context: bool = False
+
+
+@router.post("/tg/stress")
+def tg_stress(body: TgStressBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.BACKTEST_RUN)
+        return _tg_svc().run_stress(
+            strategy_slug=body.strategy_slug,
+            dataset=body.dataset,
+            n=min(body.n, 100),
+            is_test_context=body.is_test_context,
+        )
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/scorecard/{slug}")
+def tg_scorecard(slug: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.BACKTEST_REVIEW)
+        return _tg_svc().research_scorecard(strategy_slug=slug, dataset="TRENDING", n=50)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/recovery/cert")
+def tg_recovery_cert(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        from saathi.platform.tg.recovery import run_recovery_suite
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return run_recovery_suite()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/portfolio/analysis")
+def tg_portfolio_analysis(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        from saathi.platform.tg.portfolio import PortfolioState, PortfolioRiskAnalyzer
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_ACCOUNT_READ)
+        state = PortfolioState()
+        analysis = PortfolioRiskAnalyzer().analyze(state)
+        return {
+            "portfolio": state.to_public(),
+            "analysis": analysis,
+            "paper_only": True,
+            "funds_label": "SIMULATED",
+            "disclaimer": "SIMULATED FUNDS — NOT REAL MONEY",
+        }
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+class TgPortfolioScenarioBody(BaseModel):
+    scenario: str = "correlated_selloff"
+
+
+@router.post("/tg/portfolio/scenario")
+def tg_portfolio_scenario(body: TgPortfolioScenarioBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        from saathi.platform.tg.portfolio import PortfolioState, PortfolioRiskAnalyzer
+        from decimal import Decimal
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_ACCOUNT_READ)
+        state = PortfolioState(
+            positions={"AAPL": {"quantity": Decimal("10"), "avg_cost": Decimal("100"), "sector": "TECH"}},
+            sector_of={"AAPL": "TECH"},
+            strategy_of={"AAPL": "trend_following"},
+            open_orders=[{"id": "p1", "status": "PENDING"}],
+        )
+        return PortfolioRiskAnalyzer().scenario(body.scenario, state)
+    except PlatformContextError as e:
+        raise _err(e) from e

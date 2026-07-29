@@ -16,6 +16,7 @@ const TABS = [
   { href: "/trading/regime", label: "Regime" },
   { href: "/trading/proposals", label: "Proposals" },
   { href: "/trading/backtests", label: "Backtest Lab" },
+  { href: "/trading/research", label: "Research Lab" },
   { href: "/trading/comparison", label: "Comparison" },
   { href: "/trading/journal", label: "Journal" },
   { href: "/trading/policy", label: "Policy" },

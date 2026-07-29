@@ -42,12 +42,20 @@ export default function TradingComparisonPage() {
         {cmp ? (
           <Card style={{ marginTop: 16 }}>
             <Heading level={2} size="md">Ranking</Heading>
-            <ol>
+            <ol data-testid="strategy-ranking">
               {(cmp.ranking || []).map((s) => (
-                <li key={s} className="mono">{s} — {cmp.verdicts?.[s]}</li>
+                <li key={s} className="mono">
+                  {s} — {cmp.verdicts?.[s]}
+                  {cmp.scorecards?.[s]?.data_classification
+                    ? ` · ${cmp.scorecards[s].data_classification}`
+                    : ""}
+                </li>
               ))}
             </ol>
             <Text tone="muted" size="sm" as="p">{(cmp.notes || []).join(" ")}</Text>
+            <Text tone="muted" size="xs" as="p">
+              No LIVE_APPROVED verdict. Fixture/synthetic results are not market evidence.
+            </Text>
           </Card>
         ) : null}
       </SignInGate>

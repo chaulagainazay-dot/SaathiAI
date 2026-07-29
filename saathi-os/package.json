@@ -14,6 +14,7 @@
     "cert:m147": "node scripts/m147_ielts_browser_cert.mjs",
     "cert:m156": "node scripts/m156_core_browser_cert.mjs",
     "cert:m165": "node scripts/m165_private_alpha_browser_cert.mjs",
+    "cert:m183": "node scripts/m183_trading_guardian_browser_cert.mjs",
     "test:browser-cert": "node scripts/m47_4_browser_cert.mjs",
     "test:browser-cert:dev": "M47_4_USE_DEV=1 node scripts/m47_4_browser_cert.mjs",
     "test:browser-cert:m47.7": "node scripts/m47_7_browser_cert.mjs",
