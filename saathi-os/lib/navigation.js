@@ -150,6 +150,17 @@ export const NAV_GROUPS = [
 /** Global chrome destinations (not in the 12 primary areas list for group count). */
 export const GLOBAL_NAV = [
   {
+    id: "fleet",
+    label: "Fleet",
+    href: "/fleet",
+    icon: "⟐",
+    description: "Distributed workers — loopback Phase A, extends M56",
+    authoritySensitivity: "runtime-operate",
+    global: true,
+    accent: "#22D3EE",
+    aliases: ["/workers", "/cluster"],
+  },
+  {
     id: "platform",
     label: "Platform",
     href: "/platform",

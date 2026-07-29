@@ -1,28 +1,29 @@
-# SaathiOS Agent Orchestration Runtime — Final Report
+# SaathiOS Distributed Worker Execution and Fleet Runtime — Final Report
 
 Status: complete with limitations.
 
 ## Terminal verdict
 
-`AGENT_ORCHESTRATION_RUNTIME_COMPLETE_WITH_LIMITATIONS`
+`DISTRIBUTED_WORKER_RUNTIME_COMPLETE_WITH_LIMITATIONS`
 
 ## Recovery
 
 - Path: `/Users/macbookpro/SaathiAI`
 - Branch: `milestone/m61-backend-workflow-persistence`
-- Starting HEAD: `a006fb81399392bdccdd1cb7cc2d30f4979a90ec` — verified
+- Starting HEAD: `213b55c0e791397cb070a3d939843f0b2734a1fa` (M102 ending pin)
 - Preserved unstaged: m25/m27/m28 evidence, `docs/design-spec/`
 
 ## Ending
 
-- Implementation: `5c4edce0b6ba636507fad822ef60d8b0811b737a`
-- LOOP_STATE pin follows.
+- Implementation and certification commits follow on this branch.
+- LOOP_STATE updated for M103–M111.
 
 ## Architecture
 
-`saathi/platform/orchestration/` plans and supervises. Mission Runtime owns
-lifecycle/checkpoints/evidence. ExecutionGateway remains the sole tool path.
-Models cannot execute tools.
+`saathi/platform/fleet/` extends M56 `ClusterCoordinator`. Agent Orchestration,
+PlatformAgentRuntime, ExecutionGateway, Approval Center, Evidence, and Audit
+remain authoritative. Workers never execute tools directly. Phase A loopback
+only.
 
 ## Production
 

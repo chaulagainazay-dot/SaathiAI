@@ -1236,6 +1236,607 @@ def orchestration_command(
         raise _err(e) from e
 
 
+# ══════════════════════════════════════════════════════════════════════════
+# M103–M111 Distributed Worker Execution and Fleet Runtime
+# Extends M56 ClusterCoordinator. Loopback Phase A only. No public listeners.
+# ══════════════════════════════════════════════════════════════════════════
+class FleetWorkerRegisterBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    worker_id: str = Field(default="", max_length=120)
+    node_id: str = Field(default="node-local", max_length=120)
+    protocol_version: str = Field(default="fleet.v1", max_length=40)
+    runtime_version: str = Field(default="m103.fleet.v1", max_length=40)
+    process_instance_id: str = Field(default="", max_length=120)
+    capability_set: list[str] = Field(default_factory=list)
+    capabilities: list[str] = Field(default_factory=list)
+    bind_host: str = Field(default="127.0.0.1", max_length=64)
+    resource_limits: dict[str, Any] = Field(default_factory=dict)
+    platform: str = Field(default="darwin", max_length=40)
+    architecture: str = Field(default="arm64", max_length=40)
+    labels: dict[str, str] = Field(default_factory=dict)
+    public_listener: bool = False
+    listen_host: str = Field(default="127.0.0.1", max_length=64)
+
+
+class FleetHeartbeatBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    cpu_pressure: float = 0.0
+    memory_pressure: float = 0.0
+    disk_pressure: float = 0.0
+    queue_depth: int = 0
+    active_leases: int = 0
+    model_status: str = Field(default="unavailable", max_length=40)
+    browser_availability: bool = False
+    error_state: str = Field(default="", max_length=200)
+    last_successful_action: str = Field(default="", max_length=120)
+    protocol_version: str = Field(default="fleet.v1", max_length=40)
+    sequence: int = 0
+
+
+class FleetWorkNodeBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    work_node_id: str = Field(default="", max_length=160)
+    id: str = Field(default="", max_length=160)
+    required_capabilities: list[str] = Field(default_factory=list)
+    capabilities: list[str] = Field(default_factory=list)
+    role: str = Field(default="", max_length=80)
+    approval_state: str = Field(default="not_required", max_length=40)
+    approval_required: bool = False
+    approval_reference: str = Field(default="", max_length=160)
+    dependencies_complete: bool = True
+    depends_on: list[str] = Field(default_factory=list)
+    incomplete_dependencies: list[str] = Field(default_factory=list)
+    risk_classification: str = Field(default="low", max_length=40)
+    anti_affinity_workers: list[str] = Field(default_factory=list)
+    affinity_workers: list[str] = Field(default_factory=list)
+    sod_exclude_workers: list[str] = Field(default_factory=list)
+    prior_failure_workers: list[str] = Field(default_factory=list)
+    attempt: int = 1
+    mission_id: str = Field(default="", max_length=160)
+    orchestration_id: str = Field(default="", max_length=160)
+    plan_version: str = Field(default="1", max_length=40)
+    idempotency_key: str = Field(default="", max_length=200)
+
+
+class FleetLeaseAcquireBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    work_node: FleetWorkNodeBody
+    worker_id: str = Field(default="", max_length=120)
+    ttl_sec: float | None = None
+    approval_reference: str = Field(default="", max_length=160)
+    mission_id: str = Field(default="", max_length=160)
+    orchestration_id: str = Field(default="", max_length=160)
+    plan_version: str = Field(default="1", max_length=40)
+    m56_execution_id: str = Field(default="", max_length=160)
+
+
+class FleetLeaseRenewBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    lease_id: str = Field(min_length=1, max_length=160)
+    worker_id: str = Field(min_length=1, max_length=120)
+    fencing_token: int
+    ttl_sec: float | None = None
+
+
+class FleetExecuteBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    lease_id: str = Field(min_length=1, max_length=160)
+    worker_id: str = Field(min_length=1, max_length=120)
+    fencing_token: int
+    arguments: dict[str, Any] = Field(default_factory=dict)
+    tool_id: str = Field(default="m49.echo_readonly", max_length=120)
+
+
+class FleetReconcileBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    lease_id: str = Field(min_length=1, max_length=160)
+    worker_id: str = Field(min_length=1, max_length=120)
+    fencing_token: int
+    result: dict[str, Any] = Field(default_factory=dict)
+    idempotency_key: str = Field(default="", max_length=200)
+
+
+class FleetCancelBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    scope: str = Field(min_length=1, max_length=40)
+    target_id: str = Field(min_length=1, max_length=160)
+    reason: str = Field(default="operator_cancel", max_length=300)
+
+
+class FleetDispatchBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    nodes: list[FleetWorkNodeBody] = Field(default_factory=list)
+    mission_id: str = Field(default="", max_length=160)
+    orchestration_id: str = Field(default="", max_length=160)
+    plan_version: str = Field(default="1", max_length=40)
+
+
+class FleetReassignBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    work_node: FleetWorkNodeBody
+    previous_lease_id: str = Field(default="", max_length=160)
+    approval_reference: str = Field(default="", max_length=160)
+
+
+class FleetReasonBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    reason: str = Field(default="operator", max_length=300)
+
+
+class FleetDispatchControlBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    paused: bool = True
+    reason: str = Field(default="", max_length=300)
+
+
+class FleetCommandBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    message: str = Field(min_length=1, max_length=2000)
+    worker_id: str = Field(default="", max_length=120)
+
+
+class FleetEventBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    lease_id: str = Field(min_length=1, max_length=160)
+    worker_id: str = Field(min_length=1, max_length=120)
+    fencing_token: int
+    event_type: str = Field(default="progress", max_length=40)
+    sequence: int = 0
+    payload: dict[str, Any] = Field(default_factory=dict)
+
+
+def _fleet_svc():
+    from saathi.platform.fleet import default_fleet_runtime
+
+    return default_fleet_runtime(_svc())
+
+
+def _fleet_ctx(authorization: str | None, x_platform_token: str | None):
+    token = _token(authorization, x_platform_token)
+    return _svc().require_context(token), token
+
+
+@router.get("/fleet/health")
+def fleet_health(
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _fleet_ctx(authorization, x_platform_token)
+        return {"health": _fleet_svc().health(ctx)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/fleet/metrics")
+def fleet_metrics(
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _fleet_ctx(authorization, x_platform_token)
+        return {"metrics": _fleet_svc().fleet_metrics(ctx)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/fleet/workers")
+def fleet_workers_list(
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _fleet_ctx(authorization, x_platform_token)
+        return _fleet_svc().list_workers(ctx)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/fleet/workers/register")
+def fleet_workers_register(
+    body: FleetWorkerRegisterBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _fleet_ctx(authorization, x_platform_token)
+        return _fleet_svc().register_worker(ctx, body.model_dump())
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/fleet/workers/{worker_id}")
+def fleet_worker_get(
+    worker_id: str,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _fleet_ctx(authorization, x_platform_token)
+        return _fleet_svc().get_worker(ctx, worker_id)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/fleet/workers/{worker_id}/heartbeat")
+def fleet_worker_heartbeat(
+    worker_id: str,
+    body: FleetHeartbeatBody | None = None,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _fleet_ctx(authorization, x_platform_token)
+        payload = body.model_dump() if body else {}
+        return _fleet_svc().heartbeat(ctx, worker_id, payload)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/fleet/workers/{worker_id}/drain")
+def fleet_worker_drain(
+    worker_id: str,
+    body: FleetReasonBody | None = None,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _fleet_ctx(authorization, x_platform_token)
+        reason = body.reason if body else "operator_drain"
+        return _fleet_svc().drain_worker(ctx, worker_id, reason=reason)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/fleet/workers/{worker_id}/quarantine")
+def fleet_worker_quarantine(
+    worker_id: str,
+    body: FleetReasonBody | None = None,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _fleet_ctx(authorization, x_platform_token)
+        reason = body.reason if body else "operator_quarantine"
+        return _fleet_svc().quarantine_worker(ctx, worker_id, reason=reason)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/fleet/workers/{worker_id}/revoke")
+def fleet_worker_revoke(
+    worker_id: str,
+    body: FleetReasonBody | None = None,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _fleet_ctx(authorization, x_platform_token)
+        reason = body.reason if body else "operator_revoke"
+        return _fleet_svc().revoke_worker(ctx, worker_id, reason=reason)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/fleet/match")
+def fleet_match(
+    body: FleetWorkNodeBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _fleet_ctx(authorization, x_platform_token)
+        decision = _fleet_svc().match_worker(ctx, body.model_dump())
+        return {"decision": decision.to_public()}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/fleet/schedule")
+def fleet_schedule(
+    work_node_id: str = "",
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _fleet_ctx(authorization, x_platform_token)
+        return _fleet_svc().explain_schedule(ctx, work_node_id=work_node_id)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/fleet/leases/acquire")
+def fleet_lease_acquire(
+    body: FleetLeaseAcquireBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _fleet_ctx(authorization, x_platform_token)
+        return _fleet_svc().acquire_lease(
+            ctx,
+            work_node=body.work_node.model_dump(),
+            worker_id=body.worker_id,
+            ttl_sec=body.ttl_sec,
+            approval_reference=body.approval_reference,
+            mission_id=body.mission_id,
+            orchestration_id=body.orchestration_id,
+            plan_version=body.plan_version,
+            m56_execution_id=body.m56_execution_id,
+        )
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/fleet/leases/renew")
+def fleet_lease_renew(
+    body: FleetLeaseRenewBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _fleet_ctx(authorization, x_platform_token)
+        return _fleet_svc().renew_lease(
+            ctx,
+            lease_id=body.lease_id,
+            worker_id=body.worker_id,
+            fencing_token=body.fencing_token,
+            ttl_sec=body.ttl_sec,
+        )
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/fleet/leases")
+def fleet_leases_list(
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _fleet_ctx(authorization, x_platform_token)
+        return _fleet_svc().list_leases(ctx)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/fleet/leases/{lease_id}/verify")
+def fleet_lease_verify(
+    lease_id: str,
+    worker_id: str = "",
+    fencing_token: int | None = None,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _fleet_ctx(authorization, x_platform_token)
+        return _fleet_svc().verify_lease(
+            ctx, lease_id=lease_id, worker_id=worker_id, fencing_token=fencing_token
+        )
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/fleet/leases/{lease_id}/request")
+def fleet_lease_request(
+    lease_id: str,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _fleet_ctx(authorization, x_platform_token)
+        return {"request": _fleet_svc().build_execution_request(ctx, lease_id)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/fleet/execute")
+def fleet_execute(
+    body: FleetExecuteBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, token = _fleet_ctx(authorization, x_platform_token)
+        return _fleet_svc().execute_leased_work(
+            ctx,
+            lease_id=body.lease_id,
+            worker_id=body.worker_id,
+            fencing_token=body.fencing_token,
+            token=token,
+            tool_id=body.tool_id,
+            arguments=body.arguments,
+        )
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/fleet/events")
+def fleet_events_ingest(
+    body: FleetEventBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _fleet_ctx(authorization, x_platform_token)
+        return _fleet_svc().ingest_event(ctx, body.model_dump())
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/fleet/events")
+def fleet_events_list(
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _fleet_ctx(authorization, x_platform_token)
+        return _fleet_svc().list_events(ctx)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/fleet/reconcile")
+def fleet_reconcile(
+    body: FleetReconcileBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _fleet_ctx(authorization, x_platform_token)
+        return _fleet_svc().reconcile_result(
+            ctx,
+            lease_id=body.lease_id,
+            worker_id=body.worker_id,
+            fencing_token=body.fencing_token,
+            result=body.result,
+            idempotency_key=body.idempotency_key,
+        )
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/fleet/reconciliations")
+def fleet_reconciliations(
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _fleet_ctx(authorization, x_platform_token)
+        return _fleet_svc().list_reconciliations(ctx)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/fleet/cancel")
+def fleet_cancel(
+    body: FleetCancelBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _fleet_ctx(authorization, x_platform_token)
+        return _fleet_svc().cancel(
+            ctx, scope=body.scope, target_id=body.target_id, reason=body.reason
+        )
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/fleet/dispatch")
+def fleet_dispatch(
+    body: FleetDispatchBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _fleet_ctx(authorization, x_platform_token)
+        return _fleet_svc().dispatch_ready_nodes(
+            ctx,
+            nodes=[n.model_dump() for n in body.nodes],
+            mission_id=body.mission_id,
+            orchestration_id=body.orchestration_id,
+            plan_version=body.plan_version,
+        )
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/fleet/dispatch/control")
+def fleet_dispatch_control(
+    body: FleetDispatchControlBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _fleet_ctx(authorization, x_platform_token)
+        return _fleet_svc().set_dispatch_paused(ctx, paused=body.paused, reason=body.reason)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/fleet/recover")
+def fleet_recover(
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _fleet_ctx(authorization, x_platform_token)
+        return _fleet_svc().recover_lost_workers(ctx)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/fleet/reassign")
+def fleet_reassign(
+    body: FleetReassignBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _fleet_ctx(authorization, x_platform_token)
+        return _fleet_svc().reassign_work(
+            ctx,
+            work_node=body.work_node.model_dump(),
+            previous_lease_id=body.previous_lease_id,
+            approval_reference=body.approval_reference,
+        )
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/fleet/recovery")
+def fleet_recovery_history(
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _fleet_ctx(authorization, x_platform_token)
+        return _fleet_svc().recovery_history(ctx)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/fleet/command")
+def fleet_command(
+    body: FleetCommandBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _fleet_ctx(authorization, x_platform_token)
+        return _fleet_svc().command_from_conversation(
+            ctx, body.message, worker_id=body.worker_id
+        )
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/fleet/certify")
+def fleet_certify(
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _fleet_ctx(authorization, x_platform_token)
+        return _fleet_svc().certify_fleet(ctx)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
 @router.post("/members")
 def add_member(
     body: MemberBody,
