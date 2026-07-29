@@ -3,8 +3,8 @@
   "historical_baseline_sha": "2cd61738522ff68968d24e4db56981b42fb8b965",
   "baseline_sha": "2cd61738522ff68968d24e4db56981b42fb8b965",
   "session_start_sha": "2cd61738522ff68968d24e4db56981b42fb8b965",
-  "current_sha": "32da209ab304489b55a3f6fa3fe2014dc0561591",
-  "implementation_sha": "cea8be8",
+  "current_sha": "PENDING",
+  "implementation_sha": "cea8be8e87551268176a2875df7a59c59615a7b0",
   "current_milestone": "M166-M175",
   "status": "complete_with_limitations",
   "completed_milestones": [
@@ -65,9 +65,9 @@
     "browser": "PASS_WITH_LIMITATION: static route + label certification; live Playwright walkthrough of new TG pages not re-driven this session"
   },
   "commits": [
-    "e1e1a7a feat(tg): M166–M175 Trading Guardian research & paper foundation core",
+    "e1e1a7a feat(tg): M166\u2013M175 Trading Guardian research & paper foundation core",
     "d973d1c feat(tg): expose TG foundation via platform API and operator UI",
-    "cea8be8 test(tg): certify M166–M175 registry, policy, risk, and paper boundaries",
-    "32da209 docs(tg): record M166–M175 architecture, runbooks, and certification evidence"
+    "cea8be8 test(tg): certify M166\u2013M175 registry, policy, risk, and paper boundaries",
+    "32da209 docs(tg): record M166\u2013M175 architecture, runbooks, and certification evidence"
   ]
 }
