@@ -3,7 +3,7 @@
   "historical_baseline_sha": "21560785e668e8c0edae5bab026147d3e257c10c",
   "baseline_sha": "21560785e668e8c0edae5bab026147d3e257c10c",
   "session_start_sha": "21560785e668e8c0edae5bab026147d3e257c10c",
-  "current_sha": "PENDING_IMPLEMENTATION_COMMIT",
+  "current_sha": "114ffb3e733c0ed18d5a8024e00f84f020542e51",
   "current_milestone": "M129",
   "status": "complete_with_limitations",
   "completed_milestones": [
@@ -32,7 +32,8 @@
       "status": "complete_with_limitations"
     }
   ],
-  "next_action": "Optional richer app UI templates — marketplace and production not authorized.",
+  "next_action": "Optional richer app UI templates \u2014 marketplace and production not authorized.",
   "last_verified_at": "2026-07-29",
-  "stop_reason": "APPLICATION_RUNTIME_COMPLETE_WITH_LIMITATIONS: local multi-app host; ModuleRegistry extended; gateway-bound workflows; browser cert; marketplace/production not authorized."
+  "stop_reason": "APPLICATION_RUNTIME_COMPLETE_WITH_LIMITATIONS: local multi-app host; ModuleRegistry extended; gateway-bound workflows; browser cert; marketplace/production not authorized.",
+  "m121_m129_implementation_sha": "114ffb3e733c0ed18d5a8024e00f84f020542e51"
 }

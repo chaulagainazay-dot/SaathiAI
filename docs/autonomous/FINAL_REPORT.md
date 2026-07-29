@@ -12,6 +12,13 @@ Status: complete with limitations.
 - Branch: `milestone/m61-backend-workflow-persistence`
 - Preserved unstaged: m25/m27/m28, `docs/design-spec/`
 
+## Ending
+
+- Implementation: 
+- Full backend: 5403 passed, 1 skipped
+- Frontend: 195 passed. ESLint pass. Next build pass.
+- Browser: APP_BROWSER_CERT_PASSED
+
 ## Architecture
 
 `saathi/platform/apps/` AppRuntime extends ModuleRegistry. Applications use
