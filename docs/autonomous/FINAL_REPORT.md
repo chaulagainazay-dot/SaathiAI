@@ -1,16 +1,16 @@
-# SaathiOS Live Conversational Intelligence — Final Report
+# SaathiOS Knowledge and Grounding Runtime — Final Report
 
 Status: complete with limitations.
 
 ## Terminal verdict
 
-`LIVE_CONVERSATIONAL_INTELLIGENCE_COMPLETE_WITH_LIMITATIONS`
+`KNOWLEDGE_GROUNDING_RUNTIME_COMPLETE_WITH_LIMITATIONS`
 
 ## Recovery
 
 - Path: `/Users/macbookpro/SaathiAI`
 - Branch: `milestone/m61-backend-workflow-persistence`
-- Starting HEAD: `1ea69436b40ba68f19f941f8e0d104df587651b3` — verified
+- Starting HEAD: `b5979eb752242914a1151771f91ad3e265d876cd` — verified
 - Preserved unstaged: m25/m27/m28 evidence, `docs/design-spec/`
 
 ## Ending
@@ -19,22 +19,20 @@ Status: complete with limitations.
 
 ## Milestones
 
-M80 ConversationService · M81 Ollama stream/cancel · M82 Yeti/context/memory ·
-M83 Intent router · M84 Voice+UI wire · M85 STT/synthetic media · M86 cert.
+M87 source/ingest · M88 lexical index · M89 authority/tenancy · M90 grounding/
+injection · M91 ConversationService · M92 citations/health/UI · M93 browser ·
+M94 final certification.
 
 ## Architecture
 
-`saathi/platform/conversation/` is the centralized conversational intelligence
-layer. Live Voice Runtime calls it. Frontend never calls providers. Models never
-execute tools.
+`saathi/platform/knowledge/` grounds `ConversationService`. Frontend never calls
+model providers or indexes for generation. Retrieved text is data-only.
 
-## Real generation
+## Retrieval
 
-- Provider: `ollama_local`
-- Model: `qwen2.5:1.5b`
-- Streaming: NDJSON `/api/chat`
-- Multi-turn: SessionMemory
-- Evidence: `docs/evidence/m86/M86_CERTIFICATION_SUMMARY.json`
+- Mode: lexical
+- Semantic: not implemented
+- Evidence: `docs/evidence/m94/M94_CERTIFICATION_SUMMARY.json`
 
 ## Production
 

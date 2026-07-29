@@ -354,3 +354,24 @@
   synthetic media cert.
 - Consequences: SaathiOS can hold real model-backed interruptible multi-turn
   voice conversations locally. Production remains unauthorized.
+
+## ADR-KNOWLEDGE-001 — Platform Knowledge and Grounding Runtime (M87–M94)
+
+- Decision: implement centralized grounding under `saathi.platform.knowledge`
+  and integrate it into `ConversationService` rather than creating a second
+  assistant, parallel search authority, or per-module retrieval brains.
+- Decision: prefer lexical retrieval with SQLite incremental index on M2/8 GB;
+  do not auto-download embedding models; claim semantic only if implemented.
+- Decision: enforce source authority hierarchy (runtime/evidence over docs and
+  model prior), freshness metadata, tenant/workspace isolation, and treat
+  retrieved text as untrusted data that cannot override RBAC, Approval Center,
+  ExecutionGateway, or Trading Guardian.
+- Decision: keep M19 `saathi.knowledge` multi-repo coordination intact; platform
+  knowledge is the Yeti/ConversationService grounding path over approved local
+  autonomous state, docs, evidence summaries, and platform records.
+- Alternatives: pure model memory; direct frontend index access; embeddings-first
+  pipeline; per-domain mini-brains for IELTS/HCG/voice.
+- Evidence: `tests/test_m87_knowledge_grounding.py` (22), M80 regressions,
+  M93 browser cert, M94 certification summary.
+- Consequences: Yeti can answer SaathiOS factual questions with traceable
+  citations when sources are indexed. Production remains unauthorized.

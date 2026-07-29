@@ -4162,6 +4162,69 @@ def conversation_cancel(
         raise _voice_failure(exc) from exc
 
 
+# ── M87+ Knowledge and Grounding Runtime ─────────────────────────────────────
+class KnowledgeSearchBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    query: str = Field(min_length=1, max_length=500)
+    top_k: int = Field(default=6, ge=1, le=12)
+
+
+class KnowledgeReindexBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    force: bool = False
+
+
+def _knowledge_svc():
+    from saathi.platform.knowledge import default_knowledge_service
+
+    return default_knowledge_service(_svc())
+
+
+@router.get("/knowledge/health")
+def knowledge_health(
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return {"health": _knowledge_svc().health(_voice_context(authorization, x_platform_token))}
+    except Exception as exc:
+        raise _voice_failure(exc) from exc
+
+
+@router.post("/knowledge/search")
+def knowledge_search(
+    body: KnowledgeSearchBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return _knowledge_svc().search(
+            _voice_context(authorization, x_platform_token),
+            body.query,
+            top_k=body.top_k,
+        )
+    except Exception as exc:
+        raise _voice_failure(exc) from exc
+
+
+@router.post("/knowledge/reindex")
+def knowledge_reindex(
+    body: KnowledgeReindexBody | None = None,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        force = bool(body.force) if body is not None else False
+        return _knowledge_svc().reindex(
+            _voice_context(authorization, x_platform_token),
+            force=force,
+        )
+    except Exception as exc:
+        raise _voice_failure(exc) from exc
+
+
 # ── M63/M64 module registry (read-only; authoritative source for browser discovery) ──
 def _module_registry():
     from saathi.platform.module_registry import get_registry

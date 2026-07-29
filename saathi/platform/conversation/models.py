@@ -37,6 +37,7 @@ class StreamEventType(str, Enum):
     TEXT_DELTA = "text_delta"
     SEGMENT_READY = "segment_ready"
     INTENT_PROPOSED = "intent_proposed"
+    GROUNDING = "grounding"
     COMPLETED = "completed"
     CANCELLED = "cancelled"
     FAILED = "failed"
@@ -124,6 +125,7 @@ class ConversationStreamEvent:
     error_message: str = ""
     action_kind: str = ActionKind.INFORMATIONAL.value
     intent: dict[str, Any] = field(default_factory=dict)
+    grounding: dict[str, Any] = field(default_factory=dict)
     ts: float = field(default_factory=time.time)
 
     def to_public(self) -> dict[str, Any]:
@@ -147,6 +149,8 @@ class ConversationStreamEvent:
                 for k, v in self.intent.items()
                 if k not in {"raw", "provider_payload", "credentials"}
             }
+        if self.grounding:
+            out["grounding"] = self.grounding
         return out
 
 
@@ -167,6 +171,7 @@ class ConversationResult:
     usage: dict[str, Any] = field(default_factory=dict)
     latency_ms: float = 0.0
     intelligence_kind: str = "model"  # model | unavailable | test_injected
+    grounding: dict[str, Any] = field(default_factory=dict)
 
     def to_public(self) -> dict[str, Any]:
         return {
@@ -186,6 +191,8 @@ class ConversationResult:
             "latency_ms": self.latency_ms,
             "intelligence_kind": self.intelligence_kind,
             "text_chars": len(self.text or ""),
+            "grounding": self.grounding or {},
+            "grounded": bool((self.grounding or {}).get("grounded")),
         }
 
 

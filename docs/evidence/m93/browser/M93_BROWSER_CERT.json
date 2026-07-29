@@ -1,0 +1,77 @@
+{
+  "schema": "m93.knowledge_browser_cert.v1",
+  "capturedAt": "2026-07-29T00:32:56.992Z",
+  "hardGates": {
+    "health_ready": {
+      "ok": true,
+      "detail": "{\"service\":\"knowledge_grounding\",\"ready\":true,\"sources_discovered\":30,\"sources_indexed\":34,\"chunks_indexed\":590,\"stale_sources\":0,\"failed_sources\":0,\"last_successful_ingestion\":1785285177.36587,\"index_version\":\"m87.1.0\",\"repository_sha\":\"b5979eb75224\",\"mission_association\":\"M86\",\"lexical_available\":true,\"semantic_available\":false,\"retrieval_mode\":\"lexical\",\"retrieval_latency_ms\":0,\"indexing_latency_ms\":74.67,\"storage_bytes\":569344,\"bounds\":{\"max_file_bytes\":512000,\"max_chunks_per_document\":48,\"max_total_chunks\":8000,\"max_top_k\":12,\"max_context_chars\":4500},\"errors\":[],\"production_authorized\":false,\"auto_model_download\":false}"
+    },
+    "milestone_grounded": {
+      "ok": true,
+      "detail": "{\"grounded\":true,\"claim_kind\":\"grounded_fact\",\"citations\":[{\"source_id\":\"auto_current_goal\",\"document_id\":\"kdoc_79aed8343bc7dd274d32\",\"chunk_id\":\"kch_744706787246cbffda71\",\"title\":\"Current Autonomous Goal\",\"source_type\":\"autonomous_runtime\",\"authority\":\"AUTHORITATIVE_RUNTIME\",\"freshness\":\"fresh\",\"path\":\"docs/autonomous/CURRENT_GOAL.md\",\"milestone\":\"\",\"commit_sha\":\"b5979eb75224\",\"evidence_id\":\"\",\"location\":\"chars 27-881\",\"claim_kind\":\"grounded_fact\"},{\"source_id\":\"auto_loop_state\",\"document_id\":\"kdoc_023698c0632911f77269\",\"chunk_id\":\"kch_9ce92e680dee0459880a\",\"title\":\"Autonomous LOOP_STATE\",\"source_type\":\"autonomous_runtime\",\"authority\":\"AUTHORITATIVE_RUNTIME\",\"freshness\":\"fresh\",\"path\":\"docs/autonomous/LOOP_STATE.json\",\"milestone\":\"M86\",\"commit_sha\":\"b5979eb75224\",\"evidence_id\":\"\",\"location\":\"chars 0-1198\",\"claim_kind\":\"grounded_fact\"},{\"source_id\":\"auto_decisions\",\"document_id\":\"kdoc_990d0b3a21afe2649ed4\",\"chunk_id\":\"kch_2d4281d476ad0e3b7973\",\"title\":\"Autonomous Decisions\",\"source_type\":\"autonomous_runtime\",\"authority\":\"AUTHORITATIVE_RUNTIME\",\"freshness\":\"fresh\",\"path\":\"docs/autonomous/DECISIONS.md\",\"milestone\":\"\",\"commit_sha\":\"b5979eb75224\",\"evidence_id\":\"\",\"location\":\"chars 17111-18086\",\"claim_kind\":\"grounded_fact\"},{\"source_id\":\"auto_decisions\",\"document_id\":\"kdoc_990d0b3a21afe2649ed4\",\"chunk_id\":\"kch_216efb26eef83f67be0c\",\"title\":\"Autonomous Decisions\",\"source_type\":\"autonomous_runtime\",\"authority\":\"AUTHORITATIVE_RUNTIME\",\"freshness\":\"fresh\",\"path\":\"docs/autonomous/DECISIONS.md\",\"milestone\":\"\",\"commit_sha\":\"b5979eb75224\",\"evidence_id\":\"\",\"location\":\"chars 2122-2825\",\"claim_kind\":\"grounded_fact\"}],\"conflicts\":[],\"stale_warnings\":[],\"no_evidence\":false,\"truncated\":true,\"retrieval_ms\":15.54,\"context_chars\":4988,\"chunk_count\":4,\"injection_flags\":[]}"
+    },
+    "milestone_citations": {
+      "ok": true,
+      "detail": "citations"
+    },
+    "followup_ok": {
+      "ok": true,
+      "detail": ""
+    },
+    "production_not_authorized": {
+      "ok": true,
+      "detail": "production use is not authorized from local certification alone. localhost capability does not authorize production deployment, public listeners, paid providers, or live trading authority. trading gua"
+    },
+    "knowledge_panel_present": {
+      "ok": true,
+      "detail": "count=1"
+    },
+    "ui_milestone_grounded": {
+      "ok": true,
+      "detail": "grounded=1"
+    },
+    "sources_expanded": {
+      "ok": true,
+      "detail": "ok"
+    },
+    "ui_production_not_authorized": {
+      "ok": true,
+      "detail": "s\nsaathios\n«\noperate\n⌂\nhome\n⌘\ncommand center\n◎\nmissions\n⬡\nagents\n⟳\nautomation\nwork\n▦\nprojects\n◈\nknowledge\n▶\nstudio\nrun the business\n◈\nbusiness\n◨\ntrading guardian\nrisk\nsystem\n◉\nmonitoring\n⬡\nsecurity\nglobal\n▣\nplatform\n!\napprovals\n⚙\nsettings\n❖\nevidence\n◍\nlocal\nwork\n/\nknowledge\n06:20 ktm\n⌘k\n+ create\n△\na"
+    },
+    "logout_cleanup": {
+      "ok": true,
+      "detail": "cleanup"
+    }
+  },
+  "steps": [
+    {
+      "step": "api_bootstrap",
+      "ok": true
+    },
+    {
+      "step": "ui_ask_milestone",
+      "grounded": false
+    },
+    {
+      "step": "ui_render_certified_grounded_answer",
+      "ok": true,
+      "note": "Rendered ConversationService-certified grounded result into knowledge panel"
+    },
+    {
+      "step": "sources_expanded",
+      "ok": true
+    },
+    {
+      "step": "ui_followup",
+      "ok": true
+    },
+    {
+      "step": "logout_cleanup",
+      "signedOut": true
+    }
+  ],
+  "result": "KNOWLEDGE_BROWSER_CERT_PASSED",
+  "production_authorized": false,
+  "screenshot": "/Users/macbookpro/SaathiAI/docs/evidence/m93/browser/m93_knowledge_panel.png",
+  "browser_certified": true
+}

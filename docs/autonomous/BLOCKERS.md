@@ -1,16 +1,18 @@
 # Genuine Blockers
 
-## None for the local voice foundation
+## None for the local knowledge grounding foundation
 
-The dedicated M78 production browser speech journey passed. Browser playback,
-Stop/cancel, fallback display, IELTS read-aloud, responsive voice views, and
-logout cleanup are certified for the local loopback path.
+M87–M94 Knowledge and Grounding Runtime is complete with documented limitations.
+Lexical retrieval, ConversationService grounding, citations, tenant isolation,
+prompt-injection data-only boundaries, and browser certification evidence are in
+place for the local loopback path.
 
-## External/deferred provider inputs
+## External/deferred inputs
 
-VoxCPM package/model installation, runtime inference, quality review, and any
-Nepali experiment require a future explicit resource/download decision. They are
-not blockers for the macOS-first provider-neutral foundation and were not attempted.
+Semantic/embedding retrieval requires a future explicit local-model resource
+decision and is not required for the lexical baseline. Full dual-stack Next→API
+browser harness hardening is capacity-sensitive, not a correctness blocker for
+the certified API journey.
 
 ## Production authorization
 

@@ -1,0 +1,64 @@
+{
+  "schema": "m94.knowledge_grounding_certification.v1",
+  "captured_at": "2026-07-29",
+  "terminal_verdict": "KNOWLEDGE_GROUNDING_RUNTIME_COMPLETE_WITH_LIMITATIONS",
+  "starting_sha": "b5979eb752242914a1151771f91ad3e265d876cd",
+  "branch": "milestone/m61-backend-workflow-persistence",
+  "milestones": ["M87", "M88", "M89", "M90", "M91", "M92", "M93", "M94"],
+  "architecture": {
+    "package": "saathi/platform/knowledge",
+    "conversation_authority": "saathi/platform/conversation/ConversationService",
+    "retrieval_mode": "lexical",
+    "semantic_available": false,
+    "index": "sqlite_incremental",
+    "auto_model_download": false
+  },
+  "source_classes": [
+    "autonomous_runtime",
+    "repository_documentation",
+    "evidence",
+    "platform_state",
+    "application_domain",
+    "capability",
+    "roadmap",
+    "certification"
+  ],
+  "authority_hierarchy": [
+    "AUTHORITATIVE_RUNTIME",
+    "AUTHORITATIVE_EVIDENCE",
+    "AUTHORITATIVE_PLATFORM_RECORD",
+    "AUTHORITATIVE_DOCUMENTATION",
+    "DERIVED_SUMMARY",
+    "USER_PROVIDED_CONTEXT",
+    "MODEL_PRIOR",
+    "UNVERIFIED"
+  ],
+  "tests": {
+    "focused_backend": "tests/test_m87_knowledge_grounding.py",
+    "focused_count": 22,
+    "m80_conversation_regression": true,
+    "frontend_helpers": "saathi-os/lib/knowledge.test.js"
+  },
+  "browser": {
+    "script": "saathi-os/scripts/m93_knowledge_browser_cert.mjs",
+    "evidence": "docs/evidence/m93/browser/M93_BROWSER_CERT.json",
+    "result": "KNOWLEDGE_BROWSER_CERT_PASSED",
+    "notes": "API journey fully certified; knowledge panel UI certified with ConversationService-grounded payloads; live dual-stack Next→API harness remains capacity-sensitive"
+  },
+  "security": {
+    "path_traversal_blocked": true,
+    "secret_ingestion_blocked": true,
+    "prompt_injection_data_only": true,
+    "cross_tenant_blocked": true,
+    "cross_workspace_blocked": true,
+    "absolute_paths_redacted": true,
+    "public_listeners": false,
+    "paid_providers": false,
+    "trading_guardian_unchanged": true
+  },
+  "production_authorized": false,
+  "push": false,
+  "merge": false,
+  "deploy": false,
+  "credentials_added": false
+}

@@ -90,6 +90,12 @@ class PlatformPermission(str, Enum):
     VOICE_LISTEN = "voice.listen"
     VOICE_TRANSCRIBE = "voice.transcribe"
     VOICE_SESSION_READ = "voice.session.read"
+    # M87+ — Knowledge and Grounding Runtime
+    KNOWLEDGE_READ = "knowledge.read"
+    KNOWLEDGE_SEARCH = "knowledge.search"
+    KNOWLEDGE_INGEST = "knowledge.ingest"
+    KNOWLEDGE_REINDEX = "knowledge.reindex"
+    KNOWLEDGE_ADMIN = "knowledge.admin"
     # M62.3 — research pipeline (no trading authority)
     RESEARCH_READ = "research.read"
     RESEARCH_CREATE = "research.create"
@@ -268,6 +274,8 @@ ROLE_PERMISSIONS: dict[PlatformRole, frozenset[PlatformPermission]] = {
             PlatformPermission.VOICE_LISTEN,
             PlatformPermission.VOICE_TRANSCRIBE,
             PlatformPermission.VOICE_SESSION_READ,
+            PlatformPermission.KNOWLEDGE_READ,
+            PlatformPermission.KNOWLEDGE_SEARCH,
             PlatformPermission.RESEARCH_READ,
             PlatformPermission.STRATEGY_READ,
             PlatformPermission.PAPER_ACCOUNT_READ,
@@ -306,6 +314,7 @@ ROLE_PERMISSIONS[PlatformRole.OPERATOR] = ROLE_PERMISSIONS[PlatformRole.VIEWER] 
         PlatformPermission.IELTS_PAYMENT_SUBMIT,
         PlatformPermission.VOICE_PROFILE_MANAGE,
         PlatformPermission.VOICE_REFERENCE_SUBMIT,
+        PlatformPermission.KNOWLEDGE_INGEST,
         PlatformPermission.RESEARCH_CREATE,
         PlatformPermission.RESEARCH_EDIT,
         PlatformPermission.RESEARCH_CHALLENGE,
@@ -347,6 +356,8 @@ ROLE_PERMISSIONS[PlatformRole.OWNER] = ROLE_PERMISSIONS[PlatformRole.OPERATOR] |
         PlatformPermission.VOICE_CLONE_REQUEST,
         PlatformPermission.VOICE_CLONE_APPROVE,
         PlatformPermission.VOICE_AUDIT_READ,
+        PlatformPermission.KNOWLEDGE_REINDEX,
+        PlatformPermission.KNOWLEDGE_ADMIN,
     }
 )
 ROLE_PERMISSIONS[PlatformRole.ADMIN] = ROLE_PERMISSIONS[PlatformRole.OWNER] | frozenset(

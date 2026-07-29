@@ -1,20 +1,21 @@
 {
-  "goal_id": "SAATHIOS_LIVE_CONVERSATIONAL_INTELLIGENCE",
-  "historical_baseline_sha": "1ea69436b40ba68f19f941f8e0d104df587651b3",
-  "baseline_sha": "1ea69436b40ba68f19f941f8e0d104df587651b3",
-  "session_start_sha": "1ea69436b40ba68f19f941f8e0d104df587651b3",
-  "current_sha": "6014b73f8e32b424d67970d980f55a42eb77d375",
-  "m80_m86_implementation_sha": "6014b73f8e32b424d67970d980f55a42eb77d375",
-  "current_milestone": "M86",
+  "goal_id": "SAATHIOS_KNOWLEDGE_GROUNDING_RUNTIME",
+  "historical_baseline_sha": "b5979eb752242914a1151771f91ad3e265d876cd",
+  "baseline_sha": "b5979eb752242914a1151771f91ad3e265d876cd",
+  "session_start_sha": "b5979eb752242914a1151771f91ad3e265d876cd",
+  "current_sha": "b5979eb752242914a1151771f91ad3e265d876cd",
+  "m87_m94_implementation_sha": "PENDING_COMMIT",
+  "current_milestone": "M94",
   "status": "complete_with_limitations",
   "completed_milestones": [
-    "M80",
-    "M81",
-    "M82",
-    "M83",
-    "M84",
-    "M85",
-    "M86"
+    "M87",
+    "M88",
+    "M89",
+    "M90",
+    "M91",
+    "M92",
+    "M93",
+    "M94"
   ],
   "prior_completed_goals": [
     {
@@ -36,9 +37,14 @@
       "goal_id": "SAATHIOS_REALTIME_VOICE_RUNTIME",
       "terminal_sha": "1ea69436b40ba68f19f941f8e0d104df587651b3",
       "status": "complete_with_limitations"
+    },
+    {
+      "goal_id": "SAATHIOS_LIVE_CONVERSATIONAL_INTELLIGENCE",
+      "terminal_sha": "b5979eb752242914a1151771f91ad3e265d876cd",
+      "status": "complete_with_limitations"
     }
   ],
-  "next_action": "Optional human mic recording, persona grounding improvements for small models, production hardening — do not auto-download models; production not authorized.",
-  "last_verified_at": "2026-07-28",
-  "stop_reason": "LIVE_CONVERSATIONAL_INTELLIGENCE_COMPLETE_WITH_LIMITATIONS: Ollama qwen2.5:1.5b real streaming multi-turn; barge-in cancel; browser STT + synthetic media cert; templates removed from default path; production not authorized."
+  "next_action": "Optional semantic retrieval only with explicit local-model approval; production hardening — do not auto-download models; production not authorized.",
+  "last_verified_at": "2026-07-29",
+  "stop_reason": "KNOWLEDGE_GROUNDING_RUNTIME_COMPLETE_WITH_LIMITATIONS: lexical grounding into ConversationService; citations; tenant isolation; injection defense; browser cert; production not authorized."
 }

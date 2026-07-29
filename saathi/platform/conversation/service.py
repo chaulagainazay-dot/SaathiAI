@@ -38,7 +38,7 @@ class ConversationService:
     """Provider-neutral conversational intelligence with streaming + cancel.
 
     Does not execute tools. Does not call SpeechService. Frontend never calls
-    providers directly.
+    providers directly. Knowledge grounding is optional and fail-safe.
     """
 
     def __init__(
@@ -48,17 +48,34 @@ class ConversationService:
         providers: list[ConversationProvider] | None = None,
         context_builder: ConversationContextBuilder | None = None,
         intent_router: ToolIntentRouter | None = None,
+        knowledge_service=None,
+        enable_grounding: bool = True,
     ):
         self.store = platform_store
         self.providers = providers or default_providers()
         self.context_builder = context_builder or ConversationContextBuilder()
         self.intent_router = intent_router or ToolIntentRouter()
+        self.knowledge_service = knowledge_service
+        self.enable_grounding = enable_grounding
         self._memories: dict[str, SessionMemory] = {}
         self._active: dict[str, str] = {}  # request_id -> session_key
         self._cancel: set[str] = set()
         self._lock = threading.RLock()
         self._sem = threading.BoundedSemaphore(MAX_CONCURRENT_GENERATIONS)
         self._provider_by_id = {p.provider_id: p for p in self.providers}
+
+    def _resolve_knowledge(self):
+        if self.knowledge_service is not None:
+            return self.knowledge_service
+        if not self.enable_grounding:
+            return None
+        try:
+            from saathi.platform.knowledge import default_knowledge_service
+
+            # Prefer store-bound service when available
+            return default_knowledge_service()
+        except Exception:
+            return None
 
     def _audit(self, ctx, event: str, **detail) -> None:
         if self.store is None:
@@ -126,6 +143,18 @@ class ConversationService:
         ctx.require_permission(PlatformPermission.VOICE_SESSION_READ)
         providers = self.provider_health(ctx)
         ready = [p for p in providers if p.get("generation_healthy")]
+        knowledge = {"enabled": self.enable_grounding, "ready": False}
+        ks = self._resolve_knowledge()
+        if ks is not None:
+            try:
+                knowledge = {
+                    "enabled": True,
+                    "ready": bool(ks.index.count_chunks() > 0),
+                    "retrieval_mode": "lexical",
+                    "semantic_available": False,
+                }
+            except Exception:
+                knowledge = {"enabled": True, "ready": False}
         return {
             "service": "conversation",
             "ready": bool(ready),
@@ -136,6 +165,7 @@ class ConversationService:
             "auto_model_download": False,
             "tools_executable_by_model": False,
             "intelligence_templates_disabled": True,
+            "grounding": knowledge,
         }
 
     def cancel(self, request_id: str) -> None:
@@ -210,6 +240,27 @@ class ConversationService:
 
         memory = self.memory_for(ctx, req.session_id, req.conversation_id)
         history = memory.history_messages()
+
+        grounding_public: dict[str, Any] = {}
+        grounding_block = ""
+        grounding_policy = ""
+        ks = self._resolve_knowledge()
+        if ks is not None and self.enable_grounding:
+            try:
+                if ks.should_ground(req.message, yeti_mode=req.yeti_mode):
+                    gctx = ks.ground(ctx, req.message, domain=req.yeti_mode)
+                    grounding_public = gctx.to_public()
+                    grounding_block = gctx.prompt_block or ""
+                    grounding_policy = ks.answer_policy.system_addendum()
+            except Exception:
+                grounding_public = {
+                    "grounded": False,
+                    "no_evidence": True,
+                    "claim_kind": "unavailable_evidence",
+                    "citations": [],
+                    "error": "retrieval_unavailable",
+                }
+
         ctx_build = self.context_builder.build(
             user_message=req.message,
             yeti_mode=req.yeti_mode,
@@ -218,6 +269,8 @@ class ConversationService:
             module_context=req.module_context,
             project_id=req.project_id,
             mission_id=req.mission_id,
+            grounding_block=grounding_block,
+            grounding_policy=grounding_policy,
         )
         provider = select_provider(req.provider, self.providers)
         t0 = time.time()
@@ -240,8 +293,17 @@ class ConversationService:
             **req.to_safe_audit(),
             **ctx_build.safe_telemetry(),
             "selected_provider": provider.provider_id,
+            "grounded": bool(grounding_public.get("grounded")),
+            "citation_count": len(grounding_public.get("citations") or []),
         }
         self._audit(ctx, "conversation.generation.started", **audit_start)
+
+        if grounding_public:
+            yield ConversationStreamEvent(
+                event=StreamEventType.GROUNDING.value,
+                request_id=req.request_id,
+                grounding=grounding_public,
+            )
 
         try:
             for event in provider.stream(
@@ -357,6 +419,8 @@ class ConversationService:
                     "latency_ms": round((time.time() - t0) * 1000, 2),
                     "intelligence_kind": intelligence,
                     "action_kind": intent.get("action_kind") if not failed else "",
+                    "grounded": bool(grounding_public.get("grounded")),
+                    "citation_count": len(grounding_public.get("citations") or []),
                 },
             )
         finally:
@@ -375,6 +439,7 @@ class ConversationService:
         error_message = ""
         action_kind = ActionKind.INFORMATIONAL.value
         intent: dict[str, Any] = {}
+        grounding: dict[str, Any] = {}
         t0 = time.time()
         intelligence = "unavailable"
         ok = False
@@ -382,7 +447,9 @@ class ConversationService:
             request_id = event.request_id or request_id
             provider = event.provider or provider
             model = event.model or model
-            if event.event == StreamEventType.TEXT_DELTA.value:
+            if event.event == StreamEventType.GROUNDING.value:
+                grounding = event.grounding or grounding
+            elif event.event == StreamEventType.TEXT_DELTA.value:
                 assembled += event.text or ""
                 streamed = True
             elif event.event == StreamEventType.COMPLETED.value:
@@ -423,6 +490,7 @@ class ConversationService:
             intent=intent,
             latency_ms=round((time.time() - t0) * 1000, 2),
             intelligence_kind=intelligence,
+            grounding=grounding,
         )
 
     # ── Voice Runtime bridge helpers ─────────────────────────────────────
@@ -470,11 +538,28 @@ def default_conversation_service(platform_service=None) -> ConversationService:
             existing = getattr(platform_service, "_conversation_service", None)
             if existing is not None:
                 return existing
-            svc = ConversationService(platform_store=getattr(platform_service, "store", None))
+            knowledge = None
+            try:
+                from saathi.platform.knowledge import default_knowledge_service
+
+                knowledge = default_knowledge_service(platform_service)
+            except Exception:
+                knowledge = None
+            svc = ConversationService(
+                platform_store=getattr(platform_service, "store", None),
+                knowledge_service=knowledge,
+            )
             setattr(platform_service, "_conversation_service", svc)
             return svc
         if _DEFAULT is None:
-            _DEFAULT = ConversationService()
+            knowledge = None
+            try:
+                from saathi.platform.knowledge import default_knowledge_service
+
+                knowledge = default_knowledge_service()
+            except Exception:
+                knowledge = None
+            _DEFAULT = ConversationService(knowledge_service=knowledge)
         return _DEFAULT
 
 
@@ -484,15 +569,25 @@ def reset_conversation_service_for_tests(platform_service=None) -> None:
         _DEFAULT = None
         if platform_service is not None and hasattr(platform_service, "_conversation_service"):
             delattr(platform_service, "_conversation_service")
+        try:
+            from saathi.platform.knowledge import reset_knowledge_service_for_tests
+
+            reset_knowledge_service_for_tests(platform_service)
+        except Exception:
+            pass
 
 
 def make_test_conversation_service(
     platform_store=None,
     *,
     reply_fn=None,
+    knowledge_service=None,
+    enable_grounding: bool = True,
 ) -> ConversationService:
     inject = InjectedConversationProvider(reply_fn=reply_fn)
     return ConversationService(
         platform_store=platform_store,
         providers=[inject, *default_providers()],
+        knowledge_service=knowledge_service,
+        enable_grounding=enable_grounding if knowledge_service is not None else False,
     )
