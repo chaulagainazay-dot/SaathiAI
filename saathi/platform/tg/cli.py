@@ -101,6 +101,53 @@ def main(argv: list[str] | None = None) -> int:
 
     sub.add_parser("posture")
 
+    # M184–M191 historical data + research
+    p_data = sub.add_parser("data")
+    data_sub = p_data.add_subparsers(dest="action")
+    p_imp = data_sub.add_parser("import")
+    p_imp.add_argument("path")
+    p_imp.add_argument("--adapter", default="local_file")
+    p_imp.add_argument("--name", default="")
+    p_imp.add_argument("--market", default="")
+    p_imp.add_argument("--instrument", default="UNKNOWN")
+    p_imp.add_argument("--calendar", default="DEFAULT_24_5")
+    p_imp.add_argument("--currency", default="USD")
+    data_sub.add_parser("list")
+    p_insp = data_sub.add_parser("inspect")
+    p_insp.add_argument("dataset_id")
+    p_insp.add_argument("--version", default="")
+    p_q = data_sub.add_parser("quarantine")
+    p_q.add_argument("dataset_id")
+    p_q.add_argument("version")
+    p_q.add_argument("--reason", default="operator_quarantine")
+    data_sub.add_parser("validate")  # alias list quality via inspect latest
+
+    p_cal = sub.add_parser("calendar")
+    cal_sub = p_cal.add_subparsers(dest="action")
+    cal_sub.add_parser("inspect")
+
+    p_res = sub.add_parser("research")
+    res_sub = p_res.add_subparsers(dest="action")
+    p_rr = res_sub.add_parser("run")
+    p_rr.add_argument("--strategy", default="trend_following")
+    p_rr.add_argument("--dataset-id", default="")
+    p_rr.add_argument("--period", default="FULL")
+    p_rr.add_argument("--seed", type=int, default=42)
+    p_rs = res_sub.add_parser("status")
+    p_rs.add_argument("--run-id", default="")
+    p_rmc = res_sub.add_parser("monte-carlo")
+    p_rmc.add_argument("--strategy", default="trend_following")
+    p_rmc.add_argument("--dataset-id", default="")
+    p_rmc.add_argument("--n", type=int, default=100)
+
+    p_sq = sub.add_parser("strategy-qualify")
+    p_sq.add_argument("--strategy", default="trend_following")
+    p_sq.add_argument("--dataset-id", default="")
+
+    p_sc2 = sub.add_parser("strategy-scorecard")
+    p_sc2.add_argument("--strategy", default="trend_following")
+    p_sc2.add_argument("--dataset-id", default="")
+
     args = parser.parse_args(argv)
     if not args.cmd:
         parser.print_help()
@@ -205,6 +252,66 @@ def main(argv: list[str] | None = None) -> int:
         if args.action == "status":
             return _out({"kill_switches": svc.kill_switch_status(), "paper_only": True})
         return 2
+
+    if args.cmd == "data":
+        if args.action == "import":
+            return _out(svc.import_historical_dataset(
+                args.path,
+                adapter=args.adapter,
+                dataset_name=args.name or "",
+                market=args.market,
+                default_instrument=args.instrument,
+                calendar_name=args.calendar,
+                currency=args.currency,
+            ))
+        if args.action == "list":
+            return _out(svc.list_historical_datasets())
+        if args.action == "inspect":
+            return _out(svc.inspect_historical_dataset(
+                args.dataset_id, version=args.version or None,
+            ))
+        if args.action == "quarantine":
+            return _out(svc.quarantine_historical_dataset(
+                args.dataset_id, args.version, reason=args.reason,
+            ))
+        if args.action == "validate":
+            return _out(svc.list_historical_datasets())
+        return 2
+
+    if args.cmd == "calendar":
+        if args.action == "inspect":
+            return _out(svc.historical_calendars())
+        return 2
+
+    if args.cmd == "research":
+        if args.action == "run":
+            return _out(svc.run_historical_research(
+                strategy_slug=args.strategy,
+                dataset_id=args.dataset_id,
+                period=args.period,
+                seed=args.seed,
+            ))
+        if args.action == "status":
+            return _out(svc.historical_research_status(args.run_id or None))
+        if args.action == "monte-carlo":
+            return _out(svc.run_monte_carlo_analysis(
+                strategy_slug=args.strategy,
+                dataset_id=args.dataset_id,
+                n_simulations=args.n,
+            ))
+        return 2
+
+    if args.cmd == "strategy-qualify":
+        return _out(svc.qualify_strategy_historical(
+            args.strategy, dataset_id=args.dataset_id,
+        ))
+
+    if args.cmd == "strategy-scorecard":
+        if args.dataset_id:
+            return _out(svc.qualify_strategy_historical(
+                args.strategy, dataset_id=args.dataset_id,
+            ))
+        return _out(svc.research_scorecard(strategy_slug=args.strategy))
 
     parser.print_help()
     return 2

@@ -7422,3 +7422,276 @@ def tg_portfolio_scenario(body: TgPortfolioScenarioBody, authorization: str | No
         return PortfolioRiskAnalyzer().scenario(body.scenario, state)
     except PlatformContextError as e:
         raise _err(e) from e
+
+
+# ══════════════════════════════════════════════════════════════════════════
+# M184–M191 — Historical market data, research, Monte Carlo, qualification
+# PAPER RESEARCH ONLY. No live orders. No broker credentials.
+# ══════════════════════════════════════════════════════════════════════════
+class TgHistoricalImportBody(BaseModel):
+    path: str
+    adapter: str = "local_file"
+    dataset_name: str = ""
+    market: str = ""
+    currency: str = "USD"
+    timezone: str = "UTC"
+    timeframe: str = "1d"
+    calendar_name: str = "DEFAULT_24_5"
+    classification: str = "HISTORICAL_LOCAL_DATASET"
+    default_instrument: str = "UNKNOWN"
+    version: str = "1.0.0"
+    adjustment_methodology: str = "SPLIT_ONLY"
+
+
+@router.post("/tg/historical/import")
+def tg_historical_import(body: TgHistoricalImportBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.BACKTEST_RUN)
+        return _tg_svc().import_historical_dataset(
+            body.path,
+            adapter=body.adapter,
+            dataset_name=body.dataset_name,
+            market=body.market,
+            currency=body.currency,
+            timezone=body.timezone,
+            timeframe=body.timeframe,
+            calendar_name=body.calendar_name,
+            classification=body.classification,
+            default_instrument=body.default_instrument,
+            version=body.version,
+            adjustment_methodology=body.adjustment_methodology,
+            org_id=ctx.org_id,
+            workspace_id=ctx.workspace_id,
+        )
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/historical/datasets")
+def tg_historical_datasets(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.STRATEGY_READ)
+        return _tg_svc().list_historical_datasets(org_id=ctx.org_id, workspace_id=ctx.workspace_id)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/historical/datasets/{dataset_id}")
+def tg_historical_dataset_detail(dataset_id: str, version: str | None = None, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        from saathi.platform.tg.service import TGServiceError
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.STRATEGY_READ)
+        try:
+            return _tg_svc().inspect_historical_dataset(
+                dataset_id, version=version, org_id=ctx.org_id, workspace_id=ctx.workspace_id,
+            )
+        except TGServiceError as te:
+            raise PlatformContextError(te.code, te.message) from te
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/historical/datasets/{dataset_id}/quality")
+def tg_historical_quality(dataset_id: str, version: str | None = None, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        from saathi.platform.tg.service import TGServiceError
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.STRATEGY_READ)
+        try:
+            detail = _tg_svc().inspect_historical_dataset(
+                dataset_id, version=version, org_id=ctx.org_id, workspace_id=ctx.workspace_id,
+            )
+            return {
+                "quality": detail["version"].get("quality"),
+                "coverage": detail["version"].get("coverage"),
+                "classification": detail["version"].get("classification"),
+                "promotable": detail.get("promotable"),
+                "paper_only": True,
+            }
+        except TGServiceError as te:
+            raise PlatformContextError(te.code, te.message) from te
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+class TgQuarantineBody(BaseModel):
+    version: str
+    reason: str = "operator_quarantine"
+
+
+@router.post("/tg/historical/datasets/{dataset_id}/quarantine")
+def tg_historical_quarantine(dataset_id: str, body: TgQuarantineBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        from saathi.platform.tg.service import TGServiceError
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.STRATEGY_EDIT)
+        try:
+            return _tg_svc().quarantine_historical_dataset(dataset_id, body.version, reason=body.reason)
+        except TGServiceError as te:
+            raise PlatformContextError(te.code, te.message) from te
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/historical/quarantine")
+def tg_historical_quarantine_list(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.STRATEGY_READ)
+        return _tg_svc().list_historical_quarantine(org_id=ctx.org_id, workspace_id=ctx.workspace_id)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/historical/calendars")
+def tg_historical_calendars(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.STRATEGY_READ)
+        return _tg_svc().historical_calendars()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+class TgHistoricalResearchBody(BaseModel):
+    strategy_slug: str = "trend_following"
+    dataset_id: str = ""
+    version: str | None = None
+    period: str = "FULL"
+    seed: int = 42
+    fee_bps: str = "10"
+    slippage_bps: str = "5"
+    spread_model: str = "realistic"
+    n_folds: int = 3
+    mc_simulations: int = 100
+
+
+@router.post("/tg/historical/research")
+def tg_historical_research(body: TgHistoricalResearchBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        from saathi.platform.tg.service import TGServiceError
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.BACKTEST_RUN)
+        try:
+            return _tg_svc().run_historical_research(
+                strategy_slug=body.strategy_slug,
+                dataset_id=body.dataset_id,
+                version=body.version,
+                period=body.period,
+                seed=body.seed,
+                fee_bps=body.fee_bps,
+                slippage_bps=body.slippage_bps,
+                spread_model=body.spread_model,
+                n_folds=min(body.n_folds, 8),
+                mc_simulations=min(body.mc_simulations, 500),
+                org_id=ctx.org_id,
+                workspace_id=ctx.workspace_id,
+            )
+        except TGServiceError as te:
+            raise PlatformContextError(te.code, te.message) from te
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/historical/research")
+def tg_historical_research_list(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.BACKTEST_REVIEW)
+        return _tg_svc().historical_research_status()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/historical/research/{run_id}")
+def tg_historical_research_get(run_id: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        from saathi.platform.tg.service import TGServiceError
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.BACKTEST_REVIEW)
+        try:
+            return _tg_svc().historical_research_status(run_id)
+        except TGServiceError as te:
+            raise PlatformContextError(te.code, te.message) from te
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+class TgMonteCarloBody(BaseModel):
+    strategy_slug: str = "trend_following"
+    dataset_id: str = ""
+    dataset: str = "TRENDING"
+    n: int = 40
+    seed: int = 42
+    n_simulations: int = 100
+
+
+@router.post("/tg/historical/monte-carlo")
+def tg_monte_carlo(body: TgMonteCarloBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.BACKTEST_RUN)
+        return _tg_svc().run_monte_carlo_analysis(
+            strategy_slug=body.strategy_slug,
+            dataset=body.dataset,
+            n=min(body.n, 200),
+            seed=body.seed,
+            n_simulations=min(body.n_simulations, 500),
+            dataset_id=body.dataset_id,
+        )
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+class TgQualifyBody(BaseModel):
+    strategy_slug: str = "trend_following"
+    dataset_id: str = ""
+    period: str = "FULL"
+    seed: int = 42
+    mc_simulations: int = 100
+
+
+@router.post("/tg/historical/qualify")
+def tg_qualify(body: TgQualifyBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.BACKTEST_REVIEW)
+        return _tg_svc().qualify_strategy_historical(
+            body.strategy_slug,
+            dataset_id=body.dataset_id,
+            period=body.period,
+            seed=body.seed,
+            mc_simulations=min(body.mc_simulations, 500),
+            org_id=ctx.org_id,
+            workspace_id=ctx.workspace_id,
+        )
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/historical/scorecard/{slug}")
+def tg_historical_scorecard(slug: str, dataset_id: str = "", authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.BACKTEST_REVIEW)
+        return _tg_svc().qualify_strategy_historical(
+            slug, dataset_id=dataset_id, org_id=ctx.org_id, workspace_id=ctx.workspace_id,
+        )
+    except PlatformContextError as e:
+        raise _err(e) from e

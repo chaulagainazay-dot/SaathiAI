@@ -69,6 +69,13 @@ class TradingGuardianService:
         self._risk_decisions: dict[str, Any] = {}
         self._backtests: dict[str, Any] = {}
         self._seeded = False
+        # M184–M191 historical research subsystem
+        from saathi.platform.tg.historical.store import HistoricalDatasetStore
+        from saathi.platform.tg.historical.import_service import HistoricalImportService
+        from saathi.platform.tg.historical.research import HistoricalResearchRunner
+        self.historical_store = HistoricalDatasetStore()
+        self.historical_import = HistoricalImportService(self.historical_store)
+        self.historical_research = HistoricalResearchRunner(self.historical_store)
 
     # ── bootstrap catalog ────────────────────────────────────────────────────
     def seed_catalog(
@@ -934,6 +941,258 @@ class TradingGuardianService:
             "paper_only": True,
             "live_authorized": False,
         }
+
+    # ── M184–M191 historical data + research ─────────────────────────────────
+    def import_historical_dataset(self, path: str, **kwargs: Any) -> dict[str, Any]:
+        """Import local historical file via read-only adapters. Paper research only."""
+        return self.historical_import.import_file(path, **kwargs)
+
+    def list_historical_datasets(self, *, org_id: str = "local", workspace_id: str = "local") -> dict[str, Any]:
+        datasets = self.historical_store.list_datasets(org_id=org_id, workspace_id=workspace_id)
+        return {
+            "datasets": [d.to_public() for d in datasets],
+            "store": self.historical_store.to_public_summary(),
+            "paper_only": True,
+            "live_authorized": False,
+        }
+
+    def inspect_historical_dataset(
+        self,
+        dataset_id: str,
+        version: str | None = None,
+        *,
+        org_id: str = "local",
+        workspace_id: str = "local",
+    ) -> dict[str, Any]:
+        if version:
+            v = self.historical_store.get_version(dataset_id, version)
+        else:
+            v = self.historical_store.get_latest(dataset_id)
+        if not v or (org_id and v.org_id and v.org_id != org_id):
+            raise TGServiceError("NOT_FOUND", "dataset version not found")
+        return {
+            "version": v.to_public(include_bars=False),
+            "promotable": v.promotable,
+            "paper_only": True,
+        }
+
+    def quarantine_historical_dataset(
+        self,
+        dataset_id: str,
+        version: str,
+        *,
+        reason: str = "operator_quarantine",
+    ) -> dict[str, Any]:
+        v = self.historical_store.get_version(dataset_id, version)
+        if not v:
+            raise TGServiceError("NOT_FOUND", "dataset version not found")
+        if v.immutable and v.status.value.startswith("ACCEPTED"):
+            # Accepted immutable versions cannot be mutated; record quarantine flag via notes only denied
+            raise TGServiceError("IMMUTABLE", "accepted dataset version is immutable")
+        rec = self.historical_store.quarantine(v, reason=reason)
+        return {"quarantine": rec.to_public(), "version": v.to_public(), "paper_only": True}
+
+    def list_historical_quarantine(self, **kwargs: Any) -> dict[str, Any]:
+        return {
+            "quarantine": [q.to_public() for q in self.historical_store.list_quarantine(**kwargs)],
+            "paper_only": True,
+            "usable_for_promotion": False,
+        }
+
+    def historical_calendars(self) -> dict[str, Any]:
+        from saathi.platform.tg.historical.calendars import list_calendars_public, SUPPORTED_MARKET_CALENDARS
+        return {
+            "calendars": list_calendars_public(),
+            "supported": list(SUPPORTED_MARKET_CALENDARS),
+            "paper_only": True,
+        }
+
+    def run_historical_research(
+        self,
+        *,
+        strategy_slug: str,
+        dataset_id: str = "",
+        version: str | None = None,
+        period: str = "FULL",
+        seed: int = 42,
+        fee_bps: str = "10",
+        slippage_bps: str = "5",
+        spread_model: str = "realistic",
+        n_folds: int = 3,
+        mc_simulations: int = 100,
+        org_id: str = "local",
+        workspace_id: str = "local",
+        bars: list | None = None,
+        classification: str | None = None,
+    ) -> dict[str, Any]:
+        from saathi.platform.tg.historical.research import HistoricalResearchRunner, ResearchConfig, ResearchPeriod
+        from saathi.platform.tg.data_contract import DataClassification
+
+        cfg = ResearchConfig(
+            period=ResearchPeriod(period) if period in {p.value for p in ResearchPeriod} else ResearchPeriod.FULL,
+            seed=seed,
+            fee_bps=fee_bps,
+            slippage_bps=slippage_bps,
+            spread_model=spread_model,
+            n_folds=n_folds,
+            mc_simulations=min(int(mc_simulations), 500),
+        )
+        dver = None
+        if dataset_id:
+            dver = (
+                self.historical_store.get_version(dataset_id, version)
+                if version
+                else self.historical_store.get_latest(dataset_id)
+            )
+            if dver is None:
+                raise TGServiceError("NOT_FOUND", f"dataset {dataset_id} not found")
+        cls = classification or (
+            dver.classification.value if dver else DataClassification.INCOMPLETE.value
+        )
+        result = self.historical_research.run(
+            strategy_slug=strategy_slug,
+            dataset_version=dver,
+            bars=bars,
+            classification=cls,
+            config=cfg,
+            dataset_id=dataset_id,
+            org_id=org_id,
+            workspace_id=workspace_id,
+        )
+        # Journal evidence (append-only)
+        try:
+            from saathi.platform.tg.domain import TradeJournalEntry
+            self.journal.append(TradeJournalEntry(
+                strategy_id=strategy_slug,
+                operator_notes=(
+                    f"historical_research_run run={result.get('run_id')} "
+                    f"verdict={result.get('qualification_verdict')} dataset={dataset_id}"
+                ),
+                evidence_refs=[
+                    str(result.get("run_id") or ""),
+                    str(result.get("output_fingerprint") or "")[:32],
+                ],
+                market_context={
+                    "kind": "historical_research",
+                    "authoritative": result.get("authoritative"),
+                    "data_classification": result.get("data_classification"),
+                },
+                org_id=org_id,
+                workspace_id=workspace_id,
+            ))
+        except Exception:
+            pass
+        return result
+
+    def historical_research_status(self, run_id: str | None = None) -> dict[str, Any]:
+        if run_id:
+            r = self.historical_research.get_run(run_id)
+            if not r:
+                raise TGServiceError("NOT_FOUND", "research run not found")
+            return r
+        return {"runs": self.historical_research.list_runs(), "paper_only": True}
+
+    def run_monte_carlo_analysis(
+        self,
+        *,
+        strategy_slug: str = "trend_following",
+        dataset: str = "TRENDING",
+        n: int = 40,
+        seed: int = 42,
+        n_simulations: int = 100,
+        dataset_id: str = "",
+    ) -> dict[str, Any]:
+        from saathi.platform.tg.historical.monte_carlo import run_monte_carlo, MonteCarloConfig
+        if dataset_id:
+            research = self.run_historical_research(
+                strategy_slug=strategy_slug, dataset_id=dataset_id, seed=seed, mc_simulations=n_simulations,
+            )
+            return {
+                "monte_carlo": research.get("monte_carlo"),
+                "strategy_slug": strategy_slug,
+                "dataset_id": dataset_id,
+                "paper_only": True,
+            }
+        bt = self.run_backtest(strategy_slug=strategy_slug, dataset=dataset, n=n, is_test_context=True)
+        mc = run_monte_carlo(
+            backtest_result=bt,
+            config=MonteCarloConfig(n_simulations=min(n_simulations, 500), seed=seed),
+        )
+        return {
+            "monte_carlo": mc,
+            "strategy_slug": strategy_slug,
+            "dataset": dataset,
+            "data_classification": bt.get("data_classification"),
+            "authoritative": bt.get("authoritative"),
+            "paper_only": True,
+            "note": "Synthetic/fixture backtest MC is research-only and cannot promote strategies.",
+        }
+
+    def qualify_strategy_historical(
+        self,
+        strategy_slug: str,
+        *,
+        dataset_id: str = "",
+        **kwargs: Any,
+    ) -> dict[str, Any]:
+        if dataset_id:
+            research = self.run_historical_research(
+                strategy_slug=strategy_slug, dataset_id=dataset_id, **{
+                    k: v for k, v in kwargs.items()
+                    if k in ("version", "period", "seed", "fee_bps", "slippage_bps", "n_folds", "mc_simulations", "org_id", "workspace_id")
+                },
+            )
+            return {
+                "qualification": research.get("scorecard"),
+                "research_run_id": research.get("run_id"),
+                "paper_only": True,
+                "live_authorized": False,
+            }
+        # Fixture path — always non-eligible for PAPER
+        bt_kwargs = {
+            k: v for k, v in kwargs.items()
+            if k in (
+                "dataset", "n", "seed", "cost_tier", "split_kind",
+                "is_test_context", "classification", "org_id", "workspace_id",
+            )
+        }
+        pack = self.research_scorecard(strategy_slug=strategy_slug, **bt_kwargs)
+        from saathi.platform.tg.historical.monte_carlo import run_monte_carlo, MonteCarloConfig
+        n_sim = int(kwargs.get("mc_simulations") or 50)
+        mc = run_monte_carlo(
+            backtest_result=pack.get("backtest"),
+            config=MonteCarloConfig(n_simulations=min(n_sim, 500), seed=int(kwargs.get("seed") or 0)),
+        )
+        from saathi.platform.tg.historical.qualification import qualify_strategy, build_gates_from_evidence
+        from saathi.platform.tg.domain import PerformanceMetrics as PM
+        m_raw = (pack.get("backtest") or {}).get("metrics") or {}
+        metrics = PM(
+            total_return=coerce_decimal(m_raw.get("total_return", 0)),
+            max_drawdown=coerce_decimal(m_raw.get("max_drawdown", 0)),
+            number_of_trades=int(m_raw.get("number_of_trades", 0) or 0),
+        )
+        gates = build_gates_from_evidence(
+            data_classification=pack.get("scorecard", {}).get("data_classification", "SYNTHETIC_VALIDATION"),
+            quality_verdict="",
+            trade_count=metrics.number_of_trades,
+            walk_forward=pack.get("walk_forward"),
+            stress=pack.get("stress"),
+            monte_carlo=mc,
+            metrics=metrics,
+            fee_bps="10",
+            spread_model="realistic",
+            slippage_bps="5",
+        )
+        q = qualify_strategy(
+            strategy_slug,
+            metrics=metrics,
+            gates=gates,
+            data_classification=pack.get("scorecard", {}).get("data_classification", "SYNTHETIC_VALIDATION"),
+            walk_forward=pack.get("walk_forward"),
+            stress=pack.get("stress"),
+            monte_carlo=mc,
+        )
+        return {"qualification": q, "monte_carlo": mc, "paper_only": True, "live_authorized": False}
 
     # ── kill switch ──────────────────────────────────────────────────────────
     def activate_kill_switch(self, **kwargs: Any) -> dict[str, Any]:
