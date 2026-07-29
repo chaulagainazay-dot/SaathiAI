@@ -1,5 +1,22 @@
 # SaathiOS Autonomous Roadmap
 
+## M176–M183 — Trading Guardian Paper Validation (2026-07-29)
+
+| Field | Value |
+| --- | --- |
+| Verdict | `TRADING_GUARDIAN_PAPER_VALIDATION_CERTIFIED_WITH_LIMITATIONS` |
+| Data contract | AUTHORITATIVE_RESULT_REQUIRES_NON_FIXTURE_DATA; fail-closed incomplete |
+| Walk-forward | Expanding/rolling/anchored; final test untouched |
+| Stress lab | Costs, regimes, data quality, parameter sensitivity |
+| Portfolio | Correlation/sector/heat; UNRECONCILED_BLOCKED |
+| Recovery | 16/16 scenarios |
+| Browser | TRADING_GUARDIAN_BROWSER_CERT_PASSED (automated; owner sign-off not claimed) |
+| Backend | 5499 passed, 1 skipped |
+| Frontend | 218 passed |
+| Live / production | Not authorized |
+
+Evidence: `docs/trading/M176_M183_PAPER_VALIDATION.md`, `docs/trading/m176_m183_evidence/`.
+
 ## M166–M175 — Trading Guardian Research & Paper Foundation (2026-07-29)
 
 | Field | Value |
