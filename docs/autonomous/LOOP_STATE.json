@@ -3,7 +3,7 @@
   "historical_baseline_sha": "58ea8d3ffb63bbeec09998954f6eec406638471d",
   "baseline_sha": "58ea8d3ffb63bbeec09998954f6eec406638471d",
   "session_start_sha": "58ea8d3ffb63bbeec09998954f6eec406638471d",
-  "current_sha": "PENDING_COMMIT",
+  "current_sha": "30cf62ecf61082423bc7c2c13f64ea60b7ec188b",
   "current_milestone": "M138",
   "status": "complete_with_limitations",
   "completed_milestones": [
@@ -31,5 +31,12 @@
   "next_action": "Optional multi-register multi-device HCG sync and print/export polish — production and live HCG not authorized.",
   "last_verified_at": "2026-07-29",
   "stop_reason": "HCG_NATIVE_APP_COMPLETE_WITH_LIMITATIONS: first-party cafeteria ops app via AppRuntime; integer money; ledger credit/supplier; browser cert; local-only.",
-  "m130_m138_implementation": "HCG domain service + UI + API + cert"
+  "m130_m138_implementation_sha": "30cf62ecf61082423bc7c2c13f64ea60b7ec188b",
+  "evidence": {
+    "backend_full": "5419 passed, 1 skipped, 0 failed",
+    "frontend_full": "199 passed",
+    "browser": "HCG_NATIVE_APP_BROWSER_CERT_PASSED",
+    "eslint": "passed",
+    "next_build": "passed"
+  }
 }
