@@ -60,6 +60,13 @@ def main(argv: list[str] | None = None) -> int:
     p_run.add_argument("--dataset", default="TRENDING")
     p_run.add_argument("--n", type=int, default=40)
     bt_sub.add_parser("compare")
+    p_wf = bt_sub.add_parser("walk-forward")
+    p_wf.add_argument("--strategy", default="trend_following")
+    p_wf.add_argument("--dataset", default="TRENDING")
+    p_st = bt_sub.add_parser("stress")
+    p_st.add_argument("--strategy", default="trend_following")
+    p_sc = bt_sub.add_parser("scorecard")
+    p_sc.add_argument("--strategy", default="trend_following")
 
     # proposal
     p_prop = sub.add_parser("proposal")
@@ -140,6 +147,12 @@ def main(argv: list[str] | None = None) -> int:
             return _out(svc.run_backtest(strategy_slug=args.strategy, dataset=args.dataset, n=args.n))
         if args.action == "compare":
             return _out(svc.compare_strategies())
+        if args.action == "walk-forward":
+            return _out(svc.run_walk_forward(strategy_slug=args.strategy, dataset=args.dataset))
+        if args.action == "stress":
+            return _out(svc.run_stress(strategy_slug=args.strategy))
+        if args.action == "scorecard":
+            return _out(svc.research_scorecard(strategy_slug=args.strategy))
         return 2
 
     if args.cmd == "proposal":

@@ -59,6 +59,16 @@ from saathi.platform.tg.journal import TradeJournal
 from saathi.platform.tg.evaluation import StrategyEvaluator, StrategyComparison
 from saathi.platform.tg.service import TradingGuardianService
 from saathi.platform.tg.strategies import CATALOG, get_catalog_strategy, list_catalog
+from saathi.platform.tg.data_contract import (
+    DataClassification,
+    AUTHORITATIVE_RESULT_REQUIRES_NON_FIXTURE_DATA,
+    classify_dataset,
+    is_authoritative,
+    incomplete_result,
+)
+from saathi.platform.tg.portfolio import PortfolioRiskAnalyzer, PortfolioState, ReconciliationVerdict
+from saathi.platform.tg.stress_lab import RobustnessVerdict
+from saathi.platform.tg.recovery import run_recovery_suite
 
 __all__ = [
     "SCHEMA_VERSION",
@@ -108,6 +118,16 @@ __all__ = [
     "CATALOG",
     "get_catalog_strategy",
     "list_catalog",
+    "DataClassification",
+    "AUTHORITATIVE_RESULT_REQUIRES_NON_FIXTURE_DATA",
+    "classify_dataset",
+    "is_authoritative",
+    "incomplete_result",
+    "PortfolioRiskAnalyzer",
+    "PortfolioState",
+    "ReconciliationVerdict",
+    "RobustnessVerdict",
+    "run_recovery_suite",
 ]
 
 # Live trading is not an executable option in this foundation.

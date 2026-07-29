@@ -432,6 +432,11 @@ class TradingGuardianService:
         p = self._proposals.get(proposal_id)
         if not p:
             raise TGServiceError("NOT_FOUND", f"proposal {proposal_id} not found")
+        if p.status == ProposalStatus.PAPER_SUBMITTED and p.paper_order_id:
+            # Idempotent re-attach: same paper order is allowed; different id rejected
+            if p.paper_order_id != paper_order_id:
+                raise TGServiceError("DUPLICATE_PAPER_ORDER", "proposal already has a different paper order")
+            return p.to_public()
         if p.status not in (ProposalStatus.APPROVED, ProposalStatus.AWAITING_APPROVAL):
             # LIMITED_AUTONOMOUS_PAPER still needs approved or explicit mode
             if self.policy.authority_mode != AuthorityMode.LIMITED_AUTONOMOUS_PAPER:
@@ -470,9 +475,45 @@ class TradingGuardianService:
         split_kind: str = "IN_SAMPLE",
         org_id: str = "local",
         workspace_id: str = "local",
+        classification: str | None = None,
+        is_test_context: bool = False,
+        allow_fixture_demo: bool = True,
+        source_path: str = "",
+        bars: list | None = None,
     ) -> dict[str, Any]:
-        """Run deterministic backtest via existing strategy engine when available."""
+        """Run deterministic backtest with mandatory data classification.
+
+        Hard policy: never silently substitute fixture metrics into failed runs.
+        M62 fixture datasets are labeled SYNTHETIC_VALIDATION or FIXTURE_TEST_ONLY.
+        """
         from saathi.platform.tg.domain import BacktestRunRef, BacktestResultView
+        from saathi.platform.tg.data_contract import (
+            DataClassification,
+            classify_dataset,
+            build_provenance,
+            incomplete_result,
+            rejected_result,
+            is_authoritative,
+            M62_FIXTURE_DATASETS,
+        )
+        from saathi.platform.tg.evaluation import EligibilityContext
+
+        cls = classify_dataset(
+            dataset,
+            explicit=classification,
+            is_test_context=is_test_context,
+            source_path=source_path,
+        )
+        # Unknown non-fixture without bars/path → incomplete (fail closed)
+        if cls == DataClassification.INCOMPLETE and bars is None and not source_path:
+            if dataset.upper() not in M62_FIXTURE_DATASETS and not allow_fixture_demo:
+                payload = incomplete_result(
+                    reason="missing_dataset_provenance",
+                    dataset_id=dataset,
+                    strategy_version="1.0.0",
+                )
+                self._backtests[payload.get("provenance", {}).get("dataset_fingerprint", "inc")] = payload
+                return payload
 
         run = BacktestRunRef(
             strategy_id=strategy_slug,
@@ -485,14 +526,13 @@ class TradingGuardianService:
             org_id=org_id,
             workspace_id=workspace_id,
         )
-        metrics = PerformanceMetrics(split_kind=split_kind)
         quality: dict[str, Any] = {"engine": "m62_4_bridge"}
         limitations = [
-            "Uses M62.4 deterministic backtest engine when fixtures map.",
             "Simulated fills may differ from real execution.",
             "Historical performance is not future performance.",
             "No profitability claim.",
             "PAPER / research only.",
+            "Synthetic and fixture results are not market evidence.",
         ]
 
         try:
@@ -500,14 +540,19 @@ class TradingGuardianService:
                 valid_momentum, valid_mean_reversion,
             )
             from saathi.platform.strategy.engine import run_backtest
+            from saathi.platform.strategy.models import REALISTIC_COST, ZERO_COST, STRESSED_COST
             from saathi.platform.market_data.fixtures import build_bars, DATASETS
             from saathi.platform.market_data.models import Timeframe
+
+            cost_map = {"realistic": REALISTIC_COST, "zero": ZERO_COST, "stressed": STRESSED_COST}
+            cost = cost_map.get(cost_tier, REALISTIC_COST)
 
             mapping = {
                 "trend_following": valid_momentum,
                 "kotegawa_mean_reversion": valid_mean_reversion,
                 "momentum_rs": valid_momentum,
             }
+
             if strategy_slug == "no_trade":
                 metrics = PerformanceMetrics(
                     number_of_trades=0,
@@ -515,13 +560,83 @@ class TradingGuardianService:
                     split_kind=split_kind,
                 )
                 run.status = "COMPLETE"
+                used_bars = bars or []
+                if not used_bars and dataset.upper() in M62_FIXTURE_DATASETS | set(DATASETS):
+                    used_bars = build_bars(
+                        dataset if dataset in DATASETS else "TRENDING", Timeframe.D1, n,
+                    )
+                prov = build_provenance(
+                    dataset_id=dataset,
+                    bars=used_bars,
+                    classification=cls,
+                    strategy_version="1.0.0",
+                    fee_bps=str(getattr(cost, "fee_bps", "0")),
+                    slippage_bps=str(getattr(cost, "slippage_bps", "0")),
+                    is_test_context=is_test_context,
+                    source_path=source_path,
+                    notes=["no_trade_control"],
+                )
             else:
-                builder = mapping.get(strategy_slug, valid_momentum)
+                builder = mapping.get(strategy_slug)
+                if builder is None:
+                    payload = rejected_result(
+                        reason="unknown_strategy_mapping",
+                        dataset_id=dataset,
+                        error=strategy_slug,
+                    )
+                    return payload
                 defn = builder()
-                ds = dataset if dataset in DATASETS else "TRENDING"
-                bars = build_bars(ds, Timeframe.D1, n)
-                result = run_backtest(defn, bars, seed=seed)
+                if bars is not None:
+                    used_bars = bars
+                else:
+                    if dataset not in DATASETS and dataset.upper() not in M62_FIXTURE_DATASETS:
+                        # Fail closed — do not invent bars or metrics
+                        return incomplete_result(
+                            reason="dataset_not_available_or_unmapped",
+                            dataset_id=dataset,
+                            strategy_version="1.0.0",
+                            error="AUTHORITATIVE_RESULT_REQUIRES_NON_FIXTURE_DATA",
+                        )
+                    ds = dataset if dataset in DATASETS else dataset
+                    if ds not in DATASETS:
+                        return incomplete_result(
+                            reason="fixture_dataset_name_unknown",
+                            dataset_id=dataset,
+                        )
+                    used_bars = build_bars(ds, Timeframe.D1, n)
+                    if classification is None:
+                        cls = (
+                            DataClassification.FIXTURE_TEST_ONLY
+                            if is_test_context
+                            else DataClassification.SYNTHETIC_VALIDATION
+                        )
+
+                result = run_backtest(defn, used_bars, seed=seed, cost=cost)
                 run.status = result.status if result.status else "COMPLETE"
+                if result.status not in ("COMPLETE",):
+                    # Fail closed — do not fabricate metrics
+                    prov = build_provenance(
+                        dataset_id=dataset, bars=used_bars, classification=DataClassification.INCOMPLETE,
+                        strategy_version="1.0.0", notes=[result.reason or result.status],
+                    )
+                    payload = {
+                        "run": run.to_public(),
+                        "metrics": None,
+                        "status": result.status,
+                        "reason": result.reason,
+                        "quality": result.quality_summary,
+                        "provenance": prov.to_public(),
+                        "data_classification": DataClassification.INCOMPLETE.value,
+                        "authoritative": False,
+                        "evaluation_verdict": "INSUFFICIENT_EVIDENCE",
+                        "fixture_metrics_used": False,
+                        "paper_only": True,
+                        "live_authorized": False,
+                        "limitations": limitations + [f"engine_status={result.status}"],
+                    }
+                    self._backtests[run.id] = payload
+                    return payload
+
                 raw_metrics = result.metrics or {}
 
                 def _mv(key: str, default: str = "0") -> Decimal:
@@ -537,13 +652,15 @@ class TradingGuardianService:
                 metrics = PerformanceMetrics(
                     total_return=_mv("total_return"),
                     max_drawdown=_mv("max_drawdown"),
-                    number_of_trades=int(_mv("trade_count", "0") or _mv("number_of_trades", "0") or 0),
+                    number_of_trades=int(_mv("trade_count", "0") or _mv("number_of_trades", "0") or len(result.fills or [])),
                     estimated_fees=_mv("total_fees", "0") if "total_fees" in raw_metrics else _mv("fees", "0"),
                     estimated_slippage=_mv("total_slippage", "0") if "total_slippage" in raw_metrics else _mv("slippage", "0"),
                     win_rate=_mv("win_rate"),
                     volatility=_mv("volatility"),
                     split_kind=split_kind,
                 )
+                if metrics.number_of_trades == 0 and result.fills:
+                    metrics.number_of_trades = len(result.fills)
                 if "sharpe" in raw_metrics:
                     metrics.sharpe = _mv("sharpe")
                 if "sortino" in raw_metrics:
@@ -553,54 +670,270 @@ class TradingGuardianService:
                 quality["result_hash"] = result.result_hash
                 quality["look_ahead_ok"] = result.look_ahead_ok
                 quality["metric_keys"] = list(raw_metrics.keys())
-        except Exception as exc:
-            run.status = "COMPLETE_WITH_FIXTURE_METRICS"
-            limitations.append(f"Backtest bridge limited: {type(exc).__name__}")
-            if strategy_slug == "no_trade":
-                metrics = PerformanceMetrics(number_of_trades=0, split_kind=split_kind)
-            else:
-                metrics = PerformanceMetrics(
-                    total_return=Decimal("0.02"),
-                    max_drawdown=Decimal("0.05"),
-                    number_of_trades=8,
-                    win_rate=Decimal("0.5"),
-                    estimated_fees=Decimal("10"),
-                    estimated_slippage=Decimal("5"),
-                    profit_factor=Decimal("1.2"),
-                    sharpe=Decimal("0.4"),
-                    split_kind=split_kind,
+                prov = build_provenance(
+                    dataset_id=dataset,
+                    bars=used_bars,
+                    classification=cls,
+                    strategy_version="1.0.0",
+                    fee_bps=str(getattr(cost, "fee_bps", "10")),
+                    slippage_bps=str(getattr(cost, "slippage_bps", "5")),
+                    is_test_context=is_test_context,
+                    source_path=source_path,
                 )
-            quality["error"] = str(exc)[:200]
+        except Exception as exc:
+            # FAIL CLOSED — never COMPLETE_WITH_FIXTURE_METRICS
+            return incomplete_result(
+                reason="backtest_engine_exception",
+                dataset_id=dataset,
+                strategy_version="1.0.0",
+                error=f"{type(exc).__name__}: {exc}"[:240],
+            )
 
+        el = EligibilityContext(
+            data_classification=cls.value,
+            trade_count=metrics.number_of_trades,
+            costs_included=True,
+            max_drawdown=abs(metrics.max_drawdown),
+            reconciled=True,
+            policy_risk_passed=False,
+            strategy_version_immutable=True,
+            audit_complete=False,
+            oos_evaluated=split_kind in ("OUT_OF_SAMPLE", "WALK_FORWARD", "TEST"),
+            walk_forward_evaluated=False,
+            stress_completed=False,
+        )
+        verdict = self.evaluator.evaluate(metrics, eligibility=el)
         view = BacktestResultView(run=run, metrics=metrics, quality=quality, limitations=limitations)
-        verdict = self.evaluator.evaluate(metrics)
         payload = view.to_public()
+        payload["status"] = run.status
         payload["evaluation_verdict"] = verdict.value
+        payload["data_classification"] = cls.value
+        payload["authoritative"] = is_authoritative(cls)
+        payload["provenance"] = prov.to_public()
+        payload["fixture_metrics_used"] = False
+        payload["paper_only"] = True
+        payload["live_authorized"] = False
+        if not is_authoritative(cls):
+            payload["research_label"] = (
+                "FIXTURE_TEST_ONLY" if cls == DataClassification.FIXTURE_TEST_ONLY
+                else "SYNTHETIC_VALIDATION"
+            )
+            payload["limitations"] = limitations + [
+                "Result is not authoritative market evidence.",
+                "Cannot support PAPER_ELIGIBLE promotion alone.",
+            ]
         self._backtests[run.id] = payload
         return payload
+
+    def run_walk_forward(
+        self,
+        *,
+        strategy_slug: str,
+        dataset: str = "TRENDING",
+        n: int = 60,
+        mode: str = "expanding",
+        n_folds: int = 3,
+        is_test_context: bool = False,
+        classification: str | None = None,
+    ) -> dict[str, Any]:
+        from saathi.platform.tg.walk_forward import run_walk_forward, WalkForwardConfig
+        from saathi.platform.tg.data_contract import classify_dataset, DataClassification, M62_FIXTURE_DATASETS
+        from saathi.platform.strategy.fixtures import valid_momentum, valid_mean_reversion
+        from saathi.platform.strategy.engine import run_backtest
+        from saathi.platform.market_data.fixtures import build_bars, DATASETS
+        from saathi.platform.market_data.models import Timeframe
+
+        if strategy_slug == "no_trade":
+            return {
+                "status": "COMPLETE",
+                "strategy_slug": "no_trade",
+                "n_folds": 0,
+                "walk_forward_consistent": True,
+                "final_test_untouched": True,
+                "out_of_sample_expectancy": "0",
+                "data_classification": classify_dataset(dataset, is_test_context=is_test_context).value,
+                "authoritative": False,
+                "paper_only": True,
+                "note": "control baseline — zero trades by design",
+            }
+
+        cls = classify_dataset(dataset, explicit=classification, is_test_context=is_test_context)
+        if dataset not in DATASETS:
+            from saathi.platform.tg.data_contract import incomplete_result
+            return incomplete_result(reason="dataset_unavailable_for_walk_forward", dataset_id=dataset)
+
+        bars = build_bars(dataset, Timeframe.D1, n)
+        if classification is None and dataset in DATASETS:
+            cls = DataClassification.FIXTURE_TEST_ONLY if is_test_context else DataClassification.SYNTHETIC_VALIDATION
+
+        mapping = {
+            "trend_following": valid_momentum,
+            "kotegawa_mean_reversion": valid_mean_reversion,
+            "momentum_rs": valid_momentum,
+        }
+        base_builder = mapping.get(strategy_slug, valid_momentum)
+
+        def strategy_builder(params: dict[str, Any]):
+            d = base_builder()
+            # bounded parameter perturbations via sizing fraction if provided
+            if "equity_fraction" in params:
+                from decimal import Decimal as D
+                d.sizing.value = D(str(params["equity_fraction"]))
+            return d
+
+        candidates = [
+            {},
+            {"equity_fraction": "0.3"},
+            {"equity_fraction": "0.5"},
+        ]
+        return run_walk_forward(
+            strategy_slug=strategy_slug,
+            bars=bars,
+            dataset_id=dataset,
+            classification=cls,
+            strategy_builder=strategy_builder,
+            run_backtest_fn=lambda defn, b, seed=0: run_backtest(defn, b, seed=seed),
+            config=WalkForwardConfig(mode=mode, n_folds=n_folds, candidate_parameter_sets=candidates),
+        )
+
+    def run_stress(
+        self,
+        *,
+        strategy_slug: str,
+        dataset: str = "TRENDING",
+        n: int = 40,
+        is_test_context: bool = False,
+    ) -> dict[str, Any]:
+        from saathi.platform.tg.stress_lab import run_stress_lab
+        from saathi.platform.tg.data_contract import classify_dataset, DataClassification
+        from saathi.platform.strategy.fixtures import valid_momentum, valid_mean_reversion
+        from saathi.platform.strategy.engine import run_backtest
+        from saathi.platform.market_data.fixtures import build_bars, DATASETS
+        from saathi.platform.market_data.models import Timeframe
+
+        if strategy_slug == "no_trade":
+            return {
+                "status": "COMPLETE",
+                "strategy_slug": "no_trade",
+                "robustness_verdict": "ROBUST",
+                "critical_failures": 0,
+                "cases": [],
+                "promote_blocked": False,
+                "paper_only": True,
+                "authoritative": False,
+                "note": "control — no positions to stress",
+            }
+        if dataset not in DATASETS:
+            from saathi.platform.tg.data_contract import incomplete_result
+            return incomplete_result(reason="dataset_unavailable_for_stress", dataset_id=dataset)
+        bars = build_bars(dataset, Timeframe.D1, n)
+        cls = DataClassification.FIXTURE_TEST_ONLY if is_test_context else DataClassification.SYNTHETIC_VALIDATION
+        mapping = {
+            "trend_following": valid_momentum,
+            "kotegawa_mean_reversion": valid_mean_reversion,
+            "momentum_rs": valid_momentum,
+        }
+        defn = mapping.get(strategy_slug, valid_momentum)()
+        return run_stress_lab(
+            strategy_slug=strategy_slug,
+            defn=defn,
+            bars=bars,
+            dataset_id=dataset,
+            classification=cls,
+            run_backtest_fn=lambda d, b, cost=None: run_backtest(d, b, cost=cost) if cost is not None else run_backtest(d, b),
+        )
 
     def compare_strategies(
         self,
         strategy_slugs: list[str] | None = None,
         **kwargs: Any,
     ) -> dict[str, Any]:
+        from saathi.platform.tg.evaluation import EligibilityContext
+        from saathi.platform.tg.data_contract import DataClassification
+
         slugs = strategy_slugs or ["kotegawa_mean_reversion", "trend_following", "momentum_rs", "no_trade"]
         results: dict[str, PerformanceMetrics] = {}
+        el_map: dict[str, EligibilityContext] = {}
+        scorecards: dict[str, dict[str, Any]] = {}
         for s in slugs:
             bt = self.run_backtest(strategy_slug=s, **kwargs)
-            m = bt["metrics"]
-            results[s] = PerformanceMetrics(
-                total_return=coerce_decimal(m.get("total_return", 0)),
-                max_drawdown=coerce_decimal(m.get("max_drawdown", 0)),
-                number_of_trades=int(m.get("number_of_trades", 0) or 0),
-                win_rate=coerce_decimal(m.get("win_rate", 0)),
-                estimated_fees=coerce_decimal(m.get("estimated_fees", 0)),
-                estimated_slippage=coerce_decimal(m.get("estimated_slippage", 0)),
-                profit_factor=coerce_decimal(m.get("profit_factor")) if m.get("profit_factor") is not None else None,
-                sharpe=coerce_decimal(m.get("sharpe")) if m.get("sharpe") is not None else None,
-                split_kind=str(m.get("split_kind", "IN_SAMPLE")),
+            cls = bt.get("data_classification", DataClassification.SYNTHETIC_VALIDATION.value)
+            m_raw = bt.get("metrics")
+            if m_raw is None:
+                results[s] = PerformanceMetrics(number_of_trades=0)
+                el_map[s] = EligibilityContext(data_classification=cls)
+                scorecards[s] = self.evaluator.scorecard(s, results[s], eligibility=el_map[s], data_classification=cls)
+                continue
+            m = PerformanceMetrics(
+                total_return=coerce_decimal(m_raw.get("total_return", 0)),
+                max_drawdown=coerce_decimal(m_raw.get("max_drawdown", 0)),
+                number_of_trades=int(m_raw.get("number_of_trades", 0) or 0),
+                win_rate=coerce_decimal(m_raw.get("win_rate", 0)),
+                estimated_fees=coerce_decimal(m_raw.get("estimated_fees", 0)),
+                estimated_slippage=coerce_decimal(m_raw.get("estimated_slippage", 0)),
+                profit_factor=coerce_decimal(m_raw.get("profit_factor")) if m_raw.get("profit_factor") is not None else None,
+                sharpe=coerce_decimal(m_raw.get("sharpe")) if m_raw.get("sharpe") is not None else None,
+                split_kind=str(m_raw.get("split_kind", "IN_SAMPLE")),
             )
-        return self.evaluator.compare(results).to_public()
+            results[s] = m
+            el_map[s] = EligibilityContext(
+                data_classification=cls,
+                trade_count=m.number_of_trades,
+                costs_included=True,
+                max_drawdown=abs(m.max_drawdown),
+                strategy_version_immutable=True,
+            )
+            scorecards[s] = self.evaluator.scorecard(s, m, eligibility=el_map[s], data_classification=cls)
+        return self.evaluator.compare(results, eligibility_map=el_map, scorecards=scorecards).to_public()
+
+    def research_scorecard(self, strategy_slug: str, **kwargs: Any) -> dict[str, Any]:
+        """Full research pack: backtest + walk-forward + stress + eligibility."""
+        from saathi.platform.tg.evaluation import EligibilityContext
+        from saathi.platform.tg.data_contract import is_authoritative
+
+        bt = self.run_backtest(strategy_slug=strategy_slug, **kwargs)
+        wf = self.run_walk_forward(strategy_slug=strategy_slug, **{k: v for k, v in kwargs.items() if k in ("dataset", "n", "is_test_context", "classification")})
+        st = self.run_stress(strategy_slug=strategy_slug, **{k: v for k, v in kwargs.items() if k in ("dataset", "n", "is_test_context")})
+        cls = bt.get("data_classification", "SYNTHETIC_VALIDATION")
+        m_raw = bt.get("metrics") or {}
+        metrics = PerformanceMetrics(
+            total_return=coerce_decimal(m_raw.get("total_return", 0)),
+            max_drawdown=coerce_decimal(m_raw.get("max_drawdown", 0)),
+            number_of_trades=int(m_raw.get("number_of_trades", 0) or 0),
+            estimated_fees=coerce_decimal(m_raw.get("estimated_fees", 0)),
+            estimated_slippage=coerce_decimal(m_raw.get("estimated_slippage", 0)),
+            profit_factor=coerce_decimal(m_raw.get("profit_factor")) if m_raw.get("profit_factor") is not None else None,
+            sharpe=coerce_decimal(m_raw.get("sharpe")) if m_raw.get("sharpe") is not None else None,
+        )
+        el = EligibilityContext(
+            data_classification=cls,
+            trade_count=metrics.number_of_trades,
+            oos_evaluated=bool(wf.get("n_folds", 0)),
+            walk_forward_evaluated=wf.get("status") == "COMPLETE",
+            walk_forward_consistent=bool(wf.get("walk_forward_consistent")),
+            costs_included=True,
+            stress_completed=st.get("status") == "COMPLETE",
+            robustness_verdict=str(st.get("robustness_verdict", "")),
+            critical_robustness_failure=bool(st.get("promote_blocked") or st.get("critical_failures", 0) > 0),
+            max_drawdown=abs(metrics.max_drawdown),
+            parameter_stable=coerce_decimal(wf.get("parameter_stability", 0)) >= Decimal("0.5"),
+            reconciled=True,
+            policy_risk_passed=False,
+            strategy_version_immutable=True,
+            audit_complete=True,
+        )
+        card = self.evaluator.scorecard(
+            strategy_slug, metrics, eligibility=el, walk_forward=wf, stress=st, data_classification=cls,
+        )
+        return {
+            "scorecard": card,
+            "backtest": bt,
+            "walk_forward": wf,
+            "stress": st,
+            "authoritative": is_authoritative(cls),
+            "paper_only": True,
+            "live_authorized": False,
+        }
 
     # ── kill switch ──────────────────────────────────────────────────────────
     def activate_kill_switch(self, **kwargs: Any) -> dict[str, Any]:
