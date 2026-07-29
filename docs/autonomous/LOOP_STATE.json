@@ -3,7 +3,7 @@
   "historical_baseline_sha": "c6265f67c84d14d1e124066f1121098ceca869bb",
   "baseline_sha": "c6265f67c84d14d1e124066f1121098ceca869bb",
   "session_start_sha": "c6265f67c84d14d1e124066f1121098ceca869bb",
-  "current_sha": "PENDING_COMMIT",
+  "current_sha": "0fee16dbf80072331588d2ec2a66a0fb9df9652e",
   "current_milestone": "M147",
   "status": "complete_with_limitations",
   "completed_milestones": [
@@ -28,7 +28,7 @@
       "status": "complete_with_limitations"
     }
   ],
-  "next_action": "Optional richer mock-test timing UI and local STT adapter — production/Gemini/Firebase not authorized.",
+  "next_action": "Optional richer mock-test timing UI and local STT adapter \u2014 production/Gemini/Firebase not authorized.",
   "last_verified_at": "2026-07-29",
   "stop_reason": "IELTS_NATIVE_APP_COMPLETE_WITH_LIMITATIONS: diagnostic, plan, 4 skills, readiness, Yeti read-only, AppRuntime host, browser cert; local deterministic scoring only.",
   "evidence": {
@@ -37,5 +37,6 @@
     "browser": "IELTS_NATIVE_APP_BROWSER_CERT_PASSED",
     "eslint": "passed",
     "next_build": "passed"
-  }
+  },
+  "m139_m147_implementation_sha": "0fee16dbf80072331588d2ec2a66a0fb9df9652e"
 }

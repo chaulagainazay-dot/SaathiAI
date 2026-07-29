@@ -2,7 +2,17 @@
   "schema": "m147.ielts_native_app_cert.v1",
   "verdict": "IELTS_NATIVE_APP_COMPLETE_WITH_LIMITATIONS",
   "date": "2026-07-29",
-  "milestones": ["M139", "M140", "M141", "M142", "M143", "M144", "M145", "M146", "M147"],
+  "milestones": [
+    "M139",
+    "M140",
+    "M141",
+    "M142",
+    "M143",
+    "M144",
+    "M145",
+    "M146",
+    "M147"
+  ],
   "app_id": "saathi.ielts_alert",
   "app_runtime": "Universal Application Runtime",
   "browser": "IELTS_NATIVE_APP_BROWSER_CERT_PASSED",
@@ -16,5 +26,7 @@
   "live_firebase": false,
   "official_ielts_scoring": false,
   "trading_guardian": "UNCHANGED / UNENGAGED",
-  "starting_sha": "c6265f67c84d14d1e124066f1121098ceca869bb"
+  "starting_sha": "c6265f67c84d14d1e124066f1121098ceca869bb",
+  "ending_sha": "0fee16dbf80072331588d2ec2a66a0fb9df9652e",
+  "implementation_sha": "0fee16dbf80072331588d2ec2a66a0fb9df9652e"
 }
