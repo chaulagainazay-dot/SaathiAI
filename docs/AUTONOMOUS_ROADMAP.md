@@ -1,5 +1,17 @@
 # SaathiOS Autonomous Roadmap
 
+## M200–M207 — Durable Paper Ledger & Long-Horizon Ops (2026-07-29)
+
+| Field | Value |
+| --- | --- |
+| Verdict | `DURABLE_PAPER_OPERATIONS_CERTIFIED_WITH_LIMITATIONS` |
+| Storage | SQLite WAL multi-process paper_gov.db |
+| Event ledger | Append-only pg_events |
+| Campaigns | Long-horizon paper campaigns (never live-eligible) |
+| Live / production | Not authorized |
+
+Evidence: `docs/trading/M200_M207_DURABLE_PAPER_OPERATIONS.md`, `docs/trading/m200_m207_evidence/`.
+
 ## M192–M199 — Paper Activation Governance (2026-07-29)
 
 | Field | Value |

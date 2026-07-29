@@ -187,6 +187,34 @@ def main(argv: list[str] | None = None) -> int:
     p_pk = pg_sub.add_parser("kill")
     p_pk.add_argument("--reason", default="cli kill")
     p_pk.add_argument("--actor", default="operator:cli")
+    # M200–M207
+    pg_sub.add_parser("storage-status")
+    pg_sub.add_parser("migrate")
+    p_cc = pg_sub.add_parser("campaign-create")
+    p_cc.add_argument("--strategy", default="trend_following")
+    p_cs = pg_sub.add_parser("campaign-start")
+    p_cs.add_argument("campaign_id")
+    p_cs.add_argument("--actor", default="operator:cli")
+    p_ccomp = pg_sub.add_parser("campaign-complete")
+    p_ccomp.add_argument("campaign_id")
+    p_ccomp.add_argument("--actor", default="operator:cli")
+    p_ev = pg_sub.add_parser("events")
+    p_ev.add_argument("--limit", type=int, default=50)
+    p_bc = pg_sub.add_parser("backup-create")
+    p_bc.add_argument("--dest", default="")
+    p_bv = pg_sub.add_parser("backup-verify")
+    p_bv.add_argument("path")
+    p_rt = pg_sub.add_parser("recovery-test")
+    p_rt.add_argument("source")
+    p_rt.add_argument("--dest", default="")
+    pg_sub.add_parser("report-daily")
+    pg_sub.add_parser("report-weekly")
+    pg_sub.add_parser("incidents")
+    pg_sub.add_parser("worker-status")
+    p_rp = pg_sub.add_parser("replay")
+    p_rp.add_argument("portfolio_id")
+    p_sn = pg_sub.add_parser("snapshot")
+    p_sn.add_argument("portfolio_id")
 
     args = parser.parse_args(argv)
     if not args.cmd:
@@ -397,10 +425,62 @@ def main(argv: list[str] | None = None) -> int:
         if args.action == "stop":
             return _out(gov.halt_strategy(args.strategy, reason=args.reason or "cli stop"))
         if args.action == "kill":
-            return _out(gov.activate_kill_switch(
-                scope=KillSwitchScope.GLOBAL, reason=args.reason or "cli kill",
-                activated_by=args.actor, source_identity="operator",
-            ))
+            try:
+                return _out(gov.activate_kill_switch(
+                    scope=KillSwitchScope.GLOBAL, reason=args.reason or "cli kill",
+                    activated_by=args.actor, source_identity="operator",
+                ))
+            except TypeError:
+                return _out(gov.activate_kill_switch(
+                    reason=args.reason or "cli kill", activated_by=args.actor,
+                ))
+        # M200–M207 durable extensions
+        if args.action == "storage-status":
+            from saathi.platform.tg.paper_activation.durable.service import default_durable_gov
+            return _out(default_durable_gov().storage_status())
+        if args.action == "migrate":
+            from saathi.platform.tg.paper_activation.durable.service import default_durable_gov
+            return _out(default_durable_gov().migrate())
+        if args.action == "campaign-create":
+            from saathi.platform.tg.paper_activation.durable.service import default_durable_gov
+            return _out(default_durable_gov().campaign_create(strategy_slug=args.strategy))
+        if args.action == "campaign-start":
+            from saathi.platform.tg.paper_activation.durable.service import default_durable_gov
+            return _out(default_durable_gov().campaign_start(args.campaign_id, operator_identity=args.actor))
+        if args.action == "campaign-complete":
+            from saathi.platform.tg.paper_activation.durable.service import default_durable_gov
+            return _out(default_durable_gov().campaign_complete(args.campaign_id, operator_identity=args.actor))
+        if args.action == "events":
+            from saathi.platform.tg.paper_activation.durable.service import default_durable_gov
+            return _out(default_durable_gov().list_events(limit=args.limit))
+        if args.action == "backup-create":
+            from saathi.platform.tg.paper_activation.durable.service import default_durable_gov
+            return _out(default_durable_gov().backup_create(args.dest or "data/platform/paper_backups"))
+        if args.action == "backup-verify":
+            from saathi.platform.tg.paper_activation.durable.service import default_durable_gov
+            return _out(default_durable_gov().backup_verify(args.path))
+        if args.action == "recovery-test":
+            from saathi.platform.tg.paper_activation.durable.service import default_durable_gov
+            return _out(default_durable_gov().recovery_test(args.source, args.dest or "data/platform/paper_recovery.db"))
+        if args.action == "report-daily":
+            from saathi.platform.tg.paper_activation.durable.service import default_durable_gov
+            return _out(default_durable_gov().report_daily())
+        if args.action == "report-weekly":
+            from saathi.platform.tg.paper_activation.durable.service import default_durable_gov
+            return _out(default_durable_gov().report_weekly())
+        if args.action == "incidents":
+            from saathi.platform.tg.paper_activation.durable.service import default_durable_gov
+            return _out(default_durable_gov().list_incidents())
+        if args.action == "worker-status":
+            from saathi.platform.tg.paper_activation.durable.service import default_durable_gov
+            g = default_durable_gov()
+            return _out({"worker_id": g.worker_id, "claim": g.process_queue_once(), "paper_only": True})
+        if args.action == "replay":
+            from saathi.platform.tg.paper_activation.durable.service import default_durable_gov
+            return _out(default_durable_gov().replay(args.portfolio_id))
+        if args.action == "snapshot":
+            from saathi.platform.tg.paper_activation.durable.service import default_durable_gov
+            return _out(default_durable_gov().snapshot(args.portfolio_id))
         return 2
 
     parser.print_help()
