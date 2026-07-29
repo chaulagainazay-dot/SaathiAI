@@ -98,6 +98,10 @@ export default function AppLauncher() {
           window.location.href = "/apps/hcg";
           return;
         }
+        if (appId === "saathi.ielts_alert" && typeof window !== "undefined") {
+          window.location.href = "/apps/ielts";
+          return;
+        }
       } else if (action === "favorite") await appActions.favorite(token, appId, true);
       else if (action === "backup") {
         const b = await appActions.backup(token, appId);

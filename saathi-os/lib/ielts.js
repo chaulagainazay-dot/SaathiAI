@@ -52,6 +52,19 @@ export const ieltsActions = {
   evaluateAlerts: (token) => ielts("/alerts/evaluate", { method: "POST", token }),
   payment: (body, token) => ielts("/payments", { method: "POST", body, token }),
   reviewPayment: (id, body, token) => ielts(`/payments/${encodeURIComponent(id)}/review`, { method: "POST", body, token }),
+  productDashboard: (token) => ielts("/product-dashboard", { token }),
+  content: (examType, token) => ielts(`/content?exam_type=${encodeURIComponent(examType || "academic")}`, { token }),
+  diagnostic: (body, token) => ielts("/diagnostic", { method: "POST", body, token }),
+  studyPlan: (body, token) => ielts("/study-plan", { method: "POST", body, token }),
+  objectivePractice: (body, token) => ielts("/objective-practice", { method: "POST", body, token }),
+  writingRevision: (body, token) => ielts("/writing/revision", { method: "POST", body, token }),
+  mockTest: (body, token) => ielts("/mock-tests", { method: "POST", body, token }),
+  mockSection: (id, body, token) => ielts(`/mock-tests/${encodeURIComponent(id)}/sections`, { method: "POST", body, token }),
+  readiness: (token) => ielts("/readiness", { token }),
+  yeti: (question, token) => ielts("/yeti", { method: "POST", body: { question }, token }),
+  backup: (token) => ielts("/backup", { method: "POST", token }),
+  restore: (body, token) => ielts("/restore", { method: "POST", body, token }),
+  reminder: (body, token) => ielts("/reminders", { method: "POST", body, token }),
 };
 
 const EMPTY = { dashboard: null, records: [], evidence: [], permissions: [], userId: "" };

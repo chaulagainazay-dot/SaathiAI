@@ -3,12 +3,25 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from typing import Protocol
+from typing import Any, Protocol
+
+from saathi.platform.ielts.content import (
+    ACADEMIC_READING_BANDS,
+    GENERAL_READING_BANDS,
+    LISTENING_BANDS,
+    RUBRIC_VERSION,
+    SCORING_VERSION,
+    indicative_band_from_raw,
+)
 
 
 LIMITATION = (
     "Local heuristic result for practice only. It is not an official IELTS score "
     "and does not replace assessment by a qualified examiner."
+)
+
+PRONUNCIATION_TEXT_ONLY = (
+    "Pronunciation is not inferred from text-only input. Acoustic analysis was not performed."
 )
 
 
@@ -84,20 +97,48 @@ class LocalHeuristicScorer:
             return "functional"
         return "established"
 
+    @staticmethod
+    def _level_to_band(level: str) -> float:
+        return {"developing": 5.0, "functional": 6.0, "established": 7.0}.get(level, 5.5)
+
     def score_writing(self, *, prompt: str, response: str, task_type: str) -> dict:
         signals = self._signals(response)
         level = self._level(signals)
+        band = self._level_to_band(level)
+        task_key = "task_achievement" if "task_1" in (task_type or "") else "task_response"
         return {
             "label": "practice estimate",
             "source": self.provider_id,
             "official": False,
             "overall_level": level,
+            "estimated_overall_band": band,
+            "confidence": 0.45,
+            "confidence_label": "low–moderate; heuristic only",
+            "rubric_version": RUBRIC_VERSION,
+            "scoring_version": SCORING_VERSION,
             "criteria": {
-                "task_response": {"level": level, "feedback": "Check that each main claim directly answers the prompt."},
-                "coherence_and_cohesion": {"level": level, "feedback": f"{signals['linking_markers']} explicit linking markers detected."},
-                "lexical_resource": {"level": level, "feedback": f"Lexical variety signal: {signals['lexical_variety']:.2f}."},
-                "grammatical_range_and_accuracy": {"level": level, "feedback": f"{signals['sentence_count']} sentence boundaries detected; manual accuracy review is still required."},
+                task_key: {
+                    "level": level,
+                    "estimated_band": band,
+                    "feedback": "Check that each main claim directly answers the prompt.",
+                },
+                "coherence_and_cohesion": {
+                    "level": level,
+                    "estimated_band": band,
+                    "feedback": f"{signals['linking_markers']} explicit linking markers detected.",
+                },
+                "lexical_resource": {
+                    "level": level,
+                    "estimated_band": band,
+                    "feedback": f"Lexical variety signal: {signals['lexical_variety']:.2f}.",
+                },
+                "grammatical_range_and_accuracy": {
+                    "level": level,
+                    "estimated_band": band,
+                    "feedback": f"{signals['sentence_count']} sentence boundaries detected; manual accuracy review is still required.",
+                },
             },
+            "priority_improvement": "Strengthen task response with one clear controlling idea per paragraph.",
             "signals": signals,
             "limitations": [LIMITATION, "The local estimator does not verify factual accuracy or nuanced grammar."],
         }
@@ -105,20 +146,103 @@ class LocalHeuristicScorer:
     def score_speaking(self, *, prompt: str, transcript: str, part: str, has_audio: bool) -> dict:
         signals = self._signals(transcript)
         level = self._level(signals)
+        band = self._level_to_band(level)
+        pronunciation = {
+            "level": "not_assessed" if not has_audio else "indicative_only",
+            "estimated_band": None if not has_audio else band,
+            "feedback": PRONUNCIATION_TEXT_ONLY if not has_audio else "Limited local signal only; not acoustic certification.",
+        }
         return {
             "label": "indicative feedback",
             "source": self.provider_id,
             "official": False,
             "overall_level": level,
+            "estimated_overall_band": band if transcript.strip() else None,
+            "confidence": 0.35 if not has_audio else 0.4,
+            "confidence_label": "low; text-only input" if not has_audio else "low–moderate",
+            "input_modality": "audio_plus_transcript" if has_audio else "text_transcript_only",
+            "rubric_version": RUBRIC_VERSION,
+            "scoring_version": SCORING_VERSION,
             "criteria": {
-                "fluency_and_coherence": {"level": level, "feedback": "Transcript structure only; pauses and delivery are not measured."},
-                "lexical_resource": {"level": level, "feedback": f"Lexical variety signal: {signals['lexical_variety']:.2f}."},
-                "grammatical_range_and_accuracy": {"level": level, "feedback": "Manual review is required for spoken-form accuracy."},
-                "pronunciation": {"level": "not_assessed", "feedback": "Pronunciation is not inferred from a transcript."},
+                "fluency_and_coherence": {
+                    "level": level,
+                    "estimated_band": band,
+                    "feedback": "Transcript structure only; pauses and delivery are not measured.",
+                },
+                "lexical_resource": {
+                    "level": level,
+                    "estimated_band": band,
+                    "feedback": f"Lexical variety signal: {signals['lexical_variety']:.2f}.",
+                },
+                "grammatical_range_and_accuracy": {
+                    "level": level,
+                    "estimated_band": band,
+                    "feedback": "Manual review is required for spoken-form accuracy.",
+                },
+                "pronunciation": pronunciation,
             },
+            "priority_improvement": "Expand answers with one reason and one example per question.",
             "signals": signals,
             "audio_analysis_performed": False,
-            "limitations": [LIMITATION, "Pronunciation and acoustic fluency were not assessed."],
+            "acoustic_pronunciation_claimed": False,
+            "limitations": [LIMITATION, PRONUNCIATION_TEXT_ONLY],
+        }
+
+    def score_objective(
+        self,
+        *,
+        skill: str,
+        exam_type: str,
+        answers: list[str],
+        key: list[dict[str, Any]],
+    ) -> dict:
+        """Exact-match scoring for reading/listening fixtures."""
+        normalized = [re.sub(r"\s+", " ", (a or "").strip().lower()) for a in answers]
+        correct = 0
+        detail = []
+        for i, q in enumerate(key):
+            expected = re.sub(r"\s+", " ", str(q.get("answer") or "").strip().lower())
+            got = normalized[i] if i < len(normalized) else ""
+            ok = bool(got) and (got == expected or expected in got or got in expected)
+            if ok:
+                correct += 1
+            detail.append({
+                "qid": q.get("qid"),
+                "correct": ok,
+                "unanswered": not got,
+                "expected_label": "hidden_from_public_response",
+            })
+        total = len(key)
+        if skill == "listening":
+            table = LISTENING_BANDS
+        elif exam_type == "general_training":
+            table = GENERAL_READING_BANDS
+        else:
+            table = ACADEMIC_READING_BANDS
+        band_info = indicative_band_from_raw(correct, total, table)
+        unanswered = sum(1 for d in detail if d["unanswered"])
+        return {
+            "label": "deterministic objective practice result",
+            "source": self.provider_id,
+            "official": False,
+            "skill": skill,
+            "exam_type": exam_type,
+            "answers_recorded": len([a for a in normalized if a]),
+            "correct": correct,
+            "total": total,
+            "unanswered": unanswered,
+            "items": detail,
+            "estimated_overall_band": band_info["indicative_band"],
+            "band_conversion": band_info,
+            "confidence": 0.7 if unanswered == 0 else 0.5,
+            "confidence_label": "moderate for fixture key; conversion is indicative only",
+            "rubric_version": RUBRIC_VERSION,
+            "scoring_version": SCORING_VERSION,
+            "limitations": [
+                LIMITATION,
+                band_info["conversion_label"],
+                "Fixture answer key only — not an official test form.",
+            ],
         }
 
 
@@ -184,8 +308,26 @@ class SafeFallbackScorer:
                 "label": "provider-assisted estimate",
                 "official": False,
                 "provider_assisted": True,
+                "acoustic_pronunciation_claimed": False,
             }
         except Exception:
             return self._safe_local(self.fallback.score_speaking(
                 prompt=prompt, transcript=transcript, part=part, has_audio=has_audio
             ))
+
+    def score_objective(
+        self,
+        *,
+        skill: str,
+        exam_type: str,
+        answers: list[str],
+        key: list[dict[str, Any]],
+    ) -> dict:
+        # Objective fixture scoring is always local deterministic
+        return {
+            **self.fallback.score_objective(
+                skill=skill, exam_type=exam_type, answers=answers, key=key
+            ),
+            "provider_assisted": False,
+            "official": False,
+        }

@@ -9,10 +9,12 @@
     "forms",
     "dashboards",
     "reports",
+    "search",
     "notifications",
     "conversation",
     "knowledge",
-    "skills"
+    "skills",
+    "workflows"
   ],
   "category": "education",
   "content_hash": "",
@@ -20,9 +22,13 @@
     {
       "id": "progress",
       "title": "Progress"
+    },
+    {
+      "id": "readiness",
+      "title": "Exam Readiness"
     }
   ],
-  "description": "IELTS learning application workspace.",
+  "description": "IELTSAlert native AI coaching and exam readiness — local-first, deterministic scoring, no live Gemini.",
   "display_name": "IELTSAlert",
   "entrypoint_type": "declarative",
   "extension": {},
@@ -34,10 +40,14 @@
     {
       "id": "goal",
       "title": "Exam Goal"
+    },
+    {
+      "id": "practice",
+      "title": "Practice"
     }
   ],
   "health_check_contract": "manifest_and_workspace",
-  "icon": "\ud83d\udcd8",
+  "icon": "📘",
   "knowledge_sources": [
     "ielts_curriculum"
   ],
@@ -54,9 +64,14 @@
       "label": "Home"
     },
     {
-      "href": "/apps/ielts/practice",
+      "href": "/apps/ielts",
       "id": "practice",
       "label": "Practice"
+    },
+    {
+      "href": "/apps/ielts",
+      "id": "readiness",
+      "label": "Readiness"
     }
   ],
   "network_requirements": "none",
@@ -66,37 +81,34 @@
     ]
   },
   "optional_permissions": [],
-  "package_hash": "e997fdfcdd2a22221332ea643d42bffeb53cb06afbf452e68296c88cc8009325",
+  "package_hash": "",
   "pages": [
     {
       "id": "home",
       "path": "/apps/ielts",
-      "title": "Home"
-    },
-    {
-      "id": "practice",
-      "path": "/apps/ielts/practice",
-      "title": "Practice"
+      "title": "IELTSAlert"
     }
   ],
   "production_posture": "not_authorized",
   "publisher": "saathios.builtin",
   "required_permissions": [
-    "runtime.read"
+    "runtime.read",
+    "ielts.read"
   ],
   "restore_strategy": "replace_workspace_snapshot",
   "skills": [
     "saathi.ielts_readiness"
   ],
   "storage": {
-    "max_mb": 32,
+    "max_mb": 64,
     "type": "workspace_isolated"
   },
   "trading_guardian_posture": "unengaged",
   "upgrade_strategy": "install_side_by_side_then_switch",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "worker_requirements": [
-    "analysis"
+    "analysis",
+    "planning"
   ],
   "workflows": [
     {

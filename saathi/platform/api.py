@@ -5704,6 +5704,247 @@ def ielts_search(q: str = "", limit: int = 50, authorization: str | None = Heade
         raise _ielts_failure(exc) from exc
 
 
+# ── M139+ IELTSAlert native productization endpoints ────────────────────────
+class IELTSDiagnosticBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    exam_type: str = Field(default="academic", max_length=32)
+    idempotency_key: str = Field(default="", max_length=120)
+
+
+class IELTSPlanBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    weeks: int = Field(default=4, ge=1, le=12)
+    idempotency_key: str = Field(default="", max_length=120)
+
+
+class IELTSObjectiveBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    skill: str = Field(default="reading", max_length=20)
+    exam_type: str = Field(default="academic", max_length=32)
+    answers: list[str] = Field(default_factory=list)
+    idempotency_key: str = Field(default="", max_length=120)
+
+
+class IELTSRevisionBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    parent_submission_id: str = Field(min_length=1, max_length=120)
+    response: str = Field(min_length=1, max_length=12000)
+    idempotency_key: str = Field(default="", max_length=120)
+
+
+class IELTSMockBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    exam_type: str = Field(default="academic", max_length=32)
+    idempotency_key: str = Field(default="", max_length=120)
+
+
+class IELTSMockSectionBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    skill: str = Field(min_length=1, max_length=20)
+    answers: list[str] = Field(default_factory=list)
+    response: str = Field(default="", max_length=12000)
+
+
+class IELTSYetiBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    question: str = Field(min_length=1, max_length=500)
+
+
+class IELTSRestoreBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    payload: dict[str, Any] = Field(default_factory=dict)
+    approval_reference: str = Field(default="", max_length=160)
+
+
+class IELTSReminderBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    title: str = Field(min_length=1, max_length=200)
+    due_date: str = Field(default="", max_length=10)
+    kind: str = Field(default="study", max_length=40)
+    idempotency_key: str = Field(default="", max_length=120)
+
+
+@router.get("/ielts/product-dashboard")
+def ielts_product_dashboard(
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return {"dashboard": _ieltssvc().product_dashboard(_ppctx(authorization, x_platform_token))}
+    except Exception as exc:
+        raise _ielts_failure(exc) from exc
+
+
+@router.get("/ielts/content")
+def ielts_content(
+    exam_type: str = "academic",
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return _ieltssvc().content_catalog(_ppctx(authorization, x_platform_token), exam_type=exam_type)
+    except Exception as exc:
+        raise _ielts_failure(exc) from exc
+
+
+@router.post("/ielts/diagnostic")
+def ielts_diagnostic(
+    body: IELTSDiagnosticBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return {"diagnostic": _ieltssvc().run_diagnostic(
+            _ppctx(authorization, x_platform_token),
+            exam_type=body.exam_type, idempotency_key=body.idempotency_key,
+        )}
+    except Exception as exc:
+        raise _ielts_failure(exc) from exc
+
+
+@router.post("/ielts/study-plan")
+def ielts_study_plan(
+    body: IELTSPlanBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return {"plan": _ieltssvc().generate_study_plan(
+            _ppctx(authorization, x_platform_token),
+            weeks=body.weeks, idempotency_key=body.idempotency_key,
+        )}
+    except Exception as exc:
+        raise _ielts_failure(exc) from exc
+
+
+@router.post("/ielts/objective-practice")
+def ielts_objective_practice(
+    body: IELTSObjectiveBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return {"practice": _ieltssvc().submit_objective_practice(
+            _ppctx(authorization, x_platform_token),
+            skill=body.skill, exam_type=body.exam_type, answers=body.answers,
+            idempotency_key=body.idempotency_key,
+        )}
+    except Exception as exc:
+        raise _ielts_failure(exc) from exc
+
+
+@router.post("/ielts/writing/revision")
+def ielts_writing_revision(
+    body: IELTSRevisionBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return _ieltssvc().submit_writing_revision(
+            _ppctx(authorization, x_platform_token),
+            parent_submission_id=body.parent_submission_id, response=body.response,
+            idempotency_key=body.idempotency_key,
+        )
+    except Exception as exc:
+        raise _ielts_failure(exc) from exc
+
+
+@router.post("/ielts/mock-tests")
+def ielts_mock_create(
+    body: IELTSMockBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return {"mock_test": _ieltssvc().create_mock_test(
+            _ppctx(authorization, x_platform_token),
+            exam_type=body.exam_type, idempotency_key=body.idempotency_key,
+        )}
+    except Exception as exc:
+        raise _ielts_failure(exc) from exc
+
+
+@router.post("/ielts/mock-tests/{mock_id}/sections")
+def ielts_mock_section(
+    mock_id: str,
+    body: IELTSMockSectionBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return _ieltssvc().complete_mock_section(
+            _ppctx(authorization, x_platform_token), mock_id,
+            skill=body.skill, answers=body.answers, response=body.response,
+        )
+    except Exception as exc:
+        raise _ielts_failure(exc) from exc
+
+
+@router.get("/ielts/readiness")
+def ielts_readiness(
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return _ieltssvc().readiness_snapshot(_ppctx(authorization, x_platform_token))
+    except Exception as exc:
+        raise _ielts_failure(exc) from exc
+
+
+@router.post("/ielts/yeti")
+def ielts_yeti(
+    body: IELTSYetiBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return _ieltssvc().grounded_answer(_ppctx(authorization, x_platform_token), body.question)
+    except Exception as exc:
+        raise _ielts_failure(exc) from exc
+
+
+@router.post("/ielts/backup")
+def ielts_backup(
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return {"backup": _ieltssvc().export_backup_payload(_ppctx(authorization, x_platform_token))}
+    except Exception as exc:
+        raise _ielts_failure(exc) from exc
+
+
+@router.post("/ielts/restore")
+def ielts_restore(
+    body: IELTSRestoreBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return _ieltssvc().restore_payload(
+            _ppctx(authorization, x_platform_token), body.payload,
+            approval_reference=body.approval_reference,
+        )
+    except Exception as exc:
+        raise _ielts_failure(exc) from exc
+
+
+@router.post("/ielts/reminders")
+def ielts_reminder(
+    body: IELTSReminderBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return {"reminder": _ieltssvc().create_reminder(
+            _ppctx(authorization, x_platform_token),
+            title=body.title, due_date=body.due_date, kind=body.kind,
+            idempotency_key=body.idempotency_key,
+        )}
+    except Exception as exc:
+        raise _ielts_failure(exc) from exc
+
+
 # ── M74 authenticated provider-neutral voice output ─────────────────────────
 def _voicesvc():
     from saathi.platform.voice import default_speech_service

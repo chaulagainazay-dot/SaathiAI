@@ -26,9 +26,38 @@ describe("IELTSAlert frontend contract", () => {
       assert.match(seen[0].url, /\/api\/v1\/platform\/ielts\/goals$/);
       assert.equal(seen[0].options.method, "POST");
       assert.equal(seen[0].options.headers["X-Platform-Token"], "test-token");
+
+      await ieltsActions.diagnostic({ exam_type: "academic" }, "test-token");
+      assert.match(seen[1].url, /\/api\/v1\/platform\/ielts\/diagnostic$/);
+      await ieltsActions.yeti("What is my readiness?", "test-token");
+      assert.match(seen[2].url, /\/api\/v1\/platform\/ielts\/yeti$/);
     } finally {
       globalThis.fetch = original;
     }
+  });
+
+  it("product workspace exposes coaching journeys and non-official scoring labels", () => {
+    const source = fs.readFileSync(
+      new URL("../components/ielts/IELTSProductWorkspace.jsx", import.meta.url),
+      "utf8"
+    );
+    for (const text of [
+      "IELTSAlert product workspace",
+      "Diagnostic assessment",
+      "Personalized study plan",
+      "Speaking practice",
+      "Writing Task practice",
+      "Reading practice",
+      "Listening practice",
+      "Mock test workflow",
+      "Exam readiness",
+      "Ask Yeti",
+      "Pronunciation is not acoustically assessed",
+      "no official IELTS claim",
+      "Application launcher",
+      'aria-live="polite"',
+      "IELTS_NOTICE.scoring",
+    ]) assert.ok(source.includes(text), text);
   });
 
   it("workspace exposes required semantic states and bounded journeys", () => {

@@ -1,0 +1,20 @@
+{
+  "schema": "m147.ielts_native_app_cert.v1",
+  "verdict": "IELTS_NATIVE_APP_COMPLETE_WITH_LIMITATIONS",
+  "date": "2026-07-29",
+  "milestones": ["M139", "M140", "M141", "M142", "M143", "M144", "M145", "M146", "M147"],
+  "app_id": "saathi.ielts_alert",
+  "app_runtime": "Universal Application Runtime",
+  "browser": "IELTS_NATIVE_APP_BROWSER_CERT_PASSED",
+  "backend_focused": "11 product + 10 foundation passed",
+  "backend_full": "5430 passed, 1 skipped, 0 failed",
+  "frontend_full": "200 passed",
+  "eslint": "passed",
+  "next_build": "passed",
+  "production_authorized": false,
+  "live_gemini": false,
+  "live_firebase": false,
+  "official_ielts_scoring": false,
+  "trading_guardian": "UNCHANGED / UNENGAGED",
+  "starting_sha": "c6265f67c84d14d1e124066f1121098ceca869bb"
+}

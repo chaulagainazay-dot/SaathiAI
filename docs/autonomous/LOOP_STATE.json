@@ -1,41 +1,40 @@
 {
-  "goal_id": "SAATHIOS_HCG_NATIVE_OPERATIONS_APPLICATION",
-  "historical_baseline_sha": "58ea8d3ffb63bbeec09998954f6eec406638471d",
-  "baseline_sha": "58ea8d3ffb63bbeec09998954f6eec406638471d",
-  "session_start_sha": "58ea8d3ffb63bbeec09998954f6eec406638471d",
-  "current_sha": "a1b0fa925303996c3f575abdd0d60039e9315e62",
-  "current_milestone": "M138",
+  "goal_id": "SAATHIOS_IELTS_NATIVE_COACHING_APPLICATION",
+  "historical_baseline_sha": "c6265f67c84d14d1e124066f1121098ceca869bb",
+  "baseline_sha": "c6265f67c84d14d1e124066f1121098ceca869bb",
+  "session_start_sha": "c6265f67c84d14d1e124066f1121098ceca869bb",
+  "current_sha": "PENDING_COMMIT",
+  "current_milestone": "M147",
   "status": "complete_with_limitations",
   "completed_milestones": [
-    "M130",
-    "M131",
-    "M132",
-    "M133",
-    "M134",
-    "M135",
-    "M136",
-    "M137",
-    "M138"
+    "M139",
+    "M140",
+    "M141",
+    "M142",
+    "M143",
+    "M144",
+    "M145",
+    "M146",
+    "M147"
   ],
   "prior_completed_goals": [
     {
-      "goal_id": "SAATHIOS_UNIVERSAL_APPLICATION_RUNTIME",
-      "terminal_sha": "58ea8d3ffb63bbeec09998954f6eec406638471d",
+      "goal_id": "SAATHIOS_HCG_NATIVE_OPERATIONS_APPLICATION",
+      "terminal_sha": "c6265f67c84d14d1e124066f1121098ceca869bb",
       "status": "complete_with_limitations"
     },
     {
-      "goal_id": "SAATHIOS_SKILL_ECOSYSTEM_RUNTIME",
+      "goal_id": "SAATHIOS_UNIVERSAL_APPLICATION_RUNTIME",
       "status": "complete_with_limitations"
     }
   ],
-  "next_action": "Optional multi-register multi-device HCG sync and print/export polish \u2014 production and live HCG not authorized.",
+  "next_action": "Optional richer mock-test timing UI and local STT adapter — production/Gemini/Firebase not authorized.",
   "last_verified_at": "2026-07-29",
-  "stop_reason": "HCG_NATIVE_APP_COMPLETE_WITH_LIMITATIONS: first-party cafeteria ops app via AppRuntime; integer money; ledger credit/supplier; browser cert; local-only.",
-  "m130_m138_implementation_sha": "30cf62ecf61082423bc7c2c13f64ea60b7ec188b",
+  "stop_reason": "IELTS_NATIVE_APP_COMPLETE_WITH_LIMITATIONS: diagnostic, plan, 4 skills, readiness, Yeti read-only, AppRuntime host, browser cert; local deterministic scoring only.",
   "evidence": {
-    "backend_full": "5419 passed, 1 skipped, 0 failed",
-    "frontend_full": "199 passed",
-    "browser": "HCG_NATIVE_APP_BROWSER_CERT_PASSED",
+    "backend_full": "5430 passed, 1 skipped, 0 failed",
+    "frontend_full": "200 passed",
+    "browser": "IELTS_NATIVE_APP_BROWSER_CERT_PASSED",
     "eslint": "passed",
     "next_build": "passed"
   }
