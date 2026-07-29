@@ -355,6 +355,21 @@
 - Consequences: SaathiOS can hold real model-backed interruptible multi-turn
   voice conversations locally. Production remains unauthorized.
 
+## ADR-ORCH-001 — Agent Orchestration over Mission Runtime (M95–M102)
+
+- Decision: add `saathi.platform.orchestration` as a planning/supervision layer
+  that compiles objectives into Mission Runtime plans and never executes tools
+  itself. PlatformAgentRuntime and ExecutionGateway remain sole tool path.
+- Decision: expand bounded mission agent roles (Researcher, Security, Operator,
+  DomainSpecialist) as policy identities, not free-form personas; implementer
+  cannot self-certify.
+- Decision: model-assisted plan suggestions are advisory only; deterministic
+  validation is mandatory; readonly analysis tool is the default for local plans.
+- Alternatives: parallel mission engine; frontend-only planner; model-direct tools.
+- Evidence: M95 tests, M70 regressions, M101 browser cert, M102 summary.
+- Consequences: SaathiOS can accept complex objectives and supervise validated
+  multi-step work locally. Production remains unauthorized.
+
 ## ADR-KNOWLEDGE-001 — Platform Knowledge and Grounding Runtime (M87–M94)
 
 - Decision: implement centralized grounding under `saathi.platform.knowledge`

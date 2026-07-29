@@ -1,0 +1,41 @@
+{
+  "schema": "m102.agent_orchestration_certification.v1",
+  "captured_at": "2026-07-29",
+  "terminal_verdict": "AGENT_ORCHESTRATION_RUNTIME_COMPLETE_WITH_LIMITATIONS",
+  "starting_sha": "a006fb81399392bdccdd1cb7cc2d30f4979a90ec",
+  "branch": "milestone/m61-backend-workflow-persistence",
+  "milestones": ["M95", "M96", "M97", "M98", "M99", "M100", "M101", "M102"],
+  "architecture": {
+    "package": "saathi/platform/orchestration",
+    "mission_runtime": "authoritative",
+    "execution": "PlatformAgentRuntime→ExecutionGateway",
+    "tools_executable_by_model": false,
+    "production_authorized": false
+  },
+  "roles": 12,
+  "templates": 10,
+  "tests": {
+    "focused": "tests/test_m95_orchestration_runtime.py",
+    "focused_count": 21,
+    "m69_m70_mission": true,
+    "m87_knowledge": true,
+    "m80_conversation": true
+  },
+  "browser": {
+    "script": "saathi-os/scripts/m101_orchestration_browser_cert.mjs",
+    "evidence": "docs/evidence/m101/browser/M101_BROWSER_CERT.json",
+    "result": "ORCHESTRATION_BROWSER_CERT_PASSED"
+  },
+  "security": {
+    "no_direct_tool_execution": true,
+    "plan_validation_required": true,
+    "approval_not_forged": true,
+    "tenant_isolation": true,
+    "trading_guardian_unchanged": true,
+    "retries_bounded": true
+  },
+  "production_authorized": false,
+  "push": false,
+  "merge": false,
+  "deploy": false
+}

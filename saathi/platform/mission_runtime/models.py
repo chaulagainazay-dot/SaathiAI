@@ -45,12 +45,16 @@ class MissionRuntimeState(str, Enum):
 class AgentType(str, Enum):
     PLANNER = "PlannerAgent"
     ARCHITECT = "ArchitectAgent"
+    RESEARCHER = "ResearcherAgent"
     IMPLEMENTER = "ImplementerAgent"
     REVIEWER = "ReviewerAgent"
     TEST = "TestAgent"
     BROWSER = "BrowserAgent"
+    SECURITY = "SecurityAgent"
     DOCUMENTATION = "DocumentationAgent"
     CERTIFICATION = "CertificationAgent"
+    OPERATOR = "OperatorAgent"
+    DOMAIN = "DomainSpecialistAgent"
 
 
 class EvidenceStatus(str, Enum):

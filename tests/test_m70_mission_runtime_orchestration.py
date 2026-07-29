@@ -199,10 +199,21 @@ def test_independent_safe_agents_dispatch_in_parallel(mission_env):
     }
     assert all(call[0] == mission["mission_id"] for call in fake.calls)
     descriptions = MissionAgentRegistry().describe()
-    assert len(descriptions) == 8
+    # M95+ expanded bounded roles (Planner…DomainSpecialist); all still
+    # execute only through PlatformAgentRuntime.
+    assert len(descriptions) >= 8
     assert {item["execution_authority"] for item in descriptions} == {
         "PlatformAgentRuntime"
     }
+    agent_types = {item["agent_type"] for item in descriptions}
+    assert {
+        "PlannerAgent",
+        "ArchitectAgent",
+        "ImplementerAgent",
+        "ReviewerAgent",
+        "ResearcherAgent",
+        "SecurityAgent",
+    } <= agent_types
 
 
 def test_approval_wait_survives_and_resumes_same_execution(mission_env):

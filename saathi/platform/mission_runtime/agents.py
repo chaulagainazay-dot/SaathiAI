@@ -45,12 +45,16 @@ class MissionAgentRegistry:
     _RESPONSIBILITIES = {
         AgentType.PLANNER: "decompose bounded goals and declare dependencies",
         AgentType.ARCHITECT: "review architecture and reuse platform authorities",
+        AgentType.RESEARCHER: "gather authorized context and summarize evidence",
         AgentType.IMPLEMENTER: "make the smallest complete implementation change",
         AgentType.REVIEWER: "perform independent evidence-backed review",
         AgentType.TEST: "run deterministic verification through registered tools",
         AgentType.BROWSER: "certify browser behavior through governed browser tools",
+        AgentType.SECURITY: "review security, isolation, and policy boundaries",
         AgentType.DOCUMENTATION: "update authoritative project documentation",
         AgentType.CERTIFICATION: "issue a final verdict only from recorded evidence",
+        AgentType.OPERATOR: "operate mission controls under human authority",
+        AgentType.DOMAIN: "apply domain templates within existing authorities",
     }
 
     def __init__(self) -> None:

@@ -948,6 +948,294 @@ def mission_runtime_certification(
         raise _err(e) from e
 
 
+# ── M95+ Agent Orchestration and Planning Runtime ───────────────────────────
+class OrchestrationIntakeBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    objective: str = Field(min_length=1, max_length=4000)
+    expected_outcome: str = Field(default="", max_length=2000)
+    scope: str = Field(default="", max_length=2000)
+    exclusions: str = Field(default="", max_length=2000)
+    project_id: str = Field(default="", max_length=160)
+    mission_id: str = Field(default="", max_length=160)
+    risk_level: str = Field(default="medium", max_length=20)
+    domain: str = Field(default="engineering", max_length=40)
+    template_id: str = Field(default="", max_length=80)
+    production_impact: bool = False
+    success_criteria: str = Field(default="", max_length=2000)
+    stop_conditions: str = Field(default="", max_length=1000)
+    budget_constraints: str = Field(default="", max_length=500)
+    time_constraints: str = Field(default="", max_length=500)
+    external_dependencies: str = Field(default="", max_length=1000)
+
+
+class OrchestrationCreateBody(OrchestrationIntakeBody):
+    model_config = ConfigDict(extra="forbid")
+
+
+class OrchestrationCommandBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    message: str = Field(min_length=1, max_length=2000)
+    orchestration_id: str = Field(default="", max_length=160)
+
+
+class OrchestrationCertifyBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    with_limitations: bool = True
+    summary: str = Field(default="", max_length=2000)
+    limitations: list[str] = Field(default_factory=list)
+
+
+class OrchestrationReplanBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    reason: str = Field(default="operator_replan", max_length=300)
+    objective: str = Field(default="", max_length=4000)
+    template_id: str = Field(default="", max_length=80)
+
+
+def _orchestration_svc():
+    from saathi.platform.orchestration import default_orchestration_service
+
+    return default_orchestration_service(_svc())
+
+
+def _orch_ctx(authorization: str | None, x_platform_token: str | None):
+    token = _token(authorization, x_platform_token)
+    return _svc().require_context(token), token
+
+
+@router.get("/orchestration/health")
+def orchestration_health(
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _orch_ctx(authorization, x_platform_token)
+        return {"health": _orchestration_svc().health(ctx)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/orchestration/roles")
+def orchestration_roles(
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _orch_ctx(authorization, x_platform_token)
+        return {"roles": _orchestration_svc().list_roles(ctx)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/orchestration/templates")
+def orchestration_templates(
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _orch_ctx(authorization, x_platform_token)
+        return {"templates": _orchestration_svc().list_templates(ctx)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/orchestration/intake")
+def orchestration_intake(
+    body: OrchestrationIntakeBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _orch_ctx(authorization, x_platform_token)
+        return _orchestration_svc().intake(ctx, body.model_dump())
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/orchestration/compile")
+def orchestration_compile(
+    body: OrchestrationIntakeBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _orch_ctx(authorization, x_platform_token)
+        return _orchestration_svc().compile_plan(ctx, body.model_dump())
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/orchestration")
+def orchestration_create(
+    body: OrchestrationCreateBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _orch_ctx(authorization, x_platform_token)
+        return _orchestration_svc().create(ctx, body.model_dump())
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/orchestration")
+def orchestration_list(
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _orch_ctx(authorization, x_platform_token)
+        return _orchestration_svc().list(ctx)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/orchestration/{orchestration_id}")
+def orchestration_get(
+    orchestration_id: str,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _orch_ctx(authorization, x_platform_token)
+        return _orchestration_svc().get(ctx, orchestration_id)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/orchestration/{orchestration_id}/start")
+def orchestration_start(
+    orchestration_id: str,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, token = _orch_ctx(authorization, x_platform_token)
+        return _orchestration_svc().start(ctx, orchestration_id, token=token)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/orchestration/{orchestration_id}/pause")
+def orchestration_pause(
+    orchestration_id: str,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _orch_ctx(authorization, x_platform_token)
+        return _orchestration_svc().pause(ctx, orchestration_id)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/orchestration/{orchestration_id}/resume")
+def orchestration_resume(
+    orchestration_id: str,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, token = _orch_ctx(authorization, x_platform_token)
+        return _orchestration_svc().resume(ctx, orchestration_id, token=token)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/orchestration/{orchestration_id}/cancel")
+def orchestration_cancel(
+    orchestration_id: str,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _orch_ctx(authorization, x_platform_token)
+        return _orchestration_svc().cancel(ctx, orchestration_id)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/orchestration/{orchestration_id}/replan")
+def orchestration_replan(
+    orchestration_id: str,
+    body: OrchestrationReplanBody | None = None,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _orch_ctx(authorization, x_platform_token)
+        payload = body.model_dump() if body else {}
+        return _orchestration_svc().replan(ctx, orchestration_id, payload)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/orchestration/{orchestration_id}/checkpoint")
+def orchestration_checkpoint(
+    orchestration_id: str,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _orch_ctx(authorization, x_platform_token)
+        return _orchestration_svc().checkpoint(ctx, orchestration_id)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/orchestration/{orchestration_id}/recover")
+def orchestration_recover(
+    orchestration_id: str,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, token = _orch_ctx(authorization, x_platform_token)
+        return _orchestration_svc().recover(ctx, orchestration_id, token=token)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/orchestration/{orchestration_id}/certify")
+def orchestration_certify(
+    orchestration_id: str,
+    body: OrchestrationCertifyBody | None = None,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _orch_ctx(authorization, x_platform_token)
+        b = body or OrchestrationCertifyBody()
+        return _orchestration_svc().certify(
+            ctx,
+            orchestration_id,
+            with_limitations=b.with_limitations,
+            summary=b.summary,
+            limitations=b.limitations,
+        )
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/orchestration/command")
+def orchestration_command(
+    body: OrchestrationCommandBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _orch_ctx(authorization, x_platform_token)
+        return _orchestration_svc().command_from_conversation(
+            ctx, body.message, orchestration_id=body.orchestration_id
+        )
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
 @router.post("/members")
 def add_member(
     body: MemberBody,

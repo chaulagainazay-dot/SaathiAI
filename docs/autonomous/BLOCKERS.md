@@ -1,18 +1,17 @@
 # Genuine Blockers
 
-## None for the local knowledge grounding foundation
+## None for the local agent orchestration foundation
 
-M87–M94 Knowledge and Grounding Runtime is complete with documented limitations.
-Lexical retrieval, ConversationService grounding, citations, tenant isolation,
-prompt-injection data-only boundaries, and browser certification evidence are in
-place for the local loopback path.
+M95–M102 Agent Orchestration Runtime is complete with documented limitations.
+Validated plan compilation, Mission Runtime coordination, bounded agent roles,
+retry classification, operator workspace, and browser certification evidence are
+in place for the local loopback path.
 
 ## External/deferred inputs
 
-Semantic/embedding retrieval requires a future explicit local-model resource
-decision and is not required for the lexical baseline. Full dual-stack Next→API
-browser harness hardening is capacity-sensitive, not a correctness blocker for
-the certified API journey.
+Durable multi-process orchestration session storage and full dual-stack live
+Next→API form action harness hardening are capacity/architecture follow-ups, not
+blockers for the certified local planning and supervision journey.
 
 ## Production authorization
 

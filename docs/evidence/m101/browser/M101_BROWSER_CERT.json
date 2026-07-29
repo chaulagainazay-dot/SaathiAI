@@ -1,0 +1,60 @@
+{
+  "schema": "m101.orchestration_browser_cert.v1",
+  "capturedAt": "2026-07-29T00:52:55.957Z",
+  "hardGates": {
+    "intake_ready": {
+      "ok": true,
+      "detail": "intake"
+    },
+    "plan_valid": {
+      "ok": true,
+      "detail": "nodes=7"
+    },
+    "orchestration_created": {
+      "ok": true,
+      "detail": "id"
+    },
+    "roles_present": {
+      "ok": true,
+      "detail": "roles=12"
+    },
+    "checkpoint": {
+      "ok": true,
+      "detail": "checkpoint"
+    },
+    "certified_with_limitations": {
+      "ok": true,
+      "detail": "CERTIFIED_WITH_LIMITATIONS"
+    },
+    "production_not_authorized": {
+      "ok": true,
+      "detail": "prod"
+    },
+    "orchestration_panel_present": {
+      "ok": true,
+      "detail": "count=1"
+    },
+    "ui_state_visible": {
+      "ok": true,
+      "detail": "state=1"
+    },
+    "ui_tasks_visible": {
+      "ok": true,
+      "detail": "tasks"
+    },
+    "logout_cleanup": {
+      "ok": true,
+      "detail": "cleanup"
+    }
+  },
+  "steps": [
+    {
+      "step": "api_bootstrap",
+      "ok": true
+    }
+  ],
+  "result": "ORCHESTRATION_BROWSER_CERT_PASSED",
+  "production_authorized": false,
+  "screenshot": "/Users/macbookpro/SaathiAI/docs/evidence/m101/browser/m101_orchestration_panel.png",
+  "browser_certified": true
+}

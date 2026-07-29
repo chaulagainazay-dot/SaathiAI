@@ -1,28 +1,23 @@
 {
-  "goal_id": "SAATHIOS_KNOWLEDGE_GROUNDING_RUNTIME",
-  "historical_baseline_sha": "b5979eb752242914a1151771f91ad3e265d876cd",
-  "baseline_sha": "b5979eb752242914a1151771f91ad3e265d876cd",
-  "session_start_sha": "b5979eb752242914a1151771f91ad3e265d876cd",
-  "current_sha": "081b321a0b0b6c24aa84daf7c38e34772630ed0a",
-  "m87_m94_implementation_sha": "081b321a0b0b6c24aa84daf7c38e34772630ed0a",
-  "current_milestone": "M94",
+  "goal_id": "SAATHIOS_AGENT_ORCHESTRATION_RUNTIME",
+  "historical_baseline_sha": "a006fb81399392bdccdd1cb7cc2d30f4979a90ec",
+  "baseline_sha": "a006fb81399392bdccdd1cb7cc2d30f4979a90ec",
+  "session_start_sha": "a006fb81399392bdccdd1cb7cc2d30f4979a90ec",
+  "current_sha": "PENDING_COMMIT",
+  "m95_m102_implementation_sha": "PENDING_COMMIT",
+  "current_milestone": "M102",
   "status": "complete_with_limitations",
   "completed_milestones": [
-    "M87",
-    "M88",
-    "M89",
-    "M90",
-    "M91",
-    "M92",
-    "M93",
-    "M94"
+    "M95",
+    "M96",
+    "M97",
+    "M98",
+    "M99",
+    "M100",
+    "M101",
+    "M102"
   ],
   "prior_completed_goals": [
-    {
-      "goal_id": "IELTS_ALERT",
-      "terminal_sha": "a4cb5c4d872a3edf048d52b7cd62bf9346703613",
-      "status": "complete"
-    },
     {
       "goal_id": "AUTONOMOUS_MISSION_RUNTIME",
       "terminal_sha": "7873586aea6066d9e1d51b1d60f85ca413127907",
@@ -42,9 +37,14 @@
       "goal_id": "SAATHIOS_LIVE_CONVERSATIONAL_INTELLIGENCE",
       "terminal_sha": "b5979eb752242914a1151771f91ad3e265d876cd",
       "status": "complete_with_limitations"
+    },
+    {
+      "goal_id": "SAATHIOS_KNOWLEDGE_GROUNDING_RUNTIME",
+      "terminal_sha": "a006fb81399392bdccdd1cb7cc2d30f4979a90ec",
+      "status": "complete_with_limitations"
     }
   ],
-  "next_action": "Optional semantic retrieval only with explicit local-model approval; production hardening — do not auto-download models; production not authorized.",
+  "next_action": "Optional durable orchestration store and CI full-suite capacity — production not authorized.",
   "last_verified_at": "2026-07-29",
-  "stop_reason": "KNOWLEDGE_GROUNDING_RUNTIME_COMPLETE_WITH_LIMITATIONS: lexical grounding into ConversationService; citations; tenant isolation; injection defense; browser cert; production not authorized."
+  "stop_reason": "AGENT_ORCHESTRATION_RUNTIME_COMPLETE_WITH_LIMITATIONS: validated plans; Mission Runtime execution; bounded roles/retries; browser cert; production not authorized."
 }

@@ -1,14 +1,14 @@
 # Current Autonomous Goal
 
-- Goal: SaathiOS Knowledge and Grounding Runtime — centralized authoritative
-  retrieval so Yeti answers from verified repository, mission, evidence, and
-  platform context rather than model memory alone.
-- Scope: `saathi/platform/knowledge`, ConversationService grounding, Yeti
-  policy, citations, health/UI, browser cert, regressions.
-- Non-goals: second ConversationService, frontend index authority, auto embedding
-  download, paid providers, production activation, Trading Guardian changes,
-  push/merge/deploy, redesign of M80–M86 conversation or Mission Runtime.
-- Starting HEAD: `b5979eb752242914a1151771f91ad3e265d876cd`
+- Goal: SaathiOS Agent Orchestration and Planning Runtime — accept complex
+  objectives, compile validated work graphs, assign specialized agents, and
+  supervise execution through Mission Runtime without bypassing authority layers.
+- Scope: `saathi/platform/orchestration`, Mission Runtime integration, roles,
+  templates, operator UI, browser cert, regressions.
+- Non-goals: second Mission Runtime / gateway / approval system, model tool
+  execution, production activation, paid providers, Trading Guardian changes,
+  push/merge/deploy.
+- Starting HEAD: `a006fb81399392bdccdd1cb7cc2d30f4979a90ec`
 - Branch: `milestone/m61-backend-workflow-persistence`
-- Terminal verdict: `KNOWLEDGE_GROUNDING_RUNTIME_COMPLETE_WITH_LIMITATIONS`
+- Terminal verdict: `AGENT_ORCHESTRATION_RUNTIME_COMPLETE_WITH_LIMITATIONS`
 - Production: not authorized.
