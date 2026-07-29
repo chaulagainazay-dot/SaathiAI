@@ -3,10 +3,19 @@
   "historical_baseline_sha": "b116c04558399c5d4f90a44ec1e837165e822e2e",
   "baseline_sha": "b116c04558399c5d4f90a44ec1e837165e822e2e",
   "session_start_sha": "b116c04558399c5d4f90a44ec1e837165e822e2e",
-  "current_sha": "PENDING",
+  "current_sha": "d213e57a8cef09738a13847bbc62d7c7475780f0",
   "current_milestone": "M192-M199",
   "status": "complete_with_limitations",
-  "completed_milestones": ["M192", "M193", "M194", "M195", "M196", "M197", "M198", "M199"],
+  "completed_milestones": [
+    "M192",
+    "M193",
+    "M194",
+    "M195",
+    "M196",
+    "M197",
+    "M198",
+    "M199"
+  ],
   "prior_completed_goals": [
     {
       "goal_id": "TRADING_GUARDIAN_HISTORICAL_RESEARCH",
@@ -34,9 +43,10 @@
   },
   "limitations": [
     "Process-local paper governance store",
-    "Margin/leverage fields are simulation labels only — cash long-only execution",
+    "Margin/leverage fields are simulation labels only \u2014 cash long-only execution",
     "Owner human sign-off not claimed",
     "Not a live-trading or profitability certification"
   ],
-  "recommended_next": "Durable multi-process paper ledger + long-horizon paper ops — still no live trading"
+  "recommended_next": "Durable multi-process paper ledger + long-horizon paper ops \u2014 still no live trading",
+  "ending_sha": "d213e57a8cef09738a13847bbc62d7c7475780f0"
 }
