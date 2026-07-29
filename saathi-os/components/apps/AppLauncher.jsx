@@ -94,6 +94,10 @@ export default function AppLauncher() {
       else if (action === "launch") {
         const data = await appActions.launch(token, appId);
         setLaunched(data);
+        if (appId === "saathi.hcg_pos" && typeof window !== "undefined") {
+          window.location.href = "/apps/hcg";
+          return;
+        }
       } else if (action === "favorite") await appActions.favorite(token, appId, true);
       else if (action === "backup") {
         const b = await appActions.backup(token, appId);

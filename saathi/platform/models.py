@@ -134,6 +134,38 @@ class PlatformPermission(str, Enum):
     PAPER_SAFETY_ACKNOWLEDGE = "paper_safety.acknowledge"
     PAPER_SAFETY_RESET_REQUEST = "paper_safety.reset_request"
     PAPER_SAFETY_RESET = "paper_safety.reset"
+    # M130+ — HCG cafeteria operations (mapped HCG roles use these permissions)
+    HCG_DASHBOARD_READ = "hcg.dashboard.read"
+    HCG_ORDER_READ = "hcg.order.read"
+    HCG_ORDER_CREATE = "hcg.order.create"
+    HCG_ORDER_UPDATE = "hcg.order.update"
+    HCG_ORDER_CANCEL = "hcg.order.cancel"
+    HCG_PAYMENT_RECORD = "hcg.payment.record"
+    HCG_PAYMENT_REVERSE = "hcg.payment.reverse"
+    HCG_SHIFT_OPEN = "hcg.shift.open"
+    HCG_SHIFT_CLOSE = "hcg.shift.close"
+    HCG_RECONCILIATION_READ = "hcg.reconciliation.read"
+    HCG_RECONCILIATION_MANAGE = "hcg.reconciliation.manage"
+    HCG_MENU_READ = "hcg.menu.read"
+    HCG_MENU_MANAGE = "hcg.menu.manage"
+    HCG_INVENTORY_READ = "hcg.inventory.read"
+    HCG_INVENTORY_MANAGE = "hcg.inventory.manage"
+    HCG_PURCHASE_READ = "hcg.purchase.read"
+    HCG_PURCHASE_MANAGE = "hcg.purchase.manage"
+    HCG_EXPENSE_READ = "hcg.expense.read"
+    HCG_EXPENSE_MANAGE = "hcg.expense.manage"
+    HCG_CREDIT_READ = "hcg.credit.read"
+    HCG_CREDIT_MANAGE = "hcg.credit.manage"
+    HCG_SUPPLIER_READ = "hcg.supplier.read"
+    HCG_SUPPLIER_MANAGE = "hcg.supplier.manage"
+    HCG_KITCHEN_READ = "hcg.kitchen.read"
+    HCG_KITCHEN_MANAGE = "hcg.kitchen.manage"
+    HCG_REPORT_READ = "hcg.report.read"
+    HCG_REPORT_EXPORT = "hcg.report.export"
+    HCG_SETTINGS_MANAGE = "hcg.settings.manage"
+    HCG_BACKUP_MANAGE = "hcg.backup.manage"
+    HCG_RESTORE_MANAGE = "hcg.restore.manage"
+    HCG_ADMIN = "hcg.admin"
 
 
 class ApprovalStatus(str, Enum):
@@ -282,6 +314,18 @@ ROLE_PERMISSIONS: dict[PlatformRole, frozenset[PlatformPermission]] = {
             PlatformPermission.PAPER_ORDER_READ,
             PlatformPermission.RECONCILE_READ,
             PlatformPermission.PAPER_SAFETY_READ,
+            # HCG viewer surface (HCG_VIEWER)
+            PlatformPermission.HCG_DASHBOARD_READ,
+            PlatformPermission.HCG_ORDER_READ,
+            PlatformPermission.HCG_MENU_READ,
+            PlatformPermission.HCG_INVENTORY_READ,
+            PlatformPermission.HCG_PURCHASE_READ,
+            PlatformPermission.HCG_EXPENSE_READ,
+            PlatformPermission.HCG_CREDIT_READ,
+            PlatformPermission.HCG_SUPPLIER_READ,
+            PlatformPermission.HCG_KITCHEN_READ,
+            PlatformPermission.HCG_REPORT_READ,
+            PlatformPermission.HCG_RECONCILIATION_READ,
         }
     ),
     PlatformRole.OPERATOR: frozenset(),  # filled below
@@ -331,6 +375,20 @@ ROLE_PERMISSIONS[PlatformRole.OPERATOR] = ROLE_PERMISSIONS[PlatformRole.VIEWER] 
         PlatformPermission.PAPER_SAFETY_TRIP,
         PlatformPermission.PAPER_SAFETY_ACKNOWLEDGE,
         PlatformPermission.PAPER_SAFETY_RESET_REQUEST,
+        # HCG cashier / kitchen / inventory operator surface
+        PlatformPermission.HCG_ORDER_CREATE,
+        PlatformPermission.HCG_ORDER_UPDATE,
+        PlatformPermission.HCG_PAYMENT_RECORD,
+        PlatformPermission.HCG_SHIFT_OPEN,
+        PlatformPermission.HCG_SHIFT_CLOSE,
+        PlatformPermission.HCG_KITCHEN_MANAGE,
+        PlatformPermission.HCG_INVENTORY_MANAGE,
+        PlatformPermission.HCG_PURCHASE_MANAGE,
+        PlatformPermission.HCG_EXPENSE_MANAGE,
+        PlatformPermission.HCG_CREDIT_MANAGE,
+        PlatformPermission.HCG_SUPPLIER_MANAGE,
+        PlatformPermission.HCG_MENU_MANAGE,
+        PlatformPermission.HCG_REPORT_EXPORT,
     }
 )
 ROLE_PERMISSIONS[PlatformRole.OWNER] = ROLE_PERMISSIONS[PlatformRole.OPERATOR] | frozenset(
@@ -358,6 +416,14 @@ ROLE_PERMISSIONS[PlatformRole.OWNER] = ROLE_PERMISSIONS[PlatformRole.OPERATOR] |
         PlatformPermission.VOICE_AUDIT_READ,
         PlatformPermission.KNOWLEDGE_REINDEX,
         PlatformPermission.KNOWLEDGE_ADMIN,
+        # HCG manager / owner surface
+        PlatformPermission.HCG_ORDER_CANCEL,
+        PlatformPermission.HCG_PAYMENT_REVERSE,
+        PlatformPermission.HCG_RECONCILIATION_MANAGE,
+        PlatformPermission.HCG_SETTINGS_MANAGE,
+        PlatformPermission.HCG_BACKUP_MANAGE,
+        PlatformPermission.HCG_RESTORE_MANAGE,
+        PlatformPermission.HCG_ADMIN,
     }
 )
 ROLE_PERMISSIONS[PlatformRole.ADMIN] = ROLE_PERMISSIONS[PlatformRole.OWNER] | frozenset(

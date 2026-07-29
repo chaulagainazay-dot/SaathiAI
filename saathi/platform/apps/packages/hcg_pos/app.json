@@ -8,20 +8,29 @@
   "capabilities": [
     "tables",
     "dashboards",
+    "reports",
+    "search",
+    "notifications",
     "workflows",
     "approvals",
-    "skills"
+    "skills",
+    "conversation",
+    "knowledge"
   ],
   "category": "retail",
   "content_hash": "",
   "dashboards": [
     {
+      "id": "ops",
+      "title": "Daily Operations"
+    },
+    {
       "id": "kitchen",
       "title": "Kitchen"
     }
   ],
-  "description": "Canteen POS operations planning (no production DB mutation).",
-  "display_name": "HCG POS",
+  "description": "Hospital cafeteria POS and operations — local-first, non-production. Sales, credit, inventory, shifts, kitchen.",
+  "display_name": "HCG Operations",
   "entrypoint_type": "declarative",
   "extension": {},
   "feature_flags": {
@@ -32,10 +41,14 @@
     {
       "id": "order_note",
       "title": "Order Note"
+    },
+    {
+      "id": "expense",
+      "title": "Expense"
     }
   ],
   "health_check_contract": "manifest_and_workspace",
-  "icon": "\u25a3",
+  "icon": "▣",
   "knowledge_sources": [],
   "local_trust_status": "BUILT_IN",
   "manifest_schema_version": "app.manifest.v1",
@@ -46,8 +59,23 @@
   "navigation": [
     {
       "href": "/apps/hcg",
-      "id": "ops",
-      "label": "Operations"
+      "id": "overview",
+      "label": "Overview"
+    },
+    {
+      "href": "/apps/hcg",
+      "id": "pos",
+      "label": "POS"
+    },
+    {
+      "href": "/apps/hcg",
+      "id": "kitchen",
+      "label": "Kitchen"
+    },
+    {
+      "href": "/apps/hcg",
+      "id": "reports",
+      "label": "Reports"
     }
   ],
   "network_requirements": "none",
@@ -57,30 +85,31 @@
     ]
   },
   "optional_permissions": [],
-  "package_hash": "2156ea38d199e8e9f2564e4e11d06e08faf6e08c2bb800c8aff602f7efbfcbbf",
+  "package_hash": "",
   "pages": [
     {
       "id": "ops",
       "path": "/apps/hcg",
-      "title": "Operations"
+      "title": "HCG Operations"
     }
   ],
   "production_posture": "not_authorized",
   "publisher": "saathios.builtin",
   "required_permissions": [
-    "runtime.read"
+    "runtime.read",
+    "hcg.dashboard.read"
   ],
   "restore_strategy": "replace_workspace_snapshot",
   "skills": [
     "saathi.hcg_ops_review"
   ],
   "storage": {
-    "max_mb": 32,
+    "max_mb": 64,
     "type": "workspace_isolated"
   },
   "trading_guardian_posture": "unengaged",
   "upgrade_strategy": "install_side_by_side_then_switch",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "worker_requirements": [
     "planning"
   ],

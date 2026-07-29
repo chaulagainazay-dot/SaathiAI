@@ -270,6 +270,7 @@ class PlatformStore:
         self._migrate_m69()
         self._migrate_m74()
         self._migrate_m79()
+        self._migrate_m130_hcg()
         self._conn.commit()
         # Serialize all shared-connection access (auth/session/approval/audit reads
         # run under FastAPI's threadpool concurrently). Reentrant so existing
@@ -1659,6 +1660,56 @@ class PlatformStore:
             );
             CREATE INDEX IF NOT EXISTS idx_m79_voice_evidence_scope
                 ON voice_runtime_evidence(org_id, workspace_id, created_at DESC);
+            """
+        )
+
+    def _migrate_m130_hcg(self) -> None:
+        """HCG cafeteria operations records — workspace/app-instance isolated."""
+        self._conn.executescript(
+            """
+            CREATE TABLE IF NOT EXISTS hcg_records (
+                record_id TEXT PRIMARY KEY,
+                record_type TEXT NOT NULL,
+                org_id TEXT NOT NULL,
+                workspace_id TEXT NOT NULL,
+                app_instance_id TEXT NOT NULL,
+                location_id TEXT NOT NULL DEFAULT '',
+                status TEXT NOT NULL,
+                body_json TEXT NOT NULL DEFAULT '{}',
+                idempotency_key TEXT NOT NULL DEFAULT '',
+                version INTEGER NOT NULL DEFAULT 1,
+                created_at REAL NOT NULL,
+                updated_at REAL NOT NULL,
+                created_by TEXT NOT NULL DEFAULT '',
+                updated_by TEXT NOT NULL DEFAULT '',
+                audit_ref TEXT NOT NULL DEFAULT '',
+                reversed_by TEXT NOT NULL DEFAULT '',
+                reverses_id TEXT NOT NULL DEFAULT '',
+                archived_at REAL NOT NULL DEFAULT 0,
+                demo INTEGER NOT NULL DEFAULT 0
+            );
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_hcg_idempotency
+                ON hcg_records(org_id, workspace_id, app_instance_id, record_type, idempotency_key)
+                WHERE idempotency_key != '';
+            CREATE INDEX IF NOT EXISTS idx_hcg_scope
+                ON hcg_records(org_id, workspace_id, app_instance_id, record_type, updated_at DESC);
+            CREATE INDEX IF NOT EXISTS idx_hcg_status
+                ON hcg_records(org_id, workspace_id, record_type, status);
+            CREATE TABLE IF NOT EXISTS hcg_evidence_events (
+                event_id TEXT PRIMARY KEY,
+                org_id TEXT NOT NULL,
+                workspace_id TEXT NOT NULL,
+                app_instance_id TEXT NOT NULL,
+                record_id TEXT NOT NULL,
+                event_type TEXT NOT NULL,
+                evidence_ref TEXT NOT NULL DEFAULT '',
+                summary TEXT NOT NULL DEFAULT '',
+                actor TEXT NOT NULL DEFAULT '',
+                detail_json TEXT NOT NULL DEFAULT '{}',
+                created_at REAL NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS idx_hcg_evidence_scope
+                ON hcg_evidence_events(org_id, workspace_id, app_instance_id, created_at DESC);
             """
         )
 

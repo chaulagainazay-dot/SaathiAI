@@ -2506,6 +2506,634 @@ def apps_certify(
         raise _err(e) from e
 
 
+# ══════════════════════════════════════════════════════════════════════════
+# M130+ HCG Native Operations Application (local-first, no production)
+# ══════════════════════════════════════════════════════════════════════════
+class HcgOrderBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    lines: list[dict[str, Any]] = Field(default_factory=list)
+    channel: str = Field(default="dine_in", max_length=40)
+    customer_id: str = Field(default="", max_length=120)
+    table_ref: str = Field(default="", max_length=40)
+    notes: str = Field(default="", max_length=500)
+    discount_minor: int = Field(default=0, ge=0)
+    idempotency_key: str = Field(default="", max_length=120)
+    shift_id: str = Field(default="", max_length=120)
+    app_instance_id: str = Field(default="", max_length=160)
+
+
+class HcgPaymentBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    order_id: str = Field(min_length=1, max_length=120)
+    amount_minor: int = Field(ge=0)
+    method: str = Field(min_length=1, max_length=40)
+    qr_reference: str = Field(default="", max_length=120)
+    customer_id: str = Field(default="", max_length=120)
+    shift_id: str = Field(default="", max_length=120)
+    idempotency_key: str = Field(default="", max_length=120)
+    note: str = Field(default="", max_length=200)
+    app_instance_id: str = Field(default="", max_length=160)
+
+
+class HcgShiftOpenBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    opening_cash_minor: int = Field(ge=0)
+    register_id: str = Field(default="reg-1", max_length=80)
+    idempotency_key: str = Field(default="", max_length=120)
+    app_instance_id: str = Field(default="", max_length=160)
+
+
+class HcgShiftCloseBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    actual_cash_minor: int = Field(ge=0)
+    explanation: str = Field(default="", max_length=500)
+    app_instance_id: str = Field(default="", max_length=160)
+
+
+class HcgKitchenBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    to_state: str = Field(min_length=1, max_length=40)
+    app_instance_id: str = Field(default="", max_length=160)
+
+
+class HcgExpenseBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    category: str = Field(min_length=1, max_length=80)
+    amount_minor: int = Field(ge=1)
+    description: str = Field(default="", max_length=500)
+    payment_source: str = Field(default="CASH", max_length=40)
+    shift_id: str = Field(default="", max_length=120)
+    idempotency_key: str = Field(default="", max_length=120)
+    app_instance_id: str = Field(default="", max_length=160)
+
+
+class HcgPurchaseBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    supplier_id: str = Field(min_length=1, max_length=120)
+    lines: list[dict[str, Any]] = Field(default_factory=list)
+    credit_minor: int = Field(default=0, ge=0)
+    paid_minor: int = Field(default=0, ge=0)
+    payment_method: str = Field(default="CASH", max_length=40)
+    idempotency_key: str = Field(default="", max_length=120)
+    app_instance_id: str = Field(default="", max_length=160)
+
+
+class HcgRepaymentBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    customer_id: str = Field(min_length=1, max_length=120)
+    amount_minor: int = Field(ge=1)
+    method: str = Field(default="CASH", max_length=40)
+    shift_id: str = Field(default="", max_length=120)
+    idempotency_key: str = Field(default="", max_length=120)
+    app_instance_id: str = Field(default="", max_length=160)
+
+
+class HcgStockBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    inventory_item_id: str = Field(min_length=1, max_length=120)
+    qty_delta: int
+    reason: str = Field(min_length=1, max_length=200)
+    movement_type: str = Field(default="ADJUSTMENT_IN", max_length=40)
+    approval_reference: str = Field(default="", max_length=160)
+    app_instance_id: str = Field(default="", max_length=160)
+
+
+class HcgMenuBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    name: str = Field(min_length=1, max_length=120)
+    category_id: str = Field(default="", max_length=120)
+    price_minor: int = Field(ge=0)
+    available: bool = True
+    favorite: bool = False
+    recipe_id: str = Field(default="", max_length=120)
+    station: str = Field(default="main", max_length=40)
+    item_id: str = Field(default="", max_length=120)
+    app_instance_id: str = Field(default="", max_length=160)
+
+
+class HcgQuestionBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    question: str = Field(min_length=1, max_length=500)
+    app_instance_id: str = Field(default="", max_length=160)
+
+
+class HcgReverseBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    approval_reference: str = Field(default="", max_length=160)
+    reason: str = Field(default="", max_length=200)
+    app_instance_id: str = Field(default="", max_length=160)
+
+
+class HcgRestoreBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    payload: dict[str, Any] = Field(default_factory=dict)
+    approval_reference: str = Field(default="", max_length=160)
+    app_instance_id: str = Field(default="", max_length=160)
+
+
+def _hcg_svc():
+    from saathi.platform.hcg import default_hcg_service
+
+    return default_hcg_service(_svc())
+
+
+def _hcg_ctx(authorization: str | None, x_platform_token: str | None):
+    token = _token(authorization, x_platform_token)
+    return _svc().require_context(token)
+
+
+def _hcg_err(exc: Exception) -> HTTPException:
+    if isinstance(exc, PlatformContextError):
+        return _err(exc)
+    from saathi.platform.hcg.models import HcgValidationError
+    from saathi.platform.hcg.money import MoneyError
+
+    if isinstance(exc, (HcgValidationError, MoneyError)):
+        code = getattr(exc, "code", "HCG_ERROR")
+        return HTTPException(status_code=400, detail={"code": code, "message": str(exc)})
+    return HTTPException(status_code=500, detail={"code": "HCG_INTERNAL", "message": "error"})
+
+
+@router.get("/apps/hcg/dashboard")
+def hcg_dashboard(
+    app_instance_id: str = "",
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return {"dashboard": _hcg_svc().dashboard(_hcg_ctx(authorization, x_platform_token), app_instance_id=app_instance_id)}
+    except Exception as e:
+        raise _hcg_err(e) from e
+
+
+@router.get("/apps/hcg/health")
+def hcg_health(
+    app_instance_id: str = "",
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return {"health": _hcg_svc().health(_hcg_ctx(authorization, x_platform_token), app_instance_id=app_instance_id)}
+    except Exception as e:
+        raise _hcg_err(e) from e
+
+
+@router.post("/apps/hcg/seed")
+def hcg_seed(
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return _hcg_svc().ensure_seeded(_hcg_ctx(authorization, x_platform_token))
+    except Exception as e:
+        raise _hcg_err(e) from e
+
+
+@router.get("/apps/hcg/menu")
+def hcg_menu(
+    q: str = "",
+    app_instance_id: str = "",
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return _hcg_svc().list_menu(_hcg_ctx(authorization, x_platform_token), app_instance_id=app_instance_id, q=q)
+    except Exception as e:
+        raise _hcg_err(e) from e
+
+
+@router.post("/apps/hcg/menu")
+def hcg_menu_upsert(
+    body: HcgMenuBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return _hcg_svc().upsert_menu_item(
+            _hcg_ctx(authorization, x_platform_token),
+            name=body.name, category_id=body.category_id, price_minor=body.price_minor,
+            available=body.available, favorite=body.favorite, recipe_id=body.recipe_id,
+            station=body.station, item_id=body.item_id, app_instance_id=body.app_instance_id,
+        )
+    except Exception as e:
+        raise _hcg_err(e) from e
+
+
+@router.get("/apps/hcg/orders")
+def hcg_orders(
+    status: str = "",
+    q: str = "",
+    app_instance_id: str = "",
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return _hcg_svc().list_orders(
+            _hcg_ctx(authorization, x_platform_token),
+            app_instance_id=app_instance_id, status=status, q=q,
+        )
+    except Exception as e:
+        raise _hcg_err(e) from e
+
+
+@router.post("/apps/hcg/orders")
+def hcg_order_create(
+    body: HcgOrderBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return _hcg_svc().create_order(
+            _hcg_ctx(authorization, x_platform_token),
+            lines=body.lines, channel=body.channel, customer_id=body.customer_id,
+            table_ref=body.table_ref, notes=body.notes, discount_minor=body.discount_minor,
+            idempotency_key=body.idempotency_key, shift_id=body.shift_id,
+            app_instance_id=body.app_instance_id,
+        )
+    except Exception as e:
+        raise _hcg_err(e) from e
+
+
+@router.get("/apps/hcg/orders/{order_id}")
+def hcg_order_get(
+    order_id: str,
+    app_instance_id: str = "",
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return _hcg_svc().get_order(
+            _hcg_ctx(authorization, x_platform_token), order_id, app_instance_id=app_instance_id,
+        )
+    except Exception as e:
+        raise _hcg_err(e) from e
+
+
+@router.post("/apps/hcg/orders/{order_id}/kitchen")
+def hcg_order_kitchen(
+    order_id: str,
+    app_instance_id: str = "",
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return _hcg_svc().submit_to_kitchen(
+            _hcg_ctx(authorization, x_platform_token), order_id, app_instance_id=app_instance_id,
+        )
+    except Exception as e:
+        raise _hcg_err(e) from e
+
+
+@router.post("/apps/hcg/payments")
+def hcg_payment(
+    body: HcgPaymentBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return _hcg_svc().record_payment(
+            _hcg_ctx(authorization, x_platform_token),
+            order_id=body.order_id, amount_minor=body.amount_minor, method=body.method,
+            qr_reference=body.qr_reference, customer_id=body.customer_id,
+            shift_id=body.shift_id, idempotency_key=body.idempotency_key,
+            note=body.note, app_instance_id=body.app_instance_id,
+        )
+    except Exception as e:
+        raise _hcg_err(e) from e
+
+
+@router.post("/apps/hcg/payments/{payment_id}/reverse")
+def hcg_payment_reverse(
+    payment_id: str,
+    body: HcgReverseBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return _hcg_svc().reverse_payment(
+            _hcg_ctx(authorization, x_platform_token), payment_id,
+            approval_reference=body.approval_reference, reason=body.reason,
+            app_instance_id=body.app_instance_id,
+        )
+    except Exception as e:
+        raise _hcg_err(e) from e
+
+
+@router.get("/apps/hcg/kitchen")
+def hcg_kitchen(
+    app_instance_id: str = "",
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return _hcg_svc().list_kitchen(_hcg_ctx(authorization, x_platform_token), app_instance_id=app_instance_id)
+    except Exception as e:
+        raise _hcg_err(e) from e
+
+
+@router.post("/apps/hcg/kitchen/{ticket_id}/transition")
+def hcg_kitchen_transition(
+    ticket_id: str,
+    body: HcgKitchenBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return _hcg_svc().transition_kitchen(
+            _hcg_ctx(authorization, x_platform_token), ticket_id,
+            to_state=body.to_state, app_instance_id=body.app_instance_id,
+        )
+    except Exception as e:
+        raise _hcg_err(e) from e
+
+
+@router.get("/apps/hcg/shifts")
+def hcg_shifts(
+    app_instance_id: str = "",
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return _hcg_svc().list_shifts(_hcg_ctx(authorization, x_platform_token), app_instance_id=app_instance_id)
+    except Exception as e:
+        raise _hcg_err(e) from e
+
+
+@router.post("/apps/hcg/shifts/open")
+def hcg_shift_open(
+    body: HcgShiftOpenBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return _hcg_svc().open_shift(
+            _hcg_ctx(authorization, x_platform_token),
+            opening_cash_minor=body.opening_cash_minor, register_id=body.register_id,
+            idempotency_key=body.idempotency_key, app_instance_id=body.app_instance_id,
+        )
+    except Exception as e:
+        raise _hcg_err(e) from e
+
+
+@router.post("/apps/hcg/shifts/{shift_id}/close")
+def hcg_shift_close(
+    shift_id: str,
+    body: HcgShiftCloseBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return _hcg_svc().close_shift(
+            _hcg_ctx(authorization, x_platform_token), shift_id,
+            actual_cash_minor=body.actual_cash_minor, explanation=body.explanation,
+            app_instance_id=body.app_instance_id,
+        )
+    except Exception as e:
+        raise _hcg_err(e) from e
+
+
+@router.get("/apps/hcg/inventory")
+def hcg_inventory(
+    q: str = "",
+    app_instance_id: str = "",
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return _hcg_svc().list_inventory(
+            _hcg_ctx(authorization, x_platform_token), app_instance_id=app_instance_id, q=q,
+        )
+    except Exception as e:
+        raise _hcg_err(e) from e
+
+
+@router.post("/apps/hcg/inventory/adjust")
+def hcg_inventory_adjust(
+    body: HcgStockBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return _hcg_svc().stock_adjust(
+            _hcg_ctx(authorization, x_platform_token),
+            inventory_item_id=body.inventory_item_id, qty_delta=body.qty_delta,
+            reason=body.reason, movement_type=body.movement_type,
+            approval_reference=body.approval_reference, app_instance_id=body.app_instance_id,
+        )
+    except Exception as e:
+        raise _hcg_err(e) from e
+
+
+@router.get("/apps/hcg/customers")
+def hcg_customers(
+    q: str = "",
+    app_instance_id: str = "",
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return _hcg_svc().list_customers(
+            _hcg_ctx(authorization, x_platform_token), app_instance_id=app_instance_id, q=q,
+        )
+    except Exception as e:
+        raise _hcg_err(e) from e
+
+
+@router.get("/apps/hcg/customers/{customer_id}/statement")
+def hcg_customer_statement(
+    customer_id: str,
+    app_instance_id: str = "",
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return _hcg_svc().customer_statement(
+            _hcg_ctx(authorization, x_platform_token), customer_id, app_instance_id=app_instance_id,
+        )
+    except Exception as e:
+        raise _hcg_err(e) from e
+
+
+@router.post("/apps/hcg/credit/repay")
+def hcg_credit_repay(
+    body: HcgRepaymentBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return _hcg_svc().record_repayment(
+            _hcg_ctx(authorization, x_platform_token),
+            customer_id=body.customer_id, amount_minor=body.amount_minor,
+            method=body.method, shift_id=body.shift_id,
+            idempotency_key=body.idempotency_key, app_instance_id=body.app_instance_id,
+        )
+    except Exception as e:
+        raise _hcg_err(e) from e
+
+
+@router.get("/apps/hcg/suppliers")
+def hcg_suppliers(
+    q: str = "",
+    app_instance_id: str = "",
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return _hcg_svc().list_suppliers(
+            _hcg_ctx(authorization, x_platform_token), app_instance_id=app_instance_id, q=q,
+        )
+    except Exception as e:
+        raise _hcg_err(e) from e
+
+
+@router.get("/apps/hcg/suppliers/{supplier_id}/statement")
+def hcg_supplier_statement(
+    supplier_id: str,
+    app_instance_id: str = "",
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return _hcg_svc().supplier_statement(
+            _hcg_ctx(authorization, x_platform_token), supplier_id, app_instance_id=app_instance_id,
+        )
+    except Exception as e:
+        raise _hcg_err(e) from e
+
+
+@router.post("/apps/hcg/purchases")
+def hcg_purchase(
+    body: HcgPurchaseBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return _hcg_svc().create_purchase(
+            _hcg_ctx(authorization, x_platform_token),
+            supplier_id=body.supplier_id, lines=body.lines,
+            credit_minor=body.credit_minor, paid_minor=body.paid_minor,
+            payment_method=body.payment_method, idempotency_key=body.idempotency_key,
+            app_instance_id=body.app_instance_id,
+        )
+    except Exception as e:
+        raise _hcg_err(e) from e
+
+
+@router.post("/apps/hcg/expenses")
+def hcg_expense(
+    body: HcgExpenseBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return _hcg_svc().create_expense(
+            _hcg_ctx(authorization, x_platform_token),
+            category=body.category, amount_minor=body.amount_minor,
+            description=body.description, payment_source=body.payment_source,
+            shift_id=body.shift_id, idempotency_key=body.idempotency_key,
+            app_instance_id=body.app_instance_id,
+        )
+    except Exception as e:
+        raise _hcg_err(e) from e
+
+
+@router.get("/apps/hcg/expenses")
+def hcg_expenses_list(
+    app_instance_id: str = "",
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return _hcg_svc().list_expenses(_hcg_ctx(authorization, x_platform_token), app_instance_id=app_instance_id)
+    except Exception as e:
+        raise _hcg_err(e) from e
+
+
+@router.get("/apps/hcg/reports")
+def hcg_reports(
+    kind: str = "daily_sales",
+    app_instance_id: str = "",
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return _hcg_svc().report(
+            _hcg_ctx(authorization, x_platform_token), kind=kind, app_instance_id=app_instance_id,
+        )
+    except Exception as e:
+        raise _hcg_err(e) from e
+
+
+@router.get("/apps/hcg/search")
+def hcg_search(
+    q: str = "",
+    app_instance_id: str = "",
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return _hcg_svc().search(
+            _hcg_ctx(authorization, x_platform_token), q=q, app_instance_id=app_instance_id,
+        )
+    except Exception as e:
+        raise _hcg_err(e) from e
+
+
+@router.get("/apps/hcg/notifications")
+def hcg_notifications(
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return _hcg_svc().list_notifications(_hcg_ctx(authorization, x_platform_token))
+    except Exception as e:
+        raise _hcg_err(e) from e
+
+
+@router.post("/apps/hcg/yeti")
+def hcg_yeti(
+    body: HcgQuestionBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return _hcg_svc().grounded_answer(
+            _hcg_ctx(authorization, x_platform_token), body.question,
+            app_instance_id=body.app_instance_id,
+        )
+    except Exception as e:
+        raise _hcg_err(e) from e
+
+
+@router.post("/apps/hcg/backup")
+def hcg_backup(
+    app_instance_id: str = "",
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return {"backup": _hcg_svc().export_backup_payload(
+            _hcg_ctx(authorization, x_platform_token), app_instance_id=app_instance_id,
+        )}
+    except Exception as e:
+        raise _hcg_err(e) from e
+
+
+@router.post("/apps/hcg/restore")
+def hcg_restore(
+    body: HcgRestoreBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        return _hcg_svc().restore_payload(
+            _hcg_ctx(authorization, x_platform_token), body.payload,
+            approval_reference=body.approval_reference, app_instance_id=body.app_instance_id,
+        )
+    except Exception as e:
+        raise _hcg_err(e) from e
+
+
 @router.post("/members")
 def add_member(
     body: MemberBody,

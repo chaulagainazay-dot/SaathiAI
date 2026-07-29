@@ -1,0 +1,108 @@
+{
+  "schema": "m138.hcg_browser_cert.v1",
+  "capturedAt": "2026-07-29T04:40:48.334Z",
+  "hardGates": {
+    "hcg_launched": {
+      "ok": true,
+      "detail": "RUNNING"
+    },
+    "workspace_isolated": {
+      "ok": true,
+      "detail": "iso"
+    },
+    "cash_order": {
+      "ok": true,
+      "detail": "PAID"
+    },
+    "credit_ledger": {
+      "ok": true,
+      "detail": "credit"
+    },
+    "inventory_purchase": {
+      "ok": true,
+      "detail": "inv"
+    },
+    "approval_gate": {
+      "ok": true,
+      "detail": "appr"
+    },
+    "controlled_reversal": {
+      "ok": true,
+      "detail": "rev"
+    },
+    "report_authoritative": {
+      "ok": true,
+      "detail": "rep"
+    },
+    "yeti_readonly": {
+      "ok": true,
+      "detail": "yeti"
+    },
+    "backup": {
+      "ok": true,
+      "detail": "ac3291015b1415fc"
+    },
+    "restore_gated": {
+      "ok": true,
+      "detail": "rg"
+    },
+    "restore_ok": {
+      "ok": true,
+      "detail": "rst"
+    },
+    "restart_recovery": {
+      "ok": true,
+      "detail": "restart"
+    },
+    "health": {
+      "ok": true,
+      "detail": "HEALTHY"
+    },
+    "no_production": {
+      "ok": true,
+      "detail": "prod"
+    },
+    "hcg_workspace_ui": {
+      "ok": true,
+      "detail": "ui"
+    },
+    "demo_label": {
+      "ok": true,
+      "detail": "label"
+    },
+    "aria_workspace": {
+      "ok": true,
+      "detail": "aria"
+    },
+    "logout_cleanup": {
+      "ok": true,
+      "detail": "logout"
+    }
+  },
+  "result": "HCG_NATIVE_APP_BROWSER_CERT_PASSED",
+  "production_hcg_accessed": false,
+  "live_payment_gateway": false,
+  "marketplace_authorized": false,
+  "production_authorized": false,
+  "trading_guardian_changed": false,
+  "api": {
+    "token": "CafArvW4dsElzU3-e9lHL7WDlqloyBvXbE4ZuffpdzM",
+    "launched": "RUNNING",
+    "isolated": true,
+    "cash_paid": "PAID",
+    "credit_increased": true,
+    "inventory_up": true,
+    "approval_blocked": true,
+    "reversed": true,
+    "report_ok": true,
+    "yeti_readonly": true,
+    "backup_hash": "ac3291015b1415fc",
+    "restore_gated": true,
+    "restored": true,
+    "restart_ok": true,
+    "health": "HEALTHY",
+    "no_production": true,
+    "recon_status": "BALANCED"
+  },
+  "browser_certified": true
+}
