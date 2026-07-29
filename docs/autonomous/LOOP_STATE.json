@@ -3,7 +3,7 @@
   "historical_baseline_sha": "013af0241251e4fbe5636351e0acd086b42ba40c",
   "baseline_sha": "013af0241251e4fbe5636351e0acd086b42ba40c",
   "session_start_sha": "013af0241251e4fbe5636351e0acd086b42ba40c",
-  "current_sha": "PENDING_IMPLEMENTATION_COMMIT",
+  "current_sha": "687ea870ada972742b53754c12da4988a3fee219",
   "current_milestone": "M120",
   "status": "complete_with_limitations",
   "completed_milestones": [
@@ -36,7 +36,8 @@
       "status": "complete_with_limitations"
     }
   ],
-  "next_action": "Optional skill authoring DX improvements — marketplace and production not authorized.",
+  "next_action": "Optional skill authoring DX improvements \u2014 marketplace and production not authorized.",
   "last_verified_at": "2026-07-29",
-  "stop_reason": "SKILL_ECOSYSTEM_RUNTIME_COMPLETE_WITH_LIMITATIONS: local skill lifecycle; gateway-bound execution; browser cert; marketplace/production not authorized."
+  "stop_reason": "SKILL_ECOSYSTEM_RUNTIME_COMPLETE_WITH_LIMITATIONS: local skill lifecycle; gateway-bound execution; browser cert; marketplace/production not authorized.",
+  "m112_m120_implementation_sha": "687ea870ada972742b53754c12da4988a3fee219"
 }

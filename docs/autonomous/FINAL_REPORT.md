@@ -15,7 +15,9 @@ Status: complete with limitations.
 
 ## Ending
 
-- Implementation SHA pinned in LOOP_STATE after commit.
+- Implementation: 
+- Full backend: 5386 passed, 1 skipped
+- Frontend: 194 passed. ESLint pass. Next build pass.
 - Browser: `SKILL_BROWSER_CERT_PASSED`
 
 ## Architecture
