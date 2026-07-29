@@ -161,6 +161,17 @@ export const GLOBAL_NAV = [
     aliases: ["/workers", "/cluster"],
   },
   {
+    id: "skill-runtime",
+    label: "Skill Runtime",
+    href: "/skill-runtime",
+    icon: "⟡",
+    description: "Local skill ecosystem — no marketplace, gateway-bound",
+    authoritySensitivity: "runtime-operate",
+    global: true,
+    accent: "#A78BFA",
+    aliases: ["/skills-runtime", "/capability-skills"],
+  },
+  {
     id: "platform",
     label: "Platform",
     href: "/platform",

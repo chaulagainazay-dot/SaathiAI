@@ -1,38 +1,30 @@
 {
-  "goal_id": "SAATHIOS_DISTRIBUTED_WORKER_FLEET_RUNTIME",
-  "historical_baseline_sha": "213b55c0e791397cb070a3d939843f0b2734a1fa",
-  "baseline_sha": "213b55c0e791397cb070a3d939843f0b2734a1fa",
-  "session_start_sha": "213b55c0e791397cb070a3d939843f0b2734a1fa",
-  "current_sha": "6a068ecda8ebb3d5c111fd4edd7e12aa29b6491e",
-  "m103_m111_implementation_sha": "6a068ecda8ebb3d5c111fd4edd7e12aa29b6491e",
-  "current_milestone": "M111",
+  "goal_id": "SAATHIOS_SKILL_ECOSYSTEM_RUNTIME",
+  "historical_baseline_sha": "013af0241251e4fbe5636351e0acd086b42ba40c",
+  "baseline_sha": "013af0241251e4fbe5636351e0acd086b42ba40c",
+  "session_start_sha": "013af0241251e4fbe5636351e0acd086b42ba40c",
+  "current_sha": "PENDING_IMPLEMENTATION_COMMIT",
+  "current_milestone": "M120",
   "status": "complete_with_limitations",
   "completed_milestones": [
-    "M103",
-    "M104",
-    "M105",
-    "M106",
-    "M107",
-    "M108",
-    "M109",
-    "M110",
-    "M111"
+    "M112",
+    "M113",
+    "M114",
+    "M115",
+    "M116",
+    "M117",
+    "M118",
+    "M119",
+    "M120"
   ],
   "prior_completed_goals": [
     {
-      "goal_id": "AUTONOMOUS_MISSION_RUNTIME",
-      "status": "complete"
-    },
-    {
-      "goal_id": "SAATHIOS_VOICE_OUTPUT_FOUNDATION",
+      "goal_id": "SAATHIOS_DISTRIBUTED_WORKER_FLEET_RUNTIME",
+      "terminal_sha": "013af0241251e4fbe5636351e0acd086b42ba40c",
       "status": "complete_with_limitations"
     },
     {
-      "goal_id": "SAATHIOS_REALTIME_VOICE_RUNTIME",
-      "status": "complete_with_limitations"
-    },
-    {
-      "goal_id": "SAATHIOS_LIVE_CONVERSATIONAL_INTELLIGENCE",
+      "goal_id": "SAATHIOS_AGENT_ORCHESTRATION_RUNTIME",
       "status": "complete_with_limitations"
     },
     {
@@ -40,12 +32,11 @@
       "status": "complete_with_limitations"
     },
     {
-      "goal_id": "SAATHIOS_AGENT_ORCHESTRATION_RUNTIME",
-      "terminal_sha": "213b55c0e791397cb070a3d939843f0b2734a1fa",
+      "goal_id": "SAATHIOS_LIVE_CONVERSATIONAL_INTELLIGENCE",
       "status": "complete_with_limitations"
     }
   ],
-  "next_action": "Optional multi-host trust design only — LAN/cloud/production not authorized.",
+  "next_action": "Optional skill authoring DX improvements — marketplace and production not authorized.",
   "last_verified_at": "2026-07-29",
-  "stop_reason": "DISTRIBUTED_WORKER_RUNTIME_COMPLETE_WITH_LIMITATIONS: Phase A loopback fleet; M56 extended; fencing/reconciliation/recovery certified; production not authorized."
+  "stop_reason": "SKILL_ECOSYSTEM_RUNTIME_COMPLETE_WITH_LIMITATIONS: local skill lifecycle; gateway-bound execution; browser cert; marketplace/production not authorized."
 }

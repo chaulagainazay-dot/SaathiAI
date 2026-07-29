@@ -1837,6 +1837,327 @@ def fleet_certify(
         raise _err(e) from e
 
 
+# ══════════════════════════════════════════════════════════════════════════
+# M112–M120 Skill Ecosystem Runtime — local packages only, no marketplace
+# ══════════════════════════════════════════════════════════════════════════
+class SkillPackageBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    package_id: str = Field(min_length=1, max_length=120)
+    approval_reference: str = Field(default="", max_length=160)
+
+
+class SkillEnableBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    version: str = Field(default="", max_length=40)
+    approval_reference: str = Field(default="", max_length=160)
+
+
+class SkillExecuteBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    version: str = Field(default="", max_length=40)
+    capability: str = Field(default="", max_length=80)
+    arguments: dict[str, Any] = Field(default_factory=dict)
+    approval_reference: str = Field(default="", max_length=160)
+    idempotency_key: str = Field(default="", max_length=200)
+
+
+class SkillUpgradeBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    to_version: str = Field(min_length=1, max_length=40)
+    package_id: str = Field(min_length=1, max_length=120)
+    approval_reference: str = Field(default="", max_length=160)
+
+
+class SkillReasonBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    reason: str = Field(default="operator", max_length=300)
+    version: str = Field(default="", max_length=40)
+
+
+class SkillCommandBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    message: str = Field(min_length=1, max_length=2000)
+    skill_id: str = Field(default="", max_length=120)
+
+
+def _skill_svc():
+    from saathi.platform.skills import default_skill_runtime
+
+    return default_skill_runtime(_svc())
+
+
+def _skill_ctx(authorization: str | None, x_platform_token: str | None):
+    token = _token(authorization, x_platform_token)
+    return _svc().require_context(token), token
+
+
+@router.get("/skills/health")
+def skills_health(
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _skill_ctx(authorization, x_platform_token)
+        return {"health": _skill_svc().health(ctx)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/skills")
+def skills_list(
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _skill_ctx(authorization, x_platform_token)
+        return _skill_svc().list_skills(ctx)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/skills/discovered")
+def skills_discovered(
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _skill_ctx(authorization, x_platform_token)
+        return _skill_svc().list_discovered(ctx)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/skills/discover")
+def skills_discover(
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _skill_ctx(authorization, x_platform_token)
+        return _skill_svc().discover(ctx)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/skills/validate")
+def skills_validate(
+    body: SkillPackageBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _skill_ctx(authorization, x_platform_token)
+        return _skill_svc().validate_package(ctx, package_id=body.package_id)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/skills/register")
+def skills_register(
+    body: SkillPackageBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _skill_ctx(authorization, x_platform_token)
+        return _skill_svc().register(
+            ctx, package_id=body.package_id, approval_reference=body.approval_reference
+        )
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/skills/{skill_id}")
+def skills_get(
+    skill_id: str,
+    version: str = "",
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _skill_ctx(authorization, x_platform_token)
+        return _skill_svc().get_skill(ctx, skill_id, version=version)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/skills/{skill_id}/enable")
+def skills_enable(
+    skill_id: str,
+    body: SkillEnableBody | None = None,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _skill_ctx(authorization, x_platform_token)
+        b = body or SkillEnableBody()
+        return _skill_svc().enable(
+            ctx, skill_id, version=b.version, approval_reference=b.approval_reference
+        )
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/skills/{skill_id}/disable")
+def skills_disable(
+    skill_id: str,
+    body: SkillEnableBody | None = None,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _skill_ctx(authorization, x_platform_token)
+        b = body or SkillEnableBody()
+        return _skill_svc().disable(ctx, skill_id, version=b.version)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/skills/{skill_id}/execute")
+def skills_execute(
+    skill_id: str,
+    body: SkillExecuteBody | None = None,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, token = _skill_ctx(authorization, x_platform_token)
+        b = body or SkillExecuteBody()
+        return _skill_svc().execute(
+            ctx,
+            skill_id,
+            version=b.version,
+            capability=b.capability,
+            arguments=b.arguments,
+            approval_reference=b.approval_reference,
+            idempotency_key=b.idempotency_key,
+            token=token,
+        )
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/skills/{skill_id}/upgrade")
+def skills_upgrade(
+    skill_id: str,
+    body: SkillUpgradeBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _skill_ctx(authorization, x_platform_token)
+        return _skill_svc().upgrade(
+            ctx,
+            skill_id,
+            to_version=body.to_version,
+            package_id=body.package_id,
+            approval_reference=body.approval_reference,
+        )
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/skills/{skill_id}/rollback")
+def skills_rollback(
+    skill_id: str,
+    body: SkillReasonBody | None = None,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _skill_ctx(authorization, x_platform_token)
+        reason = body.reason if body else "operator_rollback"
+        return _skill_svc().rollback(ctx, skill_id, reason=reason)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/skills/{skill_id}/quarantine")
+def skills_quarantine(
+    skill_id: str,
+    body: SkillReasonBody | None = None,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _skill_ctx(authorization, x_platform_token)
+        b = body or SkillReasonBody()
+        return _skill_svc().quarantine(
+            ctx, skill_id, reason=b.reason, version=b.version
+        )
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/skills/{skill_id}/revoke")
+def skills_revoke(
+    skill_id: str,
+    body: SkillReasonBody | None = None,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _skill_ctx(authorization, x_platform_token)
+        b = body or SkillReasonBody()
+        return _skill_svc().revoke(ctx, skill_id, reason=b.reason, version=b.version)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/skills/{skill_id}/executions")
+def skills_executions(
+    skill_id: str,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _skill_ctx(authorization, x_platform_token)
+        return _skill_svc().list_executions(ctx, skill_id)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/skills/{skill_id}/health")
+def skills_skill_health(
+    skill_id: str,
+    version: str = "",
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _skill_ctx(authorization, x_platform_token)
+        return _skill_svc().check_health(ctx, skill_id, version=version)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/skills/command")
+def skills_command(
+    body: SkillCommandBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _skill_ctx(authorization, x_platform_token)
+        return _skill_svc().command_from_conversation(
+            ctx, body.message, skill_id=body.skill_id
+        )
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/skills/certify")
+def skills_certify(
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    try:
+        ctx, _ = _skill_ctx(authorization, x_platform_token)
+        return _skill_svc().certify(ctx)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
 @router.post("/members")
 def add_member(
     body: MemberBody,
