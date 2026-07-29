@@ -7695,3 +7695,378 @@ def tg_historical_scorecard(slug: str, dataset_id: str = "", authorization: str 
         )
     except PlatformContextError as e:
         raise _err(e) from e
+
+
+# ══════════════════════════════════════════════════════════════════════════
+# M192–M199 — Paper Activation Governance (PAPER ONLY, no live broker)
+# ══════════════════════════════════════════════════════════════════════════
+def _paper_gov():
+    from saathi.platform.tg.paper_activation.service import default_paper_gov
+    return default_paper_gov()
+
+
+@router.get("/tg/paper/posture")
+def tg_paper_posture(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_ACCOUNT_READ)
+        return _paper_gov().posture()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/paper/status")
+def tg_paper_status(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_ACCOUNT_READ)
+        return _paper_gov().status(org_id=ctx.org_id, workspace_id=ctx.workspace_id)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+class TgPaperPortfolioBody(BaseModel):
+    name: str = "Paper Fund"
+    starting_cash: str = "100000"
+    base_currency: str = "USD"
+
+
+@router.post("/tg/paper/portfolios")
+def tg_paper_portfolio_create(body: TgPaperPortfolioBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        from saathi.platform.tg.paper_activation.service import PaperGovError
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_ACCOUNT_CREATE)
+        try:
+            return _paper_gov().create_portfolio(
+                name=body.name, starting_cash=body.starting_cash, base_currency=body.base_currency,
+                org_id=ctx.org_id, workspace_id=ctx.workspace_id,
+            )
+        except PaperGovError as e:
+            raise PlatformContextError(e.code, e.message) from e
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/paper/portfolios")
+def tg_paper_portfolios(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_ACCOUNT_READ)
+        return _paper_gov().list_portfolios(org_id=ctx.org_id, workspace_id=ctx.workspace_id)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/paper/portfolios/{pid}")
+def tg_paper_portfolio_get(pid: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        from saathi.platform.tg.paper_activation.service import PaperGovError
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_ACCOUNT_READ)
+        try:
+            return _paper_gov().get_portfolio(pid)
+        except PaperGovError as e:
+            raise PlatformContextError(e.code, e.message) from e
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+class TgPaperApprovalRequestBody(BaseModel):
+    strategy_slug: str
+    reason: str
+    qualification: dict[str, Any] = Field(default_factory=dict)
+    strategy_version: str = "1.0.0"
+    dataset_id: str = ""
+    dataset_fingerprint: str = ""
+
+
+@router.post("/tg/paper/approvals/request")
+def tg_paper_approval_request(body: TgPaperApprovalRequestBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        from saathi.platform.tg.paper_activation.service import PaperGovError
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.APPROVAL_REQUEST)
+        try:
+            return _paper_gov().request_approval(
+                strategy_slug=body.strategy_slug,
+                qualification=body.qualification,
+                reason=body.reason,
+                operator_id=ctx.user_id or ctx.requested_by(),
+                operator_identity=f"operator:{ctx.requested_by()}",
+                strategy_version=body.strategy_version,
+                dataset_id=body.dataset_id,
+                dataset_fingerprint=body.dataset_fingerprint,
+                org_id=ctx.org_id,
+                workspace_id=ctx.workspace_id,
+            )
+        except PaperGovError as e:
+            raise PlatformContextError(e.code, e.message) from e
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+class TgPaperApprovalDecideBody(BaseModel):
+    decision: str  # approve | reject
+    notes: str = ""
+    reason: str = ""
+
+
+@router.post("/tg/paper/approvals/{aid}/decide")
+def tg_paper_approval_decide(aid: str, body: TgPaperApprovalDecideBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        from saathi.platform.tg.paper_activation.service import PaperGovError
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.APPROVAL_DECIDE)
+        try:
+            return _paper_gov().decide_approval(
+                approval_id=aid,
+                decision=body.decision,
+                operator_id=ctx.user_id or ctx.requested_by(),
+                operator_identity=f"operator:{ctx.requested_by()}",
+                notes=body.notes,
+                reason=body.reason,
+            )
+        except PaperGovError as e:
+            raise PlatformContextError(e.code, e.message) from e
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/paper/approvals")
+def tg_paper_approvals(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.APPROVAL_READ)
+        return _paper_gov().list_approvals(org_id=ctx.org_id, workspace_id=ctx.workspace_id)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+class TgPaperActivateBody(BaseModel):
+    strategy_slug: str
+    approval_id: str
+    portfolio_id: str = ""
+    portfolio_name: str = ""
+    starting_cash: str = "100000"
+
+
+@router.post("/tg/paper/activate")
+def tg_paper_activate(body: TgPaperActivateBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        from saathi.platform.tg.paper_activation.service import PaperGovError
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.STRATEGY_EDIT)
+        try:
+            return _paper_gov().activate_strategy(
+                strategy_slug=body.strategy_slug,
+                approval_id=body.approval_id,
+                portfolio_id=body.portfolio_id or None,
+                operator_identity=f"operator:{ctx.requested_by()}",
+                org_id=ctx.org_id,
+                workspace_id=ctx.workspace_id,
+                portfolio_name=body.portfolio_name,
+                starting_cash=body.starting_cash,
+            )
+        except PaperGovError as e:
+            raise PlatformContextError(e.code, e.message) from e
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/paper/activations")
+def tg_paper_activations(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.STRATEGY_READ)
+        return _paper_gov().list_activations(org_id=ctx.org_id, workspace_id=ctx.workspace_id)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+class TgPaperOrderBody(BaseModel):
+    portfolio_id: str
+    strategy_slug: str
+    symbol: str
+    side: str = "BUY"
+    quantity: str
+    order_type: str = "MARKET"
+    tif: str = "DAY"
+    limit_price: str | None = None
+    stop_price: str | None = None
+    reason: str = ""
+    notes: str = ""
+    market_regime: str = ""
+    confidence: str = ""
+    stop: str = ""
+    target: str = ""
+
+
+@router.post("/tg/paper/orders")
+def tg_paper_order(body: TgPaperOrderBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        from saathi.platform.tg.paper_activation.service import PaperGovError
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_ORDER_PROPOSE)
+        try:
+            return _paper_gov().place_order(
+                portfolio_id=body.portfolio_id,
+                strategy_slug=body.strategy_slug,
+                symbol=body.symbol,
+                side=body.side,
+                quantity=body.quantity,
+                order_type=body.order_type,
+                tif=body.tif,
+                limit_price=body.limit_price,
+                stop_price=body.stop_price,
+                reason=body.reason,
+                notes=body.notes,
+                market_regime=body.market_regime,
+                confidence=body.confidence,
+                stop=body.stop,
+                target=body.target,
+                org_id=ctx.org_id,
+                workspace_id=ctx.workspace_id,
+            )
+        except PaperGovError as e:
+            raise PlatformContextError(e.code, e.message) from e
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/paper/portfolios/{pid}/orders")
+def tg_paper_orders(pid: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_ORDER_READ)
+        return _paper_gov().list_orders(pid)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/paper/portfolios/{pid}/positions")
+def tg_paper_positions(pid: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_ACCOUNT_READ)
+        return _paper_gov().list_positions(pid)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+class TgPaperTickBody(BaseModel):
+    symbol: str
+    bid: str
+    ask: str
+    last: str
+    volume: str = "1000000"
+    gap_open: bool = False
+
+
+@router.post("/tg/paper/portfolios/{pid}/tick")
+def tg_paper_tick(pid: str, body: TgPaperTickBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        from saathi.platform.tg.paper_activation.service import PaperGovError
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_ORDER_PROPOSE)
+        try:
+            return _paper_gov().process_market(
+                pid, symbol=body.symbol, bid=body.bid, ask=body.ask, last=body.last,
+                volume=body.volume, gap_open=body.gap_open,
+            )
+        except PaperGovError as e:
+            raise PlatformContextError(e.code, e.message) from e
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/paper/portfolios/{pid}/analytics")
+def tg_paper_analytics(pid: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        from saathi.platform.tg.paper_activation.service import PaperGovError
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_ACCOUNT_READ)
+        try:
+            return _paper_gov().analytics(pid)
+        except PaperGovError as e:
+            raise PlatformContextError(e.code, e.message) from e
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/paper/portfolios/{pid}/journal")
+def tg_paper_journal(pid: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_ORDER_READ)
+        return _paper_gov().list_journal(portfolio_id=pid, org_id=ctx.org_id)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/paper/portfolios/{pid}/reconcile")
+def tg_paper_reconcile(pid: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        from saathi.platform.tg.paper_activation.service import PaperGovError
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        try:
+            return _paper_gov().reconcile(pid)
+        except PaperGovError as e:
+            raise PlatformContextError(e.code, e.message) from e
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+class TgPaperKillBody(BaseModel):
+    reason: str = "operator_halt"
+    scope: str = "GLOBAL"
+
+
+@router.post("/tg/paper/kill-switch")
+def tg_paper_kill(body: TgPaperKillBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        from saathi.platform.tg.domain import KillSwitchScope
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_TRIP)
+        return _paper_gov().activate_kill_switch(
+            scope=KillSwitchScope(body.scope),
+            reason=body.reason,
+            activated_by=ctx.requested_by(),
+            source_identity="operator",
+            org_id=ctx.org_id,
+            workspace_id=ctx.workspace_id,
+        )
+    except PlatformContextError as e:
+        raise _err(e) from e
+    except PermissionError as e:
+        raise HTTPException(status_code=403, detail=str(e)) from e
+
+
+@router.get("/tg/paper/kill-switch")
+def tg_paper_kill_status(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _paper_gov().kill_switch_status(org_id=ctx.org_id, workspace_id=ctx.workspace_id)
+    except PlatformContextError as e:
+        raise _err(e) from e

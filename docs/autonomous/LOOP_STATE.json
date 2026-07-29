@@ -1,85 +1,42 @@
 {
-  "goal_id": "TRADING_GUARDIAN_HISTORICAL_RESEARCH",
-  "historical_baseline_sha": "ba66cca5e0ffd8874f8e8c3a4cb25a7dde74425e",
-  "baseline_sha": "ba66cca5e0ffd8874f8e8c3a4cb25a7dde74425e",
-  "session_start_sha": "ba66cca5e0ffd8874f8e8c3a4cb25a7dde74425e",
-  "current_sha": "fe73687372d1920988a8e2192b6253121267a4e8",
-  "current_milestone": "M184-M191",
+  "goal_id": "PAPER_ACTIVATION_GOVERNANCE",
+  "historical_baseline_sha": "b116c04558399c5d4f90a44ec1e837165e822e2e",
+  "baseline_sha": "b116c04558399c5d4f90a44ec1e837165e822e2e",
+  "session_start_sha": "b116c04558399c5d4f90a44ec1e837165e822e2e",
+  "current_sha": "PENDING",
+  "current_milestone": "M192-M199",
   "status": "complete_with_limitations",
-  "completed_milestones": [
-    "M184",
-    "M185",
-    "M186",
-    "M187",
-    "M188",
-    "M189",
-    "M190",
-    "M191"
-  ],
+  "completed_milestones": ["M192", "M193", "M194", "M195", "M196", "M197", "M198", "M199"],
   "prior_completed_goals": [
     {
-      "goal_id": "TRADING_GUARDIAN_PAPER_VALIDATION",
-      "terminal_sha": "ba66cca5e0ffd8874f8e8c3a4cb25a7dde74425e",
-      "verdict": "TRADING_GUARDIAN_PAPER_VALIDATION_CERTIFIED_WITH_LIMITATIONS"
-    },
-    {
-      "goal_id": "TRADING_GUARDIAN_RESEARCH_AND_PAPER_FOUNDATION",
-      "terminal_sha": "89fc0b2eae73a4e4a99ffb1a6a65aae2e091632e",
-      "verdict": "TRADING_GUARDIAN_RESEARCH_AND_PAPER_FOUNDATION_READY_WITH_LIMITATIONS"
+      "goal_id": "TRADING_GUARDIAN_HISTORICAL_RESEARCH",
+      "terminal_sha": "b116c04558399c5d4f90a44ec1e837165e822e2e",
+      "verdict": "TRADING_GUARDIAN_HISTORICAL_RESEARCH_CERTIFIED_WITH_LIMITATIONS"
     }
   ],
-  "verdict": "TRADING_GUARDIAN_HISTORICAL_RESEARCH_CERTIFIED_WITH_LIMITATIONS",
-  "current_verdict": "TRADING_GUARDIAN_HISTORICAL_RESEARCH_CERTIFIED_WITH_LIMITATIONS",
+  "verdict": "PAPER_ACTIVATION_GOVERNANCE_CERTIFIED_WITH_LIMITATIONS",
   "production_authorized": false,
   "public_exposure_authorized": false,
   "live_trading_authorized": false,
   "broker_credentials_supported": false,
   "owner_signoff": "NOT_CLAIMED_AUTOMATED_ONLY",
-  "trading_guardian": {
-    "status": "HISTORICAL_RESEARCH_CERTIFIED",
-    "live_authorized": false,
-    "paper_only": true,
-    "authoritative_policy": "AUTHORITATIVE_RESULT_REQUIRES_NON_FIXTURE_DATA",
-    "historical_adapters": [
-      "local_csv_parquet",
-      "binance_public_file_first",
-      "nepse_local",
-      "yahoo_local_cache"
-    ],
-    "paper_eligible_requires": [
-      "non_fixture_authoritative_history",
-      "quality_accepted",
-      "walk_forward",
-      "stress",
-      "monte_carlo",
-      "realistic_costs",
-      "owner_approval_before_activation"
-    ]
-  },
   "tests": {
-    "focused_m184_m191": "27 passed",
-    "focused_m166_m191": "73 passed",
-    "full_backend": "5526 passed, 1 skipped",
-    "frontend": "218 passed",
-    "browser": "TRADING_GUARDIAN_HISTORICAL_BROWSER_CERT_PASSED_WITH_LIMITATIONS"
+    "focused_m192_m199": "12 passed",
+    "focused_m176_m199": "57 passed",
+    "frontend": "233 passed",
+    "browser": "PAPER_ACTIVATION_BROWSER_CERT_PASSED"
+  },
+  "trading_guardian": {
+    "paper_only": true,
+    "live_authorized": false,
+    "paper_activation": true,
+    "requires_owner_approval": true
   },
   "limitations": [
-    "NEPSE holidays are bounded fixtures, not a live exchange calendar feed",
-    "Yahoo network fetch intentionally disabled; local files only",
-    "Binance live public klines optional and off by default",
-    "Adjusted-price methodology can differ from vendor series",
-    "Monte Carlo resamples trade returns; does not invent full alternative market histories",
-    "PAPER_ELIGIBLE does not authorize live trading",
+    "Process-local paper governance store",
+    "Margin/leverage fields are simulation labels only — cash long-only execution",
     "Owner human sign-off not claimed",
-    "ui_policy_kill_switch browser journey soft-fails control visibility (non-hard-gate)"
+    "Not a live-trading or profitability certification"
   ],
-  "recommended_next": "M192+ paper activation governance with owner-approved PAPER_ELIGIBLE strategies only \u2014 still no live trading",
-  "ending_sha": "fe73687372d1920988a8e2192b6253121267a4e8",
-  "implementation_commits": [
-    "5f15228",
-    "9a4ccce",
-    "6e5ec3f",
-    "b18e88a",
-    "fe73687"
-  ]
+  "recommended_next": "Durable multi-process paper ledger + long-horizon paper ops — still no live trading"
 }

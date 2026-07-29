@@ -1,0 +1,343 @@
+{
+  "schema": "m199.paper_activation_browser_cert.v1",
+  "capturedAt": "2026-07-29T12:29:25.857Z",
+  "bff": "http://127.0.0.1:18792",
+  "ui": "http://127.0.0.1:3191",
+  "isolated_db": "/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m199-cert-44934/platform.db",
+  "paper_only": true,
+  "live_trading_authorized": false,
+  "production_authorized": false,
+  "public_exposure_authorized": false,
+  "hardGates": {
+    "bff_up": {
+      "ok": true,
+      "detail": "http://127.0.0.1:18792"
+    },
+    "seed_login": {
+      "ok": true,
+      "detail": "token issued"
+    },
+    "api_posture_paper": {
+      "ok": true,
+      "detail": "true"
+    },
+    "api_no_live": {
+      "ok": true,
+      "detail": "false"
+    },
+    "recovery_suite": {
+      "ok": true,
+      "detail": "16/16"
+    },
+    "ui_up": {
+      "ok": true,
+      "detail": "http://127.0.0.1:3191"
+    },
+    "warm_paper_routes": {
+      "ok": true,
+      "detail": "ok"
+    },
+    "banner_paper_only": {
+      "ok": true,
+      "detail": "ok"
+    },
+    "banner_no_live": {
+      "ok": true,
+      "detail": "ok"
+    },
+    "banner_simulated": {
+      "ok": true,
+      "detail": "ok"
+    },
+    "all_routes": {
+      "ok": true,
+      "detail": "26/26"
+    }
+  },
+  "journeys": [
+    {
+      "name": "api_backtest",
+      "ok": true,
+      "detail": "SYNTHETIC_VALIDATION"
+    },
+    {
+      "name": "api_backtest_classified",
+      "ok": true,
+      "detail": "SYNTHETIC_VALIDATION"
+    },
+    {
+      "name": "api_no_fixture_fabricate",
+      "ok": true,
+      "detail": "COMPLETE"
+    },
+    {
+      "name": "api_not_authoritative_for_m62_fixture",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "api_proposal",
+      "ok": true,
+      "detail": "POLICY_BLOCKED"
+    },
+    {
+      "name": "api_human_approval",
+      "ok": true,
+      "detail": "approve"
+    },
+    {
+      "name": "api_walk_forward",
+      "ok": true,
+      "detail": "folds=2 untouched=true"
+    },
+    {
+      "name": "api_stress",
+      "ok": true,
+      "detail": "CONDITIONALLY_ROBUST"
+    },
+    {
+      "name": "api_historical_calendars",
+      "ok": true,
+      "detail": "DEFAULT_24_5,RTH_UTC,NEPSE,US_RTH,BINANCE_24_7"
+    },
+    {
+      "name": "api_historical_datasets",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "api_monte_carlo",
+      "ok": true,
+      "detail": "INSUFFICIENT_TRADES"
+    },
+    {
+      "name": "api_qualify_fixture_not_paper_eligible",
+      "ok": true,
+      "detail": "INSUFFICIENT_EVIDENCE"
+    },
+    {
+      "name": "api_qualify_no_live",
+      "ok": true,
+      "detail": "false"
+    },
+    {
+      "name": "api_paper_posture",
+      "ok": true,
+      "detail": "true"
+    },
+    {
+      "name": "api_paper_portfolio_create",
+      "ok": true,
+      "detail": "pport_56a8379e627b4cd0"
+    },
+    {
+      "name": "api_paper_approvals",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "api_kill_switch",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "api_recovery_cert",
+      "ok": true,
+      "detail": "16/16"
+    },
+    {
+      "name": "open_overview",
+      "ok": true,
+      "detail": "/trading"
+    },
+    {
+      "name": "route_/trading",
+      "ok": true,
+      "detail": "status=200"
+    },
+    {
+      "name": "route_/trading/accounts",
+      "ok": true,
+      "detail": "status=200"
+    },
+    {
+      "name": "route_/trading/orders",
+      "ok": true,
+      "detail": "status=200"
+    },
+    {
+      "name": "route_/trading/positions",
+      "ok": true,
+      "detail": "status=200"
+    },
+    {
+      "name": "route_/trading/strategies",
+      "ok": true,
+      "detail": "status=200"
+    },
+    {
+      "name": "route_/trading/regime",
+      "ok": true,
+      "detail": "status=200"
+    },
+    {
+      "name": "route_/trading/proposals",
+      "ok": true,
+      "detail": "status=200"
+    },
+    {
+      "name": "route_/trading/backtests",
+      "ok": true,
+      "detail": "status=200"
+    },
+    {
+      "name": "route_/trading/research",
+      "ok": true,
+      "detail": "status=200"
+    },
+    {
+      "name": "route_/trading/historical",
+      "ok": true,
+      "detail": "status=200"
+    },
+    {
+      "name": "route_/trading/monte-carlo",
+      "ok": true,
+      "detail": "status=200"
+    },
+    {
+      "name": "route_/trading/qualification",
+      "ok": true,
+      "detail": "status=200"
+    },
+    {
+      "name": "route_/trading/paper-portfolio",
+      "ok": true,
+      "detail": "status=200"
+    },
+    {
+      "name": "route_/trading/paper-orders",
+      "ok": true,
+      "detail": "status=200"
+    },
+    {
+      "name": "route_/trading/paper-journal",
+      "ok": true,
+      "detail": "status=200"
+    },
+    {
+      "name": "route_/trading/paper-risk",
+      "ok": true,
+      "detail": "status=200"
+    },
+    {
+      "name": "route_/trading/paper-approvals",
+      "ok": true,
+      "detail": "status=200"
+    },
+    {
+      "name": "route_/trading/paper-analytics",
+      "ok": true,
+      "detail": "status=200"
+    },
+    {
+      "name": "route_/trading/paper-reconcile",
+      "ok": true,
+      "detail": "status=200"
+    },
+    {
+      "name": "route_/trading/comparison",
+      "ok": true,
+      "detail": "status=200"
+    },
+    {
+      "name": "route_/trading/journal",
+      "ok": true,
+      "detail": "status=200"
+    },
+    {
+      "name": "route_/trading/policy",
+      "ok": true,
+      "detail": "status=200"
+    },
+    {
+      "name": "route_/trading/reconciliation",
+      "ok": true,
+      "detail": "status=200"
+    },
+    {
+      "name": "route_/trading/safety",
+      "ok": true,
+      "detail": "status=200"
+    },
+    {
+      "name": "route_/trading/approvals",
+      "ok": true,
+      "detail": "status=200"
+    },
+    {
+      "name": "route_/trading/evidence",
+      "ok": true,
+      "detail": "status=200"
+    },
+    {
+      "name": "ui_create_proposal",
+      "ok": true,
+      "detail": "clicked"
+    },
+    {
+      "name": "ui_historical_list",
+      "ok": true,
+      "detail": "gate"
+    },
+    {
+      "name": "ui_monte_carlo",
+      "ok": true,
+      "detail": "gate"
+    },
+    {
+      "name": "ui_qualification",
+      "ok": true,
+      "detail": "gate"
+    },
+    {
+      "name": "ui_paper_create",
+      "ok": true,
+      "detail": "clicked"
+    },
+    {
+      "name": "ui_paper_risk",
+      "ok": true,
+      "detail": "gate"
+    },
+    {
+      "name": "ui_paper_approvals",
+      "ok": true,
+      "detail": "gate"
+    },
+    {
+      "name": "ui_policy_kill_switch",
+      "ok": true,
+      "detail": "control"
+    },
+    {
+      "name": "keyboard_nav",
+      "ok": true,
+      "detail": "tab"
+    },
+    {
+      "name": "trading_nav_a11y",
+      "ok": true,
+      "detail": "aria"
+    }
+  ],
+  "result": "PAPER_ACTIVATION_BROWSER_CERT_PASSED",
+  "owner_signoff": "NOT_CLAIMED_AUTOMATED_ONLY",
+  "certification_kind": "automated_browser",
+  "notes": [
+    "Automated Playwright certification — not human owner sign-off.",
+    "Synthetic operator actions are automated, not claimed as owner acceptance."
+  ],
+  "failed_gates": 0,
+  "failed_journeys": 0
+}

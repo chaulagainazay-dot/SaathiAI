@@ -1,0 +1,6 @@
+{
+  "result": "PAPER_ACTIVATION_BROWSER_CERT_PASSED",
+  "failed_gates": 0,
+  "failed_journeys": 0,
+  "owner_signoff": "NOT_CLAIMED_AUTOMATED_ONLY"
+}

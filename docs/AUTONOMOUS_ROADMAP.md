@@ -1,5 +1,18 @@
 # SaathiOS Autonomous Roadmap
 
+## M192–M199 — Paper Activation Governance (2026-07-29)
+
+| Field | Value |
+| --- | --- |
+| Verdict | `PAPER_ACTIVATION_GOVERNANCE_CERTIFIED_WITH_LIMITATIONS` |
+| Activation | Owner-approved PAPER_ELIGIBLE → PAPER_ACTIVE only |
+| Portfolio | Multi-portfolio cash simulator; risk halt; kill switch |
+| Orders | Market/limit/stop/IOC/FOK; fees/slippage; no exchange |
+| Browser | PAPER_ACTIVATION_BROWSER_CERT_PASSED |
+| Live / production | Not authorized |
+
+Evidence: `docs/trading/M192_M199_PAPER_ACTIVATION.md`, `docs/trading/m192_m199_evidence/`.
+
 ## M184–M191 — Historical Market Data & Strategy Qualification (2026-07-29)
 
 | Field | Value |

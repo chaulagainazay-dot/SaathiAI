@@ -148,6 +148,46 @@ def main(argv: list[str] | None = None) -> int:
     p_sc2.add_argument("--strategy", default="trend_following")
     p_sc2.add_argument("--dataset-id", default="")
 
+    # M192–M199 paper activation governance
+    p_pg = sub.add_parser("paper-gov")
+    pg_sub = p_pg.add_subparsers(dest="action")
+    pg_sub.add_parser("status")
+    p_pc = pg_sub.add_parser("create")
+    p_pc.add_argument("--name", default="Paper Fund")
+    p_pc.add_argument("--cash", default="100000")
+    p_pp = pg_sub.add_parser("portfolio")
+    p_pp.add_argument("portfolio_id")
+    pg_sub.add_parser("portfolios")
+    p_pa = pg_sub.add_parser("approve")
+    p_pa.add_argument("approval_id")
+    p_pa.add_argument("--actor", default="operator:cli")
+    p_pa.add_argument("--notes", default="")
+    p_pa.add_argument("--reason", default="")
+    p_prj = pg_sub.add_parser("reject")
+    p_prj.add_argument("approval_id")
+    p_prj.add_argument("--actor", default="operator:cli")
+    p_prj.add_argument("--notes", default="")
+    p_prj.add_argument("--reason", default="rejected")
+    p_pact = pg_sub.add_parser("activate")
+    p_pact.add_argument("--strategy", required=True)
+    p_pact.add_argument("--approval-id", required=True)
+    p_pact.add_argument("--portfolio-id", default="")
+    p_pact.add_argument("--actor", default="operator:cli")
+    p_po = pg_sub.add_parser("orders")
+    p_po.add_argument("portfolio_id")
+    p_pos = pg_sub.add_parser("positions")
+    p_pos.add_argument("portfolio_id")
+    p_pan = pg_sub.add_parser("analytics")
+    p_pan.add_argument("portfolio_id")
+    p_prec = pg_sub.add_parser("reconcile")
+    p_prec.add_argument("portfolio_id")
+    p_pst = pg_sub.add_parser("stop")
+    p_pst.add_argument("--strategy", required=True)
+    p_pst.add_argument("--reason", default="operator stop")
+    p_pk = pg_sub.add_parser("kill")
+    p_pk.add_argument("--reason", default="cli kill")
+    p_pk.add_argument("--actor", default="operator:cli")
+
     args = parser.parse_args(argv)
     if not args.cmd:
         parser.print_help()
@@ -312,6 +352,56 @@ def main(argv: list[str] | None = None) -> int:
                 args.strategy, dataset_id=args.dataset_id,
             ))
         return _out(svc.research_scorecard(strategy_slug=args.strategy))
+
+    if args.cmd == "paper-gov":
+        from saathi.platform.tg.paper_activation.service import default_paper_gov, PaperGovError
+        gov = default_paper_gov()
+        if args.action == "status":
+            return _out(gov.status())
+        if args.action == "create":
+            return _out(gov.create_portfolio(name=args.name, starting_cash=args.cash))
+        if args.action == "portfolio":
+            return _out(gov.get_portfolio(args.portfolio_id))
+        if args.action == "portfolios":
+            return _out(gov.list_portfolios())
+        if args.action == "approve":
+            return _out(gov.decide_approval(
+                approval_id=args.approval_id, decision="approve",
+                operator_id=args.actor, operator_identity=args.actor,
+                notes=args.notes, reason=args.reason or "cli approve",
+            ))
+        if args.action == "reject":
+            return _out(gov.decide_approval(
+                approval_id=args.approval_id, decision="reject",
+                operator_id=args.actor, operator_identity=args.actor,
+                notes=args.notes, reason=args.reason or "cli reject",
+            ))
+        if args.action == "activate":
+            try:
+                return _out(gov.activate_strategy(
+                    strategy_slug=args.strategy,
+                    approval_id=args.approval_id,
+                    portfolio_id=args.portfolio_id or None,
+                    operator_identity=args.actor,
+                ))
+            except PaperGovError as e:
+                return _out({"error": e.code, "message": e.message})
+        if args.action == "orders":
+            return _out(gov.list_orders(args.portfolio_id))
+        if args.action == "positions":
+            return _out(gov.list_positions(args.portfolio_id))
+        if args.action == "analytics":
+            return _out(gov.analytics(args.portfolio_id))
+        if args.action == "reconcile":
+            return _out(gov.reconcile(args.portfolio_id))
+        if args.action == "stop":
+            return _out(gov.halt_strategy(args.strategy, reason=args.reason or "cli stop"))
+        if args.action == "kill":
+            return _out(gov.activate_kill_switch(
+                scope=KillSwitchScope.GLOBAL, reason=args.reason or "cli kill",
+                activated_by=args.actor, source_identity="operator",
+            ))
+        return 2
 
     parser.print_help()
     return 2
