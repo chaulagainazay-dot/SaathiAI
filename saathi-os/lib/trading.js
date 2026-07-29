@@ -11,7 +11,14 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { plat, getToken } from "./platform-client";
 
-export const SAFETY_BANNER = ["PAPER TRADING ONLY", "NO LIVE BROKER", "NO REAL FUNDS", "LONG-ONLY", "LOCALHOST"];
+export const SAFETY_BANNER = [
+  "PAPER TRADING ONLY",
+  "NO LIVE ORDERS",
+  "SIMULATED FUNDS",
+  "NO LIVE BROKER",
+  "LONG-ONLY",
+  "LOCALHOST",
+];
 
 // ── formatting (display only — never accounting authority) ──────────────────────
 export function fmtMoney(v, currency = "USD") {

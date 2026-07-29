@@ -7005,3 +7005,301 @@ def module_health(module_id: str, authorization: str | None = Header(default=Non
                 "state": m.resolve_state(can_read=can_read, is_agent=is_agent).value}
     except PlatformContextError as e:
         raise _err(e) from e
+
+
+# ══════════════════════════════════════════════════════════════════════════
+# M166–M175 — Trading Guardian Research & Paper Foundation
+# PAPER ONLY. No live orders. No broker credentials. Default ADVISORY.
+# Composes M62 paper_trading + strategy + safety; does not replace them.
+# ══════════════════════════════════════════════════════════════════════════
+def _tg_svc():
+    from saathi.platform.tg.service import default_tg_service
+    return default_tg_service()
+
+
+def _tg_ctx(a, x):
+    return _svc().require_context(_token(a, x))
+
+
+@router.get("/tg/posture")
+def tg_posture(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.STRATEGY_READ)
+        return _tg_svc().posture()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/strategies")
+def tg_strategies(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        from saathi.platform.tg.strategies import list_catalog
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.STRATEGY_READ)
+        svc = _tg_svc()
+        svc.seed_catalog(org_id=ctx.org_id, workspace_id=ctx.workspace_id)
+        return {
+            "catalog": list_catalog(),
+            "registered": [s.to_public() for s in svc.registry.list(org_id=ctx.org_id, workspace_id=ctx.workspace_id)],
+            "paper_only": True,
+            "live_authorized": False,
+        }
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/strategies/{slug}")
+def tg_strategy_detail(slug: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.STRATEGY_READ)
+        svc = _tg_svc()
+        svc.seed_catalog(org_id=ctx.org_id, workspace_id=ctx.workspace_id)
+        s = svc.registry.get_by_slug(slug, org_id=ctx.org_id, workspace_id=ctx.workspace_id)
+        if not s:
+            raise PlatformContextError("NOT_FOUND", "strategy not found")
+        return {"strategy": s.to_public(), "paper_only": True}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/policies")
+def tg_policies(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.STRATEGY_READ)
+        return {"policies": [_tg_svc().policy.to_public()], "paper_only": True}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+class TgRegimeBody(BaseModel):
+    snapshot: dict[str, Any] = Field(default_factory=dict)
+
+
+@router.post("/tg/regime/evaluate")
+def tg_regime_evaluate(body: TgRegimeBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        from saathi.platform.tg.fixtures import trending_snapshot
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.STRATEGY_READ)
+        snap = body.snapshot if body.snapshot else trending_snapshot().to_public()
+        return {"regime": _tg_svc().evaluate_regime(snap), "paper_only": True, "llm_determined": False}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+class TgProposalBody(BaseModel):
+    strategy_slug: str = "trend_following"
+    snapshot: dict[str, Any] = Field(default_factory=dict)
+    fixture: str = "trending"
+
+
+@router.post("/tg/proposals")
+def tg_proposal_create(body: TgProposalBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        from saathi.platform.tg.fixtures import trending_snapshot, mean_reverting_snapshot, momentum_snapshot
+        from saathi.platform.tg.service import TGServiceError
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_ORDER_PROPOSE)
+        if body.snapshot:
+            snap = body.snapshot
+        else:
+            snap = {
+                "trending": trending_snapshot,
+                "mean_reverting": mean_reverting_snapshot,
+                "momentum": momentum_snapshot,
+            }.get(body.fixture, trending_snapshot)().to_public()
+        try:
+            return _tg_svc().generate_proposal(
+                strategy_slug=body.strategy_slug,
+                snapshot=snap,
+                org_id=ctx.org_id,
+                workspace_id=ctx.workspace_id,
+                project_id=ctx.project_id or "",
+                actor=ctx.requested_by(),
+            )
+        except TGServiceError as te:
+            raise PlatformContextError(te.code, te.message) from te
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/proposals")
+def tg_proposals_list(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_ORDER_READ)
+        return {"proposals": _tg_svc().list_proposals(org_id=ctx.org_id, workspace_id=ctx.workspace_id), "paper_only": True}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/proposals/{pid}")
+def tg_proposal_get(pid: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        from saathi.platform.tg.service import TGServiceError
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_ORDER_READ)
+        try:
+            return {"proposal": _tg_svc().get_proposal(pid, org_id=ctx.org_id, workspace_id=ctx.workspace_id), "paper_only": True}
+        except TGServiceError as te:
+            raise PlatformContextError(te.code, te.message) from te
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+class TgReviewBody(BaseModel):
+    decision: str  # approve | reject
+    approval_id: str = ""
+    notes: str = ""
+
+
+@router.post("/tg/proposals/{pid}/review")
+def tg_proposal_review(pid: str, body: TgReviewBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        from saathi.platform.tg.service import TGServiceError
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.APPROVAL_DECIDE)
+        try:
+            return _tg_svc().review_proposal(
+                pid,
+                decision=body.decision,
+                actor=ctx.requested_by(),
+                approval_id=body.approval_id,
+                notes=body.notes,
+                org_id=ctx.org_id,
+                workspace_id=ctx.workspace_id,
+            )
+        except TGServiceError as te:
+            raise PlatformContextError(te.code, te.message) from te
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+class TgBacktestBody(BaseModel):
+    strategy_slug: str = "trend_following"
+    dataset: str = "TRENDING"
+    n: int = 40
+    seed: int = 0
+    cost_tier: str = "realistic"
+    split_kind: str = "IN_SAMPLE"
+
+
+@router.post("/tg/backtests")
+def tg_backtest_run(body: TgBacktestBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.BACKTEST_RUN)
+        return _tg_svc().run_backtest(
+            strategy_slug=body.strategy_slug,
+            dataset=body.dataset,
+            n=min(body.n, 200),
+            seed=body.seed,
+            cost_tier=body.cost_tier,
+            split_kind=body.split_kind,
+            org_id=ctx.org_id,
+            workspace_id=ctx.workspace_id,
+        )
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/backtests/compare")
+def tg_backtest_compare(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.BACKTEST_REVIEW)
+        return _tg_svc().compare_strategies(org_id=ctx.org_id, workspace_id=ctx.workspace_id)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/journal")
+def tg_journal(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_ORDER_READ)
+        entries = _tg_svc().journal.list(org_id=ctx.org_id, workspace_id=ctx.workspace_id)
+        return {
+            "entries": [e.to_public() for e in entries],
+            "paper_only": True,
+            "funds_label": "SIMULATED",
+            "immutable": True,
+        }
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+class TgKillSwitchBody(BaseModel):
+    scope: str = "GLOBAL"
+    scope_ref: str = ""
+    reason: str = "manual"
+
+
+@router.post("/tg/kill-switch/activate")
+def tg_kill_activate(body: TgKillSwitchBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        from saathi.platform.tg.domain import KillSwitchScope
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_TRIP)
+        return {
+            "kill_switch": _tg_svc().activate_kill_switch(
+                scope=KillSwitchScope(body.scope),
+                scope_ref=body.scope_ref,
+                reason=body.reason,
+                activated_by=ctx.requested_by(),
+                org_id=ctx.org_id,
+                workspace_id=ctx.workspace_id,
+                source_identity="operator",
+            ),
+            "paper_only": True,
+        }
+    except PlatformContextError as e:
+        raise _err(e) from e
+    except PermissionError as e:
+        raise HTTPException(status_code=403, detail=str(e)) from e
+
+
+@router.get("/tg/kill-switch")
+def tg_kill_status(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return {
+            "kill_switches": _tg_svc().kill_switch_status(org_id=ctx.org_id, workspace_id=ctx.workspace_id),
+            "paper_only": True,
+        }
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/strategies/{slug}/suspend")
+def tg_strategy_suspend(slug: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.STRATEGY_EDIT)
+        svc = _tg_svc()
+        svc.seed_catalog(org_id=ctx.org_id, workspace_id=ctx.workspace_id)
+        s = svc.registry.get_by_slug(slug, org_id=ctx.org_id, workspace_id=ctx.workspace_id)
+        if not s:
+            raise PlatformContextError("NOT_FOUND", "strategy not found")
+        return {"strategy": svc.registry.suspend(s.id).to_public(), "paper_only": True}
+    except PlatformContextError as e:
+        raise _err(e) from e
