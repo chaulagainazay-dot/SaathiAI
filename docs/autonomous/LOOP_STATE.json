@@ -3,7 +3,7 @@
   "historical_baseline_sha": "ba66cca5e0ffd8874f8e8c3a4cb25a7dde74425e",
   "baseline_sha": "ba66cca5e0ffd8874f8e8c3a4cb25a7dde74425e",
   "session_start_sha": "ba66cca5e0ffd8874f8e8c3a4cb25a7dde74425e",
-  "current_sha": "PENDING_COMMIT",
+  "current_sha": "fe73687372d1920988a8e2192b6253121267a4e8",
   "current_milestone": "M184-M191",
   "status": "complete_with_limitations",
   "completed_milestones": [
@@ -73,5 +73,13 @@
     "Owner human sign-off not claimed",
     "ui_policy_kill_switch browser journey soft-fails control visibility (non-hard-gate)"
   ],
-  "recommended_next": "M192+ paper activation governance with owner-approved PAPER_ELIGIBLE strategies only — still no live trading"
+  "recommended_next": "M192+ paper activation governance with owner-approved PAPER_ELIGIBLE strategies only \u2014 still no live trading",
+  "ending_sha": "fe73687372d1920988a8e2192b6253121267a4e8",
+  "implementation_commits": [
+    "5f15228",
+    "9a4ccce",
+    "6e5ec3f",
+    "b18e88a",
+    "fe73687"
+  ]
 }
