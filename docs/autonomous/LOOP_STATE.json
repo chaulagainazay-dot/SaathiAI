@@ -5,7 +5,7 @@
   "session_start_sha": "2c07669ba688564c9f65583a52cfb191a205a95f",
   "current_sha": "ff388323777ae52c436fdd06b00a55753c085e66",
   "implementation_sha": "06e02b5613e392b06a41327258def94fa9f67512",
-  "current_milestone": "M165",
+  "current_milestone": "M166-M175",
   "status": "complete_with_limitations",
   "completed_milestones": [
     "M148",
@@ -58,5 +58,11 @@
     "focused": "tests/test_m157_private_alpha.py 15 passed"
   },
   "m148_m156_implementation_sha": "0ab95a1683b58050dee0cfca2b3c150831740bbb",
-  "trading_guardian": "UNCHANGED / UNENGAGED"
+  "trading_guardian": {
+    "status": "RESEARCH_AND_PAPER_FOUNDATION",
+    "live_authorized": false,
+    "paper_only": true,
+    "default_mode": "ADVISORY"
+  },
+  "current_verdict": "TRADING_GUARDIAN_RESEARCH_AND_PAPER_FOUNDATION_READY_WITH_LIMITATIONS"
 }

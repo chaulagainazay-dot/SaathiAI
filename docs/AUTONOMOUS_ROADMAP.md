@@ -1,5 +1,21 @@
 # SaathiOS Autonomous Roadmap
 
+## M166–M175 — Trading Guardian Research & Paper Foundation (2026-07-29)
+
+| Field | Value |
+| --- | --- |
+| Verdict | `TRADING_GUARDIAN_RESEARCH_AND_PAPER_FOUNDATION_READY_WITH_LIMITATIONS` |
+| Package | `saathi/platform/tg/` composition over M62 paper stack |
+| Strategies | Kotegawa-inspired MR, trend, momentum RS, no-trade control |
+| Authority | ADVISORY default; paper only; no live mode |
+| Gates | Policy + risk + kill switch + Approval Center + ExecutionGateway |
+| UI | /trading + regime/proposals/backtests/comparison/journal/policy |
+| CLI | `python -m saathi.platform.tg.cli` |
+| Tests | M166–M175 focused 28; M62 regression subset green |
+| Live / production | Not authorized |
+
+Evidence: `docs/trading/M166_M175_TRADING_GUARDIAN_FOUNDATION.md`, `docs/trading/m166_m175_evidence/`.
+
 ## M80–M86 — Live Conversational Intelligence (2026-07-28)
 
 | Field | Value |
