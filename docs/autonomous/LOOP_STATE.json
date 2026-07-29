@@ -3,7 +3,7 @@
   "historical_baseline_sha": "2c07669ba688564c9f65583a52cfb191a205a95f",
   "baseline_sha": "2c07669ba688564c9f65583a52cfb191a205a95f",
   "session_start_sha": "2c07669ba688564c9f65583a52cfb191a205a95f",
-  "current_sha": "f5aa401e6a6641a040038ecf7cd8825bba468e23",
+  "current_sha": "ff388323777ae52c436fdd06b00a55753c085e66",
   "implementation_sha": "06e02b5613e392b06a41327258def94fa9f67512",
   "current_milestone": "M165",
   "status": "complete_with_limitations",
@@ -47,7 +47,7 @@
   "browser": "SAATHIOS_PRIVATE_ALPHA_BROWSER_CERT_PASSED",
   "production_authorized": false,
   "public_exposure_authorized": false,
-  "next_action": "Owner-operated private alpha on the certified local Mac; product applications and provider adapters — not core OS redesign.",
+  "next_action": "Owner-operated private alpha on the certified local Mac; product applications and provider adapters \u2014 not core OS redesign.",
   "last_verified_at": "2026-07-29",
   "stop_reason": "PRIVATE_ALPHA_READY_WITH_LIMITATIONS: release packaging, lifecycle, backup/restore, bounded automations, support/ops certified for single-machine local private alpha.",
   "evidence": {
