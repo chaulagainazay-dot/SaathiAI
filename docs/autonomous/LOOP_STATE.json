@@ -1,68 +1,73 @@
 {
-  "goal_id": "SAATHIOS_PRIVATE_ALPHA_RELEASE",
-  "historical_baseline_sha": "2c07669ba688564c9f65583a52cfb191a205a95f",
-  "baseline_sha": "2c07669ba688564c9f65583a52cfb191a205a95f",
-  "session_start_sha": "2c07669ba688564c9f65583a52cfb191a205a95f",
-  "current_sha": "ff388323777ae52c436fdd06b00a55753c085e66",
-  "implementation_sha": "06e02b5613e392b06a41327258def94fa9f67512",
+  "goal_id": "TRADING_GUARDIAN_RESEARCH_AND_PAPER_FOUNDATION",
+  "historical_baseline_sha": "2cd61738522ff68968d24e4db56981b42fb8b965",
+  "baseline_sha": "2cd61738522ff68968d24e4db56981b42fb8b965",
+  "session_start_sha": "2cd61738522ff68968d24e4db56981b42fb8b965",
+  "current_sha": "32da209ab304489b55a3f6fa3fe2014dc0561591",
+  "implementation_sha": "cea8be8",
   "current_milestone": "M166-M175",
   "status": "complete_with_limitations",
   "completed_milestones": [
-    "M148",
-    "M149",
-    "M150",
-    "M151",
-    "M152",
-    "M153",
-    "M154",
-    "M155",
-    "M156",
-    "M157",
-    "M158",
-    "M159",
-    "M160",
-    "M161",
-    "M162",
-    "M163",
-    "M164",
-    "M165"
+    "M166",
+    "M167",
+    "M168",
+    "M169",
+    "M170",
+    "M171",
+    "M172",
+    "M173",
+    "M174",
+    "M175"
   ],
   "prior_completed_goals": [
     {
+      "goal_id": "SAATHIOS_PRIVATE_ALPHA_RELEASE",
+      "terminal_sha": "2cd61738522ff68968d24e4db56981b42fb8b965",
+      "implementation_sha": "06e02b5613e392b06a41327258def94fa9f67512",
+      "verdict": "PRIVATE_ALPHA_READY_WITH_LIMITATIONS",
+      "status": "complete_with_limitations"
+    },
+    {
       "goal_id": "SAATHIOS_CORE_COMPLETION",
-      "terminal_sha": "2c07669ba688564c9f65583a52cfb191a205a95f",
-      "status": "complete_with_limitations"
-    },
-    {
-      "goal_id": "SAATHIOS_IELTS_NATIVE_COACHING_APPLICATION",
-      "status": "complete_with_limitations"
-    },
-    {
-      "goal_id": "SAATHIOS_HCG_NATIVE_OPERATIONS_APPLICATION",
       "status": "complete_with_limitations"
     }
   ],
   "release_version": "0.1.0-private-alpha.1",
-  "verdict": "PRIVATE_ALPHA_READY_WITH_LIMITATIONS",
-  "browser": "SAATHIOS_PRIVATE_ALPHA_BROWSER_CERT_PASSED",
+  "verdict": "TRADING_GUARDIAN_RESEARCH_AND_PAPER_FOUNDATION_READY_WITH_LIMITATIONS",
+  "current_verdict": "TRADING_GUARDIAN_RESEARCH_AND_PAPER_FOUNDATION_READY_WITH_LIMITATIONS",
   "production_authorized": false,
   "public_exposure_authorized": false,
-  "next_action": "Owner-operated private alpha on the certified local Mac; product applications and provider adapters \u2014 not core OS redesign.",
-  "last_verified_at": "2026-07-29",
-  "stop_reason": "PRIVATE_ALPHA_READY_WITH_LIMITATIONS: release packaging, lifecycle, backup/restore, bounded automations, support/ops certified for single-machine local private alpha.",
-  "evidence": {
-    "backend_full": "5455 passed, 1 skipped, 0 failed",
-    "frontend_full": "207 passed",
-    "browser": "SAATHIOS_PRIVATE_ALPHA_BROWSER_CERT_PASSED",
-    "eslint": "passed",
-    "focused": "tests/test_m157_private_alpha.py 15 passed"
-  },
-  "m148_m156_implementation_sha": "0ab95a1683b58050dee0cfca2b3c150831740bbb",
+  "live_trading_authorized": false,
   "trading_guardian": {
     "status": "RESEARCH_AND_PAPER_FOUNDATION",
     "live_authorized": false,
     "paper_only": true,
-    "default_mode": "ADVISORY"
+    "default_mode": "ADVISORY",
+    "package": "saathi/platform/tg",
+    "composites": [
+      "saathi.platform.strategy",
+      "saathi.platform.paper_trading",
+      "saathi.platform.safety",
+      "saathi.platform.trading_guardian",
+      "saathi.platform.market_data"
+    ]
   },
-  "current_verdict": "TRADING_GUARDIAN_RESEARCH_AND_PAPER_FOUNDATION_READY_WITH_LIMITATIONS"
+  "next_action": "Optional operator walkthrough of new /trading/* surfaces on localhost; do not begin live-trading milestone.",
+  "last_verified_at": "2026-07-29",
+  "stop_reason": "TRADING_GUARDIAN_RESEARCH_AND_PAPER_FOUNDATION_READY_WITH_LIMITATIONS: research, backtest, and paper-trading foundation certified; no live authority.",
+  "evidence": {
+    "backend_full": "5481 passed, 1 skipped, 0 failed",
+    "backend_focused": "tests/test_m166_m175_trading_guardian.py 28 passed",
+    "m62_trading_regression": "233 passed",
+    "frontend_full": "216 passed",
+    "eslint": "passed",
+    "build": "passed",
+    "browser": "PASS_WITH_LIMITATION: static route + label certification; live Playwright walkthrough of new TG pages not re-driven this session"
+  },
+  "commits": [
+    "e1e1a7a feat(tg): M166–M175 Trading Guardian research & paper foundation core",
+    "d973d1c feat(tg): expose TG foundation via platform API and operator UI",
+    "cea8be8 test(tg): certify M166–M175 registry, policy, risk, and paper boundaries",
+    "32da209 docs(tg): record M166–M175 architecture, runbooks, and certification evidence"
+  ]
 }
