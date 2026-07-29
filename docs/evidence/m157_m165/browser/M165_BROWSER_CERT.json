@@ -1,0 +1,145 @@
+{
+  "schema": "m165.private_alpha_browser_cert.v1",
+  "capturedAt": "2026-07-29T06:53:46.794Z",
+  "hardGates": {
+    "prepare": {
+      "ok": true,
+      "detail": ""
+    },
+    "core_surfaces": {
+      "ok": true,
+      "detail": ""
+    },
+    "automation_authority": {
+      "ok": true,
+      "detail": ""
+    },
+    "backup_restore": {
+      "ok": true,
+      "detail": ""
+    },
+    "dr_drill": {
+      "ok": true,
+      "detail": ""
+    },
+    "support_privacy": {
+      "ok": true,
+      "detail": ""
+    },
+    "cert_gate": {
+      "ok": true,
+      "detail": ""
+    },
+    "production_not_authorized": {
+      "ok": true,
+      "detail": ""
+    },
+    "browser_localhost_ui": {
+      "ok": true,
+      "detail": "ui_reachable_localhost"
+    }
+  },
+  "result": "SAATHIOS_PRIVATE_ALPHA_BROWSER_CERT_PASSED",
+  "production_authorized": false,
+  "public_exposure_authorized": false,
+  "trading_guardian_changed": false,
+  "release_version": "0.1.0-private-alpha.1",
+  "steps": [
+    {
+      "name": "prepare",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "operator_home",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "universal_search",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "unified_yeti",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "automation_default_disabled",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "automation_approval_gate",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "automation_execute",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "backup",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "isolated_restore",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "dr_drill",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "support_bundle_privacy",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "hcg",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "ielts",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "cert_gate",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "browser_ui",
+      "ok": true,
+      "detail": "ui_reachable_localhost"
+    }
+  ],
+  "runtime": {
+    "token": "GdReQvhNYIpFKByW9b9D_CyiRLvUOcq-oRwuVgnyi1o",
+    "prepare_ok": true,
+    "home_unified": true,
+    "search_enforced": true,
+    "yeti_readonly": true,
+    "automation_disabled_default": true,
+    "automation_blocked_approval": "BLOCKED_APPROVAL",
+    "automation_succeeded": true,
+    "backup_ok": true,
+    "isolated_restore": true,
+    "dr_verdict": "PRIVATE_ALPHA_DR_DRILL_PASSED",
+    "support_privacy": true,
+    "hcg_ok": true,
+    "ielts_ok": true,
+    "cert_verdict": "PRIVATE_ALPHA_READY_WITH_LIMITATIONS",
+    "cert_fail_count": 0,
+    "production_authorized": false,
+    "manifest_version": "0.1.0-private-alpha.1",
+    "git_sha": "2c07669ba688564c9f65583a52cfb191a205a95f\n2c07669ba688564c9f65583a52cfb191a205a95f"
+  }
+}

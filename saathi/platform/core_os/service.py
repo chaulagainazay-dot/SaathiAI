@@ -631,6 +631,8 @@ class SaathiCoreService:
         action: str,
         app_scope: str = "platform",
         requires_approval: bool = True,
+        trigger: str = "",
+        enabled: bool = False,
     ) -> dict:
         try:
             ctx.require_permission(PlatformPermission.WORKFLOW_WRITE)
@@ -641,7 +643,8 @@ class SaathiCoreService:
             raise PlatformContextError("VALIDATION_FAILED", "name required")
         schedule = (schedule or "daily_morning")[:40]
         action = (action or "summarize")[:80]
-        # Automations never self-execute tools
+        trigger = (trigger or schedule or "manual")[:40]
+        # Automations never self-execute tools; disabled by default (M162)
         rec = {
             "automation_id": new_id("auto_"),
             "org_id": ctx.org_id,
@@ -649,13 +652,26 @@ class SaathiCoreService:
             "owner_id": ctx.user_id,
             "name": name,
             "schedule": schedule,
+            "trigger": trigger,
             "action": action,
             "app_scope": app_scope[:40],
             "requires_approval": bool(requires_approval),
-            "enabled": True,
+            "approval_policy": "required" if requires_approval else "optional",
+            "required_permissions": ["RUNTIME_OPERATE"],
+            "execution_limits": {"max_retries": 2, "timeout_sec": 60},
+            "retry_policy": {"max_retries": 2, "backoff": "none"},
+            "timeout": 60,
+            "evidence_policy": "always",
+            "notification_policy": "on_completion",
+            "enabled": bool(enabled),  # private-alpha default: disabled
+            "state": "ENABLED" if enabled else "DISABLED",
+            "last_run": None,
+            "next_eligible_run": None,
+            "idempotency_key": f"auto:{name}:{action}",
             "direct_tool_execution": False,
             "bypass_gateway": False,
-            "execution_path": "MissionRuntime→AgentRuntime→ExecutionGateway",
+            "self_approve": False,
+            "execution_path": "MissionRuntime→AgentRuntime→ExecutionGateway→ApprovalCenter",
             "created_at": time.time(),
         }
         raw = dict(self.store.get_config(AUTOMATIONS_KEY, {}) or {})

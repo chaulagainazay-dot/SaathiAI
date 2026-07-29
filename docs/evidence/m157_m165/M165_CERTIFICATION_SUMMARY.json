@@ -1,0 +1,18 @@
+{
+  "schema": "m165.private_alpha_summary.v1",
+  "verdict": "PRIVATE_ALPHA_READY_WITH_LIMITATIONS",
+  "browser": "SAATHIOS_PRIVATE_ALPHA_BROWSER_CERT_PASSED",
+  "release_version": "0.1.0-private-alpha.1",
+  "date": "2026-07-29",
+  "milestones": ["M157", "M158", "M159", "M160", "M161", "M162", "M163", "M164", "M165"],
+  "starting_sha": "2c07669ba688564c9f65583a52cfb191a205a95f",
+  "backend_full": "5455 passed, 1 skipped, 0 failed",
+  "frontend_full": "207 passed",
+  "eslint": "passed",
+  "browser_cert": "SAATHIOS_PRIVATE_ALPHA_BROWSER_CERT_PASSED",
+  "dr_drill": "PRIVATE_ALPHA_DR_DRILL_PASSED",
+  "production_authorized": false,
+  "public_exposure_authorized": false,
+  "trading_guardian": "UNCHANGED / UNENGAGED",
+  "architecture": "release_engineering_composition_only"
+}
