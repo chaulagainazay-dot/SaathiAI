@@ -6,6 +6,8 @@
   "date": "2026-07-29",
   "milestones": ["M157", "M158", "M159", "M160", "M161", "M162", "M163", "M164", "M165"],
   "starting_sha": "2c07669ba688564c9f65583a52cfb191a205a95f",
+  "ending_sha": "06e02b5613e392b06a41327258def94fa9f67512",
+  "implementation_sha": "06e02b5613e392b06a41327258def94fa9f67512",
   "backend_full": "5455 passed, 1 skipped, 0 failed",
   "frontend_full": "207 passed",
   "eslint": "passed",
