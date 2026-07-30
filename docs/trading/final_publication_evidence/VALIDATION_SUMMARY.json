@@ -1,0 +1,38 @@
+{
+  "schema": "VALIDATION_SUMMARY",
+  "ok": true,
+  "focused_m312_m319": {
+    "passed": 30,
+    "failed": 0,
+    "ok": true
+  },
+  "regression_m304_m311": {
+    "passed": 7,
+    "failed": 0,
+    "ok": true
+  },
+  "frontend_unit": {
+    "passed": 4,
+    "failed": 0,
+    "ok": true
+  },
+  "production_build": {
+    "ok": true
+  },
+  "browser_cert": {
+    "ok": true,
+    "verdict": "TRADING_CONNECTIVITY_GOVERNANCE_BROWSER_CERT_PASSED_WITH_LIMITATIONS"
+  },
+  "cg_certify": {
+    "ok": true,
+    "verdict": "TRADING_CONNECTIVITY_GOVERNANCE_CERTIFIED_WITH_LIMITATIONS"
+  },
+  "isolation": {
+    "provider_isolation": true,
+    "account_access_refused": true,
+    "order_path_refused": true,
+    "llm_may_approve": false,
+    "external_domains_called": []
+  },
+  "authority_values_all_false": true
+}
