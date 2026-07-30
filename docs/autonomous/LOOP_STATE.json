@@ -2,9 +2,9 @@
   "goal_id": "REPRODUCIBILITY_SUPPLY_CHAIN_AUTHORIZATION",
   "historical_baseline_sha": "97d2f8b8d132674b1b721ec623bd8054fe31ce9a",
   "baseline_sha": "97d2f8b8d132674b1b721ec623bd8054fe31ce9a",
-  "implementation_sha": "1e3f0a185c635b4c03201ac1db1ffc33d66e7b9a",
-  "current_sha": "1e3f0a185c635b4c03201ac1db1ffc33d66e7b9a",
-  "ending_sha": "1e3f0a185c635b4c03201ac1db1ffc33d66e7b9a",
+  "implementation_sha": "28d1c93d2b7e4c6f409102a8f74820e6174aea40",
+  "current_sha": "28d1c93d2b7e4c6f409102a8f74820e6174aea40",
+  "ending_sha": "28d1c93d2b7e4c6f409102a8f74820e6174aea40",
   "current_milestone": "M232-M239",
   "branch": "milestone/m232-m239-reproducibility-supply-chain",
   "status": "complete_with_limitations",
@@ -64,6 +64,6 @@
     "Authorization planning does not grant real connectivity"
   ],
   "next_recommended_milestone": "M240 only after owner planning \u2014 do not auto-start; remain paper/sandbox only; no real connectivity",
-  "updated_at": "2026-07-30T02:19:58.845243+00:00",
-  "docs_pin_sha": "1e3f0a185c635b4c03201ac1db1ffc33d66e7b9a"
+  "updated_at": "2026-07-30T02:20:19.147414+00:00",
+  "docs_pin_sha": "28d1c93d2b7e4c6f409102a8f74820e6174aea40"
 }
