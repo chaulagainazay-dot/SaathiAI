@@ -1559,3 +1559,6 @@ Branch `milestone/m42-graduation-review`.
 - Evidence: `docs/trading/m232_m239_evidence/`. Doc: `docs/trading/M232_M239_REPRODUCIBILITY_SUPPLY_CHAIN_AUTHORIZATION.md`.
 - **Superseded next-step:** M240–M247 completed on branch `milestone/m240-m247-provider-canary-planning` (planning package ready for owner review; no connectivity).
 
+### M312–M319 Connectivity Governance
+
+Certified with limitations: GOVERNANCE_ONLY; no provider connection.

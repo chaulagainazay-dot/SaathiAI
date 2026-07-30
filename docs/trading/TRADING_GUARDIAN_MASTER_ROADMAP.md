@@ -69,3 +69,15 @@ institution-grade · paper-only · scientifically defensible.
 ## Status (as of M311)
 
 Phases 1–4 of this master roadmap are **implemented and certified with limitations** under paper/research/read-only authority. Broker connectivity remains out of scope.
+
+## M312–M319 Connectivity Governance (COMPLETE WITH LIMITATIONS)
+
+- **Verdict:** `TRADING_CONNECTIVITY_GOVERNANCE_CERTIFIED_WITH_LIMITATIONS`
+- **Max state:** `CONNECTIVITY_GOVERNANCE_READY_NO_PROVIDER_CONNECTION`
+- **Maturity:** `GOVERNANCE_ONLY`
+- **Branch:** `milestone/m312-m319-connectivity-governance`
+- Governance charter, authority model, provider registry, approval framework,
+  credential policy, revocation/emergency/incident, threat model, control center.
+- **No provider connection. No credentials. No orders. No canary. No live trading.**
+- Evidence: `docs/trading/m312_m319_evidence/`
+

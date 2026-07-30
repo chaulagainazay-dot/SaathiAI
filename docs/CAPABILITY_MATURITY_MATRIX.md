@@ -101,3 +101,17 @@ permissions (macOS TCC actuation), or credentials (authenticated cloud/browser).
 | M21.2 provider availability / cost / failover / circuit | deterministic-tested | descriptors; availability; Decimal cost; failure taxonomy; circuit (durable as of M24); cheap_ask proxy blocked; `tests/test_m21_2_*`; live Ollama blocked; not production |
 | M24 durable circuit/cost + engine consolidation | deterministic-tested | `governance_store`/`governance_service`; reservation protocol; recovery; cloud+openai_compat CANONICAL; `tests/test_m24_*`; residual exceptions=0 |
 | PRODUCT/IELTSAlert revenue (pielts M21.x) | product-repo pilot (out of band) | Separate repo `/Users/macbookpro/Saathi/apps/pielts`; **not** platform M21 |
+
+## Connectivity Governance (M312–M319)
+
+| Capability | Maturity | Notes |
+|------------|----------|-------|
+| Connectivity charter | GOVERNANCE_ONLY | v1.0.0 finalized |
+| Authority lattice | GOVERNANCE_ONLY | no implicit expand |
+| Provider registry | GOVERNANCE_ONLY | docs/mock only, not connected |
+| Approval framework | GOVERNANCE_ONLY | APPROVED_NOT_ACTIVE max |
+| Credential policy | GOVERNANCE_ONLY | synthetic refs only |
+| Emergency shutdown | GOVERNANCE_ONLY | dominates authority |
+| Threat model | GOVERNANCE_ONLY | 68 threats catalogued |
+| Provider connection | PROHIBITED | not started |
+| Live trading | PROHIBITED | not authorized |
