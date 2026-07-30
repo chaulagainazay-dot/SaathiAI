@@ -10187,3 +10187,778 @@ def tg_pcp_evidence(authorization: str | None = Header(default=None), x_platform
         }
     except PlatformContextError as e:
         raise _err(e) from e
+
+
+# ── M248–M255 Institutional Investment Intelligence (PAPER ONLY) ─────────────
+def _tg_intelligence():
+    from saathi.platform.tg.intelligence.service import default_intelligence
+    return default_intelligence()
+
+
+@router.get("/tg/intelligence/posture")
+def tg_ii_posture(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_intelligence().posture()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/intelligence/verdict")
+def tg_ii_verdict(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_intelligence().terminal_verdict()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/intelligence/dashboard")
+def tg_ii_dashboard(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_intelligence().dashboard()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/intelligence/strategies")
+def tg_ii_strategies(category: str | None = None, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_intelligence().list_strategies(category)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/intelligence/strategies/categories")
+def tg_ii_strategy_cats(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_intelligence().strategy_categories()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/intelligence/strategies/{strategy_id}")
+def tg_ii_strategy_get(strategy_id: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_intelligence().get_strategy(strategy_id)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+class IiStrategyRunBody(BaseModel):
+    bars: list[dict] | None = None
+    params: dict | None = None
+
+
+@router.post("/tg/intelligence/strategies/{strategy_id}/run")
+def tg_ii_strategy_run(strategy_id: str, body: IiStrategyRunBody | None = None, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        body = body or IiStrategyRunBody()
+        return _tg_intelligence().strategy_run(strategy_id, bars=body.bars, params=body.params)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/intelligence/portfolio")
+def tg_ii_portfolio(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_intelligence().portfolio_overview()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/intelligence/portfolio/risk")
+def tg_ii_portfolio_risk(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_intelligence().portfolio_risk()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/intelligence/portfolio/report")
+def tg_ii_portfolio_report(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_intelligence().portfolio_report()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/intelligence/analytics")
+def tg_ii_analytics(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_intelligence().analytics()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/intelligence/risk")
+def tg_ii_risk(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_intelligence().portfolio_risk()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+class IiBacktestBody(BaseModel):
+    strategy_id: str = "tf_dual_ma"
+    seed: int = 42
+    capital: float = 100000.0
+    commission_bps: float = 5.0
+    slippage_bps: float = 8.0
+
+
+@router.post("/tg/intelligence/backtests")
+def tg_ii_backtest(body: IiBacktestBody | None = None, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        body = body or IiBacktestBody()
+        return _tg_intelligence().backtest(
+            body.strategy_id, seed=body.seed, capital=body.capital,
+            commission_bps=body.commission_bps, slippage_bps=body.slippage_bps,
+        )
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/intelligence/backtests")
+def tg_ii_backtests_list(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_intelligence().list_backtests()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+class IiCompareBody(BaseModel):
+    strategy_ids: list[str] | None = None
+    seed: int = 42
+
+
+@router.post("/tg/intelligence/backtests/compare")
+def tg_ii_backtest_compare(body: IiCompareBody | None = None, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        body = body or IiCompareBody()
+        return _tg_intelligence().backtest_compare(body.strategy_ids, seed=body.seed)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+class IiWalkForwardBody(BaseModel):
+    strategy_id: str = "tf_dual_ma"
+    seed: int = 42
+    n_folds: int = 3
+
+
+@router.post("/tg/intelligence/simulations/walk-forward")
+def tg_ii_wf(body: IiWalkForwardBody | None = None, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        body = body or IiWalkForwardBody()
+        return _tg_intelligence().run_walk_forward(body.strategy_id, seed=body.seed, n_folds=body.n_folds)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+class IiMonteCarloBody(BaseModel):
+    n_simulations: int = 200
+    seed: int = 42
+    horizon: int = 60
+    target_return: float = 0.10
+
+
+@router.post("/tg/intelligence/simulations/monte-carlo")
+def tg_ii_mc(body: IiMonteCarloBody | None = None, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        body = body or IiMonteCarloBody()
+        return _tg_intelligence().run_monte_carlo(
+            n_simulations=body.n_simulations, seed=body.seed,
+            horizon=body.horizon, target_return=body.target_return,
+        )
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+class IiCommitteeBody(BaseModel):
+    instrument: str = "SPY"
+    context: dict | None = None
+
+
+@router.post("/tg/intelligence/committee")
+def tg_ii_committee(body: IiCommitteeBody | None = None, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        body = body or IiCommitteeBody()
+        return _tg_intelligence().committee_review(body.instrument, context=body.context)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+class IiExplainBody(BaseModel):
+    instrument: str = "SPY"
+    action: str | None = None
+    strategy_id: str | None = None
+    context: dict | None = None
+
+
+@router.post("/tg/intelligence/explanations")
+def tg_ii_explain(body: IiExplainBody | None = None, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        body = body or IiExplainBody()
+        return _tg_intelligence().explain(
+            instrument=body.instrument, action=body.action,
+            strategy_id=body.strategy_id, context=body.context,
+        )
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/intelligence/decisions")
+def tg_ii_decisions(limit: int = 50, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_intelligence().decisions(limit=limit)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/intelligence/watchlists")
+def tg_ii_watchlists(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_intelligence().watchlists()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+class IiWatchlistBody(BaseModel):
+    name: str
+    symbols: list[str] = []
+
+
+@router.post("/tg/intelligence/watchlists")
+def tg_ii_watchlist_upsert(body: IiWatchlistBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_intelligence().upsert_watchlist(body.name, body.symbols)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/intelligence/alerts")
+def tg_ii_alerts(limit: int = 50, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_intelligence().alerts(limit=limit)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/intelligence/timeline")
+def tg_ii_timeline(limit: int = 100, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_intelligence().timeline(limit=limit)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/intelligence/confidence-trends")
+def tg_ii_conf(limit: int = 50, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_intelligence().confidence_trends(limit=limit)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/intelligence/security/scan")
+def tg_ii_sec(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_intelligence().security_scan()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/intelligence/certify")
+def tg_ii_certify(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_intelligence().certify()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/intelligence/broker/connect")
+def tg_ii_broker_refuse(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_intelligence().refuse_broker()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+class IiCredBody(BaseModel):
+    api_key: str | None = None
+    secret: str | None = None
+
+
+@router.post("/tg/intelligence/credentials")
+def tg_ii_cred_refuse(body: IiCredBody | None = None, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        val = None
+        if body:
+            val = body.api_key or body.secret
+        return _tg_intelligence().refuse_credentials(val)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/intelligence/orders")
+def tg_ii_order_refuse(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_intelligence().refuse_order()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+# ── M256–M263 Market Data & Signal Validation (RESEARCH ONLY) ────────────────
+def _tg_market_data():
+    from saathi.platform.tg.market_data.service import default_market_data
+    return default_market_data()
+
+
+@router.get("/tg/research-data/posture")
+def tg_md_posture(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_market_data().posture()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/research-data/verdict")
+def tg_md_verdict(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_market_data().terminal_verdict()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/research-data/dashboard")
+def tg_md_dashboard(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_market_data().dashboard()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/research-data/datasets")
+def tg_md_datasets(state: str | None = None, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_market_data().list_datasets(state)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/research-data/datasets/{dataset_id}")
+def tg_md_dataset_get(dataset_id: str, version: str | None = None, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_market_data().get_dataset(dataset_id, version)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+class MdRegisterBody(BaseModel):
+    name: str
+    description: str = ""
+    provider: str = "local"
+    source_type: str = "REPOSITORY_FIXTURE"
+    source_ref: str = ""
+    market: str = "US"
+    exchange: str = "XNAS"
+    asset_class: str = "equity"
+    frequency: str = "1d"
+    licence_type: str = "CC0-1.0"
+    checksum: str = ""
+    is_synthetic: bool = False
+    dataset_version: str = "v1"
+
+
+@router.post("/tg/research-data/datasets/register")
+def tg_md_register(body: MdRegisterBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_market_data().register_dataset(**body.model_dump())
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/research-data/datasets/{dataset_id}/quarantine")
+def tg_md_quarantine(dataset_id: str, version: str = "v1", reason: str = "quarantined", authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_market_data().quarantine_dataset(dataset_id, version, reason)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/research-data/datasets/{dataset_id}/provenance")
+def tg_md_provenance(dataset_id: str, version: str = "v1", authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_market_data().get_provenance(dataset_id, version)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/research-data/datasets/{dataset_id}/licence")
+def tg_md_licence(dataset_id: str, version: str = "v1", use_case: str = "local_research", authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_market_data().licence_check(dataset_id, version, use_case)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/research-data/datasets/{dataset_id}/ingest")
+def tg_md_ingest(dataset_id: str, version: str = "v1", authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_market_data().ingest(dataset_id, version)
+    except PlatformContextError as e:
+        raise _err(e) from e
+    except Exception as e:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=400, detail=str(e)) from e
+
+
+@router.get("/tg/research-data/datasets/{dataset_id}/ingestion-report")
+def tg_md_ingest_report(dataset_id: str, version: str | None = None, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_market_data().ingest_report(dataset_id, version)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/research-data/datasets/{dataset_id}/quality")
+def tg_md_quality(dataset_id: str, version: str = "v1", authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_market_data().quality_check(dataset_id, version)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/research-data/datasets/{dataset_id}/quality-report")
+def tg_md_quality_report(dataset_id: str, version: str = "v1", authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_market_data().quality_report(dataset_id, version)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/research-data/calendars/{exchange}")
+def tg_md_calendar(exchange: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_market_data().calendar.get(exchange)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/research-data/datasets/{dataset_id}/corporate-actions")
+def tg_md_ca(dataset_id: str, version: str = "v1", authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_market_data().list_corporate_actions(dataset_id, version)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/research-data/datasets/{dataset_id}/bias-check")
+def tg_md_bias(dataset_id: str, version: str = "v1", authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_market_data().bias_check(dataset_id, version)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/research-data/datasets/{dataset_id}/split")
+def tg_md_split(dataset_id: str, version: str = "v1", kind: str = "chronological_holdout", authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_market_data().split_dataset(dataset_id, version, kind=kind)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/research-data/features")
+def tg_md_features(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_market_data().feature_list()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/research-data/features/{feature_id}/lineage")
+def tg_md_feature_lineage(feature_id: str, version: str | None = None, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_market_data().feature_lineage(feature_id, version)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/research-data/datasets/{dataset_id}/features/build")
+def tg_md_feature_build(dataset_id: str, version: str = "v1", authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_market_data().feature_build(dataset_id, version)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+class MdValidateBody(BaseModel):
+    strategy_id: str = "tf_dual_ma"
+    version: str = "v1"
+    commission_bps: float = 5.0
+    slippage_bps: float = 8.0
+    seed: int = 42
+    trial_count: int = 1
+
+
+@router.post("/tg/research-data/datasets/{dataset_id}/validate")
+def tg_md_validate(dataset_id: str, body: MdValidateBody | None = None, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        body = body or MdValidateBody()
+        split = _tg_market_data().split_dataset(dataset_id, body.version)
+        return _tg_market_data().validate_signal(
+            body.strategy_id, dataset_id, body.version,
+            split=split, commission_bps=body.commission_bps,
+            slippage_bps=body.slippage_bps, seed=body.seed, trial_count=body.trial_count,
+        )
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/research-data/bootstrap")
+def tg_md_bootstrap(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_market_data().bootstrap_fixture_pipeline()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/research-data/certify")
+def tg_md_certify(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_market_data().certify()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/research-data/evidence")
+def tg_md_evidence(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_market_data().evidence_bundle()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/research-data/security")
+def tg_md_security(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_market_data().security_scan()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/research-data/broker/connect")
+def tg_md_broker_refuse(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_market_data().refuse_broker()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+class MdCredBody(BaseModel):
+    api_key: str | None = None
+    secret: str | None = None
+
+
+@router.post("/tg/research-data/credentials")
+def tg_md_cred_refuse(body: MdCredBody | None = None, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        val = None
+        if body:
+            val = body.api_key or body.secret
+        return _tg_market_data().refuse_credentials(val)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/research-data/orders")
+def tg_md_order_refuse(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_market_data().refuse_order()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/research-data/canary/activate")
+def tg_md_canary_refuse(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_market_data().refuse_canary()
+    except PlatformContextError as e:
+        raise _err(e) from e

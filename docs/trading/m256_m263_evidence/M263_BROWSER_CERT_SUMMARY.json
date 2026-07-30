@@ -1,0 +1,7 @@
+{
+  "verdict": "RESEARCH_GRADE_MARKET_DATA_SIGNAL_VALIDATION_BROWSER_CERT_PASSED_WITH_LIMITATIONS",
+  "hard_gates_pass": true,
+  "branch": "milestone/m256-m263-market-data-signal-validation",
+  "sha": "1aace307d6d6d67117cda4b49d8e47f03cf54dcf",
+  "timestamp": "2026-07-30T04:41:21.763Z"
+}

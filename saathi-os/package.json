@@ -9,7 +9,7 @@
     "start": "next start -p 3000",
     "lint": "eslint . --max-warnings 5",
     "lint:fix": "eslint . --fix",
-    "test": "node --test lib/navigation.test.js lib/m47_2_safety.test.js lib/attention.test.js lib/approvals.test.js lib/m47_3_safety.test.js lib/m47_4_parity.test.js lib/redirects.test.js lib/platform-ops.test.js lib/spatial.test.js lib/workspace.test.js lib/operator.test.js lib/modules/registry.test.js lib/modules/discovery.test.js lib/ielts.test.js lib/mission-runtime.test.js lib/voice-output.test.js lib/fleet.test.js lib/orchestration.test.js lib/skill-runtime.test.js lib/apps.test.js lib/hcg.test.js lib/core-os.test.js lib/private-alpha.test.js lib/m166_trading_guardian.test.js lib/m184_historical_research.test.js lib/m192_paper_activation.test.js lib/m200_durable_paper.test.js lib/m208_ops_graduation.test.js lib/m216_broker_sandbox.test.js lib/m224_broker_readiness.test.js lib/m232_integration_assurance.test.js lib/m240_provider_canary_planning.test.js",
+    "test": "node --test lib/navigation.test.js lib/m47_2_safety.test.js lib/attention.test.js lib/approvals.test.js lib/m47_3_safety.test.js lib/m47_4_parity.test.js lib/redirects.test.js lib/platform-ops.test.js lib/spatial.test.js lib/workspace.test.js lib/operator.test.js lib/modules/registry.test.js lib/modules/discovery.test.js lib/ielts.test.js lib/mission-runtime.test.js lib/voice-output.test.js lib/fleet.test.js lib/orchestration.test.js lib/skill-runtime.test.js lib/apps.test.js lib/hcg.test.js lib/core-os.test.js lib/private-alpha.test.js lib/m166_trading_guardian.test.js lib/m184_historical_research.test.js lib/m192_paper_activation.test.js lib/m200_durable_paper.test.js lib/m208_ops_graduation.test.js lib/m216_broker_sandbox.test.js lib/m224_broker_readiness.test.js lib/m232_integration_assurance.test.js lib/m240_provider_canary_planning.test.js lib/m248_intelligence.test.js lib/m256_market_data.test.js",
     "cert:m138": "node scripts/m138_hcg_browser_cert.mjs",
     "cert:m147": "node scripts/m147_ielts_browser_cert.mjs",
     "cert:m156": "node scripts/m156_core_browser_cert.mjs",
@@ -53,7 +53,9 @@
     "cert:m72:build": "MISSION_RUNTIME_CERT_MILESTONE=M72 M72_BUILD=1 node scripts/m71_browser_cert.mjs",
     "cert:m77": "M77_BUILD=1 node scripts/m77_voice_browser_cert.mjs",
     "cert:m239": "node scripts/m239_integration_assurance_browser_cert.mjs",
-    "cert:m247": "node scripts/m247_provider_canary_planning_browser_cert.mjs"
+    "cert:m247": "node scripts/m247_provider_canary_planning_browser_cert.mjs",
+    "cert:m255": "node scripts/m255_intelligence_browser_cert.mjs",
+    "cert:m263": "node scripts/m263_market_data_browser_cert.mjs"
   },
   "dependencies": {
     "framer-motion": "^11.15.0",

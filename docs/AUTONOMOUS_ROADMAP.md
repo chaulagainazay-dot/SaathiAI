@@ -1,5 +1,41 @@
 # SaathiOS Autonomous Roadmap
 
+## M256–M263 — Market Data Foundation, Dataset Governance & Signal Validation (2026-07-30)
+
+| Field | Value |
+| --- | --- |
+| Verdict | `RESEARCH_GRADE_MARKET_DATA_AND_SIGNAL_VALIDATION_CERTIFIED_WITH_LIMITATIONS` |
+| Max state | `RESEARCH_DATA_AND_SIGNAL_VALIDATION_READY` |
+| Package | `saathi/platform/tg/market_data/` |
+| Branch | `milestone/m256-m263-market-data-signal-validation` |
+| UI | `/trading/research-data` |
+| CLI | `md-*` / `paper-gov md-*` |
+| API | `/api/v1/platform/tg/research-data/*` |
+| Tests | Focused 23; II+MD 37; FE unit 10; browser WITH_LIMITATIONS |
+| Synthetic label | `SYNTHETIC_TEST_DATA` when fixtures used |
+| Historical completeness | `REAL_HISTORICAL_DATA_VALIDATION_INCOMPLETE` on fixture-only cert |
+| Connectivity / credentials / canary / orders | **Not authorized** |
+| Live trading | **Not authorized** |
+| Next | M264 only after human review; do not auto-start |
+
+**THE SYSTEM REMAINS RESEARCH, PAPER AND SANDBOX ONLY.**
+
+**NO REAL BROKER CONNECTION. NO CREDENTIALS. NO CANARY ACTIVATION. NO ORDER EXECUTION. NO GUARANTEED PROFITABILITY.**
+
+Evidence: `docs/trading/M256_M263_MARKET_DATA_AND_SIGNAL_VALIDATION.md`, `docs/trading/m256_m263_evidence/`.
+
+## M248–M255 — Institutional Investment Intelligence & Portfolio Brain (2026-07-30)
+
+| Field | Value |
+| --- | --- |
+| Verdict | `INSTITUTIONAL_INVESTMENT_INTELLIGENCE_CERTIFIED_WITH_LIMITATIONS` |
+| Max state | `PAPER_INTELLIGENCE_ENGINE_READY` |
+| Package | `saathi/platform/tg/intelligence/` |
+| UI | `/trading/intelligence` |
+| Limitation addressed by M256–M263 | Ungoverned synthetic bars when no historical dataset |
+
+Evidence: `docs/trading/M248_M255_INSTITUTIONAL_INVESTMENT_INTELLIGENCE.md`, `docs/trading/m248_m255_evidence/`.
+
 ## M240–M247 — Provider Selection, Read-Only Canary Design & Human Authorization Package (2026-07-30)
 
 | Field | Value |

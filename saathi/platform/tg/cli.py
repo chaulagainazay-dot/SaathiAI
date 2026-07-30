@@ -318,6 +318,122 @@ def main(argv: list[str] | None = None) -> int:
     pg_sub.add_parser("pcp-security")
     pg_sub.add_parser("pcp-certify")
     pg_sub.add_parser("pcp-dashboard")
+    # M248–M255 institutional investment intelligence (PAPER ONLY)
+    pg_sub.add_parser("ii-strategy-list")
+    p_iis = pg_sub.add_parser("ii-strategy-run")
+    p_iis.add_argument("--strategy", default="tf_dual_ma")
+    pg_sub.add_parser("ii-portfolio-risk")
+    pg_sub.add_parser("ii-portfolio-report")
+    p_iibt = pg_sub.add_parser("ii-backtest")
+    p_iibt.add_argument("--strategy", default="tf_dual_ma")
+    p_iibt.add_argument("--seed", type=int, default=42)
+    p_iimc = pg_sub.add_parser("ii-monte-carlo")
+    p_iimc.add_argument("--n", type=int, default=200)
+    p_iimc.add_argument("--seed", type=int, default=42)
+    p_iiwf = pg_sub.add_parser("ii-walk-forward")
+    p_iiwf.add_argument("--strategy", default="tf_dual_ma")
+    p_iiwf.add_argument("--seed", type=int, default=42)
+    p_iic = pg_sub.add_parser("ii-committee-review")
+    p_iic.add_argument("--instrument", default="SPY")
+    p_iie = pg_sub.add_parser("ii-explain")
+    p_iie.add_argument("--instrument", default="SPY")
+    p_iie.add_argument("--strategy", default="tf_dual_ma")
+    pg_sub.add_parser("ii-certify")
+    pg_sub.add_parser("ii-dashboard")
+    # M256–M263 market data & signal validation (RESEARCH ONLY)
+    pg_sub.add_parser("md-verdict")
+    pg_sub.add_parser("md-dataset-list")
+    p_mds = pg_sub.add_parser("md-dataset-show")
+    p_mds.add_argument("--id", required=True)
+    p_mds.add_argument("--version", default="")
+    p_mdr = pg_sub.add_parser("md-dataset-register")
+    p_mdr.add_argument("--name", required=True)
+    p_mdr.add_argument("--licence", default="CC0-1.0")
+    p_mdr.add_argument("--synthetic", action="store_true")
+    p_mdl = pg_sub.add_parser("md-licence-check")
+    p_mdl.add_argument("--id", required=True)
+    p_mdl.add_argument("--version", default="v1")
+    p_mdp = pg_sub.add_parser("md-provenance")
+    p_mdp.add_argument("--id", required=True)
+    p_mdp.add_argument("--version", default="v1")
+    p_mdi = pg_sub.add_parser("md-ingest")
+    p_mdi.add_argument("--id", required=True)
+    p_mdi.add_argument("--version", default="v1")
+    p_mdir = pg_sub.add_parser("md-ingest-report")
+    p_mdir.add_argument("--id", required=True)
+    p_mdq = pg_sub.add_parser("md-quality")
+    p_mdq.add_argument("--id", required=True)
+    p_mdq.add_argument("--version", default="v1")
+    p_mdqr = pg_sub.add_parser("md-quality-report")
+    p_mdqr.add_argument("--id", required=True)
+    p_mdqr.add_argument("--version", default="v1")
+    p_mdqu = pg_sub.add_parser("md-quarantine")
+    p_mdqu.add_argument("--id", required=True)
+    p_mdqu.add_argument("--version", default="v1")
+    p_mdc = pg_sub.add_parser("md-calendar-check")
+    p_mdc.add_argument("--id", required=True)
+    p_mdc.add_argument("--version", default="v1")
+    p_mdca = pg_sub.add_parser("md-corporate-actions")
+    p_mdca.add_argument("--id", required=True)
+    p_mdca.add_argument("--version", default="v1")
+    p_mda = pg_sub.add_parser("md-adjust")
+    p_mda.add_argument("--id", required=True)
+    p_mda.add_argument("--version", default="v1")
+    p_mda.add_argument("--symbol", default="DEMO")
+    p_mdb = pg_sub.add_parser("md-bias-check")
+    p_mdb.add_argument("--id", required=True)
+    p_mdb.add_argument("--version", default="v1")
+    p_mdsp = pg_sub.add_parser("md-split")
+    p_mdsp.add_argument("--id", required=True)
+    p_mdsp.add_argument("--version", default="v1")
+    pg_sub.add_parser("md-feature-list")
+    p_mdfb = pg_sub.add_parser("md-feature-build")
+    p_mdfb.add_argument("--id", required=True)
+    p_mdfb.add_argument("--version", default="v1")
+    p_mdfl = pg_sub.add_parser("md-feature-lineage")
+    p_mdfl.add_argument("--feature", required=True)
+    p_mdv = pg_sub.add_parser("md-validate-signal")
+    p_mdv.add_argument("--strategy", default="tf_dual_ma")
+    p_mdv.add_argument("--id", required=True)
+    p_mdv.add_argument("--version", default="v1")
+    p_mdcs = pg_sub.add_parser("md-compare-strategies")
+    p_mdcs.add_argument("--id", required=True)
+    p_mdcs.add_argument("--version", default="v1")
+    p_mdra = pg_sub.add_parser("md-regime-analysis")
+    p_mdra.add_argument("--id", required=True)
+    p_mdra.add_argument("--version", default="v1")
+    pg_sub.add_parser("md-certify")
+    pg_sub.add_parser("md-dashboard")
+    pg_sub.add_parser("md-bootstrap")
+    # Top-level md-* aliases
+    sub.add_parser("md-verdict")
+    sub.add_parser("md-dataset-list")
+    sub.add_parser("md-feature-list")
+    sub.add_parser("md-certify")
+    sub.add_parser("md-dashboard")
+    sub.add_parser("md-bootstrap")
+    # Aliases matching goal prompt command names
+    p_sl = sub.add_parser("strategy-list")
+    p_sl.add_argument("--category", default="")
+    p_sr = sub.add_parser("strategy-run")
+    p_sr.add_argument("--strategy", default="tf_dual_ma")
+    sub.add_parser("portfolio-risk")
+    sub.add_parser("portfolio-report")
+    p_bt2 = sub.add_parser("backtest-v2")
+    p_bt2.add_argument("--strategy", default="tf_dual_ma")
+    p_bt2.add_argument("--seed", type=int, default=42)
+    p_mc2 = sub.add_parser("monte-carlo")
+    p_mc2.add_argument("--n", type=int, default=200)
+    p_mc2.add_argument("--seed", type=int, default=42)
+    p_wf2 = sub.add_parser("walk-forward")
+    p_wf2.add_argument("--strategy", default="tf_dual_ma")
+    p_wf2.add_argument("--seed", type=int, default=42)
+    p_cr = sub.add_parser("committee-review")
+    p_cr.add_argument("--instrument", default="SPY")
+    p_ex = sub.add_parser("explain")
+    p_ex.add_argument("--instrument", default="SPY")
+    p_ex.add_argument("--strategy", default="tf_dual_ma")
+    sub.add_parser("certify-intelligence")
 
     args = parser.parse_args(argv)
     if not args.cmd:
@@ -799,7 +915,166 @@ def main(argv: list[str] | None = None) -> int:
                 return pwrap(pcp.certify())
             if args.action == "pcp-dashboard":
                 return pwrap(pcp.dashboard())
+        # M248–M255 institutional intelligence
+        if args.action and str(args.action).startswith("ii-"):
+            from saathi.platform.tg.intelligence.service import default_intelligence
+            ii = default_intelligence()
+
+            def iwrap(d):
+                if isinstance(d, dict):
+                    d = {
+                        **d,
+                        "LIVE_TRADING_AUTHORIZED": False,
+                        "BROKER_CONNECTIVITY_AUTHORIZED": False,
+                        "paper_only": True,
+                    }
+                return _out(d)
+
+            if args.action == "ii-strategy-list":
+                return iwrap(ii.list_strategies())
+            if args.action == "ii-strategy-run":
+                return iwrap(ii.strategy_run(args.strategy))
+            if args.action == "ii-portfolio-risk":
+                return iwrap(ii.portfolio_risk())
+            if args.action == "ii-portfolio-report":
+                return iwrap(ii.portfolio_report())
+            if args.action == "ii-backtest":
+                return iwrap(ii.backtest(args.strategy, seed=args.seed))
+            if args.action == "ii-monte-carlo":
+                return iwrap(ii.run_monte_carlo(n_simulations=args.n, seed=args.seed))
+            if args.action == "ii-walk-forward":
+                return iwrap(ii.run_walk_forward(args.strategy, seed=args.seed))
+            if args.action == "ii-committee-review":
+                return iwrap(ii.committee_review(args.instrument))
+            if args.action == "ii-explain":
+                return iwrap(ii.explain(args.instrument, strategy_id=args.strategy))
+            if args.action == "ii-certify":
+                return iwrap(ii.certify())
+            if args.action == "ii-dashboard":
+                return iwrap(ii.dashboard())
+        # M256–M263 market data
+        if args.action and str(args.action).startswith("md-"):
+            from saathi.platform.tg.market_data.service import default_market_data
+            md = default_market_data()
+
+            def mwrap(d):
+                if isinstance(d, dict):
+                    d = {
+                        **d,
+                        "REAL_CONNECTIVITY_AUTHORIZED": False,
+                        "CREDENTIAL_PROVISIONING_AUTHORIZED": False,
+                        "CANARY_ACTIVATION_AUTHORIZED": False,
+                        "ORDER_EXECUTION_AUTHORIZED": False,
+                        "LIVE_TRADING_AUTHORIZED": False,
+                        "research_only": True,
+                    }
+                return _out(d)
+
+            if args.action == "md-verdict":
+                return mwrap(md.terminal_verdict())
+            if args.action == "md-dataset-list":
+                return mwrap(md.list_datasets())
+            if args.action == "md-dataset-show":
+                return mwrap(md.get_dataset(args.id, args.version or None))
+            if args.action == "md-dataset-register":
+                return mwrap(md.register_dataset(
+                    name=args.name, licence_type=args.licence,
+                    is_synthetic=bool(args.synthetic), checksum="cli_register",
+                ))
+            if args.action == "md-licence-check":
+                return mwrap(md.licence_check(args.id, args.version))
+            if args.action == "md-provenance":
+                return mwrap(md.get_provenance(args.id, args.version))
+            if args.action == "md-ingest":
+                return mwrap(md.ingest(args.id, args.version))
+            if args.action == "md-ingest-report":
+                return mwrap(md.ingest_report(args.id))
+            if args.action == "md-quality":
+                return mwrap(md.quality_check(args.id, args.version))
+            if args.action == "md-quality-report":
+                return mwrap(md.quality_report(args.id, args.version))
+            if args.action == "md-quarantine":
+                return mwrap(md.quarantine_dataset(args.id, args.version))
+            if args.action == "md-calendar-check":
+                return mwrap(md.calendar_check(args.id, args.version))
+            if args.action == "md-corporate-actions":
+                return mwrap(md.list_corporate_actions(args.id, args.version))
+            if args.action == "md-adjust":
+                return mwrap(md.adjust(args.id, args.version, args.symbol))
+            if args.action == "md-bias-check":
+                return mwrap(md.bias_check(args.id, args.version))
+            if args.action == "md-split":
+                return mwrap(md.split_dataset(args.id, args.version))
+            if args.action == "md-feature-list":
+                return mwrap(md.feature_list())
+            if args.action == "md-feature-build":
+                return mwrap(md.feature_build(args.id, args.version))
+            if args.action == "md-feature-lineage":
+                return mwrap(md.feature_lineage(args.feature))
+            if args.action == "md-validate-signal":
+                split = md.split_dataset(args.id, args.version)
+                return mwrap(md.validate_signal(args.strategy, args.id, args.version, split=split))
+            if args.action == "md-compare-strategies":
+                return mwrap(md.compare_strategies(["tf_dual_ma", "mr_zscore"], args.id, args.version))
+            if args.action == "md-regime-analysis":
+                return mwrap(md.regime_analysis(args.id, args.version))
+            if args.action == "md-certify":
+                return mwrap(md.certify())
+            if args.action == "md-dashboard":
+                return mwrap(md.dashboard())
+            if args.action == "md-bootstrap":
+                return mwrap(md.bootstrap_fixture_pipeline())
         return 2
+
+    # Top-level market-data aliases (M256–M263)
+    if args.cmd in (
+        "md-verdict", "md-dataset-list", "md-feature-list",
+        "md-certify", "md-dashboard", "md-bootstrap",
+    ):
+        from saathi.platform.tg.market_data.service import default_market_data
+        md = default_market_data()
+        if args.cmd == "md-verdict":
+            return _out(md.terminal_verdict())
+        if args.cmd == "md-dataset-list":
+            return _out(md.list_datasets())
+        if args.cmd == "md-feature-list":
+            return _out(md.feature_list())
+        if args.cmd == "md-certify":
+            return _out(md.certify())
+        if args.cmd == "md-dashboard":
+            return _out(md.dashboard())
+        if args.cmd == "md-bootstrap":
+            return _out(md.bootstrap_fixture_pipeline())
+
+    # Top-level intelligence command aliases (M248–M255)
+    if args.cmd in (
+        "strategy-list", "strategy-run", "portfolio-risk", "portfolio-report",
+        "backtest-v2", "monte-carlo", "walk-forward", "committee-review",
+        "explain", "certify-intelligence",
+    ):
+        from saathi.platform.tg.intelligence.service import default_intelligence
+        ii = default_intelligence()
+        if args.cmd == "strategy-list":
+            cat = getattr(args, "category", "") or None
+            return _out(ii.list_strategies(cat if cat else None))
+        if args.cmd == "strategy-run":
+            return _out(ii.strategy_run(args.strategy))
+        if args.cmd == "portfolio-risk":
+            return _out(ii.portfolio_risk())
+        if args.cmd == "portfolio-report":
+            return _out(ii.portfolio_report())
+        if args.cmd == "backtest-v2":
+            return _out(ii.backtest(args.strategy, seed=args.seed))
+        if args.cmd == "monte-carlo":
+            return _out(ii.run_monte_carlo(n_simulations=args.n, seed=args.seed))
+        if args.cmd == "walk-forward":
+            return _out(ii.run_walk_forward(args.strategy, seed=args.seed))
+        if args.cmd == "committee-review":
+            return _out(ii.committee_review(args.instrument))
+        if args.cmd == "explain":
+            return _out(ii.explain(args.instrument, strategy_id=args.strategy))
+        if args.cmd == "certify-intelligence":
+            return _out(ii.certify())
 
     parser.print_help()
     return 2

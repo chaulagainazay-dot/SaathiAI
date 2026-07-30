@@ -1,0 +1,418 @@
+{
+  "schema": "M261_FEATURE_CATALOG",
+  "count": 12,
+  "features": [
+    {
+      "feature_id": "atr_14",
+      "feature_version": "v1",
+      "name": "atr_14",
+      "category": "volatility",
+      "formula": "mean(true_range, 14)",
+      "lookback": 14,
+      "timestamp_semantics": "bar_close",
+      "availability_rule": "same_bar_close_available",
+      "missing_data_policy": "propagate_null",
+      "normalization_policy": "none_global_fit_forbidden",
+      "input_dataset_versions": [
+        "ds_synth_ohlcv_equity_demo_bac23c7d756b5e97@v1"
+      ],
+      "output_checksum": "daffbdcb7cdb418128ec8be0f7dedd8610a352e2c3c03e121fa7138e6cd41446",
+      "creator_version": "m261.feature_store.v1",
+      "lineage": [
+        {
+          "dataset": "ds_synth_ohlcv_equity_demo_bac23c7d756b5e97@v1"
+        },
+        {
+          "formula": "mean(true_range, 14)"
+        },
+        {
+          "creator": "m261.feature_store.v1"
+        }
+      ],
+      "limitations": [
+        "research_only",
+        "not_live_trading_infra"
+      ],
+      "certified": false
+    },
+    {
+      "feature_id": "custom_mom",
+      "feature_version": "v1",
+      "name": "custom_mom",
+      "category": "custom",
+      "formula": "close/close_n - 1",
+      "lookback": 5,
+      "timestamp_semantics": "bar_close",
+      "availability_rule": "same_bar_close_available",
+      "missing_data_policy": "propagate_null",
+      "normalization_policy": "none_global_fit_forbidden",
+      "input_dataset_versions": [],
+      "output_checksum": "",
+      "creator_version": "m261.feature_store.v1",
+      "lineage": [
+        {
+          "step": "new_version",
+          "formula": "close/close_n - 1",
+          "prior_versions": 0
+        }
+      ],
+      "limitations": [
+        "research_only"
+      ],
+      "certified": false
+    },
+    {
+      "feature_id": "custom_mom",
+      "feature_version": "v2",
+      "name": "custom_mom",
+      "category": "custom",
+      "formula": "close/close_n - 1 + 0",
+      "lookback": 5,
+      "timestamp_semantics": "bar_close",
+      "availability_rule": "same_bar_close_available",
+      "missing_data_policy": "propagate_null",
+      "normalization_policy": "none_global_fit_forbidden",
+      "input_dataset_versions": [],
+      "output_checksum": "",
+      "creator_version": "m261.feature_store.v1",
+      "lineage": [
+        {
+          "step": "new_version",
+          "formula": "close/close_n - 1 + 0",
+          "prior_versions": 1
+        }
+      ],
+      "limitations": [
+        "research_only"
+      ],
+      "certified": false
+    },
+    {
+      "feature_id": "ema_12",
+      "feature_version": "v1",
+      "name": "ema_12",
+      "category": "trend",
+      "formula": "ema(close, 12)",
+      "lookback": 12,
+      "timestamp_semantics": "bar_close",
+      "availability_rule": "same_bar_close_available",
+      "missing_data_policy": "propagate_null",
+      "normalization_policy": "none_global_fit_forbidden",
+      "input_dataset_versions": [
+        "ds_synth_ohlcv_equity_demo_bac23c7d756b5e97@v1"
+      ],
+      "output_checksum": "daffbdcb7cdb418128ec8be0f7dedd8610a352e2c3c03e121fa7138e6cd41446",
+      "creator_version": "m261.feature_store.v1",
+      "lineage": [
+        {
+          "dataset": "ds_synth_ohlcv_equity_demo_bac23c7d756b5e97@v1"
+        },
+        {
+          "formula": "ema(close, 12)"
+        },
+        {
+          "creator": "m261.feature_store.v1"
+        }
+      ],
+      "limitations": [
+        "research_only",
+        "not_live_trading_infra"
+      ],
+      "certified": false
+    },
+    {
+      "feature_id": "log_return",
+      "feature_version": "v1",
+      "name": "log_return",
+      "category": "price_return",
+      "formula": "ln(close_t / close_t-1)",
+      "lookback": 1,
+      "timestamp_semantics": "bar_close",
+      "availability_rule": "same_bar_close_available",
+      "missing_data_policy": "propagate_null",
+      "normalization_policy": "none_global_fit_forbidden",
+      "input_dataset_versions": [
+        "ds_synth_ohlcv_equity_demo_bac23c7d756b5e97@v1"
+      ],
+      "output_checksum": "daffbdcb7cdb418128ec8be0f7dedd8610a352e2c3c03e121fa7138e6cd41446",
+      "creator_version": "m261.feature_store.v1",
+      "lineage": [
+        {
+          "dataset": "ds_synth_ohlcv_equity_demo_bac23c7d756b5e97@v1"
+        },
+        {
+          "formula": "ln(close_t / close_t-1)"
+        },
+        {
+          "creator": "m261.feature_store.v1"
+        }
+      ],
+      "limitations": [
+        "research_only",
+        "not_live_trading_infra"
+      ],
+      "certified": false
+    },
+    {
+      "feature_id": "momentum_10",
+      "feature_version": "v1",
+      "name": "momentum_10",
+      "category": "price_return",
+      "formula": "close_t / close_t-10 - 1",
+      "lookback": 10,
+      "timestamp_semantics": "bar_close",
+      "availability_rule": "same_bar_close_available",
+      "missing_data_policy": "propagate_null",
+      "normalization_policy": "none_global_fit_forbidden",
+      "input_dataset_versions": [
+        "ds_synth_ohlcv_equity_demo_bac23c7d756b5e97@v1"
+      ],
+      "output_checksum": "daffbdcb7cdb418128ec8be0f7dedd8610a352e2c3c03e121fa7138e6cd41446",
+      "creator_version": "m261.feature_store.v1",
+      "lineage": [
+        {
+          "dataset": "ds_synth_ohlcv_equity_demo_bac23c7d756b5e97@v1"
+        },
+        {
+          "formula": "close_t / close_t-10 - 1"
+        },
+        {
+          "creator": "m261.feature_store.v1"
+        }
+      ],
+      "limitations": [
+        "research_only",
+        "not_live_trading_infra"
+      ],
+      "certified": false
+    },
+    {
+      "feature_id": "relative_volume_20",
+      "feature_version": "v1",
+      "name": "relative_volume_20",
+      "category": "volume",
+      "formula": "volume / mean(volume, 20)",
+      "lookback": 20,
+      "timestamp_semantics": "bar_close",
+      "availability_rule": "same_bar_close_available",
+      "missing_data_policy": "propagate_null",
+      "normalization_policy": "none_global_fit_forbidden",
+      "input_dataset_versions": [
+        "ds_synth_ohlcv_equity_demo_bac23c7d756b5e97@v1"
+      ],
+      "output_checksum": "daffbdcb7cdb418128ec8be0f7dedd8610a352e2c3c03e121fa7138e6cd41446",
+      "creator_version": "m261.feature_store.v1",
+      "lineage": [
+        {
+          "dataset": "ds_synth_ohlcv_equity_demo_bac23c7d756b5e97@v1"
+        },
+        {
+          "formula": "volume / mean(volume, 20)"
+        },
+        {
+          "creator": "m261.feature_store.v1"
+        }
+      ],
+      "limitations": [
+        "research_only",
+        "not_live_trading_infra"
+      ],
+      "certified": false
+    },
+    {
+      "feature_id": "rolling_volatility_20",
+      "feature_version": "v1",
+      "name": "rolling_volatility_20",
+      "category": "volatility",
+      "formula": "stdev(simple_return, 20)",
+      "lookback": 20,
+      "timestamp_semantics": "bar_close",
+      "availability_rule": "same_bar_close_available",
+      "missing_data_policy": "propagate_null",
+      "normalization_policy": "none_global_fit_forbidden",
+      "input_dataset_versions": [
+        "ds_synth_ohlcv_equity_demo_bac23c7d756b5e97@v1"
+      ],
+      "output_checksum": "daffbdcb7cdb418128ec8be0f7dedd8610a352e2c3c03e121fa7138e6cd41446",
+      "creator_version": "m261.feature_store.v1",
+      "lineage": [
+        {
+          "dataset": "ds_synth_ohlcv_equity_demo_bac23c7d756b5e97@v1"
+        },
+        {
+          "formula": "stdev(simple_return, 20)"
+        },
+        {
+          "creator": "m261.feature_store.v1"
+        }
+      ],
+      "limitations": [
+        "research_only",
+        "not_live_trading_infra"
+      ],
+      "certified": false
+    },
+    {
+      "feature_id": "rsi_14",
+      "feature_version": "v1",
+      "name": "rsi_14",
+      "category": "technical",
+      "formula": "rsi(close, 14)",
+      "lookback": 14,
+      "timestamp_semantics": "bar_close",
+      "availability_rule": "same_bar_close_available",
+      "missing_data_policy": "propagate_null",
+      "normalization_policy": "none_global_fit_forbidden",
+      "input_dataset_versions": [
+        "ds_synth_ohlcv_equity_demo_bac23c7d756b5e97@v1"
+      ],
+      "output_checksum": "daffbdcb7cdb418128ec8be0f7dedd8610a352e2c3c03e121fa7138e6cd41446",
+      "creator_version": "m261.feature_store.v1",
+      "lineage": [
+        {
+          "dataset": "ds_synth_ohlcv_equity_demo_bac23c7d756b5e97@v1"
+        },
+        {
+          "formula": "rsi(close, 14)"
+        },
+        {
+          "creator": "m261.feature_store.v1"
+        }
+      ],
+      "limitations": [
+        "research_only",
+        "not_live_trading_infra"
+      ],
+      "certified": false
+    },
+    {
+      "feature_id": "simple_return",
+      "feature_version": "v1",
+      "name": "simple_return",
+      "category": "price_return",
+      "formula": "(close_t / close_t-1) - 1",
+      "lookback": 1,
+      "timestamp_semantics": "bar_close",
+      "availability_rule": "same_bar_close_available",
+      "missing_data_policy": "propagate_null",
+      "normalization_policy": "none_global_fit_forbidden",
+      "input_dataset_versions": [
+        "ds_synth_ohlcv_equity_demo_bac23c7d756b5e97@v1"
+      ],
+      "output_checksum": "daffbdcb7cdb418128ec8be0f7dedd8610a352e2c3c03e121fa7138e6cd41446",
+      "creator_version": "m261.feature_store.v1",
+      "lineage": [
+        {
+          "dataset": "ds_synth_ohlcv_equity_demo_bac23c7d756b5e97@v1"
+        },
+        {
+          "formula": "(close_t / close_t-1) - 1"
+        },
+        {
+          "creator": "m261.feature_store.v1"
+        }
+      ],
+      "limitations": [
+        "research_only",
+        "not_live_trading_infra"
+      ],
+      "certified": false
+    },
+    {
+      "feature_id": "sma_10",
+      "feature_version": "v1",
+      "name": "sma_10",
+      "category": "trend",
+      "formula": "mean(close, 10)",
+      "lookback": 10,
+      "timestamp_semantics": "bar_close",
+      "availability_rule": "same_bar_close_available",
+      "missing_data_policy": "propagate_null",
+      "normalization_policy": "none_global_fit_forbidden",
+      "input_dataset_versions": [
+        "ds_synth_ohlcv_equity_demo_bac23c7d756b5e97@v1"
+      ],
+      "output_checksum": "daffbdcb7cdb418128ec8be0f7dedd8610a352e2c3c03e121fa7138e6cd41446",
+      "creator_version": "m261.feature_store.v1",
+      "lineage": [
+        {
+          "dataset": "ds_synth_ohlcv_equity_demo_bac23c7d756b5e97@v1"
+        },
+        {
+          "formula": "mean(close, 10)"
+        },
+        {
+          "creator": "m261.feature_store.v1"
+        }
+      ],
+      "limitations": [
+        "research_only",
+        "not_live_trading_infra"
+      ],
+      "certified": false
+    },
+    {
+      "feature_id": "sma_20",
+      "feature_version": "v1",
+      "name": "sma_20",
+      "category": "trend",
+      "formula": "mean(close, 20)",
+      "lookback": 20,
+      "timestamp_semantics": "bar_close",
+      "availability_rule": "same_bar_close_available",
+      "missing_data_policy": "propagate_null",
+      "normalization_policy": "none_global_fit_forbidden",
+      "input_dataset_versions": [
+        "ds_synth_ohlcv_equity_demo_bac23c7d756b5e97@v1"
+      ],
+      "output_checksum": "daffbdcb7cdb418128ec8be0f7dedd8610a352e2c3c03e121fa7138e6cd41446",
+      "creator_version": "m261.feature_store.v1",
+      "lineage": [
+        {
+          "dataset": "ds_synth_ohlcv_equity_demo_bac23c7d756b5e97@v1"
+        },
+        {
+          "formula": "mean(close, 20)"
+        },
+        {
+          "creator": "m261.feature_store.v1"
+        }
+      ],
+      "limitations": [
+        "research_only",
+        "not_live_trading_infra"
+      ],
+      "certified": false
+    }
+  ],
+  "immutable_versions": true,
+  "creator_version": "m261.feature_store.v1",
+  "LIVE_TRADING_AUTHORIZED": false,
+  "BROKER_CONNECTIVITY_AUTHORIZED": false,
+  "REAL_CONNECTIVITY_AUTHORIZED": false,
+  "CREDENTIAL_PROVISIONING_AUTHORIZED": false,
+  "CANARY_ACTIVATION_AUTHORIZED": false,
+  "ORDER_EXECUTION_AUTHORIZED": false,
+  "ORDER_SUBMISSION_AUTHORIZED": false,
+  "API_KEYS_ACCEPTED": false,
+  "OAUTH_AUTHORIZED": false,
+  "LIVE_MARKET_DATA_AUTHORIZED": false,
+  "LIVE_DATA_DEPENDENCY": false,
+  "REGULATORY_GRADE_MARKET_DATA": false,
+  "STRATEGY_PROFITABILITY_GUARANTEED": false,
+  "LIVE_MARKET_READINESS": false,
+  "INVESTMENT_ADVICE_CERTIFIED": false,
+  "paper_only": true,
+  "sandbox_only": true,
+  "research_only": true,
+  "offline_first": true,
+  "offline_capable": true,
+  "no_broker_connection": true,
+  "no_api_keys": true,
+  "no_oauth": true,
+  "no_order_submission": true,
+  "no_live_data_dependency": true,
+  "no_live_trading": true,
+  "certified_research_requires_registered_dataset": true,
+  "evidence_hash": "14b159bdbf16de0a3e131ef9f060c56bd83a3df3c2f19b3d30ea1836d07a81c1"
+}

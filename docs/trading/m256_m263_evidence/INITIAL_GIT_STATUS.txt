@@ -1,0 +1,18 @@
+ M docs/evidence/m25/LATEST_ENVIRONMENT_OBSERVATION.json
+ M docs/evidence/m25/LIVE_CERT_EVIDENCE.json
+ M docs/evidence/m25/LIVE_CERT_SUMMARY.md
+ M docs/evidence/m27/connector_events.jsonl
+ M docs/evidence/m28/deprecation_events.jsonl
+ M saathi-os/components/trading/TradingShell.jsx
+ M saathi-os/package.json
+ M saathi/platform/api.py
+ M saathi/platform/tg/cli.py
+?? docs/design-spec/
+?? docs/trading/M248_M255_INSTITUTIONAL_INVESTMENT_INTELLIGENCE.md
+?? docs/trading/m248_m255_evidence/
+?? docs/trading/m256_m263_evidence/
+?? saathi-os/app/trading/intelligence/
+?? saathi-os/lib/m248_intelligence.test.js
+?? saathi-os/scripts/m255_intelligence_browser_cert.mjs
+?? saathi/platform/tg/intelligence/
+?? tests/test_m248_m255_institutional_intelligence.py
