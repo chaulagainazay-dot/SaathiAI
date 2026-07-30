@@ -69,8 +69,8 @@
   "m280_started": false,
   "notes": "M272-M279 closed with limitations; paper candidate is review-only",
   "implementation_sha": "6cbce97ed45145518f01862eba752bf74aa38977",
-  "current_sha": "178e6d7483643d3ebe763da937de1a934c191665",
-  "ending_sha": "178e6d7483643d3ebe763da937de1a934c191665",
+  "current_sha": "da58f16f2122045d72e8d1365a70593faa384587",
+  "ending_sha": "da58f16f2122045d72e8d1365a70593faa384587",
   "clean_clone_certification": true,
   "browser_certification": true
 }
