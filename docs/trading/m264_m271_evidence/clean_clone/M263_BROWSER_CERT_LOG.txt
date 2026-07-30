@@ -1,0 +1,8 @@
+
+> saathi-os@0.1.0 cert:m263
+> node scripts/m263_market_data_browser_cert.mjs
+
+{
+  "verdict": "RESEARCH_GRADE_MARKET_DATA_SIGNAL_VALIDATION_BROWSER_CERT_PASSED_WITH_LIMITATIONS",
+  "hard_gates_pass": true
+}

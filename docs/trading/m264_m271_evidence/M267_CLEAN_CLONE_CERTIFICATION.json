@@ -1,0 +1,26 @@
+{
+  "schema": "M267_CLEAN_CLONE_CERTIFICATION",
+  "clean_clone_path": "/tmp/saathiai-m267-clean",
+  "checked_out_sha": "08e6b84dae118f803e3d74c47bf30a5d573d4bad",
+  "timestamp": "2026-07-30T07:13:10.414319+00:00",
+  "M248_M255_COMMITTED_SOURCE_PRESENT": true,
+  "M256_M263_COMMITTED_SOURCE_PRESENT": true,
+  "UNTRACKED_REQUIRED_SOURCE_FILES": 0,
+  "CLEAN_CLONE_BACKEND_TESTS_PASSED": true,
+  "CLEAN_CLONE_FRONTEND_TESTS_PASSED": true,
+  "CLEAN_CLONE_PRODUCTION_BUILD_PASSED": true,
+  "M255_BROWSER_CERT_PASSED": true,
+  "M263_BROWSER_CERT_PASSED": true,
+  "backend_tests": "37 passed",
+  "frontend_tests": "10 passed",
+  "build_routes": [
+    "/trading/intelligence",
+    "/trading/research-data"
+  ],
+  "m255_verdict": "INSTITUTIONAL_INVESTMENT_INTELLIGENCE_CERTIFIED_WITH_LIMITATIONS",
+  "m263_verdict": "RESEARCH_GRADE_MARKET_DATA_SIGNAL_VALIDATION_BROWSER_CERT_PASSED_WITH_LIMITATIONS",
+  "initial_git_status_empty": true,
+  "post_run_status_notes": "venv/node_modules/.next and evidence writes expected; no required source mutation",
+  "unexpected_source_mutations": [],
+  "ok": true
+}

@@ -1,0 +1,162 @@
+{
+  "schema": "m255.institutional_intelligence_browser_cert.v1",
+  "verdict": "INSTITUTIONAL_INVESTMENT_INTELLIGENCE_CERTIFIED_WITH_LIMITATIONS",
+  "branch": "HEAD",
+  "sha": "08e6b84dae118f803e3d74c47bf30a5d573d4bad",
+  "timestamp": "2026-07-30T07:12:17.659Z",
+  "hard_gates": {
+    "bff_up": {
+      "ok": true,
+      "detail": "http://127.0.0.1:8855"
+    },
+    "seed_login": {
+      "ok": true,
+      "detail": "token issued"
+    },
+    "dashboard_api": {
+      "ok": true,
+      "detail": "ok"
+    },
+    "broker_refused": {
+      "ok": true,
+      "detail": "BROKER_CONNECTIVITY_FORBIDDEN"
+    },
+    "credentials_refused": {
+      "ok": true,
+      "detail": "API_KEYS_FORBIDDEN"
+    },
+    "orders_refused": {
+      "ok": true,
+      "detail": "ORDER_SUBMISSION_FORBIDDEN"
+    },
+    "certify": {
+      "ok": true,
+      "detail": "INSTITUTIONAL_INVESTMENT_INTELLIGENCE_CERTIFIED_WITH_LIMITATIONS"
+    },
+    "ui_up": {
+      "ok": true,
+      "detail": "http://127.0.0.1:3255"
+    },
+    "ui_route_loads": {
+      "ok": true,
+      "detail": "shell loaded (app gate)"
+    }
+  },
+  "soft_gates": {
+    "ui_labels_depth": {
+      "ok": true,
+      "detail": "Authenticated paper-only badges soft-limited by app availability gate"
+    },
+    "browser_ui_sign_in_or_app_gate": {
+      "ok": true,
+      "detail": "Full authenticated UI interactions soft-limited if app/sign-in gate blocks"
+    }
+  },
+  "journeys": [
+    {
+      "name": "dashboard_api",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "strategy_library",
+      "ok": true,
+      "detail": "11"
+    },
+    {
+      "name": "portfolio_overview",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "risk_dashboard",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "backtest",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "monte_carlo",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "walk_forward",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "committee",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "explainable",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "broker_refused",
+      "ok": true,
+      "detail": "BROKER_CONNECTIVITY_FORBIDDEN"
+    },
+    {
+      "name": "credentials_refused",
+      "ok": true,
+      "detail": "API_KEYS_FORBIDDEN"
+    },
+    {
+      "name": "orders_refused",
+      "ok": true,
+      "detail": "ORDER_SUBMISSION_FORBIDDEN"
+    },
+    {
+      "name": "certify",
+      "ok": true,
+      "detail": "INSTITUTIONAL_INVESTMENT_INTELLIGENCE_CERTIFIED_WITH_LIMITATIONS"
+    },
+    {
+      "name": "ui_boundary_labels",
+      "ok": true,
+      "detail": "app_availability_gate"
+    },
+    {
+      "name": "ui_command_center",
+      "ok": true,
+      "detail": "/trading/intelligence"
+    }
+  ],
+  "screenshots": [
+    "/private/tmp/saathiai-m267-clean/docs/trading/m248_m255_evidence/browser/screenshots/intelligence_command_center.png",
+    "/private/tmp/saathiai-m267-clean/docs/trading/m248_m255_evidence/browser/screenshots/intelligence_after_actions.png"
+  ],
+  "paper_only": true,
+  "sandbox_only": true,
+  "offline_capable": true,
+  "broker_connectivity_authorized": false,
+  "api_keys_accepted": false,
+  "order_submission_authorized": false,
+  "live_trading_authorized": false,
+  "notes": [
+    "PAPER ONLY",
+    "NO BROKER CONNECTIVITY",
+    "NO API KEYS",
+    "NO LIVE MARKET ACCESS",
+    "NO ORDER EXECUTION",
+    "NO LIVE TRADING"
+  ],
+  "hard_ok": true,
+  "journey_ok": true,
+  "limitations": [
+    "Browser UI paper badges soft-limited by application availability gate",
+    "PAPER ONLY",
+    "NO BROKER CONNECTIVITY",
+    "NO API KEYS",
+    "NO LIVE MARKET ACCESS",
+    "NO ORDER EXECUTION",
+    "NO LIVE TRADING"
+  ]
+}

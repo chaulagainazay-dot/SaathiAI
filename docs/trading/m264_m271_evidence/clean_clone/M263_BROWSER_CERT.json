@@ -1,0 +1,192 @@
+{
+  "schema": "m263.market_data_browser_cert.v1",
+  "verdict": "RESEARCH_GRADE_MARKET_DATA_SIGNAL_VALIDATION_BROWSER_CERT_PASSED_WITH_LIMITATIONS",
+  "branch": "HEAD",
+  "sha": "08e6b84dae118f803e3d74c47bf30a5d573d4bad",
+  "timestamp": "2026-07-30T07:12:44.455Z",
+  "hard_gates": {
+    "bff_up": {
+      "ok": true,
+      "detail": "http://127.0.0.1:8863"
+    },
+    "seed_login": {
+      "ok": true,
+      "detail": "token issued"
+    },
+    "dashboard_api": {
+      "ok": true,
+      "detail": "ok"
+    },
+    "bootstrap": {
+      "ok": true,
+      "detail": "ds_synth_ohlcv_equity_demo_319af353a222955f"
+    },
+    "broker_refused": {
+      "ok": true,
+      "detail": "BROKER_CONNECTIVITY_FORBIDDEN"
+    },
+    "credentials_refused": {
+      "ok": true,
+      "detail": "API_KEYS_FORBIDDEN"
+    },
+    "orders_refused": {
+      "ok": true,
+      "detail": "ORDER_SUBMISSION_FORBIDDEN"
+    },
+    "canary_refused": {
+      "ok": true,
+      "detail": "CANARY_ACTIVATION_FORBIDDEN"
+    },
+    "certify": {
+      "ok": true,
+      "detail": "RESEARCH_GRADE_MARKET_DATA_AND_SIGNAL_VALIDATION_CERTIFIED_WITH_LIMITATIONS"
+    },
+    "ui_up": {
+      "ok": true,
+      "detail": "http://127.0.0.1:3263"
+    },
+    "ui_route_loads": {
+      "ok": true,
+      "detail": "shell loaded (app gate)"
+    },
+    "no_credential_form": {
+      "ok": true,
+      "detail": "ok"
+    },
+    "security_scan": {
+      "ok": true,
+      "detail": "ok"
+    }
+  },
+  "soft_gates": {},
+  "journeys": [
+    {
+      "name": "dashboard_api",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "bootstrap_pipeline",
+      "ok": true,
+      "detail": "ds_synth_ohlcv_equity_demo_319af353a222955f"
+    },
+    {
+      "name": "dataset_catalogue",
+      "ok": true,
+      "detail": "1"
+    },
+    {
+      "name": "feature_store",
+      "ok": true,
+      "detail": "10"
+    },
+    {
+      "name": "broker_refused",
+      "ok": true,
+      "detail": "BROKER_CONNECTIVITY_FORBIDDEN"
+    },
+    {
+      "name": "credentials_refused",
+      "ok": true,
+      "detail": "API_KEYS_FORBIDDEN"
+    },
+    {
+      "name": "orders_refused",
+      "ok": true,
+      "detail": "ORDER_SUBMISSION_FORBIDDEN"
+    },
+    {
+      "name": "canary_refused",
+      "ok": true,
+      "detail": "CANARY_ACTIVATION_FORBIDDEN"
+    },
+    {
+      "name": "certify",
+      "ok": true,
+      "detail": "RESEARCH_GRADE_MARKET_DATA_AND_SIGNAL_VALIDATION_CERTIFIED_WITH_LIMITATIONS"
+    },
+    {
+      "name": "ui_boundary_labels",
+      "ok": true,
+      "detail": "app_availability_gate"
+    },
+    {
+      "name": "no_credential_form",
+      "ok": true,
+      "detail": "ok"
+    },
+    {
+      "name": "synthetic_label_visible",
+      "ok": true,
+      "detail": "gated"
+    },
+    {
+      "name": "no_profit_guarantee",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "no_live_readiness_claim",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "security_scan",
+      "ok": true,
+      "detail": "{\"no_api_keys_in_env_required\":true,\"no_broker_sdk_imports\":true,\"no_order_execution\":true,\"no_pickle_loads\":true,\"offline_capable\":true}"
+    }
+  ],
+  "screenshots": [
+    "/private/tmp/saathiai-m267-clean/docs/trading/m256_m263_evidence/browser/screenshots/research_data_control_center.png",
+    "/private/tmp/saathiai-m267-clean/docs/trading/m256_m263_evidence/browser/screenshots/research_data_after_actions.png"
+  ],
+  "research_only": true,
+  "offline_first": true,
+  "paper_only": true,
+  "sandbox_only": true,
+  "offline_capable": true,
+  "broker_connectivity_authorized": false,
+  "api_keys_accepted": false,
+  "order_submission_authorized": false,
+  "live_trading_authorized": false,
+  "canary_activation_authorized": false,
+  "real_connectivity_authorized": false,
+  "notes": [
+    "RESEARCH ONLY",
+    "OFFLINE-FIRST",
+    "NO BROKER CONNECTIVITY",
+    "NO ACCOUNT ACCESS",
+    "NO ORDER EXECUTION",
+    "NO LIVE TRADING",
+    "NO GUARANTEED PROFITABILITY"
+  ],
+  "limitations": [
+    "SYNTHETIC_TEST_DATA used for architecture certification",
+    "REAL_HISTORICAL_DATA_VALIDATION_INCOMPLETE"
+  ],
+  "dataset_fixture_ids": [
+    "ds_synth_ohlcv_equity_demo_319af353a222955f"
+  ],
+  "validation_results": {
+    "dataset_id": "ds_synth_ohlcv_equity_demo_319af353a222955f",
+    "dataset_version": "v1",
+    "validation_state": "OUT_OF_SAMPLE_FAILED"
+  },
+  "authority_assertions": {
+    "LIVE_TRADING_AUTHORIZED": true,
+    "BROKER_CONNECTIVITY_AUTHORIZED": true,
+    "API_KEYS_ACCEPTED": true
+  },
+  "broker_isolation_result": {
+    "ok": true
+  },
+  "credential_scan": {
+    "ok": true,
+    "env_hits": []
+  },
+  "external_domain_scan": {
+    "hits": []
+  },
+  "hard_gates_pass": true,
+  "journeys_pass": true
+}
