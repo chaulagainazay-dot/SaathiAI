@@ -12033,3 +12033,223 @@ def tg_ps_live(authorization: str | None = Header(default=None), x_platform_toke
         return _tg_paper_sim().refuse_live()
     except PlatformContextError as e:
         raise _err(e) from e
+
+
+# ── M296–M303 Institutional Portfolio & Risk Intelligence ────────────────────
+
+def _tg_portfolio_risk():
+    from saathi.platform.tg.portfolio_risk.service import default_portfolio_risk
+    return default_portfolio_risk()
+
+
+@router.get("/tg/portfolio-risk/posture")
+def tg_pr_posture(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_portfolio_risk().posture()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/portfolio-risk/verdict")
+def tg_pr_verdict(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_portfolio_risk().terminal_verdict()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/portfolio-risk/dashboard")
+def tg_pr_dashboard(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_portfolio_risk().dashboard()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/portfolio-risk/analytics")
+def tg_pr_analytics(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_portfolio_risk().analyze()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/portfolio-risk/limits")
+def tg_pr_limits(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_portfolio_risk().evaluate_limits()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/portfolio-risk/attribution")
+def tg_pr_attr(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_portfolio_risk().performance_attribution()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/portfolio-risk/optimise")
+def tg_pr_opt(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_portfolio_risk().optimise()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/portfolio-risk/scenarios")
+def tg_pr_scn(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_portfolio_risk().run_scenarios()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/portfolio-risk/sizing")
+def tg_pr_size(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_portfolio_risk().size_positions()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/portfolio-risk/committee")
+def tg_pr_cm(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_portfolio_risk().committee_review()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/portfolio-risk/bootstrap")
+def tg_pr_boot(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_portfolio_risk().bootstrap_demo_pipeline()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/portfolio-risk/certify")
+def tg_pr_cert(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_portfolio_risk().certify()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/portfolio-risk/evidence")
+def tg_pr_ev(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_portfolio_risk().evidence_bundle()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/portfolio-risk/security")
+def tg_pr_sec(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_portfolio_risk().security_scan()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/portfolio-risk/broker/connect")
+def tg_pr_broker(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_portfolio_risk().refuse_broker()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+class PrCredBody(BaseModel):
+    api_key: str | None = None
+
+
+@router.post("/tg/portfolio-risk/credentials")
+def tg_pr_cred(body: PrCredBody | None = None, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_portfolio_risk().refuse_credentials(body.api_key if body else None)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/portfolio-risk/orders")
+def tg_pr_orders(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_portfolio_risk().refuse_order()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/portfolio-risk/canary/activate")
+def tg_pr_canary(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_portfolio_risk().refuse_canary()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/portfolio-risk/live/activate")
+def tg_pr_live(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_portfolio_risk().refuse_live()
+    except PlatformContextError as e:
+        raise _err(e) from e

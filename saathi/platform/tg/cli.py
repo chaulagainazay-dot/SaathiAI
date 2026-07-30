@@ -500,6 +500,21 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("ps-dashboard")
     sub.add_parser("ps-bootstrap")
     sub.add_parser("ps-certify")
+    # M296–M303 portfolio risk intelligence
+    pg_sub.add_parser("pr-verdict")
+    pg_sub.add_parser("pr-dashboard")
+    pg_sub.add_parser("pr-bootstrap")
+    pg_sub.add_parser("pr-analytics")
+    pg_sub.add_parser("pr-limits")
+    pg_sub.add_parser("pr-attribution")
+    pg_sub.add_parser("pr-optimise")
+    pg_sub.add_parser("pr-scenarios")
+    pg_sub.add_parser("pr-committee")
+    pg_sub.add_parser("pr-certify")
+    sub.add_parser("pr-verdict")
+    sub.add_parser("pr-dashboard")
+    sub.add_parser("pr-bootstrap")
+    sub.add_parser("pr-certify")
     # Aliases matching goal prompt command names
     p_sl = sub.add_parser("strategy-list")
     p_sl.add_argument("--category", default="")
@@ -1264,6 +1279,43 @@ def main(argv: list[str] | None = None) -> int:
                 return pwrap(ps.trading_calendar())
             if args.action == "ps-certify":
                 return pwrap(ps.certify())
+        # M296–M303 portfolio risk
+        if args.action and str(args.action).startswith("pr-"):
+            from saathi.platform.tg.portfolio_risk.service import default_portfolio_risk
+            pr = default_portfolio_risk()
+
+            def prwrap(d):
+                if isinstance(d, dict):
+                    d = {
+                        **d,
+                        "REAL_CONNECTIVITY_AUTHORIZED": False,
+                        "BROKER_CONNECTIVITY_AUTHORIZED": False,
+                        "ORDER_EXECUTION_AUTHORIZED": False,
+                        "LIVE_TRADING_AUTHORIZED": False,
+                        "research_only": True,
+                    }
+                return _out(d)
+
+            if args.action == "pr-verdict":
+                return prwrap(pr.terminal_verdict())
+            if args.action == "pr-dashboard":
+                return prwrap(pr.dashboard())
+            if args.action == "pr-bootstrap":
+                return prwrap(pr.bootstrap_demo_pipeline())
+            if args.action == "pr-analytics":
+                return prwrap(pr.analyze())
+            if args.action == "pr-limits":
+                return prwrap(pr.evaluate_limits())
+            if args.action == "pr-attribution":
+                return prwrap(pr.performance_attribution())
+            if args.action == "pr-optimise":
+                return prwrap(pr.optimise())
+            if args.action == "pr-scenarios":
+                return prwrap(pr.run_scenarios())
+            if args.action == "pr-committee":
+                return prwrap(pr.committee_review())
+            if args.action == "pr-certify":
+                return prwrap(pr.certify())
         return 2
 
     # Top-level market-data aliases (M256–M263)
@@ -1373,6 +1425,19 @@ def main(argv: list[str] | None = None) -> int:
             return _out(ps.bootstrap_demo_pipeline())
         if args.cmd == "ps-certify":
             return _out(ps.certify())
+
+    # Top-level portfolio-risk aliases (M296–M303)
+    if args.cmd in ("pr-verdict", "pr-dashboard", "pr-bootstrap", "pr-certify"):
+        from saathi.platform.tg.portfolio_risk.service import default_portfolio_risk
+        pr = default_portfolio_risk()
+        if args.cmd == "pr-verdict":
+            return _out(pr.terminal_verdict())
+        if args.cmd == "pr-dashboard":
+            return _out(pr.dashboard())
+        if args.cmd == "pr-bootstrap":
+            return _out(pr.bootstrap_demo_pipeline())
+        if args.cmd == "pr-certify":
+            return _out(pr.certify())
 
     parser.print_help()
     return 2

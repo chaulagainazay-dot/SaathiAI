@@ -39,6 +39,7 @@ const TABS = [
   { href: "/trading/research-lab", label: "Research Lab" },
   { href: "/trading/research-orchestrator", label: "Research Orchestrator" },
   { href: "/trading/paper-simulation", label: "Paper Simulation" },
+  { href: "/trading/portfolio-risk", label: "Portfolio Risk" },
   { href: "/trading/paper-ledger", label: "Ledger" },
   { href: "/trading/paper-recovery", label: "Recovery" },
   { href: "/trading/comparison", label: "Comparison" },
