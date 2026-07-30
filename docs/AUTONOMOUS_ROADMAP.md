@@ -1,5 +1,30 @@
 # SaathiOS Autonomous Roadmap
 
+## M240–M247 — Provider Selection, Read-Only Canary Design & Human Authorization Package (2026-07-30)
+
+| Field | Value |
+| --- | --- |
+| Verdict | `PROVIDER_CANARY_PLANNING_CERTIFIED_WITH_LIMITATIONS` |
+| Max state | `READ_ONLY_CANARY_PACKAGE_READY_FOR_OWNER_REVIEW` |
+| Preferred provider | **Alpaca** (recommendation only; eligibility unconfirmed) |
+| Fallback provider | **Kraken** |
+| Package | `saathi/platform/tg/provider_canary_planning/` |
+| Branch | `milestone/m240-m247-provider-canary-planning` |
+| UI | `/trading/provider-canary-planning` |
+| CLI | `paper-gov pcp-*` |
+| API | `/api/v1/platform/tg/provider-canary-planning/*` |
+| Tests | Focused 23; M216–M247 regression 79; FE unit 15; browser WITH_LIMITATIONS |
+| Connectivity / credentials / canary | **Not authorized** |
+| Live trading | **Not authorized** |
+| Owner sign-off | **Not claimed by automation** |
+| Next | M248 only after human owner review; do not auto-start |
+
+**THE SYSTEM REMAINS PAPER, SANDBOX AND PLANNING ONLY.**
+
+**NO REAL BROKER CONNECTION. NO CREDENTIALS. NO CANARY ACTIVATION. PREFERRED PROVIDER IS A RECOMMENDATION ONLY.**
+
+Evidence: `docs/trading/M240_M247_PROVIDER_CANARY_PLANNING.md`, `docs/trading/m240_m247_evidence/`.
+
 ## M208–M215 — Extended Paper Campaign Validation & Operational Graduation (2026-07-30)
 
 | Field | Value |
@@ -1428,6 +1453,7 @@ Branch `milestone/m42-graduation-review`.
 - M237 supply-chain threat model + assurance gates;
 - M238 read-only integration authorization **planning** (max canary-planning eligible; real connectivity false; no automated owner sign-off);
 - M239 Integration Assurance Control Center `/trading/integration-assurance`; `cert:m239`.
-- Explicit: no real connectivity, no credentials, no orders, no live trading, M240 not started.
+- Explicit: no real connectivity, no credentials, no orders, no live trading.
 - Evidence: `docs/trading/m232_m239_evidence/`. Doc: `docs/trading/M232_M239_REPRODUCIBILITY_SUPPLY_CHAIN_AUTHORIZATION.md`.
+- **Superseded next-step:** M240–M247 completed on branch `milestone/m240-m247-provider-canary-planning` (planning package ready for owner review; no connectivity).
 

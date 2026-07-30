@@ -1,4 +1,6 @@
-# SaathiOS Capability Maturity Matrix (as of M239 certification)
+# SaathiOS Capability Maturity Matrix (as of M247 certification)
+
+| Provider selection, RO canary design & human authorization package (M240–M247) | deterministic-tested; browser-certified-with-limitations; **planning-only; no real connectivity; no credentials; canary not authorized** | `saathi/platform/tg/provider_canary_planning/`; preferred Alpaca (recommendation only); fallback Kraken; eligibility ELIGIBILITY_UNCONFIRMED; capability map provider_adapter_implemented=false; ceremony DOCUMENTED_NOT_EXECUTED; owner package APPROVE_PLANNING_PACKAGE_ONLY only; transport REAL_PROVIDER_TRANSPORT_FORBIDDEN; `/trading/provider-canary-planning`; `cert:m247` WITH_LIMITATIONS; 23 focused + 79 M216–M247 + 15 FE unit; live/connectivity/canary not authorized |
 
 Levels: implemented < deterministic-tested < security/red-team-tested < live-tested < production.
 
