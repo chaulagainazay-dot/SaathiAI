@@ -487,6 +487,19 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("ro-bootstrap")
     sub.add_parser("ro-certify")
     sub.add_parser("ro-job-list")
+    # M288–M295 institutional paper simulation
+    pg_sub.add_parser("ps-verdict")
+    pg_sub.add_parser("ps-dashboard")
+    pg_sub.add_parser("ps-bootstrap")
+    pg_sub.add_parser("ps-exchange")
+    pg_sub.add_parser("ps-portfolio-list")
+    pg_sub.add_parser("ps-kill-switch")
+    pg_sub.add_parser("ps-calendar")
+    pg_sub.add_parser("ps-certify")
+    sub.add_parser("ps-verdict")
+    sub.add_parser("ps-dashboard")
+    sub.add_parser("ps-bootstrap")
+    sub.add_parser("ps-certify")
     # Aliases matching goal prompt command names
     p_sl = sub.add_parser("strategy-list")
     p_sl.add_argument("--category", default="")
@@ -1218,6 +1231,39 @@ def main(argv: list[str] | None = None) -> int:
                 return owrap(ro.research_calendar())
             if args.action == "ro-certify":
                 return owrap(ro.certify())
+        # M288–M295 paper simulation
+        if args.action and str(args.action).startswith("ps-"):
+            from saathi.platform.tg.paper_simulation.service import default_paper_simulation
+            ps = default_paper_simulation()
+
+            def pwrap(d):
+                if isinstance(d, dict):
+                    d = {
+                        **d,
+                        "REAL_CONNECTIVITY_AUTHORIZED": False,
+                        "BROKER_CONNECTIVITY_AUTHORIZED": False,
+                        "ORDER_EXECUTION_AUTHORIZED": False,
+                        "LIVE_TRADING_AUTHORIZED": False,
+                        "simulation_only": True,
+                    }
+                return _out(d)
+
+            if args.action == "ps-verdict":
+                return pwrap(ps.terminal_verdict())
+            if args.action == "ps-dashboard":
+                return pwrap(ps.dashboard())
+            if args.action == "ps-bootstrap":
+                return pwrap(ps.bootstrap_demo_pipeline())
+            if args.action == "ps-exchange":
+                return pwrap(ps.exchange_status())
+            if args.action == "ps-portfolio-list":
+                return pwrap(ps.list_portfolios())
+            if args.action == "ps-kill-switch":
+                return pwrap(ps.kill_switch_status())
+            if args.action == "ps-calendar":
+                return pwrap(ps.trading_calendar())
+            if args.action == "ps-certify":
+                return pwrap(ps.certify())
         return 2
 
     # Top-level market-data aliases (M256–M263)
@@ -1314,6 +1360,19 @@ def main(argv: list[str] | None = None) -> int:
             return _out(ro.certify())
         if args.cmd == "ro-job-list":
             return _out(ro.list_jobs())
+
+    # Top-level paper-simulation aliases (M288–M295)
+    if args.cmd in ("ps-verdict", "ps-dashboard", "ps-bootstrap", "ps-certify"):
+        from saathi.platform.tg.paper_simulation.service import default_paper_simulation
+        ps = default_paper_simulation()
+        if args.cmd == "ps-verdict":
+            return _out(ps.terminal_verdict())
+        if args.cmd == "ps-dashboard":
+            return _out(ps.dashboard())
+        if args.cmd == "ps-bootstrap":
+            return _out(ps.bootstrap_demo_pipeline())
+        if args.cmd == "ps-certify":
+            return _out(ps.certify())
 
     parser.print_help()
     return 2
