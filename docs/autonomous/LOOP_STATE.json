@@ -25,5 +25,8 @@
   "regulatory_grade_risk": false,
   "m304_started": false,
   "browser_certification": true,
-  "notes": "Phase 3 complete; Phase 4 read-only observation not started"
+  "notes": "Phase 3 complete; Phase 4 read-only observation not started",
+  "implementation_sha": "6aa6ba5e26658bcc68722e8169305ba43466f850",
+  "current_sha": "6aa6ba5e26658bcc68722e8169305ba43466f850",
+  "ending_sha": "6aa6ba5e26658bcc68722e8169305ba43466f850"
 }
