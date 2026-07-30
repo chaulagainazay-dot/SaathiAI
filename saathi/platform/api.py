@@ -8694,3 +8694,734 @@ def tg_ops_groups(authorization: str | None = Header(default=None), x_platform_t
         return _ops_gov().list_groups(org_id=ctx.org_id)
     except PlatformContextError as e:
         raise _err(e) from e
+
+
+# ── M216–M223 Broker Integration Sandbox Architecture ───────────────────────
+# PAPER ONLY. No live brokers. No API credentials. No exchange authentication.
+def _broker_sandbox():
+    from saathi.platform.tg.broker_sandbox.service import default_broker_sandbox
+    return default_broker_sandbox()
+
+
+@router.get("/tg/broker-sandbox/posture")
+def tg_bs_posture(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _broker_sandbox().posture()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/broker-sandbox/verdict")
+def tg_bs_verdict(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _broker_sandbox().terminal_verdict()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/broker-sandbox/dashboard")
+def tg_bs_dashboard(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_ACCOUNT_READ)
+        return _broker_sandbox().dashboard()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/broker-sandbox/abstraction")
+def tg_bs_abstraction(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _broker_sandbox().abstraction()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/broker-sandbox/brokers")
+def tg_bs_brokers(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _broker_sandbox().list_brokers()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/broker-sandbox/brokers/{broker_id}")
+def tg_bs_broker(broker_id: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        from saathi.platform.tg.broker_sandbox.service import BrokerSandboxError
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        try:
+            return _broker_sandbox().get_broker(broker_id)
+        except BrokerSandboxError as e:
+            raise PlatformContextError(e.code, e.message) from e
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/broker-sandbox/capabilities")
+def tg_bs_capabilities(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _broker_sandbox().list_capabilities()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/broker-sandbox/brokers/{broker_id}/connect")
+def tg_bs_connect_refused(broker_id: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    """Always refuses real connections — architecture safety surface."""
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _broker_sandbox().refuse_connect(broker_id)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+class TgBsCredBody(BaseModel):
+    broker_id: str
+    label: str = ""
+    provider_metadata: dict = {}
+    permission_scopes: list[str] = []
+
+
+@router.post("/tg/broker-sandbox/credentials")
+def tg_bs_cred_create(body: TgBsCredBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        from saathi.platform.tg.broker_sandbox.service import BrokerSandboxError
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.STRATEGY_EDIT)
+        try:
+            return _broker_sandbox().create_credential_ref(
+                broker_id=body.broker_id,
+                label=body.label,
+                provider_metadata=body.provider_metadata,
+                permission_scopes=body.permission_scopes or None,
+                actor=f"operator:{ctx.requested_by()}",
+            )
+        except BrokerSandboxError as e:
+            raise PlatformContextError(e.code, e.message) from e
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/broker-sandbox/credentials")
+def tg_bs_creds(broker_id: str = "", authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _broker_sandbox().list_credential_refs(broker_id=broker_id)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/broker-sandbox/credentials/{ref_id}/use")
+def tg_bs_cred_use(ref_id: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    """Always fails closed — credentials are unusable."""
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _broker_sandbox().attempt_use_credential(ref_id)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+class TgBsEmuSessionBody(BaseModel):
+    seed: int = 42
+    latency_ms: int = 0
+    market_open: bool = True
+
+
+@router.post("/tg/broker-sandbox/emulator/sessions")
+def tg_bs_emu_session(body: TgBsEmuSessionBody = TgBsEmuSessionBody(), authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.STRATEGY_EDIT)
+        return _broker_sandbox().emulator_session(
+            seed=body.seed, latency_ms=body.latency_ms, market_open=body.market_open,
+        )
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+class TgBsEmuOrderBody(BaseModel):
+    session_id: str
+    symbol: str = "AAA"
+    side: str = "BUY"
+    order_type: str = "MARKET"
+    quantity: str = "1"
+    limit_price: str | None = None
+    client_order_id: str = ""
+    partial_fill_ratio: str | None = None
+
+
+@router.post("/tg/broker-sandbox/emulator/orders")
+def tg_bs_emu_order(body: TgBsEmuOrderBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        from saathi.platform.tg.broker_sandbox.service import BrokerSandboxError
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.STRATEGY_EDIT)
+        try:
+            return _broker_sandbox().emulator_place_order(
+                body.session_id,
+                symbol=body.symbol, side=body.side, order_type=body.order_type,
+                quantity=body.quantity, limit_price=body.limit_price,
+                client_order_id=body.client_order_id,
+                partial_fill_ratio=body.partial_fill_ratio,
+            )
+        except BrokerSandboxError as e:
+            raise PlatformContextError(e.code, e.message) from e
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/broker-sandbox/emulator/orders")
+def tg_bs_emu_orders(session_id: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_ACCOUNT_READ)
+        return _broker_sandbox().emulator_orders(session_id)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+class TgBsTrustBody(BaseModel):
+    broker_id: str
+    notes: str = ""
+    paper_graduation_ref: str = ""
+
+
+@router.post("/tg/broker-sandbox/trust/pipelines")
+def tg_bs_trust_create(body: TgBsTrustBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        from saathi.platform.tg.broker_sandbox.service import BrokerSandboxError
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.STRATEGY_EDIT)
+        try:
+            return _broker_sandbox().trust_create(
+                broker_id=body.broker_id,
+                created_by=f"operator:{ctx.requested_by()}",
+                notes=body.notes,
+                paper_graduation_ref=body.paper_graduation_ref,
+            )
+        except BrokerSandboxError as e:
+            raise PlatformContextError(e.code, e.message) from e
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/broker-sandbox/trust/pipelines")
+def tg_bs_trust_list(broker_id: str = "", authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _broker_sandbox().trust_list(broker_id=broker_id)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+class TgBsTrustDecideBody(BaseModel):
+    stage: str
+    decision: str
+    reason: str = ""
+    actor_role: str = "OPERATOR"
+
+
+@router.post("/tg/broker-sandbox/trust/pipelines/{pid}/decide")
+def tg_bs_trust_decide(pid: str, body: TgBsTrustDecideBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        from saathi.platform.tg.broker_sandbox.service import BrokerSandboxError
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.STRATEGY_EDIT)
+        try:
+            return _broker_sandbox().trust_decide(
+                pid, stage=body.stage, decision=body.decision,
+                actor=f"operator:{ctx.requested_by()}",
+                actor_role=body.actor_role, reason=body.reason,
+            )
+        except BrokerSandboxError as e:
+            raise PlatformContextError(e.code, e.message) from e
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/broker-sandbox/trust/pipelines/{pid}/gate")
+def tg_bs_trust_gate(pid: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        from saathi.platform.tg.broker_sandbox.service import BrokerSandboxError
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        try:
+            return _broker_sandbox().trust_gate(pid)
+        except BrokerSandboxError as e:
+            raise PlatformContextError(e.code, e.message) from e
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+class TgBsFailBody(BaseModel):
+    scenario: str
+    session_id: str = ""
+
+
+@router.post("/tg/broker-sandbox/failure/run")
+def tg_bs_fail_run(body: TgBsFailBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _broker_sandbox().failure_run(body.scenario, session_id=body.session_id)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/broker-sandbox/failure/suite")
+def tg_bs_fail_suite(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _broker_sandbox().failure_suite()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/broker-sandbox/security/validate")
+def tg_bs_security(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _broker_sandbox().security_validate()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/broker-sandbox/audit")
+def tg_bs_audit(limit: int = 100, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _broker_sandbox().audit_timeline(limit=limit)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+# ── M224–M231 Read-Only Broker Connectivity Readiness ────────────────────────
+# SIMULATION ONLY. No real brokers. No real credentials. No order submission.
+def _broker_readiness():
+    from saathi.platform.tg.broker_readiness.service import default_broker_readiness
+    return default_broker_readiness()
+
+
+@router.get("/tg/broker-readiness/posture")
+def tg_br_posture(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _broker_readiness().posture()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/broker-readiness/verdict")
+def tg_br_verdict(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _broker_readiness().terminal_verdict()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/broker-readiness/dashboard")
+def tg_br_dashboard(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _broker_readiness().dashboard()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/broker-readiness/providers")
+def tg_br_providers(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _broker_readiness().list_providers()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/broker-readiness/adapters")
+def tg_br_adapters(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _broker_readiness().adapter_contract()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/broker-readiness/capabilities")
+def tg_br_capabilities(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _broker_readiness().list_adapter_ops()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+class BrPolicyBody(BaseModel):
+    operation: str
+    scopes: list[str] = []
+    permissions: list[str] = []
+    environment: str = "SIMULATION"
+    approval_state: str = "UNAPPROVED"
+    owner_signoff: bool = False
+    expired: bool = False
+    revoked: bool = False
+    withdrawal_permission: bool = False
+    trading_permission: bool = False
+    administrative_permission: bool = False
+    production_authority: bool = False
+    live_trading_authority: bool = False
+    real_connection_requested: bool = False
+
+
+@router.post("/tg/broker-readiness/policy/evaluate")
+def tg_br_policy(body: BrPolicyBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _broker_readiness().policy_check(**body.model_dump())
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+class BrCredentialProposeBody(BaseModel):
+    provider_id: str = "sim.readonly.fixture"
+    credential_type: str = "SIMULATED_METADATA"
+    declared_scopes: list[str] = ["ACCOUNT_METADATA_READ", "BALANCE_READ", "POSITION_READ"]
+    environment: str = "SIMULATION"
+    metadata: dict = {}
+
+
+@router.post("/tg/broker-readiness/credentials")
+def tg_br_cred_propose(body: BrCredentialProposeBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        from saathi.platform.tg.broker_readiness.service import BrokerReadinessError
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_CONFIGURE)
+        # Reject any secret-shaped fields in raw body extras — model only allows metadata dict
+        return _broker_readiness().propose_credential(
+            provider_id=body.provider_id,
+            credential_type=body.credential_type,
+            declared_scopes=body.declared_scopes,
+            environment=body.environment,
+            actor=ctx.user_id if hasattr(ctx, "user_id") else "api",
+            metadata=body.metadata,
+        )
+    except BrokerReadinessError as e:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=400, detail={"code": e.code, "message": e.message}) from e
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/broker-readiness/credentials")
+def tg_br_cred_list(provider_id: str = "", authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _broker_readiness().list_credentials(provider_id=provider_id)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+class BrLifecycleBody(BaseModel):
+    to_state: str
+    reason: str = ""
+
+
+@router.post("/tg/broker-readiness/credentials/{cid}/lifecycle")
+def tg_br_cred_life(cid: str, body: BrLifecycleBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        from saathi.platform.tg.broker_readiness.service import BrokerReadinessError
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_CONFIGURE)
+        return _broker_readiness().credential_lifecycle(cid, to_state=body.to_state, reason=body.reason, actor=getattr(ctx, "user_id", "api"))
+    except BrokerReadinessError as e:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=400, detail={"code": e.code, "message": e.message}) from e
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/broker-readiness/credentials/{cid}/advance")
+def tg_br_cred_advance(cid: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        from saathi.platform.tg.broker_readiness.service import BrokerReadinessError
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_CONFIGURE)
+        return _broker_readiness().advance_credential(cid, actor=getattr(ctx, "user_id", "api"))
+    except BrokerReadinessError as e:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=400, detail={"code": e.code, "message": e.message}) from e
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+class BrScopeBody(BaseModel):
+    requested: list[str] = []
+    declared: list[str] = []
+    provider_reported: list[str] = []
+    approved: list[str] = []
+    credential_id: str = ""
+
+
+@router.post("/tg/broker-readiness/scope/validate")
+def tg_br_scope(body: BrScopeBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _broker_readiness().scope_check(**body.model_dump())
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/broker-readiness/sessions")
+def tg_br_session_create(provider_id: str = "sim.readonly.fixture", credential_id: str = "", authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_CONFIGURE)
+        return _broker_readiness().session_create(provider_id=provider_id, credential_id=credential_id)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/broker-readiness/sessions/{sid}/simulate")
+def tg_br_session_sim(sid: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        from saathi.platform.tg.broker_readiness.service import BrokerReadinessError
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_CONFIGURE)
+        return _broker_readiness().session_simulate(sid)
+    except BrokerReadinessError as e:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=400, detail={"code": e.code, "message": e.message}) from e
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/broker-readiness/sessions")
+def tg_br_sessions(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _broker_readiness().list_sessions()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/broker-readiness/snapshots/load")
+def tg_br_snap_load(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_CONFIGURE)
+        return _broker_readiness().snapshot_load()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/broker-readiness/snapshots")
+def tg_br_snaps(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _broker_readiness().list_snapshots()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+class BrReconcileBody(BaseModel):
+    provider_snapshot_id: str
+    local_snapshot_id: str = ""
+
+
+@router.post("/tg/broker-readiness/reconcile")
+def tg_br_reconcile(body: BrReconcileBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        from saathi.platform.tg.broker_readiness.service import BrokerReadinessError
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _broker_readiness().reconcile_run(body.provider_snapshot_id, body.local_snapshot_id)
+    except BrokerReadinessError as e:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=400, detail={"code": e.code, "message": e.message}) from e
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/broker-readiness/drills/expiry")
+def tg_br_expiry(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_CONFIGURE)
+        return _broker_readiness().expiry_drill()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/broker-readiness/drills/revocation")
+def tg_br_revocation(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_CONFIGURE)
+        return _broker_readiness().revocation_drill()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/broker-readiness/drills/{scenario}")
+def tg_br_drill(scenario: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_CONFIGURE)
+        aliases = {
+            "expiry": "credential_expiry_during_session",
+            "revocation": "credential_revocation_during_session",
+        }
+        scenario = aliases.get(scenario, scenario)
+        return _broker_readiness().drill_run(scenario)
+    except PlatformContextError as e:
+        raise _err(e) from e
+    except ValueError as e:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=400, detail=str(e)) from e
+
+
+@router.get("/tg/broker-readiness/incidents")
+def tg_br_incidents(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _broker_readiness().list_drills()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/broker-readiness/security/scan")
+def tg_br_security(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _broker_readiness().security_scan()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/broker-readiness/audit")
+def tg_br_audit(limit: int = 100, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _broker_readiness().audit_timeline(limit=limit)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/broker-readiness/certify")
+def tg_br_certify(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _broker_readiness().certify()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+class BrTransportBody(BaseModel):
+    url: str
+
+
+@router.post("/tg/broker-readiness/transport/probe")
+def tg_br_transport(body: BrTransportBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _broker_readiness().transport_probe(body.url)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+class BrLlmBody(BaseModel):
+    action: str
+
+
+@router.post("/tg/broker-readiness/llm/refuse")
+def tg_br_llm(body: BrLlmBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _broker_readiness().llm_refuse(body.action)
+    except PlatformContextError as e:
+        raise _err(e) from e

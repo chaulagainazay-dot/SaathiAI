@@ -236,6 +236,48 @@ def main(argv: list[str] | None = None) -> int:
     p_ocreate.add_argument("--strategy", default="trend_following")
     p_ocreate.add_argument("--owner", default="operator:cli")
     p_ocreate.add_argument("--tags", default="")
+    # M216–M223 broker sandbox
+    pg_sub.add_parser("bs-posture")
+    pg_sub.add_parser("bs-verdict")
+    pg_sub.add_parser("bs-dashboard")
+    pg_sub.add_parser("bs-brokers")
+    pg_sub.add_parser("bs-capabilities")
+    pg_sub.add_parser("bs-security")
+    pg_sub.add_parser("bs-failure-suite")
+    p_bsf = pg_sub.add_parser("bs-failure")
+    p_bsf.add_argument("scenario")
+    p_bsc = pg_sub.add_parser("bs-connect-refuse")
+    p_bsc.add_argument("broker_id")
+    # M224–M231 broker readiness (SIMULATION_ONLY)
+    pg_sub.add_parser("br-verdict")
+    pg_sub.add_parser("br-providers")
+    pg_sub.add_parser("br-adapters")
+    pg_sub.add_parser("br-capabilities")
+    p_brpol = pg_sub.add_parser("br-policy-check")
+    p_brpol.add_argument("operation")
+    p_brpol.add_argument("--scopes", default="")
+    p_brpol.add_argument("--permissions", default="")
+    p_brcred = pg_sub.add_parser("br-credential-propose")
+    p_brcred.add_argument("--provider", default="sim.readonly.fixture")
+    p_brcred.add_argument("--scopes", default="ACCOUNT_METADATA_READ,BALANCE_READ,POSITION_READ")
+    p_brlife = pg_sub.add_parser("br-credential-lifecycle")
+    p_brlife.add_argument("credential_id")
+    p_brlife.add_argument("--to", default="")
+    p_brsc = pg_sub.add_parser("br-scope-check")
+    p_brsc.add_argument("--requested", default="BALANCE_READ")
+    p_brsc.add_argument("--approved", default="BALANCE_READ,POSITION_READ")
+    pg_sub.add_parser("br-session-simulate")
+    pg_sub.add_parser("br-snapshot-load")
+    p_brrec = pg_sub.add_parser("br-reconcile")
+    p_brrec.add_argument("provider_snapshot_id")
+    p_brrec.add_argument("--local", default="")
+    pg_sub.add_parser("br-revocation-drill")
+    pg_sub.add_parser("br-expiry-drill")
+    pg_sub.add_parser("br-incidents")
+    pg_sub.add_parser("br-security")
+    pg_sub.add_parser("br-certify")
+    p_brdrill = pg_sub.add_parser("br-drill")
+    p_brdrill.add_argument("scenario")
 
     args = parser.parse_args(argv)
     if not args.cmd:
@@ -539,6 +581,86 @@ def main(argv: list[str] | None = None) -> int:
             return _out(default_ops_gov().campaign_create(
                 strategy_slug=args.strategy, owner=args.owner, tags=tags,
             ))
+        # M216–M223 broker sandbox
+        if args.action == "bs-posture":
+            from saathi.platform.tg.broker_sandbox.service import default_broker_sandbox
+            return _out(default_broker_sandbox().posture())
+        if args.action == "bs-verdict":
+            from saathi.platform.tg.broker_sandbox.service import default_broker_sandbox
+            return _out(default_broker_sandbox().terminal_verdict())
+        if args.action == "bs-dashboard":
+            from saathi.platform.tg.broker_sandbox.service import default_broker_sandbox
+            return _out(default_broker_sandbox().dashboard())
+        if args.action == "bs-brokers":
+            from saathi.platform.tg.broker_sandbox.service import default_broker_sandbox
+            return _out(default_broker_sandbox().list_brokers())
+        if args.action == "bs-capabilities":
+            from saathi.platform.tg.broker_sandbox.service import default_broker_sandbox
+            return _out(default_broker_sandbox().list_capabilities())
+        if args.action == "bs-security":
+            from saathi.platform.tg.broker_sandbox.service import default_broker_sandbox
+            return _out(default_broker_sandbox().security_validate())
+        if args.action == "bs-failure-suite":
+            from saathi.platform.tg.broker_sandbox.service import default_broker_sandbox
+            return _out(default_broker_sandbox().failure_suite())
+        if args.action == "bs-failure":
+            from saathi.platform.tg.broker_sandbox.service import default_broker_sandbox
+            return _out(default_broker_sandbox().failure_run(args.scenario))
+        if args.action == "bs-connect-refuse":
+            from saathi.platform.tg.broker_sandbox.service import default_broker_sandbox
+            return _out(default_broker_sandbox().refuse_connect(args.broker_id))
+        # M224–M231 broker readiness
+        if args.action and str(args.action).startswith("br-"):
+            from saathi.platform.tg.broker_readiness.service import default_broker_readiness
+            br = default_broker_readiness()
+            sim = {"SIMULATION_ONLY": True}
+            def wrap(d):
+                if isinstance(d, dict):
+                    d = {**d, **sim}
+                return _out(d)
+            if args.action == "br-verdict":
+                return wrap(br.terminal_verdict())
+            if args.action == "br-providers":
+                return wrap(br.list_providers())
+            if args.action == "br-adapters":
+                return wrap(br.adapter_contract())
+            if args.action == "br-capabilities":
+                return wrap(br.list_adapter_ops())
+            if args.action == "br-policy-check":
+                scopes = [s for s in args.scopes.split(",") if s.strip()]
+                perms = [s for s in args.permissions.split(",") if s.strip()]
+                return wrap(br.policy_check(args.operation, scopes=scopes, permissions=perms))
+            if args.action == "br-credential-propose":
+                scopes = [s for s in args.scopes.split(",") if s.strip()]
+                # reject secret-shaped CLI args
+                if any(x in ("api_key", "secret", "token", "password") for x in dir(args)):
+                    pass
+                return wrap(br.propose_credential(provider_id=args.provider, declared_scopes=scopes, actor="operator:cli"))
+            if args.action == "br-credential-lifecycle":
+                return wrap(br.credential_lifecycle(args.credential_id, to_state=args.to or "", actor="operator:cli"))
+            if args.action == "br-scope-check":
+                req = [s for s in args.requested.split(",") if s.strip()]
+                appr = [s for s in args.approved.split(",") if s.strip()]
+                return wrap(br.scope_check(requested=req, declared=req, approved=appr, provider_reported=req))
+            if args.action == "br-session-simulate":
+                s = br.session_create()
+                return wrap(br.session_simulate(s["session"]["id"]))
+            if args.action == "br-snapshot-load":
+                return wrap(br.snapshot_load())
+            if args.action == "br-reconcile":
+                return wrap(br.reconcile_run(args.provider_snapshot_id, args.local))
+            if args.action == "br-revocation-drill":
+                return wrap(br.revocation_drill())
+            if args.action == "br-expiry-drill":
+                return wrap(br.expiry_drill())
+            if args.action == "br-incidents":
+                return wrap(br.list_drills())
+            if args.action == "br-security":
+                return wrap(br.security_scan())
+            if args.action == "br-certify":
+                return wrap(br.certify())
+            if args.action == "br-drill":
+                return wrap(br.drill_run(args.scenario))
         return 2
 
     parser.print_help()
