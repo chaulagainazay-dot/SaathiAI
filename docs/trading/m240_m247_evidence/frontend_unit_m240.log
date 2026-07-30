@@ -1,0 +1,29 @@
+▶ M216–M223 broker sandbox UI
+  ✔ broker-sandbox page is sandbox-only / paper-only (2.502417ms)
+  ✔ tabs include broker-sandbox (0.312875ms)
+✔ M216–M223 broker sandbox UI (4.087541ms)
+▶ M224–M231 broker readiness UI
+  ✔ broker-readiness page is simulation-only / read-only (1.33975ms)
+  ✔ does not accept raw secrets or enable trading (0.306ms)
+  ✔ TradingShell includes Broker Readiness tab (0.105042ms)
+  ✔ cert:m231 script exists in package.json (0.151708ms)
+✔ M224–M231 broker readiness UI (2.527292ms)
+▶ M232–M239 integration assurance UI
+  ✔ integration-assurance page shows planning-only boundaries (1.067417ms)
+  ✔ does not accept credentials or activate providers (0.295583ms)
+  ✔ TradingShell includes Integration Assurance tab (0.416167ms)
+  ✔ cert:m239 script exists in package.json (0.380917ms)
+✔ M232–M239 integration assurance UI (2.934292ms)
+✔ provider canary planning page exists (0.849958ms)
+✔ page is planning-only with authority labels (1.635667ms)
+✔ page has no credential form or oauth controls (0.366209ms)
+✔ trading shell links to provider canary planning (0.130084ms)
+✔ package.json includes cert:m247 and unit test (0.185834ms)
+ℹ tests 15
+ℹ suites 3
+ℹ pass 15
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 98.260083

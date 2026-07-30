@@ -1,0 +1,74 @@
+{
+  "provider": "alpaca",
+  "proposed_read_only_scopes": [
+    {
+      "scope_name": "account_read",
+      "kind": "PROPOSED_READ_ONLY",
+      "rationale": "Minimum scope to read account metadata, balances, positions, and history.",
+      "source_evidence": "Alpaca Trading API account/positions/orders GET families"
+    },
+    {
+      "scope_name": "orders_read",
+      "kind": "PROPOSED_READ_ONLY",
+      "rationale": "Read open and historical orders only; never place/cancel/modify.",
+      "source_evidence": "GET /v2/orders"
+    },
+    {
+      "scope_name": "activities_read",
+      "kind": "PROPOSED_READ_ONLY",
+      "rationale": "Read fills, fees, and transaction history.",
+      "source_evidence": "GET /v2/account/activities"
+    }
+  ],
+  "forbidden_scopes": [
+    {
+      "scope_name": "trading_write",
+      "kind": "FORBIDDEN",
+      "rationale": "Any order place/cancel/modify permission.",
+      "source_evidence": "planning invariant"
+    },
+    {
+      "scope_name": "withdrawal",
+      "kind": "FORBIDDEN",
+      "rationale": "Withdrawal capability must never be granted.",
+      "source_evidence": "planning invariant"
+    },
+    {
+      "scope_name": "transfer",
+      "kind": "FORBIDDEN",
+      "rationale": "Transfer initiation forbidden.",
+      "source_evidence": "planning invariant"
+    },
+    {
+      "scope_name": "account_admin",
+      "kind": "FORBIDDEN",
+      "rationale": "Account/sub-account administration forbidden.",
+      "source_evidence": "planning invariant"
+    },
+    {
+      "scope_name": "credential_admin",
+      "kind": "FORBIDDEN",
+      "rationale": "API-key administration from SaathiOS forbidden.",
+      "source_evidence": "planning invariant"
+    },
+    {
+      "scope_name": "margin_activation",
+      "kind": "FORBIDDEN",
+      "rationale": "Margin/leverage activation forbidden.",
+      "source_evidence": "planning invariant"
+    },
+    {
+      "scope_name": "oauth_full_access",
+      "kind": "FORBIDDEN",
+      "rationale": "OAuth sessions out of scope and forbidden for this canary design.",
+      "source_evidence": "planning invariant"
+    }
+  ],
+  "mixed_scope_accepted": false,
+  "provider_adapter_implemented": false,
+  "REAL_CONNECTIVITY_AUTHORIZED": false,
+  "evidence_hash": "5d0b686c0a83f6eeaadbf6a6004b65d22cdfe4ea13f3e97cd9a76224aec1e984",
+  "CREDENTIAL_PROVISIONING_AUTHORIZED": false,
+  "CANARY_ACTIVATION_AUTHORIZED": false,
+  "LIVE_TRADING_AUTHORIZED": false
+}

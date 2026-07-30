@@ -1,0 +1,273 @@
+{
+  "generated_at": "2026-07-30T03:10:36Z",
+  "files": [
+    {
+      "path": "00_git_status_pre.txt",
+      "sha256": "97fcc1d9548fe8baac2e4743996c75cd0d7a62d9058a0b05bb380e453c3dca53",
+      "bytes": 291
+    },
+    {
+      "path": "00_recovery_baseline.txt",
+      "sha256": "b50f5044381b81466b539fbf45a9aabad126030c646f5d799c4c93d46c0a57b7",
+      "bytes": 897
+    },
+    {
+      "path": "00_starting_sha.txt",
+      "sha256": "04d42ae9ce7ca9a5952893df8913bbed4d61329a98cb778efd6fd1b6df88e2d9",
+      "bytes": 41
+    },
+    {
+      "path": "M240_PROVIDER_CANDIDATE_RANKING.json",
+      "sha256": "684af7a0ccf2490d7b7bf6204aa244e835af312cf3498443a585a656c4709eb2",
+      "bytes": 30384
+    },
+    {
+      "path": "M241_CAPABILITY_ENDPOINT_MAP.json",
+      "sha256": "50208b803588e4f4f561348c12b431ee6d57031e339f998aadb11bfb7a3c7244",
+      "bytes": 17716
+    },
+    {
+      "path": "M241_SCOPES.json",
+      "sha256": "85e400ba2f8e02814939eb0f2568882f17e78ec8bada2f77969ab3ea7e3d3f6b",
+      "bytes": 2313
+    },
+    {
+      "path": "M242_ELIGIBILITY_TERMS_REVIEW.json",
+      "sha256": "8a2861f7e2ae8f617c60ac5fb73b5d667d14727e56a94995904b61c867438dc5",
+      "bytes": 8273
+    },
+    {
+      "path": "M243_CANARY_ARCHITECTURE.json",
+      "sha256": "792ebc6d9bbb74071480984a88334e0f588b3dc432505913973c0f4894c990da",
+      "bytes": 5358
+    },
+    {
+      "path": "M244_CREDENTIAL_CEREMONY.json",
+      "sha256": "dc004e9479f4595e5ddc26ef03182e9ec31e257d2188a71d48ce0d591db242bb",
+      "bytes": 8816
+    },
+    {
+      "path": "M245_CANARY_GATES.json",
+      "sha256": "bc031c05241d228de7fac36943c132c3b8aebbe9cbccdccebb554c9de2378bbd",
+      "bytes": 3693
+    },
+    {
+      "path": "M246_OWNER_REVIEW_PACKAGE.json",
+      "sha256": "cf0e76992860dc0e990a951ed7df65057f8ebfea6191f570b73c245118bb1de0",
+      "bytes": 73809
+    },
+    {
+      "path": "M246_OWNER_REVIEW_PACKAGE.md",
+      "sha256": "265ff37b92fbaff989f163602d1de27355a95214aa058560ea6607823c3adecd",
+      "bytes": 1575
+    },
+    {
+      "path": "M247_BROWSER_CERT.json",
+      "sha256": "ac184ab98e05223f8d3e944ba87a0d1a934cc4bfd5c0be84f999ae728db04057",
+      "bytes": 8110
+    },
+    {
+      "path": "browser/screenshots/01_provider_canary_planning.png",
+      "sha256": "68cacba197250b264f9e346fd3cd25086b78098268a9759fe53c141d94efe5b9",
+      "bytes": 54628
+    },
+    {
+      "path": "browser/screenshots/02_provider_canary_planning_after_clicks.png",
+      "sha256": "68cacba197250b264f9e346fd3cd25086b78098268a9759fe53c141d94efe5b9",
+      "bytes": 54628
+    },
+    {
+      "path": "browser_cert_run.log",
+      "sha256": "1010951b32a875f6c278aa22e50bfc2a3ef19b9b00ed537a10a44de0811cd1a0",
+      "bytes": 793
+    },
+    {
+      "path": "certification_summary.json",
+      "sha256": "51f5d123b4bcddd642f8f94e05d9e5bf5a05042a5fab75176068ad6f18248832",
+      "bytes": 1719
+    },
+    {
+      "path": "cli_pcp_abort.json",
+      "sha256": "b98198752440fd3886bc9cfb4060ee87c8dc6b7c81dfb989ef828e433cdb9ff9",
+      "bytes": 1829
+    },
+    {
+      "path": "cli_pcp_acceptance.json",
+      "sha256": "d4402dbbc630330fbefff8de47f35e2d17a3948be1fd39025d1d6131b29ff907",
+      "bytes": 2095
+    },
+    {
+      "path": "cli_pcp_canary_design.json",
+      "sha256": "1157bb7585b3f7ae480f93f4cfe98f99c5a3f3983f20e14fa4add2c0e1e7bdc9",
+      "bytes": 5441
+    },
+    {
+      "path": "cli_pcp_candidates.json",
+      "sha256": "f2ead6073cc15bf71409e9b5b22c9458766344bb28713c6e06485a55294db9c4",
+      "bytes": 17521
+    },
+    {
+      "path": "cli_pcp_capabilities.json",
+      "sha256": "d4ebef5104c0338f5db43af0ee1f9444d0cca8019d1ccc88f4f5e021af141ed3",
+      "bytes": 17840
+    },
+    {
+      "path": "cli_pcp_certify.json",
+      "sha256": "51f5d123b4bcddd642f8f94e05d9e5bf5a05042a5fab75176068ad6f18248832",
+      "bytes": 1719
+    },
+    {
+      "path": "cli_pcp_credential_runbook.json",
+      "sha256": "919c469cddd8a3f4b28a2505e10a9141dc6450277fe0e80e665a4aebb7794d5c",
+      "bytes": 8893
+    },
+    {
+      "path": "cli_pcp_dashboard.json",
+      "sha256": "05827ee2b7fcba5652e7d1d2e47f6a907eef664b2c2785f5d9666298189478ef",
+      "bytes": 3931
+    },
+    {
+      "path": "cli_pcp_eligibility.json",
+      "sha256": "d77b88a5bb91d604e60211f71c54221cca4d364398b35412f80f68a790936d92",
+      "bytes": 5588
+    },
+    {
+      "path": "cli_pcp_endpoints.json",
+      "sha256": "bb6d0b1c744c09659c9137840fba4baaa07b09656d052b75b6fe31c6107df243",
+      "bytes": 17748
+    },
+    {
+      "path": "cli_pcp_monitoring.json",
+      "sha256": "c4f1da54635b27ff995fa919bb07bb324afb2dc749aafdb15e28743dd758dab4",
+      "bytes": 600
+    },
+    {
+      "path": "cli_pcp_owner_package.json",
+      "sha256": "a26b9bf622b37d256be877b9c64c01edefc2cea6365403b600ee44dffbe7450e",
+      "bytes": 73933
+    },
+    {
+      "path": "cli_pcp_provider.json",
+      "sha256": "a919942da60423b2ae5088257a89ba9256125c40faaa185cbf99b70016ae2ad4",
+      "bytes": 5975
+    },
+    {
+      "path": "cli_pcp_rank.json",
+      "sha256": "f86423bc7b34eac334f12c66323b41d7b888fc956f4ee5a138a189fd22c43b1b",
+      "bytes": 30508
+    },
+    {
+      "path": "cli_pcp_reconciliation.json",
+      "sha256": "ced225b148e3dbfd49f3c593684f6f7474c9091b0d8cea57aee09924fcf860e2",
+      "bytes": 520
+    },
+    {
+      "path": "cli_pcp_scopes.json",
+      "sha256": "7efdf1437b774925268bd2b010e41de0b056e31d54846e0b8142b583359cb979",
+      "bytes": 2437
+    },
+    {
+      "path": "cli_pcp_security.json",
+      "sha256": "8720202d0a14825566c36ee02468bb38932e427c59d62a80dbdb537f7338f618",
+      "bytes": 5210
+    },
+    {
+      "path": "cli_pcp_sources.json",
+      "sha256": "5c619a85fcef2eef7df4dddac14fe61684fa8dfe89b05303f9918d444902db7a",
+      "bytes": 8231
+    },
+    {
+      "path": "cli_pcp_terms.json",
+      "sha256": "28aa45a24b09e95a0c29f897dfb89a87bc681332ec4879bafb5dd54b0a9fb030",
+      "bytes": 2524
+    },
+    {
+      "path": "cli_pcp_verdict.json",
+      "sha256": "daf38eed43744603e9847b5286c734ecf40f286a2317473a8eef64727e126945",
+      "bytes": 1767
+    },
+    {
+      "path": "credential_scan.json",
+      "sha256": "12b79e04b5a3d54b28a942c0143d92d50b9f3155cf34587dece718c6056698c3",
+      "bytes": 76
+    },
+    {
+      "path": "external_domain_scan.json",
+      "sha256": "93ea47e6b5523ca66f3d5c45beac0206f3bd551959b10554091fc9dc8390a502",
+      "bytes": 2671
+    },
+    {
+      "path": "focused_backend.log",
+      "sha256": "6957653a9d15f97a68b608e72a927ca890e6584e942223d14ef966c6ff1c8c87",
+      "bytes": 99
+    },
+    {
+      "path": "frontend_build.log",
+      "sha256": "d074561f5c355c0bcfd60216b156b4ca142502c65748ce6df34c10538939e9c2",
+      "bytes": 9588
+    },
+    {
+      "path": "frontend_unit_m240.log",
+      "sha256": "80076342ea2856e2980e304bf255f02b4f6cc937b0b3c5ca2491feae58a5a98b",
+      "bytes": 1324
+    },
+    {
+      "path": "limitations.md",
+      "sha256": "09046ae32ca0bf62c8ae22ad858f94da4dc369fe84a8ec56bb8fdadfe4f606ba",
+      "bytes": 742
+    },
+    {
+      "path": "llm_boundary_scan.json",
+      "sha256": "2b7d91639a3120c954be212865c0001b0ea3aa0bc50df04893d02df4f8cbd43a",
+      "bytes": 1285
+    },
+    {
+      "path": "network_isolation_scan.json",
+      "sha256": "8a4967b6ae763b62ed51fcd37aa3ea886fac5037c764535351ebaad8fe0827d5",
+      "bytes": 419
+    },
+    {
+      "path": "official_source_inventory.json",
+      "sha256": "4d84f36fb3f9c4100e2d74756de00ff7c92a4ffe4282930e37b75356888f7995",
+      "bytes": 8107
+    },
+    {
+      "path": "owner_signoff_restriction.json",
+      "sha256": "9d36f7ae67314dcfebccb985e7e7502a36ae37688d67e5cd1a88fc72433c39dd",
+      "bytes": 333
+    },
+    {
+      "path": "pcp_evidence.db",
+      "sha256": "6dc146465ad7583e9f5d5ba75cde5cc24ca53daf85bd9cfb87e7802022be57d8",
+      "bytes": 307200
+    },
+    {
+      "path": "regression_m216_m247.log",
+      "sha256": "f81e2f2d568d9de5ebedafc217287c1316415b2cef0d779253e553f251c96f48",
+      "bytes": 180
+    },
+    {
+      "path": "repository_baseline.json",
+      "sha256": "a4ce6f2aca53c6852b68305ef0b4cbe44d58a31a44738d9a5986b28f7ad63c18",
+      "bytes": 246
+    },
+    {
+      "path": "runtime_transport_scan.json",
+      "sha256": "4786195a3502ebb92315467b4945794026730e8a878812dbaef0b3c6b8c299d0",
+      "bytes": 113
+    },
+    {
+      "path": "security_scan.json",
+      "sha256": "8720202d0a14825566c36ee02468bb38932e427c59d62a80dbdb537f7338f618",
+      "bytes": 5210
+    },
+    {
+      "path": "threat_model.json",
+      "sha256": "bae8a6bd25918178221aea7b08f6ca8a9e390a152b142ef28373702d1bc11d71",
+      "bytes": 18350
+    }
+  ],
+  "count": 53,
+  "verdict": "PROVIDER_CANARY_PLANNING_CERTIFIED_WITH_LIMITATIONS",
+  "REAL_CONNECTIVITY_AUTHORIZED": false
+}

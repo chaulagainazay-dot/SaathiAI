@@ -1,0 +1,43 @@
+{
+  "verdict": "PROVIDER_CANARY_PLANNING_CERTIFIED_WITH_LIMITATIONS",
+  "max_planning_state": "READ_ONLY_CANARY_PACKAGE_READY_FOR_OWNER_REVIEW",
+  "paper_only": true,
+  "sandbox_only": true,
+  "planning_only": true,
+  "preferred_provider": "alpaca",
+  "fallback_provider": "kraken",
+  "preferred_is_recommendation_only": true,
+  "owner_eligibility_claimed": false,
+  "owner_signoff": "NOT_CLAIMED_AUTOMATED_ONLY",
+  "owner_signoff_generated_by_automation": false,
+  "provider_adapter_implemented": false,
+  "canary_activated": false,
+  "statements": [
+    "THE SYSTEM REMAINS PAPER, SANDBOX AND PLANNING ONLY.",
+    "NO REAL BROKER CONNECTION WAS CREATED.",
+    "NO REAL BROKER ACCOUNT WAS ACCESSED.",
+    "NO REAL API CREDENTIALS WERE REQUESTED, ACCEPTED OR STORED.",
+    "NO OAUTH SESSION WAS CREATED.",
+    "NO PROVIDER-SPECIFIC RUNTIME ADAPTER WAS ACTIVATED.",
+    "NO CANARY WAS ACTIVATED.",
+    "NO ORDER SUBMISSION OR ORDER CANCELLATION CAPABILITY EXISTS.",
+    "LIVE TRADING IS NOT AUTHORIZED.",
+    "THE PREFERRED PROVIDER IS A RECOMMENDATION ONLY.",
+    "OWNER ELIGIBILITY IS NOT CLAIMED WITHOUT EXPLICIT VERIFIED EVIDENCE.",
+    "OWNER SIGN-OFF WAS NOT GENERATED OR CLAIMED BY AUTOMATION.",
+    "THE PACKAGE IS READY FOR HUMAN OWNER REVIEW ONLY."
+  ],
+  "limitations": [
+    "Owner geographic eligibility unconfirmed",
+    "Terms/legal review incomplete",
+    "Provider documentation may drift after retrieval date",
+    "No runtime provider adapter",
+    "Single-host SQLite planning store",
+    "Preferred provider is recommendation only"
+  ],
+  "REAL_CONNECTIVITY_AUTHORIZED": false,
+  "CREDENTIAL_PROVISIONING_AUTHORIZED": false,
+  "CANARY_ACTIVATION_AUTHORIZED": false,
+  "READ_ONLY_PRODUCTION_AUTHORIZED": false,
+  "LIVE_TRADING_AUTHORIZED": false
+}

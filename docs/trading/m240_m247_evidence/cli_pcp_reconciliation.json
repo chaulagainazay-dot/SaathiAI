@@ -1,0 +1,15 @@
+{
+  "baseline": "paper portfolio and durable ledger remain source of truth for trading",
+  "compare": "provider snapshot series for continuity only",
+  "tolerance": "threshold-defined; unknown assets fail closed",
+  "does_not_mutate": [
+    "paper_portfolio",
+    "orders",
+    "positions_execution_path"
+  ],
+  "REAL_CONNECTIVITY_AUTHORIZED": false,
+  "CREDENTIAL_PROVISIONING_AUTHORIZED": false,
+  "CANARY_ACTIVATION_AUTHORIZED": false,
+  "READ_ONLY_PRODUCTION_AUTHORIZED": false,
+  "LIVE_TRADING_AUTHORIZED": false
+}

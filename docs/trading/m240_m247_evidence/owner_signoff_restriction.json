@@ -1,0 +1,12 @@
+{
+  "ok": false,
+  "code": "OWNER_SIGNOFF_AUTOMATION_FORBIDDEN",
+  "message": "Automation must not pre-select or sign an owner decision.",
+  "owner_signoff_generated_by_automation": false,
+  "decision_options": [
+    "REJECT",
+    "REQUEST_CHANGES",
+    "APPROVE_PLANNING_PACKAGE_ONLY"
+  ],
+  "REAL_CONNECTIVITY_AUTHORIZED": false
+}

@@ -1,0 +1,70 @@
+{
+  "pre_activation_gates": [
+    "owner_approval",
+    "security_approval",
+    "legal_and_eligibility_review",
+    "exact_read_only_scope_match",
+    "provider_identity_verification",
+    "network_allow_list_verification",
+    "endpoint_allow_list_verification",
+    "credential_expiry_configured",
+    "revocation_path_verified",
+    "kill_switch_verified",
+    "audit_storage_verified",
+    "reconciliation_baseline_ready",
+    "monitoring_ready",
+    "incident_owner_assigned",
+    "rollback_documented"
+  ],
+  "success_criteria": [
+    "only_approved_endpoints_used",
+    "only_approved_read_scopes_observed",
+    "no_provider_identity_mismatch",
+    "no_secret_leakage",
+    "no_write_capability",
+    "no_order_path",
+    "no_withdrawal_path",
+    "snapshots_within_expected_timing",
+    "reconciliation_within_tolerance",
+    "rate_limits_respected",
+    "audit_trail_complete",
+    "expiry_works",
+    "revocation_works",
+    "disconnect_works",
+    "paper_portfolio_unchanged",
+    "durable_ledger_consistent",
+    "no_trading_guardian_execution_authority_introduced"
+  ],
+  "thresholds": {
+    "warning": {
+      "stale_data_seconds": 900,
+      "single_429": 1,
+      "recon_delta_bps": 50
+    },
+    "stop": {
+      "stale_data_seconds": 3600,
+      "consecutive_429": 3,
+      "recon_delta_bps": 200,
+      "auth_failures": 1
+    },
+    "manual_review": {
+      "unknown_schema_fields": 1,
+      "unknown_asset": 1,
+      "pagination_gap": 1
+    },
+    "security_abort_no_auto_recovery": true,
+    "recovery_procedure": "Human-only re-entry after full incident review; no automated recovery after security abort.",
+    "re_entry_requirements": [
+      "incident closed",
+      "credential rotated or destroyed",
+      "fresh owner + security approval",
+      "gates re-validated",
+      "new planning/authority milestone if connectivity still not authorized"
+    ]
+  },
+  "REAL_CONNECTIVITY_AUTHORIZED": false,
+  "CREDENTIAL_PROVISIONING_AUTHORIZED": false,
+  "CANARY_ACTIVATION_AUTHORIZED": false,
+  "READ_ONLY_PRODUCTION_AUTHORIZED": false,
+  "LIVE_TRADING_AUTHORIZED": false
+}

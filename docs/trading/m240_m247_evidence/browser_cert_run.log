@@ -1,0 +1,35 @@
+
+> saathi-os@0.1.0 cert:m247
+> node scripts/m247_provider_canary_planning_browser_cert.mjs
+
+{
+  "verdict": "PROVIDER_CANARY_PLANNING_BROWSER_CERT_PASSED_WITH_LIMITATIONS",
+  "path": "/Users/macbookpro/SaathiAI/docs/trading/m240_m247_evidence/M247_BROWSER_CERT.json",
+  "hard": {
+    "bff_up": {
+      "ok": true,
+      "detail": "http://127.0.0.1:8847"
+    },
+    "seed_login": {
+      "ok": true,
+      "detail": "token issued"
+    },
+    "dashboard_api": {
+      "ok": true,
+      "detail": "ok"
+    },
+    "owner_signoff_block": {
+      "ok": true,
+      "detail": "OWNER_SIGNOFF_AUTOMATION_FORBIDDEN"
+    },
+    "network_isolation": {
+      "ok": true,
+      "detail": "blocked"
+    },
+    "ui_up": {
+      "ok": true,
+      "detail": "http://127.0.0.1:3247"
+    }
+  },
+  "journeys": 31
+}

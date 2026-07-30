@@ -1,0 +1,62 @@
+{
+  "abort_triggers": [
+    "unexpected_write_scope",
+    "mixed_read_write_scope",
+    "withdrawal_permission",
+    "transfer_permission",
+    "provider_mismatch",
+    "account_mismatch",
+    "credential_leak",
+    "suspicious_logging",
+    "network_destination_mismatch",
+    "endpoint_outside_allow_list",
+    "scope_drift",
+    "account_permission_mutation",
+    "reconciliation_failure",
+    "unknown_asset",
+    "unexplained_balance_discrepancy",
+    "stale_data_beyond_threshold",
+    "replayed_response",
+    "audit_failure",
+    "revocation_failure",
+    "kill_switch_failure",
+    "repeated_rate_limit_violation",
+    "provider_suspension",
+    "legal_or_eligibility_concern",
+    "owner_withdrawal_of_approval",
+    "security_withdrawal_of_approval"
+  ],
+  "thresholds": {
+    "warning": {
+      "stale_data_seconds": 900,
+      "single_429": 1,
+      "recon_delta_bps": 50
+    },
+    "stop": {
+      "stale_data_seconds": 3600,
+      "consecutive_429": 3,
+      "recon_delta_bps": 200,
+      "auth_failures": 1
+    },
+    "manual_review": {
+      "unknown_schema_fields": 1,
+      "unknown_asset": 1,
+      "pagination_gap": 1
+    },
+    "security_abort_no_auto_recovery": true,
+    "recovery_procedure": "Human-only re-entry after full incident review; no automated recovery after security abort.",
+    "re_entry_requirements": [
+      "incident closed",
+      "credential rotated or destroyed",
+      "fresh owner + security approval",
+      "gates re-validated",
+      "new planning/authority milestone if connectivity still not authorized"
+    ]
+  },
+  "automated_recovery_after_security_abort": false,
+  "REAL_CONNECTIVITY_AUTHORIZED": false,
+  "CREDENTIAL_PROVISIONING_AUTHORIZED": false,
+  "CANARY_ACTIVATION_AUTHORIZED": false,
+  "READ_ONLY_PRODUCTION_AUTHORIZED": false,
+  "LIVE_TRADING_AUTHORIZED": false
+}

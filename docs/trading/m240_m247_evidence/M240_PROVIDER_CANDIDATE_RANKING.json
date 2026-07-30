@@ -1,0 +1,707 @@
+{
+  "preferred_provider": "alpaca",
+  "fallback_provider": "kraken",
+  "preferred_is_recommendation_only": true,
+  "owner_eligibility_claimed": false,
+  "ranking": [
+    {
+      "provider": "alpaca",
+      "display_name": "Alpaca",
+      "classification": "OWNER_ELIGIBILITY_UNCONFIRMED",
+      "preferred": true,
+      "fallback": false,
+      "average_score": 4.4,
+      "scores": {
+        "eligibility": {
+          "score": 3,
+          "evidence": "Official docs describe individual/business trading accounts and paper environment; availability is jurisdiction-specific.",
+          "confidence": "medium",
+          "uncertainty": "Owner country/residency and product eligibility not verified for this installation.",
+          "disqualifying_issue": null,
+          "unresolved_question": "Confirm owner residency and Alpaca account eligibility before any future canary."
+        },
+        "security": {
+          "score": 4,
+          "evidence": "API key model with paper/live separation; IP restrictions commonly supported; OAuth Connect exists but is forbidden for this canary path.",
+          "confidence": "medium",
+          "uncertainty": "Exact console paths for key expiry and IP allow-list need owner verification.",
+          "disqualifying_issue": null,
+          "unresolved_question": null
+        },
+        "api_quality": {
+          "score": 5,
+          "evidence": "Official Trading API + Market Data docs; account, positions, orders, portfolio history endpoints documented.",
+          "confidence": "high",
+          "uncertainty": "Schema drift possible; pin docs version at canary time.",
+          "disqualifying_issue": null,
+          "unresolved_question": null
+        },
+        "operational_suitability": {
+          "score": 5,
+          "evidence": "Dedicated paper-api environment supports deterministic testing without live capital.",
+          "confidence": "high",
+          "uncertainty": "Paper vs live host isolation must be enforced by network allow-list.",
+          "disqualifying_issue": null,
+          "unresolved_question": null
+        },
+        "commercial_product_fit": {
+          "score": 5,
+          "evidence": "US equities + crypto APIs align with SaathiOS paper-to-read-only roadmap.",
+          "confidence": "high",
+          "uncertainty": "Market-data redistribution limits require legal review before any redistribution.",
+          "disqualifying_issue": null,
+          "unresolved_question": null
+        }
+      },
+      "disqualifying_issues": [],
+      "unresolved_questions": [
+        "Is the owner eligible to open/use Alpaca in their jurisdiction?",
+        "Will paper keys remain strictly isolated from live keys?",
+        "What market-data terms apply to stored snapshots?"
+      ],
+      "rationale": "Strongest first-canary candidate: clear paper environment, strong account/position/history coverage, equities+crypto fit, and documented API quality. Owner eligibility remains UNCONFIRMED.",
+      "rank": 1
+    },
+    {
+      "provider": "kraken",
+      "display_name": "Kraken",
+      "classification": "CONDITIONALLY_ELIGIBLE",
+      "preferred": false,
+      "fallback": true,
+      "average_score": 3.6,
+      "scores": {
+        "eligibility": {
+          "score": 3,
+          "evidence": "Kraken offers accounts and API keys broadly; country restrictions exist and are owner-specific.",
+          "confidence": "medium",
+          "uncertainty": "Owner residency and product access unconfirmed.",
+          "disqualifying_issue": null,
+          "unresolved_question": "Confirm Kraken account eligibility and entity for owner country."
+        },
+        "security": {
+          "score": 5,
+          "evidence": "Official permission matrix separates Query Funds / Query Orders from Create & Modify Orders / Withdraw Funds; GetApiKeyInfo enables permission introspection.",
+          "confidence": "high",
+          "uncertainty": "Key expiry and IP allow-list options need owner console confirmation.",
+          "disqualifying_issue": null,
+          "unresolved_question": null
+        },
+        "api_quality": {
+          "score": 4,
+          "evidence": "Mature REST private endpoints for balances, orders, trades, ledgers with documented permissions.",
+          "confidence": "high",
+          "uncertainty": "Nonce/signature model is operationally heavier than simple key headers.",
+          "disqualifying_issue": null,
+          "unresolved_question": null
+        },
+        "operational_suitability": {
+          "score": 3,
+          "evidence": "No full equities paper broker equivalent; crypto-focused; good status/docs.",
+          "confidence": "medium",
+          "uncertainty": "Limited equity coverage vs SaathiOS multi-asset roadmap.",
+          "disqualifying_issue": null,
+          "unresolved_question": null
+        },
+        "commercial_product_fit": {
+          "score": 3,
+          "evidence": "Strong crypto coverage; weaker multi-asset equities fit for SaathiOS primary paper path.",
+          "confidence": "medium",
+          "uncertainty": "Asset universe and fee structures need product review.",
+          "disqualifying_issue": null,
+          "unresolved_question": null
+        }
+      },
+      "disqualifying_issues": [],
+      "unresolved_questions": [
+        "Does owner already have or can open a Kraken account legally?",
+        "Is crypto-only canary acceptable as fallback for roadmap?"
+      ],
+      "rationale": "Best fallback: excellent granular query-only permissions and key introspection. Crypto-centric product fit is secondary to Alpaca for multi-asset paper path.",
+      "rank": 2
+    },
+    {
+      "provider": "coinbase",
+      "display_name": "Coinbase (Advanced Trade / CDP)",
+      "classification": "CONDITIONALLY_ELIGIBLE",
+      "preferred": false,
+      "fallback": false,
+      "average_score": 3.4,
+      "scores": {
+        "eligibility": {
+          "score": 3,
+          "evidence": "Coinbase products vary by region; Advanced Trade CDP keys documented.",
+          "confidence": "medium",
+          "uncertainty": "Owner jurisdiction eligibility unconfirmed.",
+          "disqualifying_issue": null,
+          "unresolved_question": null
+        },
+        "security": {
+          "score": 4,
+          "evidence": "can_view / can_trade / can_transfer separation; IP whitelist encouraged; keys may not expire by default.",
+          "confidence": "medium",
+          "uncertainty": "Non-expiring keys are a residual security concern requiring forced rotation policy.",
+          "disqualifying_issue": null,
+          "unresolved_question": null
+        },
+        "api_quality": {
+          "score": 4,
+          "evidence": "Advanced Trade REST with portfolio/account endpoints and key permission introspection.",
+          "confidence": "high",
+          "uncertainty": "CDP JWT auth complexity and portfolio UUID binding.",
+          "disqualifying_issue": null,
+          "unresolved_question": null
+        },
+        "operational_suitability": {
+          "score": 3,
+          "evidence": "No equity paper broker equivalent; crypto focused.",
+          "confidence": "medium",
+          "uncertainty": "OAuth paths exist and must remain disabled.",
+          "disqualifying_issue": null,
+          "unresolved_question": null
+        },
+        "commercial_product_fit": {
+          "score": 3,
+          "evidence": "Crypto coverage good; equities fit limited for primary roadmap.",
+          "confidence": "medium",
+          "uncertainty": "Brand/terms constraints on third-party software need legal review.",
+          "disqualifying_issue": null,
+          "unresolved_question": null
+        }
+      },
+      "disqualifying_issues": [],
+      "unresolved_questions": [
+        "Can keys be forced to expire or only rotated manually?",
+        "Owner entity eligibility for Advanced Trade?"
+      ],
+      "rationale": "Viable crypto alternative with clear view/trade/transfer flags; not preferred due to non-expiring keys residual risk and weaker equities fit.",
+      "rank": 3
+    },
+    {
+      "provider": "binance",
+      "display_name": "Binance",
+      "classification": "LEGAL_REVIEW_REQUIRED",
+      "preferred": false,
+      "fallback": false,
+      "average_score": 3.0,
+      "scores": {
+        "eligibility": {
+          "score": 2,
+          "evidence": "Binance entities and products are highly jurisdiction-sensitive; many regions restricted.",
+          "confidence": "low",
+          "uncertainty": "Owner country may be unsupported; entity selection unresolved.",
+          "disqualifying_issue": null,
+          "unresolved_question": "Which Binance legal entity (if any) serves the owner?"
+        },
+        "security": {
+          "score": 4,
+          "evidence": "API key restrictions support disabling withdrawals and trading for read-oriented use; IP bind recommended.",
+          "confidence": "medium",
+          "uncertainty": "Regional product differences (global vs US etc.).",
+          "disqualifying_issue": null,
+          "unresolved_question": null
+        },
+        "api_quality": {
+          "score": 4,
+          "evidence": "Extensive REST/WS docs for account, balances, trades.",
+          "confidence": "medium",
+          "uncertainty": "Version fragmentation and product matrix complexity.",
+          "disqualifying_issue": null,
+          "unresolved_question": null
+        },
+        "operational_suitability": {
+          "score": 2,
+          "evidence": "High complexity; geographic/entity risk elevates ops burden for first canary.",
+          "confidence": "medium",
+          "uncertainty": "Testnet availability and parity with production vary by product.",
+          "disqualifying_issue": null,
+          "unresolved_question": null
+        },
+        "commercial_product_fit": {
+          "score": 3,
+          "evidence": "Strong crypto coverage; equities not primary.",
+          "confidence": "medium",
+          "uncertainty": "Terms and redistribution need legal review.",
+          "disqualifying_issue": null,
+          "unresolved_question": null
+        }
+      },
+      "disqualifying_issues": [],
+      "unresolved_questions": [
+        "Is the owner in a supported Binance jurisdiction?",
+        "Which official entity API applies?"
+      ],
+      "rationale": "Capable API but eligibility/legal entity risk too high for preferred first canary.",
+      "rank": 4
+    },
+    {
+      "provider": "interactive_brokers",
+      "display_name": "Interactive Brokers",
+      "classification": "NOT_RECOMMENDED",
+      "preferred": false,
+      "fallback": false,
+      "average_score": 2.8,
+      "scores": {
+        "eligibility": {
+          "score": 3,
+          "evidence": "IBKR serves many countries with multi-asset accounts; account type complexity high.",
+          "confidence": "medium",
+          "uncertainty": "Owner account type and API access entitlements unconfirmed.",
+          "disqualifying_issue": null,
+          "unresolved_question": null
+        },
+        "security": {
+          "score": 3,
+          "evidence": "Client Portal session/OAuth-oriented models; less simple static read-only API key model than peers.",
+          "confidence": "medium",
+          "uncertainty": "Session-based auth increases operational and security surface for a bounded canary.",
+          "disqualifying_issue": null,
+          "unresolved_question": null
+        },
+        "api_quality": {
+          "score": 3,
+          "evidence": "CPAPI and TWS/Gateway documented; powerful but complex.",
+          "confidence": "medium",
+          "uncertainty": "Gateway process dependency elevates maintenance burden.",
+          "disqualifying_issue": null,
+          "unresolved_question": null
+        },
+        "operational_suitability": {
+          "score": 1,
+          "evidence": "Requires gateway/session lifecycle; poor fit for first isolated canary.",
+          "confidence": "high",
+          "uncertainty": "Excessive implementation complexity for M240\u2013M247 planning scope.",
+          "disqualifying_issue": "Session/gateway model unsuitable as first read-only canary target.",
+          "unresolved_question": null
+        },
+        "commercial_product_fit": {
+          "score": 4,
+          "evidence": "Excellent multi-asset coverage long-term.",
+          "confidence": "high",
+          "uncertainty": "Complexity outweighs fit for first canary.",
+          "disqualifying_issue": null,
+          "unresolved_question": null
+        }
+      },
+      "disqualifying_issues": [
+        "Session/gateway authentication model is unsuitable for the first bounded canary."
+      ],
+      "unresolved_questions": [
+        "Could a future milestone design a gateway-isolated canary?"
+      ],
+      "rationale": "Excellent multi-asset product but operational model is too complex for first canary.",
+      "rank": 5
+    },
+    {
+      "provider": "bybit",
+      "display_name": "Bybit",
+      "classification": "LEGAL_REVIEW_REQUIRED",
+      "preferred": false,
+      "fallback": false,
+      "average_score": 2.6,
+      "scores": {
+        "eligibility": {
+          "score": 2,
+          "evidence": "Bybit availability is region-dependent; restrictions apply in multiple jurisdictions.",
+          "confidence": "low",
+          "uncertainty": "Owner eligibility unconfirmed.",
+          "disqualifying_issue": null,
+          "unresolved_question": null
+        },
+        "security": {
+          "score": 3,
+          "evidence": "API key permissions exist for read vs trade; withdrawal controls expected but console-verified.",
+          "confidence": "medium",
+          "uncertainty": "IP/expiry options need verification.",
+          "disqualifying_issue": null,
+          "unresolved_question": null
+        },
+        "api_quality": {
+          "score": 4,
+          "evidence": "V5 REST docs for account, positions, order history.",
+          "confidence": "medium",
+          "uncertainty": "Derivatives-centric semantics.",
+          "disqualifying_issue": null,
+          "unresolved_question": null
+        },
+        "operational_suitability": {
+          "score": 2,
+          "evidence": "Derivatives focus and regional complexity elevate risk for first canary.",
+          "confidence": "medium",
+          "uncertainty": "Testnet parity verification needed.",
+          "disqualifying_issue": null,
+          "unresolved_question": null
+        },
+        "commercial_product_fit": {
+          "score": 2,
+          "evidence": "Crypto derivatives-heavy; weaker fit to paper equities path.",
+          "confidence": "medium",
+          "uncertainty": "Roadmap misalignment for first canary.",
+          "disqualifying_issue": null,
+          "unresolved_question": null
+        }
+      },
+      "disqualifying_issues": [],
+      "unresolved_questions": [
+        "Is Bybit available and lawful for the owner?"
+      ],
+      "rationale": "API capable but legal/regional risk and derivatives focus make it non-preferred.",
+      "rank": 6
+    },
+    {
+      "provider": "zerodha",
+      "display_name": "Zerodha (Kite Connect)",
+      "classification": "OWNER_ELIGIBILITY_UNCONFIRMED",
+      "preferred": false,
+      "fallback": false,
+      "average_score": 2.4,
+      "scores": {
+        "eligibility": {
+          "score": 1,
+          "evidence": "Kite Connect is primarily for Indian market participants; residency restrictions likely apply.",
+          "confidence": "medium",
+          "uncertainty": "Owner India residency/account eligibility unconfirmed \u2014 likely blocking for non-IN owners.",
+          "disqualifying_issue": null,
+          "unresolved_question": "Is the owner an eligible Indian resident Zerodha client?"
+        },
+        "security": {
+          "score": 3,
+          "evidence": "Login token model; API key + access token; daily login flows typical.",
+          "confidence": "medium",
+          "uncertainty": "Token lifecycle differs from long-lived read-only keys.",
+          "disqualifying_issue": null,
+          "unresolved_question": null
+        },
+        "api_quality": {
+          "score": 4,
+          "evidence": "Kite Connect v3 docs cover holdings, positions, orders, margins.",
+          "confidence": "high",
+          "uncertainty": "Daily re-auth patterns complicate long-lived canary windows.",
+          "disqualifying_issue": null,
+          "unresolved_question": null
+        },
+        "operational_suitability": {
+          "score": 2,
+          "evidence": "India-market focus; login ceremony complicates automated bounded canary.",
+          "confidence": "medium",
+          "uncertainty": "Product geography may not match owner.",
+          "disqualifying_issue": null,
+          "unresolved_question": null
+        },
+        "commercial_product_fit": {
+          "score": 2,
+          "evidence": "Indian equities; limited global multi-asset fit for SaathiOS primary path.",
+          "confidence": "medium",
+          "uncertainty": "Roadmap fit depends on owner market.",
+          "disqualifying_issue": null,
+          "unresolved_question": null
+        }
+      },
+      "disqualifying_issues": [],
+      "unresolved_questions": [
+        "Owner residency and Zerodha account status?"
+      ],
+      "rationale": "Strong India-market API; owner eligibility highly uncertain; not preferred for first global canary.",
+      "rank": 7
+    }
+  ],
+  "matrix": {
+    "alpaca": {
+      "eligibility": {
+        "score": 3,
+        "evidence": "Official docs describe individual/business trading accounts and paper environment; availability is jurisdiction-specific.",
+        "confidence": "medium",
+        "uncertainty": "Owner country/residency and product eligibility not verified for this installation.",
+        "disqualifying_issue": null,
+        "unresolved_question": "Confirm owner residency and Alpaca account eligibility before any future canary."
+      },
+      "security": {
+        "score": 4,
+        "evidence": "API key model with paper/live separation; IP restrictions commonly supported; OAuth Connect exists but is forbidden for this canary path.",
+        "confidence": "medium",
+        "uncertainty": "Exact console paths for key expiry and IP allow-list need owner verification.",
+        "disqualifying_issue": null,
+        "unresolved_question": null
+      },
+      "api_quality": {
+        "score": 5,
+        "evidence": "Official Trading API + Market Data docs; account, positions, orders, portfolio history endpoints documented.",
+        "confidence": "high",
+        "uncertainty": "Schema drift possible; pin docs version at canary time.",
+        "disqualifying_issue": null,
+        "unresolved_question": null
+      },
+      "operational_suitability": {
+        "score": 5,
+        "evidence": "Dedicated paper-api environment supports deterministic testing without live capital.",
+        "confidence": "high",
+        "uncertainty": "Paper vs live host isolation must be enforced by network allow-list.",
+        "disqualifying_issue": null,
+        "unresolved_question": null
+      },
+      "commercial_product_fit": {
+        "score": 5,
+        "evidence": "US equities + crypto APIs align with SaathiOS paper-to-read-only roadmap.",
+        "confidence": "high",
+        "uncertainty": "Market-data redistribution limits require legal review before any redistribution.",
+        "disqualifying_issue": null,
+        "unresolved_question": null
+      }
+    },
+    "kraken": {
+      "eligibility": {
+        "score": 3,
+        "evidence": "Kraken offers accounts and API keys broadly; country restrictions exist and are owner-specific.",
+        "confidence": "medium",
+        "uncertainty": "Owner residency and product access unconfirmed.",
+        "disqualifying_issue": null,
+        "unresolved_question": "Confirm Kraken account eligibility and entity for owner country."
+      },
+      "security": {
+        "score": 5,
+        "evidence": "Official permission matrix separates Query Funds / Query Orders from Create & Modify Orders / Withdraw Funds; GetApiKeyInfo enables permission introspection.",
+        "confidence": "high",
+        "uncertainty": "Key expiry and IP allow-list options need owner console confirmation.",
+        "disqualifying_issue": null,
+        "unresolved_question": null
+      },
+      "api_quality": {
+        "score": 4,
+        "evidence": "Mature REST private endpoints for balances, orders, trades, ledgers with documented permissions.",
+        "confidence": "high",
+        "uncertainty": "Nonce/signature model is operationally heavier than simple key headers.",
+        "disqualifying_issue": null,
+        "unresolved_question": null
+      },
+      "operational_suitability": {
+        "score": 3,
+        "evidence": "No full equities paper broker equivalent; crypto-focused; good status/docs.",
+        "confidence": "medium",
+        "uncertainty": "Limited equity coverage vs SaathiOS multi-asset roadmap.",
+        "disqualifying_issue": null,
+        "unresolved_question": null
+      },
+      "commercial_product_fit": {
+        "score": 3,
+        "evidence": "Strong crypto coverage; weaker multi-asset equities fit for SaathiOS primary paper path.",
+        "confidence": "medium",
+        "uncertainty": "Asset universe and fee structures need product review.",
+        "disqualifying_issue": null,
+        "unresolved_question": null
+      }
+    },
+    "coinbase": {
+      "eligibility": {
+        "score": 3,
+        "evidence": "Coinbase products vary by region; Advanced Trade CDP keys documented.",
+        "confidence": "medium",
+        "uncertainty": "Owner jurisdiction eligibility unconfirmed.",
+        "disqualifying_issue": null,
+        "unresolved_question": null
+      },
+      "security": {
+        "score": 4,
+        "evidence": "can_view / can_trade / can_transfer separation; IP whitelist encouraged; keys may not expire by default.",
+        "confidence": "medium",
+        "uncertainty": "Non-expiring keys are a residual security concern requiring forced rotation policy.",
+        "disqualifying_issue": null,
+        "unresolved_question": null
+      },
+      "api_quality": {
+        "score": 4,
+        "evidence": "Advanced Trade REST with portfolio/account endpoints and key permission introspection.",
+        "confidence": "high",
+        "uncertainty": "CDP JWT auth complexity and portfolio UUID binding.",
+        "disqualifying_issue": null,
+        "unresolved_question": null
+      },
+      "operational_suitability": {
+        "score": 3,
+        "evidence": "No equity paper broker equivalent; crypto focused.",
+        "confidence": "medium",
+        "uncertainty": "OAuth paths exist and must remain disabled.",
+        "disqualifying_issue": null,
+        "unresolved_question": null
+      },
+      "commercial_product_fit": {
+        "score": 3,
+        "evidence": "Crypto coverage good; equities fit limited for primary roadmap.",
+        "confidence": "medium",
+        "uncertainty": "Brand/terms constraints on third-party software need legal review.",
+        "disqualifying_issue": null,
+        "unresolved_question": null
+      }
+    },
+    "binance": {
+      "eligibility": {
+        "score": 2,
+        "evidence": "Binance entities and products are highly jurisdiction-sensitive; many regions restricted.",
+        "confidence": "low",
+        "uncertainty": "Owner country may be unsupported; entity selection unresolved.",
+        "disqualifying_issue": null,
+        "unresolved_question": "Which Binance legal entity (if any) serves the owner?"
+      },
+      "security": {
+        "score": 4,
+        "evidence": "API key restrictions support disabling withdrawals and trading for read-oriented use; IP bind recommended.",
+        "confidence": "medium",
+        "uncertainty": "Regional product differences (global vs US etc.).",
+        "disqualifying_issue": null,
+        "unresolved_question": null
+      },
+      "api_quality": {
+        "score": 4,
+        "evidence": "Extensive REST/WS docs for account, balances, trades.",
+        "confidence": "medium",
+        "uncertainty": "Version fragmentation and product matrix complexity.",
+        "disqualifying_issue": null,
+        "unresolved_question": null
+      },
+      "operational_suitability": {
+        "score": 2,
+        "evidence": "High complexity; geographic/entity risk elevates ops burden for first canary.",
+        "confidence": "medium",
+        "uncertainty": "Testnet availability and parity with production vary by product.",
+        "disqualifying_issue": null,
+        "unresolved_question": null
+      },
+      "commercial_product_fit": {
+        "score": 3,
+        "evidence": "Strong crypto coverage; equities not primary.",
+        "confidence": "medium",
+        "uncertainty": "Terms and redistribution need legal review.",
+        "disqualifying_issue": null,
+        "unresolved_question": null
+      }
+    },
+    "interactive_brokers": {
+      "eligibility": {
+        "score": 3,
+        "evidence": "IBKR serves many countries with multi-asset accounts; account type complexity high.",
+        "confidence": "medium",
+        "uncertainty": "Owner account type and API access entitlements unconfirmed.",
+        "disqualifying_issue": null,
+        "unresolved_question": null
+      },
+      "security": {
+        "score": 3,
+        "evidence": "Client Portal session/OAuth-oriented models; less simple static read-only API key model than peers.",
+        "confidence": "medium",
+        "uncertainty": "Session-based auth increases operational and security surface for a bounded canary.",
+        "disqualifying_issue": null,
+        "unresolved_question": null
+      },
+      "api_quality": {
+        "score": 3,
+        "evidence": "CPAPI and TWS/Gateway documented; powerful but complex.",
+        "confidence": "medium",
+        "uncertainty": "Gateway process dependency elevates maintenance burden.",
+        "disqualifying_issue": null,
+        "unresolved_question": null
+      },
+      "operational_suitability": {
+        "score": 1,
+        "evidence": "Requires gateway/session lifecycle; poor fit for first isolated canary.",
+        "confidence": "high",
+        "uncertainty": "Excessive implementation complexity for M240\u2013M247 planning scope.",
+        "disqualifying_issue": "Session/gateway model unsuitable as first read-only canary target.",
+        "unresolved_question": null
+      },
+      "commercial_product_fit": {
+        "score": 4,
+        "evidence": "Excellent multi-asset coverage long-term.",
+        "confidence": "high",
+        "uncertainty": "Complexity outweighs fit for first canary.",
+        "disqualifying_issue": null,
+        "unresolved_question": null
+      }
+    },
+    "zerodha": {
+      "eligibility": {
+        "score": 1,
+        "evidence": "Kite Connect is primarily for Indian market participants; residency restrictions likely apply.",
+        "confidence": "medium",
+        "uncertainty": "Owner India residency/account eligibility unconfirmed \u2014 likely blocking for non-IN owners.",
+        "disqualifying_issue": null,
+        "unresolved_question": "Is the owner an eligible Indian resident Zerodha client?"
+      },
+      "security": {
+        "score": 3,
+        "evidence": "Login token model; API key + access token; daily login flows typical.",
+        "confidence": "medium",
+        "uncertainty": "Token lifecycle differs from long-lived read-only keys.",
+        "disqualifying_issue": null,
+        "unresolved_question": null
+      },
+      "api_quality": {
+        "score": 4,
+        "evidence": "Kite Connect v3 docs cover holdings, positions, orders, margins.",
+        "confidence": "high",
+        "uncertainty": "Daily re-auth patterns complicate long-lived canary windows.",
+        "disqualifying_issue": null,
+        "unresolved_question": null
+      },
+      "operational_suitability": {
+        "score": 2,
+        "evidence": "India-market focus; login ceremony complicates automated bounded canary.",
+        "confidence": "medium",
+        "uncertainty": "Product geography may not match owner.",
+        "disqualifying_issue": null,
+        "unresolved_question": null
+      },
+      "commercial_product_fit": {
+        "score": 2,
+        "evidence": "Indian equities; limited global multi-asset fit for SaathiOS primary path.",
+        "confidence": "medium",
+        "uncertainty": "Roadmap fit depends on owner market.",
+        "disqualifying_issue": null,
+        "unresolved_question": null
+      }
+    },
+    "bybit": {
+      "eligibility": {
+        "score": 2,
+        "evidence": "Bybit availability is region-dependent; restrictions apply in multiple jurisdictions.",
+        "confidence": "low",
+        "uncertainty": "Owner eligibility unconfirmed.",
+        "disqualifying_issue": null,
+        "unresolved_question": null
+      },
+      "security": {
+        "score": 3,
+        "evidence": "API key permissions exist for read vs trade; withdrawal controls expected but console-verified.",
+        "confidence": "medium",
+        "uncertainty": "IP/expiry options need verification.",
+        "disqualifying_issue": null,
+        "unresolved_question": null
+      },
+      "api_quality": {
+        "score": 4,
+        "evidence": "V5 REST docs for account, positions, order history.",
+        "confidence": "medium",
+        "uncertainty": "Derivatives-centric semantics.",
+        "disqualifying_issue": null,
+        "unresolved_question": null
+      },
+      "operational_suitability": {
+        "score": 2,
+        "evidence": "Derivatives focus and regional complexity elevate risk for first canary.",
+        "confidence": "medium",
+        "uncertainty": "Testnet parity verification needed.",
+        "disqualifying_issue": null,
+        "unresolved_question": null
+      },
+      "commercial_product_fit": {
+        "score": 2,
+        "evidence": "Crypto derivatives-heavy; weaker fit to paper equities path.",
+        "confidence": "medium",
+        "uncertainty": "Roadmap misalignment for first canary.",
+        "disqualifying_issue": null,
+        "unresolved_question": null
+      }
+    }
+  },
+  "retrieval_date": "2026-07-30",
+  "evidence_hash": "7a54519c233e821b6626d5f48053533323edee87d129302d328b8c302de66bb8",
+  "REAL_CONNECTIVITY_AUTHORIZED": false,
+  "note": "Preferred provider selection is a recommendation only."
+}

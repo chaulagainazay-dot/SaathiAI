@@ -1,0 +1,132 @@
+{
+  "preferred": {
+    "preferred_provider": "alpaca",
+    "recommendation_only": true,
+    "owner_eligibility_claimed": false,
+    "detail": {
+      "provider": "alpaca",
+      "display_name": "Alpaca",
+      "classification": "OWNER_ELIGIBILITY_UNCONFIRMED",
+      "preferred": true,
+      "fallback": false,
+      "average_score": 4.4,
+      "scores": {
+        "eligibility": {
+          "score": 3,
+          "evidence": "Official docs describe individual/business trading accounts and paper environment; availability is jurisdiction-specific.",
+          "confidence": "medium",
+          "uncertainty": "Owner country/residency and product eligibility not verified for this installation.",
+          "disqualifying_issue": null,
+          "unresolved_question": "Confirm owner residency and Alpaca account eligibility before any future canary."
+        },
+        "security": {
+          "score": 4,
+          "evidence": "API key model with paper/live separation; IP restrictions commonly supported; OAuth Connect exists but is forbidden for this canary path.",
+          "confidence": "medium",
+          "uncertainty": "Exact console paths for key expiry and IP allow-list need owner verification.",
+          "disqualifying_issue": null,
+          "unresolved_question": null
+        },
+        "api_quality": {
+          "score": 5,
+          "evidence": "Official Trading API + Market Data docs; account, positions, orders, portfolio history endpoints documented.",
+          "confidence": "high",
+          "uncertainty": "Schema drift possible; pin docs version at canary time.",
+          "disqualifying_issue": null,
+          "unresolved_question": null
+        },
+        "operational_suitability": {
+          "score": 5,
+          "evidence": "Dedicated paper-api environment supports deterministic testing without live capital.",
+          "confidence": "high",
+          "uncertainty": "Paper vs live host isolation must be enforced by network allow-list.",
+          "disqualifying_issue": null,
+          "unresolved_question": null
+        },
+        "commercial_product_fit": {
+          "score": 5,
+          "evidence": "US equities + crypto APIs align with SaathiOS paper-to-read-only roadmap.",
+          "confidence": "high",
+          "uncertainty": "Market-data redistribution limits require legal review before any redistribution.",
+          "disqualifying_issue": null,
+          "unresolved_question": null
+        }
+      },
+      "disqualifying_issues": [],
+      "unresolved_questions": [
+        "Is the owner eligible to open/use Alpaca in their jurisdiction?",
+        "Will paper keys remain strictly isolated from live keys?",
+        "What market-data terms apply to stored snapshots?"
+      ],
+      "rationale": "Strongest first-canary candidate: clear paper environment, strong account/position/history coverage, equities+crypto fit, and documented API quality. Owner eligibility remains UNCONFIRMED.",
+      "rank": 1
+    },
+    "REAL_CONNECTIVITY_AUTHORIZED": false
+  },
+  "fallback": {
+    "fallback_provider": "kraken",
+    "recommendation_only": true,
+    "detail": {
+      "provider": "kraken",
+      "display_name": "Kraken",
+      "classification": "CONDITIONALLY_ELIGIBLE",
+      "preferred": false,
+      "fallback": true,
+      "average_score": 3.6,
+      "scores": {
+        "eligibility": {
+          "score": 3,
+          "evidence": "Kraken offers accounts and API keys broadly; country restrictions exist and are owner-specific.",
+          "confidence": "medium",
+          "uncertainty": "Owner residency and product access unconfirmed.",
+          "disqualifying_issue": null,
+          "unresolved_question": "Confirm Kraken account eligibility and entity for owner country."
+        },
+        "security": {
+          "score": 5,
+          "evidence": "Official permission matrix separates Query Funds / Query Orders from Create & Modify Orders / Withdraw Funds; GetApiKeyInfo enables permission introspection.",
+          "confidence": "high",
+          "uncertainty": "Key expiry and IP allow-list options need owner console confirmation.",
+          "disqualifying_issue": null,
+          "unresolved_question": null
+        },
+        "api_quality": {
+          "score": 4,
+          "evidence": "Mature REST private endpoints for balances, orders, trades, ledgers with documented permissions.",
+          "confidence": "high",
+          "uncertainty": "Nonce/signature model is operationally heavier than simple key headers.",
+          "disqualifying_issue": null,
+          "unresolved_question": null
+        },
+        "operational_suitability": {
+          "score": 3,
+          "evidence": "No full equities paper broker equivalent; crypto-focused; good status/docs.",
+          "confidence": "medium",
+          "uncertainty": "Limited equity coverage vs SaathiOS multi-asset roadmap.",
+          "disqualifying_issue": null,
+          "unresolved_question": null
+        },
+        "commercial_product_fit": {
+          "score": 3,
+          "evidence": "Strong crypto coverage; weaker multi-asset equities fit for SaathiOS primary paper path.",
+          "confidence": "medium",
+          "uncertainty": "Asset universe and fee structures need product review.",
+          "disqualifying_issue": null,
+          "unresolved_question": null
+        }
+      },
+      "disqualifying_issues": [],
+      "unresolved_questions": [
+        "Does owner already have or can open a Kraken account legally?",
+        "Is crypto-only canary acceptable as fallback for roadmap?"
+      ],
+      "rationale": "Best fallback: excellent granular query-only permissions and key introspection. Crypto-centric product fit is secondary to Alpaca for multi-asset paper path.",
+      "rank": 2
+    },
+    "REAL_CONNECTIVITY_AUTHORIZED": false
+  },
+  "REAL_CONNECTIVITY_AUTHORIZED": false,
+  "CREDENTIAL_PROVISIONING_AUTHORIZED": false,
+  "CANARY_ACTIVATION_AUTHORIZED": false,
+  "LIVE_TRADING_AUTHORIZED": false
+}

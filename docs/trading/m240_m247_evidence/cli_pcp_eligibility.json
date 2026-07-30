@@ -1,0 +1,134 @@
+{
+  "provider": "alpaca",
+  "result": "ELIGIBILITY_UNCONFIRMED",
+  "items": [
+    {
+      "item": "geographic_eligibility",
+      "classification": "OWNER_CONFIRMATION_REQUIRED",
+      "finding": "Alpaca product availability is jurisdiction-specific. Owner country not verified in this package.",
+      "source": "https://docs.alpaca.markets/docs/getting-started"
+    },
+    {
+      "item": "residency_requirements",
+      "classification": "OWNER_CONFIRMATION_REQUIRED",
+      "finding": "Residency and tax residency may affect account eligibility; owner must confirm.",
+      "source": "owner confirmation required"
+    },
+    {
+      "item": "account_eligibility",
+      "classification": "OWNER_CONFIRMATION_REQUIRED",
+      "finding": "Individual vs business account type and KYC status unknown for this owner.",
+      "source": "owner confirmation required"
+    },
+    {
+      "item": "api_eligibility",
+      "classification": "SUPPORTED_BY_OFFICIAL_SOURCE",
+      "finding": "Official Trading API documentation exists for account-authenticated API access.",
+      "source": "https://docs.alpaca.markets/docs/getting-started-with-trading-api"
+    },
+    {
+      "item": "api_terms_of_use",
+      "classification": "LEGAL_REVIEW_REQUIRED",
+      "finding": "API and brokerage terms must be reviewed by owner/legal before connectivity.",
+      "source": "provider legal pages (owner must open current version)"
+    },
+    {
+      "item": "automated_access_restrictions",
+      "classification": "LEGAL_REVIEW_REQUIRED",
+      "finding": "Automated access must comply with rate limits and API terms; bot use restrictions need review.",
+      "source": "API terms (current version at canary time)"
+    },
+    {
+      "item": "data_retention_restrictions",
+      "classification": "LEGAL_REVIEW_REQUIRED",
+      "finding": "Account and market data retention/redistribution may be restricted by licence.",
+      "source": "terms + market data licence"
+    },
+    {
+      "item": "redistribution_restrictions",
+      "classification": "LEGAL_REVIEW_REQUIRED",
+      "finding": "Snapshots stored in SaathiOS must not be redistributed without licence clearance.",
+      "source": "market data and API terms"
+    },
+    {
+      "item": "privacy_requirements",
+      "classification": "OWNER_CONFIRMATION_REQUIRED",
+      "finding": "Account PII handling must match owner privacy obligations and provider privacy policy.",
+      "source": "provider privacy policy + owner policy"
+    },
+    {
+      "item": "audit_requirements",
+      "classification": "SUPPORTED_BY_OFFICIAL_SOURCE",
+      "finding": "Canary design requires full local audit of calls; provider may retain own logs.",
+      "source": "planning design M243"
+    },
+    {
+      "item": "account_data_storage_restrictions",
+      "classification": "LEGAL_REVIEW_REQUIRED",
+      "finding": "Storing balances/positions locally must comply with provider and privacy rules.",
+      "source": "terms + privacy"
+    },
+    {
+      "item": "third_party_software_restrictions",
+      "classification": "LEGAL_REVIEW_REQUIRED",
+      "finding": "Using SaathiOS as third-party software against provider API needs terms clearance.",
+      "source": "API terms"
+    },
+    {
+      "item": "credential_sharing_restrictions",
+      "classification": "SECURITY_REVIEW_REQUIRED",
+      "finding": "Credentials must never be shared with LLMs or multi-tenant untrusted actors.",
+      "source": "planning invariant + security model"
+    },
+    {
+      "item": "rate_limit_obligations",
+      "classification": "SUPPORTED_BY_OFFICIAL_SOURCE",
+      "finding": "Canary must respect provider rate limits; budget enforced in design.",
+      "source": "provider rate-limit behaviour"
+    },
+    {
+      "item": "provider_branding_requirements",
+      "classification": "UNRESOLVED",
+      "finding": "Branding/attribution requirements not fully inventoried.",
+      "source": "pending legal review"
+    },
+    {
+      "item": "prohibited_activities",
+      "classification": "LEGAL_REVIEW_REQUIRED",
+      "finding": "Order submission, wash trading, market manipulation remain prohibited; canary is read-only by design.",
+      "source": "terms + planning invariant"
+    },
+    {
+      "item": "termination_and_suspension_risks",
+      "classification": "OWNER_CONFIRMATION_REQUIRED",
+      "finding": "Provider may suspend API access; canary must abort cleanly on suspension signals.",
+      "source": "terms + canary abort design"
+    }
+  ],
+  "legal_review_items": [
+    "api_terms_of_use current version acknowledgement",
+    "automated-access and bot restrictions",
+    "data retention and redistribution licences",
+    "third-party software authorization",
+    "privacy/PII handling for account snapshots",
+    "jurisdiction-specific brokerage regulations for owner",
+    "branding and attribution obligations"
+  ],
+  "unresolved": [
+    "geographic_eligibility",
+    "residency_requirements",
+    "account_eligibility",
+    "privacy_requirements",
+    "provider_branding_requirements",
+    "termination_and_suspension_risks"
+  ],
+  "owner_eligibility_claimed": false,
+  "legal_approval_generated_by_automation": false,
+  "disclaimer": "This is not legal advice or legal certification. Owner eligibility is not claimed without explicit verified evidence.",
+  "retrieval_date": "2026-07-30",
+  "evidence_hash": "f7610efd8cc4cca73f5c5055b18ee650ebb461f4c7f09ff4e4002f835aeb7847",
+  "REAL_CONNECTIVITY_AUTHORIZED": false,
+  "CREDENTIAL_PROVISIONING_AUTHORIZED": false,
+  "CANARY_ACTIVATION_AUTHORIZED": false,
+  "LIVE_TRADING_AUTHORIZED": false
+}
