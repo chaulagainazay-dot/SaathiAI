@@ -515,6 +515,20 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("pr-dashboard")
     sub.add_parser("pr-bootstrap")
     sub.add_parser("pr-certify")
+    # M304–M311 read-only market observation
+    pg_sub.add_parser("mo-verdict")
+    pg_sub.add_parser("mo-dashboard")
+    pg_sub.add_parser("mo-bootstrap")
+    pg_sub.add_parser("mo-symbols")
+    pg_sub.add_parser("mo-quotes")
+    pg_sub.add_parser("mo-snapshot")
+    pg_sub.add_parser("mo-exchanges")
+    pg_sub.add_parser("mo-benchmarks")
+    pg_sub.add_parser("mo-certify")
+    sub.add_parser("mo-verdict")
+    sub.add_parser("mo-dashboard")
+    sub.add_parser("mo-bootstrap")
+    sub.add_parser("mo-certify")
     # Aliases matching goal prompt command names
     p_sl = sub.add_parser("strategy-list")
     p_sl.add_argument("--category", default="")
@@ -1316,6 +1330,42 @@ def main(argv: list[str] | None = None) -> int:
                 return prwrap(pr.committee_review())
             if args.action == "pr-certify":
                 return prwrap(pr.certify())
+        # M304–M311 market observation
+        if args.action and str(args.action).startswith("mo-"):
+            from saathi.platform.tg.market_observation.service import default_market_observation
+            mo = default_market_observation()
+
+            def mowrap(d):
+                if isinstance(d, dict):
+                    d = {
+                        **d,
+                        "REAL_CONNECTIVITY_AUTHORIZED": False,
+                        "BROKER_CONNECTIVITY_AUTHORIZED": False,
+                        "ORDER_EXECUTION_AUTHORIZED": False,
+                        "LIVE_TRADING_AUTHORIZED": False,
+                        "ACCOUNT_ACCESS_AUTHORIZED": False,
+                        "read_only_observation": True,
+                    }
+                return _out(d)
+
+            if args.action == "mo-verdict":
+                return mowrap(mo.terminal_verdict())
+            if args.action == "mo-dashboard":
+                return mowrap(mo.dashboard())
+            if args.action == "mo-bootstrap":
+                return mowrap(mo.bootstrap_demo_pipeline())
+            if args.action == "mo-symbols":
+                return mowrap(mo.list_symbols())
+            if args.action == "mo-quotes":
+                return mowrap(mo.list_quotes())
+            if args.action == "mo-snapshot":
+                return mowrap(mo.market_snapshot())
+            if args.action == "mo-exchanges":
+                return mowrap(mo.list_exchange_status())
+            if args.action == "mo-benchmarks":
+                return mowrap(mo.list_benchmarks())
+            if args.action == "mo-certify":
+                return mowrap(mo.certify())
         return 2
 
     # Top-level market-data aliases (M256–M263)
@@ -1438,6 +1488,19 @@ def main(argv: list[str] | None = None) -> int:
             return _out(pr.bootstrap_demo_pipeline())
         if args.cmd == "pr-certify":
             return _out(pr.certify())
+
+    # Top-level market-observation aliases (M304–M311)
+    if args.cmd in ("mo-verdict", "mo-dashboard", "mo-bootstrap", "mo-certify"):
+        from saathi.platform.tg.market_observation.service import default_market_observation
+        mo = default_market_observation()
+        if args.cmd == "mo-verdict":
+            return _out(mo.terminal_verdict())
+        if args.cmd == "mo-dashboard":
+            return _out(mo.dashboard())
+        if args.cmd == "mo-bootstrap":
+            return _out(mo.bootstrap_demo_pipeline())
+        if args.cmd == "mo-certify":
+            return _out(mo.certify())
 
     parser.print_help()
     return 2
