@@ -1,0 +1,113 @@
+{
+  "schema": "M296_M303_EVIDENCE_MANIFEST",
+  "files": {
+    "FOCUSED_TEST_LOG.txt": {
+      "sha256": "aa3b08c10d6f5981ebf0d46e1ee770eeab66e44245d950bc97237a8e5c384f79",
+      "bytes": 99
+    },
+    "FRONTEND_TEST_LOG.txt": {
+      "sha256": "6794a960c01cfa4c5be85fc0581553d61dc2d750acfaa0c0f202b097bc9cc710",
+      "bytes": 334
+    },
+    "INITIAL_GIT_STATUS.txt": {
+      "sha256": "b4cd9ed6452058aaa7e86ee3a6741ebfcfc12c6c417a83142bee349b425c06cf",
+      "bytes": 291
+    },
+    "LIMITATIONS.json": {
+      "sha256": "f3ebed35d55e792f07b2e262bed1b0f993e841f9c782bb813857bd2366596ac2",
+      "bytes": 288
+    },
+    "M296_M303_THREAT_MODEL.json": {
+      "sha256": "bb36ae87fe0dddcc11ce929551c5b48bc3b3275418f2609307ae4c9ab9938d97",
+      "bytes": 2555
+    },
+    "M296_PORTFOLIO_ANALYTICS.json": {
+      "sha256": "d18e3303db3fbe483b9351aafd21b3795065713968f488cb1eda90f52281c4e2",
+      "bytes": 6843
+    },
+    "M296_RECOVERY_BASELINE.json": {
+      "sha256": "68f1ed4a99c7498211e637cd2aea082dd55590c0ad4f26066e64dfad4664ce60",
+      "bytes": 913
+    },
+    "M297_ATTRIBUTION.json": {
+      "sha256": "2aa7ef5bfb06bcca8cec5ea32c78bcf3bf06188a8702c818425215bd1bf51ee1",
+      "bytes": 2461
+    },
+    "M298_LIMITS_AND_BUDGETS.json": {
+      "sha256": "bb9de54ab9f3aae64c72cfb8005a0f12f66e8615c88d3182597e3baa7803013e",
+      "bytes": 2068
+    },
+    "M299_SIZING_AND_ALLOCATION.json": {
+      "sha256": "163484b332bd8c16d6fe320dec6eb45b2b1fcf68abfd420f09dbc9ce8c541053",
+      "bytes": 2607
+    },
+    "M300_OPTIMISER_V2.json": {
+      "sha256": "960091cd39c8e7526d579c3cbde37c868156fcb505f1e5442a83539c597d8b60",
+      "bytes": 4889
+    },
+    "M301_SCENARIOS_DASHBOARDS.json": {
+      "sha256": "df602bd4103d817a47ac777edf62889d353d3788ce022bd1803ce70360990588",
+      "bytes": 7447
+    },
+    "M302_COMMITTEE_V2.json": {
+      "sha256": "51e81d65543f097678caded0eb4ee962e8c99ec6f4470897e8f3404ad68f49be",
+      "bytes": 6850
+    },
+    "M303_BROWSER_CERT_LOG.txt": {
+      "sha256": "c1cb3f7d1b723cd0681738c85104f363aa981be40bec7c4ea821dd381fb0e7e9",
+      "bytes": 194
+    },
+    "M303_BROWSER_CERT_SUMMARY.json": {
+      "sha256": "104c354ff2e7e2a0ab7340d74a89d6cce8d152ff9398e72812740730d4ae1b8d",
+      "bytes": 270
+    },
+    "M303_CERTIFY.json": {
+      "sha256": "a13dc983c366cc9ad36e37cdf810b1ef7b7bdef75b4ce3b39b71d8f265190285",
+      "bytes": 2456
+    },
+    "M303_CLEAN_CLONE_CERTIFICATION.json": {
+      "sha256": "566162969063a66b9c887717a12521108db171e1f76a3fb1531ffdd0e53eb661",
+      "bytes": 516
+    },
+    "M303_DASHBOARD.json": {
+      "sha256": "a82c05f6bd2cacd2ea854d00ea473dc0abdc647e6b46a1e4579c7e87edbc33b4",
+      "bytes": 8498
+    },
+    "M303_FINAL_REPORT.md": {
+      "sha256": "a2aef60ffe0103496b5a8a9773cd3dc530fd064d29eca6daf45b313713e79a1d",
+      "bytes": 512
+    },
+    "M303_PIPELINE.json": {
+      "sha256": "eab2b0078106278e364ec17448ba66e2c80c1ac54691e3f37742fcf2a84a20ec",
+      "bytes": 29063
+    },
+    "M303_SECURITY_SCANS.json": {
+      "sha256": "7ca21390e41cb1872ef0c2b072fe3dacea61ce9f7217b67a1b71f50b9bb14df9",
+      "bytes": 1379
+    },
+    "PRODUCTION_BUILD_LOG.txt": {
+      "sha256": "c5c8daf9e18844b870c7ae918f1ef0e4887fc486c2a67828f3d62512c90584ce",
+      "bytes": 9996
+    },
+    "STARTING_SHA.txt": {
+      "sha256": "b94930ed3adb5131866bd6240b0e0c2fa4a560b2fea8c89e7322dd72313e3c92",
+      "bytes": 41
+    },
+    "browser/M303_BROWSER_CERT.json": {
+      "sha256": "83c339d16e2e34febc12dcbed40312a46d8f114bd6f1b34c6955fe5db9e2bf6c",
+      "bytes": 4830
+    },
+    "browser/screenshots/portfolio_risk_after_actions.png": {
+      "sha256": "f3c64eca3e7be67ca7626ae360df10850db891d9eb1e71ada4417be838e146c3",
+      "bytes": 77880
+    },
+    "browser/screenshots/portfolio_risk_after_bootstrap.png": {
+      "sha256": "f3c64eca3e7be67ca7626ae360df10850db891d9eb1e71ada4417be838e146c3",
+      "bytes": 77880
+    },
+    "browser/screenshots/portfolio_risk_control_center.png": {
+      "sha256": "f3c64eca3e7be67ca7626ae360df10850db891d9eb1e71ada4417be838e146c3",
+      "bytes": 77880
+    }
+  }
+}

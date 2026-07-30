@@ -1,5 +1,20 @@
 # SaathiOS Autonomous Roadmap
 
+## M296–M303 — Institutional Portfolio & Risk Intelligence (2026-07-30)
+
+| Field | Value |
+| --- | --- |
+| Verdict | `INSTITUTIONAL_PORTFOLIO_RISK_INTELLIGENCE_CERTIFIED_WITH_LIMITATIONS` |
+| Max state | `INSTITUTIONAL_PORTFOLIO_RISK_INTELLIGENCE_ONLY` |
+| Package | `saathi/platform/tg/portfolio_risk/` |
+| Branch | `milestone/m296-m303-portfolio-risk-intelligence` |
+| UI | `/trading/portfolio-risk` |
+| Browser | `cert:m303` |
+| Broker / live / orders | **Not authorized** |
+| Next | M304–M311 read-only market observation after review |
+
+Evidence: `docs/trading/M296_M303_PORTFOLIO_RISK_INTELLIGENCE.md`, `docs/trading/m296_m303_evidence/`.
+
 ## M280–M287 — Autonomous Research Orchestrator (2026-07-30)
 
 | Field | Value |

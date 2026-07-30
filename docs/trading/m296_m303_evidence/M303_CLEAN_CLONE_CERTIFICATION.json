@@ -1,0 +1,17 @@
+{
+  "schema": "M303_CLEAN_CLONE_CERTIFICATION",
+  "timestamp": "2026-07-30T13:24:33Z",
+  "M288_M295_SOURCE_PRESENT": true,
+  "M296_M303_SOURCE_PRESENT": true,
+  "FOCUSED_TESTS_PASSED": true,
+  "FRONTEND_TESTS_PASSED": true,
+  "PRODUCTION_BUILD_PASSED": true,
+  "M303_BROWSER_CERT_PASSED": true,
+  "m303_verdict": "INSTITUTIONAL_PORTFOLIO_RISK_BROWSER_CERT_PASSED_WITH_LIMITATIONS",
+  "backend_tests": "10 passed",
+  "frontend_tests": "5 passed",
+  "build_routes": [
+    "/trading/portfolio-risk"
+  ],
+  "ok": true
+}

@@ -1,0 +1,86 @@
+{
+  "ok": true,
+  "method": "brinson_lite_equal_weight_benchmark",
+  "label": "RESEARCH_ATTRIBUTION_NOT_OFFICIAL_GIPS",
+  "total_allocation_effect": 0.057925,
+  "total_selection_effect": -0.324506,
+  "positions": [
+    {
+      "symbol": "SPY",
+      "weight": 0.416233,
+      "active_weight": 0.216233,
+      "asset_return_ann": -0.367256,
+      "allocation_effect": -0.054166,
+      "selection_effect": -0.023352,
+      "interaction_effect": -0.025247
+    },
+    {
+      "symbol": "QQQ",
+      "weight": 0.180368,
+      "active_weight": -0.019632,
+      "asset_return_ann": -0.537769,
+      "allocation_effect": 0.004918,
+      "selection_effect": -0.057454,
+      "interaction_effect": 0.00564
+    },
+    {
+      "symbol": "EFA",
+      "weight": 0.051335,
+      "active_weight": -0.148665,
+      "asset_return_ann": -0.660972,
+      "allocation_effect": 0.03724,
+      "selection_effect": -0.082095,
+      "interaction_effect": 0.061023
+    },
+    {
+      "symbol": "TLT",
+      "weight": 0.053185,
+      "active_weight": -0.146815,
+      "asset_return_ann": -0.554993,
+      "allocation_effect": 0.036777,
+      "selection_effect": -0.060899,
+      "interaction_effect": 0.044705
+    },
+    {
+      "symbol": "GLD",
+      "weight": 0.067638,
+      "active_weight": -0.132362,
+      "asset_return_ann": -0.754023,
+      "allocation_effect": 0.033156,
+      "selection_effect": -0.100705,
+      "interaction_effect": 0.066648
+    }
+  ],
+  "factor_attribution": {
+    "market": 0.850301,
+    "size": -0.040247,
+    "value": 0.017867,
+    "momentum": 0.082133
+  },
+  "LIVE_TRADING_AUTHORIZED": false,
+  "BROKER_CONNECTIVITY_AUTHORIZED": false,
+  "REAL_CONNECTIVITY_AUTHORIZED": false,
+  "CREDENTIAL_PROVISIONING_AUTHORIZED": false,
+  "CANARY_ACTIVATION_AUTHORIZED": false,
+  "ORDER_EXECUTION_AUTHORIZED": false,
+  "ORDER_SUBMISSION_AUTHORIZED": false,
+  "API_KEYS_ACCEPTED": false,
+  "OAUTH_AUTHORIZED": false,
+  "PRODUCTION_AUTHORIZED": false,
+  "STRATEGY_PROFITABILITY_GUARANTEED": false,
+  "INVESTMENT_ADVICE_CERTIFIED": false,
+  "LIVE_MARKET_READINESS": false,
+  "REGULATORY_GRADE_RISK": false,
+  "paper_only": true,
+  "sandbox_only": true,
+  "research_only": true,
+  "offline_first": true,
+  "no_broker_connection": true,
+  "no_api_keys": true,
+  "no_oauth": true,
+  "no_order_submission": true,
+  "no_live_trading": true,
+  "not_investment_advice": true,
+  "max_authority": "INSTITUTIONAL_PORTFOLIO_RISK_INTELLIGENCE_ONLY",
+  "default_max_leverage": 1.0
+}

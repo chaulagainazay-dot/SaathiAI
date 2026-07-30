@@ -1,0 +1,7 @@
+{
+  "verdict": "INSTITUTIONAL_PORTFOLIO_RISK_BROWSER_CERT_PASSED_WITH_LIMITATIONS",
+  "hard_gates_pass": true,
+  "branch": "milestone/m296-m303-portfolio-risk-intelligence",
+  "sha": "f582dd36d34398b5eadfaf9f1676cbc75b0bc041",
+  "timestamp": "2026-07-30T13:23:36.702Z"
+}
