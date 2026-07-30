@@ -12572,3 +12572,496 @@ def tg_mo_live_feed(authorization: str | None = Header(default=None), x_platform
         return _tg_market_observation().refuse_authenticated_live_feed()
     except PlatformContextError as e:
         raise _err(e) from e
+
+
+# ---------------------------------------------------------------------------
+# M312–M319 Connectivity Governance (governance only — no provider connection)
+# ---------------------------------------------------------------------------
+
+def _tg_connectivity_governance():
+    from saathi.platform.tg.connectivity_governance.service import default_connectivity_governance
+    return default_connectivity_governance()
+
+
+@router.get("/tg/connectivity-governance/posture")
+def tg_cg_posture(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_connectivity_governance().posture()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/connectivity-governance/verdict")
+def tg_cg_verdict(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_connectivity_governance().terminal_verdict()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/connectivity-governance/dashboard")
+def tg_cg_dashboard(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_connectivity_governance().dashboard()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/connectivity-governance/charter")
+def tg_cg_charter(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_connectivity_governance().charter()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/connectivity-governance/authorities")
+def tg_cg_authorities(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_connectivity_governance().authority_list()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/connectivity-governance/authorities/{capability}")
+def tg_cg_authority_detail(capability: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_connectivity_governance().authority_evaluate(capability)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/connectivity-governance/providers")
+def tg_cg_providers(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_connectivity_governance().list_providers()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/connectivity-governance/providers/{provider_id}")
+def tg_cg_provider_detail(provider_id: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_connectivity_governance().get_provider(provider_id)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/connectivity-governance/capability-policy")
+def tg_cg_capability_policy(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_connectivity_governance().capability_policy()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/connectivity-governance/approvals")
+def tg_cg_approvals(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_connectivity_governance().list_approvals()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/connectivity-governance/approvals/{approval_id}")
+def tg_cg_approval_detail(approval_id: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_connectivity_governance().get_approval(approval_id)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+class CgApprovalBody(BaseModel):
+    requestor: str = "api_requestor"
+    approval_type: str = "provider_documentation_review"
+    provider: str = "prov_mock_contract"
+    environment: str = "governance"
+    capability_scope: list[str] = ["offline_fixture_access"]
+    operation_scope: list[str] = ["documentation_review"]
+    jurisdiction: str = "N/A"
+    expiry_seconds: float = 86400.0
+    allowed_network_destinations: list[str] = ["localhost"]
+    evidence_requirements: list[str] = ["docs"]
+    revocation_conditions: list[str] = ["operator_request"]
+    acknowledgements: list[str] = ["governance_only", "no_activation"]
+
+
+@router.post("/tg/connectivity-governance/approvals")
+def tg_cg_approval_create(body: CgApprovalBody | None = None, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        import time as _time
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        b = body or CgApprovalBody()
+        return _tg_connectivity_governance().create_approval(
+            requestor=b.requestor,
+            approval_type=b.approval_type,
+            provider=b.provider,
+            environment=b.environment,
+            capability_scope=b.capability_scope,
+            operation_scope=b.operation_scope,
+            jurisdiction=b.jurisdiction,
+            expiry_time=_time.time() + b.expiry_seconds,
+            allowed_network_destinations=b.allowed_network_destinations,
+            evidence_requirements=b.evidence_requirements,
+            revocation_conditions=b.revocation_conditions,
+            acknowledgements=b.acknowledgements,
+        )
+    except Exception as e:
+        from saathi.platform.tg.connectivity_governance.errors import ConnectivityGovernanceError
+        if isinstance(e, ConnectivityGovernanceError):
+            return e.to_dict()
+        if isinstance(e, PlatformContextError):
+            raise _err(e) from e
+        raise
+
+
+class CgReviewBody(BaseModel):
+    approver: str = "api_approver"
+    decision: str = "approve"
+    notes: str = ""
+
+
+@router.post("/tg/connectivity-governance/approvals/{approval_id}/submit")
+def tg_cg_approval_submit(approval_id: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        appr = _tg_connectivity_governance().get_approval(approval_id)
+        actor = (appr.get("approval") or {}).get("requestor") or "api_requestor"
+        return _tg_connectivity_governance().submit_approval(approval_id, actor=actor)
+    except Exception as e:
+        from saathi.platform.tg.connectivity_governance.errors import ConnectivityGovernanceError
+        if isinstance(e, ConnectivityGovernanceError):
+            return e.to_dict()
+        if isinstance(e, PlatformContextError):
+            raise _err(e) from e
+        raise
+
+
+@router.post("/tg/connectivity-governance/approvals/{approval_id}/review")
+def tg_cg_approval_review(approval_id: str, body: CgReviewBody | None = None, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        b = body or CgReviewBody()
+        return _tg_connectivity_governance().review_approval(approval_id, approver=b.approver, decision=b.decision, notes=b.notes)
+    except Exception as e:
+        from saathi.platform.tg.connectivity_governance.errors import ConnectivityGovernanceError
+        if isinstance(e, ConnectivityGovernanceError):
+            return e.to_dict()
+        if isinstance(e, PlatformContextError):
+            raise _err(e) from e
+        raise
+
+
+@router.post("/tg/connectivity-governance/approvals/{approval_id}/revoke")
+def tg_cg_approval_revoke(approval_id: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_connectivity_governance().revoke_approval(approval_id, actor="api_operator", reason="operator_request")
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/connectivity-governance/credential-policy")
+def tg_cg_credential_policy(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_connectivity_governance().credential_policy()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/connectivity-governance/revocations")
+def tg_cg_revocations(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_connectivity_governance().list_revocations()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/connectivity-governance/incidents")
+def tg_cg_incidents(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_connectivity_governance().list_incidents()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/connectivity-governance/incidents/{incident_id}")
+def tg_cg_incident_detail(incident_id: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_connectivity_governance().get_incident(incident_id)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+class CgEmergencyBody(BaseModel):
+    actor: str = "api_operator"
+    reason: str = "governance_drill"
+
+
+@router.get("/tg/connectivity-governance/emergency-shutdown")
+def tg_cg_emergency_status(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_connectivity_governance().emergency_status()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/connectivity-governance/emergency-shutdown")
+def tg_cg_emergency_activate(body: CgEmergencyBody | None = None, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        b = body or CgEmergencyBody()
+        return _tg_connectivity_governance().emergency_shutdown(actor=b.actor, reason=b.reason)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/connectivity-governance/threat-model")
+def tg_cg_threats(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_connectivity_governance().list_threats()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/connectivity-governance/risk-summary")
+def tg_cg_risk_summary(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_connectivity_governance().risk_summary()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/connectivity-governance/maturity")
+def tg_cg_maturity(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_connectivity_governance().maturity()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/connectivity-governance/bootstrap")
+def tg_cg_bootstrap(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_connectivity_governance().bootstrap_demo_pipeline()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/connectivity-governance/certify")
+def tg_cg_certify(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_connectivity_governance().certify()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/connectivity-governance/evidence")
+def tg_cg_evidence(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_connectivity_governance().evidence_bundle()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/connectivity-governance/security")
+def tg_cg_security(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_connectivity_governance().security_scan()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+# Hard refusal endpoints — no secrets accepted, no connectivity
+@router.post("/tg/connectivity-governance/broker/login")
+def tg_cg_broker_login(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_connectivity_governance().refuse_broker_login()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/connectivity-governance/oauth")
+def tg_cg_oauth(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_connectivity_governance().refuse_oauth()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+class CgCredBody(BaseModel):
+    # Deliberately does not accept raw secret fields as validated credentials
+    note: str = "credentials_refused"
+
+
+@router.post("/tg/connectivity-governance/credentials")
+def tg_cg_credentials(body: CgCredBody | None = None, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_connectivity_governance().refuse_credentials(None)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/connectivity-governance/connect")
+def tg_cg_connect(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_connectivity_governance().refuse_provider_connect()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/connectivity-governance/orders")
+def tg_cg_orders(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_connectivity_governance().refuse_order()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/connectivity-governance/accounts")
+def tg_cg_accounts(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_connectivity_governance().refuse_account_access()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/connectivity-governance/balances")
+def tg_cg_balances(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_connectivity_governance().refuse_balance_access()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/connectivity-governance/positions")
+def tg_cg_positions(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_connectivity_governance().refuse_position_access()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/connectivity-governance/canary/activate")
+def tg_cg_canary(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_connectivity_governance().refuse_canary()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/connectivity-governance/live/activate")
+def tg_cg_live(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_connectivity_governance().refuse_live_trading()
+    except PlatformContextError as e:
+        raise _err(e) from e

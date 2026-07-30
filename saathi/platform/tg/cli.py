@@ -529,6 +529,17 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("mo-dashboard")
     sub.add_parser("mo-bootstrap")
     sub.add_parser("mo-certify")
+    # M312–M319 connectivity governance
+    for _cg in (
+        "cg-verdict", "cg-charter-show", "cg-authority-list", "cg-authority-evaluate",
+        "cg-provider-list", "cg-provider-show", "cg-provider-register", "cg-provider-prohibit",
+        "cg-approval-create", "cg-approval-submit", "cg-approval-review", "cg-approval-reject",
+        "cg-approval-revoke", "cg-credential-policy", "cg-threat-list", "cg-risk-summary",
+        "cg-incident-create", "cg-incident-contain", "cg-emergency-shutdown", "cg-maturity",
+        "cg-certify", "cg-dashboard", "cg-bootstrap",
+    ):
+        pg_sub.add_parser(_cg)
+        sub.add_parser(_cg)
     # Aliases matching goal prompt command names
     p_sl = sub.add_parser("strategy-list")
     p_sl.add_argument("--category", default="")
@@ -1366,6 +1377,36 @@ def main(argv: list[str] | None = None) -> int:
                 return mowrap(mo.list_benchmarks())
             if args.action == "mo-certify":
                 return mowrap(mo.certify())
+        # M312–M319 connectivity governance
+        if args.action and str(args.action).startswith("cg-"):
+            from saathi.platform.tg.connectivity_governance.service import default_connectivity_governance
+            cg = default_connectivity_governance()
+            action = args.action
+            if action == "cg-verdict":
+                return _out(cg.terminal_verdict())
+            if action == "cg-dashboard":
+                return _out(cg.dashboard())
+            if action == "cg-bootstrap":
+                return _out(cg.bootstrap_demo_pipeline())
+            if action == "cg-charter-show":
+                return _out(cg.charter())
+            if action == "cg-authority-list":
+                return _out(cg.authority_list())
+            if action == "cg-provider-list":
+                return _out(cg.list_providers())
+            if action == "cg-credential-policy":
+                return _out(cg.credential_policy())
+            if action == "cg-threat-list":
+                return _out(cg.list_threats())
+            if action == "cg-risk-summary":
+                return _out(cg.risk_summary())
+            if action == "cg-maturity":
+                return _out(cg.maturity())
+            if action == "cg-emergency-shutdown":
+                return _out(cg.emergency_shutdown(actor="cli_operator", reason="paper_gov_drill"))
+            if action == "cg-certify":
+                return _out(cg.certify())
+            return _out({"ok": False, "error": f"unknown cg action: {action}"})
         return 2
 
     # Top-level market-data aliases (M256–M263)
@@ -1501,6 +1542,103 @@ def main(argv: list[str] | None = None) -> int:
             return _out(mo.bootstrap_demo_pipeline())
         if args.cmd == "mo-certify":
             return _out(mo.certify())
+
+    # Top-level connectivity-governance aliases (M312–M319)
+    if args.cmd and str(args.cmd).startswith("cg-"):
+        from saathi.platform.tg.connectivity_governance.service import default_connectivity_governance
+        cg = default_connectivity_governance()
+        cmd = args.cmd
+        if cmd == "cg-verdict":
+            return _out(cg.terminal_verdict())
+        if cmd == "cg-dashboard":
+            return _out(cg.dashboard())
+        if cmd == "cg-bootstrap":
+            return _out(cg.bootstrap_demo_pipeline())
+        if cmd == "cg-charter-show":
+            return _out(cg.charter())
+        if cmd == "cg-authority-list":
+            return _out(cg.authority_list())
+        if cmd == "cg-authority-evaluate":
+            cap = getattr(args, "capability", None) or "offline_fixture_access"
+            return _out(cg.authority_evaluate(cap))
+        if cmd == "cg-provider-list":
+            return _out(cg.list_providers())
+        if cmd == "cg-provider-show":
+            pid = getattr(args, "provider_id", None) or "prov_mock_contract"
+            return _out(cg.get_provider(pid))
+        if cmd == "cg-provider-register":
+            return _out(cg.register_provider({
+                "provider_id": "prov_cli_docs",
+                "provider_name": "CLI Registered Docs Provider",
+                "provider_type": "docs",
+                "jurisdiction": "N/A",
+                "official_domains": ["localhost"],
+                "governance_status": "RESEARCH_ONLY",
+            }, actor="cli_operator"))
+        if cmd == "cg-provider-prohibit":
+            pid = getattr(args, "provider_id", None) or "prov_cli_docs"
+            return _out(cg.prohibit_provider(pid, actor="cli_operator", reason="operator_request"))
+        if cmd == "cg-approval-create":
+            import time as _t
+            return _out(cg.create_approval(
+                requestor="cli_requestor",
+                approval_type="provider_documentation_review",
+                provider="prov_mock_contract",
+                environment="governance",
+                capability_scope=["offline_fixture_access"],
+                operation_scope=["documentation_review"],
+                jurisdiction="N/A",
+                expiry_time=_t.time() + 86400,
+                allowed_network_destinations=["localhost"],
+                evidence_requirements=["docs"],
+                revocation_conditions=["operator_request"],
+                acknowledgements=["governance_only", "no_activation"],
+            ))
+        if cmd == "cg-approval-submit":
+            aid = getattr(args, "approval_id", None)
+            if not aid:
+                return _out({"ok": False, "error": "approval_id required"})
+            return _out(cg.submit_approval(aid, actor="cli_requestor"))
+        if cmd == "cg-approval-review":
+            aid = getattr(args, "approval_id", None)
+            if not aid:
+                return _out({"ok": False, "error": "approval_id required"})
+            return _out(cg.review_approval(aid, approver="cli_approver", decision="approve"))
+        if cmd == "cg-approval-reject":
+            aid = getattr(args, "approval_id", None)
+            if not aid:
+                return _out({"ok": False, "error": "approval_id required"})
+            return _out(cg.review_approval(aid, approver="cli_approver", decision="reject"))
+        if cmd == "cg-approval-revoke":
+            aid = getattr(args, "approval_id", None)
+            if not aid:
+                return _out({"ok": False, "error": "approval_id required"})
+            return _out(cg.revoke_approval(aid, actor="cli_operator", reason="operator_request"))
+        if cmd == "cg-credential-policy":
+            return _out(cg.credential_policy())
+        if cmd == "cg-threat-list":
+            return _out(cg.list_threats())
+        if cmd == "cg-risk-summary":
+            return _out(cg.risk_summary())
+        if cmd == "cg-incident-create":
+            return _out(cg.create_incident(
+                incident_type="scope_violation",
+                actor="cli_operator",
+                summary="CLI governance incident drill",
+                severity="HIGH",
+            ))
+        if cmd == "cg-incident-contain":
+            iid = getattr(args, "incident_id", None)
+            if not iid:
+                return _out({"ok": False, "error": "incident_id required"})
+            return _out(cg.advance_incident(iid, step="contain", actor="cli_operator"))
+        if cmd == "cg-emergency-shutdown":
+            return _out(cg.emergency_shutdown(actor="cli_operator", reason="cli_drill"))
+        if cmd == "cg-maturity":
+            return _out(cg.maturity())
+        if cmd == "cg-certify":
+            return _out(cg.certify())
+        return _out({"ok": False, "error": f"unknown cg command: {cmd}"})
 
     parser.print_help()
     return 2
