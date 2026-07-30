@@ -1,0 +1,13 @@
+✔ paper-simulation page exists (0.716958ms)
+✔ boundary labels present (1.245583ms)
+✔ no password form / place order live (0.136708ms)
+✔ TradingShell has Paper Simulation tab (0.273125ms)
+✔ package.json has cert:m295 (0.486ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 106.055666

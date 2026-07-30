@@ -1,0 +1,113 @@
+{
+  "schema": "M288_M295_EVIDENCE_MANIFEST",
+  "files": {
+    "FOCUSED_TEST_LOG.txt": {
+      "sha256": "ed3a5a27ca8f03a2bda786968e4581ce4b95e1980f33136756dfb18bd21d7c17",
+      "bytes": 99
+    },
+    "FRONTEND_TEST_LOG.txt": {
+      "sha256": "c261002b7985f6d21de3afd8cbab3fb43dbe136c6ebaa872c7c66b7c1ca81ce5",
+      "bytes": 351
+    },
+    "INITIAL_GIT_STATUS.txt": {
+      "sha256": "fa26d211d0f0d23f9dd36229f7d4498d5b7b75062f792ec895cdbbc7c9f4f206",
+      "bytes": 291
+    },
+    "LIMITATIONS.json": {
+      "sha256": "0815c777625170bbce430d683b7b3f8ee462dd62049d0ea495e55aa9890f4bd2",
+      "bytes": 303
+    },
+    "M288_M295_THREAT_MODEL.json": {
+      "sha256": "2b901c4b4ea92586cea48a953c953ab30dbdb6d7e8658830f22676ae5948daa3",
+      "bytes": 3216
+    },
+    "M288_RECOVERY_BASELINE.json": {
+      "sha256": "187e45b35692c21371ecbc3636342ff94bade4131f702607cc344e3bc04a6bf6",
+      "bytes": 933
+    },
+    "M288_VIRTUAL_EXCHANGE.json": {
+      "sha256": "3c872138549e447b4b385adf2ee44d259fc7e22a39dacd09ece4b1223f76ed0c",
+      "bytes": 1361
+    },
+    "M289_ORDER_BOOK.json": {
+      "sha256": "a8c90ad62502bddc4b3647cb367dc76630c269cd27f7111c99de4308e11857ac",
+      "bytes": 1646
+    },
+    "M290_ORDERS_AND_FILLS.json": {
+      "sha256": "94e85b4d2d0ec2a8b4c4d23bd4c3dedb427ca3feb4cc60f00e3215173b045946",
+      "bytes": 4757
+    },
+    "M291_PORTFOLIO_LEDGER.json": {
+      "sha256": "0eebc519a9c8d0446387764e37e611dee1b470208e4350e514391a4544d1600a",
+      "bytes": 2091
+    },
+    "M292_CASH_AND_MARGIN.json": {
+      "sha256": "6ae6098ce2ddc4d1e692ede6b65a3887d5bb341668763102f0414c3b6918b7e3",
+      "bytes": 2384
+    },
+    "M293_CORPORATE_ACTIONS_CALENDAR.json": {
+      "sha256": "16c3cfb413152e9c49956621c46ab884cadf5a809be3d43376550af64275538b",
+      "bytes": 3082
+    },
+    "M294_RISK_KILL_SWITCH.json": {
+      "sha256": "7ec10ed391d0aaf90990f51bebde3f2f2ad854ed2bca705aafc355f59ac1d5fc",
+      "bytes": 2267
+    },
+    "M295_BROWSER_CERT_LOG.txt": {
+      "sha256": "1eee23d6994b7dfac93153c3156c1df57e900b3b10ea5dd00dfd43f28ea5c8c9",
+      "bytes": 198
+    },
+    "M295_BROWSER_CERT_SUMMARY.json": {
+      "sha256": "78b82eb777795dd6040033d707238dea46c89dc37a12282e66b6176361ad3ce1",
+      "bytes": 275
+    },
+    "M295_CERTIFY.json": {
+      "sha256": "85a163fb534fed8f43e1af75b88f8888377accc2eee9d6ad6c7a2212f40e6f00",
+      "bytes": 2630
+    },
+    "M295_CLEAN_CLONE_CERTIFICATION.json": {
+      "sha256": "502e9bd089fddfd257620767c836c75405e9496cceb08f90bd0a91fc29924a9d",
+      "bytes": 530
+    },
+    "M295_DASHBOARD.json": {
+      "sha256": "178b42ba82b7fa2e498e9b6cc388cb820d54548824b04bd0ba839ab38517fa35",
+      "bytes": 10133
+    },
+    "M295_FINAL_REPORT.md": {
+      "sha256": "8c538db6fb2dbacd970c8d9212654ae99c89680d33d7d898f27bfe1bc3bd9306",
+      "bytes": 505
+    },
+    "M295_PIPELINE.json": {
+      "sha256": "d5943cdbd4ebe46d5f1794ca994489567b05a925560279005d8102a16ee5456b",
+      "bytes": 5348
+    },
+    "M295_SECURITY_SCANS.json": {
+      "sha256": "8b71037b701a7dae1a9ceb4a062d4aa878e131e8f6f7361a61d3a560ef26f515",
+      "bytes": 1503
+    },
+    "PRODUCTION_BUILD_LOG.txt": {
+      "sha256": "e394f88f2dd7d9b0bf264efd5bdbd6bb26efc846f8572d9686f389b22b1bdba1",
+      "bytes": 9928
+    },
+    "STARTING_SHA.txt": {
+      "sha256": "6cac17e23b9268fcc4c2bf3a505252a39925abc84da05842c975f0110a3a8fc6",
+      "bytes": 41
+    },
+    "browser/M295_BROWSER_CERT.json": {
+      "sha256": "2960e951297fd2327bc8c18aa87be3d3652ddc916cdb729c15736bac906cf5a1",
+      "bytes": 5066
+    },
+    "browser/screenshots/paper_simulation_after_actions.png": {
+      "sha256": "13019b3177d3a28ede2580320439dac7b6874d018a971d69dade1a8267c79c78",
+      "bytes": 77742
+    },
+    "browser/screenshots/paper_simulation_after_bootstrap.png": {
+      "sha256": "13019b3177d3a28ede2580320439dac7b6874d018a971d69dade1a8267c79c78",
+      "bytes": 77742
+    },
+    "browser/screenshots/paper_simulation_control_center.png": {
+      "sha256": "13019b3177d3a28ede2580320439dac7b6874d018a971d69dade1a8267c79c78",
+      "bytes": 77742
+    }
+  }
+}

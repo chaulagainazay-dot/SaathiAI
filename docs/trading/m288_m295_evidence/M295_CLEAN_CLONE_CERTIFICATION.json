@@ -1,0 +1,17 @@
+{
+  "schema": "M295_CLEAN_CLONE_CERTIFICATION",
+  "timestamp": "2026-07-30T13:17:14Z",
+  "M280_M287_COMMITTED_SOURCE_PRESENT": true,
+  "M288_M295_SOURCE_PRESENT": true,
+  "FOCUSED_TESTS_PASSED": true,
+  "FRONTEND_TESTS_PASSED": true,
+  "PRODUCTION_BUILD_PASSED": true,
+  "M295_BROWSER_CERT_PASSED": true,
+  "m295_verdict": "INSTITUTIONAL_PAPER_SIMULATION_BROWSER_CERT_PASSED_WITH_LIMITATIONS",
+  "backend_tests": "10 passed",
+  "frontend_tests": "5 passed",
+  "build_routes": [
+    "/trading/paper-simulation"
+  ],
+  "ok": true
+}
