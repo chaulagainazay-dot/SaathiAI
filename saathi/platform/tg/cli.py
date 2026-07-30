@@ -463,6 +463,30 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("rl-certify")
     sub.add_parser("rl-dashboard")
     sub.add_parser("rl-bootstrap")
+    # M280–M287 autonomous research orchestrator
+    pg_sub.add_parser("ro-verdict")
+    pg_sub.add_parser("ro-dashboard")
+    pg_sub.add_parser("ro-bootstrap")
+    pg_sub.add_parser("ro-job-list")
+    p_roe = pg_sub.add_parser("ro-job-enqueue")
+    p_roe.add_argument("--name", default="cli_job")
+    p_roe.add_argument("--kind", default="noop")
+    p_roe.add_argument("--priority", default="NORMAL")
+    p_rot = pg_sub.add_parser("ro-tick")
+    p_rot.add_argument("--max-jobs", type=int, default=1)
+    pg_sub.add_parser("ro-workers")
+    pg_sub.add_parser("ro-budget")
+    pg_sub.add_parser("ro-templates")
+    pg_sub.add_parser("ro-strategies")
+    pg_sub.add_parser("ro-notebook")
+    pg_sub.add_parser("ro-failures")
+    pg_sub.add_parser("ro-calendar")
+    pg_sub.add_parser("ro-certify")
+    sub.add_parser("ro-verdict")
+    sub.add_parser("ro-dashboard")
+    sub.add_parser("ro-bootstrap")
+    sub.add_parser("ro-certify")
+    sub.add_parser("ro-job-list")
     # Aliases matching goal prompt command names
     p_sl = sub.add_parser("strategy-list")
     p_sl.add_argument("--category", default="")
@@ -1149,6 +1173,51 @@ def main(argv: list[str] | None = None) -> int:
                 return rwrap(rl.dashboard())
             if args.action == "rl-bootstrap":
                 return rwrap(rl.bootstrap_demo_pipeline())
+        # M280–M287 research orchestrator
+        if args.action and str(args.action).startswith("ro-"):
+            from saathi.platform.tg.research_orchestrator.service import default_research_orchestrator
+            ro = default_research_orchestrator()
+
+            def owrap(d):
+                if isinstance(d, dict):
+                    d = {
+                        **d,
+                        "REAL_CONNECTIVITY_AUTHORIZED": False,
+                        "BROKER_CONNECTIVITY_AUTHORIZED": False,
+                        "ORDER_EXECUTION_AUTHORIZED": False,
+                        "LIVE_TRADING_AUTHORIZED": False,
+                        "research_only": True,
+                    }
+                return _out(d)
+
+            if args.action == "ro-verdict":
+                return owrap(ro.terminal_verdict())
+            if args.action == "ro-dashboard":
+                return owrap(ro.dashboard())
+            if args.action == "ro-bootstrap":
+                return owrap(ro.bootstrap_demo_pipeline())
+            if args.action == "ro-job-list":
+                return owrap(ro.list_jobs())
+            if args.action == "ro-job-enqueue":
+                return owrap(ro.enqueue_job(args.name, {"kind": args.kind, "seed": 42}, priority=args.priority))
+            if args.action == "ro-tick":
+                return owrap(ro.tick(max_jobs=args.max_jobs))
+            if args.action == "ro-workers":
+                return owrap(ro.workers_status())
+            if args.action == "ro-budget":
+                return owrap(ro.budget_status())
+            if args.action == "ro-templates":
+                return owrap(ro.list_templates())
+            if args.action == "ro-strategies":
+                return owrap(ro.list_strategies_v2())
+            if args.action == "ro-notebook":
+                return owrap(ro.notebook())
+            if args.action == "ro-failures":
+                return owrap(ro.failure_analysis())
+            if args.action == "ro-calendar":
+                return owrap(ro.research_calendar())
+            if args.action == "ro-certify":
+                return owrap(ro.certify())
         return 2
 
     # Top-level market-data aliases (M256–M263)
@@ -1228,6 +1297,23 @@ def main(argv: list[str] | None = None) -> int:
             return _out(rl.dashboard())
         if args.cmd == "rl-bootstrap":
             return _out(rl.bootstrap_demo_pipeline())
+
+    # Top-level research-orchestrator aliases (M280–M287)
+    if args.cmd in (
+        "ro-verdict", "ro-dashboard", "ro-bootstrap", "ro-certify", "ro-job-list",
+    ):
+        from saathi.platform.tg.research_orchestrator.service import default_research_orchestrator
+        ro = default_research_orchestrator()
+        if args.cmd == "ro-verdict":
+            return _out(ro.terminal_verdict())
+        if args.cmd == "ro-dashboard":
+            return _out(ro.dashboard())
+        if args.cmd == "ro-bootstrap":
+            return _out(ro.bootstrap_demo_pipeline())
+        if args.cmd == "ro-certify":
+            return _out(ro.certify())
+        if args.cmd == "ro-job-list":
+            return _out(ro.list_jobs())
 
     parser.print_help()
     return 2
