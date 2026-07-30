@@ -12,7 +12,7 @@
   ],
   "branch": "milestone/m208-m215-ops-graduation",
   "baseline_sha": "0d489fbae07a8572b6039bf231d3bab35f1e9dc1",
-  "implementation_sha_pending_commit": true,
+  "implementation_sha_pending_commit": false,
   "current_head_before_impl_commit": "0d489fbae07a8572b6039bf231d3bab35f1e9dc1",
   "captured_at": "2026-07-30T01:05:49.885379+00:00",
   "tests": {
@@ -85,5 +85,7 @@
       "}",
       "EXIT:0"
     ]
-  }
+  },
+  "implementation_sha": "692a6d24134584117bd483d1b32c91a9fd4bcfa6",
+  "ending_sha": "692a6d24134584117bd483d1b32c91a9fd4bcfa6"
 }

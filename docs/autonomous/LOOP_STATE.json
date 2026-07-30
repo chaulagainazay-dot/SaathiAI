@@ -1,36 +1,45 @@
 {
-  "goal_id": "DURABLE_PAPER_OPERATIONS",
+  "goal_id": "OPERATIONAL_GRADUATION",
   "historical_baseline_sha": "f90378b2b92eb30e8e515f72aa2dab3a668def3c",
-  "baseline_sha": "f90378b2b92eb30e8e515f72aa2dab3a668def3c",
-  "current_sha": "3e0d46a4c5fcdbb50d6cc96e660558518b62d0fc",
-  "ending_sha": "3e0d46a4c5fcdbb50d6cc96e660558518b62d0fc",
-  "current_milestone": "M200-M207",
+  "baseline_sha": "0d489fbae07a8572b6039bf231d3bab35f1e9dc1",
+  "implementation_sha": "692a6d24134584117bd483d1b32c91a9fd4bcfa6",
+  "current_sha": "692a6d24134584117bd483d1b32c91a9fd4bcfa6",
+  "ending_sha": "692a6d24134584117bd483d1b32c91a9fd4bcfa6",
+  "current_milestone": "M208-M215",
+  "branch": "milestone/m208-m215-ops-graduation",
   "status": "complete_with_limitations",
   "completed_milestones": [
-    "M200",
-    "M201",
-    "M202",
-    "M203",
-    "M204",
-    "M205",
-    "M206",
-    "M207"
+    "M208",
+    "M209",
+    "M210",
+    "M211",
+    "M212",
+    "M213",
+    "M214",
+    "M215"
   ],
-  "verdict": "DURABLE_PAPER_OPERATIONS_CERTIFIED_WITH_LIMITATIONS",
+  "verdict": "OPERATIONAL_GRADUATION_CERTIFIED_WITH_LIMITATIONS",
   "production_authorized": false,
   "live_trading_authorized": false,
   "broker_credentials_supported": false,
   "owner_signoff": "NOT_CLAIMED_AUTOMATED_ONLY",
+  "paper_only": true,
+  "strategy_auto_promoted_to_live": false,
   "tests": {
-    "focused_m200_m207": "15 passed",
-    "focused_m192_m200": "27 passed",
-    "frontend": "238 passed",
-    "browser": "DURABLE_PAPER_BROWSER_CERT_PASSED_WITH_LIMITATIONS"
+    "focused_m208_m215": "15 passed",
+    "m200_compat": "15 passed",
+    "tg_m166_m215": "115 passed",
+    "full_backend": "5568 passed, 1 skipped",
+    "frontend": "240 passed",
+    "frontend_build": "pass",
+    "browser": "OPS_GRADUATION_BROWSER_CERT_PASSED_WITH_LIMITATIONS"
   },
   "limitations": [
     "Single-host SQLite not multi-node",
-    "Browser cert soft-limitation on Next cold compile and empty approvals list",
-    "Owner human sign-off not claimed"
+    "Graduation is paper research-stage only",
+    "Owner human sign-off not claimed",
+    "Browser soft-limitation on api_paper_approvals / cold compile on 8GB host"
   ],
-  "paper_only": true
+  "next_recommended_milestone": "M216 only after owner planning \u2014 do not auto-start; remain paper-only",
+  "updated_at": "2026-07-30T01:06:10.135542+00:00"
 }
