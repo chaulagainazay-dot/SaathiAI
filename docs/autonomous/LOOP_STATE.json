@@ -5,8 +5,8 @@
   "m248_m255_recovery_defect": "certified_locally_never_committed_untracked_only",
   "m248_m255_recovered_implementation_sha": "6341dd1edb76bda24febb019a6a9b592fc8fb7dc",
   "implementation_sha": "4c64ab037c716f2bf8be8dcbfb4579ac5ff37882",
-  "current_sha": "4c64ab037c716f2bf8be8dcbfb4579ac5ff37882",
-  "ending_sha": "4c64ab037c716f2bf8be8dcbfb4579ac5ff37882",
+  "current_sha": "079b633da9ede0b85cd2ca5eb7863487a6b3b2d4",
+  "ending_sha": "079b633da9ede0b85cd2ca5eb7863487a6b3b2d4",
   "current_milestone": "M264-M271",
   "branch": "milestone/m264-m271-intelligence-recovery-historical-data",
   "status": "complete_with_limitations",
@@ -109,5 +109,5 @@
   ],
   "next_recommended_milestone": "M272 only after human review \u2014 remain research/paper/sandbox; no broker connectivity",
   "updated_at": "2026-07-30T07:17:48+00:00",
-  "docs_pin_sha": "4c64ab037c716f2bf8be8dcbfb4579ac5ff37882"
+  "docs_pin_sha": "079b633da9ede0b85cd2ca5eb7863487a6b3b2d4"
 }
