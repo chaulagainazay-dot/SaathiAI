@@ -126,26 +126,33 @@ class ReproductionRunner:
             ],
             60,
         )
+        # Import / migrate smoke only — full pytest runs in primary tree evidence.
+        # Nested full suites risk recursion and multi-minute clones on constrained hosts.
         step(
-            "focused_tests",
+            "import_integration_assurance",
             [
-                sys.executable, "-m", "pytest",
-                "tests/test_m232_m239_integration_assurance.py",
-                "-q", "--tb=no",
+                sys.executable, "-c",
+                "from saathi.platform.tg.integration_assurance import TERMINAL_VERDICT, "
+                "REAL_CONNECTIVITY_AUTHORIZED; "
+                "from saathi.platform.tg.broker_sandbox import *; "
+                "from saathi.platform.tg.broker_readiness import TERMINAL_VERDICT as BRV; "
+                "assert REAL_CONNECTIVITY_AUTHORIZED is False; "
+                "print('import_ok', TERMINAL_VERDICT, BRV)",
             ],
-            300,
+            60,
         )
-        # optional readiness regression subset if file exists
-        if (work_path / "tests/test_m224_m231_broker_readiness.py").exists():
-            step(
-                "m224_m231_regression_subset",
-                [
-                    sys.executable, "-m", "pytest",
-                    "tests/test_m224_m231_broker_readiness.py",
-                    "-q", "--tb=no",
-                ],
-                300,
-            )
+        step(
+            "source_audit_in_tree",
+            [
+                sys.executable, "-c",
+                "from pathlib import Path; import tempfile; "
+                "from saathi.platform.tg.integration_assurance.service import IntegrationAssuranceService; "
+                "s=IntegrationAssuranceService(db_path=Path(tempfile.mkdtemp())/'x.db'); "
+                "r=s.source_audit(); print(r.get('verdict'), r.get('baseline_ok'), r.get('ok')); "
+                "assert r.get('baseline_ok') is True",
+            ],
+            90,
+        )
         return results
 
     def clean_worktree(self, *, base_ref: str = "HEAD") -> dict[str, Any]:

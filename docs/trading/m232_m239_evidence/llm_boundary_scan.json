@@ -1,0 +1,7 @@
+{
+  "check": "llm_authority_scan",
+  "result": "PASS",
+  "owner_signoff_automated": false,
+  "real_connectivity_authorized": false,
+  "ok": true
+}

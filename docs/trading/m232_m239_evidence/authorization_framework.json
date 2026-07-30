@@ -1,0 +1,171 @@
+{
+  "domains": {
+    "domains": [
+      {
+        "id": "OWNER_AUTH",
+        "name": "Owner authorization",
+        "required": true
+      },
+      {
+        "id": "SECURITY_AUTH",
+        "name": "Security authorization",
+        "required": true
+      },
+      {
+        "id": "LEGAL_TOS",
+        "name": "Legal and terms-of-service review",
+        "required": true
+      },
+      {
+        "id": "PROVIDER_ELIGIBILITY",
+        "name": "Provider eligibility review",
+        "required": true
+      },
+      {
+        "id": "CREDENTIAL_SCOPE",
+        "name": "Credential-scope review",
+        "required": true
+      },
+      {
+        "id": "DATA_RETENTION",
+        "name": "Data-retention review",
+        "required": true
+      },
+      {
+        "id": "PRIVACY",
+        "name": "Privacy review",
+        "required": true
+      },
+      {
+        "id": "INFRASTRUCTURE",
+        "name": "Infrastructure review",
+        "required": true
+      },
+      {
+        "id": "NETWORK_ALLOWLIST",
+        "name": "Network allow-list approval",
+        "required": true
+      },
+      {
+        "id": "INCIDENT_RESPONSE",
+        "name": "Incident-response readiness",
+        "required": true
+      },
+      {
+        "id": "REVOCATION",
+        "name": "Revocation readiness",
+        "required": true
+      },
+      {
+        "id": "RECONCILIATION",
+        "name": "Reconciliation readiness",
+        "required": true
+      },
+      {
+        "id": "MONITORING",
+        "name": "Monitoring readiness",
+        "required": true
+      },
+      {
+        "id": "ROLLBACK",
+        "name": "Rollback readiness",
+        "required": true
+      },
+      {
+        "id": "READ_ONLY_CANARY",
+        "name": "Read-only canary approval",
+        "required": true
+      },
+      {
+        "id": "POST_CANARY",
+        "name": "Post-canary review",
+        "required": true
+      }
+    ],
+    "count": 16,
+    "real_connectivity_authorized": false,
+    "max_state": "READ_ONLY_CANARY_PLANNING_ELIGIBLE",
+    "REAL_CONNECTIVITY_AUTHORIZED": false
+  },
+  "plan": {
+    "plan": {
+      "id": "plan_42bd283dbbaa4b71",
+      "provider": "future.read_only.provider",
+      "environment": "PLANNING",
+      "aggregate_state": "PLANNING_ONLY",
+      "real_connectivity_authorized": false,
+      "detail": {
+        "created_by": "planning"
+      },
+      "created_at": 1785377922.844527
+    },
+    "approvals": [],
+    "aggregate": {
+      "state": "PLANNING_ONLY",
+      "real_connectivity_authorized": false,
+      "missing_domains": [
+        "OWNER_AUTH",
+        "SECURITY_AUTH",
+        "LEGAL_TOS",
+        "PROVIDER_ELIGIBILITY",
+        "CREDENTIAL_SCOPE",
+        "DATA_RETENTION",
+        "PRIVACY",
+        "INFRASTRUCTURE",
+        "NETWORK_ALLOWLIST",
+        "INCIDENT_RESPONSE",
+        "REVOCATION",
+        "RECONCILIATION",
+        "MONITORING",
+        "ROLLBACK",
+        "READ_ONLY_CANARY",
+        "POST_CANARY"
+      ],
+      "active_domains": [],
+      "max_state": "READ_ONLY_CANARY_PLANNING_ELIGIBLE",
+      "single_approval_grants_connectivity": false,
+      "owner_signoff_automated": false,
+      "REAL_CONNECTIVITY_AUTHORIZED": false
+    },
+    "REAL_CONNECTIVITY_AUTHORIZED": false
+  },
+  "owner_signoff_automation": {
+    "ok": false,
+    "error": "OWNER_SIGNOFF_AUTOMATION_FORBIDDEN",
+    "message": "No automated test, LLM, agent or pipeline may produce owner sign-off.",
+    "owner_signoff_automated": false,
+    "REAL_CONNECTIVITY_AUTHORIZED": false
+  },
+  "activate": {
+    "ok": false,
+    "error": "REAL_CONNECTIVITY_NOT_AUTHORIZED",
+    "real_connectivity_authorized": false,
+    "message": "M238 is planning only. Real connectivity cannot be activated.",
+    "REAL_CONNECTIVITY_AUTHORIZED": false
+  },
+  "eligibility": {
+    "eligible_for_canary_planning": false,
+    "state": "PLANNING_ONLY",
+    "real_connectivity_authorized": false,
+    "missing_domains": [
+      "OWNER_AUTH",
+      "SECURITY_AUTH",
+      "LEGAL_TOS",
+      "PROVIDER_ELIGIBILITY",
+      "CREDENTIAL_SCOPE",
+      "DATA_RETENTION",
+      "PRIVACY",
+      "INFRASTRUCTURE",
+      "NETWORK_ALLOWLIST",
+      "INCIDENT_RESPONSE",
+      "REVOCATION",
+      "RECONCILIATION",
+      "MONITORING",
+      "ROLLBACK",
+      "READ_ONLY_CANARY",
+      "POST_CANARY"
+    ],
+    "message": "Not eligible for read-only canary planning",
+    "REAL_CONNECTIVITY_AUTHORIZED": false
+  }
+}

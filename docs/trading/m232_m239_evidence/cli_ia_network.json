@@ -1,0 +1,41 @@
+{
+  "runtime_provider_transport": "REAL_PROVIDER_TRANSPORT_FORBIDDEN",
+  "allowed": [
+    "localhost",
+    "127.0.0.1",
+    "repository-local files"
+  ],
+  "dependency_registry_separated": true,
+  "forbidden_domains": [
+    "alpaca.markets",
+    "api.alpaca.markets",
+    "api.binance.com",
+    "api.bybit.com",
+    "api.coinbase.com",
+    "api.exchange.coinbase.com",
+    "api.ibkr.com",
+    "api.kite.trade",
+    "api.kraken.com",
+    "binance.com",
+    "bybit.com",
+    "coinbase.com",
+    "fapi.binance.com",
+    "gdcdyn.interactivebrokers.com",
+    "interactivebrokers.com",
+    "kite.zerodha.com",
+    "kraken.com",
+    "login.alpaca.markets",
+    "oauth.binance.com",
+    "paper-api.alpaca.markets",
+    "zerodha.com"
+  ],
+  "scan": {
+    "provider_blocks": 0,
+    "registry_requests": 0,
+    "registry_not_misclassified_as_broker": true,
+    "attempts": [],
+    "isolation_ok": true,
+    "REAL_CONNECTIVITY_AUTHORIZED": false
+  },
+  "REAL_CONNECTIVITY_AUTHORIZED": false
+}

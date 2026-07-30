@@ -1,0 +1,85 @@
+{
+  "source_repository": "/Users/macbookpro/SaathiAI",
+  "branch": "milestone/m232-m239-reproducibility-supply-chain",
+  "sha": "1e3f0a185c635b4c03201ac1db1ffc33d66e7b9a",
+  "clone_path_fingerprint": "743f4fc880bac7c729377a4da2e53dd2",
+  "operating_system": "Darwin",
+  "architecture": "arm64",
+  "python_version": "3.12.13",
+  "node_version": "v26.4.0",
+  "package_manager_versions": {
+    "npm": "11.17.0",
+    "pip": "pip"
+  },
+  "dependency_installation_result": "not_required_for_structural_or_import_tests",
+  "migration_result": {
+    "step": "initialize_storage_migrate",
+    "cmd": [
+      "/Users/macbookpro/SaathiAI/.venv/bin/python",
+      "-c",
+      "from saathi.platform.tg.integration_assurance.store import AssuranceStore; import tempfile; from pathlib import Path; p=Path(tempfile.mkdtemp())/'ia.db'; AssuranceStore(p); print('migrated', p)"
+    ],
+    "exit_code": 0,
+    "ok": true,
+    "log_tail": "migrated /var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/tmp8mvxktn5/ia.db\n"
+  },
+  "test_results": {
+    "kind": "clean_worktree",
+    "path": "/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-28rmyovr/clean-wt",
+    "steps": [
+      {
+        "step": "initialize_storage_migrate",
+        "cmd": [
+          "/Users/macbookpro/SaathiAI/.venv/bin/python",
+          "-c",
+          "from saathi.platform.tg.integration_assurance.store import AssuranceStore; import tempfile; from pathlib import Path; p=Path(tempfile.mkdtemp())/'ia.db'; AssuranceStore(p); print('migrated', p)"
+        ],
+        "exit_code": 0,
+        "ok": true,
+        "log_tail": "migrated /var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/tmp8mvxktn5/ia.db\n"
+      },
+      {
+        "step": "import_integration_assurance",
+        "cmd": [
+          "/Users/macbookpro/SaathiAI/.venv/bin/python",
+          "-c",
+          "from saathi.platform.tg.integration_assurance import TERMINAL_VERDICT, REAL_CONNECTIVITY_AUTHORIZED; from saathi.platform.tg.broker_sandbox import *; from saathi.platform.tg.broker_readiness import TERMINAL_VERDICT as BRV; assert REAL_CONNECTIVITY_AUTHORIZED is False; print('import_ok', TERMINAL_VERDICT, BRV)"
+        ],
+        "exit_code": 0,
+        "ok": true,
+        "log_tail": "import_ok BROKER_SANDBOX_ARCHITECTURE_CERTIFIED_WITH_LIMITATIONS READ_ONLY_BROKER_READINESS_CERTIFIED_WITH_LIMITATIONS\n"
+      },
+      {
+        "step": "source_audit_in_tree",
+        "cmd": [
+          "/Users/macbookpro/SaathiAI/.venv/bin/python",
+          "-c",
+          "from pathlib import Path; import tempfile; from saathi.platform.tg.integration_assurance.service import IntegrationAssuranceService; s=IntegrationAssuranceService(db_path=Path(tempfile.mkdtemp())/'x.db'); r=s.source_audit(); print(r.get('verdict'), r.get('baseline_ok'), r.get('ok')); assert r.get('baseline_ok') is True"
+        ],
+        "exit_code": 0,
+        "ok": true,
+        "log_tail": "ALL_REQUIRED_SOURCE_COMMITTED True True\n"
+      }
+    ]
+  },
+  "build_result": {
+    "skipped": true,
+    "reason": "worktree stage focuses on source+tests"
+  },
+  "browser_result": {
+    "skipped": true,
+    "reason": "browser cert in dedicated stage"
+  },
+  "environment_assumptions": [
+    "git available",
+    "python >= 3.11",
+    "pytest installed in host interpreter for in-tree tests"
+  ],
+  "external_network_attempts": 0,
+  "hidden_state_findings": [],
+  "final_verdict": "CLEAN_CLONE_REPRODUCIBLE",
+  "limitations": [],
+  "worktree_path": "/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-28rmyovr/clean-wt",
+  "worktree_log": "HEAD is now at 1e3f0a1 feat(tg): M232\u2013M239 reproducibility, supply-chain and auth planning\nPreparing worktree (detached HEAD 1e3f0a1)\nUpdating files:  94% (3410/3610)\nUpdating files:  95% (3430/3610)\nUpdating files:  96% (3466/3610)\nUpdating files:  97% (3502/3610)\nUpdating files:  98% (3538/3610)\nUpdating files:  99% (3574/3610)\nUpdating files: 100% (3610/3610)\nUpdating files: 100% (3610/3610), done.\n",
+  "REAL_CONNECTIVITY_AUTHORIZED": false
+}

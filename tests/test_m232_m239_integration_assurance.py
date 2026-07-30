@@ -64,6 +64,7 @@ def test_m232_classifications_present(svc: IntegrationAssuranceService):
 # ── M233 reproduction (structural; full clone in certification) ──────────────
 
 def test_m233_clean_worktree_structural(svc: IntegrationAssuranceService):
+    # Structural path uses worktree add; nested pytest is non-recursive.
     r = svc.clean_worktree()
     assert r["final_verdict"] in (
         "CLEAN_CLONE_REPRODUCIBLE",
@@ -71,6 +72,7 @@ def test_m233_clean_worktree_structural(svc: IntegrationAssuranceService):
     )
     assert r["external_network_attempts"] == 0
     assert not any(h.get("kind") == "hidden_env_or_secret_file" for h in r.get("hidden_state_findings") or [])
+    assert r["REAL_CONNECTIVITY_AUTHORIZED"] is False
 
 
 def test_m233_clean_clone_structural(svc: IntegrationAssuranceService):
@@ -280,17 +282,33 @@ def test_dashboard_and_verdict(svc: IntegrationAssuranceService):
     assert "THE SYSTEM REMAINS PAPER AND SANDBOX ONLY." in v["statements"]
 
 
-def test_certify_smoke(svc: IntegrationAssuranceService):
-    # Full certify is heavier; still must keep connectivity false
+def test_certify_smoke(svc: IntegrationAssuranceService, monkeypatch):
+    # Stub heavy clean-clone stages so unit suite stays non-recursive / bounded.
+    monkeypatch.setattr(
+        svc, "clean_worktree",
+        lambda: {
+            "final_verdict": "CLEAN_CLONE_REPRODUCIBLE_WITH_LIMITATIONS",
+            "limitations": ["stubbed in unit test"],
+            "external_network_attempts": 0,
+        },
+    )
+    monkeypatch.setattr(
+        svc, "clean_clone",
+        lambda: {
+            "final_verdict": "CLEAN_CLONE_REPRODUCIBLE_WITH_LIMITATIONS",
+            "limitations": ["stubbed in unit test"],
+            "external_network_attempts": 0,
+        },
+    )
     r = svc.certify()
     assert r["real_connectivity_authorized"] is False
     assert r["REAL_CONNECTIVITY_AUTHORIZED"] is False
     assert r["authorization"]["owner_signoff_automation_blocked"] is True
     assert r["authorization"]["connectivity_activation_blocked"] is True
-    assert r["source_audit"].get("ok") is True or r["source_audit"].get("m216", {}).get("resolution") == "ALL_REQUIRED_SOURCE_COMMITTED"
+    assert r["source_audit"].get("ok") is True or r["source_audit"].get("baseline_ok") is True
     assert r["verdict"] in (
         TERMINAL_VERDICT,
         "M232_M239_IMPLEMENTED_NOT_VERIFIED",
-        "M232_M239_REQUIRED_SOURCE_UNCOMMITTED",  # pre-commit of IA package only
+        "M232_M239_REQUIRED_SOURCE_UNCOMMITTED",
         "REPRODUCIBILITY_SUPPLY_CHAIN_AUTHORIZATION_CERTIFIED_WITH_LIMITATIONS",
     )

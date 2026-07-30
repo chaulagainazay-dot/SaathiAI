@@ -1,0 +1,236 @@
+{
+  "threats": [
+    {
+      "threat": "malicious_dependency_update",
+      "attack_path": "Compromised package version published to registry and pulled on install",
+      "affected_asset": "runtime / build environment",
+      "preventative_control": "Lockfiles; version pins; manual upgrade review",
+      "detective_control": "Dependency inventory; unpinned report; SBOM diff",
+      "recovery_control": "Pin last-known-good; rotate secrets; rebuild from clean clone",
+      "evidence": "ia_threats/malicious_dependency_update",
+      "residual_risk": "Transitive dependency compromise still possible"
+    },
+    {
+      "threat": "compromised_package_registry",
+      "attack_path": "Registry serves malicious tarball",
+      "affected_asset": "install pipeline",
+      "preventative_control": "Registry allow-list; HTTPS; integrity hashes in npm lock",
+      "detective_control": "Source registry inventory; unexpected registry detection",
+      "recovery_control": "Reinstall from verified mirror; audit install logs",
+      "evidence": "ia_threats/compromised_package_registry",
+      "residual_risk": "PyPI hash pinning not fully enforced"
+    },
+    {
+      "threat": "typosquatted_dependency",
+      "attack_path": "Lookalike package name in requirements",
+      "affected_asset": "dependency graph",
+      "preventative_control": "Review direct deps; known package names",
+      "detective_control": "Inventory review; risk ranking",
+      "recovery_control": "Remove package; clean environments",
+      "evidence": "ia_threats/typosquatted_dependency",
+      "residual_risk": "Human review still required"
+    },
+    {
+      "threat": "dependency_confusion",
+      "attack_path": "Public package shadows private name",
+      "affected_asset": "package resolution",
+      "preventative_control": "Public registries only for public names; no private namespace collision",
+      "detective_control": "Registry allow-list checks",
+      "recovery_control": "Pin exact versions; clear caches",
+      "evidence": "ia_threats/dependency_confusion",
+      "residual_risk": "Low for fully public stack"
+    },
+    {
+      "threat": "compromised_maintainer",
+      "attack_path": "Maintainer account takeover publishes bad release",
+      "affected_asset": "direct dependencies",
+      "preventative_control": "Pin versions; delay upgrades; review changelogs",
+      "detective_control": "Sudden version jumps in lockfile diffs",
+      "recovery_control": "Downgrade; rotate credentials",
+      "evidence": "ia_threats/compromised_maintainer",
+      "residual_risk": "Medium"
+    },
+    {
+      "threat": "malicious_install_script",
+      "attack_path": "postinstall executes arbitrary code",
+      "affected_asset": "developer machine / CI",
+      "preventative_control": "Detect lifecycle scripts; avoid curl|sh",
+      "detective_control": "Install-script inventory gate",
+      "recovery_control": "Reimage; revoke tokens",
+      "evidence": "ia_threats/malicious_install_script",
+      "residual_risk": "npm lifecycle still possible"
+    },
+    {
+      "threat": "lockfile_tampering",
+      "attack_path": "Attacker modifies package-lock without review",
+      "affected_asset": "reproducible builds",
+      "preventative_control": "PR review; lock fingerprint in provenance",
+      "detective_control": "Lockfile consistency gate",
+      "recovery_control": "Restore lock from git history",
+      "evidence": "ia_threats/lockfile_tampering",
+      "residual_risk": "Low if git protected"
+    },
+    {
+      "threat": "generated_file_tampering",
+      "attack_path": "Evidence or build artifacts altered post-generation",
+      "affected_asset": "certification evidence",
+      "preventative_control": "Content hashes; provenance records",
+      "detective_control": "Hash mismatch detection",
+      "recovery_control": "Regenerate from clean clone",
+      "evidence": "ia_threats/generated_file_tampering",
+      "residual_risk": "Unsigned hashes only"
+    },
+    {
+      "threat": "browser_binary_substitution",
+      "attack_path": "Playwright browser binary replaced",
+      "affected_asset": "browser certification",
+      "preventative_control": "Install via playwright; local-only cert",
+      "detective_control": "Unexpected browser path findings",
+      "recovery_control": "Reinstall browsers",
+      "evidence": "ia_threats/browser_binary_substitution",
+      "residual_risk": "Medium on shared machines"
+    },
+    {
+      "threat": "git_hook_manipulation",
+      "attack_path": "Malicious pre-commit hook",
+      "affected_asset": "developer workflow",
+      "preventative_control": "Do not auto-install hooks from untrusted sources",
+      "detective_control": "Audit .git/hooks in threat model",
+      "recovery_control": "Remove hooks; rotate credentials",
+      "evidence": "ia_threats/git_hook_manipulation",
+      "residual_risk": "Local machine trust"
+    },
+    {
+      "threat": "ci_action_compromise",
+      "attack_path": "GitHub Action ships malicious code",
+      "affected_asset": "CI secrets / artifacts",
+      "preventative_control": "Pin actions by SHA when possible",
+      "detective_control": "Floating tag detection",
+      "recovery_control": "Rotate CI secrets; re-run from pinned actions",
+      "evidence": "ia_threats/ci_action_compromise",
+      "residual_risk": "Medium if floating tags remain"
+    },
+    {
+      "threat": "floating_github_action_tags",
+      "attack_path": "Action tag retargeted to malicious commit",
+      "affected_asset": "CI pipeline",
+      "preventative_control": "Prefer full SHA pins",
+      "detective_control": "Floating action gate",
+      "recovery_control": "Pin SHAs; audit recent runs",
+      "evidence": "ia_threats/floating_github_action_tags",
+      "residual_risk": "Documented limitation if tags used"
+    },
+    {
+      "threat": "compromised_build_cache",
+      "attack_path": "Poisoned node_modules or pip cache",
+      "affected_asset": "build output",
+      "preventative_control": "Clean-clone verification; no cache in clean worktree",
+      "detective_control": "Hidden dependency audit",
+      "recovery_control": "Delete caches; reinstall from lockfiles",
+      "evidence": "ia_threats/compromised_build_cache",
+      "residual_risk": "Low after clean clone"
+    },
+    {
+      "threat": "local_path_injection",
+      "attack_path": "PYTHONPATH or node path injects local code",
+      "affected_asset": "runtime imports",
+      "preventative_control": "Preflight unexpected import check",
+      "detective_control": "Preflight gate",
+      "recovery_control": "Unset PYTHONPATH; re-run",
+      "evidence": "ia_threats/local_path_injection",
+      "residual_risk": "Low"
+    },
+    {
+      "threat": "environment_variable_injection",
+      "attack_path": "Provider credentials injected via env",
+      "affected_asset": "isolation boundary",
+      "preventative_control": "Forbidden env list; fail-closed preflight",
+      "detective_control": "Credential env scan",
+      "recovery_control": "Unset vars; never log secrets",
+      "evidence": "ia_threats/environment_variable_injection",
+      "residual_risk": "Low"
+    },
+    {
+      "threat": "dns_poisoning",
+      "attack_path": "Package registry resolves to attacker",
+      "affected_asset": "install network path",
+      "preventative_control": "HTTPS; known registries",
+      "detective_control": "Unexpected registry domain",
+      "recovery_control": "Reinstall after DNS validation",
+      "evidence": "ia_threats/dns_poisoning",
+      "residual_risk": "Infrastructure residual"
+    },
+    {
+      "threat": "download_substitution",
+      "attack_path": "Binary download replaced in transit",
+      "affected_asset": "tooling binaries",
+      "preventative_control": "Prefer lockfile package managers",
+      "detective_control": "Unverified download detection",
+      "recovery_control": "Re-download with integrity checks",
+      "evidence": "ia_threats/download_substitution",
+      "residual_risk": "Medium for ad-hoc scripts"
+    },
+    {
+      "threat": "checksum_bypass",
+      "attack_path": "Integrity check skipped",
+      "affected_asset": "install integrity",
+      "preventative_control": "npm ci uses lock integrity",
+      "detective_control": "Integrity report",
+      "recovery_control": "Force clean install",
+      "evidence": "ia_threats/checksum_bypass",
+      "residual_risk": "pip hashes not mandatory"
+    },
+    {
+      "threat": "stale_vulnerable_dependency",
+      "attack_path": "Known CVE remains unpatched",
+      "affected_asset": "runtime",
+      "preventative_control": "Manual review policy; no auto-upgrade without review",
+      "detective_control": "Risk-ranked inventory",
+      "recovery_control": "Targeted upgrade after review",
+      "evidence": "ia_threats/stale_vulnerable_dependency",
+      "residual_risk": "Accepted for planning milestone"
+    },
+    {
+      "threat": "malicious_fixture",
+      "attack_path": "Test fixture triggers side effects",
+      "affected_asset": "test harness",
+      "preventative_control": "Fixtures are synthetic metadata only",
+      "detective_control": "Secret rejection tests",
+      "recovery_control": "Remove fixture; re-run suite",
+      "evidence": "ia_threats/malicious_fixture",
+      "residual_risk": "Low"
+    },
+    {
+      "threat": "malicious_documentation_command",
+      "attack_path": "Docs instruct curl|sh or credential use",
+      "affected_asset": "operator workflow",
+      "preventative_control": "Docs are planning/repro only; no provider connect",
+      "detective_control": "Doc review in certification",
+      "recovery_control": "Amend docs",
+      "evidence": "ia_threats/malicious_documentation_command",
+      "residual_risk": "Low"
+    },
+    {
+      "threat": "evidence_tampering",
+      "attack_path": "Certification evidence edited to hide failure",
+      "affected_asset": "audit trail",
+      "preventative_control": "Evidence hashes; provenance; regenerate from clean clone",
+      "detective_control": "Manifest hash verification",
+      "recovery_control": "Regenerate evidence; note discrepancy",
+      "evidence": "ia_threats/evidence_tampering",
+      "residual_risk": "Unsigned integrity only"
+    },
+    {
+      "threat": "sbom_tampering",
+      "attack_path": "SBOM altered after generation",
+      "affected_asset": "supply-chain transparency",
+      "preventative_control": "SBOM fingerprint in store + provenance",
+      "detective_control": "Fingerprint mismatch",
+      "recovery_control": "Regenerate SBOM",
+      "evidence": "ia_threats/sbom_tampering",
+      "residual_risk": "Unsigned"
+    }
+  ],
+  "count": 23,
+  "REAL_CONNECTIVITY_AUTHORIZED": false
+}

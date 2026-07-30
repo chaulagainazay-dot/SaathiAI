@@ -1,0 +1,7 @@
+{
+  "ok": false,
+  "error": "OWNER_SIGNOFF_AUTOMATION_FORBIDDEN",
+  "message": "No automated test, LLM, agent or pipeline may produce owner sign-off.",
+  "owner_signoff_automated": false,
+  "REAL_CONNECTIVITY_AUTHORIZED": false
+}

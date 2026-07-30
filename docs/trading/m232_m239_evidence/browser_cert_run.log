@@ -1,0 +1,35 @@
+
+> saathi-os@0.1.0 cert:m239
+> node scripts/m239_integration_assurance_browser_cert.mjs
+
+{
+  "verdict": "REPRODUCIBILITY_SUPPLY_CHAIN_AUTHORIZATION_BROWSER_CERT_PASSED_WITH_LIMITATIONS",
+  "path": "/Users/macbookpro/SaathiAI/docs/trading/m232_m239_evidence/M239_BROWSER_CERT.json",
+  "hard": {
+    "bff_up": {
+      "ok": true,
+      "detail": "http://127.0.0.1:8839"
+    },
+    "seed_login": {
+      "ok": true,
+      "detail": "token issued"
+    },
+    "dashboard_api": {
+      "ok": true,
+      "detail": "ok"
+    },
+    "owner_signoff_block": {
+      "ok": true,
+      "detail": "OWNER_SIGNOFF_AUTOMATION_FORBIDDEN"
+    },
+    "network_isolation": {
+      "ok": true,
+      "detail": "blocked"
+    },
+    "ui_up": {
+      "ok": true,
+      "detail": "http://127.0.0.1:3239"
+    }
+  },
+  "journeys": 22
+}

@@ -1415,3 +1415,19 @@ Branch `milestone/m42-graduation-review`.
   no production read-only authority, no owner sign-off claimed, M232 not started.
 - Evidence: `docs/trading/m224_m231_evidence/`. Doc: `docs/trading/M224_M231_READ_ONLY_BROKER_READINESS.md`.
 - Next: only after owner planning — remain paper/sandbox only.
+
+## M232–M239 — Reproducibility, Supply-Chain Assurance & Authorization Planning (2026-07-30)
+
+**Status:** `REPRODUCIBILITY_SUPPLY_CHAIN_AUTHORIZATION_CERTIFIED_WITH_LIMITATIONS`.
+
+- M232 clean-clone dependency audit (M216 uncommitted baseline resolved — all required source committed);
+- M233 clean worktree + clean clone reproduction (WITH_LIMITATIONS on full npm/browser in clone);
+- M234 hermetic environment contract + fail-closed preflight;
+- M235 dependency inventory / lockfiles / install-script scan;
+- M236 CycloneDX SBOM + unsigned provenance;
+- M237 supply-chain threat model + assurance gates;
+- M238 read-only integration authorization **planning** (max canary-planning eligible; real connectivity false; no automated owner sign-off);
+- M239 Integration Assurance Control Center `/trading/integration-assurance`; `cert:m239`.
+- Explicit: no real connectivity, no credentials, no orders, no live trading, M240 not started.
+- Evidence: `docs/trading/m232_m239_evidence/`. Doc: `docs/trading/M232_M239_REPRODUCIBILITY_SUPPLY_CHAIN_AUTHORIZATION.md`.
+
