@@ -405,6 +405,50 @@ def main(argv: list[str] | None = None) -> int:
     pg_sub.add_parser("md-certify")
     pg_sub.add_parser("md-dashboard")
     pg_sub.add_parser("md-bootstrap")
+    # M272–M279 multi-strategy research lab (RESEARCH ONLY)
+    pg_sub.add_parser("rl-verdict")
+    p_rlc = pg_sub.add_parser("rl-experiment-create")
+    p_rlc.add_argument("--name", default="cli_experiment")
+    p_rlc.add_argument("--strategy", default="tf_dual_ma")
+    p_rlp = pg_sub.add_parser("rl-experiment-preregister")
+    p_rlp.add_argument("--id", required=True)
+    p_rlp.add_argument("--version", default="v1")
+    pg_sub.add_parser("rl-experiment-list")
+    p_rls = pg_sub.add_parser("rl-experiment-show")
+    p_rls.add_argument("--id", required=True)
+    p_rls.add_argument("--version", default="v1")
+    p_rlr = pg_sub.add_parser("rl-experiment-run")
+    p_rlr.add_argument("--id", required=True)
+    p_rlr.add_argument("--version", default="v1")
+    p_rlrep = pg_sub.add_parser("rl-experiment-replay")
+    p_rlrep.add_argument("--id", required=True)
+    p_rlrep.add_argument("--version", default="v1")
+    pg_sub.add_parser("rl-strategy-compare")
+    p_rlrob = pg_sub.add_parser("rl-robustness")
+    p_rlrob.add_argument("--strategy", default="tf_dual_ma")
+    pg_sub.add_parser("rl-overfitting")
+    pg_sub.add_parser("rl-regime-build")
+    pg_sub.add_parser("rl-regime-classify")
+    pg_sub.add_parser("rl-regime-validate")
+    pg_sub.add_parser("rl-portfolio-build")
+    pg_sub.add_parser("rl-portfolio-optimise")
+    pg_sub.add_parser("rl-portfolio-risk")
+    pg_sub.add_parser("rl-ensemble-build")
+    pg_sub.add_parser("rl-ensemble-validate")
+    pg_sub.add_parser("rl-stress-run")
+    pg_sub.add_parser("rl-candidate-list")
+    p_rlcr = pg_sub.add_parser("rl-candidate-review")
+    p_rlcr.add_argument("--id", required=True)
+    p_rlcr.add_argument("--actor", default="human_reviewer")
+    p_rlcj = pg_sub.add_parser("rl-candidate-reject")
+    p_rlcj.add_argument("--id", required=True)
+    p_rlcj.add_argument("--reason", default="rejected_by_operator")
+    p_rlcv = pg_sub.add_parser("rl-candidate-revoke")
+    p_rlcv.add_argument("--id", required=True)
+    p_rlcv.add_argument("--reason", default="revoked_by_operator")
+    pg_sub.add_parser("rl-certify")
+    pg_sub.add_parser("rl-dashboard")
+    pg_sub.add_parser("rl-bootstrap")
     # Top-level md-* aliases
     sub.add_parser("md-verdict")
     sub.add_parser("md-dataset-list")
@@ -412,6 +456,13 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("md-certify")
     sub.add_parser("md-dashboard")
     sub.add_parser("md-bootstrap")
+    # Top-level rl-* aliases
+    sub.add_parser("rl-verdict")
+    sub.add_parser("rl-experiment-list")
+    sub.add_parser("rl-strategy-compare")
+    sub.add_parser("rl-certify")
+    sub.add_parser("rl-dashboard")
+    sub.add_parser("rl-bootstrap")
     # Aliases matching goal prompt command names
     p_sl = sub.add_parser("strategy-list")
     p_sl.add_argument("--category", default="")
@@ -1024,6 +1075,80 @@ def main(argv: list[str] | None = None) -> int:
                 return mwrap(md.dashboard())
             if args.action == "md-bootstrap":
                 return mwrap(md.bootstrap_fixture_pipeline())
+        # M272–M279 research lab
+        if args.action and str(args.action).startswith("rl-"):
+            from saathi.platform.tg.research_lab.service import default_research_lab
+            rl = default_research_lab()
+
+            def rwrap(d):
+                if isinstance(d, dict):
+                    d = {
+                        **d,
+                        "REAL_CONNECTIVITY_AUTHORIZED": False,
+                        "BROKER_CONNECTIVITY_AUTHORIZED": False,
+                        "CREDENTIAL_PROVISIONING_AUTHORIZED": False,
+                        "CANARY_ACTIVATION_AUTHORIZED": False,
+                        "ORDER_EXECUTION_AUTHORIZED": False,
+                        "LIVE_TRADING_AUTHORIZED": False,
+                        "research_only": True,
+                    }
+                return _out(d)
+
+            if args.action == "rl-verdict":
+                return rwrap(rl.terminal_verdict())
+            if args.action == "rl-experiment-create":
+                return rwrap(rl.create_experiment(
+                    args.name, strategy_ids=[args.strategy], random_seed=42,
+                ))
+            if args.action == "rl-experiment-preregister":
+                return rwrap(rl.pre_register(args.id, args.version))
+            if args.action == "rl-experiment-list":
+                return rwrap(rl.list_experiments())
+            if args.action == "rl-experiment-show":
+                return rwrap(rl.get_experiment(args.id, args.version))
+            if args.action == "rl-experiment-run":
+                return rwrap(rl.run_experiment(args.id, args.version))
+            if args.action == "rl-experiment-replay":
+                return rwrap(rl.replay_experiment(args.id, args.version))
+            if args.action == "rl-strategy-compare":
+                return rwrap(rl.compare_strategies())
+            if args.action == "rl-robustness":
+                return rwrap(rl.analyse_robustness(args.strategy))
+            if args.action == "rl-overfitting":
+                return rwrap(rl.analyse_robustness("tf_dual_ma"))
+            if args.action == "rl-regime-build":
+                return rwrap(rl.build_regimes())
+            if args.action == "rl-regime-classify":
+                return rwrap(rl.classify_regimes())
+            if args.action == "rl-regime-validate":
+                return rwrap(rl.validate_regimes())
+            if args.action in ("rl-portfolio-build", "rl-portfolio-optimise", "rl-portfolio-risk"):
+                from saathi.platform.tg.research_lab.comparison import _simulate_strategy_returns
+                assets = ["tf_dual_ma", "mom_rs_equity"]
+                rets = {a: _simulate_strategy_returns(a, n=80, seed=i)["returns"] for i, a in enumerate(assets)}
+                return rwrap(rl.build_portfolio(assets, rets, method="equal_weight"))
+            if args.action in ("rl-ensemble-build", "rl-ensemble-validate"):
+                return rwrap(rl.build_ensemble(["tf_dual_ma", "mom_rs_equity", "mr_bollinger_reversion"]))
+            if args.action == "rl-stress-run":
+                from saathi.platform.tg.research_lab.comparison import _simulate_strategy_returns
+                assets = ["tf_dual_ma", "mom_rs_equity"]
+                rets = {a: _simulate_strategy_returns(a, n=80, seed=i)["returns"] for i, a in enumerate(assets)}
+                w = {a: 0.5 for a in assets}
+                return rwrap(rl.run_stress(w, rets))
+            if args.action == "rl-candidate-list":
+                return rwrap(rl.list_candidates())
+            if args.action == "rl-candidate-review":
+                return rwrap(rl.request_candidate_review(args.id, actor=args.actor))
+            if args.action == "rl-candidate-reject":
+                return rwrap(rl.reject_candidate(args.id, args.reason))
+            if args.action == "rl-candidate-revoke":
+                return rwrap(rl.revoke_candidate(args.id, args.reason))
+            if args.action == "rl-certify":
+                return rwrap(rl.certify())
+            if args.action == "rl-dashboard":
+                return rwrap(rl.dashboard())
+            if args.action == "rl-bootstrap":
+                return rwrap(rl.bootstrap_demo_pipeline())
         return 2
 
     # Top-level market-data aliases (M256–M263)
@@ -1075,6 +1200,34 @@ def main(argv: list[str] | None = None) -> int:
             return _out(ii.explain(args.instrument, strategy_id=args.strategy))
         if args.cmd == "certify-intelligence":
             return _out(ii.certify())
+
+    # Top-level research-lab aliases (M272–M279)
+    if args.cmd in (
+        "rl-verdict", "rl-experiment-list", "rl-strategy-compare",
+        "rl-certify", "rl-dashboard", "rl-bootstrap",
+    ):
+        from saathi.platform.tg.research_lab.service import default_research_lab
+        rl = default_research_lab()
+        if args.cmd == "rl-verdict":
+            return _out({
+                **rl.terminal_verdict(),
+                "REAL_CONNECTIVITY_AUTHORIZED": False,
+                "BROKER_CONNECTIVITY_AUTHORIZED": False,
+                "CREDENTIAL_PROVISIONING_AUTHORIZED": False,
+                "CANARY_ACTIVATION_AUTHORIZED": False,
+                "ORDER_EXECUTION_AUTHORIZED": False,
+                "LIVE_TRADING_AUTHORIZED": False,
+            })
+        if args.cmd == "rl-experiment-list":
+            return _out(rl.list_experiments())
+        if args.cmd == "rl-strategy-compare":
+            return _out(rl.compare_strategies())
+        if args.cmd == "rl-certify":
+            return _out(rl.certify())
+        if args.cmd == "rl-dashboard":
+            return _out(rl.dashboard())
+        if args.cmd == "rl-bootstrap":
+            return _out(rl.bootstrap_demo_pipeline())
 
     parser.print_help()
     return 2

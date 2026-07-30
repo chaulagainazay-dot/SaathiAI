@@ -10962,3 +10962,431 @@ def tg_md_canary_refuse(authorization: str | None = Header(default=None), x_plat
         return _tg_market_data().refuse_canary()
     except PlatformContextError as e:
         raise _err(e) from e
+
+
+# ── M272–M279 Multi-Strategy Research Lab (RESEARCH ONLY) ────────────────────
+
+def _tg_research_lab():
+    from saathi.platform.tg.research_lab.service import default_research_lab
+    return default_research_lab()
+
+
+@router.get("/tg/research-lab/posture")
+def tg_rl_posture(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_research_lab().posture()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/research-lab/verdict")
+def tg_rl_verdict(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_research_lab().terminal_verdict()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/research-lab/dashboard")
+def tg_rl_dashboard(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_research_lab().dashboard()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/research-lab/experiments")
+def tg_rl_experiments(status: str | None = None, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_research_lab().list_experiments(status)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/research-lab/experiments/{experiment_id}")
+def tg_rl_experiment_get(experiment_id: str, version: str = "v1", authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_research_lab().get_experiment(experiment_id, version)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+class RlExperimentCreateBody(BaseModel):
+    name: str = "api_experiment"
+    description: str = ""
+    research_question: str = ""
+    hypothesis: str = ""
+    strategy_ids: list[str] = ["tf_dual_ma"]
+    random_seed: int = 42
+
+
+@router.post("/tg/research-lab/experiments")
+def tg_rl_experiment_create(body: RlExperimentCreateBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_research_lab().create_experiment(
+            body.name,
+            description=body.description,
+            research_question=body.research_question,
+            hypothesis=body.hypothesis,
+            strategy_ids=body.strategy_ids,
+            random_seed=body.random_seed,
+            actor=getattr(ctx, "actor_id", None) or "api",
+        )
+    except PlatformContextError as e:
+        raise _err(e) from e
+    except Exception as e:
+        from saathi.platform.tg.research_lab.errors import ResearchLabError
+        if isinstance(e, ResearchLabError):
+            return e.to_dict()
+        raise
+
+
+@router.post("/tg/research-lab/experiments/{experiment_id}/pre-register")
+def tg_rl_pre_register(experiment_id: str, version: str = "v1", authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_research_lab().pre_register(experiment_id, version)
+    except PlatformContextError as e:
+        raise _err(e) from e
+    except Exception as e:
+        from saathi.platform.tg.research_lab.errors import ResearchLabError
+        if isinstance(e, ResearchLabError):
+            return e.to_dict()
+        raise
+
+
+@router.post("/tg/research-lab/experiments/{experiment_id}/run")
+def tg_rl_run(experiment_id: str, version: str = "v1", authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_research_lab().run_experiment(experiment_id, version)
+    except PlatformContextError as e:
+        raise _err(e) from e
+    except Exception as e:
+        from saathi.platform.tg.research_lab.errors import ResearchLabError
+        if isinstance(e, ResearchLabError):
+            return e.to_dict()
+        raise
+
+
+@router.post("/tg/research-lab/experiments/{experiment_id}/replay")
+def tg_rl_replay(experiment_id: str, version: str = "v1", authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_research_lab().replay_experiment(experiment_id, version)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/research-lab/compare")
+def tg_rl_compare(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_research_lab().compare_strategies()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/research-lab/robustness")
+def tg_rl_robustness(strategy_id: str = "tf_dual_ma", authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_research_lab().analyse_robustness(strategy_id)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/research-lab/regimes/definitions")
+def tg_rl_regime_defs(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_research_lab().regime_definitions()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/research-lab/regimes/build")
+def tg_rl_regime_build(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_research_lab().build_regimes()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/research-lab/regimes/classify")
+def tg_rl_regime_classify(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_research_lab().classify_regimes()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/research-lab/portfolios/build")
+def tg_rl_portfolio_build(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        from saathi.platform.tg.research_lab.comparison import _simulate_strategy_returns
+        assets = ["tf_dual_ma", "mom_rs_equity", "mr_bollinger_reversion"]
+        rets = {a: _simulate_strategy_returns(a, n=100, seed=i)["returns"] for i, a in enumerate(assets)}
+        return _tg_research_lab().build_portfolio(assets, rets, method="equal_weight")
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/research-lab/ensembles/build")
+def tg_rl_ensemble_build(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_research_lab().build_ensemble(["tf_dual_ma", "mom_rs_equity", "mr_bollinger_reversion"])
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/research-lab/stress/run")
+def tg_rl_stress(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        from saathi.platform.tg.research_lab.comparison import _simulate_strategy_returns
+        assets = ["tf_dual_ma", "mom_rs_equity"]
+        rets = {a: _simulate_strategy_returns(a, n=80, seed=i)["returns"] for i, a in enumerate(assets)}
+        return _tg_research_lab().run_stress({a: 0.5 for a in assets}, rets)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/research-lab/candidates")
+def tg_rl_candidates(state: str | None = None, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_research_lab().list_candidates(state)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/research-lab/candidates/{candidate_id}")
+def tg_rl_candidate_get(candidate_id: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_research_lab().get_candidate(candidate_id)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+class RlCandidateActionBody(BaseModel):
+    reason: str = "operator_action"
+    actor: str = "human_reviewer"
+
+
+@router.post("/tg/research-lab/candidates/{candidate_id}/review")
+def tg_rl_candidate_review(candidate_id: str, body: RlCandidateActionBody | None = None, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        actor = (body.actor if body else None) or "human_reviewer"
+        return _tg_research_lab().request_candidate_review(candidate_id, actor=actor)
+    except PlatformContextError as e:
+        raise _err(e) from e
+    except Exception as e:
+        from saathi.platform.tg.research_lab.errors import ResearchLabError
+        if isinstance(e, ResearchLabError):
+            return e.to_dict()
+        raise
+
+
+@router.post("/tg/research-lab/candidates/{candidate_id}/reject")
+def tg_rl_candidate_reject(candidate_id: str, body: RlCandidateActionBody | None = None, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        reason = (body.reason if body else None) or "rejected"
+        return _tg_research_lab().reject_candidate(candidate_id, reason)
+    except PlatformContextError as e:
+        raise _err(e) from e
+    except Exception as e:
+        from saathi.platform.tg.research_lab.errors import ResearchLabError
+        if isinstance(e, ResearchLabError):
+            return e.to_dict()
+        raise
+
+
+@router.post("/tg/research-lab/candidates/{candidate_id}/revoke")
+def tg_rl_candidate_revoke(candidate_id: str, body: RlCandidateActionBody | None = None, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        reason = (body.reason if body else None) or "revoked"
+        return _tg_research_lab().revoke_candidate(candidate_id, reason)
+    except PlatformContextError as e:
+        raise _err(e) from e
+    except Exception as e:
+        from saathi.platform.tg.research_lab.errors import ResearchLabError
+        if isinstance(e, ResearchLabError):
+            return e.to_dict()
+        raise
+
+
+@router.post("/tg/research-lab/bootstrap")
+def tg_rl_bootstrap(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_research_lab().bootstrap_demo_pipeline()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/research-lab/certify")
+def tg_rl_certify(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_research_lab().certify()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/research-lab/certification")
+def tg_rl_certification_get(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_research_lab().terminal_verdict()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/research-lab/evidence")
+def tg_rl_evidence(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_research_lab().evidence_bundle()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/research-lab/security")
+def tg_rl_security(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_research_lab().security_scan()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/research-lab/broker/connect")
+def tg_rl_broker_refuse(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_research_lab().refuse_broker()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+class RlCredBody(BaseModel):
+    api_key: str | None = None
+    secret: str | None = None
+
+
+@router.post("/tg/research-lab/credentials")
+def tg_rl_cred_refuse(body: RlCredBody | None = None, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        val = None
+        if body:
+            val = body.api_key or body.secret
+        return _tg_research_lab().refuse_credentials(val)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/research-lab/orders")
+def tg_rl_order_refuse(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_research_lab().refuse_order()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/research-lab/canary/activate")
+def tg_rl_canary_refuse(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_research_lab().refuse_canary()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/research-lab/paper-execution/activate")
+def tg_rl_paper_exec_refuse(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_research_lab().refuse_paper_execution()
+    except PlatformContextError as e:
+        raise _err(e) from e

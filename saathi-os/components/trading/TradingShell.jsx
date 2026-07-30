@@ -36,6 +36,7 @@ const TABS = [
   { href: "/trading/provider-canary-planning", label: "Provider Canary Planning" },
   { href: "/trading/intelligence", label: "Portfolio Intelligence" },
   { href: "/trading/research-data", label: "Research Data" },
+  { href: "/trading/research-lab", label: "Research Lab" },
   { href: "/trading/paper-ledger", label: "Ledger" },
   { href: "/trading/paper-recovery", label: "Recovery" },
   { href: "/trading/comparison", label: "Comparison" },
