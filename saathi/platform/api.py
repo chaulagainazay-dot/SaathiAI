@@ -9777,3 +9777,413 @@ def tg_ia_evidence(authorization: str | None = Header(default=None), x_platform_
     except PlatformContextError as e:
         raise _err(e) from e
 
+
+
+# ── M240–M247 Provider Canary Planning (PLANNING ONLY) ──────────────────────
+def _provider_canary_planning():
+    from saathi.platform.tg.provider_canary_planning.service import default_provider_canary_planning
+    return default_provider_canary_planning()
+
+
+@router.get("/tg/provider-canary-planning/posture")
+def tg_pcp_posture(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _provider_canary_planning().posture()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/provider-canary-planning/verdict")
+def tg_pcp_verdict(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _provider_canary_planning().terminal_verdict()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/provider-canary-planning/dashboard")
+def tg_pcp_dashboard(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _provider_canary_planning().dashboard()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/provider-canary-planning/candidates")
+def tg_pcp_candidates(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _provider_canary_planning().candidates()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/provider-canary-planning/rankings")
+def tg_pcp_rankings(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _provider_canary_planning().rankings()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/provider-canary-planning/sources")
+def tg_pcp_sources(provider: str | None = None, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _provider_canary_planning().list_sources(provider)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/provider-canary-planning/preferred")
+def tg_pcp_preferred(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _provider_canary_planning().preferred()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/provider-canary-planning/fallback")
+def tg_pcp_fallback(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _provider_canary_planning().fallback()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/provider-canary-planning/capabilities")
+def tg_pcp_caps(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _provider_canary_planning().capabilities_map()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/provider-canary-planning/endpoints")
+def tg_pcp_endpoints(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _provider_canary_planning().endpoints()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/provider-canary-planning/scopes")
+def tg_pcp_scopes(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _provider_canary_planning().scopes()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+class PcpScopesBody(BaseModel):
+    scopes: list[str] = []
+
+
+@router.post("/tg/provider-canary-planning/scopes/validate")
+def tg_pcp_scopes_validate(body: PcpScopesBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _provider_canary_planning().validate_scopes(body.scopes)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/provider-canary-planning/eligibility")
+def tg_pcp_elig(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _provider_canary_planning().eligibility_review()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/provider-canary-planning/terms")
+def tg_pcp_terms(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _provider_canary_planning().terms_review()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/provider-canary-planning/canary")
+def tg_pcp_canary(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _provider_canary_planning().canary_design()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/provider-canary-planning/canary/activate")
+def tg_pcp_canary_activate(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _provider_canary_planning().canary_activate_attempt()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/provider-canary-planning/credential-ceremony")
+def tg_pcp_cred(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _provider_canary_planning().credential_ceremony()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+class PcpCredBody(BaseModel):
+    api_key: str | None = None
+    secret: str | None = None
+    token: str | None = None
+
+
+@router.post("/tg/provider-canary-planning/credentials")
+def tg_pcp_cred_reject(body: PcpCredBody | None = None, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        val = None
+        if body:
+            val = body.api_key or body.secret or body.token
+        return _provider_canary_planning().refuse_credentials(val)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/provider-canary-planning/oauth")
+def tg_pcp_oauth(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _provider_canary_planning().refuse_oauth()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/provider-canary-planning/monitoring")
+def tg_pcp_mon(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _provider_canary_planning().monitoring_plan()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/provider-canary-planning/reconciliation")
+def tg_pcp_recon(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _provider_canary_planning().reconciliation_plan()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/provider-canary-planning/acceptance")
+def tg_pcp_accept(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _provider_canary_planning().acceptance_gates()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/provider-canary-planning/abort")
+def tg_pcp_abort(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _provider_canary_planning().abort_gates()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/provider-canary-planning/owner-package")
+def tg_pcp_owner(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _provider_canary_planning().owner_package()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/provider-canary-planning/owner-signoff")
+def tg_pcp_owner_signoff(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _provider_canary_planning().owner_auto_signoff_attempt()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+class PcpReviewBody(BaseModel):
+    status: str
+    notes: str = ""
+
+
+@router.post("/tg/provider-canary-planning/planning-review-status")
+def tg_pcp_review(body: PcpReviewBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_CONFIGURE)
+        return _provider_canary_planning().planning_review_status(body.status, notes=body.notes, actor="api")
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/provider-canary-planning/network-policy")
+def tg_pcp_net(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _provider_canary_planning().network_policy()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+class PcpTransportBody(BaseModel):
+    url: str
+
+
+@router.post("/tg/provider-canary-planning/transport/probe")
+def tg_pcp_transport(body: PcpTransportBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _provider_canary_planning().transport_probe(body.url)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/provider-canary-planning/security/scan")
+def tg_pcp_sec(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _provider_canary_planning().security_scan()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/provider-canary-planning/threat-model")
+def tg_pcp_threats(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _provider_canary_planning().threat_model()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/provider-canary-planning/audit")
+def tg_pcp_audit(limit: int = 100, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _provider_canary_planning().audit_timeline(limit=limit)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/provider-canary-planning/certify")
+def tg_pcp_certify(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _provider_canary_planning().certify()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+class PcpLlmBody(BaseModel):
+    action: str
+
+
+@router.post("/tg/provider-canary-planning/llm/refuse")
+def tg_pcp_llm(body: PcpLlmBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _provider_canary_planning().llm_refuse(body.action)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/provider-canary-planning/evidence")
+def tg_pcp_evidence(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return {
+            "path": "docs/trading/m240_m247_evidence/",
+            "REAL_CONNECTIVITY_AUTHORIZED": False,
+            "note": "Evidence generated offline; UI displays findings only",
+        }
+    except PlatformContextError as e:
+        raise _err(e) from e

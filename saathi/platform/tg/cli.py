@@ -297,6 +297,27 @@ def main(argv: list[str] | None = None) -> int:
     pg_sub.add_parser("ia-security")
     pg_sub.add_parser("ia-certify")
     pg_sub.add_parser("ia-dashboard")
+    # M240–M247 provider canary planning (PLANNING ONLY)
+    pg_sub.add_parser("pcp-verdict")
+    pg_sub.add_parser("pcp-candidates")
+    pg_sub.add_parser("pcp-rank")
+    pg_sub.add_parser("pcp-sources")
+    pg_sub.add_parser("pcp-provider")
+    pg_sub.add_parser("pcp-capabilities")
+    pg_sub.add_parser("pcp-endpoints")
+    pg_sub.add_parser("pcp-eligibility")
+    pg_sub.add_parser("pcp-terms")
+    pg_sub.add_parser("pcp-scopes")
+    pg_sub.add_parser("pcp-canary-design")
+    pg_sub.add_parser("pcp-credential-runbook")
+    pg_sub.add_parser("pcp-monitoring")
+    pg_sub.add_parser("pcp-reconciliation")
+    pg_sub.add_parser("pcp-acceptance")
+    pg_sub.add_parser("pcp-abort")
+    pg_sub.add_parser("pcp-owner-package")
+    pg_sub.add_parser("pcp-security")
+    pg_sub.add_parser("pcp-certify")
+    pg_sub.add_parser("pcp-dashboard")
 
     args = parser.parse_args(argv)
     if not args.cmd:
@@ -722,6 +743,62 @@ def main(argv: list[str] | None = None) -> int:
                 return iwrap(ia.certify())
             if args.action == "ia-dashboard":
                 return iwrap(ia.dashboard())
+        # M240–M247 provider canary planning
+        if args.action and str(args.action).startswith("pcp-"):
+            from saathi.platform.tg.provider_canary_planning.service import default_provider_canary_planning
+            pcp = default_provider_canary_planning()
+
+            def pwrap(d):
+                if isinstance(d, dict):
+                    d = {
+                        **d,
+                        "REAL_CONNECTIVITY_AUTHORIZED": False,
+                        "CREDENTIAL_PROVISIONING_AUTHORIZED": False,
+                        "CANARY_ACTIVATION_AUTHORIZED": False,
+                        "LIVE_TRADING_AUTHORIZED": False,
+                    }
+                return _out(d)
+
+            if args.action == "pcp-verdict":
+                return pwrap(pcp.terminal_verdict())
+            if args.action == "pcp-candidates":
+                return pwrap(pcp.candidates())
+            if args.action == "pcp-rank":
+                return pwrap(pcp.rankings())
+            if args.action == "pcp-sources":
+                return pwrap(pcp.list_sources())
+            if args.action == "pcp-provider":
+                return pwrap({"preferred": pcp.preferred(), "fallback": pcp.fallback()})
+            if args.action == "pcp-capabilities":
+                return pwrap(pcp.capabilities_map())
+            if args.action == "pcp-endpoints":
+                return pwrap(pcp.endpoints())
+            if args.action == "pcp-eligibility":
+                return pwrap(pcp.eligibility_review())
+            if args.action == "pcp-terms":
+                return pwrap(pcp.terms_review())
+            if args.action == "pcp-scopes":
+                return pwrap(pcp.scopes())
+            if args.action == "pcp-canary-design":
+                return pwrap(pcp.canary_design())
+            if args.action == "pcp-credential-runbook":
+                return pwrap(pcp.credential_ceremony())
+            if args.action == "pcp-monitoring":
+                return pwrap(pcp.monitoring_plan())
+            if args.action == "pcp-reconciliation":
+                return pwrap(pcp.reconciliation_plan())
+            if args.action == "pcp-acceptance":
+                return pwrap(pcp.acceptance_gates())
+            if args.action == "pcp-abort":
+                return pwrap(pcp.abort_gates())
+            if args.action == "pcp-owner-package":
+                return pwrap(pcp.owner_package())
+            if args.action == "pcp-security":
+                return pwrap(pcp.security_scan())
+            if args.action == "pcp-certify":
+                return pwrap(pcp.certify())
+            if args.action == "pcp-dashboard":
+                return pwrap(pcp.dashboard())
         return 2
 
     parser.print_help()
