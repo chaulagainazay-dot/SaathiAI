@@ -1,0 +1,761 @@
+[
+  {
+    "review_id": "scope_4ac62c3d57054e1d",
+    "outcome": "LEAST_PRIVILEGE_CONFIRMED_IN_SIMULATION",
+    "ok": true,
+    "requested": [
+      "ACCOUNT_METADATA_READ"
+    ],
+    "declared": [
+      "ACCOUNT_METADATA_READ"
+    ],
+    "provider_reported": [
+      "ACCOUNT_METADATA_READ"
+    ],
+    "approved": [
+      "ACCOUNT_METADATA_READ"
+    ],
+    "effective": [
+      "ACCOUNT_METADATA_READ"
+    ],
+    "scope_diff": {
+      "requested_not_in_approved": [],
+      "declared_not_in_approved": [],
+      "provider_not_in_declared": [],
+      "approved_not_in_declared": [],
+      "write_scopes": [],
+      "unknown_scopes": []
+    },
+    "reasons": [
+      "least privilege confirmed in simulation"
+    ],
+    "fail_closed": false,
+    "simulation_only": true
+  },
+  {
+    "review_id": "scope_ab29c17e5b994175",
+    "outcome": "LEAST_PRIVILEGE_CONFIRMED_IN_SIMULATION",
+    "ok": true,
+    "requested": [
+      "ACCOUNT_PERMISSION_READ"
+    ],
+    "declared": [
+      "ACCOUNT_PERMISSION_READ"
+    ],
+    "provider_reported": [
+      "ACCOUNT_PERMISSION_READ"
+    ],
+    "approved": [
+      "ACCOUNT_PERMISSION_READ"
+    ],
+    "effective": [
+      "ACCOUNT_PERMISSION_READ"
+    ],
+    "scope_diff": {
+      "requested_not_in_approved": [],
+      "declared_not_in_approved": [],
+      "provider_not_in_declared": [],
+      "approved_not_in_declared": [],
+      "write_scopes": [],
+      "unknown_scopes": []
+    },
+    "reasons": [
+      "least privilege confirmed in simulation"
+    ],
+    "fail_closed": false,
+    "simulation_only": true
+  },
+  {
+    "review_id": "scope_0f5dadcfe5e64bf1",
+    "outcome": "LEAST_PRIVILEGE_CONFIRMED_IN_SIMULATION",
+    "ok": true,
+    "requested": [
+      "BALANCE_READ"
+    ],
+    "declared": [
+      "BALANCE_READ"
+    ],
+    "provider_reported": [
+      "BALANCE_READ"
+    ],
+    "approved": [
+      "BALANCE_READ"
+    ],
+    "effective": [
+      "BALANCE_READ"
+    ],
+    "scope_diff": {
+      "requested_not_in_approved": [],
+      "declared_not_in_approved": [],
+      "provider_not_in_declared": [],
+      "approved_not_in_declared": [],
+      "write_scopes": [],
+      "unknown_scopes": []
+    },
+    "reasons": [
+      "least privilege confirmed in simulation"
+    ],
+    "fail_closed": false,
+    "simulation_only": true
+  },
+  {
+    "review_id": "scope_a20ca46f976f4353",
+    "outcome": "LEAST_PRIVILEGE_CONFIRMED_IN_SIMULATION",
+    "ok": true,
+    "requested": [
+      "FEE_HISTORY_READ"
+    ],
+    "declared": [
+      "FEE_HISTORY_READ"
+    ],
+    "provider_reported": [
+      "FEE_HISTORY_READ"
+    ],
+    "approved": [
+      "FEE_HISTORY_READ"
+    ],
+    "effective": [
+      "FEE_HISTORY_READ"
+    ],
+    "scope_diff": {
+      "requested_not_in_approved": [],
+      "declared_not_in_approved": [],
+      "provider_not_in_declared": [],
+      "approved_not_in_declared": [],
+      "write_scopes": [],
+      "unknown_scopes": []
+    },
+    "reasons": [
+      "least privilege confirmed in simulation"
+    ],
+    "fail_closed": false,
+    "simulation_only": true
+  },
+  {
+    "review_id": "scope_290c9eb2fb6c4bfd",
+    "outcome": "LEAST_PRIVILEGE_CONFIRMED_IN_SIMULATION",
+    "ok": true,
+    "requested": [
+      "MARKET_DATA_READ"
+    ],
+    "declared": [
+      "MARKET_DATA_READ"
+    ],
+    "provider_reported": [
+      "MARKET_DATA_READ"
+    ],
+    "approved": [
+      "MARKET_DATA_READ"
+    ],
+    "effective": [
+      "MARKET_DATA_READ"
+    ],
+    "scope_diff": {
+      "requested_not_in_approved": [],
+      "declared_not_in_approved": [],
+      "provider_not_in_declared": [],
+      "approved_not_in_declared": [],
+      "write_scopes": [],
+      "unknown_scopes": []
+    },
+    "reasons": [
+      "least privilege confirmed in simulation"
+    ],
+    "fail_closed": false,
+    "simulation_only": true
+  },
+  {
+    "review_id": "scope_61c46e703b0545e9",
+    "outcome": "LEAST_PRIVILEGE_CONFIRMED_IN_SIMULATION",
+    "ok": true,
+    "requested": [
+      "ORDER_HISTORY_READ"
+    ],
+    "declared": [
+      "ORDER_HISTORY_READ"
+    ],
+    "provider_reported": [
+      "ORDER_HISTORY_READ"
+    ],
+    "approved": [
+      "ORDER_HISTORY_READ"
+    ],
+    "effective": [
+      "ORDER_HISTORY_READ"
+    ],
+    "scope_diff": {
+      "requested_not_in_approved": [],
+      "declared_not_in_approved": [],
+      "provider_not_in_declared": [],
+      "approved_not_in_declared": [],
+      "write_scopes": [],
+      "unknown_scopes": []
+    },
+    "reasons": [
+      "least privilege confirmed in simulation"
+    ],
+    "fail_closed": false,
+    "simulation_only": true
+  },
+  {
+    "review_id": "scope_d825e650e6554d30",
+    "outcome": "LEAST_PRIVILEGE_CONFIRMED_IN_SIMULATION",
+    "ok": true,
+    "requested": [
+      "PORTFOLIO_READ"
+    ],
+    "declared": [
+      "PORTFOLIO_READ"
+    ],
+    "provider_reported": [
+      "PORTFOLIO_READ"
+    ],
+    "approved": [
+      "PORTFOLIO_READ"
+    ],
+    "effective": [
+      "PORTFOLIO_READ"
+    ],
+    "scope_diff": {
+      "requested_not_in_approved": [],
+      "declared_not_in_approved": [],
+      "provider_not_in_declared": [],
+      "approved_not_in_declared": [],
+      "write_scopes": [],
+      "unknown_scopes": []
+    },
+    "reasons": [
+      "least privilege confirmed in simulation"
+    ],
+    "fail_closed": false,
+    "simulation_only": true
+  },
+  {
+    "review_id": "scope_9d01dac5d9af4384",
+    "outcome": "LEAST_PRIVILEGE_CONFIRMED_IN_SIMULATION",
+    "ok": true,
+    "requested": [
+      "POSITION_READ"
+    ],
+    "declared": [
+      "POSITION_READ"
+    ],
+    "provider_reported": [
+      "POSITION_READ"
+    ],
+    "approved": [
+      "POSITION_READ"
+    ],
+    "effective": [
+      "POSITION_READ"
+    ],
+    "scope_diff": {
+      "requested_not_in_approved": [],
+      "declared_not_in_approved": [],
+      "provider_not_in_declared": [],
+      "approved_not_in_declared": [],
+      "write_scopes": [],
+      "unknown_scopes": []
+    },
+    "reasons": [
+      "least privilege confirmed in simulation"
+    ],
+    "fail_closed": false,
+    "simulation_only": true
+  },
+  {
+    "review_id": "scope_24d95112015e4630",
+    "outcome": "LEAST_PRIVILEGE_CONFIRMED_IN_SIMULATION",
+    "ok": true,
+    "requested": [
+      "TRADE_HISTORY_READ"
+    ],
+    "declared": [
+      "TRADE_HISTORY_READ"
+    ],
+    "provider_reported": [
+      "TRADE_HISTORY_READ"
+    ],
+    "approved": [
+      "TRADE_HISTORY_READ"
+    ],
+    "effective": [
+      "TRADE_HISTORY_READ"
+    ],
+    "scope_diff": {
+      "requested_not_in_approved": [],
+      "declared_not_in_approved": [],
+      "provider_not_in_declared": [],
+      "approved_not_in_declared": [],
+      "write_scopes": [],
+      "unknown_scopes": []
+    },
+    "reasons": [
+      "least privilege confirmed in simulation"
+    ],
+    "fail_closed": false,
+    "simulation_only": true
+  },
+  {
+    "review_id": "scope_3dc969b9a58c438f",
+    "outcome": "LEAST_PRIVILEGE_CONFIRMED_IN_SIMULATION",
+    "ok": true,
+    "requested": [
+      "TRANSACTION_HISTORY_READ"
+    ],
+    "declared": [
+      "TRANSACTION_HISTORY_READ"
+    ],
+    "provider_reported": [
+      "TRANSACTION_HISTORY_READ"
+    ],
+    "approved": [
+      "TRANSACTION_HISTORY_READ"
+    ],
+    "effective": [
+      "TRANSACTION_HISTORY_READ"
+    ],
+    "scope_diff": {
+      "requested_not_in_approved": [],
+      "declared_not_in_approved": [],
+      "provider_not_in_declared": [],
+      "approved_not_in_declared": [],
+      "write_scopes": [],
+      "unknown_scopes": []
+    },
+    "reasons": [
+      "least privilege confirmed in simulation"
+    ],
+    "fail_closed": false,
+    "simulation_only": true
+  },
+  {
+    "review_id": "scope_1df5c66586f14ae3",
+    "outcome": "WRITE_PERMISSION_REJECTED",
+    "ok": false,
+    "requested": [
+      "ACCOUNT_ADMIN"
+    ],
+    "declared": [
+      "ACCOUNT_ADMIN"
+    ],
+    "provider_reported": [
+      "ACCOUNT_ADMIN"
+    ],
+    "approved": [
+      "ACCOUNT_ADMIN"
+    ],
+    "effective": [],
+    "scope_diff": {
+      "requested_not_in_approved": [],
+      "declared_not_in_approved": [],
+      "provider_not_in_declared": [],
+      "approved_not_in_declared": [],
+      "write_scopes": [
+        "ACCOUNT_ADMIN"
+      ],
+      "unknown_scopes": []
+    },
+    "reasons": [
+      "write scopes present: ['ACCOUNT_ADMIN']"
+    ],
+    "fail_closed": true,
+    "simulation_only": true
+  },
+  {
+    "review_id": "scope_e749f93631a14fd8",
+    "outcome": "WRITE_PERMISSION_REJECTED",
+    "ok": false,
+    "requested": [
+      "API_KEY_ADMIN"
+    ],
+    "declared": [
+      "API_KEY_ADMIN"
+    ],
+    "provider_reported": [
+      "API_KEY_ADMIN"
+    ],
+    "approved": [
+      "API_KEY_ADMIN"
+    ],
+    "effective": [],
+    "scope_diff": {
+      "requested_not_in_approved": [],
+      "declared_not_in_approved": [],
+      "provider_not_in_declared": [],
+      "approved_not_in_declared": [],
+      "write_scopes": [
+        "API_KEY_ADMIN"
+      ],
+      "unknown_scopes": []
+    },
+    "reasons": [
+      "write scopes present: ['API_KEY_ADMIN']"
+    ],
+    "fail_closed": true,
+    "simulation_only": true
+  },
+  {
+    "review_id": "scope_2cbc242293e14ed7",
+    "outcome": "WRITE_PERMISSION_REJECTED",
+    "ok": false,
+    "requested": [
+      "LEVERAGE_ENABLE"
+    ],
+    "declared": [
+      "LEVERAGE_ENABLE"
+    ],
+    "provider_reported": [
+      "LEVERAGE_ENABLE"
+    ],
+    "approved": [
+      "LEVERAGE_ENABLE"
+    ],
+    "effective": [],
+    "scope_diff": {
+      "requested_not_in_approved": [],
+      "declared_not_in_approved": [],
+      "provider_not_in_declared": [],
+      "approved_not_in_declared": [],
+      "write_scopes": [
+        "LEVERAGE_ENABLE"
+      ],
+      "unknown_scopes": []
+    },
+    "reasons": [
+      "write scopes present: ['LEVERAGE_ENABLE']"
+    ],
+    "fail_closed": true,
+    "simulation_only": true
+  },
+  {
+    "review_id": "scope_d84c4ccc43ee4e8b",
+    "outcome": "WRITE_PERMISSION_REJECTED",
+    "ok": false,
+    "requested": [
+      "MARGIN_ENABLE"
+    ],
+    "declared": [
+      "MARGIN_ENABLE"
+    ],
+    "provider_reported": [
+      "MARGIN_ENABLE"
+    ],
+    "approved": [
+      "MARGIN_ENABLE"
+    ],
+    "effective": [],
+    "scope_diff": {
+      "requested_not_in_approved": [],
+      "declared_not_in_approved": [],
+      "provider_not_in_declared": [],
+      "approved_not_in_declared": [],
+      "write_scopes": [
+        "MARGIN_ENABLE"
+      ],
+      "unknown_scopes": []
+    },
+    "reasons": [
+      "write scopes present: ['MARGIN_ENABLE']"
+    ],
+    "fail_closed": true,
+    "simulation_only": true
+  },
+  {
+    "review_id": "scope_9adcd603e9a94bb8",
+    "outcome": "WRITE_PERMISSION_REJECTED",
+    "ok": false,
+    "requested": [
+      "ORDER_CANCEL"
+    ],
+    "declared": [
+      "ORDER_CANCEL"
+    ],
+    "provider_reported": [
+      "ORDER_CANCEL"
+    ],
+    "approved": [
+      "ORDER_CANCEL"
+    ],
+    "effective": [],
+    "scope_diff": {
+      "requested_not_in_approved": [],
+      "declared_not_in_approved": [],
+      "provider_not_in_declared": [],
+      "approved_not_in_declared": [],
+      "write_scopes": [
+        "ORDER_CANCEL"
+      ],
+      "unknown_scopes": []
+    },
+    "reasons": [
+      "write scopes present: ['ORDER_CANCEL']"
+    ],
+    "fail_closed": true,
+    "simulation_only": true
+  },
+  {
+    "review_id": "scope_79b965d7233b4694",
+    "outcome": "WRITE_PERMISSION_REJECTED",
+    "ok": false,
+    "requested": [
+      "ORDER_CREATE"
+    ],
+    "declared": [
+      "ORDER_CREATE"
+    ],
+    "provider_reported": [
+      "ORDER_CREATE"
+    ],
+    "approved": [
+      "ORDER_CREATE"
+    ],
+    "effective": [],
+    "scope_diff": {
+      "requested_not_in_approved": [],
+      "declared_not_in_approved": [],
+      "provider_not_in_declared": [],
+      "approved_not_in_declared": [],
+      "write_scopes": [
+        "ORDER_CREATE"
+      ],
+      "unknown_scopes": []
+    },
+    "reasons": [
+      "write scopes present: ['ORDER_CREATE']"
+    ],
+    "fail_closed": true,
+    "simulation_only": true
+  },
+  {
+    "review_id": "scope_aa69d422a2f6432c",
+    "outcome": "WRITE_PERMISSION_REJECTED",
+    "ok": false,
+    "requested": [
+      "ORDER_MODIFY"
+    ],
+    "declared": [
+      "ORDER_MODIFY"
+    ],
+    "provider_reported": [
+      "ORDER_MODIFY"
+    ],
+    "approved": [
+      "ORDER_MODIFY"
+    ],
+    "effective": [],
+    "scope_diff": {
+      "requested_not_in_approved": [],
+      "declared_not_in_approved": [],
+      "provider_not_in_declared": [],
+      "approved_not_in_declared": [],
+      "write_scopes": [
+        "ORDER_MODIFY"
+      ],
+      "unknown_scopes": []
+    },
+    "reasons": [
+      "write scopes present: ['ORDER_MODIFY']"
+    ],
+    "fail_closed": true,
+    "simulation_only": true
+  },
+  {
+    "review_id": "scope_c5dfe4f974004880",
+    "outcome": "WRITE_PERMISSION_REJECTED",
+    "ok": false,
+    "requested": [
+      "SUBACCOUNT_ADMIN"
+    ],
+    "declared": [
+      "SUBACCOUNT_ADMIN"
+    ],
+    "provider_reported": [
+      "SUBACCOUNT_ADMIN"
+    ],
+    "approved": [
+      "SUBACCOUNT_ADMIN"
+    ],
+    "effective": [],
+    "scope_diff": {
+      "requested_not_in_approved": [],
+      "declared_not_in_approved": [],
+      "provider_not_in_declared": [],
+      "approved_not_in_declared": [],
+      "write_scopes": [
+        "SUBACCOUNT_ADMIN"
+      ],
+      "unknown_scopes": []
+    },
+    "reasons": [
+      "write scopes present: ['SUBACCOUNT_ADMIN']"
+    ],
+    "fail_closed": true,
+    "simulation_only": true
+  },
+  {
+    "review_id": "scope_df9de9a19e904e63",
+    "outcome": "WRITE_PERMISSION_REJECTED",
+    "ok": false,
+    "requested": [
+      "TRADING_ENABLE"
+    ],
+    "declared": [
+      "TRADING_ENABLE"
+    ],
+    "provider_reported": [
+      "TRADING_ENABLE"
+    ],
+    "approved": [
+      "TRADING_ENABLE"
+    ],
+    "effective": [],
+    "scope_diff": {
+      "requested_not_in_approved": [],
+      "declared_not_in_approved": [],
+      "provider_not_in_declared": [],
+      "approved_not_in_declared": [],
+      "write_scopes": [
+        "TRADING_ENABLE"
+      ],
+      "unknown_scopes": []
+    },
+    "reasons": [
+      "write scopes present: ['TRADING_ENABLE']"
+    ],
+    "fail_closed": true,
+    "simulation_only": true
+  },
+  {
+    "review_id": "scope_82aadb5bc3ad4648",
+    "outcome": "WRITE_PERMISSION_REJECTED",
+    "ok": false,
+    "requested": [
+      "TRANSFER_APPROVE"
+    ],
+    "declared": [
+      "TRANSFER_APPROVE"
+    ],
+    "provider_reported": [
+      "TRANSFER_APPROVE"
+    ],
+    "approved": [
+      "TRANSFER_APPROVE"
+    ],
+    "effective": [],
+    "scope_diff": {
+      "requested_not_in_approved": [],
+      "declared_not_in_approved": [],
+      "provider_not_in_declared": [],
+      "approved_not_in_declared": [],
+      "write_scopes": [
+        "TRANSFER_APPROVE"
+      ],
+      "unknown_scopes": []
+    },
+    "reasons": [
+      "write scopes present: ['TRANSFER_APPROVE']"
+    ],
+    "fail_closed": true,
+    "simulation_only": true
+  },
+  {
+    "review_id": "scope_ce5ae006f40844eb",
+    "outcome": "WRITE_PERMISSION_REJECTED",
+    "ok": false,
+    "requested": [
+      "TRANSFER_CREATE"
+    ],
+    "declared": [
+      "TRANSFER_CREATE"
+    ],
+    "provider_reported": [
+      "TRANSFER_CREATE"
+    ],
+    "approved": [
+      "TRANSFER_CREATE"
+    ],
+    "effective": [],
+    "scope_diff": {
+      "requested_not_in_approved": [],
+      "declared_not_in_approved": [],
+      "provider_not_in_declared": [],
+      "approved_not_in_declared": [],
+      "write_scopes": [
+        "TRANSFER_CREATE"
+      ],
+      "unknown_scopes": []
+    },
+    "reasons": [
+      "write scopes present: ['TRANSFER_CREATE']"
+    ],
+    "fail_closed": true,
+    "simulation_only": true
+  },
+  {
+    "review_id": "scope_a990ac6613f04b9c",
+    "outcome": "WRITE_PERMISSION_REJECTED",
+    "ok": false,
+    "requested": [
+      "WITHDRAWAL_APPROVE"
+    ],
+    "declared": [
+      "WITHDRAWAL_APPROVE"
+    ],
+    "provider_reported": [
+      "WITHDRAWAL_APPROVE"
+    ],
+    "approved": [
+      "WITHDRAWAL_APPROVE"
+    ],
+    "effective": [],
+    "scope_diff": {
+      "requested_not_in_approved": [],
+      "declared_not_in_approved": [],
+      "provider_not_in_declared": [],
+      "approved_not_in_declared": [],
+      "write_scopes": [
+        "WITHDRAWAL_APPROVE"
+      ],
+      "unknown_scopes": []
+    },
+    "reasons": [
+      "write scopes present: ['WITHDRAWAL_APPROVE']"
+    ],
+    "fail_closed": true,
+    "simulation_only": true
+  },
+  {
+    "review_id": "scope_445f79c51f844081",
+    "outcome": "WRITE_PERMISSION_REJECTED",
+    "ok": false,
+    "requested": [
+      "WITHDRAWAL_CREATE"
+    ],
+    "declared": [
+      "WITHDRAWAL_CREATE"
+    ],
+    "provider_reported": [
+      "WITHDRAWAL_CREATE"
+    ],
+    "approved": [
+      "WITHDRAWAL_CREATE"
+    ],
+    "effective": [],
+    "scope_diff": {
+      "requested_not_in_approved": [],
+      "declared_not_in_approved": [],
+      "provider_not_in_declared": [],
+      "approved_not_in_declared": [],
+      "write_scopes": [
+        "WITHDRAWAL_CREATE"
+      ],
+      "unknown_scopes": []
+    },
+    "reasons": [
+      "write scopes present: ['WITHDRAWAL_CREATE']"
+    ],
+    "fail_closed": true,
+    "simulation_only": true
+  }
+]

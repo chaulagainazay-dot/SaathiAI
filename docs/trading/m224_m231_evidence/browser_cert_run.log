@@ -1,0 +1,9 @@
+
+> saathi-os@0.1.0 cert:m231
+> node scripts/m231_broker_readiness_browser_cert.mjs
+
+{
+  "verdict": "READ_ONLY_BROKER_READINESS_BROWSER_CERT_PASSED_WITH_LIMITATIONS",
+  "hardFails": 0,
+  "journeyFails": 1
+}

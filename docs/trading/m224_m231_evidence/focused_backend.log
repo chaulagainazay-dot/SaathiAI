@@ -1,0 +1,32 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0 -- /Users/macbookpro/SaathiAI/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/macbookpro/SaathiAI
+configfile: pyproject.toml
+plugins: anyio-4.14.1, asyncio-1.4.0, opik-2.1.5
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collecting ... collected 21 items
+
+tests/test_m224_m231_broker_readiness.py::test_m224_adapter_contract_and_connection_state PASSED [  4%]
+tests/test_m224_m231_broker_readiness.py::test_m224_providers_not_connected PASSED [  9%]
+tests/test_m224_m231_broker_readiness.py::test_m225_policy_allows_simulation_denies_write PASSED [ 14%]
+tests/test_m224_m231_broker_readiness.py::test_m225_mixed_permissions_no_silent_downgrade PASSED [ 19%]
+tests/test_m224_m231_broker_readiness.py::test_m226_lifecycle_and_unusable PASSED [ 23%]
+tests/test_m224_m231_broker_readiness.py::test_m226_secret_rejection_api_key_jwt_pem PASSED [ 28%]
+tests/test_m224_m231_broker_readiness.py::test_m226_write_scope_on_propose_rejected PASSED [ 33%]
+tests/test_m224_m231_broker_readiness.py::test_m226_no_restoration_after_revocation PASSED [ 38%]
+tests/test_m224_m231_broker_readiness.py::test_m227_least_privilege_and_rejects PASSED [ 42%]
+tests/test_m224_m231_broker_readiness.py::test_m228_simulated_connection_state_machine PASSED [ 47%]
+tests/test_m224_m231_broker_readiness.py::test_m228_real_transport_blocked PASSED [ 52%]
+tests/test_m224_m231_broker_readiness.py::test_m228_no_auto_reconnect_after_security_failure PASSED [ 57%]
+tests/test_m224_m231_broker_readiness.py::test_m229_snapshot_and_reconcile_no_mutation PASSED [ 61%]
+tests/test_m224_m231_broker_readiness.py::test_m230_expiry_and_revocation_drills PASSED [ 66%]
+tests/test_m224_m231_broker_readiness.py::test_m230_incident_suite PASSED [ 71%]
+tests/test_m224_m231_broker_readiness.py::test_m231_dashboard_and_certify PASSED [ 76%]
+tests/test_m224_m231_broker_readiness.py::test_m231_llm_boundary PASSED  [ 80%]
+tests/test_m224_m231_broker_readiness.py::test_m231_security_scan PASSED [ 85%]
+tests/test_m224_m231_broker_readiness.py::test_storage_restart_safe PASSED [ 90%]
+tests/test_m224_m231_broker_readiness.py::test_posture_flags PASSED      [ 95%]
+tests/test_m224_m231_broker_readiness.py::test_cli_verdict_importable PASSED [100%]
+
+============================== 21 passed in 0.74s ==============================

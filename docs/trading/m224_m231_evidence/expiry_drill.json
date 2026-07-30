@@ -1,0 +1,27 @@
+{
+  "drill_id": "drill_e5103ed0ca8540b4",
+  "scenario": "credential_expiry_during_session",
+  "result": {
+    "ok": true,
+    "fail_closed": true,
+    "credential_state": "expired",
+    "session_state": "SIMULATED_EXPIRED",
+    "ingestion_stopped": true,
+    "session_invalidated": true,
+    "projections_stale": true,
+    "auto_reconnect_prohibited": true
+  },
+  "fail_closed": true,
+  "recovery_procedure": "1) Invalidate session 2) Mark credential expired 3) Preserve audit 4) Manual review required 5) Propose new simulated credential if needed",
+  "ingestion_stopped": true,
+  "session_invalidated": true,
+  "audit_preserved": true,
+  "projections_stale": true,
+  "ops_notified": true,
+  "manual_review_required": true,
+  "auto_reconnect_prohibited": true,
+  "auto_approval_restoration_prohibited": true,
+  "paper_only": true,
+  "live_systems_affected": false,
+  "simulation_only": true
+}

@@ -1,0 +1,41 @@
+{
+  "verdict": {
+    "verdict": "BROKER_SANDBOX_ARCHITECTURE_CERTIFIED_WITH_LIMITATIONS",
+    "paper_only": true,
+    "live_trading_authorized": false,
+    "broker_connections_exist": false,
+    "api_credentials_created": false,
+    "live_trading_is_authorized": false,
+    "sandbox_can_execute_real_orders": false,
+    "statements": [
+      "THE SYSTEM REMAINS PAPER ONLY.",
+      "NO BROKER CONNECTIONS EXIST.",
+      "NO API CREDENTIALS WERE CREATED.",
+      "NO LIVE TRADING IS AUTHORIZED.",
+      "THE SANDBOX CANNOT EXECUTE REAL ORDERS."
+    ],
+    "limitations": [
+      "Single-host SQLite",
+      "Catalog brokers are design metadata only",
+      "Credential references never hold secrets",
+      "Trust approval is sandbox-scoped only",
+      "Owner human sign-off not claimed for production"
+    ]
+  },
+  "security": {
+    "all_passed": true,
+    "passed_count": 8,
+    "total": 8
+  },
+  "failure_suite": {
+    "passed": true,
+    "all_fail_closed": true,
+    "scenarios": 19
+  },
+  "brokers_not_connected": {
+    "ok": true,
+    "violations": [],
+    "all_not_connected": true,
+    "paper_only": true
+  }
+}

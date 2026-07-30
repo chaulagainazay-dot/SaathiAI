@@ -1,0 +1,22 @@
+baseline_branch=milestone/m216-m223-broker-sandbox-architecture
+baseline_sha=a70303581637108dd616b9176dd18cbdddcdfd84
+captured_at=2026-07-30T01:31:39Z
+dirty_working_tree:
+ M docs/evidence/m25/LATEST_ENVIRONMENT_OBSERVATION.json
+ M docs/evidence/m25/LIVE_CERT_EVIDENCE.json
+ M docs/evidence/m25/LIVE_CERT_SUMMARY.md
+ M docs/evidence/m27/connector_events.jsonl
+ M docs/evidence/m28/deprecation_events.jsonl
+ M saathi-os/components/trading/TradingShell.jsx
+ M saathi-os/package.json
+ M saathi/platform/api.py
+ M saathi/platform/tg/cli.py
+?? docs/design-spec/
+?? docs/trading/M216_M223_BROKER_SANDBOX_ARCHITECTURE.md
+?? docs/trading/m216_m223_evidence/
+?? docs/trading/m224_m231_evidence/
+?? saathi-os/app/trading/broker-sandbox/
+?? saathi-os/lib/m216_broker_sandbox.test.js
+?? saathi-os/scripts/m223_broker_sandbox_browser_cert.mjs
+?? saathi/platform/tg/broker_sandbox/
+?? tests/test_m216_m223_broker_sandbox.py

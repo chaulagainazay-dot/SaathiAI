@@ -1,0 +1,34 @@
+{
+  "review_id": "scope_a056415ed522444d",
+  "outcome": "WRITE_PERMISSION_REJECTED",
+  "ok": false,
+  "requested": [
+    "ORDER_CREATE"
+  ],
+  "declared": [
+    "ORDER_CREATE"
+  ],
+  "provider_reported": [
+    "ORDER_CREATE"
+  ],
+  "approved": [
+    "ORDER_CREATE"
+  ],
+  "effective": [],
+  "scope_diff": {
+    "requested_not_in_approved": [],
+    "declared_not_in_approved": [],
+    "provider_not_in_declared": [],
+    "approved_not_in_declared": [],
+    "write_scopes": [
+      "ORDER_CREATE"
+    ],
+    "unknown_scopes": []
+  },
+  "reasons": [
+    "write scopes present: ['ORDER_CREATE']"
+  ],
+  "fail_closed": true,
+  "simulation_only": true,
+  "SIMULATION_ONLY": true
+}

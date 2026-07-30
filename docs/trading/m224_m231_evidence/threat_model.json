@@ -1,0 +1,191 @@
+[
+  {
+    "threat": "secret_leakage",
+    "attack_path": "Submit api_key/JWT via API/CLI/UI metadata fields",
+    "preventative_control": "reject_secrets_in_payload + PROHIBITED_SECRET_KEYS",
+    "detective_control": "security checks + audit trail + drill suite + transport block log",
+    "recovery_control": "invalidate session, preserve evidence, manual review, no auto reconnect",
+    "residual_limitation": "Single-host simulation; owner human sign-off not automated",
+    "evidence_reference": "br_security_checks/secret_leakage"
+  },
+  {
+    "threat": "excessive_permissions",
+    "attack_path": "Propose credential with ORDER_CREATE + read scopes",
+    "preventative_control": "ScopeValidator + PolicyEngine fail closed",
+    "detective_control": "security checks + audit trail + drill suite + transport block log",
+    "recovery_control": "invalidate session, preserve evidence, manual review, no auto reconnect",
+    "residual_limitation": "Single-host simulation; owner human sign-off not automated",
+    "evidence_reference": "br_security_checks/excessive_permissions"
+  },
+  {
+    "threat": "credential_reuse",
+    "attack_path": "Reuse revoked reference for new session",
+    "preventative_control": "lifecycle terminal states + no restoration",
+    "detective_control": "security checks + audit trail + drill suite + transport block log",
+    "recovery_control": "invalidate session, preserve evidence, manual review, no auto reconnect",
+    "residual_limitation": "Single-host simulation; owner human sign-off not automated",
+    "evidence_reference": "br_security_checks/credential_reuse"
+  },
+  {
+    "threat": "expired_credentials",
+    "attack_path": "Keep using expired reference mid-session",
+    "preventative_control": "expiry drill invalidates session",
+    "detective_control": "security checks + audit trail + drill suite + transport block log",
+    "recovery_control": "invalidate session, preserve evidence, manual review, no auto reconnect",
+    "residual_limitation": "Single-host simulation; owner human sign-off not automated",
+    "evidence_reference": "br_security_checks/expired_credentials"
+  },
+  {
+    "threat": "unrevoked_credentials",
+    "attack_path": "Leave compromised ref active",
+    "preventative_control": "revocation drill + manual review",
+    "detective_control": "security checks + audit trail + drill suite + transport block log",
+    "recovery_control": "invalidate session, preserve evidence, manual review, no auto reconnect",
+    "residual_limitation": "Single-host simulation; owner human sign-off not automated",
+    "evidence_reference": "br_security_checks/unrevoked_credentials"
+  },
+  {
+    "threat": "provider_impersonation",
+    "attack_path": "Mismatch provider identity in session",
+    "preventative_control": "identity mismatch \u2192 FAILED_SAFE",
+    "detective_control": "security checks + audit trail + drill suite + transport block log",
+    "recovery_control": "invalidate session, preserve evidence, manual review, no auto reconnect",
+    "residual_limitation": "Single-host simulation; owner human sign-off not automated",
+    "evidence_reference": "br_security_checks/provider_impersonation"
+  },
+  {
+    "threat": "confused_deputy",
+    "attack_path": "LLM or service acts with elevated authority",
+    "preventative_control": "LLM_BOUNDARY all authority false",
+    "detective_control": "security checks + audit trail + drill suite + transport block log",
+    "recovery_control": "invalidate session, preserve evidence, manual review, no auto reconnect",
+    "residual_limitation": "Single-host simulation; owner human sign-off not automated",
+    "evidence_reference": "br_security_checks/confused_deputy"
+  },
+  {
+    "threat": "scope_drift",
+    "attack_path": "Provider reports expanded scopes after approval",
+    "preventative_control": "scope mismatch rejected",
+    "detective_control": "security checks + audit trail + drill suite + transport block log",
+    "recovery_control": "invalidate session, preserve evidence, manual review, no auto reconnect",
+    "residual_limitation": "Single-host simulation; owner human sign-off not automated",
+    "evidence_reference": "br_security_checks/scope_drift"
+  },
+  {
+    "threat": "session_replay",
+    "attack_path": "Replay session tokens (simulated)",
+    "preventative_control": "session state machine + security flags",
+    "detective_control": "security checks + audit trail + drill suite + transport block log",
+    "recovery_control": "invalidate session, preserve evidence, manual review, no auto reconnect",
+    "residual_limitation": "Single-host simulation; owner human sign-off not automated",
+    "evidence_reference": "br_security_checks/session_replay"
+  },
+  {
+    "threat": "snapshot_replay",
+    "attack_path": "Resubmit identical snapshot fingerprint",
+    "preventative_control": "fingerprint detection in drills",
+    "detective_control": "security checks + audit trail + drill suite + transport block log",
+    "recovery_control": "invalidate session, preserve evidence, manual review, no auto reconnect",
+    "residual_limitation": "Single-host simulation; owner human sign-off not automated",
+    "evidence_reference": "br_security_checks/snapshot_replay"
+  },
+  {
+    "threat": "audit_tampering",
+    "attack_path": "Modify audit without hash chain",
+    "preventative_control": "evidence_hash on audit rows",
+    "detective_control": "security checks + audit trail + drill suite + transport block log",
+    "recovery_control": "invalidate session, preserve evidence, manual review, no auto reconnect",
+    "residual_limitation": "Single-host simulation; owner human sign-off not automated",
+    "evidence_reference": "br_security_checks/audit_tampering"
+  },
+  {
+    "threat": "malicious_fixture_data",
+    "attack_path": "Inject order commands in snapshot JSON",
+    "preventative_control": "read_model_only; no execution from snapshots",
+    "detective_control": "security checks + audit trail + drill suite + transport block log",
+    "recovery_control": "invalidate session, preserve evidence, manual review, no auto reconnect",
+    "residual_limitation": "Single-host simulation; owner human sign-off not automated",
+    "evidence_reference": "br_security_checks/malicious_fixture_data"
+  },
+  {
+    "threat": "schema_confusion",
+    "attack_path": "Ambiguous fields enabling write interpretation",
+    "preventative_control": "normalized scopes + authority classes",
+    "detective_control": "security checks + audit trail + drill suite + transport block log",
+    "recovery_control": "invalidate session, preserve evidence, manual review, no auto reconnect",
+    "residual_limitation": "Single-host simulation; owner human sign-off not automated",
+    "evidence_reference": "br_security_checks/schema_confusion"
+  },
+  {
+    "threat": "order_command_injection",
+    "attack_path": "Embed place_order in read snapshot",
+    "preventative_control": "write ops unavailable on adapter",
+    "detective_control": "security checks + audit trail + drill suite + transport block log",
+    "recovery_control": "invalidate session, preserve evidence, manual review, no auto reconnect",
+    "residual_limitation": "Single-host simulation; owner human sign-off not automated",
+    "evidence_reference": "br_security_checks/order_command_injection"
+  },
+  {
+    "threat": "prompt_injection_provider_metadata",
+    "attack_path": "Adversarial text in provider metadata",
+    "preventative_control": "LLM advisory only; no authority",
+    "detective_control": "security checks + audit trail + drill suite + transport block log",
+    "recovery_control": "invalidate session, preserve evidence, manual review, no auto reconnect",
+    "residual_limitation": "Single-host simulation; owner human sign-off not automated",
+    "evidence_reference": "br_security_checks/prompt_injection_provider_metadata"
+  },
+  {
+    "threat": "unauthorized_environment_promotion",
+    "attack_path": "Claim PRODUCTION environment",
+    "preventative_control": "DENY_WRONG_ENVIRONMENT",
+    "detective_control": "security checks + audit trail + drill suite + transport block log",
+    "recovery_control": "invalidate session, preserve evidence, manual review, no auto reconnect",
+    "residual_limitation": "Single-host simulation; owner human sign-off not automated",
+    "evidence_reference": "br_security_checks/unauthorized_environment_promotion"
+  },
+  {
+    "threat": "approval_bypass",
+    "attack_path": "Skip owner/security stages",
+    "preventative_control": "lifecycle transitions enforced",
+    "detective_control": "security checks + audit trail + drill suite + transport block log",
+    "recovery_control": "invalidate session, preserve evidence, manual review, no auto reconnect",
+    "residual_limitation": "Single-host simulation; owner human sign-off not automated",
+    "evidence_reference": "br_security_checks/approval_bypass"
+  },
+  {
+    "threat": "llm_authority_escalation",
+    "attack_path": "LLM tries to approve/connect/trade",
+    "preventative_control": "LLM_BOUNDARY hard false flags",
+    "detective_control": "security checks + audit trail + drill suite + transport block log",
+    "recovery_control": "invalidate session, preserve evidence, manual review, no auto reconnect",
+    "residual_limitation": "Single-host simulation; owner human sign-off not automated",
+    "evidence_reference": "br_security_checks/llm_authority_escalation"
+  },
+  {
+    "threat": "real_transport_activation",
+    "attack_path": "Adapter opens HTTPS to exchange",
+    "preventative_control": "TransportGuard blocks domains",
+    "detective_control": "security checks + audit trail + drill suite + transport block log",
+    "recovery_control": "invalidate session, preserve evidence, manual review, no auto reconnect",
+    "residual_limitation": "Single-host simulation; owner human sign-off not automated",
+    "evidence_reference": "br_security_checks/real_transport_activation"
+  },
+  {
+    "threat": "dependency_compromise",
+    "attack_path": "Compromised library attempts network",
+    "preventative_control": "no HTTP client in adapter path",
+    "detective_control": "security checks + audit trail + drill suite + transport block log",
+    "recovery_control": "invalidate session, preserve evidence, manual review, no auto reconnect",
+    "residual_limitation": "Single-host simulation; owner human sign-off not automated",
+    "evidence_reference": "br_security_checks/dependency_compromise"
+  },
+  {
+    "threat": "logging_secret_shaped_values",
+    "attack_path": "Secrets appear in logs/audit",
+    "preventative_control": "secrets rejected before persist",
+    "detective_control": "security checks + audit trail + drill suite + transport block log",
+    "recovery_control": "invalidate session, preserve evidence, manual review, no auto reconnect",
+    "residual_limitation": "Single-host simulation; owner human sign-off not automated",
+    "evidence_reference": "br_security_checks/logging_secret_shaped_values"
+  }
+]
