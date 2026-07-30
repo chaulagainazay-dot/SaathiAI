@@ -3,8 +3,8 @@
   "historical_baseline_sha": "1aace307d6d6d67117cda4b49d8e47f03cf54dcf",
   "baseline_sha": "1aace307d6d6d67117cda4b49d8e47f03cf54dcf",
   "implementation_sha": "b1207b92cfad5ed9561bb0e4bfb6e1aee09466bb",
-  "current_sha": "b1207b92cfad5ed9561bb0e4bfb6e1aee09466bb",
-  "ending_sha": "b1207b92cfad5ed9561bb0e4bfb6e1aee09466bb",
+  "current_sha": "b8c032220e78ab4d9f833c5e0c75c52f51c77df8",
+  "ending_sha": "b8c032220e78ab4d9f833c5e0c75c52f51c77df8",
   "current_milestone": "M256-M263",
   "branch": "milestone/m256-m263-market-data-signal-validation",
   "status": "complete_with_limitations",
@@ -99,5 +99,5 @@
   ],
   "next_recommended_milestone": "M264 only after human review of research-data evidence \u2014 do not auto-start; remain research/paper/sandbox; no broker connectivity",
   "updated_at": "2026-07-30T04:43:30+00:00",
-  "docs_pin_sha": "b1207b92cfad5ed9561bb0e4bfb6e1aee09466bb"
+  "docs_pin_sha": "b8c032220e78ab4d9f833c5e0c75c52f51c77df8"
 }
