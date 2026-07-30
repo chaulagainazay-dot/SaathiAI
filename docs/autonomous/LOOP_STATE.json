@@ -2,9 +2,9 @@
   "goal_id": "READ_ONLY_BROKER_READINESS",
   "historical_baseline_sha": "a70303581637108dd616b9176dd18cbdddcdfd84",
   "baseline_sha": "a70303581637108dd616b9176dd18cbdddcdfd84",
-  "implementation_sha": "8189a8c5c5f1291f41ce69ed0ca52e8bcdef6377",
-  "current_sha": "4d0ffe6086aa6db270124fccea802f91914ea01e",
-  "ending_sha": "4d0ffe6086aa6db270124fccea802f91914ea01e",
+  "implementation_sha": "79d3c29b5e6f629332bb1a8ff2c92ac05f8be34d",
+  "current_sha": "0065518494a6c5e38b6cf293c83b1768e54f1390",
+  "ending_sha": "0065518494a6c5e38b6cf293c83b1768e54f1390",
   "current_milestone": "M224-M231",
   "branch": "milestone/m224-m231-read-only-broker-readiness",
   "status": "complete_with_limitations",
@@ -64,6 +64,6 @@
     "Readiness does not grant production read-only authority"
   ],
   "next_recommended_milestone": "M232 only after owner planning \u2014 do not auto-start; remain paper/sandbox only; no real connectivity",
-  "updated_at": "2026-07-30T01:45:15.460474+00:00",
-  "docs_pin_sha": "4d0ffe6086aa6db270124fccea802f91914ea01e"
+  "updated_at": "2026-07-30T01:45:35.002135+00:00",
+  "docs_pin_sha": "0065518494a6c5e38b6cf293c83b1768e54f1390"
 }
