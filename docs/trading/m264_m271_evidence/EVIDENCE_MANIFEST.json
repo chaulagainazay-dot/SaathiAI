@@ -1,0 +1,131 @@
+{
+  "milestone": "M264-M271",
+  "files": [
+    {
+      "path": "COMBINED_II_MD_TESTS.txt",
+      "sha256": "c424d934508022393794d8883020f39115ae41ba685b44482e95b8340fe935d0",
+      "bytes": 99
+    },
+    {
+      "path": "FINAL_FOCUSED_TESTS.txt",
+      "sha256": "25b6da78126d98f8ad3c34fb8569cdc72f32374ca6455e26dd041861f7c20295",
+      "bytes": 99
+    },
+    {
+      "path": "FINAL_FRONTEND_TESTS.txt",
+      "sha256": "6bebadb3b088c38820a5331757c1e62076252a4e1e70e678cd72f8e6e9aba560",
+      "bytes": 728
+    },
+    {
+      "path": "M264_RECOVERY_INTAKE.json",
+      "sha256": "2d45e76b35caaf4a62e1bf56c747c0908bc80e1f98f5700f0980b2228b322274",
+      "bytes": 18164
+    },
+    {
+      "path": "M266_INTEGRATION_DEPENDENCY_AUDIT.json",
+      "sha256": "594e1fe656d7c32253e5cd5a64092edcafb594a759bb0df64fece8eca1f77cb5",
+      "bytes": 804
+    },
+    {
+      "path": "M267_CLEAN_CLONE_CERTIFICATION.json",
+      "sha256": "3d5bbbc2d52af97cebf9b982a63bbc70c5db419013b8f809bd3c077f82938f10",
+      "bytes": 1091
+    },
+    {
+      "path": "M268_HISTORICAL_DATASET_SELECTION.json",
+      "sha256": "3f842211d8078837fb3a9f7b52961c769c1e3233e0526ba4f9fd12608703ccd7",
+      "bytes": 8504
+    },
+    {
+      "path": "M269_HISTORICAL_DATA_QUALITY_CERTIFICATION.json",
+      "sha256": "da82381d203c19e8841cc3c59ee83dd6e4a9bd6e3efb031220779a0d8f91e625",
+      "bytes": 3986
+    },
+    {
+      "path": "M270_REAL_HISTORICAL_SIGNAL_VALIDATION.json",
+      "sha256": "57fbf44abf3872163ee233995d362402b476970817081a368d771de8c0823453",
+      "bytes": 14210
+    },
+    {
+      "path": "M270_STRATEGY_PREREGISTRATION.json",
+      "sha256": "b2d06fe7ba035b55f9bbcdb3b9b2fac4698d816f27fe304d34e535671840ad7c",
+      "bytes": 629
+    },
+    {
+      "path": "M271_BROWSER_CERT_LOG.txt",
+      "sha256": "53ec1fc8e543d80f277363cbf763ff7103c10f6d65fc641703cec1ccbd56761e",
+      "bytes": 199
+    },
+    {
+      "path": "M271_FINAL_REPORT.md",
+      "sha256": "6989188ab5fb4c5a35c851fe3258de8d7974d994f6db49fd32b2244be70614c5",
+      "bytes": 1365
+    },
+    {
+      "path": "M271_INTEGRATED_BROWSER_CERT.json",
+      "sha256": "d1a414a88136e81dac61150de7928f8d63a0492deed5f4584697d3312722d5fe",
+      "bytes": 3185
+    },
+    {
+      "path": "M271_SECURITY_SCANS.json",
+      "sha256": "323d76bf9fa3b611f60ad9dc359d93f0da86b8f669e07b4a990da52dceec8e16",
+      "bytes": 453
+    },
+    {
+      "path": "browser/M271_INTEGRATED_BROWSER_CERT.json",
+      "sha256": "d1a414a88136e81dac61150de7928f8d63a0492deed5f4584697d3312722d5fe",
+      "bytes": 3185
+    },
+    {
+      "path": "browser/screenshots/m271_intelligence.png",
+      "sha256": "85e4a4c112a66d2ae90aaed25816e541a1d7cc074a0708e14a1777d8aa14e59b",
+      "bytes": 77726
+    },
+    {
+      "path": "browser/screenshots/m271_research_data.png",
+      "sha256": "85e4a4c112a66d2ae90aaed25816e541a1d7cc074a0708e14a1777d8aa14e59b",
+      "bytes": 77726
+    },
+    {
+      "path": "clean_clone/BACKEND_TESTS.txt",
+      "sha256": "64239e059eaa468d7f6599a113a1ccf7d1bf1d1f0c1e4b8608ef961483d0038f",
+      "bytes": 884
+    },
+    {
+      "path": "clean_clone/FRONTEND_TESTS.txt",
+      "sha256": "2b6d1dfc58ed11377e3c2c21b1597b6f9e9c3a49137f04246cd7ee695c99895f",
+      "bytes": 731
+    },
+    {
+      "path": "clean_clone/GIT_STATUS.txt",
+      "sha256": "7c4b6964c12be4530f4209be6aa8f18e87716a33bd76b69b6863d1cac2b5d295",
+      "bytes": 25
+    },
+    {
+      "path": "clean_clone/M255_BROWSER_CERT.json",
+      "sha256": "aaf7f472b0552cb65b13ef50395944b3ee3bc2081ace07c755060bd4560b01b0",
+      "bytes": 3771
+    },
+    {
+      "path": "clean_clone/M255_BROWSER_CERT_LOG.txt",
+      "sha256": "1f609e5cc4cdcf232fa48135bc222e788ac63969502cc4c3a5af792953636a70",
+      "bytes": 201
+    },
+    {
+      "path": "clean_clone/M263_BROWSER_CERT.json",
+      "sha256": "2afaa34b56bbea8d61929b1dd30fefb257247b87d363ac6f273b720c7a321ddb",
+      "bytes": 4719
+    },
+    {
+      "path": "clean_clone/M263_BROWSER_CERT_LOG.txt",
+      "sha256": "b14c0fe4cbeedb8d66b6313cd33714f2d9cd49436b7cc771dbd139bac2719846",
+      "bytes": 207
+    },
+    {
+      "path": "clean_clone/PRODUCTION_BUILD.txt",
+      "sha256": "42fe82231ec29523de0fd5c5a0a1e7d0260b76db9193b818c658eb861aea1019",
+      "bytes": 9725
+    }
+  ],
+  "count": 25
+}

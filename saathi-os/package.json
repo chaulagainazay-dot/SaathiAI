@@ -55,7 +55,8 @@
     "cert:m239": "node scripts/m239_integration_assurance_browser_cert.mjs",
     "cert:m247": "node scripts/m247_provider_canary_planning_browser_cert.mjs",
     "cert:m255": "node scripts/m255_intelligence_browser_cert.mjs",
-    "cert:m263": "node scripts/m263_market_data_browser_cert.mjs"
+    "cert:m263": "node scripts/m263_market_data_browser_cert.mjs",
+    "cert:m271": "node scripts/m271_integrated_browser_cert.mjs"
   },
   "dependencies": {
     "framer-motion": "^11.15.0",

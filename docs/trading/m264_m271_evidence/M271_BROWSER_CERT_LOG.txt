@@ -1,0 +1,8 @@
+
+> saathi-os@0.1.0 cert:m271
+> node scripts/m271_integrated_browser_cert.mjs
+
+{
+  "verdict": "INTELLIGENCE_RECOVERY_HISTORICAL_DATA_BROWSER_CERT_PASSED_WITH_LIMITATIONS",
+  "hard_gates_pass": true
+}

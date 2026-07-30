@@ -1,5 +1,24 @@
 # SaathiOS Autonomous Roadmap
 
+## M264–M271 — Intelligence Recovery, Clean-Clone Repro & Historical Data (2026-07-30)
+
+| Field | Value |
+| --- | --- |
+| Verdict | `INTELLIGENCE_BASELINE_RECOVERED_AND_HISTORICAL_DATA_QUALIFIED_WITH_LIMITATIONS` |
+| Defect fixed | M248–M255 was untracked; now committed |
+| Clean clone | Backend 37 / FE 10 / build / cert:m255 / cert:m263 passed |
+| Historical status | `BOUNDED_REAL_HISTORICAL_DATA_VALIDATED_WITH_LIMITATIONS` |
+| Branch | `milestone/m264-m271-intelligence-recovery-historical-data` |
+| UI | `/trading/intelligence` + `/trading/research-data` |
+| Browser | `cert:m255`, `cert:m263`, `cert:m271` |
+| Live / broker / canary / orders | **Not authorized** |
+| Next | M272 only after human review; do not auto-start |
+
+**M248–M255 IS NOW PRESENT IN COMMITTED GIT HISTORY.**  
+**M248–M263 PASSES FROM A CLEAN CLONE USING COMMITTED SOURCE ONLY.**
+
+Evidence: `docs/trading/M264_M271_INTELLIGENCE_RECOVERY_AND_HISTORICAL_DATA.md`, `docs/trading/m264_m271_evidence/`.
+
 ## M256–M263 — Market Data Foundation, Dataset Governance & Signal Validation (2026-07-30)
 
 | Field | Value |

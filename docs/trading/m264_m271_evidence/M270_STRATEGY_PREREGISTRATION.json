@@ -1,0 +1,26 @@
+{
+  "strategies_selected": [
+    "tf_dual_ma"
+  ],
+  "parameters": {
+    "sma_fast": 10,
+    "sma_slow": 20
+  },
+  "features": [
+    "sma_10",
+    "sma_20",
+    "simple_return",
+    "rsi_14"
+  ],
+  "benchmark": "buy_hold",
+  "transaction_costs_bps": 5.0,
+  "slippage_bps": 8.0,
+  "train_ratio": 0.6,
+  "val_ratio": 0.2,
+  "embargo_bars": 2,
+  "purge_bars": 0,
+  "regime_definitions": "20-bar return thresholds (bull/bear/sideways/vol)",
+  "success_criteria": "OOS expectancy>=0 and sharpe>=0 with costs; no overclaim",
+  "failure_criteria": "negative OOS expectancy, leakage, governance block",
+  "registered_before_run": true
+}

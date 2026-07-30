@@ -81,3 +81,6 @@ docs/platform/m55_evidence/screenshots/
 docs/platform/m56_evidence/screenshots/
 docs/platform/m57_evidence/screenshots/
 .saathi-local/
+
+# M264-M271 frozen historical snapshots (local only)
+data/platform/historical_snapshots/
