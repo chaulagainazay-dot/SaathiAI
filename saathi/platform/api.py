@@ -9425,3 +9425,355 @@ def tg_br_llm(body: BrLlmBody, authorization: str | None = Header(default=None),
         return _broker_readiness().llm_refuse(body.action)
     except PlatformContextError as e:
         raise _err(e) from e
+
+# ── M232–M239 Integration Assurance (reproducibility / supply-chain / planning) ──
+# REPRODUCIBILITY AND PLANNING ONLY. No real connectivity. No credentials.
+def _integration_assurance():
+    from saathi.platform.tg.integration_assurance.service import default_integration_assurance
+    return default_integration_assurance()
+
+
+@router.get("/tg/integration-assurance/posture")
+def tg_ia_posture(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _integration_assurance().posture()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/integration-assurance/verdict")
+def tg_ia_verdict(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _integration_assurance().terminal_verdict()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/integration-assurance/dashboard")
+def tg_ia_dashboard(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _integration_assurance().dashboard()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/integration-assurance/source-audit")
+def tg_ia_source(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _integration_assurance().source_audit()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/integration-assurance/reproduction/clean-worktree")
+def tg_ia_wt(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _integration_assurance().clean_worktree()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/integration-assurance/reproduction/clean-clone")
+def tg_ia_cc(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _integration_assurance().clean_clone()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/integration-assurance/environment")
+def tg_ia_env(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _integration_assurance().env_contract()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/integration-assurance/environment/preflight")
+def tg_ia_preflight(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _integration_assurance().env_preflight()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/integration-assurance/dependencies")
+def tg_ia_deps(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _integration_assurance().dependency_inventory()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/integration-assurance/lockfiles")
+def tg_ia_locks(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _integration_assurance().lockfile_checks()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/integration-assurance/sbom")
+def tg_ia_sbom(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _integration_assurance().generate_sbom()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/integration-assurance/provenance")
+def tg_ia_prov(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _integration_assurance().provenance()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/integration-assurance/supply-chain")
+def tg_ia_sc(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _integration_assurance().threat_model()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/integration-assurance/assurance-gates")
+def tg_ia_gates(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _integration_assurance().assurance_gates()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/integration-assurance/authorization/domains")
+def tg_ia_domains(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _integration_assurance().auth_domains()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/integration-assurance/authorization/plan")
+def tg_ia_plan(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        from saathi.platform.tg.integration_assurance.service import IntegrationAssuranceError
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_CONFIGURE)
+        return _integration_assurance().auth_create_plan()
+    except IntegrationAssuranceError as e:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=400, detail={"code": e.code, "message": e.message}) from e
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/integration-assurance/authorization/eligibility")
+def tg_ia_elig(plan_id: str = "", authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _integration_assurance().auth_eligibility(plan_id)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+class IaApprovalBody(BaseModel):
+    plan_id: str
+    domain: str
+    approver_identity: str = ""
+    role: str = "human"
+    scope: str = "read-only-planning"
+    provider: str = ""
+    environment: str = "PLANNING"
+    automated: bool = False
+    evidence_refs: list[str] = []
+    acknowledgements: list[str] = []
+
+
+@router.post("/tg/integration-assurance/authorization/approval")
+def tg_ia_appr(body: IaApprovalBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        from saathi.platform.tg.integration_assurance.service import IntegrationAssuranceError
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_CONFIGURE)
+        # Never accept credentials
+        return _integration_assurance().auth_record_approval(
+            body.plan_id, body.domain,
+            approver_identity=body.approver_identity,
+            role=body.role,
+            scope=body.scope,
+            provider=body.provider,
+            environment=body.environment,
+            automated=body.automated,
+            evidence_refs=body.evidence_refs,
+            acknowledgements=body.acknowledgements,
+            actor=getattr(ctx, "user_id", "api"),
+        )
+    except IntegrationAssuranceError as e:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=400, detail={"code": e.code, "message": e.message}) from e
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/integration-assurance/authorization/owner-signoff-attempt")
+def tg_ia_owner_block(plan_id: str = "", authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        if not plan_id:
+            plan = _integration_assurance().auth_create_plan()
+            plan_id = plan["plan"]["id"]
+        return _integration_assurance().auth_owner_signoff_attempt(plan_id, actor="agent")
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/integration-assurance/authorization/activate")
+def tg_ia_activate(plan_id: str = "", authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _integration_assurance().auth_activate_connectivity(plan_id)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/integration-assurance/network-policy")
+def tg_ia_net(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _integration_assurance().network_policy()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+class IaTransportBody(BaseModel):
+    url: str
+
+
+@router.post("/tg/integration-assurance/transport/probe")
+def tg_ia_transport(body: IaTransportBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _integration_assurance().transport_probe(body.url)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/integration-assurance/security/scan")
+def tg_ia_sec(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _integration_assurance().security_scan()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/integration-assurance/audit")
+def tg_ia_audit(limit: int = 100, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _integration_assurance().audit_timeline(limit=limit)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/integration-assurance/certify")
+def tg_ia_certify(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _integration_assurance().certify()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+class IaLlmBody(BaseModel):
+    action: str
+
+
+@router.post("/tg/integration-assurance/llm/refuse")
+def tg_ia_llm(body: IaLlmBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _integration_assurance().llm_refuse(body.action)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/integration-assurance/evidence")
+def tg_ia_evidence(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return {
+            "path": "docs/trading/m232_m239_evidence/",
+            "REAL_CONNECTIVITY_AUTHORIZED": False,
+            "note": "Evidence generated offline; UI displays findings only",
+        }
+    except PlatformContextError as e:
+        raise _err(e) from e
+

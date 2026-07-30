@@ -51,7 +51,8 @@
     "cert:m71:build": "M71_BUILD=1 node scripts/m71_browser_cert.mjs",
     "cert:m72": "MISSION_RUNTIME_CERT_MILESTONE=M72 node scripts/m71_browser_cert.mjs",
     "cert:m72:build": "MISSION_RUNTIME_CERT_MILESTONE=M72 M72_BUILD=1 node scripts/m71_browser_cert.mjs",
-    "cert:m77": "M77_BUILD=1 node scripts/m77_voice_browser_cert.mjs"
+    "cert:m77": "M77_BUILD=1 node scripts/m77_voice_browser_cert.mjs",
+    "cert:m239": "node scripts/m239_integration_assurance_browser_cert.mjs"
   },
   "dependencies": {
     "framer-motion": "^11.15.0",

@@ -32,6 +32,7 @@ const TABS = [
   { href: "/trading/ops-graduation", label: "Ops Graduation" },
   { href: "/trading/broker-sandbox", label: "Broker Sandbox" },
   { href: "/trading/broker-readiness", label: "Broker Readiness" },
+  { href: "/trading/integration-assurance", label: "Integration Assurance" },
   { href: "/trading/paper-ledger", label: "Ledger" },
   { href: "/trading/paper-recovery", label: "Recovery" },
   { href: "/trading/comparison", label: "Comparison" },

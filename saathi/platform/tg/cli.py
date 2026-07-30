@@ -278,6 +278,25 @@ def main(argv: list[str] | None = None) -> int:
     pg_sub.add_parser("br-certify")
     p_brdrill = pg_sub.add_parser("br-drill")
     p_brdrill.add_argument("scenario")
+    # M232–M239 integration assurance (REPRODUCIBILITY AND PLANNING ONLY)
+    pg_sub.add_parser("ia-verdict")
+    pg_sub.add_parser("ia-source-audit")
+    pg_sub.add_parser("ia-clean-worktree")
+    pg_sub.add_parser("ia-clean-clone")
+    pg_sub.add_parser("ia-env-preflight")
+    pg_sub.add_parser("repro-preflight")  # alias
+    pg_sub.add_parser("ia-dependencies")
+    pg_sub.add_parser("ia-lockfiles")
+    pg_sub.add_parser("ia-sbom")
+    pg_sub.add_parser("ia-provenance")
+    pg_sub.add_parser("ia-supply-chain")
+    pg_sub.add_parser("ia-assurance-gates")
+    pg_sub.add_parser("ia-authorization-plan")
+    pg_sub.add_parser("ia-approval-status")
+    pg_sub.add_parser("ia-network-policy")
+    pg_sub.add_parser("ia-security")
+    pg_sub.add_parser("ia-certify")
+    pg_sub.add_parser("ia-dashboard")
 
     args = parser.parse_args(argv)
     if not args.cmd:
@@ -661,6 +680,48 @@ def main(argv: list[str] | None = None) -> int:
                 return wrap(br.certify())
             if args.action == "br-drill":
                 return wrap(br.drill_run(args.scenario))
+        # M232–M239 integration assurance
+        if args.action and (str(args.action).startswith("ia-") or args.action == "repro-preflight"):
+            from saathi.platform.tg.integration_assurance.service import default_integration_assurance
+            ia = default_integration_assurance()
+            def iwrap(d):
+                if isinstance(d, dict):
+                    d = {**d, "REAL_CONNECTIVITY_AUTHORIZED": False}
+                return _out(d)
+            if args.action in ("ia-verdict",):
+                return iwrap(ia.terminal_verdict())
+            if args.action == "ia-source-audit":
+                return iwrap(ia.source_audit())
+            if args.action == "ia-clean-worktree":
+                return iwrap(ia.clean_worktree())
+            if args.action == "ia-clean-clone":
+                return iwrap(ia.clean_clone())
+            if args.action in ("ia-env-preflight", "repro-preflight"):
+                return iwrap(ia.env_preflight())
+            if args.action == "ia-dependencies":
+                return iwrap(ia.dependency_inventory())
+            if args.action == "ia-lockfiles":
+                return iwrap(ia.lockfile_checks())
+            if args.action == "ia-sbom":
+                return iwrap(ia.generate_sbom())
+            if args.action == "ia-provenance":
+                return iwrap(ia.provenance())
+            if args.action == "ia-supply-chain":
+                return iwrap(ia.threat_model())
+            if args.action == "ia-assurance-gates":
+                return iwrap(ia.assurance_gates())
+            if args.action == "ia-authorization-plan":
+                return iwrap(ia.auth_create_plan())
+            if args.action == "ia-approval-status":
+                return iwrap(ia.auth_eligibility())
+            if args.action == "ia-network-policy":
+                return iwrap(ia.network_policy())
+            if args.action == "ia-security":
+                return iwrap(ia.security_scan())
+            if args.action == "ia-certify":
+                return iwrap(ia.certify())
+            if args.action == "ia-dashboard":
+                return iwrap(ia.dashboard())
         return 2
 
     parser.print_help()
