@@ -3,8 +3,8 @@
   "historical_baseline_sha": "007c4e6491adea144d10a31ed0454ddb733565af",
   "baseline_sha": "007c4e6491adea144d10a31ed0454ddb733565af",
   "implementation_sha": "4af78699dcf4d61acf96459a3682c732cc7d83a8",
-  "current_sha": "3f41c44468426c50d56ec85f7269631bea7eee83",
-  "ending_sha": "3f41c44468426c50d56ec85f7269631bea7eee83",
+  "current_sha": "97489b80dc797e908993d68fc3a9b5fa4c5694f3",
+  "ending_sha": "97489b80dc797e908993d68fc3a9b5fa4c5694f3",
   "current_milestone": "M240-M247",
   "branch": "milestone/m240-m247-provider-canary-planning",
   "status": "complete_with_limitations",
@@ -84,5 +84,5 @@
   ],
   "next_recommended_milestone": "M248 only after human owner review of planning package \u2014 do not auto-start; remain paper/sandbox/planning only; no real connectivity",
   "updated_at": "2026-07-30T12:00:00+00:00",
-  "docs_pin_sha": "3f41c44468426c50d56ec85f7269631bea7eee83"
+  "docs_pin_sha": "97489b80dc797e908993d68fc3a9b5fa4c5694f3"
 }
