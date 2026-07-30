@@ -3,8 +3,8 @@
   "historical_baseline_sha": "f90378b2b92eb30e8e515f72aa2dab3a668def3c",
   "baseline_sha": "0d489fbae07a8572b6039bf231d3bab35f1e9dc1",
   "implementation_sha": "692a6d24134584117bd483d1b32c91a9fd4bcfa6",
-  "current_sha": "692a6d24134584117bd483d1b32c91a9fd4bcfa6",
-  "ending_sha": "692a6d24134584117bd483d1b32c91a9fd4bcfa6",
+  "current_sha": "168f14153aa1aea431bc004b526b98ff9158e92c",
+  "ending_sha": "168f14153aa1aea431bc004b526b98ff9158e92c",
   "current_milestone": "M208-M215",
   "branch": "milestone/m208-m215-ops-graduation",
   "status": "complete_with_limitations",
@@ -41,5 +41,6 @@
     "Browser soft-limitation on api_paper_approvals / cold compile on 8GB host"
   ],
   "next_recommended_milestone": "M216 only after owner planning \u2014 do not auto-start; remain paper-only",
-  "updated_at": "2026-07-30T01:06:10.135542+00:00"
+  "updated_at": "2026-07-30T01:06:27.782886+00:00",
+  "docs_pin_sha": "168f14153aa1aea431bc004b526b98ff9158e92c"
 }
