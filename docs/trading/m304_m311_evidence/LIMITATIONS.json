@@ -1,0 +1,10 @@
+{
+  "limitations": [
+    "Offline fixtures / frozen local observation only",
+    "Not a live authenticated market data feed",
+    "Validation purpose \u2014 not trading",
+    "No broker, account, balance, or portfolio access",
+    "No credential storage"
+  ],
+  "purpose": "validation_not_trading"
+}

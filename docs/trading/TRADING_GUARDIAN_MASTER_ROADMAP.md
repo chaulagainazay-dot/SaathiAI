@@ -64,3 +64,8 @@ separate governance programme and explicit human approval.
 
 Reproducible · explainable · evidence-driven · portfolio-aware · research-first ·
 institution-grade · paper-only · scientifically defensible.
+
+
+## Status (as of M311)
+
+Phases 1–4 of this master roadmap are **implemented and certified with limitations** under paper/research/read-only authority. Broker connectivity remains out of scope.

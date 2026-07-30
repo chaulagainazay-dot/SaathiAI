@@ -1,0 +1,13 @@
+✔ market-observation page exists (0.508208ms)
+✔ boundary labels (1.108458ms)
+✔ no password form (0.110625ms)
+✔ TradingShell has Market Observation tab (0.2615ms)
+✔ package.json has cert:m311 (0.352083ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 80.922292

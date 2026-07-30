@@ -1,0 +1,61 @@
+{
+  "ok": true,
+  "count": 3,
+  "exchanges": [
+    {
+      "exchange": "CRYPTO_PAPER",
+      "status": "OPEN",
+      "session": "24x7",
+      "detail_json": "{\"source\": \"OFFLINE_FIXTURE\"}",
+      "updated_at": 1785418344.577437
+    },
+    {
+      "exchange": "NASDAQ",
+      "status": "OPEN",
+      "session": "RTH",
+      "detail_json": "{\"source\": \"OFFLINE_FIXTURE\"}",
+      "updated_at": 1785418344.577437
+    },
+    {
+      "exchange": "NYSE_ARCA",
+      "status": "OPEN",
+      "session": "RTH",
+      "detail_json": "{\"source\": \"OFFLINE_FIXTURE\"}",
+      "updated_at": 1785418344.577437
+    }
+  ],
+  "live_feed": false,
+  "LIVE_TRADING_AUTHORIZED": false,
+  "BROKER_CONNECTIVITY_AUTHORIZED": false,
+  "REAL_CONNECTIVITY_AUTHORIZED": false,
+  "CREDENTIAL_PROVISIONING_AUTHORIZED": false,
+  "CREDENTIAL_STORAGE_AUTHORIZED": false,
+  "CANARY_ACTIVATION_AUTHORIZED": false,
+  "ORDER_EXECUTION_AUTHORIZED": false,
+  "ORDER_SUBMISSION_AUTHORIZED": false,
+  "ACCOUNT_ACCESS_AUTHORIZED": false,
+  "PORTFOLIO_ACCESS_AUTHORIZED": false,
+  "BALANCE_ACCESS_AUTHORIZED": false,
+  "API_KEYS_ACCEPTED": false,
+  "OAUTH_AUTHORIZED": false,
+  "PRODUCTION_AUTHORIZED": false,
+  "LIVE_MARKET_READINESS": false,
+  "STRATEGY_PROFITABILITY_GUARANTEED": false,
+  "INVESTMENT_ADVICE_CERTIFIED": false,
+  "AUTHENTICATED_PROVIDER_TRAFFIC": false,
+  "paper_only": true,
+  "sandbox_only": true,
+  "research_only": true,
+  "offline_first": true,
+  "read_only_observation": true,
+  "validation_not_trading": true,
+  "no_broker_login": true,
+  "no_oauth": true,
+  "no_credential_storage": true,
+  "no_orders": true,
+  "no_account_access": true,
+  "no_portfolio_access": true,
+  "no_balance_access": true,
+  "no_live_trading": true,
+  "max_authority": "READ_ONLY_MARKET_OBSERVATION_ONLY"
+}

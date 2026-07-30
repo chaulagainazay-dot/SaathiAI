@@ -1,0 +1,7 @@
+{
+  "verdict": "READ_ONLY_MARKET_OBSERVATION_BROWSER_CERT_PASSED_WITH_LIMITATIONS",
+  "hard_gates_pass": true,
+  "branch": "milestone/m304-m311-read-only-market-observation",
+  "sha": "29930b8ae050552fccd1fa02308c8be24b60c7b1",
+  "timestamp": "2026-07-30T13:32:29.040Z"
+}

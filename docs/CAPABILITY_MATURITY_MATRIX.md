@@ -1,5 +1,6 @@
-# SaathiOS Capability Maturity Matrix (as of M303 certification)
+# SaathiOS Capability Maturity Matrix (as of M311 certification)
 
+| Read-only market observation (M304–M311) | deterministic-tested; browser-certified-with-limitations; **validation not trading; offline fixtures; no broker login/oauth/credentials/orders/accounts** | `saathi/platform/tg/market_observation/`; snapshots+quotes+history+metadata+exchange status+CA+benchmarks; `/trading/market-observation`; `cert:m311`; live trading not authorized |
 | Institutional portfolio & risk intelligence (M296–M303) | deterministic-tested; browser-certified-with-limitations; **paper/research only; not regulatory capital; not investment advice** | `saathi/platform/tg/portfolio_risk/`; analytics+limits+optimiser V2+scenarios+committee V2; `/trading/portfolio-risk`; `cert:m303`; live/connectivity not authorized |
 | Institutional paper trading simulation (M288–M295) | deterministic-tested; browser-certified-with-limitations; **virtual exchange only; no broker; no real order routing** | `saathi/platform/tg/paper_simulation/`; matching+book+ledger+kill switch; `/trading/paper-simulation`; `cert:m295`; live/connectivity not authorized |
 | Autonomous research orchestrator (M280–M287) | deterministic-tested; browser-certified-with-limitations; **research-only; in-process workers; no broker/orders** | `saathi/platform/tg/research_orchestrator/`; queue+scheduler+budget+templates+notebook+hypotheses; `/trading/research-orchestrator`; `cert:m287`; composes M248/M256/M272; live/connectivity not authorized |
