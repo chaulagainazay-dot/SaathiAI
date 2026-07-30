@@ -28,5 +28,8 @@
   "master_roadmap_phases_1_to_4_complete": true,
   "browser_certification": true,
   "purpose": "validation_not_trading",
-  "notes": "Master roadmap Phases 1-4 complete; broker connectivity remains separate programme"
+  "notes": "Master roadmap Phases 1-4 complete; broker connectivity remains separate programme",
+  "implementation_sha": "a11315dd381f50d642b547c67425ce567fb0000c",
+  "current_sha": "a11315dd381f50d642b547c67425ce567fb0000c",
+  "ending_sha": "a11315dd381f50d642b547c67425ce567fb0000c"
 }
