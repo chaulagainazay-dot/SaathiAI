@@ -1,0 +1,31 @@
+{
+  "limitations": [
+    "Research-only multi-strategy lab; not production or live-market ready",
+    "Portfolio optimisation is not regulatory-grade",
+    "PAPER_CANDIDATE does not authorize execution",
+    "Synthetic paths labelled unless bound to governed historical data",
+    "Bounded historical OOS failures preserved from M270"
+  ],
+  "preserved_oos_failures": [
+    {
+      "instrument": "AAPL",
+      "strategy_id": "tf_dual_ma",
+      "state": "OUT_OF_SAMPLE_FAILED"
+    },
+    {
+      "instrument": "BTCUSDT",
+      "strategy_id": "tf_dual_ma",
+      "state": "OUT_OF_SAMPLE_FAILED"
+    }
+  ],
+  "historical_data_status": "BOUNDED_REAL_HISTORICAL_DATA_VALIDATED_WITH_LIMITATIONS",
+  "not_claimed": [
+    "profitability",
+    "investment_advice_certification",
+    "regulatory_grade_portfolio_optimisation",
+    "production_readiness",
+    "live_market_readiness",
+    "broker_connectivity",
+    "order_execution"
+  ]
+}

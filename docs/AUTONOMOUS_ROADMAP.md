@@ -1,5 +1,22 @@
 # SaathiOS Autonomous Roadmap
 
+## M272–M279 — Multi-Strategy Research Lab & Adaptive Portfolio Intelligence (2026-07-30)
+
+| Field | Value |
+| --- | --- |
+| Verdict | `MULTI_STRATEGY_RESEARCH_LAB_AND_ADAPTIVE_PORTFOLIO_INTELLIGENCE_CERTIFIED_WITH_LIMITATIONS` |
+| Max state | `RESEARCH_PORTFOLIO_AND_PAPER_CANDIDATE_EVALUATION_ONLY` |
+| Package | `saathi/platform/tg/research_lab/` |
+| Branch | `milestone/m272-m279-multi-strategy-research-lab` |
+| UI | `/trading/research-lab` |
+| Browser | `cert:m279` |
+| Preserved OOS | AAPL + BTCUSDT `tf_dual_ma` remain `OUT_OF_SAMPLE_FAILED` |
+| Paper candidate | Human review required; does **not** authorize execution |
+| Live / broker / canary / orders | **Not authorized** |
+| Next | M280 only after human review; do not auto-start |
+
+Evidence: `docs/trading/M272_M279_MULTI_STRATEGY_RESEARCH_LAB.md`, `docs/trading/m272_m279_evidence/`.
+
 ## M264–M271 — Intelligence Recovery, Clean-Clone Repro & Historical Data (2026-07-30)
 
 | Field | Value |
@@ -12,7 +29,7 @@
 | UI | `/trading/intelligence` + `/trading/research-data` |
 | Browser | `cert:m255`, `cert:m263`, `cert:m271` |
 | Live / broker / canary / orders | **Not authorized** |
-| Next | M272 only after human review; do not auto-start |
+| Next | Completed by M272–M279 research lab |
 
 **M248–M255 IS NOW PRESENT IN COMMITTED GIT HISTORY.**  
 **M248–M263 PASSES FROM A CLEAN CLONE USING COMMITTED SOURCE ONLY.**

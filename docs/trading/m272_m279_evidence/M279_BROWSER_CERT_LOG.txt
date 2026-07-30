@@ -1,0 +1,8 @@
+
+> saathi-os@0.1.0 cert:m279
+> node scripts/m279_research_lab_browser_cert.mjs
+
+{
+  "verdict": "MULTI_STRATEGY_RESEARCH_LAB_BROWSER_CERT_PASSED_WITH_LIMITATIONS",
+  "hard_gates_pass": true
+}

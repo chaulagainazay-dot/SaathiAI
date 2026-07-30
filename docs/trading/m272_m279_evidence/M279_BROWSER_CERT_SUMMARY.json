@@ -1,0 +1,7 @@
+{
+  "verdict": "MULTI_STRATEGY_RESEARCH_LAB_BROWSER_CERT_PASSED_WITH_LIMITATIONS",
+  "hard_gates_pass": true,
+  "branch": "milestone/m272-m279-multi-strategy-research-lab",
+  "sha": "6cbce97ed45145518f01862eba752bf74aa38977",
+  "timestamp": "2026-07-30T07:45:39.915Z"
+}

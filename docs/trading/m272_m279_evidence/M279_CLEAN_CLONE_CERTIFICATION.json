@@ -1,0 +1,26 @@
+{
+  "schema": "M279_CLEAN_CLONE_CERTIFICATION",
+  "clean_clone_path": "/tmp/saathiai-m279-clean",
+  "checked_out_sha": "6cbce97ed45145518f01862eba752bf74aa38977",
+  "timestamp": "2026-07-30T07:46:34Z",
+  "M248_M255_COMMITTED_SOURCE_PRESENT": true,
+  "M256_M263_COMMITTED_SOURCE_PRESENT": true,
+  "M264_M271_COMMITTED_SOURCE_PRESENT": true,
+  "M272_M279_COMMITTED_SOURCE_PRESENT": true,
+  "UNTRACKED_REQUIRED_SOURCE_FILES": 0,
+  "missing_required": [],
+  "CLEAN_CLONE_BACKEND_TESTS_PASSED": true,
+  "CLEAN_CLONE_FRONTEND_TESTS_PASSED": true,
+  "CLEAN_CLONE_PRODUCTION_BUILD_PASSED": true,
+  "M255_BROWSER_CERT_PASSED": true,
+  "M263_BROWSER_CERT_PASSED": true,
+  "M271_BROWSER_CERT_PASSED": true,
+  "M279_BROWSER_CERT_PASSED": true,
+  "backend_tests": "...............                                                          [100%]\n15 passed in 0.63s\n",
+  "frontend_tests": "5 passed",
+  "build_routes": [
+    "/trading/research-lab"
+  ],
+  "initial_git_status_empty": true,
+  "ok": true
+}

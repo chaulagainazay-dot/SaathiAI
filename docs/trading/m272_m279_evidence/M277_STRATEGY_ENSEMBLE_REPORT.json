@@ -1,0 +1,207 @@
+{
+  "schema": "M277_STRATEGY_ENSEMBLE_REPORT",
+  "ok": true,
+  "state": "RESEARCH_VALIDATED_WITH_LIMITATIONS",
+  "method": "equal_weight",
+  "strategy_ids": [
+    "tf_dual_ma",
+    "mom_rs_equity",
+    "mr_bollinger_reversion",
+    "bo_donchian"
+  ],
+  "weights": {
+    "tf_dual_ma": 0.25,
+    "mom_rs_equity": 0.25,
+    "mr_bollinger_reversion": 0.25,
+    "bo_donchian": 0.25
+  },
+  "allocation_rule": {
+    "allocation_rule_version": "v1",
+    "method": "equal_weight",
+    "strategy_ids": [
+      "tf_dual_ma",
+      "mom_rs_equity",
+      "mr_bollinger_reversion",
+      "bo_donchian"
+    ],
+    "weights": {
+      "tf_dual_ma": 0.25,
+      "mom_rs_equity": 0.25,
+      "mr_bollinger_reversion": 0.25,
+      "bo_donchian": 0.25
+    },
+    "regime_inputs": {},
+    "fitted_on": "training",
+    "frozen": true,
+    "test_set_tuning_forbidden": true,
+    "engine_version": "m277.ensemble.v1",
+    "checksum": "ad9dd6b5423b63280c43c58f03c1fc04a2d995b30c44ab6140c40bb6706e971c",
+    "authority": "RESEARCH_PORTFOLIO_AND_PAPER_CANDIDATE_EVALUATION_ONLY"
+  },
+  "workflow": {
+    "fit_on": "training",
+    "freeze_allocation_rules": true,
+    "validate_on": "validation",
+    "evaluate_once_on": "test",
+    "revisions": 0,
+    "trial_count": 1
+  },
+  "validation_metrics": {
+    "annualised_return": 0.157093,
+    "volatility": 0.043051,
+    "sharpe_ratio": 3.649006,
+    "sortino_ratio": 6.374084,
+    "maximum_drawdown": 0.009046,
+    "calmar_ratio": 17.366001,
+    "var_95": 0.004788,
+    "expected_shortfall_95": 0.004788,
+    "downside_deviation": 0.024646,
+    "hit_rate": 0.6,
+    "average_win": 0.002423,
+    "average_loss": -0.002077,
+    "expectancy": 0.000623,
+    "profit_factor": 1.750458,
+    "recovery_factor": 2.074177
+  },
+  "test_metrics": {
+    "annualised_return": 0.023127,
+    "volatility": 0.053002,
+    "sharpe_ratio": 0.436353,
+    "sortino_ratio": 0.901409,
+    "maximum_drawdown": 0.010901,
+    "calmar_ratio": 2.121506,
+    "var_95": 0.005329,
+    "expected_shortfall_95": 0.005329,
+    "downside_deviation": 0.025657,
+    "hit_rate": 0.566667,
+    "average_win": 0.00267,
+    "average_loss": -0.003279,
+    "expectancy": 9.2e-05,
+    "profit_factor": 1.064581,
+    "recovery_factor": 0.238024
+  },
+  "baselines": {
+    "equal_weight": {
+      "annualised_return": 0.023127,
+      "volatility": 0.053002,
+      "sharpe_ratio": 0.436353,
+      "sortino_ratio": 0.901409,
+      "maximum_drawdown": 0.010901,
+      "calmar_ratio": 2.121506,
+      "var_95": 0.005329,
+      "expected_shortfall_95": 0.005329,
+      "downside_deviation": 0.025657,
+      "hit_rate": 0.566667,
+      "average_win": 0.00267,
+      "average_loss": -0.003279,
+      "expectancy": 9.2e-05,
+      "profit_factor": 1.064581,
+      "recovery_factor": 0.238024
+    },
+    "best_single_train_selected": {
+      "strategy_id": "tf_dual_ma",
+      "annualised_return": 0.183679,
+      "volatility": 0.107518,
+      "sharpe_ratio": 1.708357,
+      "sortino_ratio": 3.268222,
+      "maximum_drawdown": 0.025139,
+      "calmar_ratio": 7.30655,
+      "var_95": 0.01286,
+      "expected_shortfall_95": 0.01286,
+      "downside_deviation": 0.056202,
+      "hit_rate": 0.6,
+      "average_win": 0.005539,
+      "average_loss": -0.006486,
+      "expectancy": 0.000729,
+      "profit_factor": 1.280953,
+      "recovery_factor": 0.852041
+    }
+  },
+  "turnover": 0.0,
+  "leakage_controls": {
+    "target_leakage": false,
+    "test_set_allocation_tuning": false,
+    "hidden_future_regime_information": false,
+    "selection_on_final_test": false
+  },
+  "explanation": {
+    "selected_strategies": [
+      "tf_dual_ma",
+      "mom_rs_equity",
+      "mr_bollinger_reversion",
+      "bo_donchian"
+    ],
+    "excluded_strategies": [],
+    "assigned_weights": {
+      "tf_dual_ma": 0.25,
+      "mom_rs_equity": 0.25,
+      "mr_bollinger_reversion": 0.25,
+      "bo_donchian": 0.25
+    },
+    "regime_inputs": [],
+    "confidence_inputs": {
+      "tf_dual_ma": 2.368379,
+      "mom_rs_equity": 0.493776,
+      "mr_bollinger_reversion": 0.413116,
+      "bo_donchian": -2.416906
+    },
+    "risk_inputs": {
+      "tf_dual_ma": 0.097781,
+      "mom_rs_equity": 0.094683,
+      "mr_bollinger_reversion": 0.089386,
+      "bo_donchian": 0.088517
+    },
+    "cost_assumptions": {
+      "included_in_path_sim": true
+    },
+    "turnover_implications": 0.0,
+    "invalidation_criteria": [
+      "test_leakage",
+      "turnover_excess",
+      "oos_failure"
+    ]
+  },
+  "limitations": [
+    "Research ensemble only; does not authorize execution",
+    "Synthetic paths unless bound to governed historical runs"
+  ],
+  "LIVE_TRADING_AUTHORIZED": false,
+  "BROKER_CONNECTIVITY_AUTHORIZED": false,
+  "REAL_CONNECTIVITY_AUTHORIZED": false,
+  "CREDENTIAL_PROVISIONING_AUTHORIZED": false,
+  "CANARY_ACTIVATION_AUTHORIZED": false,
+  "ORDER_EXECUTION_AUTHORIZED": false,
+  "ORDER_SUBMISSION_AUTHORIZED": false,
+  "ORDER_MODIFICATION_AUTHORIZED": false,
+  "ORDER_CANCELLATION_AUTHORIZED": false,
+  "API_KEYS_ACCEPTED": false,
+  "OAUTH_AUTHORIZED": false,
+  "LIVE_MARKET_DATA_AUTHORIZED": false,
+  "LIVE_DATA_DEPENDENCY": false,
+  "PAPER_EXECUTION_AUTHORIZED": false,
+  "AUTOMATED_INVESTMENT_AUTHORITY": false,
+  "REGULATORY_GRADE_PORTFOLIO_OPTIMISATION": false,
+  "STRATEGY_PROFITABILITY_GUARANTEED": false,
+  "LIVE_MARKET_READINESS": false,
+  "INVESTMENT_ADVICE_CERTIFIED": false,
+  "PRODUCTION_AUTHORIZED": false,
+  "REAL_BROKER_CONNECTION_CAPABLE": false,
+  "paper_only": true,
+  "sandbox_only": true,
+  "research_only": true,
+  "offline_first": true,
+  "offline_capable": true,
+  "no_broker_connection": true,
+  "no_api_keys": true,
+  "no_oauth": true,
+  "no_order_submission": true,
+  "no_live_data_dependency": true,
+  "no_live_trading": true,
+  "certified_experiment_requires_pre_registration": true,
+  "human_review_required_for_paper_candidate": true,
+  "paper_candidate_does_not_authorise_execution": true,
+  "max_authority": "RESEARCH_PORTFOLIO_AND_PAPER_CANDIDATE_EVALUATION_ONLY",
+  "default_leverage_max": 1.0,
+  "evidence_hash": "38d683cae2cf788f5596831c18e3ced1e271be7b798c3855065b4d01cd51e79f",
+  "ensemble_id": "ens_6da4fa13faeb4d6c"
+}

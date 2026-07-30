@@ -1,0 +1,43 @@
+{
+  "schema": "M272_RECOVERY_BASELINE",
+  "timestamp": "2026-07-30T07:31:01Z",
+  "repository_path": "/Users/macbookpro/SaathiAI",
+  "starting_branch": "milestone/m264-m271-intelligence-recovery-historical-data",
+  "starting_sha_expected": "a180a78998a2a416b3277efa0a07a7bc4aed6dfd",
+  "starting_sha_observed_at_branch_create": "a180a78998a2a416b3277efa0a07a7bc4aed6dfd",
+  "working_branch": "milestone/m272-m279-multi-strategy-research-lab",
+  "parent_sha_check": "a180a78998a2a416b3277efa0a07a7bc4aed6dfd",
+  "checks": {
+    "repo_path_ok": true,
+    "m248_m255_present": true,
+    "m256_m263_present": true,
+    "m264_m271_evidence_present": true,
+    "clean_clone_cert_ok": true,
+    "historical_data_status": "BOUNDED_REAL_HISTORICAL_DATA_VALIDATED_WITH_LIMITATIONS",
+    "aapl_oos_state": "OUT_OF_SAMPLE_FAILED",
+    "btcusdt_oos_state": "OUT_OF_SAMPLE_FAILED",
+    "failed_strategies_preserved": true,
+    "unrelated_dirty_preserved": true
+  },
+  "preserved_unrelated_paths": [
+    "docs/evidence/m25/*",
+    "docs/evidence/m27/*",
+    "docs/evidence/m28/*",
+    "docs/design-spec/"
+  ],
+  "initial_git_status": [
+    "M docs/evidence/m25/LATEST_ENVIRONMENT_OBSERVATION.json",
+    " M docs/evidence/m25/LIVE_CERT_EVIDENCE.json",
+    " M docs/evidence/m25/LIVE_CERT_SUMMARY.md",
+    " M docs/evidence/m27/connector_events.jsonl",
+    " M docs/evidence/m28/deprecation_events.jsonl",
+    "?? docs/design-spec/",
+    "?? docs/trading/m272_m279_evidence/"
+  ],
+  "prior_verdict": "INTELLIGENCE_BASELINE_RECOVERED_AND_HISTORICAL_DATA_QUALIFIED_WITH_LIMITATIONS",
+  "prior_max_state": "INTELLIGENCE_AND_BOUNDED_HISTORICAL_RESEARCH_READY",
+  "ok": true,
+  "verdict": "M272_RECOVERY_BASELINE_OK",
+  "starting_sha_observed": "a180a78998a2a416b3277efa0a07a7bc4aed6dfd",
+  "branch_created_from": "milestone/m264-m271-intelligence-recovery-historical-data"
+}

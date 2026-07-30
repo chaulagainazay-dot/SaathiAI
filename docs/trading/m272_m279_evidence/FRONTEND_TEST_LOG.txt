@@ -1,0 +1,13 @@
+✔ research-lab page exists (0.498958ms)
+✔ research-lab page has research boundary labels (2.297417ms)
+✔ research-lab page has no broker connect / api key / order / oauth controls (0.510375ms)
+✔ TradingShell includes Research Lab tab (0.684958ms)
+✔ package.json has cert:m279 (0.539333ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 84.602625
