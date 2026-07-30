@@ -3,8 +3,8 @@
   "historical_baseline_sha": "007c4e6491adea144d10a31ed0454ddb733565af",
   "baseline_sha": "007c4e6491adea144d10a31ed0454ddb733565af",
   "implementation_sha": "4af78699dcf4d61acf96459a3682c732cc7d83a8",
-  "current_sha": "PENDING_DOCS_PIN",
-  "ending_sha": "PENDING_DOCS_PIN",
+  "current_sha": "3f41c44468426c50d56ec85f7269631bea7eee83",
+  "ending_sha": "3f41c44468426c50d56ec85f7269631bea7eee83",
   "current_milestone": "M240-M247",
   "branch": "milestone/m240-m247-provider-canary-planning",
   "status": "complete_with_limitations",
@@ -82,7 +82,7 @@
     "Browser UI soft-limited behind sign-in gate for full authenticated journeys",
     "Owner human sign-off not claimed"
   ],
-  "next_recommended_milestone": "M248 only after human owner review of planning package — do not auto-start; remain paper/sandbox/planning only; no real connectivity",
+  "next_recommended_milestone": "M248 only after human owner review of planning package \u2014 do not auto-start; remain paper/sandbox/planning only; no real connectivity",
   "updated_at": "2026-07-30T12:00:00+00:00",
-  "docs_pin_sha": "PENDING_DOCS_PIN"
+  "docs_pin_sha": "3f41c44468426c50d56ec85f7269631bea7eee83"
 }
