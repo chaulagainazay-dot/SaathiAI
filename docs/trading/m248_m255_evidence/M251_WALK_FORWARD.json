@@ -1,0 +1,234 @@
+{
+  "ok": true,
+  "engine": "walk_forward_v2",
+  "strategy_id": "tf_dual_ma",
+  "n_folds": 3,
+  "mode": "rolling",
+  "train_size": 40,
+  "test_size": 20,
+  "embargo": 1,
+  "seed": 42,
+  "folds": [
+    {
+      "fold": 0,
+      "train_range": [
+        0,
+        40
+      ],
+      "test_range": [
+        41,
+        61
+      ],
+      "embargo": 1,
+      "selected_params": {
+        "fast": 8,
+        "slow": 20,
+        "label": "fast8_slow20"
+      },
+      "selected_before_test": true,
+      "optimized_on_test": false,
+      "train_scores": [
+        {
+          "params": {
+            "fast": 8,
+            "slow": 20,
+            "label": "fast8_slow20"
+          },
+          "sharpe": -0.2688,
+          "max_drawdown": 0.009805,
+          "total_return": -0.002198,
+          "score": -0.28841
+        },
+        {
+          "params": {
+            "fast": 10,
+            "slow": 20,
+            "label": "fast10_slow20"
+          },
+          "sharpe": -0.2688,
+          "max_drawdown": 0.009805,
+          "total_return": -0.002198,
+          "score": -0.28841
+        },
+        {
+          "params": {
+            "fast": 12,
+            "slow": 30,
+            "label": "fast12_slow30"
+          },
+          "sharpe": -0.2688,
+          "max_drawdown": 0.009805,
+          "total_return": -0.002198,
+          "score": -0.28841
+        }
+      ],
+      "test_metrics": {
+        "total_return": null,
+        "sharpe": null,
+        "max_drawdown": null,
+        "win_rate": null,
+        "profit_factor": null
+      }
+    },
+    {
+      "fold": 1,
+      "train_range": [
+        20,
+        60
+      ],
+      "test_range": [
+        61,
+        81
+      ],
+      "embargo": 1,
+      "selected_params": {
+        "fast": 8,
+        "slow": 20,
+        "label": "fast8_slow20"
+      },
+      "selected_before_test": true,
+      "optimized_on_test": false,
+      "train_scores": [
+        {
+          "params": {
+            "fast": 8,
+            "slow": 20,
+            "label": "fast8_slow20"
+          },
+          "sharpe": -6.4224,
+          "max_drawdown": 0.02453,
+          "total_return": -0.019709,
+          "score": -6.47146
+        },
+        {
+          "params": {
+            "fast": 10,
+            "slow": 20,
+            "label": "fast10_slow20"
+          },
+          "sharpe": -6.4224,
+          "max_drawdown": 0.02453,
+          "total_return": -0.019709,
+          "score": -6.47146
+        },
+        {
+          "params": {
+            "fast": 12,
+            "slow": 30,
+            "label": "fast12_slow30"
+          },
+          "sharpe": -6.4224,
+          "max_drawdown": 0.02453,
+          "total_return": -0.019709,
+          "score": -6.47146
+        }
+      ],
+      "test_metrics": {
+        "total_return": null,
+        "sharpe": null,
+        "max_drawdown": null,
+        "win_rate": null,
+        "profit_factor": null
+      }
+    },
+    {
+      "fold": 2,
+      "train_range": [
+        40,
+        80
+      ],
+      "test_range": [
+        81,
+        101
+      ],
+      "embargo": 1,
+      "selected_params": {
+        "fast": 8,
+        "slow": 20,
+        "label": "fast8_slow20"
+      },
+      "selected_before_test": true,
+      "optimized_on_test": false,
+      "train_scores": [
+        {
+          "params": {
+            "fast": 8,
+            "slow": 20,
+            "label": "fast8_slow20"
+          },
+          "sharpe": -3.3243,
+          "max_drawdown": 0.008801,
+          "total_return": -0.008407,
+          "score": -3.341902
+        },
+        {
+          "params": {
+            "fast": 10,
+            "slow": 20,
+            "label": "fast10_slow20"
+          },
+          "sharpe": -3.3243,
+          "max_drawdown": 0.008801,
+          "total_return": -0.008407,
+          "score": -3.341902
+        },
+        {
+          "params": {
+            "fast": 12,
+            "slow": 30,
+            "label": "fast12_slow30"
+          },
+          "sharpe": -3.3243,
+          "max_drawdown": 0.008801,
+          "total_return": -0.008407,
+          "score": -3.341902
+        }
+      ],
+      "test_metrics": {
+        "total_return": null,
+        "sharpe": null,
+        "max_drawdown": null,
+        "win_rate": null,
+        "profit_factor": null
+      }
+    }
+  ],
+  "aggregate": {
+    "mean_test_return": 0.0,
+    "mean_test_sharpe": 0.0,
+    "mean_train_sharpe": -3.3385,
+    "train_test_degradation": -3.3385,
+    "positive_fold_ratio": 0.0,
+    "max_test_drawdown": 0
+  },
+  "overfitting": {
+    "detected": false,
+    "score": 0.0,
+    "method": "train_test_sharpe_degradation"
+  },
+  "robustness_score": 0.0,
+  "confidence_score": 0.0,
+  "invariants": {
+    "optimized_on_evaluation_set": false,
+    "selected_before_test": true,
+    "train_test_separated": true
+  },
+  "evidence_hash": "d29ad69768f7bdd64133b00da53793aa283bdcfbb932420cf47386237872d6ea",
+  "LIVE_TRADING_AUTHORIZED": false,
+  "BROKER_CONNECTIVITY_AUTHORIZED": false,
+  "API_KEYS_ACCEPTED": false,
+  "OAUTH_AUTHORIZED": false,
+  "ORDER_SUBMISSION_AUTHORIZED": false,
+  "LIVE_MARKET_DATA_AUTHORIZED": false,
+  "LIVE_DATA_DEPENDENCY": false,
+  "paper_only": true,
+  "sandbox_only": true,
+  "offline_capable": true,
+  "no_broker_connection": true,
+  "no_api_keys": true,
+  "no_oauth": true,
+  "no_order_submission": true,
+  "no_live_data_dependency": true,
+  "no_live_trading": true,
+  "run_id": "ii__5eebd976e8874d98"
+}

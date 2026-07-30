@@ -1,0 +1,65 @@
+{
+  "portfolio_id": "paper_core_demo",
+  "risk_summary": {
+    "volatility": 0.099942,
+    "sharpe": -1.6644,
+    "sortino": -3.7585,
+    "max_drawdown": 0.092597,
+    "beta": 0.8665,
+    "var_95": 0.008505,
+    "expected_shortfall_95": 0.01078
+  },
+  "exposures": {
+    "sector": {
+      "Broad Market": 0.417595,
+      "Commodities": 0.070527,
+      "Fixed Income": 0.050111,
+      "International": 0.053452,
+      "Technology": 0.176318
+    },
+    "geographic": {
+      "Developed ex-US": 0.053452,
+      "Global": 0.070527,
+      "US": 0.644024
+    },
+    "asset_class": {
+      "bond_etf": 0.050111,
+      "commodity_etf": 0.070527,
+      "equity_etf": 0.647365
+    }
+  },
+  "concentration": {
+    "top_position_weight": 0.417595,
+    "top_3_weight": 0.66444,
+    "hhi": 0.215816
+  },
+  "diversification": {
+    "herfindahl": 0.215816,
+    "effective_n": 4.6336,
+    "score": 0.9267,
+    "position_count": 5
+  },
+  "alerts": [
+    {
+      "severity": "warn",
+      "code": "HIGH_CONCENTRATION",
+      "message": "Top position > 35%"
+    }
+  ],
+  "LIVE_TRADING_AUTHORIZED": false,
+  "BROKER_CONNECTIVITY_AUTHORIZED": false,
+  "API_KEYS_ACCEPTED": false,
+  "OAUTH_AUTHORIZED": false,
+  "ORDER_SUBMISSION_AUTHORIZED": false,
+  "LIVE_MARKET_DATA_AUTHORIZED": false,
+  "LIVE_DATA_DEPENDENCY": false,
+  "paper_only": true,
+  "sandbox_only": true,
+  "offline_capable": true,
+  "no_broker_connection": true,
+  "no_api_keys": true,
+  "no_oauth": true,
+  "no_order_submission": true,
+  "no_live_data_dependency": true,
+  "no_live_trading": true
+}
