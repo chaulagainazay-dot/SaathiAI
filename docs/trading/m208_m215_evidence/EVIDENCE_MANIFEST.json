@@ -1,0 +1,181 @@
+{
+  "schema": "m208.evidence_manifest.v1",
+  "created_at": "2026-07-30T01:05:49.892444+00:00",
+  "branch": "milestone/m208-m215-ops-graduation",
+  "baseline_sha": "0d489fbae07a8572b6039bf231d3bab35f1e9dc1",
+  "file_count": 34,
+  "files": [
+    {
+      "path": "docs/trading/m208_m215_evidence/AUTHORITY_SCAN.json",
+      "bytes": 2968,
+      "sha256": "ec46939f50751a5bbffd192047602f597b80c168af1709159d598521f5571e0b"
+    },
+    {
+      "path": "docs/trading/m208_m215_evidence/BROADER_TG_REGRESSION.txt",
+      "bytes": 109,
+      "sha256": "fbf96d8df5800fe530268afa657d40aca17482c4f0143657cf371c2cfc286bd8"
+    },
+    {
+      "path": "docs/trading/m208_m215_evidence/BROWSER_CERT_LOG.txt",
+      "bytes": 274,
+      "sha256": "8b6bee5860ecceed121386999afaebe98d61040e80639b1a34dc5573e1ed7c18"
+    },
+    {
+      "path": "docs/trading/m208_m215_evidence/CERTIFICATION.json",
+      "bytes": 8827,
+      "sha256": "2ef84e9e2922c54b6136d6d50e125072958c1be429b7534adb985f72562866f5"
+    },
+    {
+      "path": "docs/trading/m208_m215_evidence/CREDENTIAL_SCAN.json",
+      "bytes": 126,
+      "sha256": "1abfb5c82524131740fa052c02162d4437a19153e44dfefc7e8ce297a40d2e79"
+    },
+    {
+      "path": "docs/trading/m208_m215_evidence/FOCUSED_M208_M215_TESTS.txt",
+      "bytes": 111,
+      "sha256": "35338ba2e9fce1a494d5c69d34e69122ef9e7f64cd3bbd260d8ccf7a99aa3777"
+    },
+    {
+      "path": "docs/trading/m208_m215_evidence/FOCUSED_TG_TESTS.txt",
+      "bytes": 181,
+      "sha256": "1361d330e4f1ce1f0151af422b6ef021c30b1c76426a6552344774bcbaab67d1"
+    },
+    {
+      "path": "docs/trading/m208_m215_evidence/FRONTEND_BUILD.txt",
+      "bytes": 9323,
+      "sha256": "1069b192776a75a2d912290c0523e75c366fac762a77c91e43f8821dc69bae6f"
+    },
+    {
+      "path": "docs/trading/m208_m215_evidence/FRONTEND_FULL_SUITE.txt",
+      "bytes": 20668,
+      "sha256": "0438899fd4b65215b01c73668b9895c5ef23a2109407605062b3368eb3059b4a"
+    },
+    {
+      "path": "docs/trading/m208_m215_evidence/FRONTEND_M208_UNIT.txt",
+      "bytes": 310,
+      "sha256": "94676d53efc2a6c8c4240d6d06fcfa9619123fa6a046f9655280941c7d3c4271"
+    },
+    {
+      "path": "docs/trading/m208_m215_evidence/FRONTEND_TRADING_UNIT.txt",
+      "bytes": 3013,
+      "sha256": "66fdb671589d68bc42e202bcbe063b3b7948032f626ce38d497025dfe858df4b"
+    },
+    {
+      "path": "docs/trading/m208_m215_evidence/FULL_BACKEND_SUITE.txt",
+      "bytes": 13559,
+      "sha256": "3a8b04a78674976c0af9c88c7f326c8506435c90ac4e271adbb734adbe0d990e"
+    },
+    {
+      "path": "docs/trading/m208_m215_evidence/GRADUATION_EVAL.json",
+      "bytes": 1615,
+      "sha256": "f5c667c3b060345943942a7b999d6f49b60fcd80c81b6a2e54a8380c4abf4ac4"
+    },
+    {
+      "path": "docs/trading/m208_m215_evidence/HEALTH_SNAPSHOT.json",
+      "bytes": 2595,
+      "sha256": "85737b5f783c77d053423d85a70ea41ae439d00b5495d863f971b9f3c57b9991"
+    },
+    {
+      "path": "docs/trading/m208_m215_evidence/LIVE_PATH_SCAN.json",
+      "bytes": 958,
+      "sha256": "d954b211dad6d28cdce88ce5078a708c70ba96f2d323f58e774924744d3a5de9"
+    },
+    {
+      "path": "docs/trading/m208_m215_evidence/M200_COMPAT_TESTS.txt",
+      "bytes": 111,
+      "sha256": "32789aa5f27246056b1f892d3c5a045f4e5879fc9b5fa31f908f7204daed53ce"
+    },
+    {
+      "path": "docs/trading/m208_m215_evidence/M215_CERTIFICATION_SUMMARY.json",
+      "bytes": 2681,
+      "sha256": "8c311c8d3c548325c848aec0e031476535f5173790928ddcba5cc6beb0b0d5d6"
+    },
+    {
+      "path": "docs/trading/m208_m215_evidence/RECOVERY_MANIFEST.json",
+      "bytes": 1401,
+      "sha256": "cb0e9113474e1b2c8657b95970c3f0f8bf706dd1126b126dda5fe9ffe79403aa"
+    },
+    {
+      "path": "docs/trading/m208_m215_evidence/SECURITY_SCAN.json",
+      "bytes": 238,
+      "sha256": "fa6fa47bb83486eb3ee2a1b78e4aca9fd7322745030261c6f83306ab27535c5f"
+    },
+    {
+      "path": "docs/trading/m208_m215_evidence/SIM_SUITE.json",
+      "bytes": 10864,
+      "sha256": "0e646db8aff301585f0ff032570ff17be9273e7dc914cf9ae18d44779e0ff020"
+    },
+    {
+      "path": "docs/trading/m208_m215_evidence/TEST_RESULTS.md",
+      "bytes": 1506,
+      "sha256": "ae2b3767d2672487296ff75fe9a30c6a88387352ccbd6733b1ffa97ff00f229b"
+    },
+    {
+      "path": "docs/trading/m208_m215_evidence/TG_M166_M215_REGRESSION.txt",
+      "bytes": 187,
+      "sha256": "49ecd47fbe77a31bc55cbb50e912f3bcbb377680f64bd4f4644b532d2ca5ab4d"
+    },
+    {
+      "path": "docs/trading/m208_m215_evidence/browser/M215_BROWSER_CERT.json",
+      "bytes": 10769,
+      "sha256": "39d669d1de24717678c6fd2ed30dd377464f185a645500ca2b57252a7a96670f"
+    },
+    {
+      "path": "docs/trading/m208_m215_evidence/browser/screenshots/01_overview.png",
+      "bytes": 178300,
+      "sha256": "26c8cab90f43953dbc14d56a2fd1e071b7ffe6f2cc2bfc6f4d01534f8f4b3ae1"
+    },
+    {
+      "path": "docs/trading/m208_m215_evidence/browser/screenshots/02_proposals.png",
+      "bytes": 175170,
+      "sha256": "474fb10d1dbe7c113b6b7372b25ec57414dcbe17d4a9b739bda66f8feb06bd6b"
+    },
+    {
+      "path": "docs/trading/m208_m215_evidence/browser/screenshots/03_historical.png",
+      "bytes": 142162,
+      "sha256": "4cd9c89b79eecf99e7d7e07bf51536e9672d9d9accdf46731517240a27f5e00b"
+    },
+    {
+      "path": "docs/trading/m208_m215_evidence/browser/screenshots/04_monte_carlo.png",
+      "bytes": 63146,
+      "sha256": "55a85f0a0727b10dd8bc89907f5bc52368eea4f6af73e55ff19468ee777ce15c"
+    },
+    {
+      "path": "docs/trading/m208_m215_evidence/browser/screenshots/05_qualification.png",
+      "bytes": 63146,
+      "sha256": "55a85f0a0727b10dd8bc89907f5bc52368eea4f6af73e55ff19468ee777ce15c"
+    },
+    {
+      "path": "docs/trading/m208_m215_evidence/browser/screenshots/06_paper_portfolio.png",
+      "bytes": 155573,
+      "sha256": "7f164b10b940c34bded082d17b8c236ed460819e747d048c3cca563701e2d90e"
+    },
+    {
+      "path": "docs/trading/m208_m215_evidence/browser/screenshots/07_paper_risk.png",
+      "bytes": 63146,
+      "sha256": "55a85f0a0727b10dd8bc89907f5bc52368eea4f6af73e55ff19468ee777ce15c"
+    },
+    {
+      "path": "docs/trading/m208_m215_evidence/browser/screenshots/08_paper_approvals.png",
+      "bytes": 63146,
+      "sha256": "55a85f0a0727b10dd8bc89907f5bc52368eea4f6af73e55ff19468ee777ce15c"
+    },
+    {
+      "path": "docs/trading/m208_m215_evidence/browser/screenshots/09_paper_ops.png",
+      "bytes": 63146,
+      "sha256": "55a85f0a0727b10dd8bc89907f5bc52368eea4f6af73e55ff19468ee777ce15c"
+    },
+    {
+      "path": "docs/trading/m208_m215_evidence/browser/screenshots/09b_ops_graduation.png",
+      "bytes": 169163,
+      "sha256": "c1e87c0c51a6de3d83cd860516c193c79bb49013ff0b95dddf5653fb6ceab1ef"
+    },
+    {
+      "path": "docs/trading/m208_m215_evidence/browser/screenshots/10_paper_ledger.png",
+      "bytes": 63146,
+      "sha256": "55a85f0a0727b10dd8bc89907f5bc52368eea4f6af73e55ff19468ee777ce15c"
+    }
+  ],
+  "verdict": "OPERATIONAL_GRADUATION_CERTIFIED_WITH_LIMITATIONS",
+  "paper_only": true
+}

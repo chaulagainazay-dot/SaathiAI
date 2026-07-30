@@ -1,0 +1,34 @@
+{
+  "schema": "m208.live_path_scan.v1",
+  "live_order_hits": [
+    {
+      "file": "saathi/platform/tg/paper_activation/ops/models.py",
+      "line": 73,
+      "text": "\"live_order_capable\": False,"
+    },
+    {
+      "file": "saathi/platform/tg/paper_activation/durable/store.py",
+      "line": 550,
+      "text": "\"paper_only\": True, \"live_order\": False,"
+    },
+    {
+      "file": "saathi-os/scripts/m215_ops_graduation_browser_cert.mjs",
+      "line": 170,
+      "text": "no_live_order_path: true,"
+    },
+    {
+      "file": "tests/test_m208_m215_ops_graduation.py",
+      "line": 12,
+      "text": "from saathi.platform.tg import LIVE_TRADING_AUTHORIZED, LIVE_ORDER_CAPABLE, BROKER_CREDENTIAL_SUPPORT"
+    },
+    {
+      "file": "tests/test_m208_m215_ops_graduation.py",
+      "line": 82,
+      "text": "assert LIVE_ORDER_CAPABLE is False"
+    }
+  ],
+  "live_auth_true_hits": [],
+  "auto_promote_hits": [],
+  "broker_hits": [],
+  "pass": true
+}

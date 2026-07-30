@@ -83,6 +83,26 @@ class DurablePaperStore:
             raise DurableStoreError("INSUFFICIENT_DISK", str(pre))
         with self._lock:
             self._conn.executescript(SCHEMA_SQL)
+            # M208–M215 additive ops tables (compose; no redesign of m200 schema).
+            # ImportError: ops package absent → skip (M200-only). Other failures fail closed.
+            try:
+                from saathi.platform.tg.paper_activation.ops.schema import (
+                    OPS_SCHEMA_SQL,
+                    SCHEMA_VERSION as OPS_SCHEMA_VERSION,
+                    ENGINE_VERSION as OPS_ENGINE_VERSION,
+                )
+            except ImportError:
+                ops_schema = None
+                ops_engine = None
+            else:
+                try:
+                    self._conn.executescript(OPS_SCHEMA_SQL)
+                    ops_schema = OPS_SCHEMA_VERSION
+                    ops_engine = OPS_ENGINE_VERSION
+                except Exception as exc:
+                    raise DurableStoreError(
+                        "OPS_SCHEMA_MIGRATION_FAILED", str(exc)
+                    ) from exc
             now = time.time()
             self._conn.execute(
                 "INSERT INTO pg_meta(key, value, updated_at) VALUES(?,?,?) "
@@ -99,10 +119,23 @@ class DurablePaperStore:
                 "ON CONFLICT(key) DO UPDATE SET value=excluded.value, updated_at=excluded.updated_at",
                 ("readiness", "READY", now),
             )
+            if ops_schema:
+                self._conn.execute(
+                    "INSERT INTO pg_meta(key, value, updated_at) VALUES(?,?,?) "
+                    "ON CONFLICT(key) DO UPDATE SET value=excluded.value, updated_at=excluded.updated_at",
+                    ("ops_schema_version", ops_schema, now),
+                )
+                self._conn.execute(
+                    "INSERT INTO pg_meta(key, value, updated_at) VALUES(?,?,?) "
+                    "ON CONFLICT(key) DO UPDATE SET value=excluded.value, updated_at=excluded.updated_at",
+                    ("ops_engine_version", ops_engine, now),
+                )
             self._conn.commit()
         return {
             "schema_version": SCHEMA_VERSION,
             "engine_version": ENGINE_VERSION,
+            "ops_schema_version": ops_schema,
+            "ops_engine_version": ops_engine,
             "status": "MIGRATED",
             "db_path": str(self.db_path),
             "paper_only": True,

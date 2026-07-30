@@ -1,0 +1,98 @@
+{
+  "schema": "m208.authority_scan.v1",
+  "captured_at": "2026-07-30T01:05:11.523720+00:00",
+  "constants": {
+    "LIVE_TRADING_AUTHORIZED": false,
+    "LIVE_ORDER_CAPABLE": false,
+    "BROKER_CREDENTIAL_SUPPORT": false
+  },
+  "llm_boundary": {
+    "llm_may_approve_campaigns": false,
+    "llm_may_graduate_strategies": false,
+    "llm_may_change_metrics": false,
+    "llm_may_modify_journals": false,
+    "llm_may_modify_evidence": false,
+    "llm_may_override_risk": false,
+    "llm_may_override_reconciliation": false,
+    "llm_may_execute_trades": false,
+    "llm_may_authorize_live": false,
+    "may_explain": true,
+    "may_summarize": true,
+    "may_compare": true,
+    "may_recommend": true,
+    "may_generate_reports": true,
+    "may_identify_anomalies": true,
+    "may_draft_documentation": true
+  },
+  "paper_posture": {
+    "paper_only": true,
+    "live_trading_authorized": false,
+    "live_order_capable": false,
+    "broker_credential_support": false,
+    "exchange_connected": false,
+    "strategy_auto_promoted_to_live": false,
+    "funds_label": "SIMULATED",
+    "disclaimer": "THE SYSTEM REMAINS PAPER ONLY. LIVE TRADING IS NOT AUTHORIZED. NO STRATEGY IS AUTOMATICALLY PROMOTED TO LIVE EXECUTION."
+  },
+  "runtime_posture": {
+    "paper_only": true,
+    "live_trading_authorized": false,
+    "strategy_auto_promoted_to_live": false,
+    "llm_may_graduate_strategies": false,
+    "llm_may_execute_trades": false,
+    "llm_may_authorize_live": false
+  },
+  "pattern_hits": {
+    "broker_api": [],
+    "api_keys": [],
+    "live_order": [
+      {
+        "file": "saathi/platform/tg/paper_activation/ops/models.py",
+        "line": 73,
+        "text": "\"live_order_capable\": False,"
+      },
+      {
+        "file": "saathi/platform/tg/paper_activation/durable/store.py",
+        "line": 550,
+        "text": "\"paper_only\": True, \"live_order\": False,"
+      },
+      {
+        "file": "saathi-os/scripts/m215_ops_graduation_browser_cert.mjs",
+        "line": 170,
+        "text": "no_live_order_path: true,"
+      },
+      {
+        "file": "tests/test_m208_m215_ops_graduation.py",
+        "line": 12,
+        "text": "from saathi.platform.tg import LIVE_TRADING_AUTHORIZED, LIVE_ORDER_CAPABLE, BROKER_CREDENTIAL_SUPPORT"
+      },
+      {
+        "file": "tests/test_m208_m215_ops_graduation.py",
+        "line": 82,
+        "text": "assert LIVE_ORDER_CAPABLE is False"
+      }
+    ],
+    "live_auth_true": [],
+    "auto_promote": [],
+    "llm_graduate": []
+  },
+  "pattern_hit_counts": {
+    "broker_api": 0,
+    "api_keys": 0,
+    "live_order": 5,
+    "live_auth_true": 0,
+    "auto_promote": 0,
+    "llm_graduate": 0
+  },
+  "required": {
+    "live_trading_authorized": true,
+    "auto_promoted_to_live": true,
+    "llm_may_graduate": true,
+    "llm_may_execute": true,
+    "llm_may_authorize_live": true,
+    "no_broker_credentials": true,
+    "no_api_key_literals": true,
+    "no_private_exchange_path": true
+  },
+  "all_required_ok": true
+}

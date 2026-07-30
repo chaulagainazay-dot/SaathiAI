@@ -29,6 +29,7 @@ const TABS = [
   { href: "/trading/paper-reconcile", label: "Paper Reconcile" },
   { href: "/trading/paper-ops", label: "Paper Ops" },
   { href: "/trading/paper-campaigns", label: "Campaigns" },
+  { href: "/trading/ops-graduation", label: "Ops Graduation" },
   { href: "/trading/paper-ledger", label: "Ledger" },
   { href: "/trading/paper-recovery", label: "Recovery" },
   { href: "/trading/comparison", label: "Comparison" },

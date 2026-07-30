@@ -1,0 +1,52 @@
+▶ M166 TG UI paper-only labels
+  ✔ app/trading/regime/page.jsx declares PAPER TRADING ONLY and NO LIVE ORDERS (1.640917ms)
+  ✔ app/trading/proposals/page.jsx declares PAPER TRADING ONLY and NO LIVE ORDERS (0.498375ms)
+  ✔ app/trading/backtests/page.jsx declares PAPER TRADING ONLY and NO LIVE ORDERS (0.488375ms)
+  ✔ app/trading/research/page.jsx declares PAPER TRADING ONLY and NO LIVE ORDERS (0.613ms)
+  ✔ app/trading/comparison/page.jsx declares PAPER TRADING ONLY and NO LIVE ORDERS (0.270375ms)
+  ✔ app/trading/journal/page.jsx declares PAPER TRADING ONLY and NO LIVE ORDERS (0.540834ms)
+  ✔ app/trading/policy/page.jsx declares PAPER TRADING ONLY and NO LIVE ORDERS (0.479833ms)
+  ✔ shared safety banner includes NO LIVE ORDERS and SIMULATED FUNDS (0.593375ms)
+  ✔ TradingShell tabs include new TG research surfaces (0.457334ms)
+  ✔ backtest page surfaces data classification labels (0.699375ms)
+  ✔ module registry keeps live_trading feature flag false (0.746ms)
+✔ M166 TG UI paper-only labels (9.031292ms)
+▶ M184 TG historical research UI
+  ✔ app/trading/historical/page.jsx declares paper research and no live orders (1.900041ms)
+  ✔ app/trading/monte-carlo/page.jsx declares paper research and no live orders (0.314458ms)
+  ✔ app/trading/qualification/page.jsx declares paper research and no live orders (0.189666ms)
+  ✔ TradingShell includes historical, monte-carlo, qualification tabs (0.444625ms)
+  ✔ qualification page blocks live claims (0.287125ms)
+  ✔ historical page references local import path (0.19425ms)
+✔ M184 TG historical research UI (4.44675ms)
+▶ M192 paper activation UI
+  ✔ app/trading/paper-portfolio/page.jsx declares paper-only (2.243208ms)
+  ✔ app/trading/paper-orders/page.jsx declares paper-only (0.583959ms)
+  ✔ app/trading/paper-journal/page.jsx declares paper-only (0.256959ms)
+  ✔ app/trading/paper-risk/page.jsx declares paper-only (0.206541ms)
+  ✔ app/trading/paper-approvals/page.jsx declares paper-only (0.236917ms)
+  ✔ app/trading/paper-analytics/page.jsx declares paper-only (0.264333ms)
+  ✔ app/trading/paper-reconcile/page.jsx declares paper-only (0.27175ms)
+  ✔ TradingShell includes paper governance tabs (0.193291ms)
+  ✔ approvals page blocks LLM approve messaging (0.226042ms)
+✔ M192 paper activation UI (7.209709ms)
+▶ M200 durable paper UI
+  ✔ app/trading/paper-ops/page.jsx paper-only (1.380125ms)
+  ✔ app/trading/paper-campaigns/page.jsx paper-only (0.340334ms)
+  ✔ app/trading/paper-ledger/page.jsx paper-only (0.4775ms)
+  ✔ app/trading/paper-recovery/page.jsx paper-only (0.15625ms)
+  ✔ tabs include durable surfaces (0.126333ms)
+✔ M200 durable paper UI (3.157416ms)
+▶ M208–M215 ops graduation UI
+  ✔ ops-graduation page is paper-only (0.477625ms)
+  ✔ tabs include ops-graduation (0.380459ms)
+✔ M208–M215 ops graduation UI (2.31075ms)
+ℹ tests 33
+ℹ suites 5
+ℹ pass 33
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 80.97825
+EXIT_FE_TRADING:0

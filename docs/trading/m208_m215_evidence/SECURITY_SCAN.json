@@ -1,0 +1,10 @@
+{
+  "schema": "m208.security_scan.v1",
+  "paper_only": true,
+  "live_trading_authorized": false,
+  "llm_boundary_restrictive": true,
+  "authority_scan_ok": true,
+  "credential_scan_ok": true,
+  "live_path_scan_ok": true,
+  "pass": true
+}

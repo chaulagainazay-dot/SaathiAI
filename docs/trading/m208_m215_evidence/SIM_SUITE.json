@@ -1,0 +1,374 @@
+{
+  "results": [
+    {
+      "id": "osim_b4f0df037860",
+      "scenario": "disk_exhaustion",
+      "input": {
+        "portfolio_id": ""
+      },
+      "result": {
+        "ok": true,
+        "verdict": "DISK_EXHAUSTION_SIMULATED",
+        "real_disk": {
+          "ok": true,
+          "free_mb": 98079,
+          "min_free_mb": 128
+        },
+        "simulated_free_mb": 10,
+        "would_block_migrate": true,
+        "fail_closed": true
+      },
+      "verdict": "DISK_EXHAUSTION_SIMULATED",
+      "created_at": 1785373511.5146182,
+      "paper_only": true,
+      "live_authorized": false
+    },
+    {
+      "id": "osim_78a544919253",
+      "scenario": "extended_outage",
+      "input": {
+        "portfolio_id": ""
+      },
+      "result": {
+        "ok": true,
+        "verdict": "OUTAGE_SIMULATED_RECOVERY_READY",
+        "storage": {
+          "status": "HEALTHY",
+          "schema_version": "m200.paper_gov.v1",
+          "engine_version": "m200.durable.engine.v1",
+          "db_path": "/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/tmp8sbsw87l/scan.db",
+          "event_count": 2,
+          "portfolio_count": 1,
+          "readiness": "READY",
+          "disk": {
+            "ok": true,
+            "free_mb": 98079,
+            "min_free_mb": 128
+          },
+          "paper_only": true,
+          "live_authorized": false
+        },
+        "restart": true,
+        "reconciliation_required": true
+      },
+      "verdict": "OUTAGE_SIMULATED_RECOVERY_READY",
+      "created_at": 1785373511.5147378,
+      "paper_only": true,
+      "live_authorized": false
+    },
+    {
+      "id": "osim_5eed08e24da8",
+      "scenario": "high_latency",
+      "input": {
+        "portfolio_id": ""
+      },
+      "result": {
+        "ok": true,
+        "verdict": "LATENCY_OBSERVED",
+        "health_latency_ms": 0.017,
+        "threshold_warning_ms": 500,
+        "warning": false
+      },
+      "verdict": "LATENCY_OBSERVED",
+      "created_at": 1785373511.514854,
+      "paper_only": true,
+      "live_authorized": false
+    },
+    {
+      "id": "osim_5d2e127c54f2",
+      "scenario": "kill_switch",
+      "input": {
+        "portfolio_id": ""
+      },
+      "result": {
+        "ok": true,
+        "verdict": "KILL_SWITCH_EXERCISE_DRY_RUN",
+        "engaged": false,
+        "note": "Dry-run only \u2014 kill switch not engaged to preserve campaign state.",
+        "llm_may_engage": false,
+        "would_halt_all_portfolios": true
+      },
+      "verdict": "KILL_SWITCH_EXERCISE_DRY_RUN",
+      "created_at": 1785373511.5149472,
+      "paper_only": true,
+      "live_authorized": false
+    },
+    {
+      "id": "osim_97ab916747c7",
+      "scenario": "market_holiday",
+      "input": {
+        "portfolio_id": ""
+      },
+      "result": {
+        "ok": true,
+        "verdict": "HOLIDAY_SIMULATED",
+        "orders_processed": 0,
+        "note": "Market holiday: no paper fills generated.",
+        "restart_safe": true
+      },
+      "verdict": "HOLIDAY_SIMULATED",
+      "created_at": 1785373511.515101,
+      "paper_only": true,
+      "live_authorized": false
+    },
+    {
+      "id": "osim_7c570876aa49",
+      "scenario": "missing_candles",
+      "input": {
+        "portfolio_id": ""
+      },
+      "result": {
+        "ok": true,
+        "verdict": "MISSING_CANDLES_SIMULATED",
+        "action": "skip_bar",
+        "portfolio_modified": false,
+        "note": "Missing candles do not invent fills."
+      },
+      "verdict": "MISSING_CANDLES_SIMULATED",
+      "created_at": 1785373511.5151849,
+      "paper_only": true,
+      "live_authorized": false
+    },
+    {
+      "id": "osim_b0e6f1d31713",
+      "scenario": "partial_datasets",
+      "input": {
+        "portfolio_id": ""
+      },
+      "result": {
+        "ok": true,
+        "verdict": "PARTIAL_DATASET_SIMULATED",
+        "authoritative": false,
+        "qualification_blocked": true,
+        "note": "Partial datasets remain non-promotable."
+      },
+      "verdict": "PARTIAL_DATASET_SIMULATED",
+      "created_at": 1785373511.5152771,
+      "paper_only": true,
+      "live_authorized": false
+    },
+    {
+      "id": "osim_72c2d14d8c88",
+      "scenario": "recovery_exercise",
+      "input": {
+        "portfolio_id": ""
+      },
+      "result": {
+        "ok": true,
+        "verdict": "RECOVERY_EXERCISE_PASSED",
+        "backup": {
+          "backup_id": "bak_34794717f36b",
+          "path": "/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/tmpb6xt97_x/paper_backup/bak_34794717f36b.db",
+          "source": "/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/tmp8sbsw87l/scan.db",
+          "fingerprint": "19b003b4dca43afc33757050252623673629e562581e6de96952e9c0f489483a",
+          "created_at": 1785373511.516873,
+          "paper_only": true
+        },
+        "verify": {
+          "ok": true,
+          "verdict": "RECOVERY_VERIFIED",
+          "health": {
+            "status": "HEALTHY",
+            "schema_version": "m200.paper_gov.v1",
+            "engine_version": "m200.durable.engine.v1",
+            "db_path": "/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/tmpb6xt97_x/paper_backup/bak_34794717f36b.db",
+            "event_count": 2,
+            "portfolio_count": 1,
+            "readiness": "READY",
+            "disk": {
+              "ok": true,
+              "free_mb": 98079,
+              "min_free_mb": 128
+            },
+            "paper_only": true,
+            "live_authorized": false
+          },
+          "backup_id": null,
+          "paper_only": true
+        },
+        "recovery": {
+          "verdict": "RECOVERY_VERIFIED",
+          "recovery_db": "/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/tmp6abc1cep/recovery.db",
+          "source_untouched": true,
+          "health": {
+            "status": "HEALTHY",
+            "schema_version": "m200.paper_gov.v1",
+            "engine_version": "m200.durable.engine.v1",
+            "db_path": "/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/tmp6abc1cep/recovery.db",
+            "event_count": 2,
+            "portfolio_count": 1,
+            "readiness": "READY",
+            "disk": {
+              "ok": true,
+              "free_mb": 98078,
+              "min_free_mb": 128
+            },
+            "paper_only": true,
+            "live_authorized": false
+          },
+          "portfolios": [
+            {
+              "portfolio_id": "pport_a25dfd550f8647d2",
+              "cash_ok": true,
+              "positions": 0,
+              "ledger_entries": 0
+            }
+          ],
+          "event_count": 2,
+          "paper_only": true,
+          "live_authorized": false
+        },
+        "cash_replay": null,
+        "audit_integrity": true,
+        "restart": true,
+        "reconciliation": true
+      },
+      "verdict": "RECOVERY_EXERCISE_PASSED",
+      "created_at": 1785373511.5206668,
+      "paper_only": true,
+      "live_authorized": false
+    },
+    {
+      "id": "osim_9ebd35c3a12e",
+      "scenario": "risk_trigger",
+      "input": {
+        "portfolio_id": ""
+      },
+      "result": {
+        "ok": true,
+        "verdict": "RISK_TRIGGER_EXERCISE",
+        "reconciliation": {
+          "verdict": "RECONCILED",
+          "findings": [],
+          "warnings": [],
+          "equity": "100000",
+          "cash": "100000",
+          "positions_value": "0",
+          "trade_count": 0,
+          "fail_closed": false,
+          "blocks_new_orders": false,
+          "paper_only": true,
+          "funds_label": "SIMULATED",
+          "disclaimer": "Paper reconciliation only \u2014 no live broker positions."
+        },
+        "portfolio_modified": false,
+        "note": "Risk exercise does not force halt in simulation mode (auto_halt=False)."
+      },
+      "verdict": "RISK_TRIGGER_EXERCISE",
+      "created_at": 1785373511.521285,
+      "paper_only": true,
+      "live_authorized": false
+    },
+    {
+      "id": "osim_d3e5e78e963b",
+      "scenario": "scheduler_failure",
+      "input": {
+        "portfolio_id": ""
+      },
+      "result": {
+        "ok": true,
+        "verdict": "SCHEDULER_DISABLED_SAFE",
+        "jobs": {
+          "enabled": false,
+          "jobs": [
+            {
+              "job_id": "daily_snapshot",
+              "enabled": false,
+              "last_run_at": 0.0,
+              "last_status": "",
+              "last_error": "",
+              "interval_sec": 86400.0
+            },
+            {
+              "job_id": "daily_reconciliation",
+              "enabled": false,
+              "last_run_at": 0.0,
+              "last_status": "",
+              "last_error": "",
+              "interval_sec": 86400.0
+            },
+            {
+              "job_id": "storage_health",
+              "enabled": false,
+              "last_run_at": 0.0,
+              "last_status": "",
+              "last_error": "",
+              "interval_sec": 86400.0
+            },
+            {
+              "job_id": "stale_worker_check",
+              "enabled": false,
+              "last_run_at": 0.0,
+              "last_status": "",
+              "last_error": "",
+              "interval_sec": 86400.0
+            },
+            {
+              "job_id": "analytics_checkpoint",
+              "enabled": false,
+              "last_run_at": 0.0,
+              "last_status": "",
+              "last_error": "",
+              "interval_sec": 86400.0
+            }
+          ],
+          "paper_only": true,
+          "note": "scheduler disabled by default"
+        },
+        "note": "Scheduler remains disabled by default; failure is fail-safe."
+      },
+      "verdict": "SCHEDULER_DISABLED_SAFE",
+      "created_at": 1785373511.521644,
+      "paper_only": true,
+      "live_authorized": false
+    },
+    {
+      "id": "osim_230acfcf3b95",
+      "scenario": "storage_failure",
+      "input": {
+        "portfolio_id": ""
+      },
+      "result": {
+        "ok": true,
+        "verdict": "STORAGE_FAILURE_SIMULATED",
+        "disk": {
+          "ok": true,
+          "free_mb": 98078,
+          "min_free_mb": 128
+        },
+        "fail_closed_if_insufficient": true,
+        "backup_recommended": true
+      },
+      "verdict": "STORAGE_FAILURE_SIMULATED",
+      "created_at": 1785373511.521734,
+      "paper_only": true,
+      "live_authorized": false
+    },
+    {
+      "id": "osim_052e1e734e52",
+      "scenario": "worker_crash",
+      "input": {
+        "portfolio_id": ""
+      },
+      "result": {
+        "ok": true,
+        "verdict": "WORKER_CRASH_SIMULATED",
+        "queue_claim": {
+          "claimed": false,
+          "worker_id": "worker_87bec176"
+        },
+        "restart_safe": true,
+        "audit_integrity": true
+      },
+      "verdict": "WORKER_CRASH_SIMULATED",
+      "created_at": 1785373511.5218408,
+      "paper_only": true,
+      "live_authorized": false
+    }
+  ],
+  "passed": 12,
+  "total": 12,
+  "paper_only": true,
+  "live_authorized": false,
+  "verdict": "OPS_SIM_SUITE_PASSED"
+}

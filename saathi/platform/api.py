@@ -8358,3 +8358,339 @@ def tg_paper_incidents(authorization: str | None = Header(default=None), x_platf
         return {"incidents": [], "paper_only": True}
     except PlatformContextError as e:
         raise _err(e) from e
+
+
+# ── M208–M215 Operational Graduation ───────────────────────────────────────
+def _ops_gov():
+    from saathi.platform.tg.paper_activation.ops.service import default_ops_gov
+    return default_ops_gov()
+
+
+@router.get("/tg/paper/ops/posture")
+def tg_ops_posture(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _ops_gov().posture()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/paper/ops/dashboard")
+def tg_ops_dashboard(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_ACCOUNT_READ)
+        return _ops_gov().ops_dashboard()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/paper/ops/health")
+def tg_ops_health(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _ops_gov().health()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/paper/ops/verdict")
+def tg_ops_verdict(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _ops_gov().terminal_verdict()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+class TgOpsCampaignBody(BaseModel):
+    strategy_slug: str
+    initial_cash: str = "100000"
+    operator_notes: str = ""
+    group_id: str = ""
+    template_id: str = ""
+    owner: str = ""
+    tags: list[str] = []
+    objectives_text: str = ""
+    min_trade_count: int = 0
+    min_duration_sec: float = 0
+
+
+@router.post("/tg/paper/ops/campaigns")
+def tg_ops_campaign_create(body: TgOpsCampaignBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        from saathi.platform.tg.paper_activation.durable.service import DurableGovError
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.STRATEGY_EDIT)
+        try:
+            return _ops_gov().campaign_create(
+                strategy_slug=body.strategy_slug, initial_cash=body.initial_cash,
+                operator_notes=body.operator_notes, group_id=body.group_id,
+                template_id=body.template_id, owner=body.owner or ctx.requested_by(),
+                tags=body.tags, objectives_text=body.objectives_text,
+                min_trade_count=body.min_trade_count, min_duration_sec=body.min_duration_sec,
+                org_id=ctx.org_id, workspace_id=ctx.workspace_id,
+            )
+        except DurableGovError as e:
+            raise PlatformContextError(e.code, e.message) from e
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/paper/ops/campaigns")
+def tg_ops_campaigns(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.STRATEGY_READ)
+        return _ops_gov().list_campaigns(org_id=ctx.org_id)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/paper/ops/campaigns/{cid}")
+def tg_ops_campaign_get(cid: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        from saathi.platform.tg.paper_activation.durable.service import DurableGovError
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.STRATEGY_READ)
+        try:
+            return _ops_gov().campaign_get(cid)
+        except DurableGovError as e:
+            raise PlatformContextError(e.code, e.message) from e
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/paper/ops/campaigns/{cid}/clone")
+def tg_ops_campaign_clone(cid: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        from saathi.platform.tg.paper_activation.durable.service import DurableGovError
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.STRATEGY_EDIT)
+        try:
+            return _ops_gov().campaign_clone(cid, owner=ctx.requested_by())
+        except DurableGovError as e:
+            raise PlatformContextError(e.code, e.message) from e
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/paper/ops/campaigns/{cid}/archive")
+def tg_ops_campaign_archive(cid: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        from saathi.platform.tg.paper_activation.durable.service import DurableGovError
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.STRATEGY_EDIT)
+        try:
+            return _ops_gov().campaign_archive(cid, operator_identity=f"operator:{ctx.requested_by()}")
+        except DurableGovError as e:
+            raise PlatformContextError(e.code, e.message) from e
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/paper/ops/campaigns/{cid}/resume")
+def tg_ops_campaign_resume(cid: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        from saathi.platform.tg.paper_activation.durable.service import DurableGovError
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.STRATEGY_EDIT)
+        try:
+            return _ops_gov().campaign_resume(cid, operator_identity=f"operator:{ctx.requested_by()}")
+        except DurableGovError as e:
+            raise PlatformContextError(e.code, e.message) from e
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+class TgOpsCompareBody(BaseModel):
+    campaign_ids: list[str]
+
+
+@router.post("/tg/paper/ops/campaigns/compare")
+def tg_ops_campaign_compare(body: TgOpsCompareBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.STRATEGY_READ)
+        return _ops_gov().campaign_compare(body.campaign_ids)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/paper/ops/campaigns/{cid}/graduate")
+def tg_ops_graduate(cid: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        from saathi.platform.tg.paper_activation.durable.service import DurableGovError
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.STRATEGY_READ)
+        try:
+            return _ops_gov().graduate(cid, actor=f"operator:{ctx.requested_by()}")
+        except DurableGovError as e:
+            raise PlatformContextError(e.code, e.message) from e
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/paper/ops/campaigns/{cid}/certify")
+def tg_ops_certify(cid: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        from saathi.platform.tg.paper_activation.durable.service import DurableGovError
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.STRATEGY_EDIT)
+        try:
+            return _ops_gov().certify_campaign(cid, actor=f"operator:{ctx.requested_by()}")
+        except DurableGovError as e:
+            raise PlatformContextError(e.code, e.message) from e
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/paper/ops/graduation")
+def tg_ops_graduation_rankings(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.STRATEGY_READ)
+        return _ops_gov().strategy_rankings()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/paper/ops/intelligence/scan")
+def tg_ops_intel_scan(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _ops_gov().scan_intelligence()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/paper/ops/recommendations")
+def tg_ops_recommendations(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _ops_gov().recommendations()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/paper/ops/analytics/rolling/{pid}")
+def tg_ops_rolling(pid: str, window: int = 20, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_ACCOUNT_READ)
+        return _ops_gov().rolling_analytics(pid, window=window)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/paper/ops/reports/weekly")
+def tg_ops_weekly(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_ACCOUNT_READ)
+        return _ops_gov().weekly_report()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/paper/ops/reports/monthly")
+def tg_ops_monthly(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_ACCOUNT_READ)
+        return _ops_gov().monthly_report()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+class TgOpsSimBody(BaseModel):
+    scenario: str
+    portfolio_id: str = ""
+
+
+@router.post("/tg/paper/ops/simulate")
+def tg_ops_simulate(body: TgOpsSimBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _ops_gov().simulate(body.scenario, portfolio_id=body.portfolio_id)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/paper/ops/simulate/suite")
+def tg_ops_simulate_suite(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _ops_gov().simulate_suite()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/paper/ops/evidence")
+def tg_ops_evidence(campaign_id: str = "", authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _ops_gov().list_evidence(campaign_id=campaign_id)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+class TgOpsGroupBody(BaseModel):
+    name: str
+    description: str = ""
+    tags: list[str] = []
+
+
+@router.post("/tg/paper/ops/groups")
+def tg_ops_create_group(body: TgOpsGroupBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.STRATEGY_EDIT)
+        return _ops_gov().create_group(
+            name=body.name, description=body.description, tags=body.tags,
+            owner=ctx.requested_by(), org_id=ctx.org_id, workspace_id=ctx.workspace_id,
+        )
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/paper/ops/groups")
+def tg_ops_groups(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.STRATEGY_READ)
+        return _ops_gov().list_groups(org_id=ctx.org_id)
+    except PlatformContextError as e:
+        raise _err(e) from e

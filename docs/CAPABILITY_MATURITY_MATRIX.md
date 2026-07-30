@@ -1,9 +1,12 @@
-# SaathiOS Capability Maturity Matrix (as of M79 certification)
+# SaathiOS Capability Maturity Matrix (as of M215 certification)
 
 Levels: implemented < deterministic-tested < security/red-team-tested < live-tested < production.
 
 | capability | maturity | evidence |
 |-----------|----------|----------|
+| Operational Graduation / multi-campaign paper ops (M208–M215) | deterministic-tested; browser-certified-with-limitations; **paper-only; no live authority** | `saathi/platform/tg/paper_activation/ops/` over durable paper gov; multi-campaign manager; health classes; graduation never live; recommend-only intelligence; rolling analytics; 12-scenario ops sim; immutable campaign cert; `/trading/ops-graduation`; `cert:m215` PASS_WITH_LIMITATIONS; 15 focused + 115 TG + 5568 backend + 240 FE; production/live not authorized |
+| Durable multi-process paper ledger (M200–M207) | deterministic-tested; browser-certified-with-limitations; **paper-only** | SQLite WAL paper_gov; event ledger; long-horizon campaigns; recovery; no live |
+| Paper activation governance (M192–M199) | deterministic-tested; browser-certified; **paper-only** | Owner-approved PAPER_ELIGIBLE→PAPER_ACTIVE; portfolio cash sim; risk halt; kill switch; no exchange |
 | Live Conversational Intelligence (M80–M86) | deterministic+live-local-model-tested; synthetic-browser-media | Central ConversationService; Ollama qwen2.5:1.5b NDJSON stream; multi-turn memory; barge-in cancel+late-chunk reject; intent propose-only; Voice Runtime wired; templates removed from default path; M85 synthetic getUserMedia PASS; production not authorized |
 | Knowledge and Grounding Runtime (M87–M94) | deterministic-tested; browser-cert-API+panel | Platform `saathi.platform.knowledge` lexical index + incremental ingest; authority/freshness/tenancy; ConversationService grounding + citations; injection data-only; `/knowledge/grounding` UI; production not authorized |
 | Agent Orchestration Runtime (M95–M102) | deterministic-tested; browser-cert | `saathi.platform.orchestration` objective intake/plan compile/validate; 12 policy roles; Mission Runtime execution only; bounded retries; `/orchestration` workspace; production not authorized |

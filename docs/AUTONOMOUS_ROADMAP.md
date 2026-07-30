@@ -1,5 +1,24 @@
 # SaathiOS Autonomous Roadmap
 
+## M208–M215 — Extended Paper Campaign Validation & Operational Graduation (2026-07-30)
+
+| Field | Value |
+| --- | --- |
+| Verdict | `OPERATIONAL_GRADUATION_CERTIFIED_WITH_LIMITATIONS` |
+| Scope | Multi-campaign ops, health monitoring, graduation, intelligence, analytics, simulation, evidence, dashboard |
+| Package | `saathi/platform/tg/paper_activation/ops/` over durable paper gov |
+| Branch | `milestone/m208-m215-ops-graduation` |
+| Tests | Focused 15; TG M166–M215 115; full backend 5568/1 skipped; frontend 240; build pass |
+| Browser | `OPS_GRADUATION_BROWSER_CERT_PASSED_WITH_LIMITATIONS` |
+| Live / production | Not authorized |
+| Auto live promotion | Forbidden |
+
+**THE SYSTEM REMAINS PAPER ONLY. LIVE TRADING IS NOT AUTHORIZED. NO STRATEGY IS AUTOMATICALLY PROMOTED TO LIVE EXECUTION.**
+
+**OPERATIONAL GRADUATION DOES NOT GRANT BROKER OR REAL-MONEY AUTHORITY.**
+
+Evidence: `docs/trading/M208_M215_OPERATIONAL_GRADUATION.md`, `docs/trading/m208_m215_evidence/`.
+
 ## M200–M207 — Durable Paper Ledger & Long-Horizon Ops (2026-07-29)
 
 | Field | Value |

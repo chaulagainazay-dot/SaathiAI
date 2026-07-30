@@ -215,6 +215,27 @@ def main(argv: list[str] | None = None) -> int:
     p_rp.add_argument("portfolio_id")
     p_sn = pg_sub.add_parser("snapshot")
     p_sn.add_argument("portfolio_id")
+    # M208–M215 operational graduation
+    pg_sub.add_parser("ops-posture")
+    pg_sub.add_parser("ops-dashboard")
+    pg_sub.add_parser("ops-health")
+    pg_sub.add_parser("ops-verdict")
+    p_og = pg_sub.add_parser("ops-graduate")
+    p_og.add_argument("campaign_id")
+    p_oc = pg_sub.add_parser("ops-certify")
+    p_oc.add_argument("campaign_id")
+    p_oc.add_argument("--actor", default="operator:cli")
+    pg_sub.add_parser("ops-intel")
+    pg_sub.add_parser("ops-sim-suite")
+    p_osim = pg_sub.add_parser("ops-simulate")
+    p_osim.add_argument("scenario")
+    p_osim.add_argument("--portfolio", default="")
+    p_oclone = pg_sub.add_parser("ops-campaign-clone")
+    p_oclone.add_argument("campaign_id")
+    p_ocreate = pg_sub.add_parser("ops-campaign-create")
+    p_ocreate.add_argument("--strategy", default="trend_following")
+    p_ocreate.add_argument("--owner", default="operator:cli")
+    p_ocreate.add_argument("--tags", default="")
 
     args = parser.parse_args(argv)
     if not args.cmd:
@@ -481,6 +502,43 @@ def main(argv: list[str] | None = None) -> int:
         if args.action == "snapshot":
             from saathi.platform.tg.paper_activation.durable.service import default_durable_gov
             return _out(default_durable_gov().snapshot(args.portfolio_id))
+        # M208–M215
+        if args.action == "ops-posture":
+            from saathi.platform.tg.paper_activation.ops.service import default_ops_gov
+            return _out(default_ops_gov().posture())
+        if args.action == "ops-dashboard":
+            from saathi.platform.tg.paper_activation.ops.service import default_ops_gov
+            return _out(default_ops_gov().ops_dashboard())
+        if args.action == "ops-health":
+            from saathi.platform.tg.paper_activation.ops.service import default_ops_gov
+            return _out(default_ops_gov().health())
+        if args.action == "ops-verdict":
+            from saathi.platform.tg.paper_activation.ops.service import default_ops_gov
+            return _out(default_ops_gov().terminal_verdict())
+        if args.action == "ops-graduate":
+            from saathi.platform.tg.paper_activation.ops.service import default_ops_gov
+            return _out(default_ops_gov().graduate(args.campaign_id, actor="operator:cli"))
+        if args.action == "ops-certify":
+            from saathi.platform.tg.paper_activation.ops.service import default_ops_gov
+            return _out(default_ops_gov().certify_campaign(args.campaign_id, actor=args.actor))
+        if args.action == "ops-intel":
+            from saathi.platform.tg.paper_activation.ops.service import default_ops_gov
+            return _out(default_ops_gov().scan_intelligence())
+        if args.action == "ops-sim-suite":
+            from saathi.platform.tg.paper_activation.ops.service import default_ops_gov
+            return _out(default_ops_gov().simulate_suite())
+        if args.action == "ops-simulate":
+            from saathi.platform.tg.paper_activation.ops.service import default_ops_gov
+            return _out(default_ops_gov().simulate(args.scenario, portfolio_id=args.portfolio))
+        if args.action == "ops-campaign-clone":
+            from saathi.platform.tg.paper_activation.ops.service import default_ops_gov
+            return _out(default_ops_gov().campaign_clone(args.campaign_id))
+        if args.action == "ops-campaign-create":
+            from saathi.platform.tg.paper_activation.ops.service import default_ops_gov
+            tags = [t for t in (args.tags or "").split(",") if t.strip()]
+            return _out(default_ops_gov().campaign_create(
+                strategy_slug=args.strategy, owner=args.owner, tags=tags,
+            ))
         return 2
 
     parser.print_help()

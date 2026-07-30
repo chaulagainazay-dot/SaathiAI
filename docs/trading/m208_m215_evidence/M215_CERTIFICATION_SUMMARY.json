@@ -1,0 +1,89 @@
+{
+  "verdict": "OPERATIONAL_GRADUATION_CERTIFIED_WITH_LIMITATIONS",
+  "status": "complete_with_limitations",
+  "paper_only": true,
+  "live_trading_authorized": false,
+  "strategy_auto_promoted_to_live": false,
+  "statements": [
+    "THE SYSTEM REMAINS PAPER ONLY.",
+    "LIVE TRADING IS NOT AUTHORIZED.",
+    "NO STRATEGY IS AUTOMATICALLY PROMOTED TO LIVE EXECUTION.",
+    "OPERATIONAL GRADUATION DOES NOT GRANT BROKER OR REAL-MONEY AUTHORITY."
+  ],
+  "branch": "milestone/m208-m215-ops-graduation",
+  "baseline_sha": "0d489fbae07a8572b6039bf231d3bab35f1e9dc1",
+  "implementation_sha_pending_commit": true,
+  "current_head_before_impl_commit": "0d489fbae07a8572b6039bf231d3bab35f1e9dc1",
+  "captured_at": "2026-07-30T01:05:49.885379+00:00",
+  "tests": {
+    "focused_m208_m215": "15 passed",
+    "m200_compat": "15 passed",
+    "broader_m192_m208": "42 passed",
+    "tg_m166_m215": "115 passed",
+    "full_backend": "5568 passed, 1 skipped",
+    "frontend_m208_unit": "2 passed",
+    "frontend_trading_unit": "33 passed",
+    "frontend_full": "240 passed",
+    "frontend_build": "pass"
+  },
+  "browser": {
+    "result": "OPS_GRADUATION_BROWSER_CERT_PASSED_WITH_LIMITATIONS",
+    "failed_gates": 0,
+    "failed_journeys": 1,
+    "failed_journey_names": [
+      "api_paper_approvals"
+    ],
+    "screenshots": [
+      "01_overview.png",
+      "02_proposals.png",
+      "03_historical.png",
+      "04_monte_carlo.png",
+      "05_qualification.png",
+      "06_paper_portfolio.png",
+      "07_paper_risk.png",
+      "08_paper_approvals.png",
+      "09_paper_ops.png",
+      "09b_ops_graduation.png",
+      "10_paper_ledger.png"
+    ],
+    "owner_signoff": "NOT_CLAIMED_AUTOMATED_ONLY"
+  },
+  "scans": {
+    "authority": "pass",
+    "credential": "pass",
+    "live_path": "pass",
+    "security": "pass"
+  },
+  "limitations": [
+    "Single-host SQLite not multi-node",
+    "Graduation is paper research-stage only",
+    "Owner human sign-off not claimed",
+    "Browser soft-fail on api_paper_approvals journey; cold compile risk on 8GB host"
+  ],
+  "owner_signoff": "NOT_CLAIMED_AUTOMATED_ONLY",
+  "log_tails": {
+    "focused": [
+      "...............                                                          [100%]",
+      "15 passed in 0.25s",
+      "EXIT_M208:0"
+    ],
+    "tg": [
+      "...........................................                              [100%]",
+      "115 passed in 0.96s",
+      "EXIT:0"
+    ],
+    "full_backend": [
+      "EXIT:0"
+    ],
+    "frontend": [
+      "\u2139 todo 0",
+      "\u2139 duration_ms 376.668292",
+      "EXIT:0"
+    ],
+    "browser": [
+      "  \"owner_signoff\": \"NOT_CLAIMED_AUTOMATED_ONLY\"",
+      "}",
+      "EXIT:0"
+    ]
+  }
+}

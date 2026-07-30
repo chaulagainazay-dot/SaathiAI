@@ -1,0 +1,114 @@
+{
+  "id": "hlth_a416bde19c1e",
+  "scope": "system",
+  "scope_ref": "",
+  "classification": "HEALTHY",
+  "components": {
+    "portfolio_health": {
+      "classification": "HEALTHY",
+      "portfolio_count": 1,
+      "halted": 0,
+      "unreconciled": 0
+    },
+    "risk_health": {
+      "classification": "HEALTHY",
+      "risk_halts": 0,
+      "kill_switch": false
+    },
+    "campaign_health": {
+      "classification": "HEALTHY",
+      "total": 1,
+      "active": 0,
+      "stale_or_overdue": []
+    },
+    "system_health": {
+      "classification": "HEALTHY",
+      "pid": 6691
+    },
+    "storage_health": {
+      "classification": "HEALTHY",
+      "detail": {
+        "status": "HEALTHY",
+        "schema_version": "m200.paper_gov.v1",
+        "engine_version": "m200.durable.engine.v1",
+        "db_path": "/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/tmp8sbsw87l/scan.db",
+        "event_count": 2,
+        "portfolio_count": 1,
+        "readiness": "READY",
+        "disk": {
+          "ok": true,
+          "free_mb": 98079,
+          "min_free_mb": 128
+        },
+        "paper_only": true,
+        "live_authorized": false
+      },
+      "disk": {
+        "ok": true,
+        "free_mb": 98079,
+        "min_free_mb": 128
+      }
+    },
+    "worker_health": {
+      "classification": "HEALTHY",
+      "worker_id": "worker_87bec176",
+      "poison": 0,
+      "pending_queue": 0
+    },
+    "reconciliation_health": {
+      "classification": "HEALTHY",
+      "recent_fails": 0,
+      "samples": 0
+    },
+    "strategy_health": {
+      "classification": "HEALTHY",
+      "active": 0,
+      "halted": 0,
+      "total": 0
+    },
+    "market_coverage": {
+      "classification": "HEALTHY",
+      "open_symbols": 0
+    },
+    "event_processing": {
+      "classification": "HEALTHY",
+      "event_count": 2
+    },
+    "scheduler_health": {
+      "classification": "HEALTHY",
+      "jobs": 0,
+      "enabled": 0,
+      "errors": 0,
+      "note": "scheduler disabled by default"
+    },
+    "disk_usage": {
+      "ok": true,
+      "free_mb": 98079,
+      "min_free_mb": 128
+    },
+    "memory_usage": {
+      "classification": "HEALTHY",
+      "rss_mb_approx": 29.28
+    },
+    "recovery_readiness": {
+      "classification": "HEALTHY",
+      "readiness": "READY",
+      "can_backup": true
+    },
+    "incidents": {
+      "classification": "HEALTHY",
+      "open": 0,
+      "critical": 0
+    }
+  },
+  "created_at": 1785373511.514474,
+  "paper_only": true,
+  "live_authorized": false,
+  "health_classes": [
+    "HEALTHY",
+    "WARNING",
+    "DEGRADED",
+    "CRITICAL",
+    "FAILED_SAFE"
+  ]
+}
