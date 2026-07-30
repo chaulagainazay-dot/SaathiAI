@@ -1,0 +1,7 @@
+{
+  "verdict": "AUTONOMOUS_RESEARCH_ORCHESTRATOR_BROWSER_CERT_PASSED_WITH_LIMITATIONS",
+  "hard_gates_pass": true,
+  "branch": "milestone/m280-m287-autonomous-research-orchestrator",
+  "sha": "72210d69da21aac152d750aa6a6fba7f24621171",
+  "timestamp": "2026-07-30T12:21:58.061Z"
+}

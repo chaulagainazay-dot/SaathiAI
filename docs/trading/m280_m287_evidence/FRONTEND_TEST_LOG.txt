@@ -1,0 +1,13 @@
+✔ research-orchestrator page exists (0.48825ms)
+✔ research-orchestrator boundary labels (1.15ms)
+✔ no password/oauth/order entry (0.159583ms)
+✔ TradingShell includes Research Orchestrator tab (0.304958ms)
+✔ package.json has cert:m287 (0.671459ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 90.954042

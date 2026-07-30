@@ -1,5 +1,20 @@
 # SaathiOS Autonomous Roadmap
 
+## M280–M287 — Autonomous Research Orchestrator (2026-07-30)
+
+| Field | Value |
+| --- | --- |
+| Verdict | `AUTONOMOUS_RESEARCH_ORCHESTRATOR_CERTIFIED_WITH_LIMITATIONS` |
+| Max state | `AUTONOMOUS_RESEARCH_ORCHESTRATION_ONLY` |
+| Package | `saathi/platform/tg/research_orchestrator/` |
+| Branch | `milestone/m280-m287-autonomous-research-orchestrator` |
+| UI | `/trading/research-orchestrator` |
+| Browser | `cert:m287` |
+| Live / broker / orders | **Not authorized** |
+| Next | M288–M295 paper simulation only after review |
+
+Evidence: `docs/trading/M280_M287_AUTONOMOUS_RESEARCH_ORCHESTRATOR.md`, `docs/trading/m280_m287_evidence/`.
+
 ## M272–M279 — Multi-Strategy Research Lab & Adaptive Portfolio Intelligence (2026-07-30)
 
 | Field | Value |
@@ -13,7 +28,7 @@
 | Preserved OOS | AAPL + BTCUSDT `tf_dual_ma` remain `OUT_OF_SAMPLE_FAILED` |
 | Paper candidate | Human review required; does **not** authorize execution |
 | Live / broker / canary / orders | **Not authorized** |
-| Next | M280 only after human review; do not auto-start |
+| Next | Completed by M280–M287 orchestrator |
 
 Evidence: `docs/trading/M272_M279_MULTI_STRATEGY_RESEARCH_LAB.md`, `docs/trading/m272_m279_evidence/`.
 

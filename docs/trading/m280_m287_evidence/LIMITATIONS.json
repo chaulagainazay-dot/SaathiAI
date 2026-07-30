@@ -1,0 +1,14 @@
+{
+  "limitations": [
+    "In-process deterministic workers only \u2014 not a distributed cluster",
+    "Runtime estimates are heuristics, not SLAs",
+    "Research orchestration only; no paper or live order execution",
+    "Budget is logical units, not cloud billing"
+  ],
+  "not_claimed": [
+    "live_trading",
+    "broker",
+    "profitability",
+    "distributed_cluster"
+  ]
+}

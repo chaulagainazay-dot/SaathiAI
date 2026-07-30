@@ -1,0 +1,8 @@
+
+> saathi-os@0.1.0 cert:m287
+> node scripts/m287_research_orchestrator_browser_cert.mjs
+
+{
+  "verdict": "AUTONOMOUS_RESEARCH_ORCHESTRATOR_BROWSER_CERT_PASSED_WITH_LIMITATIONS",
+  "hard_gates_pass": true
+}
