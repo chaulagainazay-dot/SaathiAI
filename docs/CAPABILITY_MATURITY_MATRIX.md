@@ -1,9 +1,11 @@
-# SaathiOS Capability Maturity Matrix (as of M215 certification)
+# SaathiOS Capability Maturity Matrix (as of M231 certification)
 
 Levels: implemented < deterministic-tested < security/red-team-tested < live-tested < production.
 
 | capability | maturity | evidence |
 |-----------|----------|----------|
+| Read-only broker readiness & credential lifecycle simulation (M224–M231) | deterministic-tested; browser-certified-with-limitations; **simulation-only; no real connection; no real credentials** | `saathi/platform/tg/broker_readiness/`; adapter contract SIMULATED_NOT_CONNECTED; policy engine deny write/real; lifecycle refs only; scope least-privilege; transport guard REAL_PROVIDER_TRANSPORT_FORBIDDEN; snapshots+recon recommendations only; M230 fail-closed drills; `/trading/broker-readiness`; `cert:m231` PASS_WITH_LIMITATIONS; 21 focused + 154 TG M166–M231 + 246 FE; production/live/read-only-prod not authorized |
+| Broker sandbox architecture & trust framework (M216–M223) | deterministic-tested; browser-certified-with-limitations; **sandbox-only; no live broker** | `saathi/platform/tg/broker_sandbox/`; catalog brokers NOT_CONNECTED; metadata credential refs; in-process emulator only; trust pipeline sandbox-scoped; `/trading/broker-sandbox`; `cert:m223` |
 | Operational Graduation / multi-campaign paper ops (M208–M215) | deterministic-tested; browser-certified-with-limitations; **paper-only; no live authority** | `saathi/platform/tg/paper_activation/ops/` over durable paper gov; multi-campaign manager; health classes; graduation never live; recommend-only intelligence; rolling analytics; 12-scenario ops sim; immutable campaign cert; `/trading/ops-graduation`; `cert:m215` PASS_WITH_LIMITATIONS; 15 focused + 115 TG + 5568 backend + 240 FE; production/live not authorized |
 | Durable multi-process paper ledger (M200–M207) | deterministic-tested; browser-certified-with-limitations; **paper-only** | SQLite WAL paper_gov; event ledger; long-horizon campaigns; recovery; no live |
 | Paper activation governance (M192–M199) | deterministic-tested; browser-certified; **paper-only** | Owner-approved PAPER_ELIGIBLE→PAPER_ACTIVE; portfolio cash sim; risk halt; kill switch; no exchange |

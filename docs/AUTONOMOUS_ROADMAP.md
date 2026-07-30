@@ -1395,3 +1395,23 @@ Branch `milestone/m42-graduation-review`.
   gates; bounded IELTS learner/reviewer journey pass.
 - No push, merge, deployment, production change, paid provider call, payment
   settlement, or external rollout.
+
+## M224–M231 — Read-Only Broker Connectivity Readiness (2026-07-30)
+
+**Status:** `READ_ONLY_BROKER_READINESS_CERTIFIED_WITH_LIMITATIONS`.
+
+- Extends M216–M223 Broker Sandbox with simulation-only readiness for a *future*
+  read-only connection — without connecting to any real broker or accepting secrets.
+- M224 read-only adapter contract (`SIMULATED_NOT_CONNECTED`); M225 capability policy;
+  M226 simulated credential lifecycle (refs only); M227 least-privilege scopes;
+  M228 connection state machine + transport guard; M229 account snapshots +
+  reconciliation (recommendations only); M230 expiry/revocation/incident drills;
+  M231 Control Center `/trading/broker-readiness`.
+- API: `/api/v1/platform/tg/broker-readiness/*`. CLI: `paper-gov br-*` (`SIMULATION_ONLY=true`).
+- Transport guard returns `REAL_PROVIDER_TRANSPORT_FORBIDDEN`. Write/mixed scopes fail closed.
+- Validation: 21 focused backend; 154 TG M166–M231 regression; 246 frontend; production
+  build pass; `cert:m231` PASS_WITH_LIMITATIONS (UI labels soft behind sign-in gate).
+- Explicit non-actions: no real credentials, no exchange connections, no order submission,
+  no production read-only authority, no owner sign-off claimed, M232 not started.
+- Evidence: `docs/trading/m224_m231_evidence/`. Doc: `docs/trading/M224_M231_READ_ONLY_BROKER_READINESS.md`.
+- Next: only after owner planning — remain paper/sandbox only.
