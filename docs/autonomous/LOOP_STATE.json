@@ -24,5 +24,8 @@
   "order_execution_authorized": false,
   "m296_started": false,
   "browser_certification": true,
-  "notes": "Phase 2 paper simulation complete; Phase 3 not started"
+  "notes": "Phase 2 paper simulation complete; Phase 3 not started",
+  "implementation_sha": "c2fa469606778c8af8f006f557d17eac4b5e0d3f",
+  "current_sha": "c2fa469606778c8af8f006f557d17eac4b5e0d3f",
+  "ending_sha": "c2fa469606778c8af8f006f557d17eac4b5e0d3f"
 }
