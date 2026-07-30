@@ -1,0 +1,23 @@
+{
+  "explicit_non_actions": [
+    "no_provider_connection",
+    "no_broker_login",
+    "no_oauth",
+    "no_real_credentials",
+    "no_account_access",
+    "no_balance_access",
+    "no_position_access",
+    "no_order_submission",
+    "no_canary_activation",
+    "no_live_trading",
+    "no_m320_started"
+  ],
+  "limitations": [
+    "Governance only \u2014 no provider connection",
+    "No real credentials or OAuth",
+    "No account, balance, or position access",
+    "No order submission or canary activation",
+    "Approvals never activate connectivity in this milestone",
+    "Live trading remains prohibited"
+  ]
+}
