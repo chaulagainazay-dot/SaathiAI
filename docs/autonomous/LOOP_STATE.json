@@ -46,7 +46,7 @@
   "browser_certification": true,
   "clean_clone_certification": true,
   "purpose": "credentialless_offline_provider_contracts_only",
-  "notes": "All non-browser gates and the authoritative Playwright Chromium interactive browser rerun passed; the historical in-app-runtime failure remains preserved; M328 not started",
+  "notes": "All non-browser gates and the authoritative Playwright Chromium interactive browser rerun passed; the historical in-app-runtime failure remains preserved; publication audit passed; M328 not started",
   "implementation_sha": "9a140ab",
-  "current_sha": "42628cda2a48f5a0d2aef75044acb2303b62b5dc"
+  "current_sha": "d29bd40c57cc3a95cd2a50a436e7356bbeb38134"
 }

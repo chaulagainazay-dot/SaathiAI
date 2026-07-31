@@ -22,6 +22,7 @@
     "PRODUCTION_BUILD_LOG.txt",
     "LIMITATIONS.json",
     "M327_FINAL_REPORT.md",
+    "M320_M327_PUBLICATION_AUDIT.json",
     "STARTING_SHA.txt"
   ],
   "preferred_verdict_withheld": false,
