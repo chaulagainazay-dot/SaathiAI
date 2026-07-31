@@ -81,7 +81,7 @@ Phases 1–4 of this master roadmap are **implemented and certified with limitat
 - **No provider connection. No credentials. No orders. No canary. No live trading.**
 - Evidence: `docs/trading/m312_m319_evidence/`
 
-## M320–M327 Credentialless Provider Contracts (IMPLEMENTED; CERTIFICATION IN PROGRESS)
+## M320–M327 Credentialless Provider Contracts (IMPLEMENTED; BROWSER GATE FAILED)
 
 - **Target verdict:** `PROVIDER_CONTRACTS_AND_MOCK_CONNECTIVITY_CERTIFIED_WITH_LIMITATIONS`
 - **Maximum state:** `MOCK_PROVIDER_READY_NO_REAL_CONNECTIVITY`
@@ -95,3 +95,6 @@ Phases 1–4 of this master roadmap are **implemented and certified with limitat
   order, transfer, withdrawal, canary, deployment, or live-trading path.**
 - Specification: `docs/trading/M320_M327_PROVIDER_CONTRACTS.md`
 - Evidence: `docs/trading/m320_m327_evidence/`
+- Backend, predecessor, frontend, build, clean-clone, secret, network, SDK, and
+  authority gates passed. The in-app browser runtime exposed no browser
+  instance, so interactive browser certification failed closed.

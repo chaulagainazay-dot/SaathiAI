@@ -4,7 +4,7 @@
   "starting_branch": "milestone/m312-m319-connectivity-governance",
   "branch": "milestone/m320-m327-provider-contracts",
   "current_milestone": "M320-M327",
-  "status": "certification_in_progress",
+  "status": "implementation_complete_browser_certification_failed",
   "completed_milestones": [
     "M320",
     "M321",
@@ -15,6 +15,7 @@
     "M326",
     "M327"
   ],
+  "verdict": "M320_M327_BROWSER_CERT_FAILED",
   "verdict_target": "PROVIDER_CONTRACTS_AND_MOCK_CONNECTIVITY_CERTIFIED_WITH_LIMITATIONS",
   "max_state": "MOCK_PROVIDER_READY_NO_REAL_CONNECTIVITY",
   "current_maturity": "MOCK_CONNECTIVITY_ONLY",
@@ -43,9 +44,9 @@
   "replay_data_only": true,
   "network_transport_disabled": true,
   "browser_certification": false,
-  "clean_clone_certification": false,
+  "clean_clone_certification": true,
   "purpose": "credentialless_offline_provider_contracts_only",
-  "notes": "Implementation complete; sequential certification in progress; M328 not started",
+  "notes": "Implementation and all non-browser gates passed; in-app browser runtime exposed zero instances, so browser certification failed closed; M328 not started",
   "implementation_sha": "9a140ab",
-  "current_sha": "9a140ab"
+  "current_sha": "e2783821e911a64c52f15e08e181db7f260761fd"
 }

@@ -1,0 +1,21 @@
+{
+  "schema": "m327.evidence_manifest.v1",
+  "milestone": "M320-M327",
+  "terminal_verdict": "M320_M327_BROWSER_CERT_FAILED",
+  "files": [
+    "M320_PROVIDER_CONTRACT_CHARTER.json",
+    "M327_CONTRACT_CERTIFICATION.json",
+    "M327_SECURITY_SCANS.json",
+    "M327_CLEAN_CLONE_CERTIFICATION.json",
+    "browser/M327_BROWSER_CERT.json",
+    "FOCUSED_TEST_LOG.txt",
+    "REGRESSION_TEST_LOG.txt",
+    "FRONTEND_TEST_LOG.txt",
+    "PRODUCTION_BUILD_LOG.txt",
+    "LIMITATIONS.json",
+    "M327_FINAL_REPORT.md",
+    "STARTING_SHA.txt"
+  ],
+  "preferred_verdict_withheld": true,
+  "withheld_reason": "mandatory interactive browser certification did not run"
+}
