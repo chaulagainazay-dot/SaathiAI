@@ -66,6 +66,13 @@ describe("M320 provider contracts UI", () => {
     assert.doesNotMatch(pages, /account_selector/i);
   });
 
+  it("renders only permitted offline session states", () => {
+    assert.match(providerPage, /pc-session-allowed-states/);
+    assert.match(providerPage, /sessions\.states/);
+    assert.doesNotMatch(providerPage, /JSON\.stringify\(sessions\.sessions/);
+    assert.doesNotMatch(providerPage, /forbidden_states/);
+  });
+
   it("binds only to provider-contract offline APIs", () => {
     assert.match(platformApi, /\/tg\/provider-contracts\/providers/);
     assert.match(platformApi, /\/tg\/provider-contracts\/charter/);

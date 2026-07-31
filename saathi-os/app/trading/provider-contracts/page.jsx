@@ -151,9 +151,23 @@ export default function ProviderContractsPage() {
           <Card data-testid="pc-session-card" style={{ marginBottom: 12 }}>
             <Heading level={2} size="md">Credentialless Session State</Heading>
             <Text className="mono">authentication_state_exists={String(sessions.authentication_state_exists)}</Text>
-            <pre className="mono" style={{ fontSize: 11, overflow: "auto" }}>
-              {JSON.stringify(sessions.sessions, null, 2)}
-            </pre>
+            <Text className="mono" data-testid="pc-session-allowed-states">
+              Allowed lifecycle states: {(sessions.states || []).join(" · ")}
+            </Text>
+            {(sessions.sessions || []).map((session) => (
+              <div key={session.provider_id} style={{ padding: "10px 0",
+                borderBottom: "1px solid var(--border-subtle,#20242e)" }}>
+                <Text className="mono">{session.provider_id} · state={session.state}</Text>
+                <Text className="mono" tone="muted">
+                  transport={session.transport} · authenticated={String(session.authenticated)}
+                </Text>
+                <Text className="mono" tone="muted">
+                  network_connection={String(session.network_connection)} ·
+                  account_access={String(session.account_access)} ·
+                  order_execution={String(session.order_execution)}
+                </Text>
+              </div>
+            ))}
           </Card>
         )}
 
