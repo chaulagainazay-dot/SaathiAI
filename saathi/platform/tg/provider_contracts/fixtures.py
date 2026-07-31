@@ -1,4 +1,4 @@
-"""Deterministic synthetic public-market fixtures."""
+"""Deterministic synthetic public-market fixtures created for M320–M327."""
 from __future__ import annotations
 
 from copy import deepcopy
@@ -58,6 +58,137 @@ ORDERBOOKS = {
     },
 }
 
+TRADES = {
+    "AAPL": [
+        {"trade_id": "syn-aapl-001", "price": "218.08", "size": 100, "time": "2026-01-15T14:29:58Z"},
+        {"trade_id": "syn-aapl-002", "price": "218.10", "size": 50, "time": "2026-01-15T14:29:59Z"},
+        {"trade_id": "syn-aapl-003", "price": "218.12", "size": 75, "time": "2026-01-15T14:30:00Z"},
+        {"trade_id": "syn-aapl-004", "price": "218.11", "size": 25, "time": "2026-01-15T14:30:01Z"},
+        {"trade_id": "syn-aapl-005", "price": "218.13", "size": 80, "time": "2026-01-15T14:30:02Z"},
+    ],
+    "BTC-USD": [
+        {"trade_id": "syn-btc-001", "price": "104250.00", "size": "0.20", "time": "2026-01-15T14:29:58Z"},
+        {"trade_id": "syn-btc-002", "price": "104255.00", "size": "0.15", "time": "2026-01-15T14:29:59Z"},
+        {"trade_id": "syn-btc-003", "price": "104260.00", "size": "0.08", "time": "2026-01-15T14:30:00Z"},
+    ],
+}
+
+SYMBOLS = [
+    {"symbol": "AAPL", "asset_class": "synthetic_equity", "currency": "USD"},
+    {"symbol": "BTC-USD", "asset_class": "synthetic_crypto", "currency": "USD"},
+    {"symbol": "SYN-ALPHA", "asset_class": "synthetic_equity", "currency": "USD"},
+    {"symbol": "SYN-BETA", "asset_class": "synthetic_equity", "currency": "USD"},
+]
+
+MARKET_STATUS = {
+    "SYNTHETIC-US": {
+        "venue": "SYNTHETIC-US",
+        "status": "FIXTURE_OPEN",
+        "as_of": "2026-01-15T14:30:00Z",
+        "next_transition": "2026-01-15T21:00:00Z",
+    },
+    "SYNTHETIC-24X7": {
+        "venue": "SYNTHETIC-24X7",
+        "status": "FIXTURE_CONTINUOUS",
+        "as_of": "2026-01-15T14:30:00Z",
+        "next_transition": None,
+    },
+}
+
+
+def with_provenance(
+    data: Mapping[str, Any],
+    source_type: str,
+) -> dict[str, Any]:
+    if source_type not in {"MOCK", "REPLAY"}:
+        raise ProviderContractError(
+            ProviderErrorCode.INVALID_RESPONSE,
+            "Fixture provenance source type is invalid",
+            details={"source_type": source_type},
+        )
+    return {
+        **deepcopy(dict(data)),
+        "source_type": source_type,
+        "live": False,
+        "synthetic": True,
+        "account_derived": False,
+        "execution_capable": False,
+        "repeatable": True,
+    }
+
+
+def _pagination(
+    values: list[dict[str, Any]],
+    params: Mapping[str, Any],
+) -> dict[str, Any]:
+    limit = params.get("limit", 2)
+    cursor = params.get("cursor")
+    if isinstance(limit, bool) or not isinstance(limit, int) or not 1 <= limit <= 100:
+        raise ProviderContractError(
+            ProviderErrorCode.INVALID_REQUEST,
+            "limit must be an integer between 1 and 100",
+        )
+    if cursor is None:
+        offset = 0
+    elif isinstance(cursor, str) and cursor.startswith("offset:"):
+        try:
+            offset = int(cursor.split(":", 1)[1])
+        except ValueError as exc:
+            raise ProviderContractError(
+                ProviderErrorCode.INVALID_REQUEST,
+                "cursor is invalid",
+            ) from exc
+    else:
+        raise ProviderContractError(
+            ProviderErrorCode.INVALID_REQUEST,
+            "cursor is invalid",
+        )
+    if offset < 0 or offset > len(values):
+        raise ProviderContractError(
+            ProviderErrorCode.INVALID_REQUEST,
+            "cursor is outside the fixture range",
+        )
+    end = min(offset + limit, len(values))
+    return {
+        "items": deepcopy(values[offset:end]),
+        "page": {
+            "cursor": cursor,
+            "next_cursor": f"offset:{end}" if end < len(values) else None,
+            "limit": limit,
+            "count": end - offset,
+            "total": len(values),
+        },
+    }
+
+
+def _simulation_controls(params: Mapping[str, Any]) -> int:
+    latency = params.get("simulated_latency_ms", 0)
+    if isinstance(latency, bool) or not isinstance(latency, int) or not 0 <= latency <= 60_000:
+        raise ProviderContractError(
+            ProviderErrorCode.INVALID_REQUEST,
+            "simulated_latency_ms must be an integer between 0 and 60000",
+        )
+    simulated_error = params.get("simulate_error")
+    if simulated_error is None:
+        return latency
+    if simulated_error == "timeout":
+        raise ProviderContractError(
+            ProviderErrorCode.TIMEOUT_SIMULATION,
+            "Deterministic offline timeout was simulated",
+            details={"waited": False, "simulated_latency_ms": latency},
+        )
+    if simulated_error == "unavailable":
+        raise ProviderContractError(
+            ProviderErrorCode.PROVIDER_UNAVAILABLE,
+            "Deterministic offline provider unavailability was simulated",
+            details={"waited": False, "simulated_latency_ms": latency},
+        )
+    raise ProviderContractError(
+        ProviderErrorCode.INVALID_REQUEST,
+        "simulate_error is unsupported",
+        details={"allowed": ["timeout", "unavailable"]},
+    )
+
 
 class FixtureCatalog:
     def list_fixtures(self) -> list[dict[str, Any]]:
@@ -73,40 +204,72 @@ class FixtureCatalog:
             })
         for symbol in sorted(ORDERBOOKS):
             fixtures.append({"fixture_id": f"orderbook:{symbol}", "operation": "orderbook.get", "symbol": symbol})
+        for symbol in sorted(TRADES):
+            fixtures.append({"fixture_id": f"trades:{symbol}", "operation": "trades.list", "symbol": symbol})
+        fixtures.append({"fixture_id": "symbols:all", "operation": "symbols.list"})
+        for venue in sorted(MARKET_STATUS):
+            fixtures.append({
+                "fixture_id": f"market-status:{venue}",
+                "operation": "market_status.get",
+                "venue": venue,
+            })
         return fixtures
 
     def resolve(self, operation: str, params: Mapping[str, Any]) -> tuple[str, dict[str, Any]]:
+        latency = _simulation_controls(params)
         symbol = params.get("symbol")
-        if not isinstance(symbol, str) or not symbol:
-            raise ProviderContractError(
-                ProviderErrorCode.INVALID_REQUEST,
-                "symbol is required",
-            )
         if operation == "quotes.get":
+            self._require_text(symbol, "symbol")
             value = QUOTES.get(symbol)
             fixture_id = f"quote:{symbol}"
         elif operation == "candles.list":
+            self._require_text(symbol, "symbol")
             interval = params.get("interval")
-            if not isinstance(interval, str) or not interval:
-                raise ProviderContractError(
-                    ProviderErrorCode.INVALID_REQUEST,
-                    "interval is required",
-                )
+            self._require_text(interval, "interval")
             value = CANDLES.get((symbol, interval))
             fixture_id = f"candles:{symbol}:{interval}"
         elif operation == "orderbook.get":
+            self._require_text(symbol, "symbol")
             value = ORDERBOOKS.get(symbol)
             fixture_id = f"orderbook:{symbol}"
+        elif operation == "trades.list":
+            self._require_text(symbol, "symbol")
+            trades = TRADES.get(symbol)
+            value = _pagination(trades, params) if trades is not None else None
+            fixture_id = f"trades:{symbol}"
+        elif operation == "symbols.list":
+            value = _pagination(SYMBOLS, params)
+            fixture_id = "symbols:all"
+        elif operation == "market_status.get":
+            venue = params.get("venue")
+            self._require_text(venue, "venue")
+            value = MARKET_STATUS.get(venue)
+            fixture_id = f"market-status:{venue}"
         else:
             raise ProviderContractError(
-                ProviderErrorCode.UNSUPPORTED,
+                ProviderErrorCode.UNSUPPORTED_CAPABILITY,
                 "Fixture operation is unsupported",
                 details={"operation": operation},
             )
         if value is None:
             raise ProviderContractError(
-                ProviderErrorCode.UNAVAILABLE,
+                ProviderErrorCode.FIXTURE_MISSING,
                 "Deterministic fixture is unavailable",
                 details={"operation": operation, "symbol": symbol},
             )
-        return fixture_id, {"fixture": deepcopy(value), "synthetic": True, "repeatable": True}
+        return fixture_id, with_provenance(
+            {
+                "fixture": deepcopy(value),
+                "simulated_latency_ms": latency,
+                "waited": False,
+            },
+            "MOCK",
+        )
+
+    @staticmethod
+    def _require_text(value: Any, name: str) -> None:
+        if not isinstance(value, str) or not value:
+            raise ProviderContractError(
+                ProviderErrorCode.INVALID_REQUEST,
+                f"{name} is required",
+            )

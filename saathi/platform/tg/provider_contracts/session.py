@@ -18,17 +18,39 @@ TRANSITIONS = {
         SessionState.MOCK_READY,
         SessionState.REPLAY_READY,
         SessionState.UNAVAILABLE,
+        SessionState.FAULTED,
+        SessionState.CLOSED,
     }),
     SessionState.MOCK_READY: frozenset({
         SessionState.DISCONNECTED,
         SessionState.UNAVAILABLE,
+        SessionState.FAULTED,
+        SessionState.CLOSED,
     }),
     SessionState.REPLAY_READY: frozenset({
         SessionState.DISCONNECTED,
         SessionState.UNAVAILABLE,
+        SessionState.FAULTED,
+        SessionState.CLOSED,
     }),
-    SessionState.UNAVAILABLE: frozenset({SessionState.DISCONNECTED}),
+    SessionState.UNAVAILABLE: frozenset({
+        SessionState.DISCONNECTED,
+        SessionState.FAULTED,
+        SessionState.CLOSED,
+    }),
+    SessionState.FAULTED: frozenset({SessionState.CLOSED}),
+    SessionState.CLOSED: frozenset(),
 }
+
+FORBIDDEN_SESSION_STATES = frozenset({
+    "AUTHENTICATED",
+    "LOGGED_IN",
+    "ACCOUNT_CONNECTED",
+    "BROKER_CONNECTED",
+    "LIVE",
+    "TRADING_READY",
+    "EXECUTION_READY",
+})
 
 
 @dataclass
@@ -39,11 +61,17 @@ class ProviderSession:
     reason: str = ""
 
     def transition(self, target: SessionState, *, reason: str = "") -> dict[str, Any]:
+        if not isinstance(target, SessionState):
+            raise ProviderContractError(
+                ProviderErrorCode.INVALID_SESSION_STATE,
+                "Provider session target is not an allowed offline state",
+                details={"target": str(target)},
+            )
         if target is self.state:
             return self.snapshot()
         if target not in TRANSITIONS[self.state]:
             raise ProviderContractError(
-                ProviderErrorCode.CONTRACT_VIOLATION,
+                ProviderErrorCode.INVALID_SESSION_STATE,
                 "Invalid provider session transition",
                 details={"from": self.state.value, "to": target.value},
             )
@@ -71,5 +99,8 @@ class ProviderSession:
             "credential_reference": None,
             "network_connection": False,
             "account_access": False,
+            "order_execution": False,
             "available_states": [state.value for state in SessionState],
+            "forbidden_states": sorted(FORBIDDEN_SESSION_STATES),
+            "authentication_state_exists": False,
         }

@@ -12,6 +12,7 @@ from saathi.platform.tg.connectivity_governance.service import (
     reset_connectivity_governance_for_tests,
 )
 from saathi.platform.tg.provider_contracts.capabilities import (
+    CAPABILITY_CONTRACTS,
     capability_catalog,
     negotiate_capabilities,
 )
@@ -40,17 +41,32 @@ from saathi.platform.tg.provider_contracts.provider import (
     DeterministicMockProvider,
     DeterministicReplayProvider,
 )
-from saathi.platform.tg.provider_contracts.schema import validate_request_payload
+from saathi.platform.tg.provider_contracts.schema import (
+    validate_capability_contract,
+    validate_request_payload,
+)
+from saathi.platform.tg.provider_contracts.session import FORBIDDEN_SESSION_STATES
+from saathi.platform.tg.provider_contracts.transport import TransportRegistry
 
 FORBIDDEN_NETWORK_IMPORTS = frozenset({
     "aiohttp",
+    "alpaca",
+    "alpaca_trade_api",
+    "binance",
+    "ccxt",
     "httpx",
+    "ib_insync",
+    "ibapi",
+    "polygon",
     "requests",
     "socket",
+    "subprocess",
     "urllib",
     "websocket",
+    "websocket_client",
     "websockets",
 })
+FORBIDDEN_DYNAMIC_IMPORT_CALLS = frozenset({"__import__", "import_module"})
 
 
 class ProviderContractService:
@@ -61,12 +77,56 @@ class ProviderContractService:
     ):
         self.governance = governance or default_connectivity_governance()
         self.repo_root = Path(repo_root) if repo_root else Path(__file__).resolve().parents[4]
+        for contract in CAPABILITY_CONTRACTS:
+            validate_capability_contract(contract)
         catalog = FixtureCatalog()
         self.mock_provider = DeterministicMockProvider(catalog)
         self.replay_provider = DeterministicReplayProvider(catalog)
         self._providers = {
             MOCK_PROVIDER_ID: self.mock_provider,
             REPLAY_PROVIDER_ID: self.replay_provider,
+        }
+        self.transport_registry = TransportRegistry()
+        self.transport_registry.register("mock", self.mock_provider.transport)
+        self.transport_registry.register("replay", self.replay_provider.transport)
+
+    def charter(self) -> dict[str, Any]:
+        return {
+            "ok": True,
+            "milestone": "M320-M327",
+            "name": "Credentialless Provider Contracts & Mock Connectivity",
+            "scope": "provider_neutral_deterministic_offline_only",
+            "contract_presence_grants_authority": False,
+            "capability_declaration_grants_permission": False,
+            "permission_activates_connectivity": False,
+            "connectivity_grants_account_access": False,
+            "account_access_grants_order_authority": False,
+            "allowed_transports": ["mock", "replay"],
+            "forbidden_integration_paths": [
+                "http",
+                "https",
+                "rest",
+                "websocket",
+                "raw_socket",
+                "broker_sdk",
+                "exchange_sdk",
+                "subprocess_network_client",
+                "browser_provider_access",
+                "dynamic_provider_import",
+            ],
+            "certification_requirements": [
+                "focused_tests",
+                "predecessor_regressions",
+                "frontend_tests",
+                "production_build",
+                "browser_certification",
+                "clean_clone_certification",
+                "secret_scan",
+                "network_isolation_scan",
+                "provider_sdk_isolation_scan",
+                "authority_scan",
+            ],
+            **BOUNDARY_VALUES,
         }
 
     def posture(self) -> dict[str, Any]:
@@ -88,7 +148,18 @@ class ProviderContractService:
                 "connected": False,
             },
             "transport_allowlist": ["mock", "replay"],
-            "transport_blocklist": ["http", "https", "websocket", "broker_sdk"],
+            "transport_blocklist": [
+                "http",
+                "https",
+                "rest",
+                "websocket",
+                "raw_socket",
+                "broker_sdk",
+                "exchange_sdk",
+                "subprocess_network_client",
+                "browser_provider_access",
+            ],
+            "transport_registry": self.transport_registry.snapshot(),
             "statements": list(TERMINAL_STATEMENTS),
             **BOUNDARY_VALUES,
         }
@@ -116,7 +187,7 @@ class ProviderContractService:
         provider = self._providers.get(provider_id)
         if provider is None:
             raise ProviderContractError(
-                ProviderErrorCode.UNAVAILABLE,
+                ProviderErrorCode.PROVIDER_UNAVAILABLE,
                 "Offline provider is unavailable",
                 details={"provider_id": provider_id},
             )
@@ -155,6 +226,7 @@ class ProviderContractService:
             "ok": True,
             "states": [state.value for state in SessionState],
             "authentication_state_exists": False,
+            "forbidden_states": sorted(FORBIDDEN_SESSION_STATES),
             "sessions": [
                 provider.session_snapshot()
                 for provider in self._providers.values()
@@ -179,7 +251,7 @@ class ProviderContractService:
         provider = self._providers.get(request.provider_id)
         if provider is None:
             raise ProviderContractError(
-                ProviderErrorCode.UNAVAILABLE,
+                ProviderErrorCode.PROVIDER_UNAVAILABLE,
                 "Offline provider is unavailable",
                 details={"provider_id": request.provider_id},
             )
@@ -197,7 +269,7 @@ class ProviderContractService:
                 "response_hash": response.response_hash,
             },
         )
-        return {"ok": True, "response": response.to_dict(), **AUTHORITY_LOCKS}
+        return {"ok": True, "response": response.to_dict(), **BOUNDARY_VALUES}
 
     def request(self, payload: Mapping[str, Any]) -> dict[str, Any]:
         try:
@@ -210,7 +282,7 @@ class ProviderContractService:
                 "error": error.to_dict(),
                 "schema_version": SCHEMA_VERSION,
                 "real_connectivity": False,
-                **AUTHORITY_LOCKS,
+                **BOUNDARY_VALUES,
             }
 
     def mock_quote(self) -> dict[str, Any]:
@@ -237,6 +309,12 @@ class ProviderContractService:
             "ok": True,
             "title": "Credentialless Provider Contracts",
             "subtitle": "Deterministic mock and replay connectivity only",
+            "safety_labels": [
+                "OFFLINE MOCK DATA",
+                "NO PROVIDER CONNECTION",
+                "NO ACCOUNT ACCESS",
+                "NO ORDER EXECUTION",
+            ],
             "verdict_target": TERMINAL_VERDICT,
             "max_state": MAX_STATE,
             "current_maturity": CURRENT_MATURITY,
@@ -261,11 +339,18 @@ class ProviderContractService:
             ],
             "forbidden_ui_controls": [
                 "credential_input",
+                "api_key_input",
+                "secret_input",
                 "oauth_button",
                 "login_button",
                 "real_provider_connect_button",
+                "live_connect_button",
+                "account_link_button",
                 "account_selector",
                 "order_form",
+                "paper_order_form",
+                "transfer_form",
+                "withdrawal_form",
                 "canary_activation",
                 "deployment_control",
             ],
@@ -290,6 +375,17 @@ class ProviderContractService:
                     root = module.split(".", 1)[0]
                     if root in FORBIDDEN_NETWORK_IMPORTS:
                         findings.append({"file": path.name, "module": module})
+                if isinstance(node, ast.Call):
+                    call_name = ""
+                    if isinstance(node.func, ast.Name):
+                        call_name = node.func.id
+                    elif isinstance(node.func, ast.Attribute):
+                        call_name = node.func.attr
+                    if call_name in FORBIDDEN_DYNAMIC_IMPORT_CALLS:
+                        findings.append({
+                            "file": path.name,
+                            "dynamic_import_call": call_name,
+                        })
         return {
             "ok": not findings,
             "findings": findings,
@@ -297,6 +393,10 @@ class ProviderContractService:
             "allowed_transports": ["mock", "replay"],
             "network_transport_classes": 0,
             "broker_sdk_imports": 0,
+            "dynamic_provider_imports": 0,
+            "runtime_registry": self.transport_registry.snapshot(),
+            "runtime_network_attempted": False,
+            "runtime_sdk_import_attempted": False,
             **AUTHORITY_LOCKS,
         }
 
@@ -340,6 +440,7 @@ class ProviderContractService:
         return {
             "ok": True,
             "posture": self.posture(),
+            "charter": self.charter(),
             "providers": self.list_providers(),
             "capabilities": self.capabilities(),
             "sessions": self.sessions(),

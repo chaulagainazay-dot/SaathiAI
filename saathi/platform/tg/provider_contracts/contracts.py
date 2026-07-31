@@ -14,7 +14,7 @@ from saathi.platform.tg.provider_contracts.models import (
 )
 
 
-class ProviderContract(ABC):
+class Provider(ABC):
     @property
     @abstractmethod
     def descriptor(self) -> ProviderDescriptor:
@@ -25,7 +25,10 @@ class ProviderContract(ABC):
         raise NotImplementedError
 
 
-class MarketDataProvider(ProviderContract):
+ProviderContract = Provider
+
+
+class MarketDataProvider(Provider):
     @abstractmethod
     def get_quote(self, symbol: str, *, idempotency_key: str) -> ProviderResponse:
         raise NotImplementedError
@@ -44,8 +47,33 @@ class MarketDataProvider(ProviderContract):
     def get_orderbook(self, symbol: str, *, idempotency_key: str) -> ProviderResponse:
         raise NotImplementedError
 
+    @abstractmethod
+    def list_trades(
+        self,
+        symbol: str,
+        *,
+        cursor: str | None = None,
+        limit: int = 2,
+        idempotency_key: str,
+    ) -> ProviderResponse:
+        raise NotImplementedError
 
-class AccountProvider(ProviderContract):
+    @abstractmethod
+    def list_symbols(
+        self,
+        *,
+        cursor: str | None = None,
+        limit: int = 2,
+        idempotency_key: str,
+    ) -> ProviderResponse:
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_market_status(self, venue: str, *, idempotency_key: str) -> ProviderResponse:
+        raise NotImplementedError
+
+
+class AccountProvider(Provider):
     """Future account-read interface only; intentionally has no implementation."""
 
     @abstractmethod
@@ -57,7 +85,7 @@ class AccountProvider(ProviderContract):
         raise NotImplementedError
 
 
-class OrderProvider(ProviderContract):
+class OrderProvider(Provider):
     """Future order interface only; intentionally has no implementation."""
 
     @abstractmethod
@@ -74,7 +102,7 @@ class OrderProvider(ProviderContract):
         raise NotImplementedError
 
 
-class ConnectivityProvider(ProviderContract):
+class ConnectivityProvider(Provider):
     @property
     @abstractmethod
     def transport_kind(self) -> TransportKind:
@@ -90,7 +118,7 @@ class ConnectivityProvider(ProviderContract):
         raise NotImplementedError
 
 
-class SessionProvider(ProviderContract):
+class SessionProvider(Provider):
     @property
     @abstractmethod
     def session_state(self) -> SessionState:

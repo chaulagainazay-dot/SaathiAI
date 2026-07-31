@@ -31,6 +31,13 @@ CAPABILITY_CONTRACTS = (
         "Deterministic synthetic candle fixtures only",
     ),
     CapabilityContract(
+        Capability.TRADES,
+        CapabilityAccess.SUPPORTED_OFFLINE,
+        ("trades.list",),
+        "synthetic_public_market_fixture",
+        "Deterministic paginated synthetic trade fixtures only",
+    ),
+    CapabilityContract(
         Capability.ORDERBOOK,
         CapabilityAccess.SUPPORTED_OFFLINE,
         ("orderbook.get",),
@@ -38,29 +45,43 @@ CAPABILITY_CONTRACTS = (
         "Deterministic synthetic orderbook fixtures only",
     ),
     CapabilityContract(
+        Capability.SYMBOLS,
+        CapabilityAccess.SUPPORTED_OFFLINE,
+        ("symbols.list",),
+        "synthetic_public_reference_fixture",
+        "Deterministic paginated synthetic symbol fixtures only",
+    ),
+    CapabilityContract(
+        Capability.MARKET_STATUS,
+        CapabilityAccess.SUPPORTED_OFFLINE,
+        ("market_status.get",),
+        "synthetic_public_market_fixture",
+        "Deterministic synthetic market-status fixtures only",
+    ),
+    CapabilityContract(
         Capability.POSITIONS,
-        CapabilityAccess.CONTRACT_ONLY,
+        CapabilityAccess.FORBIDDEN_BY_GOVERNANCE,
         ("positions.list",),
         "account_private",
         "Interface contract only; position access is not authorized",
     ),
     CapabilityContract(
         Capability.BALANCES,
-        CapabilityAccess.CONTRACT_ONLY,
+        CapabilityAccess.FORBIDDEN_BY_GOVERNANCE,
         ("balances.list",),
         "account_private",
         "Interface contract only; balance access is not authorized",
     ),
     CapabilityContract(
         Capability.ORDERS,
-        CapabilityAccess.DENIED,
+        CapabilityAccess.FORBIDDEN_BY_GOVERNANCE,
         ("orders.list", "orders.submit"),
         "execution_private",
         "Order access and submission are prohibited",
     ),
     CapabilityContract(
         Capability.TRANSFERS,
-        CapabilityAccess.DENIED,
+        CapabilityAccess.FORBIDDEN_BY_GOVERNANCE,
         ("transfers.create",),
         "funds_movement",
         "Transfers are prohibited",
@@ -79,16 +100,27 @@ def capability_catalog() -> dict[str, Any]:
             for contract in CAPABILITY_CONTRACTS
             if contract.access is CapabilityAccess.SUPPORTED_OFFLINE
         ],
-        "contract_only": [
+        "unsupported": [
             contract.name.value
             for contract in CAPABILITY_CONTRACTS
-            if contract.access is CapabilityAccess.CONTRACT_ONLY
+            if contract.access is CapabilityAccess.UNSUPPORTED
+        ],
+        "forbidden_by_governance": [
+            contract.name.value
+            for contract in CAPABILITY_CONTRACTS
+            if contract.access is CapabilityAccess.FORBIDDEN_BY_GOVERNANCE
         ],
         "denied": [
             contract.name.value
             for contract in CAPABILITY_CONTRACTS
-            if contract.access is CapabilityAccess.DENIED
+            if contract.access is not CapabilityAccess.SUPPORTED_OFFLINE
         ],
+        "unavailable": [
+            contract.name.value
+            for contract in CAPABILITY_CONTRACTS
+            if contract.access is CapabilityAccess.UNAVAILABLE
+        ],
+        "known_states": [state.value for state in CapabilityAccess],
         "negotiation_only": True,
         "executes": False,
     }
@@ -97,7 +129,7 @@ def capability_catalog() -> dict[str, Any]:
 def negotiate_capabilities(provider_id: str, requested: Iterable[str]) -> dict[str, Any]:
     if provider_id not in (MOCK_PROVIDER_ID, REPLAY_PROVIDER_ID):
         raise ProviderContractError(
-            ProviderErrorCode.UNAVAILABLE,
+            ProviderErrorCode.PROVIDER_UNAVAILABLE,
             "Offline provider is unavailable",
             details={"provider_id": provider_id},
         )
@@ -119,7 +151,7 @@ def negotiate_capabilities(provider_id: str, requested: Iterable[str]) -> dict[s
             capability = Capability(name)
         except ValueError as exc:
             raise ProviderContractError(
-                ProviderErrorCode.UNSUPPORTED,
+                ProviderErrorCode.UNSUPPORTED_CAPABILITY,
                 "Unknown provider capability",
                 details={"capability": name},
             ) from exc
@@ -143,9 +175,21 @@ def negotiate_capabilities(provider_id: str, requested: Iterable[str]) -> dict[s
 
 def require_offline_capability(capability: Capability) -> None:
     contract = CONTRACT_BY_CAPABILITY[capability]
-    if contract.access is not CapabilityAccess.SUPPORTED_OFFLINE:
+    if contract.access is CapabilityAccess.FORBIDDEN_BY_GOVERNANCE:
         raise ProviderContractError(
-            ProviderErrorCode.CAPABILITY_DENIED,
+            ProviderErrorCode.CAPABILITY_FORBIDDEN,
+            contract.reason,
+            details={"capability": capability.value, "access": contract.access.value},
+        )
+    if contract.access is CapabilityAccess.UNSUPPORTED:
+        raise ProviderContractError(
+            ProviderErrorCode.UNSUPPORTED_CAPABILITY,
+            contract.reason,
+            details={"capability": capability.value, "access": contract.access.value},
+        )
+    if contract.access is CapabilityAccess.UNAVAILABLE:
+        raise ProviderContractError(
+            ProviderErrorCode.PROVIDER_UNAVAILABLE,
             contract.reason,
             details={"capability": capability.value, "access": contract.access.value},
         )

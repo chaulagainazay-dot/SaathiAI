@@ -3,6 +3,10 @@ from __future__ import annotations
 
 from typing import Any, TYPE_CHECKING
 
+from saathi.platform.tg.connectivity_governance.authority import (
+    prove_deny_overrides_allow,
+    prove_no_implicit_expansion,
+)
 from saathi.platform.tg.connectivity_governance.storage import evidence_hash
 from saathi.platform.tg.provider_contracts.contracts import (
     AccountProvider,
@@ -52,16 +56,40 @@ def certify_provider_contracts(service: "ProviderContractService") -> dict[str, 
     checks["transport_allowlist_exact"] = {
         provider["transport"] for provider in providers["providers"]
     } == {"mock", "replay"}
+    checks["transport_registry_closed"] = (
+        service.transport_registry.snapshot()["registered"] == ["mock", "replay"]
+        and service.transport_registry.snapshot()["dynamic_imports"] is False
+        and service.transport_registry.snapshot()["network_enabled"] is False
+    )
 
     capability = service.negotiate(
         MOCK_PROVIDER_ID,
-        ["quotes", "candles", "orderbook", "positions", "balances", "orders", "transfers"],
+        [
+            "quotes",
+            "candles",
+            "trades",
+            "orderbook",
+            "symbols",
+            "market_status",
+            "positions",
+            "balances",
+            "orders",
+            "transfers",
+        ],
     )
     checks["capability_negotiation_only"] = (
         capability["negotiation_only"] is True
         and capability["executes"] is False
     )
-    checks["sensitive_capabilities_denied"] = set(capability["denied"]) == {
+    checks["offline_capabilities_exact"] = set(capability["granted"]) == {
+        "quotes",
+        "candles",
+        "trades",
+        "orderbook",
+        "symbols",
+        "market_status",
+    }
+    checks["sensitive_capabilities_forbidden"] = set(capability["denied"]) == {
         "positions",
         "balances",
         "orders",
@@ -80,7 +108,11 @@ def certify_provider_contracts(service: "ProviderContractService") -> dict[str, 
     checks["mock_schema_valid"] = (
         mock_first["response"]["status"] == "ok"
         and mock_first["response"]["transport"] == "mock"
+        and mock_first["response"]["data"]["source_type"] == "MOCK"
         and mock_first["response"]["data"]["synthetic"] is True
+        and mock_first["response"]["data"]["live"] is False
+        and mock_first["response"]["data"]["account_derived"] is False
+        and mock_first["response"]["data"]["execution_capable"] is False
         and mock_first["response"]["real_connectivity"] is False
     )
 
@@ -96,6 +128,40 @@ def certify_provider_contracts(service: "ProviderContractService") -> dict[str, 
     checks["replay_fixture_bound"] = (
         replay_first["response"]["transport"] == "replay"
         and replay_first["response"]["fixture_id"].startswith("replay:")
+        and replay_first["response"]["data"]["source_type"] == "REPLAY"
+        and replay_first["response"]["data"]["live"] is False
+    )
+
+    page = service.dispatch({
+        "provider_id": MOCK_PROVIDER_ID,
+        "operation": "trades.list",
+        "params": {"symbol": "AAPL", "limit": 2},
+        "idempotency_key": "cert:mock:trades:AAPL:p1:v1",
+    })
+    checks["deterministic_pagination"] = (
+        page["response"]["data"]["fixture"]["page"]["next_cursor"] == "offset:2"
+        and page["response"]["data"]["fixture"]["page"]["count"] == 2
+    )
+    latency = service.dispatch({
+        "provider_id": MOCK_PROVIDER_ID,
+        "operation": "quotes.get",
+        "params": {"symbol": "AAPL", "simulated_latency_ms": 250},
+        "idempotency_key": "cert:mock:latency:AAPL:v1",
+    })
+    checks["synthetic_latency_without_wait"] = (
+        latency["response"]["data"]["simulated_latency_ms"] == 250
+        and latency["response"]["data"]["waited"] is False
+    )
+    timeout = service.request({
+        "provider_id": MOCK_PROVIDER_ID,
+        "operation": "quotes.get",
+        "params": {"symbol": "AAPL", "simulate_error": "timeout"},
+        "idempotency_key": "cert:mock:timeout:AAPL:v1",
+    })
+    checks["deterministic_error_injection"] = (
+        timeout["ok"] is False
+        and timeout["error"]["code"] == "timeout_simulation"
+        and timeout["error"]["retryable"] is True
     )
 
     malformed = service.request({
@@ -115,9 +181,9 @@ def certify_provider_contracts(service: "ProviderContractService") -> dict[str, 
         "params": {},
         "idempotency_key": "cert:denied:balances:v1",
     })
-    checks["capability_denied_normalized"] = (
+    checks["capability_forbidden_normalized"] = (
         denied["ok"] is False
-        and denied["error"]["code"] == "capability_denied"
+        and denied["error"]["code"] == "capability_forbidden"
     )
 
     replay_miss = service.request({
@@ -126,9 +192,9 @@ def certify_provider_contracts(service: "ProviderContractService") -> dict[str, 
         "params": {"symbol": "BTC-USD"},
         "idempotency_key": "cert:replay:miss:BTC-USD:v1",
     })
-    checks["replay_miss_normalized"] = (
+    checks["fixture_missing_normalized"] = (
         replay_miss["ok"] is False
-        and replay_miss["error"]["code"] == "replay_miss"
+        and replay_miss["error"]["code"] == "fixture_missing"
     )
 
     conflict_payload = {
@@ -149,7 +215,17 @@ def certify_provider_contracts(service: "ProviderContractService") -> dict[str, 
         sessions["authentication_state_exists"] is False
         and all(session["authenticated"] is False for session in sessions["sessions"])
         and {session["state"] for session in sessions["sessions"]}
-        == {"mock_ready", "replay_ready"}
+        == {"MOCK_READY", "REPLAY_READY"}
+        and set(sessions["forbidden_states"])
+        == {
+            "AUTHENTICATED",
+            "LOGGED_IN",
+            "ACCOUNT_CONNECTED",
+            "BROKER_CONNECTED",
+            "LIVE",
+            "TRADING_READY",
+            "EXECUTION_READY",
+        }
     )
 
     security = service.security_scan()
@@ -157,6 +233,20 @@ def certify_provider_contracts(service: "ProviderContractService") -> dict[str, 
     checks["security_scan"] = security["ok"] is True
     checks["governance_composed"] = (
         service.posture()["governance_binding"]["registered"] is True
+    )
+    checks["deny_overrides_allow"] = prove_deny_overrides_allow()["ok"] is True
+    checks["authority_does_not_expand"] = prove_no_implicit_expansion()["ok"] is True
+    checks["approval_does_not_activate_connectivity"] = (
+        service.governance.approvals.list_approvals()["any_active_connectivity"] is False
+    )
+    checks["llm_cannot_activate"] = (
+        security["governance_security_ok"] is True
+        and service.governance.security_scan()["llm_authority_scan"]["llm_may_activate"] is False
+    )
+    checks["charter_fail_closed"] = (
+        service.charter()["contract_presence_grants_authority"] is False
+        and service.charter()["capability_declaration_grants_permission"] is False
+        and service.charter()["permission_activates_connectivity"] is False
     )
 
     for name, passed in checks.items():

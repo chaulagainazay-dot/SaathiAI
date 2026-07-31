@@ -21,29 +21,46 @@ ENGINE_VERSION = "m320.provider_contracts.engine.v1"
 TERMINAL_VERDICT = "PROVIDER_CONTRACTS_AND_MOCK_CONNECTIVITY_CERTIFIED_WITH_LIMITATIONS"
 MAX_STATE = "MOCK_PROVIDER_READY_NO_REAL_CONNECTIVITY"
 CURRENT_MATURITY = "MOCK_CONNECTIVITY_ONLY"
-BROWSER_CERT_VERDICT = "PROVIDER_CONTRACTS_BROWSER_CERTIFIED_OFFLINE_WITH_LIMITATIONS"
+BROWSER_CERT_VERDICT = (
+    "PROVIDER_CONTRACTS_MOCK_CONNECTIVITY_BROWSER_CERT_PASSED_WITH_LIMITATIONS"
+)
 
 MOCK_PROVIDER_ID = "saathi.mock.market.v1"
 REPLAY_PROVIDER_ID = "saathi.replay.market.v1"
 
 HARD_AUTHORITY_KEYS = (
     "REAL_CONNECTIVITY_AUTHORIZED",
+    "BROKER_CONNECTIVITY_AUTHORIZED",
     "OAUTH_AUTHORIZED",
     "CREDENTIAL_PROVISIONING_AUTHORIZED",
+    "CREDENTIAL_VALIDATION_AUTHORIZED",
+    "AUTHENTICATION_AUTHORIZED",
     "ACCOUNT_ACCESS_AUTHORIZED",
     "BALANCE_READ_AUTHORIZED",
     "POSITION_READ_AUTHORIZED",
+    "ORDER_HISTORY_AUTHORIZED",
     "ORDER_SUBMISSION_AUTHORIZED",
     "ORDER_EXECUTION_AUTHORIZED",
+    "TRANSFER_AUTHORIZED",
+    "WITHDRAWAL_AUTHORIZED",
     "CANARY_ACTIVATION_AUTHORIZED",
     "LIVE_TRADING_AUTHORIZED",
+    "AUTOMATED_INVESTMENT_AUTHORITY",
 )
 
 AUTHORITY_LOCKS = {key: False for key in HARD_AUTHORITY_KEYS}
+ISOLATION_ASSERTIONS = {
+    "NO_REAL_PROVIDER_CONNECTION": True,
+    "NO_REAL_CREDENTIALS": True,
+    "NO_ACCOUNT_ACCESS": True,
+    "NO_ORDER_EXECUTION": True,
+    "MOCK_DATA_ONLY": True,
+    "REPLAY_DATA_ONLY": True,
+    "NETWORK_TRANSPORT_DISABLED": True,
+}
 BOUNDARY_VALUES = {
     **AUTHORITY_LOCKS,
-    "BROKER_CONNECTIVITY_AUTHORIZED": False,
-    "CREDENTIAL_VALIDATION_AUTHORIZED": False,
+    **ISOLATION_ASSERTIONS,
     "CREDENTIAL_STORAGE_AUTHORIZED": False,
     "READ_ONLY_PRODUCTION_AUTHORIZED": False,
     "EXTERNAL_PAPER_EXECUTION_AUTHORIZED": False,
@@ -100,7 +117,8 @@ def digest(value: Any) -> str:
 
 def authority_locks_intact() -> bool:
     return all(
-        GOVERNANCE_AUTHORITY_VALUES.get(key) is False and AUTHORITY_LOCKS[key] is False
+        GOVERNANCE_AUTHORITY_VALUES.get(key, False) is False
+        and AUTHORITY_LOCKS[key] is False
         for key in HARD_AUTHORITY_KEYS
     )
 
@@ -108,7 +126,10 @@ def authority_locks_intact() -> bool:
 class Capability(str, Enum):
     QUOTES = "quotes"
     CANDLES = "candles"
+    TRADES = "trades"
     ORDERBOOK = "orderbook"
+    SYMBOLS = "symbols"
+    MARKET_STATUS = "market_status"
     POSITIONS = "positions"
     BALANCES = "balances"
     ORDERS = "orders"
@@ -116,9 +137,10 @@ class Capability(str, Enum):
 
 
 class CapabilityAccess(str, Enum):
-    SUPPORTED_OFFLINE = "supported_offline"
-    CONTRACT_ONLY = "contract_only"
-    DENIED = "denied"
+    SUPPORTED_OFFLINE = "SUPPORTED_OFFLINE"
+    UNSUPPORTED = "UNSUPPORTED"
+    FORBIDDEN_BY_GOVERNANCE = "FORBIDDEN_BY_GOVERNANCE"
+    UNAVAILABLE = "UNAVAILABLE"
 
 
 class TransportKind(str, Enum):
@@ -127,10 +149,12 @@ class TransportKind(str, Enum):
 
 
 class SessionState(str, Enum):
-    DISCONNECTED = "disconnected"
-    MOCK_READY = "mock_ready"
-    REPLAY_READY = "replay_ready"
-    UNAVAILABLE = "unavailable"
+    DISCONNECTED = "DISCONNECTED"
+    MOCK_READY = "MOCK_READY"
+    REPLAY_READY = "REPLAY_READY"
+    UNAVAILABLE = "UNAVAILABLE"
+    FAULTED = "FAULTED"
+    CLOSED = "CLOSED"
 
 
 class ResponseStatus(str, Enum):
@@ -141,7 +165,10 @@ class ResponseStatus(str, Enum):
 OPERATION_CAPABILITIES = {
     "quotes.get": Capability.QUOTES,
     "candles.list": Capability.CANDLES,
+    "trades.list": Capability.TRADES,
     "orderbook.get": Capability.ORDERBOOK,
+    "symbols.list": Capability.SYMBOLS,
+    "market_status.get": Capability.MARKET_STATUS,
     "positions.list": Capability.POSITIONS,
     "balances.list": Capability.BALANCES,
     "orders.list": Capability.ORDERS,
@@ -166,6 +193,8 @@ class CapabilityContract:
             "data_class": self.data_class,
             "reason": self.reason,
             "executes": False,
+            "grants_authority": False,
+            "activates_connectivity": False,
         }
 
 
@@ -195,6 +224,7 @@ class ProviderDescriptor:
             "account_access": False,
             "order_execution": False,
             "connected": False,
+            **ISOLATION_ASSERTIONS,
         }
 
 
@@ -272,12 +302,15 @@ class ProviderResponse:
             "authenticated": False,
             "real_connectivity": False,
             "idempotent": True,
-            **AUTHORITY_LOCKS,
+            **BOUNDARY_VALUES,
         }
 
 
 TERMINAL_STATEMENTS = (
-    "MOCK CONNECTIVITY ONLY",
+    "OFFLINE MOCK DATA",
+    "NO PROVIDER CONNECTION",
+    "NO ACCOUNT ACCESS",
+    "NO ORDER EXECUTION",
     "NO REAL PROVIDER CONNECTION",
     "NO HTTP OR WEBSOCKET TRANSPORT",
     "NO CREDENTIALS OR OAUTH",

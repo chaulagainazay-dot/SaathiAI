@@ -17,7 +17,7 @@ from saathi.platform.tg.provider_contracts.errors import (
     ProviderContractError,
     ProviderErrorCode,
 )
-from saathi.platform.tg.provider_contracts.fixtures import FixtureCatalog
+from saathi.platform.tg.provider_contracts.fixtures import FixtureCatalog, with_provenance
 from saathi.platform.tg.provider_contracts.models import (
     MOCK_PROVIDER_ID,
     REPLAY_PROVIDER_ID,
@@ -48,6 +48,9 @@ def build_replay_records(catalog: FixtureCatalog) -> tuple[ReplayRecord, ...]:
         ("replay:quote:AAPL:v1", "quotes.get", {"symbol": "AAPL"}),
         ("replay:candles:BTC-USD:1h:v1", "candles.list", {"symbol": "BTC-USD", "interval": "1h"}),
         ("replay:orderbook:AAPL:v1", "orderbook.get", {"symbol": "AAPL"}),
+        ("replay:trades:AAPL:p1:v1", "trades.list", {"symbol": "AAPL", "limit": 2}),
+        ("replay:symbols:p1:v1", "symbols.list", {"limit": 2}),
+        ("replay:market-status:SYNTHETIC-US:v1", "market_status.get", {"venue": "SYNTHETIC-US"}),
     )
     records = []
     for fixture_id, operation, params in definitions:
@@ -57,7 +60,7 @@ def build_replay_records(catalog: FixtureCatalog) -> tuple[ReplayRecord, ...]:
             provider_id=REPLAY_PROVIDER_ID,
             operation=operation,
             params=params,
-            response_data=data,
+            response_data=with_provenance(data, "REPLAY"),
         ))
     return tuple(records)
 
@@ -91,6 +94,10 @@ class _OfflineMarketProvider(
         return self._transport.kind
 
     @property
+    def transport(self) -> ProviderTransport:
+        return self._transport
+
+    @property
     def offline_only(self) -> bool:
         return True
 
@@ -119,7 +126,7 @@ class _OfflineMarketProvider(
         )
         if self.session_state is not expected_state:
             raise ProviderContractError(
-                ProviderErrorCode.SESSION_UNAVAILABLE,
+                ProviderErrorCode.INVALID_SESSION_STATE,
                 "Offline provider session is not ready",
                 details={"state": self.session_state.value},
             )
@@ -158,6 +165,34 @@ class _OfflineMarketProvider(
     def get_orderbook(self, symbol: str, *, idempotency_key: str) -> ProviderResponse:
         return self._request("orderbook.get", {"symbol": symbol}, idempotency_key)
 
+    def list_trades(
+        self,
+        symbol: str,
+        *,
+        cursor: str | None = None,
+        limit: int = 2,
+        idempotency_key: str,
+    ) -> ProviderResponse:
+        params: dict[str, Any] = {"symbol": symbol, "limit": limit}
+        if cursor is not None:
+            params["cursor"] = cursor
+        return self._request("trades.list", params, idempotency_key)
+
+    def list_symbols(
+        self,
+        *,
+        cursor: str | None = None,
+        limit: int = 2,
+        idempotency_key: str,
+    ) -> ProviderResponse:
+        params: dict[str, Any] = {"limit": limit}
+        if cursor is not None:
+            params["cursor"] = cursor
+        return self._request("symbols.list", params, idempotency_key)
+
+    def get_market_status(self, venue: str, *, idempotency_key: str) -> ProviderResponse:
+        return self._request("market_status.get", {"venue": venue}, idempotency_key)
+
     def transport_snapshot(self) -> dict[str, Any]:
         snapshot = getattr(self._transport, "snapshot", None)
         return snapshot() if callable(snapshot) else {
@@ -173,7 +208,14 @@ class DeterministicMockProvider(_OfflineMarketProvider):
             provider_id=MOCK_PROVIDER_ID,
             display_name="Saathi Deterministic Mock Market Provider",
             transport=TransportKind.MOCK,
-            capabilities=(Capability.QUOTES, Capability.CANDLES, Capability.ORDERBOOK),
+            capabilities=(
+                Capability.QUOTES,
+                Capability.CANDLES,
+                Capability.TRADES,
+                Capability.ORDERBOOK,
+                Capability.SYMBOLS,
+                Capability.MARKET_STATUS,
+            ),
         )
         super().__init__(
             descriptor,
@@ -195,7 +237,14 @@ class DeterministicReplayProvider(_OfflineMarketProvider):
             provider_id=REPLAY_PROVIDER_ID,
             display_name="Saathi Recorded Fixture Replay Provider",
             transport=TransportKind.REPLAY,
-            capabilities=(Capability.QUOTES, Capability.CANDLES, Capability.ORDERBOOK),
+            capabilities=(
+                Capability.QUOTES,
+                Capability.CANDLES,
+                Capability.TRADES,
+                Capability.ORDERBOOK,
+                Capability.SYMBOLS,
+                Capability.MARKET_STATUS,
+            ),
         )
         self.replay_transport = ReplayTransport(REPLAY_PROVIDER_ID, replay_records)
         super().__init__(
