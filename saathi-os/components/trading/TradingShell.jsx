@@ -42,6 +42,7 @@ const TABS = [
   { href: "/trading/portfolio-risk", label: "Portfolio Risk" },
   { href: "/trading/market-observation", label: "Market Observation" },
   { href: "/trading/connectivity-governance", label: "Connectivity Governance" },
+  { href: "/trading/provider-contracts", label: "Provider Contracts" },
   { href: "/trading/paper-ledger", label: "Ledger" },
   { href: "/trading/paper-recovery", label: "Recovery" },
   { href: "/trading/comparison", label: "Comparison" },
