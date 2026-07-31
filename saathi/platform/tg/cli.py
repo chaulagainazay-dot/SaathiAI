@@ -540,6 +540,14 @@ def main(argv: list[str] | None = None) -> int:
     ):
         pg_sub.add_parser(_cg)
         sub.add_parser(_cg)
+    # M320–M327 credentialless provider contracts (mock/replay only)
+    for _pc in (
+        "pc-verdict", "pc-dashboard", "pc-providers", "pc-capabilities",
+        "pc-sessions", "pc-replay-fixtures", "pc-mock-quote",
+        "pc-replay-quote", "pc-security", "pc-certify",
+    ):
+        pg_sub.add_parser(_pc)
+        sub.add_parser(_pc)
     # Aliases matching goal prompt command names
     p_sl = sub.add_parser("strategy-list")
     p_sl.add_argument("--category", default="")
@@ -1407,6 +1415,31 @@ def main(argv: list[str] | None = None) -> int:
             if action == "cg-certify":
                 return _out(cg.certify())
             return _out({"ok": False, "error": f"unknown cg action: {action}"})
+        if args.action and str(args.action).startswith("pc-"):
+            from saathi.platform.tg.provider_contracts.service import default_provider_contracts
+            pc = default_provider_contracts()
+            action = args.action
+            if action == "pc-verdict":
+                return _out(pc.posture())
+            if action == "pc-dashboard":
+                return _out(pc.dashboard())
+            if action == "pc-providers":
+                return _out(pc.list_providers())
+            if action == "pc-capabilities":
+                return _out(pc.capabilities())
+            if action == "pc-sessions":
+                return _out(pc.sessions())
+            if action == "pc-replay-fixtures":
+                return _out(pc.replay_fixtures())
+            if action == "pc-mock-quote":
+                return _out(pc.mock_quote())
+            if action == "pc-replay-quote":
+                return _out(pc.replay_quote())
+            if action == "pc-security":
+                return _out(pc.security_scan())
+            if action == "pc-certify":
+                return _out(pc.certify())
+            return _out({"ok": False, "error": f"unknown pc action: {action}"})
         return 2
 
     # Top-level market-data aliases (M256–M263)
@@ -1639,6 +1672,33 @@ def main(argv: list[str] | None = None) -> int:
         if cmd == "cg-certify":
             return _out(cg.certify())
         return _out({"ok": False, "error": f"unknown cg command: {cmd}"})
+
+    # Top-level credentialless provider contract aliases (M320–M327)
+    if args.cmd and str(args.cmd).startswith("pc-"):
+        from saathi.platform.tg.provider_contracts.service import default_provider_contracts
+        pc = default_provider_contracts()
+        cmd = args.cmd
+        if cmd == "pc-verdict":
+            return _out(pc.posture())
+        if cmd == "pc-dashboard":
+            return _out(pc.dashboard())
+        if cmd == "pc-providers":
+            return _out(pc.list_providers())
+        if cmd == "pc-capabilities":
+            return _out(pc.capabilities())
+        if cmd == "pc-sessions":
+            return _out(pc.sessions())
+        if cmd == "pc-replay-fixtures":
+            return _out(pc.replay_fixtures())
+        if cmd == "pc-mock-quote":
+            return _out(pc.mock_quote())
+        if cmd == "pc-replay-quote":
+            return _out(pc.replay_quote())
+        if cmd == "pc-security":
+            return _out(pc.security_scan())
+        if cmd == "pc-certify":
+            return _out(pc.certify())
+        return _out({"ok": False, "error": f"unknown pc command: {cmd}"})
 
     parser.print_help()
     return 2

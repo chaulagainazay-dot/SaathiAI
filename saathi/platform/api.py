@@ -13065,3 +13065,116 @@ def tg_cg_live(authorization: str | None = Header(default=None), x_platform_toke
         return _tg_connectivity_governance().refuse_live_trading()
     except PlatformContextError as e:
         raise _err(e) from e
+
+
+# ---------------------------------------------------------------------------
+# M320–M327 Credentialless Provider Contracts (mock/replay only)
+# ---------------------------------------------------------------------------
+
+def _tg_provider_contracts():
+    from saathi.platform.tg.provider_contracts.service import default_provider_contracts
+    return default_provider_contracts()
+
+
+def _tg_pc_authorized(
+    authorization: str | None,
+    x_platform_token: str | None,
+):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_provider_contracts()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+class ProviderCapabilityBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    provider_id: str = "saathi.mock.market.v1"
+    capabilities: list[str] = Field(default_factory=lambda: ["quotes", "candles", "orderbook"])
+
+
+class ProviderOfflineRequestBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    provider_id: str = "saathi.mock.market.v1"
+    operation: str = "quotes.get"
+    params: dict[str, Any] = Field(default_factory=lambda: {"symbol": "AAPL"})
+    idempotency_key: str = "ui:mock:quote:AAPL:v1"
+    schema_version: str = "m320.provider_contracts.v1"
+
+
+@router.get("/tg/provider-contracts/posture")
+def tg_pc_posture(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    return _tg_pc_authorized(authorization, x_platform_token).posture()
+
+
+@router.get("/tg/provider-contracts/dashboard")
+def tg_pc_dashboard(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    return _tg_pc_authorized(authorization, x_platform_token).dashboard()
+
+
+@router.get("/tg/provider-contracts/providers")
+def tg_pc_providers(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    return _tg_pc_authorized(authorization, x_platform_token).list_providers()
+
+
+@router.get("/tg/provider-contracts/providers/{provider_id}")
+def tg_pc_provider_detail(provider_id: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    service = _tg_pc_authorized(authorization, x_platform_token)
+    try:
+        return service.get_provider(provider_id)
+    except Exception as exc:
+        from saathi.platform.tg.provider_contracts.errors import normalize_error
+        return {"ok": False, "error": normalize_error(exc).to_dict()}
+
+
+@router.get("/tg/provider-contracts/capabilities")
+def tg_pc_capabilities(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    return _tg_pc_authorized(authorization, x_platform_token).capabilities()
+
+
+@router.post("/tg/provider-contracts/capabilities/negotiate")
+def tg_pc_capability_negotiate(body: ProviderCapabilityBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    service = _tg_pc_authorized(authorization, x_platform_token)
+    try:
+        return service.negotiate(body.provider_id, body.capabilities)
+    except Exception as exc:
+        from saathi.platform.tg.provider_contracts.errors import normalize_error
+        return {"ok": False, "error": normalize_error(exc).to_dict()}
+
+
+@router.get("/tg/provider-contracts/sessions")
+def tg_pc_sessions(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    return _tg_pc_authorized(authorization, x_platform_token).sessions()
+
+
+@router.get("/tg/provider-contracts/replay/fixtures")
+def tg_pc_replay_fixtures(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    return _tg_pc_authorized(authorization, x_platform_token).replay_fixtures()
+
+
+@router.post("/tg/provider-contracts/requests")
+def tg_pc_request(body: ProviderOfflineRequestBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    service = _tg_pc_authorized(authorization, x_platform_token)
+    return service.request(body.model_dump())
+
+
+@router.get("/tg/provider-contracts/security")
+def tg_pc_security(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    return _tg_pc_authorized(authorization, x_platform_token).security_scan()
+
+
+@router.get("/tg/provider-contracts/maturity")
+def tg_pc_maturity(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    return _tg_pc_authorized(authorization, x_platform_token).maturity()
+
+
+@router.get("/tg/provider-contracts/evidence")
+def tg_pc_evidence(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    return _tg_pc_authorized(authorization, x_platform_token).evidence_bundle()
+
+
+@router.post("/tg/provider-contracts/certify")
+def tg_pc_certify(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    return _tg_pc_authorized(authorization, x_platform_token).certify()
