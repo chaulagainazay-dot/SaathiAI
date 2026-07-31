@@ -5,7 +5,7 @@
   "ok": true,
   "timestamp": "2026-07-31T01:35:57.138Z",
   "branch": "milestone/m320-m327-provider-contracts",
-  "head_sha": "42628cdb9c6a89506f70203a24fe3bffde4ae10c",
+  "head_sha": "42628cda2a48f5a0d2aef75044acb2303b62b5dc",
   "browser_engine": "chromium",
   "browser_version": "151.0.7922.34",
   "playwright_version": "1.62.0",
@@ -127,7 +127,7 @@
     "proven_by_initial_interactive_run": true,
     "description": "The provider session card rendered backend policy-only forbidden state names.",
     "repair": "Render only the allowed lifecycle state list and fail-closed session facts.",
-    "commit": "42628cdb9c6a89506f70203a24fe3bffde4ae10c",
+    "commit": "42628cda2a48f5a0d2aef75044acb2303b62b5dc",
     "focused_regression": "8 passed"
   },
   "historical_result": {

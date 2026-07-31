@@ -14,7 +14,7 @@ The original environmental browser failure remains preserved in
 - Worktree: `/Users/macbookpro/SaathiAI-m320-m327`
 - Branch: `milestone/m320-m327-provider-contracts`
 - Browser-recovery starting SHA: `ac2fa6d5b994c1791bee0733c5a00517ae655e74`
-- Browser-tested repair SHA: `42628cdb9c6a89506f70203a24fe3bffde4ae10c`
+- Browser-tested repair SHA: `42628cda2a48f5a0d2aef75044acb2303b62b5dc`
 - Maximum state: `MOCK_PROVIDER_READY_NO_REAL_CONNECTIVITY`
 - Maturity: `MOCK_CONNECTIVITY_ONLY`
 
