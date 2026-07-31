@@ -1562,3 +1562,18 @@ Branch `milestone/m42-graduation-review`.
 ### M312–M319 Connectivity Governance
 
 Certified with limitations: GOVERNANCE_ONLY; no provider connection.
+
+### M320–M327 Credentialless Provider Contracts & Mock Connectivity
+
+Implemented on `milestone/m320-m327-provider-contracts` from verified predecessor
+`6639ca730ece11bce160a55a237fcaff8df3058c`. Adds provider-neutral contracts,
+explicit capability states, deterministic synthetic mock data, integrity-checked
+replay, offline transports, strict schemas, normalized errors, idempotency, and
+an unauthenticated provider-session lifecycle. Existing connectivity governance,
+authority, approval, audit, evidence, policy, maturity, and certification
+systems remain authoritative.
+
+Maximum state is `MOCK_PROVIDER_READY_NO_REAL_CONNECTIVITY`; maturity is
+`MOCK_CONNECTIVITY_ONLY`. No real connection, OAuth, credentials, provider
+authentication, account data, order path, transfer, canary, deployment, or live
+trading is authorized or implemented.

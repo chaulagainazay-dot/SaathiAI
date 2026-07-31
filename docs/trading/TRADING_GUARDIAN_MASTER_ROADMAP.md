@@ -81,3 +81,17 @@ Phases 1–4 of this master roadmap are **implemented and certified with limitat
 - **No provider connection. No credentials. No orders. No canary. No live trading.**
 - Evidence: `docs/trading/m312_m319_evidence/`
 
+## M320–M327 Credentialless Provider Contracts (IMPLEMENTED; CERTIFICATION IN PROGRESS)
+
+- **Target verdict:** `PROVIDER_CONTRACTS_AND_MOCK_CONNECTIVITY_CERTIFIED_WITH_LIMITATIONS`
+- **Maximum state:** `MOCK_PROVIDER_READY_NO_REAL_CONNECTIVITY`
+- **Maturity:** `MOCK_CONNECTIVITY_ONLY`
+- **Branch:** `milestone/m320-m327-provider-contracts`
+- Provider-neutral interfaces, exact capability negotiation, deterministic
+  synthetic fixtures, mock/replay transports, replay integrity, normalized
+  errors, idempotency, and offline-only session lifecycle.
+- Composes with M312–M319 governance; approval never activates connectivity.
+- **No real provider, credential, authentication, account, balance, position,
+  order, transfer, withdrawal, canary, deployment, or live-trading path.**
+- Specification: `docs/trading/M320_M327_PROVIDER_CONTRACTS.md`
+- Evidence: `docs/trading/m320_m327_evidence/`

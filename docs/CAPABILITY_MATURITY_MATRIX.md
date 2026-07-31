@@ -115,3 +115,24 @@ permissions (macOS TCC actuation), or credentials (authenticated cloud/browser).
 | Threat model | GOVERNANCE_ONLY | 68 threats catalogued |
 | Provider connection | PROHIBITED | not started |
 | Live trading | PROHIBITED | not authorized |
+
+## Credentialless Provider Contracts (M320–M327)
+
+| Capability | Maturity | Notes |
+|------------|----------|-------|
+| Provider contract charter | MOCK_CONNECTIVITY_ONLY | offline and credentialless |
+| Provider-neutral interfaces | MOCK_CONNECTIVITY_ONLY | contracts grant no authority |
+| Quotes | SUPPORTED_OFFLINE | deterministic synthetic fixtures |
+| Candles | SUPPORTED_OFFLINE | deterministic synthetic fixtures |
+| Trades | SUPPORTED_OFFLINE | deterministic paginated fixtures |
+| Order books | SUPPORTED_OFFLINE | deterministic synthetic fixtures |
+| Symbols | SUPPORTED_OFFLINE | deterministic paginated fixtures |
+| Market status | SUPPORTED_OFFLINE | fixed synthetic venue state |
+| Replay transport | MOCK_CONNECTIVITY_ONLY | integrity-checked fixtures |
+| HTTP / WebSocket / socket transport | PROHIBITED | absent and isolated |
+| Provider SDKs | PROHIBITED | absent; no dynamic imports |
+| Balances | FORBIDDEN_BY_GOVERNANCE | no implementation |
+| Positions | FORBIDDEN_BY_GOVERNANCE | no implementation |
+| Orders | FORBIDDEN_BY_GOVERNANCE | no implementation or execution |
+| Transfers / withdrawals | FORBIDDEN_BY_GOVERNANCE | no implementation |
+| Real provider connection | PROHIBITED | not started |
