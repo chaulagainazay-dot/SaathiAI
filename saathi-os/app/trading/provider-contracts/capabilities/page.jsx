@@ -57,7 +57,10 @@ export default function ProviderCapabilitiesPage() {
               capabilities: [
                 "quotes",
                 "candles",
+                "trades",
                 "orderbook",
+                "symbols",
+                "market_status",
                 "positions",
                 "balances",
                 "orders",
@@ -69,10 +72,11 @@ export default function ProviderCapabilitiesPage() {
 
         <Card data-testid="pc-capability-boundary" style={{ marginBottom: 12 }}>
           <Heading level={2} size="md">Capability Boundary</Heading>
-          <Text className="mono">quotes · candles · orderbook = SUPPORTED_OFFLINE</Text>
-          <Text className="mono">positions · balances = CONTRACT_ONLY / DENIED</Text>
-          <Text className="mono">orders · transfers = DENIED</Text>
+          <Text className="mono">quotes · candles · trades · orderbook · symbols · market_status = SUPPORTED_OFFLINE</Text>
+          <Text className="mono">positions · balances · orders · transfers = FORBIDDEN_BY_GOVERNANCE</Text>
+          <Text className="mono">Other negotiated states: UNSUPPORTED · UNAVAILABLE</Text>
           <Text className="mono">negotiation_only=true · executes=false</Text>
+          <Text className="mono">Declaration does not grant permission, connectivity, account access, or order authority.</Text>
         </Card>
 
         {catalog && (

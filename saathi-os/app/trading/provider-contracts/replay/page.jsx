@@ -65,6 +65,8 @@ export default function ProviderReplayPage() {
           <Heading level={2} size="md">Replay Contract</Heading>
           <Text className="mono">transport=replay · network_enabled=false</Text>
           <Text className="mono">deterministic=true · recorded_offline=true</Text>
+          <Text className="mono">source_type=REPLAY · live=false · synthetic=true</Text>
+          <Text className="mono">account_derived=false · execution_capable=false</Text>
           <Text className="mono">Every request requires an idempotency key.</Text>
         </Card>
 
@@ -78,6 +80,9 @@ export default function ProviderReplayPage() {
                 <Text className="mono">{fixture.fixture_id}</Text>
                 <Text className="mono" tone="muted">
                   {fixture.recorded_request?.operation} · {fixture.recorded_response_hash}
+                </Text>
+                <Text className="mono" tone="muted">
+                  integrity_valid={String(fixture.integrity_valid)}
                 </Text>
               </div>
             ))}

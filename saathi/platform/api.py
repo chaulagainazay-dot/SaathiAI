@@ -13092,7 +13092,14 @@ def _tg_pc_authorized(
 class ProviderCapabilityBody(BaseModel):
     model_config = ConfigDict(extra="forbid")
     provider_id: str = "saathi.mock.market.v1"
-    capabilities: list[str] = Field(default_factory=lambda: ["quotes", "candles", "orderbook"])
+    capabilities: list[str] = Field(default_factory=lambda: [
+        "quotes",
+        "candles",
+        "trades",
+        "orderbook",
+        "symbols",
+        "market_status",
+    ])
 
 
 class ProviderOfflineRequestBody(BaseModel):
@@ -13107,6 +13114,11 @@ class ProviderOfflineRequestBody(BaseModel):
 @router.get("/tg/provider-contracts/posture")
 def tg_pc_posture(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
     return _tg_pc_authorized(authorization, x_platform_token).posture()
+
+
+@router.get("/tg/provider-contracts/charter")
+def tg_pc_charter(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    return _tg_pc_authorized(authorization, x_platform_token).charter()
 
 
 @router.get("/tg/provider-contracts/dashboard")

@@ -542,7 +542,7 @@ def main(argv: list[str] | None = None) -> int:
         sub.add_parser(_cg)
     # M320–M327 credentialless provider contracts (mock/replay only)
     for _pc in (
-        "pc-verdict", "pc-dashboard", "pc-providers", "pc-capabilities",
+        "pc-verdict", "pc-charter", "pc-dashboard", "pc-providers", "pc-capabilities",
         "pc-sessions", "pc-replay-fixtures", "pc-mock-quote",
         "pc-replay-quote", "pc-security", "pc-certify",
     ):
@@ -1421,6 +1421,8 @@ def main(argv: list[str] | None = None) -> int:
             action = args.action
             if action == "pc-verdict":
                 return _out(pc.posture())
+            if action == "pc-charter":
+                return _out(pc.charter())
             if action == "pc-dashboard":
                 return _out(pc.dashboard())
             if action == "pc-providers":
@@ -1680,6 +1682,8 @@ def main(argv: list[str] | None = None) -> int:
         cmd = args.cmd
         if cmd == "pc-verdict":
             return _out(pc.posture())
+        if cmd == "pc-charter":
+            return _out(pc.charter())
         if cmd == "pc-dashboard":
             return _out(pc.dashboard())
         if cmd == "pc-providers":

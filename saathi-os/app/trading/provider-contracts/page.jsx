@@ -23,6 +23,7 @@ export default function ProviderContractsPage() {
   const [sessions, setSessions] = useState(null);
   const [mockQuote, setMockQuote] = useState(null);
   const [certification, setCertification] = useState(null);
+  const [selectedProvider, setSelectedProvider] = useState("saathi.mock.market.v1");
   const [error, setError] = useState(null);
 
   const load = async (path, setter, method = "GET", body = undefined) => {
@@ -66,17 +67,30 @@ export default function ProviderContractsPage() {
         <LoadError error={error} />
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
           <Button data-testid="pc-load-overview" onClick={loadOverview}>Load Provider Contracts</Button>
+          <label className="mono" htmlFor="pc-provider-select">
+            Offline provider
+            <select
+              id="pc-provider-select"
+              data-testid="pc-provider-select"
+              value={selectedProvider}
+              onChange={(event) => setSelectedProvider(event.target.value)}
+              style={{ marginLeft: 8 }}
+            >
+              <option value="saathi.mock.market.v1">Deterministic Mock</option>
+              <option value="saathi.replay.market.v1">Recorded Replay</option>
+            </select>
+          </label>
           <Button data-testid="pc-mock-quote" onClick={() => load(
             "/tg/provider-contracts/requests",
             setMockQuote,
             "POST",
             {
-              provider_id: "saathi.mock.market.v1",
+              provider_id: selectedProvider,
               operation: "quotes.get",
               params: { symbol: "AAPL" },
               idempotency_key: "ui:mock:quote:AAPL:v1",
             },
-          )}>Preview Mock Quote</Button>
+          )}>Run Deterministic Query</Button>
           <Button data-testid="pc-certify" onClick={() => load(
             "/tg/provider-contracts/certify",
             setCertification,
@@ -90,10 +104,14 @@ export default function ProviderContractsPage() {
           <Text className="mono" data-testid="pc-max-state">Maximum: MOCK_PROVIDER_READY_NO_REAL_CONNECTIVITY</Text>
           <Text className="mono" data-testid="pc-authority-locks">
             REAL_CONNECTIVITY_AUTHORIZED=false · OAUTH_AUTHORIZED=false ·
-            CREDENTIAL_PROVISIONING_AUTHORIZED=false · ACCOUNT_ACCESS_AUTHORIZED=false ·
-            BALANCE_READ_AUTHORIZED=false · POSITION_READ_AUTHORIZED=false ·
+            BROKER_CONNECTIVITY_AUTHORIZED=false · CREDENTIAL_PROVISIONING_AUTHORIZED=false ·
+            CREDENTIAL_VALIDATION_AUTHORIZED=false · AUTHENTICATION_AUTHORIZED=false ·
+            ACCOUNT_ACCESS_AUTHORIZED=false · BALANCE_READ_AUTHORIZED=false ·
+            POSITION_READ_AUTHORIZED=false · ORDER_HISTORY_AUTHORIZED=false ·
             ORDER_SUBMISSION_AUTHORIZED=false · ORDER_EXECUTION_AUTHORIZED=false ·
-            CANARY_ACTIVATION_AUTHORIZED=false · LIVE_TRADING_AUTHORIZED=false
+            TRANSFER_AUTHORIZED=false · WITHDRAWAL_AUTHORIZED=false ·
+            CANARY_ACTIVATION_AUTHORIZED=false · LIVE_TRADING_AUTHORIZED=false ·
+            AUTOMATED_INVESTMENT_AUTHORITY=false
           </Text>
         </Card>
 
@@ -121,6 +139,9 @@ export default function ProviderContractsPage() {
                 <Text className="mono" tone="muted">
                   credentialless={String(provider.credentialless)} · network_enabled={String(provider.network_enabled)}
                 </Text>
+                <Text className="mono" tone="muted">
+                  source boundary: synthetic offline fixtures · connected={String(provider.connected)}
+                </Text>
               </div>
             ))}
           </Card>
@@ -139,6 +160,7 @@ export default function ProviderContractsPage() {
         {mockQuote && (
           <Card data-testid="pc-mock-response" style={{ marginBottom: 12 }}>
             <Heading level={2} size="md">Deterministic Mock Response</Heading>
+            <Text className="mono">Synthetic provenance is mandatory: source_type=MOCK or REPLAY · live=false</Text>
             <pre className="mono" style={{ fontSize: 11, overflow: "auto" }}>
               {JSON.stringify(mockQuote.response, null, 2)}
             </pre>

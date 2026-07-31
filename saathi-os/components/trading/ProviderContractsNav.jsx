@@ -27,18 +27,17 @@ export function OfflineProviderBoundary() {
     <div data-testid="provider-offline-boundary" role="note"
       style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
       {[
-        "MOCK CONNECTIVITY ONLY",
-        "NO REAL PROVIDER",
-        "NO HTTP / WEBSOCKET",
-        "NO CREDENTIALS / OAUTH",
+        "OFFLINE MOCK DATA",
+        "NO PROVIDER CONNECTION",
         "NO ACCOUNT ACCESS",
-        "NO ORDERS",
-        "NO CANARY",
-        "NO LIVE TRADING",
+        "NO ORDER EXECUTION",
+        "MOCK DATA ONLY",
+        "REPLAY DATA ONLY",
+        "NETWORK TRANSPORT DISABLED",
       ].map((label) => (
         <span key={label} className="mono" style={{ fontSize: 10.5, padding: "3px 8px",
           border: "1px solid var(--border-subtle,#2a2f3a)", borderRadius: 999,
-          color: label.startsWith("MOCK") ? "var(--signal-ok,#10C98A)" : "var(--signal-danger,#FF5A5A)" }}>
+          color: label.includes("DATA") ? "var(--signal-ok,#10C98A)" : "var(--signal-danger,#FF5A5A)" }}>
           {label}
         </span>
       ))}
