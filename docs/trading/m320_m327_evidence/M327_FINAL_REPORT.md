@@ -2,65 +2,82 @@
 
 ## Terminal verdict
 
-`M320_M327_BROWSER_CERT_FAILED`
+`PROVIDER_CONTRACTS_AND_MOCK_CONNECTIVITY_CERTIFIED_WITH_LIMITATIONS`
 
-Implementation and every non-browser gate passed. The preferred milestone
-verdict is withheld because the mandatory in-app browser runtime exposed zero
-browser instances, so interactive browser verification could not run.
+The authoritative interactive browser rerun passed after one bounded UI repair.
+The original environmental browser failure remains preserved in
+`browser/M327_BROWSER_CERT.json`; the later authoritative result is
+`browser/M327_BROWSER_CERT_RERUN.json`.
 
 ## Repository
 
 - Worktree: `/Users/macbookpro/SaathiAI-m320-m327`
-- Starting branch: `milestone/m312-m319-connectivity-governance`
-- Starting SHA: `6639ca730ece11bce160a55a237fcaff8df3058c`
-- Ending branch: `milestone/m320-m327-provider-contracts`
-- Clean-clone source SHA: `e2783821e911a64c52f15e08e181db7f260761fd`
+- Branch: `milestone/m320-m327-provider-contracts`
+- Browser-recovery starting SHA: `ac2fa6d5b994c1791bee0733c5a00517ae655e74`
+- Browser-tested repair SHA: `42628cdb9c6a89506f70203a24fe3bffde4ae10c`
+- Maximum state: `MOCK_PROVIDER_READY_NO_REAL_CONNECTIVITY`
+- Maturity: `MOCK_CONNECTIVITY_ONLY`
 
-## Implementation
+## Browser certification
 
-The milestone adds provider-neutral contracts, six offline market-fixture
-capabilities, deterministic mock and replay providers, a closed transport
-registry, replay-integrity checks, schemas, normalized errors, idempotency,
-offline session states, API, CLI, Control Center pages, audit evidence, and
-governance-composed certification.
+| Gate | Result |
+|---|---|
+| Runtime | Playwright 1.62.0, Chromium 151.0.7922.34 |
+| Application | Next.js development server and Uvicorn API, both explicitly bound to `127.0.0.1` |
+| Routes | Provider contracts, capabilities, replay |
+| Interactive checks | 87 passed, 0 failed |
+| Deterministic mock | PASS; same request produced the same rendered result |
+| Deterministic replay | PASS; same request produced the same rendered result |
+| Missing replay fixture | PASS; fail-closed `fixture_missing` envelope |
+| Session states | PASS; permitted states visible, forbidden states absent |
+| Required banners | PASS |
+| Credential/OAuth/account/order/live-connect controls | 0 |
+| Console errors / page errors / failed requests | 0 / 0 / 0 |
+| Forbidden external requests | 0 |
+| Authority indicators | All 17 false |
+| Screenshots | 6 visually inspected |
 
-Balances, positions, orders, and transfers are
-`FORBIDDEN_BY_GOVERNANCE`. No concrete account or order provider exists.
+The first interactive recovery run proved that the session card rendered
+policy-only forbidden state names. Commit `42628cd` made the smallest repair:
+the card now renders only permitted lifecycle states and fail-closed session
+facts. The focused frontend regression passed 8 tests.
 
-## Validation
+## Existing non-browser certification
 
 | Gate | Result |
 |---|---|
 | Focused backend | 82 passed |
 | M304–M319 regressions | 37 passed |
 | Frontend | 301 passed |
-| M320 UI static boundary | 7 passed |
 | Production build | PASS; 126 pages |
 | Clean clone | PASS |
 | Secret scan | PASS; 28 files, 0 findings |
-| Network isolation | PASS |
-| Provider SDK isolation | PASS |
-| Dynamic import isolation | PASS |
+| Network / provider-SDK / dynamic-import isolation | PASS |
 | Authority scan | PASS |
-| Interactive browser | FAIL; no browser instance available |
 
-## Authority
+## Limitations
 
-All 17 hard authority values are false. All seven positive isolation
-assertions are true. Maximum state remains
-`MOCK_PROVIDER_READY_NO_REAL_CONNECTIVITY`; maturity is
-`MOCK_CONNECTIVITY_ONLY`.
+- The in-app browser runtime still exposed zero instances, so the already
+  installed project-pinned Playwright Chromium runtime was used.
+- A synthetic localhost SaathiOS platform-operator session passed the existing
+  Control Center SignInGate. It was not a provider credential.
+- Browser cookies and browser storage values were not inspected under
+  browser-control safety rules.
+- The global SaathiOS shell `LIVE CONNECTED` badge denotes localhost
+  platform-runtime health, not provider connectivity. The provider surface
+  displayed `NO PROVIDER CONNECTION` and exposed no live-connect control.
+- Only deterministic synthetic mock and replay data exists.
 
 ## Explicit non-actions
 
-PR #12 was not modified. M312–M319 history was not rewritten. The original
-worktree and its preserved local files were not altered. No real provider
-connection, OAuth, credential, provider authentication, account access, balance
-read, position read, order, transfer, withdrawal, paper execution, live
-execution, canary, deployment, release, push, merge, or M328 work occurred.
+PR #12 was not modified. The M312–M319 branch and history were not modified.
+No real provider, broker, or exchange connection was created. No OAuth,
+credential-provisioning, provider-authentication, account, balance, position,
+order, transfer, withdrawal, canary, paper execution, live execution,
+deployment, release, merge, push, force push, history rewrite, or M328 work
+occurred.
 
 ## Recommended next action
 
-Make an in-app browser instance available and rerun only the M327 interactive
-browser certification. Do not start M328 and do not push until that gate passes
-and the owner explicitly authorizes a push.
+Stop at M327. Review the local certification commits and evidence. Push only if
+the owner explicitly authorizes it; do not start M328 under this mission.

@@ -1,13 +1,21 @@
 {
   "schema": "m327.evidence_manifest.v1",
   "milestone": "M320-M327",
-  "terminal_verdict": "M320_M327_BROWSER_CERT_FAILED",
+  "terminal_verdict": "PROVIDER_CONTRACTS_AND_MOCK_CONNECTIVITY_CERTIFIED_WITH_LIMITATIONS",
   "files": [
     "M320_PROVIDER_CONTRACT_CHARTER.json",
     "M327_CONTRACT_CERTIFICATION.json",
     "M327_SECURITY_SCANS.json",
     "M327_CLEAN_CLONE_CERTIFICATION.json",
     "browser/M327_BROWSER_CERT.json",
+    "browser/M327_BROWSER_CERT_RERUN.json",
+    "browser/run_m327_browser_cert.mjs",
+    "browser/provider-contracts-overview-rerun.png",
+    "browser/capability-matrix-rerun.png",
+    "browser/replay-fixtures-rerun.png",
+    "browser/deterministic-mock-result-rerun.png",
+    "browser/deterministic-replay-result-rerun.png",
+    "browser/offline-authority-boundary-rerun.png",
     "FOCUSED_TEST_LOG.txt",
     "REGRESSION_TEST_LOG.txt",
     "FRONTEND_TEST_LOG.txt",
@@ -16,6 +24,7 @@
     "M327_FINAL_REPORT.md",
     "STARTING_SHA.txt"
   ],
-  "preferred_verdict_withheld": true,
-  "withheld_reason": "mandatory interactive browser certification did not run"
+  "preferred_verdict_withheld": false,
+  "historical_browser_failure_preserved": true,
+  "authoritative_browser_rerun": "browser/M327_BROWSER_CERT_RERUN.json"
 }

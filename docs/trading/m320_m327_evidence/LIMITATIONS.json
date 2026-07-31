@@ -1,7 +1,10 @@
 {
   "schema": "m327.limitations.v1",
   "limitations": [
-    "Interactive browser certification failed because the in-app browser runtime exposed zero browser instances",
+    "The in-app browser runtime exposed zero instances; the authoritative interactive rerun used the already-installed project-pinned Playwright Chromium runtime",
+    "The existing Control Center SignInGate required a synthetic localhost platform-operator session; no provider credential or provider authentication was used",
+    "Browser cookies and storage values were not inspected under browser-control safety rules",
+    "The global shell LIVE CONNECTED badge denotes localhost platform-runtime health and not provider connectivity",
     "Only deterministic synthetic mock and replay data exists",
     "Idempotency persistence was not introduced; restart stability is derived from canonical fingerprints and fixtures",
     "npm ci reported 9 high-severity advisories in the pre-existing dependency graph; this milestone made no dependency-version change",

@@ -2,7 +2,7 @@
   "schema": "m327.contract_certification.v1",
   "ok": true,
   "verdict": "PROVIDER_CONTRACTS_AND_MOCK_CONNECTIVITY_CERTIFIED_WITH_LIMITATIONS",
-  "scope": "contract_runtime_only_excludes_browser_gate",
+  "scope": "contract_runtime_plus_authoritative_interactive_browser_rerun",
   "maximum_state": "MOCK_PROVIDER_READY_NO_REAL_CONNECTIVITY",
   "maturity": "MOCK_CONNECTIVITY_ONLY",
   "checks": {
@@ -36,6 +36,8 @@
     "cli": true,
     "frontend_static": true
   },
-  "browser_gate_included": false,
-  "terminal_milestone_verdict": "M320_M327_BROWSER_CERT_FAILED"
+  "browser_gate_included": true,
+  "browser_gate_verdict": "PROVIDER_CONTRACTS_MOCK_CONNECTIVITY_BROWSER_CERT_PASSED_WITH_LIMITATIONS",
+  "browser_evidence": "browser/M327_BROWSER_CERT_RERUN.json",
+  "terminal_milestone_verdict": "PROVIDER_CONTRACTS_AND_MOCK_CONNECTIVITY_CERTIFIED_WITH_LIMITATIONS"
 }

@@ -1577,3 +1577,10 @@ Maximum state is `MOCK_PROVIDER_READY_NO_REAL_CONNECTIVITY`; maturity is
 `MOCK_CONNECTIVITY_ONLY`. No real connection, OAuth, credentials, provider
 authentication, account data, order path, transfer, canary, deployment, or live
 trading is authorized or implemented.
+
+The authoritative M327 interactive browser rerun passed with limitations using
+the already-installed project-pinned Playwright Chromium runtime. The original
+in-app-runtime failure remains preserved as historical evidence. All browser
+traffic was localhost-only, all 17 authorities remained false, and no provider
+credential, OAuth, account-link, live-connect, order, transfer, withdrawal, or
+canary control was rendered.

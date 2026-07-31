@@ -81,9 +81,10 @@ Phases 1–4 of this master roadmap are **implemented and certified with limitat
 - **No provider connection. No credentials. No orders. No canary. No live trading.**
 - Evidence: `docs/trading/m312_m319_evidence/`
 
-## M320–M327 Credentialless Provider Contracts (IMPLEMENTED; BROWSER GATE FAILED)
+## M320–M327 Credentialless Provider Contracts (CERTIFIED WITH LIMITATIONS)
 
-- **Target verdict:** `PROVIDER_CONTRACTS_AND_MOCK_CONNECTIVITY_CERTIFIED_WITH_LIMITATIONS`
+- **Verdict:** `PROVIDER_CONTRACTS_AND_MOCK_CONNECTIVITY_CERTIFIED_WITH_LIMITATIONS`
+- **Browser verdict:** `PROVIDER_CONTRACTS_MOCK_CONNECTIVITY_BROWSER_CERT_PASSED_WITH_LIMITATIONS`
 - **Maximum state:** `MOCK_PROVIDER_READY_NO_REAL_CONNECTIVITY`
 - **Maturity:** `MOCK_CONNECTIVITY_ONLY`
 - **Branch:** `milestone/m320-m327-provider-contracts`
@@ -96,5 +97,7 @@ Phases 1–4 of this master roadmap are **implemented and certified with limitat
 - Specification: `docs/trading/M320_M327_PROVIDER_CONTRACTS.md`
 - Evidence: `docs/trading/m320_m327_evidence/`
 - Backend, predecessor, frontend, build, clean-clone, secret, network, SDK, and
-  authority gates passed. The in-app browser runtime exposed no browser
-  instance, so interactive browser certification failed closed.
+  authority gates passed. The historical in-app browser failure is preserved;
+  the later authoritative project-pinned Playwright Chromium rerun passed all
+  interactive UI, deterministic-flow, forbidden-control, console, and
+  localhost-only network checks.
