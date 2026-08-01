@@ -1,0 +1,578 @@
+{
+  "schema": "m339.private_alpha_e2e_journey.v1",
+  "milestone": "M339",
+  "journey_id": "PRIVATE_ALPHA_JOURNEY_V1",
+  "verdict": "PRIVATE_ALPHA_E2E_JOURNEY_PASSED",
+  "stages": {
+    "identity_and_session": {
+      "steps": 13,
+      "passed": 13,
+      "failed": 0,
+      "status": "PASS",
+      "failed_steps": []
+    },
+    "rbac": {
+      "steps": 10,
+      "passed": 10,
+      "failed": 0,
+      "status": "PASS",
+      "failed_steps": []
+    },
+    "approvals": {
+      "steps": 9,
+      "passed": 9,
+      "failed": 0,
+      "status": "PASS",
+      "failed_steps": []
+    },
+    "mission_lifecycle": {
+      "steps": 12,
+      "passed": 12,
+      "failed": 0,
+      "status": "PASS",
+      "failed_steps": []
+    },
+    "evidence_and_audit": {
+      "steps": 5,
+      "passed": 5,
+      "failed": 0,
+      "status": "PASS",
+      "failed_steps": []
+    },
+    "operations": {
+      "steps": 17,
+      "passed": 17,
+      "failed": 0,
+      "status": "PASS",
+      "failed_steps": []
+    },
+    "session_revocation_and_signout": {
+      "steps": 4,
+      "passed": 4,
+      "failed": 0,
+      "status": "PASS",
+      "failed_steps": []
+    }
+  },
+  "step_count": 70,
+  "passed": 70,
+  "failed": 0,
+  "positive_steps": 31,
+  "negative_steps": 18,
+  "assertions": 18,
+  "failed_steps": [],
+  "steps": [
+    {
+      "step": "owner_bootstrapped",
+      "kind": "assertion",
+      "ok": true,
+      "detail": "one owner per installation"
+    },
+    {
+      "step": "owner_role_is_owner",
+      "kind": "assertion",
+      "ok": true,
+      "detail": "role=owner"
+    },
+    {
+      "step": "owner_issues_operator_invite",
+      "kind": "positive",
+      "ok": true,
+      "detail": "invite-only; no public self-registration",
+      "duration_ms": 0
+    },
+    {
+      "step": "operator_accepts_invite",
+      "kind": "positive",
+      "ok": true,
+      "detail": "",
+      "duration_ms": 65
+    },
+    {
+      "step": "owner_issues_viewer_invite",
+      "kind": "positive",
+      "ok": true,
+      "detail": "",
+      "duration_ms": 0
+    },
+    {
+      "step": "viewer_accepts_invite",
+      "kind": "positive",
+      "ok": true,
+      "detail": "",
+      "duration_ms": 65
+    },
+    {
+      "step": "workspace_binding_matches_owner",
+      "kind": "assertion",
+      "ok": true,
+      "detail": "invited users are bound to the inviting org and workspace"
+    },
+    {
+      "step": "anonymous_access_refused",
+      "kind": "negative",
+      "ok": true,
+      "refused_with": "ANONYMOUS_PROHIBITED",
+      "detail": "no anonymous identity may obtain a context",
+      "duration_ms": 0
+    },
+    {
+      "step": "invalid_token_refused",
+      "kind": "negative",
+      "ok": true,
+      "refused_with": "SESSION_INVALID",
+      "detail": "a forged token must not authenticate",
+      "duration_ms": 0
+    },
+    {
+      "step": "invalid_password_login_refused",
+      "kind": "negative",
+      "ok": true,
+      "refused_with": "AUTH_FAILED",
+      "detail": "invalid credentials fail closed",
+      "duration_ms": 32
+    },
+    {
+      "step": "reused_invite_refused",
+      "kind": "negative",
+      "ok": true,
+      "refused_with": "INVITE_NOT_PENDING",
+      "detail": "an invite is single-use",
+      "duration_ms": 0
+    },
+    {
+      "step": "short_lived_session_issued",
+      "kind": "positive",
+      "ok": true,
+      "detail": "",
+      "duration_ms": 0
+    },
+    {
+      "step": "expired_session_refused",
+      "kind": "negative",
+      "ok": true,
+      "refused_with": "SESSION_INVALID",
+      "detail": "an expired session must not authenticate",
+      "duration_ms": 0
+    },
+    {
+      "step": "operator_creates_project",
+      "kind": "positive",
+      "ok": true,
+      "detail": "operator may create an allowed project",
+      "duration_ms": 2
+    },
+    {
+      "step": "operator_creates_mission",
+      "kind": "positive",
+      "ok": true,
+      "detail": "",
+      "duration_ms": 1
+    },
+    {
+      "step": "mission_validated_against_legacy_key",
+      "kind": "positive",
+      "ok": true,
+      "detail": "mission validation binds the mission to a known runtime key",
+      "duration_ms": 1
+    },
+    {
+      "step": "viewer_cannot_create_project",
+      "kind": "negative",
+      "ok": true,
+      "refused_with": "PERMISSION_DENIED",
+      "detail": "viewer is read-only",
+      "duration_ms": 0
+    },
+    {
+      "step": "foreign_project_refused",
+      "kind": "negative",
+      "ok": true,
+      "refused_with": "PROJECT_ISOLATION",
+      "detail": "a session may not claim a project it does not own",
+      "duration_ms": 0
+    },
+    {
+      "step": "foreign_org_id",
+      "kind": "observation",
+      "ok": true,
+      "value": "org_a1f9d4b2b8eb47da"
+    },
+    {
+      "step": "unauthorized_workspace_access_refused",
+      "kind": "negative",
+      "ok": true,
+      "refused_with": "WORKSPACE_ISOLATION",
+      "detail": "a workspace outside the session org may not be selected",
+      "duration_ms": 0
+    },
+    {
+      "step": "cross_organization_workspace_switch_refused",
+      "kind": "negative",
+      "ok": true,
+      "refused_with": "MEMBERSHIP_REVOKED",
+      "detail": "a non-member may not switch into another organization",
+      "duration_ms": 0
+    },
+    {
+      "step": "cross_organization_project_access_refused",
+      "kind": "negative",
+      "ok": true,
+      "refused_with": "PROJECT_ISOLATION",
+      "detail": "a project belonging to another organization is invisible",
+      "duration_ms": 0
+    },
+    {
+      "step": "foreign_org_audit_is_isolated",
+      "kind": "assertion",
+      "ok": true,
+      "detail": "audit queries are scoped by organization"
+    },
+    {
+      "step": "operator_requests_approval",
+      "kind": "positive",
+      "ok": true,
+      "detail": "a mutating tool requires an approval",
+      "duration_ms": 1
+    },
+    {
+      "step": "approval_appears_in_owner_inbox",
+      "kind": "positive",
+      "ok": true,
+      "detail": "pending approval is visible to the deciding human",
+      "duration_ms": 0
+    },
+    {
+      "step": "self_approval_blocked_maker_checker",
+      "kind": "negative",
+      "ok": true,
+      "refused_with": "PERMISSION_DENIED",
+      "detail": "the requester may not decide their own approval",
+      "duration_ms": 0
+    },
+    {
+      "step": "viewer_cannot_approve",
+      "kind": "negative",
+      "ok": true,
+      "refused_with": "PERMISSION_DENIED",
+      "detail": "viewer holds no approval authority",
+      "duration_ms": 0
+    },
+    {
+      "step": "owner_approves",
+      "kind": "positive",
+      "ok": true,
+      "detail": "a human owner decides",
+      "duration_ms": 1
+    },
+    {
+      "step": "second_approval_requested_for_revocation",
+      "kind": "positive",
+      "ok": true,
+      "detail": "",
+      "duration_ms": 1
+    },
+    {
+      "step": "revoked_approval_cannot_authorize_execution",
+      "kind": "negative",
+      "ok": true,
+      "refused_with": "APPROVAL_REVOKED",
+      "detail": "a revoked approval grants nothing",
+      "duration_ms": 6
+    },
+    {
+      "step": "short_ttl_approval_requested",
+      "kind": "positive",
+      "ok": true,
+      "detail": "",
+      "duration_ms": 1
+    },
+    {
+      "step": "expired_approval_cannot_authorize_execution",
+      "kind": "negative",
+      "ok": true,
+      "refused_with": "APPROVAL_EXPIRED",
+      "detail": "an expired approval grants nothing",
+      "duration_ms": 8
+    },
+    {
+      "step": "approved_mission_executes_local_tool",
+      "kind": "positive",
+      "ok": true,
+      "detail": "execution runs through the ExecutionGateway only",
+      "duration_ms": 16
+    },
+    {
+      "step": "execution_recorded_output",
+      "kind": "assertion",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "step": "readonly_tool_needs_no_approval",
+      "kind": "positive",
+      "ok": true,
+      "detail": "a read-only tool is not gated behind approval",
+      "duration_ms": 9
+    },
+    {
+      "step": "readonly_output_is_observable",
+      "kind": "assertion",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "step": "approval_does_not_grant_unrelated_authority",
+      "kind": "negative",
+      "ok": true,
+      "refused_with": "APPROVAL_TOOL_MISMATCH",
+      "detail": "a LOCAL_MUTATION approval never authorizes financial execution",
+      "duration_ms": 3
+    },
+    {
+      "step": "mutating_tool_without_approval_refused",
+      "kind": "negative",
+      "ok": true,
+      "refused_with": "APPROVAL_REQUIRED",
+      "detail": "no approval, no mutation",
+      "duration_ms": 3
+    },
+    {
+      "step": "mission_execution_cancellable",
+      "kind": "positive",
+      "ok": true,
+      "detail": "a running execution can be cancelled",
+      "duration_ms": 8
+    },
+    {
+      "step": "cancellation_reached_terminal_state",
+      "kind": "assertion",
+      "ok": true,
+      "detail": "{'terminal': True, 'state': 'rejected', 'error': None}"
+    },
+    {
+      "step": "failure_is_safe_and_classified",
+      "kind": "positive",
+      "ok": true,
+      "detail": "a prohibited action fails closed with a classified outcome",
+      "duration_ms": 7
+    },
+    {
+      "step": "prohibited_outcome_class",
+      "kind": "assertion",
+      "ok": true,
+      "detail": "{'ok': False, 'outcome_class': 'PROHIBITED', 'error_code': 'TOOL_FINANCIAL_EXECUTION_PROHIBITED'}"
+    },
+    {
+      "step": "idempotent_retry_does_not_duplicate",
+      "kind": "positive",
+      "ok": true,
+      "detail": "a retry with the same idempotency key must not duplicate the effect",
+      "duration_ms": 9
+    },
+    {
+      "step": "retry_is_idempotent",
+      "kind": "assertion",
+      "ok": true,
+      "detail": "{'first_ok': True, 'second_ok': True, 'duplicated': False}"
+    },
+    {
+      "step": "audit_timeline_available",
+      "kind": "positive",
+      "ok": true,
+      "detail": "",
+      "duration_ms": 0
+    },
+    {
+      "step": "audit_records_execution",
+      "kind": "assertion",
+      "ok": true,
+      "detail": "events=['approval.decided', 'approval.requested', 'approval.revoked', 'invitation.accepted', 'invitation.created', 'mission.created', 'mission.legacy_linked', 'platform.bootstrap', 'project.created', 'runtime.approval_accepted', 'runtime.approval_rejected', 'runtime.approval_required']"
+    },
+    {
+      "step": "audit_attributes_actor",
+      "kind": "assertion",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "step": "audit_event_count",
+      "kind": "observation",
+      "ok": true,
+      "value": 105
+    },
+    {
+      "step": "audit_contains_no_credential_values",
+      "kind": "assertion",
+      "ok": true,
+      "detail": "no password or session token in audit"
+    },
+    {
+      "step": "operations_service_available",
+      "kind": "positive",
+      "ok": true,
+      "detail": "",
+      "duration_ms": 37
+    },
+    {
+      "step": "health_reflects_journey",
+      "kind": "positive",
+      "ok": true,
+      "detail": "",
+      "duration_ms": 5
+    },
+    {
+      "step": "health_reports_domains",
+      "kind": "assertion",
+      "ok": true,
+      "detail": "overall=HEALTHY domains=['dependency', 'module', 'platform', 'provider_registry', 'replay', 'scheduler', 'storage']"
+    },
+    {
+      "step": "metrics_record_the_journey",
+      "kind": "positive",
+      "ok": true,
+      "detail": "",
+      "duration_ms": 2
+    },
+    {
+      "step": "alerts_surface_simulated_warning",
+      "kind": "positive",
+      "ok": true,
+      "detail": "",
+      "duration_ms": 0
+    },
+    {
+      "step": "alert_evaluation_completed",
+      "kind": "assertion",
+      "ok": true,
+      "detail": "raised=0"
+    },
+    {
+      "step": "diagnostics_capture_state",
+      "kind": "positive",
+      "ok": true,
+      "detail": "",
+      "duration_ms": 16
+    },
+    {
+      "step": "diagnostics_covered_subsystems",
+      "kind": "assertion",
+      "ok": true,
+      "detail": "checks=7 subsystems=['approval_engine', 'authority_system', 'browser_certification_history', 'configuration', 'provider_contracts', 'replay_engine', 'storage']"
+    },
+    {
+      "step": "backup_snapshot_verified",
+      "kind": "positive",
+      "ok": true,
+      "detail": "",
+      "duration_ms": 0
+    },
+    {
+      "step": "backup_verification_ok",
+      "kind": "assertion",
+      "ok": true,
+      "detail": "verified=3"
+    },
+    {
+      "step": "recovery_simulation_succeeds",
+      "kind": "positive",
+      "ok": true,
+      "detail": "",
+      "duration_ms": 0
+    },
+    {
+      "step": "recovery_simulation_ok",
+      "kind": "assertion",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "step": "security_scan_clean",
+      "kind": "positive",
+      "ok": true,
+      "detail": "",
+      "duration_ms": 36
+    },
+    {
+      "step": "security_scan_summary",
+      "kind": "observation",
+      "ok": true,
+      "value": "{\"ok\": true, \"findings\": [], \"isolation\": {\"ok\": true, \"findings\": [], \"inspected_files\": [\"__init__.py\", \"alerts.py\", \"backup.py\", \"certification.py\", \"diagnostics.py\", \"errors.py\", \"health.py\", \"metrics.py\", \"models.py\", \"observability.py\", \"performance.py\", \"service.py\"], \"forbidden_modules\": [\"aiohttp\", \"azure\", \"boto3\", \"botocore\", \"datadog\", \"ddtrace\", \"elasticapm\", \"google\", \"grpc\", \"honeyc"
+    },
+    {
+      "step": "authority_locks_intact",
+      "kind": "positive",
+      "ok": true,
+      "detail": "",
+      "duration_ms": 0
+    },
+    {
+      "step": "authority_locks_intact_value",
+      "kind": "assertion",
+      "ok": true,
+      "detail": "True"
+    },
+    {
+      "step": "system_backup_and_dry_run_restore",
+      "kind": "positive",
+      "ok": true,
+      "detail": "",
+      "duration_ms": 125
+    },
+    {
+      "step": "owner_revokes_viewer_session",
+      "kind": "positive",
+      "ok": true,
+      "detail": "",
+      "duration_ms": 0
+    },
+    {
+      "step": "revoked_session_cannot_authenticate",
+      "kind": "negative",
+      "ok": true,
+      "refused_with": "SESSION_INVALID",
+      "detail": "a revoked session is dead immediately",
+      "duration_ms": 0
+    },
+    {
+      "step": "operator_signs_out",
+      "kind": "positive",
+      "ok": true,
+      "detail": "",
+      "duration_ms": 0
+    },
+    {
+      "step": "signed_out_session_cannot_authenticate",
+      "kind": "negative",
+      "ok": true,
+      "refused_with": "SESSION_INVALID",
+      "detail": "sign-out ends the session",
+      "duration_ms": 0
+    }
+  ],
+  "runtime_boundary": {
+    "tools_used": [
+      "m49.echo_readonly",
+      "m49.local_note_write",
+      "m49.cooperative_cancel",
+      "m49.financial_execution_stub"
+    ],
+    "all_tools_local_deterministic": true,
+    "external_provider_calls": 0,
+    "network_calls": 0,
+    "mock_providers_only": true
+  },
+  "authority": {
+    "real_connectivity_authorized": false,
+    "broker_connectivity_authorized": false,
+    "credential_provisioning_authorized": false,
+    "oauth_authorized": false,
+    "account_access_authorized": false,
+    "order_submission_authorized": false,
+    "order_execution_authorized": false,
+    "live_trading_authorized": false,
+    "public_production_authorized": false,
+    "public_registration_authorized": false
+  },
+  "duration_sec": 1.06
+}
