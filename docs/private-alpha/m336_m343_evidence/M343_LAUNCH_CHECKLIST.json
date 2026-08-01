@@ -1,0 +1,261 @@
+{
+  "schema": "m343.private_alpha_launch_checklist.v1",
+  "milestone": "M336-M343",
+  "verdict": "PRIVATE_ALPHA_LAUNCH_READINESS_CERTIFIED_WITH_LIMITATIONS",
+  "max_state": "PRIVATE_ALPHA_READY_OFFLINE_INVITE_ONLY",
+  "owner_review_status": "OWNER_REVIEW_REQUIRED",
+  "owner_review_may_be_automated": false,
+  "release_is_automatic": false,
+  "counts": {
+    "PASS": 31,
+    "PASS_WITH_LIMITATION": 1,
+    "OWNER_REVIEW_REQUIRED": 1
+  },
+  "total_items": 33,
+  "failed_items": [],
+  "checklist": [
+    {
+      "category": "source integrity",
+      "item": "Predecessor SHA resolved in full",
+      "state": "PASS",
+      "detail": "6cdf72661834242eb4901f7eaf44a4425957db37",
+      "evidence": "M336_RECOVERY_BASELINE.json"
+    },
+    {
+      "category": "git status",
+      "item": "Working branch isolated from predecessor PRs",
+      "state": "PASS",
+      "detail": "PR #12 and PR #13 untouched",
+      "evidence": "M336_RECOVERY_BASELINE.json"
+    },
+    {
+      "category": "git status",
+      "item": "Unrelated local changes preserved",
+      "state": "PASS",
+      "detail": "NONE \u2014 no add/clean/reset/restore/checkout/stash executed against the primary worktree",
+      "evidence": "M336_RECOVERY_BASELINE.json"
+    },
+    {
+      "category": "tests",
+      "item": "All eight inherited failures closed",
+      "state": "PASS",
+      "detail": "M57=0 M157=0 gate=0",
+      "evidence": "M337_REGRESSION_DEBT_CLOSURE.json"
+    },
+    {
+      "category": "tests",
+      "item": "No test was weakened, skipped or deleted",
+      "state": "PASS",
+      "detail": "the three affected suites are byte-identical to the predecessor",
+      "evidence": "M337_REGRESSION_DEBT_CLOSURE.json"
+    },
+    {
+      "category": "tests",
+      "item": "Full backend suite green",
+      "state": "PASS",
+      "detail": "6007 passed, 0 failed",
+      "evidence": "M343_TEST_RESULTS.json"
+    },
+    {
+      "category": "tests",
+      "item": "Full frontend suite green",
+      "state": "PASS",
+      "detail": "342 passed, 0 failed",
+      "evidence": "M343_TEST_RESULTS.json"
+    },
+    {
+      "category": "tests",
+      "item": "Production build succeeds",
+      "state": "PASS",
+      "detail": "clean; /operations/private-alpha-readiness at 3.55 kB, 159 kB first load",
+      "evidence": "M343_TEST_RESULTS.json"
+    },
+    {
+      "category": "release",
+      "item": "Release gate passes",
+      "state": "PASS",
+      "detail": "EXIT_READY",
+      "evidence": "M337_REGRESSION_DEBT_CLOSURE.json"
+    },
+    {
+      "category": "authentication",
+      "item": "Authentication and session lifecycle",
+      "state": "PASS",
+      "detail": "13/13 steps",
+      "evidence": "M339_PRIVATE_ALPHA_E2E_JOURNEY.json"
+    },
+    {
+      "category": "RBAC",
+      "item": "Role-based access control",
+      "state": "PASS",
+      "detail": "10/10 steps",
+      "evidence": "M339_PRIVATE_ALPHA_E2E_JOURNEY.json"
+    },
+    {
+      "category": "workspace isolation",
+      "item": "Workspace and organization isolation",
+      "state": "PASS",
+      "detail": "10/10 steps",
+      "evidence": "M339_PRIVATE_ALPHA_E2E_JOURNEY.json"
+    },
+    {
+      "category": "approvals",
+      "item": "Approval lifecycle and maker-checker",
+      "state": "PASS",
+      "detail": "9/9 steps",
+      "evidence": "M339_PRIVATE_ALPHA_E2E_JOURNEY.json"
+    },
+    {
+      "category": "mission lifecycle",
+      "item": "Mission create through cancel and retry",
+      "state": "PASS",
+      "detail": "13/13 steps",
+      "evidence": "M339_PRIVATE_ALPHA_E2E_JOURNEY.json"
+    },
+    {
+      "category": "observability",
+      "item": "Health, metrics, alerts and diagnostics",
+      "state": "PASS",
+      "detail": "17/17 steps",
+      "evidence": "M339_PRIVATE_ALPHA_E2E_JOURNEY.json"
+    },
+    {
+      "category": "mission lifecycle",
+      "item": "Every boundary refusal is a real authorization failure",
+      "state": "PASS",
+      "detail": "18 refusals, each with a specific code",
+      "evidence": "M339_PRIVATE_ALPHA_E2E_JOURNEY.json"
+    },
+    {
+      "category": "diagnostics",
+      "item": "Diagnostics cover every subsystem",
+      "state": "PASS",
+      "detail": "",
+      "evidence": "M339_PRIVATE_ALPHA_E2E_JOURNEY.json"
+    },
+    {
+      "category": "backup",
+      "item": "Backup snapshot verified",
+      "state": "PASS",
+      "detail": "a corrupted archive is detected and live state stays intact",
+      "evidence": "M341_SOAK_CONCURRENCY_RECOVERY_REPORT.json"
+    },
+    {
+      "category": "recovery",
+      "item": "Restart, restore and interruption recovery",
+      "state": "PASS",
+      "detail": "8 recovery scenarios",
+      "evidence": "M341_SOAK_CONCURRENCY_RECOVERY_REPORT.json"
+    },
+    {
+      "category": "soak",
+      "item": "Sustained local soak completed",
+      "state": "PASS",
+      "detail": "61.36 min, 938247 operations, 0 errors, concurrency_ok=True",
+      "evidence": "M341_SOAK_CONCURRENCY_RECOVERY_REPORT.json"
+    },
+    {
+      "category": "security",
+      "item": "All authority locks false",
+      "state": "PASS",
+      "detail": "15 locks, all false",
+      "evidence": "live read"
+    },
+    {
+      "category": "security",
+      "item": "Runtime made no external or network call",
+      "state": "PASS",
+      "detail": "",
+      "evidence": "M339_PRIVATE_ALPHA_E2E_JOURNEY.json"
+    },
+    {
+      "category": "security",
+      "item": "Concurrent approval decisions cannot both win",
+      "state": "PASS",
+      "detail": "exactly one decider wins; the rest are refused",
+      "evidence": "M341_SOAK_CONCURRENCY_RECOVERY_REPORT.json"
+    },
+    {
+      "category": "privacy",
+      "item": "No credential value reaches the audit trail",
+      "state": "PASS",
+      "detail": "",
+      "evidence": "M339_PRIVATE_ALPHA_E2E_JOURNEY.json"
+    },
+    {
+      "category": "browser",
+      "item": "Browser certification passed",
+      "state": "PASS",
+      "detail": "92 checks passed, 0 failed",
+      "evidence": "M343_BROWSER_CERT.json"
+    },
+    {
+      "category": "clean clone",
+      "item": "Clean-clone certification passed",
+      "state": "PASS",
+      "detail": "M343_CLEAN_CLONE_CERTIFIED",
+      "evidence": "M343_CLEAN_CLONE_CERTIFICATION.json"
+    },
+    {
+      "category": "documentation",
+      "item": "Private-alpha scope",
+      "state": "PASS",
+      "detail": "present",
+      "evidence": "docs/private-alpha/PRIVATE_ALPHA_SCOPE.md"
+    },
+    {
+      "category": "release",
+      "item": "Release runbook",
+      "state": "PASS",
+      "detail": "present",
+      "evidence": "docs/private-alpha/PRIVATE_ALPHA_RELEASE_RUNBOOK.md"
+    },
+    {
+      "category": "rollback",
+      "item": "Rollback runbook",
+      "state": "PASS",
+      "detail": "present",
+      "evidence": "docs/private-alpha/PRIVATE_ALPHA_ROLLBACK_RUNBOOK.md"
+    },
+    {
+      "category": "incident response",
+      "item": "Incident runbook",
+      "state": "PASS",
+      "detail": "present",
+      "evidence": "docs/private-alpha/PRIVATE_ALPHA_INCIDENT_RUNBOOK.md"
+    },
+    {
+      "category": "tester support",
+      "item": "Tester guide",
+      "state": "PASS",
+      "detail": "present",
+      "evidence": "docs/private-alpha/PRIVATE_ALPHA_TESTER_GUIDE.md"
+    },
+    {
+      "category": "known limitations",
+      "item": "Limitations stated explicitly",
+      "state": "PASS_WITH_LIMITATION",
+      "detail": "10 documented limitations",
+      "evidence": "PRIVATE_ALPHA_SCOPE.md"
+    },
+    {
+      "category": "owner approval",
+      "item": "Human owner review of the release",
+      "state": "OWNER_REVIEW_REQUIRED",
+      "detail": "Automation may not mark this item as passed. It stays OWNER_REVIEW_REQUIRED until the owner personally records a decision outside this tooling.",
+      "evidence": "human"
+    }
+  ],
+  "known_limitations": [
+    "Local-only, single-host private alpha. No public URL and no public deployment.",
+    "Invite only. Public self-registration is not enabled and may not be enabled by automation.",
+    "No broker or provider connectivity. No credential is requested, accepted or stored.",
+    "No account, balance or position access. No order is submitted, modified or cancelled.",
+    "No paper or live execution. Live trading remains prohibited.",
+    "Missions run local deterministic tools and mock providers only.",
+    "Backups are owner-managed and local. No cloud backup, no external telemetry.",
+    "No uptime guarantee and no service-level agreement.",
+    "Certified on macOS arm64 only.",
+    "Owner review is required before any release and is never satisfied by automation."
+  ]
+}
