@@ -9,13 +9,21 @@
   SaathiOS process it finds, but **stops only what it started**.
 
 ## Start
-Resolves the repo, verifies the Python venv + frontend deps, checks ports 8765
-and 3000. If a healthy SaathiOS process already serves a port, it is **reused and
-left as-is**. If a port is held by an **unrelated** process, the launcher **fails
-closed** and never kills it. Otherwise it starts the backend on `127.0.0.1:8765`
-and the frontend on `localhost:3000` with the explicit API base, waits for
-readiness, and only then reports success. A `launcher.lock` prevents duplicate
-start storms.
+Resolves the repo, verifies `curl`, then classifies ports 8765 and 3000. If a
+healthy SaathiOS process already serves a port, it is **reused and left as-is**.
+If a port is held by an **unrelated** process, the launcher **fails closed** and
+never kills it. Otherwise it starts the backend on `127.0.0.1:8765` and the
+frontend on `localhost:3000` with the explicit API base, waits for readiness, and
+only then reports success. A `launcher.lock` prevents duplicate start storms.
+
+**Build-toolchain checks are role-conditional (M336–M343).** The Python venv is
+required only when the launcher must spawn the backend itself, and
+`saathi-os/node_modules` only when it must spawn the frontend — those are the
+only paths that use them. Each spawn path still aborts non-zero when its
+toolchain is missing. A role that is reused rather than spawned needs neither, so
+the documented reuse path is no longer gated on developer build artifacts, and a
+real blocker (unhealthy or unrelated listener) is reported as itself rather than
+being masked behind a generic "environment not ready" message.
 
 ## Stop
 Graceful `SIGTERM` first, bounded 10 s wait, then `SIGKILL` **only** for
