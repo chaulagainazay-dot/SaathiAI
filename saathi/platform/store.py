@@ -2521,6 +2521,59 @@ class PlatformStore:
         ).fetchone()
         return self._platform_execution_row(row) if row else None
 
+    def decide_approval_if_pending(
+        self,
+        approval_id: str,
+        *,
+        status: str,
+        decided_by: str,
+        decided_at: float,
+        reason: str = "",
+    ) -> bool:
+        """Atomically move a PENDING approval to a terminal decision.
+
+        M341: the read-check-write form let concurrent deciders all observe
+        `pending` and all write a decision, so one approval could record several
+        decisions and a later approve could overwrite an earlier reject. The
+        conditional UPDATE makes exactly one decider win, matching the guarantee
+        consume_approval_if_approved() already provides for dispatch.
+        """
+        with self._runtime_lock:
+            cur = self._conn.execute(
+                "UPDATE approvals SET status=?, decided_by=?, decided_at=?, reason=?"
+                " WHERE approval_id=? AND status=?",
+                (
+                    status,
+                    decided_by,
+                    decided_at,
+                    reason[:500],
+                    approval_id,
+                    ApprovalStatus.PENDING.value,
+                ),
+            )
+            self._conn.commit()
+            return cur.rowcount == 1
+
+    def revoke_approval_if_revocable(
+        self, approval_id: str, *, decided_by: str, decided_at: float
+    ) -> bool:
+        """Atomically revoke an approval that is still pending or approved."""
+        with self._runtime_lock:
+            cur = self._conn.execute(
+                "UPDATE approvals SET status=?, decided_by=?, decided_at=?"
+                " WHERE approval_id=? AND status IN (?,?)",
+                (
+                    ApprovalStatus.REVOKED.value,
+                    decided_by,
+                    decided_at,
+                    approval_id,
+                    ApprovalStatus.PENDING.value,
+                    ApprovalStatus.APPROVED.value,
+                ),
+            )
+            self._conn.commit()
+            return cur.rowcount == 1
+
     def consume_approval_if_approved(
         self, approval_id: str, *, consumed_at: float | None = None
     ) -> bool:

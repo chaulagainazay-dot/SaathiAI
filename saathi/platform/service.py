@@ -410,13 +410,25 @@ class PlatformService:
             rec.status = ApprovalStatus.EXPIRED.value
             self.store.save_approval(rec)
             raise PlatformContextError("APPROVAL_EXPIRED", approval_id)
-        rec.status = (
+        decided_status = (
             ApprovalStatus.APPROVED.value if approve else ApprovalStatus.REJECTED.value
         )
-        rec.decided_by = ctx.user_id
-        rec.decided_at = now
-        rec.reason = reason[:500]
-        self.store.save_approval(rec)
+        # M341: the decision is applied by a conditional UPDATE, so concurrent
+        # deciders cannot each observe `pending` and each write a decision. The
+        # loser is refused exactly as a sequential second decider would be.
+        if not self.store.decide_approval_if_pending(
+            approval_id,
+            status=decided_status,
+            decided_by=ctx.user_id,
+            decided_at=now,
+            reason=reason,
+        ):
+            current = self.store.get_approval(approval_id)
+            raise PlatformContextError(
+                "APPROVAL_NOT_PENDING",
+                f"status={current.status if current else 'missing'}",
+            )
+        rec = self.store.get_approval(approval_id) or rec
         self._audit(
             "approval.decided",
             ctx,
@@ -440,10 +452,16 @@ class PlatformService:
             ApprovalStatus.APPROVED.value,
         ):
             raise PlatformContextError("APPROVAL_NOT_REVOCABLE", rec.status)
-        rec.status = ApprovalStatus.REVOKED.value
-        rec.decided_by = ctx.user_id
-        rec.decided_at = time.time()
-        self.store.save_approval(rec)
+        # M341: same conditional-UPDATE guarantee as decide_approval, so a
+        # revocation racing a decision or a second revocation cannot both win.
+        if not self.store.revoke_approval_if_revocable(
+            approval_id, decided_by=ctx.user_id, decided_at=time.time()
+        ):
+            current = self.store.get_approval(approval_id)
+            raise PlatformContextError(
+                "APPROVAL_NOT_REVOCABLE", current.status if current else "missing"
+            )
+        rec = self.store.get_approval(approval_id) or rec
         self._audit(
             "approval.revoked",
             ctx,
