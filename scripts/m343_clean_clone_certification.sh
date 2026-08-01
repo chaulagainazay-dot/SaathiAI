@@ -114,7 +114,12 @@ grep -q "ALL_LOCKS_FALSE True" "$LOGS/authority.log" && result_authority="pass" 
 # not a URL the application fetches, and it predates this milestone. It is
 # excluded by exact literal rather than by loosening the pattern, so any other
 # apple.com URL would still be counted.
-network_hits="$(grep -rhEo 'https?://[a-zA-Z0-9.-]+' \
+#
+# -I and --exclude-dir=__pycache__ keep the scan on source: the clone's own test
+# run compiles .pyc files, and `grep -r` otherwise emits a "Binary file …
+# matches" line that is neither a URL nor excludable by literal. Skipping
+# compiled artifacts of the source already being scanned narrows nothing.
+network_hits="$(grep -rhEo -I --exclude-dir=__pycache__ 'https?://[a-zA-Z0-9.-]+' \
   saathi/platform/private_alpha bin/saathi-local 2>/dev/null \
   | grep -vE '127\.0\.0\.1|localhost' \
   | grep -vFx 'http://www.apple.com' | wc -l | tr -d ' ')"
