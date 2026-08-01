@@ -159,12 +159,35 @@ Detail: [`M340_PRIVATE_ALPHA_UX_READINESS.json`](m336_m343_evidence/M340_PRIVATE
 
 ## 7. Reliability
 
-`scripts/m341_private_alpha_soak.py` sustains a bounded local workload with
-concurrent sessions, tenants and missions, sampling memory, CPU, file
-descriptors, database and log growth, latency and error rate throughout, then
-runs four concurrency scenarios and eight recovery scenarios.
+`scripts/m341_private_alpha_soak.py` sustained **61.4 minutes** of continuous
+local load: four concurrent workers across two tenants and two workspaces,
+**84,651 complete cycles**, **938,247 operations**, **zero errors**.
 
-It reports the duration it actually sustained and never claims one it did not.
+| | |
+| --- | --- |
+| Latency | p50 2.8 ms · p95 48.3 ms · p99 67.1 ms |
+| Memory | 56.9 → 65.1 MB (8.2 MB growth over the hour) |
+| File descriptors | 46 → 97, bounded |
+| Concurrency scenarios | 4 / 4 pass |
+| Recovery scenarios | 8 / 8 pass |
+
+Recovery covered restart with no audit loss, database integrity after load,
+corrupted-backup detection with live state intact, dry-run restore, stale-session
+rejection, abandoned-mission recoverability, an interrupted approval that stays
+pending and never self-approves, and diagnostics after restart.
+
+**One finding this milestone does not fix.** The database grew from 671 KB to
+1.67 GB — roughly 1.8 KB per operation, with no retention, pruning or
+compaction. At real tester rates this is not a problem, and the release runbook
+already watches database growth daily during the first week. But a retention
+policy is a governance decision about how long an audit trail must survive, not
+a repair, and it must be settled before anything longer-running than a bounded
+private alpha. It is recorded in
+[`LIMITATIONS.json`](m336_m343_evidence/LIMITATIONS.json) rather than left for
+someone to discover.
+
+The runner reports the duration it actually sustained and never claims one it
+did not.
 
 Evidence: [`M341_SOAK_CONCURRENCY_RECOVERY_REPORT.json`](m336_m343_evidence/M341_SOAK_CONCURRENCY_RECOVERY_REPORT.json).
 
@@ -216,6 +239,13 @@ anything else.
   the private-alpha UI has no separate mutation surface for them.
 - Forbidden-control checks assert absence across the certified routes; they
   cannot prove absence on routes outside the private-alpha journey.
+- The local database grows without bound under sustained load. See the soak
+  section; a retention policy is required before anything longer-running.
+- `test_m17_1_live.py::test_live_browser_dom_and_click` allows a real browser
+  five seconds to start headless, so it fails under heavy CPU contention and
+  passes idle. It behaves identically at the untouched predecessor SHA and this
+  branch never touched that code, so it was left alone rather than having its
+  timeout raised to make a suite green.
 - Owner review has **not** been performed. No automation may perform it.
 
 ## 11. What was not done
