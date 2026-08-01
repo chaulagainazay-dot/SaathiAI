@@ -26,8 +26,8 @@
       "failed_steps": []
     },
     "mission_lifecycle": {
-      "steps": 12,
-      "passed": 12,
+      "steps": 13,
+      "passed": 13,
       "failed": 0,
       "status": "PASS",
       "failed_steps": []
@@ -54,12 +54,12 @@
       "failed_steps": []
     }
   },
-  "step_count": 70,
-  "passed": 70,
+  "step_count": 71,
+  "passed": 71,
   "failed": 0,
   "positive_steps": 31,
   "negative_steps": 18,
-  "assertions": 18,
+  "assertions": 19,
   "failed_steps": [],
   "steps": [
     {
@@ -86,7 +86,7 @@
       "kind": "positive",
       "ok": true,
       "detail": "",
-      "duration_ms": 65
+      "duration_ms": 69
     },
     {
       "step": "owner_issues_viewer_invite",
@@ -100,7 +100,7 @@
       "kind": "positive",
       "ok": true,
       "detail": "",
-      "duration_ms": 65
+      "duration_ms": 70
     },
     {
       "step": "workspace_binding_matches_owner",
@@ -130,7 +130,7 @@
       "ok": true,
       "refused_with": "AUTH_FAILED",
       "detail": "invalid credentials fail closed",
-      "duration_ms": 32
+      "duration_ms": 34
     },
     {
       "step": "reused_invite_refused",
@@ -160,21 +160,21 @@
       "kind": "positive",
       "ok": true,
       "detail": "operator may create an allowed project",
-      "duration_ms": 2
+      "duration_ms": 0
     },
     {
       "step": "operator_creates_mission",
       "kind": "positive",
       "ok": true,
       "detail": "",
-      "duration_ms": 1
+      "duration_ms": 0
     },
     {
       "step": "mission_validated_against_legacy_key",
       "kind": "positive",
       "ok": true,
       "detail": "mission validation binds the mission to a known runtime key",
-      "duration_ms": 1
+      "duration_ms": 0
     },
     {
       "step": "viewer_cannot_create_project",
@@ -196,7 +196,7 @@
       "step": "foreign_org_id",
       "kind": "observation",
       "ok": true,
-      "value": "org_a1f9d4b2b8eb47da"
+      "value": "org_830666971dda4d9c"
     },
     {
       "step": "unauthorized_workspace_access_refused",
@@ -233,7 +233,7 @@
       "kind": "positive",
       "ok": true,
       "detail": "a mutating tool requires an approval",
-      "duration_ms": 1
+      "duration_ms": 0
     },
     {
       "step": "approval_appears_in_owner_inbox",
@@ -263,14 +263,14 @@
       "kind": "positive",
       "ok": true,
       "detail": "a human owner decides",
-      "duration_ms": 1
+      "duration_ms": 0
     },
     {
       "step": "second_approval_requested_for_revocation",
       "kind": "positive",
       "ok": true,
       "detail": "",
-      "duration_ms": 1
+      "duration_ms": 0
     },
     {
       "step": "revoked_approval_cannot_authorize_execution",
@@ -278,14 +278,14 @@
       "ok": true,
       "refused_with": "APPROVAL_REVOKED",
       "detail": "a revoked approval grants nothing",
-      "duration_ms": 6
+      "duration_ms": 3
     },
     {
       "step": "short_ttl_approval_requested",
       "kind": "positive",
       "ok": true,
       "detail": "",
-      "duration_ms": 1
+      "duration_ms": 0
     },
     {
       "step": "expired_approval_cannot_authorize_execution",
@@ -293,14 +293,14 @@
       "ok": true,
       "refused_with": "APPROVAL_EXPIRED",
       "detail": "an expired approval grants nothing",
-      "duration_ms": 8
+      "duration_ms": 4
     },
     {
       "step": "approved_mission_executes_local_tool",
       "kind": "positive",
       "ok": true,
       "detail": "execution runs through the ExecutionGateway only",
-      "duration_ms": 16
+      "duration_ms": 9
     },
     {
       "step": "execution_recorded_output",
@@ -313,7 +313,7 @@
       "kind": "positive",
       "ok": true,
       "detail": "a read-only tool is not gated behind approval",
-      "duration_ms": 9
+      "duration_ms": 8
     },
     {
       "step": "readonly_output_is_observable",
@@ -341,14 +341,20 @@
       "step": "mission_execution_cancellable",
       "kind": "positive",
       "ok": true,
-      "detail": "a running execution can be cancelled",
-      "duration_ms": 8
+      "detail": "a real runtime.cancel() is issued against the in-flight execution",
+      "duration_ms": 59
+    },
+    {
+      "step": "cancellation_was_requested",
+      "kind": "assertion",
+      "ok": true,
+      "detail": "{'cancel_requested': True, 'execution_id': 'pex_2fc16eb98b3640f6', 'cancel_state': 'RUNNING', 'final_state': 'CANCELLED', 'terminal': True, 'thread_finished': True, 'error': None}"
     },
     {
       "step": "cancellation_reached_terminal_state",
       "kind": "assertion",
       "ok": true,
-      "detail": "{'terminal': True, 'state': 'rejected', 'error': None}"
+      "detail": "{'cancel_requested': True, 'execution_id': 'pex_2fc16eb98b3640f6', 'cancel_state': 'RUNNING', 'final_state': 'CANCELLED', 'terminal': True, 'thread_finished': True, 'error': None}"
     },
     {
       "step": "failure_is_safe_and_classified",
@@ -399,7 +405,7 @@
       "step": "audit_event_count",
       "kind": "observation",
       "ok": true,
-      "value": 105
+      "value": 107
     },
     {
       "step": "audit_contains_no_credential_values",
@@ -412,7 +418,7 @@
       "kind": "positive",
       "ok": true,
       "detail": "",
-      "duration_ms": 37
+      "duration_ms": 39
     },
     {
       "step": "health_reflects_journey",
@@ -439,7 +445,7 @@
       "kind": "positive",
       "ok": true,
       "detail": "",
-      "duration_ms": 0
+      "duration_ms": 1
     },
     {
       "step": "alert_evaluation_completed",
@@ -452,7 +458,7 @@
       "kind": "positive",
       "ok": true,
       "detail": "",
-      "duration_ms": 16
+      "duration_ms": 18
     },
     {
       "step": "diagnostics_covered_subsystems",
@@ -491,7 +497,7 @@
       "kind": "positive",
       "ok": true,
       "detail": "",
-      "duration_ms": 36
+      "duration_ms": 39
     },
     {
       "step": "security_scan_summary",
@@ -517,7 +523,7 @@
       "kind": "positive",
       "ok": true,
       "detail": "",
-      "duration_ms": 125
+      "duration_ms": 141
     },
     {
       "step": "owner_revokes_viewer_session",
@@ -574,5 +580,5 @@
     "public_production_authorized": false,
     "public_registration_authorized": false
   },
-  "duration_sec": 1.06
+  "duration_sec": 1.191
 }

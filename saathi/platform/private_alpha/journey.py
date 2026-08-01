@@ -446,8 +446,13 @@ def run_private_alpha_journey(
     # cancellation
     cancelled = rec.check(
         "mission_execution_cancellable",
-        lambda: _cancel_probe(runtime, operator_token, project, mission),
-        detail="a running execution can be cancelled",
+        lambda: _cancel_probe(platform, runtime, operator_token, project, mission),
+        detail="a real runtime.cancel() is issued against the in-flight execution",
+    )
+    rec.assert_true(
+        "cancellation_was_requested",
+        bool(cancelled) and cancelled.get("cancel_requested") is True,
+        detail=str(cancelled),
     )
     rec.assert_true(
         "cancellation_reached_terminal_state",
@@ -632,17 +637,24 @@ def _must_succeed(result):
     return result
 
 
-def _cancel_probe(runtime, token: str, project, mission) -> dict[str, Any]:
-    """Start a cooperatively-cancellable execution and cancel it."""
+def _cancel_probe(platform, runtime, token: str, project, mission) -> dict[str, Any]:
+    """Start a cooperatively-cancellable execution and actually cancel it.
+
+    Observing that a long-running tool eventually finishes proves nothing about
+    cancellation, so this issues a real runtime.cancel() against the in-flight
+    execution and asserts the record reaches a terminal state.
+    """
     import threading
 
     box: dict[str, Any] = {}
+    run_id = f"m339-cancel-{int(time.time() * 1000)}"
 
     def _run():
         try:
             box["result"] = runtime.execute_token(
                 token=token, tool_id=TOOL_CANCELLABLE,
-                arguments={"seconds": 5},
+                arguments={"stages": 400},
+                run_id=run_id,
                 project_id=project["project_id"], mission_id=mission["mission_id"],
             )
         except Exception as exc:  # noqa: BLE001
@@ -650,13 +662,43 @@ def _cancel_probe(runtime, token: str, project, mission) -> dict[str, Any]:
 
     thread = threading.Thread(target=_run, daemon=True)
     thread.start()
-    thread.join(timeout=12)
-    record = box.get("result")
-    state = getattr(record, "state", None) or getattr(record, "status", None)
+
+    execution_id = ""
+    deadline = time.time() + 8
+    while time.time() < deadline and not execution_id:
+        for record in platform.store.list_platform_executions(
+            mission_id=mission["mission_id"], tool_id=TOOL_CANCELLABLE, limit=20
+        ):
+            execution_id = record.execution_id
+            break
+        if not execution_id:
+            time.sleep(0.05)
+
+    cancel_state = None
+    cancel_error = None
+    if execution_id:
+        try:
+            cancelled = runtime.cancel(token=token, execution_id=execution_id)
+            cancel_state = str(getattr(cancelled, "state", ""))
+        except Exception as exc:  # noqa: BLE001
+            cancel_error = f"{type(exc).__name__}: {exc}"[:200]
+
+    thread.join(timeout=20)
+
+    final_state = cancel_state
+    if execution_id:
+        final = platform.store.get_platform_execution(execution_id)
+        if final is not None:
+            final_state = str(final.state)
+
     return {
-        "terminal": record is not None or "error" in box,
-        "state": str(state) if state is not None else None,
-        "error": box.get("error"),
+        "cancel_requested": bool(execution_id) and cancel_error is None,
+        "execution_id": execution_id or None,
+        "cancel_state": cancel_state,
+        "final_state": final_state,
+        "terminal": bool(execution_id) and cancel_error is None and bool(final_state),
+        "thread_finished": not thread.is_alive(),
+        "error": cancel_error or box.get("error"),
     }
 
 
