@@ -145,7 +145,7 @@ async function main() {
   let forbiddenExternalRequests = [];
 
   // ── API-level journey the UI then reflects ────────────────────────────────
-  const me = await platform("/auth/me", { token });
+  const me = await platform("/me", { token });
   check("workspace_binding_established",
     Boolean(me.json?.org_id || me.json?.context?.org_id || me.json?.user),
     `status=${me.status}`);
@@ -191,7 +191,7 @@ async function main() {
   });
   check("human_approval", decided.status < 400, `status=${decided.status}`);
 
-  const executed = await platform("/runtime/execute", {
+  const executed = await platform("/execute", {
     method: "POST", token,
     body: {
       tool_id: "m49.local_note_write", arguments: { key: "m343", value: "cert" },
@@ -217,7 +217,7 @@ async function main() {
   const revoked = await platform(`/approvals/${cancelId}/revoke`, { method: "POST", token });
   check("mission_cancellation", revoked.status < 400, `status=${revoked.status}`);
 
-  const failedExec = await platform("/runtime/execute", {
+  const failedExec = await platform("/execute", {
     method: "POST", token,
     body: { tool_id: "m49.financial_execution_stub", arguments: { symbol: "AAPL" } },
   });
@@ -352,7 +352,7 @@ async function main() {
     check("session_list_readable", sessions.status < 400, `status=${sessions.status}`);
     const logout = await platform("/auth/logout", { method: "POST", token });
     check("sign_out", logout.status < 400, `status=${logout.status}`);
-    const afterLogout = await platform("/auth/me", { token });
+    const afterLogout = await platform("/me", { token });
     check("session_revocation_effective", afterLogout.status >= 400, `status=${afterLogout.status}`);
 
     // ── network isolation and app-owned errors ────────────────────────────
