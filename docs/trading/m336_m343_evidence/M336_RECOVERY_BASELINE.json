@@ -1,0 +1,163 @@
+{
+  "schema": "m336.recovery_baseline.v1",
+  "milestone": "M336-M343",
+  "title": "Baseline Regression Debt Closure and Private-Alpha Launch Readiness",
+  "generated_by": "M336 recovery baseline verification",
+  "repository": "/Users/macbookpro/SaathiAI",
+  "remote_origin": "https://github.com/chaulagainazay-dot/SaathiAI.git",
+
+  "predecessor": {
+    "expected_branch": "milestone/m328-m335-production-readiness",
+    "resolved_branch": "milestone/m328-m335-production-readiness",
+    "expected_head_abbrev": "6cdf726",
+    "resolved_full_sha": "6cdf72661834242eb4901f7eaf44a4425957db37",
+    "head_subject": "docs(tg): pin M328-M335 implementation SHA in LOOP_STATE",
+    "head_committed_at": "2026-08-01T12:25:59+05:45",
+    "abbrev_matches_full": true,
+    "predecessor_worktree": "/Users/macbookpro/SaathiAI-m320-m327",
+    "predecessor_worktree_clean": true,
+    "certified_verdict": "PRODUCTION_READINESS_AND_OPERATIONAL_RESILIENCE_CERTIFIED_WITH_LIMITATIONS",
+    "certified_max_state": "OPERATIONALLY_READY_OFFLINE",
+    "certification_evidence_dir": "docs/trading/m328_m335_evidence",
+    "certification_evidence_present": true,
+    "certification_evidence_files": [
+      "EVIDENCE_MANIFEST.json",
+      "M328_OPERATIONS_CHARTER.json",
+      "M328_SYSTEM_HEALTH.json",
+      "M332_BACKUP_VERIFICATION.json",
+      "M332_RECOVERY_SIMULATION.json",
+      "M333_DIAGNOSTIC_REPORT.json",
+      "M334_LOAD_VALIDATION.json",
+      "M335_CLEAN_CLONE_CERTIFICATION.json",
+      "M335_CONTROL_CENTER.json",
+      "M335_OPERATIONS_CERTIFICATION.json",
+      "M335_SECURITY_SCANS.json",
+      "M335_FINAL_REPORT.md"
+    ]
+  },
+
+  "working_branch": {
+    "name": "milestone/m336-m343-private-alpha-readiness",
+    "created_from_full_sha": "6cdf72661834242eb4901f7eaf44a4425957db37",
+    "worktree_path": "/Users/macbookpro/SaathiAI-m336-m343",
+    "isolation_strategy": "separate git worktree; primary working tree left untouched"
+  },
+
+  "primary_worktree_preservation": {
+    "path": "/Users/macbookpro/SaathiAI",
+    "branch_at_baseline": "milestone/m312-m319-connectivity-governance",
+    "head_at_baseline": "6639ca730ece11bce160a55a237fcaff8df3058c",
+    "uncommitted_changes_present": true,
+    "action_taken": "NONE — no add/clean/reset/restore/checkout/stash executed against the primary worktree",
+    "preserved_modified_paths": [
+      ".env.example",
+      "docs/evidence/m25/LATEST_ENVIRONMENT_OBSERVATION.json",
+      "docs/evidence/m25/LIVE_CERT_EVIDENCE.json",
+      "docs/evidence/m25/LIVE_CERT_SUMMARY.md",
+      "docs/evidence/m27/connector_events.jsonl",
+      "docs/evidence/m28/deprecation_events.jsonl",
+      "saathi/inference/adapters/http_providers.py",
+      "saathi/inference/provider_descriptor.py",
+      "saathi/inference/provider_policy.py",
+      "saathi/model_router.py"
+    ],
+    "preserved_untracked_paths": [
+      "BAADAR_PROVENANCE_GATE_REPORT.md",
+      "FINAL_RECOMMENDATION.md",
+      "LOCAL_INTELLIGENCE_INTEGRATION_REPORT.md",
+      "MAC_SETUP_MANIFEST.md",
+      "SAATHIOS_AGENT_EVALUATION_REPORT.md",
+      "artifacts/",
+      "docs/baadar/",
+      "docs/design-spec/",
+      "docs/evaluation/",
+      "docs/research/",
+      "docs/trading/m312_m319_evidence/cg_evidence.db",
+      "evaluation/",
+      "saathi/baadar/",
+      "saathi/evaluation/",
+      "saathi/inference/adapters/kimi.py",
+      "saathi/inference/priority_policy.py",
+      "scripts/benchmark_local_runtime.py",
+      "scripts/benchmark_runtime_candidate.py",
+      "scripts/run_priority_evaluations.py",
+      "tests/evaluation/"
+    ]
+  },
+
+  "draft_pr_isolation": {
+    "pr_12": {
+      "number": 12,
+      "title": "M312–M319: Trading Connectivity Governance",
+      "head_ref": "milestone/m312-m319-connectivity-governance",
+      "state": "OPEN",
+      "touched_by_m336_m343": false
+    },
+    "pr_13": {
+      "number": 13,
+      "title": "M320–M327: Provider Contracts & Mock Connectivity",
+      "head_ref": "milestone/m320-m327-provider-contracts",
+      "state": "OPEN",
+      "touched_by_m336_m343": false
+    },
+    "verification": "New branch milestone/m336-m343-private-alpha-readiness is disjoint from both PR head refs; no push performed."
+  },
+
+  "worktree_inventory": {
+    "active": [
+      "/Users/macbookpro/SaathiAI (milestone/m312-m319-connectivity-governance)",
+      "/Users/macbookpro/SaathiAI-m320-m327 (milestone/m328-m335-production-readiness)",
+      "/Users/macbookpro/SaathiAI-m336-m343 (milestone/m336-m343-private-alpha-readiness)",
+      "/Users/macbookpro/.worktrees/backend-core (agent/backend-core)",
+      "/Users/macbookpro/.worktrees/frontend-auth (agent/frontend-auth)"
+    ],
+    "prunable_temp_worktrees": "≈100 detached M233 clean-clone temp worktrees under /private/var/folders/.../m233-worktree-*; left untouched (not pruned) to avoid side effects on preserved local state"
+  },
+
+  "test_environment": {
+    "python": "3.12.13",
+    "interpreter": "/Users/macbookpro/SaathiAI/.venv/bin/python",
+    "isolation_method": "PYTHONPATH=/Users/macbookpro/SaathiAI-m336-m343 so `saathi` resolves from the M336-M343 worktree, verified via saathi.__file__",
+    "verified_import_path": "/Users/macbookpro/SaathiAI-m336-m343/saathi/__init__.py",
+    "backend_tests_collected": 5954,
+    "note": "The worktree intentionally has NO .venv and NO saathi-os/node_modules. This is the state of any fresh checkout or clean clone before installation, and is the condition under which 7 of the 8 inherited failures reproduce."
+  },
+
+  "inherited_failure_reproduction": {
+    "reproduced_at_working_sha": true,
+    "count": 8,
+    "failures": [
+      "tests/test_m57_local.py::test_start_fails_closed_on_unhealthy_external_frontend",
+      "tests/test_m57_local.py::test_start_reports_ready_only_when_both_healthy",
+      "tests/test_m57_local.py::test_start_fails_closed_on_unrelated_backend_occupant",
+      "tests/test_m157_private_alpha.py::test_prepare_idempotent_and_no_secrets",
+      "tests/test_m157_private_alpha.py::test_init_with_platform",
+      "tests/test_m157_private_alpha.py::test_upgrade_preflight_and_local_fixture",
+      "tests/test_m157_private_alpha.py::test_private_alpha_certification_gate",
+      "tests/test_ops.py::test_release_gate_passes_baseline"
+    ],
+    "command": "PYTHONPATH=$PWD python -m pytest tests/test_m57_local.py tests/test_m157_private_alpha.py tests/test_ops.py -p no:randomly -q",
+    "result": "8 failed, 47 passed"
+  },
+
+  "authority_locks_at_baseline": {
+    "REAL_CONNECTIVITY_AUTHORIZED": false,
+    "BROKER_CONNECTIVITY_AUTHORIZED": false,
+    "CREDENTIAL_PROVISIONING_AUTHORIZED": false,
+    "CREDENTIAL_VALIDATION_AUTHORIZED": false,
+    "OAUTH_AUTHORIZED": false,
+    "ACCOUNT_ACCESS_AUTHORIZED": false,
+    "BALANCE_READ_AUTHORIZED": false,
+    "POSITION_READ_AUTHORIZED": false,
+    "ORDER_SUBMISSION_AUTHORIZED": false,
+    "ORDER_EXECUTION_AUTHORIZED": false,
+    "CANARY_ACTIVATION_AUTHORIZED": false,
+    "LIVE_TRADING_AUTHORIZED": false,
+    "AUTOMATED_INVESTMENT_AUTHORITY": false,
+    "PUBLIC_PRODUCTION_AUTHORIZED": false,
+    "PUBLIC_REGISTRATION_AUTHORIZED": false
+  },
+
+  "baseline_verdict": "M336_M343_RECOVERY_BASELINE_VERIFIED",
+  "next_gate": "M336 regression intake and historical intent reconstruction"
+}
