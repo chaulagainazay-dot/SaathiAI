@@ -323,7 +323,8 @@ async function main() {
       (await page.getByTestId("readiness-limitations").count()) > 0
       && /invite only/i.test(text));
     check("health_status_visible", /reliability|health|recovery/i.test(text));
-    check("alert_visibility", /alert|diagnostic/i.test(text) || true, "operations panel present");
+    check("alert_visibility", /concurrency|recovery|soak/i.test(text),
+      "reliability panel reports the alert-bearing observability results");
     check("backup_recovery_status_visible", /recovery/i.test(text));
     check("owner_review_required_visible", text.includes("OWNER_REVIEW_REQUIRED"));
     check("release_not_automatic_visible", text.includes("PRIVATE_ALPHA_RELEASE_NOT_AUTOMATIC"));
@@ -331,7 +332,7 @@ async function main() {
     await certifyForbiddenControls(page, "readiness");
     await screenshot(page, "private-alpha-readiness.png");
     await screenshot(page, "private-alpha-readiness-checklist.png",
-      page.getByTestId("readiness-checklist"));
+      page.getByTestId("readiness-checklist-table"));
 
     // ── authority values must all be false ────────────────────────────────
     readinessJson = (await platform("/private-alpha/readiness", { token })).json || {};

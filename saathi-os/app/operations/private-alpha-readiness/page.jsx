@@ -181,7 +181,7 @@ export default function PrivateAlphaReadinessPage() {
               ))}
             </div>
             <div style={{ overflowX: "auto" }}>
-              <table data-testid="readiness-checklist" style={{ width: "100%", borderCollapse: "collapse" }}>
+              <table data-testid="readiness-checklist-table" style={{ width: "100%", borderCollapse: "collapse" }}>
                 <caption style={{ textAlign: "left", paddingBottom: 6 }}>
                   <Text size="sm" tone="muted">
                     Every item is derived from evidence on disk or a live read. An
