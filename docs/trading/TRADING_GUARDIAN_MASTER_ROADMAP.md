@@ -101,3 +101,32 @@ Phases 1–4 of this master roadmap are **implemented and certified with limitat
   the later authoritative project-pinned Playwright Chromium rerun passed all
   interactive UI, deterministic-flow, forbidden-control, console, and
   localhost-only network checks.
+
+## M328–M335 Production Readiness, Observability & Operational Resilience (CERTIFIED WITH LIMITATIONS)
+
+- **Verdict:** `PRODUCTION_READINESS_AND_OPERATIONAL_RESILIENCE_CERTIFIED_WITH_LIMITATIONS`
+- **Browser verdict:** `PRODUCTION_READINESS_OPERATIONAL_RESILIENCE_BROWSER_CERT_PASSED_WITH_LIMITATIONS`
+- **Maximum state:** `OPERATIONALLY_READY_OFFLINE`
+- **Maturity:** `OPERATIONALLY_READY_OFFLINE`
+- **Branch:** `milestone/m328-m335-production-readiness`
+- Centralized health framework (7 domains, 5 states, worst-wins rollup), unified
+  offline observability (deterministic trace IDs, correlation, timelines, execution
+  history, audit visualization), local metrics (7 kinds, nearest-rank percentiles),
+  offline alerting (3 severities, 3 local destinations), backup integrity and
+  recovery simulation, a single diagnostics centre over 7 subsystems, deterministic
+  modelled load validation over 5 dimensions, and a read-only operations control
+  centre with 8 panels.
+- Composes M312–M319 governance and M320–M327 provider contracts; introduces no
+  parallel monitoring system.
+- Observation grants no authority: a FAILED component, a breached threshold, or a
+  CRITICAL alert changes nothing but what an operator sees.
+- Fully deterministic — no wall clock, no random source. The certification evidence
+  hash is byte-identical across processes and across a clean clone.
+- **No external telemetry, cloud monitoring, email/SMS/push alerting, cloud backup,
+  deployment control, or execution control. No provider connection, credential,
+  OAuth, account, balance, position, order, canary, or live-trading path.**
+- Backend hard gate 62/62; browser certification 257/257 on real Playwright Chromium
+  against localhost-only servers; focused suites 96 backend + 16 frontend; full
+  frontend 318; predecessor M312–M327 112; clean clone verified.
+- Specification: `docs/trading/M328_M335_PRODUCTION_READINESS.md`
+- Evidence: `docs/trading/m328_m335_evidence/`

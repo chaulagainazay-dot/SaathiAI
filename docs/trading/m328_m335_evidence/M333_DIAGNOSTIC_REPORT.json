@@ -1,0 +1,192 @@
+{
+  "ok": true,
+  "milestone": "M333",
+  "name": "Operational Diagnostics Centre",
+  "schema_version": "m328.production_readiness.v1",
+  "report_id": "diag_133c36b4ad4184cc",
+  "subsystems": [
+    "provider_contracts",
+    "replay_engine",
+    "authority_system",
+    "approval_engine",
+    "storage",
+    "configuration",
+    "browser_certification_history"
+  ],
+  "covered_subsystems": [
+    "approval_engine",
+    "authority_system",
+    "browser_certification_history",
+    "configuration",
+    "provider_contracts",
+    "replay_engine",
+    "storage"
+  ],
+  "missing_subsystems": [],
+  "coverage_complete": true,
+  "check_count": 7,
+  "counts": {
+    "PASS": 7,
+    "WARN": 0,
+    "FAIL": 0,
+    "SKIPPED": 0
+  },
+  "failures": [],
+  "results": [
+    {
+      "check_id": "diag.provider_contracts",
+      "subsystem": "provider_contracts",
+      "status": "PASS",
+      "summary": "Provider contracts remain credentialless and offline",
+      "detail": {
+        "provider_count": 2,
+        "any_real": false,
+        "any_connected": false,
+        "any_authenticated": false,
+        "security_ok": true,
+        "security_findings": []
+      },
+      "remediates_automatically": false
+    },
+    {
+      "check_id": "diag.replay_engine",
+      "subsystem": "replay_engine",
+      "status": "PASS",
+      "summary": "Replay engine is deterministic and fixture-bound",
+      "detail": {
+        "fixture_count": 6,
+        "recorded_offline": true,
+        "network_capture": false,
+        "repeat_dispatch_identical": true
+      },
+      "remediates_automatically": false
+    },
+    {
+      "check_id": "diag.authority_system",
+      "subsystem": "authority_system",
+      "status": "PASS",
+      "summary": "Authority lattice proofs hold and every hard lock is false",
+      "detail": {
+        "no_implicit_expansion": true,
+        "deny_overrides_allow": true,
+        "expiry": true,
+        "revocation": true,
+        "emergency_override": true,
+        "milestone_locks_false": true
+      },
+      "remediates_automatically": false
+    },
+    {
+      "check_id": "diag.approval_engine",
+      "subsystem": "approval_engine",
+      "status": "PASS",
+      "summary": "No approval activates connectivity",
+      "detail": {
+        "approval_count": 0,
+        "any_active_connectivity": false,
+        "approval_equals_activation": false
+      },
+      "remediates_automatically": false
+    },
+    {
+      "check_id": "diag.storage",
+      "subsystem": "storage",
+      "status": "PASS",
+      "summary": "Storage schema is credential-free and snapshots verify",
+      "detail": {
+        "schema_ok": true,
+        "table_count": 13,
+        "forbidden_fields_found": [],
+        "snapshots_verified": 3,
+        "snapshot_failures": []
+      },
+      "remediates_automatically": false
+    },
+    {
+      "check_id": "diag.configuration",
+      "subsystem": "configuration",
+      "status": "PASS",
+      "summary": "Configuration is offline and every authority lock is false",
+      "detail": {
+        "schema_version": "m328.production_readiness.v1",
+        "authority_lock_count": 11,
+        "all_locks_false": true,
+        "offline_only": true,
+        "config_digest": "c0a27d6708002d08548251167e4ebdd12e15c4490203dfa24ea2a11bc731abae"
+      },
+      "remediates_automatically": false
+    },
+    {
+      "check_id": "diag.browser_certification_history",
+      "subsystem": "browser_certification_history",
+      "status": "PASS",
+      "summary": "2 prior browser certification record(s) readable",
+      "detail": {
+        "records": [
+          {
+            "path": "docs/trading/m320_m327_evidence/browser/M327_BROWSER_CERT.json",
+            "verdict": "M320_M327_BROWSER_CERT_FAILED",
+            "ok": false,
+            "milestone": null
+          },
+          {
+            "path": "docs/trading/m312_m319_evidence/browser/M319_BROWSER_CERT.json",
+            "verdict": "TRADING_CONNECTIVITY_GOVERNANCE_BROWSER_CERT_PASSED_WITH_LIMITATIONS",
+            "ok": true,
+            "milestone": null
+          }
+        ],
+        "missing": [],
+        "history_is_read_only": true
+      },
+      "remediates_automatically": false
+    }
+  ],
+  "generated_at": 1767225618.75,
+  "unified_report": true,
+  "auto_remediation": false,
+  "REAL_CONNECTIVITY_AUTHORIZED": false,
+  "BROKER_CONNECTIVITY_AUTHORIZED": false,
+  "OAUTH_AUTHORIZED": false,
+  "CREDENTIAL_PROVISIONING_AUTHORIZED": false,
+  "ACCOUNT_ACCESS_AUTHORIZED": false,
+  "BALANCE_READ_AUTHORIZED": false,
+  "POSITION_READ_AUTHORIZED": false,
+  "ORDER_SUBMISSION_AUTHORIZED": false,
+  "ORDER_EXECUTION_AUTHORIZED": false,
+  "CANARY_ACTIVATION_AUTHORIZED": false,
+  "LIVE_TRADING_AUTHORIZED": false,
+  "AUTHENTICATION_AUTHORIZED": false,
+  "AUTOMATED_INVESTMENT_AUTHORITY": false,
+  "CREDENTIAL_VALIDATION_AUTHORIZED": false,
+  "ORDER_HISTORY_AUTHORIZED": false,
+  "TRANSFER_AUTHORIZED": false,
+  "WITHDRAWAL_AUTHORIZED": false,
+  "OFFLINE_OBSERVABILITY_ONLY": true,
+  "NO_EXTERNAL_TELEMETRY": true,
+  "NO_CLOUD_MONITORING": true,
+  "NO_EMAIL_ALERTS": true,
+  "NO_SMS_ALERTS": true,
+  "NO_PUSH_ALERTS": true,
+  "NO_CLOUD_BACKUP": true,
+  "NO_DEPLOYMENT_CONTROL": true,
+  "NO_EXECUTION_CONTROL": true,
+  "READ_ONLY_OPERATIONS_DASHBOARD": true,
+  "DETERMINISTIC_ENGINE": true,
+  "PRODUCTION_AUTHORIZED": false,
+  "DEPLOYMENT_AUTHORIZED": false,
+  "EXTERNAL_TELEMETRY_AUTHORIZED": false,
+  "CLOUD_MONITORING_AUTHORIZED": false,
+  "CLOUD_BACKUP_AUTHORIZED": false,
+  "PAPER_EXECUTION_AUTHORIZED": false,
+  "real_connectivity": false,
+  "authenticated": false,
+  "credentials_present": false,
+  "network_transport_available": false,
+  "offline_only": true,
+  "read_only": true,
+  "deterministic": true,
+  "current_maturity": "OPERATIONALLY_READY_OFFLINE",
+  "max_state": "OPERATIONALLY_READY_OFFLINE",
+  "report_digest": "133c36b4ad4184ccced6231c5cc1a74463e308c778cc23f76799f6b3f8b8f2a7"
+}

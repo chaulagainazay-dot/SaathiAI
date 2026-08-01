@@ -1,0 +1,13 @@
+COMMAND: python -m pytest -q -p no:randomly tests/test_m328_m335_production_readiness.py
+RESULT: PASS
+TOTAL: 96 passed
+WARNINGS: 8 (dependency deprecation warnings only; no test failed)
+COVERAGE: hard authority boundary, M328 health states/domains/rollup/degradation,
+  M329 deterministic tracing/correlation/redaction/timelines/execution history,
+  M330 metric kind coverage/nearest-rank percentiles/classification direction,
+  M331 severities/destinations/forbidden-transport rejection/lifecycle terminality,
+  M332 snapshot coverage/integrity/recovery simulation/corruption detection,
+  M333 subsystem coverage/unified report/determinism/no-remediation,
+  M334 dimension coverage/repeatability proof/no generated traffic,
+  M335 panel completeness/read-only guarantees/authority summary,
+  isolation scans, socket-refusal cycle, API surface, UI boundary.
