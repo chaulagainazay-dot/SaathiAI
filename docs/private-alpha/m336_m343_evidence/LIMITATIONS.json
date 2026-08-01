@@ -71,6 +71,32 @@
     }
   ],
 
+  "operational_findings_not_fixed_in_this_milestone": [
+    {
+      "finding": "Unbounded local database growth under sustained load",
+      "observed": "The M341 soak grew data from 671 KB to 1.67 GB across 938,247 operations in 61.4 minutes — roughly 1.8 KB per operation, with no retention, pruning or compaction.",
+      "severity": "MEDIUM for private alpha, HIGH before any longer-running deployment",
+      "why_not_fixed_here": "Adding a retention or pruning policy changes what evidence and audit data is kept. That is a governance decision about how long an audit trail must survive, not a repair, and it is outside the scope of a regression-closure and launch-readiness milestone.",
+      "why_it_is_acceptable_for_private_alpha": "The soak rate reflects synthetic hammering by four concurrent workers with no think time. A small number of invited testers generate orders of magnitude less. The release runbook already instructs the operator to watch database growth daily during the first week, and prepare() enforces a 5 GB disk-headroom check.",
+      "risk_if_ignored": "On the 8 GB reference machine, sustained synthetic-rate load would consume the 5 GB headroom in roughly three hours. Real tester load will not approach this, but an automated or looping client could.",
+      "recommended_next_action": "Define an audit and evidence retention policy, then implement pruning and compaction behind it, before any deployment that runs longer than a bounded private alpha.",
+      "evidence": "M341_SOAK_CONCURRENCY_RECOVERY_REPORT.json resources.db_bytes_start / db_bytes_end, and the 240 interval samples"
+    },
+    {
+      "finding": "test_m17_1_live.py::test_live_browser_dom_and_click is sensitive to CPU contention",
+      "observed": "It failed during the full backend suite that ran concurrently with the 61-minute soak, and passed on an idle machine (9/9). LiveBrowserDriver.launch() polls the DevTools endpoint 50 times at 0.1 s — a hard 5-second budget for a real Brave browser to start headless. Under contention the browser cannot start in time, _ws stays None, and the next command raises AttributeError.",
+      "introduced_by_this_branch": false,
+      "proof": [
+        "git diff 6cdf726..HEAD -- saathi/computer_agent/ tests/test_m17_1_live.py is empty",
+        "the same test fails at the untouched predecessor SHA 6cdf726 under the same load",
+        "it passed in the pristine predecessor baseline taken on an idle machine",
+        "it passes on an idle machine on this branch"
+      ],
+      "why_not_fixed_here": "The fix is to make the launch budget adaptive or to serialise browser-dependent tests. Both touch M17 test infrastructure unrelated to this milestone, and changing a timeout to make a suite green is the kind of change this milestone deliberately avoided.",
+      "recommended_next_action": "Give LiveBrowserDriver.launch() a configurable, longer budget, or mark the browser-dependent tests as requiring exclusive CPU."
+    }
+  ],
+
   "known_defects_found_and_fixed_in_this_milestone": [
     {
       "defect": "prepare() could never return ok on a machine where installation had not already been performed in place, blocking init_first_run, apply_local_upgrade and the M165 gate.",

@@ -1,0 +1,10 @@
+{
+  "verdict": "PRIVATE_ALPHA_SOAK_PASSED",
+  "minutes": 61.36,
+  "cycles": 84651,
+  "operations": 938247,
+  "errors": 0,
+  "concurrency_ok": true,
+  "recovery_ok": true,
+  "output": "/Users/macbookpro/SaathiAI-m336-m343/docs/private-alpha/m336_m343_evidence/M341_SOAK_CONCURRENCY_RECOVERY_REPORT.json"
+}
