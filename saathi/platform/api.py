@@ -13379,3 +13379,70 @@ def tg_ops_evidence(authorization: str | None = Header(default=None), x_platform
 @router.post("/tg/operations/certify")
 def tg_ops_certify(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
     return _tg_ops_authorized(authorization, x_platform_token).certify()
+
+
+# ---------------------------------------------------------------------------
+# M336–M343 Private Alpha Launch Readiness
+# Read-only. No route here launches, deploys, publishes, invites, connects a
+# provider, executes an order, or records owner review. Owner review is a human
+# act performed outside this tooling and is never satisfied by an API call.
+# ---------------------------------------------------------------------------
+
+def _private_alpha_readiness_authorized(
+    authorization: str | None,
+    x_platform_token: str | None,
+):
+    try:
+        from saathi.platform.models import PlatformPermission
+
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return ctx
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/private-alpha/readiness")
+def private_alpha_readiness(
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    _private_alpha_readiness_authorized(authorization, x_platform_token)
+    from saathi.platform.private_alpha.launch_readiness import launch_readiness_report
+
+    return launch_readiness_report()
+
+
+@router.get("/private-alpha/checklist")
+def private_alpha_checklist(
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    _private_alpha_readiness_authorized(authorization, x_platform_token)
+    from saathi.platform.private_alpha.launch_readiness import build_checklist
+
+    return {"checklist": build_checklist()}
+
+
+@router.get("/private-alpha/contract")
+def private_alpha_contract(
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    _private_alpha_readiness_authorized(authorization, x_platform_token)
+    from saathi.platform.private_alpha.launch_readiness import (
+        AUTHORITY_LOCKS,
+        KNOWN_LIMITATIONS,
+        MAX_STATE,
+        authority_posture,
+    )
+
+    return {
+        "private_alpha": True,
+        "invite_only": True,
+        "public_registration_authorized": False,
+        "max_state": MAX_STATE,
+        "known_limitations": KNOWN_LIMITATIONS,
+        "authority_locks": authority_posture()["locks"],
+        "authority_lock_names": list(AUTHORITY_LOCKS),
+    }
