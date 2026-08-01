@@ -1584,3 +1584,48 @@ in-app-runtime failure remains preserved as historical evidence. All browser
 traffic was localhost-only, all 17 authorities remained false, and no provider
 credential, OAuth, account-link, live-connect, order, transfer, withdrawal, or
 canary control was rendered.
+
+### M328–M335 Production Readiness, Observability & Operational Resilience
+
+Certified with limitations on `milestone/m328-m335-production-readiness`.
+Maximum state `OPERATIONALLY_READY_OFFLINE`. Recorded eight full-suite backend
+failures and proved they predated the milestone.
+
+### M336–M343 Baseline Regression Debt Closure & Private-Alpha Launch Readiness
+
+Implemented on `milestone/m336-m343-private-alpha-readiness` from verified
+predecessor `6cdf72661834242eb4901f7eaf44a4425957db37`.
+
+Closes the eight inherited failures rather than carrying them forward. All eight
+reduced to two root causes. The first — build artifacts (`.venv`,
+`saathi-os/node_modules`) treated as required host prerequisites — was not
+cosmetic: it meant a newly invited private-alpha tester could never complete
+first run, because `prepare()` could not return `ok` on a machine where
+installation had not already been performed in place. The second was a release
+gate that counted a bare PEM header as a leaked key and so blocked on its own
+secret-rejection sample, red since M224–M231.
+
+All three repairs are implementation-side. The three test files containing the
+eight failures are byte-identical to the predecessor commit, verified by
+`git hash-object`. Eighteen focused regression tests guard the repairs, including
+one that injects a genuine PEM key body and asserts the gate still blocks.
+
+Building the certification surfaced two further defects: every release manifest
+recorded the SHA twice (`git rev-parse HEAD HEAD`), and concurrent approval
+decisions could all win a read-check-write race — found by the soak, invisible to
+the sequential test that had always passed.
+
+Adds the private-alpha contract, a 71-step certified journey whose eighteen
+refusals are each asserted to return their own specific code, corrected
+platform-status wording, twelve failure and empty states, bounded soak with
+concurrency and recovery scenarios, four operational runbooks, and a read-only
+launch-readiness Control Center.
+
+Maximum state is `PRIVATE_ALPHA_READY_OFFLINE_INVITE_ONLY`. Invite-only,
+localhost-only. No public registration, no broker or provider connection, no
+credential, no account access, no order, no paper or live execution. All fifteen
+authority locks false.
+
+Owner review is required, cannot be satisfied by automation, and had not been
+performed at certification time. Private-alpha readiness does not authorize
+public production deployment. M344 was not started.

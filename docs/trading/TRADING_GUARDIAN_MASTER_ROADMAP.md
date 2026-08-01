@@ -130,3 +130,40 @@ Phases 1–4 of this master roadmap are **implemented and certified with limitat
   frontend 318; predecessor M312–M327 112; clean clone verified.
 - Specification: `docs/trading/M328_M335_PRODUCTION_READINESS.md`
 - Evidence: `docs/trading/m328_m335_evidence/`
+
+## M336–M343 Baseline Regression Debt Closure & Private-Alpha Launch Readiness (CERTIFIED WITH LIMITATIONS)
+
+- **Verdict:** `PRIVATE_ALPHA_LAUNCH_READINESS_CERTIFIED_WITH_LIMITATIONS`
+- **Browser verdict:** `PRIVATE_ALPHA_LAUNCH_READINESS_BROWSER_CERT_PASSED_WITH_LIMITATIONS`
+- **Maximum state:** `PRIVATE_ALPHA_READY_OFFLINE_INVITE_ONLY`
+- **Branch:** `milestone/m336-m343-private-alpha-readiness`
+- Closes the eight inherited backend failures M328–M335 correctly identified but
+  did not own. All eight reduced to two root causes, both repaired in
+  implementation: the three test files containing them are byte-identical to the
+  predecessor commit.
+  - **RC-A** (7 failures) — `bin/saathi-local` and `private_alpha.prepare()`
+    treated the build artifacts `.venv` and `saathi-os/node_modules` as required
+    host prerequisites. They are outputs of installation, so on any fresh
+    checkout — including a newly invited tester's machine — `init_first_run`,
+    `apply_local_upgrade` and the M165 gate were permanently blocked.
+  - **RC-B** (1 failure) — the release gate counted a bare PEM header as a leaked
+    private key and so blocked on its own secret-rejection sample and detector
+    pattern. Red since `79d3c29` (M224–M231).
+- Two further defects found while building the certification: the release SHA was
+  recorded twice in every manifest (`rev-parse HEAD HEAD`), and concurrent
+  `decide_approval` calls could all win a read-check-write race. Both fixed;
+  the approval decision is now a conditional UPDATE under the runtime lock.
+- Private-alpha contract, 71-step certified journey (31 positive, 18 refusals
+  each asserted to return its own specific code), corrected platform-status
+  wording, twelve failure and empty states, bounded soak with concurrency and
+  recovery scenarios, four operational runbooks, and a read-only launch-readiness
+  Control Center at `/operations/private-alpha-readiness`.
+- **Invite-only. Localhost-only. No public registration, no broker or provider
+  connection, no credential, no account, balance or position access, no order,
+  no paper or live execution. All fifteen authority locks false.**
+- Owner review is required, is not satisfied by any code path, and had not been
+  performed at certification time.
+- Browser certification 92/92 on real Playwright Chromium; frontend suite 342;
+  production build clean.
+- Specification: `docs/private-alpha/M336_M343_PRIVATE_ALPHA_LAUNCH_READINESS.md`
+- Evidence: `docs/private-alpha/m336_m343_evidence/`
