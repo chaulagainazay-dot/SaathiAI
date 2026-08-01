@@ -34,6 +34,49 @@ def _out(data: Any) -> int:
     return 0
 
 
+def _ops_dispatch(command: str) -> int:
+    """M328–M335 read-only operations commands. Nothing here mutates live state."""
+    from saathi.platform.tg.production_readiness.service import default_operations
+
+    ops = default_operations()
+    handlers = {
+        "prod-verdict": ops.posture,
+        "prod-charter": ops.charter,
+        "prod-control-center": ops.control_center,
+        "prod-health": ops.health.snapshot,
+        "prod-observability": ops.observability.posture,
+        "prod-timelines": ops.observability.timelines,
+        "prod-execution-history": ops.observability.execution_history,
+        "prod-audit-visualization": lambda: ops.observability.audit_visualization(
+            ops.governance.store.list_audit(100)
+        ),
+        "prod-metrics": ops.metrics.summary,
+        "prod-alerts": ops.alerts.list_alerts,
+        "prod-alert-policy": ops.alerts.destination_policy,
+        "prod-backups": ops.backups.list_snapshots,
+        "prod-backup-verify": ops.verify_backups,
+        "prod-recovery-simulate": ops.simulate_recovery,
+        "prod-recovery-history": ops.backups.recovery_history,
+        "prod-diagnostics": ops.run_diagnostics,
+        "prod-load-validation": ops.run_load_validation,
+        "prod-authority": ops.authority_summary,
+        "prod-certification-history": ops.certification_history,
+        "prod-security": ops.security_scan,
+        "prod-maturity": ops.maturity,
+        "prod-evidence": ops.evidence_bundle,
+        "prod-certify": ops.certify,
+    }
+    handler = handlers.get(command)
+    if handler is None:
+        return _out({"ok": False, "error": f"unknown operations command: {command}"})
+    try:
+        return _out(handler())
+    except Exception as exc:
+        from saathi.platform.tg.production_readiness.errors import error_envelope
+
+        return _out(error_envelope(exc))
+
+
 def main(argv: list[str] | None = None) -> int:
     argv = list(sys.argv[1:] if argv is None else argv)
     parser = argparse.ArgumentParser(prog="saathi-trading", description="Trading Guardian CLI (paper only)")
@@ -548,6 +591,18 @@ def main(argv: list[str] | None = None) -> int:
     ):
         pg_sub.add_parser(_pc)
         sub.add_parser(_pc)
+    # M328–M335 production readiness, observability and operational resilience
+    for _ops in (
+        "prod-verdict", "prod-charter", "prod-control-center", "prod-health",
+        "prod-observability", "prod-timelines", "prod-execution-history",
+        "prod-audit-visualization", "prod-metrics", "prod-alerts", "prod-alert-policy",
+        "prod-backups", "prod-backup-verify", "prod-recovery-simulate",
+        "prod-recovery-history", "prod-diagnostics", "prod-load-validation",
+        "prod-authority", "prod-certification-history", "prod-security",
+        "prod-maturity", "prod-evidence", "prod-certify",
+    ):
+        pg_sub.add_parser(_ops)
+        sub.add_parser(_ops)
     # Aliases matching goal prompt command names
     p_sl = sub.add_parser("strategy-list")
     p_sl.add_argument("--category", default="")
@@ -1442,6 +1497,8 @@ def main(argv: list[str] | None = None) -> int:
             if action == "pc-certify":
                 return _out(pc.certify())
             return _out({"ok": False, "error": f"unknown pc action: {action}"})
+        if args.action and str(args.action).startswith("prod-"):
+            return _ops_dispatch(str(args.action))
         return 2
 
     # Top-level market-data aliases (M256–M263)
@@ -1703,6 +1760,10 @@ def main(argv: list[str] | None = None) -> int:
         if cmd == "pc-certify":
             return _out(pc.certify())
         return _out({"ok": False, "error": f"unknown pc command: {cmd}"})
+
+    # Top-level operations aliases (M328–M335)
+    if args.cmd and str(args.cmd).startswith("prod-"):
+        return _ops_dispatch(str(args.cmd))
 
     parser.print_help()
     return 2

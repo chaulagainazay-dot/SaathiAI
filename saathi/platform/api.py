@@ -13190,3 +13190,192 @@ def tg_pc_evidence(authorization: str | None = Header(default=None), x_platform_
 @router.post("/tg/provider-contracts/certify")
 def tg_pc_certify(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
     return _tg_pc_authorized(authorization, x_platform_token).certify()
+
+
+# ---------------------------------------------------------------------------
+# M328–M335 Production Readiness, Observability & Operational Resilience
+# Read-only offline operations surface. No execution or deployment control.
+# ---------------------------------------------------------------------------
+
+def _tg_operations():
+    from saathi.platform.tg.production_readiness.service import default_operations
+    return default_operations()
+
+
+def _tg_ops_authorized(
+    authorization: str | None,
+    x_platform_token: str | None,
+):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_operations()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+def _tg_ops_guard(fn, *args, **kwargs):
+    try:
+        return fn(*args, **kwargs)
+    except Exception as exc:
+        from saathi.platform.tg.production_readiness.errors import error_envelope
+        return error_envelope(exc)
+
+
+class OperationsAlertActionBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    actor: str = "operator"
+
+
+class OperationsRecoveryBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    snapshot_id: str | None = None
+
+
+@router.get("/tg/operations/posture")
+def tg_ops_posture(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    return _tg_ops_authorized(authorization, x_platform_token).posture()
+
+
+@router.get("/tg/operations/charter")
+def tg_ops_charter(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    return _tg_ops_authorized(authorization, x_platform_token).charter()
+
+
+@router.get("/tg/operations/control-center")
+def tg_ops_control_center(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    return _tg_ops_authorized(authorization, x_platform_token).control_center()
+
+
+@router.get("/tg/operations/health")
+def tg_ops_health(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    return _tg_ops_authorized(authorization, x_platform_token).health.snapshot()
+
+
+@router.get("/tg/operations/health/{component_id}")
+def tg_ops_health_component(component_id: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    service = _tg_ops_authorized(authorization, x_platform_token)
+    return _tg_ops_guard(service.health.component, component_id)
+
+
+@router.get("/tg/operations/observability")
+def tg_ops_observability(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    return _tg_ops_authorized(authorization, x_platform_token).observability.posture()
+
+
+@router.get("/tg/operations/observability/logs")
+def tg_ops_logs(limit: int = 200, level: str | None = None, component: str | None = None, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    service = _tg_ops_authorized(authorization, x_platform_token)
+    return _tg_ops_guard(service.observability.records, limit=limit, level=level, component=component)
+
+
+@router.get("/tg/operations/observability/traces/{trace_id}")
+def tg_ops_trace(trace_id: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    service = _tg_ops_authorized(authorization, x_platform_token)
+    return _tg_ops_guard(service.observability.trace, trace_id)
+
+
+@router.get("/tg/operations/observability/timelines")
+def tg_ops_timelines(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    return _tg_ops_authorized(authorization, x_platform_token).observability.timelines()
+
+
+@router.get("/tg/operations/observability/execution-history")
+def tg_ops_execution_history(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    return _tg_ops_authorized(authorization, x_platform_token).observability.execution_history()
+
+
+@router.get("/tg/operations/observability/audit-visualization")
+def tg_ops_audit_visualization(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    service = _tg_ops_authorized(authorization, x_platform_token)
+    return service.observability.audit_visualization(service.governance.store.list_audit(100))
+
+
+@router.get("/tg/operations/metrics")
+def tg_ops_metrics(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    return _tg_ops_authorized(authorization, x_platform_token).metrics.summary()
+
+
+@router.get("/tg/operations/alerts")
+def tg_ops_alerts(severity: str | None = None, state: str | None = None, limit: int = 100, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    service = _tg_ops_authorized(authorization, x_platform_token)
+    return _tg_ops_guard(service.alerts.list_alerts, severity=severity, state=state, limit=limit)
+
+
+@router.get("/tg/operations/alerts/policy")
+def tg_ops_alert_policy(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    return _tg_ops_authorized(authorization, x_platform_token).alerts.destination_policy()
+
+
+@router.post("/tg/operations/alerts/{alert_id}/acknowledge")
+def tg_ops_alert_acknowledge(alert_id: str, body: OperationsAlertActionBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    service = _tg_ops_authorized(authorization, x_platform_token)
+    return _tg_ops_guard(service.alerts.acknowledge, alert_id, body.actor)
+
+
+@router.post("/tg/operations/alerts/{alert_id}/resolve")
+def tg_ops_alert_resolve(alert_id: str, body: OperationsAlertActionBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    service = _tg_ops_authorized(authorization, x_platform_token)
+    return _tg_ops_guard(service.alerts.resolve, alert_id, body.actor)
+
+
+@router.get("/tg/operations/backups")
+def tg_ops_backups(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    return _tg_ops_authorized(authorization, x_platform_token).backups.list_snapshots()
+
+
+@router.post("/tg/operations/backups/verify")
+def tg_ops_backup_verify(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    return _tg_ops_authorized(authorization, x_platform_token).verify_backups()
+
+
+@router.post("/tg/operations/backups/simulate-recovery")
+def tg_ops_simulate_recovery(body: OperationsRecoveryBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    service = _tg_ops_authorized(authorization, x_platform_token)
+    return _tg_ops_guard(service.simulate_recovery, body.snapshot_id)
+
+
+@router.get("/tg/operations/backups/recovery-history")
+def tg_ops_recovery_history(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    return _tg_ops_authorized(authorization, x_platform_token).backups.recovery_history()
+
+
+@router.post("/tg/operations/diagnostics")
+def tg_ops_diagnostics(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    return _tg_ops_authorized(authorization, x_platform_token).run_diagnostics()
+
+
+@router.post("/tg/operations/load-validation")
+def tg_ops_load_validation(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    return _tg_ops_authorized(authorization, x_platform_token).run_load_validation()
+
+
+@router.get("/tg/operations/authority")
+def tg_ops_authority(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    return _tg_ops_authorized(authorization, x_platform_token).authority_summary()
+
+
+@router.get("/tg/operations/certification-history")
+def tg_ops_certification_history(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    return _tg_ops_authorized(authorization, x_platform_token).certification_history()
+
+
+@router.get("/tg/operations/security")
+def tg_ops_security(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    return _tg_ops_authorized(authorization, x_platform_token).security_scan()
+
+
+@router.get("/tg/operations/maturity")
+def tg_ops_maturity(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    return _tg_ops_authorized(authorization, x_platform_token).maturity()
+
+
+@router.get("/tg/operations/evidence")
+def tg_ops_evidence(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    return _tg_ops_authorized(authorization, x_platform_token).evidence_bundle()
+
+
+@router.post("/tg/operations/certify")
+def tg_ops_certify(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    return _tg_ops_authorized(authorization, x_platform_token).certify()
