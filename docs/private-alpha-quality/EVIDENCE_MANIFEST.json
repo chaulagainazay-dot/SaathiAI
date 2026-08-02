@@ -1,0 +1,84 @@
+{
+  "record": "SAATHIOS_PRIVATE_ALPHA_PRODUCT_EXCELLENCE_EVIDENCE_MANIFEST",
+  "generated_at": "2026-08-02T19:05:00+05:45",
+  "branch": "improve/saathios-private-alpha-product-excellence",
+  "base_sha": "6b55013d52458628a19a065c49365a6ff0d3a9da",
+  "terminal_verdict": "REAL_USER_VALIDATION_PENDING",
+  "maximum_state_reached": "PRIVATE_ALPHA_READY_FOR_OWNER_OPERATION_OFFLINE_INVITE_ONLY",
+  "maximum_state_note": "The mission's target state PRIVATE_ALPHA_STABLE_FOR_BOUNDED_REAL_USER_VALIDATION was NOT reached, because bounded real-user validation has not begun.",
+
+  "artefacts_produced": [
+    { "file": "RECOVERY_BASELINE.json", "phase": "0", "status": "COMPLETE" },
+    { "file": "PRODUCT_EXPERIENCE_INVENTORY.json", "phase": "1", "status": "PARTIAL", "limitation": "2 of 145 routes browser-verified; authenticated areas classified from source only" },
+    { "file": "PRIVATE_ALPHA_USER_VALIDATION_PLAN.md", "phase": "2", "status": "COMPLETE" },
+    { "file": "REAL_USER_TEST_SCRIPTS.md", "phase": "3", "status": "COMPLETE" },
+    { "file": "PRIVATE_ALPHA_FEEDBACK_SCHEMA.json", "phase": "4", "status": "COMPLETE" },
+    { "file": "PRIVATE_ALPHA_FEEDBACK_LOG.json", "phase": "4", "status": "EMPTY_BY_DESIGN", "limitation": "no real tester session has occurred; fabrication prohibited" },
+    { "file": "ACCESSIBILITY_AUDIT.json", "phase": "7", "status": "PARTIAL", "limitation": "1 of 145 routes" },
+    { "file": "PRIVATE_ALPHA_PERFORMANCE_BASELINE.json", "phase": "8", "status": "PARTIAL", "limitation": "unauthenticated surfaces only" },
+    { "file": "PRIVATE_ALPHA_RETENTION_POLICY.md", "phase": "11", "status": "COMPLETE_POLICY_NO_TOOLING" },
+    { "file": "DEFECT_LOG.json", "phase": "12", "status": "COMPLETE" },
+    { "file": "PRIVATE_ALPHA_RELEASE_PROCESS.md", "phase": "13", "status": "COMPLETE" },
+    { "file": "PRIVATE_ALPHA_CHANGELOG.md", "phase": "13", "status": "COMPLETE" },
+    { "file": "PRIVATE_ALPHA_KNOWN_ISSUES.md", "phase": "13", "status": "COMPLETE" },
+    { "file": "EVIDENCE_MANIFEST.json", "phase": "19", "status": "COMPLETE" },
+    { "file": "FINAL_REPORT.md", "phase": "19", "status": "COMPLETE" }
+  ],
+
+  "artefacts_NOT_produced": [
+    { "item": "PERFORMANCE_OPTIMISATION_REPORT.json", "phase": "9", "reason": "No evidence-backed bottleneck was found. Every measured value sits far inside budget. Producing an optimisation report with no optimisation would be noise." },
+    { "item": "PRIVATE_ALPHA_RELIABILITY_REPORT.json", "phase": "10", "reason": "20 of 21 required reliability cases need an authenticated session (duplicate mission, expired approval, mission interruption, cross-workspace checks). Only expired/stale session and frontend restart were exercisable." },
+    { "item": "MOBILE_AUDIT", "phase": "6", "reason": "Viewport could not be varied. Chrome enforces a minimum window width and the viewport stayed pinned at 819 CSS px across 375, 390, 768 and 1440 requests. Phone-width behaviour is unverified, not passed." },
+    { "item": "npm run cert:private-alpha-quality", "phase": "17", "reason": "18 of 24 required browser journeys need authentication. Authoring a certification script that cannot execute its own gate would produce a misleading PASS." },
+    { "item": "CLEAN_CLONE_CERTIFICATION", "phase": "18", "reason": "Clean clone must run browser certification to be meaningful; that is blocked by the same authentication gate. A clone that only builds proves less than the existing clean-clone evidence at c2f198c." },
+    { "item": "Real-user session records", "phase": "15", "reason": "No real tester session occurred. Fabrication is prohibited by the mission and was not performed." },
+    { "item": "Feedback surface inside SaathiOS", "phase": "4", "reason": "Adding a new UI surface is feature work. The mission forbids adding major functionality while workflows remain unvalidated." }
+  ],
+
+  "verification_gates": {
+    "frontend_focused_tests": { "command": "node --test lib/platform-ops.test.js", "result": "20/20 PASS" },
+    "frontend_full_suite": { "command": "npm test", "result": "382 pass, 0 fail, 71 suites" },
+    "lint": { "command": "npm run lint", "result": "PASS (eslint --max-warnings 5)" },
+    "production_build": { "command": "npm run build", "result": "PASS, all 145 routes emitted, 102 kB shared first load" },
+    "backend_full_suite": { "command": "pytest tests", "result": "INCONCLUSIVE - see backend_suite_finding" },
+    "browser_certification": { "result": "NOT_RUN - authentication gate" },
+    "clean_clone": { "result": "NOT_RUN - see artefacts_NOT_produced" }
+  },
+
+  "backend_suite_finding": {
+    "severity": "P2",
+    "observation": "The full backend suite (341 test files) reached 32% and then hung. The pytest process sat at 0.0% CPU in sleeping state for over 10 minutes with no output advance. Its only child was the multiprocessing resource tracker, so the block is inside the suite, not a runaway subprocess.",
+    "suspected_cause": "Contention with the live environment. The frontend (3000) and two backends (8765, 8766) were running and holding data/platform/platform.db while the suite executed. A test that binds a fixed port or opens the same SQLite file can block indefinitely.",
+    "historical_corroboration": "Prior sessions recorded 'Regression Test Output Timeout During M62.9R Certification' and 'Regression Test Output File Still Empty After Timeout' - the same class of symptom.",
+    "not_done": "No test was skipped, deleted or marked xfail to make the suite pass. The hang is reported as-is.",
+    "recommendation": "Add pytest-timeout (already declared in pyproject dev extras but NOT installed in the shared venv) and run the backend suite with all local services stopped."
+  },
+
+  "safety_scans": {
+    "network_binding": { "result": "PASS for SaathiOS", "detail": "3000, 8765, 8766 all bound to 127.0.0.1", "finding": "third-party ollama binds *:11434 - recorded as PA-D-006" },
+    "secret_scan": { "result": "PASS", "detail": "no credentials in tracked source; two matches are redaction patterns inside secret-detection code; only .env.example is tracked" },
+    "authority_scan": {
+      "result": "PASS",
+      "runtime_values": {
+        "production": "PRODUCTION_NOT_AUTHORIZED",
+        "trading_guardian": "TRADING_GUARDIAN_UNENGAGED_ADVISORY_ONLY",
+        "connectors": "CONNECTOR_MUTATIONS_DRY_RUN_ONLY",
+        "authority": "AUTHORITY_FAIL_CLOSED"
+      },
+      "source_invariants": {
+        "permits_live_execution": "False (declared 'invariant: never True', guarded at 2 call sites)",
+        "production_authorized": "False (private_alpha/config.py default and prepare.py)"
+      },
+      "public_registration": "NO PATH FOUND"
+    },
+    "external_calls": { "result": "PASS", "detail": "frontend runtime code references only localhost; no external host in lib/ or the platform page" }
+  },
+
+  "privacy": {
+    "credentials_recorded": false,
+    "tokens_recorded": false,
+    "voice_recordings_recorded": false,
+    "personal_data_recorded": false,
+    "note": "One synthetic token string was injected into browser localStorage to test expiry recovery and was removed by the application under test. No real token value was written to any evidence file."
+  }
+}

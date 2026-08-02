@@ -1,0 +1,98 @@
+{
+  "record": "SAATHIOS_PRIVATE_ALPHA_DEFECT_LOG",
+  "scope": "Defects found by AUTOMATION during this mission. Real-user feedback is tracked separately in PRIVATE_ALPHA_FEEDBACK_LOG.json.",
+  "build_sha": "6b55013d52458628a19a065c49365a6ff0d3a9da",
+  "captured_at": "2026-08-02T18:50:00+05:45",
+
+  "summary": { "P0": 0, "P1": 0, "P2": 5, "P3": 1, "fixed_this_mission": 1, "open": 6 },
+
+  "defects": [
+    {
+      "id": "PA-D-001",
+      "severity": "P1",
+      "category": "reliability",
+      "title": "Expired session dead-ended the platform with no route back to sign-in",
+      "found_by": "automation",
+      "root_cause": "app/platform/page.jsx surfaced SESSION_INVALID through setError but never cleared the dead token. The sign-in form renders only under !token, so an idle-expired session (idle_ttl_sec 3600) left the owner stuck behind a raw error.",
+      "user_impact": "After one hour idle, the owner could not sign in again without manually clearing localStorage.",
+      "status": "VERIFIED",
+      "resolution": "Authenticated SESSION_INVALID / MEMBERSHIP_REVOKED / 401 now clear the token via the canonical helper, blank every authenticated field, and restore the sign-in surface. 403, 5xx, offline and malformed responses deliberately do not clear.",
+      "evidence": "commit 6b55013; 11 regression tests in lib/platform-ops.test.js; browser-verified with a synthetic dead token (auto-cleared, sign-in rendered, 0 uncaught errors, 1 navigation entry, /me called once)",
+      "fixed": true
+    },
+    {
+      "id": "PA-D-002",
+      "severity": "P2",
+      "category": "reliability",
+      "title": "Running Next.js server serves a stale manifest after .next is rebuilt",
+      "found_by": "automation",
+      "root_cause": "next start holds the build manifest in memory. Rebuilding .next underneath a running server makes it serve HTML referencing chunk hashes that no longer exist, producing ChunkLoadError and a blank 'SaathiOS failed to load' screen despite HTTP 200.",
+      "user_impact": "Application appears completely broken while the server reports healthy. Encountered twice in this session.",
+      "status": "CONFIRMED",
+      "resolution": "Operationally resolved by restarting the server after each build. NOT fixed in code.",
+      "recommendation": "Add a build-id check or a documented 'rebuild then restart' step to the local run guide, so a rebuild can never leave a healthy-looking but broken server.",
+      "fixed": false
+    },
+    {
+      "id": "PA-D-003",
+      "severity": "P2",
+      "category": "usability",
+      "title": "Two auth systems present contradictory first-run state",
+      "found_by": "automation",
+      "root_cause": "/api/v1/auth/passkey/status reports has_password=false and /unlock therefore renders 'Set up sign-in', while the platform account system already holds password hashes for all three users. The two systems are independent.",
+      "user_impact": "A returning owner whose session expired can be shown a first-time 'set a password' screen, which reads as data loss.",
+      "status": "CONFIRMED",
+      "fixed": false
+    },
+    {
+      "id": "PA-D-004",
+      "severity": "P2",
+      "category": "usability",
+      "title": "Expired-session recovery offers 'Bootstrap + login' as the only control",
+      "found_by": "automation",
+      "root_cause": "The unauthenticated /platform surface presents a single button that both creates an org/workspace/owner and logs in. There is no distinct 'sign in' affordance for a returning user.",
+      "user_impact": "A returning user is invited to run a first-installation action. Wording implies setup rather than re-authentication.",
+      "status": "CONFIRMED",
+      "note": "Discovered while verifying PA-D-001. The recovery path now works; the label on the destination is what remains confusing.",
+      "fixed": false
+    },
+    {
+      "id": "PA-D-005",
+      "severity": "P2",
+      "category": "accessibility",
+      "title": "No skip-navigation link",
+      "found_by": "automation",
+      "cross_reference": "A11Y-001",
+      "status": "CONFIRMED",
+      "fixed": false
+    },
+    {
+      "id": "PA-D-006",
+      "severity": "P2",
+      "category": "security",
+      "title": "ollama binds all interfaces on *:11434",
+      "found_by": "automation",
+      "root_cause": "Third-party local model server, not SaathiOS code. Every SaathiOS listener (3000, 8765, 8766) is correctly bound to 127.0.0.1.",
+      "user_impact": "On an untrusted network, a local model endpoint is reachable from other hosts. Does not expose SaathiOS data or authority, but it is real machine exposure alongside a local-first product.",
+      "status": "CONFIRMED",
+      "recommendation": "Set OLLAMA_HOST=127.0.0.1 so the offline-first posture holds for the whole stack. Owner decision - outside the SaathiOS repository.",
+      "fixed": false
+    },
+    {
+      "id": "PA-D-007",
+      "severity": "P3",
+      "category": "usability",
+      "title": "Breadcrumb truncates to 'Pla...' at the observed viewport",
+      "found_by": "automation",
+      "status": "CONFIRMED",
+      "fixed": false
+    }
+  ],
+
+  "release_gate_evaluation": {
+    "P0_open": 0,
+    "P1_open": 0,
+    "gate": "No P0 or P1 defect is open. The release gate is NOT blocked by automation-found defects.",
+    "caveat": "This evaluation covers automation-found defects only. Real-user validation has not run, so unknown P0/P1 defects may exist in the authenticated journeys that were never exercised."
+  }
+}
