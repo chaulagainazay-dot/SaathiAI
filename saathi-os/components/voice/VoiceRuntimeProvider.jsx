@@ -9,6 +9,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { usePathname } from "next/navigation";
 import { getToken, PLATFORM_CONTEXT_EVENT } from "@/lib/platform-client";
 import { useVoiceOutput } from "./VoiceOutputProvider";
 import {
@@ -68,6 +69,17 @@ export function VoiceRuntimeProvider({ children }) {
       cleanupLocal();
     };
   }, [cleanupLocal, hardReset]);
+
+  // Shell mounts this provider above the router, so a client-side navigation
+  // does not unmount it and the microphone stream would stay hot on an
+  // unrelated page. Release capture on route change; skip the first render.
+  const pathname = usePathname();
+  const listeningPathRef = useRef(pathname);
+  useEffect(() => {
+    if (listeningPathRef.current === pathname) return;
+    listeningPathRef.current = pathname;
+    hardReset();
+  }, [pathname, hardReset]);
 
   const ensureSession = useCallback(
     async (activeToken) => {
