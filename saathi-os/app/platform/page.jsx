@@ -62,6 +62,25 @@ async function plat(path, { method = "GET", body, token } = {}) {
   return data;
 }
 
+/* Render auth failures as something a person can act on, without ever
+   confirming whether the account exists or echoing internal reasons. */
+function friendlyAuthError(message) {
+  const raw = String(message || "");
+  if (/auth_failed|AUTH_FAILED/.test(raw)) {
+    return "Sign-in failed. Check the email and password and try again.";
+  }
+  if (/password_reset_required|PASSWORD_RESET_REQUIRED/.test(raw)) {
+    return "A password reset is required before signing in.";
+  }
+  if (/MEMBERSHIP_REVOKED/.test(raw)) {
+    return "This account no longer has access to the organization.";
+  }
+  if (/Failed to fetch|NetworkError|load failed/i.test(raw)) {
+    return "Can't reach the SaathiOS platform API. Check that the local server is running.";
+  }
+  return raw;
+}
+
 /* A titled glass detail panel with a signal edge and anchor id. */
 function ModulePanel({ id, title, signal = "idle", children, meta }) {
   return (
@@ -86,6 +105,7 @@ export default function PlatformPage() {
   const router = useRouter();
   const [token, setToken] = useState("");
   const [email, setEmail] = useState("owner@local");
+  const [password, setPassword] = useState("");
   const [health, setHealth] = useState(null);
   const [me, setMe] = useState(null);
   const [projects, setProjects] = useState([]);
@@ -175,12 +195,22 @@ export default function PlatformPage() {
     try {
       await plat("/bootstrap", {
         method: "POST",
-        body: { email, name: "Owner", org_name: "Default Org", workspace_name: "Default Workspace" },
+        body: {
+          email,
+          name: "Owner",
+          org_name: "Default Org",
+          workspace_name: "Default Workspace",
+          ...(password ? { password } : {}),
+        },
       });
-      const login = await plat("/auth/login", { method: "POST", body: { email } });
+      const login = await plat("/auth/login", {
+        method: "POST",
+        body: { email, ...(password ? { password } : {}) },
+      });
       persist(login.token);
+      setPassword("");
     } catch (e) {
-      setError(String(e.message || e));
+      setError(friendlyAuthError(e.message || e));
     } finally {
       setBusy(false);
     }
@@ -190,10 +220,16 @@ export default function PlatformPage() {
     setBusy(true);
     setError(null);
     try {
-      const data = await plat("/auth/login", { method: "POST", body: { email } });
+      // Credentialed accounts are rejected by the passwordless compatibility
+      // path, so the password must travel with the request when one is given.
+      const data = await plat("/auth/login", {
+        method: "POST",
+        body: { email, ...(password ? { password } : {}) },
+      });
       persist(data.token);
+      setPassword("");
     } catch (e) {
-      setError(String(e.message || e));
+      setError(friendlyAuthError(e.message || e));
     } finally {
       setBusy(false);
     }
@@ -376,7 +412,11 @@ export default function PlatformPage() {
             </div>
           </SystemStatusStrip>
 
-          {error && <ErrorState title="Platform error" detail={error} />}
+          {error && (
+            <div data-testid="platform-error" role="alert">
+              <ErrorState title="Platform error" detail={error} />
+            </div>
+          )}
           {busy && <LoadingState label="Working…" />}
 
           {/* ---- spatial hero: core + module ring ---- */}
@@ -397,9 +437,20 @@ export default function PlatformPage() {
                 ExecutionGateway. Connectors remain dry-run; production and trading are disabled.
               </Text>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginTop: "var(--space-4)" }}>
-                <Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="email" aria-label="Email" style={{ maxWidth: 220 }} />
-                <Button variant="primary" onClick={bootstrap}>Bootstrap + login</Button>
-                <Button onClick={login} variant="secondary">Login</Button>
+                <Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="email" aria-label="Email" data-testid="platform-email" style={{ maxWidth: 220 }} />
+                <Input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") login(); }}
+                  placeholder="password"
+                  aria-label="Password"
+                  autoComplete="current-password"
+                  data-testid="platform-password"
+                  style={{ maxWidth: 220 }}
+                />
+                <Button variant="primary" onClick={bootstrap} data-testid="platform-bootstrap">Bootstrap + login</Button>
+                <Button onClick={login} variant="secondary" data-testid="platform-login">Login</Button>
               </div>
             </GlassFrame>
           )}
