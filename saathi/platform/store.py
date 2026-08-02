@@ -914,12 +914,15 @@ class PlatformStore:
     ) -> MissionLinkRecord:
         mid = mission_id or new_id("mis_")
         now = self._now()
-        self._conn.execute(
-            "INSERT INTO missions (mission_id, project_id, org_id, workspace_id, key, name,"
-            " owner_id, status, created_at) VALUES (?,?,?,?,?,?,?,?,?)",
-            (mid, project_id, org_id, workspace_id, key, name, owner_id, "active", now),
-        )
-        self._conn.commit()
+        try:
+            self._conn.execute(
+                "INSERT INTO missions (mission_id, project_id, org_id, workspace_id, key, name,"
+                " owner_id, status, created_at) VALUES (?,?,?,?,?,?,?,?,?)",
+                (mid, project_id, org_id, workspace_id, key, name, owner_id, "active", now),
+            )
+            self._conn.commit()
+        except sqlite3.IntegrityError as exc:
+            raise ValueError("mission key already exists in organization") from exc
         return MissionLinkRecord(
             mission_id=mid,
             project_id=project_id,

@@ -65,6 +65,7 @@ def _err(exc: PlatformContextError) -> HTTPException:
     if exc.code in (
         "APPROVAL_REQUIRED",
         "INVALID_STATE",
+        "MISSION_KEY_EXISTS",
         "RESOURCE_BUDGET_EXHAUSTED",
         "REVIEW_REQUIRED",
         "VERIFICATION_REQUIRED",
