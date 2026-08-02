@@ -31,6 +31,14 @@ generation = [
     "soundfile>=0.12",      # WAV I/O + duration
     "pillow>=10",           # deterministic scene-card fallback
 ]
+# Test tooling. The private-alpha runbooks already tell operators to run
+# `pip install -e '.[dev]'`, but the extra did not exist and pytest was declared
+# nowhere, so a clean clone could not run the suite from committed source alone.
+# [tool.pytest.ini_options] below configures pytest; this is what installs it.
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+]
 
 [project.scripts]
 saathi = "saathi.server:main"
