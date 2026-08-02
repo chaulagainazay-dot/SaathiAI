@@ -47,11 +47,13 @@
 
   "backend_suite_finding": {
     "severity": "P2",
-    "observation": "The full backend suite (341 test files) reached 32% and then hung. The pytest process sat at 0.0% CPU in sleeping state for over 10 minutes with no output advance. Its only child was the multiprocessing resource tracker, so the block is inside the suite, not a runaway subprocess.",
-    "suspected_cause": "Contention with the live environment. The frontend (3000) and two backends (8765, 8766) were running and holding data/platform/platform.db while the suite executed. A test that binds a fixed port or opens the same SQLite file can block indefinitely.",
+    "observation": "The full backend suite (341 test files) stalls at 32% in tests/test_m18_4_insforge_migration.py. Reproduced across two independent runs, both stopping in the same module. In the first run the pytest process sat at 0.0% CPU in sleeping state for over 10 minutes; the second run eventually progressed, so the stall is a very slow section rather than a permanent deadlock.",
+    "isolated_cause": "The module constructs a provider client against base_url http://127.0.0.1:7130 with timeout_sec=5.0. Nothing listens on port 7130, so every affected case burns its connection timeout serially.",
+    "external_call_check": "NEGATIVE - this is a LOOPBACK address, not an external provider. The pytest process held no TCP or UDP sockets when inspected. No forbidden external request was observed.",
+    "zero_failures_so_far": "0 FAILED and 0 ERROR lines up to the stall point across both runs.",
     "historical_corroboration": "Prior sessions recorded 'Regression Test Output Timeout During M62.9R Certification' and 'Regression Test Output File Still Empty After Timeout' - the same class of symptom.",
-    "not_done": "No test was skipped, deleted or marked xfail to make the suite pass. The hang is reported as-is.",
-    "recommendation": "Add pytest-timeout (already declared in pyproject dev extras but NOT installed in the shared venv) and run the backend suite with all local services stopped."
+    "not_done": "No test was skipped, deleted or marked xfail to make the suite complete. The stall is reported as-is, and the backend gate is therefore recorded as INCONCLUSIVE rather than PASS.",
+    "recommendation": "Install pytest-timeout (declared in pyproject dev extras but absent from the shared venv) and either stand up a stub on 127.0.0.1:7130 for that module or mark it as requiring a live fixture, so the suite produces a verdict instead of a stall."
   },
 
   "safety_scans": {

@@ -68,13 +68,19 @@ directory. `audit_events` (428) and `sessions` (73) are 78% of all rows. Retenti
 still worth having as prevention — the policy is written — but it is not a capacity problem today,
 and no data was deleted and no deletion tooling was built.
 
-**The backend suite does not currently pass or fail cleanly — it hangs.** At 32% the pytest process
-sat at 0.0% CPU, sleeping, for over ten minutes with no output. A verbose re-run progressed past
-that point, so the hang is not deterministic; contention with the live frontend and two backends
-holding `platform.db` is the likely cause. Prior sessions recorded the same class of symptom
-("Regression Test Output Timeout During M62.9R Certification"). **No test was skipped, deleted or
-marked xfail to make this go away.** `pytest-timeout` is declared in `pyproject` dev extras but is
-not installed in the shared venv; installing it and running with local services stopped is the fix.
+**The backend suite does not currently pass or fail cleanly — it stalls.** Two independent runs both
+stopped at 32% in the same module, `tests/test_m18_4_insforge_migration.py`. Cause isolated: that
+module builds a provider client against `http://127.0.0.1:7130` with a 5-second timeout, and nothing
+listens on 7130, so each affected case burns its timeout serially. In the first run the process sat
+at 0.0% CPU for over ten minutes.
+
+Two things worth stating plainly. **This is a loopback address, not an external provider** — the
+pytest process held no TCP or UDP sockets when inspected, so no forbidden external request occurred.
+And **zero tests failed** up to the stall in either run. **No test was skipped, deleted or marked
+xfail to make this go away**; the backend gate is recorded as INCONCLUSIVE rather than PASS. Prior
+sessions logged the same class of symptom ("Regression Test Output Timeout During M62.9R
+Certification"). `pytest-timeout` is declared in `pyproject` dev extras but is absent from the
+shared venv.
 
 ## Work deliberately not done
 
