@@ -285,6 +285,15 @@ export function VoiceRuntimeProvider({ children }) {
     }
     setBusy(true);
     try {
+      // VOICE_INPUT_INTERRUPTS_OUTPUT. `runtime.speaking` is derived only from
+      // the server voice session (state RESPONDING / playbackState playing), so
+      // it is false while VoiceOutputProvider is playing assistant audio started
+      // elsewhere — chat, IELTS feedback, the voice dock. Without this the
+      // microphone would open on top of audio that is still playing. Cancel
+      // output first and await it, so capture never begins until playback has
+      // actually stopped. This is interrupt-on-microphone-start, not acoustic
+      // ducking and not full duplex.
+      await voiceOutput?.stop?.();
       const sessionId = await ensureSession(activeToken);
       await startBrowserRecognition(activeToken, sessionId);
       await refreshHistory(activeToken);
@@ -307,6 +316,7 @@ export function VoiceRuntimeProvider({ children }) {
     runtime.speaking,
     startBrowserRecognition,
     token,
+    voiceOutput,
   ]);
 
   const retry = useCallback(async () => {
