@@ -1,0 +1,197 @@
+{
+  "record": "SAATHIOS_FULL_E2E_FUNCTIONAL_AUDIT_EVIDENCE_MANIFEST",
+  "repair_branch": "fix/saathios-full-e2e-functional-recovery",
+  "starting_sha": "1647e19",
+  "ending_sha": "ddd3ab918b9f379b9fb74336829d6be66fbec471",
+  "commits": [
+    "ddd3ab9 test(e2e): browser certification, route sweep and journey evidence",
+    "cfe345a fix(unlock): probe WebAuthn support after mount, not during render",
+    "ee72944 fix(voice): stop speech and release the microphone on route change",
+    "05f9435 fix(platform-ui): give the console login form a password field",
+    "8ff12e3 fix(shell): serve the SaathiOS UI on loopback only",
+    "a2b1f9e fix(alpha): exercise session expiry on a credentialed account",
+    "29b10fd fix(platform): close the passwordless login bypass and fail closed on duplicates",
+    "6d5f12e docs(e2e): baseline, functional inventory and defect record"
+  ],
+  "commit_count": 8,
+  "files": [
+    {
+      "path": "docs/e2e-functional-audit/API_JOURNEY.json",
+      "bytes": 60285,
+      "sha256_16": "2e08c6f87eda0880"
+    },
+    {
+      "path": "docs/e2e-functional-audit/BASELINE_DEFECTS.json",
+      "bytes": 16518,
+      "sha256_16": "fecc64918e89f32b"
+    },
+    {
+      "path": "docs/e2e-functional-audit/DEGRADED_STATE.json",
+      "bytes": 17744,
+      "sha256_16": "b5740cdf3a4de21a"
+    },
+    {
+      "path": "docs/e2e-functional-audit/FINAL_REPORT.md",
+      "bytes": 11320,
+      "sha256_16": "823042522f8436f4"
+    },
+    {
+      "path": "docs/e2e-functional-audit/FUNCTIONAL_INVENTORY.json",
+      "bytes": 14508,
+      "sha256_16": "bf405a2db1ea3269"
+    },
+    {
+      "path": "docs/e2e-functional-audit/MANUAL_AUDIO_CHECKLIST.md",
+      "bytes": 2937,
+      "sha256_16": "b8595ef1b7ce0277"
+    },
+    {
+      "path": "docs/e2e-functional-audit/RBAC_MATRIX.json",
+      "bytes": 1954,
+      "sha256_16": "db679847bcb14166"
+    },
+    {
+      "path": "docs/e2e-functional-audit/RECOVERY_BASELINE.json",
+      "bytes": 7925,
+      "sha256_16": "dee3e32dd8ad3e55"
+    },
+    {
+      "path": "docs/e2e-functional-audit/ROUTE_INVENTORY.json",
+      "bytes": 24781,
+      "sha256_16": "0746384f5b6cb971"
+    },
+    {
+      "path": "docs/e2e-functional-audit/VOICE_ARCHITECTURE.md",
+      "bytes": 4986,
+      "sha256_16": "a29d0056c9fadb67"
+    },
+    {
+      "path": "docs/e2e-functional-audit/api_journey_driver.py",
+      "bytes": 17583,
+      "sha256_16": "e565b7ff63775024"
+    },
+    {
+      "path": "docs/e2e-functional-audit/browser/BROWSER_E2E_CERT.json",
+      "bytes": 13561,
+      "sha256_16": "7fc1f278eb6c0898"
+    },
+    {
+      "path": "docs/e2e-functional-audit/browser/screenshots/A1-login-form.png",
+      "bytes": 524499,
+      "sha256_16": "8a48249a1415ecef"
+    },
+    {
+      "path": "docs/e2e-functional-audit/browser/screenshots/A2-invalid-login.png",
+      "bytes": 736018,
+      "sha256_16": "b3c55e4673ce5265"
+    },
+    {
+      "path": "docs/e2e-functional-audit/browser/screenshots/A3-owner-signed-in.png",
+      "bytes": 371076,
+      "sha256_16": "2798a8acc06fbcf4"
+    },
+    {
+      "path": "docs/e2e-functional-audit/browser/screenshots/A4-signed-out.png",
+      "bytes": 517191,
+      "sha256_16": "59a693051b085e6b"
+    },
+    {
+      "path": "docs/e2e-functional-audit/browser/screenshots/B1-approval-center.png",
+      "bytes": 505855,
+      "sha256_16": "2df20a0287b02484"
+    },
+    {
+      "path": "docs/e2e-functional-audit/browser/screenshots/B2-missions.png",
+      "bytes": 534555,
+      "sha256_16": "f6251e836938c9eb"
+    },
+    {
+      "path": "docs/e2e-functional-audit/browser/screenshots/B3-evidence.png",
+      "bytes": 418249,
+      "sha256_16": "36ee3bfa90478531"
+    },
+    {
+      "path": "docs/e2e-functional-audit/browser/screenshots/C1-chat.png",
+      "bytes": 87733,
+      "sha256_16": "9be2f36dd3b7c3bc"
+    },
+    {
+      "path": "docs/e2e-functional-audit/browser/screenshots/DE1-voice.png",
+      "bytes": 139607,
+      "sha256_16": "6e96a25f94692268"
+    },
+    {
+      "path": "docs/e2e-functional-audit/browser/screenshots/F1-ops.png",
+      "bytes": 622422,
+      "sha256_16": "f4ed7817be11b0af"
+    },
+    {
+      "path": "docs/e2e-functional-audit/browser/screenshots/F2-readiness.png",
+      "bytes": 166594,
+      "sha256_16": "e80f574ee7da226d"
+    },
+    {
+      "path": "docs/e2e-functional-audit/browser/screenshots/F3-health.png",
+      "bytes": 201636,
+      "sha256_16": "22bde4ea98446dc6"
+    },
+    {
+      "path": "docs/e2e-functional-audit/browser/screenshots/F4-diagnostics.png",
+      "bytes": 192474,
+      "sha256_16": "7c09984a790b772e"
+    },
+    {
+      "path": "docs/e2e-functional-audit/browser/screenshots/F5-alerts.png",
+      "bytes": 190196,
+      "sha256_16": "8545c6ca7d0e3736"
+    },
+    {
+      "path": "docs/e2e-functional-audit/browser/screenshots/F6-backups.png",
+      "bytes": 193159,
+      "sha256_16": "2297f88d9b17379d"
+    },
+    {
+      "path": "docs/e2e-functional-audit/browser/screenshots/F7-evidence.png",
+      "bytes": 449484,
+      "sha256_16": "3e0d123808efa696"
+    },
+    {
+      "path": "docs/e2e-functional-audit/browser/screenshots/F8-notifications.png",
+      "bytes": 469043,
+      "sha256_16": "cb0db14dc4ed5bff"
+    },
+    {
+      "path": "docs/e2e-functional-audit/browser/screenshots/M1-login-mobile.png",
+      "bytes": 1290836,
+      "sha256_16": "d733fec74a6db2c3"
+    },
+    {
+      "path": "docs/e2e-functional-audit/browser/screenshots/M2-home-mobile.png",
+      "bytes": 404156,
+      "sha256_16": "9f844d860eedf29c"
+    },
+    {
+      "path": "docs/e2e-functional-audit/browser/screenshots/M3-missions-mobile.png",
+      "bytes": 915813,
+      "sha256_16": "eafd34e2c4f1bf5f"
+    },
+    {
+      "path": "docs/e2e-functional-audit/browser/screenshots/M4-approvals-mobile.png",
+      "bytes": 507936,
+      "sha256_16": "482ab45390da2482"
+    }
+  ],
+  "file_count": 33,
+  "total_bytes": 9632634,
+  "harnesses": [
+    "saathi-os/scripts/e2e_full_application_browser_cert.mjs",
+    "saathi-os/scripts/e2e_route_inventory.mjs",
+    "docs/e2e-functional-audit/api_journey_driver.py"
+  ],
+  "regression_tests": [
+    "tests/test_e2e_functional_recovery.py",
+    "saathi-os/lib/e2e-voice-route-cleanup.test.js",
+    "saathi-os/lib/e2e-local-only-binding.test.js"
+  ],
+  "redaction_policy": "No password, session token, credential hash or personal data appears in any file. Test identities are synthetic; passwords were generated at runtime, held only in the environment, and redacted before serialisation."
+}
