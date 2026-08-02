@@ -63,7 +63,8 @@
     "cert:m303": "node scripts/m303_portfolio_risk_browser_cert.mjs",
     "cert:m311": "node scripts/m311_market_observation_browser_cert.mjs",
     "cert:m319": "node scripts/m319_connectivity_governance_browser_cert.mjs",
-    "cert:m343": "node scripts/m343_private_alpha_launch_browser_cert.mjs"
+    "cert:m343": "node scripts/m343_private_alpha_launch_browser_cert.mjs",
+    "audio:review": "node scripts/audio_review_session.mjs"
   },
   "dependencies": {
     "framer-motion": "^11.15.0",
