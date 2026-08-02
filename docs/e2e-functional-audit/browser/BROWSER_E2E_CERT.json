@@ -1,6 +1,6 @@
 {
   "record": "SAATHIOS_FULL_APPLICATION_E2E_BROWSER_CERT",
-  "ui_base": "http://127.0.0.1:3100",
+  "ui_base": "http://127.0.0.1:3000",
   "api_base": "http://127.0.0.1:8766",
   "totals": {
     "checks": 86,
@@ -96,7 +96,7 @@
       "journey": "F",
       "name": "/platform/ops renders a usable shell",
       "ok": true,
-      "detail": "http 200 · 9049 chars"
+      "detail": "http 200 · 9050 chars"
     },
     {
       "journey": "F",
@@ -204,7 +204,7 @@
       "journey": "F",
       "name": "/platform/evidence renders a usable shell",
       "ok": true,
-      "detail": "http 200 · 9157 chars"
+      "detail": "http 200 · 9703 chars"
     },
     {
       "journey": "F",
@@ -222,7 +222,7 @@
       "journey": "F",
       "name": "/platform/notifications renders a usable shell",
       "ok": true,
-      "detail": "http 200 · 8509 chars"
+      "detail": "http 200 · 8715 chars"
     },
     {
       "journey": "F",

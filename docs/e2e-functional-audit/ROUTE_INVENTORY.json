@@ -1,11 +1,11 @@
 {
   "record": "SAATHIOS_E2E_ROUTE_INVENTORY",
-  "ui_base": "http://127.0.0.1:3100",
+  "ui_base": "http://127.0.0.1:3000",
   "note": "Static routes only. Dynamic segments ([id]) are exercised by the browser certification with real ids, not by this sweep.",
   "totals": {
     "routes": 129,
-    "INTENTIONALLY_UNAVAILABLE": 7,
-    "IMPLEMENTED_AND_WORKING": 122
+    "INTENTIONALLY_UNAVAILABLE": 6,
+    "IMPLEMENTED_AND_WORKING": 123
   },
   "routes": [
     {
@@ -59,7 +59,7 @@
     {
       "route": "/automation",
       "status": 200,
-      "chars": 7453,
+      "chars": 7452,
       "classification": "IMPLEMENTED_AND_WORKING",
       "note": "",
       "console_errors": []
@@ -131,9 +131,9 @@
     {
       "route": "/evidence",
       "status": 200,
-      "chars": 6829,
-      "classification": "INTENTIONALLY_UNAVAILABLE",
-      "note": "route renders an explicit availability gate",
+      "chars": 11375,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
       "console_errors": []
     },
     {
@@ -371,7 +371,7 @@
     {
       "route": "/os",
       "status": 200,
-      "chars": 7647,
+      "chars": 7648,
       "classification": "IMPLEMENTED_AND_WORKING",
       "note": "",
       "console_errors": []
@@ -379,7 +379,7 @@
     {
       "route": "/platform",
       "status": 200,
-      "chars": 10600,
+      "chars": 11537,
       "classification": "IMPLEMENTED_AND_WORKING",
       "note": "",
       "console_errors": []
@@ -387,7 +387,7 @@
     {
       "route": "/platform/actions",
       "status": 200,
-      "chars": 8422,
+      "chars": 8430,
       "classification": "IMPLEMENTED_AND_WORKING",
       "note": "",
       "console_errors": []
@@ -395,7 +395,7 @@
     {
       "route": "/platform/agents",
       "status": 200,
-      "chars": 8133,
+      "chars": 8321,
       "classification": "IMPLEMENTED_AND_WORKING",
       "note": "",
       "console_errors": []
@@ -403,7 +403,7 @@
     {
       "route": "/platform/approvals",
       "status": 200,
-      "chars": 8549,
+      "chars": 8906,
       "classification": "IMPLEMENTED_AND_WORKING",
       "note": "",
       "console_errors": []
@@ -419,7 +419,7 @@
     {
       "route": "/platform/attention",
       "status": 200,
-      "chars": 7956,
+      "chars": 8163,
       "classification": "IMPLEMENTED_AND_WORKING",
       "note": "",
       "console_errors": []
@@ -427,7 +427,7 @@
     {
       "route": "/platform/evidence",
       "status": 200,
-      "chars": 9157,
+      "chars": 10034,
       "classification": "IMPLEMENTED_AND_WORKING",
       "note": "",
       "console_errors": []
@@ -435,7 +435,7 @@
     {
       "route": "/platform/home",
       "status": 200,
-      "chars": 8306,
+      "chars": 8383,
       "classification": "IMPLEMENTED_AND_WORKING",
       "note": "",
       "console_errors": []
@@ -443,7 +443,7 @@
     {
       "route": "/platform/missions",
       "status": 200,
-      "chars": 8209,
+      "chars": 8647,
       "classification": "IMPLEMENTED_AND_WORKING",
       "note": "",
       "console_errors": []
@@ -459,7 +459,7 @@
     {
       "route": "/platform/notifications",
       "status": 200,
-      "chars": 8509,
+      "chars": 8818,
       "classification": "IMPLEMENTED_AND_WORKING",
       "note": "",
       "console_errors": []
@@ -475,7 +475,7 @@
     {
       "route": "/platform/ops",
       "status": 200,
-      "chars": 9047,
+      "chars": 9050,
       "classification": "IMPLEMENTED_AND_WORKING",
       "note": "",
       "console_errors": []
@@ -579,7 +579,7 @@
     {
       "route": "/studio",
       "status": 200,
-      "chars": 8735,
+      "chars": 8725,
       "classification": "IMPLEMENTED_AND_WORKING",
       "note": "",
       "console_errors": []
