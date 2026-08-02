@@ -235,7 +235,11 @@ def run_private_alpha_journey(
     # expired session
     expired = rec.check(
         "short_lived_session_issued",
-        lambda: platform.login(email="viewer@private-alpha.local", ttl_sec=0.05),
+        lambda: platform.authenticate_login(
+            email="viewer@private-alpha.local",
+            password=VIEWER_PASSWORD,
+            ttl_sec=0.05,
+        ),
     )
     if expired:
         time.sleep(0.2)
