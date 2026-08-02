@@ -18,7 +18,9 @@ dependencies = [
     # install, not in an extra. Clean-clone verification found each of these
     # failing to import from a fresh checkout.
     "groq>=0.4.0",          # saathi/agents/master.py, sub_agents/base.py
-    "PyJWT>=2.8",           # saathi/auth_logto.py
+    # [crypto] pulls `cryptography`, required for the RS256 JWKS verification
+    # in saathi/auth_logto.py (jwt.PyJWKClient + algorithms=["RS256"]).
+    "PyJWT[crypto]>=2.8",   # saathi/auth_logto.py
     "PyYAML>=6.0",          # saathi/security/redteam/runner.py
 ]
 
