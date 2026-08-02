@@ -1,0 +1,205 @@
+{
+  "record": "SAATHIOS_FULL_E2E_FUNCTIONAL_INVENTORY",
+  "built_from": [
+    "saathi-os/app/**/page.jsx — 129 static routes enumerated from source",
+    "GET /openapi.json on the running isolated backend — 1216 API paths",
+    "saathi/platform/models.py ROLE_PERMISSIONS — the real role/permission matrix",
+    "direct source reading of the auth, voice, approval and runtime paths",
+    "129-route signed-in browser sweep (ROUTE_INVENTORY.json)",
+    "86-check browser certification (browser/BROWSER_E2E_CERT.json)"
+  ],
+  "not_built_from": "documentation or milestone reports",
+
+  "totals": {
+    "frontend_static_routes": 129,
+    "api_paths": 1216,
+    "platform_api_paths": 817,
+    "browser_checks": 86,
+    "browser_checks_passed": 86
+  },
+
+  "classification_counts": {
+    "IMPLEMENTED_AND_WORKING": 122,
+    "INTENTIONALLY_UNAVAILABLE": 7,
+    "IMPLEMENTED_BROKEN": 0,
+    "PARTIALLY_IMPLEMENTED": 0,
+    "MOCK_ONLY": 0,
+    "NOT_IMPLEMENTED": 1,
+    "BLOCKED_BY_ENVIRONMENT": 3,
+    "note": "Route counts come from the post-repair sweep. NOT_IMPLEMENTED and BLOCKED_BY_ENVIRONMENT counts refer to voice capabilities, not routes."
+  },
+
+  "groups": {
+    "platform_startup": {
+      "backend startup": "IMPLEMENTED_AND_WORKING — python -m saathi.server, port from PORT/SAATHI_PORT (config.py:97)",
+      "frontend startup": "IMPLEMENTED_AND_WORKING — next start; API base from NEXT_PUBLIC_SAATHI_API, default http://localhost:8765",
+      "health endpoint": "IMPLEMENTED_AND_WORKING — GET /api/v1/platform/health returns 200 unauthenticated",
+      "database initialization": "IMPLEMENTED_AND_WORKING — SQLite at <repo>/data/saathi.db, created on first run; a fresh worktree starts empty",
+      "first-run setup": "IMPLEMENTED_AND_WORKING — POST /api/v1/platform/bootstrap; bootstrap_owner_secure refuses a second bootstrap (BOOTSTRAP_DONE)",
+      "restart behavior": "IMPLEMENTED_AND_WORKING — restarted the backend 3 times during this audit; data and sessions survived",
+      "known operational hazard": "DEFECT-ENV-001 — nothing prevents starting the API and UI from different worktrees, which silently breaks every newer endpoint"
+    },
+
+    "identity": {
+      "user provisioning by invitation": "IMPLEMENTED_AND_WORKING — POST /invitations, /invitations/accept, /invitations/{id}/revoke",
+      "valid login": "IMPLEMENTED_AND_WORKING — POST /auth/login with email+password, verified through the rendered form",
+      "invalid login": "IMPLEMENTED_AND_WORKING — 401 with a generic message; no account enumeration",
+      "passwordless legacy login": "INTENTIONALLY_UNAVAILABLE for credentialed accounts — REPAIRED in this mission (DEFECT-005). Still available to M50 accounts that have no credential at all.",
+      "session creation / renewal / expiry": "IMPLEMENTED_AND_WORKING — session_ttl_sec and idle_ttl_sec from platform config; /auth/session/rotate present",
+      "session revocation": "IMPLEMENTED_AND_WORKING — POST /sessions/{id}/revoke; the revoked token is refused afterwards (verified)",
+      "logout": "IMPLEMENTED_AND_WORKING — POST /auth/logout; also cancels the user's speech operations and clears voice sessions",
+      "multiple sessions": "IMPLEMENTED_AND_WORKING — two concurrent operator sessions held, one revoked independently",
+      "unauthorized route handling": "IMPLEMENTED_AND_WORKING — 401 without a token, 401 with a bogus token",
+      "password change": "IMPLEMENTED_AND_WORKING — POST /auth/password/change revokes the user's other sessions",
+      "public registration": "INTENTIONALLY_UNAVAILABLE — no registration endpoint or UI control exists; verified absent in the rendered page"
+    },
+
+    "organization_and_workspace": {
+      "organization listing / selection": "IMPLEMENTED_AND_WORKING — GET /organizations",
+      "workspace listing / selection / switching": "IMPLEMENTED_AND_WORKING — GET /workspaces, POST /context/workspace",
+      "workspace persistence": "IMPLEMENTED_AND_WORKING — carried on the session record",
+      "cross-workspace denial": "IMPLEMENTED_AND_WORKING — WORKSPACE_ISOLATION raised in login and in approval scoping (runtime.py:_approval_reference)",
+      "cross-organization denial": "IMPLEMENTED_AND_WORKING — APPROVAL_SCOPE / PROJECT_ISOLATION guards",
+      "missing workspace handling": "IMPLEMENTED_AND_WORKING — NO_WORKSPACE raised rather than a null context"
+    },
+
+    "roles_and_permissions": {
+      "source_of_truth": "saathi/platform/models.py:287-434 ROLE_PERMISSIONS",
+      "viewer": "read-only: platform/workspace/project/mission/approval/settings/connector/audit/runtime/binding/workflow read",
+      "operator": "viewer + PROJECT_CREATE, MISSION_WRITE, MISSION_RUN, APPROVAL_REQUEST, RUNTIME_EXECUTE, AGENT_BINDING_USE, SESSION_MANAGE, WORKFLOW_WRITE and the HCG/IELTS operator surfaces",
+      "owner": "operator + APPROVAL_DECIDE, RUNTIME_OPERATE, AGENT_BINDING_MANAGE, USER_MANAGE, ORG_MANAGE, SETTINGS_WRITE and the review/publish/validate permissions",
+      "admin": "owner + PLATFORM_WRITE",
+      "system": "all permissions — internal only",
+      "verified_boundaries": [
+        "viewer cannot create a mission (403)",
+        "viewer cannot decide an approval (403)",
+        "operator cannot cancel a runtime execution — RUNTIME_OPERATE is owner+ (403)",
+        "operator cannot invite (403)",
+        "requester cannot self-approve (403)"
+      ]
+    },
+
+    "dashboard_and_navigation": {
+      "dashboard / operator home": "IMPLEMENTED_AND_WORKING — /platform, /platform/home",
+      "sidebar and top navigation": "IMPLEMENTED_AND_WORKING — backend-driven via GET /platform/navigation and /platform/modules",
+      "mobile navigation": "IMPLEMENTED_AND_WORKING — verified at 390x844; zero horizontal overflow on the routes tested",
+      "command palette": "IMPLEMENTED_AND_WORKING — GET /platform/core/commands feeds it",
+      "loading / empty / error states": "IMPLEMENTED_AND_WORKING — no route rendered a bare spinner or a stack trace in the 129-route sweep",
+      "module availability gates": "INTENTIONALLY_UNAVAILABLE by design on 7 routes (/, /approvals, /ceo, /control, /evidence, /trading, /trading/provider-contracts/capabilities) — these render an explicit availability gate rather than failing"
+    },
+
+    "projects": {
+      "list / create / open": "IMPLEMENTED_AND_WORKING — GET,POST /projects",
+      "project isolation": "IMPLEMENTED_AND_WORKING — PROJECT_ISOLATION raised when a project is outside the caller's org/workspace",
+      "unauthorized project access": "IMPLEMENTED_AND_WORKING — fails closed"
+    },
+
+    "missions": {
+      "create / list": "IMPLEMENTED_AND_WORKING — GET,POST /missions",
+      "duplicate-submission prevention": "IMPLEMENTED_AND_WORKING — REPAIRED in this mission (DEFECT-001). Was HTTP 500 with a stack trace; now HTTP 409 MISSION_KEY_EXISTS.",
+      "runtime plan / run / pause / resume / cancel / recover": "IMPLEMENTED_AND_WORKING — full verb set under /missions/{id}/runtime/*",
+      "checkpoints, evidence, reviews, certifications": "IMPLEMENTED_AND_WORKING — dedicated runtime sub-routes",
+      "inspect result and audit": "IMPLEMENTED_AND_WORKING — /runtime/executions/{id}, /timeline, /audit"
+    },
+
+    "approval_center": {
+      "request": "IMPLEMENTED_AND_WORKING — POST /approvals",
+      "scope validation at request time": "IMPLEMENTED_AND_WORKING — ADDED in this mission (DEFECT-002). A scope the tool manifest can never satisfy is now refused with HTTP 400 naming the field.",
+      "approve / reject": "IMPLEMENTED_AND_WORKING — POST /approvals/{id}/decide",
+      "revoke": "IMPLEMENTED_AND_WORKING — POST /approvals/{id}/revoke",
+      "expire": "IMPLEMENTED_AND_WORKING — expires_at enforced; expire_stale_approvals runs on reference build",
+      "single-use": "IMPLEMENTED_AND_WORKING — consume_approval_if_approved claims the approval before dispatch; a second decide and a replayed execute both fail",
+      "self-approval rejection": "IMPLEMENTED_AND_WORKING — 403",
+      "unauthorized approval rejection": "IMPLEMENTED_AND_WORKING — viewer 403",
+      "scope isolation": "IMPLEMENTED_AND_WORKING — org, workspace, user, tool, project and mission all checked",
+      "audit trail": "IMPLEMENTED_AND_WORKING — approval.requested / decided recorded, including denials"
+    },
+
+    "local_agent_execution": {
+      "execute": "IMPLEMENTED_AND_WORKING — POST /platform/execute; verified end to end with m49.local_note_write reaching COMPLETED",
+      "unapproved execution": "IMPLEMENTED_AND_WORKING — fails closed with TOOL_APPROVAL_REQUIRED / 409",
+      "idempotency": "IMPLEMENTED_AND_WORKING — unique index on (execution_id, idempotency_key); replay does not double-execute",
+      "cancellation": "IMPLEMENTED_AND_WORKING — POST /runtime/executions/{id}/cancel, owner+ only",
+      "progress and timeline": "IMPLEMENTED_AND_WORKING — /runtime/executions, /{id}/timeline, /attention",
+      "financial / live tools": "INTENTIONALLY_UNAVAILABLE — PROHIBITED manifests still route through the gateway denial path; no order tool is reachable"
+    },
+
+    "chat_and_assistant": {
+      "conversation health / providers": "IMPLEMENTED_AND_WORKING — GET /platform/conversation/health, /providers",
+      "submit / complete / cancel": "IMPLEMENTED_AND_WORKING — POST /conversation/complete, /conversation/cancel",
+      "rendered chat route": "IMPLEMENTED_AND_WORKING — /chat renders; no overclaiming 'AI connected' string present",
+      "local model availability": "BLOCKED_BY_ENVIRONMENT — no local model provider is configured in the audit environment, so response generation quality was not exercised. The route reports availability rather than spinning."
+    },
+
+    "voice": {
+      "detail": "See VOICE_ARCHITECTURE.md — two distinct stacks, classified separately.",
+      "microphone permission / denial / fallback": "IMPLEMENTED_AND_WORKING",
+      "browser speech recognition wiring": "IMPLEMENTED_AND_WORKING",
+      "transcription accuracy (English / Nepali / mixed)": "BLOCKED_BY_ENVIRONMENT — headless Chromium grants no real microphone",
+      "server-side TTS synthesis and playback": "IMPLEMENTED_AND_WORKING",
+      "stop / interrupt": "IMPLEMENTED_AND_WORKING",
+      "overlapping-speech prevention": "IMPLEMENTED_AND_WORKING — speak() awaits stop()",
+      "route-change cleanup (audio)": "IMPLEMENTED_AND_WORKING — REPAIRED (DEFECT-003)",
+      "route-change cleanup (microphone)": "IMPLEMENTED_AND_WORKING — REPAIRED (DEFECT-004)",
+      "logout cleanup": "IMPLEMENTED_AND_WORKING — client resets on PLATFORM_CONTEXT_EVENT; server cancels speech on logout",
+      "barge-in, platform voice runtime": "NOT_IMPLEMENTED — there is a stop control and a server /interrupt endpoint, but no ducking. Not claimed as barge-in.",
+      "barge-in, chat VoiceControl": "IMPLEMENTED_AND_WORKING — onresult cancels speechSynthesis and reports stop latency",
+      "audible quality, voice selection, Nepali pronunciation": "REQUIRES_HUMAN_AUDIO_VERIFICATION — headless Chromium reports 0 installed voices"
+    },
+
+    "mr_yeti_persona": {
+      "persona binding": "IMPLEMENTED_AND_WORKING — voice_profile_id 'yeti_teacher' is the default profile in both VoiceRuntimeProvider and the IELTS workspace; POST /platform/core/yeti exists",
+      "consistency": "IMPLEMENTED_AND_WORKING — no conflicting or placeholder persona name found in the rendered pages swept"
+    },
+
+    "notifications": {
+      "notification center": "IMPLEMENTED_AND_WORKING — GET /platform/core/notifications, route /platform/notifications renders",
+      "live toasts": "IMPLEMENTED_AND_WORKING — LiveToasts mounted in Shell",
+      "accessibility announcement": "IMPLEMENTED_AND_WORKING — aria-live regions present in the shell and error surfaces"
+    },
+
+    "operations": {
+      "health": "IMPLEMENTED_AND_WORKING — /platform/health, /platform/core/health, /trading/operations/health",
+      "metrics": "IMPLEMENTED_AND_WORKING — GET /runtime/metrics",
+      "diagnostics": "IMPLEMENTED_AND_WORKING — GET /runtime/diagnostics, route renders",
+      "alerts": "IMPLEMENTED_AND_WORKING — /trading/operations/alerts renders",
+      "backup and recovery": "IMPLEMENTED_AND_WORKING — /trading/operations/backups renders; /runtime/executions/{id}/recover and /reconcile exist",
+      "private-alpha readiness": "IMPLEMENTED_AND_WORKING — /private-alpha, /readiness, /checklist, /contract",
+      "evidence export": "IMPLEMENTED_AND_WORKING — GET /runtime/export, retention preview and hold"
+    },
+
+    "trading_guardian": {
+      "status": "All Trading Guardian routes render and remain advisory. 454 of the 817 platform API paths sit under /platform/tg.",
+      "intelligence, research data, research lab, portfolio and risk, market observation, connectivity governance, provider contracts": "IMPLEMENTED_AND_WORKING (render), NON_AUTHORITATIVE",
+      "real provider / credential / account / order controls": "INTENTIONALLY_UNAVAILABLE — none rendered; verified by text scan of the signed-in pages and by the authority-lock scan",
+      "authority locks": "All hard authorities remain false — verified against /private-alpha/readiness"
+    }
+  },
+
+  "environment_limitations": [
+    {
+      "id": "ENV-LIM-001",
+      "classification": "BLOCKED_BY_ENVIRONMENT",
+      "item": "Real speech transcription accuracy",
+      "reason": "Headless Chromium grants no microphone device."
+    },
+    {
+      "id": "ENV-LIM-002",
+      "classification": "REQUIRES_HUMAN_AUDIO_VERIFICATION",
+      "item": "Audible speech output, voice selection, Nepali pronunciation",
+      "reason": "speechSynthesis.getVoices() returned 0 in the certification browser; audible quality is not machine-judgeable."
+    },
+    {
+      "id": "ENV-LIM-003",
+      "classification": "BLOCKED_BY_ENVIRONMENT",
+      "item": "Local model chat response generation",
+      "reason": "No local model provider configured in the audit environment. The application reports availability rather than hanging, which is the required behaviour."
+    },
+    {
+      "id": "ENV-LIM-004",
+      "classification": "REQUIRES_PRODUCT_DECISION",
+      "item": "Barge-in in the platform voice runtime",
+      "reason": "Not implemented. Whether the platform runtime should duck output on detected speech, as the chat VoiceControl does, is a product decision, not a defect to silently patch."
+    }
+  ]
+}
