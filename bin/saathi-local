@@ -149,10 +149,24 @@ _wait_ready() {  # _wait_ready <fn> <label> <timeout_sec>
 }
 
 # ── environment checks ───────────────────────────────────────────────────────
+# M336–M343: the build toolchain is required only by the paths that actually
+# SPAWN a server. A role that resolves to an already-healthy process (owned or
+# external) is reused and never spawned, so demanding .venv / node_modules for
+# it gated the documented reuse path on developer build artifacts and masked the
+# real blocker (an unhealthy or unrelated listener) behind a generic
+# "environment not ready" message. The spawn-path checks below remain hard
+# fail-closed aborts; nothing is skipped, only scoped to the role that needs it.
+_check_backend_toolchain() {
+  [ -x "$PY" ] || { say "  ! python venv missing at .venv (run: python -m venv .venv && pip install -e .)"; return 1; }
+  return 0
+}
+_check_frontend_toolchain() {
+  [ -d "$REPO/saathi-os/node_modules" ] || { say "  ! frontend deps missing (run: cd saathi-os && npm install)"; return 1; }
+  return 0
+}
+# Host-level prerequisite needed by every subcommand that probes readiness.
 _check_env() {
   local ok=0
-  [ -x "$PY" ] || { say "  ! python venv missing at .venv (run: python -m venv .venv && pip install -e .)"; ok=1; }
-  [ -d "$REPO/saathi-os/node_modules" ] || { say "  ! frontend deps missing (run: cd saathi-os && npm install)"; ok=1; }
   command -v curl >/dev/null 2>&1 || { say "  ! curl not found"; ok=1; }
   return $ok
 }
@@ -171,6 +185,7 @@ _ensure_backend() {
     owned-unhealthy|external-unhealthy) _blocker backend "$state" "$pid"; return 1 ;;
     unrelated) say "backend: port $BFF_PORT occupied by UNRELATED PID $pid — refusing to kill it (fail-closed)"; _log "port $BFF_PORT unrelated $pid"; return 1 ;;
     free)
+      _check_backend_toolchain || { say "backend: cannot start — environment not ready; see doctor"; return 1; }
       _rotate "$BACKEND_LOG"
       ( cd "$REPO" && exec "$PY" -m uvicorn saathi.server:app --host "$BFF_HOST" --port "$BFF_PORT" ) >>"$BACKEND_LOG" 2>&1 &
       local np=$!; printf '%s\nbackend\n' "$np" >"$BACKEND_PID"
@@ -187,6 +202,7 @@ _ensure_frontend() {
     owned-unhealthy|external-unhealthy) _blocker frontend "$state" "$pid"; return 1 ;;
     unrelated) say "frontend: port $UI_PORT occupied by UNRELATED PID $pid — refusing to kill it (fail-closed)"; _log "port $UI_PORT unrelated $pid"; return 1 ;;
     free)
+      _check_frontend_toolchain || { say "frontend: cannot start — environment not ready; see doctor"; return 1; }
       _rotate "$FRONTEND_LOG"
       ( cd "$REPO/saathi-os" && NEXT_PUBLIC_SAATHI_API="$API_BASE" exec npm run dev -- -p "$UI_PORT" ) >>"$FRONTEND_LOG" 2>&1 &
       local np=$!; printf '%s\nfrontend\n' "$np" >"$FRONTEND_PID"

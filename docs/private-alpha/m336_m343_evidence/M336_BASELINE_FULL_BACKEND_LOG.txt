@@ -1,0 +1,336 @@
+........................................................................ [  1%]
+........................................................................ [  2%]
+........................................................................ [  3%]
+........................................................................ [  4%]
+........................................................................ [  6%]
+........................................................................ [  7%]
+........................................................................ [  8%]
+....................................................................s... [  9%]
+........................................................................ [ 10%]
+........................................................................ [ 12%]
+........................................................................ [ 13%]
+F.F...F....F............................................................ [ 14%]
+........................................................................ [ 15%]
+........................................................................ [ 16%]
+........................................................................ [ 18%]
+........................................................................ [ 19%]
+........................................................................ [ 20%]
+........................................................................ [ 21%]
+........................................................................ [ 22%]
+........................................................................ [ 24%]
+........................................................................ [ 25%]
+........................................................................ [ 26%]
+........................................................................ [ 27%]
+........................................................................ [ 29%]
+........................................................................ [ 30%]
+........................................................................ [ 31%]
+........................................................................ [ 32%]
+........................................................................ [ 33%]
+........................................................................ [ 35%]
+........................................................................ [ 36%]
+........................................................................ [ 37%]
+........................................................................ [ 38%]
+........................................................................ [ 39%]
+........................................................................ [ 41%]
+........................................................................ [ 42%]
+........................................................................ [ 43%]
+........................................................................ [ 44%]
+........................................................................ [ 45%]
+........................................................................ [ 47%]
+........................................................................ [ 48%]
+........................................................................ [ 49%]
+........................................................................ [ 50%]
+........................................................................ [ 51%]
+........................................................................ [ 53%]
+........................................................................ [ 54%]
+........................................................................ [ 55%]
+........................................................................ [ 56%]
+........................................................................ [ 58%]
+........................................................................ [ 59%]
+........................................................................ [ 60%]
+........................................................................ [ 61%]
+........................................................................ [ 62%]
+........................................................................ [ 64%]
+........................................................................ [ 65%]
+........................................................................ [ 66%]
+........................................................................ [ 67%]
+........................................................................ [ 68%]
+........................................................................ [ 70%]
+........................................................................ [ 71%]
+........................................................................ [ 72%]
+........................................................................ [ 73%]
+........................................................................ [ 74%]
+........................................................................ [ 76%]
+........................................................................ [ 77%]
+........................................................................ [ 78%]
+........................................................................ [ 79%]
+........................................................................ [ 81%]
+........................................................................ [ 82%]
+........................................................................ [ 83%]
+........................................................................ [ 84%]
+................F..F.F.................................................. [ 85%]
+........................................................................ [ 87%]
+........................................................................ [ 88%]
+........................................................................ [ 89%]
+........................................................................ [ 90%]
+........................................................................ [ 91%]
+........................................................................ [ 93%]
+.......F................................................................ [ 94%]
+........................................................................ [ 95%]
+........................................................................ [ 96%]
+........................................................................ [ 97%]
+........................................................................ [ 99%]
+..................................................                       [100%]
+=================================== FAILURES ===================================
+____________________ test_prepare_idempotent_and_no_secrets ____________________
+
+tmp_path = PosixPath('/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/pytest-of-macbookpro/pytest-31/test_prepare_idempotent_and_no0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x13d8504d0>
+
+    def test_prepare_idempotent_and_no_secrets(tmp_path, monkeypatch):
+        # use real repo dirs but ensure prepare is re-runnable
+        r1 = prepare(install_deps=False)
+        r2 = prepare(install_deps=False)
+>       assert r1["ok"] is True
+E       assert False is True
+
+tests/test_m157_private_alpha.py:103: AssertionError
+___________________________ test_init_with_platform ____________________________
+
+env = (<saathi.platform.service.PlatformService object at 0x13d698bc0>, 'XOsJ7C7MR_n6zdkIxw5Vbr-Y3LJTfUBZXtTy4FtSO68', Platf...th('/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/pytest-of-macbookpro/pytest-31/test_init_with_platform0'))
+
+    def test_init_with_platform(env):
+        platform, token, ctx, core, tmp = env
+        r = init_first_run(
+            acknowledge_local_only=True,
+            platform=platform,
+            enable_hcg_demo=False,
+            enable_ielts_demo=False,
+        )
+>       assert r["ok"] is True
+E       assert False is True
+
+tests/test_m157_private_alpha.py:125: AssertionError
+___________________ test_upgrade_preflight_and_local_fixture ___________________
+
+env = (<saathi.platform.service.PlatformService object at 0x13d7178f0>, 'oVTiXkk0_M-VgoDwZsOz-EhmWOkmXGgTLXMou8bmCZY', Platf...ivate/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/pytest-of-macbookpro/pytest-31/test_upgrade_preflight_and_loc0'))
+tmp_path = PosixPath('/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/pytest-of-macbookpro/pytest-31/test_upgrade_preflight_and_loc0')
+
+    def test_upgrade_preflight_and_local_fixture(env, tmp_path):
+        pre = upgrade_preflight()
+        assert pre["remote_fetch"] is False
+        assert pre["production_authorized"] is False
+        fix = tmp_path / "fixture"
+        fix.mkdir()
+        (fix / "release_fixture.json").write_text(
+            json.dumps({"target_version": "0.1.0-private-alpha.1-fixture"}),
+            encoding="utf-8",
+        )
+        db = tmp_path / "upgrade.db"
+        r = apply_local_upgrade(fixture_dir=fix, work_db=db)
+>       assert r["ok"] is True
+E       assert False is True
+
+tests/test_m157_private_alpha.py:211: AssertionError
+____________________ test_private_alpha_certification_gate _____________________
+
+env = (<saathi.platform.service.PlatformService object at 0x13d717a10>, 'naaAonUnjcFdK60ljs0MLVHn_X0Sl0dcEOVXOAN1eu4', Platf...ivate/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/pytest-of-macbookpro/pytest-31/test_private_alpha_certificati0'))
+
+    def test_private_alpha_certification_gate(env):
+        platform, token, ctx, core, tmp = env
+        report = run_private_alpha_certification(
+            platform=platform, token=token, write_evidence=False
+        )
+        assert report["production_authorized"] is False
+        assert report["public_exposure_authorized"] is False
+>       assert report["fail_count"] == 0
+E       assert 1 == 0
+
+tests/test_m157_private_alpha.py:372: AssertionError
+____________ test_start_fails_closed_on_unhealthy_external_frontend ____________
+
+tmp_path = PosixPath('/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/pytest-of-macbookpro/pytest-31/test_start_fails_closed_on_unh0')
+dummy_process = <Popen: returncode: None args: ['sleep', '60']>
+
+    def test_start_fails_closed_on_unhealthy_external_frontend(tmp_path, dummy_process):
+        home = tmp_path / "saathi-home"
+        r = _run(["start"], home, extra_env=_env_backend_healthy_frontend_unhealthy(dummy_process.pid))
+        # 1. non-zero exit (fail-closed)
+        assert r.returncode != 0
+        # 2. accurate message: never claims ready; names the frontend blocker
+        assert "is ready" not in r.stdout
+>       assert "BLOCKER" in r.stdout and "NOT ready" in r.stdout
+E       AssertionError: assert ('BLOCKER' in '  ! python venv missing at .venv (run: python -m venv .venv && pip install -e .)\n  ! frontend deps missing (run: cd saathi-os && npm install)\nenvironment not ready; see doctor\n')
+E        +  where '  ! python venv missing at .venv (run: python -m venv .venv && pip install -e .)\n  ! frontend deps missing (run: cd saathi-os && npm install)\nenvironment not ready; see doctor\n' = CompletedProcess(args=['bash', '/private/tmp/claude-501/-Users-macbookpro/8448d22c-1ee1-4b08-ae21-aee38773ea9c/scratch...l -e .)\n  ! frontend deps missing (run: cd saathi-os && npm install)\nenvironment not ready; see doctor\n', stderr='').stdout
+
+tests/test_m57_local.py:211: AssertionError
+_______________ test_start_reports_ready_only_when_both_healthy ________________
+
+tmp_path = PosixPath('/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/pytest-of-macbookpro/pytest-31/test_start_reports_ready_only_0')
+
+    def test_start_reports_ready_only_when_both_healthy(tmp_path):
+        home = tmp_path / "saathi-home"
+        r = _run(
+            ["start"], home,
+            extra_env={
+                "SAATHI_LOCAL_ASSESS_BACKEND": "external-healthy 1782",
+                "SAATHI_LOCAL_ASSESS_FRONTEND": "external-healthy 48062",
+            },
+        )
+>       assert r.returncode == 0
+E       AssertionError: assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['bash', '/private/tmp/claude-501/-Users-macbookpro/8448d22c-1ee1-4b08-ae21-aee38773ea9c/scratch...l -e .)\n  ! frontend deps missing (run: cd saathi-os && npm install)\nenvironment not ready; see doctor\n', stderr='').returncode
+
+tests/test_m57_local.py:262: AssertionError
+____________ test_start_fails_closed_on_unrelated_backend_occupant _____________
+
+tmp_path = PosixPath('/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/pytest-of-macbookpro/pytest-31/test_start_fails_closed_on_unr0')
+
+    def test_start_fails_closed_on_unrelated_backend_occupant(tmp_path):
+        home = tmp_path / "saathi-home"
+        r = _run(
+            ["start"], home,
+            extra_env={"SAATHI_LOCAL_ASSESS_BACKEND": "unrelated 99999"},
+        )
+        assert r.returncode != 0
+>       assert "UNRELATED PID 99999" in r.stdout
+E       AssertionError: assert 'UNRELATED PID 99999' in '  ! python venv missing at .venv (run: python -m venv .venv && pip install -e .)\n  ! frontend deps missing (run: cd saathi-os && npm install)\nenvironment not ready; see doctor\n'
+E        +  where '  ! python venv missing at .venv (run: python -m venv .venv && pip install -e .)\n  ! frontend deps missing (run: cd saathi-os && npm install)\nenvironment not ready; see doctor\n' = CompletedProcess(args=['bash', '/private/tmp/claude-501/-Users-macbookpro/8448d22c-1ee1-4b08-ae21-aee38773ea9c/scratch...l -e .)\n  ! frontend deps missing (run: cd saathi-os && npm install)\nenvironment not ready; see doctor\n', stderr='').stdout
+
+tests/test_m57_local.py:282: AssertionError
+______________________ test_release_gate_passes_baseline _______________________
+
+    def test_release_gate_passes_baseline():
+        # real run of the safe gates (storage/config/db/backup/secret) — should pass
+        code, report = RG.release_check(strict_dirty=False)
+>       assert code in (RG.EXIT_READY, RG.EXIT_WARN)
+E       assert 3 in (0, 1)
+
+tests/test_ops.py:210: AssertionError
+=============================== warnings summary ===============================
+saathi/server.py:5204
+  /private/tmp/claude-501/-Users-macbookpro/8448d22c-1ee1-4b08-ae21-aee38773ea9c/scratchpad/baseline-wt/saathi/server.py:5204: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    @app.on_event("startup")
+
+../../../../../../../Users/macbookpro/SaathiAI/.venv/lib/python3.12/site-packages/fastapi/applications.py:4675
+../../../../../../../Users/macbookpro/SaathiAI/.venv/lib/python3.12/site-packages/fastapi/applications.py:4675
+../../../../../../../Users/macbookpro/SaathiAI/.venv/lib/python3.12/site-packages/fastapi/applications.py:4675
+  /Users/macbookpro/SaathiAI/.venv/lib/python3.12/site-packages/fastapi/applications.py:4675: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    return self.router.on_event(event_type)  # ty: ignore[deprecated]
+
+saathi/server.py:5323
+  /private/tmp/claude-501/-Users-macbookpro/8448d22c-1ee1-4b08-ae21-aee38773ea9c/scratchpad/baseline-wt/saathi/server.py:5323: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    @app.on_event("startup")
+
+saathi/server.py:5334
+  /private/tmp/claude-501/-Users-macbookpro/8448d22c-1ee1-4b08-ae21-aee38773ea9c/scratchpad/baseline-wt/saathi/server.py:5334: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    @app.on_event("shutdown")
+
+../../../../../../../Users/macbookpro/SaathiAI/.venv/lib/python3.12/site-packages/fastapi/testclient.py:1
+  /Users/macbookpro/SaathiAI/.venv/lib/python3.12/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+saathi/platform/voice/runtime/session_manager.py:8
+  /private/tmp/claude-501/-Users-macbookpro/8448d22c-1ee1-4b08-ae21-aee38773ea9c/scratchpad/baseline-wt/saathi/platform/voice/runtime/session_manager.py:8: DeprecationWarning: 'audioop' is deprecated and slated for removal in Python 3.13
+    import audioop
+
+tests/test_m80_conversation_service.py:214
+  /private/tmp/claude-501/-Users-macbookpro/8448d22c-1ee1-4b08-ae21-aee38773ea9c/scratchpad/baseline-wt/tests/test_m80_conversation_service.py:214: PytestUnknownMarkWarning: Unknown pytest.mark.integration - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.integration
+
+tests/test_ai_studio.py::test_default_metadata_never_raises
+  /private/tmp/claude-501/-Users-macbookpro/8448d22c-1ee1-4b08-ae21-aee38773ea9c/scratchpad/baseline-wt/saathi/ai_studio.py:98: DeprecationWarning: saathi.llm.generate is a compatibility facade (M22); use governed InferenceRequest or an approved adapter. Provider HTTP is adapter-only.
+    out = generate(ModelLabel.STANDARD, prompt, "Reply with ONLY JSON.", max_tokens=600).text
+
+tests/test_chat.py: 21 warnings
+  /private/tmp/claude-501/-Users-macbookpro/8448d22c-1ee1-4b08-ae21-aee38773ea9c/scratchpad/baseline-wt/saathi/chat/engine.py:136: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    timestamp=datetime.utcnow(),
+
+tests/test_chat.py: 21 warnings
+  /private/tmp/claude-501/-Users-macbookpro/8448d22c-1ee1-4b08-ae21-aee38773ea9c/scratchpad/baseline-wt/saathi/chat/engine.py:137: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    current_time=datetime.utcnow())
+
+tests/test_chat.py: 132 warnings
+tests/test_execution_gateway.py: 6 warnings
+tests/test_studio_os.py: 21 warnings
+  /private/tmp/claude-501/-Users-macbookpro/8448d22c-1ee1-4b08-ae21-aee38773ea9c/scratchpad/baseline-wt/saathi/execution/state.py:81: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    timestamp=datetime.utcnow(),
+
+tests/test_chat.py: 22 warnings
+tests/test_execution_gateway.py: 1 warning
+  /private/tmp/claude-501/-Users-macbookpro/8448d22c-1ee1-4b08-ae21-aee38773ea9c/scratchpad/baseline-wt/saathi/execution/queue/base.py:24: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    self.enqueued_at = datetime.utcnow()
+
+tests/test_chat.py: 44 warnings
+tests/test_execution_gateway.py: 2 warnings
+tests/test_m20_2_governed_local_inference.py: 1 warning
+  <string>:9: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+
+tests/test_chat.py::test_tool_call_via_gateway
+tests/test_chat.py::test_tool_call_via_gateway
+  /private/tmp/claude-501/-Users-macbookpro/8448d22c-1ee1-4b08-ae21-aee38773ea9c/scratchpad/baseline-wt/saathi/chat/engine.py:368: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    timestamp=datetime.utcnow(), current_time=datetime.utcnow())
+
+tests/test_execution_gateway.py::test_reference_execution_path_produces_auditable_result
+  /private/tmp/claude-501/-Users-macbookpro/8448d22c-1ee1-4b08-ae21-aee38773ea9c/scratchpad/baseline-wt/tests/test_execution_gateway.py:81: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    timestamp=datetime.utcnow(),
+
+tests/test_execution_gateway.py::test_reference_execution_path_produces_auditable_result
+  /private/tmp/claude-501/-Users-macbookpro/8448d22c-1ee1-4b08-ae21-aee38773ea9c/scratchpad/baseline-wt/tests/test_execution_gateway.py:82: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    current_time=datetime.utcnow(),
+
+tests/test_m16_control_center.py: 2 warnings
+tests/test_m17_10_run_monitor.py: 1 warning
+tests/test_m17_11_notification_delivery.py: 1 warning
+tests/test_m17_12_harness_pipeline.py: 2 warnings
+tests/test_m17_13_mission_engine.py: 2 warnings
+tests/test_m17_14_mission_scheduler.py: 3 warnings
+tests/test_m17_15_pipeline_recovery.py: 2 warnings
+tests/test_m17_21_registry_health.py: 2 warnings
+tests/test_m17_22_execution_gateway.py: 1 warning
+tests/test_m17_23_browser_execution_gateway.py: 1 warning
+tests/test_m17_25_mcp_governance.py: 2 warnings
+tests/test_ops.py: 3 warnings
+  /private/tmp/claude-501/-Users-macbookpro/8448d22c-1ee1-4b08-ae21-aee38773ea9c/scratchpad/baseline-wt/saathi/ops/backup.py:112: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+    tar.extractall(target)
+
+tests/test_m328_m335_production_readiness.py::test_operations_api_exposes_no_execution_route
+  /Users/macbookpro/SaathiAI/.venv/lib/python3.12/site-packages/fastapi/openapi/utils.py:252: UserWarning: Duplicate Operation ID studio_full_pipeline_api_v1_studio_full_pipeline_post for function studio_full_pipeline at /private/tmp/claude-501/-Users-macbookpro/8448d22c-1ee1-4b08-ae21-aee38773ea9c/scratchpad/baseline-wt/saathi/server.py
+    warnings.warn(message, stacklevel=1)
+
+tests/test_studio_os.py: 14 warnings
+  /private/tmp/claude-501/-Users-macbookpro/8448d22c-1ee1-4b08-ae21-aee38773ea9c/scratchpad/baseline-wt/saathi/studio_os/ffmpeg_engine.py:81: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    timestamp=datetime.utcnow(), current_time=datetime.utcnow()), hist)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_m157_private_alpha.py::test_prepare_idempotent_and_no_secrets
+FAILED tests/test_m157_private_alpha.py::test_init_with_platform - assert Fal...
+FAILED tests/test_m157_private_alpha.py::test_upgrade_preflight_and_local_fixture
+FAILED tests/test_m157_private_alpha.py::test_private_alpha_certification_gate
+FAILED tests/test_m57_local.py::test_start_fails_closed_on_unhealthy_external_frontend
+FAILED tests/test_m57_local.py::test_start_reports_ready_only_when_both_healthy
+FAILED tests/test_m57_local.py::test_start_fails_closed_on_unrelated_backend_occupant
+FAILED tests/test_ops.py::test_release_gate_passes_baseline - assert 3 in (0, 1)
+8 failed, 5945 passed, 1 skipped, 322 warnings in 941.03s (0:15:41)
+EXIT=1

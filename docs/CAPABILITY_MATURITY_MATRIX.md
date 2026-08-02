@@ -136,3 +136,33 @@ permissions (macOS TCC actuation), or credentials (authenticated cloud/browser).
 | Orders | FORBIDDEN_BY_GOVERNANCE | no implementation or execution |
 | Transfers / withdrawals | FORBIDDEN_BY_GOVERNANCE | no implementation |
 | Real provider connection | PROHIBITED | not started |
+
+## Private-Alpha Launch Readiness (M336–M343)
+
+| Capability | Maturity | Notes |
+|------------|----------|-------|
+| Private-alpha contract | PRIVATE_ALPHA_READY_OFFLINE_INVITE_ONLY | audience, environment, journey, exclusions |
+| Invitation-only access | SUPPORTED_OFFLINE | owner-issued, single-use, email-bound |
+| Public self-registration | PROHIBITED | `PUBLIC_REGISTRATION_AUTHORIZED=false` |
+| Authentication | SUPPORTED_OFFLINE | invalid credentials fail closed |
+| Session expiry and revocation | SUPPORTED_OFFLINE | both proven to stop authenticating immediately |
+| RBAC | SUPPORTED_OFFLINE | viewer, operator, owner separation certified |
+| Workspace isolation | SUPPORTED_OFFLINE | `WORKSPACE_ISOLATION` / `PROJECT_ISOLATION` |
+| Organization isolation | SUPPORTED_OFFLINE | `MEMBERSHIP_REVOKED` on cross-org switch |
+| Mission lifecycle | SUPPORTED_OFFLINE | create, validate, approve, execute, cancel, retry |
+| Real cancellation | SUPPORTED_OFFLINE | `runtime.cancel()` on an in-flight execution → `CANCELLED` |
+| Approval maker-checker | SUPPORTED_OFFLINE | self-approval blocked; requester may not decide |
+| Concurrent approval decisions | SUPPORTED_OFFLINE | conditional UPDATE; exactly one decider wins |
+| Approval single-use dispatch | SUPPORTED_OFFLINE | one approval authorizes at most one execution |
+| Local deterministic execution | SUPPORTED_OFFLINE | ExecutionGateway only; mock providers |
+| Evidence and audit | SUPPORTED_OFFLINE | no credential value reaches the audit trail |
+| Soak, concurrency, recovery | SUPPORTED_OFFLINE | bounded local validation on the reference machine |
+| Release / rollback / incident runbooks | SUPPORTED_OFFLINE | written for use under pressure |
+| Launch-readiness Control Center | READ_ONLY_OFFLINE | GET routes only; no launch or approve control |
+| Owner review | OWNER_REVIEW_REQUIRED | not satisfiable by automation |
+| Public production deployment | PROHIBITED | `PUBLIC_PRODUCTION_AUTHORIZED=false` |
+| Broker / provider connectivity | PROHIBITED | absent, not merely disabled |
+| Credential collection | PROHIBITED | never requested, accepted or stored |
+| Account / balance / position access | FORBIDDEN_BY_GOVERNANCE | no implementation |
+| Order submission or execution | FORBIDDEN_BY_GOVERNANCE | no implementation |
+| Paper or live execution | PROHIBITED | not enabled |

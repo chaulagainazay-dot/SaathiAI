@@ -20,6 +20,7 @@ import {
   voiceActions,
   voiceOutputReducer,
 } from "@/lib/voice-output";
+import { usePathname } from "next/navigation";
 import {
   getToken,
   PLATFORM_CONTEXT_EVENT,
@@ -307,6 +308,18 @@ export function VoiceOutputProvider({ children }) {
     },
     [poll, preferences, stop, token]
   );
+
+  // The provider sits above the router in Shell, so it never unmounts on a
+  // client-side navigation and the detached Audio element would keep playing
+  // in the background of an unrelated page. Stop speech when the route changes
+  // — never on first render, which would cancel a freshly-started utterance.
+  const pathname = usePathname();
+  const spokenPathRef = useRef(pathname);
+  useEffect(() => {
+    if (spokenPathRef.current === pathname) return;
+    spokenPathRef.current = pathname;
+    stop();
+  }, [pathname, stop]);
 
   const play = useCallback(async () => {
     if (!audioRef.current || !output.audioReady) return false;

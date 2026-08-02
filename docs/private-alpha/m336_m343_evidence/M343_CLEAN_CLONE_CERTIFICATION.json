@@ -1,0 +1,29 @@
+{
+  "schema": "m343.clean_clone_certification.v1",
+  "milestone": "M336-M343",
+  "verdict": "M343_CLEAN_CLONE_CERTIFIED",
+  "clone_sha": "582e6b255ed533d3c64114b11ad9079d9cad2430",
+  "requested_sha": "582e6b255ed533d3c64114b11ad9079d9cad2430",
+  "clone_path": "/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m343-clean-clone.Tbtx4bPFYV/repo",
+  "source_repository": "/Users/macbookpro/SaathiAI-m336-m343",
+  "clone_method": "git clone --no-hardlinks then checkout the exact SHA; tracked files only",
+  "forbidden_artifacts_present": 0,
+  "untracked_files_in_clone": 0,
+  "not_copied": [".env", ".proxy.env", "local databases", "build output", "caches", "untracked evidence", "local credentials", "original worktree source"],
+  "results": {
+    "focused_milestone_suites": "pass",
+    "full_backend_suite": "pass",
+    "release_gate": "pass",
+    "private_alpha_journey": "pass",
+    "full_frontend_suite": "pass",
+    "production_build": "pass",
+    "authority_scan": "pass",
+    "network_isolation_scan": "pass"
+  },
+  "backend": {"passed": 6007, "failed": 0},
+  "frontend": {"passed": 342, "failed": 0},
+  "release_gate_exit_code": 0,
+  "non_localhost_host_literals_in_private_alpha_surface": 0,
+  "logs": "/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m343-clean-clone.Tbtx4bPFYV/_logs",
+  "browser_certification": "run separately against a live local stack; see M343_BROWSER_CERT.json"
+}

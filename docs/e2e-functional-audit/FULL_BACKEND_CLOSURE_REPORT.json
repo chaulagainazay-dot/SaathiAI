@@ -1,0 +1,49 @@
+{
+  "record": "SAATHIOS_FULL_BACKEND_CLOSURE_REPORT",
+  "phase": "PHASE_5_AND_6_AFFECTED_TESTS_AND_FULL_SUITE",
+
+  "affected_tests": {
+    "how_identified": "Read from the prior full-suite log (logs/full_backend2.log) rather than guessed. Both names came from its `FAILED` lines.",
+    "tests": [
+      "tests/test_m157_private_alpha.py::test_private_alpha_certification_gate",
+      "tests/test_m157_private_alpha.py::test_doctor_no_public_saathi_listeners"
+    ],
+    "shared_root_cause": "doctor() in saathi/platform/private_alpha/prepare.py reported saathi_public_listeners: [{command: node, pid: 12672, address: \"*:3000\"}]. public_listener_regression is bool(that list), and certification.py:83 turns the same flag into the gate's single FAIL. One stale process, two failing tests.",
+    "action": "The process was inspected against five explicit conditions and stopped with SIGTERM. The listener-security check itself was NOT weakened, relaxed, or exempted in any way.",
+    "rerun_result": "2 passed in 3.32s",
+    "AFFECTED_TESTS_PASSED": 2,
+    "AFFECTED_TESTS_FAILED": 0
+  },
+
+  "full_backend_suite": {
+    "command": "python -m pytest tests/ -q -p no:warnings",
+    "worktree": "/Users/macbookpro/SaathiAI-full-e2e",
+    "result": "6027 passed, 1 skipped in 1024.68s (0:17:04)",
+    "FULL_BACKEND_FAILURES": 0,
+    "comparison_to_prior_run": {
+      "prior": "6025 passed, 1 skipped, 2 failed",
+      "now": "6027 passed, 1 skipped, 0 failed",
+      "delta": "+2 passing — the two previously failing tests. No test was removed, skipped or weakened to achieve this."
+    }
+  },
+
+  "skip": {
+    "count": 1,
+    "test": "tests/test_generation.py:51",
+    "reason": "slow render; set SAATHI_SLOW=1",
+    "policy": "Established opt-in policy skip that predates this branch — a slow media-render test gated behind an explicit environment variable. It is not an environment failure and not a test disabled to obtain a green run.",
+    "documented": true
+  },
+
+  "certification_gates_checked": {
+    "blocker_critical_high_app_owned_failures": 0,
+    "public_listener_regression": false,
+    "authentication_bypass_tests": "passing — tests/test_e2e_functional_recovery.py, 8 auth-bypass cases",
+    "workspace_isolation": "passing",
+    "approval_scope_validation": "passing",
+    "voice_cleanup_tests": "passing — saathi-os/lib/e2e-voice-route-cleanup.test.js and e2e-voice-interruption.test.js",
+    "release_gates": "passing — private-alpha certification gate returns 0 FAIL"
+  },
+
+  "verdict": "FULL_BACKEND_SUITE_PASSED_ZERO_FAILURES"
+}

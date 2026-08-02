@@ -43,6 +43,7 @@ const TABS = [
   { href: "/trading/market-observation", label: "Market Observation" },
   { href: "/trading/connectivity-governance", label: "Connectivity Governance" },
   { href: "/trading/provider-contracts", label: "Provider Contracts" },
+  { href: "/trading/operations", label: "Operations Control Center" },
   { href: "/trading/paper-ledger", label: "Ledger" },
   { href: "/trading/paper-recovery", label: "Recovery" },
   { href: "/trading/comparison", label: "Comparison" },

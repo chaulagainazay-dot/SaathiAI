@@ -1,0 +1,26 @@
+{
+  "schema": "m335.limitations.v1",
+  "milestones": "M328-M335",
+  "verdict": "PRODUCTION_READINESS_AND_OPERATIONAL_RESILIENCE_CERTIFIED_WITH_LIMITATIONS",
+  "maximum_state": "OPERATIONALLY_READY_OFFLINE",
+  "maturity": "OPERATIONALLY_READY_OFFLINE",
+  "limitations": [
+    "Offline operational observation only; no external telemetry provider, exporter, or cloud monitoring agent exists.",
+    "Alerts are delivered to the Control Center, local logs and audit history only. Email, SMS, push and webhook destinations are rejected with a normalized forbidden_destination error.",
+    "Recovery is simulated against local snapshots. Live state is never mutated and nothing is applied to production.",
+    "Load validation is a closed-form deterministic model, not generated traffic. No threads are spawned, no sockets opened, no sleeps taken.",
+    "The operations dashboard is read-only. It exposes no execution, deployment, connectivity, credential, or order control.",
+    "Health state, metric thresholds, alerts and diagnostics are advisory. None of them remediate, escalate, unlock, or grant authority.",
+    "Browser certification history is read, never written.",
+    "No provider connectivity, credential, OAuth, account, balance, position, order, canary, deployment or live-trading path exists or is created by this milestone."
+  ],
+  "known_pre_existing_conditions": [
+    "tests/test_m157_private_alpha.py, tests/test_m57_local.py and tests/test_ops.py::test_release_gate_passes_baseline fail on this machine. All were reproduced on a clean clone at the base SHA and predate this branch.",
+    "The SaathiOS app shell polls /api/v1/connectors/approvals/pending, which answers 401 without CORS headers on the local browser-certification harness. Those request failures and console messages originate outside M328-M335 and are attributed separately in the browser certification record."
+  ],
+  "not_implemented_by_design": [
+    "broker login", "OAuth", "credentials", "API keys", "account access",
+    "balances", "positions", "order execution", "paper execution", "live execution",
+    "authenticated APIs", "cloud telemetry", "external monitoring", "deployment", "M336+"
+  ]
+}
