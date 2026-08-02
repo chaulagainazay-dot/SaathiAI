@@ -1,0 +1,122 @@
+{
+  "record": "SAATHIOS_CLEAN_CLONE_CERTIFICATION",
+  "phase": "PHASE_8_CLEAN_CLONE_CERTIFICATION",
+
+  "certified_sha": "8e7dcfccc3f9d0da2bdb939b020e12fb8d6bca13",
+  "branch": "fix/saathios-full-e2e-functional-recovery",
+  "clone_method": "git clone --no-local /Users/macbookpro/SaathiAI <temp>/SaathiAI, then git checkout <sha>",
+  "clone_path": "/tmp/saathios-full-e2e-clean.<random>/SaathiAI",
+  "why_the_primary_repo_was_cloneable": "The repair branch lives in a linked worktree, but worktrees share the primary repository's ref store, so refs/heads/fix/saathios-full-e2e-functional-recovery was already visible to `git clone`. Nothing was pushed to make this possible.",
+
+  "initial_state": {
+    "MODIFIED_TRACKED_FILES": 0,
+    "UNTRACKED_REQUIRED_SOURCE_FILES": 0,
+    "git_status_output": "empty",
+    "forbidden_artifacts_checked": [".env", ".proxy.env", "data/saathi.db", "saathi-os/.next", "saathi-os/node_modules", ".venv"],
+    "forbidden_artifacts_present": 0,
+    "nothing_copied_from_the_repair_worktree": true
+  },
+
+  "install": {
+    "backend": "python3.12 -m venv .venv && .venv/bin/pip install -e '.[dev]'",
+    "backend_source": "the command the private-alpha runbooks already document",
+    "frontend": "npm ci (package-lock.json)",
+    "note": "Committed manifests and lockfiles only. No dependency was installed by hand to make the run succeed — where one was missing, the manifest was fixed and the clone rebuilt."
+  },
+
+  "defects_found_by_this_phase": [
+    {
+      "id": "DEFECT-008",
+      "severity": "HIGH",
+      "title": "The repository could not run its own test suite from committed source",
+      "detail": "The private-alpha release and rollback runbooks both instruct `pip install -e '.[dev]'`, but no `dev` extra existed and pytest was declared in no manifest at all — only configured via [tool.pytest.ini_options].",
+      "resolution": "FIXED — pyproject.toml now defines the dev extra with pytest and pytest-asyncio."
+    },
+    {
+      "id": "DEFECT-009",
+      "severity": "HIGH",
+      "title": "Three unconditionally-imported modules were undeclared",
+      "detail": "saathi/agents/master.py, saathi/agents/sub_agents/base.py, saathi/auth_logto.py and saathi/security/redteam/runner.py import groq, jwt and yaml at module scope. groq appeared only in requirements.txt (scoped to cloud deployment); PyJWT and PyYAML appeared nowhere. Five test modules failed to import from a fresh checkout.",
+      "resolution": "FIXED — declared in pyproject base dependencies, because the imports are not guarded."
+    },
+    {
+      "id": "DEFECT-010",
+      "severity": "MEDIUM",
+      "title": "PyJWT lacked its crypto extra for RS256",
+      "detail": "saathi/auth_logto.py verifies Logto tokens with jwt.PyJWKClient and algorithms=[\"RS256\"], which needs `cryptography`. Plain PyJWT does not pull it.",
+      "resolution": "FIXED — PyJWT[crypto]>=2.8."
+    },
+    {
+      "id": "DEFECT-011",
+      "severity": "MEDIUM",
+      "title": "A fail-closed launcher test never established its own premise",
+      "detail": "test_launcher_still_fails_closed_when_backend_must_spawn_without_venv pointed SAATHI_REPO at a directory it never created. bin/saathi-local:_resolve_repo only honours SAATHI_REPO when it contains saathi-os/, so the override was silently ignored, the launcher resolved the real repository, found the .venv the documentation tells you to create, and the assertion was never reached. It passed only on machines without a .venv.",
+      "resolution": "FIXED — the test now builds a fake repo with saathi-os/ and deliberately no .venv, mirroring the sibling frontend test. Strengthened, not weakened: verified by mutation — replacing the `[ -x \"$PY\" ]` guard in bin/saathi-local with a no-op makes it fail. bin/saathi-local itself is unchanged."
+    }
+  ],
+
+  "results": {
+    "backend": {
+      "command": ".venv/bin/python -m pytest tests/ -q -p no:warnings",
+      "result": "6021 passed, 7 skipped, 0 failed in 956.11s (0:15:56)",
+      "failures": 0
+    },
+    "frontend": {
+      "command": "npm ci && npm test",
+      "result": "371 passed, 0 failed"
+    },
+    "build": {
+      "command": "npm run build",
+      "result": "compiled successfully, 133 static pages"
+    },
+    "browser_e2e": {
+      "command": "node scripts/e2e_full_application_browser_cert.mjs",
+      "ui": "http://127.0.0.1:3110 (loopback, allowlisted CORS origin)",
+      "api": "http://127.0.0.1:8777 (loopback)",
+      "result": "86/86 checks passed",
+      "page_errors": 0,
+      "external_requests": 0
+    }
+  },
+
+  "required_assertions": {
+    "CLEAN_CLONE_SOURCE_COMPLETE": true,
+    "CLEAN_CLONE_BACKEND_PASSED": true,
+    "CLEAN_CLONE_FRONTEND_PASSED": true,
+    "CLEAN_CLONE_BUILD_PASSED": true,
+    "CLEAN_CLONE_BROWSER_E2E_PASSED": true,
+    "CLEAN_CLONE_AUTHENTICATION_BYPASS_REJECTED": true,
+    "CLEAN_CLONE_LOOPBACK_ONLY": true,
+    "CLEAN_CLONE_FORBIDDEN_EXTERNAL_REQUESTS": 0
+  },
+
+  "authentication_bypass_probe": {
+    "request": "POST /api/v1/platform/auth/login {\"email\": \"owner@e2e.local\"}",
+    "response": 401,
+    "verdict": "bypass remains closed in a clean clone built only from committed source"
+  },
+
+  "loopback_verification": {
+    "clean_clone_backend": "127.0.0.1:8777",
+    "clean_clone_frontend": "127.0.0.1:3110",
+    "wildcard_or_public_bind": "none"
+  },
+
+  "observations_investigated_not_defects": [
+    {
+      "observation": "First browser attempt on port 3777 scored 81/86 with 168 console errors, all CORS-blocked",
+      "finding": "NOT_A_DEFECT — saathi/cors_policy.py enforces a fixed allowlist of local dev origins (3000, 3100, 3110, 3112, 8765). Port 3777 is not on it, so the backend correctly refused the origin. A strict origin allowlist is the right behaviour; the port choice was wrong. Rerun on the allowlisted 3110: 86/86."
+    },
+    {
+      "observation": "Clean clone shows 51 console errors and 25 failed requests vs 1 and 0 in the repair worktree",
+      "finding": "NOT_A_DEFECT, and the clean clone is the stricter of the two. 24 of the 25 are one shell widget polling the legacy /api/v1/connectors/approvals/pending, which the clean clone answers 401 while the repair worktree answers 200. Cause: saathi/server.py reads BAADAR_PASSWORD at import; _is_authed falls back to trusting loopback only when no password is configured. The app auto-writes a .env with a generated BAADAR_PASSWORD on first run. The repair worktree's backend started at 06:59:43, before its .env was written at 07:57:18, so it runs with an empty password and trusts loopback. The clean clone started after its own .env existed, so legacy endpoints correctly require a legacy session that the platform-only browser cert never establishes. All 86 platform assertions pass in both. .env is gitignored and was never committed."
+    },
+    {
+      "observation": "Clean clone skips 7 tests, the repair worktree skips 1",
+      "finding": "EXPECTED — optional-dependency and environment guards (ffmpeg, git checkout detection, a local Ollama model, slow-render opt-in). The repair worktree has more of those tools present. No skip was introduced by this branch."
+    }
+  ],
+
+  "cleanup": "Only the temporary clone created by this mission was deleted, and only after all evidence was preserved into docs/e2e-functional-audit/clean-clone/.",
+  "verdict": "CLEAN_CLONE_CERTIFIED"
+}
