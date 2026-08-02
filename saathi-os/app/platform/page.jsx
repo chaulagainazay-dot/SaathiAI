@@ -22,10 +22,13 @@ import {
   canCancelExecution,
   canPreviewRetention,
   canExportEvidence,
+  clearedAuthenticatedView,
   EVIDENCE_EXPORT_KINDS,
+  isSessionExpiryError,
   requiresDestructiveConfirmation,
   runtimeTone,
   safetyBadges,
+  SESSION_EXPIRED_MESSAGE,
 } from "@/lib/platform-ops";
 import { coreSignal, coreMetrics, SIGNAL, SIGNAL_TOKENS } from "@/lib/spatial";
 import { SpatialMap } from "@/components/spatial/SpatialMap";
@@ -57,7 +60,11 @@ async function plat(path, { method = "GET", body, token } = {}) {
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
     const msg = data?.detail?.message || data?.detail?.code || data?.error || res.statusText;
-    throw new Error(typeof msg === "string" ? msg : JSON.stringify(msg));
+    const err = new Error(typeof msg === "string" ? msg : JSON.stringify(msg));
+    // Carried so expired-session recovery can tell an authenticated 401 apart
+    // from a 403 or a 5xx (same contract as lib/platform-client.js).
+    err.status = res.status;
+    throw err;
   }
   return data;
 }
@@ -131,15 +138,60 @@ export default function PlatformPage() {
     plat("/health").then(setHealth).catch(() => {});
   }, []);
 
-  const persist = (t) => {
+  const persist = useCallback((t) => {
     setToken(t);
     setPlatformToken(t);
-  };
+  }, []);
+
+  /* Blank every authenticated field. Shared by logout and expiry recovery so
+     neither can drift out of sync and leave private data on screen. */
+  const clearAuthenticatedView = useCallback(() => {
+    const blank = clearedAuthenticatedView();
+    setMe(blank.me);
+    setProjects(blank.projects);
+    setApprovals(blank.approvals);
+    setConfig(blank.config);
+    setBindings(blank.bindings);
+    setExecutions(blank.executions);
+    setAttention(blank.attention);
+    setMetrics(blank.metrics);
+    setDiagnostics(blank.diagnostics);
+    setTimeline(blank.timeline);
+    setSelectedExecution(blank.selectedExecution);
+    setRetentionPlan(blank.retentionPlan);
+    setExportManifest(blank.exportManifest);
+    setEcho(blank.echo);
+    setSelectedModule(blank.selectedModule);
+  }, []);
+
+  /* The stored token is dead: drop it (canonical clear in lib/platform-client),
+     blank the authenticated surface, and let the `!token` branch render sign-in.
+     Clearing the token flips the refresh effect's guard off, so this cannot loop
+     — no redirect, no re-fetch, no second recovery pass. */
+  const recoverFromExpiredSession = useCallback(() => {
+    clearAuthenticatedView();
+    persist("");
+    setBusy(false);
+    setError(SESSION_EXPIRED_MESSAGE);
+  }, [clearAuthenticatedView, persist]);
+
+  /* Authenticated action handlers: recover on expiry, surface anything else. */
+  const handleAuthedError = useCallback(
+    (e) => {
+      if (isSessionExpiryError(e, { authenticated: true })) {
+        recoverFromExpiredSession();
+        return;
+      }
+      setError(String(e?.message || e));
+    },
+    [recoverFromExpiredSession]
+  );
 
   const refresh = useCallback(async (tok) => {
     if (!tok) return;
     setBusy(true);
     setError(null);
+    let expired = false;
     // Cold-start hardening (M58): the spatial home is heavier to compile, widening
     // the first-hit cold window. `get` retries transient failures; we warm up with a
     // single sequential /me call (absorbs the cold compile + CORS-activation window),
@@ -152,7 +204,10 @@ export default function PlatformPage() {
         } catch (e) {
           const transient = /Failed to fetch|NetworkError|load failed|ECONNREFUSED/i.test(String(e.message || e));
           if (i === attempts - 1 || !transient) {
-            if (!transient) setError((prev) => prev || String(e.message || e));
+            // Every call here carries `tok`, so a 401 really does mean the
+            // stored token is dead — recover instead of dead-ending on an error.
+            if (isSessionExpiryError(e, { authenticated: true })) expired = true;
+            else if (!transient) setError((prev) => prev || String(e.message || e));
             return null;
           }
           await new Promise((res) => setTimeout(res, Math.min(2500, 500 * (i + 1))));
@@ -161,6 +216,12 @@ export default function PlatformPage() {
       return null;
     };
     const m = await get("/me");
+    // Short-circuit before the fan-out: nine more doomed calls would only repeat
+    // the same 401 and delay the sign-in surface.
+    if (expired) {
+      recoverFromExpiredSession();
+      return;
+    }
     const [p, a, c, h, b, x, q, r, d] = await Promise.all([
       get("/projects"),
       get("/approvals?status=pending"),
@@ -172,6 +233,10 @@ export default function PlatformPage() {
       get("/runtime/metrics"),
       get("/runtime/diagnostics"),
     ]);
+    if (expired) {
+      recoverFromExpiredSession();
+      return;
+    }
     if (m) setMe(m);
     setProjects(p?.projects || []);
     setApprovals(a?.approvals || []);
@@ -183,7 +248,7 @@ export default function PlatformPage() {
     setMetrics(r?.metrics || null);
     setDiagnostics(d?.diagnostics || null);
     setBusy(false);
-  }, []);
+  }, [recoverFromExpiredSession]);
 
   useEffect(() => {
     if (token) refresh(token);
@@ -242,18 +307,7 @@ export default function PlatformPage() {
       /* ignore */
     }
     persist("");
-    setMe(null);
-    setProjects([]);
-    setApprovals([]);
-    setBindings([]);
-    setExecutions([]);
-    setAttention([]);
-    setMetrics(null);
-    setSelectedExecution(null);
-    setTimeline([]);
-    setDiagnostics(null);
-    setRetentionPlan(null);
-    setExportManifest(null);
+    clearAuthenticatedView();
   };
 
   const exportEvidence = async (kind) => {
@@ -265,7 +319,7 @@ export default function PlatformPage() {
       });
       setExportManifest(r.manifest || null);
     } catch (e) {
-      setError(String(e.message || e));
+      handleAuthedError(e);
     } finally {
       setBusy(false);
     }
@@ -279,7 +333,7 @@ export default function PlatformPage() {
       const r = await plat("/runtime/retention/preview", { method: "POST", token, body: {} });
       setRetentionPlan(r.retention || null);
     } catch (e) {
-      setError(String(e.message || e));
+      handleAuthedError(e);
     } finally {
       setBusy(false);
     }
@@ -295,7 +349,7 @@ export default function PlatformPage() {
       });
       await refresh(token);
     } catch (e) {
-      setError(String(e.message || e));
+      handleAuthedError(e);
     } finally {
       setBusy(false);
     }
@@ -312,7 +366,7 @@ export default function PlatformPage() {
       });
       setEcho(r);
     } catch (e) {
-      setError(String(e.message || e));
+      handleAuthedError(e);
     } finally {
       setBusy(false);
     }
@@ -327,7 +381,7 @@ export default function PlatformPage() {
       });
       setTimeline(result.timeline || []);
     } catch (e) {
-      setError(String(e.message || e));
+      handleAuthedError(e);
     }
   };
 
@@ -341,7 +395,7 @@ export default function PlatformPage() {
       });
       await refresh(token);
     } catch (e) {
-      setError(String(e.message || e));
+      handleAuthedError(e);
     } finally {
       setBusy(false);
     }
@@ -359,7 +413,7 @@ export default function PlatformPage() {
       await plat(`/agent-bindings/${binding.binding_id}/${action}`, { method: "POST", token });
       await refresh(token);
     } catch (e) {
-      setError(String(e.message || e));
+      handleAuthedError(e);
     } finally {
       setBusy(false);
     }
