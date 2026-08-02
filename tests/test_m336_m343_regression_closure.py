@@ -50,10 +50,18 @@ def test_launcher_still_fails_closed_when_backend_must_spawn_without_venv(tmp_pa
     The venv check must still fire there and must still abort non-zero.
     """
     home = tmp_path / "saathi-home"
+    # _resolve_repo only honours SAATHI_REPO when it contains saathi-os/, so the
+    # fake repo has to exist or the launcher silently falls back to the real one
+    # — and then finds the developer's own .venv and never reaches the check this
+    # test exists to prove. Mirrors the fake_repo setup in the frontend test
+    # below, minus the .venv, which is precisely what must be missing here.
+    fake_repo = tmp_path / "fake-repo"
+    (fake_repo / "saathi-os").mkdir(parents=True)
+    assert not (fake_repo / ".venv").exists()
     r = _run_launcher(
         ["start"], home,
         extra_env={
-            "SAATHI_REPO": str(tmp_path / "empty-repo"),
+            "SAATHI_REPO": str(fake_repo),
             "SAATHI_LOCAL_ASSESS_BACKEND": "free",
             "SAATHI_LOCAL_ASSESS_FRONTEND": "external-healthy 48062",
         },
