@@ -235,3 +235,104 @@ to these repairs, and were deliberately left unstaged.
 5. Review the loopback-binding change if LAN access to the dev UI is wanted — that
    should be an explicit decision, not a framework default.
 6. `git worktree prune` to clear the 100 stale M233 entries.
+
+---
+
+# Closure addendum — final functional closure, clean clone and publication
+
+Supersedes the limitations section above. Written after the closure mission.
+
+**THE STALE PUBLIC PORT-3000 LISTENER WAS INSPECTED AND SAFELY REMOVED OR PROVEN ABSENT.**
+
+**THE REPAIRED SAATHIOS APPLICATION BINDS TO LOOPBACK ONLY BY DEFAULT.**
+
+**THE TWO ENVIRONMENT-CAUSED BACKEND FAILURES WERE RERUN AND PASSED.**
+
+**THE FULL BACKEND SUITE PASSES WITH ZERO FAILURES.**
+
+**THE PASSWORDLESS LOGIN BYPASS REMAINS CLOSED.**
+
+**THE FULL APPLICATION PASSES FROM A CLEAN CLONE USING COMMITTED SOURCE ONLY.**
+
+**NO REQUIRED SOURCE FILE REMAINS UNTRACKED.**
+
+**VOICE AND MICROPHONE CLEANUP WORK ACROSS NAVIGATION AND LOGOUT.**
+
+**PLATFORM BARGE-IN STATUS IS ACCURATELY IMPLEMENTED OR DOCUMENTED.**
+
+**LAN ACCESS REMAINS DISABLED BY DEFAULT.**
+
+**OWNER AUDIO QUALITY REVIEW WAS NOT CLAIMED BY AUTOMATION.**
+
+**NO PUBLIC REGISTRATION WAS ENABLED.**
+
+**NO PROVIDER OR BROKER CONNECTION WAS CREATED.**
+
+**NO REAL FINANCIAL CREDENTIAL WAS REQUESTED, ACCEPTED OR STORED.**
+
+**NO FINANCIAL ACCOUNT, BALANCE OR POSITION WAS ACCESSED.**
+
+**NO ORDER OR LIVE EXECUTION WAS ENABLED.**
+
+**NO DEPLOYMENT OR RELEASE WAS PERFORMED.**
+
+**THE PULL REQUEST REMAINS DRAFT.**
+
+## Closure verdict
+
+`SAATHIOS_FULL_E2E_RECOVERY_CLEAN_CLONE_AND_PUBLICATION_CERTIFIED_WITH_LIMITATIONS`
+
+Maximum state: `PRIVATE_ALPHA_READY_FOR_OWNER_OPERATION_OFFLINE_INVITE_ONLY`
+
+## Closure results
+
+| Gate | Result |
+|---|---|
+| Stale listener | PID 12672 proven stale, SIGTERM, stopped first attempt |
+| Frontend bind | `127.0.0.1:3000` via committed `npm start`; LAN IP refuses |
+| Backend bind | `127.0.0.1` |
+| Public listeners | 0 |
+| Affected tests | 2 passed, 0 failed |
+| Full backend | 6027 passed, 1 skipped, **0 failed** |
+| Frontend | 371 passed |
+| Production build | pass |
+| Browser E2E | 86/86 |
+| Route sweep | 129/129 |
+| Degraded state | 52/52 |
+| API journey | 73/73 |
+| Security audit | 26/26 |
+| Clean clone backend | 6021 passed, 7 skipped, 0 failed |
+| Clean clone frontend | 371 passed |
+| Clean clone build | pass |
+| Clean clone browser E2E | 86/86 |
+| Forbidden external requests | 0 |
+
+## Defects fixed during closure
+
+| Id | Severity | Summary |
+|---|---|---|
+| DEFECT-007 | HIGH | Microphone could open over live playback — `runtime.speaking` tracked only the server session |
+| DEFECT-008 | HIGH | `pytest` declared in no manifest; the `.[dev]` extra the runbooks document did not exist |
+| DEFECT-009 | HIGH | `groq`, `PyJWT`, `PyYAML` imported unconditionally but undeclared |
+| DEFECT-010 | MEDIUM | `PyJWT` needed `[crypto]` for the RS256 JWKS path |
+| DEFECT-011 | MEDIUM | A launcher fail-closed test never established its own premise |
+
+## Correction to the earlier barge-in classification
+
+The previous report recorded `PLATFORM_BARGE_IN = NOT_IMPLEMENTED`. That was too
+harsh. `interrupt()` already cancelled output before capture. The real defect was
+narrower and is now fixed. Current accurate label:
+`VOICE_INPUT_INTERRUPTS_OUTPUT` — not full duplex, not acoustic ducking. See
+`VOICE_INTERRUPTION_DECISION.json`.
+
+## Remaining limitations
+
+| Item | Classification |
+|---|---|
+| Audible speech quality, Nepali pronunciation, volume | `OWNER_AUDIO_REVIEW_REQUIRED` — run `npm run audio:review` |
+| Interruption on *detected speech* during playback | `REQUIRES_PRODUCT_DECISION` — needs continuous capture and echo cancellation |
+| Real transcription accuracy | `BLOCKED_BY_ENVIRONMENT` — headless Chromium grants no microphone |
+| Local model chat generation | `BLOCKED_BY_ENVIRONMENT` — no provider configured |
+| LAN access | `LAN_ACCESS_ENABLED=false` by design; documented only |
+| 100 stale M233 worktrees | `git worktree prune` recommended |
+| PR base | The intended base was never published; see `PUBLICATION_AUDIT.json` |
