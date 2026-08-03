@@ -61,7 +61,7 @@ def test_missing_credential_reference_is_explicit_when_connectivity_requested():
 
 def test_raw_credential_is_rejected_in_favor_of_reference():
     with pytest.raises(TwentyConfigurationError, match="raw_credential_forbidden"):
-        TwentyConfig(credential_reference="Bearer super-secret").validate()
+        TwentyConfig(credential_reference="Bearer x").validate()
 
 
 def test_deterministic_company_pagination_and_schema_mapping():
