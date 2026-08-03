@@ -56,6 +56,17 @@ OWNER_ONLY_GATES = frozenset({Gate.OWNER_APPROVAL})
 #: Gates the security role must approve, whoever else reviews the subject.
 SECURITY_OWNED_GATES = frozenset({Gate.SECURITY_APPROVAL, Gate.RED_TEAM_REVIEW})
 
+#: Gates whose evidence is a *review of someone else's work*, so the evidence is
+#: authored by the approver rather than by the subject. Every other gate's
+#: evidence must be the subject's own output. Getting this backwards would let a
+#: reviewer's document stand in for the work it reviews, or vice versa.
+REVIEWER_AUTHORED_GATES = frozenset({
+    Gate.SECURITY_APPROVAL,
+    Gate.RED_TEAM_REVIEW,
+    Gate.CODE_REVIEW,
+    Gate.OWNER_APPROVAL,
+})
+
 
 class GateError(ValueError):
     def __init__(self, code: str, detail: str = ""):
@@ -182,10 +193,18 @@ class GateEngine:
                     f"expected={expected.value}:actual={artifact.kind}"
                 )
 
-        # 5. The evidence must actually be the subject's work.
-        if resolved and gate_enum not in OWNER_ONLY_GATES:
+        # 5. The evidence must come from the right party: the subject's own
+        #    output for most gates, the approver's review for review gates.
+        if resolved:
             authors = {a.authoring_agent for a in resolved}
-            if subject_author not in authors:
+            if gate_enum in REVIEWER_AUTHORED_GATES:
+                if approver not in authors:
+                    refusals.append(f"evidence_not_authored_by_reviewer:{approver}")
+                if subject_author in authors and subject_author != approver:
+                    refusals.append(
+                        f"review_evidence_authored_by_subject:{subject_author}"
+                    )
+            elif subject_author not in authors:
                 refusals.append(
                     f"evidence_not_authored_by_subject:{subject_author}"
                 )

@@ -317,6 +317,56 @@ def test_evidence_of_the_wrong_kind_is_refused(engine, mission):
     assert any(r.startswith("evidence_wrong_kind") for r in decision.refusals)
 
 
+def test_a_review_gate_wants_the_reviewers_document_not_the_subjects(engine, mission):
+    """security_approval evidence is the reviewer's review, not the subject's design."""
+    design = make_artifact(
+        mission_id=mission.dev_mission_id,
+        kind=ArtifactKind.SECURITY_REVIEW,
+        authoring_agent="security-governance",
+        repository_sha=SHA,
+        title="Security review of the design",
+        required_next_action="decide",
+        payload={
+            "verdict": "pass",
+            "trading_guardian_impact": "none",
+            "global_config_impact": "none",
+        },
+    )
+    engine.artifacts.put(design)
+    _, decision = engine.pass_gate(
+        mission.dev_mission_id,
+        Gate.SECURITY_APPROVAL,
+        approver="security-governance",
+        subject_author="architecture",
+        evidence_artifact_ids=[design.artifact_id],
+    )
+    assert decision.allowed
+
+
+def test_a_review_gate_refuses_evidence_written_by_the_subject(engine, mission):
+    review_by_subject = make_artifact(
+        mission_id=mission.dev_mission_id,
+        kind=ArtifactKind.CODE_REVIEW,
+        authoring_agent="code-review",
+        repository_sha=SHA,
+        title="Review",
+        required_next_action="fix",
+        worktree="/tmp/wt",
+        branch="agent/backend-engineering/dm001-x",
+        payload={"reviewed_author": "backend-engineering"},
+    )
+    engine.artifacts.put(review_by_subject)
+    decision = engine.evaluate(
+        mission.dev_mission_id,
+        Gate.CODE_REVIEW,
+        approver="architecture",
+        subject_author="code-review",
+        evidence_artifact_ids=[review_by_subject.artifact_id],
+    )
+    assert "evidence_not_authored_by_reviewer:architecture" in decision.refusals
+    assert "review_evidence_authored_by_subject:code-review" in decision.refusals
+
+
 def test_evidence_must_be_the_subjects_own_work(engine, mission):
     artifact = _findings(engine, mission)
     decision = engine.evaluate(
