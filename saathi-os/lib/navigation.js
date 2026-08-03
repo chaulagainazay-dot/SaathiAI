@@ -209,11 +209,11 @@ export const GLOBAL_NAV = [
     label: "Settings",
     href: "/settings",
     icon: "⚙",
-    description: "Theme, density, experience mode, profile",
+    description: "Theme, density, profile, and discoverable voice controls",
     mobilePriority: 5,
     global: true,
     accent: "#8B98B4",
-    aliases: ["/me"],
+    aliases: ["/me", "/settings/voice"],
   },
   {
     id: "evidence",

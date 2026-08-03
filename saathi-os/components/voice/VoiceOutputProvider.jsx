@@ -211,6 +211,7 @@ export function VoiceOutputProvider({ children }) {
       const url = URL.createObjectURL(blob);
       const audio = new Audio(url);
       audio.preload = "auto";
+      audio.volume = preferences.volume;
       audio.onplaying = () => dispatch({ type: "PLAYING" });
       audio.onended = () => dispatch({ type: "ENDED" });
       audio.onerror = () =>
@@ -222,7 +223,7 @@ export function VoiceOutputProvider({ children }) {
       audioRef.current = audio;
       dispatch({ type: "READY", operation });
     },
-    [clearAudioElements]
+    [clearAudioElements, preferences.volume]
   );
 
   const poll = useCallback(

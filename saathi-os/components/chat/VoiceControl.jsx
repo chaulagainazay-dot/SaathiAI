@@ -11,6 +11,7 @@
 // unit-level provider checks, and a full production build. Live microphone
 // permission + a real spoken utterance were NOT exercised in this session —
 // the sandboxed browser-automation environment cannot grant getUserMedia.
+import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { API_BASE, afetch } from "@/lib/api";
 
@@ -126,7 +127,8 @@ export default function VoiceControl({ conversationId, chatMode, agent,
     next();
   }, []);
 
-  // ── barge-in: stop playback the instant new speech is detected ─────────
+  // Recognition-result interruption only. This is not full acoustic barge-in:
+  // the browser must first report speech before playback can be cancelled.
   const stopPlayback = useCallback(() => {
     if (window?.speechSynthesis?.speaking) {
       const stopMs = performance.now() - bargeInStartRef.current;
@@ -289,6 +291,9 @@ export default function VoiceControl({ conversationId, chatMode, agent,
       {error && !permissionDenied && (
         <div style={{ color: "#ff8c8c" }} role="alert">{error}</div>
       )}
+      <div style={{ fontSize: 11, color: "#8fa0c4" }}>
+        Push-to-interrupt only · <Link href="/settings/voice">Voice setup and privacy</Link>
+      </div>
     </div>
   );
 }
