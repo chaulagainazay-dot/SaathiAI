@@ -270,10 +270,14 @@ system on top of those would create competing sources of truth for authority, ap
 audit.
 
 **Decision:** Add one new package, `saathi/agentdev/`, that sits strictly above
-`saathi/engineering/` with a one-way dependency. It reuses `SafetyLevel` and `Approval` from
-`saathi.safety`, the bound-approval shape and hash-chained ledger from `saathi.engineering`,
-the `docs/evidence/m<NNN>/` certification convention and the `tests/test_m<NNN>_*.py` test
-convention. It adds only what provably does not exist: development-role contracts with
+`saathi/engineering/` with a one-way dependency. Its only runtime imports outside the
+standard library are `saathi.safety` (`SafetyLevel`, `Approval`) and `saathi.config` (`ROOT`);
+what it takes from `saathi.engineering` is design contract rather than code — the
+bound-approval field set, the append-only history shape, the atomic-write-with-backup
+pattern, and the denials-re-applied-after-override settings rule, each re-implemented for
+different nouns. It follows the `docs/evidence/m<NNN>/` certification convention and the
+`tests/test_m<NNN>_*.py` test convention. It adds only what provably does not exist:
+development-role contracts with
 repository path scopes, a mission-bound worktree manager, deliberation artifacts, structured
 meetings with preserved disagreement, no-self-approval gates and offline behaviour
 evaluations.

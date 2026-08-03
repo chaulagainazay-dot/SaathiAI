@@ -149,32 +149,42 @@ separate from `saathi/engineering/`.
 Rationale for a sibling package rather than extending `engineering/` in place:
 `engineering/` governs *one coding agent executing one backlog item*. This
 milestone governs *many reasoning agents deliberating over one mission and
-optionally handing work to that coding agent*. They compose vertically —
-`agentdev` sits above `engineering` and calls into it — so keeping them
-separate preserves the existing module's certified surface (M20.0–M20.7
-evidence) while making the dependency direction explicit and one-way:
+optionally handing work to that coding agent*. Keeping them separate preserves
+the existing module's certified surface (M20.0–M20.7 evidence).
+
+**Actual runtime dependencies of `saathi/agentdev/`** — verified by reading
+every import statement in the package:
 
 ```
-saathi/agentdev/   (new — deliberation, roles, worktrees, meetings, gates)
-        │  depends on
-        ▼
-saathi/engineering/  (existing — approvals, ledger, settings, integrity)
-        │  depends on
-        ▼
-saathi/safety.py     (existing — SafetyLevel, Approval)
+saathi/agentdev/  ──imports──►  saathi.safety   (SafetyLevel, Approval)
+                  ──imports──►  saathi.config   (ROOT)
+                  ──imports──►  standard library only
 ```
 
-`agentdev` never imports upward. `engineering/` is not modified.
+That is the complete list. `agentdev` does **not** import
+`saathi.engineering`, `saathi.missions`, `saathi.platform` or any product
+module. What it takes from `saathi/engineering/` is *design contract*, not
+code: the bound-approval field set, the append-only ledger shape, the atomic
+`.tmp` → `os.replace` + `.bak` write pattern, and the
+denials-re-applied-after-override settings rule are each re-implemented for the
+different nouns this layer handles. Where a future milestone hands work to a
+coding agent, it will call `EngineeringStore` directly rather than duplicating
+its lifecycle.
+
+The dependency direction is one-way and asserted by a test: nothing under
+`saathi/engineering/`, `saathi/missions/` or `saathi/platform/` imports
+`saathi.agentdev`. `engineering/` is not modified.
 
 ### 3.2 What is extended, not rebuilt
 
 | New need | Reused SaathiOS component | How |
 |---|---|---|
-| Authority levels for dev-agent capabilities | `saathi.safety.SafetyLevel`, `Approval` | Each role's `max_authority` is a `SafetyLevel`; no parallel enum |
-| Approval semantics | `engineering.approval` binding fields | Gate records reuse the same bound shape: repository + branch + starting commit + subject + actor + TTL + single-use |
-| Tamper-evident audit | `engineering.session_ledger.SessionLedger` | Mission events append to a ledger of the same hash-chained form |
-| Disabled-by-default flags | `engineering.settings` pattern | `agentdev` settings follow the same "env can enable convenience, never authority" rule, with the same hard-false denials |
-| Store durability | `engineering.store.EngineeringStore` locking / `.bak` / atomic write pattern | Mission artifact store uses the same primitives |
+| Authority levels for dev-agent capabilities | `saathi.safety.SafetyLevel`, `Approval` | **Imported.** Each role's `max_authority` is a `SafetyLevel`; no parallel enum |
+| Repository root | `saathi.config.ROOT` | **Imported.** |
+| Approval semantics | `engineering.approval` binding fields | *Pattern only.* Gate records carry the same bound shape — subject, approver, evidence, decided-at — for a different subject |
+| Tamper-evident history | `engineering.session_ledger.SessionLedger` | *Pattern only.* Mission `history` is append-only with the same event vocabulary |
+| Disabled-by-default flags | `engineering.settings` | *Pattern only.* Same "env can enable convenience, never authority" rule, with its own twelve hard-false denials |
+| Store durability | `engineering.store.EngineeringStore` | *Pattern only.* Atomic `.tmp` → `os.replace` with `.bak` retention, re-implemented for three stores |
 | Evidence convention | `docs/evidence/m<NNN>/` | Mission evidence written to `docs/evidence/m344_m351/` |
 | Decision record convention | `docs/DECISIONS.md` | New ADR-012 appended |
 | Test convention | `tests/test_m<NNN>_*.py` | `tests/test_m344_m351_*.py` |

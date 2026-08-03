@@ -205,5 +205,32 @@
     "deletions": 0,
     "stale_worktrees_removed": 0,
     "denials_forced_false": 12
+  },
+  "validation": {
+    "agentdev_tests": {
+      "passed": 346,
+      "failed": 0,
+      "duration_s": 7.83
+    },
+    "existing_engineering_and_agent_regressions": {
+      "passed": 144,
+      "failed": 0,
+      "duration_s": 5.02
+    },
+    "existing_safety_governance_security_trading": {
+      "passed": 1090,
+      "failed": 0,
+      "duration_s": 174.96
+    }
+  },
+  "dependencies": {
+    "runtime_imports_outside_stdlib": [
+      "saathi.safety",
+      "saathi.config"
+    ],
+    "imports_saathi_engineering": false,
+    "imports_trading_guardian": false,
+    "modules_outside_agentdev_importing_agentdev": 0,
+    "note": "engineering/ contributes design contracts, not code; a future coding handoff will call EngineeringStore directly."
   }
 }

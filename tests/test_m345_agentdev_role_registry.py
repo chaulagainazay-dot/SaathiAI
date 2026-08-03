@@ -154,6 +154,77 @@ def test_registry_reuses_saathi_safety_and_defines_no_parallel_enum():
             )
 
 
+def test_agentdev_imports_nothing_beyond_safety_and_config():
+    """ADR-012: the package's only non-stdlib dependencies are declared here.
+
+    Growing this list is a governance decision, not an implementation detail.
+    """
+    import ast
+
+    package = Path(roles_mod.__file__).parent
+    external: set[str] = set()
+    for path in sorted(package.rglob("*.py")):
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ImportFrom) and node.module:
+                external.add(node.module)
+            elif isinstance(node, ast.Import):
+                external.update(alias.name for alias in node.names)
+
+    saathi_imports = {m for m in external if m.startswith("saathi")}
+    outside_package = {
+        m for m in saathi_imports if not m.startswith("saathi.agentdev")
+    }
+    assert outside_package == {"saathi.safety", "saathi.config"}, outside_package
+
+
+def test_no_saathi_module_outside_agentdev_imports_agentdev():
+    """ADR-012 rule 3: the dependency direction is one-way."""
+    import ast
+
+    package_root = Path(roles_mod.__file__).parent
+    saathi_root = package_root.parent
+    offenders: list[str] = []
+    for path in saathi_root.rglob("*.py"):
+        if package_root in path.parents or path.parent == package_root:
+            continue
+        try:
+            tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        except (SyntaxError, UnicodeDecodeError):  # pragma: no cover
+            continue
+        for node in ast.walk(tree):
+            module = ""
+            if isinstance(node, ast.ImportFrom) and node.module:
+                module = node.module
+            elif isinstance(node, ast.Import):
+                module = ",".join(a.name for a in node.names)
+            if "agentdev" in module:
+                offenders.append(f"{path.relative_to(saathi_root)}:{module}")
+    assert not offenders, offenders
+
+
+def test_agentdev_does_not_import_trading_guardian():
+    """The Trading Guardian is untouched by this milestone."""
+    import ast
+
+    package = Path(roles_mod.__file__).parent
+    offenders: list[str] = []
+    for path in sorted(package.rglob("*.py")):
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        for node in ast.walk(tree):
+            module = ""
+            if isinstance(node, ast.ImportFrom) and node.module:
+                module = node.module
+            elif isinstance(node, ast.Import):
+                module = ",".join(a.name for a in node.names)
+            if any(
+                marker in module
+                for marker in ("trading_guardian", "platform.tg", "paper_trading")
+            ):
+                offenders.append(f"{path.name}:{module}")
+    assert not offenders, offenders
+
+
 def test_summary_reports_the_registry_shape():
     s = registry_summary()
     assert s["count"] == 14

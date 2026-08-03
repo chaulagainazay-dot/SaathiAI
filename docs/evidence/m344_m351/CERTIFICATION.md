@@ -76,9 +76,10 @@ and dirty-tree removal.
 
 | SaathiOS system | Location | How it was reused |
 |---|---|---|
-| Runtime governance engine | `saathi/safety.py` | `SafetyLevel` and `Approval` are the only authority vocabulary; a test asserts no parallel enum exists |
-| Governed engineering orchestrator | `saathi/engineering/` | Left unmodified. `agentdev` sits above it with a one-way dependency; its bound-approval shape, hash-chained ledger and disabled-by-default settings pattern are the models followed |
-| Durable store primitives | `saathi/engineering/store.py` | Atomic `.tmp` → `os.replace` writes with `.bak` retention, copied into all three `agentdev` stores |
+| Runtime governance engine | `saathi/safety.py` | **Imported.** `SafetyLevel` and `Approval` are the only authority vocabulary; a test asserts no parallel enum exists |
+| Repository root | `saathi/config.py` | **Imported.** |
+| Governed engineering orchestrator | `saathi/engineering/` | Left unmodified and **not imported**. Its bound-approval field set, append-only history shape and disabled-by-default settings rule are design contracts this layer follows for different nouns. A future handoff to a coding agent will call `EngineeringStore` directly rather than duplicate its lifecycle |
+| Durable store primitives | `saathi/engineering/store.py` | *Pattern only.* Atomic `.tmp` → `os.replace` with `.bak` retention, re-implemented in all three `agentdev` stores |
 | Milestone evidence convention | `docs/evidence/m<NNN>/` | This pack |
 | Decision record convention | `docs/DECISIONS.md` | ADR-012 appended |
 | Test convention | `tests/test_m<NNN>_*.py`, pytest `asyncio_mode=auto` | Seven new suites |
