@@ -1,14 +1,23 @@
 {
   "schema_version": "1.0",
-  "captured_at": "2026-08-03T16:50:29+05:45",
+  "captured_at": "2026-08-03T16:52:15+05:45",
   "milestone": "M360",
   "branch": "evaluation/twenty-readonly-sandbox",
   "starting_sha": "1008dc8d8fbd68a7ab4965d9c400f004852937fb",
   "prepublication_head_sha": "5fa3076d49a4f3f8b95379bb783c7057ffda68ef",
   "publication": {
-    "state": "PENDING_PUSH",
+    "state": "DRAFT_BRANCH_AND_PULL_REQUEST_PUBLISHED",
     "remote": "origin",
-    "pull_request": null,
+    "published_head_before_metadata_commit": "5420d1694fb502db25b027810d792ae186e4930c",
+    "pull_request": {
+      "number": 15,
+      "url": "https://github.com/chaulagainazay-dot/SaathiAI/pull/15",
+      "title": "draft: add offline read-only Twenty CRM integration foundation",
+      "state": "OPEN",
+      "draft": true,
+      "base": "milestone/m312-m319-connectivity-governance",
+      "head": "evaluation/twenty-readonly-sandbox"
+    },
     "force_push_required": false,
     "selected_base": "milestone/m312-m319-connectivity-governance",
     "selected_base_sha": "6639ca730ece11bce160a55a237fcaff8df3058c",
@@ -97,6 +106,6 @@
     "deployment": false,
     "trading_changed": false
   },
-  "current_verdict": "TWENTY_OFFLINE_FOUNDATION_READY_FOR_OWNER_ACCEPTANCE",
+  "current_verdict": "TWENTY_OFFLINE_FOUNDATION_PUBLISHED_OWNER_ACCEPTANCE_PENDING",
   "maximum_current_state": "OFFLINE_FOUNDATION_ONLY_RUNTIME_PENDING"
 }

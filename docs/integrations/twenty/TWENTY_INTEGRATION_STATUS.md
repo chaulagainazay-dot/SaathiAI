@@ -11,7 +11,7 @@ historical verdicts are preserved rather than rewritten.
 | Implementation | `OFFLINE_FOUNDATION_COMPLETE` |
 | Capability boundary | `OFFLINE_READ_ONLY_INTEGRATION_FOUNDATION` |
 | Owner review | `PENDING` |
-| Publication | `LOCAL_ONLY` until the publication commit is pushed |
+| Publication | `DRAFT_BRANCH_PUBLISHED`; Draft PR #15 is open |
 | Runtime | `TWENTY_RUNTIME_NOT_DEPLOYED` |
 | Provider connectivity | `NO_LIVE_PROVIDER_CONNECTIVITY` |
 | Write authority | `NO_CRM_WRITE_AUTHORITY` |
@@ -23,9 +23,10 @@ historical verdicts are preserved rather than rewritten.
 | Production | `NOT_AUTHORIZED` |
 
 The current summary verdict is
-`TWENTY_OFFLINE_READ_ONLY_FOUNDATION_READY_FOR_OWNER_ACCEPTANCE`. It must not
-be changed to an acceptance verdict until an owner identity and affirmative
-decision are recorded in [OWNER_REVIEW.md](OWNER_REVIEW.md).
+`TWENTY_OFFLINE_FOUNDATION_PUBLISHED_OWNER_ACCEPTANCE_PENDING`. Publication is
+not owner acceptance. This verdict must not be changed to an acceptance verdict
+until an owner identity and affirmative decision are recorded in
+[OWNER_REVIEW.md](OWNER_REVIEW.md).
 
 The historical runtime-evaluation verdict remains
 `TWENTY_SETUP_BLOCKED_BY_RESOURCE_CONSTRAINTS`. That verdict means the offline
