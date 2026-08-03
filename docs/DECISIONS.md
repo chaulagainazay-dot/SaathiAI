@@ -19,6 +19,7 @@ This file records every significant architectural decision made during the desig
 | ADR-009 | Versioned documentation (v1.x/) over single rolling file | 2026-07 | Accepted |
 | ADR-010 | HyperFrames for video assembly over FFmpeg-direct | 2026-07 | Accepted |
 | ADR-011 | Mission certification is atomic and evidence-gated | 2026-07 | Accepted |
+| ADR-012 | Development agents live in `saathi/agentdev/`, above `saathi/engineering/` | 2026-08 | Accepted |
 
 ---
 
@@ -250,6 +251,46 @@ partial certification are rejected.
 - **Client certification:** would make browser state authoritative.
 - **Task-completion-only certification:** omits verification and checkpoint freshness.
 - **Separate certificate/state writes:** permits partial terminal state after failure.
+
+---
+
+## ADR-012: Development agents live in `saathi/agentdev/`, above `saathi/engineering/`
+
+**Date:** 2026-08
+**Status:** Accepted
+**Milestones:** M344–M351
+
+**Context:** The multi-agent development environment needs role contracts, mission-bound
+worktree isolation, structured meetings, durable deliberation artifacts, independent review
+gates and agent-behaviour evaluation. SaathiOS already owns a governed engineering
+orchestrator (`saathi/engineering/`, M20.0–M20.7), a runtime agent registry
+(`saathi/agent_registry.py`), a deterministic governance engine (`saathi/safety.py`), four
+product mission systems and a universal evidence schema. Building a second agent operating
+system on top of those would create competing sources of truth for authority, approvals and
+audit.
+
+**Decision:** Add one new package, `saathi/agentdev/`, that sits strictly above
+`saathi/engineering/` with a one-way dependency. It reuses `SafetyLevel` and `Approval` from
+`saathi.safety`, the bound-approval shape and hash-chained ledger from `saathi.engineering`,
+the `docs/evidence/m<NNN>/` certification convention and the `tests/test_m<NNN>_*.py` test
+convention. It adds only what provably does not exist: development-role contracts with
+repository path scopes, a mission-bound worktree manager, deliberation artifacts, structured
+meetings with preserved disagreement, no-self-approval gates and offline behaviour
+evaluations.
+
+**Rationale:**
+- `saathi/engineering/` governs one coding agent executing one backlog item; this layer governs many reasoning agents deliberating over one mission. They compose vertically rather than overlapping.
+- Keeping `engineering/` unmodified preserves its M20.0–M20.7 certification surface.
+- A one-way dependency makes the authority chain explicit and testable: no module under `engineering/`, `missions/` or `platform/` may import `agentdev`.
+- `AgentContract` in the runtime registry has no path scope, prohibited actions, independent reviewer or escalation target. Adding development-only fields to it would couple two unrelated lifecycles.
+- ECC is adopted as principles only. No ECC file, module, hook, dependency or managed artifact enters this repository; it stays a read-only reference outside it.
+
+**Rejected alternatives:**
+- **Extend `saathi/engineering/` in place:** would enlarge a certified module with a different lifecycle and blur "one coding agent" versus "a council of reasoning agents".
+- **Extend `saathi/agent_registry.py`:** conflates runtime product agents with development agents; the two need different fields, different authority and different review rules.
+- **Reuse `saathi/missions/`:** a development mission has different participants, artifacts and terminal states than a product mission; sharing the store would make "mission" ambiguous.
+- **Import ECC's orchestration, hooks or Memory Vault:** creates a second source of truth for governance and a third-party supply-chain dependency inside the security boundary.
+- **Reuse milestone numbers M328–M335 as specified:** those numbers are already taken by shipped milestones; renumbering to M344–M351 preserves single-identity milestones.
 
 ---
 
