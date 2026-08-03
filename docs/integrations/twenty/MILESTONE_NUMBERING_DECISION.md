@@ -31,6 +31,8 @@ M360–M368 is the next contiguous free range.
 | Milestone | Scope |
 | --- | --- |
 | M360 | Offline foundation terminology, owner-review record, roadmap placement, and draft publication |
+| M361A | Pre-runtime readiness verification checkpoint; does not start M361 |
+| M361B | Runtime-readiness gap-resolution checkpoint; does not start M361 |
 | M361 | Private runtime-host approval and preparation |
 | M362 | Pinned isolated Twenty sandbox deployment |
 | M363 | Read-only REST/health provider connectivity validation |

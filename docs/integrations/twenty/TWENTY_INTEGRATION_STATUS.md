@@ -23,11 +23,14 @@ historical verdicts are preserved rather than rewritten.
 | Licensing boundary | `API_SDK_WEBHOOK_APP_EXTENSION_BOUNDARY`; `NO_TWENTY_CORE_EMBEDDING` |
 | Production | `NOT_AUTHORIZED` |
 
-M361A pre-runtime readiness is `TWENTY_RUNTIME_READINESS_INCOMPLETE` and
-`M361_ENTRY_NOT_READY`. The source pin and architecture are ready, but the
-required CI check, immutable runtime image set, host selection, operator/billing
-fields, private webhook feasibility, and approvals remain unresolved. This
-checkpoint does not start M361 or alter the capability state.
+M361B is `TWENTY_RUNTIME_GAPS_PARTIALLY_RESOLVED` and
+`M361_ENTRY_NOT_READY`. It records `M361A_COMPLETE_WITH_LIMITATIONS`, formally
+classifies the required CI failure as a reproducible pre-existing baseline defect,
+captures partial immutable image/architecture evidence, defers live webhook
+validation, and bounds the read-only auth model. The required CI repair,
+application source/image relationship, host TLS component, owner fields, and
+approvals remain unresolved. This checkpoint does not start M361 or alter the
+capability state.
 
 The owner decision is
 `TWENTY_OFFLINE_FOUNDATION_OWNER_ACCEPTED_WITH_LIMITATIONS`. The current summary
@@ -81,6 +84,10 @@ own only replaceable CRM storage and CRM-native behavior behind supported APIs.
 - [Machine-readable M360 owner decision](evidence/M360_OWNER_ACCEPTANCE.json)
 - [M361A pre-runtime readiness](M361A_PRE_RUNTIME_READINESS.md)
 - [Machine-readable M361A audit](evidence/M361A_READINESS_AUDIT.json)
+- [M361B runtime gap resolution](M361B_RUNTIME_GAP_RESOLUTION.md)
+- [M361B machine-readable audit](evidence/M361B_GAP_RESOLUTION_AUDIT.json)
+- [Runtime digest manifest](evidence/TWENTY_RUNTIME_DIGEST_MANIFEST.json)
+- [Owner runtime decision template](TWENTY_RUNTIME_OWNER_DECISION_TEMPLATE.md)
 
 ## Separate runtime decision still required
 

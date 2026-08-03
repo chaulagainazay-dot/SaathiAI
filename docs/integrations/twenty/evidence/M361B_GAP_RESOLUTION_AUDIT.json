@@ -1,0 +1,124 @@
+{
+  "schema_version": "1.0",
+  "assessment_id": "M361B-TWENTY-RUNTIME-GAP-RESOLUTION-2026-08-03",
+  "captured_at": "2026-08-03T13:07:51Z",
+  "repository": "chaulagainazay-dot/SaathiAI",
+  "branch": "evaluation/twenty-readonly-sandbox",
+  "starting_sha": "7b7d4a422c54c40111f3755e7775445f5cd75c9f",
+  "terminal_verdict": "TWENTY_RUNTIME_GAPS_PARTIALLY_RESOLVED",
+  "m361_entry_decision": "M361_ENTRY_NOT_READY",
+  "runtime_recommendation": "HOST_ARCHITECTURE_DECISION_PENDING",
+  "recommended_next_action": "RESOLVE_REMAINING_TECHNICAL_GAPS",
+  "owner_decision": {
+    "m361a": "M361A_COMPLETE_WITH_LIMITATIONS",
+    "m361_entry": "M361_ENTRY_NOT_READY",
+    "runtime_host_approval": "RUNTIME_HOST_APPROVAL_NOT_GRANTED",
+    "host_purchase_or_provisioning": "HOST_PURCHASE_OR_PROVISIONING_NOT_AUTHORIZED",
+    "m361_m368": "M361_M368_NOT_STARTED"
+  },
+  "ci": {
+    "output": "CI_GAP_REQUIRES_SEPARATE_REPAIR",
+    "classification": "PRE_EXISTING_BASELINE_FAILURE",
+    "base_run_id": 30553847890,
+    "m360_run_id": 30809497607,
+    "m361a_run_id": 30812211970,
+    "test": "tests/test_ops.py::test_release_gate_passes_baseline",
+    "exit_code": 3,
+    "local_reproduced": true,
+    "twenty_changed_relevant_paths": false
+  },
+  "supply_chain": {
+    "image_digest_set": "IMAGE_DIGEST_SET_PARTIAL",
+    "dependency_pinning": "DEPENDENCY_PINNING_PARTIAL",
+    "manifest": "TWENTY_RUNTIME_DIGEST_MANIFEST.json",
+    "image_pull_performed": false
+  },
+  "architecture": {
+    "result": "ARM64_COMPATIBILITY_SUPPORTED_BY_MANIFESTS",
+    "twenty_arm64_manifest": true,
+    "postgres_arm64_manifest": true,
+    "redis_arm64_manifest": true,
+    "runtime_validated": false
+  },
+  "webhook": {
+    "conclusion": "LIVE_WEBHOOK_VALIDATION_SHOULD_BE_DEFERRED",
+    "m361_m364_strategy": "NO_WEBHOOK_PENDING_OWNER_APPROVAL",
+    "offline_contract_tests_are_live_delivery_proof": false,
+    "public_exception_granted": false
+  },
+  "authentication": {
+    "conclusion": "AUTH_MODEL_READY_WITH_LIMITATIONS",
+    "core_read_provider_enforcement": "READ_ONLY_BY_ROLE_BUT_NOT_ENDPOINT",
+    "metadata_read_provider_enforcement": "UNKNOWN",
+    "credential_created": false,
+    "endpoint_called": false
+  },
+  "entry_matrix_counts": {
+    "PASS": 7,
+    "FAIL": 2,
+    "PENDING_OWNER_DECISION": 17,
+    "PENDING_EXTERNAL_SELECTION": 0,
+    "PENDING_SEPARATE_REPAIR": 1,
+    "UNKNOWN": 1,
+    "NOT_APPLICABLE": 0
+  },
+  "owner_fields_unfilled": [
+    "runtime_option",
+    "provider_or_operator",
+    "host_architecture",
+    "host_region",
+    "cost_ceiling",
+    "currency",
+    "payment_responsibility",
+    "billing_alert_threshold",
+    "start_date",
+    "expiry_date",
+    "maximum_runtime_hours",
+    "shutdown_trigger",
+    "removal_deadline",
+    "data_restrictions",
+    "network_restrictions",
+    "webhook_option",
+    "public_exposure_exception",
+    "runtime_operator",
+    "security_reviewer",
+    "evidence_reviewer",
+    "cost_owner",
+    "image_digest_manifest",
+    "authentication_role",
+    "credential_expiry",
+    "backup_location",
+    "backup_retention",
+    "abort_conditions",
+    "approval_id",
+    "decision"
+  ],
+  "authority": {
+    "runtime_host_approved": false,
+    "host_provisioning_authorized": false,
+    "production_authorized": false,
+    "crm_write_authority": false,
+    "public_webhook_authorized": false,
+    "m361_started": false
+  },
+  "non_actions": {
+    "runtime_installed_or_started": false,
+    "container_runtime_installed": false,
+    "image_pulled_or_built": false,
+    "host_or_account_created": false,
+    "cost_incurred": false,
+    "credential_or_oauth_created": false,
+    "keychain_accessed": false,
+    "connectivity_attempted": false,
+    "real_data_used": false,
+    "crm_read_or_write_performed": false,
+    "public_webhook_exposed": false,
+    "authority_changed": false,
+    "loop_state_changed": false,
+    "merge_tag_release_or_deployment": false
+  },
+  "required_end_state": [
+    "M361_NOT_STARTED",
+    "RUNTIME_HOST_APPROVAL_STILL_REQUIRED"
+  ]
+}

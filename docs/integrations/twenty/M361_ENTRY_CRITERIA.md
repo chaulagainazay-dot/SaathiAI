@@ -1,33 +1,41 @@
 # M361 entry criteria and abort controls
 
 M361 may start only when every mandatory entry row is `PASS`. A recommendation,
-document, or owner acceptance of M360 is not runtime-host approval.
+formal gap classification, manifest capture, or owner acceptance of M360/M361A
+is not runtime-host approval. This matrix reflects M361B.
 
 ## Entry matrix
 
 | Entry criterion | State | Evidence or missing decision |
 | --- | --- | --- |
 | Owner acceptance of M360 | `PASS` | M360 owner decision for reviewed SHA `a0e4fa5` |
+| Owner disposition of M361A | `PASS` | `M361A_COMPLETE_WITH_LIMITATIONS` recorded in M361B |
+| Prior CI state classified | `PASS` | reproducible `PRE_EXISTING_BASELINE_FAILURE`; not caused by Twenty |
+| Required CI repair or policy waiver complete | `PENDING_SEPARATE_REPAIR` | required reliability check remains red; repair belongs to authoritative baseline |
+| Source commit pinned | `PASS` | clean SHA `37f1fe17ab48269384cffb774f82f096abe3863a` |
+| Image digest manifest complete | `FAIL` | candidate digests captured, but Twenty source/image relationship and private TLS component are unresolved |
+| Dependency pinning acceptable | `FAIL` | lockfile/toolchain recorded; migrations and source-build bootstrap inputs remain unproven |
+| Architecture compatibility acceptable | `PASS` | candidate Twenty/PostgreSQL/Redis manifests include linux/arm64 and linux/amd64; runtime remains untested |
 | Runtime option selected | `PENDING_OWNER_DECISION` | private temporary host is recommended, not selected |
 | Runtime-host approval granted | `PENDING_OWNER_DECISION` | explicitly not granted |
 | Operator assigned | `PENDING_OWNER_DECISION` | human `RUNTIME_OPERATOR` unassigned |
-| Cost ceiling assigned | `PENDING_OWNER_DECISION` | value/currency absent |
-| Payment responsibility assigned | `PENDING_OWNER_DECISION` | `COST_OWNER` unassigned |
-| Start date assigned | `PENDING_OWNER_DECISION` | absent |
-| Expiry date assigned | `PENDING_OWNER_DECISION` | absent |
-| Removal deadline assigned | `PENDING_OWNER_DECISION` | absent |
-| Source commit pinned | `PASS` | clean SHA `37f1fe17ab48269384cffb774f82f096abe3863a` |
-| Image digest pinned | `FAIL` | Twenty/PostgreSQL/Redis immutable digest set absent |
-| Synthetic-data manifest complete | `PASS` | `SYNTHETIC_DATA_MANIFEST.md` |
+| Security reviewer assigned | `PENDING_OWNER_DECISION` | human `SECURITY_REVIEWER` unassigned |
+| Evidence reviewer assigned | `PENDING_OWNER_DECISION` | human `EVIDENCE_REVIEWER` unassigned |
+| Cost owner assigned | `PENDING_OWNER_DECISION` | human `COST_OWNER` unassigned |
+| Cost ceiling and currency approved | `PENDING_OWNER_DECISION` | values absent |
+| Start and expiry dates approved | `PENDING_OWNER_DECISION` | values absent |
+| Maximum runtime duration approved | `PENDING_OWNER_DECISION` | value absent |
+| Removal deadline approved | `PENDING_OWNER_DECISION` | value absent |
 | Network policy approved | `PENDING_OWNER_DECISION` | design exists; host-specific rules unapproved |
-| Authentication model approved | `PENDING_OWNER_DECISION` | design exists; endpoint enforcement unproven |
+| Authentication model approved | `PENDING_OWNER_DECISION` | `AUTH_MODEL_READY_WITH_LIMITATIONS`; Metadata provider enforcement remains unknown |
+| Synthetic-data manifest approved | `PENDING_OWNER_DECISION` | complete design exists; owner approval absent |
+| Webhook strategy approved or explicitly deferred | `PENDING_OWNER_DECISION` | M361B recommends no webhook in M361–M364 |
 | Backup plan approved | `PENDING_OWNER_DECISION` | design exists; provider/operator absent |
 | Removal plan approved | `PENDING_OWNER_DECISION` | deadline/operator absent |
 | Abort conditions approved | `PENDING_OWNER_DECISION` | catalogue exists; roles/thresholds unapproved |
 | Private host meets baseline | `UNKNOWN` | no host selected or measured |
 | SaathiOS authority systems unchanged | `PASS` | readiness work is documentation/evidence only |
 | PR and branch state understood | `PASS` | branch published; PR #15 only and Draft |
-| Relevant CI status acceptable | `FAIL` | required reliability run failed in classified unrelated ops baseline |
 
 Current decision: `M361_ENTRY_NOT_READY`.
 
@@ -86,5 +94,7 @@ backup_retention_and_location
 abort_conditions
 ```
 
-Additionally, the required CI failure and private-webhook feasibility must be
-resolved or bounded before their affected phases can pass entry.
+Additionally, the owner must select an architecture and private TLS mechanism,
+approve webhook deferral or a separate exception, and acknowledge the separate CI
+repair and partial image/source relationship. The fillable authoritative package
+is `TWENTY_RUNTIME_OWNER_DECISION_TEMPLATE.md`.
