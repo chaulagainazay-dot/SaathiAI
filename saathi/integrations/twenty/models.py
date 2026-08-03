@@ -94,4 +94,15 @@ class TwentyIntegrationStatus:
     read_only: bool = True
     write_authority: bool = False
     webhook_execution_authority: bool = False
-    evidence_state: str = "FIXTURE_CONTRACTS_ONLY"
+    implementation_state: str = "OFFLINE_READ_ONLY_INTEGRATION_FOUNDATION"
+    owner_review_state: str = "PENDING"
+    rollout_states: tuple[str, ...] = ("OFF", "SHADOW")
+    connectivity_state: str = "NO_LIVE_PROVIDER_CONNECTIVITY"
+    runtime_state: str = "TWENTY_RUNTIME_NOT_DEPLOYED"
+    authority_state: str = "NO_CRM_WRITE_AUTHORITY"
+    webhook_capability: str = "VERIFIED_EVENTS_TO_OBSERVATIONS_ONLY_NO_DIRECT_EXECUTION"
+    data_classification: str = "SYNTHETIC_DATA_ONLY"
+    deployment_boundary: str = "TWENTY_SEPARATE_REPLACEABLE_SERVICE"
+    licensing_boundary: str = "API_SDK_WEBHOOK_APP_EXTENSION_BOUNDARY_NO_TWENTY_CORE_EMBEDDING"
+    production_authorization: str = "NOT_AUTHORIZED"
+    evidence_state: str = "SOURCE_INSPECTED_FIXTURE_CONTRACTS_ONLY"

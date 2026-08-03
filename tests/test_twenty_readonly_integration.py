@@ -131,6 +131,21 @@ def test_manifest_composes_with_canonical_registry_and_never_grants_authority():
     assert manifest.secret_references == ("TWENTY_API_CREDENTIAL_REFERENCE",)
 
 
+def test_canonical_status_terms_do_not_overstate_runtime_or_authority():
+    client, _ = fixture_client()
+    status = client.status()
+    assert status.implementation_state == "OFFLINE_READ_ONLY_INTEGRATION_FOUNDATION"
+    assert status.owner_review_state == "PENDING"
+    assert status.rollout_states == ("OFF", "SHADOW")
+    assert status.connectivity_state == "NO_LIVE_PROVIDER_CONNECTIVITY"
+    assert status.runtime_state == "TWENTY_RUNTIME_NOT_DEPLOYED"
+    assert status.authority_state == "NO_CRM_WRITE_AUTHORITY"
+    assert status.webhook_capability == "VERIFIED_EVENTS_TO_OBSERVATIONS_ONLY_NO_DIRECT_EXECUTION"
+    assert status.data_classification == "SYNTHETIC_DATA_ONLY"
+    assert status.deployment_boundary == "TWENTY_SEPARATE_REPLACEABLE_SERVICE"
+    assert status.production_authorization == "NOT_AUTHORIZED"
+
+
 def signed_webhook(*, event="company.updated", event_id="evt_demo", scope=SCOPE, secret="fixture-secret", timestamp="1000000000000"):
     raw = json.dumps({"event": event, "data": {"id": "demo-company-hospital", "name": "Demo Hospital"}}, separators=(",", ":")).encode()
     signature = hmac.new(secret.encode(), timestamp.encode() + b":" + raw, hashlib.sha256).hexdigest()

@@ -57,9 +57,8 @@ credential subsystem. The current implementation does not resolve or use a token
 
 ## Sandbox operations
 
-Prepared files live at
-`/Users/macbookpro/dev-toolkits/twenty-saathios-sandbox`, outside SaathiOS and the
-upstream clone. The topology binds only `127.0.0.1:3020`, has an internal Docker
+Prepared files live at `$TWENTY_SANDBOX`, outside `$SAATHIOS_REPO` and
+`$TWENTY_CLONE`. The topology binds only `127.0.0.1:3020`, has an internal Docker
 network, disables email/provider integrations/telemetry, and uses names explicitly
 prefixed `saathios_twenty_sandbox`. See its README for start/stop/status/log/reset,
 backup, upgrade, and uninstall procedures.

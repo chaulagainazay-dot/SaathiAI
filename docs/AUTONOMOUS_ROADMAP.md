@@ -1,5 +1,23 @@
 # SaathiOS Autonomous Roadmap
 
+## M360–M368 — Twenty CRM Offline Foundation and Read-Only Runtime Validation (reserved 2026-08-03)
+
+| Field | Value |
+| --- | --- |
+| Current scope | M360 offline terminology, owner-review record, host decision, and publication preparation |
+| Current verdict | `TWENTY_OFFLINE_READ_ONLY_FOUNDATION_READY_FOR_OWNER_ACCEPTANCE` |
+| Owner review | `PENDING` — no acceptance identity/signature recorded |
+| Runtime / connectivity | `TWENTY_RUNTIME_NOT_DEPLOYED`; `NO_LIVE_PROVIDER_CONNECTIVITY` |
+| Authority / rollout / data | `NO_CRM_WRITE_AUTHORITY`; OFF/SHADOW only; synthetic only |
+| Reserved next program | M361–M368 `TWENTY_READ_ONLY_PROVIDER_CONNECTIVITY_AND_SCHEMA_VALIDATION` |
+| Entry gate | Explicit owner approval of a private runtime option; no paid resource may be created automatically |
+
+M352–M359 is already assigned to Agent Operations Console and Controlled Provider
+Routing on its separate branch. The collision audit therefore reserves the next
+contiguous free range, M360–M368, without renumbering existing milestones.
+
+Evidence and canonical status: `docs/integrations/twenty/`.
+
 ## M296–M303 — Institutional Portfolio & Risk Intelligence (2026-07-30)
 
 | Field | Value |
