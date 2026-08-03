@@ -1,4 +1,6 @@
-# SaathiOS Capability Maturity Matrix (as of M311 certification)
+# SaathiOS Capability Maturity Matrix (M360 Twenty offline-foundation addition)
+
+| Twenty CRM optional integration (M360 complete; M361–M368 not started) | offline-foundation-tested and owner-accepted-with-limitations; **runtime not deployed; no live provider connectivity; no CRM writes** | Separate replaceable service boundary; injected fixture transport only; REST/GraphQL schemas not live-validated; signed webhook fixtures → observations only; OFF; synthetic data; runtime-host approval deferred; `docs/integrations/twenty/TWENTY_INTEGRATION_STATUS.md` |
 
 | Read-only market observation (M304–M311) | deterministic-tested; browser-certified-with-limitations; **validation not trading; offline fixtures; no broker login/oauth/credentials/orders/accounts** | `saathi/platform/tg/market_observation/`; snapshots+quotes+history+metadata+exchange status+CA+benchmarks; `/trading/market-observation`; `cert:m311`; live trading not authorized |
 | Institutional portfolio & risk intelligence (M296–M303) | deterministic-tested; browser-certified-with-limitations; **paper/research only; not regulatory capital; not investment advice** | `saathi/platform/tg/portfolio_risk/`; analytics+limits+optimiser V2+scenarios+committee V2; `/trading/portfolio-risk`; `cert:m303`; live/connectivity not authorized |

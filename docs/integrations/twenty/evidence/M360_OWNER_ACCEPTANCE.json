@@ -1,0 +1,88 @@
+{
+  "schema_version": "1.0",
+  "decision_id": "M360-OWNER-ACCEPTANCE-2026-08-03",
+  "timestamp": "2026-08-03T17:05:34+05:45",
+  "repository": "chaulagainazay-dot/SaathiAI",
+  "branch": "evaluation/twenty-readonly-sandbox",
+  "reviewed_sha": "a0e4fa5ba1e30c6d2892e9bea0d9f96e97897c3d",
+  "pull_request": 15,
+  "decision": "TWENTY_OFFLINE_FOUNDATION_OWNER_ACCEPTED_WITH_LIMITATIONS",
+  "owner_identity": "SAATHIOS_OWNER_EXPLICIT_TASK_DECISION",
+  "owner_signature_recorded": false,
+  "owner_gate": "PASS_OFFLINE_FOUNDATION_ONLY",
+  "canonical_state": {
+    "implementation": "OFFLINE_FOUNDATION_COMPLETE",
+    "capability": "OFFLINE_READ_ONLY_INTEGRATION_FOUNDATION",
+    "owner_review": "ACCEPTED_WITH_LIMITATIONS",
+    "publication": "DRAFT_BRANCH_PUBLISHED",
+    "runtime": "TWENTY_RUNTIME_NOT_DEPLOYED",
+    "connectivity": "NO_LIVE_PROVIDER_CONNECTIVITY",
+    "crm_authority": "NO_CRM_WRITE_AUTHORITY",
+    "rollout": "OFF",
+    "data": "SYNTHETIC_DATA_ONLY",
+    "webhooks": [
+      "VERIFIED_EVENTS_TO_OBSERVATIONS_ONLY",
+      "NO_DIRECT_EXECUTION"
+    ],
+    "deployment_boundary": "TWENTY_SEPARATE_REPLACEABLE_SERVICE",
+    "licensing_boundary": [
+      "API_SDK_WEBHOOK_APP_EXTENSION_BOUNDARY",
+      "NO_TWENTY_CORE_EMBEDDING"
+    ],
+    "production": "NOT_AUTHORIZED"
+  },
+  "accepted_scope": [
+    "terminology_and_maturity_records",
+    "offline_adapter_contracts",
+    "read_only_capability_boundaries",
+    "webhook_to_observation_design",
+    "synthetic_test_fixtures",
+    "governance_integration",
+    "documentation_and_evidence",
+    "runtime_host_decision_package",
+    "m361_m368_proposal",
+    "draft_pr_15_publication"
+  ],
+  "ci": {
+    "reviewed_sha_state": "FINAL_SHA_CI_PENDING",
+    "workflow": "reliability",
+    "run_id": 30808287294,
+    "critical_regressions": "IN_PROGRESS"
+  },
+  "validation": {
+    "focused_twenty_tests": {
+      "passed": 20,
+      "failed": 0,
+      "duration_seconds": 0.09
+    },
+    "connector_governance_regressions": {
+      "passed": 315,
+      "failed": 0,
+      "duration_seconds": 16.52
+    },
+    "implementation_files_changed": false
+  },
+  "runtime_host": {
+    "decision": "RUNTIME_HOST_DECISION_DEFERRED",
+    "approval": "RUNTIME_HOST_APPROVAL_NOT_GRANTED",
+    "preferred_future_option": "PRIVATE_TEMPORARY_DEVELOPMENT_HOST",
+    "fallback_only": "LIGHTWEIGHT_LOCAL_CONTAINER_RUNTIME"
+  },
+  "authorization": {
+    "runtime": false,
+    "host_or_cost": false,
+    "provider_connectivity": false,
+    "credentials_or_oauth": false,
+    "crm_read_connectivity": false,
+    "crm_writes_or_deletes": false,
+    "email": false,
+    "public_webhook": false,
+    "production": false,
+    "merge": false,
+    "deployment": false,
+    "authority_change": false
+  },
+  "m360_state": "M360_COMPLETE_OWNER_ACCEPTED_WITH_LIMITATIONS",
+  "m361_m368_state": "NOT_STARTED",
+  "next_gate": "M361_ENTRY_BLOCKED_PENDING_SEPARATE_RUNTIME_HOST_APPROVAL"
+}

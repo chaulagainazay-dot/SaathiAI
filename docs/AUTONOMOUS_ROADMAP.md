@@ -1,5 +1,25 @@
 # SaathiOS Autonomous Roadmap
 
+## M360–M368 — Twenty CRM Offline Foundation and Read-Only Runtime Validation (reserved 2026-08-03)
+
+| Field | Value |
+| --- | --- |
+| Current scope | M360 complete: offline terminology, owner acceptance, host-decision deferral, and draft publication |
+| Current verdict | `TWENTY_OFFLINE_FOUNDATION_ACCEPTED_AND_PUBLISHED_WITH_RUNTIME_PENDING` |
+| Owner review | `ACCEPTED_WITH_LIMITATIONS` for reviewed SHA `a0e4fa5`; CI pending at decision time |
+| Runtime / connectivity | `TWENTY_RUNTIME_NOT_DEPLOYED`; `NO_LIVE_PROVIDER_CONNECTIVITY` |
+| Authority / rollout / data | `NO_CRM_WRITE_AUTHORITY`; `OFF`; `SYNTHETIC_DATA_ONLY` |
+| Reserved next program | M361–M368 `TWENTY_READ_ONLY_PROVIDER_CONNECTIVITY_AND_SCHEMA_VALIDATION`; `NOT_STARTED` |
+| Entry gate | `M361_ENTRY_BLOCKED_PENDING_SEPARATE_RUNTIME_HOST_APPROVAL`; no paid resource may be created automatically |
+| M361A readiness checkpoint | `TWENTY_RUNTIME_READINESS_INCOMPLETE`; `M361_ENTRY_NOT_READY`; documentation/evidence only |
+| M361B gap-resolution checkpoint | `TWENTY_RUNTIME_GAPS_PARTIALLY_RESOLVED`; manifest-level ARM64 support; partial immutable stack; CI requires separate baseline repair; `M361_ENTRY_NOT_READY` |
+
+M352–M359 is already assigned to Agent Operations Console and Controlled Provider
+Routing on its separate branch. The collision audit therefore reserves the next
+contiguous free range, M360–M368, without renumbering existing milestones.
+
+Evidence and canonical status: `docs/integrations/twenty/`.
+
 ## M296–M303 — Institutional Portfolio & Risk Intelligence (2026-07-30)
 
 | Field | Value |

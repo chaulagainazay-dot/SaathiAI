@@ -1,0 +1,111 @@
+{
+  "schema_version": "1.0",
+  "captured_at": "2026-08-03T16:52:15+05:45",
+  "milestone": "M360",
+  "branch": "evaluation/twenty-readonly-sandbox",
+  "starting_sha": "1008dc8d8fbd68a7ab4965d9c400f004852937fb",
+  "prepublication_head_sha": "5fa3076d49a4f3f8b95379bb783c7057ffda68ef",
+  "publication": {
+    "state": "DRAFT_BRANCH_AND_PULL_REQUEST_PUBLISHED",
+    "remote": "origin",
+    "published_head_before_metadata_commit": "5420d1694fb502db25b027810d792ae186e4930c",
+    "pull_request": {
+      "number": 15,
+      "url": "https://github.com/chaulagainazay-dot/SaathiAI/pull/15",
+      "title": "draft: add offline read-only Twenty CRM integration foundation",
+      "state": "OPEN",
+      "draft": true,
+      "base": "milestone/m312-m319-connectivity-governance",
+      "head": "evaluation/twenty-readonly-sandbox"
+    },
+    "force_push_required": false,
+    "selected_base": "milestone/m312-m319-connectivity-governance",
+    "selected_base_sha": "6639ca730ece11bce160a55a237fcaff8df3058c",
+    "base_only_commits": 0,
+    "feature_only_commits_before_m360": 3,
+    "m320_m327_base_rejected": true,
+    "m320_m327_rejection_reason": "not an ancestor; it would introduce unrelated reverse diffs"
+  },
+  "owner_review": {
+    "state": "PENDING",
+    "owner_identity_recorded": false,
+    "acceptance_recorded": false,
+    "runtime_host_authorized": false,
+    "paid_resource_authorized": false
+  },
+  "terminology": {
+    "capability": "OFFLINE_READ_ONLY_INTEGRATION_FOUNDATION",
+    "runtime": "TWENTY_RUNTIME_NOT_DEPLOYED",
+    "connectivity": "NO_LIVE_PROVIDER_CONNECTIVITY",
+    "write_authority": "NO_CRM_WRITE_AUTHORITY",
+    "data": "SYNTHETIC_DATA_ONLY",
+    "production": "NOT_AUTHORIZED"
+  },
+  "milestone_numbering": {
+    "highest_preexisting_assigned_milestone": "M359",
+    "selected_contiguous_range": "M360-M368",
+    "next_runtime_milestone": "M361-M368",
+    "runtime_program_state": "NOT_STARTED"
+  },
+  "validation": {
+    "focused_tests": {
+      "passed": 20,
+      "failed": 0,
+      "duration_seconds": 0.10
+    },
+    "connector_regression_tests": {
+      "passed": 315,
+      "failed": 0
+    },
+    "combined_focused_and_connector_tests": {
+      "passed": 335,
+      "failed": 0,
+      "duration_seconds": 16.82
+    },
+    "historical_full_backend": {
+      "passed": 5785,
+      "skipped": 1,
+      "failed": 9,
+      "duration_seconds": 1007.09,
+      "rerun_for_m360": false,
+      "classification": "PRESERVED_UNRELATED_ENVIRONMENT_FAILURES"
+    },
+    "python_compile": "PASS",
+    "json_syntax": "PASS",
+    "yaml_static_syntax": "PASS",
+    "shell_syntax": "PASS",
+    "git_diff_check": "PASS",
+    "network_import_isolation": "PASS",
+    "artifact_path_scan": "PASS_ZERO_FINDINGS",
+    "private_key_scan": "PASS_ZERO_FINDINGS",
+    "known_token_format_scan": "PASS_ZERO_FINDINGS",
+    "credential_value_scan": "PASS_ZERO_VALUES_ONE_INTENTIONAL_REJECTION_PATTERN",
+    "copied_twenty_core_scan": "PASS_ZERO_FINDINGS",
+    "enterprise_source_marker_scan": "PASS_ZERO_FINDINGS",
+    "reusable_document_absolute_path_scan": "PASS_ZERO_FINDINGS",
+    "destructive_command_scan": "PASS_ZERO_FINDINGS"
+  },
+  "runtime": {
+    "installed": false,
+    "started": false,
+    "host_created": false,
+    "account_created": false,
+    "credentials_created": false,
+    "connectivity_attempted": false
+  },
+  "authority": {
+    "provider_connectivity": false,
+    "oauth": false,
+    "credentials": false,
+    "authentication": false,
+    "crm_read_connectivity": false,
+    "crm_write": false,
+    "email_send": false,
+    "public_webhook": false,
+    "production": false,
+    "deployment": false,
+    "trading_changed": false
+  },
+  "current_verdict": "TWENTY_OFFLINE_FOUNDATION_PUBLISHED_OWNER_ACCEPTANCE_PENDING",
+  "maximum_current_state": "OFFLINE_FOUNDATION_ONLY_RUNTIME_PENDING"
+}
