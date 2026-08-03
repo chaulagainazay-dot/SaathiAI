@@ -1,0 +1,159 @@
+{
+  "schema_version": "1.0",
+  "assessment_id": "M361A-PRE-RUNTIME-READINESS-2026-08-03",
+  "captured_at": "2026-08-03T17:46:27+05:45",
+  "repository": "chaulagainazay-dot/SaathiAI",
+  "branch": "evaluation/twenty-readonly-sandbox",
+  "starting_sha": "12be0aa18cc88d81c1186998454cdd1497d06fd5",
+  "pull_request": {
+    "number": 15,
+    "state": "OPEN",
+    "draft": true,
+    "only_pull_request_for_branch": true
+  },
+  "terminal_verdict": "TWENTY_RUNTIME_READINESS_INCOMPLETE",
+  "m361_entry_decision": "M361_ENTRY_NOT_READY",
+  "recommended_runtime_option": "PRIVATE_TEMPORARY_DEVELOPMENT_HOST_RECOMMENDED",
+  "recommended_next_action": "RESOLVE_READINESS_GAPS",
+  "state": {
+    "m360": "M360_COMPLETE_OWNER_ACCEPTED_WITH_LIMITATIONS",
+    "foundation": "OFFLINE_FOUNDATION_COMPLETE",
+    "capability": "OFFLINE_READ_ONLY_INTEGRATION_FOUNDATION",
+    "runtime": "TWENTY_RUNTIME_NOT_DEPLOYED",
+    "runtime_host_decision": "RUNTIME_HOST_DECISION_DEFERRED",
+    "runtime_host_approval": "RUNTIME_HOST_APPROVAL_NOT_GRANTED",
+    "m361_m368": "NOT_STARTED",
+    "rollout": "OFF",
+    "connectivity": "NO_LIVE_PROVIDER_CONNECTIVITY",
+    "crm_write_authority": "NO_CRM_WRITE_AUTHORITY",
+    "production": "NOT_AUTHORIZED"
+  },
+  "ci": {
+    "run_id": 30809497607,
+    "head_sha": "12be0aa18cc88d81c1186998454cdd1497d06fd5",
+    "state": "FAILED",
+    "blocking_check": "ops.hardening_m13_5",
+    "failure": "tests/test_ops.py::test_release_gate_passes_baseline",
+    "result": "1 failed, 24 passed",
+    "classification": "UNRELATED_BASELINE_OPS_RELEASE_GATE_FAILURE_BUT_REQUIRED_CHECK_UNACCEPTABLE",
+    "twenty_connector_security_authority_checks": "PASS_AS_REPORTED_BY_MANIFEST"
+  },
+  "supply_chain": {
+    "source_sha": "37f1fe17ab48269384cffb774f82f096abe3863a",
+    "source_branch": "main",
+    "source_clean": true,
+    "source_version_evidence": "twenty-client-sdk_and_twenty-sdk_2.27.0",
+    "license": "AGPLv3_WITH_TWENTY_APPLICATION_EXCEPTION_AND_MARKED_ENTERPRISE_FILES",
+    "source_pin": "SOURCE_PIN_READY",
+    "image_digest": "IMAGE_DIGEST_NOT_READY",
+    "dependency_pinning": "DEPENDENCY_PINNING_NOT_READY",
+    "lockfile_present": true,
+    "package_manager": "yarn@4.13.0",
+    "node_engine": "^24.5.0"
+  },
+  "architecture_compatibility": [
+    {
+      "component": "owner_mac_host",
+      "classification": "ARM64_NATIVE",
+      "evidence": "arm64 host"
+    },
+    {
+      "component": "twenty_dockerfile_design",
+      "classification": "MULTI_ARCH",
+      "evidence": "TARGETARCH-aware build steps"
+    },
+    {
+      "component": "published_twentycrm_twenty_image",
+      "classification": "UNKNOWN",
+      "evidence": "manifest not pulled or inspected"
+    },
+    {
+      "component": "node_base_image",
+      "classification": "UNKNOWN",
+      "evidence": "digest present in Dockerfile; architecture manifest not inspected"
+    },
+    {
+      "component": "postgres_16_image",
+      "classification": "UNKNOWN",
+      "evidence": "tag only in Compose"
+    },
+    {
+      "component": "redis_image",
+      "classification": "UNKNOWN",
+      "evidence": "mutable tag in Compose"
+    },
+    {
+      "component": "native_extensions",
+      "classification": "UNKNOWN",
+      "evidence": "no ARM64 runtime/build performed"
+    },
+    {
+      "component": "amd64_emulation",
+      "classification": "NOT_USED",
+      "evidence": "no runtime started; emulation is not approved"
+    },
+    {
+      "component": "browser_automation",
+      "classification": "NOT_USED",
+      "evidence": "not part of M361A"
+    }
+  ],
+  "readiness": {
+    "repository": "READY_WITH_LIMITATIONS",
+    "ci": "NOT_READY",
+    "source_pin": "READY",
+    "image_digest": "NOT_READY",
+    "host_selection": "NOT_READY",
+    "resource_baseline": "READY_WITH_LIMITATIONS",
+    "apple_silicon": "UNKNOWN",
+    "authentication": "READY_WITH_LIMITATIONS",
+    "synthetic_data": "READY",
+    "network_policy": "READY_WITH_LIMITATIONS",
+    "webhook": "NOT_READY",
+    "backup_restore": "READY_WITH_LIMITATIONS",
+    "removal": "READY_WITH_LIMITATIONS",
+    "cost": "NOT_READY",
+    "operator": "NOT_READY",
+    "abort_conditions": "READY_WITH_LIMITATIONS"
+  },
+  "entry_matrix_counts": {
+    "PASS": 5,
+    "FAIL": 2,
+    "PENDING_OWNER_DECISION": 13,
+    "PENDING_EXTERNAL_SELECTION": 0,
+    "UNKNOWN": 1
+  },
+  "material_gaps": [
+    "required_ci_failure_unresolved",
+    "runtime_option_not_selected",
+    "runtime_host_not_approved",
+    "operator_and_cost_roles_unassigned",
+    "cost_dates_and_removal_deadline_absent",
+    "immutable_runtime_image_set_absent",
+    "apple_silicon_image_compatibility_unproven",
+    "metadata_read_only_role_enforcement_unproven",
+    "private_webhook_delivery_unproven",
+    "durable_webhook_replay_not_implemented",
+    "host_specific_network_backup_and_removal_controls_unapproved"
+  ],
+  "non_actions": {
+    "runtime_installed_or_started": false,
+    "image_pulled": false,
+    "host_created": false,
+    "cost_incurred": false,
+    "account_or_credential_created": false,
+    "keychain_accessed": false,
+    "connectivity_attempted": false,
+    "real_data_used": false,
+    "crm_read_or_write_performed": false,
+    "public_webhook_exposed": false,
+    "authority_changed": false,
+    "loop_state_advanced": false,
+    "m361_started": false,
+    "merge_or_deployment": false
+  },
+  "required_end_state": [
+    "M361_NOT_STARTED",
+    "RUNTIME_HOST_APPROVAL_STILL_REQUIRED"
+  ]
+}

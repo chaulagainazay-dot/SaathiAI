@@ -23,6 +23,12 @@ historical verdicts are preserved rather than rewritten.
 | Licensing boundary | `API_SDK_WEBHOOK_APP_EXTENSION_BOUNDARY`; `NO_TWENTY_CORE_EMBEDDING` |
 | Production | `NOT_AUTHORIZED` |
 
+M361A pre-runtime readiness is `TWENTY_RUNTIME_READINESS_INCOMPLETE` and
+`M361_ENTRY_NOT_READY`. The source pin and architecture are ready, but the
+required CI check, immutable runtime image set, host selection, operator/billing
+fields, private webhook feasibility, and approvals remain unresolved. This
+checkpoint does not start M361 or alter the capability state.
+
 The owner decision is
 `TWENTY_OFFLINE_FOUNDATION_OWNER_ACCEPTED_WITH_LIMITATIONS`. The current summary
 verdict is `TWENTY_OFFLINE_FOUNDATION_ACCEPTED_AND_PUBLISHED_WITH_RUNTIME_PENDING`.
@@ -73,6 +79,8 @@ own only replaceable CRM storage and CRM-native behavior behind supported APIs.
 - [Machine-readable historical evidence](evidence/TWENTY_EVALUATION_EVIDENCE.json)
 - [M360 owner-acceptance record](evidence/M360_OWNER_ACCEPTANCE.md)
 - [Machine-readable M360 owner decision](evidence/M360_OWNER_ACCEPTANCE.json)
+- [M361A pre-runtime readiness](M361A_PRE_RUNTIME_READINESS.md)
+- [Machine-readable M361A audit](evidence/M361A_READINESS_AUDIT.json)
 
 ## Separate runtime decision still required
 

@@ -1,6 +1,7 @@
 # M361–M368 — Twenty read-only provider connectivity and schema validation
 
-Status: `NOT_STARTED`; blocked on explicit runtime-host owner approval.
+Status: `NOT_STARTED`; M361A is `TWENTY_RUNTIME_READINESS_INCOMPLETE`; blocked on
+readiness gaps and explicit runtime-host owner approval.
 
 ## Objective
 
