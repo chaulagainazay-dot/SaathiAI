@@ -431,6 +431,54 @@ def cmd_config_surface(args: argparse.Namespace) -> int:
 
 
 # --------------------------------------------------------------------------
+# local model adapter (M355)
+# --------------------------------------------------------------------------
+
+
+def _adapter(args: argparse.Namespace):
+    from saathi.agentdev.model_adapter import DEFAULT_ENDPOINT, OllamaAdapter
+
+    return OllamaAdapter(
+        args.model, endpoint=args.endpoint or DEFAULT_ENDPOINT
+    )
+
+
+def cmd_model_capabilities(args: argparse.Namespace) -> int:
+    from saathi.agentdev.model_adapter import ModelAdapterError
+
+    try:
+        _emit(_adapter(args).capabilities())
+    except ModelAdapterError as exc:
+        _emit({"error": exc.code, "detail": exc.detail})
+        return EXIT_REFUSED
+    return EXIT_OK
+
+
+def cmd_model_health(args: argparse.Namespace) -> int:
+    from saathi.agentdev.model_adapter import ModelAdapterError
+
+    try:
+        health = _adapter(args).health()
+    except ModelAdapterError as exc:
+        _emit({"error": exc.code, "detail": exc.detail})
+        return EXIT_REFUSED
+    _emit(health)
+    return EXIT_OK if health.get("healthy") else EXIT_FAIL
+
+
+def cmd_model_verify(args: argparse.Namespace) -> int:
+    from saathi.agentdev.model_adapter import ModelAdapterError, verify_adapter
+
+    try:
+        report = verify_adapter(_adapter(args))
+    except ModelAdapterError as exc:
+        _emit({"error": exc.code, "detail": exc.detail})
+        return EXIT_REFUSED
+    _emit(report)
+    return EXIT_OK if report.get("verified") else EXIT_FAIL
+
+
+# --------------------------------------------------------------------------
 # operations console (M353)
 # --------------------------------------------------------------------------
 
@@ -733,6 +781,30 @@ def build_parser() -> argparse.ArgumentParser:
     config.add_parser(
         "surface", help="The full protected surface."
     ).set_defaults(func=cmd_config_surface)
+
+    from saathi.agentdev.model_adapter import DEFAULT_MODEL
+
+    model = sub.add_parser(
+        "model", help="Local reasoning adapter (M355). Loopback only."
+    ).add_subparsers(dest="model_command", required=True)
+
+    def _model_args(p: argparse.ArgumentParser) -> argparse.ArgumentParser:
+        p.add_argument("--model", default=DEFAULT_MODEL)
+        p.add_argument(
+            "--endpoint", default="",
+            help="Local provider endpoint. Non-loopback hosts are refused.",
+        )
+        return p
+
+    _model_args(
+        model.add_parser("capabilities", help="What the adapter offers and denies.")
+    ).set_defaults(func=cmd_model_capabilities)
+    _model_args(
+        model.add_parser("health", help="Is the local provider up and the model present?")
+    ).set_defaults(func=cmd_model_health)
+    _model_args(
+        model.add_parser("verify", help="Health, load and three measured calls.")
+    ).set_defaults(func=cmd_model_verify)
 
     runner = sub.add_parser(
         "runner", help="Deterministic agent runner (M354)."
