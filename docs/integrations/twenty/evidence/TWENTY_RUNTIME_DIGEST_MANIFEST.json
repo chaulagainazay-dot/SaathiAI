@@ -1,0 +1,152 @@
+{
+  "schema_version": "1.0",
+  "manifest_id": "M361B-TWENTY-RUNTIME-DIGESTS-2026-08-03",
+  "captured_at": "2026-08-03T13:07:51Z",
+  "capture_method": "PUBLIC_DOCKER_HUB_TAG_METADATA_ONLY_NO_IMAGE_PULL_NO_LAYER_DOWNLOAD",
+  "source": {
+    "repository": "https://github.com/twentyhq/twenty",
+    "pinned_sha": "37f1fe17ab48269384cffb774f82f096abe3863a",
+    "branch": "main",
+    "clean": true,
+    "root_package_version": "0.2.1",
+    "sdk_version_evidence": "2.27.0",
+    "package_manager": "yarn@4.13.0",
+    "node_engine": "^24.5.0",
+    "lockfile": "yarn.lock",
+    "license": "AGPL-3.0_WITH_TWENTY_APPLICATION_EXCEPTION; MARKED_ENTERPRISE_FILES_COMMERCIAL; NAMED_SDK_PACKAGES_MIT"
+  },
+  "overall": {
+    "image_digest_set": "IMAGE_DIGEST_SET_PARTIAL",
+    "dependency_pinning": "DEPENDENCY_PINNING_PARTIAL",
+    "architecture": "ARM64_COMPATIBILITY_SUPPORTED_BY_MANIFESTS",
+    "reproducibility_claimed": false
+  },
+  "images": [
+    {
+      "component": "twenty_server_and_worker",
+      "registry": "docker.io",
+      "image": "twentycrm/twenty",
+      "upstream_reference": "twentycrm/twenty:${TAG:-latest}",
+      "observed_tag": "v2.26.0",
+      "manifest_digest": "sha256:3c5845fb485b57688bb90a202918038c2d4ce3b868c0dad8df3cf79e51c91dd9",
+      "digest_status": "VERIFIED_DIGEST",
+      "version_relationship": "VERSION_RELATIONSHIP_UNPROVEN",
+      "architectures": {
+        "linux_amd64": "sha256:f6e6bd5a2a8722e870eef0602eabc7ad2ee6756403afe4c19a5573101bcf227b",
+        "linux_arm64": "sha256:832a252184eaa785cff93c3ce8dc3670da4c6a470c6e3e78ff8303e76a557bf7"
+      },
+      "architecture_classification": "MULTI_ARCH_WITH_ARM64",
+      "source_documentation": [
+        "https://hub.docker.com/r/twentycrm/twenty/tags",
+        "packages/twenty-docker/docker-compose.yml"
+      ],
+      "license": "AGPL-3.0_WITH_TWENTY_APPLICATION_EXCEPTION_AND_MARKED_ENTERPRISE_EXCEPTIONS",
+      "update_policy": "OWNER_REVIEWED_DIGEST_REPLACEMENT_ONLY",
+      "rollback_pin": "sha256:3c5845fb485b57688bb90a202918038c2d4ce3b868c0dad8df3cf79e51c91dd9",
+      "runtime_validated": false
+    },
+    {
+      "component": "postgresql",
+      "registry": "docker.io",
+      "image": "library/postgres",
+      "upstream_reference": "postgres:16",
+      "observed_tag": "16.14",
+      "manifest_digest": "sha256:33f923b05f64ca54ac4401c01126a6b92afe839a0aa0a52bc5aeb5cc958e5f20",
+      "digest_status": "VERIFIED_DIGEST",
+      "version_relationship": "POSTGRES_MAJOR_16_MATCHES_UPSTREAM_COMPOSE",
+      "architectures": {
+        "linux_amd64": "sha256:da8cf245a60506e50a0a8cbb0f39c559ca622d92490605b67fcadc74ca1ea8e4",
+        "linux_arm64": "sha256:7a2dba81d252ccc7db593db5463cec0aee9d123fb931863e08677e73eb3e3847"
+      },
+      "architecture_classification": "MULTI_ARCH_WITH_ARM64",
+      "source_documentation": [
+        "https://hub.docker.com/_/postgres",
+        "packages/twenty-docker/docker-compose.yml"
+      ],
+      "license": "POSTGRESQL_LICENSE",
+      "update_policy": "OWNER_REVIEWED_DIGEST_REPLACEMENT_AND_MIGRATION_REVIEW",
+      "rollback_pin": "sha256:33f923b05f64ca54ac4401c01126a6b92afe839a0aa0a52bc5aeb5cc958e5f20",
+      "migration_compatibility_validated": false
+    },
+    {
+      "component": "redis",
+      "registry": "docker.io",
+      "image": "library/redis",
+      "upstream_reference": "redis (production Compose); redis:7 (development Compose)",
+      "observed_tag": "7.2.15",
+      "manifest_digest": "sha256:6372db89351b00ba0ddca437ff49ce2ed4beed8a961a27d8259060c9603c240d",
+      "digest_status": "VERIFIED_DIGEST",
+      "version_relationship": "CANDIDATE_MAJOR_7_MATCHES_UPSTREAM_DEVELOPMENT_COMPOSE_BUT_RUNTIME_UNPROVEN",
+      "architectures": {
+        "linux_amd64": "sha256:a02a9030f7ff575e9d5371af4d9bcab815ed5437262e171174283bd19f558b04",
+        "linux_arm64": "sha256:c4c2b9f3d43bb3566552eb7cc3221866f8a7a0403227a264138c4363719e576f"
+      },
+      "architecture_classification": "MULTI_ARCH_WITH_ARM64",
+      "source_documentation": [
+        "https://hub.docker.com/_/redis",
+        "packages/twenty-docker/docker-compose.yml",
+        "packages/twenty-docker/docker-compose.dev.yml"
+      ],
+      "license": "BSD-3-CLAUSE_REDIS_7_2_SOURCE_LINE",
+      "update_policy": "OWNER_REVIEWED_PATCH_AND_DIGEST_REPLACEMENT_ONLY",
+      "rollback_pin": "sha256:6372db89351b00ba0ddca437ff49ce2ed4beed8a961a27d8259060c9603c240d",
+      "runtime_validated": false
+    },
+    {
+      "component": "node_source_build_base",
+      "registry": "docker.io",
+      "image": "library/node",
+      "upstream_reference": "node:24.18.0-alpine3.23@sha256:595398b0081eacda8e1c4c5b97b76cd1020e4d58a8ebcb4843b9bca1e79e7436",
+      "observed_tag": "24.18.0-alpine3.23",
+      "manifest_digest": "sha256:595398b0081eacda8e1c4c5b97b76cd1020e4d58a8ebcb4843b9bca1e79e7436",
+      "digest_status": "VERIFIED_DIGEST",
+      "version_relationship": "MATCHES_PINNED_UPSTREAM_DOCKERFILE",
+      "architectures": {
+        "linux_amd64": "sha256:00295958df3ca22b4d3df4ae8dbffd823dbca1c53efbcf235f62fbf3fa5ca756",
+        "linux_arm64": "sha256:e8470651b67dd2af4e982ea4c8b4166b521d55f3951cc1ef1dcb1671befe7dd3"
+      },
+      "architecture_classification": "MULTI_ARCH_WITH_ARM64",
+      "source_documentation": [
+        "https://hub.docker.com/_/node",
+        "packages/twenty-docker/twenty/Dockerfile"
+      ],
+      "license": "MIT_NODE_JS_WITH_BUNDLED_DEPENDENCY_LICENSES",
+      "update_policy": "SOURCE_BUILD_REVIEW_ONLY",
+      "rollback_pin": "sha256:595398b0081eacda8e1c4c5b97b76cd1020e4d58a8ebcb4843b9bca1e79e7436",
+      "required_for_prebuilt_runtime": false
+    },
+    {
+      "component": "private_tls_terminator_or_proxy",
+      "registry": null,
+      "image": null,
+      "upstream_reference": null,
+      "observed_tag": null,
+      "manifest_digest": null,
+      "digest_status": "DIGEST_NOT_FOUND",
+      "version_relationship": "PENDING_HOST_SELECTION",
+      "architectures": {},
+      "architecture_classification": "UNKNOWN",
+      "source_documentation": [
+        "docs/integrations/twenty/NETWORK_AND_EGRESS_POLICY.md"
+      ],
+      "license": "NOT_SELECTED",
+      "update_policy": "OWNER_AND_SECURITY_REVIEW_REQUIRED_IF_COMPONENT_IS_NEEDED",
+      "rollback_pin": null,
+      "required_if": "SELECTED_PRIVATE_HOST_DOES_NOT_PROVIDE_APPROVED_PRIVATE_TLS_TERMINATION"
+    }
+  ],
+  "unresolved": [
+    "TWENTY_IMAGE_TO_PINNED_SOURCE_SHA_RELATIONSHIP_UNPROVEN",
+    "PRIVATE_TLS_COMPONENT_PENDING_HOST_SELECTION",
+    "MIGRATION_COMPATIBILITY_NOT_EXECUTED",
+    "SOURCE_BUILD_BOOTSTRAP_INPUTS_NOT_FULLY_IMMUTABLE",
+    "NATIVE_MODULE_AND_WORKER_RUNTIME_NOT_EXECUTED"
+  ],
+  "non_actions": {
+    "image_pulled": false,
+    "image_built": false,
+    "layer_downloaded": false,
+    "runtime_started": false,
+    "host_selected": false
+  }
+}
