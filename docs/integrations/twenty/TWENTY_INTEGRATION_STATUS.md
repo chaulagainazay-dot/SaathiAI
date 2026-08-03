@@ -10,23 +10,24 @@ historical verdicts are preserved rather than rewritten.
 | --- | --- |
 | Implementation | `OFFLINE_FOUNDATION_COMPLETE` |
 | Capability boundary | `OFFLINE_READ_ONLY_INTEGRATION_FOUNDATION` |
-| Owner review | `PENDING` |
+| Owner review | `ACCEPTED_WITH_LIMITATIONS` |
 | Publication | `DRAFT_BRANCH_PUBLISHED`; Draft PR #15 is open |
 | Runtime | `TWENTY_RUNTIME_NOT_DEPLOYED` |
+| Runtime-host decision | `RUNTIME_HOST_DECISION_DEFERRED`; approval not granted |
 | Provider connectivity | `NO_LIVE_PROVIDER_CONNECTIVITY` |
 | Write authority | `NO_CRM_WRITE_AUTHORITY` |
-| Rollout | `OFF`, `SHADOW` only |
+| Rollout | `OFF` |
 | Data | `SYNTHETIC_DATA_ONLY` |
 | Webhooks | `VERIFIED_EVENTS_TO_OBSERVATIONS_ONLY`; `NO_DIRECT_EXECUTION` |
 | Deployment boundary | `TWENTY_SEPARATE_REPLACEABLE_SERVICE` |
 | Licensing boundary | `API_SDK_WEBHOOK_APP_EXTENSION_BOUNDARY`; `NO_TWENTY_CORE_EMBEDDING` |
 | Production | `NOT_AUTHORIZED` |
 
-The current summary verdict is
-`TWENTY_OFFLINE_FOUNDATION_PUBLISHED_OWNER_ACCEPTANCE_PENDING`. Publication is
-not owner acceptance. This verdict must not be changed to an acceptance verdict
-until an owner identity and affirmative decision are recorded in
-[OWNER_REVIEW.md](OWNER_REVIEW.md).
+The owner decision is
+`TWENTY_OFFLINE_FOUNDATION_OWNER_ACCEPTED_WITH_LIMITATIONS`. The current summary
+verdict is `TWENTY_OFFLINE_FOUNDATION_ACCEPTED_AND_PUBLISHED_WITH_RUNTIME_PENDING`.
+M360 is `M360_COMPLETE_OWNER_ACCEPTED_WITH_LIMITATIONS`. The reviewed-SHA CI
+state at decision time is `FINAL_SHA_CI_PENDING`.
 
 The historical runtime-evaluation verdict remains
 `TWENTY_SETUP_BLOCKED_BY_RESOURCE_CONSTRAINTS`. That verdict means the offline
@@ -40,7 +41,8 @@ safety result, not proof of a broken implementation and not proof that Twenty ru
 - A separate upstream audit clone and separate sandbox configuration.
 - A provider-neutral, injected read transport contract with deterministic fixtures.
 - Read contracts for companies, people, opportunities, tasks, metadata, and schema.
-- Existing connector-registry composition with OFF/SHADOW and READ-only declarations.
+- Existing connector-registry composition with READ-only declarations; current
+  rollout remains `OFF`.
 - Organization/workspace scope mapping, fail-closed errors, redacted audit metadata,
   write rejection, and signed-webhook verification to observations only.
 - Focused and connector-regression evidence.
@@ -69,14 +71,17 @@ own only replaceable CRM storage and CRM-native behavior behind supported APIs.
 - [Next runtime program](M361_M368_READ_ONLY_RUNTIME_VALIDATION.md)
 - [Historical evaluation report](evidence/FINAL_EVALUATION_REPORT.md)
 - [Machine-readable historical evidence](evidence/TWENTY_EVALUATION_EVIDENCE.json)
+- [M360 owner-acceptance record](evidence/M360_OWNER_ACCEPTANCE.md)
+- [Machine-readable M360 owner decision](evidence/M360_OWNER_ACCEPTANCE.json)
 
-## Owner decision still required
+## Separate runtime decision still required
 
-The owner must decide whether to accept the offline foundation and whether to
-authorize a later private runtime environment. Acceptance does not authorize a
-host purchase, deployment, connectivity, credentials, writes, OAuth, email,
-public webhooks, or production use. No paid resource may be created without a
-separate explicit owner decision.
+Foundation acceptance does not authorize a host purchase, deployment,
+connectivity, credentials, writes, OAuth, email, public webhooks, production use,
+or M361 entry. M361–M368 remain `NOT_STARTED` and
+`M361_ENTRY_BLOCKED_PENDING_SEPARATE_RUNTIME_HOST_APPROVAL`. No paid resource may
+be created without a later explicit owner decision containing the required host,
+cost, operator, expiry, network, data, and removal terms.
 
 ## Certification invalidation
 

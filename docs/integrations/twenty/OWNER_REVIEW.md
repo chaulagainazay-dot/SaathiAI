@@ -1,28 +1,36 @@
 # Twenty offline foundation owner review
 
 ```yaml
-review_state: PENDING
-owner_identity: NOT_RECORDED
+decision_id: M360-OWNER-ACCEPTANCE-2026-08-03
+review_state: ACCEPTED_WITH_LIMITATIONS
+owner_identity: SAATHIOS_OWNER_EXPLICIT_TASK_DECISION
 owner_signature: NOT_RECORDED
-reviewed_commit: NOT_RECORDED
+decision_source: EXPLICIT_OWNER_INSTRUCTION
+accepted_at: 2026-08-03T17:05:34+05:45
+reviewed_commit: a0e4fa5ba1e30c6d2892e9bea0d9f96e97897c3d
+reviewed_pull_request: 15
 automation_may_accept: false
+runtime_host_decision: DEFERRED
+runtime_host_approval: NOT_GRANTED
+m361_m368_state: NOT_STARTED
 ```
 
-This record is intentionally pending. Repository authorship, a user request to
-prepare publication, and an automated report are not substitutes for an explicit
-owner acceptance decision.
+The SaathiOS owner explicitly accepted the reviewed offline foundation with the
+limitations below. No personal name or cryptographic signature is inferred; the
+identity records only the role asserted by the explicit owner-decision instruction.
+Repository authorship and automated reports remain insufficient acceptance evidence.
 
-The eventual owner review must independently address:
+The accepted interpretation is:
 
-- [ ] Accept `OFFLINE_READ_ONLY_INTEGRATION_FOUNDATION` as the bounded capability.
-- [ ] Accept the API/SDK/webhook/app-extension licensing boundary and no core embedding.
-- [ ] Accept Twenty as a separate, optional, replaceable service.
-- [ ] Accept read-only, synthetic-only, OFF/SHADOW-only limits.
-- [ ] Accept that the historical runtime blocker is preserved and no runtime was proven.
-- [ ] Reject forcing a persistent full stack onto the 8 GB Mac.
-- [ ] Select or reject a later private runtime option.
-- [ ] Confirm that CRM writes remain prohibited until separately governed and certified.
+- [x] Accept `OFFLINE_READ_ONLY_INTEGRATION_FOUNDATION` as the bounded capability.
+- [x] Accept the API/SDK/webhook/app-extension boundary with no Twenty core embedding.
+- [x] Accept Twenty as a separate, optional, replaceable service.
+- [x] Accept read-only, synthetic-only, `OFF` rollout limits.
+- [x] Accept the historical runtime blocker and that no runtime was proven.
+- [x] Reject forcing a persistent full stack onto the 8 GB Mac.
+- [x] Keep CRM writes prohibited until separately governed and certified.
+- [ ] Approve or select a later private runtime option.
 
-If accepted later, record the human owner identity, date, reviewed commit, exact
-scope, and any conditions. Do not edit historical evidence to imply retroactive
-acceptance.
+This acceptance does not authorize a runtime, host, cost, account, credential,
+connectivity, write/delete method, email, public webhook, production use, merge,
+or M361 entry. The runtime-host decision remains separately deferred.

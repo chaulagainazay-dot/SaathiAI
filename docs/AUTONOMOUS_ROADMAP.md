@@ -4,13 +4,13 @@
 
 | Field | Value |
 | --- | --- |
-| Current scope | M360 offline terminology, owner-review record, host decision, and publication preparation |
-| Current verdict | `TWENTY_OFFLINE_READ_ONLY_FOUNDATION_READY_FOR_OWNER_ACCEPTANCE` |
-| Owner review | `PENDING` — no acceptance identity/signature recorded |
+| Current scope | M360 complete: offline terminology, owner acceptance, host-decision deferral, and draft publication |
+| Current verdict | `TWENTY_OFFLINE_FOUNDATION_ACCEPTED_AND_PUBLISHED_WITH_RUNTIME_PENDING` |
+| Owner review | `ACCEPTED_WITH_LIMITATIONS` for reviewed SHA `a0e4fa5`; CI pending at decision time |
 | Runtime / connectivity | `TWENTY_RUNTIME_NOT_DEPLOYED`; `NO_LIVE_PROVIDER_CONNECTIVITY` |
-| Authority / rollout / data | `NO_CRM_WRITE_AUTHORITY`; OFF/SHADOW only; synthetic only |
-| Reserved next program | M361–M368 `TWENTY_READ_ONLY_PROVIDER_CONNECTIVITY_AND_SCHEMA_VALIDATION` |
-| Entry gate | Explicit owner approval of a private runtime option; no paid resource may be created automatically |
+| Authority / rollout / data | `NO_CRM_WRITE_AUTHORITY`; `OFF`; `SYNTHETIC_DATA_ONLY` |
+| Reserved next program | M361–M368 `TWENTY_READ_ONLY_PROVIDER_CONNECTIVITY_AND_SCHEMA_VALIDATION`; `NOT_STARTED` |
+| Entry gate | `M361_ENTRY_BLOCKED_PENDING_SEPARATE_RUNTIME_HOST_APPROVAL`; no paid resource may be created automatically |
 
 M352–M359 is already assigned to Agent Operations Console and Controlled Provider
 Routing on its separate branch. The collision audit therefore reserves the next
