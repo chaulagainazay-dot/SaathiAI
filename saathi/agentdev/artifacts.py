@@ -5,7 +5,9 @@ unreviewable. Every claim a development agent makes lands here instead, as a
 schema-validated document bound to a mission, an author, a repository SHA and —
 when code is involved — a worktree and a branch.
 
-The sixteen kinds are a closed vocabulary. Every artifact carries the same
+The seventeen kinds are a closed vocabulary — sixteen from M347 plus
+``documentation_update``, added in M354 because the Documentation Agent held a
+capability with no artifact it could write. Every artifact carries the same
 fifteen envelope fields, so a reviewer, a gate and the final synthesis all read
 the same shape regardless of who wrote it.
 
@@ -55,6 +57,11 @@ class ArtifactKind(str, Enum):
     EXECUTIVE_DECISION = "executive_decision"
     OWNER_APPROVAL = "owner_approval"
     FINAL_SYNTHESIS = "final_synthesis"
+    # M354. The Documentation Agent held ``author_documentation`` with no kind
+    # it could write; every other capability had one. Adding the kind was the
+    # smaller correction — the alternative was letting documentation masquerade
+    # as research findings.
+    DOCUMENTATION_UPDATE = "documentation_update"
 
 
 class ArtifactStatus(str, Enum):
@@ -126,6 +133,7 @@ KIND_CAPABILITY: dict[ArtifactKind, str] = {
     ArtifactKind.VERIFICATION_REPORT: "run_tests",
     ArtifactKind.EXECUTIVE_DECISION: "synthesize_decision",
     ArtifactKind.FINAL_SYNTHESIS: "synthesize_decision",
+    ArtifactKind.DOCUMENTATION_UPDATE: "author_documentation",
     # OWNER_APPROVAL has no agent capability: only the owner may author it.
 }
 

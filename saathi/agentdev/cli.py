@@ -559,6 +559,39 @@ def cmd_verify(args: argparse.Namespace) -> int:
     return EXIT_OK if not problems else EXIT_FAIL
 
 
+def cmd_run_plan(args: argparse.Namespace) -> int:
+    """Execute the deterministic reference plan (M354). No model, no prompts."""
+    from saathi.agentdev.runner import AgentRunner, reference_plan
+
+    settings, _, _ = _stores(args)
+    plan = reference_plan(dev_mission_id=args.mission_id)
+    if args.dry_run:
+        _emit({
+            "dry_run": True,
+            "dev_mission_id": plan.dev_mission_id,
+            "steps": [
+                {"step_id": s.step_id, "action": s.action, "agent_id": s.agent_id or None}
+                for s in plan.steps
+            ],
+        })
+        return EXIT_OK
+    trace = AgentRunner(settings.store_path()).run(plan)
+    _emit(trace.to_dict())
+    return EXIT_OK if trace.completed else EXIT_FAIL
+
+
+def cmd_run_plan_show(args: argparse.Namespace) -> int:
+    from saathi.agentdev.runner import PARTICIPANTS, reference_plan
+
+    plan = reference_plan()
+    _emit({
+        "participants": PARTICIPANTS,
+        "plan": plan.to_dict(),
+        "note": "Scripted handlers. No prompt, no model, no reasoning.",
+    })
+    return EXIT_OK
+
+
 def cmd_simulate(args: argparse.Namespace) -> int:
     from saathi.agentdev.simulation import run_offline_mission
 
@@ -700,6 +733,18 @@ def build_parser() -> argparse.ArgumentParser:
     config.add_parser(
         "surface", help="The full protected surface."
     ).set_defaults(func=cmd_config_surface)
+
+    runner = sub.add_parser(
+        "runner", help="Deterministic agent runner (M354)."
+    ).add_subparsers(dest="runner_command", required=True)
+    runner.add_parser(
+        "plan", help="Show the reference plan and its eight participants."
+    ).set_defaults(func=cmd_run_plan_show)
+    rrun = _with_dry_run(
+        runner.add_parser("run", help="Execute the reference plan. No model.")
+    )
+    rrun.add_argument("--mission-id", default="dmrunner01")
+    rrun.set_defaults(func=cmd_run_plan)
 
     console = sub.add_parser(
         "console", help="Read-only Agent Operations Console (M353)."

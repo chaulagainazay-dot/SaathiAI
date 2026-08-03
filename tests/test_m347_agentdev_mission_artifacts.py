@@ -98,8 +98,10 @@ def test_every_artifact_carries_the_full_envelope(mission):
         assert hasattr(artifact, attribute), attribute
 
 
-def test_the_sixteen_kinds_are_a_closed_vocabulary():
-    assert len(ArtifactKind) == 16
+def test_the_kinds_are_a_closed_vocabulary():
+    # Sixteen at M347; ``documentation_update`` added in M354 because the
+    # Documentation Agent held a capability with no artifact it could write.
+    assert len(ArtifactKind) == 17
     with pytest.raises(ArtifactError) as exc:
         make_artifact(
             mission_id="dm001", kind="gossip", authoring_agent="research",
