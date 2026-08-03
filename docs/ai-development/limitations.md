@@ -70,7 +70,7 @@ Depends on agent compliance. Detectable by evaluation; **not** enforced.
 
 5. **Peak memory was not instrumented.** Only wall-clock duration was measured. The Cost agent recorded this as a limitation rather than estimating.
 
-6. **No UI.** There is no operator console, dashboard or Control Center surface. The CLI is the only interface.
+6. ~~**No UI.**~~ **Resolved in M353.** The read-only Agent Operations Console renders fifteen panels as a terminal summary or a self-contained HTML page — see [operations-console.md](operations-console.md). It remains read-only and does not poll: it has no approve, advance, create, remove, merge, deploy or provider verb, and a refresh means running the command again.
 
 7. **The 102 pre-existing stale worktrees remain.** They are reported by the census and left in place; removing another milestone's leftovers is not this milestone's authority.
 
@@ -96,4 +96,4 @@ Depends on agent compliance. Detectable by evaluation; **not** enforced.
 | No model in the loop | The next milestone's controlled provider routing |
 | Ten scenarios | Growth driven by real incidents, not by target counts |
 | Peak memory unmeasured | `resource.getrusage` instrumentation in the suite runner |
-| No UI | An operations console, explicitly deferred |
+| ~~No UI~~ | Delivered in M353 as a read-only console |

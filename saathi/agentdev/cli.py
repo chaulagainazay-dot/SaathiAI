@@ -431,6 +431,53 @@ def cmd_config_surface(args: argparse.Namespace) -> int:
 
 
 # --------------------------------------------------------------------------
+# operations console (M353)
+# --------------------------------------------------------------------------
+
+
+def cmd_console_state(args: argparse.Namespace) -> int:
+    from saathi.agentdev.console import collect_console_state
+
+    settings, _, _ = _stores(args)
+    _emit(collect_console_state(settings))
+    return EXIT_OK
+
+
+def cmd_console_show(args: argparse.Namespace) -> int:
+    from saathi.agentdev.console import collect_console_state, render_text
+
+    settings, _, _ = _stores(args)
+    print(render_text(collect_console_state(settings)), end="")
+    return EXIT_OK
+
+
+def cmd_console_render(args: argparse.Namespace) -> int:
+    """Render the console to HTML. The only file this surface ever produces."""
+    from saathi.agentdev.console import collect_console_state, render_html
+
+    settings, _, _ = _stores(args)
+    page = render_html(collect_console_state(settings))
+    if not args.output:
+        print(page, end="")
+        return EXIT_OK
+    destination = Path(args.output).expanduser()
+    from saathi.agentdev.config_protection import classify_path
+
+    verdict = classify_path(str(destination))
+    if verdict.protected:
+        _emit({
+            "error": "output_path_protected",
+            "path": str(destination),
+            "detail": verdict.reason,
+        })
+        return EXIT_REFUSED
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    destination.write_text(page, encoding="utf-8")
+    _emit({"rendered": str(destination), "bytes": len(page.encode("utf-8"))})
+    return EXIT_OK
+
+
+# --------------------------------------------------------------------------
 # terminology (M352)
 # --------------------------------------------------------------------------
 
@@ -653,6 +700,24 @@ def build_parser() -> argparse.ArgumentParser:
     config.add_parser(
         "surface", help="The full protected surface."
     ).set_defaults(func=cmd_config_surface)
+
+    console = sub.add_parser(
+        "console", help="Read-only Agent Operations Console (M353)."
+    ).add_subparsers(dest="console_command", required=True)
+    console.add_parser(
+        "show", help="Terminal summary of all fifteen panels."
+    ).set_defaults(func=cmd_console_show)
+    console.add_parser(
+        "state", help="Full console state as JSON."
+    ).set_defaults(func=cmd_console_state)
+    crender = console.add_parser(
+        "render", help="Render the console to a self-contained HTML page."
+    )
+    crender.add_argument(
+        "--output", default="",
+        help="Write the page here. Omit to print it to stdout.",
+    )
+    crender.set_defaults(func=cmd_console_render)
 
     terminology = sub.add_parser(
         "terminology", help="Owner-pinned terminology (M352)."

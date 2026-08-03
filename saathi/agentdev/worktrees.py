@@ -160,6 +160,15 @@ def _run_git(args: list[str], cwd: Path, timeout: int = 60) -> tuple[int, str]:
         return 127, str(exc)
 
 
+def run_read_only_git(args: list[str], cwd: Path, timeout: int = 60) -> tuple[int, str]:
+    """Public entry point for other ``agentdev`` modules needing git.
+
+    Delegates to the same allowlist :class:`WorktreeManager` uses, so there is
+    one place where a destructive verb can be refused rather than two.
+    """
+    return _run_git(list(args), Path(cwd), timeout=timeout)
+
+
 @dataclass
 class GitWorktree:
     """One entry from ``git worktree list --porcelain``."""
