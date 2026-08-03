@@ -1,0 +1,7 @@
+{
+  "data": [
+    {"id": "demo-company-hospital", "name": "Demo Hospital"},
+    {"id": "demo-company-supplier", "name": "Demo Food Supplier"}
+  ],
+  "pageInfo": {"hasNextPage": true, "endCursor": "demo-cursor-2"}
+}

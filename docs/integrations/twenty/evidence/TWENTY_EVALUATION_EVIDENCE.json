@@ -1,0 +1,103 @@
+{
+  "schema_version": "1.0",
+  "captured_at": "2026-08-03T16:28:52+05:45",
+  "terminal_verdict": "TWENTY_SETUP_BLOCKED_BY_RESOURCE_CONSTRAINTS",
+  "go_no_go": "ISOLATED_SANDBOX_EVALUATION_ALLOWED_WITH_RUNTIME_BLOCKER",
+  "saathios": {
+    "original_path": "/Users/macbookpro/SaathiAI",
+    "original_branch": "milestone/m312-m319-connectivity-governance",
+    "original_sha": "6639ca730ece11bce160a55a237fcaff8df3058c",
+    "isolated_worktree": "/Users/macbookpro/SaathiAI-twenty-readonly",
+    "branch": "evaluation/twenty-readonly-sandbox",
+    "starting_sha": "6639ca730ece11bce160a55a237fcaff8df3058c",
+    "original_dirty_state_preserved": true
+  },
+  "twenty": {
+    "path": "/Users/macbookpro/dev-toolkits/twenty",
+    "branch": "main",
+    "sha": "37f1fe17ab48269384cffb774f82f096abe3863a",
+    "source_version": "2.27.0",
+    "license_boundary": {
+      "core": "AGPLv3_WITH_TWENTY_APPLICATION_EXCEPTION",
+      "sdk_app_areas": "MIT_AS_DECLARED_PER_PACKAGE",
+      "enterprise_marked_source_file_count": 303,
+      "legal_advice": false
+    }
+  },
+  "environment": {
+    "macos": "26.5.1 (25F80)",
+    "architecture": "arm64",
+    "memory_bytes": 8589934592,
+    "disk_free_gib": 63,
+    "docker": "NOT_INSTALLED",
+    "docker_compose": "NOT_INSTALLED",
+    "node": "26.4.0",
+    "npm": "11.17.0",
+    "pnpm": "11.5.0",
+    "yarn": "NOT_INSTALLED",
+    "corepack": "NOT_INSTALLED",
+    "postgres_process_detected": false,
+    "redis_process_detected": false,
+    "active_saathios_ports": [3000, 8765, 8766],
+    "planned_twenty_port": 3020
+  },
+  "adapter": {
+    "live_transport_implemented": false,
+    "fixture_transport_only": true,
+    "network_import_scan": "PASS",
+    "read_only": true,
+    "write_methods": false,
+    "write_rejection": true,
+    "connector_registry_composed": true,
+    "execution_gateway_bypassed": false,
+    "api_contract_state": "SOURCE_INSPECTED_FIXTURE_ONLY_NOT_LIVE_VALIDATED",
+    "webhook_endpoint_exposed": false,
+    "webhook_direct_execution": false
+  },
+  "tests": {
+    "focused": {"passed": 19, "failed": 0, "duration_seconds": 0.09},
+    "connector_regression": {"passed": 315, "failed": 0, "duration_seconds": 17.74},
+    "full_backend": {
+      "passed": 5785,
+      "skipped": 1,
+      "failed": 9,
+      "duration_seconds": 1007.09,
+      "classification": "BASELINE_ENVIRONMENT_FAILURES_OUTSIDE_TWENTY_PACKAGE",
+      "failed_areas": ["M157 private-alpha readiness", "M17.1 live browser", "M57 local worktree prerequisites", "ops release readiness"]
+    },
+    "python_compile": "PASS",
+    "json_syntax": "PASS",
+    "yaml_syntax": "PASS_STATIC_ONLY",
+    "shell_syntax": "PASS",
+    "git_diff_check": "PASS",
+    "secret_pattern_scan": "PASS"
+  },
+  "runtime_validation": {
+    "containers": "NOT_RUN_DOCKER_UNAVAILABLE",
+    "health": "NOT_RUN",
+    "ui": "NOT_RUN",
+    "login": "NOT_RUN",
+    "api": "NOT_RUN",
+    "graphql": "NOT_RUN",
+    "oauth": "NOT_RUN",
+    "webhook_delivery": "NOT_RUN",
+    "custom_objects": "NOT_RUN",
+    "backup_restore": "NOT_RUN",
+    "restart_persistence": "NOT_RUN",
+    "runtime_memory": "NOT_MEASURED",
+    "runtime_disk": "NOT_MEASURED"
+  },
+  "authority": {
+    "production_data": false,
+    "real_credentials": false,
+    "public_exposure": false,
+    "autonomous_write": false,
+    "email_send": false,
+    "external_account_creation": false,
+    "trading_guardian_changed": false,
+    "approval_authority_changed": false,
+    "execution_authority_changed": false,
+    "deployment": false,
+    "push": false
+  }
+}
