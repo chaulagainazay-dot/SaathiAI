@@ -64,7 +64,7 @@ Depends on agent compliance. Detectable by evaluation; **not** enforced.
 
 2. **No model is in the loop.** Every agent in the simulated mission is a scripted caller of the real modules. The systems are proven; agent *behaviour* under a real model is not. This is exactly the objection the Testing agent raised in the red-team review, and it is preserved unresolved rather than answered.
 
-3. **Ten scenarios do not bound the behaviour space.** The suite proves ten specific refusals hold. Calling it "behaviour coverage" is a stretch the mission itself flagged and referred to the owner.
+3. **Ten scenarios do not bound the behaviour space.** The suite establishes that ten specific refusals hold. The mission flagged the name "behaviour coverage" as a stretch and referred it to the owner; M352 rejected the term outright. The suite is a *behaviour scenario suite*, reported as a count — see [terminology.md](terminology.md).
 
 4. **No provider is connected.** No credential, no network, no paid call. Any claim about live-provider behaviour or cost is unmeasured.
 
@@ -85,7 +85,7 @@ Depends on agent compliance. Detectable by evaluation; **not** enforced.
 - Passing the `owner_approval` gate — no agent may, by construction
 - Any change to protected configuration
 - Any push, merge or deploy
-- Deciding whether the first suite may be called "behaviour coverage" before a model participates — the open question from the simulated mission
+- ~~Deciding whether the first suite may claim behaviour evaluation before a model participates~~ — **resolved in M352**: no. See [terminology.md](terminology.md) §3.
 - Authorising the next milestone
 
 ## What would change these limitations

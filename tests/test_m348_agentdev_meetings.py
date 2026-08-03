@@ -80,7 +80,7 @@ def _challenge(mission_id: str, target: str, author: str = "security-governance"
     body.update({
         "claim": "The finding does not cover authority boundaries.",
         "evidence": "No claim mentions the approval chain.",
-        "counterargument": "Behaviour coverage without authority coverage is partial.",
+        "counterargument": "A behaviour scenario suite without authority scenarios is partial.",
         "failure_mode": "An unauthorized action passes unnoticed.",
         "risk": "Governance regression ships undetected.",
         "alternative": "Add authority scenarios to the first suite.",

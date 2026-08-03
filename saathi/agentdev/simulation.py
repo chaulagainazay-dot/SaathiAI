@@ -11,7 +11,7 @@ decision systems work.
 The simulation is **not** a production agent-evaluation platform, and it does
 not implement one. It builds only the foundation, runs it, and preserves the
 disagreement that a real council would leave behind: the Testing agent's
-objection about the boundary between behaviour coverage and prompt compliance
+objection about the boundary between a scenario count and prompt compliance
 goes unanswered, so the terminal verdict is ``APPROVED_WITH_LIMITATIONS``
 rather than a clean approval. That outcome is the point — a simulation that
 manufactured unanimity would prove nothing.
@@ -129,7 +129,7 @@ def run_offline_mission(
         body=OBJECTIVE,
         payload={
             "sufficient_evidence_looks_like": [
-                "a source-backed count of existing behaviour coverage",
+                "a source-backed count of existing behaviour scenarios",
                 "a design that reuses existing SaathiOS systems",
                 "a security verdict on authority and execution risk",
                 "a measured cost against the host ceilings",
@@ -233,7 +233,7 @@ def run_offline_mission(
                 "Cost of behaviour evaluation against a live provider",
             ],
             "insufficient_evidence_on": [
-                "Whether behaviour coverage reduces incident rate — no baseline exists.",
+                "Whether a behaviour scenario suite reduces incident rate — no baseline exists.",
             ],
         },
     )
@@ -262,7 +262,7 @@ def run_offline_mission(
         kind=ArtifactKind.PROPOSAL,
         authoring_agent="product-strategy",
         repository_sha=SHA,
-        title="Product case for behaviour coverage",
+        title="Product case for a behaviour scenario suite",
         required_next_action="architecture proposes a design",
         payload={
             "problem": "A governance regression is invisible until it causes harm.",
@@ -288,8 +288,8 @@ def run_offline_mission(
             claim="The findings do not cover authority-boundary behaviour.",
             evidence="No claim in the findings mentions approval or veto behaviour.",
             counterargument=(
-                "Behaviour coverage without authority coverage would miss the "
-                "regressions that matter most here."
+                "A behaviour scenario suite without authority scenarios would "
+                "miss the regressions that matter most here."
             ),
             failure_mode="A widened agent authority ships with a green suite.",
             risk="Governance regression reaches the owner unnoticed.",
@@ -652,8 +652,8 @@ def run_offline_mission(
                 "scenario exercises a model at all."
             ),
             counterargument=(
-                "Calling this 'behaviour coverage' invites the same overstatement "
-                "the council just rejected one level down."
+                "Claiming behaviour evaluation here invites the same "
+                "overstatement the council just rejected one level down."
             ),
             failure_mode=(
                 "A future change to prompt-level guidance passes the suite "
@@ -661,12 +661,12 @@ def run_offline_mission(
             ),
             risk="The gap between evaluated and enforced widens invisibly.",
             alternative=(
-                "Name the suite 'governance refusal coverage' and defer behaviour "
-                "coverage until a model is in the loop."
+                "Name the suite a governance refusal scenario suite and defer "
+                "any behaviour-evaluation claim until a model is in the loop."
             ),
             decision_required=(
-                "Is the first suite allowed to be named behaviour coverage before "
-                "any model participates?"
+                "May the first suite claim behaviour evaluation before any "
+                "model participates?"
             ),
         ),
     )
@@ -751,7 +751,7 @@ def run_offline_mission(
                 "Scenarios at schema_validated tier establish detection, not prevention.",
             ],
             "owner_decision_required_on": [
-                "Whether the suite may be named behaviour coverage before a model participates.",
+                "Whether the suite may claim behaviour evaluation before a model participates.",
             ],
         },
     )

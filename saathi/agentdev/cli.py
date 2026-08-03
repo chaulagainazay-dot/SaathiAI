@@ -431,6 +431,42 @@ def cmd_config_surface(args: argparse.Namespace) -> int:
 
 
 # --------------------------------------------------------------------------
+# terminology (M352)
+# --------------------------------------------------------------------------
+
+
+def cmd_terminology_lexicon(args: argparse.Namespace) -> int:
+    from saathi.agentdev.terminology import lexicon_report
+
+    _emit(lexicon_report())
+    return EXIT_OK
+
+
+def cmd_terminology_audit(args: argparse.Namespace) -> int:
+    from saathi.agentdev.terminology import audit_surface
+
+    report = audit_surface(root=args.root or None)
+    _emit(report)
+    return EXIT_OK if report["clean"] else EXIT_FAIL
+
+
+def cmd_terminology_classify(args: argparse.Namespace) -> int:
+    from saathi.agentdev.terminology import TERMS_BY_NAME, classify
+
+    classification = classify(args.term)
+    if classification is None:
+        _emit({
+            "term": args.term,
+            "classification": None,
+            "detail": "not reviewed by the owner",
+            "reviewed_terms": sorted(TERMS_BY_NAME),
+        })
+        return EXIT_NOT_FOUND
+    _emit(TERMS_BY_NAME[args.term.strip().lower()].to_dict())
+    return EXIT_OK
+
+
+# --------------------------------------------------------------------------
 # verification and simulation
 # --------------------------------------------------------------------------
 
@@ -617,6 +653,21 @@ def build_parser() -> argparse.ArgumentParser:
     config.add_parser(
         "surface", help="The full protected surface."
     ).set_defaults(func=cmd_config_surface)
+
+    terminology = sub.add_parser(
+        "terminology", help="Owner-pinned terminology (M352)."
+    ).add_subparsers(dest="terminology_command", required=True)
+    terminology.add_parser(
+        "lexicon", help="Every reviewed term and its classification."
+    ).set_defaults(func=cmd_terminology_lexicon)
+    taudit = terminology.add_parser(
+        "audit", help="Scan the reviewed surface for banned phrasing."
+    )
+    taudit.add_argument("--root", default="", help="Override the repository root.")
+    taudit.set_defaults(func=cmd_terminology_audit)
+    tclassify = terminology.add_parser("classify", help="Classify one term.")
+    tclassify.add_argument("term")
+    tclassify.set_defaults(func=cmd_terminology_classify)
 
     verify = sub.add_parser("verify", help="Read-only consistency check of a mission.")
     verify.add_argument("mission_id")

@@ -298,4 +298,43 @@ evaluations.
 
 ---
 
+## ADR-013: Terminology on the `agentdev` surface is pinned data, not prose
+
+**Date:** 2026-08
+**Status:** Accepted
+**Milestones:** M352
+
+**Context:** M344–M351 shipped with one question referred to the owner: may a ten-scenario
+deterministic suite be called "behaviour coverage"? The same ambiguity affected ten other
+words used across `docs/ai-development/`, `saathi/agentdev/`, the CLI, the evidence package
+and the tests — *behaviour evaluation*, *governance evaluation*, *simulation*,
+*certification*, *enforcement*, *orchestration*, *autonomy*, *runtime*, *approval* and
+*authority*. Each read as a stronger guarantee than the code provides. M355–M356 put a real
+model in the loop, at which point an ambiguous word stops being a documentation defect and
+becomes a governance one: a reader cannot tell whether a refusal is a code path or a
+sentence in a prompt.
+
+**Decision:** Pin the vocabulary as typed data in `saathi/agentdev/terminology.py`. Every
+reviewed term maps to exactly one of six classifications — `technically_enforced`,
+`schema_validated`, `deterministic`, `model_evaluated`, `advisory_only`,
+`documentation_only` — or to `rejected` with a named replacement. A closed list of
+twenty-two banned literal phrases is scanned across the reviewed surface by
+`python -m saathi.agentdev terminology audit`, and a test fails if any appears outside a
+declared quote-for-rejection allowance. The owner decision record is
+`docs/ai-development/terminology.md`.
+
+**Rationale:**
+- A lexicon in prose is unenforceable and drifts on the first new document; a lexicon in code is testable and drifts loudly.
+- Classifying rather than deleting keeps useful words usable: *approval* is fine, *approval* meaning owner approval is not, and the distinction is now written down once.
+- The referred question gets a recorded answer — no — instead of surviving into a milestone where a model's output would inherit the ambiguity.
+- A literal-phrase guard is honest about its own reach: it catches listed wordings and cannot detect novel ones, so the guard's limitation is published alongside it rather than claimed away.
+
+**Rejected alternatives:**
+- **A prose style guide only:** unenforceable, and the M344–M351 open question is evidence that prose guidance did not prevent the overstatement.
+- **Semantic or model-based review of wording:** would make the terminology guard itself `model_evaluated`, adding a non-deterministic dependency to the one control whose job is to keep claims checkable.
+- **Deleting the ambiguous words:** *approval*, *authority* and *enforcement* name real, correct mechanisms. Removing them would cost precision; classifying them adds it.
+- **Rewriting the M344–M351 evidence package:** that package records what was true at its commit, including the unresolved question. Superseding it is correct; editing it is not.
+
+---
+
 *New decisions are appended at the bottom. Do not edit past decisions — supersede them with new ADRs.*
