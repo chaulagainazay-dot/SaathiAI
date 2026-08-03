@@ -599,6 +599,91 @@ def cmd_console_render(args: argparse.Namespace) -> int:
 
 
 # --------------------------------------------------------------------------
+# owner review console (M358)
+# --------------------------------------------------------------------------
+
+
+def cmd_review_packet(args: argparse.Namespace) -> int:
+    from saathi.agentdev.missions import MissionError
+    from saathi.agentdev.review_console import build_review_packet
+
+    settings, _, _ = _stores(args)
+    try:
+        _emit(build_review_packet(args.mission_id, settings))
+    except MissionError as exc:
+        _emit({"error": exc.code, "detail": exc.detail})
+        return EXIT_NOT_FOUND
+    return EXIT_OK
+
+
+def cmd_review_render(args: argparse.Namespace) -> int:
+    from saathi.agentdev.config_protection import classify_path
+    from saathi.agentdev.missions import MissionError
+    from saathi.agentdev.review_console import build_review_packet, render_review_html
+
+    settings, _, _ = _stores(args)
+    try:
+        page = render_review_html(build_review_packet(args.mission_id, settings))
+    except MissionError as exc:
+        _emit({"error": exc.code, "detail": exc.detail})
+        return EXIT_NOT_FOUND
+    if not args.output:
+        print(page, end="")
+        return EXIT_OK
+    destination = Path(args.output).expanduser()
+    verdict = classify_path(str(destination))
+    if verdict.protected:
+        _emit({
+            "error": "output_path_protected",
+            "path": str(destination),
+            "detail": verdict.reason,
+        })
+        return EXIT_REFUSED
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    destination.write_text(page, encoding="utf-8")
+    _emit({"rendered": str(destination), "bytes": len(page.encode("utf-8"))})
+    return EXIT_OK
+
+
+def cmd_review_action(args: argparse.Namespace) -> int:
+    from saathi.agentdev.missions import MissionError
+    from saathi.agentdev.review_console import ReviewError, record_owner_action
+
+    settings, _, _ = _stores(args)
+    try:
+        result = record_owner_action(
+            settings,
+            args.mission_id,
+            args.action,
+            actor=args.actor,
+            rationale=args.rationale,
+            reviewed_artifact_ids=args.artifact or [],
+            acknowledged_risks=args.acknowledge_risk or [],
+            dry_run=args.dry_run,
+        )
+    except (ReviewError, MissionError) as exc:
+        _emit({"error": exc.code, "detail": exc.detail})
+        return EXIT_REFUSED
+    _emit(result)
+    return EXIT_OK
+
+
+def cmd_review_ledger(args: argparse.Namespace) -> int:
+    from saathi.agentdev.review_console import OwnerDecisionLedger, ReviewError
+
+    settings, _, _ = _stores(args)
+    ledger = OwnerDecisionLedger(settings.store_path(), args.mission_id)
+    try:
+        entries = [d.to_dict() for d in ledger.entries()]
+        chain = ledger.verify_chain()
+    except ReviewError as exc:
+        _emit({"error": exc.code, "detail": exc.detail})
+        return EXIT_FAIL
+    _emit({"dev_mission_id": args.mission_id, "entries": entries, "chain": chain})
+    return EXIT_OK if chain["intact"] else EXIT_FAIL
+
+
+# --------------------------------------------------------------------------
 # terminology (M352)
 # --------------------------------------------------------------------------
 
@@ -838,12 +923,47 @@ def build_parser() -> argparse.ArgumentParser:
     geval.add_argument("--evidence", action="append", help="Repeatable artifact id.")
     geval.set_defaults(func=cmd_gate_evaluate)
 
-    review = sub.add_parser("review", help="Review standard.").add_subparsers(
-        dest="review_command", required=True
-    )
+    review = sub.add_parser(
+        "review", help="Review standard (M349) and the owner review console (M358)."
+    ).add_subparsers(dest="review_command", required=True)
     review.add_parser(
         "standard", help="The evidence a high or critical finding must carry."
     ).set_defaults(func=cmd_review_standard)
+
+    rpacket = review.add_parser("packet", help="Everything the owner needs, as JSON.")
+    rpacket.add_argument("mission_id")
+    rpacket.set_defaults(func=cmd_review_packet)
+    rrender = review.add_parser("render", help="Render the owner review page.")
+    rrender.add_argument("mission_id")
+    rrender.add_argument("--output", default="", help="Write the page here.")
+    rrender.set_defaults(func=cmd_review_render)
+    rledger = review.add_parser(
+        "ledger", help="Owner decisions and the integrity of their chain."
+    )
+    rledger.add_argument("mission_id")
+    rledger.set_defaults(func=cmd_review_ledger)
+
+    for action in ("approve", "reject", "request-changes", "needs-research"):
+        parser_for_action = _with_dry_run(
+            review.add_parser(
+                action, help=f"Record the owner's {action.replace('-', ' ')} decision."
+            )
+        )
+        parser_for_action.add_argument("mission_id")
+        parser_for_action.add_argument(
+            "--actor", required=True, help="Must be 'owner'; anything else is refused."
+        )
+        parser_for_action.add_argument("--rationale", required=True)
+        parser_for_action.add_argument(
+            "--artifact", action="append", help="Repeatable: artifact ids reviewed."
+        )
+        parser_for_action.add_argument(
+            "--acknowledge-risk", action="append",
+            help="Repeatable: a remaining risk the owner accepts. Required to approve.",
+        )
+        parser_for_action.set_defaults(
+            func=cmd_review_action, action=action.replace("-", "_")
+        )
 
     config = sub.add_parser("config", help="Configuration protection.").add_subparsers(
         dest="config_command", required=True
