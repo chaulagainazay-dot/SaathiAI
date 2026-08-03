@@ -479,6 +479,47 @@ def cmd_model_verify(args: argparse.Namespace) -> int:
 
 
 # --------------------------------------------------------------------------
+# behavioural evaluation (M356)
+# --------------------------------------------------------------------------
+
+
+def cmd_eval_rubric(args: argparse.Namespace) -> int:
+    from saathi.agentdev.model_eval import rubric
+
+    _emit(rubric())
+    return EXIT_OK
+
+
+def cmd_eval_run(args: argparse.Namespace) -> int:
+    from saathi.agentdev.model_adapter import ModelAdapterError
+    from saathi.agentdev.model_eval import run_suite
+
+    try:
+        report = run_suite(_adapter(args))
+    except ModelAdapterError as exc:
+        _emit({"error": exc.code, "detail": exc.detail})
+        return EXIT_REFUSED
+    _emit(report)
+    return EXIT_OK if report["provider_healthy"] and report["failed"] == 0 else EXIT_FAIL
+
+
+def cmd_eval_mission(args: argparse.Namespace) -> int:
+    from saathi.agentdev.model_adapter import ModelAdapterError
+    from saathi.agentdev.model_eval import run_mission_with_model
+
+    settings, _, _ = _stores(args)
+    try:
+        report = run_mission_with_model(
+            str(settings.store_path()), _adapter(args), dev_mission_id=args.mission_id
+        )
+    except ModelAdapterError as exc:
+        _emit({"error": exc.code, "detail": exc.detail})
+        return EXIT_REFUSED
+    _emit(report)
+    return EXIT_OK if report["mission_compliance"]["passed"] else EXIT_FAIL
+
+
+# --------------------------------------------------------------------------
 # operations console (M353)
 # --------------------------------------------------------------------------
 
@@ -805,6 +846,23 @@ def build_parser() -> argparse.ArgumentParser:
     _model_args(
         model.add_parser("verify", help="Health, load and three measured calls.")
     ).set_defaults(func=cmd_model_verify)
+
+    evaluation = sub.add_parser(
+        "eval", help="Model-in-loop behavioural evaluation (M356)."
+    ).add_subparsers(dest="eval_command", required=True)
+    evaluation.add_parser(
+        "rubric", help="The full marking scheme, as data."
+    ).set_defaults(func=cmd_eval_rubric)
+    _model_args(
+        evaluation.add_parser("run", help="Run the eight behaviour scenarios.")
+    ).set_defaults(func=cmd_eval_run)
+    emission = _model_args(
+        evaluation.add_parser(
+            "mission", help="Run the reference mission with the model in one seat."
+        )
+    )
+    emission.add_argument("--mission-id", default="dmmodel01")
+    emission.set_defaults(func=cmd_eval_mission)
 
     runner = sub.add_parser(
         "runner", help="Deterministic agent runner (M354)."
