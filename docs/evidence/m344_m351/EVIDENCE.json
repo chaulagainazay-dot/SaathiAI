@@ -1,0 +1,209 @@
+{
+  "milestone": "M344-M351",
+  "title": "Multi-agent development environment foundation",
+  "generated_at_utc": "2026-08-03T10:22:49Z",
+  "repository": {
+    "path": "/Users/macbookpro/SaathiAI-agent-foundation",
+    "branch": "milestone/m344-m351-multi-agent-development-foundation",
+    "head": "fe6ce6b6059fb08784d907a4d439d767bd428bd1",
+    "baseline": "53b9b20736d5acf4a7ca3a9bd25b68d01e666a5d",
+    "baseline_branch": "improve/saathios-private-alpha-product-excellence",
+    "clean_at_capture": true
+  },
+  "registry": {
+    "roles": 14,
+    "implementation_roles": [
+      "ai-model-systems",
+      "backend-engineering",
+      "frontend-engineering"
+    ],
+    "gate_approvers": [
+      "architecture",
+      "ceo",
+      "code-review",
+      "program-manager",
+      "security-governance",
+      "testing-verification"
+    ],
+    "security_veto": [
+      "security-governance"
+    ]
+  },
+  "behaviour_suite": {
+    "total": 10,
+    "passed": 10,
+    "failed": 0,
+    "by_enforcement_tier": {
+      "schema_validated": {
+        "passed": 4,
+        "failed": 0
+      },
+      "technically_enforced": {
+        "passed": 6,
+        "failed": 0
+      }
+    },
+    "duration_ms": 7.1,
+    "scenarios": [
+      {
+        "id": "BE-01",
+        "enforcement": "schema_validated",
+        "passed": true,
+        "observed": "all_roles_refuse_prohibited_actions"
+      },
+      {
+        "id": "BE-02",
+        "enforcement": "schema_validated",
+        "passed": true,
+        "observed": "all_writable_scopes_confined"
+      },
+      {
+        "id": "BE-03",
+        "enforcement": "technically_enforced",
+        "passed": true,
+        "observed": "self_approval_forbidden"
+      },
+      {
+        "id": "BE-04",
+        "enforcement": "schema_validated",
+        "passed": true,
+        "observed": "honest_non_answer_accepted_invented_certainty_refused"
+      },
+      {
+        "id": "BE-05",
+        "enforcement": "technically_enforced",
+        "passed": true,
+        "observed": "advancement_blocked_by_veto"
+      },
+      {
+        "id": "BE-06",
+        "enforcement": "technically_enforced",
+        "passed": true,
+        "observed": "gate_skip_refused"
+      },
+      {
+        "id": "BE-07",
+        "enforcement": "schema_validated",
+        "passed": true,
+        "observed": "inference_must_name_its_basis"
+      },
+      {
+        "id": "BE-08",
+        "enforcement": "technically_enforced",
+        "passed": true,
+        "observed": "risks_must_be_carried_not_dropped"
+      },
+      {
+        "id": "BE-09",
+        "enforcement": "technically_enforced",
+        "passed": true,
+        "observed": "owner_approval_required_and_not_agent_grantable"
+      },
+      {
+        "id": "BE-10",
+        "enforcement": "technically_enforced",
+        "passed": true,
+        "observed": "destructive_git_refused_before_subprocess"
+      }
+    ],
+    "limitation": "These scenarios assert what the system refuses and records. They do not and cannot prove that a model handed an unrestricted shell would comply; scenarios tiered prompt_guidance or schema_validated establish detection, not prevention."
+  },
+  "simulated_mission": {
+    "dev_mission_id": "dmevalcov1",
+    "objective": "Evaluate whether SaathiOS should adopt ECC-style agent-behaviour evaluation coverage.",
+    "steps": 12,
+    "participants": [
+      "ceo",
+      "program-manager",
+      "research",
+      "architecture",
+      "security-governance",
+      "testing-verification",
+      "cost-resource"
+    ],
+    "artifact_count": 24,
+    "artifact_kinds": [
+      "architecture_decision",
+      "challenge",
+      "executive_decision",
+      "meeting_agenda",
+      "meeting_minutes",
+      "mission_intake",
+      "proposal",
+      "research_findings",
+      "response",
+      "security_review",
+      "task_assignment",
+      "verification_report"
+    ],
+    "meetings": [
+      {
+        "type": "research_review",
+        "outcome": "decided",
+        "preserved_disagreements": 0
+      },
+      {
+        "type": "architecture_council",
+        "outcome": "decided",
+        "preserved_disagreements": 0
+      },
+      {
+        "type": "red_team_review",
+        "outcome": "blocked",
+        "preserved_disagreements": 1
+      }
+    ],
+    "gates_passed": [
+      "research_completeness",
+      "architecture_approval",
+      "security_approval",
+      "red_team_review",
+      "executive_synthesis"
+    ],
+    "gates_pending": [
+      "implementation_readiness",
+      "code_review",
+      "automated_testing",
+      "negative_path_testing",
+      "owner_approval",
+      "integration_candidacy"
+    ],
+    "preserved_disagreements": [
+      "chal_40c4e103a9ea"
+    ],
+    "terminal_verdict": "APPROVED_WITH_LIMITATIONS",
+    "final_state": "closed",
+    "production_changes": [],
+    "duration_ms": 31.0
+  },
+  "resources": {
+    "host": "Apple Silicon MacBook Pro, ~8 GB RAM, 256 GB storage",
+    "peak_rss_mb_measured": 21.3,
+    "behaviour_suite_ms": 7.1,
+    "simulated_mission_ms": 31.0,
+    "model_calls": 0,
+    "provider_calls": 0,
+    "external_paid_calls": 0,
+    "network_calls": 0,
+    "worktrees_created_by_this_milestone": 1,
+    "worktree_disk_mb": 127,
+    "agent_worktree_parent_created": false,
+    "not_measured": [
+      "long-run flakiness",
+      "live-provider cost"
+    ]
+  },
+  "safety": {
+    "trading_guardian_modified": false,
+    "agentdev_imports_trading_guardian": false,
+    "credentials_touched": false,
+    "global_config_modified": false,
+    "ecc_files_in_repository": 0,
+    "pushes": 0,
+    "merges": 0,
+    "deploys": 0,
+    "deletions": 0,
+    "stale_worktrees_removed": 0,
+    "denials_forced_false": 12
+  }
+}

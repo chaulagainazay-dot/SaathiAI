@@ -1629,3 +1629,69 @@ authority locks false.
 Owner review is required, cannot be satisfied by automation, and had not been
 performed at certification time. Private-alpha readiness does not authorize
 public production deployment. M344 was not started.
+
+### M344–M351 Multi-Agent Development Environment Foundation
+
+Verdict: `MULTI_AGENT_DEVELOPMENT_FOUNDATION_CERTIFIED_WITH_LIMITATIONS`.
+Branch `milestone/m344-m351-multi-agent-development-foundation`, baseline
+`53b9b20`. Evidence: `docs/evidence/m344_m351/`.
+
+A SaathiOS-native environment in which specialised development agents receive
+bounded missions, research independently, deliberate in recorded meetings and
+produce evidence-backed decisions. It was originally specified as M328–M335;
+that range and M336–M343 are already shipped, so reusing the numbers would have
+created two milestones with the same identity. Renumbered with owner approval;
+scope unchanged.
+
+The discovery pass established what already existed. `saathi/engineering/`
+(8,183 lines, M20.0–M20.7) already governs coding-agent supervision, bound
+approvals, a hash-chained session ledger, integrity evidence and
+disabled-by-default authority. `saathi/safety.py` already owns deterministic
+action classification. Four systems already own product missions. Six of the
+eleven required capabilities therefore existed and were extended rather than
+rebuilt; `saathi/engineering/` was not modified at all.
+
+Five did not exist. `saathi/agentdev/` adds them above `engineering/` with a
+strictly one-way dependency (ADR-012): fourteen declarative role contracts with
+repository path scopes and independent reviewers, mission-bound worktree
+isolation, sixteen artifact kinds, five structured meeting types, eleven review
+gates, and the first agent-behaviour evaluation suite. Authority reuses
+`SafetyLevel` and `Approval`; a test asserts no parallel enum exists.
+
+Three properties are structural rather than instructional. No agent may approve
+its own output, in either the pass or the fail direction. A gate cannot be
+skipped by advancing twice, because each state names its exit gates and the
+check runs on every hop. Consensus cannot be fabricated: a `decided` meeting
+outcome is refused while any challenge is unanswered, unanswered challenges
+become preserved disagreements on the mission, and
+`APPROVED_FOR_IMPLEMENTATION` is refused while any disagreement stands.
+
+The worktree gap was measured, not assumed: the baseline reported 112 git
+worktrees of which 102 were stale and prunable, left by the ad-hoc M233
+reproduction helper. The new manager binds one worktree to one mission and one
+agent, refuses branch and path collisions, and exposes no removal method at
+all — only a removal plan that withholds its command while uncommitted,
+untracked, contaminated or unmerged state exists. Destructive git verbs are
+refused before `subprocess`. The 102 stale worktrees were reported and left in
+place.
+
+The simulated mission ran all twelve steps with all seven required agents, three
+meetings and 24 artifacts across 12 kinds, and deliberately left a real
+disagreement unresolved: ten scenarios bound ten refusals, not the behaviour
+space. The terminal verdict is therefore `APPROVED_WITH_LIMITATIONS`, not a
+clean approval, and the naming question was referred to the owner.
+
+343 new tests, 144 existing engineering and agent regressions, and 1,090
+existing safety, governance, approval, security and trading tests all pass.
+Zero model calls, zero provider calls, zero paid calls, zero network calls.
+
+Trading Guardian is unchanged and unimported. No credential, global
+configuration, MCP server, broker, deploy, merge or push was touched. ECC
+remains an external read-only reference; no ECC file, module, hook or dependency
+exists in this repository.
+
+The verdict carries limitations because three claims cannot be made honestly
+yet: nothing sandboxes a filesystem, so worktree confinement is detected rather
+than prevented; no model is in the loop, so agent behaviour under a real model
+is unproven; and the owner has not reviewed the evidence. M352–M359 was not
+started.
