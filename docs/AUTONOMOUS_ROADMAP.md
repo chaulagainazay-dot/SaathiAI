@@ -1695,3 +1695,50 @@ yet: nothing sandboxes a filesystem, so worktree confinement is detected rather
 than prevented; no model is in the loop, so agent behaviour under a real model
 is unproven; and the owner has not reviewed the evidence. M352–M359 was not
 started.
+
+## M352–M359 — Agent Operations, Model-in-Loop Evaluation & Certification (2026-08-04)
+
+**Verdict:** `AGENT_OPERATIONS_CERTIFIED_WITH_LIMITATIONS`
+**Evidence:** `docs/evidence/m352_m359/`
+
+Extends the M344–M351 multi-agent development foundation. Seven new modules,
+all inside `saathi/agentdev/`; zero modules outside it changed; zero packages
+installed; the existing `~/SaathiAI/.venv` reused.
+
+M352 closed the question M351 referred upward — may a ten-scenario
+deterministic suite claim behaviour evaluation before any model participates?
+No. Twelve terms are now pinned as typed data with one classification each,
+twenty-two literal phrasings are banned, and `terminology audit` fails if one
+reappears. M353 delivered the read-only operations console (fifteen panels,
+no write verb, no store mutation, no external reference, no polling), closing
+foundation limitation 6. M354 delivered the deterministic runner: any mission
+plan executes through one seven-phase contract with traces, timing, lineage and
+named failure causes, producing byte-identical artifacts across runs. M355
+connected one local model over loopback behind an adapter that offers nine
+capabilities and structurally denies shell, filesystem, tools, non-loopback
+network, credentials and provider fallback.
+
+M356 replaced exactly one participant — the Research Agent — with `qwen3:4b`
+and scored it against a fully published rubric. It passed 2 of 8 scenarios: 32
+of 32 form criteria, 2 of 7 honesty criteria. Asked to edit protected
+configuration and force-push, it refused correctly in the refusal field and, in
+the same reply, asserted as a fact that it had done both. M357 then attacked
+the system with nine prompt attacks: the model complied with 7 of 9; the system
+held on 9 of 9 — eight refusals and one recorded substitution, nothing silent.
+The model is not the control; the refusals are. M358 gave the owner a review
+packet and four actions — approve, reject, request changes, needs research —
+recorded in an append-only hash-chained ledger whose editing, deletion,
+reordering and forgery are each detected and located by test.
+
+378 new tests, 346 existing agentdev tests, 181 engineering/registry/safety and
+1,033 governance/approval/security/trading regressions all pass: 1,938 passed,
+0 failed. Zero cloud calls, zero paid calls, zero credentials, zero pushes,
+merges or deploys, zero worktrees created.
+
+The verdict carries limitations because four claims still cannot be made
+honestly: nothing sandboxes a filesystem, so worktree confinement is detected
+rather than prevented; the concurrency ceilings are declared and reported but
+unenforced, because nothing spawns processes; only one model in one seat was
+ever exercised, and it failed most behaviour scenarios; and attack coverage is
+a list of nine rather than a proof. M360 and beyond were not started, and
+require explicit owner approval.

@@ -1,10 +1,24 @@
 # Operator Guide
 
-**Milestone:** M350 · **Entry point:** `python -m saathi.agentdev`
+**Milestones:** M350, extended in M352–M359 · **Entry point:** `python -m saathi.agentdev`
 
 Read-only by default. Every state-changing command accepts `--dry-run`. Nothing
 here can push, merge, deploy, use a credential or trade — those verbs do not
 exist in the module.
+
+## The one-screen tour
+
+```bash
+python -m saathi.agentdev doctor              # is the environment healthy?
+python -m saathi.agentdev console show        # fifteen panels, read-only
+python -m saathi.agentdev runner run          # 30-step deterministic mission
+python -m saathi.agentdev review packet <id>  # everything the owner needs
+```
+
+Nine command groups exist. `doctor`, `agent`, `mission`, `worktree`, `meeting`,
+`gate`, `config`, `verify` and `simulate` came from M344–M351;
+`terminology`, `console`, `runner`, `model`, `eval`, `adversarial` and the
+`review` sub-commands were added in M352–M359.
 
 ## First contact
 
@@ -87,6 +101,52 @@ python -m saathi.agentdev simulate --dry-run
 python -m saathi.agentdev simulate
 ```
 
+## Added in M352–M359
+
+```bash
+# Terminology (M352) — is the reviewed surface clean?
+python -m saathi.agentdev terminology audit
+python -m saathi.agentdev terminology classify autonomy
+python -m saathi.agentdev terminology lexicon
+
+# Operations console (M353) — read-only, fifteen panels, no polling
+python -m saathi.agentdev console show
+python -m saathi.agentdev console state
+python -m saathi.agentdev console render --output /tmp/console.html
+
+# Deterministic runner (M354) — no model, no prompts
+python -m saathi.agentdev runner plan
+python -m saathi.agentdev runner run --dry-run
+python -m saathi.agentdev runner run
+
+# Local model adapter (M355) — loopback only
+python -m saathi.agentdev model capabilities
+python -m saathi.agentdev model health
+python -m saathi.agentdev model verify
+
+# Behaviour evaluation (M356) — one model in one seat
+python -m saathi.agentdev eval rubric
+python -m saathi.agentdev eval run          # ~120 s
+python -m saathi.agentdev eval mission      # ~15 s
+
+# Adversarial evaluation (M357) — nine attacks
+python -m saathi.agentdev adversarial list
+python -m saathi.agentdev adversarial run   # ~125 s
+
+# Owner review (M358) — four actions, owner only
+python -m saathi.agentdev review packet <dev_mission_id>
+python -m saathi.agentdev review render <dev_mission_id> --output /tmp/review.html
+python -m saathi.agentdev review approve <id> --actor owner --rationale "..." \
+  --acknowledge-risk "<risk>"
+python -m saathi.agentdev review reject <id> --actor owner --rationale "..."
+python -m saathi.agentdev review request-changes <id> --actor owner --rationale "..."
+python -m saathi.agentdev review needs-research <id> --actor owner --rationale "..."
+python -m saathi.agentdev review ledger <id>     # exits 1 if the chain is broken
+```
+
+Only `owner` may run the four `review` decision commands. Any other `--actor`
+is refused with `action_not_by_owner`.
+
 ## Exit codes
 
 | Code | Meaning |
@@ -123,7 +183,20 @@ Fix all of them, then re-run. Every code is documented in
 | Task | Why it is not automated |
 |---|---|
 | Removing a worktree | The module emits the command; it never runs one |
-| Passing the owner-approval gate | No agent may, by construction |
+| Passing the owner-approval gate | Only `owner` may, by construction. M358 gives the owner the means; it gives nobody else the same means |
 | Pruning the 102 pre-existing stale worktrees | Not this milestone's authority |
 | Changing protected configuration | Needs an owner-approved proposal |
 | Pushing, merging, deploying | Out of scope entirely |
+| Starting or stopping the Ollama daemon | The adapter reads it; it never manages it |
+| Counting concurrent agents against the ceilings | Ceilings are declared and reported, not enforced |
+
+## Where to read next
+
+| Question | Document |
+|---|---|
+| What does a word mean here? | [terminology.md](terminology.md) |
+| What is certified, and what is not? | [certification-guide.md](certification-guide.md) |
+| What are the hard numbers? | [operating-limits.md](operating-limits.md) |
+| Something broke — now what? | [recovery-guide.md](recovery-guide.md) |
+| How was the model measured? | [model-evaluation.md](model-evaluation.md) |
+| Did the system hold under attack? | [adversarial-evaluation.md](adversarial-evaluation.md) |

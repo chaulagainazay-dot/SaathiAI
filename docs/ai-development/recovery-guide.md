@@ -1,6 +1,7 @@
 # Recovery Guide
 
-**Milestones:** M346, M347 · Nothing in this guide deletes anything.
+**Milestones:** M346, M347, extended in M352–M359 · Nothing in this guide
+deletes anything.
 
 ## Principle
 
@@ -122,3 +123,106 @@ The store is disposable. Missions and artifacts live under
 `SAATHI_AGENTDEV_STORE` (default `<repo>/data/agentdev`, gitignored). Point the
 variable at a fresh directory to start over; nothing in the repository depends
 on the store's contents.
+
+---
+
+# Recovery paths added in M352–M359
+
+## The terminology audit reports findings
+
+```bash
+python -m saathi.agentdev terminology audit
+```
+
+Each finding names the file, the line, the banned phrase, the reason and the
+replacement. Fix the wording; the audit is a lexical guard, so a rewrite that
+avoids the listed phrase satisfies it. If the phrase is being *quoted in order
+to be rejected*, add the file to `QUOTED_FOR_REJECTION` in
+`terminology.py` with a reason — and expect that allowance to be reviewed with
+the lexicon.
+
+## The console reports a blocker
+
+`console show` orders notices blocker → warning → info. The three blockers:
+
+| Code | Meaning | Recovery |
+|---|---|---|
+| `security_veto_open` | A veto stands against a mission | Only `security-governance` may withdraw it, with evidence |
+| `closed_without_verdict` | A closed mission has no terminal verdict | The store was edited by hand; that is the finding |
+| `terminology_findings` | Banned phrasing on the reviewed surface | See above |
+
+A warning is not a blocker. `repository_dirty` and `stale_worktrees` are
+expected on a working host.
+
+## A runner step failed
+
+The trace names the step, the phase and the cause. Read `failures[0]`.
+
+| Cause | Phase | Meaning |
+|---|---|---|
+| `input_step_not_executed` | `receive` | The plan cites a step that never ran — usually an ordering mistake |
+| `no_handler` | `process` | No handler is registered for that `(agent_id, kind)` pair |
+| `handler_returned_non_mapping` | `process` | The handler returned something other than a dict |
+| `handler_returned_envelope_field` | `produce` | A handler tried to set `authoring_agent`, `mission_id` or another envelope field. The offending names are in the detail |
+| `author_lacks_capability` | `produce` | The role may not write that artifact kind |
+| `gate_refused` | `process` | The gate engine refused; the detail lists every refusal |
+| `gate_not_passed` | `record` | An `advance` step tried to leave a state whose exit gate has not passed |
+| `verdict_not_authored_by_ceo` | `record` | Only the CEO may set a terminal verdict |
+| `digest_mismatch_after_write` | `verify` | The artifact read back differs from the one written. Treat as storage corruption |
+
+Re-running the plan into a fresh store is safe and cheap (~20 ms).
+
+## The provider is unreachable
+
+```bash
+python -m saathi.agentdev model health
+```
+
+| `error_code` | Meaning | Recovery |
+|---|---|---|
+| `provider_unreachable` | Nothing is serving the endpoint | Start Ollama by hand. This package never starts or stops it |
+| `model_not_installed` | The daemon is up but the model is absent | `available_models` lists what is present; pull the model by hand |
+| `endpoint_not_loopback` | A non-local endpoint was configured | Refused by design. Use `127.0.0.1`, `localhost` or `::1` |
+
+There is no fallback. A failed call returns a failure naming the configured
+model, deliberately — a substitute answer would make the run unattributable.
+
+## The model failed inside a mission
+
+The mission still completes. Look at the research artifact's
+`payload.substituted`:
+
+| Value | Meaning |
+|---|---|
+| `call_failed:<code>` | The provider call failed; an honest `INSUFFICIENT_EVIDENCE` finding was recorded instead |
+| `unparseable_output` | The model's reply would not parse |
+| `invalid_claim:<code>` | A claim failed the real validator |
+| `null` | The model's own finding was used unchanged |
+
+No recovery is required — the substitution *is* the recovery, and it is visible
+to any reader of the artifact.
+
+## The owner decision ledger is broken
+
+```bash
+python -m saathi.agentdev review ledger <dev_mission_id>   # exits 1 if broken
+```
+
+| `reason` | Meaning |
+|---|---|
+| `entry content does not match its hash` | That entry was edited after it was written |
+| `prev_hash does not match the entry before it` | An entry was inserted, forged or reordered |
+| `sequence jumped to N` | An entry was deleted |
+| `ledger_corrupt` | A line is not valid JSON |
+
+**There is no repair path, and that is the point.** The chain exists to make
+tampering visible, not reversible. A broken chain is a finding to investigate,
+not a file to fix. Preserve `owner_review.jsonl` as evidence, record the
+discovery, and take fresh decisions in a new store if the mission must proceed.
+
+## An adversarial probe reports `silently_continued`
+
+The system failed, not the model. `silently_continued` means an attack changed
+state or produced an approval with no record. Read `system.detail`, which names
+what got through, and treat it as a governance defect with the same severity as
+a failed gate.

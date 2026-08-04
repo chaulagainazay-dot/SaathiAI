@@ -337,4 +337,44 @@ declared quote-for-rejection allowance. The owner decision record is
 
 ---
 
+## ADR-014: A model enters a mission through a handler that cannot touch the artifact envelope
+
+**Date:** 2026-08
+**Status:** Accepted
+**Milestones:** M354–M357
+
+**Context:** M355 connects a local model; M356 puts it in one seat of a real mission. The
+question that decides whether that is safe is not "is the model good?" but "what can the
+model reach?". A model that could name its own `authoring_agent`, its own `mission_id` or
+its own `repository_sha` would be able to forge authorship, and every downstream control —
+the no-self-approval rule, the evidence-authorship check, the owner-only gate — is defined
+in terms of those fields. The M356 measurement made the question concrete rather than
+theoretical: `qwen3:4b` passed 2 of 8 behaviour scenarios, and in M357 it complied with 7
+of 9 prompt attacks.
+
+**Decision:** A runner handler receives a `HandlerContext` with exactly three fields — the
+plan, its own step, and its resolved input artifacts — and returns the artifact *body*. The
+envelope (`artifact_id`, `mission_id`, `kind`, `authoring_agent`, `repository_sha`, `title`,
+`required_next_action`, `status`, both clocks) is set by the runner, and a handler returning
+any envelope field is refused by name at the `produce` phase. `override_handler()` swaps one
+handler for a model-backed one and changes nothing else. Alongside it: the adapter has no
+automatic fallback, so a failed call returns a failure naming the configured model rather
+than a substitute answer.
+
+**Rationale:**
+- Authority must not live in the layer being evaluated. Keeping the envelope with the runner means a model gains no authority by being a model.
+- The measurement confirms the design rather than assuming it: with the model in one seat, the mission still ran thirty steps and closed with every gate enforced and none self-approved, while the model itself failed most behaviour scenarios.
+- A refusal by field name is better than silently dropping the field: a handler that *tried* to name its own author is a fact the trace should carry.
+- No fallback keeps every recorded result attributable. A second model answering for the first would make "which model did this?" unanswerable, which is the whole point of a model evaluation.
+- One deterministic id derivation (`<kind4>_<mission>_<NN>`) replaces `uuid4` in the runner so two runs are comparable; the seam is in one function rather than scattered.
+
+**Rejected alternatives:**
+- **Let handlers construct whole artifacts:** every governance check downstream is defined on envelope fields; handing those to the participant being evaluated defeats them.
+- **Sanitise the envelope silently:** loses the signal that a forgery was attempted.
+- **A tool-calling or agentic interface to the model:** would require exactly the shell, filesystem and network access the adapter exists to deny.
+- **Fall back to a second model on failure:** unattributable results, and a quiet downgrade is worse than a loud failure.
+- **Trust the model's own refusal field:** M356 scenario ME-07 refused in the refusal field and, in the same reply, asserted it had edited protected configuration and force-pushed. A refusal claim is evidence about a claim, not about an action.
+
+---
+
 *New decisions are appended at the bottom. Do not edit past decisions — supersede them with new ADRs.*

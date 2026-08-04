@@ -1,9 +1,14 @@
 # Multi-Agent Development Environment — Architecture
 
-**Milestones:** M344–M351
+**Milestones:** M344–M351, extended by M352–M359
 **Baseline:** `improve/saathios-private-alpha-product-excellence` @ `53b9b20`
 **Branch:** `milestone/m344-m351-multi-agent-development-foundation`
 **Status:** foundation; no production behaviour changed
+
+> **M352–M359 update.** Sections 1–3 below describe the M344–M351 foundation
+> and remain accurate. [Section 4](#4-m352m359-extension) records what the
+> second block added, why each addition was necessary, and what it deliberately
+> did not change.
 
 > Numbering note. This work was specified as "M328–M335". Both M328–M335
 > (production readiness) and M336–M343 (private-alpha readiness) are already
@@ -244,3 +249,87 @@ distinction is never blurred:
 Nothing in this milestone technically prevents a model from writing outside its
 worktree if it is handed an unrestricted shell. What is enforced is that
 `agentdev` never hands one out, and that a violation is detected and recorded.
+
+---
+
+## 4. M352–M359 extension
+
+Eight milestones, seven new modules, one new artifact kind, no change to any
+module outside `saathi/agentdev/`.
+
+### 4.1 What was added
+
+| Module | Milestone | Why nothing existing covered it |
+|---|---|---|
+| `terminology.py` | M352 | The lexicon existed only as prose, and prose did not prevent the coverage overstatement the M351 mission itself flagged and referred to the owner. A typed lexicon plus a phrase guard makes drift loud |
+| `console.py` | M353 | M344–M351 limitation 6 was "no UI, the CLI is the only interface". Fifteen panels assembled from stores, registry, live git and the host |
+| `resources.py` | M353 | Ceilings were declared against an 8 GB host with nothing measuring that host. `resource`, `shutil` and `os.sysconf` were enough; no dependency was added |
+| `runner.py` | M354 | `simulation.py` is *one* hard-coded mission. Nothing executed an arbitrary plan through a uniform contract with traces, timing, lineage and named failure causes |
+| `model_adapter.py` | M355 | No component talked to a model at all. One place, loopback only, nine capabilities and seven structural denials |
+| `model_eval.py` | M356 | 343 code test files, ten deterministic governance scenarios, and nothing that measured a real model against a published rubric |
+| `adversarial.py` | M357 | Nothing asked what the system does when the model misbehaves — the question that decides whether governance is real |
+| `review_console.py` | M358 | The `owner_approval` gate was owner-only from M349 with no means for the owner to exercise it, and no immutable record of owner decisions |
+
+### 4.2 The dependency graph is unchanged
+
+```
+saathi/agentdev/  ──imports──►  saathi.safety   (SafetyLevel, Approval)
+                  ──imports──►  saathi.config   (ROOT)
+                  ──imports──►  standard library only
+```
+
+Verified at certification: `saathi/agentdev/` imports exactly `saathi.safety`,
+`saathi.config` and itself, and **zero** modules under `saathi/engineering/`,
+`saathi/missions/` or `saathi/platform/` import `saathi.agentdev`.
+
+No package was installed. No virtual environment was created — the existing
+`~/SaathiAI/.venv` is reused.
+
+### 4.3 One extension to the closed vocabulary
+
+`ArtifactKind.DOCUMENTATION_UPDATE` was added in M354, taking sixteen kinds to
+seventeen. The Documentation Agent held `author_documentation` with no artifact
+kind it could write; every other capability had one. The alternative — letting
+documentation masquerade as `research_findings` — was worse.
+
+### 4.4 The seam a model enters through
+
+This is the load-bearing design decision of the second block.
+
+```
+PlanStep ──► HandlerContext(plan, step, inputs) ──► handler ──► body dict
+                                                                  │
+                     runner owns the envelope ────────────────────┘
+                     (artifact_id, mission_id, kind, authoring_agent,
+                      repository_sha, title, required_next_action, status)
+```
+
+A handler returns the artifact **body**. The envelope belongs to the runner, and
+a handler returning any envelope field is refused by name at the `produce`
+phase. `override_handler()` swaps one handler for a model-backed one.
+
+The consequence, measured in M356 and M357: a model that failed six of eight
+behaviour scenarios and complied with seven of nine attacks still could not
+forge an author, approve a gate, skip a state or close a mission. It gains no
+authority by being a model, because authority was never in the handler.
+
+### 4.5 Enforcement honesty, extended
+
+The four tiers from §3.6 gained a fifth for model-produced claims:
+
+| Tier | Added in | Meaning |
+|---|---|---|
+| `model_evaluated` | M352 | A local model produced it and a documented rubric scored it. Establishes what one model did on one host at one moment — never a property of models |
+
+`certification` was pinned as `documentation_only`, `autonomy` was rejected
+outright, and `runtime` was reserved for the product runtime so the new
+execution engine is called the *deterministic runner*. See
+[terminology.md](terminology.md).
+
+### 4.6 What M352–M359 deliberately did not do
+
+- **No new orchestrator.** The runner drives the existing `GateEngine`, `DevMissionStore` and `ArtifactStore`; it does not re-implement any of them.
+- **No second approval model.** M358 satisfies the M349 owner-only gate; it does not introduce a parallel approval concept.
+- **No provider abstraction layer beyond one interface.** One adapter protocol, one implementation, one scripted stand-in for tests, no registry and no fallback.
+- **No agent process supervisor.** Nothing spawns a process, so the concurrency ceilings remain declared rather than enforced — stated everywhere they appear.
+- **No change to `saathi/engineering/`**, `saathi/missions/`, `saathi/platform/` or any product module.

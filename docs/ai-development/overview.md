@@ -81,9 +81,28 @@ created, and only for an engineering role, and only through
 | [security-boundaries.md](security-boundaries.md) | What this milestone may never do |
 | [limitations.md](limitations.md) | Honest statement of what is enforced versus guided |
 
+### Added in M352–M359
+
+| Document | Contents |
+|---|---|
+| [terminology.md](terminology.md) | The Owner Terminology Decision Record — twelve pinned terms, twenty-two banned phrasings |
+| [operations-console.md](operations-console.md) | The read-only console, its fifteen panels and how read-only is established |
+| [deterministic-runner.md](deterministic-runner.md) | The seven-phase contract, the four step actions, and the handler/envelope seam |
+| [model-adapter.md](model-adapter.md) | The isolated local adapter: nine capabilities, seven structural denials |
+| [model-evaluation.md](model-evaluation.md) | The published rubric, the eight scenarios and the measured result |
+| [adversarial-evaluation.md](adversarial-evaluation.md) | The nine attacks and what held |
+| [owner-review-console.md](owner-review-console.md) | Four owner actions and the hash-chained decision ledger |
+| [certification-guide.md](certification-guide.md) | What "certified" means, and how to reproduce it |
+| [operating-limits.md](operating-limits.md) | Measured concurrency, memory, disk, latency and known risks |
+
 ## Honesty rule
 
 Throughout these documents, a control is labelled **technically enforced**,
-**schema validated**, **orchestration checked** or **prompt guidance**. Prompt
-guidance depends on agent compliance and is only detectable by evaluation. It is
-never described as enforcement.
+**schema validated**, **orchestration checked**, **deterministic**,
+**model evaluated**, **advisory only** or **documentation only**. Prompt text
+depends on agent compliance and is only detectable by evaluation. It is never
+described as enforcement.
+
+Vocabulary is not a matter of taste here: every term above is pinned in
+`saathi/agentdev/terminology.py`, and `python -m saathi.agentdev terminology
+audit` fails if a banned phrasing reappears on this surface.
