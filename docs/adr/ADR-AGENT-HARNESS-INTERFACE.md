@@ -4,13 +4,17 @@
 | --- | --- |
 | **ID** | ADR-AGENT-HARNESS-INTERFACE |
 | **Date** | 2026-08-06 |
-| **Status** | **ACCEPTED (design-only; no implementation authorized)** |
+| **Status** | **ACCEPTED_DESIGN_ONLY** |
 | **Milestone** | M385 |
 | **Parent decision** | ADR-QM-MULTI-AGENT-RUNTIME → `ADAPT_SELECTED_PATTERNS` |
 | **Full design** | [`docs/agent-runtime/M385_AGENT_HARNESS_INTERFACE_DESIGN.md`](../agent-runtime/M385_AGENT_HARNESS_INTERFACE_DESIGN.md) |
 | **Design baseline SHA** | `949afa68a4135aa94dbdaaf9aecfd618e0948c09` |
 | **Design baseline branch** | `milestone/m369-m376-local-model-qualification` (docs authored on this tip; publication may use a dedicated M377–M385 branch) |
-| **Implementation status** | **Design-only — not implemented** |
+| **Implementation status** | **Design-only — not implemented** (no `AgentHarness` / `FakeInMemoryHarness` in `saathi/`) |
+| **Authority impact** | None while design-only; if later implemented, driver only under orchestration — never EG replacement |
+| **Supersedes** | Informal “multi-CLI as control plane” speculation |
+| **Superseded by** | Not superseded; **blocked by** ADR-SAATHIOS-ARCHITECTURE-CONSOLIDATION freezes + **FM-C2** (AgentSessionAdapter relationship) |
+| **Explicit non-actions** | No adapters; no commercial CLIs; no gateway bypass; no TG change |
 
 ---
 
