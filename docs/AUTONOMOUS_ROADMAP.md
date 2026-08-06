@@ -1,5 +1,20 @@
 # SaathiOS Autonomous Roadmap
 
+## M385 — AgentHarness Interface Design (2026-08-06)
+
+| Field | Value |
+| --- | --- |
+| Verdict | `AGENT_HARNESS_DESIGN_APPROVED_WITH_LIMITATIONS` |
+| Mode | **Design-only** — no adapters, no runtime code, no providers |
+| ADR | `docs/adr/ADR-AGENT-HARNESS-INTERFACE.md` |
+| Design | `docs/agent-runtime/M385_AGENT_HARNESS_INTERFACE_DESIGN.md` |
+| Placement | Under `agent_runtime` via controller; tools only via ExecutionGateway |
+| First future adapter order | FakeInMemoryHarness → LocalModelHarness (read-only) → bounded coding |
+| Forbidden | QM import; gateway bypass; TG change; commercial CLI adapters without cert |
+| Next | Human review only — **do not auto-start** M386, types, FakeInMemoryHarness, or commercial CLIs |
+
+**AgentHarness is an internal driver contract, not an authority layer. Design-only; not implemented.**
+
 ## M377–M384 — QM Multi-Agent Runtime Architecture Gap Analysis (2026-08-06)
 
 | Field | Value |
