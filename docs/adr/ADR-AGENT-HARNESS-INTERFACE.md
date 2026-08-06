@@ -13,7 +13,7 @@
 | **Implementation status** | **Design-only — not implemented** (no `AgentHarness` / `FakeInMemoryHarness` in `saathi/`) |
 | **Authority impact** | None while design-only; if later implemented, driver only under orchestration — never EG replacement |
 | **Supersedes** | Informal “multi-CLI as control plane” speculation |
-| **Superseded by** | Not superseded; **blocked by** ADR-SAATHIOS-ARCHITECTURE-CONSOLIDATION freezes + **FM-C2** (AgentSessionAdapter relationship) |
+| **Superseded by** | Not superseded. **Amended by** ADR-AGENT-SESSION-ADAPTER-HARNESS-RELATIONSHIP (FM-C2): plane separation vs engineering `AgentSessionAdapter`; implementation still **FZ-01** / FM-I1 gated |
 | **Explicit non-actions** | No adapters; no commercial CLIs; no gateway bypass; no TG change |
 
 ---

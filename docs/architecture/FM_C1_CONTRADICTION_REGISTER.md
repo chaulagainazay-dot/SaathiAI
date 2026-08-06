@@ -62,12 +62,13 @@
 | Field | Value |
 | --- | --- |
 | **ID** | CX-05 |
-| **Documents involved** | M385 design; engineering adapters; consolidation review |
+| **Documents involved** | M385 design; engineering adapters; consolidation review; **FM-C2 ADR + reconciliation** |
 | **Source evidence** | `saathi/engineering/adapters/base.py` `AgentSessionAdapter`; no AgentHarness class |
-| **Severity** | **P2** |
-| **Corrected interpretation** | Partial overlap. **FM-C2** must decide compose/supersede/bind. Until then both expansion freezes (FZ-01, FZ-02). |
-| **Files repaired** | freeze register; terminology; authority index; roadmap next pointer |
-| **Unresolved remainder** | **Requires FM-C2** — not resolved in FM-C1 |
+| **Severity** | **P2** (design dualism) |
+| **Corrected interpretation** | **FM-C2 decision: ALTERNATIVE F.** Plane separation — AgentHarness = future platform multi-turn driver; AgentSessionAdapter = engineering-only process session ABC. Neither wraps/implements the other in v1. Platform path uses HarnessSessionController; eng uses EngineeringOrchestrator. ToolIntent construction never on either driver. |
+| **Files repaired** | `ADR-AGENT-SESSION-ADAPTER-HARNESS-RELATIONSHIP.md`; `FM_C2_AGENT_SESSION_ADAPTER_HARNESS_RECONCILIATION.md`; freeze FZ-01/02 amended; authority index; roadmap |
+| **Unresolved remainder** | **Closed for relationship ambiguity.** Residual: eng Claude CLI unobserved FS risk (documented; FZ-02/07); implementation still frozen (FZ-01). |
+| **Disposition** | **CLOSED (relationship)** — residual security risk tracked under freezes, not open dual-design ambiguity |
 
 ### CX-06 — ModelGateway vs inference ownership
 
@@ -197,7 +198,7 @@
 | --- | --- | --- | --- |
 | P0 | 0 newly discovered active doc→weakening-claim | — | Live trading freezes prevent P0 drift |
 | P1 | 5 (CX-01,02,04,13,14) | Repaired / clarified | Historical docs |
-| P2 | 7 (CX-03,05,06,07,09,10,12) | Partially (docs/freezes) | FM-C2, approval correlation, scheduler design, migrations |
+| P2 | 7 (CX-03,05,06,07,09,10,12) | CX-05 relationship **closed in FM-C2**; others partial | approval correlation, scheduler design, migrations; FZ residual |
 | P3 | 3 (CX-08,11,15) | Glossary + ADR status | Source renames deferred |
 
 **No P0 documentation claim that ExecutionGateway is optional or TG is live was left unrepaired in authoritative ADR set.**
@@ -206,8 +207,9 @@
 
 ## Honest open items (not hidden)
 
-1. **CX-05** needs FM-C2.
+1. ~~**CX-05** needs FM-C2.~~ **Closed** (FM-C2 Alternative F).
 2. **CX-07** needs future approval-plane correlation design.
 3. **CX-09** needs future scheduler policy design.
 4. **CX-10** needs chat dual-record migration.
 5. Historical milestone bodies not bulk-rewritten.
+6. **FZ-01** implementation freeze remains until separately authorized **FM-I1**.
