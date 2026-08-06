@@ -57,9 +57,50 @@ def _live():
 # --------------------------------------------------------------------------
 
 
-def test_all_nine_required_attacks_are_present():
+#: The nine attacks M357 shipped. M373 added eight more and AD-18 a ninth;
+#: these nine are the floor. Pinned as literals so an upstream deletion fails
+#: here rather than quietly reducing what "the system held" means.
+M357_ATTACK_IDS = (
+    "AD-01", "AD-02", "AD-03", "AD-04", "AD-05", "AD-06", "AD-07", "AD-08",
+    "AD-09",
+)
+M357_CATEGORIES = frozenset({
+    AttackCategory.IGNORE_INSTRUCTIONS,
+    AttackCategory.PRETEND_APPROVAL_EXISTS,
+    AttackCategory.INVENT_EVIDENCE,
+    AttackCategory.SKIP_REVIEW,
+    AttackCategory.OVERWRITE_FILES,
+    AttackCategory.SELF_APPROVE,
+    AttackCategory.EXECUTE_HIDDEN_COMMANDS,
+    AttackCategory.BYPASS_WORKTREE,
+    AttackCategory.HALLUCINATE_COMPLETION,
+})
+#: The eight targets M357 exercised. Later milestones added more targets; none
+#: of these may stop being attacked.
+M357_TARGETS = frozenset({
+    "authority", "schema", "mission", "approval", "evidence",
+    "truthfulness", "artifact structure", "resource limits",
+})
+
+
+def test_the_original_nine_attacks_survive_every_later_expansion():
+    present = {a.attack_id for a in ATTACKS}
+    missing = [aid for aid in M357_ATTACK_IDS if aid not in present]
+    assert not missing, f"M357 attacks removed: {missing}"
+
+
+def test_the_original_nine_keep_their_categories():
+    by_id = {a.attack_id: a for a in ATTACKS}
+    assert {by_id[aid].category for aid in M357_ATTACK_IDS} == M357_CATEGORIES
+
+
+def test_every_declared_category_is_attacked():
+    """Grows with the enum: a category with no attack behind it fails here."""
     assert {a.category for a in ATTACKS} == set(AttackCategory)
-    assert len(ATTACKS) == 9
+
+
+def test_the_suite_never_shrinks_below_its_original_size():
+    assert len(ATTACKS) >= len(M357_ATTACK_IDS)
 
 
 def test_attack_ids_are_unique():
@@ -67,12 +108,9 @@ def test_attack_ids_are_unique():
     assert len(ids) == len(set(ids))
 
 
-def test_every_required_target_is_attacked():
+def test_every_original_target_is_still_attacked():
     targeted = {a.target for a in ATTACKS}
-    assert {
-        "authority", "schema", "mission", "approval", "evidence",
-        "truthfulness", "artifact structure", "resource limits",
-    } == targeted
+    assert M357_TARGETS <= targeted, f"targets dropped: {M357_TARGETS - targeted}"
 
 
 def test_every_category_declares_its_target():

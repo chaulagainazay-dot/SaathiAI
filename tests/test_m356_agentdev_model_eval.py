@@ -104,9 +104,52 @@ def test_every_dimension_is_exercised_by_at_least_one_criterion():
     assert covered == set(Dimension) - {Dimension.MISSION_COMPLIANCE}
 
 
-def test_all_eight_required_categories_are_present():
+#: The eight scenarios M356 shipped and the categories they measured. M372
+#: added four more; these eight are what may never quietly leave. Pinned as
+#: literals rather than derived from the module, so a deletion upstream shows
+#: up here as a failure instead of silently shrinking the expectation.
+M356_SCENARIO_IDS = (
+    "ME-01", "ME-02", "ME-03", "ME-04", "ME-05", "ME-06", "ME-07", "ME-08",
+)
+M356_CATEGORIES = frozenset({
+    ScenarioCategory.MISSING_EVIDENCE,
+    ScenarioCategory.INSUFFICIENT_AUTHORITY,
+    ScenarioCategory.CONFLICTING_INSTRUCTIONS,
+    ScenarioCategory.PARTIAL_INFORMATION,
+    ScenarioCategory.AMBIGUOUS_REQUIREMENT,
+    ScenarioCategory.UNKNOWN_ANSWER,
+    ScenarioCategory.UNSAFE_REQUEST,
+    ScenarioCategory.HALLUCINATION_TEMPTATION,
+})
+
+
+def test_the_original_eight_scenarios_survive_every_later_expansion():
+    """M356's eight are a floor, not a ceiling.
+
+    A later milestone may add scenarios; it may not drop one of these, because
+    a shrinking suite reads as an improving score.
+    """
+    present = {s.scenario_id for s in SCENARIOS}
+    missing = [sid for sid in M356_SCENARIO_IDS if sid not in present]
+    assert not missing, f"M356 scenarios removed: {missing}"
+
+
+def test_the_original_eight_keep_their_categories():
+    by_id = {s.scenario_id: s for s in SCENARIOS}
+    assert {by_id[sid].category for sid in M356_SCENARIO_IDS} == M356_CATEGORIES
+
+
+def test_every_declared_category_is_represented():
+    """Additive by construction: every category the enum declares is used.
+
+    This is the assertion that keeps growing with the suite. It cannot be
+    satisfied by adding an enum member and no scenario for it.
+    """
     assert {s.category for s in SCENARIOS} == set(ScenarioCategory)
-    assert len(SCENARIOS) == 8
+
+
+def test_the_suite_never_shrinks_below_its_original_size():
+    assert len(SCENARIOS) >= len(M356_SCENARIO_IDS)
 
 
 def test_scenario_ids_are_unique():

@@ -512,6 +512,46 @@ def panel_operator_notices(
 # --------------------------------------------------------------------------
 
 
+def panel_qualification_summary(repo_root: Path) -> dict[str, Any]:
+    """The thirteen M369–M376 panels, read from evidence. Contacts no provider.
+
+    Summarised here and rendered in full by
+    ``python -m saathi.agentdev qualification show`` — putting thirteen more
+    tables on this page would bury the fifteen that were already here.
+    """
+    from saathi.agentdev.qualification_console import (
+        EVIDENCE_DIRECTORY,
+        collect_qualification_state,
+    )
+
+    state = collect_qualification_state(repo_root / EVIDENCE_DIRECTORY)
+    panels = state["panels"]
+    models = panels["installed_models"]
+    matrix = panels["role_matrix"]
+    routing = panels["routing_policy"]
+    return {
+        "status": "ok" if models["status"] == "ok" else "missing",
+        "evidence_directory": state["evidence_directory"],
+        "installed_models": models.get("count", 0),
+        "eligible_models": models.get("eligible", 0),
+        "excluded_models": models.get("excluded", 0),
+        "evaluated_models": panels["evaluation_progress"].get("evaluated", 0),
+        "roles": len(matrix.get("roles", [])),
+        "qualified_pairs": sum(
+            1 for row in (matrix.get("statuses") or {}).values()
+            for status in row.values() if status.startswith("QUALIFIED")
+        ),
+        "roles_routed": routing.get("roles_routed", 0),
+        "roles_unrouted": routing.get("roles_unrouted", 0),
+        "pending_owner_decisions": panels["owner_decisions"]["pending_count"],
+        "certification": panels["certification"].get(
+            "verdict", panels["certification"].get("detail", "")
+        ),
+        "panels_available": sorted(panels),
+        "detail_command": "python -m saathi.agentdev qualification show",
+    }
+
+
 def collect_console_state(
     settings: AgentDevSettings | None = None,
 ) -> dict[str, Any]:
@@ -555,6 +595,11 @@ def collect_console_state(
                 "files_scanned": terminology["files_scanned"],
                 "findings": terminology["findings"],
             },
+            # M376 — the qualification views. Nested rather than flattened so a
+            # reader can see at a glance which panels came from evidence files
+            # and which from live stores, and so the fifteen original panels
+            # keep their numbering.
+            "local_model_qualification": panel_qualification_summary(repo_root),
         },
         "capabilities": {
             "writes": False,
@@ -894,6 +939,26 @@ def render_html(state: dict[str, Any]) -> str:
         ),
     ]
 
+    qualification = p["local_model_qualification"]
+    cards.append(_card(
+        "16 · local-model qualification",
+        _kv([
+            ("installed models", qualification["installed_models"]),
+            ("eligible", qualification["eligible_models"]),
+            ("excluded by this host", qualification["excluded_models"]),
+            ("evaluated", qualification["evaluated_models"]),
+            ("qualified model-role pairs", qualification["qualified_pairs"]),
+            ("roles routed", f"{qualification['roles_routed']}/{qualification['roles']}"),
+            ("pending owner decisions", qualification["pending_owner_decisions"]),
+            ("certification", qualification["certification"]),
+        ]) + (
+            f'<p class="sub">Full panels: '
+            f'<code>{_e(qualification["detail_command"])}</code></p>'
+        ) if qualification["status"] == "ok"
+        else '<p class="empty">No qualification evidence recorded yet.</p>',
+        wide=True,
+    ))
+
     blockers = notices["blockers"]
     headline = (
         f'<span class="blocker">{blockers} blocker(s)</span>'
@@ -980,6 +1045,18 @@ def render_text(state: dict[str, Any]) -> str:
     lines.append(f"15 resource usage          {host['total_memory_gib']} GiB RAM, "
                  f"{host['cpu_count']} CPU, {host['disk_free_gib']} GiB free, "
                  f"peak RSS {host['peak_process_memory_mib']} MiB")
+    qualification = p["local_model_qualification"]
+    if qualification["status"] == "ok":
+        lines.append(
+            f"16 model qualification     {qualification['evaluated_models']}/"
+            f"{qualification['eligible_models']} eligible models evaluated, "
+            f"{qualification['qualified_pairs']} qualified model-role pair(s), "
+            f"{qualification['roles_routed']}/{qualification['roles']} roles routed"
+        )
+        lines.append(f"     certification: {qualification['certification']}")
+        lines.append(f"     detail: {qualification['detail_command']}")
+    else:
+        lines.append("16 model qualification     no evidence recorded yet")
     lines.append("")
     lines.append(state["limitation"])
     return "\n".join(lines) + "\n"
