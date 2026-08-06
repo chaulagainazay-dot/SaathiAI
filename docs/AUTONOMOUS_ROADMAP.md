@@ -1,5 +1,35 @@
 # SaathiOS Autonomous Roadmap
 
+## M385 — AgentHarness Interface Design (2026-08-06)
+
+| Field | Value |
+| --- | --- |
+| Verdict | `AGENT_HARNESS_DESIGN_APPROVED_WITH_LIMITATIONS` |
+| Mode | **Design-only** — no adapters, no runtime code, no providers |
+| ADR | `docs/adr/ADR-AGENT-HARNESS-INTERFACE.md` |
+| Design | `docs/agent-runtime/M385_AGENT_HARNESS_INTERFACE_DESIGN.md` |
+| Placement | Under `agent_runtime` via controller; tools only via ExecutionGateway |
+| First future adapter order | FakeInMemoryHarness → LocalModelHarness (read-only) → bounded coding |
+| Forbidden | QM import; gateway bypass; TG change; commercial CLI adapters without cert |
+| Next | Human review only — **do not auto-start** M386, types, FakeInMemoryHarness, or commercial CLIs |
+
+**AgentHarness is an internal driver contract, not an authority layer. Design-only; not implemented.**
+
+## M377–M384 — QM Multi-Agent Runtime Architecture Gap Analysis (2026-08-06)
+
+| Field | Value |
+| --- | --- |
+| Verdict | `ADAPT_SELECTED_PATTERNS` |
+| Mode | **Analysis-only** — no production code, no deploy, no QM import |
+| QM tip audited | `0f0e0adccce2` (github.com/yc-software/qm, MIT) |
+| ADR | `docs/adr/ADR-QM-MULTI-AGENT-RUNTIME.md` |
+| Evidence | `docs/agent-runtime/M377_M384_QM_MULTI_AGENT_RUNTIME_GAP_ANALYSIS.md` |
+| Scores | Architecture 42 · Security 38 · Governance 31 (0–100) |
+| Forbidden | Replace ExecutionGateway / Approval / Governance / RBAC / Trading Guardian |
+| Follow-on | M385 AgentHarness design completed (design-only); M386/M387 not started |
+
+**QM is a conceptual reference only. No runtime alignment. No plugin integration. No QM source copied.**
+
 ## M296–M303 — Institutional Portfolio & Risk Intelligence (2026-07-30)
 
 | Field | Value |
@@ -61,7 +91,7 @@ Evidence: `docs/trading/M272_M279_MULTI_STRATEGY_RESEARCH_LAB.md`, `docs/trading
 | Live / broker / canary / orders | **Not authorized** |
 | Next | Completed by M272–M279 research lab |
 
-**M248–M255 IS NOW PRESENT IN COMMITTED GIT HISTORY.**  
+**M248–M255 IS NOW PRESENT IN COMMITTED GIT HISTORY.**
 **M248–M263 PASSES FROM A CLEAN CLONE USING COMMITTED SOURCE ONLY.**
 
 Evidence: `docs/trading/M264_M271_INTELLIGENCE_RECOVERY_AND_HISTORICAL_DATA.md`, `docs/trading/m264_m271_evidence/`.

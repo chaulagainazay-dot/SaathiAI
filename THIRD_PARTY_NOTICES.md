@@ -1,5 +1,29 @@
 # Third-Party Notices
 
+## yc-software/qm (MIT License)
+- Source: https://github.com/yc-software/qm
+- License: MIT (Copyright (c) 2026 QM contributors)
+- Audited commit: `0f0e0adccce2` (2026-08-05, M377–M384 analysis)
+- Use in SaathiOS: **architectural / design reference only — NO source code copied,
+  NO submodule, NO npm dependency, NO bundled QM files.**
+
+SaathiOS does not vendor the QM repository and does not replace ExecutionGateway,
+Approval, Governance, RBAC, agent_runtime, or Trading Guardian. Selected *ideas*
+(multi-harness session interface shape, policy floor composition, skill promotion
+lifecycle) may inform future **original** SaathiOS designs under
+ADR-QM-MULTI-AGENT-RUNTIME (`ADAPT_SELECTED_PATTERNS`) and
+ADR-AGENT-HARNESS-INTERFACE.
+
+This notice records design-reference auditability. It does **not** imply that MIT
+copyright notice obligations were triggered for idea-only reference, and it does
+**not** imply that QM software is distributed with SaathiOS. If any QM file is
+copied in future, its MIT copyright notice, license text, source path, and commit
+will be preserved here and modifications documented before merge.
+
+Evidence: `docs/adr/ADR-QM-MULTI-AGENT-RUNTIME.md`,
+`docs/agent-runtime/M377_M384_QM_MULTI_AGENT_RUNTIME_GAP_ANALYSIS.md`,
+`docs/adr/ADR-AGENT-HARNESS-INTERFACE.md`.
+
 ## open-jarvis/OpenJarvis (Apache License 2.0)
 - Source: https://github.com/open-jarvis/OpenJarvis.git
 - License: Apache-2.0
