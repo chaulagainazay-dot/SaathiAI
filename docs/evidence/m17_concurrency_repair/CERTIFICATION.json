@@ -27,7 +27,11 @@
   ],
   "stress": {
     "iterations_total": 175,
-    "worker_configs": [2, 5, 10],
+    "worker_configs": [
+      2,
+      5,
+      10
+    ],
     "successes": 175,
     "duplicate_graphs": 0,
     "contention_false_failures": 0,
@@ -62,5 +66,7 @@
   "m377_started": false,
   "deployment": false,
   "authority_expansion": false,
-  "trading_guardian_touched": false
+  "trading_guardian_touched": false,
+  "final_sha": "5e3d312a77310ccd039ad39fcaee5a796ab4e818",
+  "evidence_sha": "5e3d312a77310ccd039ad39fcaee5a796ab4e818"
 }
