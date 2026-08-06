@@ -67,6 +67,12 @@
   "deployment": false,
   "authority_expansion": false,
   "trading_guardian_touched": false,
-  "final_sha": "36d66e90a5862d1a6066159e7bb154da906b1847",
-  "evidence_sha": "36d66e90a5862d1a6066159e7bb154da906b1847"
+  "final_sha": "d543b2c86de9a330560ce4ed04fb06b05556ff8f",
+  "evidence_sha": "36d66e90a5862d1a6066159e7bb154da906b1847",
+  "github_ci": {
+    "run_id": "31094532429",
+    "critical_regressions": "pass",
+    "full_suite": "pass",
+    "pr": 17
+  }
 }
