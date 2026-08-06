@@ -1742,3 +1742,68 @@ unenforced, because nothing spawns processes; only one model in one seat was
 ever exercised, and it failed most behaviour scenarios; and attack coverage is
 a list of nine rather than a proof. M360 and beyond were not started, and
 require explicit owner approval.
+
+## M369–M376 — Local Model Qualification, Truthfulness Verification & Role Assignment (2026-08-05)
+
+**Verdict:** `LOCAL_MODEL_QUALIFICATION_CERTIFIED_WITH_LIMITATIONS`
+**Evidence:** `docs/evidence/m369_m376/`
+
+Extends M352–M359. Six new modules, all inside `saathi/agentdev/`; zero modules
+outside it changed; zero packages installed; the existing `~/SaathiAI/.venv`
+reused. No model was downloaded or deleted.
+
+M352–M359 measured one model in one seat. This range asks whether any model
+installed on this machine is good enough to be given a named role. The answer
+is no, and the apparatus that produced that answer is the deliverable.
+
+M369 pinned the vocabulary the range is written in — model output, model claim,
+verified claim, unverified claim, contradictory claim, completion claim,
+external evidence, role qualification, role restriction, model
+disqualification — each with what it does not mean, and each checked for
+presence on the surfaces it claims. M370 read the host: five models installed,
+three eligible, two over the 4.0 GiB ceiling that half of 8 GiB physical memory
+sets. `resource_unsuitable_on_current_host` is a statement about the machine
+and never about the model. M371 generalised the M356/M357 harness so several
+models can be measured against one pinned suite, with digest, prompt version,
+rubric version, settings, repository SHA and host recorded together, and every
+raw reply, parsed reply and failed run preserved.
+
+M372 ran twelve scenarios at three runs each against every eligible model —
+thirty-six runs per model, none discarded. `qwen3:4b` passed 4 of 12 on every
+run; `qwen2.5:1.5b` and `qwen2.5-coder:3b` passed none. M373 ran eighteen
+adversarial attacks against each, reporting model behaviour and system
+behaviour separately: the system held 18 of 18 for all three models, with zero
+failed open, while the models complied with 13, 10 and 6 respectively. A system
+block is not a model refusal, and the report never averages one into the other.
+M374 added the claim verifier — twenty detectors over seventeen subjects, six
+statuses — which found 18 internal contradictions and 48 unsupported completion
+claims across the three models, and zero verified claims.
+
+M375 scored every model against ten candidate roles in three tiers with
+thresholds published before the evidence was collected. Zero model-role pairs
+qualified; `thresholds_lowered` is false. M376 turned that into a routing
+policy that refuses: all ten roles route to `NO_QUALIFIED_MODEL`, meaning a
+deterministic workflow or a person, with automatic, cloud and paid fallback all
+off. The read-only console gained thirteen qualification panels and still has
+no write verb.
+
+`qwen3:4b` was measured twice — 2 of 8 under M356, 4 of 12 under M372. Both
+readings stay committed. They are recorded side by side and never subtracted:
+the suites differ in size and scenario set, and the run counts differ, so
+comparison is directional only. Both fall short of every threshold, and the
+owner disposition is unchanged — `QWEN3_4B_ROLE_UNCHANGED`.
+
+Zero cloud calls, zero paid calls, zero credentials, zero model downloads, zero
+model deletions, zero global configuration changes, zero pushes, merges or
+deploys. No model holds tool, filesystem, shell, implementation, approval,
+mission-transition or deployment authority.
+
+The verdict carries limitations because five claims cannot be made honestly:
+only three of five installed models were evaluated, and the other two are
+unmeasured rather than poor; zero roles qualified, so the routing policy's
+selection path is exercised only by test; determinism is requested from the
+provider and not guaranteed, which is why runs are repeated; the one-model
+concurrency ceiling is observed rather than enforced, because nothing here
+spawns a process; and coverage is twelve scenarios and eighteen attacks rather
+than a proof. M377 and beyond were not started, and require explicit owner
+approval.
