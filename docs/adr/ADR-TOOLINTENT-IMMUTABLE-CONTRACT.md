@@ -1,8 +1,16 @@
 # ADR: ToolIntent as Immutable Execution Contract
 
-**Date:** 2026-07-10  
-**Status:** ACCEPTED  
-**Context:** Phase 3.1 execution infrastructure  
+| Field | Value |
+| --- | --- |
+| **ID** | ADR-TOOLINTENT-IMMUTABLE-CONTRACT |
+| **Date** | 2026-07-10 |
+| **Status** | **ACCEPTED_IMPLEMENTED** (FM-C1 status repair 2026-08-06) |
+| **Context** | Phase 3.1 execution infrastructure |
+| **Implementation status** | **Implemented** — `saathi/execution/toolintent.py` (`@dataclass(frozen=True)`, deep-copy parameters/metadata) |
+| **Authority impact** | All consequential actions represented as ToolIntent and routed through ExecutionGateway |
+| **Supersedes** | Informal mutable request envelopes for side effects |
+| **Superseded by** | None |
+| **Related** | ADR-EXECUTIONGATEWAY-SPECIFICATION |
 
 ## Decision
 
@@ -16,11 +24,11 @@ All consequential actions must be:
 
 ## Immutability Guarantee
 
-- **Identity fields** (intent_id, correlation_id, mission_id, business_unit, actor_id, created_at, expires_at) are immutable
-- **Mutable fields** (parameters, priority, timeout, metadata) may be refined by approval workflow
-- **Idempotency key** is computed once at creation; stable across parameter refinements
-- **Authorization decisions** are based on state at creation time; later mutations don't affect approval validity
-- **Isolation** via defensive deep copy: source dict mutation, external mutation of returned dicts cannot affect intent
+- **All fields are immutable after construction** (`@dataclass(frozen=True)`).
+- **parameters** and **metadata** are deep-copied at init; returned dicts are copies so external mutation cannot alter the intent.
+- **Idempotency key** is computed once at creation and remains stable.
+- **Authorization / approval** bind to the frozen intent identity; they must not rewrite ToolIntent fields. Approval *state* lives in separate records (execution/platform stores), not inside ToolIntent.
+- **FM-C1 correction:** an earlier draft of this ADR claimed parameters/priority/timeout/metadata were “mutable for approval workflow.” That claim **contradicts current source** and is **rejected**. Create a new ToolIntent (new idempotency key rules apply) if the requested action changes.
 
 ## Boundaries
 
@@ -62,7 +70,7 @@ All of these go to separate artifacts (Evidence, Timeline, Audit Trail).
 
 **Why separate-from-execution?** The intent says "what to do"; the gateway decides "whether to do it" and "how to do it safely." Mixing them creates feedback loops and makes it hard to audit who decided what.
 
-**Why defensive copy?** Prevents accidental authorization bypass via external dict mutation. Callers who modify intent.parameters are not breaking the intent contract (it's intentionally mutable for approval workflow), but their changes won't invalidate the idempotency key or bypass the approval decision made at creation time.
+**Why defensive copy?** Prevents accidental authorization bypass via external dict mutation. Callers cannot reassign frozen fields; copies returned from `to_dict()` isolation prevent accidental shared-dict mutation.
 
 ## Related
 

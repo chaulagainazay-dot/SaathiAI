@@ -1,5 +1,44 @@
 # SaathiOS Autonomous Roadmap
 
+## FM-C1 — Architecture Documentation Freeze and Contradiction Repair (2026-08-06)
+
+| Field | Value |
+| --- | --- |
+| Verdict | `ARCHITECTURE_DOCUMENTATION_BASELINE_FROZEN_WITH_LIMITATIONS` |
+| Mode | **Documentation only** — no production code, adapters, renames, providers, credentials, CI |
+| Starting SHA | `e9581f43848cf90283c7c4e1c0dbfbad65a4a531` |
+| Authority index | `docs/architecture/ARCHITECTURE_AUTHORITY_INDEX.md` |
+| Terminology | `docs/architecture/CANONICAL_TERMINOLOGY.md` |
+| Freeze register | `docs/architecture/ARCHITECTURE_FREEZE_REGISTER.md` |
+| Contradiction register | `docs/architecture/FM_C1_CONTRADICTION_REGISTER.md` |
+| Baseline report | `docs/architecture/FM_C1_DOCUMENTATION_BASELINE_REPORT.md` |
+| Key repair | ADR-EXECUTIONGATEWAY → **ACCEPTED_IMPLEMENTED** (was stale “awaiting implementation”) |
+| AgentHarness | Remains **unimplemented** and **frozen** (FZ-01) |
+| FakeInMemoryHarness | **Unauthorized** |
+| Policy floors / skill promotion | **Deferred** (FZ-16 / FZ-17); not renumbered as active milestones |
+| Commercial CLIs | **Blocked** (FZ-07) |
+| Next | **FM-C2 only** — design ADR: `AgentSessionAdapter` ↔ AgentHarness relationship. **Do not** implement. |
+
+**Documentation baseline frozen. Do not auto-start FM-C2 implementation work or any harness code.**
+
+## M386–M393 — Architecture Consolidation and Overlap Review (2026-08-06)
+
+| Field | Value |
+| --- | --- |
+| Verdict | `SAATHIOS_ARCHITECTURE_READY_WITH_CONSOLIDATION_REQUIRED` |
+| Mode | **Analysis + design only** — no production code, adapters, migrations, providers, or CI |
+| Inspected SHA | `e9581f43848cf90283c7c4e1c0dbfbad65a4a531` |
+| ADR | `docs/adr/ADR-SAATHIOS-ARCHITECTURE-CONSOLIDATION.md` |
+| Full review | `docs/architecture/M386_M393_ARCHITECTURE_CONSOLIDATION_REVIEW.md` |
+| Composite readiness | ≈ 68 / 100 (see scorecard in review) |
+| ExecutionGateway | Remains **sole** external-action authority |
+| AgentHarness | Design retained **conditionally**; **not** to implement until engineering `AgentSessionAdapter` relationship ADR (FM-C2) |
+| Renumbering | Prior QM ADR “M386 policy floors / M387 skill promotion” **deferred** (not cancelled); M386–M393 reclaimed for consolidation |
+| Forbidden | AgentHarness types; FakeInMemoryHarness; policy floors; skill promotion; commercial CLIs; EG/TG/RBAC weaken; QM import |
+| Next | **Completed follow-on:** FM-C1 documentation baseline. Then **FM-C2** design-only only. |
+
+**Do not auto-start AgentHarness implementation, policy floors, skill promotion, or commercial CLI adapters.**
+
 ## M385 — AgentHarness Interface Design (2026-08-06)
 
 | Field | Value |
@@ -11,7 +50,7 @@
 | Placement | Under `agent_runtime` via controller; tools only via ExecutionGateway |
 | First future adapter order | FakeInMemoryHarness → LocalModelHarness (read-only) → bounded coding |
 | Forbidden | QM import; gateway bypass; TG change; commercial CLI adapters without cert |
-| Next | Human review only — **do not auto-start** M386, types, FakeInMemoryHarness, or commercial CLIs |
+| Next | M386–M393 + **FM-C1 complete**. Implementation still blocked; next design = **FM-C2** only |
 
 **AgentHarness is an internal driver contract, not an authority layer. Design-only; not implemented.**
 
@@ -26,7 +65,7 @@
 | Evidence | `docs/agent-runtime/M377_M384_QM_MULTI_AGENT_RUNTIME_GAP_ANALYSIS.md` |
 | Scores | Architecture 42 · Security 38 · Governance 31 (0–100) |
 | Forbidden | Replace ExecutionGateway / Approval / Governance / RBAC / Trading Guardian |
-| Follow-on | M385 AgentHarness design completed (design-only); M386/M387 not started |
+| Follow-on | M385 design complete; M386–M393 architecture consolidation complete (docs); policy floors / skill promotion still deferred |
 
 **QM is a conceptual reference only. No runtime alignment. No plugin integration. No QM source copied.**
 

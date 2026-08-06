@@ -4,9 +4,13 @@
 | --- | --- |
 | **ID** | ADR-QM-MULTI-AGENT-RUNTIME |
 | **Date** | 2026-08-06 |
-| **Status** | ACCEPTED (analysis-only; no implementation authorized) |
+| **Status** | **ACCEPTED_DESIGN_ONLY** (analysis decision; no runtime integration authorized) |
 | **Milestone** | M377–M384 |
 | **Decision** | **ADAPT_SELECTED_PATTERNS** |
+| **Implementation status** | **No QM code in SaathiOS** — conceptual reference only |
+| **Authority impact** | Must not replace ExecutionGateway, Approval, RBAC, credentials, or Trading Guardian |
+| **Supersedes** | Informal “adopt QM as runtime” speculation |
+| **Superseded by** | None for decision; **milestone numbers** M386/M387 in future table superseded by consolidation renumbering (see ADR-SAATHIOS-ARCHITECTURE-CONSOLIDATION) |
 | **QM source** | https://github.com/yc-software/qm |
 | **QM audited tip** | `0f0e0adccce2` (2026-08-05; main) |
 | **License** | MIT (`Copyright (c) 2026 QM contributors`) |
