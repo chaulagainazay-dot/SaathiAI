@@ -343,7 +343,11 @@ class MissionEngine:
         """Bind an ALREADY-resumed graph pipeline result to a fresh mission instance
         and finalize it through the normal mission lifecycle WITHOUT launching a
         second graph (the graph was resumed in place by the recovery layer). Mission
-        stays the authority for its own state; idempotent on a terminal mission."""
+        stays the authority for its own state; idempotent on a terminal mission.
+
+        Concurrent settlers: only one begins the mission run. Losers reload the
+        authoritative terminal state (or report in_progress) instead of inventing
+        a second failure."""
         m = self._owned(mission_id, owner)
         if not m["ok"]:
             return m
@@ -354,9 +358,24 @@ class MissionEngine:
                     "idempotent": True}
         eq = self.enqueue(mission_id, owner=owner)      # draft/approved → queued
         if not eq.get("ok"):
+            # Peer may have already advanced the lifecycle — reload.
+            cur = self.ledger.inspect_mission(mission_id, owner=owner)
+            if cur and cur["state"] in MISSION_TERMINAL:
+                return {"ok": cur["state"] == MISSION_COMPLETED, "state": cur["state"],
+                        "mission_id": mission_id, "idempotent": True}
+            if cur and cur["state"] == MISSION_RUNNING:
+                return {"ok": False, "reason": "settle_in_progress",
+                        "mission_id": mission_id, "in_progress": True}
             return eq
         begun = self.ledger.begin_mission_run(mission_id)
         if not begun.get("ok"):
+            cur = self.ledger.inspect_mission(mission_id, owner=owner)
+            if cur and cur["state"] in MISSION_TERMINAL:
+                return {"ok": cur["state"] == MISSION_COMPLETED, "state": cur["state"],
+                        "mission_id": mission_id, "idempotent": True}
+            if cur and cur["state"] == MISSION_RUNNING:
+                return {"ok": False, "reason": "settle_in_progress",
+                        "mission_id": mission_id, "in_progress": True}
             return {"ok": False, "reason": begun.get("reason")}
         attempt = begun["attempt"]
         if ok:
@@ -373,6 +392,63 @@ class MissionEngine:
         return {"ok": False, "state": disp["state"], "mission_id": mission_id,
                 "pipeline_id": pipeline_id, "failure_code": disp["failure_code"]}
 
+    def _resume_in_progress_result(self, mission_id: str, rec_id: str, pid: str) -> dict:
+        """Concurrent recovery lost the claim or observed a mid-flight graph.
+
+        Never settles the linked recovered mission as failed from a stale read —
+        that races the winner into a permanent false terminal failure. Reload the
+        recovered mission if the winner already finished; otherwise report
+        in_progress so the caller leaves the occurrence recoverable.
+        """
+        existing = self.ledger.inspect_mission(rec_id, owner=None)
+        if existing and existing["state"] in MISSION_TERMINAL:
+            return {"ok": existing["state"] == MISSION_COMPLETED, "mission_id": rec_id,
+                    "state": existing["state"], "pipeline_id": pid,
+                    "retried_from": mission_id, "idempotent": True,
+                    "converged": True}
+        return {"ok": False, "reason": "resume_in_progress", "mission_id": rec_id,
+                "retried_from": mission_id, "pipeline_id": pid, "in_progress": True}
+
+    def _settle_linked_recovery(self, *, mission_id: str, rec_id: str, owner: str,
+                                pid: str, graph_ok: bool, failure_code: str = "",
+                                rres: dict | None = None,
+                                session_id: str = "graph_recovery",
+                                converged: bool = False) -> dict:
+        """Create/settle the deterministic recovered mission from an authoritative
+        terminal graph reading. Idempotent when another worker already settled it."""
+        rres = rres or {}
+        mission = self.ledger.inspect_mission(mission_id, owner=owner) or {}
+        tmpl_id = mission.get("template") or ""
+        params = dict(mission.get("params") or {})
+        self.create(tmpl_id, owner=owner, params=params,
+                    mission_id=rec_id, correlation_id=mission_id)
+        settle = self.settle_recovered(rec_id, owner=owner, pipeline_id=pid,
+                                       ok=graph_ok, failure_code=failure_code,
+                                       steps_run=rres.get("rerun_steps", 0),
+                                       session_id=session_id)
+        if settle.get("in_progress"):
+            return self._resume_in_progress_result(mission_id, rec_id, pid)
+        # If we raced another settler, reload authoritative recovered state.
+        existing = self.ledger.inspect_mission(rec_id, owner=owner)
+        if existing and existing["state"] in MISSION_TERMINAL:
+            return {"ok": existing["state"] == MISSION_COMPLETED,
+                    "mission_id": rec_id, "retried_from": mission_id,
+                    "pipeline_id": pid, "state": existing["state"],
+                    "reused_steps": rres.get("reused_steps", 0),
+                    "rerun_steps": rres.get("rerun_steps", 0),
+                    "resume_reason": rres.get("reason", ""),
+                    "failure_code": existing.get("failure_code", ""),
+                    "idempotent": bool(settle.get("idempotent")),
+                    "converged": converged or bool(settle.get("idempotent"))}
+        return {"ok": bool(settle.get("ok")) and graph_ok,
+                "mission_id": rec_id, "retried_from": mission_id,
+                "pipeline_id": pid, "state": settle.get("state"),
+                "reused_steps": rres.get("reused_steps", 0),
+                "rerun_steps": rres.get("rerun_steps", 0),
+                "resume_reason": rres.get("reason", ""),
+                "failure_code": settle.get("failure_code", ""),
+                "converged": converged, "idempotent": bool(settle.get("idempotent"))}
+
     def resume_graph_mission(self, mission_id: str, *, owner: str,
                              session_id: str = "graph_recovery", now=None) -> dict:
         """Recover a FAILED graph mission by resuming its EXISTING graph pipeline
@@ -380,7 +456,12 @@ class MissionEngine:
         rerunning only the interrupted branch, running the join once), then recording
         the outcome on a DETERMINISTIC linked-retry mission. The original failed
         mission stays immutable. Fully idempotent — repeated calls settle to the same
-        recovered mission and never duplicate a branch, join, or mission run."""
+        recovered mission and never duplicate a branch, join, or mission run.
+
+        Concurrent callers: at most one wins the recovery claim and runs the resume.
+        Losers either converge on the winner's terminal recovered mission or return
+        `in_progress` — they never invent a terminal failure from a mid-flight graph
+        (`not_resumable:running`) or an active recovery claim."""
         m = self._owned(mission_id, owner)
         if not m["ok"]:
             return m
@@ -406,28 +487,47 @@ class MissionEngine:
                           correlation_id=mission_id, pipeline_id=pid)
         rres = self.graph_runner.resume(gspec, owner=owner, session_id=session_id,
                                         now=now)
-        # another worker holds the recovery lease — do NOT settle a linked mission on
-        # a possibly-stale graph read; leave it recoverable for a bounded next pass.
-        if not rres.get("ok") and rres.get("reason") == "recovery_claimed":
-            return {"ok": False, "reason": "resume_in_progress", "mission_id": mission_id,
-                    "retried_from": mission_id, "pipeline_id": pid, "in_progress": True}
-        # the graph terminal state is authoritative regardless of who won the resume
+        # Authoritative graph read AFTER resume attempt (winner or loser).
         g = self.ledger.inspect_graph(pid, owner=owner)
-        graph_ok = bool(g) and g["state"] == L.PIPELINE_SUCCEEDED
+        gstate = (g or {}).get("state", "")
         gcode = (g or {}).get("failure_code", "") or rres.get("failure_code", "")
-        # ensure the deterministic recovered mission exists (duplicate is fine)
-        self.create(mission["template"], owner=owner, params=mission["params"],
-                    mission_id=rec_id, correlation_id=mission_id)
-        settle = self.settle_recovered(rec_id, owner=owner, pipeline_id=pid,
-                                       ok=graph_ok, failure_code=gcode,
-                                       steps_run=rres.get("rerun_steps", 0),
-                                       session_id=session_id)
-        return {"ok": graph_ok, "mission_id": rec_id, "retried_from": mission_id,
-                "pipeline_id": pid, "state": settle.get("state"),
-                "reused_steps": rres.get("reused_steps", 0),
-                "rerun_steps": rres.get("rerun_steps", 0),
-                "resume_reason": rres.get("reason", ""),
-                "failure_code": settle.get("failure_code", "")}
+
+        if not rres.get("ok"):
+            reason = rres.get("reason", "")
+            # Contention / mid-flight: claim held, or pipeline not FAILED because
+            # the winner reopened it (running) or already finished (succeeded).
+            contending = (
+                reason == "recovery_claimed"
+                or reason.startswith("not_resumable:")
+            )
+            if contending:
+                if gstate == L.PIPELINE_SUCCEEDED:
+                    # Winner finished the graph — converge on the same recovered mission.
+                    return self._settle_linked_recovery(
+                        mission_id=mission_id, rec_id=rec_id, owner=owner, pid=pid,
+                        graph_ok=True, failure_code="", rres=rres,
+                        session_id=session_id, converged=True)
+                # Still mid-flight or graph still failed while another worker holds
+                # the claim — do NOT settle a failed recovered mission from this.
+                return self._resume_in_progress_result(mission_id, rec_id, pid)
+            # Definitive non-contention failure (graph invalid, owner mismatch, …)
+            if gstate == L.PIPELINE_SUCCEEDED:
+                return self._settle_linked_recovery(
+                    mission_id=mission_id, rec_id=rec_id, owner=owner, pid=pid,
+                    graph_ok=True, failure_code="", rres=rres, session_id=session_id,
+                    converged=True)
+            if gstate == L.PIPELINE_RUNNING:
+                return self._resume_in_progress_result(mission_id, rec_id, pid)
+            # Own resume attempt failed with a terminal-failed graph.
+            return self._settle_linked_recovery(
+                mission_id=mission_id, rec_id=rec_id, owner=owner, pid=pid,
+                graph_ok=False, failure_code=gcode, rres=rres, session_id=session_id)
+
+        # We won the resume claim and the runner returned. Graph terminal is authority.
+        graph_ok = gstate == L.PIPELINE_SUCCEEDED
+        return self._settle_linked_recovery(
+            mission_id=mission_id, rec_id=rec_id, owner=owner, pid=pid,
+            graph_ok=graph_ok, failure_code=gcode, rres=rres, session_id=session_id)
 
     def reconcile_running_mission(self, mission_id: str, *, owner: str) -> dict:
         """Crash window F: a mission left RUNNING while its graph pipeline already
