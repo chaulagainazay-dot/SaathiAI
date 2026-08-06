@@ -3,6 +3,11 @@
 
 # runtime data: voice profile, memory db, logs, uploaded files
 data/
+# Authoritative AgentDev role registry is package data, not runtime state.
+# Without these exceptions a broad `data/` rule hides roles.json from git and
+# clean CI checkouts raise registry_not_found for the entire agentdev suite.
+!saathi/agentdev/data/
+!saathi/agentdev/data/roles.json
 
 # python
 .venv/

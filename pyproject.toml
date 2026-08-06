@@ -66,3 +66,6 @@ asyncio_default_fixture_loop_scope = "function"
 
 [tool.setuptools.package-data]
 "saathi.production" = ["agency_prompts/*.md", "agency_prompts/*.txt"]
+# Authoritative development-agent role registry (M345+). Must ship in wheels and
+# editable installs so clean clones and GitHub Actions resolve DATA_PATH.
+"saathi.agentdev" = ["data/*.json"]
