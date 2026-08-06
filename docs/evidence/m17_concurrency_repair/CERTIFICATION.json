@@ -1,0 +1,66 @@
+{
+  "schema": "m17.concurrency_repair.certification.v1",
+  "verdict": "M17_SCHEDULED_GRAPH_CONCURRENCY_CERTIFIED_WITH_LIMITATIONS",
+  "title": "M17 scheduled-graph concurrent recovery repair",
+  "repository": "SaathiAI-agent-foundation",
+  "branch": "fix/m17-scheduled-graph-concurrency",
+  "base_sha": "855c5e8c502597e00a2211653080ad2d98f943ca",
+  "implementation_sha": "5f7ad09adc8f02ca88df57e38600c29819ee7f26",
+  "failing_ci_run_id": "31080359121",
+  "original_failure_signature": "assert 'failed' == 'succeeded' (test_concurrent_recover_creates_one_resumed_graph / scheduled_graph.concurrency_dedup)",
+  "root_cause_classification": [
+    "check_then_act_race",
+    "stale_read_after_competing_resume",
+    "contention_path_settled_false_terminal_failure",
+    "loser_settled_from_original_failed_mission_after_recovery_terminal"
+  ],
+  "repair_summary": [
+    "resume_graph_mission treats recovery_claimed and not_resumable:* as contention; converges when graph already SUCCEEDED; otherwise returns in_progress without settling a failed recovered mission",
+    "settle_recovered reloads peer terminal state / reports settle_in_progress instead of inventing a second failure",
+    "ScheduledGraphCoordinator.recover prefers an already-terminal recovered mission; on in_progress leaves occurrence recoverable instead of finishing OCC_FAILED from the original mission",
+    "settle_occurrence_from_mission reloads occurrence when finish_occurrence reports already_terminal"
+  ],
+  "concurrency_scope_proven": "in_process multi-thread callers sharing one RunLedger (sqlite BEGIN IMMEDIATE claims)",
+  "concurrency_scope_not_proven": [
+    "multi-process multi-interpreter workers without additional evidence",
+    "distributed multi-host recovery"
+  ],
+  "stress": {
+    "iterations_total": 175,
+    "worker_configs": [2, 5, 10],
+    "successes": 175,
+    "duplicate_graphs": 0,
+    "contention_false_failures": 0,
+    "orphan_states": 0,
+    "timeouts": 0
+  },
+  "tests": {
+    "focused_m17_17_passed": 36,
+    "critical_regressions": "PASS",
+    "full_suite_passed": 7097,
+    "full_suite_skipped": 1,
+    "clean_clone": "PASS (36 m17_17 + 1070 agentdev/safety + stress 20x5)"
+  },
+  "m369_m376_unchanged": {
+    "qualified_pairs": 0,
+    "roles_routed": 0,
+    "roles_unrouted": 10,
+    "certification": "LOCAL_MODEL_QUALIFICATION_CERTIFIED_WITH_LIMITATIONS"
+  },
+  "limitations": [
+    "Proven for in-process multi-thread concurrency on the sqlite RunLedger; multi-process/distributed safety is not certified here.",
+    "in_progress losers may require a subsequent recover() or reconcile pass to settle the occurrence; that is intentional and recoverable, not a silent success.",
+    "Adversarial coverage is the races encoded in tests and the stress harness, not a formal proof of all interleavings."
+  ],
+  "verdict_reasons": [
+    "root cause identified and fixed at mission recovery + occurrence settlement layers without a parallel recovery subsystem",
+    "deterministic race tests and 175 stress iterations show zero duplicate graphs and zero contention-only false failures",
+    "critical-regressions and full local suite pass",
+    "clean-clone validation passes from tracked content",
+    "scope limitation remains for multi-process/distributed workers"
+  ],
+  "m377_started": false,
+  "deployment": false,
+  "authority_expansion": false,
+  "trading_guardian_touched": false
+}

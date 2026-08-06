@@ -1,0 +1,20 @@
+{
+  "schema": "m17.concurrency_repair.ci_reconciliation.v1",
+  "original_failed_run": {
+    "id": "31080359121",
+    "url": "https://github.com/chaulagainazay-dot/SaathiAI/actions/runs/31080359121",
+    "workflow": "reliability",
+    "event": "push",
+    "head_branch": "milestone/m344-m351-multi-agent-development-foundation",
+    "head_sha": "855c5e8c502597e00a2211653080ad2d98f943ca",
+    "critical_regressions": "failure",
+    "full_suite": "skipped",
+    "blocking_check": "scheduled_graph.concurrency_dedup",
+    "failure_signature": "assert 'failed' == 'succeeded' in test_concurrent_recover_creates_one_resumed_graph"
+  },
+  "repair_base": "855c5e8c502597e00a2211653080ad2d98f943ca",
+  "repair_branch": "fix/m17-scheduled-graph-concurrency",
+  "local_critical_regressions": "PASS",
+  "local_full_suite": "7097 passed, 1 skipped",
+  "note": "PR CI results filled after push; this file records pre-push local CI-equivalent validation."
+}
