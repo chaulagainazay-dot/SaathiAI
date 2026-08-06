@@ -1,0 +1,55 @@
+{
+  "schema": "m17.concurrency_repair.stress.v1",
+  "harness": "scripts/m17_scheduled_graph_concurrency_stress.py",
+  "backend": "sqlite RunLedger tempfile per iteration",
+  "execution_model": "threading.Thread + Barrier, same process, shared ledger connection factory",
+  "configs": [
+    {
+      "file": "STRESS_2w.json",
+      "iterations": 100,
+      "workers": 2,
+      "successes": 100,
+      "failures": 0,
+      "duplicate_graphs": 0,
+      "contention_false_failures": 0,
+      "orphan_states": 0,
+      "timeouts": 0,
+      "worker_errors": 0,
+      "duration_s": 7.8059
+    },
+    {
+      "file": "STRESS_5w.json",
+      "iterations": 50,
+      "workers": 5,
+      "successes": 50,
+      "failures": 0,
+      "duplicate_graphs": 0,
+      "contention_false_failures": 0,
+      "orphan_states": 0,
+      "timeouts": 0,
+      "worker_errors": 0,
+      "duration_s": 5.6421
+    },
+    {
+      "file": "STRESS_10w.json",
+      "iterations": 25,
+      "workers": 10,
+      "successes": 25,
+      "failures": 0,
+      "duplicate_graphs": 0,
+      "contention_false_failures": 0,
+      "orphan_states": 0,
+      "timeouts": 0,
+      "worker_errors": 0,
+      "duration_s": 4.3396
+    }
+  ],
+  "totals": {
+    "iterations": 175,
+    "successes": 175,
+    "failures": 0,
+    "duplicate_graphs": 0,
+    "contention_false_failures": 0,
+    "orphan_states": 0
+  }
+}
