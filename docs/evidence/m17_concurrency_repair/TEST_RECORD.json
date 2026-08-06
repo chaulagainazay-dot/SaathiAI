@@ -1,0 +1,48 @@
+{
+  "schema": "m17.concurrency_repair.test_record.v1",
+  "compileall": {"command": "python -m compileall -q saathi scripts tests", "ok": true},
+  "focused_m17_17": {
+    "command": "pytest -q tests/test_m17_17_scheduled_graph_recovery.py",
+    "passed": 36,
+    "failed": 0,
+    "ok": true
+  },
+  "related_m17_14_17": {
+    "command": "pytest -q tests/test_m17_14_mission_scheduler.py tests/test_m17_15_pipeline_recovery.py tests/test_m17_16_parallel_pipeline.py tests/test_m17_17_scheduled_graph_recovery.py",
+    "passed": 164,
+    "failed": 0,
+    "ok": true
+  },
+  "critical_regressions": {
+    "command": "CI-equivalent load_manifest loop with pytest -q -p no:cacheprovider",
+    "ok": true,
+    "duration_s": 577.9,
+    "scheduled_graph.concurrency_dedup": "PASS",
+    "blocking_failures": []
+  },
+  "full_suite": {
+    "command": "pytest tests/ -q -p no:cacheprovider",
+    "passed": 7097,
+    "skipped": 1,
+    "failed": 0,
+    "duration_s": 1063.0,
+    "ok": true,
+    "baseline_before_repair": "7092 passed, 1 skipped"
+  },
+  "m369_m376_invariants": {
+    "agentdev_and_safety_tests": {"passed": 1070, "failed": 0, "ok": true},
+    "terminology_audit_clean": true,
+    "qualified_pairs": 0,
+    "roles_routed": 0,
+    "roles_unrouted": 10,
+    "certification": "LOCAL_MODEL_QUALIFICATION_CERTIFIED_WITH_LIMITATIONS",
+    "thresholds_changed": false
+  },
+  "stress": {
+    "summary_file": "STRESS_RESULTS.json",
+    "iterations_total": 175,
+    "successes": 175,
+    "duplicate_graphs": 0,
+    "contention_false_failures": 0
+  }
+}
