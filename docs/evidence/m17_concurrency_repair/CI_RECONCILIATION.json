@@ -16,5 +16,19 @@
   "repair_branch": "fix/m17-scheduled-graph-concurrency",
   "local_critical_regressions": "PASS",
   "local_full_suite": "7097 passed, 1 skipped",
-  "note": "PR CI results filled after push; this file records pre-push local CI-equivalent validation."
+  "note": "Local and GitHub CI both green after repair push.",
+  "repair_pr": {
+    "number": 17,
+    "url": "https://github.com/chaulagainazay-dot/SaathiAI/pull/17",
+    "draft": true,
+    "base": "milestone/m344-m351-multi-agent-development-foundation",
+    "head": "fix/m17-scheduled-graph-concurrency",
+    "head_sha": "d543b2c86de9a330560ce4ed04fb06b05556ff8f",
+    "ci_run_id": "31094532429",
+    "ci_url": "https://github.com/chaulagainazay-dot/SaathiAI/actions/runs/31094532429",
+    "critical_regressions": "pass",
+    "critical_regressions_duration": "23m20s",
+    "full_suite": "pass",
+    "full_suite_duration": "25m3s"
+  }
 }
