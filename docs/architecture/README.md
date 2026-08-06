@@ -14,6 +14,8 @@
 | 5 | [`ARCHITECTURE_FREEZE_REGISTER.md`](./ARCHITECTURE_FREEZE_REGISTER.md) | What must not expand |
 | 6 | [`FM_C1_CONTRADICTION_REGISTER.md`](./FM_C1_CONTRADICTION_REGISTER.md) | Known contradictions |
 | 7 | [`FM_C1_DOCUMENTATION_BASELINE_REPORT.md`](./FM_C1_DOCUMENTATION_BASELINE_REPORT.md) | FM-C1 closeout |
+| 8 | [`../adr/ADR-AGENT-SESSION-ADAPTER-HARNESS-RELATIONSHIP.md`](../adr/ADR-AGENT-SESSION-ADAPTER-HARNESS-RELATIONSHIP.md) | FM-C2 relationship ADR |
+| 9 | [`FM_C2_AGENT_SESSION_ADAPTER_HARNESS_RECONCILIATION.md`](./FM_C2_AGENT_SESSION_ADAPTER_HARNESS_RECONCILIATION.md) | FM-C2 full design |
 
 ## Core domain ADRs
 
@@ -21,7 +23,8 @@
 | --- | --- | --- |
 | ExecutionGateway | [`../adr/ADR-EXECUTIONGATEWAY-SPECIFICATION.md`](../adr/ADR-EXECUTIONGATEWAY-SPECIFICATION.md) | **ACCEPTED_IMPLEMENTED** |
 | ToolIntent | [`../adr/ADR-TOOLINTENT-IMMUTABLE-CONTRACT.md`](../adr/ADR-TOOLINTENT-IMMUTABLE-CONTRACT.md) | **ACCEPTED_IMPLEMENTED** |
-| AgentHarness (design) | [`../adr/ADR-AGENT-HARNESS-INTERFACE.md`](../adr/ADR-AGENT-HARNESS-INTERFACE.md) | **ACCEPTED_DESIGN_ONLY** — blocked pending FM-C2 |
+| AgentHarness (design) | [`../adr/ADR-AGENT-HARNESS-INTERFACE.md`](../adr/ADR-AGENT-HARNESS-INTERFACE.md) | **ACCEPTED_DESIGN_ONLY** — impl FZ-01 / FM-I1 gated |
+| Session adapter relationship | [`../adr/ADR-AGENT-SESSION-ADAPTER-HARNESS-RELATIONSHIP.md`](../adr/ADR-AGENT-SESSION-ADAPTER-HARNESS-RELATIONSHIP.md) | **ACCEPTED_DESIGN_ONLY** (FM-C2 Alternative F) |
 | QM reference | [`../adr/ADR-QM-MULTI-AGENT-RUNTIME.md`](../adr/ADR-QM-MULTI-AGENT-RUNTIME.md) | **ACCEPTED_DESIGN_ONLY** — no import |
 
 ## Related (not control-plane supersession)
@@ -36,9 +39,10 @@
 ## Rules
 
 1. **ExecutionGateway** is the sole external side-effect path.
-2. **AgentHarness is not implemented** and must not be started before FM-C2.
-3. Prefer this directory + authority index over stale milestone headers.
-4. Historical reports are evidence, not status truth.
-5. **Next design milestone: FM-C2 only** (AgentSessionAdapter ↔ AgentHarness relationship). Do not auto-start implementation.
+2. **AgentHarness is not implemented**; FM-C2 decided plane separation — implementation still **FZ-01** / **FM-I1** gated.
+3. **AgentSessionAdapter** is engineering-only; not the platform multi-turn contract.
+4. Prefer this directory + authority index over stale milestone headers.
+5. Historical reports are evidence, not status truth.
+6. **Next implementation (if authorized):** FM-I1 FakeInMemoryHarness only — not commercial CLIs.
 
-**Do not** implement AgentHarness, FakeInMemoryHarness, commercial CLI adapters, policy floors, or skill promotion from this folder alone.
+**Do not** implement AgentHarness, FakeInMemoryHarness, commercial CLI adapters, policy floors, or skill promotion without separate owner authorization.

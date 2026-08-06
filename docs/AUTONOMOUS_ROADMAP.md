@@ -1,5 +1,26 @@
 # SaathiOS Autonomous Roadmap
 
+## FM-C2 — AgentSessionAdapter ↔ AgentHarness Relationship (2026-08-06)
+
+| Field | Value |
+| --- | --- |
+| Verdict | `AGENT_SESSION_HARNESS_RELATIONSHIP_APPROVED_WITH_LIMITATIONS` |
+| Mode | **Design-only** — no production code, no adapter changes, no FakeInMemoryHarness |
+| Baseline SHA | `f79726d5746ecd485210dee6af12a3ed33a9f01e` |
+| ADR | `docs/adr/ADR-AGENT-SESSION-ADAPTER-HARNESS-RELATIONSHIP.md` |
+| Design | `docs/architecture/FM_C2_AGENT_SESSION_ADAPTER_HARNESS_RECONCILIATION.md` |
+| Decision | **Alternative F** — controller composition + plane separation |
+| Platform multi-turn contract | **AgentHarness** (still design-only / FZ-01) |
+| Engineering process sessions | **AgentSessionAdapter** (active; eng-scoped only) |
+| Wrap/implement each other? | **No in v1** |
+| ToolIntent construction | Controllers only — never either driver |
+| CX-05 | **Closed** (relationship) |
+| FZ-01 / FZ-02 | **Retained** (amended prerequisites) |
+| Commercial CLIs | **Blocked** (FZ-07) |
+| Next | **FM-I1 only after separate owner authorization** — types + FakeInMemoryHarness + controller test double. **Do not auto-start.** |
+
+**Do not implement AgentHarness, modify AgentSessionAdapter, or integrate commercial CLIs from this ADR alone.**
+
 ## FM-C1 — Architecture Documentation Freeze and Contradiction Repair (2026-08-06)
 
 | Field | Value |
@@ -17,9 +38,9 @@
 | FakeInMemoryHarness | **Unauthorized** |
 | Policy floors / skill promotion | **Deferred** (FZ-16 / FZ-17); not renumbered as active milestones |
 | Commercial CLIs | **Blocked** (FZ-07) |
-| Next | **FM-C2 only** — design ADR: `AgentSessionAdapter` ↔ AgentHarness relationship. **Do not** implement. |
+| Next | **Completed:** FM-C2 design relationship. Implementation remains **FM-I1** gated. |
 
-**Documentation baseline frozen. Do not auto-start FM-C2 implementation work or any harness code.**
+**Documentation baseline frozen. Implementation still separately gated.**
 
 ## M386–M393 — Architecture Consolidation and Overlap Review (2026-08-06)
 

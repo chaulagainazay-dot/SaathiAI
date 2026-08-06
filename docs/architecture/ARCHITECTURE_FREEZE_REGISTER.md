@@ -16,24 +16,27 @@ Unfreezing **requires** the authority and prerequisites listed. Informal “just
 | Field | Value |
 | --- | --- |
 | **Frozen subject** | Production types, packages, adapters for AgentHarness; FakeInMemoryHarness; LocalModelHarness |
-| **Reason** | Design-only (M385); dualism with `AgentSessionAdapter` unresolved |
-| **Originating decision** | ADR-AGENT-HARNESS; consolidation D3/D4; FM-C1 |
-| **Authority to unfreeze** | Owner + accepted **FM-C2** design ADR + separate implementation milestone authorization |
-| **Prerequisite** | FM-C2 relationship decision; freezes FZ-04, FZ-05 still held |
-| **Prohibited work** | Any `saathi/**` AgentHarness code; CI suites claiming adapters exist |
-| **Review condition** | After FM-C2 acceptance |
+| **Reason** | Design-only (M385); implementation not yet authorized (relationship now decided in FM-C2) |
+| **Originating decision** | ADR-AGENT-HARNESS; consolidation D3/D4; FM-C1; **amended FM-C2** |
+| **Authority to unfreeze** | Owner + **separate implementation milestone** (FM-I1: fake + types + controller test double only) |
+| **Prerequisite** | **FM-C2 relationship ADR accepted** (satisfied 2026-08-06); freezes FZ-04, FZ-05, FZ-07 still held |
+| **Prohibited work** | Any `saathi/**` AgentHarness code until FM-I1 authorization; commercial CLI adapters; CI claiming adapters exist |
+| **Review condition** | After explicit FM-I1 owner authorization — **not** auto-started by FM-C2 |
+| **FM-C2 disposition** | **RETAINED** (relationship prerequisite met; implementation freeze remains) |
 
 ### FZ-02 — New AgentSessionAdapter variants
 
 | Field | Value |
 | --- | --- |
 | **Frozen subject** | New commercial or multi-turn session adapters under `saathi.engineering.adapters` |
-| **Reason** | Avoid deepening dual plane before FM-C2 |
-| **Originating decision** | Consolidation R-04; FM-C1 |
-| **Authority to unfreeze** | FM-C2 decision that defines allowed adapter set |
-| **Prerequisite** | FM-C2 |
-| **Prohibited work** | New Claude/Codex/OpenCode adapters; new ABC subclasses for product use |
-| **Review condition** | FM-C2 |
+| **Reason** | Engineering plane must not become a second platform multi-agent control plane; commercial CLI residual side effects |
+| **Originating decision** | Consolidation R-04; FM-C1; **amended FM-C2** (plane separation) |
+| **Authority to unfreeze** | Security ADR + package certification; platform drivers must implement **AgentHarness**, not new eng ABC product variants |
+| **Prerequisite** | FM-C2 accepted (satisfied); FZ-07 for any commercial CLI |
+| **Prohibited work** | New Claude/Codex/OpenCode adapters; new ABC subclasses for product/platform use |
+| **Allowed without unfreeze** | Existing `mock` / `claude_code` classes; tests; dry_run; eng settings allowlist as today |
+| **Review condition** | Only with security ADR elevating a process driver under AgentHarness bridge |
+| **FM-C2 disposition** | **RETAINED / AMENDED** (scope clarified; freeze not removed) |
 
 ### FZ-03 — New bare Orchestrator modules
 

@@ -1,8 +1,9 @@
 # SaathiOS Architecture Authority Index
 
-**Status:** AUTHORITATIVE (FM-C1, 2026-08-06)
+**Status:** AUTHORITATIVE (FM-C1 baseline; **updated FM-C2** 2026-08-06)
 **Companion baseline:** [`FM_C1_DOCUMENTATION_BASELINE_REPORT.md`](./FM_C1_DOCUMENTATION_BASELINE_REPORT.md)
 **Top-level architecture ADR:** [`docs/adr/ADR-SAATHIOS-ARCHITECTURE-CONSOLIDATION.md`](../adr/ADR-SAATHIOS-ARCHITECTURE-CONSOLIDATION.md)
+**Driver relationship ADR:** [`docs/adr/ADR-AGENT-SESSION-ADAPTER-HARNESS-RELATIONSHIP.md`](../adr/ADR-AGENT-SESSION-ADAPTER-HARNESS-RELATIONSHIP.md)
 
 This index tells a competent engineer **which documents to trust**, which are historical, and where source ownership lives. Prefer this file over scattered milestone headers when claims conflict.
 
@@ -17,11 +18,13 @@ This index tells a competent engineer **which documents to trust**, which are hi
 | Multi-agent runs | `docs/agent-runtime/M48_*` + `saathi/agent_runtime/` |
 | Platform tenancy / RBAC / mission runtime | `saathi/platform/` + CAPABILITY_MATURITY_MATRIX rows |
 | Providers / models | `saathi/inference/` + M21–M25 docs |
-| AgentHarness design (not implemented) | ADR-AGENT-HARNESS-INTERFACE (blocked until FM-C2) |
+| AgentHarness design (not implemented) | ADR-AGENT-HARNESS-INTERFACE |
+| **AgentSessionAdapter ↔ AgentHarness relationship** | **ADR-AGENT-SESSION-ADAPTER-HARNESS-RELATIONSHIP** + [`FM_C2_…RECONCILIATION.md`](./FM_C2_AGENT_SESSION_ADAPTER_HARNESS_RECONCILIATION.md) |
+| Engineering process adapters | `saathi/engineering/adapters/` — **engineering plane only** |
 | What is frozen | [`ARCHITECTURE_FREEZE_REGISTER.md`](./ARCHITECTURE_FREEZE_REGISTER.md) |
 | Terminology | [`CANONICAL_TERMINOLOGY.md`](./CANONICAL_TERMINOLOGY.md) |
-| Contradictions | [`FM_C1_CONTRADICTION_REGISTER.md`](./FM_C1_CONTRADICTION_REGISTER.md) |
-| Next design work | **FM-C2 only** — not implementation |
+| Contradictions | [`FM_C1_CONTRADICTION_REGISTER.md`](./FM_C1_CONTRADICTION_REGISTER.md) (CX-05 closed in FM-C2) |
+| Next authorized implementation | **FM-I1 only after owner authorization** — FakeInMemoryHarness + types; not auto-start |
 
 **Document class legend:** AUTHORITATIVE · SUPPORTING · HISTORICAL · SUPERSEDED · DRAFT · DESIGN_ONLY · REJECTED · STALE_REQUIRES_REPAIR
 
@@ -37,6 +40,8 @@ This index tells a competent engineer **which documents to trust**, which are hi
 | Canonical terminology | `docs/architecture/CANONICAL_TERMINOLOGY.md` | AUTHORITATIVE | — |
 | Freeze register | `docs/architecture/ARCHITECTURE_FREEZE_REGISTER.md` | AUTHORITATIVE | — |
 | Contradiction register | `docs/architecture/FM_C1_CONTRADICTION_REGISTER.md` | AUTHORITATIVE | — |
+| AgentSessionAdapter ↔ AgentHarness | `docs/adr/ADR-AGENT-SESSION-ADAPTER-HARNESS-RELATIONSHIP.md` | AUTHORITATIVE design | `saathi/engineering/adapters/` (eng only) |
+| FM-C2 reconciliation evidence | `docs/architecture/FM_C2_AGENT_SESSION_ADAPTER_HARNESS_RECONCILIATION.md` | AUTHORITATIVE design | — |
 | Roadmap (current top entries) | `docs/AUTONOMOUS_ROADMAP.md` | AUTHORITATIVE for sequencing | — |
 | Capability maturity (capability rows) | `docs/CAPABILITY_MATURITY_MATRIX.md` | AUTHORITATIVE for maturity claims | packages listed per row |
 | Project operating rules | `Agents.md` | AUTHORITATIVE for agent ops / TG rules | — |
@@ -134,7 +139,8 @@ This index tells a competent engineer **which documents to trust**, which are hi
 | ADR-SAATHIOS-ARCHITECTURE-CONSOLIDATION | ACCEPTED_DESIGN_ONLY | Top architecture map |
 | ADR-EXECUTIONGATEWAY-SPECIFICATION | ACCEPTED_IMPLEMENTED | FM-C1 repaired from “awaiting implementation” |
 | ADR-TOOLINTENT-IMMUTABLE-CONTRACT | ACCEPTED_IMPLEMENTED | FM-C1 repaired immutability wording |
-| ADR-AGENT-HARNESS-INTERFACE | ACCEPTED_DESIGN_ONLY | Blocked pending FM-C2 |
+| ADR-AGENT-HARNESS-INTERFACE | ACCEPTED_DESIGN_ONLY | Relationship decided FM-C2; impl still FZ-01 |
+| ADR-AGENT-SESSION-ADAPTER-HARNESS-RELATIONSHIP | ACCEPTED_DESIGN_ONLY | FM-C2; Alternative F |
 | ADR-QM-MULTI-AGENT-RUNTIME | ACCEPTED_DESIGN_ONLY | ADAPT_SELECTED_PATTERNS; no import |
 | ADR-VIDEO-BACKEND-POLICY | ACCEPTED_WITH_LIMITATIONS | Video routing under EG |
 | ADR-OPENMONTAGE-SEPARATE-SERVICE | ACCEPTED_WITH_LIMITATIONS | AGPL isolation |
@@ -175,7 +181,8 @@ Allowed status vocabulary: `PROPOSED` · `ACCEPTED_DESIGN_ONLY` · `ACCEPTED_IMP
 | `saathi/model_router.py` | M48.1 model routing | — | M48 / earlier |
 | `saathi/execution/orchestrators/model_gateway.py` | freeze register (frozen expansion) | consolidation | residual |
 | `saathi/application_harness/` | M17.3+ docs | — | M17.3+ |
-| `saathi/engineering/adapters/` | M385 design + freeze register | ADR-AGENT-HARNESS (pending FM-C2) | engineering / M385 |
+| `saathi/engineering/adapters/` | FM-C2 reconciliation + freeze register | ADR-AGENT-SESSION-ADAPTER-HARNESS-RELATIONSHIP | engineering M20 / FM-C2 |
+| AgentHarness (none) | ADR-AGENT-HARNESS + FM-C2 | ACCEPTED_DESIGN_ONLY; FZ-01 | M385 / FM-C2 |
 | `saathi/memory/` | memory docs + consolidation SoT | consolidation | M9 |
 | `saathi/evidence/` | evidence docs | consolidation | early |
 | `saathi/security/` | security docs | — | M15.2 |
@@ -186,7 +193,7 @@ Allowed status vocabulary: `PROPOSED` · `ACCEPTED_DESIGN_ONLY` · `ACCEPTED_IMP
 | `saathi/scheduler.py` | freeze register / consolidation | consolidation | early product |
 | `saathi/agents/` (IELTS) | M48.2 legacy boundary | consolidation freeze | domain |
 | `saathi/chat/` | M8 / RR-04 | consolidation freeze dual-write | M8 |
-| AgentHarness (none) | ADR-AGENT-HARNESS | ACCEPTED_DESIGN_ONLY | M385 |
+| AgentHarness (none) | ADR-AGENT-HARNESS + FM-C2 relationship | ACCEPTED_DESIGN_ONLY; FZ-01 | M385 / FM-C2 |
 | QM (none) | ADR-QM | ACCEPTED_DESIGN_ONLY | M377–M384 |
 
 ---
@@ -195,11 +202,11 @@ Allowed status vocabulary: `PROPOSED` · `ACCEPTED_DESIGN_ONLY` · `ACCEPTED_IMP
 
 | Work | Status |
 | --- | --- |
-| FM-C1 documentation baseline | **This milestone** |
-| FM-C2 AgentSessionAdapter ↔ AgentHarness relationship | **Next design milestone only** |
-| AgentHarness types / FakeInMemoryHarness | **Unauthorized** until FM-C2 + separate impl authorization |
-| Policy floors / skill promotion | **Deferred** (not FM-C2) |
-| Commercial CLI adapters | **Blocked** |
+| FM-C1 documentation baseline | **Complete** (published baseline) |
+| FM-C2 AgentSessionAdapter ↔ AgentHarness relationship | **Complete (design-only)** — Alternative F |
+| AgentHarness types / FakeInMemoryHarness | **Unauthorized** until **FM-I1** owner authorization (FZ-01 retained) |
+| Policy floors / skill promotion | **Deferred** |
+| Commercial CLI adapters | **Blocked** (FZ-07 / FZ-02) |
 | Live trading / broker credentials | **Blocked** |
 
 ---
