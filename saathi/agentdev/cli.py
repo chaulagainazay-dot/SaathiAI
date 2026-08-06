@@ -435,6 +435,12 @@ def cmd_config_surface(args: argparse.Namespace) -> int:
 # --------------------------------------------------------------------------
 
 
+def _default_endpoint() -> str:
+    from saathi.agentdev.model_adapter import DEFAULT_ENDPOINT
+
+    return DEFAULT_ENDPOINT
+
+
 def _adapter(args: argparse.Namespace):
     from saathi.agentdev.model_adapter import DEFAULT_ENDPOINT, OllamaAdapter
 
@@ -595,6 +601,150 @@ def cmd_console_render(args: argparse.Namespace) -> int:
     destination.parent.mkdir(parents=True, exist_ok=True)
     destination.write_text(page, encoding="utf-8")
     _emit({"rendered": str(destination), "bytes": len(page.encode("utf-8"))})
+    return EXIT_OK
+
+
+# --------------------------------------------------------------------------
+# local-model qualification (M369-M376)
+# --------------------------------------------------------------------------
+
+
+def cmd_qualification_inventory(args: argparse.Namespace) -> int:
+    """Every installed model and this host's resource baseline. Reads only."""
+    from saathi.agentdev.model_inventory import collect_inventory
+
+    _emit(collect_inventory(args.endpoint, describe=not args.no_describe))
+    return EXIT_OK
+
+
+def cmd_qualification_baseline(args: argparse.Namespace) -> int:
+    from saathi.agentdev.model_inventory import assess_safety, collect_baseline
+
+    baseline = collect_baseline(args.endpoint)
+    decision = assess_safety(baseline)
+    _emit({"baseline": baseline.to_dict(), "safety": decision.to_dict()})
+    return EXIT_OK if decision.safe else EXIT_REFUSED
+
+
+def cmd_qualification_manifest(args: argparse.Namespace) -> int:
+    """The pinned suite, before any model is contacted."""
+    from saathi.agentdev.cross_model_eval import RunSettings, suite_manifest
+
+    _emit(suite_manifest(
+        model=args.model, digest="", adapter="ollama",
+        settings=RunSettings(runs_per_scenario=args.runs),
+        repository_sha=args.sha,
+    ))
+    return EXIT_OK
+
+
+def cmd_qualification_thresholds(args: argparse.Namespace) -> int:
+    from saathi.agentdev.model_qualification import (
+        AUTHORITY_BOUNDARY,
+        OWNER_DECISION,
+        ROLE_TIERS,
+        TIER_THRESHOLDS,
+        UNIVERSAL_PROHIBITIONS,
+    )
+
+    _emit({
+        "owner_decision": OWNER_DECISION,
+        "authority_boundary": list(AUTHORITY_BOUNDARY),
+        "role_tiers": {r.value: t.value for r, t in ROLE_TIERS.items()},
+        "thresholds": {t.value: v.to_dict() for t, v in TIER_THRESHOLDS.items()},
+        "universal_prohibitions": list(UNIVERSAL_PROHIBITIONS),
+    })
+    return EXIT_OK
+
+
+def cmd_qualification_verify_claims(args: argparse.Namespace) -> int:
+    """Run the claim verifier over one response read from a file or stdin."""
+    from saathi.agentdev.claim_verification import verify_response
+
+    raw = (
+        Path(args.file).expanduser().read_text(encoding="utf-8")
+        if args.file else sys.stdin.read()
+    )
+    parsed = None
+    try:
+        candidate = json.loads(raw)
+        parsed = candidate if isinstance(candidate, dict) else None
+    except json.JSONDecodeError:
+        pass
+    _emit(verify_response(raw, parsed))
+    return EXIT_OK
+
+
+def _qualification_state(args: argparse.Namespace) -> dict[str, Any]:
+    from saathi.agentdev.qualification_console import collect_qualification_state
+
+    return collect_qualification_state(args.evidence or None)
+
+
+def cmd_qualification_state(args: argparse.Namespace) -> int:
+    _emit(_qualification_state(args))
+    return EXIT_OK
+
+
+def cmd_qualification_show(args: argparse.Namespace) -> int:
+    from saathi.agentdev.qualification_console import render_qualification_text
+
+    print(render_qualification_text(_qualification_state(args)), end="")
+    return EXIT_OK
+
+
+def cmd_qualification_render(args: argparse.Namespace) -> int:
+    from saathi.agentdev.qualification_console import render_qualification_html
+
+    page = render_qualification_html(_qualification_state(args))
+    if not args.output:
+        print(page, end="")
+        return EXIT_OK
+    destination = Path(args.output).expanduser()
+    from saathi.agentdev.config_protection import classify_path
+
+    verdict = classify_path(str(destination))
+    if verdict.protected:
+        _emit({
+            "error": "output_path_protected",
+            "path": str(destination),
+            "detail": verdict.reason,
+        })
+        return EXIT_REFUSED
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    destination.write_text(page, encoding="utf-8")
+    _emit({"rendered": str(destination), "bytes": len(page.encode("utf-8"))})
+    return EXIT_OK
+
+
+def cmd_qualification_route(args: argparse.Namespace) -> int:
+    """Which model, if any, a role routes to. Executes nothing."""
+    from saathi.agentdev.model_qualification import Role, route, routing_policy
+
+    state = _qualification_state(args)
+    directory = Path(state["evidence_directory"])
+    matrix_path = directory / "ROLE_QUALIFICATION_MATRIX.json"
+    if not matrix_path.is_file():
+        _emit({
+            "error": "matrix_missing",
+            "path": str(matrix_path),
+            "detail": "run the qualification suite before asking for a route",
+        })
+        return EXIT_REFUSED
+    matrix = json.loads(matrix_path.read_text(encoding="utf-8"))
+    if not args.role:
+        _emit(routing_policy(matrix))
+        return EXIT_OK
+    try:
+        role = Role(args.role.upper())
+    except ValueError:
+        _emit({
+            "error": "unknown_role",
+            "role": args.role,
+            "known": [r.value for r in Role],
+        })
+        return EXIT_USAGE
+    _emit(route(role, matrix).to_dict())
     return EXIT_OK
 
 
@@ -1060,6 +1210,76 @@ def build_parser() -> argparse.ArgumentParser:
         help="Write the page here. Omit to print it to stdout.",
     )
     crender.set_defaults(func=cmd_console_render)
+
+    qualification = sub.add_parser(
+        "qualification",
+        help="Local-model qualification: inventory, thresholds, role "
+             "qualification, role restriction, model disqualification and "
+             "routing (M369-M376). Read-only; it starts no model.",
+    ).add_subparsers(dest="qualification_command", required=True)
+    qinv = qualification.add_parser(
+        "inventory", help="Installed models, digests and host eligibility."
+    )
+    qinv.add_argument("--endpoint", default=_default_endpoint())
+    qinv.add_argument(
+        "--no-describe", action="store_true",
+        help="Skip /api/show. Faster; omits context length and capabilities.",
+    )
+    qinv.set_defaults(func=cmd_qualification_inventory)
+    qbase = qualification.add_parser(
+        "baseline", help="Measure the host against the declared thresholds."
+    )
+    qbase.add_argument("--endpoint", default=_default_endpoint())
+    qbase.set_defaults(func=cmd_qualification_baseline)
+    qman = qualification.add_parser(
+        "manifest", help="The pinned evaluation suite. Contacts nothing."
+    )
+    qman.add_argument("--model", default="")
+    qman.add_argument("--runs", type=int, default=3)
+    qman.add_argument("--sha", default="")
+    qman.set_defaults(func=cmd_qualification_manifest)
+    qualification.add_parser(
+        "thresholds", help="Owner decision, boundary and every role threshold."
+    ).set_defaults(func=cmd_qualification_thresholds)
+    qclaims = qualification.add_parser(
+        "verify-claims",
+        help="Classify every model claim in one model output as a verified "
+             "claim, an unverified claim or a contradictory claim, against "
+             "external evidence. A completion claim with no evidence behind it "
+             "is reported, never believed.",
+    )
+    qclaims.add_argument(
+        "--file", default="", help="Read the response here. Omit to read stdin."
+    )
+    qclaims.set_defaults(func=cmd_qualification_verify_claims)
+    for name, help_text, func in (
+        ("show", "Terminal summary of the thirteen qualification panels.",
+         cmd_qualification_show),
+        ("state", "Full qualification console state as JSON.",
+         cmd_qualification_state),
+    ):
+        panel = qualification.add_parser(name, help=help_text)
+        panel.add_argument("--evidence", default="", help="Override the evidence directory.")
+        panel.set_defaults(func=func)
+    qrender = qualification.add_parser(
+        "render", help="Render the qualification console to HTML."
+    )
+    qrender.add_argument("--evidence", default="")
+    qrender.add_argument(
+        "--output", default="", help="Write the page here. Omit to print it."
+    )
+    qrender.set_defaults(func=cmd_qualification_render)
+    qroute = qualification.add_parser(
+        "route",
+        help="Show the routing decision for one role, or the whole policy. "
+             "A role with no qualified model routes to a deterministic "
+             "workflow or a person; model output never routes itself.",
+    )
+    qroute.add_argument("--evidence", default="")
+    qroute.add_argument(
+        "--role", default="", help="Omit for the full policy across every role."
+    )
+    qroute.set_defaults(func=cmd_qualification_route)
 
     terminology = sub.add_parser(
         "terminology", help="Owner-pinned terminology (M352)."

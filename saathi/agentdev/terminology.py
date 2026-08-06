@@ -229,6 +229,146 @@ LEXICON: tuple[PinnedTerm, ...] = (
         ),
         surfaces=("docs", "code", "cli", "tests"),
     ),
+    # ---- M369 — the vocabulary local-model qualification is written in -----
+    #
+    # The distinction the whole milestone turns on is between what a model
+    # *says* and what a deterministic system can *show*. Every term below
+    # exists to keep those two apart in prose, in code and in evidence.
+    PinnedTerm(
+        term="model output",
+        classification=Classification.MODEL_EVALUATED,
+        means=(
+            "Raw or structured content a model generated on one call, recorded "
+            "verbatim beside the request that produced it."
+        ),
+        does_not_mean=(
+            "Evidence that anything happened outside the model. Output is text; "
+            "it changes no file, no gate and no mission state."
+        ),
+        surfaces=("docs", "code", "cli", "evidence", "tests"),
+    ),
+    PinnedTerm(
+        term="model claim",
+        classification=Classification.MODEL_EVALUATED,
+        means=(
+            "A statement inside model output about facts, state, actions, "
+            "results, approvals or completion. Detected and classified, never "
+            "believed on sight."
+        ),
+        does_not_mean=(
+            "A fact. A claim is the thing verification is applied to, not its "
+            "outcome."
+        ),
+        surfaces=("docs", "code", "cli", "evidence", "tests"),
+    ),
+    PinnedTerm(
+        term="verified claim",
+        classification=Classification.DETERMINISTIC,
+        means=(
+            "A model claim that a deterministic evidence source independently "
+            "confirmed — a runner trace, an artifact record, git output, a gate "
+            "ledger entry or a file hash."
+        ),
+        does_not_mean=(
+            "That the claim is true in general. It means one named source "
+            "agreed with it. Another model agreeing is not verification."
+        ),
+        surfaces=("docs", "code", "cli", "evidence", "tests"),
+    ),
+    PinnedTerm(
+        term="unverified claim",
+        classification=Classification.DETERMINISTIC,
+        means=(
+            "A model claim for which no approved evidence source was consulted "
+            "or none carried a matching record."
+        ),
+        does_not_mean=(
+            "That the claim is false. Unverified is the absence of support, not "
+            "the presence of refutation."
+        ),
+        surfaces=("docs", "code", "cli", "evidence", "tests"),
+    ),
+    PinnedTerm(
+        term="contradictory claim",
+        classification=Classification.DETERMINISTIC,
+        means=(
+            "One response containing mutually incompatible statements — "
+            "refusing an action while reporting it done, denying access while "
+            "reporting a file changed, noting approval is missing while "
+            "recording approval."
+        ),
+        does_not_mean=(
+            "Disagreement with evidence. That is a separate status, "
+            "contradicted_by_evidence, decided by a different check."
+        ),
+        surfaces=("docs", "code", "cli", "evidence", "tests"),
+    ),
+    PinnedTerm(
+        term="completion claim",
+        classification=Classification.MODEL_EVALUATED,
+        means=(
+            "A model claim that a command, edit, test, push, review, gate or "
+            "mission stage finished. Always verified separately from the "
+            "schema it arrived in."
+        ),
+        does_not_mean=(
+            "Completion. A well-formed value in a declared field is still only "
+            "a string; it never advances mission state."
+        ),
+        surfaces=("docs", "code", "cli", "evidence", "tests"),
+    ),
+    PinnedTerm(
+        term="external evidence",
+        classification=Classification.DETERMINISTIC,
+        means=(
+            "A record produced by an approved deterministic system — runner "
+            "state, artifact lineage, git output, a test record, a gate or "
+            "review ledger entry, a file hash, adapter metadata."
+        ),
+        does_not_mean=(
+            "Anything a model wrote, including a model quoting another model."
+        ),
+        surfaces=("docs", "code", "cli", "evidence", "tests"),
+    ),
+    PinnedTerm(
+        term="role qualification",
+        classification=Classification.DETERMINISTIC,
+        means=(
+            "A recorded finding that one model met every published threshold "
+            "for one bounded role on this host at this commit."
+        ),
+        does_not_mean=(
+            "Authority. Qualification permits a model to be *asked*; it grants "
+            "no tool, no file, no shell and no approval."
+        ),
+        surfaces=("docs", "code", "cli", "evidence", "tests"),
+    ),
+    PinnedTerm(
+        term="role restriction",
+        classification=Classification.DOCUMENTATION_ONLY,
+        means=(
+            "The explicit prohibition list attached to every qualified role, "
+            "naming what the model may not do even inside that role."
+        ),
+        does_not_mean=(
+            "A runtime sandbox. The prohibitions are enforced by the adapter's "
+            "structural denials, not by the restriction text itself."
+        ),
+        surfaces=("docs", "code", "cli", "evidence"),
+    ),
+    PinnedTerm(
+        term="model disqualification",
+        classification=Classification.DETERMINISTIC,
+        means=(
+            "A recorded finding that a model missed a published threshold for "
+            "a role, with the failing dimension and the run named."
+        ),
+        does_not_mean=(
+            "That the model is unfit generally. A host-limited model is "
+            "recorded as resource_unsuitable, which is a different finding."
+        ),
+        surfaces=("docs", "code", "cli", "evidence", "tests"),
+    ),
 )
 
 TERMS_BY_NAME: dict[str, PinnedTerm] = {t.term: t for t in LEXICON}
@@ -359,6 +499,37 @@ BANNED_PHRASES: tuple[BannedPhrase, ...] = (
         "No proportion of any behaviour space is measured.",
         "N of N scenarios passed",
     ),
+    # ---- M369 — wordings that would blur claim and evidence ---------------
+    BannedPhrase(
+        "model verified",
+        "A model verifies nothing; verification is a deterministic system agreeing.",
+        "claim verified against <named evidence source>",
+    ),
+    BannedPhrase(
+        "the model confirmed",
+        "Confirmation requires an independent source, not a second assertion.",
+        "the model claimed; the claim is verified or unverified",
+    ),
+    BannedPhrase(
+        "best model",
+        "Roles are qualified against thresholds, never ranked into a winner.",
+        "qualified for <role> on this host",
+    ),
+    BannedPhrase(
+        "model approved",
+        "No model holds approval authority in any role.",
+        "the model recommended; the owner approves",
+    ),
+    BannedPhrase(
+        "trusted model",
+        "No model is trusted; its output is validated every time.",
+        "qualified for <role>, output still validated",
+    ),
+    BannedPhrase(
+        "generally capable",
+        "Qualification is per role, per host, per commit — never general.",
+        "qualified for the named roles at this commit",
+    ),
 )
 
 #: A banned phrase may appear where it is being quoted in order to be rejected.
@@ -389,6 +560,31 @@ QUOTED_FOR_REJECTION: tuple[tuple[str, str, str], ...] = (
         "docs/evidence/m352_m359/TERMINOLOGY_AUDIT.json",
         "*",
         "Generated audit output quotes each phrase it searched for.",
+    ),
+    (
+        "docs/evidence/m369_m376/TERMINOLOGY_AUDIT.json",
+        "*",
+        "Generated audit output quotes each phrase it searched for.",
+    ),
+    (
+        "docs/ai-development/model-qualification-limitations.md",
+        "*",
+        "Names the M369 wordings that were rejected, in order to reject them.",
+    ),
+    (
+        "saathi/agentdev/claim_verification.py",
+        "*",
+        "The verifier's detectors quote the phrasings they look for.",
+    ),
+    (
+        "tests/test_m369_agentdev_qualification_terms.py",
+        "*",
+        "The test asserts the guard fires on each M369 banned phrase.",
+    ),
+    (
+        "tests/test_m374_agentdev_claim_verification.py",
+        "*",
+        "Fixtures quote the phrasings the verifier must catch.",
     ),
 )
 
@@ -455,6 +651,7 @@ AUDITED_SURFACE: tuple[str, ...] = (
     "docs/ai-development",
     "saathi/agentdev",
     "docs/evidence/m352_m359",
+    "docs/evidence/m369_m376",
     "tests/test_m3*_agentdev_*.py",
 )
 
@@ -538,3 +735,140 @@ def classify(term: str) -> Classification | None:
     """The pinned classification for ``term``, or ``None`` if unreviewed."""
     pinned = TERMS_BY_NAME.get(term.strip().lower())
     return pinned.classification if pinned else None
+
+
+# --------------------------------------------------------------------------
+# M369 — the qualification vocabulary, checked surface by surface
+# --------------------------------------------------------------------------
+
+#: The eleven terms M369 pinned. Written out rather than filtered from the
+#: lexicon by classification, so removing one from :data:`LEXICON` fails the
+#: audit instead of shrinking it.
+M369_TERMS: tuple[str, ...] = (
+    "model output",
+    "model claim",
+    "verified claim",
+    "unverified claim",
+    "contradictory claim",
+    "completion claim",
+    "external evidence",
+    "role qualification",
+    "role restriction",
+    "model disqualification",
+    "certification",
+)
+
+#: Where each surface lives, relative to the repository root. A term that
+#: claims a surface must actually appear on it; a lexicon entry nobody uses is
+#: a definition, not a pinned term.
+M369_SURFACES: dict[str, tuple[str, ...]] = {
+    "code": ("saathi/agentdev",),
+    "tests": ("tests/test_m369_agentdev_qualification_terms.py",
+              "tests/test_m372_agentdev_cross_model_behavior.py",
+              "tests/test_m373_agentdev_cross_model_adversarial.py",
+              "tests/test_m375_agentdev_role_qualification.py",
+              "tests/test_m376_agentdev_certification_and_routing.py"),
+    "evidence": ("docs/evidence/m369_m376",),
+    "docs": ("docs/ai-development",),
+    "cli": ("saathi/agentdev/cli.py", "saathi/agentdev/qualification_console.py"),
+    "console": ("saathi/agentdev/qualification_console.py",
+                "saathi/agentdev/console.py"),
+    "certification": ("docs/evidence/m369_m376/CERTIFICATION.json",),
+}
+
+#: The boundary tokens M369 pinned. Each must be findable in the code that
+#: enforces it, not only in a document that describes it.
+M369_BOUNDARY_TOKENS: tuple[str, ...] = (
+    "M352_M359_OWNER_ACCEPTED_WITH_LIMITATIONS",
+    "MODEL_STATEMENTS_DO_NOT_CHANGE_SYSTEM_STATE",
+    "COMPLETION_REQUIRES_EXTERNAL_EVIDENCE",
+)
+
+
+def _surface_text(base: Path, targets: Iterable[str]) -> str:
+    """Every auditable byte of one surface, lowercased, as one blob."""
+    chunks: list[str] = []
+    for path in _iter_files(base, list(targets)):
+        try:
+            chunks.append(path.read_text(encoding="utf-8").lower())
+        except (OSError, UnicodeDecodeError):
+            continue
+    return "\n".join(chunks)
+
+
+def qualification_terminology_audit(
+    root: Path | str | None = None,
+) -> dict[str, Any]:
+    """The M369 terminology record: banned phrases, plus per-surface coverage.
+
+    Two different questions, answered separately. :func:`audit_surface` asks
+    whether anything overstates what the system does. This adds the other half
+    — whether each pinned term is actually *used* on the surfaces it claims,
+    because a vocabulary nobody writes in is a glossary rather than a pin.
+
+    ``root`` is recorded relative to the repository, never as an absolute local
+    path: this file is committed evidence and has to read the same on any
+    machine.
+    """
+    base = Path(root) if root else Path(ROOT)
+    scan = audit_surface(base)
+    surface_text = {
+        name: _surface_text(base, targets)
+        for name, targets in M369_SURFACES.items()
+    }
+
+    coverage: list[dict[str, Any]] = []
+    gaps: list[str] = []
+    for term in M369_TERMS:
+        pinned = TERMS_BY_NAME.get(term)
+        expected = list(pinned.surfaces) if pinned else []
+        found = sorted(
+            name for name, text in surface_text.items() if term in text
+        )
+        missing = [s for s in expected if s not in found]
+        coverage.append({
+            "term": term,
+            "classification": pinned.classification.value if pinned else "",
+            "declared_surfaces": expected,
+            "found_on": found,
+            "missing_from": missing,
+            "means": pinned.means if pinned else "",
+            "does_not_mean": pinned.does_not_mean if pinned else "",
+        })
+        gaps.extend(f"{term}: not found on {s}" for s in missing)
+
+    tokens = []
+    for token in M369_BOUNDARY_TOKENS:
+        found = sorted(
+            name for name, text in surface_text.items() if token.lower() in text
+        )
+        tokens.append({"token": token, "found_on": found})
+        if "code" not in found:
+            gaps.append(f"{token}: absent from the code that would enforce it")
+
+    return {
+        "audit": "agentdev.m369_m376.terminology.v1",
+        "milestones": ["M369"],
+        "root": ".",
+        "scan": {
+            "files_scanned": scan["files_scanned"],
+            "banned_phrases": scan["banned_phrases"],
+            "lexicon_terms": scan["lexicon_terms"],
+            "findings": scan["findings"],
+            "clean": scan["clean"],
+        },
+        "surfaces": {name: list(t) for name, t in M369_SURFACES.items()},
+        "term_coverage": coverage,
+        "boundary_tokens": tokens,
+        "classifications_preserved": [c.value for c in Classification],
+        "gaps": gaps,
+        "clean": scan["clean"] and not gaps,
+        "limitation": (
+            "Two literal checks, not a reading. The phrase guard catches the "
+            "wordings the owner named and cannot detect an overstatement "
+            "phrased in words nobody listed; the coverage check confirms a term "
+            "appears on a surface, not that it was used correctly there. "
+            "Terminology consistency beyond these two checks is "
+            "documentation_only."
+        ),
+    }
