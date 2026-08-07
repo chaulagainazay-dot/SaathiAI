@@ -25,6 +25,7 @@ import {
   getToken,
   PLATFORM_CONTEXT_EVENT,
 } from "@/lib/platform-client";
+import { useVoiceSession } from "./VoiceSessionProvider";
 
 const VoiceOutputContext = createContext(null);
 const TERMINAL = new Set([
@@ -67,6 +68,7 @@ export function VoiceOutputProvider({ children }) {
   const pollRef = useRef(null);
   const metadataRef = useRef(null);
   const operationRef = useRef(null);
+  const voiceSession = useVoiceSession();
 
   useEffect(() => {
     operationRef.current = output.operation;
@@ -184,7 +186,7 @@ export function VoiceOutputProvider({ children }) {
   );
 
   const stop = useCallback(
-    async ({ remote = true } = {}) => {
+    async ({ remote = true, reason = "USER_CANCEL" } = {}) => {
       const operation = operationRef.current;
       clearLocalAudio();
       if (
@@ -196,8 +198,13 @@ export function VoiceOutputProvider({ children }) {
         await voiceActions.cancel(operation.operationId, token).catch(() => null);
       }
       dispatch({ type: "CANCELLED" });
+      try {
+        await voiceSession?.endOutput?.(reason);
+      } catch {
+        /* ignore */
+      }
     },
-    [clearLocalAudio, token]
+    [clearLocalAudio, token, voiceSession]
   );
 
   const prepareAudio = useCallback(
@@ -272,7 +279,14 @@ export function VoiceOutputProvider({ children }) {
     ) => {
       const approvedText = String(text || "").trim();
       if (!preferences.enabled || !token || !approvedText) return false;
+      // Contract: cancel any prior speech before a new synthesis request.
       await stop();
+      // V-NEXT-1: exclusive output claim via VoiceSessionManager.
+      await voiceSession?.beginOutput?.({
+        label: "VoiceOutputProvider",
+        stop: () => clearLocalAudio(),
+      });
+      voiceSession?.setTranscript?.({ assistant: approvedText });
       const controller = new AbortController();
       pollRef.current = controller;
       try {
@@ -301,13 +315,14 @@ export function VoiceOutputProvider({ children }) {
             unavailable: error?.status === 503,
             message: String(error?.message || "Speech is unavailable."),
           });
+          voiceSession?.setError?.(String(error?.message || error));
         }
         return false;
       } finally {
         if (pollRef.current === controller) pollRef.current = null;
       }
     },
-    [poll, preferences, stop, token]
+    [poll, preferences, stop, token, voiceSession, clearLocalAudio]
   );
 
   // The provider sits above the router in Shell, so it never unmounts on a

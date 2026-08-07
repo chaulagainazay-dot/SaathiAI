@@ -1,5 +1,19 @@
 # SaathiOS Autonomous Roadmap
 
+## V-NEXT-1 — Canonical Voice Session + Single Audio Ownership (2026-08-07)
+
+| Field | Value |
+| --- | --- |
+| Mode | **Voice architecture consolidation** — no VAD/wake/full-duplex product claim |
+| Branch | `feature/v-next-1-canonical-voice-session` |
+| Base | `feature/ui-next-1-central-command` @ `d66fa3a…` |
+| Package | `saathi-os/lib/voice-session/*` + VoiceSessionProvider |
+| Docs | `docs/voice-next-1/` |
+| Verdict | `CANONICAL_VOICE_SESSION_CERTIFIED_WITH_LIMITATIONS` |
+| Next | `V-NEXT-2` (separate authorization) |
+
+---
+
 ## UI-NEXT-1 — Central Command Composition (2026-08-07)
 
 | Field | Value |
