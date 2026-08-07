@@ -1,12 +1,12 @@
 # FM-I6 — Bounded LocalModelHarness Implementation
 
-**Status:** Internal non-production implementation  
-**Date:** 2026-08-07  
-**Terminal verdict:** `FM_I6_LOCAL_MODEL_HARNESS_CERTIFIED_WITH_LIMITATIONS`  
-**Closeout:** FM-I6.1 — `docs/agent-runtime/FM_I6_1_CLOSEOUT.md` · verdict `FM_I6_1_CLOSEOUT_CERTIFIED_WITH_LIMITATIONS`  
-**Authorized baseline:** FM-I5 @ `8a45aa947944540e87a106616a2d42142543a5ca`  
-**Branch:** `implementation/fm-i6-bounded-local-model-harness`  
-**Production certified:** **False**  
+**Status:** Internal non-production implementation
+**Date:** 2026-08-07
+**Terminal verdict:** `FM_I6_LOCAL_MODEL_HARNESS_CERTIFIED_WITH_LIMITATIONS`
+**Closeout:** FM-I6.1 — `docs/agent-runtime/FM_I6_1_CLOSEOUT.md` · verdict `FM_I6_1_CLOSEOUT_CERTIFIED_WITH_LIMITATIONS`
+**Authorized baseline:** FM-I5 @ `8a45aa947944540e87a106616a2d42142543a5ca`
+**Branch:** `implementation/fm-i6-bounded-local-model-harness`
+**Production certified:** **False**
 **Model role-qualified:** **No** (plumbing only)
 
 ---

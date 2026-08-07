@@ -1,6 +1,6 @@
 # Operator Guide — Bind Ollama to Loopback Only (FM-I6.1)
 
-**Audience:** Human operator (not automated by SaathiOS)  
+**Audience:** Human operator (not automated by SaathiOS)
 **Why:** FM-I6.1 verified that Ollama on this host listens on `*:11434` (true wildcard),
 reachable on LAN IPv4 (`192.168.1.89`) and global IPv6 addresses, with the application
 firewall disabled. SaathiOS clients only connect to `http://127.0.0.1:11434`, but the
