@@ -1,0 +1,40 @@
+{
+  "mission": "T-NEXT-1",
+  "title": "CANONICAL PAPER FUND LEDGER + PORTFOLIO AUTHORITY FOUNDATION",
+  "certified_at": "2026-08-07T10:47:07.079708+00:00",
+  "terminal_verdict": "CANONICAL_PAPER_FUND_LEDGER_CERTIFIED_WITH_LIMITATIONS",
+  "base_branch": "feature/ui-next-1-central-command",
+  "base_sha": "d66fa3aea03dbb8f5daed431ff62d64fad7906a9",
+  "work_branch": "feature/t-next-1-canonical-paper-ledger",
+  "worktree": "/Users/macbookpro/SaathiAI-trading-next-1",
+  "canonical_writer": "saathi.platform.fund_ledger.PortfolioLedgerService",
+  "accounting_method": "FIFO",
+  "money": "decimal.Decimal fixed scales; float rejected",
+  "tests": {
+    "fund_ledger_scenarios": "19 OK",
+    "command_composition": "7 pass"
+  },
+  "voice_track_untouched": {
+    "pr": 34,
+    "branch": "data/v-next-2b6-product-clean-speech"
+  },
+  "non_actions": {
+    "live_trading": false,
+    "broker_connectivity": false,
+    "exchange_connectivity": false,
+    "withdrawal": false,
+    "leverage": false,
+    "agent_direct_portfolio_mutation": false,
+    "trading_guardian_weakened": false,
+    "execution_gateway_bypass": false,
+    "deployment": false,
+    "master_merge": false,
+    "v_next_2b7": false
+  },
+  "limitations": [
+    "OMS auto-post bridge not wired into production fill path yet",
+    "paper_trading avg-cost store still exists for OMS lifecycle",
+    "corporate actions / FX deferred",
+    "drawdown deferred to T-NEXT-2"
+  ]
+}
