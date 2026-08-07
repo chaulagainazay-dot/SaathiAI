@@ -86,7 +86,10 @@ At most one transient loopback connect retry before any output (Loopback transpo
 
 ## Resource governance
 
-`max_active_sessions=1`, budget fields from session, memory gate on live, no second model policy (degraded if multiple loaded).
+`max_active_sessions=1`, budget fields from session, memory gate on live
+(FM-I6.2-MG-FIX: combined macOS gate `fm_i6_2_mg_fix.combined_macos.v1` —
+Darwin free%, reclaimable, model headroom ~4022 MiB estimate, swap, compressor;
+pure free diagnostic only), no second model policy (degraded if multiple loaded).
 
 ## Durability
 
@@ -97,7 +100,7 @@ Does not auto-resume inference. Interrupted turns fail/cancel; new turn requires
 | Gate | Result |
 | --- | --- |
 | IPv6 `*:11434` listener | **`LIVE_OLLAMA_BINDING_UNSAFE`** — live skipped |
-| Memory pressure | Often fails free% / available MiB floors |
+| Memory pressure | Combined MG-FIX gate; often fails model-headroom (~4 GiB reclaimable) on busy 8 GiB hosts |
 | `LOCAL_MODEL_LIVE=1` | Required for live; default unset |
 
 Mock tests are authoritative for certification of plumbing.

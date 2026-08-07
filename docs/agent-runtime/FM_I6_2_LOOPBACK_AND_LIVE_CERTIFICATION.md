@@ -151,7 +151,12 @@ Verify:
 
 - Close heavy apps manually.
 - Ensure `ollama ps` is empty.
-- Re-check free% ≥ 20 and available ≥ 1024 MiB.
+- **FM-I6.2-MG / MG-FIX:** pure free is **diagnostic only**. Combined gate
+  `fm_i6_2_mg_fix.combined_macos.v1` is implemented in
+  `local_model_memory_gate.py` (see `docs/agent-runtime/FM_I6_2_MEMORY_GATE_FIX.md`).
+- Live admission requires Darwin free% ≥ 20, reclaimable ≥ 2048 MiB, reclaimable ≥
+  model headroom (~4022 MiB for pin — **estimate**), swap ≤ 512 MiB and not rising,
+  compressor &lt; 50% soft / &lt; 70% hard, single session, single/pinned model, valid probes.
 
 ---
 
@@ -159,8 +164,8 @@ Verify:
 
 | Phase | Status |
 | --- | --- |
-| D Loopback verify | **Pending operator** |
-| E Memory | **Blocked now** (free% ≈ 19.74) |
+| D Loopback verify | **Pending operator** (host later showed loopback-only bind; re-verify) |
+| E Memory | **Design revised** (FM-I6.2-MG) — pure free primary rejected; combined gate accepted; implementation deferred; live still blocked |
 | F Model pin | **Pass** (0.32.5 / digest match) — recheck after remediation |
 | G Regression | **Pass** — 184 passed, 1 skipped |
 | H Live cert | **Not started** |

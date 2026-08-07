@@ -1,5 +1,40 @@
 # SaathiOS Autonomous Roadmap
 
+## FM-I6.2-MG-FIX — Combined macOS Memory Gate Implementation (2026-08-07)
+
+| Field | Value |
+| --- | --- |
+| Mode | **Implementation + injected tests** — no live inference |
+| Baseline | `54a4665e7bbc6e113c18ec50d150245934603991` |
+| Branch | `hardening/fm-i6.2-macos-memory-gate-fix` |
+| Module | `saathi/agent_runtime/harness/local_model_memory_gate.py` |
+| Report | `docs/agent-runtime/FM_I6_2_MEMORY_GATE_FIX.md` |
+| Evidence | `docs/evidence/fm_i6_2_memory_gate_fix/` |
+| Policy | `fm_i6_2_mg_fix.combined_macos.v1` |
+| Tests | 34 MG-FIX + FM-I1–I6 regression (218 passed, 1 skipped) |
+| Terminal verdict | `FM_I6_2_COMBINED_MEMORY_GATE_CERTIFIED_WITH_LIMITATIONS` |
+| Live cert | **Still separately gated** (host headroom + operator auth) |
+| FM-I7 ready | **No** |
+| Production certified | **False** |
+
+## FM-I6.2-MG — macOS Memory-Gate Validation (2026-08-07)
+
+| Field | Value |
+| --- | --- |
+| Mode | **Validation + design only** — no live inference, no harness code change |
+| Baseline | FM-I6.2 tip @ `54a4665e7bbc6e113c18ec50d150245934603991` |
+| Branch | `hardening/fm-i6.2-ollama-live-certification` |
+| ADR | `docs/adr/ADR-MACOS-LOCAL-MODEL-MEMORY-GATE.md` |
+| Report | `docs/agent-runtime/FM_I6_2_MEMORY_GATE_VALIDATION.md` |
+| Evidence | `docs/evidence/fm_i6_2_memory_gate/` |
+| Finding | Pure free ≥ 20% is **not** a valid primary macOS gate; harness `free_percent` is reclaimable ratio (misnamed) |
+| Decision | `REPLACE_WITH_COMBINED_MACOS_GATE` |
+| Terminal verdict | `FM_I6_2_MEMORY_GATE_REQUIRES_REVISION` |
+| Live inference | **Not performed** |
+| FM-I6.2 live cert | **Still blocked** pending FM-I6.2-MG-FIX + operator headroom |
+| FM-I7 ready | **No** |
+| Next | **FM-I6.2-MG-FIX completed** on branch `hardening/fm-i6.2-macos-memory-gate-fix` |
+
 ## FM-I6.2 — Ollama Loopback Remediation + Minimal Live Cert (2026-08-07)
 
 | Field | Value |
