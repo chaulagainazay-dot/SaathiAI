@@ -46,6 +46,15 @@ from saathi.agent_runtime.harness.local_model_types import (
     validate_loopback_endpoint,
     version_compatible,
 )
+from saathi.agent_runtime.harness.local_model_memory_gate import (
+    MEMORY_GATE_POLICY_VERSION,
+    CombinedMacOSMemoryGate,
+    MemoryGateDecision,
+    MemoryGateReason,
+    default_darwin_sample,
+    evaluate_memory_samples,
+    legacy_snapshot_from_decision,
+)
 from saathi.agent_runtime.harness.types import (
     CancelAck,
     CancelAckStatus,
@@ -73,38 +82,44 @@ from saathi.agent_runtime.harness.types import (
 
 
 def _default_memory_probe() -> MemorySnapshot:
-    """Best-effort Darwin/Linux memory snapshot; fail closed if unreadable."""
-    total = 0
-    try:
-        if platform.system() == "Darwin":
-            out = subprocess.check_output(["sysctl", "-n", "hw.memsize"], text=True, timeout=2)
-            total = int(out.strip())
-            vm = subprocess.check_output(["vm_stat"], text=True, timeout=2)
-            page_size = 16384
-            m = re.search(r"page size of (\d+)", vm)
-            if m:
-                page_size = int(m.group(1))
-            def _pages(label: str) -> int:
-                mm = re.search(rf"{label}:\s+(\d+)", vm)
-                return int(mm.group(1)) if mm else 0
+    """Legacy single-shot wrapper over the combined macOS gate (two samples).
 
-            free = _pages("Pages free")
-            inactive = _pages("Pages inactive")
-            speculative = _pages("Pages speculative")
-            available = (free + inactive + speculative) * page_size
-            free_pct = (available / total * 100.0) if total else 0.0
-            avail_mib = available / (1024 * 1024)
-            ok = free_pct >= MIN_FREE_MEMORY_PERCENT and avail_mib >= MIN_AVAILABLE_MEMORY_MIB
-            return MemorySnapshot(
-                total_bytes=total,
-                free_percent=free_pct,
-                available_mib=avail_mib,
-                ok=ok,
-                detail="darwin_vm_stat",
+    Prefer :meth:`LocalModelHarness._run_memory_gate` for full decision metadata.
+    Fail closed if unreadable. Pure free is diagnostic only.
+    """
+    try:
+        gate = CombinedMacOSMemoryGate(sleeper=lambda _s: None)
+        # Two samples without sleep for legacy probe (tests may still inject MemorySnapshot).
+        s1 = default_darwin_sample()
+        s2 = default_darwin_sample()
+        decision = evaluate_memory_samples(
+            s1,
+            s2,
+            loaded_models=(),
+            active_local_sessions=0,
+            prior_denial=False,
+            correlation_id="legacy_probe",
+        )
+        snap = legacy_snapshot_from_decision(decision)
+        if s1.probe_valid and s1.physical_memory_bytes:
+            pure_pct = (
+                100.0 * s1.pure_free_bytes / s1.physical_memory_bytes
+                if s1.physical_memory_bytes
+                else 0.0
             )
+            return MemorySnapshot(
+                total_bytes=snap.total_bytes,
+                free_percent=snap.free_percent,
+                available_mib=snap.available_mib,
+                ok=snap.ok,
+                detail=snap.detail,
+                pure_free_percent=pure_pct,
+                darwin_free_percent=s2.darwin_free_percent,
+                policy_version=MEMORY_GATE_POLICY_VERSION,
+            )
+        return snap
     except Exception as e:
         return MemorySnapshot(0, 0.0, 0.0, False, detail=f"probe_failed:{e}")
-    return MemorySnapshot(0, 0.0, 0.0, False, detail="unsupported_platform")
 
 
 def _default_binding_probe() -> Tuple[bool, str]:
@@ -150,8 +165,10 @@ class LocalModelHarness:
         clock: Optional[Callable[[], float]] = None,
         id_factory: Optional[Callable[[], str]] = None,
         memory_probe: Optional[Callable[[], MemorySnapshot]] = None,
+        memory_gate: Optional[CombinedMacOSMemoryGate] = None,
         binding_probe: Optional[Callable[[], Tuple[bool, str]]] = None,
         live_mode: bool = False,
+        audit_log: Optional[Any] = None,
     ) -> None:
         self._live_mode = live_mode
         cfg = config or LocalModelConfig()
@@ -169,18 +186,27 @@ class LocalModelHarness:
             self._transport = MockOllamaTransport()
         self._clock = clock or time.time
         self._id_factory = id_factory or (lambda: str(uuid.uuid4()))
-        # Default memory probe always-OK for mock; live uses real probe.
+        # Combined macOS gate (FM-I6.2-MG-FIX). Injected gate preferred; legacy
+        # memory_probe still supported for simple ok/deny tests.
+        self._memory_gate = memory_gate
         if memory_probe is not None:
             self._memory_probe = memory_probe
-        elif live_mode:
-            self._memory_probe = _default_memory_probe
+        elif live_mode and memory_gate is None:
+            self._memory_gate = CombinedMacOSMemoryGate(clock=self._clock)
+            self._memory_probe = None
+        elif memory_gate is not None:
+            self._memory_probe = None
         else:
+            # Mock default: always-OK legacy snapshot (gates off unless enforce + inject).
             self._memory_probe = lambda: MemorySnapshot(
                 total_bytes=8 * 1024**3,
                 free_percent=50.0,
-                available_mib=2048.0,
+                available_mib=8192.0,
                 ok=True,
                 detail="mock_default",
+                pure_free_percent=1.0,
+                darwin_free_percent=50.0,
+                policy_version=MEMORY_GATE_POLICY_VERSION,
             )
         self._binding_probe = binding_probe or _default_binding_probe
         self._sessions: Dict[str, _LocalSession] = {}
@@ -188,6 +214,10 @@ class LocalModelHarness:
         self._quarantined = False
         self._readiness = LocalReadinessState.UNCONFIGURED
         self._readiness_detail = ""
+        self._last_memory_decision: Optional[MemoryGateDecision] = None
+        self._memory_prior_denial: bool = False
+        self._memory_retry_count: int = 0
+        self._audit_log = audit_log
         self._metrics = LocalMetrics()
         self._assembler = ContextAssembler(
             max_context_tokens=self._config.max_context_tokens,
@@ -943,14 +973,8 @@ class LocalModelHarness:
                 self._readiness = LocalReadinessState.BINDING_UNSAFE
                 self._readiness_detail = reason
                 # Continue inventory check but live turns will fail.
-        if probe_memory and self._config.enforce_memory_gate:
-            mem = self._memory_probe()
-            if not mem.ok:
-                self._readiness = LocalReadinessState.RESOURCE_PRESSURE
-                self._readiness_detail = (
-                    f"free_pct={mem.free_percent:.1f} avail_mib={mem.available_mib:.1f} ({mem.detail})"
-                )
-                return
+        # Inventory first so memory gate can see loaded models.
+        inv: Optional[RuntimeInventory] = None
         try:
             inv = self._transport.inventory()
         except TransportError as e:
@@ -968,6 +992,26 @@ class LocalModelHarness:
             if self._live_mode:
                 self._readiness = LocalReadinessState.RUNTIME_UNAVAILABLE
                 return
+
+        if probe_memory and self._config.enforce_memory_gate:
+            decision = self._run_memory_gate_unlocked(inv)
+            self._last_memory_decision = decision
+            if not decision.allowed:
+                self._memory_prior_denial = True
+                if decision.health_state == "DEGRADED":
+                    self._readiness = LocalReadinessState.DEGRADED
+                else:
+                    self._readiness = LocalReadinessState.RESOURCE_PRESSURE
+                self._readiness_detail = (
+                    f"policy={decision.policy_version} "
+                    f"reasons={decision.detail} "
+                    f"reclaimable_mib={decision.available_reclaimable_mib:.1f} "
+                    f"required_mib={decision.required_headroom_mib:.1f}"
+                )
+                return
+            self._memory_prior_denial = False
+            self._memory_retry_count = 0
+
         # Model pin
         match = None
         for m in inv.models:
@@ -1010,6 +1054,195 @@ class LocalModelHarness:
             return
         self._readiness = LocalReadinessState.MODEL_READY
         self._readiness_detail = f"model={match.name}"
+
+    def _run_memory_gate_unlocked(self, inv: RuntimeInventory) -> MemoryGateDecision:
+        """Run combined macOS memory gate (or legacy snapshot probe). Fail closed."""
+        active = sum(1 for s in self._sessions.values() if not s.closed)
+        loaded = tuple(inv.loaded_models or ())
+        corr = self._id_factory()
+        self._audit(
+            "local_model.memory_probe_started",
+            correlation_id=corr,
+            detail={"policy_version": MEMORY_GATE_POLICY_VERSION},
+        )
+
+        # Legacy MemorySnapshot injection path (simple ok bit).
+        if self._memory_probe is not None and self._memory_gate is None:
+            try:
+                mem = self._memory_probe()
+            except Exception as e:
+                decision = MemoryGateDecision(
+                    allowed=False,
+                    health_state="DEGRADED",
+                    denial_reasons=(MemoryGateReason.PROBE_FAILED,),
+                    current_sample=None,
+                    previous_sample=None,
+                    required_headroom_mib=0.0,
+                    available_reclaimable_mib=0.0,
+                    headroom_deficit_mib=0.0,
+                    retry_allowed=False,
+                    next_retry_after=0.0,
+                    hysteresis_required=self._memory_prior_denial,
+                    policy_version=MEMORY_GATE_POLICY_VERSION,
+                    correlation_id=corr,
+                    detail=f"probe_failed:{e}",
+                )
+                self._audit(
+                    "local_model.memory_gate_probe_failed",
+                    correlation_id=corr,
+                    detail=decision.to_audit_dict(),
+                )
+                return decision
+            # Map legacy snapshot into a synthetic gate decision without claiming Darwin metrics.
+            if not mem.ok:
+                decision = MemoryGateDecision(
+                    allowed=False,
+                    health_state="RESOURCE_PRESSURE",
+                    denial_reasons=(MemoryGateReason.MODEL_HEADROOM_LOW,),
+                    current_sample=None,
+                    previous_sample=None,
+                    required_headroom_mib=float(MIN_AVAILABLE_MEMORY_MIB),
+                    available_reclaimable_mib=float(mem.available_mib),
+                    headroom_deficit_mib=max(
+                        0.0, float(MIN_AVAILABLE_MEMORY_MIB) - float(mem.available_mib)
+                    ),
+                    retry_allowed=self._memory_retry_count < 2,
+                    next_retry_after=self._clock() + 15.0,
+                    hysteresis_required=self._memory_prior_denial,
+                    policy_version=MEMORY_GATE_POLICY_VERSION,
+                    correlation_id=corr,
+                    detail=mem.detail or "legacy_memory_probe_denied",
+                )
+                self._memory_retry_count += 1
+                self._audit(
+                    "local_model.memory_gate_denied",
+                    correlation_id=corr,
+                    detail=decision.to_audit_dict(),
+                )
+                return decision
+            decision = MemoryGateDecision(
+                allowed=True,
+                health_state="MODEL_READY",
+                denial_reasons=(),
+                current_sample=None,
+                previous_sample=None,
+                required_headroom_mib=float(MIN_AVAILABLE_MEMORY_MIB),
+                available_reclaimable_mib=float(mem.available_mib),
+                headroom_deficit_mib=0.0,
+                retry_allowed=False,
+                next_retry_after=0.0,
+                hysteresis_required=False,
+                policy_version=MEMORY_GATE_POLICY_VERSION,
+                correlation_id=corr,
+                detail="legacy_memory_probe_allowed",
+            )
+            self._audit(
+                "local_model.memory_gate_allowed",
+                correlation_id=corr,
+                detail=decision.to_audit_dict(),
+            )
+            return decision
+
+        gate = self._memory_gate or CombinedMacOSMemoryGate(clock=self._clock)
+        if self._memory_retry_count >= 2:
+            decision = MemoryGateDecision(
+                allowed=False,
+                health_state="RESOURCE_PRESSURE",
+                denial_reasons=(MemoryGateReason.MODEL_HEADROOM_LOW,),
+                current_sample=None,
+                previous_sample=None,
+                required_headroom_mib=gate.budget.required_headroom_mib,
+                available_reclaimable_mib=0.0,
+                headroom_deficit_mib=gate.budget.required_headroom_mib,
+                retry_allowed=False,
+                next_retry_after=0.0,
+                hysteresis_required=True,
+                policy_version=MEMORY_GATE_POLICY_VERSION,
+                correlation_id=corr,
+                detail="retry_limit_reached",
+            )
+            self._audit(
+                "local_model.memory_gate_denied",
+                correlation_id=corr,
+                detail=decision.to_audit_dict(),
+            )
+            return decision
+
+        try:
+            decision = gate.evaluate(
+                loaded_models=loaded,
+                active_local_sessions=active,
+                prior_denial=self._memory_prior_denial,
+                correlation_id=corr,
+                retry_count=self._memory_retry_count,
+            )
+        except Exception as e:
+            decision = MemoryGateDecision(
+                allowed=False,
+                health_state="DEGRADED",
+                denial_reasons=(MemoryGateReason.PROBE_FAILED,),
+                current_sample=None,
+                previous_sample=None,
+                required_headroom_mib=gate.budget.required_headroom_mib,
+                available_reclaimable_mib=0.0,
+                headroom_deficit_mib=0.0,
+                retry_allowed=False,
+                next_retry_after=0.0,
+                hysteresis_required=self._memory_prior_denial,
+                policy_version=MEMORY_GATE_POLICY_VERSION,
+                correlation_id=corr,
+                detail=f"gate_exception:{e}",
+            )
+            self._audit(
+                "local_model.memory_gate_probe_failed",
+                correlation_id=corr,
+                detail=decision.to_audit_dict(),
+            )
+            return decision
+
+        self._audit(
+            "local_model.memory_probe_completed",
+            correlation_id=corr,
+            detail=decision.to_audit_dict(),
+        )
+        if decision.allowed:
+            self._audit(
+                "local_model.memory_gate_allowed",
+                correlation_id=corr,
+                detail=decision.to_audit_dict(),
+            )
+        else:
+            self._memory_retry_count += 1
+            action = (
+                "local_model.memory_gate_hysteresis_pending"
+                if decision.hysteresis_required
+                else "local_model.memory_gate_denied"
+            )
+            self._audit(action, correlation_id=corr, detail=decision.to_audit_dict())
+        return decision
+
+    def _audit(
+        self,
+        action: str,
+        *,
+        correlation_id: str = "",
+        detail: Optional[Mapping[str, Any]] = None,
+    ) -> None:
+        if self._audit_log is None:
+            return
+        try:
+            self._audit_log.record(
+                action,
+                correlation_id=correlation_id,
+                detail=dict(detail or {}),
+            )
+        except Exception:
+            # Audit failure must not open the memory gate; readiness already decided.
+            pass
+
+    def last_memory_decision(self) -> Optional[MemoryGateDecision]:
+        with self._lock:
+            return self._last_memory_decision
 
     def _require_session(self, session_id: str) -> _LocalSession:
         sess = self._sessions.get(session_id)
