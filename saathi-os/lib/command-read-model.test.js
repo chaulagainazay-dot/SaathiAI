@@ -5,6 +5,7 @@ import {
   composePortfolioPanel,
   composeRiskPanel,
   composeProposalPanel,
+  composePerformancePanel,
   composeAttention,
   reasonCodeLabel,
   mapProductionUiIntent,
@@ -98,6 +99,23 @@ describe("command-read-model production", () => {
     assert.match(i.reply, /cannot approve|cannot authorize/i);
     const s = mapProductionUiIntent("stop");
     assert.equal(s.type, "stop");
+  });
+
+  it("performance panel pass-through no invent", () => {
+    const empty = composePerformancePanel(null);
+    assert.equal(empty.provenance, "UNAVAILABLE");
+    const live = composePerformancePanel({
+      paper_performance: {
+        nav: "100000",
+        return_pct: "0.01",
+        source: "portfolio_performance_engine",
+        mode: "PAPER",
+        live_execution: "UNAVAILABLE",
+        provenance: "DERIVED",
+      },
+    });
+    assert.equal(live.paper_performance.live_execution, "UNAVAILABLE");
+    assert.equal(live.paper_performance.nav, "100000");
   });
 
   it("loading shows LOADING not zero", () => {

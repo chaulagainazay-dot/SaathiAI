@@ -5229,6 +5229,15 @@ def paper_account_proposals(account_id: str, limit: int = 10, authorization: str
         raise _err(e) from e
 
 
+@router.get("/paper/accounts/{account_id}/performance")
+def paper_account_performance(account_id: str, period: str = "SINCE_INCEPTION", authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    """Deterministic PAPER performance history contract (T-NEXT-4). Read-only."""
+    try:
+        return _ppsvc().paper_performance_snapshot(_ppctx(authorization, x_platform_token), account_id, period=period)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
 @router.post("/paper/order-intents")
 def paper_intent_create(body: PaperIntentBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
     try:

@@ -55,11 +55,12 @@ async function loadPaperCommandSources(token) {
         proposalError: "no paper account",
       };
     }
-    const [snap, risk, props, summary] = await Promise.all([
+    const [snap, risk, props, summary, perf] = await Promise.all([
       settled(g(`/paper/accounts/${accountId}/command-snapshot`)),
       settled(g(`/paper/accounts/${accountId}/risk`)),
       settled(g(`/paper/accounts/${accountId}/proposals`)),
       settled(g(`/paper/accounts/${accountId}/summary`)),
+      settled(g(`/paper/accounts/${accountId}/performance`)),
     ]);
     // Prefer command-snapshot; fall back to summary (still live if present)
     const portfolio = snap.ok
@@ -76,6 +77,8 @@ async function loadPaperCommandSources(token) {
       riskError: risk.ok ? null : risk.error,
       proposal: props.ok ? props.value : null,
       proposalError: props.ok ? null : props.error,
+      performance: perf.ok ? perf.value : null,
+      performanceError: perf.ok ? null : perf.error,
     };
   } catch (e) {
     return {
@@ -274,6 +277,8 @@ export function useHybridCommand({
       riskError: paper.riskError,
       proposalPayload: paper.proposal,
       proposalError: paper.proposalError,
+      performancePayload: paper.performance,
+      performanceError: paper.performanceError,
       agents,
       missions: Array.isArray(missionsList) ? missionsList : [],
       approvals: Array.isArray(approvalsList) ? approvalsList : [],

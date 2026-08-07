@@ -867,6 +867,70 @@ class PaperTradingService:
             "source": "portfolio_construction",
         }
 
+    def performance_engine(self):
+        """Lazy PortfolioPerformanceEngine bound to paper ledger (read-only)."""
+        if getattr(self, "_perf_engine", None) is None:
+            from saathi.platform.portfolio_performance.engine import PortfolioPerformanceEngine
+            from saathi.platform.portfolio_performance.store import PerformanceStore
+            from saathi.platform.fund_ledger.cutover import fund_id_for_account
+            store_path = ":memory:"
+            paper_path = getattr(self.store, "db_path", None)
+            if paper_path is not None:
+                from pathlib import Path as _P
+                pp = _P(str(paper_path))
+                store_path = str(pp.with_name(pp.stem + "_performance.db"))
+            eng = PortfolioPerformanceEngine(store=PerformanceStore(store_path))
+
+            def _state(key: str):
+                fid = key
+                if not self.ledger.store.get_fund(fid):
+                    fid = self.fill_posts.fund_for_account(key) or fund_id_for_account(key)
+                return self.ledger.get_state(fid)
+
+            def _recon(key: str):
+                try:
+                    # prefer account id if looks like pacc_
+                    if str(key).startswith("pacc_"):
+                        return self.portfolio_reconciliation_status(None, key)  # type: ignore
+                except Exception:
+                    pass
+                pending = self.fill_posts.pending_count()
+                return {
+                    "ok": pending == 0,
+                    "portfolio_status": "HEALTHY" if pending == 0 else "RECONCILIATION_REQUIRED",
+                    "pending_ledger_posts": pending,
+                }
+
+            def _events(key: str):
+                fid = key
+                if not self.ledger.store.get_fund(fid):
+                    fid = self.fill_posts.fund_for_account(key) or fund_id_for_account(key)
+                return self.ledger.list_events(fid)
+
+            eng.bind_ledger(_state, _recon, _events)
+            self._perf_engine = eng
+        return self._perf_engine
+
+    def paper_performance_snapshot(self, ctx, account_id: str, period: str = "SINCE_INCEPTION") -> dict:
+        """Command-facing PAPER performance contract. Read-only."""
+        ctx.require_permission(PlatformPermission.PAPER_ACCOUNT_READ)
+        self._account_or_404(ctx, account_id)
+        from saathi.platform.fund_ledger.cutover import fund_id_for_account
+        fund_id = self.fill_posts.fund_for_account(account_id) or fund_id_for_account(account_id)
+        eng = self.performance_engine()
+        # ensure at least one observation from current ledger
+        try:
+            if self.ledger.store.get_fund(fund_id):
+                st = self.ledger.get_state(fund_id)
+                recon = self.portfolio_reconciliation_status(ctx, account_id)
+                eng.record_observation_from_state(fund_id, st, recon=recon)
+        except Exception:
+            pass
+        contract = eng.command_performance_contract(fund_id, period=period)
+        contract["fund_id"] = fund_id
+        contract["account_id"] = account_id
+        return contract
+
     def _post_fill_to_canonical_ledger(self, acct: PaperAccount, order: PaperOrder, fill: PaperFill) -> dict:
         # Ensure bind exists (accounts created pre-cutover in tests still work)
         fund_id = self.fill_posts.fund_for_account(acct.id)

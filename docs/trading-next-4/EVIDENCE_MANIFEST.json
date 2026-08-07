@@ -1,0 +1,10 @@
+{
+  "mission": "T-NEXT-4",
+  "terminal_verdict": "PERFORMANCE_ANALYTICS_ATTRIBUTION_CERTIFIED_WITH_LIMITATIONS",
+  "base_sha": "44ec75ca9c1fd5ad1dcdd6ef56fbf3df2cc4e8be",
+  "base_pr": 42,
+  "branch": "feature/t-next-4-performance-attribution",
+  "worktree": "~/SaathiAI-trading-next-4",
+  "tests_performance": 20,
+  "certified_at": "2026-08-07T12:55:48.567662+00:00"
+}
