@@ -3,7 +3,7 @@
 | Field | Value |
 | --- | --- |
 | **Canonical branch** | `integration/saathios-canonical-baseline` |
-| **Final tip SHA** | `6d72f00b76e902bc957263f05f1d6c11229a88a1` |
+| **Final tip SHA** | tip of `integration/saathios-canonical-baseline` (publish-time: see git / PR) |
 | **M17 integrated tip (pre final docs)** | `6d72f00b76e902bc957263f05f1d6c11229a88a1` |
 | **Source baseline branch** | `hardening/fm-i6.2-macos-memory-gate-fix` |
 | **Source baseline SHA** | `6d72f00b76e902bc957263f05f1d6c11229a88a1` |
@@ -66,6 +66,8 @@ Linear ancestry from master through:
 
 ## Publication pin
 
-- Final tip: `6d72f00b76e902bc957263f05f1d6c11229a88a1`
+- Final tip: resolve with `git rev-parse origin/integration/saathios-canonical-baseline`
 - Branch: `integration/saathios-canonical-baseline`
 - Remote: origin/integration/saathios-canonical-baseline
+
+M17 code tip (cherry-pick complete): `272dbd5d0b9495d9682955074a76b4931e440daf`

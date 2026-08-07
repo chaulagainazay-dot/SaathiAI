@@ -64,7 +64,11 @@
     "pr_close",
     "pr_merge_other"
   ],
-  "final_tip_sha": "6d72f00b76e902bc957263f05f1d6c11229a88a1",
+  "final_tip_sha": "d006d00b62e8dae753e1426592f010e231c98d76",
   "canonical_branch": "integration/saathios-canonical-baseline",
-  "draft_pr": 24
+  "draft_pr": 24,
+  "final_tip_sha_note": "branch tip of integration/saathios-canonical-baseline",
+  "m17_code_tip_sha": "272dbd5d0b9495d9682955074a76b4931e440daf",
+  "source_baseline_sha": "e1738d7deec5f44600fbf0d99e2b8f74a4bc83d0",
+  "publish_time_head_at_write": "d006d00b62e8dae753e1426592f010e231c98d76"
 }

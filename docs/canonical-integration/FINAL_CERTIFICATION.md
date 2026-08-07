@@ -27,7 +27,7 @@ CANONICAL_SAATHIOS_BASELINE_CERTIFIED_WITH_LIMITATIONS
 | Field | Value |
 | --- | --- |
 | Canonical branch | `integration/saathios-canonical-baseline` |
-| Final tip SHA | `6d72f00b76e902bc957263f05f1d6c11229a88a1` |
+| Final tip SHA | tip of `integration/saathios-canonical-baseline` |
 | Source baseline | `hardening/fm-i6.2-macos-memory-gate-fix` @ `6d72f00b76e902bc957263f05f1d6c11229a88a1` |
 | Draft PR | #24 |
 | Merge to master authorized | **false** |
@@ -37,7 +37,7 @@ CANONICAL_SAATHIOS_BASELINE_CERTIFIED_WITH_LIMITATIONS
 
 ## Publication pin
 
-- Final tip: `6d72f00b76e902bc957263f05f1d6c11229a88a1`
+- Final tip: resolve with `git rev-parse origin/integration/saathios-canonical-baseline`
 - Branch: `integration/saathios-canonical-baseline`
 
 ## Next mission
@@ -47,3 +47,5 @@ UI-NEXT-1 — SAATHIOS CENTRAL COMMAND COMPOSITION
 ```
 
 Separate owner authorization required. Do not start in this mission.
+
+M17 code tip (cherry-pick complete): `272dbd5d0b9495d9682955074a76b4931e440daf`
