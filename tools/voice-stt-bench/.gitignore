@@ -1,7 +1,6 @@
 .venv/
-corpus/wav/
-corpus/codeswitch/wav/
-corpus/**/*.aiff
-corpus/**/*.mp3
+.venv-omni/
+corpus/wav
+corpus/codeswitch
 __pycache__/
 *.pyc
