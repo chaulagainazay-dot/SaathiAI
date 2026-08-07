@@ -1,0 +1,40 @@
+{
+  "mission": "V-NEXT-2B.1",
+  "verdict": "MULTILINGUAL_LOCAL_STT_NOT_YET_QUALIFIED",
+  "source_sha": "468a056046e35d7da240bb204591af184d0ab03c",
+  "source_pr": 28,
+  "source_ci": {
+    "critical_regressions": "SUCCESS",
+    "full_suite": "FAILURE",
+    "full_suite_note": "test_m17_1_live.py::test_live_browser_dom_and_click unrelated flake"
+  },
+  "ancestry": [
+    "feature/v-next-2b-streaming-stt-turns",
+    "feature/v-next-2a-vad-barge-in",
+    "feature/v-next-1-canonical-voice-session",
+    "feature/ui-next-1-central-command",
+    "integration/saathios-canonical-baseline"
+  ],
+  "benchmarks": {
+    "engine": "faster-whisper",
+    "models": [
+      "tiny",
+      "base",
+      "small"
+    ],
+    "nepali_gate_passed": false,
+    "result_files": [
+      "tools/voice-stt-bench/results/faster-whisper-tiny.json",
+      "tools/voice-stt-bench/results/faster-whisper-base.json",
+      "tools/voice-stt-bench/results/faster-whisper-small.json"
+    ]
+  },
+  "tests": {
+    "voice_session": "37 passed",
+    "production_build": "green"
+  },
+  "privacy": {
+    "local": "LOCAL_CONFIRMED",
+    "browser": "PLATFORM_MANAGED_UNKNOWN"
+  }
+}
