@@ -1,5 +1,21 @@
 # SaathiOS Autonomous Roadmap
 
+## FM-I6 — Bounded LocalModelHarness Implementation (2026-08-07)
+
+| Field | Value |
+| --- | --- |
+| Mode | **Internal non-production** — LocalModelHarness plumbing + mock transport |
+| Baseline | FM-I5 @ `8a45aa947944540e87a106616a2d42142543a5ca` |
+| Branch | `implementation/fm-i6-bounded-local-model-harness` |
+| Report | `docs/agent-runtime/FM_I6_LOCAL_MODEL_HARNESS_IMPLEMENTATION.md` |
+| Package | `saathi.agent_runtime.harness.local_model*` |
+| Runtime | Ollama user-managed loopback; mock transport CI-authoritative |
+| Model pin | `qwen2.5:1.5b` (not role-qualified) |
+| Live tests | Gated — binding unsafe and/or memory pressure on certifying host |
+| Terminal verdict | `FM_I6_LOCAL_MODEL_HARNESS_CERTIFIED_WITH_LIMITATIONS` |
+| Production certified | **False** |
+| Next | **FM-I7 only after separate owner authorization** — do not auto-start |
+
 ## FM-I5 — LocalModelHarness Design and Security (2026-08-07)
 
 | Field | Value |

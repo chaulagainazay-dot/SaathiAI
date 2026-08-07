@@ -203,7 +203,10 @@ or ExecutionGateway behavior changes. `AgentSessionAdapter` remains unchanged.
 **FM-I5 (2026-08-07, design-only)** accepted LocalModelHarness architecture with limitations
 (`ADR-LOCAL-MODEL-HARNESS`, `docs/agent-runtime/FM_I5_LOCAL_MODEL_HARNESS_DESIGN.md`):
 `OLLAMA_SELECTED`, `USER_MANAGED_RUNTIME`, model pin `qwen2.5:1.5b`, loopback-only.
-**No implementation.** FM-I6 remains separately gated.
+
+**FM-I6 (2026-08-07)** implemented bounded `LocalModelHarness` + mock/loopback transports
+(`docs/agent-runtime/FM_I6_LOCAL_MODEL_HARNESS_IMPLEMENTATION.md`). Live tests gated.
+`PRODUCTION_CERTIFIED=False`. Model not role-qualified. Commercial CLIs still frozen.
 
 ---
 

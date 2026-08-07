@@ -11,8 +11,9 @@
 | **Design baseline SHA** | `498bf2f75dfe765368a125bfe68c1a3e8e1a985f` |
 | **Design baseline branch** | `implementation/fm-i4-resource-governance` |
 | **Design branch** | `docs/fm-i5-local-model-harness-design` |
-| **Implementation status** | **Not implemented.** No `LocalModelHarness` source. No FM-I6 authorization. |
-| **Terminal verdict** | `FM_I5_LOCAL_MODEL_HARNESS_DESIGN_APPROVED_WITH_LIMITATIONS` |
+| **Implementation status** | **FM-I6 partial** — `LocalModelHarness` + mock/loopback transports under `saathi.agent_runtime.harness.local_model*` (`PRODUCTION_CERTIFIED=False`). Live gated. Not role-qualified. |
+| **Terminal verdict (design)** | `FM_I5_LOCAL_MODEL_HARNESS_DESIGN_APPROVED_WITH_LIMITATIONS` |
+| **Terminal verdict (impl)** | `FM_I6_LOCAL_MODEL_HARNESS_CERTIFIED_WITH_LIMITATIONS` |
 | **Production certified** | **False** |
 | **Authority impact** | None while design-only; if later implemented under FM-I6, driver only under harness controller — never EG replacement |
 | **Supersedes** | Informal “wire Ollama as agent control plane” speculation |
@@ -294,8 +295,8 @@ All agentdev roles remain `NO_QUALIFIED_MODEL` per ROUTING_POLICY.json.
 | Item | Status |
 | --- | --- |
 | FM-I5 design | **Complete** (this ADR + design doc) |
-| LocalModelHarness source | **Absent** (correct) |
-| FM-I6 | **Not started** — requires owner authorization + entry-gate checklist |
+| LocalModelHarness source | **Present (FM-I6)** — internal non-production |
+| FM-I6 | **Complete with limitations** — see FM_I6 implementation report |
 | Production | **False** |
 
 ---

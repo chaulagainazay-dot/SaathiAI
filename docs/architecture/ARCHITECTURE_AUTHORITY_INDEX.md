@@ -24,7 +24,7 @@ This index tells a competent engineer **which documents to trust**, which are hi
 | What is frozen | [`ARCHITECTURE_FREEZE_REGISTER.md`](./ARCHITECTURE_FREEZE_REGISTER.md) |
 | Terminology | [`CANONICAL_TERMINOLOGY.md`](./CANONICAL_TERMINOLOGY.md) |
 | Contradictions | [`FM_C1_CONTRADICTION_REGISTER.md`](./FM_C1_CONTRADICTION_REGISTER.md) (CX-05 closed in FM-C2) |
-| Next authorized implementation | **FM-I6 only after separate owner authorization** — FM-I5 LocalModelHarness design accepted with limitations (docs only); no LocalModelHarness source yet; providers/CLIs remain frozen |
+| Next authorized implementation | **FM-I7 only after separate owner authorization** — FM-I6 LocalModelHarness plumbing certified with limitations (mock authoritative; live gated); commercial CLIs / production remain frozen |
 
 **Document class legend:** AUTHORITATIVE · SUPPORTING · HISTORICAL · SUPERSEDED · DRAFT · DESIGN_ONLY · REJECTED · STALE_REQUIRES_REPAIR
 
@@ -67,7 +67,8 @@ This index tells a competent engineer **which documents to trust**, which are hi
 | Runtime inventory | `docs/agent-runtime/M48_1_RUNTIME_INVENTORY.md` | SUPPORTING (may lag new modules) | same |
 | Contracts / lifecycle / residual risk | `docs/agent-runtime/M48_*` | SUPPORTING / AUTHORITATIVE for residual RR-01..10 | same |
 | AgentHarness design | ADR-AGENT-HARNESS + M385 design | **DESIGN_ONLY** + FM-I1–I4 internal proof | `saathi/agent_runtime/harness/` (fake + controller; not production) |
-| LocalModelHarness design | ADR-LOCAL-MODEL-HARNESS + FM-I5 design | **DESIGN_ONLY** | **not in source** (FM-I6 gated) |
+| LocalModelHarness design | ADR-LOCAL-MODEL-HARNESS + FM-I5 design | **DESIGN_ONLY** + FM-I6 impl | `saathi/agent_runtime/harness/local_model*.py` (internal; not production) |
+| LocalModelHarness implementation | FM-I6 report | **INTERNAL non-production** | mock authoritative; live gated |
 | Engineering sessions | engineering package docs (if any) | SUPPORTING | `saathi/engineering/adapters/` |
 
 ### 3.3 Provider architecture

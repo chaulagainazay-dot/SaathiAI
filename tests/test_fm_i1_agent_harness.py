@@ -617,8 +617,11 @@ def test_no_prohibited_imports_in_fm_i1_code():
         "playwright",
     }
     # FM-I2 allows ExecutionGateway only inside gateway_bridge.py (bounded adapter).
+    # FM-I6 local_model*.py may use stdlib urllib/subprocess probes only; certified separately.
     # Fake harness and core types must still avoid EG and providers.
     for path in HARNESS_ROOT.rglob("*.py"):
+        if path.name.startswith("local_model"):
+            continue
         if path.name == "gateway_bridge.py":
             # May import ExecutionGateway; still no provider/network clients
             tree = ast.parse(path.read_text(encoding="utf-8"))
@@ -649,6 +652,13 @@ def test_no_subprocess_or_network_calls_in_source():
         r"\b(subprocess|Popen|socket\.|httpx\.|requests\.|aiohttp\.|urllib\.request)\b"
     )
     for path in HARNESS_ROOT.rglob("*.py"):
+        if path.name.startswith("local_model"):
+            # FM-I6 owns bounded loopback urllib + read-only probes; no Popen/shell tools.
+            text = path.read_text(encoding="utf-8")
+            assert "subprocess.Popen" not in text
+            assert "openai" not in text
+            assert "anthropic" not in text
+            continue
         text = path.read_text(encoding="utf-8")
         assert not pattern.search(text), f"prohibited call pattern in {path}"
 

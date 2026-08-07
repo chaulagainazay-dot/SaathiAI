@@ -1,13 +1,14 @@
-"""FM-I1 — AgentHarness contract, FakeInMemoryHarness, HarnessSessionController.
+"""FM-I1+ — AgentHarness contract, FakeInMemoryHarness, LocalModelHarness, controller.
 
 Internal platform multi-turn driver proof under ``saathi.agent_runtime``.
 
 This package is **non-production** and **internal-only**. It does not:
 
-* integrate commercial CLIs, providers, Ollama, or network services;
+* integrate commercial CLIs or cloud providers;
 * replace ExecutionGateway, approvals, RBAC, or Trading Guardian;
 * wrap or implement engineering ``AgentSessionAdapter``;
-* introduce a shared DriverProtocol or public SDK.
+* introduce a shared DriverProtocol or public SDK;
+* start/stop/kill Ollama or pull models (LocalModelHarness is user-managed only).
 
 Authority model (Alternative F / FM-C2):
 
@@ -15,6 +16,7 @@ Authority model (Alternative F / FM-C2):
 * Harness session state is a **projection** only.
 * Harnesses propose tools; only the trusted controller builds ToolIntent.
 * FakeInMemoryHarness is fully in-process and deterministic.
+* LocalModelHarness (FM-I6) is an untrusted local inference driver only.
 """
 from __future__ import annotations
 
@@ -88,6 +90,21 @@ from saathi.agent_runtime.harness.governance_policy import (
     HarnessTimeoutPolicy,
     QueueEntryState,
 )
+from saathi.agent_runtime.harness.local_model import LocalModelHarness
+from saathi.agent_runtime.harness.local_model_types import (
+    LocalModelConfig,
+    LocalReadinessState,
+    PINNED_MODEL,
+    PINNED_MODEL_DIGEST,
+    ALLOWED_ENDPOINT,
+    validate_loopback_endpoint,
+)
+from saathi.agent_runtime.harness.local_model_transport import (
+    MockOllamaTransport,
+    LoopbackOllamaTransport,
+    MockScript,
+    TransportError,
+)
 
 __all__ = [
     "AgentHarness",
@@ -147,9 +164,20 @@ __all__ = [
     "HarnessResourcePolicy",
     "HarnessTimeoutPolicy",
     "QueueEntryState",
+    "LocalModelHarness",
+    "LocalModelConfig",
+    "LocalReadinessState",
+    "MockOllamaTransport",
+    "LoopbackOllamaTransport",
+    "MockScript",
+    "TransportError",
+    "PINNED_MODEL",
+    "PINNED_MODEL_DIGEST",
+    "ALLOWED_ENDPOINT",
+    "validate_loopback_endpoint",
 ]
 
-# FM-I1 is intentionally not production-certified.
+# Intentionally not production-certified (FM-I1 through FM-I6).
 PRODUCTION_CERTIFIED = False
-MILESTONE = "FM-I1"
+MILESTONE = "FM-I6"
 PROTOCOL_VERSION = "1.0"

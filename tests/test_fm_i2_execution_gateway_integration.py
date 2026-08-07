@@ -392,6 +392,16 @@ def test_fm_i2_no_provider_imports_in_bridge():
     root = Path(__file__).resolve().parents[1] / "saathi" / "agent_runtime" / "harness"
     banned = ("openai", "anthropic", "ollama", "subprocess", "httpx", "requests")
     for path in root.glob("*.py"):
+        # FM-I6 local_model*.py: stdlib urllib + optional subprocess probes only;
+        # still ban commercial SDKs and ollama Python package.
+        if path.name.startswith("local_model"):
+            text = path.read_text(encoding="utf-8")
+            for b in ("openai", "anthropic", "httpx", "requests"):
+                assert f"import {b}" not in text
+                assert f"from {b}" not in text
+            assert "import ollama" not in text
+            assert "from ollama" not in text
+            continue
         text = path.read_text(encoding="utf-8")
         for b in banned:
             assert f"import {b}" not in text
