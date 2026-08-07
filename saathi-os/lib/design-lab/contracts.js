@@ -53,6 +53,88 @@ export const MODES = Object.freeze([
 
 /** @returns {import('./contracts.js').CommandReadModel} */
 export function buildDemoCommandModel(scenario = "healthy") {
+  if (scenario === "empty_states") {
+    return {
+      scenario: "empty_states",
+      global_provenance: PROVENANCE.DEMO,
+      banner: "DEMO · empty-state fixture",
+      portfolio: {
+        provenance: PROVENANCE.DEMO,
+        authority: "PortfolioLedgerService",
+        mode: "PAPER",
+        live_execution: "UNAVAILABLE",
+        paper_nav: "100000.00",
+        cash: "100000.00",
+        realized_pnl: "0.00",
+        unrealized_pnl: "0.00",
+        gross_exposure: "0.00",
+        net_exposure: "0.00",
+        positions: [],
+        portfolio_status: "HEALTHY",
+        reconciliation: { ok: true, portfolio_status: "HEALTHY", pending_ledger_posts: 0 },
+      },
+      risk: {
+        provenance: PROVENANCE.DEMO,
+        authority: "PortfolioRiskEngine",
+        label: "PAPER RISK",
+        mode: "PAPER",
+        live_execution: "UNAVAILABLE",
+        risk_status: "HEALTHY",
+        result: "ALLOW",
+        drawdown: "0",
+        daily_pnl: "0",
+        weekly_pnl: "0",
+        cash_pct: "1",
+        largest_position: "0",
+        budget_version: "paper-risk-budget/v1",
+        risk_budget_consumed: [],
+        stress: [],
+        reason_codes: [],
+        active_breaches: [],
+      },
+      agents: { provenance: PROVENANCE.DEMO, authority: "fixture", nodes: [] },
+      mission: { provenance: PROVENANCE.DEMO, id: "none", name: "No active mission", stages: [] },
+      approvals: { provenance: PROVENANCE.DEMO, items: [] },
+      evidence: { provenance: PROVENANCE.DEMO, events: [] },
+      system: {
+        provenance: PROVENANCE.DEMO,
+        paper: { value: "PAPER", status: "HEALTHY" },
+        trading_guardian: { value: "SAFE", status: "HEALTHY" },
+        ledger_reconciliation: { value: "HEALTHY", status: "HEALTHY" },
+        risk: { value: "HEALTHY", status: "HEALTHY" },
+        voice: { value: "READY", status: "HEALTHY" },
+        models: { value: "LOCAL/BOUND", status: "HEALTHY" },
+        gateway: { value: "READY", status: "HEALTHY" },
+        runtime_health: { value: "HEALTHY", status: "HEALTHY" },
+      },
+      attention: { provenance: PROVENANCE.DERIVED_FROM_REAL, items: [] },
+      voice_session_state: "READY",
+    };
+  }
+  if (scenario === "service_error") {
+    const base = buildDemoCommandModel("healthy");
+    return {
+      ...base,
+      scenario: "service_error",
+      banner: "DEMO · partial service failure",
+      portfolio: { ...base.portfolio, error: "portfolio read failed", paper_nav: null, cash: null, positions: [] },
+      risk: { ...base.risk, risk_status: "UNAVAILABLE", error: "risk unavailable", risk_budget_consumed: [], stress: [] },
+      agents: { ...base.agents, error: "mission service unavailable", nodes: [] },
+      system: {
+        ...base.system,
+        risk: { value: "UNAVAILABLE", status: "UNAVAILABLE" },
+        voice: { value: "UNAVAILABLE", status: "UNAVAILABLE" },
+      },
+      attention: {
+        provenance: PROVENANCE.DERIVED_FROM_REAL,
+        items: [
+          { id: "att-err-p", severity: "high", kind: "provider_degraded", title: "Portfolio read failed", urgency: 90, ref: "portfolio" },
+          { id: "att-err-r", severity: "high", kind: "provider_degraded", title: "Risk unavailable", urgency: 85, ref: "risk" },
+        ],
+      },
+    };
+  }
+
   const reconOk = scenario !== "recon_required";
   const riskWarn = scenario === "risk_warning" || scenario === "recon_required";
   const voiceDegraded = scenario === "voice_degraded";
