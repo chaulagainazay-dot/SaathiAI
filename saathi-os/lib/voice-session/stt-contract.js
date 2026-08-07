@@ -56,8 +56,12 @@ export function nextTranscriptSequence() {
  * Backchannel / non-turn short forms (English + common particles).
  * Used by TurnCoordinator — not authority.
  */
+/**
+ * Backchannel particles — English + common Nepali acknowledgements.
+ * Extended from live transcript review; still heuristic (not LLM).
+ */
 export const BACKCHANNEL_RE =
-  /^(yeah|yes|yep|yup|uh-huh|uh huh|hmm+|mm+|mhm|okay|ok|right|sure|अँ|हजुर|हुन्छ|ठिकै|ठीक|अह|हो)$/i;
+  /^(yeah|yes|yep|yup|uh-huh|uh huh|uhhuh|hmm+|mm+|mhm|mmm+|okay|ok|right|sure|alright|got it|गोइत|अँ+|हजुर|हजूर|हुन्छ|हुन्‍छ|ठिकै|ठीक|ठीक छ|अह+|हो|हो\s*हो|अच्छा|आहा|उम्+)$/i;
 
 /**
  * Meaningful interruption requires more than a grunt.
