@@ -212,6 +212,31 @@ export function composeRiskPanel(risk, { error = null, loading = false } = {}) {
 /**
  * Compose proposal panel from T-NEXT-3 command_proposal_contract.
  */
+export function composePerformancePanel(payload, { error = null, loading = false } = {}) {
+  if (loading) {
+    return { provenance: PROD_PROVENANCE.LOADING, paper_performance: null };
+  }
+  if (error) {
+    return { provenance: PROD_PROVENANCE.ERROR, error, paper_performance: null };
+  }
+  const perf = payload?.paper_performance || payload?.performance || null;
+  if (!perf) {
+    return {
+      provenance: PROD_PROVENANCE.UNAVAILABLE,
+      paper_performance: null,
+      note: "performance unavailable",
+    };
+  }
+  return {
+    provenance: perf.provenance === "DERIVED" || perf.source === "portfolio_performance_engine" ? PROD_PROVENANCE.LIVE : PROD_PROVENANCE.DERIVED,
+    paper_performance: {
+      ...perf,
+      mode: "PAPER",
+      live_execution: "UNAVAILABLE",
+    },
+  };
+}
+
 export function composeProposalPanel(payload, { error = null, loading = false } = {}) {
   if (loading) {
     return { provenance: PROD_PROVENANCE.LOADING, portfolio_proposal: null };
@@ -501,6 +526,9 @@ export function composeHybridCommandModel({
   proposalPayload = null,
   proposalError = null,
   proposalLoading = false,
+  performancePayload = null,
+  performanceError = null,
+  performanceLoading = false,
   agents = [],
   missions = [],
   approvals = [],
@@ -521,6 +549,10 @@ export function composeHybridCommandModel({
   const proposal = composeProposalPanel(proposalPayload, {
     error: proposalError,
     loading: proposalLoading,
+  });
+  const performance = composePerformancePanel(performancePayload, {
+    error: performanceError,
+    loading: performanceLoading,
   });
   const attention = composeAttention({
     portfolio,
@@ -616,6 +648,7 @@ export function composeHybridCommandModel({
     portfolio,
     risk,
     proposal,
+    performance,
     attention,
     system,
     agents: { provenance: agentNodes.length ? PROD_PROVENANCE.LIVE : PROD_PROVENANCE.UNAVAILABLE, nodes: agentNodes },
