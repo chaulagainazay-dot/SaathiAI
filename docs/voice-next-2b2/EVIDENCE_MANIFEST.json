@@ -1,0 +1,30 @@
+{
+  "mission": "V-NEXT-2B.2",
+  "verdict": "NEPALI_SPECIALIZED_LOCAL_ASR_NOT_QUALIFIED",
+  "source_branch": "qualification/v-next-2b1-local-stt",
+  "source_sha": "6a4ac3f230fb619739a8ca2ed9f6643cd0c13c89",
+  "locked_gates": {
+    "intent": 0.6,
+    "first_span": 0.5,
+    "cer": 0.45,
+    "lowered": false
+  },
+  "ci_inheritance": {
+    "classification": "ENVIRONMENTAL_BROWSER_FAILURE",
+    "cert_label": "UPSTREAM_CI_FLAKE_PROVEN_AND_DOCUMENTED",
+    "local_repro": "5/5 PASS"
+  },
+  "models_benchmarked": [
+    "Dragneel/whisper-small-nepali (CT2 int8)",
+    "sparshrestha/finetuned-whisper-small-nepali (CT2 int8)",
+    "devrahulbanjara/whisper-small-nepali (CT2 \u2014 runtime fail)"
+  ],
+  "gate_results": {
+    "dragneel": false,
+    "sparshrestha": false,
+    "devrahul": false
+  },
+  "best_ne_mix_intent_raw": 0.154,
+  "product_primary": "browser_speech_recognition",
+  "qwen3_asr": "RESEARCH_COMPARATOR_NOT_LOADED"
+}
