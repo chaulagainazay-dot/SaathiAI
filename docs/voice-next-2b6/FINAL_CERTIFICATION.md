@@ -28,8 +28,8 @@ Until ≥5 commercial-consent speakers, ≥500 MIX, ≥200 numeric, speaker-disj
 ## Branch / tip (at doc authoring)
 
 - branch: `data/v-next-2b6-product-clean-speech`
-- base SHA: 
-- tip SHA: `c95762c9d6f63e3b8ab1319b91595131550f42d8`
+- base SHA: `a250663c59762defeabcd4771d7c000000d701c2`
+- tip SHA: see `EVIDENCE_MANIFEST.json` field `tip_sha` (updated on pin commit)
 - worktree: `~/SaathiAI-voice-next-2b6`
 
 ## Non-actions confirmed
