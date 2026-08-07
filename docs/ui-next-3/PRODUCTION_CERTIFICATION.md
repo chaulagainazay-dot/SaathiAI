@@ -7,6 +7,7 @@ PRODUCTION_HYBRID_COMMAND_CENTER_CERTIFIED_WITH_LIMITATIONS
 ```
 
 ## Base
+- Tip SHA: `51ef1c864ec7ffb2b82ec1c2601d12430648abcf`
 - Convergence: T-NEXT-3 @ 5fed77a + merge UI-NEXT-2.2 @ dc52c0b
 - Work branch: feature/ui-next-3-production-hybrid-command
 
