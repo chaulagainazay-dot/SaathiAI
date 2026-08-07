@@ -48,4 +48,8 @@ Separate owner authorization required. Do not start in this mission.
 ## Publication pin
 
 - Final tip: 
-- Branch: 
+- Branch:
+
+## Publication pin
+
+- Final tip: 

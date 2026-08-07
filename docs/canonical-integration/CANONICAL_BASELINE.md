@@ -67,4 +67,8 @@ Linear ancestry from `master` through:
 ## Publication pin
 
 - Final tip: 
-- Branch: 
+- Branch:
+
+## Publication pin
+
+- Final tip: 
