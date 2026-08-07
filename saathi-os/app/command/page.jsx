@@ -1,8 +1,7 @@
 "use client";
-import { useEffect, useState } from "react";
+
 import Link from "next/link";
 import {
-  Card,
   Heading,
   Text,
   Button,
@@ -10,154 +9,120 @@ import {
   AuthorityBadge,
   LoadingState,
   ErrorState,
-  EmptyState,
 } from "@/components/ui";
-import { controlOverview, controlAttention } from "@/lib/api";
-import { mapSeverityToStatus } from "@/lib/attention";
+import { useCommandCenter } from "@/lib/useCommandCenter";
+import AuthorityStrip from "@/components/command/AuthorityStrip";
+import CommandComposer from "@/components/command/CommandComposer";
+import AttentionQueue from "@/components/command/AttentionQueue";
+import ActivityPanel from "@/components/command/ActivityPanel";
+import InvestmentSnapshot from "@/components/command/InvestmentSnapshot";
+import SystemHealthPanel from "@/components/command/SystemHealthPanel";
+import EvidenceTimeline from "@/components/command/EvidenceTimeline";
 
+/**
+ * UI-NEXT-1 — SaathiOS Central Command composition.
+ * Composes existing APIs into one control plane. No new backend authority.
+ */
 export default function CommandCenterPage() {
-  const [ov, setOv] = useState(null);
-  const [attention, setAttention] = useState(null);
-  const [err, setErr] = useState(null);
-  const [attErr, setAttErr] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let cancelled = false;
-    Promise.allSettled([controlOverview(), controlAttention()]).then(([a, b]) => {
-      if (cancelled) return;
-      if (a.status === "fulfilled") setOv(a.value);
-      else setErr(String(a.reason));
-      if (b.status === "fulfilled") setAttention(b.value);
-      else setAttErr(String(b.reason));
-      setLoading(false);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const items = Array.isArray(attention?.items)
-    ? attention.items
-    : Array.isArray(attention)
-      ? attention
-      : [];
+  const { loading, model, refresh } = useCommandCenter();
 
   return (
-    <div className="page shell-page">
-      <div className="shell-page-header">
+    <div className="page shell-page cmd-page">
+      <header className="shell-page-header cmd-header">
         <Text tone="muted" size="xs" mono>
-          Operate · Command Center
+          Operate · Command
         </Text>
-        <Heading level={1} size="xl">
-          Command Center
-        </Heading>
+        <div className="cmd-header-row">
+          <Heading level={1} size="xl">
+            SaathiOS Command
+          </Heading>
+          <div className="cmd-header-actions">
+            <AuthorityBadge authority="advisory" label="Compose · no direct execution" />
+            <StatusBadge status="blocked" label="LIVE TRADING OFF" />
+            <Button size="sm" variant="outline" onClick={() => refresh?.()}>
+              Refresh
+            </Button>
+          </div>
+        </div>
         <Text tone="muted" size="sm" as="p" className="home-intro">
-          Plan and request approval. Execution is never implied from navigation alone.
+          What Saathi is doing, what needs you, what is blocked, and what evidence exists — in one
+          place. Plan and request approval; ExecutionGateway remains the only external-action path.
         </Text>
-        <div className="home-header-actions">
-          <AuthorityBadge authority="advisory" />
-          <StatusBadge status="info" label="Observe" />
-          <StatusBadge status="pending" label="Plan" />
-          <StatusBadge status="pending" label="Request approval" />
-          <StatusBadge status="blocked" label="Execute · gated" />
-        </div>
-      </div>
+      </header>
 
-      {loading && <LoadingState label="Loading command surfaces…" />}
+      {loading && !model && <LoadingState label="Loading command surfaces…" />}
 
-      {!loading && (
-        <div className="shell-page-grid">
-          <Card>
-            <Heading level={2} size="md">
-              Gates
-            </Heading>
-            <ul className="shell-gate-list">
-              <li>
-                <StatusBadge status="info" label="Observe" /> Read-only platform state
-              </li>
-              <li>
-                <StatusBadge status="pending" label="Plan" /> Draft intent — not execution
-              </li>
-              <li>
-                <StatusBadge status="pending" label="Request approval" /> Opens Approval Inbox
-              </li>
-              <li>
-                <StatusBadge status="blocked" label="Execute" /> Only after backend approval
-              </li>
-            </ul>
-            <div className="home-section-actions">
-              <Link href="/approvals">
-                <Button variant="primary" size="sm">
-                  Open Approvals
-                </Button>
-              </Link>
-              <Link href="/control">
-                <Button variant="secondary" size="sm">
-                  Legacy Control (full M16)
-                </Button>
-              </Link>
-              <Link href="/monitoring">
-                <Button variant="outline" size="sm">
-                  Monitoring
-                </Button>
-              </Link>
-              <Link href="/control/computer">
-                <Button variant="outline" size="sm">
-                  Computer agent
-                </Button>
-              </Link>
+      {!loading && !model && (
+        <ErrorState
+          title="Command composition unavailable"
+          description="No sources could be composed. Try Monitoring or Home."
+          action={
+            <Link href="/">
+              <Button size="sm">Home</Button>
+            </Link>
+          }
+        />
+      )}
+
+      {model && (
+        <>
+          <AuthorityStrip authority={model.authority} />
+
+          <div className="cmd-mobile-priority only-mobile">
+            <CommandComposer command={model.command} voiceSessionState={model.command?.voiceSessionState} />
+            <AttentionQueue attention={model.attention} />
+            <ActivityPanel activity={model.activity} />
+            <SystemHealthPanel systemHealth={model.systemHealth} />
+          </div>
+
+          <div className="cmd-layout only-desktop">
+            <CommandComposer command={model.command} voiceSessionState={model.command?.voiceSessionState} />
+
+            <div className="cmd-mid-grid">
+              <ActivityPanel activity={model.activity} />
+              <AttentionQueue attention={model.attention} />
             </div>
-            <Text tone="disabled" size="xs" mono as="p">
-              Control workflows split: search/timeline stay on /control · attention also on Home ·
-              approvals on /approvals · health on /monitoring. /control is kept for deep links.
+
+            <div className="cmd-mid-grid">
+              <InvestmentSnapshot investment={model.investment} />
+              <SystemHealthPanel systemHealth={model.systemHealth} />
+            </div>
+
+            <EvidenceTimeline timeline={model.timeline} />
+          </div>
+
+          <div className="only-mobile">
+            <InvestmentSnapshot investment={model.investment} />
+            <EvidenceTimeline timeline={model.timeline} />
+          </div>
+
+          {model.overviewError ? (
+            <Text tone="muted" size="xs" mono as="p">
+              Overview source: {model.overviewError}
             </Text>
-          </Card>
+          ) : null}
 
-          <Card>
-            <Heading level={2} size="md">
-              Platform overview
-            </Heading>
-            {err && !ov && (
-              <ErrorState title="Overview unavailable" description="Control overview failed." detail={err} />
-            )}
-            {ov && (
-              <pre className="shell-json mono">
-                {JSON.stringify(
-                  {
-                    keys: Object.keys(ov || {}).slice(0, 14),
-                    platform_health: ov?.platform_health?.status || ov?.platform_health?.value ? "present" : "n/a",
-                  },
-                  null,
-                  2
-                )}
-              </pre>
-            )}
-            {!err && !ov && <EmptyState title="No overview payload" />}
-          </Card>
-
-          <Card>
-            <Heading level={2} size="md">
-              Attention feed
-            </Heading>
-            {attErr && !items.length && (
-              <ErrorState title="Attention unavailable" detail={attErr} />
-            )}
-            {!attErr && items.length === 0 && (
-              <EmptyState title="No attention items" description="Control attention list is empty or missing." />
-            )}
-            {items.length > 0 && (
-              <ul className="home-continue-list">
-                {items.slice(0, 12).map((it, i) => (
-                  <li key={it.kind + i}>
-                    <StatusBadge status={mapSeverityToStatus(it.severity || "medium")} label={it.severity || "item"} />{" "}
-                    {it.message || it.title || it.kind}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Card>
-        </div>
+          <footer className="cmd-footer">
+            <Text tone="disabled" size="xs" mono>
+              UI-NEXT-1 composition · inventsMetrics=
+              {String(model.meta?.inventsMetrics)} · liveTrading=
+              {String(model.meta?.liveTrading)} ·{" "}
+              <Link href="/docs" className="cmd-footer-link">
+                deep links
+              </Link>{" "}
+              stay on Missions, Approvals, Trading, Monitoring, Evidence
+            </Text>
+            <nav className="cmd-footer-nav" aria-label="Command deep links">
+              <Link href="/missions">Missions</Link>
+              <Link href="/agents">Agents</Link>
+              <Link href="/approvals">Approvals</Link>
+              <Link href="/trading">Trading</Link>
+              <Link href="/monitoring">Monitoring</Link>
+              <Link href="/evidence">Evidence</Link>
+              <Link href="/settings/voice">Voice</Link>
+            </nav>
+          </footer>
+        </>
       )}
     </div>
   );
