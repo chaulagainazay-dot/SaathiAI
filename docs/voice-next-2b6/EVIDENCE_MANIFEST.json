@@ -1,0 +1,152 @@
+{
+  "mission": "V-NEXT-2B.6",
+  "title": "PRODUCT-CLEAN MULTI-SPEAKER NEPALI\u2013ENGLISH SPEECH COLLECTION",
+  "certified_at": "2026-08-07T10:24:48.908133+00:00",
+  "terminal_verdict": "PRODUCT_CLEAN_DATA_INSUFFICIENT_FOR_TRAINING",
+  "base_branch": "training/v-next-2b5-whisper-cs-lora-readiness",
+  "base_sha": "a250663c59762defeabcd4771d7c000000d701c2",
+  "work_branch": "data/v-next-2b6-product-clean-speech",
+  "worktree": "/Users/macbookpro/SaathiAI-voice-next-2b6",
+  "prompt_stats": {
+    "total_prompts": 739,
+    "MIX": 435,
+    "EN": 268,
+    "NE": 36,
+    "numeric": 476,
+    "interrupt": 12,
+    "financial_flagged": 489
+  },
+  "corpus": {
+    "root": "/Users/macbookpro/.saathi/stt-product-corpus",
+    "speakers": 0,
+    "clips": 0,
+    "hours": 0.0,
+    "raw_audio_in_git": false
+  },
+  "authorization": {
+    "mission": "V-NEXT-2B.6",
+    "checked_at": "2026-08-07T10:23:41.879181+00:00",
+    "verdict": "PRODUCT_CLEAN_DATA_INSUFFICIENT_FOR_TRAINING",
+    "training_authorized": false,
+    "paid_job_authorized": false,
+    "thresholds": {
+      "min_speakers": 5,
+      "min_mix": 500,
+      "min_numeric": 200,
+      "min_qa_pass_rate": 0.9
+    },
+    "observed": {
+      "commercial_speakers_with_pass_clips": 0,
+      "speakers": [],
+      "clean_pass_clips": 0,
+      "mix_clean": 0,
+      "numeric_clean": 0,
+      "research_only_in_train": 0,
+      "qa_pass_rate": 1.0,
+      "speaker_disjoint": false,
+      "split_ready": false,
+      "contamination_clean": true
+    },
+    "checks": {
+      "min_speakers_5": false,
+      "min_mix_500": false,
+      "min_numeric_200": false,
+      "commercial_consent_complete": false,
+      "zero_research_only_in_train": true,
+      "speaker_disjoint_holdout": false,
+      "qa_pass_rate_ok": true,
+      "contamination_clean": true,
+      "manifest_present": false,
+      "human_verified_all_train": false
+    },
+    "dataset_version": null,
+    "notes": "Do not launch Hugging Face Jobs or local LoRA until WHISPER_CS_LORA_TRAINING_AUTHORIZED. Raw audio stays under ~/.saathi/stt-product-corpus/."
+  },
+  "contamination": {
+    "checked_at": "2026-08-07T10:23:41.817294+00:00",
+    "locked_text_entries_indexed": 55,
+    "product_clips_checked": 0,
+    "overlaps": [],
+    "overlap_count": 0,
+    "status": "CLEAN",
+    "policy": "Do not train on V-NEXT-2B.1\u20132B.4 locked corpora; treat as immutable holdout"
+  },
+  "freeze": {
+    "dataset_version": null,
+    "frozen": false,
+    "frozen_at": null,
+    "status": "NOT_FROZEN",
+    "reason": "PRODUCT_CLEAN_DATA_INSUFFICIENT_FOR_TRAINING",
+    "manifest_sha256": null,
+    "speaker_count": 0,
+    "clip_count": 0,
+    "hours": 0.0,
+    "license_summary": {
+      "product_training": "speaker commercial consent required",
+      "redistribution_default": false,
+      "common_voice_ne": "CC0 support role only (not mirrored in repo)"
+    },
+    "consent_summary": {
+      "commercial_speakers_with_pass_clips": 0,
+      "speakers": [],
+      "clean_pass_clips": 0,
+      "mix_clean": 0,
+      "numeric_clean": 0,
+      "research_only_in_train": 0,
+      "qa_pass_rate": 1.0,
+      "speaker_disjoint": false,
+      "split_ready": false,
+      "contamination_clean": true
+    },
+    "split_summary": {
+      "status": "NO_MANIFEST",
+      "speaker_disjoint": false,
+      "training_split_ready": false,
+      "message": "No clips to split"
+    },
+    "gate_verdict": "PRODUCT_CLEAN_DATA_INSUFFICIENT_FOR_TRAINING",
+    "raw_audio_in_git": false,
+    "raw_audio_root": "/Users/macbookpro/.saathi/stt-product-corpus"
+  },
+  "artifacts": [
+    "docs/voice-next-2b6/CODE_SWITCH_CORPUS.md",
+    "docs/voice-next-2b6/CONSENT_SUMMARY.md",
+    "docs/voice-next-2b6/CONTAMINATION_REPORT.md",
+    "docs/voice-next-2b6/DATASET_FREEZE.json",
+    "docs/voice-next-2b6/DATASET_STATISTICS.md",
+    "docs/voice-next-2b6/DATA_COLLECTION_PROTOCOL.md",
+    "docs/voice-next-2b6/DATA_QA_REPORT.md",
+    "docs/voice-next-2b6/EVIDENCE_MANIFEST.json",
+    "docs/voice-next-2b6/FINAL_CERTIFICATION.md",
+    "docs/voice-next-2b6/FINANCIAL_TERMS_CORPUS.md",
+    "docs/voice-next-2b6/NUMERIC_CORPUS.md",
+    "docs/voice-next-2b6/PROMPT_CORPUS.md",
+    "docs/voice-next-2b6/PROVENANCE_REPORT.md",
+    "docs/voice-next-2b6/RECORDING_GUIDE.md",
+    "docs/voice-next-2b6/SPEAKER_CONSENT_SPEC.md",
+    "docs/voice-next-2b6/SPLIT_REPORT.md",
+    "docs/voice-next-2b6/TRAINING_AUTHORIZATION_REPORT.md"
+  ],
+  "tools": "tools/voice-stt-data/",
+  "prior_evidence_preserved": [
+    "docs/voice-next-2b1",
+    "docs/voice-next-2b2",
+    "docs/voice-next-2b3",
+    "docs/voice-next-2b4",
+    "docs/voice-next-2b5"
+  ],
+  "non_actions": {
+    "model_training": false,
+    "lora_training": false,
+    "language_router": false,
+    "streaming_tts": false,
+    "wake_word": false,
+    "cloud_stt": false,
+    "raw_audio_committed": false,
+    "execution_gateway_changed": false,
+    "trading_guardian_changed": false,
+    "live_trading": false,
+    "deployment": false,
+    "master_merge": false
+  }
+}

@@ -57,5 +57,21 @@
   },
   "deployment_path": "merge_and_unload \u2192 ct2-transformers-converter int8 \u2192 faster-whisper \u2192 LocalStreamingSttAdapter",
   "training_authorized": false,
-  "paid_job_authorized": false
+  "paid_job_authorized": false,
+  "v_next_2b6_gate": {
+    "checked_at": "2026-08-07T10:23:41.879181+00:00",
+    "verdict": "PRODUCT_CLEAN_DATA_INSUFFICIENT_FOR_TRAINING",
+    "observed": {
+      "commercial_speakers_with_pass_clips": 0,
+      "speakers": [],
+      "clean_pass_clips": 0,
+      "mix_clean": 0,
+      "numeric_clean": 0,
+      "research_only_in_train": 0,
+      "qa_pass_rate": 1.0,
+      "speaker_disjoint": false,
+      "split_ready": false,
+      "contamination_clean": true
+    }
+  }
 }
