@@ -1,0 +1,652 @@
+{
+  "tips": {
+    "master": {
+      "ref": "master",
+      "sha": "67efcb3cd5ca52c2fb96052168253fdf286ff60a"
+    },
+    "saathios-ui-ux": {
+      "ref": "milestone/saathios-ui-ux",
+      "sha": "efd67f4d255a86a9a4e0a017dc6a685b00bb0dd0"
+    },
+    "m48": {
+      "ref": "milestone/m48-agent-runtime-baseline",
+      "sha": "27b3bcf3ac58f92558c3b2c466a33c09dc823d14"
+    },
+    "m49.1": {
+      "ref": "milestone/m49-tool-execution-framework",
+      "sha": "f41e756c169b3899cb96a6b922d990472df13433"
+    },
+    "m49.2": {
+      "ref": "milestone/m49-2-tool-convergence",
+      "sha": "d8492a8993de6ea4e83c59d9aea37440e1676ee3"
+    },
+    "m49.3": {
+      "ref": "milestone/m49-3-gateway-completion",
+      "sha": "0eb1592caa207ca61b250ec50a8fc9c6a3d1ba3c"
+    },
+    "m49.4": {
+      "ref": "milestone/m49-4-runtime-closure",
+      "sha": "e024c0c0447def2322f7761203465b90d530d311"
+    },
+    "m50": {
+      "ref": "milestone/m50-platform-foundation",
+      "sha": "154a247b26f466a8eb3019265ac50a2568745a14"
+    },
+    "m51": {
+      "ref": "milestone/m51-private-alpha-productization",
+      "sha": "e8dd4a9b61eac6445ab3084ea8aa01c395f2cd7c"
+    },
+    "m52": {
+      "ref": "milestone/m52-platform-agent-runtime",
+      "sha": "7edb6094de38a6141800b28e95f65c2f697049c2"
+    },
+    "m53": {
+      "ref": "milestone/m53-runtime-operations",
+      "sha": "6626dea9936e945d2172e39114f9ec5b34d21012"
+    },
+    "m54": {
+      "ref": "milestone/m54-private-alpha-readiness",
+      "sha": "16c0778a7b4e9b186d1b9b8cf7e2dfb7aaeb5b19"
+    },
+    "m55": {
+      "ref": "milestone/m55-release-candidate",
+      "sha": "855b14e3724a79c1ef055fc130365035bdd51642"
+    },
+    "m56": {
+      "ref": "milestone/m56-distributed-runtime",
+      "sha": "92ba24cc068ea11d1f48c2b17c14321d3c828c3a"
+    },
+    "m57": {
+      "ref": "milestone/m57-localhost-hardening",
+      "sha": "fe3b692f5133de41a2018f34c87a074ee9cefad1"
+    },
+    "m59": {
+      "ref": "milestone/m59-spatial-workspace",
+      "sha": "2089dae6c75f3908c8b359177d07d4763a82a561"
+    },
+    "m60": {
+      "ref": "milestone/m60-guided-operator-workflows",
+      "sha": "78a46a8455a24d9b00c3b877e75282af182a7d0b"
+    },
+    "m61": {
+      "ref": "milestone/m61-backend-workflow-persistence",
+      "sha": "2cd61738522ff68968d24e4db56981b42fb8b965"
+    },
+    "m304-m311": {
+      "ref": "milestone/m304-m311-read-only-market-observation",
+      "sha": "ed3dea7d6030e083473964784650b52b7ba08d5e"
+    },
+    "m312-m319": {
+      "ref": "milestone/m312-m319-connectivity-governance",
+      "sha": "6639ca730ece11bce160a55a237fcaff8df3058c"
+    },
+    "m320-m327": {
+      "ref": "milestone/m320-m327-provider-contracts",
+      "sha": "5b505f1a119989ec78856f969cb9fe3184bc784f"
+    },
+    "m328-m335": {
+      "ref": "milestone/m328-m335-production-readiness",
+      "sha": "6cdf72661834242eb4901f7eaf44a4425957db37"
+    },
+    "m336-m343": {
+      "ref": "milestone/m336-m343-private-alpha-readiness",
+      "sha": "d2961e02f8b0967a7d1dc419a71bc9acc8ec5a47"
+    },
+    "ui-recovery": {
+      "ref": "fix/saathios-ui-recovery",
+      "sha": "1647e192dfa5aa86113d386b86e96dca428e423f"
+    },
+    "full-e2e": {
+      "ref": "fix/saathios-full-e2e-functional-recovery",
+      "sha": "6b55013d52458628a19a065c49365a6ff0d3a9da"
+    },
+    "private-alpha-excellence": {
+      "ref": "improve/saathios-private-alpha-product-excellence",
+      "sha": "53b9b20736d5acf4a7ca3a9bd25b68d01e666a5d"
+    },
+    "m344-m351-local": {
+      "ref": "milestone/m344-m351-multi-agent-development-foundation",
+      "sha": "f5bc7cb428d43ed089afae7bb7fc1443f515ba6b"
+    },
+    "m344-m351-remote": {
+      "ref": "origin/milestone/m344-m351-multi-agent-development-foundation",
+      "sha": "48510a9570d4f009848a4f12be4edaadbd7555e1"
+    },
+    "m369-m376": {
+      "ref": "milestone/m369-m376-local-model-qualification",
+      "sha": "949afa68a4135aa94dbdaaf9aecfd618e0948c09"
+    },
+    "m377-m385": {
+      "ref": "milestone/m377-m385-qm-agent-harness-design",
+      "sha": "e9581f43848cf90283c7c4e1c0dbfbad65a4a531"
+    },
+    "fm-c1": {
+      "ref": "docs/fm-c1-architecture-baseline-freeze",
+      "sha": "f79726d5746ecd485210dee6af12a3ed33a9f01e"
+    },
+    "fm-c2": {
+      "ref": "docs/fm-c2-agent-session-harness-relationship",
+      "sha": "97dc6bfab840834f3430df347f526835d94f34cd"
+    },
+    "fm-i1": {
+      "ref": "implementation/fm-i1-fake-agent-harness",
+      "sha": "bf957f8fd7c942bcc139a30dfcb596c9d6b44fec"
+    },
+    "fm-i1.5": {
+      "ref": "implementation/fm-i1.5-harness-stress-certification",
+      "sha": "43df48b79065ceec1f37fd9dacca1d09579b6b67"
+    },
+    "fm-i2": {
+      "ref": "implementation/fm-i2-execution-gateway-integration",
+      "sha": "dd09ca033dd335694975b42102d11b0375a4e53e"
+    },
+    "fm-i3": {
+      "ref": "implementation/fm-i3-durable-harness-state",
+      "sha": "4ebcd71c9489823bd7c53a44822d0bb572abf012"
+    },
+    "fm-i4": {
+      "ref": "implementation/fm-i4-resource-governance",
+      "sha": "498bf2f75dfe765368a125bfe68c1a3e8e1a985f"
+    },
+    "fm-i5": {
+      "ref": "docs/fm-i5-local-model-harness-design",
+      "sha": "8a45aa947944540e87a106616a2d42142543a5ca"
+    },
+    "fm-i6": {
+      "ref": "implementation/fm-i6-bounded-local-model-harness",
+      "sha": "8540e686f4a56d54b9dca8ec3d36004468fd0392"
+    },
+    "fm-i6.2-ollama": {
+      "ref": "hardening/fm-i6.2-ollama-live-certification",
+      "sha": "54a4665e7bbc6e113c18ec50d150245934603991"
+    },
+    "fm-i6.2-memory": {
+      "ref": "hardening/fm-i6.2-macos-memory-gate-fix",
+      "sha": "e1738d7deec5f44600fbf0d99e2b8f74a4bc83d0"
+    },
+    "m17-concurrency": {
+      "ref": "fix/m17-scheduled-graph-concurrency",
+      "sha": "8577f2fbf10ea9d7a631ba9be861e574155bab7b"
+    },
+    "twenty": {
+      "ref": "evaluation/twenty-readonly-sandbox",
+      "sha": "2c98319420b333848cb4add08ec16c6b740345c1"
+    },
+    "tg-foundation": {
+      "ref": "milestone/m166-m175-trading-guardian-foundation",
+      "sha": "89fc0b2eae73a4e4a99ffb1a6a65aae2e091632e"
+    },
+    "tg-paper": {
+      "ref": "milestone/m176-m183-trading-guardian-paper-validation",
+      "sha": "ba66cca5e0ffd8874f8e8c3a4cb25a7dde74425e"
+    },
+    "tg-hist": {
+      "ref": "milestone/m184-m191-trading-guardian-historical-research",
+      "sha": "b116c04558399c5d4f90a44ec1e837165e822e2e"
+    },
+    "tg-paper-gov": {
+      "ref": "milestone/m192-m199-paper-activation-governance",
+      "sha": "f90378b2b92eb30e8e515f72aa2dab3a668def3c"
+    },
+    "tg-durable": {
+      "ref": "milestone/m200-m207-durable-paper-operations",
+      "sha": "0d489fbae07a8572b6039bf231d3bab35f1e9dc1"
+    },
+    "tg-ops": {
+      "ref": "milestone/m208-m215-ops-graduation",
+      "sha": "a70303581637108dd616b9176dd18cbdddcdfd84"
+    },
+    "tg-broker-arch": {
+      "ref": "milestone/m216-m223-broker-sandbox-architecture",
+      "sha": "a70303581637108dd616b9176dd18cbdddcdfd84"
+    },
+    "tg-broker-ro": {
+      "ref": "milestone/m224-m231-read-only-broker-readiness",
+      "sha": "97d2f8b8d132674b1b721ec623bd8054fe31ce9a"
+    },
+    "tg-repro": {
+      "ref": "milestone/m232-m239-reproducibility-supply-chain",
+      "sha": "007c4e6491adea144d10a31ed0454ddb733565af"
+    },
+    "tg-canary": {
+      "ref": "milestone/m240-m247-provider-canary-planning",
+      "sha": "1aace307d6d6d67117cda4b49d8e47f03cf54dcf"
+    },
+    "tg-signal": {
+      "ref": "milestone/m256-m263-market-data-signal-validation",
+      "sha": "fa0d54adf8a2b17a54db82748bc3f53c74a07290"
+    },
+    "tg-intel": {
+      "ref": "milestone/m264-m271-intelligence-recovery-historical-data",
+      "sha": "a180a78998a2a416b3277efa0a07a7bc4aed6dfd"
+    },
+    "tg-lab": {
+      "ref": "milestone/m272-m279-multi-strategy-research-lab",
+      "sha": "72210d69da21aac152d750aa6a6fba7f24621171"
+    },
+    "tg-orch": {
+      "ref": "milestone/m280-m287-autonomous-research-orchestrator",
+      "sha": "50abdaa73528cb167bd5558308917d94a5e89552"
+    },
+    "tg-sim": {
+      "ref": "milestone/m288-m295-institutional-paper-simulation",
+      "sha": "f582dd36d34398b5eadfaf9f1676cbc75b0bc041"
+    },
+    "tg-risk": {
+      "ref": "milestone/m296-m303-portfolio-risk-intelligence",
+      "sha": "29930b8ae050552fccd1fa02308c8be24b60c7b1"
+    }
+  },
+  "vs_master": {
+    "saathios-ui-ux": {
+      "ahead_of_master": 0,
+      "behind_master": 1,
+      "merge_base_master": "efd67f4d255a86a9a4e0a017dc6a685b00bb0dd0",
+      "subject": "docs(saathios): document draft-exit readiness"
+    },
+    "m48": {
+      "ahead_of_master": 7,
+      "behind_master": 0,
+      "merge_base_master": "67efcb3cd5ca52c2fb96052168253fdf286ff60a",
+      "subject": "docs(agent-runtime): stabilize M48.5 final report SHA wording"
+    },
+    "m49.1": {
+      "ahead_of_master": 13,
+      "behind_master": 0,
+      "merge_base_master": "67efcb3cd5ca52c2fb96052168253fdf286ff60a",
+      "subject": "docs(tool-runtime): fix M49.1 final report trailing marker"
+    },
+    "m49.2": {
+      "ahead_of_master": 17,
+      "behind_master": 0,
+      "merge_base_master": "67efcb3cd5ca52c2fb96052168253fdf286ff60a",
+      "subject": "docs(tool-runtime): record M49.2 migration, idempotency, and security evidence"
+    },
+    "m49.3": {
+      "ahead_of_master": 23,
+      "behind_master": 0,
+      "merge_base_master": "67efcb3cd5ca52c2fb96052168253fdf286ff60a",
+      "subject": "docs(tool-runtime): record M49.3 validation and security evidence"
+    },
+    "m49.4": {
+      "ahead_of_master": 28,
+      "behind_master": 0,
+      "merge_base_master": "67efcb3cd5ca52c2fb96052168253fdf286ff60a",
+      "subject": "docs(tool-runtime): record M49.4 CI critical pass and full-suite browser flake"
+    },
+    "m50": {
+      "ahead_of_master": 30,
+      "behind_master": 0,
+      "merge_base_master": "67efcb3cd5ca52c2fb96052168253fdf286ff60a",
+      "subject": "docs(platform): record M50 draft PR #8 and tip SHA"
+    },
+    "m51": {
+      "ahead_of_master": 32,
+      "behind_master": 0,
+      "merge_base_master": "67efcb3cd5ca52c2fb96052168253fdf286ff60a",
+      "subject": "docs(platform): record M51 draft PR #9"
+    },
+    "m52": {
+      "ahead_of_master": 34,
+      "behind_master": 0,
+      "merge_base_master": "67efcb3cd5ca52c2fb96052168253fdf286ff60a",
+      "subject": "docs(platform): record M52 draft PR and CI evidence"
+    },
+    "m53": {
+      "ahead_of_master": 37,
+      "behind_master": 0,
+      "merge_base_master": "67efcb3cd5ca52c2fb96052168253fdf286ff60a",
+      "subject": "docs(platform): record M53 evidence-SHA CI confirmation run"
+    },
+    "m54": {
+      "ahead_of_master": 40,
+      "behind_master": 0,
+      "merge_base_master": "67efcb3cd5ca52c2fb96052168253fdf286ff60a",
+      "subject": "docs(platform): M54 readiness documentation, runbooks, and browser evidence"
+    },
+    "m55": {
+      "ahead_of_master": 43,
+      "behind_master": 0,
+      "merge_base_master": "67efcb3cd5ca52c2fb96052168253fdf286ff60a",
+      "subject": "docs(platform): M55 release-candidate documentation and browser evidence"
+    },
+    "m56": {
+      "ahead_of_master": 46,
+      "behind_master": 0,
+      "merge_base_master": "67efcb3cd5ca52c2fb96052168253fdf286ff60a",
+      "subject": "docs(platform): M56 distributed-runtime docs and browser evidence"
+    },
+    "m57": {
+      "ahead_of_master": 51,
+      "behind_master": 0,
+      "merge_base_master": "67efcb3cd5ca52c2fb96052168253fdf286ff60a",
+      "subject": "feat(platform): M58 Glass Frame spatial command interface"
+    },
+    "m59": {
+      "ahead_of_master": 52,
+      "behind_master": 0,
+      "merge_base_master": "67efcb3cd5ca52c2fb96052168253fdf286ff60a",
+      "subject": "feat(platform): M59 spatial workspaces, command interface, UI certification"
+    },
+    "m60": {
+      "ahead_of_master": 53,
+      "behind_master": 0,
+      "merge_base_master": "67efcb3cd5ca52c2fb96052168253fdf286ff60a",
+      "subject": "feat(platform): M60 guided operator workflows and safe action orchestration"
+    },
+    "m61": {
+      "ahead_of_master": 125,
+      "behind_master": 0,
+      "merge_base_master": "67efcb3cd5ca52c2fb96052168253fdf286ff60a",
+      "subject": "docs(alpha): align LOOP_STATE current_sha with terminal HEAD"
+    },
+    "m304-m311": {
+      "ahead_of_master": 204,
+      "behind_master": 0,
+      "merge_base_master": "67efcb3cd5ca52c2fb96052168253fdf286ff60a",
+      "subject": "docs(tg): finalize LOOP_STATE ending SHA for M304\u2013M311"
+    },
+    "m312-m319": {
+      "ahead_of_master": 216,
+      "behind_master": 0,
+      "merge_base_master": "67efcb3cd5ca52c2fb96052168253fdf286ff60a",
+      "subject": "docs(tg): final publication closure pin for M312\u2013M319"
+    },
+    "m320-m327": {
+      "ahead_of_master": 227,
+      "behind_master": 0,
+      "merge_base_master": "67efcb3cd5ca52c2fb96052168253fdf286ff60a",
+      "subject": "docs(tg): record final publication audit"
+    },
+    "m328-m335": {
+      "ahead_of_master": 239,
+      "behind_master": 0,
+      "merge_base_master": "67efcb3cd5ca52c2fb96052168253fdf286ff60a",
+      "subject": "docs(tg): pin M328-M335 implementation SHA in LOOP_STATE"
+    },
+    "m336-m343": {
+      "ahead_of_master": 263,
+      "behind_master": 0,
+      "merge_base_master": "67efcb3cd5ca52c2fb96052168253fdf286ff60a",
+      "subject": "docs(tg): M336-M343 LOOP_STATE closure"
+    },
+    "ui-recovery": {
+      "ahead_of_master": 264,
+      "behind_master": 0,
+      "merge_base_master": "67efcb3cd5ca52c2fb96052168253fdf286ff60a",
+      "subject": "fix(shell): present terminal bootstrap phases truthfully on module routes"
+    },
+    "full-e2e": {
+      "ahead_of_master": 286,
+      "behind_master": 0,
+      "merge_base_master": "67efcb3cd5ca52c2fb96052168253fdf286ff60a",
+      "subject": "fix(platform): recover safely from expired sessions"
+    },
+    "private-alpha-excellence": {
+      "ahead_of_master": 290,
+      "behind_master": 0,
+      "merge_base_master": "67efcb3cd5ca52c2fb96052168253fdf286ff60a",
+      "subject": "feat(voice): expose private-alpha voice settings and diagnostics"
+    },
+    "m344-m351-local": {
+      "ahead_of_master": 309,
+      "behind_master": 0,
+      "merge_base_master": "67efcb3cd5ca52c2fb96052168253fdf286ff60a",
+      "subject": "docs(agentdev): M359 certification, operating limits and guides"
+    },
+    "m344-m351-remote": {
+      "ahead_of_master": 320,
+      "behind_master": 0,
+      "merge_base_master": "67efcb3cd5ca52c2fb96052168253fdf286ff60a",
+      "subject": "Merge pull request #17 from chaulagainazay-dot/fix/m17-scheduled-graph-concurrency"
+    },
+    "m369-m376": {
+      "ahead_of_master": 312,
+      "behind_master": 0,
+      "merge_base_master": "67efcb3cd5ca52c2fb96052168253fdf286ff60a",
+      "subject": "fix(ci): package role registry and close clean-checkout suite gaps"
+    },
+    "m377-m385": {
+      "ahead_of_master": 314,
+      "behind_master": 0,
+      "merge_base_master": "67efcb3cd5ca52c2fb96052168253fdf286ff60a",
+      "subject": "docs(agent-runtime): define governed AgentHarness contract"
+    },
+    "fm-c1": {
+      "ahead_of_master": 315,
+      "behind_master": 0,
+      "merge_base_master": "67efcb3cd5ca52c2fb96052168253fdf286ff60a",
+      "subject": "docs(architecture): freeze SaathiOS architecture documentation baseline"
+    },
+    "fm-c2": {
+      "ahead_of_master": 316,
+      "behind_master": 0,
+      "merge_base_master": "67efcb3cd5ca52c2fb96052168253fdf286ff60a",
+      "subject": "docs(architecture): reconcile agent session adapter and agent harness"
+    },
+    "fm-i1": {
+      "ahead_of_master": 318,
+      "behind_master": 0,
+      "merge_base_master": "67efcb3cd5ca52c2fb96052168253fdf286ff60a",
+      "subject": "docs(agent-runtime): record FM-I1 fake harness proof and FZ-01 partial unfreeze"
+    },
+    "fm-i1.5": {
+      "ahead_of_master": 319,
+      "behind_master": 0,
+      "merge_base_master": "67efcb3cd5ca52c2fb96052168253fdf286ff60a",
+      "subject": "feat(agent-runtime): FM-I1.5 harness stress, fuzz, and concurrency certification"
+    },
+    "fm-i2": {
+      "ahead_of_master": 320,
+      "behind_master": 0,
+      "merge_base_master": "67efcb3cd5ca52c2fb96052168253fdf286ff60a",
+      "subject": "feat(agent-runtime): FM-I2 integrate harness with real ExecutionGateway"
+    },
+    "fm-i3": {
+      "ahead_of_master": 321,
+      "behind_master": 0,
+      "merge_base_master": "67efcb3cd5ca52c2fb96052168253fdf286ff60a",
+      "subject": "feat(agent-runtime): FM-I3 durable harness session and event persistence"
+    },
+    "fm-i4": {
+      "ahead_of_master": 322,
+      "behind_master": 0,
+      "merge_base_master": "67efcb3cd5ca52c2fb96052168253fdf286ff60a",
+      "subject": "feat(agent-runtime): FM-I4 harness resource governance and admission control"
+    },
+    "fm-i5": {
+      "ahead_of_master": 323,
+      "behind_master": 0,
+      "merge_base_master": "67efcb3cd5ca52c2fb96052168253fdf286ff60a",
+      "subject": "docs(agent-runtime): design bounded local model harness"
+    },
+    "fm-i6": {
+      "ahead_of_master": 326,
+      "behind_master": 0,
+      "merge_base_master": "67efcb3cd5ca52c2fb96052168253fdf286ff60a",
+      "subject": "docs(agent-runtime): strip trailing whitespace in FM-I6.1 docs"
+    },
+    "fm-i6.2-ollama": {
+      "ahead_of_master": 327,
+      "behind_master": 0,
+      "merge_base_master": "67efcb3cd5ca52c2fb96052168253fdf286ff60a",
+      "subject": "docs(agent-runtime): record Ollama loopback remediation evidence"
+    },
+    "fm-i6.2-memory": {
+      "ahead_of_master": 331,
+      "behind_master": 0,
+      "merge_base_master": "67efcb3cd5ca52c2fb96052168253fdf286ff60a",
+      "subject": "docs(agent-runtime): record FM-I6.2-LIVE memory-gate denial"
+    },
+    "m17-concurrency": {
+      "ahead_of_master": 319,
+      "behind_master": 0,
+      "merge_base_master": "67efcb3cd5ca52c2fb96052168253fdf286ff60a",
+      "subject": "docs(scheduler): record green GitHub CI for M17 concurrency repair"
+    },
+    "twenty": {
+      "ahead_of_master": 227,
+      "behind_master": 0,
+      "merge_base_master": "67efcb3cd5ca52c2fb96052168253fdf286ff60a",
+      "subject": "docs: record M361B owner decision and entry gate"
+    },
+    "tg-foundation": {
+      "ahead_of_master": 133,
+      "behind_master": 0,
+      "merge_base_master": "67efcb3cd5ca52c2fb96052168253fdf286ff60a",
+      "subject": "docs(tg): finalize LOOP_STATE current_sha (no amend loop)"
+    },
+    "tg-paper": {
+      "ahead_of_master": 139,
+      "behind_master": 0,
+      "merge_base_master": "67efcb3cd5ca52c2fb96052168253fdf286ff60a",
+      "subject": "docs(tg): finalize LOOP_STATE current_sha (no amend loop)"
+    },
+    "tg-hist": {
+      "ahead_of_master": 145,
+      "behind_master": 0,
+      "merge_base_master": "67efcb3cd5ca52c2fb96052168253fdf286ff60a",
+      "subject": "docs(tg): pin M184\u2013M191 LOOP_STATE ending SHA"
+    },
+    "tg-paper-gov": {
+      "ahead_of_master": 147,
+      "behind_master": 0,
+      "merge_base_master": "67efcb3cd5ca52c2fb96052168253fdf286ff60a",
+      "subject": "docs(tg): pin M192\u2013M199 LOOP_STATE ending SHA"
+    },
+    "tg-durable": {
+      "ahead_of_master": 149,
+      "behind_master": 0,
+      "merge_base_master": "67efcb3cd5ca52c2fb96052168253fdf286ff60a",
+      "subject": "docs(tg): pin M200\u2013M207 LOOP_STATE ending SHA"
+    },
+    "tg-ops": {
+      "ahead_of_master": 153,
+      "behind_master": 0,
+      "merge_base_master": "67efcb3cd5ca52c2fb96052168253fdf286ff60a",
+      "subject": "docs(tg): finalize LOOP_STATE current_sha (no amend loop)"
+    },
+    "tg-broker-arch": {
+      "ahead_of_master": 153,
+      "behind_master": 0,
+      "merge_base_master": "67efcb3cd5ca52c2fb96052168253fdf286ff60a",
+      "subject": "docs(tg): finalize LOOP_STATE current_sha (no amend loop)"
+    },
+    "tg-broker-ro": {
+      "ahead_of_master": 162,
+      "behind_master": 0,
+      "merge_base_master": "67efcb3cd5ca52c2fb96052168253fdf286ff60a",
+      "subject": "docs(tg): finalize LOOP_STATE current_sha (no amend loop)"
+    },
+    "tg-repro": {
+      "ahead_of_master": 166,
+      "behind_master": 0,
+      "merge_base_master": "67efcb3cd5ca52c2fb96052168253fdf286ff60a",
+      "subject": "docs(tg): finalize LOOP_STATE current_sha (no amend loop)"
+    },
+    "tg-canary": {
+      "ahead_of_master": 172,
+      "behind_master": 0,
+      "merge_base_master": "67efcb3cd5ca52c2fb96052168253fdf286ff60a",
+      "subject": "docs(tg): finalize LOOP_STATE current_sha (no amend loop)"
+    },
+    "tg-signal": {
+      "ahead_of_master": 175,
+      "behind_master": 0,
+      "merge_base_master": "67efcb3cd5ca52c2fb96052168253fdf286ff60a",
+      "subject": "docs(tg): finalize LOOP_STATE current_sha (no amend loop)"
+    },
+    "tg-intel": {
+      "ahead_of_master": 183,
+      "behind_master": 0,
+      "merge_base_master": "67efcb3cd5ca52c2fb96052168253fdf286ff60a",
+      "subject": "docs(tg): finalize LOOP_STATE current_sha (no amend loop)"
+    },
+    "tg-lab": {
+      "ahead_of_master": 188,
+      "behind_master": 0,
+      "merge_base_master": "67efcb3cd5ca52c2fb96052168253fdf286ff60a",
+      "subject": "docs(tg): finalize LOOP_STATE current_sha (no amend loop)"
+    },
+    "tg-orch": {
+      "ahead_of_master": 192,
+      "behind_master": 0,
+      "merge_base_master": "67efcb3cd5ca52c2fb96052168253fdf286ff60a",
+      "subject": "docs(tg): finalize LOOP_STATE ending SHA for M280\u2013M287"
+    },
+    "tg-sim": {
+      "ahead_of_master": 196,
+      "behind_master": 0,
+      "merge_base_master": "67efcb3cd5ca52c2fb96052168253fdf286ff60a",
+      "subject": "docs(tg): finalize LOOP_STATE ending SHA for M288\u2013M295"
+    },
+    "tg-risk": {
+      "ahead_of_master": 200,
+      "behind_master": 0,
+      "merge_base_master": "67efcb3cd5ca52c2fb96052168253fdf286ff60a",
+      "subject": "docs(tg): finalize LOOP_STATE ending SHA for M296\u2013M303"
+    }
+  },
+  "containment_scores": {
+    "fm-i6.2-memory": 55,
+    "fm-i6.2-ollama": 54,
+    "fm-i6": 53,
+    "fm-i5": 52,
+    "fm-i4": 51,
+    "fm-i3": 50,
+    "fm-i2": 49,
+    "fm-i1.5": 48,
+    "fm-i1": 47,
+    "fm-c2": 46,
+    "m344-m351-remote": 45,
+    "fm-c1": 45,
+    "m377-m385": 44,
+    "m17-concurrency": 44,
+    "m369-m376": 43,
+    "m344-m351-local": 42,
+    "private-alpha-excellence": 41,
+    "full-e2e": 40,
+    "ui-recovery": 39,
+    "m336-m343": 38,
+    "m328-m335": 37,
+    "m320-m327": 36,
+    "twenty": 36,
+    "m312-m319": 35,
+    "m304-m311": 34,
+    "tg-risk": 33,
+    "tg-sim": 32,
+    "tg-orch": 31,
+    "tg-lab": 30,
+    "tg-intel": 29,
+    "tg-signal": 28,
+    "tg-canary": 27,
+    "tg-repro": 26,
+    "tg-broker-ro": 25,
+    "tg-ops": 24,
+    "tg-broker-arch": 24,
+    "tg-durable": 22,
+    "tg-paper-gov": 21,
+    "tg-hist": 20,
+    "tg-paper": 19,
+    "tg-foundation": 18,
+    "m61": 17,
+    "m60": 16,
+    "m59": 15,
+    "m57": 14,
+    "m56": 13,
+    "m55": 12,
+    "m54": 11,
+    "m53": 10,
+    "m52": 9,
+    "m51": 8,
+    "m50": 7,
+    "m49.4": 6,
+    "m49.3": 5,
+    "m49.2": 4,
+    "m49.1": 3,
+    "m48": 2,
+    "master": 1,
+    "saathios-ui-ux": 0
+  },
+  "missing": []
+}

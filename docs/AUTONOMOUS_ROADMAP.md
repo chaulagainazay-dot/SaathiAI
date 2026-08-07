@@ -1,5 +1,25 @@
 # SaathiOS Autonomous Roadmap
 
+## CANONICAL INTEGRATION READINESS AUDIT (2026-08-07) — ANALYSIS ONLY
+
+| Field | Value |
+| --- | --- |
+| Mode | **Analysis-only** — no merges, no product implementation |
+| Audit branch | `audit/saathios-canonical-integration-readiness` |
+| Worktree | `/Users/macbookpro/SaathiAI-canonical-integration-audit` |
+| Deliverables | `docs/canonical-integration-audit/*` |
+| Recommended canonical branch | `hardening/fm-i6.2-macos-memory-gate-fix` |
+| Recommended canonical SHA | `e1738d7deec5f44600fbf0d99e2b8f74a4bc83d0` |
+| Terminal verdict | `CANONICAL_INTEGRATION_PLAN_CERTIFIED_WITH_LIMITATIONS` |
+| Integration completed | **False** |
+| Merge authorized | **False** |
+| Deployment authorized | **False** |
+| Next mission (requires separate auth) | `SAATHIOS_CANONICAL_BASELINE_INTEGRATION` |
+| Gap closed by plan | M17 concurrency fix missing from recommended tip; PR stack / master lag |
+| Forbidden | Do not treat this entry as integration completion |
+
+---
+
 ## FM-I6.2-LIVE — Live Certification Attempt (2026-08-07)
 
 | Field | Value |

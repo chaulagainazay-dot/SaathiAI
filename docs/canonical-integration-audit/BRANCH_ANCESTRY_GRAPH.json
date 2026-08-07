@@ -1,0 +1,344 @@
+{
+  "schema_version": 1,
+  "audit_date": "2026-08-07",
+  "method": [
+    "git merge-base --is-ancestor",
+    "git rev-list --left-right --count",
+    "git rev-list --count"
+  ],
+  "recommended_canonical": {
+    "branch": "hardening/fm-i6.2-macos-memory-gate-fix",
+    "sha": "e1738d7deec5f44600fbf0d99e2b8f74a4bc83d0"
+  },
+  "master": "67efcb3cd5ca52c2fb96052168253fdf286ff60a",
+  "linear_main_chain": [
+    {
+      "name": "master",
+      "sha": "67efcb3cd5ca52c2fb96052168253fdf286ff60a"
+    },
+    {
+      "name": "m48",
+      "sha": "27b3bcf3ac58f92558c3b2c466a33c09dc823d14"
+    },
+    {
+      "name": "m49.1",
+      "sha": "f41e756c169b3899cb96a6b922d990472df13433"
+    },
+    {
+      "name": "m49.2",
+      "sha": "d8492a8993de6ea4e83c59d9aea37440e1676ee3"
+    },
+    {
+      "name": "m49.3",
+      "sha": "0eb1592caa207ca61b250ec50a8fc9c6a3d1ba3c"
+    },
+    {
+      "name": "m49.4",
+      "sha": "e024c0c0447def2322f7761203465b90d530d311"
+    },
+    {
+      "name": "m50",
+      "sha": "154a247b26f466a8eb3019265ac50a2568745a14"
+    },
+    {
+      "name": "m51",
+      "sha": "e8dd4a9b61eac6445ab3084ea8aa01c395f2cd7c"
+    },
+    {
+      "name": "m52",
+      "sha": "7edb6094de38a6141800b28e95f65c2f697049c2"
+    },
+    {
+      "name": "m53",
+      "sha": "6626dea9936e945d2172e39114f9ec5b34d21012"
+    },
+    {
+      "name": "m61 (via M54\u2013M61 side then absorbed)",
+      "sha": "2cd61738522ff68968d24e4db56981b42fb8b965"
+    },
+    {
+      "name": "m304\u2013m311",
+      "sha": "ed3dea7d6030e083473964784650b52b7ba08d5e"
+    },
+    {
+      "name": "m312\u2013m319",
+      "sha": "6639ca730ece11bce160a55a237fcaff8df3058c"
+    },
+    {
+      "name": "m320\u2013m327",
+      "sha": "5b505f1a119989ec78856f969cb9fe3184bc784f"
+    },
+    {
+      "name": "m328\u2013m335",
+      "sha": "6cdf72661834242eb4901f7eaf44a4425957db37"
+    },
+    {
+      "name": "m336\u2013m343",
+      "sha": "d2961e02f8b0967a7d1dc419a71bc9acc8ec5a47"
+    },
+    {
+      "name": "ui-recovery",
+      "sha": "1647e192dfa5aa86113d386b86e96dca428e423f"
+    },
+    {
+      "name": "full-e2e (local)",
+      "sha": "6b55013d52458628a19a065c49365a6ff0d3a9da"
+    },
+    {
+      "name": "private-alpha excellence",
+      "sha": "53b9b20736d5acf4a7ca3a9bd25b68d01e666a5d"
+    },
+    {
+      "name": "m344\u2013m359 local tip",
+      "sha": "f5bc7cb428d43ed089afae7bb7fc1443f515ba6b"
+    },
+    {
+      "name": "m369\u2013m376",
+      "sha": "949afa68a4135aa94dbdaaf9aecfd618e0948c09"
+    },
+    {
+      "name": "m377\u2013m385",
+      "sha": "e9581f43848cf90283c7c4e1c0dbfbad65a4a531"
+    },
+    {
+      "name": "fm-c1",
+      "sha": "f79726d5746ecd485210dee6af12a3ed33a9f01e"
+    },
+    {
+      "name": "fm-c2",
+      "sha": "97dc6bfab840834f3430df347f526835d94f34cd"
+    },
+    {
+      "name": "fm-i1\u2026i6",
+      "sha": "8540e686f4a56d54b9dca8ec3d36004468fd0392"
+    },
+    {
+      "name": "fm-i6.2 memory (RECOMMENDED)",
+      "sha": "e1738d7deec5f44600fbf0d99e2b8f74a4bc83d0"
+    }
+  ],
+  "post_m369_divergence": {
+    "fork_point": "949afa68a4135aa94dbdaaf9aecfd618e0948c09",
+    "harness_tip": "e1738d7deec5f44600fbf0d99e2b8f74a4bc83d0",
+    "m344_remote_merge_tip": "48510a9570d4f009848a4f12be4edaadbd7555e1",
+    "left_right_m344_vs_harness": {
+      "only_m344_remote": 8,
+      "only_harness": 19
+    },
+    "m344_remote_unique": [
+      "merge #16",
+      "merge #17",
+      "m17 concurrency commits"
+    ],
+    "harness_unique": [
+      "m377-m385",
+      "fm-c1",
+      "fm-c2",
+      "fm-i1..i6",
+      "fm-i6.2 memory gate + LIVE denial"
+    ]
+  },
+  "tips": {
+    "master": {
+      "ref": "master",
+      "sha": "67efcb3cd5ca52c2fb96052168253fdf286ff60a",
+      "ahead_master": 0
+    },
+    "m48": {
+      "ref": "milestone/m48-agent-runtime-baseline",
+      "sha": "27b3bcf3ac58f92558c3b2c466a33c09dc823d14"
+    },
+    "m49.1": {
+      "ref": "milestone/m49-tool-execution-framework",
+      "sha": "f41e756c169b3899cb96a6b922d990472df13433"
+    },
+    "m49.2": {
+      "ref": "milestone/m49-2-tool-convergence",
+      "sha": "d8492a8993de6ea4e83c59d9aea37440e1676ee3"
+    },
+    "m49.3": {
+      "ref": "milestone/m49-3-gateway-completion",
+      "sha": "0eb1592caa207ca61b250ec50a8fc9c6a3d1ba3c"
+    },
+    "m49.4": {
+      "ref": "milestone/m49-4-runtime-closure",
+      "sha": "e024c0c0447def2322f7761203465b90d530d311"
+    },
+    "m50": {
+      "ref": "milestone/m50-platform-foundation",
+      "sha": "154a247b26f466a8eb3019265ac50a2568745a14"
+    },
+    "m51": {
+      "ref": "milestone/m51-private-alpha-productization",
+      "sha": "e8dd4a9b61eac6445ab3084ea8aa01c395f2cd7c"
+    },
+    "m52": {
+      "ref": "milestone/m52-platform-agent-runtime",
+      "sha": "7edb6094de38a6141800b28e95f65c2f697049c2"
+    },
+    "m53": {
+      "ref": "milestone/m53-runtime-operations",
+      "sha": "6626dea9936e945d2172e39114f9ec5b34d21012"
+    },
+    "m54": {
+      "ref": "milestone/m54-private-alpha-readiness",
+      "sha": "16c0778a7b4e9b186d1b9b8cf7e2dfb7aaeb5b19"
+    },
+    "m61": {
+      "ref": "milestone/m61-backend-workflow-persistence",
+      "sha": "2cd61738522ff68968d24e4db56981b42fb8b965"
+    },
+    "m304": {
+      "ref": "milestone/m304-m311-read-only-market-observation",
+      "sha": "ed3dea7d6030e083473964784650b52b7ba08d5e"
+    },
+    "m312": {
+      "ref": "milestone/m312-m319-connectivity-governance",
+      "sha": "6639ca730ece11bce160a55a237fcaff8df3058c"
+    },
+    "m320": {
+      "ref": "milestone/m320-m327-provider-contracts",
+      "sha": "5b505f1a119989ec78856f969cb9fe3184bc784f"
+    },
+    "m328": {
+      "ref": "milestone/m328-m335-production-readiness",
+      "sha": "6cdf72661834242eb4901f7eaf44a4425957db37"
+    },
+    "m336": {
+      "ref": "milestone/m336-m343-private-alpha-readiness",
+      "sha": "d2961e02f8b0967a7d1dc419a71bc9acc8ec5a47"
+    },
+    "ui_recovery": {
+      "ref": "fix/saathios-ui-recovery",
+      "sha": "1647e192dfa5aa86113d386b86e96dca428e423f"
+    },
+    "full_e2e_local": {
+      "ref": "fix/saathios-full-e2e-functional-recovery",
+      "sha": "6b55013d52458628a19a065c49365a6ff0d3a9da",
+      "note": "local tip 1 commit ahead of origin"
+    },
+    "full_e2e_origin": {
+      "ref": "origin/fix/saathios-full-e2e-functional-recovery",
+      "sha": "c2f198c4c454048fcce3fb5e2adcb2c0d176ded8"
+    },
+    "private_alpha": {
+      "ref": "improve/saathios-private-alpha-product-excellence",
+      "sha": "53b9b20736d5acf4a7ca3a9bd25b68d01e666a5d"
+    },
+    "m344_local": {
+      "ref": "milestone/m344-m351-multi-agent-development-foundation",
+      "sha": "f5bc7cb428d43ed089afae7bb7fc1443f515ba6b",
+      "note": "local tip before merges"
+    },
+    "m344_remote": {
+      "ref": "origin/milestone/m344-m351-multi-agent-development-foundation",
+      "sha": "48510a9570d4f009848a4f12be4edaadbd7555e1",
+      "note": "includes merge #16 and #17"
+    },
+    "m369": {
+      "ref": "milestone/m369-m376-local-model-qualification",
+      "sha": "949afa68a4135aa94dbdaaf9aecfd618e0948c09"
+    },
+    "m377": {
+      "ref": "milestone/m377-m385-qm-agent-harness-design",
+      "sha": "e9581f43848cf90283c7c4e1c0dbfbad65a4a531"
+    },
+    "fm_c1": {
+      "ref": "docs/fm-c1-architecture-baseline-freeze",
+      "sha": "f79726d5746ecd485210dee6af12a3ed33a9f01e"
+    },
+    "fm_c2": {
+      "ref": "docs/fm-c2-agent-session-harness-relationship",
+      "sha": "97dc6bfab840834f3430df347f526835d94f34cd"
+    },
+    "fm_i6": {
+      "ref": "implementation/fm-i6-bounded-local-model-harness",
+      "sha": "8540e686f4a56d54b9dca8ec3d36004468fd0392"
+    },
+    "fm_i6_2_mem": {
+      "ref": "hardening/fm-i6.2-macos-memory-gate-fix",
+      "sha": "e1738d7deec5f44600fbf0d99e2b8f74a4bc83d0"
+    },
+    "m17": {
+      "ref": "fix/m17-scheduled-graph-concurrency",
+      "sha": "8577f2fbf10ea9d7a631ba9be861e574155bab7b"
+    },
+    "twenty": {
+      "ref": "evaluation/twenty-readonly-sandbox",
+      "sha": "2c98319420b333848cb4add08ec16c6b740345c1"
+    },
+    "saathios_ui_ux": {
+      "ref": "milestone/saathios-ui-ux",
+      "sha": "efd67f4d255a86a9a4e0a017dc6a685b00bb0dd0",
+      "note": "merged as PR #2 into master tip"
+    }
+  },
+  "containment_scores_top": {
+    "fm-i6.2-memory": 55,
+    "fm-i6.2-ollama": 54,
+    "fm-i6": 53,
+    "fm-i5": 52,
+    "fm-i4": 51,
+    "fm-i3": 50,
+    "fm-i2": 49,
+    "fm-i1.5": 48,
+    "fm-i1": 47,
+    "fm-c2": 46,
+    "m344-m351-remote": 45,
+    "fm-c1": 45,
+    "m377-m385": 44,
+    "m17-concurrency": 44,
+    "m369-m376": 43,
+    "m344-m351-local": 42,
+    "private-alpha-excellence": 41,
+    "full-e2e": 40,
+    "ui-recovery": 39,
+    "m336-m343": 38,
+    "m328-m335": 37,
+    "m320-m327": 36,
+    "twenty": 36,
+    "m312-m319": 35,
+    "m304-m311": 34,
+    "tg-risk": 33,
+    "tg-sim": 32,
+    "tg-orch": 31,
+    "tg-lab": 30,
+    "tg-intel": 29,
+    "tg-signal": 28,
+    "tg-canary": 27,
+    "tg-repro": 26,
+    "tg-broker-ro": 25,
+    "tg-ops": 24,
+    "tg-broker-arch": 24,
+    "tg-durable": 22,
+    "tg-paper-gov": 21,
+    "tg-hist": 20,
+    "tg-paper": 19,
+    "tg-foundation": 18,
+    "m61": 17,
+    "m60": 16,
+    "m59": 15,
+    "m57": 14,
+    "m56": 13,
+    "m55": 12,
+    "m54": 11,
+    "m53": 10,
+    "m52": 9,
+    "m51": 8,
+    "m50": 7,
+    "m49.4": 6,
+    "m49.3": 5,
+    "m49.2": 4,
+    "m49.1": 3,
+    "m48": 2,
+    "master": 1,
+    "saathios-ui-ux": 0
+  },
+  "side_branches": {
+    "twenty": {
+      "ref": "evaluation/twenty-readonly-sandbox",
+      "sha": "2c98319420b333848cb4add08ec16c6b740345c1"
+    },
+    "dirty_original_worktree": "uncommitted Baadar/evaluation/local intelligence \u2014 not in any tip"
+  }
+}
