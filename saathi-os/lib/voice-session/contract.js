@@ -41,8 +41,10 @@ export const CAPABILITY_DEFAULTS = Object.freeze({
   manualInterruptAvailable: true,
   vadAvailable: false,
   acousticBargeInAvailable: false,
-  wakeWordAvailable: false,
   streamingSttAvailable: false,
+  partialTranscriptAvailable: false,
+  turnCoordinationAvailable: false,
+  wakeWordAvailable: false,
   streamingTtsAvailable: false,
   fullDuplexAvailable: false,
 });
@@ -57,7 +59,10 @@ export function detectVoiceCapabilities(win = typeof window !== "undefined" ? wi
     return {
       ...CAPABILITY_DEFAULTS,
       vadAvailable: true,
-      acousticBargeInAvailable: false, // needs live mic for product barge-in
+      acousticBargeInAvailable: false,
+      streamingSttAvailable: true, // mock/browser adapters available in pipeline
+      partialTranscriptAvailable: true,
+      turnCoordinationAvailable: true,
       manualInterruptAvailable: true,
     };
   }
@@ -66,18 +71,21 @@ export function detectVoiceCapabilities(win = typeof window !== "undefined" ? wi
   const Recognition =
     win.SpeechRecognition || win.webkitSpeechRecognition || null;
   const hasSynth = typeof win.speechSynthesis !== "undefined";
+  const sttOk = Boolean(Recognition);
   return {
     ...CAPABILITY_DEFAULTS,
     microphoneAvailable: Boolean(hasMedia),
-    speechRecognitionAvailable: Boolean(Recognition),
+    speechRecognitionAvailable: sttOk,
     speechOutputAvailable: hasSynth || true,
     manualInterruptAvailable: true,
     vadAvailable: true,
     acousticBargeInAvailable: Boolean(hasMedia),
+    streamingSttAvailable: sttOk,
+    partialTranscriptAvailable: sttOk,
+    turnCoordinationAvailable: true,
     wakeWordAvailable: false,
-    streamingSttAvailable: false,
     streamingTtsAvailable: false,
-    fullDuplexAvailable: false, // barge-in ≠ full-duplex conversation
+    fullDuplexAvailable: false,
   };
 }
 
