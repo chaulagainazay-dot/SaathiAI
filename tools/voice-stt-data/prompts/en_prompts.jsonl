@@ -1,0 +1,68 @@
+{"prompt_id": "en_001", "language_class": "EN", "category": "command", "contains_numbers": false, "contains_financial_terms": false, "text": "Saathi, show my active missions."}
+{"prompt_id": "en_002", "language_class": "EN", "category": "command", "contains_numbers": false, "contains_financial_terms": false, "text": "Open the command center."}
+{"prompt_id": "en_003", "language_class": "EN", "category": "command", "contains_numbers": false, "contains_financial_terms": true, "text": "What is Trading Guardian status?"}
+{"prompt_id": "en_004", "language_class": "EN", "category": "command", "contains_numbers": false, "contains_financial_terms": false, "text": "Is ExecutionGateway healthy?"}
+{"prompt_id": "en_005", "language_class": "EN", "category": "command", "contains_numbers": false, "contains_financial_terms": true, "text": "Show portfolio risk."}
+{"prompt_id": "en_006", "language_class": "EN", "category": "command", "contains_numbers": false, "contains_financial_terms": false, "text": "Cancel that response."}
+{"prompt_id": "en_007", "language_class": "EN", "category": "command", "contains_numbers": false, "contains_financial_terms": true, "text": "Stop talking."}
+{"prompt_id": "en_008", "language_class": "EN", "category": "command", "contains_numbers": false, "contains_financial_terms": false, "text": "Give me a short system health summary."}
+{"prompt_id": "en_009", "language_class": "EN", "category": "command", "contains_numbers": false, "contains_financial_terms": true, "text": "List pending approvals."}
+{"prompt_id": "en_010", "language_class": "EN", "category": "command", "contains_numbers": false, "contains_financial_terms": true, "text": "Compare today's NAV and drawdown."}
+{"prompt_id": "en_011", "language_class": "EN", "category": "command", "contains_numbers": false, "contains_financial_terms": false, "text": "Do not execute anything."}
+{"prompt_id": "en_012", "language_class": "EN", "category": "command", "contains_numbers": false, "contains_financial_terms": false, "text": "Observe only."}
+{"prompt_id": "en_013", "language_class": "EN", "category": "command", "contains_numbers": false, "contains_financial_terms": false, "text": "Show mission evidence."}
+{"prompt_id": "en_014", "language_class": "EN", "category": "command", "contains_numbers": false, "contains_financial_terms": false, "text": "Pause the current agent."}
+{"prompt_id": "en_015", "language_class": "EN", "category": "command", "contains_numbers": false, "contains_financial_terms": false, "text": "Resume listening."}
+{"prompt_id": "en_016", "language_class": "EN", "category": "command", "contains_numbers": false, "contains_financial_terms": false, "text": "What is the largest position?"}
+{"prompt_id": "en_017", "language_class": "EN", "category": "command", "contains_numbers": false, "contains_financial_terms": true, "text": "Show cash balance."}
+{"prompt_id": "en_018", "language_class": "EN", "category": "command", "contains_numbers": false, "contains_financial_terms": true, "text": "Explain rebalance proposal."}
+{"prompt_id": "en_019", "language_class": "EN", "category": "command", "contains_numbers": false, "contains_financial_terms": false, "text": "Is the model runtime degraded?"}
+{"prompt_id": "en_020", "language_class": "EN", "category": "command", "contains_numbers": false, "contains_financial_terms": false, "text": "Switch to quiet mode."}
+{"prompt_id": "en_021", "language_class": "EN", "category": "command", "contains_numbers": false, "contains_financial_terms": false, "text": "Repeat that."}
+{"prompt_id": "en_022", "language_class": "EN", "category": "command", "contains_numbers": false, "contains_financial_terms": false, "text": "Speak slower."}
+{"prompt_id": "en_023", "language_class": "EN", "category": "command", "contains_numbers": false, "contains_financial_terms": false, "text": "Speak faster."}
+{"prompt_id": "en_024", "language_class": "EN", "category": "command", "contains_numbers": false, "contains_financial_terms": false, "text": "Wait."}
+{"prompt_id": "en_025", "language_class": "EN", "category": "command", "contains_numbers": false, "contains_financial_terms": false, "text": "Don't do that."}
+{"prompt_id": "en_026", "language_class": "EN", "category": "command", "contains_numbers": false, "contains_financial_terms": false, "text": "Show provider health."}
+{"prompt_id": "en_027", "language_class": "EN", "category": "command", "contains_numbers": false, "contains_financial_terms": false, "text": "List open missions."}
+{"prompt_id": "en_028", "language_class": "EN", "category": "command", "contains_numbers": false, "contains_financial_terms": true, "text": "Summarize portfolio exposure."}
+{"prompt_id": "en_029", "language_class": "EN", "category": "command", "contains_numbers": false, "contains_financial_terms": false, "text": "Is paper trading mode on?"}
+{"prompt_id": "en_030", "language_class": "EN", "category": "command", "contains_numbers": false, "contains_financial_terms": true, "text": "Show risk budget remaining."}
+{"prompt_id": "nm_001", "language_class": "EN", "category": "numeric", "contains_numbers": true, "contains_financial_terms": true, "canonical_number": "5", "unit": "percent", "contrast_group": "5v50pct", "text": "Reduce position by five percent."}
+{"prompt_id": "nm_002", "language_class": "EN", "category": "numeric", "contains_numbers": true, "contains_financial_terms": true, "canonical_number": "50", "unit": "percent", "contrast_group": "5v50pct", "text": "Reduce position by fifty percent."}
+{"prompt_id": "nm_003", "language_class": "EN", "category": "numeric", "contains_numbers": true, "contains_financial_terms": true, "canonical_number": "15", "unit": "percent", "contrast_group": "15v50sl", "text": "Set stop loss at fifteen percent."}
+{"prompt_id": "nm_004", "language_class": "EN", "category": "numeric", "contains_numbers": true, "contains_financial_terms": true, "canonical_number": "50", "unit": "percent", "contrast_group": "15v50sl", "text": "Set stop loss at fifty percent."}
+{"prompt_id": "nm_005", "language_class": "EN", "category": "numeric", "contains_numbers": true, "contains_financial_terms": true, "canonical_number": "500", "unit": "shares", "contrast_group": null, "text": "Buy five hundred shares."}
+{"prompt_id": "nm_006", "language_class": "EN", "category": "numeric", "contains_numbers": true, "contains_financial_terms": true, "canonical_number": "15", "unit": "shares", "contrast_group": null, "text": "Buy fifteen shares."}
+{"prompt_id": "nm_007", "language_class": "EN", "category": "numeric", "contains_numbers": true, "contains_financial_terms": true, "canonical_number": "50000", "unit": "NPR", "contrast_group": "50k_v_500k", "text": "NAV is fifty thousand NPR."}
+{"prompt_id": "nm_008", "language_class": "EN", "category": "numeric", "contains_numbers": true, "contains_financial_terms": true, "canonical_number": "500000", "unit": "NPR", "contrast_group": "50k_v_500k", "text": "NAV is five hundred thousand NPR."}
+{"prompt_id": "nm_009", "language_class": "EN", "category": "numeric", "contains_numbers": true, "contains_financial_terms": true, "canonical_number": "1.5", "unit": "percent", "contrast_group": "1p5v15dd", "text": "Drawdown is one point five percent."}
+{"prompt_id": "nm_010", "language_class": "EN", "category": "numeric", "contains_numbers": true, "contains_financial_terms": true, "canonical_number": "15", "unit": "percent", "contrast_group": "1p5v15dd", "text": "Drawdown is fifteen percent."}
+{"prompt_id": "nm_011", "language_class": "EN", "category": "numeric", "contains_numbers": true, "contains_financial_terms": true, "canonical_number": "0.5", "unit": "ratio", "contrast_group": "0p5v5ratio", "text": "Risk ratio is zero point five."}
+{"prompt_id": "nm_012", "language_class": "EN", "category": "numeric", "contains_numbers": true, "contains_financial_terms": true, "canonical_number": "5", "unit": "ratio", "contrast_group": "0p5v5ratio", "text": "Risk ratio is five."}
+{"prompt_id": "nm_013", "language_class": "EN", "category": "numeric", "contains_numbers": true, "contains_financial_terms": true, "canonical_number": "5000", "unit": "NPR", "contrast_group": null, "text": "Keep cash at NPR five thousand."}
+{"prompt_id": "nm_014", "language_class": "EN", "category": "numeric", "contains_numbers": true, "contains_financial_terms": true, "canonical_number": "500000", "unit": "NPR", "contrast_group": null, "text": "Keep cash at NPR five lakh."}
+{"prompt_id": "nm_015", "language_class": "EN", "category": "numeric", "contains_numbers": true, "contains_financial_terms": true, "canonical_number": "7.25", "unit": "percent", "contrast_group": null, "text": "Exposure is seven point two five percent."}
+{"prompt_id": "nm_016", "language_class": "EN", "category": "numeric", "contains_numbers": true, "contains_financial_terms": true, "canonical_number": "0.75", "unit": "percent", "contrast_group": null, "text": "Fee is zero point seven five percent."}
+{"prompt_id": "nm_017", "language_class": "EN", "category": "numeric", "contains_numbers": true, "contains_financial_terms": true, "canonical_number": "3", "unit": "count", "contrast_group": null, "text": "Three approvals remaining."}
+{"prompt_id": "nm_018", "language_class": "EN", "category": "numeric", "contains_numbers": true, "contains_financial_terms": true, "canonical_number": "15", "unit": "count", "contrast_group": null, "text": "Fifteen positions open."}
+{"prompt_id": "nm_028", "language_class": "EN", "category": "numeric", "contains_numbers": true, "contains_financial_terms": true, "canonical_number": "7.25", "unit": "percent", "contrast_group": null, "text": "Take profit at seven point two five percent."}
+{"prompt_id": "nm_029", "language_class": "EN", "category": "numeric", "contains_numbers": true, "contains_financial_terms": true, "canonical_number": "1.5", "unit": "percent", "contrast_group": null, "text": "Stop loss at one point five percent."}
+{"prompt_id": "nm_030", "language_class": "EN", "category": "numeric", "contains_numbers": true, "contains_financial_terms": true, "canonical_number": "5000", "unit": "NPR", "contrast_group": null, "text": "Budget remaining is NPR five thousand."}
+{"prompt_id": "nm_031", "language_class": "EN", "category": "numeric", "contains_numbers": true, "contains_financial_terms": true, "canonical_number": "5", "unit": "percent", "contrast_group": null, "text": "Exposure is five percent."}
+{"prompt_id": "nm_032", "language_class": "EN", "category": "numeric", "contains_numbers": true, "contains_financial_terms": true, "canonical_number": "50", "unit": "percent", "contrast_group": null, "text": "Exposure is fifty percent."}
+{"prompt_id": "nm_033", "language_class": "EN", "category": "numeric", "contains_numbers": true, "contains_financial_terms": true, "canonical_number": "5", "unit": "shares", "contrast_group": null, "text": "Buy five shares."}
+{"prompt_id": "nm_034", "language_class": "EN", "category": "numeric", "contains_numbers": true, "contains_financial_terms": true, "canonical_number": "50", "unit": "shares", "contrast_group": null, "text": "Buy fifty shares."}
+{"prompt_id": "nm_035", "language_class": "EN", "category": "numeric", "contains_numbers": true, "contains_financial_terms": true, "canonical_number": "0.5", "unit": "percent", "contrast_group": null, "text": "Drawdown is zero point five percent."}
+{"prompt_id": "nm_036", "language_class": "EN", "category": "numeric", "contains_numbers": true, "contains_financial_terms": true, "canonical_number": "5", "unit": "percent", "contrast_group": null, "text": "Drawdown is five percent."}
+{"prompt_id": "nm_037", "language_class": "EN", "category": "numeric", "contains_numbers": true, "contains_financial_terms": true, "canonical_number": "50000", "unit": "NPR", "contrast_group": null, "text": "Cash is NPR fifty thousand."}
+{"prompt_id": "nm_038", "language_class": "EN", "category": "numeric", "contains_numbers": true, "contains_financial_terms": true, "canonical_number": "500000", "unit": "NPR", "contrast_group": null, "text": "Cash is NPR five hundred thousand."}
+{"prompt_id": "nm_039", "language_class": "EN", "category": "numeric", "contains_numbers": true, "contains_financial_terms": true, "canonical_number": "15", "unit": "percent", "contrast_group": null, "text": "Risk budget is fifteen percent."}
+{"prompt_id": "nm_040", "language_class": "EN", "category": "numeric", "contains_numbers": true, "contains_financial_terms": true, "canonical_number": "50", "unit": "percent", "contrast_group": null, "text": "Risk budget is fifty percent."}
+{"prompt_id": "int_001", "language_class": "EN", "category": "interrupt", "contains_numbers": false, "contains_financial_terms": false, "text": "Stop."}
+{"prompt_id": "int_002", "language_class": "EN", "category": "interrupt", "contains_numbers": false, "contains_financial_terms": false, "text": "Cancel."}
+{"prompt_id": "int_005", "language_class": "EN", "category": "interrupt", "contains_numbers": false, "contains_financial_terms": false, "text": "Saathi stop."}
+{"prompt_id": "int_007", "language_class": "EN", "category": "interrupt", "contains_numbers": false, "contains_financial_terms": false, "text": "Cancel that."}
+{"prompt_id": "int_011", "language_class": "EN", "category": "interrupt", "contains_numbers": false, "contains_financial_terms": false, "text": "Enough."}
+{"prompt_id": "int_013", "language_class": "EN", "category": "interrupt", "contains_numbers": false, "contains_financial_terms": false, "text": "Saathi, stop now."}
+{"prompt_id": "int_014", "language_class": "EN", "category": "interrupt", "contains_numbers": false, "contains_financial_terms": false, "text": "Cancel response."}
