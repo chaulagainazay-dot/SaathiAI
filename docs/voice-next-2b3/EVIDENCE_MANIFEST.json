@@ -27,5 +27,10 @@
   "best_mix_intent": 0.5217391304347826,
   "best_en_intent": 0.8,
   "owner_corpus": "PARTIAL_TOOL_ONLY",
-  "router_implemented": false
+  "router_implemented": false,
+  "tip_sha": "ec0e7c97d7f30555a8dc15677643ac91250fa4db",
+  "draft_pr": 31,
+  "draft_pr_url": "https://github.com/chaulagainazay-dot/SaathiAI/pull/31",
+  "branch": "qualification/v-next-2b3-code-switch-asr",
+  "worktree": "/Users/macbookpro/SaathiAI-voice-next-2b3"
 }
