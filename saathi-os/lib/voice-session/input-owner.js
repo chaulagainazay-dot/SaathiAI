@@ -109,6 +109,9 @@ export function acquireInputClaim({ label = "anonymous", onPreempt } = {}) {
   return {
     id,
     release,
+    get mediaStream() {
+      return mediaStream;
+    },
     setMediaStream(stream) {
       if (released || activeClaim?.id !== id) return;
       if (mediaStream && mediaStream !== stream) {
@@ -165,7 +168,18 @@ export function getRecognitionCtor(win = typeof window !== "undefined" ? window 
 /**
  * Open mic under a claim. Stops tracks on claim release.
  */
-export async function openMicrophoneForClaim(claim, constraints = { audio: true }) {
+/**
+ * Default constraints enable browser AEC/NS when available (echo control).
+ */
+export const DEFAULT_MIC_CONSTRAINTS = Object.freeze({
+  audio: {
+    echoCancellation: true,
+    noiseSuppression: true,
+    autoGainControl: true,
+  },
+});
+
+export async function openMicrophoneForClaim(claim, constraints = DEFAULT_MIC_CONSTRAINTS) {
   if (!claim?.isActive?.()) {
     throw new Error("Input claim is not active");
   }

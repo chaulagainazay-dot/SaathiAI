@@ -13,6 +13,7 @@ import {
   acquireInputClaim,
   forceReleaseInput,
   getInputOwnerSnapshot,
+  openMicrophoneForClaim,
   subscribeInputOwner,
 } from "./input-owner.js";
 import {
@@ -23,6 +24,7 @@ import {
   cancelBrowserSpeechSynthesis,
 } from "./output-owner.js";
 import { recordVoiceTelemetry } from "./telemetry.js";
+import { createBargeInController } from "./barge-in-controller.js";
 
 /**
  * @typedef {object} VoiceSessionManager
@@ -38,6 +40,9 @@ export function createVoiceSessionManager(hooks = {}) {
   let snapshot = {
     ...INITIAL_VOICE_SESSION,
     capabilities: detectVoiceCapabilities(),
+    speechDetected: false,
+    lastBargeInLatencyMs: null,
+    vadHealth: null,
   };
   const subscribers = new Set();
   let inputClaim = null;
@@ -47,15 +52,29 @@ export function createVoiceSessionManager(hooks = {}) {
   let speaking = false;
   let thinking = false;
   let interrupting = false;
+  let speechDetected = false;
   let error = "";
   let startedAt = null;
 
+  function getMediaStream() {
+    return inputClaim?.mediaStream || null;
+  }
+
+  const bargeIn = createBargeInController({
+    manager: null,
+    getStream: getMediaStream,
+  });
+
   function publish(partial = {}) {
     const now = new Date().toISOString();
+    const caps = snapshot.capabilities || detectVoiceCapabilities();
+    // If VAD failed, degrade capability flags honestly
+    const vadOk = !bargeIn.isVadFailed() && caps.vadAvailable;
     snapshot = {
       ...snapshot,
       ...partial,
       lastActivityAt: now,
+      speechDetected,
       state: deriveSessionState({
         closed,
         error: error || partial.error,
@@ -63,13 +82,25 @@ export function createVoiceSessionManager(hooks = {}) {
         speaking,
         thinking,
         interrupting,
-        degraded: snapshot.degraded,
-        ready: Boolean(snapshot.capabilities?.microphoneAvailable || snapshot.capabilities?.speechRecognitionAvailable),
+        speechDetected,
+        degraded: snapshot.degraded || bargeIn.isVadFailed(),
+        ready: Boolean(caps.microphoneAvailable || caps.speechRecognitionAvailable),
       }),
+      capabilities: {
+        ...caps,
+        vadAvailable: vadOk,
+        acousticBargeInAvailable: vadOk && !bargeIn.isVadFailed(),
+        manualInterruptAvailable: true,
+        fullDuplexAvailable: false,
+        wakeWordAvailable: false,
+        streamingSttAvailable: false,
+        streamingTtsAvailable: false,
+      },
       inputClaimId: inputClaim?.id || null,
       outputClaimId: outputClaim?.id || null,
       inputState: listening ? "listening" : inputClaim ? "held" : "idle",
       outputState: speaking ? "speaking" : outputClaim ? "held" : "idle",
+      vadHealth: bargeIn.health(),
     };
     for (const fn of subscribers) {
       try {
@@ -115,6 +146,27 @@ export function createVoiceSessionManager(hooks = {}) {
     },
     refreshCapabilities,
 
+    notifySpeechDetected(on, _ev) {
+      speechDetected = Boolean(on);
+      publish();
+    },
+    notifyBargeInLatency(ms) {
+      publish({ lastBargeInLatencyMs: ms });
+    },
+    notifyVadFailed(message) {
+      error = "";
+      publish({
+        degraded: true,
+        capabilities: {
+          ...detectVoiceCapabilities(),
+          vadAvailable: false,
+          acousticBargeInAvailable: false,
+          manualInterruptAvailable: true,
+        },
+      });
+      recordVoiceTelemetry("vad_failed", { errorCode: String(message || "").slice(0, 80) });
+    },
+
     /**
      * Ensure session id exists for UI/telemetry.
      */
@@ -134,7 +186,7 @@ export function createVoiceSessionManager(hooks = {}) {
     },
 
     /**
-     * Claim input; policy: stop output first (manual interrupt).
+     * Claim input; policy: stop output first (manual interrupt) unless acoustic path.
      */
     async beginInput({ label = "voice-input", stopOutputFirst = true } = {}) {
       if (closed) throw new Error("Voice session is closed");
@@ -153,6 +205,7 @@ export function createVoiceSessionManager(hooks = {}) {
         sessionId: snapshot.sessionId,
         claimId: inputClaim.id,
       });
+      // Arm VAD on same physical capture when stream is attached later
       return publish({ error: "" });
     },
 
@@ -160,7 +213,46 @@ export function createVoiceSessionManager(hooks = {}) {
       return inputClaim;
     },
 
+    /**
+     * Attach VAD to the current claim's MediaStream (same getUserMedia).
+     */
+    async armVad({ bargeInMode = false, config = {} } = {}) {
+      try {
+        if (inputClaim && !inputClaim.mediaStream) {
+          // open mic with AEC when available; synthetic/tests may skip
+          try {
+            await openMicrophoneForClaim(inputClaim);
+          } catch {
+            /* headless / no mic — VAD still accepts processVadFrame */
+          }
+        }
+        await bargeIn.arm({ bargeInMode, config });
+        if (bargeInMode) {
+          bargeIn.markSpeakingStart();
+          if (config.echoSuppressionMs === 0) bargeIn.clearEchoWindow();
+        }
+        publish();
+      } catch (err) {
+        api.notifyVadFailed(String(err?.message || err));
+      }
+      return bargeIn.health();
+    },
+
+    /** Test/synthetic frames into VAD + pre-roll */
+    processVadFrame(frame, meta) {
+      bargeIn.processFrame(frame, meta);
+    },
+
+    getPreRollSamples() {
+      return bargeIn.getPreRoll();
+    },
+
+    getBargeInHealth() {
+      return bargeIn.health();
+    },
+
     endInput(reason = "USER_CANCEL") {
+      bargeIn.disarm();
       if (inputClaim) {
         inputClaim.release();
         inputClaim = null;
@@ -168,6 +260,7 @@ export function createVoiceSessionManager(hooks = {}) {
         forceReleaseInput(reason);
       }
       listening = false;
+      speechDetected = false;
       recordVoiceTelemetry("input_stopped", {
         sessionId: snapshot.sessionId,
         reason,
@@ -175,7 +268,7 @@ export function createVoiceSessionManager(hooks = {}) {
       return publish();
     },
 
-    async beginOutput({ label = "voice-output", stop } = {}) {
+    async beginOutput({ label = "voice-output", stop, armBargeIn = true } = {}) {
       if (closed) throw new Error("Voice session is closed");
       // New assistant response interrupts prior speech
       if (outputClaim) {
@@ -195,6 +288,7 @@ export function createVoiceSessionManager(hooks = {}) {
             /* ignore */
           }
           cancelBrowserSpeechSynthesis();
+          bargeIn.markSpeakingEnd();
         },
       });
       speaking = true;
@@ -203,7 +297,25 @@ export function createVoiceSessionManager(hooks = {}) {
         sessionId: snapshot.sessionId,
         claimId: outputClaim.id,
       });
-      return publish({ error: "" });
+      publish({ error: "" });
+
+      // Acoustic barge-in: keep/reuse single input capture for VAD monitor
+      if (armBargeIn) {
+        try {
+          if (!inputClaim) {
+            inputClaim = acquireInputClaim({ label: "vad-monitor" });
+          }
+          if (!inputClaim.mediaStream) {
+            await openMicrophoneForClaim(inputClaim);
+          }
+          await bargeIn.arm({ bargeInMode: true });
+          bargeIn.markSpeakingStart();
+        } catch (err) {
+          // VAD failure must not block playback — manual interrupt remains
+          api.notifyVadFailed(String(err?.message || err));
+        }
+      }
+      return snapshot;
     },
 
     getOutputClaim() {
@@ -211,6 +323,7 @@ export function createVoiceSessionManager(hooks = {}) {
     },
 
     async endOutput(reason = "USER_CANCEL") {
+      bargeIn.markSpeakingEnd();
       if (outputClaim) {
         await outputClaim.release();
         outputClaim = null;
@@ -248,7 +361,7 @@ export function createVoiceSessionManager(hooks = {}) {
     },
 
     /**
-     * Canonical interrupt — manual/input-request interruption (not acoustic VAD).
+     * Canonical interrupt — manual or ACOUSTIC_SPEECH (VAD).
      * @param {string} reason
      */
     async interrupt(reason = "USER_CANCEL") {
@@ -267,6 +380,7 @@ export function createVoiceSessionManager(hooks = {}) {
         /* ignore */
       }
       cancelBrowserSpeechSynthesis();
+      bargeIn.markSpeakingEnd();
       if (outputClaim) {
         try {
           await outputClaim.release();
@@ -279,13 +393,14 @@ export function createVoiceSessionManager(hooks = {}) {
       }
       speaking = false;
 
-      // Input: only release on session close / logout / route — not on mic request
+      // Input: only release on session close / logout / route — keep for acoustic continue
       if (
         reason === "ROUTE_CHANGE" ||
         reason === "SESSION_CLOSE" ||
         reason === "LOGOUT" ||
         reason === "ERROR"
       ) {
+        await bargeIn.disarm();
         if (inputClaim) {
           inputClaim.release();
           inputClaim = null;
@@ -293,11 +408,16 @@ export function createVoiceSessionManager(hooks = {}) {
           forceReleaseInput(reason);
         }
         listening = false;
+        speechDetected = false;
         try {
           await hooks.onStopInput?.(reason);
         } catch {
           /* ignore */
         }
+      } else if (reason === "ACOUSTIC_SPEECH") {
+        // Preserve input ownership so utterance continues after barge-in
+        listening = true;
+        speechDetected = true;
       }
 
       interrupting = false;
@@ -305,6 +425,7 @@ export function createVoiceSessionManager(hooks = {}) {
     },
 
     async close(reason = "SESSION_CLOSE") {
+      await bargeIn.disarm();
       await api.interrupt(reason);
       if (inputClaim) {
         inputClaim.release();
@@ -314,6 +435,7 @@ export function createVoiceSessionManager(hooks = {}) {
       listening = false;
       speaking = false;
       thinking = false;
+      speechDetected = false;
       closed = true;
       recordVoiceTelemetry("cleanup", {
         sessionId: snapshot.sessionId,
@@ -325,10 +447,14 @@ export function createVoiceSessionManager(hooks = {}) {
     dispose() {
       unsubIn();
       unsubOut();
+      bargeIn.disarm();
       api.close("SESSION_CLOSE");
       subscribers.clear();
     },
   };
+
+  // Wire circular barge-in → manager (mutable)
+  bargeIn.manager = api;
 
   // initial capability detect
   refreshCapabilities();

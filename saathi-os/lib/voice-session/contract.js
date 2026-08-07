@@ -4,11 +4,12 @@
  * Does not grant execution or financial authority.
  */
 
-/** States that can be represented truthfully without VAD */
+/** States representable when VAD evidence exists (V-NEXT-2A activates SPEECH_DETECTED) */
 export const VOICE_SESSION_STATES = Object.freeze([
   "IDLE",
   "READY",
   "LISTENING",
+  "SPEECH_DETECTED",
   "TRANSCRIBING",
   "THINKING",
   "SPEAKING",
@@ -18,8 +19,8 @@ export const VOICE_SESSION_STATES = Object.freeze([
   "CLOSED",
 ]);
 
-/** Future-compatible; SPEECH_DETECTED reserved until VAD exists */
-export const RESERVED_FUTURE_STATES = Object.freeze(["SPEECH_DETECTED"]);
+/** Still reserved / not claimed as product capabilities */
+export const RESERVED_FUTURE_STATES = Object.freeze([]);
 
 export const INTERRUPT_REASONS = Object.freeze([
   "USER_MIC_REQUEST",
@@ -30,6 +31,7 @@ export const INTERRUPT_REASONS = Object.freeze([
   "ERROR",
   "CLAIM_PREEMPT",
   "LOGOUT",
+  "ACOUSTIC_SPEECH",
 ]);
 
 export const CAPABILITY_DEFAULTS = Object.freeze({
@@ -38,6 +40,7 @@ export const CAPABILITY_DEFAULTS = Object.freeze({
   speechOutputAvailable: false,
   manualInterruptAvailable: true,
   vadAvailable: false,
+  acousticBargeInAvailable: false,
   wakeWordAvailable: false,
   streamingSttAvailable: false,
   streamingTtsAvailable: false,
@@ -49,8 +52,14 @@ export const CAPABILITY_DEFAULTS = Object.freeze({
  * @param {Window|null} win
  */
 export function detectVoiceCapabilities(win = typeof window !== "undefined" ? window : null) {
+  // Energy VAD adapter is always available in-process (synthetic or live frames).
   if (!win) {
-    return { ...CAPABILITY_DEFAULTS };
+    return {
+      ...CAPABILITY_DEFAULTS,
+      vadAvailable: true,
+      acousticBargeInAvailable: false, // needs live mic for product barge-in
+      manualInterruptAvailable: true,
+    };
   }
   const hasMedia =
     typeof win.navigator?.mediaDevices?.getUserMedia === "function";
@@ -61,13 +70,14 @@ export function detectVoiceCapabilities(win = typeof window !== "undefined" ? wi
     ...CAPABILITY_DEFAULTS,
     microphoneAvailable: Boolean(hasMedia),
     speechRecognitionAvailable: Boolean(Recognition),
-    speechOutputAvailable: hasSynth || true, // platform SpeechService path may exist
+    speechOutputAvailable: hasSynth || true,
     manualInterruptAvailable: true,
-    vadAvailable: false,
+    vadAvailable: true,
+    acousticBargeInAvailable: Boolean(hasMedia),
     wakeWordAvailable: false,
     streamingSttAvailable: false,
     streamingTtsAvailable: false,
-    fullDuplexAvailable: false,
+    fullDuplexAvailable: false, // barge-in ≠ full-duplex conversation
   };
 }
 
@@ -122,12 +132,15 @@ export function deriveSessionState({
   speaking = false,
   thinking = false,
   interrupting = false,
+  speechDetected = false,
   degraded = false,
   ready = false,
 } = {}) {
   if (closed) return "CLOSED";
   if (error) return "ERROR";
   if (interrupting) return "INTERRUPTING";
+  // Speech while listening (or post-barge-in) — only when VAD reports it
+  if (speechDetected && !speaking) return "SPEECH_DETECTED";
   if (speaking) return "SPEAKING";
   if (thinking) return "THINKING";
   if (listening || recording) return "LISTENING";
@@ -143,10 +156,11 @@ export function toCommandVoiceLabel(state) {
     CLOSED: "OFF",
     READY: "READY",
     LISTENING: "LISTENING",
+    SPEECH_DETECTED: "SPEECH_DETECTED",
     TRANSCRIBING: "LISTENING",
     THINKING: "THINKING",
     SPEAKING: "SPEAKING",
-    INTERRUPTING: "INTERRUPTED",
+    INTERRUPTING: "INTERRUPTING",
     DEGRADED: "DEGRADED",
     ERROR: "ERROR",
   };
