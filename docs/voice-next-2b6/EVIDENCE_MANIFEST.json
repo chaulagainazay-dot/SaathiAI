@@ -154,5 +154,6 @@
     "9548c64 feat(data): add consented multi-speaker recorder and manifest tooling",
     "6641177 feat(data): add speech QA and contamination validation",
     "9144018 docs(data): freeze product speech corpus metadata"
-  ]
+  ],
+  "tip_sha": "ceb5e201dac859f805f457127b46d4e38074a403"
 }

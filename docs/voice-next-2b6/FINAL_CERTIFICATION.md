@@ -29,7 +29,7 @@ Until ≥5 commercial-consent speakers, ≥500 MIX, ≥200 numeric, speaker-disj
 
 - branch: `data/v-next-2b6-product-clean-speech`
 - base SHA: 
-- tip SHA (pre-pin): will update on commit`a250663c59762defeabcd4771d7c000000d701c2`
+- tip SHA: `ceb5e201dac859f805f457127b46d4e38074a403`
 - worktree: `~/SaathiAI-voice-next-2b6`
 
 ## Non-actions confirmed
@@ -43,4 +43,3 @@ V-NEXT-2B.7 — WHISPER CS SMALL LoRA TRAINING + LOCKED REQUALIFICATION
 ```
 
 Otherwise: continue multi-speaker recruitment and recording.
-
