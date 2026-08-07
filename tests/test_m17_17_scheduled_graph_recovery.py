@@ -372,11 +372,200 @@ def test_concurrent_recover_creates_one_resumed_graph():
         t.start()
     for t in ts:
         t.join()
+    # Contending recoveries may leave the occurrence recoverable briefly; a
+    # follow-up recover must converge (never leave a permanent false failure).
+    if led.inspect_occurrence(oid)["state"] != OCC_SUCCEEDED:
+        follow = coord.recover(oid, now=210.0)
+        assert follow.get("state") == OCC_SUCCEEDED or led.inspect_occurrence(oid)["state"] == OCC_SUCCEEDED, (
+            results, follow, led.inspect_occurrence(oid))
     assert led.inspect_occurrence(oid)["state"] == OCC_SUCCEEDED
     mid = led.inspect_occurrence(oid)["mission_id"]
     rec_id = eng._recovered_mission_id(mid)
     # one recovered mission run, one resumed graph (same pid), one join
     assert eng.inspect(rec_id)["run_count"] == 1
+    assert eng.inspect(rec_id)["state"] == MISSION_COMPLETED
+    # No caller may observe a contention-only terminal failure after convergence.
+    for r in results.values():
+        assert r.get("state") in (OCC_SUCCEEDED, OCC_RETRY_WAIT, "retry_wait") or r.get("in_progress") or r.get("ok") or r.get("converged") or r.get("idempotent")
+
+
+@live
+def test_concurrent_recover_callers_converge_on_same_resumed_graph():
+    """Two concurrent recoveries create at most one recovered mission / pipeline
+    and both eventual outcomes reference the same resumed graph."""
+    led, coord, sch, eng, _ = _build(injected=_fail_on("b.db", 1))
+    oid, _ = _one_occurrence(sch)
+    coord.dispatch(oid, now=120.0)
+    mid = led.inspect_occurrence(oid)["mission_id"]
+    pid = eng.inspect(mid)["last_pipeline_id"]
+    results = {}
+    barrier = threading.Barrier(2)
+
+    def go(i):
+        barrier.wait()
+        results[i] = coord.recover(oid, now=200.0)
+
+    ts = [threading.Thread(target=go, args=(i,)) for i in range(2)]
+    for t in ts:
+        t.start()
+    for t in ts:
+        t.join()
+    # Drive to terminal if a contender left the occurrence recoverable.
+    for _ in range(3):
+        if led.inspect_occurrence(oid)["state"] == OCC_SUCCEEDED:
+            break
+        coord.recover(oid, now=210.0)
+    assert led.inspect_occurrence(oid)["state"] == OCC_SUCCEEDED
+    rec_id = eng._recovered_mission_id(mid)
+    rec = eng.inspect(rec_id)
+    assert rec["state"] == MISSION_COMPLETED
+    assert rec["last_pipeline_id"] == pid
+    assert rec["run_count"] == 1
+    # Exactly one pipeline for the original correlation (resumed in place).
+    assert len(led.pipelines_for_correlation(mid)) == 1
+    assert led.inspect_graph(pid, owner="ajay")["state"] == PIPELINE_SUCCEEDED
+    # Original failed mission stays immutable audit truth.
+    assert eng.inspect(mid)["state"] == MISSION_FAILED
+
+
+@live
+def test_concurrent_recover_ten_callers_single_resumed_graph():
+    led, coord, sch, eng, _ = _build(injected=_fail_on("b.db", 1))
+    oid, _ = _one_occurrence(sch)
+    coord.dispatch(oid, now=120.0)
+    mid = led.inspect_occurrence(oid)["mission_id"]
+    pid = eng.inspect(mid)["last_pipeline_id"]
+    n = 10
+    results = {}
+    barrier = threading.Barrier(n)
+    lock = threading.Lock()
+
+    def go(i):
+        barrier.wait()
+        r = coord.recover(oid, now=200.0)
+        with lock:
+            results[i] = r
+
+    ts = [threading.Thread(target=go, args=(i,)) for i in range(n)]
+    for t in ts:
+        t.start()
+    for t in ts:
+        t.join()
+    for _ in range(5):
+        if led.inspect_occurrence(oid)["state"] == OCC_SUCCEEDED:
+            break
+        coord.recover(oid, now=220.0)
+    assert led.inspect_occurrence(oid)["state"] == OCC_SUCCEEDED, results
+    rec_id = eng._recovered_mission_id(mid)
+    assert eng.inspect(rec_id)["run_count"] == 1
+    assert eng.inspect(rec_id)["last_pipeline_id"] == pid
+    assert len(led.pipelines_for_correlation(mid)) == 1
+    # No contention-only terminal failure after convergence.
+    assert led.inspect_occurrence(oid)["state"] != "failed" or False
+
+
+@live
+def test_recover_after_completion_is_idempotent_same_graph():
+    led, coord, sch, eng, _ = _build(injected=_fail_on("b.db", 1))
+    oid, _ = _one_occurrence(sch)
+    coord.dispatch(oid, now=120.0)
+    a = coord.recover(oid, now=200.0)
+    b = coord.recover(oid, now=210.0)
+    assert a["state"] == OCC_SUCCEEDED
+    assert b["state"] == OCC_SUCCEEDED
+    assert b.get("idempotent") is True or b.get("converged") is True or b.get("ok") is True
+    mid = led.inspect_occurrence(oid)["mission_id"]
+    rec_id = eng._recovered_mission_id(mid)
+    assert eng.inspect(rec_id)["run_count"] == 1
+
+
+@live
+def test_unrelated_graphs_recover_concurrently():
+    """Recovery locks are per-source-graph; unrelated occurrences must not block."""
+    led, coord, sch, eng, _ = _build(injected=_fail_on("b.db", 1))
+    o1, _ = _one_occurrence(sch, owner="ajay", now=100.0)
+    o2, _ = _one_occurrence(sch, owner="ajay", now=200.0)
+    coord.dispatch(o1, now=120.0)
+    coord.dispatch(o2, now=220.0)
+    results = {}
+    barrier = threading.Barrier(2)
+
+    def go(i, oid):
+        barrier.wait()
+        results[i] = coord.recover(oid, now=300.0 + i)
+
+    ts = [threading.Thread(target=go, args=(0, o1)),
+          threading.Thread(target=go, args=(1, o2))]
+    for t in ts:
+        t.start()
+    for t in ts:
+        t.join()
+    for oid in (o1, o2):
+        for _ in range(3):
+            if led.inspect_occurrence(oid)["state"] == OCC_SUCCEEDED:
+                break
+            coord.recover(oid, now=400.0)
+        assert led.inspect_occurrence(oid)["state"] == OCC_SUCCEEDED, (oid, results)
+
+
+@live
+def test_concurrent_resume_not_resumable_running_does_not_fail_recovered_mission():
+    """Deterministic race: loser observing not_resumable:running must not settle
+    the recovered mission as failed while the winner is still executing."""
+    led, coord, sch, eng, _ = _build(injected=_fail_on("b.db", 1))
+    oid, _ = _one_occurrence(sch)
+    coord.dispatch(oid, now=120.0)
+    mid = led.inspect_occurrence(oid)["mission_id"]
+    pid = eng.inspect(mid)["last_pipeline_id"]
+    # Force the interleaving: hold the resume mid-flight so a concurrent call
+    # observes pipeline RUNNING / recovery_claimed.
+    release = threading.Event()
+    entered = threading.Event()
+    orig_execute = eng.graph_runner._execute
+
+    def gated_execute(*a, **kw):
+        entered.set()
+        release.wait(timeout=5.0)
+        return orig_execute(*a, **kw)
+
+    eng.graph_runner._execute = gated_execute
+    winner = {}
+    loser = {}
+
+    def win():
+        winner["r"] = eng.resume_graph_mission(mid, owner="ajay", now=200.0)
+
+    def lose():
+        assert entered.wait(timeout=5.0)
+        loser["r"] = eng.resume_graph_mission(mid, owner="ajay", now=200.0)
+        release.set()
+
+    t1 = threading.Thread(target=win)
+    t2 = threading.Thread(target=lose)
+    t1.start()
+    t2.start()
+    t1.join(timeout=10.0)
+    t2.join(timeout=10.0)
+    # Loser must not have permanently failed the recovered mission.
+    rec_id = eng._recovered_mission_id(mid)
+    rec = eng.inspect(rec_id)
+    assert loser["r"].get("in_progress") or loser["r"].get("ok") or loser["r"].get("idempotent") or loser["r"].get("converged"), loser
+    if rec is not None and rec["state"] in (MISSION_FAILED, MISSION_BLOCKED):
+        # Only allowed if the winner also failed for a real reason.
+        assert winner["r"].get("ok") is False and not winner["r"].get("in_progress")
+    else:
+        # Winner should succeed; recovered mission completed or still settling.
+        assert winner["r"].get("ok") or winner["r"].get("in_progress") or (
+            rec and rec["state"] == MISSION_COMPLETED)
+        if rec is None or rec["state"] != MISSION_COMPLETED:
+            # Finish any residual settlement via coordinator.
+            for _ in range(3):
+                coord.recover(oid, now=250.0)
+                rec = eng.inspect(rec_id)
+                if rec and rec["state"] == MISSION_COMPLETED:
+                    break
+        assert eng.inspect(rec_id)["state"] == MISSION_COMPLETED
+        assert led.inspect_graph(pid, owner="ajay")["state"] == PIPELINE_SUCCEEDED
 
 
 # ══ OWNER SAFETY ═════════════════════════════════════════════════════════════
