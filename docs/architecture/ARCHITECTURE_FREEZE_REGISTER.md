@@ -25,6 +25,7 @@ Unfreezing **requires** the authority and prerequisites listed. Informal “just
 | **Review condition** | FM-I2+ only after separate owner authorization |
 | **FM-C2 disposition** | **RETAINED** for everything beyond FM-I1 fake proof |
 | **FM-I1 disposition** | **PARTIALLY UNFROZEN** (2026-08-07) — fake + types + controller proof only |
+| **FM-I2 disposition** | **PARTIALLY UNFROZEN** (2026-08-07) — real ExecutionGateway via isolated local echo/noop only; no providers/CLIs |
 
 ### FZ-02 — New AgentSessionAdapter variants
 

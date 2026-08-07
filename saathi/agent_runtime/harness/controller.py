@@ -1,4 +1,4 @@
-"""HarnessSessionController — trusted platform mediator (FM-I1 proof).
+"""HarnessSessionController — trusted platform mediator (FM-I1 / FM-I2).
 
 Owns: session↔run bind, lifecycle validation, event normalization, ToolIntent
 construction, approval-required pause, cancel propagation, resource checks,
@@ -7,13 +7,14 @@ audit correlation, protocol quarantine.
 Does **not** own: authN, RBAC source of truth, approval issuance, credentials,
 provider secrets, direct tool execution, gateway replacement, Trading Guardian.
 
-FM-I1 forbids external process spawning, network clients, and browser drivers
-in this package; tool side effects stay mediated via ToolIntent + test double.
+FM-I2 routes ToolIntent through the real ExecutionGateway via
+``RealExecutionGatewayAdapter`` (local no-op/echo handlers only).
+``GatewayTestDouble`` remains available for isolated unit tests.
 """
 from __future__ import annotations
 
 from dataclasses import dataclass, field, replace
-from typing import Any, Dict, List, Mapping, Optional, Set, Tuple
+from typing import Any, Dict, List, Mapping, Optional, Set, Tuple, Union
 import hashlib
 import re
 import threading
@@ -23,6 +24,7 @@ import uuid
 from saathi.agent_runtime.harness.audit import HarnessAuditLog
 from saathi.agent_runtime.harness.errors import HarnessError, HarnessErrorCode
 from saathi.agent_runtime.harness.fake import FakeInMemoryHarness
+from saathi.agent_runtime.harness.gateway_bridge import RealExecutionGatewayAdapter
 from saathi.agent_runtime.harness.mapping import project_harness_to_run_state
 from saathi.agent_runtime.harness.protocol import AgentHarness
 from saathi.agent_runtime.harness.types import (
@@ -50,7 +52,6 @@ from saathi.agent_runtime.harness.types import (
 )
 from saathi.agent_runtime.models import RunState
 
-# Import ToolIntent without pulling ExecutionGateway (env/py version safe).
 from saathi.execution.toolintent import (
     ActorType,
     ApprovalLevel,
@@ -61,25 +62,31 @@ from saathi.execution.toolintent import (
 )
 
 
-# Tools the FM-I1 proof allows the controller to map into ToolIntent.
+# Tools the harness proof allows the controller to map into ToolIntent.
+# connector_id=local + family=local → EG default safe local handler (echo/noop).
 KNOWN_FAKE_TOOLS: Mapping[str, Mapping[str, Any]] = {
     "fake.echo": {
         "capability": "diagnostics",
-        "connector_id": "fake-in-memory",
+        "connector_id": "local",
         "operation": "echo",
         "risk_level": RiskLevel.LOW,
         "approval_level": ApprovalLevel.L1,
         "requires_approval": False,
+        "family": "local",
     },
     "fake.sensitive_read": {
         "capability": "diagnostics",
-        "connector_id": "fake-in-memory",
-        "operation": "sensitive_read",
+        "connector_id": "local",
+        # After approval, only the safe local no-op runs (no FS/network).
+        "operation": "noop",
         "risk_level": RiskLevel.HIGH,
         "approval_level": ApprovalLevel.L4,
         "requires_approval": True,
+        "family": "local",
     },
 }
+
+GatewayLike = Union[RealExecutionGatewayAdapter, "GatewayTestDouble", Any]
 
 
 @dataclass
@@ -115,26 +122,39 @@ class _BoundSession:
     consumed_idempotency_keys: Set[str] = field(default_factory=set)
     pending_proposal_id: Optional[str] = None
     pending_proposal: Optional[ToolProposal] = None
+    pending_tool_intent: Optional[ToolIntent] = None
+    pending_execution_id: Optional[str] = None
     closed: bool = False
 
 
 class GatewayTestDouble:
-    """Narrow ExecutionGateway test double for FM-I1 tool mediation proofs.
+    """Narrow ExecutionGateway test double for isolated unit tests (FM-I1).
 
-    Not a shadow production gateway. Records intents and returns redacted
-    results without network, child processes, FS mutation, or credentials.
+    Retained for unit isolation. Production-shaped harness proofs use
+    ``RealExecutionGatewayAdapter`` (default since FM-I2).
+    Not a shadow production gateway.
     """
+
+    is_real_gateway = False
 
     def __init__(self) -> None:
         self.submitted: List[ToolIntent] = []
         self.cancelled_intent_ids: List[str] = []
+        self.approved_execution_ids: List[str] = []
         self._results_by_idem: Dict[str, Mapping[str, Any]] = {}
         self.deny_all: bool = False
         self.execute: bool = True
         self.raise_on_submit: bool = False
 
-    def submit(self, intent: ToolIntent) -> Mapping[str, Any]:
+    def submit(
+        self,
+        intent: ToolIntent,
+        *,
+        approval_id: str = "",
+        execute: Optional[bool] = None,
+    ) -> Mapping[str, Any]:
         """Accept a trusted ToolIntent; return redacted synthetic result."""
+        _ = approval_id
         if self.raise_on_submit:
             raise RuntimeError("gateway test double failure (injected)")
         errors = intent.validate()
@@ -149,32 +169,88 @@ class GatewayTestDouble:
                 "ok": False,
                 "status": "denied",
                 "summary": "gateway test double denied execution",
+                "path": "GatewayTestDouble",
+                "executed": False,
             }
         # Idempotent replay
         if intent.idempotency_key in self._results_by_idem:
             return dict(self._results_by_idem[intent.idempotency_key])
         self.submitted.append(intent)
-        if not self.execute:
+        do_execute = self.execute if execute is None else execute
+        # Simulated L4 / HIGH risk approval gate (mirrors EG needs_approval)
+        needs = intent.approval_level in (ApprovalLevel.L3, ApprovalLevel.L4) or intent.risk_level in (
+            RiskLevel.HIGH,
+            RiskLevel.CRITICAL,
+        )
+        if needs and not approval_id:
+            result = {
+                "ok": False,
+                "status": "approval_required",
+                "summary": "awaiting approval (test double)",
+                "execution_id": f"td-{intent.intent_id[:8]}",
+                "path": "GatewayTestDouble",
+                "executed": False,
+            }
+            return result
+        if not do_execute:
             result = {
                 "ok": False,
                 "status": "not_executed",
                 "summary": "execution disabled on test double",
+                "path": "GatewayTestDouble",
+                "executed": False,
             }
         else:
-            # Synthetic only — never pretends real external side effects
             result = {
                 "ok": True,
-                "status": "fake_success",
+                "status": "succeeded",
                 "summary": f"fake result for {intent.operation}",
                 "echo": dict(intent.parameters),
-                "executed": False,  # honesty: no real side effect
+                "executed": False,  # honesty: no real side effect on double
                 "path": "GatewayTestDouble",
+                "execution_id": f"td-{intent.intent_id[:8]}",
             }
         self._results_by_idem[intent.idempotency_key] = result
         return dict(result)
 
-    def cancel(self, intent_id: str) -> None:
+    def approve(
+        self,
+        execution_id: str,
+        *,
+        intent: ToolIntent,
+        approval_id: str = "",
+        execute: bool = True,
+    ) -> Mapping[str, Any]:
+        self.approved_execution_ids.append(execution_id)
+        if not execute:
+            return {
+                "ok": False,
+                "status": "approved_pending",
+                "summary": "approved but not executed",
+                "execution_id": execution_id,
+                "path": "GatewayTestDouble",
+                "executed": False,
+            }
+        result = {
+            "ok": True,
+            "status": "succeeded",
+            "summary": f"fake approved result for {intent.operation}",
+            "execution_id": execution_id,
+            "path": "GatewayTestDouble",
+            "executed": False,
+            "approval_id": approval_id,
+        }
+        if intent.idempotency_key:
+            self._results_by_idem[intent.idempotency_key] = result
+        return result
+
+    def cancel(self, intent_id: str, *, reason: str = "cancelled") -> None:
+        _ = reason
         self.cancelled_intent_ids.append(intent_id)
+
+    def cancel_session(self, session_id: str, *, reason: str = "session_cancelled") -> List[str]:
+        _ = session_id, reason
+        return list(self.cancelled_intent_ids)
 
 
 class HarnessSessionController:
@@ -184,13 +260,19 @@ class HarnessSessionController:
         self,
         harness: AgentHarness,
         *,
-        gateway: Optional[GatewayTestDouble] = None,
+        gateway: Optional[GatewayLike] = None,
         audit: Optional[HarnessAuditLog] = None,
         known_tools: Optional[Mapping[str, Mapping[str, Any]]] = None,
         max_sessions: int = 4,
+        use_real_gateway: bool = True,
     ) -> None:
         self._harness = harness
-        self._gateway = gateway if gateway is not None else GatewayTestDouble()
+        if gateway is not None:
+            self._gateway = gateway
+        elif use_real_gateway:
+            self._gateway = RealExecutionGatewayAdapter(isolated=True)
+        else:
+            self._gateway = GatewayTestDouble()
         self._audit = audit if audit is not None else HarnessAuditLog()
         self._known_tools = dict(known_tools or KNOWN_FAKE_TOOLS)
         self._max_sessions = max_sessions
@@ -202,8 +284,12 @@ class HarnessSessionController:
         return self._audit
 
     @property
-    def gateway(self) -> GatewayTestDouble:
+    def gateway(self) -> GatewayLike:
         return self._gateway
+
+    @property
+    def uses_real_gateway(self) -> bool:
+        return bool(getattr(self._gateway, "is_real_gateway", False))
 
     # ── Lifecycle ───────────────────────────────────────────────────────────
 
@@ -422,10 +508,20 @@ class HarnessSessionController:
     def request_cancel(self, session_id: str, reason: str = "run_cancelled") -> CancelAck:
         with self._lock:
             bound = self._require_bound(session_id)
-            # Cancel pending gateway work
-            for intent in list(self._gateway.submitted):
-                if intent.metadata.get("session_id") == session_id:
-                    self._gateway.cancel(intent.intent_id)
+            # Cancel pending gateway work via real EG (or double)
+            if hasattr(self._gateway, "cancel_session"):
+                self._gateway.cancel_session(session_id, reason=reason)
+            else:
+                for intent in list(getattr(self._gateway, "submitted", [])):
+                    if (intent.metadata or {}).get("session_id") == session_id:
+                        eid = getattr(intent, "intent_id", "")
+                        self._gateway.cancel(eid, reason=reason)
+            if bound.pending_execution_id:
+                try:
+                    self._gateway.cancel(bound.pending_execution_id, reason=reason)
+                except Exception:
+                    pass
+                bound.pending_execution_id = None
 
             try:
                 ack = self._harness.request_cancel(session_id, reason)
@@ -555,30 +651,85 @@ class HarnessSessionController:
         )
         if decision is ApprovalRefState.APPROVED and bound.pending_proposal is not None:
             proposal = bound.pending_proposal
+            intent = bound.pending_tool_intent
+            execution_id = bound.pending_execution_id or ""
             bound.approval_refs[approval_ref] = ApprovalRefState.APPROVED
-            mediated = self.mediate_proposal(proposal)
-            if mediated.disposition is ToolProposalDisposition.ACCEPTED:
-                if isinstance(self._harness, FakeInMemoryHarness):
-                    try:
-                        self._harness.deliver_tool_result(
-                            session_id,
-                            turn_id=proposal.turn_id,
-                            correlation_id=proposal.correlation_id,
-                            result=mediated.redacted_result or {"summary": "approved"},
-                            denied=False,
-                        )
-                        self._ingest_events(session_id)
-                    except HarnessError:
-                        pass
+            if intent is not None and execution_id and hasattr(self._gateway, "approve"):
+                try:
+                    result = self._gateway.approve(
+                        execution_id,
+                        intent=intent,
+                        approval_id=approval_ref,
+                        execute=True,
+                    )
+                except Exception as exc:  # noqa: BLE001
+                    result = {
+                        "ok": False,
+                        "status": "failed",
+                        "summary": f"approval apply failed: {exc}",
+                        "executed": False,
+                    }
+                if result.get("ok"):
+                    if isinstance(self._harness, FakeInMemoryHarness):
+                        try:
+                            self._harness.deliver_tool_result(
+                                session_id,
+                                turn_id=proposal.turn_id,
+                                correlation_id=proposal.correlation_id,
+                                result=result,
+                                denied=False,
+                            )
+                            self._ingest_events(session_id)
+                        except HarnessError:
+                            pass
+                else:
+                    if isinstance(self._harness, FakeInMemoryHarness):
+                        try:
+                            self._harness.deliver_tool_result(
+                                session_id,
+                                turn_id=proposal.turn_id,
+                                correlation_id=proposal.correlation_id,
+                                result=result,
+                                denied=True,
+                            )
+                            self._ingest_events(session_id)
+                        except HarnessError:
+                            pass
+            else:
+                # Fallback: re-mediate with double-style path
+                mediated = self.mediate_proposal(proposal)
+                if mediated.disposition is ToolProposalDisposition.ACCEPTED:
+                    if isinstance(self._harness, FakeInMemoryHarness):
+                        try:
+                            self._harness.deliver_tool_result(
+                                session_id,
+                                turn_id=proposal.turn_id,
+                                correlation_id=proposal.correlation_id,
+                                result=mediated.redacted_result or {"summary": "approved"},
+                                denied=False,
+                            )
+                            self._ingest_events(session_id)
+                        except HarnessError:
+                            pass
             bound.approval_refs[approval_ref] = ApprovalRefState.CONSUMED
             bound.pending_proposal = None
             bound.pending_proposal_id = None
+            bound.pending_tool_intent = None
+            bound.pending_execution_id = None
         elif decision in (
             ApprovalRefState.DENIED,
             ApprovalRefState.EXPIRED,
             ApprovalRefState.REVOKED,
         ):
             proposal = bound.pending_proposal
+            if bound.pending_execution_id:
+                try:
+                    self._gateway.cancel(
+                        bound.pending_execution_id,
+                        reason=f"approval_{decision.value}",
+                    )
+                except Exception:
+                    pass
             if isinstance(self._harness, FakeInMemoryHarness) and proposal is not None:
                 try:
                     self._harness.deliver_tool_result(
@@ -593,6 +744,8 @@ class HarnessSessionController:
                     pass
             bound.pending_proposal = None
             bound.pending_proposal_id = None
+            bound.pending_tool_intent = None
+            bound.pending_execution_id = None
 
     # ── Tool mediation ──────────────────────────────────────────────────────
 
@@ -705,67 +858,9 @@ class HarnessSessionController:
         if len(idem) != 64:
             idem = hashlib.sha256(idem.encode()).hexdigest()
 
-        # Approval-required path — controller surfaces wait; does not approve
-        if tool_meta.get("requires_approval"):
-            approval_ref = f"apr-{proposal.proposal_id}"
-            state = bound.approval_refs.get(approval_ref, ApprovalRefState.NONE)
-            if state is ApprovalRefState.NONE:
-                bound.approval_refs[approval_ref] = ApprovalRefState.PENDING
-                bound.pending_proposal_id = proposal.proposal_id
-                bound.projected_run_state = RunState.AWAITING_APPROVAL
-                self._audit.record(
-                    "harness.approval_required",
-                    session_id=proposal.session_id,
-                    run_id=bound.run_id,
-                    correlation_id=proposal.correlation_id,
-                    detail={
-                        "approval_ref": approval_ref,
-                        "tool": proposal.tool_name,
-                        "proposal_id": proposal.proposal_id,
-                    },
-                )
-                # Do not inject into harness sequence space (preserves monotonic seq).
-                return MediatedToolResult(
-                    disposition=ToolProposalDisposition.APPROVAL_REQUIRED,
-                    proposal_id=proposal.proposal_id,
-                    reason="approval required",
-                    approval_state=ApprovalRefState.PENDING,
-                    approval_ref=approval_ref,
-                )
-            if state is ApprovalRefState.PENDING:
-                return MediatedToolResult(
-                    disposition=ToolProposalDisposition.APPROVAL_REQUIRED,
-                    proposal_id=proposal.proposal_id,
-                    reason="approval still pending",
-                    approval_state=ApprovalRefState.PENDING,
-                    approval_ref=approval_ref,
-                )
-            if state in (
-                ApprovalRefState.DENIED,
-                ApprovalRefState.EXPIRED,
-                ApprovalRefState.REVOKED,
-            ):
-                return MediatedToolResult(
-                    disposition=ToolProposalDisposition.DENIED,
-                    proposal_id=proposal.proposal_id,
-                    reason=f"approval {state.value}",
-                    approval_state=state,
-                    approval_ref=approval_ref,
-                )
-            if state is ApprovalRefState.CONSUMED:
-                return MediatedToolResult(
-                    disposition=ToolProposalDisposition.DENIED,
-                    proposal_id=proposal.proposal_id,
-                    reason="approval already consumed",
-                    approval_state=state,
-                    approval_ref=approval_ref,
-                )
-            # APPROVED — fall through to construct intent (then mark consumed by caller)
-
-        # Trusted ToolIntent construction (controller only)
+        # Trusted ToolIntent construction (controller only — never the harness)
         try:
             corr = proposal.correlation_id
-            # correlation_id must be UUID4 for ToolIntent.validate
             try:
                 uuid.UUID(corr, version=4)
             except (ValueError, TypeError):
@@ -791,9 +886,13 @@ class HarnessSessionController:
                     "session_id": proposal.session_id,
                     "turn_id": proposal.turn_id,
                     "run_id": bound.run_id,
+                    "mission_id": bound.mission_id,
+                    "organization_id": bound.organization_id,
+                    "workspace_id": bound.workspace_id,
                     "proposal_id": proposal.proposal_id,
                     "harness_id": "fake-in-memory",
                     "source": "HarnessSessionController",
+                    "family": str(tool_meta.get("family") or "local"),
                 },
             )
         except Exception as exc:  # noqa: BLE001 — fail closed
@@ -813,9 +912,11 @@ class HarnessSessionController:
 
         # Idempotent retry: same key must not double-execute side effects
         if idem in bound.consumed_idempotency_keys:
-            existing = self._gateway.submit(intent)  # returns cached if any
+            existing = self._gateway.submit(intent)
             return MediatedToolResult(
-                disposition=ToolProposalDisposition.ACCEPTED,
+                disposition=ToolProposalDisposition.ACCEPTED
+                if existing.get("ok")
+                else ToolProposalDisposition.DENIED,
                 proposal_id=proposal.proposal_id,
                 tool_intent=intent,
                 redacted_result=existing,
@@ -837,13 +938,48 @@ class HarnessSessionController:
                 proposal_id=proposal.proposal_id,
                 reason=f"gateway failure: {exc}",
             )
-        bound.consumed_idempotency_keys.add(idem)
-        denied = not result.get("ok", False)
-        disposition = (
-            ToolProposalDisposition.DENIED
-            if denied
-            else ToolProposalDisposition.ACCEPTED
-        )
+
+        # Real EG (or double) requested human approval — harness must not self-approve
+        if result.get("status") == "approval_required":
+            approval_ref = f"apr-{proposal.proposal_id}"
+            bound.approval_refs[approval_ref] = ApprovalRefState.PENDING
+            bound.pending_proposal_id = proposal.proposal_id
+            bound.pending_proposal = proposal
+            bound.pending_tool_intent = intent
+            bound.pending_execution_id = str(result.get("execution_id") or "")
+            bound.projected_run_state = RunState.AWAITING_APPROVAL
+            self._audit.record(
+                "harness.approval_required",
+                session_id=proposal.session_id,
+                run_id=bound.run_id,
+                correlation_id=proposal.correlation_id,
+                detail={
+                    "approval_ref": approval_ref,
+                    "tool": proposal.tool_name,
+                    "proposal_id": proposal.proposal_id,
+                    "execution_id": bound.pending_execution_id,
+                    "gateway_path": result.get("path"),
+                },
+            )
+            return MediatedToolResult(
+                disposition=ToolProposalDisposition.APPROVAL_REQUIRED,
+                proposal_id=proposal.proposal_id,
+                tool_intent=intent,
+                redacted_result=result,
+                reason="approval required",
+                approval_state=ApprovalRefState.PENDING,
+                approval_ref=approval_ref,
+            )
+
+        if result.get("ok"):
+            bound.consumed_idempotency_keys.add(idem)
+            disposition = ToolProposalDisposition.ACCEPTED
+        else:
+            disposition = ToolProposalDisposition.DENIED
+            if result.get("status") in ("succeeded",):
+                disposition = ToolProposalDisposition.ACCEPTED
+                bound.consumed_idempotency_keys.add(idem)
+
         self._audit.record(
             "harness.tool_mediated",
             session_id=proposal.session_id,
@@ -854,7 +990,10 @@ class HarnessSessionController:
                 "tool": proposal.tool_name,
                 "disposition": disposition.value,
                 "intent_id": intent.intent_id,
-                "executed": False,
+                "execution_id": result.get("execution_id"),
+                "gateway_path": result.get("path"),
+                "gateway_status": result.get("status"),
+                "executed": bool(result.get("executed")),
             },
         )
         return MediatedToolResult(

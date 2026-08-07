@@ -58,6 +58,10 @@ from saathi.agent_runtime.harness.controller import (
     HarnessSessionController,
     MediatedToolResult,
 )
+from saathi.agent_runtime.harness.gateway_bridge import (
+    RealExecutionGatewayAdapter,
+    build_isolated_execution_gateway,
+)
 from saathi.agent_runtime.harness.audit import HarnessAuditLog, HarnessAuditRecord
 from saathi.agent_runtime.harness.types import can_transition_harness, is_terminal_harness_state
 
@@ -71,6 +75,8 @@ __all__ = [
     "FakeInMemoryHarness",
     "FakeScenario",
     "GatewayTestDouble",
+    "RealExecutionGatewayAdapter",
+    "build_isolated_execution_gateway",
     "HARNESS_TO_RUN_STATE",
     "HarnessAuditLog",
     "HarnessAuditRecord",

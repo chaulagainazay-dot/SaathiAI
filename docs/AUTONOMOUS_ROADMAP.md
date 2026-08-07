@@ -1,5 +1,18 @@
 # SaathiOS Autonomous Roadmap
 
+## FM-I2 — Real ExecutionGateway Integration (2026-08-07)
+
+| Field | Value |
+| --- | --- |
+| Mode | **Internal non-production** — real EG contract via isolated local no-op/echo only |
+| Baseline | FM-I1.5 @ `43df48b79065ceec1f37fd9dacca1d09579b6b67` |
+| Branch | `implementation/fm-i2-execution-gateway-integration` |
+| Report | `docs/agent-runtime/FM_I2_EXECUTIONGATEWAY_INTEGRATION.md` |
+| Adapter | `RealExecutionGatewayAdapter` → `ExecutionGateway.submit` |
+| GatewayTestDouble | Retained for isolated unit tests |
+| Production certified | **False** |
+| Next | **FM-I3 only after separate owner authorization** |
+
 ## FM-I1.5 — Harness Stress Certification (2026-08-07)
 
 | Field | Value |
