@@ -1,0 +1,61 @@
+{
+  "mission": "V-NEXT-2B.5",
+  "created_at": "2026-08-07T10:06:48.972351+00:00",
+  "status": "PRODUCT_CLEAN_DATA_INSUFFICIENT_FOR_TRAINING",
+  "base_model": {
+    "id": "openai/whisper-small",
+    "revision": "main",
+    "note": "Default product base. Bijay13 warm-start only if provenance cleared."
+  },
+  "method": {
+    "type": "lora_peft",
+    "target_modules": [
+      "q_proj",
+      "v_proj"
+    ],
+    "r": 32,
+    "lora_alpha": 64,
+    "lora_dropout": 0.05,
+    "bias": "none"
+  },
+  "optimization": {
+    "learning_rate": 0.0001,
+    "epochs_max": 5,
+    "per_device_batch_size": 4,
+    "gradient_accumulation_steps": 8,
+    "warmup_ratio": 0.03,
+    "seed": 42,
+    "fp16": true
+  },
+  "datasets": {
+    "product_clean": [],
+    "owner_private": [
+      "~/.saathi/stt-owner-corpus/"
+    ],
+    "research_only": [
+      "public NE-EN CS v2 CC-BY-NC"
+    ],
+    "common_voice_ne": {
+      "license": "CC0",
+      "bucket": "PRODUCT_CLEAN",
+      "role": "mono_ne_support",
+      "mirrored_in_repo": false
+    }
+  },
+  "excluded_from_train": [
+    "docs/voice-next-2b1 locked corpus",
+    "docs/voice-next-2b3 codeswitch eval",
+    "tools/voice-stt-bench locked/eval manifests"
+  ],
+  "qualification_gates": {
+    "en_intent_min": 0.7,
+    "ne_intent_min": 0.6,
+    "mix_intent_min": 0.6,
+    "ne_first_span_min": 0.5,
+    "ne_cer_max": 0.45,
+    "numeric_fidelity_min": 0.7
+  },
+  "deployment_path": "merge_and_unload \u2192 ct2-transformers-converter int8 \u2192 faster-whisper \u2192 LocalStreamingSttAdapter",
+  "training_authorized": false,
+  "paid_job_authorized": false
+}
