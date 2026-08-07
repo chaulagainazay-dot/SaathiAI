@@ -148,5 +148,11 @@
     "live_trading": false,
     "deployment": false,
     "master_merge": false
-  }
+  },
+  "commits": [
+    "713febf docs(voice): define product-clean speech collection protocol",
+    "9548c64 feat(data): add consented multi-speaker recorder and manifest tooling",
+    "6641177 feat(data): add speech QA and contamination validation",
+    "9144018 docs(data): freeze product speech corpus metadata"
+  ]
 }
