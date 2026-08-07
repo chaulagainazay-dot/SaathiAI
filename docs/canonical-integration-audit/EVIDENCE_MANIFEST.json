@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "audit": "SAATHIOS_CANONICAL_INTEGRATION_READINESS",
+  "date": "2026-08-07",
+  "verdict": "CANONICAL_INTEGRATION_PLAN_CERTIFIED_WITH_LIMITATIONS",
+  "recommended_canonical_branch": "hardening/fm-i6.2-macos-memory-gate-fix",
+  "recommended_canonical_sha": "e1738d7deec5f44600fbf0d99e2b8f74a4bc83d0",
+  "master_sha": "67efcb3cd5ca52c2fb96052168253fdf286ff60a",
+  "divergence": {
+    "fork_point_m369": "949afa68a4135aa94dbdaaf9aecfd618e0948c09",
+    "m344_remote": "48510a9570d4f009848a4f12be4edaadbd7555e1",
+    "m17_tip": "8577f2fbf10ea9d7a631ba9be861e574155bab7b",
+    "missing_from_canonical": [
+      "m17 scheduled-graph concurrency fix"
+    ]
+  },
+  "deliverables": [
+    "REPOSITORY_STATE.md",
+    "BRANCH_ANCESTRY_GRAPH.md",
+    "BRANCH_ANCESTRY_GRAPH.json",
+    "PULL_REQUEST_DISPOSITION_MATRIX.md",
+    "MILESTONE_CONTAINMENT_MATRIX.md",
+    "ARCHITECTURE_OVERLAP_AUDIT.md",
+    "VOICE_RUNTIME_INVENTORY.md",
+    "TRADING_AND_FUND_READINESS.md",
+    "COMMAND_CENTER_UI_READINESS.md",
+    "DOCUMENTATION_TRUTH_AUDIT.md",
+    "CANONICAL_BASELINE_CANDIDATES.md",
+    "PROPOSED_INTEGRATION_SEQUENCE.md",
+    "THREE_PILLAR_GAP_MATRIX.md",
+    "RISKS_AND_OWNER_DECISIONS.md",
+    "FINAL_CERTIFICATION.md",
+    "EVIDENCE_MANIFEST.json"
+  ],
+  "methods": [
+    "git fetch --all --prune",
+    "git worktree list",
+    "git merge-base --is-ancestor",
+    "git rev-list --left-right --count",
+    "git fsck --full",
+    "gh pr list --state all",
+    "code search on tip worktree SaathiAI-agent-foundation @ e1738d7",
+    "read committed e2e voice/trading/architecture docs"
+  ],
+  "prohibited_actions_confirmed_not_done": [
+    "merge_to_master",
+    "merge_any_pr",
+    "close_any_pr",
+    "rebase_rewrite_published",
+    "force_push",
+    "delete_branches",
+    "delete_worktrees",
+    "deploy",
+    "release",
+    "activate_providers",
+    "inspect_credentials",
+    "connect_broker",
+    "live_trading",
+    "weaken_tg_or_gateway",
+    "start_voice_impl",
+    "start_hedge_fund_impl",
+    "ui_redesign",
+    "hide_failing_tests",
+    "modify_historical_evidence"
+  ],
+  "original_worktree": {
+    "path": "/Users/macbookpro/SaathiAI",
+    "branch": "milestone/m312-m319-connectivity-governance",
+    "head": "6639ca730ece11bce160a55a237fcaff8df3058c",
+    "dirty_preserved": true
+  }
+}
