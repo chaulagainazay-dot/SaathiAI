@@ -1,5 +1,22 @@
 # SaathiOS Autonomous Roadmap
 
+## CANONICAL BASELINE INTEGRATION (2026-08-07)
+
+| Field | Value |
+| --- | --- |
+| Mode | **Integration** — M17 cherry-pick onto Candidate A; no product features |
+| Branch | `integration/saathios-canonical-baseline` |
+| Source | `hardening/fm-i6.2-macos-memory-gate-fix` @ `e1738d7deec5f44600fbf0d99e2b8f74a4bc83d0` |
+| M17 | Concurrent scheduled-graph recovery fix + tests + stress validated |
+| Docs | `docs/canonical-integration/` |
+| Terminal verdict | `CANONICAL_SAATHIOS_BASELINE_CERTIFIED_WITH_LIMITATIONS` |
+| Master merge | **False** |
+| Deployment | **False** |
+| Live trading / providers | **False** |
+| Next mission | `UI-NEXT-1 — SAATHIOS CENTRAL COMMAND COMPOSITION` (separate auth) |
+
+---
+
 ## FM-I6.2-LIVE — Live Certification Attempt (2026-08-07)
 
 | Field | Value |
