@@ -803,6 +803,70 @@ class PaperTradingService:
             }
         return eng.command_risk_contract(fund_id, ledger_state=state, recon=recon)
 
+    def list_portfolio_proposals(self, ctx, account_id: str, *, limit: int = 10) -> dict:
+        """Read-only proposal list for Hybrid Command. Never constructs or executes."""
+        ctx.require_permission(PlatformPermission.PAPER_ACCOUNT_READ)
+        self._account_or_404(ctx, account_id)
+        from saathi.platform.fund_ledger.cutover import fund_id_for_account
+        fund_id = self.fill_posts.fund_for_account(account_id) or fund_id_for_account(account_id)
+        try:
+            from saathi.platform.portfolio_construction.store import ProposalStore
+        except Exception as e:
+            return {
+                "mode": "PAPER",
+                "live_execution": "UNAVAILABLE",
+                "authorizes_execution": False,
+                "fund_id": fund_id,
+                "proposals": [],
+                "active": None,
+                "provenance": "UNAVAILABLE",
+                "error": f"construction module unavailable: {e}",
+            }
+        # Colocate proposal DB with paper store when path-backed
+        store_path = ":memory:"
+        paper_path = getattr(self.store, "db_path", None)
+        if paper_path is not None:
+            from pathlib import Path as _P
+            pp = _P(str(paper_path))
+            store_path = str(pp.with_name(pp.stem + "_proposals.db"))
+        store = ProposalStore(store_path)
+        items = store.list_for_fund(fund_id, limit=limit)
+        active_raw = items[0] if items else None
+        active = None
+        if active_raw:
+            active = {
+                "id": active_raw.get("id") or active_raw.get("proposal_id"),
+                "status": active_raw.get("status"),
+                "created_at": active_raw.get("created_at"),
+                "expires_at": active_raw.get("expires_at"),
+                "source": active_raw.get("source"),
+                "method": active_raw.get("method"),
+                "current": active_raw.get("current"),
+                "proposed": active_raw.get("proposed"),
+                "delta": active_raw.get("delta"),
+                "trades": active_raw.get("trades"),
+                "projected_risk": active_raw.get("projected_risk"),
+                "warnings": active_raw.get("warnings") or [],
+                "reason_codes": active_raw.get("reason_codes") or [],
+                "evidence_refs": active_raw.get("evidence_refs") or {},
+                "approval_status": None,
+                "authorizes_execution": False,
+                "mode": "PAPER",
+                "target_allocations": active_raw.get("target_allocations"),
+                "turnover": active_raw.get("turnover"),
+                "cash_weight": active_raw.get("cash_weight"),
+            }
+        return {
+            "mode": "PAPER",
+            "live_execution": "UNAVAILABLE",
+            "authorizes_execution": False,
+            "fund_id": fund_id,
+            "proposals": items,
+            "active": active,
+            "provenance": "LIVE" if items else "UNAVAILABLE",
+            "source": "portfolio_construction",
+        }
+
     def _post_fill_to_canonical_ledger(self, acct: PaperAccount, order: PaperOrder, fill: PaperFill) -> dict:
         # Ensure bind exists (accounts created pre-cutover in tests still work)
         fund_id = self.fill_posts.fund_for_account(acct.id)

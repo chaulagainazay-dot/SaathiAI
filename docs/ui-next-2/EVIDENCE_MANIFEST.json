@@ -1,0 +1,25 @@
+{
+  "mission": "UI-NEXT-2",
+  "title": "SAATHIOS DESIGN DNA + CENTRAL COMMAND EXPERIENCE ARCHITECTURE",
+  "certified_at": "2026-08-07T11:36:58.253431+00:00",
+  "terminal_verdict": "SAATHIOS_COMMAND_DESIGN_ARCHITECTURE_APPROVED_WITH_LIMITATIONS",
+  "base_branch": "feature/ui-next-1-central-command",
+  "base_sha": "d66fa3aea03dbb8f5daed431ff62d64fad7906a9",
+  "work_branch": "design/ui-next-2-saathios-design-dna",
+  "selected_architecture": "HYBRID_COMMAND",
+  "prototype_route": "/design-lab",
+  "external_toolkits_path": "~/dev-toolkits/ui-design/",
+  "t_next_contracts_referenced": true,
+  "trading_branches_merged": false,
+  "speech_branch_merged": false,
+  "non_actions": {
+    "command_replaced": false,
+    "threejs_production": false,
+    "uncontrolled_animation_deps": false,
+    "tg_changed": false,
+    "execution_gateway_changed": false,
+    "ledger_changed": false,
+    "risk_engine_changed": false,
+    "master_merge": false
+  }
+}
