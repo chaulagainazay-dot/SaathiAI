@@ -1,7 +1,7 @@
 {
   "mission": "T-NEXT-3",
   "title": "PORTFOLIO CONSTRUCTION + REBALANCING PROPOSAL ENGINE",
-  "certified_at": "2026-08-07T12:06:24.468991+00:00",
+  "certified_at": "2026-08-07T12:07:19.190168+00:00",
   "terminal_verdict": "PORTFOLIO_CONSTRUCTION_PROPOSAL_ENGINE_CERTIFIED_WITH_LIMITATIONS",
   "base_sha": "0507f2afd20b1a27f7a1cb47eae4ec01dac58e84",
   "base_branch": "feature/t-next-2-independent-risk-engine",
@@ -26,5 +26,8 @@
     "execution": false,
     "pr35_36_37_merge": false,
     "ui_next_3_started": false
-  }
+  },
+  "tip_sha": "a6a6b1f074c8bc56039e84803b7f8efb62f65308",
+  "draft_pr": 41,
+  "draft_pr_url": "https://github.com/chaulagainazay-dot/SaathiAI/pull/41"
 }

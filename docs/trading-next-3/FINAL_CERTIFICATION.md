@@ -7,6 +7,8 @@ PORTFOLIO_CONSTRUCTION_PROPOSAL_ENGINE_CERTIFIED_WITH_LIMITATIONS
 ```
 
 ## Base
+- Work tip: `a6a6b1f074c8bc56039e84803b7f8efb62f65308`
+- Draft PR: #41 vs T-NEXT-2
 - Branch base: `feature/t-next-2-independent-risk-engine`
 - SHA: `0507f2afd20b1a27f7a1cb47eae4ec01dac58e84`
 - PR #37 head verified OPEN, no auto-merge
