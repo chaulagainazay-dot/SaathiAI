@@ -26,5 +26,8 @@
   },
   "best_ne_mix_intent_raw": 0.154,
   "product_primary": "browser_speech_recognition",
-  "qwen3_asr": "RESEARCH_COMPARATOR_NOT_LOADED"
+  "qwen3_asr": "RESEARCH_COMPARATOR_NOT_LOADED",
+  "tip_sha_pre_pin": "32404d9fdb291c408e15d9e8099ac03fa8a59c7b",
+  "branch": "qualification/v-next-2b2-nepali-asr",
+  "worktree": "/Users/macbookpro/SaathiAI-voice-next-2b2"
 }
