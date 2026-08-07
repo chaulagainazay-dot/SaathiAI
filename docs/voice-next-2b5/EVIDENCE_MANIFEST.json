@@ -22,5 +22,10 @@
     "numeric": 0.4,
     "peak_rss_mib": 1400
   },
-  "blocker": "no product-clean multi-speaker code-switch corpus yet"
+  "blocker": "no product-clean multi-speaker code-switch corpus yet",
+  "tip_sha": "ef401f6cdc15c907cc8aaf3e4955110fd7e5b614",
+  "draft_pr": 33,
+  "draft_pr_url": "https://github.com/chaulagainazay-dot/SaathiAI/pull/33",
+  "branch": "training/v-next-2b5-whisper-cs-lora-readiness",
+  "worktree": "/Users/macbookpro/SaathiAI-voice-next-2b5"
 }
