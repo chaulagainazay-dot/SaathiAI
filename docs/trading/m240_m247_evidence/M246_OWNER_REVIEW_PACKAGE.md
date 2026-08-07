@@ -1,0 +1,53 @@
+# M246 Owner Review Package
+
+**PLANNING ONLY — NO REAL CONNECTIVITY — NO CREDENTIALS — CANARY NOT AUTHORIZED**
+
+## Executive Summary
+
+M240–M247 produces a provider-specific, evidence-backed read-only canary planning package for human owner review. Preferred provider is a recommendation only. No connectivity, credentials, or canary activation is authorized.
+
+## Preferred Provider (recommendation only)
+
+`alpaca`
+
+## Fallback Provider
+
+`kraken`
+
+## Eligibility
+
+Result: `ELIGIBILITY_UNCONFIRMED`
+
+Owner eligibility claimed: **false**
+
+## Decision Options (human only)
+
+- `REJECT`
+- `REQUEST_CHANGES`
+- `APPROVE_PLANNING_PACKAGE_ONLY`
+
+No option authorizes connectivity.
+
+## Authority Values
+
+- `REAL_CONNECTIVITY_AUTHORIZED=False`
+- `CREDENTIAL_PROVISIONING_AUTHORIZED=False`
+- `CANARY_ACTIVATION_AUTHORIZED=False`
+- `READ_ONLY_PRODUCTION_AUTHORIZED=False`
+- `LIVE_TRADING_AUTHORIZED=False`
+
+## Explicit Non-Authorizations
+
+- THE SYSTEM REMAINS PAPER, SANDBOX AND PLANNING ONLY.
+- NO REAL BROKER CONNECTION WAS CREATED.
+- NO REAL BROKER ACCOUNT WAS ACCESSED.
+- NO REAL API CREDENTIALS WERE REQUESTED, ACCEPTED OR STORED.
+- NO OAUTH SESSION WAS CREATED.
+- NO PROVIDER-SPECIFIC RUNTIME ADAPTER WAS ACTIVATED.
+- NO CANARY WAS ACTIVATED.
+- NO ORDER SUBMISSION OR ORDER CANCELLATION CAPABILITY EXISTS.
+- LIVE TRADING IS NOT AUTHORIZED.
+- THE PREFERRED PROVIDER IS A RECOMMENDATION ONLY.
+- OWNER ELIGIBILITY IS NOT CLAIMED WITHOUT EXPLICIT VERIFIED EVIDENCE.
+- OWNER SIGN-OFF WAS NOT GENERATED OR CLAIMED BY AUTOMATION.
+- THE PACKAGE IS READY FOR HUMAN OWNER REVIEW ONLY.

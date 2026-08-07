@@ -257,3 +257,26 @@ the existing text-response rules (still authoritative for typed chat):
 - **simulation-only**: "This is simulation-verified only — local deterministic behaviour, not proof of live-provider compatibility."
 - **read-only pilot**: "The pilot is read-only; no write, financial, or account-changing operation is in scope."
 - **production activation blocked**: "Production activation stays blocked; connector rollout is OFF and CANARY/ACTIVE are prohibited here."
+
+## M73–M77 — speech-output language
+
+- **synthesis vs playback**: say "speech is ready — choose Play" after artifact
+  completion. Never imply that requesting synthesis automatically played audio.
+- **fallback**: say "VoxCPM is unavailable; macOS system voice was used" only when
+  the operation records `fallback_used=true`. Never hide or infer a fallback.
+- **provider unavailable**: say "speech is unavailable; no audio was produced."
+  Do not present an unavailable provider as silence or success.
+- **provider maturity**: keep implemented, installed, configured, model available,
+  runtime verified, quality reviewed, and certified distinct.
+- **language honesty**: "English is certified through the macOS provider." Nepali
+  stays "unsupported-not-verified" until synthesis and human quality review pass;
+  Hindi or Devanagari input is not Nepali evidence.
+- **Yeti voice**: describe it as a provider-neutral written voice design, never a
+  clone or a real person's voice.
+- **cloning**: "voice cloning is disabled." Do not invite reference recording or
+  imply consent can be inferred.
+- **browser limitation**: say "backend synthesis passed; browser playback is not
+  certified" when the browser journey does not pass. Never upgrade a partial
+  browser run to a certification.
+- **production boundary**: local speech availability does not authorize production,
+  background speech, autoplay, public service exposure, or model download.

@@ -1,0 +1,35 @@
+{
+  "result_hashes": [
+    "afafdb6491685d342a6b58e10b6bcf03c3f47a8ed846591e742bf06e8b8247ed",
+    "afafdb6491685d342a6b58e10b6bcf03c3f47a8ed846591e742bf06e8b8247ed",
+    "afafdb6491685d342a6b58e10b6bcf03c3f47a8ed846591e742bf06e8b8247ed"
+  ],
+  "identical": true,
+  "manifest": {
+    "strategy_hash": "026b415f497758e90c2a34beef0b94328a36cfd6c652a596d485db81db98f89d",
+    "dataset_hash": "a4c2425d7431617b15d29a7777911f1b5bea1cfcb251d37c2fe450f0ae244fe5",
+    "engine_version": "m62_4.engine.v1",
+    "feature_version": "m62_4.features.v1",
+    "cost_model": {
+      "fixed_fee": "0",
+      "pct_fee": "0.0005",
+      "per_unit_fee": "0",
+      "min_fee": "1",
+      "slippage_bps": "5",
+      "spread_slippage": false,
+      "max_volume_participation": "0.1"
+    },
+    "slippage_model": {
+      "slippage_bps": "5",
+      "spread": false
+    },
+    "calendar": "DEFAULT_24_5",
+    "seed": 0,
+    "parameters": {},
+    "starting_cash": "100000",
+    "timeframe": "1d",
+    "instrument": "TRENDING",
+    "bar_count": 30,
+    "result_hash": "afafdb6491685d342a6b58e10b6bcf03c3f47a8ed846591e742bf06e8b8247ed"
+  }
+}

@@ -1,0 +1,123 @@
+{
+  "schema": "m110.fleet_browser_cert.v1",
+  "capturedAt": "2026-07-29T01:10:49.435Z",
+  "hardGates": {
+    "two_workers_admitted": {
+      "ok": true,
+      "detail": "workers"
+    },
+    "parallel_dispatch": {
+      "ok": true,
+      "detail": "n=2"
+    },
+    "approval_blocks_lease": {
+      "ok": true,
+      "detail": "approval"
+    },
+    "approved_lease_issued": {
+      "ok": true,
+      "detail": "lease"
+    },
+    "result_accepted": {
+      "ok": true,
+      "detail": "ACCEPTED"
+    },
+    "stale_rejected": {
+      "ok": true,
+      "detail": "REJECTED_STALE"
+    },
+    "recovered_accepted": {
+      "ok": true,
+      "detail": "ACCEPTED"
+    },
+    "fencing_advanced": {
+      "ok": true,
+      "detail": "fence"
+    },
+    "drain_state": {
+      "ok": true,
+      "detail": "DRAINING"
+    },
+    "drain_no_new_work": {
+      "ok": true,
+      "detail": ""
+    },
+    "extends_m56": {
+      "ok": true,
+      "detail": "m56"
+    },
+    "no_direct_tools": {
+      "ok": true,
+      "detail": "tools"
+    },
+    "no_production": {
+      "ok": true,
+      "detail": "prod"
+    },
+    "no_public_listener": {
+      "ok": true,
+      "detail": "listener"
+    },
+    "loopback_transport": {
+      "ok": true,
+      "detail": "loopback_only"
+    },
+    "cert_verdict": {
+      "ok": true,
+      "detail": "FLEET_CERTIFIED_PHASE_A_WITH_LIMITATIONS"
+    },
+    "fleet_panel_present": {
+      "ok": true,
+      "detail": "count=1"
+    },
+    "ui_workers_visible": {
+      "ok": true,
+      "detail": "workers"
+    },
+    "ui_recon_visible": {
+      "ok": true,
+      "detail": "recon"
+    },
+    "ui_phase_visible": {
+      "ok": true,
+      "detail": "phase"
+    },
+    "logout_cleanup": {
+      "ok": true,
+      "detail": "cleanup"
+    }
+  },
+  "steps": [
+    {
+      "step": "api_fleet_journey",
+      "ok": true,
+      "apiResult": {
+        "token": "OOn4TB004Q55WvOUxHQcsk56lrcFR1xW-O3aDW18aiU",
+        "workers_admitted": 2,
+        "dispatched": 2,
+        "blocked_approval": 1,
+        "approved_lease": "lease_fe119e3e4cf848dc",
+        "accepted": "ACCEPTED",
+        "stale_outcome": "REJECTED_STALE",
+        "stale_advances": false,
+        "recovered_outcome": "ACCEPTED",
+        "new_fence_gt_old": true,
+        "drain_trust": "DRAINING",
+        "match_after_drain": "",
+        "cert_verdict": "FLEET_CERTIFIED_PHASE_A_WITH_LIMITATIONS",
+        "extends_m56": true,
+        "replaces_m56": false,
+        "direct_tools": false,
+        "production": false,
+        "public_listener": false,
+        "transport": "loopback_only"
+      }
+    }
+  ],
+  "result": "FLEET_BROWSER_CERT_PASSED",
+  "production_authorized": false,
+  "phase": "PHASE_A_SINGLE_HOST",
+  "public_listener": false,
+  "screenshot": "/Users/macbookpro/SaathiAI/docs/evidence/m110/browser/m110_fleet_panel.png",
+  "browser_certified": true
+}

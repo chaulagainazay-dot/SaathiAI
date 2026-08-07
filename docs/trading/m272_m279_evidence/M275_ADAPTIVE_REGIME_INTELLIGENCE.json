@@ -1,0 +1,1274 @@
+{
+  "schema": "M275_ADAPTIVE_REGIME_INTELLIGENCE",
+  "ok": true,
+  "section": "definitions",
+  "definitions": [
+    {
+      "regime_id": "trend_regime_v1",
+      "regime_version": "v1",
+      "dimension": "trend",
+      "formula": "sign(sma_return_20) with |ret| thresholds",
+      "thresholds": {
+        "up_ret": 0.05,
+        "down_ret": -0.05
+      },
+      "labels": [
+        "upward_trend",
+        "downward_trend",
+        "sideways",
+        "transitional"
+      ],
+      "input_features": [
+        "simple_return_20"
+      ],
+      "dataset_versions": {},
+      "lookback_period": 20,
+      "minimum_duration": 3,
+      "transition_rule": "label_change_persists_min_duration",
+      "availability": "real_time_research_features_only",
+      "ex_post_descriptive": false,
+      "limitations": [
+        "Thresholds fitted on training data only"
+      ],
+      "fit_status": "FITTED_ON_TRAIN_FROZEN",
+      "fitted_on": "training_period_only",
+      "test_set_used_for_thresholds": false,
+      "checksum": "a021fba16806f36e1ad1266d1f00ec6d10c2ed13738f07170bfbe2d3d4f872ac",
+      "engine_version": "m275.regime.v1",
+      "storage_id": "rdef_9347f4e08c62497d"
+    },
+    {
+      "regime_id": "volatility_regime_v1",
+      "regime_version": "v1",
+      "dimension": "volatility",
+      "formula": "realized_vol_20 vs train quantiles",
+      "thresholds": {
+        "low_q": 0.25,
+        "high_q": 0.75,
+        "extreme_q": 0.95,
+        "low": 0.0056424055434389445,
+        "high": 0.006227568653953141,
+        "extreme": 0.006809455882263996
+      },
+      "labels": [
+        "low_volatility",
+        "normal_volatility",
+        "high_volatility",
+        "extreme_volatility"
+      ],
+      "input_features": [
+        "realized_vol_20"
+      ],
+      "dataset_versions": {},
+      "lookback_period": 20,
+      "minimum_duration": 2,
+      "transition_rule": "quantile_band_change",
+      "availability": "real_time_research_features_only",
+      "ex_post_descriptive": false,
+      "limitations": [
+        "Quantiles frozen from training split"
+      ],
+      "fit_status": "FITTED_ON_TRAIN_FROZEN",
+      "fitted_on": "training_period_only",
+      "test_set_used_for_thresholds": false,
+      "checksum": "5a97658e2d0487c0fdf10476a53bf36042522ddda7a5d1c6db275fc6058aaab1",
+      "engine_version": "m275.regime.v1",
+      "storage_id": "rdef_4fc44a88e2524622"
+    },
+    {
+      "regime_id": "liquidity_regime_v1",
+      "regime_version": "v1",
+      "dimension": "liquidity",
+      "formula": "volume_zscore proxy when volume present else UNKNOWN",
+      "thresholds": {
+        "reduced_z": -1.0,
+        "stressed_z": -2.0
+      },
+      "labels": [
+        "normal_liquidity",
+        "reduced_liquidity",
+        "stressed_liquidity"
+      ],
+      "input_features": [
+        "volume_z_20"
+      ],
+      "dataset_versions": {},
+      "lookback_period": 20,
+      "minimum_duration": 2,
+      "transition_rule": "zscore_band",
+      "availability": "real_time_research_features_only",
+      "ex_post_descriptive": false,
+      "limitations": [
+        "Volume may be missing; falls back to REGIME_UNKNOWN"
+      ],
+      "fit_status": "INSUFFICIENT_TRAIN_DATA",
+      "storage_id": "rdef_e3c64b61fe0c43ee"
+    },
+    {
+      "regime_id": "correlation_regime_v1",
+      "regime_version": "v1",
+      "dimension": "correlation",
+      "formula": "avg pairwise corr rolling when multi-asset else UNKNOWN",
+      "thresholds": {
+        "low": 0.2,
+        "high": 0.6,
+        "risk_off": 0.8
+      },
+      "labels": [
+        "low_cross_asset_correlation",
+        "normal_correlation",
+        "high_correlation",
+        "risk_off_correlation_spike"
+      ],
+      "input_features": [
+        "rolling_corr_20"
+      ],
+      "dataset_versions": {},
+      "lookback_period": 20,
+      "minimum_duration": 3,
+      "transition_rule": "corr_band",
+      "availability": "real_time_research_features_only",
+      "ex_post_descriptive": false,
+      "limitations": [
+        "Single-asset series cannot form correlation regime"
+      ],
+      "fit_status": "INSUFFICIENT_TRAIN_DATA",
+      "storage_id": "rdef_64d65e30ad2141fa"
+    }
+  ],
+  "macro_regimes_fabricated": false,
+  "macro_note": "macro_omitted_no_governed_pit_data",
+  "thresholds_fitted_on": "training_only",
+  "test_set_used_for_thresholds": false,
+  "LIVE_TRADING_AUTHORIZED": false,
+  "BROKER_CONNECTIVITY_AUTHORIZED": false,
+  "REAL_CONNECTIVITY_AUTHORIZED": false,
+  "CREDENTIAL_PROVISIONING_AUTHORIZED": false,
+  "CANARY_ACTIVATION_AUTHORIZED": false,
+  "ORDER_EXECUTION_AUTHORIZED": false,
+  "ORDER_SUBMISSION_AUTHORIZED": false,
+  "ORDER_MODIFICATION_AUTHORIZED": false,
+  "ORDER_CANCELLATION_AUTHORIZED": false,
+  "API_KEYS_ACCEPTED": false,
+  "OAUTH_AUTHORIZED": false,
+  "LIVE_MARKET_DATA_AUTHORIZED": false,
+  "LIVE_DATA_DEPENDENCY": false,
+  "PAPER_EXECUTION_AUTHORIZED": false,
+  "AUTOMATED_INVESTMENT_AUTHORITY": false,
+  "REGULATORY_GRADE_PORTFOLIO_OPTIMISATION": false,
+  "STRATEGY_PROFITABILITY_GUARANTEED": false,
+  "LIVE_MARKET_READINESS": false,
+  "INVESTMENT_ADVICE_CERTIFIED": false,
+  "PRODUCTION_AUTHORIZED": false,
+  "REAL_BROKER_CONNECTION_CAPABLE": false,
+  "paper_only": true,
+  "sandbox_only": true,
+  "research_only": true,
+  "offline_first": true,
+  "offline_capable": true,
+  "no_broker_connection": true,
+  "no_api_keys": true,
+  "no_oauth": true,
+  "no_order_submission": true,
+  "no_live_data_dependency": true,
+  "no_live_trading": true,
+  "certified_experiment_requires_pre_registration": true,
+  "human_review_required_for_paper_candidate": true,
+  "paper_candidate_does_not_authorise_execution": true,
+  "max_authority": "RESEARCH_PORTFOLIO_AND_PAPER_CANDIDATE_EVALUATION_ONLY",
+  "default_leverage_max": 1.0,
+  "classification": {
+    "ok": true,
+    "n_bars": 150,
+    "series_sample": [
+      {
+        "index": 0,
+        "labels": {
+          "trend": "UNKNOWN",
+          "volatility": "UNKNOWN"
+        },
+        "state": "REGIME_INSUFFICIENT_DATA",
+        "confidence": 0.0,
+        "availability_timestamp_index": 0,
+        "uses_future_information": false
+      },
+      {
+        "index": 1,
+        "labels": {
+          "trend": "UNKNOWN",
+          "volatility": "UNKNOWN"
+        },
+        "state": "REGIME_INSUFFICIENT_DATA",
+        "confidence": 0.0,
+        "availability_timestamp_index": 1,
+        "uses_future_information": false
+      },
+      {
+        "index": 2,
+        "labels": {
+          "trend": "UNKNOWN",
+          "volatility": "UNKNOWN"
+        },
+        "state": "REGIME_INSUFFICIENT_DATA",
+        "confidence": 0.0,
+        "availability_timestamp_index": 2,
+        "uses_future_information": false
+      },
+      {
+        "index": 3,
+        "labels": {
+          "trend": "UNKNOWN",
+          "volatility": "UNKNOWN"
+        },
+        "state": "REGIME_INSUFFICIENT_DATA",
+        "confidence": 0.0,
+        "availability_timestamp_index": 3,
+        "uses_future_information": false
+      },
+      {
+        "index": 4,
+        "labels": {
+          "trend": "UNKNOWN",
+          "volatility": "UNKNOWN"
+        },
+        "state": "REGIME_INSUFFICIENT_DATA",
+        "confidence": 0.0,
+        "availability_timestamp_index": 4,
+        "uses_future_information": false
+      },
+      {
+        "index": 5,
+        "labels": {
+          "trend": "UNKNOWN",
+          "volatility": "UNKNOWN"
+        },
+        "state": "REGIME_INSUFFICIENT_DATA",
+        "confidence": 0.0,
+        "availability_timestamp_index": 5,
+        "uses_future_information": false
+      },
+      {
+        "index": 6,
+        "labels": {
+          "trend": "UNKNOWN",
+          "volatility": "UNKNOWN"
+        },
+        "state": "REGIME_INSUFFICIENT_DATA",
+        "confidence": 0.0,
+        "availability_timestamp_index": 6,
+        "uses_future_information": false
+      },
+      {
+        "index": 7,
+        "labels": {
+          "trend": "UNKNOWN",
+          "volatility": "UNKNOWN"
+        },
+        "state": "REGIME_INSUFFICIENT_DATA",
+        "confidence": 0.0,
+        "availability_timestamp_index": 7,
+        "uses_future_information": false
+      },
+      {
+        "index": 8,
+        "labels": {
+          "trend": "UNKNOWN",
+          "volatility": "UNKNOWN"
+        },
+        "state": "REGIME_INSUFFICIENT_DATA",
+        "confidence": 0.0,
+        "availability_timestamp_index": 8,
+        "uses_future_information": false
+      },
+      {
+        "index": 9,
+        "labels": {
+          "trend": "UNKNOWN",
+          "volatility": "UNKNOWN"
+        },
+        "state": "REGIME_INSUFFICIENT_DATA",
+        "confidence": 0.0,
+        "availability_timestamp_index": 9,
+        "uses_future_information": false
+      },
+      {
+        "index": 10,
+        "labels": {
+          "trend": "UNKNOWN",
+          "volatility": "UNKNOWN"
+        },
+        "state": "REGIME_INSUFFICIENT_DATA",
+        "confidence": 0.0,
+        "availability_timestamp_index": 10,
+        "uses_future_information": false
+      },
+      {
+        "index": 11,
+        "labels": {
+          "trend": "UNKNOWN",
+          "volatility": "UNKNOWN"
+        },
+        "state": "REGIME_INSUFFICIENT_DATA",
+        "confidence": 0.0,
+        "availability_timestamp_index": 11,
+        "uses_future_information": false
+      },
+      {
+        "index": 12,
+        "labels": {
+          "trend": "UNKNOWN",
+          "volatility": "UNKNOWN"
+        },
+        "state": "REGIME_INSUFFICIENT_DATA",
+        "confidence": 0.0,
+        "availability_timestamp_index": 12,
+        "uses_future_information": false
+      },
+      {
+        "index": 13,
+        "labels": {
+          "trend": "UNKNOWN",
+          "volatility": "UNKNOWN"
+        },
+        "state": "REGIME_INSUFFICIENT_DATA",
+        "confidence": 0.0,
+        "availability_timestamp_index": 13,
+        "uses_future_information": false
+      },
+      {
+        "index": 14,
+        "labels": {
+          "trend": "UNKNOWN",
+          "volatility": "UNKNOWN"
+        },
+        "state": "REGIME_INSUFFICIENT_DATA",
+        "confidence": 0.0,
+        "availability_timestamp_index": 14,
+        "uses_future_information": false
+      },
+      {
+        "index": 15,
+        "labels": {
+          "trend": "UNKNOWN",
+          "volatility": "UNKNOWN"
+        },
+        "state": "REGIME_INSUFFICIENT_DATA",
+        "confidence": 0.0,
+        "availability_timestamp_index": 15,
+        "uses_future_information": false
+      },
+      {
+        "index": 16,
+        "labels": {
+          "trend": "UNKNOWN",
+          "volatility": "UNKNOWN"
+        },
+        "state": "REGIME_INSUFFICIENT_DATA",
+        "confidence": 0.0,
+        "availability_timestamp_index": 16,
+        "uses_future_information": false
+      },
+      {
+        "index": 17,
+        "labels": {
+          "trend": "UNKNOWN",
+          "volatility": "UNKNOWN"
+        },
+        "state": "REGIME_INSUFFICIENT_DATA",
+        "confidence": 0.0,
+        "availability_timestamp_index": 17,
+        "uses_future_information": false
+      },
+      {
+        "index": 18,
+        "labels": {
+          "trend": "UNKNOWN",
+          "volatility": "UNKNOWN"
+        },
+        "state": "REGIME_INSUFFICIENT_DATA",
+        "confidence": 0.0,
+        "availability_timestamp_index": 18,
+        "uses_future_information": false
+      },
+      {
+        "index": 19,
+        "labels": {
+          "trend": "transitional",
+          "volatility": "normal_volatility",
+          "liquidity": "REGIME_UNKNOWN",
+          "correlation": "REGIME_UNKNOWN"
+        },
+        "state": "REGIME_TRANSITION",
+        "confidence": 0.56,
+        "availability_timestamp_index": 19,
+        "uses_future_information": false
+      },
+      {
+        "truncated": true
+      }
+    ],
+    "series_full_bounded": [
+      {
+        "index": 100,
+        "labels": {
+          "trend": "upward_trend",
+          "volatility": "high_volatility",
+          "liquidity": "REGIME_UNKNOWN",
+          "correlation": "REGIME_UNKNOWN"
+        },
+        "state": "REGIME_TRANSITION",
+        "confidence": 0.8,
+        "availability_timestamp_index": 100,
+        "uses_future_information": false
+      },
+      {
+        "index": 101,
+        "labels": {
+          "trend": "upward_trend",
+          "volatility": "high_volatility",
+          "liquidity": "REGIME_UNKNOWN",
+          "correlation": "REGIME_UNKNOWN"
+        },
+        "state": "REGIME_CLASSIFIED",
+        "confidence": 0.8,
+        "availability_timestamp_index": 101,
+        "uses_future_information": false
+      },
+      {
+        "index": 102,
+        "labels": {
+          "trend": "upward_trend",
+          "volatility": "high_volatility",
+          "liquidity": "REGIME_UNKNOWN",
+          "correlation": "REGIME_UNKNOWN"
+        },
+        "state": "REGIME_CLASSIFIED",
+        "confidence": 0.8,
+        "availability_timestamp_index": 102,
+        "uses_future_information": false
+      },
+      {
+        "index": 103,
+        "labels": {
+          "trend": "upward_trend",
+          "volatility": "high_volatility",
+          "liquidity": "REGIME_UNKNOWN",
+          "correlation": "REGIME_UNKNOWN"
+        },
+        "state": "REGIME_CLASSIFIED",
+        "confidence": 0.8,
+        "availability_timestamp_index": 103,
+        "uses_future_information": false
+      },
+      {
+        "index": 104,
+        "labels": {
+          "trend": "upward_trend",
+          "volatility": "high_volatility",
+          "liquidity": "REGIME_UNKNOWN",
+          "correlation": "REGIME_UNKNOWN"
+        },
+        "state": "REGIME_CLASSIFIED",
+        "confidence": 0.8,
+        "availability_timestamp_index": 104,
+        "uses_future_information": false
+      },
+      {
+        "index": 105,
+        "labels": {
+          "trend": "transitional",
+          "volatility": "high_volatility",
+          "liquidity": "REGIME_UNKNOWN",
+          "correlation": "REGIME_UNKNOWN"
+        },
+        "state": "REGIME_TRANSITION",
+        "confidence": 0.56,
+        "availability_timestamp_index": 105,
+        "uses_future_information": false
+      },
+      {
+        "index": 106,
+        "labels": {
+          "trend": "upward_trend",
+          "volatility": "normal_volatility",
+          "liquidity": "REGIME_UNKNOWN",
+          "correlation": "REGIME_UNKNOWN"
+        },
+        "state": "REGIME_TRANSITION",
+        "confidence": 0.8,
+        "availability_timestamp_index": 106,
+        "uses_future_information": false
+      },
+      {
+        "index": 107,
+        "labels": {
+          "trend": "transitional",
+          "volatility": "high_volatility",
+          "liquidity": "REGIME_UNKNOWN",
+          "correlation": "REGIME_UNKNOWN"
+        },
+        "state": "REGIME_TRANSITION",
+        "confidence": 0.56,
+        "availability_timestamp_index": 107,
+        "uses_future_information": false
+      },
+      {
+        "index": 108,
+        "labels": {
+          "trend": "transitional",
+          "volatility": "normal_volatility",
+          "liquidity": "REGIME_UNKNOWN",
+          "correlation": "REGIME_UNKNOWN"
+        },
+        "state": "REGIME_TRANSITION",
+        "confidence": 0.56,
+        "availability_timestamp_index": 108,
+        "uses_future_information": false
+      },
+      {
+        "index": 109,
+        "labels": {
+          "trend": "transitional",
+          "volatility": "low_volatility",
+          "liquidity": "REGIME_UNKNOWN",
+          "correlation": "REGIME_UNKNOWN"
+        },
+        "state": "REGIME_TRANSITION",
+        "confidence": 0.56,
+        "availability_timestamp_index": 109,
+        "uses_future_information": false
+      },
+      {
+        "index": 110,
+        "labels": {
+          "trend": "transitional",
+          "volatility": "normal_volatility",
+          "liquidity": "REGIME_UNKNOWN",
+          "correlation": "REGIME_UNKNOWN"
+        },
+        "state": "REGIME_TRANSITION",
+        "confidence": 0.56,
+        "availability_timestamp_index": 110,
+        "uses_future_information": false
+      },
+      {
+        "index": 111,
+        "labels": {
+          "trend": "transitional",
+          "volatility": "normal_volatility",
+          "liquidity": "REGIME_UNKNOWN",
+          "correlation": "REGIME_UNKNOWN"
+        },
+        "state": "REGIME_CLASSIFIED",
+        "confidence": 0.56,
+        "availability_timestamp_index": 111,
+        "uses_future_information": false
+      },
+      {
+        "index": 112,
+        "labels": {
+          "trend": "sideways",
+          "volatility": "normal_volatility",
+          "liquidity": "REGIME_UNKNOWN",
+          "correlation": "REGIME_UNKNOWN"
+        },
+        "state": "REGIME_TRANSITION",
+        "confidence": 0.8,
+        "availability_timestamp_index": 112,
+        "uses_future_information": false
+      },
+      {
+        "index": 113,
+        "labels": {
+          "trend": "transitional",
+          "volatility": "high_volatility",
+          "liquidity": "REGIME_UNKNOWN",
+          "correlation": "REGIME_UNKNOWN"
+        },
+        "state": "REGIME_TRANSITION",
+        "confidence": 0.56,
+        "availability_timestamp_index": 113,
+        "uses_future_information": false
+      },
+      {
+        "index": 114,
+        "labels": {
+          "trend": "transitional",
+          "volatility": "high_volatility",
+          "liquidity": "REGIME_UNKNOWN",
+          "correlation": "REGIME_UNKNOWN"
+        },
+        "state": "REGIME_CLASSIFIED",
+        "confidence": 0.56,
+        "availability_timestamp_index": 114,
+        "uses_future_information": false
+      },
+      {
+        "index": 115,
+        "labels": {
+          "trend": "transitional",
+          "volatility": "high_volatility",
+          "liquidity": "REGIME_UNKNOWN",
+          "correlation": "REGIME_UNKNOWN"
+        },
+        "state": "REGIME_CLASSIFIED",
+        "confidence": 0.56,
+        "availability_timestamp_index": 115,
+        "uses_future_information": false
+      },
+      {
+        "index": 116,
+        "labels": {
+          "trend": "transitional",
+          "volatility": "extreme_volatility",
+          "liquidity": "REGIME_UNKNOWN",
+          "correlation": "REGIME_UNKNOWN"
+        },
+        "state": "REGIME_TRANSITION",
+        "confidence": 0.56,
+        "availability_timestamp_index": 116,
+        "uses_future_information": false
+      },
+      {
+        "index": 117,
+        "labels": {
+          "trend": "transitional",
+          "volatility": "extreme_volatility",
+          "liquidity": "REGIME_UNKNOWN",
+          "correlation": "REGIME_UNKNOWN"
+        },
+        "state": "REGIME_CLASSIFIED",
+        "confidence": 0.56,
+        "availability_timestamp_index": 117,
+        "uses_future_information": false
+      },
+      {
+        "index": 118,
+        "labels": {
+          "trend": "sideways",
+          "volatility": "high_volatility",
+          "liquidity": "REGIME_UNKNOWN",
+          "correlation": "REGIME_UNKNOWN"
+        },
+        "state": "REGIME_TRANSITION",
+        "confidence": 0.8,
+        "availability_timestamp_index": 118,
+        "uses_future_information": false
+      },
+      {
+        "index": 119,
+        "labels": {
+          "trend": "sideways",
+          "volatility": "high_volatility",
+          "liquidity": "REGIME_UNKNOWN",
+          "correlation": "REGIME_UNKNOWN"
+        },
+        "state": "REGIME_CLASSIFIED",
+        "confidence": 0.8,
+        "availability_timestamp_index": 119,
+        "uses_future_information": false
+      },
+      {
+        "index": 120,
+        "labels": {
+          "trend": "transitional",
+          "volatility": "high_volatility",
+          "liquidity": "REGIME_UNKNOWN",
+          "correlation": "REGIME_UNKNOWN"
+        },
+        "state": "REGIME_TRANSITION",
+        "confidence": 0.56,
+        "availability_timestamp_index": 120,
+        "uses_future_information": false
+      },
+      {
+        "index": 121,
+        "labels": {
+          "trend": "transitional",
+          "volatility": "high_volatility",
+          "liquidity": "REGIME_UNKNOWN",
+          "correlation": "REGIME_UNKNOWN"
+        },
+        "state": "REGIME_CLASSIFIED",
+        "confidence": 0.56,
+        "availability_timestamp_index": 121,
+        "uses_future_information": false
+      },
+      {
+        "index": 122,
+        "labels": {
+          "trend": "sideways",
+          "volatility": "high_volatility",
+          "liquidity": "REGIME_UNKNOWN",
+          "correlation": "REGIME_UNKNOWN"
+        },
+        "state": "REGIME_TRANSITION",
+        "confidence": 0.8,
+        "availability_timestamp_index": 122,
+        "uses_future_information": false
+      },
+      {
+        "index": 123,
+        "labels": {
+          "trend": "sideways",
+          "volatility": "high_volatility",
+          "liquidity": "REGIME_UNKNOWN",
+          "correlation": "REGIME_UNKNOWN"
+        },
+        "state": "REGIME_CLASSIFIED",
+        "confidence": 0.8,
+        "availability_timestamp_index": 123,
+        "uses_future_information": false
+      },
+      {
+        "index": 124,
+        "labels": {
+          "trend": "transitional",
+          "volatility": "high_volatility",
+          "liquidity": "REGIME_UNKNOWN",
+          "correlation": "REGIME_UNKNOWN"
+        },
+        "state": "REGIME_TRANSITION",
+        "confidence": 0.56,
+        "availability_timestamp_index": 124,
+        "uses_future_information": false
+      },
+      {
+        "index": 125,
+        "labels": {
+          "trend": "transitional",
+          "volatility": "high_volatility",
+          "liquidity": "REGIME_UNKNOWN",
+          "correlation": "REGIME_UNKNOWN"
+        },
+        "state": "REGIME_CLASSIFIED",
+        "confidence": 0.56,
+        "availability_timestamp_index": 125,
+        "uses_future_information": false
+      },
+      {
+        "index": 126,
+        "labels": {
+          "trend": "transitional",
+          "volatility": "high_volatility",
+          "liquidity": "REGIME_UNKNOWN",
+          "correlation": "REGIME_UNKNOWN"
+        },
+        "state": "REGIME_CLASSIFIED",
+        "confidence": 0.56,
+        "availability_timestamp_index": 126,
+        "uses_future_information": false
+      },
+      {
+        "index": 127,
+        "labels": {
+          "trend": "sideways",
+          "volatility": "high_volatility",
+          "liquidity": "REGIME_UNKNOWN",
+          "correlation": "REGIME_UNKNOWN"
+        },
+        "state": "REGIME_TRANSITION",
+        "confidence": 0.8,
+        "availability_timestamp_index": 127,
+        "uses_future_information": false
+      },
+      {
+        "index": 128,
+        "labels": {
+          "trend": "sideways",
+          "volatility": "high_volatility",
+          "liquidity": "REGIME_UNKNOWN",
+          "correlation": "REGIME_UNKNOWN"
+        },
+        "state": "REGIME_CLASSIFIED",
+        "confidence": 0.8,
+        "availability_timestamp_index": 128,
+        "uses_future_information": false
+      },
+      {
+        "index": 129,
+        "labels": {
+          "trend": "transitional",
+          "volatility": "high_volatility",
+          "liquidity": "REGIME_UNKNOWN",
+          "correlation": "REGIME_UNKNOWN"
+        },
+        "state": "REGIME_TRANSITION",
+        "confidence": 0.56,
+        "availability_timestamp_index": 129,
+        "uses_future_information": false
+      },
+      {
+        "index": 130,
+        "labels": {
+          "trend": "transitional",
+          "volatility": "high_volatility",
+          "liquidity": "REGIME_UNKNOWN",
+          "correlation": "REGIME_UNKNOWN"
+        },
+        "state": "REGIME_CLASSIFIED",
+        "confidence": 0.56,
+        "availability_timestamp_index": 130,
+        "uses_future_information": false
+      },
+      {
+        "index": 131,
+        "labels": {
+          "trend": "transitional",
+          "volatility": "high_volatility",
+          "liquidity": "REGIME_UNKNOWN",
+          "correlation": "REGIME_UNKNOWN"
+        },
+        "state": "REGIME_CLASSIFIED",
+        "confidence": 0.56,
+        "availability_timestamp_index": 131,
+        "uses_future_information": false
+      },
+      {
+        "index": 132,
+        "labels": {
+          "trend": "transitional",
+          "volatility": "normal_volatility",
+          "liquidity": "REGIME_UNKNOWN",
+          "correlation": "REGIME_UNKNOWN"
+        },
+        "state": "REGIME_TRANSITION",
+        "confidence": 0.56,
+        "availability_timestamp_index": 132,
+        "uses_future_information": false
+      },
+      {
+        "index": 133,
+        "labels": {
+          "trend": "transitional",
+          "volatility": "normal_volatility",
+          "liquidity": "REGIME_UNKNOWN",
+          "correlation": "REGIME_UNKNOWN"
+        },
+        "state": "REGIME_CLASSIFIED",
+        "confidence": 0.56,
+        "availability_timestamp_index": 133,
+        "uses_future_information": false
+      },
+      {
+        "index": 134,
+        "labels": {
+          "trend": "transitional",
+          "volatility": "normal_volatility",
+          "liquidity": "REGIME_UNKNOWN",
+          "correlation": "REGIME_UNKNOWN"
+        },
+        "state": "REGIME_CLASSIFIED",
+        "confidence": 0.56,
+        "availability_timestamp_index": 134,
+        "uses_future_information": false
+      },
+      {
+        "index": 135,
+        "labels": {
+          "trend": "transitional",
+          "volatility": "normal_volatility",
+          "liquidity": "REGIME_UNKNOWN",
+          "correlation": "REGIME_UNKNOWN"
+        },
+        "state": "REGIME_CLASSIFIED",
+        "confidence": 0.56,
+        "availability_timestamp_index": 135,
+        "uses_future_information": false
+      },
+      {
+        "index": 136,
+        "labels": {
+          "trend": "transitional",
+          "volatility": "normal_volatility",
+          "liquidity": "REGIME_UNKNOWN",
+          "correlation": "REGIME_UNKNOWN"
+        },
+        "state": "REGIME_CLASSIFIED",
+        "confidence": 0.56,
+        "availability_timestamp_index": 136,
+        "uses_future_information": false
+      },
+      {
+        "index": 137,
+        "labels": {
+          "trend": "upward_trend",
+          "volatility": "normal_volatility",
+          "liquidity": "REGIME_UNKNOWN",
+          "correlation": "REGIME_UNKNOWN"
+        },
+        "state": "REGIME_TRANSITION",
+        "confidence": 0.8,
+        "availability_timestamp_index": 137,
+        "uses_future_information": false
+      },
+      {
+        "index": 138,
+        "labels": {
+          "trend": "transitional",
+          "volatility": "high_volatility",
+          "liquidity": "REGIME_UNKNOWN",
+          "correlation": "REGIME_UNKNOWN"
+        },
+        "state": "REGIME_TRANSITION",
+        "confidence": 0.56,
+        "availability_timestamp_index": 138,
+        "uses_future_information": false
+      },
+      {
+        "index": 139,
+        "labels": {
+          "trend": "transitional",
+          "volatility": "high_volatility",
+          "liquidity": "REGIME_UNKNOWN",
+          "correlation": "REGIME_UNKNOWN"
+        },
+        "state": "REGIME_CLASSIFIED",
+        "confidence": 0.56,
+        "availability_timestamp_index": 139,
+        "uses_future_information": false
+      },
+      {
+        "index": 140,
+        "labels": {
+          "trend": "transitional",
+          "volatility": "high_volatility",
+          "liquidity": "REGIME_UNKNOWN",
+          "correlation": "REGIME_UNKNOWN"
+        },
+        "state": "REGIME_CLASSIFIED",
+        "confidence": 0.56,
+        "availability_timestamp_index": 140,
+        "uses_future_information": false
+      },
+      {
+        "index": 141,
+        "labels": {
+          "trend": "transitional",
+          "volatility": "high_volatility",
+          "liquidity": "REGIME_UNKNOWN",
+          "correlation": "REGIME_UNKNOWN"
+        },
+        "state": "REGIME_CLASSIFIED",
+        "confidence": 0.56,
+        "availability_timestamp_index": 141,
+        "uses_future_information": false
+      },
+      {
+        "index": 142,
+        "labels": {
+          "trend": "transitional",
+          "volatility": "high_volatility",
+          "liquidity": "REGIME_UNKNOWN",
+          "correlation": "REGIME_UNKNOWN"
+        },
+        "state": "REGIME_CLASSIFIED",
+        "confidence": 0.56,
+        "availability_timestamp_index": 142,
+        "uses_future_information": false
+      },
+      {
+        "index": 143,
+        "labels": {
+          "trend": "transitional",
+          "volatility": "high_volatility",
+          "liquidity": "REGIME_UNKNOWN",
+          "correlation": "REGIME_UNKNOWN"
+        },
+        "state": "REGIME_CLASSIFIED",
+        "confidence": 0.56,
+        "availability_timestamp_index": 143,
+        "uses_future_information": false
+      },
+      {
+        "index": 144,
+        "labels": {
+          "trend": "transitional",
+          "volatility": "high_volatility",
+          "liquidity": "REGIME_UNKNOWN",
+          "correlation": "REGIME_UNKNOWN"
+        },
+        "state": "REGIME_CLASSIFIED",
+        "confidence": 0.56,
+        "availability_timestamp_index": 144,
+        "uses_future_information": false
+      },
+      {
+        "index": 145,
+        "labels": {
+          "trend": "transitional",
+          "volatility": "extreme_volatility",
+          "liquidity": "REGIME_UNKNOWN",
+          "correlation": "REGIME_UNKNOWN"
+        },
+        "state": "REGIME_TRANSITION",
+        "confidence": 0.56,
+        "availability_timestamp_index": 145,
+        "uses_future_information": false
+      },
+      {
+        "index": 146,
+        "labels": {
+          "trend": "transitional",
+          "volatility": "high_volatility",
+          "liquidity": "REGIME_UNKNOWN",
+          "correlation": "REGIME_UNKNOWN"
+        },
+        "state": "REGIME_TRANSITION",
+        "confidence": 0.56,
+        "availability_timestamp_index": 146,
+        "uses_future_information": false
+      },
+      {
+        "index": 147,
+        "labels": {
+          "trend": "transitional",
+          "volatility": "extreme_volatility",
+          "liquidity": "REGIME_UNKNOWN",
+          "correlation": "REGIME_UNKNOWN"
+        },
+        "state": "REGIME_TRANSITION",
+        "confidence": 0.56,
+        "availability_timestamp_index": 147,
+        "uses_future_information": false
+      },
+      {
+        "index": 148,
+        "labels": {
+          "trend": "transitional",
+          "volatility": "extreme_volatility",
+          "liquidity": "REGIME_UNKNOWN",
+          "correlation": "REGIME_UNKNOWN"
+        },
+        "state": "REGIME_CLASSIFIED",
+        "confidence": 0.56,
+        "availability_timestamp_index": 148,
+        "uses_future_information": false
+      },
+      {
+        "index": 149,
+        "labels": {
+          "trend": "sideways",
+          "volatility": "extreme_volatility",
+          "liquidity": "REGIME_UNKNOWN",
+          "correlation": "REGIME_UNKNOWN"
+        },
+        "state": "REGIME_TRANSITION",
+        "confidence": 0.8,
+        "availability_timestamp_index": 149,
+        "uses_future_information": false
+      }
+    ],
+    "transition_count": 62,
+    "transitions_sample": [
+      {
+        "index": 19,
+        "from": "UNKNOWN|UNKNOWN",
+        "to": "transitional|normal_volatility"
+      },
+      {
+        "index": 22,
+        "from": "transitional|normal_volatility",
+        "to": "sideways|normal_volatility"
+      },
+      {
+        "index": 23,
+        "from": "sideways|normal_volatility",
+        "to": "transitional|normal_volatility"
+      },
+      {
+        "index": 24,
+        "from": "transitional|normal_volatility",
+        "to": "sideways|high_volatility"
+      },
+      {
+        "index": 28,
+        "from": "sideways|high_volatility",
+        "to": "transitional|high_volatility"
+      },
+      {
+        "index": 29,
+        "from": "transitional|high_volatility",
+        "to": "sideways|normal_volatility"
+      },
+      {
+        "index": 32,
+        "from": "sideways|normal_volatility",
+        "to": "transitional|normal_volatility"
+      },
+      {
+        "index": 33,
+        "from": "transitional|normal_volatility",
+        "to": "sideways|low_volatility"
+      },
+      {
+        "index": 34,
+        "from": "sideways|low_volatility",
+        "to": "transitional|low_volatility"
+      },
+      {
+        "index": 35,
+        "from": "transitional|low_volatility",
+        "to": "transitional|normal_volatility"
+      },
+      {
+        "index": 38,
+        "from": "transitional|normal_volatility",
+        "to": "sideways|normal_volatility"
+      },
+      {
+        "index": 44,
+        "from": "sideways|normal_volatility",
+        "to": "sideways|low_volatility"
+      },
+      {
+        "index": 45,
+        "from": "sideways|low_volatility",
+        "to": "sideways|normal_volatility"
+      },
+      {
+        "index": 48,
+        "from": "sideways|normal_volatility",
+        "to": "transitional|normal_volatility"
+      },
+      {
+        "index": 49,
+        "from": "transitional|normal_volatility",
+        "to": "sideways|normal_volatility"
+      },
+      {
+        "index": 50,
+        "from": "sideways|normal_volatility",
+        "to": "transitional|normal_volatility"
+      },
+      {
+        "index": 52,
+        "from": "transitional|normal_volatility",
+        "to": "sideways|normal_volatility"
+      },
+      {
+        "index": 53,
+        "from": "sideways|normal_volatility",
+        "to": "transitional|normal_volatility"
+      },
+      {
+        "index": 54,
+        "from": "transitional|normal_volatility",
+        "to": "sideways|normal_volatility"
+      },
+      {
+        "index": 55,
+        "from": "sideways|normal_volatility",
+        "to": "sideways|low_volatility"
+      }
+    ],
+    "counts": {
+      "unknown": 19,
+      "low_confidence": 0,
+      "classified": 131
+    },
+    "regime_drift_detected": false,
+    "drift_state": null,
+    "point_in_time_controls": {
+      "future_information_used": false,
+      "thresholds_from_test": false,
+      "ex_post_relabelling": false
+    },
+    "unknown_regime_supported": true,
+    "insufficient_data_supported": true,
+    "LIVE_TRADING_AUTHORIZED": false,
+    "BROKER_CONNECTIVITY_AUTHORIZED": false,
+    "REAL_CONNECTIVITY_AUTHORIZED": false,
+    "CREDENTIAL_PROVISIONING_AUTHORIZED": false,
+    "CANARY_ACTIVATION_AUTHORIZED": false,
+    "ORDER_EXECUTION_AUTHORIZED": false,
+    "ORDER_SUBMISSION_AUTHORIZED": false,
+    "ORDER_MODIFICATION_AUTHORIZED": false,
+    "ORDER_CANCELLATION_AUTHORIZED": false,
+    "API_KEYS_ACCEPTED": false,
+    "OAUTH_AUTHORIZED": false,
+    "LIVE_MARKET_DATA_AUTHORIZED": false,
+    "LIVE_DATA_DEPENDENCY": false,
+    "PAPER_EXECUTION_AUTHORIZED": false,
+    "AUTOMATED_INVESTMENT_AUTHORITY": false,
+    "REGULATORY_GRADE_PORTFOLIO_OPTIMISATION": false,
+    "STRATEGY_PROFITABILITY_GUARANTEED": false,
+    "LIVE_MARKET_READINESS": false,
+    "INVESTMENT_ADVICE_CERTIFIED": false,
+    "PRODUCTION_AUTHORIZED": false,
+    "REAL_BROKER_CONNECTION_CAPABLE": false,
+    "paper_only": true,
+    "sandbox_only": true,
+    "research_only": true,
+    "offline_first": true,
+    "offline_capable": true,
+    "no_broker_connection": true,
+    "no_api_keys": true,
+    "no_oauth": true,
+    "no_order_submission": true,
+    "no_live_data_dependency": true,
+    "no_live_trading": true,
+    "certified_experiment_requires_pre_registration": true,
+    "human_review_required_for_paper_candidate": true,
+    "paper_candidate_does_not_authorise_execution": true,
+    "max_authority": "RESEARCH_PORTFOLIO_AND_PAPER_CANDIDATE_EVALUATION_ONLY",
+    "default_leverage_max": 1.0,
+    "evidence_hash": "45f155450ddbc6ea2cab525a36270771bb73da4bb0f1f9e58636267fae1b59ab",
+    "classification_id": "rcls_23bfe0cbaddd4c11"
+  },
+  "strategy_by_regime": {
+    "ok": true,
+    "strategy_id": "tf_dual_ma",
+    "strategy_by_regime": {
+      "sideways": {
+        "n": 150,
+        "expectancy": 0.000942,
+        "sharpe_ratio": 2.393258,
+        "maximum_drawdown": 0.038958
+      }
+    },
+    "regime_dependent": false,
+    "unknown_included": false,
+    "limitations": [
+      "Regime labels are research classifications, not live market state feeds",
+      "Small-n regimes have low confidence"
+    ],
+    "LIVE_TRADING_AUTHORIZED": false,
+    "BROKER_CONNECTIVITY_AUTHORIZED": false,
+    "REAL_CONNECTIVITY_AUTHORIZED": false,
+    "CREDENTIAL_PROVISIONING_AUTHORIZED": false,
+    "CANARY_ACTIVATION_AUTHORIZED": false,
+    "ORDER_EXECUTION_AUTHORIZED": false,
+    "ORDER_SUBMISSION_AUTHORIZED": false,
+    "ORDER_MODIFICATION_AUTHORIZED": false,
+    "ORDER_CANCELLATION_AUTHORIZED": false,
+    "API_KEYS_ACCEPTED": false,
+    "OAUTH_AUTHORIZED": false,
+    "LIVE_MARKET_DATA_AUTHORIZED": false,
+    "LIVE_DATA_DEPENDENCY": false,
+    "PAPER_EXECUTION_AUTHORIZED": false,
+    "AUTOMATED_INVESTMENT_AUTHORITY": false,
+    "REGULATORY_GRADE_PORTFOLIO_OPTIMISATION": false,
+    "STRATEGY_PROFITABILITY_GUARANTEED": false,
+    "LIVE_MARKET_READINESS": false,
+    "INVESTMENT_ADVICE_CERTIFIED": false,
+    "PRODUCTION_AUTHORIZED": false,
+    "REAL_BROKER_CONNECTION_CAPABLE": false,
+    "paper_only": true,
+    "sandbox_only": true,
+    "research_only": true,
+    "offline_first": true,
+    "offline_capable": true,
+    "no_broker_connection": true,
+    "no_api_keys": true,
+    "no_oauth": true,
+    "no_order_submission": true,
+    "no_live_data_dependency": true,
+    "no_live_trading": true,
+    "certified_experiment_requires_pre_registration": true,
+    "human_review_required_for_paper_candidate": true,
+    "paper_candidate_does_not_authorise_execution": true,
+    "max_authority": "RESEARCH_PORTFOLIO_AND_PAPER_CANDIDATE_EVALUATION_ONLY",
+    "default_leverage_max": 1.0
+  }
+}

@@ -1,0 +1,91 @@
+{
+  "LOOK_AHEAD_STRATEGY": {
+    "expected_channel": "engine",
+    "expected_status": "REJECTED",
+    "expected_code": "look-ahead",
+    "result": "REJECTED",
+    "look_ahead_ok": false
+  },
+  "FUTURE_RETURN_FEATURE": {
+    "expected_channel": "structural",
+    "expected_status": "REJECTED",
+    "expected_code": "FUTURE_RETURN_FEATURE",
+    "runnable": false,
+    "codes": [
+      "FUTURE_RETURN_FEATURE"
+    ],
+    "result": "REJECTED"
+  },
+  "UNBOUNDED_POSITION_SIZE": {
+    "expected_channel": "structural",
+    "expected_status": "REJECTED",
+    "expected_code": "UNBOUNDED_POSITION_SIZE",
+    "runnable": false,
+    "codes": [
+      "UNBOUNDED_POSITION_SIZE"
+    ],
+    "result": "REJECTED"
+  },
+  "EXCESSIVE_LEVERAGE_REQUEST": {
+    "expected_channel": "structural",
+    "expected_status": "REJECTED",
+    "expected_code": "EXCESSIVE_LEVERAGE_REQUEST",
+    "runnable": false,
+    "codes": [
+      "EXCESSIVE_LEVERAGE_REQUEST"
+    ],
+    "result": "REJECTED"
+  },
+  "DUPLICATE_ORDER_STRATEGY": {
+    "expected_channel": "engine_guard",
+    "expected_status": "COMPLETE",
+    "expected_code": "single_entry",
+    "result": "COMPLETE",
+    "buy_fills": 1
+  },
+  "ZERO_COST_DEPENDENT": {
+    "expected_channel": "cost",
+    "expected_status": "COMPLETE",
+    "expected_code": "cost_sensitive",
+    "result": "COMPLETE",
+    "cost_sensitive": true,
+    "zero": "0.09",
+    "stressed": "-0.02"
+  },
+  "SINGLE_TRADE_OVERFIT": {
+    "expected_channel": "validation",
+    "expected_status": "COMPLETE",
+    "expected_code": "SINGLE_TRADE_DOMINANCE",
+    "result": "COMPLETE",
+    "outcome": "FAILED_BIAS_CHECK"
+  },
+  "TEST_SET_TUNED": {
+    "expected_channel": "walk_forward",
+    "expected_status": "COMPLETE",
+    "expected_code": "selected_before_test",
+    "result": "COMPLETE",
+    "note": "fold.selected_before_test flag recorded per fold"
+  },
+  "MISSING_DATA_IGNORER": {
+    "expected_channel": "quality",
+    "expected_status": "COMPLETE",
+    "expected_code": "gap_surfaced",
+    "result": "COMPLETE",
+    "blocking": 0,
+    "counts": {
+      "VALID": 26,
+      "GAPPED": 1
+    }
+  },
+  "INVALID_PRICE_ACCEPTOR": {
+    "expected_channel": "quality",
+    "expected_status": "REJECTED",
+    "expected_code": "data quality blocking",
+    "result": "REJECTED",
+    "blocking": 1,
+    "counts": {
+      "VALID": 29,
+      "INVALID_PRICE": 1
+    }
+  }
+}

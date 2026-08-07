@@ -1,0 +1,17 @@
+{
+  "schema": "M311_CLEAN_CLONE_CERTIFICATION",
+  "timestamp": "2026-07-30T13:33:26Z",
+  "M296_M303_SOURCE_PRESENT": true,
+  "M304_M311_SOURCE_PRESENT": true,
+  "FOCUSED_TESTS_PASSED": true,
+  "FRONTEND_TESTS_PASSED": true,
+  "PRODUCTION_BUILD_PASSED": true,
+  "M311_BROWSER_CERT_PASSED": true,
+  "m311_verdict": "READ_ONLY_MARKET_OBSERVATION_BROWSER_CERT_PASSED_WITH_LIMITATIONS",
+  "backend_tests": "7 passed",
+  "frontend_tests": "5 passed",
+  "build_routes": [
+    "/trading/market-observation"
+  ],
+  "ok": true
+}

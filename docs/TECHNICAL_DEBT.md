@@ -1,5 +1,207 @@
 # SaathiOS Technical Debt / Known Gaps
 
+## M73–M77 Voice Output Foundation residual debt (2026-07-28)
+
+- HIGH / CERTIFICATION: the dedicated M77 production browser speech journey did
+  not pass within its initial run plus two bounded retry cycles. The harness
+  reached a real authenticated synthesis request but did not observe the client
+  `completed` state within 30 seconds. Backend replication completed through the
+  macOS fallback, and unit/regression/build gates pass, but browser playback,
+  browser Stop/cancel, IELTS browser read-aloud, responsive voice views, context
+  invalidation, and logout cleanup must be re-certified before the UI is described
+  as browser-certified.
+- MEDIUM / INTENTIONAL: VoxCPM is an implemented optional adapter, not an installed
+  runtime. No package, executable, GGUF, or weights are present; runtime, quality,
+  latency, memory, English, and Nepali inference remain unverified. Any future
+  evaluation needs an isolated environment and an explicit resource/download
+  decision for the 8 GiB machine.
+- MEDIUM / PERFORMANCE: native macOS cold artifact readiness measured 4.539 seconds,
+  above the suggested 2-second target. Warm readiness measured 1.663 seconds.
+  Provider-native chunk streaming is not implemented; authenticated range delivery
+  begins only after the complete artifact exists.
+- MEDIUM / SAFETY-INTENTIONAL: voice cloning remains disabled below the provider
+  boundary. Verified rights/consent, public-figure restrictions, immutable consent
+  evidence, synthetic labeling, revocation/deletion, and reference-artifact
+  lifecycle controls must all exist before activation.
+- LOW: English is the only certified synthesis language and only at the backend/native
+  provider layer. Nepali is `UNSUPPORTED_NOT_VERIFIED`; Hindi or Devanagari
+  acceptance must never be relabeled as Nepali quality.
+- LOW / DEV-ONLY: production npm audit remains zero-vulnerability. The full
+  development audit reports the pre-existing nine high advisories in the
+  ESLint/minimatch/brace-expansion tree; the registry proposes a breaking ESLint
+  major upgrade.
+
+## M69–M72 Autonomous Mission Runtime residual debt (2026-07-28)
+
+- MEDIUM / INTENTIONAL: the certified runtime is single-host, SQLite-backed, and
+  synchronously driven. Multi-host leases, distributed queue ownership, remote
+  workers, and an always-on background mission daemon are not enabled or certified.
+- MEDIUM / INTENTIONAL: final certification is a server-authored deterministic
+  snapshot over internal evidence, review, checkpoint, budget, and commit references.
+  It is not a cryptographic signature, independent remote attestation, or proof that
+  a referenced Git object exists outside the bounded checkout contract.
+- LOW: checkpoint and recovery contracts are durable, but cross-host checkpoint
+  transfer, external artifact retention/verification, and distributed exactly-once
+  coordination remain future work.
+- LOW: Mission Control browser certification covers authenticated desktop/mobile
+  rendering, semantics, overflow, reload persistence, and browser errors; exhaustive
+  screen-reader and assistive-technology certification remains deferred.
+- LOW / DEV-ONLY: production npm audit is zero-vulnerability. The full development
+  audit reports nine high advisories in ESLint's minimatch/brace-expansion tree; the
+  registry's complete remediation requires a breaking ESLint major upgrade. Keep lint
+  input trusted and address this through a coordinated Next/ESLint toolchain milestone.
+- RESOLVED from M59/M60: mission runtime now has authenticated per-mission detail,
+  lifecycle controls, durable backend checkpoints/evidence, and server-derived
+  Mission Control state. Browser controls remain intentionally observational.
+
+## M61 residual / deferred (2026-07-26)
+
+- **Resolved from M60:** plan/notifications/saved-views/templates now SERVER_PERSISTED;
+  attention ack/resolve SERVER_AUTHORIZED+AUDITED; search SERVER_AUTHORIZED; drafts +
+  optimistic concurrency added.
+- **Single-host SQLite** — persistence is single-host (no distributed store / streaming
+  / multi-node); that is M62.
+- **UI draft adoption incremental** — server draft APIs exist + tested, but the M60
+  mission/onboarding pages still autosave locally (server draft wiring deferred).
+- **Notification synthesis is client-triggered** (operator+ syncs derived events into
+  durable records); no server-side background event producer yet.
+- **Search** covers missions/projects/approvals/templates/notifications; execution +
+  evidence full-text deferred.
+- Cold-start session race persists in the isolated cert env; page loads (e.g. saved
+  views) now retry transient 401/network on cold start to compensate.
+
+## M60 residual / deferred (2026-07-26)
+
+- **Missing backend APIs (M61 targets):** mission plan persistence, attention
+  acknowledge/resolve, durable notifications, saved-view persistence, workflow-template
+  persistence, server-side authorized search, mission update, onboarding-progress
+  persistence. M60 implements these as DRAFT_ONLY / BLOCKED / DERIVED / LOCAL_ONLY /
+  authorized-loaded-records with honest in-UI labels.
+- **Cold-start session race:** in the isolated cert env, a concurrent cold request can
+  briefly 401 ("session expired, revoked, or unknown") and show a transient banner that
+  self-heals on reconcile. This makes `mission_creation_live`/`mission_scope_select`
+  SOFT gates (the `/projects` fetch races). One-off page fetches (`/projects` in
+  mission-new, approval-new, search) do not yet share `usePlatformData`'s retry.
+- **axe serious (6, pre-existing):** global TopBar status glyph contrast — carried from
+  M58/M59, needs a chrome-a11y pass.
+- Local perf only; no real-user CWV.
+
+## M59 residual / deferred (2026-07-26)
+
+- **Resolved from M58:** standalone Mission/Agents/Approval/Attention spatial screens
+  now exist; spatial command palette shipped; prod-build cert + axe-core added.
+- **No per-mission API** — mission detail composes list record + runtime records by
+  `mission_id`; last-operator-action / final-result fields unavailable.
+- **No attention acknowledge/resolve API** — attention workspace is inspect + navigate
+  + governed cancel only; resume/reconcile stay on Operations.
+- **Mission actions read-only** — no lifecycle-transition API beyond create.
+- **axe serious (10, pre-existing, not M59):** global TopBar status glyph contrast
+  ("Local"/"Alerts") and M58 `/platform` module-panel `<ul>` non-`<li>` children
+  (`list` rule). Needs a dedicated chrome-a11y pass (M60).
+- **Global vs spatial ⌘K:** spatial palette wins via capture-phase suppression; the
+  global app-shell palette still mounts (closed) on workspace routes.
+- **Perf is local-lab only** — no real-user Core Web Vitals yet.
+- Dev-mode cert can flake on first-hit on-demand route compilation under load;
+  production (precompiled) build is the authoritative gate.
+
+## M58 residual / deferred (2026-07-26)
+
+- Spatial scope applied to `/platform` + `/platform/ops` only; other `/platform/*`
+  and app routes still use the prior presentation. Shared app shell (rail, top clock)
+  unchanged.
+- Screens 3–6 (Mission Control execution graph, Agents constellation, full Approval
+  Center, standalone Attention field) are live glass panels/nodes on the home, not yet
+  separate full spatial screens → M59.
+- Ops constellation node **cards** carry the certified `data-testid`s inline; the
+  detail drawer deliberately carries none (to keep values unique). Any future cert must
+  assert against the card, not the drawer.
+- M58 cert runs in dev mode; `cert:m58:build` (prod build) not yet run.
+- No axe-core / Lighthouse-CWV assertions in the cert; mono micro-label contrast sweep
+  pending. Accessibility is AA-targeted + label-verified, not tool-audited.
+- Cold-start resilience relies on a warm-up fetch + patient retry; if the BFF is truly
+  down (not merely cold) cards show explicit "Unavailable", by design.
+
+## M57 residual / deferred (2026-07-25)
+
+- macOS ⌥⌘B is PREPARED, not auto-assigned (cannot safely enumerate system
+  bindings); operator assigns + verifies. Login LaunchAgent prepared, disabled.
+- A pre-existing com.saathi.local LaunchAgent may hold *:8765 (all interfaces);
+  M57 never modifies it and fails closed around it. Clean single-launcher daily
+  use requires the operator to unload it (or bind it to 127.0.0.1).
+- Heartbeat is single-host (30s); no multi-host coordination.
+- Cold-load retry mitigates first-compile races but a genuinely down backend
+  still surfaces after retries.
+- No deployment, production, connectors, financial/trading, or multi-host.
+
+## M56 residual / deferred (2026-07-25)
+
+- Distributed runtime is a single-host foundation: workers/leases/nodes/scheduler
+  are advisory and implemented on one host; no networking, remote execution, or
+  multi-host coordination backend is enabled.
+- Cluster state is config-backed single-writer (no schema migration); multi-host
+  concurrent writes need a coordination backend (deferred).
+- No distributed consensus/quorum/exactly-once; recovery proves single-host
+  invariants only.
+- Operator-console cluster surfaces are browser-certified locally; backend
+  contract tests are the CI-side guarantee.
+- Deployment, production mode, connector mutation, financial/trading execution
+  remain deferred. Trading Guardian advisory-only.
+
+## M55 residual / deferred (2026-07-25)
+
+- Release readiness is advisory/structural (`READY_WITH_LIMITATIONS`), not a
+  deployment authorization; production/connectors/cloud intentionally disabled.
+- Backup restore and retention purge remain simulations/dry-run; real destructive
+  operations deferred behind owner confirmation + backup rehearsal.
+- Metrics are single-host snapshots; `restart_count` is UNKNOWN (no cross-process
+  tracking); no distributed telemetry.
+- Recovery certification covers single-host restart/dispatch/binding invariants;
+  multi-host coordination out of scope.
+- Operator-console browser certification is local; backend contract tests are the
+  CI-side guarantee.
+- Deployment, production mode, OAuth, live connector mutation, and
+  financial/trading execution remain deferred. Trading Guardian advisory-only.
+
+## M54 residual / deferred (2026-07-25)
+
+- Private-alpha operational readiness (diagnostics, evidence export, dry-run
+  retention) and browser certification are local single-host only.
+- Retention purge is dry-run only; real deletion is deferred behind explicit
+  owner confirmation and a backup rehearsal.
+- Browser certification is certified locally; the full managed BFF+UI+Chromium
+  run is not run in CI (backend contract tests cover the CI side). No distributed
+  telemetry.
+- Recorded-dispatch uncertainty remains manual and non-replayable by design.
+- Compatibility wrappers remain until external callers migrate.
+- Deployment, production OAuth/email, live connector mutation, and
+  financial/trading execution remain deferred. Trading Guardian advisory-only.
+- Split-origin browser access requires `X-Platform-Token` in the CORS allowlist
+  (added in M54) and a scoped `SAATHI_CORS_ORIGINS`.
+
+## M53 residual / deferred (2026-07-24)
+
+- Runtime operations and multi-identity binding administration are available
+  for private-alpha use, but coordination remains single-host SQLite.
+- Recorded-dispatch uncertainty remains manual and non-replayable by design.
+- Operational metrics are bounded persisted snapshots, not distributed or
+  real-time telemetry.
+- Compatibility wrappers remain gateway/runtime enforced until their external
+  callers migrate.
+- Browser certification, CI, deployment, production authority, live connector
+  mutation, financial/trading execution, and multi-host workers remain deferred.
+- Trading Guardian remains unengaged and advisory-only.
+
+## M52 residual / deferred (2026-07-23)
+
+- Platform-agent execution is consolidated through `PlatformAgentRuntime` and
+  M49 `ExecutionGateway`; unbound legacy `AgentExecutor` dispatch is closed.
+- Single-host SQLite lifecycle coordination is not a distributed guarantee.
+- Recorded-dispatch restart recovery pauses for manual reconciliation and never
+  auto-replays a mutation.
+- Multi-agent binding administration is closed by M53. Live connector mutations,
+  deployment, and production authorization remain deferred.
+- Trading Guardian remains unengaged and advisory-only.
+
 ## Program note (M21–M39 / M30, 2026-07-17)
 
 Platform program through **M30 connector conformance + certification** (operator-authorized).
@@ -314,3 +516,44 @@ Product IELTSAlert work uses **PRODUCT/IELTSAlert** numbering — not platform d
 - Editing `gov/bypass_guard.py` (allowlisting the M32 provider runtime) drifted the
   4 gov connector certifications; they were re-assessed to CERTIFIED_WITH_LIMITATIONS
   (fresh). Future edits to that file require the same explicit re-assess.
+
+## M64 — Module shell residual debt (2026-07-28)
+
+- LOW: frontend static module metadata remains as a non-operational loading/route
+  skeleton and drift-test fixture. It cannot grant capability; remove only after a
+  backend-derived skeleton/migration path is proven.
+- LOW: module enablement is process-global, not tenant-specific. Do not imply tenant
+  enablement until an authoritative persistence model exists.
+- LOW: no module discovery cache, global search index, or dynamic installation.
+- LOW: focused keyboard/semantic/status accessibility passed; exhaustive assistive-
+  technology certification remains deferred.
+- MEDIUM / PRE-EXISTING: the global TopBar approvals request
+  (`/api/v1/connectors/approvals/pending`) emits a CORS plus failed-resource pair in
+  the checkout-local production browser. M64 module requests have zero unexpected
+  console errors and are unaffected; fix the connector/TopBar CORS contract in its
+  own bounded milestone.
+
+## M65–M68 — IELTSAlert residual debt (2026-07-28)
+
+- MEDIUM / INTENTIONAL: provider-assisted scoring is not configured. The explicit
+  unavailable adapter falls back to a deterministic local practice estimate with
+  local provenance; no official band score is produced.
+- MEDIUM / INTENTIONAL: test-center availability is a labelled Kathmandu/Pokhara
+  fixture source. Live provider contracting, legal terms, freshness/reconciliation,
+  and notification delivery remain external work.
+- MEDIUM / INTENTIONAL: payment is a manual evidence-verification record only. It
+  performs no settlement, automatic approval, entitlement activation, refund, or
+  financial reconciliation.
+- LOW: artifacts are bounded centralized evidence references; IELTS-specific upload,
+  antivirus/media processing, transcription, and retention UI were not duplicated.
+- LOW: persistence is single-host PlatformStore SQLite and module enablement remains
+  process-global as recorded under M64.
+- LOW: the separate `pielts` product repository was audited as EXTERNAL and not
+  migrated. Any future adapter must preserve platform identity/RBAC/audit authority.
+- LOW: focused browser accessibility passed; exhaustive screen-reader and
+  assistive-technology certification is deferred.
+- LOW / DEV-ONLY: production npm audit is zero-vulnerability after patching
+  Next/PostCSS/Sharp and Playwright. ESLint's dependency tree retains minimatch
+  advisories whose registry remediation requires incompatible major versions;
+  lint receives trusted checkout-local source only. Revisit with a coordinated
+  ESLint/Next config major upgrade.

@@ -1,0 +1,165 @@
+{
+  "name": "read_only_provider_canary",
+  "state": "CANARY_DESIGNED_NOT_AUTHORIZED",
+  "provider": "alpaca",
+  "environment": "ONE_OWNER_CONTROLLED_ACCOUNT_ONE_ENV",
+  "mode": "READ_ONLY",
+  "activation": "MANUAL_ONLY",
+  "revocation": "MANUAL_AND_KILL_SWITCH",
+  "time_bounded": true,
+  "rate_limited": true,
+  "monitored": true,
+  "fully_audited": true,
+  "components": [
+    "Owner Approval Center (existing)",
+    "Credential Metadata Lifecycle (reference-only; no raw secrets to LLM)",
+    "Transport Guard (endpoint + network allow-list)",
+    "Canary Read Collector (future; not implemented)",
+    "Snapshot Store (durable; no credentials)",
+    "Reconciliation Engine (compare snapshots)",
+    "Audit Evidence Store",
+    "Monitoring & Abort Evaluator",
+    "Kill Switch",
+    "Operations Control Center UI (planning view)"
+  ],
+  "isolation": {
+    "from_execution_systems": true,
+    "from_order_submission": true,
+    "from_portfolio_mutation": true,
+    "from_trading_guardian_autonomous_actions": true,
+    "from_llm_credential_path": true
+  },
+  "trust_boundaries": [
+    {
+      "boundary": "owner_human",
+      "description": "Only human owner may approve planning package and future activation."
+    },
+    {
+      "boundary": "credential_entry",
+      "description": "Raw secret never enters LLM context; only reference IDs stored in SaathiOS."
+    },
+    {
+      "boundary": "network_allowlist",
+      "description": "Only paper-api (or designated) host allowed; no OAuth login hosts."
+    },
+    {
+      "boundary": "endpoint_allowlist",
+      "description": "Only GET account/positions/orders/activities families."
+    },
+    {
+      "boundary": "execution_isolation",
+      "description": "No path into order placement, cancel, withdraw, transfer."
+    },
+    {
+      "boundary": "tg_autonomy_isolation",
+      "description": "Trading Guardian cannot auto-act on canary data."
+    }
+  ],
+  "data_flow": [
+    "owner_approved_credential_ref \u2192 transport_guard \u2192 allowed_GET \u2192 snapshot_normalize \u2192 durable_store \u2192 audit \u2192 recon \u2192 monitor"
+  ],
+  "storage_flow": [
+    "snapshots + hashes + timestamps",
+    "no raw credentials",
+    "no full secret material",
+    "retention-bounded purge job (future)"
+  ],
+  "audit_flow": [
+    "every request attempt logged (url family, status, latency, hash of response redacted)",
+    "abort events immutable",
+    "revocation events immutable"
+  ],
+  "reconciliation_flow": [
+    "baseline paper portfolio remains unchanged",
+    "provider snapshot vs prior snapshot delta within tolerance",
+    "unknown asset \u2192 abort"
+  ],
+  "kill_switch_flow": [
+    "manual kill \u2192 stop collector \u2192 revoke local use of ref \u2192 optional external revoke runbook"
+  ],
+  "revocation_flow": [
+    "owner revokes at provider console",
+    "operator marks ref REVOKED",
+    "transport refuses subsequent use",
+    "external verification step in runbook"
+  ],
+  "error_flow": [
+    "4xx auth \u2192 abort security",
+    "429 \u2192 backoff then threshold abort",
+    "5xx \u2192 warning then stop threshold",
+    "schema unknown \u2192 manual review"
+  ],
+  "owner_approval_flow": [
+    "M246 package review \u2192 APPROVE_PLANNING_PACKAGE_ONLY only",
+    "separate future milestone required for any connectivity authority"
+  ],
+  "may_read": [
+    "provider_identity",
+    "account_metadata",
+    "permissions",
+    "balances",
+    "positions",
+    "order_history",
+    "trade_history",
+    "fee_history",
+    "transaction_history"
+  ],
+  "must_not": [
+    "order_placement",
+    "order_cancellation",
+    "order_modification",
+    "withdrawal",
+    "transfer",
+    "account_administration",
+    "sub_account_administration",
+    "api_key_administration",
+    "margin_activation",
+    "leverage_activation"
+  ],
+  "network_allowlist_proposal": [
+    "paper-api.alpaca.markets"
+  ],
+  "endpoint_allowlist_proposal": [
+    "GET /v2/clock",
+    "GET /v2/account",
+    "GET /v2/positions",
+    "GET /v2/orders (read statuses only)",
+    "GET /v2/account/portfolio/history",
+    "GET /v2/account/activities",
+    "GET /v2/assets"
+  ],
+  "endpoint_denylist_proposal": [
+    "POST /v2/orders",
+    "DELETE /v2/orders/*",
+    "PATCH /v2/orders/*",
+    "any withdrawal/transfer path",
+    "any OAuth authorize path"
+  ],
+  "budgets": {
+    "time_limit": "max 72 hours per canary window (proposal)",
+    "call_budget": "max 500 authenticated GETs per window",
+    "rate_limit_budget": "max 30 requests/minute; stop after 3 consecutive 429s",
+    "retry_policy": "idempotent GET only; max 2 retries",
+    "backoff_policy": "exponential 1s, 2s, 4s; no retry on 401/403",
+    "data_retention_limit": "30 days for canary snapshots unless legal requires shorter"
+  },
+  "evidence_capture": [
+    "request family + timestamp + response hash",
+    "scope introspection result",
+    "abort evidence packs"
+  ],
+  "rollback": [
+    "disable collector",
+    "revoke credential ref locally",
+    "purge short-lived caches",
+    "retain immutable audit",
+    "paper portfolio and durable ledger remain authoritative and unchanged"
+  ],
+  "provider_adapter_implemented": false,
+  "canary_activation_authorized": false,
+  "evidence_hash": "269134eb1c3301fef35954f6df039324fa2dd6c4d51816e0948d8218e12f0433",
+  "CANARY_ACTIVATION_AUTHORIZED": false,
+  "REAL_CONNECTIVITY_AUTHORIZED": false,
+  "CREDENTIAL_PROVISIONING_AUTHORIZED": false,
+  "LIVE_TRADING_AUTHORIZED": false
+}

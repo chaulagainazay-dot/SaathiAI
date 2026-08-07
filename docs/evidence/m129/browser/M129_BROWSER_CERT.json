@@ -1,0 +1,74 @@
+{
+  "schema": "m129.app_browser_cert.v1",
+  "capturedAt": "2026-07-29T03:29:34.411Z",
+  "hardGates": {
+    "discover_ge_5": {
+      "ok": true,
+      "detail": "10"
+    },
+    "launched_running": {
+      "ok": true,
+      "detail": "RUNNING"
+    },
+    "workspace_isolated": {
+      "ok": true,
+      "detail": "iso"
+    },
+    "approval_blocked": {
+      "ok": true,
+      "detail": "appr"
+    },
+    "workflow_ok": {
+      "ok": true,
+      "detail": "wf"
+    },
+    "no_bypass": {
+      "ok": true,
+      "detail": "gw"
+    },
+    "backup_restore": {
+      "ok": true,
+      "detail": "bk"
+    },
+    "multi_apps": {
+      "ok": true,
+      "detail": "multi"
+    },
+    "cert": {
+      "ok": true,
+      "detail": "APPLICATION_RUNTIME_CERTIFIED_WITH_LIMITATIONS"
+    },
+    "no_marketplace": {
+      "ok": true,
+      "detail": "mkt"
+    },
+    "no_production": {
+      "ok": true,
+      "detail": "prod"
+    },
+    "apps_panel": {
+      "ok": true,
+      "detail": "panel"
+    },
+    "ui_installed": {
+      "ok": true,
+      "detail": "inst"
+    },
+    "ui_detail": {
+      "ok": true,
+      "detail": "detail"
+    },
+    "ui_no_mkt": {
+      "ok": true,
+      "detail": "mkt"
+    },
+    "logout_cleanup": {
+      "ok": true,
+      "detail": "logout"
+    }
+  },
+  "result": "APP_BROWSER_CERT_PASSED",
+  "marketplace_authorized": false,
+  "production_authorized": false,
+  "browser_certified": true
+}

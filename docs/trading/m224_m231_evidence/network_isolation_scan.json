@@ -1,0 +1,29 @@
+[
+  {
+    "ok": false,
+    "url": "https://api.binance.com",
+    "result": "REAL_PROVIDER_TRANSPORT_FORBIDDEN",
+    "message": "Refusing transport to 'api.binance.com'. Real provider connectivity is forbidden.",
+    "SIMULATION_ONLY": true
+  },
+  {
+    "ok": false,
+    "url": "https://api.alpaca.markets",
+    "result": "REAL_PROVIDER_TRANSPORT_FORBIDDEN",
+    "message": "Refusing transport to 'api.alpaca.markets'. Real provider connectivity is forbidden.",
+    "SIMULATION_ONLY": true
+  },
+  {
+    "ok": false,
+    "url": "https://api.ibkr.com",
+    "result": "REAL_PROVIDER_TRANSPORT_FORBIDDEN",
+    "message": "Refusing transport to 'api.ibkr.com'. Real provider connectivity is forbidden.",
+    "SIMULATION_ONLY": true
+  },
+  {
+    "ok": true,
+    "url": "http://127.0.0.1:8080",
+    "result": "LOCAL_SIMULATION_ONLY",
+    "SIMULATION_ONLY": true
+  }
+]

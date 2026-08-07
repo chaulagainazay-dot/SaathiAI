@@ -1,0 +1,172 @@
+{
+  "schema": "m54.browser_cert.v1",
+  "bff": "http://127.0.0.1:8790",
+  "ui": "http://127.0.0.1:3140",
+  "isolated_db": "/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m54-cert-3487/platform.db",
+  "mode": "dev",
+  "flows": {
+    "seed": {
+      "ok": true
+    },
+    "auth_anonymous_denied": true,
+    "diagnostics": {
+      "schema_version": "m54.readiness.v1",
+      "environment": {
+        "classification": "LOCAL_OR_TEST",
+        "private_alpha": true,
+        "production_authorized": false,
+        "labels": [
+          "PRIVATE_ALPHA",
+          "LOCAL_OR_TEST_ENVIRONMENT",
+          "NON_PRODUCTION",
+          "CONNECTOR_MUTATIONS_DRY_RUN",
+          "FINANCIAL_EXECUTION_DISABLED",
+          "TRADING_DISABLED",
+          "SINGLE_HOST_LOCAL_DATA"
+        ]
+      },
+      "health": {
+        "api": "ok",
+        "frontend": "served_separately",
+        "database": "available",
+        "platform_schema": "m53"
+      },
+      "runtime": {
+        "total_recent_executions": 1,
+        "queue_state": {
+          "COMPLETED": 1
+        },
+        "attention_count": 0,
+        "waiting_approval": 0,
+        "paused": 0,
+        "recovering": 0,
+        "reconciliation_records": 0
+      },
+      "bindings": {
+        "total": 2,
+        "by_state": {
+          "ACTIVE": 2,
+          "SUSPENDED": 0,
+          "REVOKED": 0
+        }
+      },
+      "safety": {
+        "connector_mutations": "DRY_RUN_ONLY",
+        "financial_execution": "DISABLED",
+        "trading_execution": "DISABLED",
+        "trading_guardian": "UNENGAGED_ADVISORY_ONLY",
+        "registered_tool_authority": "ExecutionGateway",
+        "canonical_runtime": "PlatformAgentRuntime"
+      },
+      "certification": {
+        "latest_certification_at": 0
+      }
+    },
+    "export": {
+      "record_count": 1,
+      "content_hash": "sha256:a49e18871f3fb0bebd09f6241a36cf9d337c0564e418a4b2e4ddfe7e78d8042c",
+      "production_data": false,
+      "leaked": []
+    },
+    "retention": {
+      "schema_version": "m54.readiness.v1",
+      "mode": "DRY_RUN",
+      "purge_executed": false,
+      "retention_days": 90,
+      "cutoff_at": 1777250266.491804,
+      "scope": {
+        "org_id": "org_7b3fc6b1358541ea",
+        "workspace_id": "ws_d96e6b4400ea48e4"
+      },
+      "eligible_for_purge": 0,
+      "eligible_execution_ids": [],
+      "protected": {
+        "non_terminal": 0,
+        "recent_within_retention": 1,
+        "legal_or_operator_hold": 0
+      },
+      "covered_record_classes": [
+        "runtime_executions",
+        "runtime_timelines",
+        "audit_events",
+        "reconciliation_records",
+        "approval_metadata",
+        "browser_certification_artifacts",
+        "exported_evidence"
+      ],
+      "irreversible": true,
+      "confirmation_required": true
+    },
+    "post_logout_protected": true,
+    "ui_readiness": {
+      "panel": 1,
+      "env": "LOCAL_OR_TEST · PRIVATE ALPHA · NON-PRODUCTION · CONNECTOR MUTATIONS DRY-RUN · FINANCIAL EXECUTION DISABLED · TRADING DISABLED",
+      "badges": "CONNECTORS: DRY_RUN_ONLY\nFINANCIAL: DISABLED\nTRADING: DISABLED\nGUARDIAN: UNENGAGED_ADVISORY_ONLY"
+    },
+    "body_snippet": "S\nSaathiOS\n«\nOPERATE\n⌂\nHome\n⌘\nCommand Center\n◎\nMissions\n⬡\nAgents\n⟳\nAutomation\nWORK\n▦\nProjects\n◈\nKnowledge\n▶\nStudio\nRUN THE BUSINESS\n◈\nBusiness\n⚠\nTrading Guardian\nRISK\nSYSTEM\n◉\nMonitoring\n⬡\nSecurity\nGLOBAL\n▣\nPlatform\n!\nApprovals\n⚙\nSettings\n❖\nEvidence\n◍\nLOCAL\nGLOBAL\n/\nPlatform\n06:22 KTM\n⌘K\n+ Create\n△\nAPPROVALS UNAVAILABLE\n○\nALERTS\nAsk Saathi\n◎\nOWNER · ADVISORY DEFAULT\nA\n✓\nLIVE CONNECTED\n◍\nLOCAL\n◎\nOPERATOR · ADVISORY DEFAULT\n△\nAPPROVALS UNAVAILABLE\nmode expert · density standard\napi 127.0.0.1:8790\nSAATHIOS\nIdentity ACTIVE · RBAC ACTIVE · Gateway TOOL_GATEWAY_ENFORCED\nPRIVATE ALPHA\nNON-PRODUCTION\n",
+    "ui_binding": true,
+    "ui_export": "Exported execution_summary: 1 records · sha256:a49e18871f3fb0bebd09f6241a36cf9d337c0564e418a4b2e4ddfe7e78d8042c · production_data false",
+    "ui_retention": "DRY_RUN · eligible 0 · purge_executed false",
+    "unsafe_actions": [],
+    "ui_logout": true
+  },
+  "screenshots": [
+    "/Users/macbookpro/SaathiAI/docs/platform/m54_evidence/screenshots/platform_authenticated.png",
+    "/Users/macbookpro/SaathiAI/docs/platform/m54_evidence/screenshots/readiness_export.png",
+    "/Users/macbookpro/SaathiAI/docs/platform/m54_evidence/screenshots/after_logout.png"
+  ],
+  "hardGates": {
+    "auth": {
+      "ok": true
+    },
+    "safety_boundaries": {
+      "ok": true
+    },
+    "export_redaction": {
+      "ok": true
+    },
+    "retention_dry_run": {
+      "ok": true
+    },
+    "logout": {
+      "ok": true
+    },
+    "ui_readiness": {
+      "ok": true
+    },
+    "ui_binding_admin": {
+      "ok": true
+    },
+    "ui_export": {
+      "ok": true
+    },
+    "ui_retention": {
+      "ok": true
+    },
+    "no_unsafe_actions": {
+      "ok": true
+    },
+    "ui_logout": {
+      "ok": true
+    }
+  },
+  "softGates": {},
+  "browserErrors": {
+    "console": [
+      "A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client bran",
+      "Access to fetch at 'http://127.0.0.1:8790/api/v1/connectors/approvals/pending' from origin 'http://127.0.0.1:3140' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present o",
+      "Failed to load resource: net::ERR_FAILED",
+      "A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client bran",
+      "Access to fetch at 'http://127.0.0.1:8790/api/v1/connectors/approvals/pending' from origin 'http://127.0.0.1:3140' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present o",
+      "Failed to load resource: net::ERR_FAILED",
+      "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+      "Access to fetch at 'http://127.0.0.1:8790/api/v1/platform/runtime/executions?limit=50' from origin 'http://127.0.0.1:3140' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is p",
+      "Failed to load resource: net::ERR_FAILED"
+    ],
+    "pageErrors": [],
+    "apiFailures": [
+      "net::ERR_FAILED //127.0.0.1:8790/api/v1/platform/runtime/executions?limit=50"
+    ]
+  },
+  "verdict": "M54_BROWSER_CERTIFIED"
+}

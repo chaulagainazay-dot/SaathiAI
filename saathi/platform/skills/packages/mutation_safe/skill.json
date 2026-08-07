@@ -1,0 +1,92 @@
+{
+  "approval_requirements": [
+    "APPROVAL_REQUIRED_TO_EXECUTE",
+    "APPROVAL_REQUIRED_FOR_MUTATION"
+  ],
+  "audit_contract": "platform_audit",
+  "browser_requirements": false,
+  "cancellation_contract": "cooperative",
+  "conflicts": [],
+  "content_hash": "",
+  "credential_reference_requirements": [],
+  "data_handling_classification": "operational",
+  "declared_agent_roles": [
+    "implementer"
+  ],
+  "declared_capabilities": [
+    "mutation.safe_test"
+  ],
+  "declared_tools": [
+    "m49.local_note_write"
+  ],
+  "dependencies": [],
+  "description": "Requires approval for a controlled deterministic local mutation via registered test tool.",
+  "display_name": "Safe Mutation Test Skill",
+  "documentation_references": [
+    "docs/autonomous/milestones/M112_M120_SKILL_ECOSYSTEM_RUNTIME.md"
+  ],
+  "domain": "platform",
+  "entrypoint_type": "declarative",
+  "evidence_contract": "content_hash",
+  "extension": {},
+  "health_check_contract": "manifest_hash_and_tools",
+  "knowledge_sources": [],
+  "lifecycle_state": "DISCOVERED",
+  "local_model_requirements": [],
+  "local_trust_status": "BUILT_IN",
+  "manifest_schema_version": "skill.manifest.v1",
+  "maximum_saathios_version": "",
+  "minimum_saathios_version": "1.0.0-local",
+  "name": "mutation_safe",
+  "network_requirements": "none",
+  "optional_permissions": [],
+  "orchestration_template_id": "",
+  "os_requirements": [
+    "darwin",
+    "linux"
+  ],
+  "package_hash": "5bd53e113d2dc9a95b453cc6db157f527936dc6f665ab248179293f8d6853f8b",
+  "platform_requirements": [
+    "platform_agent_runtime",
+    "execution_gateway"
+  ],
+  "privacy_classification": "no_personal_data",
+  "production_posture": "not_authorized",
+  "prohibited_permissions": [
+    "unrestricted_shell",
+    "direct_tool_execution",
+    "forge_approval"
+  ],
+  "publisher": "saathios.builtin",
+  "required_permissions": [
+    "runtime.read",
+    "runtime.execute"
+  ],
+  "resource_budgets": {
+    "memory_mb": 128,
+    "timeout_sec": 60
+  },
+  "retry_policy": {
+    "max_attempts": 1
+  },
+  "risk_classification": "medium",
+  "rollback_policy": "restore_previous_certified",
+  "signature_status": "local_builtin",
+  "skill_id": "saathi.mutation_safe",
+  "storage_requirements_mb": 8,
+  "tags": [
+    "builtin",
+    "local",
+    "deterministic"
+  ],
+  "timeouts": {
+    "execution_sec": 60.0,
+    "health_sec": 5.0
+  },
+  "trading_guardian_posture": "unengaged_readonly_only",
+  "upgrade_policy": "keep_previous_until_rollback_window",
+  "version": "1.0.0",
+  "worker_requirements": [
+    "coding"
+  ]
+}

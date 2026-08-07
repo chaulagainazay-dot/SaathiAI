@@ -1,0 +1,71 @@
+{
+  "record": "SAATHIOS_FINAL_CLOSURE_RECOVERY_BASELINE",
+  "phase": "PHASE_1_REPOSITORY_AND_RUNTIME_RECOVERY",
+
+  "repository": "/Users/macbookpro/SaathiAI",
+  "worktree": "/Users/macbookpro/SaathiAI-full-e2e",
+  "worktree_toplevel_confirmed": "/Users/macbookpro/SaathiAI-full-e2e",
+
+  "starting_state": {
+    "branch": "fix/saathios-full-e2e-functional-recovery",
+    "sha": "61a4255070de8c9e392e4929411b15be9c72dfb0",
+    "matches_expected": true,
+    "expected_sha": "61a4255",
+    "reset_required": false,
+    "note": "HEAD matched the expected closure starting point exactly. No reset, clean, restore, checkout-- or stash was run; none of the forbidden recovery commands were used."
+  },
+
+  "starting_git_status": {
+    "tracked_modified": [
+      "docs/evidence/m25/LATEST_ENVIRONMENT_OBSERVATION.json",
+      "docs/evidence/m25/LIVE_CERT_EVIDENCE.json",
+      "docs/evidence/m25/LIVE_CERT_SUMMARY.md",
+      "docs/evidence/m27/connector_events.jsonl",
+      "docs/evidence/m28/deprecation_events.jsonl"
+    ],
+    "classification": "RUNTIME_ARTIFACTS_NOT_SOURCE",
+    "explanation": "These are rewritten with fresh timestamps by the backend test suite on every run. They are unrelated to the repairs and were deliberately left unstaged throughout, in both the prior audit and this closure.",
+    "untracked_required_source": 0
+  },
+
+  "starting_commits_on_branch": [
+    "61a4255 docs(e2e): final report and evidence manifest",
+    "ddd3ab9 test(e2e): browser certification, route sweep and journey evidence",
+    "cfe345a fix(unlock): probe WebAuthn support after mount, not during render",
+    "ee72944 fix(voice): stop speech and release the microphone on route change",
+    "05f9435 fix(platform-ui): give the console login form a password field",
+    "8ff12e3 fix(shell): serve the SaathiOS UI on loopback only",
+    "a2b1f9e fix(alpha): exercise session expiry on a credentialed account",
+    "29b10fd fix(platform): close the passwordless login bypass and fail closed on duplicates",
+    "6d5f12e docs(e2e): baseline, functional inventory and defect record"
+  ],
+
+  "ancestry": {
+    "branch_base": "1647e19 (fix/saathios-ui-recovery)",
+    "certified_milestone_contained": "d2961e0 (milestone/m336-m343-private-alpha-readiness) — proven an ancestor",
+    "note": "d2961e0 -> 1647e19 -> 61a4255. The certified private-alpha tree is fully contained."
+  },
+
+  "runtime_at_start_of_closure": {
+    "port_3000": {
+      "listener": "node 12672, TCP *:3000 (LISTEN)",
+      "cwd": "/Users/macbookpro/SaathiAI-ui-recovery/saathi-os",
+      "verdict": "STALE_PUBLIC_LISTENER — the cause of the two remaining backend failures. Removed in Phase 2; see STALE_LISTENER_INSPECTION.json."
+    },
+    "port_8765": {
+      "listener": "python -m saathi.server, pid 1328, 127.0.0.1",
+      "verdict": "UNRELATED — left running untouched throughout this closure."
+    },
+    "port_8766": {
+      "listener": "python -m saathi.server, 127.0.0.1, from /Users/macbookpro/SaathiAI-full-e2e",
+      "verdict": "the audit backend, loopback-bound"
+    },
+    "port_3100": {
+      "listener": "node, 127.0.0.1, from the repair worktree",
+      "verdict": "the audit frontend from the prior mission; stopped in Phase 4 and replaced by the committed `npm start` on 127.0.0.1:3000"
+    }
+  },
+
+  "forbidden_commands_used": [],
+  "verdict": "CLOSURE_BASELINE_RESOLVED"
+}

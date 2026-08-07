@@ -1,0 +1,232 @@
+{
+  "schema": "m77.voice_browser_cert.v1",
+  "capturedAt": "2026-07-28T14:22:20.057Z",
+  "mode": "production-build-loopback",
+  "hardGates": {
+    "api_port_available": {
+      "ok": true,
+      "detail": ""
+    },
+    "ui_port_available": {
+      "ok": true,
+      "detail": ""
+    },
+    "backend_loopback": {
+      "ok": true,
+      "detail": ""
+    },
+    "local_bootstrap": {
+      "ok": true,
+      "detail": ""
+    },
+    "authenticated_sign_in": {
+      "ok": true,
+      "detail": ""
+    },
+    "ielts_feedback_seeded": {
+      "ok": true,
+      "detail": ""
+    },
+    "frontend_loopback": {
+      "ok": true,
+      "detail": ""
+    },
+    "agent_browser_page_content": {
+      "ok": true,
+      "detail": ""
+    },
+    "agent_browser_no_overlay": {
+      "ok": true,
+      "detail": ""
+    },
+    "agent_browser_interactive_snapshot": {
+      "ok": true,
+      "detail": ""
+    },
+    "chat_http_200": {
+      "ok": true,
+      "detail": ""
+    },
+    "chat_fixtures_isolated": {
+      "ok": true,
+      "detail": ""
+    },
+    "assistant_speak_actions": {
+      "ok": true,
+      "detail": ""
+    },
+    "no_autoplay_after_synthesis": {
+      "ok": true,
+      "detail": ""
+    },
+    "fallback_label_visible": {
+      "ok": true,
+      "detail": ""
+    },
+    "macos_provider_visible": {
+      "ok": true,
+      "detail": ""
+    },
+    "actual_fallback_operation": {
+      "ok": true,
+      "detail": ""
+    },
+    "authenticated_audio_range": {
+      "ok": true,
+      "detail": ""
+    },
+    "local_audio_playing": {
+      "ok": true,
+      "detail": ""
+    },
+    "playback_stop_control": {
+      "ok": true,
+      "detail": ""
+    },
+    "browser_cancel_acknowledged": {
+      "ok": true,
+      "detail": "65ms"
+    },
+    "desktop_no_overlay": {
+      "ok": true,
+      "detail": ""
+    },
+    "ielts_read_aloud_visible": {
+      "ok": true,
+      "detail": ""
+    },
+    "ielts_yeti_request": {
+      "ok": true,
+      "detail": ""
+    },
+    "ielts_audio_play_stop": {
+      "ok": true,
+      "detail": ""
+    },
+    "context_invalidation_clears_audio": {
+      "ok": true,
+      "detail": ""
+    },
+    "ielts_no_overlay": {
+      "ok": true,
+      "detail": ""
+    },
+    "provider_unavailable_state": {
+      "ok": true,
+      "detail": ""
+    },
+    "no_framework_overlay": {
+      "ok": true,
+      "detail": ""
+    },
+    "no_page_errors": {
+      "ok": true,
+      "detail": ""
+    },
+    "no_console_errors": {
+      "ok": true,
+      "detail": ""
+    },
+    "logout_clears_voice_client": {
+      "ok": true,
+      "detail": ""
+    },
+    "logout_revokes_session": {
+      "ok": true,
+      "detail": ""
+    }
+  },
+  "responsive": {
+    "tablet_no_horizontal_overflow": {
+      "ok": true,
+      "detail": ""
+    },
+    "tablet_dock_visible": {
+      "ok": true,
+      "detail": ""
+    },
+    "tablet_no_overlay": {
+      "ok": true,
+      "detail": ""
+    },
+    "mobile_no_horizontal_overflow": {
+      "ok": true,
+      "detail": ""
+    },
+    "mobile_dock_visible": {
+      "ok": true,
+      "detail": ""
+    },
+    "mobile_no_overlay": {
+      "ok": true,
+      "detail": ""
+    }
+  },
+  "accessibility": {
+    "assistant_speak_visible_focus": {
+      "ok": true,
+      "detail": ""
+    },
+    "mobile_reduced_motion": {
+      "ok": true,
+      "detail": ""
+    }
+  },
+  "security": {
+    "voice_urls_have_no_tokens": {
+      "ok": true,
+      "detail": ""
+    },
+    "voice_responses_have_no_private_paths": {
+      "ok": true,
+      "detail": ""
+    },
+    "voice_responses_have_no_tokens": {
+      "ok": true,
+      "detail": ""
+    },
+    "ielts_private_response_not_spoken": {
+      "ok": true,
+      "detail": ""
+    }
+  },
+  "regressions": {
+    "m64_shell_browser_regression": {
+      "ok": true,
+      "detail": ""
+    },
+    "m64HardGates": 21,
+    "m64StateGates": 12,
+    "m64ResponsiveGates": 6
+  },
+  "browserErrors": {
+    "page": [],
+    "console": [
+      "Access to fetch at 'http://127.0.0.1:8765/api/v1/auth/passkeys' from origin 'http://127.0.0.1:3000' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource.",
+      "Failed to load resource: net::ERR_FAILED"
+    ],
+    "overlay": 0
+  },
+  "network": {
+    "chatFixtureRequests": 4,
+    "voiceRequests": 4,
+    "tokensInUrls": 0,
+    "privatePathsInResponses": 0,
+    "tokenInResponses": 0,
+    "privateLearnerTextInSpeech": 0
+  },
+  "screenshots": [
+    "screenshots/m77_agent_browser_unlock.png",
+    "screenshots/m77_chat_voice_desktop.png",
+    "screenshots/m77_ielts_read_aloud_desktop.png",
+    "screenshots/m77_voice_unavailable.png",
+    "screenshots/m77_ielts_tablet.png",
+    "screenshots/m77_ielts_mobile.png"
+  ],
+  "timings": {
+    "browserCancelAcknowledgedMs": 65
+  },
+  "verdict": "PASS",
+  "generatedAudioRetained": false,
+  "tempDatabaseRetained": false
+}

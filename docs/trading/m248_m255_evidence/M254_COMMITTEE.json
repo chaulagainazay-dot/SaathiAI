@@ -1,0 +1,246 @@
+{
+  "instrument": "SPY",
+  "final_recommendation": "BUY",
+  "consensus": "MAJORITY",
+  "agreement_ratio": 0.5,
+  "committee_confidence": 0.5967,
+  "average_member_confidence": 0.5583,
+  "voting_summary": {
+    "votes": {
+      "BUY": 3,
+      "HOLD": 3
+    },
+    "weighted_confidence": {
+      "BUY": 1.79,
+      "HOLD": 1.56
+    },
+    "majority_action": "BUY"
+  },
+  "agreements": [
+    {
+      "role": "macro_analyst",
+      "action": "BUY",
+      "rationale": "Macro expansion supports risk assets"
+    },
+    {
+      "role": "technical_analyst",
+      "action": "BUY",
+      "rationale": "Price structure and trend filters constructive"
+    },
+    {
+      "role": "quant_analyst",
+      "action": "BUY",
+      "rationale": "Factor/score composite positive after vol adjustment"
+    }
+  ],
+  "disagreements": [
+    {
+      "role": "fundamental_analyst",
+      "action": "HOLD",
+      "rationale": "Fair value; fundamentals neutral"
+    },
+    {
+      "role": "risk_manager",
+      "action": "HOLD",
+      "rationale": "Risk within policy bands"
+    },
+    {
+      "role": "portfolio_manager",
+      "action": "HOLD",
+      "rationale": "Fits policy allocation; no rebalance urgent"
+    }
+  ],
+  "dissenting_opinions": [
+    {
+      "role": "fundamental_analyst",
+      "action": "HOLD",
+      "confidence": 0.5,
+      "rationale": "Fair value; fundamentals neutral",
+      "key_risk": "earnings miss / guidance cut"
+    },
+    {
+      "role": "risk_manager",
+      "action": "HOLD",
+      "confidence": 0.52,
+      "rationale": "Risk within policy bands",
+      "key_risk": "tail event / gap beyond stop"
+    },
+    {
+      "role": "portfolio_manager",
+      "action": "HOLD",
+      "confidence": 0.54,
+      "rationale": "Fits policy allocation; no rebalance urgent",
+      "key_risk": "allocation drift / correlation spike"
+    }
+  ],
+  "opinions": [
+    {
+      "role": "macro_analyst",
+      "action": "BUY",
+      "confidence": 0.58,
+      "rationale": "Macro expansion supports risk assets",
+      "key_risk": "policy/growth shock",
+      "independent": true,
+      "paper_only": true
+    },
+    {
+      "role": "technical_analyst",
+      "action": "BUY",
+      "confidence": 0.64,
+      "rationale": "Price structure and trend filters constructive",
+      "key_risk": "false breakout",
+      "independent": true,
+      "paper_only": true
+    },
+    {
+      "role": "fundamental_analyst",
+      "action": "HOLD",
+      "confidence": 0.5,
+      "rationale": "Fair value; fundamentals neutral",
+      "key_risk": "earnings miss / guidance cut",
+      "independent": true,
+      "paper_only": true
+    },
+    {
+      "role": "quant_analyst",
+      "action": "BUY",
+      "confidence": 0.57,
+      "rationale": "Factor/score composite positive after vol adjustment",
+      "key_risk": "factor crowding / model decay",
+      "independent": true,
+      "paper_only": true
+    },
+    {
+      "role": "risk_manager",
+      "action": "HOLD",
+      "confidence": 0.52,
+      "rationale": "Risk within policy bands",
+      "key_risk": "tail event / gap beyond stop",
+      "independent": true,
+      "paper_only": true
+    },
+    {
+      "role": "portfolio_manager",
+      "action": "HOLD",
+      "confidence": 0.54,
+      "rationale": "Fits policy allocation; no rebalance urgent",
+      "key_risk": "allocation drift / correlation spike",
+      "independent": true,
+      "paper_only": true
+    }
+  ],
+  "synthesis_notes": [
+    "Synthesised action BUY under MAJORITY.",
+    "3 specialists agree; 3 dissent.",
+    "Dissent recorded from: fundamental_analyst, risk_manager, portfolio_manager.",
+    "Committee output is advisory for paper portfolios only \u2014 not an order."
+  ],
+  "paper_only": true,
+  "not_an_order": true,
+  "LIVE_TRADING_AUTHORIZED": false,
+  "BROKER_CONNECTIVITY_AUTHORIZED": false,
+  "API_KEYS_ACCEPTED": false,
+  "OAUTH_AUTHORIZED": false,
+  "ORDER_SUBMISSION_AUTHORIZED": false,
+  "LIVE_MARKET_DATA_AUTHORIZED": false,
+  "LIVE_DATA_DEPENDENCY": false,
+  "sandbox_only": true,
+  "offline_capable": true,
+  "no_broker_connection": true,
+  "no_api_keys": true,
+  "no_oauth": true,
+  "no_order_submission": true,
+  "no_live_data_dependency": true,
+  "no_live_trading": true,
+  "explanation": {
+    "instrument": "SPY",
+    "action": "BUY",
+    "strategy_id": null,
+    "why": "Recommendation is BUY on SPY because the paper strategy signal (committee_majority) aligns with the current offline assessment at confidence 60%.",
+    "why_now": "Timing is driven by the latest evaluated bar/signal state for SPY. Supporting factors: Positive setup relative to strategy entry rules. Key tension: Offline/fixture data may not reflect live microstructure.",
+    "supporting_evidence": [
+      "Positive setup relative to strategy entry rules",
+      "Regime context: risk_on"
+    ],
+    "conflicting_evidence": [
+      "Offline/fixture data may not reflect live microstructure",
+      "Macro shocks can invalidate technical structure quickly",
+      "Entry may be late if move already extended",
+      "Opportunity cost if mean reversion occurs first"
+    ],
+    "assumptions": [
+      "Analysis uses paper/offline or fixture data only",
+      "No live broker quotes or order book",
+      "Transaction costs are modelled, not guaranteed",
+      "Past simulated behaviour is not future performance"
+    ],
+    "risks": [
+      "Model risk: indicators may fail in regime shifts",
+      "Liquidity risk under stressed markets",
+      "Gap risk overnight or over weekends",
+      "Concentration risk if position oversized relative to portfolio"
+    ],
+    "confidence": 0.5967,
+    "confidence_band": "moderate",
+    "historical_behaviour": {
+      "note": "Comparable offline behaviour only",
+      "similar_setups": [
+        "Trend continuation after MA alignment (research fixture)",
+        "Mean-reversion bounce from lower band (research fixture)"
+      ],
+      "historical_win_rate_label": "NON_AUTHORITATIVE_FIXTURE"
+    },
+    "comparable_situations": [
+      {
+        "situation": "Prior offline uptrend pullback",
+        "outcome_label": "SIMULATED",
+        "lesson": "Confirm higher-timeframe trend before entry"
+      },
+      {
+        "situation": "False breakout under low volume",
+        "outcome_label": "SIMULATED",
+        "lesson": "Require volume confirmation for breakouts"
+      }
+    ],
+    "expected_upside": {
+      "label": "expected_upside_if_thesis_holds",
+      "expected_return_if_correct": 0.0718,
+      "horizon": "strategy_default",
+      "note": "Illustrative model range for paper research only"
+    },
+    "expected_downside": {
+      "label": "expected_downside_if_thesis_fails",
+      "expected_loss_if_wrong": 0.0523,
+      "stop_reference": "strategy_stop",
+      "note": "Not a guaranteed loss bound; gaps can exceed stops"
+    },
+    "invalidation_conditions": [
+      "Thesis invalidated if strategy exit conditions fire",
+      "Kill-switch or risk limit breach forces flat paper posture",
+      "Data quality failure or stale marks suspend recommendations",
+      "Break of key support / MA structure invalidates long thesis",
+      "Volume collapse or failed breakout cancels entry quality"
+    ],
+    "human_summary": "BUY SPY (paper). Confidence moderate (60%). If correct, illustrative upside ~7.2%; if wrong, illustrative downside ~5.2%. Not live trading advice.",
+    "investor_readable": true,
+    "not_financial_advice": true,
+    "disclaimer": "Research explanation for paper portfolios only. Not investment advice. Not a live order. Not a guarantee.",
+    "LIVE_TRADING_AUTHORIZED": false,
+    "BROKER_CONNECTIVITY_AUTHORIZED": false,
+    "API_KEYS_ACCEPTED": false,
+    "OAUTH_AUTHORIZED": false,
+    "ORDER_SUBMISSION_AUTHORIZED": false,
+    "LIVE_MARKET_DATA_AUTHORIZED": false,
+    "LIVE_DATA_DEPENDENCY": false,
+    "paper_only": true,
+    "sandbox_only": true,
+    "offline_capable": true,
+    "no_broker_connection": true,
+    "no_api_keys": true,
+    "no_oauth": true,
+    "no_order_submission": true,
+    "no_live_data_dependency": true,
+    "no_live_trading": true
+  },
+  "decision_id": "dec_54cd62fea18d4c1f"
+}

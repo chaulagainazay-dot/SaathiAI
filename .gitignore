@@ -3,12 +3,21 @@
 
 # runtime data: voice profile, memory db, logs, uploaded files
 data/
+# Authoritative AgentDev role registry is package data, not runtime state.
+# Without these exceptions a broad `data/` rule hides roles.json from git and
+# clean CI checkouts raise registry_not_found for the entire agentdev suite.
+!saathi/agentdev/data/
+!saathi/agentdev/data/roles.json
 
 # python
 .venv/
 __pycache__/
 *.pyc
 *.egg-info/
+# uv lockfiles are local/tooling artifacts unless an approved milestone
+# intentionally adopts uv-managed dependency locking for the monorepo.
+uv.lock
+uv.lock.bak
 firebase-admin.json
 .superpowers/
 
@@ -76,3 +85,11 @@ docs/m46/*.local.json.save
 docs/m46/*.save
 docs/ui-ux/m47_4_evidence/screenshots/
 docs/ui-ux/m47_7_evidence/screenshots/
+docs/platform/m54_evidence/screenshots/
+docs/platform/m55_evidence/screenshots/
+docs/platform/m56_evidence/screenshots/
+docs/platform/m57_evidence/screenshots/
+.saathi-local/
+
+# M264-M271 frozen historical snapshots (local only)
+data/platform/historical_snapshots/

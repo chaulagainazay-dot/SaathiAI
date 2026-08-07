@@ -1,0 +1,216 @@
+{
+  "schema": "m60.browser_cert.v1",
+  "bff": "http://127.0.0.1:8840",
+  "ui": "http://127.0.0.1:3200",
+  "mode": "build",
+  "hardGates": {
+    "production_build_succeeds": {
+      "ok": true
+    },
+    "prod_server_starts": {
+      "ok": true,
+      "mode": "build"
+    },
+    "onboarding_loads": {
+      "ok": true
+    },
+    "onboarding_safety_visible": {
+      "ok": true
+    },
+    "mission_creation_loads": {
+      "ok": true
+    },
+    "mission_draft_completes": {
+      "ok": true
+    },
+    "mission_plan_loads": {
+      "ok": true
+    },
+    "execution_readiness_reflects_state": {
+      "ok": true
+    },
+    "approval_prep_loads": {
+      "ok": true
+    },
+    "approval_preview_truthful": {
+      "ok": true
+    },
+    "action_queue_loads": {
+      "ok": true
+    },
+    "notification_center_loads": {
+      "ok": true
+    },
+    "evidence_timeline_loads": {
+      "ok": true
+    },
+    "saved_views_loads": {
+      "ok": true
+    },
+    "search_loads": {
+      "ok": true
+    },
+    "templates_loads": {
+      "ok": true
+    },
+    "workflows_loads": {
+      "ok": true
+    },
+    "role_aware_actions": {
+      "ok": true
+    },
+    "safety_status_visible": {
+      "ok": true
+    },
+    "accessibility_no_critical": {
+      "ok": true,
+      "serious": 6
+    },
+    "reduced_motion": {
+      "ok": true
+    },
+    "responsive_mobile": {
+      "ok": true
+    },
+    "no_page_errors": {
+      "ok": true
+    },
+    "no_hydration_errors": {
+      "ok": true
+    }
+  },
+  "softGates": {
+    "onboarding_keyboard": {
+      "ok": true
+    },
+    "mission_scope_select": {
+      "ok": false
+    },
+    "mission_creation_live": {
+      "ok": false,
+      "note": "UI submit did not confirm; create API verified via seed"
+    },
+    "accessibility_no_serious": {
+      "ok": false,
+      "serious": 6
+    }
+  },
+  "accessibility": {
+    "onboarding": {
+      "critical": 0,
+      "serious": 1,
+      "critNodes": []
+    },
+    "mission_new": {
+      "critical": 0,
+      "serious": 1,
+      "critNodes": []
+    },
+    "mission_plan": {
+      "critical": 0,
+      "serious": 1,
+      "critNodes": []
+    },
+    "approval_new": {
+      "critical": 0,
+      "serious": 1,
+      "critNodes": []
+    },
+    "actions": {
+      "critical": 0,
+      "serious": 1,
+      "critNodes": []
+    },
+    "evidence": {
+      "critical": 0,
+      "serious": 1,
+      "critNodes": []
+    },
+    "aggregate": {
+      "crit": 0,
+      "serious": 6
+    }
+  },
+  "screenshots": [
+    "onboarding.png",
+    "onboarding_safety.png",
+    "mission_new.png",
+    "mission_scope.png",
+    "mission_created.png",
+    "mission_plan.png",
+    "approval_new.png",
+    "actions.png",
+    "notifications.png",
+    "evidence.png",
+    "saved_views.png",
+    "search.png",
+    "templates.png",
+    "workflows.png",
+    "reduced_motion.png",
+    "mobile_onboarding.png",
+    "mobile_mission_new.png"
+  ],
+  "browserErrors": {
+    "pageErrors": [],
+    "hydration": [],
+    "console": [
+      "Access to fetch at 'http://127.0.0.1:8840/api/v1/connectors/approvals/pending' from origin 'http://127.0.0.1:3200' has been blocked by CORS policy: No 'Access-C",
+      "Failed to load resource: net::ERR_FAILED",
+      "Access to fetch at 'http://127.0.0.1:8840/api/v1/connectors/approvals/pending' from origin 'http://127.0.0.1:3200' has been blocked by CORS policy: No 'Access-C",
+      "Failed to load resource: net::ERR_FAILED",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Access to fetch at 'http://127.0.0.1:8840/api/v1/connectors/approvals/pending' from origin 'http://127.0.0.1:3200' has been blocked by CORS policy: No 'Access-C",
+      "Failed to load resource: net::ERR_FAILED",
+      "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+      "Access to fetch at 'http://127.0.0.1:8840/api/v1/connectors/approvals/pending' from origin 'http://127.0.0.1:3200' has been blocked by CORS policy: No 'Access-C",
+      "Failed to load resource: net::ERR_FAILED",
+      "Access to fetch at 'http://127.0.0.1:8840/api/v1/connectors/approvals/pending' from origin 'http://127.0.0.1:3200' has been blocked by CORS policy: No 'Access-C",
+      "Failed to load resource: net::ERR_FAILED",
+      "Access to fetch at 'http://127.0.0.1:8840/api/v1/connectors/approvals/pending' from origin 'http://127.0.0.1:3200' has been blocked by CORS policy: No 'Access-C",
+      "Failed to load resource: net::ERR_FAILED",
+      "Access to fetch at 'http://127.0.0.1:8840/api/v1/platform/agent-bindings' from origin 'http://127.0.0.1:3200' has been blocked by CORS policy: No 'Access-Contro",
+      "Failed to load resource: net::ERR_FAILED",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Access to fetch at 'http://127.0.0.1:8840/api/v1/connectors/approvals/pending' from origin 'http://127.0.0.1:3200' has been blocked by CORS policy: No 'Access-C",
+      "Failed to load resource: net::ERR_FAILED",
+      "Access to fetch at 'http://127.0.0.1:8840/api/v1/connectors/approvals/pending' from origin 'http://127.0.0.1:3200' has been blocked by CORS policy: No 'Access-C",
+      "Failed to load resource: net::ERR_FAILED",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Access to fetch at 'http://127.0.0.1:8840/api/v1/platform/agent-bindings' from origin 'http://127.0.0.1:3200' has been blocked by CORS policy: No 'Access-Contro",
+      "Failed to load resource: net::ERR_FAILED",
+      "Access to fetch at 'http://127.0.0.1:8840/api/v1/platform/runtime/metrics' from origin 'http://127.0.0.1:3200' has been blocked by CORS policy: No 'Access-Contr",
+      "Failed to load resource: net::ERR_FAILED",
+      "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+      "Access to fetch at 'http://127.0.0.1:8840/api/v1/connectors/approvals/pending' from origin 'http://127.0.0.1:3200' has been blocked by CORS policy: No 'Access-C",
+      "Failed to load resource: net::ERR_FAILED",
+      "Access to fetch at 'http://127.0.0.1:8840/api/v1/connectors/approvals/pending' from origin 'http://127.0.0.1:3200' has been blocked by CORS policy: No 'Access-C",
+      "Failed to load resource: net::ERR_FAILED",
+      "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+      "Access to fetch at 'http://127.0.0.1:8840/api/v1/connectors/approvals/pending' from origin 'http://127.0.0.1:3200' has been blocked by CORS policy: No 'Access-C",
+      "Failed to load resource: net::ERR_FAILED",
+      "Access to fetch at 'http://127.0.0.1:8840/api/v1/platform/runtime/executions?limit=100' from origin 'http://127.0.0.1:3200' has been blocked by CORS policy: No ",
+      "Failed to load resource: net::ERR_FAILED",
+      "Access to fetch at 'http://127.0.0.1:8840/api/v1/connectors/approvals/pending' from origin 'http://127.0.0.1:3200' has been blocked by CORS policy: No 'Access-C",
+      "Failed to load resource: net::ERR_FAILED",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Access to fetch at 'http://127.0.0.1:8840/api/v1/connectors/approvals/pending' from origin 'http://127.0.0.1:3200' has been blocked by CORS policy: No 'Access-C",
+      "Failed to load resource: net::ERR_FAILED",
+      "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+      "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+      "Access to fetch at 'http://127.0.0.1:8840/api/v1/connectors/approvals/pending' from origin 'http://127.0.0.1:3200' has been blocked by CORS policy: No 'Access-C",
+      "Failed to load resource: net::ERR_FAILED",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    ]
+  },
+  "flows": {
+    "seed": {
+      "ok": true,
+      "bindingId": "bind_39629926e4204cf3",
+      "projectId": "prj_725c23acd8c84bbe",
+      "missionId": "mis_5be7b44aa7f1459e",
+      "pendingApprovalId": "apr_66635f583c094f2d"
+    }
+  },
+  "verdict": "PASS"
+}

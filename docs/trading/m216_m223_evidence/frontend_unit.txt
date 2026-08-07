@@ -1,0 +1,12 @@
+▶ M216–M223 broker sandbox UI
+  ✔ broker-sandbox page is sandbox-only / paper-only (1.277166ms)
+  ✔ tabs include broker-sandbox (0.237667ms)
+✔ M216–M223 broker sandbox UI (2.075083ms)
+ℹ tests 2
+ℹ suites 1
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 56.353

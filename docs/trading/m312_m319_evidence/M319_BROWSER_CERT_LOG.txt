@@ -1,0 +1,27 @@
+PASS page_source_governance_banner 
+PASS page_source_no_password_field 
+PASS page_source_no_api_key_field 
+PASS page_source_no_connect_enable 
+PASS page_source_maturity 
+PASS page_source_approval_not_activation 
+PASS backend_bootstrap 
+PASS backend_cert 
+PASS backend_verdict 
+PASS backend_maturity 
+PASS backend_authority_false 
+PASS screenshot_control_center 
+PASS banner_visible 
+PASS verdict_renders 
+PASS max_state_renders 
+PASS maturity_governance_only 
+PASS authority_false_display 
+PASS charter_section 
+PASS provider_section 
+PASS approval_section 
+PASS credential_section 
+PASS threat_section 
+PASS incident_section 
+PASS maturity_section 
+PASS evidence_section 
+PASS no_secret_input 
+PASS no_external_auth_request static local page only

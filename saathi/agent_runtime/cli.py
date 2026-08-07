@@ -46,28 +46,167 @@ def main(argv: list[str] | None = None) -> int:
     orch = default_orchestrator()
 
     if cmd == "inspect" or cmd == "health":
-        _emit({"agents": [a.agent_id for a in registry.all_agents()],
-               "recent_runs": orch.store.list_runs(limit=10)})
+        from saathi.agent_runtime.contracts import contract_summary
+
+        _emit(
+            {
+                "agents": [a.agent_id for a in registry.all_agents()],
+                "recent_runs": orch.store.list_runs(limit=10),
+                "m48_1_contract": contract_summary(),
+            }
+        )
+        return EXIT_OK
+    if cmd == "contract":
+        # Read-only M48.1 contract inventory (never executes agents/tools).
+        from saathi.agent_runtime.contracts import contract_summary
+
+        _emit(contract_summary())
+        return EXIT_OK
+    if cmd == "lifecycle-health":
+        from saathi.agent_runtime.lifecycle import provider_health_evidence
+
+        _emit({"providers": [p.to_dict() for p in provider_health_evidence()]})
+        return EXIT_OK
+    if cmd == "recover" and rest:
+        from saathi.agent_runtime.lifecycle import RunLifecycleController
+
+        _emit(RunLifecycleController(orch.store).recover_run(rest[0]))
+        return EXIT_OK
+    if cmd == "recover-all":
+        from saathi.agent_runtime.lifecycle import RunLifecycleController
+
+        _emit(RunLifecycleController(orch.store).recover_all())
+        return EXIT_OK
+    if cmd == "reconcile-all":
+        from saathi.agent_runtime.lifecycle import RunLifecycleController
+
+        _emit(RunLifecycleController(orch.store).reconcile_all())
+        return EXIT_OK
+    if cmd == "kill-switch":
+        from saathi.agent_runtime.lifecycle import RunLifecycleController
+
+        scope = rest[0] if rest else "all"
+        rid = rest[1] if len(rest) > 1 else ""
+        lc = RunLifecycleController(orch.store)
+        if scope == "run":
+            _emit(lc.kill_switch(scope="run", run_id=rid))
+        elif scope == "mission":
+            _emit(lc.kill_switch(scope="mission", mission_id=rid))
+        else:
+            _emit(lc.kill_switch(scope="all"))
         return EXIT_OK
     if cmd == "list":
         _emit({"agents": [a.to_dict() for a in registry.all_agents()]})
         return EXIT_OK
+    # M49.1 read-only tool diagnostics (never executes arbitrary tools)
+    if cmd == "tools":
+        from saathi.tool_runtime.registry import default_registry
+
+        reg = default_registry()
+        sub = rest[0] if rest else "list"
+        if sub == "list":
+            _emit(
+                {
+                    "tools": [m.to_public_dict() for m in reg.list_manifests(include_disabled=True)],
+                    "count": len(reg.list_manifests(include_disabled=True)),
+                }
+            )
+            return EXIT_OK
+        if sub == "inspect" and len(rest) >= 2:
+            m = reg.get_manifest(rest[1])
+            if not m:
+                _emit({"error": "tool not found", "tool_id": rest[1]})
+                return EXIT_BAD
+            _emit(m.to_public_dict())
+            return EXIT_OK
+        if sub == "validate":
+            _emit(reg.validate_all())
+            return EXIT_OK
+        if sub == "capability-matrix":
+            _emit({"matrix": reg.capability_matrix()})
+            return EXIT_OK
+        if sub == "reconcile-idempotency":
+            # Read/repair stale durable idempotency leases only — no tool execute
+            from saathi.tool_runtime.durable_idempotency import (
+                default_durable_idempotency_store,
+            )
+
+            _emit(default_durable_idempotency_store().reconcile_stale())
+            return EXIT_OK
+        # M49.3 read-only audits (never execute tools / no secrets / no network)
+        if sub == "audit-gateway":
+            from saathi.tool_runtime.gateway_audit import validate_tool_gateway_coverage
+
+            _emit(validate_tool_gateway_coverage())
+            return EXIT_OK
+        if sub == "audit-legacy":
+            from saathi.tool_runtime.gateway_audit import audit_legacy_execution
+
+            _emit(audit_legacy_execution())
+            return EXIT_OK
+        if sub == "audit-connectors":
+            from saathi.tool_runtime.gateway_audit import audit_connectors
+
+            _emit(audit_connectors())
+            return EXIT_OK
+        if sub == "audit-cancellation":
+            from saathi.tool_runtime.gateway_audit import audit_cancellation
+
+            _emit(audit_cancellation())
+            return EXIT_OK
+        if sub == "audit-approvals":
+            from saathi.tool_runtime.gateway_audit import audit_approvals
+
+            _emit(audit_approvals())
+            return EXIT_OK
+        _emit(
+            {
+                "error": (
+                    "usage: tools list|inspect <id>|validate|capability-matrix|"
+                    "reconcile-idempotency|audit-gateway|audit-legacy|"
+                    "audit-connectors|audit-cancellation|audit-approvals"
+                ),
+                "note": "read-only diagnostics; no generic tool execute command",
+            }
+        )
+        return EXIT_BAD
     if cmd == "run":
         if len(rest) >= 4 and rest[0] == "--agent" and rest[2] == "--input":
+            from saathi.agent_runtime.service import start_agent_run
+
             agent, text = rest[1], rest[3]
             if not registry.get(agent):
                 _emit({"error": f"unknown agent {agent}"})
                 return EXIT_BAD
-            rid = orch.create_run(text, strategy="build")  # single dominated by chosen
-            out = orch.run(rid)
+            rec = start_agent_run(
+                objective=text,
+                strategy="build",
+                execute=True,
+                orchestrator=orch,
+                authority_class="READ_ONLY",
+            )
+            if not rec.ok:
+                _emit(rec.to_dict())
+                return EXIT_FAIL
+            out = rec.outcome or {"run_id": rec.run_id, "state": rec.state}
             _emit(out)
             return _run_exit(out)
         _emit({"error": "usage: run --agent <id> --input \"...\""})
         return EXIT_BAD
     if cmd == "run-team":
         if len(rest) >= 2 and rest[0] == "--input":
-            rid = orch.create_run(rest[1])
-            out = orch.run(rid)
+            from saathi.agent_runtime.service import start_agent_run
+
+            rec = start_agent_run(
+                objective=rest[1],
+                execute=True,
+                orchestrator=orch,
+                authority_class="READ_ONLY",
+            )
+            if not rec.ok:
+                _emit(rec.to_dict())
+                return EXIT_FAIL
+            out = rec.outcome or {"run_id": rec.run_id, "state": rec.state}
             _emit(out)
             return _run_exit(out)
         _emit({"error": "usage: run-team --input \"...\""})

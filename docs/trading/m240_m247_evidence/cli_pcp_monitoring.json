@@ -1,0 +1,21 @@
+{
+  "signals": [
+    "request_count",
+    "error_rate",
+    "latency",
+    "rate_limit_headers",
+    "scope_introspection",
+    "endpoint_allowlist_hits",
+    "denylist_blocks",
+    "snapshot_freshness",
+    "recon_delta",
+    "kill_switch_state"
+  ],
+  "alerting": "operator + owner on stop/security abort",
+  "dashboard": "/trading/provider-canary-planning (planning view only in M247)",
+  "REAL_CONNECTIVITY_AUTHORIZED": false,
+  "CREDENTIAL_PROVISIONING_AUTHORIZED": false,
+  "CANARY_ACTIVATION_AUTHORIZED": false,
+  "READ_ONLY_PRODUCTION_AUTHORIZED": false,
+  "LIVE_TRADING_AUTHORIZED": false
+}

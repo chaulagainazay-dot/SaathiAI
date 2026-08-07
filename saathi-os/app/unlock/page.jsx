@@ -40,8 +40,25 @@ export default function Unlock() {
   const [forgotEmail, setForgotEmail] = useState("");
   const [rememberMe, setRememberMe] = useState(true);
   const [online, setOnline] = useState(true);
-  const supported = passkeySupported();
-  const platformName = passkeyPlatformName();
+  // WebAuthn capability can only be probed in the browser. Calling these during
+  // render made the server ("not supported" / "Biometrics") and the client
+  // ("supported" / "Touch ID") disagree, which broke hydration on /unlock with
+  // React error #418. Start from the server-safe answer and refine after mount.
+  const [capability, setCapability] = useState({
+    ready: false,
+    supported: false,
+    platformName: "Biometrics",
+    unsupportedMsg: "",
+  });
+  useEffect(() => {
+    setCapability({
+      ready: true,
+      supported: passkeySupported(),
+      platformName: passkeyPlatformName(),
+      unsupportedMsg: passkeyUnsupportedReason(),
+    });
+  }, []);
+  const { supported, platformName } = capability;
   const pwRef = useRef(null);
 
   const refresh = () => passkeyStatus().then(setStatus).catch(() => {});
@@ -139,7 +156,7 @@ export default function Unlock() {
     fontWeight: 600, fontSize: 15, minHeight: 46, color: "#fff", background: bg, width: "100%",
     marginTop: 12, opacity: (busy || dis) ? 0.5 : 1, touchAction: "manipulation" });
 
-  const unsupportedMsg = passkeyUnsupportedReason();
+  const unsupportedMsg = capability.unsupportedMsg;
 
   return (
     <div className="unlock-page" style={{ minHeight: "100dvh", display: "flex", alignItems: "flex-start", justifyContent: "center",
@@ -178,7 +195,7 @@ export default function Unlock() {
             {busy ? "Unlocking…" : `🔓 Unlock with ${platformName}`}
           </button>
         )}
-        {mode === "unlock" && !supported && (
+        {mode === "unlock" && capability.ready && !supported && (
           <div role="alert" style={{ background: "rgba(255,255,255,0.04)", padding: 14, borderRadius: 11, fontSize: 13, color: "var(--color-ink-400)", marginTop: 14 }}>
             <strong>Passkeys not supported</strong><br />
             {unsupportedMsg}

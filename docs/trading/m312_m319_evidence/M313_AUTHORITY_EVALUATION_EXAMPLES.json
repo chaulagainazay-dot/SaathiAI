@@ -1,0 +1,79 @@
+{
+  "examples": [
+    {
+      "CANARY_ACTIVATION_AUTHORIZED": false,
+      "LIVE_TRADING_AUTHORIZED": false,
+      "ORDER_SUBMISSION_AUTHORIZED": false,
+      "REAL_CONNECTIVITY_AUTHORIZED": false,
+      "activates_connectivity": false,
+      "authority_does_not_implicitly_expand": true,
+      "capability": "offline_fixture_access",
+      "deny_overrides_allow": true,
+      "domain": "market_data",
+      "emergency": true,
+      "ok": true,
+      "reason": "emergency_shutdown",
+      "state": "EMERGENCY_DISABLED"
+    },
+    {
+      "CANARY_ACTIVATION_AUTHORIZED": false,
+      "LIVE_TRADING_AUTHORIZED": false,
+      "ORDER_SUBMISSION_AUTHORIZED": false,
+      "REAL_CONNECTIVITY_AUTHORIZED": false,
+      "activates_connectivity": false,
+      "authority_does_not_implicitly_expand": true,
+      "capability": "balances",
+      "deny_overrides_allow": true,
+      "domain": "account_read",
+      "emergency": true,
+      "ok": true,
+      "reason": "emergency_shutdown",
+      "state": "EMERGENCY_DISABLED"
+    },
+    {
+      "CANARY_ACTIVATION_AUTHORIZED": false,
+      "LIVE_TRADING_AUTHORIZED": false,
+      "ORDER_SUBMISSION_AUTHORIZED": false,
+      "REAL_CONNECTIVITY_AUTHORIZED": false,
+      "activates_connectivity": false,
+      "authority_does_not_implicitly_expand": true,
+      "capability": "submit_order",
+      "deny_overrides_allow": true,
+      "domain": "account_write",
+      "emergency": true,
+      "ok": true,
+      "reason": "emergency_shutdown",
+      "state": "EMERGENCY_DISABLED"
+    },
+    {
+      "CANARY_ACTIVATION_AUTHORIZED": false,
+      "LIVE_TRADING_AUTHORIZED": false,
+      "ORDER_SUBMISSION_AUTHORIZED": false,
+      "REAL_CONNECTIVITY_AUTHORIZED": false,
+      "activates_connectivity": false,
+      "authority_does_not_implicitly_expand": true,
+      "capability": "live_execution",
+      "deny_overrides_allow": true,
+      "domain": "execution",
+      "emergency": true,
+      "ok": true,
+      "reason": "emergency_shutdown",
+      "state": "EMERGENCY_DISABLED"
+    },
+    {
+      "CANARY_ACTIVATION_AUTHORIZED": false,
+      "LIVE_TRADING_AUTHORIZED": false,
+      "ORDER_SUBMISSION_AUTHORIZED": false,
+      "REAL_CONNECTIVITY_AUTHORIZED": false,
+      "activates_connectivity": false,
+      "authority_does_not_implicitly_expand": true,
+      "capability": "offline_fixture_access",
+      "deny_overrides_allow": true,
+      "domain": "market_data",
+      "emergency": true,
+      "ok": true,
+      "reason": "emergency_shutdown",
+      "state": "EMERGENCY_DISABLED"
+    }
+  ]
+}

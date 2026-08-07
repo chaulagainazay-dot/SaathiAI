@@ -1,0 +1,157 @@
+
+> saathi-os@0.1.0 build
+> next build
+
+   ▲ Next.js 15.5.22
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully in 5.9s
+   Linting and checking validity of types ...
+   Collecting page data ...
+   Generating static pages (0/115) ...
+   Generating static pages (28/115) 
+   Generating static pages (57/115) 
+   Generating static pages (86/115) 
+ ✓ Generating static pages (115/115)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                                 Size  First Load JS
+┌ ○ /                                    11.2 kB         167 kB
+├ ○ /_not-found                             1 kB         103 kB
+├ ƒ /[dept]                              2.62 kB         151 kB
+├ ○ /agents                               1.3 kB         153 kB
+├ ○ /approvals                           4.48 kB         160 kB
+├ ○ /apps                                 5.1 kB         111 kB
+├ ○ /apps/hcg                            7.49 kB         117 kB
+├ ○ /apps/ielts                          7.25 kB         116 kB
+├ ○ /automation                           3.2 kB         155 kB
+├ ○ /automation/production               1.97 kB         154 kB
+├ ○ /business                            1.15 kB         153 kB
+├ ○ /ceo                                 2.25 kB         108 kB
+├ ○ /chat                                  171 B         118 kB
+├ ○ /command                             3.85 kB         159 kB
+├ ○ /connectors                          2.04 kB         154 kB
+├ ○ /control                             2.15 kB         154 kB
+├ ○ /control/computer                    1.28 kB         153 kB
+├ ○ /evidence                            2.21 kB         154 kB
+├ ○ /finance                               682 B         149 kB
+├ ○ /fleet                               5.36 kB         111 kB
+├ ○ /ielts                                 142 B         166 kB
+├ ○ /ielts/alerts                          142 B         166 kB
+├ ○ /ielts/evidence                        142 B         166 kB
+├ ○ /ielts/goals                           141 B         166 kB
+├ ○ /ielts/onboarding                      142 B         166 kB
+├ ○ /ielts/payments                        142 B         166 kB
+├ ○ /ielts/practice                        142 B         166 kB
+├ ○ /ielts/practice/listening              142 B         166 kB
+├ ○ /ielts/practice/reading                142 B         166 kB
+├ ○ /ielts/practice/speaking               142 B         166 kB
+├ ○ /ielts/practice/writing                142 B         166 kB
+├ ○ /ielts/settings                        142 B         166 kB
+├ ○ /ielts/submissions                     143 B         166 kB
+├ ƒ /infrastructure                        132 B         102 kB
+├ ○ /knowledge                           4.19 kB         160 kB
+├ ○ /knowledge/grounding                 4.56 kB         110 kB
+├ ○ /knowledge/library                    2.3 kB         155 kB
+├ ○ /lab                                 1.61 kB         154 kB
+├ ○ /learning                            2.26 kB         154 kB
+├ ○ /manifest.webmanifest                  132 B         102 kB
+├ ○ /maturity                            1.42 kB         154 kB
+├ ƒ /me                                    132 B         102 kB
+├ ○ /mission                             4.84 kB         157 kB
+├ ○ /missions                            1.42 kB         154 kB
+├ ƒ /missions/[id]                       4.69 kB         160 kB
+├ ƒ /missions/[id]/intake                2.71 kB         158 kB
+├ ƒ /missions/[id]/proposal              2.84 kB         158 kB
+├ ƒ /missions/[id]/reference             2.48 kB         155 kB
+├ ƒ /missions/[id]/voice                 3.62 kB         159 kB
+├ ƒ /missions/[id]/website               2.64 kB         155 kB
+├ ○ /missions/new                         1.5 kB         154 kB
+├ ○ /monitoring                          5.96 kB         162 kB
+├ ○ /orchestration                       5.18 kB         111 kB
+├ ○ /os                                  3.94 kB         156 kB
+├ ○ /platform                               9 kB         165 kB
+├ ○ /platform/actions                    2.03 kB         127 kB
+├ ○ /platform/agents                     3.35 kB         123 kB
+├ ƒ /platform/agents/[agentId]           2.48 kB         122 kB
+├ ○ /platform/approvals                  3.48 kB         123 kB
+├ ƒ /platform/approvals/[approvalId]     2.92 kB         123 kB
+├ ○ /platform/approvals/new              4.05 kB         129 kB
+├ ○ /platform/attention                  2.83 kB         123 kB
+├ ƒ /platform/attention/[attentionId]    5.11 kB         131 kB
+├ ○ /platform/evidence                   2.22 kB         128 kB
+├ ○ /platform/home                       4.94 kB         114 kB
+├ ○ /platform/missions                   4.08 kB         124 kB
+├ ƒ /platform/missions/[missionId]        5.1 kB         125 kB
+├ ƒ /platform/missions/[missionId]/plan  5.43 kB         131 kB
+├ ○ /platform/missions/new               4.96 kB         130 kB
+├ ○ /platform/notifications              2.74 kB         128 kB
+├ ○ /platform/onboarding                 4.32 kB         130 kB
+├ ○ /platform/ops                        6.66 kB         163 kB
+├ ○ /platform/saved-views                3.09 kB         129 kB
+├ ○ /platform/search                     2.61 kB         128 kB
+├ ○ /platform/templates                  2.58 kB         128 kB
+├ ○ /platform/workflows                  1.01 kB         126 kB
+├ ƒ /platform/workflows/[workflowId]     3.39 kB         129 kB
+├ ○ /platform/workflows/new                836 B         126 kB
+├ ƒ /project/create/[token]              1.41 kB         107 kB
+├ ○ /projects                            1.72 kB         154 kB
+├ ○ /reset-password                      2.06 kB         154 kB
+├ ○ /saathi                              2.41 kB         155 kB
+├ ○ /security                            6.34 kB         159 kB
+├ ○ /settings                            4.26 kB         156 kB
+├ ○ /skill-runtime                       5.04 kB         111 kB
+├ ○ /skills                              1.62 kB         154 kB
+├ ○ /studio                              4.18 kB         156 kB
+├ ○ /studio-os                           3.43 kB         109 kB
+├ ○ /studio/control-room                 3.66 kB         156 kB
+├ ○ /trading                              2.2 kB         164 kB
+├ ○ /trading/accounts                      833 B         163 kB
+├ ƒ /trading/accounts/[accountId]        2.06 kB         164 kB
+├ ○ /trading/approvals                   1.91 kB         164 kB
+├ ○ /trading/backtests                   1.62 kB         163 kB
+├ ○ /trading/broker-readiness            3.27 kB         165 kB
+├ ○ /trading/broker-sandbox              1.99 kB         164 kB
+├ ○ /trading/comparison                  1.17 kB         163 kB
+├ ○ /trading/evidence                    2.43 kB         164 kB
+├ ○ /trading/historical                  1.82 kB         164 kB
+├ ○ /trading/integration-assurance       2.54 kB         164 kB
+├ ○ /trading/journal                     1.11 kB         163 kB
+├ ○ /trading/monte-carlo                 1.34 kB         163 kB
+├ ○ /trading/ops-graduation              1.76 kB         163 kB
+├ ○ /trading/orders                        794 B         162 kB
+├ ƒ /trading/orders/[orderId]            1.78 kB         163 kB
+├ ○ /trading/paper-analytics             1.03 kB         163 kB
+├ ○ /trading/paper-approvals             1.05 kB         163 kB
+├ ○ /trading/paper-campaigns             1.14 kB         163 kB
+├ ○ /trading/paper-journal               1.06 kB         163 kB
+├ ○ /trading/paper-ledger                  982 B         163 kB
+├ ○ /trading/paper-ops                   1.11 kB         163 kB
+├ ○ /trading/paper-orders                1.07 kB         163 kB
+├ ○ /trading/paper-portfolio             1.38 kB         163 kB
+├ ○ /trading/paper-reconcile             1.05 kB         163 kB
+├ ○ /trading/paper-recovery                982 B         163 kB
+├ ○ /trading/paper-risk                  1.07 kB         163 kB
+├ ○ /trading/policy                      1.37 kB         163 kB
+├ ○ /trading/positions                    1.1 kB         163 kB
+├ ○ /trading/proposals                   1.44 kB         163 kB
+├ ○ /trading/provider-canary-planning    2.19 kB         164 kB
+├ ○ /trading/qualification               1.47 kB         163 kB
+├ ○ /trading/reconciliation              2.28 kB         164 kB
+├ ○ /trading/regime                      1.16 kB         163 kB
+├ ○ /trading/research                    1.61 kB         163 kB
+├ ○ /trading/safety                       3.4 kB         165 kB
+├ ○ /trading/strategies                  1.05 kB         163 kB
+├ ○ /unlock                              4.89 kB         157 kB
+├ ○ /voice                               1.74 kB         154 kB
+└ ○ /workspace                           2.48 kB         155 kB
++ First Load JS shared by all             102 kB
+  ├ chunks/1255-cf02c4775860a5ab.js      46.1 kB
+  ├ chunks/4bd1b696-100b9d70ed4e49c1.js  54.2 kB
+  └ other shared chunks (total)          1.94 kB
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+

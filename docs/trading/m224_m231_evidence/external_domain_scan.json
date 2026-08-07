@@ -1,0 +1,55 @@
+{
+  "in_memory_attempts": 5,
+  "blocked_count": 5,
+  "blocked": [
+    {
+      "attempted_url": "https://api.binance.com/api/v3/account",
+      "domain": "api.binance.com",
+      "result": "REAL_PROVIDER_TRANSPORT_FORBIDDEN",
+      "detail": {
+        "reason": "external provider domain blocked"
+      },
+      "at": 1785375854.3069282
+    },
+    {
+      "attempted_url": "https://api.binance.com/api/v3/account",
+      "domain": "api.binance.com",
+      "result": "REAL_PROVIDER_TRANSPORT_FORBIDDEN",
+      "detail": {
+        "reason": "external provider domain blocked"
+      },
+      "at": 1785375854.319098
+    },
+    {
+      "attempted_url": "https://api.binance.com",
+      "domain": "api.binance.com",
+      "result": "REAL_PROVIDER_TRANSPORT_FORBIDDEN",
+      "detail": {
+        "reason": "external provider domain blocked"
+      },
+      "at": 1785375854.3241322
+    },
+    {
+      "attempted_url": "https://api.alpaca.markets",
+      "domain": "api.alpaca.markets",
+      "result": "REAL_PROVIDER_TRANSPORT_FORBIDDEN",
+      "detail": {
+        "reason": "external provider domain blocked"
+      },
+      "at": 1785375854.3249211
+    },
+    {
+      "attempted_url": "https://api.ibkr.com",
+      "domain": "api.ibkr.com",
+      "result": "REAL_PROVIDER_TRANSPORT_FORBIDDEN",
+      "detail": {
+        "reason": "external provider domain blocked"
+      },
+      "at": 1785375854.325562
+    }
+  ],
+  "persisted_blocks": 5,
+  "result": "REAL_PROVIDER_TRANSPORT_FORBIDDEN",
+  "network_isolation": true,
+  "real_transport_possible": false
+}

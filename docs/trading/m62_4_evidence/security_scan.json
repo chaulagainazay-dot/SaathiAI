@@ -1,0 +1,23 @@
+{
+  "patterns_checked": [
+    "ExecutionGateway",
+    "broker_adapter",
+    "submit_order",
+    "place_order",
+    "\\beval\\(",
+    "\\bexec\\(",
+    "subprocess",
+    "import requests",
+    "urllib.request",
+    "socket\\.socket",
+    "httpx",
+    "aiohttp",
+    "__import__",
+    "importlib.import_module",
+    "os.system"
+  ],
+  "code_hits": {},
+  "verdict": "CLEAN \u2014 none of the forbidden patterns appear in strategy/*.py executable code",
+  "orderintent_usage": "guardian_sim.py only, constructed with Environment.SIMULATION and passed to the fail-closed Guardian for a VETO; never submitted, never reaches ExecutionGateway or a broker",
+  "no_live_execution_imports": "strategy package imports only trading_models, trading_guardian, market_data, research(read), platform models/context"
+}

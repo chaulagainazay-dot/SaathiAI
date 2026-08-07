@@ -83,32 +83,89 @@ def _id() -> str:
     return uuid.uuid4().hex
 
 
+# M48.3 additive columns on orchestration_run (backward-compatible).
+_LIFECYCLE_COLUMNS: tuple[tuple[str, str], ...] = (
+    ("attempt", "INTEGER DEFAULT 1"),
+    ("heartbeat_at", "REAL DEFAULT 0"),
+    ("lease_owner", "TEXT DEFAULT ''"),
+    ("lease_expires_at", "REAL DEFAULT 0"),
+    ("cancel_requested_at", "REAL DEFAULT 0"),
+    ("cancel_reason", "TEXT DEFAULT ''"),
+    ("cancel_status", "TEXT DEFAULT ''"),
+    ("deadline_at", "REAL DEFAULT 0"),
+    ("terminal_reason", "TEXT DEFAULT ''"),
+    ("last_error_code", "TEXT DEFAULT ''"),
+    ("parent_run_id", "TEXT DEFAULT ''"),
+)
+
+
 class RunStore:
     def __init__(self, db_path: str | Path | None = None):
         self.db_path = Path(db_path) if db_path else DB_PATH
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         with self._conn() as c:
             c.executescript(_SCHEMA)
+            self._migrate_lifecycle(c)
+
+    def _migrate_lifecycle(self, c: sqlite3.Connection) -> None:
+        """Additive M48.3 columns — safe if already present."""
+        existing = {
+            r[1]
+            for r in c.execute("PRAGMA table_info(orchestration_run)").fetchall()
+        }
+        for name, decl in _LIFECYCLE_COLUMNS:
+            if name not in existing:
+                c.execute(
+                    f"ALTER TABLE orchestration_run ADD COLUMN {name} {decl}"
+                )
 
     def _conn(self) -> sqlite3.Connection:
-        c = sqlite3.connect(str(self.db_path))
+        c = sqlite3.connect(str(self.db_path), timeout=30)
         c.row_factory = sqlite3.Row
+        c.execute("PRAGMA busy_timeout=30000")
         return c
 
     # ── runs ──────────────────────────────────────────────────────────────
     def create_run(self, *, objective: str, strategy: str, actor: str,
                    project_id: str = "", conversation_id: str = "",
-                   budget: dict | None = None) -> str:
+                   budget: dict | None = None, deadline_at: float = 0.0,
+                   parent_run_id: str = "", attempt: int = 1) -> str:
         rid = _id()
         now = _now()
+        budget = dict(budget or {})
+        if deadline_at <= 0:
+            # default deadline from budget.timeout_sec when present
+            try:
+                deadline_at = now + float(budget.get("timeout_sec") or 300)
+            except (TypeError, ValueError):
+                deadline_at = now + 300
         with self._conn() as c:
-            c.execute("INSERT INTO orchestration_run(id,objective,strategy,state,"
-                      "actor,project_id,conversation_id,budget,created_at,updated_at)"
-                      " VALUES(?,?,?,?,?,?,?,?,?,?)",
-                      (rid, objective, strategy, RunState.CREATED.value, actor,
-                       project_id, conversation_id, json.dumps(budget or {}), now, now))
+            c.execute(
+                "INSERT INTO orchestration_run(id,objective,strategy,state,"
+                "actor,project_id,conversation_id,budget,created_at,updated_at,"
+                "attempt,deadline_at,parent_run_id,heartbeat_at)"
+                " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                (
+                    rid,
+                    objective,
+                    strategy,
+                    RunState.CREATED.value,
+                    actor,
+                    project_id,
+                    conversation_id,
+                    json.dumps(budget),
+                    now,
+                    now,
+                    int(attempt or 1),
+                    float(deadline_at or 0),
+                    parent_run_id or "",
+                    now,
+                ),
+            )
         self.event(rid, "run.created", {"objective": objective[:120],
-                                        "strategy": strategy})
+                                        "strategy": strategy,
+                                        "attempt": attempt,
+                                        "deadline_at": deadline_at})
         return rid
 
     def get_run(self, rid: str) -> Optional[dict]:
@@ -120,17 +177,68 @@ class RunStore:
         d["budget"] = json.loads(d.get("budget") or "{}")
         return d
 
-    def transition(self, rid: str, dst: RunState, *, actor: str = "system") -> None:
+    def update_lifecycle(self, rid: str, **fields) -> None:
+        """Update M48.3 lifecycle columns only (whitelist)."""
+        allowed = {c[0] for c in _LIFECYCLE_COLUMNS} | {"updated_at"}
+        cols = {k: v for k, v in fields.items() if k in allowed}
+        if not cols:
+            return
+        cols["updated_at"] = _now()
+        assignments = ", ".join(f"{k}=?" for k in cols)
+        vals = list(cols.values()) + [rid]
+        with self._conn() as c:
+            c.execute(
+                f"UPDATE orchestration_run SET {assignments} WHERE id=?",
+                vals,
+            )
+
+    def list_active_runs(self, *, limit: int = 200) -> list[dict]:
+        """Non-terminal runs for recovery/reconciliation."""
+        terminal = (
+            RunState.COMPLETED.value,
+            RunState.CANCELLED.value,
+            RunState.FAILED.value,
+            RunState.TIMED_OUT.value,
+            RunState.ROLLED_BACK.value,
+            RunState.PARTIALLY_COMPLETED.value,
+        )
+        placeholders = ",".join("?" * len(terminal))
+        with self._conn() as c:
+            rows = c.execute(
+                f"SELECT * FROM orchestration_run WHERE state NOT IN ({placeholders}) "
+                f"ORDER BY updated_at DESC LIMIT ?",
+                (*terminal, limit),
+            ).fetchall()
+        out = []
+        for row in rows:
+            d = dict(row)
+            d["budget"] = json.loads(d.get("budget") or "{}")
+            out.append(d)
+        return out
+
+    def transition(self, rid: str, dst: RunState, *, actor: str = "system",
+                   terminal_reason: str = "") -> None:
         run = self.get_run(rid)
         if not run:
             raise KeyError(rid)
         src = RunState(run["state"])
         validate_transition(src, dst)   # raises IllegalTransition
+        now = _now()
         with self._conn() as c:
-            c.execute("UPDATE orchestration_run SET state=?, updated_at=? WHERE id=?",
-                      (dst.value, _now(), rid))
+            if terminal_reason:
+                c.execute(
+                    "UPDATE orchestration_run SET state=?, updated_at=?, "
+                    "terminal_reason=?, lease_owner='', lease_expires_at=0 WHERE id=?",
+                    (dst.value, now, terminal_reason, rid),
+                )
+            else:
+                c.execute(
+                    "UPDATE orchestration_run SET state=?, updated_at=? WHERE id=?",
+                    (dst.value, now, rid),
+                )
         self.event(rid, "run.state", {"from": src.value, "to": dst.value,
-                                      "actor": actor})
+                                      "actor": actor,
+                                      "terminal_reason": terminal_reason or None})
 
     def set_outcome(self, rid: str, outcome: dict) -> None:
         with self._conn() as c:

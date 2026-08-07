@@ -1,0 +1,300 @@
+{
+  "schema": "M278_STRESS_TEST_AND_CANDIDATE_PROMOTION",
+  "stress": {
+    "schema": "M278_STRESS_TEST_AND_CANDIDATE_PROMOTION",
+    "section": "stress",
+    "ok": true,
+    "portfolio_id": "pf_a2b431705b1c4a2d",
+    "weights": {
+      "tf_dual_ma": 0.25,
+      "mom_rs_equity": 0.25,
+      "mr_bollinger_reversion": 0.25,
+      "bo_donchian": 0.25
+    },
+    "base_metrics": {
+      "annualised_return": 0.054449,
+      "volatility": 0.043692,
+      "sharpe_ratio": 1.246194,
+      "sortino_ratio": 1.960834,
+      "maximum_drawdown": 0.028476,
+      "calmar_ratio": 1.912084,
+      "var_95": 0.004828,
+      "expected_shortfall_95": 0.005759,
+      "downside_deviation": 0.027768,
+      "hit_rate": 0.541667,
+      "average_win": 0.002168,
+      "average_loss": -0.00209,
+      "expectancy": 0.000216,
+      "profit_factor": 1.225517,
+      "recovery_factor": 0.906085
+    },
+    "historical_stresses": [
+      {
+        "name": "worst_20bar_drawdown_window",
+        "start": 7,
+        "portfolio_loss": 0.02399,
+        "maximum_drawdown": 0.02399,
+        "category": "historical_replay",
+        "limitations": [
+          "Bounded sample; not full crisis library"
+        ]
+      },
+      {
+        "name": "high_volatility_window",
+        "portfolio_loss": 0.028795,
+        "maximum_drawdown": 0.028476,
+        "category": "historical_replay"
+      }
+    ],
+    "hypothetical_stresses": [
+      {
+        "name": "equity_drawdown",
+        "portfolio_loss": 0.2,
+        "maximum_drawdown": 0.2,
+        "var_95": 0.12,
+        "expected_shortfall_95": 0.16,
+        "category": "hypothetical"
+      },
+      {
+        "name": "crypto_drawdown",
+        "portfolio_loss": 0.35,
+        "maximum_drawdown": 0.35,
+        "var_95": 0.21,
+        "expected_shortfall_95": 0.28,
+        "category": "hypothetical"
+      },
+      {
+        "name": "volatility_doubling",
+        "portfolio_loss": 0.056401,
+        "maximum_drawdown": 0.056401,
+        "var_95": 0.009656,
+        "expected_shortfall_95": 0.011518,
+        "category": "hypothetical"
+      },
+      {
+        "name": "correlation_convergence",
+        "portfolio_loss": 0.1,
+        "maximum_drawdown": 0.1,
+        "var_95": 0.06,
+        "expected_shortfall_95": 0.08,
+        "category": "hypothetical"
+      },
+      {
+        "name": "slippage_increase",
+        "portfolio_loss": 0.02,
+        "maximum_drawdown": 0.02,
+        "var_95": 0.012,
+        "expected_shortfall_95": 0.016,
+        "category": "hypothetical"
+      },
+      {
+        "name": "commission_increase",
+        "portfolio_loss": 0.01,
+        "maximum_drawdown": 0.01,
+        "var_95": 0.006,
+        "expected_shortfall_95": 0.008,
+        "category": "hypothetical"
+      },
+      {
+        "name": "delayed_signal",
+        "portfolio_loss": 0.03,
+        "maximum_drawdown": 0.03,
+        "var_95": 0.018,
+        "expected_shortfall_95": 0.024,
+        "category": "hypothetical"
+      },
+      {
+        "name": "missing_data",
+        "portfolio_loss": 0.02,
+        "maximum_drawdown": 0.02,
+        "var_95": 0.012,
+        "expected_shortfall_95": 0.016,
+        "category": "hypothetical"
+      },
+      {
+        "name": "strategy_failure",
+        "portfolio_loss": 0.15,
+        "maximum_drawdown": 0.15,
+        "var_95": 0.09,
+        "expected_shortfall_95": 0.12,
+        "category": "hypothetical"
+      },
+      {
+        "name": "benchmark_shock",
+        "portfolio_loss": 0.12,
+        "maximum_drawdown": 0.12,
+        "var_95": 0.072,
+        "expected_shortfall_95": 0.096,
+        "category": "hypothetical"
+      },
+      {
+        "name": "liquidity_reduction",
+        "portfolio_loss": 0.05,
+        "maximum_drawdown": 0.05,
+        "var_95": 0.03,
+        "expected_shortfall_95": 0.04,
+        "category": "hypothetical"
+      },
+      {
+        "name": "one_strategy_collapse",
+        "portfolio_loss": 0.18,
+        "maximum_drawdown": 0.18,
+        "var_95": 0.108,
+        "expected_shortfall_95": 0.144,
+        "category": "hypothetical"
+      },
+      {
+        "name": "regime_misclassification",
+        "portfolio_loss": 0.08,
+        "maximum_drawdown": 0.08,
+        "var_95": 0.048,
+        "expected_shortfall_95": 0.064,
+        "category": "hypothetical"
+      }
+    ],
+    "statistical_stresses": [
+      {
+        "name": "block_bootstrap_mdd",
+        "p5": 0.013104,
+        "p50": 0.0258,
+        "p95": 0.060132,
+        "category": "statistical",
+        "label": "BLOCK_BOOTSTRAP_APPROXIMATION"
+      },
+      {
+        "name": "return_resampling",
+        "portfolio_loss": 0.078775,
+        "category": "statistical"
+      },
+      {
+        "name": "parameter_perturbation",
+        "portfolio_loss": 0.034171,
+        "category": "statistical"
+      }
+    ],
+    "breaches": [],
+    "breach_count": 0,
+    "max_drawdown_limit": 0.35,
+    "limitations": [
+      "Hypothetical shocks are research scenarios, not forecasts",
+      "Historical stress library limited by governed data coverage",
+      "Recovery time estimates omitted without longer histories"
+    ],
+    "LIVE_TRADING_AUTHORIZED": false,
+    "BROKER_CONNECTIVITY_AUTHORIZED": false,
+    "REAL_CONNECTIVITY_AUTHORIZED": false,
+    "CREDENTIAL_PROVISIONING_AUTHORIZED": false,
+    "CANARY_ACTIVATION_AUTHORIZED": false,
+    "ORDER_EXECUTION_AUTHORIZED": false,
+    "ORDER_SUBMISSION_AUTHORIZED": false,
+    "ORDER_MODIFICATION_AUTHORIZED": false,
+    "ORDER_CANCELLATION_AUTHORIZED": false,
+    "API_KEYS_ACCEPTED": false,
+    "OAUTH_AUTHORIZED": false,
+    "LIVE_MARKET_DATA_AUTHORIZED": false,
+    "LIVE_DATA_DEPENDENCY": false,
+    "PAPER_EXECUTION_AUTHORIZED": false,
+    "AUTOMATED_INVESTMENT_AUTHORITY": false,
+    "REGULATORY_GRADE_PORTFOLIO_OPTIMISATION": false,
+    "STRATEGY_PROFITABILITY_GUARANTEED": false,
+    "LIVE_MARKET_READINESS": false,
+    "INVESTMENT_ADVICE_CERTIFIED": false,
+    "PRODUCTION_AUTHORIZED": false,
+    "REAL_BROKER_CONNECTION_CAPABLE": false,
+    "paper_only": true,
+    "sandbox_only": true,
+    "research_only": true,
+    "offline_first": true,
+    "offline_capable": true,
+    "no_broker_connection": true,
+    "no_api_keys": true,
+    "no_oauth": true,
+    "no_order_submission": true,
+    "no_live_data_dependency": true,
+    "no_live_trading": true,
+    "certified_experiment_requires_pre_registration": true,
+    "human_review_required_for_paper_candidate": true,
+    "paper_candidate_does_not_authorise_execution": true,
+    "max_authority": "RESEARCH_PORTFOLIO_AND_PAPER_CANDIDATE_EVALUATION_ONLY",
+    "default_leverage_max": 1.0,
+    "evidence_hash": "aba5c1bcbba9da91fb60ed546f8a4fd927c65ddd0a4ba680cfe680b28fe5f9a4",
+    "stress_id": "str_42a2976ca8b84779"
+  },
+  "candidate": {
+    "ok": true,
+    "subject_type": "strategy",
+    "subject_id": "tf_dual_ma",
+    "state": "VALIDATION_FAILED",
+    "gates": {
+      "governed_historical_data": true,
+      "pre_registered_experiment": true,
+      "out_of_sample_evaluated": true,
+      "walk_forward_completed": true,
+      "transaction_costs_included": true,
+      "slippage_included": true,
+      "robustness_completed": true,
+      "multiple_testing_disclosed": true,
+      "regime_analysis_completed": true,
+      "stress_testing_completed": true,
+      "evidence_complete": true,
+      "authority_violation": false,
+      "human_review_required": true
+    },
+    "gate_failures": [
+      "out_of_sample_failed",
+      "robustness_failed"
+    ],
+    "human_review_status": "REQUIRED",
+    "paper_candidate_meaning": "ELIGIBLE_FOR_FUTURE_PAPER_SIMULATION_REVIEW",
+    "paper_candidate_authorises_execution": false,
+    "automatic_paper_execution": false,
+    "promotion_to_paper_candidate": false,
+    "limitations": [
+      "Promotion only marks eligibility for future paper simulation review",
+      "Human approval remains required",
+      "Does not enable order execution"
+    ],
+    "LIVE_TRADING_AUTHORIZED": false,
+    "BROKER_CONNECTIVITY_AUTHORIZED": false,
+    "REAL_CONNECTIVITY_AUTHORIZED": false,
+    "CREDENTIAL_PROVISIONING_AUTHORIZED": false,
+    "CANARY_ACTIVATION_AUTHORIZED": false,
+    "ORDER_EXECUTION_AUTHORIZED": false,
+    "ORDER_SUBMISSION_AUTHORIZED": false,
+    "ORDER_MODIFICATION_AUTHORIZED": false,
+    "ORDER_CANCELLATION_AUTHORIZED": false,
+    "API_KEYS_ACCEPTED": false,
+    "OAUTH_AUTHORIZED": false,
+    "LIVE_MARKET_DATA_AUTHORIZED": false,
+    "LIVE_DATA_DEPENDENCY": false,
+    "PAPER_EXECUTION_AUTHORIZED": false,
+    "AUTOMATED_INVESTMENT_AUTHORITY": false,
+    "REGULATORY_GRADE_PORTFOLIO_OPTIMISATION": false,
+    "STRATEGY_PROFITABILITY_GUARANTEED": false,
+    "LIVE_MARKET_READINESS": false,
+    "INVESTMENT_ADVICE_CERTIFIED": false,
+    "PRODUCTION_AUTHORIZED": false,
+    "REAL_BROKER_CONNECTION_CAPABLE": false,
+    "paper_only": true,
+    "sandbox_only": true,
+    "research_only": true,
+    "offline_first": true,
+    "offline_capable": true,
+    "no_broker_connection": true,
+    "no_api_keys": true,
+    "no_oauth": true,
+    "no_order_submission": true,
+    "no_live_data_dependency": true,
+    "no_live_trading": true,
+    "certified_experiment_requires_pre_registration": true,
+    "human_review_required_for_paper_candidate": true,
+    "paper_candidate_does_not_authorise_execution": true,
+    "max_authority": "RESEARCH_PORTFOLIO_AND_PAPER_CANDIDATE_EVALUATION_ONLY",
+    "default_leverage_max": 1.0,
+    "evidence_hash": "8a2e68c19d3a3ed34c32ef4387b33812320f6c4e992427fa0af53950e57ead4c",
+    "candidate_id": "cand_9198c3698cb54a31"
+  },
+  "paper_candidate_meaning": "ELIGIBLE_FOR_FUTURE_PAPER_SIMULATION_REVIEW",
+  "paper_candidate_authorises_execution": false,
+  "human_review_required": true
+}

@@ -1,0 +1,10 @@
+{
+  "allowed": [
+    "files.pythonhosted.org",
+    "npmjs.org",
+    "pypi.org",
+    "pypi.python.org",
+    "registry.npmjs.org"
+  ],
+  "bad": []
+}

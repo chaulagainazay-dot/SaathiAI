@@ -1,0 +1,51 @@
+{
+  "check": "network_isolation",
+  "result": "PASS",
+  "probes": [
+    {
+      "ok": false,
+      "blocked": true,
+      "domain": "api.binance.com",
+      "result": "REAL_PROVIDER_TRANSPORT_FORBIDDEN",
+      "url": "https://api.binance.com/api/v3/account",
+      "REAL_CONNECTIVITY_AUTHORIZED": false
+    },
+    {
+      "ok": false,
+      "blocked": true,
+      "domain": "api.alpaca.markets",
+      "result": "REAL_PROVIDER_TRANSPORT_FORBIDDEN",
+      "url": "https://api.alpaca.markets/v2/account",
+      "REAL_CONNECTIVITY_AUTHORIZED": false
+    },
+    {
+      "ok": false,
+      "blocked": true,
+      "domain": "api.kite.trade",
+      "result": "REAL_PROVIDER_TRANSPORT_FORBIDDEN",
+      "url": "https://api.kite.trade/user/profile",
+      "REAL_CONNECTIVITY_AUTHORIZED": false
+    },
+    {
+      "ok": true,
+      "domain": "127.0.0.1",
+      "result": "LOCAL_SIMULATION_ONLY",
+      "category": "local",
+      "blocked": false,
+      "REAL_CONNECTIVITY_AUTHORIZED": false
+    },
+    {
+      "ok": true,
+      "domain": "pypi.org",
+      "result": "DEPENDENCY_REGISTRY_ALLOWED_SEPARATE_FROM_PROVIDER",
+      "category": "dependency_registry",
+      "broker_connectivity": false,
+      "blocked": false,
+      "REAL_CONNECTIVITY_AUTHORIZED": false
+    }
+  ],
+  "provider_blocked": true,
+  "localhost_allowed": true,
+  "registry_separated": true,
+  "ok": true
+}

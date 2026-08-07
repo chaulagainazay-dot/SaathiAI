@@ -1,0 +1,1048 @@
+{
+  "strategies": {
+    "ok": true,
+    "registry": "strategy_registry_v2",
+    "composes": "M248_StrategyRegistryEngine",
+    "count": 11,
+    "strategies": [
+      {
+        "id": "mom_rs_equity",
+        "category": "momentum",
+        "name": "Relative Strength Momentum",
+        "description": "Ranks equities by multi-horizon relative strength; long top decile with trend filter.",
+        "supported_markets": [
+          "equities",
+          "etf"
+        ],
+        "supported_assets": [
+          "US_LARGE_CAP",
+          "US_MID_CAP",
+          "SECTOR_ETF"
+        ],
+        "required_indicators": [
+          "returns_21d",
+          "returns_63d",
+          "returns_126d",
+          "sma_200"
+        ],
+        "entry_conditions": [
+          "rank_top_decile",
+          "price_above_sma_200",
+          "volume_above_avg"
+        ],
+        "exit_conditions": [
+          "rank_below_median",
+          "price_below_sma_200",
+          "time_stop_63d"
+        ],
+        "stop_loss_logic": "ATR(14)*2.5 trailing from entry high",
+        "take_profit_logic": "None fixed; scale-out at +2R optional",
+        "sizing_model": "volatility_target",
+        "expected_holding_period": "21-63 trading days",
+        "risk_profile": "moderate",
+        "confidence_model": "rank_stability * trend_alignment * volume_confirm",
+        "required_confirmations": [
+          "trend_filter",
+          "liquidity_floor"
+        ],
+        "limitations": [
+          "crowding risk",
+          "regime-dependent",
+          "turnover/tax drag"
+        ],
+        "paper_only": true,
+        "live_authorized": false,
+        "broker_required": false,
+        "fingerprint": "mom_rs_equity:momentum:v1",
+        "registry_version": "v2",
+        "orchestrator_compatible": true,
+        "research_only": true
+      },
+      {
+        "id": "mr_bollinger_reversion",
+        "category": "mean_reversion",
+        "name": "Bollinger Band Mean Reversion",
+        "description": "Fade 2-sigma deviations in range-bound markets with RSI confirmation.",
+        "supported_markets": [
+          "equities",
+          "etf",
+          "fx_paper"
+        ],
+        "supported_assets": [
+          "LIQUID_EQUITY",
+          "INDEX_ETF"
+        ],
+        "required_indicators": [
+          "bollinger_20_2",
+          "rsi_14",
+          "atr_14"
+        ],
+        "entry_conditions": [
+          "close_below_lower_band",
+          "rsi_below_30",
+          "regime_not_trending"
+        ],
+        "exit_conditions": [
+          "close_above_mid_band",
+          "rsi_above_50",
+          "time_stop_10d"
+        ],
+        "stop_loss_logic": "Beyond lower band by 1.5*ATR",
+        "take_profit_logic": "Mid-band or +1.5R",
+        "sizing_model": "fixed_fractional",
+        "expected_holding_period": "2-10 trading days",
+        "risk_profile": "moderate",
+        "confidence_model": "band_distance * rsi_extreme * regime_score",
+        "required_confirmations": [
+          "range_regime",
+          "no_earnings_within_3d"
+        ],
+        "limitations": [
+          "fails in strong trends",
+          "gap risk",
+          "needs liquid names"
+        ],
+        "paper_only": true,
+        "live_authorized": false,
+        "broker_required": false,
+        "fingerprint": "mr_bollinger_reversion:mean_reversion:v1",
+        "registry_version": "v2",
+        "orchestrator_compatible": true,
+        "research_only": true
+      },
+      {
+        "id": "tf_dual_ma",
+        "category": "trend_following",
+        "name": "Dual Moving Average Trend",
+        "description": "Classic dual-MA crossover with ATR stops and volatility targeting.",
+        "supported_markets": [
+          "equities",
+          "etf",
+          "futures_paper",
+          "crypto_paper"
+        ],
+        "supported_assets": [
+          "INDEX",
+          "SECTOR_ETF",
+          "MAJOR_CRYPTO_PAPER"
+        ],
+        "required_indicators": [
+          "sma_50",
+          "sma_200",
+          "atr_14"
+        ],
+        "entry_conditions": [
+          "sma_50_cross_above_sma_200",
+          "atr_filter_ok"
+        ],
+        "exit_conditions": [
+          "sma_50_cross_below_sma_200",
+          "trailing_stop_hit"
+        ],
+        "stop_loss_logic": "ATR(14)*3 from entry; trail after +1R",
+        "take_profit_logic": "Trail only (trend following)",
+        "sizing_model": "volatility_target",
+        "expected_holding_period": "20-200 trading days",
+        "risk_profile": "moderate",
+        "confidence_model": "ma_separation * slope_consistency",
+        "required_confirmations": [
+          "volatility_target_feasible"
+        ],
+        "limitations": [
+          "whipsaw in ranges",
+          "late entries/exits",
+          "drawdown clusters"
+        ],
+        "paper_only": true,
+        "live_authorized": false,
+        "broker_required": false,
+        "fingerprint": "tf_dual_ma:trend_following:v1",
+        "registry_version": "v2",
+        "orchestrator_compatible": true,
+        "research_only": true
+      },
+      {
+        "id": "bo_donchian",
+        "category": "breakout",
+        "name": "Donchian Channel Breakout",
+        "description": "Enter on N-day high/low breakouts with volume expansion.",
+        "supported_markets": [
+          "equities",
+          "futures_paper",
+          "crypto_paper"
+        ],
+        "supported_assets": [
+          "LIQUID_EQUITY",
+          "INDEX",
+          "MAJOR_CRYPTO_PAPER"
+        ],
+        "required_indicators": [
+          "donchian_20",
+          "donchian_55",
+          "volume_sma_20"
+        ],
+        "entry_conditions": [
+          "close_above_donchian_high_20",
+          "volume_gt_1_5x_avg"
+        ],
+        "exit_conditions": [
+          "close_below_donchian_low_10",
+          "time_stop_40d"
+        ],
+        "stop_loss_logic": "Donchian low of last 10 bars or 2*ATR",
+        "take_profit_logic": "Trail with Donchian mid / ATR",
+        "sizing_model": "fixed_fractional",
+        "expected_holding_period": "5-40 trading days",
+        "risk_profile": "aggressive",
+        "confidence_model": "breakout_quality * volume_expansion * false_breakout_filter",
+        "required_confirmations": [
+          "volume_expansion",
+          "no_major_news_blackout"
+        ],
+        "limitations": [
+          "false breakouts",
+          "gap risk",
+          "high turnover"
+        ],
+        "paper_only": true,
+        "live_authorized": false,
+        "broker_required": false,
+        "fingerprint": "bo_donchian:breakout:v1",
+        "registry_version": "v2",
+        "orchestrator_compatible": true,
+        "research_only": true
+      },
+      {
+        "id": "vol_regime_switch",
+        "category": "volatility",
+        "name": "Volatility Regime Switch",
+        "description": "Allocate between risk-on and defensive based on realised/implied vol regime.",
+        "supported_markets": [
+          "equities",
+          "etf"
+        ],
+        "supported_assets": [
+          "SPY",
+          "QQQ",
+          "TLT",
+          "GLD",
+          "CASH"
+        ],
+        "required_indicators": [
+          "realised_vol_20",
+          "vix_proxy",
+          "corr_spy_tlt"
+        ],
+        "entry_conditions": [
+          "vol_regime_change",
+          "rebalance_threshold_exceeded"
+        ],
+        "exit_conditions": [
+          "regime_revert",
+          "scheduled_rebalance"
+        ],
+        "stop_loss_logic": "Portfolio heat > 6% daily \u2192 defensive sleeve",
+        "take_profit_logic": "N/A (allocation strategy)",
+        "sizing_model": "equal_weight",
+        "expected_holding_period": "continuous rebalance monthly",
+        "risk_profile": "conservative",
+        "confidence_model": "regime_persistence * vol_forecast_error",
+        "required_confirmations": [
+          "data_quality_ok"
+        ],
+        "limitations": [
+          "proxy VIX only offline",
+          "lagged regime detection"
+        ],
+        "paper_only": true,
+        "live_authorized": false,
+        "broker_required": false,
+        "fingerprint": "vol_regime_switch:volatility:v1",
+        "registry_version": "v2",
+        "orchestrator_compatible": true,
+        "research_only": true
+      },
+      {
+        "id": "dca_core_equity",
+        "category": "dca",
+        "name": "Core Equity Dollar-Cost Average",
+        "description": "Scheduled equal notional purchases into a core equity basket.",
+        "supported_markets": [
+          "equities",
+          "etf"
+        ],
+        "supported_assets": [
+          "BROAD_MARKET_ETF",
+          "WORLD_ETF"
+        ],
+        "required_indicators": [
+          "calendar_schedule",
+          "cash_available"
+        ],
+        "entry_conditions": [
+          "schedule_date",
+          "cash_above_reserve"
+        ],
+        "exit_conditions": [
+          "goal_horizon_reached",
+          "manual_stop"
+        ],
+        "stop_loss_logic": "None at unit level; portfolio max-DD alert only",
+        "take_profit_logic": "None (accumulation)",
+        "sizing_model": "dca_schedule",
+        "expected_holding_period": "multi-year",
+        "risk_profile": "conservative",
+        "confidence_model": "horizon_alignment * fee_efficiency",
+        "required_confirmations": [
+          "cash_budget_ok"
+        ],
+        "limitations": [
+          "no tactical edge claimed",
+          "path-dependent opportunity cost"
+        ],
+        "paper_only": true,
+        "live_authorized": false,
+        "broker_required": false,
+        "fingerprint": "dca_core_equity:dca:v1",
+        "registry_version": "v2",
+        "orchestrator_compatible": true,
+        "research_only": true
+      },
+      {
+        "id": "value_pb_pe",
+        "category": "value_investing",
+        "name": "Classic Value Screen",
+        "description": "Long low P/B and P/E names with quality filter and sector neutrality.",
+        "supported_markets": [
+          "equities"
+        ],
+        "supported_assets": [
+          "US_LARGE_CAP",
+          "US_MID_CAP"
+        ],
+        "required_indicators": [
+          "pe_ttm",
+          "pb",
+          "roe",
+          "debt_to_equity"
+        ],
+        "entry_conditions": [
+          "pe_bottom_quintile",
+          "pb_bottom_quintile",
+          "roe_above_sector_median"
+        ],
+        "exit_conditions": [
+          "valuation_normalize",
+          "quality_break",
+          "rebalance_quarterly"
+        ],
+        "stop_loss_logic": "Hard stop -25% or thesis invalidation",
+        "take_profit_logic": "Valuation mean reversion to sector median",
+        "sizing_model": "equal_weight",
+        "expected_holding_period": "6-24 months",
+        "risk_profile": "moderate",
+        "confidence_model": "value_spread * quality_score * sector_neutral_residual",
+        "required_confirmations": [
+          "fundamental_data_fresh",
+          "no_distress_flags"
+        ],
+        "limitations": [
+          "value traps",
+          "accounting restatement risk",
+          "slow feedback"
+        ],
+        "paper_only": true,
+        "live_authorized": false,
+        "broker_required": false,
+        "fingerprint": "value_pb_pe:value_investing:v1",
+        "registry_version": "v2",
+        "orchestrator_compatible": true,
+        "research_only": true
+      },
+      {
+        "id": "growth_sales_accel",
+        "category": "growth_investing",
+        "name": "Sales Acceleration Growth",
+        "description": "Own names with accelerating revenue and positive estimate revisions.",
+        "supported_markets": [
+          "equities"
+        ],
+        "supported_assets": [
+          "US_GROWTH",
+          "NASDAQ_LISTED"
+        ],
+        "required_indicators": [
+          "sales_yoy",
+          "sales_accel",
+          "eps_revision",
+          "rs_63d"
+        ],
+        "entry_conditions": [
+          "sales_accel_positive",
+          "eps_revision_up",
+          "rs_above_median"
+        ],
+        "exit_conditions": [
+          "sales_decel",
+          "revision_down",
+          "rs_bottom_quartile"
+        ],
+        "stop_loss_logic": "ATR-based or -15% hard stop",
+        "take_profit_logic": "Trailing with RS deterioration",
+        "sizing_model": "volatility_target",
+        "expected_holding_period": "3-12 months",
+        "risk_profile": "aggressive",
+        "confidence_model": "accel_strength * revision_breadth * momentum_confirm",
+        "required_confirmations": [
+          "liquidity",
+          "no_going_concern"
+        ],
+        "limitations": [
+          "high valuation risk",
+          "crowding",
+          "narrative fragility"
+        ],
+        "paper_only": true,
+        "live_authorized": false,
+        "broker_required": false,
+        "fingerprint": "growth_sales_accel:growth_investing:v1",
+        "registry_version": "v2",
+        "orchestrator_compatible": true,
+        "research_only": true
+      },
+      {
+        "id": "swing_pullback",
+        "category": "swing_trading",
+        "name": "Trend Pullback Swing",
+        "description": "Buy pullbacks to rising MAs in established uptrends.",
+        "supported_markets": [
+          "equities",
+          "etf",
+          "crypto_paper"
+        ],
+        "supported_assets": [
+          "LIQUID_EQUITY",
+          "INDEX_ETF"
+        ],
+        "required_indicators": [
+          "sma_20",
+          "sma_50",
+          "rsi_14",
+          "atr_14"
+        ],
+        "entry_conditions": [
+          "uptrend_sma20_above_sma50",
+          "pullback_to_sma20",
+          "rsi_recover_from_40"
+        ],
+        "exit_conditions": [
+          "target_2R",
+          "structure_break",
+          "time_stop_15d"
+        ],
+        "stop_loss_logic": "Below swing low or 1.5*ATR",
+        "take_profit_logic": "Scale 50% at 2R; trail remainder",
+        "sizing_model": "fixed_fractional",
+        "expected_holding_period": "3-15 trading days",
+        "risk_profile": "moderate",
+        "confidence_model": "trend_quality * pullback_depth * volume_dry_up",
+        "required_confirmations": [
+          "higher_timeframe_trend"
+        ],
+        "limitations": [
+          "overnight gap",
+          "news events",
+          "false pullbacks"
+        ],
+        "paper_only": true,
+        "live_authorized": false,
+        "broker_required": false,
+        "fingerprint": "swing_pullback:swing_trading:v1",
+        "registry_version": "v2",
+        "orchestrator_compatible": true,
+        "research_only": true
+      },
+      {
+        "id": "scalp_microstructure_paper",
+        "category": "scalping",
+        "name": "Paper Microstructure Scalp",
+        "description": "Very short-horizon edge simulation for research; not production-ready.",
+        "supported_markets": [
+          "equities_paper",
+          "crypto_paper"
+        ],
+        "supported_assets": [
+          "HIGHLY_LIQUID"
+        ],
+        "required_indicators": [
+          "spread",
+          "microprice",
+          "order_imbalance_proxy"
+        ],
+        "entry_conditions": [
+          "spread_tight",
+          "imbalance_threshold",
+          "no_auction"
+        ],
+        "exit_conditions": [
+          "target_ticks",
+          "time_stop_minutes",
+          "spread_widens"
+        ],
+        "stop_loss_logic": "Hard tick stop + inventory limit",
+        "take_profit_logic": "Fixed ticks or mid reversion",
+        "sizing_model": "fixed_notional",
+        "expected_holding_period": "seconds to minutes (simulated bars)",
+        "risk_profile": "speculative",
+        "confidence_model": "spread_stability * fill_assumption_quality",
+        "required_confirmations": [
+          "offline_tick_or_bar_proxy"
+        ],
+        "limitations": [
+          "no live order book",
+          "fill model is assumption-heavy",
+          "not suitable for live trading claims"
+        ],
+        "paper_only": true,
+        "live_authorized": false,
+        "broker_required": false,
+        "fingerprint": "scalp_microstructure_paper:scalping:v1",
+        "registry_version": "v2",
+        "orchestrator_compatible": true,
+        "research_only": true
+      },
+      {
+        "id": "lt_buy_hold_core",
+        "category": "long_term_investing",
+        "name": "Long-Term Core Buy-and-Hold",
+        "description": "Strategic multi-asset core allocation with annual rebalance bands.",
+        "supported_markets": [
+          "equities",
+          "etf",
+          "bonds_paper"
+        ],
+        "supported_assets": [
+          "WORLD_EQUITY",
+          "BOND_ETF",
+          "CASH"
+        ],
+        "required_indicators": [
+          "allocation_drift",
+          "rebalance_band"
+        ],
+        "entry_conditions": [
+          "policy_allocation_set",
+          "cash_deployed_per_policy"
+        ],
+        "exit_conditions": [
+          "rebalance_band_hit",
+          "policy_change"
+        ],
+        "stop_loss_logic": "None unit-level; portfolio DD monitoring only",
+        "take_profit_logic": "None (strategic)",
+        "sizing_model": "equal_weight",
+        "expected_holding_period": "multi-year",
+        "risk_profile": "conservative",
+        "confidence_model": "policy_clarity * cost_efficiency * diversification",
+        "required_confirmations": [
+          "policy_documented"
+        ],
+        "limitations": [
+          "no alpha claim",
+          "inflation/rate path risk"
+        ],
+        "paper_only": true,
+        "live_authorized": false,
+        "broker_required": false,
+        "fingerprint": "lt_buy_hold_core:long_term_investing:v1",
+        "registry_version": "v2",
+        "orchestrator_compatible": true,
+        "research_only": true
+      }
+    ],
+    "LIVE_TRADING_AUTHORIZED": false,
+    "BROKER_CONNECTIVITY_AUTHORIZED": false,
+    "REAL_CONNECTIVITY_AUTHORIZED": false,
+    "CREDENTIAL_PROVISIONING_AUTHORIZED": false,
+    "CANARY_ACTIVATION_AUTHORIZED": false,
+    "ORDER_EXECUTION_AUTHORIZED": false,
+    "ORDER_SUBMISSION_AUTHORIZED": false,
+    "API_KEYS_ACCEPTED": false,
+    "OAUTH_AUTHORIZED": false,
+    "PAPER_EXECUTION_AUTHORIZED": false,
+    "AUTOMATED_INVESTMENT_AUTHORITY": false,
+    "PRODUCTION_AUTHORIZED": false,
+    "STRATEGY_PROFITABILITY_GUARANTEED": false,
+    "INVESTMENT_ADVICE_CERTIFIED": false,
+    "LIVE_MARKET_READINESS": false,
+    "paper_only": true,
+    "sandbox_only": true,
+    "research_only": true,
+    "offline_first": true,
+    "offline_capable": true,
+    "no_broker_connection": true,
+    "no_api_keys": true,
+    "no_oauth": true,
+    "no_order_submission": true,
+    "no_live_trading": true,
+    "deterministic_orchestration": true,
+    "max_authority": "AUTONOMOUS_RESEARCH_ORCHESTRATION_ONLY"
+  },
+  "models": {
+    "ok": true,
+    "count": 1,
+    "models": [
+      {
+        "model_id": "model_a8f62d88c5a9",
+        "name": "demo_research_model",
+        "version": "v1",
+        "checksum": "a8f62d88c5a94d5f0d2296e46f0955acd1b9e4f56da13e92a2ffaba89eb36f48",
+        "created_at": 1785414067.1398132
+      }
+    ],
+    "LIVE_TRADING_AUTHORIZED": false,
+    "BROKER_CONNECTIVITY_AUTHORIZED": false,
+    "REAL_CONNECTIVITY_AUTHORIZED": false,
+    "CREDENTIAL_PROVISIONING_AUTHORIZED": false,
+    "CANARY_ACTIVATION_AUTHORIZED": false,
+    "ORDER_EXECUTION_AUTHORIZED": false,
+    "ORDER_SUBMISSION_AUTHORIZED": false,
+    "API_KEYS_ACCEPTED": false,
+    "OAUTH_AUTHORIZED": false,
+    "PAPER_EXECUTION_AUTHORIZED": false,
+    "AUTOMATED_INVESTMENT_AUTHORITY": false,
+    "PRODUCTION_AUTHORIZED": false,
+    "STRATEGY_PROFITABILITY_GUARANTEED": false,
+    "INVESTMENT_ADVICE_CERTIFIED": false,
+    "LIVE_MARKET_READINESS": false,
+    "paper_only": true,
+    "sandbox_only": true,
+    "research_only": true,
+    "offline_first": true,
+    "offline_capable": true,
+    "no_broker_connection": true,
+    "no_api_keys": true,
+    "no_oauth": true,
+    "no_order_submission": true,
+    "no_live_trading": true,
+    "deterministic_orchestration": true,
+    "max_authority": "AUTONOMOUS_RESEARCH_ORCHESTRATION_ONLY"
+  },
+  "features": {
+    "ok": true,
+    "registry": "feature_registry",
+    "composes": "M261_FeatureStore",
+    "features": [
+      {
+        "feature_id": "atr_14",
+        "feature_version": "v1",
+        "name": "atr_14",
+        "category": "volatility",
+        "formula": "mean(true_range, 14)",
+        "lookback": 14,
+        "timestamp_semantics": "bar_close",
+        "availability_rule": "same_bar_close_available",
+        "missing_data_policy": "propagate_null",
+        "normalization_policy": "none_global_fit_forbidden",
+        "input_dataset_versions": [
+          "ds_synth_ohlcv_equity_demo_bac23c7d756b5e97@v1"
+        ],
+        "output_checksum": "daffbdcb7cdb418128ec8be0f7dedd8610a352e2c3c03e121fa7138e6cd41446",
+        "creator_version": "m261.feature_store.v1",
+        "lineage": [
+          {
+            "dataset": "ds_synth_ohlcv_equity_demo_bac23c7d756b5e97@v1"
+          },
+          {
+            "formula": "mean(true_range, 14)"
+          },
+          {
+            "creator": "m261.feature_store.v1"
+          }
+        ],
+        "limitations": [
+          "research_only",
+          "not_live_trading_infra"
+        ],
+        "certified": false
+      },
+      {
+        "feature_id": "custom_mom",
+        "feature_version": "v1",
+        "name": "custom_mom",
+        "category": "custom",
+        "formula": "close/close_n - 1",
+        "lookback": 5,
+        "timestamp_semantics": "bar_close",
+        "availability_rule": "same_bar_close_available",
+        "missing_data_policy": "propagate_null",
+        "normalization_policy": "none_global_fit_forbidden",
+        "input_dataset_versions": [],
+        "output_checksum": "",
+        "creator_version": "m261.feature_store.v1",
+        "lineage": [
+          {
+            "step": "new_version",
+            "formula": "close/close_n - 1",
+            "prior_versions": 0
+          }
+        ],
+        "limitations": [
+          "research_only"
+        ],
+        "certified": false
+      },
+      {
+        "feature_id": "custom_mom",
+        "feature_version": "v2",
+        "name": "custom_mom",
+        "category": "custom",
+        "formula": "close/close_n - 1 + 0",
+        "lookback": 5,
+        "timestamp_semantics": "bar_close",
+        "availability_rule": "same_bar_close_available",
+        "missing_data_policy": "propagate_null",
+        "normalization_policy": "none_global_fit_forbidden",
+        "input_dataset_versions": [],
+        "output_checksum": "",
+        "creator_version": "m261.feature_store.v1",
+        "lineage": [
+          {
+            "step": "new_version",
+            "formula": "close/close_n - 1 + 0",
+            "prior_versions": 1
+          }
+        ],
+        "limitations": [
+          "research_only"
+        ],
+        "certified": false
+      },
+      {
+        "feature_id": "ema_12",
+        "feature_version": "v1",
+        "name": "ema_12",
+        "category": "trend",
+        "formula": "ema(close, 12)",
+        "lookback": 12,
+        "timestamp_semantics": "bar_close",
+        "availability_rule": "same_bar_close_available",
+        "missing_data_policy": "propagate_null",
+        "normalization_policy": "none_global_fit_forbidden",
+        "input_dataset_versions": [
+          "ds_synth_ohlcv_equity_demo_bac23c7d756b5e97@v1"
+        ],
+        "output_checksum": "daffbdcb7cdb418128ec8be0f7dedd8610a352e2c3c03e121fa7138e6cd41446",
+        "creator_version": "m261.feature_store.v1",
+        "lineage": [
+          {
+            "dataset": "ds_synth_ohlcv_equity_demo_bac23c7d756b5e97@v1"
+          },
+          {
+            "formula": "ema(close, 12)"
+          },
+          {
+            "creator": "m261.feature_store.v1"
+          }
+        ],
+        "limitations": [
+          "research_only",
+          "not_live_trading_infra"
+        ],
+        "certified": false
+      },
+      {
+        "feature_id": "log_return",
+        "feature_version": "v1",
+        "name": "log_return",
+        "category": "price_return",
+        "formula": "ln(close_t / close_t-1)",
+        "lookback": 1,
+        "timestamp_semantics": "bar_close",
+        "availability_rule": "same_bar_close_available",
+        "missing_data_policy": "propagate_null",
+        "normalization_policy": "none_global_fit_forbidden",
+        "input_dataset_versions": [
+          "ds_synth_ohlcv_equity_demo_bac23c7d756b5e97@v1"
+        ],
+        "output_checksum": "daffbdcb7cdb418128ec8be0f7dedd8610a352e2c3c03e121fa7138e6cd41446",
+        "creator_version": "m261.feature_store.v1",
+        "lineage": [
+          {
+            "dataset": "ds_synth_ohlcv_equity_demo_bac23c7d756b5e97@v1"
+          },
+          {
+            "formula": "ln(close_t / close_t-1)"
+          },
+          {
+            "creator": "m261.feature_store.v1"
+          }
+        ],
+        "limitations": [
+          "research_only",
+          "not_live_trading_infra"
+        ],
+        "certified": false
+      },
+      {
+        "feature_id": "momentum_10",
+        "feature_version": "v1",
+        "name": "momentum_10",
+        "category": "price_return",
+        "formula": "close_t / close_t-10 - 1",
+        "lookback": 10,
+        "timestamp_semantics": "bar_close",
+        "availability_rule": "same_bar_close_available",
+        "missing_data_policy": "propagate_null",
+        "normalization_policy": "none_global_fit_forbidden",
+        "input_dataset_versions": [
+          "ds_synth_ohlcv_equity_demo_bac23c7d756b5e97@v1"
+        ],
+        "output_checksum": "daffbdcb7cdb418128ec8be0f7dedd8610a352e2c3c03e121fa7138e6cd41446",
+        "creator_version": "m261.feature_store.v1",
+        "lineage": [
+          {
+            "dataset": "ds_synth_ohlcv_equity_demo_bac23c7d756b5e97@v1"
+          },
+          {
+            "formula": "close_t / close_t-10 - 1"
+          },
+          {
+            "creator": "m261.feature_store.v1"
+          }
+        ],
+        "limitations": [
+          "research_only",
+          "not_live_trading_infra"
+        ],
+        "certified": false
+      },
+      {
+        "feature_id": "relative_volume_20",
+        "feature_version": "v1",
+        "name": "relative_volume_20",
+        "category": "volume",
+        "formula": "volume / mean(volume, 20)",
+        "lookback": 20,
+        "timestamp_semantics": "bar_close",
+        "availability_rule": "same_bar_close_available",
+        "missing_data_policy": "propagate_null",
+        "normalization_policy": "none_global_fit_forbidden",
+        "input_dataset_versions": [
+          "ds_synth_ohlcv_equity_demo_bac23c7d756b5e97@v1"
+        ],
+        "output_checksum": "daffbdcb7cdb418128ec8be0f7dedd8610a352e2c3c03e121fa7138e6cd41446",
+        "creator_version": "m261.feature_store.v1",
+        "lineage": [
+          {
+            "dataset": "ds_synth_ohlcv_equity_demo_bac23c7d756b5e97@v1"
+          },
+          {
+            "formula": "volume / mean(volume, 20)"
+          },
+          {
+            "creator": "m261.feature_store.v1"
+          }
+        ],
+        "limitations": [
+          "research_only",
+          "not_live_trading_infra"
+        ],
+        "certified": false
+      },
+      {
+        "feature_id": "rolling_volatility_20",
+        "feature_version": "v1",
+        "name": "rolling_volatility_20",
+        "category": "volatility",
+        "formula": "stdev(simple_return, 20)",
+        "lookback": 20,
+        "timestamp_semantics": "bar_close",
+        "availability_rule": "same_bar_close_available",
+        "missing_data_policy": "propagate_null",
+        "normalization_policy": "none_global_fit_forbidden",
+        "input_dataset_versions": [
+          "ds_synth_ohlcv_equity_demo_bac23c7d756b5e97@v1"
+        ],
+        "output_checksum": "daffbdcb7cdb418128ec8be0f7dedd8610a352e2c3c03e121fa7138e6cd41446",
+        "creator_version": "m261.feature_store.v1",
+        "lineage": [
+          {
+            "dataset": "ds_synth_ohlcv_equity_demo_bac23c7d756b5e97@v1"
+          },
+          {
+            "formula": "stdev(simple_return, 20)"
+          },
+          {
+            "creator": "m261.feature_store.v1"
+          }
+        ],
+        "limitations": [
+          "research_only",
+          "not_live_trading_infra"
+        ],
+        "certified": false
+      },
+      {
+        "feature_id": "rsi_14",
+        "feature_version": "v1",
+        "name": "rsi_14",
+        "category": "technical",
+        "formula": "rsi(close, 14)",
+        "lookback": 14,
+        "timestamp_semantics": "bar_close",
+        "availability_rule": "same_bar_close_available",
+        "missing_data_policy": "propagate_null",
+        "normalization_policy": "none_global_fit_forbidden",
+        "input_dataset_versions": [
+          "ds_synth_ohlcv_equity_demo_bac23c7d756b5e97@v1"
+        ],
+        "output_checksum": "daffbdcb7cdb418128ec8be0f7dedd8610a352e2c3c03e121fa7138e6cd41446",
+        "creator_version": "m261.feature_store.v1",
+        "lineage": [
+          {
+            "dataset": "ds_synth_ohlcv_equity_demo_bac23c7d756b5e97@v1"
+          },
+          {
+            "formula": "rsi(close, 14)"
+          },
+          {
+            "creator": "m261.feature_store.v1"
+          }
+        ],
+        "limitations": [
+          "research_only",
+          "not_live_trading_infra"
+        ],
+        "certified": false
+      },
+      {
+        "feature_id": "simple_return",
+        "feature_version": "v1",
+        "name": "simple_return",
+        "category": "price_return",
+        "formula": "(close_t / close_t-1) - 1",
+        "lookback": 1,
+        "timestamp_semantics": "bar_close",
+        "availability_rule": "same_bar_close_available",
+        "missing_data_policy": "propagate_null",
+        "normalization_policy": "none_global_fit_forbidden",
+        "input_dataset_versions": [
+          "ds_synth_ohlcv_equity_demo_bac23c7d756b5e97@v1"
+        ],
+        "output_checksum": "daffbdcb7cdb418128ec8be0f7dedd8610a352e2c3c03e121fa7138e6cd41446",
+        "creator_version": "m261.feature_store.v1",
+        "lineage": [
+          {
+            "dataset": "ds_synth_ohlcv_equity_demo_bac23c7d756b5e97@v1"
+          },
+          {
+            "formula": "(close_t / close_t-1) - 1"
+          },
+          {
+            "creator": "m261.feature_store.v1"
+          }
+        ],
+        "limitations": [
+          "research_only",
+          "not_live_trading_infra"
+        ],
+        "certified": false
+      },
+      {
+        "feature_id": "sma_10",
+        "feature_version": "v1",
+        "name": "sma_10",
+        "category": "trend",
+        "formula": "mean(close, 10)",
+        "lookback": 10,
+        "timestamp_semantics": "bar_close",
+        "availability_rule": "same_bar_close_available",
+        "missing_data_policy": "propagate_null",
+        "normalization_policy": "none_global_fit_forbidden",
+        "input_dataset_versions": [
+          "ds_synth_ohlcv_equity_demo_bac23c7d756b5e97@v1"
+        ],
+        "output_checksum": "daffbdcb7cdb418128ec8be0f7dedd8610a352e2c3c03e121fa7138e6cd41446",
+        "creator_version": "m261.feature_store.v1",
+        "lineage": [
+          {
+            "dataset": "ds_synth_ohlcv_equity_demo_bac23c7d756b5e97@v1"
+          },
+          {
+            "formula": "mean(close, 10)"
+          },
+          {
+            "creator": "m261.feature_store.v1"
+          }
+        ],
+        "limitations": [
+          "research_only",
+          "not_live_trading_infra"
+        ],
+        "certified": false
+      },
+      {
+        "feature_id": "sma_20",
+        "feature_version": "v1",
+        "name": "sma_20",
+        "category": "trend",
+        "formula": "mean(close, 20)",
+        "lookback": 20,
+        "timestamp_semantics": "bar_close",
+        "availability_rule": "same_bar_close_available",
+        "missing_data_policy": "propagate_null",
+        "normalization_policy": "none_global_fit_forbidden",
+        "input_dataset_versions": [
+          "ds_synth_ohlcv_equity_demo_bac23c7d756b5e97@v1"
+        ],
+        "output_checksum": "daffbdcb7cdb418128ec8be0f7dedd8610a352e2c3c03e121fa7138e6cd41446",
+        "creator_version": "m261.feature_store.v1",
+        "lineage": [
+          {
+            "dataset": "ds_synth_ohlcv_equity_demo_bac23c7d756b5e97@v1"
+          },
+          {
+            "formula": "mean(close, 20)"
+          },
+          {
+            "creator": "m261.feature_store.v1"
+          }
+        ],
+        "limitations": [
+          "research_only",
+          "not_live_trading_infra"
+        ],
+        "certified": false
+      }
+    ],
+    "count": 12,
+    "LIVE_TRADING_AUTHORIZED": false,
+    "BROKER_CONNECTIVITY_AUTHORIZED": false,
+    "REAL_CONNECTIVITY_AUTHORIZED": false,
+    "CREDENTIAL_PROVISIONING_AUTHORIZED": false,
+    "CANARY_ACTIVATION_AUTHORIZED": false,
+    "ORDER_EXECUTION_AUTHORIZED": false,
+    "ORDER_SUBMISSION_AUTHORIZED": false,
+    "API_KEYS_ACCEPTED": false,
+    "OAUTH_AUTHORIZED": false,
+    "PAPER_EXECUTION_AUTHORIZED": false,
+    "AUTOMATED_INVESTMENT_AUTHORITY": false,
+    "PRODUCTION_AUTHORIZED": false,
+    "STRATEGY_PROFITABILITY_GUARANTEED": false,
+    "INVESTMENT_ADVICE_CERTIFIED": false,
+    "LIVE_MARKET_READINESS": false,
+    "paper_only": true,
+    "sandbox_only": true,
+    "research_only": true,
+    "offline_first": true,
+    "offline_capable": true,
+    "no_broker_connection": true,
+    "no_api_keys": true,
+    "no_oauth": true,
+    "no_order_submission": true,
+    "no_live_trading": true,
+    "deterministic_orchestration": true,
+    "max_authority": "AUTONOMOUS_RESEARCH_ORCHESTRATION_ONLY"
+  }
+}

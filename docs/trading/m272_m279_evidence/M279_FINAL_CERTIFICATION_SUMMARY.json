@@ -1,0 +1,32 @@
+{
+  "schema": "M272_M279_FINAL_REPORT",
+  "terminal_verdict": "MULTI_STRATEGY_RESEARCH_LAB_AND_ADAPTIVE_PORTFOLIO_INTELLIGENCE_CERTIFIED_WITH_LIMITATIONS",
+  "max_state": "RESEARCH_PORTFOLIO_AND_PAPER_CANDIDATE_EVALUATION_ONLY",
+  "browser_verdict": "MULTI_STRATEGY_RESEARCH_LAB_BROWSER_CERT_PASSED_WITH_LIMITATIONS",
+  "focused_tests": "15 passed",
+  "regression_tests": "52 passed (II+MD+RL)",
+  "frontend_tests": "5 passed",
+  "production_build": "ok /trading/research-lab",
+  "clean_clone": true,
+  "preserved_oos_failures": [
+    {
+      "instrument": "AAPL",
+      "strategy_id": "tf_dual_ma",
+      "state": "OUT_OF_SAMPLE_FAILED"
+    },
+    {
+      "instrument": "BTCUSDT",
+      "strategy_id": "tf_dual_ma",
+      "state": "OUT_OF_SAMPLE_FAILED"
+    }
+  ],
+  "authority": {
+    "LIVE_TRADING_AUTHORIZED": false,
+    "BROKER_CONNECTIVITY_AUTHORIZED": false,
+    "ORDER_EXECUTION_AUTHORIZED": false,
+    "PAPER_EXECUTION_AUTHORIZED": false,
+    "paper_candidate_authorises_execution": false
+  },
+  "m280_started": false,
+  "evidence_file_count": 28
+}

@@ -1,0 +1,48 @@
+{
+  "schema": "m111.distributed_worker_fleet_certification.v1",
+  "captured_at": "2026-07-29",
+  "terminal_verdict": "DISTRIBUTED_WORKER_RUNTIME_COMPLETE_WITH_LIMITATIONS",
+  "branch": "milestone/m61-backend-workflow-persistence",
+  "starting_sha": "213b55c0e791397cb070a3d939843f0b2734a1fa",
+  "implementation_sha": "6a068ecda8ebb3d5c111fd4edd7e12aa29b6491e",
+  "milestones": ["M103", "M104", "M105", "M106", "M107", "M108", "M109", "M110", "M111"],
+  "full_backend_suite": "5369 passed, 1 skipped, 0 failed",
+  "frontend_suite": "193 passed",
+  "eslint": "pass",
+  "next_build": "pass",
+  "architecture": {
+    "package": "saathi/platform/fleet",
+    "extends": "M56_ClusterCoordinator",
+    "replaces_m56": false,
+    "execution": "PlatformAgentRuntime→ExecutionGateway",
+    "tools_executable_by_worker_directly": false,
+    "phase": "PHASE_A_SINGLE_HOST",
+    "transport": "loopback_only",
+    "public_listener": false,
+    "production_authorized": false,
+    "lan_authorized": false,
+    "cloud_authorized": false
+  },
+  "tests": {
+    "focused": "tests/test_m103_fleet_runtime.py",
+    "m56_regression": "tests/test_m56_cluster.py",
+    "orchestration_regression": "tests/test_m95_orchestration_runtime.py"
+  },
+  "browser": {
+    "script": "saathi-os/scripts/m110_fleet_browser_cert.mjs",
+    "evidence": "docs/evidence/m110/browser/M110_BROWSER_CERT.json",
+    "result": "FLEET_BROWSER_CERT_PASSED"
+  },
+  "security": {
+    "no_direct_tool_execution": true,
+    "approvals_before_lease": true,
+    "fencing_enforced": true,
+    "stale_duplicate_late_rejected": true,
+    "tenant_isolation": true,
+    "trading_guardian_unchanged": true
+  },
+  "production_authorized": false,
+  "push": false,
+  "merge": false,
+  "deploy": false
+}

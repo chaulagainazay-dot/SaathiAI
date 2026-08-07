@@ -1,0 +1,112 @@
+{
+  "supported_operating_systems": [
+    "darwin",
+    "linux"
+  ],
+  "supported_architectures": [
+    "x86_64",
+    "arm64",
+    "aarch64"
+  ],
+  "python_version_range": ">=3.11,<3.14",
+  "node_version": ">=18",
+  "package_managers": {
+    "python": "pip (requirements.txt + pyproject.toml)",
+    "node": "npm (package-lock.json required)"
+  },
+  "browser_requirements": {
+    "playwright_chromium": "required for browser certification",
+    "headless_ok": true
+  },
+  "sqlite_requirements": "stdlib sqlite3; writable data/platform/",
+  "required_build_tools": [
+    "git",
+    "python3",
+    "node",
+    "npm"
+  ],
+  "expected_ports": {
+    "platform_api": [
+      8800,
+      8823,
+      8831,
+      8839
+    ],
+    "frontend": [
+      3200,
+      3231,
+      3239
+    ]
+  },
+  "environment_variables": {
+    "required": [],
+    "optional": [
+      "SAATHI_DATA_DIR",
+      "PYTHONPATH",
+      "CI"
+    ],
+    "forbidden": [
+      "ALPACA_API_KEY",
+      "ALPACA_API_SECRET",
+      "ALPACA_SECRET_KEY",
+      "BINANCE_API_KEY",
+      "BINANCE_API_SECRET",
+      "BINANCE_SECRET",
+      "BROKER_API_KEY",
+      "BROKER_API_SECRET",
+      "BROKER_TOKEN",
+      "BYBIT_API_KEY",
+      "BYBIT_API_SECRET",
+      "COINBASE_API_KEY",
+      "COINBASE_API_SECRET",
+      "IBKR_ACCOUNT",
+      "IBKR_PASSWORD",
+      "IBKR_USERNAME",
+      "KITE_API_KEY",
+      "KRAKEN_API_KEY",
+      "KRAKEN_API_SECRET",
+      "OAUTH_CLIENT_SECRET",
+      "PROVIDER_API_KEY",
+      "PROVIDER_SECRET",
+      "PROVIDER_TOKEN",
+      "TRADING_PASSWORD",
+      "ZERODHA_ACCESS_TOKEN",
+      "ZERODHA_API_KEY"
+    ]
+  },
+  "storage_paths": {
+    "platform_db": "data/platform/",
+    "integration_assurance_db": "data/platform/integration_assurance.db",
+    "broker_readiness_db": "data/platform/broker_readiness.db",
+    "broker_sandbox_db": "data/platform/broker_sandbox.db"
+  },
+  "generated_file_paths": [
+    "docs/trading/m232_m239_evidence/",
+    "saathi-os/.next/"
+  ],
+  "cache_paths": [
+    "saathi-os/node_modules/",
+    ".venv/",
+    "__pycache__/"
+  ],
+  "test_database_paths": [
+    "tmp/",
+    "/tmp/m232*",
+    "/tmp/m239*"
+  ],
+  "browser_artifact_paths": [
+    "docs/trading/m232_m239_evidence/browser/"
+  ],
+  "network_restrictions": {
+    "runtime_provider_transport": "FORBIDDEN",
+    "allowed_during_cert": [
+      "localhost",
+      "127.0.0.1"
+    ],
+    "package_install_separated": true,
+    "dependency_registry_not_broker": true
+  },
+  "REAL_CONNECTIVITY_AUTHORIZED": false,
+  "preflight_ok": true,
+  "fingerprint": "56942cd40e0de58e855e59c9b43ee07a2060f165b39e21d19095f6967ff3fa4f"
+}

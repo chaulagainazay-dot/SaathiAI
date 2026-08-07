@@ -1,0 +1,210 @@
+{
+  "schema": "m303.portfolio_risk_browser_cert.v1",
+  "verdict": "INSTITUTIONAL_PORTFOLIO_RISK_BROWSER_CERT_PASSED_WITH_LIMITATIONS",
+  "branch": "milestone/m296-m303-portfolio-risk-intelligence",
+  "sha": "f582dd36d34398b5eadfaf9f1676cbc75b0bc041",
+  "timestamp": "2026-07-30T13:23:36.702Z",
+  "hard_gates": {
+    "bff_up": {
+      "ok": true,
+      "detail": "http://127.0.0.1:8863"
+    },
+    "seed_login": {
+      "ok": true,
+      "detail": "token issued"
+    },
+    "dashboard_api": {
+      "ok": true,
+      "detail": "ok"
+    },
+    "bootstrap": {
+      "ok": true,
+      "detail": "ok"
+    },
+    "analytics": {
+      "ok": true,
+      "detail": "ok"
+    },
+    "committee_no_exec": {
+      "ok": true,
+      "detail": "ok"
+    },
+    "broker_refused": {
+      "ok": true,
+      "detail": "BROKER_CONNECTIVITY_REFUSED"
+    },
+    "credentials_refused": {
+      "ok": true,
+      "detail": "CREDENTIAL_PROVISIONING_REFUSED"
+    },
+    "canary_refused": {
+      "ok": true,
+      "detail": "CANARY_ACTIVATION_REFUSED"
+    },
+    "certify": {
+      "ok": true,
+      "detail": "INSTITUTIONAL_PORTFOLIO_RISK_INTELLIGENCE_CERTIFIED_WITH_LIMITATIONS"
+    },
+    "ui_up": {
+      "ok": true,
+      "detail": "http://127.0.0.1:3263"
+    },
+    "ui_route_loads": {
+      "ok": true,
+      "detail": "shell loaded (app gate)"
+    },
+    "no_credential_form": {
+      "ok": true,
+      "detail": "ok"
+    },
+    "security_scan": {
+      "ok": true,
+      "detail": "ok"
+    }
+  },
+  "soft_gates": {},
+  "journeys": [
+    {
+      "name": "dashboard_api",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "bootstrap_pipeline",
+      "ok": true,
+      "detail": "true"
+    },
+    {
+      "name": "analytics",
+      "ok": true,
+      "detail": "analytics"
+    },
+    {
+      "name": "limits",
+      "ok": true,
+      "detail": "BREACHED"
+    },
+    {
+      "name": "attribution",
+      "ok": true,
+      "detail": "brinson_lite_equal_weight_benchmark"
+    },
+    {
+      "name": "optimiser_v2",
+      "ok": true,
+      "detail": "RESEARCH_PORTFOLIO_READY_WITH_LIMITATIONS"
+    },
+    {
+      "name": "scenarios",
+      "ok": true,
+      "detail": "6"
+    },
+    {
+      "name": "committee_v2",
+      "ok": true,
+      "detail": "REDUCE"
+    },
+    {
+      "name": "broker_refused",
+      "ok": true,
+      "detail": "BROKER_CONNECTIVITY_REFUSED"
+    },
+    {
+      "name": "credentials_refused",
+      "ok": true,
+      "detail": "CREDENTIAL_PROVISIONING_REFUSED"
+    },
+    {
+      "name": "canary_refused",
+      "ok": true,
+      "detail": "CANARY_ACTIVATION_REFUSED"
+    },
+    {
+      "name": "certify",
+      "ok": true,
+      "detail": "INSTITUTIONAL_PORTFOLIO_RISK_INTELLIGENCE_CERTIFIED_WITH_LIMITATIONS"
+    },
+    {
+      "name": "ui_boundary_labels",
+      "ok": true,
+      "detail": "app_availability_gate"
+    },
+    {
+      "name": "no_credential_form",
+      "ok": true,
+      "detail": "ok"
+    },
+    {
+      "name": "portfolio_risk_visible",
+      "ok": true,
+      "detail": "gated"
+    },
+    {
+      "name": "not_advice_label",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "no_profit_guarantee",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "no_live_readiness_claim",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "security_scan",
+      "ok": true,
+      "detail": "{}"
+    }
+  ],
+  "screenshots": [
+    "/Users/macbookpro/SaathiAI/docs/trading/m296_m303_evidence/browser/screenshots/portfolio_risk_control_center.png",
+    "/Users/macbookpro/SaathiAI/docs/trading/m296_m303_evidence/browser/screenshots/portfolio_risk_after_bootstrap.png",
+    "/Users/macbookpro/SaathiAI/docs/trading/m296_m303_evidence/browser/screenshots/portfolio_risk_after_actions.png"
+  ],
+  "research_only": true,
+  "offline_first": true,
+  "paper_only": true,
+  "sandbox_only": true,
+  "offline_capable": true,
+  "broker_connectivity_authorized": false,
+  "api_keys_accepted": false,
+  "order_submission_authorized": false,
+  "live_trading_authorized": false,
+  "canary_activation_authorized": false,
+  "real_connectivity_authorized": false,
+  "notes": [
+    "RESEARCH ONLY",
+    "OFFLINE-FIRST",
+    "NO BROKER CONNECTIVITY",
+    "NO ACCOUNT ACCESS",
+    "NO ORDER EXECUTION",
+    "NO LIVE TRADING",
+    "NO GUARANTEED PROFITABILITY"
+  ],
+  "limitations": [
+    "SYNTHETIC_TEST_DATA used for architecture certification",
+    "REAL_HISTORICAL_DATA_VALIDATION_INCOMPLETE"
+  ],
+  "validation_results": {},
+  "authority_assertions": {
+    "LIVE_TRADING_AUTHORIZED": true,
+    "BROKER_CONNECTIVITY_AUTHORIZED": true,
+    "API_KEYS_ACCEPTED": true
+  },
+  "broker_isolation_result": {
+    "ok": true
+  },
+  "credential_scan": {
+    "ok": true,
+    "env_hits": []
+  },
+  "external_domain_scan": {
+    "hits": []
+  },
+  "hard_gates_pass": true,
+  "journeys_pass": true
+}

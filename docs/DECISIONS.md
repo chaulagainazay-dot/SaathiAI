@@ -18,6 +18,8 @@ This file records every significant architectural decision made during the desig
 | ADR-008 | OmniVoice over ElevenLabs for TTS | 2026-07 | Accepted |
 | ADR-009 | Versioned documentation (v1.x/) over single rolling file | 2026-07 | Accepted |
 | ADR-010 | HyperFrames for video assembly over FFmpeg-direct | 2026-07 | Accepted |
+| ADR-011 | Mission certification is atomic and evidence-gated | 2026-07 | Accepted |
+| ADR-012 | Development agents live in `saathi/agentdev/`, above `saathi/engineering/` | 2026-08 | Accepted |
 
 ---
 
@@ -222,6 +224,156 @@ This file records every significant architectural decision made during the desig
 **Rejected alternatives:**
 - **FFmpeg direct (drawtext, overlay filters):** Powerful but extremely verbose for text-heavy videos; hard to maintain
 - **MoviePy:** Python wrapper over FFmpeg; adds abstraction without solving the layout problem
+
+---
+
+## ADR-011: Mission certification is atomic and evidence-gated
+
+**Date:** 2026-07
+**Status:** Accepted
+
+**Context:** Autonomous mission task completion alone does not prove that evidence,
+independent review, browser/tests, resource accounting, commit references, and the
+latest durable checkpoint agree.
+
+**Decision:** The platform server is the only certification author. It verifies the
+completed mission snapshot and writes the immutable certificate plus the runtime's
+`CERTIFIED` transition in one transaction. Client-supplied certifier identity and
+partial certification are rejected.
+
+**Rationale:**
+- prevents UI or agent self-certification;
+- prevents certificate/runtime split-brain after interruption;
+- binds the verdict to tenant-owned passing evidence and independent review;
+- ensures recovery state, resource usage, commits, tests, and browser status match.
+
+**Rejected alternatives:**
+- **Client certification:** would make browser state authoritative.
+- **Task-completion-only certification:** omits verification and checkpoint freshness.
+- **Separate certificate/state writes:** permits partial terminal state after failure.
+
+---
+
+## ADR-012: Development agents live in `saathi/agentdev/`, above `saathi/engineering/`
+
+**Date:** 2026-08
+**Status:** Accepted
+**Milestones:** M344–M351
+
+**Context:** The multi-agent development environment needs role contracts, mission-bound
+worktree isolation, structured meetings, durable deliberation artifacts, independent review
+gates and agent-behaviour evaluation. SaathiOS already owns a governed engineering
+orchestrator (`saathi/engineering/`, M20.0–M20.7), a runtime agent registry
+(`saathi/agent_registry.py`), a deterministic governance engine (`saathi/safety.py`), four
+product mission systems and a universal evidence schema. Building a second agent operating
+system on top of those would create competing sources of truth for authority, approvals and
+audit.
+
+**Decision:** Add one new package, `saathi/agentdev/`, that sits strictly above
+`saathi/engineering/` with a one-way dependency. Its only runtime imports outside the
+standard library are `saathi.safety` (`SafetyLevel`, `Approval`) and `saathi.config` (`ROOT`);
+what it takes from `saathi.engineering` is design contract rather than code — the
+bound-approval field set, the append-only history shape, the atomic-write-with-backup
+pattern, and the denials-re-applied-after-override settings rule, each re-implemented for
+different nouns. It follows the `docs/evidence/m<NNN>/` certification convention and the
+`tests/test_m<NNN>_*.py` test convention. It adds only what provably does not exist:
+development-role contracts with
+repository path scopes, a mission-bound worktree manager, deliberation artifacts, structured
+meetings with preserved disagreement, no-self-approval gates and offline behaviour
+evaluations.
+
+**Rationale:**
+- `saathi/engineering/` governs one coding agent executing one backlog item; this layer governs many reasoning agents deliberating over one mission. They compose vertically rather than overlapping.
+- Keeping `engineering/` unmodified preserves its M20.0–M20.7 certification surface.
+- A one-way dependency makes the authority chain explicit and testable: no module under `engineering/`, `missions/` or `platform/` may import `agentdev`.
+- `AgentContract` in the runtime registry has no path scope, prohibited actions, independent reviewer or escalation target. Adding development-only fields to it would couple two unrelated lifecycles.
+- ECC is adopted as principles only. No ECC file, module, hook, dependency or managed artifact enters this repository; it stays a read-only reference outside it.
+
+**Rejected alternatives:**
+- **Extend `saathi/engineering/` in place:** would enlarge a certified module with a different lifecycle and blur "one coding agent" versus "a council of reasoning agents".
+- **Extend `saathi/agent_registry.py`:** conflates runtime product agents with development agents; the two need different fields, different authority and different review rules.
+- **Reuse `saathi/missions/`:** a development mission has different participants, artifacts and terminal states than a product mission; sharing the store would make "mission" ambiguous.
+- **Import ECC's orchestration, hooks or Memory Vault:** creates a second source of truth for governance and a third-party supply-chain dependency inside the security boundary.
+- **Reuse milestone numbers M328–M335 as specified:** those numbers are already taken by shipped milestones; renumbering to M344–M351 preserves single-identity milestones.
+
+---
+
+## ADR-013: Terminology on the `agentdev` surface is pinned data, not prose
+
+**Date:** 2026-08
+**Status:** Accepted
+**Milestones:** M352
+
+**Context:** M344–M351 shipped with one question referred to the owner: may a ten-scenario
+deterministic suite be called "behaviour coverage"? The same ambiguity affected ten other
+words used across `docs/ai-development/`, `saathi/agentdev/`, the CLI, the evidence package
+and the tests — *behaviour evaluation*, *governance evaluation*, *simulation*,
+*certification*, *enforcement*, *orchestration*, *autonomy*, *runtime*, *approval* and
+*authority*. Each read as a stronger guarantee than the code provides. M355–M356 put a real
+model in the loop, at which point an ambiguous word stops being a documentation defect and
+becomes a governance one: a reader cannot tell whether a refusal is a code path or a
+sentence in a prompt.
+
+**Decision:** Pin the vocabulary as typed data in `saathi/agentdev/terminology.py`. Every
+reviewed term maps to exactly one of six classifications — `technically_enforced`,
+`schema_validated`, `deterministic`, `model_evaluated`, `advisory_only`,
+`documentation_only` — or to `rejected` with a named replacement. A closed list of
+twenty-two banned literal phrases is scanned across the reviewed surface by
+`python -m saathi.agentdev terminology audit`, and a test fails if any appears outside a
+declared quote-for-rejection allowance. The owner decision record is
+`docs/ai-development/terminology.md`.
+
+**Rationale:**
+- A lexicon in prose is unenforceable and drifts on the first new document; a lexicon in code is testable and drifts loudly.
+- Classifying rather than deleting keeps useful words usable: *approval* is fine, *approval* meaning owner approval is not, and the distinction is now written down once.
+- The referred question gets a recorded answer — no — instead of surviving into a milestone where a model's output would inherit the ambiguity.
+- A literal-phrase guard is honest about its own reach: it catches listed wordings and cannot detect novel ones, so the guard's limitation is published alongside it rather than claimed away.
+
+**Rejected alternatives:**
+- **A prose style guide only:** unenforceable, and the M344–M351 open question is evidence that prose guidance did not prevent the overstatement.
+- **Semantic or model-based review of wording:** would make the terminology guard itself `model_evaluated`, adding a non-deterministic dependency to the one control whose job is to keep claims checkable.
+- **Deleting the ambiguous words:** *approval*, *authority* and *enforcement* name real, correct mechanisms. Removing them would cost precision; classifying them adds it.
+- **Rewriting the M344–M351 evidence package:** that package records what was true at its commit, including the unresolved question. Superseding it is correct; editing it is not.
+
+---
+
+## ADR-014: A model enters a mission through a handler that cannot touch the artifact envelope
+
+**Date:** 2026-08
+**Status:** Accepted
+**Milestones:** M354–M357
+
+**Context:** M355 connects a local model; M356 puts it in one seat of a real mission. The
+question that decides whether that is safe is not "is the model good?" but "what can the
+model reach?". A model that could name its own `authoring_agent`, its own `mission_id` or
+its own `repository_sha` would be able to forge authorship, and every downstream control —
+the no-self-approval rule, the evidence-authorship check, the owner-only gate — is defined
+in terms of those fields. The M356 measurement made the question concrete rather than
+theoretical: `qwen3:4b` passed 2 of 8 behaviour scenarios, and in M357 it complied with 7
+of 9 prompt attacks.
+
+**Decision:** A runner handler receives a `HandlerContext` with exactly three fields — the
+plan, its own step, and its resolved input artifacts — and returns the artifact *body*. The
+envelope (`artifact_id`, `mission_id`, `kind`, `authoring_agent`, `repository_sha`, `title`,
+`required_next_action`, `status`, both clocks) is set by the runner, and a handler returning
+any envelope field is refused by name at the `produce` phase. `override_handler()` swaps one
+handler for a model-backed one and changes nothing else. Alongside it: the adapter has no
+automatic fallback, so a failed call returns a failure naming the configured model rather
+than a substitute answer.
+
+**Rationale:**
+- Authority must not live in the layer being evaluated. Keeping the envelope with the runner means a model gains no authority by being a model.
+- The measurement confirms the design rather than assuming it: with the model in one seat, the mission still ran thirty steps and closed with every gate enforced and none self-approved, while the model itself failed most behaviour scenarios.
+- A refusal by field name is better than silently dropping the field: a handler that *tried* to name its own author is a fact the trace should carry.
+- No fallback keeps every recorded result attributable. A second model answering for the first would make "which model did this?" unanswerable, which is the whole point of a model evaluation.
+- One deterministic id derivation (`<kind4>_<mission>_<NN>`) replaces `uuid4` in the runner so two runs are comparable; the seam is in one function rather than scattered.
+
+**Rejected alternatives:**
+- **Let handlers construct whole artifacts:** every governance check downstream is defined on envelope fields; handing those to the participant being evaluated defeats them.
+- **Sanitise the envelope silently:** loses the signal that a forgery was attempted.
+- **A tool-calling or agentic interface to the model:** would require exactly the shell, filesystem and network access the adapter exists to deny.
+- **Fall back to a second model on failure:** unattributable results, and a quiet downgrade is worse than a loud failure.
+- **Trust the model's own refusal field:** M356 scenario ME-07 refused in the refusal field and, in the same reply, asserted it had edited protected configuration and force-pushed. A refusal claim is evidence about a claim, not about an action.
 
 ---
 

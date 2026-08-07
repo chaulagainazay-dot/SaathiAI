@@ -1,0 +1,118 @@
+{
+  "schema": "M272_M279_EVIDENCE_MANIFEST",
+  "generated_at": "2026-07-30T07:46:54Z",
+  "files": {
+    "FINAL_GIT_STATUS.txt": {
+      "sha256": "1a6ce14bed7668f663740267cf7786fed9b6c700a0a1ebc212c8a11ebb0a3a17",
+      "bytes": 451
+    },
+    "FOCUSED_TEST_LOG.txt": {
+      "sha256": "a696813edd44763f1a1b9603790b9857c2a50e60fbb94e9c874392a3ec0ed443",
+      "bytes": 99
+    },
+    "FRONTEND_TEST_LOG.txt": {
+      "sha256": "e939660978f822b2a57fec1fde863461dac5c361c247f87c047996090608a6bc",
+      "bytes": 412
+    },
+    "IMPLEMENTATION_FILE_LIST.json": {
+      "sha256": "f082da9a3f5f919aeb78dbfc5430e2a1abdeed4e2187d707d900edb0c1463d70",
+      "bytes": 1614
+    },
+    "INITIAL_GIT_STATUS.txt": {
+      "sha256": "4dff8de5f8bdbab5b2d78b7d48cbc1ecf624b16d68812cca206459fa61d365d1",
+      "bytes": 291
+    },
+    "LIMITATIONS.json": {
+      "sha256": "28d8f333efcc8886dcb94d1e3fef69ad8787f716c955bec832634f0ee743bef3",
+      "bytes": 930
+    },
+    "M272_EXPERIMENT_REGISTRY.json": {
+      "sha256": "a417a6bb1e4c4c42ef5980bf626f1b9e066464d1bc1735d7f2c070431e2b5a20",
+      "bytes": 8040
+    },
+    "M272_M279_THREAT_MODEL.json": {
+      "sha256": "ad5175a5dc7cedeb028a85443bd2502679bf46a86f872dfda6dda2e0982ea950",
+      "bytes": 17202
+    },
+    "M272_RECOVERY_BASELINE.json": {
+      "sha256": "2495faf4b3e2d8e112ff8d600d68a847c1f7d5b8f2ff2f4decd1282e019e5509",
+      "bytes": 1853
+    },
+    "M273_MULTI_STRATEGY_COMPARISON.json": {
+      "sha256": "006fc179ad37a5a6a2f84065fa2345578d0cd57f061d609c620b33a97fed68c3",
+      "bytes": 25251
+    },
+    "M274_ROBUSTNESS_AND_OVERFITTING_REPORT.json": {
+      "sha256": "0292d80fdb150ce165cfe2202d3b1d96d40819aa7711abf1e5d3f3e1c79287c0",
+      "bytes": 9185
+    },
+    "M275_ADAPTIVE_REGIME_INTELLIGENCE.json": {
+      "sha256": "83da6c4f4b4c7ce5229708056dd8dc5786dd1717b795b604b3085602f42a1e86",
+      "bytes": 37508
+    },
+    "M276_PORTFOLIO_OPTIMISATION_REPORT.json": {
+      "sha256": "9dd4c6ccbea027c7111d3aabef2eebced3025397be2ddfcaa9bb72c73bb45456",
+      "bytes": 4509
+    },
+    "M277_STRATEGY_ENSEMBLE_REPORT.json": {
+      "sha256": "15ab0067ad5af149a398f1f740307dbc7a609c1f98fe2c17a1b74f9b539fdaae",
+      "bytes": 6111
+    },
+    "M278_STRESS_TEST_AND_CANDIDATE_PROMOTION.json": {
+      "sha256": "25e8452591a44b0992d34de52bc9332bb13c669849d180128c8a71fb0c96df11",
+      "bytes": 9633
+    },
+    "M279_BROWSER_CERT_LOG.txt": {
+      "sha256": "9804d1b994f084525b74749834d58bba352a2fad54c6472cdbb7b970f642a6a6",
+      "bytes": 191
+    },
+    "M279_BROWSER_CERT_SUMMARY.json": {
+      "sha256": "d50198eed616b52bd1c0e24d2478635ea3e64f069d2da14bf5c1a482e330db14",
+      "bytes": 269
+    },
+    "M279_CERTIFY.json": {
+      "sha256": "7407d939d30616116a012e64ddb0ce147a24d4b63247f9b46e2cba7e0eaf32f4",
+      "bytes": 3674
+    },
+    "M279_CLEAN_CLONE_CERTIFICATION.json": {
+      "sha256": "d23f09ab59e6301b2fde1d84a1bb5420cfcb27671e441e1b23d7d35b3b0a9093",
+      "bytes": 992
+    },
+    "M279_DASHBOARD.json": {
+      "sha256": "04444993acf8df978a82de76e75d3568424632c1224537cb59ac8e6da075dbf5",
+      "bytes": 9680
+    },
+    "M279_PIPELINE.json": {
+      "sha256": "697ccffb6c1b88d0be64dbca1290bb73751a75644a1a1d2d2f5b7dfdf2233d50",
+      "bytes": 468
+    },
+    "M279_SECURITY_SCANS.json": {
+      "sha256": "a75a457b19a338b7b007a0dd529087788dfdc3e849d028d0abdf3695defef8e4",
+      "bytes": 9290
+    },
+    "PRODUCTION_BUILD_LOG.txt": {
+      "sha256": "eaa21208e51128ef745c160ba4c017ef5efe8106d21265d6b279ea7ad819cbac",
+      "bytes": 9792
+    },
+    "REGRESSION_II_MD_RL.txt": {
+      "sha256": "5bfd253975d532db1ed1b96a0cf05160ca4860b98926197ce97f1973ff0b439c",
+      "bytes": 99
+    },
+    "browser/M279_BROWSER_CERT.json": {
+      "sha256": "aae786f9b0012a75f74babed97d544d5cc73c170373f2edb21ae8873ad7ce57b",
+      "bytes": 5725
+    },
+    "browser/screenshots/research_lab_after_actions.png": {
+      "sha256": "309d7b811cba5ea22fbac4a0708f4f72e09948046e9ef528c036aa6a163d50c2",
+      "bytes": 77726
+    },
+    "browser/screenshots/research_lab_after_bootstrap.png": {
+      "sha256": "309d7b811cba5ea22fbac4a0708f4f72e09948046e9ef528c036aa6a163d50c2",
+      "bytes": 77726
+    },
+    "browser/screenshots/research_lab_control_center.png": {
+      "sha256": "309d7b811cba5ea22fbac4a0708f4f72e09948046e9ef528c036aa6a163d50c2",
+      "bytes": 77726
+    }
+  }
+}

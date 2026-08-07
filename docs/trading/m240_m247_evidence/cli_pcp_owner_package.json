@@ -1,0 +1,1803 @@
+{
+  "executive_summary": "M240\u2013M247 produces a provider-specific, evidence-backed read-only canary planning package for human owner review. Preferred provider is a recommendation only. No connectivity, credentials, or canary activation is authorized.",
+  "milestone_boundary": "M240-M247",
+  "max_planning_state": "READ_ONLY_CANARY_PACKAGE_READY_FOR_OWNER_REVIEW",
+  "preferred_provider": "alpaca",
+  "fallback_provider": "kraken",
+  "preferred_is_recommendation_only": true,
+  "ranking_evidence": {
+    "preferred_provider": "alpaca",
+    "fallback_provider": "kraken",
+    "preferred_is_recommendation_only": true,
+    "owner_eligibility_claimed": false,
+    "ranking": [
+      {
+        "provider": "alpaca",
+        "display_name": "Alpaca",
+        "classification": "OWNER_ELIGIBILITY_UNCONFIRMED",
+        "preferred": true,
+        "fallback": false,
+        "average_score": 4.4,
+        "scores": {
+          "eligibility": {
+            "score": 3,
+            "evidence": "Official docs describe individual/business trading accounts and paper environment; availability is jurisdiction-specific.",
+            "confidence": "medium",
+            "uncertainty": "Owner country/residency and product eligibility not verified for this installation.",
+            "disqualifying_issue": null,
+            "unresolved_question": "Confirm owner residency and Alpaca account eligibility before any future canary."
+          },
+          "security": {
+            "score": 4,
+            "evidence": "API key model with paper/live separation; IP restrictions commonly supported; OAuth Connect exists but is forbidden for this canary path.",
+            "confidence": "medium",
+            "uncertainty": "Exact console paths for key expiry and IP allow-list need owner verification.",
+            "disqualifying_issue": null,
+            "unresolved_question": null
+          },
+          "api_quality": {
+            "score": 5,
+            "evidence": "Official Trading API + Market Data docs; account, positions, orders, portfolio history endpoints documented.",
+            "confidence": "high",
+            "uncertainty": "Schema drift possible; pin docs version at canary time.",
+            "disqualifying_issue": null,
+            "unresolved_question": null
+          },
+          "operational_suitability": {
+            "score": 5,
+            "evidence": "Dedicated paper-api environment supports deterministic testing without live capital.",
+            "confidence": "high",
+            "uncertainty": "Paper vs live host isolation must be enforced by network allow-list.",
+            "disqualifying_issue": null,
+            "unresolved_question": null
+          },
+          "commercial_product_fit": {
+            "score": 5,
+            "evidence": "US equities + crypto APIs align with SaathiOS paper-to-read-only roadmap.",
+            "confidence": "high",
+            "uncertainty": "Market-data redistribution limits require legal review before any redistribution.",
+            "disqualifying_issue": null,
+            "unresolved_question": null
+          }
+        },
+        "disqualifying_issues": [],
+        "unresolved_questions": [
+          "Is the owner eligible to open/use Alpaca in their jurisdiction?",
+          "Will paper keys remain strictly isolated from live keys?",
+          "What market-data terms apply to stored snapshots?"
+        ],
+        "rationale": "Strongest first-canary candidate: clear paper environment, strong account/position/history coverage, equities+crypto fit, and documented API quality. Owner eligibility remains UNCONFIRMED.",
+        "rank": 1
+      },
+      {
+        "provider": "kraken",
+        "display_name": "Kraken",
+        "classification": "CONDITIONALLY_ELIGIBLE",
+        "preferred": false,
+        "fallback": true,
+        "average_score": 3.6,
+        "scores": {
+          "eligibility": {
+            "score": 3,
+            "evidence": "Kraken offers accounts and API keys broadly; country restrictions exist and are owner-specific.",
+            "confidence": "medium",
+            "uncertainty": "Owner residency and product access unconfirmed.",
+            "disqualifying_issue": null,
+            "unresolved_question": "Confirm Kraken account eligibility and entity for owner country."
+          },
+          "security": {
+            "score": 5,
+            "evidence": "Official permission matrix separates Query Funds / Query Orders from Create & Modify Orders / Withdraw Funds; GetApiKeyInfo enables permission introspection.",
+            "confidence": "high",
+            "uncertainty": "Key expiry and IP allow-list options need owner console confirmation.",
+            "disqualifying_issue": null,
+            "unresolved_question": null
+          },
+          "api_quality": {
+            "score": 4,
+            "evidence": "Mature REST private endpoints for balances, orders, trades, ledgers with documented permissions.",
+            "confidence": "high",
+            "uncertainty": "Nonce/signature model is operationally heavier than simple key headers.",
+            "disqualifying_issue": null,
+            "unresolved_question": null
+          },
+          "operational_suitability": {
+            "score": 3,
+            "evidence": "No full equities paper broker equivalent; crypto-focused; good status/docs.",
+            "confidence": "medium",
+            "uncertainty": "Limited equity coverage vs SaathiOS multi-asset roadmap.",
+            "disqualifying_issue": null,
+            "unresolved_question": null
+          },
+          "commercial_product_fit": {
+            "score": 3,
+            "evidence": "Strong crypto coverage; weaker multi-asset equities fit for SaathiOS primary paper path.",
+            "confidence": "medium",
+            "uncertainty": "Asset universe and fee structures need product review.",
+            "disqualifying_issue": null,
+            "unresolved_question": null
+          }
+        },
+        "disqualifying_issues": [],
+        "unresolved_questions": [
+          "Does owner already have or can open a Kraken account legally?",
+          "Is crypto-only canary acceptable as fallback for roadmap?"
+        ],
+        "rationale": "Best fallback: excellent granular query-only permissions and key introspection. Crypto-centric product fit is secondary to Alpaca for multi-asset paper path.",
+        "rank": 2
+      },
+      {
+        "provider": "coinbase",
+        "display_name": "Coinbase (Advanced Trade / CDP)",
+        "classification": "CONDITIONALLY_ELIGIBLE",
+        "preferred": false,
+        "fallback": false,
+        "average_score": 3.4,
+        "scores": {
+          "eligibility": {
+            "score": 3,
+            "evidence": "Coinbase products vary by region; Advanced Trade CDP keys documented.",
+            "confidence": "medium",
+            "uncertainty": "Owner jurisdiction eligibility unconfirmed.",
+            "disqualifying_issue": null,
+            "unresolved_question": null
+          },
+          "security": {
+            "score": 4,
+            "evidence": "can_view / can_trade / can_transfer separation; IP whitelist encouraged; keys may not expire by default.",
+            "confidence": "medium",
+            "uncertainty": "Non-expiring keys are a residual security concern requiring forced rotation policy.",
+            "disqualifying_issue": null,
+            "unresolved_question": null
+          },
+          "api_quality": {
+            "score": 4,
+            "evidence": "Advanced Trade REST with portfolio/account endpoints and key permission introspection.",
+            "confidence": "high",
+            "uncertainty": "CDP JWT auth complexity and portfolio UUID binding.",
+            "disqualifying_issue": null,
+            "unresolved_question": null
+          },
+          "operational_suitability": {
+            "score": 3,
+            "evidence": "No equity paper broker equivalent; crypto focused.",
+            "confidence": "medium",
+            "uncertainty": "OAuth paths exist and must remain disabled.",
+            "disqualifying_issue": null,
+            "unresolved_question": null
+          },
+          "commercial_product_fit": {
+            "score": 3,
+            "evidence": "Crypto coverage good; equities fit limited for primary roadmap.",
+            "confidence": "medium",
+            "uncertainty": "Brand/terms constraints on third-party software need legal review.",
+            "disqualifying_issue": null,
+            "unresolved_question": null
+          }
+        },
+        "disqualifying_issues": [],
+        "unresolved_questions": [
+          "Can keys be forced to expire or only rotated manually?",
+          "Owner entity eligibility for Advanced Trade?"
+        ],
+        "rationale": "Viable crypto alternative with clear view/trade/transfer flags; not preferred due to non-expiring keys residual risk and weaker equities fit.",
+        "rank": 3
+      },
+      {
+        "provider": "binance",
+        "display_name": "Binance",
+        "classification": "LEGAL_REVIEW_REQUIRED",
+        "preferred": false,
+        "fallback": false,
+        "average_score": 3.0,
+        "scores": {
+          "eligibility": {
+            "score": 2,
+            "evidence": "Binance entities and products are highly jurisdiction-sensitive; many regions restricted.",
+            "confidence": "low",
+            "uncertainty": "Owner country may be unsupported; entity selection unresolved.",
+            "disqualifying_issue": null,
+            "unresolved_question": "Which Binance legal entity (if any) serves the owner?"
+          },
+          "security": {
+            "score": 4,
+            "evidence": "API key restrictions support disabling withdrawals and trading for read-oriented use; IP bind recommended.",
+            "confidence": "medium",
+            "uncertainty": "Regional product differences (global vs US etc.).",
+            "disqualifying_issue": null,
+            "unresolved_question": null
+          },
+          "api_quality": {
+            "score": 4,
+            "evidence": "Extensive REST/WS docs for account, balances, trades.",
+            "confidence": "medium",
+            "uncertainty": "Version fragmentation and product matrix complexity.",
+            "disqualifying_issue": null,
+            "unresolved_question": null
+          },
+          "operational_suitability": {
+            "score": 2,
+            "evidence": "High complexity; geographic/entity risk elevates ops burden for first canary.",
+            "confidence": "medium",
+            "uncertainty": "Testnet availability and parity with production vary by product.",
+            "disqualifying_issue": null,
+            "unresolved_question": null
+          },
+          "commercial_product_fit": {
+            "score": 3,
+            "evidence": "Strong crypto coverage; equities not primary.",
+            "confidence": "medium",
+            "uncertainty": "Terms and redistribution need legal review.",
+            "disqualifying_issue": null,
+            "unresolved_question": null
+          }
+        },
+        "disqualifying_issues": [],
+        "unresolved_questions": [
+          "Is the owner in a supported Binance jurisdiction?",
+          "Which official entity API applies?"
+        ],
+        "rationale": "Capable API but eligibility/legal entity risk too high for preferred first canary.",
+        "rank": 4
+      },
+      {
+        "provider": "interactive_brokers",
+        "display_name": "Interactive Brokers",
+        "classification": "NOT_RECOMMENDED",
+        "preferred": false,
+        "fallback": false,
+        "average_score": 2.8,
+        "scores": {
+          "eligibility": {
+            "score": 3,
+            "evidence": "IBKR serves many countries with multi-asset accounts; account type complexity high.",
+            "confidence": "medium",
+            "uncertainty": "Owner account type and API access entitlements unconfirmed.",
+            "disqualifying_issue": null,
+            "unresolved_question": null
+          },
+          "security": {
+            "score": 3,
+            "evidence": "Client Portal session/OAuth-oriented models; less simple static read-only API key model than peers.",
+            "confidence": "medium",
+            "uncertainty": "Session-based auth increases operational and security surface for a bounded canary.",
+            "disqualifying_issue": null,
+            "unresolved_question": null
+          },
+          "api_quality": {
+            "score": 3,
+            "evidence": "CPAPI and TWS/Gateway documented; powerful but complex.",
+            "confidence": "medium",
+            "uncertainty": "Gateway process dependency elevates maintenance burden.",
+            "disqualifying_issue": null,
+            "unresolved_question": null
+          },
+          "operational_suitability": {
+            "score": 1,
+            "evidence": "Requires gateway/session lifecycle; poor fit for first isolated canary.",
+            "confidence": "high",
+            "uncertainty": "Excessive implementation complexity for M240\u2013M247 planning scope.",
+            "disqualifying_issue": "Session/gateway model unsuitable as first read-only canary target.",
+            "unresolved_question": null
+          },
+          "commercial_product_fit": {
+            "score": 4,
+            "evidence": "Excellent multi-asset coverage long-term.",
+            "confidence": "high",
+            "uncertainty": "Complexity outweighs fit for first canary.",
+            "disqualifying_issue": null,
+            "unresolved_question": null
+          }
+        },
+        "disqualifying_issues": [
+          "Session/gateway authentication model is unsuitable for the first bounded canary."
+        ],
+        "unresolved_questions": [
+          "Could a future milestone design a gateway-isolated canary?"
+        ],
+        "rationale": "Excellent multi-asset product but operational model is too complex for first canary.",
+        "rank": 5
+      },
+      {
+        "provider": "bybit",
+        "display_name": "Bybit",
+        "classification": "LEGAL_REVIEW_REQUIRED",
+        "preferred": false,
+        "fallback": false,
+        "average_score": 2.6,
+        "scores": {
+          "eligibility": {
+            "score": 2,
+            "evidence": "Bybit availability is region-dependent; restrictions apply in multiple jurisdictions.",
+            "confidence": "low",
+            "uncertainty": "Owner eligibility unconfirmed.",
+            "disqualifying_issue": null,
+            "unresolved_question": null
+          },
+          "security": {
+            "score": 3,
+            "evidence": "API key permissions exist for read vs trade; withdrawal controls expected but console-verified.",
+            "confidence": "medium",
+            "uncertainty": "IP/expiry options need verification.",
+            "disqualifying_issue": null,
+            "unresolved_question": null
+          },
+          "api_quality": {
+            "score": 4,
+            "evidence": "V5 REST docs for account, positions, order history.",
+            "confidence": "medium",
+            "uncertainty": "Derivatives-centric semantics.",
+            "disqualifying_issue": null,
+            "unresolved_question": null
+          },
+          "operational_suitability": {
+            "score": 2,
+            "evidence": "Derivatives focus and regional complexity elevate risk for first canary.",
+            "confidence": "medium",
+            "uncertainty": "Testnet parity verification needed.",
+            "disqualifying_issue": null,
+            "unresolved_question": null
+          },
+          "commercial_product_fit": {
+            "score": 2,
+            "evidence": "Crypto derivatives-heavy; weaker fit to paper equities path.",
+            "confidence": "medium",
+            "uncertainty": "Roadmap misalignment for first canary.",
+            "disqualifying_issue": null,
+            "unresolved_question": null
+          }
+        },
+        "disqualifying_issues": [],
+        "unresolved_questions": [
+          "Is Bybit available and lawful for the owner?"
+        ],
+        "rationale": "API capable but legal/regional risk and derivatives focus make it non-preferred.",
+        "rank": 6
+      },
+      {
+        "provider": "zerodha",
+        "display_name": "Zerodha (Kite Connect)",
+        "classification": "OWNER_ELIGIBILITY_UNCONFIRMED",
+        "preferred": false,
+        "fallback": false,
+        "average_score": 2.4,
+        "scores": {
+          "eligibility": {
+            "score": 1,
+            "evidence": "Kite Connect is primarily for Indian market participants; residency restrictions likely apply.",
+            "confidence": "medium",
+            "uncertainty": "Owner India residency/account eligibility unconfirmed \u2014 likely blocking for non-IN owners.",
+            "disqualifying_issue": null,
+            "unresolved_question": "Is the owner an eligible Indian resident Zerodha client?"
+          },
+          "security": {
+            "score": 3,
+            "evidence": "Login token model; API key + access token; daily login flows typical.",
+            "confidence": "medium",
+            "uncertainty": "Token lifecycle differs from long-lived read-only keys.",
+            "disqualifying_issue": null,
+            "unresolved_question": null
+          },
+          "api_quality": {
+            "score": 4,
+            "evidence": "Kite Connect v3 docs cover holdings, positions, orders, margins.",
+            "confidence": "high",
+            "uncertainty": "Daily re-auth patterns complicate long-lived canary windows.",
+            "disqualifying_issue": null,
+            "unresolved_question": null
+          },
+          "operational_suitability": {
+            "score": 2,
+            "evidence": "India-market focus; login ceremony complicates automated bounded canary.",
+            "confidence": "medium",
+            "uncertainty": "Product geography may not match owner.",
+            "disqualifying_issue": null,
+            "unresolved_question": null
+          },
+          "commercial_product_fit": {
+            "score": 2,
+            "evidence": "Indian equities; limited global multi-asset fit for SaathiOS primary path.",
+            "confidence": "medium",
+            "uncertainty": "Roadmap fit depends on owner market.",
+            "disqualifying_issue": null,
+            "unresolved_question": null
+          }
+        },
+        "disqualifying_issues": [],
+        "unresolved_questions": [
+          "Owner residency and Zerodha account status?"
+        ],
+        "rationale": "Strong India-market API; owner eligibility highly uncertain; not preferred for first global canary.",
+        "rank": 7
+      }
+    ],
+    "matrix": {
+      "alpaca": {
+        "eligibility": {
+          "score": 3,
+          "evidence": "Official docs describe individual/business trading accounts and paper environment; availability is jurisdiction-specific.",
+          "confidence": "medium",
+          "uncertainty": "Owner country/residency and product eligibility not verified for this installation.",
+          "disqualifying_issue": null,
+          "unresolved_question": "Confirm owner residency and Alpaca account eligibility before any future canary."
+        },
+        "security": {
+          "score": 4,
+          "evidence": "API key model with paper/live separation; IP restrictions commonly supported; OAuth Connect exists but is forbidden for this canary path.",
+          "confidence": "medium",
+          "uncertainty": "Exact console paths for key expiry and IP allow-list need owner verification.",
+          "disqualifying_issue": null,
+          "unresolved_question": null
+        },
+        "api_quality": {
+          "score": 5,
+          "evidence": "Official Trading API + Market Data docs; account, positions, orders, portfolio history endpoints documented.",
+          "confidence": "high",
+          "uncertainty": "Schema drift possible; pin docs version at canary time.",
+          "disqualifying_issue": null,
+          "unresolved_question": null
+        },
+        "operational_suitability": {
+          "score": 5,
+          "evidence": "Dedicated paper-api environment supports deterministic testing without live capital.",
+          "confidence": "high",
+          "uncertainty": "Paper vs live host isolation must be enforced by network allow-list.",
+          "disqualifying_issue": null,
+          "unresolved_question": null
+        },
+        "commercial_product_fit": {
+          "score": 5,
+          "evidence": "US equities + crypto APIs align with SaathiOS paper-to-read-only roadmap.",
+          "confidence": "high",
+          "uncertainty": "Market-data redistribution limits require legal review before any redistribution.",
+          "disqualifying_issue": null,
+          "unresolved_question": null
+        }
+      },
+      "kraken": {
+        "eligibility": {
+          "score": 3,
+          "evidence": "Kraken offers accounts and API keys broadly; country restrictions exist and are owner-specific.",
+          "confidence": "medium",
+          "uncertainty": "Owner residency and product access unconfirmed.",
+          "disqualifying_issue": null,
+          "unresolved_question": "Confirm Kraken account eligibility and entity for owner country."
+        },
+        "security": {
+          "score": 5,
+          "evidence": "Official permission matrix separates Query Funds / Query Orders from Create & Modify Orders / Withdraw Funds; GetApiKeyInfo enables permission introspection.",
+          "confidence": "high",
+          "uncertainty": "Key expiry and IP allow-list options need owner console confirmation.",
+          "disqualifying_issue": null,
+          "unresolved_question": null
+        },
+        "api_quality": {
+          "score": 4,
+          "evidence": "Mature REST private endpoints for balances, orders, trades, ledgers with documented permissions.",
+          "confidence": "high",
+          "uncertainty": "Nonce/signature model is operationally heavier than simple key headers.",
+          "disqualifying_issue": null,
+          "unresolved_question": null
+        },
+        "operational_suitability": {
+          "score": 3,
+          "evidence": "No full equities paper broker equivalent; crypto-focused; good status/docs.",
+          "confidence": "medium",
+          "uncertainty": "Limited equity coverage vs SaathiOS multi-asset roadmap.",
+          "disqualifying_issue": null,
+          "unresolved_question": null
+        },
+        "commercial_product_fit": {
+          "score": 3,
+          "evidence": "Strong crypto coverage; weaker multi-asset equities fit for SaathiOS primary paper path.",
+          "confidence": "medium",
+          "uncertainty": "Asset universe and fee structures need product review.",
+          "disqualifying_issue": null,
+          "unresolved_question": null
+        }
+      },
+      "coinbase": {
+        "eligibility": {
+          "score": 3,
+          "evidence": "Coinbase products vary by region; Advanced Trade CDP keys documented.",
+          "confidence": "medium",
+          "uncertainty": "Owner jurisdiction eligibility unconfirmed.",
+          "disqualifying_issue": null,
+          "unresolved_question": null
+        },
+        "security": {
+          "score": 4,
+          "evidence": "can_view / can_trade / can_transfer separation; IP whitelist encouraged; keys may not expire by default.",
+          "confidence": "medium",
+          "uncertainty": "Non-expiring keys are a residual security concern requiring forced rotation policy.",
+          "disqualifying_issue": null,
+          "unresolved_question": null
+        },
+        "api_quality": {
+          "score": 4,
+          "evidence": "Advanced Trade REST with portfolio/account endpoints and key permission introspection.",
+          "confidence": "high",
+          "uncertainty": "CDP JWT auth complexity and portfolio UUID binding.",
+          "disqualifying_issue": null,
+          "unresolved_question": null
+        },
+        "operational_suitability": {
+          "score": 3,
+          "evidence": "No equity paper broker equivalent; crypto focused.",
+          "confidence": "medium",
+          "uncertainty": "OAuth paths exist and must remain disabled.",
+          "disqualifying_issue": null,
+          "unresolved_question": null
+        },
+        "commercial_product_fit": {
+          "score": 3,
+          "evidence": "Crypto coverage good; equities fit limited for primary roadmap.",
+          "confidence": "medium",
+          "uncertainty": "Brand/terms constraints on third-party software need legal review.",
+          "disqualifying_issue": null,
+          "unresolved_question": null
+        }
+      },
+      "binance": {
+        "eligibility": {
+          "score": 2,
+          "evidence": "Binance entities and products are highly jurisdiction-sensitive; many regions restricted.",
+          "confidence": "low",
+          "uncertainty": "Owner country may be unsupported; entity selection unresolved.",
+          "disqualifying_issue": null,
+          "unresolved_question": "Which Binance legal entity (if any) serves the owner?"
+        },
+        "security": {
+          "score": 4,
+          "evidence": "API key restrictions support disabling withdrawals and trading for read-oriented use; IP bind recommended.",
+          "confidence": "medium",
+          "uncertainty": "Regional product differences (global vs US etc.).",
+          "disqualifying_issue": null,
+          "unresolved_question": null
+        },
+        "api_quality": {
+          "score": 4,
+          "evidence": "Extensive REST/WS docs for account, balances, trades.",
+          "confidence": "medium",
+          "uncertainty": "Version fragmentation and product matrix complexity.",
+          "disqualifying_issue": null,
+          "unresolved_question": null
+        },
+        "operational_suitability": {
+          "score": 2,
+          "evidence": "High complexity; geographic/entity risk elevates ops burden for first canary.",
+          "confidence": "medium",
+          "uncertainty": "Testnet availability and parity with production vary by product.",
+          "disqualifying_issue": null,
+          "unresolved_question": null
+        },
+        "commercial_product_fit": {
+          "score": 3,
+          "evidence": "Strong crypto coverage; equities not primary.",
+          "confidence": "medium",
+          "uncertainty": "Terms and redistribution need legal review.",
+          "disqualifying_issue": null,
+          "unresolved_question": null
+        }
+      },
+      "interactive_brokers": {
+        "eligibility": {
+          "score": 3,
+          "evidence": "IBKR serves many countries with multi-asset accounts; account type complexity high.",
+          "confidence": "medium",
+          "uncertainty": "Owner account type and API access entitlements unconfirmed.",
+          "disqualifying_issue": null,
+          "unresolved_question": null
+        },
+        "security": {
+          "score": 3,
+          "evidence": "Client Portal session/OAuth-oriented models; less simple static read-only API key model than peers.",
+          "confidence": "medium",
+          "uncertainty": "Session-based auth increases operational and security surface for a bounded canary.",
+          "disqualifying_issue": null,
+          "unresolved_question": null
+        },
+        "api_quality": {
+          "score": 3,
+          "evidence": "CPAPI and TWS/Gateway documented; powerful but complex.",
+          "confidence": "medium",
+          "uncertainty": "Gateway process dependency elevates maintenance burden.",
+          "disqualifying_issue": null,
+          "unresolved_question": null
+        },
+        "operational_suitability": {
+          "score": 1,
+          "evidence": "Requires gateway/session lifecycle; poor fit for first isolated canary.",
+          "confidence": "high",
+          "uncertainty": "Excessive implementation complexity for M240\u2013M247 planning scope.",
+          "disqualifying_issue": "Session/gateway model unsuitable as first read-only canary target.",
+          "unresolved_question": null
+        },
+        "commercial_product_fit": {
+          "score": 4,
+          "evidence": "Excellent multi-asset coverage long-term.",
+          "confidence": "high",
+          "uncertainty": "Complexity outweighs fit for first canary.",
+          "disqualifying_issue": null,
+          "unresolved_question": null
+        }
+      },
+      "zerodha": {
+        "eligibility": {
+          "score": 1,
+          "evidence": "Kite Connect is primarily for Indian market participants; residency restrictions likely apply.",
+          "confidence": "medium",
+          "uncertainty": "Owner India residency/account eligibility unconfirmed \u2014 likely blocking for non-IN owners.",
+          "disqualifying_issue": null,
+          "unresolved_question": "Is the owner an eligible Indian resident Zerodha client?"
+        },
+        "security": {
+          "score": 3,
+          "evidence": "Login token model; API key + access token; daily login flows typical.",
+          "confidence": "medium",
+          "uncertainty": "Token lifecycle differs from long-lived read-only keys.",
+          "disqualifying_issue": null,
+          "unresolved_question": null
+        },
+        "api_quality": {
+          "score": 4,
+          "evidence": "Kite Connect v3 docs cover holdings, positions, orders, margins.",
+          "confidence": "high",
+          "uncertainty": "Daily re-auth patterns complicate long-lived canary windows.",
+          "disqualifying_issue": null,
+          "unresolved_question": null
+        },
+        "operational_suitability": {
+          "score": 2,
+          "evidence": "India-market focus; login ceremony complicates automated bounded canary.",
+          "confidence": "medium",
+          "uncertainty": "Product geography may not match owner.",
+          "disqualifying_issue": null,
+          "unresolved_question": null
+        },
+        "commercial_product_fit": {
+          "score": 2,
+          "evidence": "Indian equities; limited global multi-asset fit for SaathiOS primary path.",
+          "confidence": "medium",
+          "uncertainty": "Roadmap fit depends on owner market.",
+          "disqualifying_issue": null,
+          "unresolved_question": null
+        }
+      },
+      "bybit": {
+        "eligibility": {
+          "score": 2,
+          "evidence": "Bybit availability is region-dependent; restrictions apply in multiple jurisdictions.",
+          "confidence": "low",
+          "uncertainty": "Owner eligibility unconfirmed.",
+          "disqualifying_issue": null,
+          "unresolved_question": null
+        },
+        "security": {
+          "score": 3,
+          "evidence": "API key permissions exist for read vs trade; withdrawal controls expected but console-verified.",
+          "confidence": "medium",
+          "uncertainty": "IP/expiry options need verification.",
+          "disqualifying_issue": null,
+          "unresolved_question": null
+        },
+        "api_quality": {
+          "score": 4,
+          "evidence": "V5 REST docs for account, positions, order history.",
+          "confidence": "medium",
+          "uncertainty": "Derivatives-centric semantics.",
+          "disqualifying_issue": null,
+          "unresolved_question": null
+        },
+        "operational_suitability": {
+          "score": 2,
+          "evidence": "Derivatives focus and regional complexity elevate risk for first canary.",
+          "confidence": "medium",
+          "uncertainty": "Testnet parity verification needed.",
+          "disqualifying_issue": null,
+          "unresolved_question": null
+        },
+        "commercial_product_fit": {
+          "score": 2,
+          "evidence": "Crypto derivatives-heavy; weaker fit to paper equities path.",
+          "confidence": "medium",
+          "uncertainty": "Roadmap misalignment for first canary.",
+          "disqualifying_issue": null,
+          "unresolved_question": null
+        }
+      }
+    },
+    "retrieval_date": "2026-07-30",
+    "evidence_hash": "7a54519c233e821b6626d5f48053533323edee87d129302d328b8c302de66bb8",
+    "REAL_CONNECTIVITY_AUTHORIZED": false,
+    "note": "Preferred provider selection is a recommendation only."
+  },
+  "provider_specific_capability_map": {
+    "provider": "alpaca",
+    "provider_adapter_implemented": false,
+    "retrieval_date": "2026-07-30",
+    "endpoints": [
+      {
+        "id": "cap_991c4bfd263a4122",
+        "provider": "alpaca",
+        "endpoint_family": "account_metadata",
+        "method": "GET",
+        "auth_category": "PRIVATE_READ_ONLY",
+        "required_scope": "account_read",
+        "pagination": "none",
+        "rate_limit": "provider standard",
+        "timestamp_behaviour": "created_at timestamps",
+        "schema_notes": "account status, currency, buying_power (read); do not act on trading fields",
+        "retention_limits": "store metadata only within retention plan",
+        "error_behaviour": "403 if key lacks account access",
+        "canary_relevance": "high \u2014 identity and status",
+        "allowed_or_forbidden": "ALLOWED_PROPOSED",
+        "source_evidence": "https://docs.alpaca.markets/docs/getting-started-with-trading-api",
+        "created_at": 1785380910.198359,
+        "path_pattern": "/v2/account"
+      },
+      {
+        "id": "cap_0f169714d8d44fe5",
+        "provider": "alpaca",
+        "endpoint_family": "account_permissions",
+        "method": "GET",
+        "auth_category": "PRIVATE_READ_ONLY",
+        "required_scope": "account_read",
+        "pagination": "none",
+        "rate_limit": "provider standard",
+        "timestamp_behaviour": "n/a",
+        "schema_notes": "Infer trading-blocked flags; abort if unexpected write-capable status",
+        "retention_limits": "audit only",
+        "error_behaviour": "missing fields \u2192 UNRESOLVED",
+        "canary_relevance": "critical \u2014 scope drift detection",
+        "allowed_or_forbidden": "ALLOWED_PROPOSED",
+        "source_evidence": "https://docs.alpaca.markets/docs/getting-started-with-trading-api",
+        "created_at": 1785380910.198359,
+        "path_pattern": "/v2/account (status + configs as available)"
+      },
+      {
+        "id": "cap_ddc10a920e114d24",
+        "provider": "alpaca",
+        "endpoint_family": "asset_metadata",
+        "method": "GET",
+        "auth_category": "PRIVATE_READ_ONLY",
+        "required_scope": "account_read",
+        "pagination": "query filters",
+        "rate_limit": "provider standard",
+        "timestamp_behaviour": "n/a",
+        "schema_notes": "tradable asset catalog",
+        "retention_limits": "reference data retention",
+        "error_behaviour": "n/a",
+        "canary_relevance": "medium",
+        "allowed_or_forbidden": "ALLOWED_PROPOSED",
+        "source_evidence": "https://docs.alpaca.markets/docs/getting-started-with-trading-api",
+        "created_at": 1785380910.198359,
+        "path_pattern": "/v2/assets"
+      },
+      {
+        "id": "cap_46a76e26f8aa4438",
+        "provider": "alpaca",
+        "endpoint_family": "balances",
+        "method": "GET",
+        "auth_category": "PRIVATE_READ_ONLY",
+        "required_scope": "account_read",
+        "pagination": "none",
+        "rate_limit": "provider standard",
+        "timestamp_behaviour": "point-in-time",
+        "schema_notes": "cash, equity, portfolio_value fields",
+        "retention_limits": "canary retention window",
+        "error_behaviour": "4xx abort review",
+        "canary_relevance": "high",
+        "allowed_or_forbidden": "ALLOWED_PROPOSED",
+        "source_evidence": "https://docs.alpaca.markets/docs/getting-started-with-trading-api",
+        "created_at": 1785380910.198359,
+        "path_pattern": "/v2/account"
+      },
+      {
+        "id": "cap_6e3e303c1f0045c0",
+        "provider": "alpaca",
+        "endpoint_family": "deposits",
+        "method": "GET",
+        "auth_category": "PRIVATE_READ_ONLY",
+        "required_scope": "account_read",
+        "pagination": "page_token",
+        "rate_limit": "provider standard",
+        "timestamp_behaviour": "transaction_time",
+        "schema_notes": "observe only; never initiate deposit",
+        "retention_limits": "bounded",
+        "error_behaviour": "n/a",
+        "canary_relevance": "low",
+        "allowed_or_forbidden": "ALLOWED_PROPOSED",
+        "source_evidence": "https://docs.alpaca.markets/docs/getting-started-with-trading-api",
+        "created_at": 1785380910.198359,
+        "path_pattern": "/v2/account/activities (CSD/JNLC etc. as applicable)"
+      },
+      {
+        "id": "cap_d32bdc5267cf4893",
+        "provider": "alpaca",
+        "endpoint_family": "fees",
+        "method": "GET",
+        "auth_category": "PRIVATE_READ_ONLY",
+        "required_scope": "account_read",
+        "pagination": "page_token",
+        "rate_limit": "provider standard",
+        "timestamp_behaviour": "transaction_time",
+        "schema_notes": "fee history observation",
+        "retention_limits": "bounded",
+        "error_behaviour": "n/a",
+        "canary_relevance": "medium",
+        "allowed_or_forbidden": "ALLOWED_PROPOSED",
+        "source_evidence": "https://docs.alpaca.markets/docs/getting-started-with-trading-api",
+        "created_at": 1785380910.198359,
+        "path_pattern": "/v2/account/activities (FEE/CINT etc.)"
+      },
+      {
+        "id": "cap_1335beef10b44d7c",
+        "provider": "alpaca",
+        "endpoint_family": "margin_metadata",
+        "method": "GET",
+        "auth_category": "PRIVATE_READ_ONLY",
+        "required_scope": "account_read",
+        "pagination": "none",
+        "rate_limit": "provider standard",
+        "timestamp_behaviour": "point-in-time",
+        "schema_notes": "read margin metadata only; never activate margin/leverage",
+        "retention_limits": "audit",
+        "error_behaviour": "n/a",
+        "canary_relevance": "low",
+        "allowed_or_forbidden": "ALLOWED_PROPOSED",
+        "source_evidence": "https://docs.alpaca.markets/docs/getting-started-with-trading-api",
+        "created_at": 1785380910.198359,
+        "path_pattern": "/v2/account (margin fields if present)"
+      },
+      {
+        "id": "cap_8d127c00cc14420c",
+        "provider": "alpaca",
+        "endpoint_family": "open_order_observation",
+        "method": "GET",
+        "auth_category": "PRIVATE_READ_ONLY",
+        "required_scope": "account_read",
+        "pagination": "limit + until/after",
+        "rate_limit": "provider standard",
+        "timestamp_behaviour": "submitted_at, filled_at",
+        "schema_notes": "read-only observation of open orders",
+        "retention_limits": "canary retention",
+        "error_behaviour": "empty ok",
+        "canary_relevance": "high",
+        "allowed_or_forbidden": "ALLOWED_PROPOSED",
+        "source_evidence": "https://docs.alpaca.markets/docs/getting-started-with-trading-api",
+        "created_at": 1785380910.198359,
+        "path_pattern": "/v2/orders?status=open"
+      },
+      {
+        "id": "cap_fe371b14e2d54f49",
+        "provider": "alpaca",
+        "endpoint_family": "order_cancellation",
+        "method": "DELETE",
+        "auth_category": "TRADING_WRITE",
+        "required_scope": "FORBIDDEN",
+        "pagination": "n/a",
+        "rate_limit": "n/a",
+        "timestamp_behaviour": "n/a",
+        "schema_notes": "Order cancel forbidden",
+        "retention_limits": "n/a",
+        "error_behaviour": "must be blocked",
+        "canary_relevance": "abort if reachable",
+        "allowed_or_forbidden": "FORBIDDEN",
+        "source_evidence": "planning invariant",
+        "created_at": 1785380910.198359,
+        "path_pattern": "/v2/orders/{id}"
+      },
+      {
+        "id": "cap_f245d1ab4dbf4750",
+        "provider": "alpaca",
+        "endpoint_family": "order_history",
+        "method": "GET",
+        "auth_category": "PRIVATE_READ_ONLY",
+        "required_scope": "account_read",
+        "pagination": "limit + direction",
+        "rate_limit": "provider standard",
+        "timestamp_behaviour": "ISO timestamps",
+        "schema_notes": "historical orders read-only",
+        "retention_limits": "provider history window + local retention plan",
+        "error_behaviour": "pagination must be complete",
+        "canary_relevance": "high",
+        "allowed_or_forbidden": "ALLOWED_PROPOSED",
+        "source_evidence": "https://docs.alpaca.markets/docs/getting-started-with-trading-api",
+        "created_at": 1785380910.198359,
+        "path_pattern": "/v2/orders?status=all|closed"
+      },
+      {
+        "id": "cap_0a5c260ce5b74be3",
+        "provider": "alpaca",
+        "endpoint_family": "order_modification",
+        "method": "PATCH",
+        "auth_category": "TRADING_WRITE",
+        "required_scope": "FORBIDDEN",
+        "pagination": "n/a",
+        "rate_limit": "n/a",
+        "timestamp_behaviour": "n/a",
+        "schema_notes": "Order modify forbidden",
+        "retention_limits": "n/a",
+        "error_behaviour": "must be blocked",
+        "canary_relevance": "abort if reachable",
+        "allowed_or_forbidden": "FORBIDDEN",
+        "source_evidence": "planning invariant",
+        "created_at": 1785380910.198359,
+        "path_pattern": "/v2/orders/{id}"
+      },
+      {
+        "id": "cap_eff50d286e214f0d",
+        "provider": "alpaca",
+        "endpoint_family": "order_placement",
+        "method": "POST",
+        "auth_category": "TRADING_WRITE",
+        "required_scope": "FORBIDDEN",
+        "pagination": "n/a",
+        "rate_limit": "n/a",
+        "timestamp_behaviour": "n/a",
+        "schema_notes": "Order submission forbidden",
+        "retention_limits": "n/a",
+        "error_behaviour": "must be blocked by allow-list and credential scope",
+        "canary_relevance": "abort if reachable",
+        "allowed_or_forbidden": "FORBIDDEN",
+        "source_evidence": "planning invariant",
+        "created_at": 1785380910.198359,
+        "path_pattern": "/v2/orders"
+      },
+      {
+        "id": "cap_4d4e3c822ec040e9",
+        "provider": "alpaca",
+        "endpoint_family": "portfolio",
+        "method": "GET",
+        "auth_category": "PRIVATE_READ_ONLY",
+        "required_scope": "account_read",
+        "pagination": "period/timeframe params",
+        "rate_limit": "provider standard",
+        "timestamp_behaviour": "timestamp arrays",
+        "schema_notes": "equity/history series",
+        "retention_limits": "bounded series only",
+        "error_behaviour": "400 on bad params",
+        "canary_relevance": "medium",
+        "allowed_or_forbidden": "ALLOWED_PROPOSED",
+        "source_evidence": "https://docs.alpaca.markets/docs/getting-started-with-trading-api",
+        "created_at": 1785380910.198359,
+        "path_pattern": "/v2/account/portfolio/history"
+      },
+      {
+        "id": "cap_f823aff07515458a",
+        "provider": "alpaca",
+        "endpoint_family": "positions",
+        "method": "GET",
+        "auth_category": "PRIVATE_READ_ONLY",
+        "required_scope": "account_read",
+        "pagination": "none (list)",
+        "rate_limit": "provider standard",
+        "timestamp_behaviour": "mark-to-market timestamps if present",
+        "schema_notes": "symbol, qty, market_value, avg_entry",
+        "retention_limits": "canary retention",
+        "error_behaviour": "empty list ok",
+        "canary_relevance": "high",
+        "allowed_or_forbidden": "ALLOWED_PROPOSED",
+        "source_evidence": "https://docs.alpaca.markets/docs/getting-started-with-trading-api",
+        "created_at": 1785380910.198359,
+        "path_pattern": "/v2/positions"
+      },
+      {
+        "id": "cap_64a736e4f88e43e0",
+        "provider": "alpaca",
+        "endpoint_family": "provider_health",
+        "method": "GET",
+        "auth_category": "PRIVATE_READ_ONLY",
+        "required_scope": "account_read",
+        "pagination": "none",
+        "rate_limit": "provider standard",
+        "timestamp_behaviour": "ISO8601",
+        "schema_notes": "reuse clock as readiness signal",
+        "retention_limits": "n/a",
+        "error_behaviour": "5xx \u2192 abort threshold",
+        "canary_relevance": "high",
+        "allowed_or_forbidden": "ALLOWED_PROPOSED",
+        "source_evidence": "https://docs.alpaca.markets/docs/getting-started-with-trading-api",
+        "created_at": 1785380910.198359,
+        "path_pattern": "/v2/clock"
+      },
+      {
+        "id": "cap_f6dd2ff509f8455c",
+        "provider": "alpaca",
+        "endpoint_family": "public_market_data",
+        "method": "GET",
+        "auth_category": "PUBLIC_UNAUTHENTICATED",
+        "required_scope": "none_or_market_data_key",
+        "pagination": "varies",
+        "rate_limit": "market data plan limits",
+        "timestamp_behaviour": "exchange timestamps",
+        "schema_notes": "Optional; not required for account canary; redistribution restricted",
+        "retention_limits": "data licence limits",
+        "error_behaviour": "n/a",
+        "canary_relevance": "out of scope for first account canary",
+        "allowed_or_forbidden": "OUT_OF_SCOPE",
+        "source_evidence": "https://docs.alpaca.markets/docs/getting-started-with-alpaca-market-data",
+        "created_at": 1785380910.198359,
+        "path_pattern": "data.alpaca.markets public/SIP feeds (optional)"
+      },
+      {
+        "id": "cap_5f4ae87f0a194095",
+        "provider": "alpaca",
+        "endpoint_family": "rate_limit_status",
+        "method": "RESPONSE_HEADERS",
+        "auth_category": "PRIVATE_READ_ONLY",
+        "required_scope": "account_read",
+        "pagination": "n/a",
+        "rate_limit": "observe X-RateLimit-* or equivalent if present",
+        "timestamp_behaviour": "n/a",
+        "schema_notes": "monitor remaining budget",
+        "retention_limits": "audit",
+        "error_behaviour": "429 \u2192 backoff then abort threshold",
+        "canary_relevance": "high",
+        "allowed_or_forbidden": "ALLOWED_PROPOSED",
+        "source_evidence": "provider rate-limit behaviour (verify at canary time)",
+        "created_at": 1785380910.198359,
+        "path_pattern": "any allowed GET"
+      },
+      {
+        "id": "cap_dcad19034a534f26",
+        "provider": "alpaca",
+        "endpoint_family": "server_time",
+        "method": "GET",
+        "auth_category": "PRIVATE_READ_ONLY",
+        "required_scope": "account_read",
+        "pagination": "none",
+        "rate_limit": "provider standard; canary budget applies",
+        "timestamp_behaviour": "ISO8601 market clock timestamps",
+        "schema_notes": "is_open, next_open, next_close",
+        "retention_limits": "n/a (point-in-time)",
+        "error_behaviour": "401/403 on bad/missing key",
+        "canary_relevance": "high \u2014 health/clock sanity",
+        "allowed_or_forbidden": "ALLOWED_PROPOSED",
+        "source_evidence": "https://docs.alpaca.markets/docs/getting-started-with-trading-api",
+        "created_at": 1785380910.198359,
+        "path_pattern": "/v2/clock"
+      },
+      {
+        "id": "cap_5d25bd2657ab4690",
+        "provider": "alpaca",
+        "endpoint_family": "trade_history",
+        "method": "GET",
+        "auth_category": "PRIVATE_READ_ONLY",
+        "required_scope": "account_read",
+        "pagination": "page_token",
+        "rate_limit": "provider standard",
+        "timestamp_behaviour": "transaction_time",
+        "schema_notes": "fills/activity feed",
+        "retention_limits": "bounded window",
+        "error_behaviour": "incomplete page \u2192 abort",
+        "canary_relevance": "high",
+        "allowed_or_forbidden": "ALLOWED_PROPOSED",
+        "source_evidence": "https://docs.alpaca.markets/docs/getting-started-with-trading-api",
+        "created_at": 1785380910.198359,
+        "path_pattern": "/v2/account/activities/FILL"
+      },
+      {
+        "id": "cap_ee2e99efb37041bb",
+        "provider": "alpaca",
+        "endpoint_family": "transactions",
+        "method": "GET",
+        "auth_category": "PRIVATE_READ_ONLY",
+        "required_scope": "account_read",
+        "pagination": "page_token",
+        "rate_limit": "provider standard",
+        "timestamp_behaviour": "transaction_time",
+        "schema_notes": "non-trading activity types may appear; filter carefully",
+        "retention_limits": "bounded",
+        "error_behaviour": "unknown activity types \u2192 review",
+        "canary_relevance": "medium",
+        "allowed_or_forbidden": "ALLOWED_PROPOSED",
+        "source_evidence": "https://docs.alpaca.markets/docs/getting-started-with-trading-api",
+        "created_at": 1785380910.198359,
+        "path_pattern": "/v2/account/activities"
+      },
+      {
+        "id": "cap_e9b46db6ce684097",
+        "provider": "alpaca",
+        "endpoint_family": "transfers",
+        "method": "ANY",
+        "auth_category": "TRANSFER_WRITE",
+        "required_scope": "FORBIDDEN",
+        "pagination": "n/a",
+        "rate_limit": "n/a",
+        "timestamp_behaviour": "n/a",
+        "schema_notes": "Transfer initiation forbidden",
+        "retention_limits": "n/a",
+        "error_behaviour": "must never be callable",
+        "canary_relevance": "abort if present",
+        "allowed_or_forbidden": "FORBIDDEN",
+        "source_evidence": "planning invariant",
+        "created_at": 1785380910.198359,
+        "path_pattern": "transfer write endpoints"
+      },
+      {
+        "id": "cap_0888e63142794866",
+        "provider": "alpaca",
+        "endpoint_family": "withdrawals",
+        "method": "ANY",
+        "auth_category": "WITHDRAWAL_WRITE",
+        "required_scope": "FORBIDDEN",
+        "pagination": "n/a",
+        "rate_limit": "n/a",
+        "timestamp_behaviour": "n/a",
+        "schema_notes": "Any withdrawal capability is forbidden",
+        "retention_limits": "n/a",
+        "error_behaviour": "must never be callable",
+        "canary_relevance": "abort if present",
+        "allowed_or_forbidden": "FORBIDDEN",
+        "source_evidence": "planning invariant",
+        "created_at": 1785380910.198359,
+        "path_pattern": "withdrawal/transfer write endpoints"
+      }
+    ],
+    "by_auth_category": {
+      "PRIVATE_READ_ONLY": [
+        "account_metadata",
+        "account_permissions",
+        "asset_metadata",
+        "balances",
+        "deposits",
+        "fees",
+        "margin_metadata",
+        "open_order_observation",
+        "order_history",
+        "portfolio",
+        "positions",
+        "provider_health",
+        "rate_limit_status",
+        "server_time",
+        "trade_history",
+        "transactions"
+      ],
+      "TRADING_WRITE": [
+        "order_cancellation",
+        "order_modification",
+        "order_placement"
+      ],
+      "PUBLIC_UNAUTHENTICATED": [
+        "public_market_data"
+      ],
+      "TRANSFER_WRITE": [
+        "transfers"
+      ],
+      "WITHDRAWAL_WRITE": [
+        "withdrawals"
+      ]
+    },
+    "count": 22,
+    "evidence_hash": "730df65243babe78f22cf58d6be23e4b724b46434adf410d2e39c6b95ae20c22",
+    "REAL_CONNECTIVITY_AUTHORIZED": false
+  },
+  "eligibility_findings": {
+    "provider": "alpaca",
+    "result": "ELIGIBILITY_UNCONFIRMED",
+    "items": [
+      {
+        "item": "geographic_eligibility",
+        "classification": "OWNER_CONFIRMATION_REQUIRED",
+        "finding": "Alpaca product availability is jurisdiction-specific. Owner country not verified in this package.",
+        "source": "https://docs.alpaca.markets/docs/getting-started"
+      },
+      {
+        "item": "residency_requirements",
+        "classification": "OWNER_CONFIRMATION_REQUIRED",
+        "finding": "Residency and tax residency may affect account eligibility; owner must confirm.",
+        "source": "owner confirmation required"
+      },
+      {
+        "item": "account_eligibility",
+        "classification": "OWNER_CONFIRMATION_REQUIRED",
+        "finding": "Individual vs business account type and KYC status unknown for this owner.",
+        "source": "owner confirmation required"
+      },
+      {
+        "item": "api_eligibility",
+        "classification": "SUPPORTED_BY_OFFICIAL_SOURCE",
+        "finding": "Official Trading API documentation exists for account-authenticated API access.",
+        "source": "https://docs.alpaca.markets/docs/getting-started-with-trading-api"
+      },
+      {
+        "item": "api_terms_of_use",
+        "classification": "LEGAL_REVIEW_REQUIRED",
+        "finding": "API and brokerage terms must be reviewed by owner/legal before connectivity.",
+        "source": "provider legal pages (owner must open current version)"
+      },
+      {
+        "item": "automated_access_restrictions",
+        "classification": "LEGAL_REVIEW_REQUIRED",
+        "finding": "Automated access must comply with rate limits and API terms; bot use restrictions need review.",
+        "source": "API terms (current version at canary time)"
+      },
+      {
+        "item": "data_retention_restrictions",
+        "classification": "LEGAL_REVIEW_REQUIRED",
+        "finding": "Account and market data retention/redistribution may be restricted by licence.",
+        "source": "terms + market data licence"
+      },
+      {
+        "item": "redistribution_restrictions",
+        "classification": "LEGAL_REVIEW_REQUIRED",
+        "finding": "Snapshots stored in SaathiOS must not be redistributed without licence clearance.",
+        "source": "market data and API terms"
+      },
+      {
+        "item": "privacy_requirements",
+        "classification": "OWNER_CONFIRMATION_REQUIRED",
+        "finding": "Account PII handling must match owner privacy obligations and provider privacy policy.",
+        "source": "provider privacy policy + owner policy"
+      },
+      {
+        "item": "audit_requirements",
+        "classification": "SUPPORTED_BY_OFFICIAL_SOURCE",
+        "finding": "Canary design requires full local audit of calls; provider may retain own logs.",
+        "source": "planning design M243"
+      },
+      {
+        "item": "account_data_storage_restrictions",
+        "classification": "LEGAL_REVIEW_REQUIRED",
+        "finding": "Storing balances/positions locally must comply with provider and privacy rules.",
+        "source": "terms + privacy"
+      },
+      {
+        "item": "third_party_software_restrictions",
+        "classification": "LEGAL_REVIEW_REQUIRED",
+        "finding": "Using SaathiOS as third-party software against provider API needs terms clearance.",
+        "source": "API terms"
+      },
+      {
+        "item": "credential_sharing_restrictions",
+        "classification": "SECURITY_REVIEW_REQUIRED",
+        "finding": "Credentials must never be shared with LLMs or multi-tenant untrusted actors.",
+        "source": "planning invariant + security model"
+      },
+      {
+        "item": "rate_limit_obligations",
+        "classification": "SUPPORTED_BY_OFFICIAL_SOURCE",
+        "finding": "Canary must respect provider rate limits; budget enforced in design.",
+        "source": "provider rate-limit behaviour"
+      },
+      {
+        "item": "provider_branding_requirements",
+        "classification": "UNRESOLVED",
+        "finding": "Branding/attribution requirements not fully inventoried.",
+        "source": "pending legal review"
+      },
+      {
+        "item": "prohibited_activities",
+        "classification": "LEGAL_REVIEW_REQUIRED",
+        "finding": "Order submission, wash trading, market manipulation remain prohibited; canary is read-only by design.",
+        "source": "terms + planning invariant"
+      },
+      {
+        "item": "termination_and_suspension_risks",
+        "classification": "OWNER_CONFIRMATION_REQUIRED",
+        "finding": "Provider may suspend API access; canary must abort cleanly on suspension signals.",
+        "source": "terms + canary abort design"
+      }
+    ],
+    "legal_review_items": [
+      "api_terms_of_use current version acknowledgement",
+      "automated-access and bot restrictions",
+      "data retention and redistribution licences",
+      "third-party software authorization",
+      "privacy/PII handling for account snapshots",
+      "jurisdiction-specific brokerage regulations for owner",
+      "branding and attribution obligations"
+    ],
+    "unresolved": [
+      "geographic_eligibility",
+      "residency_requirements",
+      "account_eligibility",
+      "privacy_requirements",
+      "provider_branding_requirements",
+      "termination_and_suspension_risks"
+    ],
+    "owner_eligibility_claimed": false,
+    "legal_approval_generated_by_automation": false,
+    "disclaimer": "This is not legal advice or legal certification. Owner eligibility is not claimed without explicit verified evidence.",
+    "retrieval_date": "2026-07-30",
+    "evidence_hash": "f7610efd8cc4cca73f5c5055b18ee650ebb461f4c7f09ff4e4002f835aeb7847",
+    "REAL_CONNECTIVITY_AUTHORIZED": false
+  },
+  "unresolved_eligibility_questions": [
+    "geographic_eligibility",
+    "residency_requirements",
+    "account_eligibility",
+    "privacy_requirements",
+    "provider_branding_requirements",
+    "termination_and_suspension_risks"
+  ],
+  "terms_review": {
+    "provider": "alpaca",
+    "terms_review_status": "TERMS_REVIEW_INCOMPLETE",
+    "items": [
+      {
+        "item": "api_terms_of_use",
+        "classification": "LEGAL_REVIEW_REQUIRED",
+        "finding": "API and brokerage terms must be reviewed by owner/legal before connectivity.",
+        "source": "provider legal pages (owner must open current version)"
+      },
+      {
+        "item": "automated_access_restrictions",
+        "classification": "LEGAL_REVIEW_REQUIRED",
+        "finding": "Automated access must comply with rate limits and API terms; bot use restrictions need review.",
+        "source": "API terms (current version at canary time)"
+      },
+      {
+        "item": "data_retention_restrictions",
+        "classification": "LEGAL_REVIEW_REQUIRED",
+        "finding": "Account and market data retention/redistribution may be restricted by licence.",
+        "source": "terms + market data licence"
+      },
+      {
+        "item": "redistribution_restrictions",
+        "classification": "LEGAL_REVIEW_REQUIRED",
+        "finding": "Snapshots stored in SaathiOS must not be redistributed without licence clearance.",
+        "source": "market data and API terms"
+      },
+      {
+        "item": "third_party_software_restrictions",
+        "classification": "LEGAL_REVIEW_REQUIRED",
+        "finding": "Using SaathiOS as third-party software against provider API needs terms clearance.",
+        "source": "API terms"
+      },
+      {
+        "item": "prohibited_activities",
+        "classification": "LEGAL_REVIEW_REQUIRED",
+        "finding": "Order submission, wash trading, market manipulation remain prohibited; canary is read-only by design.",
+        "source": "terms + planning invariant"
+      },
+      {
+        "item": "termination_and_suspension_risks",
+        "classification": "OWNER_CONFIRMATION_REQUIRED",
+        "finding": "Provider may suspend API access; canary must abort cleanly on suspension signals.",
+        "source": "terms + canary abort design"
+      }
+    ],
+    "legal_review_items": [
+      "api_terms_of_use current version acknowledgement",
+      "automated-access and bot restrictions",
+      "data retention and redistribution licences",
+      "third-party software authorization",
+      "privacy/PII handling for account snapshots",
+      "jurisdiction-specific brokerage regulations for owner",
+      "branding and attribution obligations"
+    ],
+    "legal_approval_generated_by_automation": false,
+    "REAL_CONNECTIVITY_AUTHORIZED": false
+  },
+  "legal_review_items": [
+    "api_terms_of_use current version acknowledgement",
+    "automated-access and bot restrictions",
+    "data retention and redistribution licences",
+    "third-party software authorization",
+    "privacy/PII handling for account snapshots",
+    "jurisdiction-specific brokerage regulations for owner",
+    "branding and attribution obligations"
+  ],
+  "minimum_required_scopes": [
+    {
+      "scope_name": "account_read",
+      "kind": "PROPOSED_READ_ONLY",
+      "rationale": "Minimum scope to read account metadata, balances, positions, and history.",
+      "source_evidence": "Alpaca Trading API account/positions/orders GET families"
+    },
+    {
+      "scope_name": "orders_read",
+      "kind": "PROPOSED_READ_ONLY",
+      "rationale": "Read open and historical orders only; never place/cancel/modify.",
+      "source_evidence": "GET /v2/orders"
+    },
+    {
+      "scope_name": "activities_read",
+      "kind": "PROPOSED_READ_ONLY",
+      "rationale": "Read fills, fees, and transaction history.",
+      "source_evidence": "GET /v2/account/activities"
+    }
+  ],
+  "forbidden_scopes": [
+    {
+      "scope_name": "trading_write",
+      "kind": "FORBIDDEN",
+      "rationale": "Any order place/cancel/modify permission.",
+      "source_evidence": "planning invariant"
+    },
+    {
+      "scope_name": "withdrawal",
+      "kind": "FORBIDDEN",
+      "rationale": "Withdrawal capability must never be granted.",
+      "source_evidence": "planning invariant"
+    },
+    {
+      "scope_name": "transfer",
+      "kind": "FORBIDDEN",
+      "rationale": "Transfer initiation forbidden.",
+      "source_evidence": "planning invariant"
+    },
+    {
+      "scope_name": "account_admin",
+      "kind": "FORBIDDEN",
+      "rationale": "Account/sub-account administration forbidden.",
+      "source_evidence": "planning invariant"
+    },
+    {
+      "scope_name": "credential_admin",
+      "kind": "FORBIDDEN",
+      "rationale": "API-key administration from SaathiOS forbidden.",
+      "source_evidence": "planning invariant"
+    },
+    {
+      "scope_name": "margin_activation",
+      "kind": "FORBIDDEN",
+      "rationale": "Margin/leverage activation forbidden.",
+      "source_evidence": "planning invariant"
+    },
+    {
+      "scope_name": "oauth_full_access",
+      "kind": "FORBIDDEN",
+      "rationale": "OAuth sessions out of scope and forbidden for this canary design.",
+      "source_evidence": "planning invariant"
+    }
+  ],
+  "network_allow_list": [
+    "paper-api.alpaca.markets"
+  ],
+  "endpoint_allow_list": [
+    "GET /v2/clock",
+    "GET /v2/account",
+    "GET /v2/positions",
+    "GET /v2/orders (read statuses only)",
+    "GET /v2/account/portfolio/history",
+    "GET /v2/account/activities",
+    "GET /v2/assets"
+  ],
+  "canary_architecture": {
+    "name": "read_only_provider_canary",
+    "state": "CANARY_DESIGNED_NOT_AUTHORIZED",
+    "provider": "alpaca",
+    "environment": "ONE_OWNER_CONTROLLED_ACCOUNT_ONE_ENV",
+    "mode": "READ_ONLY",
+    "activation": "MANUAL_ONLY",
+    "revocation": "MANUAL_AND_KILL_SWITCH",
+    "time_bounded": true,
+    "rate_limited": true,
+    "monitored": true,
+    "fully_audited": true,
+    "components": [
+      "Owner Approval Center (existing)",
+      "Credential Metadata Lifecycle (reference-only; no raw secrets to LLM)",
+      "Transport Guard (endpoint + network allow-list)",
+      "Canary Read Collector (future; not implemented)",
+      "Snapshot Store (durable; no credentials)",
+      "Reconciliation Engine (compare snapshots)",
+      "Audit Evidence Store",
+      "Monitoring & Abort Evaluator",
+      "Kill Switch",
+      "Operations Control Center UI (planning view)"
+    ],
+    "isolation": {
+      "from_execution_systems": true,
+      "from_order_submission": true,
+      "from_portfolio_mutation": true,
+      "from_trading_guardian_autonomous_actions": true,
+      "from_llm_credential_path": true
+    },
+    "trust_boundaries": [
+      {
+        "boundary": "owner_human",
+        "description": "Only human owner may approve planning package and future activation."
+      },
+      {
+        "boundary": "credential_entry",
+        "description": "Raw secret never enters LLM context; only reference IDs stored in SaathiOS."
+      },
+      {
+        "boundary": "network_allowlist",
+        "description": "Only paper-api (or designated) host allowed; no OAuth login hosts."
+      },
+      {
+        "boundary": "endpoint_allowlist",
+        "description": "Only GET account/positions/orders/activities families."
+      },
+      {
+        "boundary": "execution_isolation",
+        "description": "No path into order placement, cancel, withdraw, transfer."
+      },
+      {
+        "boundary": "tg_autonomy_isolation",
+        "description": "Trading Guardian cannot auto-act on canary data."
+      }
+    ],
+    "data_flow": [
+      "owner_approved_credential_ref \u2192 transport_guard \u2192 allowed_GET \u2192 snapshot_normalize \u2192 durable_store \u2192 audit \u2192 recon \u2192 monitor"
+    ],
+    "storage_flow": [
+      "snapshots + hashes + timestamps",
+      "no raw credentials",
+      "no full secret material",
+      "retention-bounded purge job (future)"
+    ],
+    "audit_flow": [
+      "every request attempt logged (url family, status, latency, hash of response redacted)",
+      "abort events immutable",
+      "revocation events immutable"
+    ],
+    "reconciliation_flow": [
+      "baseline paper portfolio remains unchanged",
+      "provider snapshot vs prior snapshot delta within tolerance",
+      "unknown asset \u2192 abort"
+    ],
+    "kill_switch_flow": [
+      "manual kill \u2192 stop collector \u2192 revoke local use of ref \u2192 optional external revoke runbook"
+    ],
+    "revocation_flow": [
+      "owner revokes at provider console",
+      "operator marks ref REVOKED",
+      "transport refuses subsequent use",
+      "external verification step in runbook"
+    ],
+    "error_flow": [
+      "4xx auth \u2192 abort security",
+      "429 \u2192 backoff then threshold abort",
+      "5xx \u2192 warning then stop threshold",
+      "schema unknown \u2192 manual review"
+    ],
+    "owner_approval_flow": [
+      "M246 package review \u2192 APPROVE_PLANNING_PACKAGE_ONLY only",
+      "separate future milestone required for any connectivity authority"
+    ],
+    "may_read": [
+      "provider_identity",
+      "account_metadata",
+      "permissions",
+      "balances",
+      "positions",
+      "order_history",
+      "trade_history",
+      "fee_history",
+      "transaction_history"
+    ],
+    "must_not": [
+      "order_placement",
+      "order_cancellation",
+      "order_modification",
+      "withdrawal",
+      "transfer",
+      "account_administration",
+      "sub_account_administration",
+      "api_key_administration",
+      "margin_activation",
+      "leverage_activation"
+    ],
+    "network_allowlist_proposal": [
+      "paper-api.alpaca.markets"
+    ],
+    "endpoint_allowlist_proposal": [
+      "GET /v2/clock",
+      "GET /v2/account",
+      "GET /v2/positions",
+      "GET /v2/orders (read statuses only)",
+      "GET /v2/account/portfolio/history",
+      "GET /v2/account/activities",
+      "GET /v2/assets"
+    ],
+    "endpoint_denylist_proposal": [
+      "POST /v2/orders",
+      "DELETE /v2/orders/*",
+      "PATCH /v2/orders/*",
+      "any withdrawal/transfer path",
+      "any OAuth authorize path"
+    ],
+    "budgets": {
+      "time_limit": "max 72 hours per canary window (proposal)",
+      "call_budget": "max 500 authenticated GETs per window",
+      "rate_limit_budget": "max 30 requests/minute; stop after 3 consecutive 429s",
+      "retry_policy": "idempotent GET only; max 2 retries",
+      "backoff_policy": "exponential 1s, 2s, 4s; no retry on 401/403",
+      "data_retention_limit": "30 days for canary snapshots unless legal requires shorter"
+    },
+    "evidence_capture": [
+      "request family + timestamp + response hash",
+      "scope introspection result",
+      "abort evidence packs"
+    ],
+    "rollback": [
+      "disable collector",
+      "revoke credential ref locally",
+      "purge short-lived caches",
+      "retain immutable audit",
+      "paper portfolio and durable ledger remain authoritative and unchanged"
+    ],
+    "provider_adapter_implemented": false,
+    "canary_activation_authorized": false,
+    "evidence_hash": "269134eb1c3301fef35954f6df039324fa2dd6c4d51816e0948d8218e12f0433",
+    "CANARY_ACTIVATION_AUTHORIZED": false,
+    "REAL_CONNECTIVITY_AUTHORIZED": false
+  },
+  "credential_ceremony": {
+    "status": "CREDENTIAL_CEREMONY_DOCUMENTED_NOT_EXECUTED",
+    "executed": false,
+    "steps_count": 20
+  },
+  "data_retention_plan": "30 days for canary snapshots unless legal requires shorter",
+  "audit_plan": [
+    "every request attempt logged (url family, status, latency, hash of response redacted)",
+    "abort events immutable",
+    "revocation events immutable"
+  ],
+  "monitoring_plan": {
+    "signals": [
+      "request_count",
+      "error_rate",
+      "latency",
+      "rate_limit_headers",
+      "scope_introspection",
+      "endpoint_allowlist_hits",
+      "denylist_blocks",
+      "snapshot_freshness",
+      "recon_delta",
+      "kill_switch_state"
+    ],
+    "alerting": "operator + owner on stop/security abort",
+    "dashboard": "/trading/provider-canary-planning (planning view only in M247)"
+  },
+  "reconciliation_plan": {
+    "baseline": "paper portfolio and durable ledger remain source of truth for trading",
+    "compare": "provider snapshot series for continuity only",
+    "tolerance": "threshold-defined; unknown assets fail closed",
+    "does_not_mutate": [
+      "paper_portfolio",
+      "orders",
+      "positions_execution_path"
+    ]
+  },
+  "incident_plan": {
+    "steps": [
+      "Assume key is hostile",
+      "Immediate kill switch",
+      "Revoke at provider",
+      "Rotate any related secrets",
+      "Scan logs for secret leakage",
+      "Preserve forensic evidence",
+      "Owner and security notification",
+      "No automated re-entry after security abort"
+    ],
+    "executed": false
+  },
+  "kill_switch_plan": [
+    "manual kill \u2192 stop collector \u2192 revoke local use of ref \u2192 optional external revoke runbook"
+  ],
+  "revocation_plan": {
+    "triggers": [
+      "owner_request",
+      "security_abort",
+      "compromise",
+      "canary_end",
+      "eligibility_concern"
+    ],
+    "steps": [
+      "Stop canary collector (if ever running)",
+      "Mark local ref REVOKED",
+      "Owner deletes key in provider console",
+      "Verify provider UI state",
+      "Remove secret from local secret store",
+      "Retain audit evidence",
+      "Complete destruction checklist"
+    ],
+    "executed": false
+  },
+  "rollback_plan": [
+    "disable collector",
+    "revoke credential ref locally",
+    "purge short-lived caches",
+    "retain immutable audit",
+    "paper portfolio and durable ledger remain authoritative and unchanged"
+  ],
+  "acceptance_criteria": [
+    "only_approved_endpoints_used",
+    "only_approved_read_scopes_observed",
+    "no_provider_identity_mismatch",
+    "no_secret_leakage",
+    "no_write_capability",
+    "no_order_path",
+    "no_withdrawal_path",
+    "snapshots_within_expected_timing",
+    "reconciliation_within_tolerance",
+    "rate_limits_respected",
+    "audit_trail_complete",
+    "expiry_works",
+    "revocation_works",
+    "disconnect_works",
+    "paper_portfolio_unchanged",
+    "durable_ledger_consistent",
+    "no_trading_guardian_execution_authority_introduced"
+  ],
+  "abort_criteria": [
+    "unexpected_write_scope",
+    "mixed_read_write_scope",
+    "withdrawal_permission",
+    "transfer_permission",
+    "provider_mismatch",
+    "account_mismatch",
+    "credential_leak",
+    "suspicious_logging",
+    "network_destination_mismatch",
+    "endpoint_outside_allow_list",
+    "scope_drift",
+    "account_permission_mutation",
+    "reconciliation_failure",
+    "unknown_asset",
+    "unexplained_balance_discrepancy",
+    "stale_data_beyond_threshold",
+    "replayed_response",
+    "audit_failure",
+    "revocation_failure",
+    "kill_switch_failure",
+    "repeated_rate_limit_violation",
+    "provider_suspension",
+    "legal_or_eligibility_concern",
+    "owner_withdrawal_of_approval",
+    "security_withdrawal_of_approval"
+  ],
+  "residual_risks": [
+    "Owner eligibility unconfirmed",
+    "Terms review incomplete",
+    "Provider documentation may drift after retrieval_date",
+    "Non-expiring keys residual risk on some providers",
+    "Market-data redistribution legal risk"
+  ],
+  "limitations": [
+    "Planning only \u2014 no runtime provider adapter",
+    "No credentials requested or stored",
+    "Eligibility not certified",
+    "Legal approval not generated",
+    "Single-host SQLite planning store"
+  ],
+  "explicit_non_authorizations": [
+    "THE SYSTEM REMAINS PAPER, SANDBOX AND PLANNING ONLY.",
+    "NO REAL BROKER CONNECTION WAS CREATED.",
+    "NO REAL BROKER ACCOUNT WAS ACCESSED.",
+    "NO REAL API CREDENTIALS WERE REQUESTED, ACCEPTED OR STORED.",
+    "NO OAUTH SESSION WAS CREATED.",
+    "NO PROVIDER-SPECIFIC RUNTIME ADAPTER WAS ACTIVATED.",
+    "NO CANARY WAS ACTIVATED.",
+    "NO ORDER SUBMISSION OR ORDER CANCELLATION CAPABILITY EXISTS.",
+    "LIVE TRADING IS NOT AUTHORIZED.",
+    "THE PREFERRED PROVIDER IS A RECOMMENDATION ONLY.",
+    "OWNER ELIGIBILITY IS NOT CLAIMED WITHOUT EXPLICIT VERIFIED EVIDENCE.",
+    "OWNER SIGN-OFF WAS NOT GENERATED OR CLAIMED BY AUTOMATION.",
+    "THE PACKAGE IS READY FOR HUMAN OWNER REVIEW ONLY."
+  ],
+  "authority_values": {
+    "REAL_CONNECTIVITY_AUTHORIZED": false,
+    "CREDENTIAL_PROVISIONING_AUTHORIZED": false,
+    "CANARY_ACTIVATION_AUTHORIZED": false,
+    "READ_ONLY_PRODUCTION_AUTHORIZED": false,
+    "LIVE_TRADING_AUTHORIZED": false
+  },
+  "sources_inventory_count": 13,
+  "owner_decision_form": {
+    "options": [
+      "REJECT",
+      "REQUEST_CHANGES",
+      "APPROVE_PLANNING_PACKAGE_ONLY"
+    ],
+    "preselected": null,
+    "signed_by_automation": false,
+    "note": "APPROVE_PLANNING_PACKAGE_ONLY does not authorize connectivity, credentials, or canary activation.",
+    "connectivity_authorization_option_present": false
+  },
+  "owner_signoff_generated_by_automation": false,
+  "owner_decision": "",
+  "evidence_hash": "60ebafe4dcbf0ce08f149335a83f5f352610ccf87f2c5c57a54c43d3d27121d0",
+  "REAL_CONNECTIVITY_AUTHORIZED": false,
+  "CREDENTIAL_PROVISIONING_AUTHORIZED": false,
+  "CANARY_ACTIVATION_AUTHORIZED": false,
+  "LIVE_TRADING_AUTHORIZED": false
+}

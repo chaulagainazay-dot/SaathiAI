@@ -1,0 +1,93 @@
+#!/usr/bin/env bash
+# saathi-alpha — SaathiOS private-alpha operator CLI (M157–M165)
+#
+# Release-engineering wrapper. Lifecycle start/stop/restart/status/open/logs
+# DELEGATE to bin/saathi-local (ownership-safe, localhost-only). Other commands
+# use python -m saathi.platform.private_alpha.
+#
+# Never enables production, public exposure, paid providers, or Trading Guardian live mode.
+set -euo pipefail
+
+_resolve_repo() {
+  if [ -n "${SAATHI_REPO:-}" ] && [ -d "$SAATHI_REPO/saathi" ]; then
+    printf '%s\n' "$SAATHI_REPO"; return 0
+  fi
+  local src="${BASH_SOURCE[0]}"
+  while [ -h "$src" ]; do
+    local dir; dir="$(cd -P "$(dirname "$src")" >/dev/null 2>&1 && pwd)"
+    src="$(readlink "$src")"; [[ $src != /* ]] && src="$dir/$src"
+  done
+  local bindir; bindir="$(cd -P "$(dirname "$src")" >/dev/null 2>&1 && pwd)"
+  cd "$bindir/.." && pwd
+}
+
+REPO="$(_resolve_repo)"
+LOCAL="$REPO/bin/saathi-local"
+PY="$REPO/.venv/bin/python"
+if [ ! -x "$PY" ]; then
+  PY="$(command -v python3 || command -v python)"
+fi
+
+say() { printf '%s\n' "$*"; }
+
+_usage() {
+  cat <<'EOF'
+usage: saathi-alpha <command>
+
+Lifecycle (delegates to saathi-local):
+  start | stop | restart | status | open | logs | doctor
+
+Private-alpha release commands:
+  prepare [--install-deps]   inspect prerequisites + create dirs
+  init --ack-local-only      first-run onboarding (no API keys)
+  manifest                   write release manifest
+  backup [label]             full-system backup
+  backups                    list system backups
+  verify-backup <archive>
+  restore-dry <archive>
+  restore <archive> --target <dir>
+  support-bundle             privacy-safe support bundle
+  certify                    private-alpha certification gate
+  playbooks                  list incident playbooks
+  upgrade-preflight
+  dr-drill [--work-dir DIR]
+  lifecycle-contract
+
+Safety:
+  production NOT_AUTHORIZED
+  public exposure NOT_AUTHORIZED
+  automations disabled by default
+  localhost-only
+EOF
+}
+
+cmd="${1:-}"
+case "$cmd" in
+  ""|help|-h|--help) _usage; exit 0 ;;
+  start|stop|restart|status|open|logs)
+    if [ ! -x "$LOCAL" ]; then
+      say "saathi-local missing or not executable: $LOCAL"; exit 1
+    fi
+    shift || true
+    exec "$LOCAL" "$cmd" "$@"
+    ;;
+  doctor)
+    # Prefer alpha doctor (includes prepare + public listener scan), then local
+    if [ -x "$PY" ]; then
+      "$PY" -m saathi.platform.private_alpha doctor || true
+    fi
+    if [ -x "$LOCAL" ]; then
+      exec "$LOCAL" doctor
+    fi
+    exit 0
+    ;;
+  prepare|init|manifest|backup|backups|verify-backup|restore-dry|restore|support-bundle|certify|playbooks|upgrade-preflight|dr-drill|lifecycle-contract)
+    shift || true
+    exec "$PY" -m saathi.platform.private_alpha "$cmd" "$@"
+    ;;
+  *)
+    say "unknown command: $cmd"
+    _usage
+    exit 2
+    ;;
+esac

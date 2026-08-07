@@ -1,0 +1,18 @@
+{
+  "broker_transport_scan": {
+    "ok": true,
+    "hits": []
+  },
+  "credential_scan": {
+    "ok": true,
+    "hits": []
+  },
+  "external_domain_scan": {
+    "ok": true,
+    "hits": []
+  },
+  "llm_authority_scan": {
+    "ok": true,
+    "boundary_present": true
+  }
+}

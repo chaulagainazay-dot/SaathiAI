@@ -1,0 +1,9 @@
+{
+  "limitations": [
+    "Virtual exchange only \u2014 not a real market venue",
+    "Simulated liquidity, latency, and slippage models",
+    "Margin is research-only with hard leverage caps",
+    "No broker connectivity or real order routing",
+    "Corporate action library is sample/demo scale"
+  ]
+}

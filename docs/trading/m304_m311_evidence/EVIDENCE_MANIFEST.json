@@ -1,0 +1,117 @@
+{
+  "schema": "M304_M311_EVIDENCE_MANIFEST",
+  "files": {
+    "FOCUSED_TEST_LOG.txt": {
+      "sha256": "18671fe2901da052a0234e02d371c831a75f36dcebf54028c7512d03c45926c4",
+      "bytes": 98
+    },
+    "FRONTEND_TEST_LOG.txt": {
+      "sha256": "00aa85553e8c7750ef8c066f21bbd474623937cc9b1e0cb60284ec9ab8515b4c",
+      "bytes": 328
+    },
+    "INITIAL_GIT_STATUS.txt": {
+      "sha256": "ff4d56d9544e116776908ea4af7a23ddea3dbac4ed49eb9b2bf38b285b27046a",
+      "bytes": 291
+    },
+    "LIMITATIONS.json": {
+      "sha256": "12e51adb0ea5824b6ff7128ad9f61bb75f67b2e9f805bc119d217e9faff2c7fc",
+      "bytes": 300
+    },
+    "M304_M311_THREAT_MODEL.json": {
+      "sha256": "e3e0257796c0fafdd67bcfd73c284b016986466ee8dea0be6042137e3f8565da",
+      "bytes": 3863
+    },
+    "M304_RECOVERY_BASELINE.json": {
+      "sha256": "c730a1ad4fbae7009904838547c8fbadd5af537ca9d7e2e5f06692a5cacd05c0",
+      "bytes": 997
+    },
+    "M304_SNAPSHOTS.json": {
+      "sha256": "557d8703c76cc2c59ecfd036538a5e7edea9dd612e55345092103c019bbff19f",
+      "bytes": 4539
+    },
+    "M305_QUOTES.json": {
+      "sha256": "d791839670a1e303c43178e37e0dec56d4b29f36bf32132d4bf100c2bbd00086",
+      "bytes": 3689
+    },
+    "M306_HISTORY.json": {
+      "sha256": "ab2653d95d1cd1c4f9c01c315684a03c4bf15fb70d706b95202659527ce83f64",
+      "bytes": 3625
+    },
+    "M307_SYMBOL_METADATA.json": {
+      "sha256": "83579822b89e2bcf31968177938c45f60572febaf4f055ae689255b449af8f72",
+      "bytes": 3630
+    },
+    "M308_EXCHANGE_STATUS.json": {
+      "sha256": "31a681faa19678cd502928e9894212cb59bc039af009775f3b92b69add52216c",
+      "bytes": 1776
+    },
+    "M309_CORPORATE_ACTIONS.json": {
+      "sha256": "3773755e278ea0ab4e122588e8bacd3206b63c427e320762aaa2294d3750b450",
+      "bytes": 2024
+    },
+    "M310_BENCHMARKS.json": {
+      "sha256": "3e322b371e6f0ddd117b8dd28a2c2e5f4a6c846bcb7d15a4780af051f6967694",
+      "bytes": 1809
+    },
+    "M311_BROWSER_CERT_LOG.txt": {
+      "sha256": "0f3ee5b472cd2a28474f90e37615f4e5095f83777429b5f35ff542c7f86509b1",
+      "bytes": 198
+    },
+    "M311_BROWSER_CERT_SUMMARY.json": {
+      "sha256": "5f3e04e18e774aded3bbc8fdd64e7722de5e2d040b22d964a4004abdb80bad21",
+      "bytes": 271
+    },
+    "M311_CERTIFY.json": {
+      "sha256": "148c8b5dae9ca23fb5e3e4735600b2fb39333cf313a9015130c17b9f0ecd5fd6",
+      "bytes": 2953
+    },
+    "M311_CLEAN_CLONE_CERTIFICATION.json": {
+      "sha256": "fc9c5f3b363a2247501f495ee3ace121e6c75d197793cce6f918548565c1a009",
+      "bytes": 519
+    },
+    "M311_DASHBOARD.json": {
+      "sha256": "de459af5d6cfee1b1f746981ef2961307cddfaff25bd82345cb9f48148f0c23a",
+      "bytes": 2141
+    },
+    "M311_FINAL_REPORT.md": {
+      "sha256": "878c1f83511f643b4608bb9bf5053f3a4a730aee6608a55f9e79bdcd6b493403",
+      "bytes": 525
+    },
+    "M311_PIPELINE.json": {
+      "sha256": "059eace8b7e98718206061d4d62734422638beb817fa3a7ff2fb09862fc1e7d3",
+      "bytes": 1439
+    },
+    "M311_REFUSALS.json": {
+      "sha256": "81c47afc4dd079db7aaea8c499c0aa6df9466e1af1b50bdafac6aa402647d489",
+      "bytes": 9708
+    },
+    "M311_SECURITY_SCANS.json": {
+      "sha256": "1da3930a28f28f2fdde1367097f1c32a1b7aa2dc952800d05e7cecd9a7872ad9",
+      "bytes": 1731
+    },
+    "PRODUCTION_BUILD_LOG.txt": {
+      "sha256": "29df1186e18671dc947a3e792dc6090d6b83ca0088530de304e68a1cc3f3f302",
+      "bytes": 10064
+    },
+    "STARTING_SHA.txt": {
+      "sha256": "3f0fa186e71799cbdf8212d3c999bcaa8a94f869b858162bab1f16f2bebb8b05",
+      "bytes": 41
+    },
+    "browser/M311_BROWSER_CERT.json": {
+      "sha256": "0d586a5cbea99105e28d97097d9e052c2fc4804911119b3f8e0b8db018433570",
+      "bytes": 5301
+    },
+    "browser/screenshots/market_observation_after_actions.png": {
+      "sha256": "7803650dbe99ec54e3f0be2e504265f2d719e251187e2a9d3c4bc7f40bda13f4",
+      "bytes": 77682
+    },
+    "browser/screenshots/market_observation_after_bootstrap.png": {
+      "sha256": "7803650dbe99ec54e3f0be2e504265f2d719e251187e2a9d3c4bc7f40bda13f4",
+      "bytes": 77682
+    },
+    "browser/screenshots/market_observation_control_center.png": {
+      "sha256": "7803650dbe99ec54e3f0be2e504265f2d719e251187e2a9d3c4bc7f40bda13f4",
+      "bytes": 77682
+    }
+  }
+}

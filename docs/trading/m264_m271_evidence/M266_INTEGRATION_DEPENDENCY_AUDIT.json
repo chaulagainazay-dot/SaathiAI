@@ -1,0 +1,33 @@
+{
+  "UNTRACKED_SOURCE_DEPENDENCIES": 0,
+  "untracked_required_files": [],
+  "absolute_path_hits": [],
+  "credential_or_env_files": [
+    "saathi/platform/tg/broker_readiness/secrets.py"
+  ],
+  "api": {
+    "intelligence_routes": true,
+    "research_data_routes": true,
+    "lazy_import_intelligence": true,
+    "lazy_import_market_data": true
+  },
+  "cli": {
+    "ii_commands": true,
+    "md_commands": true,
+    "strategy_list": true
+  },
+  "frontend": {
+    "intelligence_tab": true,
+    "research_data_tab": true,
+    "cert_m255": true,
+    "cert_m263": true,
+    "test_m248": true,
+    "test_m256": true
+  },
+  "cross_package_imports": {
+    "intelligence_imports_market_data": false,
+    "market_data_imports_intelligence": false,
+    "market_data_hard_imports_intelligence": []
+  },
+  "ok": true
+}

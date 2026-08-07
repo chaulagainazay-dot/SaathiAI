@@ -1,0 +1,150 @@
+{
+  "schema": "m223.broker_sandbox_browser_cert.v1",
+  "capturedAt": "2026-07-30T01:24:48.678Z",
+  "branch": "milestone/m216-m223-broker-sandbox-architecture",
+  "sha": "a70303581637108dd616b9176dd18cbdddcdfd84",
+  "working_tree_dirty": true,
+  "bff": "http://127.0.0.1:8823",
+  "ui": "http://127.0.0.1:3223",
+  "isolated_db": "/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m223-cert-7296/platform.db",
+  "paper_only": true,
+  "sandbox_only": true,
+  "live_trading_authorized": false,
+  "broker_connections_exist": false,
+  "api_credentials_created": false,
+  "production_authorized": false,
+  "hardGates": {
+    "bff_up": {
+      "ok": true,
+      "detail": "http://127.0.0.1:8823"
+    },
+    "seed_login": {
+      "ok": true,
+      "detail": "token issued"
+    },
+    "api_bs_posture": {
+      "ok": true,
+      "detail": "paper_only"
+    },
+    "api_bs_verdict": {
+      "ok": true,
+      "detail": "BROKER_SANDBOX_ARCHITECTURE_CERTIFIED_WITH_LIMITATIONS"
+    },
+    "api_all_not_connected": {
+      "ok": true,
+      "detail": "ok"
+    },
+    "api_security": {
+      "ok": true,
+      "detail": "all_passed"
+    },
+    "ui_up": {
+      "ok": true,
+      "detail": "http://127.0.0.1:3223"
+    }
+  },
+  "journeys": [
+    {
+      "name": "api_bs_posture",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "api_bs_verdict",
+      "ok": true,
+      "detail": "BROKER_SANDBOX_ARCHITECTURE_CERTIFIED_WITH_LIMITATIONS"
+    },
+    {
+      "name": "api_bs_brokers",
+      "ok": true,
+      "detail": "n=8"
+    },
+    {
+      "name": "api_all_not_connected",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "api_connect_refused",
+      "ok": true,
+      "detail": "BROKER_CONNECT_FORBIDDEN"
+    },
+    {
+      "name": "api_capabilities",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "api_dashboard",
+      "ok": true,
+      "detail": "SANDBOX ONLY"
+    },
+    {
+      "name": "api_security",
+      "ok": true,
+      "detail": "8/8"
+    },
+    {
+      "name": "api_failure_suite",
+      "ok": true,
+      "detail": "scenarios=19"
+    },
+    {
+      "name": "api_emulator_session",
+      "ok": true,
+      "detail": "esess_a30ec5633efc4585"
+    },
+    {
+      "name": "api_emulator_order_simulated",
+      "ok": true,
+      "detail": "FILLED"
+    },
+    {
+      "name": "api_cred_metadata",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "api_cred_use_refused",
+      "ok": true,
+      "detail": "CREDENTIAL_UNUSABLE"
+    },
+    {
+      "name": "ui_sandbox_labels",
+      "ok": false,
+      "detail": "sandbox=false noLive=false"
+    },
+    {
+      "name": "ui_sandbox_labels_soft",
+      "ok": true,
+      "detail": "sign-in gate soft"
+    }
+  ],
+  "soft_limitations": [
+    "UI labels not fully visible without auth session in browser (sign-in gate)",
+    "ui_sandbox_labels: sandbox=false noLive=false"
+  ],
+  "screenshots": [
+    "/Users/macbookpro/SaathiAI/docs/trading/m216_m223_evidence/browser/screenshots/01_broker_sandbox.png",
+    "/Users/macbookpro/SaathiAI/docs/trading/m216_m223_evidence/browser/screenshots/02_broker_sandbox_after_clicks.png"
+  ],
+  "safety_assertions": {
+    "paper_only": true,
+    "sandbox_only": true,
+    "live_trading_authorized": false,
+    "no_live_broker": true,
+    "no_api_credentials": true,
+    "cannot_execute_real_orders": true
+  },
+  "result": "BROKER_SANDBOX_BROWSER_CERT_PASSED_WITH_LIMITATIONS",
+  "owner_signoff": "NOT_CLAIMED_AUTOMATED_ONLY",
+  "certification_kind": "automated_browser",
+  "notes": [
+    "Automated Playwright certification — not human owner sign-off.",
+    "THE SYSTEM REMAINS PAPER ONLY.",
+    "NO BROKER CONNECTIONS EXIST.",
+    "NO API CREDENTIALS WERE CREATED.",
+    "NO LIVE TRADING IS AUTHORIZED.",
+    "THE SANDBOX CANNOT EXECUTE REAL ORDERS."
+  ]
+}

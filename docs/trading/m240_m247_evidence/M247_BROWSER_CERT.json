@@ -1,0 +1,313 @@
+{
+  "schema": "m247.provider_canary_planning_browser_cert.v1",
+  "verdict": "PROVIDER_CANARY_PLANNING_BROWSER_CERT_PASSED_WITH_LIMITATIONS",
+  "branch": "milestone/m240-m247-provider-canary-planning",
+  "sha": "007c4e6491adea144d10a31ed0454ddb733565af",
+  "timestamp": "2026-07-30T03:10:13.556Z",
+  "hard_gates": {
+    "bff_up": {
+      "ok": true,
+      "detail": "http://127.0.0.1:8847"
+    },
+    "seed_login": {
+      "ok": true,
+      "detail": "token issued"
+    },
+    "dashboard_api": {
+      "ok": true,
+      "detail": "ok"
+    },
+    "owner_signoff_block": {
+      "ok": true,
+      "detail": "OWNER_SIGNOFF_AUTOMATION_FORBIDDEN"
+    },
+    "network_isolation": {
+      "ok": true,
+      "detail": "blocked"
+    },
+    "ui_up": {
+      "ok": true,
+      "detail": "http://127.0.0.1:3247"
+    }
+  },
+  "soft_gates": {
+    "ui_boundary_labels": {
+      "ok": true,
+      "detail": "soft — may be behind sign-in gate"
+    },
+    "browser_ui_sign_in_gate": {
+      "ok": true,
+      "detail": "Full authenticated UI interactions soft-limited if sign-in gate blocks"
+    }
+  },
+  "journeys": [
+    {
+      "name": "dashboard_api",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "certification_summary",
+      "ok": true,
+      "detail": "PROVIDER_CANARY_PLANNING_CERTIFIED_WITH_LIMITATIONS"
+    },
+    {
+      "name": "candidate_ranking",
+      "ok": true,
+      "detail": "7"
+    },
+    {
+      "name": "preferred_and_fallback",
+      "ok": true,
+      "detail": "alpaca/kraken"
+    },
+    {
+      "name": "evidence_and_confidence",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "missing_evidence_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "evidence_sources",
+      "ok": true,
+      "detail": "13"
+    },
+    {
+      "name": "capability_map",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "public_readonly_forbidden_separated",
+      "ok": true,
+      "detail": "PRIVATE_READ_ONLY,TRADING_WRITE,PUBLIC_UNAUTHENTICATED,TRANSFER_WRITE,WITHDRAWAL_WRITE"
+    },
+    {
+      "name": "proposed_scopes_read_only",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "write_scopes_forbidden",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "eligibility_uncertainty_visible",
+      "ok": true,
+      "detail": "ELIGIBILITY_UNCONFIRMED"
+    },
+    {
+      "name": "terms_limitations_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "canary_architecture",
+      "ok": true,
+      "detail": "CANARY_DESIGNED_NOT_AUTHORIZED"
+    },
+    {
+      "name": "credential_ceremony_not_executed",
+      "ok": true,
+      "detail": "CREDENTIAL_CEREMONY_DOCUMENTED_NOT_EXECUTED"
+    },
+    {
+      "name": "acceptance_criteria",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "abort_triggers",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "owner_review_package",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "automation_cannot_owner_signoff",
+      "ok": true,
+      "detail": "OWNER_SIGNOFF_AUTOMATION_FORBIDDEN"
+    },
+    {
+      "name": "canary_activation_remains_false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "no_credential_acceptance",
+      "ok": true,
+      "detail": "RAW_CREDENTIAL_REJECTED"
+    },
+    {
+      "name": "network_isolation",
+      "ok": true,
+      "detail": "REAL_PROVIDER_TRANSPORT_FORBIDDEN"
+    },
+    {
+      "name": "llm_authority_refused",
+      "ok": true,
+      "detail": "LLM_ACTION_FORBIDDEN"
+    },
+    {
+      "name": "network_policy_status",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "evidence_center",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "auth_rbac_fail_safe",
+      "ok": true,
+      "detail": "401"
+    },
+    {
+      "name": "certification_matches_evidence",
+      "ok": true,
+      "detail": "PROVIDER_CANARY_PLANNING_CERTIFIED_WITH_LIMITATIONS"
+    },
+    {
+      "name": "dashboard_loads_ui",
+      "ok": false,
+      "detail": "missing"
+    },
+    {
+      "name": "no_credential_form",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "no_oauth_control",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "no_connection_control_live",
+      "ok": true,
+      "detail": ""
+    }
+  ],
+  "screenshots": [
+    "/Users/macbookpro/SaathiAI/docs/trading/m240_m247_evidence/browser/screenshots/01_provider_canary_planning.png",
+    "/Users/macbookpro/SaathiAI/docs/trading/m240_m247_evidence/browser/screenshots/02_provider_canary_planning_after_clicks.png"
+  ],
+  "preferred_provider": "alpaca",
+  "fallback_provider": "kraken",
+  "evidence_freshness": "2026-07-30",
+  "eligibility_result": "ELIGIBILITY_UNCONFIRMED",
+  "terms_result": "TERMS_REVIEW_INCOMPLETE",
+  "capability_result": {
+    "count": 22,
+    "adapter": false
+  },
+  "proposed_scopes": [
+    {
+      "scope_name": "account_read",
+      "kind": "PROPOSED_READ_ONLY",
+      "rationale": "Minimum scope to read account metadata, balances, positions, and history.",
+      "source_evidence": "Alpaca Trading API account/positions/orders GET families"
+    },
+    {
+      "scope_name": "orders_read",
+      "kind": "PROPOSED_READ_ONLY",
+      "rationale": "Read open and historical orders only; never place/cancel/modify.",
+      "source_evidence": "GET /v2/orders"
+    },
+    {
+      "scope_name": "activities_read",
+      "kind": "PROPOSED_READ_ONLY",
+      "rationale": "Read fills, fees, and transaction history.",
+      "source_evidence": "GET /v2/account/activities"
+    }
+  ],
+  "forbidden_scopes": [
+    {
+      "scope_name": "trading_write",
+      "kind": "FORBIDDEN",
+      "rationale": "Any order place/cancel/modify permission.",
+      "source_evidence": "planning invariant"
+    },
+    {
+      "scope_name": "withdrawal",
+      "kind": "FORBIDDEN",
+      "rationale": "Withdrawal capability must never be granted.",
+      "source_evidence": "planning invariant"
+    },
+    {
+      "scope_name": "transfer",
+      "kind": "FORBIDDEN",
+      "rationale": "Transfer initiation forbidden.",
+      "source_evidence": "planning invariant"
+    },
+    {
+      "scope_name": "account_admin",
+      "kind": "FORBIDDEN",
+      "rationale": "Account/sub-account administration forbidden.",
+      "source_evidence": "planning invariant"
+    },
+    {
+      "scope_name": "credential_admin",
+      "kind": "FORBIDDEN",
+      "rationale": "API-key administration from SaathiOS forbidden.",
+      "source_evidence": "planning invariant"
+    },
+    {
+      "scope_name": "margin_activation",
+      "kind": "FORBIDDEN",
+      "rationale": "Margin/leverage activation forbidden.",
+      "source_evidence": "planning invariant"
+    },
+    {
+      "scope_name": "oauth_full_access",
+      "kind": "FORBIDDEN",
+      "rationale": "OAuth sessions out of scope and forbidden for this canary design.",
+      "source_evidence": "planning invariant"
+    }
+  ],
+  "transport_isolation_result": {
+    "ok": false,
+    "result": "REAL_PROVIDER_TRANSPORT_FORBIDDEN"
+  },
+  "credential_scan": {
+    "rejected": true
+  },
+  "authority_assertions": {
+    "llm_owner_signoff_denied": true,
+    "real_connectivity_authorized": false,
+    "canary_activation_authorized": false
+  },
+  "owner_signoff_assertion": {
+    "blocked": true,
+    "code": "OWNER_SIGNOFF_AUTOMATION_FORBIDDEN"
+  },
+  "limitations": [
+    "soft journey failures: dashboard_loads_ui"
+  ],
+  "paper_only": true,
+  "sandbox_only": true,
+  "planning_only": true,
+  "real_connectivity_authorized": false,
+  "credential_provisioning_authorized": false,
+  "canary_activation_authorized": false,
+  "live_trading_authorized": false,
+  "owner_signoff": "NOT_CLAIMED_AUTOMATED_ONLY",
+  "notes": [
+    "THE SYSTEM REMAINS PAPER, SANDBOX AND PLANNING ONLY.",
+    "NO REAL BROKER CONNECTION WAS CREATED.",
+    "NO REAL API CREDENTIALS WERE REQUESTED, ACCEPTED OR STORED.",
+    "NO CANARY WAS ACTIVATED.",
+    "THE PREFERRED PROVIDER IS A RECOMMENDATION ONLY.",
+    "OWNER SIGN-OFF WAS NOT GENERATED OR CLAIMED BY AUTOMATION.",
+    "THE PACKAGE IS READY FOR HUMAN OWNER REVIEW ONLY."
+  ]
+}

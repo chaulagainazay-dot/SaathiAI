@@ -1,0 +1,70 @@
+{
+  "schema": "m64.browser_cert.v1",
+  "mode": "production-build-loopback",
+  "hardGates": {
+    "sign_in": true,
+    "apps_http_200": true,
+    "backend_navigation_trading": true,
+    "placeholder_ieltsalert": true,
+    "placeholder_hcg_pos": true,
+    "placeholder_travel": true,
+    "placeholder_finance": true,
+    "trading_actionable_card": true,
+    "no_placeholder_card_links": true,
+    "truthful_placeholder_statuses": true,
+    "command_palette_trading": true,
+    "command_palette_filters_placeholders": true,
+    "desktop_no_overlay": true,
+    "trading_route_opens": true,
+    "trading_paper_boundary": true,
+    "placeholder_route_guard": true,
+    "unknown_route_safe": true,
+    "no_page_errors": true,
+    "no_unexpected_console_errors": true,
+    "no_framework_overlays": true
+  },
+  "stateGates": {
+    "context_switch_clears_actionable_state": true,
+    "context_switch_refetches": true,
+    "session_expired_banner": true,
+    "session_expired_no_actionable_trading": true,
+    "permission_restricted_banner": true,
+    "permission_restricted_no_actionable_trading": true,
+    "malformed_response_fails_closed": true,
+    "malformed_no_actionable_trading": true,
+    "bounded_retry_count": true,
+    "offline_no_actionable_trading": true,
+    "logout_removes_actionable_navigation": true,
+    "logout_clears_module_state": true
+  },
+  "responsive": {
+    "tablet_content": true,
+    "tablet_no_horizontal_overflow": true,
+    "tablet_no_overlay": true,
+    "mobile_content": true,
+    "mobile_no_horizontal_overflow": true,
+    "mobile_no_overlay": true
+  },
+  "accessibility": {
+    "visible_keyboard_focus": true,
+    "semantic_statuses": true,
+    "semantic_links_buttons": true
+  },
+  "screenshots": [
+    "m64_apps_desktop.png",
+    "m64_placeholder_guard.png",
+    "m64_apps_tablet.png",
+    "m64_apps_mobile.png"
+  ],
+  "browserErrors": {
+    "page": 0,
+    "console": 6,
+    "expectedTopbarCors": 6,
+    "unexpectedConsole": 0,
+    "consoleCategories": {
+      "topbar_approvals_cors": 6
+    },
+    "overlay": 0
+  },
+  "verdict": "PASS"
+}

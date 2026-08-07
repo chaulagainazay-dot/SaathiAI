@@ -1,0 +1,1122 @@
+{
+  "format": "CycloneDX",
+  "specVersion": "1.5",
+  "fingerprint": "be1fa3144094d0bc7f715f8927979aa7c55084f8108505f61aea52d9eeb07c0a",
+  "component_count": 46,
+  "repository_revision": "1e3f0a185c635b4c03201ac1db1ffc33d66e7b9a",
+  "generation_timestamp": "2026-07-30T02:18:42.607754+00:00",
+  "tool_version": "m232.integration_assurance.engine.v1",
+  "signed": false,
+  "signing_note": "Unsigned hashes recorded as integrity evidence; not cryptographic signatures.",
+  "REAL_CONNECTIVITY_AUTHORIZED": false,
+  "bom": {
+    "bomFormat": "CycloneDX",
+    "specVersion": "1.5",
+    "serialNumber": "urn:uuid:sbom_18ef7118fbaf4b68",
+    "version": 1,
+    "metadata": {
+      "timestamp": "2026-07-30T02:18:42.607754+00:00",
+      "tools": [
+        {
+          "vendor": "SaathiAI",
+          "name": "integration_assurance",
+          "version": "m232.integration_assurance.engine.v1"
+        }
+      ],
+      "component": {
+        "type": "application",
+        "name": "saathiai",
+        "version": "1e3f0a185c63"
+      },
+      "properties": [
+        {
+          "name": "saathi:branch",
+          "value": "milestone/m232-m239-reproducibility-supply-chain"
+        },
+        {
+          "name": "saathi:sha",
+          "value": "1e3f0a185c635b4c03201ac1db1ffc33d66e7b9a"
+        },
+        {
+          "name": "saathi:schema",
+          "value": "m232.integration_assurance.v1"
+        },
+        {
+          "name": "saathi:signing",
+          "value": "unsigned-hash-integrity-only"
+        }
+      ]
+    },
+    "components": [
+      {
+        "type": "application",
+        "name": "saathiai-backend",
+        "version": "0.1.0",
+        "purl": "pkg:generic/saathiai-backend@0.1.0"
+      },
+      {
+        "type": "application",
+        "name": "saathi-os-frontend",
+        "version": "0.1.0",
+        "purl": "pkg:generic/saathi-os@0.1.0"
+      },
+      {
+        "type": "application",
+        "name": "browser-certification-tooling",
+        "version": "m239",
+        "purl": "pkg:generic/m239-browser-cert@m239"
+      },
+      {
+        "type": "application",
+        "name": "milestone-evidence-tooling",
+        "version": "m232-m239",
+        "purl": "pkg:generic/m232-m239-evidence@1"
+      },
+      {
+        "type": "library",
+        "name": "anthropic",
+        "version": "0.40",
+        "purl": "pkg:pypi/anthropic@0.40",
+        "scope": "required",
+        "licenses": [
+          {
+            "license": {
+              "id": "unknown"
+            }
+          }
+        ],
+        "properties": [
+          {
+            "name": "saathi:subsystem",
+            "value": "backend"
+          },
+          {
+            "name": "saathi:unpinned",
+            "value": "True"
+          }
+        ]
+      },
+      {
+        "type": "library",
+        "name": "fastapi",
+        "version": "0.110",
+        "purl": "pkg:pypi/fastapi@0.110",
+        "scope": "required",
+        "licenses": [
+          {
+            "license": {
+              "id": "unknown"
+            }
+          }
+        ],
+        "properties": [
+          {
+            "name": "saathi:subsystem",
+            "value": "backend"
+          },
+          {
+            "name": "saathi:unpinned",
+            "value": "True"
+          }
+        ]
+      },
+      {
+        "type": "library",
+        "name": "uvicorn",
+        "version": "[standard]>=0.29",
+        "purl": "pkg:pypi/uvicorn@[standard]>=0.29",
+        "scope": "required",
+        "licenses": [
+          {
+            "license": {
+              "id": "unknown"
+            }
+          }
+        ],
+        "properties": [
+          {
+            "name": "saathi:subsystem",
+            "value": "backend"
+          },
+          {
+            "name": "saathi:unpinned",
+            "value": "True"
+          }
+        ]
+      },
+      {
+        "type": "library",
+        "name": "httpx",
+        "version": "0.27",
+        "purl": "pkg:pypi/httpx@0.27",
+        "scope": "required",
+        "licenses": [
+          {
+            "license": {
+              "id": "unknown"
+            }
+          }
+        ],
+        "properties": [
+          {
+            "name": "saathi:subsystem",
+            "value": "backend"
+          },
+          {
+            "name": "saathi:unpinned",
+            "value": "True"
+          }
+        ]
+      },
+      {
+        "type": "library",
+        "name": "python-dotenv",
+        "version": "1.0",
+        "purl": "pkg:pypi/python-dotenv@1.0",
+        "scope": "required",
+        "licenses": [
+          {
+            "license": {
+              "id": "unknown"
+            }
+          }
+        ],
+        "properties": [
+          {
+            "name": "saathi:subsystem",
+            "value": "backend"
+          },
+          {
+            "name": "saathi:unpinned",
+            "value": "True"
+          }
+        ]
+      },
+      {
+        "type": "library",
+        "name": "python-multipart",
+        "version": "0.0.9",
+        "purl": "pkg:pypi/python-multipart@0.0.9",
+        "scope": "required",
+        "licenses": [
+          {
+            "license": {
+              "id": "unknown"
+            }
+          }
+        ],
+        "properties": [
+          {
+            "name": "saathi:subsystem",
+            "value": "backend"
+          },
+          {
+            "name": "saathi:unpinned",
+            "value": "True"
+          }
+        ]
+      },
+      {
+        "type": "library",
+        "name": "groq",
+        "version": "0.4.0",
+        "purl": "pkg:pypi/groq@0.4.0",
+        "scope": "required",
+        "licenses": [
+          {
+            "license": {
+              "id": "unknown"
+            }
+          }
+        ],
+        "properties": [
+          {
+            "name": "saathi:subsystem",
+            "value": "backend"
+          },
+          {
+            "name": "saathi:unpinned",
+            "value": "True"
+          }
+        ]
+      },
+      {
+        "type": "library",
+        "name": "openai",
+        "version": "1.30",
+        "purl": "pkg:pypi/openai@1.30",
+        "scope": "required",
+        "licenses": [
+          {
+            "license": {
+              "id": "unknown"
+            }
+          }
+        ],
+        "properties": [
+          {
+            "name": "saathi:subsystem",
+            "value": "backend"
+          },
+          {
+            "name": "saathi:unpinned",
+            "value": "True"
+          }
+        ]
+      },
+      {
+        "type": "library",
+        "name": "firebase-admin",
+        "version": "6.0",
+        "purl": "pkg:pypi/firebase-admin@6.0",
+        "scope": "required",
+        "licenses": [
+          {
+            "license": {
+              "id": "unknown"
+            }
+          }
+        ],
+        "properties": [
+          {
+            "name": "saathi:subsystem",
+            "value": "backend"
+          },
+          {
+            "name": "saathi:unpinned",
+            "value": "True"
+          }
+        ]
+      },
+      {
+        "type": "library",
+        "name": "google-cloud-firestore",
+        "version": "2.0",
+        "purl": "pkg:pypi/google-cloud-firestore@2.0",
+        "scope": "required",
+        "licenses": [
+          {
+            "license": {
+              "id": "unknown"
+            }
+          }
+        ],
+        "properties": [
+          {
+            "name": "saathi:subsystem",
+            "value": "backend"
+          },
+          {
+            "name": "saathi:unpinned",
+            "value": "True"
+          }
+        ]
+      },
+      {
+        "type": "library",
+        "name": "feedparser",
+        "version": "6.0",
+        "purl": "pkg:pypi/feedparser@6.0",
+        "scope": "required",
+        "licenses": [
+          {
+            "license": {
+              "id": "unknown"
+            }
+          }
+        ],
+        "properties": [
+          {
+            "name": "saathi:subsystem",
+            "value": "backend"
+          },
+          {
+            "name": "saathi:unpinned",
+            "value": "True"
+          }
+        ]
+      },
+      {
+        "type": "library",
+        "name": "pillow",
+        "version": "10.0",
+        "purl": "pkg:pypi/pillow@10.0",
+        "scope": "required",
+        "licenses": [
+          {
+            "license": {
+              "id": "unknown"
+            }
+          }
+        ],
+        "properties": [
+          {
+            "name": "saathi:subsystem",
+            "value": "backend"
+          },
+          {
+            "name": "saathi:unpinned",
+            "value": "True"
+          }
+        ]
+      },
+      {
+        "type": "library",
+        "name": "moviepy",
+        "version": "2.0",
+        "purl": "pkg:pypi/moviepy@2.0",
+        "scope": "required",
+        "licenses": [
+          {
+            "license": {
+              "id": "unknown"
+            }
+          }
+        ],
+        "properties": [
+          {
+            "name": "saathi:subsystem",
+            "value": "backend"
+          },
+          {
+            "name": "saathi:unpinned",
+            "value": "True"
+          }
+        ]
+      },
+      {
+        "type": "library",
+        "name": "requests",
+        "version": "2.31",
+        "purl": "pkg:pypi/requests@2.31",
+        "scope": "required",
+        "licenses": [
+          {
+            "license": {
+              "id": "unknown"
+            }
+          }
+        ],
+        "properties": [
+          {
+            "name": "saathi:subsystem",
+            "value": "backend"
+          },
+          {
+            "name": "saathi:unpinned",
+            "value": "True"
+          }
+        ]
+      },
+      {
+        "type": "library",
+        "name": "schedule",
+        "version": "1.2",
+        "purl": "pkg:pypi/schedule@1.2",
+        "scope": "required",
+        "licenses": [
+          {
+            "license": {
+              "id": "unknown"
+            }
+          }
+        ],
+        "properties": [
+          {
+            "name": "saathi:subsystem",
+            "value": "backend"
+          },
+          {
+            "name": "saathi:unpinned",
+            "value": "True"
+          }
+        ]
+      },
+      {
+        "type": "library",
+        "name": "python-telegram-bot",
+        "version": "20.0",
+        "purl": "pkg:pypi/python-telegram-bot@20.0",
+        "scope": "required",
+        "licenses": [
+          {
+            "license": {
+              "id": "unknown"
+            }
+          }
+        ],
+        "properties": [
+          {
+            "name": "saathi:subsystem",
+            "value": "backend"
+          },
+          {
+            "name": "saathi:unpinned",
+            "value": "True"
+          }
+        ]
+      },
+      {
+        "type": "library",
+        "name": "google-cloud-storage",
+        "version": "2.10",
+        "purl": "pkg:pypi/google-cloud-storage@2.10",
+        "scope": "required",
+        "licenses": [
+          {
+            "license": {
+              "id": "unknown"
+            }
+          }
+        ],
+        "properties": [
+          {
+            "name": "saathi:subsystem",
+            "value": "backend"
+          },
+          {
+            "name": "saathi:unpinned",
+            "value": "True"
+          }
+        ]
+      },
+      {
+        "type": "library",
+        "name": "opik",
+        "version": "2.0",
+        "purl": "pkg:pypi/opik@2.0",
+        "scope": "required",
+        "licenses": [
+          {
+            "license": {
+              "id": "unknown"
+            }
+          }
+        ],
+        "properties": [
+          {
+            "name": "saathi:subsystem",
+            "value": "backend"
+          },
+          {
+            "name": "saathi:unpinned",
+            "value": "True"
+          }
+        ]
+      },
+      {
+        "type": "library",
+        "name": "tweepy",
+        "version": "4.0",
+        "purl": "pkg:pypi/tweepy@4.0",
+        "scope": "required",
+        "licenses": [
+          {
+            "license": {
+              "id": "unknown"
+            }
+          }
+        ],
+        "properties": [
+          {
+            "name": "saathi:subsystem",
+            "value": "backend"
+          },
+          {
+            "name": "saathi:unpinned",
+            "value": "True"
+          }
+        ]
+      },
+      {
+        "type": "library",
+        "name": "webauthn",
+        "version": "2.0",
+        "purl": "pkg:pypi/webauthn@2.0",
+        "scope": "required",
+        "licenses": [
+          {
+            "license": {
+              "id": "unknown"
+            }
+          }
+        ],
+        "properties": [
+          {
+            "name": "saathi:subsystem",
+            "value": "backend"
+          },
+          {
+            "name": "saathi:unpinned",
+            "value": "True"
+          }
+        ]
+      },
+      {
+        "type": "library",
+        "name": "anthropic",
+        "version": "0.40",
+        "purl": "pkg:pypi/anthropic@0.40",
+        "scope": "required",
+        "licenses": [
+          {
+            "license": {
+              "id": "unknown"
+            }
+          }
+        ],
+        "properties": [
+          {
+            "name": "saathi:subsystem",
+            "value": "backend"
+          },
+          {
+            "name": "saathi:unpinned",
+            "value": "True"
+          }
+        ]
+      },
+      {
+        "type": "library",
+        "name": "fastapi",
+        "version": "0.110",
+        "purl": "pkg:pypi/fastapi@0.110",
+        "scope": "required",
+        "licenses": [
+          {
+            "license": {
+              "id": "unknown"
+            }
+          }
+        ],
+        "properties": [
+          {
+            "name": "saathi:subsystem",
+            "value": "backend"
+          },
+          {
+            "name": "saathi:unpinned",
+            "value": "True"
+          }
+        ]
+      },
+      {
+        "type": "library",
+        "name": "uvicorn",
+        "version": "0.29",
+        "purl": "pkg:pypi/uvicorn@0.29",
+        "scope": "required",
+        "licenses": [
+          {
+            "license": {
+              "id": "unknown"
+            }
+          }
+        ],
+        "properties": [
+          {
+            "name": "saathi:subsystem",
+            "value": "backend"
+          },
+          {
+            "name": "saathi:unpinned",
+            "value": "True"
+          }
+        ]
+      },
+      {
+        "type": "library",
+        "name": "httpx",
+        "version": "0.27",
+        "purl": "pkg:pypi/httpx@0.27",
+        "scope": "required",
+        "licenses": [
+          {
+            "license": {
+              "id": "unknown"
+            }
+          }
+        ],
+        "properties": [
+          {
+            "name": "saathi:subsystem",
+            "value": "backend"
+          },
+          {
+            "name": "saathi:unpinned",
+            "value": "True"
+          }
+        ]
+      },
+      {
+        "type": "library",
+        "name": "python-dotenv",
+        "version": "1.0",
+        "purl": "pkg:pypi/python-dotenv@1.0",
+        "scope": "required",
+        "licenses": [
+          {
+            "license": {
+              "id": "unknown"
+            }
+          }
+        ],
+        "properties": [
+          {
+            "name": "saathi:subsystem",
+            "value": "backend"
+          },
+          {
+            "name": "saathi:unpinned",
+            "value": "True"
+          }
+        ]
+      },
+      {
+        "type": "library",
+        "name": "python-multipart",
+        "version": "0.0.9",
+        "purl": "pkg:pypi/python-multipart@0.0.9",
+        "scope": "required",
+        "licenses": [
+          {
+            "license": {
+              "id": "unknown"
+            }
+          }
+        ],
+        "properties": [
+          {
+            "name": "saathi:subsystem",
+            "value": "backend"
+          },
+          {
+            "name": "saathi:unpinned",
+            "value": "True"
+          }
+        ]
+      },
+      {
+        "type": "library",
+        "name": "numpy",
+        "version": "1.26",
+        "purl": "pkg:pypi/numpy@1.26",
+        "scope": "required",
+        "licenses": [
+          {
+            "license": {
+              "id": "unknown"
+            }
+          }
+        ],
+        "properties": [
+          {
+            "name": "saathi:subsystem",
+            "value": "backend"
+          },
+          {
+            "name": "saathi:unpinned",
+            "value": "True"
+          }
+        ]
+      },
+      {
+        "type": "library",
+        "name": "soundfile",
+        "version": "0.12",
+        "purl": "pkg:pypi/soundfile@0.12",
+        "scope": "required",
+        "licenses": [
+          {
+            "license": {
+              "id": "unknown"
+            }
+          }
+        ],
+        "properties": [
+          {
+            "name": "saathi:subsystem",
+            "value": "backend"
+          },
+          {
+            "name": "saathi:unpinned",
+            "value": "True"
+          }
+        ]
+      },
+      {
+        "type": "library",
+        "name": "pillow",
+        "version": "10.0",
+        "purl": "pkg:pypi/pillow@10.0",
+        "scope": "required",
+        "licenses": [
+          {
+            "license": {
+              "id": "unknown"
+            }
+          }
+        ],
+        "properties": [
+          {
+            "name": "saathi:subsystem",
+            "value": "backend"
+          },
+          {
+            "name": "saathi:unpinned",
+            "value": "True"
+          }
+        ]
+      },
+      {
+        "type": "library",
+        "name": "openai",
+        "version": "1.0",
+        "purl": "pkg:pypi/openai@1.0",
+        "scope": "required",
+        "licenses": [
+          {
+            "license": {
+              "id": "unknown"
+            }
+          }
+        ],
+        "properties": [
+          {
+            "name": "saathi:subsystem",
+            "value": "backend"
+          },
+          {
+            "name": "saathi:unpinned",
+            "value": "True"
+          }
+        ]
+      },
+      {
+        "type": "library",
+        "name": "framer-motion",
+        "version": "11.15.0",
+        "purl": "pkg:npm/framer-motion@11.15.0",
+        "scope": "required",
+        "licenses": [
+          {
+            "license": {
+              "id": "unknown"
+            }
+          }
+        ],
+        "properties": [
+          {
+            "name": "saathi:subsystem",
+            "value": "frontend"
+          },
+          {
+            "name": "saathi:unpinned",
+            "value": "True"
+          }
+        ]
+      },
+      {
+        "type": "library",
+        "name": "next",
+        "version": "15.5.22",
+        "purl": "pkg:npm/next@15.5.22",
+        "scope": "required",
+        "licenses": [
+          {
+            "license": {
+              "id": "unknown"
+            }
+          }
+        ],
+        "properties": [
+          {
+            "name": "saathi:subsystem",
+            "value": "frontend"
+          },
+          {
+            "name": "saathi:unpinned",
+            "value": "True"
+          }
+        ]
+      },
+      {
+        "type": "library",
+        "name": "react",
+        "version": "19.0.0",
+        "purl": "pkg:npm/react@19.0.0",
+        "scope": "required",
+        "licenses": [
+          {
+            "license": {
+              "id": "unknown"
+            }
+          }
+        ],
+        "properties": [
+          {
+            "name": "saathi:subsystem",
+            "value": "frontend"
+          },
+          {
+            "name": "saathi:unpinned",
+            "value": "True"
+          }
+        ]
+      },
+      {
+        "type": "library",
+        "name": "react-dom",
+        "version": "19.0.0",
+        "purl": "pkg:npm/react-dom@19.0.0",
+        "scope": "required",
+        "licenses": [
+          {
+            "license": {
+              "id": "unknown"
+            }
+          }
+        ],
+        "properties": [
+          {
+            "name": "saathi:subsystem",
+            "value": "frontend"
+          },
+          {
+            "name": "saathi:unpinned",
+            "value": "True"
+          }
+        ]
+      },
+      {
+        "type": "library",
+        "name": "@eslint/eslintrc",
+        "version": "3.3.6",
+        "purl": "pkg:npm/@eslint/eslintrc@3.3.6",
+        "scope": "optional",
+        "licenses": [
+          {
+            "license": {
+              "id": "unknown"
+            }
+          }
+        ],
+        "properties": [
+          {
+            "name": "saathi:subsystem",
+            "value": "frontend"
+          },
+          {
+            "name": "saathi:unpinned",
+            "value": "True"
+          }
+        ]
+      },
+      {
+        "type": "library",
+        "name": "@tailwindcss/postcss",
+        "version": "4.0.0",
+        "purl": "pkg:npm/@tailwindcss/postcss@4.0.0",
+        "scope": "optional",
+        "licenses": [
+          {
+            "license": {
+              "id": "unknown"
+            }
+          }
+        ],
+        "properties": [
+          {
+            "name": "saathi:subsystem",
+            "value": "frontend"
+          },
+          {
+            "name": "saathi:unpinned",
+            "value": "True"
+          }
+        ]
+      },
+      {
+        "type": "library",
+        "name": "eslint",
+        "version": "9.39.5",
+        "purl": "pkg:npm/eslint@9.39.5",
+        "scope": "optional",
+        "licenses": [
+          {
+            "license": {
+              "id": "unknown"
+            }
+          }
+        ],
+        "properties": [
+          {
+            "name": "saathi:subsystem",
+            "value": "frontend"
+          },
+          {
+            "name": "saathi:unpinned",
+            "value": "True"
+          }
+        ]
+      },
+      {
+        "type": "library",
+        "name": "eslint-config-next",
+        "version": "15.5.21",
+        "purl": "pkg:npm/eslint-config-next@15.5.21",
+        "scope": "optional",
+        "licenses": [
+          {
+            "license": {
+              "id": "unknown"
+            }
+          }
+        ],
+        "properties": [
+          {
+            "name": "saathi:subsystem",
+            "value": "frontend"
+          },
+          {
+            "name": "saathi:unpinned",
+            "value": "True"
+          }
+        ]
+      },
+      {
+        "type": "library",
+        "name": "playwright",
+        "version": "1.62.0",
+        "purl": "pkg:npm/playwright@1.62.0",
+        "scope": "optional",
+        "licenses": [
+          {
+            "license": {
+              "id": "unknown"
+            }
+          }
+        ],
+        "properties": [
+          {
+            "name": "saathi:subsystem",
+            "value": "frontend"
+          },
+          {
+            "name": "saathi:unpinned",
+            "value": "True"
+          }
+        ]
+      },
+      {
+        "type": "library",
+        "name": "postcss",
+        "version": "8.5.23",
+        "purl": "pkg:npm/postcss@8.5.23",
+        "scope": "optional",
+        "licenses": [
+          {
+            "license": {
+              "id": "unknown"
+            }
+          }
+        ],
+        "properties": [
+          {
+            "name": "saathi:subsystem",
+            "value": "frontend"
+          },
+          {
+            "name": "saathi:unpinned",
+            "value": "True"
+          }
+        ]
+      },
+      {
+        "type": "library",
+        "name": "tailwindcss",
+        "version": "4.0.0",
+        "purl": "pkg:npm/tailwindcss@4.0.0",
+        "scope": "optional",
+        "licenses": [
+          {
+            "license": {
+              "id": "unknown"
+            }
+          }
+        ],
+        "properties": [
+          {
+            "name": "saathi:subsystem",
+            "value": "frontend"
+          },
+          {
+            "name": "saathi:unpinned",
+            "value": "True"
+          }
+        ]
+      },
+      {
+        "type": "library",
+        "name": "playwright",
+        "version": "devDependency-or-global",
+        "purl": "pkg:npm/playwright@devDependency-or-global",
+        "scope": "optional",
+        "licenses": [
+          {
+            "license": {
+              "id": "Apache-2.0"
+            }
+          }
+        ],
+        "properties": [
+          {
+            "name": "saathi:subsystem",
+            "value": "browser-cert"
+          },
+          {
+            "name": "saathi:unpinned",
+            "value": "False"
+          }
+        ]
+      }
+    ],
+    "dependencies": [
+      {
+        "ref": "pkg:generic/saathiai-backend@0.1.0",
+        "dependsOn": [
+          "pkg:pypi/anthropic@0.40",
+          "pkg:pypi/fastapi@0.110",
+          "pkg:pypi/uvicorn@[standard]>=0.29",
+          "pkg:pypi/httpx@0.27",
+          "pkg:pypi/python-dotenv@1.0",
+          "pkg:pypi/python-multipart@0.0.9",
+          "pkg:pypi/groq@0.4.0",
+          "pkg:pypi/openai@1.30",
+          "pkg:pypi/firebase-admin@6.0",
+          "pkg:pypi/google-cloud-firestore@2.0",
+          "pkg:pypi/feedparser@6.0",
+          "pkg:pypi/pillow@10.0",
+          "pkg:pypi/moviepy@2.0",
+          "pkg:pypi/requests@2.31",
+          "pkg:pypi/schedule@1.2",
+          "pkg:pypi/python-telegram-bot@20.0",
+          "pkg:pypi/google-cloud-storage@2.10",
+          "pkg:pypi/opik@2.0",
+          "pkg:pypi/tweepy@4.0",
+          "pkg:pypi/webauthn@2.0",
+          "pkg:pypi/anthropic@0.40",
+          "pkg:pypi/fastapi@0.110",
+          "pkg:pypi/uvicorn@0.29",
+          "pkg:pypi/httpx@0.27",
+          "pkg:pypi/python-dotenv@1.0",
+          "pkg:pypi/python-multipart@0.0.9",
+          "pkg:pypi/numpy@1.26",
+          "pkg:pypi/soundfile@0.12",
+          "pkg:pypi/pillow@10.0",
+          "pkg:pypi/openai@1.0"
+        ]
+      }
+    ]
+  }
+}

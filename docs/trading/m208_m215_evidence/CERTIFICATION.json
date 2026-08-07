@@ -1,0 +1,303 @@
+{
+  "id": "cert_b4f38a75f9d843",
+  "campaign_id": "pcamp_4fa2d8304be643d1",
+  "kind": "campaign_certification",
+  "outcome": "MORE_EVIDENCE_REQUIRED",
+  "bundle": {
+    "schema": "m214.campaign_evidence.v1",
+    "campaign": {
+      "id": "pcamp_4fa2d8304be643d1",
+      "org_id": "local",
+      "workspace_id": "local",
+      "portfolio_id": "",
+      "strategy_slug": "trend_following",
+      "strategy_version": "1.0.0",
+      "dataset_fingerprint": "",
+      "qualification_fingerprint": "",
+      "approval_id": "",
+      "status": "DRAFT",
+      "start_date": null,
+      "planned_end_date": 1787965511.5136588,
+      "actual_end_date": null,
+      "initial_cash": "100000",
+      "allowed_symbols": [],
+      "risk_policy_version": "1.0.0",
+      "cost_model_version": "1.0.0",
+      "objectives": {},
+      "evaluation_criteria": {},
+      "min_duration_sec": 0.0,
+      "min_trade_count": 0,
+      "operator_notes": "",
+      "evidence": {},
+      "version": 1,
+      "created_at": 1785373511.5136588,
+      "updated_at": 1785373511.513663,
+      "paper_only": true,
+      "live_authorized": false,
+      "group_id": "",
+      "template_id": "",
+      "owner": "scan",
+      "tags": [
+        "auth-scan"
+      ],
+      "metadata": {},
+      "objectives_text": "",
+      "notes": "",
+      "schedule": {},
+      "depends_on": [],
+      "cloned_from": "",
+      "archived_at": null,
+      "version_history": [
+        {
+          "event": "created",
+          "snapshot": {
+            "status": "DRAFT",
+            "strategy_slug": "trend_following"
+          },
+          "ts": 1785373511.5139542,
+          "version": 1
+        }
+      ]
+    },
+    "strategy": {
+      "slug": "trend_following",
+      "version": "1.0.0"
+    },
+    "risk": {
+      "portfolio_halt": null,
+      "kill_switch": false
+    },
+    "journal": {},
+    "reconciliation": {},
+    "analytics": {},
+    "health": {
+      "campaign_id": "pcamp_4fa2d8304be643d1",
+      "classification": "HEALTHY",
+      "detail": {
+        "campaign": {
+          "id": "pcamp_4fa2d8304be643d1",
+          "org_id": "local",
+          "workspace_id": "local",
+          "portfolio_id": "",
+          "strategy_slug": "trend_following",
+          "strategy_version": "1.0.0",
+          "dataset_fingerprint": "",
+          "qualification_fingerprint": "",
+          "approval_id": "",
+          "status": "DRAFT",
+          "start_date": null,
+          "planned_end_date": 1787965511.5136588,
+          "actual_end_date": null,
+          "initial_cash": "100000",
+          "allowed_symbols": [],
+          "risk_policy_version": "1.0.0",
+          "cost_model_version": "1.0.0",
+          "objectives": {},
+          "evaluation_criteria": {},
+          "min_duration_sec": 0.0,
+          "min_trade_count": 0,
+          "operator_notes": "",
+          "evidence": {},
+          "version": 1,
+          "created_at": 1785373511.5136588,
+          "updated_at": 1785373511.513663,
+          "paper_only": true,
+          "live_authorized": false
+        }
+      },
+      "paper_only": true
+    },
+    "system_health": {
+      "id": "hlth_23f0d506658c",
+      "scope": "system",
+      "scope_ref": "",
+      "classification": "HEALTHY",
+      "components": {
+        "portfolio_health": {
+          "classification": "HEALTHY",
+          "portfolio_count": 1,
+          "halted": 0,
+          "unreconciled": 0
+        },
+        "risk_health": {
+          "classification": "HEALTHY",
+          "risk_halts": 0,
+          "kill_switch": false
+        },
+        "campaign_health": {
+          "classification": "HEALTHY",
+          "total": 1,
+          "active": 0,
+          "stale_or_overdue": []
+        },
+        "system_health": {
+          "classification": "HEALTHY",
+          "pid": 6691
+        },
+        "storage_health": {
+          "classification": "HEALTHY",
+          "detail": {
+            "status": "HEALTHY",
+            "schema_version": "m200.paper_gov.v1",
+            "engine_version": "m200.durable.engine.v1",
+            "db_path": "/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/tmp8sbsw87l/scan.db",
+            "event_count": 7,
+            "portfolio_count": 1,
+            "readiness": "READY",
+            "disk": {
+              "ok": true,
+              "free_mb": 98078,
+              "min_free_mb": 128
+            },
+            "paper_only": true,
+            "live_authorized": false
+          },
+          "disk": {
+            "ok": true,
+            "free_mb": 98078,
+            "min_free_mb": 128
+          }
+        },
+        "worker_health": {
+          "classification": "HEALTHY",
+          "worker_id": "worker_87bec176",
+          "poison": 0,
+          "pending_queue": 0
+        },
+        "reconciliation_health": {
+          "classification": "HEALTHY",
+          "recent_fails": 0,
+          "samples": 1
+        },
+        "strategy_health": {
+          "classification": "HEALTHY",
+          "active": 0,
+          "halted": 0,
+          "total": 0
+        },
+        "market_coverage": {
+          "classification": "HEALTHY",
+          "open_symbols": 0
+        },
+        "event_processing": {
+          "classification": "HEALTHY",
+          "event_count": 7
+        },
+        "scheduler_health": {
+          "classification": "HEALTHY",
+          "jobs": 5,
+          "enabled": 0,
+          "errors": 0,
+          "note": "scheduler disabled by default"
+        },
+        "disk_usage": {
+          "ok": true,
+          "free_mb": 98078,
+          "min_free_mb": 128
+        },
+        "memory_usage": {
+          "classification": "HEALTHY",
+          "rss_mb_approx": 29.69
+        },
+        "recovery_readiness": {
+          "classification": "HEALTHY",
+          "readiness": "READY",
+          "can_backup": true
+        },
+        "incidents": {
+          "classification": "HEALTHY",
+          "open": 0,
+          "critical": 0
+        }
+      },
+      "created_at": 1785373511.522497,
+      "paper_only": true,
+      "live_authorized": false,
+      "health_classes": [
+        "HEALTHY",
+        "WARNING",
+        "DEGRADED",
+        "CRITICAL",
+        "FAILED_SAFE"
+      ]
+    },
+    "recovery": {
+      "readiness": {
+        "classification": "HEALTHY",
+        "readiness": "READY",
+        "can_backup": true
+      }
+    },
+    "graduation": {
+      "id": "grad_c25bdcb9209141",
+      "campaign_id": "pcamp_4fa2d8304be643d1",
+      "strategy_slug": "trend_following",
+      "classification": "RESEARCH_ONLY",
+      "metrics": {
+        "duration_sec": 0.008860349655151367,
+        "trade_count": 0,
+        "total_return": null,
+        "max_drawdown_pct": 0.0,
+        "profit_factor": null,
+        "sharpe": 0.0,
+        "sortino": 0.0,
+        "expectancy": 0.0,
+        "win_rate": 0.0,
+        "recon_ok": true,
+        "journal_count": 0,
+        "operator_interventions": 0,
+        "system_incidents": 0,
+        "campaign_status": "DRAFT",
+        "risk_policy_compliance": true,
+        "consistency_proxy": 0.0,
+        "regime_stability_proxy": true,
+        "parameter_stability_proxy": true,
+        "monte_carlo_consistency_proxy": true,
+        "walk_forward_consistency_proxy": true,
+        "paper_only": true
+      },
+      "gates": {
+        "min_duration": false,
+        "min_trades": false,
+        "drawdown_ok": true,
+        "sharpe_ok": true,
+        "recon_ok": true,
+        "journal_ok": false,
+        "interventions_ok": true,
+        "incidents_ok": true,
+        "not_live": true,
+        "paper_only": true,
+        "profit_factor_ok": true
+      },
+      "reasons": [
+        "gate_failed:min_duration",
+        "gate_failed:min_trades",
+        "gate_failed:journal_ok"
+      ],
+      "live_authorized": false,
+      "auto_promoted_to_live": false,
+      "evaluated_at": 1785373511.52258,
+      "actor": "system",
+      "immutable": true,
+      "paper_only": true,
+      "disclaimer": "Graduation evaluates paper operational readiness only. LIVE TRADING IS NOT AUTHORIZED. NO STRATEGY IS AUTOMATICALLY PROMOTED TO LIVE EXECUTION.",
+      "fingerprint": "be99c1d1ceaaa0dfb147d8b0dbdc473a7fb0c830b03f4b285ff77d0d85ee92d8"
+    },
+    "browser": {
+      "note": "browser evidence attached separately when certified"
+    },
+    "paper_only": true,
+    "live_authorized": false,
+    "created_at": 1785373511.522766,
+    "fingerprint": "3346128274cbdf17a221d5a95b938fb46c2ddebb013bd9a3beeb6c4f3a91d33c"
+  },
+  "classification": "RESEARCH_ONLY",
+  "live_authorized": false,
+  "auto_promoted_to_live": false,
+  "immutable": true,
+  "actor": "operator:scan",
+  "created_at": 1785373511.522843,
+  "paper_only": true,
+  "disclaimer": "THE SYSTEM REMAINS PAPER ONLY. LIVE TRADING IS NOT AUTHORIZED. NO STRATEGY IS AUTOMATICALLY PROMOTED TO LIVE EXECUTION.",
+  "fingerprint": "6e8f8c4d38825795f87e3d80721c9dca1a83271ef2e03bc1c8a5dc85c5fe2c2a"
+}

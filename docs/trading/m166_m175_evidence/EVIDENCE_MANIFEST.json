@@ -1,0 +1,29 @@
+{
+  "milestone": "M166-M175",
+  "verdict": "TRADING_GUARDIAN_RESEARCH_AND_PAPER_FOUNDATION_READY_WITH_LIMITATIONS",
+  "paper_only": true,
+  "live_trading_authorized": false,
+  "live_order_capable": false,
+  "broker_credential_support": false,
+  "default_authority_mode": "ADVISORY",
+  "package": "saathi/platform/tg",
+  "tests": {
+    "focused": "tests/test_m166_m175_trading_guardian.py",
+    "frontend": "saathi-os/lib/m166_trading_guardian.test.js"
+  },
+  "composites": [
+    "saathi.platform.strategy",
+    "saathi.platform.paper_trading",
+    "saathi.platform.safety",
+    "saathi.platform.trading_guardian",
+    "saathi.platform.market_data"
+  ],
+  "disclaimers": [
+    "PAPER TRADING ONLY",
+    "NO LIVE ORDERS",
+    "SIMULATED FUNDS",
+    "Historical performance is not future performance",
+    "Simulated fills may differ from real execution",
+    "No profitability claim"
+  ]
+}

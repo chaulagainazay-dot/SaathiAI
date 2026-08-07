@@ -1,0 +1,24 @@
+{
+  "schema": "M288_RECOVERY_BASELINE",
+  "repository_path": "/Users/macbookpro/SaathiAI",
+  "starting_branch": "milestone/m280-m287-autonomous-research-orchestrator",
+  "starting_sha": "50abdaa73528cb167bd5558308917d94a5e89552",
+  "working_branch": "milestone/m288-m295-institutional-paper-simulation",
+  "prior_verdict": "AUTONOMOUS_RESEARCH_ORCHESTRATOR_CERTIFIED_WITH_LIMITATIONS",
+  "prior_max_state": "AUTONOMOUS_RESEARCH_ORCHESTRATION_ONLY",
+  "checks": {
+    "m280_m287_orchestrator_present": true,
+    "m272_m279_research_lab_present": true,
+    "paper_activation_present": true,
+    "unrelated_dirty_preserved": true
+  },
+  "authority": {
+    "LIVE_TRADING_AUTHORIZED": false,
+    "BROKER_CONNECTIVITY_AUTHORIZED": false,
+    "ORDER_EXECUTION_AUTHORIZED": false,
+    "REAL_EXCHANGE_AUTHORIZED": false,
+    "max_authority": "INSTITUTIONAL_PAPER_SIMULATION_ONLY"
+  },
+  "ok": true,
+  "verdict": "M288_RECOVERY_BASELINE_OK"
+}

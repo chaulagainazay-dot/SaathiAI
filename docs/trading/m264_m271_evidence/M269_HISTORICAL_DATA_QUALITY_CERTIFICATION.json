@@ -1,0 +1,129 @@
+{
+  "schema": "M269_HISTORICAL_DATA_QUALITY_CERTIFICATION",
+  "ingestion": [
+    {
+      "selection_id": "equity_aapl_plotly_github",
+      "dataset_id": "ds_equity_aapl_plotly_github_f931ca34b9399348",
+      "version": "v1",
+      "accepted": 400,
+      "rejected": 0,
+      "source_checksum": "902b2c44502e6f89681ebc0edd4b2bd8a440ca7565e1dddda7491675c80a6799",
+      "output_checksum": "c6e20a234d3bcfc2bd464e1947fe51eb56ebff0511ec06a87198655d282672ae",
+      "status": "OK"
+    },
+    {
+      "selection_id": "crypto_btcusdt_cryptodatadownload",
+      "dataset_id": "ds_crypto_btcusdt_cryptodatadownloa_83d004159604a587",
+      "version": "v1",
+      "accepted": 400,
+      "rejected": 0,
+      "source_checksum": "0dac513e06ecb35cfc28a7003f6277b20fd7e817cf716eed217c60f9032b65d2",
+      "output_checksum": "ccc8c5c68bb20baa2f068c5982c8584d71426bd464d0855d251d5ab5e5fed25c",
+      "status": "OK"
+    }
+  ],
+  "quality": [
+    {
+      "selection_id": "equity_aapl_plotly_github",
+      "dataset_id": "ds_equity_aapl_plotly_github_f931ca34b9399348",
+      "classification": "HIGH_CONFIDENCE",
+      "blocking_defects": [],
+      "scores": {
+        "completeness": 1.0,
+        "consistency": 1.0,
+        "timeliness": 1.0,
+        "uniqueness": 1.0,
+        "validity": 1.0,
+        "adjustment_confidence": 0.8,
+        "source_confidence": 0.85
+      },
+      "price_integrity": "pass",
+      "timestamp_integrity": "pass",
+      "calendar": {
+        "is_247": false,
+        "issue_count": 0
+      }
+    },
+    {
+      "selection_id": "crypto_btcusdt_cryptodatadownload",
+      "dataset_id": "ds_crypto_btcusdt_cryptodatadownloa_83d004159604a587",
+      "classification": "HIGH_CONFIDENCE",
+      "blocking_defects": [],
+      "scores": {
+        "completeness": 1.0,
+        "consistency": 1.0,
+        "timeliness": 1.0,
+        "uniqueness": 1.0,
+        "validity": 1.0,
+        "adjustment_confidence": 0.8,
+        "source_confidence": 0.85
+      },
+      "price_integrity": "pass",
+      "timestamp_integrity": "pass",
+      "calendar": {
+        "is_247": true,
+        "issue_count": null
+      }
+    }
+  ],
+  "classifications": [
+    {
+      "selection_id": "equity_aapl_plotly_github",
+      "dataset_id": "ds_equity_aapl_plotly_github_f931ca34b9399348",
+      "classification": "RESEARCH_APPROVED",
+      "approval": {
+        "ok": true,
+        "state": "RESEARCH_RESTRICTED"
+      },
+      "quality": "HIGH_CONFIDENCE"
+    },
+    {
+      "dataset_selection_id": "macro_unrate_fred",
+      "classification": "LIMITED_USE",
+      "reason": "macro series not OHLCV bars; architecture support only; REVISION_BIAS_POSSIBLE",
+      "checksum": "90ee1bc820c9e6511361e4ca4c2f320b20f54fc6acd67342266385ad16b649cb"
+    },
+    {
+      "selection_id": "crypto_btcusdt_cryptodatadownload",
+      "dataset_id": "ds_crypto_btcusdt_cryptodatadownloa_83d004159604a587",
+      "classification": "RESEARCH_RESTRICTED",
+      "approval": {
+        "ok": true,
+        "state": "RESEARCH_RESTRICTED"
+      },
+      "quality": "HIGH_CONFIDENCE"
+    }
+  ],
+  "bias_controls": [
+    {
+      "selection_id": "equity_aapl_plotly_github",
+      "invariants": {
+        "future_information_available": false,
+        "train_test_leakage_detected": false,
+        "survivorship_bias_unreported": true,
+        "evaluation_set_optimised_on": false
+      },
+      "limitations": [
+        "KNOWN_RESEARCH_LIMITATION",
+        "survivorship_bias_risk"
+      ]
+    },
+    {
+      "selection_id": "crypto_btcusdt_cryptodatadownload",
+      "invariants": {
+        "future_information_available": false,
+        "train_test_leakage_detected": false,
+        "survivorship_bias_unreported": true,
+        "evaluation_set_optimised_on": false
+      },
+      "limitations": [
+        "KNOWN_RESEARCH_LIMITATION",
+        "survivorship_bias_risk"
+      ]
+    }
+  ],
+  "raw_prices_preserved": true,
+  "not_regulatory_grade": true,
+  "snapshots_not_committed_to_git": true,
+  "checksums_recorded": true
+}

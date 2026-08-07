@@ -1,0 +1,9 @@
+{
+  "limitations": [
+    "Research risk metrics \u2014 not regulatory capital figures",
+    "Not investment advice",
+    "Optimiser V2 composes research-lab; not production OMS",
+    "Scenario shocks are hypothetical research cases",
+    "No broker connectivity or order execution"
+  ]
+}

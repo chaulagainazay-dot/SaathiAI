@@ -1,0 +1,27 @@
+{
+  "reconciliation": {
+    "id": "rec_b7401c4150e44a65",
+    "provider_snapshot_id": "snap_980b31be82be4503",
+    "local_snapshot_id": "snap_f23d48ea69254b96",
+    "classifications": [
+      "MATCHED",
+      "MATCHED"
+    ],
+    "discrepancies": [
+      {
+        "class": "MATCHED",
+        "detail": "balance USD matched"
+      },
+      {
+        "class": "MATCHED",
+        "detail": "balance BTC matched"
+      }
+    ],
+    "recommendations": [],
+    "mutated_provider": false,
+    "mutated_portfolio": false,
+    "overall": "MATCHED",
+    "simulation_only": true
+  },
+  "SIMULATION_ONLY": true
+}

@@ -1,0 +1,8 @@
+
+> saathi-os@0.1.0 cert:m311
+> node scripts/m311_market_observation_browser_cert.mjs
+
+{
+  "verdict": "READ_ONLY_MARKET_OBSERVATION_BROWSER_CERT_PASSED_WITH_LIMITATIONS",
+  "hard_gates_pass": true
+}

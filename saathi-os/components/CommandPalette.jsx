@@ -3,8 +3,9 @@ import { useState, useMemo, useEffect, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { getAllNavItems, getPrimaryAreas, GLOBAL_NAV, NAV_GROUPS } from "@/lib/navigation";
+import { applicationCommandsFromBackend } from "@/lib/modules/shell";
 
-function buildCommands(pathname) {
+function buildCommands(pathname, moduleNavigation) {
   const cmds = [];
 
   for (const g of NAV_GROUPS) {
@@ -18,6 +19,7 @@ function buildCommands(pathname) {
       });
     }
   }
+  cmds.push(...applicationCommandsFromBackend(moduleNavigation));
   for (const item of GLOBAL_NAV) {
     cmds.push({
       id: `nav-${item.id}`,
@@ -64,6 +66,56 @@ function buildCommands(pathname) {
       group: "Actions",
       route: "/settings",
       kind: "navigate",
+    },
+    {
+      id: "act-voice-settings",
+      label: "Open Voice Settings",
+      group: "Actions",
+      route: "/settings/voice",
+      kind: "navigate",
+    },
+    // M148+ SaathiOS Core unification destinations
+    {
+      id: "core-home",
+      label: "Operator Home (unified dashboard)",
+      group: "Core",
+      route: "/platform/home",
+      kind: "navigate",
+    },
+    {
+      id: "core-search",
+      label: "Universal Search",
+      group: "Core",
+      route: "/platform/search",
+      kind: "navigate",
+    },
+    {
+      id: "core-hcg",
+      label: "Launch HCG Operations",
+      group: "Applications",
+      route: "/apps/hcg",
+      kind: "navigate",
+    },
+    {
+      id: "core-ielts",
+      label: "Launch IELTSAlert",
+      group: "Applications",
+      route: "/apps/ielts",
+      kind: "navigate",
+    },
+    {
+      id: "core-apps",
+      label: "Application Launcher",
+      group: "Applications",
+      route: "/apps",
+      kind: "navigate",
+    },
+    {
+      id: "core-notifications",
+      label: "Notification Center",
+      group: "Core",
+      route: "/platform/notifications",
+      kind: "navigate",
     }
   );
 
@@ -105,14 +157,17 @@ function buildCommands(pathname) {
   return cmds;
 }
 
-export default function CommandPalette({ open, onClose }) {
+export default function CommandPalette({ open, onClose, moduleNavigation = null }) {
   const router = useRouter();
   const pathname = usePathname();
   const [q, setQ] = useState("");
   const [sel, setSel] = useState(0);
   const inputRef = useRef(null);
 
-  const commands = useMemo(() => buildCommands(pathname), [pathname]);
+  const commands = useMemo(
+    () => buildCommands(pathname, moduleNavigation),
+    [pathname, moduleNavigation]
+  );
 
   const results = useMemo(() => {
     const s = q.trim().toLowerCase();

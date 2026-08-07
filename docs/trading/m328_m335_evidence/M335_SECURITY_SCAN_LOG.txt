@@ -1,0 +1,58 @@
+M328-M335 SECURITY AND ISOLATION SCANS
+
+1. SECRET SCAN
+   COMMAND: grep -rniE "(api[_-]?key|api[_-]?secret|client[_-]?secret|access[_-]?token|
+            refresh[_-]?token|private[_-]?key|password)\s*[:=]\s*[\"'][A-Za-z0-9/+_-]{12,}"
+            over saathi/platform/tg/production_readiness/, saathi-os/app/trading/operations/,
+            saathi-os/components/trading/OperationsNav.jsx and both new test suites
+   RESULT: PASS — no hardcoded secret literal
+
+2. NETWORK AND TELEMETRY IMPORT SCAN
+   COMMAND: grep for imports of requests, httpx, aiohttp, socket, urllib, websocket(s),
+            smtplib, boto3, botocore, opentelemetry, prometheus_client, statsd, datadog,
+            sentry_sdk, newrelic, twilio, subprocess, paramiko
+   RESULT: PASS — none present
+   RUNTIME EQUIVALENT: OperationsService.isolation_scan() walks the package AST and
+            reports ok=true, findings=[]; enforced again by
+            test_package_imports_no_network_or_telemetry_module.
+
+3. SOCKET REFUSAL
+   TEST: test_no_socket_is_opened_during_a_full_operations_cycle monkeypatches
+         socket.socket.connect and socket.create_connection to raise, then runs the full
+         cycle (health, metrics, diagnostics, load validation, backup verify, recovery
+         simulation, control centre).
+   RESULT: PASS — no connection attempted
+
+4. FORBIDDEN UI CONTROL SCAN
+   COMMAND: grep for oauth, <input, <form, type="password", connect provider,
+            place order, submit order across the operations UI
+   RESULT: PASS — the only match is the OAUTH_AUTHORIZED=false boundary declaration,
+            which is a lock statement, not a control
+
+5. AUTHORITY SCAN
+   COMMAND: grep for any of the eleven hard authority keys assigned true
+   RESULT: PASS — no authority lock is ever set true in this milestone
+
+6. OBSERVABILITY REDACTION
+   RUNTIME: ObservabilityEngine.redaction_scan() reports ok=true across all retained
+            records; forbidden fields are replaced with [REDACTED] at write time,
+            recursively, including nested maps and lists.
+
+7. ALERT TRANSPORT ISOLATION
+   RUNTIME: AlertEngine.isolation_scan() reports ok=true with
+            email_transport_present=false, sms_transport_present=false,
+            push_transport_present=false, webhook_transport_present=false,
+            external_deliveries=0, network_deliveries=0.
+
+8. BACKUP TARGET ISOLATION
+   RUNTIME: BackupEngine.isolation_scan() reports ok=true with
+            cloud_targets_configured=0 and remote_transports_present=false.
+
+9. BROWSER NETWORK ISOLATION
+   RUNTIME: the Playwright certification recorded every browser request and found
+            forbidden_external_requests=0; all traffic was bound to 127.0.0.1.
+
+10. COMPOSED SECURITY
+    RUNTIME: OperationsService.security_scan() reports ok=true, findings=[], with
+             provider_contract_security_ok=true and governance_security_ok=true,
+             confirming the predecessor milestones remain intact.

@@ -1,0 +1,94 @@
+{
+  "approval_requirements": [
+    "NO_APPROVAL_REQUIRED"
+  ],
+  "audit_contract": "platform_audit",
+  "browser_requirements": false,
+  "cancellation_contract": "cooperative",
+  "conflicts": [],
+  "content_hash": "",
+  "credential_reference_requirements": [],
+  "data_handling_classification": "operational",
+  "declared_agent_roles": [
+    "domain_specialist",
+    "planner"
+  ],
+  "declared_capabilities": [
+    "hcg.analyze",
+    "hcg.operations.plan",
+    "report.generate"
+  ],
+  "declared_tools": [
+    "m49.echo_readonly"
+  ],
+  "dependencies": [],
+  "description": "Planning and analysis for HCG operations; no production database mutation.",
+  "display_name": "HCG Operations Review Skill",
+  "documentation_references": [
+    "docs/autonomous/milestones/M112_M120_SKILL_ECOSYSTEM_RUNTIME.md"
+  ],
+  "domain": "hcg",
+  "entrypoint_type": "declarative",
+  "evidence_contract": "content_hash",
+  "extension": {},
+  "health_check_contract": "manifest_hash_and_tools",
+  "knowledge_sources": [],
+  "lifecycle_state": "DISCOVERED",
+  "local_model_requirements": [],
+  "local_trust_status": "BUILT_IN",
+  "manifest_schema_version": "skill.manifest.v1",
+  "maximum_saathios_version": "",
+  "minimum_saathios_version": "1.0.0-local",
+  "name": "hcg_ops_review",
+  "network_requirements": "none",
+  "optional_permissions": [],
+  "orchestration_template_id": "hcg_ops",
+  "os_requirements": [
+    "darwin",
+    "linux"
+  ],
+  "package_hash": "3f09e047f473e74ffffc1f8f74ae48f8789f1b3e7fac08664fbc59ff07b968e2",
+  "platform_requirements": [
+    "platform_agent_runtime",
+    "execution_gateway"
+  ],
+  "privacy_classification": "no_personal_data",
+  "production_posture": "not_authorized",
+  "prohibited_permissions": [
+    "unrestricted_shell",
+    "direct_tool_execution",
+    "forge_approval"
+  ],
+  "publisher": "saathios.builtin",
+  "required_permissions": [
+    "runtime.read"
+  ],
+  "resource_budgets": {
+    "memory_mb": 128,
+    "timeout_sec": 60
+  },
+  "retry_policy": {
+    "max_attempts": 1
+  },
+  "risk_classification": "medium",
+  "rollback_policy": "restore_previous_certified",
+  "signature_status": "local_builtin",
+  "skill_id": "saathi.hcg_ops_review",
+  "storage_requirements_mb": 8,
+  "tags": [
+    "builtin",
+    "local",
+    "deterministic"
+  ],
+  "timeouts": {
+    "execution_sec": 60.0,
+    "health_sec": 5.0
+  },
+  "trading_guardian_posture": "unengaged_readonly_only",
+  "upgrade_policy": "keep_previous_until_rollback_window",
+  "version": "1.0.0",
+  "worker_requirements": [
+    "planning",
+    "analysis"
+  ]
+}

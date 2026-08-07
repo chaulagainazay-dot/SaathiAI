@@ -1,0 +1,241 @@
+{
+  "strategy_id": "tf_dual_ma",
+  "strategy_version": "v1",
+  "dataset_id": "ds_synth_ohlcv_equity_demo_bac23c7d756b5e97",
+  "dataset_version": "v1",
+  "feature_versions": [
+    "sma_10@v1",
+    "sma_20@v1"
+  ],
+  "universe": {
+    "symbols": [
+      "DEMO"
+    ],
+    "count": 1
+  },
+  "training_period": {
+    "start": "2024-01-02T00:00:00Z",
+    "end": "2024-04-10T00:00:00Z"
+  },
+  "validation_period": {
+    "start": "2024-04-15T00:00:00Z",
+    "end": "2024-05-16T00:00:00Z",
+    "count": 24
+  },
+  "test_period": {
+    "start": "2024-05-21T00:00:00Z",
+    "end": "2024-06-17T00:00:00Z",
+    "count": 20
+  },
+  "embargo_or_purge": {
+    "embargo_bars": 2,
+    "purge_bars": 0
+  },
+  "signal_count": 80,
+  "trade_count": 4,
+  "long_trades": 2,
+  "short_trades": 2,
+  "turnover": 0.03333333333333333,
+  "in_sample": {
+    "n": 1,
+    "hit_rate": 1.0,
+    "avg_win": 0.015232,
+    "avg_loss": 0,
+    "expectancy": 0.015232,
+    "profit_factor": 999.0,
+    "ann_return": 44.1253,
+    "volatility": 0,
+    "sharpe": 0,
+    "sortino": 0,
+    "max_drawdown": 0.0392,
+    "calmar": 1125.3858
+  },
+  "out_of_sample": {
+    "n": 1,
+    "hit_rate": 0.0,
+    "avg_win": 0,
+    "avg_loss": -0.020979,
+    "expectancy": -0.020979,
+    "profit_factor": 0.0,
+    "ann_return": -0.9952,
+    "volatility": 0,
+    "sharpe": 0,
+    "sortino": -15.8745,
+    "max_drawdown": 0.0392,
+    "calmar": -25.3823
+  },
+  "hit_rate": 0.0,
+  "average_win": 0,
+  "average_loss": -0.020979,
+  "expectancy": -0.020979,
+  "profit_factor": 0.0,
+  "annualised_return": -0.9952,
+  "volatility": 0,
+  "sharpe_ratio": 0,
+  "sortino_ratio": -15.8745,
+  "maximum_drawdown": 0.0392,
+  "calmar_ratio": -25.3823,
+  "var_95": -0.020979,
+  "expected_shortfall_95": -0.020979,
+  "benchmark": {
+    "name": "buy_hold",
+    "return": 0.099414
+  },
+  "benchmark_excess_return": -0.123988,
+  "alpha_estimate_with_limitations": {
+    "excess": -0.123988,
+    "limitation": "Not a formal CAPM alpha; research estimate only"
+  },
+  "beta": null,
+  "capacity_liquidity_warnings": [
+    "participation_limits_not_fully_modelled"
+  ],
+  "stability_across_windows": {
+    "folds": [
+      {
+        "fold": 0,
+        "train_bars": 40,
+        "test_bars": 40,
+        "optimized_on_evaluation_set": false
+      },
+      {
+        "fold": 1,
+        "train_bars": 80,
+        "test_bars": 40,
+        "optimized_on_evaluation_set": false
+      }
+    ],
+    "optimized_on_evaluation_set": false,
+    "seed": 42
+  },
+  "parameter_sensitivity": {
+    "note": "single_parameter_set_evaluated",
+    "trial_count": 1
+  },
+  "walk_forward": {
+    "folds": [
+      {
+        "fold": 0,
+        "train_bars": 40,
+        "test_bars": 40,
+        "optimized_on_evaluation_set": false
+      },
+      {
+        "fold": 1,
+        "train_bars": 80,
+        "test_bars": 40,
+        "optimized_on_evaluation_set": false
+      }
+    ],
+    "optimized_on_evaluation_set": false,
+    "seed": 42
+  },
+  "monte_carlo": {
+    "n_simulations": 200,
+    "seed": 42,
+    "probability_of_loss": 1.0,
+    "probability_of_ruin": 0.0,
+    "p5": -0.021,
+    "p50": -0.021,
+    "p95": -0.021,
+    "historical_sample_size": 1,
+    "limitations": [
+      "Block bootstrap not used; i.i.d. sample with replacement"
+    ]
+  },
+  "probability_of_loss": 1.0,
+  "probability_of_ruin": 0.0,
+  "regime_analysis": {
+    "definitions": {
+      "bull": "20-bar return > 5%",
+      "bear": "20-bar return < -5%",
+      "sideways": "otherwise",
+      "high_volatility": "20-bar realized vol > 2%",
+      "low_volatility": "otherwise"
+    },
+    "counts": {
+      "bull": 5,
+      "bear": 0,
+      "sideways": 95,
+      "high_volatility": 0,
+      "low_volatility": 100
+    },
+    "dominant": "low_volatility",
+    "regime_dependent": false,
+    "macro_regimes_fabricated": false,
+    "note": "Inflation/rate/crisis regimes omitted without approved macro data"
+  },
+  "multiple_testing": {
+    "trial_count": 1,
+    "false_discovery_warning": false,
+    "robustness_penalty": 0.0,
+    "parameter_mining_risk": false,
+    "baseline_comparison": "buy_hold",
+    "holdout_isolated": true,
+    "note": "Trial count reported; simplistic p-values are not proof of profitability"
+  },
+  "transaction_cost_assumptions": {
+    "commission_bps": 5.0
+  },
+  "slippage_assumptions": {
+    "slippage_bps": 8.0
+  },
+  "confidence_classification": "OUT_OF_SAMPLE_FAILED",
+  "state": "OUT_OF_SAMPLE_FAILED",
+  "failure_reasons": [
+    "synthetic_dataset",
+    "negative_oos_expectancy",
+    "narrow_universe"
+  ],
+  "invalidation_conditions": [
+    "dataset_revoked",
+    "checksum_changed",
+    "licence_revoked",
+    "blocking_quality_defect",
+    "lookahead_detected"
+  ],
+  "limitations": [
+    "SYNTHETIC_TEST_DATA",
+    "KNOWN_RESEARCH_LIMITATION",
+    "single_asset_or_limited_universe"
+  ],
+  "is_synthetic": true,
+  "FORBIDDEN_STATES_NOT_USED": [
+    "PROFITABLE",
+    "GUARANTEED",
+    "SAFE",
+    "LIVE_READY",
+    "PRODUCTION_READY"
+  ],
+  "disclaimer": "STRATEGY RESULTS DO NOT GUARANTEE FUTURE PERFORMANCE. RESEARCH VALIDATION DOES NOT AUTHORIZE LIVE TRADING.",
+  "evidence_hash": "76a9baadd0ed26c9ed026a4ee3bb8a49b08cf1974d348284cb83582888a41f74",
+  "ok": true,
+  "run_id": "val_ccb5f3b33d6946eb",
+  "LIVE_TRADING_AUTHORIZED": false,
+  "BROKER_CONNECTIVITY_AUTHORIZED": false,
+  "REAL_CONNECTIVITY_AUTHORIZED": false,
+  "CREDENTIAL_PROVISIONING_AUTHORIZED": false,
+  "CANARY_ACTIVATION_AUTHORIZED": false,
+  "ORDER_EXECUTION_AUTHORIZED": false,
+  "ORDER_SUBMISSION_AUTHORIZED": false,
+  "API_KEYS_ACCEPTED": false,
+  "OAUTH_AUTHORIZED": false,
+  "LIVE_MARKET_DATA_AUTHORIZED": false,
+  "LIVE_DATA_DEPENDENCY": false,
+  "REGULATORY_GRADE_MARKET_DATA": false,
+  "STRATEGY_PROFITABILITY_GUARANTEED": false,
+  "LIVE_MARKET_READINESS": false,
+  "INVESTMENT_ADVICE_CERTIFIED": false,
+  "paper_only": true,
+  "sandbox_only": true,
+  "research_only": true,
+  "offline_first": true,
+  "offline_capable": true,
+  "no_broker_connection": true,
+  "no_api_keys": true,
+  "no_oauth": true,
+  "no_order_submission": true,
+  "no_live_data_dependency": true,
+  "no_live_trading": true,
+  "certified_research_requires_registered_dataset": true
+}

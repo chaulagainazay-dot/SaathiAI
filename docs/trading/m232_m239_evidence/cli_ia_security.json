@@ -1,0 +1,181 @@
+{
+  "all_pass": true,
+  "checks": [
+    {
+      "check": "credential_scan",
+      "result": "PASS",
+      "forbidden_present": [],
+      "ok": true
+    },
+    {
+      "check": "external_domain_scan",
+      "result": "PASS",
+      "probes": [
+        {
+          "ok": false,
+          "blocked": true,
+          "domain": "alpaca.markets",
+          "result": "REAL_PROVIDER_TRANSPORT_FORBIDDEN",
+          "url": "https://alpaca.markets/",
+          "REAL_CONNECTIVITY_AUTHORIZED": false
+        },
+        {
+          "ok": false,
+          "blocked": true,
+          "domain": "api.alpaca.markets",
+          "result": "REAL_PROVIDER_TRANSPORT_FORBIDDEN",
+          "url": "https://api.alpaca.markets/",
+          "REAL_CONNECTIVITY_AUTHORIZED": false
+        },
+        {
+          "ok": false,
+          "blocked": true,
+          "domain": "api.binance.com",
+          "result": "REAL_PROVIDER_TRANSPORT_FORBIDDEN",
+          "url": "https://api.binance.com/",
+          "REAL_CONNECTIVITY_AUTHORIZED": false
+        },
+        {
+          "ok": false,
+          "blocked": true,
+          "domain": "api.bybit.com",
+          "result": "REAL_PROVIDER_TRANSPORT_FORBIDDEN",
+          "url": "https://api.bybit.com/",
+          "REAL_CONNECTIVITY_AUTHORIZED": false
+        },
+        {
+          "ok": false,
+          "blocked": true,
+          "domain": "api.coinbase.com",
+          "result": "REAL_PROVIDER_TRANSPORT_FORBIDDEN",
+          "url": "https://api.coinbase.com/",
+          "REAL_CONNECTIVITY_AUTHORIZED": false
+        },
+        {
+          "ok": false,
+          "blocked": true,
+          "domain": "api.exchange.coinbase.com",
+          "result": "REAL_PROVIDER_TRANSPORT_FORBIDDEN",
+          "url": "https://api.exchange.coinbase.com/",
+          "REAL_CONNECTIVITY_AUTHORIZED": false
+        },
+        {
+          "ok": false,
+          "blocked": true,
+          "domain": "api.ibkr.com",
+          "result": "REAL_PROVIDER_TRANSPORT_FORBIDDEN",
+          "url": "https://api.ibkr.com/",
+          "REAL_CONNECTIVITY_AUTHORIZED": false
+        },
+        {
+          "ok": false,
+          "blocked": true,
+          "domain": "api.kite.trade",
+          "result": "REAL_PROVIDER_TRANSPORT_FORBIDDEN",
+          "url": "https://api.kite.trade/",
+          "REAL_CONNECTIVITY_AUTHORIZED": false
+        },
+        {
+          "ok": false,
+          "blocked": true,
+          "domain": "api.kraken.com",
+          "result": "REAL_PROVIDER_TRANSPORT_FORBIDDEN",
+          "url": "https://api.kraken.com/",
+          "REAL_CONNECTIVITY_AUTHORIZED": false
+        },
+        {
+          "ok": false,
+          "blocked": true,
+          "domain": "binance.com",
+          "result": "REAL_PROVIDER_TRANSPORT_FORBIDDEN",
+          "url": "https://binance.com/",
+          "REAL_CONNECTIVITY_AUTHORIZED": false
+        },
+        {
+          "ok": false,
+          "blocked": true,
+          "domain": "bybit.com",
+          "result": "REAL_PROVIDER_TRANSPORT_FORBIDDEN",
+          "url": "https://bybit.com/",
+          "REAL_CONNECTIVITY_AUTHORIZED": false
+        },
+        {
+          "ok": false,
+          "blocked": true,
+          "domain": "coinbase.com",
+          "result": "REAL_PROVIDER_TRANSPORT_FORBIDDEN",
+          "url": "https://coinbase.com/",
+          "REAL_CONNECTIVITY_AUTHORIZED": false
+        }
+      ],
+      "ok": true
+    },
+    {
+      "check": "llm_authority_scan",
+      "result": "PASS",
+      "owner_signoff_automated": false,
+      "real_connectivity_authorized": false,
+      "ok": true
+    },
+    {
+      "check": "network_isolation",
+      "result": "PASS",
+      "probes": [
+        {
+          "ok": false,
+          "blocked": true,
+          "domain": "api.binance.com",
+          "result": "REAL_PROVIDER_TRANSPORT_FORBIDDEN",
+          "url": "https://api.binance.com/api/v3/account",
+          "REAL_CONNECTIVITY_AUTHORIZED": false
+        },
+        {
+          "ok": false,
+          "blocked": true,
+          "domain": "api.alpaca.markets",
+          "result": "REAL_PROVIDER_TRANSPORT_FORBIDDEN",
+          "url": "https://api.alpaca.markets/v2/account",
+          "REAL_CONNECTIVITY_AUTHORIZED": false
+        },
+        {
+          "ok": false,
+          "blocked": true,
+          "domain": "api.kite.trade",
+          "result": "REAL_PROVIDER_TRANSPORT_FORBIDDEN",
+          "url": "https://api.kite.trade/user/profile",
+          "REAL_CONNECTIVITY_AUTHORIZED": false
+        },
+        {
+          "ok": true,
+          "domain": "127.0.0.1",
+          "result": "LOCAL_SIMULATION_ONLY",
+          "category": "local",
+          "blocked": false,
+          "REAL_CONNECTIVITY_AUTHORIZED": false
+        },
+        {
+          "ok": true,
+          "domain": "pypi.org",
+          "result": "DEPENDENCY_REGISTRY_ALLOWED_SEPARATE_FROM_PROVIDER",
+          "category": "dependency_registry",
+          "broker_connectivity": false,
+          "blocked": false,
+          "REAL_CONNECTIVITY_AUTHORIZED": false
+        }
+      ],
+      "provider_blocked": true,
+      "localhost_allowed": true,
+      "registry_separated": true,
+      "ok": true
+    },
+    {
+      "check": "secret_pattern_scan",
+      "result": "PASS",
+      "hits": [],
+      "ok": true
+    }
+  ],
+  "passed": 5,
+  "failed": 0,
+  "REAL_CONNECTIVITY_AUTHORIZED": false
+}

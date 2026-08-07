@@ -1,0 +1,28 @@
+{
+  "drill_id": "drill_00e303a93e4944f4",
+  "scenario": "credential_revocation_during_session",
+  "result": {
+    "ok": true,
+    "fail_closed": true,
+    "credential_state": "revoked",
+    "session_state": "SIMULATED_REVOKED",
+    "security_failure": true,
+    "reconnect_blocked": true,
+    "ingestion_stopped": true,
+    "session_invalidated": true,
+    "auto_reconnect_prohibited": true
+  },
+  "fail_closed": true,
+  "recovery_procedure": "1) Stop simulated ingestion 2) Invalidate session 3) Mark revoked 4) No auto-reconnect 5) Manual review",
+  "ingestion_stopped": true,
+  "session_invalidated": true,
+  "audit_preserved": true,
+  "projections_stale": true,
+  "ops_notified": true,
+  "manual_review_required": true,
+  "auto_reconnect_prohibited": true,
+  "auto_approval_restoration_prohibited": true,
+  "paper_only": true,
+  "live_systems_affected": false,
+  "simulation_only": true
+}

@@ -1,0 +1,24 @@
+M240-M247 Recovery Baseline
+===========================
+Repository: /Users/macbookpro/SaathiAI
+Starting branch: milestone/m232-m239-reproducibility-supply-chain
+Starting SHA: 007c4e6491adea144d10a31ed0454ddb733565af
+Working branch: milestone/m240-m247-provider-canary-planning
+Created: 2026-07-30
+Prior verdict: REPRODUCIBILITY_SUPPLY_CHAIN_AUTHORIZATION_CERTIFIED_WITH_LIMITATIONS
+
+Preserved unrelated dirty files (NOT staged/cleaned):
+- docs/evidence/m25/*
+- docs/evidence/m27/*
+- docs/evidence/m28/*
+- docs/design-spec/
+
+Authority locks (immutable for this milestone):
+REAL_CONNECTIVITY_AUTHORIZED=false
+CREDENTIAL_PROVISIONING_AUTHORIZED=false
+CANARY_ACTIVATION_AUTHORIZED=false
+READ_ONLY_PRODUCTION_AUTHORIZED=false
+LIVE_TRADING_AUTHORIZED=false
+
+M232-M239 evidence and LOOP_STATE confirmed committed on baseline SHA.
+No M216-M239 required source left uncommitted (prior milestone complete).

@@ -1,0 +1,92 @@
+{
+  "schema": "m147.ielts_browser_cert.v1",
+  "capturedAt": "2026-07-29T05:18:23.317Z",
+  "hardGates": {
+    "launched": {
+      "ok": true,
+      "detail": "RUNNING"
+    },
+    "diagnostic": {
+      "ok": true,
+      "detail": "5"
+    },
+    "plan_valid": {
+      "ok": true,
+      "detail": "plan"
+    },
+    "no_acoustic_claim": {
+      "ok": true,
+      "detail": "pron"
+    },
+    "writing_immutable": {
+      "ok": true,
+      "detail": "wr"
+    },
+    "reading": {
+      "ok": true,
+      "detail": "4"
+    },
+    "listening": {
+      "ok": true,
+      "detail": "4"
+    },
+    "readiness_not_official": {
+      "ok": true,
+      "detail": "ready"
+    },
+    "yeti_readonly": {
+      "ok": true,
+      "detail": "yeti"
+    },
+    "restore_gated": {
+      "ok": true,
+      "detail": "rst"
+    },
+    "restart": {
+      "ok": true,
+      "detail": "restart"
+    },
+    "backup": {
+      "ok": true,
+      "detail": "7aadf0c3e9199c80"
+    },
+    "ui_ielts": {
+      "ok": true,
+      "detail": "ui"
+    },
+    "ui_non_official": {
+      "ok": true,
+      "detail": "label"
+    },
+    "aria": {
+      "ok": true,
+      "detail": "aria"
+    },
+    "logout": {
+      "ok": true,
+      "detail": "logout"
+    }
+  },
+  "result": "IELTS_NATIVE_APP_BROWSER_CERT_PASSED",
+  "live_gemini": false,
+  "live_firebase": false,
+  "production_authorized": false,
+  "trading_guardian_changed": false,
+  "api": {
+    "token": "vxB0eh76WfkX6OFBdf9BHl7kIQR5BQXGtziXD9sFG0E",
+    "launched": "RUNNING",
+    "diagnostic_overall": 5,
+    "plan_valid": true,
+    "no_acoustic_claim": true,
+    "parent_immutable": true,
+    "reading_correct": 4,
+    "listening_correct": 4,
+    "readiness_official": false,
+    "yeti_readonly": true,
+    "restore_gated": true,
+    "restart_ok": true,
+    "backup_hash": "7aadf0c3e9199c80",
+    "no_production": true
+  },
+  "browser_certified": true
+}

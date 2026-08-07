@@ -1,0 +1,15 @@
+# M223 Broker Sandbox Browser Cert
+
+**Result:** `BROKER_SANDBOX_BROWSER_CERT_PASSED_WITH_LIMITATIONS`
+
+- paper_only: true
+- sandbox_only: true
+- live_trading_authorized: false
+- hardGates: 7
+- journeys: 15 (1 soft/fail)
+
+THE SYSTEM REMAINS PAPER ONLY.
+NO BROKER CONNECTIONS EXIST.
+NO API CREDENTIALS WERE CREATED.
+NO LIVE TRADING IS AUTHORIZED.
+THE SANDBOX CANNOT EXECUTE REAL ORDERS.

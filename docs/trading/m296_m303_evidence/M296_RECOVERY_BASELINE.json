@@ -1,0 +1,23 @@
+{
+  "schema": "M296_RECOVERY_BASELINE",
+  "repository_path": "/Users/macbookpro/SaathiAI",
+  "starting_branch": "milestone/m288-m295-institutional-paper-simulation",
+  "starting_sha": "f582dd36d34398b5eadfaf9f1676cbc75b0bc041",
+  "working_branch": "milestone/m296-m303-portfolio-risk-intelligence",
+  "prior_verdict": "INSTITUTIONAL_PAPER_TRADING_SIMULATION_CERTIFIED_WITH_LIMITATIONS",
+  "prior_max_state": "INSTITUTIONAL_PAPER_SIMULATION_ONLY",
+  "checks": {
+    "m288_m295_paper_simulation_present": true,
+    "m272_m279_research_lab_present": true,
+    "m248_m255_intelligence_present": true,
+    "unrelated_dirty_preserved": true
+  },
+  "authority": {
+    "LIVE_TRADING_AUTHORIZED": false,
+    "BROKER_CONNECTIVITY_AUTHORIZED": false,
+    "ORDER_EXECUTION_AUTHORIZED": false,
+    "max_authority": "INSTITUTIONAL_PORTFOLIO_RISK_INTELLIGENCE_ONLY"
+  },
+  "ok": true,
+  "verdict": "M296_RECOVERY_BASELINE_OK"
+}

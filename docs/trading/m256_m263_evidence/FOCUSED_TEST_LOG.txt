@@ -1,0 +1,34 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0 -- /Users/macbookpro/SaathiAI/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/macbookpro/SaathiAI
+configfile: pyproject.toml
+plugins: anyio-4.14.1, asyncio-1.4.0, opik-2.1.5
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collecting ... collected 23 items
+
+tests/test_m256_m263_market_data.py::test_authority_locks_false PASSED   [  4%]
+tests/test_m256_m263_market_data.py::test_m256_deterministic_ids_and_versioning PASSED [  8%]
+tests/test_m256_m263_market_data.py::test_m256_unregistered_rejected PASSED [ 13%]
+tests/test_m256_m263_market_data.py::test_m256_supersede_and_revoke PASSED [ 17%]
+tests/test_m256_m263_market_data.py::test_m257_unknown_licence_fail_closed PASSED [ 21%]
+tests/test_m256_m263_market_data.py::test_m257_forbidden_licence PASSED  [ 26%]
+tests/test_m256_m263_market_data.py::test_m257_provenance_required PASSED [ 30%]
+tests/test_m256_m263_market_data.py::test_m258_csv_ingestion_and_idempotent PASSED [ 34%]
+tests/test_m256_m263_market_data.py::test_m258_bad_rows_quarantine_and_reject PASSED [ 39%]
+tests/test_m256_m263_market_data.py::test_m258_unsafe_file_rejected PASSED [ 43%]
+tests/test_m256_m263_market_data.py::test_m258_path_traversal_style PASSED [ 47%]
+tests/test_m256_m263_market_data.py::test_m259_quality_and_blocking PASSED [ 52%]
+tests/test_m256_m263_market_data.py::test_m259_corporate_actions_preserve_raw PASSED [ 56%]
+tests/test_m256_m263_market_data.py::test_m259_calendar_equity_vs_crypto PASSED [ 60%]
+tests/test_m256_m263_market_data.py::test_m260_splits_no_leakage PASSED  [ 65%]
+tests/test_m256_m263_market_data.py::test_m260_bias_invariants PASSED    [ 69%]
+tests/test_m256_m263_market_data.py::test_m261_features_versioned PASSED [ 73%]
+tests/test_m256_m263_market_data.py::test_m262_signal_validation PASSED  [ 78%]
+tests/test_m256_m263_market_data.py::test_m262_governance_blocks_quarantined PASSED [ 82%]
+tests/test_m256_m263_market_data.py::test_m263_security_and_refusals PASSED [ 86%]
+tests/test_m256_m263_market_data.py::test_m263_certify PASSED            [ 91%]
+tests/test_m256_m263_market_data.py::test_m263_dashboard_and_posture PASSED [ 95%]
+tests/test_m256_m263_market_data.py::test_cli_md_certify PASSED          [100%]
+
+============================== 23 passed in 1.33s ==============================

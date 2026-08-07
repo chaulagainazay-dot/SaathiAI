@@ -1,0 +1,6 @@
+{
+  "result": "TRADING_GUARDIAN_HISTORICAL_BROWSER_CERT_PASSED_WITH_LIMITATIONS",
+  "failed_gates": 0,
+  "failed_journeys": 1,
+  "owner_signoff": "NOT_CLAIMED_AUTOMATED_ONLY"
+}

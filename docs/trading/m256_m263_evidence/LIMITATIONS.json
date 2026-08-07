@@ -1,0 +1,27 @@
+{
+  "limitations": [
+    "SYNTHETIC_TEST_DATA used for architecture certification",
+    "REAL_HISTORICAL_DATA_VALIDATION_INCOMPLETE for live public markets",
+    "Not regulatory-grade market data",
+    "Holiday calendars are sample/incomplete",
+    "Strategy results do not guarantee future performance",
+    "Research validation does not authorize live trading",
+    "Single-host SQLite market_data_research.db",
+    "Parquet/SQLite export ingestion not enabled in offline cert path",
+    "Survivorship controls warn but do not auto-expand delisted universes without data"
+  ],
+  "explicit_non_actions": [
+    "No broker credentials requested or accepted",
+    "No Alpaca/Kraken/other broker connection",
+    "No M240-M247 canary activation",
+    "No private broker APIs",
+    "No account balances/positions retrieval",
+    "No order submission/cancellation/modification",
+    "No production read-only access",
+    "No regulatory-grade market data claim",
+    "No guaranteed profitability claim",
+    "No live-market readiness claim",
+    "No investment advice certification",
+    "M264 not started"
+  ]
+}

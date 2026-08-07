@@ -1,0 +1,18 @@
+✔ intelligence command center page exists (0.55925ms)
+✔ page is paper-only with authority labels (0.919125ms)
+✔ page has no credential form or broker connect controls (0.2735ms)
+✔ trading shell links to portfolio intelligence (0.106125ms)
+✔ package.json includes cert:m255 and unit test (0.790708ms)
+✔ research-data page exists (0.454458ms)
+✔ research-data page has research boundary labels (1.250792ms)
+✔ research-data page has no broker connect / api key / order / oauth controls (0.398958ms)
+✔ TradingShell includes Research Data tab (0.686583ms)
+✔ package.json has cert:m263 (0.180417ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 83.263083

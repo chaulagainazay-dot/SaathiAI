@@ -1,0 +1,43 @@
+{
+  "verdict": "PROVIDER_CANARY_PLANNING_CERTIFIED_WITH_LIMITATIONS",
+  "hard_gates_pass": true,
+  "preferred_provider": "alpaca",
+  "fallback_provider": "kraken",
+  "eligibility_result": "ELIGIBILITY_UNCONFIRMED",
+  "canary_state": "CANARY_DESIGNED_NOT_AUTHORIZED",
+  "credential_status": "CREDENTIAL_CEREMONY_DOCUMENTED_NOT_EXECUTED",
+  "owner_signoff_generated_by_automation": false,
+  "security": {
+    "credential_scan_ok": true,
+    "network_isolation_ok": true,
+    "adapter_scan_ok": true,
+    "llm_boundary_ok": true
+  },
+  "gates_present": {
+    "pre_activation": 15,
+    "success": 17,
+    "abort": 25
+  },
+  "max_planning_state": "READ_ONLY_CANARY_PACKAGE_READY_FOR_OWNER_REVIEW",
+  "statements": [
+    "THE SYSTEM REMAINS PAPER, SANDBOX AND PLANNING ONLY.",
+    "NO REAL BROKER CONNECTION WAS CREATED.",
+    "NO REAL BROKER ACCOUNT WAS ACCESSED.",
+    "NO REAL API CREDENTIALS WERE REQUESTED, ACCEPTED OR STORED.",
+    "NO OAUTH SESSION WAS CREATED.",
+    "NO PROVIDER-SPECIFIC RUNTIME ADAPTER WAS ACTIVATED.",
+    "NO CANARY WAS ACTIVATED.",
+    "NO ORDER SUBMISSION OR ORDER CANCELLATION CAPABILITY EXISTS.",
+    "LIVE TRADING IS NOT AUTHORIZED.",
+    "THE PREFERRED PROVIDER IS A RECOMMENDATION ONLY.",
+    "OWNER ELIGIBILITY IS NOT CLAIMED WITHOUT EXPLICIT VERIFIED EVIDENCE.",
+    "OWNER SIGN-OFF WAS NOT GENERATED OR CLAIMED BY AUTOMATION.",
+    "THE PACKAGE IS READY FOR HUMAN OWNER REVIEW ONLY."
+  ],
+  "REAL_CONNECTIVITY_AUTHORIZED": false,
+  "CREDENTIAL_PROVISIONING_AUTHORIZED": false,
+  "CANARY_ACTIVATION_AUTHORIZED": false,
+  "READ_ONLY_PRODUCTION_AUTHORIZED": false,
+  "LIVE_TRADING_AUTHORIZED": false,
+  "evidence_hash": "3a526e990679eddea8da11fd200c21736a88bb3ca8343c84032ab44e07c6e4cb"
+}

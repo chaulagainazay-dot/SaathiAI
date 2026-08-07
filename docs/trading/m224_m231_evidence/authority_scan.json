@@ -1,0 +1,33 @@
+{
+  "live_trading_authorized": false,
+  "real_broker_connection_capable": false,
+  "credential_usable_for_real_connection": false,
+  "order_submission_capable": false,
+  "llm_boundary": {
+    "llm_may_explain_adapter_contracts": true,
+    "llm_may_summarize_scope_differences": true,
+    "llm_may_identify_excessive_permissions": true,
+    "llm_may_explain_reconciliation": true,
+    "llm_may_recommend_revocation": true,
+    "llm_may_recommend_investigation": true,
+    "llm_may_draft_incident_reports": true,
+    "llm_may_compare_provider_capabilities": true,
+    "llm_may_generate_simulation_scenarios": true,
+    "llm_may_accept_credentials": false,
+    "llm_may_store_credentials": false,
+    "llm_may_approve_credentials": false,
+    "llm_may_approve_providers": false,
+    "llm_may_activate_sessions": false,
+    "llm_may_restore_revoked_access": false,
+    "llm_may_change_scopes": false,
+    "llm_may_connect_brokers": false,
+    "llm_may_access_account_data": false,
+    "llm_may_submit_orders": false,
+    "llm_may_cancel_orders": false,
+    "llm_may_modify_portfolios": false,
+    "llm_may_authorize_live_trading": false,
+    "llm_may_certify_owner_approval": false,
+    "llm_may_override_reconciliation": false,
+    "llm_may_override_security_failures": false
+  }
+}

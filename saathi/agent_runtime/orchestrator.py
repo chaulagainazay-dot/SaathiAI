@@ -14,7 +14,7 @@ from saathi.agent_runtime import registry
 from saathi.agent_runtime.gateway_exec import AgentExecutor
 from saathi.agent_runtime.graph import TaskGraph
 from saathi.agent_runtime.models import (
-    RunState, Task, RiskClass, validate_output, MessageType,
+    RunState, Task, RiskClass, validate_output, MessageType, is_terminal,
 )
 from saathi.agent_runtime import policy as pol
 from saathi.agent_runtime.store import RunStore
@@ -43,20 +43,121 @@ class Orchestrator:
         return self._memory or None
 
     # ── planning → task DAG ───────────────────────────────────────────────
-    def create_run(self, objective: str, *, actor: str = "user:ajay",
-                   strategy: str = "", project_id: str = "",
-                   conversation_id: str = "", budget: dict | None = None) -> str:
+    def create_run(
+        self,
+        objective: str,
+        *,
+        actor: str = "user:ajay",
+        strategy: str = "",
+        project_id: str = "",
+        conversation_id: str = "",
+        budget: dict | None = None,
+        contract_request=None,
+        provider_status=None,
+        skip_contract: bool = False,
+    ) -> str:
+        """Create a durable run after M48.1 contract validation (fail-closed).
+
+        Prefer :func:`saathi.agent_runtime.service.start_agent_run` for new
+        callers. Direct ``create_run`` still validates unless
+        ``skip_contract=True`` (low-level tests only).
+
+        Validation runs **before** any RunStore persistence.
+        """
+        budget = dict(budget or {})
         strat = choose_strategy(objective, requested=strategy)
-        rid = self.store.create_run(objective=objective, strategy=strat, actor=actor,
-                                    project_id=project_id,
-                                    conversation_id=conversation_id, budget=budget)
+
+        if skip_contract:
+            # M48.4: escape hatch only under pytest (never from API/chat/CLI).
+            import os
+            if not os.environ.get("PYTEST_CURRENT_TEST"):
+                from saathi.agent_runtime.errors import AgentRunError, AgentRuntimeErrorCode
+                raise AgentRunError(
+                    AgentRuntimeErrorCode.VALIDATION_FAILED,
+                    "skip_contract is test-only and cannot be used in production paths",
+                )
+        if not skip_contract:
+            from saathi.agent_runtime.service import (
+                ensure_run_request_allowed,
+                request_from_objective,
+            )
+            from saathi.agent_runtime.errors import AgentRunError
+
+            req = contract_request or request_from_objective(
+                objective,
+                strategy=strategy,
+                actor=actor,
+                project_id=project_id,
+                conversation_id=conversation_id,
+                budget=budget,
+                authority_class=str(
+                    budget.get("authority_class") or "READ_ONLY"
+                ),
+                requested_capability=str(budget.get("capability") or ""),
+                approval_token=budget.get("approval_token"),
+                approval_expires_at=budget.get("approval_expires_at"),
+                approval_revoked=bool(budget.get("approval_revoked")),
+                timeout_sec=float(budget.get("timeout_sec") or 60.0),
+                max_retries=int(budget.get("max_retries") if budget.get("max_retries") is not None else 2),
+            )
+            violations = ensure_run_request_allowed(
+                req, provider_status=provider_status
+            )
+            if violations:
+                from saathi.agent_runtime.errors import public_code_for_contract
+
+                v0 = violations[0]
+                code = public_code_for_contract(
+                    v0.code.value if hasattr(v0.code, "value") else str(v0.code)
+                )
+                raise AgentRunError(
+                    code,
+                    v0.message,
+                    violations=[v.to_dict() for v in violations],
+                )
+            # Persist capability metadata for audit (never store raw tokens)
+            budget.setdefault("capability", req.requested_capability)
+            budget.setdefault("authority_class", req.authority_class)
+            if req.approval_token:
+                budget["approval_present"] = True
+                budget.pop("approval_token", None)
+
+        rid = self.store.create_run(
+            objective=objective,
+            strategy=strat,
+            actor=actor,
+            project_id=project_id,
+            conversation_id=conversation_id,
+            budget=budget,
+        )
+        self.store.event(
+            rid,
+            "validation.passed",
+            {
+                "capability": budget.get("capability"),
+                "authority_class": budget.get("authority_class"),
+                "provider_status": budget.get("provider_status"),
+            },
+        )
         self.store.transition(rid, RunState.PLANNING, actor=actor)
-        self._build_tasks(rid, objective, strat, project_id)
+        self._build_tasks(rid, objective, strat, project_id, budget=budget)
         self.store.transition(rid, RunState.QUEUED, actor=actor)
         return rid
 
-    def _build_tasks(self, rid: str, objective: str, strat: str, project_id: str) -> None:
+    def _build_tasks(
+        self,
+        rid: str,
+        objective: str,
+        strat: str,
+        project_id: str,
+        budget: dict | None = None,
+    ) -> None:
+        budget = budget or {}
         roles = STRATEGIES.get(strat, ["planner"])
+        # M48.4: single-agent force (chat M8 bridge / explicit agent_id)
+        force = (budget.get("force_agent") or budget.get("agent_id") or "").strip()
+        if force:
+            roles = [force]
         prev = None
         for i, role in enumerate(roles):
             defn = registry.get(role)
@@ -95,49 +196,82 @@ class Orchestrator:
     # ── execution ─────────────────────────────────────────────────────────
     def run(self, rid: str, *, max_wall_sec: float = 60.0) -> dict:
         """Execute ready tasks until done / blocked / budget / paused / cancelled."""
+        from saathi.agent_runtime.lifecycle import RunLifecycleController
+
         run = self.store.get_run(rid)
         if not run:
             raise KeyError(rid)
+        lc = RunLifecycleController(self.store)
+        if lc.is_cancel_requested(rid):
+            lc.request_cancel(rid, reason="pre_run_cancel")
+            return self._outcome(rid, partial=True, note="cancelled")
+        if lc.check_deadline(rid):
+            lc.enforce_timeout(rid)
+            return self._outcome(rid, partial=True, note="timed_out")
+
         budget = pol.Budget(**{k: v for k, v in (run["budget"] or {}).items()
                                if k in pol.Budget.__annotations__})
+        owner = None
+        lease = lc.acquire_lease(rid)
+        if lease.ok:
+            owner = lease.owner
         self._safe_transition(rid, RunState.RUNNING)
         start = time.time()
         last_fp: dict[str, str] = {}
 
-        while True:
-            run = self.store.get_run(rid)
-            state = RunState(run["state"])
-            if state in (RunState.PAUSED, RunState.CANCELLED):
-                break
-            if time.time() - start > max_wall_sec:
-                self._safe_transition(rid, RunState.TIMED_OUT)
-                break
-            over = budget.exhausted()
-            if over:
-                self.store.event(rid, "run.budget", {"reason": over})
-                self._finalize(rid, budget, partial=True, note=over)
-                return self._outcome(rid, partial=True, note=over)
+        try:
+            while True:
+                run = self.store.get_run(rid)
+                state = RunState(run["state"])
+                if state in (RunState.PAUSED, RunState.CANCELLED, RunState.TIMED_OUT):
+                    break
+                if lc.is_cancel_requested(rid):
+                    lc.request_cancel(rid, reason="mid_run_cancel")
+                    break
+                if lc.check_deadline(rid) or (time.time() - start > max_wall_sec):
+                    lc.enforce_timeout(rid)
+                    # also respect wall clock if deadline missing
+                    if RunState(self.store.get_run(rid)["state"]) != RunState.TIMED_OUT:
+                        self._safe_transition(rid, RunState.TIMED_OUT)
+                    break
+                if owner:
+                    lc.heartbeat(rid, owner=owner)
+                over = budget.exhausted()
+                if over:
+                    self.store.event(rid, "run.budget", {"reason": over})
+                    self._finalize(rid, budget, partial=True, note=over)
+                    return self._outcome(rid, partial=True, note=over)
 
-            graph = TaskGraph(self._tasks(rid))
-            if graph.all_done():
-                break
-            ready = graph.ready()
-            if not ready:
-                if graph.blocked():
-                    self._safe_transition(rid, RunState.BLOCKED)
-                break
-
-            for task in ready:
-                self._run_task(rid, task, budget, last_fp)
-                budget.charge(steps=1)
-                if budget.exhausted():
+                graph = TaskGraph(self._tasks(rid))
+                if graph.all_done():
+                    break
+                ready = graph.ready()
+                if not ready:
+                    if graph.blocked():
+                        self._safe_transition(rid, RunState.BLOCKED)
                     break
 
-        # verify + review handled inside _run_task; finalize
-        return self._finalize(rid, budget)
+                for task in ready:
+                    if lc.is_cancel_requested(rid):
+                        break
+                    self._run_task(rid, task, budget, last_fp)
+                    budget.charge(steps=1)
+                    if budget.exhausted():
+                        break
+
+            # verify + review handled inside _run_task; finalize
+            return self._finalize(rid, budget)
+        finally:
+            if owner:
+                lc.release_lease(rid, owner=owner)
 
     def _run_task(self, rid: str, task: Task, budget: pol.Budget,
                   last_fp: dict) -> None:
+        from saathi.agent_runtime.lifecycle import RunLifecycleController
+
+        if RunLifecycleController(self.store).is_cancel_requested(rid):
+            self.store.update_task(task.task_id, status="cancelled")
+            return
         defn = registry.get(task.agent)
         if not defn:
             self.store.update_task(task.task_id, status="skipped")
@@ -157,10 +291,26 @@ class Orchestrator:
         # Layer 10: scoped memory retrieval (never widens beyond task scope)
         context = self._retrieve_scoped(rid, task, defn)
 
+        from saathi.agent_runtime.gateway_exec import CancellationToken
+
+        cancel_token = CancellationToken(run_id=rid, store=self.store)
         try:
-            result = self.executor.run_turn(defn, task.objective, context=context)
+            result = self.executor.run_turn(
+                defn, task.objective, context=context, cancel_token=cancel_token
+            )
+        except RuntimeError as exc:
+            if "CANCELLATION" in str(exc).upper():
+                self.store.update_task(task.task_id, status="cancelled")
+                self.store.finish_agent_run(arid, "cancelled")
+                return
+            result = {"text": "", "status": "failed", "error": repr(exc)[:200]}
         except Exception as exc:
             result = {"text": "", "status": "failed", "error": repr(exc)[:200]}
+
+        if result.get("status") == "cancelled":
+            self.store.update_task(task.task_id, status="cancelled")
+            self.store.finish_agent_run(arid, "cancelled")
+            return
 
         budget.charge(tokens=result.get("tokens", 0), tool_calls=0)
 
@@ -300,15 +450,32 @@ class Orchestrator:
         return self.run(rid)
 
     def cancel(self, rid: str, actor: str = "user:ajay") -> None:
-        self.store.transition(rid, RunState.CANCELLED, actor=actor)
-        self.store.event(rid, "run.cancelled", {"actor": actor})
+        """Durable cancellation via lifecycle controller (idempotent)."""
+        from saathi.agent_runtime.lifecycle import RunLifecycleController
+
+        RunLifecycleController(self.store).request_cancel(
+            rid, actor=actor, reason="orchestrator_cancel"
+        )
 
     def retry_task(self, rid: str, task_id: str) -> dict:
+        from saathi.agent_runtime.lifecycle import RunLifecycleController
+
+        lc = RunLifecycleController(self.store)
+        if lc.is_cancel_requested(rid):
+            return self._outcome(rid, partial=True, note="cancelled")
+        if lc.check_deadline(rid):
+            lc.enforce_timeout(rid)
+            return self._outcome(rid, partial=True, note="timed_out")
+        run = self.store.get_run(rid)
+        if run and is_terminal(RunState(run["state"])):
+            # do not silently revive terminal runs — new attempt only via new run
+            return self._outcome(rid, partial=True, note="terminal_no_retry_in_place")
         self.store.update_task(task_id, status="pending")
         run = self.store.get_run(rid)
         if RunState(run["state"]) in (RunState.FAILED, RunState.PARTIALLY_COMPLETED,
                                       RunState.BLOCKED):
             self.store.transition(rid, RunState.RUNNING)
+        lc.bump_attempt(rid)
         return self.run(rid)
 
     # ── finalize ──────────────────────────────────────────────────────────

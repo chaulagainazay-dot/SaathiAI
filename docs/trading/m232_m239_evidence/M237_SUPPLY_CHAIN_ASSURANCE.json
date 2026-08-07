@@ -1,0 +1,468 @@
+{
+  "ok": true,
+  "all_pass": true,
+  "gates": [
+    {
+      "gate": "lockfile_presence",
+      "passed": true,
+      "detail": [
+        {
+          "path": "saathi-os/package-lock.json",
+          "present": true,
+          "fingerprint": "da18c88e154609ae4f46fdd53e715642701e03ed9f34ddfc0bc218166116339d",
+          "consistent": true,
+          "floating_refs": []
+        },
+        {
+          "path": "requirements.txt",
+          "present": true,
+          "fingerprint": "009a7ec9f92bf2662b2c3efebebe0a03576d775f54e91e5e195b6d83cb8e2cff",
+          "consistent": true,
+          "floating_refs": [
+            "anthropic>=0.40",
+            "fastapi>=0.110",
+            "uvicorn[standard]>=0.29",
+            "httpx>=0.27",
+            "python-dotenv>=1.0",
+            "python-multipart>=0.0.9",
+            "groq>=0.4.0",
+            "openai>=1.30",
+            "firebase-admin>=6.0",
+            "google-cloud-firestore>=2.0",
+            "feedparser>=6.0",
+            "pillow>=10.0",
+            "moviepy>=2.0",
+            "requests>=2.31",
+            "schedule>=1.2",
+            "python-telegram-bot>=20.0",
+            "google-cloud-storage>=2.10",
+            "opik>=2.0",
+            "tweepy>=4.0",
+            "webauthn>=2.0"
+          ]
+        },
+        {
+          "path": "pyproject.toml",
+          "present": true,
+          "fingerprint": "949fa18221511d09eefb268bc9e55303d87aceabc25f2d9ee6fe07ad04386041",
+          "consistent": true,
+          "floating_refs": []
+        }
+      ]
+    },
+    {
+      "gate": "lockfile_consistency",
+      "passed": true,
+      "detail": {
+        "ok": true,
+        "checks": [
+          {
+            "path": "saathi-os/package-lock.json",
+            "present": true,
+            "fingerprint": "da18c88e154609ae4f46fdd53e715642701e03ed9f34ddfc0bc218166116339d",
+            "consistent": true,
+            "floating_refs": []
+          },
+          {
+            "path": "requirements.txt",
+            "present": true,
+            "fingerprint": "009a7ec9f92bf2662b2c3efebebe0a03576d775f54e91e5e195b6d83cb8e2cff",
+            "consistent": true,
+            "floating_refs": [
+              "anthropic>=0.40",
+              "fastapi>=0.110",
+              "uvicorn[standard]>=0.29",
+              "httpx>=0.27",
+              "python-dotenv>=1.0",
+              "python-multipart>=0.0.9",
+              "groq>=0.4.0",
+              "openai>=1.30",
+              "firebase-admin>=6.0",
+              "google-cloud-firestore>=2.0",
+              "feedparser>=6.0",
+              "pillow>=10.0",
+              "moviepy>=2.0",
+              "requests>=2.31",
+              "schedule>=1.2",
+              "python-telegram-bot>=20.0",
+              "google-cloud-storage>=2.10",
+              "opik>=2.0",
+              "tweepy>=4.0",
+              "webauthn>=2.0"
+            ]
+          },
+          {
+            "path": "pyproject.toml",
+            "present": true,
+            "fingerprint": "949fa18221511d09eefb268bc9e55303d87aceabc25f2d9ee6fe07ad04386041",
+            "consistent": true,
+            "floating_refs": []
+          }
+        ],
+        "lock_fingerprint": "f55611e7f581a5cdd56bca44f0c193d5f8672da728a8851a6a12d445b67318e1",
+        "REAL_CONNECTIVITY_AUTHORIZED": false
+      }
+    },
+    {
+      "gate": "package_source_allow_list",
+      "passed": true,
+      "detail": []
+    },
+    {
+      "gate": "disallow_floating_git_dependencies",
+      "passed": true,
+      "detail": []
+    },
+    {
+      "gate": "identify_lifecycle_scripts",
+      "passed": true,
+      "detail": []
+    },
+    {
+      "gate": "hash_generated_certification_artifacts",
+      "passed": true,
+      "detail": "provenance content hashes recorded"
+    },
+    {
+      "gate": "verify_source_tree_state",
+      "passed": true,
+      "detail": "ALL_REQUIRED_SOURCE_COMMITTED"
+    },
+    {
+      "gate": "verify_clean_clone_status",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "gate": "verify_no_hidden_provider_dependency",
+      "passed": true,
+      "detail": "transport guard + audit"
+    },
+    {
+      "gate": "verify_no_credentials",
+      "passed": true,
+      "detail": "forbidden env + secret reject"
+    },
+    {
+      "gate": "verify_no_external_authenticated_requests",
+      "passed": true,
+      "detail": "provider transport blocked"
+    },
+    {
+      "gate": "preflight_fail_closed",
+      "passed": true,
+      "detail": [
+        {
+          "check": "correct_repository",
+          "ok": true,
+          "detail": "/Users/macbookpro/SaathiAI"
+        },
+        {
+          "check": "python_version",
+          "ok": true,
+          "detail": "3.12.13"
+        },
+        {
+          "check": "node_available",
+          "ok": true,
+          "detail": "/opt/homebrew/bin/node"
+        },
+        {
+          "check": "lockfile:saathi-os/package-lock.json",
+          "ok": true,
+          "detail": "/Users/macbookpro/SaathiAI/saathi-os/package-lock.json"
+        },
+        {
+          "check": "lockfile:requirements.txt",
+          "ok": true,
+          "detail": "/Users/macbookpro/SaathiAI/requirements.txt"
+        },
+        {
+          "check": "lockfile:pyproject.toml",
+          "ok": true,
+          "detail": "/Users/macbookpro/SaathiAI/pyproject.toml"
+        },
+        {
+          "check": "no_provider_credentials_in_env",
+          "ok": true,
+          "detail": []
+        },
+        {
+          "check": "no_secret_env_variables",
+          "ok": true,
+          "detail": []
+        },
+        {
+          "check": "disk_availability",
+          "ok": true,
+          "detail": "83264MB free"
+        },
+        {
+          "check": "database_writability",
+          "ok": true,
+          "detail": "/Users/macbookpro/SaathiAI/data/platform"
+        },
+        {
+          "check": "port_availability_sample",
+          "ok": true,
+          "detail": "at least one cert port free"
+        },
+        {
+          "check": "local_browser_hint",
+          "ok": true,
+          "detail": "playwright-managed"
+        },
+        {
+          "check": "network_isolation_settings",
+          "ok": true,
+          "detail": "runtime provider transport forbidden by design"
+        },
+        {
+          "check": "unexpected_local_imports",
+          "ok": true,
+          "detail": []
+        },
+        {
+          "check": "required_source_trees",
+          "ok": true,
+          "detail": "broker_sandbox + broker_readiness"
+        }
+      ]
+    }
+  ],
+  "passed": 12,
+  "failed": 0,
+  "REAL_CONNECTIVITY_AUTHORIZED": false,
+  "M237_SUPPLY_CHAIN_ASSURANCE": {
+    "all_pass": true,
+    "gates": [
+      {
+        "gate": "lockfile_presence",
+        "passed": true,
+        "detail": [
+          {
+            "path": "saathi-os/package-lock.json",
+            "present": true,
+            "fingerprint": "da18c88e154609ae4f46fdd53e715642701e03ed9f34ddfc0bc218166116339d",
+            "consistent": true,
+            "floating_refs": []
+          },
+          {
+            "path": "requirements.txt",
+            "present": true,
+            "fingerprint": "009a7ec9f92bf2662b2c3efebebe0a03576d775f54e91e5e195b6d83cb8e2cff",
+            "consistent": true,
+            "floating_refs": [
+              "anthropic>=0.40",
+              "fastapi>=0.110",
+              "uvicorn[standard]>=0.29",
+              "httpx>=0.27",
+              "python-dotenv>=1.0",
+              "python-multipart>=0.0.9",
+              "groq>=0.4.0",
+              "openai>=1.30",
+              "firebase-admin>=6.0",
+              "google-cloud-firestore>=2.0",
+              "feedparser>=6.0",
+              "pillow>=10.0",
+              "moviepy>=2.0",
+              "requests>=2.31",
+              "schedule>=1.2",
+              "python-telegram-bot>=20.0",
+              "google-cloud-storage>=2.10",
+              "opik>=2.0",
+              "tweepy>=4.0",
+              "webauthn>=2.0"
+            ]
+          },
+          {
+            "path": "pyproject.toml",
+            "present": true,
+            "fingerprint": "949fa18221511d09eefb268bc9e55303d87aceabc25f2d9ee6fe07ad04386041",
+            "consistent": true,
+            "floating_refs": []
+          }
+        ]
+      },
+      {
+        "gate": "lockfile_consistency",
+        "passed": true,
+        "detail": {
+          "ok": true,
+          "checks": [
+            {
+              "path": "saathi-os/package-lock.json",
+              "present": true,
+              "fingerprint": "da18c88e154609ae4f46fdd53e715642701e03ed9f34ddfc0bc218166116339d",
+              "consistent": true,
+              "floating_refs": []
+            },
+            {
+              "path": "requirements.txt",
+              "present": true,
+              "fingerprint": "009a7ec9f92bf2662b2c3efebebe0a03576d775f54e91e5e195b6d83cb8e2cff",
+              "consistent": true,
+              "floating_refs": [
+                "anthropic>=0.40",
+                "fastapi>=0.110",
+                "uvicorn[standard]>=0.29",
+                "httpx>=0.27",
+                "python-dotenv>=1.0",
+                "python-multipart>=0.0.9",
+                "groq>=0.4.0",
+                "openai>=1.30",
+                "firebase-admin>=6.0",
+                "google-cloud-firestore>=2.0",
+                "feedparser>=6.0",
+                "pillow>=10.0",
+                "moviepy>=2.0",
+                "requests>=2.31",
+                "schedule>=1.2",
+                "python-telegram-bot>=20.0",
+                "google-cloud-storage>=2.10",
+                "opik>=2.0",
+                "tweepy>=4.0",
+                "webauthn>=2.0"
+              ]
+            },
+            {
+              "path": "pyproject.toml",
+              "present": true,
+              "fingerprint": "949fa18221511d09eefb268bc9e55303d87aceabc25f2d9ee6fe07ad04386041",
+              "consistent": true,
+              "floating_refs": []
+            }
+          ],
+          "lock_fingerprint": "f55611e7f581a5cdd56bca44f0c193d5f8672da728a8851a6a12d445b67318e1",
+          "REAL_CONNECTIVITY_AUTHORIZED": false
+        }
+      },
+      {
+        "gate": "package_source_allow_list",
+        "passed": true,
+        "detail": []
+      },
+      {
+        "gate": "disallow_floating_git_dependencies",
+        "passed": true,
+        "detail": []
+      },
+      {
+        "gate": "identify_lifecycle_scripts",
+        "passed": true,
+        "detail": []
+      },
+      {
+        "gate": "hash_generated_certification_artifacts",
+        "passed": true,
+        "detail": "provenance content hashes recorded"
+      },
+      {
+        "gate": "verify_source_tree_state",
+        "passed": true,
+        "detail": "ALL_REQUIRED_SOURCE_COMMITTED"
+      },
+      {
+        "gate": "verify_clean_clone_status",
+        "passed": true,
+        "detail": null
+      },
+      {
+        "gate": "verify_no_hidden_provider_dependency",
+        "passed": true,
+        "detail": "transport guard + audit"
+      },
+      {
+        "gate": "verify_no_credentials",
+        "passed": true,
+        "detail": "forbidden env + secret reject"
+      },
+      {
+        "gate": "verify_no_external_authenticated_requests",
+        "passed": true,
+        "detail": "provider transport blocked"
+      },
+      {
+        "gate": "preflight_fail_closed",
+        "passed": true,
+        "detail": [
+          {
+            "check": "correct_repository",
+            "ok": true,
+            "detail": "/Users/macbookpro/SaathiAI"
+          },
+          {
+            "check": "python_version",
+            "ok": true,
+            "detail": "3.12.13"
+          },
+          {
+            "check": "node_available",
+            "ok": true,
+            "detail": "/opt/homebrew/bin/node"
+          },
+          {
+            "check": "lockfile:saathi-os/package-lock.json",
+            "ok": true,
+            "detail": "/Users/macbookpro/SaathiAI/saathi-os/package-lock.json"
+          },
+          {
+            "check": "lockfile:requirements.txt",
+            "ok": true,
+            "detail": "/Users/macbookpro/SaathiAI/requirements.txt"
+          },
+          {
+            "check": "lockfile:pyproject.toml",
+            "ok": true,
+            "detail": "/Users/macbookpro/SaathiAI/pyproject.toml"
+          },
+          {
+            "check": "no_provider_credentials_in_env",
+            "ok": true,
+            "detail": []
+          },
+          {
+            "check": "no_secret_env_variables",
+            "ok": true,
+            "detail": []
+          },
+          {
+            "check": "disk_availability",
+            "ok": true,
+            "detail": "83264MB free"
+          },
+          {
+            "check": "database_writability",
+            "ok": true,
+            "detail": "/Users/macbookpro/SaathiAI/data/platform"
+          },
+          {
+            "check": "port_availability_sample",
+            "ok": true,
+            "detail": "at least one cert port free"
+          },
+          {
+            "check": "local_browser_hint",
+            "ok": true,
+            "detail": "playwright-managed"
+          },
+          {
+            "check": "network_isolation_settings",
+            "ok": true,
+            "detail": "runtime provider transport forbidden by design"
+          },
+          {
+            "check": "unexpected_local_imports",
+            "ok": true,
+            "detail": []
+          },
+          {
+            "check": "required_source_trees",
+            "ok": true,
+            "detail": "broker_sandbox + broker_readiness"
+          }
+        ]
+      }
+    ]
+  }
+}

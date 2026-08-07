@@ -1,0 +1,13 @@
+{
+  "starting_branch": "milestone/m224-m231-read-only-broker-readiness",
+  "starting_sha": "97d2f8b8d132674b1b721ec623bd8054fe31ce9a",
+  "working_branch": "milestone/m232-m239-reproducibility-supply-chain",
+  "implementation_sha": "1e3f0a185c635b4c03201ac1db1ffc33d66e7b9a",
+  "preserved_unrelated": [
+    "docs/evidence/m25/*",
+    "docs/evidence/m27/*",
+    "docs/evidence/m28/*",
+    "docs/design-spec/"
+  ],
+  "m216_uncommitted_finding": "ALL_REQUIRED_SOURCE_COMMITTED \u2014 no uncommitted required broker_sandbox files"
+}

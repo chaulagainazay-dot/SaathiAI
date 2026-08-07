@@ -163,6 +163,24 @@ access is deny-by-default (no silent localhost or private-network browsing),
 and screenshots of passwords, payments, or trading pages are suppressed or
 masked before storage so evidence stays useful without becoming a secret archive.
 
+## Autonomous Mission Runtime (M69–M72)
+
+SaathiOS can now turn a bounded engineering objective into a durable plan, break it
+into dependency-aware work, assign specialist orchestration roles, run independent
+safe work in parallel, stop for approvals, recover after interruption, verify the
+result, and issue an evidence-backed final certificate. A mission does not gain new
+permissions by being autonomous: every tool action still goes through the same
+PlatformAgentRuntime and ExecutionGateway, every approval remains human-owned, and
+unknown side effects stop for review instead of being replayed.
+
+Operators can see real mission health, progress, active phase/task/agent, evidence,
+warnings, blockers, ETA, budgets, checkpoints, and final certification in Mission
+Control. Work survives restart through durable checkpoints, while finite retries,
+time/token/commit/test/browser budgets, no-progress limits, and cancellation prevent
+unbounded loops. This is the reusable platform foundation future HCG POS, Travel,
+Finance, CRM, ERP, and Voice modules may compose; it does not itself implement or
+activate any of those products.
+
 ## Voice OS (M12)
 
 Ajay can now talk to SaathiOS instead of typing — the same Chat brain,

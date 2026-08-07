@@ -1,0 +1,80 @@
+{
+  "schema": "m61.browser_cert.v1",
+  "bff": "http://127.0.0.1:8850",
+  "ui": "http://127.0.0.1:3210",
+  "mode": "build",
+  "hardGates": {
+    "plan_persist": {
+      "ok": true
+    },
+    "plan_survives_reload_api": {
+      "ok": true
+    },
+    "optimistic_concurrency_409": {
+      "ok": true
+    },
+    "notification_persist_dedupe": {
+      "ok": true
+    },
+    "saved_view_persist": {
+      "ok": true
+    },
+    "saved_view_secret_rejected": {
+      "ok": true
+    },
+    "template_persist": {
+      "ok": true
+    },
+    "draft_persist": {
+      "ok": true
+    },
+    "attention_mutation": {
+      "ok": true
+    },
+    "mutation_audited": {
+      "ok": true
+    },
+    "server_search": {
+      "ok": true
+    },
+    "tenant_isolation": {
+      "ok": true
+    },
+    "unauthenticated_rejected": {
+      "ok": true
+    },
+    "production_build_succeeds": {
+      "ok": true
+    },
+    "saved_view_survives_fresh_browser": {
+      "ok": true
+    },
+    "server_search_browser": {
+      "ok": true
+    },
+    "no_page_errors": {
+      "ok": true
+    },
+    "no_hydration_errors": {
+      "ok": true
+    },
+    "localhost_only_retained": {
+      "ok": true
+    }
+  },
+  "softGates": {
+    "notifications_render": {
+      "ok": true
+    }
+  },
+  "screenshots": [
+    "saved_views_persisted.png",
+    "notifications_persisted.png",
+    "server_search.png"
+  ],
+  "browserErrors": {
+    "pageErrors": [],
+    "hydration": []
+  },
+  "verdict": "PASS"
+}

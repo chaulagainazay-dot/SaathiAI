@@ -1,0 +1,32 @@
+{
+  "milestone": "M256-M263",
+  "repository_path": "/Users/macbookpro/SaathiAI",
+  "starting_branch": "milestone/m240-m247-provider-canary-planning",
+  "starting_sha": "1aace307d6d6d67117cda4b49d8e47f03cf54dcf",
+  "m248_m255_verdict": "INSTITUTIONAL_INVESTMENT_INTELLIGENCE_CERTIFIED_WITH_LIMITATIONS",
+  "m248_m255_evidence_present": true,
+  "m248_m255_code_present": true,
+  "m248_m255_commit_status": "untracked_working_tree_present_not_yet_committed_on_m240_branch",
+  "m255_verdict_file": "docs/trading/m248_m255_evidence/M255_VERDICT.json",
+  "m255_certify_file": "docs/trading/m248_m255_evidence/M255_CERTIFY.json",
+  "authoritative_cert_m255_supersedes_failed_ui_label": true,
+  "preserved_unrelated": [
+    "docs/evidence/m25/*",
+    "docs/evidence/m27/*",
+    "docs/evidence/m28/*",
+    "docs/design-spec/",
+    "M248-M255 untracked intelligence package and evidence"
+  ],
+  "authority_boundary": {
+    "PAPER_ONLY": true,
+    "SANDBOX_ONLY": true,
+    "RESEARCH_ONLY": true,
+    "OFFLINE_FIRST": true,
+    "NO_REAL_BROKER_CONNECTIVITY": true,
+    "NO_API_KEYS": true,
+    "NO_ORDER_SUBMISSION": true,
+    "NO_LIVE_TRADING": true
+  },
+  "recovery_status": "OK",
+  "notes": "M248-M255 exists as untracked working-tree artifacts with successful M255_VERDICT; branch currently milestone/m240-m247. Creating milestone/m256-m263-market-data-signal-validation without cleaning unrelated dirty files."
+}

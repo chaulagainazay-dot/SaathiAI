@@ -1,0 +1,183 @@
+{
+  "schema": "m336_m343.evidence_manifest.v1",
+  "milestone": "M336-M343",
+  "verdict": "PRIVATE_ALPHA_LAUNCH_READINESS_CERTIFIED_WITH_LIMITATIONS",
+  "max_state": "PRIVATE_ALPHA_READY_OFFLINE_INVITE_ONLY",
+  "owner_review_status": "OWNER_REVIEW_REQUIRED",
+  "file_count": 34,
+  "total_bytes": 3641914,
+  "files": [
+    {
+      "path": "docs/trading/m336_m343_evidence/M336_RECOVERY_BASELINE.json",
+      "bytes": 7235,
+      "sha256": "ebbc7b1cfcec6a4aed9a1135479a11b7c770c395213e80f203bcd11f68f7d630"
+    },
+    {
+      "path": "docs/private-alpha/m336_m343_evidence/LIMITATIONS.json",
+      "bytes": 10532,
+      "sha256": "afe175f00715e88de68de982c3a58557ac2c592f9d29d03971014b0a16b29aa3"
+    },
+    {
+      "path": "docs/private-alpha/m336_m343_evidence/M336_BASELINE_FULL_BACKEND_LOG.txt",
+      "bytes": 23956,
+      "sha256": "98d4f10f57aac26f8046f2017a511cb25ddd009826ba41cad9d120ba73784ad1"
+    },
+    {
+      "path": "docs/private-alpha/m336_m343_evidence/M336_BEFORE_FOCUSED_TEST_LOG.txt",
+      "bytes": 8981,
+      "sha256": "46129fce9b9d47d9ad5bf5bcb5b330abc3a04daa826be4423213298386daae19"
+    },
+    {
+      "path": "docs/private-alpha/m336_m343_evidence/M336_REGRESSION_INTENT_RECONSTRUCTION.json",
+      "bytes": 22020,
+      "sha256": "3d8393d3cf31b1daa0f5c414c70d198b5cc27efb04206b87252b677fac057b88"
+    },
+    {
+      "path": "docs/private-alpha/m336_m343_evidence/M337_AFTER_FOCUSED_TEST_LOG.txt",
+      "bytes": 901,
+      "sha256": "1e3a989a6dceb7031be0b56af93f10f4c5f8cb79c59c7216d3b5a7f25695c829"
+    },
+    {
+      "path": "docs/private-alpha/m336_m343_evidence/M337_REGRESSION_DEBT_CLOSURE.json",
+      "bytes": 11440,
+      "sha256": "12ac22d3eacaa0568a78e759081d3eb190204b730a38abd9e26d190a665a595a"
+    },
+    {
+      "path": "docs/private-alpha/m336_m343_evidence/M337_RELATED_MILESTONE_REGRESSIONS.txt",
+      "bytes": 191,
+      "sha256": "8f3044f1946319a55012bba2e98254f470a3bf83442a6ce539ba68c51cec109b"
+    },
+    {
+      "path": "docs/private-alpha/m336_m343_evidence/M338_PRIVATE_ALPHA_CONTRACT.json",
+      "bytes": 8526,
+      "sha256": "010e94ce70124640aeffa4e18556ae354c10368250679f14a1d5a02b39189abd"
+    },
+    {
+      "path": "docs/private-alpha/m336_m343_evidence/M339_PRIVATE_ALPHA_E2E_JOURNEY.json",
+      "bytes": 15677,
+      "sha256": "124c01c1ed456fd7b1f0f60d7d3c54a6ccd3065513ec68ad60fcdb3fc706ad80"
+    },
+    {
+      "path": "docs/private-alpha/m336_m343_evidence/M340_PRIVATE_ALPHA_UX_READINESS.json",
+      "bytes": 10129,
+      "sha256": "b799724db051d11b880f138231e01e8dd0a3a12c30cef2b4fcef599fcefac0e8"
+    },
+    {
+      "path": "docs/private-alpha/m336_m343_evidence/M341_SOAK_CONCURRENCY_RECOVERY_REPORT.json",
+      "bytes": 77096,
+      "sha256": "c2cec858ce2b39bd758909d280aa1a0dcf2fae2a5df9a4d987fdee2ec30f955f"
+    },
+    {
+      "path": "docs/private-alpha/m336_m343_evidence/M341_SOAK_RUN_LOG.txt",
+      "bytes": 305,
+      "sha256": "89706d7454c0cb2576ee9a5c0fdf229b3f9a77687dcfe571899201a32ca83b71"
+    },
+    {
+      "path": "docs/private-alpha/m336_m343_evidence/M343_BROWSER_CERT.json",
+      "bytes": 51115,
+      "sha256": "2606cb51a2439681942c6c99e564d19fba8161ca8e996fa697950be4fa98e2d2"
+    },
+    {
+      "path": "docs/private-alpha/m336_m343_evidence/M343_CLEAN_CLONE_CERTIFICATION.json",
+      "bytes": 1397,
+      "sha256": "45d64f0fba674fa6ff62a0142f62132810c88f98e2971bbe2539235de63497db"
+    },
+    {
+      "path": "docs/private-alpha/m336_m343_evidence/M343_FOCUSED_TEST_LOG.txt",
+      "bytes": 902,
+      "sha256": "ebc69827aa17225a3de729be1f94eaaa764945f7ed0c898c8567224a407dfcdf"
+    },
+    {
+      "path": "docs/private-alpha/m336_m343_evidence/M343_FULL_BACKEND_LOG.txt",
+      "bytes": 14694,
+      "sha256": "933b0850ac8e5fd6be9d1ffd0455f9d5f5d17f966b472148e669963d0d6cd58d"
+    },
+    {
+      "path": "docs/private-alpha/m336_m343_evidence/M343_LAUNCH_CHECKLIST.json",
+      "bytes": 8580,
+      "sha256": "78b8f74f05d264653f261ff8b58dc5d71dbc88ae0ddc12aed5c85a92f8b8e320"
+    },
+    {
+      "path": "docs/private-alpha/m336_m343_evidence/M343_PRODUCTION_BUILD_LOG.txt",
+      "bytes": 11573,
+      "sha256": "f5d25ee9c454f704267162613a1946ee00affe8b691cc971be3b8333e101d644"
+    },
+    {
+      "path": "docs/private-alpha/m336_m343_evidence/M343_SECURITY_THREAT_MODEL.json",
+      "bytes": 11026,
+      "sha256": "d1b5ac818a4f2871312db4c68ef28a40c6dae589caf3ec82aa70817b83d0d749"
+    },
+    {
+      "path": "docs/private-alpha/m336_m343_evidence/M343_TEST_RESULTS.json",
+      "bytes": 4082,
+      "sha256": "d294f687ea9dbb9b54e81342f60b3adda150d6e7daaaed1df60601942b217869"
+    },
+    {
+      "path": "docs/private-alpha/m336_m343_evidence/browser/private-alpha-approvals.png",
+      "bytes": 717044,
+      "sha256": "a1b10f921a2d6e2c1ce89c8f2436dfff196ed08e7c1cad38f55c8a4a2b46d992"
+    },
+    {
+      "path": "docs/private-alpha/m336_m343_evidence/browser/private-alpha-landing.png",
+      "bytes": 552053,
+      "sha256": "06292bf86a211914d407bedac9ef49368418cda785a3098b39354ad0bd1128b8"
+    },
+    {
+      "path": "docs/private-alpha/m336_m343_evidence/browser/private-alpha-missions.png",
+      "bytes": 694708,
+      "sha256": "19233e21a991fd7173352a7bbca856a92dce3f3110024a3d9b15b1b5a13b298f"
+    },
+    {
+      "path": "docs/private-alpha/m336_m343_evidence/browser/private-alpha-onboarding.png",
+      "bytes": 698514,
+      "sha256": "5909e969af03e51263c68bbe98e8c7e15ad9aee8e5dca8bce90b67e6ab1ad99d"
+    },
+    {
+      "path": "docs/private-alpha/m336_m343_evidence/browser/private-alpha-readiness-checklist.png",
+      "bytes": 286627,
+      "sha256": "663d81c4f86ea1fa8cbb9948ad9a7025bcb0fd1fce0465977c42193381dc45aa"
+    },
+    {
+      "path": "docs/private-alpha/m336_m343_evidence/browser/private-alpha-readiness.png",
+      "bytes": 338871,
+      "sha256": "40ccec101d9a50f56e58ef2de8dedcfd74b9882981a7cbd056017d14d236a2af"
+    },
+    {
+      "path": "docs/private-alpha/PRIVATE_ALPHA_SCOPE.md",
+      "bytes": 6175,
+      "sha256": "336c1f5d6c282ead549899895b72f68ca5760a335561e48c19f78a9fc1ae55cc"
+    },
+    {
+      "path": "docs/private-alpha/PRIVATE_ALPHA_RELEASE_RUNBOOK.md",
+      "bytes": 5863,
+      "sha256": "65801651f48863bda683078063e18efa1b6d21c930af275570b745188fee04eb"
+    },
+    {
+      "path": "docs/private-alpha/PRIVATE_ALPHA_ROLLBACK_RUNBOOK.md",
+      "bytes": 5730,
+      "sha256": "bbc84de9be7310b09e591259ce0ecde797944f3660e4356bbf6f99661bcbe6d9"
+    },
+    {
+      "path": "docs/private-alpha/PRIVATE_ALPHA_INCIDENT_RUNBOOK.md",
+      "bytes": 10001,
+      "sha256": "8213c5bfc011aa14d32863f88b8e4b72f6dccc52422c257e9965e12005b4fcbe"
+    },
+    {
+      "path": "docs/private-alpha/PRIVATE_ALPHA_TESTER_GUIDE.md",
+      "bytes": 6888,
+      "sha256": "de2d7d69724a94835d7ded6c4742c26eebeffe242c4436be76ab84ee8e089067"
+    },
+    {
+      "path": "docs/private-alpha/PRIVATE_ALPHA_LAUNCH_CHECKLIST.md",
+      "bytes": 5418,
+      "sha256": "2abecdc2df60455ed2a694cbc3680c813530d2ee1f6585533a56ae03a94a1d38"
+    },
+    {
+      "path": "docs/private-alpha/M336_M343_PRIVATE_ALPHA_LAUNCH_READINESS.md",
+      "bytes": 13664,
+      "sha256": "28d6215b11864ac7570d20db7fdfbe9423eac431c1f31dbf02a3ccd649989cf9"
+    }
+  ],
+  "raw_evidence_preserved": true,
+  "note": "Checksums are over the files as committed. Test logs are raw output, not summaries."
+}

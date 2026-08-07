@@ -1,0 +1,93 @@
+{
+  "instrument": "SPY",
+  "action": "BUY",
+  "strategy_id": "tf_dual_ma",
+  "why": "Recommendation is BUY on SPY because the paper strategy signal (uptrend_momentum) aligns with the current offline assessment at confidence 54%.",
+  "why_now": "Timing is driven by the latest evaluated bar/signal state for SPY. Supporting factors: SPY: short MA above long MA (trend support). Key tension: Offline/fixture data may not reflect live microstructure.",
+  "supporting_evidence": [
+    "SPY: short MA above long MA (trend support)",
+    "Primary signal reason: uptrend_momentum",
+    "Positive setup relative to strategy entry rules"
+  ],
+  "conflicting_evidence": [
+    "Offline/fixture data may not reflect live microstructure",
+    "Macro shocks can invalidate technical structure quickly",
+    "Entry may be late if move already extended",
+    "Opportunity cost if mean reversion occurs first"
+  ],
+  "assumptions": [
+    "Analysis uses paper/offline or fixture data only",
+    "No live broker quotes or order book",
+    "Transaction costs are modelled, not guaranteed",
+    "Past simulated behaviour is not future performance",
+    "Signal evaluated under strategy 'tf_dual_ma' rules"
+  ],
+  "risks": [
+    "Model risk: indicators may fail in regime shifts",
+    "Liquidity risk under stressed markets",
+    "Gap risk overnight or over weekends",
+    "Concentration risk if position oversized relative to portfolio",
+    "Current paper portfolio already shows elevated concentration"
+  ],
+  "confidence": 0.5379,
+  "confidence_band": "moderate",
+  "historical_behaviour": {
+    "note": "Comparable offline behaviour only",
+    "similar_setups": [
+      "Trend continuation after MA alignment (research fixture)",
+      "Mean-reversion bounce from lower band (research fixture)"
+    ],
+    "historical_win_rate_label": "NON_AUTHORITATIVE_FIXTURE"
+  },
+  "comparable_situations": [
+    {
+      "situation": "Prior offline uptrend pullback",
+      "outcome_label": "SIMULATED",
+      "lesson": "Confirm higher-timeframe trend before entry"
+    },
+    {
+      "situation": "False breakout under low volume",
+      "outcome_label": "SIMULATED",
+      "lesson": "Require volume confirmation for breakouts"
+    }
+  ],
+  "expected_upside": {
+    "label": "expected_upside_if_thesis_holds",
+    "expected_return_if_correct": 0.0677,
+    "horizon": "strategy_default",
+    "note": "Illustrative model range for paper research only"
+  },
+  "expected_downside": {
+    "label": "expected_downside_if_thesis_fails",
+    "expected_loss_if_wrong": 0.057,
+    "stop_reference": "ATR(14)*3 from entry; trail after +1R",
+    "note": "Not a guaranteed loss bound; gaps can exceed stops"
+  },
+  "invalidation_conditions": [
+    "Thesis invalidated if strategy exit conditions fire",
+    "Kill-switch or risk limit breach forces flat paper posture",
+    "Data quality failure or stale marks suspend recommendations",
+    "Break of key support / MA structure invalidates long thesis",
+    "Volume collapse or failed breakout cancels entry quality"
+  ],
+  "human_summary": "BUY SPY (paper). Confidence moderate (54%). If correct, illustrative upside ~6.8%; if wrong, illustrative downside ~5.7%. Not live trading advice.",
+  "investor_readable": true,
+  "not_financial_advice": true,
+  "disclaimer": "Research explanation for paper portfolios only. Not investment advice. Not a live order. Not a guarantee.",
+  "LIVE_TRADING_AUTHORIZED": false,
+  "BROKER_CONNECTIVITY_AUTHORIZED": false,
+  "API_KEYS_ACCEPTED": false,
+  "OAUTH_AUTHORIZED": false,
+  "ORDER_SUBMISSION_AUTHORIZED": false,
+  "LIVE_MARKET_DATA_AUTHORIZED": false,
+  "LIVE_DATA_DEPENDENCY": false,
+  "paper_only": true,
+  "sandbox_only": true,
+  "offline_capable": true,
+  "no_broker_connection": true,
+  "no_api_keys": true,
+  "no_oauth": true,
+  "no_order_submission": true,
+  "no_live_data_dependency": true,
+  "no_live_trading": true
+}

@@ -1,0 +1,111 @@
+{
+  "schema": "m120.skill_browser_cert.v1",
+  "capturedAt": "2026-07-29T02:02:47.819Z",
+  "hardGates": {
+    "discover_valid_ge_3": {
+      "ok": true,
+      "detail": "8"
+    },
+    "invalid_rejected": {
+      "ok": true,
+      "detail": "malicious"
+    },
+    "registered_disabled": {
+      "ok": true,
+      "detail": "disabled"
+    },
+    "executed": {
+      "ok": true,
+      "detail": "exec"
+    },
+    "no_direct_tools": {
+      "ok": true,
+      "detail": "tools"
+    },
+    "approval_blocked": {
+      "ok": true,
+      "detail": "appr"
+    },
+    "disabled_blocked": {
+      "ok": true,
+      "detail": "disable"
+    },
+    "upgraded": {
+      "ok": true,
+      "detail": "1.1.0"
+    },
+    "rolled_back": {
+      "ok": true,
+      "detail": "1.0.0"
+    },
+    "quarantine_blocked": {
+      "ok": true,
+      "detail": "q"
+    },
+    "cert_verdict": {
+      "ok": true,
+      "detail": "SKILL_ECOSYSTEM_CERTIFIED_WITH_LIMITATIONS"
+    },
+    "no_marketplace": {
+      "ok": true,
+      "detail": "mkt"
+    },
+    "no_remote": {
+      "ok": true,
+      "detail": "remote"
+    },
+    "no_production": {
+      "ok": true,
+      "detail": "prod"
+    },
+    "skill_panel_present": {
+      "ok": true,
+      "detail": "panel"
+    },
+    "ui_discovered": {
+      "ok": true,
+      "detail": "disc"
+    },
+    "ui_skills": {
+      "ok": true,
+      "detail": "skills"
+    },
+    "ui_no_marketplace": {
+      "ok": true,
+      "detail": "mkt"
+    },
+    "logout_cleanup": {
+      "ok": true,
+      "detail": "cleanup"
+    }
+  },
+  "steps": [
+    {
+      "step": "api_skill_lifecycle",
+      "ok": true,
+      "apiResult": {
+        "token": "AhL9rma0aML12F3niQTSrm2kLwMw9pcdvI7aFHpg4FE",
+        "discovered_valid": 8,
+        "invalid_rejected": true,
+        "registered_disabled": true,
+        "executed": true,
+        "direct_tools": false,
+        "approval_blocked": true,
+        "disabled_blocked": true,
+        "upgraded": "1.1.0",
+        "rolled_back": "1.0.0",
+        "quarantine_blocked": true,
+        "cert_verdict": "SKILL_ECOSYSTEM_CERTIFIED_WITH_LIMITATIONS",
+        "marketplace": false,
+        "remote_install": false,
+        "production": false
+      }
+    }
+  ],
+  "result": "SKILL_BROWSER_CERT_PASSED",
+  "marketplace_authorized": false,
+  "remote_install_authorized": false,
+  "production_authorized": false,
+  "screenshot": "/Users/macbookpro/SaathiAI/docs/evidence/m120/browser/m120_skill_panel.png",
+  "browser_certified": true
+}

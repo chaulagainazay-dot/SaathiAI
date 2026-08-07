@@ -28,6 +28,266 @@ If the answer is the latter, the feature belongs in the product layer, not the p
 
 ## 3. Current Platform State
 
+### M80–M86 Live Conversational Intelligence (2026-07-28)
+
+* **What:** Live Voice now uses real model-backed multi-turn conversation via
+  centralized `ConversationService` (Ollama localhost NDJSON streaming when
+  available). Deterministic template replies are no longer the default
+  intelligence path. Barge-in cancels generation and speech; logout clears
+  session memory.
+* **Model fit:** Prefers already-installed `qwen2.5:1.5b` on M2/8 GB; no auto
+  download. Tools are never executable by the model.
+* **Evidence:** `docs/evidence/m86/M86_CERTIFICATION_SUMMARY.json`.
+* **Limits:** Small-model factual drift; synthetic browser media (not human mic);
+  production not authorized.
+
+### M79 Real-Time Voice Runtime (2026-07-28)
+
+* **What:** SaathiOS can hold a live, interruptible voice conversation: one mic
+  button, explicit permission, partial transcripts, conversational Yeti replies,
+  spoken responses via the existing SpeechService, and barge-in that stops
+  playback and resumes listening. Logout clears voice sessions.
+* **How:** `saathi/platform/voice/runtime/` centralizes VoiceSessionManager,
+  VoiceInputService, VAD, provider-neutral STT (browser streaming, optional
+  Whisper-compatible if installed, optional macOS helper, unavailable),
+  ConversationRuntime, SpeechRuntime (segments → SpeechService), and exclusive
+  AudioPlaybackController. Shell Live Voice dock is in the unified shell.
+* **Does not replace:** SpeechService, Platform/Mission runtime, Identity, RBAC
+  core, ExecutionGateway, Approvals, ModuleRegistry.
+* **Verified:** 17 M79 backend tests, 15 M74 regression, 10 frontend voice
+  contracts; shell=False; no public listeners; no raw audio persistence; no auto
+  model download.
+* **Limits:** automation cannot always grant getUserMedia; production not
+  authorized; Whisper/macOS STT not auto-installed.
+
+### M69–M72 Autonomous Mission Runtime (2026-07-28)
+
+* **What:** SaathiOS can now plan, decompose, schedule, execute, review, recover,
+  resume, and certify bounded engineering missions through a durable platform
+  runtime. The explicit model is Mission → Goal → Phase → Milestone → Task →
+  Subtask, followed by append-only Evidence, Decision, Checkpoint, Review, and
+  Certification artifacts.
+* **How:** `saathi/platform/mission_runtime/` composes the existing platform mission,
+  store, identity/context, RBAC, project/workspace, audit, approval, evidence,
+  `PlatformAgentRuntime`, and `ExecutionGateway` authorities. It adds a validated
+  priority DAG, finite decision/scheduling cycles, bounded parallel batches, eight
+  orchestration roles, resource budgets, confirmed-failure-only retry, no-replay
+  recovery, authenticated APIs, and a backend-driven Mission Dashboard in the
+  existing shell.
+* **Certification:** final certification is server-authored and atomic. It requires
+  completed tasks, no blockers, passing mission-owned evidence, independent approved
+  review, passing test/browser states, valid commit references, and a fresh durable
+  checkpoint whose task/resource/status snapshot matches. The runtime and immutable
+  certificate transition together to `CERTIFIED`.
+* **Verified:** 18 M69–M72 tests, 138 related platform tests, full backend 5,257
+  passed/1 skipped, frontend 183, lint/build clean, production browser PASS (33 hard,
+  3 responsive, 2 accessibility; zero page/console/hydration errors), production
+  dependency audit clean, and changed production source secret-clean.
+* **Boundaries:** single-host SQLite/local execution; no distributed worker service,
+  background mission daemon, production activation, cloud deployment, or financial/
+  trading authority. `MISSION_RUNTIME_COMPLETE`.
+
+### M61 Backend workflow persistence & safe mutation APIs (2026-07-26)
+
+* **What:** first backend milestone since M56. Replaced every M60 frontend-only
+  placeholder with durable, server-authoritative APIs: mission plans, notifications,
+  saved views, workflow templates, attention acknowledge/resolve/reopen, drafts, and
+  server search — all permission-gated, audited, tenant-scoped, and optimistic-
+  concurrency checked. Execution authority unchanged.
+* **How:** `saathi/platform/models.py` (5 new permissions), `store.py` (`_migrate_m61`
+  + CRUD for 6 tables + revisions + search, versioned), `workflow_service.py`
+  (ctx-gated + audit + concurrency mapping + secret rejection), 20 endpoints in
+  `api.py` under `/api/v1/platform/workflow/*` (409 on stale writes, 400 on secret
+  payloads). Client adapter `saathi-os/lib/workflow-api.js`; M60 pages rewired
+  (saved-views/notifications/search/attention/plan/templates) with no UX redesign.
+* **Capability shift:** plan DRAFT_ONLY→SERVER_PERSISTED; notifications DERIVED→
+  SERVER_PERSISTED+AUDITED; saved-views/templates LOCAL_ONLY→SERVER_PERSISTED;
+  attention BLOCKED→SERVER_AUTHORIZED+AUDITED; search loaded-records→SERVER_AUTHORIZED.
+* **Verified:** 11 M61 backend tests (service+HTTP+concurrency+RBAC+isolation+audit);
+  53 existing platform tests pass (no regression); FE 130 unit + lint + build green;
+  M61 cert proves server data survives a FRESH browser (no localStorage). `M61_COMPLETE_WITH_LIMITATIONS`.
+* **Limits:** single-host SQLite; incremental UI draft adoption; notification synthesis
+  client-triggered; production unauthorized. Evidence: `docs/platform/M61_*`, `m61_evidence/`.
+
+### M60 Guided operator workflows & safe action orchestration (2026-07-26)
+
+* **What:** turned the M59 spatial workspaces into guided operator journeys —
+  first-run onboarding, mission creation, mission planning + execution readiness,
+  agent selection, approval-request preparation, operator action queue, notification
+  center, evidence timeline, saved views, cross-workspace search, workflow templates,
+  role-aware actions, and server reconciliation. 13 new `/platform/*` routes.
+* **How:** `lib/operator.js` (pure, 18 tests) with an authoritative CAPABILITY_MATRIX
+  deciding LIVE / READ_ONLY / DRAFT_ONLY / DERIVED / LOCAL_ONLY / BLOCKED per workflow;
+  `lib/local-store.js` (non-sensitive local state); `components/spatial/GuidedWorkflow.jsx`
+  (stepper, stage, role notice, draft banner, reconciliation chip). Reuses the M59
+  SpatialWorkspaceShell. No backend change.
+* **LIVE paths (real APIs):** mission create (POST /missions), project create
+  (POST /projects), approval request (POST /approvals), governed execution
+  (POST /execute, read-only tool). Bounded states elsewhere: plan DRAFT_ONLY,
+  notifications DERIVED, saved views/templates LOCAL_ONLY, search over authorized
+  loaded records, attention ack/resolve BLOCKED (no API).
+* **Verified:** production browser cert PASS (25 hard gates, 0 page/hydration errors);
+  dev regression PASS; axe 0 critical (6 serious pre-existing chrome); responsive/
+  reduced-motion PASS; 130/130 unit; lint/build clean; M59 cert re-run PASS. Soft:
+  live UI mission-submit races a cold-start backend session 401 in the isolated cert
+  env (create path proven by fixtures + tests).
+* **Safety:** all M57–M59 boundaries retained; approvals server-owned; no browser-
+  direct execution; production not authorized. `M60_COMPLETE_WITH_LIMITATIONS`.
+  Evidence: `docs/platform/M60_*`, `m60_evidence/`.
+
+### M59 Spatial workspaces, command interface & UI certification (2026-07-26)
+
+* **What:** completed the four standalone spatial operator workspaces deferred from
+  M58 — Mission Control, Agent Constellation, Approval Authority Center, Runtime
+  Attention Center — each with a list + detail route, plus a global ⌘K command
+  palette, a unified focus-trapped context drawer, and a shared `SpatialWorkspaceShell`.
+* **How:** `saathi-os/lib/workspace.js` (pure normalizers: mission/agent/approval/
+  attention view-models, lifecycle + severity mapping, command generation) +
+  `lib/platform-client.js` (shared authenticated `/api/v1/platform/*` hook) +
+  `components/spatial/{SpatialWorkspaceShell,SpatialCommandPalette,SpatialContextDrawer,
+  RequireSession,primitives}` + 8 routes under `app/platform/`. No backend change.
+* **API truth:** no per-mission API → detail composed by `mission_id` matching;
+  approvals decided via server `POST /approvals/{id}/decide` (never optimistic);
+  attention = flagged executions, cancel-only (no acknowledge/resolve API invented).
+* **Verified:** production-build browser cert PASS (21 hard gates, 0 page/hydration
+  errors); dev regression PASS; axe-core 0 critical (10 serious, all pre-existing
+  chrome/M58); responsive 390px PASS; reduced-motion PASS; 112/112 unit; lint/build
+  clean. 15 cert screenshots. Fixed a real critical a11y bug (palette aria-required-
+  parent) + a double-⌘K-palette conflict with the global shell.
+* **Safety:** all M57/M58 boundaries retained. `M59_COMPLETE_WITH_LIMITATIONS`.
+  Limits: axe≠full WCAG, lab perf≠field CWV, mission/attention actions read-only
+  where no safe API exists. Evidence: `docs/platform/M59_*`, `m59_evidence/`.
+
+### M58 Glass Frame interface & central AI command center (2026-07-26)
+
+* **What:** `/platform` and `/platform/ops` transformed from card-grid dashboards into
+  a spatial Glass Frame AI operating system — a central animated `SaathiCore`, a
+  floating 12-module ring connected by luminous curved paths, and glass detail panels.
+* **How:** `saathi-os/lib/spatial.js` (pure semantics: module registry, signal mapping,
+  ring geometry, hydration-stable rounding) + `saathi-os/components/spatial/*`
+  (SaathiCore, SpatialMap, GlassFrame, StatusPulse, ContextDrawer, SpatialIcon, …) +
+  additive Glass Frame token layer in `globals.css`. No backend change.
+* **Semantics:** cyan=active, amber=authority/attention, red=blocked, blue-grey=idle,
+  green=verified. Every connection maps to a real relationship; counts are live or
+  explicit "Unavailable" (never fabricated).
+* **Verified:** M58_BROWSER_CERTIFIED (13 gates, 0 hydration/page errors); M54–M57
+  re-run all CERTIFIED; 94/94 unit; lint/build clean. Two real bugs caught via
+  screenshot/console review and fixed (core false-BLOCKED on healthy gateway; SSR
+  float-precision hydration mismatch).
+* **Safety:** PlatformAgentRuntime canonical; ExecutionGateway sole tool authority;
+  connectors DRY_RUN_ONLY; financial/trading disabled; multi-host disabled; production
+  not authorized — all labels visible + truthful. `M58_COMPLETE_WITH_LIMITATIONS`.
+  Deferred to M59: standalone Mission/Agents/Approval/Attention spatial screens.
+
+### M57 localhost daily-use hardening & operator launcher (2026-07-25)
+
+* **Launcher** (`bin/saathi-local`, symlinked ~/.local/bin): start/stop/restart/
+  status/open/logs/doctor. PID-file + command-signature ownership — reuses any
+  healthy SaathiOS process, stops only what it started, fails closed on unrelated
+  listeners. Localhost-only (127.0.0.1/localhost), never 0.0.0.0, no tunnels, no sudo.
+* **Single-host heartbeat** (`ClusterCoordinator.beat_local_node` on a 30s BFF
+  task): node-local health accurate while running, stale after stop. No authority.
+* **Cold-load UI hardening** (/platform/ops): loading state + bounded retry/backoff;
+  transient cold-compile races no longer show a fatal error.
+* **local_readiness** module wired into doctor + release gate. macOS ⌥⌘B shortcut
+  PREPARED (scripts/macos/saathi-open.sh → saathi-local open), operator-assigned.
+  Login LaunchAgent `com.saathi.local-launcher` prepared, DISABLED.
+* **Safety**: no production/connectors/financial/trading/multi-host; existing
+  `com.saathi.local` agent never modified. `M57_COMPLETE_WITH_LIMITATIONS` (local).
+
+### M56 distributed runtime foundation (single-host compatible) (2026-07-25)
+
+* **Distributed foundation** (`saathi/platform/cluster.py`): RuntimeNode/Cluster,
+  WorkerLease/ExecutionLease, RuntimeHeartbeat, DistributedClock; WorkerRegistry
+  (register/heartbeat/drain/pause/resume/retire), LeaseCoordinator (single-owner
+  acquire/renew/verify/transfer/recover, fail-closed), SchedulerFoundation
+  (advisory FIFO/priority plan, pause/resume), Topology, NodeHealth, Distributed
+  Metrics, and a 7-scenario recovery certifier. Config-backed (m56_*), NO schema
+  migration, backwards compatible.
+* **Advisory only**: PlatformAgentRuntime stays canonical; ExecutionGateway stays
+  the sole registered-tool authority; leases/scheduler never execute or dispatch.
+  Single-host; multi-host prepared, not enabled.
+* **Operator console** (`/platform/ops`): cluster/topology/node-health/scheduler/
+  distributed-metrics/recovery cards. APIs under `/cluster/*`.
+* **Safety**: tenant isolation, no duplicate ownership/execution, no replay,
+  connectors dry-run, financial/trading disabled, Trading Guardian advisory-only,
+  production not authorized. `M56_COMPLETE_WITH_LIMITATIONS` (local; not pushed,
+  not merged, not deployed).
+
+### M55 platform release candidate & operational excellence (2026-07-25)
+
+* **Release-excellence layer** (`saathi/platform/release.py`): expanded health,
+  dashboard metrics, backup validation (checksum + integrity + non-destructive
+  restore simulation), recovery certification (restart/dispatch/binding scenarios
+  proving no duplicate/escalation/replay/corruption), and a release validator
+  (PASS/WARNING/FAIL/UNKNOWN + readiness score). Additive; no new runtime,
+  gateway, RBAC, identity, or database.
+* **Release gate CLI** (`python -m saathi.platform.release_check`): deterministic
+  RC report over an isolated platform; verdict `READY_WITH_LIMITATIONS` (score
+  92.5) — advisory only, enables nothing.
+* **Operator console** (`/platform/ops`): read-only health/metrics/release/
+  recovery/backup/security dashboard. Browser-certified: `M55_BROWSER_CERTIFIED`.
+* **APIs**: `/release/health|metrics|validate|backup|recovery`.
+* **Safety**: production not authorized, connectors dry-run, financial/trading
+  disabled, Trading Guardian unengaged/advisory-only, backup/purge non-destructive.
+  `M55_COMPLETE_WITH_LIMITATIONS` (local; not pushed, not merged, not deployed).
+
+### M54 private-alpha operational readiness & browser certification (2026-07-25)
+
+* **Operational readiness layer** (`saathi/platform/readiness.py`): tenant-scoped
+  diagnostics, bounded evidence export (allowlist + forbidden-key scrub +
+  deterministic content hash + audit), and dry-run retention preview with
+  legal/operator holds. No new runtime, gateway, RBAC, identity, or database.
+* **Browser certification** (`saathi-os/scripts/m54_browser_cert.mjs`): managed
+  BFF+UI+Chromium over an isolated `SAATHI_PLATFORM_DB`, certifying the
+  authenticated `/platform` operator workflow — auth/tenancy, binding admin,
+  governed execution, export, dry-run retention, logout — plus API safety gates.
+* **Recovery rehearsals** (`tests/test_m54_readiness.py`): restart preserves
+  waiting executions; recorded-dispatch resume is refused (non-replay).
+* **CORS**: `X-Platform-Token` added to the allowlist so the split-origin
+  private-alpha browser workflow works; scoped `SAATHI_CORS_ORIGINS`.
+* **Safety**: connectors dry-run, financial/trading execution disabled, Trading
+  Guardian unengaged/advisory-only, production not authorized. Retention never
+  deletes. `M54_COMPLETE_WITH_LIMITATIONS` (local; not merged, not deployed).
+
+### M53 runtime operations and binding administration (2026-07-24)
+
+* **Multiple bounded identities:** durable, workspace-scoped platform-agent
+  bindings with lifecycle, versioning, optional project/mission scope,
+  tool/capability allowlists, and authority ceilings.
+* **Private-alpha operations:** tenant-scoped execution list/detail, lifecycle
+  timelines, attention classification, bounded metrics, cancellation, and
+  permission-controlled reconciliation.
+* **Non-replay recovery:** dispatch uncertainty remains paused for manual review;
+  recorded dispatch can never be resumed through administrative action.
+* **Canonical authority retained:** resumable work returns through
+  `PlatformAgentRuntime`; only `ExecutionGateway` may execute a registered tool.
+* **Safety:** connector mutations remain dry-run, financial/trading execution
+  remains disabled, Trading Guardian remains unengaged/advisory-only, and
+  production is not authorized.
+* **Remote status:** `M53_REMOTE_CERTIFIED_WITH_LIMITATIONS`. Draft PR #11 (base
+  M52), CI-certified — reliability PR-head run 30108250805 passed
+  (critical-regressions + full-suite). Not merged; no deployment. Evidence:
+  `docs/platform/M53_REMOTE_VERIFICATION.md`.
+
+### M52 platform-agent runtime consolidation (2026-07-23)
+
+* **Canonical path:** token-trusted identity/session/tenant context →
+  `PlatformAgentBinding` → `PlatformAgentRuntime` → Approval Center →
+  M49 `ExecutionGateway` → tool service/registry/adapter/audit.
+* **One execution authority:** the runtime orchestrates lifecycle and context;
+  it does not replace or weaken ExecutionGateway.
+* **Lifecycle:** durable explicit states, legal transitions, cancellation,
+  timeout, scoped idempotency, terminal replay, and restart reconciliation in
+  the existing platform SQLite database.
+* **Recovery safety:** a recorded dispatch is never automatically replayed
+  after restart; uncertain work pauses for review.
+* **Legacy closure:** `AgentExecutor` direct gateway and special local/video
+  tool dispatch were removed; an unbound agent fails closed.
+* **Safety:** connector mutations remain dry-run, financial execution remains
+  prohibited, Trading Guardian remains unengaged/advisory-only, and production
+  is not authorized.
+
 ### Platform M30 connector conformance and certification (2026-07-17)
 
 * **Module:** `saathi.connectors.conformance` — specification, sandbox harness, fingerprint, drift, revoke, CLI.
@@ -1825,6 +2085,43 @@ ARCHITECTURE, DOMAIN_POLICY, EVIDENCE_REDACTION.
 **Verdict: PRODUCTION BROWSER ADAPTERS, DOMAIN POLICY, WORKFLOW MIGRATION, AND EVIDENCE REDACTION GOVERNED**
 — NOT full production deploy (live CDP still needs managed loopback endpoint +
 binary; human signed-queue workflows remain isolated; pixel OCR not required).
+
+## M73–M77 — Voice Output Foundation (2026-07-28)
+
+SaathiOS speech output is centralized in `saathi.platform.voice.SpeechService`.
+It composes existing PlatformStore identity/context/RBAC, audit, evidence,
+notifications, module health, and runtime lifecycle patterns. Modules and browser
+surfaces do not call provider executables or VoxCPM directly.
+
+The canonical speech layer persists metadata and artifact references, not request
+text or raw reference audio. It bounds text, queue depth, concurrency, timeouts,
+artifact bytes, retention, retries, and recovery. States are queued, preparing,
+synthesizing, streaming, playing, completed, cancelled, failed, unavailable, and
+expired. Heavy-provider concurrency defaults to one.
+
+Providers:
+
+- macOS system speech is the lightweight local English baseline, executed through
+  safe argument arrays and process-group cancellation;
+- VoxCPM is an optional disabled adapter for explicit GGUF/Metal CLI or loopback
+  service configuration, with no application-start import, process start, model
+  discovery download, or weight download;
+- the unavailable provider makes absence an explicit platform state.
+
+Voice profiles remain provider-neutral. `saathi_default` and the written
+`yeti_teacher` design are built in. Cloning/reference enrollment is rejected until
+the complete rights, consent, audit, labeling, revocation, deletion, and
+public-figure safety system exists.
+
+The unified shell exposes explicit Speak, Play, and Stop controls, provider/fallback
+state, profile and rate selection, and safe local preferences. There is no autoplay.
+IELTS speaks only bounded backend feedback through the Yeti profile and excludes the
+learner submission.
+
+M77 closes with limitations: backend/native English synthesis is runtime-verified,
+but the dedicated production browser speech journey did not pass its bounded retry
+budget. VoxCPM is not installed or runtime-verified, Nepali is unsupported-not-
+verified, cloning is disabled, and production use remains unauthorized.
 
 ## ECP M17.24 — External Capability Program foundation (2026-07-15)
 

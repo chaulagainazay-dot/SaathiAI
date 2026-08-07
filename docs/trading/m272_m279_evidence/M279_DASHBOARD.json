@@ -1,0 +1,312 @@
+{
+  "title": "Multi-Strategy Research Lab Control Center",
+  "verdict_target": "MULTI_STRATEGY_RESEARCH_LAB_AND_ADAPTIVE_PORTFOLIO_INTELLIGENCE_CERTIFIED_WITH_LIMITATIONS",
+  "max_state": "RESEARCH_PORTFOLIO_AND_PAPER_CANDIDATE_EVALUATION_ONLY",
+  "statements": [
+    "RESEARCH ONLY",
+    "OFFLINE-FIRST",
+    "PAPER ONLY",
+    "SANDBOX ONLY",
+    "NO BROKER CONNECTIVITY",
+    "NO ACCOUNT ACCESS",
+    "NO CREDENTIALS",
+    "NO ORDER EXECUTION",
+    "NO LIVE TRADING",
+    "PAPER CANDIDATE DOES NOT AUTHORISE ORDER EXECUTION",
+    "NO GUARANTEED PROFITABILITY",
+    "RESEARCH RESULTS DO NOT CONSTITUTE INVESTMENT ADVICE",
+    "HUMAN REVIEW REQUIRED FOR PAPER CANDIDATE"
+  ],
+  "overview": {
+    "experiment_count": 2,
+    "by_status": {
+      "DRAFT": 1,
+      "COMPLETED": 1
+    },
+    "candidate_count": 1,
+    "candidates_by_state": {
+      "VALIDATION_FAILED": 1
+    },
+    "paper_candidates": 0,
+    "preserved_oos_failures": [
+      {
+        "instrument": "AAPL",
+        "strategy_id": "tf_dual_ma",
+        "state": "OUT_OF_SAMPLE_FAILED"
+      },
+      {
+        "instrument": "BTCUSDT",
+        "strategy_id": "tf_dual_ma",
+        "state": "OUT_OF_SAMPLE_FAILED"
+      }
+    ],
+    "dataset_status": "BOUNDED_REAL_HISTORICAL_DATA_VALIDATED_WITH_LIMITATIONS"
+  },
+  "experiments": [
+    {
+      "ok": true,
+      "experiment_id": "exp_773401c116470147",
+      "experiment_version": "v1",
+      "name": "cert_gate_draft_only",
+      "status": "DRAFT",
+      "config_checksum": "fffeff5599fb24f6a1983f02c150bd905623b537467bb0f137aa548150187d2e",
+      "parent_id": null,
+      "parent_version": null,
+      "actor": "system",
+      "created_at": 1785397478.6935208,
+      "execution_at": null,
+      "immutable": false,
+      "evidence_hash": null,
+      "metadata": {
+        "benchmark": "buy_hold",
+        "certified_experiment_requires_pre_registration": true,
+        "configuration_checksum": "fffeff5599fb24f6a1983f02c150bd905623b537467bb0f137aa548150187d2e",
+        "creation_timestamp": 1785397478.693417,
+        "dataset_ids": [],
+        "dataset_versions": {},
+        "description": "must not run without pre-registration",
+        "embargo_period": {
+          "bars": 2
+        },
+        "evidence_references": [],
+        "execution_timestamp": null,
+        "experiment_id": "exp_773401c116470147",
+        "experiment_name": "cert_gate_draft_only",
+        "experiment_version": "v1",
+        "feature_ids": [
+          "sma_10",
+          "sma_20"
+        ],
+        "feature_versions": {
+          "sma_10": "v1",
+          "sma_20": "v1"
+        },
+        "fixed_parameters": {
+          "sma_fast": 10,
+          "sma_slow": 20
+        },
+        "git_sha": "a180a78998a2a416b3277efa0a07a7bc4aed6dfd",
+        "hypothesis": "",
+        "instrument_universe": [
+          "DEMO"
+        ],
+        "limitations": [],
+        "liquidity_assumptions": {
+          "min_adv_usd": 1000000
+        },
+        "operator": "system",
+        "parameter_search_space": {},
+        "parent_id": null,
+        "parent_version": null,
+        "portfolio_objective": "research_robustness",
+        "position_limits": {
+          "max_weight": 1.0
+        },
+        "purge_period": {
+          "bars": 0
+        },
+        "random_seed": 99,
+        "rebalance_frequency": "daily",
+        "regime_definitions": [],
+        "registry_version": "m272.experiment_registry.v1",
+        "research_question": "",
+        "risk_limits": {
+          "max_drawdown": 0.25,
+          "max_leverage": 1.0
+        },
+        "slippage_model": {
+          "slippage_bps": 8.0
+        },
+        "software_version": "m272.research_lab.engine.v1",
+        "status": "DRAFT",
+        "strategy_ids": [
+          "tf_dual_ma"
+        ],
+        "strategy_versions": {
+          "tf_dual_ma": "v1"
+        },
+        "test_period": {
+          "ratio": 0.2
+        },
+        "training_period": {
+          "ratio": 0.6
+        },
+        "transaction_cost_model": {
+          "commission_bps": 5.0
+        },
+        "trial_count": 1,
+        "tunable_parameters": {},
+        "validation_period": {
+          "ratio": 0.2
+        }
+      }
+    },
+    {
+      "ok": true,
+      "experiment_id": "exp_40ec94a290b4c53c",
+      "experiment_version": "v1",
+      "name": "m272_demo_multi_strategy_lab",
+      "status": "COMPLETED",
+      "config_checksum": "49cb4e53852bc29885ec411273b405cf28d49f116e7bba54920917da618cd6cd",
+      "parent_id": null,
+      "parent_version": null,
+      "actor": "system",
+      "created_at": 1785397478.6523361,
+      "execution_at": 1785397478.682695,
+      "immutable": true,
+      "evidence_hash": "27d04e8e6a7da16b9b45350708e26c145bba90b2faa45f6d6fffb4afe45067d1",
+      "metadata": {
+        "benchmark": "buy_hold",
+        "certified_experiment_requires_pre_registration": true,
+        "configuration_checksum": "49cb4e53852bc29885ec411273b405cf28d49f116e7bba54920917da618cd6cd",
+        "creation_timestamp": 1785397478.652216,
+        "dataset_ids": [],
+        "dataset_versions": {},
+        "description": "Bounded multi-strategy research lab demo",
+        "embargo_period": {
+          "bars": 2
+        },
+        "evidence_references": [
+          "27d04e8e6a7da16b9b45350708e26c145bba90b2faa45f6d6fffb4afe45067d1"
+        ],
+        "execution_timestamp": 1785397478.6819148,
+        "experiment_id": "exp_40ec94a290b4c53c",
+        "experiment_name": "m272_demo_multi_strategy_lab",
+        "experiment_version": "v1",
+        "feature_ids": [
+          "sma_10",
+          "sma_20"
+        ],
+        "feature_versions": {
+          "sma_10": "v1",
+          "sma_20": "v1"
+        },
+        "fixed_parameters": {
+          "sma_fast": 10,
+          "sma_slow": 20
+        },
+        "git_sha": "a180a78998a2a416b3277efa0a07a7bc4aed6dfd",
+        "hypothesis": "Equal-weight ensemble of registry strategies is more robust than tf_dual_ma alone under common costs",
+        "instrument_universe": [
+          "DEMO",
+          "AAPL",
+          "BTCUSDT"
+        ],
+        "limitations": [
+          "Demo uses synthetic paths plus preserved M270 historical OOS failures"
+        ],
+        "liquidity_assumptions": {
+          "min_adv_usd": 1000000
+        },
+        "operator": "system",
+        "parameter_search_space": {},
+        "parent_id": null,
+        "parent_version": null,
+        "portfolio_objective": "research_robustness",
+        "position_limits": {
+          "max_weight": 1.0
+        },
+        "pre_registered_at": 1785397478.653582,
+        "pre_registered_by": "system",
+        "purge_period": {
+          "bars": 0
+        },
+        "random_seed": 42,
+        "rebalance_frequency": "daily",
+        "regime_definitions": [],
+        "registry_version": "m272.experiment_registry.v1",
+        "research_question": "Do multi-strategy ensembles improve research robustness vs single dual-MA?",
+        "risk_limits": {
+          "max_drawdown": 0.25,
+          "max_leverage": 1.0
+        },
+        "slippage_model": {
+          "slippage_bps": 8.0
+        },
+        "software_version": "m272.research_lab.engine.v1",
+        "status": "COMPLETED",
+        "strategy_ids": [
+          "tf_dual_ma",
+          "mom_rs_equity",
+          "mr_bollinger_reversion",
+          "bo_donchian"
+        ],
+        "strategy_versions": {
+          "tf_dual_ma": "v1"
+        },
+        "test_period": {
+          "ratio": 0.2
+        },
+        "training_period": {
+          "ratio": 0.6
+        },
+        "transaction_cost_model": {
+          "commission_bps": 5.0
+        },
+        "trial_count": 1,
+        "tunable_parameters": {},
+        "validation_period": {
+          "ratio": 0.2
+        }
+      },
+      "has_result": true
+    }
+  ],
+  "candidates": [
+    {
+      "id": "cand_9198c3698cb54a31",
+      "subject_type": "strategy",
+      "subject_id": "tf_dual_ma",
+      "state": "VALIDATION_FAILED",
+      "human_review_status": "REQUIRED",
+      "created_at": 1785397478.680018,
+      "updated_at": 1785397478.680018
+    }
+  ],
+  "labels": {
+    "RESEARCH_ONLY": true,
+    "OFFLINE_FIRST": true,
+    "PAPER_CANDIDATE_DOES_NOT_AUTHORISE_ORDER_EXECUTION": true,
+    "NO_BROKER_CONNECTIVITY": true,
+    "NO_ACCOUNT_ACCESS": true,
+    "NO_CREDENTIALS": true,
+    "NO_LIVE_TRADING": true
+  },
+  "LIVE_TRADING_AUTHORIZED": false,
+  "BROKER_CONNECTIVITY_AUTHORIZED": false,
+  "REAL_CONNECTIVITY_AUTHORIZED": false,
+  "CREDENTIAL_PROVISIONING_AUTHORIZED": false,
+  "CANARY_ACTIVATION_AUTHORIZED": false,
+  "ORDER_EXECUTION_AUTHORIZED": false,
+  "ORDER_SUBMISSION_AUTHORIZED": false,
+  "ORDER_MODIFICATION_AUTHORIZED": false,
+  "ORDER_CANCELLATION_AUTHORIZED": false,
+  "API_KEYS_ACCEPTED": false,
+  "OAUTH_AUTHORIZED": false,
+  "LIVE_MARKET_DATA_AUTHORIZED": false,
+  "LIVE_DATA_DEPENDENCY": false,
+  "PAPER_EXECUTION_AUTHORIZED": false,
+  "AUTOMATED_INVESTMENT_AUTHORITY": false,
+  "REGULATORY_GRADE_PORTFOLIO_OPTIMISATION": false,
+  "STRATEGY_PROFITABILITY_GUARANTEED": false,
+  "LIVE_MARKET_READINESS": false,
+  "INVESTMENT_ADVICE_CERTIFIED": false,
+  "PRODUCTION_AUTHORIZED": false,
+  "REAL_BROKER_CONNECTION_CAPABLE": false,
+  "paper_only": true,
+  "sandbox_only": true,
+  "research_only": true,
+  "offline_first": true,
+  "offline_capable": true,
+  "no_broker_connection": true,
+  "no_api_keys": true,
+  "no_oauth": true,
+  "no_order_submission": true,
+  "no_live_data_dependency": true,
+  "no_live_trading": true,
+  "certified_experiment_requires_pre_registration": true,
+  "human_review_required_for_paper_candidate": true,
+  "paper_candidate_does_not_authorise_execution": true,
+  "max_authority": "RESEARCH_PORTFOLIO_AND_PAPER_CANDIDATE_EVALUATION_ONLY",
+  "default_leverage_max": 1.0
+}

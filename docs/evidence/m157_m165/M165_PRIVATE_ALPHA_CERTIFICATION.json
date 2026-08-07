@@ -1,0 +1,452 @@
+{
+  "schema": "m165.private_alpha_cert.v1",
+  "verdict": "PRIVATE_ALPHA_READY_WITH_LIMITATIONS",
+  "browser_verdict_required": "SAATHIOS_PRIVATE_ALPHA_BROWSER_CERT_PASSED",
+  "release_version": "0.1.0-private-alpha.1",
+  "git_sha": "2c07669ba688564c9f65583a52cfb191a205a95f\n2c07669ba688564c9f65583a52cfb191a205a95f",
+  "production_authorized": false,
+  "public_exposure_authorized": false,
+  "checks": [
+    {
+      "check": "release_integrity",
+      "status": "PASS",
+      "detail": "version=0.1.0-private-alpha.1"
+    },
+    {
+      "check": "public_exposure",
+      "status": "PASS",
+      "detail": "not authorized"
+    },
+    {
+      "check": "installation_prepare",
+      "status": "PASS",
+      "detail": "prepare checks"
+    },
+    {
+      "check": "lifecycle_localhost",
+      "status": "PASS",
+      "detail": "saathi-local contract"
+    },
+    {
+      "check": "lifecycle_no_unrelated_kill",
+      "status": "PASS",
+      "detail": "ownership-safe"
+    },
+    {
+      "check": "doctor",
+      "status": "PASS",
+      "detail": "public_listener_regression=False"
+    },
+    {
+      "check": "public_listener_scan",
+      "status": "PASS",
+      "detail": "no Saathi public binds"
+    },
+    {
+      "check": "configuration",
+      "status": "PASS",
+      "detail": "m160.alpha_config.v1"
+    },
+    {
+      "check": "automations_default_off",
+      "status": "WARNING",
+      "detail": "global flag"
+    },
+    {
+      "check": "compatibility_matrix",
+      "status": "PASS",
+      "detail": "cells=22"
+    },
+    {
+      "check": "disaster_recovery_drill",
+      "status": "PASS",
+      "detail": "PRIVATE_ALPHA_DR_DRILL_PASSED"
+    },
+    {
+      "check": "support_bundle_privacy",
+      "status": "PASS",
+      "detail": "saathios-support-20260729-123849.tar.gz"
+    },
+    {
+      "check": "automation_authority",
+      "status": "PASS",
+      "detail": "fail-closed automation"
+    },
+    {
+      "check": "operator_validation",
+      "status": "PASS",
+      "detail": "synthetic steps=12"
+    },
+    {
+      "check": "hcg_journey",
+      "status": "PASS",
+      "detail": "synthetic"
+    },
+    {
+      "check": "ielts_journey",
+      "status": "PASS",
+      "detail": "synthetic"
+    },
+    {
+      "check": "search_yeti",
+      "status": "PASS",
+      "detail": "synthetic"
+    },
+    {
+      "check": "incident_playbooks",
+      "status": "PASS",
+      "detail": "count=18"
+    },
+    {
+      "check": "trading_guardian",
+      "status": "PASS",
+      "detail": "UNCHANGED / UNENGAGED"
+    },
+    {
+      "check": "production_posture",
+      "status": "PASS",
+      "detail": "NOT_AUTHORIZED"
+    },
+    {
+      "check": "paid_providers",
+      "status": "PASS",
+      "detail": "not activated"
+    },
+    {
+      "check": "live_payments",
+      "status": "PASS",
+      "detail": "not connected"
+    },
+    {
+      "check": "production_firebase",
+      "status": "PASS",
+      "detail": "not connected"
+    }
+  ],
+  "fail_count": 0,
+  "warn_count": 1,
+  "pass_count": 22,
+  "compatibility_matrix": {
+    "schema": "m157.compatibility.v1",
+    "release_version": "0.1.0-private-alpha.1",
+    "primary_machine": {
+      "cpu": "Apple Silicon",
+      "os": "macOS",
+      "ram_gb": 8,
+      "storage_class_gb": 256,
+      "network": "localhost-only"
+    },
+    "matrix": {
+      "clean_setup": "CERTIFIED_WITH_LIMITATIONS",
+      "existing_setup": "CERTIFIED_WITH_LIMITATIONS",
+      "restart": "CERTIFIED",
+      "upgrade": "CERTIFIED_WITH_LIMITATIONS",
+      "backup": "CERTIFIED",
+      "restore": "CERTIFIED_WITH_LIMITATIONS",
+      "browser_launch": "CERTIFIED_WITH_LIMITATIONS",
+      "hcg": "CERTIFIED_WITH_LIMITATIONS",
+      "ieltsalert": "CERTIFIED_WITH_LIMITATIONS",
+      "unified_yeti": "CERTIFIED_WITH_LIMITATIONS",
+      "universal_search": "CERTIFIED",
+      "mission_runtime": "CERTIFIED_WITH_LIMITATIONS",
+      "approval_center": "CERTIFIED",
+      "execution_gateway": "CERTIFIED",
+      "evidence": "CERTIFIED",
+      "audit": "CERTIFIED",
+      "automations_dry_run": "CERTIFIED",
+      "automations_bounded_execution": "CERTIFIED_WITH_LIMITATIONS",
+      "support_bundle": "CERTIFIED",
+      "multi_host": "NOT_CLAIMED",
+      "public_saas": "NOT_CLAIMED",
+      "production": "NOT_CLAIMED"
+    },
+    "notes": [
+      "Broader OS/arch compatibility is NOT claimed without evidence.",
+      "Upgrade certification is limited to synthetic/local release fixtures.",
+      "Destructive restore requires owner/admin approval."
+    ]
+  },
+  "release_manifest": {
+    "schema": "m157.private_alpha.v1",
+    "saathios_release_version": "0.1.0-private-alpha.1",
+    "git_sha": "2c07669ba688564c9f65583a52cfb191a205a95f\n2c07669ba688564c9f65583a52cfb191a205a95f",
+    "git_branch": "milestone/m61-backend-workflow-persistence",
+    "schema_version": "m157.private_alpha.v1",
+    "platform_version": "m50-m156.core",
+    "application_package_versions": {
+      "saathi.travel_planner": "1.0.0",
+      "saathi.malicious_app": "0.0.1",
+      "saathi.crm_lite": "1.0.0",
+      "saathi.ielts_alert": "1.1.0",
+      "saathi.portfolio_readonly": "1.0.0",
+      "saathi.document_hub": "1.0.0",
+      "saathi.platform_demo": "1.1.0",
+      "saathi.erp_lite": "1.0.0",
+      "saathi.hcg_pos": "1.1.0"
+    },
+    "supported_operating_system": "macOS",
+    "supported_cpu_architecture": "arm64",
+    "supported_python_versions": [
+      "3.11",
+      "3.12"
+    ],
+    "supported_node_min": "18",
+    "supported_package_managers": {
+      "pip": "venv",
+      "npm": ">=9"
+    },
+    "required_local_ports": {
+      "backend": 8765,
+      "frontend": 3000
+    },
+    "required_directories": [
+      "data/platform",
+      "data/backups",
+      "data/alpha",
+      "data/alpha/config",
+      "data/alpha/support",
+      "data/alpha/restore"
+    ],
+    "required_disk_headroom_gb": 5,
+    "recommended_memory_gb": 8,
+    "database_location": "data/platform/platform.db",
+    "backup_format_version": "m161.system_backup.v1",
+    "browser_certification_version": "m165.private_alpha.browser.v1",
+    "config_schema_version": "m160.alpha_config.v1",
+    "runtime_observed": {
+      "python": "3.12.13",
+      "node": "v26.4.0",
+      "npm": "11.17.0",
+      "os": "Darwin",
+      "arch": "arm64",
+      "platform": "macOS-26.5.1-arm64-arm-64bit"
+    },
+    "known_limitations": [
+      "local-only single-machine private alpha",
+      "not production-authorized",
+      "public exposure not authorized",
+      "no live payments",
+      "no production Firebase",
+      "no paid AI provider activation in first-run",
+      "automations disabled by default; opt-in only",
+      "Trading Guardian advisory / unengaged for private alpha",
+      "no multi-host / multi-device sync",
+      "no public marketplace",
+      "owner-managed backups",
+      "no guaranteed uptime",
+      "synthetic/demo data for certification"
+    ],
+    "production_authorized": false,
+    "public_exposure_authorized": false,
+    "financial_execution_authorized": false,
+    "paid_providers_authorized": false,
+    "trading_live_authorized": false,
+    "generated_at": 1785308029.110841,
+    "channel": "private-alpha"
+  },
+  "operator_validation": {
+    "ok": true,
+    "persona": "synthetic_owner_operator",
+    "human_feedback": false,
+    "synthetic_validation": true,
+    "steps": [
+      {
+        "name": "open_operator_home",
+        "ok": true,
+        "duration_ms": 1,
+        "result_keys": [
+          "schema",
+          "title",
+          "applications",
+          "hcg",
+          "ielts",
+          "notifications",
+          "approvals_pending",
+          "approvals_count",
+          "memory",
+          "activity",
+          "automations_count",
+          "todays_work"
+        ]
+      },
+      {
+        "name": "universal_search",
+        "ok": true,
+        "duration_ms": 53,
+        "result_keys": [
+          "query",
+          "results",
+          "count",
+          "scope",
+          "tenant_isolated",
+          "workspace_isolated",
+          "permissions_enforced"
+        ]
+      },
+      {
+        "name": "unified_yeti",
+        "ok": true,
+        "duration_ms": 3,
+        "result_keys": [
+          "question",
+          "answer",
+          "domains",
+          "can_mutate",
+          "mutable",
+          "execution_gateway_bypass",
+          "approval_bypass",
+          "intent",
+          "source",
+          "security"
+        ]
+      },
+      {
+        "name": "notifications",
+        "ok": true,
+        "duration_ms": 0,
+        "result_keys": [
+          "notifications",
+          "count",
+          "unified",
+          "channels",
+          "engine"
+        ]
+      },
+      {
+        "name": "create_automation",
+        "ok": true,
+        "duration_ms": 1,
+        "result_keys": [
+          "automation"
+        ]
+      },
+      {
+        "name": "automation_bounded_execution",
+        "ok": true,
+        "duration_ms": 13,
+        "result_keys": [
+          "blocked",
+          "done"
+        ]
+      },
+      {
+        "name": "workflow_graph",
+        "ok": true,
+        "duration_ms": 1,
+        "result_keys": [
+          "graph"
+        ]
+      },
+      {
+        "name": "hcg_dashboard",
+        "ok": true,
+        "duration_ms": 0,
+        "result_keys": [
+          "metrics",
+          "label"
+        ]
+      },
+      {
+        "name": "ielts_dashboard",
+        "ok": true,
+        "duration_ms": 0,
+        "result_keys": [
+          "goal",
+          "next_practice",
+          "progress",
+          "active_alerts",
+          "pending_payments",
+          "scoring",
+          "availability",
+          "manual_payment_only",
+          "generated_on",
+          "readiness",
+          "study_plan_count",
+          "mock_test_count"
+        ]
+      },
+      {
+        "name": "backup_dry_run",
+        "ok": true,
+        "duration_ms": 151,
+        "result_keys": [
+          "mode",
+          "would_restore",
+          "verification",
+          "destructive",
+          "live_data_touched"
+        ]
+      },
+      {
+        "name": "doctor",
+        "ok": true,
+        "duration_ms": 362,
+        "result_keys": [
+          "prepare",
+          "local_readiness",
+          "listeners_sample",
+          "saathi_public_listeners",
+          "public_listener_regression",
+          "ok",
+          "production_authorized"
+        ]
+      },
+      {
+        "name": "support_bundle",
+        "ok": true,
+        "duration_ms": 581,
+        "result_keys": [
+          "archive",
+          "name",
+          "size_bytes",
+          "privacy_scan_clean",
+          "production_authorized",
+          "includes_secrets",
+          "includes_private_content"
+        ]
+      }
+    ],
+    "feedback": [
+      {
+        "persona": "synthetic_owner",
+        "kind": "completion",
+        "completion_time_sec": 1.171,
+        "confusing_steps": [],
+        "human": false,
+        "synthetic": true,
+        "label": "SYNTHETIC_VALIDATION_ONLY"
+      }
+    ],
+    "duration_sec": 1.171,
+    "journeys": {
+      "core_operator": true,
+      "hcg": true,
+      "ielts": true,
+      "search": true,
+      "yeti": true,
+      "automation": true
+    }
+  },
+  "disaster_recovery": "PRIVATE_ALPHA_DR_DRILL_PASSED",
+  "support_bundle": {
+    "name": "saathios-support-20260729-123849.tar.gz",
+    "privacy_scan_clean": true
+  },
+  "duration_sec": 2.673,
+  "known_limitations": [
+    "local-only single-machine private alpha",
+    "not production-authorized",
+    "public exposure not authorized",
+    "no live payments",
+    "no production Firebase",
+    "no paid AI provider activation in first-run",
+    "automations disabled by default; opt-in only",
+    "Trading Guardian advisory / unengaged for private alpha",
+    "no multi-host / multi-device sync",
+    "no public marketplace",
+    "owner-managed backups",
+    "no guaranteed uptime",
+    "synthetic/demo data for certification"
+  ],
+  "trading_guardian": "UNCHANGED / UNENGAGED"
+}

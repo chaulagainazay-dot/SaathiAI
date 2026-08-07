@@ -1,0 +1,149 @@
+{
+  "record": "SAATHIOS_FINAL_PUBLICATION_AUDIT",
+  "phase": "PHASE_13_FINAL_PUBLICATION_AUDIT",
+  "branch": "fix/saathios-full-e2e-functional-recovery",
+  "base_of_branch": "1647e19 (fix/saathios-ui-recovery)",
+  "publication_readiness": "PUBLICATION_READY_WITH_LIMITATIONS",
+  "accepted_limitation": "OWNER_AUDIO_REVIEW_REQUIRED",
+
+  "commit_review": {
+    "commits_on_branch": 19,
+    "empty_commits": 0,
+    "amended_or_rebased_history": false,
+    "staging_method": "explicit paths only — `git add .` and `git add -A` were never used",
+    "categories": {
+      "security_repairs": 1,
+      "correctness_repairs": 4,
+      "build_manifest_repairs": 3,
+      "test_integrity_repairs": 2,
+      "documentation_and_policy": 3,
+      "evidence": 6
+    }
+  },
+
+  "changed_source_files": [
+    "pyproject.toml",
+    "saathi/platform/alpha.py",
+    "saathi/platform/api.py",
+    "saathi/platform/private_alpha/journey.py",
+    "saathi/platform/service.py",
+    "saathi/platform/store.py",
+    "saathi-os/app/platform/page.jsx",
+    "saathi-os/app/unlock/page.jsx",
+    "saathi-os/components/voice/VoiceOutputProvider.jsx",
+    "saathi-os/components/voice/VoiceRuntimeProvider.jsx",
+    "saathi-os/package.json"
+  ],
+  "added_tests": [
+    "tests/test_e2e_functional_recovery.py",
+    "saathi-os/lib/e2e-voice-route-cleanup.test.js",
+    "saathi-os/lib/e2e-voice-interruption.test.js",
+    "saathi-os/lib/e2e-local-only-binding.test.js"
+  ],
+  "added_harnesses": [
+    "saathi-os/scripts/e2e_full_application_browser_cert.mjs",
+    "saathi-os/scripts/e2e_route_inventory.mjs",
+    "saathi-os/scripts/audio_review_session.mjs",
+    "docs/e2e-functional-audit/api_journey_driver.py",
+    "docs/e2e-functional-audit/security_audit.py"
+  ],
+  "added_policy_docs": ["docs/private-alpha/LAN_TESTING_POLICY.md"],
+
+  "test_integrity": {
+    "test_files_deleted": 0,
+    "assertions_removed": 0,
+    "skip_or_xfail_markers_added": 0,
+    "timeouts_raised": 0,
+    "only_test_modified": "tests/test_m336_m343_regression_closure.py",
+    "modification_nature": "STRENGTHENED — the test now creates the fake repo its own SAATHI_REPO override requires, so the assertion is actually reached. Verified by mutation: neutering the `[ -x \"$PY\" ]` guard in bin/saathi-local makes it fail. It previously passed only on machines that had not followed the documented setup.",
+    "inherited_test_files_verified_unchanged": [
+      "tests/test_m157_private_alpha.py",
+      "tests/test_m339_private_alpha_journey.py",
+      "tests/test_m50_approval_and_runtime.py",
+      "tests/test_m50_api.py",
+      "tests/test_m50_platform_identity.py"
+    ]
+  },
+
+  "secret_scan": {
+    "method": "regex sweep of the whole branch diff for credential shapes, plus an exact-string search of every runtime-generated test password against the committed tree",
+    "generated_test_passwords_committed": 0,
+    "session_tokens_committed": 0,
+    "password_hashes_committed": 0,
+    "private_keys_committed": 0,
+    "env_files_committed": 0,
+    "database_files_added": 0,
+    "matches_reviewed_and_cleared": [
+      "\"tok_forged_value_aaaaaaaaaaaaaaaa\" — a deliberately invalid token literal used to prove forged tokens are rejected",
+      "\"not-the-password\" — a wrong-password literal in a rejection test",
+      "the string list (\"Traceback\", \"sqlite3.\", \"password_hash\", \"scrypt$\") — the leak-detection pattern set in the security audit"
+    ],
+    "note": ".env is gitignored (.gitignore:2) and was never staged. The three tracked .db files under docs/trading/ and storage/ predate this branch and were not touched."
+  },
+
+  "authority_boundary": {
+    "hard_authorities_set_true_in_changed_source": 0,
+    "live_readiness_probe": "GET /api/v1/platform/private-alpha/readiness — no *_AUTHORIZED lock true",
+    "public_registration_endpoint": "absent (405)",
+    "provider_or_broker_connection_created": false,
+    "financial_credential_requested_accepted_or_stored": false,
+    "account_balance_or_position_accessed": false,
+    "order_or_live_execution_enabled": false,
+    "authority_expanded_by_this_branch": false,
+    "authority_narrowed_by_this_branch": [
+      "passwordless login no longer serves credentialed accounts",
+      "the UI no longer binds to every network interface",
+      "approval scopes a tool cannot satisfy are refused at request time",
+      "the microphone can no longer open over live playback"
+    ]
+  },
+
+  "gate_results": {
+    "FULL_BACKEND_FAILURES": 0,
+    "FULL_BACKEND_RESULT": "6027 passed, 1 skipped",
+    "FULL_FRONTEND_PASSED": true,
+    "FULL_FRONTEND_RESULT": "371 passed, 0 failed",
+    "PRODUCTION_BUILD_PASSED": true,
+    "BROWSER_E2E_PASSED": true,
+    "BROWSER_E2E_RESULT": "86/86",
+    "ROUTE_SWEEP": "129/129 rendering",
+    "DEGRADED_STATE": "52/52",
+    "API_JOURNEY": "73/73",
+    "CLEAN_CLONE_PASSED": true,
+    "PUBLIC_LISTENER_DETECTED": false,
+    "PASSWORDLESS_LOGIN_REJECTED": true,
+    "SECRET_SCAN_PASSED": true,
+    "AUTHORITY_SCAN_PASSED": true,
+    "FORBIDDEN_EXTERNAL_REQUESTS": 0,
+    "SECURITY_AUDIT": "26/26"
+  },
+
+  "pr_base_determination": {
+    "mission_suggested_base": "milestone/m336-m343-private-alpha-readiness",
+    "suggested_base_exists_on_origin": false,
+    "fix_saathios_ui_recovery_exists_on_origin": false,
+    "method": "Enumerated every origin head, tested each with `git merge-base --is-ancestor`, and ranked the ancestors by `git rev-list --count <base>..HEAD`.",
+    "ancestors_on_origin_nearest_first": [
+      "milestone/m320-m327-provider-contracts — 53 commits behind HEAD",
+      "milestone/m312-m319-connectivity-governance — 64",
+      "milestone/m304-m311-read-only-market-observation — 76"
+    ],
+    "chosen_base": "milestone/m320-m327-provider-contracts",
+    "reason": "It is the nearest ancestor that actually exists on origin. The suggested base was never published, and the mission forbids pushing any branch other than the repair branch, so it cannot be created.",
+    "consequence": "The draft PR spans 53 commits: the unpublished M328-M343 work plus this closure's 19. It is NOT a 19-commit diff. This is stated in the PR body so no reviewer mistakes the scope.",
+    "recommended_follow_up": "If a narrower PR is wanted, publish milestone/m336-m343-private-alpha-readiness first and retarget the base. That requires separate authorization to push another branch."
+  },
+
+  "blocking_conditions_checked": {
+    "backend_failures_remain": false,
+    "clean_clone_fails": false,
+    "public_listener_remains": false,
+    "authentication_bypass_returned": false,
+    "browser_e2e_fails": false,
+    "authority_expands": false,
+    "secrets_found": false,
+    "required_evidence_missing": false
+  },
+
+  "verdict": "PUBLICATION_READY_WITH_LIMITATIONS"
+}

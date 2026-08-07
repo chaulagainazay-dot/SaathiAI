@@ -1,0 +1,48 @@
+{
+  "config": {
+    "tenants": 3,
+    "accounts": 9,
+    "orders_per_account": 90,
+    "symbols": [
+      "TRENDING",
+      "STEADY",
+      "VOLA"
+    ]
+  },
+  "throughput": {
+    "orders": 1620,
+    "fills": 1620,
+    "partial_fills": 0,
+    "market_events": 4860,
+    "wall_seconds": 4.813,
+    "orders_per_sec": 336.6,
+    "events_per_sec": 1009.7
+  },
+  "latency_ms": {
+    "order_p50": 1.205,
+    "order_p95": 4.118,
+    "order_p99": 5.431,
+    "fill_p50": 1.21,
+    "fill_p95": 1.952,
+    "fill_p99": 5.413
+  },
+  "resources": {
+    "db_bytes": 12718080,
+    "db_kb": 12420.0,
+    "db_bytes_per_order": 7850.7,
+    "max_rss_mb": 37.6
+  },
+  "accounting": {
+    "invariant_violations": [],
+    "invariants_clean": true,
+    "duplicate_fill_ids_in_session": {},
+    "unique_fills_recorded": 1620
+  },
+  "recovery": {
+    "restart_seconds": 0.0005,
+    "invariants_hold_after_restart": true,
+    "recovery_detail": [],
+    "duplicate_fills_after_restart_replay": 0,
+    "no_duplicate_accounting": true
+  }
+}

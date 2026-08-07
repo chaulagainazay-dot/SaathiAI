@@ -1,0 +1,81 @@
+{
+  "app_id": "saathi.travel_planner",
+  "app_type": "business",
+  "approval_requirements": [
+    "NO_APPROVAL_REQUIRED"
+  ],
+  "backup_strategy": "workspace_snapshot",
+  "capabilities": [
+    "forms",
+    "calendar",
+    "tasks",
+    "conversation"
+  ],
+  "category": "travel",
+  "content_hash": "",
+  "dashboards": [],
+  "description": "Trip planning and itinerary workspace.",
+  "display_name": "Travel Planner",
+  "entrypoint_type": "declarative",
+  "extension": {},
+  "feature_flags": {
+    "bypass_gateway": false,
+    "marketplace": false
+  },
+  "forms": [
+    {
+      "id": "trip",
+      "title": "Trip"
+    }
+  ],
+  "health_check_contract": "manifest_and_workspace",
+  "icon": "\u2708",
+  "local_trust_status": "BUILT_IN",
+  "manifest_schema_version": "app.manifest.v1",
+  "migration_strategy": "config_only_no_schema_break",
+  "minimum_saathios_version": "1.0.0-local",
+  "module_registry_id": "travel",
+  "name": "travel_planner",
+  "navigation": [
+    {
+      "href": "/apps/travel",
+      "id": "trips",
+      "label": "Trips"
+    }
+  ],
+  "network_requirements": "none",
+  "notifications": {
+    "channels": [
+      "in_app"
+    ]
+  },
+  "optional_permissions": [],
+  "package_hash": "81954b3226f1594c124452bfb6d9d24f774d29db3a32ee06c7d0c3ab43ca9c9d",
+  "pages": [
+    {
+      "id": "trips",
+      "path": "/apps/travel",
+      "title": "Trips"
+    }
+  ],
+  "production_posture": "not_authorized",
+  "publisher": "saathios.builtin",
+  "required_permissions": [
+    "runtime.read"
+  ],
+  "restore_strategy": "replace_workspace_snapshot",
+  "skills": [],
+  "storage": {
+    "max_mb": 32,
+    "type": "workspace_isolated"
+  },
+  "trading_guardian_posture": "unengaged",
+  "upgrade_strategy": "install_side_by_side_then_switch",
+  "version": "1.0.0",
+  "workflows": [
+    {
+      "capability": "report.generate",
+      "id": "plan"
+    }
+  ]
+}

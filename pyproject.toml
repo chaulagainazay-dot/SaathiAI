@@ -14,6 +14,14 @@ dependencies = [
     "soundfile>=0.12",
     "pillow>=10.0",         # thumbnail scoring / image analysis
     "openai>=1.0",          # agent runtime + Gemini(OpenAI-compat)/eval clients
+    # Imported unconditionally by saathi/ modules, so they belong in the base
+    # install, not in an extra. Clean-clone verification found each of these
+    # failing to import from a fresh checkout.
+    "groq>=0.4.0",          # saathi/agents/master.py, sub_agents/base.py
+    # [crypto] pulls `cryptography`, required for the RS256 JWKS verification
+    # in saathi/auth_logto.py (jwt.PyJWKClient + algorithms=["RS256"]).
+    "PyJWT[crypto]>=2.8",   # saathi/auth_logto.py
+    "PyYAML>=6.0",          # saathi/security/redteam/runner.py
 ]
 
 [project.optional-dependencies]
@@ -30,6 +38,14 @@ generation = [
     "kokoro>=0.9.4",        # local TTS narration (pulls torch)
     "soundfile>=0.12",      # WAV I/O + duration
     "pillow>=10",           # deterministic scene-card fallback
+]
+# Test tooling. The private-alpha runbooks already tell operators to run
+# `pip install -e '.[dev]'`, but the extra did not exist and pytest was declared
+# nowhere, so a clean clone could not run the suite from committed source alone.
+# [tool.pytest.ini_options] below configures pytest; this is what installs it.
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
 ]
 
 [project.scripts]
@@ -50,3 +66,6 @@ asyncio_default_fixture_loop_scope = "function"
 
 [tool.setuptools.package-data]
 "saathi.production" = ["agency_prompts/*.md", "agency_prompts/*.txt"]
+# Authoritative development-agent role registry (M345+). Must ship in wheels and
+# editable installs so clean clones and GitHub Actions resolve DATA_PATH.
+"saathi.agentdev" = ["data/*.json"]

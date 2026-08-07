@@ -1,0 +1,17 @@
+{
+  "ok": true,
+  "localhost": {
+    "ok": true,
+    "domain": "127.0.0.1",
+    "result": "LOCAL_SIMULATION_ONLY",
+    "category": "local"
+  },
+  "private_provider": {
+    "ok": false,
+    "domain": "paper-api.alpaca.markets",
+    "result": "REAL_PROVIDER_TRANSPORT_FORBIDDEN",
+    "message": "Blocked: paper-api.alpaca.markets",
+    "REAL_CONNECTIVITY_AUTHORIZED": false
+  },
+  "REAL_CONNECTIVITY_AUTHORIZED": false
+}

@@ -1,0 +1,123 @@
+{
+  "schema": "m71.browser_cert.v1",
+  "mode": "production-build-loopback",
+  "hardGates": {
+    "backend_loopback": {
+      "ok": true,
+      "detail": ""
+    },
+    "authenticated_login": {
+      "ok": true,
+      "detail": ""
+    },
+    "runtime_plan_api": {
+      "ok": true,
+      "detail": ""
+    },
+    "governed_run_waits_for_verification": {
+      "ok": true,
+      "detail": ""
+    },
+    "evidence_api": {
+      "ok": true,
+      "detail": ""
+    },
+    "checkpoint_api": {
+      "ok": true,
+      "detail": ""
+    },
+    "dashboard_summary_api": {
+      "ok": true,
+      "detail": ""
+    },
+    "unauthenticated_rejected": {
+      "ok": true,
+      "detail": ""
+    },
+    "production_build": {
+      "ok": true,
+      "detail": ""
+    },
+    "frontend_loopback": {
+      "ok": true,
+      "detail": ""
+    },
+    "mission_control_backend_runtime": {
+      "ok": true,
+      "detail": ""
+    },
+    "runtime_health_visible": {
+      "ok": true,
+      "detail": ""
+    },
+    "progress_semantics": {
+      "ok": true,
+      "detail": ""
+    },
+    "agent_visible": {
+      "ok": true,
+      "detail": ""
+    },
+    "evidence_visible": {
+      "ok": true,
+      "detail": ""
+    },
+    "checkpoint_visible": {
+      "ok": true,
+      "detail": ""
+    },
+    "test_status_visible": {
+      "ok": true,
+      "detail": ""
+    },
+    "no_browser_execution_authority": {
+      "ok": true,
+      "detail": ""
+    },
+    "no_page_errors": {
+      "ok": true,
+      "detail": ""
+    },
+    "no_hydration_errors": {
+      "ok": true,
+      "detail": ""
+    },
+    "no_console_errors": {
+      "ok": true,
+      "detail": ""
+    }
+  },
+  "responsive": {
+    "mobile_no_horizontal_overflow": {
+      "ok": true,
+      "detail": ""
+    },
+    "mobile_runtime_content": {
+      "ok": true,
+      "detail": ""
+    }
+  },
+  "accessibility": {
+    "semantic_progress": {
+      "ok": true,
+      "detail": ""
+    },
+    "semantic_section_headings": {
+      "ok": true,
+      "detail": ""
+    }
+  },
+  "browserErrors": {
+    "page": [],
+    "console": [],
+    "hydration": []
+  },
+  "screenshots": [
+    "screenshots/m71_mission_control.png",
+    "screenshots/m71_mission_detail.png",
+    "screenshots/m71_mission_mobile.png"
+  ],
+  "ui": "http://127.0.0.1:3221",
+  "api": "http://127.0.0.1:8871",
+  "verdict": "PASS"
+}

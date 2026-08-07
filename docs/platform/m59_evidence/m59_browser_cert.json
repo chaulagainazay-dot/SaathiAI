@@ -1,0 +1,450 @@
+{
+  "schema": "m59.browser_cert.v1",
+  "bff": "http://127.0.0.1:8830",
+  "ui": "http://127.0.0.1:3190",
+  "isolated_db": "/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m59-cert-48354/platform.db",
+  "mode": "dev",
+  "flows": {
+    "seed": {
+      "ok": true,
+      "missionId": "mis_8bc52be5b3254064",
+      "bindingId": "bind_9a3eaabb238a42c1",
+      "pendingApprovalId": "apr_419fcade623c4436"
+    },
+    "shell_hydration_baseline": 0
+  },
+  "screenshots": [
+    "platform.png",
+    "ops.png",
+    "missions.png",
+    "context_drawer.png",
+    "command_palette.png",
+    "mission_detail.png",
+    "agents.png",
+    "agent_detail.png",
+    "approvals.png",
+    "approval_detail.png",
+    "attention.png",
+    "reduced_motion.png",
+    "mobile_missions.png",
+    "mobile_approvals.png",
+    "mobile_attention.png"
+  ],
+  "hardGates": {
+    "prod_server_starts": {
+      "ok": true,
+      "mode": "dev"
+    },
+    "route_platform": {
+      "ok": true
+    },
+    "route_ops": {
+      "ok": true
+    },
+    "route_missions": {
+      "ok": true
+    },
+    "context_drawer_opens": {
+      "ok": true
+    },
+    "command_palette_opens": {
+      "ok": true
+    },
+    "route_mission_detail": {
+      "ok": true
+    },
+    "route_agents": {
+      "ok": true
+    },
+    "route_agent_detail": {
+      "ok": true
+    },
+    "route_approvals": {
+      "ok": true
+    },
+    "route_approval_detail": {
+      "ok": true
+    },
+    "approval_decision_surface": {
+      "ok": true
+    },
+    "route_attention": {
+      "ok": true
+    },
+    "route_attention_detail": {
+      "ok": true
+    },
+    "real_api_binding": {
+      "ok": true
+    },
+    "reduced_motion": {
+      "ok": true
+    },
+    "responsive_mobile": {
+      "ok": true,
+      "noHorizontalOverflow": true
+    },
+    "accessibility_no_critical": {
+      "ok": true,
+      "serious": 10
+    },
+    "no_page_errors": {
+      "ok": true
+    },
+    "no_hydration_errors": {
+      "ok": true
+    }
+  },
+  "softGates": {
+    "context_drawer_escape_closes": {
+      "ok": true
+    },
+    "command_palette_escape_closes": {
+      "ok": true
+    },
+    "attention_items_present": {
+      "ok": false,
+      "note": "no attention items in seeded fixture; center renders clear state"
+    },
+    "accessibility_no_serious": {
+      "ok": false,
+      "serious": 10
+    }
+  },
+  "accessibility": {
+    "platform": {
+      "critical": 0,
+      "serious": 2,
+      "critIds": [],
+      "seriousIds": [
+        "color-contrast",
+        "list"
+      ],
+      "critNodes": [],
+      "seriousNodes": [
+        {
+          "id": "color-contrast",
+          "nodes": [
+            {
+              "target": [
+                ".shell-topbar-left > .mono[aria-label=\"Environment: Local\"] > span:nth-child(2)"
+              ],
+              "html": "<span>Local</span>"
+            },
+            {
+              "target": [
+                "span[aria-label=\"Status: Alerts\"] > span:nth-child(2)"
+              ],
+              "html": "<span>Alerts</span>"
+            }
+          ]
+        },
+        {
+          "id": "list",
+          "nodes": [
+            {
+              "target": [
+                "#mod-attention > ul"
+              ],
+              "html": "<ul style=\"list-style: none; padding: 0px; margin: 0px; display: grid; gap: 8px;\"><span class=\"\" style=\"color: var(--text-muted); font-size: var(--fs-sm); line-height: var(--leading-normal);\">No execu"
+            },
+            {
+              "target": [
+                "#mod-approvals > ul"
+              ],
+              "html": "<ul style=\"list-style: none; padding: 0px; margin: 0px; display: grid; gap: 6px;\"><span class=\"\" style=\"color: var(--text-muted); font-size: var(--fs-sm); line-height: var(--leading-normal);\">No pendi"
+            }
+          ]
+        }
+      ]
+    },
+    "missions": {
+      "critical": 0,
+      "serious": 1,
+      "critIds": [],
+      "seriousIds": [
+        "color-contrast"
+      ],
+      "critNodes": [],
+      "seriousNodes": [
+        {
+          "id": "color-contrast",
+          "nodes": [
+            {
+              "target": [
+                ".shell-topbar-left > .mono[aria-label=\"Environment: Local\"] > span:nth-child(2)"
+              ],
+              "html": "<span>Local</span>"
+            },
+            {
+              "target": [
+                "span[aria-label=\"Status: Alerts\"] > span:nth-child(2)"
+              ],
+              "html": "<span>Alerts</span>"
+            }
+          ]
+        }
+      ]
+    },
+    "command_palette": {
+      "critical": 0,
+      "serious": 1,
+      "critIds": [],
+      "seriousIds": [
+        "color-contrast"
+      ],
+      "critNodes": [],
+      "seriousNodes": [
+        {
+          "id": "color-contrast",
+          "nodes": [
+            {
+              "target": [
+                ".shell-topbar-left > .mono[aria-label=\"Environment: Local\"] > span:nth-child(2)"
+              ],
+              "html": "<span>Local</span>"
+            },
+            {
+              "target": [
+                "span[aria-label=\"Status: Alerts\"] > span:nth-child(2)"
+              ],
+              "html": "<span>Alerts</span>"
+            }
+          ]
+        }
+      ]
+    },
+    "mission_detail": {
+      "critical": 0,
+      "serious": 1,
+      "critIds": [],
+      "seriousIds": [
+        "color-contrast"
+      ],
+      "critNodes": [],
+      "seriousNodes": [
+        {
+          "id": "color-contrast",
+          "nodes": [
+            {
+              "target": [
+                ".shell-topbar-left > .mono[aria-label=\"Environment: Local\"] > span:nth-child(2)"
+              ],
+              "html": "<span>Local</span>"
+            },
+            {
+              "target": [
+                "span[aria-label=\"Status: Alerts\"] > span:nth-child(2)"
+              ],
+              "html": "<span>Alerts</span>"
+            }
+          ]
+        }
+      ]
+    },
+    "agents": {
+      "critical": 0,
+      "serious": 1,
+      "critIds": [],
+      "seriousIds": [
+        "color-contrast"
+      ],
+      "critNodes": [],
+      "seriousNodes": [
+        {
+          "id": "color-contrast",
+          "nodes": [
+            {
+              "target": [
+                ".shell-topbar-left > .mono[aria-label=\"Environment: Local\"] > span:nth-child(2)"
+              ],
+              "html": "<span>Local</span>"
+            },
+            {
+              "target": [
+                "span[aria-label=\"Status: Alerts\"] > span:nth-child(2)"
+              ],
+              "html": "<span>Alerts</span>"
+            }
+          ]
+        }
+      ]
+    },
+    "agent_detail": {
+      "critical": 0,
+      "serious": 1,
+      "critIds": [],
+      "seriousIds": [
+        "color-contrast"
+      ],
+      "critNodes": [],
+      "seriousNodes": [
+        {
+          "id": "color-contrast",
+          "nodes": [
+            {
+              "target": [
+                ".shell-topbar-left > .mono[aria-label=\"Environment: Local\"] > span:nth-child(2)"
+              ],
+              "html": "<span>Local</span>"
+            },
+            {
+              "target": [
+                "span[aria-label=\"Status: Alerts\"] > span:nth-child(2)"
+              ],
+              "html": "<span>Alerts</span>"
+            }
+          ]
+        }
+      ]
+    },
+    "approvals": {
+      "critical": 0,
+      "serious": 1,
+      "critIds": [],
+      "seriousIds": [
+        "color-contrast"
+      ],
+      "critNodes": [],
+      "seriousNodes": [
+        {
+          "id": "color-contrast",
+          "nodes": [
+            {
+              "target": [
+                ".shell-topbar-left > .mono[aria-label=\"Environment: Local\"] > span:nth-child(2)"
+              ],
+              "html": "<span>Local</span>"
+            },
+            {
+              "target": [
+                "span[aria-label=\"Status: Alerts\"] > span:nth-child(2)"
+              ],
+              "html": "<span>Alerts</span>"
+            }
+          ]
+        }
+      ]
+    },
+    "approval_detail": {
+      "critical": 0,
+      "serious": 1,
+      "critIds": [],
+      "seriousIds": [
+        "color-contrast"
+      ],
+      "critNodes": [],
+      "seriousNodes": [
+        {
+          "id": "color-contrast",
+          "nodes": [
+            {
+              "target": [
+                ".shell-topbar-left > .mono[aria-label=\"Environment: Local\"] > span:nth-child(2)"
+              ],
+              "html": "<span>Local</span>"
+            },
+            {
+              "target": [
+                "span[aria-label=\"Status: Alerts\"] > span:nth-child(2)"
+              ],
+              "html": "<span>Alerts</span>"
+            }
+          ]
+        }
+      ]
+    },
+    "attention": {
+      "critical": 0,
+      "serious": 1,
+      "critIds": [],
+      "seriousIds": [
+        "color-contrast"
+      ],
+      "critNodes": [],
+      "seriousNodes": [
+        {
+          "id": "color-contrast",
+          "nodes": [
+            {
+              "target": [
+                ".shell-topbar-left > .mono[aria-label=\"Environment: Local\"] > span:nth-child(2)"
+              ],
+              "html": "<span>Local</span>"
+            },
+            {
+              "target": [
+                "span[aria-label=\"Status: Alerts\"] > span:nth-child(2)"
+              ],
+              "html": "<span>Alerts</span>"
+            }
+          ]
+        }
+      ]
+    },
+    "aggregate": {
+      "crit": 0,
+      "serious": 10
+    }
+  },
+  "performance": {},
+  "browserErrors": {
+    "pageErrors": [],
+    "hydration": [],
+    "console": [
+      "Access to fetch at 'http://127.0.0.1:8830/api/v1/connectors/approvals/pending' from origin 'http://127.0.0.1:3190' has been blocked by CORS policy: No 'Access-C",
+      "Failed to load resource: net::ERR_FAILED",
+      "Access to fetch at 'http://127.0.0.1:8830/api/v1/connectors/approvals/pending' from origin 'http://127.0.0.1:3190' has been blocked by CORS policy: No 'Access-C",
+      "Failed to load resource: net::ERR_FAILED",
+      "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+      "Access to fetch at 'http://127.0.0.1:8830/api/v1/platform/projects' from origin 'http://127.0.0.1:3190' has been blocked by CORS policy: No 'Access-Control-Allo",
+      "Failed to load resource: net::ERR_FAILED",
+      "Access to fetch at 'http://127.0.0.1:8830/api/v1/connectors/approvals/pending' from origin 'http://127.0.0.1:3190' has been blocked by CORS policy: No 'Access-C",
+      "Failed to load resource: net::ERR_FAILED",
+      "Access to fetch at 'http://127.0.0.1:8830/api/v1/platform/cluster/topology' from origin 'http://127.0.0.1:3190' has been blocked by CORS policy: No 'Access-Cont",
+      "Failed to load resource: net::ERR_FAILED",
+      "Access to fetch at 'http://127.0.0.1:8830/api/v1/platform/release/metrics' from origin 'http://127.0.0.1:3190' has been blocked by CORS policy: No 'Access-Contr",
+      "Failed to load resource: net::ERR_FAILED",
+      "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+      "Access to fetch at 'http://127.0.0.1:8830/api/v1/connectors/approvals/pending' from origin 'http://127.0.0.1:3190' has been blocked by CORS policy: No 'Access-C",
+      "Failed to load resource: net::ERR_FAILED",
+      "Access to fetch at 'http://127.0.0.1:8830/api/v1/platform/runtime/diagnostics' from origin 'http://127.0.0.1:3190' has been blocked by CORS policy: No 'Access-C",
+      "Failed to load resource: net::ERR_FAILED",
+      "Access to fetch at 'http://127.0.0.1:8830/api/v1/connectors/approvals/pending' from origin 'http://127.0.0.1:3190' has been blocked by CORS policy: No 'Access-C",
+      "Failed to load resource: net::ERR_FAILED",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Access to fetch at 'http://127.0.0.1:8830/api/v1/platform/runtime/executions?limit=100' from origin 'http://127.0.0.1:3190' has been blocked by CORS policy: No ",
+      "Failed to load resource: net::ERR_FAILED",
+      "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+      "Access to fetch at 'http://127.0.0.1:8830/api/v1/connectors/approvals/pending' from origin 'http://127.0.0.1:3190' has been blocked by CORS policy: No 'Access-C",
+      "Failed to load resource: net::ERR_FAILED",
+      "Access to fetch at 'http://127.0.0.1:8830/api/v1/connectors/approvals/pending' from origin 'http://127.0.0.1:3190' has been blocked by CORS policy: No 'Access-C",
+      "Failed to load resource: net::ERR_FAILED",
+      "Access to fetch at 'http://127.0.0.1:8830/api/v1/connectors/approvals/pending' from origin 'http://127.0.0.1:3190' has been blocked by CORS policy: No 'Access-C",
+      "Failed to load resource: net::ERR_FAILED",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Access to fetch at 'http://127.0.0.1:8830/api/v1/platform/missions' from origin 'http://127.0.0.1:3190' has been blocked by CORS policy: No 'Access-Control-Allo",
+      "Failed to load resource: net::ERR_FAILED",
+      "Access to fetch at 'http://127.0.0.1:8830/api/v1/connectors/approvals/pending' from origin 'http://127.0.0.1:3190' has been blocked by CORS policy: No 'Access-C",
+      "Failed to load resource: net::ERR_FAILED",
+      "Access to fetch at 'http://127.0.0.1:8830/api/v1/platform/runtime/attention' from origin 'http://127.0.0.1:3190' has been blocked by CORS policy: No 'Access-Con",
+      "Failed to load resource: net::ERR_FAILED",
+      "Access to fetch at 'http://127.0.0.1:8830/api/v1/platform/runtime/executions?limit=100' from origin 'http://127.0.0.1:3190' has been blocked by CORS policy: No ",
+      "Failed to load resource: net::ERR_FAILED",
+      "Access to fetch at 'http://127.0.0.1:8830/api/v1/platform/agent-bindings' from origin 'http://127.0.0.1:3190' has been blocked by CORS policy: No 'Access-Contro",
+      "Failed to load resource: net::ERR_FAILED",
+      "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+      "Access to fetch at 'http://127.0.0.1:8830/api/v1/platform/runtime/metrics' from origin 'http://127.0.0.1:3190' has been blocked by CORS policy: No 'Access-Contr",
+      "Failed to load resource: net::ERR_FAILED",
+      "Access to fetch at 'http://127.0.0.1:8830/api/v1/platform/runtime/diagnostics' from origin 'http://127.0.0.1:3190' has been blocked by CORS policy: No 'Access-C",
+      "Failed to load resource: net::ERR_FAILED",
+      "Access to fetch at 'http://127.0.0.1:8830/api/v1/connectors/approvals/pending' from origin 'http://127.0.0.1:3190' has been blocked by CORS policy: No 'Access-C",
+      "Failed to load resource: net::ERR_FAILED",
+      "Access to fetch at 'http://127.0.0.1:8830/api/v1/platform/approvals?status=pending' from origin 'http://127.0.0.1:3190' has been blocked by CORS policy: No 'Acc",
+      "Failed to load resource: net::ERR_FAILED",
+      "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+    ]
+  },
+  "verdict": "PASS",
+  "hardFailCount": 0
+}

@@ -196,3 +196,28 @@ Milestone 1 adds tokens + primitives **without** touching existing inline styles
 1. Extend `app/globals.css` `@theme` + `:root` with §2–§10 tokens (dark now, light scaffolded).
 2. Add primitives to `components/ui.jsx`: `StatusBadge`, `RiskBadge`, `AuthorityBadge`, `EnvironmentBadge`, `EvidenceBadge`, `EmptyState`, `LoadingState`, `ErrorState`, `BlockedState`, `ConfirmDialog`, `DestructiveDialog`.
 3. No route/API changes. Fully backward compatible. This is the safe first implementation milestone from the audit.
+
+---
+
+## M58 — Glass Frame layer (2026-07-26)
+
+Additive spatial layer on top of the existing token foundation (all prior tokens
+preserved). Full detail in `docs/platform/M58_GLASS_FRAME_DESIGN.md` and
+`docs/platform/M58_COMPONENT_SYSTEM.md`.
+
+**Semantic tokens (new):** `--canvas-bg`, `--canvas-depth`, `--glass-frame-surface`,
+`--glass-frame-surface-strong`, `--glass-frame-border`, `--glass-frame-highlight`,
+`--shadow-glass`, `--signal-{active,attention,danger,success,idle,unknown}`,
+`--connection-{active,authority,blocked,inactive,success}`,
+`--glow-{core,active,attention,danger}`. All resolve to the existing cyan/amber/red/
+green/slate ramp; 600-weights in light theme.
+
+**Signal language:** cyan=operational, amber=authority/attention, red=blocked,
+blue-grey=idle, green=verified-only, dashed-grey=unknown. Never colour-only — always
+paired with text/glyph.
+
+**Components:** `GlassFrame`/`GlassPanel`/`ContextDrawer` (translucent dark glass, 1px
+luminous edge, blur, glow), `SaathiCore`, `SpatialMap`/`SpatialModuleNode`/
+`ConnectionLayer`, `StatusPulse`, `SafetyBoundaryBadge`, `LiveMetric`,
+`SystemStatusStrip`, `SpatialIcon` (one outline family). Live in
+`saathi-os/components/spatial/`.

@@ -1,0 +1,57 @@
+{
+  "schema": "m120.skill_ecosystem_certification.v1",
+  "captured_at": "2026-07-29",
+  "terminal_verdict": "SKILL_ECOSYSTEM_RUNTIME_COMPLETE_WITH_LIMITATIONS",
+  "branch": "milestone/m61-backend-workflow-persistence",
+  "starting_sha": "013af0241251e4fbe5636351e0acd086b42ba40c",
+  "milestones": [
+    "M112",
+    "M113",
+    "M114",
+    "M115",
+    "M116",
+    "M117",
+    "M118",
+    "M119",
+    "M120"
+  ],
+  "architecture": {
+    "package": "saathi/platform/skills",
+    "extends": [
+      "ModuleRegistry",
+      "ToolRegistry",
+      "ExecutionGateway",
+      "Fleet"
+    ],
+    "replaces_tool_registry": false,
+    "replaces_module_registry": false,
+    "execution": "PlatformAgentRuntime\u2192ExecutionGateway",
+    "marketplace_authorized": false,
+    "remote_install_authorized": false,
+    "production_authorized": false
+  },
+  "tests": {
+    "focused": "tests/test_m112_skill_runtime.py",
+    "focused_count": 17
+  },
+  "browser": {
+    "script": "saathi-os/scripts/m120_skill_browser_cert.mjs",
+    "evidence": "docs/evidence/m120/browser/M120_BROWSER_CERT.json",
+    "result": "SKILL_BROWSER_CERT_PASSED"
+  },
+  "security": {
+    "no_direct_tool_execution": true,
+    "manifests_cannot_grant_authority": true,
+    "unverified_cannot_execute": true,
+    "disabled_quarantined_revoked_blocked": true,
+    "trading_guardian_unchanged": true
+  },
+  "push": false,
+  "merge": false,
+  "deploy": false,
+  "implementation_sha": "687ea870ada972742b53754c12da4988a3fee219",
+  "full_backend_suite": "5386 passed, 1 skipped, 0 failed",
+  "frontend_suite": "194 passed",
+  "eslint": "pass",
+  "next_build": "pass"
+}

@@ -1,0 +1,50 @@
+{
+  "approve_credentials": {
+    "ok": false,
+    "action": "approve_credentials",
+    "error": "LLM_AUTHORITY_DENIED",
+    "allowed": false,
+    "message": "LLM outputs remain advisory. No authority actions permitted.",
+    "SIMULATION_ONLY": true
+  },
+  "activate_sessions": {
+    "ok": false,
+    "action": "activate_sessions",
+    "error": "LLM_AUTHORITY_DENIED",
+    "allowed": false,
+    "message": "LLM outputs remain advisory. No authority actions permitted.",
+    "SIMULATION_ONLY": true
+  },
+  "connect_brokers": {
+    "ok": false,
+    "action": "connect_brokers",
+    "error": "LLM_AUTHORITY_DENIED",
+    "allowed": false,
+    "message": "LLM outputs remain advisory. No authority actions permitted.",
+    "SIMULATION_ONLY": true
+  },
+  "authorize_live_trading": {
+    "ok": false,
+    "action": "authorize_live_trading",
+    "error": "LLM_AUTHORITY_DENIED",
+    "allowed": false,
+    "message": "LLM outputs remain advisory. No authority actions permitted.",
+    "SIMULATION_ONLY": true
+  },
+  "submit_orders": {
+    "ok": false,
+    "action": "submit_orders",
+    "error": "LLM_AUTHORITY_DENIED",
+    "allowed": false,
+    "message": "LLM outputs remain advisory. No authority actions permitted.",
+    "SIMULATION_ONLY": true
+  },
+  "store_credentials": {
+    "ok": false,
+    "action": "store_credentials",
+    "error": "LLM_AUTHORITY_DENIED",
+    "allowed": false,
+    "message": "LLM outputs remain advisory. No authority actions permitted.",
+    "SIMULATION_ONLY": true
+  }
+}

@@ -1,0 +1,408 @@
+{
+  "milestone": "M264",
+  "repository_path": "/Users/macbookpro/SaathiAI",
+  "starting_branch": "milestone/m256-m263-market-data-signal-validation",
+  "starting_sha": "fa0d54adf8a2b17a54db82748bc3f53c74a07290",
+  "defect": {
+    "description": "M248-M255 certified locally but never committed; git ls-tree empty; untracked only",
+    "confirmed_absent_from_HEAD": true,
+    "confirmed_present_untracked": true
+  },
+  "inventory_count": 38,
+  "inventory": [
+    {
+      "path": "saathi/platform/tg/intelligence/__init__.py",
+      "size": 988,
+      "sha256": "4d73028004b03cb309fb2688126dc926b657cf43f7613493234e3b7cb2b11b12",
+      "mtime_utc": "2026-07-30T03:22:59.947842+00:00",
+      "source_classification": "UNTRACKED_WORKING_TREE",
+      "expected_milestone_ownership": "M248-M255_backend",
+      "classification": "MATCHES_CERTIFIED_EVIDENCE"
+    },
+    {
+      "path": "saathi/platform/tg/intelligence/backtest_v2.py",
+      "size": 10646,
+      "sha256": "6b6b9e8a30af7e1f1eac8da8f352c857aa57884b406e682bc75b1e7dee8ec9a7",
+      "mtime_utc": "2026-07-30T03:21:40.574459+00:00",
+      "source_classification": "UNTRACKED_WORKING_TREE",
+      "expected_milestone_ownership": "M248-M255_backend",
+      "classification": "MATCHES_CERTIFIED_EVIDENCE"
+    },
+    {
+      "path": "saathi/platform/tg/intelligence/committee.py",
+      "size": 8903,
+      "sha256": "795e58aecb93fd1f008f107430773795076dd8890c20fa8afd80b6e7d4893d8a",
+      "mtime_utc": "2026-07-30T03:21:40.574893+00:00",
+      "source_classification": "UNTRACKED_WORKING_TREE",
+      "expected_milestone_ownership": "M248-M255_backend",
+      "classification": "MATCHES_CERTIFIED_EVIDENCE"
+    },
+    {
+      "path": "saathi/platform/tg/intelligence/explainable.py",
+      "size": 9198,
+      "sha256": "98d4c904f5eeabbc7644afd43f9c11a85fd6830ec5bf156994631830dc314a04",
+      "mtime_utc": "2026-07-30T03:21:40.574910+00:00",
+      "source_classification": "UNTRACKED_WORKING_TREE",
+      "expected_milestone_ownership": "M248-M255_backend",
+      "classification": "MATCHES_CERTIFIED_EVIDENCE"
+    },
+    {
+      "path": "saathi/platform/tg/intelligence/models.py",
+      "size": 3202,
+      "sha256": "6771e628213fff16deff700cde14d07e917676428c43d07e38b00fa89d3ceb6d",
+      "mtime_utc": "2026-07-30T03:17:13.747514+00:00",
+      "source_classification": "UNTRACKED_WORKING_TREE",
+      "expected_milestone_ownership": "M248-M255_backend",
+      "classification": "MATCHES_CERTIFIED_EVIDENCE"
+    },
+    {
+      "path": "saathi/platform/tg/intelligence/monte_carlo.py",
+      "size": 7333,
+      "sha256": "f5dae50914488947789f877c9879bcf624aa5368d85911fe2cb8d4eac29bbf32",
+      "mtime_utc": "2026-07-30T03:21:40.574785+00:00",
+      "source_classification": "UNTRACKED_WORKING_TREE",
+      "expected_milestone_ownership": "M248-M255_backend",
+      "classification": "MATCHES_CERTIFIED_EVIDENCE"
+    },
+    {
+      "path": "saathi/platform/tg/intelligence/portfolio_engine.py",
+      "size": 11889,
+      "sha256": "d55280ebea06dd2e65014f9c97317f70614658764b2d324712c568ee80d7ee9b",
+      "mtime_utc": "2026-07-30T03:19:19.446738+00:00",
+      "source_classification": "UNTRACKED_WORKING_TREE",
+      "expected_milestone_ownership": "M248-M255_backend",
+      "classification": "MATCHES_CERTIFIED_EVIDENCE"
+    },
+    {
+      "path": "saathi/platform/tg/intelligence/security.py",
+      "size": 3600,
+      "sha256": "f8d48eebecf892c4336b2d88c68f85788406e192f425820a6b19fa8469513540",
+      "mtime_utc": "2026-07-30T03:26:32.938950+00:00",
+      "source_classification": "UNTRACKED_WORKING_TREE",
+      "expected_milestone_ownership": "M248-M255_backend",
+      "classification": "MATCHES_CERTIFIED_EVIDENCE"
+    },
+    {
+      "path": "saathi/platform/tg/intelligence/service.py",
+      "size": 21433,
+      "sha256": "a7c1bcf9bdcce063da52fd515f4d00c337c072611a427569c68b4bb76ae101ac",
+      "mtime_utc": "2026-07-30T03:22:59.947670+00:00",
+      "source_classification": "UNTRACKED_WORKING_TREE",
+      "expected_milestone_ownership": "M248-M255_backend",
+      "classification": "MATCHES_CERTIFIED_EVIDENCE"
+    },
+    {
+      "path": "saathi/platform/tg/intelligence/store.py",
+      "size": 9425,
+      "sha256": "c17bcf5677a0da98ce60953bd22a2b6db896d361bed4da5801e426d9f444b692",
+      "mtime_utc": "2026-07-30T03:19:19.446564+00:00",
+      "source_classification": "UNTRACKED_WORKING_TREE",
+      "expected_milestone_ownership": "M248-M255_backend",
+      "classification": "MATCHES_CERTIFIED_EVIDENCE"
+    },
+    {
+      "path": "saathi/platform/tg/intelligence/strategy_registry.py",
+      "size": 18713,
+      "sha256": "b8c67edff7378a0dd4b873099257d509f429252fe2446ba62d9f21c644f1175f",
+      "mtime_utc": "2026-07-30T03:19:19.446599+00:00",
+      "source_classification": "UNTRACKED_WORKING_TREE",
+      "expected_milestone_ownership": "M248-M255_backend",
+      "classification": "MATCHES_CERTIFIED_EVIDENCE"
+    },
+    {
+      "path": "saathi/platform/tg/intelligence/walk_forward_v2.py",
+      "size": 6762,
+      "sha256": "b55e3e01d47114b48ae1210d460ea99fe5ede8f3b0ad26757a42f4a3f9b13001",
+      "mtime_utc": "2026-07-30T03:21:40.574667+00:00",
+      "source_classification": "UNTRACKED_WORKING_TREE",
+      "expected_milestone_ownership": "M248-M255_backend",
+      "classification": "MATCHES_CERTIFIED_EVIDENCE"
+    },
+    {
+      "path": "saathi-os/app/trading/intelligence/page.jsx",
+      "size": 9311,
+      "sha256": "455e888ca6a6919e600471a4a730ecdfd5c36d4d8fe67267c40addd9d3720b3f",
+      "mtime_utc": "2026-07-30T03:28:08.574273+00:00",
+      "source_classification": "UNTRACKED_WORKING_TREE",
+      "expected_milestone_ownership": "M248-M255_frontend",
+      "classification": "MATCHES_CERTIFIED_EVIDENCE"
+    },
+    {
+      "path": "saathi-os/lib/m248_intelligence.test.js",
+      "size": 1967,
+      "sha256": "e9927583fabeca6693a09198ae411559cd737b054e179758dd62b31f12c6dfff",
+      "mtime_utc": "2026-07-30T03:25:12.375606+00:00",
+      "source_classification": "UNTRACKED_WORKING_TREE",
+      "expected_milestone_ownership": "M248-M255_frontend",
+      "classification": "MATCHES_CERTIFIED_EVIDENCE"
+    },
+    {
+      "path": "saathi-os/scripts/m255_intelligence_browser_cert.mjs",
+      "size": 15006,
+      "sha256": "f307aa81d02ada31b225e8acf9ad62c73f59eebe24a0ca5b53b3316e53843a06",
+      "mtime_utc": "2026-07-30T03:29:10.837532+00:00",
+      "source_classification": "UNTRACKED_WORKING_TREE",
+      "expected_milestone_ownership": "M248-M255_frontend",
+      "classification": "MATCHES_CERTIFIED_EVIDENCE"
+    },
+    {
+      "path": "tests/test_m248_m255_institutional_intelligence.py",
+      "size": 8592,
+      "sha256": "b7a13405f486718bafef97e6da00eee09b1eb9231f6536af316a422b324caef1",
+      "mtime_utc": "2026-07-30T03:26:32.939038+00:00",
+      "source_classification": "UNTRACKED_WORKING_TREE",
+      "expected_milestone_ownership": "M248-M255_tests",
+      "classification": "MATCHES_CERTIFIED_EVIDENCE"
+    },
+    {
+      "path": "docs/trading/M248_M255_INSTITUTIONAL_INVESTMENT_INTELLIGENCE.md",
+      "size": 4933,
+      "sha256": "42222fca172eec7ab6fc60351268f6add4b1d9bed2ff8d6b0aa074fb3d3ccc79",
+      "mtime_utc": "2026-07-30T03:26:05.383450+00:00",
+      "source_classification": "UNTRACKED_WORKING_TREE",
+      "expected_milestone_ownership": "M248-M255_docs_evidence",
+      "classification": "MATCHES_CERTIFIED_EVIDENCE"
+    },
+    {
+      "path": "docs/trading/m248_m255_evidence/M248_STRATEGY_CATEGORIES.json",
+      "size": 1177,
+      "sha256": "9fa515280ca90f2610a34568f2496c06dadcb122c5364f63d2b94bc7781488e8",
+      "mtime_utc": "2026-07-30T03:26:48.501183+00:00",
+      "source_classification": "UNTRACKED_WORKING_TREE",
+      "expected_milestone_ownership": "M248-M255_docs_evidence",
+      "classification": "MATCHES_CERTIFIED_EVIDENCE"
+    },
+    {
+      "path": "docs/trading/m248_m255_evidence/M248_STRATEGY_REGISTRY.json",
+      "size": 16064,
+      "sha256": "eab5aa9ec03afd94db10765b4af594ccfd451e0a207427cd149fc783b0314ab7",
+      "mtime_utc": "2026-07-30T03:26:48.501028+00:00",
+      "source_classification": "UNTRACKED_WORKING_TREE",
+      "expected_milestone_ownership": "M248-M255_docs_evidence",
+      "classification": "MATCHES_CERTIFIED_EVIDENCE"
+    },
+    {
+      "path": "docs/trading/m248_m255_evidence/M249_ANALYTICS.json",
+      "size": 4032,
+      "sha256": "9d539a941540418b80b7056f7cfa33660c4ca002205c04844d1f0f4a57639e85",
+      "mtime_utc": "2026-07-30T03:26:48.502944+00:00",
+      "source_classification": "UNTRACKED_WORKING_TREE",
+      "expected_milestone_ownership": "M248-M255_docs_evidence",
+      "classification": "MATCHES_CERTIFIED_EVIDENCE"
+    },
+    {
+      "path": "docs/trading/m248_m255_evidence/M249_PORTFOLIO_OVERVIEW.json",
+      "size": 4552,
+      "sha256": "06be50f6ebe56498bca5df357d2e380459a62e1cab502c61f3b7d7a47c7e5fc0",
+      "mtime_utc": "2026-07-30T03:26:48.502196+00:00",
+      "source_classification": "UNTRACKED_WORKING_TREE",
+      "expected_milestone_ownership": "M248-M255_docs_evidence",
+      "classification": "MATCHES_CERTIFIED_EVIDENCE"
+    },
+    {
+      "path": "docs/trading/m248_m255_evidence/M249_PORTFOLIO_REPORT.json",
+      "size": 7289,
+      "sha256": "a58773b8b101c2df84ceb8caedb9ec8f14c4760fced0d7fe86d0d7c66b05245a",
+      "mtime_utc": "2026-07-30T03:26:48.502660+00:00",
+      "source_classification": "UNTRACKED_WORKING_TREE",
+      "expected_milestone_ownership": "M248-M255_docs_evidence",
+      "classification": "MATCHES_CERTIFIED_EVIDENCE"
+    },
+    {
+      "path": "docs/trading/m248_m255_evidence/M249_PORTFOLIO_RISK.json",
+      "size": 1541,
+      "sha256": "bbbba32324f8a3bd92b6deac941be2f199f0df50ac628771870f57de9fa34212",
+      "mtime_utc": "2026-07-30T03:26:48.502378+00:00",
+      "source_classification": "UNTRACKED_WORKING_TREE",
+      "expected_milestone_ownership": "M248-M255_docs_evidence",
+      "classification": "MATCHES_CERTIFIED_EVIDENCE"
+    },
+    {
+      "path": "docs/trading/m248_m255_evidence/M250_BACKTEST.json",
+      "size": 7681,
+      "sha256": "aea5dd6b6d10c21c58758c932ccba25e7ffe8313f949fb92c9fc1565f3b46e72",
+      "mtime_utc": "2026-07-30T03:26:48.503402+00:00",
+      "source_classification": "UNTRACKED_WORKING_TREE",
+      "expected_milestone_ownership": "M248-M255_docs_evidence",
+      "classification": "MATCHES_CERTIFIED_EVIDENCE"
+    },
+    {
+      "path": "docs/trading/m248_m255_evidence/M250_BACKTEST_COMPARE.json",
+      "size": 33819,
+      "sha256": "4d58b96c460bfbca3b810977ee8cf33f793dc4894c649bb3fdf7fc98f981b250",
+      "mtime_utc": "2026-07-30T03:26:48.505125+00:00",
+      "source_classification": "UNTRACKED_WORKING_TREE",
+      "expected_milestone_ownership": "M248-M255_docs_evidence",
+      "classification": "MATCHES_CERTIFIED_EVIDENCE"
+    },
+    {
+      "path": "docs/trading/m248_m255_evidence/M251_WALK_FORWARD.json",
+      "size": 5378,
+      "sha256": "e9176c21373e6f297e68962e1532f393d3910f3bfc031cba809f88693c9e98ee",
+      "mtime_utc": "2026-07-30T03:26:48.505367+00:00",
+      "source_classification": "UNTRACKED_WORKING_TREE",
+      "expected_milestone_ownership": "M248-M255_docs_evidence",
+      "classification": "MATCHES_CERTIFIED_EVIDENCE"
+    },
+    {
+      "path": "docs/trading/m248_m255_evidence/M252_MONTE_CARLO.json",
+      "size": 2355,
+      "sha256": "11c67eb56bfaea271b14938d68e4e8adb26df216c698c00058021e06687b91a4",
+      "mtime_utc": "2026-07-30T03:26:48.505528+00:00",
+      "source_classification": "UNTRACKED_WORKING_TREE",
+      "expected_milestone_ownership": "M248-M255_docs_evidence",
+      "classification": "MATCHES_CERTIFIED_EVIDENCE"
+    },
+    {
+      "path": "docs/trading/m248_m255_evidence/M253_EXPLANATION.json",
+      "size": 3877,
+      "sha256": "de301e7bfd95402cb92732a10d768f99406bac18f181cee8054c9772b3fdb15c",
+      "mtime_utc": "2026-07-30T03:26:48.505925+00:00",
+      "source_classification": "UNTRACKED_WORKING_TREE",
+      "expected_milestone_ownership": "M248-M255_docs_evidence",
+      "classification": "MATCHES_CERTIFIED_EVIDENCE"
+    },
+    {
+      "path": "docs/trading/m248_m255_evidence/M254_COMMITTEE.json",
+      "size": 8096,
+      "sha256": "d8928300fc8dbdcb8fb9b28dcf1d59bbf4d50f00a4e0f1effaa499db112a4985",
+      "mtime_utc": "2026-07-30T03:26:48.506485+00:00",
+      "source_classification": "UNTRACKED_WORKING_TREE",
+      "expected_milestone_ownership": "M248-M255_docs_evidence",
+      "classification": "MATCHES_CERTIFIED_EVIDENCE"
+    },
+    {
+      "path": "docs/trading/m248_m255_evidence/M255_BROWSER_CERT_SUMMARY.json",
+      "size": 329,
+      "sha256": "ac82349a018974a3b0ec9899d2e4197763cf203dd2b16c82e54fb07d4418afea",
+      "mtime_utc": "2026-07-30T03:29:25.160007+00:00",
+      "source_classification": "UNTRACKED_WORKING_TREE",
+      "expected_milestone_ownership": "M248-M255_docs_evidence",
+      "classification": "MATCHES_CERTIFIED_EVIDENCE"
+    },
+    {
+      "path": "docs/trading/m248_m255_evidence/M255_CERTIFY.json",
+      "size": 1556,
+      "sha256": "d894f7ed59c3106660b52100e5ecbd99a6cb64a286332946651c719c955ef853",
+      "mtime_utc": "2026-07-30T03:26:48.507535+00:00",
+      "source_classification": "UNTRACKED_WORKING_TREE",
+      "expected_milestone_ownership": "M248-M255_docs_evidence",
+      "classification": "MATCHES_CERTIFIED_EVIDENCE"
+    },
+    {
+      "path": "docs/trading/m248_m255_evidence/M255_DASHBOARD.json",
+      "size": 15980,
+      "sha256": "cdbde9120facf3cf842b0bd27925f8c2ef940f45032f6d7f238e0d46ced0798e",
+      "mtime_utc": "2026-07-30T03:26:48.507295+00:00",
+      "source_classification": "UNTRACKED_WORKING_TREE",
+      "expected_milestone_ownership": "M248-M255_docs_evidence",
+      "classification": "MATCHES_CERTIFIED_EVIDENCE"
+    },
+    {
+      "path": "docs/trading/m248_m255_evidence/M255_FINAL_REPORT.md",
+      "size": 2415,
+      "sha256": "29f80771e75b775b67733423f0160a38359aea3538fa992509c3140cd62b53b2",
+      "mtime_utc": "2026-07-30T03:29:40.214782+00:00",
+      "source_classification": "UNTRACKED_WORKING_TREE",
+      "expected_milestone_ownership": "M248-M255_docs_evidence",
+      "classification": "MATCHES_CERTIFIED_EVIDENCE"
+    },
+    {
+      "path": "docs/trading/m248_m255_evidence/M255_SECURITY.json",
+      "size": 825,
+      "sha256": "2ee124149daac1e12d59dea44696db1819008d97a57feb01e3904d16e277f070",
+      "mtime_utc": "2026-07-30T03:26:48.507737+00:00",
+      "source_classification": "UNTRACKED_WORKING_TREE",
+      "expected_milestone_ownership": "M248-M255_docs_evidence",
+      "classification": "MATCHES_CERTIFIED_EVIDENCE"
+    },
+    {
+      "path": "docs/trading/m248_m255_evidence/M255_VERDICT.json",
+      "size": 1411,
+      "sha256": "4fb88185a949253db9493f47e6bcb6f8cacfeddad39df3d2c9b8dfaef896f8a5",
+      "mtime_utc": "2026-07-30T03:26:48.507953+00:00",
+      "source_classification": "UNTRACKED_WORKING_TREE",
+      "expected_milestone_ownership": "M248-M255_docs_evidence",
+      "classification": "MATCHES_CERTIFIED_EVIDENCE"
+    },
+    {
+      "path": "docs/trading/m248_m255_evidence/browser/M255_BROWSER_CERT.json",
+      "size": 3799,
+      "sha256": "c62df3abec7f3f6cfb56e6f5d7107345cd67266063afad3168e1e2225c9570b9",
+      "mtime_utc": "2026-07-30T03:29:25.159864+00:00",
+      "source_classification": "UNTRACKED_WORKING_TREE",
+      "expected_milestone_ownership": "M248-M255_docs_evidence",
+      "classification": "MATCHES_CERTIFIED_EVIDENCE"
+    },
+    {
+      "path": "docs/trading/m248_m255_evidence/browser/screenshots/intelligence_after_actions.png",
+      "size": 75662,
+      "sha256": "97ea0fabdf2445b4763d8ec08ef06fd422ebe69e0e6d6d34d1ebb7db4424f1d7",
+      "mtime_utc": "2026-07-30T03:29:25.111604+00:00",
+      "source_classification": "UNTRACKED_WORKING_TREE",
+      "expected_milestone_ownership": "M248-M255_docs_evidence",
+      "classification": "MATCHES_CERTIFIED_EVIDENCE"
+    },
+    {
+      "path": "docs/trading/m248_m255_evidence/browser/screenshots/intelligence_command_center.png",
+      "size": 74526,
+      "sha256": "87e39cd1603622a86400473d31fd6707d51ee686ba96ba50be22ac0e475a9909",
+      "mtime_utc": "2026-07-30T03:29:25.031800+00:00",
+      "source_classification": "UNTRACKED_WORKING_TREE",
+      "expected_milestone_ownership": "M248-M255_docs_evidence",
+      "classification": "MATCHES_CERTIFIED_EVIDENCE"
+    }
+  ],
+  "classification_counts": {
+    "MATCHES_CERTIFIED_EVIDENCE": 38
+  },
+  "evidence_reconciliation": {
+    "M255_VERDICT_present": true,
+    "M255_CERTIFY_present": true,
+    "M255_BROWSER_CERT_present": true,
+    "verdict": "INSTITUTIONAL_INVESTMENT_INTELLIGENCE_CERTIFIED_WITH_LIMITATIONS",
+    "certify_hard_gates": true,
+    "browser_verdict": "INSTITUTIONAL_INVESTMENT_INTELLIGENCE_CERTIFIED_WITH_LIMITATIONS",
+    "models_verdict_matches_evidence": true,
+    "authority_values_false": true,
+    "test_file_exact_name": "tests/test_m248_m255_institutional_intelligence.py",
+    "test_file_present": true
+  },
+  "post_certification_change_analysis": {
+    "latest_evidence_mtime": "2026-07-30T03:29:40.214782+00:00",
+    "latest_code_mtime": "2026-07-30T03:29:10.837532+00:00",
+    "note": "Working-tree code and evidence both present; treat as certified baseline for recovery if tests pass and authority locks match",
+    "action": "recover as-is; no silent rewrites"
+  },
+  "shared_files_in_M256_commit": {
+    "saathi/platform/api.py": {
+      "committed": true,
+      "note": "intelligence routes present in committed M256 tree",
+      "working_tree_differs": false
+    },
+    "saathi/platform/tg/cli.py": {
+      "committed": true,
+      "note": "ii-* commands present in committed M256 tree",
+      "working_tree_differs": false
+    },
+    "saathi-os/components/trading/TradingShell.jsx": {
+      "committed": true,
+      "note": "Portfolio Intelligence tab in committed tree",
+      "working_tree_differs": false
+    },
+    "saathi-os/package.json": {
+      "committed": true,
+      "note": "cert:m255 and m248 test in committed tree",
+      "working_tree_differs": false
+    }
+  },
+  "package_json_has_m255_scripts": true,
+  "preserved_unrelated": [
+    "docs/evidence/m25/*",
+    "docs/evidence/m27/*",
+    "docs/evidence/m28/*",
+    "docs/design-spec/"
+  ],
+  "recovery_status": "OK",
+  "stop_required": false
+}

@@ -1,0 +1,159 @@
+# M49.3 Supported Tool Scope
+
+## SUPPORTED_CANONICAL
+
+All `m49.*` enabled manifests via ExecutionGateway.
+
+- `m49.allowlisted_command` → SUPPORTED_READ_ONLY
+- `m49.connector.browser.inspect_page` → SUPPORTED_READ_ONLY
+- `m49.connector.gcal.create_event` → SUPPORTED_DRY_RUN_ONLY
+- `m49.connector.gcal.list_events` → SUPPORTED_READ_ONLY
+- `m49.connector.gcal.read_event` → SUPPORTED_READ_ONLY
+- `m49.connector.github.create_issue` → SUPPORTED_DRY_RUN_ONLY
+- `m49.connector.github.read_pull_request` → SUPPORTED_READ_ONLY
+- `m49.connector.github.read_repository` → SUPPORTED_READ_ONLY
+- `m49.connector.gmail.create_draft` → SUPPORTED_DRY_RUN_ONLY
+- `m49.connector.gmail.read_message` → SUPPORTED_READ_ONLY
+- `m49.connector.gmail.search_messages` → SUPPORTED_READ_ONLY
+- `m49.connector.gmail.send_message` → SUPPORTED_DRY_RUN_ONLY
+- `m49.cooperative_cancel` → SUPPORTED_READ_ONLY
+- `m49.echo_readonly` → SUPPORTED_READ_ONLY
+- `m49.financial_advisory_stub` → SUPPORTED_APPROVAL_REQUIRED
+- `m49.list_blueprints` → SUPPORTED_READ_ONLY
+- `m49.list_open_tasks` → SUPPORTED_READ_ONLY
+- `m49.list_projects` → SUPPORTED_READ_ONLY
+- `m49.list_reminders` → SUPPORTED_READ_ONLY
+- `m49.list_social_connections` → SUPPORTED_READ_ONLY
+- `m49.local_artifact_write` → SUPPORTED_APPROVAL_REQUIRED
+- `m49.local_note_write` → SUPPORTED_APPROVAL_REQUIRED
+- `m49.my_files_list` → SUPPORTED_READ_ONLY
+- `m49.performance_report` → SUPPORTED_READ_ONLY
+- `m49.subprocess_diag` → SUPPORTED_READ_ONLY
+- `m49.system_health` → SUPPORTED_READ_ONLY
+- `m49.timeout_demo` → SUPPORTED_READ_ONLY
+- `m49.todays_events` → SUPPORTED_READ_ONLY
+
+## DEFERRED_NOT_RUNTIME_SUPPORTED
+
+- `ab_ai_chat`
+- `ab_batch`
+- `ab_click`
+- `ab_close`
+- `ab_eval`
+- `ab_fill`
+- `ab_find_text`
+- `ab_get_text`
+- `ab_get_url`
+- `ab_goto`
+- `ab_open`
+- `ab_press`
+- `ab_screenshot`
+- `ab_snapshot`
+- `ab_status`
+- `add_event`
+- `add_reminder`
+- `check_messages`
+- `connect_facebook_instagram`
+- `deploy_ielts_site`
+- `look_at_screen`
+- `mac_close_app`
+- `mac_open_app`
+- `mac_run_shortcut`
+- `mac_type_text`
+- `make_animated_video`
+- `make_flow_prompts`
+- `make_talking_yeti`
+- `make_video`
+- `ml_add_subscriber`
+- `ml_create_campaign`
+- `ml_create_group`
+- `post_social_content`
+- `post_to_all_socials`
+- `project_edit_file`
+- `publish_blog`
+- `publish_to_youtube`
+- `queue_video`
+- `read_mac_file`
+- `register_project`
+- `render_hyperframes_video`
+- `search_mac_files`
+- `send_telegram`
+- `send_video_to_phone`
+- `trigger_blueprint`
+- `trigger_n8n_workflow`
+- `write_file`
+
+## PROHIBITED
+
+- `applescript`
+- `broker_execute`
+- `cancel_order`
+- `enable_leverage`
+- `exchange_execute`
+- `live_trade`
+- `place_order`
+- `project_run`
+- `run_shell`
+- `withdraw_funds`
+
+## LEGACY_BOUNDED (temporary)
+
+- `ask_document`
+- `bilibili_search`
+- `canteen_query`
+- `cheap_ask`
+- `cheap_proxy_status`
+- `check_animated_video`
+- `clean_prose`
+- `content_strategy_30day`
+- `crypto_prices`
+- `deep_plan`
+- `dm_sales_converter`
+- `draft_social_content`
+- `engagement_booster`
+- `english_log_mistake`
+- `english_progress`
+- `exchange_rate`
+- `find_community_questions`
+- `get_mobile_link`
+- `github_repo`
+- `hashtag_seo_system`
+- `make_blog_post`
+- `make_content`
+- `make_daily_kit`
+- `make_quote_image`
+- `make_quote_kit`
+- `make_quote_video`
+- `ml_get_automation`
+- `ml_get_subscriber`
+- `ml_list_automations`
+- `ml_list_campaigns`
+- `ml_list_groups`
+- `ml_list_subscribers`
+- `ml_stats`
+- `monthly_analytics_review`
+- `motivational_quote`
+- `nepali_progress`
+- `plan_project_work`
+- `profile_optimizer`
+- `project_overview`
+- `reach_doctor`
+- `read_project_file`
+- `read_webpage`
+- `record_feedback`
+- `remember_fact`
+- `research`
+- `rss_feed`
+- `score_prose`
+- `search_project`
+- `self_improve`
+- `self_status`
+- `social_dashboard`
+- `stage_draft`
+- `teach_nepali`
+- `todays_content`
+- `viral_hook_generator`
+- `web_search`
+- `what_learned`
+- `youtube_info`
+- `youtube_subtitles`

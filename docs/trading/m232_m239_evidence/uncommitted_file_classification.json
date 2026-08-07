@@ -1,0 +1,101 @@
+{
+  "items": [
+    {
+      "path": "saathi/platform/tg/broker_sandbox",
+      "classification": "COMMITTED_AND_REQUIRED",
+      "committed": true,
+      "required": true,
+      "tracked_count": 13,
+      "untracked_source_count": 0,
+      "untracked": []
+    },
+    {
+      "path": "saathi/platform/tg/broker_readiness",
+      "classification": "COMMITTED_AND_REQUIRED",
+      "committed": true,
+      "required": true,
+      "tracked_count": 16,
+      "untracked_source_count": 0,
+      "untracked": []
+    },
+    {
+      "path": "saathi/platform/tg/integration_assurance",
+      "classification": "COMMITTED_AND_REQUIRED",
+      "committed": true,
+      "required": true,
+      "tracked_count": 15,
+      "untracked_source_count": 0,
+      "untracked": []
+    },
+    {
+      "path": "tests/test_m224_m231_broker_readiness.py",
+      "classification": "COMMITTED_AND_REQUIRED",
+      "committed": true,
+      "required": true
+    },
+    {
+      "path": "tests/test_m216_m223_broker_sandbox.py",
+      "classification": "COMMITTED_AND_REQUIRED",
+      "committed": true,
+      "required": true
+    },
+    {
+      "path": "data/platform/broker_readiness.db",
+      "classification": "GENERATED_REPRODUCIBLY",
+      "committed": false,
+      "required": false
+    },
+    {
+      "path": "data/platform/broker_sandbox.db",
+      "classification": "GENERATED_REPRODUCIBLY",
+      "committed": false,
+      "required": false
+    },
+    {
+      "path": "saathi-os/node_modules",
+      "classification": "STALE_LOCAL_ARTIFACT",
+      "committed": false,
+      "required": false,
+      "note": "Must not be required for clean clone; install from lockfiles"
+    },
+    {
+      "path": ".venv",
+      "classification": "STALE_LOCAL_ARTIFACT",
+      "committed": false,
+      "required": false,
+      "note": "Must not be required for clean clone; install from lockfiles"
+    },
+    {
+      "path": ".env",
+      "classification": "STALE_LOCAL_ARTIFACT",
+      "committed": false,
+      "required": false,
+      "note": "Forbidden secret source; must not be required"
+    }
+  ],
+  "m216": {
+    "question": "Does M224\u2013M231 depend on uncommitted M216 broker_sandbox files?",
+    "broker_sandbox": {
+      "path": "saathi/platform/tg/broker_sandbox",
+      "classification": "COMMITTED_AND_REQUIRED",
+      "committed": true,
+      "required": true,
+      "tracked_count": 13,
+      "untracked_source_count": 0,
+      "untracked": []
+    },
+    "broker_readiness": {
+      "path": "saathi/platform/tg/broker_readiness",
+      "classification": "COMMITTED_AND_REQUIRED",
+      "committed": true,
+      "required": true,
+      "tracked_count": 16,
+      "untracked_source_count": 0,
+      "untracked": []
+    },
+    "readiness_imports_sandbox": false,
+    "uncommitted_required_files": [],
+    "resolution": "ALL_REQUIRED_SOURCE_COMMITTED",
+    "m216_uncommitted_dependency": false
+  }
+}

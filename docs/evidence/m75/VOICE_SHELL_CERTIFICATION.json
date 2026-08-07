@@ -1,0 +1,62 @@
+{
+  "milestone": "M75",
+  "captured_at": "2026-07-28",
+  "scope": "unified-shell speech controls and assistant response actions",
+  "features": {
+    "assistant_speak_action": true,
+    "global_stop_control": true,
+    "explicit_play_control": true,
+    "autoplay": false,
+    "provider_state": true,
+    "fallback_label": true,
+    "voice_profile_selector": true,
+    "speaking_rate_control": true,
+    "user_enable_disable": true,
+    "versioned_safe_preference": true,
+    "logout_cleanup": true,
+    "context_invalidation": true,
+    "reduced_motion": true,
+    "keyboard_and_screen_reader_labels": true
+  },
+  "state_coverage": [
+    "idle",
+    "queued",
+    "preparing",
+    "synthesizing",
+    "streaming",
+    "playing",
+    "completed",
+    "cancelled",
+    "failed",
+    "unavailable",
+    "expired"
+  ],
+  "verification": {
+    "backend_targeted": {
+      "command": ".venv/bin/pytest -q tests/test_m74_voice_foundation.py tests/test_m74_voice_api.py",
+      "passed": 15,
+      "failed": 0
+    },
+    "frontend_complete": {
+      "command": "npm test",
+      "passed": 188,
+      "failed": 0
+    },
+    "eslint": "PASS",
+    "production_build": "PASS",
+    "static_routes_built": 82
+  },
+  "react_review": {
+    "single_shared_provider": true,
+    "parallel_metadata_requests": true,
+    "bounded_polling": true,
+    "abort_on_context_change": true,
+    "audio_object_url_revocation": true,
+    "no_duplicate_global_event_listener": true
+  },
+  "limitations": [
+    "Playback requires a second explicit Play action after synthesis completes.",
+    "The shell uses completed authenticated artifacts; provider-native chunk streaming is not claimed.",
+    "IELTS feedback actions are delivered in M76."
+  ]
+}

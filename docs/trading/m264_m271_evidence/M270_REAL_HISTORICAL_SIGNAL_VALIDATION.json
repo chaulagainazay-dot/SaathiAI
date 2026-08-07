@@ -1,0 +1,469 @@
+{
+  "schema": "M270_REAL_HISTORICAL_SIGNAL_VALIDATION",
+  "preregistration": {
+    "strategies_selected": [
+      "tf_dual_ma"
+    ],
+    "parameters": {
+      "sma_fast": 10,
+      "sma_slow": 20
+    },
+    "features": [
+      "sma_10",
+      "sma_20",
+      "simple_return",
+      "rsi_14"
+    ],
+    "benchmark": "buy_hold",
+    "transaction_costs_bps": 5.0,
+    "slippage_bps": 8.0,
+    "train_ratio": 0.6,
+    "val_ratio": 0.2,
+    "embargo_bars": 2,
+    "purge_bars": 0,
+    "regime_definitions": "20-bar return thresholds (bull/bear/sideways/vol)",
+    "success_criteria": "OOS expectancy>=0 and sharpe>=0 with costs; no overclaim",
+    "failure_criteria": "negative OOS expectancy, leakage, governance block",
+    "registered_before_run": true
+  },
+  "validations": [
+    {
+      "selection_id": "equity_aapl_plotly_github",
+      "dataset_id": "ds_equity_aapl_plotly_github_f931ca34b9399348",
+      "dataset_version": "v1",
+      "is_synthetic": false,
+      "state": "OUT_OF_SAMPLE_FAILED",
+      "trade_count": 15,
+      "out_of_sample": {
+        "n": 2,
+        "hit_rate": 0.0,
+        "avg_win": 0,
+        "avg_loss": -0.021394,
+        "expectancy": -0.021394,
+        "profit_factor": 0.0,
+        "ann_return": -0.9957,
+        "volatility": 0.282,
+        "sharpe": -19.1208,
+        "sortino": -12.2138,
+        "max_drawdown": 0.1455,
+        "calmar": -6.8438
+      },
+      "sharpe_ratio": -19.1208,
+      "expectancy": -0.021394,
+      "maximum_drawdown": 0.1455,
+      "benchmark_excess_return": -0.007112,
+      "walk_forward": {
+        "folds": [
+          {
+            "fold": 0,
+            "train_bars": 133,
+            "test_bars": 133,
+            "optimized_on_evaluation_set": false
+          },
+          {
+            "fold": 1,
+            "train_bars": 266,
+            "test_bars": 133,
+            "optimized_on_evaluation_set": false
+          }
+        ],
+        "optimized_on_evaluation_set": false,
+        "seed": 42
+      },
+      "monte_carlo": {
+        "n_simulations": 200,
+        "seed": 42,
+        "probability_of_loss": 1.0,
+        "probability_of_ruin": 0.0,
+        "p5": -0.0768,
+        "p50": -0.0426,
+        "p95": -0.0073,
+        "historical_sample_size": 2,
+        "limitations": [
+          "Block bootstrap not used; i.i.d. sample with replacement"
+        ]
+      },
+      "regime_analysis": {
+        "definitions": {
+          "bull": "20-bar return > 5%",
+          "bear": "20-bar return < -5%",
+          "sideways": "otherwise",
+          "high_volatility": "20-bar realized vol > 2%",
+          "low_volatility": "otherwise"
+        },
+        "counts": {
+          "bull": 116,
+          "bear": 83,
+          "sideways": 181,
+          "high_volatility": 52,
+          "low_volatility": 328
+        },
+        "dominant": "low_volatility",
+        "regime_dependent": true,
+        "macro_regimes_fabricated": false,
+        "note": "Inflation/rate/crisis regimes omitted without approved macro data"
+      },
+      "multiple_testing": {
+        "trial_count": 1,
+        "false_discovery_warning": false,
+        "robustness_penalty": 0.0,
+        "parameter_mining_risk": false,
+        "baseline_comparison": "buy_hold",
+        "holdout_isolated": true,
+        "note": "Trial count reported; simplistic p-values are not proof of profitability"
+      },
+      "transaction_cost_assumptions": {
+        "commission_bps": 5.0
+      },
+      "slippage_assumptions": {
+        "slippage_bps": 8.0
+      },
+      "failure_reasons": [
+        "negative_oos_expectancy",
+        "narrow_universe"
+      ],
+      "limitations": [
+        "single_asset_or_limited_universe"
+      ],
+      "disclaimer": "STRATEGY RESULTS DO NOT GUARANTEE FUTURE PERFORMANCE. RESEARCH VALIDATION DOES NOT AUTHORIZE LIVE TRADING.",
+      "evidence_hash": "80d7bdcf65cf8cb94e713eba4050ba0a7f71d63b979e896407139b553d1d287e"
+    },
+    {
+      "selection_id": "crypto_btcusdt_cryptodatadownload",
+      "dataset_id": "ds_crypto_btcusdt_cryptodatadownloa_83d004159604a587",
+      "dataset_version": "v1",
+      "is_synthetic": false,
+      "state": "OUT_OF_SAMPLE_FAILED",
+      "trade_count": 17,
+      "out_of_sample": {
+        "n": 4,
+        "hit_rate": 0.5,
+        "avg_win": 0.023767,
+        "avg_loss": -0.05257,
+        "expectancy": -0.014402,
+        "profit_factor": 0.4521,
+        "ann_return": -0.9742,
+        "volatility": 0.6258,
+        "sharpe": -5.7997,
+        "sortino": -5.9469,
+        "max_drawdown": 0.4744,
+        "calmar": -2.0532
+      },
+      "sharpe_ratio": -5.7997,
+      "expectancy": -0.014402,
+      "maximum_drawdown": 0.4744,
+      "benchmark_excess_return": 0.127339,
+      "walk_forward": {
+        "folds": [
+          {
+            "fold": 0,
+            "train_bars": 133,
+            "test_bars": 133,
+            "optimized_on_evaluation_set": false
+          },
+          {
+            "fold": 1,
+            "train_bars": 266,
+            "test_bars": 133,
+            "optimized_on_evaluation_set": false
+          }
+        ],
+        "optimized_on_evaluation_set": false,
+        "seed": 42
+      },
+      "monte_carlo": {
+        "n_simulations": 200,
+        "seed": 42,
+        "probability_of_loss": 0.715,
+        "probability_of_ruin": 0.0,
+        "p5": -0.1946,
+        "p50": -0.0594,
+        "p95": 0.0955,
+        "historical_sample_size": 4,
+        "limitations": [
+          "Block bootstrap not used; i.i.d. sample with replacement"
+        ]
+      },
+      "regime_analysis": {
+        "definitions": {
+          "bull": "20-bar return > 5%",
+          "bear": "20-bar return < -5%",
+          "sideways": "otherwise",
+          "high_volatility": "20-bar realized vol > 2%",
+          "low_volatility": "otherwise"
+        },
+        "counts": {
+          "bull": 155,
+          "bear": 174,
+          "sideways": 51,
+          "high_volatility": 380,
+          "low_volatility": 0
+        },
+        "dominant": "high_volatility",
+        "regime_dependent": true,
+        "macro_regimes_fabricated": false,
+        "note": "Inflation/rate/crisis regimes omitted without approved macro data"
+      },
+      "multiple_testing": {
+        "trial_count": 1,
+        "false_discovery_warning": false,
+        "robustness_penalty": 0.0,
+        "parameter_mining_risk": false,
+        "baseline_comparison": "buy_hold",
+        "holdout_isolated": true,
+        "note": "Trial count reported; simplistic p-values are not proof of profitability"
+      },
+      "transaction_cost_assumptions": {
+        "commission_bps": 5.0
+      },
+      "slippage_assumptions": {
+        "slippage_bps": 8.0
+      },
+      "failure_reasons": [
+        "negative_oos_expectancy",
+        "narrow_universe"
+      ],
+      "limitations": [
+        "single_asset_or_limited_universe"
+      ],
+      "disclaimer": "STRATEGY RESULTS DO NOT GUARANTEE FUTURE PERFORMANCE. RESEARCH VALIDATION DOES NOT AUTHORIZE LIVE TRADING.",
+      "evidence_hash": "55dc9b00aa28d3da4a449230090c40aa52170b6134feb6c462e81f3949731532"
+    }
+  ],
+  "synthetic_comparison": {
+    "synthetic_state": {
+      "state": "OUT_OF_SAMPLE_FAILED",
+      "sharpe_ratio": 0,
+      "trade_count": 4,
+      "is_synthetic": true
+    },
+    "synthetic_labelled": true,
+    "historical_runs": [
+      {
+        "selection_id": "equity_aapl_plotly_github",
+        "state": "OUT_OF_SAMPLE_FAILED",
+        "is_synthetic": false
+      },
+      {
+        "selection_id": "crypto_btcusdt_cryptodatadownload",
+        "state": "OUT_OF_SAMPLE_FAILED",
+        "is_synthetic": false
+      }
+    ],
+    "note": "Synthetic fixtures remain labelled SYNTHETIC_TEST_DATA; historical runs use is_synthetic=false"
+  },
+  "failed_strategies": [
+    {
+      "selection_id": "equity_aapl_plotly_github",
+      "dataset_id": "ds_equity_aapl_plotly_github_f931ca34b9399348",
+      "dataset_version": "v1",
+      "is_synthetic": false,
+      "state": "OUT_OF_SAMPLE_FAILED",
+      "trade_count": 15,
+      "out_of_sample": {
+        "n": 2,
+        "hit_rate": 0.0,
+        "avg_win": 0,
+        "avg_loss": -0.021394,
+        "expectancy": -0.021394,
+        "profit_factor": 0.0,
+        "ann_return": -0.9957,
+        "volatility": 0.282,
+        "sharpe": -19.1208,
+        "sortino": -12.2138,
+        "max_drawdown": 0.1455,
+        "calmar": -6.8438
+      },
+      "sharpe_ratio": -19.1208,
+      "expectancy": -0.021394,
+      "maximum_drawdown": 0.1455,
+      "benchmark_excess_return": -0.007112,
+      "walk_forward": {
+        "folds": [
+          {
+            "fold": 0,
+            "train_bars": 133,
+            "test_bars": 133,
+            "optimized_on_evaluation_set": false
+          },
+          {
+            "fold": 1,
+            "train_bars": 266,
+            "test_bars": 133,
+            "optimized_on_evaluation_set": false
+          }
+        ],
+        "optimized_on_evaluation_set": false,
+        "seed": 42
+      },
+      "monte_carlo": {
+        "n_simulations": 200,
+        "seed": 42,
+        "probability_of_loss": 1.0,
+        "probability_of_ruin": 0.0,
+        "p5": -0.0768,
+        "p50": -0.0426,
+        "p95": -0.0073,
+        "historical_sample_size": 2,
+        "limitations": [
+          "Block bootstrap not used; i.i.d. sample with replacement"
+        ]
+      },
+      "regime_analysis": {
+        "definitions": {
+          "bull": "20-bar return > 5%",
+          "bear": "20-bar return < -5%",
+          "sideways": "otherwise",
+          "high_volatility": "20-bar realized vol > 2%",
+          "low_volatility": "otherwise"
+        },
+        "counts": {
+          "bull": 116,
+          "bear": 83,
+          "sideways": 181,
+          "high_volatility": 52,
+          "low_volatility": 328
+        },
+        "dominant": "low_volatility",
+        "regime_dependent": true,
+        "macro_regimes_fabricated": false,
+        "note": "Inflation/rate/crisis regimes omitted without approved macro data"
+      },
+      "multiple_testing": {
+        "trial_count": 1,
+        "false_discovery_warning": false,
+        "robustness_penalty": 0.0,
+        "parameter_mining_risk": false,
+        "baseline_comparison": "buy_hold",
+        "holdout_isolated": true,
+        "note": "Trial count reported; simplistic p-values are not proof of profitability"
+      },
+      "transaction_cost_assumptions": {
+        "commission_bps": 5.0
+      },
+      "slippage_assumptions": {
+        "slippage_bps": 8.0
+      },
+      "failure_reasons": [
+        "negative_oos_expectancy",
+        "narrow_universe"
+      ],
+      "limitations": [
+        "single_asset_or_limited_universe"
+      ],
+      "disclaimer": "STRATEGY RESULTS DO NOT GUARANTEE FUTURE PERFORMANCE. RESEARCH VALIDATION DOES NOT AUTHORIZE LIVE TRADING.",
+      "evidence_hash": "80d7bdcf65cf8cb94e713eba4050ba0a7f71d63b979e896407139b553d1d287e"
+    },
+    {
+      "selection_id": "crypto_btcusdt_cryptodatadownload",
+      "dataset_id": "ds_crypto_btcusdt_cryptodatadownloa_83d004159604a587",
+      "dataset_version": "v1",
+      "is_synthetic": false,
+      "state": "OUT_OF_SAMPLE_FAILED",
+      "trade_count": 17,
+      "out_of_sample": {
+        "n": 4,
+        "hit_rate": 0.5,
+        "avg_win": 0.023767,
+        "avg_loss": -0.05257,
+        "expectancy": -0.014402,
+        "profit_factor": 0.4521,
+        "ann_return": -0.9742,
+        "volatility": 0.6258,
+        "sharpe": -5.7997,
+        "sortino": -5.9469,
+        "max_drawdown": 0.4744,
+        "calmar": -2.0532
+      },
+      "sharpe_ratio": -5.7997,
+      "expectancy": -0.014402,
+      "maximum_drawdown": 0.4744,
+      "benchmark_excess_return": 0.127339,
+      "walk_forward": {
+        "folds": [
+          {
+            "fold": 0,
+            "train_bars": 133,
+            "test_bars": 133,
+            "optimized_on_evaluation_set": false
+          },
+          {
+            "fold": 1,
+            "train_bars": 266,
+            "test_bars": 133,
+            "optimized_on_evaluation_set": false
+          }
+        ],
+        "optimized_on_evaluation_set": false,
+        "seed": 42
+      },
+      "monte_carlo": {
+        "n_simulations": 200,
+        "seed": 42,
+        "probability_of_loss": 0.715,
+        "probability_of_ruin": 0.0,
+        "p5": -0.1946,
+        "p50": -0.0594,
+        "p95": 0.0955,
+        "historical_sample_size": 4,
+        "limitations": [
+          "Block bootstrap not used; i.i.d. sample with replacement"
+        ]
+      },
+      "regime_analysis": {
+        "definitions": {
+          "bull": "20-bar return > 5%",
+          "bear": "20-bar return < -5%",
+          "sideways": "otherwise",
+          "high_volatility": "20-bar realized vol > 2%",
+          "low_volatility": "otherwise"
+        },
+        "counts": {
+          "bull": 155,
+          "bear": 174,
+          "sideways": 51,
+          "high_volatility": 380,
+          "low_volatility": 0
+        },
+        "dominant": "high_volatility",
+        "regime_dependent": true,
+        "macro_regimes_fabricated": false,
+        "note": "Inflation/rate/crisis regimes omitted without approved macro data"
+      },
+      "multiple_testing": {
+        "trial_count": 1,
+        "false_discovery_warning": false,
+        "robustness_penalty": 0.0,
+        "parameter_mining_risk": false,
+        "baseline_comparison": "buy_hold",
+        "holdout_isolated": true,
+        "note": "Trial count reported; simplistic p-values are not proof of profitability"
+      },
+      "transaction_cost_assumptions": {
+        "commission_bps": 5.0
+      },
+      "slippage_assumptions": {
+        "slippage_bps": 8.0
+      },
+      "failure_reasons": [
+        "negative_oos_expectancy",
+        "narrow_universe"
+      ],
+      "limitations": [
+        "single_asset_or_limited_universe"
+      ],
+      "disclaimer": "STRATEGY RESULTS DO NOT GUARANTEE FUTURE PERFORMANCE. RESEARCH VALIDATION DOES NOT AUTHORIZE LIVE TRADING.",
+      "evidence_hash": "55dc9b00aa28d3da4a449230090c40aa52170b6134feb6c462e81f3949731532"
+    }
+  ],
+  "research_promising": [],
+  "historical_data_status": "BOUNDED_REAL_HISTORICAL_DATA_VALIDATED_WITH_LIMITATIONS",
+  "forbidden_claims_not_used": [
+    "PROFITABLE",
+    "GUARANTEED",
+    "SAFE",
+    "LIVE_READY",
+    "PRODUCTION_READY",
+    "BROKER_READY"
+  ]
+}

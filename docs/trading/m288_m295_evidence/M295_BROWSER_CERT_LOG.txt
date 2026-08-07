@@ -1,0 +1,8 @@
+
+> saathi-os@0.1.0 cert:m295
+> node scripts/m295_paper_simulation_browser_cert.mjs
+
+{
+  "verdict": "INSTITUTIONAL_PAPER_SIMULATION_BROWSER_CERT_PASSED_WITH_LIMITATIONS",
+  "hard_gates_pass": true
+}

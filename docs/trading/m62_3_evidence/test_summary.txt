@@ -1,0 +1,4 @@
+14 passed, 7 warnings in 0.97s
+M62.3 research: 14 tests (unit/integration/persistence/RBAC/adversarial/HTTP).
+Regression M62.2+M62.1+M61+M50: 48 pass. Safety scan clean (no order/broker/execution/network/subprocess in research/).
+Legacy M5 research.py + investment.py: LEGACY_ISOLATED (not wired; avoids a 2nd platform architecture). tools/*research*: OUT_OF_SCOPE (network).

@@ -1,0 +1,62 @@
+{
+  "provider": "alpaca",
+  "terms_review_status": "TERMS_REVIEW_INCOMPLETE",
+  "items": [
+    {
+      "item": "api_terms_of_use",
+      "classification": "LEGAL_REVIEW_REQUIRED",
+      "finding": "API and brokerage terms must be reviewed by owner/legal before connectivity.",
+      "source": "provider legal pages (owner must open current version)"
+    },
+    {
+      "item": "automated_access_restrictions",
+      "classification": "LEGAL_REVIEW_REQUIRED",
+      "finding": "Automated access must comply with rate limits and API terms; bot use restrictions need review.",
+      "source": "API terms (current version at canary time)"
+    },
+    {
+      "item": "data_retention_restrictions",
+      "classification": "LEGAL_REVIEW_REQUIRED",
+      "finding": "Account and market data retention/redistribution may be restricted by licence.",
+      "source": "terms + market data licence"
+    },
+    {
+      "item": "redistribution_restrictions",
+      "classification": "LEGAL_REVIEW_REQUIRED",
+      "finding": "Snapshots stored in SaathiOS must not be redistributed without licence clearance.",
+      "source": "market data and API terms"
+    },
+    {
+      "item": "third_party_software_restrictions",
+      "classification": "LEGAL_REVIEW_REQUIRED",
+      "finding": "Using SaathiOS as third-party software against provider API needs terms clearance.",
+      "source": "API terms"
+    },
+    {
+      "item": "prohibited_activities",
+      "classification": "LEGAL_REVIEW_REQUIRED",
+      "finding": "Order submission, wash trading, market manipulation remain prohibited; canary is read-only by design.",
+      "source": "terms + planning invariant"
+    },
+    {
+      "item": "termination_and_suspension_risks",
+      "classification": "OWNER_CONFIRMATION_REQUIRED",
+      "finding": "Provider may suspend API access; canary must abort cleanly on suspension signals.",
+      "source": "terms + canary abort design"
+    }
+  ],
+  "legal_review_items": [
+    "api_terms_of_use current version acknowledgement",
+    "automated-access and bot restrictions",
+    "data retention and redistribution licences",
+    "third-party software authorization",
+    "privacy/PII handling for account snapshots",
+    "jurisdiction-specific brokerage regulations for owner",
+    "branding and attribution obligations"
+  ],
+  "legal_approval_generated_by_automation": false,
+  "REAL_CONNECTIVITY_AUTHORIZED": false,
+  "CREDENTIAL_PROVISIONING_AUTHORIZED": false,
+  "CANARY_ACTIVATION_AUTHORIZED": false,
+  "LIVE_TRADING_AUTHORIZED": false
+}

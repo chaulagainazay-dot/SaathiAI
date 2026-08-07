@@ -1,0 +1,19 @@
+{
+  "git_status_short": [
+    " M saathi/platform/api.py",
+    " M saathi/platform/models.py",
+    "?? docs/design-spec/",
+    "?? docs/trading/BACKTEST_BIAS_CONTROLS.md",
+    "?? docs/trading/M62_4_FINAL_REPORT.md",
+    "?? docs/trading/PORTFOLIO_ACCOUNTING.md",
+    "?? docs/trading/STRATEGY_AND_BACKTESTING.md",
+    "?? docs/trading/STRESS_AND_SENSITIVITY.md",
+    "?? docs/trading/TRANSACTION_COSTS.md",
+    "?? docs/trading/WALK_FORWARD_VALIDATION.md",
+    "?? docs/trading/m62_4_evidence/",
+    "?? saathi/platform/strategy/",
+    "?? tests/test_m62_4_strategy.py"
+  ],
+  "design_spec_touched": false,
+  "note": "docs/design-spec/ present but untouched and NOT staged; databases/pyc excluded"
+}

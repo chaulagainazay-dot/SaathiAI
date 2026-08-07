@@ -1,0 +1,17 @@
+{
+  "schema": "M287_CLEAN_CLONE_CERTIFICATION",
+  "timestamp": "2026-07-30T12:22:31Z",
+  "M272_M279_COMMITTED_SOURCE_PRESENT": true,
+  "M280_M287_SOURCE_PRESENT": true,
+  "FOCUSED_TESTS_PASSED": true,
+  "FRONTEND_TESTS_PASSED": true,
+  "PRODUCTION_BUILD_PASSED": true,
+  "M287_BROWSER_CERT_PASSED": true,
+  "m287_verdict": "AUTONOMOUS_RESEARCH_ORCHESTRATOR_BROWSER_CERT_PASSED_WITH_LIMITATIONS",
+  "backend_tests": "10 passed",
+  "frontend_tests": "5 passed",
+  "build_routes": [
+    "/trading/research-orchestrator"
+  ],
+  "ok": true
+}

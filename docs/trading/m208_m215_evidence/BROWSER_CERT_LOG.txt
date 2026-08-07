@@ -1,0 +1,12 @@
+
+> saathi-os@0.1.0 cert:m215
+> node scripts/m215_ops_graduation_browser_cert.mjs
+
+{
+  "result": "OPS_GRADUATION_BROWSER_CERT_PASSED_WITH_LIMITATIONS",
+  "failed_gates": 0,
+  "failed_journeys": 1,
+  "screenshots": 11,
+  "owner_signoff": "NOT_CLAIMED_AUTOMATED_ONLY"
+}
+EXIT:0

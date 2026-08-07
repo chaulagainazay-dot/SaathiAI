@@ -17,6 +17,13 @@ import StatusBar from "./shell/StatusBar";
 import CopilotPanel from "./shell/CopilotPanel";
 import { ShellChromeProvider, useShellChrome } from "./shell/ShellChromeContext";
 import { GO_SHORTCUTS } from "@/lib/navigation";
+import { ModuleDiscoveryProvider } from "@/lib/modules/ModuleDiscoveryContext";
+import { useModuleDiscoveryContext } from "@/lib/modules/ModuleDiscoveryContext";
+import ModuleRouteBoundary from "./modules/ModuleRouteBoundary";
+import { VoiceOutputProvider } from "./voice/VoiceOutputProvider";
+import VoiceOutputDock from "./voice/VoiceOutputDock";
+import { VoiceRuntimeProvider } from "./voice/VoiceRuntimeProvider";
+import VoiceRuntimeDock from "./voice/VoiceRuntimeDock";
 
 function ShellInner({ children }) {
   const pathname = usePathname();
@@ -27,6 +34,7 @@ function ShellInner({ children }) {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [approvalState, setApprovalState] = useState({ status: "loading" });
   const { sidebarExpanded, copilotOpen, toggleCopilot, closeCopilot, openCopilot } = useShellChrome();
+  const moduleDiscovery = useModuleDiscoveryContext();
 
   useEffect(() => {
     if (bare) return undefined;
@@ -110,7 +118,7 @@ function ShellInner({ children }) {
         data-sidebar={sidebarExpanded ? "expanded" : "collapsed"}
         data-copilot={copilotOpen ? "open" : "closed"}
       >
-        <Sidebar />
+        <Sidebar moduleDiscovery={moduleDiscovery} />
         <div className="shell-desktop-main">
           <TopBar
             onSearch={() => setPaletteOpen(true)}
@@ -136,7 +144,7 @@ function ShellInner({ children }) {
         data-sidebar={sidebarExpanded ? "expanded" : "collapsed"}
         data-copilot={copilotOpen ? "open" : "closed"}
       >
-        {children}
+        <ModuleRouteBoundary>{children}</ModuleRouteBoundary>
       </main>
 
       {copilotOpen && (
@@ -160,7 +168,13 @@ function ShellInner({ children }) {
       )}
 
       <LiveToasts />
-      <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
+      <VoiceRuntimeDock />
+      <VoiceOutputDock />
+      <CommandPalette
+        open={paletteOpen}
+        onClose={() => setPaletteOpen(false)}
+        moduleNavigation={moduleDiscovery.isReady ? moduleDiscovery.navigation : null}
+      />
       <CeoMode open={ceoOpen} onClose={() => setCeoOpen(false)} />
     </LiveProvider>
   );
@@ -169,7 +183,13 @@ function ShellInner({ children }) {
 export default function Shell({ children }) {
   return (
     <ShellChromeProvider>
-      <ShellInner>{children}</ShellInner>
+      <ModuleDiscoveryProvider>
+        <VoiceOutputProvider>
+          <VoiceRuntimeProvider>
+            <ShellInner>{children}</ShellInner>
+          </VoiceRuntimeProvider>
+        </VoiceOutputProvider>
+      </ModuleDiscoveryProvider>
     </ShellChromeProvider>
   );
 }

@@ -1,0 +1,135 @@
+{
+  "schema": "m271.integrated_browser_cert.v1",
+  "verdict": "INTELLIGENCE_RECOVERY_HISTORICAL_DATA_BROWSER_CERT_PASSED_WITH_LIMITATIONS",
+  "branch": "milestone/m264-m271-intelligence-recovery-historical-data",
+  "sha": "9d92c74ecffabe19ed42ae7913956629fa28a30d",
+  "timestamp": "2026-07-30T07:16:25.133Z",
+  "hard_gates": {
+    "clean_clone_evidence": {
+      "ok": true,
+      "detail": "ok"
+    },
+    "bff_up": {
+      "ok": true,
+      "detail": "http://127.0.0.1:8871"
+    },
+    "seed": {
+      "ok": true,
+      "detail": "ok"
+    },
+    "intelligence_api": {
+      "ok": true,
+      "detail": "ok"
+    },
+    "research_data_api": {
+      "ok": true,
+      "detail": "ok"
+    },
+    "ii_broker_refused": {
+      "ok": true,
+      "detail": "BROKER_CONNECTIVITY_FORBIDDEN"
+    },
+    "md_broker_refused": {
+      "ok": true,
+      "detail": "BROKER_CONNECTIVITY_FORBIDDEN"
+    },
+    "md_orders_refused": {
+      "ok": true,
+      "detail": "ORDER_SUBMISSION_FORBIDDEN"
+    },
+    "md_canary_refused": {
+      "ok": true,
+      "detail": "CANARY_ACTIVATION_FORBIDDEN"
+    },
+    "ui_up": {
+      "ok": true,
+      "detail": "http://127.0.0.1:3271"
+    }
+  },
+  "journeys": [
+    {
+      "name": "clean_clone_cert_present",
+      "ok": true,
+      "detail": "08e6b84dae118f803e3d74c47bf30a5d573d4bad"
+    },
+    {
+      "name": "intelligence_dashboard",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "research_data_dashboard",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "name": "ii_certify",
+      "ok": true,
+      "detail": "INSTITUTIONAL_INVESTMENT_INTELLIGENCE_CERTIFIED_WITH_LIMITATIONS"
+    },
+    {
+      "name": "md_certify",
+      "ok": true,
+      "detail": "RESEARCH_GRADE_MARKET_DATA_AND_SIGNAL_VALIDATION_CERTIFIED_WITH_LIMITATIONS"
+    },
+    {
+      "name": "ii_broker_refused",
+      "ok": true,
+      "detail": "BROKER_CONNECTIVITY_FORBIDDEN"
+    },
+    {
+      "name": "md_broker_refused",
+      "ok": true,
+      "detail": "BROKER_CONNECTIVITY_FORBIDDEN"
+    },
+    {
+      "name": "md_orders_refused",
+      "ok": true,
+      "detail": "ORDER_SUBMISSION_FORBIDDEN"
+    },
+    {
+      "name": "md_canary_refused",
+      "ok": true,
+      "detail": "CANARY_ACTIVATION_FORBIDDEN"
+    },
+    {
+      "name": "intelligence_page",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "research_data_page",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "no_password_form",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "no_live_ready_claim",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "no_profit_guarantee_label",
+      "ok": true,
+      "detail": "research boundary present or soft"
+    }
+  ],
+  "screenshots": [
+    "/Users/macbookpro/SaathiAI/docs/trading/m264_m271_evidence/browser/screenshots/m271_intelligence.png",
+    "/Users/macbookpro/SaathiAI/docs/trading/m264_m271_evidence/browser/screenshots/m271_research_data.png"
+  ],
+  "LIVE_TRADING_AUTHORIZED": false,
+  "BROKER_CONNECTIVITY_AUTHORIZED": false,
+  "notes": [
+    "RESEARCH ONLY",
+    "PAPER ONLY",
+    "NO BROKER",
+    "NO CREDENTIALS",
+    "NO LIVE TRADING"
+  ],
+  "hard_gates_pass": true
+}

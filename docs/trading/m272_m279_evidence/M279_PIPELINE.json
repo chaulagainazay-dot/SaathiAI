@@ -1,0 +1,18 @@
+{
+  "experiment_id": "exp_40ec94a290b4c53c",
+  "config_checksum": "49cb4e53852bc29885ec411273b405cf28d49f116e7bba54920917da618cd6cd",
+  "pre_registered": true,
+  "candidate_state": "VALIDATION_FAILED",
+  "preserved_oos_failures": [
+    {
+      "instrument": "AAPL",
+      "strategy_id": "tf_dual_ma",
+      "state": "OUT_OF_SAMPLE_FAILED"
+    },
+    {
+      "instrument": "BTCUSDT",
+      "strategy_id": "tf_dual_ma",
+      "state": "OUT_OF_SAMPLE_FAILED"
+    }
+  ]
+}

@@ -16,14 +16,14 @@ function read(rel) {
 describe("Trading Guardian page safety", () => {
   const src = read("app/trading/page.jsx");
 
-  it("declares advisory-only and execution disabled", () => {
-    assert.match(src, /Advisory only/i);
-    assert.match(src, /Execution/i);
-    assert.match(src, /Disabled/i);
-    assert.match(src, /Not granted|not granted/i);
-    assert.match(src, /Leverage/i);
-    assert.match(src, /Withdrawal/i);
-    assert.match(src, /Prohibited|prohibited/i);
+  it("declares paper-only simulation with live execution disabled (M62.8)", () => {
+    // M62.8 replaces the M54 advisory placeholder with a real paper workspace.
+    // The boundary is truthful: paper execution available, live execution disabled.
+    assert.match(src, /PAPER/);
+    assert.match(src, /SIMULATION ONLY/i);
+    assert.match(src, /LIVE EXECUTION: UNAVAILABLE|Live execution unavailable/i);
+    assert.match(src, /long-only|LONG-ONLY/i);
+    assert.match(src, /localhost/i);
   });
 
   it("has no order/trade/broker execute controls", () => {
@@ -34,10 +34,13 @@ describe("Trading Guardian page safety", () => {
     assert.doesNotMatch(src, /type="submit"[^>]*>[\s\S]{0,40}(Buy|Sell|Order)/i);
   });
 
-  it("uses authority and risk primitives", () => {
-    assert.match(src, /AuthorityBadge/);
-    assert.match(src, /RiskBadge/);
-    assert.match(src, /BlockedState/);
+  it("carries explicit paper-only authority framing (M62.8)", () => {
+    // The real paper workspace replaces the placeholder badges with a truthful,
+    // persistent safety frame: paper environment, simulation authority, live disabled.
+    assert.match(src, /SafetyBanner/);
+    assert.match(src, /ENVIRONMENT: PAPER/);
+    assert.match(src, /AUTHORITY: SIMULATION ONLY/);
+    assert.match(src, /LIVE EXECUTION: UNAVAILABLE/);
   });
 });
 

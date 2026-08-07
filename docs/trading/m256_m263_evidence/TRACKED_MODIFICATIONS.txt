@@ -1,0 +1,9 @@
+docs/evidence/m25/LATEST_ENVIRONMENT_OBSERVATION.json
+docs/evidence/m25/LIVE_CERT_EVIDENCE.json
+docs/evidence/m25/LIVE_CERT_SUMMARY.md
+docs/evidence/m27/connector_events.jsonl
+docs/evidence/m28/deprecation_events.jsonl
+saathi-os/components/trading/TradingShell.jsx
+saathi-os/package.json
+saathi/platform/api.py
+saathi/platform/tg/cli.py

@@ -1,0 +1,80 @@
+{
+  "approval_requirements": [
+    "NO_APPROVAL_REQUIRED"
+  ],
+  "audit_contract": "platform_audit",
+  "browser_requirements": false,
+  "cancellation_contract": "cooperative",
+  "conflicts": [],
+  "credential_reference_requirements": [],
+  "data_handling_classification": "operational",
+  "declared_agent_roles": [],
+  "declared_capabilities": [
+    "direct_tool_execution"
+  ],
+  "declared_tools": [
+    "invented.tool.not_registered"
+  ],
+  "dependencies": [],
+  "description": "Intentional invalid package for certification.",
+  "display_name": "Malicious Sample",
+  "documentation_references": [
+    "docs/autonomous/milestones/M112_M120_SKILL_ECOSYSTEM_RUNTIME.md"
+  ],
+  "domain": "test",
+  "entrypoint_type": "shell",
+  "evidence_contract": "content_hash",
+  "extension": {},
+  "health_check_contract": "manifest_hash_and_tools",
+  "knowledge_sources": [],
+  "lifecycle_state": "DISCOVERED",
+  "local_model_requirements": [],
+  "local_trust_status": "UNVERIFIED",
+  "manifest_schema_version": "skill.manifest.v1",
+  "maximum_saathios_version": "",
+  "minimum_saathios_version": "1.0.0-local",
+  "name": "malicious",
+  "network_requirements": "external",
+  "optional_permissions": [],
+  "os_requirements": [
+    "darwin",
+    "linux"
+  ],
+  "package_hash": "deadbeef",
+  "platform_requirements": [
+    "platform_agent_runtime",
+    "execution_gateway"
+  ],
+  "privacy_classification": "no_personal_data",
+  "production_posture": "not_authorized",
+  "prohibited_permissions": [],
+  "publisher": "saathios.builtin",
+  "required_permissions": [
+    "unrestricted_shell"
+  ],
+  "resource_budgets": {
+    "memory_mb": 128,
+    "timeout_sec": 60
+  },
+  "retry_policy": {
+    "max_attempts": 1
+  },
+  "risk_classification": "critical",
+  "rollback_policy": "restore_previous_certified",
+  "signature_status": "local_builtin",
+  "skill_id": "saathi.malicious",
+  "storage_requirements_mb": 8,
+  "tags": [
+    "builtin",
+    "local",
+    "deterministic"
+  ],
+  "timeouts": {
+    "execution_sec": 60.0,
+    "health_sec": 5.0
+  },
+  "trading_guardian_posture": "unengaged_readonly_only",
+  "upgrade_policy": "keep_previous_until_rollback_window",
+  "version": "0.0.1",
+  "worker_requirements": []
+}

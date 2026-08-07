@@ -1,0 +1,992 @@
+{
+  "ok": true,
+  "limits": {
+    "ok": true,
+    "state": "BREACHED",
+    "limits": {
+      "max_leverage": 1.0,
+      "max_position_weight": 0.35,
+      "max_sector_weight": 0.5,
+      "max_drawdown": 0.2,
+      "max_var_95": 0.05,
+      "max_expected_shortfall_95": 0.08,
+      "max_gross_exposure": 1.0,
+      "min_cash_pct": 0.0,
+      "max_correlation_avg": 0.85
+    },
+    "breaches": [
+      {
+        "limit": "max_position_weight",
+        "value": 0.416233,
+        "threshold": 0.35,
+        "severity": "breach"
+      }
+    ],
+    "warnings": [],
+    "risk_budgets": [
+      {
+        "symbol": "SPY",
+        "actual": 0.605643,
+        "target": 0.2,
+        "delta": 0.405643
+      },
+      {
+        "symbol": "QQQ",
+        "actual": 0.301812,
+        "target": 0.2,
+        "delta": 0.101812
+      },
+      {
+        "symbol": "EFA",
+        "actual": 0.067226,
+        "target": 0.2,
+        "delta": -0.132774
+      },
+      {
+        "symbol": "TLT",
+        "actual": 0.015477,
+        "target": 0.2,
+        "delta": -0.184523
+      },
+      {
+        "symbol": "GLD",
+        "actual": 0.009842,
+        "target": 0.2,
+        "delta": -0.190158
+      }
+    ],
+    "drawdown_manager": {
+      "current_drawdown": 0.129434,
+      "limit": 0.2,
+      "action": "HALT_RESEARCH_REBALANCE"
+    },
+    "LIVE_TRADING_AUTHORIZED": false,
+    "BROKER_CONNECTIVITY_AUTHORIZED": false,
+    "REAL_CONNECTIVITY_AUTHORIZED": false,
+    "CREDENTIAL_PROVISIONING_AUTHORIZED": false,
+    "CANARY_ACTIVATION_AUTHORIZED": false,
+    "ORDER_EXECUTION_AUTHORIZED": false,
+    "ORDER_SUBMISSION_AUTHORIZED": false,
+    "API_KEYS_ACCEPTED": false,
+    "OAUTH_AUTHORIZED": false,
+    "PRODUCTION_AUTHORIZED": false,
+    "STRATEGY_PROFITABILITY_GUARANTEED": false,
+    "INVESTMENT_ADVICE_CERTIFIED": false,
+    "LIVE_MARKET_READINESS": false,
+    "REGULATORY_GRADE_RISK": false,
+    "paper_only": true,
+    "sandbox_only": true,
+    "research_only": true,
+    "offline_first": true,
+    "no_broker_connection": true,
+    "no_api_keys": true,
+    "no_oauth": true,
+    "no_order_submission": true,
+    "no_live_trading": true,
+    "not_investment_advice": true,
+    "max_authority": "INSTITUTIONAL_PORTFOLIO_RISK_INTELLIGENCE_ONLY",
+    "default_max_leverage": 1.0
+  },
+  "attribution": {
+    "ok": true,
+    "method": "brinson_lite_equal_weight_benchmark",
+    "label": "RESEARCH_ATTRIBUTION_NOT_OFFICIAL_GIPS",
+    "total_allocation_effect": 0.057925,
+    "total_selection_effect": -0.324506,
+    "positions": [
+      {
+        "symbol": "SPY",
+        "weight": 0.416233,
+        "active_weight": 0.216233,
+        "asset_return_ann": -0.367256,
+        "allocation_effect": -0.054166,
+        "selection_effect": -0.023352,
+        "interaction_effect": -0.025247
+      },
+      {
+        "symbol": "QQQ",
+        "weight": 0.180368,
+        "active_weight": -0.019632,
+        "asset_return_ann": -0.537769,
+        "allocation_effect": 0.004918,
+        "selection_effect": -0.057454,
+        "interaction_effect": 0.00564
+      },
+      {
+        "symbol": "EFA",
+        "weight": 0.051335,
+        "active_weight": -0.148665,
+        "asset_return_ann": -0.660972,
+        "allocation_effect": 0.03724,
+        "selection_effect": -0.082095,
+        "interaction_effect": 0.061023
+      },
+      {
+        "symbol": "TLT",
+        "weight": 0.053185,
+        "active_weight": -0.146815,
+        "asset_return_ann": -0.554993,
+        "allocation_effect": 0.036777,
+        "selection_effect": -0.060899,
+        "interaction_effect": 0.044705
+      },
+      {
+        "symbol": "GLD",
+        "weight": 0.067638,
+        "active_weight": -0.132362,
+        "asset_return_ann": -0.754023,
+        "allocation_effect": 0.033156,
+        "selection_effect": -0.100705,
+        "interaction_effect": 0.066648
+      }
+    ],
+    "factor_attribution": {
+      "market": 0.850301,
+      "size": -0.040247,
+      "value": 0.017867,
+      "momentum": 0.082133
+    },
+    "LIVE_TRADING_AUTHORIZED": false,
+    "BROKER_CONNECTIVITY_AUTHORIZED": false,
+    "REAL_CONNECTIVITY_AUTHORIZED": false,
+    "CREDENTIAL_PROVISIONING_AUTHORIZED": false,
+    "CANARY_ACTIVATION_AUTHORIZED": false,
+    "ORDER_EXECUTION_AUTHORIZED": false,
+    "ORDER_SUBMISSION_AUTHORIZED": false,
+    "API_KEYS_ACCEPTED": false,
+    "OAUTH_AUTHORIZED": false,
+    "PRODUCTION_AUTHORIZED": false,
+    "STRATEGY_PROFITABILITY_GUARANTEED": false,
+    "INVESTMENT_ADVICE_CERTIFIED": false,
+    "LIVE_MARKET_READINESS": false,
+    "REGULATORY_GRADE_RISK": false,
+    "paper_only": true,
+    "sandbox_only": true,
+    "research_only": true,
+    "offline_first": true,
+    "no_broker_connection": true,
+    "no_api_keys": true,
+    "no_oauth": true,
+    "no_order_submission": true,
+    "no_live_trading": true,
+    "not_investment_advice": true,
+    "max_authority": "INSTITUTIONAL_PORTFOLIO_RISK_INTELLIGENCE_ONLY",
+    "default_max_leverage": 1.0
+  },
+  "sizing": {
+    "ok": true,
+    "method": "inverse_volatility",
+    "weights": {
+      "SPY": 0.2,
+      "QQQ": 0.2,
+      "EFA": 0.2,
+      "TLT": 0.2,
+      "GLD": 0.2
+    },
+    "notionals": {
+      "SPY": 17298.0,
+      "QQQ": 17298.0,
+      "EFA": 17298.0,
+      "TLT": 17298.0,
+      "GLD": 17298.0
+    },
+    "equity": 86490.0,
+    "cash_weight": 0.0,
+    "max_leverage": 1.0,
+    "authorizes_execution": false,
+    "LIVE_TRADING_AUTHORIZED": false,
+    "BROKER_CONNECTIVITY_AUTHORIZED": false,
+    "REAL_CONNECTIVITY_AUTHORIZED": false,
+    "CREDENTIAL_PROVISIONING_AUTHORIZED": false,
+    "CANARY_ACTIVATION_AUTHORIZED": false,
+    "ORDER_EXECUTION_AUTHORIZED": false,
+    "ORDER_SUBMISSION_AUTHORIZED": false,
+    "API_KEYS_ACCEPTED": false,
+    "OAUTH_AUTHORIZED": false,
+    "PRODUCTION_AUTHORIZED": false,
+    "STRATEGY_PROFITABILITY_GUARANTEED": false,
+    "INVESTMENT_ADVICE_CERTIFIED": false,
+    "LIVE_MARKET_READINESS": false,
+    "REGULATORY_GRADE_RISK": false,
+    "paper_only": true,
+    "sandbox_only": true,
+    "research_only": true,
+    "offline_first": true,
+    "no_broker_connection": true,
+    "no_api_keys": true,
+    "no_oauth": true,
+    "no_order_submission": true,
+    "no_live_trading": true,
+    "not_investment_advice": true,
+    "max_authority": "INSTITUTIONAL_PORTFOLIO_RISK_INTELLIGENCE_ONLY",
+    "default_max_leverage": 1.0
+  },
+  "dynamic_allocation": {
+    "ok": true,
+    "regime": "normal",
+    "scale": 1.0,
+    "weights": {
+      "SPY": 0.2,
+      "QQQ": 0.2,
+      "EFA": 0.2,
+      "TLT": 0.2,
+      "GLD": 0.2
+    },
+    "cash_weight": 0.0,
+    "rule": "predefined_regime_scale",
+    "test_set_tuning": false,
+    "LIVE_TRADING_AUTHORIZED": false,
+    "BROKER_CONNECTIVITY_AUTHORIZED": false,
+    "REAL_CONNECTIVITY_AUTHORIZED": false,
+    "CREDENTIAL_PROVISIONING_AUTHORIZED": false,
+    "CANARY_ACTIVATION_AUTHORIZED": false,
+    "ORDER_EXECUTION_AUTHORIZED": false,
+    "ORDER_SUBMISSION_AUTHORIZED": false,
+    "API_KEYS_ACCEPTED": false,
+    "OAUTH_AUTHORIZED": false,
+    "PRODUCTION_AUTHORIZED": false,
+    "STRATEGY_PROFITABILITY_GUARANTEED": false,
+    "INVESTMENT_ADVICE_CERTIFIED": false,
+    "LIVE_MARKET_READINESS": false,
+    "REGULATORY_GRADE_RISK": false,
+    "paper_only": true,
+    "sandbox_only": true,
+    "research_only": true,
+    "offline_first": true,
+    "no_broker_connection": true,
+    "no_api_keys": true,
+    "no_oauth": true,
+    "no_order_submission": true,
+    "no_live_trading": true,
+    "not_investment_advice": true,
+    "max_authority": "INSTITUTIONAL_PORTFOLIO_RISK_INTELLIGENCE_ONLY",
+    "default_max_leverage": 1.0
+  },
+  "optimisation": {
+    "schema": "M276_PORTFOLIO_OPTIMISATION_REPORT",
+    "ok": true,
+    "state": "RESEARCH_PORTFOLIO_READY_WITH_LIMITATIONS",
+    "method": "inverse_volatility",
+    "assets": [
+      "SPY",
+      "QQQ",
+      "EFA",
+      "TLT",
+      "GLD"
+    ],
+    "weights": {
+      "SPY": 0.187645,
+      "QQQ": 0.18478,
+      "EFA": 0.186823,
+      "TLT": 0.197709,
+      "GLD": 0.193043
+    },
+    "cash": 0.05,
+    "expected_risk": {
+      "volatility": 0.060139
+    },
+    "expected_return": {
+      "value": -0.211044,
+      "limitations": [
+        "Not a forecast; historical research estimate only"
+      ],
+      "used": false,
+      "estimation_uncertainty": "HIGH",
+      "estimation_method": "caller_supplied_or_historical_mean_train_only",
+      "test_leakage_prevented": true,
+      "label": "EXPECTED_RETURNS_ARE_UNCERTAIN_ESTIMATES"
+    },
+    "volatility": 0.060139,
+    "var_95": 0.010532,
+    "expected_shortfall_95": 0.010729,
+    "drawdown_estimate": 0.095012,
+    "concentration": {
+      "max_weight": 0.197709,
+      "hhi": 0.180612
+    },
+    "diversification_ratio": 1.499862,
+    "turnover": 0.475,
+    "transaction_costs": 0.000237,
+    "risk_contributions": [
+      {
+        "asset": "SPY",
+        "weight": 0.187645,
+        "marginal_risk_contribution": 1.522e-05,
+        "component_risk_contribution": 2.86e-06,
+        "pct_risk": 0.198995
+      },
+      {
+        "asset": "QQQ",
+        "weight": 0.18478,
+        "marginal_risk_contribution": 1.613e-05,
+        "component_risk_contribution": 2.98e-06,
+        "pct_risk": 0.207698
+      },
+      {
+        "asset": "EFA",
+        "weight": 0.186823,
+        "marginal_risk_contribution": 1.508e-05,
+        "component_risk_contribution": 2.82e-06,
+        "pct_risk": 0.196254
+      },
+      {
+        "asset": "TLT",
+        "weight": 0.197709,
+        "marginal_risk_contribution": 1.556e-05,
+        "component_risk_contribution": 3.08e-06,
+        "pct_risk": 0.214306
+      },
+      {
+        "asset": "GLD",
+        "weight": 0.193043,
+        "marginal_risk_contribution": 1.359e-05,
+        "component_risk_contribution": 2.62e-06,
+        "pct_risk": 0.182747
+      }
+    ],
+    "constraint_utilisation": {
+      "max_weight": 0.35,
+      "leverage_limit": 1.0,
+      "gross_exposure": 0.95,
+      "net_exposure": 0.95,
+      "turnover_limit": 1.0
+    },
+    "constraints": {
+      "maximum_asset_weight": 0.35,
+      "leverage_limit": 1.0,
+      "turnover_limit": 1.0,
+      "concentration_limit": 0.4,
+      "gross_exposure": 1.0,
+      "net_exposure": 1.0,
+      "cash_minimum": 0.05,
+      "minimum_weight": 0.0
+    },
+    "baselines": {
+      "equal_weight": {
+        "SPY": 0.19,
+        "QQQ": 0.19,
+        "EFA": 0.19,
+        "TLT": 0.19,
+        "GLD": 0.19
+      },
+      "inverse_volatility": {
+        "SPY": 0.1876450550199891,
+        "QQQ": 0.1847798457561987,
+        "EFA": 0.18682291896252867,
+        "TLT": 0.19770914212612925,
+        "GLD": 0.19304303813515428
+      }
+    },
+    "warnings": [],
+    "confidence": "research_with_limitations",
+    "default_leverage_max": 1.0,
+    "hidden_leverage": false,
+    "borrowing_authorized": false,
+    "limitations": [
+      "Research-only optimisation; not regulatory-grade",
+      "No live leverage or borrowing authority",
+      "Covariance estimated from short research samples may be unstable"
+    ],
+    "LIVE_TRADING_AUTHORIZED": false,
+    "BROKER_CONNECTIVITY_AUTHORIZED": false,
+    "REAL_CONNECTIVITY_AUTHORIZED": false,
+    "CREDENTIAL_PROVISIONING_AUTHORIZED": false,
+    "CANARY_ACTIVATION_AUTHORIZED": false,
+    "ORDER_EXECUTION_AUTHORIZED": false,
+    "ORDER_SUBMISSION_AUTHORIZED": false,
+    "ORDER_MODIFICATION_AUTHORIZED": false,
+    "ORDER_CANCELLATION_AUTHORIZED": false,
+    "API_KEYS_ACCEPTED": false,
+    "OAUTH_AUTHORIZED": false,
+    "LIVE_MARKET_DATA_AUTHORIZED": false,
+    "LIVE_DATA_DEPENDENCY": false,
+    "PAPER_EXECUTION_AUTHORIZED": false,
+    "AUTOMATED_INVESTMENT_AUTHORITY": false,
+    "REGULATORY_GRADE_PORTFOLIO_OPTIMISATION": false,
+    "STRATEGY_PROFITABILITY_GUARANTEED": false,
+    "LIVE_MARKET_READINESS": false,
+    "INVESTMENT_ADVICE_CERTIFIED": false,
+    "PRODUCTION_AUTHORIZED": false,
+    "REAL_BROKER_CONNECTION_CAPABLE": false,
+    "paper_only": true,
+    "sandbox_only": true,
+    "research_only": true,
+    "offline_first": true,
+    "offline_capable": true,
+    "no_broker_connection": true,
+    "no_api_keys": true,
+    "no_oauth": true,
+    "no_order_submission": true,
+    "no_live_data_dependency": true,
+    "no_live_trading": true,
+    "certified_experiment_requires_pre_registration": true,
+    "human_review_required_for_paper_candidate": true,
+    "paper_candidate_does_not_authorise_execution": true,
+    "max_authority": "RESEARCH_PORTFOLIO_AND_PAPER_CANDIDATE_EVALUATION_ONLY",
+    "evidence_hash": "793130ed383a8013ab46fdd660de4610e93526c58d3ed8375ce8c9b2e358aeaf",
+    "portfolio_id": "pf_0dc03da1f4714548",
+    "optimiser_version": "v2",
+    "composes": "M276_PortfolioBuilder",
+    "baselines_required": true,
+    "authorizes_execution": false,
+    "REGULATORY_GRADE_RISK": false,
+    "not_investment_advice": true,
+    "default_max_leverage": 1.0,
+    "optimisation_id": "opt_95b3b01b736f40db"
+  },
+  "scenarios": {
+    "ok": true,
+    "schema": "M296_SCENARIO_ENGINE",
+    "stress_dashboard": {
+      "worst_scenario": {
+        "name": "equity_drawdown_20",
+        "portfolio_pnl": -10953.0,
+        "portfolio_loss_pct": 0.126639,
+        "equity_after": 75537.0,
+        "drawdown_proxy": 0.126639,
+        "es_proxy": 0.139303,
+        "contributions": [
+          {
+            "symbol": "SPY",
+            "shock": -0.2,
+            "pnl": -7200.0
+          },
+          {
+            "symbol": "QQQ",
+            "shock": -0.2,
+            "pnl": -3120.0
+          },
+          {
+            "symbol": "EFA",
+            "shock": -0.2,
+            "pnl": -888.0
+          },
+          {
+            "symbol": "TLT",
+            "shock": 0.03,
+            "pnl": 138.0
+          },
+          {
+            "symbol": "GLD",
+            "shock": 0.02,
+            "pnl": 117.0
+          }
+        ],
+        "cash_unchanged": 20000.0
+      },
+      "scenarios": [
+        {
+          "name": "equity_drawdown_10",
+          "portfolio_pnl": -5453.5,
+          "portfolio_loss_pct": 0.063054,
+          "equity_after": 81036.5,
+          "drawdown_proxy": 0.063054,
+          "es_proxy": 0.069359,
+          "contributions": [
+            {
+              "symbol": "SPY",
+              "shock": -0.1,
+              "pnl": -3600.0
+            },
+            {
+              "symbol": "QQQ",
+              "shock": -0.1,
+              "pnl": -1560.0
+            },
+            {
+              "symbol": "EFA",
+              "shock": -0.1,
+              "pnl": -444.0
+            },
+            {
+              "symbol": "TLT",
+              "shock": 0.02,
+              "pnl": 92.0
+            },
+            {
+              "symbol": "GLD",
+              "shock": 0.01,
+              "pnl": 58.5
+            }
+          ],
+          "cash_unchanged": 20000.0
+        },
+        {
+          "name": "equity_drawdown_20",
+          "portfolio_pnl": -10953.0,
+          "portfolio_loss_pct": 0.126639,
+          "equity_after": 75537.0,
+          "drawdown_proxy": 0.126639,
+          "es_proxy": 0.139303,
+          "contributions": [
+            {
+              "symbol": "SPY",
+              "shock": -0.2,
+              "pnl": -7200.0
+            },
+            {
+              "symbol": "QQQ",
+              "shock": -0.2,
+              "pnl": -3120.0
+            },
+            {
+              "symbol": "EFA",
+              "shock": -0.2,
+              "pnl": -888.0
+            },
+            {
+              "symbol": "TLT",
+              "shock": 0.03,
+              "pnl": 138.0
+            },
+            {
+              "symbol": "GLD",
+              "shock": 0.02,
+              "pnl": 117.0
+            }
+          ],
+          "cash_unchanged": 20000.0
+        },
+        {
+          "name": "rates_up",
+          "portfolio_pnl": -2726.6,
+          "portfolio_loss_pct": 0.031525,
+          "equity_after": 83763.4,
+          "drawdown_proxy": 0.031525,
+          "es_proxy": 0.034678,
+          "contributions": [
+            {
+              "symbol": "SPY",
+              "shock": -0.04,
+              "pnl": -1440.0
+            },
+            {
+              "symbol": "QQQ",
+              "shock": -0.04,
+              "pnl": -624.0
+            },
+            {
+              "symbol": "EFA",
+              "shock": -0.04,
+              "pnl": -177.6
+            },
+            {
+              "symbol": "TLT",
+              "shock": -0.08,
+              "pnl": -368.0
+            },
+            {
+              "symbol": "GLD",
+              "shock": -0.02,
+              "pnl": -117.0
+            }
+          ],
+          "cash_unchanged": 20000.0
+        },
+        {
+          "name": "risk_off_correlation",
+          "portfolio_pnl": -6570.3,
+          "portfolio_loss_pct": 0.075966,
+          "equity_after": 79919.7,
+          "drawdown_proxy": 0.075966,
+          "es_proxy": 0.083563,
+          "contributions": [
+            {
+              "symbol": "SPY",
+              "shock": -0.12,
+              "pnl": -4320.0
+            },
+            {
+              "symbol": "QQQ",
+              "shock": -0.12,
+              "pnl": -1872.0
+            },
+            {
+              "symbol": "EFA",
+              "shock": -0.12,
+              "pnl": -532.8
+            },
+            {
+              "symbol": "TLT",
+              "shock": -0.03,
+              "pnl": -138.0
+            },
+            {
+              "symbol": "GLD",
+              "shock": 0.05,
+              "pnl": 292.5
+            }
+          ],
+          "cash_unchanged": 20000.0
+        },
+        {
+          "name": "vol_spike",
+          "portfolio_pnl": -3989.4,
+          "portfolio_loss_pct": 0.046126,
+          "equity_after": 82500.6,
+          "drawdown_proxy": 0.046126,
+          "es_proxy": 0.050738,
+          "contributions": [
+            {
+              "symbol": "SPY",
+              "shock": -0.06,
+              "pnl": -2160.0
+            },
+            {
+              "symbol": "QQQ",
+              "shock": -0.06,
+              "pnl": -936.0
+            },
+            {
+              "symbol": "EFA",
+              "shock": -0.06,
+              "pnl": -266.4
+            },
+            {
+              "symbol": "TLT",
+              "shock": -0.06,
+              "pnl": -276.0
+            },
+            {
+              "symbol": "GLD",
+              "shock": -0.06,
+              "pnl": -351.0
+            }
+          ],
+          "cash_unchanged": 20000.0
+        },
+        {
+          "name": "liquidity_stress",
+          "portfolio_pnl": -5984.1,
+          "portfolio_loss_pct": 0.069188,
+          "equity_after": 80505.9,
+          "drawdown_proxy": 0.069188,
+          "es_proxy": 0.076107,
+          "contributions": [
+            {
+              "symbol": "SPY",
+              "shock": -0.08,
+              "pnl": -2880.0
+            },
+            {
+              "symbol": "QQQ",
+              "shock": -0.08,
+              "pnl": -1248.0
+            },
+            {
+              "symbol": "EFA",
+              "shock": -0.08,
+              "pnl": -355.2
+            },
+            {
+              "symbol": "TLT",
+              "shock": -0.08,
+              "pnl": -368.0
+            },
+            {
+              "symbol": "GLD",
+              "shock": -0.08,
+              "pnl": -468.0
+            }
+          ],
+          "cash_unchanged": 20000.0
+        }
+      ]
+    },
+    "liquidity_dashboard": {
+      "liquidity_stress_loss": -5984.1,
+      "note": "Simulated liquidity shock \u2014 not live order-book depth"
+    },
+    "expected_shortfall_dashboard": {
+      "baseline_es_95": 0.01298,
+      "scenario_es_proxies": {
+        "equity_drawdown_10": 0.069359,
+        "equity_drawdown_20": 0.139303,
+        "rates_up": 0.034678,
+        "risk_off_correlation": 0.083563,
+        "vol_spike": 0.050738,
+        "liquidity_stress": 0.076107
+      },
+      "label": "RESEARCH_ES_NOT_REGULATORY"
+    },
+    "scenario_count": 6,
+    "LIVE_TRADING_AUTHORIZED": false,
+    "BROKER_CONNECTIVITY_AUTHORIZED": false,
+    "REAL_CONNECTIVITY_AUTHORIZED": false,
+    "CREDENTIAL_PROVISIONING_AUTHORIZED": false,
+    "CANARY_ACTIVATION_AUTHORIZED": false,
+    "ORDER_EXECUTION_AUTHORIZED": false,
+    "ORDER_SUBMISSION_AUTHORIZED": false,
+    "API_KEYS_ACCEPTED": false,
+    "OAUTH_AUTHORIZED": false,
+    "PRODUCTION_AUTHORIZED": false,
+    "STRATEGY_PROFITABILITY_GUARANTEED": false,
+    "INVESTMENT_ADVICE_CERTIFIED": false,
+    "LIVE_MARKET_READINESS": false,
+    "REGULATORY_GRADE_RISK": false,
+    "paper_only": true,
+    "sandbox_only": true,
+    "research_only": true,
+    "offline_first": true,
+    "no_broker_connection": true,
+    "no_api_keys": true,
+    "no_oauth": true,
+    "no_order_submission": true,
+    "no_live_trading": true,
+    "not_investment_advice": true,
+    "max_authority": "INSTITUTIONAL_PORTFOLIO_RISK_INTELLIGENCE_ONLY",
+    "default_max_leverage": 1.0,
+    "evidence_hash": "8283c359b5fbbcf5e0e1981d0e9c2b54511d0c551e70e22e4209b4a40940610b",
+    "scenario_run_id": "scn_a35d93f1030f405d"
+  },
+  "committee": {
+    "ok": true,
+    "committee_version": "v2",
+    "composes": "M254_InvestmentCommittee",
+    "instrument": "PORTFOLIO",
+    "base_committee": {
+      "instrument": "PORTFOLIO",
+      "final_recommendation": "REDUCE",
+      "consensus": "SPLIT",
+      "agreement_ratio": 0.3333,
+      "committee_confidence": 0.68,
+      "average_member_confidence": 0.595,
+      "voting_summary": {
+        "votes": {
+          "HOLD": 2,
+          "SELL": 2,
+          "REDUCE": 2
+        },
+        "weighted_confidence": {
+          "HOLD": 1.0,
+          "SELL": 1.21,
+          "REDUCE": 1.36
+        },
+        "majority_action": "HOLD"
+      },
+      "agreements": [
+        {
+          "role": "risk_manager",
+          "action": "REDUCE",
+          "rationale": "Risk limits: elevated vol or concentration argues smaller size"
+        },
+        {
+          "role": "portfolio_manager",
+          "action": "REDUCE",
+          "rationale": "Portfolio construction: trim to restore diversification"
+        }
+      ],
+      "disagreements": [
+        {
+          "role": "macro_analyst",
+          "action": "HOLD",
+          "rationale": "Mixed macro; wait for clearer regime"
+        },
+        {
+          "role": "technical_analyst",
+          "action": "SELL",
+          "rationale": "Downtrend structure; avoid catching knives"
+        },
+        {
+          "role": "fundamental_analyst",
+          "action": "HOLD",
+          "rationale": "Fair value; fundamentals neutral"
+        },
+        {
+          "role": "quant_analyst",
+          "action": "SELL",
+          "rationale": "Factor/score composite negative after vol adjustment"
+        }
+      ],
+      "dissenting_opinions": [
+        {
+          "role": "macro_analyst",
+          "action": "HOLD",
+          "confidence": 0.5,
+          "rationale": "Mixed macro; wait for clearer regime",
+          "key_risk": "policy/growth shock"
+        },
+        {
+          "role": "technical_analyst",
+          "action": "SELL",
+          "confidence": 0.64,
+          "rationale": "Downtrend structure; avoid catching knives",
+          "key_risk": "false breakout"
+        },
+        {
+          "role": "fundamental_analyst",
+          "action": "HOLD",
+          "confidence": 0.5,
+          "rationale": "Fair value; fundamentals neutral",
+          "key_risk": "earnings miss / guidance cut"
+        },
+        {
+          "role": "quant_analyst",
+          "action": "SELL",
+          "confidence": 0.57,
+          "rationale": "Factor/score composite negative after vol adjustment",
+          "key_risk": "factor crowding / model decay"
+        }
+      ],
+      "opinions": [
+        {
+          "role": "macro_analyst",
+          "action": "HOLD",
+          "confidence": 0.5,
+          "rationale": "Mixed macro; wait for clearer regime",
+          "key_risk": "policy/growth shock",
+          "independent": true,
+          "paper_only": true
+        },
+        {
+          "role": "technical_analyst",
+          "action": "SELL",
+          "confidence": 0.64,
+          "rationale": "Downtrend structure; avoid catching knives",
+          "key_risk": "false breakout",
+          "independent": true,
+          "paper_only": true
+        },
+        {
+          "role": "fundamental_analyst",
+          "action": "HOLD",
+          "confidence": 0.5,
+          "rationale": "Fair value; fundamentals neutral",
+          "key_risk": "earnings miss / guidance cut",
+          "independent": true,
+          "paper_only": true
+        },
+        {
+          "role": "quant_analyst",
+          "action": "SELL",
+          "confidence": 0.57,
+          "rationale": "Factor/score composite negative after vol adjustment",
+          "key_risk": "factor crowding / model decay",
+          "independent": true,
+          "paper_only": true
+        },
+        {
+          "role": "risk_manager",
+          "action": "REDUCE",
+          "confidence": 0.7,
+          "rationale": "Risk limits: elevated vol or concentration argues smaller size",
+          "key_risk": "tail event / gap beyond stop",
+          "independent": true,
+          "paper_only": true
+        },
+        {
+          "role": "portfolio_manager",
+          "action": "REDUCE",
+          "confidence": 0.66,
+          "rationale": "Portfolio construction: trim to restore diversification",
+          "key_risk": "allocation drift / correlation spike",
+          "independent": true,
+          "paper_only": true
+        }
+      ],
+      "synthesis_notes": [
+        "Synthesised action REDUCE under SPLIT.",
+        "2 specialists agree; 4 dissent.",
+        "Dissent recorded from: macro_analyst, technical_analyst, fundamental_analyst, quant_analyst.",
+        "Committee output is advisory for paper portfolios only \u2014 not an order."
+      ],
+      "paper_only": true,
+      "not_an_order": true,
+      "LIVE_TRADING_AUTHORIZED": false,
+      "BROKER_CONNECTIVITY_AUTHORIZED": false,
+      "API_KEYS_ACCEPTED": false,
+      "OAUTH_AUTHORIZED": false,
+      "ORDER_SUBMISSION_AUTHORIZED": false,
+      "LIVE_MARKET_DATA_AUTHORIZED": false,
+      "LIVE_DATA_DEPENDENCY": false,
+      "sandbox_only": true,
+      "offline_capable": true,
+      "no_broker_connection": true,
+      "no_api_keys": true,
+      "no_oauth": true,
+      "no_order_submission": true,
+      "no_live_data_dependency": true,
+      "no_live_trading": true
+    },
+    "risk_overlay": {
+      "role": "portfolio_risk_officer_v2",
+      "action": "REDUCE",
+      "confidence": 0.7,
+      "rationale": "limits=BREACHED; worst_scenario_loss=12.66%",
+      "limits_state": "BREACHED",
+      "diversification_ratio": 0.926692,
+      "es_95": 0.01298
+    },
+    "synthesis": {
+      "committee_version": "v2",
+      "portfolio_aware": true,
+      "risk_overlay": {
+        "role": "portfolio_risk_officer_v2",
+        "action": "REDUCE",
+        "confidence": 0.7,
+        "rationale": "limits=BREACHED; worst_scenario_loss=12.66%",
+        "limits_state": "BREACHED",
+        "diversification_ratio": 0.926692,
+        "es_95": 0.01298
+      },
+      "final_recommendation": "REDUCE",
+      "consensus": "MAJORITY",
+      "v2_override_reason": "exposure_or_drawdown_breach"
+    },
+    "authorizes_execution": false,
+    "not_investment_advice": true,
+    "LIVE_TRADING_AUTHORIZED": false,
+    "BROKER_CONNECTIVITY_AUTHORIZED": false,
+    "REAL_CONNECTIVITY_AUTHORIZED": false,
+    "CREDENTIAL_PROVISIONING_AUTHORIZED": false,
+    "CANARY_ACTIVATION_AUTHORIZED": false,
+    "ORDER_EXECUTION_AUTHORIZED": false,
+    "ORDER_SUBMISSION_AUTHORIZED": false,
+    "API_KEYS_ACCEPTED": false,
+    "OAUTH_AUTHORIZED": false,
+    "PRODUCTION_AUTHORIZED": false,
+    "STRATEGY_PROFITABILITY_GUARANTEED": false,
+    "INVESTMENT_ADVICE_CERTIFIED": false,
+    "LIVE_MARKET_READINESS": false,
+    "REGULATORY_GRADE_RISK": false,
+    "paper_only": true,
+    "sandbox_only": true,
+    "research_only": true,
+    "offline_first": true,
+    "no_broker_connection": true,
+    "no_api_keys": true,
+    "no_oauth": true,
+    "no_order_submission": true,
+    "no_live_trading": true,
+    "max_authority": "INSTITUTIONAL_PORTFOLIO_RISK_INTELLIGENCE_ONLY",
+    "default_max_leverage": 1.0,
+    "evidence_hash": "411c30f590b72204604eb77e309214fa4a7d0144bb405ef59ab9e86e66a72abc",
+    "committee_id": "cm_71dcc2b9adaa4204"
+  },
+  "LIVE_TRADING_AUTHORIZED": false,
+  "BROKER_CONNECTIVITY_AUTHORIZED": false,
+  "REAL_CONNECTIVITY_AUTHORIZED": false,
+  "CREDENTIAL_PROVISIONING_AUTHORIZED": false,
+  "CANARY_ACTIVATION_AUTHORIZED": false,
+  "ORDER_EXECUTION_AUTHORIZED": false,
+  "ORDER_SUBMISSION_AUTHORIZED": false,
+  "API_KEYS_ACCEPTED": false,
+  "OAUTH_AUTHORIZED": false,
+  "PRODUCTION_AUTHORIZED": false,
+  "STRATEGY_PROFITABILITY_GUARANTEED": false,
+  "INVESTMENT_ADVICE_CERTIFIED": false,
+  "LIVE_MARKET_READINESS": false,
+  "REGULATORY_GRADE_RISK": false,
+  "paper_only": true,
+  "sandbox_only": true,
+  "research_only": true,
+  "offline_first": true,
+  "no_broker_connection": true,
+  "no_api_keys": true,
+  "no_oauth": true,
+  "no_order_submission": true,
+  "no_live_trading": true,
+  "not_investment_advice": true,
+  "max_authority": "INSTITUTIONAL_PORTFOLIO_RISK_INTELLIGENCE_ONLY",
+  "default_max_leverage": 1.0
+}

@@ -1,0 +1,21 @@
+{
+  "broker_transport_scan": {
+    "ok": true,
+    "hits": []
+  },
+  "external_domain_hardcoded_broker": {
+    "ok": true,
+    "hits": []
+  },
+  "historical_raw_snapshots_not_in_git": {
+    "ok": true,
+    "tracked": []
+  },
+  "llm_boundary_present": true,
+  "authority_locks": {
+    "LIVE_TRADING_AUTHORIZED": false,
+    "BROKER_CONNECTIVITY_AUTHORIZED": false,
+    "ORDER_SUBMISSION_AUTHORIZED": false,
+    "CANARY_ACTIVATION_AUTHORIZED": false
+  }
+}

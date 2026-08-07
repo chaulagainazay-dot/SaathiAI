@@ -1,0 +1,116 @@
+{
+  "schema": "m58.browser_cert.v1",
+  "bff": "http://127.0.0.1:8820",
+  "ui": "http://127.0.0.1:3180",
+  "isolated_db": "/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m58-cert-8538/platform.db",
+  "mode": "dev",
+  "flows": {
+    "seed": {
+      "ok": true
+    },
+    "shell_hydration_baseline": 0,
+    "core": "SAATHI READY LOCAL PRIVATE ALPHA",
+    "module_nodes": 12,
+    "connections": 16,
+    "safety": {
+      "env": "LOCAL_OR_TEST · PRIVATE ALPHA · NON-PRODUCTION · CONNECTOR MUTATIONS DRY-RUN · F",
+      "badges": "CONNECTORS: DRY_RUN_ONLY\nFINANCIAL: DISABLED\nTRADING: DISABLED\nGUARDIAN: UNENGAGED_ADVISORY_ONLY"
+    },
+    "navigation": {
+      "current": 1,
+      "runtimePanel": 1
+    },
+    "unsafe": [],
+    "ops": {
+      "opsPaths": 16,
+      "banner": "Private-alpha operations · read-only except already-approved operations · LOCAL ",
+      "health": "○\nNEUTRAL\nRuntime ok\nUptime 0s · DB available · Latency 0.01"
+    },
+    "ops_drawer": 1,
+    "mobile_nodes": 12,
+    "reduced_motion": {
+      "rmNodes": 12,
+      "rmCore": true
+    },
+    "spatial_hydration": 0
+  },
+  "screenshots": [
+    "/Users/macbookpro/SaathiAI/docs/platform/m58_evidence/screenshots/platform_spatial_desktop.png",
+    "/Users/macbookpro/SaathiAI/docs/platform/m58_evidence/screenshots/ops_constellation_desktop.png",
+    "/Users/macbookpro/SaathiAI/docs/platform/m58_evidence/screenshots/ops_selected_drawer.png",
+    "/Users/macbookpro/SaathiAI/docs/platform/m58_evidence/screenshots/platform_mobile.png",
+    "/Users/macbookpro/SaathiAI/docs/platform/m58_evidence/screenshots/platform_reduced_motion.png"
+  ],
+  "hardGates": {
+    "spatial_core_rendered": {
+      "ok": true,
+      "core": "SAATHI READY LOCAL PRIVATE ALPHA"
+    },
+    "module_ring_rendered": {
+      "ok": true,
+      "nodeCount": 12
+    },
+    "connections_rendered": {
+      "ok": true,
+      "pathCount": 16
+    },
+    "safety_visible": {
+      "ok": true
+    },
+    "production_unauthorized_visible": {
+      "ok": true
+    },
+    "module_navigation": {
+      "ok": true
+    },
+    "no_unsafe_actions": {
+      "ok": true
+    },
+    "ops_constellation": {
+      "ok": true
+    },
+    "ops_detail_drawer": {
+      "ok": true
+    },
+    "responsive_mobile": {
+      "ok": true,
+      "mobileNodes": 12
+    },
+    "reduced_motion": {
+      "ok": true
+    },
+    "no_page_errors": {
+      "ok": true
+    },
+    "no_new_hydration_errors": {
+      "ok": true
+    }
+  },
+  "softGates": {},
+  "browserErrors": {
+    "pageErrors": [],
+    "hydration": [],
+    "console": [
+      "Access to fetch at 'http://127.0.0.1:8820/api/v1/connectors/approvals/pending' from origin 'http://127.0.0.1:3180' has been blocked by CORS policy: No 'Access-C",
+      "Failed to load resource: net::ERR_FAILED",
+      "Access to fetch at 'http://127.0.0.1:8820/api/v1/connectors/approvals/pending' from origin 'http://127.0.0.1:3180' has been blocked by CORS policy: No 'Access-C",
+      "Failed to load resource: net::ERR_FAILED",
+      "Access to fetch at 'http://127.0.0.1:8820/api/v1/connectors/approvals/pending' from origin 'http://127.0.0.1:3180' has been blocked by CORS policy: No 'Access-C",
+      "Failed to load resource: net::ERR_FAILED",
+      "Access to fetch at 'http://127.0.0.1:8820/api/v1/connectors/approvals/pending' from origin 'http://127.0.0.1:3180' has been blocked by CORS policy: No 'Access-C",
+      "Failed to load resource: net::ERR_FAILED",
+      "Access to fetch at 'http://127.0.0.1:8820/api/v1/platform/release/metrics' from origin 'http://127.0.0.1:3180' has been blocked by CORS policy: No 'Access-Contr",
+      "Failed to load resource: net::ERR_FAILED",
+      "Access to fetch at 'http://127.0.0.1:8820/api/v1/platform/cluster/node-health' from origin 'http://127.0.0.1:3180' has been blocked by CORS policy: No 'Access-C",
+      "Failed to load resource: net::ERR_FAILED",
+      "Access to fetch at 'http://127.0.0.1:8820/api/v1/connectors/approvals/pending' from origin 'http://127.0.0.1:3180' has been blocked by CORS policy: No 'Access-C",
+      "Failed to load resource: net::ERR_FAILED",
+      "Access to fetch at 'http://127.0.0.1:8820/api/v1/platform/approvals?status=pending' from origin 'http://127.0.0.1:3180' has been blocked by CORS policy: No 'Acc",
+      "Failed to load resource: net::ERR_FAILED",
+      "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+    ]
+  },
+  "pageErrorCount": 0,
+  "verdict": "M58_BROWSER_CERTIFIED",
+  "failedHardGates": []
+}

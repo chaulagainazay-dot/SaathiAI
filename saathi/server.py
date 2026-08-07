@@ -1630,6 +1630,13 @@ try:
 except Exception as _e:
     print(f"[saathi] control-center router unavailable: {_e}")
 
+# M50 Platform foundation — identity, RBAC, approvals, tenancy (on M49 runtime).
+try:
+    from .platform.api import router as platform_m50_router
+    app.include_router(platform_m50_router)
+except Exception as _e:
+    print(f"[saathi] platform-m50 router unavailable: {_e}")
+
 # Simple access key for remote/tunnel use. Local requests (the Mac itself)
 # are always allowed; remote requests must send X-Saathi-Token.
 import os as _os
@@ -1725,6 +1732,8 @@ async def _auth(request, call_next):
             or path == "/api/v1/ceo/os"
             or path == "/api/v1/infrastructure/health"
             or path == "/api/v1/platform/maturity"
+            # M50 platform foundation enforces its own session token (X-Platform-Token).
+            or path.startswith("/api/v1/platform/")
             or path == "/api/v1/studio/queue"
             or path == "/api/v1/studio/plan"
             or path == "/api/v1/studio/script"
@@ -5308,3 +5317,24 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+# ── M57 single-host heartbeat (localhost-only; advisory; no authority) ───────
+@app.on_event("startup")
+def _saathi_start_local_heartbeat():
+    """Keep node-local health accurate while the BFF runs. Cancelled on shutdown
+    so health goes stale after a bounded timeout once the process stops."""
+    try:
+        from saathi.platform.cluster import start_local_heartbeat
+        start_local_heartbeat()
+    except Exception:
+        pass
+
+
+@app.on_event("shutdown")
+def _saathi_stop_local_heartbeat():
+    try:
+        from saathi.platform.cluster import stop_local_heartbeat
+        stop_local_heartbeat()
+    except Exception:
+        pass

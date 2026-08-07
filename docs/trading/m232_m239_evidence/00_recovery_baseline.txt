@@ -1,0 +1,60 @@
+=== RECOVERY BASELINE M232-M239 ===
+timestamp: 2026-07-30T01:55:23Z
+repo: /Users/macbookpro/SaathiAI
+branch: milestone/m224-m231-read-only-broker-readiness
+HEAD: 97d2f8b8d132674b1b721ec623bd8054fe31ce9a
+
+=== git status --short ===
+ M docs/evidence/m25/LATEST_ENVIRONMENT_OBSERVATION.json
+ M docs/evidence/m25/LIVE_CERT_EVIDENCE.json
+ M docs/evidence/m25/LIVE_CERT_SUMMARY.md
+ M docs/evidence/m27/connector_events.jsonl
+ M docs/evidence/m28/deprecation_events.jsonl
+?? docs/design-spec/
+?? docs/trading/m232_m239_evidence/
+
+=== tracked modifications ===
+ M docs/evidence/m25/LATEST_ENVIRONMENT_OBSERVATION.json
+ M docs/evidence/m25/LIVE_CERT_EVIDENCE.json
+ M docs/evidence/m25/LIVE_CERT_SUMMARY.md
+ M docs/evidence/m27/connector_events.jsonl
+ M docs/evidence/m28/deprecation_events.jsonl
+
+=== untracked ===
+?? docs/design-spec/
+?? docs/trading/m232_m239_evidence/
+
+=== broker_sandbox tracked ===
+saathi/platform/tg/broker_sandbox/__init__.py
+saathi/platform/tg/broker_sandbox/abstraction.py
+saathi/platform/tg/broker_sandbox/control_center.py
+saathi/platform/tg/broker_sandbox/credentials.py
+saathi/platform/tg/broker_sandbox/emulator.py
+saathi/platform/tg/broker_sandbox/failure.py
+saathi/platform/tg/broker_sandbox/models.py
+saathi/platform/tg/broker_sandbox/registry.py
+saathi/platform/tg/broker_sandbox/schema.py
+saathi/platform/tg/broker_sandbox/security.py
+saathi/platform/tg/broker_sandbox/service.py
+saathi/platform/tg/broker_sandbox/store.py
+saathi/platform/tg/broker_sandbox/trust_pipeline.py
+
+=== broker_readiness tracked ===
+saathi/platform/tg/broker_readiness/__init__.py
+saathi/platform/tg/broker_readiness/adapter.py
+saathi/platform/tg/broker_readiness/connection.py
+saathi/platform/tg/broker_readiness/control_center.py
+saathi/platform/tg/broker_readiness/credentials.py
+saathi/platform/tg/broker_readiness/drills.py
+saathi/platform/tg/broker_readiness/models.py
+saathi/platform/tg/broker_readiness/policy.py
+saathi/platform/tg/broker_readiness/schema.py
+saathi/platform/tg/broker_readiness/scope.py
+saathi/platform/tg/broker_readiness/secrets.py
+saathi/platform/tg/broker_readiness/security.py
+saathi/platform/tg/broker_readiness/service.py
+saathi/platform/tg/broker_readiness/snapshots.py
+saathi/platform/tg/broker_readiness/store.py
+saathi/platform/tg/broker_readiness/transport.py
+
+=== uncommitted under broker paths ===

@@ -1,0 +1,126 @@
+{
+  "labels": {
+    "planning_only": "PLANNING ONLY",
+    "no_real_connectivity": "NO REAL CONNECTIVITY",
+    "no_credentials": "NO CREDENTIALS",
+    "no_account_access": "NO ACCOUNT ACCESS",
+    "canary_not_authorized": "CANARY NOT AUTHORIZED",
+    "live_trading_not_authorized": "LIVE TRADING NOT AUTHORIZED"
+  },
+  "posture": {
+    "mode": "PROVIDER_CANARY_PLANNING_ONLY",
+    "paper_only": true,
+    "sandbox_only": true,
+    "planning_only": true,
+    "real_connectivity_authorized": false,
+    "credential_provisioning_authorized": false,
+    "canary_activation_authorized": false,
+    "read_only_production_authorized": false,
+    "live_trading_authorized": false,
+    "order_submission_capable": false,
+    "order_cancellation_capable": false,
+    "credentials_accepted": false,
+    "provider_account_access": false,
+    "oauth_session_capable": false,
+    "provider_adapter_implemented": false,
+    "owner_signoff_automated": false,
+    "owner_signoff_generated_by_automation": false,
+    "canary_state": "CANARY_DESIGNED_NOT_AUTHORIZED",
+    "credential_ceremony_status": "CREDENTIAL_CEREMONY_DOCUMENTED_NOT_EXECUTED",
+    "max_planning_state": "READ_ONLY_CANARY_PACKAGE_READY_FOR_OWNER_REVIEW",
+    "disclaimer": "PLANNING ONLY. NO REAL CONNECTIVITY. NO CREDENTIALS. NO ACCOUNT ACCESS. CANARY NOT AUTHORIZED. LIVE TRADING NOT AUTHORIZED. PREFERRED PROVIDER IS A RECOMMENDATION ONLY."
+  },
+  "schema_version": "m240.provider_canary_planning.v1",
+  "engine_version": "m240.provider_canary_planning.engine.v1",
+  "terminal_verdict_target": "PROVIDER_CANARY_PLANNING_CERTIFIED_WITH_LIMITATIONS",
+  "preferred_provider": "alpaca",
+  "fallback_provider": "kraken",
+  "sections": {
+    "planning_overview": {
+      "via": "GET /dashboard"
+    },
+    "candidate_ranking": {
+      "via": "GET /rankings"
+    },
+    "preferred_provider": {
+      "via": "GET /preferred"
+    },
+    "fallback_provider": {
+      "via": "GET /fallback"
+    },
+    "evidence_sources": {
+      "via": "GET /sources"
+    },
+    "capability_map": {
+      "via": "GET /capabilities"
+    },
+    "endpoint_classification": {
+      "via": "GET /endpoints"
+    },
+    "eligibility_review": {
+      "via": "GET /eligibility"
+    },
+    "terms_and_data_governance": {
+      "via": "GET /terms"
+    },
+    "proposed_read_only_scopes": {
+      "via": "GET /scopes"
+    },
+    "forbidden_scopes": {
+      "via": "GET /scopes"
+    },
+    "canary_architecture": {
+      "via": "GET /canary"
+    },
+    "credential_ceremony": {
+      "via": "GET /credential-ceremony"
+    },
+    "network_policy": {
+      "via": "GET /network-policy"
+    },
+    "monitoring_plan": {
+      "via": "GET /monitoring"
+    },
+    "reconciliation_plan": {
+      "via": "GET /reconciliation"
+    },
+    "acceptance_criteria": {
+      "via": "GET /acceptance"
+    },
+    "abort_triggers": {
+      "via": "GET /abort"
+    },
+    "revocation_plan": {
+      "via": "GET /credential-ceremony"
+    },
+    "human_approval_package": {
+      "via": "GET /owner-package"
+    },
+    "missing_evidence": {
+      "via": "eligibility.unresolved"
+    },
+    "certification": {
+      "via": "POST /certify"
+    },
+    "evidence_centre": {
+      "path": "docs/trading/m240_m247_evidence/"
+    }
+  },
+  "ui_constraints": {
+    "accept_credentials": false,
+    "open_oauth": false,
+    "open_provider_login": false,
+    "connect_provider": false,
+    "call_private_apis": false,
+    "activate_canary": false,
+    "approve_legal_review": false,
+    "generate_owner_signoff": false,
+    "authorise_connectivity": false,
+    "enable_live_trading": false
+  },
+  "REAL_CONNECTIVITY_AUTHORIZED": false,
+  "CREDENTIAL_PROVISIONING_AUTHORIZED": false,
+  "CANARY_ACTIVATION_AUTHORIZED": false,
+  "LIVE_TRADING_AUTHORIZED": false,
+  "disclaimer": "PLANNING ONLY. NO REAL CONNECTIVITY. NO CREDENTIALS. NO ACCOUNT ACCESS. CANARY NOT AUTHORIZED. LIVE TRADING NOT AUTHORIZED. PREFERRED PROVIDER IS A RECOMMENDATION ONLY."
+}

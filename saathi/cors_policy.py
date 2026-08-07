@@ -37,6 +37,10 @@ CORS_ALLOW_HEADERS = [
     "X-Requested-With",
     "x-baadar-session",
     "X-Baadar-Session",
+    # Platform console session header (M50+). Required for the split-origin
+    # private-alpha browser workflow certified in M54.
+    "X-Platform-Token",
+    "x-platform-token",
 ]
 
 

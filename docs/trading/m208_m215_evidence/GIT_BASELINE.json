@@ -1,0 +1,13 @@
+{
+  "schema": "m208.git_baseline.v1",
+  "starting_branch": "milestone/m200-m207-durable-paper-operations",
+  "starting_sha": "0d489fbae07a8572b6039bf231d3bab35f1e9dc1",
+  "working_branch": "milestone/m208-m215-ops-graduation",
+  "head_before_impl_commit": "0d489fbae07a8572b6039bf231d3bab35f1e9dc1",
+  "unrelated_preserved": [
+    "docs/evidence/m25/*",
+    "docs/evidence/m27/connector_events.jsonl",
+    "docs/evidence/m28/deprecation_events.jsonl",
+    "docs/design-spec/"
+  ]
+}

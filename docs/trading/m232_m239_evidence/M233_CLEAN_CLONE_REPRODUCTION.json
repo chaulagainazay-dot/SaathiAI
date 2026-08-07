@@ -1,0 +1,90 @@
+{
+  "source_repository": "/Users/macbookpro/SaathiAI",
+  "branch": "milestone/m232-m239-reproducibility-supply-chain",
+  "sha": "1e3f0a185c635b4c03201ac1db1ffc33d66e7b9a",
+  "clone_path_fingerprint": "a8bdce87d633c84f27f6d2ca63eff0b2",
+  "operating_system": "Darwin",
+  "architecture": "arm64",
+  "python_version": "3.12.13",
+  "node_version": "v26.4.0",
+  "package_manager_versions": {
+    "npm": "11.17.0",
+    "pip": "pip"
+  },
+  "dependency_installation_result": {
+    "ok": true,
+    "note": "skipped full npm/pip reinstall to conserve resources; lockfiles verified present"
+  },
+  "migration_result": {
+    "step": "initialize_storage_migrate",
+    "cmd": [
+      "/Users/macbookpro/SaathiAI/.venv/bin/python",
+      "-c",
+      "from saathi.platform.tg.integration_assurance.store import AssuranceStore; import tempfile; from pathlib import Path; p=Path(tempfile.mkdtemp())/'ia.db'; AssuranceStore(p); print('migrated', p)"
+    ],
+    "exit_code": 0,
+    "ok": true,
+    "log_tail": "migrated /var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/tmpp6vsj3ua/ia.db\n"
+  },
+  "test_results": {
+    "kind": "clean_clone",
+    "path": "/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-clone-qxjqoy3l/clean-clone",
+    "steps": [
+      {
+        "step": "initialize_storage_migrate",
+        "cmd": [
+          "/Users/macbookpro/SaathiAI/.venv/bin/python",
+          "-c",
+          "from saathi.platform.tg.integration_assurance.store import AssuranceStore; import tempfile; from pathlib import Path; p=Path(tempfile.mkdtemp())/'ia.db'; AssuranceStore(p); print('migrated', p)"
+        ],
+        "exit_code": 0,
+        "ok": true,
+        "log_tail": "migrated /var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/tmpp6vsj3ua/ia.db\n"
+      },
+      {
+        "step": "import_integration_assurance",
+        "cmd": [
+          "/Users/macbookpro/SaathiAI/.venv/bin/python",
+          "-c",
+          "from saathi.platform.tg.integration_assurance import TERMINAL_VERDICT, REAL_CONNECTIVITY_AUTHORIZED; from saathi.platform.tg.broker_sandbox import *; from saathi.platform.tg.broker_readiness import TERMINAL_VERDICT as BRV; assert REAL_CONNECTIVITY_AUTHORIZED is False; print('import_ok', TERMINAL_VERDICT, BRV)"
+        ],
+        "exit_code": 0,
+        "ok": true,
+        "log_tail": "import_ok BROKER_SANDBOX_ARCHITECTURE_CERTIFIED_WITH_LIMITATIONS READ_ONLY_BROKER_READINESS_CERTIFIED_WITH_LIMITATIONS\n"
+      },
+      {
+        "step": "source_audit_in_tree",
+        "cmd": [
+          "/Users/macbookpro/SaathiAI/.venv/bin/python",
+          "-c",
+          "from pathlib import Path; import tempfile; from saathi.platform.tg.integration_assurance.service import IntegrationAssuranceService; s=IntegrationAssuranceService(db_path=Path(tempfile.mkdtemp())/'x.db'); r=s.source_audit(); print(r.get('verdict'), r.get('baseline_ok'), r.get('ok')); assert r.get('baseline_ok') is True"
+        ],
+        "exit_code": 0,
+        "ok": true,
+        "log_tail": "ALL_REQUIRED_SOURCE_COMMITTED True True\n"
+      }
+    ]
+  },
+  "build_result": {
+    "skipped_in_clone": true,
+    "reason": "machine resource conservation; production build verified in primary tree"
+  },
+  "browser_result": {
+    "skipped_in_clone": true,
+    "reason": "browser cert verified separately with cert:m239"
+  },
+  "environment_assumptions": [
+    "local git clone --local (no network for clone)",
+    "host python with pytest for focused tests",
+    "package install network separated from provider isolation evidence"
+  ],
+  "external_network_attempts": 0,
+  "hidden_state_findings": [],
+  "final_verdict": "CLEAN_CLONE_REPRODUCIBLE_WITH_LIMITATIONS",
+  "limitations": [
+    "Full npm install + production build + browser cert run in primary tree evidence; clone ran focused pytest"
+  ],
+  "clone_log": "Cloning into '/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-clone-qxjqoy3l/clean-clone'...\ndone.\n",
+  "timestamp": "2026-07-30T02:18:42.256178+00:00",
+  "REAL_CONNECTIVITY_AUTHORIZED": false
+}

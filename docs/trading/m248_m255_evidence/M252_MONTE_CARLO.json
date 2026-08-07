@@ -1,0 +1,97 @@
+{
+  "ok": true,
+  "engine": "monte_carlo_v1",
+  "n_simulations": 200,
+  "horizon_bars": 60,
+  "seed": 42,
+  "initial_equity": 100000.0,
+  "block_size": 5,
+  "method": "block_bootstrap_return_resample",
+  "repeatable": true,
+  "probability_of_ruin": 0.0,
+  "probability_of_target_return": 0.035,
+  "target_return": 0.1,
+  "ruin_threshold": 0.5,
+  "sequence_risk": {
+    "mean_max_drawdown": 0.048015,
+    "p95_max_drawdown": 0.081795,
+    "p99_max_drawdown": 0.100204,
+    "note": "Order of returns materially affects path outcomes (sequence risk)."
+  },
+  "return_distribution": {
+    "p5": -0.06741,
+    "p25": -0.029662,
+    "p50": -0.004406,
+    "p75": 0.026718,
+    "p95": 0.094834,
+    "mean": 0.003589
+  },
+  "confidence_intervals": {
+    "return_90": [
+      -0.06741,
+      0.094834
+    ],
+    "return_95": [
+      -0.071997,
+      0.102023
+    ],
+    "drawdown_90": [
+      0.025088,
+      0.081795
+    ]
+  },
+  "worst_case_scenarios": [
+    {
+      "sim": 3,
+      "total_return": -0.081337,
+      "max_drawdown": 0.105595,
+      "final_equity": 91866.3284
+    },
+    {
+      "sim": 2,
+      "total_return": -0.032132,
+      "max_drawdown": 0.063932,
+      "final_equity": 96786.8399
+    },
+    {
+      "sim": 1,
+      "total_return": 0.025853,
+      "max_drawdown": 0.03425,
+      "final_equity": 102585.2808
+    },
+    {
+      "sim": 0,
+      "total_return": 0.021785,
+      "max_drawdown": 0.030547,
+      "final_equity": 102178.5311
+    },
+    {
+      "sim": 4,
+      "total_return": 0.065507,
+      "max_drawdown": 0.017232,
+      "final_equity": 106550.6577
+    }
+  ],
+  "recovery_analysis": {
+    "mean_bars_to_recover_or_horizon": 60.0,
+    "note": "Bars until equity recovers peak after first 10% DD, else horizon."
+  },
+  "evidence_hash": "e0bf2191a6ac83c7f7ed900eee5735376d294c5634ef9549b0ca87ff0fda750a",
+  "LIVE_TRADING_AUTHORIZED": false,
+  "BROKER_CONNECTIVITY_AUTHORIZED": false,
+  "API_KEYS_ACCEPTED": false,
+  "OAUTH_AUTHORIZED": false,
+  "ORDER_SUBMISSION_AUTHORIZED": false,
+  "LIVE_MARKET_DATA_AUTHORIZED": false,
+  "LIVE_DATA_DEPENDENCY": false,
+  "paper_only": true,
+  "sandbox_only": true,
+  "offline_capable": true,
+  "no_broker_connection": true,
+  "no_api_keys": true,
+  "no_oauth": true,
+  "no_order_submission": true,
+  "no_live_data_dependency": true,
+  "no_live_trading": true,
+  "run_id": "ii__ee015ba05460415d"
+}

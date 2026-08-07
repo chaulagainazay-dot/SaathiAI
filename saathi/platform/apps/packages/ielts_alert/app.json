@@ -1,0 +1,120 @@
+{
+  "app_id": "saathi.ielts_alert",
+  "app_type": "education",
+  "approval_requirements": [
+    "NO_APPROVAL_REQUIRED"
+  ],
+  "backup_strategy": "workspace_snapshot",
+  "capabilities": [
+    "forms",
+    "dashboards",
+    "reports",
+    "search",
+    "notifications",
+    "conversation",
+    "knowledge",
+    "skills",
+    "workflows"
+  ],
+  "category": "education",
+  "content_hash": "",
+  "dashboards": [
+    {
+      "id": "progress",
+      "title": "Progress"
+    },
+    {
+      "id": "readiness",
+      "title": "Exam Readiness"
+    }
+  ],
+  "description": "IELTSAlert native AI coaching and exam readiness — local-first, deterministic scoring, no live Gemini.",
+  "display_name": "IELTSAlert",
+  "entrypoint_type": "declarative",
+  "extension": {},
+  "feature_flags": {
+    "bypass_gateway": false,
+    "marketplace": false
+  },
+  "forms": [
+    {
+      "id": "goal",
+      "title": "Exam Goal"
+    },
+    {
+      "id": "practice",
+      "title": "Practice"
+    }
+  ],
+  "health_check_contract": "manifest_and_workspace",
+  "icon": "📘",
+  "knowledge_sources": [
+    "ielts_curriculum"
+  ],
+  "local_trust_status": "BUILT_IN",
+  "manifest_schema_version": "app.manifest.v1",
+  "migration_strategy": "config_only_no_schema_break",
+  "minimum_saathios_version": "1.0.0-local",
+  "module_registry_id": "ielts",
+  "name": "ielts_alert",
+  "navigation": [
+    {
+      "href": "/apps/ielts",
+      "id": "home",
+      "label": "Home"
+    },
+    {
+      "href": "/apps/ielts",
+      "id": "practice",
+      "label": "Practice"
+    },
+    {
+      "href": "/apps/ielts",
+      "id": "readiness",
+      "label": "Readiness"
+    }
+  ],
+  "network_requirements": "none",
+  "notifications": {
+    "channels": [
+      "in_app"
+    ]
+  },
+  "optional_permissions": [],
+  "package_hash": "",
+  "pages": [
+    {
+      "id": "home",
+      "path": "/apps/ielts",
+      "title": "IELTSAlert"
+    }
+  ],
+  "production_posture": "not_authorized",
+  "publisher": "saathios.builtin",
+  "required_permissions": [
+    "runtime.read",
+    "ielts.read"
+  ],
+  "restore_strategy": "replace_workspace_snapshot",
+  "skills": [
+    "saathi.ielts_readiness"
+  ],
+  "storage": {
+    "max_mb": 64,
+    "type": "workspace_isolated"
+  },
+  "trading_guardian_posture": "unengaged",
+  "upgrade_strategy": "install_side_by_side_then_switch",
+  "version": "1.1.0",
+  "worker_requirements": [
+    "analysis",
+    "planning"
+  ],
+  "workflows": [
+    {
+      "capability": "ielts.readiness.review",
+      "id": "readiness_review",
+      "skill_id": "saathi.ielts_readiness"
+    }
+  ]
+}

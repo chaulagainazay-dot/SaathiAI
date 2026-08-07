@@ -1,0 +1,148 @@
+{
+  "ok": true,
+  "symbol": "SPY",
+  "bar_count": 30,
+  "bars_sample": [
+    {
+      "symbol": "SPY",
+      "ts": 1782826344.6294699,
+      "open": 450.0497,
+      "high": 454.6836,
+      "low": 447.7995,
+      "close": 452.4215,
+      "volume": 31750000.0,
+      "source": "OFFLINE_FIXTURE"
+    },
+    {
+      "symbol": "SPY",
+      "ts": 1782912744.6294699,
+      "open": 452.4215,
+      "high": 458.5938,
+      "low": 450.1594,
+      "close": 456.3123,
+      "volume": 40000000.0,
+      "source": "OFFLINE_FIXTURE"
+    },
+    {
+      "symbol": "SPY",
+      "ts": 1782999144.6294699,
+      "open": 456.3123,
+      "high": 458.5938,
+      "low": 453.9081,
+      "close": 456.1891,
+      "volume": 43250000.0,
+      "source": "OFFLINE_FIXTURE"
+    },
+    {
+      "symbol": "SPY",
+      "ts": 1783085544.6294699,
+      "open": 456.1891,
+      "high": 458.47,
+      "low": 451.4116,
+      "close": 453.68,
+      "volume": 37500000.0,
+      "source": "OFFLINE_FIXTURE"
+    },
+    {
+      "symbol": "SPY",
+      "ts": 1783171944.6294699,
+      "open": 453.68,
+      "high": 457.8224,
+      "low": 451.4116,
+      "close": 455.5447,
+      "volume": 27750000.000000004,
+      "source": "OFFLINE_FIXTURE"
+    },
+    {
+      "truncated": true
+    }
+  ],
+  "bars_tail": [
+    {
+      "symbol": "SPY",
+      "ts": 1784986344.6294699,
+      "open": 461.2591,
+      "high": 466.6991,
+      "low": 458.9528,
+      "close": 464.3772,
+      "volume": 44000000.0,
+      "source": "OFFLINE_FIXTURE"
+    },
+    {
+      "symbol": "SPY",
+      "ts": 1785072744.6294699,
+      "open": 464.3772,
+      "high": 466.6991,
+      "low": 460.7107,
+      "close": 463.0259,
+      "volume": 27250000.000000004,
+      "source": "OFFLINE_FIXTURE"
+    },
+    {
+      "symbol": "SPY",
+      "ts": 1785159144.6294699,
+      "open": 463.0259,
+      "high": 465.341,
+      "low": 458.4348,
+      "close": 460.7385,
+      "volume": 26500000.0,
+      "source": "OFFLINE_FIXTURE"
+    },
+    {
+      "symbol": "SPY",
+      "ts": 1785245544.6294699,
+      "open": 460.7385,
+      "high": 466.9827,
+      "low": 458.4348,
+      "close": 464.6594,
+      "volume": 37750000.0,
+      "source": "OFFLINE_FIXTURE"
+    },
+    {
+      "symbol": "SPY",
+      "ts": 1785331944.6294699,
+      "open": 464.6594,
+      "high": 466.9827,
+      "low": 458.8593,
+      "close": 461.1652,
+      "volume": 37000000.0,
+      "source": "OFFLINE_FIXTURE"
+    }
+  ],
+  "source": "OFFLINE_FIXTURE",
+  "authenticated_live": false,
+  "read_only": true,
+  "LIVE_TRADING_AUTHORIZED": false,
+  "BROKER_CONNECTIVITY_AUTHORIZED": false,
+  "REAL_CONNECTIVITY_AUTHORIZED": false,
+  "CREDENTIAL_PROVISIONING_AUTHORIZED": false,
+  "CREDENTIAL_STORAGE_AUTHORIZED": false,
+  "CANARY_ACTIVATION_AUTHORIZED": false,
+  "ORDER_EXECUTION_AUTHORIZED": false,
+  "ORDER_SUBMISSION_AUTHORIZED": false,
+  "ACCOUNT_ACCESS_AUTHORIZED": false,
+  "PORTFOLIO_ACCESS_AUTHORIZED": false,
+  "BALANCE_ACCESS_AUTHORIZED": false,
+  "API_KEYS_ACCEPTED": false,
+  "OAUTH_AUTHORIZED": false,
+  "PRODUCTION_AUTHORIZED": false,
+  "LIVE_MARKET_READINESS": false,
+  "STRATEGY_PROFITABILITY_GUARANTEED": false,
+  "INVESTMENT_ADVICE_CERTIFIED": false,
+  "AUTHENTICATED_PROVIDER_TRAFFIC": false,
+  "paper_only": true,
+  "sandbox_only": true,
+  "research_only": true,
+  "offline_first": true,
+  "read_only_observation": true,
+  "validation_not_trading": true,
+  "no_broker_login": true,
+  "no_oauth": true,
+  "no_credential_storage": true,
+  "no_orders": true,
+  "no_account_access": true,
+  "no_portfolio_access": true,
+  "no_balance_access": true,
+  "no_live_trading": true,
+  "max_authority": "READ_ONLY_MARKET_OBSERVATION_ONLY"
+}

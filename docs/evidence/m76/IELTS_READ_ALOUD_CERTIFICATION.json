@@ -1,0 +1,42 @@
+{
+  "milestone": "M76",
+  "captured_at": "2026-07-28",
+  "scope": "IELTSAlert feedback read-aloud",
+  "contract": {
+    "source": "ielts_feedback",
+    "profile": "yeti_teacher",
+    "language": "en-US",
+    "canonical_speech_service": true,
+    "browser_speech_synthesis": false,
+    "response_text_included": false,
+    "backend_feedback_only": true,
+    "maximum_chars": 4000,
+    "official_score_claim": false,
+    "autoplay": false
+  },
+  "verification": {
+    "frontend_complete": {
+      "command": "npm test",
+      "passed": 189,
+      "failed": 0
+    },
+    "eslint": "PASS",
+    "production_build": "PASS",
+    "static_routes_built": 82
+  },
+  "states_reused": [
+    "queued",
+    "preparing",
+    "synthesizing",
+    "playing",
+    "completed",
+    "cancelled",
+    "failed",
+    "unavailable"
+  ],
+  "limitations": [
+    "English feedback is certified; Nepali remains unsupported-not-verified.",
+    "The Yeti profile is written provider-neutral voice design, not a cloned voice.",
+    "Pronunciation feedback remains explicitly unavailable from transcript-only IELTS practice."
+  ]
+}

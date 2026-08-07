@@ -1,0 +1,92 @@
+{
+  "ok": false,
+  "probes": [
+    {
+      "ok": true,
+      "domain": "alpaca.markets",
+      "result": "DOCUMENTATION_RESEARCH_SEPARATE_FROM_RUNTIME",
+      "category": "documentation_research",
+      "broker_connectivity": false,
+      "runtime_transport": false
+    },
+    {
+      "ok": false,
+      "domain": "api-pub.bitfinex.com",
+      "result": "REAL_PROVIDER_TRANSPORT_FORBIDDEN",
+      "message": "Blocked: api-pub.bitfinex.com",
+      "REAL_CONNECTIVITY_AUTHORIZED": false
+    },
+    {
+      "ok": false,
+      "domain": "api.alpaca.markets",
+      "result": "REAL_PROVIDER_TRANSPORT_FORBIDDEN",
+      "message": "Blocked: api.alpaca.markets",
+      "REAL_CONNECTIVITY_AUTHORIZED": false
+    },
+    {
+      "ok": false,
+      "domain": "api.binance.com",
+      "result": "REAL_PROVIDER_TRANSPORT_FORBIDDEN",
+      "message": "Blocked: api.binance.com",
+      "REAL_CONNECTIVITY_AUTHORIZED": false
+    },
+    {
+      "ok": false,
+      "domain": "api.bybit.com",
+      "result": "REAL_PROVIDER_TRANSPORT_FORBIDDEN",
+      "message": "Blocked: api.bybit.com",
+      "REAL_CONNECTIVITY_AUTHORIZED": false
+    },
+    {
+      "ok": false,
+      "domain": "api.coinbase.com",
+      "result": "REAL_PROVIDER_TRANSPORT_FORBIDDEN",
+      "message": "Blocked: api.coinbase.com",
+      "REAL_CONNECTIVITY_AUTHORIZED": false
+    },
+    {
+      "ok": false,
+      "domain": "api.exchange.coinbase.com",
+      "result": "REAL_PROVIDER_TRANSPORT_FORBIDDEN",
+      "message": "Blocked: api.exchange.coinbase.com",
+      "REAL_CONNECTIVITY_AUTHORIZED": false
+    },
+    {
+      "ok": false,
+      "domain": "api.ibkr.com",
+      "result": "REAL_PROVIDER_TRANSPORT_FORBIDDEN",
+      "message": "Blocked: api.ibkr.com",
+      "REAL_CONNECTIVITY_AUTHORIZED": false
+    },
+    {
+      "ok": false,
+      "domain": "api.kite.trade",
+      "result": "REAL_PROVIDER_TRANSPORT_FORBIDDEN",
+      "message": "Blocked: api.kite.trade",
+      "REAL_CONNECTIVITY_AUTHORIZED": false
+    },
+    {
+      "ok": false,
+      "domain": "api.kraken.com",
+      "result": "REAL_PROVIDER_TRANSPORT_FORBIDDEN",
+      "message": "Blocked: api.kraken.com",
+      "REAL_CONNECTIVITY_AUTHORIZED": false
+    },
+    {
+      "ok": false,
+      "domain": "api.prime.coinbase.com",
+      "result": "REAL_PROVIDER_TRANSPORT_FORBIDDEN",
+      "message": "Blocked: api.prime.coinbase.com",
+      "REAL_CONNECTIVITY_AUTHORIZED": false
+    },
+    {
+      "ok": false,
+      "domain": "binance.com",
+      "result": "REAL_PROVIDER_TRANSPORT_FORBIDDEN",
+      "message": "Blocked: binance.com",
+      "REAL_CONNECTIVITY_AUTHORIZED": false
+    }
+  ],
+  "blocked_count": 11,
+  "REAL_CONNECTIVITY_AUTHORIZED": false
+}

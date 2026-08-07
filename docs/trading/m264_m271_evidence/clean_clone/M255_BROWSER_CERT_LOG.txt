@@ -1,0 +1,9 @@
+
+> saathi-os@0.1.0 cert:m255
+> node scripts/m255_intelligence_browser_cert.mjs
+
+{
+  "verdict": "INSTITUTIONAL_INVESTMENT_INTELLIGENCE_CERTIFIED_WITH_LIMITATIONS",
+  "hard_ok": true,
+  "journeys": 15
+}

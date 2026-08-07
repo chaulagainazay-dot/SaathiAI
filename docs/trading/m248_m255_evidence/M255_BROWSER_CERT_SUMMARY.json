@@ -1,0 +1,14 @@
+{
+  "verdict": "INSTITUTIONAL_INVESTMENT_INTELLIGENCE_CERTIFIED_WITH_LIMITATIONS",
+  "hard_ok": true,
+  "journey_ok": true,
+  "notes": [
+    "PAPER ONLY",
+    "NO BROKER CONNECTIVITY",
+    "NO API KEYS",
+    "NO LIVE MARKET ACCESS",
+    "NO ORDER EXECUTION",
+    "NO LIVE TRADING"
+  ],
+  "timestamp": "2026-07-30T03:29:11.976Z"
+}

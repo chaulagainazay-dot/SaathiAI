@@ -1,0 +1,67 @@
+{
+  "milestone": "M74",
+  "captured_at": "2026-07-28",
+  "scope": "provider-neutral speech backend and authenticated API",
+  "machine": {
+    "architecture": "arm64",
+    "chip": "Apple M2",
+    "unified_memory_bytes": 8589934592,
+    "free_disk_kib": 77528828
+  },
+  "macos_system_provider": {
+    "executable": "/usr/bin/say",
+    "voice_count": 184,
+    "network_required": false,
+    "output_format": "aiff",
+    "sample_rate": 22050,
+    "test_text_language": "English",
+    "cold": {
+      "artifact_ready_ms": 4539.2,
+      "audio_duration_seconds": 3.301,
+      "real_time_factor": 1.375,
+      "artifact_bytes": 149684
+    },
+    "warm": {
+      "artifact_ready_ms": 1663.31,
+      "audio_duration_seconds": 3.301,
+      "real_time_factor": 0.504,
+      "artifact_bytes": 149684
+    },
+    "process_max_resident_bytes": 48332800,
+    "cancel_confirmed_ms": 46.04,
+    "cancelled_artifact_retained": false,
+    "result": "CERTIFIED_ENGLISH_LOCAL_ARTIFACT"
+  },
+  "streaming": {
+    "provider_chunk_streaming": false,
+    "http_range_delivery": true,
+    "ui_thread_blocking": false,
+    "result": "ARTIFACT_ONLY"
+  },
+  "voxcpm": {
+    "implemented": true,
+    "installed": false,
+    "configured": false,
+    "model_available": false,
+    "runtime_verified": false,
+    "quality_reviewed": false,
+    "certified": false,
+    "state": "CONFIGURED_NOT_INSTALLED"
+  },
+  "languages": {
+    "english": "CERTIFIED_WITH_MACOS_SYSTEM_PROVIDER",
+    "nepali": "UNSUPPORTED_NOT_VERIFIED"
+  },
+  "cloning": "CAPABILITY_DISABLED",
+  "tests": {
+    "command": ".venv/bin/pytest -q tests/test_m74_voice_foundation.py tests/test_m74_voice_api.py",
+    "passed": 14,
+    "failed": 0
+  },
+  "limitations": [
+    "The measured cold artifact-ready time exceeded the suggested two-second target.",
+    "Warm artifact-ready time met the two-second target.",
+    "Provider-native chunk streaming is not exposed; authenticated range delivery starts after artifact completion.",
+    "No VoxCPM package, executable, GGUF, or model weight was downloaded."
+  ]
+}
