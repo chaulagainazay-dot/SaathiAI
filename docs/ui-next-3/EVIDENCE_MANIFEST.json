@@ -6,7 +6,7 @@
   "base_ui": "dc52c0b97a298eb228359c518c2de5b2e21de1e5",
   "branch": "feature/ui-next-3-production-hybrid-command",
   "worktree": "~/SaathiAI-ui-next-3",
-  "certified_at": "2026-08-07T12:23:22.883569+00:00",
+  "certified_at": "2026-08-07T12:23:45.594979+00:00",
   "non_actions": {
     "live_trading": false,
     "auto_approval": false,
@@ -19,5 +19,7 @@
     "serious": 0
   },
   "browser_verdict": "BROWSER_CERT_PASS",
-  "tip_sha": "51ef1c864ec7ffb2b82ec1c2601d12430648abcf"
+  "tip_sha": "2a689607b6f4d5e86bb713aab5d322d089d701cf",
+  "draft_pr": 42,
+  "draft_pr_url": "https://github.com/chaulagainazay-dot/SaathiAI/pull/42"
 }
