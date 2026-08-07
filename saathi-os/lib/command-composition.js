@@ -217,6 +217,16 @@ export function composeInvestmentSnapshot({ summary = null, ready = false, auth 
       },
     },
     positions: Array.isArray(summary.positions) ? summary.positions : [],
+    // T-NEXT-2: optional PAPER risk contract (never invents; pass-through only)
+    paperRisk:
+      summary.paper_risk || summary.paperRisk || summary.risk_contract
+        ? {
+            label: "PAPER RISK",
+            mode: "PAPER",
+            liveExecution: "UNAVAILABLE",
+            ...(summary.paper_risk || summary.paperRisk || summary.risk_contract),
+          }
+        : null,
     note: fromLedger
       ? "PAPER — values from canonical fund ledger. Live execution unavailable."
       : "Paper only. Live execution unavailable. Missing ledger fields marked NOT AVAILABLE.",

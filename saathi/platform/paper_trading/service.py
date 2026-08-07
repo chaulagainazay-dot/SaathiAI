@@ -740,6 +740,69 @@ class PaperTradingService:
         snap["account_id"] = account_id
         return snap
 
+
+    def risk_engine(self):
+        """Lazy PortfolioRiskEngine bound to this paper service ledger."""
+        if getattr(self, "_risk_engine", None) is None:
+            from saathi.platform.portfolio_risk_engine.engine import PortfolioRiskEngine
+            from saathi.platform.portfolio_risk_engine.history import NavHistoryStore
+            from saathi.platform.fund_ledger.cutover import fund_id_for_account
+            hist_path = None
+            paper_path = getattr(self.store, "db_path", None)
+            if paper_path is not None:
+                from pathlib import Path as _P
+                pp = _P(str(paper_path))
+                hist_path = pp.with_name(pp.stem + "_risk_nav.db")
+            eng = PortfolioRiskEngine(history=NavHistoryStore(hist_path))
+
+            def _state(key: str):
+                fid = key
+                if not self.ledger.store.get_fund(fid):
+                    fid = self.fill_posts.fund_for_account(key) or fund_id_for_account(key)
+                return self.ledger.get_state(fid)
+
+            def _recon(key: str):
+                # account-scoped recon preferred
+                try:
+                    return self.portfolio_reconciliation_status(ctx=None, account_id=key)  # type: ignore
+                except Exception:
+                    pending = self.fill_posts.pending_count()
+                    return {"ok": pending == 0, "portfolio_status": "HEALTHY" if pending == 0 else "RECONCILIATION_REQUIRED"}
+
+            # recon needs ctx — bind simpler pending check
+            def _recon2(key: str):
+                pending = self.fill_posts.pending_count(key) if key.startswith("pacc_") else self.fill_posts.pending_count()
+                # also fund pending
+                return {
+                    "ok": pending == 0,
+                    "portfolio_status": "HEALTHY" if pending == 0 else "RECONCILIATION_REQUIRED",
+                    "pending_ledger_posts": pending,
+                }
+
+            eng.bind_ledger(_state, _recon2)
+            self._risk_engine = eng
+        return self._risk_engine
+
+    def paper_risk_snapshot(self, ctx, account_id: str) -> dict:
+        """Command/agent-facing PAPER risk contract from independent engine."""
+        ctx.require_permission(PlatformPermission.PAPER_ACCOUNT_READ)
+        self._account_or_404(ctx, account_id)
+        from saathi.platform.fund_ledger.cutover import fund_id_for_account
+        fund_id = self.fill_posts.fund_for_account(account_id) or fund_id_for_account(account_id)
+        eng = self.risk_engine()
+        # prefer recon with real ctx
+        recon = self.portfolio_reconciliation_status(ctx, account_id)
+        state = self.ledger.get_state(fund_id) if self.ledger.store.get_fund(fund_id) else None
+        if state is None:
+            return {
+                "label": "PAPER RISK",
+                "mode": "PAPER",
+                "live_execution": "UNAVAILABLE",
+                "risk_status": "DATA_INSUFFICIENT",
+                "error": "fund missing",
+            }
+        return eng.command_risk_contract(fund_id, ledger_state=state, recon=recon)
+
     def _post_fill_to_canonical_ledger(self, acct: PaperAccount, order: PaperOrder, fill: PaperFill) -> dict:
         # Ensure bind exists (accounts created pre-cutover in tests still work)
         fund_id = self.fill_posts.fund_for_account(acct.id)
