@@ -40,7 +40,7 @@
   "best_local": "bijay-small-ne-en-v3.1",
   "fine_tuning_performed": false,
   "router_implemented": false,
-  "tip_sha": "fb3972b54bd7a28ceab89332895691a0c229bf38",
+  "tip_sha": "1f351435462dfffeedd01326f9551b4b284cb71e",
   "draft_pr": 32,
   "draft_pr_url": "https://github.com/chaulagainazay-dot/SaathiAI/pull/32",
   "branch": "qualification/v-next-2b4-omnilingual-asr",
