@@ -4,7 +4,12 @@ Permission-gated, tenant-scoped, audited. Owns the authoritative flow:
 
     OrderIntent → Trading Guardian veto → approval verification/consumption →
     cash/position reservation → durable PaperOrder → deterministic fills →
-    cash & position accounting → audit evidence.
+    (T-NEXT-1.1) canonical fund ledger post → books & records.
+
+OMS owns order lifecycle and fill production.
+PortfolioLedgerService owns cash/lots/P&L/NAV/exposure (books authority).
+OMS avg-cost tables remain LEGACY_OMS_STATE_NOT_BOOKS_AUTHORITY for reservations
+and compatibility only.
 
 The MUTATION methods (:meth:`submit_order`, :meth:`cancel_order`,
 :meth:`process_market_event`) are INTERNAL — they must be reached only through the
@@ -18,6 +23,7 @@ from __future__ import annotations
 import sqlite3
 import time as _time
 from decimal import Decimal
+from pathlib import Path
 from typing import Any
 
 from saathi.platform.context import PlatformContextError
@@ -34,14 +40,26 @@ from saathi.platform.paper_trading.models import (
 )
 from saathi.platform.paper_trading.store import PaperStore, IdempotencyConflict
 from saathi.platform.paper_trading.broker import PaperBroker, MarketEvent
+from saathi.platform.fund_ledger.service import PortfolioLedgerService
+from saathi.platform.fund_ledger.store import FundLedgerStore
+from saathi.platform.fund_ledger.cutover import fund_id_for_account, DEFAULT_MARKER
+from saathi.platform.fund_ledger.posting import (
+    FillPostingStore, post_accepted_fill, retry_pending_posts, POST_POSTED, POST_DUPLICATE, POST_FAILED, POST_PENDING,
+)
+from saathi.platform.fund_ledger.view_adapter import LedgerPortfolioViewAdapter
+from saathi.platform.fund_ledger.reducer import LedgerError
 
 APPROVAL_NOTIONAL_THRESHOLD = Decimal("2500")   # orders at/above this need an approval
+LEGACY_OMS_STATE_NOT_BOOKS_AUTHORITY = True
 
 
 class PaperTradingService:
     def __init__(self, store: PaperStore | None = None, *, platform_store=None,
                  fee_model: FeeModel | None = None, slippage_model: SlippageModel | None = None,
-                 guardian_limits: RiskLimits | None = None, seed: int = 0):
+                 guardian_limits: RiskLimits | None = None, seed: int = 0,
+                 ledger: PortfolioLedgerService | None = None,
+                 fill_posts: FillPostingStore | None = None,
+                 auto_post_ledger: bool = True):
         assert_paper_safe()
         self.store = store or PaperStore()
         self._platform_store = platform_store
@@ -51,6 +69,28 @@ class PaperTradingService:
         self.broker = PaperBroker(fee_model=self.fee_model, slippage_model=self.slippage_model, seed=seed)
         self._audit_sink = None
         self._safety = None   # optional M62.7 SafetyService (breaker posture veto)
+        self.auto_post_ledger = auto_post_ledger
+        # Canonical books: separate SQLite next to paper OMS DB (or memory)
+        if ledger is not None:
+            self.ledger = ledger
+        else:
+            paper_path = getattr(self.store, "db_path", None)
+            if paper_path is not None:
+                lp = Path(str(paper_path))
+                fund_path = lp.with_name(lp.stem + "_fund_ledger.db")
+            else:
+                fund_path = None
+            self.ledger = PortfolioLedgerService(FundLedgerStore(fund_path))
+        if fill_posts is not None:
+            self.fill_posts = fill_posts
+        else:
+            paper_path = getattr(self.store, "db_path", None)
+            if paper_path is not None:
+                pp = Path(str(paper_path))
+                self.fill_posts = FillPostingStore(pp.with_name(pp.stem + "_fill_posts.db"))
+            else:
+                self.fill_posts = FillPostingStore()
+        self.cutover_marker = DEFAULT_MARKER.to_public()
 
     def bind_safety(self, safety_service):
         """Attach the M62.7 SafetyService so submissions consult breaker posture.
@@ -87,19 +127,99 @@ class PaperTradingService:
                             starting_cash=cash, current_cash=cash, status=AccountStatus.ACTIVE,
                             environment=Environment.PAPER, created_by=ctx.user_id)
         rec = self.store.create_account(acct)
-        self._audit(ctx, "paper.account.created", account_id=acct.id, starting_cash=str(cash))
-        return rec.to_public()
+        # T-NEXT-1.1: open canonical fund books (fresh fund; no historical OMS migration)
+        fund_id = fund_id_for_account(acct.id)
+        try:
+            if not self.ledger.store.get_fund(fund_id):
+                self.ledger.create_fund(
+                    fund_id=fund_id,
+                    name=f"paper:{acct.name}",
+                    base_currency=base_currency,
+                    opening_cash=cash,
+                    actor=ctx.user_id or "system",
+                )
+            self.fill_posts.bind_account(acct.id, fund_id, org_id=ctx.org_id)
+        except Exception as e:  # noqa: BLE001
+            # Account exists; books open failure is visible and blocks healthy status
+            self._audit(ctx, "paper.ledger.fund_open_failed", account_id=acct.id, error=str(e),
+                        outcome="error")
+            out = rec.to_public()
+            out["fund_id"] = fund_id
+            out["ledger_fund_open"] = "FAILED"
+            out["portfolio_status"] = "RECONCILIATION_REQUIRED"
+            out["legacy_oms_state_not_books_authority"] = LEGACY_OMS_STATE_NOT_BOOKS_AUTHORITY
+            return out
+        self._audit(ctx, "paper.account.created", account_id=acct.id, starting_cash=str(cash),
+                    fund_id=fund_id)
+        out = rec.to_public()
+        out["fund_id"] = fund_id
+        out["books_authority"] = "canonical_fund_ledger"
+        out["legacy_oms_state_not_books_authority"] = LEGACY_OMS_STATE_NOT_BOOKS_AUTHORITY
+        out["cutover"] = self.cutover_marker
+        return out
 
     def get_account(self, ctx, account_id: str) -> dict:
         ctx.require_permission(PlatformPermission.PAPER_ACCOUNT_READ)
         acct = self._account_or_404(ctx, account_id)
-        positions = self.store.list_positions(ctx.org_id, account_id)
-        pv = sum((p.market_value(p.avg_cost) for p in positions if p.quantity != 0), Decimal("0"))
-        upnl = Decimal("0")
-        out = acct.to_public(unrealized_pnl=upnl, positions_value=pv)
-        out["positions"] = [p.to_public(mark=p.avg_cost) for p in positions if p.quantity != 0]
+        # OMS lifecycle fields (reservations) still from OMS store
+        oms_positions = self.store.list_positions(ctx.org_id, account_id)
+        reserved_by_symbol = {p.symbol: p.reserved_quantity for p in oms_positions}
+        fund_id = self.fill_posts.fund_for_account(account_id) or fund_id_for_account(account_id)
+        books = None
+        try:
+            if self.ledger.store.get_fund(fund_id):
+                state = self.ledger.get_state(fund_id)
+                books = LedgerPortfolioViewAdapter.from_ledger_state(
+                    state,
+                    account_id=account_id,
+                    reserved_cash=acct.reserved_cash,
+                    reserved_by_symbol=reserved_by_symbol,
+                )
+        except Exception:
+            books = None
+
+        recon = self.portfolio_reconciliation_status(ctx, account_id)
+        if books:
+            out = acct.to_public(
+                unrealized_pnl=D(books["unrealized_pnl"]),
+                positions_value=D(books["positions_value"]),
+            )
+            # Overlay canonical books fields
+            out["cash"] = books["cash"]
+            out["current_cash"] = books["cash"]  # books authority (OMS current_cash is lifecycle shadow)
+            out["available_cash"] = books["available_cash"]
+            out["realized_pnl"] = books["realized_pnl"]
+            out["unrealized_pnl"] = books["unrealized_pnl"]
+            out["nav"] = books["nav"]
+            out["paper_nav"] = books["paper_nav"]
+            out["equity"] = books["nav"]
+            out["positions_value"] = books["positions_value"]
+            out["exposure"] = books["exposure"]
+            out["positions"] = books["positions"]
+            out["open_lots"] = books["open_lots"]
+            out["books_authority"] = "canonical_fund_ledger"
+            out["source"] = "canonical_fund_ledger"
+            out["mark_source"] = "canonical_fund_ledger_marks_or_cost"
+        else:
+            # Fallback only if fund missing — still mark non-canonical
+            pv = sum((p.market_value(p.avg_cost) for p in oms_positions if p.quantity != 0), Decimal("0"))
+            out = acct.to_public(unrealized_pnl=Decimal("0"), positions_value=pv)
+            out["positions"] = [p.to_public(mark=p.avg_cost) for p in oms_positions if p.quantity != 0]
+            out["books_authority"] = "UNAVAILABLE"
+            out["mark_source"] = "oms_lifecycle_fallback"
         out["halt_reason"] = self.store.account_halt_reason(ctx.org_id, account_id)
-        out["mark_source"] = "replay/fixture"  # marks derive from avg_cost; no live feed
+        out["fund_id"] = fund_id
+        out["legacy_oms_state_not_books_authority"] = LEGACY_OMS_STATE_NOT_BOOKS_AUTHORITY
+        out["oms_lifecycle"] = {
+            "reserved_cash": str(q2(acct.reserved_cash)),
+            "oms_current_cash_shadow": str(q2(acct.current_cash)),
+            "oms_realized_pnl_shadow": str(q2(acct.realized_pnl)),
+            "note": "OMS cash/avg-cost shadows are not books authority after T-NEXT-1.1",
+        }
+        out["portfolio_status"] = recon.get("portfolio_status")
+        out["reconciliation"] = recon
+        out["mode"] = "PAPER"
+        out["live_execution"] = "UNAVAILABLE"
         return out
 
     def list_accounts(self, ctx) -> list[dict]:
@@ -170,10 +290,50 @@ class PaperTradingService:
 
     # ── the Guardian veto (independent, fail-closed) ────────────────────────
     def _guardian_review(self, acct: PaperAccount, intent: OrderIntent, event: MarketEvent) -> dict:
-        positions = self.store.list_positions(acct.org_id, acct.id)
-        tpos = {p.symbol: TPosition(symbol=p.symbol, quantity=p.quantity, avg_price=p.avg_cost,
-                                    realized_pnl=p.realized_pnl) for p in positions if p.quantity != 0}
-        taccount = TAccount(account_id=acct.id, environment=Environment.PAPER, cash=acct.available_cash,
+        """TG portfolio inputs: canonical ledger positions/cash when available.
+
+        Reservations still subtract OMS reserved_cash so buy capacity stays fail-closed.
+        TG is not redesigned — only the ownership snapshot source is canonicalized.
+        """
+        fund_id = self.fill_posts.fund_for_account(acct.id) or fund_id_for_account(acct.id)
+        tpos: dict[str, TPosition] = {}
+        cash_for_tg = acct.available_cash
+        input_source = "oms_lifecycle"
+        try:
+            if self.ledger.store.get_fund(fund_id):
+                state = self.ledger.get_state(fund_id)
+                cash_for_tg = q2(D(state["cash"]) - acct.reserved_cash)
+                if cash_for_tg < 0:
+                    cash_for_tg = Decimal("0")
+                for p in state.get("positions") or []:
+                    if D(p.get("quantity") or 0) == 0:
+                        continue
+                    # reserved qty still OMS-side for sell capacity
+                    oms_pos = self.store.get_position(acct.org_id, acct.id, p["symbol"])
+                    qty = D(p["quantity"])
+                    if oms_pos and oms_pos.reserved_quantity:
+                        # expose free qty to TG as quantity (TG uses position.quantity)
+                        qty = qty  # full open; broker validate still uses OMS available
+                    tpos[p["symbol"]] = TPosition(
+                        symbol=p["symbol"],
+                        quantity=qty,
+                        avg_price=D(p.get("avg_cost") or 0),
+                        realized_pnl=D(p.get("realized_pnl") or 0),
+                    )
+                input_source = "canonical_fund_ledger"
+        except Exception:
+            positions = self.store.list_positions(acct.org_id, acct.id)
+            tpos = {p.symbol: TPosition(symbol=p.symbol, quantity=p.quantity, avg_price=p.avg_cost,
+                                        realized_pnl=p.realized_pnl) for p in positions if p.quantity != 0}
+            cash_for_tg = acct.available_cash
+            input_source = "oms_lifecycle_fallback"
+
+        if not tpos and input_source != "canonical_fund_ledger":
+            positions = self.store.list_positions(acct.org_id, acct.id)
+            tpos = {p.symbol: TPosition(symbol=p.symbol, quantity=p.quantity, avg_price=p.avg_cost,
+                                        realized_pnl=p.realized_pnl) for p in positions if p.quantity != 0}
+
+        taccount = TAccount(account_id=acct.id, environment=Environment.PAPER, cash=cash_for_tg,
                             currency=acct.base_currency, positions=tpos)
         ref_price = D(event.ask) if intent.side == OrderSide.BUY else D(event.bid)
         guardian = TradingGuardian(limits=self._guardian_limits)
@@ -183,6 +343,7 @@ class PaperTradingService:
         pub = decision.to_public()
         pub["environment"] = "PAPER"
         pub["is_trade_approval"] = False
+        pub["portfolio_input_source"] = input_source
         return pub
 
     # ── INTERNAL: submit (reached only via ExecutionGateway tool) ───────────
@@ -372,16 +533,63 @@ class PaperTradingService:
             transition=(prev_state.value, order.broker_state.value, "fill"),
             ledger_entries=ledger_entries, event_hash=event.event_hash())
         if not applied:
-            # duplicate event — idempotent no-op
+            # duplicate market event — OMS fill not re-inserted; retry any pending ledger posts
             cur = self.store.get_order(ctx.org_id, order_id)
-            return {"filled": False, "reason": "duplicate event (idempotent)", "order": cur.to_public()}
+            retried = []
+            if self.auto_post_ledger:
+                retried = retry_pending_posts(self.ledger, self.fill_posts, limit=20)
+            return {
+                "filled": False,
+                "reason": "duplicate event (idempotent)",
+                "order": cur.to_public(),
+                "ledger_retry": retried,
+            }
         if fully:
             self.store.update_intent(ctx.org_id, order.order_intent_id, state=OrderState.FILLED.value)
         else:
             self.store.update_intent(ctx.org_id, order.order_intent_id, state=OrderState.PARTIALLY_FILLED.value)
-        self._audit(ctx, "paper.order.filled", order_id=order.id, quantity=str(f), price=str(plan.price),
-                    result_hash=plan.result_hash, fully=fully)
-        return {"filled": True, "fill": fill.to_public(), "order": order.to_public()}
+
+        # T-NEXT-1.1: automatic canonical ledger post after OMS fill commit
+        ledger_post = None
+        if self.auto_post_ledger:
+            ledger_post = self._post_fill_to_canonical_ledger(acct, order, fill)
+            # Optional mark at fill price for unrealized path
+            try:
+                fund_id = self.fill_posts.fund_for_account(acct.id) or fund_id_for_account(acct.id)
+                if ledger_post and ledger_post.get("status") in (POST_POSTED, POST_DUPLICATE):
+                    self.ledger.record_mark(
+                        fund_id,
+                        security_id=f"sec_{order.symbol.upper()}_PAPER",
+                        price=plan.price,
+                        symbol=order.symbol,
+                        source="paper_fill_mark",
+                        idempotency_key=f"mark:fill:{fill.id}",
+                    )
+            except Exception:
+                pass
+
+        self._audit(
+            ctx,
+            "paper.order.filled",
+            order_id=order.id,
+            quantity=str(f),
+            price=str(plan.price),
+            result_hash=plan.result_hash,
+            fully=fully,
+            fill_id=fill.id,
+            ledger_event_id=(ledger_post or {}).get("ledger_event_id"),
+            ledger_post_status=(ledger_post or {}).get("status"),
+        )
+        recon = self.portfolio_reconciliation_status(ctx, acct.id)
+        return {
+            "filled": True,
+            "fill": fill.to_public(),
+            "order": order.to_public(),
+            "ledger_post": ledger_post,
+            "portfolio_status": recon.get("portfolio_status"),
+            "reconciliation": recon,
+            "books_authority": "canonical_fund_ledger",
+        }
 
     # ── INTERNAL: cancel (reached only via ExecutionGateway tool) ───────────
     def cancel_order(self, ctx, *, order_id: str, idempotency_key: str = "") -> dict:
@@ -472,19 +680,154 @@ class PaperTradingService:
 
     def list_positions(self, ctx, account_id: str) -> list[dict]:
         ctx.require_permission(PlatformPermission.PAPER_ACCOUNT_READ)
-        self._account_or_404(ctx, account_id)
-        return [p.to_public(mark=p.avg_cost) for p in self.store.list_positions(ctx.org_id, account_id)]
+        acct = self._account_or_404(ctx, account_id)
+        fund_id = self.fill_posts.fund_for_account(account_id) or fund_id_for_account(account_id)
+        try:
+            if self.ledger.store.get_fund(fund_id):
+                state = self.ledger.get_state(fund_id)
+                oms_positions = self.store.list_positions(ctx.org_id, account_id)
+                reserved = {p.symbol: p.reserved_quantity for p in oms_positions}
+                view = LedgerPortfolioViewAdapter.from_ledger_state(
+                    state, account_id=account_id, reserved_cash=acct.reserved_cash, reserved_by_symbol=reserved
+                )
+                return view["positions"]
+        except Exception:
+            pass
+        # OMS lifecycle fallback (not books authority)
+        return [
+            {**p.to_public(mark=p.avg_cost), "source": "oms_lifecycle_fallback",
+             "legacy_oms_state_not_books_authority": True}
+            for p in self.store.list_positions(ctx.org_id, account_id)
+        ]
 
     def ledger(self, ctx, account_id: str, *, limit=500, offset=0) -> list[dict]:
+        """OMS cash journal (lifecycle). Canonical events: list_canonical_events."""
         ctx.require_permission(PlatformPermission.PAPER_ACCOUNT_READ)
         self._account_or_404(ctx, account_id)
-        return self.store.list_ledger(ctx.org_id, account_id, limit=min(int(limit), 1000), offset=int(offset))
+        rows = self.store.list_ledger(ctx.org_id, account_id, limit=min(int(limit), 1000), offset=int(offset))
+        return [{**r, "authority": "OMS_LIFECYCLE_ONLY", "legacy_oms_state_not_books_authority": True} for r in rows]
+
+    def list_canonical_events(self, ctx, account_id: str) -> list[dict]:
+        ctx.require_permission(PlatformPermission.PAPER_ACCOUNT_READ)
+        self._account_or_404(ctx, account_id)
+        fund_id = self.fill_posts.fund_for_account(account_id) or fund_id_for_account(account_id)
+        if not self.ledger.store.get_fund(fund_id):
+            return []
+        return self.ledger.list_events(fund_id)
 
     def summary(self, ctx, account_id: str) -> dict:
         acct_pub = self.get_account(ctx, account_id)
         acct_pub["open_orders"] = sum(1 for o in self.store.list_orders(ctx.org_id, account_id=account_id, limit=500)
                                       if not o.is_terminal)
         return acct_pub
+
+    def command_center_snapshot(self, ctx, account_id: str) -> dict:
+        """Runtime Command Center payload from canonical ledger (no manual injection)."""
+        ctx.require_permission(PlatformPermission.PAPER_ACCOUNT_READ)
+        self._account_or_404(ctx, account_id)
+        fund_id = self.fill_posts.fund_for_account(account_id) or fund_id_for_account(account_id)
+        recon = self.portfolio_reconciliation_status(ctx, account_id)
+        if not self.ledger.store.get_fund(fund_id):
+            return {
+                "mode": "PAPER",
+                "live_execution": "UNAVAILABLE",
+                "source": "canonical_fund_ledger",
+                "portfolio_status": "RECONCILIATION_REQUIRED",
+                "error": "fund not open",
+            }
+        state = self.ledger.get_state(fund_id)
+        snap = LedgerPortfolioViewAdapter.command_summary(state, recon=recon)
+        snap["account_id"] = account_id
+        return snap
+
+    def _post_fill_to_canonical_ledger(self, acct: PaperAccount, order: PaperOrder, fill: PaperFill) -> dict:
+        # Ensure bind exists (accounts created pre-cutover in tests still work)
+        fund_id = self.fill_posts.fund_for_account(acct.id)
+        if not fund_id:
+            fund_id = fund_id_for_account(acct.id)
+            if not self.ledger.store.get_fund(fund_id):
+                try:
+                    self.ledger.create_fund(
+                        fund_id=fund_id,
+                        name=f"paper:{acct.id}",
+                        base_currency=acct.base_currency,
+                        opening_cash=acct.starting_cash,
+                        actor="cutover_lazy_open",
+                    )
+                except Exception:
+                    pass
+            self.fill_posts.bind_account(acct.id, fund_id, org_id=acct.org_id)
+        side = order.side.value if hasattr(order.side, "value") else str(order.side)
+        return post_accepted_fill(
+            self.ledger,
+            self.fill_posts,
+            account_id=acct.id,
+            fill_id=fill.id,
+            order_id=order.id,
+            side=side,
+            symbol=order.symbol,
+            quantity=fill.quantity,
+            price=fill.price,
+            fee=fill.fee,
+            actor="paper_oms",
+        )
+
+    def retry_ledger_posts(self, ctx, *, limit: int = 50) -> dict:
+        """Idempotent retry of PENDING/FAILED ledger posts after crash/degrade."""
+        ctx.require_permission(PlatformPermission.PAPER_ORDER_SUBMIT)
+        results = retry_pending_posts(self.ledger, self.fill_posts, limit=limit)
+        return {
+            "retried": len(results),
+            "results": results,
+            "pending_remaining": self.fill_posts.pending_count(),
+        }
+
+    def portfolio_reconciliation_status(self, ctx, account_id: str) -> dict:
+        """OMS vs ledger gate — no silent repair."""
+        self._account_or_404(ctx, account_id)
+        fund_id = self.fill_posts.fund_for_account(account_id) or fund_id_for_account(account_id)
+        pending = self.fill_posts.pending_count(account_id)
+        issues = []
+        ok = True
+        if pending > 0:
+            ok = False
+            issues.append({"code": "LEDGER_POST_PENDING", "detail": f"{pending} fill(s) pending/failed ledger post"})
+
+        norm = []
+        for o in self.store.list_orders(ctx.org_id, account_id=account_id, limit=500):
+            for f in self.store.list_fills(ctx.org_id, o.id, limit=1000):
+                fid = f.get("id") if isinstance(f, dict) else None
+                if fid:
+                    norm.append(
+                        {
+                            "fill_id": fid,
+                            "quantity": f.get("quantity"),
+                            "price": f.get("price"),
+                        }
+                    )
+
+        ledger_report = {"ok": True, "issues": []}
+        if self.ledger.store.get_fund(fund_id):
+            # When OMS fills exist, require matching ledger fills; empty OMS is fine for cash-only funds
+            ledger_report = self.ledger.reconcile(fund_id, oms_fills=norm if norm else [])
+            if not ledger_report.get("ok"):
+                ok = False
+                issues.extend(ledger_report.get("issues") or [])
+        else:
+            ok = False
+            issues.append({"code": "FUND_MISSING", "detail": fund_id})
+
+        status = "HEALTHY" if ok else "RECONCILIATION_REQUIRED"
+        return {
+            "fund_id": fund_id,
+            "ok": ok,
+            "portfolio_status": status,
+            "pending_ledger_posts": pending,
+            "issues": issues,
+            "ledger_report": ledger_report,
+            "mode": "PAPER",
+            "legacy_oms_state_not_books_authority": LEGACY_OMS_STATE_NOT_BOOKS_AUTHORITY,
+        }
 
     # ── invariant check (used by tests + future reconciliation) ─────────────
     def check_account_invariants(self, ctx, account_id: str, *, tol: Decimal = Decimal("0.01")) -> list[str]:
