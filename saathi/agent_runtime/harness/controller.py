@@ -26,6 +26,14 @@ from saathi.agent_runtime.harness.durable_store import HarnessDurableStore
 from saathi.agent_runtime.harness.errors import HarnessError, HarnessErrorCode
 from saathi.agent_runtime.harness.fake import FakeInMemoryHarness
 from saathi.agent_runtime.harness.gateway_bridge import RealExecutionGatewayAdapter
+from saathi.agent_runtime.harness.governance import (
+    AdmissionRequest,
+    HarnessSessionGovernor,
+)
+from saathi.agent_runtime.harness.governance_policy import (
+    AdmissionDecision,
+    HarnessResourcePolicy,
+)
 from saathi.agent_runtime.harness.mapping import project_harness_to_run_state
 from saathi.agent_runtime.harness.persistence import (
     DurableSessionRecord,
@@ -277,6 +285,9 @@ class HarnessSessionController:
         use_real_gateway: bool = True,
         durable_store: Optional[HarnessDurableStore] = None,
         require_durable_store: bool = False,
+        governor: Optional[HarnessSessionGovernor] = None,
+        resource_policy: Optional[HarnessResourcePolicy] = None,
+        enable_governance: bool = True,
     ) -> None:
         self._harness = harness
         if gateway is not None:
@@ -296,6 +307,58 @@ class HarnessSessionController:
                 HarnessErrorCode.INVALID_REQUEST,
                 "durable_store required but not provided",
             )
+        self._governance_enabled = enable_governance
+        if governor is not None:
+            self._governor = governor
+        elif enable_governance:
+            from dataclasses import replace as _replace
+
+            from saathi.agent_runtime.harness.governance_policy import (
+                HarnessAdmissionPolicy,
+                HarnessQueuePolicy,
+            )
+
+            # Scale admission/queue with controller max_sessions so unit tests
+            # that raise max_sessions keep working under governance.
+            base = resource_policy or HarnessResourcePolicy.default()
+            adm = HarnessAdmissionPolicy(
+                max_active_sessions_global=max(1, max_sessions),
+                max_active_sessions_per_org=max(
+                    1, min(base.admission.max_active_sessions_per_org, max_sessions)
+                    if max_sessions <= 8
+                    else max_sessions
+                ),
+                max_active_sessions_per_workspace=max(
+                    1, min(base.admission.max_active_sessions_per_workspace, max_sessions)
+                    if max_sessions <= 8
+                    else max_sessions
+                ),
+                max_active_sessions_per_harness=max(1, max_sessions),
+                allow_multiple_sessions_per_run=base.admission.allow_multiple_sessions_per_run,
+            )
+            # Concurrent stress tests use distinct run_ids; allow multi-run.
+            if max_sessions > 8:
+                adm = _replace(adm, allow_multiple_sessions_per_run=True)
+            q = HarnessQueuePolicy(
+                max_queued_sessions_global=max(32, max_sessions * 2),
+                max_queued_sessions_per_org=max(8, max_sessions),
+                max_queued_sessions_per_workspace=max(4, max_sessions),
+                age_promotion_seconds=base.queue.age_promotion_seconds,
+                priority_ceiling=base.queue.priority_ceiling,
+                default_fairness_weight=base.queue.default_fairness_weight,
+            )
+            pol = _replace(
+                base,
+                admission=adm,
+                queue=q,
+                # Keep session-level counters high enough for stress/multi-turn tests
+                max_turns_per_session=max(base.max_turns_per_session, 64),
+                max_events_per_session=max(base.max_events_per_session, 512),
+                max_tool_proposals_per_session=max(base.max_tool_proposals_per_session, 64),
+            )
+            self._governor = HarnessSessionGovernor(pol)
+        else:
+            self._governor = None
 
     @property
     def audit(self) -> HarnessAuditLog:
@@ -313,6 +376,10 @@ class HarnessSessionController:
     def uses_real_gateway(self) -> bool:
         return bool(getattr(self._gateway, "is_real_gateway", False))
 
+    @property
+    def governor(self) -> Optional[HarnessSessionGovernor]:
+        return self._governor
+
     # ── Lifecycle ───────────────────────────────────────────────────────────
 
     def start_session(
@@ -328,6 +395,9 @@ class HarnessSessionController:
         allowed_tool_names: Tuple[str, ...] = ("fake.echo",),
         budget: Optional[HarnessBudget] = None,
         session_id: Optional[str] = None,
+        priority: int = 0,
+        run_state: Optional[str] = None,
+        queue_if_busy: bool = False,
     ) -> HarnessSessionHandle:
         with self._lock:
             return self._start_session_locked(
@@ -341,6 +411,9 @@ class HarnessSessionController:
                 allowed_tool_names=allowed_tool_names,
                 budget=budget,
                 session_id=session_id,
+                priority=priority,
+                run_state=run_state,
+                queue_if_busy=queue_if_busy,
             )
 
     def _start_session_locked(
@@ -356,6 +429,9 @@ class HarnessSessionController:
         allowed_tool_names: Tuple[str, ...] = ("fake.echo",),
         budget: Optional[HarnessBudget] = None,
         session_id: Optional[str] = None,
+        priority: int = 0,
+        run_state: Optional[str] = None,
+        queue_if_busy: bool = False,
     ) -> HarnessSessionHandle:
         if authority_class == "FINANCIAL_EXECUTION":
             raise HarnessError(
@@ -392,6 +468,63 @@ class HarnessSessionController:
             )
 
         sid = session_id or new_id("hs-")
+        # FM-I4 admission / queue (does not grant tool execution authority)
+        if self._governor is not None:
+            areq = AdmissionRequest(
+                session_id=sid,
+                run_id=run_id,
+                mission_id=mission_id or run_id,
+                organization_id=organization_id or "",
+                workspace_id=workspace_id or "",
+                actor_id=actor_id,
+                harness_id=profile.harness_id,
+                correlation_id=correlation_id,
+                priority=priority,
+                harness_healthy=health.status.value != "unhealthy",
+                harness_quarantined=False,
+                run_state=run_state,
+                # Session budgets may only tighten policy; do not reject for
+                # lower session limits. Raise-attempts checked separately if set.
+                requested_max_turns=None,
+            )
+            ares = self._governor.admit(areq)
+            # Admission audit is best-effort until session exists; re-recorded after start.
+            _admission_detail = {
+                "decision": ares.decision,
+                "reason": ares.reason,
+                "queue_entry_id": ares.queue_entry_id,
+                "reservation_id": ares.reservation_id,
+            }
+            if ares.decision == AdmissionDecision.QUEUE:
+                if not queue_if_busy:
+                    # Default: reject capacity rather than return half-started session
+                    raise HarnessError(
+                        HarnessErrorCode.RESOURCE_EXHAUSTED,
+                        f"admission queued (capacity): {ares.reason}",
+                        session_id=sid,
+                        details={
+                            "decision": ares.decision,
+                            "queue_entry_id": ares.queue_entry_id,
+                        },
+                    )
+                raise HarnessError(
+                    HarnessErrorCode.RESOURCE_EXHAUSTED,
+                    f"session queued: {ares.queue_entry_id}",
+                    session_id=sid,
+                    details={
+                        "decision": ares.decision,
+                        "queue_entry_id": ares.queue_entry_id,
+                    },
+                )
+            if ares.decision != AdmissionDecision.ADMIT_NOW:
+                raise HarnessError(
+                    HarnessErrorCode.RESOURCE_EXHAUSTED
+                    if ares.decision == AdmissionDecision.REJECT_CAPACITY
+                    else HarnessErrorCode.INVALID_REQUEST,
+                    f"admission rejected: {ares.decision}: {ares.reason}",
+                    session_id=sid,
+                    details={"decision": ares.decision, "reason": ares.reason},
+                )
         # Scope isolation: session_id cannot move across org/workspace
         if sid in self._sessions:
             bound = self._sessions[sid]
@@ -465,6 +598,14 @@ class HarnessSessionController:
                 ) from exc
         self._ingest_events(sid)
         try:
+            if self._governor is not None:
+                self._audit.record(
+                    "harness.admission",
+                    session_id=sid,
+                    run_id=run_id,
+                    correlation_id=correlation_id,
+                    detail=locals().get("_admission_detail") or {"decision": "ADMIT_NOW"},
+                )
             self._audit.record(
                 "harness.session_started",
                 session_id=sid,
@@ -476,6 +617,8 @@ class HarnessSessionController:
             # Audit failure must not leave a live untracked session: quarantine fail-closed
             bound.quarantined = True
             bound.quarantine_reason = f"audit_write_failed: {exc}"
+            if self._governor is not None:
+                self._governor.release(sid, reason="audit_write_failed")
             self._persist_quarantine(sid, bound.quarantine_reason)
             raise HarnessError(
                 HarnessErrorCode.INTERNAL,
@@ -545,6 +688,35 @@ class HarnessSessionController:
         )
         handle = self._harness.submit_turn(req)
         self._ingest_events(session_id)
+        # FM-I4 live resource accounting + timeout enforcement
+        if self._governor is not None:
+            usage = self._harness.resource_usage(session_id)
+            viol = self._governor.record_activity(
+                session_id,
+                turns=usage.turns,
+                events=usage.events,
+                output_chars=usage.output_chars,
+                logical_tokens=usage.fake_tokens,
+                tool_proposals=usage.tool_proposals,
+                absolute=True,
+            )
+            if viol:
+                self._audit.record(
+                    "harness.resource_limit",
+                    session_id=session_id,
+                    run_id=bound.run_id,
+                    detail={"limit": viol},
+                )
+                try:
+                    self.request_cancel(session_id, reason=f"resource_limit:{viol}")
+                except HarnessError:
+                    pass
+                raise HarnessError(
+                    HarnessErrorCode.RESOURCE_EXHAUSTED,
+                    f"resource limit: {viol}",
+                    session_id=session_id,
+                    details={"limit": viol},
+                )
         self._audit.record(
             "harness.turn_submitted",
             session_id=session_id,
@@ -574,6 +746,10 @@ class HarnessSessionController:
                     pass
                 bound.pending_execution_id = None
 
+            if self._governor is not None:
+                self._governor.mark_cancel_requested(session_id)
+                self._governor.cancel_queued(session_id, reason=reason)
+
             try:
                 ack = self._harness.request_cancel(session_id, reason)
             except HarnessError as exc:
@@ -595,6 +771,8 @@ class HarnessSessionController:
             if ack.status in (CancelAckStatus.ACKNOWLEDGED, CancelAckStatus.ALREADY_TERMINAL):
                 bound.projected_run_state = RunState.CANCELLED
                 bound.last_terminal_run_state = RunState.CANCELLED
+                if self._governor is not None:
+                    self._governor.release(session_id, reason=reason or "cancelled")
                 if self._store is not None:
                     try:
                         self._persist_session_fields(
@@ -635,6 +813,8 @@ class HarnessSessionController:
                 HarnessSessionState.CLOSED,
                 prior_terminal_run=bound.last_terminal_run_state,
             )
+            if self._governor is not None:
+                self._governor.release(session_id, reason=reason or "closed")
             if self._store is not None:
                 try:
                     term = (

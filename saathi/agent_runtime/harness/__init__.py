@@ -75,6 +75,19 @@ from saathi.agent_runtime.harness.persistence import (
 )
 from saathi.agent_runtime.harness.audit import HarnessAuditLog, HarnessAuditRecord
 from saathi.agent_runtime.harness.types import can_transition_harness, is_terminal_harness_state
+from saathi.agent_runtime.harness.governance import (
+    AdmissionRequest,
+    AdmissionResult,
+    HarnessSessionGovernor,
+)
+from saathi.agent_runtime.harness.governance_policy import (
+    AdmissionDecision,
+    HarnessAdmissionPolicy,
+    HarnessQueuePolicy,
+    HarnessResourcePolicy,
+    HarnessTimeoutPolicy,
+    QueueEntryState,
+)
 
 __all__ = [
     "AgentHarness",
@@ -125,6 +138,15 @@ __all__ = [
     "project_harness_to_run_state",
     "can_transition_harness",
     "is_terminal_harness_state",
+    "AdmissionRequest",
+    "AdmissionResult",
+    "HarnessSessionGovernor",
+    "AdmissionDecision",
+    "HarnessAdmissionPolicy",
+    "HarnessQueuePolicy",
+    "HarnessResourcePolicy",
+    "HarnessTimeoutPolicy",
+    "QueueEntryState",
 ]
 
 # FM-I1 is intentionally not production-certified.

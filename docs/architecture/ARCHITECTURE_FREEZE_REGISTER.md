@@ -27,6 +27,7 @@ Unfreezing **requires** the authority and prerequisites listed. Informal “just
 | **FM-I1 disposition** | **PARTIALLY UNFROZEN** (2026-08-07) — fake + types + controller proof only |
 | **FM-I2 disposition** | **PARTIALLY UNFROZEN** (2026-08-07) — real ExecutionGateway via isolated local echo/noop only; no providers/CLIs |
 | **FM-I3 disposition** | **PARTIALLY UNFROZEN** (2026-08-07) — durable harness session/event store (isolated SQLite only); no shared production DB |
+| **FM-I4 disposition** | **PARTIALLY UNFROZEN** (2026-08-07) — in-process harness admission/queue/limits only; no distributed scheduler/workers |
 
 ### FZ-02 — New AgentSessionAdapter variants
 

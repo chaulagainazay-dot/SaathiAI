@@ -1,5 +1,17 @@
 # SaathiOS Autonomous Roadmap
 
+## FM-I4 — Harness Resource Governance (2026-08-07)
+
+| Field | Value |
+| --- | --- |
+| Mode | **Internal non-production** — in-process admission, queue, fairness, limits |
+| Baseline | FM-I3 @ `4ebcd71c9489823bd7c53a44822d0bb572abf012` |
+| Branch | `implementation/fm-i4-resource-governance` |
+| Report | `docs/agent-runtime/FM_I4_RESOURCE_GOVERNANCE.md` |
+| Governor | `HarnessSessionGovernor` (not a general scheduler) |
+| Production certified | **False** |
+| Next | **FM-I5 only after separate owner authorization** |
+
 ## FM-I3 — Durable Harness Session State (2026-08-07)
 
 | Field | Value |
