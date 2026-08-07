@@ -49,6 +49,8 @@ export function createVoiceSessionManager(hooks = {}) {
     sttDegraded: false,
     sttDegradedReason: "",
     interruptClass: null,
+    sttEngine: null,
+    voiceInputLabel: null,
   };
   const subscribers = new Set();
   let inputClaim = null;
@@ -189,6 +191,12 @@ export function createVoiceSessionManager(hooks = {}) {
     },
     notifySttDegraded(reason) {
       publish({ sttDegraded: true, sttDegradedReason: String(reason || ""), degraded: true });
+    },
+    notifySttEngineState(engine) {
+      publish({
+        sttEngine: engine || null,
+        voiceInputLabel: engine?.label || null,
+      });
     },
 
     /**
@@ -468,10 +476,13 @@ export function createVoiceSessionManager(hooks = {}) {
         listening = true;
         speechDetected = true;
         pipeline?.onAcousticInterrupt?.();
-        // Attach pre-roll to STT (browser cannot ingest PCM; records note)
+        // Attach pre-roll PCM to STT (local ingests; browser metadata-only)
         try {
           const pre = bargeIn.getPreRoll?.();
-          if (pre?.length) pipeline?.attachPreRoll?.(pre);
+          if (pre?.length) {
+            pipeline?.attachPreRoll?.(pre);
+            pipeline?.pushLivePcm?.(pre, { preRollAttached: true });
+          }
         } catch {
           /* ignore */
         }
