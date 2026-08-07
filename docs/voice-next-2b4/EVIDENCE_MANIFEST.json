@@ -39,5 +39,10 @@
   "product_primary": "browser_speech_recognition",
   "best_local": "bijay-small-ne-en-v3.1",
   "fine_tuning_performed": false,
-  "router_implemented": false
+  "router_implemented": false,
+  "tip_sha": "fb3972b54bd7a28ceab89332895691a0c229bf38",
+  "draft_pr": 32,
+  "draft_pr_url": "https://github.com/chaulagainazay-dot/SaathiAI/pull/32",
+  "branch": "qualification/v-next-2b4-omnilingual-asr",
+  "worktree": "/Users/macbookpro/SaathiAI-voice-next-2b4"
 }
