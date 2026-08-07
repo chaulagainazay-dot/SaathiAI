@@ -25,6 +25,7 @@ import {
 } from "./output-owner.js";
 import { recordVoiceTelemetry } from "./telemetry.js";
 import { createBargeInController } from "./barge-in-controller.js";
+import { createRealtimeVoicePipeline } from "./pipeline-coordinator.js";
 
 /**
  * @typedef {object} VoiceSessionManager
@@ -43,6 +44,11 @@ export function createVoiceSessionManager(hooks = {}) {
     speechDetected: false,
     lastBargeInLatencyMs: null,
     vadHealth: null,
+    lastTurn: null,
+    lastPipelineEvent: null,
+    sttDegraded: false,
+    sttDegradedReason: "",
+    interruptClass: null,
   };
   const subscribers = new Set();
   let inputClaim = null;
@@ -65,11 +71,14 @@ export function createVoiceSessionManager(hooks = {}) {
     getStream: getMediaStream,
   });
 
+  /** @type {ReturnType<typeof createRealtimeVoicePipeline>|null} */
+  let pipeline = null;
+
   function publish(partial = {}) {
     const now = new Date().toISOString();
     const caps = snapshot.capabilities || detectVoiceCapabilities();
-    // If VAD failed, degrade capability flags honestly
     const vadOk = !bargeIn.isVadFailed() && caps.vadAvailable;
+    const sttOk = caps.streamingSttAvailable && !snapshot.sttDegraded;
     snapshot = {
       ...snapshot,
       ...partial,
@@ -83,17 +92,19 @@ export function createVoiceSessionManager(hooks = {}) {
         thinking,
         interrupting,
         speechDetected,
-        degraded: snapshot.degraded || bargeIn.isVadFailed(),
+        degraded: snapshot.degraded || bargeIn.isVadFailed() || snapshot.sttDegraded,
         ready: Boolean(caps.microphoneAvailable || caps.speechRecognitionAvailable),
       }),
       capabilities: {
         ...caps,
         vadAvailable: vadOk,
         acousticBargeInAvailable: vadOk && !bargeIn.isVadFailed(),
+        streamingSttAvailable: sttOk || Boolean(pipeline && !pipeline.health?.()?.degraded),
+        partialTranscriptAvailable: sttOk || Boolean(pipeline),
+        turnCoordinationAvailable: true,
         manualInterruptAvailable: true,
         fullDuplexAvailable: false,
         wakeWordAvailable: false,
-        streamingSttAvailable: false,
         streamingTtsAvailable: false,
       },
       inputClaimId: inputClaim?.id || null,
@@ -101,6 +112,7 @@ export function createVoiceSessionManager(hooks = {}) {
       inputState: listening ? "listening" : inputClaim ? "held" : "idle",
       outputState: speaking ? "speaking" : outputClaim ? "held" : "idle",
       vadHealth: bargeIn.health(),
+      pipelineHealth: pipeline?.health?.() || null,
     };
     for (const fn of subscribers) {
       try {
@@ -148,6 +160,8 @@ export function createVoiceSessionManager(hooks = {}) {
 
     notifySpeechDetected(on, _ev) {
       speechDetected = Boolean(on);
+      if (on) pipeline?.onVadSpeechStart?.();
+      else pipeline?.onVadSpeechEnd?.();
       publish();
     },
     notifyBargeInLatency(ms) {
@@ -165,6 +179,16 @@ export function createVoiceSessionManager(hooks = {}) {
         },
       });
       recordVoiceTelemetry("vad_failed", { errorCode: String(message || "").slice(0, 80) });
+    },
+    notifyTurnFinal(turn) {
+      // isExecutable flag is informational — Command must not auto-execute tools
+      publish({ lastTurn: turn });
+    },
+    notifyPipelineEvent(ev) {
+      publish({ lastPipelineEvent: ev });
+    },
+    notifySttDegraded(reason) {
+      publish({ sttDegraded: true, sttDegradedReason: String(reason || ""), degraded: true });
     },
 
     /**
@@ -205,8 +229,33 @@ export function createVoiceSessionManager(hooks = {}) {
         sessionId: snapshot.sessionId,
         claimId: inputClaim.id,
       });
-      // Arm VAD on same physical capture when stream is attached later
+      // Start streaming STT + turn coordinator (browser or mock)
+      try {
+        await api.startStreamingPipeline({ sttMode: hooks.sttMode || "auto" });
+      } catch (err) {
+        api.notifySttDegraded(String(err?.message || err));
+      }
       return publish({ error: "" });
+    },
+
+    /**
+     * Attach streaming STT pipeline (tests may inject mock mode).
+     */
+    async startStreamingPipeline({ sttMode = "auto" } = {}) {
+      if (pipeline) {
+        try {
+          await pipeline.stop();
+        } catch {
+          /* ignore */
+        }
+      }
+      pipeline = createRealtimeVoicePipeline({ manager: api, sttMode });
+      await pipeline.start();
+      return pipeline.health();
+    },
+
+    getPipeline() {
+      return pipeline;
     },
 
     getInputClaim() {
@@ -418,13 +467,29 @@ export function createVoiceSessionManager(hooks = {}) {
         // Preserve input ownership so utterance continues after barge-in
         listening = true;
         speechDetected = true;
+        pipeline?.onAcousticInterrupt?.();
+        // Attach pre-roll to STT (browser cannot ingest PCM; records note)
+        try {
+          const pre = bargeIn.getPreRoll?.();
+          if (pre?.length) pipeline?.attachPreRoll?.(pre);
+        } catch {
+          /* ignore */
+        }
       }
 
       interrupting = false;
-      return publish();
+      return publish({
+        interruptClass: pipeline?.turns?.getLastInterruptClass?.() || null,
+      });
     },
 
     async close(reason = "SESSION_CLOSE") {
+      try {
+        await pipeline?.stop?.();
+      } catch {
+        /* ignore */
+      }
+      pipeline = null;
       await bargeIn.disarm();
       await api.interrupt(reason);
       if (inputClaim) {

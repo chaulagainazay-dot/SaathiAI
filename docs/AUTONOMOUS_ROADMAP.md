@@ -1,5 +1,20 @@
 # SaathiOS Autonomous Roadmap
 
+## V-NEXT-2B — Streaming STT + Intelligent Turn Orchestration (2026-08-07)
+
+| Field | Value |
+| --- | --- |
+| Mode | **Streaming input + turns** — partial ≠ execute |
+| Branch | `feature/v-next-2b-streaming-stt-turns` |
+| Base | `feature/v-next-2a-vad-barge-in` @ `9fad029…` |
+| STT | Browser SpeechRecognition (+ mock tests) |
+| Orchestration | Saathi RealtimeVoicePipelineCoordinator |
+| Docs | `docs/voice-next-2b/` |
+| Verdict | `STREAMING_STT_TURN_ORCHESTRATION_CERTIFIED_WITH_LIMITATIONS` |
+| Next | `V-NEXT-2C` (separate authorization) |
+
+---
+
 ## V-NEXT-2A — Local VAD + Acoustic Barge-In (2026-08-07)
 
 | Field | Value |

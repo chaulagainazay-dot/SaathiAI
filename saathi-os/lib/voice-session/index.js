@@ -44,3 +44,17 @@ export { createPreRollBuffer } from "./pre-roll-buffer.js";
 export { createAudioFrameTap } from "./audio-frame-tap.js";
 export { createBargeInController } from "./barge-in-controller.js";
 export { DEFAULT_MIC_CONSTRAINTS } from "./input-owner.js";
+export {
+  STT_PRIVACY,
+  nextUtteranceId,
+  isMeaningfulTranscript,
+  looksSyntacticallyComplete,
+  BACKCHANNEL_RE,
+} from "./stt-contract.js";
+export { admitStreamingStt, VOICE_RESOURCE_POLICY } from "./resource-budget.js";
+export {
+  createBrowserStreamingStt,
+  createMockStreamingStt,
+} from "./browser-streaming-stt.js";
+export { createTurnCoordinator, DEFAULT_TURN_CONFIG } from "./turn-coordinator.js";
+export { createRealtimeVoicePipeline } from "./pipeline-coordinator.js";

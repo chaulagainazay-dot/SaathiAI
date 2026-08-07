@@ -1859,3 +1859,14 @@ html, body {
   .cmd-timeline-link,
   .cmd-row { transition: none; }
 }
+
+/* V-NEXT-2B partial vs final transcript */
+.cmd-transcript-panel {
+  margin: 0.5rem 0;
+  padding: 0.65rem 0.75rem;
+  border-radius: var(--rad-sm, 8px);
+  border: 1px solid var(--border-subtle, rgba(255,255,255,0.08));
+  background: rgba(255,255,255,0.02);
+}
+.cmd-transcript-partial { font-style: italic; opacity: 0.9; }
+.cmd-transcript-final { font-weight: 500; }
