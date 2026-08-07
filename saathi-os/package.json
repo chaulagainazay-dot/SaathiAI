@@ -14,6 +14,7 @@
     "cert:m147": "node scripts/m147_ielts_browser_cert.mjs",
     "cert:m156": "node scripts/m156_core_browser_cert.mjs",
     "cert:m165": "node scripts/m165_private_alpha_browser_cert.mjs",
+    "cert:ui-next-2-2": "node scripts/ui_next_2_2_hybrid_browser_cert.mjs",
     "cert:m183": "node scripts/m183_trading_guardian_browser_cert.mjs",
     "cert:m215": "node scripts/m215_ops_graduation_browser_cert.mjs",
     "cert:m223": "node scripts/m223_broker_sandbox_browser_cert.mjs",

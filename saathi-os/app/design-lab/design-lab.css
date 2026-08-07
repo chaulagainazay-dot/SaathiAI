@@ -1,14 +1,33 @@
 /* UI-NEXT-2 Design Lab — isolated tokens & layout. Does not restyle production /command. */
 
+/* Hide production shell chrome while viewing design-lab only (prototype isolation). */
+body:has(.dl-root) .shell-topbar,
+body:has(.dl-root) .shell-statusbar,
+body:has(.dl-root) .shell-nav,
+body:has(.dl-root) nav.shell-nav,
+body:has(.dl-root) [data-testid="shell-topbar"],
+body:has(.dl-root) [data-testid="private-alpha-badge"],
+body:has(.dl-root) aside.shell-sidebar,
+body:has(.dl-root) .shell-sidebar {
+  display: none !important;
+}
+
+body:has(.dl-root) .shell-main,
+body:has(.dl-root) main {
+  margin: 0 !important;
+  padding: 0 !important;
+  max-width: none !important;
+}
+
 .dl-root {
   --dl-bg: #0e1116;
   --dl-s1: #151a21;
   --dl-s2: #1b222c;
   --dl-raised: #232b36;
-  --dl-text: #e8edf4;
-  --dl-sec: #a8b3c4;
-  --dl-muted: #7a8699;
-  --dl-border: #2a3340;
+  --dl-text: #f2f5fa;
+  --dl-sec: #c5d0e0;
+  --dl-muted: #a7b4c8;
+  --dl-border: #3a4556;
   --dl-active: #4a90d9;
   --dl-accent: #5b9fd4;
   --dl-ok: #3d9b6e;
@@ -32,7 +51,7 @@
 .dl-banner {
   background: #3a2a12;
   border: 1px solid var(--dl-warn);
-  color: #f0e0a8;
+  color: #ffe9a8;
   padding: 8px 12px;
   border-radius: 8px;
   font-size: 12px;
@@ -245,28 +264,32 @@ a.dl-btn {
 .dl-pill {
   font-size: 11px;
   font-family: ui-monospace, Menlo, monospace;
-  padding: 3px 8px;
+  padding: 4px 9px;
   border-radius: 999px;
   border: 1px solid var(--dl-border);
-  background: var(--dl-s1);
-  color: var(--dl-sec);
+  background: var(--dl-s2);
+  color: var(--dl-text);
 }
 
 .dl-pill-ok {
-  border-color: #2d5a42;
-  color: var(--dl-ok);
+  border-color: #3d9b6e;
+  color: #8fd4b0;
+  background: #15261c;
 }
 .dl-pill-warn {
-  border-color: #6a5a1a;
-  color: var(--dl-warn);
+  border-color: #c9a227;
+  color: #f0d878;
+  background: #2a2410;
 }
 .dl-pill-crit {
-  border-color: #6a3030;
-  color: var(--dl-crit);
+  border-color: #c45c5c;
+  color: #f0b0b0;
+  background: #2a1515;
 }
 .dl-pill-info {
-  border-color: #2a4a6a;
-  color: var(--dl-accent);
+  border-color: #5b9fd4;
+  color: #b8dcf5;
+  background: #152030;
 }
 
 .dl-tabs,
@@ -283,9 +306,30 @@ a.dl-btn {
   border: 1px solid var(--dl-border);
   color: var(--dl-sec);
   border-radius: 8px;
-  padding: 6px 12px;
+  padding: 10px 14px;
+  min-height: 40px;
   font-size: 13px;
   cursor: pointer;
+}
+
+.dl-empty {
+  color: var(--dl-sec);
+  font-size: 12px;
+  padding: 10px;
+  background: var(--dl-s2);
+  border-radius: 8px;
+  border: 1px dashed var(--dl-border);
+}
+
+.dl-node,
+.dl-pos {
+  min-height: 40px;
+}
+
+html.dl-reduced-root .dl-orb[data-state="LISTENING"],
+.dl-reduced .dl-orb[data-state="LISTENING"] {
+  animation: none !important;
+  box-shadow: none !important;
 }
 
 .dl-tab[aria-selected="true"],
@@ -374,6 +418,8 @@ a.dl-btn {
   border-radius: var(--dl-radius);
   padding: 10px 12px;
   min-height: 0;
+  /* avoid non-focusable scroll regions (axe scrollable-region-focusable) */
+  overflow: visible;
 }
 
 .dl-panel h2 {
@@ -382,7 +428,7 @@ a.dl-btn {
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--dl-muted);
+  color: var(--dl-sec);
 }
 
 .dl-panel.dl-focus {
@@ -405,7 +451,7 @@ a.dl-btn {
 .dl-metric label {
   display: block;
   font-size: 10px;
-  color: var(--dl-muted);
+  color: var(--dl-sec);
   font-family: ui-monospace, Menlo, monospace;
   margin-bottom: 4px;
 }

@@ -40,7 +40,7 @@ function Metric({ label, value, provenance }) {
   return (
     <div className="dl-metric">
       <label>{label}</label>
-      <div className="val">{value ?? "—"}</div>
+      <div className="val">{value == null || value === "" ? "UNAVAILABLE" : value}</div>
       {provenance ? (
         <div className="dl-prov" data-prov={provenance}>
           {provenance}
@@ -80,6 +80,8 @@ const SCENARIOS = [
   { id: "risk_warning", label: "Risk warning" },
   { id: "recon_required", label: "Recon required" },
   { id: "voice_degraded", label: "Voice degraded" },
+  { id: "empty_states", label: "Empty" },
+  { id: "service_error", label: "Service error" },
 ];
 
 export default function DesignLabPage() {
@@ -112,10 +114,17 @@ export default function DesignLabPage() {
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const apply = () => setReducedMotion(!!mq.matches);
+    const apply = () => {
+      const on = !!mq.matches;
+      setReducedMotion(on);
+      document.documentElement.classList.toggle("dl-reduced-root", on);
+    };
     apply();
     mq.addEventListener?.("change", apply);
-    return () => mq.removeEventListener?.("change", apply);
+    return () => {
+      mq.removeEventListener?.("change", apply);
+      document.documentElement.classList.remove("dl-reduced-root");
+    };
   }, []);
 
   const portfolio = model?.portfolio;
@@ -160,8 +169,10 @@ export default function DesignLabPage() {
 
   if (!model) {
     return (
-      <div className="dl-root">
-        <p className="dl-banner">Loading Hybrid Command prototype…</p>
+      <div className="dl-root" data-testid="design-lab-loading" aria-busy="true">
+        <p className="dl-banner" role="status">
+          LOADING · Hybrid Command prototype…
+        </p>
       </div>
     );
   }
@@ -270,7 +281,11 @@ export default function DesignLabPage() {
                 </button>
               </li>
             ))}
-            {!model.attention.items?.length ? <li className="dl-muted">No attention items</li> : null}
+            {!model.attention.items?.length ? (
+              <li className="dl-empty" data-testid="attention-empty">
+                No attention items · system quiet
+              </li>
+            ) : null}
           </ul>
         </section>
 
@@ -346,19 +361,27 @@ export default function DesignLabPage() {
               ))}
             </div>
             <div className="dl-agent-graph" data-testid="agent-graph">
+              {(model.agents.nodes || []).length === 0 ? (
+                <p className="dl-empty" data-testid="agents-empty">
+                  No missions or agents · {model.agents.error || "empty"}
+                </p>
+              ) : null}
               {(model.agents.nodes || []).map((n) => (
                 <button
                   key={n.id}
                   type="button"
                   className={`dl-node ${selectedAgent === n.id ? "dl-node-sel" : ""}`}
                   data-status={n.status}
+                  aria-label={`Agent ${n.name} status ${n.status}`}
                   onClick={() => {
                     setSelectedAgent(n.id);
                     setCtx("agent", n.id, `${n.name} · ${n.status}`);
                   }}
                 >
                   <span>{n.name}</span>
-                  <span className="dl-mono">{n.status}</span>
+                  <span className="dl-mono" aria-hidden="true">
+                    {n.status}
+                  </span>
                 </button>
               ))}
             </div>
@@ -397,12 +420,23 @@ export default function DesignLabPage() {
               <Metric label="net_exposure" value={formatMoney(portfolio.net_exposure)} provenance={portfolio.provenance} />
             </div>
             <h3 className="dl-subh">Positions</h3>
+            {portfolio.error ? (
+              <p className="dl-empty" data-testid="portfolio-error">
+                Portfolio read failed · UNAVAILABLE
+              </p>
+            ) : null}
             <div className="dl-pos-list">
+              {(portfolio.positions || []).length === 0 && !portfolio.error ? (
+                <p className="dl-empty" data-testid="positions-empty">
+                  No open positions · cash-only book
+                </p>
+              ) : null}
               {(portfolio.positions || []).map((p) => (
                 <button
                   key={p.symbol}
                   type="button"
                   className={`dl-pos ${selectedPosition === p.symbol ? "dl-pos-sel" : ""}`}
+                  aria-label={`Position ${p.symbol} weight ${p.weight}`}
                   onClick={() => {
                     setSelectedPosition(p.symbol);
                     setCtx("position", p.symbol, `Position ${p.symbol}`);
