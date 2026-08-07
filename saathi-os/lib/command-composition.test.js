@@ -37,6 +37,35 @@ describe("command-composition", () => {
     assert.equal(snap.fields.drawdown.available, false);
   });
 
+  it("investment reads canonical fund ledger fields when provided", () => {
+    const snap = composeInvestmentSnapshot({
+      auth: true,
+      ready: true,
+      summary: {
+        source: "canonical_fund_ledger",
+        fund_id: "fund_demo",
+        paper_nav: "100000.00",
+        cash: "90000.00",
+        pnl: "123.45",
+        gross_exposure: "10000.00",
+        net_exposure: "10000.00",
+        positions: [{ symbol: "AAA", quantity: "10" }],
+        blockingBreakers: 0,
+        unackAlerts: 0,
+        critDrift: 0,
+      },
+    });
+    assert.equal(snap.mode, "PAPER");
+    assert.equal(snap.liveExecution, "UNAVAILABLE");
+    assert.equal(snap.fields.paperNav.available, true);
+    assert.equal(snap.fields.paperNav.value, 100000);
+    assert.equal(snap.fields.pnl.available, true);
+    assert.equal(snap.fields.grossExposure.available, true);
+    assert.equal(snap.fields.netExposure.available, true);
+    assert.equal(snap.positions.length, 1);
+    assert.ok(String(snap.note).includes("canonical fund ledger"));
+  });
+
   it("investment without session does not invent zeros", () => {
     const snap = composeInvestmentSnapshot({ auth: false });
     assert.equal(snap.fields.paperNav.available, false);
