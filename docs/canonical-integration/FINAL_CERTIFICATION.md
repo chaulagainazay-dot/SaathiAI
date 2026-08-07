@@ -41,3 +41,11 @@ UI-NEXT-1 — SAATHIOS CENTRAL COMMAND COMPOSITION
 ```
 
 Separate owner authorization required. Do not start in this mission.
+
+
+**Final tip SHA:**
+
+## Publication pin
+
+- Final tip: 
+- Branch: 

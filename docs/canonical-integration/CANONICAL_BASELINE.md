@@ -3,7 +3,8 @@
 | Field | Value |
 | --- | --- |
 | **Canonical branch** | `integration/saathios-canonical-baseline` |
-| **Canonical SHA (pre-docs tip after M17)** | `272dbd5d0b9495d9682955074a76b4931e440daf` |
+| **Final tip SHA** |  |
+| **Canonical SHA (M17 code tip)** | `272dbd5d0b9495d9682955074a76b4931e440daf` |
 | **Source baseline branch** | `hardening/fm-i6.2-macos-memory-gate-fix` |
 | **Source baseline SHA** | `e1738d7deec5f44600fbf0d99e2b8f74a4bc83d0` |
 | **Worktree** | `/Users/macbookpro/SaathiAI-canonical-baseline` |
@@ -62,3 +63,8 @@ Linear ancestry from `master` through:
 - Model output ≠ authority
 - Financial execution prohibited
 - Voice activation does not grant execution authority
+
+## Publication pin
+
+- Final tip: 
+- Branch: 

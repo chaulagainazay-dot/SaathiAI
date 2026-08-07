@@ -63,5 +63,7 @@
     "history_rewrite",
     "pr_close",
     "pr_merge_other"
-  ]
+  ],
+  "final_tip_sha": "c12935aeac8ef85def67c51bb0ba294759985f27",
+  "canonical_branch": "integration/saathios-canonical-baseline"
 }
