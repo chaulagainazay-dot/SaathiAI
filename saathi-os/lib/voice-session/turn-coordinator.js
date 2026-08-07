@@ -1,6 +1,9 @@
 /**
  * TurnCoordinator — multi-signal turn finalization.
  * PARTIAL ≠ executable. Final turn emits for Command/Chat only.
+ *
+ * V-NEXT-2B.1: engine-neutral normalization; punctuation / linguistic completeness;
+ * backchannel hardening; false-interrupt recovery with STT evidence.
  */
 
 import {
@@ -17,7 +20,22 @@ export const DEFAULT_TURN_CONFIG = Object.freeze({
   minFinalChars: 2,
   endpointGraceMs: 200,
   falseInterruptWaitMs: 900,
+  // Prefer STT final over pure silence when both race
+  preferSttFinal: true,
+  // Drop stale partials that regress (shorter + not prefix) after a final
+  rejectRegressivePartials: true,
 });
+
+/**
+ * Normalize raw provider text for turn logic (engine-neutral).
+ * @param {string} text
+ */
+export function normalizeTurnText(text) {
+  return String(text || "")
+    .replace(/\s+/g, " ")
+    .replace(/^[\s,;:]+/, "")
+    .trim();
+}
 
 /**
  * @param {object} opts
@@ -55,17 +73,20 @@ export function createTurnCoordinator(opts = {}) {
   }
 
   function tryFinalize(reason) {
-    const text = String(partialText || lastFinalText || "").trim();
+    const text = normalizeTurnText(partialText || lastFinalText || "");
     if (!isMeaningfulTranscript(text) && !BACKCHANNEL_RE.test(text)) {
       return null;
     }
     // Backchannels can finalize as non-executable turns
+    const isBc = BACKCHANNEL_RE.test(text);
     const turn = {
       text,
-      isBackchannel: BACKCHANNEL_RE.test(text),
-      isExecutable: isMeaningfulTranscript(text) && !BACKCHANNEL_RE.test(text),
+      isBackchannel: isBc,
+      isExecutable: isMeaningfulTranscript(text) && !isBc,
       reason,
       finalizedAt: new Date().toISOString(),
+      // Authority: never auto-execute tools from turn alone
+      authority: "none",
     };
     finalizedTurns += 1;
     partialText = "";
@@ -90,14 +111,27 @@ export function createTurnCoordinator(opts = {}) {
     },
 
     onPartial(ev) {
-      partialText = String(ev?.text || "");
+      const text = normalizeTurnText(ev?.text || "");
+      // Ordering: ignore empty; optionally reject regressive partials after final
+      if (
+        cfg.rejectRegressivePartials &&
+        lastFinalText &&
+        text &&
+        text.length + 2 < lastFinalText.length &&
+        !lastFinalText.startsWith(text) &&
+        !text.startsWith(lastFinalText.slice(0, Math.min(8, lastFinalText.length)))
+      ) {
+        emit("stt.partial_ignored", { text, reason: "regressive" });
+        return;
+      }
+      partialText = text;
       lastActivityAt = now();
       emit("stt.partial", { text: partialText });
       // NEVER executable
     },
 
     onFinal(ev) {
-      const text = String(ev?.text || "").trim();
+      const text = normalizeTurnText(ev?.text || "");
       lastFinalText = text;
       partialText = text;
       lastActivityAt = now();
@@ -117,7 +151,8 @@ export function createTurnCoordinator(opts = {}) {
         pendingFalseInterrupt = null;
       }
 
-      if (looksSyntacticallyComplete(text) || !vadSpeechActive) {
+      // Linguistic completeness: punctuation / clause length / speech ended
+      if (looksSyntacticallyComplete(text) || !vadSpeechActive || cfg.preferSttFinal) {
         return tryFinalize("stt_final");
       }
       emit("turn.possible_end", { reason: "stt_final_incomplete" });

@@ -51,10 +51,28 @@ export {
   looksSyntacticallyComplete,
   BACKCHANNEL_RE,
 } from "./stt-contract.js";
-export { admitStreamingStt, VOICE_RESOURCE_POLICY } from "./resource-budget.js";
+export {
+  admitStreamingStt,
+  VOICE_RESOURCE_POLICY,
+  minReclaimableForModel,
+  resolveSttHierarchy,
+  formatVoiceInputLabel,
+} from "./resource-budget.js";
 export {
   createBrowserStreamingStt,
   createMockStreamingStt,
 } from "./browser-streaming-stt.js";
-export { createTurnCoordinator, DEFAULT_TURN_CONFIG } from "./turn-coordinator.js";
-export { createRealtimeVoicePipeline } from "./pipeline-coordinator.js";
+export {
+  createLocalStreamingStt,
+  createLocalStreamingSttForTests,
+  createHintDrivenLocalStt,
+} from "./local-streaming-stt.js";
+export {
+  createTurnCoordinator,
+  DEFAULT_TURN_CONFIG,
+  normalizeTurnText,
+} from "./turn-coordinator.js";
+export {
+  createRealtimeVoicePipeline,
+  normalizeTranscriptEvent,
+} from "./pipeline-coordinator.js";
