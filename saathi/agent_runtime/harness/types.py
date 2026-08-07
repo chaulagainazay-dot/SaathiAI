@@ -392,6 +392,7 @@ class ApprovalRefState(str, Enum):
 class ProtocolViolationKind(str, Enum):
     INVALID_TRANSITION = "invalid_transition"
     DUPLICATE_EVENT_ID = "duplicate_event_id"
+    DUPLICATE_SEQUENCE = "duplicate_sequence"
     SEQUENCE_GAP = "sequence_gap"
     SEQUENCE_REGRESSION = "sequence_regression"
     EVENT_AFTER_CLOSE = "event_after_close"
@@ -404,6 +405,8 @@ class ProtocolViolationKind(str, Enum):
     RESOURCE_LIMIT = "resource_limit"
     LATE_EVENT = "late_event"
     CAPABILITY_CLAIM_ABUSE = "capability_claim_abuse"
+    SECRET_PAYLOAD = "secret_payload"
+    INVALID_PAYLOAD = "invalid_payload"
 
 
 def new_id(prefix: str = "") -> str:

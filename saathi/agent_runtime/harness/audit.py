@@ -36,6 +36,8 @@ class HarnessAuditLog:
 
     def __init__(self) -> None:
         self._records: List[HarnessAuditRecord] = []
+        # Fault injection (FM-I1.5): when True, record() raises fail-closed.
+        self.fail_writes: bool = False
 
     def record(
         self,
@@ -46,6 +48,8 @@ class HarnessAuditLog:
         correlation_id: str = "",
         detail: Optional[Mapping[str, Any]] = None,
     ) -> HarnessAuditRecord:
+        if self.fail_writes:
+            raise RuntimeError("audit write failure (injected)")
         rec = HarnessAuditRecord(
             action=action,
             timestamp=time.time(),

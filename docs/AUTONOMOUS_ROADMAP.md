@@ -1,5 +1,17 @@
 # SaathiOS Autonomous Roadmap
 
+## FM-I1.5 — Harness Stress Certification (2026-08-07)
+
+| Field | Value |
+| --- | --- |
+| Mode | **Internal non-production** — stress, fuzz, concurrency, replay; no real adapter |
+| Baseline | FM-I1 @ `bf957f8fd7c942bcc139a30dfcb596c9d6b44fec` |
+| Branch | `implementation/fm-i1.5-harness-stress-certification` |
+| Report | `docs/agent-runtime/FM_I1_5_HARNESS_STRESS_CERTIFICATION.md` |
+| Tests | `tests/test_fm_i1_5_harness_stress.py` + FM-I1 suite |
+| Production certified | **False** |
+| Next | **FM-I2 only after separate owner authorization** |
+
 ## FM-I1 — Fake AgentHarness Proof (2026-08-07)
 
 | Field | Value |

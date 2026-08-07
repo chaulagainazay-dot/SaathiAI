@@ -24,7 +24,7 @@ This index tells a competent engineer **which documents to trust**, which are hi
 | What is frozen | [`ARCHITECTURE_FREEZE_REGISTER.md`](./ARCHITECTURE_FREEZE_REGISTER.md) |
 | Terminology | [`CANONICAL_TERMINOLOGY.md`](./CANONICAL_TERMINOLOGY.md) |
 | Contradictions | [`FM_C1_CONTRADICTION_REGISTER.md`](./FM_C1_CONTRADICTION_REGISTER.md) (CX-05 closed in FM-C2) |
-| Next authorized implementation | **FM-I2 only after separate owner authorization** — providers/CLIs remain frozen |
+| Next authorized implementation | **FM-I2 only after separate owner authorization** — providers/CLIs remain frozen; FM-I1.5 stress suite is internal proof only |
 
 **Document class legend:** AUTHORITATIVE · SUPPORTING · HISTORICAL · SUPERSEDED · DRAFT · DESIGN_ONLY · REJECTED · STALE_REQUIRES_REPAIR
 

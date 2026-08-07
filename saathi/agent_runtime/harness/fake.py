@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field, replace
 from enum import Enum
-from typing import Any, Dict, Iterator, List, Mapping, Optional, Tuple
+from typing import Any, Callable, Dict, Iterator, List, Mapping, Optional, Tuple
 import copy
 import hashlib
 import threading
@@ -92,11 +92,16 @@ class FakeInMemoryHarness:
         scenario_by_turn: Optional[Mapping[str, FakeScenario]] = None,
         healthy: bool = True,
         fail_cancel_ack: bool = False,
+        clock: Optional[Callable[[], float]] = None,
+        id_factory: Optional[Callable[[], str]] = None,
     ) -> None:
         self._default_scenario = default_scenario
         self._scenario_by_turn = dict(scenario_by_turn or {})
         self._healthy = healthy
         self._fail_cancel_ack = fail_cancel_ack
+        # Deterministic hooks for FM-I1.5 replay certification (default: wall clock / uuid4).
+        self._clock = clock or time.time
+        self._id_factory = id_factory or (lambda: str(uuid.uuid4()))
         self._sessions: Dict[str, _Session] = {}
         self._lock = threading.RLock()
         self._profile = HarnessCapabilityProfile(
@@ -201,16 +206,19 @@ class FakeInMemoryHarness:
                     f"cannot accept turns in state {sess.state.value}",
                     session_id=req.session_id,
                 )
-            if sess.state not in (
-                HarnessSessionState.READY,
-                HarnessSessionState.WAITING_FOR_TOOL,
-            ):
-                # After tool result, controller may leave us READY; WAITING_FOR_TOOL
-                # accepts only via deliver_tool_result then continue.
+            # New turns only from READY. WAITING_FOR_TOOL continues via
+            # deliver_tool_result (controller), never a parallel submit_turn.
+            if sess.state is not HarnessSessionState.READY:
                 if sess.state is HarnessSessionState.WAITING_FOR_APPROVAL:
                     raise HarnessError(
                         HarnessErrorCode.APPROVAL_PENDING,
                         "session waiting for approval",
+                        session_id=req.session_id,
+                    )
+                if sess.state is HarnessSessionState.WAITING_FOR_TOOL:
+                    raise HarnessError(
+                        HarnessErrorCode.INVALID_STATE,
+                        "cannot submit_turn while waiting for tool result",
                         session_id=req.session_id,
                     )
                 raise HarnessError(
@@ -459,6 +467,49 @@ class FakeInMemoryHarness:
         with self._lock:
             return list(self._sessions.keys())
 
+    def force_timeout(self, session_id: str, *, reason: str = "forced_timeout") -> None:
+        """Fail-closed timeout transition from any non-terminal active state (test/fault)."""
+        with self._lock:
+            sess = self._require_session(session_id)
+            if is_terminal_harness_state(sess.state) or sess.closed:
+                return
+            # Prefer direct TIMED_OUT when legal; otherwise CANCELLING→CANCELLED is wrong —
+            # walk via CANCELLING only if needed, else force FAILED path is not timeout.
+            if can_transition_harness(sess.state, HarnessSessionState.TIMED_OUT):
+                self._transition(sess, HarnessSessionState.TIMED_OUT)
+            elif can_transition_harness(sess.state, HarnessSessionState.CANCELLING):
+                self._transition(sess, HarnessSessionState.CANCELLING)
+                # CANCELLING cannot go to TIMED_OUT; record as FAILED with timeout reason
+                if can_transition_harness(sess.state, HarnessSessionState.FAILED):
+                    self._transition(sess, HarnessSessionState.FAILED)
+                    sess.terminal_reason = reason
+                    self._emit(
+                        sess,
+                        HarnessEventType.SESSION_FAILED,
+                        {"reason": reason, "kind": "timeout_via_cancel_path"},
+                    )
+                    return
+            else:
+                raise HarnessError(
+                    HarnessErrorCode.INVALID_STATE,
+                    f"cannot force timeout from {sess.state.value}",
+                    session_id=session_id,
+                )
+            sess.terminal_reason = reason
+            self._emit(
+                sess,
+                HarnessEventType.SESSION_TIMED_OUT,
+                {"reason": reason},
+            )
+
+    def purge_closed_sessions(self) -> int:
+        """Release closed sessions from memory (bounded cleanup for stress tests)."""
+        with self._lock:
+            closed = [sid for sid, s in self._sessions.items() if s.closed]
+            for sid in closed:
+                del self._sessions[sid]
+            return len(closed)
+
     # ── Internals ───────────────────────────────────────────────────────────
 
     def _handle(self, sess: _Session) -> HarnessSessionHandle:
@@ -551,10 +602,10 @@ class FakeInMemoryHarness:
             )
 
         sess.seq += 1
-        event_id = str(uuid.uuid4())
+        event_id = str(self._id_factory())
         if event_id in sess.event_ids:
-            # astronomically unlikely; still fail-closed
-            event_id = str(uuid.uuid4())
+            # Deterministic or collision: mint a distinct suffix fail-closed
+            event_id = f"{event_id}-{sess.seq}"
         sess.event_ids.add(event_id)
         tokens = int(safe_payload.get("fake_tokens", 0) or 0)
         sess.usage = replace(
@@ -584,7 +635,7 @@ class FakeInMemoryHarness:
             sequence_number=sess.seq,
             event_type=event_type,
             harness_id=HARNESS_ID,
-            timestamp=time.time(),
+            timestamp=float(self._clock()),
             payload=safe_payload,
             turn_id=turn_id,
             run_id=sess.req.run_id,
@@ -787,7 +838,9 @@ class FakeInMemoryHarness:
             ),
         ):
             sess.seq += 1
-            event_id = str(uuid.uuid4())
+            event_id = str(self._id_factory())
+            if event_id in sess.event_ids:
+                event_id = f"{event_id}-{sess.seq}"
             sess.event_ids.add(event_id)
             sess.usage = replace(sess.usage, events=sess.usage.events + 1)
             sess.events.append(
@@ -797,7 +850,7 @@ class FakeInMemoryHarness:
                     sequence_number=sess.seq,
                     event_type=event_type,
                     harness_id=HARNESS_ID,
-                    timestamp=time.time(),
+                    timestamp=float(self._clock()),
                     payload=payload,
                     run_id=sess.req.run_id,
                     mission_id=sess.req.mission_id,

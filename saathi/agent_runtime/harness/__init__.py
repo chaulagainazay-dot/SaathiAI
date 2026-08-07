@@ -59,6 +59,7 @@ from saathi.agent_runtime.harness.controller import (
     MediatedToolResult,
 )
 from saathi.agent_runtime.harness.audit import HarnessAuditLog, HarnessAuditRecord
+from saathi.agent_runtime.harness.types import can_transition_harness, is_terminal_harness_state
 
 __all__ = [
     "AgentHarness",
@@ -96,6 +97,8 @@ __all__ = [
     "ToolProposal",
     "ToolProposalDisposition",
     "project_harness_to_run_state",
+    "can_transition_harness",
+    "is_terminal_harness_state",
 ]
 
 # FM-I1 is intentionally not production-certified.

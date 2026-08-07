@@ -15,6 +15,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field, replace
 from typing import Any, Dict, List, Mapping, Optional, Set, Tuple
 import hashlib
+import re
+import threading
 import time
 import uuid
 
@@ -129,9 +131,12 @@ class GatewayTestDouble:
         self._results_by_idem: Dict[str, Mapping[str, Any]] = {}
         self.deny_all: bool = False
         self.execute: bool = True
+        self.raise_on_submit: bool = False
 
     def submit(self, intent: ToolIntent) -> Mapping[str, Any]:
         """Accept a trusted ToolIntent; return redacted synthetic result."""
+        if self.raise_on_submit:
+            raise RuntimeError("gateway test double failure (injected)")
         errors = intent.validate()
         if errors:
             raise HarnessError(
@@ -190,6 +195,7 @@ class HarnessSessionController:
         self._known_tools = dict(known_tools or KNOWN_FAKE_TOOLS)
         self._max_sessions = max_sessions
         self._sessions: Dict[str, _BoundSession] = {}
+        self._lock = threading.RLock()
 
     @property
     def audit(self) -> HarnessAuditLog:
@@ -202,6 +208,34 @@ class HarnessSessionController:
     # ── Lifecycle ───────────────────────────────────────────────────────────
 
     def start_session(
+        self,
+        *,
+        run_id: str,
+        actor_id: str,
+        correlation_id: str,
+        mission_id: str = "",
+        organization_id: Optional[str] = None,
+        workspace_id: Optional[str] = None,
+        authority_class: str = "READ_ONLY",
+        allowed_tool_names: Tuple[str, ...] = ("fake.echo",),
+        budget: Optional[HarnessBudget] = None,
+        session_id: Optional[str] = None,
+    ) -> HarnessSessionHandle:
+        with self._lock:
+            return self._start_session_locked(
+                run_id=run_id,
+                actor_id=actor_id,
+                correlation_id=correlation_id,
+                mission_id=mission_id,
+                organization_id=organization_id,
+                workspace_id=workspace_id,
+                authority_class=authority_class,
+                allowed_tool_names=allowed_tool_names,
+                budget=budget,
+                session_id=session_id,
+            )
+
+    def _start_session_locked(
         self,
         *,
         run_id: str,
@@ -294,16 +328,44 @@ class HarnessSessionController:
         )
         self._sessions[sid] = bound
         self._ingest_events(sid)
-        self._audit.record(
-            "harness.session_started",
-            session_id=sid,
-            run_id=run_id,
-            correlation_id=correlation_id,
-            detail={"authority_class": authority_class, "org": organization_id},
-        )
+        try:
+            self._audit.record(
+                "harness.session_started",
+                session_id=sid,
+                run_id=run_id,
+                correlation_id=correlation_id,
+                detail={"authority_class": authority_class, "org": organization_id},
+            )
+        except RuntimeError as exc:
+            # Audit failure must not leave a live untracked session: quarantine fail-closed
+            bound.quarantined = True
+            bound.quarantine_reason = f"audit_write_failed: {exc}"
+            raise HarnessError(
+                HarnessErrorCode.INTERNAL,
+                "audit write failed; session quarantined",
+                session_id=sid,
+            ) from exc
         return handle
 
     def submit_turn(
+        self,
+        session_id: str,
+        *,
+        input_text: str,
+        correlation_id: str,
+        turn_id: Optional[str] = None,
+        causation_id: Optional[str] = None,
+    ) -> HarnessTurnHandle:
+        with self._lock:
+            return self._submit_turn_locked(
+                session_id,
+                input_text=input_text,
+                correlation_id=correlation_id,
+                turn_id=turn_id,
+                causation_id=causation_id,
+            )
+
+    def _submit_turn_locked(
         self,
         session_id: str,
         *,
@@ -358,60 +420,74 @@ class HarnessSessionController:
         return handle
 
     def request_cancel(self, session_id: str, reason: str = "run_cancelled") -> CancelAck:
-        bound = self._require_bound(session_id)
-        # Cancel pending gateway work
-        for intent in list(self._gateway.submitted):
-            if intent.metadata.get("session_id") == session_id:
-                self._gateway.cancel(intent.intent_id)
+        with self._lock:
+            bound = self._require_bound(session_id)
+            # Cancel pending gateway work
+            for intent in list(self._gateway.submitted):
+                if intent.metadata.get("session_id") == session_id:
+                    self._gateway.cancel(intent.intent_id)
 
-        try:
-            ack = self._harness.request_cancel(session_id, reason)
-        except HarnessError as exc:
-            # Fail-closed: mark cancelled projection even if ack fails
-            bound.projected_run_state = RunState.FAILED
-            bound.last_terminal_run_state = RunState.FAILED
-            self._audit.record(
-                "harness.cancellation_failed_closed",
-                session_id=session_id,
-                run_id=bound.run_id,
-                detail={"error": exc.code, "reason": reason},
-            )
-            raise
+            try:
+                ack = self._harness.request_cancel(session_id, reason)
+            except HarnessError as exc:
+                # Fail-closed: mark cancelled projection even if ack fails
+                bound.projected_run_state = RunState.FAILED
+                bound.last_terminal_run_state = RunState.FAILED
+                try:
+                    self._audit.record(
+                        "harness.cancellation_failed_closed",
+                        session_id=session_id,
+                        run_id=bound.run_id,
+                        detail={"error": exc.code, "reason": reason},
+                    )
+                except RuntimeError:
+                    pass
+                raise
 
-        self._ingest_events(session_id)
-        if ack.status in (CancelAckStatus.ACKNOWLEDGED, CancelAckStatus.ALREADY_TERMINAL):
-            bound.projected_run_state = RunState.CANCELLED
-            bound.last_terminal_run_state = RunState.CANCELLED
-        self._audit.record(
-            "harness.cancellation",
-            session_id=session_id,
-            run_id=bound.run_id,
-            detail={"status": ack.status.value, "reason": reason},
-        )
-        # Idempotent second cancel
-        return ack
+            self._ingest_events(session_id)
+            if ack.status in (CancelAckStatus.ACKNOWLEDGED, CancelAckStatus.ALREADY_TERMINAL):
+                bound.projected_run_state = RunState.CANCELLED
+                bound.last_terminal_run_state = RunState.CANCELLED
+            try:
+                self._audit.record(
+                    "harness.cancellation",
+                    session_id=session_id,
+                    run_id=bound.run_id,
+                    detail={"status": ack.status.value, "reason": reason},
+                )
+            except RuntimeError:
+                # Cancel already applied; audit failure is recorded as quarantine risk
+                bound.quarantined = True
+                bound.quarantine_reason = "audit_write_failed_after_cancel"
+            return ack
 
     def close_session(self, session_id: str, reason: str = "closed") -> SessionCloseResult:
-        bound = self._require_bound(session_id)
-        result = self._harness.close_session(session_id, reason)
-        bound.closed = True
-        self._ingest_events(session_id)
-        bound.projected_run_state = project_harness_to_run_state(
-            HarnessSessionState.CLOSED,
-            prior_terminal_run=bound.last_terminal_run_state,
-        )
-        self._audit.record(
-            "harness.session_closed",
-            session_id=session_id,
-            run_id=bound.run_id,
-            detail={"reason": reason, "already_closed": result.already_closed},
-        )
-        return result
+        with self._lock:
+            bound = self._require_bound(session_id)
+            result = self._harness.close_session(session_id, reason)
+            bound.closed = True
+            self._ingest_events(session_id)
+            bound.projected_run_state = project_harness_to_run_state(
+                HarnessSessionState.CLOSED,
+                prior_terminal_run=bound.last_terminal_run_state,
+            )
+            try:
+                self._audit.record(
+                    "harness.session_closed",
+                    session_id=session_id,
+                    run_id=bound.run_id,
+                    detail={"reason": reason, "already_closed": result.already_closed},
+                )
+            except RuntimeError:
+                bound.quarantined = True
+                bound.quarantine_reason = "audit_write_failed_after_close"
+            return result
 
     def poll_events(self, session_id: str, after_seq: int = 0) -> List[HarnessEvent]:
-        self._ingest_events(session_id)
-        bound = self._require_bound(session_id)
-        return [e for e in bound.normalized_events if e.sequence_number > after_seq]
+        with self._lock:
+            self._ingest_events(session_id)
+            bound = self._require_bound(session_id)
+            return [e for e in bound.normalized_events if e.sequence_number > after_seq]
 
     def projected_run_state(self, session_id: str) -> RunState:
         return self._require_bound(session_id).projected_run_state
@@ -522,6 +598,10 @@ class HarnessSessionController:
 
     def mediate_proposal(self, proposal: ToolProposal) -> MediatedToolResult:
         """Validate proposal and build ToolIntent; never let harness authorize."""
+        with self._lock:
+            return self._mediate_proposal_locked(proposal)
+
+    def _mediate_proposal_locked(self, proposal: ToolProposal) -> MediatedToolResult:
         bound = self._require_bound(proposal.session_id)
         if bound.quarantined:
             return MediatedToolResult(
@@ -742,7 +822,21 @@ class HarnessSessionController:
                 reason="idempotent replay",
             )
 
-        result = self._gateway.submit(intent)
+        try:
+            result = self._gateway.submit(intent)
+        except Exception as exc:  # noqa: BLE001 — gateway double / seam failure
+            self._audit.record(
+                "harness.gateway_failure",
+                session_id=proposal.session_id,
+                run_id=bound.run_id,
+                correlation_id=proposal.correlation_id,
+                detail={"error": str(exc)[:200]},
+            )
+            return MediatedToolResult(
+                disposition=ToolProposalDisposition.DENIED,
+                proposal_id=proposal.proposal_id,
+                reason=f"gateway failure: {exc}",
+            )
         bound.consumed_idempotency_keys.add(idem)
         denied = not result.get("ok", False)
         disposition = (
@@ -830,17 +924,34 @@ class HarnessSessionController:
         bound = self._require_bound(session_id)
         if bound.quarantined:
             return
-        raw = list(self._harness.poll_events(session_id, after_seq=bound.last_seq))
+        # Full stream scan so injected regression/duplicate events with
+        # sequence_number <= watermark are still observed and fail-closed.
+        raw = list(self._harness.poll_events(session_id, after_seq=0))
+        seen_in_stream: Set[str] = set()
         for ev in raw:
+            if ev.event_id in seen_in_stream:
+                self._quarantine(
+                    bound.session_id,
+                    ProtocolViolationKind.DUPLICATE_EVENT_ID,
+                    f"duplicate event_id in stream {ev.event_id}",
+                )
+                return
+            seen_in_stream.add(ev.event_id)
+            if ev.event_id in bound.seen_event_ids:
+                # Already accepted on a prior ingest pass.
+                continue
             if self._validate_event(bound, ev):
                 bound.normalized_events.append(ev)
                 bound.last_seq = max(bound.last_seq, ev.sequence_number)
                 bound.seen_event_ids.add(ev.event_id)
                 self._update_projection_from_event(bound, ev)
+            else:
+                # Quarantine already applied inside _validate_event
+                return
 
     def _validate_event(self, bound: _BoundSession, ev: HarnessEvent) -> bool:
+        # Post-close events (except the close event itself) → quarantine
         if bound.closed and ev.event_type is not HarnessEventType.SESSION_CLOSED:
-            # Late events after close → quarantine
             if any(
                 e.event_type is HarnessEventType.SESSION_CLOSED
                 for e in bound.normalized_events
@@ -851,6 +962,21 @@ class HarnessSessionController:
                     f"event {ev.event_id} after close",
                 )
                 return False
+
+        # Post-terminal non-terminal events fail closed (except close/cancel ack/fail reports)
+        terminal_projected = bound.last_terminal_run_state is not None
+        if terminal_projected and ev.event_type in (
+            HarnessEventType.TURN_ACCEPTED,
+            HarnessEventType.TEXT_DELTA,
+            HarnessEventType.TOOL_PROPOSAL,
+        ):
+            self._quarantine(
+                bound.session_id,
+                ProtocolViolationKind.LATE_EVENT,
+                f"active event {ev.event_type.value} after terminal projection",
+            )
+            return False
+
         if ev.event_id in bound.seen_event_ids:
             self._quarantine(
                 bound.session_id,
@@ -865,19 +991,37 @@ class HarnessSessionController:
                 f"seq {ev.sequence_number} <= {bound.last_seq}",
             )
             return False
+        # Sequence gaps are forbidden for the fake/controller protocol (fail closed).
         if bound.last_seq and ev.sequence_number > bound.last_seq + 1:
-            # gap — still accept but audit (deterministic fake should not gap)
-            self._audit.record(
-                "harness.sequence_gap",
-                session_id=bound.session_id,
-                run_id=bound.run_id,
-                detail={"from": bound.last_seq, "to": ev.sequence_number},
+            self._quarantine(
+                bound.session_id,
+                ProtocolViolationKind.SEQUENCE_GAP,
+                f"seq gap {bound.last_seq} → {ev.sequence_number}",
             )
+            return False
         if ev.session_id != bound.session_id:
             self._quarantine(
                 bound.session_id,
                 ProtocolViolationKind.FORGED_EVENT,
                 "session_id mismatch on event",
+            )
+            return False
+        if ev.run_id is not None and bound.run_id and ev.run_id != bound.run_id:
+            self._quarantine(
+                bound.session_id,
+                ProtocolViolationKind.FORGED_EVENT,
+                "run_id mismatch on event",
+            )
+            return False
+        if (
+            ev.mission_id is not None
+            and bound.mission_id
+            and ev.mission_id != bound.mission_id
+        ):
+            self._quarantine(
+                bound.session_id,
+                ProtocolViolationKind.FORGED_EVENT,
+                "mission_id mismatch on event",
             )
             return False
         if (
@@ -902,8 +1046,24 @@ class HarnessSessionController:
                 "event workspace mismatch",
             )
             return False
-        # Reject private CoT persistence
+
         payload = dict(ev.payload)
+        # Reject secret-shaped payload keys fail-closed (not merely strip).
+        # Use whole-key / boundary patterns so resource counters like
+        # ``fake_tokens`` are not false positives.
+        secret_re = re.compile(
+            r"^(password|secret|api[_-]?key|private[_-]?key|token|access_token|"
+            r"refresh_token|id_token|authorization|bearer|auth_token)$",
+            re.IGNORECASE,
+        )
+        for key in payload:
+            if secret_re.match(str(key)):
+                self._quarantine(
+                    bound.session_id,
+                    ProtocolViolationKind.SECRET_PAYLOAD,
+                    f"secret-shaped payload key: {key}",
+                )
+                return False
         for banned in ("chain_of_thought", "private_cot", "hidden_reasoning", "raw_cot"):
             if banned in payload:
                 self._audit.record(
@@ -912,6 +1072,13 @@ class HarnessSessionController:
                     run_id=bound.run_id,
                     detail={"key": banned, "event_id": ev.event_id},
                 )
+                # Strip is not enough for controller-normalized path: refuse event
+                self._quarantine(
+                    bound.session_id,
+                    ProtocolViolationKind.FORGED_EVENT,
+                    f"private reasoning key present: {banned}",
+                )
+                return False
         return True
 
     def _update_projection_from_event(self, bound: _BoundSession, ev: HarnessEvent) -> None:
