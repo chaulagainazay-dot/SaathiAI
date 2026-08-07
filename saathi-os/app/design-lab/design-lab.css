@@ -1,0 +1,479 @@
+/* UI-NEXT-2 Design Lab — isolated tokens & layout. Does not restyle production /command. */
+
+.dl-root {
+  --dl-bg: #0e1116;
+  --dl-s1: #151a21;
+  --dl-s2: #1b222c;
+  --dl-raised: #232b36;
+  --dl-text: #e8edf4;
+  --dl-sec: #a8b3c4;
+  --dl-muted: #7a8699;
+  --dl-border: #2a3340;
+  --dl-active: #4a90d9;
+  --dl-accent: #5b9fd4;
+  --dl-ok: #3d9b6e;
+  --dl-warn: #c9a227;
+  --dl-crit: #c45c5c;
+  --dl-think: #8b7ec8;
+  --dl-radius: 10px;
+  --dl-gap: 10px;
+
+  background: var(--dl-bg);
+  color: var(--dl-text);
+  min-height: 100vh;
+  padding: 12px 14px 28px;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+}
+
+.dl-root * {
+  box-sizing: border-box;
+}
+
+.dl-banner {
+  background: #3a2a12;
+  border: 1px solid var(--dl-warn);
+  color: #f0e0a8;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  margin-bottom: 12px;
+}
+
+.dl-top {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.dl-brand {
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  font-size: 14px;
+}
+
+.dl-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.dl-pill {
+  font-size: 11px;
+  font-family: ui-monospace, Menlo, monospace;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--dl-border);
+  background: var(--dl-s1);
+  color: var(--dl-sec);
+}
+
+.dl-pill-ok {
+  border-color: #2d5a42;
+  color: var(--dl-ok);
+}
+.dl-pill-warn {
+  border-color: #6a5a1a;
+  color: var(--dl-warn);
+}
+.dl-pill-crit {
+  border-color: #6a3030;
+  color: var(--dl-crit);
+}
+.dl-pill-info {
+  border-color: #2a4a6a;
+  color: var(--dl-accent);
+}
+
+.dl-tabs,
+.dl-concepts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.dl-tab,
+.dl-concept {
+  background: var(--dl-s1);
+  border: 1px solid var(--dl-border);
+  color: var(--dl-sec);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.dl-tab[aria-selected="true"],
+.dl-concept[aria-pressed="true"] {
+  border-color: var(--dl-active);
+  color: var(--dl-text);
+  background: var(--dl-s2);
+  box-shadow: 0 0 0 1px rgba(74, 144, 217, 0.25);
+}
+
+.dl-tab:focus-visible,
+.dl-concept:focus-visible,
+.dl-btn:focus-visible,
+.dl-input:focus-visible {
+  outline: 2px solid var(--dl-accent);
+  outline-offset: 2px;
+}
+
+.dl-grid {
+  display: grid;
+  gap: var(--dl-gap);
+}
+
+/* Hybrid default denser 12-col */
+.dl-layout-c {
+  grid-template-columns: 220px minmax(0, 1.2fr) 240px;
+  grid-template-areas:
+    "att saathi sys"
+    "agents saathi invest"
+    "evidence evidence evidence"
+    "composer composer composer";
+}
+
+.dl-layout-a {
+  grid-template-columns: 1fr 1fr;
+  grid-template-areas:
+    "invest invest"
+    "sys att"
+    "evidence evidence"
+    "composer composer";
+}
+
+.dl-layout-a .dl-saathi,
+.dl-layout-a .dl-agents {
+  display: none;
+}
+
+.dl-layout-b {
+  grid-template-columns: 200px minmax(0, 1.4fr) 200px;
+  grid-template-areas:
+    "att saathi sys"
+    "agents saathi agents"
+    "invest invest invest"
+    "composer composer composer";
+}
+
+.dl-layout-b .dl-evidence {
+  display: none;
+}
+
+.dl-area-att {
+  grid-area: att;
+}
+.dl-area-saathi {
+  grid-area: saathi;
+}
+.dl-area-sys {
+  grid-area: sys;
+}
+.dl-area-agents {
+  grid-area: agents;
+}
+.dl-area-invest {
+  grid-area: invest;
+}
+.dl-area-evidence {
+  grid-area: evidence;
+}
+.dl-area-composer {
+  grid-area: composer;
+}
+
+.dl-panel {
+  background: var(--dl-s1);
+  border: 1px solid var(--dl-border);
+  border-radius: var(--dl-radius);
+  padding: 10px 12px;
+  min-height: 0;
+}
+
+.dl-panel h2 {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--dl-muted);
+}
+
+.dl-panel.dl-focus {
+  border-color: var(--dl-active);
+  box-shadow: 0 0 0 1px rgba(74, 144, 217, 0.2);
+}
+
+.dl-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 8px;
+}
+
+.dl-metric {
+  background: var(--dl-s2);
+  border-radius: 8px;
+  padding: 8px;
+}
+
+.dl-metric label {
+  display: block;
+  font-size: 10px;
+  color: var(--dl-muted);
+  font-family: ui-monospace, Menlo, monospace;
+  margin-bottom: 4px;
+}
+
+.dl-metric .val {
+  font-variant-numeric: tabular-nums;
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 13px;
+  color: var(--dl-text);
+}
+
+.dl-saathi-core {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 200px;
+  text-align: center;
+}
+
+.dl-orb {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #8ec8f0, var(--dl-accent) 45%, #1a3048 80%);
+  border: 2px solid var(--dl-border);
+  position: relative;
+}
+
+.dl-orb[data-state="LISTENING"] {
+  box-shadow: 0 0 0 0 rgba(91, 159, 212, 0.45);
+  animation: dl-pulse 1.5s ease-in-out infinite;
+}
+.dl-orb[data-state="THINKING"] {
+  background: radial-gradient(circle at 35% 30%, #c0b4f0, var(--dl-think) 50%, #2a2440 80%);
+}
+.dl-orb[data-state="SPEAKING"] {
+  box-shadow: 0 0 16px rgba(61, 155, 110, 0.35);
+  background: radial-gradient(circle at 35% 30%, #8fd4b0, var(--dl-ok) 50%, #1a3028 80%);
+}
+.dl-orb[data-state="DEGRADED"],
+.dl-orb[data-state="ERROR"] {
+  background: radial-gradient(circle at 35% 30%, #e0a0a0, var(--dl-crit) 55%, #301818 85%);
+}
+
+@keyframes dl-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(91, 159, 212, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 12px rgba(91, 159, 212, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dl-orb[data-state="LISTENING"] {
+    animation: none;
+    box-shadow: none;
+  }
+}
+
+.dl-transcript {
+  font-size: 13px;
+  color: var(--dl-sec);
+  max-width: 36ch;
+  min-height: 2.5em;
+}
+
+.dl-yeti {
+  font-size: 11px;
+  color: var(--dl-muted);
+  font-family: ui-monospace, Menlo, monospace;
+}
+
+.dl-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dl-list li {
+  background: var(--dl-s2);
+  border-radius: 8px;
+  padding: 8px;
+  font-size: 12px;
+  border-left: 3px solid var(--dl-border);
+}
+
+.dl-list li[data-sev="high"] {
+  border-left-color: var(--dl-crit);
+}
+.dl-list li[data-sev="medium"] {
+  border-left-color: var(--dl-warn);
+}
+.dl-list li[data-sev="low"] {
+  border-left-color: var(--dl-accent);
+}
+
+.dl-agent-graph {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.dl-node {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 8px;
+  background: var(--dl-s2);
+  border-radius: 6px;
+  border: 1px solid var(--dl-border);
+}
+
+.dl-node[data-status="ACTIVE"] {
+  border-color: var(--dl-accent);
+}
+.dl-node[data-status="APPROVAL_REQUIRED"],
+.dl-node[data-status="BLOCKED"] {
+  border-color: var(--dl-warn);
+}
+.dl-node[data-status="FAILED"],
+.dl-node[data-status="VETOED"] {
+  border-color: var(--dl-crit);
+}
+.dl-node[data-status="COMPLETE"] {
+  border-color: #2d5a42;
+}
+
+.dl-bar {
+  margin-top: 6px;
+}
+.dl-bar-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--dl-muted);
+  font-family: ui-monospace, Menlo, monospace;
+}
+.dl-bar-track {
+  height: 6px;
+  background: var(--dl-s2);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-top: 3px;
+}
+.dl-bar-fill {
+  height: 100%;
+  background: var(--dl-accent);
+}
+.dl-bar-fill.warn {
+  background: var(--dl-warn);
+}
+.dl-bar-fill.ok {
+  background: var(--dl-ok);
+}
+
+.dl-timeline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: stretch;
+}
+
+.dl-ev {
+  flex: 1 1 100px;
+  background: var(--dl-s2);
+  border-radius: 8px;
+  padding: 6px 8px;
+  font-size: 11px;
+  border-top: 2px solid var(--dl-border);
+}
+.dl-ev .t {
+  color: var(--dl-muted);
+  font-family: ui-monospace, Menlo, monospace;
+}
+.dl-ev .stage {
+  color: var(--dl-accent);
+  text-transform: uppercase;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+}
+
+.dl-composer {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  background: var(--dl-raised);
+}
+
+.dl-input {
+  flex: 1;
+  background: var(--dl-s2);
+  border: 1px solid var(--dl-border);
+  border-radius: 8px;
+  color: var(--dl-text);
+  padding: 10px 12px;
+  font-size: 14px;
+}
+
+.dl-btn {
+  background: var(--dl-accent);
+  color: #0e1116;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.dl-btn-ghost {
+  background: transparent;
+  border: 1px solid var(--dl-border);
+  color: var(--dl-sec);
+}
+
+.dl-foot {
+  margin-top: 14px;
+  font-size: 11px;
+  color: var(--dl-muted);
+  font-family: ui-monospace, Menlo, monospace;
+}
+
+/* Mobile: Saathi-first stack */
+@media (max-width: 900px) {
+  .dl-layout-a,
+  .dl-layout-b,
+  .dl-layout-c {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "saathi"
+      "att"
+      "invest"
+      "sys"
+      "agents"
+      "evidence"
+      "composer";
+  }
+
+  .dl-layout-a .dl-saathi,
+  .dl-layout-a .dl-agents,
+  .dl-layout-b .dl-evidence {
+    display: block;
+  }
+}
