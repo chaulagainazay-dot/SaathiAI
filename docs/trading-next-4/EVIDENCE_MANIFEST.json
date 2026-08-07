@@ -6,5 +6,6 @@
   "branch": "feature/t-next-4-performance-attribution",
   "worktree": "~/SaathiAI-trading-next-4",
   "tests_performance": 20,
-  "certified_at": "2026-08-07T12:55:48.567662+00:00"
+  "certified_at": "2026-08-07T12:56:07.118717+00:00",
+  "tip_sha": "6978963ae585f1a6dfad9ff759c740defa9c521f"
 }
