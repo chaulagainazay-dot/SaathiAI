@@ -150,14 +150,27 @@ export function useHybridCommand({
         }));
       }
       // Attach a synthetic proposal for proposal-ready / risk-blocked fixtures
-      if (fixtureScenario === "risk_warning" || fixtureScenario === "healthy") {
+      if (
+        fixtureScenario === "risk_warning" ||
+        fixtureScenario === "healthy" ||
+        fixtureScenario === "risk_breached" ||
+        fixtureScenario === "proposal_ready" ||
+        fixtureScenario === "performance" ||
+        fixtureScenario === "agent_active"
+      ) {
+        const propStatus =
+          fixtureScenario === "risk_breached"
+            ? "RISK_BLOCKED"
+            : fixtureScenario === "risk_warning"
+              ? "READY_FOR_APPROVAL"
+              : "READY_FOR_APPROVAL";
         model.proposal = {
           provenance: "FIXTURE",
           authorizes_execution: false,
           mode: "PAPER",
           portfolio_proposal: {
             id: "pprop_fixture_demo",
-            status: fixtureScenario === "risk_warning" ? "READY_FOR_APPROVAL" : "READY_FOR_APPROVAL",
+            status: propStatus,
             method: "equal_weight",
             source: "fixture",
             created_at: Date.now() / 1000,
@@ -206,20 +219,20 @@ export function useHybridCommand({
               { symbol: "CCC", target_weight: "0.05" },
             ],
             projected_risk: model.risk,
-            warnings: fixtureScenario === "risk_warning" ? ["RISK_WARN"] : [],
+            warnings: fixtureScenario === "risk_warning" || fixtureScenario === "risk_breached" ? ["RISK_WARN"] : [],
             reason_codes: ["EQUAL_WEIGHT_BASELINE", "TARGET_WEIGHT_RESTORE"],
             reason_labels: [
               { code: "EQUAL_WEIGHT_BASELINE", label: "Equal-weight baseline allocation" },
               { code: "TARGET_WEIGHT_RESTORE", label: "Restore target allocation" },
             ],
-            evidence_refs: {},
+            evidence_refs: { proposal_id: "pprop_fixture_demo" },
             approval_status: null,
             authorizes_execution: false,
             mode: "PAPER",
           },
         };
       }
-      if (fixtureScenario === "recon_required") {
+      if (fixtureScenario === "recon_required" || fixtureScenario === "proposal_blocked") {
         model.proposal = {
           provenance: "FIXTURE",
           portfolio_proposal: {
@@ -240,6 +253,158 @@ export function useHybridCommand({
             projected_risk: model.risk,
           },
         };
+      }
+      if (fixtureScenario === "risk_breached") {
+        if (model.risk) {
+          model.risk = {
+            ...model.risk,
+            risk_status: "BREACHED",
+            result: "BLOCK",
+            reason_codes: ["HARD_LIMIT_DRAWDOWN", "LARGEST_POSITION_BREACH"],
+            active_breaches: [{ code: "HARD_LIMIT_DRAWDOWN", severity: "critical" }],
+          };
+        }
+        if (model.system?.risk) {
+          model.system.risk = { value: "BREACHED", status: "BREACHED" };
+        }
+      }
+      // Performance read-contract fixture (T-NEXT-4 shapes; no frontend math)
+      if (
+        fixtureScenario === "healthy" ||
+        fixtureScenario === "performance" ||
+        fixtureScenario === "risk_warning"
+      ) {
+        model.performance = {
+          provenance: "FIXTURE",
+          paper_performance: {
+            source: "portfolio_performance_engine",
+            provenance: "DERIVED",
+            mode: "PAPER",
+            live_execution: "UNAVAILABLE",
+            nav: model.portfolio?.paper_nav || "1248500.00",
+            total_return: "0.024",
+            max_drawdown: "0.031",
+            realized_pnl: model.portfolio?.realized_pnl || "1200.00",
+            unrealized_pnl: model.portfolio?.unrealized_pnl || "850.00",
+            nav_history: [
+              { t: "2026-08-01", nav: "1220000.00" },
+              { t: "2026-08-04", nav: "1234000.00" },
+              { t: "2026-08-07", nav: model.portfolio?.paper_nav || "1248500.00" },
+            ],
+            position_contribution: [
+              { symbol: "AAA", contribution: "0.012", pnl: "420.00" },
+              { symbol: "BBB", contribution: "0.008", pnl: "210.00" },
+              { symbol: "CCC", contribution: "0.004", pnl: "95.00" },
+            ],
+          },
+        };
+      }
+      // Agent / mission states for motion cert
+      if (fixtureScenario === "healthy" || fixtureScenario === "agent_active") {
+        model.agents = {
+          provenance: "FIXTURE",
+          authority: "fixture",
+          nodes: [
+            {
+              id: "agent_research",
+              name: "Research",
+              role: "analyst",
+              status: "ACTIVE",
+              task: "scan",
+              mission: "mission_alpha",
+              dependencies: [],
+              evidence: ["ev_risk_1"],
+            },
+            {
+              id: "agent_risk",
+              name: "Risk",
+              role: "guardian",
+              status: "WAITING",
+              task: "await",
+              mission: "mission_alpha",
+              dependencies: ["agent_research"],
+              evidence: [],
+            },
+            {
+              id: "agent_exec",
+              name: "Construction",
+              role: "builder",
+              status: "APPROVAL_REQUIRED",
+              task: "proposal",
+              mission: "mission_alpha",
+              dependencies: ["agent_risk"],
+              evidence: ["pprop_fixture_demo"],
+            },
+          ],
+        };
+        model.missions = {
+          provenance: "FIXTURE",
+          items: [
+            {
+              id: "mission_alpha",
+              name: "Paper rebalance",
+              status: "ACTIVE",
+              stage: "RISK_REVIEW",
+            },
+          ],
+        };
+      }
+      // Linked evidence for focus highlighting (real related_ids only)
+      if (
+        fixtureScenario === "healthy" ||
+        fixtureScenario === "risk_warning" ||
+        fixtureScenario === "risk_breached" ||
+        fixtureScenario === "agent_active"
+      ) {
+        model.evidence = {
+          provenance: "FIXTURE",
+          events: [
+            {
+              id: "ev_risk_1",
+              type: "risk_breach",
+              status: "OPEN",
+              timestamp: "2026-08-07T10:00:00Z",
+              actor: "PortfolioRiskEngine",
+              reason: "soft warning near limit",
+              related_ids: ["pprop_fixture_demo", "AAA"],
+            },
+            {
+              id: "ev_prop_1",
+              type: "proposal",
+              status: "READY",
+              timestamp: "2026-08-07T10:05:00Z",
+              actor: "PortfolioConstruction",
+              reason: "equal weight restore",
+              related_ids: ["pprop_fixture_demo"],
+              proposal_id: "pprop_fixture_demo",
+            },
+            {
+              id: "ev_agent_1",
+              type: "agent",
+              status: "ACTIVE",
+              timestamp: "2026-08-07T10:06:00Z",
+              actor: "agent_research",
+              agent_id: "agent_research",
+              mission_id: "mission_alpha",
+              related_ids: ["mission_alpha"],
+            },
+          ],
+          causal_chain: [
+            { type: "signal", status: "ok", provenance: "FIXTURE" },
+            { type: "risk", status: "warn", provenance: "FIXTURE" },
+            { type: "proposal", status: "ready", provenance: "FIXTURE" },
+          ],
+        };
+      }
+      // Map unknown cert aliases onto design-lab bases
+      if (fixtureScenario === "proposal_ready") {
+        model.banner = "FIXTURE · proposal_ready · not live authority · browser/cert only";
+      }
+      if (fixtureScenario === "proposal_blocked") {
+        const base = buildDemoCommandModel("recon_required");
+        model.portfolio = base.portfolio;
+        model.risk = base.risk;
+        model.banner = "FIXTURE · proposal_blocked · not live authority · browser/cert only";
       }
       return { model, accountId: null };
     }

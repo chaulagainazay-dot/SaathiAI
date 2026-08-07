@@ -6,7 +6,7 @@
  * Read-mostly · PAPER · zero execution / approval / TG override authority.
  */
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import "./command-hybrid.css";
 import { useHybridCommand } from "@/lib/useHybridCommand";
@@ -19,6 +19,13 @@ import {
   yetiFromSystem,
   reasonCodeLabel,
 } from "@/lib/command-read-model";
+import {
+  voicePresentation,
+  riskMotionTone,
+  proposalMotionTone,
+  relatedEvidenceEvents,
+} from "@/lib/command-motion";
+import { LoadingState, ErrorState, EmptyState, StatusBadge, Button } from "@/components/ui";
 
 function Pill({ children, tone = "default" }) {
   const cls =
@@ -71,9 +78,15 @@ function BudgetBar({ item }) {
   const limitRaw = String(item.limit ?? item.hard_threshold ?? "1").replace(/[^0-9.]/g, "");
   const limit = Number(limitRaw) || 1;
   const pct = Math.min(100, Math.round((used / limit) * 100));
-  const fillCls = item.status === "OK" || item.status === "HEALTHY" ? "ok" : "warn";
+  const st = String(item.status || "").toUpperCase();
+  const fillCls =
+    st === "OK" || st === "HEALTHY"
+      ? "ok"
+      : st === "BREACHED" || st === "BLOCK" || st === "CRITICAL"
+        ? "crit"
+        : "warn";
   return (
-    <div className="dl-bar">
+    <div className="dl-bar" data-status={item.status || ""}>
       <div className="dl-bar-label">
         <span>{item.name}</span>
         <span>
@@ -99,7 +112,91 @@ function BudgetBar({ item }) {
   );
 }
 
-function ProposalPanel({ proposal, focus, onFocus, showWhy, setShowWhy }) {
+function PerformancePanel({ performance }) {
+  const perf = performance?.paper_performance;
+  if (!perf) {
+    return (
+      <div className="hc-perf" data-testid="performance-panel" data-state="empty">
+        <h3 className="dl-subh">
+          Performance <ProvenanceTag p={performance?.provenance || "UNAVAILABLE"} />
+        </h3>
+        <p className="dl-muted">{performance?.note || "Performance history UNAVAILABLE"}</p>
+        <div className="hc-auth-label">Read-only · no frontend financial calculation</div>
+      </div>
+    );
+  }
+  const periods = perf.returns || perf.period_returns || [];
+  const contrib = perf.position_contribution || perf.contributions || [];
+  return (
+    <div
+      className="hc-perf"
+      data-testid="performance-panel"
+      data-period={perf.as_of || perf.period || "all"}
+      aria-labelledby="hc-perf-h"
+    >
+      <h3 id="hc-perf-h" className="dl-subh">
+        Performance <ProvenanceTag p={performance.provenance} />
+      </h3>
+      <div className="dl-pills" style={{ marginBottom: 8 }}>
+        <Pill tone="info">PAPER</Pill>
+        <Pill tone="crit">LIVE UNAVAILABLE</Pill>
+        <Pill>T-NEXT-4 read</Pill>
+      </div>
+      <div className="dl-metric-grid" data-testid="performance-metrics">
+        <Metric label="NAV" value={formatMoney(perf.nav ?? perf.current_nav)} provenance={performance.provenance} />
+        <Metric
+          label="return"
+          value={formatFraction(perf.total_return ?? perf.return_pct ?? periods[0]?.return)}
+          provenance={performance.provenance}
+        />
+        <Metric
+          label="drawdown"
+          value={formatFraction(perf.max_drawdown ?? perf.drawdown)}
+          provenance={performance.provenance}
+        />
+        <Metric
+          label="realized_pnl"
+          value={formatMoney(perf.realized_pnl)}
+          provenance={performance.provenance}
+        />
+        <Metric
+          label="unrealized_pnl"
+          value={formatMoney(perf.unrealized_pnl)}
+          provenance={performance.provenance}
+        />
+      </div>
+      {Array.isArray(perf.nav_history) && perf.nav_history.length ? (
+        <p className="dl-muted" data-testid="nav-history-count">
+          NAV history points: {perf.nav_history.length} · chart: tabular (no 3D)
+        </p>
+      ) : (
+        <p className="dl-muted">NAV history UNAVAILABLE</p>
+      )}
+      {contrib.length ? (
+        <div className="dl-pos-list" aria-label="Position contribution" data-testid="perf-contribution">
+          {contrib.slice(0, 8).map((c, i) => (
+            <div key={c.symbol || i} className="dl-pos" style={{ cursor: "default" }}>
+              <span className="dl-mono">{c.symbol || "—"}</span>
+              <span>{formatFraction(c.contribution ?? c.weight)}</span>
+              <span>{formatMoney(c.pnl ?? c.unrealized_pnl)}</span>
+            </div>
+          ))}
+        </div>
+      ) : null}
+      <div className="hc-auth-label">Pass-through only · inventsMetrics=false</div>
+    </div>
+  );
+}
+
+function ProposalPanel({
+  proposal,
+  focus,
+  onFocus,
+  showWhy,
+  setShowWhy,
+  selectedTrade,
+  onSelectTrade,
+}) {
   const pp = proposal?.portfolio_proposal;
   if (!pp) {
     return (
@@ -111,7 +208,9 @@ function ProposalPanel({ proposal, focus, onFocus, showWhy, setShowWhy }) {
     );
   }
   const status = pp.status || "DRAFT";
+  const propTone = proposalMotionTone(status);
   const trades = (pp.trades || []).filter((t) => t.action === "BUY" || t.action === "SELL");
+  const linked = !!selectedTrade;
   return (
     <div
       className={`hc-proposal ${focus === "proposal" ? "dl-focus" : ""}`}
@@ -124,9 +223,7 @@ function ProposalPanel({ proposal, focus, onFocus, showWhy, setShowWhy }) {
       </h3>
       <div className="dl-pills" style={{ marginBottom: 8 }}>
         <Pill tone="info">PROPOSAL</Pill>
-        <Pill tone={status === "RISK_BLOCKED" ? "crit" : status === "READY_FOR_APPROVAL" ? "warn" : "info"}>
-          {status}
-        </Pill>
+        <Pill tone={propTone}>{status}</Pill>
         <Pill tone="crit">NOT EXECUTED</Pill>
         <Pill tone="crit">LIVE UNAVAILABLE</Pill>
         <Pill>PAPER</Pill>
@@ -135,39 +232,78 @@ function ProposalPanel({ proposal, focus, onFocus, showWhy, setShowWhy }) {
         {pp.id} · {pp.method || pp.source || "—"} · auth exec={String(!!pp.authorizes_execution)}
       </div>
       {(pp.current || pp.proposed) && (
-        <div className="hc-compare" data-testid="proposal-compare">
-          <div>
+        <div
+          className={`hc-compare ${linked ? "hc-compare-sync" : ""}`}
+          data-testid="proposal-compare"
+          data-linked={linked ? "1" : "0"}
+        >
+          <div className={linked ? "hc-compare-side-linked" : undefined} data-side="current">
             <strong>CURRENT</strong>
             <div>cash {formatMoney(pp.current?.cash)}</div>
             <div>NAV {formatMoney(pp.current?.nav)}</div>
             <div>largest {formatFraction(pp.current?.largest_position)}</div>
             <div>risk {pp.current?.risk_status || "—"}</div>
+            {selectedTrade ? (
+              <div className="dl-mono" data-testid="compare-trade-current">
+                {selectedTrade.symbol} {formatFraction(selectedTrade.current_weight)}
+              </div>
+            ) : null}
           </div>
           <div className="arrow" aria-hidden="true">
             →
           </div>
-          <div>
+          <div className={linked ? "hc-compare-side-linked" : undefined} data-side="proposed">
             <strong>PROPOSED</strong>
             <div>cash {formatMoney(pp.proposed?.cash)}</div>
             <div>NAV {formatMoney(pp.proposed?.nav)}</div>
             <div>largest {formatFraction(pp.proposed?.largest_position)}</div>
             <div>risk {pp.proposed?.risk_status || "—"}</div>
+            {selectedTrade ? (
+              <div className="dl-mono" data-testid="compare-trade-proposed">
+                {selectedTrade.symbol} {formatFraction(selectedTrade.target_weight)}
+              </div>
+            ) : null}
           </div>
         </div>
       )}
+      {selectedTrade?.reason_codes?.length || selectedTrade ? (
+        <div className="dl-muted" data-testid="compare-trade-meta">
+          trade {selectedTrade?.action} {selectedTrade?.symbol}
+          {selectedTrade?.reason_codes?.length
+            ? ` · reason ${selectedTrade.reason_codes.join(", ")}`
+            : ""}
+          {pp.projected_risk?.risk_status
+            ? ` · projected risk ${pp.projected_risk.risk_status}`
+            : ""}
+        </div>
+      ) : null}
       {trades.length ? (
-        <div className="dl-pos-list" aria-label="Proposed trades">
-          {trades.map((t, i) => (
-            <div key={`${t.symbol}-${i}`} className="dl-pos" style={{ cursor: "default" }}>
-              <span className="dl-mono">
-                {t.action} {t.symbol}
-              </span>
-              <span>
-                {formatFraction(t.current_weight)} → {formatFraction(t.target_weight)}
-              </span>
-              <span>qty {t.estimated_quantity ?? "—"}</span>
-            </div>
-          ))}
+        <div className="dl-pos-list" aria-label="Proposed trades" data-testid="proposal-trades">
+          {trades.map((t, i) => {
+            const sel = selectedTrade?.symbol === t.symbol && selectedTrade?.action === t.action;
+            return (
+              <button
+                key={`${t.symbol}-${i}`}
+                type="button"
+                className="dl-pos hc-trade-row"
+                data-selected={sel ? "1" : "0"}
+                data-testid={`trade-row-${t.symbol}`}
+                aria-pressed={sel}
+                onClick={() => {
+                  onSelectTrade?.(sel ? null : t);
+                  onFocus?.("proposal", pp.id, `Trade ${t.action} ${t.symbol}`);
+                }}
+              >
+                <span className="dl-mono">
+                  {t.action} {t.symbol}
+                </span>
+                <span>
+                  {formatFraction(t.current_weight)} → {formatFraction(t.target_weight)}
+                </span>
+                <span>qty {t.estimated_quantity ?? "—"}</span>
+              </button>
+            );
+          })}
         </div>
       ) : (
         <p className="dl-muted">No material BUY/SELL rows</p>
@@ -222,12 +358,14 @@ export default function CommandCenterPage() {
   const { loading, model, refresh } = useHybridCommand({ fixtureScenario });
 
   const [mode, setMode] = useState("command");
+  const [modeEnter, setModeEnter] = useState(false);
   const [voice, setVoice] = useState("READY");
   const [focus, setFocus] = useState("saathi");
   const [context, setContext] = useState({ kind: null, id: null, label: "None" });
   const [selectedAgent, setSelectedAgent] = useState(null);
   const [selectedPosition, setSelectedPosition] = useState(null);
   const [selectedEvidence, setSelectedEvidence] = useState(null);
+  const [selectedTrade, setSelectedTrade] = useState(null);
   const [input, setInput] = useState("");
   const [transcript, setTranscript] = useState("");
   const [reply, setReply] = useState(
@@ -235,6 +373,8 @@ export default function CommandCenterPage() {
   );
   const [reducedMotion, setReducedMotion] = useState(false);
   const [showWhy, setShowWhy] = useState(false);
+  const [riskFlash, setRiskFlash] = useState(false);
+  const prevRiskRef = useRef(null);
 
   useEffect(() => {
     if (model?.saathi?.voice_session_state) setVoice(model.saathi.voice_session_state);
@@ -258,10 +398,40 @@ export default function CommandCenterPage() {
   const portfolio = model?.portfolio;
   const risk = model?.risk;
   const proposal = model?.proposal;
+  const performance = model?.performance;
   const system = model?.system;
   const reconBlocked =
     portfolio?.portfolio_status === "RECONCILIATION_REQUIRED" ||
     portfolio?.reconciliation?.portfolio_status === "RECONCILIATION_REQUIRED";
+  const riskStatus = risk?.risk_status || (reconBlocked ? "RECONCILIATION_REQUIRED" : "UNAVAILABLE");
+  const voiceMeta = useMemo(() => voicePresentation(voice), [voice]);
+
+  // Risk transition flash — only on meaningful status change; never permanent pulse
+  useEffect(() => {
+    const next = riskStatus;
+    const prev = prevRiskRef.current;
+    prevRiskRef.current = next;
+    if (prev == null || prev === next || reducedMotion) return;
+    if (["WARNING", "BREACHED", "RECONCILIATION_REQUIRED", "DATA_INSUFFICIENT", "HEALTHY"].includes(next)) {
+      setRiskFlash(true);
+      const t = window.setTimeout(() => setRiskFlash(false), 280);
+      return () => window.clearTimeout(t);
+    }
+  }, [riskStatus, reducedMotion]);
+
+  const changeMode = useCallback(
+    (next) => {
+      if (next === mode) return;
+      setMode(next);
+      if (reducedMotion) {
+        setModeEnter(false);
+        return;
+      }
+      setModeEnter(true);
+      window.setTimeout(() => setModeEnter(false), 200);
+    },
+    [mode, reducedMotion],
+  );
 
   const yeti = useMemo(
     () => yetiFromSystem({ voice, attention: model?.attention, risk }),
@@ -292,7 +462,7 @@ export default function CommandCenterPage() {
       setVoice("THINKING");
       const intent = mapProductionUiIntent(text);
       window.setTimeout(() => {
-        if (intent.mode) setMode(intent.mode);
+        if (intent.mode) changeMode(intent.mode);
         if (intent.focus) setFocus(intent.focus);
         setVoice(intent.voice || "SPEAKING");
         setReply(intent.reply || "");
@@ -300,15 +470,42 @@ export default function CommandCenterPage() {
         if (intent.type === "stop") setFocus("saathi");
       }, reducedMotion ? 0 : 180);
     },
-    [input, reducedMotion],
+    [input, reducedMotion, changeMode],
   );
+
+  const relatedEvidenceIds = useMemo(() => {
+    const events = model?.evidence?.events || [];
+    const sel = {
+      kind: context.kind,
+      id:
+        context.id ||
+        selectedTrade?.symbol ||
+        model?.proposal?.portfolio_proposal?.id ||
+        selectedAgent ||
+        selectedPosition,
+      relatedIds: [
+        selectedTrade?.symbol,
+        model?.proposal?.portfolio_proposal?.id,
+        selectedAgent,
+        selectedPosition,
+        ...(selectedTrade?.reason_codes || []),
+      ].filter(Boolean),
+    };
+    return new Set(relatedEvidenceEvents(events, sel).map((e) => e.id));
+  }, [
+    context.kind,
+    context.id,
+    selectedTrade,
+    model?.proposal?.portfolio_proposal?.id,
+    selectedAgent,
+    selectedPosition,
+    model?.evidence?.events,
+  ]);
 
   if (loading && !model) {
     return (
       <div className="dl-root hc-root" data-testid="command-loading" aria-busy="true">
-        <p className="dl-banner" role="status">
-          LOADING · Hybrid Command…
-        </p>
+        <LoadingState label="LOADING · Hybrid Command…" />
       </div>
     );
   }
@@ -316,10 +513,15 @@ export default function CommandCenterPage() {
   if (!model) {
     return (
       <div className="dl-root hc-root" data-testid="command-error">
-        <p className="dl-banner" role="alert">
-          Command composition unavailable
-        </p>
-        <Link href="/">Home</Link>
+        <ErrorState
+          title="Command composition unavailable"
+          description="Hybrid Command could not compose a read model."
+          action={
+            <Link href="/" className="dl-btn dl-btn-ghost">
+              Home
+            </Link>
+          }
+        />
       </div>
     );
   }
@@ -344,8 +546,12 @@ export default function CommandCenterPage() {
       className={`dl-root hc-root ${reducedMotion ? "dl-reduced" : ""}`}
       data-testid="hybrid-command-root"
       data-mode={mode}
+      data-mode-enter={modeEnter ? "1" : "0"}
+      data-voice={voice}
+      data-risk={riskStatus}
       data-recon={portfolio?.portfolio_status}
       data-fixture={fixtureScenario || ""}
+      data-motion="ui-next-3.1"
     >
       <div className="dl-banner" role="status" data-testid="command-banner">
         {model.banner} · provenance {model.global_provenance}
@@ -379,9 +585,10 @@ export default function CommandCenterPage() {
           <Pill tone="ok">GW {system?.gateway?.value || "EG"}</Pill>
         </div>
         <div className="dl-top-actions">
-          <button type="button" className="dl-btn dl-btn-ghost" onClick={() => refresh?.()}>
+          <StatusBadge status="info" label={`VOICE ${voice}`} />
+          <Button type="button" variant="ghost" className="dl-btn dl-btn-ghost" onClick={() => refresh?.()}>
             Refresh
-          </button>
+          </Button>
           <Link href="/design-lab" className="dl-btn dl-btn-ghost">
             Design lab
           </Link>
@@ -397,7 +604,7 @@ export default function CommandCenterPage() {
             className="dl-tab"
             aria-selected={mode === m.id}
             data-testid={`mode-${m.id}`}
-            onClick={() => setMode(m.id)}
+            onClick={() => changeMode(m.id)}
           >
             {m.label}
           </button>
@@ -442,7 +649,7 @@ export default function CommandCenterPage() {
             ))}
             {!model.attention?.items?.length ? (
               <li className="dl-empty" data-testid="attention-empty">
-                No attention items · system quiet
+                <EmptyState title="No attention items" description="System quiet" />
               </li>
             ) : null}
           </ul>
@@ -458,10 +665,19 @@ export default function CommandCenterPage() {
               className="dl-orb"
               data-state={voice}
               data-reduced={reducedMotion ? "1" : "0"}
+              data-loop={voiceMeta.loop && !reducedMotion ? "1" : "0"}
               role="img"
-              aria-label={`Voice session ${voice}`}
+              aria-label={`Voice session ${voiceMeta.label}`}
               data-testid="saathi-orb"
             />
+            <div
+              className="hc-voice-badge"
+              data-state={voice}
+              data-testid="voice-state-badge"
+              aria-live="polite"
+            >
+              {voiceMeta.label.toUpperCase()}
+            </div>
             <div className="dl-yeti" data-testid="yeti-state">
               Mr. Yeti · {yeti}
             </div>
@@ -493,7 +709,9 @@ export default function CommandCenterPage() {
         </section>
 
         <section
-          className={`dl-panel dl-area-sys ${focus === "risk" ? "dl-focus" : ""}`}
+          className={`dl-panel dl-area-sys ${focus === "risk" ? "dl-focus" : ""} ${riskFlash ? "hc-risk-flash" : ""}`}
+          data-risk-status={riskStatus}
+          data-testid="risk-panel"
           aria-labelledby="hc-sys-h"
         >
           <h2 id="hc-sys-h">
@@ -502,12 +720,8 @@ export default function CommandCenterPage() {
           <div className="dl-pills" style={{ marginBottom: 8 }}>
             <Pill tone="info">PAPER RISK</Pill>
             <Pill tone="crit">LIVE UNAVAILABLE</Pill>
-            <Pill
-              tone={
-                risk?.risk_status === "HEALTHY" ? "ok" : risk?.risk_status === "WARNING" ? "warn" : "crit"
-              }
-            >
-              {risk?.risk_status || "UNAVAILABLE"}
+            <Pill tone={riskMotionTone(riskStatus)}>
+              {risk?.risk_status || riskStatus || "UNAVAILABLE"}
             </Pill>
           </div>
           <div className="dl-metric-grid">
@@ -534,16 +748,22 @@ export default function CommandCenterPage() {
 
         {showAgents && (
           <section
-            className={`dl-panel dl-area-agents ${focus === "agents" ? "dl-focus" : ""}`}
+            className={`dl-panel dl-area-agents hc-mode-panel ${focus === "agents" ? "dl-focus" : ""}`}
             aria-labelledby="hc-ag-h"
+            data-testid="agents-panel"
           >
             <h2 id="hc-ag-h">
               Agents / Missions <ProvenanceTag p={model.agents?.provenance} />
             </h2>
             {missions.length ? (
-              <div className="dl-mission" aria-label="Missions">
+              <div className="dl-mission" aria-label="Missions" data-testid="mission-stages">
                 {missions.map((m) => (
-                  <span key={m.id} className="dl-stage dl-stage-active" title={m.status}>
+                  <span
+                    key={m.id}
+                    className="dl-stage"
+                    data-status={m.status || m.stage || "ACTIVE"}
+                    title={m.status}
+                  >
                     {m.name}: {m.stage || m.status}
                   </span>
                 ))}
@@ -563,6 +783,7 @@ export default function CommandCenterPage() {
                   type="button"
                   className={`dl-node ${selectedAgent === n.id ? "dl-node-sel" : ""}`}
                   data-status={n.status}
+                  data-testid={`agent-node-${n.id}`}
                   aria-label={`Agent ${n.name} status ${n.status}`}
                   onClick={() => {
                     setSelectedAgent(n.id);
@@ -596,8 +817,9 @@ export default function CommandCenterPage() {
 
         {showInvest && (
           <section
-            className={`dl-panel dl-area-invest ${focus === "risk" || focus === "proposal" ? "dl-focus" : ""}`}
+            className={`dl-panel dl-area-invest hc-mode-panel ${focus === "risk" || focus === "proposal" ? "dl-focus" : ""}`}
             aria-labelledby="hc-inv-h"
+            data-testid="investments-panel"
           >
             <h2 id="hc-inv-h">
               Investments <ProvenanceTag p={portfolio?.provenance} />
@@ -643,7 +865,14 @@ export default function CommandCenterPage() {
               onFocus={setCtx}
               showWhy={showWhy}
               setShowWhy={setShowWhy}
+              selectedTrade={selectedTrade}
+              onSelectTrade={(t) => {
+                setSelectedTrade(t);
+                if (t?.symbol) setSelectedPosition(t.symbol);
+              }}
             />
+
+            <PerformancePanel performance={performance} />
 
             <h3 className="dl-subh">Positions</h3>
             {portfolio?.error ? (
@@ -662,6 +891,7 @@ export default function CommandCenterPage() {
                   key={p.symbol || p.security_id}
                   type="button"
                   className={`dl-pos ${selectedPosition === p.symbol ? "dl-pos-sel" : ""}`}
+                  data-linked={selectedTrade?.symbol === p.symbol ? "1" : "0"}
                   aria-label={`Position ${p.symbol} weight ${p.weight}`}
                   onClick={() => {
                     setSelectedPosition(p.symbol);
@@ -727,8 +957,9 @@ export default function CommandCenterPage() {
 
         {showEvidence && (
           <section
-            className={`dl-panel dl-area-evidence ${focus === "evidence" ? "dl-focus" : ""}`}
+            className={`dl-panel dl-area-evidence hc-mode-panel ${focus === "evidence" ? "dl-focus" : ""}`}
             aria-labelledby="hc-ev-h"
+            data-testid="evidence-panel"
           >
             <h2 id="hc-ev-h">
               Evidence <ProvenanceTag p={model.evidence?.provenance} />
@@ -740,7 +971,7 @@ export default function CommandCenterPage() {
                 </span>
               ))}
             </div>
-            <div className="dl-timeline">
+            <div className="dl-timeline" data-testid="evidence-timeline">
               {(model.evidence?.events || []).length === 0 ? (
                 <p className="dl-empty">No evidence events · UNAVAILABLE</p>
               ) : (
@@ -749,6 +980,8 @@ export default function CommandCenterPage() {
                     key={ev.id}
                     type="button"
                     className={`dl-ev ${selectedEvidence === ev.id ? "dl-ev-sel" : ""}`}
+                    data-related={relatedEvidenceIds.has(ev.id) ? "1" : "0"}
+                    data-testid={`evidence-ev-${ev.id}`}
                     onClick={() => {
                       setSelectedEvidence(ev.id);
                       setCtx("evidence", ev.id, `${ev.type} ${ev.id}`);
@@ -814,7 +1047,7 @@ export default function CommandCenterPage() {
             type="button"
             role="tab"
             aria-selected={mode === m.id}
-            onClick={() => setMode(m.id)}
+            onClick={() => changeMode(m.id)}
           >
             {m.label}
           </button>
@@ -822,9 +1055,9 @@ export default function CommandCenterPage() {
       </nav>
 
       <footer className="dl-foot">
-        UI-NEXT-3 Production Hybrid Command · inventsMetrics=
+        UI-NEXT-3.1 Production Motion · inventsMetrics=
         {String(model.meta?.inventsMetrics)} · liveTrading={String(model.meta?.liveTrading)} · exec=
-        {String(model.meta?.authorizesExecution)} ·{" "}
+        {String(model.meta?.authorizesExecution)} · gsap=DEFERRED · lottie=DEFERRED · three=DEFERRED ·{" "}
         <Link href="/missions">Missions</Link> · <Link href="/approvals">Approvals</Link> ·{" "}
         <Link href="/trading">Trading</Link> · <Link href="/evidence">Evidence</Link> ·{" "}
         <Link href="/settings/voice">Voice</Link>
