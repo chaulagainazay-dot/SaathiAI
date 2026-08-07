@@ -17,9 +17,11 @@ import {
 } from "./index.js";
 
 describe("voice-session contract", () => {
-  it("defaults capabilities without inventing VAD/full-duplex", () => {
+  it("defaults capabilities without inventing full-duplex or wake word", () => {
     const caps = detectVoiceCapabilities(null);
-    assert.equal(caps.vadAvailable, false);
+    // Energy VAD adapter is available in-process; acoustic barge-in needs mic.
+    assert.equal(caps.vadAvailable, true);
+    assert.equal(caps.acousticBargeInAvailable, false);
     assert.equal(caps.wakeWordAvailable, false);
     assert.equal(caps.fullDuplexAvailable, false);
     assert.equal(caps.manualInterruptAvailable, true);
@@ -30,9 +32,11 @@ describe("voice-session contract", () => {
     assert.equal(deriveSessionState({ speaking: true }), "SPEAKING");
     assert.equal(deriveSessionState({ thinking: true }), "THINKING");
     assert.equal(deriveSessionState({ interrupting: true }), "INTERRUPTING");
+    assert.equal(deriveSessionState({ speechDetected: true }), "SPEECH_DETECTED");
     assert.equal(deriveSessionState({ error: "x" }), "ERROR");
     assert.equal(deriveSessionState({ closed: true }), "CLOSED");
     assert.equal(toCommandVoiceLabel("LISTENING"), "LISTENING");
+    assert.equal(toCommandVoiceLabel("SPEECH_DETECTED"), "SPEECH_DETECTED");
     assert.equal(toCommandVoiceLabel("IDLE"), "OFF");
   });
 });

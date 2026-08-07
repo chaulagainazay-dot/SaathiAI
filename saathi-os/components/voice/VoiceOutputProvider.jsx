@@ -281,11 +281,19 @@ export function VoiceOutputProvider({ children }) {
       if (!preferences.enabled || !token || !approvedText) return false;
       // Contract: cancel any prior speech before a new synthesis request.
       await stop();
-      // V-NEXT-1: exclusive output claim via VoiceSessionManager.
-      await voiceSession?.beginOutput?.({
-        label: "VoiceOutputProvider",
-        stop: () => clearLocalAudio(),
-      });
+      // V-NEXT-1/2A: exclusive output claim; arm acoustic barge-in monitor.
+      if (voiceSession?.manager?.beginOutput) {
+        await voiceSession.manager.beginOutput({
+          label: "VoiceOutputProvider",
+          stop: () => clearLocalAudio(),
+          armBargeIn: true,
+        });
+      } else {
+        await voiceSession?.beginOutput?.({
+          label: "VoiceOutputProvider",
+          stop: () => clearLocalAudio(),
+        });
+      }
       voiceSession?.setTranscript?.({ assistant: approvedText });
       const controller = new AbortController();
       pollRef.current = controller;

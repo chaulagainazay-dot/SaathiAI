@@ -98,10 +98,18 @@ export default function CommandComposer({ command, voiceSessionState }) {
         {voiceSession?.session?.transcriptPartial
           ? ` · partial “${String(voiceSession.session.transcriptPartial).slice(0, 48)}”`
           : ""}
+        {voiceSession?.session?.lastBargeInLatencyMs != null
+          ? ` · barge-in ${Math.round(voiceSession.session.lastBargeInLatencyMs)}ms`
+          : ""}
         {" · "}
         caps: mic={String(!!caps.microphoneAvailable)} stt=
-        {String(!!caps.speechRecognitionAvailable)} vad=false wake=false duplex=false
-        {" · "}manual interrupt only
+        {String(!!caps.speechRecognitionAvailable)} vad=
+        {String(!!caps.vadAvailable)} bargeIn=
+        {String(!!caps.acousticBargeInAvailable)} wake=false duplex=false
+        {" · "}
+        {caps.acousticBargeInAvailable
+          ? "acoustic barge-in + manual interrupt"
+          : "manual interrupt (VAD degraded/unavailable)"}
       </Text>
     </section>
   );

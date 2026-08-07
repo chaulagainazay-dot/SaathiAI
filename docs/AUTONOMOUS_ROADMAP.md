@@ -1,5 +1,19 @@
 # SaathiOS Autonomous Roadmap
 
+## V-NEXT-2A — Local VAD + Acoustic Barge-In (2026-08-07)
+
+| Field | Value |
+| --- | --- |
+| Mode | **VAD sensor + barge-in** via VoiceSession.interrupt |
+| Branch | `feature/v-next-2a-vad-barge-in` |
+| Base | `feature/v-next-1-canonical-voice-session` @ `b960b0d…` |
+| Adapter | energy_zcr_v1 (Silero deferred) |
+| Docs | `docs/voice-next-2a/` |
+| Verdict | `LOCAL_VAD_BARGE_IN_CERTIFIED_WITH_LIMITATIONS` |
+| Next | `V-NEXT-2B` (separate authorization) |
+
+---
+
 ## V-NEXT-1 — Canonical Voice Session + Single Audio Ownership (2026-08-07)
 
 | Field | Value |
