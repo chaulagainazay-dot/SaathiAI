@@ -24,7 +24,7 @@ This index tells a competent engineer **which documents to trust**, which are hi
 | What is frozen | [`ARCHITECTURE_FREEZE_REGISTER.md`](./ARCHITECTURE_FREEZE_REGISTER.md) |
 | Terminology | [`CANONICAL_TERMINOLOGY.md`](./CANONICAL_TERMINOLOGY.md) |
 | Contradictions | [`FM_C1_CONTRADICTION_REGISTER.md`](./FM_C1_CONTRADICTION_REGISTER.md) (CX-05 closed in FM-C2) |
-| Next authorized implementation | **FM-I7 only after separate owner authorization** — FM-I6 LocalModelHarness plumbing certified with limitations (mock authoritative; live gated); commercial CLIs / production remain frozen |
+| Next authorized implementation | **FM-I7 only after separate owner authorization** — FM-I6.1 closeout complete with limitations; runtime still LAN-exposed until operator rebind; commercial CLIs / production remain frozen; **FM-I7 not ready** |
 
 **Document class legend:** AUTHORITATIVE · SUPPORTING · HISTORICAL · SUPERSEDED · DRAFT · DESIGN_ONLY · REJECTED · STALE_REQUIRES_REPAIR
 

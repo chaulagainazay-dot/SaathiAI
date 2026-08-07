@@ -14,6 +14,10 @@ data/
 __pycache__/
 *.pyc
 *.egg-info/
+# uv lockfiles are local/tooling artifacts unless an approved milestone
+# intentionally adopts uv-managed dependency locking for the monorepo.
+uv.lock
+uv.lock.bak
 firebase-admin.json
 .superpowers/
 

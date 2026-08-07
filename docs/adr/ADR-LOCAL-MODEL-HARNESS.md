@@ -14,6 +14,7 @@
 | **Implementation status** | **FM-I6 partial** — `LocalModelHarness` + mock/loopback transports under `saathi.agent_runtime.harness.local_model*` (`PRODUCTION_CERTIFIED=False`). Live gated. Not role-qualified. |
 | **Terminal verdict (design)** | `FM_I5_LOCAL_MODEL_HARNESS_DESIGN_APPROVED_WITH_LIMITATIONS` |
 | **Terminal verdict (impl)** | `FM_I6_LOCAL_MODEL_HARNESS_CERTIFIED_WITH_LIMITATIONS` |
+| **Closeout (FM-I6.1)** | `FM_I6_1_CLOSEOUT_CERTIFIED_WITH_LIMITATIONS` — true wildcard Ollama exposure documented; live skipped; see `docs/agent-runtime/FM_I6_1_CLOSEOUT.md` |
 | **Production certified** | **False** |
 | **Authority impact** | None while design-only; if later implemented under FM-I6, driver only under harness controller — never EG replacement |
 | **Supersedes** | Informal “wire Ollama as agent control plane” speculation |

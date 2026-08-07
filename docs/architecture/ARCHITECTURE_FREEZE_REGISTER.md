@@ -30,6 +30,7 @@ Unfreezing **requires** the authority and prerequisites listed. Informal “just
 | **FM-I4 disposition** | **PARTIALLY UNFROZEN** (2026-08-07) — in-process harness admission/queue/limits only; no distributed scheduler/workers |
 | **FM-I5 disposition** | **DESIGN ONLY** (2026-08-07) — LocalModelHarness architecture + security ADR accepted with limitations; **no implementation**. Runtime `OLLAMA_SELECTED`, model pin `qwen2.5:1.5b`, `USER_MANAGED_RUNTIME`, loopback-only. Implementation remains frozen until FM-I6 owner authorization + entry gates. See `docs/adr/ADR-LOCAL-MODEL-HARNESS.md` and `docs/agent-runtime/FM_I5_LOCAL_MODEL_HARNESS_DESIGN.md`. |
 | **FM-I6 disposition** | **PARTIALLY UNFROZEN** (2026-08-07) — LocalModelHarness + mock/loopback transports + tests only; `USER_MANAGED_RUNTIME`; no start/stop/pull/kill; live tests gated (`LIVE_OLLAMA_BINDING_UNSAFE` / memory). **`PRODUCTION_CERTIFIED=False`**. Commercial CLIs / production activation remain frozen. See `docs/agent-runtime/FM_I6_LOCAL_MODEL_HARNESS_IMPLEMENTATION.md`. |
+| **FM-I6.1 disposition** | **CLOSEOUT** (2026-08-07) — runtime boundary audited (true wildcard exposure documented); `uv.lock` test artifact removed/ignored; live skipped honestly; draft publication only. **No FZ-01 expansion.** Operator rebind is manual. See `docs/agent-runtime/FM_I6_1_CLOSEOUT.md`. |
 
 ### FZ-02 — New AgentSessionAdapter variants
 

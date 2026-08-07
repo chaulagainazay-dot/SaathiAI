@@ -1,5 +1,22 @@
 # SaathiOS Autonomous Roadmap
 
+## FM-I6.1 — LocalModelHarness Closeout (2026-08-07)
+
+| Field | Value |
+| --- | --- |
+| Mode | **Hardening / publication closeout** — no new features |
+| Baseline | FM-I6 @ `228f6efbc94402fc2a4129cb038b34d5ec7f8f51` |
+| Branch | `implementation/fm-i6-bounded-local-model-harness` |
+| Report | `docs/agent-runtime/FM_I6_1_CLOSEOUT.md` |
+| Evidence | `docs/evidence/fm_i6_1/` |
+| Runtime boundary | **TRUE_WILDCARD_EXPOSURE** (`*:11434` LAN/global open) — operator guide only |
+| Live inference | **SKIPPED** (binding + memory free%) |
+| Mock regression | 184 passed, 1 skipped |
+| Terminal verdict | `FM_I6_1_CLOSEOUT_CERTIFIED_WITH_LIMITATIONS` |
+| FM-I7 ready | **No** |
+| Production certified | **False** |
+| Next | FM-I7 only after separate owner authorization + preferably operator loopback rebind |
+
 ## FM-I6 — Bounded LocalModelHarness Implementation (2026-08-07)
 
 | Field | Value |
