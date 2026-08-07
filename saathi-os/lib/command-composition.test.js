@@ -37,6 +37,27 @@ describe("command-composition", () => {
     assert.equal(snap.fields.drawdown.available, false);
   });
 
+  it("investment pass-through paper risk contract when provided", () => {
+    const snap = composeInvestmentSnapshot({
+      auth: true,
+      ready: true,
+      summary: {
+        source: "canonical_fund_ledger",
+        paper_nav: "100000",
+        cash: "100000",
+        paper_risk: {
+          risk_status: "HEALTHY",
+          drawdown: "0.00",
+          label: "PAPER RISK",
+        },
+      },
+    });
+    assert.ok(snap.paperRisk);
+    assert.equal(snap.paperRisk.label, "PAPER RISK");
+    assert.equal(snap.paperRisk.liveExecution, "UNAVAILABLE");
+    assert.equal(snap.paperRisk.risk_status, "HEALTHY");
+  });
+
   it("investment reads canonical fund ledger fields when provided", () => {
     const snap = composeInvestmentSnapshot({
       auth: true,
