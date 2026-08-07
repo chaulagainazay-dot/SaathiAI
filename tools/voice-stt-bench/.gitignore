@@ -1,10 +1,7 @@
 .venv/
 corpus/wav/
+corpus/codeswitch/wav/
 corpus/**/*.aiff
 corpus/**/*.mp3
 __pycache__/
 *.pyc
-corpus/owner_real/**/*.wav
-corpus/owner_real/**/*.aiff
-corpus/owner_real/**/*.mp3
-results/v-next-2b2/*.tmp
