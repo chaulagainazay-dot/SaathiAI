@@ -9,7 +9,7 @@
 | **Baseline SHA** | `f79726d5746ecd485210dee6af12a3ed33a9f01e` (`docs/fm-c1-architecture-baseline-freeze`) |
 | **Full design** | [`docs/architecture/FM_C2_AGENT_SESSION_ADAPTER_HARNESS_RECONCILIATION.md`](../architecture/FM_C2_AGENT_SESSION_ADAPTER_HARNESS_RECONCILIATION.md) |
 | **Parents** | ADR-AGENT-HARNESS-INTERFACE · ADR-SAATHIOS-ARCHITECTURE-CONSOLIDATION · FM-C1 freezes |
-| **Implementation status** | **Design-only — no production code, adapters, or types authorized** |
+| **Implementation status** | Design accepted; **FM-I1** (separately authorized) landed internal FakeInMemoryHarness + controller proof only — not production |
 | **Authority impact** | Clarifies dual-plane relationship; does **not** weaken ExecutionGateway, Approval, RBAC, credentials, or Trading Guardian |
 | **Supersedes** | Ambiguous “two harnesses” reading of CX-05; informal plans that would elevate engineering adapters to platform control plane |
 | **Amends** | ADR-AGENT-HARNESS-INTERFACE (placement confirmed; relationship to engineering adapters decided); freezes FZ-01 / FZ-02 (prerequisites updated, freezes **retained**) |
@@ -171,7 +171,7 @@ Execution plane (all):
 
 | Freeze | Disposition |
 | --- | --- |
-| **FZ-01** AgentHarness implementation | **RETAINED.** FM-C2 relationship prerequisite **satisfied**. Unfreeze still requires **separate implementation milestone authorization** (FM-I1). |
+| **FZ-01** AgentHarness implementation | **PARTIALLY UNFROZEN for FM-I1 only** (2026-08-07 owner authorization): types + FakeInMemoryHarness + HarnessSessionController proof. All other AgentHarness expansion remains frozen. |
 | **FZ-02** New AgentSessionAdapter variants | **RETAINED / AMENDED.** No new commercial or product ABC adapters. Mock remains allowed for engineering tests. Future platform drivers implement **AgentHarness**, not new engineering ABC variants. |
 
 ---

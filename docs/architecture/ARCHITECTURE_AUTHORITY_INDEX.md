@@ -18,13 +18,13 @@ This index tells a competent engineer **which documents to trust**, which are hi
 | Multi-agent runs | `docs/agent-runtime/M48_*` + `saathi/agent_runtime/` |
 | Platform tenancy / RBAC / mission runtime | `saathi/platform/` + CAPABILITY_MATURITY_MATRIX rows |
 | Providers / models | `saathi/inference/` + M21–M25 docs |
-| AgentHarness design (not implemented) | ADR-AGENT-HARNESS-INTERFACE |
+| AgentHarness design + FM-I1 fake proof | ADR-AGENT-HARNESS-INTERFACE + `saathi/agent_runtime/harness/` (**internal; not production**) |
 | **AgentSessionAdapter ↔ AgentHarness relationship** | **ADR-AGENT-SESSION-ADAPTER-HARNESS-RELATIONSHIP** + [`FM_C2_…RECONCILIATION.md`](./FM_C2_AGENT_SESSION_ADAPTER_HARNESS_RECONCILIATION.md) |
 | Engineering process adapters | `saathi/engineering/adapters/` — **engineering plane only** |
 | What is frozen | [`ARCHITECTURE_FREEZE_REGISTER.md`](./ARCHITECTURE_FREEZE_REGISTER.md) |
 | Terminology | [`CANONICAL_TERMINOLOGY.md`](./CANONICAL_TERMINOLOGY.md) |
 | Contradictions | [`FM_C1_CONTRADICTION_REGISTER.md`](./FM_C1_CONTRADICTION_REGISTER.md) (CX-05 closed in FM-C2) |
-| Next authorized implementation | **FM-I1 only after owner authorization** — FakeInMemoryHarness + types; not auto-start |
+| Next authorized implementation | **FM-I2 only after separate owner authorization** — providers/CLIs remain frozen |
 
 **Document class legend:** AUTHORITATIVE · SUPPORTING · HISTORICAL · SUPERSEDED · DRAFT · DESIGN_ONLY · REJECTED · STALE_REQUIRES_REPAIR
 

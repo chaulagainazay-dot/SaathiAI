@@ -10,7 +10,7 @@
 | **Full design** | [`docs/agent-runtime/M385_AGENT_HARNESS_INTERFACE_DESIGN.md`](../agent-runtime/M385_AGENT_HARNESS_INTERFACE_DESIGN.md) |
 | **Design baseline SHA** | `949afa68a4135aa94dbdaaf9aecfd618e0948c09` |
 | **Design baseline branch** | `milestone/m369-m376-local-model-qualification` (docs authored on this tip; publication may use a dedicated M377–M385 branch) |
-| **Implementation status** | **Design-only — not implemented** (no `AgentHarness` / `FakeInMemoryHarness` in `saathi/`) |
+| **Implementation status** | **FM-I1 partial** — internal types + `FakeInMemoryHarness` + `HarnessSessionController` under `saathi.agent_runtime.harness` (`PRODUCTION_CERTIFIED=False`). No commercial/CLI/provider adapters. |
 | **Authority impact** | None while design-only; if later implemented, driver only under orchestration — never EG replacement |
 | **Supersedes** | Informal “multi-CLI as control plane” speculation |
 | **Superseded by** | Not superseded. **Amended by** ADR-AGENT-SESSION-ADAPTER-HARNESS-RELATIONSHIP (FM-C2): plane separation vs engineering `AgentSessionAdapter`; implementation still **FZ-01** / FM-I1 gated |
@@ -187,9 +187,18 @@ security ADRs and package certification.
 
 ## Implementation status
 
-**Design documentation only.** No Python/TS types package, no FakeInMemoryHarness,
-no LocalModelHarness, no commercial CLI adapter, no CI suite, and no behavioral
-change to `saathi.agent_runtime` or ExecutionGateway were authorized by M385.
+**M385** was design documentation only.
+
+**FM-I1 (2026-08-07, separately authorized)** added:
+
+- `saathi.agent_runtime.harness` — internal contract types, protocol, mapping
+- `FakeInMemoryHarness` — deterministic in-process fake (no network/process/provider)
+- `HarnessSessionController` — bounded trusted mediator + gateway **test double**
+- `tests/test_fm_i1_agent_harness.py` — conformance and security invariant suite
+
+Still **not** authorized / not present: LocalModelHarness, commercial CLI adapters,
+provider SDKs, credentials, production activation, public SDK, or ExecutionGateway
+behavior changes. `AgentSessionAdapter` remains unchanged.
 
 ---
 

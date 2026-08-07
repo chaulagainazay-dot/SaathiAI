@@ -1,5 +1,22 @@
 # SaathiOS Autonomous Roadmap
 
+## FM-I1 — Fake AgentHarness Proof (2026-08-07)
+
+| Field | Value |
+| --- | --- |
+| Verdict | See terminal certification on branch `implementation/fm-i1-fake-agent-harness` |
+| Mode | **Internal non-production proof** — contract types + FakeInMemoryHarness + HarnessSessionController |
+| Authorized base | `docs/fm-c2-agent-session-harness-relationship` @ `97dc6bfab840834f3430df347f526835d94f34cd` |
+| Package | `saathi.agent_runtime.harness` |
+| Tests | `tests/test_fm_i1_agent_harness.py` |
+| FZ-01 | **Partially unfrozen** for FM-I1 scope only |
+| FZ-02 / FZ-07 | **Fully retained** |
+| Production certified | **False** |
+| Forbidden | Providers, commercial CLIs, Ollama, credentials, network/shell/browser, AgentSessionAdapter edits, EG replacement |
+| Next | **FM-I2 only after separate owner authorization** — do not auto-start |
+
+**AgentHarness is an internal platform multi-turn driver proof. Not production-activated.**
+
 ## FM-C2 — AgentSessionAdapter ↔ AgentHarness Relationship (2026-08-06)
 
 | Field | Value |
@@ -10,16 +27,17 @@
 | ADR | `docs/adr/ADR-AGENT-SESSION-ADAPTER-HARNESS-RELATIONSHIP.md` |
 | Design | `docs/architecture/FM_C2_AGENT_SESSION_ADAPTER_HARNESS_RECONCILIATION.md` |
 | Decision | **Alternative F** — controller composition + plane separation |
-| Platform multi-turn contract | **AgentHarness** (still design-only / FZ-01) |
-| Engineering process sessions | **AgentSessionAdapter** (active; eng-scoped only) |
+| Platform multi-turn contract | **AgentHarness** (FM-I1 internal fake proof landed; still not production) |
+| Engineering process sessions | **AgentSessionAdapter** (active; eng-scoped only; **unchanged by FM-I1**) |
 | Wrap/implement each other? | **No in v1** |
 | ToolIntent construction | Controllers only — never either driver |
 | CX-05 | **Closed** (relationship) |
-| FZ-01 / FZ-02 | **Retained** (amended prerequisites) |
+| FZ-01 | **Partially unfrozen** for FM-I1 only (2026-08-07) |
+| FZ-02 | **Retained** |
 | Commercial CLIs | **Blocked** (FZ-07) |
-| Next | **FM-I1 only after separate owner authorization** — types + FakeInMemoryHarness + controller test double. **Do not auto-start.** |
+| Next | **FM-I1 complete on implementation branch** — do not start FM-I2 without owner authorization |
 
-**Do not implement AgentHarness, modify AgentSessionAdapter, or integrate commercial CLIs from this ADR alone.**
+**Do not modify AgentSessionAdapter or integrate commercial CLIs from this ADR alone.**
 
 ## FM-C1 — Architecture Documentation Freeze and Contradiction Repair (2026-08-06)
 

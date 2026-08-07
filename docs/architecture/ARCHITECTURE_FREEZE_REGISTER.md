@@ -15,14 +15,16 @@ Unfreezing **requires** the authority and prerequisites listed. Informal “just
 
 | Field | Value |
 | --- | --- |
-| **Frozen subject** | Production types, packages, adapters for AgentHarness; FakeInMemoryHarness; LocalModelHarness |
-| **Reason** | Design-only (M385); implementation not yet authorized (relationship now decided in FM-C2) |
-| **Originating decision** | ADR-AGENT-HARNESS; consolidation D3/D4; FM-C1; **amended FM-C2** |
-| **Authority to unfreeze** | Owner + **separate implementation milestone** (FM-I1: fake + types + controller test double only) |
-| **Prerequisite** | **FM-C2 relationship ADR accepted** (satisfied 2026-08-06); freezes FZ-04, FZ-05, FZ-07 still held |
-| **Prohibited work** | Any `saathi/**` AgentHarness code until FM-I1 authorization; commercial CLI adapters; CI claiming adapters exist |
-| **Review condition** | After explicit FM-I1 owner authorization — **not** auto-started by FM-C2 |
-| **FM-C2 disposition** | **RETAINED** (relationship prerequisite met; implementation freeze remains) |
+| **Frozen subject** | Production activation of AgentHarness; LocalModelHarness; commercial/CLI harness adapters; public SDK |
+| **Reason** | M385 design-only; FM-C2 relationship decided; **FM-I1 partially unfrozen** for internal fake proof only |
+| **Originating decision** | ADR-AGENT-HARNESS; consolidation D3/D4; FM-C1; **amended FM-C2**; **FM-I1 owner authorization 2026-08-07** |
+| **Authority to unfreeze** | Owner + implementation milestone (further unfreeze beyond FM-I1 requires new authorization) |
+| **Prerequisite** | FM-C2 accepted (satisfied); FZ-02 / FZ-07 remain held for commercial paths |
+| **Prohibited work** | LocalModelHarness; Claude Code / Codex / OpenCode / Pi; Ollama/provider adapters; credentials; production certification; public SDK; AgentSessionAdapter changes |
+| **Allowed under partial unfreeze (FM-I1)** | Internal contract types under `saathi.agent_runtime.harness`; `FakeInMemoryHarness`; bounded `HarnessSessionController` proof; conformance tests; related docs. **`PRODUCTION_CERTIFIED = False`**. |
+| **Review condition** | FM-I2+ only after separate owner authorization |
+| **FM-C2 disposition** | **RETAINED** for everything beyond FM-I1 fake proof |
+| **FM-I1 disposition** | **PARTIALLY UNFROZEN** (2026-08-07) — fake + types + controller proof only |
 
 ### FZ-02 — New AgentSessionAdapter variants
 
