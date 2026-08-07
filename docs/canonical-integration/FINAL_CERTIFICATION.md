@@ -2,9 +2,7 @@
 
 ## Primary verdict
 
-```text
-CANONICAL_SAATHIOS_BASELINE_CERTIFIED_WITH_LIMITATIONS
-```
+
 
 ### Why CERTIFIED_WITH_LIMITATIONS (not full CERTIFIED)
 
@@ -18,7 +16,7 @@ CANONICAL_SAATHIOS_BASELINE_CERTIFIED_WITH_LIMITATIONS
 
 - M17 cherry-picks clean; 36/36 tests × 3 iterations green
 - Stress 180/180 green across 2/5/10 workers
-- Architecture-critical 293 + gateway 148 + model 117 + TG sample 119 green
+- Architecture-critical 293 + gateway 148 + model 117 + TG sample 119 + agentdev 1181 green
 - Frontend 387 unit + production build green
 - No authority expansion; Candidate A SHA verified pre-integration
 
@@ -26,30 +24,22 @@ CANONICAL_SAATHIOS_BASELINE_CERTIFIED_WITH_LIMITATIONS
 
 | Field | Value |
 | --- | --- |
-| Canonical branch | `integration/saathios-canonical-baseline` |
-| Source baseline | `hardening/fm-i6.2-macos-memory-gate-fix` @ `e1738d7deec5f44600fbf0d99e2b8f74a4bc83d0` |
-| M17 code tip (before final docs commits) | `272dbd5d0b9495d9682955074a76b4931e440daf` |
+| Canonical branch |  |
+| Final tip SHA |  |
+| Source baseline |  @  |
+| Draft PR | #24 |
 | Merge to master authorized | **false** |
 | Deployment authorized | **false** |
 | Live trading | **false** |
 | Provider connectivity | **false** |
 
+## Publication pin
+
+- Final tip: 
+- Branch: 
+
 ## Next mission
 
-```text
-UI-NEXT-1 — SAATHIOS CENTRAL COMMAND COMPOSITION
-```
+
 
 Separate owner authorization required. Do not start in this mission.
-
-
-**Final tip SHA:**
-
-## Publication pin
-
-- Final tip: 
-- Branch:
-
-## Publication pin
-
-- Final tip: 

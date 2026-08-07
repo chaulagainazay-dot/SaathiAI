@@ -2,12 +2,12 @@
 
 | Field | Value |
 | --- | --- |
-| **Canonical branch** | `integration/saathios-canonical-baseline` |
+| **Canonical branch** |  |
 | **Final tip SHA** |  |
-| **Canonical SHA (M17 code tip)** | `272dbd5d0b9495d9682955074a76b4931e440daf` |
-| **Source baseline branch** | `hardening/fm-i6.2-macos-memory-gate-fix` |
-| **Source baseline SHA** | `e1738d7deec5f44600fbf0d99e2b8f74a4bc83d0` |
-| **Worktree** | `/Users/macbookpro/SaathiAI-canonical-baseline` |
+| **M17 integrated tip (pre final docs)** |  |
+| **Source baseline branch** |  |
+| **Source baseline SHA** |  |
+| **Worktree** |  |
 | **Established** | 2026-08-07 |
 | **Production status** | **NOT production certified** — private-alpha / integration baseline |
 | **Live trading authority** | **false** |
@@ -19,7 +19,7 @@
 
 ## Contained milestone families
 
-Linear ancestry from `master` through:
+Linear ancestry from  through:
 
 - M47 UI/UX foundation (on master)
 - M48 agent runtime baseline
@@ -40,7 +40,7 @@ Linear ancestry from `master` through:
 
 | Item | Status |
 | --- | --- |
-| Twenty CRM (`evaluation/twenty-readonly-sandbox`) | KEEP_SEPARATE — diverged from m312 |
+| Twenty CRM () | KEEP_SEPARATE — diverged from m312 |
 | Dirty Baadar/evaluation WIP on original m312 worktree | NOT integrated |
 | Live provider/broker credentials | Forbidden |
 | Uncommitted original worktree changes | Preserved outside this branch |
@@ -48,12 +48,12 @@ Linear ancestry from `master` through:
 ## Known limitations
 
 1. Full backend suite (~6000 tests) not fully re-run in this mission (architecture-critical + M17 + samples run).
-2. Browser smoke requires running platform server — may be environment-limited.
+2. Browser smoke requires running platform server — environment-limited this mission.
 3. Multi-runtime coexistence (M48 / M52 / harness / engineering) remains intentional debt.
-4. Residual legacy `subprocess` tools outside gateway remain classified, not deleted.
+4. Residual legacy  tools outside gateway remain classified, not deleted.
 5. Historical M17 evidence JSON pins original repair SHAs (immutable provenance), not this tip.
 6. FM-I6.2 live inference still memory-gated on certifying hosts.
-7. `master` still lags this tip until a separate publish mission.
+7.  still lags this tip until a separate publish mission.
 
 ## Authority invariants (non-negotiable)
 
@@ -67,8 +67,5 @@ Linear ancestry from `master` through:
 ## Publication pin
 
 - Final tip: 
-- Branch:
-
-## Publication pin
-
-- Final tip: 
+- Branch: 
+- Remote: 
