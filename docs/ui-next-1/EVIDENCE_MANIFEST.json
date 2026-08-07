@@ -8,11 +8,14 @@
   "tests": {
     "command_composition_unit": 12,
     "frontend_build": "pass",
-    "browser": "not_run"
+    "browser": "not_run",
+    "frontend_unit_passed": 399
   },
   "security": {
     "zero_new_authority": true,
     "zero_live_trading": true,
     "zero_provider_activation": true
-  }
+  },
+  "final_tip_sha": "15b8bfad05f9399d6f766d07a5673ce87f325e29",
+  "draft_pr": 25
 }
