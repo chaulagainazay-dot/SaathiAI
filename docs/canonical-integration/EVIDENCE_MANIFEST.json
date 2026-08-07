@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "mission": "SAATHIOS_CANONICAL_BASELINE_INTEGRATION",
+  "date": "2026-08-07",
+  "verdict": "CANONICAL_SAATHIOS_BASELINE_CERTIFIED_WITH_LIMITATIONS",
+  "source_baseline": {
+    "branch": "hardening/fm-i6.2-macos-memory-gate-fix",
+    "sha": "e1738d7deec5f44600fbf0d99e2b8f74a4bc83d0"
+  },
+  "integration_branch": "integration/saathios-canonical-baseline",
+  "m17_original_commits": [
+    "4197c9b6d4ba22af6c34426f5efb7a9892cf1892",
+    "5f7ad09adc8f02ca88df57e38600c29819ee7f26",
+    "5e3d312a77310ccd039ad39fcaee5a796ab4e818",
+    "36d66e90a5862d1a6066159e7bb154da906b1847",
+    "d543b2c86de9a330560ce4ed04fb06b05556ff8f",
+    "8577f2fbf10ea9d7a631ba9be861e574155bab7b"
+  ],
+  "m17_integrated_shas": [
+    "4b65d0428feaf5e18cb71b4c0bf097884adc180d",
+    "655dd928e9252272b0ed8282e1371798f7c208ce",
+    "13bf79ece6c3423880c7b673d987b59213c3c0fb",
+    "fc0f04ff44b2670248c53c0ee6a491d382cbf847",
+    "6a33adab6e98fa6d2e18463856f5698b443765db",
+    "272dbd5d0b9495d9682955074a76b4931e440daf"
+  ],
+  "tests": {
+    "m17_17_iterations": 3,
+    "m17_17_per_iteration": {
+      "collected": 36,
+      "passed": 36,
+      "failed": 0
+    },
+    "stress_total_successes": 180,
+    "architecture_critical_passed": 293,
+    "gateway_m49_passed": 148,
+    "local_model_passed": 117,
+    "local_model_skipped": 1,
+    "tg_sample_passed": 119,
+    "frontend_unit_passed": 387,
+    "frontend_build": "pass",
+    "full_backend_suite": "not_run",
+    "browser_suite": "not_run_environment_limited",
+    "private_alpha_agentdev_passed": 1181
+  },
+  "security": {
+    "secrets": "ZERO_NEW_SECRET_FINDINGS",
+    "authority_bypasses": "ZERO_NEW_AUTHORITY_BYPASSES",
+    "live_trading": "ZERO_LIVE_TRADING_ACTIVATION",
+    "providers": "ZERO_PROVIDER_ACTIVATION"
+  },
+  "prohibited_actions_not_done": [
+    "master_merge",
+    "deployment",
+    "release",
+    "provider_activation",
+    "broker_connectivity",
+    "live_trading",
+    "voice_implementation",
+    "ui_redesign",
+    "trading_features",
+    "threshold_lowering",
+    "history_rewrite",
+    "pr_close",
+    "pr_merge_other"
+  ]
+}
