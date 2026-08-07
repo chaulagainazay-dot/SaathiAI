@@ -150,10 +150,15 @@
     "master_merge": false
   },
   "commits": [
-    "713febf docs(voice): define product-clean speech collection protocol",
-    "9548c64 feat(data): add consented multi-speaker recorder and manifest tooling",
+    "c9740eb docs(voice): pin V-NEXT-2B.6 tip and draft evidence",
+    "83db2d1 docs(voice): restore base SHA in V-NEXT-2B.6 certification",
+    "1c4357f docs(voice): correct V-NEXT-2B.6 tip SHA pin",
+    "c95762c docs(voice): pin V-NEXT-2B.6 tip SHA and evidence",
+    "8e4322b docs(voice): certify V-NEXT-2B.6 data readiness",
+    "9144018 docs(data): freeze product speech corpus metadata",
     "6641177 feat(data): add speech QA and contamination validation",
-    "9144018 docs(data): freeze product speech corpus metadata"
+    "9548c64 feat(data): add consented multi-speaker recorder and manifest tooling",
+    "713febf docs(voice): define product-clean speech collection protocol"
   ],
-  "tip_sha": "c95762c9d6f63e3b8ab1319b91595131550f42d8"
+  "tip_sha": "c9740eb17b0cc2c7280367c9cbe9c71af28c6d56"
 }
