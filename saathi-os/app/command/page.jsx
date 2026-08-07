@@ -18,13 +18,16 @@ import ActivityPanel from "@/components/command/ActivityPanel";
 import InvestmentSnapshot from "@/components/command/InvestmentSnapshot";
 import SystemHealthPanel from "@/components/command/SystemHealthPanel";
 import EvidenceTimeline from "@/components/command/EvidenceTimeline";
+import { useVoiceSession } from "@/components/voice/VoiceSessionProvider";
 
 /**
- * UI-NEXT-1 — SaathiOS Central Command composition.
- * Composes existing APIs into one control plane. No new backend authority.
+ * UI-NEXT-1 + V-NEXT-1 — Central Command with canonical voice session state.
+ * Composes existing APIs. No new backend authority. Voice does not execute tools.
  */
 export default function CommandCenterPage() {
   const { loading, model, refresh } = useCommandCenter();
+  const voiceSession = useVoiceSession();
+  const voiceLabel = voiceSession?.commandLabel || model?.command?.voiceSessionState || "UNKNOWN";
 
   return (
     <div className="page shell-page cmd-page">
@@ -69,14 +72,14 @@ export default function CommandCenterPage() {
           <AuthorityStrip authority={model.authority} />
 
           <div className="cmd-mobile-priority only-mobile">
-            <CommandComposer command={model.command} voiceSessionState={model.command?.voiceSessionState} />
+            <CommandComposer command={model.command} voiceSessionState={voiceLabel} />
             <AttentionQueue attention={model.attention} />
             <ActivityPanel activity={model.activity} />
             <SystemHealthPanel systemHealth={model.systemHealth} />
           </div>
 
           <div className="cmd-layout only-desktop">
-            <CommandComposer command={model.command} voiceSessionState={model.command?.voiceSessionState} />
+            <CommandComposer command={model.command} voiceSessionState={voiceLabel} />
 
             <div className="cmd-mid-grid">
               <ActivityPanel activity={model.activity} />
