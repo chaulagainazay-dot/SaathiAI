@@ -1,5 +1,19 @@
 # SaathiOS Autonomous Roadmap
 
+## FM-I3 — Durable Harness Session State (2026-08-07)
+
+| Field | Value |
+| --- | --- |
+| Mode | **Internal non-production** — isolated SQLite session/event durability |
+| Baseline | FM-I2 @ `dd09ca033dd335694975b42102d11b0375a4e53e` |
+| Branch | `implementation/fm-i3-durable-harness-state` |
+| Report | `docs/agent-runtime/FM_I3_DURABLE_HARNESS_STATE.md` |
+| Store | `HarnessDurableStore` (injected; no process singleton) |
+| Replay | Inspection only (`can_execute=False`) |
+| Recovery | Fail-closed; no auto tool/model resume |
+| Production certified | **False** |
+| Next | **FM-I4 only after separate owner authorization** |
+
 ## FM-I2 — Real ExecutionGateway Integration (2026-08-07)
 
 | Field | Value |

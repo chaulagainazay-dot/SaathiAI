@@ -62,6 +62,17 @@ from saathi.agent_runtime.harness.gateway_bridge import (
     RealExecutionGatewayAdapter,
     build_isolated_execution_gateway,
 )
+from saathi.agent_runtime.harness.durable_store import HarnessDurableStore
+from saathi.agent_runtime.harness.persistence import (
+    SCHEMA_VERSION,
+    SOURCE_OF_TRUTH,
+    DurableEventRecord,
+    DurableSessionRecord,
+    RecoveryDisposition,
+    RecoveryResult,
+    RetentionClass,
+    TerminalOutcome,
+)
 from saathi.agent_runtime.harness.audit import HarnessAuditLog, HarnessAuditRecord
 from saathi.agent_runtime.harness.types import can_transition_harness, is_terminal_harness_state
 
@@ -77,6 +88,15 @@ __all__ = [
     "GatewayTestDouble",
     "RealExecutionGatewayAdapter",
     "build_isolated_execution_gateway",
+    "HarnessDurableStore",
+    "SCHEMA_VERSION",
+    "SOURCE_OF_TRUTH",
+    "DurableEventRecord",
+    "DurableSessionRecord",
+    "RecoveryDisposition",
+    "RecoveryResult",
+    "RetentionClass",
+    "TerminalOutcome",
     "HARNESS_TO_RUN_STATE",
     "HarnessAuditLog",
     "HarnessAuditRecord",

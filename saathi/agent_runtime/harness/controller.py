@@ -22,10 +22,20 @@ import time
 import uuid
 
 from saathi.agent_runtime.harness.audit import HarnessAuditLog
+from saathi.agent_runtime.harness.durable_store import HarnessDurableStore
 from saathi.agent_runtime.harness.errors import HarnessError, HarnessErrorCode
 from saathi.agent_runtime.harness.fake import FakeInMemoryHarness
 from saathi.agent_runtime.harness.gateway_bridge import RealExecutionGatewayAdapter
 from saathi.agent_runtime.harness.mapping import project_harness_to_run_state
+from saathi.agent_runtime.harness.persistence import (
+    DurableSessionRecord,
+    RecoveryDisposition,
+    RecoveryResult,
+    RetentionClass,
+    TerminalOutcome,
+    map_run_state_snapshot,
+    map_terminal_outcome,
+)
 from saathi.agent_runtime.harness.protocol import AgentHarness
 from saathi.agent_runtime.harness.types import (
     ApprovalRefState,
@@ -265,6 +275,8 @@ class HarnessSessionController:
         known_tools: Optional[Mapping[str, Mapping[str, Any]]] = None,
         max_sessions: int = 4,
         use_real_gateway: bool = True,
+        durable_store: Optional[HarnessDurableStore] = None,
+        require_durable_store: bool = False,
     ) -> None:
         self._harness = harness
         if gateway is not None:
@@ -278,6 +290,12 @@ class HarnessSessionController:
         self._max_sessions = max_sessions
         self._sessions: Dict[str, _BoundSession] = {}
         self._lock = threading.RLock()
+        self._store = durable_store
+        if require_durable_store and durable_store is None:
+            raise HarnessError(
+                HarnessErrorCode.INVALID_REQUEST,
+                "durable_store required but not provided",
+            )
 
     @property
     def audit(self) -> HarnessAuditLog:
@@ -286,6 +304,10 @@ class HarnessSessionController:
     @property
     def gateway(self) -> GatewayLike:
         return self._gateway
+
+    @property
+    def durable_store(self) -> Optional[HarnessDurableStore]:
+        return self._store
 
     @property
     def uses_real_gateway(self) -> bool:
@@ -400,6 +422,7 @@ class HarnessSessionController:
             budget=bud,
         )
         handle = self._harness.start_session(req)
+        projected = project_harness_to_run_state(handle.state)
         bound = _BoundSession(
             session_id=sid,
             run_id=run_id,
@@ -410,9 +433,36 @@ class HarnessSessionController:
             authority_class=authority_class,
             allowed_tools=tuple(allowed_tool_names),
             budget=bud,
-            projected_run_state=project_harness_to_run_state(handle.state),
+            projected_run_state=projected,
         )
         self._sessions[sid] = bound
+        # Durable session create (fail closed if store present and write fails)
+        if self._store is not None:
+            try:
+                drec = DurableSessionRecord(
+                    session_id=sid,
+                    harness_id=handle.harness_id,
+                    run_id=run_id,
+                    mission_id=mission_id or run_id,
+                    organization_id=organization_id or "",
+                    workspace_id=workspace_id or "",
+                    actor_id=actor_id,
+                    projected_harness_state=handle.state.value,
+                    authoritative_run_state_snapshot=map_run_state_snapshot(projected),
+                    retention_class=RetentionClass.ACTIVE.value,
+                )
+                self._store.create_session(drec)
+            except HarnessError:
+                # Remove in-memory bind on durable failure
+                self._sessions.pop(sid, None)
+                raise
+            except Exception as exc:  # noqa: BLE001
+                self._sessions.pop(sid, None)
+                raise HarnessError(
+                    HarnessErrorCode.INTERNAL,
+                    f"durable session create failed: {exc}",
+                    session_id=sid,
+                ) from exc
         self._ingest_events(sid)
         try:
             self._audit.record(
@@ -426,6 +476,7 @@ class HarnessSessionController:
             # Audit failure must not leave a live untracked session: quarantine fail-closed
             bound.quarantined = True
             bound.quarantine_reason = f"audit_write_failed: {exc}"
+            self._persist_quarantine(sid, bound.quarantine_reason)
             raise HarnessError(
                 HarnessErrorCode.INTERNAL,
                 "audit write failed; session quarantined",
@@ -544,6 +595,22 @@ class HarnessSessionController:
             if ack.status in (CancelAckStatus.ACKNOWLEDGED, CancelAckStatus.ALREADY_TERMINAL):
                 bound.projected_run_state = RunState.CANCELLED
                 bound.last_terminal_run_state = RunState.CANCELLED
+                if self._store is not None:
+                    try:
+                        self._persist_session_fields(
+                            bound,
+                            projected_harness_state=HarnessSessionState.CANCELLED.value,
+                            authoritative_run_state_snapshot=RunState.CANCELLED.value,
+                            terminal_outcome=TerminalOutcome.CANCELLED.value,
+                            retention_class=RetentionClass.CANCELLED.value,
+                            cancellation_requested_at=time.time(),
+                            cancellation_acknowledged_at=time.time(),
+                            pending_execution_id="",
+                            pending_approval_reference="",
+                            pending_tool_proposal_id="",
+                        )
+                    except HarnessError:
+                        pass
             try:
                 self._audit.record(
                     "harness.cancellation",
@@ -555,6 +622,7 @@ class HarnessSessionController:
                 # Cancel already applied; audit failure is recorded as quarantine risk
                 bound.quarantined = True
                 bound.quarantine_reason = "audit_write_failed_after_cancel"
+                self._persist_quarantine(session_id, bound.quarantine_reason)
             return ack
 
     def close_session(self, session_id: str, reason: str = "closed") -> SessionCloseResult:
@@ -567,6 +635,35 @@ class HarnessSessionController:
                 HarnessSessionState.CLOSED,
                 prior_terminal_run=bound.last_terminal_run_state,
             )
+            if self._store is not None:
+                try:
+                    term = (
+                        map_terminal_outcome(
+                            HarnessSessionState.CANCELLED
+                            if bound.last_terminal_run_state is RunState.CANCELLED
+                            else HarnessSessionState.COMPLETED
+                        ).value
+                    )
+                    if bound.last_terminal_run_state is RunState.FAILED:
+                        term = TerminalOutcome.FAILED.value
+                    elif bound.last_terminal_run_state is RunState.TIMED_OUT:
+                        term = TerminalOutcome.TIMED_OUT.value
+                    self._persist_session_fields(
+                        bound,
+                        closed=True,
+                        projected_harness_state=HarnessSessionState.CLOSED.value,
+                        authoritative_run_state_snapshot=map_run_state_snapshot(
+                            bound.projected_run_state
+                        ),
+                        terminal_outcome=term,
+                        retention_class=(
+                            RetentionClass.CANCELLED.value
+                            if term == TerminalOutcome.CANCELLED.value
+                            else RetentionClass.COMPLETED.value
+                        ),
+                    )
+                except HarnessError:
+                    pass
             try:
                 self._audit.record(
                     "harness.session_closed",
@@ -577,6 +674,7 @@ class HarnessSessionController:
             except RuntimeError:
                 bound.quarantined = True
                 bound.quarantine_reason = "audit_write_failed_after_close"
+                self._persist_quarantine(session_id, bound.quarantine_reason)
             return result
 
     def poll_events(self, session_id: str, after_seq: int = 0) -> List[HarnessEvent]:
@@ -961,6 +1059,18 @@ class HarnessSessionController:
                     "gateway_path": result.get("path"),
                 },
             )
+            if self._store is not None:
+                try:
+                    self._persist_session_fields(
+                        bound,
+                        projected_harness_state=HarnessSessionState.WAITING_FOR_APPROVAL.value,
+                        authoritative_run_state_snapshot=RunState.AWAITING_APPROVAL.value,
+                        pending_execution_id=bound.pending_execution_id or "",
+                        pending_approval_reference=approval_ref,
+                        pending_tool_proposal_id=proposal.proposal_id,
+                    )
+                except HarnessError:
+                    raise
             return MediatedToolResult(
                 disposition=ToolProposalDisposition.APPROVAL_REQUIRED,
                 proposal_id=proposal.proposal_id,
@@ -1084,6 +1194,9 @@ class HarnessSessionController:
                 bound.last_seq = max(bound.last_seq, ev.sequence_number)
                 bound.seen_event_ids.add(ev.event_id)
                 self._update_projection_from_event(bound, ev)
+                # Durable append must succeed before event is considered committed
+                # for recovery/replay (fail closed if store present).
+                self._persist_event(bound, ev)
             else:
                 # Quarantine already applied inside _validate_event
                 return
@@ -1289,12 +1402,288 @@ class HarnessSessionController:
             return
         bound.quarantined = True
         bound.quarantine_reason = f"{kind.value}: {reason}"
-        self._audit.record(
-            "harness.protocol_violation",
-            session_id=session_id,
-            run_id=bound.run_id,
-            detail={"kind": kind.value, "reason": reason},
+        try:
+            self._audit.record(
+                "harness.protocol_violation",
+                session_id=session_id,
+                run_id=bound.run_id,
+                detail={"kind": kind.value, "reason": reason},
+            )
+        except RuntimeError:
+            pass
+        self._persist_quarantine(session_id, bound.quarantine_reason)
+
+    def _persist_event(self, bound: _BoundSession, ev: HarnessEvent) -> None:
+        if self._store is None:
+            return
+        try:
+            hstate = self.harness_state(bound.session_id)
+            term = map_terminal_outcome(hstate)
+            usage = {}
+            try:
+                ru = self._harness.resource_usage(bound.session_id)
+                usage = {
+                    "turns": ru.turns,
+                    "events": ru.events,
+                    "fake_tokens": ru.fake_tokens,
+                    "tool_proposals": ru.tool_proposals,
+                    "output_chars": ru.output_chars,
+                    "logical_time_ms": ru.logical_time_ms,
+                }
+            except Exception:
+                usage = {}
+            d_ev = self._store.event_from_harness_event(ev)
+            kwargs: Dict[str, Any] = {
+                "projected_harness_state": hstate.value,
+                "authoritative_run_state_snapshot": map_run_state_snapshot(
+                    bound.projected_run_state
+                ),
+                "resource_usage_snapshot": usage,
+                "pending_execution_id": bound.pending_execution_id or "",
+                "pending_approval_reference": "",
+                "pending_tool_proposal_id": bound.pending_proposal_id or "",
+            }
+            # Preserve approval ref if pending
+            if bound.pending_proposal_id:
+                for ref, st in bound.approval_refs.items():
+                    if st is ApprovalRefState.PENDING:
+                        kwargs["pending_approval_reference"] = ref
+                        break
+            if term is not TerminalOutcome.NONE:
+                kwargs["terminal_outcome"] = term.value
+                if term is TerminalOutcome.COMPLETED:
+                    kwargs["retention_class"] = RetentionClass.COMPLETED.value
+                elif term is TerminalOutcome.FAILED:
+                    kwargs["retention_class"] = RetentionClass.FAILED.value
+                elif term is TerminalOutcome.CANCELLED:
+                    kwargs["retention_class"] = RetentionClass.CANCELLED.value
+            if bound.closed:
+                kwargs["closed"] = True
+            if bound.quarantined:
+                kwargs["quarantined"] = True
+                kwargs["quarantine_reason"] = bound.quarantine_reason
+            self._store.append_event(bound.session_id, d_ev, **kwargs)
+        except HarnessError:
+            # Fail closed: quarantine session and re-raise
+            bound.quarantined = True
+            bound.quarantine_reason = "durable_append_failed"
+            try:
+                if self._store is not None:
+                    self._store.mark_quarantine(bound.session_id, bound.quarantine_reason)
+            except Exception:
+                pass
+            raise
+        except Exception as exc:  # noqa: BLE001
+            bound.quarantined = True
+            bound.quarantine_reason = f"durable_append_failed: {exc}"
+            try:
+                if self._store is not None:
+                    self._store.mark_quarantine(bound.session_id, bound.quarantine_reason)
+            except Exception:
+                pass
+            raise HarnessError(
+                HarnessErrorCode.INTERNAL,
+                bound.quarantine_reason,
+                session_id=bound.session_id,
+            ) from exc
+
+    def _persist_quarantine(self, session_id: str, reason: str) -> None:
+        if self._store is None:
+            return
+        try:
+            self._store.mark_quarantine(session_id, reason)
+        except Exception:
+            pass
+
+    def _persist_session_fields(self, bound: _BoundSession, **fields: Any) -> None:
+        if self._store is None:
+            return
+        rec = self._store.get_session(bound.session_id)
+        if rec is None:
+            raise HarnessError(
+                HarnessErrorCode.INTERNAL,
+                "durable session missing during update",
+                session_id=bound.session_id,
+            )
+        for k, v in fields.items():
+            if hasattr(rec, k):
+                setattr(rec, k, v)
+        try:
+            self._store.update_session(rec)
+        except HarnessError:
+            raise
+        except Exception as exc:  # noqa: BLE001
+            raise HarnessError(
+                HarnessErrorCode.INTERNAL,
+                f"durable session update failed: {exc}",
+                session_id=bound.session_id,
+            ) from exc
+
+    # ── Recovery / replay (inspection) ──────────────────────────────────────
+
+    def recover_session(
+        self,
+        session_id: str,
+        *,
+        authoritative_run_state: Optional[str] = None,
+        execution_exists: Optional[bool] = None,
+        approval_valid: Optional[bool] = None,
+    ) -> RecoveryResult:
+        """Reload durable state after restart. Never auto-resumes tool work."""
+        if self._store is None:
+            raise HarnessError(
+                HarnessErrorCode.INVALID_REQUEST,
+                "durable_store required for recovery",
+                session_id=session_id,
+            )
+        result = self._store.recover_session(
+            session_id,
+            authoritative_run_state=authoritative_run_state,
+            execution_exists=execution_exists,
+            approval_valid=approval_valid,
         )
+        # Apply quarantine dispositions into memory if rebound later
+        if result.session and result.disposition in (
+            RecoveryDisposition.QUARANTINE_STALE,
+            RecoveryDisposition.QUARANTINE_CORRUPT,
+            RecoveryDisposition.QUARANTINE_AUTHORITY_CONFLICT,
+        ):
+            try:
+                self._store.mark_quarantine(
+                    session_id, result.reason or result.disposition.value
+                )
+            except Exception:
+                pass
+        self._audit.record(
+            "harness.recovery",
+            session_id=session_id,
+            run_id=(result.session.run_id if result.session else ""),
+            detail={
+                "disposition": result.disposition.value,
+                "reason": result.reason,
+                "can_continue": result.can_continue,
+                "events_count": result.events_count,
+            },
+        )
+        return result
+
+    def rebind_recovered_session(
+        self,
+        session_id: str,
+        *,
+        allowed_tool_names: Tuple[str, ...] = ("fake.echo", "fake.sensitive_read"),
+    ) -> DurableSessionRecord:
+        """Load durable session into controller memory for inspection only.
+
+        Does not restart the driver or execute tools. Continuation requires
+        a separate explicit operator action outside FM-I3.
+        """
+        if self._store is None:
+            raise HarnessError(
+                HarnessErrorCode.INVALID_REQUEST,
+                "durable_store required for rebind",
+                session_id=session_id,
+            )
+        rec = self._store.get_session(session_id)
+        if rec is None:
+            raise HarnessError(
+                HarnessErrorCode.UNKNOWN_SESSION,
+                f"unknown durable session {session_id}",
+                session_id=session_id,
+            )
+        if rec.quarantined or rec.closed:
+            raise HarnessError(
+                HarnessErrorCode.QUARANTINED if rec.quarantined else HarnessErrorCode.TERMINAL_SESSION,
+                rec.quarantine_reason or "session closed",
+                session_id=session_id,
+            )
+        recovery = self._store.recover_session(session_id)
+        if recovery.disposition in (
+            RecoveryDisposition.QUARANTINE_STALE,
+            RecoveryDisposition.QUARANTINE_CORRUPT,
+            RecoveryDisposition.QUARANTINE_AUTHORITY_CONFLICT,
+            RecoveryDisposition.ABANDON_ORPHANED,
+        ):
+            raise HarnessError(
+                HarnessErrorCode.QUARANTINED,
+                recovery.reason or recovery.disposition.value,
+                session_id=session_id,
+            )
+        # Cancelled / terminal: bind read-only projection, no turns
+        events = self._store.list_events(session_id)
+        try:
+            rs = RunState(rec.authoritative_run_state_snapshot)
+        except Exception:
+            rs = RunState.RUNNING
+        bound = _BoundSession(
+            session_id=session_id,
+            run_id=rec.run_id,
+            mission_id=rec.mission_id,
+            actor_id=rec.actor_id,
+            organization_id=rec.organization_id or None,
+            workspace_id=rec.workspace_id or None,
+            authority_class="READ_ONLY",
+            allowed_tools=tuple(allowed_tool_names),
+            budget=HarnessBudget(),
+            projected_run_state=rs,
+            last_seq=rec.last_event_sequence,
+            seen_event_ids={e.event_id for e in events},
+            quarantined=rec.quarantined,
+            quarantine_reason=rec.quarantine_reason,
+            pending_proposal_id=rec.pending_tool_proposal_id or None,
+            pending_execution_id=rec.pending_execution_id or None,
+            closed=rec.closed,
+        )
+        if rec.pending_approval_reference:
+            bound.approval_refs[rec.pending_approval_reference] = ApprovalRefState.PENDING
+        # Reconstruct normalized event list (inspection)
+        for e in events:
+            try:
+                et = HarnessEventType(e.event_type)
+            except ValueError:
+                et = HarnessEventType.WARNING
+            bound.normalized_events.append(
+                HarnessEvent(
+                    event_id=e.event_id,
+                    session_id=e.session_id,
+                    sequence_number=e.sequence_number,
+                    event_type=et,
+                    harness_id=e.harness_id,
+                    timestamp=e.timestamp,
+                    payload=dict(e.payload),
+                    turn_id=e.turn_id or None,
+                    run_id=e.run_id or None,
+                    mission_id=e.mission_id or None,
+                    organization_id=e.organization_id or None,
+                    workspace_id=e.workspace_id or None,
+                    correlation_id=e.correlation_id or None,
+                    causation_id=e.causation_id or None,
+                )
+            )
+        if rec.terminal_outcome not in (TerminalOutcome.NONE.value, ""):
+            bound.last_terminal_run_state = rs
+        self._sessions[session_id] = bound
+        return rec
+
+    def replay_session(self, session_id: str) -> Dict[str, Any]:
+        """Inspection-only replay from durable events (no tool execution)."""
+        if self._store is None:
+            raise HarnessError(
+                HarnessErrorCode.INVALID_REQUEST,
+                "durable_store required for replay",
+                session_id=session_id,
+            )
+        timeline = self._store.replay_timeline(session_id)
+        self._audit.record(
+            "harness.replay_inspection",
+            session_id=session_id,
+            detail={
+                "ok": timeline.get("ok"),
+                "event_count": timeline.get("event_count"),
+                "can_execute": False,
+            },
+        )
+        return timeline
 
     def _project_terminal(self, bound: _BoundSession, hstate: HarnessSessionState) -> None:
         rs = project_harness_to_run_state(hstate)
