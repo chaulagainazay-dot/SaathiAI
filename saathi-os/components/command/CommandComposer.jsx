@@ -93,23 +93,51 @@ export default function CommandComposer({ command, voiceSessionState }) {
           </Button>
         </Link>
       </div>
+      {(voiceSession?.session?.transcriptPartial ||
+        voiceSession?.session?.transcriptFinal ||
+        voiceSession?.session?.lastTurn) && (
+        <div className="cmd-transcript-panel" aria-live="polite">
+          {voiceSession?.session?.transcriptPartial ? (
+            <Text tone="muted" size="sm" as="p" className="cmd-transcript-partial">
+              <strong>Partial (not executable):</strong>{" "}
+              {String(voiceSession.session.transcriptPartial).slice(0, 200)}
+            </Text>
+          ) : null}
+          {voiceSession?.session?.transcriptFinal || voiceSession?.session?.lastTurn?.text ? (
+            <Text tone="default" size="sm" as="p" className="cmd-transcript-final">
+              <strong>Final turn:</strong>{" "}
+              {String(
+                voiceSession.session.lastTurn?.text || voiceSession.session.transcriptFinal || ""
+              ).slice(0, 200)}
+              {voiceSession.session.lastTurn?.isExecutable === false
+                ? " · non-executable / backchannel"
+                : voiceSession.session.lastTurn
+                  ? " · ready for review (not auto-run)"
+                  : ""}
+            </Text>
+          ) : null}
+          {voiceSession?.session?.sttDegraded ? (
+            <Text tone="muted" size="xs" as="p">
+              STT degraded: {voiceSession.session.sttDegradedReason || "fallback"}
+            </Text>
+          ) : null}
+        </div>
+      )}
       <Text tone="disabled" size="xs" mono as="p">
         Canonical VoiceSession: {vs}
-        {voiceSession?.session?.transcriptPartial
-          ? ` · partial “${String(voiceSession.session.transcriptPartial).slice(0, 48)}”`
-          : ""}
         {voiceSession?.session?.lastBargeInLatencyMs != null
           ? ` · barge-in ${Math.round(voiceSession.session.lastBargeInLatencyMs)}ms`
           : ""}
+        {voiceSession?.session?.interruptClass
+          ? ` · interrupt ${voiceSession.session.interruptClass}`
+          : ""}
         {" · "}
-        caps: mic={String(!!caps.microphoneAvailable)} stt=
-        {String(!!caps.speechRecognitionAvailable)} vad=
+        caps: stt={String(!!caps.streamingSttAvailable)} partial=
+        {String(!!caps.partialTranscriptAvailable)} vad=
         {String(!!caps.vadAvailable)} bargeIn=
         {String(!!caps.acousticBargeInAvailable)} wake=false duplex=false
         {" · "}
-        {caps.acousticBargeInAvailable
-          ? "acoustic barge-in + manual interrupt"
-          : "manual interrupt (VAD degraded/unavailable)"}
+        partial≠execute · privacy browser STT = PLATFORM_MANAGED_UNKNOWN
       </Text>
     </section>
   );
