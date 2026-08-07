@@ -5202,6 +5202,33 @@ def paper_summary(account_id: str, authorization: str | None = Header(default=No
         raise _err(e) from e
 
 
+@router.get("/paper/accounts/{account_id}/command-snapshot")
+def paper_command_snapshot(account_id: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    """Canonical ledger snapshot for production Hybrid Command (read-only)."""
+    try:
+        return _ppsvc().command_center_snapshot(_ppctx(authorization, x_platform_token), account_id)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/paper/accounts/{account_id}/risk")
+def paper_account_risk(account_id: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    """Independent PortfolioRiskEngine contract for production Command (read-only)."""
+    try:
+        return _ppsvc().paper_risk_snapshot(_ppctx(authorization, x_platform_token), account_id)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/paper/accounts/{account_id}/proposals")
+def paper_account_proposals(account_id: str, limit: int = 10, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    """Latest portfolio construction proposals for fund (read-only; no execution)."""
+    try:
+        return _ppsvc().list_portfolio_proposals(_ppctx(authorization, x_platform_token), account_id, limit=limit)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
 @router.post("/paper/order-intents")
 def paper_intent_create(body: PaperIntentBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
     try:
