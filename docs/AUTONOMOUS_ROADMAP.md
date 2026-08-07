@@ -1,5 +1,23 @@
 # SaathiOS Autonomous Roadmap
 
+## FM-I6.2-LIVE — Live Certification Attempt (2026-08-07)
+
+| Field | Value |
+| --- | --- |
+| Mode | **Live attempt** — published MG-FIX, evaluated combined gate, **no inference** |
+| Baseline | `a83305f0b1e69db896fc6b86f0d4ddbc10f92e82` |
+| Branch | `hardening/fm-i6.2-macos-memory-gate-fix` |
+| Draft PR | https://github.com/chaulagainazay-dot/SaathiAI/pull/22 |
+| Runtime boundary | Pass (loopback-only, firewall on, digest match, Ollama 0.32.5) |
+| Memory gate | **DENIED** — `MODEL_HEADROOM_LOW` (reclaimable ~2380 MiB &lt; 4021.5 MiB) |
+| Live tests A/B/C | **Not run** |
+| Report | `docs/agent-runtime/FM_I6_2_LIVE_CERTIFICATION.md` |
+| Evidence | `docs/evidence/fm_i6_2_live/` |
+| Terminal verdict | `FM_I6_2_LIVE_MEMORY_GATE_DENIED` |
+| Production / role-qualified | **False** |
+| FM-I7 ready | **No** |
+| Next | Operator frees ~1.6+ GiB reclaimable headroom; re-run FM-I6.2-LIVE without lowering thresholds |
+
 ## FM-I6.2-MG-FIX — Combined macOS Memory Gate Implementation (2026-08-07)
 
 | Field | Value |

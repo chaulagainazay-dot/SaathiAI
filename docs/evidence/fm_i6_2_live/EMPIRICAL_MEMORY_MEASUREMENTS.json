@@ -1,0 +1,31 @@
+{
+  "evidence": "fm_i6_2_live.empirical_memory.v1",
+  "status": "PRE_ADMISSION_ONLY",
+  "inference_attempted": false,
+  "design_estimated_peak_mib": 2681,
+  "required_headroom_mib": 4021.5,
+  "pre_admission_idle": {
+    "sample1": {
+      "darwin_free_percent": 58.0,
+      "reclaimable_mib": 2380.34,
+      "pure_free_mib": 55.47,
+      "compressor_percent": 23.27,
+      "swap_used_mib": 0.0,
+      "ollama_rss_kib": 22656
+    },
+    "sample2": {
+      "darwin_free_percent": 58.0,
+      "reclaimable_mib": 2394.94,
+      "pure_free_mib": 76.08,
+      "compressor_percent": 23.25,
+      "swap_used_mib": 0.0
+    }
+  },
+  "during_load": null,
+  "peak_streaming": null,
+  "post_terminal": null,
+  "post_settle": null,
+  "observed_rss_increase_mib": null,
+  "difference_from_design_estimate_mib": null,
+  "note": "No load measurement because gate denied model admission. Values are measured pre-admission only."
+}

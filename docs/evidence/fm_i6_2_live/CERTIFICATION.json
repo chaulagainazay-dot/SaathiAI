@@ -1,0 +1,41 @@
+{
+  "evidence": "fm_i6_2_live.certification.v1",
+  "milestone": "FM-I6.2-LIVE",
+  "terminal_verdict": "FM_I6_2_LIVE_MEMORY_GATE_DENIED",
+  "baseline_sha": "a83305f0b1e69db896fc6b86f0d4ddbc10f92e82",
+  "branch": "hardening/fm-i6.2-macos-memory-gate-fix",
+  "mg_fix_remote": "origin/hardening/fm-i6.2-macos-memory-gate-fix",
+  "draft_pr": "https://github.com/chaulagainazay-dot/SaathiAI/pull/22",
+  "pr_base": "hardening/fm-i6.2-ollama-live-certification",
+  "production_certified": false,
+  "model_role_qualified": false,
+  "live_inference": false,
+  "runtime_boundary": {
+    "firewall": "enabled",
+    "bind": "127.0.0.1:11434",
+    "wildcard": false,
+    "server_version": "0.32.5",
+    "model": "qwen2.5:1.5b",
+    "digest_match": true,
+    "loaded_models": []
+  },
+  "memory_gate": {
+    "policy_version": "fm_i6_2_mg_fix.combined_macos.v1",
+    "allowed": false,
+    "denial_reasons": ["MODEL_HEADROOM_LOW"],
+    "required_headroom_mib": 4021.5,
+    "available_reclaimable_mib": 2380.34,
+    "deficit_mib": 1641.16,
+    "darwin_free_percent": 58.0,
+    "swap_used_mib": 0.0,
+    "compressor_percent": 23.27
+  },
+  "empirical_budget_classification": "LIVE_TEST_NOT_RUN",
+  "fm_i7_ready": false,
+  "operator_guidance": [
+    "Close heavy applications (browsers, IDE helpers) or restart Mac with Ollama.app closed.",
+    "Re-run dual-sample gate until reclaimable_mib >= 4021.5 (or ~4277.5 after a prior denial due to hysteresis).",
+    "Do not lower gate thresholds to force a pass.",
+    "Then re-authorize FM-I6.2-LIVE."
+  ]
+}
