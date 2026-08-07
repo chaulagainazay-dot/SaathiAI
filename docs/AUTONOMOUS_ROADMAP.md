@@ -1,5 +1,21 @@
 # SaathiOS Autonomous Roadmap
 
+## FM-I6.2 — Ollama Loopback Remediation + Minimal Live Cert (2026-08-07)
+
+| Field | Value |
+| --- | --- |
+| Mode | **Operator-owned remediation** + optional minimal live cert |
+| Baseline | FM-I6.1 tip @ `8540e686f4a56d54b9dca8ec3d36004468fd0392` |
+| Branch | `hardening/fm-i6.2-ollama-live-certification` |
+| Report | `docs/agent-runtime/FM_I6_2_LOOPBACK_AND_LIVE_CERTIFICATION.md` |
+| Evidence | `docs/evidence/fm_i6_2/` |
+| Diagnosis | Dual runtime: LaunchAgent loopback + Ollama.app wildcard |
+| Live | **Not started** — operator must quit app, enable firewall, free memory |
+| Regression | 184 passed, 1 skipped |
+| Terminal verdict | `FM_I6_2_OPERATOR_ACTION_REQUIRED` |
+| FM-I7 ready | **No** |
+| Next | Operator completes Step 1 (Quit Ollama.app) → resume Phase D verification |
+
 ## FM-I6.1 — LocalModelHarness Closeout (2026-08-07)
 
 | Field | Value |
