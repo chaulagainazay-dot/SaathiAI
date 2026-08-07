@@ -148,15 +148,25 @@ export function composeInvestmentSnapshot({ summary = null, ready = false, auth 
   }
 
   const num = (v) => (v == null || Number.isNaN(Number(v)) ? null : Number(v));
-  const equity = num(summary.equity);
+  // Prefer canonical fund ledger fields when present (T-NEXT-1); never invent in UI.
+  const equity = num(summary.paper_nav ?? summary.paperNav ?? summary.nav ?? summary.equity);
   const cash = num(summary.cash);
+  const pnl = num(summary.pnl ?? summary.total_pnl);
+  const gross = num(summary.gross_exposure ?? summary.grossExposure);
+  const net = num(summary.net_exposure ?? summary.netExposure);
+  const fromLedger = summary.source === "canonical_fund_ledger" || summary.ledger === true;
 
   const riskState =
     (summary.blockingBreakers || 0) > 0
       ? { available: true, value: "BLOCKED", label: "BLOCKED", reason: "blocking breakers" }
       : (summary.unackAlerts || 0) > 0 || (summary.critDrift || 0) > 0
         ? { available: true, value: "DEGRADED", label: "DEGRADED", reason: "alerts or recon drift" }
-        : { available: true, value: "PAPER_ACTIVE", label: "PAPER ACTIVE", reason: "safety surface loaded" };
+        : { available: true, value: "PAPER_ACTIVE", label: "PAPER ACTIVE", reason: fromLedger ? "canonical ledger" : "safety surface loaded" };
+
+  const field = (value, okReason, missReason) =>
+    value == null
+      ? na(missReason)
+      : { available: true, value, label: String(value), reason: okReason };
 
   return {
     mode: "PAPER",
@@ -164,24 +174,28 @@ export function composeInvestmentSnapshot({ summary = null, ready = false, auth 
     ready: true,
     error: error || null,
     fields: {
-      paperNav:
-        equity == null
-          ? na("total_equity absent")
-          : { available: true, value: equity, label: String(equity), reason: "sum paper total_equity" },
-      cash:
-        cash == null
-          ? na("current_cash absent")
-          : { available: true, value: cash, label: String(cash), reason: "sum paper current_cash" },
-      pnl: na("P&L not exposed on overview aggregate"),
-      grossExposure: na("not in overview payload — T-NEXT-1"),
-      netExposure: na("not in overview payload — T-NEXT-1"),
-      drawdown: na("not in overview payload — T-NEXT-1"),
+      paperNav: field(
+        equity,
+        fromLedger ? "canonical fund ledger NAV" : "sum paper total_equity",
+        "total_equity / paper_nav absent",
+      ),
+      cash: field(
+        cash,
+        fromLedger ? "canonical fund ledger cash" : "sum paper current_cash",
+        "current_cash absent",
+      ),
+      pnl: field(pnl, "canonical fund ledger total P&L", "P&L not exposed on overview aggregate"),
+      grossExposure: field(gross, "canonical fund ledger gross exposure", "not in overview payload — T-NEXT-1"),
+      netExposure: field(net, "canonical fund ledger net exposure", "not in overview payload — T-NEXT-1"),
+      drawdown: na("not in overview payload — T-NEXT-2 risk engine"),
       riskState,
       accounts: {
         available: true,
-        value: summary.accounts || 0,
-        label: `${summary.active || 0} active / ${summary.accounts || 0}`,
-        reason: "paper.accounts",
+        value: summary.accounts || (fromLedger ? 1 : 0),
+        label: fromLedger
+          ? `ledger fund ${summary.fund_id || ""}`.trim()
+          : `${summary.active || 0} active / ${summary.accounts || 0}`,
+        reason: fromLedger ? "canonical_fund_ledger" : "paper.accounts",
       },
       unackAlerts: {
         available: true,
@@ -202,8 +216,10 @@ export function composeInvestmentSnapshot({ summary = null, ready = false, auth 
         reason: "paper.safety.states",
       },
     },
-    positions: [],
-    note: "Paper only. Live execution unavailable. Missing ledger fields marked NOT AVAILABLE.",
+    positions: Array.isArray(summary.positions) ? summary.positions : [],
+    note: fromLedger
+      ? "PAPER — values from canonical fund ledger. Live execution unavailable."
+      : "Paper only. Live execution unavailable. Missing ledger fields marked NOT AVAILABLE.",
   };
 }
 
