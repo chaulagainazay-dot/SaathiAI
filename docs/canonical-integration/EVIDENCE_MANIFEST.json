@@ -64,7 +64,7 @@
     "pr_close",
     "pr_merge_other"
   ],
-  "final_tip_sha": "63e6329b48e997ab396d0b55b8349d522ad7ebf8",
+  "final_tip_sha": "6d72f00b76e902bc957263f05f1d6c11229a88a1",
   "canonical_branch": "integration/saathios-canonical-baseline",
   "draft_pr": 24
 }

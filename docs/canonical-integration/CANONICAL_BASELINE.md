@@ -2,12 +2,12 @@
 
 | Field | Value |
 | --- | --- |
-| **Canonical branch** |  |
-| **Final tip SHA** |  |
-| **M17 integrated tip (pre final docs)** |  |
-| **Source baseline branch** |  |
-| **Source baseline SHA** |  |
-| **Worktree** |  |
+| **Canonical branch** | `integration/saathios-canonical-baseline` |
+| **Final tip SHA** | `6d72f00b76e902bc957263f05f1d6c11229a88a1` |
+| **M17 integrated tip (pre final docs)** | `6d72f00b76e902bc957263f05f1d6c11229a88a1` |
+| **Source baseline branch** | `hardening/fm-i6.2-macos-memory-gate-fix` |
+| **Source baseline SHA** | `6d72f00b76e902bc957263f05f1d6c11229a88a1` |
+| **Worktree** | `/Users/macbookpro/SaathiAI-canonical-baseline` |
 | **Established** | 2026-08-07 |
 | **Production status** | **NOT production certified** — private-alpha / integration baseline |
 | **Live trading authority** | **false** |
@@ -19,14 +19,14 @@
 
 ## Contained milestone families
 
-Linear ancestry from  through:
+Linear ancestry from master through:
 
 - M47 UI/UX foundation (on master)
 - M48 agent runtime baseline
 - M49.1–M49.4 tool runtime / gateway
 - M50–M53 platform foundation / agent runtime / ops
 - M54–M61 private-alpha product / spatial / workflows
-- Trading Guardian M166–M343 (paper, research, observation, connectivity governance, provider contracts, production readiness, private-alpha readiness)
+- Trading Guardian M166–M343
 - UI recovery + full E2E functional/security recovery
 - Private-alpha product excellence (voice settings)
 - M344–M359 multi-agent development foundation
@@ -40,32 +40,32 @@ Linear ancestry from  through:
 
 | Item | Status |
 | --- | --- |
-| Twenty CRM () | KEEP_SEPARATE — diverged from m312 |
+| Twenty CRM (evaluation/twenty-readonly-sandbox) | KEEP_SEPARATE — diverged from m312 |
 | Dirty Baadar/evaluation WIP on original m312 worktree | NOT integrated |
 | Live provider/broker credentials | Forbidden |
 | Uncommitted original worktree changes | Preserved outside this branch |
 
 ## Known limitations
 
-1. Full backend suite (~6000 tests) not fully re-run in this mission (architecture-critical + M17 + samples run).
-2. Browser smoke requires running platform server — environment-limited this mission.
-3. Multi-runtime coexistence (M48 / M52 / harness / engineering) remains intentional debt.
-4. Residual legacy  tools outside gateway remain classified, not deleted.
-5. Historical M17 evidence JSON pins original repair SHAs (immutable provenance), not this tip.
+1. Full backend suite not fully re-run (architecture-critical + M17 + samples run).
+2. Browser smoke requires live platform server — environment-limited this mission.
+3. Multi-runtime coexistence remains intentional debt.
+4. Residual legacy subprocess tools outside gateway classified, not deleted.
+5. Historical M17 evidence JSON pins original repair SHAs (immutable provenance).
 6. FM-I6.2 live inference still memory-gated on certifying hosts.
-7.  still lags this tip until a separate publish mission.
+7. master still lags this tip until a separate publish mission.
 
 ## Authority invariants (non-negotiable)
 
 - ExecutionGateway = sole external tool-execution authority
 - Trading Guardian independent and fail-closed
-- Approval ≠ activation
-- Model output ≠ authority
+- Approval does not equal activation
+- Model output does not equal authority
 - Financial execution prohibited
 - Voice activation does not grant execution authority
 
 ## Publication pin
 
-- Final tip: 
-- Branch: 
-- Remote: 
+- Final tip: `6d72f00b76e902bc957263f05f1d6c11229a88a1`
+- Branch: `integration/saathios-canonical-baseline`
+- Remote: origin/integration/saathios-canonical-baseline
