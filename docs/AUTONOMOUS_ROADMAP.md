@@ -1,5 +1,23 @@
 # SaathiOS Autonomous Roadmap
 
+## FM-I5 — LocalModelHarness Design and Security (2026-08-07)
+
+| Field | Value |
+| --- | --- |
+| Mode | **Design-only** — architecture + security ADR; no implementation |
+| Baseline | FM-I4 @ `498bf2f75dfe765368a125bfe68c1a3e8e1a985f` |
+| Branch | `docs/fm-i5-local-model-harness-design` |
+| ADR | `docs/adr/ADR-LOCAL-MODEL-HARNESS.md` |
+| Report | `docs/agent-runtime/FM_I5_LOCAL_MODEL_HARNESS_DESIGN.md` |
+| Runtime selection | `OLLAMA_SELECTED` (0.32.5 user-managed) |
+| Model pin | `qwen2.5:1.5b` (digest pinned; synthetic proof only; not M376 role-qualified) |
+| Process ownership | `USER_MANAGED_RUNTIME` |
+| Network | loopback `http://127.0.0.1:11434` only; cloud fallback prohibited |
+| Terminal verdict | `FM_I5_LOCAL_MODEL_HARNESS_DESIGN_APPROVED_WITH_LIMITATIONS` |
+| Production certified | **False** |
+| Forbidden | LocalModelHarness code, ollama pull/run/start/stop, inference, providers, credentials, FM-I6 without new auth |
+| Next | **FM-I6 only after separate owner authorization** — do not auto-start |
+
 ## FM-I4 — Harness Resource Governance (2026-08-07)
 
 | Field | Value |

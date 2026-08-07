@@ -196,9 +196,14 @@ security ADRs and package certification.
 - `HarnessSessionController` — bounded trusted mediator + gateway **test double**
 - `tests/test_fm_i1_agent_harness.py` — conformance and security invariant suite
 
-Still **not** authorized / not present: LocalModelHarness, commercial CLI adapters,
-provider SDKs, credentials, production activation, public SDK, or ExecutionGateway
-behavior changes. `AgentSessionAdapter` remains unchanged.
+Still **not** authorized / not present in source: LocalModelHarness implementation,
+commercial CLI adapters, provider SDKs, credentials, production activation, public SDK,
+or ExecutionGateway behavior changes. `AgentSessionAdapter` remains unchanged.
+
+**FM-I5 (2026-08-07, design-only)** accepted LocalModelHarness architecture with limitations
+(`ADR-LOCAL-MODEL-HARNESS`, `docs/agent-runtime/FM_I5_LOCAL_MODEL_HARNESS_DESIGN.md`):
+`OLLAMA_SELECTED`, `USER_MANAGED_RUNTIME`, model pin `qwen2.5:1.5b`, loopback-only.
+**No implementation.** FM-I6 remains separately gated.
 
 ---
 
