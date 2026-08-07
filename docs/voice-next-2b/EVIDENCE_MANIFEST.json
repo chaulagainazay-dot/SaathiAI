@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "mission": "V-NEXT-2B-STREAMING-STT-TURNS",
+  "verdict": "STREAMING_STT_TURN_ORCHESTRATION_CERTIFIED_WITH_LIMITATIONS",
+  "source_sha": "9fad0298ddfc7a01e8bfd91b985f45c64ebf2bfc",
+  "source_branch": "feature/v-next-2a-vad-barge-in",
+  "feature_branch": "feature/v-next-2b-streaming-stt-turns",
+  "stt": "browser_speech_recognition + mock",
+  "orchestration": "RealtimeVoicePipelineCoordinator (Saathi-owned)",
+  "pipecat": "ADAPT_INTEGRATE_LATER",
+  "tests_note": "see npm test after suite run",
+  "tests": {
+    "frontend_unit_passed": 421,
+    "build": "pass"
+  }
+}
