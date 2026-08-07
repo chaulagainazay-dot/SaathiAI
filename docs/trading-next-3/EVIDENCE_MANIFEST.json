@@ -1,0 +1,30 @@
+{
+  "mission": "T-NEXT-3",
+  "title": "PORTFOLIO CONSTRUCTION + REBALANCING PROPOSAL ENGINE",
+  "certified_at": "2026-08-07T12:06:24.468991+00:00",
+  "terminal_verdict": "PORTFOLIO_CONSTRUCTION_PROPOSAL_ENGINE_CERTIFIED_WITH_LIMITATIONS",
+  "base_sha": "0507f2afd20b1a27f7a1cb47eae4ec01dac58e84",
+  "base_branch": "feature/t-next-2-independent-risk-engine",
+  "base_pr": 37,
+  "work_branch": "feature/t-next-3-portfolio-construction",
+  "worktree": "~/SaathiAI-trading-next-3",
+  "engine": "saathi.platform.portfolio_construction.PortfolioConstructionEngine",
+  "tests": {
+    "construction": 18,
+    "chain_construction_risk_ledger": 54
+  },
+  "methods": [
+    "equal_weight",
+    "fixed_target",
+    "signal_proportional",
+    "risk_budget_constrained"
+  ],
+  "non_actions": {
+    "live_trading": false,
+    "auto_approval": false,
+    "ledger_mutation": false,
+    "execution": false,
+    "pr35_36_37_merge": false,
+    "ui_next_3_started": false
+  }
+}
