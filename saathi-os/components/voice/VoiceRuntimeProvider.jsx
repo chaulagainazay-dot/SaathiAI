@@ -275,6 +275,9 @@ export function VoiceRuntimeProvider({ children }) {
       claim.setRecognition(recognition);
       recognitionRef.current = recognition;
       recognition.start();
+      try {
+        await voiceSession?.manager?.armVad?.({ bargeInMode: false });
+      } catch { /* VAD optional */ }
       dispatch({ type: "LOCAL_RECORDING", recording: true, listening: true });
     },
     [cleanupLocal, submitFinalTranscript, voiceSession]
