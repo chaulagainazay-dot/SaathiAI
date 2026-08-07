@@ -76,3 +76,8 @@ export {
   createRealtimeVoicePipeline,
   normalizeTranscriptEvent,
 } from "./pipeline-coordinator.js";
+export {
+  DOMAIN_VOCAB_RULES,
+  applyDomainVocabulary,
+  normalizeTranscriptText,
+} from "./domain-vocab.js";
