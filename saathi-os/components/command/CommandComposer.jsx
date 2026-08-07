@@ -123,6 +123,17 @@ export default function CommandComposer({ command, voiceSessionState }) {
           ) : null}
         </div>
       )}
+      {voiceSession?.session?.voiceInputLabel ? (
+        <Text tone="muted" size="xs" as="p" className="cmd-voice-input-label">
+          <strong>{voiceSession.session.voiceInputLabel.title || "VOICE INPUT"}</strong>
+          {" · "}
+          {voiceSession.session.voiceInputLabel.line}
+          {voiceSession.session.sttEngine?.language
+            ? ` · lang ${voiceSession.session.sttEngine.language}`
+            : ""}
+          {voiceSession.session.sttEngine?.degraded ? " · degraded" : ""}
+        </Text>
+      ) : null}
       <Text tone="disabled" size="xs" mono as="p">
         Canonical VoiceSession: {vs}
         {voiceSession?.session?.lastBargeInLatencyMs != null
@@ -137,7 +148,10 @@ export default function CommandComposer({ command, voiceSessionState }) {
         {String(!!caps.vadAvailable)} bargeIn=
         {String(!!caps.acousticBargeInAvailable)} wake=false duplex=false
         {" · "}
-        partial≠execute · privacy browser STT = PLATFORM_MANAGED_UNKNOWN
+        partial≠execute · privacy=
+        {voiceSession?.session?.sttEngine?.privacyClass ||
+          voiceSession?.session?.voiceInputLabel?.privacyClass ||
+          "PLATFORM_MANAGED_UNKNOWN"}
       </Text>
     </section>
   );

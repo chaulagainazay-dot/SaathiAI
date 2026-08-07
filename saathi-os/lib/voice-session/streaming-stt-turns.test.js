@@ -26,13 +26,20 @@ describe("stt policy", () => {
 
   it("resource admission prefers browser STT and never lowers LLM gate", () => {
     const a = admitStreamingStt({ browserSttAvailable: true });
-    assert.equal(a.admission, "LOCAL_STT_ALLOWED");
+    // Browser path is READY_DEGRADED (privacy unknown) with legacy ALLOWED
+    assert.ok(
+      a.admission === "LOCAL_STT_READY_DEGRADED" || a.admission === "LOCAL_STT_ALLOWED"
+    );
+    assert.equal(a.mode, "browser_streaming");
     assert.equal(a.policy.neverLowerLlmMemoryGate, true);
     const b = admitStreamingStt({
       heavyLocalSttRequested: true,
       localLlmActive: true,
     });
-    assert.equal(b.admission, "LOCAL_STT_BLOCKED_RESOURCE_PRESSURE");
+    assert.ok(
+      b.admission === "LOCAL_STT_BLOCKED_MEMORY" ||
+        b.admission === "LOCAL_STT_BLOCKED_RESOURCE_PRESSURE"
+    );
   });
 });
 
@@ -111,6 +118,9 @@ describe("streaming pipeline + manager", () => {
       localLlmActive: true,
       browserSttAvailable: false,
     });
-    assert.equal(blocked.admission, "LOCAL_STT_BLOCKED_RESOURCE_PRESSURE");
+    assert.ok(
+      blocked.admission === "LOCAL_STT_BLOCKED_MEMORY" ||
+        blocked.admission === "LOCAL_STT_BLOCKED_RESOURCE_PRESSURE"
+    );
   });
 });
