@@ -1,5 +1,19 @@
 # SaathiOS Autonomous Roadmap
 
+## UI-NEXT-1 — Central Command Composition (2026-08-07)
+
+| Field | Value |
+| --- | --- |
+| Mode | **UI composition** — no new backend, no voice redesign |
+| Branch | `feature/ui-next-1-central-command` |
+| Base | `integration/saathios-canonical-baseline` @ `20302574…` |
+| Surface | `/command` control plane |
+| Docs | `docs/ui-next-1/` |
+| Verdict | `CENTRAL_COMMAND_COMPOSITION_CERTIFIED_WITH_LIMITATIONS` |
+| Next | `V-NEXT-1` (separate authorization) |
+
+---
+
 ## CANONICAL BASELINE INTEGRATION (2026-08-07)
 
 | Field | Value |
