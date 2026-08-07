@@ -61,6 +61,7 @@ Operator guide (manual only): `docs/agent-runtime/FM_I6_1_OLLAMA_LOOPBACK_OPERAT
 | Gate | Result |
 | --- | --- |
 | Runtime available | Pass |
+| Memory gate semantics (post FM-I6.2-MG) | **Requires revision** — pure free ≥20% not primary; harness `free_percent` is reclaimable ratio; combined gate ADR accepted, code deferred |
 | Client endpoint validation | Pass (`127.0.0.1` only) |
 | Model pin + digest | Pass |
 | Memory free% ≥ 20 | **Fail** (~18.8%) |

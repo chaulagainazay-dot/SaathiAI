@@ -589,7 +589,7 @@ Maps to existing `ToolProposal` dataclass in `types.py` after controller normali
 | Wall-clock turn | 90 s | |
 | Idle | 120 s | |
 | Model-load wait | 60 s | |
-| Memory pressure | fail closed if free% &lt; 20 or available &lt; 1024 MiB (M370 thresholds) | Observe; do not kill others |
+| Memory pressure | Originally: fail closed if free% &lt; 20 or available &lt; 1024 MiB (M370 thresholds). **FM-I6.2-MG:** pure free ≥20% is invalid as primary on macOS; see `docs/adr/ADR-MACOS-LOCAL-MODEL-MEMORY-GATE.md` (combined Darwin free% + reclaimable vs model budget + swap). | Observe; do not kill others |
 | Parallel model loading | **Forbidden** | |
 | Second model | **Forbidden** | |
 

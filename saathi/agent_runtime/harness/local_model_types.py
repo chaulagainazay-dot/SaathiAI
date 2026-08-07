@@ -57,11 +57,14 @@ MAX_STREAM_RESPONSE_BYTES = 256 * 1024
 MAX_DELTA_CHARS = 4096
 MAX_OUTPUT_CHARS_DEFAULT = 4096
 
-# Resource gates (FM-I5 / M370)
-MIN_FREE_MEMORY_PERCENT = 20
-MIN_AVAILABLE_MEMORY_MIB = 1024.0
+# Resource gates — FM-I6.2-MG-FIX combined macOS gate (see local_model_memory_gate.py).
+# Legacy names retained for import compatibility; values are NOT pure-free floors.
+# Primary admission uses CombinedMacOSMemoryGate, not these alone.
+MIN_FREE_MEMORY_PERCENT = 20  # Darwin memory_pressure free% floor (not pure free pages)
+MIN_AVAILABLE_MEMORY_MIB = 2048.0  # absolute reclaimable floor (raised from 1024 by MG-FIX)
 MAX_ACTIVE_LOCAL_SESSIONS = 1
 MAX_TRANSIENT_CONNECT_RETRIES = 1
+MEMORY_GATE_POLICY_VERSION = "fm_i6_2_mg_fix.combined_macos.v1"
 
 DEFAULT_TEMPERATURE = 0.2
 DEFAULT_TOP_P = 0.9
@@ -202,11 +205,21 @@ class RuntimeInventory:
 
 @dataclass(frozen=True)
 class MemorySnapshot:
+    """Legacy snapshot shape (transitional).
+
+    ``free_percent`` historically mixed reclaimable-ratio semantics. Prefer
+    :class:`MacOSMemorySample` / :class:`MemoryGateDecision` from
+    ``local_model_memory_gate``. ``ok`` remains the admission bit for old tests.
+    """
+
     total_bytes: int
-    free_percent: float
-    available_mib: float
+    free_percent: float  # diagnostic; not pure free
+    available_mib: float  # reclaimable MiB when produced by MG-FIX
     ok: bool
     detail: str = ""
+    pure_free_percent: float = 0.0  # diagnostic only
+    darwin_free_percent: float = 0.0
+    policy_version: str = ""
 
 
 @dataclass(frozen=True)
