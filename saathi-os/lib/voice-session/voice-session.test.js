@@ -17,12 +17,14 @@ import {
 } from "./index.js";
 
 describe("voice-session contract", () => {
-  it("defaults capabilities without inventing VAD/full-duplex", () => {
+  it("defaults capabilities without inventing wake-word/full-duplex", () => {
     const caps = detectVoiceCapabilities(null);
-    assert.equal(caps.vadAvailable, false);
+    // Energy VAD is available in-process; wake word and full duplex are not
+    assert.equal(caps.vadAvailable, true);
     assert.equal(caps.wakeWordAvailable, false);
     assert.equal(caps.fullDuplexAvailable, false);
     assert.equal(caps.manualInterruptAvailable, true);
+    assert.equal(caps.acousticBargeInAvailable, false);
   });
 
   it("derives truthful states only", () => {

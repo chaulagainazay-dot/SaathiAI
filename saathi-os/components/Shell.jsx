@@ -24,6 +24,7 @@ import { VoiceOutputProvider } from "./voice/VoiceOutputProvider";
 import VoiceOutputDock from "./voice/VoiceOutputDock";
 import { VoiceRuntimeProvider } from "./voice/VoiceRuntimeProvider";
 import VoiceRuntimeDock from "./voice/VoiceRuntimeDock";
+import { VoiceSessionProvider } from "./voice/VoiceSessionProvider";
 
 function ShellInner({ children }) {
   const pathname = usePathname();
@@ -184,11 +185,13 @@ export default function Shell({ children }) {
   return (
     <ShellChromeProvider>
       <ModuleDiscoveryProvider>
-        <VoiceOutputProvider>
-          <VoiceRuntimeProvider>
-            <ShellInner>{children}</ShellInner>
-          </VoiceRuntimeProvider>
-        </VoiceOutputProvider>
+        <VoiceSessionProvider>
+          <VoiceOutputProvider>
+            <VoiceRuntimeProvider>
+              <ShellInner>{children}</ShellInner>
+            </VoiceRuntimeProvider>
+          </VoiceOutputProvider>
+        </VoiceSessionProvider>
       </ModuleDiscoveryProvider>
     </ShellChromeProvider>
   );
