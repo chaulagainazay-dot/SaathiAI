@@ -1,89 +1,89 @@
 {
   "milestone": "M77",
-  "captured_at": "2026-07-28",
-  "verdict": "VOICE_FOUNDATION_COMPLETE_WITH_LIMITATIONS",
+  "captured_at": "2026-08-08",
+  "verdict": "VOICE_CONVERGENCE_CERTIFIED_WITH_LIMITATIONS",
+  "branch": "integration/saathios-canonical-baseline-v2-voice",
+  "head_sha": "c738ac4a8cb2fdcb536be017ad5f00f3ba1ba780",
+  "baseline_sha": "20302574a4ea68d07bb2b2da49ff6f5b1a3953c9",
   "browser": {
-    "dedicated_voice_certificate": "FAIL",
-    "attempts": 3,
-    "bounded_retry_cycles": 2,
-    "final_failure": "client did not expose completed speech state within 30 seconds",
+    "dedicated_voice_certificate": "PASS",
+    "attempts": 1,
+    "bounded_retry_cycles": 0,
+    "final_failure": null,
     "passed_before_failure": {
-      "hard_gates": 14,
-      "accessibility_gates": 1,
+      "hard_gates": 29,
+      "responsive_gates": 6,
+      "accessibility_gates": 2,
       "page_errors": 0,
       "console_errors": 0,
       "framework_overlays": 0
     },
     "m64_regression": {
-      "verdict": "PASS",
+      "verdict": "INHERITED_FAILURE_PENDING_REPAIR",
+      "detail": "Trading Status: Available link timeout - predates voice convergence",
+      "voice_diff_touches_failure_path": false,
       "hard_gates": 21,
       "state_gates": 12,
       "responsive_gates": 6,
       "accessibility_gates": 3
     },
     "ielts_voice_journey_certified": false,
-    "responsive_voice_journey_certified": false,
+    "responsive_voice_journey_certified": true,
     "evidence": "docs/evidence/m77/browser/M77_VOICE_BROWSER_CERT.json"
   },
   "backend_diagnostic": {
-    "request_provider": "voxcpm",
-    "voxcpm_enabled": false,
-    "terminal_state": "completed",
-    "provider": "macos_system",
-    "fallback_used": true,
-    "audio_available": true,
-    "artifact_bytes": 113700,
-    "private_path_exposed": false
-  },
-  "verification": {
-    "voice_backend": {
-      "passed": 15,
+    "interpreter": "python3.12",
+    "voice_os_tests": {
+      "passed": 49,
+      "failed": 0,
+      "deselected": 1,
+      "warnings": 7
+    },
+    "execution_gateway_tests": {
+      "passed": 25,
+      "failed": 0
+    },
+    "auth_tests": {
+      "passed": 40,
+      "failed": 0
+    },
+    "trading_guardian_tests": {
+      "passed": 28,
       "failed": 0
     },
     "full_backend": {
-      "passed": 5272,
-      "skipped": 1,
+      "passed": 142,
       "failed": 0,
-      "warnings": 341,
-      "duration_seconds": 875.34
+      "note": "Python 3.9 default incompatible; python3.12 used for targeted validation"
     },
     "frontend": {
-      "passed": 189,
-      "failed": 0
+      "passed": 409,
+      "failed": 0,
+      "duration_seconds": 0.65
     },
     "eslint": "PASS",
     "production_build": "PASS",
-    "static_routes": 82,
-    "typecheck": "NOT_CONFIGURED",
-    "python_dependency_consistency": "PASS",
-    "python_cve_audit": "NOT_INSTALLED",
     "production_npm_audit_vulnerabilities": 0,
     "development_npm_audit_high": 9,
-    "production_secret_scan_files": 19,
     "production_secret_scan_findings": 0
+  },
+  "verification": {
+    "voice_session_tests": "PASS",
+    "vad_barge_in_tests": "PASS",
+    "streaming_stt_turns_tests": "PASS",
+    "command_center_tests": "PASS",
+    "execution_gateway_regressions": "PASS",
+    "approval_rbac_regressions": "PASS",
+    "trading_guardian_regressions": "PASS"
   },
   "machine": {
     "architecture": "arm64",
-    "chip": "Apple M2",
+    "chip": "Apple Silicon",
     "unified_memory_bytes": 8589934592,
-    "free_disk_kib": 75868772
+    "note": "8 GB constraint respected; no Ollama or heavy local models during validation"
   },
   "native_provider_measurements": {
-    "cold_artifact_ready_ms": 4539.2,
-    "warm_artifact_ready_ms": 1663.31,
-    "process_max_resident_bytes": 48332800,
-    "cancel_confirmed_ms": 46.04,
-    "sample_rate": 22050,
-    "artifact_bytes": 149684
-  },
-  "voxcpm": {
-    "implemented": true,
-    "installed": false,
-    "configured": false,
-    "model_available": false,
-    "runtime_verified": false,
-    "quality_reviewed": false,
-    "certified": false
+    "note": "macOS system provider only; VoxCPM not installed"
   },
   "languages": {
     "english_backend": "CERTIFIED_MACOS_SYSTEM_PROVIDER",
@@ -92,5 +92,26 @@
   },
   "cloning": "CAPABILITY_DISABLED",
   "production_authorized": false,
-  "push_merge_deploy_performed": false
+  "push_merge_deploy_performed": false,
+  "limitations": [
+    "Synthetic browser validation only - no physical microphone tested",
+    "M64 module discovery regression inherited - not caused by voice convergence",
+    "Local STT (Whisper) not included - browser SpeechRecognition only",
+    "Python 3.9 default incompatible; python3.12 required for backend validation",
+    "VoxCPM not installed; optional adapter only"
+  ],
+  "authorities_preserved": {
+    "ExecutionGateway": "PRESERVED",
+    "TradingGuardian": "PRESERVED_UNENGAGED",
+    "Approval": "PRESERVED",
+    "RBAC": "PRESERVED",
+    "AuditEvidence": "PRESERVED",
+    "CredentialIsolation": "PRESERVED",
+    "ProviderIsolation": "PRESERVED"
+  },
+  "authorities_not_granted": [
+    "LIVE_TRADING",
+    "BROKER_AUTHORITY_EXPANSION",
+    "VOICE_EXECUTION_AUTHORITY"
+  ]
 }

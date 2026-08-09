@@ -1,6 +1,6 @@
 {
   "schema": "m129.app_browser_cert.v1",
-  "capturedAt": "2026-07-29T03:29:34.411Z",
+  "capturedAt": "2026-08-09T09:59:12.998Z",
   "hardGates": {
     "discover_ge_5": {
       "ok": true,
