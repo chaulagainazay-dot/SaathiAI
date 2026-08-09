@@ -5,11 +5,12 @@
     "sign_in": true,
     "apps_http_200": true,
     "backend_navigation_trading": true,
-    "placeholder_ieltsalert": true,
+    "backend_navigation_ielts": true,
     "placeholder_hcg_pos": true,
     "placeholder_travel": true,
     "placeholder_finance": true,
     "trading_actionable_card": true,
+    "ielts_actionable_card": true,
     "no_placeholder_card_links": true,
     "truthful_placeholder_statuses": true,
     "command_palette_trading": true,
@@ -58,12 +59,10 @@
   ],
   "browserErrors": {
     "page": 0,
-    "console": 6,
-    "expectedTopbarCors": 6,
+    "console": 0,
+    "expectedTopbarCors": 0,
     "unexpectedConsole": 0,
-    "consoleCategories": {
-      "topbar_approvals_cors": 6
-    },
+    "consoleCategories": {},
     "overlay": 0
   },
   "verdict": "PASS"

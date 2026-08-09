@@ -298,8 +298,16 @@ async function certifyFailureStates(browser, token) {
 async function certifyLogout(browser, token) {
   const context = await authContext(browser, token, { width: 1280, height: 900 });
   const page = await context.newPage();
+
+  const sessionsResponse = page.waitForResponse(
+    (r) => r.url().includes("/api/v1/auth/sessions") && r.request().method() === "GET"
+  );
+
   await page.goto(`${UI}/security`, { waitUntil: "domcontentloaded" });
   await page.getByRole("button", { name: /Sign out$/ }).waitFor();
+
+  await sessionsResponse;
+
   await page.getByRole("button", { name: /Sign out$/ }).click();
   await page.waitForFunction(
     () => !localStorage.getItem("saathi_platform_token"),
