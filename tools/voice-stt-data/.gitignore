@@ -1,0 +1,11 @@
+# Never commit recordings or local corpus mirrors
+*.wav
+*.flac
+*.mp3
+*.m4a
+*.ogg
+*.webm
+/local-corpus/
+__pycache__/
+*.pyc
+.DS_Store

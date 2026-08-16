@@ -19,6 +19,12 @@ import {
   voiceRuntimeActions,
   voiceRuntimeReducer,
 } from "@/lib/voice-runtime";
+import {
+  acquireInputClaim,
+  openMicrophoneForClaim,
+  forceReleaseInput,
+} from "@/lib/voice-session";
+import { useVoiceSession } from "./VoiceSessionProvider";
 
 const VoiceRuntimeContext = createContext(null);
 
@@ -32,7 +38,9 @@ export function VoiceRuntimeProvider({ children }) {
   const recognitionRef = useRef(null);
   const sessionIdRef = useRef("");
   const mediaStreamRef = useRef(null);
+  const inputClaimRef = useRef(null);
   const voiceOutput = useVoiceOutput();
+  const voiceSession = useVoiceSession();
 
   useEffect(() => {
     sessionIdRef.current = runtime.sessionId;
@@ -49,13 +57,32 @@ export function VoiceRuntimeProvider({ children }) {
       mediaStreamRef.current.getTracks().forEach((track) => track.stop());
       mediaStreamRef.current = null;
     }
-  }, []);
+    if (inputClaimRef.current) {
+      try {
+        inputClaimRef.current.release();
+      } catch {
+        /* ignore */
+      }
+      inputClaimRef.current = null;
+    }
+    try {
+      voiceSession?.endInput?.("USER_CANCEL");
+    } catch {
+      /* ignore */
+    }
+  }, [voiceSession]);
 
   const hardReset = useCallback(() => {
     cleanupLocal();
+    forceReleaseInput("SESSION_CLOSE");
+    try {
+      voiceSession?.interrupt?.("SESSION_CLOSE");
+    } catch {
+      /* ignore */
+    }
     dispatch({ type: "RESET" });
     setBusy(false);
-  }, [cleanupLocal]);
+  }, [cleanupLocal, voiceSession]);
 
   useEffect(() => {
     setToken(getToken());
@@ -155,16 +182,23 @@ export function VoiceRuntimeProvider({ children }) {
           "Browser speech recognition is unavailable. Use a Chromium browser or install a local STT provider."
         );
       }
-      // Explicit gesture path — request mic permission first (loopback only).
+      // V-NEXT-1: exclusive input claim via VoiceSessionManager (single owner).
+      await voiceSession?.beginInput?.({ label: "VoiceRuntimeProvider", stopOutputFirst: true });
+      let claim = voiceSession?.manager?.getInputClaim?.() || null;
+      if (!claim) {
+        claim = acquireInputClaim({ label: "VoiceRuntimeProvider" });
+      }
+      inputClaimRef.current = claim;
+
       try {
-        mediaStreamRef.current = await navigator.mediaDevices.getUserMedia({
-          audio: true,
-        });
+        mediaStreamRef.current = await openMicrophoneForClaim(claim, { audio: true });
       } catch {
         await voiceRuntimeActions.listen(activeToken, sessionId, {
           mode: "toggle",
           permission_granted: false,
         });
+        claim.release();
+        inputClaimRef.current = null;
         throw new Error("Microphone permission is required to talk.");
       }
 
@@ -179,6 +213,7 @@ export function VoiceRuntimeProvider({ children }) {
       recognition.lang = "en-US";
 
       recognition.onresult = async (event) => {
+        if (!claim.isActive()) return;
         let interim = "";
         let finalText = "";
         for (let i = event.resultIndex; i < event.results.length; i += 1) {
@@ -187,6 +222,7 @@ export function VoiceRuntimeProvider({ children }) {
           else interim += piece;
         }
         if (interim) {
+          voiceSession?.setTranscript?.({ partial: interim });
           try {
             const partial = await voiceRuntimeActions.transcript(
               activeToken,
@@ -203,6 +239,8 @@ export function VoiceRuntimeProvider({ children }) {
         }
         if (finalText.trim()) {
           setBusy(true);
+          voiceSession?.setTranscript?.({ final: finalText.trim(), partial: "" });
+          voiceSession?.setThinking?.(true);
           try {
             await submitFinalTranscript(activeToken, sessionId, finalText.trim());
           } catch (error) {
@@ -210,8 +248,10 @@ export function VoiceRuntimeProvider({ children }) {
               type: "ERROR",
               error: String(error?.message || error),
             });
+            voiceSession?.setError?.(String(error?.message || error));
           } finally {
             setBusy(false);
+            voiceSession?.setThinking?.(false);
             dispatch({ type: "LOCAL_RECORDING", recording: false });
             cleanupLocal();
           }
@@ -232,11 +272,15 @@ export function VoiceRuntimeProvider({ children }) {
         dispatch({ type: "LOCAL_RECORDING", recording: false });
       };
 
+      claim.setRecognition(recognition);
       recognitionRef.current = recognition;
       recognition.start();
+      try {
+        await voiceSession?.manager?.armVad?.({ bargeInMode: false });
+      } catch { /* VAD optional */ }
       dispatch({ type: "LOCAL_RECORDING", recording: true, listening: true });
     },
-    [cleanupLocal, submitFinalTranscript]
+    [cleanupLocal, submitFinalTranscript, voiceSession]
   );
 
   const interrupt = useCallback(async () => {
@@ -245,17 +289,18 @@ export function VoiceRuntimeProvider({ children }) {
     if (!activeToken || !sessionId) return;
     setBusy(true);
     try {
+      await voiceSession?.interrupt?.("USER_CANCEL");
       await voiceOutput?.stop?.();
       const result = await voiceRuntimeActions.interrupt(activeToken, sessionId);
       dispatch({ type: "SESSION", session: result.session });
-      // Immediately resume listening after barge-in
+      // Immediately resume listening after barge-in (manual interrupt path)
       await startBrowserRecognition(activeToken, sessionId);
     } catch (error) {
       dispatch({ type: "ERROR", error: String(error?.message || error) });
     } finally {
       setBusy(false);
     }
-  }, [startBrowserRecognition, token, voiceOutput]);
+  }, [startBrowserRecognition, token, voiceOutput, voiceSession]);
 
   const toggleMic = useCallback(async () => {
     const activeToken = token || getToken();
@@ -285,14 +330,14 @@ export function VoiceRuntimeProvider({ children }) {
     }
     setBusy(true);
     try {
-      // VOICE_INPUT_INTERRUPTS_OUTPUT. `runtime.speaking` is derived only from
-      // the server voice session (state RESPONDING / playbackState playing), so
-      // it is false while VoiceOutputProvider is playing assistant audio started
-      // elsewhere — chat, IELTS feedback, the voice dock. Without this the
-      // microphone would open on top of audio that is still playing. Cancel
-      // output first and await it, so capture never begins until playback has
-      // actually stopped. This is interrupt-on-microphone-start, not acoustic
-      // ducking and not full duplex.
+      // VOICE_INPUT_INTERRUPTS_OUTPUT via canonical VoiceSessionManager.
+      // Manual mic-start interrupt — not acoustic barge-in / full duplex.
+      // Source contract: await voiceOutput.stop immediately before ensureSession.
+      await voiceSession?.openSession?.({
+        sessionId: sessionIdRef.current || undefined,
+        inputProvider: "browser",
+        outputProvider: "platform",
+      });
       await voiceOutput?.stop?.();
       const sessionId = await ensureSession(activeToken);
       await startBrowserRecognition(activeToken, sessionId);
@@ -316,6 +361,7 @@ export function VoiceRuntimeProvider({ children }) {
     runtime.speaking,
     startBrowserRecognition,
     token,
+    voiceSession,
     voiceOutput,
   ]);
 

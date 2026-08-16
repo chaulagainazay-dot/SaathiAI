@@ -1,5 +1,48 @@
 # SaathiOS Autonomous Roadmap
 
+## V-NEXT-2B — Streaming STT + Intelligent Turn Orchestration (2026-08-07)
+
+| Field | Value |
+| --- | --- |
+| Mode | **Streaming input + turns** — partial ≠ execute |
+| Branch | `feature/v-next-2b-streaming-stt-turns` |
+| Base | `feature/v-next-2a-vad-barge-in` @ `9fad029…` |
+| STT | Browser SpeechRecognition (+ mock tests) |
+| Orchestration | Saathi RealtimeVoicePipelineCoordinator |
+| Docs | `docs/voice-next-2b/` |
+| Verdict | `STREAMING_STT_TURN_ORCHESTRATION_CERTIFIED_WITH_LIMITATIONS` |
+| Next | `V-NEXT-2C` (separate authorization) |
+
+---
+
+## V-NEXT-2A — Local VAD + Acoustic Barge-In (2026-08-07)
+
+| Field | Value |
+| --- | --- |
+| Mode | **VAD sensor + barge-in** via VoiceSession.interrupt |
+| Branch | `feature/v-next-2a-vad-barge-in` |
+| Base | `feature/v-next-1-canonical-voice-session` @ `b960b0d…` |
+| Adapter | energy_zcr_v1 (Silero deferred) |
+| Docs | `docs/voice-next-2a/` |
+| Verdict | `LOCAL_VAD_BARGE_IN_CERTIFIED_WITH_LIMITATIONS` |
+| Next | `V-NEXT-2B` (separate authorization) |
+
+---
+
+## V-NEXT-1 — Canonical Voice Session + Single Audio Ownership (2026-08-07)
+
+| Field | Value |
+| --- | --- |
+| Mode | **Voice architecture consolidation** — no VAD/wake/full-duplex product claim |
+| Branch | `feature/v-next-1-canonical-voice-session` |
+| Base | `feature/ui-next-1-central-command` @ `d66fa3a…` |
+| Package | `saathi-os/lib/voice-session/*` + VoiceSessionProvider |
+| Docs | `docs/voice-next-1/` |
+| Verdict | `CANONICAL_VOICE_SESSION_CERTIFIED_WITH_LIMITATIONS` |
+| Next | `V-NEXT-2` (separate authorization) |
+
+---
+
 ## UI-NEXT-1 — Central Command Composition (2026-08-07)
 
 | Field | Value |

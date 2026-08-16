@@ -51,6 +51,7 @@ export function voicePresentation(state) {
     IDLE: { tone: "muted", loop: false, label: "Idle", reduced: "static" },
     READY: { tone: "info", loop: false, label: "Ready", reduced: "static" },
     LISTENING: { tone: "info", loop: true, label: "Listening", reduced: "static badge" },
+    SPEECH_DETECTED: { tone: "info", loop: true, label: "Speech detected", reduced: "static badge" },
     TRANSCRIBING: { tone: "info", loop: true, label: "Transcribing", reduced: "static badge" },
     THINKING: { tone: "think", loop: true, label: "Thinking", reduced: "text only" },
     SPEAKING: { tone: "ok", loop: true, label: "Speaking", reduced: "static" },

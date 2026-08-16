@@ -14,11 +14,17 @@ export const PROVENANCE = Object.freeze({
   UNAVAILABLE: "UNAVAILABLE",
 });
 
-/** VoiceSession presentation vocabulary (UI-NEXT-2.1 mission + existing mapper). */
+/**
+ * VoiceSession presentation vocabulary (UI-NEXT-2.1 mission + existing mapper).
+ * Kept identical to the canonical V-NEXT contract in lib/voice-session/contract.js
+ * so the command surface can render every state the session manager can enter —
+ * SPEECH_DETECTED arrives with V-NEXT-2A acoustic barge-in.
+ */
 export const VOICE_SESSION_STATES = Object.freeze([
   "IDLE",
   "READY",
   "LISTENING",
+  "SPEECH_DETECTED",
   "TRANSCRIBING",
   "THINKING",
   "SPEAKING",

@@ -1,0 +1,37 @@
+{
+  "dataset_version": null,
+  "frozen": false,
+  "frozen_at": null,
+  "status": "NOT_FROZEN",
+  "reason": "PRODUCT_CLEAN_DATA_INSUFFICIENT_FOR_TRAINING",
+  "manifest_sha256": null,
+  "speaker_count": 0,
+  "clip_count": 0,
+  "hours": 0.0,
+  "license_summary": {
+    "product_training": "speaker commercial consent required",
+    "redistribution_default": false,
+    "common_voice_ne": "CC0 support role only (not mirrored in repo)"
+  },
+  "consent_summary": {
+    "commercial_speakers_with_pass_clips": 0,
+    "speakers": [],
+    "clean_pass_clips": 0,
+    "mix_clean": 0,
+    "numeric_clean": 0,
+    "research_only_in_train": 0,
+    "qa_pass_rate": 1.0,
+    "speaker_disjoint": false,
+    "split_ready": false,
+    "contamination_clean": true
+  },
+  "split_summary": {
+    "status": "NO_MANIFEST",
+    "speaker_disjoint": false,
+    "training_split_ready": false,
+    "message": "No clips to split"
+  },
+  "gate_verdict": "PRODUCT_CLEAN_DATA_INSUFFICIENT_FOR_TRAINING",
+  "raw_audio_in_git": false,
+  "raw_audio_root": "/Users/macbookpro/.saathi/stt-product-corpus"
+}

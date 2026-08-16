@@ -1,9 +1,10 @@
 "use client";
 
 /**
- * UI-NEXT-3 — Production Hybrid Command Center.
+ * UI-NEXT-3.1 — Production Hybrid Command Center + V-NEXT canonical voice session.
  * Modes: Command · Agents · Investments · Evidence
  * Read-mostly · PAPER · zero execution / approval / TG override authority.
+ * Voice is a consumer only: VoiceSessionManager owns mic/speaker, never authority.
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -26,6 +27,7 @@ import {
   relatedEvidenceEvents,
 } from "@/lib/command-motion";
 import { LoadingState, ErrorState, EmptyState, StatusBadge, Button } from "@/components/ui";
+import { useVoiceSession } from "@/components/voice/VoiceSessionProvider";
 
 function Pill({ children, tone = "default" }) {
   const cls =
@@ -356,10 +358,14 @@ export default function CommandCenterPage() {
   }, []);
 
   const { loading, model, refresh } = useHybridCommand({ fixtureScenario });
+  const voiceSession = useVoiceSession();
 
   const [mode, setMode] = useState("command");
   const [modeEnter, setModeEnter] = useState(false);
-  const [voice, setVoice] = useState("READY");
+  // Presentation-only voice override. The canonical owner is VoiceSessionManager
+  // (V-NEXT-1) published through VoiceSessionProvider; this holds the local
+  // read-model / demo-intent label used when no real session owns the mic.
+  const [voiceOverride, setVoiceOverride] = useState("READY");
   const [focus, setFocus] = useState("saathi");
   const [context, setContext] = useState({ kind: null, id: null, label: "None" });
   const [selectedAgent, setSelectedAgent] = useState(null);
@@ -377,8 +383,16 @@ export default function CommandCenterPage() {
   const prevRiskRef = useRef(null);
 
   useEffect(() => {
-    if (model?.saathi?.voice_session_state) setVoice(model.saathi.voice_session_state);
+    if (model?.saathi?.voice_session_state) setVoiceOverride(model.saathi.voice_session_state);
   }, [model?.saathi?.voice_session_state]);
+
+  // V-NEXT-1 single-owner rule: when a real VoiceSession holds the mic/speaker,
+  // its state wins over any local presentation label. IDLE/CLOSED means the
+  // manager owns nothing, so the local read-model label is shown instead.
+  const canonicalVoiceState = voiceSession?.session?.state;
+  const canonicalVoiceOwns =
+    !!canonicalVoiceState && canonicalVoiceState !== "IDLE" && canonicalVoiceState !== "CLOSED";
+  const voice = canonicalVoiceOwns ? canonicalVoiceState : voiceOverride;
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -459,12 +473,12 @@ export default function CommandCenterPage() {
       const text = input.trim();
       if (!text) return;
       setTranscript(text);
-      setVoice("THINKING");
+      setVoiceOverride("THINKING");
       const intent = mapProductionUiIntent(text);
       window.setTimeout(() => {
         if (intent.mode) changeMode(intent.mode);
         if (intent.focus) setFocus(intent.focus);
-        setVoice(intent.voice || "SPEAKING");
+        setVoiceOverride(intent.voice || "SPEAKING");
         setReply(intent.reply || "");
         setInput("");
         if (intent.type === "stop") setFocus("saathi");
@@ -700,7 +714,7 @@ export default function CommandCenterPage() {
               data-testid="cycle-voice"
               onClick={() => {
                 const i = VOICE_SESSION_STATES.indexOf(voice);
-                setVoice(VOICE_SESSION_STATES[(i + 1) % VOICE_SESSION_STATES.length]);
+                setVoiceOverride(VOICE_SESSION_STATES[(i + 1) % VOICE_SESSION_STATES.length]);
               }}
             >
               Cycle voice state (test)
@@ -1030,7 +1044,10 @@ export default function CommandCenterPage() {
             type="button"
             className="dl-btn dl-btn-ghost"
             data-testid="listen-btn"
-            onClick={() => setVoice("LISTENING")}
+            onClick={() => {
+              setVoiceOverride("LISTENING");
+              voiceSession?.beginInput?.({ reason: "COMMAND_LISTEN" });
+            }}
           >
             Listen
           </button>
