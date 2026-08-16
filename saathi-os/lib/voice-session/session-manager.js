@@ -310,12 +310,19 @@ export function createVoiceSessionManager(hooks = {}) {
 
     endInput(reason = "USER_CANCEL") {
       bargeIn.disarm();
+      // Idempotent teardown. Every publish() allocates a new snapshot with a
+      // fresh lastActivityAt, so publishing when nothing was owned hands every
+      // React subscriber a changed value for a state change that did not
+      // happen. A consumer whose cleanup calls endInput then re-runs forever.
+      const foreignClaim = !inputClaim && Boolean(getInputOwnerSnapshot().claimId);
+      const owned = Boolean(inputClaim) || listening || speechDetected || foreignClaim;
       if (inputClaim) {
         inputClaim.release();
         inputClaim = null;
-      } else {
+      } else if (foreignClaim) {
         forceReleaseInput(reason);
       }
+      if (!owned) return snapshot;
       listening = false;
       speechDetected = false;
       recordVoiceTelemetry("input_stopped", {
@@ -381,12 +388,16 @@ export function createVoiceSessionManager(hooks = {}) {
 
     async endOutput(reason = "USER_CANCEL") {
       bargeIn.markSpeakingEnd();
+      // Idempotent for the same reason as endInput.
+      const foreignClaim = !outputClaim && Boolean(getOutputOwnerSnapshot().claimId);
+      const owned = Boolean(outputClaim) || speaking || foreignClaim;
       if (outputClaim) {
         await outputClaim.release();
         outputClaim = null;
-      } else {
+      } else if (foreignClaim) {
         await forceReleaseOutput(reason);
       }
+      if (!owned) return snapshot;
       speaking = false;
       recordVoiceTelemetry("output_stopped", {
         sessionId: snapshot.sessionId,

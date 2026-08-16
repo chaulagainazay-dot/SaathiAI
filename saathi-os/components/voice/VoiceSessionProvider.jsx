@@ -16,7 +16,7 @@ import {
 import { usePathname } from "next/navigation";
 import { PLATFORM_CONTEXT_EVENT } from "@/lib/platform-client";
 import {
-  createVoiceSessionManager,
+  getDefaultVoiceSessionManager,
   toCommandVoiceLabel,
   detectVoiceCapabilities,
 } from "@/lib/voice-session";
@@ -24,8 +24,20 @@ import {
 const VoiceSessionContext = createContext(null);
 
 export function VoiceSessionProvider({ children, manager: externalManager }) {
+  // The shared process-wide manager, never a per-mount instance.
+  //
+  // This provider re-renders on every route change (it reads usePathname to
+  // force mic cleanup). Constructing the manager here made its identity churn
+  // with navigation, and a fresh manager re-subscribes and republishes a new
+  // snapshot on each render. That starved React's navigation transition: click
+  // handlers ran, synchronous state updates still committed, but no client-side
+  // route change ever landed — every link and sidebar button in the shell was
+  // silently inert while direct URL loads worked.
+  //
+  // Single voice session owner is the V-NEXT-1 contract anyway; there is
+  // exactly one microphone. `externalManager` stays injectable for tests.
   const manager = useMemo(
-    () => externalManager || createVoiceSessionManager(),
+    () => externalManager || getDefaultVoiceSessionManager(),
     [externalManager]
   );
   const [session, setSession] = useState(() => manager.getSnapshot());

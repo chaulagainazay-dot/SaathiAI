@@ -182,16 +182,43 @@ export async function verifyRuntime({ chromium, ui, api, check, expectedSha = nu
   check("frontend_worktree_matches_harness", frontend?.worktreePath === REPO_ROOT);
   check("backend_worktree_matches_harness", backend?.worktreePath === REPO_ROOT);
 
-  // 6. The browser really talks to the backend origin under test.
+  // 6. The browser really talks to the backend under test.
+  //
+  //    Origin strings are not the right test. The product default API base is
+  //    http://localhost:8765 while the harness addresses http://127.0.0.1:8765;
+  //    those are the same process reached through two loopback names, and a
+  //    string comparison would fail a correct run. What matters is identity, so
+  //    each observed backend origin is asked who it is and its answer compared
+  //    against the commit under test. That is strictly stronger: it also
+  //    catches a second backend listening on the expected origin.
   const origins = await observedApiOrigins({ chromium, ui });
-  const expectedOrigin = originOf(api);
-  if (origins.length === 0) {
-    check("runtime_api_origin_verified", false);
-  } else {
-    check("runtime_api_origin_verified", origins.includes(expectedOrigin));
+  const uiOrigin = originOf(ui);
+  const backendOrigins = origins.filter((o) => o !== uiOrigin);
+
+  const identified = [];
+  for (const origin of backendOrigins) {
+    const seen = await fetchJson(`${origin}/api/v1/platform/provenance`);
+    identified.push({ origin, sha: seen?.backendSha || UNKNOWN });
   }
 
-  return { worktree, frontend, backend, expected, observedOrigins: origins };
+  check("runtime_api_traffic_observed", backendOrigins.length > 0);
+  check(
+    "runtime_api_origin_verified",
+    identified.some((entry) => entry.sha === backendSha),
+  );
+  check(
+    "no_foreign_backend_origin",
+    identified.every((entry) => entry.sha === backendSha),
+  );
+
+  return {
+    worktree,
+    frontend,
+    backend,
+    expected,
+    observedOrigins: origins,
+    identifiedBackends: identified,
+  };
 }
 
 /**
@@ -218,6 +245,7 @@ export function certificateProvenance({ runtime, ui, api, command, harnessFile }
     frontendOrigin: originOf(ui),
     backendOrigin: originOf(api),
     observedApiOrigins: runtime?.observedOrigins || [],
+    identifiedBackends: runtime?.identifiedBackends || [],
     certificationCommand: command || UNKNOWN,
     harnessSha,
     harnessVersion: PROVENANCE_SCHEMA,

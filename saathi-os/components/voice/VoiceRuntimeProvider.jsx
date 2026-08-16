@@ -41,6 +41,12 @@ export function VoiceRuntimeProvider({ children }) {
   const inputClaimRef = useRef(null);
   const voiceOutput = useVoiceOutput();
   const voiceSession = useVoiceSession();
+  // Read the session through a ref inside teardown paths. `voiceSession` is a
+  // fresh object on every published snapshot, so a cleanup callback that closes
+  // over it directly changes identity whenever voice state changes — and the
+  // effect it belongs to then re-runs its own cleanup, which publishes again.
+  const voiceSessionRef = useRef(voiceSession);
+  voiceSessionRef.current = voiceSession;
 
   useEffect(() => {
     sessionIdRef.current = runtime.sessionId;
@@ -66,23 +72,23 @@ export function VoiceRuntimeProvider({ children }) {
       inputClaimRef.current = null;
     }
     try {
-      voiceSession?.endInput?.("USER_CANCEL");
+      voiceSessionRef.current?.endInput?.("USER_CANCEL");
     } catch {
       /* ignore */
     }
-  }, [voiceSession]);
+  }, []);
 
   const hardReset = useCallback(() => {
     cleanupLocal();
     forceReleaseInput("SESSION_CLOSE");
     try {
-      voiceSession?.interrupt?.("SESSION_CLOSE");
+      voiceSessionRef.current?.interrupt?.("SESSION_CLOSE");
     } catch {
       /* ignore */
     }
     dispatch({ type: "RESET" });
     setBusy(false);
-  }, [cleanupLocal, voiceSession]);
+  }, [cleanupLocal]);
 
   useEffect(() => {
     setToken(getToken());
