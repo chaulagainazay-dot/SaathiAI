@@ -27,13 +27,12 @@ from .cors_policy import (  # noqa: E402
 )
 
 _origins = resolve_cors_origins()
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=_origins,
-    allow_credentials=True,
-    allow_methods=CORS_ALLOW_METHODS,
-    allow_headers=CORS_ALLOW_HEADERS,
-)
+# NOTE: CORSMiddleware is deliberately NOT registered here. Starlette builds the
+# middleware stack outermost-first from the reverse of the registration order, so
+# registering CORS at import time would bury it beneath the `_auth` gate defined
+# further down this module. It is registered at the bottom of the file instead —
+# see `_install_outermost_cors()` — so that CORS is the outermost layer and an
+# authentication rejection still leaves the origin correctly labelled.
 
 
 # ── Security Headers Middleware (Phase 7) ───────────────────────────────────
@@ -1719,8 +1718,12 @@ async def _auth(request, call_next):
     path = request.url.path
     # Always allow: login endpoint, OAuth callbacks, static assets, and
     # endpoints that enforce their own bearer auth (BAADAR_API_KEY).
-    if (request.method == "OPTIONS"
-            or path == "/api/v1/auth/login"
+    #
+    # There is no `OPTIONS` bypass here. CORSMiddleware is the outermost layer
+    # (see `_install_outermost_cors()`), so a browser preflight is answered
+    # before it ever reaches this gate. An `OPTIONS` request that is not a
+    # preflight is an ordinary request and is authenticated like any other.
+    if (path == "/api/v1/auth/login"
             or path == "/api/v1/auth/change-password"
             or path == "/api/v1/auth/logout"
             or path == "/api/v1/auth/forgot"
@@ -5309,6 +5312,38 @@ def _start_background():
                 register_project(_name, _path)
     except Exception:
         pass
+
+
+def _install_outermost_cors() -> None:
+    """Register CORSMiddleware as the outermost middleware.
+
+    Starlette applies `add_middleware` by prepending, so the last registration
+    wins the outermost position. Every other middleware in this module — the
+    security headers layer and the `_auth` gate — is registered above, which
+    makes this call the one that puts CORS on the outside.
+
+    Ordering matters beyond preflight. With CORS innermost, an authentication
+    rejection short-circuits before CORS can label the response, so the browser
+    reports a CORS failure for what is really a 401 and the real cause is
+    invisible in the console. With CORS outermost:
+
+      * an allowed-origin preflight is answered by CORS and never reaches
+        `_auth`, so no `OPTIONS` bypass is needed in the auth gate;
+      * an allowed-origin unauthenticated request still returns 401, and that
+        401 carries the correct `Access-Control-Allow-Origin`;
+      * a disallowed origin gets no `Access-Control-Allow-Origin` on anything,
+        and authentication is not consulted to decide that.
+    """
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=_origins,
+        allow_credentials=True,
+        allow_methods=CORS_ALLOW_METHODS,
+        allow_headers=CORS_ALLOW_HEADERS,
+    )
+
+
+_install_outermost_cors()
 
 
 def main():
