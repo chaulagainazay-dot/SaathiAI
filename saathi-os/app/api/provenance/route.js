@@ -30,12 +30,21 @@ const REPO_ROOT = join(FRONTEND_ROOT, "..");
 const PROD_ENVS = new Set(["production", "prod", "staging", "canary"]);
 const UNKNOWN = "UNKNOWN";
 
+/**
+ * Mirror of saathi.cors_policy.resolve_environment — the same variables in the
+ * same order, defaulting the same way.
+ *
+ * NODE_ENV is deliberately not consulted. It describes the build mode, and
+ * `next start` sets it to "production" for any production build including a
+ * local certification run. Treating that as the deployment environment made the
+ * frontend claim production while the backend beside it reported development,
+ * so the two halves disagreed about their own identity.
+ */
 function resolveEnvironment() {
   const raw =
     process.env.SAATHI_ENV ||
     process.env.SAATHI_ENVIRONMENT ||
     process.env.ENVIRONMENT ||
-    process.env.NODE_ENV ||
     "development";
   return String(raw).trim().toLowerCase() || "development";
 }
