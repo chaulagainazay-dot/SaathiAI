@@ -1719,7 +1719,8 @@ async def _auth(request, call_next):
     path = request.url.path
     # Always allow: login endpoint, OAuth callbacks, static assets, and
     # endpoints that enforce their own bearer auth (BAADAR_API_KEY).
-    if (path == "/api/v1/auth/login"
+    if (request.method == "OPTIONS"
+            or path == "/api/v1/auth/login"
             or path == "/api/v1/auth/change-password"
             or path == "/api/v1/auth/logout"
             or path == "/api/v1/auth/forgot"
