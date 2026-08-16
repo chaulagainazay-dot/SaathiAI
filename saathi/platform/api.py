@@ -466,7 +466,25 @@ class RetentionHoldBody(BaseModel):
 
 @router.get("/health")
 def platform_health():
-    return _svc().health()
+    """Platform health, with the provenance of the code answering it.
+
+    The provenance block lets a browser certification harness prove which
+    checkout served the run instead of assuming. Filesystem paths in it are
+    local/development/test only — see `saathi.provenance`.
+    """
+    from saathi.provenance import runtime_provenance
+
+    payload = dict(_svc().health())
+    payload["provenance"] = runtime_provenance()
+    return payload
+
+
+@router.get("/provenance")
+def platform_provenance():
+    """Standalone runtime identity of the backend. Non-secret by construction."""
+    from saathi.provenance import runtime_provenance
+
+    return runtime_provenance()
 
 
 @router.post("/bootstrap")
