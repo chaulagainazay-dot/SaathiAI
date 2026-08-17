@@ -120,15 +120,26 @@ runtime, and in both runs the two were proven equal.
 | Frontend | 527 passed, 0 failed |
 | Authority invariants (`tests/test_r2_architecture_invariants.py`) | 36 assertions passed |
 
+### Publication and CI
+
+| Field | Value |
+| --- | --- |
+| Published SHA | `9e369bd` on `origin/integration/saathios-trunk-v3`, no force push |
+| Pull request | #45, open, not draft, base `integration/saathios-canonical-baseline` |
+| Workflow run | `reliability` 32010707455, testing `9e369bd` |
+| `critical-regressions` | **success** — 262 blocking manifest checks, 0 failed; 7547 collected; 309 routes |
+| `full-suite` | **success** — 7530 passed, 17 skipped, 0 failed |
+
+The first run, on `4bab721`, failed `full-suite` and found the two defects in
+the section above. Publication was the first time this code had run on Linux.
+
 ### Remaining limitation
 
-Everything above is *local*. At the documentation commit the trunk is
-integrated, tested locally and browser-certified; it is not yet published, not
-yet CI-verified, and not merged. GitHub CI — `critical-regressions` and
-`full-suite` — remains pending, and R2 carries no terminal verdict until both
-report success against the final published HEAD. The pull request targets
+The trunk is integrated, locally tested, browser-certified, published and
+CI-verified. It is **not merged**. The pull request targets
 `integration/saathios-canonical-baseline` and stays open; merge to the canonical
-baseline was never authorized and was not performed.
+baseline was never authorized and was not performed. Nothing here authorizes
+production, live trading, broker connectivity, or deployment.
 
 Auth enforcement still depends substantially on a large hand-maintained path
 bypass/allowlist plus duplicated route-level authorization behaviour. R2

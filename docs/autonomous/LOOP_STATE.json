@@ -8,9 +8,9 @@
   "base_branch": "integration/saathios-canonical-baseline",
   "starting_branch": "feature/ui-next-3-1-production-motion",
   "baseline_sha": "1a51ae955cb6c13394c19bb2dd9f6e3ef109854f",
-  "documented_at_sha": "6e90743d963e50a1d031aef04a35f780c23ac673",
-  "last_content_sha": "6e90743d963e50a1d031aef04a35f780c23ac673",
-  "ending_sha_note": "documented_at_sha is the HEAD this state file describes. The commit carrying this file is exactly one commit later and cannot embed its own hash; published_sha is written back in the CI-state pass once GitHub CI has run against the final HEAD.",
+  "documented_at_sha": "9e369bda036fdfc81a246c8583c263f14cfee1f7",
+  "last_content_sha": "9e369bda036fdfc81a246c8583c263f14cfee1f7",
+  "ending_sha_note": "documented_at_sha is the HEAD whose CI results this file records — GitHub Actions run 32010707455 tested exactly that SHA. The commit carrying this file is one commit later and cannot embed its own hash; it triggers its own required CI, and that run must also be green before R2 may be reported terminal. No earlier commit is certified while a later HEAD is reported.",
 
   "predecessor_program": "M336-M343 private-alpha launch readiness",
   "predecessor_state_superseded": true,
@@ -50,8 +50,8 @@
     "m64_applications_dashboard": "browser_certified",
     "m77_voice_output_foundation": "browser_certified",
     "authority_invariants": "verified_locally",
-    "github_publication": "pending",
-    "github_ci": "pending",
+    "github_publication": "published",
+    "github_ci": "ci_verified",
     "merge_to_canonical_baseline": "not_authorized"
   },
   "state_vocabulary": {
@@ -64,10 +64,10 @@
     "merged": "the pull request was merged into its base branch"
   },
 
-  "status": "integrated_and_locally_certified_pending_ci",
-  "verdict": null,
+  "status": "integrated_locally_certified_published_and_ci_verified",
+  "verdict": "R2_TRUNK_CONVERGENCE_COMPLETE",
   "verdict_target": "R2_TRUNK_CONVERGENCE_COMPLETE",
-  "verdict_note": "no terminal verdict may be recorded until both required CI jobs report success against the final HEAD",
+  "verdict_note": "both required CI jobs reported success against 9e369bd; the commit carrying this record must receive its own green run before the program is reported terminal",
 
   "certification": {
     "m64": {
@@ -109,8 +109,8 @@
     "evidence_mutation_hygiene": "runtime operation no longer dirties committed evidence",
     "package_hash_determinism": "application package hashes are ordered by name, so they no longer depend on filesystem read order",
     "public_knowledge_paths": "no absolute host paths in corpus-served documents",
-    "github_ci_critical_regressions": "pending",
-    "github_ci_full_suite": "pending"
+    "github_ci_critical_regressions": "success — 262 blocking manifest checks passed, 0 failed; 7547 tests collected with no collection errors; 309 server routes (floor 290)",
+    "github_ci_full_suite": "success — 7530 passed, 17 skipped, 0 failed in 23m56s on ubuntu-latest / Python 3.12.13"
   },
 
   "defects_found_and_repaired": [
@@ -155,21 +155,57 @@
   ],
 
   "publication": {
-    "pushed": false,
-    "upstream": null,
-    "published_sha": null,
-    "pr_number": null,
+    "pushed": true,
+    "upstream": "origin/integration/saathios-trunk-v3",
+    "published_sha": "9e369bda036fdfc81a246c8583c263f14cfee1f7",
+    "pr_number": 45,
     "pr_base": "integration/saathios-canonical-baseline",
     "pr_head": "integration/saathios-trunk-v3",
-    "pr_state": null,
+    "pr_state": "OPEN",
+    "pr_is_draft": false,
     "merged": false,
     "deployed": false,
-    "workflow_run_id": null,
-    "workflow_url": null,
-    "ci_commit_sha_tested": null,
-    "ci_critical_regressions": "pending",
-    "ci_full_suite": "pending"
+    "workflow_name": "reliability",
+    "workflow_run_id": 32010707455,
+    "workflow_url": "https://github.com/chaulagainazay-dot/SaathiAI/actions/runs/32010707455",
+    "ci_commit_sha_tested": "9e369bda036fdfc81a246c8583c263f14cfee1f7",
+    "ci_started_at": "2026-08-17T08:30:39Z",
+    "ci_completed_at": "2026-08-17T09:15:18Z",
+    "ci_runner": "ubuntu-latest, Python 3.12.13",
+    "ci_critical_regressions": {
+      "job_id": 95329446484,
+      "conclusion": "success",
+      "started_at": "2026-08-17T08:30:42Z",
+      "completed_at": "2026-08-17T08:49:48Z",
+      "blocking_manifest_checks_passed": 262,
+      "blocking_manifest_checks_failed": 0,
+      "tests_collected": 7547,
+      "server_routes": 309
+    },
+    "ci_full_suite": {
+      "job_id": 95334038526,
+      "conclusion": "success",
+      "started_at": "2026-08-17T08:49:51Z",
+      "completed_at": "2026-08-17T09:15:17Z",
+      "passed": 7530,
+      "skipped": 17,
+      "failed": 0,
+      "duration": "23m56s"
+    },
+    "first_run_on_4bab721": {
+      "workflow_run_id": 32006446275,
+      "conclusion": "failure",
+      "critical_regressions": "success",
+      "full_suite": "failure — 12 failed, 7509 passed, 17 skipped",
+      "disposition": "both causes diagnosed and repaired in 9e369bd; recorded as R2-D5 and R2-D6"
+    }
   },
+
+  "linux_clean_clone_differences": [
+    "application package hashes were computed in filesystem read order, so a hash pinned on APFS could not validate on ext4. This is R2-D5. The canonical baseline had passed the same job on Linux only because readdir order happened to agree, which made the gate a coin flip on every runner rather than a platform-specific failure. Repaired by ordering the walk; the pinned hashes were already the sorted-order hashes, so no package or evidence was regenerated.",
+    "tests/test_m121_app_runtime.py and tests/test_m87_knowledge_grounding.py were not in the bounded local suite, so neither failure could be seen before publication. Both files are now in it.",
+    "tests/test_m17_1_live.py::test_live_browser_launch_and_close and ::test_live_browser_dom_and_click failed on the canonical baseline's Linux run and passed on both trunk-v3 runs. Pre-existing contention-sensitive flake, not touched by R2, recorded rather than claimed as a fix."
+  ],
 
   "production_authority": false,
   "live_trading_authorized": false,

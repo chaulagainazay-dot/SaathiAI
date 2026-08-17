@@ -373,3 +373,78 @@ No Docker, Kubernetes, additional database, background service, build daemon or
 new model runtime was introduced. The convergence ran on the existing
 architecture on an 8 GB Apple Silicon host: one venv, one Next build, two
 loopback processes during certification.
+
+---
+
+## 11. Publication and CI
+
+| Field | Value |
+| --- | --- |
+| Branch | `integration/saathios-trunk-v3` |
+| Final published SHA | `9e369bda036fdfc81a246c8583c263f14cfee1f7` |
+| Upstream | `origin/integration/saathios-trunk-v3`, same SHA, no force push |
+| Pull request | [#45](https://github.com/chaulagainazay-dot/SaathiAI/pull/45), open, not draft |
+| Base | `integration/saathios-canonical-baseline` — deliberately not `master` |
+| Merged | no; merge was never authorized |
+| Workflow | `reliability`, run [32010707455](https://github.com/chaulagainazay-dot/SaathiAI/actions/runs/32010707455) |
+| SHA tested | `9e369bd` — the same SHA as the published HEAD |
+| Runner | `ubuntu-latest`, Python 3.12.13 |
+| Started / completed | 2026-08-17T08:30:39Z / 2026-08-17T09:15:18Z |
+
+| Required job | ID | Conclusion | Result |
+| --- | --- | --- | --- |
+| `critical-regressions` | 95329446484 | **success** | 262 blocking manifest checks passed, 0 failed; 7547 tests collected with no collection errors; 309 server routes against a floor of 290 |
+| `full-suite` | 95334038526 | **success** | 7530 passed, 17 skipped, 0 failed, 23m56s |
+
+### The first run failed, and what it found
+
+Run `32006446275` on `4bab721` passed `critical-regressions` and failed
+`full-suite` with 12 failed, 7509 passed, 17 skipped. Publication was the first
+time any of this code had been executed on Linux, and it earned its keep.
+
+**Eleven failures — `package_hash_mismatch` in `tests/test_m121_app_runtime.py`.**
+`AppRuntime.validate_package` hashed a package's files in raw `os.walk` order,
+which is readdir order and therefore a property of the filesystem rather than of
+the package. Every built-in package has exactly two hashed files, so there were
+exactly two possible hashes; the values pinned in each `app.json` matched one
+order and not the other. This is recorded as **R2-D5**.
+
+It is not a convergence regression. The canonical baseline passed the same job
+on Linux, but it passed because readdir order happened to agree that day — the
+gate was a coin flip on every runner, not a platform-specific failure. The walk
+is now ordered by name. The pinned hashes were already the sorted-order hashes,
+so no package manifest and no evidence was regenerated to make this pass.
+`tests/test_package_hash_determinism.py` asserts the hash and the pinned-hash
+validation both survive a reversed read order, and its final test fails rather
+than passing vacuously if the built-in packages ever drop below two hashed files.
+
+**One failure — `tests/test_m87_knowledge_grounding.py::test_no_absolute_paths_in_public`.**
+The Phase 11 documentation commit put absolute host paths into
+`docs/autonomous/LOOP_STATE.json`, which the public knowledge corpus serves and
+that test forbids. Self-inflicted by the preceding commit, repaired in the same
+program, recorded as **R2-D6**. The paths were removed from the state file. The
+worktree path remains recorded in the browser certificates under
+`provenance.worktreePath`, because those are evidence and were not weakened to
+satisfy a test.
+
+**The bounded local suite had never run either file.** That is the real finding:
+a macOS-only gate that does not run the suites covering the surfaces you touched
+cannot see this class of defect. Both files are now in
+`docs/integration/trunk-v3/BOUNDED_SUITE.txt`, which with the nine new
+determinism guards takes it from 976 to **1024 passed, 0 failed**.
+
+### Linux / clean-clone differences found
+
+- Package hash ordering (R2-D5 above) — the only genuine platform-sensitive
+  defect, and it was latent rather than introduced.
+- `tests/test_m17_1_live.py::test_live_browser_launch_and_close` and
+  `::test_live_browser_dom_and_click` failed on the canonical baseline's Linux
+  run and passed on both trunk-v3 runs. Pre-existing contention-sensitive flake,
+  untouched by R2. Recorded, not claimed as a fix.
+
+### What remains untrue
+
+The pull request is open and must stay open. Merge to
+`integration/saathios-canonical-baseline` was never authorized and was not
+performed. Nothing here authorizes production, live trading, broker
+connectivity, or any deployment.
