@@ -448,3 +448,28 @@ The pull request is open and must stay open. Merge to
 `integration/saathios-canonical-baseline` was never authorized and was not
 performed. Nothing here authorizes production, live trading, broker
 connectivity, or any deployment.
+
+### CI on the record commit
+
+`68d5713`, the commit carrying section 11, received its own required CI as
+run [32014601693](https://github.com/chaulagainazay-dot/SaathiAI/actions/runs/32014601693):
+`critical-regressions` success (job 95352662425) and `full-suite` success
+(job 95352661515). Both green at the final HEAD.
+
+`full-suite` failed on its first attempt at that SHA with one failure —
+`tests/test_m17_computer_agent.py::test_replay_redacts_credentials` — on a
+docs-only commit, and passed on re-run. It is a pre-existing time-dependent
+flake, and the diagnosis is worth stating precisely because the test name
+implies a security failure and there was none.
+
+The test asserts that the replay blob contains neither the password `hunter2`
+nor the OTP `999`. Both are redacted, and always were: holding `time.time()`
+fixed shows `hunter2` absent under every timestamp. But the blob also carries
+two raw `time.time()` floats, and `"999" not in blob` fails whenever a
+timestamp's decimal expansion happens to contain `999` — about 0.37% per
+timestamp, so roughly 0.7% per run. The redaction control held; the test's
+oracle is unsound.
+
+It is not a convergence regression, R2 never touched that suite, and R2 does not
+fix it — the same treatment this manifest gives the `test_m17_1_live` contention
+flake. It is a real defect and belongs to whichever program owns that suite.

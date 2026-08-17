@@ -192,6 +192,16 @@
       "failed": 0,
       "duration": "23m56s"
     },
+    "run_on_this_record_sha": {
+      "sha": "68d5713d6f965d862c58e9cb3cd25972558f5913",
+      "note": "the commit carrying the CI record above; per the ending_sha_note convention a commit cannot embed its own hash, so this block was written by the commit that follows it",
+      "workflow_run_id": 32014601693,
+      "workflow_url": "https://github.com/chaulagainazay-dot/SaathiAI/actions/runs/32014601693",
+      "conclusion": "success",
+      "critical_regressions": "success — job 95352662425, 2026-08-17T09:19:18Z to 09:38:26Z",
+      "full_suite": "success — job 95352661515, 2026-08-17T10:04:47Z to 10:30:27Z, on re-run",
+      "full_suite_first_attempt": "failure — job 95346230610, 1 failed / 7529 passed / 17 skipped; tests/test_m17_computer_agent.py::test_replay_redacts_credentials, a pre-existing time-dependent flake diagnosed below and deliberately not fixed"
+    },
     "first_run_on_4bab721": {
       "workflow_run_id": 32006446275,
       "conclusion": "failure",
@@ -204,6 +214,7 @@
   "linux_clean_clone_differences": [
     "application package hashes were computed in filesystem read order, so a hash pinned on APFS could not validate on ext4. This is R2-D5. The canonical baseline had passed the same job on Linux only because readdir order happened to agree, which made the gate a coin flip on every runner rather than a platform-specific failure. Repaired by ordering the walk; the pinned hashes were already the sorted-order hashes, so no package or evidence was regenerated.",
     "tests/test_m121_app_runtime.py and tests/test_m87_knowledge_grounding.py were not in the bounded local suite, so neither failure could be seen before publication. Both files are now in it.",
+    "tests/test_m17_computer_agent.py::test_replay_redacts_credentials is a pre-existing time-dependent flake. It asserts the replay blob contains neither the password 'hunter2' nor the OTP '999'. Both are redacted correctly and always were — proven by holding time.time() fixed — but the blob also carries two raw time.time() floats, and the assertion fails whenever a timestamp's decimal expansion happens to contain the substring '999'. Measured at about 0.37 percent per timestamp, so roughly 0.7 percent per run. The redaction control never failed; the test's own oracle is unsound. Not a convergence regression and not touched by R2, so it was recorded rather than repaired, and the job was re-run to obtain an authoritative result. It is a genuine defect and belongs to whichever program owns that suite.",
     "tests/test_m17_1_live.py::test_live_browser_launch_and_close and ::test_live_browser_dom_and_click failed on the canonical baseline's Linux run and passed on both trunk-v3 runs. Pre-existing contention-sensitive flake, not touched by R2, recorded rather than claimed as a fix."
   ],
 
