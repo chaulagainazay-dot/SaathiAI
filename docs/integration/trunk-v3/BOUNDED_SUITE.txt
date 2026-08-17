@@ -38,3 +38,6 @@ tests/test_import_determinism_guard.py
 tests/test_runtime_provenance.py
 tests/test_evidence_mutation_hygiene.py
 tests/test_r2_architecture_invariants.py
+tests/test_package_hash_determinism.py
+tests/test_m121_app_runtime.py
+tests/test_m87_knowledge_grounding.py

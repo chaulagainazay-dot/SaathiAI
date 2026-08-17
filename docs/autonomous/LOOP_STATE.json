@@ -3,7 +3,8 @@
   "program": "R2 — SaathiOS trunk convergence",
   "purpose": "converge three independently-advanced program heads onto one authoritative trunk, repair the defects convergence exposes, and publish it for CI verification without merging to the canonical baseline",
   "branch": "integration/saathios-trunk-v3",
-  "worktree": "/Users/macbookpro/SaathiAI-trunk-v3",
+  "worktree_name": "SaathiAI-trunk-v3",
+  "worktree_path_note": "the absolute worktree path is recorded in the browser certificates under provenance.worktreePath; it is deliberately not repeated here, because this file is served by the public knowledge corpus and tests/test_m87_knowledge_grounding.py forbids absolute host paths in public output",
   "base_branch": "integration/saathios-canonical-baseline",
   "starting_branch": "feature/ui-next-3-1-production-motion",
   "baseline_sha": "1a51ae955cb6c13394c19bb2dd9f6e3ef109854f",
@@ -81,7 +82,7 @@
       "reattested_at_sha": "8b645e3cec97547fdae672c57626483696a4d39a",
       "reattested_by": "M77 shell regression sub-run",
       "evidence": "docs/platform/m64_evidence/M64_BROWSER_CERT.json",
-      "provenance": "saathi.cert_provenance.v1; worktree /Users/macbookpro/SaathiAI-trunk-v3; single backend origin observed"
+      "provenance": "saathi.cert_provenance.v1; worktree SaathiAI-trunk-v3; single backend origin observed"
     },
     "m77": {
       "verdict": "PASS",
@@ -98,7 +99,7 @@
   },
 
   "gates": {
-    "bounded_backend_suite": "976 passed, 0 failed — ./.venv/bin/python -m pytest $(cat docs/integration/trunk-v3/BOUNDED_SUITE.txt) -p no:randomly",
+    "bounded_backend_suite": "1024 passed, 0 failed — ./.venv/bin/python -m pytest $(cat docs/integration/trunk-v3/BOUNDED_SUITE.txt) -p no:randomly (was 976 before the CI-surfaced repairs added 9 determinism guards and admitted the two suites that caught them)",
     "frontend_suite": "527 passed, 0 failed — npm --prefix saathi-os test",
     "authority_invariants": "36 assertions passed — tests/test_r2_architecture_invariants.py",
     "m64_browser_certification": "PASS (21 hard / 12 state / 6 responsive / 3 accessibility)",
@@ -106,6 +107,8 @@
     "import_determinism": "saathi resolves to this checkout; root conftest.py refuses collection otherwise",
     "runtime_provenance": "frontend and backend each identify their SHA and worktree at runtime; certification fails closed on mismatch",
     "evidence_mutation_hygiene": "runtime operation no longer dirties committed evidence",
+    "package_hash_determinism": "application package hashes are ordered by name, so they no longer depend on filesystem read order",
+    "public_knowledge_paths": "no absolute host paths in corpus-served documents",
     "github_ci_critical_regressions": "pending",
     "github_ci_full_suite": "pending"
   },
@@ -134,6 +137,20 @@
       "defect": "runtime operation wrote into committed evidence directories and dirtied immutable state",
       "commit": "686e78d",
       "repair": "runtime storage separated from committed evidence; guarded by tests/test_evidence_mutation_hygiene.py"
+    },
+    {
+      "id": "R2-D5",
+      "defect": "AppRuntime.validate_package hashed a package's files in raw os.walk order, so package_hash was a property of the filesystem rather than of the package; every built-in package has two hashed files and therefore two possible hashes, and a hash pinned on APFS failed validation on ext4 with package_hash_mismatch",
+      "found_by": "GitHub CI full-suite on Linux at 4bab721 — 11 failures in tests/test_m121_app_runtime.py; the same tests pass on macOS, and the canonical baseline had passed on Linux only because readdir order happened to agree",
+      "repair": "the walk is ordered by name; tests/test_package_hash_determinism.py asserts the hash and the pinned-hash validation both survive a reversed read order, and refuses to pass vacuously if the packages ever drop below two hashed files",
+      "class": "latent pre-existing non-determinism, not a convergence regression; repaired inside R2 because determinism of this kind is what R2 already owns"
+    },
+    {
+      "id": "R2-D6",
+      "defect": "the first version of this state file listed absolute host paths, which the public knowledge corpus then served; tests/test_m87_knowledge_grounding.py forbids that",
+      "found_by": "GitHub CI full-suite on Linux at 4bab721, reproduced locally afterwards",
+      "repair": "absolute paths removed from this file; the worktree path remains recorded in the browser certificates, which are evidence and were not weakened",
+      "class": "regression introduced by the R2 documentation commit itself and repaired in the same program"
     }
   ],
 
@@ -191,7 +208,7 @@
     "milestone/m312-m319-connectivity-governance and the M2–M343 milestone ladder — historical 40-PR ladder, out of scope by instruction",
     "implementation/fm-i1…fm-i6 and hardening/fm-i6.2-* — AgentHarness / local model harness line, future milestone",
     "evaluation/twenty-readonly-sandbox and audit/saathios-canonical-integration-readiness — evaluation and audit lines, not product code",
-    "/Users/macbookpro/SaathiAI (main worktree) — dirty with unowned provider/inference edits; inspected, not load-bearing to this convergence"
+    "the main SaathiAI worktree — dirty with unowned provider/inference edits; inspected, not load-bearing to this convergence"
   ],
   "branches_deleted": false,
   "worktrees_deleted": false,

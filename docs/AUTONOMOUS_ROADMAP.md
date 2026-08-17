@@ -73,6 +73,34 @@ alone. They are repairs inside R2, not milestones of their own.
   into committed evidence directories; storage was separated and the boundary
   is now guarded by `tests/test_evidence_mutation_hygiene.py`.
 
+### Defects discovered by CI
+
+Publication found two more. Neither was visible to a macOS-only gate.
+
+- **Application package hashes depended on filesystem read order.**
+  `AppRuntime.validate_package` hashed a package's files in raw `os.walk` order,
+  so `package_hash` was a property of the filesystem rather than of the package.
+  Every built-in package has exactly two hashed files, so there were two
+  possible hashes: one pinned on APFS failed validation on ext4 with
+  `package_hash_mismatch`, taking 11 tests in `tests/test_m121_app_runtime.py`
+  with it. The canonical baseline had passed the same job on Linux only because
+  readdir order happened to agree — this was latent, not a convergence
+  regression. The walk is now ordered by name, and
+  `tests/test_package_hash_determinism.py` asserts that both the hash and the
+  pinned-hash validation survive a reversed read order, and refuses to pass
+  vacuously if the packages ever drop below two hashed files.
+- **The R2 documentation commit leaked absolute host paths into public knowledge
+  output.** `docs/autonomous/LOOP_STATE.json` is served by the knowledge
+  corpus, and `tests/test_m87_knowledge_grounding.py` forbids absolute paths
+  there. This one was self-inflicted by the preceding commit and is repaired in
+  the same program. The worktree path stays recorded in the browser
+  certificates, which are evidence and were not weakened to satisfy the test.
+
+Both repairs are determinism and hygiene work of the kind R2 already owns, and
+no product behaviour changed. The bounded backend suite grew from 976 to 1024:
+nine new determinism guards, plus the two suites that caught these failures,
+which the macOS gate had not been running.
+
 ### Certification
 
 Both browser certifications were re-run on the converged trunk against a
@@ -88,7 +116,7 @@ runtime, and in both runs the two were proven equal.
 
 | Local suite | Result |
 | --- | --- |
-| Bounded backend regression | 976 passed, 0 failed |
+| Bounded backend regression | 1024 passed, 0 failed (976 before the CI-surfaced repairs) |
 | Frontend | 527 passed, 0 failed |
 | Authority invariants (`tests/test_r2_architecture_invariants.py`) | 36 assertions passed |
 
