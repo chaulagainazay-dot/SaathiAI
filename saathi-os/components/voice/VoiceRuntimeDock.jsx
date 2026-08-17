@@ -157,14 +157,32 @@ export default function VoiceRuntimeDock() {
       ) : null}
 
       <style jsx>{`
+        /* The dock is shell chrome, not page content. In document flow it landed
+           after <main>, underneath the fixed sidebar and below the fixed status
+           bar, so the mic was unclickable on desktop and off-viewport on phones.
+           Anchor it bottom-left: clear of the sidebar (primary navigation), of
+           the status bar, and of the bottom-right M75 output dock. */
         .voice-runtime-dock {
-          margin: 8px 12px 0;
+          position: fixed;
+          left: calc(var(--shell-sidebar-expanded, 240px) + 16px);
+          bottom: calc(var(--shell-statusbar-h, 36px) + 12px);
+          z-index: 47;
+          width: min(360px, calc(100vw - 32px));
+          max-height: min(46vh, 420px);
+          overflow-y: auto;
+          overscroll-behavior: contain;
+          margin: 0;
           padding: 10px 12px;
           border-radius: 14px;
           border: 1px solid rgba(255, 255, 255, 0.08);
           background: rgba(10, 14, 28, 0.72);
           color: #e8eefc;
           font-size: 12px;
+        }
+        /* Sidebar collapse is published on the desktop chrome wrapper, which is
+           a preceding sibling of this dock in the shell tree. */
+        :global(.shell-desktop[data-sidebar="collapsed"]) ~ .voice-runtime-dock {
+          left: calc(var(--shell-sidebar-collapsed, 64px) + 16px);
         }
         .voice-runtime-head {
           display: flex;
@@ -190,6 +208,8 @@ export default function VoiceRuntimeDock() {
         .voice-runtime-mic {
           width: 44px;
           height: 44px;
+          min-width: 44px;
+          min-height: 44px;
           border-radius: 999px;
           border: 1px solid;
           cursor: pointer;
@@ -207,6 +227,12 @@ export default function VoiceRuntimeDock() {
           padding: 6px 10px;
           cursor: pointer;
           font-size: 11px;
+        }
+        .voice-runtime-mic:focus-visible,
+        .voice-runtime-interrupt:focus-visible,
+        .voice-runtime-retry:focus-visible {
+          outline: 2px solid var(--focus-ring, #7aa2ff);
+          outline-offset: 2px;
         }
         .voice-runtime-listening-pulse {
           height: 4px;
@@ -289,9 +315,27 @@ export default function VoiceRuntimeDock() {
             height: 14px;
           }
         }
-        @media (max-width: 720px) {
+        /* Narrow desktop/tablet: the bottom-right output dock (anchored 42px up)
+           reaches far enough left to meet this dock, so stack above it. */
+        @media (max-width: 1023px) {
           .voice-runtime-dock {
-            margin: 6px 8px 0;
+            bottom: calc(var(--shell-statusbar-h, 36px) + 12px + 212px);
+          }
+        }
+        /* The output dock re-anchors to 76px at this width (globals.css). */
+        @media (max-width: 820px) {
+          .voice-runtime-dock {
+            bottom: calc(var(--shell-statusbar-h, 36px) + 12px + 246px);
+          }
+        }
+        /* Phone companion: no sidebar, no status bar; clear the tab bar and the
+           taller single-column output dock. */
+        @media (max-width: 699px) {
+          .voice-runtime-dock {
+            left: 10px;
+            width: min(360px, calc(100vw - 20px));
+            max-height: min(38vh, 320px);
+            bottom: calc(328px + env(safe-area-inset-bottom, 0px));
           }
         }
       `}</style>
