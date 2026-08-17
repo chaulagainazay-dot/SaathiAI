@@ -466,7 +466,25 @@ class RetentionHoldBody(BaseModel):
 
 @router.get("/health")
 def platform_health():
-    return _svc().health()
+    """Platform health, with the provenance of the code answering it.
+
+    The provenance block lets a browser certification harness prove which
+    checkout served the run instead of assuming. Filesystem paths in it are
+    local/development/test only — see `saathi.provenance`.
+    """
+    from saathi.provenance import runtime_provenance
+
+    payload = dict(_svc().health())
+    payload["provenance"] = runtime_provenance()
+    return payload
+
+
+@router.get("/provenance")
+def platform_provenance():
+    """Standalone runtime identity of the backend. Non-secret by construction."""
+    from saathi.provenance import runtime_provenance
+
+    return runtime_provenance()
 
 
 @router.post("/bootstrap")
@@ -5198,6 +5216,42 @@ def paper_ledger(account_id: str, limit: int = 500, offset: int = 0, authorizati
 def paper_summary(account_id: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
     try:
         return {"summary": _ppsvc().summary(_ppctx(authorization, x_platform_token), account_id)}
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/paper/accounts/{account_id}/command-snapshot")
+def paper_command_snapshot(account_id: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    """Canonical ledger snapshot for production Hybrid Command (read-only)."""
+    try:
+        return _ppsvc().command_center_snapshot(_ppctx(authorization, x_platform_token), account_id)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/paper/accounts/{account_id}/risk")
+def paper_account_risk(account_id: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    """Independent PortfolioRiskEngine contract for production Command (read-only)."""
+    try:
+        return _ppsvc().paper_risk_snapshot(_ppctx(authorization, x_platform_token), account_id)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/paper/accounts/{account_id}/proposals")
+def paper_account_proposals(account_id: str, limit: int = 10, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    """Latest portfolio construction proposals for fund (read-only; no execution)."""
+    try:
+        return _ppsvc().list_portfolio_proposals(_ppctx(authorization, x_platform_token), account_id, limit=limit)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/paper/accounts/{account_id}/performance")
+def paper_account_performance(account_id: str, period: str = "SINCE_INCEPTION", authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    """Deterministic PAPER performance history contract (T-NEXT-4). Read-only."""
+    try:
+        return _ppsvc().paper_performance_snapshot(_ppctx(authorization, x_platform_token), account_id, period=period)
     except PlatformContextError as e:
         raise _err(e) from e
 

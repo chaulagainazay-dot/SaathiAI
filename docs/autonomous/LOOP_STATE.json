@@ -1,36 +1,227 @@
 {
-  "goal_id": "BASELINE_REGRESSION_DEBT_CLOSURE_AND_PRIVATE_ALPHA_LAUNCH_READINESS",
-  "baseline_sha": "6cdf72661834242eb4901f7eaf44a4425957db37",
-  "starting_branch": "milestone/m328-m335-production-readiness",
-  "branch": "milestone/m336-m343-private-alpha-readiness",
-  "current_milestone": "M336-M343",
-  "status": "certified_with_limitations",
-  "completed_milestones": [
-    "M328",
-    "M329",
-    "M330",
-    "M331",
-    "M332",
-    "M333",
-    "M334",
-    "M335",
-    "M336",
-    "M337",
-    "M338",
-    "M339",
-    "M340",
-    "M341",
-    "M342",
-    "M343"
+  "goal_id": "R2_TRUNK_CONVERGENCE",
+  "program": "R2 — SaathiOS trunk convergence",
+  "purpose": "converge three independently-advanced program heads onto one authoritative trunk, repair the defects convergence exposes, and publish it for CI verification without merging to the canonical baseline",
+  "branch": "integration/saathios-trunk-v3",
+  "worktree_name": "SaathiAI-trunk-v3",
+  "worktree_path_note": "the absolute worktree path is recorded in the browser certificates under provenance.worktreePath; it is deliberately not repeated here, because this file is served by the public knowledge corpus and tests/test_m87_knowledge_grounding.py forbids absolute host paths in public output",
+  "base_branch": "integration/saathios-canonical-baseline",
+  "starting_branch": "feature/ui-next-3-1-production-motion",
+  "baseline_sha": "1a51ae955cb6c13394c19bb2dd9f6e3ef109854f",
+  "documented_at_sha": "9e369bda036fdfc81a246c8583c263f14cfee1f7",
+  "last_content_sha": "9e369bda036fdfc81a246c8583c263f14cfee1f7",
+  "ending_sha_note": "documented_at_sha is the HEAD whose CI results this file records — GitHub Actions run 32010707455 tested exactly that SHA. The commit carrying this file is one commit later and cannot embed its own hash; it triggers its own required CI, and that run must also be green before R2 may be reported terminal. No earlier commit is certified while a later HEAD is reported.",
+
+  "predecessor_program": "M336-M343 private-alpha launch readiness",
+  "predecessor_state_superseded": true,
+
+  "input_heads": {
+    "ui_next_3_1_and_t_next_4": {
+      "branch": "feature/ui-next-3-1-production-motion",
+      "sha": "1a51ae955cb6c13394c19bb2dd9f6e3ef109854f",
+      "role": "convergence base"
+    },
+    "v_next_2b6": {
+      "branch": "data/v-next-2b6-product-clean-speech",
+      "sha": "f4dd4fbee54daa1cdbd7d28bc445592209265148",
+      "role": "merged"
+    },
+    "m64_route_repair": {
+      "branch": "fix/m64-module-discovery-regression",
+      "sha": "8e59e2c68ce8b86533f349eb62567f827fe53762",
+      "role": "cherry-picked (source only; browser evidence rejected)"
+    },
+    "r1_cors_auth_preservation": {
+      "branch": "recovery/r1-cors-auth-preservation",
+      "sha": "2a2b3bbeebeff08e17c173698e6c7f921f5e1c19",
+      "role": "cherry-picked"
+    },
+    "r1_import_determinism": {
+      "branch": "recovery/r1-cors-auth-preservation",
+      "sha": "c84912646de85328183fc23794a5beb7b83b8e6a",
+      "role": "cherry-picked"
+    }
+  },
+
+  "state": {
+    "trunk_convergence": "integrated",
+    "bounded_backend_regression": "passed_locally",
+    "frontend_regression": "passed_locally",
+    "m64_applications_dashboard": "browser_certified",
+    "m77_voice_output_foundation": "browser_certified",
+    "authority_invariants": "verified_locally",
+    "github_publication": "published",
+    "github_ci": "ci_verified",
+    "merge_to_canonical_baseline": "not_authorized"
+  },
+  "state_vocabulary": {
+    "integrated": "the change is present in this trunk's history",
+    "passed_locally": "a suite was executed on this host at a known SHA and reported zero failures",
+    "browser_certified": "a real browser drove the production build against a real backend under real authentication, and the certificate records the frontend and backend SHA it observed",
+    "verified_locally": "machine-checked by an executing test on this host, not asserted by reading code",
+    "published": "the branch exists on origin at the same SHA as the local branch",
+    "ci_verified": "the required GitHub workflow jobs completed with conclusion success against the final HEAD",
+    "merged": "the pull request was merged into its base branch"
+  },
+
+  "status": "integrated_locally_certified_published_and_ci_verified",
+  "verdict": "R2_TRUNK_CONVERGENCE_COMPLETE",
+  "verdict_target": "R2_TRUNK_CONVERGENCE_COMPLETE",
+  "verdict_note": "both required CI jobs reported success against 9e369bd; the commit carrying this record must receive its own green run before the program is reported terminal",
+
+  "certification": {
+    "m64": {
+      "verdict": "PASS",
+      "hard_gates": 21,
+      "state_gates": 12,
+      "responsive_gates": 6,
+      "accessibility_gates": 3,
+      "certified_sha": "257f0ba4f0abda1f38d47562e62b0d8891c437bf",
+      "frontend_sha": "257f0ba4f0abda1f38d47562e62b0d8891c437bf",
+      "backend_sha": "257f0ba4f0abda1f38d47562e62b0d8891c437bf",
+      "reattested_at_sha": "8b645e3cec97547fdae672c57626483696a4d39a",
+      "reattested_by": "M77 shell regression sub-run",
+      "evidence": "docs/platform/m64_evidence/M64_BROWSER_CERT.json",
+      "provenance": "saathi.cert_provenance.v1; worktree SaathiAI-trunk-v3; single backend origin observed"
+    },
+    "m77": {
+      "verdict": "PASS",
+      "hard_gates": 36,
+      "responsive_gates": 6,
+      "accessibility_gates": 2,
+      "security_gates": 4,
+      "certified_sha": "8b645e3cec97547fdae672c57626483696a4d39a",
+      "frontend_sha": "8b645e3cec97547fdae672c57626483696a4d39a",
+      "backend_sha": "8b645e3cec97547fdae672c57626483696a4d39a",
+      "evidence": "docs/evidence/m77/browser/M77_VOICE_BROWSER_CERT.json",
+      "provenance": "saathi.cert_provenance.v1; frontend and backend SHA proven equal at runtime; no cross-worktree evidence"
+    }
+  },
+
+  "gates": {
+    "bounded_backend_suite": "1024 passed, 0 failed — ./.venv/bin/python -m pytest $(cat docs/integration/trunk-v3/BOUNDED_SUITE.txt) -p no:randomly (was 976 before the CI-surfaced repairs added 9 determinism guards and admitted the two suites that caught them)",
+    "frontend_suite": "527 passed, 0 failed — npm --prefix saathi-os test",
+    "authority_invariants": "36 assertions passed — tests/test_r2_architecture_invariants.py",
+    "m64_browser_certification": "PASS (21 hard / 12 state / 6 responsive / 3 accessibility)",
+    "m77_browser_certification": "PASS (36 hard / 6 responsive / 2 accessibility / 4 security)",
+    "import_determinism": "saathi resolves to this checkout; root conftest.py refuses collection otherwise",
+    "runtime_provenance": "frontend and backend each identify their SHA and worktree at runtime; certification fails closed on mismatch",
+    "evidence_mutation_hygiene": "runtime operation no longer dirties committed evidence",
+    "package_hash_determinism": "application package hashes are ordered by name, so they no longer depend on filesystem read order",
+    "public_knowledge_paths": "no absolute host paths in corpus-served documents",
+    "github_ci_critical_regressions": "success — 262 blocking manifest checks passed, 0 failed; 7547 tests collected with no collection errors; 309 server routes (floor 290)",
+    "github_ci_full_suite": "success — 7530 passed, 17 skipped, 0 failed in 23m56s on ubuntu-latest / Python 3.12.13"
+  },
+
+  "defects_found_and_repaired": [
+    {
+      "id": "R2-D1",
+      "defect": "CORSMiddleware was not outermost, so authentication failures on allowed origins returned without CORS headers and surfaced in the browser as opaque network errors",
+      "commit": "2b0442f",
+      "repair": "CORSMiddleware moved outermost; the temporary OPTIONS authentication bypass deleted rather than retained"
+    },
+    {
+      "id": "R2-D2",
+      "defect": "voice session teardown re-entered its own update path and froze shell-wide client navigation",
+      "commit": "257f0ba",
+      "repair": "teardown loop broken; navigation restored under browser certification"
+    },
+    {
+      "id": "R2-D3",
+      "defect": "every signed-out page load issued a request guaranteed to return 401",
+      "commit": "257f0ba",
+      "repair": "the request is no longer issued while signed out"
+    },
+    {
+      "id": "R2-D4",
+      "defect": "runtime operation wrote into committed evidence directories and dirtied immutable state",
+      "commit": "686e78d",
+      "repair": "runtime storage separated from committed evidence; guarded by tests/test_evidence_mutation_hygiene.py"
+    },
+    {
+      "id": "R2-D5",
+      "defect": "AppRuntime.validate_package hashed a package's files in raw os.walk order, so package_hash was a property of the filesystem rather than of the package; every built-in package has two hashed files and therefore two possible hashes, and a hash pinned on APFS failed validation on ext4 with package_hash_mismatch",
+      "found_by": "GitHub CI full-suite on Linux at 4bab721 — 11 failures in tests/test_m121_app_runtime.py; the same tests pass on macOS, and the canonical baseline had passed on Linux only because readdir order happened to agree",
+      "repair": "the walk is ordered by name; tests/test_package_hash_determinism.py asserts the hash and the pinned-hash validation both survive a reversed read order, and refuses to pass vacuously if the packages ever drop below two hashed files",
+      "class": "latent pre-existing non-determinism, not a convergence regression; repaired inside R2 because determinism of this kind is what R2 already owns"
+    },
+    {
+      "id": "R2-D6",
+      "defect": "the first version of this state file listed absolute host paths, which the public knowledge corpus then served; tests/test_m87_knowledge_grounding.py forbids that",
+      "found_by": "GitHub CI full-suite on Linux at 4bab721, reproduced locally afterwards",
+      "repair": "absolute paths removed from this file; the worktree path remains recorded in the browser certificates, which are evidence and were not weakened",
+      "class": "regression introduced by the R2 documentation commit itself and repaired in the same program"
+    }
   ],
-  "verdict": "PRIVATE_ALPHA_LAUNCH_READINESS_CERTIFIED_WITH_LIMITATIONS",
-  "verdict_target": "PRIVATE_ALPHA_LAUNCH_READINESS_CERTIFIED_WITH_LIMITATIONS",
-  "browser_verdict": "PRIVATE_ALPHA_LAUNCH_READINESS_BROWSER_CERT_PASSED_WITH_LIMITATIONS",
-  "max_state": "PRIVATE_ALPHA_READY_OFFLINE_INVITE_ONLY",
-  "current_maturity": "PRIVATE_ALPHA_READY_OFFLINE_INVITE_ONLY",
-  "predecessor_maturity": "OPERATIONALLY_READY_OFFLINE",
-  "real_connectivity_authorized": false,
+
+  "publication": {
+    "pushed": true,
+    "upstream": "origin/integration/saathios-trunk-v3",
+    "published_sha": "9e369bda036fdfc81a246c8583c263f14cfee1f7",
+    "pr_number": 45,
+    "pr_base": "integration/saathios-canonical-baseline",
+    "pr_head": "integration/saathios-trunk-v3",
+    "pr_state": "OPEN",
+    "pr_is_draft": false,
+    "merged": false,
+    "deployed": false,
+    "workflow_name": "reliability",
+    "workflow_run_id": 32010707455,
+    "workflow_url": "https://github.com/chaulagainazay-dot/SaathiAI/actions/runs/32010707455",
+    "ci_commit_sha_tested": "9e369bda036fdfc81a246c8583c263f14cfee1f7",
+    "ci_started_at": "2026-08-17T08:30:39Z",
+    "ci_completed_at": "2026-08-17T09:15:18Z",
+    "ci_runner": "ubuntu-latest, Python 3.12.13",
+    "ci_critical_regressions": {
+      "job_id": 95329446484,
+      "conclusion": "success",
+      "started_at": "2026-08-17T08:30:42Z",
+      "completed_at": "2026-08-17T08:49:48Z",
+      "blocking_manifest_checks_passed": 262,
+      "blocking_manifest_checks_failed": 0,
+      "tests_collected": 7547,
+      "server_routes": 309
+    },
+    "ci_full_suite": {
+      "job_id": 95334038526,
+      "conclusion": "success",
+      "started_at": "2026-08-17T08:49:51Z",
+      "completed_at": "2026-08-17T09:15:17Z",
+      "passed": 7530,
+      "skipped": 17,
+      "failed": 0,
+      "duration": "23m56s"
+    },
+    "run_on_this_record_sha": {
+      "sha": "68d5713d6f965d862c58e9cb3cd25972558f5913",
+      "note": "the commit carrying the CI record above; per the ending_sha_note convention a commit cannot embed its own hash, so this block was written by the commit that follows it",
+      "workflow_run_id": 32014601693,
+      "workflow_url": "https://github.com/chaulagainazay-dot/SaathiAI/actions/runs/32014601693",
+      "conclusion": "success",
+      "critical_regressions": "success — job 95352662425, 2026-08-17T09:19:18Z to 09:38:26Z",
+      "full_suite": "success — job 95352661515, 2026-08-17T10:04:47Z to 10:30:27Z, on re-run",
+      "full_suite_first_attempt": "failure — job 95346230610, 1 failed / 7529 passed / 17 skipped; tests/test_m17_computer_agent.py::test_replay_redacts_credentials, a pre-existing time-dependent flake diagnosed below and deliberately not fixed"
+    },
+    "first_run_on_4bab721": {
+      "workflow_run_id": 32006446275,
+      "conclusion": "failure",
+      "critical_regressions": "success",
+      "full_suite": "failure — 12 failed, 7509 passed, 17 skipped",
+      "disposition": "both causes diagnosed and repaired in 9e369bd; recorded as R2-D5 and R2-D6"
+    }
+  },
+
+  "linux_clean_clone_differences": [
+    "application package hashes were computed in filesystem read order, so a hash pinned on APFS could not validate on ext4. This is R2-D5. The canonical baseline had passed the same job on Linux only because readdir order happened to agree, which made the gate a coin flip on every runner rather than a platform-specific failure. Repaired by ordering the walk; the pinned hashes were already the sorted-order hashes, so no package or evidence was regenerated.",
+    "tests/test_m121_app_runtime.py and tests/test_m87_knowledge_grounding.py were not in the bounded local suite, so neither failure could be seen before publication. Both files are now in it.",
+    "tests/test_m17_computer_agent.py::test_replay_redacts_credentials is a pre-existing time-dependent flake. It asserts the replay blob contains neither the password 'hunter2' nor the OTP '999'. Both are redacted correctly and always were — proven by holding time.time() fixed — but the blob also carries two raw time.time() floats, and the assertion fails whenever a timestamp's decimal expansion happens to contain the substring '999'. Measured at about 0.37 percent per timestamp, so roughly 0.7 percent per run. The redaction control never failed; the test's own oracle is unsound. Not a convergence regression and not touched by R2, so it was recorded rather than repaired, and the job was re-run to obtain an authoritative result. It is a genuine defect and belongs to whichever program owns that suite.",
+    "tests/test_m17_1_live.py::test_live_browser_launch_and_close and ::test_live_browser_dom_and_click failed on the canonical baseline's Linux run and passed on both trunk-v3 runs. Pre-existing contention-sensitive flake, not touched by R2, recorded rather than claimed as a fix."
+  ],
+
+  "production_authority": false,
+  "live_trading_authorized": false,
   "broker_connectivity_authorized": false,
+  "real_connectivity_authorized": false,
   "oauth_authorized": false,
   "credential_provisioning_authorized": false,
   "credential_validation_authorized": false,
@@ -44,62 +235,37 @@
   "transfer_authorized": false,
   "withdrawal_authorized": false,
   "canary_activation_authorized": false,
-  "live_trading_authorized": false,
   "automated_investment_authority": false,
+  "public_production_authorized": false,
+  "public_registration_authorized": false,
+  "invite_only": true,
   "no_real_provider_connection": true,
   "no_real_credentials": true,
   "no_account_access": true,
   "no_order_execution": true,
-  "no_external_telemetry": true,
-  "no_cloud_monitoring": true,
-  "no_email_sms_push_alerting": true,
-  "no_cloud_backup": true,
   "no_deployment_control": true,
   "no_execution_control": true,
-  "read_only_operations_dashboard": true,
   "deterministic_engine": true,
-  "browser_certification": true,
-  "clean_clone_certification": true,
-  "recovery_validation": true,
-  "diagnostics_validation": true,
-  "performance_validation": true,
-  "purpose": "close inherited regression debt and certify bounded, local, invite-only private-alpha launch readiness",
-  "gates": {
-    "full_backend_suite": "6007 passed, 1 skipped, 0 failed (baseline: 5945 passed, 8 failed)",
-    "focused_milestone_suites": "109 passed",
-    "full_frontend_tests": "342 passed (baseline 318 + 24 added)",
-    "backend_tests_added": "54",
-    "frontend_tests_added": "24",
-    "release_gate": "EXIT_READY (0); was EXIT_SECURITY (3)",
-    "private_alpha_journey": "71/71 steps; 31 positive, 18 refusals each with a specific code",
-    "browser_certification": "92/92 on Chromium 151.0.7922.34",
-    "soak": "61.36 minutes, 84651 cycles, 938247 operations, 0 errors",
-    "concurrency_scenarios": "4/4",
-    "recovery_scenarios": "8/8",
-    "production_build": "clean",
-    "clean_clone": "backend 6007 + frontend 342 passed, build clean, gate EXIT_READY, journey passed, authority and network scans clean",
-    "security_threat_model": "32 threats: 28 covered, 4 partially covered, 0 uncovered"
-  },
-  "notes": "All eight inherited backend failures were closed in implementation; the three test files containing them are byte-identical to predecessor 6cdf726, verified by git hash-object. Two root causes: build artifacts treated as host prerequisites (7 failures), and a release gate counting a bare PEM header as a leaked key (1 failure, red since 79d3c29). Three further defects were found while building the certification and fixed: the release SHA was recorded twice in every manifest, concurrent decide_approval calls could all win a read-check-write race (found by the soak; the sequential test always passed), and the journey's cancellation probe never actually cancelled. Two findings are recorded and NOT fixed: unbounded local database growth under sustained load (671 KB to 1.67 GB over 938k operations), which needs a retention policy that is a governance decision; and test_m17_1_live.py::test_live_browser_dom_and_click, a pre-existing contention-sensitive flake that this branch never touched and that passes idle at both this SHA and the predecessor. Owner review was NOT performed and cannot be performed by automation. M344 was not started.",
-  "merged": false,
-  "pushed": false,
-  "deployed": false,
-  "pr_13_modified": false,
-  "implementation_sha": "3f907c6ae433d456fae709ab6d58542f05b55163",
-  "last_content_sha": "3f907c6ae433d456fae709ab6d58542f05b55163",
-  "ending_sha_note": "The final commit on this branch is this LOOP_STATE SHA pin itself, so it cannot embed its own hash. last_content_sha is the final commit carrying implementation, test, documentation or evidence changes; the branch tip is exactly one commit later.",
-  "public_production_authorized": false,
-  "public_registration_authorized": false,
-  "invite_only": true,
   "owner_review_status": "OWNER_REVIEW_REQUIRED",
   "owner_review_may_be_automated": false,
   "release_is_automatic": false,
-  "inherited_failures_at_baseline": 8,
-  "inherited_failures_remaining": 0,
-  "soak_validation": true,
-  "concurrency_validation": true,
-  "m344_started": false,
-  "limitations": "docs/private-alpha/m336_m343_evidence/LIMITATIONS.json",
-  "evidence": "docs/private-alpha/m336_m343_evidence/",
-  "specification": "docs/private-alpha/M336_M343_PRIVATE_ALPHA_LAUNCH_READINESS.md"
+
+  "remaining_divergence": [
+    "integration/saathios-canonical-baseline-v2-voice (b5e8fda) — condensed voice implementation, superseded by V-NEXT, deliberately not merged",
+    "milestone/m312-m319-connectivity-governance and the M2–M343 milestone ladder — historical 40-PR ladder, out of scope by instruction",
+    "implementation/fm-i1…fm-i6 and hardening/fm-i6.2-* — AgentHarness / local model harness line, future milestone",
+    "evaluation/twenty-readonly-sandbox and audit/saathios-canonical-integration-readiness — evaluation and audit lines, not product code",
+    "the main SaathiAI worktree — dirty with unowned provider/inference edits; inspected, not load-bearing to this convergence"
+  ],
+  "branches_deleted": false,
+  "worktrees_deleted": false,
+
+  "next_program_recommended": "R3_CENTRALIZED_AUTH_POLICY_HARDENING",
+  "next_program_authorized": false,
+
+  "manifest": "docs/integration/trunk-v3/CONVERGENCE_MANIFEST.md",
+  "bounded_suite": "docs/integration/trunk-v3/BOUNDED_SUITE.txt",
+  "invariant_test": "tests/test_r2_architecture_invariants.py",
+
+  "notes": "R2 converged three independently-advanced program heads — UI-NEXT through 3.1 with T-NEXT through 4 as the base, V-NEXT through 2B.6 merged onto it, and the M64 route repair plus the two R1 recovery commits cherry-picked — onto one trunk. R1 was cherry-picked rather than merged because its branch sits on the condensed voice line, which would have contested V-NEXT's ownership of the voice runtime. The V-NEXT merge produced exactly two textual conflicts, resolved COMBINE and ADAPT and recorded in the manifest. Convergence exposed four real defects that no single input line could have surfaced alone; all four are repaired in this trunk. Certification was rebuilt so it cannot lie about what it tested: frontend and backend each report their SHA and worktree at runtime, the certificate records both, and the run fails closed if they disagree or if a foreign backend origin is observed. At this SHA the trunk is integrated, locally tested, and browser-certified, and it is neither published nor CI-verified nor merged. Those are three distinct unmet conditions and none of them may be reported as completion."
 }

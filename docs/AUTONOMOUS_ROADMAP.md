@@ -1,5 +1,210 @@
 # SaathiOS Autonomous Roadmap
 
+## R2 — Trunk Convergence (2026-08-16)
+
+| Field | Value |
+| --- | --- |
+| Mode | **Convergence and repair** — no new product functionality |
+| Branch | `integration/saathios-trunk-v3` |
+| Base | `feature/ui-next-3-1-production-motion` @ `1a51ae9…` |
+| Target | `integration/saathios-canonical-baseline` (pull request, not merged) |
+| Docs | `docs/integration/trunk-v3/` |
+| State | integrated; locally tested; browser-certified; **not yet published, CI-verified or merged** |
+| Next | `R3 — CENTRALIZED_AUTH_POLICY_HARDENING` (separate authorization) |
+
+Three program lines had advanced independently and no single checkout contained
+all three. R2 converged them onto one trunk and published it for CI
+verification. It added no feature.
+
+### Inputs integrated
+
+| Line | Branch | SHA | Role |
+| --- | --- | --- | --- |
+| UI-NEXT through 3.1 + T-NEXT through 4 | `feature/ui-next-3-1-production-motion` | `1a51ae9…` | convergence base |
+| V-NEXT through 2B.6 | `data/v-next-2b6-product-clean-speech` | `f4dd4fb…` | merged |
+| M64 route repair | `fix/m64-module-discovery-regression` | `8e59e2c…` | cherry-picked, source only |
+| R1 CORS/auth preservation | `recovery/r1-cors-auth-preservation` | `2a2b3bb…` | cherry-picked |
+| R1 import determinism | `recovery/r1-cors-auth-preservation` | `c849126…` | cherry-picked |
+
+R1 was cherry-picked rather than merged. Its branch sits on
+`integration/saathios-canonical-baseline-v2-voice`, which carries five commits
+of the **condensed** voice implementation; merging it would have imported that
+line alongside V-NEXT and let it contest ownership of the voice runtime — the
+one substitution this convergence was explicitly not to make. The M64 branch's
+browser evidence was rejected and only its source taken, because evidence
+captured on another checkout cannot certify this one.
+
+The V-NEXT merge produced exactly two textual conflicts. `saathi-os/package.json`
+was resolved **COMBINE**; `saathi-os/app/command/page.jsx` was resolved **ADAPT**,
+keeping the UI-NEXT structure and wiring the V-NEXT contract into it rather than
+choosing a side. Both resolutions, and three further REJECT/KEEP decisions in
+the certification harness, are recorded in
+`docs/integration/trunk-v3/CONVERGENCE_MANIFEST.md`.
+
+### Architectural outcomes
+
+One consolidated trunk carries all three lines. `/apps` and `/app-launcher`
+ownership is correct again, which is what the M64 route contract asserts.
+Python and worktree resolution is deterministic: the root `conftest.py` guard
+refuses collection if `saathi` ever resolves outside this checkout, so every
+pytest invocation proves its own resolution before running. Frontend and
+backend provenance is reproducible — each identifies its SHA and worktree at
+runtime, and certification fails closed when they disagree or when a foreign
+backend origin is observed. `CORSMiddleware` is outermost. The temporary
+OPTIONS authentication bypass is deleted rather than retained, so browser
+certification runs against real authentication. Runtime-generated evidence no
+longer contaminates immutable committed state.
+
+### Defects discovered by convergence
+
+Convergence surfaced four defects that no single input line could have exposed
+alone. They are repairs inside R2, not milestones of their own.
+
+- **CORS middleware ordering** (`2b0442f`). `CORSMiddleware` was not outermost,
+  so authentication failures on allowed origins returned without CORS headers
+  and reached the browser as opaque network errors rather than as 401s. The
+  middleware was moved outermost and the OPTIONS bypass deleted.
+- **Voice teardown froze client navigation** (`257f0ba`). Voice session teardown
+  re-entered its own update path; the resulting loop froze client-side
+  navigation shell-wide, not only in voice surfaces.
+- **Guaranteed-401 request on every signed-out page load** (`257f0ba`). Every
+  signed-out load issued a request that could only ever return 401.
+- **Runtime dirtying committed evidence** (`686e78d`). Runtime operation wrote
+  into committed evidence directories; storage was separated and the boundary
+  is now guarded by `tests/test_evidence_mutation_hygiene.py`.
+
+### Defects discovered by CI
+
+Publication found two more. Neither was visible to a macOS-only gate.
+
+- **Application package hashes depended on filesystem read order.**
+  `AppRuntime.validate_package` hashed a package's files in raw `os.walk` order,
+  so `package_hash` was a property of the filesystem rather than of the package.
+  Every built-in package has exactly two hashed files, so there were two
+  possible hashes: one pinned on APFS failed validation on ext4 with
+  `package_hash_mismatch`, taking 11 tests in `tests/test_m121_app_runtime.py`
+  with it. The canonical baseline had passed the same job on Linux only because
+  readdir order happened to agree — this was latent, not a convergence
+  regression. The walk is now ordered by name, and
+  `tests/test_package_hash_determinism.py` asserts that both the hash and the
+  pinned-hash validation survive a reversed read order, and refuses to pass
+  vacuously if the packages ever drop below two hashed files.
+- **The R2 documentation commit leaked absolute host paths into public knowledge
+  output.** `docs/autonomous/LOOP_STATE.json` is served by the knowledge
+  corpus, and `tests/test_m87_knowledge_grounding.py` forbids absolute paths
+  there. This one was self-inflicted by the preceding commit and is repaired in
+  the same program. The worktree path stays recorded in the browser
+  certificates, which are evidence and were not weakened to satisfy the test.
+
+Both repairs are determinism and hygiene work of the kind R2 already owns, and
+no product behaviour changed. The bounded backend suite grew from 976 to 1024:
+nine new determinism guards, plus the two suites that caught these failures,
+which the macOS gate had not been running.
+
+### Certification
+
+Both browser certifications were re-run on the converged trunk against a
+production build, a real backend and real authentication.
+
+| Certification | Verdict | Gates | Certified SHA |
+| --- | --- | --- | --- |
+| M64 — applications dashboard | **PASS** | 21 hard / 12 state / 6 responsive / 3 accessibility | `257f0ba…`, re-attested at `8b645e3…` |
+| M77 — voice output foundation | **PASS** | 36 hard / 6 responsive / 2 accessibility / 4 security | `8b645e3…` |
+
+Each certificate records the frontend SHA and the backend SHA it observed at
+runtime, and in both runs the two were proven equal.
+
+| Local suite | Result |
+| --- | --- |
+| Bounded backend regression | 1024 passed, 0 failed (976 before the CI-surfaced repairs) |
+| Frontend | 527 passed, 0 failed |
+| Authority invariants (`tests/test_r2_architecture_invariants.py`) | 36 assertions passed |
+
+### Publication and CI
+
+| Field | Value |
+| --- | --- |
+| Published SHA | `9e369bd` on `origin/integration/saathios-trunk-v3`, no force push |
+| Pull request | #45, open, not draft, base `integration/saathios-canonical-baseline` |
+| Workflow run | `reliability` 32010707455, testing `9e369bd` |
+| `critical-regressions` | **success** — 262 blocking manifest checks, 0 failed; 7547 collected; 309 routes |
+| `full-suite` | **success** — 7530 passed, 17 skipped, 0 failed |
+
+The first run, on `4bab721`, failed `full-suite` and found the two defects in
+the section above. Publication was the first time this code had run on Linux.
+
+### Remaining limitation
+
+The trunk is integrated, locally tested, browser-certified, published and
+CI-verified. It is **not merged**. The pull request targets
+`integration/saathios-canonical-baseline` and stays open; merge to the canonical
+baseline was never authorized and was not performed. Nothing here authorizes
+production, live trading, broker connectivity, or deployment.
+
+Auth enforcement still depends substantially on a large hand-maintained path
+bypass/allowlist plus duplicated route-level authorization behaviour. R2
+preserved that mechanism and repaired its ordering; it did not replace it. That
+replacement is R3 and requires explicit owner approval.
+
+---
+
+## V-NEXT-2B — Streaming STT + Intelligent Turn Orchestration (2026-08-07)
+
+| Field | Value |
+| --- | --- |
+| Mode | **Streaming input + turns** — partial ≠ execute |
+| Branch | `feature/v-next-2b-streaming-stt-turns` |
+| Base | `feature/v-next-2a-vad-barge-in` @ `9fad029…` |
+| STT | Browser SpeechRecognition (+ mock tests) |
+| Orchestration | Saathi RealtimeVoicePipelineCoordinator |
+| Docs | `docs/voice-next-2b/` |
+| Verdict | `STREAMING_STT_TURN_ORCHESTRATION_CERTIFIED_WITH_LIMITATIONS` |
+| Next | `V-NEXT-2C` (separate authorization) |
+
+---
+
+## V-NEXT-2A — Local VAD + Acoustic Barge-In (2026-08-07)
+
+| Field | Value |
+| --- | --- |
+| Mode | **VAD sensor + barge-in** via VoiceSession.interrupt |
+| Branch | `feature/v-next-2a-vad-barge-in` |
+| Base | `feature/v-next-1-canonical-voice-session` @ `b960b0d…` |
+| Adapter | energy_zcr_v1 (Silero deferred) |
+| Docs | `docs/voice-next-2a/` |
+| Verdict | `LOCAL_VAD_BARGE_IN_CERTIFIED_WITH_LIMITATIONS` |
+| Next | `V-NEXT-2B` (separate authorization) |
+
+---
+
+## V-NEXT-1 — Canonical Voice Session + Single Audio Ownership (2026-08-07)
+
+| Field | Value |
+| --- | --- |
+| Mode | **Voice architecture consolidation** — no VAD/wake/full-duplex product claim |
+| Branch | `feature/v-next-1-canonical-voice-session` |
+| Base | `feature/ui-next-1-central-command` @ `d66fa3a…` |
+| Package | `saathi-os/lib/voice-session/*` + VoiceSessionProvider |
+| Docs | `docs/voice-next-1/` |
+| Verdict | `CANONICAL_VOICE_SESSION_CERTIFIED_WITH_LIMITATIONS` |
+| Next | `V-NEXT-2` (separate authorization) |
+
+---
+
+## UI-NEXT-1 — Central Command Composition (2026-08-07)
+
+| Field | Value |
+| --- | --- |
+| Mode | **UI composition** — no new backend, no voice redesign |
+| Branch | `feature/ui-next-1-central-command` |
+| Base | `integration/saathios-canonical-baseline` @ `20302574…` |
+| Surface | `/command` control plane |
+| Docs | `docs/ui-next-1/` |
+| Verdict | `CENTRAL_COMMAND_COMPOSITION_CERTIFIED_WITH_LIMITATIONS` |
+| Next | `V-NEXT-1` (separate authorization) |
+
+---
+
 ## CANONICAL BASELINE INTEGRATION (2026-08-07)
 
 | Field | Value |

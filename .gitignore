@@ -93,3 +93,7 @@ docs/platform/m57_evidence/screenshots/
 
 # M264-M271 frozen historical snapshots (local only)
 data/platform/historical_snapshots/
+
+# Runtime state. Written continuously by ordinary operation; never evidence.
+# See saathi/runtime_paths.py — docs/evidence/** stays the committed record.
+.runtime/

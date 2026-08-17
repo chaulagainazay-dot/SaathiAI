@@ -262,9 +262,16 @@ class AppRuntime:
         total = 0
         file_count = 0
         h = hashlib.sha256()
+        # package_hash feeds a stored equality check, so the walk must be
+        # ordered by name and not by directory read order. os.walk yields
+        # whatever readdir gives it, which differs per filesystem: the same
+        # package hashes one way on APFS and another on ext4, and a hash pinned
+        # on one host then fails validation on the other.
         for dirpath, dirnames, filenames in os.walk(package_dir):
-            dirnames[:] = [d for d in dirnames if not (Path(dirpath) / d).is_symlink()]
-            for fn in filenames:
+            dirnames[:] = sorted(
+                d for d in dirnames if not (Path(dirpath) / d).is_symlink()
+            )
+            for fn in sorted(filenames):
                 fp = Path(dirpath) / fn
                 if fp.is_symlink():
                     errors.append(f"symlink_file:{fn}")

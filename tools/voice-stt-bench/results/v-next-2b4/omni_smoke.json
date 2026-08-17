@@ -1,0 +1,53 @@
+{
+  "rss_peak": 1806.15625,
+  "results": [
+    {
+      "tag": "en",
+      "mode": "lang_cond",
+      "lang": "eng_Latn",
+      "decode_s": 1.7057472080014122,
+      "hyp": "  ا ",
+      "rss": 1806.15625
+    },
+    {
+      "tag": "en",
+      "mode": "no_lang",
+      "lang": "eng_Latn",
+      "decode_s": 1.6113872499990975,
+      "hyp": "  ا ",
+      "rss": 1806.15625
+    },
+    {
+      "tag": "ne",
+      "mode": "lang_cond",
+      "lang": "nep_Deva",
+      "decode_s": 4.689540875002422,
+      "hyp": "मेरो आजको फोट फलेरेस् देखाउ",
+      "rss": 1806.15625
+    },
+    {
+      "tag": "ne",
+      "mode": "no_lang",
+      "lang": "nep_Deva",
+      "decode_s": 4.754270041998097,
+      "hyp": "मेरो आजको फोट फलेरेस् देखाउ",
+      "rss": 1806.15625
+    },
+    {
+      "tag": "mix",
+      "mode": "lang_cond",
+      "lang": "nep_Deva",
+      "decode_s": 3.698480416001985,
+      "hyp": "tredin guordien pustety skissa",
+      "rss": 1806.15625
+    },
+    {
+      "tag": "mix",
+      "mode": "no_lang",
+      "lang": "nep_Deva",
+      "decode_s": 3.7158241249999264,
+      "hyp": "tredin guordien pustety skissa",
+      "rss": 1806.15625
+    }
+  ]
+}

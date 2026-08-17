@@ -1,0 +1,31 @@
+{
+  "mission": "V-NEXT-2B.5",
+  "verdict": "PRODUCT_CLEAN_DATA_INSUFFICIENT_FOR_TRAINING",
+  "source_sha": "54f784b0e77834c5f03a237b75ed2fcfa07323a3",
+  "source_pr": 32,
+  "method": "lora_peft",
+  "training_performed": false,
+  "paid_job_launched": false,
+  "gates": {
+    "en_intent_min": 0.7,
+    "ne_intent_min": 0.6,
+    "mix_intent_min": 0.6,
+    "ne_first_span_min": 0.5,
+    "ne_cer_max": 0.45,
+    "numeric_fidelity_min": 0.7
+  },
+  "champion_preserved": {
+    "name": "Bijay13 Whisper Small NE\u2013EN v3.1",
+    "en_intent": 0.8,
+    "ne_intent": 0.57,
+    "mix_intent": 0.52,
+    "numeric": 0.4,
+    "peak_rss_mib": 1400
+  },
+  "blocker": "no product-clean multi-speaker code-switch corpus yet",
+  "tip_sha": "ef401f6cdc15c907cc8aaf3e4955110fd7e5b614",
+  "draft_pr": 33,
+  "draft_pr_url": "https://github.com/chaulagainazay-dot/SaathiAI/pull/33",
+  "branch": "training/v-next-2b5-whisper-cs-lora-readiness",
+  "worktree": "/Users/macbookpro/SaathiAI-voice-next-2b5"
+}
