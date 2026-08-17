@@ -278,6 +278,45 @@ export function micButtonLabel(runtime) {
   return "Start talking";
 }
 
+/**
+ * The stage of one voice turn, as the runtime can actually prove it.
+ *
+ * Deliberately distinguishes "listen" (capture is open, nothing heard) from
+ * "hear" (a transcript fragment exists). The dock reports the difference, so a
+ * live capture that is producing no speech can never read as progress.
+ */
+export const VOICE_TURN_STAGES = Object.freeze([
+  "idle",
+  "listen",
+  "hear",
+  "think",
+  "speak",
+  "fail",
+]);
+
+export function voiceTurnStage(runtime) {
+  if (!runtime) return "idle";
+  if (runtime.error || runtime.state === "FAILED") return "fail";
+  if (runtime.speaking) return "speak";
+  if (runtime.state === "THINKING") return "think";
+  if (runtime.recording && String(runtime.partialUser || "").trim()) return "hear";
+  if (runtime.recording || runtime.listening) return "listen";
+  return "idle";
+}
+
+export function voiceStageLabel(stage) {
+  return (
+    {
+      idle: "Idle",
+      listen: "Listening",
+      hear: "Hearing you",
+      think: "Thinking",
+      speak: "Speaking",
+      fail: "Failed",
+    }[stage] || "Idle"
+  );
+}
+
 export function createVoiceRuntimeClient() {
   return {
     getToken,

@@ -15,6 +15,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { voiceStageLabel, voiceTurnStage, VOICE_TURN_STAGES } from "./voice-runtime.js";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const SOURCE = readFileSync(
@@ -117,5 +118,44 @@ describe("voice runtime dock layout (R2.1-D1)", () => {
     assert.match(SOURCE, /className="voice-runtime-mic"/);
     assert.match(SOURCE, /aria-label=\{micLabel\}/);
     assert.match(SOURCE, /type="button"/);
+  });
+});
+
+describe("voice turn stage", () => {
+  const runtime = (over) => ({
+    state: "IDLE",
+    error: "",
+    speaking: false,
+    recording: false,
+    listening: false,
+    partialUser: "",
+    ...over,
+  });
+
+  it("separates open capture from actually hearing something", () => {
+    assert.equal(voiceTurnStage(runtime({ recording: true })), "listen");
+    assert.equal(
+      voiceTurnStage(runtime({ recording: true, partialUser: "  " })),
+      "listen"
+    );
+    assert.equal(
+      voiceTurnStage(runtime({ recording: true, partialUser: "how many" })),
+      "hear"
+    );
+  });
+
+  it("ranks failure and speech above capture", () => {
+    assert.equal(voiceTurnStage(runtime({ recording: true, error: "network" })), "fail");
+    assert.equal(voiceTurnStage(runtime({ state: "FAILED" })), "fail");
+    assert.equal(voiceTurnStage(runtime({ speaking: true, recording: true })), "speak");
+    assert.equal(voiceTurnStage(runtime({ state: "THINKING" })), "think");
+  });
+
+  it("defaults to idle and always labels a known stage", () => {
+    assert.equal(voiceTurnStage(runtime()), "idle");
+    assert.equal(voiceTurnStage(null), "idle");
+    for (const stage of VOICE_TURN_STAGES) {
+      assert.ok(voiceStageLabel(stage).length > 0, `no label for ${stage}`);
+    }
   });
 });
