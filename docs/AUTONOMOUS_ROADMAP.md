@@ -1,5 +1,114 @@
 # SaathiOS Autonomous Roadmap
 
+## R2 — Trunk Convergence (2026-08-16)
+
+| Field | Value |
+| --- | --- |
+| Mode | **Convergence and repair** — no new product functionality |
+| Branch | `integration/saathios-trunk-v3` |
+| Base | `feature/ui-next-3-1-production-motion` @ `1a51ae9…` |
+| Target | `integration/saathios-canonical-baseline` (pull request, not merged) |
+| Docs | `docs/integration/trunk-v3/` |
+| State | integrated; locally tested; browser-certified; **not yet published, CI-verified or merged** |
+| Next | `R3 — CENTRALIZED_AUTH_POLICY_HARDENING` (separate authorization) |
+
+Three program lines had advanced independently and no single checkout contained
+all three. R2 converged them onto one trunk and published it for CI
+verification. It added no feature.
+
+### Inputs integrated
+
+| Line | Branch | SHA | Role |
+| --- | --- | --- | --- |
+| UI-NEXT through 3.1 + T-NEXT through 4 | `feature/ui-next-3-1-production-motion` | `1a51ae9…` | convergence base |
+| V-NEXT through 2B.6 | `data/v-next-2b6-product-clean-speech` | `f4dd4fb…` | merged |
+| M64 route repair | `fix/m64-module-discovery-regression` | `8e59e2c…` | cherry-picked, source only |
+| R1 CORS/auth preservation | `recovery/r1-cors-auth-preservation` | `2a2b3bb…` | cherry-picked |
+| R1 import determinism | `recovery/r1-cors-auth-preservation` | `c849126…` | cherry-picked |
+
+R1 was cherry-picked rather than merged. Its branch sits on
+`integration/saathios-canonical-baseline-v2-voice`, which carries five commits
+of the **condensed** voice implementation; merging it would have imported that
+line alongside V-NEXT and let it contest ownership of the voice runtime — the
+one substitution this convergence was explicitly not to make. The M64 branch's
+browser evidence was rejected and only its source taken, because evidence
+captured on another checkout cannot certify this one.
+
+The V-NEXT merge produced exactly two textual conflicts. `saathi-os/package.json`
+was resolved **COMBINE**; `saathi-os/app/command/page.jsx` was resolved **ADAPT**,
+keeping the UI-NEXT structure and wiring the V-NEXT contract into it rather than
+choosing a side. Both resolutions, and three further REJECT/KEEP decisions in
+the certification harness, are recorded in
+`docs/integration/trunk-v3/CONVERGENCE_MANIFEST.md`.
+
+### Architectural outcomes
+
+One consolidated trunk carries all three lines. `/apps` and `/app-launcher`
+ownership is correct again, which is what the M64 route contract asserts.
+Python and worktree resolution is deterministic: the root `conftest.py` guard
+refuses collection if `saathi` ever resolves outside this checkout, so every
+pytest invocation proves its own resolution before running. Frontend and
+backend provenance is reproducible — each identifies its SHA and worktree at
+runtime, and certification fails closed when they disagree or when a foreign
+backend origin is observed. `CORSMiddleware` is outermost. The temporary
+OPTIONS authentication bypass is deleted rather than retained, so browser
+certification runs against real authentication. Runtime-generated evidence no
+longer contaminates immutable committed state.
+
+### Defects discovered by convergence
+
+Convergence surfaced four defects that no single input line could have exposed
+alone. They are repairs inside R2, not milestones of their own.
+
+- **CORS middleware ordering** (`2b0442f`). `CORSMiddleware` was not outermost,
+  so authentication failures on allowed origins returned without CORS headers
+  and reached the browser as opaque network errors rather than as 401s. The
+  middleware was moved outermost and the OPTIONS bypass deleted.
+- **Voice teardown froze client navigation** (`257f0ba`). Voice session teardown
+  re-entered its own update path; the resulting loop froze client-side
+  navigation shell-wide, not only in voice surfaces.
+- **Guaranteed-401 request on every signed-out page load** (`257f0ba`). Every
+  signed-out load issued a request that could only ever return 401.
+- **Runtime dirtying committed evidence** (`686e78d`). Runtime operation wrote
+  into committed evidence directories; storage was separated and the boundary
+  is now guarded by `tests/test_evidence_mutation_hygiene.py`.
+
+### Certification
+
+Both browser certifications were re-run on the converged trunk against a
+production build, a real backend and real authentication.
+
+| Certification | Verdict | Gates | Certified SHA |
+| --- | --- | --- | --- |
+| M64 — applications dashboard | **PASS** | 21 hard / 12 state / 6 responsive / 3 accessibility | `257f0ba…`, re-attested at `8b645e3…` |
+| M77 — voice output foundation | **PASS** | 36 hard / 6 responsive / 2 accessibility / 4 security | `8b645e3…` |
+
+Each certificate records the frontend SHA and the backend SHA it observed at
+runtime, and in both runs the two were proven equal.
+
+| Local suite | Result |
+| --- | --- |
+| Bounded backend regression | 976 passed, 0 failed |
+| Frontend | 527 passed, 0 failed |
+| Authority invariants (`tests/test_r2_architecture_invariants.py`) | 36 assertions passed |
+
+### Remaining limitation
+
+Everything above is *local*. At the documentation commit the trunk is
+integrated, tested locally and browser-certified; it is not yet published, not
+yet CI-verified, and not merged. GitHub CI — `critical-regressions` and
+`full-suite` — remains pending, and R2 carries no terminal verdict until both
+report success against the final published HEAD. The pull request targets
+`integration/saathios-canonical-baseline` and stays open; merge to the canonical
+baseline was never authorized and was not performed.
+
+Auth enforcement still depends substantially on a large hand-maintained path
+bypass/allowlist plus duplicated route-level authorization behaviour. R2
+preserved that mechanism and repaired its ordering; it did not replace it. That
+replacement is R3 and requires explicit owner approval.
+
+---
+
 ## V-NEXT-2B — Streaming STT + Intelligent Turn Orchestration (2026-08-07)
 
 | Field | Value |
