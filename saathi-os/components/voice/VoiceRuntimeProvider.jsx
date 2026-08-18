@@ -321,7 +321,8 @@ export function VoiceRuntimeProvider({ children }) {
       inputClaimRef.current = claim;
 
       try {
-        mediaStreamRef.current = await openMicrophoneForClaim(claim, { audio: true });
+        // No constraint argument: the DEFAULT_MIC_CONSTRAINTS contract applies.
+        mediaStreamRef.current = await openMicrophoneForClaim(claim);
       } catch {
         await voiceRuntimeActions.listen(activeToken, sessionId, {
           mode: "toggle",

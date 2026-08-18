@@ -1,6 +1,7 @@
 "use client";
 import { useRef, useState } from "react";
 import { sendVoice } from "./api";
+import { DEFAULT_MIC_CONSTRAINTS } from "./voice-session";
 
 // Push-to-talk hook (ported from the old Baadar voice UI): record mic → send to
 // /api/v1/voice/command → returns { transcript, reply } and plays the TTS reply.
@@ -13,7 +14,7 @@ export function useVoice(onTurn) {
   const start = async () => {
     if (recording || busy) return;
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const stream = await navigator.mediaDevices.getUserMedia(DEFAULT_MIC_CONSTRAINTS);
       const rec = new MediaRecorder(stream);
       chunksRef.current = [];
       rec.ondataavailable = (e) => e.data.size && chunksRef.current.push(e.data);

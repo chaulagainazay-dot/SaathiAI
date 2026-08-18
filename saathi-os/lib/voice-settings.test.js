@@ -62,7 +62,7 @@ describe("voice settings discovery and safety", () => {
       'synth.cancel();',
       'window.addEventListener(PLATFORM_CONTEXT_EVENT, onContext)',
       'mediaRef.current?.getTracks?.().forEach((track) => track.stop())',
-      'navigator.mediaDevices.getUserMedia({ audio: true })',
+      'navigator.mediaDevices.getUserMedia(DEFAULT_MIC_CONSTRAINTS)',
       'setTranscript(text)',
       "No voice recording or transcript is persisted by this settings test",
       'href="/settings/voice"',

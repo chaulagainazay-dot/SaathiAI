@@ -11,6 +11,7 @@ import {
   safePermissionState,
   summarizeVoiceCapability,
 } from "@/lib/voice-settings";
+import { DEFAULT_MIC_CONSTRAINTS } from "@/lib/voice-session";
 
 const card = {
   border: "1px solid var(--border-subtle, rgba(255,255,255,.1))",
@@ -186,7 +187,7 @@ export default function VoiceSettingsPage() {
       return;
     }
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const stream = await navigator.mediaDevices.getUserMedia(DEFAULT_MIC_CONSTRAINTS);
       stream.getTracks().forEach((track) => track.stop());
       setPermission("granted");
       setInputStatus("Microphone permission granted. Capture remains off.");
@@ -209,7 +210,7 @@ export default function VoiceSettingsPage() {
     try {
       await stopOutput();
       stopInput();
-      mediaRef.current = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRef.current = await navigator.mediaDevices.getUserMedia(DEFAULT_MIC_CONSTRAINTS);
       setPermission("granted");
       const recognition = new Ctor();
       recognition.continuous = false;

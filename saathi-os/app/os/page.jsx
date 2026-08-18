@@ -67,6 +67,8 @@ export default function OperatingSystem() {
   const enroll = async () => {
     setEnrollMsg(""); setEnrolling(true);
     try {
+      // Speaker enrollment wants the unprocessed signal; the AEC/NS/AGC
+      // contract in DEFAULT_MIC_CONSTRAINTS is for STT capture, not this.
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const rec = new MediaRecorder(stream);
       const chunks = [];
