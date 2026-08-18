@@ -43,7 +43,7 @@ describe("voice input interrupts voice output", () => {
 
     const stopAt = body.indexOf("await voiceOutput?.stop?.()");
     const sessionAt = body.indexOf("await ensureSession(activeToken)");
-    const recogAt = body.indexOf("await startBrowserRecognition(activeToken, sessionId)");
+    const recogAt = body.indexOf("await startListening(activeToken, sessionId)");
 
     assert.ok(stopAt > -1, "toggleMic must cancel voice output");
     assert.ok(sessionAt > -1 && recogAt > -1, "toggleMic must open a session and start capture");
@@ -72,7 +72,7 @@ describe("voice input interrupts voice output", () => {
     const body = runtime.slice(start, end);
     const stopAt = body.indexOf("await voiceOutput?.stop?.()");
     const interruptAt = body.indexOf("voiceRuntimeActions.interrupt(");
-    const recogAt = body.indexOf("await startBrowserRecognition(");
+    const recogAt = body.indexOf("await startListening(");
     assert.ok(stopAt > -1 && interruptAt > -1 && recogAt > -1);
     assert.ok(stopAt < interruptAt, "local audio stops before the server is told");
     assert.ok(interruptAt < recogAt, "capture resumes only after the interrupt is recorded");

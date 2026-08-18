@@ -26,6 +26,8 @@ export function createBrowserStreamingStt(opts = {}) {
   const partialListeners = new Set();
   /** @type {Set<Function>} */
   const finalListeners = new Set();
+  /** @type {Set<Function>} */
+  const errorListeners = new Set();
 
   let recognition = null;
   let running = false;
@@ -36,8 +38,20 @@ export function createBrowserStreamingStt(opts = {}) {
   let error = "";
   let finals = 0;
   let partials = 0;
+  /**
+   * A finalized utterance keeps its id until the next one actually starts.
+   * Rotating on the final instead would make a redelivered result look like a
+   * brand-new utterance, and downstream duplicate detection would have nothing
+   * to key on.
+   */
+  let awaitingNewUtterance = false;
 
   function emitPartial(text) {
+    if (awaitingNewUtterance) {
+      utteranceId = nextUtteranceId();
+      utteranceStartedAt = new Date().toISOString();
+      awaitingNewUtterance = false;
+    }
     partials += 1;
     lastPartial = text;
     const ev = {
@@ -84,9 +98,8 @@ export function createBrowserStreamingStt(opts = {}) {
         /* ignore */
       }
     }
-    // prepare next utterance id
-    utteranceId = nextUtteranceId();
-    utteranceStartedAt = new Date().toISOString();
+    // The next partial opens the next utterance.
+    awaitingNewUtterance = true;
     lastPartial = "";
   }
 
@@ -101,6 +114,7 @@ export function createBrowserStreamingStt(opts = {}) {
       }
       utteranceId = nextUtteranceId();
       utteranceStartedAt = new Date().toISOString();
+      awaitingNewUtterance = false;
       recognition = new Ctor();
       recognition.continuous = true;
       recognition.interimResults = true;
@@ -121,6 +135,20 @@ export function createBrowserStreamingStt(opts = {}) {
       recognition.onerror = (ev) => {
         error = String(ev?.error || "speech_recognition_error");
         recordVoiceTelemetry("stt_error", { errorCode: error.slice(0, 80) });
+        if (cancelled) return;
+        const payload = {
+          code: error,
+          message: error,
+          source: "browser_speech_recognition",
+          fatal: error === "not-allowed" || error === "service-not-allowed",
+        };
+        for (const fn of errorListeners) {
+          try {
+            fn(payload);
+          } catch {
+            /* ignore */
+          }
+        }
       };
       recognition.onend = () => {
         running = false;
@@ -159,6 +187,10 @@ export function createBrowserStreamingStt(opts = {}) {
     onFinal(cb) {
       finalListeners.add(cb);
       return () => finalListeners.delete(cb);
+    },
+    onError(cb) {
+      errorListeners.add(cb);
+      return () => errorListeners.delete(cb);
     },
 
     async flush() {

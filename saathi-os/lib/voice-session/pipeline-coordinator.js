@@ -93,7 +93,10 @@ export function createRealtimeVoicePipeline({
   localSttFactory = null,
 } = {}) {
   const self = { manager: managerIn };
+  const inBrowser = typeof window !== "undefined";
   const browserAvailable = Boolean(getRecognitionCtor());
+  /** Set when no adapter can serve this runtime truthfully. */
+  let unsupportedReason = "";
 
   const signals = {
     browserSttAvailable: browserAvailable || sttMode === "mock",
@@ -144,14 +147,30 @@ export function createRealtimeVoicePipeline({
     }
 
     if (!stt) {
-      if (sttMode === "browser" || browserAvailable || admission.mode === "browser_streaming" || admission.mode === "browser_fallback") {
+      if (
+        sttMode === "browser" ||
+        browserAvailable ||
+        admission.mode === "browser_streaming" ||
+        admission.mode === "browser_fallback"
+      ) {
         stt = createBrowserStreamingStt({
           getSessionId: () => self.manager?.getSnapshot?.()?.sessionId || "",
         });
         selectedMode = "browser_streaming";
-      } else {
+      } else if (!inBrowser) {
+        // No browser speech engine exists in this runtime at all — Node, the
+        // test harness. Deterministic adapter, never a product surface.
         stt = createMockStreamingStt();
         selectedMode = "mock";
+      } else {
+        // A browser with no SpeechRecognition and no local engine has no way
+        // to transcribe. Saying so is the only truthful answer: substituting
+        // the mock here would publish invented transcripts as if they were
+        // speech, and would open a microphone that can produce no STT.
+        stt = null;
+        selectedMode = "unavailable";
+        unsupportedReason =
+          "Speech recognition is unavailable in this browser and no local STT engine is installed.";
       }
     }
   }
@@ -167,6 +186,7 @@ export function createRealtimeVoicePipeline({
 
   let unsubPartial = null;
   let unsubFinal = null;
+  let unsubError = null;
   let tickTimer = null;
   let active = false;
   let degraded =
@@ -181,6 +201,7 @@ export function createRealtimeVoicePipeline({
       // PARTIAL ≠ executable
       turns.onPartial(ev);
       self.manager?.setTranscript?.({ partial: ev.text });
+      self.manager?.notifyPartialTranscript?.(ev);
       self.manager?.notifyPipelineEvent?.({ type: "stt.partial", text: ev.text, privacyClass: ev.privacyClass });
       self.manager?.notifySttEngineState?.(buildEngineState());
     });
@@ -191,12 +212,18 @@ export function createRealtimeVoicePipeline({
       self.manager?.notifyPipelineEvent?.({ type: "stt.final", text: ev.text, privacyClass: ev.privacyClass });
       self.manager?.notifySttEngineState?.(buildEngineState());
     });
+    // Engine errors are the authoritative error source for input; they must
+    // reach published runtime state rather than dying in adapter telemetry.
+    unsubError =
+      adapter.onError?.((err) => {
+        self.manager?.notifySttError?.(err);
+      }) || null;
     tickTimer = setInterval(() => turns.tick(), 120);
     active = true;
   }
 
   function buildEngineState() {
-    const h = stt.health?.() || {};
+    const h = stt?.health?.() || {};
     const label = formatVoiceInputLabel({
       ...h,
       adapter: h.adapter || selectedMode,
@@ -218,6 +245,8 @@ export function createRealtimeVoicePipeline({
       fallbackUsed,
       hierarchy,
       label,
+      supported: Boolean(stt),
+      unsupportedReason,
     };
   }
 
@@ -253,16 +282,17 @@ export function createRealtimeVoicePipeline({
     }
     if (unsubPartial) unsubPartial();
     if (unsubFinal) unsubFinal();
-    unsubPartial = unsubFinal = null;
+    if (unsubError) unsubError();
+    unsubPartial = unsubFinal = unsubError = null;
 
     let tail = null;
     let syncError = null;
     try {
-      if (typeof stt.cancelSync === "function") {
+      if (typeof stt?.cancelSync === "function") {
         stt.cancelSync();
       } else {
         // Contract: cancel()'s synchronous prefix must close the window too.
-        tail = stt.cancel?.();
+        tail = stt?.cancel?.();
       }
     } catch (err) {
       syncError = err;
@@ -292,6 +322,15 @@ export function createRealtimeVoicePipeline({
 
     async start() {
       if (active) return;
+      if (!stt) {
+        degraded = true;
+        self.manager?.notifySttUnsupported?.(unsupportedReason);
+        self.manager?.notifySttEngineState?.(buildEngineState());
+        recordVoiceTelemetry("stt_unsupported", {
+          errorCode: unsupportedReason.slice(0, 80),
+        });
+        return;
+      }
       if (
         admission.admission === "LOCAL_STT_BLOCKED_MEMORY" &&
         admission.mode === "text_or_manual"
@@ -365,7 +404,7 @@ export function createRealtimeVoicePipeline({
      * @param {Float32Array|number[]} samples
      */
     attachPreRoll(samples) {
-      stt.pushAudio?.(samples, {
+      stt?.pushAudio?.(samples, {
         preRollAttached: true,
         sampleCount: samples?.length || 0,
       });
@@ -409,7 +448,7 @@ export function createRealtimeVoicePipeline({
         hierarchy,
         selectedMode,
         fallbackUsed,
-        stt: stt.health?.() || null,
+        stt: stt?.health?.() || null,
         turns: turns.health(),
         engine,
         label: engine.label,

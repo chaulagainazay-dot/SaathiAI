@@ -51,6 +51,7 @@ export function createVoiceSessionManager(hooks = {}) {
     interruptClass: null,
     sttEngine: null,
     voiceInputLabel: null,
+    sttUnsupported: false,
   };
   const subscribers = new Set();
   let inputClaim = null;
@@ -75,6 +76,30 @@ export function createVoiceSessionManager(hooks = {}) {
 
   /** @type {ReturnType<typeof createRealtimeVoicePipeline>|null} */
   let pipeline = null;
+
+  /**
+   * Monotonic input generation. `beginInput()` opens a new one; anything
+   * stamped with an older generation belongs to a session the user already
+   * ended, and a consumer that pinned its generation can reject it.
+   */
+  let inputEpoch = 0;
+  let turnSeq = 0;
+  /** @type {Set<(turn: object) => void>} */
+  const finalTurnListeners = new Set();
+  /** @type {Set<(partial: object) => void>} */
+  const partialTranscriptListeners = new Set();
+  /** Last error code published, so one engine fault is reported once. */
+  let lastPublishedErrorCode = "";
+
+  function fanOut(listeners, payload) {
+    for (const fn of listeners) {
+      try {
+        fn(payload);
+      } catch {
+        /* a consumer's failure must not break the others */
+      }
+    }
+  }
 
   /**
    * Observe an unawaited cleanup promise.
@@ -261,9 +286,101 @@ export function createVoiceSessionManager(hooks = {}) {
       });
       recordVoiceTelemetry("vad_failed", { errorCode: String(message || "").slice(0, 80) });
     },
+    /**
+     * The authoritative finalized turn.
+     *
+     * Reached only from the streaming pipeline's own turn coordinator — there
+     * is one recognizer and one path to a final. Each turn carries a
+     * `turnId`, so a consumer that submits work can be exactly-once without
+     * inspecting text, and an `epoch`, so a consumer can reject a turn that
+     * belongs to a session it no longer owns.
+     *
+     * `isExecutable` stays informational: Command must not auto-execute tools.
+     */
     notifyTurnFinal(turn) {
-      // isExecutable flag is informational — Command must not auto-execute tools
       publish({ lastTurn: turn });
+      const text = String(turn?.text || "").trim();
+      // Empty finals carry nothing to submit. A turn with no live pipeline
+      // behind it is a late event from a session already torn down.
+      if (!text || !pipeline) return;
+      // Identity comes from the turn's own sequence when it has one, so
+      // redelivering the same turn object is recognisably the same turn.
+      const sequence = Number(turn?.sequence) || (turnSeq += 1);
+      fanOut(finalTurnListeners, {
+        ...turn,
+        text,
+        sessionId: snapshot.sessionId,
+        epoch: inputEpoch,
+        turnId: `${snapshot.sessionId || "vs"}:${inputEpoch}:${sequence}`,
+      });
+    },
+
+    /**
+     * A partial transcript. Published for display; never executable, never a
+     * finalized turn, and dropped once the pipeline behind it is gone.
+     */
+    notifyPartialTranscript(ev) {
+      const text = String(ev?.text || "").trim();
+      if (!text || !pipeline) return;
+      fanOut(partialTranscriptListeners, {
+        text,
+        sessionId: snapshot.sessionId,
+        epoch: inputEpoch,
+        privacyClass: ev?.privacyClass || null,
+        isFinal: false,
+        isExecutable: false,
+      });
+    },
+
+    /** Subscribe to authoritative finalized turns. */
+    onFinalTurn(cb) {
+      finalTurnListeners.add(cb);
+      return () => finalTurnListeners.delete(cb);
+    },
+
+    /** Subscribe to authoritative partial transcripts. */
+    onPartialTranscript(cb) {
+      partialTranscriptListeners.add(cb);
+      return () => partialTranscriptListeners.delete(cb);
+    },
+
+    getInputEpoch() {
+      return inputEpoch;
+    },
+
+    /**
+     * An engine fault from the one authoritative recognizer. Published once:
+     * a recognizer can repeat the same error every restart attempt, and the
+     * user needs one truthful message, not a stream of them.
+     */
+    notifySttError(err) {
+      const code = String(err?.code || err?.message || err || "speech_recognition_error");
+      if (code === lastPublishedErrorCode) return snapshot;
+      lastPublishedErrorCode = code;
+      return api.setError(code);
+    },
+
+    /**
+     * No engine can transcribe in this runtime. Truthful unavailability, not
+     * a silent downgrade to a deterministic stand-in.
+     */
+    notifySttUnsupported(reason) {
+      const message = String(
+        reason || "Speech recognition is unavailable in this browser."
+      );
+      error = message;
+      lastPublishedErrorCode = message;
+      recordVoiceTelemetry("stt_unsupported", {
+        sessionId: snapshot.sessionId,
+        errorCode: message.slice(0, 80),
+      });
+      return publish({
+        sttUnsupported: true,
+        sttDegraded: true,
+        sttDegradedReason: message,
+        degraded: true,
+        error: message,
+      });
     },
     notifyPipelineEvent(ev) {
       publish({ lastPipelineEvent: ev });
@@ -310,6 +427,9 @@ export function createVoiceSessionManager(hooks = {}) {
           listening = false;
         },
       });
+      inputEpoch += 1;
+      turnSeq = 0;
+      lastPublishedErrorCode = "";
       listening = true;
       error = "";
       recordVoiceTelemetry("input_started", {
@@ -322,7 +442,10 @@ export function createVoiceSessionManager(hooks = {}) {
       } catch (err) {
         api.notifySttDegraded(String(err?.message || err));
       }
-      return publish({ error: "" });
+      // `error` is blank unless starting the pipeline reported a real fault —
+      // an unsupported engine, for instance. Blanking it here unconditionally
+      // would erase the one truthful thing the runtime just learned.
+      return publish({ error });
     },
 
     /**

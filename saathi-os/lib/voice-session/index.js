@@ -81,3 +81,8 @@ export {
   applyDomainVocabulary,
   normalizeTranscriptText,
 } from "./domain-vocab.js";
+export {
+  createTurnBinding,
+  evaluateRecognitionSupport,
+  RECOGNITION_UNSUPPORTED_MESSAGE,
+} from "./recognition-binding.js";
