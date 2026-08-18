@@ -40,6 +40,44 @@ export function normalizeTranscriptEvent(ev = {}) {
 }
 
 /**
+ * Observe a teardown tail without letting it reject.
+ *
+ * A rejected cleanup promise is still a fact worth recording, but an unhandled
+ * one crashes the process under Node's default policy and is invisible to the
+ * caller that deliberately did not await. So the rejection is attached to here,
+ * classified, and surfaced as a resolved value.
+ *
+ * @param {object} opts
+ * @param {Promise<any>|null|undefined} opts.tail
+ * @param {unknown} opts.syncError error thrown before the first await, if any
+ * @param {boolean} opts.wasActive
+ * @param {string} opts.mode
+ * @returns {Promise<{status: string, errorCode: string|null}>} never rejects
+ */
+function classifyTeardown({ tail, syncError, wasActive, mode }) {
+  const report = (status, err) => {
+    const errorCode = err == null ? null : String(err?.message || err).slice(0, 80);
+    if (status !== "clean") {
+      recordVoiceTelemetry("stt_teardown_failed", {
+        reason: `${mode}:${status}`,
+        errorCode: errorCode || status,
+      });
+    }
+    return { status, errorCode };
+  };
+
+  if (syncError) return Promise.resolve(report("sync_error", syncError));
+  const base = wasActive ? "clean" : "already_stopped";
+  if (!tail || typeof tail.then !== "function") {
+    return Promise.resolve(report(base, null));
+  }
+  return tail.then(
+    () => report(base, null),
+    (err) => report("async_error", err)
+  );
+}
+
+/**
  * @param {object} opts
  * @param {object} opts.manager VoiceSessionManager
  * @param {"browser"|"mock"|"local"|"auto"} [opts.sttMode]
@@ -183,6 +221,63 @@ export function createRealtimeVoicePipeline({
     };
   }
 
+  /**
+   * Synchronous cancellation boundary.
+   *
+   * Everything that can still produce a transcript, a timer tick, or a
+   * recognizer restart is closed before this function returns:
+   *
+   *   - `active` cleared, so `start()` cannot no-op its way back in;
+   *   - the turn tick interval cleared;
+   *   - partial/final subscriptions detached, so late adapter events reach
+   *     no manager;
+   *   - the adapter cancelled synchronously (`cancelSync`, or the
+   *     synchronous prefix of `cancel()` for adapters without it);
+   *   - the turn coordinator reset.
+   *
+   * Callers that must not await — `endInput()` is synchronous by contract —
+   * call this directly. The returned `tail` is the adapter's asynchronous
+   * remainder, already wrapped so it settles to a classification instead of
+   * rejecting; awaiting it is optional, ignoring it cannot go unhandled.
+   *
+   * Idempotent: a second call finds nothing live and reports `already_stopped`.
+   *
+   * @returns {{ closed: boolean, tail: Promise<{status: string, errorCode: string|null}> }}
+   */
+  function beginStop() {
+    const wasActive = active;
+    active = false;
+    if (tickTimer) {
+      clearInterval(tickTimer);
+      tickTimer = null;
+    }
+    if (unsubPartial) unsubPartial();
+    if (unsubFinal) unsubFinal();
+    unsubPartial = unsubFinal = null;
+
+    let tail = null;
+    let syncError = null;
+    try {
+      if (typeof stt.cancelSync === "function") {
+        stt.cancelSync();
+      } else {
+        // Contract: cancel()'s synchronous prefix must close the window too.
+        tail = stt.cancel?.();
+      }
+    } catch (err) {
+      syncError = err;
+    }
+    turns.reset();
+
+    const classified = classifyTeardown({
+      tail,
+      syncError,
+      wasActive,
+      mode: selectedMode,
+    });
+    return { closed: true, tail: classified };
+  }
+
   return {
     get manager() {
       return self.manager;
@@ -298,21 +393,11 @@ export function createRealtimeVoicePipeline({
       return buildEngineState();
     },
 
+    beginStop,
+
     async stop() {
-      active = false;
-      if (tickTimer) {
-        clearInterval(tickTimer);
-        tickTimer = null;
-      }
-      if (unsubPartial) unsubPartial();
-      if (unsubFinal) unsubFinal();
-      unsubPartial = unsubFinal = null;
-      try {
-        await stt.cancel();
-      } catch {
-        /* ignore */
-      }
-      turns.reset();
+      const { tail } = beginStop();
+      return tail;
     },
 
     health() {

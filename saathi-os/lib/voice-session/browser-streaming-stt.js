@@ -165,17 +165,45 @@ export function createBrowserStreamingStt(opts = {}) {
       /* browser finalizes on isFinal results */
     },
 
-    async cancel() {
+    /**
+     * Close the restart window. Fully synchronous by contract.
+     *
+     * `onend` restarts the recognizer, so cancellation is only real once the
+     * handlers are detached and `cancelled` is set. Both happen here, before
+     * `abort()` — a browser that dispatches `onend` synchronously from
+     * `abort()` must not find a live restart path. Callers that need a
+     * guaranteed-closed window call this instead of awaiting `cancel()`.
+     */
+    cancelSync() {
       cancelled = true;
-      try {
-        recognition?.stop?.();
-        recognition?.abort?.();
-      } catch {
-        /* ignore */
-      }
+      const rec = recognition;
       recognition = null;
       running = false;
+      if (rec) {
+        // Neutralize first: detached handlers cannot schedule a restart.
+        try {
+          rec.onresult = null;
+          rec.onerror = null;
+          rec.onend = null;
+        } catch {
+          /* ignore */
+        }
+        try {
+          rec.stop?.();
+        } catch {
+          /* ignore */
+        }
+        try {
+          rec.abort?.();
+        } catch {
+          /* ignore */
+        }
+      }
       recordVoiceTelemetry("stt_cancelled", { sessionId: getSessionId() });
+    },
+
+    async cancel() {
+      this.cancelSync();
     },
 
     async close() {
@@ -256,6 +284,9 @@ export function createMockStreamingStt() {
       return () => finalListeners.delete(cb);
     },
     async flush() {},
+    cancelSync() {
+      running = false;
+    },
     async cancel() {
       running = false;
     },

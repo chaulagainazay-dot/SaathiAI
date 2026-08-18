@@ -27,6 +27,10 @@
  * @property {(cb: (ev: TranscriptEvent) => void) => () => void} onPartial
  * @property {(cb: (ev: TranscriptEvent) => void) => () => void} onFinal
  * @property {() => Promise<void>|void} [flush]
+ * @property {() => void} [cancelSync] synchronous cancellation boundary:
+ *   closes the restart window (flags, handlers, abort) with no await.
+ *   Adapters that omit it must keep `cancel()`'s synchronous prefix
+ *   equivalent, because teardown callers invoke it without awaiting.
  * @property {() => Promise<void>|void} cancel
  * @property {() => Promise<void>|void} close
  * @property {() => object} health

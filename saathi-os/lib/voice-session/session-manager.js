@@ -76,6 +76,85 @@ export function createVoiceSessionManager(hooks = {}) {
   /** @type {ReturnType<typeof createRealtimeVoicePipeline>|null} */
   let pipeline = null;
 
+  /**
+   * Observe an unawaited cleanup promise.
+   *
+   * Teardown entry points are synchronous by contract, so the async parts of
+   * cleanup are started and not awaited. Dropping those promises on the floor
+   * would turn any failure into an unhandled rejection — invisible here, fatal
+   * to the process. Attaching this instead records the failure and resolves.
+   *
+   * @param {unknown} tail
+   * @param {string} stage
+   * @param {string} reason
+   * @returns {Promise<{status: string, errorCode: string|null}>} never rejects
+   */
+  function observeCleanupTail(tail, stage, reason) {
+    if (!tail || typeof tail.then !== "function") {
+      return Promise.resolve({ status: "clean", errorCode: null });
+    }
+    return tail.then(
+      () => ({ status: "clean", errorCode: null }),
+      (err) => {
+        const errorCode = String(err?.message || err).slice(0, 80);
+        recordVoiceTelemetry("cleanup_failed", {
+          sessionId: snapshot.sessionId,
+          reason: `${stage}:${reason}`,
+          errorCode,
+        });
+        return { status: "async_error", errorCode };
+      }
+    );
+  }
+
+  /**
+   * The last teardown tail, so callers and tests can observe how cleanup
+   * finished without any teardown path having to become async.
+   * @type {Promise<{status: string, errorCode: string|null}>}
+   */
+  let inputPipelineTeardown = Promise.resolve({ status: "idle", errorCode: null });
+
+  /**
+   * Detach and stop the streaming input pipeline.
+   *
+   * The browser STT adapter restarts its own recognizer from `onend`, so the
+   * only thing that ends capture is the adapter's cancelled flag. `endInput()`
+   * is synchronous by contract, and awaiting an async stop would leave a window
+   * where that self-restart could win the race. `beginStop()` exists for
+   * exactly this: it closes the whole restart window — tick timer, transcript
+   * subscriptions, cancelled flag, recognizer abort — before it returns, and
+   * hands back the asynchronous remainder separately.
+   *
+   * That remainder is kept, not discarded. It never rejects (the coordinator
+   * classifies it first), so nothing here suppresses a failure: a failed
+   * teardown lands in telemetry and in `whenInputPipelineStopped()`.
+   *
+   * Idempotent: a second call finds no pipeline and does nothing.
+   *
+   * @returns {Promise<{status: string, errorCode: string|null}>|null}
+   */
+  function stopInputPipeline(reason = "SESSION_CLOSE") {
+    const stopping = pipeline;
+    if (!stopping) return null;
+    pipeline = null;
+    let tail;
+    try {
+      ({ tail } = stopping.beginStop());
+    } catch (err) {
+      // beginStop is written not to throw; if it ever does, the failure is
+      // recorded rather than swallowed, and teardown still continues.
+      const errorCode = String(err?.message || err).slice(0, 80);
+      recordVoiceTelemetry("stt_teardown_failed", { reason, errorCode });
+      tail = Promise.resolve({ status: "begin_stop_threw", errorCode });
+    }
+    inputPipelineTeardown = tail;
+    recordVoiceTelemetry("stt_pipeline_stopped", {
+      sessionId: snapshot.sessionId,
+      reason,
+    });
+    return tail;
+  }
+
   function publish(partial = {}) {
     const now = new Date().toISOString();
     const caps = snapshot.capabilities || detectVoiceCapabilities();
@@ -250,13 +329,8 @@ export function createVoiceSessionManager(hooks = {}) {
      * Attach streaming STT pipeline (tests may inject mock mode).
      */
     async startStreamingPipeline({ sttMode = "auto" } = {}) {
-      if (pipeline) {
-        try {
-          await pipeline.stop();
-        } catch {
-          /* ignore */
-        }
-      }
+      // One recognizer per session: any prior pipeline is torn down first.
+      stopInputPipeline("PIPELINE_RESTART");
       pipeline = createRealtimeVoicePipeline({ manager: api, sttMode });
       await pipeline.start();
       return pipeline.health();
@@ -264,6 +338,14 @@ export function createVoiceSessionManager(hooks = {}) {
 
     getPipeline() {
       return pipeline;
+    },
+
+    /**
+     * Resolve once the last input-pipeline teardown has fully settled.
+     * Resolves to its classification; never rejects.
+     */
+    whenInputPipelineStopped() {
+      return inputPipelineTeardown;
     },
 
     getInputClaim() {
@@ -309,7 +391,13 @@ export function createVoiceSessionManager(hooks = {}) {
     },
 
     endInput(reason = "USER_CANCEL") {
-      bargeIn.disarm();
+      // disarm() is async and endInput is not; observe rather than drop it.
+      observeCleanupTail(bargeIn.disarm(), "vad_disarm", reason);
+      // Stop the recognizer before the ownership guard below. A consumer whose
+      // cleanup releases the input claim first arrives here with nothing owned,
+      // and an early return there used to leave the pipeline's self-restarting
+      // recognizer holding the microphone after the user stopped voice.
+      stopInputPipeline(reason);
       // Idempotent teardown. Every publish() allocates a new snapshot with a
       // fresh lastActivityAt, so publishing when nothing was owned hands every
       // React subscriber a changed value for a state change that did not
@@ -469,6 +557,8 @@ export function createVoiceSessionManager(hooks = {}) {
         reason === "ERROR"
       ) {
         await bargeIn.disarm();
+        // Navigation and logout end capture, so the recognizer goes with it.
+        stopInputPipeline(reason);
         if (inputClaim) {
           inputClaim.release();
           inputClaim = null;
@@ -506,12 +596,7 @@ export function createVoiceSessionManager(hooks = {}) {
     },
 
     async close(reason = "SESSION_CLOSE") {
-      try {
-        await pipeline?.stop?.();
-      } catch {
-        /* ignore */
-      }
-      pipeline = null;
+      stopInputPipeline(reason);
       await bargeIn.disarm();
       await api.interrupt(reason);
       if (inputClaim) {
@@ -534,8 +619,8 @@ export function createVoiceSessionManager(hooks = {}) {
     dispose() {
       unsubIn();
       unsubOut();
-      bargeIn.disarm();
-      api.close("SESSION_CLOSE");
+      observeCleanupTail(bargeIn.disarm(), "vad_disarm", "DISPOSE");
+      observeCleanupTail(api.close("SESSION_CLOSE"), "close", "DISPOSE");
       subscribers.clear();
     },
   };
