@@ -191,18 +191,62 @@ def _decode(audio_bytes: bytes, filename: str) -> tuple[np.ndarray, int]:
     except Exception:
         # browser sends webm/opus — convert with ffmpeg
         suffix = "." + (filename.rsplit(".", 1)[-1] if "." in filename else "webm")
-        with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as f:
-            f.write(audio_bytes)
-            src = f.name
-        dst = src + ".wav"
-        subprocess.run([_ffmpeg(), "-y", "-i", src, "-ar", "16000", "-ac", "1", dst],
-                       capture_output=True, check=True, timeout=60)
-        wav, sr = sf.read(dst)
-        Path(src).unlink(missing_ok=True)
-        Path(dst).unlink(missing_ok=True)
+        src = dst = None
+        try:
+            with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as f:
+                f.write(audio_bytes)
+                src = f.name
+            dst = src + ".wav"
+            subprocess.run([_ffmpeg(), "-y", "-i", src, "-ar", "16000", "-ac", "1", dst],
+                           capture_output=True, check=True, timeout=60)
+            wav, sr = sf.read(dst)
+        finally:
+            # R2.1-S3: every exit path clears both files — success, ffmpeg
+            # failure or timeout, decoder failure, and cancellation. Uploaded
+            # audio must not survive on disk after the turn that produced it.
+            for _p in (src, dst):
+                if _p:
+                    Path(_p).unlink(missing_ok=True)
     if wav.ndim > 1:
         wav = wav.mean(axis=1)
     return wav.astype(np.float32), sr
+
+
+# ---------- Bounded decoding for untrusted uploads ----------
+
+class AudioError(Exception):
+    """Bounded, non-leaking audio rejection. ``code`` is safe to return."""
+    code = "audio_error"
+
+
+class AudioUndecodable(AudioError):
+    code = "audio_undecodable"
+
+
+class AudioTooLong(AudioError):
+    code = "audio_too_long"
+
+
+def decode_16k(audio_bytes: bytes, filename: str = "audio.wav", *,
+               max_seconds: float | None = None) -> np.ndarray:
+    """Decode an untrusted upload to a 16 kHz mono array, duration-bounded.
+
+    Raises :class:`AudioUndecodable` when the bytes are not readable audio and
+    :class:`AudioTooLong` when the decoded duration exceeds ``max_seconds``.
+    Both carry a bounded ``code`` and no provider detail. Temporary files are
+    removed by ``_decode`` on every path, including these failures.
+    """
+    try:
+        wav, sr = _decode(audio_bytes, filename)
+    except AudioError:
+        raise
+    except Exception as e:
+        raise AudioUndecodable(str(type(e).__name__)) from e
+    if sr <= 0 or len(wav) == 0:
+        raise AudioUndecodable("empty_audio")
+    if max_seconds is not None and (len(wav) / float(sr)) > float(max_seconds):
+        raise AudioTooLong(f"exceeds {max_seconds:g}s")
+    return _resample(wav, sr)
 
 
 def _resample(wav: np.ndarray, sr: int, target: int = 16000) -> np.ndarray:

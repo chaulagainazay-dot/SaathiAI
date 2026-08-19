@@ -2756,8 +2756,34 @@ def set_connection(body: ConnIn):
     return {"saved": connections.save_one(body.platform, cfg)}
 
 
+# ── R2.1-S3/S4: bounded contract for the legacy voice command endpoint ──────
+# The size and duration caps are the existing voice runtime contract, not
+# whatever the legacy path happened to tolerate.
+from saathi.platform.voice.runtime.models import (  # noqa: E402
+    MAX_AUDIO_UPLOAD_BYTES as VOICE_MAX_UPLOAD_BYTES,
+    MAX_RECORDING_SECONDS as VOICE_MAX_SECONDS,
+)
+
+VOICE_ALLOWED_AUDIO_MIME = frozenset({
+    "audio/webm", "audio/ogg", "audio/wav", "audio/x-wav", "audio/wave",
+    "audio/mpeg", "audio/mp3", "audio/mp4", "audio/m4a", "audio/x-m4a",
+    "audio/aac", "audio/flac", "audio/x-flac",
+})
+VOICE_ALLOWED_AUDIO_EXT = frozenset({
+    "webm", "ogg", "oga", "opus", "wav", "mp3", "mpeg", "mp4", "m4a", "aac", "flac",
+})
 # No ":" — a client must not be able to forge a scoped session identifier.
 _VOICE_SESSION_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$")
+
+
+def _voice_mime_ok(content_type: str | None, filename: str) -> bool:
+    """Allowlist the declared audio type; fall back to the extension only when
+    the client sent no usable type. Anything else is rejected unread."""
+    declared = (content_type or "").split(";")[0].strip().lower()
+    if declared and declared not in ("application/octet-stream", "binary/octet-stream"):
+        return declared in VOICE_ALLOWED_AUDIO_MIME
+    ext = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
+    return ext in VOICE_ALLOWED_AUDIO_EXT
 
 
 def _voice_principal(request) -> str:
@@ -2789,7 +2815,7 @@ async def voice_command(request: Request, file: UploadFile = File(...),
                         require_wake: bool = Form(False)):
     """Full voice turn: authenticate → bound → transcribe → agent → TTS.
 
-    R2.1-S3 — this endpoint is authenticated and non-elevating:
+    R2.1-S3/S4 — this endpoint is authenticated and non-elevating:
 
       * anonymous callers get 401 before the upload is read, decoded,
         transcribed, persisted, sent to an LLM, or synthesised,
@@ -2797,6 +2823,7 @@ async def voice_command(request: Request, file: UploadFile = File(...),
         so a caller cannot reach another caller's session,
       * the speaker match is observational metadata: it never authenticates,
         never authorizes, and never unlocks a tool,
+      * media type, byte size, and decoded duration are bounded,
       * privileged actions still require an ApprovalCenter approval and the
         canonical ExecutionGateway; this turn is advisory-only.
 
@@ -2822,9 +2849,29 @@ async def voice_command(request: Request, file: UploadFile = File(...),
     if not _rate_ok(request):
         return {"reply": "One moment — too many requests. Try again shortly.", "transcript": ""}
 
-    # 4. Transcribe.
-    audio = await file.read()
-    stt = voice.transcribe(audio, file.filename or "audio.wav")
+    # 4. Media type allowlist — decided from headers, before the body is read.
+    filename = file.filename or "audio.webm"
+    if not _voice_mime_ok(file.content_type, filename):
+        return JSONResponse({"error": "unsupported_media_type"}, status_code=415)
+
+    # 5. Bounded read — one byte past the cap is enough to reject.
+    audio = await file.read(VOICE_MAX_UPLOAD_BYTES + 1)
+    if len(audio) > VOICE_MAX_UPLOAD_BYTES:
+        return JSONResponse({"error": "payload_too_large"}, status_code=413)
+    if not audio:
+        return JSONResponse({"error": "empty_upload"}, status_code=400)
+
+    # 6. Bounded decode — duration is capped before transcription. Temporary
+    #    files are removed on every path (success, ffmpeg failure, decoder
+    #    failure, cancellation) by voice._decode's finally block.
+    try:
+        wav = voice.decode_16k(audio, filename, max_seconds=VOICE_MAX_SECONDS)
+    except voice.AudioTooLong:
+        return JSONResponse({"error": "audio_too_long"}, status_code=413)
+    except voice.AudioError:
+        return JSONResponse({"error": "audio_undecodable"}, status_code=400)
+
+    stt = voice.transcribe_array(wav)
     text = stt["text"].strip()
     if not text:
         return {"ignored": "no_speech"}
@@ -2843,7 +2890,7 @@ async def voice_command(request: Request, file: UploadFile = File(...),
     # 7. Speaker match — observational only. The caller was authenticated in
     #    step 1; this says who the microphone sounded like and nothing more.
     try:
-        match = voice.verify(audio)
+        match = voice.verify_array(wav)
     except Exception:
         match = {"verified": None, "reason": "verify_unavailable", "similarity": 0.0}
     ver = {"verified": match.get("verified"),
@@ -2862,8 +2909,8 @@ async def voice_command(request: Request, file: UploadFile = File(...),
             audio_out, mime = voice.synthesize(reply, stt["language"])
             out["reply_audio_b64"] = base64.b64encode(audio_out).decode()
             out["reply_audio_mime"] = mime
-        except Exception as e:
-            out["tts_error"] = str(e)
+        except Exception:
+            out["tts_error"] = "tts_unavailable"  # bounded: no provider detail
     return out
 
 
