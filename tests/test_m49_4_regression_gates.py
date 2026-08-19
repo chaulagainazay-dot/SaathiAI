@@ -41,7 +41,7 @@ def test_m49_2_durable_idempotency_replay(tmp_path):
 
 
 def test_m49_3_shell_still_blocked():
-    out = execute_tool("run_shell", {"command": "whoami"}, speaker_verified=True)
+    out = execute_tool("run_shell", {"command": "whoami"})
     assert out.get("blocked") is True
 
 

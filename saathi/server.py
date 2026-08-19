@@ -2497,12 +2497,22 @@ FOLLOWUP_WINDOW = 15.0
 class ChatIn(BaseModel):
     text: str
     session_id: str = "default"
+    # R2.1-S1: retained for wire compatibility and deliberately unused — it no
+    # longer reaches _safe_respond, the agent, or the tool dispatcher. The field
+    # itself is removed from the contract in the endpoint-authentication change.
     speaker_verified: bool = False
 
 
-def _safe_respond(text: str, session_id: str, speaker_verified: bool) -> str:
+def _safe_respond(text: str, session_id: str, *,
+                  speaker_match_observed: bool | None = None) -> str:
+    """Advisory conversation turn. Carries no authority by construction.
+
+    ``speaker_match_observed`` is bounded metadata (True | False | None) that
+    reaches the L7 audit and nothing else. It never grants authority.
+    """
     try:
-        return agent.respond(text, session_id, speaker_verified=speaker_verified)
+        return agent.respond(text, session_id,
+                             speaker_match_observed=speaker_match_observed)
     except Exception as e:
         msg = str(e)
         if "429" in msg or "quota" in msg.lower():
@@ -2534,9 +2544,10 @@ def _rate_ok(request: Request) -> bool:
 
 @app.post("/api/v1/agent/chat")
 def chat(body: ChatIn, request: Request):
+    """Advisory conversation. Non-elevating: nothing in the body grants authority."""
     if not _rate_ok(request):
         return {"reply": "I'm getting a lot of requests right now — give me a minute and try again."}
-    reply = _safe_respond(body.text, body.session_id, body.speaker_verified)
+    reply = _safe_respond(body.text, body.session_id)
     return {"reply": reply}
 
 
@@ -2617,7 +2628,7 @@ async def chat_with_file(
     user_msg = message.strip() or "Please read and summarize this."
     full_prompt = f"{file_note}\n\n{extracted[:6000]}\n\n{user_msg}" if extracted else f"{file_note}\n\n{user_msg}"
 
-    reply = _safe_respond(full_prompt, session_id, speaker_verified=False)
+    reply = _safe_respond(full_prompt, session_id)
     return {"reply": reply, "file": name, "extracted_chars": len(extracted)}
 
 
@@ -2726,7 +2737,12 @@ async def voice_command(request: Request, file: UploadFile = File(...),
                         session_id: str = Form("default"),
                         speak_reply: bool = Form(True),
                         require_wake: bool = Form(False)):
-    """Full voice turn: audio → verify speaker → transcribe → (wake check) → agent → TTS."""
+    """Full voice turn: audio → verify speaker → transcribe → (wake check) → agent → TTS.
+
+    R2.1-S1: the speaker match is bounded metadata. It reaches the L7 audit and
+    nothing else — it selects no identity, satisfies no approval, and unlocks no
+    privileged tool.
+    """
     global _last_reply_at
     if not _rate_ok(request):
         return {"reply": "One moment — too many requests. Try again shortly.", "transcript": ""}
@@ -2759,7 +2775,8 @@ async def voice_command(request: Request, file: UploadFile = File(...),
         except Exception as e:
             ver = {"verified": False, "reason": f"verify_error: {e}", "similarity": 0.0}
 
-    reply = _safe_respond(text, session_id, ver.get("verified", False))
+    reply = _safe_respond(text, session_id,
+                          speaker_match_observed=ver.get("verified", None))
     _last_reply_at = time.time()
 
     out = {"transcript": text, "language": stt["language"],
@@ -5267,9 +5284,12 @@ def _start_background():
         from .infrastructure.conversation import register_default_brain
         from .agent import SaathiAgent
         _agent = SaathiAgent()
+        # R2.1-S1: the default conversation brain is shared by every channel and
+        # must never be pre-elevated. Authority comes from the authenticated
+        # session and the ApprovalCenter, not from being the default brain.
         register_default_brain(
             lambda message, session: _agent.respond(
-                message, session_id=session.session_id, speaker_verified=True))
+                message, session_id=session.session_id))
     except Exception:
         pass
 

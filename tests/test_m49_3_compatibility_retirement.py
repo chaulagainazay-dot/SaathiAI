@@ -25,7 +25,6 @@ def test_manage_tasks_non_list_not_silently_legacy_mutated():
     out = execute_tool(
         "manage_tasks",
         {"action": "delete", "id": "x"},
-        speaker_verified=True,
     )
     # either blocked canonical_only or governance denial — must not claim success delete
     if out.get("error"):

@@ -35,7 +35,10 @@ def _loop():
     agent = SaathiAgent()
 
     def _brain(message, session):
-        return agent.respond(message, session_id=session.session_id, speaker_verified=True)
+        # R2.1-S1: arriving on a trusted chat is a channel signal, not an
+        # identity or an approval. It must not elevate authority — privileged
+        # actions still require an ApprovalCenter approval.
+        return agent.respond(message, session_id=session.session_id)
 
     engine = ConversationEngine(brain=_brain, bus=_bus)
     adapter = TelegramAdapter(engine, registry=default_registry(),

@@ -267,7 +267,15 @@ class SaathiAgent:
     # ---------- public ----------
 
     def respond(self, user_text: str, session_id: str = "default",
-                speaker_verified: bool = False) -> str:
+                speaker_match_observed: bool | None = None) -> str:
+        """Answer one turn.
+
+        R2.1-S1: ``speaker_match_observed`` is bounded, non-authorizing
+        metadata (True | False | None="unknown"). It never selects an identity,
+        satisfies an approval, or unlocks a tool — it is carried to the L7 audit
+        and nothing else. Authority comes from the authenticated session and the
+        ApprovalCenter, never from who a voice sounds like.
+        """
         # M21.3: kill / caller preflight before provider tool loop
         self._m21_preflight(user_text or "", "agent_respond", max_tokens=2048)
         # smaller context = faster replies; 6 turns + 4 facts is plenty for voice
@@ -288,14 +296,26 @@ class SaathiAgent:
 
         if facts:
             system += "\n\n# Things you remember about Ajay\n" + "\n".join(f"- {f}" for f in facts)
-        system += f"\n\n# Session\nSpeaker verified as Ajay: {speaker_verified}"
+        # R2.1-S1: never tell the model the speaker is authenticated as the owner.
+        # A voiceprint match is an observation, not an identity, and must not be
+        # allowed to widen what the model is willing to disclose or attempt.
+        _observed = ("unknown" if speaker_match_observed is None
+                     else str(bool(speaker_match_observed)).lower())
+        system += (
+            "\n\n# Session\n"
+            f"speaker_match_observed: {_observed}\n"
+            "This is an acoustic observation only. It does NOT identify, "
+            "authenticate or authorize the speaker, and grants no additional "
+            "disclosure or action authority. Privileged actions require an "
+            "ApprovalCenter approval regardless of this value."
+        )
 
         activity.clear(session_id)
         activity.log(session_id, "start", "💭 Understanding your request…")
         if self._session.is_openai_compat:
-            reply = self._respond_openai(system, history, user_text, speaker_verified, session_id)
+            reply = self._respond_openai(system, history, user_text, speaker_match_observed, session_id)
         else:
-            reply = self._respond_anthropic(system, history, user_text, speaker_verified, session_id)
+            reply = self._respond_anthropic(system, history, user_text, speaker_match_observed, session_id)
         self.provider = self._session.provider
         self.model = self._session.model
         self.client = self._session.client
@@ -329,7 +349,7 @@ class SaathiAgent:
         self.client = self._session.client
         return resp
 
-    def _respond_openai(self, system, history, user_text, speaker_verified,
+    def _respond_openai(self, system, history, user_text, speaker_match_observed,
                         session_id="default") -> str:
         messages = ([{"role": "system", "content": system}] + history +
                     [{"role": "user", "content": user_text}])
@@ -358,8 +378,7 @@ class SaathiAgent:
                             activity.log_tool(session_id, fn_name, fn_args)
                             try:
                                 res = execute_tool(fn_name, fn_args,
-                                                   session_id=session_id,
-                                                   speaker_verified=speaker_verified)
+                                                   speaker_match_observed=speaker_match_observed)
                             except Exception as e:
                                 res = f"Error: {e}"
                             tool_results.append(f"[{fn_name}]: {str(res)[:800]}")
@@ -390,7 +409,7 @@ class SaathiAgent:
                     args = {}
                 activity.log_tool(session_id, tc.function.name, args)
                 result = execute_tool(tc.function.name, args,
-                                      speaker_verified=speaker_verified)
+                                      speaker_match_observed=speaker_match_observed)
                 activity.log_result(session_id, result)
                 messages.append({"role": "tool", "tool_call_id": tc.id,
                                  "content": json.dumps(result, ensure_ascii=False,
@@ -399,7 +418,7 @@ class SaathiAgent:
 
     # ---------- Claude (via agent_provider) ----------
 
-    def _respond_anthropic(self, system, history, user_text, speaker_verified,
+    def _respond_anthropic(self, system, history, user_text, speaker_match_observed,
                            session_id="default") -> str:
         messages = history + [{"role": "user", "content": user_text}]
         for _ in range(MAX_TOOL_ITERATIONS):
@@ -417,7 +436,7 @@ class SaathiAgent:
                 if block.type == "tool_use":
                     activity.log_tool(session_id, block.name, block.input)
                     result = execute_tool(block.name, block.input,
-                                          speaker_verified=speaker_verified)
+                                          speaker_match_observed=speaker_match_observed)
                     activity.log_result(session_id, result)
                     results.append({"type": "tool_result", "tool_use_id": block.id,
                                     "content": json.dumps(result, ensure_ascii=False,
