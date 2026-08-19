@@ -11,7 +11,6 @@ import MobileTabBar from "./mobile/MobileTabBar";
 import QuickSheet from "./mobile/QuickSheet";
 import { LiveProvider } from "./live/LiveProvider";
 import LiveToasts from "./live/LiveToasts";
-import MobileMic from "./MobileMic";
 import Sidebar from "./shell/Sidebar";
 import StatusBar from "./shell/StatusBar";
 import CopilotPanel from "./shell/CopilotPanel";
@@ -135,10 +134,6 @@ function ShellInner({ children }) {
       <MobileTopBar />
       <MobileTabBar onAdd={() => setSheetOpen(true)} onCopilot={openCopilot} />
       <QuickSheet open={sheetOpen} onClose={() => setSheetOpen(false)} />
-      <div className="only-touch">
-        <MobileMic />
-      </div>
-
       {/* Single main content tree (desktop + mobile) */}
       <main
         className="app-main shell-main"
