@@ -154,10 +154,12 @@ describe("no production caller replaces the contract", () => {
     });
   }
 
-  it("the two openMicrophoneForClaim callers pass no constraints at all", () => {
+  it("every openMicrophoneForClaim caller passes no constraints at all", () => {
     for (const relative of [
       "components/voice/VoiceRuntimeProvider.jsx",
       "components/chat/VoiceControl.jsx",
+      // R2.1-D6.5: settings capture joined the claimed callers.
+      "app/settings/voice/page.jsx",
     ]) {
       const source = readFileSync(root(relative), "utf8");
       const calls = source.match(/openMicrophoneForClaim\([^)]*\)/g) || [];
