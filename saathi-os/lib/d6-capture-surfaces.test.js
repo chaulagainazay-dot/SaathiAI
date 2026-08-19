@@ -13,18 +13,64 @@
  */
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync, existsSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { readFileSync, existsSync, readdirSync } from "node:fs";
+import { dirname, join, relative as relativePath, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-export const root = (...parts) => join(HERE, "..", ...parts);
-const read = (relative) => readFileSync(root(relative), "utf8");
+const root = (...parts) => join(HERE, "..", ...parts);
+const read = (rel) => readFileSync(root(rel), "utf8");
+
+/** Directories that ship to a browser. `scripts/` holds certificates, not app code. */
+const PRODUCTION_ROOTS = ["app", "components", "lib"];
+const SOURCE_EXTENSIONS = [".js", ".jsx", ".mjs", ".ts", ".tsx"];
+
+/**
+ * Every production frontend source, walked from the tree rather than listed.
+ *
+ * A hand-maintained list is the failure mode these invariants exist to catch:
+ * a new file with a new recorder is exactly the thing nobody remembers to add
+ * to a checklist. Test files are excluded — they construct fake recognizers and
+ * fake microphones on purpose.
+ */
+function productionSources() {
+  const found = [];
+  const walk = (absolute) => {
+    for (const entry of readdirSync(absolute, { withFileTypes: true })) {
+      if (entry.name === "node_modules" || entry.name.startsWith(".")) continue;
+      const next = join(absolute, entry.name);
+      if (entry.isDirectory()) {
+        walk(next);
+        continue;
+      }
+      if (!SOURCE_EXTENSIONS.some((ext) => entry.name.endsWith(ext))) continue;
+      if (/\.test\.[cm]?[jt]sx?$/.test(entry.name)) continue;
+      found.push(relativePath(root(), next).split(sep).join("/"));
+    }
+  };
+  for (const dir of PRODUCTION_ROOTS) walk(root(dir));
+  return found.sort();
+}
+
+
+/**
+ * Drop comments before matching.
+ *
+ * These invariants describe what the code *reaches*, and a source file that
+ * explains why a capture API was removed necessarily names it. Matching raw
+ * text would make the explanation itself the violation.
+ */
+function stripComments(source) {
+  return source
+    .replace(/\/\*[\s\S]*?\*\//g, " ")
+    .replace(/(^|[^:])\/\/[^\n]*/g, "$1 ");
+}
 
 const CAPTURE_APIS = ["getUserMedia", "MediaRecorder", "SpeechRecognition"];
 
 describe("D6.2 — MobileSaathi is a text surface", () => {
-  const source = read("components/mobile/MobileSaathi.jsx");
+  const raw = read("components/mobile/MobileSaathi.jsx");
+  const source = stripComments(raw);
 
   for (const api of CAPTURE_APIS) {
     it(`never reaches ${api}`, () => {
@@ -53,7 +99,7 @@ describe("D6.2 — MobileSaathi is a text surface", () => {
   });
 
   it("points at the one microphone control without creating a second trigger", () => {
-    assert.ok(/only microphone control in SaathiOS/.test(source),
+    assert.ok(/only microphone control in SaathiOS/.test(raw),
       "the truthful voice pointer is missing");
     // A pointer is copy. A trigger is a control. Only the send button remains.
     const buttons = source.match(/<button/g) || [];
@@ -70,7 +116,8 @@ describe("D6.2 — MobileSaathi is a text surface", () => {
 });
 
 describe("D6.3 — /os is a text surface", () => {
-  const source = read("app/os/page.jsx");
+  const raw = read("app/os/page.jsx");
+  const source = stripComments(raw);
 
   for (const api of CAPTURE_APIS) {
     it(`never reaches ${api}`, () => {
@@ -103,5 +150,23 @@ describe("D6.3 — /os is a text surface", () => {
     assert.ok(!/voice\.(start|stop|busy|recording)/.test(source),
       "a recorder consumer is back in /os");
     assert.ok(!/\/api\/v1\/voice\//.test(source), "/os must not talk to voice endpoints");
+  });
+});
+
+describe("D6.4 — the unclaimed recording hook is gone", () => {
+  it("lib/useVoice.js does not exist", () => {
+    assert.ok(!existsSync(root("lib/useVoice.js")), "the recorder hook is back");
+  });
+
+  it("no client wrapper for the legacy upload endpoint remains", () => {
+    const api = read("lib/api.js");
+    assert.ok(!/export async function sendVoice/.test(api), "the sendVoice wrapper is back");
+  });
+
+  it("no production frontend source calls /api/v1/voice/command", () => {
+    const offenders = productionSources().filter((rel) =>
+      /\/api\/v1\/voice\/command/.test(stripComments(read(rel)))
+    );
+    assert.deepEqual(offenders, [], "a frontend caller of the legacy upload endpoint is back");
   });
 });

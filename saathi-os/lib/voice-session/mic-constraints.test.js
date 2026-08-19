@@ -16,7 +16,7 @@
  */
 import { describe, it, beforeEach, afterEach } from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -127,8 +127,18 @@ describe("no production caller replaces the contract", () => {
     "components/voice/VoiceRuntimeProvider.jsx",
     "components/chat/VoiceControl.jsx",
     "app/settings/voice/page.jsx",
-    "lib/useVoice.js",
   ];
+
+  // R2.1-D6.4: lib/useVoice.js is gone, so it is no longer in the list above.
+  // Dropping it silently would look identical to dropping coverage, so the
+  // removal is asserted instead: the hook that opened an unclaimed recorder
+  // and uploaded to /api/v1/voice/command must not come back.
+  it("the unclaimed recording hook no longer exists", () => {
+    assert.ok(
+      !existsSync(root("lib/useVoice.js")),
+      "lib/useVoice.js is back — an unclaimed MediaRecorder outside the input registry"
+    );
+  });
 
   for (const relative of sttCaptureSurfaces) {
     it(`${relative} does not request a bare { audio: true }`, () => {

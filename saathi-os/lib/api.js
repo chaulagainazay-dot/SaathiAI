@@ -138,17 +138,13 @@ export async function rollbackLabPrompt(name, version) {
   return r.json();
 }
 
-// Voice turn: send recorded audio → { transcript, reply, reply_audio_b64, reply_audio_mime }.
-export async function sendVoice(blob, sessionId = "web") {
-  const fd = new FormData();
-  fd.append("file", blob, "speech.webm");
-  fd.append("session_id", sessionId);
-  fd.append("speak_reply", "true");
-  fd.append("require_wake", "false");
-  const r = await afetch(`${LOCAL_BASE}/api/v1/voice/command`, { method: "POST", body: fd });
-  if (!r.ok) throw new Error(`voice ${r.status}`);
-  return r.json();
-}
+// R2.1-D6.4: sendVoice() is gone. It wrapped the legacy upload endpoint
+// POST /api/v1/voice/command, and its only callers were the unclaimed
+// MediaRecorder surfaces removed in D6.2/D6.3. Live voice is the streaming
+// pipeline owned by VoiceSessionManager, not a blob upload. The endpoint still
+// exists and is still authenticated and bounded for direct API clients — see
+// the backend endpoint tests — but SaathiOS has no client wrapper for it.
+// Do not reintroduce one.
 
 // R2.1-S6: enrollVoice() is gone. It wrapped /api/v1/voice/enroll, which is
 // retired — a speaker profile is not a credential and never granted authority.
