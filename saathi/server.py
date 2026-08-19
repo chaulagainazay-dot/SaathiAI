@@ -12,7 +12,7 @@ from fastapi import Body, Depends, FastAPI, File, Form, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from . import config, voice
 from .agent import SaathiAgent
@@ -1768,9 +1768,10 @@ async def _auth(request, call_next):
             or path == "/api/v1/directors/registry"
             or path == "/api/v1/mission"
             or path == "/api/v1/mission/complete"
-            or path == "/api/v1/agent/chat"
             or path == "/api/v1/workspace"
-            or path == "/api/v1/voice/command"
+            # R2.1-S3: /api/v1/voice/command is deliberately NOT here. A voice
+            # turn reaches the agent, so it must be authenticated like
+            # /api/v1/agent/chat. Do not re-add it.
             or path == "/api/v1/code-memory/status"
             or path == "/api/v1/lab/prompts"
             or path.startswith("/api/v1/lab/prompts/")
@@ -2495,12 +2496,19 @@ FOLLOWUP_WINDOW = 15.0
 
 
 class ChatIn(BaseModel):
+    """Public chat contract.
+
+    R2.1-S2: there is deliberately no trust field here. ``speaker_verified``
+    was removed — a client-supplied boolean must never select an identity,
+    satisfy an approval, or unlock a privileged tool. Extra JSON keys are
+    ignored (Pydantic's default), so a legacy client that still sends
+    ``{"speaker_verified": true}`` keeps working as ordinary chat and is
+    granted nothing. Do not add an authority field to this model.
+    """
+    model_config = ConfigDict(extra="ignore")
+
     text: str
     session_id: str = "default"
-    # R2.1-S1: retained for wire compatibility and deliberately unused — it no
-    # longer reaches _safe_respond, the agent, or the tool dispatcher. The field
-    # itself is removed from the contract in the endpoint-authentication change.
-    speaker_verified: bool = False
 
 
 def _safe_respond(text: str, session_id: str, *,
@@ -2544,7 +2552,23 @@ def _rate_ok(request: Request) -> bool:
 
 @app.post("/api/v1/agent/chat")
 def chat(body: ChatIn, request: Request):
-    """Advisory conversation. Non-elevating: nothing in the body grants authority."""
+    """Advisory conversation. Authenticated, non-elevating.
+
+    R2.1-S2:
+      * anonymous callers get 401 (enforced by the auth middleware — this path
+        is no longer on the bypass list),
+      * the caller's identity is taken from the authenticated server context
+        only, never from the request body,
+      * an authenticated caller is an ordinary user, never an admin,
+      * privileged actions still require an ApprovalCenter approval and the
+        canonical ExecutionGateway; the legacy tool path fails closed and this
+        endpoint degrades to advisory-only rather than executing them.
+    """
+    # Defence in depth: the middleware already rejects anonymous callers, but
+    # this endpoint must never be reachable unauthenticated even if the bypass
+    # list regresses.
+    if not (_is_authed(request) or _is_local(request)):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
     if not _rate_ok(request):
         return {"reply": "I'm getting a lot of requests right now — give me a minute and try again."}
     reply = _safe_respond(body.text, body.session_id)
@@ -2732,22 +2756,74 @@ def set_connection(body: ConnIn):
     return {"saved": connections.save_one(body.platform, cfg)}
 
 
+# No ":" — a client must not be able to forge a scoped session identifier.
+_VOICE_SESSION_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$")
+
+
+def _voice_principal(request) -> str:
+    """Stable key for the authenticated caller, derived server-side only.
+
+    Never read from the request body or from a voiceprint. Used to namespace
+    conversation sessions so one caller cannot address another's session.
+    """
+    cookies = getattr(request, "cookies", None) or {}
+    token = (cookies.get("baadar_session")
+             or request.headers.get("x-baadar-session", ""))
+    if token:
+        from saathi import sessions
+        sid = sessions.session_id(token)
+        if sid:
+            return "s:" + sid
+    api_token = request.headers.get("x-saathi-token", "")
+    if api_token:
+        return "t:" + _hashlib.sha256(api_token.encode()).hexdigest()[:16]
+    if _is_local(request):
+        return "local"
+    return ""
+
+
 @app.post("/api/v1/voice/command")
 async def voice_command(request: Request, file: UploadFile = File(...),
                         session_id: str = Form("default"),
                         speak_reply: bool = Form(True),
                         require_wake: bool = Form(False)):
-    """Full voice turn: audio → verify speaker → transcribe → (wake check) → agent → TTS.
+    """Full voice turn: authenticate → bound → transcribe → agent → TTS.
 
-    R2.1-S1: the speaker match is bounded metadata. It reaches the L7 audit and
-    nothing else — it selects no identity, satisfies no approval, and unlocks no
-    privileged tool.
+    R2.1-S3 — this endpoint is authenticated and non-elevating:
+
+      * anonymous callers get 401 before the upload is read, decoded,
+        transcribed, persisted, sent to an LLM, or synthesised,
+      * the conversation session is namespaced by a server-derived principal,
+        so a caller cannot reach another caller's session,
+      * the speaker match is observational metadata: it never authenticates,
+        never authorizes, and never unlocks a tool,
+      * privileged actions still require an ApprovalCenter approval and the
+        canonical ExecutionGateway; this turn is advisory-only.
+
+    A signed-out MobileSaathi client receiving 401 here is correct behaviour.
     """
     global _last_reply_at
+
+    # 1. Authentication first — nothing expensive happens before this. Defence
+    #    in depth: the middleware already rejects anonymous callers, and this
+    #    check holds even if the bypass list regresses.
+    if not (_is_authed(request) or _is_local(request)):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    principal = _voice_principal(request)
+    if not principal:
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+
+    # 2. Session scoping — the client supplies a bare name; the scope is ours.
+    if not _VOICE_SESSION_RE.match(session_id or ""):
+        return JSONResponse({"error": "invalid_session_id"}, status_code=400)
+    scoped_session = f"voice:{principal}:{session_id}"
+
+    # 3. Rate limiting — defence in depth, never authorization.
     if not _rate_ok(request):
         return {"reply": "One moment — too many requests. Try again shortly.", "transcript": ""}
-    audio = await file.read()
 
+    # 4. Transcribe.
+    audio = await file.read()
     stt = voice.transcribe(audio, file.filename or "audio.wav")
     text = stt["text"].strip()
     if not text:
@@ -2764,19 +2840,19 @@ async def voice_command(request: Request, file: UploadFile = File(...),
         else:
             return {"ignored": "no_wake_word", "transcript": stt["text"]}
 
-    # Already signed in (password or passkey session, or local machine)? Trust the
-    # owner — skip per-utterance voice verification. Only fall back to speaker
-    # verification when there is NO session.
-    if _is_authed(request) or _is_local(request):
-        ver = {"verified": True, "reason": "session_authenticated", "similarity": 1.0}
-    else:
-        try:
-            ver = voice.verify(audio)
-        except Exception as e:
-            ver = {"verified": False, "reason": f"verify_error: {e}", "similarity": 0.0}
+    # 7. Speaker match — observational only. The caller was authenticated in
+    #    step 1; this says who the microphone sounded like and nothing more.
+    try:
+        match = voice.verify(audio)
+    except Exception:
+        match = {"verified": None, "reason": "verify_unavailable", "similarity": 0.0}
+    ver = {"verified": match.get("verified"),
+           "similarity": match.get("similarity", 0.0),
+           "reason": match.get("reason", ""),
+           "authorizing": False}
 
-    reply = _safe_respond(text, session_id,
-                          speaker_match_observed=ver.get("verified", None))
+    reply = _safe_respond(text, scoped_session,
+                          speaker_match_observed=ver.get("verified"))
     _last_reply_at = time.time()
 
     out = {"transcript": text, "language": stt["language"],
