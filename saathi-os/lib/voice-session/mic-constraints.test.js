@@ -161,15 +161,21 @@ describe("no production caller replaces the contract", () => {
     }
   });
 
-  it("speaker enrollment is the documented exception, not an oversight", () => {
-    // Enrollment records the raw voice for speaker identity; browser AEC/NS/AGC
-    // would process the very signal being enrolled.
+  it("speaker enrollment no longer opts out, because it no longer exists", () => {
+    // Enrollment was the one documented exception to the capture contract: it
+    // recorded the raw voice for speaker identity, so browser AEC/NS/AGC would
+    // have processed the very signal being enrolled. R2.1-S6 retired the
+    // capability, so the exception is gone rather than justified — these two
+    // pages must now open no microphone at all.
     for (const relative of ["app/voice/page.jsx", "app/os/page.jsx"]) {
       const source = readFileSync(root(relative), "utf8");
-      assert.match(
-        source,
-        /unprocessed signal[\s\S]{0,200}getUserMedia\(\{ audio: true \}\)/,
-        `${relative} must state why it opts out`
+      assert.ok(
+        !/getUserMedia\(/.test(source),
+        `${relative} must not open a microphone; enrollment is retired`
+      );
+      assert.ok(
+        !/new MediaRecorder\(/.test(source),
+        `${relative} must not record a speaker sample`
       );
     }
   });

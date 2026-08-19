@@ -767,12 +767,6 @@ body[data-state="speaking"]  #micBtn { background: #064e3b; border-color: var(--
 }
 .pwd-btn:hover { background: var(--purple2); }
 #pwdMsg { font-size: var(--fs-sm); text-align: center; min-height: 18px; }
-#enrollBtn {
-  background: var(--surface2); border: 1px solid var(--green);
-  color: var(--green); border-radius: var(--radius-sm); padding: 12px;
-  font-size: var(--fs-base); font-weight: 700; cursor: pointer; width: 100%; transition: background .15s;
-}
-#enrollBtn:hover { background: #052e16; }
 
 /* ── QUICK CHIPS (Chat footer) ── */
 #quickChips {
@@ -2314,45 +2308,13 @@ button:active, .plat-act-btn:active { transform: scale(0.96); }
     </div>
 
     <div class="card" id="enroll-card">
-      <div class="card-hd"><div class="dot" style="background:var(--green)"></div>Voice Enrollment</div>
-      <p style="font-size:var(--fs-sm);color:var(--text2);line-height:1.6;margin-bottom:13px">
-        Enroll your voice to unlock privileged tools — Mac control, social posting, and more.<br>
-        <span style="color:var(--text3);font-size:11px">You'll be asked to speak a few phrases. Takes about 40 seconds total.</span>
+      <div class="card-hd"><div class="dot" style="background:var(--text3)"></div>Voice Enrollment</div>
+      <p style="font-size:var(--fs-sm);color:var(--text2);line-height:1.6;margin-bottom:0">
+        Retired. Speaker enrollment never granted access to privileged tools, and the
+        endpoint behind it is withdrawn — sign in to act.<br>
+        <span style="color:var(--text3);font-size:11px">Nothing is recorded here. Any voice profile
+        already on this machine is left untouched.</span>
       </p>
-
-      <!-- idle state -->
-      <div id="enroll-idle">
-        <button id="enrollBtn" onclick="startEnroll()">🎙 Enroll My Voice</button>
-      </div>
-
-      <!-- active enrollment UI -->
-      <div id="enroll-active" style="display:none">
-        <!-- prompt card -->
-        <div id="enroll-prompt-box" style="background:#0d0d1a;border:1px solid #a259ff55;border-radius:12px;padding:16px 18px;margin-bottom:14px;text-align:center">
-          <div style="font-size:10px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">Round <span id="enroll-round-num">1</span> of <span id="enroll-round-total">4</span> — speak clearly</div>
-          <div id="enroll-prompt-text" style="font-size:1.3rem;font-weight:800;color:#fff;line-height:1.4;min-height:3rem;display:flex;align-items:center;justify-content:center"></div>
-        </div>
-
-        <!-- waveform / timer bar -->
-        <div style="position:relative;height:6px;background:var(--surface2);border-radius:3px;margin-bottom:12px;overflow:hidden">
-          <div id="enroll-progress-bar" style="height:100%;width:0%;background:linear-gradient(90deg,#a259ff,#3b82f6);border-radius:3px;transition:width 0.1s linear"></div>
-        </div>
-
-        <!-- mic pulse -->
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
-          <div id="enroll-mic-dot" style="width:12px;height:12px;border-radius:50%;background:#ef4444;flex-shrink:0;animation:blink 0.8s ease-in-out infinite"></div>
-          <div id="enroll-mic-label" style="font-size:13px;color:var(--text2)">Listening…</div>
-          <div id="enroll-timer" style="margin-left:auto;font-size:12px;font-weight:700;color:#a259ff;font-variant-numeric:tabular-nums"></div>
-        </div>
-
-        <!-- round dots -->
-        <div style="display:flex;gap:6px;justify-content:center;margin-bottom:14px" id="enroll-dots"></div>
-
-        <button id="enroll-stop-btn" onclick="stopEnrollEarly()" style="width:100%;background:#2d0a0a;border:1px solid #ef444444;color:#ef4444;border-radius:8px;padding:8px;font-size:12px;cursor:pointer">✕ Cancel</button>
-      </div>
-
-      <!-- result -->
-      <div id="enrollStatus" style="margin-top:9px;font-size:var(--fs-sm);color:var(--text3);text-align:center"></div>
     </div>
     <div class="card">
       <div class="card-hd"><div class="dot"></div>Registered Projects</div>
@@ -4245,207 +4207,12 @@ async function toggleConn(platform) {
   } catch {}
 }
 
-// ════════════════════════ VOICE ENROLL ════════════════════════
-// ── Voice Enrollment — guided multi-round ──────────────────────────────────
-
-const _ENROLL_PROMPTS = [
-  "My name is Ajay and I use Baadar every day to run my business.",
-  "Practice makes perfect — IELTS band seven is my goal.",
-  "Post today's content to Facebook, Instagram, and YouTube.",
-  "Open the canteen dashboard and show me today's sales.",
-  "Baadar, generate a new Mr. Yeti video for tonight.",
-  "Research the latest IELTS tips and write a blog post.",
-  "Send a Telegram message to confirm the post was uploaded.",
-  "Check the GitHub Actions status and show me the results.",
-];
-
-let _enrollStream = null;
-let _enrollRecorder = null;
-let _enrollChunks = [];
-let _enrollRound = 0;
-let _enrollAllChunks = [];
-let _enrollTimer = null;
-let _enrollProgressTimer = null;
-let _enrollCancelled = false;
-const _ENROLL_ROUNDS = 4;
-const _ROUND_SECONDS = 8;
-
-function _shufflePrompts() {
-  const arr = [..._ENROLL_PROMPTS];
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-  }
-  return arr.slice(0, _ENROLL_ROUNDS);
-}
-
-let _enrollSelectedPrompts = [];
-
-async function startEnroll() {
-  const status = document.getElementById('enrollStatus');
-  status.textContent = '';
-  _enrollCancelled = false;
-  _enrollAllChunks = [];
-  _enrollRound = 0;
-  _enrollSelectedPrompts = _shufflePrompts();
-
-  try {
-    _enrollStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-  } catch(e) {
-    status.textContent = '❌ Microphone access denied: ' + e.message;
-    return;
-  }
-
-  document.getElementById('enroll-idle').style.display = 'none';
-  document.getElementById('enroll-active').style.display = 'block';
-  document.getElementById('enroll-round-total').textContent = _ENROLL_ROUNDS;
-  _renderEnrollDots();
-  _runEnrollRound();
-}
-
-function _renderEnrollDots() {
-  const container = document.getElementById('enroll-dots');
-  if (!container) return;
-  container.innerHTML = Array.from({length: _ENROLL_ROUNDS}, (_, i) => {
-    const state = i < _enrollRound ? 'done' : i === _enrollRound ? 'active' : 'waiting';
-    const color = state === 'done' ? '#10b981' : state === 'active' ? '#a259ff' : '#333';
-    const size  = state === 'active' ? '12px' : '8px';
-    return `<div style="width:${size};height:${size};border-radius:50%;background:${color};transition:all .3s;flex-shrink:0"></div>`;
-  }).join('');
-}
-
-function _runEnrollRound() {
-  if (_enrollCancelled) return;
-
-  const prompt     = _enrollSelectedPrompts[_enrollRound];
-  const roundLabel = document.getElementById('enroll-round-num');
-  const promptEl   = document.getElementById('enroll-prompt-text');
-  const micLabel   = document.getElementById('enroll-mic-label');
-  const timerEl    = document.getElementById('enroll-timer');
-  const bar        = document.getElementById('enroll-progress-bar');
-
-  if (roundLabel) roundLabel.textContent = _enrollRound + 1;
-  if (promptEl)   promptEl.textContent   = '"' + prompt + '"';
-  if (micLabel)   micLabel.textContent   = 'Listening…';
-  _renderEnrollDots();
-
-  // 1-second countdown before recording starts
-  let countdown = 3;
-  if (micLabel) micLabel.textContent = 'Get ready… ' + countdown;
-  const cdTimer = setInterval(() => {
-    countdown--;
-    if (countdown <= 0) {
-      clearInterval(cdTimer);
-      if (micLabel) micLabel.textContent = '🔴 Speaking now…';
-      _startRoundRecording(prompt);
-    } else {
-      if (micLabel) micLabel.textContent = 'Get ready… ' + countdown;
-    }
-  }, 1000);
-}
-
-function _startRoundRecording(prompt) {
-  if (_enrollCancelled) return;
-
-  const bar     = document.getElementById('enroll-progress-bar');
-  const timerEl = document.getElementById('enroll-timer');
-  _enrollChunks = [];
-
-  _enrollRecorder = new MediaRecorder(_enrollStream);
-  _enrollRecorder.ondataavailable = e => { if (e.data.size > 0) _enrollChunks.push(e.data); };
-  _enrollRecorder.onstop = () => {
-    _enrollAllChunks.push(..._enrollChunks);
-    _enrollRound++;
-    clearInterval(_enrollProgressTimer);
-    if (bar) bar.style.width = '100%';
-
-    if (_enrollRound >= _ENROLL_ROUNDS || _enrollCancelled) {
-      _finishEnroll();
-    } else {
-      // brief pause between rounds
-      setTimeout(_runEnrollRound, 800);
-    }
-  };
-
-  _enrollRecorder.start(100);
-
-  // Progress bar + timer
-  let elapsed = 0;
-  if (bar) bar.style.width = '0%';
-  _enrollProgressTimer = setInterval(() => {
-    elapsed += 100;
-    const pct = Math.min((elapsed / (_ROUND_SECONDS * 1000)) * 100, 100);
-    if (bar) bar.style.width = pct + '%';
-    const remaining = Math.ceil((_ROUND_SECONDS * 1000 - elapsed) / 1000);
-    if (timerEl) timerEl.textContent = remaining + 's';
-  }, 100);
-
-  // Auto-stop after ROUND_SECONDS
-  _enrollTimer = setTimeout(() => {
-    if (_enrollRecorder && _enrollRecorder.state === 'recording') {
-      _enrollRecorder.stop();
-    }
-    clearInterval(_enrollProgressTimer);
-  }, _ROUND_SECONDS * 1000);
-}
-
-async function _finishEnroll() {
-  const status  = document.getElementById('enrollStatus');
-  const micLbl  = document.getElementById('enroll-mic-label');
-  const timerEl = document.getElementById('enroll-timer');
-
-  if (micLbl)  micLbl.textContent  = '⏳ Processing your voice…';
-  if (timerEl) timerEl.textContent = '';
-
-  // Stop mic
-  if (_enrollStream) _enrollStream.getTracks().forEach(t => t.stop());
-
-  if (_enrollCancelled || _enrollAllChunks.length === 0) {
-    _resetEnrollUI('Enrollment cancelled.');
-    return;
-  }
-
-  try {
-    const blob = new Blob(_enrollAllChunks, { type: 'audio/webm' });
-    const fd   = new FormData();
-    fd.append('file', blob, 'enroll.webm');
-
-    const r = await fetch(BASE + '/api/v1/voice/enroll', {
-      method: 'POST', body: fd, credentials: 'include',
-    });
-    const d = await r.json();
-
-    if (d.status === 'enrolled') {
-      _resetEnrollUI('✅ Voice enrolled! Baadar now recognises you.');
-      document.getElementById('enrollStatus').style.color = 'var(--green)';
-    } else {
-      _resetEnrollUI('❌ Enrollment failed — please try again.');
-    }
-  } catch(e) {
-    _resetEnrollUI('❌ Network error: ' + e.message);
-  }
-}
-
-function stopEnrollEarly() {
-  _enrollCancelled = true;
-  clearTimeout(_enrollTimer);
-  clearInterval(_enrollProgressTimer);
-  if (_enrollRecorder && _enrollRecorder.state === 'recording') {
-    _enrollRecorder.stop();
-  } else {
-    if (_enrollStream) _enrollStream.getTracks().forEach(t => t.stop());
-    _resetEnrollUI('Enrollment cancelled.');
-  }
-}
-
-function _resetEnrollUI(msg) {
-  document.getElementById('enroll-active').style.display = 'none';
-  document.getElementById('enroll-idle').style.display   = 'block';
-  const status = document.getElementById('enrollStatus');
-  if (status) status.textContent = msg || '';
-  const bar = document.getElementById('enroll-progress-bar');
-  if (bar) bar.style.width = '0%';
-}
+// ════════════════════════ VOICE ENROLL — REMOVED (R2.1-S6) ════════════
+// The guided multi-round enrollment recorder posted the owner's voice to
+// /api/v1/voice/enroll and told them it unlocked privileged tools. It never
+// granted authority and the endpoint is retired, so the recorder is gone
+// rather than left dormant. Do not reintroduce a voice-enrollment capture
+// here or anywhere else in this client.
 
 // ════════════════════════ PLATFORM HUB ════════════════════════
 function togglePlatHub(id) {

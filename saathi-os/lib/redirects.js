@@ -25,7 +25,14 @@ export const SAFE_REDIRECTS = [
   },
 ];
 
-/** Paths that must never appear as redirect sources in this program. */
+/** Paths that must never appear as redirect sources in this program.
+ *
+ * This governs the M47.5 parity redirect table only. R2.1-S6 separately
+ * retired the /voice speaker-enrollment surface and sends it to
+ * /settings/voice at the route level (app/voice/page.jsx), which is a
+ * security retirement rather than a parity consolidation — so /voice stays
+ * forbidden here and no row for it may be added below.
+ */
 export const NEVER_REDIRECT_SOURCES = [
   "/project/create",
   "/chat",
