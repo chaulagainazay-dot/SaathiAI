@@ -1,0 +1,214 @@
+{
+  "record": "R2_1_SPEAKER_IDENTITY_AUTHORITY_REPAIR",
+  "milestone": "R2.1-S1\u2026S10",
+  "captured_at": "2026-08-19",
+  "branch": "validation/r2-1-real-microphone-owner",
+  "head_sha": "8e7743cc10413e7380691b8440819bf40f347554",
+  "verdict": "SPEAKER_IDENTITY_AUTHORITY_BOUNDARY_REPAIRED_WITH_LIMITATIONS",
+  "privacy_status": "sanitized \u2014 no exploit payload, no raw audio, no voice profile contents, no credential or token",
+  "vulnerability_class": "Identity-signal authority elevation: an unauthenticated identity observation (a voiceprint match, a channel, or a client-supplied boolean) selected a privileged identity, satisfied approval requirements, and unlocked privileged tool execution. Compounded by a dispatch path that executed registered tool handlers outside the single execution gateway.",
+  "former_elevation_sources": [
+    {
+      "id": 1,
+      "source": "/api/v1/agent/chat request body",
+      "mechanism": "client-supplied speaker_verified: true, accepted anonymously",
+      "status": "REMOVED \u2014 field deleted from the contract; extra keys ignored; endpoint authenticated"
+    },
+    {
+      "id": 2,
+      "source": "Telegram bridge",
+      "mechanism": "hardcoded trust for the operator chat id",
+      "status": "REMOVED \u2014 demoted to bounded metadata"
+    },
+    {
+      "id": 3,
+      "source": "default conversation brain",
+      "mechanism": "registered with speaker_verified=True for every channel",
+      "status": "REMOVED \u2014 registered with no authority argument"
+    },
+    {
+      "id": 4,
+      "source": "/api/v1/voice/command voiceprint",
+      "mechanism": "verification result passed as authority into the dispatcher",
+      "status": "REMOVED \u2014 reported as observational metadata with authorizing: false"
+    },
+    {
+      "id": 5,
+      "source": "listener / wake-word path",
+      "mechanism": "per-utterance voice match passed as authority",
+      "status": "REMOVED \u2014 demoted to bounded metadata"
+    },
+    {
+      "id": 6,
+      "source": "push-to-talk path",
+      "mechanism": "per-utterance voice match passed as authority",
+      "status": "REMOVED \u2014 demoted to bounded metadata"
+    }
+  ],
+  "direct_handler_bypass_finding": {
+    "summary": "Removing the privileged bypass was not sufficient. saathi/tools/registry.py::execute_tool ended in a direct handler invocation for every tool classified LEGACY_BOUNDED, which executed outside the ExecutionGateway contract: no approval reference, no idempotency key, no gateway audit record.",
+    "measured_before": {
+      "method": "every registered handler replaced by a counting mock; one probe per tool class",
+      "probe_classes": 10,
+      "classes_that_executed_directly": [
+        "ordinary non-privileged",
+        "read-only",
+        "filesystem",
+        "networked",
+        "residual/unclassified"
+      ],
+      "direct_invocations": 5,
+      "named_tools_in_the_executable_inventory": 70,
+      "worst_case": "classify_legacy_tool() defaults unmatched names to LEGACY_BOUNDED, so any newly registered handler became executable without review"
+    },
+    "measured_after": {
+      "direct_invocations": 0,
+      "coverage": "every registered tool name, every tool class, every legacy entry point, speaker match True | False | unknown"
+    }
+  },
+  "authority_flow": {
+    "before": "identity signal \u2192 Identity.ADMIN \u2192 human_approved=True and code_confirmed=True \u2192 privileged bypass \u2192 handler executed in-process",
+    "after": "identity signal \u2192 bounded metadata in the L7 audit only. Dispatcher runs as Identity.USER with human_approved=False and code_confirmed=False. Approval is only a server-minted ToolApprovalReference validated by ToolExecutionService. Execution is only via the canonical ExecutionGateway; everything else fails closed."
+  },
+  "endpoint_authentication": {
+    "/api/v1/agent/chat": "removed from the anonymous bypass list; in-handler 401; trust field removed; mass-assignment blocked (extra=ignore)",
+    "/api/v1/voice/command": "removed from the anonymous bypass list; in-handler 401 before the upload is read, decoded, transcribed, persisted, sent to an LLM, or synthesised; conversation session namespaced by a server-derived principal; client session names validated and unable to carry a scope",
+    "/api/v1/voice/enroll": "authenticated, then 410 voice_enrollment_unavailable"
+  },
+  "gateway_fail_closed": {
+    "boundary": "saathi/tools/registry.py::execute_tool",
+    "behaviour": "classify \u2192 govern \u2192 audit \u2192 canonical gateway; no handler is invoked here",
+    "malformed_arguments": "rejected as malformed_tool_request instead of raising out of the boundary",
+    "unknown_tool": "rejected; no generic fallback",
+    "machine_invariant": "AST assertion that execute_tool contains no call on the resolved handler, plus an exhaustive runtime sweep over every registered name"
+  },
+  "enrollment_retirement": {
+    "backend": "no UploadFile parameter, so the multipart body is never parsed; no audio read or decoded; no profile written; bounded audit event with no audio, transcript, or client content",
+    "frontend": "/voice is a server-component redirect to /settings/voice; /os enrollment button, state and recorder removed; enrollVoice() client wrapper deleted; legacy static client's guided recorder removed and its card replaced with a retired notice",
+    "existing_profile": "preserved \u2014 asserted by hash before and after both retired routes"
+  },
+  "upload_bounds_and_cleanup": {
+    "media_types": "allowlist decided from request headers before the body is read (415)",
+    "size": "MAX_AUDIO_UPLOAD_BYTES from the existing voice runtime contract (413)",
+    "duration": "MAX_RECORDING_SECONDS from the same contract, enforced after decode and before transcription (413)",
+    "temporary_files": "voice._decode wraps its ffmpeg conversion in try/finally; source and decoded files are removed on success, ffmpeg failure, ffmpeg timeout, decoder failure, and cancellation",
+    "error_surface": "bounded codes only; no provider detail, transcript, or audio; TTS failure reports tts_unavailable",
+    "rate_limiting": "retained as defence in depth, behind authentication rather than in front of it"
+  },
+  "adversarial_matrix": {
+    "items": 30,
+    "tests": 45,
+    "file": "tests/test_r2_1_s7_adversarial_matrix.py",
+    "method": "harmless mocked handlers only; no real side effect is performed or required",
+    "result": "all items pass"
+  },
+  "test_inventory": {
+    "tests/test_r2_1_authority_boundary.py": 11,
+    "tests/test_r2_1_execution_gateway_invariant.py": 91,
+    "tests/test_r2_1_endpoint_auth.py": 22,
+    "tests/test_r2_1_voice_bounds.py": 19,
+    "tests/test_r2_1_voice_enrollment_retired.py": 7,
+    "tests/test_r2_1_s7_adversarial_matrix.py": 45,
+    "saathi-os/lib/s6-enrollment-retirement.test.js": 23,
+    "total": 218
+  },
+  "validation_runs": {
+    "full_backend_suite": {
+      "sha": "51d808d3d748211a359de81245ca69854d4b3fa1",
+      "started_utc": "2026-08-19T13:49:50Z",
+      "ended_utc": "2026-08-19T14:09:26Z",
+      "duration": "0:19:33",
+      "passed": 7727,
+      "failed": 0,
+      "skipped": 8,
+      "collection_errors": 0,
+      "services_started_during_run": false,
+      "ports_3000_8765_after": "clear"
+    },
+    "bounded_backend_regression": {
+      "passed": 699,
+      "skipped": 1,
+      "failed": 0
+    },
+    "frontend_suite": {
+      "passed": 694,
+      "failed": 0
+    },
+    "lint": {
+      "errors": 0,
+      "warnings": 3,
+      "threshold": 5,
+      "warnings_pre_existing": true
+    },
+    "production_build": "success",
+    "secret_credential_path_scan": {
+      "gate_exit_code": 0,
+      "strong_hits": 0,
+      "non_material_markers": "PEM headers without key material in two threat-model fixtures"
+    },
+    "r2_1_dock_layout_certificate": "PASS \u2014 10 hard, 56 layout, 28 accessibility gates across 7 viewports",
+    "m77_voice_browser_certificate": "PASS \u2014 36 hard, 6 responsive, 2 accessibility, 4 security gates",
+    "m64_regression": "PASS \u2014 21 gates",
+    "s6_enrollment_retirement_certificate": "PASS \u2014 26 hard gates"
+  },
+  "disclosures": [
+    {
+      "id": "timestamp-oracle-flake",
+      "test": "tests/test_m17_computer_agent.py::test_replay_redacts_credentials",
+      "classification": "PRE_EXISTING_TIMESTAMP_SENSITIVE_ASSERTION_FLAKE",
+      "root_cause": "Replay.to_dict() serialises time.time() floats, and the test asserts the literal \"999\" is absent from the serialised blob. A timestamp such as 1787130767.713999 trips it.",
+      "credential_redaction_property": "PASSED \u2014 secrets are replaced by [REDACTED] in every observed run, including the failing one",
+      "measured_rate": "0.33% per run over 4000 real-clock samples",
+      "occurrences": "one failure across three full-suite runs; the authoritative post-S4 run passed",
+      "action": "not repaired during this security milestone; unrelated to the repair"
+    },
+    {
+      "id": "browser-launch-flake",
+      "test": "tests/test_m17_1_live.py::test_live_browser_launch_and_close",
+      "classification": "PRE_EXISTING_CONTENTION_SENSITIVE_BROWSER_FLAKE",
+      "action": "not repaired; did not recur in the authoritative run"
+    },
+    {
+      "id": "m77-agent-browser-timeout",
+      "classification": "ENVIRONMENT_DEPENDENT_EXTERNAL_TOOL_STEP",
+      "detail": "The M77 certificate's external agent-browser step timed out on first invocation and passed on an unchanged-code retry with all 36 hard gates."
+    }
+  ],
+  "launch_agent_containment": {
+    "label": "com.saathi.local",
+    "plist": "~/Library/LaunchAgents/com.saathi.local.plist",
+    "why": "RunAtLoad=true, starting ~/SaathiAI/scripts/start_local.sh \u2014 the unrepaired main tree, not the repaired trunk-v3 checkout",
+    "action": "unloaded from the per-user domain; the plist file was not edited, renamed, or deleted",
+    "plist_sha256_unchanged": "5e4e0849683dc10c1da355df5e048bb0af252c492d3930f63da2e9e157a92c45",
+    "post_state": "service not loaded; ports 3000/8765 clear; no process from ~/SaathiAI running",
+    "classification": "TEMPORARY_LOCAL_CONTAINMENT_PENDING_CANONICAL_TRUNK_PROMOTION",
+    "committed": false,
+    "restoration_command": "launchctl bootstrap gui/501 /Users/macbookpro/Library/LaunchAgents/com.saathi.local.plist",
+    "restoration_precondition": "Do not restore until a repaired canonical checkout is promoted and the plist's target script is explicitly reviewed. Restoring it as-is would start the unrepaired main tree."
+  },
+  "remaining_limitations": [
+    "On-box callers are trusted. _is_local() treats a genuine loopback request with no forwarding header as authenticated, so any local process can reach the authenticated endpoints. This is pre-existing documented policy shared with /api/v1/agent/chat, not a change made here, and it is why the browser certificate models a remote caller through the proxy header.",
+    "/api/v1/voice/command still exists. It is authenticated, scoped, bounded and advisory, but it remains a legacy surface; retiring it entirely is future work.",
+    "Session scoping is single-owner. The deployment has one owner identity, so the principal namespace prevents cross-session access rather than cross-tenant access. Multi-tenant workspace binding is not implemented on this legacy path.",
+    "SaathiOS guards routes per page, not with a global shell guard. /settings/voice renders signed out; it exposes no enrollment and no server data, and the API refuses unauthenticated callers, but frontend route protection is not uniform.",
+    "The speaker match is still computed on an authenticated voice turn. It is metadata only and gates nothing, but the voiceprint code path has not been deleted.",
+    "The retired enrollment endpoint is retained as a truthful 410 rather than removed from the routing table, so old clients get an answer instead of a 404.",
+    "Advisory model output is unchanged. The model can still describe a privileged action; it simply cannot cause one through this path."
+  ],
+  "canonical_promotion_requirement": "This repair lives in the SaathiAI-trunk-v3 worktree on an unpushed validation branch. The vulnerable main tree at ~/SaathiAI is unchanged. No LaunchAgent may be restored, and no production loopback stack may be restarted from ~/SaathiAI, until the repaired checkout is promoted to canonical and the LaunchAgent's target is reviewed against it.",
+  "commits": [
+    "867e2a7 fix(security): remove speaker identity authority elevation",
+    "782316e fix(auth): protect legacy agent and voice command endpoints",
+    "65b35a2 fix(voice): bound legacy audio command processing",
+    "51d808d fix(voice): retire voice enrollment instead of re-gating it",
+    "d0dc5a2 fix(ui): retire legacy speaker enrollment surface",
+    "0b8a13d test(security): add the R2.1 adversarial security matrix",
+    "8e7743c test(security): certify the enrollment retirement in a real browser"
+  ],
+  "excluded_from_this_evidence": [
+    "no exploit command, weaponised payload, or reproduction script",
+    "no raw audio, transcript, or voice-profile contents",
+    "no credential, token, session cookie, or password material",
+    "docs/evidence/m25/* \u2014 reproducible test-generated output from an unrelated live-cert test, restored rather than committed into this repair"
+  ]
+}

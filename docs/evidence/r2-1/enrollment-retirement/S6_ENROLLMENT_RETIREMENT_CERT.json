@@ -1,0 +1,172 @@
+{
+  "schema": "r2_1.enrollment_retirement_cert.v1",
+  "provenance": {
+    "schema": "saathi.cert_provenance.v1",
+    "capturedAt": "2026-08-19T14:28:11.802Z",
+    "repoSha": "0b8a13df720bbcb70fe1ad89cfb4cfade8517e55",
+    "repoBranch": "validation/r2-1-real-microphone-owner",
+    "repoDirty": true,
+    "worktreePath": "/Users/macbookpro/SaathiAI-trunk-v3",
+    "repository": "SaathiAI-trunk-v3",
+    "frontendSha": "0b8a13df720bbcb70fe1ad89cfb4cfade8517e55",
+    "backendSha": "0b8a13df720bbcb70fe1ad89cfb4cfade8517e55",
+    "frontendOrigin": "",
+    "backendOrigin": "",
+    "observedApiOrigins": [],
+    "identifiedBackends": [],
+    "certificationCommand": "npm --prefix saathi-os run cert:s6-enrollment",
+    "harnessSha": "UNKNOWN",
+    "harnessVersion": "saathi.cert_provenance.v1"
+  },
+  "capturedAt": "2026-08-19T14:27:50.754Z",
+  "mode": "production-build-loopback",
+  "scope": "retirement of the speaker-enrollment surface; no microphone behaviour is certified",
+  "hardGates": {
+    "api_port_available": {
+      "ok": true,
+      "detail": ""
+    },
+    "ui_port_available": {
+      "ok": true,
+      "detail": ""
+    },
+    "backend_loopback": {
+      "ok": true,
+      "detail": ""
+    },
+    "local_bootstrap": {
+      "ok": true,
+      "detail": "status 200"
+    },
+    "authenticated_sign_in": {
+      "ok": true,
+      "detail": ""
+    },
+    "production_build": {
+      "ok": true,
+      "detail": ""
+    },
+    "frontend_loopback": {
+      "ok": true,
+      "detail": ""
+    },
+    "runtime_frontend_backend_sha_match": {
+      "ok": true,
+      "detail": ""
+    },
+    "runtime_matches_harness_worktree": {
+      "ok": true,
+      "detail": ""
+    },
+    "signed_out_surface_offers_no_enrollment": {
+      "ok": true,
+      "detail": "S\nSaathiOS\n«\nOPERATE\n⌂\nHome\n⌘\nCommand Center\n◎\nMissions\n⬡\nAgents\n⟳\nAutomation\nWORK\n▦\nProjects\n◈\nKnowledge\n▶\nStudio\nRUN THE BUSINESS\n◈\nBusiness\n◨\nTrading Guardia"
+    },
+    "signed_out_route_opens_no_microphone": {
+      "ok": true,
+      "detail": "{\"getUserMedia\":0,\"mediaRecorder\":0,\"permissionQuery\":1}"
+    },
+    "voice_redirects_to_settings_voice": {
+      "ok": true,
+      "detail": "landed on http://127.0.0.1:3000/settings/voice"
+    },
+    "redirect_opens_no_microphone": {
+      "ok": true,
+      "detail": "{\"getUserMedia\":0,\"mediaRecorder\":0,\"permissionQuery\":1}"
+    },
+    "redirect_records_nothing": {
+      "ok": true,
+      "detail": "{\"getUserMedia\":0,\"mediaRecorder\":0,\"permissionQuery\":1}"
+    },
+    "destination_has_no_enrollment_control": {
+      "ok": true,
+      "detail": "S\nSaathiOS\n«\nOPERATE\n⌂\nHome\n⌘\nCommand Center\n◎\nMissions\n⬡\nAgents\n⟳\nAutomation\nWORK\n▦\nProjects\n◈\nKnowledge\n▶\nStudio\nRUN THE BUSINESS\n◈\nBusiness\n◨\nTrading Guardia"
+    },
+    "destination_makes_no_owner_authority_claim": {
+      "ok": true,
+      "detail": ""
+    },
+    "missions_surface_renders": {
+      "ok": true,
+      "detail": "S\nSaathiOS\n«\nOPERATE\n⌂\nHome\n⌘\nCommand Center\n◎\nMissions\n⬡\nAgents\n⟳\nAutomation\nWORK\n▦\nProjects\n◈\nKnowledge\n▶\nStudio\nRUN T"
+    },
+    "voice_studio_reachable_from_missions": {
+      "ok": true,
+      "detail": "http://127.0.0.1:3000/missions/dfc1c56957544105/voice"
+    },
+    "mission_voice_studio_opens_no_microphone": {
+      "ok": true,
+      "detail": "{\"getUserMedia\":0,\"mediaRecorder\":0,\"permissionQuery\":0}"
+    },
+    "anonymous_voice_command_rejected": {
+      "ok": true,
+      "detail": "status 401"
+    },
+    "anonymous_rejection_precedes_body_validation": {
+      "ok": true,
+      "detail": "status 401"
+    },
+    "anonymous_voice_enroll_rejected": {
+      "ok": true,
+      "detail": "status 401"
+    },
+    "voice_enroll_never_succeeds": {
+      "ok": true,
+      "detail": "status 410"
+    },
+    "voice_enroll_reports_unavailable": {
+      "ok": true,
+      "detail": "{\"error\":\"voice_enrollment_unavailable\",\"deprecated\":true,\"message\":\"Voice enrollment is retired. A speaker profile never granted authority and no longer exists"
+    },
+    "no_page_errors": {
+      "ok": true,
+      "detail": ""
+    },
+    "no_console_errors": {
+      "ok": true,
+      "detail": ""
+    }
+  },
+  "routes": {
+    "signed_out_settings_voice": "http://127.0.0.1:3000/settings/voice",
+    "voice_redirect": "http://127.0.0.1:3000/settings/voice",
+    "missions": "http://127.0.0.1:3000/missions",
+    "missions_had_a_mission": true,
+    "mission_dashboard": "http://127.0.0.1:3000/missions/dfc1c56957544105",
+    "mission_detail_rendered": true,
+    "voice_studio": "http://127.0.0.1:3000/missions/dfc1c56957544105/voice",
+    "anonymous_voice_command_status": 401,
+    "anonymous_voice_enroll_status": 401,
+    "local_voice_enroll_status": 410,
+    "local_voice_enroll_error": "voice_enrollment_unavailable"
+  },
+  "captureAttempts": {
+    "signed_out_settings_voice": {
+      "getUserMedia": 0,
+      "mediaRecorder": 0,
+      "permissionQuery": 1
+    },
+    "voice_redirect": {
+      "getUserMedia": 0,
+      "mediaRecorder": 0,
+      "permissionQuery": 1
+    },
+    "missions": {
+      "getUserMedia": 0,
+      "mediaRecorder": 0,
+      "permissionQuery": 0
+    }
+  },
+  "browserErrors": {
+    "page": [],
+    "console": []
+  },
+  "screenshots": [
+    "screenshots/s6_signed_out_settings_voice.png",
+    "screenshots/s6_voice_redirect.png",
+    "screenshots/s6_voice_studio.png"
+  ],
+  "verdict": "PASS",
+  "tempDatabaseRetained": true,
+  "tempDatabaseRemoved": true
+}

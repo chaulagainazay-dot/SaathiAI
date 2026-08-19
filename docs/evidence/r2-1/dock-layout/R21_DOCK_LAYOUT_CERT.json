@@ -2,14 +2,14 @@
   "schema": "r2_1.voice_dock_layout_cert.v1",
   "provenance": {
     "schema": "saathi.cert_provenance.v1",
-    "capturedAt": "2026-08-19T00:54:38.171Z",
-    "repoSha": "d4485a6cb0395d2bc2e5ae010e2d34924c432262",
+    "capturedAt": "2026-08-19T14:19:51.105Z",
+    "repoSha": "0b8a13df720bbcb70fe1ad89cfb4cfade8517e55",
     "repoBranch": "validation/r2-1-real-microphone-owner",
-    "repoDirty": true,
+    "repoDirty": false,
     "worktreePath": "/Users/macbookpro/SaathiAI-trunk-v3",
     "repository": "SaathiAI-trunk-v3",
-    "frontendSha": "d4485a6cb0395d2bc2e5ae010e2d34924c432262",
-    "backendSha": "d4485a6cb0395d2bc2e5ae010e2d34924c432262",
+    "frontendSha": "0b8a13df720bbcb70fe1ad89cfb4cfade8517e55",
+    "backendSha": "0b8a13df720bbcb70fe1ad89cfb4cfade8517e55",
     "frontendOrigin": "http://127.0.0.1:3000",
     "backendOrigin": "http://127.0.0.1:8765",
     "observedApiOrigins": [],
@@ -18,7 +18,7 @@
     "harnessSha": "eda888b9b1d87cb773668f79444e24dcc059371c",
     "harnessVersion": "saathi.cert_provenance.v1"
   },
-  "capturedAt": "2026-08-19T00:54:16.058Z",
+  "capturedAt": "2026-08-19T14:19:25.941Z",
   "mode": "production-build-loopback",
   "scope": "layout and reachability only — no microphone behaviour is certified",
   "hardGates": {

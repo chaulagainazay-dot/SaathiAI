@@ -3,14 +3,14 @@
   "mode": "production-build-loopback",
   "provenance": {
     "schema": "saathi.cert_provenance.v1",
-    "capturedAt": "2026-08-19T00:56:02.348Z",
-    "repoSha": "d4485a6cb0395d2bc2e5ae010e2d34924c432262",
+    "capturedAt": "2026-08-19T14:22:54.129Z",
+    "repoSha": "0b8a13df720bbcb70fe1ad89cfb4cfade8517e55",
     "repoBranch": "validation/r2-1-real-microphone-owner",
     "repoDirty": true,
     "worktreePath": "/Users/macbookpro/SaathiAI-trunk-v3",
     "repository": "SaathiAI-trunk-v3",
-    "frontendSha": "d4485a6cb0395d2bc2e5ae010e2d34924c432262",
-    "backendSha": "d4485a6cb0395d2bc2e5ae010e2d34924c432262",
+    "frontendSha": "0b8a13df720bbcb70fe1ad89cfb4cfade8517e55",
+    "backendSha": "0b8a13df720bbcb70fe1ad89cfb4cfade8517e55",
     "frontendOrigin": "http://127.0.0.1:3000",
     "backendOrigin": "http://127.0.0.1:8765",
     "observedApiOrigins": [
@@ -19,7 +19,7 @@
     "identifiedBackends": [
       {
         "origin": "http://127.0.0.1:8765",
-        "sha": "d4485a6cb0395d2bc2e5ae010e2d34924c432262"
+        "sha": "0b8a13df720bbcb70fe1ad89cfb4cfade8517e55"
       }
     ],
     "certificationCommand": "npm --prefix saathi-os run cert:m64",
