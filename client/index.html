@@ -341,20 +341,6 @@ body { font-family: var(--font);
 #attachBtn:hover { background: var(--surface2); }
 #attachBtn.has-file { border-color: var(--purple); color: var(--lilac); background: #1a0d3d; }
 #fileInput { display: none; }
-#micBtn {
-  width: 50px; height: 50px; border-radius: 25px; flex-shrink: 0;
-  background: var(--surface); border: 1.5px solid var(--border);
-  color: var(--lilac); font-size: 24px; cursor: pointer; display: flex;
-  align-items: center; justify-content: center; transition: background .15s;
-}
-body[data-state="listening"] #micBtn { background: #1e3a5f; border-color: #3b82f6;
-  animation: micpulse 1.3s ease-out infinite; }
-body[data-state="thinking"]  #micBtn { background: #0c3325; border-color: var(--green); color: var(--green); }
-body[data-state="speaking"]  #micBtn { background: #064e3b; border-color: var(--green); color: var(--green); }
-@keyframes micpulse {
-  0%  { box-shadow: 0 0 0 0 rgba(59,130,246,.5); }
-  70% { box-shadow: 0 0 0 10px rgba(59,130,246,0); }
-}
 #sendBtn {
   height: 50px; padding: 0 22px; border-radius: 25px; flex-shrink: 0;
   background: linear-gradient(135deg, #7c3aed, #6d28d9); color: #fff; border: none;
@@ -1341,7 +1327,6 @@ button:active, .plat-act-btn:active { transform: scale(0.96); }
     <div id="chatInputRow">
       <button id="attachBtn" onclick="document.getElementById('fileInput').click()" title="Attach PDF, image, or file">📎</button>
       <input id="fileInput" type="file" accept=".pdf,.jpg,.jpeg,.png,.webp,.gif,.txt,.md,.csv,.json,.py,.js,.ts" onchange="onFileAttach(event)">
-      <button id="micBtn" onclick="toggleMic()">🎙</button>
       <input id="textIn" placeholder="Ask anything, paste a URL, or attach a file…" onkeydown="onKey(event)" oninput="onChatInput(event)">
       <button id="sendBtn" onclick="sendText()">Send</button>
     </div>
@@ -3443,48 +3428,19 @@ function sendText() {
 }
 function onKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendText(); } }
 
-let mediaRec = null, chunks = [], recording = false;
-async function toggleMic() {
-  if (recording) { mediaRec?.stop(); return; }
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    mediaRec = new MediaRecorder(stream);
-    chunks = [];
-    mediaRec.ondataavailable = e => chunks.push(e.data);
-    mediaRec.onstop = () => processAudio(stream);
-    mediaRec.start(); recording = true; setState('listening');
-  } catch { toast('🎙 Microphone access denied'); }
-}
-async function processAudio(stream) {
-  recording = false; setState('thinking');
-  stream.getTracks().forEach(t => t.stop());
-  const blob = new Blob(chunks, { type: 'audio/webm' });
-  const fd = new FormData();
-  fd.append('file', blob, 'audio.webm');
-  fd.append('session_id', SID);
-  fd.append('speak_reply', 'true');
-  try {
-    const r = await fetch(BASE + '/api/v1/voice/command',
-      { method: 'POST', body: fd, credentials: 'include' });
-    const d = await r.json();
-    if (d.ignored) { setState('idle'); return; }
-    addMsg('user', d.transcript + (d.verification?.verified ? ' ✓' : ''));
-    stepsEl = null; startPoll(SID);
-    if (d.reply) {
-      stopPoll(); finishSteps();
-      addMsg('bot', d.reply);
-      if (d.reply_audio_b64) playAudio(d.reply_audio_b64, d.reply_audio_mime);
-      else setState('idle');
-      checkPendingDraft();
-    }
-  } catch { setState('idle'); }
-}
-function playAudio(b64, mime) {
-  setState('speaking');
-  const a = new Audio('data:' + mime + ';base64,' + b64);
-  a.onended = () => setState('idle');
-  a.play().catch(() => setState('idle'));
-}
+// R2.1-D6: the legacy client's push-to-talk recorder is removed.
+//
+// toggleMic()/processAudio() opened the microphone with a bare { audio: true },
+// discarding the DEFAULT_MIC_CONSTRAINTS contract, took no AudioInputOwner
+// claim, and uploaded a webm blob to POST /api/v1/voice/command. S6 removed the
+// enrollment recorder from this file but left this one, so it survived as a
+// reachable unclaimed capture surface served at the backend root.
+//
+// This client is text and file input only. Live voice is the SaathiOS Live
+// Voice dock, which owns the single microphone claim. Do not add a recorder
+// back here: it cannot participate in the ownership registry from this
+// document, so it could only ever be a second, unstoppable owner.
+
 function speakReply(text, lang) {
   if (!window.speechSynthesis) { setState('idle'); return; }
   setState('speaking');
