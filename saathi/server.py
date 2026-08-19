@@ -2915,9 +2915,47 @@ async def voice_command(request: Request, file: UploadFile = File(...),
 
 
 @app.post("/api/v1/voice/enroll")
-async def enroll_voice(file: UploadFile = File(...)):
-    voice.enroll(await file.read())
-    return {"status": "enrolled"}
+async def enroll_voice(request: Request):
+    """Deprecated (R2.1-S4). Voice enrollment is retired and does nothing.
+
+    Enrollment existed to "unlock owner actions" — that is exactly the
+    authority a voiceprint must never carry, so the capability is retired
+    rather than re-gated. The honest answer is that the feature is
+    unavailable, not that enrolment succeeded:
+
+      * the request body is never read, so no audio is buffered or decoded,
+      * no speaker profile is written, and any existing profile is left
+        untouched,
+      * the attempt is audited as a bounded event with no audio, no
+        transcript, and no client-supplied content,
+      * nothing here grants, changes, or observes authority.
+
+    Deliberately no ``UploadFile`` parameter: declaring one would make the
+    framework parse and spool the multipart body before this function runs.
+    """
+    if not (_is_authed(request) or _is_local(request)):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    try:
+        from saathi import authsec
+        ip = (request.headers.get("x-forwarded-for", "").split(",")[0].strip()
+              or (request.client.host if request.client else ""))
+        authsec.audit("voice_enroll_attempt", ok=False, ip=ip,
+                      ua=request.headers.get("user-agent", "")[:200],
+                      detail="deprecated_and_unavailable")
+    except Exception:
+        pass  # auditing must not become a new failure mode for a retired route
+    return JSONResponse(
+        {
+            "error": "voice_enrollment_unavailable",
+            "deprecated": True,
+            "message": (
+                "Voice enrollment is retired. A speaker profile never granted "
+                "authority and no longer exists as a capability; sign in to act. "
+                "No audio was read and no profile was changed."
+            ),
+        },
+        status_code=410,
+    )
 
 
 @app.post("/api/v1/files/upload")
