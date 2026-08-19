@@ -43,6 +43,14 @@ function Pill({ children, tone = "default" }) {
   return <span className={cls}>{children}</span>;
 }
 
+/** Chip tone from a system-strip status. Unknown never reads as healthy. */
+function chipTone(status) {
+  if (status === "HEALTHY") return "ok";
+  if (status === "DEGRADED" || status === "WARNING") return "warn";
+  if (status === "BLOCKED") return "crit";
+  return "info";
+}
+
 function ProvenanceTag({ p }) {
   const tone =
     p === "LIVE" || p === "REAL"
@@ -595,8 +603,17 @@ export default function CommandCenterPage() {
             RISK {system?.risk?.value || "—"}
           </Pill>
           <Pill tone={system?.voice?.status === "HEALTHY" ? "info" : "warn"}>VOICE {voice}</Pill>
-          <Pill>MODELS {system?.models?.value || "—"}</Pill>
-          <Pill tone="ok">GW {system?.gateway?.value || "EG"}</Pill>
+          {/* Scalar strings only. `models.value` used to be the raw backend
+              array, which React cannot render as a child. */}
+          <Pill tone={chipTone(system?.models?.status)} title={system?.models?.reason}>
+            MODELS {system?.models?.value || "—"}
+          </Pill>
+          <Pill tone={chipTone(system?.infrastructure?.status)} title={system?.infrastructure?.reason}>
+            INFRA {system?.infrastructure?.value || "—"}
+          </Pill>
+          <Pill tone={chipTone(system?.gateway?.status)} title={system?.gateway?.reason}>
+            GW {system?.gateway?.value || "—"}
+          </Pill>
         </div>
         <div className="dl-top-actions">
           <StatusBadge status="info" label={`VOICE ${voice}`} />
