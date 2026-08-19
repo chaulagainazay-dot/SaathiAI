@@ -235,11 +235,19 @@ export function createVoiceSessionManager(hooks = {}) {
   }
 
   const unsubIn = subscribeInputOwner(() => {
-    if (!getInputOwnerSnapshot().claimId && inputClaim) {
-      inputClaim = null;
-      listening = false;
-      publish();
-    }
+    if (!inputClaim) return;
+    // Ownership can be taken away as well as given up: another surface
+    // acquiring the microphone preempts this claim. The streaming pipeline's
+    // recognizer is created inside the adapter rather than registered on the
+    // claim, so releasing the claim does not stop it — without this, a chat
+    // voice surface taking the microphone would leave the shell's recognizer
+    // running against a claim it no longer holds.
+    const lost = !getInputOwnerSnapshot().claimId || inputClaim.isActive?.() === false;
+    if (!lost) return;
+    stopInputPipeline("CLAIM_PREEMPTED");
+    inputClaim = null;
+    listening = false;
+    publish();
   });
   const unsubOut = subscribeOutputOwner(() => {
     if (!getOutputOwnerSnapshot().claimId && outputClaim) {
