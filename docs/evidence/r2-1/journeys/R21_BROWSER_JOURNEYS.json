@@ -1,0 +1,168 @@
+{
+  "label": "REAL_BROWSER_AUTOMATION_WITHOUT_PHYSICAL_MICROPHONE",
+  "disclosure": "Chromium fake media device only. No physical microphone and no human speech was involved. These journeys prove plumbing, ownership and teardown; they prove nothing about recognition accuracy.",
+  "frontendSha": "d4485a6cb0395d2bc2e5ae010e2d34924c432262",
+  "journeys": {
+    "sign_in": {
+      "path": "/platform",
+      "tokenPresent": true,
+      "pageErrors": [],
+      "consoleErrors": []
+    },
+    "platform": {
+      "path": "/platform",
+      "status": "visited",
+      "contentLength": 3704,
+      "react31": 0,
+      "pageErrors": [],
+      "consoleErrors": [],
+      "nextOverlay": false,
+      "voiceDock": true
+    },
+    "settings_voice_diagnostics": {
+      "path": "/settings/voice/diagnostics",
+      "status": "visited",
+      "contentLength": 2325,
+      "react31": 0,
+      "pageErrors": [],
+      "consoleErrors": [],
+      "nextOverlay": false,
+      "voiceDock": true,
+      "panel": {
+        "testid": "voice-diagnostics-panel",
+        "mounted": "true",
+        "micPermission": "granted",
+        "sessionState": "READY",
+        "inputState": "idle",
+        "outputState": "idle",
+        "vadLane": "idle",
+        "bargeInClass": "none",
+        "ttsLane": "idle",
+        "cleanup": "clean",
+        "duplicateInputOwner": "false",
+        "errorCategory": "none"
+      }
+    },
+    "talk_key": {
+      "during": {
+        "testid": "voice-diagnostics-panel",
+        "mounted": "true",
+        "micPermission": "granted",
+        "sessionState": "LISTENING",
+        "inputState": "listening",
+        "outputState": "idle",
+        "vadLane": "speech",
+        "bargeInClass": "none",
+        "ttsLane": "idle",
+        "cleanup": "held",
+        "duplicateInputOwner": "false",
+        "errorCategory": "none"
+      },
+      "after": {
+        "testid": "voice-diagnostics-panel",
+        "mounted": "true",
+        "micPermission": "granted",
+        "sessionState": "READY",
+        "inputState": "idle",
+        "outputState": "idle",
+        "vadLane": "idle",
+        "bargeInClass": "none",
+        "ttsLane": "idle",
+        "cleanup": "clean",
+        "duplicateInputOwner": "false",
+        "errorCategory": "none"
+      },
+      "backendActiveBefore": 0,
+      "backendActiveDuring": 1,
+      "backendActiveAfter": 0,
+      "pageErrors": [],
+      "consoleErrors": []
+    },
+    "route_change_cleanup": {
+      "activeWhileListening": 1,
+      "backendActiveAfterRoute": 1,
+      "url": "http://127.0.0.1:3000/command",
+      "pageErrors": []
+    },
+    "apps": {
+      "path": "/apps",
+      "status": "visited",
+      "contentLength": 1888,
+      "react31": 0,
+      "pageErrors": [],
+      "consoleErrors": [],
+      "nextOverlay": false,
+      "voiceDock": true
+    },
+    "app_launcher": {
+      "path": "/app-launcher",
+      "status": "visited",
+      "contentLength": 1272,
+      "react31": 0,
+      "pageErrors": [],
+      "consoleErrors": [],
+      "nextOverlay": false,
+      "voiceDock": true
+    },
+    "command": {
+      "path": "/command",
+      "status": "visited",
+      "contentLength": 4005,
+      "react31": 0,
+      "pageErrors": [],
+      "consoleErrors": [
+        "console: Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "console: Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "nextOverlay": false,
+      "voiceDock": true,
+      "systemStrip": "PAPER\nLIVE UNAVAILABLE\nTG SAFE\nRECON ERROR\nRISK ERROR\nVOICE READY\nMODELS 0/8\nINFRA 50%\nGW NOT REPORTED"
+    },
+    "approval_center": {
+      "path": "/approvals",
+      "status": "visited",
+      "contentLength": 1868,
+      "react31": 0,
+      "pageErrors": [],
+      "consoleErrors": [
+        "console: Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "nextOverlay": false,
+      "voiceDock": true
+    },
+    "trading_status_read_only": {
+      "path": "/trading/safety",
+      "status": "visited",
+      "contentLength": 1914,
+      "react31": 0,
+      "pageErrors": [],
+      "consoleErrors": [],
+      "nextOverlay": false,
+      "voiceDock": true
+    },
+    "logout": {
+      "tokenCleared": true,
+      "backendActiveAfterLogout": 1,
+      "pageErrors": []
+    },
+    "protected_route_signed_out": {
+      "url": "http://127.0.0.1:3000/approvals",
+      "redirectedOrGated": false,
+      "bodyHead": "S\nSaathiOS\n«\nOPERATE\n⌂\nHome\n⌘\nCommand Center\n◎\nMissions\n⬡\nAgents\n⟳\nAutomation\nWORK\n▦\nProjects\n◈\nKnowledge\n▶\nStudio\nRUN THE BUSINESS\n◈\nBusiness\n◨\nTrading Guardia",
+      "pageErrors": []
+    }
+  },
+  "totals": {
+    "pageErrors": 0,
+    "react31": 0,
+    "consoleErrors": 6
+  },
+  "allErrors": [
+    "console: Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "console: Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "console: Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "console: Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "console: Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "console: Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+  ]
+}

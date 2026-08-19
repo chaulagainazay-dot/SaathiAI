@@ -1,0 +1,822 @@
+{
+  "schema": "r2_1.voice_dock_layout_cert.v1",
+  "provenance": {
+    "schema": "saathi.cert_provenance.v1",
+    "capturedAt": "2026-08-19T00:54:38.171Z",
+    "repoSha": "d4485a6cb0395d2bc2e5ae010e2d34924c432262",
+    "repoBranch": "validation/r2-1-real-microphone-owner",
+    "repoDirty": true,
+    "worktreePath": "/Users/macbookpro/SaathiAI-trunk-v3",
+    "repository": "SaathiAI-trunk-v3",
+    "frontendSha": "d4485a6cb0395d2bc2e5ae010e2d34924c432262",
+    "backendSha": "d4485a6cb0395d2bc2e5ae010e2d34924c432262",
+    "frontendOrigin": "http://127.0.0.1:3000",
+    "backendOrigin": "http://127.0.0.1:8765",
+    "observedApiOrigins": [],
+    "identifiedBackends": [],
+    "certificationCommand": "npm --prefix saathi-os run cert:r21-dock",
+    "harnessSha": "eda888b9b1d87cb773668f79444e24dcc059371c",
+    "harnessVersion": "saathi.cert_provenance.v1"
+  },
+  "capturedAt": "2026-08-19T00:54:16.058Z",
+  "mode": "production-build-loopback",
+  "scope": "layout and reachability only — no microphone behaviour is certified",
+  "hardGates": {
+    "api_port_available": {
+      "ok": true,
+      "detail": ""
+    },
+    "ui_port_available": {
+      "ok": true,
+      "detail": ""
+    },
+    "backend_loopback": {
+      "ok": true,
+      "detail": ""
+    },
+    "local_bootstrap": {
+      "ok": true,
+      "detail": "status 200"
+    },
+    "authenticated_sign_in": {
+      "ok": true,
+      "detail": ""
+    },
+    "production_build": {
+      "ok": true,
+      "detail": ""
+    },
+    "frontend_loopback": {
+      "ok": true,
+      "detail": ""
+    },
+    "runtime_frontend_backend_sha_match": {
+      "ok": true,
+      "detail": ""
+    },
+    "runtime_matches_harness_worktree": {
+      "ok": true,
+      "detail": ""
+    },
+    "no_page_errors": {
+      "ok": true,
+      "detail": ""
+    }
+  },
+  "layout": {
+    "desktop_1440_dock_is_fixed_chrome": {
+      "ok": true,
+      "detail": "fixed"
+    },
+    "desktop_1440_mic_inside_viewport": {
+      "ok": true,
+      "detail": "{\"x\":270,\"y\":781,\"width\":48,\"height\":48,\"right\":318,\"bottom\":829}"
+    },
+    "desktop_1440_dock_inside_viewport": {
+      "ok": true,
+      "detail": "{\"x\":256,\"y\":742,\"width\":360,\"height\":110,\"right\":616,\"bottom\":852}"
+    },
+    "desktop_1440_mic_is_click_target": {
+      "ok": true,
+      "detail": "top element at mic centre: MIC"
+    },
+    "desktop_1440_dock_clear_of_status_bar": {
+      "ok": true,
+      "detail": "overlap 0px²"
+    },
+    "desktop_1440_dock_clear_of_navigation": {
+      "ok": true,
+      "detail": "sidebar 0px², tabbar 0px²"
+    },
+    "desktop_1440_docks_do_not_materially_overlap": {
+      "ok": true,
+      "detail": "output overlap 0px² of 39600px²"
+    },
+    "desktop_1440_no_horizontal_overflow": {
+      "ok": true,
+      "detail": "0px"
+    },
+    "desktop_1280_dock_is_fixed_chrome": {
+      "ok": true,
+      "detail": "fixed"
+    },
+    "desktop_1280_mic_inside_viewport": {
+      "ok": true,
+      "detail": "{\"x\":270,\"y\":681,\"width\":48,\"height\":48,\"right\":318,\"bottom\":729}"
+    },
+    "desktop_1280_dock_inside_viewport": {
+      "ok": true,
+      "detail": "{\"x\":256,\"y\":642,\"width\":360,\"height\":110,\"right\":616,\"bottom\":752}"
+    },
+    "desktop_1280_mic_is_click_target": {
+      "ok": true,
+      "detail": "top element at mic centre: MIC"
+    },
+    "desktop_1280_dock_clear_of_status_bar": {
+      "ok": true,
+      "detail": "overlap 0px²"
+    },
+    "desktop_1280_dock_clear_of_navigation": {
+      "ok": true,
+      "detail": "sidebar 0px², tabbar 0px²"
+    },
+    "desktop_1280_docks_do_not_materially_overlap": {
+      "ok": true,
+      "detail": "output overlap 0px² of 39600px²"
+    },
+    "desktop_1280_no_horizontal_overflow": {
+      "ok": true,
+      "detail": "0px"
+    },
+    "laptop_1024_dock_is_fixed_chrome": {
+      "ok": true,
+      "detail": "fixed"
+    },
+    "laptop_1024_mic_inside_viewport": {
+      "ok": true,
+      "detail": "{\"x\":270,\"y\":649,\"width\":48,\"height\":48,\"right\":318,\"bottom\":697}"
+    },
+    "laptop_1024_dock_inside_viewport": {
+      "ok": true,
+      "detail": "{\"x\":256,\"y\":610,\"width\":360,\"height\":110,\"right\":616,\"bottom\":720}"
+    },
+    "laptop_1024_mic_is_click_target": {
+      "ok": true,
+      "detail": "top element at mic centre: MIC"
+    },
+    "laptop_1024_dock_clear_of_status_bar": {
+      "ok": true,
+      "detail": "overlap 0px²"
+    },
+    "laptop_1024_dock_clear_of_navigation": {
+      "ok": true,
+      "detail": "sidebar 0px², tabbar 0px²"
+    },
+    "laptop_1024_docks_do_not_materially_overlap": {
+      "ok": true,
+      "detail": "output overlap 0px² of 39600px²"
+    },
+    "laptop_1024_no_horizontal_overflow": {
+      "ok": true,
+      "detail": "0px"
+    },
+    "tablet_834_dock_is_fixed_chrome": {
+      "ok": true,
+      "detail": "fixed"
+    },
+    "tablet_834_mic_inside_viewport": {
+      "ok": true,
+      "detail": "{\"x\":270,\"y\":781,\"width\":48,\"height\":48,\"right\":318,\"bottom\":829}"
+    },
+    "tablet_834_dock_inside_viewport": {
+      "ok": true,
+      "detail": "{\"x\":256,\"y\":742,\"width\":360,\"height\":110,\"right\":616,\"bottom\":852}"
+    },
+    "tablet_834_mic_is_click_target": {
+      "ok": true,
+      "detail": "top element at mic centre: MIC"
+    },
+    "tablet_834_dock_clear_of_status_bar": {
+      "ok": true,
+      "detail": "overlap 0px²"
+    },
+    "tablet_834_dock_clear_of_navigation": {
+      "ok": true,
+      "detail": "sidebar 0px², tabbar 0px²"
+    },
+    "tablet_834_docks_do_not_materially_overlap": {
+      "ok": true,
+      "detail": "output overlap 0px² of 39600px²"
+    },
+    "tablet_834_no_horizontal_overflow": {
+      "ok": true,
+      "detail": "0px"
+    },
+    "tablet_768_dock_is_fixed_chrome": {
+      "ok": true,
+      "detail": "fixed"
+    },
+    "tablet_768_mic_inside_viewport": {
+      "ok": true,
+      "detail": "{\"x\":270,\"y\":659,\"width\":48,\"height\":48,\"right\":318,\"bottom\":707}"
+    },
+    "tablet_768_dock_inside_viewport": {
+      "ok": true,
+      "detail": "{\"x\":256,\"y\":620,\"width\":360,\"height\":110,\"right\":616,\"bottom\":730}"
+    },
+    "tablet_768_mic_is_click_target": {
+      "ok": true,
+      "detail": "top element at mic centre: MIC"
+    },
+    "tablet_768_dock_clear_of_status_bar": {
+      "ok": true,
+      "detail": "overlap 0px²"
+    },
+    "tablet_768_dock_clear_of_navigation": {
+      "ok": true,
+      "detail": "sidebar 0px², tabbar 0px²"
+    },
+    "tablet_768_docks_do_not_materially_overlap": {
+      "ok": true,
+      "detail": "output overlap 0px² of 39600px²"
+    },
+    "tablet_768_no_horizontal_overflow": {
+      "ok": true,
+      "detail": "0px"
+    },
+    "phone_390_dock_is_fixed_chrome": {
+      "ok": true,
+      "detail": "fixed"
+    },
+    "phone_390_mic_inside_viewport": {
+      "ok": true,
+      "detail": "{\"x\":24,\"y\":445,\"width\":48,\"height\":48,\"right\":72,\"bottom\":493}"
+    },
+    "phone_390_dock_inside_viewport": {
+      "ok": true,
+      "detail": "{\"x\":10,\"y\":406,\"width\":360,\"height\":110,\"right\":370,\"bottom\":516}"
+    },
+    "phone_390_mic_is_click_target": {
+      "ok": true,
+      "detail": "top element at mic centre: MIC"
+    },
+    "phone_390_dock_clear_of_status_bar": {
+      "ok": true,
+      "detail": "overlap 0px²"
+    },
+    "phone_390_dock_clear_of_navigation": {
+      "ok": true,
+      "detail": "sidebar 0px², tabbar 0px²"
+    },
+    "phone_390_docks_do_not_materially_overlap": {
+      "ok": true,
+      "detail": "output overlap 0px² of 39600px²"
+    },
+    "phone_390_no_horizontal_overflow": {
+      "ok": true,
+      "detail": "0px"
+    },
+    "phone_360_dock_is_fixed_chrome": {
+      "ok": true,
+      "detail": "fixed"
+    },
+    "phone_360_mic_inside_viewport": {
+      "ok": true,
+      "detail": "{\"x\":24,\"y\":341,\"width\":48,\"height\":48,\"right\":72,\"bottom\":389}"
+    },
+    "phone_360_dock_inside_viewport": {
+      "ok": true,
+      "detail": "{\"x\":10,\"y\":302,\"width\":340,\"height\":110,\"right\":350,\"bottom\":412}"
+    },
+    "phone_360_mic_is_click_target": {
+      "ok": true,
+      "detail": "top element at mic centre: MIC"
+    },
+    "phone_360_dock_clear_of_status_bar": {
+      "ok": true,
+      "detail": "overlap 0px²"
+    },
+    "phone_360_dock_clear_of_navigation": {
+      "ok": true,
+      "detail": "sidebar 0px², tabbar 0px²"
+    },
+    "phone_360_docks_do_not_materially_overlap": {
+      "ok": true,
+      "detail": "output overlap 0px² of 37400px²"
+    },
+    "phone_360_no_horizontal_overflow": {
+      "ok": true,
+      "detail": "0px"
+    }
+  },
+  "accessibility": {
+    "desktop_1440_mic_touch_target": {
+      "ok": true,
+      "detail": "48x48"
+    },
+    "desktop_1440_mic_accessible_name": {
+      "ok": true,
+      "detail": "Start talking"
+    },
+    "desktop_1440_keyboard_reaches_mic": {
+      "ok": true,
+      "detail": "32 tab stops"
+    },
+    "desktop_1440_focus_is_visible": {
+      "ok": true,
+      "detail": "{\"width\":\"2px\",\"style\":\"solid\"}"
+    },
+    "desktop_1280_mic_touch_target": {
+      "ok": true,
+      "detail": "48x48"
+    },
+    "desktop_1280_mic_accessible_name": {
+      "ok": true,
+      "detail": "Start talking"
+    },
+    "desktop_1280_keyboard_reaches_mic": {
+      "ok": true,
+      "detail": "30 tab stops"
+    },
+    "desktop_1280_focus_is_visible": {
+      "ok": true,
+      "detail": "{\"width\":\"2px\",\"style\":\"solid\"}"
+    },
+    "laptop_1024_mic_touch_target": {
+      "ok": true,
+      "detail": "48x48"
+    },
+    "laptop_1024_mic_accessible_name": {
+      "ok": true,
+      "detail": "Start talking"
+    },
+    "laptop_1024_keyboard_reaches_mic": {
+      "ok": true,
+      "detail": "31 tab stops"
+    },
+    "laptop_1024_focus_is_visible": {
+      "ok": true,
+      "detail": "{\"width\":\"2px\",\"style\":\"solid\"}"
+    },
+    "tablet_834_mic_touch_target": {
+      "ok": true,
+      "detail": "48x48"
+    },
+    "tablet_834_mic_accessible_name": {
+      "ok": true,
+      "detail": "Start talking"
+    },
+    "tablet_834_keyboard_reaches_mic": {
+      "ok": true,
+      "detail": "31 tab stops"
+    },
+    "tablet_834_focus_is_visible": {
+      "ok": true,
+      "detail": "{\"width\":\"2px\",\"style\":\"solid\"}"
+    },
+    "tablet_768_mic_touch_target": {
+      "ok": true,
+      "detail": "48x48"
+    },
+    "tablet_768_mic_accessible_name": {
+      "ok": true,
+      "detail": "Start talking"
+    },
+    "tablet_768_keyboard_reaches_mic": {
+      "ok": true,
+      "detail": "31 tab stops"
+    },
+    "tablet_768_focus_is_visible": {
+      "ok": true,
+      "detail": "{\"width\":\"2px\",\"style\":\"solid\"}"
+    },
+    "phone_390_mic_touch_target": {
+      "ok": true,
+      "detail": "48x48"
+    },
+    "phone_390_mic_accessible_name": {
+      "ok": true,
+      "detail": "Start talking"
+    },
+    "phone_390_keyboard_reaches_mic": {
+      "ok": true,
+      "detail": "7 tab stops"
+    },
+    "phone_390_focus_is_visible": {
+      "ok": true,
+      "detail": "{\"width\":\"2px\",\"style\":\"solid\"}"
+    },
+    "phone_360_mic_touch_target": {
+      "ok": true,
+      "detail": "48x48"
+    },
+    "phone_360_mic_accessible_name": {
+      "ok": true,
+      "detail": "Start talking"
+    },
+    "phone_360_keyboard_reaches_mic": {
+      "ok": true,
+      "detail": "7 tab stops"
+    },
+    "phone_360_focus_is_visible": {
+      "ok": true,
+      "detail": "{\"width\":\"2px\",\"style\":\"solid\"}"
+    }
+  },
+  "geometry": {
+    "desktop_1440": {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "dock": {
+        "x": 256,
+        "y": 742,
+        "width": 360,
+        "height": 110,
+        "right": 616,
+        "bottom": 852
+      },
+      "mic": {
+        "x": 270,
+        "y": 781,
+        "width": 48,
+        "height": 48,
+        "right": 318,
+        "bottom": 829
+      },
+      "output": {
+        "x": 1062,
+        "y": 696,
+        "width": 360,
+        "height": 162,
+        "right": 1422,
+        "bottom": 858
+      },
+      "statusBar": {
+        "x": 240,
+        "y": 864,
+        "width": 1200,
+        "height": 36,
+        "right": 1440,
+        "bottom": 900
+      },
+      "sidebar": {
+        "x": 0,
+        "y": 0,
+        "width": 240,
+        "height": 900,
+        "right": 240,
+        "bottom": 900
+      },
+      "tabBar": null,
+      "micHit": "MIC",
+      "micName": "Start talking",
+      "micPosition": "fixed",
+      "micInViewport": true,
+      "dockInViewport": true,
+      "overlapOutput": 0,
+      "overlapStatusBar": 0,
+      "overlapSidebar": 0,
+      "overlapTabBar": 0,
+      "dockArea": 39600,
+      "horizontalOverflow": 0,
+      "keyboardTabStops": 32
+    },
+    "desktop_1280": {
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "dock": {
+        "x": 256,
+        "y": 642,
+        "width": 360,
+        "height": 110,
+        "right": 616,
+        "bottom": 752
+      },
+      "mic": {
+        "x": 270,
+        "y": 681,
+        "width": 48,
+        "height": 48,
+        "right": 318,
+        "bottom": 729
+      },
+      "output": {
+        "x": 902,
+        "y": 596,
+        "width": 360,
+        "height": 162,
+        "right": 1262,
+        "bottom": 758
+      },
+      "statusBar": {
+        "x": 240,
+        "y": 764,
+        "width": 1040,
+        "height": 36,
+        "right": 1280,
+        "bottom": 800
+      },
+      "sidebar": {
+        "x": 0,
+        "y": 0,
+        "width": 240,
+        "height": 800,
+        "right": 240,
+        "bottom": 800
+      },
+      "tabBar": null,
+      "micHit": "MIC",
+      "micName": "Start talking",
+      "micPosition": "fixed",
+      "micInViewport": true,
+      "dockInViewport": true,
+      "overlapOutput": 0,
+      "overlapStatusBar": 0,
+      "overlapSidebar": 0,
+      "overlapTabBar": 0,
+      "dockArea": 39600,
+      "horizontalOverflow": 0,
+      "keyboardTabStops": 30
+    },
+    "laptop_1024": {
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "dock": {
+        "x": 256,
+        "y": 610,
+        "width": 360,
+        "height": 110,
+        "right": 616,
+        "bottom": 720
+      },
+      "mic": {
+        "x": 270,
+        "y": 649,
+        "width": 48,
+        "height": 48,
+        "right": 318,
+        "bottom": 697
+      },
+      "output": {
+        "x": 646,
+        "y": 564,
+        "width": 360,
+        "height": 162,
+        "right": 1006,
+        "bottom": 726
+      },
+      "statusBar": {
+        "x": 240,
+        "y": 732,
+        "width": 784,
+        "height": 36,
+        "right": 1024,
+        "bottom": 768
+      },
+      "sidebar": {
+        "x": 0,
+        "y": 0,
+        "width": 240,
+        "height": 768,
+        "right": 240,
+        "bottom": 768
+      },
+      "tabBar": null,
+      "micHit": "MIC",
+      "micName": "Start talking",
+      "micPosition": "fixed",
+      "micInViewport": true,
+      "dockInViewport": true,
+      "overlapOutput": 0,
+      "overlapStatusBar": 0,
+      "overlapSidebar": 0,
+      "overlapTabBar": 0,
+      "dockArea": 39600,
+      "horizontalOverflow": 0,
+      "keyboardTabStops": 31
+    },
+    "tablet_834": {
+      "viewport": {
+        "width": 834,
+        "height": 1112
+      },
+      "dock": {
+        "x": 256,
+        "y": 742,
+        "width": 360,
+        "height": 110,
+        "right": 616,
+        "bottom": 852
+      },
+      "mic": {
+        "x": 270,
+        "y": 781,
+        "width": 48,
+        "height": 48,
+        "right": 318,
+        "bottom": 829
+      },
+      "output": {
+        "x": 456,
+        "y": 908,
+        "width": 360,
+        "height": 162,
+        "right": 816,
+        "bottom": 1070
+      },
+      "statusBar": {
+        "x": 240,
+        "y": 1076,
+        "width": 594,
+        "height": 36,
+        "right": 834,
+        "bottom": 1112
+      },
+      "sidebar": {
+        "x": 0,
+        "y": 0,
+        "width": 240,
+        "height": 1112,
+        "right": 240,
+        "bottom": 1112
+      },
+      "tabBar": null,
+      "micHit": "MIC",
+      "micName": "Start talking",
+      "micPosition": "fixed",
+      "micInViewport": true,
+      "dockInViewport": true,
+      "overlapOutput": 0,
+      "overlapStatusBar": 0,
+      "overlapSidebar": 0,
+      "overlapTabBar": 0,
+      "dockArea": 39600,
+      "horizontalOverflow": 0,
+      "keyboardTabStops": 31
+    },
+    "tablet_768": {
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "dock": {
+        "x": 256,
+        "y": 620,
+        "width": 360,
+        "height": 110,
+        "right": 616,
+        "bottom": 730
+      },
+      "mic": {
+        "x": 270,
+        "y": 659,
+        "width": 48,
+        "height": 48,
+        "right": 318,
+        "bottom": 707
+      },
+      "output": {
+        "x": 418,
+        "y": 788,
+        "width": 340,
+        "height": 161,
+        "right": 758,
+        "bottom": 948
+      },
+      "statusBar": {
+        "x": 240,
+        "y": 988,
+        "width": 528,
+        "height": 36,
+        "right": 768,
+        "bottom": 1024
+      },
+      "sidebar": {
+        "x": 0,
+        "y": 0,
+        "width": 240,
+        "height": 1024,
+        "right": 240,
+        "bottom": 1024
+      },
+      "tabBar": null,
+      "micHit": "MIC",
+      "micName": "Start talking",
+      "micPosition": "fixed",
+      "micInViewport": true,
+      "dockInViewport": true,
+      "overlapOutput": 0,
+      "overlapStatusBar": 0,
+      "overlapSidebar": 0,
+      "overlapTabBar": 0,
+      "dockArea": 39600,
+      "horizontalOverflow": 0,
+      "keyboardTabStops": 31
+    },
+    "phone_390": {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "dock": {
+        "x": 10,
+        "y": 406,
+        "width": 360,
+        "height": 110,
+        "right": 370,
+        "bottom": 516
+      },
+      "mic": {
+        "x": 24,
+        "y": 445,
+        "width": 48,
+        "height": 48,
+        "right": 72,
+        "bottom": 493
+      },
+      "output": {
+        "x": 40,
+        "y": 550,
+        "width": 340,
+        "height": 219,
+        "right": 380,
+        "bottom": 768
+      },
+      "statusBar": null,
+      "sidebar": null,
+      "tabBar": {
+        "x": 0,
+        "y": 784,
+        "width": 390,
+        "height": 60,
+        "right": 390,
+        "bottom": 844
+      },
+      "micHit": "MIC",
+      "micName": "Start talking",
+      "micPosition": "fixed",
+      "micInViewport": true,
+      "dockInViewport": true,
+      "overlapOutput": 0,
+      "overlapStatusBar": 0,
+      "overlapSidebar": 0,
+      "overlapTabBar": 0,
+      "dockArea": 39600,
+      "horizontalOverflow": 0,
+      "keyboardTabStops": 7
+    },
+    "phone_360": {
+      "viewport": {
+        "width": 360,
+        "height": 740
+      },
+      "dock": {
+        "x": 10,
+        "y": 302,
+        "width": 340,
+        "height": 110,
+        "right": 350,
+        "bottom": 412
+      },
+      "mic": {
+        "x": 24,
+        "y": 341,
+        "width": 48,
+        "height": 48,
+        "right": 72,
+        "bottom": 389
+      },
+      "output": {
+        "x": 10,
+        "y": 446,
+        "width": 340,
+        "height": 219,
+        "right": 350,
+        "bottom": 664
+      },
+      "statusBar": null,
+      "sidebar": null,
+      "tabBar": {
+        "x": 0,
+        "y": 680,
+        "width": 360,
+        "height": 60,
+        "right": 360,
+        "bottom": 740
+      },
+      "micHit": "MIC",
+      "micName": "Start talking",
+      "micPosition": "fixed",
+      "micInViewport": true,
+      "dockInViewport": true,
+      "overlapOutput": 0,
+      "overlapStatusBar": 0,
+      "overlapSidebar": 0,
+      "overlapTabBar": 0,
+      "dockArea": 37400,
+      "horizontalOverflow": 0,
+      "keyboardTabStops": 7
+    }
+  },
+  "browserErrors": {
+    "page": [],
+    "console": []
+  },
+  "screenshots": [
+    "screenshots/r21_dock_desktop_1440.png",
+    "screenshots/r21_dock_desktop_1280.png",
+    "screenshots/r21_dock_laptop_1024.png",
+    "screenshots/r21_dock_tablet_834.png",
+    "screenshots/r21_dock_tablet_768.png",
+    "screenshots/r21_dock_phone_390.png",
+    "screenshots/r21_dock_phone_360.png"
+  ],
+  "verdict": "PASS",
+  "tempDatabaseRetained": false
+}
