@@ -40,6 +40,7 @@ import {
   openMicrophoneForClaim,
   forceReleaseInput,
   createTurnBinding,
+  createSessionFinalizer,
   evaluateRecognitionSupport,
   RECOGNITION_UNSUPPORTED_MESSAGE,
 } from "@/lib/voice-session";
@@ -60,8 +61,42 @@ export function VoiceRuntimeProvider({ children }) {
   // The binding to the authoritative transcript stream, one generation at a
   // time. Submission rules live in the binding, not here.
   const bindingRef = useRef(null);
+  // Read the token from a ref in teardown paths: cleanup runs during logout,
+  // when the state value has already moved on but the *old* token is the one
+  // that can still terminate the old session.
+  const tokenRef = useRef("");
+  tokenRef.current = token;
   const voiceOutput = useVoiceOutput();
   const voiceSession = useVoiceSession();
+
+  // Terminal cleanup of backend sessions. `POST /stop` only moves input_state;
+  // a session leaves LISTENING through `POST /finish`, and nothing used to
+  // call it — so every abandoned session stayed active until the per-user
+  // budget refused new ones.
+  const finalizerRef = useRef(null);
+  if (!finalizerRef.current) {
+    finalizerRef.current = createSessionFinalizer({
+      finish: (activeToken, sessionId, options) =>
+        voiceRuntimeActions.finish(activeToken, sessionId, options),
+      onPendingChange: (pending) => dispatch({ type: "CLEANUP_PENDING", pending }),
+    });
+  }
+
+  /** Terminate the backend session this surface is abandoning. */
+  const finalizeBackendSession = useCallback((reason, overrideToken, keepalive = false) => {
+    const sessionId = sessionIdRef.current;
+    if (!sessionId) return "skipped";
+    const outcome = finalizerRef.current.finalize({
+      token: overrideToken || tokenRef.current || getToken(),
+      sessionId,
+      reason,
+      keepalive,
+    });
+    // The id is abandoned either way; a failed request stays pending in the
+    // finalizer rather than pretending the session was closed.
+    sessionIdRef.current = "";
+    return outcome;
+  }, []);
   // Read the session through a ref inside teardown paths. `voiceSession` is a
   // fresh object on every published snapshot, so a cleanup callback that closes
   // over it directly changes identity whenever voice state changes — and the
@@ -106,6 +141,7 @@ export function VoiceRuntimeProvider({ children }) {
 
   const hardReset = useCallback(() => {
     cleanupLocal();
+    finalizeBackendSession("SESSION_CLOSE");
     forceReleaseInput("SESSION_CLOSE");
     try {
       voiceSessionRef.current?.interrupt?.("SESSION_CLOSE");
@@ -114,20 +150,33 @@ export function VoiceRuntimeProvider({ children }) {
     }
     dispatch({ type: "RESET" });
     setBusy(false);
-  }, [cleanupLocal]);
+  }, [cleanupLocal, finalizeBackendSession]);
 
   useEffect(() => {
     setToken(getToken());
     const onContext = (event) => {
+      // Finalize with the outgoing token: after a logout or workspace switch
+      // the new token cannot terminate the previous context's session.
+      finalizeBackendSession("LOGOUT", tokenRef.current);
       hardReset();
       setToken(event?.detail?.token ?? getToken());
     };
+    // A hard navigation or a closed tab runs no React cleanup, so the session
+    // would be stranded with nothing left to send the terminal request. This
+    // is the last moment the page can still speak; keepalive lets the request
+    // outlive it.
+    const onPageHide = () => {
+      finalizeBackendSession("PAGE_HIDE", tokenRef.current, true);
+    };
     window.addEventListener(PLATFORM_CONTEXT_EVENT, onContext);
+    window.addEventListener("pagehide", onPageHide);
     return () => {
       window.removeEventListener(PLATFORM_CONTEXT_EVENT, onContext);
+      window.removeEventListener("pagehide", onPageHide);
       cleanupLocal();
+      finalizeBackendSession("UNMOUNT");
     };
-  }, [cleanupLocal, hardReset]);
+  }, [cleanupLocal, finalizeBackendSession, hardReset]);
 
   // Shell mounts this provider above the router, so a client-side navigation
   // does not unmount it and the microphone stream would stay hot on an
@@ -391,8 +440,11 @@ export function VoiceRuntimeProvider({ children }) {
         } catch {
           /* ignore */
         }
+        // `/stop` ends capture but leaves the conversation in LISTENING. The
+        // user pressing stop has ended the conversation, so terminate it.
+        finalizeBackendSession("USER_STOP", activeToken);
       }
-      dispatch({ type: "LOCAL_RECORDING", recording: false });
+      dispatch({ type: "SESSION_CLOSED" });
       return;
     }
     if (runtime.speaking) {
@@ -409,6 +461,10 @@ export function VoiceRuntimeProvider({ children }) {
         inputProvider: "browser",
         outputProvider: "platform",
       });
+      // Flush terminal requests that failed earlier, before adding another
+      // session to the per-user budget. Kept above the output stop so the
+      // awaited stop() stays immediately adjacent to opening the session.
+      finalizerRef.current.retryPending({ token: activeToken });
       await voiceOutput?.stop?.();
       const sessionId = await ensureSession(activeToken);
       await startListening(activeToken, sessionId);
@@ -426,6 +482,7 @@ export function VoiceRuntimeProvider({ children }) {
   }, [
     cleanupLocal,
     ensureSession,
+    finalizeBackendSession,
     interrupt,
     refreshHistory,
     runtime.recording,
@@ -450,6 +507,7 @@ export function VoiceRuntimeProvider({ children }) {
     retry,
     hardReset,
     micLabel: micButtonLabel(runtime),
+    pendingCleanup: runtime.pendingCleanup || [],
   };
 
   return (

@@ -86,3 +86,4 @@ export {
   evaluateRecognitionSupport,
   RECOGNITION_UNSUPPORTED_MESSAGE,
 } from "./recognition-binding.js";
+export { createSessionFinalizer } from "./session-finalizer.js";

@@ -20,6 +20,7 @@ from .conversation import ConversationRuntime
 from .input_service import VoiceInputService
 from .models import (
     MAX_AUDIO_UPLOAD_BYTES,
+    ABANDONED_SESSION_IDLE_SECONDS,
     MAX_SESSIONS_PER_USER,
     SESSION_TTL_SECONDS,
     ConversationSession,
@@ -182,6 +183,12 @@ class VoiceSessionManager:
             body = validate_session_create(payload or {})
         except VoiceValidationError as exc:
             raise PlatformContextError("VALIDATION_FAILED", str(exc)) from exc
+        # An abandoned session must stop counting as an active one. Clients
+        # cannot always send the terminal request — a closed tab or a hard
+        # navigation kills it in flight — and without this the per-user budget
+        # fills with sessions nobody is in, until voice stops working entirely
+        # with RESOURCE_BUDGET_EXHAUSTED.
+        self._reconcile_abandoned_sessions(ctx)
         active = self.repo.count_active_for_user(
             org_id=ctx.org_id, workspace_id=ctx.workspace_id, user_id=ctx.user_id
         )
@@ -252,6 +259,42 @@ class VoiceSessionManager:
         self._persist(session)
         self._audit(ctx, "voice.session.finished", session=session)
         return session.to_public()
+
+    def _reconcile_abandoned_sessions(self, ctx) -> int:
+        """Finish this caller's stale sessions. Scoped, audited, non-destructive.
+
+        Only the caller's own org/workspace/user rows are considered, so this
+        can never terminate another user's session. Nothing is deleted: the
+        session transitions to FINISHED and its history stays queryable.
+        """
+        now = self.store._now()
+        cleared = 0
+        for session in self.repo.list_sessions(
+            org_id=ctx.org_id, workspace_id=ctx.workspace_id, user_id=ctx.user_id,
+            limit=MAX_SESSIONS_PER_USER * 4,
+        ):
+            if session.state in {
+                ConversationState.FINISHED.value,
+                ConversationState.FAILED.value,
+            }:
+                continue
+            idle_for = now - (session.last_activity_at or session.created_at or now)
+            expired = bool(session.expires_at) and session.expires_at < now
+            if not expired and idle_for < ABANDONED_SESSION_IDLE_SECONDS:
+                continue
+            session.state = ConversationState.FINISHED.value
+            session.input_state = InputState.IDLE.value
+            session.playback_state = PlaybackState.IDLE.value
+            self._cleanup_runtime(session.session_id)
+            self._persist(session)
+            self._audit(
+                ctx,
+                "voice.session.reconciled",
+                session=session,
+                detail={"reason": "expired" if expired else "idle_abandoned"},
+            )
+            cleared += 1
+        return cleared
 
     def clear_user_sessions(self, ctx) -> int:
         """Logout / context switch cleanup — finish all owned active sessions."""
