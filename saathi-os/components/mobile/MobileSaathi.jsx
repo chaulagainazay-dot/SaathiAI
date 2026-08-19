@@ -2,7 +2,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Eyebrow } from "@/components/ui";
 import { sendChat, login } from "@/lib/api";
-import { useVoice } from "@/lib/useVoice";
 
 const EXAMPLE_PROMPTS = [
   "Today's cafeteria sold 171 Dal Bhat.",
@@ -15,10 +14,6 @@ export default function MobileSaathi() {
   const [chat, setChat] = useState([]);   // {role:"you"|"saathi", text}
   const [ask, setAsk] = useState("");
   const [busy, setBusy] = useState(false);
-  const voice = useVoice((transcript, reply) => {
-    setChat((c) => [...c, ...(transcript ? [{ role: "you", text: transcript }] : []),
-      { role: "saathi", text: reply }]);
-  });
   const [needPw, setNeedPw] = useState(false);
   const [pw, setPw] = useState("");
   const pendingRef = useRef(null);         // message to resend after unlock
@@ -67,6 +62,13 @@ export default function MobileSaathi() {
         </div>
         <p style={{ fontSize: 14, color: "var(--color-ink-300)", marginTop: 10, lineHeight: 1.5 }}>
           Good morning, Ajay. Ask me anything — today's lesson, revenue, or what needs your attention.
+        </p>
+        {/* R2.1-D6.2: this surface is text only. Speaking to Saathi happens in
+            the one globally mounted Live Voice dock, not in a second recorder
+            embedded here. Deliberately a statement, not a control. */}
+        <p style={{ fontSize: 12, color: "var(--color-ink-400)", marginTop: 8, lineHeight: 1.5 }}>
+          Type here to talk to Saathi. To speak, use the Live Voice dock — it is the
+          only microphone control in SaathiOS.
         </p>
       </div>
 
@@ -117,17 +119,10 @@ export default function MobileSaathi() {
       ) : (
         <div style={{ display: "flex", gap: 8, paddingTop: 8 }}>
           <input value={ask} onChange={(e) => setAsk(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && send(ask)} disabled={busy || voice.busy}
-            placeholder={voice.recording ? "Listening…" : voice.busy ? "Transcribing…" : "Message Saathi…"}
+            onKeyDown={(e) => e.key === "Enter" && send(ask)} disabled={busy}
+            placeholder="Message Saathi…"
             style={{ flex: 1, padding: "13px 16px", borderRadius: 22, fontSize: 15,
               border: "1px solid rgba(255,255,255,0.12)", background: "rgba(255,255,255,0.05)", color: "inherit" }} />
-          {/* push-to-talk (ported from Baadar): hold to speak */}
-          <button onPointerDown={voice.start} onPointerUp={voice.stop} onPointerLeave={voice.stop}
-            disabled={busy || voice.busy}
-            style={{ width: 52, borderRadius: 22, border: "none", fontSize: 20, cursor: "pointer",
-              background: voice.recording ? "radial-gradient(circle at 38% 35%, #ffd0d0, #ff6b6b)"
-                : "rgba(255,255,255,0.08)", color: voice.recording ? "#0A1120" : "inherit",
-              boxShadow: voice.recording ? "0 0 20px rgba(255,107,107,0.7)" : "none" }}>🎤</button>
           <button onClick={() => send(ask)} disabled={busy || !ask.trim()}
             style={{ width: 52, borderRadius: 22, border: "none", fontSize: 20, cursor: "pointer",
               background: "radial-gradient(circle at 38% 35%, #ffffff, #9fc0ff)", color: "#0A1120",
