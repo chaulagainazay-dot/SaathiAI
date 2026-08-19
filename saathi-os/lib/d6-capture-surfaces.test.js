@@ -68,3 +68,40 @@ describe("D6.2 — MobileSaathi is a text surface", () => {
       "the canonical dock must stay globally mounted for every route including /saathi");
   });
 });
+
+describe("D6.3 — /os is a text surface", () => {
+  const source = read("app/os/page.jsx");
+
+  for (const api of CAPTURE_APIS) {
+    it(`never reaches ${api}`, () => {
+      assert.ok(!source.includes(api), `${api} is back in /os`);
+    });
+  }
+
+  it("does not import or consume the recording hook", () => {
+    assert.ok(!/\buseVoice\b/.test(source), "the recorder hook is back");
+  });
+
+  it("has no speech-derived upload path and no retired enrollment call", () => {
+    assert.ok(!source.includes("sendVoice"), "sendVoice is back");
+    assert.ok(!source.includes("enrollVoice"), "retired enrollment is back");
+  });
+
+  it("keeps the dashboard reads and the mission write", () => {
+    assert.ok(source.includes("fetchCeoOs"), "fetchCeoOs was lost");
+    assert.ok(source.includes("completeMission"), "completeMission was lost");
+    assert.ok(source.includes("completeMissionItem"), "the mission checklist was lost");
+  });
+
+  it("keeps the typed ask flow and its authenticated retry", () => {
+    assert.ok(source.includes("const submitAsk = async"), "the typed ask was lost");
+    assert.ok(source.includes("submitAskText"), "the post-login retry was lost");
+    assert.ok(source.includes("sendChat"), "typed submission was lost");
+  });
+
+  it("implements no second voice or session runtime", () => {
+    assert.ok(!/voice\.(start|stop|busy|recording)/.test(source),
+      "a recorder consumer is back in /os");
+    assert.ok(!/\/api\/v1\/voice\//.test(source), "/os must not talk to voice endpoints");
+  });
+});
