@@ -69,7 +69,8 @@
     "audio:review": "node scripts/audio_review_session.mjs",
     "cert:voice-settings": "node scripts/voice_settings_browser_cert.mjs",
     "cert:ui-next-3": "node scripts/ui_next_3_hybrid_browser_cert.mjs",
-    "cert:ui-next-3-1": "node scripts/ui_next_3_1_motion_browser_cert.mjs"
+    "cert:ui-next-3-1": "node scripts/ui_next_3_1_motion_browser_cert.mjs",
+    "cert:s6-enrollment": "node scripts/s6_enrollment_retirement_browser_cert.mjs"
   },
   "dependencies": {
     "framer-motion": "^11.15.0",
