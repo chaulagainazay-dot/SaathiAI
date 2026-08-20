@@ -1,7 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { voiceStageLabel, voiceTurnStage } from "@/lib/voice-runtime";
+import {
+  advanceTurnTimer,
+  createTurnTimerState,
+} from "@/lib/voice-turn-timer";
 import { useVoiceRuntime } from "./VoiceRuntimeProvider";
 
 /** The four stages of one turn, in the order the runtime moves through them. */
@@ -11,13 +15,6 @@ const LADDER = [
   { key: "think", label: "Think" },
   { key: "speak", label: "Speak" },
 ];
-
-function clock(ms) {
-  const total = Math.max(0, Math.floor(ms / 1000));
-  const minutes = String(Math.floor(total / 60)).padStart(2, "0");
-  const seconds = String(total % 60).padStart(2, "0");
-  return `${minutes}:${seconds}`;
-}
 
 function MicGlyph({ stage }) {
   if (stage === "speak") {
@@ -63,21 +60,33 @@ export default function VoiceRuntimeDock() {
     useVoiceRuntime();
 
   const stage = voiceTurnStage(runtime);
-  const [since, setSince] = useState(() => Date.now());
-  const [now, setNow] = useState(() => Date.now());
+  // The turn identity. Retry finalizes the failed backend session and opens a
+  // new one, so this changing is the canonical signal to start measuring
+  // again — rather than inferring a retry from the stage going fail -> listen,
+  // which cannot distinguish a retry from a recovery.
+  const epochKey = runtime.sessionId || "";
+  const [, tick] = useState(0);
+  const timerRef = useRef(createTurnTimerState());
+  // Folded during render so a freeze uses the transition's own timestamp
+  // instead of whatever the last interval tick happened to be. The fold is
+  // idempotent for one render, so Strict Mode's double invocation is harmless.
+  timerRef.current = advanceTurnTimer(timerRef.current, {
+    stage,
+    epochKey,
+    now: Date.now(),
+  });
+  const { display: elapsed, running } = timerRef.current;
 
+  // One interval, only while a turn is actually running. A failed turn holds no
+  // interval at all, so nothing survives to advance a frozen reading, and the
+  // cleanup runs on unmount and on every route change that unmounts the dock.
   useEffect(() => {
-    const started = Date.now();
-    setSince(started);
-    setNow(started);
-    if (stage === "idle") return undefined;
-    const timer = setInterval(() => setNow(Date.now()), 1000);
+    if (!running) return undefined;
+    const timer = setInterval(() => tick((n) => n + 1), 1000);
     return () => clearInterval(timer);
-  }, [stage]);
+  }, [running]);
 
   if (!token) return null;
-
-  const elapsed = clock(now - since);
   const heard = String(runtime.partialUser || "").trim();
   const spoken = String(runtime.partialAssistant || "").trim();
   const activeIndex = LADDER.findIndex((step) => step.key === stage);
@@ -118,7 +127,7 @@ export default function VoiceRuntimeDock() {
         <span className="vrd-stage" aria-live="polite">
           {voiceStageLabel(stage)}
         </span>
-        <span className="vrd-clock">{stage === "idle" ? "--:--" : elapsed}</span>
+        <span className="vrd-clock">{elapsed}</span>
       </header>
 
       <div className="vrd-body">
