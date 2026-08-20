@@ -200,6 +200,25 @@ export function VoiceRuntimeProvider({ children }) {
     dispatch({ type: "ERROR", error: publishedError, message: publishedError });
   }, [publishedError]);
 
+  // A recognition attempt that ended in a fatal engine fault has already
+  // released the microphone locally by the time this runs — the manager owns
+  // that half. What it cannot do is end the *backend* session, because it has
+  // no token and no session id by design. This is that half.
+  //
+  // The callback runs synchronously inside the manager's teardown, which is
+  // what makes it correct: `finalizeBackendSession` reads the id of the
+  // session that just failed and clears it in the same tick, so a retry
+  // starting immediately afterwards cannot have its own new id finished by an
+  // older failure. A failed request stays pending in the finalizer rather than
+  // reporting a clean close, and it cannot disturb the published fault.
+  const voiceManager = voiceSession?.manager || null;
+  useEffect(() => {
+    if (!voiceManager?.onTerminalInput) return undefined;
+    return voiceManager.onTerminalInput(() => {
+      finalizeBackendSession("RECOGNITION_ERROR");
+    });
+  }, [voiceManager, finalizeBackendSession]);
+
   const ensureSession = useCallback(
     async (activeToken) => {
       if (sessionIdRef.current) return sessionIdRef.current;

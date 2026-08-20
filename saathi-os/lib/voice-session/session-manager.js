@@ -90,6 +90,67 @@ export function createVoiceSessionManager(hooks = {}) {
   const partialTranscriptListeners = new Set();
   /** Last error code published, so one engine fault is reported once. */
   let lastPublishedErrorCode = "";
+  /**
+   * The input generation already terminated by a fatal recognition error.
+   *
+   * A terminal error arrives more than once by construction: the recognizer
+   * re-errors on every self-restart, `abort()` can dispatch `onerror`
+   * synchronously from inside the teardown that is handling the first one, and
+   * releasing the claim notifies subscribers who run their own cleanup. This
+   * marker is set *before* any of that teardown starts, so every re-entrant
+   * path finds the epoch already terminal and becomes a no-op.
+   *
+   * -1 means no epoch has failed. It is never reset during cleanup of the
+   * failed epoch — `beginInput()` opens the next generation instead.
+   */
+  let terminalInputEpoch = -1;
+  /** @type {Set<(ev: {epoch: number, category: string, reason: string}) => void>} */
+  const terminalInputListeners = new Set();
+
+  /**
+   * Codes that end the current recognition attempt rather than interrupting it.
+   *
+   * Policy lives here, not in the adapter. The browser adapter reports a
+   * `fatal` hint for the two permission codes it can recognise, but lifecycle
+   * consequences belong to the manager so every adapter — browser, local,
+   * mock — is governed by one rule. `network` is the case R2.1 was opened for:
+   * Chrome's speech service is unreachable, `onend` fires, and the adapter
+   * restarts forever while the backend session stays LISTENING.
+   *
+   * `no-speech` is deliberately absent: it is the documented retryable case,
+   * and the adapter's own restart handles it.
+   */
+  const TERMINAL_STT_ERROR_CODES = new Set([
+    "network",
+    "not-allowed",
+    "service-not-allowed",
+    "audio-capture",
+    "aborted",
+  ]);
+
+  /**
+   * True when this code ends the epoch.
+   *
+   * `aborted` is ambiguous: the browser reports it both for a recogniser the
+   * product deliberately cancelled and for one that died unexpectedly. An
+   * expected abort cannot reach here at all — `beginStop()` detaches the error
+   * subscription before calling `cancelSync()` — so an `aborted` that still
+   * arrives is the unexpected kind and is treated as terminal.
+   *
+   * @param {string} code
+   * @param {boolean} adapterFatalHint
+   */
+  function isTerminalSttError(code, adapterFatalHint = false) {
+    return TERMINAL_STT_ERROR_CODES.has(code) || Boolean(adapterFatalHint);
+  }
+
+  /**
+   * A callback stamped with `epoch` may still act on the runtime.
+   * @param {number} epoch
+   */
+  function isEpochLive(epoch) {
+    return epoch === inputEpoch && epoch !== terminalInputEpoch;
+  }
 
   function fanOut(listeners, payload) {
     for (const fn of listeners) {
@@ -178,6 +239,112 @@ export function createVoiceSessionManager(hooks = {}) {
       reason,
     });
     return tail;
+  }
+
+  /**
+   * End one recognition attempt that cannot continue. The single terminal
+   * funnel for fatal STT faults.
+   *
+   * Ordering is the whole point, and it is not interchangeable:
+   *
+   *   1. mark the epoch terminal *first*, so the recogniser's own re-entrant
+   *      `onerror` (dispatched synchronously from `abort()`), the input-owner
+   *      subscriber that runs when the claim is released, and a racing unmount
+   *      all find the work already claimed and return;
+   *   2. publish the bounded code once, before teardown, so the error is the
+   *      user-visible outcome rather than a cleanup status that overwrote it;
+   *   3. `stopInputPipeline()` — `beginStop()` detaches the transcript and
+   *      error subscriptions and calls `cancelSync()` *synchronously*, which
+   *      is what actually closes the restart window. The `aborted` this
+   *      provokes has no listener left to reach;
+   *   4. release the claim, which stops the recogniser and every track;
+   *   5. notify terminal-input subscribers synchronously. The provider turns
+   *      that into the backend terminal request. Deferring this to an effect
+   *      would let RETRY replace the provider's session id first, and the
+   *      wrong session — or none — would be finished.
+   *
+   * Local teardown never waits on the network: the backend call is scheduled
+   * by the provider and observed there, so a dead uplink cannot hold the
+   * microphone open. Nothing here is reset for retry; `beginInput()` opens the
+   * next generation.
+   *
+   * @param {string} code bounded error code, already normalized
+   * @param {number} epoch the generation that failed
+   */
+  function terminalRecognitionFailure(code, epoch) {
+    terminalInputEpoch = epoch;
+    lastPublishedErrorCode = code;
+    // Set before teardown, not published before it. Every publish() reads this
+    // closure variable, so the fault is already part of any snapshot cleanup
+    // might produce — while the user still sees exactly one error publication
+    // for one engine fault.
+    error = code;
+    recordVoiceTelemetry("stt_terminal_error", {
+      sessionId: snapshot.sessionId,
+      errorCode: code.slice(0, 80),
+      reason: "RECOGNITION_ERROR",
+    });
+
+    observeCleanupTail(bargeIn.disarm(), "vad_disarm", "RECOGNITION_ERROR");
+    stopInputPipeline("RECOGNITION_ERROR");
+    // Drop the reference before releasing. `release()` notifies the input-owner
+    // subscribers synchronously, and this manager is one of them: leaving the
+    // field set would re-enter its preemption branch and publish a second,
+    // redundant snapshot for a single fault.
+    const failedClaim = inputClaim;
+    inputClaim = null;
+    if (failedClaim) {
+      failedClaim.release();
+    } else if (getInputOwnerSnapshot().claimId) {
+      forceReleaseInput("RECOGNITION_ERROR");
+    }
+    listening = false;
+    speechDetected = false;
+
+    // Synchronous, before any retry can replace the provider's session id.
+    fanOut(terminalInputListeners, {
+      epoch,
+      category: code,
+      reason: "RECOGNITION_ERROR",
+    });
+
+    // `error` is re-asserted rather than assumed: releasing the claim notifies
+    // subscribers, and a subscriber that publishes must not be able to leave a
+    // snapshot without the fault that caused all of this.
+    return publish({ error: code });
+  }
+
+  /**
+   * The manager, as seen by one pipeline generation.
+   *
+   * The pipeline coordinator and the STT adapters are generic: they report
+   * what the engine did and must not carry the manager's bookkeeping. So the
+   * generation is captured *here*, when the pipeline is created, and the
+   * transcript and error callbacks arrive already stamped. A pipeline that
+   * outlives its generation — a recogniser mid-flight when the user retried —
+   * still calls these, and they drop the call rather than publishing a dead
+   * epoch's partial into the live one.
+   *
+   * Delegation is by prototype so every other manager method the coordinator
+   * uses keeps working untouched.
+   *
+   * @param {number} epoch
+   */
+  function epochBoundManager(epoch) {
+    return Object.create(api, {
+      notifySttError: {
+        value: (err) => api.notifySttError(err, epoch),
+      },
+      setTranscript: {
+        value: (t) => (isEpochLive(epoch) ? api.setTranscript(t) : snapshot),
+      },
+      notifyPipelineEvent: {
+        value: (ev) => (isEpochLive(epoch) ? api.notifyPipelineEvent(ev) : snapshot),
+      },
+      notifySttEngineState: {
+        value: (s) => (isEpochLive(epoch) ? api.notifySttEngineState(s) : snapshot),
+      },
+    });
   }
 
   function publish(partial = {}) {
@@ -272,6 +439,31 @@ export function createVoiceSessionManager(hooks = {}) {
     },
     refreshCapabilities,
 
+    /**
+     * Observe the end of one recognition attempt.
+     *
+     * Exists so the runtime provider can terminate the *backend* session
+     * without the manager knowing anything about tokens, HTTP or session ids —
+     * the manager owns recognition lifecycle, the provider owns the network.
+     * The payload is bounded on purpose: a generation number, the error
+     * category and a fixed reason. No raw error object, transcript, audio,
+     * token or authority state crosses this boundary, and nothing is persisted.
+     *
+     * Fires exactly once per terminal epoch, synchronously.
+     *
+     * @param {(ev: {epoch: number, category: string, reason: string}) => void} fn
+     * @returns {() => void} unsubscribe
+     */
+    onTerminalInput(fn) {
+      terminalInputListeners.add(fn);
+      return () => terminalInputListeners.delete(fn);
+    },
+
+    /** The generation ended by a fatal recognition error, or -1. */
+    getTerminalInputEpoch() {
+      return terminalInputEpoch;
+    },
+
     notifySpeechDetected(on, _ev) {
       speechDetected = Boolean(on);
       if (on) pipeline?.onVadSpeechStart?.();
@@ -361,8 +553,24 @@ export function createVoiceSessionManager(hooks = {}) {
      * a recognizer can repeat the same error every restart attempt, and the
      * user needs one truthful message, not a stream of them.
      */
-    notifySttError(err) {
+    /**
+     * Publish an engine error, and end the attempt when the code is terminal.
+     *
+     * `epoch` is stamped by the manager when the pipeline is started, so a
+     * callback from a generation the user already abandoned is dropped instead
+     * of publishing into the generation that replaced it. It is optional: a
+     * caller outside the pipeline (a test, a direct consumer) is treated as
+     * belonging to the current epoch.
+     *
+     * @param {{code?: string, message?: string, fatal?: boolean}|string} err
+     * @param {number} [epoch]
+     */
+    notifySttError(err, epoch = inputEpoch) {
+      if (!isEpochLive(epoch)) return snapshot;
       const code = String(err?.code || err?.message || err || "speech_recognition_error");
+      if (isTerminalSttError(code, err?.fatal)) {
+        return terminalRecognitionFailure(code, epoch);
+      }
       if (code === lastPublishedErrorCode) return snapshot;
       lastPublishedErrorCode = code;
       return api.setError(code);
@@ -462,7 +670,10 @@ export function createVoiceSessionManager(hooks = {}) {
     async startStreamingPipeline({ sttMode = "auto" } = {}) {
       // One recognizer per session: any prior pipeline is torn down first.
       stopInputPipeline("PIPELINE_RESTART");
-      pipeline = createRealtimeVoicePipeline({ manager: api, sttMode });
+      pipeline = createRealtimeVoicePipeline({
+        manager: epochBoundManager(inputEpoch),
+        sttMode,
+      });
       await pipeline.start();
       return pipeline.health();
     },
