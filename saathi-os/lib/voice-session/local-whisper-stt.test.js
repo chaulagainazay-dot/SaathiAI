@@ -351,3 +351,111 @@ describe("provider selection is truthful", () => {
     );
   });
 });
+
+// ── shell wiring: readiness is resolved per pipeline start ──────────────────
+//
+// The manager asks for local readiness each time it builds a pipeline. These
+// cover the three answers that matter: ready, not ready, and a probe that
+// fails outright.
+
+describe("local engine readiness resolution", () => {
+  async function startWith(hooks) {
+    const env = installBrowserEnv({ withSpeechRecognition: true });
+    const { createVoiceSessionManager } = await import("./session-manager.js");
+    const manager = createVoiceSessionManager(hooks);
+    try {
+      const health = await manager.startStreamingPipeline({ sttMode: "auto" });
+      return health;
+    } finally {
+      manager.dispose();
+      env.restore();
+    }
+  }
+
+  const readyFactory = () =>
+    createLocalWhisperStt({ transcribeFn: async () => ({ text: "", isFinal: true }) });
+
+  it("uses the local engine when the probe answers ready", async () => {
+    const health = await startWith({ resolveLocalStt: async () => readyFactory });
+    assert.equal(health.selectedMode, "local_streaming");
+  });
+
+  it("reports unavailable when the probe answers not-ready", async () => {
+    const health = await startWith({ resolveLocalStt: async () => null });
+    assert.equal(health.selectedMode, "unavailable");
+  });
+
+  it("a probe that throws means unavailable, never assumed ready", async () => {
+    const health = await startWith({
+      resolveLocalStt: async () => { throw new Error("service is down"); },
+    });
+    assert.equal(health.selectedMode, "unavailable");
+  });
+
+  it("a not-ready probe still honours an explicit browser opt-in", async () => {
+    const health = await startWith({
+      resolveLocalStt: async () => null,
+      browserFallbackEnabled: true,
+    });
+    assert.equal(health.selectedMode, "browser_streaming");
+  });
+
+  it("readiness is re-resolved on every pipeline start, never cached", async () => {
+    const env = installBrowserEnv({ withSpeechRecognition: true });
+    const { createVoiceSessionManager } = await import("./session-manager.js");
+    let calls = 0;
+    const manager = createVoiceSessionManager({
+      resolveLocalStt: async () => { calls += 1; return calls === 1 ? readyFactory : null; },
+    });
+    try {
+      assert.equal((await manager.startStreamingPipeline({ sttMode: "auto" })).selectedMode,
+        "local_streaming");
+      assert.equal((await manager.startStreamingPipeline({ sttMode: "auto" })).selectedMode,
+        "unavailable", "an engine that went away is not still ready");
+      assert.equal(calls, 2);
+    } finally {
+      manager.dispose();
+      env.restore();
+    }
+  });
+
+  it("a probe that resolves after the turn ended cannot attach an adapter", async () => {
+    const env = installBrowserEnv({ withSpeechRecognition: true });
+    const { createVoiceSessionManager } = await import("./session-manager.js");
+    const { forceReleaseInput } = await import("./input-owner.js");
+
+    let releaseProbe;
+    const probed = new Promise((resolve) => { releaseProbe = resolve; });
+    let resolveCalls = 0;
+    const manager = createVoiceSessionManager({
+      // Only the first probe hangs; the turn that overtakes it must not be
+      // blocked behind the stale one.
+      resolveLocalStt: async () => {
+        resolveCalls += 1;
+        if (resolveCalls === 1) await probed;
+        return () =>
+          createLocalWhisperStt({ transcribeFn: async () => ({ text: "", isFinal: true }) });
+      },
+    });
+
+    try {
+      // A pipeline start whose readiness probe is still in flight...
+      const pending = manager.startStreamingPipeline({ sttMode: "auto" });
+      // ...while the input generation moves on underneath it.
+      await manager.beginInput({ label: "next-turn", stopOutputFirst: false });
+      releaseProbe();
+      const health = await pending;
+
+      assert.notEqual(
+        health.selectedMode,
+        "local_streaming",
+        "a stale probe must not attach an adapter to a turn that already ended"
+      );
+      assert.ok(resolveCalls >= 1);
+    } finally {
+      forceReleaseInput("TEST_TEARDOWN");
+      manager.dispose();
+      env.restore();
+    }
+  });
+});

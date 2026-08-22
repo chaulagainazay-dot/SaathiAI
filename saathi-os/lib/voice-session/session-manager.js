@@ -42,6 +42,9 @@ import { createRealtimeVoicePipeline } from "./pipeline-coordinator.js";
  * @param {boolean} [hooks.browserFallbackEnabled] opt in to Chrome Web Speech
  *   when the local engine is unavailable. Off by default — see the fallback
  *   policy in pipeline-coordinator.js.
+ * @param {() => Promise<(() => object)|null>} [hooks.resolveLocalStt] async
+ *   readiness probe run once per pipeline start; resolves to a local adapter
+ *   factory when the engine is reachable, or null when it is not.
  */
 export function createVoiceSessionManager(hooks = {}) {
   let snapshot = {
@@ -684,6 +687,23 @@ export function createVoiceSessionManager(hooks = {}) {
     } = {}) {
       // One recognizer per session: any prior pipeline is torn down first.
       stopInputPipeline("PIPELINE_RESTART");
+
+      // Readiness is re-checked per pipeline start rather than cached: the
+      // local engine can stop being reachable between turns, and a stale
+      // "ready" would send an utterance into a service that is gone. The
+      // probe is read-only and opens no microphone.
+      if (!localSttFactory && typeof hooks.resolveLocalStt === "function") {
+        const startEpoch = inputEpoch;
+        try {
+          const resolved = await hooks.resolveLocalStt();
+          // A slow probe must not attach an adapter to a turn that already
+          // ended; the epoch is the same guard the rest of input uses.
+          if (inputEpoch === startEpoch) localSttFactory = resolved || null;
+        } catch {
+          // A failed probe means "not available", never "assume ready".
+          localSttFactory = null;
+        }
+      }
       pipeline = createRealtimeVoicePipeline({
         manager: epochBoundManager(inputEpoch),
         sttMode,
@@ -994,9 +1014,14 @@ export function createVoiceSessionManager(hooks = {}) {
 /** Process-wide default manager for browser shell */
 let defaultManager = null;
 
-export function getDefaultVoiceSessionManager() {
+/**
+ * The one manager the application shell shares. `hooks` are applied only when
+ * the singleton is first built — the composition root wires the local speech
+ * engine here so every surface inherits the same provider selection.
+ */
+export function getDefaultVoiceSessionManager(hooks = {}) {
   if (!defaultManager) {
-    defaultManager = createVoiceSessionManager();
+    defaultManager = createVoiceSessionManager(hooks);
   }
   return defaultManager;
 }
