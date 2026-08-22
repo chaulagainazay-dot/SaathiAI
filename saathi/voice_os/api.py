@@ -187,3 +187,93 @@ def events_stream(sid: str, request: Request):
         session = st.get_session(sid)
         yield f"data: {json.dumps({'event': 'snapshot', 'state': session['state']})}\n\n"
     return StreamingResponse(_gen(), media_type="text/event-stream")
+
+
+# ── R2.1: local speech recognition transport ────────────────────────────────
+# The browser owns the microphone; the engine runs here. This is the smallest
+# transport that satisfies the architecture: one authenticated loopback POST
+# carrying one bounded utterance, answered with text.
+#
+# Explicitly NOT here: no session ownership, no authority, no persistence.
+# The transcript is returned to the caller and forgotten. Turning it into an
+# action remains the job of authenticated command classification, the
+# ApprovalCenter and the ExecutionGateway — a transcript is never an approval.
+#
+# The path is /api/v1/voice/stt/* and is covered by the /api/v1 auth
+# middleware. It must never be added to the middleware's bypass list: the
+# sibling /api/v1/voice/transcribe is exempt only because it is the HCG
+# bearer-key integration, which authenticates itself.
+
+from fastapi import UploadFile, File, Form  # noqa: E402
+from fastapi.responses import JSONResponse  # noqa: E402
+
+from saathi.voice_os import local_whisper as _local_stt  # noqa: E402
+
+_STT_PROVIDER = _local_stt.WhisperCppSTT()
+
+
+def _stt_authenticated(request: Request) -> bool:
+    """Defence in depth. The middleware already rejects anonymous callers on
+    this path; a regression in its bypass list must not silently open the
+    speech engine to an unauthenticated caller."""
+    return bool(getattr(request.state, "user_id", None))
+
+
+@router.get("/stt/health")
+def stt_health(request: Request):
+    """Read-only readiness for the dock and for diagnostics.
+
+    Diagnostics renders this without opening a microphone, so both surfaces
+    observe the same truth about the engine instead of disagreeing.
+    """
+    if not _stt_authenticated(request):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    return _STT_PROVIDER.health()
+
+
+@router.post("/stt/transcribe")
+async def stt_transcribe(request: Request,
+                         file: UploadFile = File(...),
+                         language: str = Form("auto")):
+    """Transcribe one bounded utterance with the local engine.
+
+    Order matters: authenticate, then bound, then decode, then transcribe.
+    Nothing expensive happens for an anonymous or oversized caller.
+    """
+    if not _stt_authenticated(request):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+
+    declared = (file.content_type or "").split(";")[0].strip().lower()
+    if declared and declared not in ("audio/wav", "audio/x-wav", "audio/wave",
+                                     "application/octet-stream"):
+        return JSONResponse({"error": "unsupported_media_type"}, status_code=415)
+
+    # One byte past the cap is enough to reject without buffering the rest.
+    audio = await file.read(_local_stt.MAX_AUDIO_BYTES + 1)
+    if len(audio) > _local_stt.MAX_AUDIO_BYTES:
+        return JSONResponse({"error": "payload_too_large"}, status_code=413)
+
+    requested = (language or "auto").strip().lower()
+    lang = requested if requested in _local_stt.ALLOWED_LANGUAGES else None
+
+    try:
+        result = _STT_PROVIDER.transcribe_wav(audio, language=lang)
+    except _local_stt.LocalSttError as err:
+        status = {"resource": 413, "unsupported": 415}.get(err.category, 503)
+        return JSONResponse(
+            {"error": "stt_failed", "category": err.category, "message": str(err)},
+            status_code=status,
+        )
+
+    return {
+        "text": result.text,
+        "language": result.language,
+        "confidence": result.confidence,
+        "isFinal": True,
+        "provider": result.provider,
+        "privacyClass": "LOCAL_CONFIRMED",
+        "durationMs": round(result.duration_ms),
+        # A transcript is input, never authority. Stated in the payload so a
+        # client cannot read authority into a successful response.
+        "authority": "none",
+    }
