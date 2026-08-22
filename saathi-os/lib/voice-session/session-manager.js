@@ -36,6 +36,12 @@ import { createRealtimeVoicePipeline } from "./pipeline-coordinator.js";
  * @param {object} [hooks]
  * @param {(reason: string) => void|Promise<void>} [hooks.onStopOutput]
  * @param {(reason: string) => void|Promise<void>} [hooks.onStopInput]
+ * @param {() => object} [hooks.localSttFactory] builds the local STT adapter
+ *   when a local engine is available. Absent means this shell has no local
+ *   engine wired, not that transcription silently moves elsewhere.
+ * @param {boolean} [hooks.browserFallbackEnabled] opt in to Chrome Web Speech
+ *   when the local engine is unavailable. Off by default — see the fallback
+ *   policy in pipeline-coordinator.js.
  */
 export function createVoiceSessionManager(hooks = {}) {
   let snapshot = {
@@ -654,7 +660,11 @@ export function createVoiceSessionManager(hooks = {}) {
       });
       // Start streaming STT + turn coordinator (browser or mock)
       try {
-        await api.startStreamingPipeline({ sttMode: hooks.sttMode || "auto" });
+        await api.startStreamingPipeline({
+          sttMode: hooks.sttMode || "auto",
+          localSttFactory: hooks.localSttFactory || null,
+          browserFallbackEnabled: Boolean(hooks.browserFallbackEnabled),
+        });
       } catch (err) {
         api.notifySttDegraded(String(err?.message || err));
       }
@@ -667,12 +677,18 @@ export function createVoiceSessionManager(hooks = {}) {
     /**
      * Attach streaming STT pipeline (tests may inject mock mode).
      */
-    async startStreamingPipeline({ sttMode = "auto" } = {}) {
+    async startStreamingPipeline({
+      sttMode = "auto",
+      localSttFactory = hooks.localSttFactory || null,
+      browserFallbackEnabled = Boolean(hooks.browserFallbackEnabled),
+    } = {}) {
       // One recognizer per session: any prior pipeline is torn down first.
       stopInputPipeline("PIPELINE_RESTART");
       pipeline = createRealtimeVoicePipeline({
         manager: epochBoundManager(inputEpoch),
         sttMode,
+        localSttFactory,
+        browserFallbackEnabled,
       });
       await pipeline.start();
       return pipeline.health();

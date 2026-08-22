@@ -217,7 +217,7 @@ const TERMINAL = {
 
 describe("endInput stops the streaming pipeline", () => {
   it("detaches the pipeline and kills the recognizer", async () => {
-    const manager = createVoiceSessionManager();
+    const manager = createVoiceSessionManager({ browserFallbackEnabled: true });
     const pipeline = await startVoice(manager);
     assert.equal(env.recognizers.length, 1, "one recognizer per session");
     assert.equal(pipeline.health().active, true);
@@ -231,7 +231,7 @@ describe("endInput stops the streaming pipeline", () => {
   });
 
   it("closes the restart window synchronously, before any await", async () => {
-    const manager = createVoiceSessionManager();
+    const manager = createVoiceSessionManager({ browserFallbackEnabled: true });
     await startVoice(manager);
     const rec = env.recognizers[0];
 
@@ -249,7 +249,7 @@ describe("endInput stops the streaming pipeline", () => {
   });
 
   it("recognizer onend cannot restart capture after cancellation", async () => {
-    const manager = createVoiceSessionManager();
+    const manager = createVoiceSessionManager({ browserFallbackEnabled: true });
     await startVoice(manager);
     const rec = env.recognizers[0];
     // Hold the handler the way the browser event loop does: it was captured
@@ -267,7 +267,7 @@ describe("endInput stops the streaming pipeline", () => {
   });
 
   it("a live session still restarts on onend — the guard is cancellation, not inertness", async () => {
-    const manager = createVoiceSessionManager();
+    const manager = createVoiceSessionManager({ browserFallbackEnabled: true });
     await startVoice(manager);
     const rec = env.recognizers[0];
 
@@ -284,7 +284,7 @@ describe("endInput stops the streaming pipeline", () => {
 
 describe("owned capture is fully released", () => {
   it("stops every owned MediaStream track", async () => {
-    const manager = createVoiceSessionManager();
+    const manager = createVoiceSessionManager({ browserFallbackEnabled: true });
     await startVoice(manager);
     assert.ok(env.allTracks().length > 0, "the test must actually open a mic");
     assert.equal(env.liveTracks().length, env.allTracks().length);
@@ -295,7 +295,7 @@ describe("owned capture is fully released", () => {
   });
 
   it("route change leaves zero active recognizers", async () => {
-    const manager = createVoiceSessionManager();
+    const manager = createVoiceSessionManager({ browserFallbackEnabled: true });
     await startVoice(manager);
 
     await manager.interrupt("ROUTE_CHANGE");
@@ -313,7 +313,7 @@ describe("owned capture is fully released", () => {
 
 describe("five start/stop cycles accumulate nothing", () => {
   it("holds recognizers, tracks, timers, claims and callbacks flat", async () => {
-    const manager = createVoiceSessionManager();
+    const manager = createVoiceSessionManager({ browserFallbackEnabled: true });
     const publishes = [];
     manager.subscribe((snap) => publishes.push(snap));
 
@@ -382,7 +382,7 @@ describe("all terminal paths reach the same cleanup state", () => {
 
   for (const [name, run] of paths) {
     it(`${name} reaches the terminal cleanup state`, async () => {
-      const manager = createVoiceSessionManager();
+      const manager = createVoiceSessionManager({ browserFallbackEnabled: true });
       await startVoice(manager);
       await run(manager);
       assert.deepEqual(terminalState(manager), TERMINAL, `${name} left residue`);
@@ -396,7 +396,7 @@ describe("all terminal paths reach the same cleanup state", () => {
 
 describe("cleanup survives hostile ordering", () => {
   it("stays effective when the input claim was already released", async () => {
-    const manager = createVoiceSessionManager();
+    const manager = createVoiceSessionManager({ browserFallbackEnabled: true });
     await startVoice(manager);
     const rec = env.recognizers[0];
 
@@ -414,7 +414,7 @@ describe("cleanup survives hostile ordering", () => {
   });
 
   it("repeated teardown is idempotent and never throws", async () => {
-    const manager = createVoiceSessionManager();
+    const manager = createVoiceSessionManager({ browserFallbackEnabled: true });
     await startVoice(manager);
 
     for (let i = 0; i < 5; i += 1) {
@@ -429,7 +429,7 @@ describe("cleanup survives hostile ordering", () => {
   });
 
   it("teardown before any session is a silent no-op", async () => {
-    const manager = createVoiceSessionManager();
+    const manager = createVoiceSessionManager({ browserFallbackEnabled: true });
     manager.endInput("USER_CANCEL");
     await manager.close("SESSION_CLOSE");
     assert.equal(env.recognizers.length, 0);
@@ -492,7 +492,7 @@ describe("teardown tails are classified, never suppressed", () => {
   });
 
   it("the manager exposes the settled teardown classification", async () => {
-    const manager = createVoiceSessionManager();
+    const manager = createVoiceSessionManager({ browserFallbackEnabled: true });
     await startVoice(manager);
 
     manager.endInput("USER_CANCEL");

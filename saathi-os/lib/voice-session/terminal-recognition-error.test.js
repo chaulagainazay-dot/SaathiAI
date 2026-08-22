@@ -143,7 +143,7 @@ afterEach(() => {
 
 /** A manager holding the microphone with a live streaming pipeline. */
 async function listening(sessionId = "vs-d9") {
-  const manager = createVoiceSessionManager();
+  const manager = createVoiceSessionManager({ browserFallbackEnabled: true });
   manager.openSession({ sessionId });
   await manager.beginInput({ label: "d9", stopOutputFirst: false });
   return manager;

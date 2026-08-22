@@ -135,7 +135,7 @@ afterEach(() => {
  * backchannels do not.
  */
 async function talk() {
-  const manager = createVoiceSessionManager();
+  const manager = createVoiceSessionManager({ browserFallbackEnabled: true });
   manager.openSession({ sessionId: "vs-d2" });
   await manager.beginInput({ label: "test", stopOutputFirst: false });
 
@@ -385,7 +385,7 @@ describe("subscriptions follow the session, not the app", () => {
   });
 
   it("five cycles hold one live recognizer inside each and none after", async () => {
-    const manager = createVoiceSessionManager();
+    const manager = createVoiceSessionManager({ browserFallbackEnabled: true });
     manager.openSession({ sessionId: "vs-cycles" });
     const submissions = [];
 
@@ -484,7 +484,7 @@ describe("unsupported recognition fails truthfully", () => {
 
   it("a browser without SpeechRecognition gets no mock fallback", async () => {
     env = installBrowserEnv({ withSpeechRecognition: false });
-    const manager = createVoiceSessionManager();
+    const manager = createVoiceSessionManager({ browserFallbackEnabled: true });
     manager.openSession({ sessionId: "vs-unsupported" });
 
     await manager.beginInput({ label: "test", stopOutputFirst: false });

@@ -84,6 +84,10 @@ function classifyTeardown({ tail, syncError, wasActive, mode }) {
  * @param {object} [opts.sttAdapter] inject adapter
  * @param {object} [opts.admissionSignals]
  * @param {object} [opts.localSttFactory] () => adapter
+ * @param {boolean} [opts.browserFallbackEnabled] opt in to Chrome Web Speech
+ *   when the local engine is unavailable. Off by default: Chrome's recognizer
+ *   sends audio to a Google service and is unreachable on the owner's host, so
+ *   silently routing there would be both a privacy change and a dead end.
  */
 export function createRealtimeVoicePipeline({
   manager: managerIn = null,
@@ -91,6 +95,7 @@ export function createRealtimeVoicePipeline({
   sttAdapter = null,
   admissionSignals = {},
   localSttFactory = null,
+  browserFallbackEnabled = false,
 } = {}) {
   const self = { manager: managerIn };
   const inBrowser = typeof window !== "undefined";
@@ -100,7 +105,12 @@ export function createRealtimeVoicePipeline({
 
   const signals = {
     browserSttAvailable: browserAvailable || sttMode === "mock",
-    heavyLocalSttRequested: sttMode === "local",
+    // Supplying a local factory IS the explicit request. The locked
+    // multilingual gate in VOICE_RESOURCE_POLICY stays false — the R2.1
+    // re-measurement confirmed Nepali still fails it — so local is admitted
+    // as the explicitly-chosen English-optimized path, never as a silent
+    // multilingual primary. Do not flip that gate to shortcut this.
+    heavyLocalSttRequested: sttMode === "local" || Boolean(localSttFactory),
     localSttAvailable: Boolean(localSttFactory) || sttMode === "local",
     localLlmActive: false,
     ...admissionSignals,
@@ -147,12 +157,19 @@ export function createRealtimeVoicePipeline({
     }
 
     if (!stt) {
-      if (
+      // Chrome Web Speech is a fallback, never a default. Reaching it requires
+      // either an explicit `browser` request or an explicit opt-in, because it
+      // ships the owner's audio to a Google service (PLATFORM_MANAGED_UNKNOWN)
+      // and, on this host, answers `network` without ever producing a
+      // transcript. Falling back silently would trade a truthful "unavailable"
+      // for an unannounced privacy change that still cannot transcribe.
+      const browserFallbackAllowed =
         sttMode === "browser" ||
-        browserAvailable ||
-        admission.mode === "browser_streaming" ||
-        admission.mode === "browser_fallback"
-      ) {
+        (browserFallbackEnabled &&
+          (browserAvailable ||
+            admission.mode === "browser_streaming" ||
+            admission.mode === "browser_fallback"));
+      if (browserFallbackAllowed) {
         stt = createBrowserStreamingStt({
           getSessionId: () => self.manager?.getSnapshot?.()?.sessionId || "",
         });
@@ -169,8 +186,9 @@ export function createRealtimeVoicePipeline({
         // speech, and would open a microphone that can produce no STT.
         stt = null;
         selectedMode = "unavailable";
-        unsupportedReason =
-          "Speech recognition is unavailable in this browser and no local STT engine is installed.";
+        unsupportedReason = browserAvailable
+          ? "Local speech recognition is unavailable, and the browser speech fallback is turned off."
+          : "Speech recognition is unavailable in this browser and no local STT engine is installed.";
       }
     }
   }

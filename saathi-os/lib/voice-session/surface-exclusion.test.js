@@ -126,7 +126,7 @@ afterEach(() => {
 
 /** The shell dock: VoiceSessionManager owns the recognizer via the pipeline. */
 async function openDock() {
-  const manager = createVoiceSessionManager();
+  const manager = createVoiceSessionManager({ browserFallbackEnabled: true });
   manager.openSession({ sessionId: "vs-dock" });
   await manager.beginInput({ label: "VoiceRuntimeProvider", stopOutputFirst: false });
   await manager.armVad({ bargeInMode: false });
