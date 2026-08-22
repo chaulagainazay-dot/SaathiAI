@@ -65,7 +65,10 @@ export default function CopilotPanel() {
         </Text>
 
         <div className="shell-copilot-chat" style={{ flex: 1, minHeight: 0, marginTop: 10, overflow: "hidden" }}>
-          <ChatWorkspace compact />
+          {/* Typed Copilot chat only. Voice is explicitly off here: this panel
+              is mounted shell-wide, and the microphone belongs to the
+              canonical VoiceRuntimeDock. */}
+          <ChatWorkspace compact voiceEnabled={false} />
         </div>
 
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 }}>

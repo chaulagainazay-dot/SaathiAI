@@ -55,7 +55,17 @@ const S = {
  * @param {{ compact?: boolean }} props
  * compact=true → Ask Saathi panel mode: same transport, reduced chrome.
  */
-export default function ChatWorkspace({ compact = false } = {}) {
+/**
+ * @param {object} props
+ * @param {boolean} [props.compact] dense layout for the embedded Copilot panel.
+ * @param {boolean} [props.voiceEnabled] mount the route's own microphone
+ *   surface. Defaults to false and must be opted into explicitly: this
+ *   component is reachable from the shell through CopilotPanel, so a voice
+ *   surface that is merely a side effect of a layout flag is one prop away
+ *   from becoming a second globally mounted microphone. The route that wants
+ *   chat voice says so; every other host gets none.
+ */
+export default function ChatWorkspace({ compact = false, voiceEnabled = false } = {}) {
   const [convs, setConvs] = useState([]);
   const [active, setActive] = useState(null);
   const [detail, setDetail] = useState(null);
@@ -276,7 +286,7 @@ export default function ChatWorkspace({ compact = false } = {}) {
             }}>
             {teamMode ? "☰ Team" : "☰ Solo"}
           </button>
-          <button
+          {voiceEnabled && <button
             onClick={() => setVoiceOpen((v) => !v)}
             title="Voice mode (browser microphone + speech)"
             aria-pressed={voiceOpen}
@@ -285,7 +295,7 @@ export default function ChatWorkspace({ compact = false } = {}) {
               borderColor: voiceOpen ? "rgba(0,191,165,.5)" : undefined,
             }}>
             🎙
-          </button>
+          </button>}
             </>
           )}
           {compact && (
@@ -339,7 +349,7 @@ export default function ChatWorkspace({ compact = false } = {}) {
 
         {error && <div role="alert" style={{ padding: "6px 16px", color: "#ff8c8c", fontSize: 12 }}>{error}</div>}
 
-        {!compact && voiceOpen && (
+        {voiceEnabled && !compact && voiceOpen && (
           <div style={{ padding: "0 14px 10px" }}>
             <VoiceControl
               conversationId={active}
