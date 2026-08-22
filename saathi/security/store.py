@@ -17,6 +17,8 @@ import uuid
 from pathlib import Path
 from typing import Callable
 
+from saathi.runtime_paths import state_path
+
 
 # ── schema ───────────────────────────────────────────────────────────────────
 _SCHEMA = """
@@ -232,7 +234,7 @@ class SecurityStore:
 
     def __init__(self, db_path: "str | Path | None" = None,
                  now: Callable[[], float] = time.time):
-        self.path = Path(db_path) if db_path else (Path.home() / ".saathi" / "security.db")
+        self.path = Path(db_path) if db_path else state_path("security.db")
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self._now = now
         self.db = sqlite3.connect(str(self.path), check_same_thread=False)
@@ -582,7 +584,7 @@ class SecurityStore:
         owner_id = self.get_or_create_owner()
 
         # Sessions
-        legacy_sessions = Path.home() / ".saathi" / "sessions.json"
+        legacy_sessions = state_path("sessions.json")
         if legacy_sessions.exists():
             try:
                 rows = json.loads(legacy_sessions.read_text())
@@ -608,7 +610,7 @@ class SecurityStore:
                 pass
 
         # Passkeys
-        legacy_passkeys = Path.home() / ".saathi" / "passkeys.json"
+        legacy_passkeys = state_path("passkeys.json")
         if legacy_passkeys.exists():
             try:
                 rows = json.loads(legacy_passkeys.read_text())
@@ -630,7 +632,7 @@ class SecurityStore:
                 pass
 
         # Reset tokens
-        legacy_reset = Path.home() / ".saathi" / "reset_tokens.json"
+        legacy_reset = state_path("reset_tokens.json")
         if legacy_reset.exists():
             try:
                 rows = json.loads(legacy_reset.read_text())
@@ -649,7 +651,7 @@ class SecurityStore:
                 pass
 
         # Audit log (line-delimited JSON)
-        legacy_audit = Path.home() / ".saathi" / "auth_audit.log"
+        legacy_audit = state_path("auth_audit.log")
         if legacy_audit.exists():
             try:
                 for line in legacy_audit.read_text().splitlines()[-1000:]:

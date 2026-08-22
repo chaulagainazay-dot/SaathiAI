@@ -10,10 +10,12 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from saathi.runtime_paths import state_path
+
 
 class ProfileStore:
     def __init__(self, root: str | None = None):
-        self.root = Path(root) if root else (Path.home() / ".saathi" / "browser_profiles")
+        self.root = Path(root) if root else state_path("browser_profiles")
 
     def path(self, profile: str) -> Path:
         # "ajay/youtube" → <root>/ajay/youtube ; reject traversal

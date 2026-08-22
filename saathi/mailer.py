@@ -1,7 +1,7 @@
 """Email adapter — SMTP-pluggable, inert until configured.
 
 Set SMTP_HOST/SMTP_PORT/SMTP_USER/SMTP_PASS/SMTP_FROM in .env to enable real
-sending. Until then send() logs the message to ~/.saathi/outbox.log and returns
+sending. Until then send() logs the message to <state root>/outbox.log and returns
 delivered=False, so the whole recovery flow is testable without a mail server
 and can be switched to live SMTP with zero code changes.
 """
@@ -13,7 +13,11 @@ import ssl
 import time
 from pathlib import Path
 
-_OUTBOX = Path.home() / ".saathi" / "outbox.log"
+from saathi.runtime_paths import state_path
+
+
+def _outbox() -> Path:
+    return state_path("outbox.log")
 
 
 def configured() -> bool:
@@ -22,8 +26,9 @@ def configured() -> bool:
 
 def _log(to: str, subject: str, body: str, delivered: bool) -> None:
     try:
-        _OUTBOX.parent.mkdir(parents=True, exist_ok=True)
-        with _OUTBOX.open("a") as f:
+        outbox = _outbox()
+        outbox.parent.mkdir(parents=True, exist_ok=True)
+        with outbox.open("a") as f:
             f.write(json.dumps({"ts": time.time(), "to": to, "subject": subject,
                                 "delivered": delivered, "body": body[:500]}) + "\n")
     except Exception:

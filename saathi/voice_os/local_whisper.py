@@ -34,6 +34,7 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
+from saathi.runtime_paths import state_path
 from saathi.voice_os.stt import STTProvider, TranscriptResult
 
 # ── bounded contract ────────────────────────────────────────────────────────
@@ -84,7 +85,7 @@ def load_config() -> EngineConfig:
         binary=_env("SAATHI_WHISPER_CPP_BIN", "whisper-cli"),
         model_path=_env(
             "SAATHI_WHISPER_CPP_MODEL",
-            str(Path.home() / ".saathi" / "stt-models" / "whisper-cpp" / "ggml-base.bin"),
+            str(state_path("stt-models") / "whisper-cpp" / "ggml-base.bin"),
         ),
         artifact_dir=_env(
             "SAATHI_VOICE_ARTIFACT_DIR",

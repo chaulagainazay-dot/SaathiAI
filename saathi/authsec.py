@@ -15,9 +15,14 @@ import time
 from collections import deque
 from pathlib import Path
 
-_DIR = Path.home() / ".saathi"
-_AUDIT = _DIR / "auth_audit.log"
+from saathi.runtime_paths import state_path
+
 _PBKDF2_ITERS = 600_000
+
+
+def _audit() -> Path:
+    """Resolved per call — a root set after import must still be honoured."""
+    return state_path("auth_audit.log")
 
 
 # ── password hashing (salted PBKDF2, backward compatible) ─────────────────────
@@ -63,10 +68,11 @@ def password_strength(pw: str) -> dict:
 # ── audit log (append-only, best-effort) ──────────────────────────────────────
 def audit(event: str, *, ok: bool = True, ip: str = "", ua: str = "", detail: str = "") -> None:
     try:
-        _DIR.mkdir(parents=True, exist_ok=True)
+        audit_path = _audit()
+        audit_path.parent.mkdir(parents=True, exist_ok=True)
         rec = {"ts": time.time(), "event": event, "ok": ok, "ip": ip,
                "ua": (ua or "")[:160], "detail": (detail or "")[:200]}
-        with _AUDIT.open("a") as f:
+        with audit_path.open("a") as f:
             f.write(json.dumps(rec) + "\n")
     except Exception:
         pass
@@ -74,7 +80,7 @@ def audit(event: str, *, ok: bool = True, ip: str = "", ua: str = "", detail: st
 
 def recent_audit(limit: int = 40) -> list[dict]:
     try:
-        lines = _AUDIT.read_text().splitlines()[-limit:]
+        lines = _audit().read_text().splitlines()[-limit:]
         return [json.loads(x) for x in reversed(lines)]
     except Exception:
         return []

@@ -2,7 +2,7 @@
 
 One account (a Gmail login, a YouTube channel, a Stripe key) can be shared across
 many Missions; one Mission can use many accounts. Credentials are ENCRYPTED at rest
-(Fernet, key in ~/.saathi, gitignored) and never returned by the API or stored in
+(Fernet, key under the state root, gitignored) and never returned by the API or stored in
 Git. Everything above (Connectors, Directors) references an account by id and asks
 the manager to use it — they never see the raw secret.
 """
@@ -15,9 +15,21 @@ import uuid
 from pathlib import Path
 
 from saathi.connectors.catalog import PROVIDERS
+from saathi.runtime_paths import state_path
 
-_DB = Path.home() / ".saathi" / "accounts.db"
-_KEY = Path.home() / ".saathi" / ".connector_key"
+
+def _db() -> Path:
+    return state_path("accounts.db")
+
+
+def _key() -> Path:
+    """Fernet key for credentials at rest.
+
+    Resolved per call, so an isolated root generates and uses its own key on
+    first encrypt instead of reading the operator's real one. Keys are never
+    copied between roots.
+    """
+    return state_path(".connector_key")
 
 _COLUMNS = ["id", "provider", "display_name", "email", "owner", "auth_type", "scopes",
             "missions", "status", "created", "last_sync", "last_used", "token_expiry", "refresh_status"]
@@ -26,19 +38,20 @@ _JSON = {"scopes", "missions"}
 
 def _fernet():
     from cryptography.fernet import Fernet
-    _KEY.parent.mkdir(parents=True, exist_ok=True)
-    if not _KEY.exists():
-        _KEY.write_bytes(Fernet.generate_key())
+    key = _key()
+    key.parent.mkdir(parents=True, exist_ok=True)
+    if not key.exists():
+        key.write_bytes(Fernet.generate_key())
         try:
-            _KEY.chmod(0o600)
+            key.chmod(0o600)
         except Exception:
             pass
-    return Fernet(_KEY.read_bytes())
+    return Fernet(key.read_bytes())
 
 
 class AccountStore:
     def __init__(self, db_path: str | None = None):
-        self.db_path = Path(db_path) if db_path else _DB
+        self.db_path = Path(db_path) if db_path else _db()
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         with self._conn() as c:
             cols = ", ".join(f"{col} {'REAL' if col in ('created','last_sync','last_used','token_expiry') else 'TEXT'}"

@@ -14,6 +14,8 @@ import time
 import uuid
 from pathlib import Path
 
+from saathi.runtime_paths import state_path
+
 SOURCE_TYPES = ("book", "github", "paper", "doc", "sop", "benchmark", "tutorial", "note",
                 "gov", "blog", "youtube", "reddit", "ai_notes")
 DIFFICULTY = ("beginner", "intermediate", "advanced")
@@ -40,7 +42,7 @@ _JSON = {"tags", "related_directors", "key_lessons", "director_ratings"}
 
 class LibraryStore:
     def __init__(self, db_path: str | None = None):
-        self.db_path = Path(db_path) if db_path else (Path.home() / ".saathi" / "knowledge_library.db")
+        self.db_path = Path(db_path) if db_path else state_path("knowledge_library.db")
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         with self._conn() as c:
             def coltype(col):

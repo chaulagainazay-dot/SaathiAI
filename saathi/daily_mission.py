@@ -5,15 +5,16 @@ Fixes the real problem: not missing features, but not feeling like opening the
 app. The briefing assigns a mission; Saathi becomes a coach, not a dashboard.
 One lesson drives both the content factory AND Ajay's own study.
 
-Storage: ~/.saathi/study.json (date → which mission items are done). No app to
+Storage: <state root>/study.json (date → which mission items are done). No app to
 open — mark items via /api/v1/mission/complete or the Telegram commands.
 """
 from __future__ import annotations
 
 import json
-import os
 import time
 from pathlib import Path
+
+from saathi.runtime_paths import state_path
 
 # the four daily actions (matches the morning-briefing mock)
 ITEMS = [("lesson", "Watch today's lesson"), ("speaking", "Complete Speaking"),
@@ -22,7 +23,7 @@ REWARD = {"episodes": 1, "streak": 1, "dream_pct": 0.03}
 
 
 def _path() -> Path:
-    p = Path(os.path.expanduser("~/.saathi/study.json"))
+    p = state_path("study.json")
     p.parent.mkdir(parents=True, exist_ok=True)
     return p
 

@@ -15,10 +15,12 @@ import time
 import uuid
 from pathlib import Path
 
+from saathi.runtime_paths import state_path
+
 
 class RunStore:
     def __init__(self, db_path: str | None = None):
-        self.db_path = Path(db_path) if db_path else (Path.home() / ".saathi" / "automation_runs.db")
+        self.db_path = Path(db_path) if db_path else state_path("automation_runs.db")
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self._init()
 

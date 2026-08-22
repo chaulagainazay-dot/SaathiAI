@@ -1,10 +1,13 @@
 """Auth v1.0 integration tests — sessions, passkeys, forgot password, account security.
 
 Run with:  python -m pytest tests/test_auth_v1.py -v
+
+The legacy-JSON cleanup below used to unlink the operator's real
+``~/.saathi/security.db`` and friends on every run. It now clears the configured
+state root instead, so the files it removes are the ones this test created.
 """
 import json
 import time
-from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
@@ -17,6 +20,7 @@ def _clean_stores(tmp_path, monkeypatch):
     from saathi.security import store as _store_mod
     from saathi.security.registry import close_registry
     from saathi.security.timeline import close_timeline
+    from saathi.runtime_paths import state_path
 
     # 1. Close and reset all security singletons
     _store_mod.close_store()
@@ -31,14 +35,16 @@ def _clean_stores(tmp_path, monkeypatch):
     # references execute the same code that checks _default_store
     _store_mod._default_store = fresh
 
-    # 3. Clean legacy JSON files (for tests that still touch them)
+    # 3. Clean legacy JSON files (for tests that still touch them). These
+    #    resolve under SAATHI_STATE_ROOT, so an isolated run never unlinks the
+    #    operator's own auth state.
     stores = [
-        Path.home() / ".saathi" / "sessions.json",
-        Path.home() / ".saathi" / "passkeys.json",
-        Path.home() / ".saathi" / "reset_tokens.json",
-        Path.home() / ".saathi" / "auth_audit.log",
-        Path.home() / ".saathi" / "security.db",
-        Path.home() / ".saathi" / "oauth_states.json",
+        state_path("sessions.json"),
+        state_path("passkeys.json"),
+        state_path("reset_tokens.json"),
+        state_path("auth_audit.log"),
+        state_path("security.db"),
+        state_path("oauth_states.json"),
     ]
     for p in stores:
         try:
@@ -189,7 +195,8 @@ class TestForgotPassword:
         assert r.status_code == 200
 
         # peek at the stored token (in real test we'd mock mailer)
-        store = Path.home() / ".saathi" / "reset_tokens.json"
+        from saathi.runtime_paths import state_path
+        store = state_path("reset_tokens.json")
         rows = json.loads(store.read_text()) if store.exists() else []
         assert len(rows) == 1
         token = rows[0]["token"]

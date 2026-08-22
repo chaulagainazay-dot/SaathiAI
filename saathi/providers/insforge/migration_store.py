@@ -8,14 +8,25 @@ import time
 from pathlib import Path
 from typing import Any, Optional
 
-DEFAULT_DIR = Path.home() / ".saathi" / "insforge_migrations"
+from saathi.runtime_paths import state_path
+
+
+def default_dir() -> Path:
+    return state_path("insforge_migrations")
+
+
+def __getattr__(name: str):
+    """Keep ``DEFAULT_DIR`` working without binding it at import time."""
+    if name == "DEFAULT_DIR":
+        return default_dir()
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
 class MigrationLedger:
     """Single-use claim store for migration fingerprints."""
 
     def __init__(self, db_path: Path | str | None = None):
-        self.path = Path(db_path) if db_path else (DEFAULT_DIR / "ledger.sqlite")
+        self.path = Path(db_path) if db_path else (default_dir() / "ledger.sqlite")
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self._lock = threading.RLock()
         self._conn = sqlite3.connect(str(self.path), check_same_thread=False)

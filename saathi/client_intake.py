@@ -24,6 +24,8 @@ import time
 import uuid
 from pathlib import Path
 
+from saathi.runtime_paths import state_path
+
 # the 7 capture steps (mirrors the wizard)
 STEPS = ["company", "goals", "audience", "services", "budget", "uploads", "review"]
 STATUSES = ("draft", "submitted", "researching", "ready")
@@ -31,7 +33,7 @@ STATUSES = ("draft", "submitted", "researching", "ready")
 
 class IntakeStore:
     def __init__(self, db_path: str | None = None):
-        self.db_path = Path(db_path) if db_path else (Path.home() / ".saathi" / "client_projects.db")
+        self.db_path = Path(db_path) if db_path else state_path("client_projects.db")
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self._init()
 

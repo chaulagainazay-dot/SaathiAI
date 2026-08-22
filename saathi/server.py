@@ -16,6 +16,7 @@ from pydantic import BaseModel, ConfigDict
 
 from . import config, voice
 from .agent import SaathiAgent
+from .runtime_paths import state_path
 
 app = FastAPI(title="SaathiAI")
 # CORS — strict origin whitelist (M47.6). NO wildcard with credentials.
@@ -2173,22 +2174,26 @@ async def rename_passkey(pid: str, request: Request):
 
 
 # ── Phase 1: Forgot Password ─────────────────────────────────────────────────
-# Reset tokens are stored in ~/.saathi/reset_tokens.json with 15-minute TTL.
+# Reset tokens live in <state root>/reset_tokens.json with 15-minute TTL.
 
-_RESET_STORE = Path.home() / ".saathi" / "reset_tokens.json"
 _RESET_TTL = 900  # 15 minutes
 
 
+def _reset_store() -> Path:
+    return state_path("reset_tokens.json")
+
+
 def _save_reset_tokens(rows: list[dict]) -> None:
-    _RESET_STORE.parent.mkdir(parents=True, exist_ok=True)
+    store = _reset_store()
+    store.parent.mkdir(parents=True, exist_ok=True)
     now = time.time()
-    _RESET_STORE.write_text(json.dumps([r for r in rows if r.get("expires", 0) > now]))
+    store.write_text(json.dumps([r for r in rows if r.get("expires", 0) > now]))
 
 
 def _load_reset_tokens() -> list[dict]:
     try:
         now = time.time()
-        rows = json.loads(_RESET_STORE.read_text())
+        rows = json.loads(_reset_store().read_text())
         return [r for r in rows if r.get("expires", 0) > now]
     except Exception:
         return []
@@ -2421,7 +2426,7 @@ def oauth_authorize(provider: str, request: Request, redirect_uri: str = ""):
     # Generate a state token (CSRF protection)
     state = _secrets.token_urlsafe(16)
     # Store state → provider mapping (simple file, 10-min TTL)
-    state_store = Path.home() / ".saathi" / "oauth_states.json"
+    state_store = state_path("oauth_states.json")
     try:
         states = json.loads(state_store.read_text()) if state_store.exists() else {}
     except Exception:
@@ -2441,7 +2446,7 @@ async def oauth_callback(request: Request, code: str = "", state: str = "", erro
     from fastapi.responses import JSONResponse, RedirectResponse
     if error:
         return JSONResponse({"ok": False, "error": error}, status_code=400)
-    state_store = Path.home() / ".saathi" / "oauth_states.json"
+    state_store = state_path("oauth_states.json")
     try:
         states = json.loads(state_store.read_text()) if state_store.exists() else {}
     except Exception:

@@ -25,6 +25,8 @@ import uuid
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from saathi.runtime_paths import state_path
+
 _COLUMNS = ["id", "timestamp", "type", "source", "project", "subject", "payload", "evidence_ids"]
 
 
@@ -55,7 +57,7 @@ def _row_to_dict(row) -> dict:
 
 class EventBus:
     def __init__(self, db_path: str | None = None):
-        self.db_path = Path(db_path) if db_path else (Path.home() / ".saathi" / "events.db")
+        self.db_path = Path(db_path) if db_path else state_path("events.db")
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self._subscribers: list[tuple[str, callable]] = []
         self._init()

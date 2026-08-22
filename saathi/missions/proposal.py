@@ -18,6 +18,8 @@ import time
 import uuid
 from pathlib import Path
 
+from saathi.runtime_paths import state_path
+
 
 # ── Pricing templates (NPR estimates, per business type) ──────────────────────
 _PRICING = {
@@ -126,7 +128,7 @@ def build(mission: dict, twin: dict, *, pricing_template: str = "") -> dict:
 # ── Store ─────────────────────────────────────────────────────────────────────
 class ProposalStore:
     def __init__(self, db_path: str | None = None):
-        self.db_path = Path(db_path) if db_path else (Path.home() / ".saathi" / "proposals.db")
+        self.db_path = Path(db_path) if db_path else state_path("proposals.db")
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         with self._conn() as c:
             c.execute("CREATE TABLE IF NOT EXISTS proposal(id TEXT PRIMARY KEY, mission_id TEXT, "

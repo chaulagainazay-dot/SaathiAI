@@ -16,6 +16,8 @@ import uuid
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from saathi.runtime_paths import state_path
+
 CATEGORIES = ("technical", "educational", "business")
 PRIORITIES = ("high", "medium", "low")
 STATUSES = ("pending", "accepted", "rejected", "implemented")
@@ -71,7 +73,7 @@ def _row_to_dict(row) -> dict:
 
 class RecommendationStore:
     def __init__(self, db_path: str | None = None):
-        self.db_path = Path(db_path) if db_path else (Path.home() / ".saathi" / "recommendations.db")
+        self.db_path = Path(db_path) if db_path else state_path("recommendations.db")
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self._init()
 
