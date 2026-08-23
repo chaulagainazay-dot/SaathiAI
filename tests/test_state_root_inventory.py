@@ -77,6 +77,30 @@ STORE_INVENTORY: dict[str, str] = {
     "stt-models": "saathi/voice_os/local_whisper.py",
 }
 
+# Stores that historically lived in the repository, not under ``~/.saathi``.
+# They resolve through ``scoped_state_path`` so the unset default stays the repo
+# path, and only move under ``SAATHI_STATE_ROOT`` when one is configured. Every
+# reader and writer must go through the shared accessor — resolving the path
+# independently at each call site is how a reader and a writer drift apart.
+SCOPED_STORE_ACCESSORS: dict[str, list[str]] = {
+    "baadar_db_path": [
+        "saathi/tools/intelligence.py",
+        "saathi/tools/referral.py",
+        "saathi/tools/content_studio.py",
+    ],
+    "projects_registry_path": ["saathi/tools/projects.py"],
+    "storage_root_path": ["saathi/storage/service.py"],
+    "storage_db_path": ["saathi/storage/service.py"],
+}
+
+# The historical repo-relative locations those stores must no longer hardcode
+# anywhere except the resolver that defines them.
+HISTORICAL_REPO_STORES = {
+    "data/baadar.db": "baadar_db_path",
+    "data/projects.json": "projects_registry_path",
+    "storage/storage.db": "storage_db_path",
+}
+
 # Directories of importable production source. Tests and fixtures are excluded:
 # a test is *supposed* to be able to name the personal root in order to assert
 # that nothing touches it.
@@ -120,6 +144,14 @@ _PATH_BUILDERS = {
 
 # Distinct directory, tracked in the repository rather than under the state root.
 _AGENT_STATE = ".saathi-agent-state"
+
+# Resolvers that read the environment. Calling one at module or class level
+# freezes the answer at import, which is the bug this whole invariant exists for.
+_LAZY_RESOLVERS = {
+    "state_path", "state_root", "scoped_state_path",
+    "baadar_db_path", "projects_registry_path",
+    "storage_root_path", "storage_db_path",
+}
 
 
 def _is_state_dir_string(text: str) -> bool:
@@ -212,7 +244,7 @@ class _Scanner(ast.NodeVisitor):
                         if _is_state_dir_string(joined):
                             self._flag(node, "f-string state path — use state_path()")
         # ── V4: state root frozen into a module/class-level constant ─────────
-        if self._depth == 0 and _callee_name(node.func) in {"state_path", "state_root"}:
+        if self._depth == 0 and _callee_name(node.func) in _LAZY_RESOLVERS:
             self._flag(node, f"{_callee_name(node.func)}() called at import time — "
                              "resolve it inside the function that uses it")
         self.generic_visit(node)
@@ -367,3 +399,44 @@ def test_scanner_detects_a_regression_in_a_real_store():
     )
     assert reverted != src, "pattern not found — update this test"
     assert scan_source(reverted, "evidence"), "invariant would not catch a revert"
+
+
+# ── repo-local stores that must now honour the canonical root ────────────────
+def test_scoped_stores_use_the_shared_accessor():
+    """Each reader/writer resolves its store through the one shared accessor."""
+    missing: list[str] = []
+    for accessor, owners in sorted(SCOPED_STORE_ACCESSORS.items()):
+        for owner in owners:
+            src = (REPO_ROOT / owner).read_text()
+            if f"{accessor}(" not in src:
+                missing.append(f"{owner} does not call {accessor}()")
+    assert not missing, "\n".join(missing)
+
+
+def test_scoped_stores_are_not_recomputed_at_call_sites():
+    """No module may rebuild these paths from config.ROOT on its own.
+
+    Three separate call sites used to compute `data/baadar.db` independently.
+    Only `saathi/runtime_paths.py` may name the historical location now.
+    """
+    offenders: list[str] = []
+    for path in _production_files():
+        rel = path.relative_to(REPO_ROOT).as_posix()
+        if rel == RESOLVER_MODULE:
+            continue
+        src = path.read_text(errors="replace")
+        for literal in HISTORICAL_REPO_STORES:
+            tail = literal.split("/")[-1]
+            # `config.ROOT / "data" / "baadar.db"` and the joined spelling alike
+            if f'"{tail}"' in src and ("config.ROOT" in src or "REPO_ROOT" in src):
+                offenders.append(f"{rel} rebuilds {literal} instead of using the accessor")
+    assert not offenders, "\n".join(offenders)
+
+
+def test_scoped_accessors_are_defined_once():
+    """The resolver module owns every historical repo-local default."""
+    resolver = (REPO_ROOT / RESOLVER_MODULE).read_text()
+    for literal, accessor in sorted(HISTORICAL_REPO_STORES.items()):
+        assert f"def {accessor}(" in resolver, f"{accessor} missing from the resolver"
+        tail = literal.split("/")[-1]
+        assert f'"{tail}"' in resolver, f"{literal} default not defined in the resolver"

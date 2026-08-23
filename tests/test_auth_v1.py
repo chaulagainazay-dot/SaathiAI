@@ -2,21 +2,57 @@
 
 Run with:  python -m pytest tests/test_auth_v1.py -v
 
-The legacy-JSON cleanup below used to unlink the operator's real
-``~/.saathi/security.db`` and friends on every run. It now clears the configured
-state root instead, so the files it removes are the ones this test created.
+Safe by construction, not by convention. This module used to unlink the
+operator's real ``~/.saathi/security.db``, ``sessions.json``, ``passkeys.json``,
+``reset_tokens.json`` and ``auth_audit.log`` on every run, and a later revision
+only moved that hazard behind ``SAATHI_STATE_ROOT`` — which meant a developer
+running the file directly still destroyed their own auth state.
+
+Now the fixture points ``SAATHI_STATE_ROOT`` at its own ``tmp_path`` before it
+imports or constructs anything that resolves a state path, and the only deletion
+helper refuses a target outside that directory. Nothing here depends on the
+caller supplying an environment variable, and importing or collecting this
+module touches no file at all.
 """
 import json
+import pathlib
 import time
 
 import pytest
 from fastapi.testclient import TestClient
 
 
+class UnsafeCleanupTarget(AssertionError):
+    """A test tried to delete something it does not own."""
+
+
+def _unlink_within(root: "pathlib.Path", target: "pathlib.Path") -> None:
+    """Delete ``target`` only if it genuinely lives under ``root``.
+
+    ``root`` is this test's ``tmp_path``. Resolving both sides first means a
+    symlink or a ``..`` cannot walk the deletion back out to the real home
+    directory; anything that does not land inside raises instead of unlinking.
+    """
+    root = pathlib.Path(root).resolve()
+    resolved = pathlib.Path(target).resolve()
+    if not resolved.is_relative_to(root):
+        raise UnsafeCleanupTarget(
+            f"refusing to delete {resolved} — outside the test-owned root {root}"
+        )
+    resolved.unlink(missing_ok=True)
+
+
 # Clear session/passkey/reset stores + Security Store singleton before each test
 @pytest.fixture(autouse=True)
 def _clean_stores(tmp_path, monkeypatch):
-    from saathi import sessions, passkey, authsec
+    # 0. Redirect ALL state-root-derived paths into this test's own directory
+    #    before anything below resolves one. Every later step — the legacy
+    #    migration read included — therefore addresses tmp_path, never $HOME.
+    state_root = tmp_path / "state"
+    state_root.mkdir(parents=True, exist_ok=True)
+    monkeypatch.setenv("SAATHI_STATE_ROOT", str(state_root))
+
+    from saathi import passkey, authsec
     from saathi.security import store as _store_mod
     from saathi.security.registry import close_registry
     from saathi.security.timeline import close_timeline
@@ -28,29 +64,20 @@ def _clean_stores(tmp_path, monkeypatch):
     close_registry()
     close_timeline()
 
-    # 2. Create a fresh temp Security Store and wire all singletons to it
+    # 2. Create a fresh temp Security Store and wire all singletons to it.
+    #    The path is explicit, so it holds even if the resolver misbehaves.
     fresh = _store_mod.SecurityStore(db_path=tmp_path / "security.db")
     fresh.migrate_from_legacy()
     # Set the module-level singleton directly — all imported get_store()
     # references execute the same code that checks _default_store
     _store_mod._default_store = fresh
 
-    # 3. Clean legacy JSON files (for tests that still touch them). These
-    #    resolve under SAATHI_STATE_ROOT, so an isolated run never unlinks the
-    #    operator's own auth state.
-    stores = [
-        state_path("sessions.json"),
-        state_path("passkeys.json"),
-        state_path("reset_tokens.json"),
-        state_path("auth_audit.log"),
-        state_path("security.db"),
-        state_path("oauth_states.json"),
-    ]
-    for p in stores:
-        try:
-            p.unlink(missing_ok=True)
-        except Exception:
-            pass
+    # 3. Clear the legacy JSON files for tests that still touch them. These
+    #    resolve under the state root set in step 0, and _unlink_within refuses
+    #    anything that somehow does not.
+    for name in ("sessions.json", "passkeys.json", "reset_tokens.json",
+                 "auth_audit.log", "security.db", "oauth_states.json"):
+        _unlink_within(tmp_path, state_path(name))
 
     # 4. Clear in-memory rate-limit windows
     authsec._WINDOWS.clear()
@@ -184,7 +211,7 @@ class TestForgotPassword:
         r = client.post("/api/v1/auth/forgot", json={"email": "a@b.com"})
         assert r.status_code == 429
 
-    def test_reset_with_valid_token(self, client, monkeypatch):
+    def test_reset_with_valid_token(self, client, monkeypatch, tmp_path):
         monkeypatch.setenv("BAADAR_PASSWORD", "oldpass")
         import saathi.server as svr
         svr._RAW_PASSWORD = "oldpass"
@@ -197,6 +224,7 @@ class TestForgotPassword:
         # peek at the stored token (in real test we'd mock mailer)
         from saathi.runtime_paths import state_path
         store = state_path("reset_tokens.json")
+        assert store.is_relative_to(tmp_path), "reset store escaped the test root"
         rows = json.loads(store.read_text()) if store.exists() else []
         assert len(rows) == 1
         token = rows[0]["token"]

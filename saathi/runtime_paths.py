@@ -136,3 +136,88 @@ def state_path(name: str | pathlib.PathLike[str]) -> pathlib.Path:
     if not rel.parts or ".." in rel.parts:
         raise StateRootError("state_path() name must be a non-empty path without '..' segments")
     return state_root().joinpath(rel)
+
+
+def scoped_state_path(
+    relative: str | pathlib.PathLike[str],
+    *,
+    env: str | None = None,
+    historical: pathlib.Path,
+) -> pathlib.Path:
+    """Resolve a store that historically lived in the repository, not in ``~/.saathi``.
+
+    :func:`state_path` is wrong for these: its unset default is ``~/.saathi``,
+    and silently relocating ``<repo>/data/baadar.db`` there would change
+    production behaviour. This keeps the historical location when no isolation
+    is configured, and moves the store under the root only when one is.
+
+    Precedence, highest first:
+
+      1. an explicit argument at the call site (the caller's job, not this one)
+      2. ``env``, when that variable names an absolute path
+      3. ``SAATHI_STATE_ROOT`` / ``relative``
+      4. ``historical``
+
+    Once ``SAATHI_STATE_ROOT`` is set there is deliberately no fall-through to
+    ``historical``: a validation run that quietly wrote back into the checkout
+    would report isolation it does not have. Nothing is created here.
+    """
+    if env:
+        override = (os.getenv(env) or "").strip()
+        if override:
+            candidate = pathlib.Path(override).expanduser()
+            if not candidate.is_absolute():
+                raise StateRootError(
+                    f"{env} must be an absolute path, got a relative one "
+                    f"({len(override)} chars)"
+                )
+            return pathlib.Path(os.path.normpath(candidate))
+    if (os.getenv(STATE_ROOT_ENV) or "").strip():
+        return state_path(relative)
+    return historical
+
+
+# ── concrete repo-local stores ───────────────────────────────────────────────
+# Defined here, once, so that every reader and writer of a given store resolves
+# the identical path. These were previously computed independently at three
+# different call sites, which is exactly how a reader and a writer drift apart.
+
+def baadar_db_path() -> pathlib.Path:
+    """Baadar content/intelligence/referral database."""
+    return scoped_state_path(
+        "data/baadar.db",
+        env="BAADAR_DB",
+        historical=REPO_ROOT / "data" / "baadar.db",
+    )
+
+
+def projects_registry_path() -> pathlib.Path:
+    """Registry of the working projects Baadar knows by name."""
+    return scoped_state_path(
+        "data/projects.json",
+        env="SAATHI_PROJECTS_FILE",
+        historical=REPO_ROOT / "data" / "projects.json",
+    )
+
+
+def storage_root_path() -> pathlib.Path:
+    """Root of the managed media/artifact store."""
+    return scoped_state_path(
+        "storage",
+        env="SAATHI_STORAGE_ROOT",
+        historical=REPO_ROOT / "storage",
+    )
+
+
+def storage_db_path(root: pathlib.Path | None = None) -> pathlib.Path:
+    """Ledger for the managed store, alongside the files it describes."""
+    override = (os.getenv("SAATHI_STORAGE_DB") or "").strip()
+    if override:
+        candidate = pathlib.Path(override).expanduser()
+        if not candidate.is_absolute():
+            raise StateRootError(
+                f"SAATHI_STORAGE_DB must be an absolute path, got a relative one "
+                f"({len(override)} chars)"
+            )
+        return pathlib.Path(os.path.normpath(candidate))
+    return (pathlib.Path(root) if root is not None else storage_root_path()) / "storage.db"

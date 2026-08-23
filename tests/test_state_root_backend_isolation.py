@@ -68,12 +68,14 @@ status["routes"] = len(server.app.routes)
 REPO = os.getcwd()
 personal_writes = sorted({p for p, m, w in opened if w and p.startswith(PERSONAL + os.sep)})
 repo_writes = sorted({p for p, m, w in opened if w and p.startswith(REPO + os.sep)})
+repo_reads = sorted({p for p, m, w in opened if not w and p.startswith(REPO + os.sep)})
 personal_reads = sorted({p for p, m, w in opened if not w and p.startswith(PERSONAL + os.sep)})
 print("@@RESULT@@" + json.dumps({
     "status": status,
     "personal_writes": personal_writes,
     "personal_reads": personal_reads,
     "repo_writes": repo_writes,
+    "repo_reads": repo_reads,
     "total_opens": len(opened),
 }))
 '''
@@ -183,20 +185,22 @@ def test_audit_hook_would_catch_a_write_under_the_watched_root(tmp_path):
     )
 
 
-# Repo-local runtime state that a boot still writes inside the checkout. These
-# predate this work and are outside the `~/.saathi` contract `SAATHI_STATE_ROOT`
-# governs: they resolve from `config.ROOT`, not from the state root. They are
-# pinned rather than fixed so that a *new* unisolated write fails loudly here
-# instead of quietly joining the list.
-KNOWN_REPO_LOCAL_WRITES = {
+# The three stores that used to escape isolation — `storage/storage.db`,
+# `data/baadar.db`, `data/projects.json` — now resolve through
+# `scoped_state_path`, so an isolated boot writes nothing inside the checkout.
+# The allowance is gone deliberately: this set is empty and must stay empty.
+KNOWN_REPO_LOCAL_WRITES: set[str] = set()
+
+# Their historical locations, which an isolated boot must not open at all.
+HISTORICAL_REPO_PATHS = (
+    "storage/storage.db",
     "data/baadar.db",
     "data/projects.json",
-    "storage/storage.db",
-}
+)
 
 
-def test_repo_local_writes_do_not_grow(isolated_env, tmp_path):
-    """A boot may still write these three, and nothing else, inside the checkout."""
+def test_isolated_boot_writes_nothing_inside_the_checkout(isolated_env, tmp_path):
+    """No repo-local state at all — the allowance for these three is retired."""
     _, env = isolated_env
     result, _ = _boot(env, tmp_path)
 
@@ -209,7 +213,28 @@ def test_repo_local_writes_do_not_grow(isolated_env, tmp_path):
 
     unexpected = written - KNOWN_REPO_LOCAL_WRITES
     assert not unexpected, (
-        "backend boot wrote new repo-local state that no override can isolate:\n  "
+        "backend boot wrote repo-local state under an isolated root:\n  "
         + "\n  ".join(sorted(unexpected))
-        + "\n\nRoute it through an explicit path or a documented override."
+        + "\n\nRoute it through saathi.runtime_paths.scoped_state_path()."
     )
+
+
+def test_isolated_boot_does_not_open_the_historical_repo_paths(isolated_env, tmp_path):
+    """The three formerly-unisolated stores are not opened, read or written."""
+    _, env = isolated_env
+    result, _ = _boot(env, tmp_path)
+
+    opened = set(result.get("repo_writes", [])) | set(result.get("repo_reads", []))
+    hit = sorted(
+        p for p in opened
+        if any(pathlib.Path(p).as_posix().endswith(h) for h in HISTORICAL_REPO_PATHS)
+    )
+    assert not hit, "isolated boot touched a historical repo-local store:\n  " + "\n  ".join(hit)
+
+
+def test_isolated_boot_materialises_the_scoped_stores_under_the_root(isolated_env, tmp_path):
+    """Positive half: the stores exist, but inside the sandbox."""
+    root, env = isolated_env
+    _boot(env, tmp_path)
+    produced = {p.relative_to(root).as_posix() for p in root.rglob("*") if p.is_file()}
+    assert "storage/storage.db" in produced, sorted(produced)[:20]

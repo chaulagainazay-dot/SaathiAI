@@ -9,9 +9,15 @@ import json
 import subprocess
 from pathlib import Path
 
-from .. import config
+from ..runtime_paths import projects_registry_path
 
-REGISTRY = config.ROOT / "data" / "projects.json"
+
+def __getattr__(name: str):
+    """``REGISTRY`` stays importable without freezing the path at import time."""
+    if name == "REGISTRY":
+        return projects_registry_path()
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
 SKIP_DIRS = {"node_modules", ".git", "dist", "build", ".next", "__pycache__",
              ".venv", "venv", "coverage", ".cache"}
 TEXT_EXT = {".js", ".jsx", ".ts", ".tsx", ".py", ".json", ".md", ".css", ".html",
@@ -19,17 +25,19 @@ TEXT_EXT = {".js", ".jsx", ".ts", ".tsx", ".py", ".json", ".md", ".css", ".html"
 
 
 def _load() -> dict:
-    if REGISTRY.exists():
+    registry = projects_registry_path()
+    if registry.exists():
         try:
-            return json.loads(REGISTRY.read_text())
+            return json.loads(registry.read_text())
         except Exception:
             return {}
     return {}
 
 
 def _save(reg: dict):
-    REGISTRY.parent.mkdir(parents=True, exist_ok=True)
-    REGISTRY.write_text(json.dumps(reg, indent=2))
+    registry = projects_registry_path()
+    registry.parent.mkdir(parents=True, exist_ok=True)
+    registry.write_text(json.dumps(reg, indent=2))
 
 
 def register_project(name: str, path: str) -> dict:

@@ -816,10 +816,9 @@ Return ONLY valid JSON:
 
 def save_hook_performance(hook_text: str, topic: str, video_id: str = ""):
     """Store a hook in hook_performance table for later performance tracking."""
-    import sqlite3, os
-    from .. import config
-    db = os.getenv("BAADAR_DB", str(config.ROOT / "data" / "baadar.db"))
-    with sqlite3.connect(db) as c:
+    import sqlite3
+    from ..runtime_paths import baadar_db_path
+    with sqlite3.connect(str(baadar_db_path())) as c:
         c.execute(
             "INSERT INTO hook_performance (hook_text, topic, video_id) VALUES (?, ?, ?)",
             (hook_text, topic, video_id)
