@@ -14,6 +14,7 @@ import time
 from datetime import datetime
 
 from . import config
+from .runtime_paths import legacy_db_path
 
 
 def _notify(title: str, message: str):
@@ -164,7 +165,7 @@ def memory_backup():
     dst = config.ROOT / "data" / "backups"
     dst.mkdir(parents=True, exist_ok=True)
     try:
-        shutil.copy2(config.DB_PATH, dst / f"saathi-{ts}.db")
+        shutil.copy2(legacy_db_path(), dst / f"saathi-{ts}.db")
         # keep only the last 8 backups
         backups = sorted(dst.glob("saathi-*.db"))
         for old in backups[:-8]:
@@ -331,7 +332,7 @@ def memory_reflector():
         recent_feedback = []
         try:
             import sqlite3
-            conn = sqlite3.connect(config.DB_PATH, check_same_thread=False)
+            conn = sqlite3.connect(legacy_db_path(), check_same_thread=False)
             rows = conn.execute(
                 "SELECT kind, detail FROM feedback ORDER BY ts DESC LIMIT 20"
             ).fetchall()

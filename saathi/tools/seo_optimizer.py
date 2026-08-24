@@ -15,13 +15,20 @@ _PERFORMANCE_LOG = _SEO_DIR / "performance_log.json"
 
 
 def _get_token() -> str:
-    try:
-        for line in (Path.home() / "SaathiAI" / ".env").read_text().splitlines():
-            if line.startswith("SAATHI_TOKEN="):
-                return line.split("=", 1)[1].strip()
-    except Exception:
-        pass
-    return ""
+    """Read the API token, honouring the process dotenv policy.
+
+    This used to parse ``~/SaathiAI/.env`` by hand — reaching into the
+    operator's *personal* checkout from whichever checkout happened to be
+    running, bypassing every isolation control. Going through the policy means
+    one configured file, or none.
+    """
+    import os
+
+    from ..dotenv_policy import apply_dotenv
+
+    if not os.getenv("SAATHI_TOKEN"):
+        apply_dotenv()
+    return os.getenv("SAATHI_TOKEN", "")
 
 
 def _load_performance() -> dict:

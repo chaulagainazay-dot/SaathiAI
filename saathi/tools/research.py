@@ -7,8 +7,6 @@ registered caller preflight. No raw source content logging.
 """
 from __future__ import annotations
 
-from .. import config
-
 CALLER_ID = "research_tools"
 PATH_ID = "tools_research"
 
@@ -70,9 +68,9 @@ def research(topic: str, depth: str = "quick") -> dict:
 
 def deep_plan(goal: str) -> dict:
     """Build an actionable plan: combines web research with Baadar's memory of Ajay."""
-    from ..memory import Memory
+    from ..legacy_store import legacy_memory
 
-    mem = Memory(config.DB_PATH)
+    mem = legacy_memory()
     facts = mem.relevant_facts(goal, limit=10)
     context = "\n".join(f"- {f}" for f in facts) or "(no stored facts matched)"
     try:

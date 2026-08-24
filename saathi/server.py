@@ -14,7 +14,8 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict
 
-from . import config, voice
+from . import config, dotenv_policy, voice
+from .runtime_paths import legacy_db_path
 from .agent import SaathiAgent
 from .runtime_paths import state_path
 
@@ -1991,15 +1992,18 @@ def change_password(body: ChangePasswordIn, request: Request):
     if strength["score"] < 2:
         authsec.audit("change_password", ok=False, ip=ip, ua=ua, detail="weak_password")
         return JSONResponse({"ok": False, "error": "Password too weak. Use 8+ chars with upper, lower, number and symbol."}, status_code=400)
+    try:
+        dotenv_policy.write_dotenv_values({"BAADAR_PASSWORD": body.new_password})
+    except dotenv_policy.DotenvPolicyError:
+        # Dotenv persistence is switched off (an isolated run). Refuse rather
+        # than change the live password with nowhere to record it.
+        authsec.audit("change_password", ok=False, ip=ip, ua=ua, detail="dotenv_write_disabled")
+        return JSONResponse(
+            {"ok": False, "error": "Password persistence is disabled in this environment."},
+            status_code=503,
+        )
     _RAW_PASSWORD = body.new_password
     _PASSWORD_HASH = authsec.hash_password(body.new_password)
-    env_path = config.ROOT / ".env"
-    text = env_path.read_text() if env_path.exists() else ""
-    if re.search(r'^BAADAR_PASSWORD=', text, flags=re.MULTILINE):
-        text = re.sub(r'^BAADAR_PASSWORD=.*$', f'BAADAR_PASSWORD={body.new_password}', text, flags=re.MULTILINE)
-    else:
-        text = (text.rstrip("\n") + "\n" if text else "") + f'BAADAR_PASSWORD={body.new_password}\n'
-    env_path.write_text(text)
     # SECURITY: invalidate all existing sessions, then issue a fresh one
     cookies = getattr(request, "cookies", None) or {}
     old_token = (cookies.get("baadar_session") or request.headers.get("x-baadar-session", ""))
@@ -2254,15 +2258,16 @@ async def reset_password(body: ResetIn, request: Request):
     match["used"] = True
     _save_reset_tokens(rows)
     # Update password
+    try:
+        dotenv_policy.write_dotenv_values({"BAADAR_PASSWORD": body.new_password})
+    except dotenv_policy.DotenvPolicyError:
+        authsec.audit("reset_password", ok=False, ip=ip, ua=ua, detail="dotenv_write_disabled")
+        return JSONResponse(
+            {"ok": False, "error": "Password persistence is disabled in this environment."},
+            status_code=503,
+        )
     _RAW_PASSWORD = body.new_password
     _PASSWORD_HASH = authsec.hash_password(body.new_password)
-    env_path = config.ROOT / ".env"
-    text = env_path.read_text() if env_path.exists() else ""
-    if re.search(r'^BAADAR_PASSWORD=', text, flags=re.MULTILINE):
-        text = re.sub(r'^BAADAR_PASSWORD=.*$', f'BAADAR_PASSWORD={body.new_password}', text, flags=re.MULTILINE)
-    else:
-        text = (text.rstrip("\n") + "\n" if text else "") + f'BAADAR_PASSWORD={body.new_password}\n'
-    env_path.write_text(text)
     authsec.audit("reset_password", ok=True, ip=ip, ua=ua, detail="password_changed")
     return {"ok": True, "message": "Password updated. Sign in with your new password."}
 
@@ -5248,7 +5253,7 @@ def dashboard_status(request: Request):
     import sqlite3
     db_stats = {"total_hooks": 0, "total_patterns": 0, "total_referral_events": 0}
     try:
-        con = sqlite3.connect(str(config.DB_PATH))
+        con = sqlite3.connect(str(legacy_db_path()))
         try:
             db_stats["total_hooks"] = con.execute("SELECT COUNT(*) FROM hooks").fetchone()[0]
         except Exception:

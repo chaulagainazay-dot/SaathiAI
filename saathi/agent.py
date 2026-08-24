@@ -15,7 +15,7 @@ from pathlib import Path
 from . import config
 from . import activity
 from .persona import SYSTEM_PROMPT
-from .memory import Memory
+from .legacy_store import legacy_memory
 from .tools.registry import TOOL_SCHEMAS, execute_tool
 
 # ---------- Suna-style skills + memory loader ----------
@@ -217,7 +217,7 @@ def _openai_tools() -> list[dict]:
 
 class SaathiAgent:
     def __init__(self):
-        self.memory = Memory(config.DB_PATH)
+        self.memory = legacy_memory()
         # M22: SDK clients + credentials live only in agent_provider adapter
         from saathi.inference.adapters.agent_provider import build_agent_session
 

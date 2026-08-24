@@ -8,7 +8,9 @@ from pathlib import Path
 
 class Memory:
     def __init__(self, db_path: Path):
+        db_path = Path(db_path)
         db_path.parent.mkdir(parents=True, exist_ok=True)
+        self.db_path = db_path
         self.db = sqlite3.connect(db_path, check_same_thread=False)
         self.db.executescript("""
             CREATE TABLE IF NOT EXISTS turns(
@@ -89,3 +91,11 @@ class Memory:
         rows = self.db.execute(
             "SELECT id, title, due FROM tasks WHERE status='open' ORDER BY id").fetchall()
         return [{"id": i, "title": t, "due": d} for i, t, d in rows]
+
+    # --- lifecycle ---
+    def close(self) -> None:
+        """Release the connection. Safe to call more than once."""
+        try:
+            self.db.close()
+        except Exception:
+            pass

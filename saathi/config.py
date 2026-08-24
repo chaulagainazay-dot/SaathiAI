@@ -4,10 +4,12 @@ import os
 import tempfile
 from pathlib import Path
 
-from dotenv import load_dotenv
+from .dotenv_policy import apply_dotenv
 
 ROOT = Path(__file__).resolve().parent.parent
-load_dotenv(ROOT / ".env")
+# Which .env is read — if any — is a policy decision, not a constant. See
+# saathi/dotenv_policy.py; the default is still <repo>/.env.
+DOTENV_STATUS = apply_dotenv()
 
 # --- Firebase: support JSON content in env var (for cloud deployments) ---
 _fb_json_str = os.getenv("FIREBASE_CREDENTIALS_JSON", "")
@@ -97,7 +99,12 @@ HOST = os.getenv("SAATHI_HOST", "127.0.0.1")
 PORT = int(os.getenv("PORT", os.getenv("SAATHI_PORT", "8765")))
 
 # --- Memory ---
-DB_PATH = ROOT / "data" / "saathi.db"
+# DB_PATH is resolved on attribute access (see __getattr__ at the end of this
+# module), not frozen here. A module-level constant is captured when `saathi` is
+# first imported, which is before any validation harness or test fixture has set
+# SAATHI_STATE_ROOT — so the old constant pinned the repository database and no
+# amount of later configuration could move it. Use runtime_paths.legacy_db_path()
+# in new code; this attribute stays for external compatibility.
 # Curated baseline lives under saathi/memory/*.md (git-tracked).
 # Runtime auto-learning MUST write only under data/memory/ (gitignored via data/).
 LEARNED_MEMORY_DIR = ROOT / "data" / "memory"
@@ -123,3 +130,18 @@ FIREBASE_STORAGE_BUCKET = os.getenv("FIREBASE_STORAGE_BUCKET", "")
 # awesome-llm-apps: 100+ production AI agent & RAG patterns (cloned locally)
 AWESOME_LLM_APPS_PATH = os.getenv("AWESOME_LLM_APPS_PATH",
     str(Path.home() / "awesome-llm-apps"))
+
+
+def __getattr__(name: str):
+    """Resolve path-valued settings lazily (PEP 562).
+
+    Only ``DB_PATH`` needs this today. Keeping it here rather than at module
+    scope means ``config.DB_PATH`` answers with the *currently* configured
+    legacy database, so a reader and a writer in the same process can never
+    disagree about which file they are using.
+    """
+    if name == "DB_PATH":
+        from .runtime_paths import legacy_db_path
+
+        return legacy_db_path()
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

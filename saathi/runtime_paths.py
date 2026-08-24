@@ -55,6 +55,8 @@ STATE_ROOT_ENV = "SAATHI_STATE_ROOT"
 
 DEFAULT_STATE_DIRNAME = ".saathi"
 
+LEGACY_DB_ENV = "SAATHI_LEGACY_DB"
+
 
 class StateRootError(ValueError):
     """``SAATHI_STATE_ROOT`` is set to something unusable.
@@ -206,6 +208,42 @@ def storage_root_path() -> pathlib.Path:
         "storage",
         env="SAATHI_STORAGE_ROOT",
         historical=REPO_ROOT / "storage",
+    )
+
+
+def legacy_db_path(explicit: str | pathlib.PathLike[str] | None = None) -> pathlib.Path:
+    """The legacy ``saathi.db`` store — conversation turns, facts, feedback, Nepali.
+
+    ``saathi.config`` used to bind this to ``<repo>/data/saathi.db`` at import
+    time. Four modules connected to it while being imported, so a backend booted
+    with an isolated ``SAATHI_STATE_ROOT`` still held read-write descriptors on a
+    database inside the git worktree, and ran ``CREATE TABLE`` DDL against it.
+    That is a containment escape: the isolation was reported but not held.
+
+    Precedence, highest first:
+
+      1. ``explicit`` — a path passed by the caller
+      2. ``SAATHI_LEGACY_DB``
+      3. ``SAATHI_STATE_ROOT/data/saathi.db``
+      4. the historical ``<repo>/data/saathi.db``
+
+    Once ``SAATHI_STATE_ROOT`` is set there is no fall-through to the repository
+    database. With neither variable set the historical path is returned
+    unchanged, so production behaviour is untouched. Nothing is created here,
+    and nothing is migrated or copied between roots.
+    """
+    if explicit is not None:
+        candidate = pathlib.Path(explicit).expanduser()
+        if not candidate.is_absolute():
+            raise StateRootError(
+                f"an explicit legacy database path must be absolute, got a "
+                f"relative one ({len(str(explicit))} chars)"
+            )
+        return pathlib.Path(os.path.normpath(candidate))
+    return scoped_state_path(
+        "data/saathi.db",
+        env=LEGACY_DB_ENV,
+        historical=REPO_ROOT / "data" / "saathi.db",
     )
 
 
