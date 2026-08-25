@@ -88,9 +88,31 @@ export async function submitIntakeForm(token, data) {
   if (!r.ok) throw new Error(`submit ${r.status}`); return r.json();
 }
 
-// Log in (sets the httponly session cookie so chat/writes are authorized).
+// D14: initialisation state. Bounded and non-secret — safe to call signed out.
+export async function bootstrapStatus() {
+  const r = await afetch(`${API_BASE}/api/v1/auth/bootstrap/status`, { cache: "no-store" });
+  if (!r.ok) throw new Error(`bootstrap status ${r.status}`);
+  return r.json();
+}
+
+// D14: first-owner provisioning. The operator token is read from the field and
+// posted once. It is never persisted here — not in localStorage, not in
+// sessionStorage, not in component state that outlives the submit — because a
+// bootstrap token that survives the request is a credential lying around.
+export async function bootstrapOwner(operatorToken, newPassword) {
+  const r = await afetch(`${API_BASE}/api/v1/auth/bootstrap`, {
+    method: "POST", credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ operator_token: operatorToken, new_password: newPassword }) });
+  const j = await r.json();
+  if (j.token) setSessionToken(j.token);
+  return j;
+}
+
+// Change the password of an already-initialised system. Requires a session;
+// this is no longer the route that creates the owner.
 export async function setPassword(current, newPassword) {
-  const r = await afetch(`${API_BASE}/api/v1/auth/change-password`, {
+  const r = await afetch(`${API_BASE}/api/v1/auth/password`, {
     method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ current: current || "", new_password: newPassword }) });
   const j = await r.json();
@@ -592,21 +614,12 @@ export async function renamePasskey(pid, label) {
   return r.json();
 }
 
-export async function forgotPassword(email) {
-  const r = await afetch(`${API_BASE}/api/v1/auth/forgot`, {
-    method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email }),
-  });
-  return r.json();
-}
-
-export async function resetPassword(token, newPassword) {
-  const r = await afetch(`${API_BASE}/api/v1/auth/reset`, {
-    method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ token, new_password: newPassword }),
-  });
-  return r.json();
-}
+// D14: /api/v1/auth/forgot and /api/v1/auth/reset are retired and answer 410
+// from the auth gate. Both were unauthenticated credential paths -- forgot
+// minted a recovery token for any caller-supplied address, reset spent it by
+// writing a plaintext password into the server's .env. No client helper wraps
+// them any more, so no screen can call them by accident. First-owner setup is
+// bootstrapOwner(); changing a known password is setPassword().
 
 export async function fetchAuthAudit(limit = 40) {
   const r = await afetch(`${API_BASE}/api/v1/auth/audit?limit=${limit}`, { cache: "no-store" });

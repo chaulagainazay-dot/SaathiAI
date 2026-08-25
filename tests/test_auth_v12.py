@@ -20,7 +20,20 @@ client = TestClient(app)
 
 @pytest.fixture
 def store(tmp_path):
+    """A store belonging to a properly bootstrapped system.
+
+    D14: an owner is created by bootstrap and by nothing else, so
+    ``get_or_create_owner`` returns "" until the bootstrap marker exists and
+    ``migrate_from_legacy`` is a no-op. These tests are about the store's CRUD,
+    not about initialisation, so they start from the state a real ACTIVE
+    installation is in.
+    """
+    import sys, pathlib as _pl
+    sys.path.insert(0, str(_pl.Path(__file__).resolve().parent))
+    from support.auth_state import make_active
+
     db = SecurityStore(db_path=tmp_path / "security.db")
+    make_active(db)
     db.migrate_from_legacy()
     return db
 
@@ -212,7 +225,16 @@ class TestSecurityTimeline:
 # ── Password Health ──────────────────────────────────────────────────────────
 class TestPasswordHealth:
     def test_no_password(self, store):
-        uid = store.get_or_create_owner()
+        # A second user, not the bootstrapped owner: the owner has a credential
+        # by construction now, so asking about it no longer describes the
+        # "user with no password" case this test is named for.
+        import time as _t
+        import uuid as _uuid
+        uid = _uuid.uuid4().hex
+        store.db.execute(
+            "INSERT INTO users (id, email, name, created_at, updated_at) VALUES (?,?,?,?,?)",
+            (uid, "nopw@test.local", "No Password", _t.time(), _t.time()))
+        store.db.commit()
         h = PasswordHealth(store=store)
         assert h.metrics(uid)["has_password"] is False
 

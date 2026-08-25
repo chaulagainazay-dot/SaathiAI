@@ -26,6 +26,7 @@ from .cors_policy import (  # noqa: E402
     CORS_ALLOW_HEADERS,
     CORS_ALLOW_METHODS,
     resolve_cors_origins,
+    origin_allowed,
 )
 
 _origins = resolve_cors_origins()
@@ -1654,12 +1655,12 @@ if not _PASSWORD_HASH and _RAW_PASSWORD:
     _PASSWORD_HASH = _hashlib.sha256(_RAW_PASSWORD.encode()).hexdigest()
 
 
-def _session_token() -> str:
-    """Deterministic session token. Seeded from the password hash when a password
-    is set, otherwise from SAATHI_TOKEN — so a login is possible (and the session
-    cookie is honoured) even when BAADAR_PASSWORD isn't configured. Stateless."""
-    seed = _PASSWORD_HASH or ACCESS_TOKEN or ""
-    return _hashlib.sha256((seed + ":baadar-session").encode()).hexdigest()
+#: D14 removed ``_session_token()``. It derived a session value from
+#: ``_PASSWORD_HASH or ACCESS_TOKEN or ""`` and ``_is_authed`` accepted it, so a
+#: system bootstrapped through the new path -- which stores the credential in the
+#: security store and leaves that process global empty -- authenticated anybody
+#: presenting ``sha256(":baadar-session")``, a constant containing no secret.
+#: Sessions are minted and validated by ``saathi.sessions``, and nowhere else.
 
 
 def _is_local(request) -> bool:
@@ -1670,7 +1671,14 @@ def _is_local(request) -> bool:
     caller. Caddy (like every sane proxy) stamps X-Forwarded-For on proxied
     traffic; genuine loopback requests never carry it. Requiring BOTH a loopback
     peer AND no forwarding header is what makes "local = trusted" safe on a
-    public deployment."""
+    public deployment.
+
+    D14: this is a *transport* predicate and nothing else. It is deliberately
+    not referenced by any authorization decision -- every ``_is_authed(request)
+    or _is_local(request)`` site was removed, because "or the caller is on this
+    machine" turned every one of those endpoints, passkey registration and an
+    arbitrary-path file read among them, into a public endpoint on the host.
+    Use it to describe a connection, never to answer who is calling."""
     host = request.client.host if request.client else ""
     if host not in ("127.0.0.1", "::1", "localhost"):
         return False
@@ -1680,7 +1688,25 @@ def _is_local(request) -> bool:
 
 
 def _is_authed(request) -> bool:
-    """Authorize via session cookie, session header, SAATHI_TOKEN, or Token Registry."""
+    """Authorize via session cookie, session header, SAATHI_TOKEN, or Token Registry.
+
+    D14: nothing authenticates unless the installation is ACTIVE. A store that
+    still has no bootstrap marker but already holds a session, API token or
+    passkey is CONTAMINATED_UNINITIALIZED -- something planted a credential
+    before an owner legitimately existed -- and honouring that credential is
+    exactly the persistence the repair exists to remove. Such a store fails
+    closed here and is left untouched for forensic recovery.
+    """
+    try:
+        from saathi import auth_bootstrap
+        from saathi.security.store import get_store
+
+        if not auth_bootstrap.is_active(get_store()):
+            return False
+    except Exception:
+        # A store we cannot classify is not a store we can authenticate against.
+        return False
+
     # a valid session cookie/header (issued by /auth/login) is always accepted
     cookies = getattr(request, "cookies", None) or {}
     token = (cookies.get("baadar_session")
@@ -1688,8 +1714,6 @@ def _is_authed(request) -> bool:
     if token:
         from saathi import sessions
         if sessions.validate(token):
-            return True
-        if token == _session_token():
             return True
     # Token Registry: named, permissioned API tokens
     raw_api_token = request.headers.get("x-saathi-token", "")
@@ -1702,9 +1726,17 @@ def _is_authed(request) -> bool:
         # Legacy SAATHI_TOKEN backward compat
         if ACCESS_TOKEN and raw_api_token == ACCESS_TOKEN:
             return True
-    # no password configured → trust genuine local callers
-    if not _PASSWORD_HASH:
-        return _is_local(request)
+    # D14: there is deliberately no "no password configured -> trust the local
+    # caller" branch here. That fallback made a missing credential *itself* the
+    # credential: on a fresh install every protected route, including API-token
+    # minting and passkey registration, answered to any loopback caller. Because
+    # the token registry is consulted above this point, anything minted during
+    # that window kept authenticating after the real owner set a password.
+    #
+    # Loopback is a transport and deployment condition. It is not an identity.
+    # An uninitialised system is unlocked by secure bootstrap (see
+    # saathi/auth_bootstrap.py), which requires an explicit operator proof, and
+    # by nothing else.
     return False
 
 
@@ -1712,6 +1744,20 @@ def _owner_id() -> str:
     """Return the owner user_id from the Security Store."""
     from saathi.security.store import get_store
     return get_store().get_or_create_owner()
+
+
+#: Retired by D14. Both were unauthenticated first-owner provisioning paths that
+#: wrote a plaintext credential into the checkout's .env.
+_RETIRED_AUTH_PATHS = frozenset({
+    "/api/v1/auth/change-password",
+    "/api/v1/auth/reset",
+    # /auth/forgot minted an unauthenticated recovery token, wrote it to a
+    # JSON store and mailed a redemption link to a caller-supplied address.
+    # Its only consumer was /auth/reset, which is retired, so every token it
+    # issues now redeems nowhere -- while remaining a durable credential an
+    # anonymous caller can cause an uninitialised system to write.
+    "/api/v1/auth/forgot",
+})
 
 
 @app.middleware("http")
@@ -1725,11 +1771,30 @@ async def _auth(request, call_next):
     # (see `_install_outermost_cors()`), so a browser preflight is answered
     # before it ever reaches this gate. An `OPTIONS` request that is not a
     # preflight is an ordinary request and is authenticated like any other.
+    # D14: the retired legacy provisioning paths answer 410 from the gate
+    # itself. They are deliberately NOT on the allowlist below -- that list
+    # exempts a route from authentication and then *runs* it, which is exactly
+    # what made them exploitable. Answering here reaches no handler, mutates
+    # nothing, and still gives a caller a bounded, actionable code.
+    if path in _RETIRED_AUTH_PATHS:
+        return JSONResponse(
+            {"ok": False, "error": "LEGACY_AUTH_RETIRED",
+             "detail": "Use POST /api/v1/auth/bootstrap for first-owner setup, "
+                       "or POST /api/v1/auth/password when signed in."},
+            status_code=410,
+        )
+    # /api/v1/auth/change-password and /api/v1/auth/reset are NOT on the
+    # allowlist. Both were bare string compares that never consulted _is_local, so a
+    # fresh install let any caller that could reach the port set the owner
+    # credential and receive a session. Both are retired below.
+    #
+    # /api/v1/auth/bootstrap/status and /api/v1/auth/bootstrap are the only
+    # unauthenticated entries that may change state, and the bootstrap route
+    # enforces its own operator proof, loopback peer and header conditions.
     if (path == "/api/v1/auth/login"
-            or path == "/api/v1/auth/change-password"
+            or path == "/api/v1/auth/bootstrap"
+            or path == "/api/v1/auth/bootstrap/status"
             or path == "/api/v1/auth/logout"
-            or path == "/api/v1/auth/forgot"
-            or path.startswith("/api/v1/auth/reset")
             or path.startswith("/api/v1/auth/passkey")
             or path == "/api/v1/auth/providers"
             or path.startswith("/api/v1/auth/oauth")
@@ -1834,14 +1899,38 @@ def login(body: LoginIn, request: Request):
     if not allowed:
         authsec.audit("login", ok=False, ip=ip, ua=ua, detail="rate_limited")
         return JSONResponse({"ok": False, "error": f"Too many attempts. Try again in {retry_after}s."}, status_code=429)
-    ok = (_PASSWORD_HASH and authsec.verify_password(body.password, _PASSWORD_HASH)) or (ACCESS_TOKEN and body.password == ACCESS_TOKEN)
+    # D14: an uninitialised system has no owner to log in as. The branch that
+    # used to live here read "if nothing is configured, let the owner in", which
+    # made *any* password succeed on a fresh install and minted a real owner
+    # session -- the same unauthenticated-owner outcome as the retired
+    # change-password path, on an endpoint that is deliberately public.
+    from saathi import auth_bootstrap
+    from saathi.security.store import get_store
+    from saathi.platform.identity import verify_password_scrypt
+
+    store = get_store()
+    if not auth_bootstrap.is_active(store):
+        authsec.audit("login", ok=False, ip=ip, ua=ua, detail="not_initialized")
+        return JSONResponse(
+            {"ok": False, "error": "NOT_INITIALIZED",
+             "detail": "This installation has no owner yet."},
+            status_code=409,
+        )
+
+    # The canonical credential is the scrypt hash in the security store. The
+    # environment-derived hash stays as a fallback so an already-initialised
+    # deployment that predates this change keeps working.
+    owner = store.owner_id()
+    stored = ((store.latest_password(owner) or {}).get("hash") or "") if owner else ""
+    ok = bool(stored) and verify_password_scrypt(body.password, stored)
+    if not ok and _PASSWORD_HASH:
+        ok = authsec.verify_password(body.password, _PASSWORD_HASH)
+    if not ok and ACCESS_TOKEN:
+        ok = secrets.compare_digest(body.password or "", ACCESS_TOKEN)
     if not ok:
-        if not (_PASSWORD_HASH or ACCESS_TOKEN):
-            ok = True  # nothing configured — let the owner in
-        else:
-            authsec.rate_hit(f"{ip}:login")
-            authsec.audit("login", ok=False, ip=ip, ua=ua, detail="wrong_password")
-            return JSONResponse({"ok": False, "error": "Wrong password"}, status_code=401)
+        authsec.rate_hit(f"{ip}:login")
+        authsec.audit("login", ok=False, ip=ip, ua=ua, detail="wrong_password")
+        return JSONResponse({"ok": False, "error": "Wrong password"}, status_code=401)
     # Compute risk score
     from saathi.security.risk import RiskEngine
     from saathi import sessions
@@ -1884,13 +1973,24 @@ def passkey_status(request: Request):
     from saathi import passkey
     rp_id, _ = _rp(request)
     return {"has_passkey": passkey.has_passkey(rp_id), "rp_id": rp_id,
-            "has_password": bool(_PASSWORD_HASH), "signed_in": _is_authed(request) or _is_local(request)}
+            "has_password": bool(_PASSWORD_HASH),
+            # D14: a loopback peer is not a signed-in owner. The shell used to
+            # read this field and render an owned UI to anyone on the box.
+            "signed_in": _is_authed(request)}
 
 
 @app.post("/api/v1/auth/passkey/register/options")
 async def passkey_register_options(request: Request):
     """Begin passkey registration (Touch ID / Face ID). Must already be signed in."""
-    if not (_is_authed(request) or _is_local(request)):
+    _gate = _require_active()         # D14: no passkey may be planted pre-ACTIVE
+    if _gate is not None:
+        return _gate
+    # D14: authentication only. Registering a passkey mints a durable credential
+    # that outlives the session that created it, so accepting a loopback peer
+    # here would hand permanent access to anything able to reach the port on
+    # this machine -- the same persistence the bootstrap repair exists to close,
+    # merely moved past ACTIVE.
+    if not _is_authed(request):
         from fastapi.responses import JSONResponse
         return JSONResponse({"error": "sign in first"}, status_code=401)
     from saathi import passkey
@@ -1901,7 +2001,10 @@ async def passkey_register_options(request: Request):
 @app.post("/api/v1/auth/passkey/register/verify")
 async def passkey_register_verify(request: Request):
     """Finish passkey registration — stores the credential. Must be signed in."""
-    if not (_is_authed(request) or _is_local(request)):
+    _gate = _require_active()         # D14: no passkey may be planted pre-ACTIVE
+    if _gate is not None:
+        return _gate
+    if not _is_authed(request):       # D14: loopback is not identity
         from fastapi.responses import JSONResponse
         return JSONResponse({"ok": False, "error": "sign in first"}, status_code=401)
     from saathi import passkey
@@ -1926,6 +2029,9 @@ async def passkey_login_options(request: Request):
 @app.post("/api/v1/auth/passkey/login/verify")
 async def passkey_login_verify(request: Request):
     """Finish biometric unlock → issue a new random session cookie. Whitelisted."""
+    _gate = _require_active()         # D14: a planted passkey must not sign in
+    if _gate is not None:
+        return _gate
     from fastapi.responses import JSONResponse
     from saathi import passkey, sessions, authsec
     rp_id, origin = _rp(request)
@@ -1972,57 +2078,204 @@ class ChangePasswordIn(BaseModel):
     current: str
     new_password: str
 
-@app.post("/api/v1/auth/change-password")
-def change_password(body: ChangePasswordIn, request: Request):
-    global _PASSWORD_HASH, _RAW_PASSWORD
-    import hashlib, re
+# ── D14: secure first-owner bootstrap ───────────────────────────────────────
+
+_PROXY_IDENTITY_HEADERS = (
+    "x-forwarded-for", "x-forwarded-host", "x-forwarded-proto",
+    "forwarded", "x-real-ip", "x-client-ip", "true-client-ip",
+)
+
+
+def _bootstrap_transport_ok(request) -> tuple[bool, str]:
+    """Bootstrap must arrive directly on loopback, unproxied.
+
+    This is a *transport precondition*, not the authorisation -- the operator
+    token is the authorisation. It exists so a reverse proxy cannot relay a
+    remote caller into first-owner provisioning. Any forwarding header at all is
+    refused rather than parsed: a header that says where a request came from is
+    written by whoever wrote the request.
+    """
+    host = request.client.host if request.client else ""
+    if host not in ("127.0.0.1", "::1", "localhost"):
+        return False, "BOOTSTRAP_NOT_LOOPBACK"
+    for header in _PROXY_IDENTITY_HEADERS:
+        if request.headers.get(header):
+            return False, "BOOTSTRAP_PROXIED_REQUEST"
+    origin = request.headers.get("origin", "")
+    if origin and not origin_allowed(origin, _origins):
+        return False, "BOOTSTRAP_ORIGIN_REJECTED"
+    return True, ""
+
+
+class BootstrapIn(BaseModel):
+    operator_token: str
+    new_password: str
+    email: str = ""
+    name: str = "Owner"
+
+
+@app.get("/api/v1/auth/bootstrap/status")
+def bootstrap_status():
+    """Bounded, non-secret initialisation state for the unlock UI."""
+    from saathi import auth_bootstrap
+    from saathi.security.store import get_store
+
+    return auth_bootstrap.status(get_store())
+
+
+@app.post("/api/v1/auth/bootstrap")
+def bootstrap(body: BootstrapIn, request: Request):
+    """Create the first owner. The only unauthenticated state change there is.
+
+    Requires, together: bootstrap explicitly armed by the operator, an empty
+    credential store, a loopback peer with no forwarding headers, an allowed
+    Origin, and a valid one-time operator token from a 0600 file owned by this
+    user. The session is issued only after the owner is committed.
+    """
     from fastapi.responses import JSONResponse
-    from saathi import sessions, authsec
-    ip = request.headers.get("x-forwarded-for", "").split(",")[0].strip() or (request.client.host if request.client else "")
+    from saathi import sessions, authsec, auth_bootstrap
+    from saathi.security.store import get_store
+
+    ip = request.client.host if request.client else ""
     ua = request.headers.get("user-agent", "")
-    # rate limit password changes
-    allowed, retry_after = authsec.rate_check(f"{ip}:change-password", limit=3, window=600)
-    if not allowed:
-        authsec.audit("change_password", ok=False, ip=ip, ua=ua, detail="rate_limited")
-        return JSONResponse({"ok": False, "error": f"Too many attempts. Try again in {retry_after}s."}, status_code=429)
-    if _PASSWORD_HASH and not authsec.verify_password(body.current, _PASSWORD_HASH):
-        authsec.audit("change_password", ok=False, ip=ip, ua=ua, detail="wrong_current")
-        return JSONResponse({"ok": False, "error": "Current password is wrong"}, status_code=400)
-    strength = authsec.password_strength(body.new_password)
-    if strength["score"] < 2:
-        authsec.audit("change_password", ok=False, ip=ip, ua=ua, detail="weak_password")
-        return JSONResponse({"ok": False, "error": "Password too weak. Use 8+ chars with upper, lower, number and symbol."}, status_code=400)
+
+    ok, why = _bootstrap_transport_ok(request)
+    if not ok:
+        authsec.audit("bootstrap", ok=False, ip=ip, ua=ua, detail=why)
+        return JSONResponse({"ok": False, "error": why}, status_code=403)
+
+    store = get_store()
     try:
-        dotenv_policy.write_dotenv_values({"BAADAR_PASSWORD": body.new_password})
-    except dotenv_policy.DotenvPolicyError:
-        # Dotenv persistence is switched off (an isolated run). Refuse rather
-        # than change the live password with nowhere to record it.
-        authsec.audit("change_password", ok=False, ip=ip, ua=ua, detail="dotenv_write_disabled")
-        return JSONResponse(
-            {"ok": False, "error": "Password persistence is disabled in this environment."},
-            status_code=503,
+        owner_id = auth_bootstrap.bootstrap_owner(
+            store,
+            password=body.new_password,
+            operator_token=body.operator_token,
+            email=body.email,
+            name=body.name,
         )
-    _RAW_PASSWORD = body.new_password
-    _PASSWORD_HASH = authsec.hash_password(body.new_password)
-    # SECURITY: invalidate all existing sessions, then issue a fresh one
+    except auth_bootstrap.BootstrapError as exc:
+        authsec.audit("bootstrap", ok=False, ip=ip, ua=ua, detail=exc.code)
+        code = 429 if exc.code == "BOOTSTRAP_RATE_LIMITED" else 403
+        return JSONResponse({"ok": False, "error": exc.code}, status_code=code)
+
+    # Committed. Only now does a credential exist to attach a session to.
+    token = sessions.create(ua=ua, ip=ip, kind="password", remember_me=False)
+    authsec.audit("bootstrap", ok=True, ip=ip, ua=ua,
+                  detail=f"owner_created_{owner_id[:8]}")
+    r = JSONResponse({"ok": True, "state": "ACTIVE", "token": token})
+    r.set_cookie("baadar_session", token, httponly=True, samesite="none",
+                 secure=True, max_age=24 * 3600)
+    return r
+
+
+def _require_active():
+    """Refuse durable-credential mutation until the system is properly owned.
+
+    D14 phase 3. Before this gate, an unauthenticated caller on a fresh install
+    could mint an API token or register a passkey, and because the token
+    registry is consulted before any freshness check in ``_is_authed``, that
+    credential kept working after the real owner set a password. Minting is
+    therefore refused in every state except ACTIVE -- including
+    CONTAMINATED_UNINITIALIZED, so planting one credential cannot unlock
+    planting the next.
+    """
+    from fastapi.responses import JSONResponse
+    from saathi import auth_bootstrap
+    from saathi.security.store import get_store
+
+    state = auth_bootstrap.auth_state(get_store())
+    if state is auth_bootstrap.AuthState.ACTIVE:
+        return None
+    return JSONResponse(
+        {"ok": False, "error": "NOT_INITIALIZED", "state": state.value},
+        status_code=409,
+    )
+
+
+@app.post("/api/v1/auth/change-password")
+def change_password_retired(body: ChangePasswordIn, request: Request):
+    """Retired (D14). This route used to be the fresh-install bootstrap.
+
+    It sat on the unauthenticated allowlist, and its only credential check was
+    ``if _PASSWORD_HASH and not verify(...)`` -- which short-circuits when no
+    password exists. So on a fresh install it required no session, minted an
+    owner session, returned a bearer token, and wrote the plaintext password
+    into the checkout's ``.env``.
+
+    First-owner provisioning is now ``POST /api/v1/auth/bootstrap`` and requires
+    an explicit operator proof. Changing an existing password is
+    ``POST /api/v1/auth/password`` and requires an authenticated session.
+    """
+    from fastapi.responses import JSONResponse
+    return JSONResponse(
+        {"ok": False, "error": "LEGACY_AUTH_RETIRED",
+         "detail": "Use POST /api/v1/auth/bootstrap to provision the first "
+                   "owner, or POST /api/v1/auth/password when signed in."},
+        status_code=410,
+    )
+
+
+class SetPasswordIn(BaseModel):
+    current: str
+    new_password: str
+
+
+@app.post("/api/v1/auth/password")
+def set_password_authenticated(body: SetPasswordIn, request: Request):
+    """Change the owner password. Authenticated, canonical, no plaintext at rest.
+
+    Differences from the route this replaces: the caller must already hold a
+    session, the current password is verified unconditionally rather than only
+    when one happens to be configured, the new credential is stored as a scrypt
+    hash in the security store, and nothing is written to any dotenv file.
+    """
+    from fastapi.responses import JSONResponse
+    from saathi import sessions, authsec, auth_bootstrap
+    from saathi.platform.identity import (
+        hash_password_scrypt, password_policy_check, verify_password_scrypt,
+    )
+    from saathi.security.store import get_store
+
+    ip = request.client.host if request.client else ""
+    ua = request.headers.get("user-agent", "")
+
+    if not _is_authed(request):
+        authsec.audit("change_password", ok=False, ip=ip, ua=ua, detail="unauthenticated")
+        return JSONResponse({"ok": False, "error": "unauthorized"}, status_code=401)
+
+    store = get_store()
+    if not auth_bootstrap.is_active(store):
+        authsec.audit("change_password", ok=False, ip=ip, ua=ua, detail="not_initialized")
+        return JSONResponse(
+            {"ok": False, "error": "NOT_INITIALIZED"}, status_code=409)
+
+    owner = store.owner_id()
+    record = store.latest_password(owner) if owner else None
+    stored = (record or {}).get("hash") or ""
+    if not stored or not verify_password_scrypt(body.current, stored):
+        authsec.audit("change_password", ok=False, ip=ip, ua=ua, detail="wrong_current")
+        return JSONResponse({"ok": False, "error": "Current password is wrong"},
+                            status_code=400)
+
+    ok, reason = password_policy_check(body.new_password)
+    if not ok:
+        authsec.audit("change_password", ok=False, ip=ip, ua=ua, detail=f"policy:{reason}")
+        return JSONResponse({"ok": False, "error": "Password too weak."}, status_code=400)
+
+    store.save_password(owner, hash_password_scrypt(body.new_password), strength_score=4)
+
     cookies = getattr(request, "cookies", None) or {}
     old_token = (cookies.get("baadar_session") or request.headers.get("x-baadar-session", ""))
     sessions.revoke_all(except_token=old_token)
     sessions.revoke(sessions.session_id(old_token))
     token = sessions.create(ua=ua, ip=ip, kind="password")
-    authsec.audit("change_password", ok=True, ip=ip, ua=ua, detail=f"new_session_{sessions.session_id(token)}")
-    from saathi.security.timeline import get_timeline
-    from saathi.security.store import get_store
-    from saathi import sessions as _sessions
-    _browser, _os_name = _sessions.describe(ua)
-    get_timeline().record(get_store().get_or_create_owner(), "password_changed",
-        title="Password changed",
-        detail="From Security settings",
-        meta={"browser": _browser, "os": _os_name, "ip": ip},
-        ip=ip, ua=ua)
+    authsec.audit("change_password", ok=True, ip=ip, ua=ua,
+                  detail=f"new_session_{sessions.session_id(token)}")
     r = JSONResponse({"ok": True, "token": token})
-    r.set_cookie("baadar_session", token, httponly=True, samesite="none", secure=True, max_age=30*24*3600)
+    r.set_cookie("baadar_session", token, httponly=True, samesite="none",
+                 secure=True, max_age=30 * 24 * 3600)
     return r
+
 
 @app.post("/api/v1/auth/logout")
 def logout(request: Request):
@@ -2099,6 +2352,9 @@ def rotate_session(request: Request):
     from saathi import sessions, authsec
     if not _is_authed(request):
         return JSONResponse({"error": "unauthorized"}, status_code=401)
+    gate = _require_active()          # D14: no session may be minted pre-ACTIVE
+    if gate is not None:
+        return gate
     token = (getattr(request, "cookies", {}).get("baadar_session")
              or request.headers.get("x-baadar-session", ""))
     ip = request.headers.get("x-forwarded-for", "").split(",")[0].strip() or (request.client.host if request.client else "")
@@ -2177,60 +2433,31 @@ async def rename_passkey(pid: str, request: Request):
     return {"ok": True}
 
 
-# ── Phase 1: Forgot Password ─────────────────────────────────────────────────
-# Reset tokens live in <state root>/reset_tokens.json with 15-minute TTL.
-
-_RESET_TTL = 900  # 15 minutes
-
-
-def _reset_store() -> Path:
-    return state_path("reset_tokens.json")
-
-
-def _save_reset_tokens(rows: list[dict]) -> None:
-    store = _reset_store()
-    store.parent.mkdir(parents=True, exist_ok=True)
-    now = time.time()
-    store.write_text(json.dumps([r for r in rows if r.get("expires", 0) > now]))
-
-
-def _load_reset_tokens() -> list[dict]:
-    try:
-        now = time.time()
-        rows = json.loads(_reset_store().read_text())
-        return [r for r in rows if r.get("expires", 0) > now]
-    except Exception:
-        return []
+# ── Phase 1: Forgot Password — retired (D14) ─────────────────────────────────
+# The reset-token JSON store is gone with the two routes that used it. Nothing
+# reads or writes <state root>/reset_tokens.json any more; an existing file is
+# left alone rather than deleted, because on a compromised install it is
+# evidence of which tokens were issued.
 
 
 @app.post("/api/v1/auth/forgot")
-async def forgot_password(request: Request):
-    """Request a password reset email. Inert if email not configured (outbox.log fallback)."""
+async def forgot_password_retired(request: Request):
+    """Retired (D14). Recovery-token minting is not an anonymous HTTP operation.
+
+    This route accepted any email address, minted a high-entropy reset token,
+    persisted it, and mailed a redemption link -- all without authentication and
+    without regard to whether the installation had an owner at all. The token it
+    produced was redeemed by ``/api/v1/auth/reset``, which is retired, so the
+    only thing left to preserve was the writing of a credential by an anonymous
+    caller. Recovery for an initialised system is an operator task.
+    """
     from fastapi.responses import JSONResponse
-    from saathi import mailer, authsec
-    body = await request.json()
-    ip = request.headers.get("x-forwarded-for", "").split(",")[0].strip() or (request.client.host if request.client else "")
-    ua = request.headers.get("user-agent", "")
-    # rate limit: 3 requests per 15 min
-    allowed, retry_after = authsec.rate_check(f"{ip}:forgot", limit=3, window=900)
-    if not allowed:
-        return JSONResponse({"ok": False, "error": f"Too many requests. Try again in {retry_after}s."}, status_code=429)
-    email = (body.get("email") or "").strip().lower()
-    authsec.rate_hit(f"{ip}:forgot")
-    # Single-owner: we don't have a user database, so we accept any email attempt
-    # and silently succeed to prevent enumeration. In production, this would lookup
-    # the user's email. For now, we store the token and email it if SMTP configured.
-    token = _secrets.token_urlsafe(32)
-    rows = _load_reset_tokens()
-    rows.append({"token": token, "email": email, "created": time.time(), "expires": time.time() + _RESET_TTL, "ip": ip, "used": False})
-    _save_reset_tokens(rows)
-    reset_link = f"{_rp(request)[1]}/reset-password?token={token}"
-    subject = "SaathiOS — Reset your password"
-    body_text = f"Someone requested a password reset for SaathiOS.\n\nIf this was you, click this link (expires in 15 minutes):\n{reset_link}\n\nIf not, ignore this email."
-    result = mailer.send(email, subject, body_text)
-    authsec.audit("forgot_password", ok=True, ip=ip, ua=ua, detail=f"email={email} delivered={result.get('delivered')}")
-    # Always return success to prevent email enumeration
-    return {"ok": True, "message": "If that email is registered, a reset link was sent."}
+    return JSONResponse(
+        {"ok": False, "error": "LEGACY_AUTH_RETIRED",
+         "detail": "Password recovery over email is retired. Use "
+                   "POST /api/v1/auth/password when signed in."},
+        status_code=410,
+    )
 
 
 class ResetIn(BaseModel):
@@ -2239,40 +2466,22 @@ class ResetIn(BaseModel):
 
 
 @app.post("/api/v1/auth/reset")
-async def reset_password(body: ResetIn, request: Request):
-    """Verify a reset token and set a new password."""
+async def reset_password_retired(body: ResetIn, request: Request):
+    """Retired (D14). Same plaintext-dotenv writer as change-password.
+
+    This route also set ``_PASSWORD_HASH`` from a process global and persisted
+    the new password as cleartext in ``.env``. Recovery for an initialised
+    system is an operator task; it is deliberately not an unauthenticated HTTP
+    endpoint.
+    """
     from fastapi.responses import JSONResponse
-    from saathi import authsec
-    global _PASSWORD_HASH, _RAW_PASSWORD
-    ip = request.headers.get("x-forwarded-for", "").split(",")[0].strip() or (request.client.host if request.client else "")
-    ua = request.headers.get("user-agent", "")
-    rows = _load_reset_tokens()
-    match = next((r for r in rows if r.get("token") == body.token and not r.get("used")), None)
-    if not match:
-        authsec.audit("reset_password", ok=False, ip=ip, ua=ua, detail="invalid_or_expired_token")
-        return JSONResponse({"ok": False, "error": "Invalid or expired reset link."}, status_code=400)
-    strength = authsec.password_strength(body.new_password)
-    if strength["score"] < 2:
-        return JSONResponse({"ok": False, "error": "Password too weak. Use 8+ chars with upper, lower, number and symbol."}, status_code=400)
-    # Invalidate the token
-    match["used"] = True
-    _save_reset_tokens(rows)
-    # Update password
-    try:
-        dotenv_policy.write_dotenv_values({"BAADAR_PASSWORD": body.new_password})
-    except dotenv_policy.DotenvPolicyError:
-        authsec.audit("reset_password", ok=False, ip=ip, ua=ua, detail="dotenv_write_disabled")
-        return JSONResponse(
-            {"ok": False, "error": "Password persistence is disabled in this environment."},
-            status_code=503,
-        )
-    _RAW_PASSWORD = body.new_password
-    _PASSWORD_HASH = authsec.hash_password(body.new_password)
-    authsec.audit("reset_password", ok=True, ip=ip, ua=ua, detail="password_changed")
-    return {"ok": True, "message": "Password updated. Sign in with your new password."}
+    return JSONResponse(
+        {"ok": False, "error": "LEGACY_AUTH_RETIRED",
+         "detail": "Password reset over HTTP is retired. Use "
+                   "POST /api/v1/auth/password when signed in."},
+        status_code=410,
+    )
 
-
-# ── Phase 4: Audit / Login History ───────────────────────────────────────────
 
 @app.get("/api/v1/auth/audit")
 def auth_audit(request: Request, limit: int = 40):
@@ -2344,6 +2553,9 @@ def create_token(body: CreateTokenIn, request: Request):
     from saathi.security.timeline import get_timeline
     if not _is_authed(request):
         return JSONResponse({"error": "unauthorized"}, status_code=401)
+    gate = _require_active()          # D14: no minting before the owner exists
+    if gate is not None:
+        return gate
     user_id = get_store().get_or_create_owner()
     reg = get_registry()
     tid, raw = reg.create(user_id, body.name, purpose=body.purpose,
@@ -2576,8 +2788,9 @@ def chat(body: ChatIn, request: Request):
     """
     # Defence in depth: the middleware already rejects anonymous callers, but
     # this endpoint must never be reachable unauthenticated even if the bypass
-    # list regresses.
-    if not (_is_authed(request) or _is_local(request)):
+    # list regresses. D14: loopback is not identity, so there is no local
+    # fallback here -- a turn that reaches the agent is an authenticated turn.
+    if not _is_authed(request):
         return JSONResponse({"error": "unauthorized"}, status_code=401)
     if not _rate_ok(request):
         return {"reply": "I'm getting a lot of requests right now — give me a minute and try again."}
@@ -2813,8 +3026,9 @@ def _voice_principal(request) -> str:
     api_token = request.headers.get("x-saathi-token", "")
     if api_token:
         return "t:" + _hashlib.sha256(api_token.encode()).hexdigest()[:16]
-    if _is_local(request):
-        return "local"
+    # D14: no "local" principal. A loopback caller holding no credential is not
+    # somebody whose sessions can be namespaced, and returning a shared constant
+    # here put every unauthenticated on-box request into one conversation scope.
     return ""
 
 
@@ -2843,8 +3057,8 @@ async def voice_command(request: Request, file: UploadFile = File(...),
 
     # 1. Authentication first — nothing expensive happens before this. Defence
     #    in depth: the middleware already rejects anonymous callers, and this
-    #    check holds even if the bypass list regresses.
-    if not (_is_authed(request) or _is_local(request)):
+    #    check holds even if the bypass list regresses. D14: no local fallback.
+    if not _is_authed(request):
         return JSONResponse({"error": "unauthorized"}, status_code=401)
     principal = _voice_principal(request)
     if not principal:
@@ -2943,7 +3157,7 @@ async def enroll_voice(request: Request):
     Deliberately no ``UploadFile`` parameter: declaring one would make the
     framework parse and spool the multipart body before this function runs.
     """
-    if not (_is_authed(request) or _is_local(request)):
+    if not _is_authed(request):       # D14: loopback is not identity
         return JSONResponse({"error": "unauthorized"}, status_code=401)
     try:
         from saathi import authsec
@@ -3522,7 +3736,9 @@ async def studio_short_video(body: ShortVideoIn, request: Request):
 async def studio_download(path: str, request: Request):
     from fastapi import HTTPException
     from fastapi.responses import FileResponse as _FR
-    if not _is_local(request) and not _is_authed(request):
+    # D14: authentication only. This endpoint reads an arbitrary caller-supplied
+    # path, so "on the box" was enough to read any file the process could.
+    if not _is_authed(request):
         raise HTTPException(401, "unauthorized")
     p = Path(path)
     if not p.exists():
@@ -3664,8 +3880,9 @@ async def auto_reel(request: Request):
 async def auto_reel_download(path: str, request: Request):
     """Serve the generated reel video file to n8n for upload."""
     from fastapi import HTTPException
-    # allow internal calls from n8n (localhost) without auth
-    if not _is_local(request) and not _is_authed(request):
+    # D14: loopback is not identity. An n8n worker on this box authenticates
+    # with an API token like any other client.
+    if not _is_authed(request):
         raise HTTPException(401, "unauthorized")
     p = Path(path)
     if not p.exists() or not str(p).startswith(str(Path.home() / "SaathiAI" / "reels_output")):

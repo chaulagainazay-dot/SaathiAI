@@ -63,7 +63,10 @@ STORE_INVENTORY: dict[str, str] = {
     "auth_audit.log": "saathi/authsec.py",
     "accounts.db": "saathi/connectors/accounts.py",
     ".connector_key": "saathi/connectors/accounts.py",
-    "reset_tokens.json": "saathi/server.py",
+    # "reset_tokens.json" was here until D14 retired /auth/forgot and /auth/reset.
+    # Nothing writes it any more, so there is no owner whose resolver could be
+    # asserted; an inventory entry for a store with no writer would only ever
+    # fail. An existing file from an older build is left in place as evidence.
     "outbox.log": "saathi/mailer.py",
     "insforge_migrations": "saathi/providers/insforge/migration_store.py",
     "browser_workspace": "saathi/browser/governed.py",

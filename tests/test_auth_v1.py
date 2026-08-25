@@ -68,6 +68,13 @@ def _clean_stores(tmp_path, monkeypatch):
     #    The path is explicit, so it holds even if the resolver misbehaves.
     fresh = _store_mod.SecurityStore(db_path=tmp_path / "security.db")
     fresh.migrate_from_legacy()
+    # D14: authentication now requires an ACTIVE installation. These tests are
+    # about sessions, passkeys and revocation on an owned system, so put the
+    # store in the state a completed bootstrap would leave it in.
+    import sys, pathlib as _pl
+    sys.path.insert(0, str(_pl.Path(__file__).resolve().parent))
+    from support.auth_state import make_active
+    make_active(fresh)
     # Set the module-level singleton directly — all imported get_store()
     # references execute the same code that checks _default_store
     _store_mod._default_store = fresh
@@ -118,10 +125,7 @@ class TestSessionIntegration:
         data = r.json()
         assert data["ok"] is True
         assert data["token"]
-        # token should NOT be the old deterministic hash
-        old = svr._session_token()
-        assert data["token"] != old
-        # and it should validate in the session store
+        # it should validate in the session store
         from saathi import sessions
         assert sessions.validate(data["token"]) is True
 
@@ -155,23 +159,22 @@ class TestSessionIntegration:
         assert sessions.validate(token) is False
 
     def test_change_password_revokes_all_sessions(self, client, monkeypatch):
-        monkeypatch.setenv("BAADAR_PASSWORD", "oldpass123")
-        import saathi.server as svr
-        svr._RAW_PASSWORD = "oldpass123"
-        svr._PASSWORD_HASH = __import__("hashlib").sha256("oldpass123".encode()).hexdigest()
+        from support.auth_state import DEFAULT_TEST_PASSWORD as PW
 
         # login on two "devices"
-        r1 = client.post("/api/v1/auth/login", json={"password": "oldpass123"}, headers={"user-agent": "DeviceA"})
+        r1 = client.post("/api/v1/auth/login", json={"password": PW}, headers={"user-agent": "DeviceA"})
         tok1 = r1.json()["token"]
-        r2 = client.post("/api/v1/auth/login", json={"password": "oldpass123"}, headers={"user-agent": "DeviceB"})
+        r2 = client.post("/api/v1/auth/login", json={"password": PW}, headers={"user-agent": "DeviceB"})
         tok2 = r2.json()["token"]
 
         from saathi import sessions
         assert sessions.validate(tok1) is True
         assert sessions.validate(tok2) is True
 
-        # change password from device A
-        r = client.post("/api/v1/auth/change-password", json={"current": "oldpass123", "new_password": "NewPass123!"}, headers={"x-baadar-session": tok1})
+        # D14: change password from device A via the canonical authenticated
+        # route. /api/v1/auth/change-password is retired -- it was the
+        # unauthenticated fresh-install provisioning path.
+        r = client.post("/api/v1/auth/password", json={"current": PW, "new_password": "NewPassw0rd!23"}, headers={"x-baadar-session": tok1})
         assert r.status_code == 200
         # both old tokens are invalidated
         assert sessions.validate(tok1) is False
@@ -180,17 +183,24 @@ class TestSessionIntegration:
         new_tok = r.json()["token"]
         assert sessions.validate(new_tok) is True
 
-    def test_legacy_deterministic_token_still_works(self, client, monkeypatch):
-        """Backward compatibility: old deterministic token still accepted during transition."""
-        monkeypatch.setenv("BAADAR_PASSWORD", "legacy123")
-        import saathi.server as svr
-        svr._RAW_PASSWORD = "legacy123"
-        svr._PASSWORD_HASH = __import__("hashlib").sha256("legacy123".encode()).hexdigest()
-        old_token = svr._session_token()
+    def test_legacy_deterministic_token_is_rejected(self, client, monkeypatch):
+        """D14: the deterministic transition token is gone, and must stay gone.
 
-        r = client.get("/api/v1/auth/sessions", headers={"x-baadar-session": old_token})
-        # should be authed (returns 200, not 401)
-        assert r.status_code != 401
+        It hashed ``_PASSWORD_HASH or ACCESS_TOKEN or ""`` with a fixed suffix.
+        A system bootstrapped the secure way stores its credential in the
+        security store and leaves that global empty, so the "secret" reduced to
+        ``sha256(":baadar-session")`` -- a constant anyone can compute. Both the
+        seeded and the unseeded form are refused here.
+        """
+        import hashlib
+        import saathi.server as svr
+
+        assert not hasattr(svr, "_session_token")
+        for seed in ("", hashlib.sha256(b"legacy123").hexdigest()):
+            forged = hashlib.sha256((seed + ":baadar-session").encode()).hexdigest()
+            r = client.get("/api/v1/auth/sessions",
+                           headers={"x-baadar-session": forged})
+            assert r.status_code == 401, seed
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -198,60 +208,45 @@ class TestSessionIntegration:
 # ═══════════════════════════════════════════════════════════════════════════════
 
 class TestForgotPassword:
-    def test_forgot_always_returns_success_to_prevent_enumeration(self, client):
-        r = client.post("/api/v1/auth/forgot", json={"email": "nobody@example.com"})
-        assert r.status_code == 200
-        assert r.json()["ok"] is True
-        assert "registered" in r.json()["message"]
+    def test_forgot_endpoint_is_retired(self, client):
+        """D14: /auth/forgot minted a recovery token for an anonymous caller.
 
-    def test_forgot_rate_limit(self, client):
-        for _ in range(3):
-            r = client.post("/api/v1/auth/forgot", json={"email": "a@b.com"})
-            assert r.status_code == 200
-        r = client.post("/api/v1/auth/forgot", json={"email": "a@b.com"})
-        assert r.status_code == 429
-
-    def test_reset_with_valid_token(self, client, monkeypatch, tmp_path):
-        monkeypatch.setenv("BAADAR_PASSWORD", "oldpass")
-        import saathi.server as svr
-        svr._RAW_PASSWORD = "oldpass"
-        svr._PASSWORD_HASH = __import__("hashlib").sha256("oldpass".encode()).hexdigest()
-
-        # request reset
-        r = client.post("/api/v1/auth/forgot", json={"email": "ajay@example.com"})
-        assert r.status_code == 200
-
-        # peek at the stored token (in real test we'd mock mailer)
+        Rate limiting it was never the fix: an unauthenticated request caused a
+        credential to be written and a redemption link to be mailed to whatever
+        address the caller supplied, on a system that need not have had an owner
+        at all. Its redeemer is retired, so there is nothing left to preserve.
+        """
         from saathi.runtime_paths import state_path
-        store = state_path("reset_tokens.json")
-        assert store.is_relative_to(tmp_path), "reset store escaped the test root"
-        rows = json.loads(store.read_text()) if store.exists() else []
-        assert len(rows) == 1
-        token = rows[0]["token"]
 
-        # reset with token
-        r = client.post("/api/v1/auth/reset", json={"token": token, "new_password": "NewStrong1!"})
-        assert r.status_code == 200
-        assert r.json()["ok"] is True
+        r = client.post("/api/v1/auth/forgot", json={"email": "a@b.com"})
+        assert r.status_code == 410
+        assert r.json()["error"] == "LEGACY_AUTH_RETIRED"
+        assert not state_path("reset_tokens.json").exists()
 
-        # new password works
-        r = client.post("/api/v1/auth/login", json={"password": "NewStrong1!"})
-        assert r.status_code == 200
-        assert r.json()["ok"] is True
+    def test_reset_endpoint_is_retired(self, client):
+        """D14: /api/v1/auth/reset is gone, and it cannot set a password.
 
-    def test_reset_rejects_invalid_token(self, client):
-        r = client.post("/api/v1/auth/reset", json={"token": "badtoken", "new_password": "NewStrong1!"})
-        assert r.status_code == 400
-        assert "Invalid or expired" in r.json()["error"]
+        This class used to prove the reset flow end to end. That flow was one of
+        the two plaintext writers: it set the process-global ``_PASSWORD_HASH``
+        and persisted the new password as cleartext in the checkout's ``.env``,
+        reachable without a session. What must now be true is that it changes
+        nothing at all -- for a good token, a bad token, and a weak password
+        alike, so no input shape can still reach a writer.
+        """
+        for body in ({"token": "testtok123", "new_password": "NewStrong1!23"},
+                     {"token": "badtoken", "new_password": "NewStrong1!23"},
+                     {"token": "testtok123", "new_password": "123"}):
+            r = client.post("/api/v1/auth/reset", json=body)
+            assert r.status_code == 410, body
+            assert r.json()["error"] == "LEGACY_AUTH_RETIRED"
+            assert "token" not in r.json()
 
-    def test_reset_rejects_weak_password(self, client):
-        # create a valid token first
-        from saathi.server import _save_reset_tokens, _load_reset_tokens
-        token = "testtok123"
-        _save_reset_tokens([{"token": token, "email": "", "created": time.time(), "expires": time.time() + 900, "ip": "", "used": False}])
-        r = client.post("/api/v1/auth/reset", json={"token": token, "new_password": "123"})
-        assert r.status_code == 400
-        assert "weak" in r.json()["error"].lower()
+    def test_recovery_token_store_has_no_writer_left(self):
+        """Nothing may mint a reset token any more, from any code path."""
+        import saathi.server as svr
+
+        for gone in ("_save_reset_tokens", "_load_reset_tokens", "_reset_store"):
+            assert not hasattr(svr, gone), gone
 
 
 # ═══════════════════════════════════════════════════════════════════════════════

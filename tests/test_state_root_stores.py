@@ -209,12 +209,16 @@ def test_connector_fernet_key_is_isolated_and_never_copied(iso_root):
     assert minted.stat().st_mode & 0o777 == 0o600
 
 
-def test_reset_token_store_is_isolated(iso_root):
+def test_reset_token_store_no_longer_exists(iso_root):
+    """D14 retired the reset-token store along with the routes that used it.
+
+    Isolation of a store that nothing writes is not a property worth asserting;
+    what matters now is that no writer came back.
+    """
     import saathi.server as server
-    assert server._reset_store() == iso_root / "reset_tokens.json"
-    server._save_reset_tokens([{"token": "t", "expires": 2 ** 40}])
-    assert (iso_root / "reset_tokens.json").is_file()
-    assert server._load_reset_tokens()[0]["token"] == "t"
+    for gone in ("_reset_store", "_save_reset_tokens", "_load_reset_tokens"):
+        assert not hasattr(server, gone), gone
+    assert not (iso_root / "reset_tokens.json").exists()
 
 
 def test_oauth_state_store_is_isolated(iso_root):

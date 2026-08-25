@@ -17,6 +17,26 @@ from fastapi.testclient import TestClient
 from saathi import config, server, voice
 
 
+@pytest.fixture(autouse=True)
+def _active_installation(tmp_path, monkeypatch):
+    """D14: an authenticated caller needs an ACTIVE installation to exist."""
+    import sys, pathlib as _pl
+    sys.path.insert(0, str(_pl.Path(__file__).resolve().parent))
+    from saathi.security import store as store_mod
+    from support.auth_state import make_active
+
+    monkeypatch.setenv("SAATHI_STATE_ROOT", str(tmp_path / "state"))
+    store_mod.close_store()
+    store_mod._default_store = None
+    fresh = store_mod.SecurityStore(db_path=tmp_path / "security.db")
+    store_mod._default_store = fresh
+    make_active(fresh)
+    yield fresh
+    fresh.close()
+    store_mod.close_store()
+    store_mod._default_store = None
+
+
 @pytest.fixture
 def client():
     return TestClient(server.app)
@@ -24,7 +44,11 @@ def client():
 
 @pytest.fixture
 def authed():
-    return {"x-baadar-session": server._session_token()}
+    # D14: a real session. ``_session_token()`` is gone -- it was a constant
+    # derived from a process global an ACTIVE system no longer sets.
+    from saathi import sessions
+    return {"x-baadar-session": sessions.create(ua="pytest", ip="127.0.0.1",
+                                                kind="password")}
 
 
 def _upload(content=b"\x1a\x45\xdf\xa3fake-webm"):

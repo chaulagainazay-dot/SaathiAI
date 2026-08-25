@@ -155,6 +155,17 @@ CREATE TABLE IF NOT EXISTS audit_log (
     session_id  TEXT
 );
 
+-- D14: first-owner bootstrap marker. One row, id=1, written inside the same
+-- transaction that creates the owner and its credential. Its presence is what
+-- makes bootstrap permanently unavailable, including across restarts -- a
+-- process-global flag would re-arm on every boot.
+CREATE TABLE IF NOT EXISTS bootstrap_marker (
+    id           INTEGER PRIMARY KEY CHECK (id = 1),
+    completed_at REAL NOT NULL,
+    owner_id     TEXT NOT NULL,
+    method       TEXT NOT NULL
+);
+
 -- Multi-user foundation (stubs)
 CREATE TABLE IF NOT EXISTS organizations (
     id          TEXT PRIMARY KEY,
@@ -246,10 +257,22 @@ class SecurityStore:
 
     # ── users ────────────────────────────────────────────────────────────────
     def get_or_create_owner(self, email: str = "", name: str = "") -> str:
-        """Return the owner user_id. Creates if absent."""
+        """Return the owner user_id, creating it only on a bootstrapped system.
+
+        D14: creating an owner is bootstrap's job and nobody else's. This method
+        used to manufacture one on demand, and every caller of it -- including
+        ``has_passkey``, reached by the public unlock screen -- therefore wrote a
+        users row into an uninitialised store. That row is itself the evidence
+        ``auth_state`` reads to detect planting, so a fresh install answered one
+        anonymous GET and then classified itself CONTAMINATED_UNINITIALIZED,
+        refusing the bootstrap it had never had. The creating branch is now
+        conditional on the bootstrap marker; before that, callers get "".
+        """
         row = self.db.execute("SELECT id FROM users WHERE status='active' LIMIT 1").fetchone()
         if row:
             return row["id"]
+        if not self.bootstrap_completed():
+            return ""
         uid = uuid.uuid4().hex
         now = self._now()
         self.db.execute(
@@ -263,6 +286,41 @@ class SecurityStore:
         )
         self.db.commit()
         return uid
+
+    def owner_id(self) -> str | None:
+        """The owner user_id, or None. Never creates.
+
+        ``get_or_create_owner`` is unusable for an authentication decision: it
+        manufactures the very identity the caller is asking about, which is how
+        an unauthenticated caller came to own a freshly installed system.
+        """
+        row = self.db.execute(
+            "SELECT id FROM users WHERE status='active' ORDER BY created_at LIMIT 1"
+        ).fetchone()
+        return row["id"] if row else None
+
+    def bootstrap_completed(self) -> dict | None:
+        row = self.db.execute("SELECT * FROM bootstrap_marker WHERE id=1").fetchone()
+        return dict(row) if row else None
+
+    def credential_census(self) -> dict[str, int]:
+        """Count every durable authentication artefact this store holds.
+
+        Used to tell an untouched installation apart from one where something
+        has already planted a credential. Counting is read-only and creates
+        nothing.
+        """
+        def n(sql: str) -> int:
+            return int(self.db.execute(sql).fetchone()[0])
+
+        return {
+            "users":     n("SELECT COUNT(*) FROM users"),
+            "passwords": n("SELECT COUNT(*) FROM passwords"),
+            "sessions":  n("SELECT COUNT(*) FROM sessions"),
+            "api_tokens": n("SELECT COUNT(*) FROM api_tokens"),
+            "passkeys":  n("SELECT COUNT(*) FROM passkeys"),
+            "user_roles": n("SELECT COUNT(*) FROM user_roles"),
+        }
 
     def get_user(self, user_id: str) -> dict | None:
         row = self.db.execute("SELECT * FROM users WHERE id=?", (user_id,)).fetchone()
@@ -577,10 +635,22 @@ class SecurityStore:
 
     # ── migration from legacy JSON files ─────────────────────────────────────
     def migrate_from_legacy(self) -> dict:
-        """One-time migration from JSON files to SQLite. Idempotent."""
+        """One-time migration from JSON files to SQLite. Idempotent.
+
+        D14: refused before the system is bootstrapped. ``get_store()`` runs this
+        on first access in every process, so on an uninitialised install it ran
+        before anybody had authenticated -- creating an owner and importing
+        legacy sessions and passkeys into a store with no owner behind them.
+        That is credential planting performed by the server on its own behalf,
+        and it left a fresh install unable to bootstrap at all. A legacy upgrade
+        migrates on the first process that starts after its owner exists.
+        """
         migrated = {"sessions": 0, "passkeys": 0, "reset_tokens": 0, "audit": 0}
 
-        # Ensure owner exists
+        if not self.bootstrap_completed():
+            migrated["skipped"] = "NOT_INITIALIZED"
+            return migrated
+
         owner_id = self.get_or_create_owner()
 
         # Sessions

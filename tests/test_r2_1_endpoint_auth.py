@@ -21,6 +21,32 @@ from saathi import server, voice
 SESSION_HEADER = "x-baadar-session"
 
 
+@pytest.fixture(autouse=True)
+def _active_installation(tmp_path, monkeypatch):
+    """D14: authentication requires an ACTIVE installation.
+
+    These tests are about session scoping and the non-authorizing nature of a
+    speaker match, not about bootstrap, so they run against a store in the state
+    a completed bootstrap leaves behind. Without this they would all fail closed
+    at the new gate and stop testing what they are named for.
+    """
+    import sys, pathlib as _pl
+    sys.path.insert(0, str(_pl.Path(__file__).resolve().parent))
+    from saathi.security import store as store_mod
+    from support.auth_state import make_active
+
+    monkeypatch.setenv("SAATHI_STATE_ROOT", str(tmp_path / "state"))
+    store_mod.close_store()
+    store_mod._default_store = None
+    fresh = store_mod.SecurityStore(db_path=tmp_path / "security.db")
+    store_mod._default_store = fresh
+    make_active(fresh)
+    yield fresh
+    fresh.close()
+    store_mod.close_store()
+    store_mod._default_store = None
+
+
 @pytest.fixture
 def client():
     return TestClient(server.app)
@@ -28,8 +54,16 @@ def client():
 
 @pytest.fixture
 def authed():
-    """Headers for a genuinely signed-in caller."""
-    return {SESSION_HEADER: server._session_token()}
+    """Headers for a genuinely signed-in caller.
+
+    D14 removed the deterministic ``_session_token()`` this used to present: it
+    was derived from a process global that a securely bootstrapped system leaves
+    empty, so it degenerated into a public constant. A real session is minted
+    instead, which is what the endpoints under test actually require.
+    """
+    from saathi import sessions
+    return {SESSION_HEADER: sessions.create(ua="pytest", ip="127.0.0.1",
+                                            kind="password")}
 
 
 def _upload(content=b"\x1a\x45\xdf\xa3fake-webm", name="speech.webm", mime="audio/webm"):
