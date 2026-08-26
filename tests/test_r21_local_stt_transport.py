@@ -26,16 +26,48 @@ def make_wav(seconds: float = 0.5, rate: int = 16000) -> bytes:
     return b"RIFF" + struct.pack("<I", len(body)) + body
 
 
-def build_app(user_id: str | None):
+class _StubContext:
+    """The shape ``require_context`` returns: a resolved platform principal."""
+
+    def __init__(self, user_id: str):
+        self.user_id = user_id
+
+
+def build_app(user_id: str | None, monkeypatch=None):
+    """A client whose requests carry an authenticated principal, or none.
+
+    D16: these endpoints used to be gated on ``request.state.user_id``, which
+    nothing in the application ever assigned — so the gate refused every caller
+    and the local engine was unreachable. Authentication now binds to the
+    D15-derived platform session the local-STT client actually sends, resolved
+    through ``require_context``. The principal is stubbed here so this suite
+    stays about *transport* — bounds, media types, cleanup, authority — rather
+    than re-testing platform session validation, which
+    tests/test_d16_local_stt_auth.py covers against the real validator.
+    """
     app = FastAPI()
-
-    @app.middleware("http")
-    async def identity(request, call_next):
-        request.state.user_id = user_id
-        return await call_next(request)
-
     app.include_router(voice_api.router)
+    ctx = _StubContext(user_id) if user_id else None
+    target = monkeypatch or _module_monkeypatch()
+    target.setattr(voice_api, "_stt_principal", lambda request: ctx)
     return TestClient(app)
+
+
+def _module_monkeypatch():
+    from _pytest.monkeypatch import MonkeyPatch
+    mp = MonkeyPatch()
+    _ACTIVE_PATCHES.append(mp)
+    return mp
+
+
+_ACTIVE_PATCHES: list = []
+
+
+@pytest.fixture(autouse=True)
+def _undo_principal_patches():
+    yield
+    while _ACTIVE_PATCHES:
+        _ACTIVE_PATCHES.pop().undo()
 
 
 @pytest.fixture()
@@ -160,9 +192,26 @@ def test_supported_language_hint_is_passed_through(engine_calls):
 
 # ── the transport is not on the anonymous bypass list ───────────────────────
 
-def test_stt_paths_are_not_exempt_from_the_api_auth_middleware():
+def test_stt_paths_reach_their_validator_only_with_a_platform_credential():
+    """D16: these paths are named in the middleware, but not exempted.
+
+    They are listed so a request carrying a platform credential can reach the
+    router that validates it — the local-STT client authenticates with
+    ``X-Platform-Token``, not with a canonical session header, so a blanket
+    rejection here made the engine unreachable. A caller presenting nothing
+    still never reaches the handler, and no prefix is exempt.
+    """
+    import inspect
+    import saathi.server as svr
+
     source = (__import__("pathlib").Path(__file__).resolve().parents[1]
               / "saathi" / "server.py").read_text()
-    assert '"/api/v1/voice/stt/transcribe"' not in source
-    assert '"/api/v1/voice/stt/health"' not in source
-    assert 'path.startswith("/api/v1/voice/stt' not in source
+    assert 'path.startswith("/api/v1/voice/stt' not in source, "no prefix exemption"
+
+    gate = inspect.getsource(svr._auth)
+    assert "_PLATFORM_CREDENTIAL_PATHS" in gate
+    assert "_presents_platform_credential(request)" in gate
+    # The paths live in the credential-gated set, never in the public one.
+    assert "/api/v1/voice/stt/health" in svr._PLATFORM_CREDENTIAL_PATHS
+    assert "/api/v1/voice/stt/transcribe" in svr._PLATFORM_CREDENTIAL_PATHS
+    assert not (svr._PUBLIC_PLATFORM_PATHS & svr._PLATFORM_CREDENTIAL_PATHS)

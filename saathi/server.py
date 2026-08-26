@@ -1788,6 +1788,17 @@ _PUBLIC_PLATFORM_PATHS = frozenset({
 })
 
 
+#: Local speech-engine endpoints. They authenticate with the same D15-derived
+#: platform session the rest of the platform surface uses (the local-STT client
+#: sends X-Platform-Token), so they must be allowed to reach their own validator
+#: rather than being rejected here for lacking a canonical session header. The
+#: router refuses anonymous, expired, revoked and wrong-principal callers.
+_PLATFORM_CREDENTIAL_PATHS = frozenset({
+    "/api/v1/voice/stt/health",
+    "/api/v1/voice/stt/transcribe",
+})
+
+
 def _presents_platform_credential(request) -> bool:
     """Whether this request carries something the platform layer can validate.
 
@@ -1865,7 +1876,8 @@ async def _auth(request, call_next):
             # Everything else under the prefix is now authenticated like the
             # rest of the API.
             or path in _PUBLIC_PLATFORM_PATHS
-            or (path.startswith("/api/v1/platform/")
+            or ((path.startswith("/api/v1/platform/")
+                 or path in _PLATFORM_CREDENTIAL_PATHS)
                 and _presents_platform_credential(request))
             or path == "/api/v1/studio/queue"
             or path == "/api/v1/studio/plan"

@@ -212,11 +212,52 @@ from saathi.voice_os import local_whisper as _local_stt  # noqa: E402
 _STT_PROVIDER = _local_stt.WhisperCppSTT()
 
 
-def _stt_authenticated(request: Request) -> bool:
-    """Defence in depth. The middleware already rejects anonymous callers on
-    this path; a regression in its bypass list must not silently open the
-    speech engine to an unauthenticated caller."""
-    return bool(getattr(request.state, "user_id", None))
+def _stt_principal(request: Request):
+    """The authenticated platform principal behind this request, or ``None``.
+
+    This replaces ``_stt_authenticated``, which read
+    ``getattr(request.state, "user_id", None)``. Nothing in the application ever
+    assigned that attribute -- no commit in the history of ``saathi/server.py``
+    sets it -- so the check returned False for every caller and both local-STT
+    endpoints answered 401 to everyone, including the owner. The local speech
+    engine has been unreachable since it was introduced.
+
+    The fix is not to populate ``request.state.user_id`` globally. Two other
+    routers already read it as ``getattr(request.state, "user_id", None) or
+    "ajay"``, so filling it in the middleware would silently re-attribute
+    connector and control-centre actions from a hardcoded string to the real
+    owner id -- a change to unrelated subsystems, made invisibly, to fix a voice
+    endpoint.
+
+    Instead this binds to the credential the client already sends. The local-STT
+    adapter authenticates with ``X-Platform-Token`` -- the D15 session derived
+    from the canonical owner -- so the same ``require_context`` that guards every
+    other platform surface guards this one, with its session validity, idle TTL,
+    membership and workspace-isolation checks intact.
+
+    Cookies are deliberately not accepted. A header credential is not attached
+    automatically by the browser, so a cross-site page cannot cause a
+    transcription on the owner's behalf, and no CSRF token is needed for a POST
+    that cannot be forged in the first place.
+    """
+    from saathi.platform.context import PlatformContextError
+    from saathi.platform.service import default_platform
+
+    header = (request.headers.get("x-platform-token") or "").strip()
+    if not header:
+        auth = (request.headers.get("authorization") or "").strip()
+        if auth.lower().startswith("bearer "):
+            header = auth[7:].strip()
+    if not header:
+        return None
+    try:
+        return default_platform().require_context(header)
+    except PlatformContextError:
+        # Anonymous, unknown, expired, revoked, or a session whose membership or
+        # workspace no longer holds. All of them fail closed and identically.
+        return None
+    except Exception:
+        return None
 
 
 @router.get("/stt/health")
@@ -224,9 +265,10 @@ def stt_health(request: Request):
     """Read-only readiness for the dock and for diagnostics.
 
     Diagnostics renders this without opening a microphone, so both surfaces
-    observe the same truth about the engine instead of disagreeing.
+    observe the same truth about the engine instead of disagreeing. Read-only:
+    it decodes nothing and writes nothing.
     """
-    if not _stt_authenticated(request):
+    if _stt_principal(request) is None:
         return JSONResponse({"error": "unauthorized"}, status_code=401)
     return _STT_PROVIDER.health()
 
@@ -240,7 +282,8 @@ async def stt_transcribe(request: Request,
     Order matters: authenticate, then bound, then decode, then transcribe.
     Nothing expensive happens for an anonymous or oversized caller.
     """
-    if not _stt_authenticated(request):
+    ctx = _stt_principal(request)
+    if ctx is None:
         return JSONResponse({"error": "unauthorized"}, status_code=401)
 
     declared = (file.content_type or "").split(";")[0].strip().lower()
@@ -273,6 +316,9 @@ async def stt_transcribe(request: Request,
         "provider": result.provider,
         "privacyClass": "LOCAL_CONFIRMED",
         "durationMs": round(result.duration_ms),
+        # Attribution comes from the validated session, never from the request
+        # body or a query parameter: a caller cannot transcribe as somebody else.
+        "principal": ctx.user_id,
         # A transcript is input, never authority. Stated in the payload so a
         # client cannot read authority into a successful response.
         "authority": "none",
