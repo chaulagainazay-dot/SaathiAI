@@ -10,6 +10,7 @@
 
 import Link from "next/link";
 import VoiceDiagnosticsPanel from "@/components/voice/VoiceDiagnosticsPanel";
+import MicCalibrationPanel from "@/components/voice/MicCalibrationPanel";
 
 const row = { display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" };
 const badge = {
@@ -48,6 +49,7 @@ export default function VoiceDiagnosticsPage() {
       </header>
 
       <VoiceDiagnosticsPanel />
+      <MicCalibrationPanel />
     </div>
   );
 }
