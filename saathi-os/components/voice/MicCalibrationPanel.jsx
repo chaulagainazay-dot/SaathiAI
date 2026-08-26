@@ -25,6 +25,10 @@ import {
 import { createAudioFrameTap } from "@/lib/voice-session/audio-frame-tap";
 import { frameRms, frameZcr } from "@/lib/voice-session/energy-vad";
 import {
+  createCalibrationCapture,
+  TERMINAL_REASONS,
+} from "@/lib/voice-session/calibration-capture";
+import {
   CALIBRATION_PHASES,
   CALIBRATION_SENTENCE,
   CALIBRATION_TOTAL_SECONDS,
@@ -42,110 +46,91 @@ export default function MicCalibrationPanel() {
   const [results, setResults] = useState(null);
   const [device, setDevice] = useState(null);
 
-  const claimRef = useRef(null);
-  const tapRef = useRef(null);
-  const streamRef = useRef(null);
+  const captureRef = useRef(null);
   const samplesRef = useRef({});
   const startedAtRef = useRef(0);
-  const timerRef = useRef(null);
-  const stoppedRef = useRef(false);
 
   /**
-   * One teardown for every exit: completion, Stop, error, preemption, route
-   * change, unmount, logout. Idempotent, because several of those can happen in
-   * the same tick (a preempt that also throws, a Stop during teardown).
+   * One terminal handler for every exit — completion, Stop, the hard deadline,
+   * an error, preemption, route change, logout and unmount. The capture manager
+   * guarantees it runs exactly once per generation and that the microphone is
+   * already released by the time it does.
    */
-  const teardown = useCallback((nextStatus) => {
-    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
-    try { tapRef.current?.stop?.(); } catch { /* already stopped */ }
-    tapRef.current = null;
-    // Stop tracks directly as well as through the claim: a run that failed
-    // between getUserMedia and setMediaStream still has a live device.
-    try { streamRef.current?.getTracks?.().forEach((t) => t.stop()); } catch { /* gone */ }
-    streamRef.current = null;
-    const claim = claimRef.current;
-    claimRef.current = null;
-    try { claim?.release?.(); } catch { /* already released */ }
+  const onTerminal = useCallback((reason) => {
     setPhase("");
     setRemaining(0);
-    if (nextStatus !== undefined) setStatus(nextStatus);
+    if (reason === TERMINAL_REASONS.COMPLETED) {
+      setResults(summariseCalibration(samplesRef.current));
+      setStatus("Calibration complete. Microphone released.");
+    } else if (reason === TERMINAL_REASONS.DEADLINE) {
+      // Truthful: the measurement did not finish, so no results are published.
+      setStatus("Calibration timed out and the microphone was released. No results.");
+    } else if (reason === TERMINAL_REASONS.PREEMPTED) {
+      setStatus("Another voice surface took the microphone. Calibration stopped.");
+    } else if (reason === TERMINAL_REASONS.ERROR) {
+      setStatus("The microphone could not be captured. Nothing was recorded.");
+    } else if (reason === TERMINAL_REASONS.STOPPED) {
+      setStatus("Calibration stopped. Microphone released.");
+    }
   }, []);
 
-  // Route change, unmount and logout all reach this.
-  useEffect(() => () => teardown(), [teardown]);
+  function capture() {
+    if (!captureRef.current) {
+      captureRef.current = createCalibrationCapture({
+        acquireClaim: ({ onPreempt }) =>
+          acquireInputClaim({ label: "diagnostics.mic-calibration", onPreempt }),
+        openMicrophone: async (claim) => {
+          const stream = await openMicrophoneForClaim(claim);
+          setDevice(describeTrackSettings(stream.getAudioTracks?.()[0]));
+          return stream;
+        },
+        createTap: (stream, onFrame) => createAudioFrameTap({ stream, onFrame }),
+        onTerminal,
+      });
+    }
+    return captureRef.current;
+  }
 
-  const finish = useCallback(() => {
-    if (stoppedRef.current) return;
-    stoppedRef.current = true;
-    const collected = samplesRef.current;
-    const summary = summariseCalibration(collected);
-    setResults(summary);
-    teardown("Calibration complete. Microphone released.");
-  }, [teardown]);
+  // Route change, unmount and logout all reach this.
+  useEffect(() => () => { captureRef.current?.stop?.(TERMINAL_REASONS.DISPOSED); }, []);
 
   const start = useCallback(async () => {
-    if (claimRef.current) return;
-    stoppedRef.current = false;
+    const cap = capture();
+    if (cap.isActive()) return;
     samplesRef.current = Object.fromEntries(CALIBRATION_PHASES.map((p) => [p.id, []]));
     setResults(null);
+    setDevice(null);
     setStatus("Requesting the microphone…");
-
-    const claim = acquireInputClaim({
-      label: "diagnostics.mic-calibration",
-      onPreempt: () => teardown("Another voice surface took the microphone. Calibration stopped."),
-    });
-    claimRef.current = claim;
-
-    let stream;
-    try {
-      // No constraint argument: the production DEFAULT_MIC_CONSTRAINTS contract
-      // applies, so this measures what Live Voice would actually receive.
-      stream = await openMicrophoneForClaim(claim);
-    } catch (error) {
-      const denied = /denied|not.?allowed|permission/i.test(String(error?.name || error?.message || ""));
-      teardown(denied
-        ? "Microphone permission was denied. Nothing was captured."
-        : "The microphone could not be opened. Nothing was captured.");
-      return;
-    }
-    streamRef.current = stream;
-    setDevice(describeTrackSettings(stream.getAudioTracks?.()[0]));
-
     startedAtRef.current = Date.now();
-    const tap = createAudioFrameTap({
-      stream,
+
+    const outcome = await cap.start({
       onFrame: (frame) => {
-        const elapsed = Date.now() - startedAtRef.current;
-        const id = phaseAtElapsed(elapsed);
-        if (!id) return;                       // past the end: dropped, not misattributed
-        // Only two numbers per frame are kept. The frame itself is not retained.
+        const id = phaseAtElapsed(Date.now() - startedAtRef.current);
+        if (!id) return;
         samplesRef.current[id].push({ rms: frameRms(frame), zcr: frameZcr(frame) });
       },
+      onRunning: () => {
+        const elapsed = Date.now() - startedAtRef.current;
+        const id = phaseAtElapsed(elapsed);
+        setRemaining(Math.max(0, Math.ceil((CALIBRATION_TOTAL_SECONDS * 1000 - elapsed) / 1000)));
+        if (!id) return true;                 // completed: the manager terminalizes
+        setPhase(id);
+        return false;
+      },
+      setIntervalImpl: setInterval,
+      clearIntervalImpl: clearInterval,
     });
-    tapRef.current = tap;
-    try {
-      await tap.start();
-    } catch {
-      teardown("The audio analyser could not start. Nothing was captured.");
-      return;
-    }
 
-    setPhase(CALIBRATION_PHASES[0].id);
-    setRemaining(CALIBRATION_TOTAL_SECONDS);
-    setStatus("Calibrating. Audio is analysed in memory only.");
-    timerRef.current = setInterval(() => {
-      const elapsed = Date.now() - startedAtRef.current;
-      const id = phaseAtElapsed(elapsed);
-      setRemaining(Math.max(0, Math.ceil((CALIBRATION_TOTAL_SECONDS * 1000 - elapsed) / 1000)));
-      if (!id) { finish(); return; }
-      setPhase(id);
-    }, 200);
-  }, [finish, teardown]);
+    if (outcome.started) {
+      setPhase(CALIBRATION_PHASES[0].id);
+      setRemaining(CALIBRATION_TOTAL_SECONDS);
+      setStatus("Calibrating. Audio is analysed in memory only.");
+    }
+  }, [onTerminal]);
 
   const stop = useCallback(() => {
-    if (!claimRef.current) return;
-    finish();
-  }, [finish]);
+    captureRef.current?.stop?.(TERMINAL_REASONS.STOPPED);
+  }, []);
 
   const clear = useCallback(() => {
     setResults(null);

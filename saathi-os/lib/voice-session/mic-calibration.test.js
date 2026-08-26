@@ -214,15 +214,19 @@ describe("device reporting", () => {
 
 describe("the calibration surface contract", () => {
   it("never opens the microphone on mount", () => {
-    // Capture may appear only inside the explicit start callback.
-    const openAt = PANEL.indexOf("openMicrophoneForClaim(claim)");
+    // Capture is delegated to the capture manager, which arms its deadline
+    // before opening anything. The panel supplies openMicrophone as a dependency
+    // and never calls it itself outside that wiring.
+    const mountEffect = PANEL.slice(PANEL.indexOf("useEffect(() =>"), PANEL.indexOf("const start ="));
+    assert.ok(!mountEffect.includes("openMicrophoneForClaim"), "no capture from mount");
+    assert.ok(!mountEffect.includes("cap.start"), "no capture from mount");
+    assert.equal(PANEL.split("openMicrophoneForClaim(").length - 1, 1,
+                 "exactly one place the device is opened");
+    const capAt = PANEL.indexOf("cap.start(");
     const startAt = PANEL.indexOf("const start =");
     const stopAt = PANEL.indexOf("const stop =");
-    assert.ok(startAt > -1 && stopAt > startAt);
-    assert.ok(openAt > startAt && openAt < stopAt,
-              "the device may only be opened from the start callback");
-    assert.equal(PANEL.split("openMicrophoneForClaim(").length - 1, 1,
-                 "exactly one capture site");
+    assert.ok(capAt > startAt && capAt < stopAt,
+              "capture may only begin from the explicit start callback");
     // Capture lives behind an explicit control.
     assert.ok(PANEL.includes('data-testid="calibration-start"'));
     assert.ok(PANEL.includes("onClick={start}"));
@@ -270,23 +274,27 @@ describe("the calibration surface contract", () => {
               "derived data must not be persisted");
   });
 
-  it("tears down on completion, stop, error, preemption and unmount", () => {
-    assert.ok(PANEL.includes("onPreempt"), "preemption must tear down");
-    assert.match(PANEL, /useEffect\(\(\) => \(\) => teardown\(\), \[teardown\]\)/);
-    // Every failure path releases before returning.
-    const starts = PANEL.slice(PANEL.indexOf("const start ="), PANEL.indexOf("const stop ="));
-    assert.ok(starts.split("teardown(").length - 1 >= 3,
-              "each early exit must tear down first");
-    assert.ok(starts.includes("return;"), "early exits actually return");
+  it("routes every terminal reason through one handler", () => {
+    // Teardown itself belongs to the capture manager, which guarantees it runs
+    // exactly once per generation; see calibration-capture.test.js. What the
+    // panel owes is a truthful reaction to each reason, and disposal on unmount.
+    const handler = PANEL.slice(PANEL.indexOf("const onTerminal"), PANEL.indexOf("function capture()"));
+    for (const reason of ["COMPLETED", "DEADLINE", "PREEMPTED", "ERROR", "STOPPED"]) {
+      assert.ok(handler.includes(reason), reason);
+    }
+    assert.ok(PANEL.includes("onPreempt"), "preemption is wired to the manager");
+    assert.match(PANEL, /useEffect\(\(\) => \(\) => \{ captureRef\.current\?\.stop\?\./);
   });
 
-  it("stops tracks and releases ownership exactly once, idempotently", () => {
-    const td = PANEL.slice(PANEL.indexOf("const teardown ="), PANEL.indexOf("const finish ="));
-    assert.ok(td.includes("tapRef.current = null"));
-    assert.ok(td.includes("streamRef.current = null"));
-    assert.ok(td.includes("claimRef.current = null"));
-    assert.ok(td.includes("release?.()"));
-    assert.ok(td.includes("t.stop()"));
+  it("delegates track/claim cleanup to the capture manager", () => {
+    // The panel must not hold its own stream, tap or claim references: two
+    // owners of the same teardown is how a resource survives one of them.
+    for (const ref of ["streamRef", "tapRef", "claimRef", "timerRef"]) {
+      assert.ok(!PANEL.includes(ref), ref + " must live in the capture manager");
+    }
+    assert.ok(PANEL.includes("createCalibrationCapture"));
+    const mgr = readFileSync(join(HERE, "calibration-capture.js"), "utf8");
+    assert.ok(mgr.includes("t.stop()") && mgr.includes("release?.()"));
   });
 
   it("clears derived results on demand", () => {

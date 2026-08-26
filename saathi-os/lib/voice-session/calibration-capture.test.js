@@ -1,0 +1,298 @@
+/**
+ * The calibration capture deadline.
+ *
+ * The first implementation armed its timer after `await tap.start()`. The
+ * microphone was therefore already open while the only thing that would ever
+ * close it was still being constructed, so a start that hung left the device
+ * live with nothing bounding it. These tests drive exactly those shapes — a
+ * promise that never settles, one that resolves after the deadline, one that
+ * rejects with resources half-open — and require the device to end up closed
+ * every time.
+ *
+ * Everything is injected, so a hung start is just a promise nobody resolves and
+ * time is whatever the fake clock says.
+ */
+import { describe, it, beforeEach } from "node:test";
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
+import {
+  createCalibrationCapture,
+  CALIBRATION_DEADLINE_MS,
+  CALIBRATION_CLEANUP_MARGIN_MS,
+  TERMINAL_REASONS,
+} from "./calibration-capture.js";
+import { CALIBRATION_TOTAL_SECONDS } from "./mic-calibration.js";
+
+const HERE = dirname(fileURLToPath(import.meta.url));
+const PANEL = readFileSync(
+  join(HERE, "..", "..", "components", "voice", "MicCalibrationPanel.jsx"), "utf8")
+  .replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+
+/** A clock whose timers fire only when the test says so. */
+function fakeClock() {
+  let seq = 0;
+  const timers = new Map();
+  return {
+    setTimeoutImpl: (fn, ms) => { const id = ++seq; timers.set(id, { fn, ms }); return id; },
+    clearTimeoutImpl: (id) => { timers.delete(id); },
+    fire: (ms) => {
+      for (const [id, t] of [...timers]) {
+        if (t.ms <= ms) { timers.delete(id); t.fn(); }
+      }
+    },
+    pending: () => timers.size,
+  };
+}
+
+function harness({ startBehaviour = "resolve" } = {}) {
+  const log = [];
+  const track = { kind: "audio", stopped: 0, stop() { this.stopped += 1; log.push("track.stop"); } };
+  const stream = { getTracks: () => [track] };
+  const claim = { released: 0, release() { this.released += 1; log.push("claim.release"); } };
+  let preempt = null;
+  let resolveStart = null;
+  let rejectStart = null;
+  const tap = { started: 0, stopped: 0,
+    start() {
+      this.started += 1;
+      log.push("tap.start");
+      if (startBehaviour === "hang") return new Promise(() => {});
+      if (startBehaviour === "manual") return new Promise((res, rej) => { resolveStart = res; rejectStart = rej; });
+      if (startBehaviour === "reject") return Promise.reject(new Error("audio graph failed"));
+      return Promise.resolve();
+    },
+    stop() { this.stopped += 1; log.push("tap.stop"); },
+  };
+  const terminals = [];
+  let intervalsCreated = 0;
+  const clock = fakeClock();
+  const capture = createCalibrationCapture({
+    acquireClaim: ({ onPreempt }) => { preempt = onPreempt; log.push("claim.acquire"); return claim; },
+    openMicrophone: async () => { log.push("mic.open"); return stream; },
+    createTap: () => { log.push("tap.create"); return tap; },
+    onTerminal: (reason, gen) => terminals.push({ reason, gen }),
+    setTimeoutImpl: clock.setTimeoutImpl,
+    clearTimeoutImpl: clock.clearTimeoutImpl,
+  });
+  return {
+    capture, clock, log, track, claim, tap, terminals,
+    intervalsCreated: () => intervalsCreated,
+    countInterval: () => { intervalsCreated += 1; return 1; },
+    preempt: (...a) => preempt?.(...a),
+    resolveStart: () => resolveStart?.(),
+    rejectStart: (e) => rejectStart?.(e || new Error("late failure")),
+  };
+}
+
+const settle = () => new Promise((r) => setTimeout(r, 0));
+
+describe("the deadline is armed before anything opens", () => {
+  it("arms before the claim, the device and the tap", async () => {
+    const h = harness();
+    const armed = [];
+    const capture = createCalibrationCapture({
+      acquireClaim: () => { armed.push("claim"); return { release() {} }; },
+      openMicrophone: async () => { armed.push("mic"); return { getTracks: () => [] }; },
+      createTap: () => ({ start: async () => { armed.push("tap"); }, stop() {} }),
+      setTimeoutImpl: (fn, ms) => { armed.push(`deadline:${ms}`); return 1; },
+      clearTimeoutImpl: () => {},
+    });
+    await capture.start({});
+    assert.equal(armed[0], `deadline:${CALIBRATION_DEADLINE_MS}`,
+                 "the deadline must be first, before any resource exists");
+    assert.deepEqual(armed.slice(1), ["claim", "mic", "tap"]);
+    void h;
+  });
+
+  it("bounds capture just past the measurement window", () => {
+    assert.equal(CALIBRATION_DEADLINE_MS,
+                 CALIBRATION_TOTAL_SECONDS * 1000 + CALIBRATION_CLEANUP_MARGIN_MS);
+    assert.ok(CALIBRATION_CLEANUP_MARGIN_MS > 0 && CALIBRATION_CLEANUP_MARGIN_MS <= 2000,
+              "a backstop, not a second measurement window");
+    assert.equal(CALIBRATION_TOTAL_SECONDS, 15, "the measurement duration is unchanged");
+  });
+});
+
+describe("a start that never settles", () => {
+  it("still releases the microphone when the deadline fires", async () => {
+    const h = harness({ startBehaviour: "hang" });
+    h.capture.start({});
+    await settle();
+    assert.equal(h.tap.started, 1, "capture really began");
+    assert.equal(h.capture.isActive(), true);
+
+    h.clock.fire(CALIBRATION_DEADLINE_MS);
+
+    assert.equal(h.capture.isActive(), false);
+    assert.equal(h.track.stopped, 1, "the track is stopped");
+    assert.equal(h.tap.stopped, 1, "the tap is closed");
+    assert.equal(h.claim.released, 1, "ownership is returned");
+    assert.deepEqual(h.terminals.map((t) => t.reason), [TERMINAL_REASONS.DEADLINE]);
+    assert.equal(h.clock.pending(), 0, "timers cleared");
+  });
+});
+
+describe("a start that resolves late", () => {
+  it("tears down its own resources and does not resurrect the run", async () => {
+    const h = harness({ startBehaviour: "manual" });
+    h.capture.start({ onRunning: () => false,
+                      setIntervalImpl: () => h.countInterval(),
+                      clearIntervalImpl: () => {} });
+    await settle();
+
+    h.clock.fire(CALIBRATION_DEADLINE_MS);
+    assert.equal(h.capture.isActive(), false);
+    const stoppedAtDeadline = h.track.stopped;
+
+    const tapStoppedAtDeadline = h.tap.stopped;
+    h.resolveStart();                      // the hung promise finally settles
+    await settle();
+
+    assert.equal(h.capture.isActive(), false, "must not restart");
+    assert.deepEqual(h.terminals.map((t) => t.reason), [TERMINAL_REASONS.DEADLINE],
+                     "the terminal outcome is not overwritten");
+    assert.ok(h.track.stopped >= stoppedAtDeadline, "late resources are also released");
+    assert.equal(h.claim.released >= 1, true);
+    // The decisive checks: accepting a late resolution would leave the tap
+    // running and arm a presentation interval for a run that is already over.
+    assert.ok(h.tap.stopped >= tapStoppedAtDeadline && h.tap.stopped >= 1,
+              "the late-resolved tap must be stopped, not left running");
+    assert.equal(h.intervalsCreated(), 0,
+                 "no phase interval may be armed after terminalization");
+    assert.equal(h.tap.started, 1, "capture is never begun a second time");
+  });
+
+  it("a late rejection is equally inert", async () => {
+    const h = harness({ startBehaviour: "manual" });
+    h.capture.start({});
+    await settle();
+    h.clock.fire(CALIBRATION_DEADLINE_MS);
+    h.rejectStart();
+    await settle();
+    assert.deepEqual(h.terminals.map((t) => t.reason), [TERMINAL_REASONS.DEADLINE]);
+    assert.equal(h.capture.isActive(), false);
+  });
+});
+
+describe("failures with resources partially open", () => {
+  it("a rejecting start releases the device and the claim", async () => {
+    const h = harness({ startBehaviour: "reject" });
+    const out = await h.capture.start({});
+    assert.equal(out.started, false);
+    assert.equal(out.reason, TERMINAL_REASONS.ERROR);
+    assert.equal(h.track.stopped, 1);
+    assert.equal(h.claim.released, 1);
+    assert.equal(h.clock.pending(), 0, "the deadline is cleared too");
+  });
+});
+
+describe("races", () => {
+  it("explicit Stop before the deadline wins, and the deadline is inert", async () => {
+    const h = harness({ startBehaviour: "hang" });
+    h.capture.start({});
+    await settle();
+    assert.equal(h.capture.stop(TERMINAL_REASONS.STOPPED), true);
+    h.clock.fire(CALIBRATION_DEADLINE_MS);
+    assert.deepEqual(h.terminals.map((t) => t.reason), [TERMINAL_REASONS.STOPPED]);
+    assert.equal(h.track.stopped, 1, "cleanup ran exactly once");
+    assert.equal(h.claim.released, 1);
+  });
+
+  it("preemption terminalizes once, and the deadline adds nothing", async () => {
+    const h = harness({ startBehaviour: "hang" });
+    h.capture.start({});
+    await settle();
+    h.preempt();
+    h.clock.fire(CALIBRATION_DEADLINE_MS);
+    assert.deepEqual(h.terminals.map((t) => t.reason), [TERMINAL_REASONS.PREEMPTED]);
+    assert.equal(h.track.stopped, 1);
+    assert.equal(h.claim.released, 1);
+  });
+
+  it("unmount/logout disposal is terminal and idempotent", async () => {
+    const h = harness({ startBehaviour: "hang" });
+    h.capture.start({});
+    await settle();
+    assert.equal(h.capture.stop(TERMINAL_REASONS.DISPOSED), true);
+    assert.equal(h.capture.stop(TERMINAL_REASONS.STOPPED), false, "second stop is a no-op");
+    h.clock.fire(CALIBRATION_DEADLINE_MS);
+    assert.equal(h.terminals.length, 1);
+    assert.equal(h.track.stopped, 1);
+  });
+
+  it("cleanup happens exactly once however many exits race", async () => {
+    const h = harness({ startBehaviour: "hang" });
+    h.capture.start({});
+    await settle();
+    h.capture.stop();
+    h.preempt();
+    h.clock.fire(CALIBRATION_DEADLINE_MS);
+    h.capture.stop();
+    assert.equal(h.terminals.length, 1);
+    assert.equal(h.track.stopped, 1);
+    assert.equal(h.tap.stopped, 1);
+    assert.equal(h.claim.released, 1);
+  });
+});
+
+describe("the normal run", () => {
+  it("completes through the presentation interval with the deadline never firing", async () => {
+    const h = harness();
+    let ticks = 0;
+    const intervals = new Map();
+    let intervalSeq = 0;
+    const out = await h.capture.start({
+      onRunning: () => { ticks += 1; return ticks >= 3; },   // "done" on the third tick
+      setIntervalImpl: (fn) => { const id = ++intervalSeq; intervals.set(id, fn); return id; },
+      clearIntervalImpl: (id) => intervals.delete(id),
+    });
+    assert.equal(out.started, true);
+    const tick = intervals.values().next().value;
+    tick(); tick(); tick();
+    assert.deepEqual(h.terminals.map((t) => t.reason), [TERMINAL_REASONS.COMPLETED]);
+    assert.equal(h.track.stopped, 1);
+    assert.equal(h.claim.released, 1);
+    assert.equal(intervals.size, 0, "the presentation interval is cleared");
+    assert.equal(h.clock.pending(), 0, "the deadline is cleared on completion");
+  });
+
+  it("a second start while active is refused rather than opening a second device", async () => {
+    const h = harness({ startBehaviour: "hang" });
+    h.capture.start({});
+    await settle();
+    const again = await h.capture.start({});
+    assert.equal(again.started, false);
+    assert.equal(again.reason, "ALREADY_ACTIVE");
+    assert.equal(h.tap.started, 1, "only one capture was ever begun");
+  });
+});
+
+describe("the panel wiring", () => {
+  it("delegates safety to the capture manager, not to the countdown", () => {
+    assert.ok(PANEL.includes("createCalibrationCapture"));
+    assert.ok(!PANEL.includes("setTimeout("), "the panel arms no timer of its own");
+    // The interval exists only for presentation, and is handed to the manager.
+    assert.ok(PANEL.includes("setIntervalImpl: setInterval"));
+  });
+
+  it("still opens nothing on mount and keeps every forbidden path out", () => {
+    const mountEffect = PANEL.slice(PANEL.indexOf("useEffect(() =>"), PANEL.indexOf("const start ="));
+    assert.ok(!mountEffect.includes("openMicrophoneForClaim"));
+    assert.ok(mountEffect.includes("stop"), "unmount disposes the capture");
+    for (const banned of ["SpeechRecognition", "MediaRecorder", "fetch(", "afetch",
+                          "createSession", "/api/", "localStorage"]) {
+      assert.ok(!PANEL.includes(banned), banned);
+    }
+  });
+
+  it("publishes no results when the deadline terminated the run", () => {
+    const handler = PANEL.slice(PANEL.indexOf("const onTerminal"), PANEL.indexOf("function capture()"));
+    const deadlineBranch = handler.slice(handler.indexOf("DEADLINE"));
+    assert.ok(!deadlineBranch.includes("setResults(summariseCalibration"),
+              "a timed-out run must not publish a measurement");
+    assert.ok(handler.includes("setResults(summariseCalibration"), "a completed run does");
+  });
+});
