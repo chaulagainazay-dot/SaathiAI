@@ -4,6 +4,15 @@ from saathi.platform.service import reset_platform_for_tests
 from saathi.tool_runtime.registry import reset_registry_for_tests
 
 
+def _support():
+    """tests/support is not a package on sys.path by default."""
+    import sys, pathlib as _pl
+    sys.path.insert(0, str(_pl.Path(__file__).resolve().parent))
+    from support import platform_auth
+    return platform_auth
+
+
+
 def client_and_headers(tmp_path, monkeypatch):
     reset_registry_for_tests()
     svc = reset_platform_for_tests(tmp_path / "ielts-api.db")
@@ -13,8 +22,9 @@ def client_and_headers(tmp_path, monkeypatch):
     monkeypatch.setattr(apimod, "default_platform", lambda: svc)
     from saathi.server import app
     client = TestClient(app)
-    client.post("/api/v1/platform/bootstrap", json={"email": "ielts@local", "name": "Learner"})
-    token = client.post("/api/v1/platform/auth/login", json={"email": "ielts@local"}).json()["token"]
+    # D15: platform identity is derived from the canonical D14 owner;
+    # the anonymous bootstrap and passwordless login are both closed.
+    token = _support().platform_token(client)
     return client, {"X-Platform-Token": token}
 
 

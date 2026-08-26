@@ -74,6 +74,14 @@ from saathi.platform.tg.provider_contracts.transport import (
 )
 
 
+def _support():
+    """tests/support is not a package on sys.path by default."""
+    import sys, pathlib as _pl
+    sys.path.insert(0, str(_pl.Path(__file__).resolve().parent))
+    from support import platform_auth
+    return platform_auth
+
+
 @pytest.fixture()
 def service(tmp_path: Path) -> ProviderContractService:
     return reset_provider_contracts_for_tests(tmp_path / "provider_contracts.db")
@@ -95,14 +103,17 @@ def api_client(tmp_path: Path, monkeypatch, service: ProviderContractService):
     from saathi.server import app
 
     client = TestClient(app)
-    bootstrap = client.post(
-        "/api/v1/platform/bootstrap",
-        json={"email": "m327@local", "name": "M327 Owner"},
-    )
-    assert bootstrap.status_code == 200
-    login = client.post(
-        "/api/v1/platform/auth/login",
-        json={"email": "m327@local"},
+    # D15: platform identity is derived from the canonical D14 owner;
+    # the anonymous bootstrap and passwordless login are both closed.
+    token_ = _support().platform_token(client)
+
+    class login:
+        status_code = 200
+        @staticmethod
+        def json():
+            return {"token": token_}
+    _unused = (
+        None,
     )
     assert login.status_code == 200
     return client, {"X-Platform-Token": login.json()["token"]}

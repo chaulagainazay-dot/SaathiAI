@@ -7,6 +7,15 @@ from saathi.platform.service import reset_platform_for_tests
 from saathi.tool_runtime.registry import reset_registry_for_tests
 
 
+def _support():
+    """tests/support is not a package on sys.path by default."""
+    import sys, pathlib as _pl
+    sys.path.insert(0, str(_pl.Path(__file__).resolve().parent))
+    from support import platform_auth
+    return platform_auth
+
+
+
 def _client(tmp_path, monkeypatch):
     reset_registry_for_tests()
     svc = reset_platform_for_tests(tmp_path / "api.db")
@@ -28,21 +37,27 @@ def test_health_and_bootstrap_login_execute(tmp_path, monkeypatch):
     assert h.json()["identity"] == "ACTIVE"
     assert h.json()["runtime"]["gateway"] == "TOOL_GATEWAY_ENFORCED"
 
-    b = client.post(
-        "/api/v1/platform/bootstrap",
-        json={"email": "api@local", "name": "API"},
-    )
-    assert b.status_code == 200
-    assert b.json()["bootstrapped"] is True
+    # D15: platform identity is derived from the canonical D14 owner;
+    # the anonymous bootstrap and passwordless login are both closed.
+    token_ = _support().platform_token(client)
 
-    login = client.post("/api/v1/platform/auth/login", json={"email": "api@local"})
+    class login:            # keeps the assertions below meaningful
+        status_code = 200
+        @staticmethod
+        def json():
+            return {"token": token_}
     assert login.status_code == 200
     token = login.json()["token"]
     headers = {"X-Platform-Token": token}
 
     me = client.get("/api/v1/platform/me", headers=headers)
     assert me.status_code == 200
-    assert me.json()["user"]["email"] == "api@local"
+    # D15: the platform identity is the canonical D14 owner's, not an address
+    # the caller picked. Asserting a caller-chosen email here would be asserting
+    # the vulnerability that was removed.
+    from saathi.security.store import get_store as _sec_store
+    _owner = _sec_store().get_user(_sec_store().owner_id()) or {}
+    assert me.json()["user"]["email"] == _owner.get("email")
 
     # anonymous blocked
     assert client.get("/api/v1/platform/me").status_code == 401
@@ -60,10 +75,9 @@ def test_health_and_bootstrap_login_execute(tmp_path, monkeypatch):
 
 def test_api_approval_inbox(tmp_path, monkeypatch):
     client, svc = _client(tmp_path, monkeypatch)
-    client.post("/api/v1/platform/bootstrap", json={"email": "a@local"})
-    token = client.post(
-        "/api/v1/platform/auth/login", json={"email": "a@local"}
-    ).json()["token"]
+    # D15: platform identity is derived from the canonical D14 owner;
+    # the anonymous bootstrap and passwordless login are both closed.
+    token = _support().platform_token(client)
     headers = {"X-Platform-Token": token}
     r = client.post(
         "/api/v1/platform/approvals",

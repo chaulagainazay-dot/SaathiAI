@@ -1760,6 +1760,49 @@ _RETIRED_AUTH_PATHS = frozenset({
 })
 
 
+#: Platform routes that are deliberately reachable without authentication.
+#: Kept minimal and explicit -- a prefix match is what allowed an unauthenticated
+#: owner bootstrap to hide under a namespace assumed to police itself.
+#:
+#: * health/provenance/maturity are read-only runtime identity, non-secret by
+#:   construction, and used by readiness probes;
+#: * private-alpha is a static banner;
+#: * auth/login is a login: it must be reachable to present a credential, and it
+#:   enforces that credential itself;
+#: * invitations/accept carries its own single-use invite code, which is the
+#:   proof; there is no session to present before redeeming one.
+_PUBLIC_PLATFORM_PATHS = frozenset({
+    "/api/v1/platform/health",
+    "/api/v1/platform/provenance",
+    "/api/v1/platform/maturity",
+    "/api/v1/platform/private-alpha",
+    "/api/v1/platform/auth/login",
+    "/api/v1/platform/invitations/accept",
+    # Reachable, but not unauthenticated: the handler requires a live canonical
+    # D14 owner session and refuses with a bounded code otherwise. It is listed
+    # here for the same reason /api/v1/auth/bootstrap is -- an operator setting
+    # the system up needs an actionable refusal ("no canonical session", "not
+    # ACTIVE", "platform state contaminated"), not the gate's blank 401. The
+    # authority is in the handler; this only decides who may be told why.
+    "/api/v1/platform/bootstrap",
+})
+
+
+def _presents_platform_credential(request) -> bool:
+    """Whether this request carries something the platform layer can validate.
+
+    Deliberately not a validity check -- validity belongs to
+    ``require_context``, which every platform route already consults. This only
+    decides whether the request may reach that check at all, so that an
+    anonymous caller cannot reach a handler that forgot to ask.
+    """
+    headers = getattr(request, "headers", None) or {}
+    if (headers.get("x-platform-token") or "").strip():
+        return True
+    auth = (headers.get("authorization") or "").strip()
+    return auth.lower().startswith("bearer ") and len(auth) > 7
+
+
 @app.middleware("http")
 async def _auth(request, call_next):
     from fastapi.responses import JSONResponse
@@ -1803,8 +1846,27 @@ async def _auth(request, call_next):
             or path == "/api/v1/ceo/os"
             or path == "/api/v1/infrastructure/health"
             or path == "/api/v1/platform/maturity"
-            # M50 platform foundation enforces its own session token (X-Platform-Token).
-            or path.startswith("/api/v1/platform/")
+            # D15: the platform namespace is no longer exempt as a whole. The
+            # old blanket prefix carried the comment "M50 platform foundation
+            # enforces its own session token (X-Platform-Token)" -- true of
+            # nearly every route under it, and false of exactly the ones that
+            # mattered. POST /api/v1/platform/bootstrap enforced nothing, so an
+            # empty unauthenticated body created the platform owner, org and
+            # workspace, and permanently fixed who the owner was.
+            #
+            # Two narrow exemptions replace it:
+            #   * an explicit list of genuinely public, read-only endpoints, and
+            #     the two routes that carry their own bearer proof in the request
+            #     (a login, an invitation code);
+            #   * any platform request that actually presents a platform
+            #     credential, which the handler then validates through
+            #     require_context. Presenting a bogus token buys nothing: it
+            #     reaches a handler that refuses it.
+            # Everything else under the prefix is now authenticated like the
+            # rest of the API.
+            or path in _PUBLIC_PLATFORM_PATHS
+            or (path.startswith("/api/v1/platform/")
+                and _presents_platform_credential(request))
             or path == "/api/v1/studio/queue"
             or path == "/api/v1/studio/plan"
             or path == "/api/v1/studio/script"
