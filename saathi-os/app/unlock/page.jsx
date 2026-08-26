@@ -3,6 +3,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Panel, Eyebrow } from "@/components/ui";
 import { login, setPassword, bootstrapStatus, bootstrapOwner } from "@/lib/api";
+import { bootstrapPresentation, UNREACHABLE } from "@/lib/bootstrap-presentation";
 import { passkeySupported, passkeyPlatformName, passkeyUnsupportedReason, passkeyStatus, registerPasskey, unlockPasskey } from "@/lib/passkey";
 
 const ACCENT = "#9B6BFF", TEAL = "#00BFA5", RED = "#FF5A5A", AMBER = "#FFB800";
@@ -69,6 +70,9 @@ export default function Unlock() {
   // all. Until the backend reports ACTIVE there is no owner to sign in as.
   const [boot, setBoot] = useState(null);
   const [opToken, setOpToken] = useState("");
+  // Last bounded refusal code from a bootstrap submission, so an expired token
+  // reads as "expired" rather than as a still-armed installation.
+  const [bootErr, setBootErr] = useState("");
   const [rememberMe, setRememberMe] = useState(true);
   const [online, setOnline] = useState(true);
   // WebAuthn capability can only be probed in the browser. Calling these during
@@ -92,9 +96,16 @@ export default function Unlock() {
   const { supported, platformName } = capability;
   const pwRef = useRef(null);
 
+  const bootView = bootstrapPresentation(boot, bootErr);
+
   const refresh = () => passkeyStatus().then(setStatus).catch(() => {});
   useEffect(() => { refresh(); }, []);
-  useEffect(() => { bootstrapStatus().then(setBoot).catch(() => setBoot({ state: "UNKNOWN" })); }, []);
+  // A rejected status request means the backend did not answer. It is stored
+  // as its own state, never as a status-shaped object: the previous
+  // `{state: "UNKNOWN"}` was read by the panel as `bootstrap_enabled` falsy and
+  // rendered "Setup is disabled", which is a claim about the operator's
+  // configuration invented from a failed fetch.
+  useEffect(() => { bootstrapStatus().then(setBoot).catch(() => setBoot(UNREACHABLE)); }, []);
 
   const doBootstrap = () => wrap(async () => {
     if (np.length < 8) return setMsg("Password must be at least 8 characters");
@@ -107,9 +118,10 @@ export default function Unlock() {
     if (r.ok) {
       setMsg("✓ Owner created — you're signed in.");
       setNp(""); setNp2("");
-      bootstrapStatus().then(setBoot).catch(() => {});
+      bootstrapStatus().then(setBoot).catch(() => setBoot(UNREACHABLE));
       refresh();
     } else {
+      setBootErr(r.error || "");
       setMsg(BOOTSTRAP_MESSAGES[r.error] || "Setup failed.");
     }
   });
@@ -265,17 +277,14 @@ export default function Unlock() {
         {/* ── Password form (login or set/change) ── */}
         {/* D14: an uninitialised system offers secure bootstrap, never a
             password form that would silently become the owner credential. */}
-        {boot && boot.state !== "ACTIVE" && (
+        {bootView.showPanel && (
           <Panel style={{ padding: 18, marginTop: 14 }}>
             <div style={{ fontSize: 13, fontWeight: 600 }}>First-time setup</div>
-            <div style={{ fontSize: 12, opacity: 0.6, margin: "6px 0 10px", lineHeight: 1.5 }}>
-              {boot.state === "CONTAMINATED_UNINITIALIZED"
-                ? "This installation has credentials but no completed setup. Setup is blocked until an operator reviews it."
-                : !boot.bootstrap_enabled
-                ? "Setup is disabled. An operator must arm it on this machine before an owner can be created."
-                : "Enter the one-time setup token from this machine, and choose the owner password."}
+            <div style={{ fontSize: 12, opacity: 0.6, margin: "6px 0 10px", lineHeight: 1.5 }}
+              data-bootstrap-state={bootView.kind}>
+              {bootView.copy}
             </div>
-            {boot.bootstrap_available && (
+            {bootView.showForm && (
               <>
                 <input type="password" value={opToken} onChange={(e) => setOpToken(e.target.value)}
                   autoComplete="off" autoCapitalize="off" autoCorrect="off" spellCheck={false}
@@ -295,7 +304,7 @@ export default function Unlock() {
           </Panel>
         )}
 
-        {boot && boot.state === "ACTIVE" && mode === "unlock" && (
+        {bootView.kind === "active" && mode === "unlock" && (
           <>
             <Panel style={{ padding: 18, marginTop: 14 }}>
               <div style={{ fontSize: 13, fontWeight: 600 }}>
