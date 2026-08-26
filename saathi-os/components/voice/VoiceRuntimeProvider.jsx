@@ -27,7 +27,9 @@ import {
   useState,
 } from "react";
 import { usePathname } from "next/navigation";
-import { getToken, PLATFORM_CONTEXT_EVENT } from "@/lib/platform-client";
+import { getToken, setToken as setPlatformToken, PLATFORM_CONTEXT_EVENT } from "@/lib/platform-client";
+import { exchangePlatformSession } from "@/lib/api";
+import { withPlatformSessionRecovery } from "@/lib/voice-session/platform-session-recovery";
 import { useVoiceOutput } from "./VoiceOutputProvider";
 import {
   INITIAL_VOICE_RUNTIME,
@@ -222,12 +224,26 @@ export function VoiceRuntimeProvider({ children }) {
   const ensureSession = useCallback(
     async (activeToken) => {
       if (sessionIdRef.current) return sessionIdRef.current;
-      const created = await voiceRuntimeActions.createSession(activeToken, {
-        input_mode: "toggle",
-        stt_provider: getRecognitionCtor() ? "browser" : "auto",
-        voice_profile_id: "yeti_teacher",
-        yeti_mode: "general",
-      });
+      // D17: the derived platform session carries a one-hour idle TTL, and the
+      // owner may press the microphone long after the tab last spoke to the
+      // backend. If creation is refused with the bounded SESSION_INVALID code —
+      // and only then — exchange the still-valid canonical session for a fresh
+      // derived one and retry this creation exactly once. The microphone is not
+      // opened until after this returns.
+      const created = await withPlatformSessionRecovery(
+        activeToken,
+        (tok) => voiceRuntimeActions.createSession(tok, {
+          input_mode: "toggle",
+          stt_provider: getRecognitionCtor() ? "browser" : "auto",
+          voice_profile_id: "yeti_teacher",
+          yeti_mode: "general",
+        }),
+        {
+          exchange: exchangePlatformSession,
+          storeToken: (t) => { setPlatformToken(t); setToken(t); },
+          clearToken: () => setPlatformToken(""),
+        },
+      );
       dispatch({ type: "SESSION", session: created.session });
       sessionIdRef.current = created.session.session_id;
       return created.session.session_id;

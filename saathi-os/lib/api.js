@@ -109,6 +109,29 @@ export async function bootstrapOwner(operatorToken, newPassword) {
   return j;
 }
 
+// D17: exchange the canonical owner session for a fresh derived platform
+// session. This is the same D15 provisioning route the shell already uses; it is
+// idempotent, so calling it when an identity exists returns that identity with a
+// new session rather than creating a second owner. Used to recover once from an
+// idle-expired platform token at the voice-runtime boundary.
+export async function exchangePlatformSession() {
+  try {
+    const r = await afetch(`${API_BASE}/api/v1/platform/bootstrap`, {
+      method: "POST", credentials: "include",
+      headers: { "Content-Type": "application/json" }, body: "{}",
+    });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok || !j.token) {
+      return { ok: false, status: r.status, code: j?.detail?.code || j?.error || "EXCHANGE_FAILED" };
+    }
+    return { ok: true, status: r.status, token: j.token };
+  } catch {
+    // A network failure is not a session failure. Reported as such so the
+    // caller stops instead of retrying an ambiguous request.
+    return { ok: false, status: 0, code: "EXCHANGE_UNREACHABLE" };
+  }
+}
+
 // Change the password of an already-initialised system. Requires a session;
 // this is no longer the route that creates the owner.
 export async function setPassword(current, newPassword) {
