@@ -23,7 +23,11 @@ const badge = {
 
 export default function VoiceDiagnosticsPage() {
   return (
-    <div className="page shell-page" data-testid="voice-diagnostics-page" style={{ maxWidth: 1100 }}>
+    <div
+      className="page shell-page shell-page--dock-clearance"
+      data-testid="voice-diagnostics-page"
+      style={{ maxWidth: 1100 }}
+    >
       <header className="shell-page-header">
         <nav aria-label="Voice diagnostics breadcrumb" style={row}>
           <Link href="/settings">Settings</Link>
