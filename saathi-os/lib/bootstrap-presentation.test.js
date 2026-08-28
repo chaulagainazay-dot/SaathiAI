@@ -187,6 +187,29 @@ describe("bootstrapPresentation — the states stay distinct", () => {
 });
 
 describe("unlock page integration", () => {
+  it("stored-password-only status renders Sign in and the current-password form", () => {
+    const status = { has_password: true, has_passkey: false, signed_in: false };
+
+    assert.equal(status.has_password ? (status.signed_in ? "You're signed in" : "Sign in") : "Set up sign-in", "Sign in");
+    assert.equal(status.has_password && !status.signed_in, true);
+    assert.match(
+      PAGE,
+      /status\.has_password\s*\?\s*\(status\.signed_in\s*\?\s*"You're signed in"\s*:\s*"Sign in"\)\s*:\s*"Set up sign-in"/,
+    );
+    assert.ok(PAGE.includes("{status.has_password && !status.signed_in && ("));
+    assert.match(PAGE, /autoComplete="current-password"[\s\S]*?aria-label="Password"/);
+  });
+
+  it("stored-password-only status cannot render either first-time password form", () => {
+    const status = { has_password: true, has_passkey: false, signed_in: false };
+
+    assert.equal(!status.has_password || status.signed_in, false);
+    assert.ok(PAGE.includes("{(!status.has_password || status.signed_in) && ("));
+    assert.ok(PAGE.includes("{bootView.showForm && ("));
+    assert.ok(PAGE.includes('bootView.kind === "active"'));
+    assert.equal(bootstrapPresentation({ state: "ACTIVE" }).showForm, false);
+  });
+
   it("stores UNREACHABLE on a rejected status request, never a status-shaped object", () => {
     assert.ok(PAGE.includes("setBoot(UNREACHABLE)"), "catch must store the sentinel");
     assert.ok(

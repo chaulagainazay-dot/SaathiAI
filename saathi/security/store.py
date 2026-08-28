@@ -342,6 +342,30 @@ class SecurityStore:
         ).fetchone()
         return dict(row) if row else None
 
+    def has_password(self, user_id: str) -> bool:
+        """Whether a stored password credential exists for ``user_id``.
+
+        The presence question and the credential itself are different facts.
+        ``latest_password`` answers the second and hands the caller a hash, so
+        a surface that only needs the first had to fetch a secret to discard
+        it. This answers the first alone: the row is counted in SQL and the
+        hash never leaves the database.
+        """
+        row = self.db.execute(
+            "SELECT 1 FROM passwords WHERE user_id=? AND LENGTH(hash) > 0 LIMIT 1",
+            (user_id,),
+        ).fetchone()
+        return row is not None
+
+    def owner_has_password(self) -> bool:
+        """Whether the active canonical owner has a stored password credential.
+
+        Returns False when there is no owner at all, which is what an
+        uninitialised installation looks like from here. Creates nothing.
+        """
+        owner = self.owner_id()
+        return bool(owner) and self.has_password(owner)
+
     def password_history(self, user_id: str, limit: int = 10) -> list[dict]:
         rows = self.db.execute(
             "SELECT * FROM passwords WHERE user_id=? ORDER BY created_at DESC LIMIT ?",

@@ -2041,13 +2041,48 @@ def _rp(request) -> tuple[str, str]:
     return rp_id, f"{scheme}://{host}"
 
 
+def _owner_password_configured() -> bool:
+    """Whether *any* credential exists that ``/auth/login`` could verify.
+
+    ``/unlock`` renders the sign-in form from this and the first-time-setup
+    form from its negation, so it has to agree with what login actually
+    checks. It used to read ``bool(_PASSWORD_HASH)`` alone -- the environment
+    fallback -- which is empty on an installation whose owner password lives
+    only in the security store, as D14 bootstrap always leaves it. That owner
+    was shown "Choose a password", the sign-in field was never rendered, and
+    the setup form's ``POST /auth/password`` answered 401 to someone holding a
+    perfectly good password.
+
+    The order mirrors ``login``: the stored canonical credential first, the
+    environment hash behind it. Presence only -- the store is asked whether a
+    row exists, never for the hash. ``ACCESS_TOKEN`` is deliberately not read
+    here: login's third fallback is a machine token, not an owner password,
+    and this field decides which human form to render.
+    """
+    try:
+        from saathi import auth_bootstrap
+        from saathi.security.store import get_store
+
+        store = get_store()
+        # An uninitialised or contaminated store has no owner to sign in as,
+        # and login refuses it with NOT_INITIALIZED. Advertising a password
+        # there would send the operator to a form that cannot succeed.
+        if auth_bootstrap.is_active(store) and store.owner_has_password():
+            return True
+    except Exception:
+        # A status probe must not become the reason the unlock page fails to
+        # render. Fall through to the environment fallbacks.
+        pass
+    return bool(_PASSWORD_HASH)
+
+
 @app.get("/api/v1/auth/passkey/status")
 def passkey_status(request: Request):
     """Auth setup status: is a password set, is a passkey registered, am I signed in. Whitelisted."""
     from saathi import passkey
     rp_id, _ = _rp(request)
     return {"has_passkey": passkey.has_passkey(rp_id), "rp_id": rp_id,
-            "has_password": bool(_PASSWORD_HASH),
+            "has_password": _owner_password_configured(),
             # D14: a loopback peer is not a signed-in owner. The shell used to
             # read this field and render an owned UI to anyone on the box.
             "signed_in": _is_authed(request)}
