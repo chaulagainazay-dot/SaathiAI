@@ -27,8 +27,8 @@ import {
   useState,
 } from "react";
 import { usePathname } from "next/navigation";
-import { getToken, setToken as setPlatformToken, PLATFORM_CONTEXT_EVENT } from "@/lib/platform-client";
-import { exchangePlatformSession } from "@/lib/api";
+import { getToken, setToken as setPlatformToken, ensurePlatformSession, PLATFORM_CONTEXT_EVENT } from "@/lib/platform-client";
+import { exchangePlatformSession, hasSessionToken } from "@/lib/api";
 import { withPlatformSessionRecovery } from "@/lib/voice-session/platform-session-recovery";
 import { useVoiceOutput } from "./VoiceOutputProvider";
 import {
@@ -156,6 +156,9 @@ export function VoiceRuntimeProvider({ children }) {
 
   useEffect(() => {
     setToken(getToken());
+    if (hasSessionToken() && !getToken()) {
+      void ensurePlatformSession();
+    }
     const onContext = (event) => {
       // Finalize with the outgoing token: after a logout or workspace switch
       // the new token cannot terminate the previous context's session.

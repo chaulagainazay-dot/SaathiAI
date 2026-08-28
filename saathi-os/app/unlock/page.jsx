@@ -5,6 +5,7 @@ import { Panel, Eyebrow } from "@/components/ui";
 import { login, setPassword, bootstrapStatus, bootstrapOwner } from "@/lib/api";
 import { bootstrapPresentation, UNREACHABLE } from "@/lib/bootstrap-presentation";
 import { passkeySupported, passkeyPlatformName, passkeyUnsupportedReason, passkeyStatus, registerPasskey, unlockPasskey } from "@/lib/passkey";
+import { ensurePlatformSession } from "@/lib/platform-client";
 
 const ACCENT = "#9B6BFF", TEAL = "#00BFA5", RED = "#FF5A5A", AMBER = "#FFB800";
 
@@ -60,6 +61,7 @@ export default function Unlock() {
   const [np, setNp] = useState("");
   const [np2, setNp2] = useState("");
   const [msg, setMsg] = useState("");
+  const [platformRetry, setPlatformRetry] = useState(false);
   const [busy, setBusy] = useState(false);
   const [showPw, setShowPw] = useState(false);
   const [showNp, setShowNp] = useState(false);
@@ -150,6 +152,21 @@ export default function Unlock() {
 
   const wrap = async (fn) => { setBusy(true); setMsg(""); try { await fn(); } catch (e) { setMsg(friendly(e)); } finally { setBusy(false); } };
 
+  const continueWithPlatformSession = async () => {
+    const exchange = await ensurePlatformSession();
+    if (!exchange.ok) {
+      setPlatformRetry(true);
+      setMsg("Signed in, but Saathi services are unavailable. Retry.");
+      return false;
+    }
+    setPlatformRetry(false);
+    return true;
+  };
+
+  const retryPlatformSession = () => wrap(async () => {
+    if (await continueWithPlatformSession()) router.push("/os");
+  });
+
   const doSetPassword = () => wrap(async () => {
     if (np.length < 8) return setMsg("Password must be at least 8 characters");
     if (np !== np2) return setMsg("Passwords don't match");
@@ -162,14 +179,19 @@ export default function Unlock() {
   const doLogin = () => wrap(async () => {
     const r = await login(pw, rememberMe);
     if (r.ok) {
-      setMsg("✓ Signed in."); setPw(""); refresh(); setTimeout(() => router.push("/os"), 600);
+      setPw(""); refresh();
+      if (await continueWithPlatformSession()) {
+        setMsg("✓ Signed in."); setTimeout(() => router.push("/os"), 600);
+      }
     } else setMsg(friendly(r.error || "Wrong password"));
   });
 
   const doUnlock = () => wrap(async () => {
     const r = await unlockPasskey(rememberMe);
-    if (r.ok) { setMsg("✓ Unlocked."); setTimeout(() => router.push("/os"), 600); }
-    else setMsg(friendly(r.error || "Unlock failed"));
+    if (!r.ok) { setMsg(friendly(r.error || "Unlock failed")); return; }
+    if (await continueWithPlatformSession()) {
+      setMsg("✓ Unlocked."); setTimeout(() => router.push("/os"), 600);
+    }
   });
 
   const doRegister = () => wrap(async () => {
@@ -435,6 +457,11 @@ export default function Unlock() {
 
         {msg && <div role={msg.startsWith("✓") ? "status" : "alert"} aria-live={msg.startsWith("✓") ? "polite" : "assertive"}
           style={{ fontSize: 12.5, marginTop: 14, color: msg.startsWith("✓") ? TEAL : RED }}>{msg}</div>}
+        {platformRetry && (
+          <button onClick={retryPlatformSession} disabled={busy} style={btn(ACCENT)}>
+            Retry platform connection
+          </button>
+        )}
       </div>
     </div>
   );
