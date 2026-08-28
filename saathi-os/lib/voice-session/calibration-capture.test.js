@@ -49,7 +49,7 @@ function fakeClock() {
 
 function harness({ startBehaviour = "resolve" } = {}) {
   const log = [];
-  const track = { kind: "audio", stopped: 0, stop() { this.stopped += 1; log.push("track.stop"); } };
+  const track = { kind: "audio", readyState: "live", stopped: 0, stop() { this.stopped += 1; this.readyState = "ended"; log.push("track.stop"); } };
   const stream = { getTracks: () => [track] };
   const claim = { released: 0, release() { this.released += 1; log.push("claim.release"); } };
   let preempt = null;
@@ -125,6 +125,7 @@ describe("a start that never settles", () => {
     assert.equal(h.capture.isActive(), true);
 
     h.clock.fire(CALIBRATION_DEADLINE_MS);
+    await settle();
 
     assert.equal(h.capture.isActive(), false);
     assert.equal(h.track.stopped, 1, "the track is stopped");
@@ -195,6 +196,7 @@ describe("races", () => {
     h.capture.start({});
     await settle();
     assert.equal(h.capture.stop(TERMINAL_REASONS.STOPPED), true);
+    await settle();
     h.clock.fire(CALIBRATION_DEADLINE_MS);
     assert.deepEqual(h.terminals.map((t) => t.reason), [TERMINAL_REASONS.STOPPED]);
     assert.equal(h.track.stopped, 1, "cleanup ran exactly once");
@@ -206,6 +208,7 @@ describe("races", () => {
     h.capture.start({});
     await settle();
     h.preempt();
+    await settle();
     h.clock.fire(CALIBRATION_DEADLINE_MS);
     assert.deepEqual(h.terminals.map((t) => t.reason), [TERMINAL_REASONS.PREEMPTED]);
     assert.equal(h.track.stopped, 1);
@@ -217,7 +220,8 @@ describe("races", () => {
     h.capture.start({});
     await settle();
     assert.equal(h.capture.stop(TERMINAL_REASONS.DISPOSED), true);
-    assert.equal(h.capture.stop(TERMINAL_REASONS.STOPPED), false, "second stop is a no-op");
+    await h.capture.stop(TERMINAL_REASONS.STOPPED);
+    assert.equal(h.capture.stop(TERMINAL_REASONS.STOPPED) instanceof Promise, true, "second stop joins cleanup");
     h.clock.fire(CALIBRATION_DEADLINE_MS);
     assert.equal(h.terminals.length, 1);
     assert.equal(h.track.stopped, 1);
@@ -228,7 +232,9 @@ describe("races", () => {
     h.capture.start({});
     await settle();
     h.capture.stop();
+    await settle();
     h.preempt();
+    await settle();
     h.clock.fire(CALIBRATION_DEADLINE_MS);
     h.capture.stop();
     assert.equal(h.terminals.length, 1);
@@ -252,6 +258,7 @@ describe("the normal run", () => {
     assert.equal(out.started, true);
     const tick = intervals.values().next().value;
     tick(); tick(); tick();
+    await settle();
     assert.deepEqual(h.terminals.map((t) => t.reason), [TERMINAL_REASONS.COMPLETED]);
     assert.equal(h.track.stopped, 1);
     assert.equal(h.claim.released, 1);

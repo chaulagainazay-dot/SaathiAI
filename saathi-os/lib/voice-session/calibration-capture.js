@@ -60,16 +60,19 @@ export function createCalibrationCapture({
   openMicrophone,
   createTap,
   onTerminal = () => {},
+  onCleanupPending = () => {},
   setTimeoutImpl = setTimeout,
   clearTimeoutImpl = clearTimeout,
   deadlineMs = CALIBRATION_DEADLINE_MS,
+  cleanupTimeoutMs = 2000,
 } = {}) {
   let generation = 0;
   let run = null;
+  let lastRun = null;
 
-  function teardown(state) {
-    // Order matters: stop producing frames, then close the graph, then hand the
-    // device back. Each step is independent so a throw cannot strand the rest.
+  async function teardown(state) {
+    // Stop timers and tracks synchronously first; then close the graph and hand
+    // ownership back. Each step is independent so a throw cannot strand the rest.
     if (state.deadlineId !== null) {
       clearTimeoutImpl(state.deadlineId);
       state.deadlineId = null;
@@ -78,14 +81,20 @@ export function createCalibrationCapture({
       state.clearIntervalImpl(state.intervalId);
       state.intervalId = null;
     }
-    try { state.tap?.stop?.(); } catch { /* already stopped */ }
-    state.tap = null;
-    // Stop tracks directly as well as through the claim: a run that failed
-    // between getUserMedia and the claim's setMediaStream still holds a device.
-    try { state.stream?.getTracks?.().forEach((t) => t.stop()); } catch { /* gone */ }
+    // Stop tracks synchronously before awaiting graph closure.
+    const tracks = state.stream?.getTracks?.() || [];
+    try { tracks.forEach((t) => t.stop()); } catch { /* gone */ }
+    const endedTrackCount = tracks.filter((t) => t?.readyState === "ended").length;
     state.stream = null;
-    try { state.claim?.release?.(); } catch { /* already released */ }
+    const tap = state.tap;
+    state.tap = null;
+    let tapResult = { confirmed: true, state: "closed" };
+    try { tapResult = await tap?.stop?.({ timeoutMs: cleanupTimeoutMs, setTimeoutImpl, clearTimeoutImpl }) || tapResult; } catch { tapResult = { confirmed: false, state: "unknown" }; }
+    const claim = state.claim;
+    try { claim?.release?.(); } catch { /* already released */ }
+    const claimReleased = claim ? (typeof claim.isActive === "function" ? !claim.isActive() : true) : true;
     state.claim = null;
+    return { trackCount: tracks.length, endedTrackCount, tracksEnded: endedTrackCount === tracks.length, graphClosed: Boolean(tapResult.confirmed), audioContextState: tapResult.state, claimReleased };
   }
 
   /** Idempotent per generation. The first reason wins; later ones are ignored. */
@@ -93,9 +102,16 @@ export function createCalibrationCapture({
     if (!state || state.terminal) return false;
     state.terminal = true;
     state.reason = reason;
-    teardown(state);
+    try { onCleanupPending(reason, state.generation); } catch { /* reporting must not throw */ }
+    state.cleanupPromise = state.cleanupPromise || teardown(state);
     if (run === state) run = null;
-    try { onTerminal(reason, state.generation); } catch { /* reporting must not throw */ }
+    lastRun = state;
+    state.cleanupPromise.then((diagnostics) => {
+      state.cleanup = diagnostics;
+      state.cleanupConfirmed = diagnostics.tracksEnded && diagnostics.graphClosed && diagnostics.claimReleased;
+      state.cleanupFailed = !state.cleanupConfirmed;
+      try { onTerminal(reason, state.generation, diagnostics); } catch { /* reporting must not throw */ }
+    });
     return true;
   }
 
@@ -124,6 +140,9 @@ export function createCalibrationCapture({
         deadlineId: null,
         intervalId: null,
         clearIntervalImpl: clearIntervalImpl || clearInterval,
+        cleanupPromise: null,
+        cleanupConfirmed: false,
+        cleanupFailed: false,
       };
       run = state;
 
@@ -139,14 +158,14 @@ export function createCalibrationCapture({
         state.claim = acquireClaim({
           onPreempt: () => terminalize(state, TERMINAL_REASONS.PREEMPTED),
         });
-        if (superseded()) { teardown(state); return { started: false, reason: state.reason }; }
+        if (superseded()) { await teardown(state); return { started: false, reason: state.reason }; }
 
         const stream = await openMicrophone(state.claim);
         if (superseded()) {
           // The deadline (or a Stop) fired while the device was opening. The
           // stream that just arrived is ours to close, and nothing else.
           try { stream?.getTracks?.().forEach((t) => t.stop()); } catch { /* gone */ }
-          teardown(state);
+          await teardown(state);
           return { started: false, reason: state.reason };
         }
         state.stream = stream;
@@ -154,7 +173,7 @@ export function createCalibrationCapture({
         const tap = createTap(stream, onFrame);
         if (superseded()) {
           try { tap?.stop?.(); } catch { /* not started */ }
-          teardown(state);
+          await teardown(state);
           return { started: false, reason: state.reason };
         }
         state.tap = tap;
@@ -164,7 +183,7 @@ export function createCalibrationCapture({
           // A late resolution. Tear down what it just built; do not restart
           // phases and do not overwrite the terminal outcome.
           try { tap.stop?.(); } catch { /* already stopped */ }
-          teardown(state);
+          await teardown(state);
           return { started: false, reason: state.reason };
         }
       } catch (error) {
@@ -185,7 +204,9 @@ export function createCalibrationCapture({
 
     /** Explicit Stop, completion, route change, logout and unmount all land here. */
     stop(reason = TERMINAL_REASONS.STOPPED) {
-      return terminalize(run, reason);
+      if (run && !run.terminal) return terminalize(run, reason);
+      if (lastRun?.cleanupPromise) return lastRun.cleanupPromise;
+      return false;
     },
   };
 }

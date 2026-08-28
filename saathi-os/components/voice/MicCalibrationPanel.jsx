@@ -56,10 +56,12 @@ export default function MicCalibrationPanel() {
    * guarantees it runs exactly once per generation and that the microphone is
    * already released by the time it does.
    */
-  const onTerminal = useCallback((reason) => {
+  const onTerminal = useCallback((reason, _generation, diagnostics = {}) => {
     setPhase("");
     setRemaining(0);
-    if (reason === TERMINAL_REASONS.COMPLETED) {
+    if (!diagnostics.tracksEnded || !diagnostics.graphClosed || !diagnostics.claimReleased) {
+      setStatus("Microphone cleanup could not be confirmed. Please close this page.");
+    } else if (reason === TERMINAL_REASONS.COMPLETED) {
       setResults(summariseCalibration(samplesRef.current));
       setStatus("Calibration complete. Microphone released.");
     } else if (reason === TERMINAL_REASONS.DEADLINE) {
@@ -85,14 +87,30 @@ export default function MicCalibrationPanel() {
           return stream;
         },
         createTap: (stream, onFrame) => createAudioFrameTap({ stream, onFrame }),
+        onCleanupPending: () => {
+          setPhase("");
+          setRemaining(0);
+          setStatus("Releasing microphone…");
+        },
         onTerminal,
       });
     }
     return captureRef.current;
   }
 
-  // Route change, unmount and logout all reach this.
-  useEffect(() => () => { captureRef.current?.stop?.(TERMINAL_REASONS.DISPOSED); }, []);
+  // Route change, unmount and logout all reach this. pagehide/beforeunload
+  // synchronously stop tracks through the capture manager before any async
+  // AudioContext close can run.
+  useEffect(() => {
+    const dispose = () => { captureRef.current?.stop?.(TERMINAL_REASONS.DISPOSED); };
+    window.addEventListener("pagehide", dispose);
+    window.addEventListener("beforeunload", dispose);
+    return () => {
+      window.removeEventListener("pagehide", dispose);
+      window.removeEventListener("beforeunload", dispose);
+      dispose();
+    };
+  }, []);
 
   const start = useCallback(async () => {
     const cap = capture();

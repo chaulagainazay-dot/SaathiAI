@@ -32,6 +32,8 @@ export function createAudioFrameTap({
   let timer = null;
   let running = false;
   let frames = 0;
+  let cleanupPromise = null;
+  let stopping = false;
 
   function tick() {
     if (!running || !analyser) return;
@@ -56,6 +58,7 @@ export function createAudioFrameTap({
     preRoll,
     async start() {
       if (running) return;
+      stopping = false;
       if (!stream || !AudioContextImpl) {
         // Synthetic/tests/headless: no live tap; caller feeds processFrame
         running = true;
@@ -68,7 +71,13 @@ export function createAudioFrameTap({
       } catch {
         /* ignore */
       }
+      if (stopping) return;
       source = ctx.createMediaStreamSource(stream);
+      if (stopping) {
+        try { source.disconnect?.(); } catch { /* already disconnected */ }
+        source = null;
+        return;
+      }
       analyser = ctx.createAnalyser();
       analyser.fftSize = Math.max(256, cfg.frameSize * 2);
       analyser.smoothingTimeConstant = 0.2;
@@ -77,8 +86,11 @@ export function createAudioFrameTap({
       timer = setInterval(tick, interval);
       running = true;
     },
-    stop() {
+    stop({ timeoutMs = 2000, setTimeoutImpl = setTimeout, clearTimeoutImpl = clearTimeout } = {}) {
+      if (cleanupPromise) return cleanupPromise;
+      cleanupPromise = (async () => {
       running = false;
+      stopping = true;
       if (timer) {
         clearInterval(timer);
         timer = null;
@@ -95,14 +107,33 @@ export function createAudioFrameTap({
       }
       source = null;
       analyser = null;
+      let closeResult = { state: "closed", confirmed: true };
       if (ctx) {
+        const closing = ctx;
         try {
-          ctx.close?.();
+          const result = closing.close?.();
+          if (result && typeof result.then === "function") {
+            let timer;
+            const timeout = new Promise((resolve) => { timer = setTimeoutImpl(() => resolve({ timedOut: true }), timeoutMs); });
+            const settled = await Promise.race([
+              result.then(() => ({ closed: true })).catch(() => ({ rejected: true })),
+              timeout,
+            ]);
+            if (timer !== undefined) clearTimeoutImpl(timer);
+            closeResult = settled.timedOut
+              ? { state: closing.state || "unknown", confirmed: false, timedOut: true }
+              : { state: closing.state || "unknown", confirmed: Boolean(settled.closed && closing.state === "closed") };
+          } else {
+            closeResult = { state: closing.state || "closed", confirmed: closing.state === undefined || closing.state === "closed" };
+          }
         } catch {
-          /* ignore */
+          closeResult = { state: closing.state || "unknown", confirmed: false, rejected: true };
         }
         ctx = null;
       }
+      return closeResult;
+      })();
+      return cleanupPromise;
     },
     /** Inject synthetic frames (tests / offline) */
     processFrame(frame, meta = {}) {

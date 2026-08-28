@@ -283,7 +283,8 @@ describe("the calibration surface contract", () => {
       assert.ok(handler.includes(reason), reason);
     }
     assert.ok(PANEL.includes("onPreempt"), "preemption is wired to the manager");
-    assert.match(PANEL, /useEffect\(\(\) => \(\) => \{ captureRef\.current\?\.stop\?\./);
+    assert.match(PANEL, /addEventListener\("pagehide", dispose\)/);
+    assert.match(PANEL, /addEventListener\("beforeunload", dispose\)/);
   });
 
   it("delegates track/claim cleanup to the capture manager", () => {
@@ -295,6 +296,11 @@ describe("the calibration surface contract", () => {
     assert.ok(PANEL.includes("createCalibrationCapture"));
     const mgr = readFileSync(join(HERE, "calibration-capture.js"), "utf8");
     assert.ok(mgr.includes("t.stop()") && mgr.includes("release?.()"));
+  });
+
+  it("shows release-in-progress before confirmed cleanup", () => {
+    assert.ok(PANEL.includes("Releasing microphone…"));
+    assert.ok(PANEL.includes("Microphone cleanup could not be confirmed"));
   });
 
   it("clears derived results on demand", () => {
