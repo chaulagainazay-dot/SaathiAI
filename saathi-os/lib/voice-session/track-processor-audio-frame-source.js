@@ -115,10 +115,19 @@ export function createTrackProcessorAudioFrameSource({
       if (cleanupPromise) return cleanupPromise;
       stopped = true;
       cleanupPromise = (async () => {
+        let cancelPromise = Promise.resolve();
         if (reader) {
-          try { await reader.cancel(); cancelSettled = true; } catch { cancelSettled = true; }
+          try {
+            // Start cancellation before any await so the owner can stop the
+            // track immediately; real processors may wait for source end.
+            cancelPromise = Promise.resolve(reader.cancel()).then(
+              () => { cancelSettled = true; },
+              () => { cancelSettled = true; },
+            );
+          } catch { cancelSettled = true; }
           try { reader.releaseLock(); } catch { /* already released */ }
         } else cancelSettled = true;
+        await cancelPromise;
         try { await loopPromise; } catch { /* pipeline is terminal */ }
         return diagnostics();
       })();

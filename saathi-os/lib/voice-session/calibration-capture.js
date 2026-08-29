@@ -81,15 +81,21 @@ export function createCalibrationCapture({
       state.clearIntervalImpl(state.intervalId);
       state.intervalId = null;
     }
-    // Stop tracks synchronously before awaiting graph closure.
+    const tap = state.tap;
+    state.tap = null;
+    // Initiate processor cancellation before stopping the claimed track. The
+    // real MediaStreamTrackProcessor stream can otherwise leave cancel()
+    // pending after its source has already ended. stop() is idempotent and
+    // begins cancellation synchronously before its first await.
+    let tapCleanup;
+    try { tapCleanup = tap?.stop?.({ timeoutMs: cleanupTimeoutMs, setTimeoutImpl, clearTimeoutImpl }); } catch { tapCleanup = Promise.resolve({ confirmed: false, state: "unknown" }); }
+    // Stop tracks synchronously immediately after cancellation is initiated.
     const tracks = state.stream?.getTracks?.() || [];
     try { tracks.forEach((t) => t.stop()); } catch { /* gone */ }
     const endedTrackCount = tracks.filter((t) => t?.readyState === "ended").length;
     state.stream = null;
-    const tap = state.tap;
-    state.tap = null;
     let tapResult = { confirmed: true, state: "closed" };
-    try { tapResult = await tap?.stop?.({ timeoutMs: cleanupTimeoutMs, setTimeoutImpl, clearTimeoutImpl }) || tapResult; } catch { tapResult = { confirmed: false, state: "unknown" }; }
+    try { tapResult = await tapCleanup || tapResult; } catch { tapResult = { confirmed: false, state: "unknown" }; }
     const claim = state.claim;
     try { claim?.release?.(); } catch { /* already released */ }
     const claimReleased = claim ? (typeof claim.isActive === "function" ? !claim.isActive() : true) : true;

@@ -34,3 +34,27 @@ test("unsupported browser refuses before a source is constructed", () => { asser
 test("track ownership remains external to the source", async () => { const h = harness(); const source = createTrackProcessorAudioFrameSource({ track: h.track, ProcessorImpl: h.Processor }); await source.start(); await source.stop(); assert.equal(h.track.stopCalls, 0); });
 test("stereo planar input is downmixed and chunked", async () => { const h = frameSource("f32-planar", [new Float32Array(1024).fill(.2), new Float32Array(1024).fill(-.2)], 16000, 2); const out = []; const source = createTrackProcessorAudioFrameSource({ track: h.track, ProcessorImpl: h.Processor, onFrame: (f) => out.push(f) }); await source.start(); h.push(); await new Promise((r) => setTimeout(r, 0)); assert.equal(out.length, 2); assert.equal(out[0][0], 0); await source.stop(); });
 test("interleaved input preserves duration across chunk boundaries", async () => { const h = frameSource("f32", Array.from({ length: 1024 }, (_, i) => i % 2 ? -.5 : .5), 16000, 1); const out = []; const source = createTrackProcessorAudioFrameSource({ track: h.track, ProcessorImpl: h.Processor, onFrame: (f) => out.push(f) }); await source.start(); h.push(); await new Promise((r) => setTimeout(r, 0)); assert.equal(out.length, 2); assert.equal(out[0].length, 512); await source.stop(); });
+
+test("cancellation starts before the claimed track is stopped", async () => {
+  const track = { readyState: "live", stopCalls: 0, stop() { this.stopCalls += 1; this.readyState = "ended"; releaseCancel?.(); } };
+  let releaseRead; let releaseCancel;
+  let cancelStarted = false;
+  const reader = {
+    read: () => new Promise((resolve) => { releaseRead = () => resolve({ done: true }); }),
+    cancel: () => { cancelStarted = true; return new Promise((resolve) => { releaseCancel = resolve; }); },
+    releaseLock: () => {},
+  };
+  class Processor { constructor() { this.readable = { getReader: () => reader }; } }
+  const source = createTrackProcessorAudioFrameSource({ track, ProcessorImpl: Processor });
+  await source.start();
+  const cleanup = source.stop();
+  assert.equal(cancelStarted, true);
+  assert.equal(track.readyState, "live");
+  track.stop();
+  releaseRead();
+  const diagnostics = await cleanup;
+  assert.equal(diagnostics.readerCancelSettled, true);
+  assert.equal(diagnostics.pipelineSettled, true);
+  assert.equal(track.readyState, "ended");
+  assert.equal(track.stopCalls, 1);
+});

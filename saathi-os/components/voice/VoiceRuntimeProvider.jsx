@@ -149,8 +149,8 @@ export function VoiceRuntimeProvider({ children }) {
   }, [detachPipelineSubscriptions]);
 
   const hardReset = useCallback(() => {
-    invalidateSessionCreation("SESSION_CLOSE");
     cleanupLocal();
+    invalidateSessionCreation("SESSION_CLOSE");
     finalizeBackendSession("SESSION_CLOSE");
     forceReleaseInput("SESSION_CLOSE");
     try {
