@@ -20,6 +20,7 @@ import { fileURLToPath } from "node:url";
 
 import {
   createCalibrationCapture,
+  createSnapshotStore,
   CALIBRATION_DEADLINE_MS,
   CALIBRATION_CLEANUP_MARGIN_MS,
   TERMINAL_REASONS,
@@ -30,6 +31,42 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const PANEL = readFileSync(
   join(HERE, "..", "..", "components", "voice", "MicCalibrationPanel.jsx"), "utf8")
   .replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+
+describe("snapshot publication bounds", () => {
+  it("freezes the subscriber cohort when listeners mutate during publication", () => {
+    const store = createSnapshotStore({ value: 0 });
+    const calls = [];
+    let unsubscribe;
+    const listenerB = () => calls.push("B");
+    const listenerA = () => {
+      calls.push("A");
+      unsubscribe?.();
+      unsubscribe = store.subscribe(listenerB);
+    };
+    unsubscribe = store.subscribe(listenerA);
+    store.publish({ value: 1 });
+    assert.deepEqual(calls, ["A"], "a new subscription must wait for the next publication");
+    store.publish({ value: 2 });
+    assert.deepEqual(calls, ["A", "B"]);
+  });
+
+  it("isolates subscriber errors and ignores returned Promises", () => {
+    const store = createSnapshotStore({ value: 0 }); let reached = false;
+    store.subscribe(() => { throw new Error("observer"); });
+    store.subscribe(() => { reached = true; return new Promise(() => {}); });
+    store.publish({ value: 1 });
+    assert.equal(reached, true);
+    assert.equal(store.getSnapshot().value, 1);
+  });
+
+  it("keeps snapshot identity stable between publications", () => {
+    const store = createSnapshotStore({ value: 0 }); const first = store.getSnapshot();
+    assert.equal(store.getSnapshot(), first);
+    store.publish({ value: 1 });
+    assert.notEqual(store.getSnapshot(), first);
+    assert.equal(store.getSnapshot(), store.getSnapshot());
+  });
+});
 
 /** A clock whose timers fire only when the test says so. */
 function fakeClock() {

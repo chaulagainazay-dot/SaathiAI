@@ -58,9 +58,17 @@ export default function MicCalibrationPanel() {
   const captureRef = useRef(null);
   const samplesRef = useRef({});
   const startedAtRef = useRef(0);
-  const controllerSnapshot = useSyncExternalStore(
+  const subscribeSnapshot = useCallback(
     (listener) => captureRef.current?.subscribe?.(listener) || (() => {}),
+    [],
+  );
+  const getSnapshot = useCallback(
     () => captureRef.current?.getSnapshot?.() || EMPTY_SNAPSHOT,
+    [],
+  );
+  const controllerSnapshot = useSyncExternalStore(
+    subscribeSnapshot,
+    getSnapshot,
     () => EMPTY_SNAPSHOT,
   );
 

@@ -29,6 +29,22 @@
  */
 import { CALIBRATION_TOTAL_SECONDS } from "./mic-calibration.js";
 
+export function createSnapshotStore(initial) {
+  let snapshot = Object.freeze({ ...initial });
+  const subscribers = new Set();
+  const publish = (patch) => {
+    snapshot = Object.freeze({ ...snapshot, ...patch });
+    const listeners = [...subscribers];
+    for (const listener of listeners) { try { listener(); } catch { /* observers must not throw */ } }
+  };
+  return {
+    getSnapshot: () => snapshot,
+    subscribe: (listener) => { subscribers.add(listener); return () => subscribers.delete(listener); },
+    publish,
+    subscriberCount: () => subscribers.size,
+  };
+}
+
 /**
  * Cleanup margin beyond the measurement window.
  *
@@ -94,7 +110,7 @@ export function createCalibrationCapture({
   let generation = 0;
   let run = null;
   let lastRun = null;
-  let snapshot = Object.freeze({
+  const snapshotStore = createSnapshotStore({
     phase: "idle", startupStage: "idle", startupErrorCode: "", cleanupState: "cleanup_confirmed",
     captureReleaseState: "idle", trackCount: 0, endedTrackCount: 0, claimState: "idle",
     pipelineState: "idle", outstandingFrames: 0, readerCancelState: "idle", processingLoopState: "idle",
@@ -104,11 +120,7 @@ export function createCalibrationCapture({
     hasDrainAfterRelease: false, hasTapCleanup: false,
     controllerImplementationId: "calibration-capture-v2-split-drain",
   });
-  const subscribers = new Set();
-  const publish = (patch) => {
-    snapshot = Object.freeze({ ...snapshot, ...patch });
-    for (const listener of subscribers) { try { listener(); } catch { /* observers must not throw */ } }
-  };
+  const publish = snapshotStore.publish;
 
   async function teardown(state) {
     // Stop timers and tracks synchronously first; then close the graph and hand
@@ -178,7 +190,7 @@ export function createCalibrationCapture({
         settled = true;
         pipelineCleanup = "timed_out";
         tapResult = { confirmed: false, state: "timed_out" };
-        publish({ phaseBTimeoutFired: true, controllerPipelineState: "timed_out", pipelineState: "timed_out", pipelineCallbackCount: snapshot.pipelineCallbackCount + 1, pipelineCallbackLastState: "timed_out", cleanupPromiseState: "settled" });
+        publish({ phaseBTimeoutFired: true, controllerPipelineState: "timed_out", pipelineState: "timed_out", pipelineCallbackCount: snapshotStore.getSnapshot().pipelineCallbackCount + 1, pipelineCallbackLastState: "timed_out", cleanupPromiseState: "settled" });
         try { onPipelineDiagnostics({ phaseBTimeoutFired: true, controllerPipelineState: "timed_out", cleanupPromiseState: "settled" }); } catch { /* diagnostics must not throw */ }
         try { onPipelineCleanup({ pipelineCleanup, ...tapResult }); } catch { /* reporting must not throw */ }
         resolveTimeout(tapResult);
@@ -211,7 +223,7 @@ export function createCalibrationCapture({
     publish({ startupStage: state.stage });
     try { onStage(state.stage, state); } catch { /* diagnostics must not throw */ }
     if (pipelineCleanup !== "timed_out") {
-      publish({ pipelineState: pipelineCleanup, pipelineCallbackCount: snapshot.pipelineCallbackCount + 1, pipelineCallbackLastState: pipelineCleanup });
+      publish({ pipelineState: pipelineCleanup, pipelineCallbackCount: snapshotStore.getSnapshot().pipelineCallbackCount + 1, pipelineCallbackLastState: pipelineCleanup });
       try { onPipelineCleanup({ pipelineCleanup, ...tapResult }); } catch { /* diagnostics must not throw */ }
     }
     publish({ controllerPipelineState: pipelineCleanup, cleanupPromiseState: "settled" });
@@ -240,7 +252,7 @@ export function createCalibrationCapture({
     if (run === state) run = null;
     lastRun = state;
     state.cleanupPromise.then((diagnostics) => {
-      publish({ terminalCallbackCount: snapshot.terminalCallbackCount + 1, cleanupPromiseState: "settled", pipelineState: diagnostics.pipelineCleanup || "failed", captureReleaseState: diagnostics.captureReleased ? "confirmed" : "failed", trackCount: diagnostics.trackCount || 0, endedTrackCount: diagnostics.endedTrackCount || 0, claimState: diagnostics.claimReleased ? "released" : "held" });
+      publish({ terminalCallbackCount: snapshotStore.getSnapshot().terminalCallbackCount + 1, cleanupPromiseState: "settled", pipelineState: diagnostics.pipelineCleanup || "failed", captureReleaseState: diagnostics.captureReleased ? "confirmed" : "failed", trackCount: diagnostics.trackCount || 0, endedTrackCount: diagnostics.endedTrackCount || 0, claimState: diagnostics.claimReleased ? "released" : "held" });
       state.cleanup = {
         ...diagnostics,
         startupStage: state.startupStage || state.stage,
@@ -255,8 +267,8 @@ export function createCalibrationCapture({
   }
 
   return {
-    getSnapshot() { return snapshot; },
-    subscribe(listener) { subscribers.add(listener); return () => subscribers.delete(listener); },
+    getSnapshot() { return snapshotStore.getSnapshot(); },
+    subscribe(listener) { return snapshotStore.subscribe(listener); },
     get generation() { return generation; },
     isActive() { return Boolean(run) && !run.terminal; },
     currentReason() { return run?.reason ?? null; },
