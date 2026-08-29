@@ -58,6 +58,8 @@ export function VoiceRuntimeProvider({ children }) {
   );
   const [busy, setBusy] = useState(false);
   const sessionIdRef = useRef("");
+  const ensureSessionFlightRef = useRef(null);
+  const authEpochRef = useRef(0);
   const mediaStreamRef = useRef(null);
   const inputClaimRef = useRef(null);
   // The binding to the authoritative transcript stream, one generation at a
@@ -99,6 +101,11 @@ export function VoiceRuntimeProvider({ children }) {
     sessionIdRef.current = "";
     return outcome;
   }, []);
+  const invalidateSessionCreation = useCallback((reason = "SESSION_INVALIDATED") => {
+    authEpochRef.current += 1;
+    ensureSessionFlightRef.current = null;
+    if (sessionIdRef.current) finalizeBackendSession(reason, tokenRef.current || getToken());
+  }, [finalizeBackendSession]);
   // Read the session through a ref inside teardown paths. `voiceSession` is a
   // fresh object on every published snapshot, so a cleanup callback that closes
   // over it directly changes identity whenever voice state changes — and the
@@ -142,6 +149,7 @@ export function VoiceRuntimeProvider({ children }) {
   }, [detachPipelineSubscriptions]);
 
   const hardReset = useCallback(() => {
+    invalidateSessionCreation("SESSION_CLOSE");
     cleanupLocal();
     finalizeBackendSession("SESSION_CLOSE");
     forceReleaseInput("SESSION_CLOSE");
@@ -152,7 +160,7 @@ export function VoiceRuntimeProvider({ children }) {
     }
     dispatch({ type: "RESET" });
     setBusy(false);
-  }, [cleanupLocal, finalizeBackendSession]);
+  }, [cleanupLocal, finalizeBackendSession, invalidateSessionCreation]);
 
   useEffect(() => {
     setToken(getToken());
@@ -162,6 +170,7 @@ export function VoiceRuntimeProvider({ children }) {
     const onContext = (event) => {
       // Finalize with the outgoing token: after a logout or workspace switch
       // the new token cannot terminate the previous context's session.
+      invalidateSessionCreation("LOGOUT");
       finalizeBackendSession("LOGOUT", tokenRef.current);
       hardReset();
       setToken(event?.detail?.token ?? getToken());
@@ -171,6 +180,7 @@ export function VoiceRuntimeProvider({ children }) {
     // is the last moment the page can still speak; keepalive lets the request
     // outlive it.
     const onPageHide = () => {
+      invalidateSessionCreation("PAGE_HIDE");
       finalizeBackendSession("PAGE_HIDE", tokenRef.current, true);
     };
     window.addEventListener(PLATFORM_CONTEXT_EVENT, onContext);
@@ -179,9 +189,10 @@ export function VoiceRuntimeProvider({ children }) {
       window.removeEventListener(PLATFORM_CONTEXT_EVENT, onContext);
       window.removeEventListener("pagehide", onPageHide);
       cleanupLocal();
+      invalidateSessionCreation("UNMOUNT");
       finalizeBackendSession("UNMOUNT");
     };
-  }, [cleanupLocal, finalizeBackendSession, hardReset]);
+  }, [cleanupLocal, finalizeBackendSession, hardReset, invalidateSessionCreation]);
 
   // Shell mounts this provider above the router, so a client-side navigation
   // does not unmount it and the microphone stream would stay hot on an
@@ -227,6 +238,13 @@ export function VoiceRuntimeProvider({ children }) {
   const ensureSession = useCallback(
     async (activeToken) => {
       if (sessionIdRef.current) return sessionIdRef.current;
+      if (ensureSessionFlightRef.current) return ensureSessionFlightRef.current.promise;
+      const epoch = authEpochRef.current;
+      // The current backend validates known session fields but has no
+      // idempotency contract; this stable client id documents the request
+      // boundary for a future server-side key without changing that schema.
+      const requestId = `voice-session-${epoch}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+      const promise = (async () => {
       // D17: the derived platform session carries a one-hour idle TTL, and the
       // owner may press the microphone long after the tab last spoke to the
       // backend. If creation is refused with the bounded SESSION_INVALID code —
@@ -236,6 +254,7 @@ export function VoiceRuntimeProvider({ children }) {
       const created = await withPlatformSessionRecovery(
         activeToken,
         (tok) => voiceRuntimeActions.createSession(tok, {
+          idempotency_key: requestId,
           input_mode: "toggle",
           stt_provider: getRecognitionCtor() ? "browser" : "auto",
           voice_profile_id: "yeti_teacher",
@@ -247,9 +266,23 @@ export function VoiceRuntimeProvider({ children }) {
           clearToken: () => setPlatformToken(""),
         },
       );
+      const sessionId = created?.session?.session_id;
+      if (!sessionId) throw new Error("VOICE_SESSION_CREATE_INVALID");
+      if (epoch !== authEpochRef.current || ensureSessionFlightRef.current?.epoch !== epoch) {
+        finalizerRef.current.finalize({ token: activeToken, sessionId, reason: "SESSION_INVALIDATED" });
+        return null;
+      }
       dispatch({ type: "SESSION", session: created.session });
-      sessionIdRef.current = created.session.session_id;
-      return created.session.session_id;
+      sessionIdRef.current = sessionId;
+      return sessionId;
+      })();
+      ensureSessionFlightRef.current = { epoch, promise };
+      void promise.then(() => {
+        if (ensureSessionFlightRef.current?.promise === promise) ensureSessionFlightRef.current = null;
+      }, () => {
+        if (ensureSessionFlightRef.current?.promise === promise) ensureSessionFlightRef.current = null;
+      });
+      return promise;
     },
     []
   );

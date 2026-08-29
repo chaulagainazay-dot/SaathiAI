@@ -277,6 +277,15 @@ describe("the boundary this is wired into", () => {
     }
   });
 
+  it("runtime session creation is provider-private single-flight and generation guarded", () => {
+    assert.ok(code.includes("ensureSessionFlightRef"));
+    assert.ok(code.includes("authEpochRef"));
+    assert.ok(code.includes("idempotency_key: requestId"));
+    assert.ok(code.includes("ensureSessionFlightRef.current?.promise === promise"));
+    assert.ok(code.includes('invalidateSessionCreation("UNMOUNT")'));
+    assert.ok(code.includes('invalidateSessionCreation("LOGOUT")'));
+  });
+
   it("the microphone is claimed only after session creation returns", () => {
     // First occurrences, inside the start handler. Searching from an offset
     // would still find a later call after a mutation moved the claim earlier,
