@@ -238,12 +238,13 @@ describe("failures with resources partially open", () => {
 
 describe("races", () => {
   it("releases the microphone before a processor drain that never settles", async () => {
-    const h = harness(); let released = false; let terminal;
+    const h = harness(); let released = false; let terminal; let pipelineEvents = 0;
     const capture = createCalibrationCapture({
       acquireClaim: () => ({ release() { released = true; } }),
       openMicrophone: async () => ({ getTracks: () => [h.track] }),
       createTap: () => ({ start: async () => {}, stop: () => new Promise(() => {}) }),
       onCaptureReleased: (d) => { assert.equal(d.captureReleased, true); assert.equal(h.track.readyState, "ended"); assert.equal(released, true); },
+      onPipelineCleanup: () => { pipelineEvents += 1; },
       onTerminal: (_r, _g, d) => { terminal = d; },
       setTimeoutImpl: h.clock.setTimeoutImpl,
       clearTimeoutImpl: h.clock.clearTimeoutImpl,
@@ -258,6 +259,7 @@ describe("races", () => {
     await settle();
     assert.equal(terminal.pipelineCleanup, "timed_out");
     assert.equal(terminal.captureReleased, true);
+    assert.equal(pipelineEvents, 1);
   });
 
   it("runs Phase A before any drain promise can settle", async () => {

@@ -135,16 +135,35 @@ export function createCalibrationCapture({
     let tapResult = { confirmed: true, state: "closed" };
     let pipelineCleanup = "confirmed";
     if (tapCleanup) {
-      let timedOut = false;
+      let settled = false;
       let timeoutId = null;
-      const timeout = new Promise((resolve) => { timeoutId = setTimeoutImpl(() => { timedOut = true; resolve({ confirmed: false, state: "timed_out" }); }, cleanupTimeoutMs); });
-      tapResult = await Promise.race([Promise.resolve(tapCleanup).catch(() => ({ confirmed: false, state: "failed" })), timeout]);
-      if (timeoutId !== null) clearTimeoutImpl(timeoutId);
-      pipelineCleanup = timedOut ? "timed_out" : (tapResult.confirmed === false ? "failed" : "confirmed");
+      let resolveTimeout;
+      const timeout = new Promise((resolve) => { resolveTimeout = resolve; });
+      timeoutId = setTimeoutImpl(() => {
+        if (settled) return;
+        settled = true;
+        pipelineCleanup = "timed_out";
+        tapResult = { confirmed: false, state: "timed_out" };
+        try { onPipelineCleanup({ pipelineCleanup, ...tapResult }); } catch { /* reporting must not throw */ }
+        resolveTimeout(tapResult);
+      }, cleanupTimeoutMs);
+      const drain = Promise.resolve(tapCleanup).then(
+        (result) => ({ result: result || { confirmed: true, state: "closed" }, status: "confirmed" }),
+        () => ({ result: { confirmed: false, state: "failed" }, status: "failed" }),
+      );
+      const winner = await Promise.race([drain, timeout.then((result) => ({ result, status: "timed_out" }))]);
+      if (!settled) {
+        settled = true;
+        tapResult = winner.result;
+        pipelineCleanup = winner.status;
+      }
+      if (timeoutId !== null && pipelineCleanup !== "timed_out") clearTimeoutImpl(timeoutId);
     }
     state.stage = (tracksEnded && tapResult.confirmed && claimReleased) ? "cleanup_confirmed" : "cleanup_failed";
     try { onStage(state.stage, state); } catch { /* diagnostics must not throw */ }
-    try { onPipelineCleanup({ pipelineCleanup, ...tapResult }); } catch { /* diagnostics must not throw */ }
+    if (pipelineCleanup !== "timed_out") {
+      try { onPipelineCleanup({ pipelineCleanup, ...tapResult }); } catch { /* diagnostics must not throw */ }
+    }
     return {
       ...tapResult,
       captureReleased,
