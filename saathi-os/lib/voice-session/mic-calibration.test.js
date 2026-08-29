@@ -248,7 +248,7 @@ describe("the calibration surface contract", () => {
   });
 
   it("reuses the production tap and frame maths", () => {
-    assert.ok(PANEL.includes("createAudioFrameTap"));
+    assert.ok(PANEL.includes("createTrackProcessorAudioFrameSource"));
     assert.ok(PANEL.includes("frameRms") && PANEL.includes("frameZcr"));
   });
 

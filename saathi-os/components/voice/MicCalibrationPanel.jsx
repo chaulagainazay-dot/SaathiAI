@@ -22,7 +22,7 @@ import {
   acquireInputClaim,
   openMicrophoneForClaim,
 } from "@/lib/voice-session/input-owner";
-import { createAudioFrameTap } from "@/lib/voice-session/audio-frame-tap";
+import { createTrackProcessorAudioFrameSource, isTrackProcessorAudioSupported } from "@/lib/voice-session/track-processor-audio-frame-source";
 import { frameRms, frameZcr } from "@/lib/voice-session/energy-vad";
 import {
   createCalibrationCapture,
@@ -86,7 +86,10 @@ export default function MicCalibrationPanel() {
           setDevice(describeTrackSettings(stream.getAudioTracks?.()[0]));
           return stream;
         },
-        createTap: (stream, onFrame) => createAudioFrameTap({ stream, onFrame }),
+        createTap: (stream, onFrame) => createTrackProcessorAudioFrameSource({
+          track: stream?.getAudioTracks?.()[0] || null,
+          onFrame,
+        }),
         onCleanupPending: () => {
           setPhase("");
           setRemaining(0);
@@ -113,6 +116,10 @@ export default function MicCalibrationPanel() {
   }, []);
 
   const start = useCallback(async () => {
+    if (!isTrackProcessorAudioSupported()) {
+      setStatus("Calibration unavailable in this browser");
+      return;
+    }
     const cap = capture();
     if (cap.isActive()) return;
     samplesRef.current = Object.fromEntries(CALIBRATION_PHASES.map((p) => [p.id, []]));
