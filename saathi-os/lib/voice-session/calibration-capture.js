@@ -51,6 +51,27 @@ export const TERMINAL_REASONS = Object.freeze({
   DISPOSED: "DISPOSED",
 });
 
+export const CALIBRATION_STARTUP_STAGES = Object.freeze([
+  "idle", "claim_acquired", "capture_requested", "capture_opened",
+  "track_selected", "frame_source_constructing", "processor_constructed",
+  "reader_acquired", "processing_loop_started", "first_frame_received",
+  "measuring", "cleanup_started", "cleanup_confirmed", "cleanup_failed",
+]);
+
+const ERROR_NAMES = new Set(["Error", "NotAllowedError", "NotFoundError", "NotReadableError", "OverconstrainedError", "AbortError", "InvalidStateError", "TypeError"]);
+const stageCode = (stage) => ({
+  idle: "CLAIM_ACQUISITION_FAILED",
+  claim_acquired: "CLAIM_ACQUISITION_FAILED",
+  capture_requested: "CAPTURE_REQUEST_FAILED",
+  capture_opened: "NO_AUDIO_TRACK",
+  track_selected: "NO_AUDIO_TRACK",
+  frame_source_constructing: "FRAME_SOURCE_CONSTRUCTION_FAILED",
+  processor_constructed: "TRACK_PROCESSOR_CONSTRUCTION_FAILED",
+  reader_acquired: "READER_ACQUISITION_FAILED",
+  processing_loop_started: "PROCESSING_LOOP_FAILED",
+  first_frame_received: "PROCESSING_LOOP_FAILED",
+}[stage] || "CALIBRATION_START_FAILED");
+
 /**
  * @param {object} deps injected so the whole lifecycle is testable without a
  *   browser: a hung start, a late resolve and a rejection are all just promises.
@@ -65,6 +86,7 @@ export function createCalibrationCapture({
   clearTimeoutImpl = clearTimeout,
   deadlineMs = CALIBRATION_DEADLINE_MS,
   cleanupTimeoutMs = 2000,
+  onStage = () => {},
 } = {}) {
   let generation = 0;
   let run = null;
@@ -83,6 +105,8 @@ export function createCalibrationCapture({
     }
     const tap = state.tap;
     state.tap = null;
+    state.stage = "cleanup_started";
+    try { onStage(state.stage, state); } catch { /* diagnostics must not throw */ }
     // Initiate processor cancellation before stopping the claimed track. The
     // real MediaStreamTrackProcessor stream can otherwise leave cancel()
     // pending after its source has already ended. stop() is idempotent and
@@ -93,6 +117,7 @@ export function createCalibrationCapture({
     const tracks = state.stream?.getTracks?.() || [];
     try { tracks.forEach((t) => t.stop()); } catch { /* gone */ }
     const endedTrackCount = tracks.filter((t) => t?.readyState === "ended").length;
+    const tracksEnded = endedTrackCount === tracks.length;
     state.stream = null;
     let tapResult = { confirmed: true, state: "closed" };
     try { tapResult = await tapCleanup || tapResult; } catch { tapResult = { confirmed: false, state: "unknown" }; }
@@ -100,7 +125,17 @@ export function createCalibrationCapture({
     try { claim?.release?.(); } catch { /* already released */ }
     const claimReleased = claim ? (typeof claim.isActive === "function" ? !claim.isActive() : true) : true;
     state.claim = null;
-    return { trackCount: tracks.length, endedTrackCount, tracksEnded: endedTrackCount === tracks.length, graphClosed: Boolean(tapResult.confirmed), audioContextState: tapResult.state, claimReleased };
+    state.stage = (tracksEnded && tapResult.confirmed && claimReleased) ? "cleanup_confirmed" : "cleanup_failed";
+    try { onStage(state.stage, state); } catch { /* diagnostics must not throw */ }
+    return {
+      ...tapResult,
+      trackCount: tracks.length,
+      endedTrackCount,
+      tracksEnded,
+      graphClosed: tapResult.confirmed !== false,
+      audioContextState: tapResult.state || "unknown",
+      claimReleased,
+    };
   }
 
   /** Idempotent per generation. The first reason wins; later ones are ignored. */
@@ -113,10 +148,15 @@ export function createCalibrationCapture({
     if (run === state) run = null;
     lastRun = state;
     state.cleanupPromise.then((diagnostics) => {
-      state.cleanup = diagnostics;
+      state.cleanup = {
+        ...diagnostics,
+        startupStage: state.startupStage || state.stage,
+        startupErrorCode: state.startupErrorCode,
+        startupErrorName: state.startupErrorName,
+      };
       state.cleanupConfirmed = diagnostics.tracksEnded && diagnostics.graphClosed && diagnostics.claimReleased;
       state.cleanupFailed = !state.cleanupConfirmed;
-      try { onTerminal(reason, state.generation, diagnostics); } catch { /* reporting must not throw */ }
+      try { onTerminal(reason, state.generation, state.cleanup); } catch { /* reporting must not throw */ }
     });
     return true;
   }
@@ -149,6 +189,10 @@ export function createCalibrationCapture({
         cleanupPromise: null,
         cleanupConfirmed: false,
         cleanupFailed: false,
+        stage: "idle",
+        startupStage: "idle",
+        startupErrorCode: null,
+        startupErrorName: null,
       };
       run = state;
 
@@ -164,8 +208,10 @@ export function createCalibrationCapture({
         state.claim = acquireClaim({
           onPreempt: () => terminalize(state, TERMINAL_REASONS.PREEMPTED),
         });
+        state.stage = state.startupStage = "claim_acquired"; onStage(state.stage, state);
         if (superseded()) { await teardown(state); return { started: false, reason: state.reason }; }
 
+        state.stage = state.startupStage = "capture_requested"; onStage(state.stage, state);
         const stream = await openMicrophone(state.claim);
         if (superseded()) {
           // The deadline (or a Stop) fired while the device was opening. The
@@ -175,8 +221,20 @@ export function createCalibrationCapture({
           return { started: false, reason: state.reason };
         }
         state.stream = stream;
+        state.stage = state.startupStage = "capture_opened"; onStage(state.stage, state);
+        const audioTracks = stream?.getAudioTracks?.() || stream?.getTracks?.()?.filter((t) => t?.kind === "audio") || [];
+        if (!audioTracks.length) { const e = new Error("no audio track"); e.code = "NO_AUDIO_TRACK"; throw e; }
+        state.stage = state.startupStage = "track_selected"; onStage(state.stage, state);
 
-        const tap = createTap(stream, onFrame);
+        state.stage = state.startupStage = "frame_source_constructing"; onStage(state.stage, state);
+        const frameHandler = (...args) => {
+          if (state.startupStage === "first_frame_received") {
+            state.stage = state.startupStage = "measuring";
+            onStage(state.stage, state);
+          }
+          return onFrame?.(...args);
+        };
+        const tap = createTap(stream, frameHandler, (stage) => { state.stage = state.startupStage = stage; onStage(stage, state); });
         if (superseded()) {
           try { tap?.stop?.(); } catch { /* not started */ }
           await teardown(state);
@@ -193,6 +251,8 @@ export function createCalibrationCapture({
           return { started: false, reason: state.reason };
         }
       } catch (error) {
+        state.startupErrorCode = error?.code || stageCode(state.stage);
+        state.startupErrorName = ERROR_NAMES.has(error?.name) ? error.name : "Error";
         terminalize(state, TERMINAL_REASONS.ERROR);
         return { started: false, reason: TERMINAL_REASONS.ERROR, error };
       }

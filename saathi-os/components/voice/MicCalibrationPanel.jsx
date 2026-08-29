@@ -45,6 +45,8 @@ export default function MicCalibrationPanel() {
   const [status, setStatus] = useState("");
   const [results, setResults] = useState(null);
   const [device, setDevice] = useState(null);
+  const [startupStage, setStartupStage] = useState("idle");
+  const [startupErrorCode, setStartupErrorCode] = useState("");
 
   const captureRef = useRef(null);
   const samplesRef = useRef({});
@@ -59,6 +61,8 @@ export default function MicCalibrationPanel() {
   const onTerminal = useCallback((reason, _generation, diagnostics = {}) => {
     setPhase("");
     setRemaining(0);
+    setStartupStage(diagnostics.startupStage || "idle");
+    setStartupErrorCode(diagnostics.startupErrorCode || "");
     if (!diagnostics.tracksEnded || !diagnostics.graphClosed || !diagnostics.claimReleased) {
       setStatus("Microphone cleanup could not be confirmed. Please close this page.");
     } else if (reason === TERMINAL_REASONS.COMPLETED) {
@@ -70,7 +74,15 @@ export default function MicCalibrationPanel() {
     } else if (reason === TERMINAL_REASONS.PREEMPTED) {
       setStatus("Another voice surface took the microphone. Calibration stopped.");
     } else if (reason === TERMINAL_REASONS.ERROR) {
-      setStatus("The microphone could not be captured. Nothing was recorded.");
+      const messages = {
+        CAPTURE_REQUEST_FAILED: "Microphone capture request failed.",
+        NO_AUDIO_TRACK: "Microphone capture opened without an audio track.",
+        TRACK_PROCESSOR_UNSUPPORTED: "Calibration unavailable in this browser.",
+        TRACK_PROCESSOR_CONSTRUCTION_FAILED: "Calibration frame processor could not start.",
+        READER_ACQUISITION_FAILED: "Calibration reader could not start.",
+        PROCESSING_LOOP_FAILED: "Calibration audio processing failed before measurement.",
+      };
+      setStatus(messages[diagnostics.startupErrorCode] || "Calibration could not start.");
     } else if (reason === TERMINAL_REASONS.STOPPED) {
       setStatus("Calibration stopped. Microphone released.");
     }
@@ -86,10 +98,12 @@ export default function MicCalibrationPanel() {
           setDevice(describeTrackSettings(stream.getAudioTracks?.()[0]));
           return stream;
         },
-        createTap: (stream, onFrame) => createTrackProcessorAudioFrameSource({
+        createTap: (stream, onFrame, onStage) => createTrackProcessorAudioFrameSource({
           track: stream?.getAudioTracks?.()[0] || null,
           onFrame,
+          onStage,
         }),
+        onStage: (stage) => { setStartupStage(stage); },
         onCleanupPending: () => {
           setPhase("");
           setRemaining(0);
@@ -125,6 +139,8 @@ export default function MicCalibrationPanel() {
     samplesRef.current = Object.fromEntries(CALIBRATION_PHASES.map((p) => [p.id, []]));
     setResults(null);
     setDevice(null);
+    setStartupErrorCode("");
+    setStartupStage("idle");
     setStatus("Requesting the microphone…");
     startedAtRef.current = Date.now();
 
@@ -150,6 +166,8 @@ export default function MicCalibrationPanel() {
       setPhase(CALIBRATION_PHASES[0].id);
       setRemaining(CALIBRATION_TOTAL_SECONDS);
       setStatus("Calibrating. Audio is analysed in memory only.");
+    } else if (outcome.error) {
+      setStartupErrorCode(outcome.error.code || "CALIBRATION_START_FAILED");
     }
   }, [onTerminal]);
 
@@ -172,6 +190,8 @@ export default function MicCalibrationPanel() {
       data-testid="mic-calibration-panel"
       data-calibration-phase={phase || "idle"}
       data-calibration-active={active ? "true" : "false"}
+      data-calibration-startup-stage={startupStage}
+      data-calibration-error-code={startupErrorCode || undefined}
       style={{ padding: 18, marginTop: 14, border: "1px solid rgba(255,255,255,0.12)", borderRadius: 12 }}
     >
       <div style={{ fontSize: 13, fontWeight: 600 }}>Calibrate microphone</div>

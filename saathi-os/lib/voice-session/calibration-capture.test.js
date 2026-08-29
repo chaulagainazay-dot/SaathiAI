@@ -95,7 +95,7 @@ describe("the deadline is armed before anything opens", () => {
     const armed = [];
     const capture = createCalibrationCapture({
       acquireClaim: () => { armed.push("claim"); return { release() {} }; },
-      openMicrophone: async () => { armed.push("mic"); return { getTracks: () => [] }; },
+      openMicrophone: async () => { armed.push("mic"); return { getTracks: () => [{ kind: "audio", readyState: "live", stop() { this.readyState = "ended"; } }] }; },
       createTap: () => ({ start: async () => { armed.push("tap"); }, stop() {} }),
       setTimeoutImpl: (fn, ms) => { armed.push(`deadline:${ms}`); return 1; },
       clearTimeoutImpl: () => {},
@@ -187,6 +187,52 @@ describe("failures with resources partially open", () => {
     assert.equal(h.track.stopped, 1);
     assert.equal(h.claim.released, 1);
     assert.equal(h.clock.pending(), 0, "the deadline is cleared too");
+  });
+
+  it("reports bounded startup stage and code when capture has no audio track", async () => {
+    let terminal;
+    const capture = createCalibrationCapture({
+      acquireClaim: () => ({ release() {} }),
+      openMicrophone: async () => ({ getTracks: () => [] }),
+      createTap: () => { throw new Error("must not construct"); },
+      onTerminal: (_reason, _gen, d) => { terminal = d; },
+    });
+    const out = await capture.start({});
+    await settle();
+    assert.equal(out.reason, TERMINAL_REASONS.ERROR);
+    assert.equal(terminal.startupStage, "capture_opened");
+    assert.equal(terminal.startupErrorCode, "NO_AUDIO_TRACK");
+    assert.equal(terminal.startupErrorName, "Error");
+  });
+
+  it("classifies frame-source construction failures without exposing exception text", async () => {
+    let terminal;
+    const capture = createCalibrationCapture({
+      acquireClaim: () => ({ release() {} }),
+      openMicrophone: async () => ({ getTracks: () => [{ kind: "audio", readyState: "live", stop() { this.readyState = "ended"; } }] }),
+      createTap: () => { const e = new Error("secret device detail"); e.name = "NotReadableError"; throw e; },
+      onTerminal: (_reason, _gen, d) => { terminal = d; },
+    });
+    await capture.start({});
+    await settle();
+    assert.equal(terminal.startupStage, "frame_source_constructing");
+    assert.equal(terminal.startupErrorCode, "FRAME_SOURCE_CONSTRUCTION_FAILED");
+    assert.equal(terminal.startupErrorName, "NotReadableError");
+    assert.equal(JSON.stringify(terminal).includes("secret device detail"), false);
+  });
+
+  it("classifies capture request failures and releases the claim", async () => {
+    let terminal; let released = 0;
+    const capture = createCalibrationCapture({
+      acquireClaim: () => ({ release() { released += 1; } }),
+      openMicrophone: async () => { throw Object.assign(new Error("permission detail"), { name: "NotAllowedError" }); },
+      onTerminal: (_reason, _gen, d) => { terminal = d; },
+    });
+    await capture.start({}); await settle();
+    assert.equal(terminal.startupStage, "capture_requested");
+    assert.equal(terminal.startupErrorCode, "CAPTURE_REQUEST_FAILED");
+    assert.equal(terminal.startupErrorName, "NotAllowedError");
+    assert.equal(released, 1);
   });
 });
 

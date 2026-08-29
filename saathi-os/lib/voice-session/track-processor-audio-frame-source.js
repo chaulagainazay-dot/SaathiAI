@@ -3,6 +3,7 @@ export const isTrackProcessorAudioSupported = (impl = typeof MediaStreamTrackPro
 
 export function createTrackProcessorAudioFrameSource({
   track, onFrame, outputSampleRate = 16000, frameSize = 512,
+  onStage = () => {},
   ProcessorImpl = typeof MediaStreamTrackProcessor !== "undefined" ? MediaStreamTrackProcessor : null,
 } = {}) {
   let processor = null;
@@ -28,6 +29,9 @@ export function createTrackProcessorAudioFrameSource({
     framesClosed,
     outstandingFrames,
     outputFrames,
+    processorCreated: Boolean(processor),
+    readerCreated: Boolean(reader),
+    processingLoopStarted: Boolean(loopPromise),
     readerCancelSettled: cancelSettled,
     pipelineSettled,
     trackState: track?.readyState || "unknown",
@@ -90,6 +94,7 @@ export function createTrackProcessorAudioFrameSource({
         const frame = item.value;
         outstandingFrames += 1;
         framesRead += 1;
+        if (framesRead === 1) { onStage("first_frame_received"); }
         try {
           inputSampleRate = inputSampleRate || Number(frame.sampleRate) || outputSampleRate;
           toMono(frame);
@@ -104,11 +109,16 @@ export function createTrackProcessorAudioFrameSource({
 
   return {
     async start() {
-      if (!track || !isTrackProcessorAudioSupported(ProcessorImpl)) throw new Error("Calibration unavailable in this browser");
-      processor = new ProcessorImpl({ track });
-      reader = processor.readable.getReader();
+      if (!track) { const e = new Error("no audio track"); e.code = "NO_AUDIO_TRACK"; throw e; }
+      if (!isTrackProcessorAudioSupported(ProcessorImpl)) { const e = new Error("unsupported"); e.code = "TRACK_PROCESSOR_UNSUPPORTED"; throw e; }
+      try { processor = new ProcessorImpl({ track }); } catch (cause) { const e = new Error("processor construction failed"); e.code = "TRACK_PROCESSOR_CONSTRUCTION_FAILED"; e.name = cause?.name; throw e; }
+      onStage("processor_constructed");
+      try { reader = processor?.readable?.getReader?.(); } catch (cause) { const e = new Error("reader acquisition failed"); e.code = "READER_ACQUISITION_FAILED"; e.name = cause?.name; throw e; }
+      if (!reader) { const e = new Error("reader acquisition failed"); e.code = "READER_ACQUISITION_FAILED"; throw e; }
+      onStage("reader_acquired");
       stopped = false;
       loopPromise = consume();
+      onStage("processing_loop_started");
       await Promise.resolve();
     },
     stop() {
