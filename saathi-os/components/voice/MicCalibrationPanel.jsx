@@ -47,6 +47,7 @@ export default function MicCalibrationPanel() {
   const [device, setDevice] = useState(null);
   const [startupStage, setStartupStage] = useState("idle");
   const [startupErrorCode, setStartupErrorCode] = useState("");
+  const [cleanupState, setCleanupState] = useState("cleanup_confirmed");
 
   const captureRef = useRef(null);
   const samplesRef = useRef({});
@@ -63,8 +64,11 @@ export default function MicCalibrationPanel() {
     setRemaining(0);
     setStartupStage(diagnostics.startupStage || "idle");
     setStartupErrorCode(diagnostics.startupErrorCode || "");
+    setCleanupState(diagnostics.captureReleased ? (diagnostics.pipelineCleanup === "confirmed" ? "cleanup_confirmed" : "pipeline_cleanup_failed") : "microphone_release_failed");
     if (!diagnostics.tracksEnded || !diagnostics.graphClosed || !diagnostics.claimReleased) {
       setStatus("Microphone cleanup could not be confirmed. Please close this page.");
+    } else if (diagnostics.pipelineCleanup === "timed_out" || diagnostics.pipelineCleanup === "failed") {
+      setStatus("Microphone released. Audio processor cleanup did not finish.");
     } else if (reason === TERMINAL_REASONS.COMPLETED) {
       setResults(summariseCalibration(samplesRef.current));
       setStatus("Calibration complete. Microphone released.");
@@ -104,9 +108,16 @@ export default function MicCalibrationPanel() {
           onStage,
         }),
         onStage: (stage) => { setStartupStage(stage); },
+        onCaptureReleased: (d) => {
+          setCleanupState(d.captureReleased ? "microphone_released_pipeline_pending" : "microphone_release_failed");
+          if (d.captureReleased) setStatus("Microphone released. Audio processor cleanup pending…");
+          else setStatus("Microphone release could not be confirmed.");
+        },
+        onPipelineCleanup: (d) => { setCleanupState(d.pipelineCleanup === "confirmed" ? "cleanup_confirmed" : "pipeline_cleanup_failed"); },
         onCleanupPending: () => {
           setPhase("");
           setRemaining(0);
+          setCleanupState("releasing_microphone");
           setStatus("Releasing microphone…");
         },
         onTerminal,
@@ -141,6 +152,7 @@ export default function MicCalibrationPanel() {
     setDevice(null);
     setStartupErrorCode("");
     setStartupStage("idle");
+    setCleanupState("releasing_microphone");
     setStatus("Requesting the microphone…");
     startedAtRef.current = Date.now();
 
@@ -192,6 +204,7 @@ export default function MicCalibrationPanel() {
       data-calibration-active={active ? "true" : "false"}
       data-calibration-startup-stage={startupStage}
       data-calibration-error-code={startupErrorCode || undefined}
+      data-calibration-cleanup-state={cleanupState}
       style={{ padding: 18, marginTop: 14, border: "1px solid rgba(255,255,255,0.12)", borderRadius: 12 }}
     >
       <div style={{ fontSize: 13, fontWeight: 600 }}>Calibrate microphone</div>

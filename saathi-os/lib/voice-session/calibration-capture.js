@@ -87,6 +87,8 @@ export function createCalibrationCapture({
   deadlineMs = CALIBRATION_DEADLINE_MS,
   cleanupTimeoutMs = 2000,
   onStage = () => {},
+  onCaptureReleased = () => {},
+  onPipelineCleanup = () => {},
 } = {}) {
   let generation = 0;
   let run = null;
@@ -119,16 +121,29 @@ export function createCalibrationCapture({
     const endedTrackCount = tracks.filter((t) => t?.readyState === "ended").length;
     const tracksEnded = endedTrackCount === tracks.length;
     state.stream = null;
-    let tapResult = { confirmed: true, state: "closed" };
-    try { tapResult = await tapCleanup || tapResult; } catch { tapResult = { confirmed: false, state: "unknown" }; }
     const claim = state.claim;
     try { claim?.release?.(); } catch { /* already released */ }
     const claimReleased = claim ? (typeof claim.isActive === "function" ? !claim.isActive() : true) : true;
     state.claim = null;
+    const captureReleased = tracksEnded && claimReleased;
+    try { onCaptureReleased({ captureReleased, trackCount: tracks.length, endedTrackCount, claimReleased }); } catch { /* diagnostics must not throw */ }
+    let tapResult = { confirmed: true, state: "closed" };
+    let pipelineCleanup = "confirmed";
+    if (tapCleanup) {
+      let timedOut = false;
+      let timeoutId = null;
+      const timeout = new Promise((resolve) => { timeoutId = setTimeoutImpl(() => { timedOut = true; resolve({ confirmed: false, state: "timed_out" }); }, cleanupTimeoutMs); });
+      tapResult = await Promise.race([Promise.resolve(tapCleanup).catch(() => ({ confirmed: false, state: "failed" })), timeout]);
+      if (timeoutId !== null) clearTimeoutImpl(timeoutId);
+      pipelineCleanup = timedOut ? "timed_out" : (tapResult.confirmed === false ? "failed" : "confirmed");
+    }
     state.stage = (tracksEnded && tapResult.confirmed && claimReleased) ? "cleanup_confirmed" : "cleanup_failed";
     try { onStage(state.stage, state); } catch { /* diagnostics must not throw */ }
+    try { onPipelineCleanup({ pipelineCleanup, ...tapResult }); } catch { /* diagnostics must not throw */ }
     return {
       ...tapResult,
+      captureReleased,
+      pipelineCleanup,
       trackCount: tracks.length,
       endedTrackCount,
       tracksEnded,

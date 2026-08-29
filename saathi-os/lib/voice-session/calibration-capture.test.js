@@ -237,6 +237,29 @@ describe("failures with resources partially open", () => {
 });
 
 describe("races", () => {
+  it("releases the microphone before a processor drain that never settles", async () => {
+    const h = harness(); let released = false; let terminal;
+    const capture = createCalibrationCapture({
+      acquireClaim: () => ({ release() { released = true; } }),
+      openMicrophone: async () => ({ getTracks: () => [h.track] }),
+      createTap: () => ({ start: async () => {}, stop: () => new Promise(() => {}) }),
+      onCaptureReleased: (d) => { assert.equal(d.captureReleased, true); assert.equal(h.track.readyState, "ended"); assert.equal(released, true); },
+      onTerminal: (_r, _g, d) => { terminal = d; },
+      setTimeoutImpl: h.clock.setTimeoutImpl,
+      clearTimeoutImpl: h.clock.clearTimeoutImpl,
+      cleanupTimeoutMs: 10,
+    });
+    await capture.start({});
+    capture.stop();
+    assert.equal(released, true);
+    assert.equal(h.track.readyState, "ended");
+    assert.equal(terminal, undefined);
+    h.clock.fire(10);
+    await settle();
+    assert.equal(terminal.pipelineCleanup, "timed_out");
+    assert.equal(terminal.captureReleased, true);
+  });
+
   it("explicit Stop before the deadline wins, and the deadline is inert", async () => {
     const h = harness({ startBehaviour: "hang" });
     h.capture.start({});
