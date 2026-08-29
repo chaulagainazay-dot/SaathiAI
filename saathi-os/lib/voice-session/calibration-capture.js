@@ -160,7 +160,8 @@ export function createCalibrationCapture({
       state.deadlineId = null;
     }
     if (state.intervalId !== null) {
-      state.clearIntervalImpl(state.intervalId);
+      const clearIntervalFn = state.clearIntervalImpl;
+      clearIntervalFn(state.intervalId);
       state.intervalId = null;
     }
     publish({ phaseAFunctionReturned: true });

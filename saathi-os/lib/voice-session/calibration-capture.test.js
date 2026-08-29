@@ -66,6 +66,25 @@ describe("snapshot publication bounds", () => {
     assert.notEqual(store.getSnapshot(), first);
     assert.equal(store.getSnapshot(), store.getSnapshot());
   });
+
+  it("clears a native-style interval without binding it to controller state", async () => {
+    const h = harness();
+    const cleared = [];
+    function clearIntervalStrict(id) {
+      if (this !== undefined) throw new TypeError("Illegal invocation");
+      cleared.push(id);
+    }
+    const capture = createCalibrationCapture({
+      acquireClaim: () => h.claim,
+      openMicrophone: async () => ({ getTracks: () => [h.track] }),
+      createTap: () => ({ start: async () => {}, stop() {} }),
+    });
+    await capture.start({ onRunning: () => false, setIntervalImpl: () => 42, clearIntervalImpl: clearIntervalStrict });
+    capture.stop();
+    await settle();
+    assert.deepEqual(cleared, [42]);
+    assert.equal(capture.getSnapshot().phaseAFunctionReturned, true);
+  });
 });
 
 /** A clock whose timers fire only when the test says so. */
