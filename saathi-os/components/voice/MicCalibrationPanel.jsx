@@ -56,6 +56,14 @@ export default function MicCalibrationPanel() {
   const [outstandingFrames, setOutstandingFrames] = useState(0);
   const [readerCancelState, setReaderCancelState] = useState("idle");
   const [processingLoopState, setProcessingLoopState] = useState("idle");
+  const [phaseBTimeoutArmed, setPhaseBTimeoutArmed] = useState(false);
+  const [phaseBTimeoutFired, setPhaseBTimeoutFired] = useState(false);
+  const [controllerPipelineState, setControllerPipelineState] = useState("idle");
+  const [pipelineCallbackCount, setPipelineCallbackCount] = useState(0);
+  const [pipelineCallbackLastState, setPipelineCallbackLastState] = useState("none");
+  const [reactPipelineCommitCount, setReactPipelineCommitCount] = useState(0);
+  const [terminalCallbackCount, setTerminalCallbackCount] = useState(0);
+  const [cleanupPromiseState, setCleanupPromiseState] = useState("idle");
 
   const captureRef = useRef(null);
   const samplesRef = useRef({});
@@ -68,6 +76,8 @@ export default function MicCalibrationPanel() {
    * already released by the time it does.
    */
   const onTerminal = useCallback((reason, _generation, diagnostics = {}) => {
+    setTerminalCallbackCount((count) => count + 1);
+    setCleanupPromiseState("settled");
     setPhase("");
     setRemaining(0);
     setStartupStage(diagnostics.startupStage || "idle");
@@ -132,11 +142,20 @@ export default function MicCalibrationPanel() {
           else setStatus("Microphone release could not be confirmed.");
         },
         onPipelineCleanup: (d) => {
+          setPipelineCallbackCount((count) => count + 1);
+          setPipelineCallbackLastState(d.pipelineCleanup || "failed");
+          setReactPipelineCommitCount((count) => count + 1);
           setPipelineState(d.pipelineCleanup || "failed");
           setReaderCancelState(d.readerCancelSettled ? "settled" : "unknown");
           setProcessingLoopState(d.pipelineSettled ? "settled" : "unknown");
           setOutstandingFrames(d.outstandingFrames || 0);
           setCleanupState(d.pipelineCleanup === "confirmed" ? "cleanup_confirmed" : "pipeline_cleanup_failed");
+        },
+        onPipelineDiagnostics: (d) => {
+          if (d.phaseBTimeoutArmed) setPhaseBTimeoutArmed(true);
+          if (d.phaseBTimeoutFired) setPhaseBTimeoutFired(true);
+          if (d.controllerPipelineState) setControllerPipelineState(d.controllerPipelineState);
+          if (d.cleanupPromiseState) setCleanupPromiseState(d.cleanupPromiseState);
         },
         onCleanupPending: () => {
           setPhase("");
@@ -145,6 +164,8 @@ export default function MicCalibrationPanel() {
           setCaptureReleaseState("pending"); setPipelineState("pending");
           setClaimState("held"); setReaderCancelState("pending"); setProcessingLoopState("pending");
           setStatus("Releasing microphone…");
+          setCleanupPromiseState("pending");
+          setControllerPipelineState("pending");
         },
         onTerminal,
       });
@@ -242,6 +263,15 @@ export default function MicCalibrationPanel() {
       data-outstanding-frame-count={outstandingFrames}
       data-reader-cancel-state={readerCancelState}
       data-processing-loop-state={processingLoopState}
+      data-phase-b-timeout-armed={phaseBTimeoutArmed ? "true" : "false"}
+      data-phase-b-timeout-fired={phaseBTimeoutFired ? "true" : "false"}
+      data-controller-pipeline-state={controllerPipelineState}
+      data-pipeline-callback-count={pipelineCallbackCount}
+      data-pipeline-callback-last-state={pipelineCallbackLastState}
+      data-react-pipeline-state={pipelineState}
+      data-react-pipeline-commit-count={reactPipelineCommitCount}
+      data-terminal-callback-count={terminalCallbackCount}
+      data-cleanup-promise-state={cleanupPromiseState}
       style={{ padding: 18, marginTop: 14, border: "1px solid rgba(255,255,255,0.12)", borderRadius: 12 }}
     >
       <div style={{ fontSize: 13, fontWeight: 600 }}>Calibrate microphone</div>

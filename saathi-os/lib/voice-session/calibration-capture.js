@@ -89,6 +89,7 @@ export function createCalibrationCapture({
   onStage = () => {},
   onCaptureReleased = () => {},
   onPipelineCleanup = () => {},
+  onPipelineDiagnostics = () => {},
 } = {}) {
   let generation = 0;
   let run = null;
@@ -149,6 +150,7 @@ export function createCalibrationCapture({
         settled = true;
         pipelineCleanup = "timed_out";
         tapResult = { confirmed: false, state: "timed_out" };
+        try { onPipelineDiagnostics({ phaseBTimeoutFired: true, controllerPipelineState: "timed_out", cleanupPromiseState: "settled" }); } catch { /* diagnostics must not throw */ }
         try { onPipelineCleanup({ pipelineCleanup, ...tapResult }); } catch { /* reporting must not throw */ }
         resolveTimeout(tapResult);
       };
@@ -156,6 +158,7 @@ export function createCalibrationCapture({
       // Keep a native wall-clock backstop independent of injected capture
       // timers; Phase A must never be able to clear this deadline.
       nativeTimeoutId = globalThis.setTimeout(publishTimeout, cleanupTimeoutMs);
+      try { onPipelineDiagnostics({ phaseBTimeoutArmed: true, controllerPipelineState: "pending", cleanupPromiseState: "pending" }); } catch { /* diagnostics must not throw */ }
       const drain = Promise.resolve(tapCleanup).then(
         (result) => ({ result: result || { confirmed: true, state: "closed" }, status: "confirmed" }),
         () => ({ result: { confirmed: false, state: "failed" }, status: "failed" }),
@@ -171,9 +174,10 @@ export function createCalibrationCapture({
     }
     state.stage = (tracksEnded && tapResult.confirmed && claimReleased) ? "cleanup_confirmed" : "cleanup_failed";
     try { onStage(state.stage, state); } catch { /* diagnostics must not throw */ }
-    if (pipelineCleanup !== "timed_out") {
+      if (pipelineCleanup !== "timed_out") {
       try { onPipelineCleanup({ pipelineCleanup, ...tapResult }); } catch { /* diagnostics must not throw */ }
     }
+    try { onPipelineDiagnostics({ controllerPipelineState: pipelineCleanup, cleanupPromiseState: "settled" }); } catch { /* diagnostics must not throw */ }
     return {
       ...tapResult,
       captureReleased,

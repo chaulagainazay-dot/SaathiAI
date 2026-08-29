@@ -371,6 +371,17 @@ describe("the panel wiring", () => {
     assert.ok(PANEL.includes("setIntervalImpl: setInterval"));
   });
 
+  it("exposes bounded Phase B publication diagnostics on the real panel", () => {
+    for (const attribute of [
+      "data-phase-b-timeout-armed", "data-phase-b-timeout-fired",
+      "data-controller-pipeline-state", "data-pipeline-callback-count",
+      "data-pipeline-callback-last-state", "data-react-pipeline-state",
+      "data-react-pipeline-commit-count", "data-terminal-callback-count",
+      "data-cleanup-promise-state",
+    ]) assert.ok(PANEL.includes(attribute), attribute);
+    assert.ok(PANEL.includes("onPipelineDiagnostics"));
+  });
+
   it("still opens nothing on mount and keeps every forbidden path out", () => {
     const mountEffect = PANEL.slice(PANEL.indexOf("useEffect(() =>"), PANEL.indexOf("const start ="));
     assert.ok(!mountEffect.includes("openMicrophoneForClaim"));
