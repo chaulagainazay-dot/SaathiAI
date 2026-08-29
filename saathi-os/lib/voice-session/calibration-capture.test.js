@@ -277,6 +277,37 @@ describe("races", () => {
     assert.equal(h.claim.released, 1);
   });
 
+  it("arms Phase B before invoking a blocking drain adapter", async () => {
+    const h = harness(); let armed = false; let invoked = 0; let terminal; let pipeline;
+    const tap = {
+      start: async () => {},
+      beginCancellation: () => ({ started: true, cancelPromise: new Promise(() => {}) }),
+      drainAfterCaptureRelease: () => { invoked += 1; return new Promise(() => {}); },
+    };
+    const capture = createCalibrationCapture({
+      acquireClaim: () => h.claim,
+      openMicrophone: async () => ({ getTracks: () => [h.track] }),
+      createTap: () => tap,
+      onPipelineDiagnostics: (d) => { if (d.phaseBTimeoutArmed) armed = true; },
+      onPipelineCleanup: (d) => { pipeline = d.pipelineCleanup; },
+      onTerminal: (_reason, _generation, d) => { terminal = d; },
+      setTimeoutImpl: h.clock.setTimeoutImpl,
+      clearTimeoutImpl: h.clock.clearTimeoutImpl,
+      cleanupTimeoutMs: 10,
+    });
+    await capture.start({});
+    capture.stop();
+    assert.equal(armed, true, "timeout is armed synchronously during Stop");
+    assert.equal(h.track.readyState, "ended");
+    assert.equal(h.claim.released, 1);
+    await Promise.resolve();
+    assert.equal(invoked, 1);
+    h.clock.fire(10);
+    await settle();
+    assert.equal(pipeline, "timed_out");
+    assert.equal(terminal.pipelineCleanup, "timed_out");
+  });
+
   it("explicit Stop before the deadline wins, and the deadline is inert", async () => {
     const h = harness({ startBehaviour: "hang" });
     h.capture.start({});

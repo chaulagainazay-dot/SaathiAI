@@ -136,10 +136,10 @@ export function createCalibrationCapture({
     }
     let tapResult = { confirmed: true, state: "closed" };
     let pipelineCleanup = "confirmed";
-    if (drainAfterRelease) {
-      try { tapCleanup = drainAfterRelease(); } catch { tapCleanup = Promise.resolve({ confirmed: false, state: "failed" }); }
-    }
-    if (tapCleanup) {
+    // Arm the Phase B backstop before invoking drain. A real Streams drain can
+    // remain pending, and even a synchronous adapter failure must not prevent
+    // the timeout from existing.
+    if (drainAfterRelease || tapCleanup) {
       let settled = false;
       let timeoutId = null;
       let nativeTimeoutId = null;
@@ -159,6 +159,11 @@ export function createCalibrationCapture({
       // timers; Phase A must never be able to clear this deadline.
       nativeTimeoutId = globalThis.setTimeout(publishTimeout, cleanupTimeoutMs);
       try { onPipelineDiagnostics({ phaseBTimeoutArmed: true, controllerPipelineState: "pending", cleanupPromiseState: "pending" }); } catch { /* diagnostics must not throw */ }
+      if (drainAfterRelease) {
+        // Defer invocation into a Promise job so synchronous throws become a
+        // rejected drain and cannot block timeout construction.
+        tapCleanup = Promise.resolve().then(() => drainAfterRelease());
+      }
       const drain = Promise.resolve(tapCleanup).then(
         (result) => ({ result: result || { confirmed: true, state: "closed" }, status: "confirmed" }),
         () => ({ result: { confirmed: false, state: "failed" }, status: "failed" }),
