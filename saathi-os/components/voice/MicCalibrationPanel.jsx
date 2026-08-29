@@ -17,7 +17,7 @@
  * own the microphone at once: whichever starts second preempts the first, and
  * preemption tears this surface down.
  */
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import {
   acquireInputClaim,
   openMicrophoneForClaim,
@@ -38,6 +38,15 @@ import {
 } from "@/lib/voice-session/mic-calibration";
 
 const ACCENT = "#9B6BFF";
+const EMPTY_SNAPSHOT = Object.freeze({
+  phase: "idle", startupStage: "idle", startupErrorCode: "", cleanupState: "cleanup_confirmed",
+  captureReleaseState: "idle", trackCount: 0, endedTrackCount: 0, claimState: "idle", pipelineState: "idle",
+  outstandingFrames: 0, readerCancelState: "idle", processingLoopState: "idle", phaseBTimeoutArmed: false,
+  phaseBTimeoutFired: false, controllerPipelineState: "idle", pipelineCallbackCount: 0,
+  pipelineCallbackLastState: "none", terminalCallbackCount: 0, cleanupPromiseState: "idle",
+  phaseAFunctionReturned: false, phaseBEntered: false, hasDrainAfterRelease: false, hasTapCleanup: false,
+  controllerImplementationId: "calibration-capture-v2-split-drain",
+});
 
 export default function MicCalibrationPanel() {
   const [phase, setPhase] = useState("");        // "" while idle
@@ -45,34 +54,15 @@ export default function MicCalibrationPanel() {
   const [status, setStatus] = useState("");
   const [results, setResults] = useState(null);
   const [device, setDevice] = useState(null);
-  const [startupStage, setStartupStage] = useState("idle");
-  const [startupErrorCode, setStartupErrorCode] = useState("");
-  const [cleanupState, setCleanupState] = useState("cleanup_confirmed");
-  const [captureReleaseState, setCaptureReleaseState] = useState("idle");
-  const [trackCount, setTrackCount] = useState(0);
-  const [endedTrackCount, setEndedTrackCount] = useState(0);
-  const [claimState, setClaimState] = useState("idle");
-  const [pipelineState, setPipelineState] = useState("idle");
-  const [outstandingFrames, setOutstandingFrames] = useState(0);
-  const [readerCancelState, setReaderCancelState] = useState("idle");
-  const [processingLoopState, setProcessingLoopState] = useState("idle");
-  const [phaseBTimeoutArmed, setPhaseBTimeoutArmed] = useState(false);
-  const [phaseBTimeoutFired, setPhaseBTimeoutFired] = useState(false);
-  const [controllerPipelineState, setControllerPipelineState] = useState("idle");
-  const [pipelineCallbackCount, setPipelineCallbackCount] = useState(0);
-  const [pipelineCallbackLastState, setPipelineCallbackLastState] = useState("none");
-  const [reactPipelineCommitCount, setReactPipelineCommitCount] = useState(0);
-  const [terminalCallbackCount, setTerminalCallbackCount] = useState(0);
-  const [cleanupPromiseState, setCleanupPromiseState] = useState("idle");
-  const [phaseAFunctionReturned, setPhaseAFunctionReturned] = useState(false);
-  const [phaseBEntered, setPhaseBEntered] = useState(false);
-  const [hasDrainAfterRelease, setHasDrainAfterRelease] = useState(false);
-  const [hasTapCleanup, setHasTapCleanup] = useState(false);
-  const [controllerImplementationId, setControllerImplementationId] = useState("calibration-capture-v2-split-drain");
 
   const captureRef = useRef(null);
   const samplesRef = useRef({});
   const startedAtRef = useRef(0);
+  const controllerSnapshot = useSyncExternalStore(
+    (listener) => captureRef.current?.subscribe?.(listener) || (() => {}),
+    () => captureRef.current?.getSnapshot?.() || EMPTY_SNAPSHOT,
+    () => EMPTY_SNAPSHOT,
+  );
 
   /**
    * One terminal handler for every exit — completion, Stop, the hard deadline,
@@ -81,20 +71,8 @@ export default function MicCalibrationPanel() {
    * already released by the time it does.
    */
   const onTerminal = useCallback((reason, _generation, diagnostics = {}) => {
-    setTerminalCallbackCount((count) => count + 1);
-    setCleanupPromiseState("settled");
     setPhase("");
     setRemaining(0);
-    setStartupStage(diagnostics.startupStage || "idle");
-    setStartupErrorCode(diagnostics.startupErrorCode || "");
-    setCleanupState(diagnostics.captureReleased ? (diagnostics.pipelineCleanup === "confirmed" ? "cleanup_confirmed" : "pipeline_cleanup_failed") : "microphone_release_failed");
-    setCaptureReleaseState(diagnostics.captureReleased ? "confirmed" : "failed");
-    setTrackCount(diagnostics.trackCount || 0); setEndedTrackCount(diagnostics.endedTrackCount || 0);
-    setClaimState(diagnostics.claimReleased ? "released" : "held");
-    setPipelineState(diagnostics.pipelineCleanup || "failed");
-    setReaderCancelState(diagnostics.readerCancelSettled ? "settled" : "unknown");
-    setProcessingLoopState(diagnostics.pipelineSettled ? "settled" : "unknown");
-    setOutstandingFrames(diagnostics.outstandingFrames || 0);
     if (!diagnostics.tracksEnded || !diagnostics.graphClosed || !diagnostics.claimReleased) {
       setStatus("Microphone cleanup could not be confirmed. Please close this page.");
     } else if (diagnostics.pipelineCleanup === "timed_out" || diagnostics.pipelineCleanup === "failed") {
@@ -137,45 +115,18 @@ export default function MicCalibrationPanel() {
           onFrame,
           onStage,
         }),
-        onStage: (stage) => { setStartupStage(stage); },
+        onStage: () => {},
         onCaptureReleased: (d) => {
-          setCaptureReleaseState(d.captureReleased ? "confirmed" : "failed");
-          setTrackCount(d.trackCount || 0); setEndedTrackCount(d.endedTrackCount || 0);
-          setClaimState(d.claimReleased ? "released" : "held");
-          setCleanupState(d.captureReleased ? "microphone_released_pipeline_pending" : "microphone_release_failed");
-          if (d.captureReleased) setStatus("Microphone released. Audio processor cleanup pending…");
-          else setStatus("Microphone release could not be confirmed.");
+          void d;
         },
         onPipelineCleanup: (d) => {
-          setPipelineCallbackCount((count) => count + 1);
-          setPipelineCallbackLastState(d.pipelineCleanup || "failed");
-          setReactPipelineCommitCount((count) => count + 1);
-          setPipelineState(d.pipelineCleanup || "failed");
-          setReaderCancelState(d.readerCancelSettled ? "settled" : "unknown");
-          setProcessingLoopState(d.pipelineSettled ? "settled" : "unknown");
-          setOutstandingFrames(d.outstandingFrames || 0);
-          setCleanupState(d.pipelineCleanup === "confirmed" ? "cleanup_confirmed" : "pipeline_cleanup_failed");
+          void d;
         },
         onPipelineDiagnostics: (d) => {
-          if (d.phaseAFunctionReturned) setPhaseAFunctionReturned(true);
-          if (d.phaseBEntered) setPhaseBEntered(true);
-          if (typeof d.hasDrainAfterRelease === "boolean") setHasDrainAfterRelease(d.hasDrainAfterRelease);
-          if (typeof d.hasTapCleanup === "boolean") setHasTapCleanup(d.hasTapCleanup);
-          if (d.controllerImplementationId) setControllerImplementationId(d.controllerImplementationId);
-          if (d.phaseBTimeoutArmed) setPhaseBTimeoutArmed(true);
-          if (d.phaseBTimeoutFired) setPhaseBTimeoutFired(true);
-          if (d.controllerPipelineState) setControllerPipelineState(d.controllerPipelineState);
-          if (d.cleanupPromiseState) setCleanupPromiseState(d.cleanupPromiseState);
+          void d;
         },
         onCleanupPending: () => {
-          setPhase("");
-          setRemaining(0);
-          setCleanupState("releasing_microphone");
-          setCaptureReleaseState("pending"); setPipelineState("pending");
-          setClaimState("held"); setReaderCancelState("pending"); setProcessingLoopState("pending");
-          setStatus("Releasing microphone…");
-          setCleanupPromiseState("pending");
-          setControllerPipelineState("pending");
+          setPhase(""); setRemaining(0);
         },
         onTerminal,
       });
@@ -207,12 +158,6 @@ export default function MicCalibrationPanel() {
     samplesRef.current = Object.fromEntries(CALIBRATION_PHASES.map((p) => [p.id, []]));
     setResults(null);
     setDevice(null);
-    setStartupErrorCode("");
-    setStartupStage("idle");
-    setCleanupState("releasing_microphone");
-    setCaptureReleaseState("pending"); setTrackCount(0); setEndedTrackCount(0);
-    setClaimState("pending"); setPipelineState("pending"); setOutstandingFrames(0);
-    setReaderCancelState("pending"); setProcessingLoopState("pending");
     setStatus("Requesting the microphone…");
     startedAtRef.current = Date.now();
 
@@ -239,7 +184,7 @@ export default function MicCalibrationPanel() {
       setRemaining(CALIBRATION_TOTAL_SECONDS);
       setStatus("Calibrating. Audio is analysed in memory only.");
     } else if (outcome.error) {
-      setStartupErrorCode(outcome.error.code || "CALIBRATION_START_FAILED");
+      void outcome.error;
     }
   }, [onTerminal]);
 
@@ -256,37 +201,42 @@ export default function MicCalibrationPanel() {
 
   const active = Boolean(phase);
   const current = CALIBRATION_PHASES.find((p) => p.id === phase);
+  const snapshotStatus = controllerSnapshot.captureReleaseState === "confirmed"
+    ? (controllerSnapshot.pipelineState === "pending" ? "Microphone released. Audio processor cleanup pending…"
+      : controllerSnapshot.pipelineState === "timed_out" || controllerSnapshot.pipelineState === "failed"
+        ? "Microphone released. Audio processor cleanup did not finish." : status)
+    : controllerSnapshot.cleanupPromiseState === "pending" ? "Releasing microphone…" : status;
 
   return (
     <section
       data-testid="mic-calibration-panel"
       data-calibration-phase={phase || "idle"}
       data-calibration-active={active ? "true" : "false"}
-      data-calibration-startup-stage={startupStage}
-      data-calibration-error-code={startupErrorCode || undefined}
-      data-calibration-cleanup-state={cleanupState}
-      data-capture-release-state={captureReleaseState}
-      data-track-count={trackCount}
-      data-ended-track-count={endedTrackCount}
-      data-input-claim-state={claimState}
-      data-pipeline-cleanup-state={pipelineState}
-      data-outstanding-frame-count={outstandingFrames}
-      data-reader-cancel-state={readerCancelState}
-      data-processing-loop-state={processingLoopState}
-      data-phase-b-timeout-armed={phaseBTimeoutArmed ? "true" : "false"}
-      data-phase-b-timeout-fired={phaseBTimeoutFired ? "true" : "false"}
-      data-controller-pipeline-state={controllerPipelineState}
-      data-pipeline-callback-count={pipelineCallbackCount}
-      data-pipeline-callback-last-state={pipelineCallbackLastState}
-      data-react-pipeline-state={pipelineState}
-      data-react-pipeline-commit-count={reactPipelineCommitCount}
-      data-terminal-callback-count={terminalCallbackCount}
-      data-cleanup-promise-state={cleanupPromiseState}
-      data-phase-a-function-returned={phaseAFunctionReturned ? "true" : "false"}
-      data-phase-b-entered={phaseBEntered ? "true" : "false"}
-      data-has-drain-after-release={hasDrainAfterRelease ? "true" : "false"}
-      data-has-tap-cleanup={hasTapCleanup ? "true" : "false"}
-      data-controller-implementation-id={controllerImplementationId}
+      data-calibration-startup-stage={controllerSnapshot.startupStage}
+      data-calibration-error-code={controllerSnapshot.startupErrorCode || undefined}
+      data-calibration-cleanup-state={controllerSnapshot.cleanupState}
+      data-capture-release-state={controllerSnapshot.captureReleaseState}
+      data-track-count={controllerSnapshot.trackCount}
+      data-ended-track-count={controllerSnapshot.endedTrackCount}
+      data-input-claim-state={controllerSnapshot.claimState}
+      data-pipeline-cleanup-state={controllerSnapshot.pipelineState}
+      data-outstanding-frame-count={controllerSnapshot.outstandingFrames}
+      data-reader-cancel-state={controllerSnapshot.readerCancelState}
+      data-processing-loop-state={controllerSnapshot.processingLoopState}
+      data-phase-b-timeout-armed={controllerSnapshot.phaseBTimeoutArmed ? "true" : "false"}
+      data-phase-b-timeout-fired={controllerSnapshot.phaseBTimeoutFired ? "true" : "false"}
+      data-controller-pipeline-state={controllerSnapshot.controllerPipelineState}
+      data-pipeline-callback-count={controllerSnapshot.pipelineCallbackCount}
+      data-pipeline-callback-last-state={controllerSnapshot.pipelineCallbackLastState}
+      data-react-pipeline-state={controllerSnapshot.pipelineState}
+      data-react-pipeline-commit-count={controllerSnapshot.pipelineCallbackCount}
+      data-terminal-callback-count={controllerSnapshot.terminalCallbackCount}
+      data-cleanup-promise-state={controllerSnapshot.cleanupPromiseState}
+      data-phase-a-function-returned={controllerSnapshot.phaseAFunctionReturned ? "true" : "false"}
+      data-phase-b-entered={controllerSnapshot.phaseBEntered ? "true" : "false"}
+      data-has-drain-after-release={controllerSnapshot.hasDrainAfterRelease ? "true" : "false"}
+      data-has-tap-cleanup={controllerSnapshot.hasTapCleanup ? "true" : "false"}
+      data-controller-implementation-id={controllerSnapshot.controllerImplementationId}
       style={{ padding: 18, marginTop: 14, border: "1px solid rgba(255,255,255,0.12)", borderRadius: 12 }}
     >
       <div style={{ fontSize: 13, fontWeight: 600 }}>Calibrate microphone</div>
@@ -325,7 +275,7 @@ export default function MicCalibrationPanel() {
         </div>
       )}
 
-      {status && <div style={{ fontSize: 12, opacity: 0.6, marginTop: 10 }}>{status}</div>}
+      {snapshotStatus && <div style={{ fontSize: 12, opacity: 0.6, marginTop: 10 }}>{snapshotStatus}</div>}
 
       {device && (
         <div style={{ fontSize: 12, opacity: 0.75, marginTop: 10 }} data-testid="calibration-device">

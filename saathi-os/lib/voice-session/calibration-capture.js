@@ -94,6 +94,21 @@ export function createCalibrationCapture({
   let generation = 0;
   let run = null;
   let lastRun = null;
+  let snapshot = Object.freeze({
+    phase: "idle", startupStage: "idle", startupErrorCode: "", cleanupState: "cleanup_confirmed",
+    captureReleaseState: "idle", trackCount: 0, endedTrackCount: 0, claimState: "idle",
+    pipelineState: "idle", outstandingFrames: 0, readerCancelState: "idle", processingLoopState: "idle",
+    phaseBTimeoutArmed: false, phaseBTimeoutFired: false, controllerPipelineState: "idle",
+    pipelineCallbackCount: 0, pipelineCallbackLastState: "none", terminalCallbackCount: 0,
+    cleanupPromiseState: "idle", phaseAFunctionReturned: false, phaseBEntered: false,
+    hasDrainAfterRelease: false, hasTapCleanup: false,
+    controllerImplementationId: "calibration-capture-v2-split-drain",
+  });
+  const subscribers = new Set();
+  const publish = (patch) => {
+    snapshot = Object.freeze({ ...snapshot, ...patch });
+    for (const listener of subscribers) { try { listener(); } catch { /* observers must not throw */ } }
+  };
 
   async function teardown(state) {
     // Stop timers and tracks synchronously first; then close the graph and hand
@@ -101,6 +116,7 @@ export function createCalibrationCapture({
     const tap = state.tap;
     state.tap = null;
     state.stage = "cleanup_started";
+    publish({ startupStage: state.stage });
     try { onStage(state.stage, state); } catch { /* diagnostics must not throw */ }
     // Initiate processor cancellation before stopping the claimed track. The
     // real MediaStreamTrackProcessor stream can otherwise leave cancel()
@@ -125,6 +141,7 @@ export function createCalibrationCapture({
     const claimReleased = claim ? (typeof claim.isActive === "function" ? !claim.isActive() : true) : true;
     state.claim = null;
     const captureReleased = tracksEnded && claimReleased;
+    publish({ captureReleaseState: captureReleased ? "confirmed" : "failed", trackCount: tracks.length, endedTrackCount, claimState: claimReleased ? "released" : "held", cleanupState: captureReleased ? "microphone_released_pipeline_pending" : "microphone_release_failed" });
     try { onCaptureReleased({ captureReleased, trackCount: tracks.length, endedTrackCount, claimReleased }); } catch { /* diagnostics must not throw */ }
     if (state.deadlineId !== null) {
       clearTimeoutImpl(state.deadlineId);
@@ -134,6 +151,7 @@ export function createCalibrationCapture({
       state.clearIntervalImpl(state.intervalId);
       state.intervalId = null;
     }
+    publish({ phaseAFunctionReturned: true });
     try { onPipelineDiagnostics({ phaseAFunctionReturned: true }); } catch { /* diagnostics must not throw */ }
     let tapResult = { confirmed: true, state: "closed" };
     let pipelineCleanup = "confirmed";
@@ -141,6 +159,7 @@ export function createCalibrationCapture({
     // remain pending, and even a synchronous adapter failure must not prevent
     // the timeout from existing.
     if (drainAfterRelease || tapCleanup) {
+      publish({ phaseBEntered: true, hasDrainAfterRelease: Boolean(drainAfterRelease), hasTapCleanup: Boolean(tapCleanup), controllerImplementationId: "calibration-capture-v2-split-drain" });
       try {
         onPipelineDiagnostics({
           phaseBEntered: true,
@@ -159,6 +178,7 @@ export function createCalibrationCapture({
         settled = true;
         pipelineCleanup = "timed_out";
         tapResult = { confirmed: false, state: "timed_out" };
+        publish({ phaseBTimeoutFired: true, controllerPipelineState: "timed_out", pipelineState: "timed_out", pipelineCallbackCount: snapshot.pipelineCallbackCount + 1, pipelineCallbackLastState: "timed_out", cleanupPromiseState: "settled" });
         try { onPipelineDiagnostics({ phaseBTimeoutFired: true, controllerPipelineState: "timed_out", cleanupPromiseState: "settled" }); } catch { /* diagnostics must not throw */ }
         try { onPipelineCleanup({ pipelineCleanup, ...tapResult }); } catch { /* reporting must not throw */ }
         resolveTimeout(tapResult);
@@ -168,6 +188,7 @@ export function createCalibrationCapture({
       // timers; Phase A must never be able to clear this deadline.
       nativeTimeoutId = globalThis.setTimeout(publishTimeout, cleanupTimeoutMs);
       try { onPipelineDiagnostics({ phaseBTimeoutArmed: true, controllerPipelineState: "pending", cleanupPromiseState: "pending" }); } catch { /* diagnostics must not throw */ }
+      publish({ phaseBTimeoutArmed: true, controllerPipelineState: "pending", cleanupPromiseState: "pending" });
       if (drainAfterRelease) {
         // Defer invocation into a Promise job so synchronous throws become a
         // rejected drain and cannot block timeout construction.
@@ -187,10 +208,13 @@ export function createCalibrationCapture({
       if (nativeTimeoutId !== null) globalThis.clearTimeout(nativeTimeoutId);
     }
     state.stage = (tracksEnded && tapResult.confirmed && claimReleased) ? "cleanup_confirmed" : "cleanup_failed";
+    publish({ startupStage: state.stage });
     try { onStage(state.stage, state); } catch { /* diagnostics must not throw */ }
-      if (pipelineCleanup !== "timed_out") {
+    if (pipelineCleanup !== "timed_out") {
+      publish({ pipelineState: pipelineCleanup, pipelineCallbackCount: snapshot.pipelineCallbackCount + 1, pipelineCallbackLastState: pipelineCleanup });
       try { onPipelineCleanup({ pipelineCleanup, ...tapResult }); } catch { /* diagnostics must not throw */ }
     }
+    publish({ controllerPipelineState: pipelineCleanup, cleanupPromiseState: "settled" });
     try { onPipelineDiagnostics({ controllerPipelineState: pipelineCleanup, cleanupPromiseState: "settled" }); } catch { /* diagnostics must not throw */ }
     return {
       ...tapResult,
@@ -210,11 +234,13 @@ export function createCalibrationCapture({
     if (!state || state.terminal) return false;
     state.terminal = true;
     state.reason = reason;
+    publish({ cleanupPromiseState: "pending", cleanupState: "releasing_microphone", captureReleaseState: "pending", claimState: "held", pipelineState: "pending", controllerPipelineState: "pending" });
     try { onCleanupPending(reason, state.generation); } catch { /* reporting must not throw */ }
     state.cleanupPromise = state.cleanupPromise || teardown(state);
     if (run === state) run = null;
     lastRun = state;
     state.cleanupPromise.then((diagnostics) => {
+      publish({ terminalCallbackCount: snapshot.terminalCallbackCount + 1, cleanupPromiseState: "settled", pipelineState: diagnostics.pipelineCleanup || "failed", captureReleaseState: diagnostics.captureReleased ? "confirmed" : "failed", trackCount: diagnostics.trackCount || 0, endedTrackCount: diagnostics.endedTrackCount || 0, claimState: diagnostics.claimReleased ? "released" : "held" });
       state.cleanup = {
         ...diagnostics,
         startupStage: state.startupStage || state.stage,
@@ -229,6 +255,8 @@ export function createCalibrationCapture({
   }
 
   return {
+    getSnapshot() { return snapshot; },
+    subscribe(listener) { subscribers.add(listener); return () => subscribers.delete(listener); },
     get generation() { return generation; },
     isActive() { return Boolean(run) && !run.terminal; },
     currentReason() { return run?.reason ?? null; },
