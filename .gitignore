@@ -84,3 +84,12 @@ docs/platform/m57_evidence/screenshots/
 
 # M264-M271 frozen historical snapshots (local only)
 data/platform/historical_snapshots/
+
+# ECC engineering harness (development plane only, never authoritative).
+# Runtime state, and vendor components synced from the pinned ecc@ecc plugin cache.
+# Reproduce with: scripts/ecc_profile_sync.sh   (manifest: .claude/ecc-profile.json)
+.ecc-data/
+.claude/skills/
+.claude/agents/
+.claude/commands/
+.claude/rules/ecc/
