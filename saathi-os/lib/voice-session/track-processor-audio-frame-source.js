@@ -10,6 +10,7 @@ export function createTrackProcessorAudioFrameSource({
   let reader = null;
   let loopPromise = null;
   let cleanupPromise = null;
+  let cancellationHandle = null;
   let stopped = false;
   let inputSampleRate = null;
   let sourceSamples = [];
@@ -121,27 +122,36 @@ export function createTrackProcessorAudioFrameSource({
       onStage("processing_loop_started");
       await Promise.resolve();
     },
-    stop() {
-      if (cleanupPromise) return cleanupPromise;
+    beginCancellation() {
+      if (cancellationHandle) return cancellationHandle;
       stopped = true;
+      let cancelPromise = Promise.resolve();
+      if (reader) {
+        try {
+          cancelPromise = Promise.resolve(reader.cancel()).then(
+            () => { cancelSettled = true; },
+            () => { cancelSettled = true; },
+          );
+        } catch { cancelSettled = true; }
+      } else cancelSettled = true;
+      cancellationHandle = { cancelPromise, started: true };
+      return cancellationHandle;
+    },
+    drainAfterCaptureRelease() {
+      if (cleanupPromise) return cleanupPromise;
+      const handle = cancellationHandle || this.beginCancellation();
       cleanupPromise = (async () => {
-        let cancelPromise = Promise.resolve();
-        if (reader) {
-          try {
-            // Start cancellation before any await so the owner can stop the
-            // track immediately; real processors may wait for source end.
-            cancelPromise = Promise.resolve(reader.cancel()).then(
-              () => { cancelSettled = true; },
-              () => { cancelSettled = true; },
-            );
-          } catch { cancelSettled = true; }
-          try { reader.releaseLock(); } catch { /* already released */ }
-        } else cancelSettled = true;
-        await cancelPromise;
+        await handle.cancelPromise;
+        if (reader) { try { reader.releaseLock(); } catch { /* already released */ } }
         try { await loopPromise; } catch { /* pipeline is terminal */ }
         return diagnostics();
       })();
       return cleanupPromise;
+    },
+    stop() {
+      if (cleanupPromise) return cleanupPromise;
+      this.beginCancellation();
+      return this.drainAfterCaptureRelease();
     },
     diagnostics,
   };

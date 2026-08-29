@@ -65,3 +65,19 @@ test("cancellation starts before the claimed track is stopped", async () => {
   assert.equal(track.readyState, "ended");
   assert.equal(track.stopCalls, 1);
 });
+
+test("split shutdown exposes synchronous cancellation and deferred drain", async () => {
+  const h = harness(); let cancelCalls = 0; let resolveCancel;
+  h.reader.cancel = () => { cancelCalls += 1; return new Promise((r) => { resolveCancel = r; }); };
+  const source = createTrackProcessorAudioFrameSource({ track: h.track, ProcessorImpl: h.Processor });
+  await source.start();
+  const handle = source.beginCancellation();
+  assert.equal(cancelCalls, 1);
+  assert.equal(h.track.readyState, "live");
+  const drain = source.drainAfterCaptureRelease();
+  h.track.stop(); resolveCancel(); h.push();
+  await drain;
+  assert.equal(source.diagnostics().readerCancelSettled, true);
+  assert.equal(source.diagnostics().pipelineSettled, true);
+  assert.equal(source.beginCancellation(), handle);
+});

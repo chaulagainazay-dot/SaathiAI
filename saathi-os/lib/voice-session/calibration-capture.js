@@ -97,14 +97,6 @@ export function createCalibrationCapture({
   async function teardown(state) {
     // Stop timers and tracks synchronously first; then close the graph and hand
     // ownership back. Each step is independent so a throw cannot strand the rest.
-    if (state.deadlineId !== null) {
-      clearTimeoutImpl(state.deadlineId);
-      state.deadlineId = null;
-    }
-    if (state.intervalId !== null) {
-      state.clearIntervalImpl(state.intervalId);
-      state.intervalId = null;
-    }
     const tap = state.tap;
     state.tap = null;
     state.stage = "cleanup_started";
@@ -114,7 +106,12 @@ export function createCalibrationCapture({
     // pending after its source has already ended. stop() is idempotent and
     // begins cancellation synchronously before its first await.
     let tapCleanup;
-    try { tapCleanup = tap?.stop?.({ timeoutMs: cleanupTimeoutMs, setTimeoutImpl, clearTimeoutImpl }); } catch { tapCleanup = Promise.resolve({ confirmed: false, state: "unknown" }); }
+    try {
+      if (tap?.beginCancellation) {
+        const handle = tap.beginCancellation();
+        tapCleanup = tap.drainAfterCaptureRelease?.(handle);
+      } else tapCleanup = tap?.stop?.({ timeoutMs: cleanupTimeoutMs, setTimeoutImpl, clearTimeoutImpl });
+    } catch { tapCleanup = Promise.resolve({ confirmed: false, state: "unknown" }); }
     // Stop tracks synchronously immediately after cancellation is initiated.
     const tracks = state.stream?.getTracks?.() || [];
     try { tracks.forEach((t) => t.stop()); } catch { /* gone */ }
@@ -127,6 +124,14 @@ export function createCalibrationCapture({
     state.claim = null;
     const captureReleased = tracksEnded && claimReleased;
     try { onCaptureReleased({ captureReleased, trackCount: tracks.length, endedTrackCount, claimReleased }); } catch { /* diagnostics must not throw */ }
+    if (state.deadlineId !== null) {
+      clearTimeoutImpl(state.deadlineId);
+      state.deadlineId = null;
+    }
+    if (state.intervalId !== null) {
+      state.clearIntervalImpl(state.intervalId);
+      state.intervalId = null;
+    }
     let tapResult = { confirmed: true, state: "closed" };
     let pipelineCleanup = "confirmed";
     if (tapCleanup) {

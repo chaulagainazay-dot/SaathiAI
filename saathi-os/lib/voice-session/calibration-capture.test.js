@@ -260,6 +260,21 @@ describe("races", () => {
     assert.equal(terminal.captureReleased, true);
   });
 
+  it("runs Phase A before any drain promise can settle", async () => {
+    const h = harness(); let phaseA;
+    const never = { start: async () => {}, beginCancellation() { return { started: true }; }, drainAfterCaptureRelease() { return new Promise(() => {}); } };
+    const capture = createCalibrationCapture({
+      acquireClaim: () => h.claim,
+      openMicrophone: async () => ({ getTracks: () => [h.track] }),
+      createTap: () => never,
+      onCaptureReleased: (d) => { phaseA = d; },
+    });
+    await capture.start({}); capture.stop();
+    assert.equal(phaseA.captureReleased, true);
+    assert.equal(h.track.readyState, "ended");
+    assert.equal(h.claim.released, 1);
+  });
+
   it("explicit Stop before the deadline wins, and the deadline is inert", async () => {
     const h = harness({ startBehaviour: "hang" });
     h.capture.start({});
