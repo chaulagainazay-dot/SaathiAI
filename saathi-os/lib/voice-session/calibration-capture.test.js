@@ -371,4 +371,9 @@ describe("the panel wiring", () => {
               "a timed-out run must not publish a measurement");
     assert.ok(handler.includes("setResults(summariseCalibration"), "a completed run does");
   });
+
+  it("exposes only bounded capture and pipeline diagnostics", () => {
+    for (const attr of ["data-capture-release-state", "data-track-count", "data-ended-track-count", "data-input-claim-state", "data-pipeline-cleanup-state", "data-outstanding-frame-count", "data-reader-cancel-state", "data-processing-loop-state"]) assert.ok(PANEL.includes(attr), attr);
+    for (const banned of ["deviceId", "token", "cookie", "stack"]) assert.equal(PANEL.includes(banned), false, banned);
+  });
 });

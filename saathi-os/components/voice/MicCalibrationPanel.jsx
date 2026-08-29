@@ -48,6 +48,14 @@ export default function MicCalibrationPanel() {
   const [startupStage, setStartupStage] = useState("idle");
   const [startupErrorCode, setStartupErrorCode] = useState("");
   const [cleanupState, setCleanupState] = useState("cleanup_confirmed");
+  const [captureReleaseState, setCaptureReleaseState] = useState("idle");
+  const [trackCount, setTrackCount] = useState(0);
+  const [endedTrackCount, setEndedTrackCount] = useState(0);
+  const [claimState, setClaimState] = useState("idle");
+  const [pipelineState, setPipelineState] = useState("idle");
+  const [outstandingFrames, setOutstandingFrames] = useState(0);
+  const [readerCancelState, setReaderCancelState] = useState("idle");
+  const [processingLoopState, setProcessingLoopState] = useState("idle");
 
   const captureRef = useRef(null);
   const samplesRef = useRef({});
@@ -65,6 +73,13 @@ export default function MicCalibrationPanel() {
     setStartupStage(diagnostics.startupStage || "idle");
     setStartupErrorCode(diagnostics.startupErrorCode || "");
     setCleanupState(diagnostics.captureReleased ? (diagnostics.pipelineCleanup === "confirmed" ? "cleanup_confirmed" : "pipeline_cleanup_failed") : "microphone_release_failed");
+    setCaptureReleaseState(diagnostics.captureReleased ? "confirmed" : "failed");
+    setTrackCount(diagnostics.trackCount || 0); setEndedTrackCount(diagnostics.endedTrackCount || 0);
+    setClaimState(diagnostics.claimReleased ? "released" : "held");
+    setPipelineState(diagnostics.pipelineCleanup || "failed");
+    setReaderCancelState(diagnostics.readerCancelSettled ? "settled" : "unknown");
+    setProcessingLoopState(diagnostics.pipelineSettled ? "settled" : "unknown");
+    setOutstandingFrames(diagnostics.outstandingFrames || 0);
     if (!diagnostics.tracksEnded || !diagnostics.graphClosed || !diagnostics.claimReleased) {
       setStatus("Microphone cleanup could not be confirmed. Please close this page.");
     } else if (diagnostics.pipelineCleanup === "timed_out" || diagnostics.pipelineCleanup === "failed") {
@@ -109,15 +124,26 @@ export default function MicCalibrationPanel() {
         }),
         onStage: (stage) => { setStartupStage(stage); },
         onCaptureReleased: (d) => {
+          setCaptureReleaseState(d.captureReleased ? "confirmed" : "failed");
+          setTrackCount(d.trackCount || 0); setEndedTrackCount(d.endedTrackCount || 0);
+          setClaimState(d.claimReleased ? "released" : "held");
           setCleanupState(d.captureReleased ? "microphone_released_pipeline_pending" : "microphone_release_failed");
           if (d.captureReleased) setStatus("Microphone released. Audio processor cleanup pending…");
           else setStatus("Microphone release could not be confirmed.");
         },
-        onPipelineCleanup: (d) => { setCleanupState(d.pipelineCleanup === "confirmed" ? "cleanup_confirmed" : "pipeline_cleanup_failed"); },
+        onPipelineCleanup: (d) => {
+          setPipelineState(d.pipelineCleanup || "failed");
+          setReaderCancelState(d.readerCancelSettled ? "settled" : "unknown");
+          setProcessingLoopState(d.pipelineSettled ? "settled" : "unknown");
+          setOutstandingFrames(d.outstandingFrames || 0);
+          setCleanupState(d.pipelineCleanup === "confirmed" ? "cleanup_confirmed" : "pipeline_cleanup_failed");
+        },
         onCleanupPending: () => {
           setPhase("");
           setRemaining(0);
           setCleanupState("releasing_microphone");
+          setCaptureReleaseState("pending"); setPipelineState("pending");
+          setClaimState("held"); setReaderCancelState("pending"); setProcessingLoopState("pending");
           setStatus("Releasing microphone…");
         },
         onTerminal,
@@ -153,6 +179,9 @@ export default function MicCalibrationPanel() {
     setStartupErrorCode("");
     setStartupStage("idle");
     setCleanupState("releasing_microphone");
+    setCaptureReleaseState("pending"); setTrackCount(0); setEndedTrackCount(0);
+    setClaimState("pending"); setPipelineState("pending"); setOutstandingFrames(0);
+    setReaderCancelState("pending"); setProcessingLoopState("pending");
     setStatus("Requesting the microphone…");
     startedAtRef.current = Date.now();
 
@@ -205,6 +234,14 @@ export default function MicCalibrationPanel() {
       data-calibration-startup-stage={startupStage}
       data-calibration-error-code={startupErrorCode || undefined}
       data-calibration-cleanup-state={cleanupState}
+      data-capture-release-state={captureReleaseState}
+      data-track-count={trackCount}
+      data-ended-track-count={endedTrackCount}
+      data-input-claim-state={claimState}
+      data-pipeline-cleanup-state={pipelineState}
+      data-outstanding-frame-count={outstandingFrames}
+      data-reader-cancel-state={readerCancelState}
+      data-processing-loop-state={processingLoopState}
       style={{ padding: 18, marginTop: 14, border: "1px solid rgba(255,255,255,0.12)", borderRadius: 12 }}
     >
       <div style={{ fontSize: 13, fontWeight: 600 }}>Calibrate microphone</div>
