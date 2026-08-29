@@ -64,6 +64,11 @@ export default function MicCalibrationPanel() {
   const [reactPipelineCommitCount, setReactPipelineCommitCount] = useState(0);
   const [terminalCallbackCount, setTerminalCallbackCount] = useState(0);
   const [cleanupPromiseState, setCleanupPromiseState] = useState("idle");
+  const [phaseAFunctionReturned, setPhaseAFunctionReturned] = useState(false);
+  const [phaseBEntered, setPhaseBEntered] = useState(false);
+  const [hasDrainAfterRelease, setHasDrainAfterRelease] = useState(false);
+  const [hasTapCleanup, setHasTapCleanup] = useState(false);
+  const [controllerImplementationId, setControllerImplementationId] = useState("calibration-capture-v2-split-drain");
 
   const captureRef = useRef(null);
   const samplesRef = useRef({});
@@ -152,6 +157,11 @@ export default function MicCalibrationPanel() {
           setCleanupState(d.pipelineCleanup === "confirmed" ? "cleanup_confirmed" : "pipeline_cleanup_failed");
         },
         onPipelineDiagnostics: (d) => {
+          if (d.phaseAFunctionReturned) setPhaseAFunctionReturned(true);
+          if (d.phaseBEntered) setPhaseBEntered(true);
+          if (typeof d.hasDrainAfterRelease === "boolean") setHasDrainAfterRelease(d.hasDrainAfterRelease);
+          if (typeof d.hasTapCleanup === "boolean") setHasTapCleanup(d.hasTapCleanup);
+          if (d.controllerImplementationId) setControllerImplementationId(d.controllerImplementationId);
           if (d.phaseBTimeoutArmed) setPhaseBTimeoutArmed(true);
           if (d.phaseBTimeoutFired) setPhaseBTimeoutFired(true);
           if (d.controllerPipelineState) setControllerPipelineState(d.controllerPipelineState);
@@ -272,6 +282,11 @@ export default function MicCalibrationPanel() {
       data-react-pipeline-commit-count={reactPipelineCommitCount}
       data-terminal-callback-count={terminalCallbackCount}
       data-cleanup-promise-state={cleanupPromiseState}
+      data-phase-a-function-returned={phaseAFunctionReturned ? "true" : "false"}
+      data-phase-b-entered={phaseBEntered ? "true" : "false"}
+      data-has-drain-after-release={hasDrainAfterRelease ? "true" : "false"}
+      data-has-tap-cleanup={hasTapCleanup ? "true" : "false"}
+      data-controller-implementation-id={controllerImplementationId}
       style={{ padding: 18, marginTop: 14, border: "1px solid rgba(255,255,255,0.12)", borderRadius: 12 }}
     >
       <div style={{ fontSize: 13, fontWeight: 600 }}>Calibrate microphone</div>

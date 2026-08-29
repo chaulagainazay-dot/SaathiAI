@@ -308,6 +308,29 @@ describe("races", () => {
     assert.equal(terminal.pipelineCleanup, "timed_out");
   });
 
+  it("publishes the Phase A/Phase B boundary markers in order", async () => {
+    const h = harness(); const events = [];
+    const capture = createCalibrationCapture({
+      acquireClaim: () => h.claim,
+      openMicrophone: async () => ({ getTracks: () => [h.track] }),
+      createTap: () => ({
+        start: async () => {},
+        beginCancellation: () => ({ started: true, cancelPromise: new Promise(() => {}) }),
+        drainAfterCaptureRelease: () => new Promise(() => {}),
+      }),
+      onPipelineDiagnostics: (d) => {
+        if (d.phaseAFunctionReturned) events.push("phase-a-returned");
+        if (d.phaseBEntered) events.push(`phase-b-entered:${d.controllerImplementationId}`);
+      },
+      setTimeoutImpl: h.clock.setTimeoutImpl,
+      clearTimeoutImpl: h.clock.clearTimeoutImpl,
+      cleanupTimeoutMs: 10,
+    });
+    await capture.start({});
+    capture.stop();
+    assert.deepEqual(events, ["phase-a-returned", "phase-b-entered:calibration-capture-v2-split-drain"]);
+  });
+
   it("explicit Stop before the deadline wins, and the deadline is inert", async () => {
     const h = harness({ startBehaviour: "hang" });
     h.capture.start({});
@@ -409,6 +432,9 @@ describe("the panel wiring", () => {
       "data-pipeline-callback-last-state", "data-react-pipeline-state",
       "data-react-pipeline-commit-count", "data-terminal-callback-count",
       "data-cleanup-promise-state",
+      "data-phase-a-function-returned", "data-phase-b-entered",
+      "data-has-drain-after-release", "data-has-tap-cleanup",
+      "data-controller-implementation-id",
     ]) assert.ok(PANEL.includes(attribute), attribute);
     assert.ok(PANEL.includes("onPipelineDiagnostics"));
   });

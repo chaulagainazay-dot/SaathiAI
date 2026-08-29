@@ -134,12 +134,21 @@ export function createCalibrationCapture({
       state.clearIntervalImpl(state.intervalId);
       state.intervalId = null;
     }
+    try { onPipelineDiagnostics({ phaseAFunctionReturned: true }); } catch { /* diagnostics must not throw */ }
     let tapResult = { confirmed: true, state: "closed" };
     let pipelineCleanup = "confirmed";
     // Arm the Phase B backstop before invoking drain. A real Streams drain can
     // remain pending, and even a synchronous adapter failure must not prevent
     // the timeout from existing.
     if (drainAfterRelease || tapCleanup) {
+      try {
+        onPipelineDiagnostics({
+          phaseBEntered: true,
+          hasDrainAfterRelease: Boolean(drainAfterRelease),
+          hasTapCleanup: Boolean(tapCleanup),
+          controllerImplementationId: "calibration-capture-v2-split-drain",
+        });
+      } catch { /* diagnostics must not throw */ }
       let settled = false;
       let timeoutId = null;
       let nativeTimeoutId = null;
