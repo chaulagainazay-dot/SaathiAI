@@ -106,10 +106,11 @@ export function createCalibrationCapture({
     // pending after its source has already ended. stop() is idempotent and
     // begins cancellation synchronously before its first await.
     let tapCleanup;
+    let drainAfterRelease;
     try {
       if (tap?.beginCancellation) {
         const handle = tap.beginCancellation();
-        tapCleanup = tap.drainAfterCaptureRelease?.(handle);
+        drainAfterRelease = () => tap.drainAfterCaptureRelease?.(handle);
       } else tapCleanup = tap?.stop?.({ timeoutMs: cleanupTimeoutMs, setTimeoutImpl, clearTimeoutImpl });
     } catch { tapCleanup = Promise.resolve({ confirmed: false, state: "unknown" }); }
     // Stop tracks synchronously immediately after cancellation is initiated.
@@ -134,19 +135,27 @@ export function createCalibrationCapture({
     }
     let tapResult = { confirmed: true, state: "closed" };
     let pipelineCleanup = "confirmed";
+    if (drainAfterRelease) {
+      try { tapCleanup = drainAfterRelease(); } catch { tapCleanup = Promise.resolve({ confirmed: false, state: "failed" }); }
+    }
     if (tapCleanup) {
       let settled = false;
       let timeoutId = null;
+      let nativeTimeoutId = null;
       let resolveTimeout;
       const timeout = new Promise((resolve) => { resolveTimeout = resolve; });
-      timeoutId = setTimeoutImpl(() => {
+      const publishTimeout = () => {
         if (settled) return;
         settled = true;
         pipelineCleanup = "timed_out";
         tapResult = { confirmed: false, state: "timed_out" };
         try { onPipelineCleanup({ pipelineCleanup, ...tapResult }); } catch { /* reporting must not throw */ }
         resolveTimeout(tapResult);
-      }, cleanupTimeoutMs);
+      };
+      timeoutId = setTimeoutImpl(publishTimeout, cleanupTimeoutMs);
+      // Keep a native wall-clock backstop independent of injected capture
+      // timers; Phase A must never be able to clear this deadline.
+      nativeTimeoutId = globalThis.setTimeout(publishTimeout, cleanupTimeoutMs);
       const drain = Promise.resolve(tapCleanup).then(
         (result) => ({ result: result || { confirmed: true, state: "closed" }, status: "confirmed" }),
         () => ({ result: { confirmed: false, state: "failed" }, status: "failed" }),
@@ -157,7 +166,8 @@ export function createCalibrationCapture({
         tapResult = winner.result;
         pipelineCleanup = winner.status;
       }
-      if (timeoutId !== null && pipelineCleanup !== "timed_out") clearTimeoutImpl(timeoutId);
+      if (timeoutId !== null) clearTimeoutImpl(timeoutId);
+      if (nativeTimeoutId !== null) globalThis.clearTimeout(nativeTimeoutId);
     }
     state.stage = (tracksEnded && tapResult.confirmed && claimReleased) ? "cleanup_confirmed" : "cleanup_failed";
     try { onStage(state.stage, state); } catch { /* diagnostics must not throw */ }
