@@ -65,3 +65,26 @@ def _assert_saathi_is_local() -> None:
 
 
 _assert_saathi_is_local()
+
+
+# ── test isolation: never touch the operator's real ~/.saathi/security.db ────
+#
+# `SecurityStore()` with no explicit path defaults to ``~/.saathi/security.db``.
+# Several code paths (audit emit in particular) construct one per call, so an
+# unfiltered test session opens dozens of connections against one shared,
+# real-home database. That is both a correctness hazard (tests mutating the
+# developer's live security store) and the cause of a hard suite hang: two
+# threads in `test_25_concurrent_claims_one_winner` block forever in
+# `SecurityStore.__init__` executing schema DDL while another test's connection
+# holds the lock.
+#
+# Redirecting the default to a per-session temporary file removes both problems
+# without changing any production default: `SAATHI_SECURITY_DB` is only consulted
+# when no explicit path is passed.
+import os as _os
+import tempfile as _tempfile
+
+if not _os.environ.get("SAATHI_SECURITY_DB"):
+    _os.environ["SAATHI_SECURITY_DB"] = _os.path.join(
+        _tempfile.mkdtemp(prefix="saathi-test-security-"), "security.db"
+    )

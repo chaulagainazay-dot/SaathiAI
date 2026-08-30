@@ -68,8 +68,8 @@ def emit(event_type: str, payload: dict | None = None, *, source: str = "mcp_gov
 def audit_security(event: str, *, ok: bool = True, detail: str = "", user_id: str = "") -> None:
     """Record denial/failure in SecurityStore when available."""
     try:
-        from saathi.security.store import SecurityStore
-        store = SecurityStore()
+        from saathi.security.store import get_store
+        store = get_store()
         store.audit(
             event,
             ok=ok,
