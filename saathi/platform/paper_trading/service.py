@@ -427,6 +427,13 @@ class PaperTradingService:
         if needs_approval:
             self._verify_approval(ctx, approval_id, account_id=acct.id, est_notional=est_notional)
             consume_cb = self._make_consume_cb(ctx, approval_id)
+        elif approval_id:
+            # T-NEXT-4: a supplied approval reference is always verified, even when
+            # this order would not have required one. Silently ignoring an unknown
+            # or revoked approval id is fail-open on a credential the caller
+            # believed was being checked.
+            self._verify_approval(ctx, approval_id, account_id=acct.id, est_notional=est_notional)
+            consume_cb = self._make_consume_cb(ctx, approval_id)
 
         # 4) build durable order + apply reservation in memory
         now = _time.time()
