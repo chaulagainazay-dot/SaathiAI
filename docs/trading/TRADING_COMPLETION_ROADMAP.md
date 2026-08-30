@@ -92,6 +92,40 @@ Statuses: `NOT_STARTED` · `DISCOVERY` · `IMPLEMENTING` · `VALIDATING` ·
   `tg/market_data/models.py`) and **2 competing quote models** (`MDQuote`,
   `Quote`).
 
+### MD-1 · Canonical point-in-time market data contract
+
+- **Status:** `CERTIFIED_WITH_LIMITATIONS` · SHA `9826796`
+- `saathi/platform/market_data/contract.py`. Four timestamps — event_timestamp,
+  as_of, **available_at**, received_at — and `visible_at()`, the only correct
+  look-ahead filter. Before this, `grep available_at` returned one hit and it was
+  a comment.
+- Asset-class enums converged by adaptation, not deletion. `investment.py` left
+  alone: different domain (personal investment categories).
+- Fresh-context review found two defects, same root cause: `Decimal("0")` as a
+  default conflated *absent* with *zero*. A one-sided quote returned spread -100
+  and mid 50; a bar with `high=100, low=open=close=0` passed. Both fixed.
+- **Tests:** 54. **Limitation:** no provider adapter; existing consumers not yet
+  migrated onto the canonical types.
+
+### NEPSE-CAL-1 · Authoritative trading calendar
+
+- **Status:** `CERTIFIED_WITH_LIMITATIONS` · SHA `a3a1945`
+- **Defect found:** `tg/historical/calendars.py` declared NEPSE as
+  `open_weekdays={0,1,2,3,4}` — Monday–Friday. **NEPSE trades Sunday–Thursday,
+  closed Friday–Saturday.** Wrong at both ends; ~2 days in 5 misclassified in
+  every backtest built on it. Its holidays were self-annotated "(example
+  fixture)".
+- New `saathi/platform/nepse/calendar.py`: weekly pattern CONFIRMED; holidays are
+  a versioned sourced dataset; uncovered trading weekday is UNKNOWN and fails
+  closed; ships zero fabricated holidays; `Asia/Kathmandu` UTC+05:45 no DST via
+  ZoneInfo.
+- Fresh-context review caught my own bug: `__post_init__` promoted any year with
+  a holiday into `covered_years`, so one 2027 holiday made an unbacked June 2027
+  Tuesday report as trading. Removed.
+- **Tests:** 34. **Top follow-up:** the Monday–Friday calendar is still in the
+  tree and still used by `historical/import_service.py`. Migrating those
+  consumers changes what their historical outputs mean and needs its own work.
+
 ### NEPSE-1 · Instrument master + portfolio file import
 
 - **Status:** `CERTIFIED_WITH_LIMITATIONS` · **Dependency:** A1 ✓
