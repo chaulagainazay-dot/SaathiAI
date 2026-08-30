@@ -92,6 +92,27 @@ Statuses: `NOT_STARTED` · `DISCOVERY` · `IMPLEMENTING` · `VALIDATING` ·
   `tg/market_data/models.py`) and **2 competing quote models** (`MDQuote`,
   `Quote`).
 
+### NEPSE-1 · Instrument master + portfolio file import
+
+- **Status:** `CERTIFIED_WITH_LIMITATIONS` · **Dependency:** A1 ✓
+- **Risk:** low · **Authority impact:** none (read-only, no ledger write)
+- **Source:** teardown of `nepseportfoliotracker.app` — 9 screens, 7 backend
+  requirements. This milestone builds the two that are unblocked.
+- **Built:** `saathi/platform/nepse/` — instrument master (identity, 15-sector
+  taxonomy, NEPSE conventions: lot 10, tick 0.10, whole shares, `Asia/Kathmandu`)
+  and file importers (Meroshare / TMS / Nepal Share) with a fail-closed trust
+  model.
+- **Not built, deliberately:** no second portfolio store. Import produces a
+  proposal; the Canonical Fund Ledger stays the sole books authority.
+- **Tests:** 47 passed. Trading regression 286 passed / 0 failed.
+- **Blockers carried forward:**
+  - `NEPSE_IMPORT_SCHEMAS_UNVERIFIED` — column aliases derived from public
+    descriptions, not real exports. Needs one genuine export of each to pin.
+  - `NEPSE_LIVE_DATA_BLOCKED_PROVIDER_ACCESS` — 6 of 9 screens need a live feed;
+    no scraping, so this is a licensing decision.
+- **Evidence:** `docs/trading/nepse-1/`
+- **Next:** NEPSE-2 (apply an ImportResult to the ledger) once schemas are pinned.
+
 ### B2 · MD-2 — Instrument master
 ### B3 · MD-3 — Provider interface
 ### B4 · MD-4 — Provider qualification system
