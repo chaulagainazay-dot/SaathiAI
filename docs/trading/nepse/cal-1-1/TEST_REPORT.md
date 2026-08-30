@@ -128,3 +128,53 @@ offline suite can be claimed green again. The last clean full run on this tree
 (before the three fixes) was `7787 passed, 0 failed`, and the three fixes touch
 only `strategy/engine.py` and `tg/market_data/quality.py`, both covered by the
 focused ladder above.
+
+---
+
+## HOST-STORAGE-1 — offline regression green after storage recovery
+
+The blocker above is cleared. Reclaimed 7.4 GB by deleting 19 gitignored
+`saathi-os/.next` Next.js build directories across the SaathiAI worktrees —
+generated output, zero tracked files, reconstructable by `npm run build`. No
+source, worktree, virtualenv, database, credential, Ollama model, or
+`~/.saathi` operator state was touched.
+
+```text
+free before   5 GB   (storage gate: block below 5.0 GB)
+free after   13.6 GB  storage_report() level=ok healthy=True
+```
+
+Canonical offline suite, full completion summary:
+
+```text
+7798 passed, 2 skipped, 12 deselected, 324 warnings in 633.78s (0:10:33)
+```
+
+Zero failures. All eight previously-failing storage-dependent tests pass —
+`test_m157_private_alpha` (4), `test_ops::test_release_gate_passes_baseline`,
+`test_m336_m343_regression_closure::test_release_gate_reports_non_material_markers_instead_of_hiding_them`,
+and `test_studio_os` (2) — 20 passed in those files together.
+
+Focused regression re-run after the cleanup, unchanged:
+
+```text
+tests/nepse                                             103 passed
++ market_data + historical research + paper simulation  217 passed
+-k "strategy or backtest"                                67 passed
+trading authority regression                            324 passed
+```
+
+Git integrity: 99 branch tips resolve, `f333000` readable with 5393 files in
+tree, `git archive HEAD` materializes the full tree, 35 worktrees still
+registered with nothing newly prunable, zero tracked-file changes in this
+worktree. `git fsck` reports two unreadable objects, both unreachable from every
+ref, absent from disk and from the reflog, and predating this work — `.git` was
+never touched by the cleanup.
+
+Operational note worth carrying: the offline suite itself consumes roughly
+3.5 GB of transient disk while running (13.6 GB free before, 10 GB after). A
+host sitting at the 5.0 GB gate is therefore guaranteed to breach it mid-run.
+Treat ~10 GB free as the practical floor for running the canonical suite, not
+the 5.0 GB gate value.
+
+Marker: `OFFLINE_REGRESSION_GREEN_AFTER_STORAGE_RECOVERY`.

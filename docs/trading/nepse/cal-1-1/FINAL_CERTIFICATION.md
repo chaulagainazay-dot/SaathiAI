@@ -15,8 +15,8 @@ Implementation gates satisfied:
   backtest, staleness, adapter, and bar-alignment behavior are tested;
 - financial authorities, live trading, brokers, and TradingAgents remain
   untouched.
-- migration-specific, focused consumer, and trading-authority regressions
-  pass with zero failures.
+- migration-specific, focused consumer, trading-authority, and canonical
+  offline regressions pass with zero failures.
 
 ## Independent fresh-context review round
 
@@ -45,9 +45,18 @@ session-hour regimes are not modelled, and certified NEPSE backtests therefore
 remain blocked until genuine complete coverage is supplied. These are
 fail-closed limitations, not legacy fallbacks.
 
-## Canonical offline regression — environment blocked
+## Canonical offline regression — green after storage recovery
 
-`OFFLINE_REGRESSION_BLOCKED_HOST_DISK_BELOW_GATE_THRESHOLD`
+`OFFLINE_REGRESSION_GREEN_AFTER_STORAGE_RECOVERY`
+
+Superseding the blocker recorded below: HOST-STORAGE-1 reclaimed 7.4 GB of
+gitignored Next.js build output, taking the host from 5 GB to 13.6 GB free.
+The canonical offline suite then completed **7798 passed, 2 skipped, 12
+deselected, 0 failed in 633.78s**, with all eight storage-dependent tests
+passing and the focused NEPSE/trading ladder unchanged. Details in
+`TEST_REPORT.md`.
+
+### Superseded record — the original blocker
 
 The last full offline run reported `8 failed, 7790 passed`. Every one of the
 eight is the host sitting at ~2.9 GB free against a 5.0 GB storage gate, in
@@ -56,9 +65,9 @@ report test. All eight reproduce in isolation in nine seconds and none touches
 calendar, NEPSE, trading, market-data, historical, or backtest code. The
 evidence is in `TEST_REPORT.md`.
 
-This is not a claim of a green offline suite. It is a claim that the failures
-are attributable to host disk and are disjoint from this milestone. The suite
-must be re-run once the host has more than 5 GB free.
+That suite has since been re-run green. The record is retained because the
+attribution work is what justified continuing rather than treating the eight
+failures as milestone defects.
 
 `SAFE_TO_CONTINUE -> NEPSE-TXN-1`
 
