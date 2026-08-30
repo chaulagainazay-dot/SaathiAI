@@ -212,6 +212,7 @@ def test_rbac_required(platform):
 
 
 @pytest.mark.integration
+@pytest.mark.external
 def test_real_ollama_generation_when_available(platform):
     """Live proof when Ollama + lightweight model are present."""
     service, ctx = platform

@@ -52,6 +52,7 @@ def test_live_report_classifies_honestly():
 
 
 # ── live browser (skips honestly if no browser) ─────────────────────────────
+@pytest.mark.browser
 @skip_no_browser
 def test_live_browser_launch_and_close():
     d = LiveBrowserDriver()
@@ -61,6 +62,7 @@ def test_live_browser_launch_and_close():
     assert close.detail["process_exited"] and close.detail["profile_cleaned"]
 
 
+@pytest.mark.browser
 @skip_no_browser
 def test_live_browser_dom_and_click():
     workspace.create()
@@ -80,6 +82,7 @@ def test_live_browser_dom_and_click():
         workspace.cleanup()
 
 
+@pytest.mark.browser
 @skip_no_browser
 def test_live_browser_workflow_through_gateway():
     from saathi.computer_agent.live_workflow import run_browser_smoke
@@ -93,6 +96,7 @@ def test_live_browser_workflow_through_gateway():
     workspace.cleanup()
 
 
+@pytest.mark.browser
 @skip_no_browser
 def test_live_screenshot_written_to_workspace_not_git():
     import os

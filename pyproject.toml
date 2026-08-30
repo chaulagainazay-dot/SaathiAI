@@ -63,6 +63,14 @@ exclude = ["saathi-os*", "tests*"]
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
+markers = [
+    "integration: local integration tests excluded from bounded offline certification",
+    "network: tests that may access a network endpoint",
+    "browser: tests that launch or require a browser",
+    "live: tests requiring live external infrastructure",
+    "external: tests requiring an external provider or service",
+    "live_ollama: tests requiring a running local Ollama service",
+]
 
 [tool.setuptools.package-data]
 "saathi.production" = ["agency_prompts/*.md", "agency_prompts/*.txt"]
