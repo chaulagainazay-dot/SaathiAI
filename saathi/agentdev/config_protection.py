@@ -90,7 +90,21 @@ class ProtectionVerdict:
 
 
 def _home() -> Path:
-    return Path(os.path.expanduser("~"))
+    """Home directory, symlink-resolved.
+
+    Candidate paths are compared against this after ``Path.resolve()``, so home
+    must be resolved the same way. Without it, a symlinked ``$HOME`` — macOS
+    ``/var`` -> ``/private/var`` is the common case, but any symlinked home does
+    it — makes ``resolved.relative_to(home)`` raise ``ValueError`` and every
+    ``~/.claude/...`` path silently classify as UNPROTECTED.
+
+    That is a protection bypass, not a cosmetic mismatch: an agent writing to
+    ``~/.claude/settings.json`` would be allowed through.
+    """
+    try:
+        return Path(os.path.expanduser("~")).resolve(strict=False)
+    except (OSError, RuntimeError):  # pragma: no cover — pathological input
+        return Path(os.path.expanduser("~"))
 
 
 def _under_home_config(resolved: Path) -> bool:
