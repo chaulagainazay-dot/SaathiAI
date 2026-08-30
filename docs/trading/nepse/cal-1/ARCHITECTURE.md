@@ -2,9 +2,14 @@
 
 `saathi/platform/nepse/calendar.py`
 
+> Historical milestone record. NEPSE-CAL-1.1 subsequently removed the active
+> legacy weekday/holiday implementation and migrated its consumers. Current
+> policy and evidence live in `docs/trading/nepse/cal-1-1/`.
+
 ## The defect this replaces
 
-`saathi/platform/tg/historical/calendars.py` defines NEPSE as:
+At the time NEPSE-CAL-1 shipped,
+`saathi/platform/tg/historical/calendars.py` defined NEPSE as:
 
 ```python
 NEPSE = MarketCalendar(
@@ -87,14 +92,12 @@ check. Both behaviours have regression tests.
 
 ## Relationship to the old calendar
 
-`tg/historical/calendars.py` is **left in place and unchanged**. It has
-consumers (`historical/import_service.py`), and silently swapping the trading
-week underneath them is a behavioural change this milestone has no mandate to
-make blind. Migrating those consumers, and deciding what their historical
-outputs meant under the inverted week, is its own piece of work.
-
-**That means the Monday–Friday NEPSE calendar is still reachable in the tree.**
-It is recorded in `LIMITATIONS.md` as the top follow-up.
+NEPSE-CAL-1 deliberately left `tg/historical/calendars.py` unchanged pending a
+semantic-impact audit. NEPSE-CAL-1.1 completed that follow-up: the historical
+surface now delegates to `NepseCalendar`, fabricated fixture holidays are gone,
+import preserves uncovered weekly candidates with provenance, and certified
+backtests require complete calendar coverage. The old Monday-Friday policy is
+retained only as an explicit legacy artifact label, never as executable policy.
 
 ## Authority
 

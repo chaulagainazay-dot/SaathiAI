@@ -12,9 +12,12 @@ from __future__ import annotations
 from saathi.platform.nepse.calendar import (
     NEPAL_TZ,
     NEPAL_TZ_NAME,
+    NEPSE_CALENDAR_V2_CANONICAL,
+    CalendarCoverageStatus,
     DayStatus,
     HolidayStatus,
     NepseCalendar,
+    SessionClassification,
     SessionState,
 )
 from saathi.platform.nepse.instruments import (
@@ -31,9 +34,12 @@ from saathi.platform.nepse.instruments import (
 __all__ = [
     "NEPAL_TZ",
     "NEPAL_TZ_NAME",
+    "NEPSE_CALENDAR_V2_CANONICAL",
+    "CalendarCoverageStatus",
     "DayStatus",
     "HolidayStatus",
     "NepseCalendar",
+    "SessionClassification",
     "SessionState",
     "NEPSE_VENUE",
     "NEPSE_CURRENCY",

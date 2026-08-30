@@ -8,6 +8,12 @@ import time
 from pathlib import Path
 from typing import Any
 
+from saathi.platform.nepse.calendar import (
+    NEPSE_CALENDAR_V2_CANONICAL,
+    CalendarCoverageStatus,
+    NepseCalendar,
+)
+from saathi.platform.tg.historical.calendars import NEPSE_BACKTEST_POLICY
 from saathi.platform.tg.historical.adapters.binance import BinancePublicHistoricalAdapter
 from saathi.platform.tg.historical.adapters.local_file import LocalFileAdapter
 from saathi.platform.tg.historical.adapters.nepse import NepseLocalAdapter
@@ -69,6 +75,7 @@ class HistoricalImportService:
         schema_map: dict[str, str] | None = None,
         min_rows: int = 20,
         force_fixture_class: bool = False,
+        nepse_calendar: NepseCalendar | None = None,
     ) -> dict[str, Any]:
         path = Path(path)
         pre = self.store.disk_preflight(path.parent if path.parent.exists() else ".")
@@ -176,6 +183,7 @@ class HistoricalImportService:
         run.progress = 0.7
 
         # Quality
+        canonical_nepse_calendar = nepse_calendar or NepseCalendar()
         quality = evaluate_dataset_quality(
             bars,
             calendar_name=calendar_name,
@@ -184,8 +192,25 @@ class HistoricalImportService:
             timeframe=timeframe,
             min_rows=min_rows,
             corporate_action_status="APPLIED" if actions else "NONE",
+            nepse_calendar=canonical_nepse_calendar if calendar_name == "NEPSE" else None,
         )
-        coverage = build_coverage(bars, calendar_name=calendar_name, timeframe=timeframe)
+        coverage = build_coverage(
+            bars,
+            calendar_name=calendar_name,
+            timeframe=timeframe,
+            nepse_calendar=canonical_nepse_calendar if calendar_name == "NEPSE" else None,
+        )
+
+        if calendar_name == "NEPSE":
+            calendar_version = NEPSE_CALENDAR_V2_CANONICAL
+            calendar_source_version = canonical_nepse_calendar.calendar_source_version
+            calendar_coverage_status = coverage.calendar_coverage_status
+            calendar_policy = NEPSE_BACKTEST_POLICY
+        else:
+            calendar_version = "GENERIC_CALENDAR_UNVERSIONED"
+            calendar_source_version = ""
+            calendar_coverage_status = CalendarCoverageStatus.UNKNOWN.value
+            calendar_policy = "GENERIC"
 
         # Classification
         if force_fixture_class:
@@ -213,6 +238,9 @@ class HistoricalImportService:
             "schema": "m184.ohlcv.v1",
             "timeframe": timeframe,
             "currency": currency,
+            "calendar_version": calendar_version,
+            "calendar_source_version": calendar_source_version,
+            "calendar_coverage_status": calendar_coverage_status,
         })
 
         name = dataset_name or path.stem
@@ -232,9 +260,13 @@ class HistoricalImportService:
             classification=dcls,
             adjustment_methodology=method,
             calendar_name=calendar_name,
+            calendar_version=calendar_version,
+            calendar_source_version=calendar_source_version,
+            calendar_coverage_status=calendar_coverage_status,
+            calendar_policy=calendar_policy,
             corporate_actions=actions,
             source=result.source or DatasetSource(adapter=adapter, uri=str(path)),
-            notes=list(result.warnings),
+            notes=list(dict.fromkeys(list(result.warnings) + list(quality.warnings))),
         )
 
         dver = DatasetVersion(
@@ -269,7 +301,7 @@ class HistoricalImportService:
             adapter=adapter,
             bars=bars,
             transformations=list(audit.transformations),
-            notes=list(result.warnings),
+            notes=list(dict.fromkeys(list(result.warnings) + list(quality.warnings))),
         )
 
         # Accept / quarantine / reject

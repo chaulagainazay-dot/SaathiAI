@@ -1,8 +1,9 @@
 """NEPSE-CAL-1 — authoritative NEPSE trading calendar.
 
-Two defects in the calendar this replaces
------------------------------------------
-``saathi/platform/tg/historical/calendars.py`` defines its NEPSE entry with
+Two defects in the calendar this replaced
+------------------------------------------
+Before NEPSE-CAL-1.1, ``saathi/platform/tg/historical/calendars.py`` defined
+its NEPSE entry with
 ``open_weekdays=frozenset({0, 1, 2, 3, 4})`` — Monday to Friday, the Western
 week.
 
@@ -13,7 +14,7 @@ That calendar is therefore wrong at both ends: it treats every Sunday as closed
 backtest, session check, or staleness rule built on it is wrong roughly two days
 in five.
 
-Its holiday set is also annotated in-source as an *"illustrative
+Its holiday set was also annotated in-source as an *"illustrative
 operator-supplied set; not exhaustive"*, with individual entries labelled
 "(example fixture)" and "(approx fixture)".
 
@@ -54,10 +55,14 @@ from zoneinfo import ZoneInfo
 __all__ = [
     "NEPAL_TZ",
     "NEPAL_TZ_NAME",
+    "NEPSE_CALENDAR_V2_CANONICAL",
+    "NEPSE_CALENDAR_SOURCE_UNSOURCED",
     "NEPSE_OPEN_LOCAL",
     "NEPSE_CLOSE_LOCAL",
     "NEPSE_TRADING_WEEKDAYS",
+    "CalendarCoverageStatus",
     "DayStatus",
+    "SessionClassification",
     "SessionState",
     "HolidayStatus",
     "NepseCalendar",
@@ -65,6 +70,8 @@ __all__ = [
 
 NEPAL_TZ_NAME = "Asia/Kathmandu"
 NEPAL_TZ = ZoneInfo(NEPAL_TZ_NAME)
+NEPSE_CALENDAR_V2_CANONICAL = "NEPSE_CALENDAR_V2_CANONICAL"
+NEPSE_CALENDAR_SOURCE_UNSOURCED = "unsourced"
 
 # Continuous trading session in Nepal local time.
 # Documented limitation: NEPSE has revised session hours over the years, and
@@ -94,6 +101,26 @@ class DayStatus(str, Enum):
     HOLIDAY_CONFIRMED = "HOLIDAY_CONFIRMED"
     HOLIDAY_EXPECTED = "HOLIDAY_EXPECTED"
     SPECIAL_SESSION = "SPECIAL_SESSION"
+    UNKNOWN = "UNKNOWN"
+
+
+class SessionClassification(str, Enum):
+    """Calendar truth for a date, independent of the time of day.
+
+    Raw ingestion may retain ``POTENTIAL_OPEN_HOLIDAY_UNKNOWN`` with explicit
+    provenance.  A certified backtest must not treat either unknown state as an
+    open session.
+    """
+
+    CONFIRMED_OPEN = "CONFIRMED_OPEN"
+    CONFIRMED_CLOSED = "CONFIRMED_CLOSED"
+    POTENTIAL_OPEN_HOLIDAY_UNKNOWN = "POTENTIAL_OPEN_HOLIDAY_UNKNOWN"
+    UNKNOWN = "UNKNOWN"
+
+
+class CalendarCoverageStatus(str, Enum):
+    COMPLETE = "COMPLETE"
+    HOLIDAY_COVERAGE_UNKNOWN = "HOLIDAY_COVERAGE_UNKNOWN"
     UNKNOWN = "UNKNOWN"
 
 
@@ -134,7 +161,7 @@ class NepseCalendar:
     holidays: Mapping[str, tuple[str, str, str]] = field(default_factory=dict)
     covered_years: frozenset[int] = field(default_factory=frozenset)
     special_sessions: Mapping[str, str] = field(default_factory=dict)
-    dataset_version: str = "unsourced"
+    dataset_version: str = NEPSE_CALENDAR_SOURCE_UNSOURCED
 
     # No __post_init__ coverage inference.
     #
@@ -190,6 +217,36 @@ class NepseCalendar:
         """True only when the day is *known* to trade. UNKNOWN is not True."""
         return self.day_status(day) in (DayStatus.TRADING, DayStatus.SPECIAL_SESSION)
 
+    def classify_session(self, day: date) -> SessionClassification:
+        """Classify date-level session truth without weakening fail-closed APIs."""
+        status = self.day_status(day)
+        if status in (DayStatus.TRADING, DayStatus.SPECIAL_SESSION):
+            return SessionClassification.CONFIRMED_OPEN
+        if status in (DayStatus.WEEKEND, DayStatus.HOLIDAY_CONFIRMED):
+            return SessionClassification.CONFIRMED_CLOSED
+        if status is DayStatus.UNKNOWN and self.is_trading_weekday(day):
+            return SessionClassification.POTENTIAL_OPEN_HOLIDAY_UNKNOWN
+        return SessionClassification.UNKNOWN
+
+    def coverage_status(self, days: Iterable[date]) -> CalendarCoverageStatus:
+        """Summarise holiday coverage for the exact dates an artifact uses."""
+        for day in days:
+            classification = self.classify_session(day)
+            if classification in (
+                SessionClassification.POTENTIAL_OPEN_HOLIDAY_UNKNOWN,
+                SessionClassification.UNKNOWN,
+            ):
+                return CalendarCoverageStatus.HOLIDAY_COVERAGE_UNKNOWN
+        return CalendarCoverageStatus.COMPLETE
+
+    @property
+    def calendar_version(self) -> str:
+        return NEPSE_CALENDAR_V2_CANONICAL
+
+    @property
+    def calendar_source_version(self) -> str:
+        return self.dataset_version
+
     # ── navigation ─────────────────────────────────────────────────────────
 
     def _step(self, start: date, delta: int) -> date:
@@ -219,10 +276,13 @@ class NepseCalendar:
         local = moment.astimezone(NEPAL_TZ)
         day = local.date()
 
-        status = self.day_status(day)
-        if status is DayStatus.UNKNOWN:
+        classification = self.classify_session(day)
+        if classification in (
+            SessionClassification.POTENTIAL_OPEN_HOLIDAY_UNKNOWN,
+            SessionClassification.UNKNOWN,
+        ):
             return SessionState.UNKNOWN
-        if status in (DayStatus.WEEKEND, DayStatus.HOLIDAY_CONFIRMED, DayStatus.HOLIDAY_EXPECTED):
+        if classification is SessionClassification.CONFIRMED_CLOSED:
             return SessionState.CLOSED
 
         t = local.time()
@@ -257,6 +317,13 @@ class NepseCalendar:
                 "close": NEPSE_CLOSE_LOCAL.isoformat(),
             },
             "dataset_version": self.dataset_version,
+            "calendar_version": self.calendar_version,
+            "calendar_source_version": self.calendar_source_version,
+            "coverage_status": (
+                CalendarCoverageStatus.COMPLETE.value
+                if self.covered_years
+                else CalendarCoverageStatus.HOLIDAY_COVERAGE_UNKNOWN.value
+            ),
             "covered_years": sorted(self.covered_years),
             "holiday_count": self.holiday_count,
             "sources": self.sources(),

@@ -3,9 +3,19 @@ from __future__ import annotations
 
 import json
 import time
-from datetime import datetime
+from datetime import date, datetime
 from typing import Any
 
+from saathi.platform.nepse.calendar import (
+    NEPAL_TZ,
+    NEPAL_TZ_NAME,
+    NEPSE_CALENDAR_V2_CANONICAL,
+    NEPSE_CLOSE_LOCAL,
+    NEPSE_OPEN_LOCAL,
+    CalendarCoverageStatus,
+    NepseCalendar,
+    SessionClassification,
+)
 from saathi.platform.tg.market_data.models import AUTHORITY_VALUES
 from saathi.platform.tg.market_data.storage import MarketDataStore, _uid
 
@@ -53,6 +63,27 @@ class CalendarEngine:
             )
 
     def get(self, exchange: str) -> dict[str, Any]:
+        if exchange.upper() == "NEPSE":
+            calendar = NepseCalendar()
+            return {
+                "ok": True,
+                "exchange": "NEPSE",
+                "market": "NEPSE",
+                "asset_class": "equity",
+                "sessions": {
+                    "open": NEPSE_OPEN_LOCAL.strftime("%H:%M"),
+                    "close": NEPSE_CLOSE_LOCAL.strftime("%H:%M"),
+                },
+                "holidays": [],
+                "early_closes": [],
+                "timezone": NEPAL_TZ_NAME,
+                "is_247": False,
+                "calendar_version": NEPSE_CALENDAR_V2_CANONICAL,
+                "calendar_source_version": calendar.calendar_source_version,
+                "calendar_coverage_status": CalendarCoverageStatus.HOLIDAY_COVERAGE_UNKNOWN.value,
+                "limitations": ["NEPSE holiday coverage is unavailable; weekly candidates remain unknown"],
+                **AUTHORITY_VALUES,
+            }
         row = self.store.query_one("SELECT * FROM md_calendars WHERE exchange=?", (exchange,))
         if not row:
             return {"ok": False, "code": "CALENDAR_NOT_FOUND", "exchange": exchange, **AUTHORITY_VALUES}
@@ -89,6 +120,54 @@ class CalendarEngine:
                 "is_247": True,
                 "issues": [],
                 "note": "Crypto 24/7 — equity session rules not applied",
+                **AUTHORITY_VALUES,
+            }
+        if exchange.upper() == "NEPSE":
+            canonical = NepseCalendar()
+            for bar in bars:
+                raw_timestamp = bar["timestamp"] or ""
+                try:
+                    parsed = datetime.fromisoformat(raw_timestamp.replace("Z", "+00:00"))
+                    local_day = (
+                        parsed.astimezone(NEPAL_TZ).date()
+                        if parsed.tzinfo is not None
+                        else date.fromisoformat(raw_timestamp[:10])
+                    )
+                except (TypeError, ValueError):
+                    issues.append({"code": "invalid_date", "ts": raw_timestamp})
+                    continue
+                classification = canonical.classify_session(local_day)
+                if classification is SessionClassification.CONFIRMED_CLOSED:
+                    issues.append(
+                        {
+                            "code": "confirmed_closed_session_bar",
+                            "symbol": bar["symbol"],
+                            "ts": raw_timestamp,
+                        }
+                    )
+                elif classification in (
+                    SessionClassification.POTENTIAL_OPEN_HOLIDAY_UNKNOWN,
+                    SessionClassification.UNKNOWN,
+                ):
+                    issues.append(
+                        {
+                            "code": "calendar_coverage_unknown",
+                            "symbol": bar["symbol"],
+                            "ts": raw_timestamp,
+                        }
+                    )
+            return {
+                "ok": True,
+                "exchange": "NEPSE",
+                "asset_class": "equity",
+                "is_247": False,
+                "issue_count": len(issues),
+                "issues": issues[:100],
+                "sessions": cal.get("sessions"),
+                "timezone": NEPAL_TZ_NAME,
+                "calendar_version": NEPSE_CALENDAR_V2_CANONICAL,
+                "calendar_source_version": canonical.calendar_source_version,
+                "calendar_coverage_status": CalendarCoverageStatus.HOLIDAY_COVERAGE_UNKNOWN.value,
                 **AUTHORITY_VALUES,
             }
         holidays = set(cal.get("holidays") or [])

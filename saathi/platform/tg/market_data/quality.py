@@ -4,8 +4,16 @@ from __future__ import annotations
 import json
 import math
 import time
+from datetime import date, datetime, timezone
 from typing import Any
 
+from saathi.platform.nepse.calendar import (
+    NEPAL_TZ,
+    NEPSE_CALENDAR_V2_CANONICAL,
+    CalendarCoverageStatus,
+    NepseCalendar,
+    SessionClassification,
+)
 from saathi.platform.tg.market_data.models import AUTHORITY_VALUES, DatasetState, QualityClass
 from saathi.platform.tg.market_data.storage import MarketDataStore, evidence_hash, _uid
 
@@ -15,6 +23,9 @@ class QualityEngine:
         self.store = store
 
     def evaluate(self, dataset_id: str, dataset_version: str, *, now_ts: str | None = None) -> dict[str, Any]:
+        dataset = self.store.get_dataset(dataset_id, dataset_version) or {}
+        exchange = str(dataset.get("exchange") or "").upper()
+        nepse_calendar = NepseCalendar() if exchange == "NEPSE" else None
         bars = self.store.query(
             """SELECT * FROM md_bars WHERE dataset_id=? AND dataset_version=?
                ORDER BY symbol, timestamp""",
@@ -87,13 +98,56 @@ class QualityEngine:
                 # Weekend check for equities only
                 if (b.get("asset_class") or "equity") in ("equity", "etf", "index"):
                     try:
-                        # ISO date portion
-                        from datetime import datetime
-                        d = datetime.strptime(ts[:10], "%Y-%m-%d")
-                        if d.weekday() >= 5:
+                        parsed = datetime.fromisoformat(ts.replace("Z", "+00:00"))
+                        # NEPSE-CAL-1.1: at +05:45, an offset-less instant late
+                        # in the UTC day belongs to the NEXT Kathmandu date.
+                        # Slicing the raw string put such a bar on the wrong side
+                        # of a Thursday/Friday boundary and silently accepted a
+                        # closed-day bar as valid. Treat a naive timestamp as UTC
+                        # and always convert.
+                        if nepse_calendar is not None:
+                            if parsed.tzinfo is None:
+                                parsed = parsed.replace(tzinfo=timezone.utc)
+                            local_day = parsed.astimezone(NEPAL_TZ).date()
+                        else:
+                            local_day = date.fromisoformat(ts[:10])
+                        if nepse_calendar is not None:
+                            session_classification = nepse_calendar.classify_session(local_day)
+                            if session_classification is SessionClassification.CONFIRMED_CLOSED:
+                                weekend_bars += 1
+                                # NEPSE-CAL-1.1: a bar on a confirmed-closed
+                                # NEPSE session is a calendar contradiction, not
+                                # a score deduction. tg/historical/quality.py
+                                # folds this into `critical` and forces REJECTED;
+                                # this engine only nudged `validity`, so a dataset
+                                # carrying Friday/Saturday bars could still certify
+                                # as RESEARCH_USABLE. Block it, same as there.
+                                blocking.append("confirmed_closed_session_bar")
+                                findings.append(
+                                    {
+                                        "kind": "calendar",
+                                        "code": "confirmed_closed_session_bar",
+                                        "symbol": sym,
+                                        "ts": ts,
+                                    }
+                                )
+                            elif session_classification in (
+                                SessionClassification.POTENTIAL_OPEN_HOLIDAY_UNKNOWN,
+                                SessionClassification.UNKNOWN,
+                            ):
+                                findings.append(
+                                    {
+                                        "kind": "calendar",
+                                        "code": "calendar_coverage_unknown",
+                                        "symbol": sym,
+                                        "ts": ts,
+                                        "severity": "warn",
+                                    }
+                                )
+                        elif local_day.weekday() >= 5:
                             weekend_bars += 1
                             findings.append({"kind": "calendar", "code": "unexpected_weekend_bar", "symbol": sym, "ts": ts})
-                    except ValueError:
+                    except (TypeError, ValueError):
                         findings.append({"kind": "timestamp", "code": "invalid_date", "symbol": sym, "ts": ts})
                         blocking.append("invalid_timestamp")
                 vol = b.get("volume")
@@ -124,7 +178,7 @@ class QualityEngine:
         completeness = 1.0 if n >= 10 else n / 10.0
         timeliness = 0.0 if future_ts else 1.0
         adjustment_confidence = 0.8  # raw preserved; adjustments optional
-        source_confidence = 0.5 if self.store.get_dataset(dataset_id, dataset_version).get("is_synthetic") else 0.85
+        source_confidence = 0.5 if dataset.get("is_synthetic") else 0.85
 
         scores = {
             "completeness": round(completeness, 4),
@@ -148,6 +202,17 @@ class QualityEngine:
             "stale_repeated_bars": stale,
             "zero_volume_bars": zero_vol,
             "negative_volume": neg_vol,
+            "calendar_version": (
+                NEPSE_CALENDAR_V2_CANONICAL if nepse_calendar is not None else "GENERIC_CALENDAR_UNVERSIONED"
+            ),
+            "calendar_source_version": (
+                nepse_calendar.calendar_source_version if nepse_calendar is not None else ""
+            ),
+            "calendar_coverage_status": (
+                CalendarCoverageStatus.HOLIDAY_COVERAGE_UNKNOWN.value
+                if nepse_calendar is not None
+                else CalendarCoverageStatus.UNKNOWN.value
+            ),
         })
 
     def _finalize(
@@ -165,6 +230,12 @@ class QualityEngine:
                 "negative_price", "high_below_low", "zero_price", "non_finite_price",
                 "duplicate_timestamp", "timestamp_out_of_order", "future_timestamp", "negative_volume",
                 "no_bars",
+                # NEPSE-CAL-1.1: a bar on a confirmed-closed session is a calendar
+                # contradiction of the same severity as a duplicate timestamp.
+                # tg/historical/quality.py already forces REJECTED/QUARANTINED for
+                # it; without this entry the same defect only reached LIMITED_USE
+                # here, so the two engines disagreed about the same dataset.
+                "confirmed_closed_session_bar",
             )):
                 classification = QualityClass.REJECTED.value if "no_bars" in blocking or "negative_price" in blocking or "high_below_low" in blocking else QualityClass.QUARANTINED.value
             else:

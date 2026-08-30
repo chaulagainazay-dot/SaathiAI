@@ -1,9 +1,14 @@
 # Limitations
 
-## The wrong calendar is still in the tree
+> Historical milestone record. The active legacy-calendar limitation below was
+> resolved by NEPSE-CAL-1.1. Current limitations are in
+> `docs/trading/nepse/cal-1-1/LIMITATIONS.md`.
 
-`saathi/platform/tg/historical/calendars.py` still defines NEPSE as Monday–Friday
-with fabricated holidays, and `historical/import_service.py` still uses it.
+## The wrong calendar was still in the tree
+
+At the NEPSE-CAL-1 boundary, `saathi/platform/tg/historical/calendars.py` still
+defined NEPSE as Monday–Friday with fabricated holidays, and
+`historical/import_service.py` still used it.
 NEPSE-CAL-1 adds a correct calendar; it does not remove the incorrect one.
 
 Migrating those consumers is deliberately out of scope — swapping the trading
@@ -11,7 +16,8 @@ week underneath existing historical imports changes what their outputs mean, and
 that needs its own analysis. **Until that migration happens, anything importing
 from `tg/historical/calendars` is still wrong two days in five.**
 
-This is the single highest-value follow-up in the NEPSE track.
+NEPSE-CAL-1.1 removed that active policy after auditing and versioning its
+semantic impact.
 
 ## The default calendar has no holidays
 

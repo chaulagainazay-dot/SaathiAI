@@ -1,5 +1,16 @@
 # SaathiOS — Business
 
+## NEPSE historical-calendar integrity (NEPSE-CAL-1.1)
+
+* Historical NEPSE research no longer carries a hidden Western Monday-Friday
+  assumption; Sunday/Friday corrections are explicit and versioned.
+* Unknown holiday coverage is preserved as uncertainty, not converted into
+  claimed trading truth. This deliberately blocks certified backtests until a
+  genuine annual source is loaded while still allowing raw evidence ingestion.
+* Existing unversioned NEPSE artifacts are not silently relabelled. No live
+  trading, broker, approval, risk, portfolio, ledger, or reconciliation
+  authority is created by this migration.
+
 ## Connector certification as trust prerequisite (M30)
 
 * Live customer integrations (Gmail, Calendar, GitHub, Slack, payments) remain **deferred** until connectors pass behavioral conformance and operators enable rollout deliberately.

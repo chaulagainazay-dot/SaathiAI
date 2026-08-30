@@ -1,5 +1,19 @@
 # SaathiOS Technical Debt / Known Gaps
 
+## NEPSE-CAL-1.1 residual debt (2026-08-30)
+
+- HIGH / INTENTIONAL: no genuine NEPSE annual holiday dataset ships. Raw
+  Sunday-Thursday sessions therefore carry `HOLIDAY_COVERAGE_UNKNOWN`, and
+  certified NEPSE backtests remain blocked by
+  `REQUIRE_CALENDAR_COVERAGE` until sourced versioned coverage is supplied.
+- MEDIUM: regular 11:00-15:00 Nepal hours are current-regime metadata, not a
+  historical hours/shortened-session dataset.
+- LOW: automatic venue-aware quote classification requires a `NEPSE:` symbol
+  prefix; unqualified symbols cannot safely imply an exchange.
+- LOW: no persisted registry of all legacy evidence exists, so unversioned
+  NEPSE artifacts remain `UNKNOWN` unless their dates prove legacy-calendar
+  impact. They are never silently promoted to canonical.
+
 ## M73–M77 Voice Output Foundation residual debt (2026-07-28)
 
 - HIGH / CERTIFICATION: the dedicated M77 production browser speech journey did

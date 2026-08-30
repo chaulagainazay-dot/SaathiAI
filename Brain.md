@@ -28,6 +28,21 @@ If the answer is the latter, the feature belongs in the product layer, not the p
 
 ## 3. Current Platform State
 
+### NEPSE-CAL-1.1 Calendar consumer migration (2026-08-30)
+
+* **What:** Historical import, backtest, market-data quality/staleness, bar
+  alignment, and paper-session consumers now use the canonical NEPSE
+  Sunday-Thursday weekly rule. The legacy Monday-Friday implementation and
+  illustrative holiday dates are no longer executable policy.
+* **Trust model:** Holiday coverage remains unknown until genuine versioned
+  annual data is supplied. Raw import may preserve potential sessions with
+  provenance; certified NEPSE backtests require complete coverage and fail
+  closed.
+* **Compatibility:** Old unversioned NEPSE artifacts remain explicitly
+  legacy-invalid and are never relabelled canonical. No trading, approval,
+  risk, construction, ledger, or reconciliation authority changed.
+* **Evidence:** `docs/trading/nepse/cal-1-1/`.
+
 ### M80–M86 Live Conversational Intelligence (2026-07-28)
 
 * **What:** Live Voice now uses real model-backed multi-turn conversation via

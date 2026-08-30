@@ -126,6 +126,24 @@ Statuses: `NOT_STARTED` · `DISCOVERY` · `IMPLEMENTING` · `VALIDATING` ·
   tree and still used by `historical/import_service.py`. Migrating those
   consumers changes what their historical outputs mean and needs its own work.
 
+### NEPSE-CAL-1.1 · Legacy calendar consumer migration
+
+- **Status:** `NEPSE_CALENDAR_LEGACY_MIGRATION_CERTIFIED_WITH_LIMITATIONS` ·
+  **Policy:** `REQUIRE_CALENDAR_COVERAGE`
+- The historical NEPSE surface now delegates to the canonical calendar; the
+  independent Monday-Friday policy and illustrative holiday dates were removed.
+- Raw import retains Sunday-Thursday candidates with
+  `HOLIDAY_COVERAGE_UNKNOWN` provenance. Certified backtests fail closed until
+  every tested year has genuine versioned coverage. Friday/Saturday remain
+  confirmed closed.
+- Generated artifacts carry calendar version/source/coverage/policy. Old
+  unversioned NEPSE artifacts remain labelled
+  `NEPSE_CALENDAR_V1_LEGACY_INVALID`; they are not silently reclassified.
+- Evidence: `docs/trading/nepse/cal-1-1/`.
+- **Regression:** 7787 passed, 8 explained environment skips, 12 deselected,
+  0 failed. **Next:** `SAFE_TO_CONTINUE -> NEPSE-TXN-1`; genuine export
+  headers remain required before importer schemas become `VERIFIED`.
+
 ### NEPSE-1 · Instrument master + portfolio file import
 
 - **Status:** `CERTIFIED_WITH_LIMITATIONS` · **Dependency:** A1 ✓
@@ -163,13 +181,14 @@ No derivatives, no leverage, no futures. Public read-only endpoints only.
 ## Stage D — NEPSE live market data
 
 `D1` instrument master · `D2` market calendar · `D3` live quote adapter ·
-`D4` historical — all `NOT_STARTED`.
+`D4` historical — roadmap delivery stages remain `NOT_STARTED`; canonical
+calendar correctness groundwork exists from NEPSE-CAL-1/1.1.
 
 **Existing seed, verified:** `saathi/platform/tg/historical/adapters/nepse.py`
 (93 lines, **local file only, no network**) and
-`saathi/platform/tg/historical/calendars.py` with a NEPSE calendar whose holiday
-set is annotated *"illustrative operator-supplied set; not exhaustive"* — a
-correctness blocker for any NEPSE backtest that must be resolved in D2.
+`saathi/platform/tg/historical/calendars.py`. NEPSE-CAL-1.1 removed its
+independent Monday-Friday/illustrative-holiday implementation. A sourced annual
+holiday dataset is still required before any NEPSE backtest can be certified.
 
 **Standing constraint:** no scraping around access controls. If official
 real-time access requires a licence, deliver adapter contract + replay/mock +
