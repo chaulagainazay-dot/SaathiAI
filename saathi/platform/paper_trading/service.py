@@ -40,6 +40,10 @@ from saathi.platform.paper_trading.models import (
 )
 from saathi.platform.paper_trading.store import PaperStore, IdempotencyConflict
 from saathi.platform.paper_trading.broker import PaperBroker, MarketEvent
+from saathi.platform.paper_trading.execution_integrity import (
+    ExecutionReadiness, ExternalOrderSnapshot, LedgerSnapshot, OmsSnapshot,
+    ReconciliationAuthority, SubmissionAttemptStore, SubmissionOutcome,
+)
 from saathi.platform.fund_ledger.service import PortfolioLedgerService
 from saathi.platform.fund_ledger.store import FundLedgerStore
 from saathi.platform.fund_ledger.cutover import fund_id_for_account, DEFAULT_MARKER
@@ -59,7 +63,9 @@ class PaperTradingService:
                  guardian_limits: RiskLimits | None = None, seed: int = 0,
                  ledger: PortfolioLedgerService | None = None,
                  fill_posts: FillPostingStore | None = None,
-                 auto_post_ledger: bool = True):
+                 auto_post_ledger: bool = True,
+                 reconciliation_authority: ReconciliationAuthority | None = None,
+                 submission_attempt_store: SubmissionAttemptStore | None = None):
         assert_paper_safe()
         self.store = store or PaperStore()
         self._platform_store = platform_store
@@ -70,6 +76,14 @@ class PaperTradingService:
         self._audit_sink = None
         self._safety = None   # optional M62.7 SafetyService (breaker posture veto)
         self.auto_post_ledger = auto_post_ledger
+        self.reconciliation_authority = reconciliation_authority or ReconciliationAuthority()
+        if submission_attempt_store is not None:
+            self.submission_attempts = submission_attempt_store
+        else:
+            paper_path = getattr(self.store, "db_path", None)
+            attempt_path = Path(str(paper_path)).with_name(Path(str(paper_path)).stem + "_submission_attempts.db") \
+                if paper_path is not None else None
+            self.submission_attempts = SubmissionAttemptStore(attempt_path or ":memory:")
         # Canonical books: separate SQLite next to paper OMS DB (or memory)
         if ledger is not None:
             self.ledger = ledger
@@ -91,6 +105,87 @@ class PaperTradingService:
             else:
                 self.fill_posts = FillPostingStore()
         self.cutover_marker = DEFAULT_MARKER.to_public()
+        self._startup_recovery = self._scan_startup_ambiguity()
+
+    def _scan_startup_ambiguity(self) -> dict[str, Any]:
+        """Scan durable attempts before admitting any new paper execution."""
+        unresolved = tuple(self.submission_attempts.unresolved_keys())
+        durable = tuple(self.store.startup_ambiguities())
+        pending_posts = int(self.fill_posts.pending_count())
+        if unresolved or durable or pending_posts:
+            return {"state": "STARTUP_RECONCILIATION_REQUIRED", "unresolved_keys": unresolved,
+                    "durable_ambiguities": durable, "pending_ledger_posts": pending_posts}
+        return {"state": "STARTUP_RECONCILED", "unresolved_keys": (),
+                "durable_ambiguities": (), "pending_ledger_posts": 0}
+
+    def startup_recovery_status(self) -> dict[str, Any]:
+        self._startup_recovery = self._scan_startup_ambiguity()
+        return {"state": self._startup_recovery["state"],
+                "unresolved_count": len(self._startup_recovery["unresolved_keys"])}
+
+    def record_submission_reconciliation(self, *, idempotency_key: str,
+                                         external_order_found: bool,
+                                         resolved_outcome: SubmissionOutcome | str,
+                                         evidence_ref: str = "") -> dict[str, Any]:
+        """Explicitly resolve an ambiguous submission; never inferred from health."""
+        row = self.submission_attempts.record_reconciliation(
+            idempotency_key=idempotency_key, external_order_found=external_order_found,
+            resolved_outcome=resolved_outcome, evidence_ref=evidence_ref,
+        )
+        self._startup_recovery = self._scan_startup_ambiguity()
+        return row
+
+    def _execution_snapshots(self, ctx, acct: PaperAccount):
+        orders = [o.to_public() for o in self.store.list_orders(ctx.org_id, account_id=acct.id, limit=500)]
+        fills = []
+        for order in orders:
+            fills.extend(self.store.list_fills(ctx.org_id, order["id"], limit=1000))
+        oms = OmsSnapshot(orders=orders, fills=fills, as_of=_time.time())
+        # The PAPER adapter's external view is deliberately a separate snapshot,
+        # not a merged dictionary. A future venue adapter replaces this method.
+        external = ExternalOrderSnapshot(orders=list(orders), fills=list(fills), as_of=_time.time())
+        positions = {p.symbol: str(p.quantity) for p in self.store.list_positions(ctx.org_id, acct.id)}
+        fund_id = self.fill_posts.fund_for_account(acct.id) or fund_id_for_account(acct.id)
+        if not self.ledger.store.get_fund(fund_id):
+            return oms, external, None, None, None
+        state = self.ledger.get_state(fund_id)
+        ledger = LedgerSnapshot(cash=str(state["cash"]), positions={
+            str(p["symbol"]): str(p["quantity"]) for p in state.get("positions", [])
+        }, as_of=_time.time())
+        return oms, external, ledger, str(acct.current_cash), positions
+
+    def _require_execution_readiness(self, ctx, acct: PaperAccount, intent: OrderIntent) -> None:
+        startup = self.startup_recovery_status()
+        if startup["state"] != "STARTUP_RECONCILED":
+            raise PlatformContextError("RECONCILIATION_REQUIRED", "startup execution ambiguity requires reconciliation")
+        portfolio = self.portfolio_reconciliation_status(ctx, acct.id)
+        if not portfolio.get("ok"):
+            raise PlatformContextError("RECONCILIATION_REQUIRED", "portfolio reconciliation is not healthy")
+        oms, external, ledger, expected_cash, expected_positions = self._execution_snapshots(ctx, acct)
+        if ledger is None:
+            raise PlatformContextError("RECONCILIATION_REQUIRED", "canonical ledger unavailable")
+        verdict = self.reconciliation_authority.evaluate(
+            oms=oms, external=external, ledger=ledger, expected_cash=expected_cash,
+            expected_positions=expected_positions, correlation_id=intent.audit_correlation_id,
+            order_original_quantities={str(o["id"]): str(o["original_quantity"]) for o in oms.orders},
+        )
+        if not verdict.permits_new_execution:
+            detail = verdict.findings[0] if verdict.findings else verdict.readiness.value
+            raise PlatformContextError("RECONCILIATION_REQUIRED", f"{verdict.readiness.value}: {detail}")
+        if not self.submission_attempts.may_submit(intent.idempotency_key):
+            raise PlatformContextError("RECONCILIATION_REQUIRED", "submission attempt requires reconciliation")
+
+    def _record_submission_intent(self, intent: OrderIntent) -> tuple[str, int]:
+        prior = self.submission_attempts.attempts_for(intent.idempotency_key)
+        attempt = len(prior) + 1
+        request_id = f"submit:{intent.idempotency_key}:{attempt}"
+        self.submission_attempts.record(
+            request_id=request_id, client_order_id=intent.intent_id,
+            idempotency_key=intent.idempotency_key, attempt=attempt,
+            outcome=SubmissionOutcome.UNKNOWN,
+            correlation_id=intent.audit_correlation_id,
+        )
+        return request_id, attempt
 
     def bind_safety(self, safety_service):
         """Attach the M62.7 SafetyService so submissions consult breaker posture.
@@ -378,6 +473,10 @@ class PaperTradingService:
             approval_id=approval_id or "n/a", state=OrderState.APPROVAL_REQUIRED,
             audit_correlation_id=rec["correlation_id"])
 
+        # Reconciliation and attempt readiness are checked before Guardian,
+        # reservation, or any durable order-side effect.
+        self._require_execution_readiness(ctx, acct, intent)
+
         # 1) Guardian veto (independent, fail-closed) — persisted, immutable for this version
         guardian = self._guardian_review(acct, intent, event)
         if not guardian.get("allowed"):
@@ -455,6 +554,7 @@ class PaperTradingService:
         acct.version += 1
 
         idem_result = {"order": order.to_public(), "guardian": guardian}
+        request_id, _attempt = self._record_submission_intent(intent)
         try:
             self.store.persist_submit(
                 account=acct, position=(position if intent.side == OrderSide.SELL else None), order=order,
@@ -467,6 +567,7 @@ class PaperTradingService:
             if existing:
                 return {"order": existing.to_public(), "idempotent_replay": True}
             raise
+        self.submission_attempts.finalize(request_id, SubmissionOutcome.ACKNOWLEDGED)
         self._audit(ctx, "paper.order.submitted", order_id=order.id, intent_id=intent_id, symbol=order.symbol,
                     quantity=str(order.original_quantity), approval_id=approval_id)
         return {"order": order.to_public(), "guardian": guardian}
@@ -633,6 +734,10 @@ class PaperTradingService:
         self.store.update_intent(ctx.org_id, order.order_intent_id, state=istate)
         self._audit(ctx, "paper.order.cancelled", order_id=order.id, filled=str(order.filled_quantity))
         return idem_result
+
+    def replace_order(self, ctx, *, order_id: str, **_kwargs) -> dict:
+        """Paper replace is intentionally unsupported until semantics are certified."""
+        raise PlatformContextError("REPLACE_UNSUPPORTED", "paper order replacement is not supported; cancel and propose a new order")
 
     # ── approval verification / consumption (server-owned) ──────────────────
     def _verify_approval(self, ctx, approval_id: str, *, account_id: str, est_notional: Decimal) -> None:

@@ -28,6 +28,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
+import threading
 import time as _time
 from dataclasses import dataclass, field
 from decimal import Decimal, InvalidOperation
@@ -135,7 +136,8 @@ class SubmissionAttemptStore:
     def __init__(self, path: str | Path, *, clock=None) -> None:
         self._path = str(path)
         self._clock = clock or _time.time
-        self._conn = sqlite3.connect(self._path)
+        self._lock = threading.RLock()
+        self._conn = sqlite3.connect(self._path, check_same_thread=False)
         self._conn.row_factory = sqlite3.Row
         self._conn.executescript(_ATTEMPT_SCHEMA)
         self._conn.commit()
@@ -172,19 +174,20 @@ class SubmissionAttemptStore:
         # Atomic idempotency on request_id. A check-then-insert would race: two
         # concurrent callers could both pass the SELECT and the second would
         # raise IntegrityError instead of returning the existing row.
-        self._conn.execute(
-            "INSERT INTO submission_attempts "
-            "(request_id, client_order_id, idempotency_key, attempt, outcome, disposition,"
-            " broker_adapter_ref, correlation_id, evidence_ref, recorded_at) "
-            "VALUES (:request_id, :client_order_id, :idempotency_key, :attempt, :outcome,"
-            " :disposition, :broker_adapter_ref, :correlation_id, :evidence_ref, :recorded_at) "
-            "ON CONFLICT(request_id) DO NOTHING",
-            row,
-        )
-        self._conn.commit()
-        stored = self._conn.execute(
-            "SELECT * FROM submission_attempts WHERE request_id = ?", (request_id,)
-        ).fetchone()
+        with self._lock:
+            self._conn.execute(
+                "INSERT INTO submission_attempts "
+                "(request_id, client_order_id, idempotency_key, attempt, outcome, disposition,"
+                " broker_adapter_ref, correlation_id, evidence_ref, recorded_at) "
+                "VALUES (:request_id, :client_order_id, :idempotency_key, :attempt, :outcome,"
+                " :disposition, :broker_adapter_ref, :correlation_id, :evidence_ref, :recorded_at) "
+                "ON CONFLICT(request_id) DO NOTHING",
+                row,
+            )
+            self._conn.commit()
+            stored = self._conn.execute(
+                "SELECT * FROM submission_attempts WHERE request_id = ?", (request_id,)
+            ).fetchone()
         return dict(stored) if stored is not None else row
 
     def record_reconciliation(
@@ -209,19 +212,35 @@ class SubmissionAttemptStore:
             "evidence_ref": evidence_ref,
             "recorded_at": float(self._clock()),
         }
-        self._conn.execute(
-            "INSERT INTO submission_reconciliations "
-            "(idempotency_key, external_order_found, resolved_outcome, evidence_ref, recorded_at) "
-            "VALUES (:idempotency_key, :external_order_found, :resolved_outcome, :evidence_ref, :recorded_at) "
-            "ON CONFLICT(idempotency_key) DO UPDATE SET "
-            " external_order_found=excluded.external_order_found,"
-            " resolved_outcome=excluded.resolved_outcome,"
-            " evidence_ref=excluded.evidence_ref,"
-            " recorded_at=excluded.recorded_at",
-            row,
-        )
-        self._conn.commit()
+        with self._lock:
+            self._conn.execute(
+                "INSERT INTO submission_reconciliations "
+                "(idempotency_key, external_order_found, resolved_outcome, evidence_ref, recorded_at) "
+                "VALUES (:idempotency_key, :external_order_found, :resolved_outcome, :evidence_ref, :recorded_at) "
+                "ON CONFLICT(idempotency_key) DO UPDATE SET "
+                " external_order_found=excluded.external_order_found,"
+                " resolved_outcome=excluded.resolved_outcome,"
+                " evidence_ref=excluded.evidence_ref,"
+                " recorded_at=excluded.recorded_at",
+                row,
+            )
+            self._conn.commit()
         return row
+
+    def finalize(self, request_id: str, outcome: SubmissionOutcome | str) -> dict[str, Any] | None:
+        """Complete a previously recorded intent without changing its identity."""
+        disposition = classify_submission(outcome)
+        outcome_value = outcome.value if isinstance(outcome, SubmissionOutcome) else str(outcome)
+        with self._lock:
+            self._conn.execute(
+                "UPDATE submission_attempts SET outcome=?, disposition=? WHERE request_id=?",
+                (outcome_value, disposition.value, request_id),
+            )
+            self._conn.commit()
+            row = self._conn.execute(
+                "SELECT * FROM submission_attempts WHERE request_id=?", (request_id,)
+            ).fetchone()
+        return dict(row) if row is not None else None
 
     # ── reads ─────────────────────────────────────────────────────────────
 
@@ -231,6 +250,17 @@ class SubmissionAttemptStore:
             (idempotency_key,),
         ).fetchall()
         return [dict(r) for r in rows]
+
+    def unresolved_keys(self) -> list[str]:
+        """Return keys whose latest known outcome still requires reconciliation."""
+        rows = self._conn.execute(
+            "SELECT DISTINCT idempotency_key FROM submission_attempts"
+        ).fetchall()
+        return [
+            str(r["idempotency_key"])
+            for r in rows
+            if self.requires_reconciliation(str(r["idempotency_key"]))
+        ]
 
     def _reconciliation(self, idempotency_key: str) -> dict[str, Any] | None:
         row = self._conn.execute(
