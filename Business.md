@@ -1,5 +1,17 @@
 # SaathiOS — Business
 
+## NEPSE normalized transaction import (NEPSE-TXN-1)
+
+* External NEPSE activity can now enter SaathiOS as a deterministic,
+  fully-accounted reconciliation proposal without becoming a second portfolio
+  or silently changing the books.
+* Stable IDs and surfaced duplicate/conflict states make repeated exports
+  auditable while Decimal and explicit date/availability semantics prevent
+  hidden financial coercion.
+* Real Meroshare, TMS, and Nepal Share compatibility remains unverified; no
+  broker, live order, account, withdrawal, leverage, or ledger-application
+  capability is created.
+
 ## NEPSE historical-calendar integrity (NEPSE-CAL-1.1)
 
 * Historical NEPSE research no longer carries a hidden Western Monday-Friday

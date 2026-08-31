@@ -32,7 +32,9 @@ can make. Status: `NEPSE_LIVE_DATA_BLOCKED_PROVIDER_ACCESS`.
 
 ## Not built in this milestone
 
-- Transaction (buy/sell) import — only holdings snapshots parse today
+- Transaction import — resolved at the normalized contract layer by
+  NEPSE-TXN-1 (`docs/trading/nepse/txn-1/`), while real source header
+  compatibility remains unverified and no transaction is applied to the ledger
 - Excel (`.xlsx`) reading — TMS is described as Excel; only its CSV export path
   is handled. Adding `.xlsx` means a new dependency and should be a deliberate
   decision

@@ -28,6 +28,20 @@ If the answer is the latter, the feature belongs in the product layer, not the p
 
 ## 3. Current Platform State
 
+### NEPSE-TXN-1 normalized transaction import (2026-08-31)
+
+* **What:** Bounded provisional Meroshare, TMS, and Nepal Share adapters now
+  normalize external activity into immutable `NEPSEExternalTransaction`
+  proposals with Decimal money, stable identity, duplicate classification,
+  deterministic reason codes, and complete row accounting.
+* **Authority:** Every accepted row resolves through the canonical NEPSE
+  instrument master. Import does not mutate the Fund Ledger, positions, cash,
+  OMS, Trading Guardian, construction, risk, or execution systems.
+* **Trust:** All three source schemas remain `SOURCE_SCHEMA_UNVERIFIED`; genuine
+  headers are still required by NEPSE-SCHEMA-1. Unknown descriptions stay
+  `UNKNOWN` and original text is preserved.
+* **Evidence:** `docs/trading/nepse/txn-1/`.
+
 ### NEPSE-CAL-1.1 Calendar consumer migration (2026-08-30)
 
 * **What:** Historical import, backtest, market-data quality/staleness, bar

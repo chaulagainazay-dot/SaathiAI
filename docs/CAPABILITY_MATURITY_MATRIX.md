@@ -1,4 +1,6 @@
-# SaathiOS Capability Maturity Matrix (as of M311 certification)
+# SaathiOS Capability Maturity Matrix (as of NEPSE-TXN-1 certification)
+
+| Normalized NEPSE transaction import (NEPSE-TXN-1) | deterministic-tested; certified-with-limitations; **proposal only; source schemas unverified; no ledger mutation or execution** | `saathi/platform/nepse/transactions/`; 52 focused + 284 related + 327 authority + 7844 offline; `docs/trading/nepse/txn-1/`; no real broker/live/order/account authority |
 
 | Read-only market observation (M304–M311) | deterministic-tested; browser-certified-with-limitations; **validation not trading; offline fixtures; no broker login/oauth/credentials/orders/accounts** | `saathi/platform/tg/market_observation/`; snapshots+quotes+history+metadata+exchange status+CA+benchmarks; `/trading/market-observation`; `cert:m311`; live trading not authorized |
 | Institutional portfolio & risk intelligence (M296–M303) | deterministic-tested; browser-certified-with-limitations; **paper/research only; not regulatory capital; not investment advice** | `saathi/platform/tg/portfolio_risk/`; analytics+limits+optimiser V2+scenarios+committee V2; `/trading/portfolio-risk`; `cert:m303`; live/connectivity not authorized |

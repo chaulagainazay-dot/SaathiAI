@@ -1,5 +1,19 @@
 # SaathiOS Technical Debt / Known Gaps
 
+## NEPSE-TXN-1 residual debt (2026-08-31)
+
+- HIGH / CERTIFICATION: genuine Meroshare, TMS, and Nepal Share transaction
+  headers and semantics remain unavailable. All adapters stay
+  `SOURCE_SCHEMA_UNVERIFIED`; NEPSE-SCHEMA-1 must pin real redacted headers
+  before source-specific end-to-end compatibility can be certified.
+- MEDIUM / INTENTIONAL: no populated canonical NEPSE instrument dataset ships;
+  transaction callers must supply `NepseInstrument` records and unknown symbols
+  reject closed.
+- MEDIUM / INTENTIONAL: corporate-action accounting, reconciliation, and ledger
+  application are outside the importer and remain future contract work.
+- LOW: `.xlsx`, Bikram Sambat dates, and non-NPR source semantics remain
+  unsupported; no dependencies or inference rules were added.
+
 ## NEPSE-CAL-1.1 residual debt (2026-08-30)
 
 - HIGH / INTENTIONAL: no genuine NEPSE annual holiday dataset ships. Raw

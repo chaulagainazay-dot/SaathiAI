@@ -144,6 +144,28 @@ Statuses: `NOT_STARTED` · `DISCOVERY` · `IMPLEMENTING` · `VALIDATING` ·
   0 failed. **Next:** `SAFE_TO_CONTINUE -> NEPSE-TXN-1`; genuine export
   headers remain required before importer schemas become `VERIFIED`.
 
+### NEPSE-TXN-1 · Normalized external transaction import
+
+- **Status:** `NEPSE_TRANSACTION_IMPORT_CONTRACT_CERTIFIED_WITH_LIMITATIONS` ·
+  **Dependency:** NEPSE-1, MD-1, NEPSE-CAL-1.1 ✓
+- Canonical immutable transaction and import-result models, Decimal money,
+  unsigned whole-share quantity, explicit trade/settlement/availability/receipt
+  time, stable transaction IDs, visible duplicate/conflict states, deterministic
+  reason codes, and bounded untrusted CSV/TSV parsing.
+- Every accepted transaction resolves through `NepseInstrument`. Import is a
+  proposal only: zero Fund Ledger, position, cash, OMS, gateway, guardian,
+  construction, or risk mutation.
+- Meroshare, TMS, and Nepal Share mappings remain
+  `SOURCE_SCHEMA_UNVERIFIED`; no real source compatibility is claimed.
+- **Regression:** 52 focused transaction tests, 284 NEPSE/MD/calendar/
+  historical/market-data tests, 327 ledger/authority tests, and canonical
+  offline suite `7844 passed, 8 skipped, 12 deselected, 0 failed`.
+- **Evidence:** `docs/trading/nepse/txn-1/`.
+- **Next dependency recommendation:** MD-1.1 venue consistency, then
+  NEPSE-SCHEMA-1 when genuine headers exist. If headers remain unavailable,
+  NEPSE-LEDGER-1 may proceed as contract design over synthetic normalized
+  transactions only; no ledger application is authorized.
+
 ### NEPSE-1 · Instrument master + portfolio file import
 
 - **Status:** `CERTIFIED_WITH_LIMITATIONS` · **Dependency:** A1 ✓
