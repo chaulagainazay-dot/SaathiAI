@@ -30,6 +30,8 @@ import { LoadingState, ErrorState, EmptyState, StatusBadge, Button } from "@/com
 import { useVoiceSession } from "@/components/voice/VoiceSessionProvider";
 import { useCommandCoreSnapshot } from "@/lib/useCommandCoreSnapshot";
 import { operationalStatus, presencePresentation } from "@/lib/command-core-status";
+import { useRunInContext } from "@/lib/useRunInContext";
+import { commandConversationId } from "@/lib/command-conversation";
 
 function Pill({ children, tone = "default" }) {
   const cls =
@@ -534,11 +536,24 @@ export default function CommandCenterPage() {
   // is null: the only real RMS lives behind a pull-only manager probe
   // (docs/command-core/EVENT_PROVENANCE.md), and a synthesised waveform is not
   // permitted.
+  // Identity of THIS central interaction. Correlation only — it authorises
+  // nothing and is never sent as a credential. Runs started from the centre
+  // carry it as conversation_id, which is how the agent runtime already
+  // correlates work (see components/chat/ChatWorkspace).
+  const [conversationId, setConversationId] = useState("");
+  useEffect(() => { setConversationId(commandConversationId()); }, []);
+
+  // The run the centre is responsible for, and only that run's real events.
+  // Background runs elsewhere in SaathiOS never reach this snapshot.
+  const { runId: contextRunId, runEvents } = useRunInContext({ conversationId });
+
   const coreMissions = model?.missions?.items || [];
   const coreSnapshot = useCommandCoreSnapshot({
     voiceSession: voiceSession?.session,
     missions: coreMissions,
     system,
+    runEvents,
+    runId: contextRunId,
     microphoneEnergy: null,
   });
   const corePresence = useMemo(
