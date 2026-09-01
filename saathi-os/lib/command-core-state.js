@@ -138,7 +138,10 @@ export function deriveCommandCoreState(input = {}) {
   const missions = Array.isArray(input.missions) ? input.missions : [];
 
   const degraded = truthy(system.degraded);
-  const supervising = hasLiveDelegatedWork(missions);
+  // Delegated work is live when the backend says a mission is active, OR when
+  // the run this surface is responsible for has started an agent and has not
+  // reached a terminal state. Both are server facts.
+  const supervising = hasLiveDelegatedWork(missions) || truthy(input.delegatedWorkActive);
   const voiceState = String(voice.state || "").toUpperCase();
 
   const settle = (state, reason) => ({

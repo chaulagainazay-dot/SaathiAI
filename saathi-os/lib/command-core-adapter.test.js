@@ -45,7 +45,9 @@ test("SUPERVISING once the agent is running and Saathi is quiet", () => {
   });
   assert.equal(s.coreState, "SUPERVISING");
   assert.equal(s.supervising, true);
-  assert.deepEqual(s.activeMissionIds, ["m1"]);
+  // The live contextual run counts as delegated work alongside the mission.
+  assert.ok(s.activeMissionIds.includes("m1"));
+  assert.ok(s.activeMissionIds.includes("run-1"));
 });
 
 test("mission truth survives when Saathi speaks over a running agent", () => {
@@ -56,7 +58,7 @@ test("mission truth survives when Saathi speaks over a running agent", () => {
   });
   assert.equal(s.coreState, "SPEAKING");
   assert.equal(s.supervising, true, "SUPERVISING must not be the only home of mission truth");
-  assert.deepEqual(s.activeMissionIds, ["m1"]);
+  assert.ok(s.activeMissionIds.includes("m1"));
 });
 
 test("an approval request outranks a running agent", () => {
@@ -241,4 +243,46 @@ test("the adapter reads no frontend clock", async () => {
   for (const banned of ["Date.now", "setTimeout", "setInterval", "performance.now"]) {
     assert.ok(!code.includes(banned), `${banned} must not be system truth`);
   }
+});
+
+test("a live contextual run establishes SUPERVISING without any mission row", () => {
+  const s = snap({ runEvents: [ev("e1", "agent.started", 10)] });
+  assert.equal(s.coreState, "SUPERVISING");
+  assert.equal(s.supervising, true);
+  assert.ok(s.activeMissionIds.includes("run-1"));
+});
+
+test("a finished contextual run stops supervising — the centre cannot get stuck", () => {
+  const s = snap({ runEvents: [ev("e1", "agent.started", 10), ev("e2", "run.completed", 20)] });
+  assert.equal(s.supervising, false);
+  assert.notEqual(s.coreState, "SUPERVISING");
+});
+
+test("a terminal run.state also stops supervising, in either payload shape", () => {
+  // The agent runtime writes {from, to}; older callers used {state}.
+  const withTo = snap({
+    runEvents: [ev("e1", "agent.started", 10), ev("e2", "run.state", 20, { from: "running", to: "completed" })],
+  });
+  assert.equal(withTo.supervising, false, "the runtime's own {to} shape must be read");
+
+  const withState = snap({
+    runEvents: [ev("e1", "agent.started", 10), ev("e2", "run.state", 20, { state: "completed" })],
+  });
+  assert.equal(withState.supervising, false);
+});
+
+test("a paused run is still live delegated work", () => {
+  const s = snap({
+    runEvents: [ev("e1", "agent.started", 10), ev("e2", "run.state", 20, { from: "running", to: "paused" })],
+  });
+  assert.equal(s.supervising, true, "paused is not terminal");
+  assert.equal(s.coreState, "SUPERVISING");
+});
+
+test("a background run cannot establish supervising through the run path", () => {
+  const s = buildCommandCoreSnapshot({
+    runId: "run-1",
+    runEvents: [ev("b1", "agent.started", 10, {}, "run-other")],
+  });
+  assert.equal(s.supervising, false);
 });

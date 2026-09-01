@@ -30,6 +30,7 @@ export const RUN_EVENT = Object.freeze({
   TOOL_REQUESTED: "tool.requested",
   TASK_FAILED: "task.failed",
   RUN_STATE: "run.state",
+  RUN_COMPLETED: "run.completed",
 });
 
 /** Provenance classes, mirroring the map document. */
@@ -105,6 +106,7 @@ export function reduceRunEvents(events, options = {}) {
     delegatedAt: null,
     agentStartedAt: null,
     runState: null,
+    runCompletedAt: null,
     toolRequestedAt: null,
     approvalPending: false,
     approvalId: null,
@@ -164,7 +166,14 @@ export function reduceRunEvents(events, options = {}) {
         fold.failedAt = at;
         break;
       case RUN_EVENT.RUN_STATE:
-        fold.runState = payload.state != null ? String(payload.state) : fold.runState;
+        // The agent runtime writes the transition as {from, to}; `state` is the
+        // shape this fold originally assumed. Read both so a terminal run is
+        // actually recognised.
+        if (payload.to != null) fold.runState = String(payload.to);
+        else if (payload.state != null) fold.runState = String(payload.state);
+        break;
+      case RUN_EVENT.RUN_COMPLETED:
+        fold.runCompletedAt = at;
         break;
       default:
         break;
@@ -230,7 +239,16 @@ export function buildCommandCoreSnapshot(input = {}) {
     ? false
     : execution.verifying === true;
 
+  // The contextual run counts as live delegated work once an agent has started
+  // and the run has not finished. A terminal run stops supervising, so the
+  // centre cannot get stuck reporting work that already ended.
+  const terminalRun = ["completed", "failed", "cancelled", "expired"]
+    .includes(String(fold.runState || "").toLowerCase());
+  const runDelegatedWorkActive =
+    fold.agentStartedAt !== null && fold.runCompletedAt === null && !terminalRun;
+
   const derived = deriveCommandCoreState({
+    delegatedWorkActive: runDelegatedWorkActive,
     guardian: { blocked: guardianBlocked },
     approval: { pending: fold.approvalPending },
     execution: { active: executionActive, verifying },
@@ -268,9 +286,12 @@ export function buildCommandCoreSnapshot(input = {}) {
     assistantSpeaking: voiceState === "SPEAKING",
 
     supervising: derived.supervising,
-    activeMissionIds: missions
-      .filter((m) => ["ACTIVE", "RUNNING", "WAITING"].includes(String(m?.state || "").toUpperCase()))
-      .map((m) => String(m.missionId ?? m.mission_id ?? "")),
+    activeMissionIds: [
+      ...missions
+        .filter((m) => ["ACTIVE", "RUNNING", "WAITING"].includes(String(m?.state || "").toUpperCase()))
+        .map((m) => String(m.missionId ?? m.mission_id ?? "")),
+      ...(runDelegatedWorkActive && input.runId ? [String(input.runId)] : []),
+    ].filter((id, i, all) => id && all.indexOf(id) === i),
     missionLiveness: missions.map((m) => missionLiveness(m)),
 
     approvalPending: fold.approvalPending,
