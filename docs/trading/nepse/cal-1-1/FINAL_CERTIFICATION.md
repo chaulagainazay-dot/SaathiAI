@@ -30,7 +30,7 @@ fixed in this milestone, one is recorded as a limitation. Full analysis in
 | R-A | `run_backtest` gate keyed on `calendar_name`, so a NEPSE instrument left at the `DEFAULT_24_5` default skipped the coverage check entirely | **Fixed** — `NEPSE_INSTRUMENT_REQUIRES_NEPSE_CALENDAR` derives the requirement from instrument identity |
 | R-C | A confirmed-closed session bar was scored but not blocking in `tg/market_data/quality.py`, so the two quality engines disagreed on the same dataset | **Fixed** — added to `blocking` and to the `_finalize` escalation list; both now force `QUARANTINED` |
 | R-D | An offset-less timestamp bypassed the Kathmandu conversion and was string-sliced; at +05:45 that misplaces every instant after 18:15 UTC by one day | **Fixed** — naive timestamps are treated as UTC and always converted |
-| R-B | `exchange` is free text and `MdRegisterBody.exchange` defaults to `"XNAS"`, so a mis-registered NEPSE dataset falls into Western weekend rules | **Recorded, not fixed** — outside the migration's file set; see `LIMITATIONS.md` |
+| R-B | `exchange` was free text and `MdRegisterBody.exchange` defaulted to `"XNAS"` | **Resolved by MD-1.1** — generic omissions are venue-neutral and contradictions fail closed; see `docs/trading/md-1-1/` |
 
 Six regression tests were added for the three fixes, written before each fix.
 The review reported **NONE** for historical-import relabelling, quote

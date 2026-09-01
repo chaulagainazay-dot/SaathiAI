@@ -16,6 +16,7 @@ from saathi.platform.market_data.fixtures import FixtureProvider, DATASETS, fixt
 from saathi.platform.market_data.store import MarketDataStore
 from saathi.platform.market_data.ingest import IngestionService, IngestionReport
 from saathi.platform.market_data.replay import ReplayEngine, ReplayStatus, ReplayEvent
+from saathi.platform.market_data.identity import IdentityValidationError, MarketIdentity, resolve_market_identity
 
 __all__ = [
     "Timeframe", "TIMEFRAME_SECONDS", "MarketDataQuality", "QualityFinding",
@@ -27,4 +28,5 @@ __all__ = [
     "FixtureProvider", "DATASETS", "fixture_manifest", "dataset_hash", "build_bars", "build_quote",
     "MarketDataStore", "IngestionService", "IngestionReport",
     "ReplayEngine", "ReplayStatus", "ReplayEvent",
+    "IdentityValidationError", "MarketIdentity", "resolve_market_identity",
 ]

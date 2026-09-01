@@ -688,3 +688,11 @@ external risk.
 * Canary **eligibility** is not canary **authorization**. M39 never sets CANARY = GRANTED.
 * External token revocation remains a manual operator duty after any live exercise.
 * Production, rollout, ACTIVE, and write authority remain NOT GRANTED. Trading Guardian remains unengaged.
+## Venue-safe market-data identity (MD-1.1)
+
+* Market-data and historical registrations now preserve venue/market/instrument
+  consistency and fail closed on contradictions.
+* Omitted generic venues remain unknown rather than inheriting a US exchange;
+  NEPSE-specific imports retain NEPSE conventions and calendar semantics.
+* This is research/data-contract hardening only: no broker, live feed, order, or
+  ledger capability is added.

@@ -585,3 +585,12 @@ Product IELTSAlert work uses **PRODUCT/IELTSAlert** numbering — not platform d
   advisories whose registry remediation requires incompatible major versions;
   lint receives trusted checkout-local source only. Revisit with a coordinated
   ESLint/Next config major upgrade.
+## MD-1.1 venue identity resolution (2026-08-31)
+
+- **RESOLVED:** generic `MdRegisterBody`, dataset registration, OHLCV
+  normalization, and calendar checks no longer silently default omitted venue
+  to XNAS. Contradictions fail closed through the canonical venue identity
+  validator.
+- LOW / CARRIED: legacy models retain string `exchange`/`venue` fields and
+  explicit provider fixtures remain; broad type migration belongs to later MD
+  provider work.

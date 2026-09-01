@@ -10719,8 +10719,10 @@ class MdRegisterBody(BaseModel):
     provider: str = "local"
     source_type: str = "REPOSITORY_FIXTURE"
     source_ref: str = ""
-    market: str = "US"
-    exchange: str = "XNAS"
+    # Generic registration is deliberately venue-neutral.  Callers must supply
+    # identity or use a bounded adapter; omission must never become XNAS.
+    market: str = ""
+    exchange: str = ""
     asset_class: str = "equity"
     frequency: str = "1d"
     licence_type: str = "CC0-1.0"

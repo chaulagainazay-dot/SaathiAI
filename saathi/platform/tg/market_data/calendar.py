@@ -107,7 +107,16 @@ class CalendarEngine:
             "SELECT symbol, timestamp, asset_class FROM md_bars WHERE dataset_id=? AND dataset_version=?",
             (dataset_id, dataset_version),
         )
-        exchange = (ds or {}).get("exchange") or "XNAS"
+        exchange = str((ds or {}).get("exchange") or "").upper()
+        if exchange in ("", "UNKNOWN"):
+            return {
+                "ok": False,
+                "code": "UNKNOWN_VENUE",
+                "exchange": "UNKNOWN",
+                "asset_class": (ds or {}).get("asset_class") or "UNKNOWN",
+                "issues": [{"code": "unknown_dataset_venue"}],
+                **AUTHORITY_VALUES,
+            }
         asset_class = (ds or {}).get("asset_class") or "equity"
         cal = self.get(exchange if asset_class != "crypto" else "CRYPTO")
         issues = []

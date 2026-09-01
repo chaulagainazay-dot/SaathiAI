@@ -2258,3 +2258,12 @@ READ_ONLY, credential-free, OFF/SHADOW only.
 * **Never** accepts plaintext tokens in CLI/evidence/Git. Never grants CANARY/ACTIVE/rollout/production/write.
 * **Provider:** `github_meta` only — `GET /user`, `GET /meta`. Per-session budget ≤ 3.
 * **M40 not started.** Trading Guardian UNENGAGED.
+### MD-1.1 venue consistency (2026-08-31)
+
+* Canonical market-data identity now validates `instrument_id`, venue, market,
+  and asset class together. Generic omissions remain `UNKNOWN`; explicit NEPSE
+  identity derives `NEPSE`, and no path defaults to XNAS.
+* Historical NEPSE imports enforce NPR, Asia/Kathmandu, and the canonical
+  calendar. Explicit US/XNAS fixtures remain isolated and intentional.
+* **Authority:** identity hardening is data-only; no ledger, approval, guardian,
+  construction, risk, OMS, broker, or execution semantics changed.

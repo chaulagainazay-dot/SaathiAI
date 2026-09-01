@@ -17,6 +17,7 @@ from enum import Enum
 from typing import Any
 
 from saathi.platform.trading_models import D, AssetClass, DataQuality, MarketState  # reuse
+from saathi.platform.market_data.identity import resolve_market_identity
 
 
 # ── timeframes ────────────────────────────────────────────────────────────────
@@ -113,6 +114,14 @@ class MDInstrument:
     timezone: str = "UTC"
     market_calendar: str = "DEFAULT_24_5"
     status: str = "active"
+
+    def __post_init__(self) -> None:
+        identity = resolve_market_identity(
+            instrument_id=self.canonical_symbol,
+            venue=self.venue,
+            asset_class=self.asset_class,
+        )
+        self.venue = identity.venue
 
     def to_public(self) -> dict[str, Any]:
         return {

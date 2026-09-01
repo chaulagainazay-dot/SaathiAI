@@ -44,6 +44,7 @@ from enum import Enum
 from typing import Any, Iterable, Sequence
 
 from saathi.platform.trading_models import DataQuality
+from saathi.platform.market_data.identity import resolve_market_identity
 
 __all__ = [
     "AssetClass",
@@ -228,6 +229,13 @@ class MarketDataEvent:
     def __post_init__(self) -> None:
         if not self.instrument_id:
             raise ValueError("instrument_id is required")
+        identity = resolve_market_identity(
+            instrument_id=self.instrument_id,
+            venue=self.venue,
+            asset_class=self.asset_class,
+        )
+        object.__setattr__(self, "instrument_id", identity.instrument_id)
+        object.__setattr__(self, "venue", identity.venue)
 
     def is_visible_at(self, decision_time: datetime) -> bool:
         return self.point_in_time.availability_at(decision_time) is DataAvailability.AVAILABLE

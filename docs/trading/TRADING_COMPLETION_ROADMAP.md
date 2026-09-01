@@ -166,6 +166,23 @@ Statuses: `NOT_STARTED` · `DISCOVERY` · `IMPLEMENTING` · `VALIDATING` ·
   NEPSE-LEDGER-1 may proceed as contract design over synthetic normalized
   transactions only; no ledger application is authorized.
 
+### MD-1.1 · Venue consistency & instrument identity hardening
+
+- **Status:** `CERTIFIED_WITH_LIMITATIONS` · **Dependency:** MD-1, NEPSE-TXN-1 ✓
+- Canonical venue identity validation now rejects contradictory instrument,
+  market, venue, and asset-class combinations. Generic registration and
+  normalization no longer default omitted venues to XNAS; explicit NEPSE
+  identity derives NEPSE, and unknown venues fail closed.
+- Historical NEPSE imports enforce NPR, Asia/Kathmandu, and the canonical NEPSE
+  calendar even through generic local-file paths. Explicit US/XNAS fixtures
+  remain supported and documented as intentional.
+- **Regression:** 15 MD-1.1 tests, 274 NEPSE/MD-1/historical/market-data tests,
+  and 328 authority tests passed. Existing TXN-1 semantics and source-schema
+  status remain unchanged.
+- **Evidence:** `docs/trading/md-1-1/`
+- **Next:** `NEPSE-SCHEMA-1` when genuine headers are available; otherwise
+  `NEPSE-LEDGER-1` contract design only over synthetic transactions.
+
 ### NEPSE-1 · Instrument master + portfolio file import
 
 - **Status:** `CERTIFIED_WITH_LIMITATIONS` · **Dependency:** A1 ✓

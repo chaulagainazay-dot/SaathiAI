@@ -77,6 +77,14 @@ class HistoricalImportService:
         force_fixture_class: bool = False,
         nepse_calendar: NepseCalendar | None = None,
     ) -> dict[str, Any]:
+        # An explicitly NEPSE dataset is a bounded identity contract.  Do not
+        # let historical defaults (USD, UTC, DEFAULT_24_5) leak into it when a
+        # caller uses the generic local-file adapter.
+        if str(market or "").strip().upper() == "NEPSE":
+            market = "NEPSE"
+            currency = "NPR"
+            timezone = "Asia/Kathmandu"
+            calendar_name = "NEPSE"
         path = Path(path)
         pre = self.store.disk_preflight(path.parent if path.parent.exists() else ".")
         if not pre.get("ok"):

@@ -24,17 +24,11 @@ authorize live data, orders, brokers, or production deployment.
 
 ## Added after the fresh-context review
 
-- **`exchange` is free text and the registration API defaults it to `XNAS`.**
-  `tg/market_data/quality.py` selects the NEPSE calendar on
-  `exchange == "NEPSE"`, but `MdRegisterBody.exchange` in
-  `saathi/platform/api.py` defaults to `"XNAS"` independently of `market`. A
-  NEPSE dataset registered with `market="NEPSE"` and the default `exchange`
-  is judged under generic weekend rules. Deliberately not fixed here: the
-  default lives outside the migration's file set and has other consumers.
-  The backtest path — where fills are produced — is closed by the
-  `NEPSE_INSTRUMENT_REQUIRES_NEPSE_CALENDAR` guard; the residual exposure is
-  dataset quality classification being too lenient. Full detail and the
-  intended fix are in `REVIEW_FINDINGS.md` (R-B).
+- **Resolved by MD-1.1:** generic registration no longer defaults
+  `MdRegisterBody.exchange` or dataset registration to `XNAS`. Contradictory
+  NEPSE/XNAS identity is rejected, and unknown dataset venue makes calendar
+  checks fail closed. The historical review finding remains in the archive;
+  the implementation evidence is in `docs/trading/md-1-1/`.
 
 - **`_write_default_fixture` in `tg/market_data/service.py` still generates
   Monday-Friday synthetic bars.** It is already labelled `SYNTHETIC_TEST_DATA`
