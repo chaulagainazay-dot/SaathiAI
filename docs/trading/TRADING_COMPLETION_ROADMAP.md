@@ -231,6 +231,11 @@ references, research claims, structured theses, checkpoint compatibility,
 expiry, and research-only authority boundaries are implemented. Specialist
 research and challenge workflows remain future milestones.
 
+`RESEARCH-1` **CERTIFIED_WITH_LIMITATIONS**: bounded specialist registry,
+frozen research contexts, typed specialist claims, disagreement preservation,
+and NEPSE/crypto compatibility are implemented. Challenge/debate orchestration
+is deferred to `RESEARCH-2`.
+
 ## Stage D — NEPSE live market data
 
 `D1` instrument master · `D2` market calendar · `D3` live quote adapter ·
