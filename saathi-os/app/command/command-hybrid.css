@@ -1132,3 +1132,90 @@ html.dl-reduced-root .dl-orb[data-state="LISTENING"],
   .hc-bottom-nav { display: flex; }
   .dl-tabs { display: none; }
 }
+
+/* ============================================================================
+   Command Core presence — motion derived from ONE core state.
+   MOTION REFLECTS TRUTH. MOTION NEVER CREATES TRUTH.
+   Only states this surface can actually reach are given motion. BLOCKED,
+   EXECUTING, VERIFYING, WAITING_APPROVAL and DELEGATING are unreachable here
+   (no trading-path verdict, no run context) and are deliberately unstyled
+   rather than animated for show.
+   ========================================================================= */
+.dl-orb[data-core-state="IDLE"] {
+  animation: hc-core-breathe 5.2s ease-in-out infinite;
+}
+.dl-orb[data-core-state="LISTENING"] {
+  animation: hc-core-breathe 1.6s ease-in-out infinite;
+}
+.dl-orb[data-core-state="UNDERSTANDING"] {
+  animation: hc-core-settle 2.2s ease-in-out infinite;
+}
+.dl-orb[data-core-state="THINKING"] {
+  animation: hc-core-breathe 2.6s ease-in-out infinite;
+}
+.dl-orb[data-core-state="SPEAKING"] {
+  animation: hc-core-breathe 1s ease-in-out infinite;
+}
+
+/* SUPERVISING is IDLE-derived and calm, but must not be identical to IDLE:
+   a delegated mission is genuinely live. One static ring, no progress arc. */
+/* SUPERVISING marks the presence; it must NOT own the animation, or it would
+   override whatever state is actually active (e.g. THINKING). The core state
+   keeps motion; this adds one static ring plus one live dot. */
+/* The voice-state vocabulary already owns border-color and box-shadow on the
+   orb. An orthogonal condition must not fight it for the same property, so the
+   supervising ring uses outline, which nothing else declares. */
+.dl-orb[data-core-state][data-supervising="1"] {
+  outline: 3px solid rgba(91, 159, 212, 0.22);
+  outline-offset: 2px;
+}
+.dl-orb[data-core-state][data-supervising="1"]::after {
+  content: "";
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--voice-listening, #5b9fd4);
+  border: 2px solid var(--dl-s1, #0d1520);
+}
+
+/* Degradation is orthogonal: it marks the presence, it does not replace the
+   state's motion. */
+/* Degradation is carried by the deterministic status line, which is the
+   accessible carrier and never colour-only. No border rule here: it would lose
+   to the voice vocabulary and ship as dead CSS. */
+
+@keyframes hc-core-breathe {
+  0%, 100% { transform: scale(0.97); }
+  50% { transform: scale(1.03); }
+}
+@keyframes hc-core-settle {
+  0% { transform: scale(1.02); }
+  100% { transform: scale(0.98); }
+}
+
+/* Reduced motion: state stays fully legible, motion goes away. The supervising
+   dot and the degraded border are static, so both survive. */
+html.dl-reduced-root .dl-orb[data-core-state],
+.dl-reduced .dl-orb[data-core-state],
+.dl-orb[data-reduced="1"] {
+  animation: none !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .dl-orb[data-core-state] { animation: none !important; }
+}
+
+/* Deterministic operational status. Sits under the presence, subordinate to
+   the conversation above it. */
+.hc-core-status {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--dl-muted, #8b98b4);
+  margin-top: 6px;
+  min-height: 17px;
+}
+.hc-core-status[data-tone="warn"] { color: var(--dl-warn, #d99b3d); }
+.hc-core-status[data-tone="crit"] { color: var(--dl-crit, #d9534f); }
+.hc-core-status[data-tone="ok"] { color: var(--dl-ok, #4a9d5f); }

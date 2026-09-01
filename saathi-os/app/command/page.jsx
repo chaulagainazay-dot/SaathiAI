@@ -28,6 +28,8 @@ import {
 } from "@/lib/command-motion";
 import { LoadingState, ErrorState, EmptyState, StatusBadge, Button } from "@/components/ui";
 import { useVoiceSession } from "@/components/voice/VoiceSessionProvider";
+import { useCommandCoreSnapshot } from "@/lib/useCommandCoreSnapshot";
+import { operationalStatus, presencePresentation } from "@/lib/command-core-status";
 
 function Pill({ children, tone = "default" }) {
   const cls =
@@ -524,6 +526,27 @@ export default function CommandCenterPage() {
     model?.evidence?.events,
   ]);
 
+  // ONE Command Core snapshot, above every early return so the hook order is
+  // unconditional. Presence, status and conversation all read this object; no
+  // component derives its own state machine. Guardian and execution are
+  // deliberately not supplied — this surface has no trading-path verdict, so
+  // BLOCKED and EXECUTING stay unreachable rather than faked. Microphone energy
+  // is null: the only real RMS lives behind a pull-only manager probe
+  // (docs/command-core/EVENT_PROVENANCE.md), and a synthesised waveform is not
+  // permitted.
+  const coreMissions = model?.missions?.items || [];
+  const coreSnapshot = useCommandCoreSnapshot({
+    voiceSession: voiceSession?.session,
+    missions: coreMissions,
+    system,
+    microphoneEnergy: null,
+  });
+  const corePresence = useMemo(
+    () => presencePresentation(coreSnapshot, { reducedMotion }),
+    [coreSnapshot, reducedMotion]
+  );
+  const coreStatus = useMemo(() => operationalStatus(coreSnapshot), [coreSnapshot]);
+
   if (loading && !model) {
     return (
       <div className="dl-root hc-root" data-testid="command-loading" aria-busy="true">
@@ -695,10 +718,13 @@ export default function CommandCenterPage() {
             <div
               className="dl-orb"
               data-state={voice}
+              data-core-state={corePresence.state}
+              data-degraded={corePresence.degraded ? "1" : "0"}
+              data-supervising={corePresence.supervising ? "1" : "0"}
               data-reduced={reducedMotion ? "1" : "0"}
-              data-loop={voiceMeta.loop && !reducedMotion ? "1" : "0"}
+              data-loop={corePresence.animate && voiceMeta.loop ? "1" : "0"}
               role="img"
-              aria-label={`Voice session ${voiceMeta.label}`}
+              aria-label={corePresence.label}
               data-testid="saathi-orb"
             />
             <div
@@ -709,6 +735,17 @@ export default function CommandCenterPage() {
             >
               {voiceMeta.label.toUpperCase()}
             </div>
+            {coreStatus ? (
+              <div
+                className="hc-core-status"
+                data-tone={coreStatus.tone}
+                data-testid="core-operational-status"
+                role="status"
+                aria-live={coreStatus.live ? "polite" : "off"}
+              >
+                {coreStatus.text}
+              </div>
+            ) : null}
             <div className="dl-yeti" data-testid="yeti-state">
               Mr. Yeti · {yeti}
             </div>
