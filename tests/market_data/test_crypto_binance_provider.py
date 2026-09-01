@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 from decimal import Decimal
-from saathi.platform.crypto.binance import BinancePublicProvider, SequenceTracker, BoundedStreamController, MarketDataSupervisor, StreamState, OrderBookSynchronizer
+from saathi.platform.crypto.binance import BinancePublicProvider, SequenceTracker, BoundedStreamController, MarketDataSupervisor, StreamState, OrderBookSynchronizer, BinanceWebSocketTransport
 from saathi.platform.market_data.models import Timeframe, MarketDataQuality
 
 UTC=timezone.utc
@@ -53,3 +53,16 @@ def test_supervisor_capture_is_bounded_and_deterministic():
     s = MarketDataSupervisor(max_capture=2)
     s.capture({"u": 1}); s.capture({"u": 2}); s.capture({"u": 3})
     assert s.capture_overflow == 1 and [x["u"] for x in s.captured] == [2,3]
+
+def test_websocket_transport_allowlists_host_and_subscribes():
+    class Fake:
+        def __init__(self): self.sent=[]; self.closed=False
+        def send(self, x): self.sent.append(x)
+        def recv(self): return '{"e":"trade","s":"BTCUSDT"}'
+        def close(self): self.closed=True
+    fake=Fake(); t=BinanceWebSocketTransport(ws_factory=lambda url, **kw: fake)
+    assert t.connect() is fake
+    t.subscribe(["btcusdt@trade"])
+    assert 'btcusdt@trade' in fake.sent[0]
+    assert t.recv_json()["s"] == "BTCUSDT"
+    t.close(); assert fake.closed

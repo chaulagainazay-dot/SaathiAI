@@ -6,6 +6,7 @@ from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 from collections import deque
 from enum import Enum
+import json
 from saathi.platform.market_data.models import MDInstrument, MDQuote, MDBar, Timeframe, MarketDataQuality
 from saathi.platform.market_data.provider import MarketDataProvider, ProviderResult, ProviderStatus, MarketClock
 from saathi.platform.trading_models import AssetClass, MarketState
@@ -89,6 +90,29 @@ class OrderBookSynchronizer:
             if bids and asks and Decimal(bids[0][0])>Decimal(asks[0][0]): return False
             return len(bids)<=self.max_depth and len(asks)<=self.max_depth
         except Exception: return False
+
+class BinanceWebSocketTransport:
+    """Small injectable wrapper around Binance's public raw stream endpoint."""
+    URL = "wss://stream.binance.com:9443/ws"
+    def __init__(self, ws_factory=None, max_frame_bytes=1_000_000):
+        self.ws_factory = ws_factory or __import__('websocket').create_connection
+        self.max_frame_bytes=max_frame_bytes; self.ws=None
+    def connect(self):
+        self.ws=self.ws_factory(self.URL, timeout=10, enable_multithread=True); return self.ws
+    def subscribe(self, streams):
+        if not self.ws: raise RuntimeError("not connected")
+        if not streams or len(streams)>4: raise ValueError("bounded stream subscription required")
+        self.ws.send(json.dumps({"method":"SUBSCRIBE","params":list(streams),"id":1}))
+    def recv_json(self):
+        if not self.ws: raise RuntimeError("not connected")
+        raw=self.ws.recv()
+        if isinstance(raw, bytes):
+            if len(raw)>self.max_frame_bytes: raise ValueError("frame too large")
+            raw=raw.decode("utf-8")
+        if not isinstance(raw,str) or len(raw.encode())>self.max_frame_bytes: raise ValueError("frame too large")
+        return json.loads(raw)
+    def close(self):
+        if self.ws: self.ws.close(); self.ws=None
 
 class BinancePublicProvider(MarketDataProvider):
     name="binance_public_spot"
