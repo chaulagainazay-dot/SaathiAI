@@ -214,8 +214,11 @@ All `NOT_STARTED`, dependent on B1.
 
 ## Stage C — Crypto live market data (spot only)
 
-`C1` reference data · `C2` REST · `C3` WebSocket — all `NOT_STARTED`, dependent on B3.
-No derivatives, no leverage, no futures. Public read-only endpoints only.
+`CRYPTO-DATA-1` **CERTIFIED_WITH_LIMITATIONS** at the current HEAD: Binance
+public spot reference/quote/bar normalization and a bounded sequence/lifecycle
+contract are available offline. No account or trading endpoints are present.
+WebSocket transport supervision, live probe, and sustained resource evidence
+remain deferred to `CRYPTO-DATA-2`. No derivatives, leverage, or futures.
 
 ## Stage D — NEPSE live market data
 
