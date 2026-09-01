@@ -252,6 +252,10 @@ Will not be started automatically under any circumstance.
 
 ## Canonical authority path (unchanged, non-negotiable)
 
+### NEPSE-LEDGER-1 (certified with limitations)
+
+Canonical NEPSE external transactions now reconcile to immutable, proposal-only records. The Fund Ledger remains sole books authority; source schemas remain unverified and no automatic application is enabled.
+
 ```
 Research / Data / Models / Agents
    ↓  Structured Research Evidence
