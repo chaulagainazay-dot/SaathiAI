@@ -71,9 +71,14 @@ export function useRunInContext({ conversationId = "", submittedRunId = "", expl
   const lastRunId = live?.last?.payload?.run_id || "";
   useEffect(() => {
     if (!lastName.startsWith(RUN_EVENT_PREFIX)) return;
-    if (lastRunId && contextRunId && lastRunId !== contextRunId) return; // another run: not ours
-    loadEvents();
-    if (!contextRunId) loadRuns();
+    // Always re-resolve which run this conversation owns. A newer run must be
+    // able to replace an older, finished one; refreshing only when there was no
+    // context left the centre pinned to a completed run. The server does the
+    // conversation filtering, so an unrelated run's event costs one cheap
+    // re-read and can never change the selection.
+    loadRuns();
+    // Only fetch events when they belong to the run we are responsible for.
+    if (!lastRunId || !contextRunId || lastRunId === contextRunId) loadEvents();
   }, [lastName, lastRunId, contextRunId, loadEvents, loadRuns]);
 
   // Second gate: even if the API returned something stray, only this run's

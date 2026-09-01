@@ -135,3 +135,12 @@ test("a contextual run reports no progress the server never sent", () => {
   assert.equal(snap.missionLiveness[0].kind, "UNKNOWN");
   assert.equal(snap.missionLiveness[0].percent, null);
 });
+
+test("a newer run replaces a finished one on the same conversation", () => {
+  const finished = { id: "old", conversation_id: CID, state: "completed", created_at: 100 };
+  const live = { id: "new", conversation_id: CID, state: "running", created_at: 200 };
+  const ctx = selectContextualRun({ conversationId: CID, conversationRuns: [finished, live] });
+  assert.equal(ctx.runId, "new", "the centre must not stay pinned to a completed run");
+  assert.equal(isRunActive(finished), false);
+  assert.equal(isRunActive(live), true);
+});

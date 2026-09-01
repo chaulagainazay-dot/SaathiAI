@@ -142,7 +142,7 @@ test("every state this surface can resolve to has a motion rule in the styleshee
     new URL("../app/command/command-hybrid.css", import.meta.url), "utf8");
   // States the /command surface can actually reach: no trading verdict is
   // supplied there, so BLOCKED/EXECUTING/VERIFYING/WAITING_APPROVAL stay out.
-  for (const state of ["IDLE", "LISTENING", "UNDERSTANDING", "THINKING", "SPEAKING", "DEGRADED"]) {
+  for (const state of ["IDLE", "LISTENING", "UNDERSTANDING", "THINKING", "SPEAKING", "SUPERVISING", "DEGRADED"]) {
     assert.ok(
       css.includes(`.dl-orb[data-core-state="${state}"]`),
       `${state} is reachable and must not render frozen`

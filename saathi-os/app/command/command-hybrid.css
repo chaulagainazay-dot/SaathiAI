@@ -1156,6 +1156,13 @@ html.dl-reduced-root .dl-orb[data-state="LISTENING"],
 .dl-orb[data-core-state="SPEAKING"] {
   animation: hc-core-breathe 1s ease-in-out infinite;
 }
+/* SUPERVISING is reachable whenever a contextual run is live. It is
+   IDLE-derived by design — calm, not busy — but it must still breathe, or a
+   delegated run reads as a frozen presence. The distinguishing signals are the
+   static ring and dot below, not extra motion. */
+.dl-orb[data-core-state="SUPERVISING"] {
+  animation: hc-core-breathe 5.2s ease-in-out infinite;
+}
 /* DEGRADED is reachable in production (real backend reports reduced provider
    capability). Without motion the presence reads as frozen rather than present
    but reduced, so it gets the restrained irregular pulse from the motion
