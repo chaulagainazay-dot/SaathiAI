@@ -19,6 +19,7 @@ from saathi.agent_runtime.models import (
 from saathi.agent_runtime import policy as pol
 from saathi.agent_runtime.store import RunStore
 from saathi.agent_runtime.strategies import STRATEGIES, choose_strategy
+from saathi.agent_runtime.test_hold import configured_hold_ms, hold_for_test
 
 
 def _tid() -> str:
@@ -287,6 +288,16 @@ class Orchestrator:
         self.store.update_task(task.task_id, status="running")
         arid = self.store.add_agent_run(rid, task.agent, task.task_id)
         self.store.event(rid, "task.started", {"task": task.task_id, "agent": task.agent})
+
+        # Certification fixture only. Returns immediately unless
+        # SAATHI_TEST_RUN_HOLD_MS is set AND this run requested the test_hold
+        # strategy, so production timing is untouched.
+        if configured_hold_ms() > 0:
+            hold_for_test(
+                run_id=rid,
+                strategy=str((self.store.get_run(rid) or {}).get("strategy") or ""),
+                store=self.store,
+            )
 
         # Layer 10: scoped memory retrieval (never widens beyond task scope)
         context = self._retrieve_scoped(rid, task, defn)

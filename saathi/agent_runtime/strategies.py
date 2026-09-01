@@ -13,6 +13,10 @@ STRATEGIES: dict[str, list[str]] = {
     "document": ["researcher", "writer", "reviewer"],
     "business": ["ceo", "researcher", "planner"],
     "broad_research": ["planner", "researcher", "researcher", "writer"],  # fan-out
+    # Certification fixture (Phase 5F). Reachable ONLY by an explicit
+    # `requested` strategy AND with SAATHI_TEST_RUN_HOLD_MS set; the
+    # objective heuristics below never return it.
+    "test_hold": ["planner"],
 }
 
 
