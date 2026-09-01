@@ -29,9 +29,14 @@ export function formatMissionEta(seconds) {
 
 export function normalizeMissionRuntimeSummary(raw) {
   if (!raw || typeof raw !== "object" || !raw.mission_id) return null;
-  const progress = Math.max(0, Math.min(100, number(raw.progress_percent)));
+  // Progress is server truth or nothing. An omitted progress_percent must not
+  // render as a real 0% — absence and a reported zero are different facts.
+  const reportedProgress = Number(raw.progress_percent);
+  const progressReported = Number.isFinite(reportedProgress);
+  const progress = progressReported ? Math.max(0, Math.min(100, reportedProgress)) : null;
   return {
     missionId: String(raw.mission_id),
+    progressReported,
     health: String(raw.health || "IDLE"),
     signal: missionRuntimeSignal(raw.health),
     state: String(raw.state || "UNKNOWN"),
