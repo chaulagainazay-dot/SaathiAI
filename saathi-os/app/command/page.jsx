@@ -32,6 +32,8 @@ import { useCommandCoreSnapshot } from "@/lib/useCommandCoreSnapshot";
 import { operationalStatus, presencePresentation } from "@/lib/command-core-status";
 import { useRunInContext } from "@/lib/useRunInContext";
 import { commandConversationId } from "@/lib/command-conversation";
+import { useAgentOrchestration } from "@/lib/useAgentOrchestration";
+import WhoIsWorking from "@/components/command/WhoIsWorking";
 
 function Pill({ children, tone = "default" }) {
   const cls =
@@ -547,6 +549,11 @@ export default function CommandCenterPage() {
   // Background runs elsewhere in SaathiOS never reach this snapshot.
   const { runId: contextRunId, runEvents } = useRunInContext({ conversationId });
 
+  // Phase 6: the orchestration surface around the conversation. It observes
+  // background work too, but the centre above still follows only the
+  // contextual run — Phase 5's contract is untouched.
+  const orchestration = useAgentOrchestration({ conversationId, contextRunId, contextEvents: runEvents });
+
   const coreMissions = model?.missions?.items || [];
   const coreSnapshot = useCommandCoreSnapshot({
     voiceSession: voiceSession?.session,
@@ -790,6 +797,8 @@ export default function CommandCenterPage() {
             </button>
           </div>
         </section>
+
+        <WhoIsWorking model={orchestration} />
 
         <section
           className={`dl-panel dl-area-sys ${focus === "risk" ? "dl-focus" : ""} ${riskFlash ? "hc-risk-flash" : ""}`}
