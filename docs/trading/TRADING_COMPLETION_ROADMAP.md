@@ -226,6 +226,11 @@ liveness, bounded reconnect, snapshot/sequence safety and bounded capture are
 available offline. Wire WebSocket runtime, persistent replay capture and live
 resource validation remain deferred.
 
+`TA-1` **CERTIFIED_WITH_LIMITATIONS**: typed point-in-time evidence
+references, research claims, structured theses, checkpoint compatibility,
+expiry, and research-only authority boundaries are implemented. Specialist
+research and challenge workflows remain future milestones.
+
 ## Stage D — NEPSE live market data
 
 `D1` instrument master · `D2` market calendar · `D3` live quote adapter ·
