@@ -1,0 +1,1 @@
+{"milestone":"CRYPTO-DATA-2","verdict":"CRYPTO_MARKET_DATA_SUPERVISION_CERTIFIED_WITH_LIMITATIONS","focused_tests":6,"authority":"read_only_market_data","limitations":["wire_websocket_transport","live_probe_dns","persistent_replay_capture","sustained_resource_measurement"]}

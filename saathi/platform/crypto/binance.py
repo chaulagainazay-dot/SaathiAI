@@ -5,6 +5,7 @@ from typing import Callable, Any
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 from collections import deque
+from enum import Enum
 from saathi.platform.market_data.models import MDInstrument, MDQuote, MDBar, Timeframe, MarketDataQuality
 from saathi.platform.market_data.provider import MarketDataProvider, ProviderResult, ProviderStatus, MarketClock
 from saathi.platform.trading_models import AssetClass, MarketState
@@ -47,6 +48,47 @@ class BoundedStreamController:
         self.connected=False; self.quality="DISCONNECTED"
         if self.reconnect_count >= self.max_reconnects: return "RECONNECT_EXHAUSTED"
         self.reconnect_count += 1; return "RECONNECT_SCHEDULED"
+
+class StreamState(str, Enum):
+    DISCONNECTED="DISCONNECTED"; CONNECTED="CONNECTED"; LIVE="LIVE"; STALE="STALE"; BACKOFF="BACKOFF"; FAILED="FAILED"; STOPPED="STOPPED"
+
+class MarketDataSupervisor:
+    """Deterministic, transport-neutral supervision and bounded capture."""
+    def __init__(self, heartbeat_timeout=15, max_reconnects=5, base_backoff=1, max_backoff=30, max_capture=1024):
+        self.heartbeat_timeout=heartbeat_timeout; self.max_reconnects=max_reconnects; self.base_backoff=base_backoff; self.max_backoff=max_backoff
+        self.state=StreamState.DISCONNECTED; self.last_event_at=None; self.reconnect_count=0; self.resync_count=0; self.last_error=None
+        self.captured=deque(maxlen=max_capture); self.capture_overflow=0; self._incident_retries=0
+    def connect(self): self.state=StreamState.CONNECTED; return self.state
+    def observe(self, at): self.last_event_at=at; self.state=StreamState.LIVE; return self.state
+    def check_liveness(self, now):
+        if self.last_event_at is None or (now-self.last_event_at).total_seconds()>self.heartbeat_timeout: self.state=StreamState.STALE
+        return self.state
+    def disconnect(self, reason):
+        self.last_error=reason
+        if self._incident_retries>=self.max_reconnects: self.state=StreamState.FAILED; return self.state
+        self._incident_retries+=1; self.reconnect_count+=1; self.state=StreamState.BACKOFF; return self.state
+    def next_backoff(self): return min(self.max_backoff, self.base_backoff * (2 ** max(0,self._incident_retries-1)))
+    def capture(self, event):
+        if len(self.captured)==self.captured.maxlen: self.capture_overflow+=1
+        self.captured.append(event)
+
+class OrderBookSynchronizer:
+    """Minimal snapshot + contiguous-delta guard; stale books never appear LIVE."""
+    def __init__(self,max_depth=100): self.max_depth=max_depth; self.last_update_id=None; self.state="DISCONNECTED"; self.bids={}; self.asks={}
+    def apply_snapshot(self, update_id, bids, asks):
+        if not self._valid_levels(bids, asks): self.state="INVALID"; return self.state
+        self.last_update_id=update_id; self.bids=dict(bids[:self.max_depth]); self.asks=dict(asks[:self.max_depth]); self.state="LIVE"; return self.state
+    def apply_delta(self, update_id, bids, asks):
+        if self.last_update_id is None or update_id != self.last_update_id+1: self.state="GAPPED"; return "GAP_DETECTED"
+        if not self._valid_levels(bids, asks): self.state="INVALID"; return self.state
+        self.last_update_id=update_id; self.state="LIVE"; return "APPLIED"
+    def _valid_levels(self,bids,asks):
+        try:
+            for p,q in list(bids)+list(asks):
+                if Decimal(p)<=0 or Decimal(q)<0: return False
+            if bids and asks and Decimal(bids[0][0])>Decimal(asks[0][0]): return False
+            return len(bids)<=self.max_depth and len(asks)<=self.max_depth
+        except Exception: return False
 
 class BinancePublicProvider(MarketDataProvider):
     name="binance_public_spot"

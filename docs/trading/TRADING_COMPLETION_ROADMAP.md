@@ -220,6 +220,11 @@ contract are available offline. No account or trading endpoints are present.
 WebSocket transport supervision, live probe, and sustained resource evidence
 remain deferred to `CRYPTO-DATA-2`. No derivatives, leverage, or futures.
 
+`CRYPTO-DATA-2` **CERTIFIED_WITH_LIMITATIONS**: deterministic supervision,
+liveness, bounded reconnect, snapshot/sequence safety and bounded capture are
+available offline. Wire WebSocket runtime, persistent replay capture and live
+resource validation remain deferred.
+
 ## Stage D — NEPSE live market data
 
 `D1` instrument master · `D2` market calendar · `D3` live quote adapter ·

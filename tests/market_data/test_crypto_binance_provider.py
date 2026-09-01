@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 from decimal import Decimal
-from saathi.platform.crypto.binance import BinancePublicProvider, SequenceTracker, BoundedStreamController
+from saathi.platform.crypto.binance import BinancePublicProvider, SequenceTracker, BoundedStreamController, MarketDataSupervisor, StreamState, OrderBookSynchronizer
 from saathi.platform.market_data.models import Timeframe, MarketDataQuality
 
 UTC=timezone.utc
@@ -30,3 +30,26 @@ def test_stream_controller_bounds_queue_and_marks_gap():
     assert c.on_disconnect() == "RECONNECT_SCHEDULED"
     assert c.on_disconnect() == "RECONNECT_SCHEDULED"
     assert c.on_disconnect() == "RECONNECT_EXHAUSTED"
+
+def test_supervisor_liveness_and_bounded_backoff():
+    s = MarketDataSupervisor(heartbeat_timeout=5, max_reconnects=2, base_backoff=1, max_backoff=4)
+    assert s.connect() == StreamState.CONNECTED
+    assert s.observe(datetime(2023,11,15, tzinfo=UTC)) == StreamState.LIVE
+    assert s.check_liveness(datetime(2023,11,15,0,0,10,tzinfo=UTC)) == StreamState.STALE
+    assert s.disconnect("timeout") == StreamState.BACKOFF
+    assert s.next_backoff() == 1
+    assert s.disconnect("timeout") == StreamState.BACKOFF
+    assert s.next_backoff() == 2
+    assert s.disconnect("timeout") == StreamState.FAILED
+
+def test_order_book_snapshot_delta_requires_continuity():
+    b = OrderBookSynchronizer(max_depth=2)
+    assert b.apply_snapshot(10, [["100","2"]], [["101","1"]]) == "LIVE"
+    assert b.apply_delta(11, [["100","3"]], []) == "APPLIED"
+    assert b.apply_delta(13, [], []) == "GAP_DETECTED"
+    assert b.state == "GAPPED"
+
+def test_supervisor_capture_is_bounded_and_deterministic():
+    s = MarketDataSupervisor(max_capture=2)
+    s.capture({"u": 1}); s.capture({"u": 2}); s.capture({"u": 3})
+    assert s.capture_overflow == 1 and [x["u"] for x in s.captured] == [2,3]
