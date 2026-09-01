@@ -1156,6 +1156,13 @@ html.dl-reduced-root .dl-orb[data-state="LISTENING"],
 .dl-orb[data-core-state="SPEAKING"] {
   animation: hc-core-breathe 1s ease-in-out infinite;
 }
+/* DEGRADED is reachable in production (real backend reports reduced provider
+   capability). Without motion the presence reads as frozen rather than present
+   but reduced, so it gets the restrained irregular pulse from the motion
+   grammar — never a distress signal. */
+.dl-orb[data-core-state="DEGRADED"] {
+  animation: hc-core-irregular 3.1s linear infinite;
+}
 
 /* SUPERVISING is IDLE-derived and calm, but must not be identical to IDLE:
    a delegated mission is genuinely live. One static ring, no progress arc. */
@@ -1190,6 +1197,14 @@ html.dl-reduced-root .dl-orb[data-state="LISTENING"],
 @keyframes hc-core-breathe {
   0%, 100% { transform: scale(0.97); }
   50% { transform: scale(1.03); }
+}
+@keyframes hc-core-irregular {
+  0% { transform: scale(0.975); opacity: 0.74; }
+  14% { transform: scale(1.02); opacity: 0.9; }
+  22% { transform: scale(0.985); opacity: 0.78; }
+  55% { transform: scale(1.01); opacity: 0.86; }
+  62% { transform: scale(0.978); opacity: 0.72; }
+  100% { transform: scale(0.975); opacity: 0.74; }
 }
 @keyframes hc-core-settle {
   0% { transform: scale(1.02); }
