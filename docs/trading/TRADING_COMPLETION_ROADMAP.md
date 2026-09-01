@@ -260,6 +260,10 @@ Canonical NEPSE external transactions now reconcile to immutable, proposal-only 
 
 Research identified licensed NEPSE feed vendors as the legitimate production path. Public portals remain research/replay sources until written automation and redistribution terms are obtained.
 
+### NEPSE-HIST-1 (certified with limitations)
+
+Canonical point-in-time historical bars, dataset manifests, validation, revision metadata, and deterministic replay are available without a live NEPSE feed. Licensed historical data remains an external dependency.
+
 ```
 Research / Data / Models / Agents
    ↓  Structured Research Evidence
