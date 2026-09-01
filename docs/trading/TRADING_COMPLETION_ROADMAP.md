@@ -220,7 +220,8 @@ contract are available offline. No account or trading endpoints are present.
 WebSocket transport supervision, live probe, and sustained resource evidence
 remain deferred to `CRYPTO-DATA-2`. No derivatives, leverage, or futures.
 
-`CRYPTO-DATA-2` **CERTIFIED_WITH_LIMITATIONS**: deterministic supervision,
+`CRYPTO-DATA-2.1` **CERTIFIED_WITH_LIMITATIONS** (live probe environment
+blocked): deterministic supervision,
 liveness, bounded reconnect, snapshot/sequence safety and bounded capture are
 available offline. Wire WebSocket runtime, persistent replay capture and live
 resource validation remain deferred.
