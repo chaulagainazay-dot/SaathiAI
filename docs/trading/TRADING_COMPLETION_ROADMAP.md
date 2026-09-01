@@ -256,6 +256,10 @@ Will not be started automatically under any circumstance.
 
 Canonical NEPSE external transactions now reconcile to immutable, proposal-only records. The Fund Ledger remains sole books authority; source schemas remain unverified and no automatic application is enabled.
 
+### NEPSE-DATA-1 (qualified with license required)
+
+Research identified licensed NEPSE feed vendors as the legitimate production path. Public portals remain research/replay sources until written automation and redistribution terms are obtained.
+
 ```
 Research / Data / Models / Agents
    ↓  Structured Research Evidence
