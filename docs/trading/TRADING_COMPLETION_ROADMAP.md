@@ -236,6 +236,11 @@ frozen research contexts, typed specialist claims, disagreement preservation,
 and NEPSE/crypto compatibility are implemented. Challenge/debate orchestration
 is deferred to `RESEARCH-2`.
 
+`RESEARCH-2` **CERTIFIED_WITH_LIMITATIONS**: typed bounded challenge sessions,
+supporting/opposing cases, evidence and assumption challenges, conservative
+termination, and disagreement preservation are implemented. Decision journaling
+is the next dependency.
+
 ## Stage D — NEPSE live market data
 
 `D1` instrument master · `D2` market calendar · `D3` live quote adapter ·
