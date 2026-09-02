@@ -35,6 +35,8 @@ import { commandConversationId } from "@/lib/command-conversation";
 import { useAgentOrchestration } from "@/lib/useAgentOrchestration";
 import WhoIsWorking from "@/components/command/WhoIsWorking";
 import WhatNeedsYou from "@/components/command/WhatNeedsYou";
+import WhatIveBeenDoing from "@/components/command/WhatIveBeenDoing";
+import { useCommandHistory } from "@/lib/useCommandHistory";
 import { useCommandAttention } from "@/lib/useCommandAttention";
 
 function Pill({ children, tone = "default" }) {
@@ -580,6 +582,17 @@ export default function CommandCenterPage() {
     snapshot: coreSnapshot,
   });
 
+  // Phase 8B: terminal truth. Built from the same durable run records -- which
+  // carry state, updated_at and terminal_reason -- never from rows the other two
+  // surfaces retained, so history reflects what happened rather than what was
+  // recently on screen.
+  const history = useCommandHistory({
+    runs: orchestration.runs,
+    conversationId,
+    contextRunId,
+    contextEvents: runEvents,
+  });
+
   if (loading && !model) {
     return (
       <div className="dl-root hc-root" data-testid="command-loading" aria-busy="true">
@@ -812,6 +825,8 @@ export default function CommandCenterPage() {
         <WhatNeedsYou model={attention} />
 
         <WhoIsWorking model={orchestration} />
+
+        <WhatIveBeenDoing model={history} />
 
         <section
           className={`dl-panel dl-area-sys ${focus === "risk" ? "dl-focus" : ""} ${riskFlash ? "hc-risk-flash" : ""}`}
