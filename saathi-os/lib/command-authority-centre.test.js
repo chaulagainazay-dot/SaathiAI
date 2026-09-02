@@ -224,9 +224,13 @@ test("the hook makes one bounded read and keys on the event object", async () =>
     new URL("./useCommandAuthorityCentre.js", import.meta.url), "utf8");
   const code = src.replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm, "");
 
-  assert.equal((code.match(/afetch\(/g) || []).length, 1, "exactly one request site");
+  // Phase 11 adds a second site: one bounded read, and one mutation. Nothing
+  // per-row, and nothing that polls.
+  assert.equal((code.match(/afetch\(/g) || []).length, 2,
+    "one authority read and one approval mutation");
   assert.match(code, /agents\/authority/);
-  assert.ok(!/approvals\?|\/runs\/\$\{/.test(code), "no per-row approval fetch");
+  assert.match(code, /\/approve/);
+  assert.ok(!/approvals\?limit|per-row/.test(code), "no per-row approval fetch");
   for (const banned of ["setInterval", "setTimeout", "EventSource", "lastName"]) {
     assert.ok(!code.includes(banned), `${banned} must not drive authority`);
   }
@@ -234,13 +238,20 @@ test("the hook makes one bounded read and keys on the event object", async () =>
   assert.match(code, /\}, \[lastEvent, load\]\)/);
 });
 
-test("the panel renders no mutation control", async () => {
+test("the panel renders only the two approval decisions", async () => {
+  // Supersedes the Phase 10 rule that no control existed at all. Phase 11 adds
+  // approve and deny and nothing else: the forbidden verbs stay forbidden.
   const fs = await import("node:fs");
   const src = await fs.promises.readFile(
     new URL("../components/command/AuthorityCentre.jsx", import.meta.url), "utf8");
-  for (const tag of ["<button", "<input", "<form", "onClick", "role=\"button\""]) {
-    assert.ok(!src.includes(tag), `${tag} must not appear on a read-only authority surface`);
+
+  assert.match(src, /data-testid="ac-approve"/);
+  assert.match(src, /data-testid="ac-deny"/);
+  for (const forbidden of ["ac-retry", "ac-override", "ac-unblock", "ac-execute",
+    "Execute", "Override", "Unblock", "Continue", "Clear block"]) {
+    assert.ok(!src.includes(forbidden), `${forbidden} must not appear`);
   }
+  assert.ok(!src.includes("<form"), "no form submission path");
 });
 
 test("empty means nothing is held, not that anything is cleared", () => {
@@ -248,4 +259,140 @@ test("empty means nothing is held, not that anything is cleared", () => {
   assert.deepEqual(model.items, []);
   assert.equal(model.counts.total, 0);
   assert.equal(model.executionReadiness, null);
+});
+
+// ── Phase 11: the approval mutation contract ───────────────────────────────
+
+test("a control binds to one specific approval record", async () => {
+  const { buildAuthorityItem: b } = await import("./command-authority-centre.js");
+  const one = b(apiItem(), { conversationId: CID });
+  assert.equal(one.actionableApprovalId, "a1", "the record's own id, never an index");
+  assert.equal(one.actionSummary, "publish");
+
+  // Several pending approvals: the surface must not choose one for the owner.
+  const many = b(apiItem({ approvals: [
+    { approval_id: "a1", action: "x" }, { approval_id: "a2", action: "y" }] }),
+    { conversationId: CID });
+  assert.equal(many.actionableApprovalId, null);
+  assert.equal(many.approvalCount, 2);
+});
+
+test("nothing is actionable without a pending approval", async () => {
+  const { buildAuthorityItem: b } = await import("./command-authority-centre.js");
+  const none = b(apiItem({ approvals: [] }), { conversationId: CID });
+  assert.equal(none.actionableApprovalId, null);
+  assert.equal(none.canUserAct, false);
+});
+
+test("a blocked item is never actionable", async () => {
+  const { buildAuthorityItem: b } = await import("./command-authority-centre.js");
+  const blocked = b(apiItem({ type: "BLOCKED", state: "blocked", approvals: [] }),
+    { conversationId: CID });
+  assert.equal(blocked.canUserAct, false);
+  assert.equal(blocked.actionableApprovalId, null, "BLOCKED recovery stays out of scope");
+});
+
+test("confirmation copy is deterministic and promises no execution", async () => {
+  const { CONFIRM_COPY } = await import("./command-authority-centre.js");
+  assert.equal(CONFIRM_COPY.approve.title, "Approve this action?");
+  assert.equal(CONFIRM_COPY.approve.confirm, "Approve");
+  assert.equal(CONFIRM_COPY.deny.confirm, "Deny");
+  assert.equal(CONFIRM_COPY.approve.cancel, "Cancel");
+
+  assert.match(CONFIRM_COPY.approve.body, /does not guarantee execution/);
+  for (const copy of Object.values(CONFIRM_COPY)) {
+    for (const banned of ["execution ready", "safe to execute", "approved for execution",
+      "will execute", "executed"]) {
+      assert.ok(!copy.body.toLowerCase().includes(banned), `${banned} must not be promised`);
+    }
+  }
+});
+
+test("every mutation failure is mapped deterministically", async () => {
+  const { mutationErrorFor, MUTATION_ERROR } = await import("./command-authority-centre.js");
+  assert.equal(mutationErrorFor(401), MUTATION_ERROR[401]);
+  assert.equal(mutationErrorFor(403), MUTATION_ERROR[403]);
+  assert.equal(mutationErrorFor(404), MUTATION_ERROR[404]);
+  assert.equal(mutationErrorFor(409), MUTATION_ERROR[409]);
+  assert.equal(mutationErrorFor(410), MUTATION_ERROR[410]);
+  assert.equal(mutationErrorFor(null), MUTATION_ERROR.NETWORK);
+  assert.equal(mutationErrorFor(500), MUTATION_ERROR.SERVER);
+  // None of them claims a decision was made.
+  for (const msg of Object.values(MUTATION_ERROR)) {
+    assert.ok(!/approved|denied/i.test(msg), `"${msg}" must not imply an outcome`);
+  }
+});
+
+test("the mutation requests authority and never grants it", async () => {
+  const fs = await import("node:fs");
+  const src = await fs.promises.readFile(
+    new URL("./useCommandAuthorityCentre.js", import.meta.url), "utf8");
+  const code = src.replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm, "");
+
+  assert.match(code, /\/approve/, "it calls the existing approval route");
+  assert.match(code, /method: "POST"/);
+  assert.match(code, /approval_id: approvalId/, "bound to the approval record");
+  assert.match(code, /runs\/\$\{encodeURIComponent\(runId\)\}/, "and to its run");
+
+  // No local authority: the model is never rewritten on success.
+  for (const banned of ["setItems(items.filter", "resolutionState:", "status: \"approved\"",
+    "optimistic"]) {
+    assert.ok(!code.includes(banned), `${banned} would be optimistic authority`);
+  }
+  // Success and failure both re-read the server.
+  assert.ok((code.match(/await load\(\)/g) || []).length >= 2,
+    "authority is re-read rather than assumed");
+});
+
+test("the row does not remove itself on success", async () => {
+  const fs = await import("node:fs");
+  const src = await fs.promises.readFile(
+    new URL("../components/command/AuthorityCentre.jsx", import.meta.url), "utf8");
+  const code = src.replace(/\/\*[\s\S]*?\*\/|\{\/\*[\s\S]*?\*\/\}/g, "");
+  for (const banned of ["setResolved", "filter((r) =>", "hidden = true", "setRemoved"]) {
+    assert.ok(!code.includes(banned), "a row disappears only when the server says so");
+  }
+  // A submit in flight cannot be submitted again.
+  assert.match(code, /if \(busy\) return;/);
+  assert.match(code, /disabled=\{busy\}/);
+});
+
+test("the confirmation is a real dialog", async () => {
+  const fs = await import("node:fs");
+  const src = await fs.promises.readFile(
+    new URL("../components/command/AuthorityCentre.jsx", import.meta.url), "utf8");
+  assert.match(src, /role="dialog"/);
+  assert.match(src, /aria-modal="true"/);
+  assert.match(src, /aria-labelledby=/);
+  assert.match(src, /confirmRef\.current\?\.focus\(\)/, "focus moves into the dialog");
+  assert.match(src, /e\.key === "Escape"/, "Escape cancels");
+  assert.match(src, /role="alert"/, "errors are announced");
+  // Buttons are named, never icon-only.
+  assert.match(src, /copy\.confirm/);
+  assert.match(src, /\{copy\.cancel\}/);
+});
+
+test("no execution-readiness claim survives anywhere on the surface", async () => {
+  const fs = await import("node:fs");
+  for (const rel of ["../components/command/AuthorityCentre.jsx",
+    "./command-authority-centre.js", "./useCommandAuthorityCentre.js"]) {
+    const src = await fs.promises.readFile(new URL(rel, import.meta.url), "utf8");
+    const code = src.replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm, "");
+    for (const banned of ["EXECUTION READY", "Approved for execution", "Safe to execute"]) {
+      assert.ok(!code.includes(banned), `${banned} must never be shown (${rel})`);
+    }
+  }
+});
+
+test("the dialog's buttons are styled by the component that renders them", async () => {
+  // Regression of a known class: styled-jsx only scopes markup rendered by the
+  // component declaring the block, so button rules living in AuthorityRow never
+  // reached the confirmation's buttons and they rendered as bare 23px text.
+  const fs = await import("node:fs");
+  const src = await fs.promises.readFile(
+    new URL("../components/command/AuthorityCentre.jsx", import.meta.url), "utf8");
+  const dialog = src.slice(src.indexOf("function ConfirmDialog"), src.indexOf("function AuthorityRow"));
+  assert.match(dialog, /<style jsx>/, "the dialog declares its own block");
+  assert.match(dialog, /\.ac-btn\s*\{[^}]*min-height:\s*36px/s,
+    "its buttons need a real touch target");
 });

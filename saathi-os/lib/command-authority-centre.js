@@ -107,6 +107,15 @@ export function buildAuthorityItem(apiItem, { conversationId = "" } = {}) {
     approvalIds: approvals.map((a) => str(a?.approval_id)).filter(Boolean),
     approvalCount: approvals.length,
     /**
+     * The approval a control binds to. Explicitly the record's own id -- never a
+     * row index, the objective, or "the current approval" -- and null unless
+     * exactly one is pending, because a control that silently resolved one of
+     * several would be deciding which on the owner's behalf.
+     */
+    actionableApprovalId: approvals.length === 1 ? str(approvals[0]?.approval_id) || null : null,
+    /** The action text the backend recorded, for the confirmation to quote. */
+    actionSummary: approvals.length === 1 ? str(approvals[0]?.action) || null : null,
+    /**
      * Whether a decision exists for the owner to make. It is NOT permission:
      * the approval route performs its own authorisation, and this surface
      * renders no control either way.
@@ -178,4 +187,51 @@ export function shouldRefreshAuthority(eventName) {
   const name = String(eventName || "");
   if (!name.startsWith(RUN_EVENT_PREFIX)) return false;
   return AUTHORITY_INVALIDATING_EVENTS.includes(name.slice(RUN_EVENT_PREFIX.length));
+}
+
+
+/**
+ * Deterministic confirmation copy.
+ *
+ * Written here rather than generated, and deliberately explicit that approval is
+ * one authority step: it lets the run continue, and says nothing about whether
+ * anything will execute, because later checks still apply and this surface has
+ * no way to know their outcome.
+ */
+export const CONFIRM_COPY = Object.freeze({
+  approve: {
+    title: "Approve this action?",
+    body: "Approval allows the run to continue. It does not guarantee execution; later authority checks still apply.",
+    confirm: "Approve",
+    cancel: "Cancel",
+  },
+  deny: {
+    title: "Deny this action?",
+    body: "Denial refuses this approval. The run will not carry out this action.",
+    confirm: "Deny",
+    cancel: "Cancel",
+  },
+});
+
+/**
+ * What the owner is told when a mutation does not succeed.
+ *
+ * Mapped from the route's real responses. Every one of them leaves authority
+ * exactly as it was: the surface never treats a failed request as a decision.
+ */
+export const MUTATION_ERROR = Object.freeze({
+  401: "Your session has expired. Sign in and try again.",
+  403: "You are not authorised to decide this approval.",
+  404: "This approval no longer exists.",
+  409: "This approval was already decided.",
+  410: "This approval has expired.",
+  NETWORK: "The request did not reach the server. Nothing was decided.",
+  SERVER: "The server could not complete this. Nothing was decided.",
+});
+
+export function mutationErrorFor(status) {
+  if (status === 401 || status === 403 || status === 404
+      || status === 409 || status === 410) return MUTATION_ERROR[status];
+  if (status == null) return MUTATION_ERROR.NETWORK;
+  return MUTATION_ERROR.SERVER;
 }

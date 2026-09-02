@@ -18,6 +18,7 @@ import { API_BASE, afetch } from "./api";
 import { useLive } from "@/components/live/LiveProvider";
 import {
   buildAuthorityCentre, shouldRefreshAuthority, AUTHORITY_INVALIDATING_EVENTS,
+  mutationErrorFor,
 } from "./command-authority-centre.js";
 
 export { shouldRefreshAuthority, AUTHORITY_INVALIDATING_EVENTS };
@@ -50,8 +51,52 @@ export function useCommandAuthorityCentre({ conversationId = "", limit = 20 } = 
     load();
   }, [lastEvent, load]);
 
-  return useMemo(
+  /**
+   * Ask the server to resolve one approval.
+   *
+   * A request, never a grant. Nothing about the item changes here: no row is
+   * removed, no status is rewritten, and the model is not touched on success.
+   * The surface learns the outcome the same way it learns everything else --
+   * by re-reading authority truth. On failure the item stays exactly as it was,
+   * because a request that did not succeed decided nothing.
+   *
+   * Binds to the approval's own id and the run that owns it; the server checks
+   * that pairing again and refuses if it does not hold.
+   */
+  const resolveApproval = useCallback(async ({ runId, approvalId, approved }) => {
+    if (!runId || !approvalId) {
+      return { ok: false, error: mutationErrorFor(404) };
+    }
+    try {
+      const r = await afetch(
+        `${API_BASE}/api/v1/agents/runs/${encodeURIComponent(runId)}/approve`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ approval_id: approvalId, approved: Boolean(approved) }),
+        });
+
+      if (!r.ok) {
+        // Re-read regardless: a 404 or a conflict usually means the decision was
+        // already made elsewhere, and the panel should show that rather than a
+        // row the server no longer recognises.
+        await load();
+        return { ok: false, status: r.status, error: mutationErrorFor(r.status) };
+      }
+
+      const body = await r.json().catch(() => ({}));
+      // Authority becomes visible only once the read model reflects the server.
+      await load();
+      return { ok: true, status: body?.status || null };
+    } catch {
+      return { ok: false, status: null, error: mutationErrorFor(null) };
+    }
+  }, [load]);
+
+  const model = useMemo(
     () => buildAuthorityCentre({ items, conversationId }),
     [items, conversationId]
   );
+
+  return useMemo(() => ({ ...model, resolveApproval }), [model, resolveApproval]);
 }
