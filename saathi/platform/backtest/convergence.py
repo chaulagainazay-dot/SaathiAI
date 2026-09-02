@@ -5,7 +5,9 @@ from decimal import Decimal
 @dataclass(frozen=True)
 class MarketObservation: instrument_id:str; as_of:datetime; available_at:datetime; price:Decimal
 @dataclass
-class BacktestResult: status:str; signals:list=field(default_factory=list); fills:list=field(default_factory=list); limitations:list=field(default_factory=list)
+class BacktestResult:
+ status:str; signals:list=field(default_factory=list); fills:list=field(default_factory=list); limitations:list=field(default_factory=list)
+ strategy_id:str=''; strategy_version:str=''; dataset_id:str=''; dataset_version:str=''; data_mode:str=''
 @dataclass(frozen=True)
 class SimFill: instrument_id:str; price:Decimal
 class CanonicalBacktest:
@@ -20,4 +22,6 @@ class CanonicalBacktest:
    if d in {'LONG_BIAS','REDUCE_BIAS','EXIT_BIAS'}:
     signals.append((o.instrument_id,d,o.as_of));
     if i+1<len(obs): fills.append(SimFill(o.instrument_id,obs[i+1].price))
-  return BacktestResult('RESEARCH_ONLY',signals,fills,['COST_MODEL_LIMITED'] if self.commission_bps==0 else [])
+  return BacktestResult('RESEARCH_ONLY',signals,fills,['COST_MODEL_LIMITED'] if self.commission_bps==0 else [],self.strategy_id,self.strategy_version,self.dataset_id,self.dataset_version,self.mode)
+def lessons_visible_at(lessons, decision_time):
+ return [l for l in lessons if l.available_at<=decision_time]

@@ -11,3 +11,9 @@ def test_future_observation_rejected_and_mode_bounded():
  with pytest.raises(ValueError): CanonicalBacktest('s','1','d','v1','LIVE')
  ev=[MarketObservation('X',T,T+timedelta(days=1),Decimal('1'))]
  assert CanonicalBacktest('s','1','d','v1','HISTORICAL').run(ev,lambda x:'LONG_BIAS').signals==[]
+
+def test_result_preserves_strategy_dataset_mode_and_future_lessons():
+ ev=[MarketObservation('X',T,T,Decimal('1')),MarketObservation('X',T+timedelta(1),T+timedelta(1),Decimal('2'))]
+ r=CanonicalBacktest('strat','v2','ds','dv','SYNTHETIC').run(ev,lambda x:'NO_SIGNAL')
+ assert (r.strategy_id,r.strategy_version,r.dataset_id,r.dataset_version,r.data_mode)==('strat','v2','ds','dv','SYNTHETIC')
+ assert lessons_visible_at([type('L',(),{'available_at':T+timedelta(1)})()],T)==[]
