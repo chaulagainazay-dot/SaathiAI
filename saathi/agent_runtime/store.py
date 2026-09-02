@@ -14,7 +14,7 @@ import uuid
 from pathlib import Path
 from typing import Optional
 
-from saathi.agent_runtime.models import RunState, validate_transition
+from saathi.agent_runtime.models import _TERMINAL, RunState, validate_transition
 
 ROOT = Path(__file__).resolve().parent.parent.parent
 DB_PATH = ROOT / "data" / "agent_runtime.db"
@@ -244,6 +244,74 @@ class RunStore:
         with self._conn() as c:
             c.execute("UPDATE orchestration_run SET final_outcome=?, updated_at=? "
                       "WHERE id=?", (json.dumps(outcome), _now(), rid))
+
+    # ── historical truth (M-Phase9) ───────────────────────────────────────
+    #
+    # `list_runs` answers "the newest runs of any kind"; history needs "the
+    # runs that actually ended, newest-ended first". Filtering a generic newest-N
+    # window down to terminal rows lets a burst of short-lived runs push real
+    # history out of the window entirely, so the terminal filter has to be part
+    # of the query rather than applied afterwards.
+
+    def terminal_history(self, *, limit: int = 20, before: float | None = None,
+                         conversation_id: str | None = None,
+                         exclude_strategies: tuple[str, ...] = (),
+                         ) -> tuple[list[dict], bool]:
+        """Terminal runs, most-recently-ended first, with a bounded read.
+
+        Returns ``(rows, has_more)``. Ordering is by ``updated_at`` -- the stamp
+        the state transition wrote, so for a terminal run it is when it ended.
+        ``id`` is a secondary key purely so equal timestamps paginate and render
+        in a stable order; it asserts no additional temporal truth.
+        """
+        terminal = tuple(sorted(s.value for s in _TERMINAL))
+        where = [f"state IN ({','.join('?' * len(terminal))})"]
+        args: list = list(terminal)
+
+        if exclude_strategies:
+            where.append(f"strategy NOT IN ({','.join('?' * len(exclude_strategies))})")
+            args.extend(exclude_strategies)
+        if conversation_id:
+            where.append("conversation_id=?")
+            args.append(conversation_id)
+        if before is not None:
+            where.append("updated_at < ?")
+            args.append(before)
+
+        # One extra row answers has_more without a second COUNT query.
+        args.append(max(1, int(limit)) + 1)
+        with self._conn() as c:
+            rows = [dict(r) for r in c.execute(
+                "SELECT id,objective,strategy,state,actor,conversation_id,"
+                "created_at,updated_at,terminal_reason "
+                f"FROM orchestration_run WHERE {' AND '.join(where)} "
+                "ORDER BY updated_at DESC, id DESC LIMIT ?",
+                args).fetchall()]
+
+        has_more = len(rows) > limit
+        return rows[:limit], has_more
+
+    def verification_summary(self, run_ids: list[str]) -> dict[str, dict]:
+        """Passed/failed counts per run, in one query rather than one per row.
+
+        Reads the durable ``verification`` table, never a run's terminal state:
+        how a run ended says nothing about whether anything was verified.
+        """
+        ids = [str(r) for r in run_ids if r]
+        if not ids:
+            return {}
+        out: dict[str, dict] = {}
+        with self._conn() as c:
+            for row in c.execute(
+                "SELECT run_id, "
+                "SUM(CASE WHEN passed=1 THEN 1 ELSE 0 END) AS passed_count, "
+                "SUM(CASE WHEN passed=0 THEN 1 ELSE 0 END) AS failed_count "
+                f"FROM verification WHERE run_id IN ({','.join('?' * len(ids))}) "
+                "GROUP BY run_id", ids
+            ):
+                out[row["run_id"]] = {"passed": int(row["passed_count"] or 0),
+                                      "failed": int(row["failed_count"] or 0)}
+        return out
 
     def list_runs(self, *, limit: int = 50, conversation_id: str | None = None) -> list[dict]:
         where, args = "", []

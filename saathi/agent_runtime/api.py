@@ -6,6 +6,9 @@ user, so an agent process cannot resolve its own approval through this API.
 from __future__ import annotations
 
 from fastapi import APIRouter
+
+from saathi.agent_runtime.test_fail import TEST_FAIL_STRATEGY
+from saathi.agent_runtime.test_hold import TEST_HOLD_STRATEGY
 from pydantic import BaseModel
 
 from saathi.agent_runtime import registry
@@ -75,6 +78,81 @@ def create_run(req: CreateRun):
 @router.post("/runs/{rid}/execute")
 def execute(rid: str, max_wall_sec: float = 60.0):
     return default_orchestrator().run(rid, max_wall_sec=max_wall_sec)
+
+
+# ── historical truth (Phase 9) ──────────────────────────────────────────────
+
+#: Certification-only strategies. Their runs are real runtime records, but they
+#: exist to exercise the system rather than to do the owner's work, so history
+#: excludes them by default. Identified by strategy, never by matching text in an
+#: objective, and taken from the fixtures' own constants so the two cannot drift.
+TEST_STRATEGIES: tuple[str, ...] = (TEST_HOLD_STRATEGY, TEST_FAIL_STRATEGY)
+
+#: Verification is its own truth. A run ending says nothing about whether
+#: anything was verified, so these are derived only from verification records.
+VERIFICATION_PASSED = "PASSED"
+VERIFICATION_FAILED = "FAILED"
+VERIFICATION_UNAVAILABLE = "UNAVAILABLE"
+
+
+def _verification_state(summary: dict | None) -> str:
+    """A failure dominates any number of passes; absence stays absence."""
+    if not summary:
+        return VERIFICATION_UNAVAILABLE
+    if summary.get("failed", 0) > 0:
+        return VERIFICATION_FAILED
+    if summary.get("passed", 0) > 0:
+        return VERIFICATION_PASSED
+    return VERIFICATION_UNAVAILABLE
+
+
+@router.get("/history")
+def history(limit: int = 20, before: float | None = None,
+            conversation_id: str | None = None,
+            include_test_strategies: bool = False):
+    """Terminal runs, newest-ended first, each with a verification summary.
+
+    Read-only. This exists because `/runs` answers a different question: it
+    returns the newest runs of any kind, so filtering it down to terminal rows
+    afterwards lets short-lived runs push real history out of the window. Here
+    the terminal filter and the fixture exclusion are part of the query.
+
+    Verification is aggregated for every returned run in a single grouped read,
+    so a page of history costs two queries regardless of how many rows it holds
+    -- never one lookup per row.
+    """
+    st = default_orchestrator().store
+    limit = max(1, min(int(limit or 20), 100))
+
+    rows, has_more = st.terminal_history(
+        limit=limit,
+        before=before,
+        conversation_id=conversation_id or None,
+        exclude_strategies=() if include_test_strategies else TEST_STRATEGIES,
+    )
+    summaries = st.verification_summary([r["id"] for r in rows])
+
+    items = []
+    for r in rows:
+        summary = summaries.get(r["id"])
+        items.append({
+            "run_id": r["id"],
+            "conversation_id": r.get("conversation_id") or "",
+            "strategy": r.get("strategy") or "",
+            "objective": r.get("objective") or "",
+            "terminal_state": r.get("state") or "",
+            "terminal_reason": r.get("terminal_reason") or "",
+            "created_at": r.get("created_at"),
+            "terminal_at": r.get("updated_at"),
+            "verification_state": _verification_state(summary),
+            "verification_passed_count": (summary or {}).get("passed", 0),
+            "verification_failed_count": (summary or {}).get("failed", 0),
+            "is_test_strategy": (r.get("strategy") or "") in TEST_STRATEGIES,
+        })
+
+    # A cursor the caller can hand back as `before` to read older history.
+    next_before = items[-1]["terminal_at"] if items and has_more else None
+    return {"items": items, "has_more": has_more, "next_before": next_before}
 
 
 @router.get("/runs")
