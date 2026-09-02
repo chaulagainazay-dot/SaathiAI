@@ -241,6 +241,11 @@ supporting/opposing cases, evidence and assumption challenges, conservative
 termination, and disagreement preservation are implemented. Decision journaling
 is the next dependency.
 
+`RESEARCH-3` **CERTIFIED_WITH_LIMITATIONS**: auditable decision records,
+outcome references, benchmark-unavailable handling, scoped point-in-time
+lessons, and non-self-promotion gates are implemented. Signal contracts are
+next.
+
 ## Stage D — NEPSE live market data
 
 `D1` instrument master · `D2` market calendar · `D3` live quote adapter ·

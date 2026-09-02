@@ -7,3 +7,4 @@ from saathi.platform.research.fixtures import FIXTURES, fixture_manifest, get_fi
 from saathi.platform.research.evidence import EvidenceReference, ResearchClaim, StructuredInvestmentThesis, ResearchCheckpoint, ResearchEvidenceSnapshot, UntrustedData, EvidenceTrustClass, ClaimStatus, visible_at, validate_claim
 from saathi.platform.research.specialists import ResearchContext, SpecialistResult, ResearchBundle, SpecialistOrchestrator, SPECIALISTS
 from saathi.platform.research.challenge import ChallengeType, Resolution, ResearchChallenge, ChallengeResolution, ChallengeSession
+from saathi.platform.research.journal import InvestmentDecisionRecord, DecisionOutcome, InvestmentLesson, LessonStatus, DecisionJournal, lessons_visible, promote
