@@ -252,8 +252,15 @@ class RunStore:
             args.append(conversation_id)
         args.append(limit)
         with self._conn() as c:
+            # `updated_at` is stamped on every transition, so for a terminal run
+            # it is when it ended -- what a history surface must sort by, since
+            # created_at only says when it was queued. `terminal_reason` is the
+            # only reason the backend itself wrote; a reader that lacks it has to
+            # either fetch per-run or invent one. Read-only projection: no schema
+            # change, and existing callers simply ignore the extra keys.
             return [dict(r) for r in c.execute(
-                "SELECT id,objective,strategy,state,actor,conversation_id,created_at "
+                "SELECT id,objective,strategy,state,actor,conversation_id,"
+                "created_at,updated_at,terminal_reason "
                 f"FROM orchestration_run{where} ORDER BY created_at DESC LIMIT ?",
                 args).fetchall()]
 
