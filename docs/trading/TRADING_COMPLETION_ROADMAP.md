@@ -269,6 +269,12 @@ post-OOS canonical regression is green (7,901 passed; log
 formal multiple-testing correction remain mandatory limitations before strategy
 promotion. Next dependency: `BACKTEST-PIT-1`.
 
+`BACKTEST-PIT-1` **CERTIFIED_WITH_LIMITATIONS**: revision-aware dataset model and
+availability-cutoff resolver are implemented; focused tests and canonical
+regression are green (7,903 passed; `/tmp/saathios-backtest-pit1-final.log`).
+Crypto strategy input paths are PIT-safe; broader corporate-action/reference
+datasets remain limited. Next dependency: `STRATEGY-CRYPTO-1`.
+
 ## Stage D — NEPSE live market data
 
 `D1` instrument master · `D2` market calendar · `D3` live quote adapter ·
