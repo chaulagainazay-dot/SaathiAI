@@ -80,6 +80,92 @@ def execute(rid: str, max_wall_sec: float = 60.0):
     return default_orchestrator().run(rid, max_wall_sec=max_wall_sec)
 
 
+# ── authority truth (Phase 10) ──────────────────────────────────────────────
+
+#: Authority types this contract can assert. DEGRADED and FAILED are deliberately
+#: absent: a capability problem and a runtime failure are not authority refusals,
+#: and attention already owns them.
+AUTHORITY_APPROVAL_REQUIRED = "APPROVAL_REQUIRED"
+AUTHORITY_BLOCKED = "BLOCKED"
+
+#: Which system asserted the decision. Never inferred from display text.
+PROVENANCE_APPROVAL_STORE = "AUTHORITATIVE_APPROVAL_STORE"
+PROVENANCE_RUN_STATE = "AUTHORITATIVE_RUN_STATE"
+
+_AUTHORITY_BY_STATE = {
+    "awaiting_approval": AUTHORITY_APPROVAL_REQUIRED,
+    "blocked": AUTHORITY_BLOCKED,
+}
+
+#: Deterministic wording. The system speaks for itself here; no model text.
+_AUTHORITY_REASON = {
+    AUTHORITY_APPROVAL_REQUIRED: "This action is waiting for your approval.",
+    AUTHORITY_BLOCKED: "This action cannot proceed under the current authority state.",
+}
+
+
+@router.get("/authority")
+def authority(limit: int = 20, conversation_id: str | None = None):
+    """Runs currently held by an authority decision, with their approvals.
+
+    Read-only, and deliberately narrow: only a run waiting for the owner and a
+    run the system has stopped. Approvals for every returned run are fetched in
+    one grouped query, so a page costs two reads however many rows it holds.
+
+    Nothing here grants, clears or resolves authority. `can_user_act` reports
+    whether a decision is *available* to the owner, which is not the same as the
+    caller being permitted to make it -- that remains the approval route's own
+    check.
+    """
+    st = default_orchestrator().store
+    limit = max(1, min(int(limit or 20), 100))
+
+    runs = st.authority_runs(limit=limit, conversation_id=conversation_id or None)
+    approvals = st.pending_approvals_for_runs([r["id"] for r in runs])
+
+    items = []
+    for r in runs:
+        state = (r.get("state") or "").lower()
+        kind = _AUTHORITY_BY_STATE.get(state)
+        if not kind:
+            continue
+        pending = approvals.get(r["id"], [])
+
+        if kind == AUTHORITY_APPROVAL_REQUIRED:
+            # An approval-held run without an approval record is a contradiction;
+            # fail closed by reporting the run state rather than inventing one.
+            provenance = (PROVENANCE_APPROVAL_STORE if pending
+                          else PROVENANCE_RUN_STATE)
+        else:
+            provenance = PROVENANCE_RUN_STATE
+
+        items.append({
+            "id": f"{kind}:{r['id']}",
+            "type": kind,
+            "run_id": r["id"],
+            "conversation_id": r.get("conversation_id") or "",
+            "objective": r.get("objective") or "",
+            "strategy": r.get("strategy") or "",
+            "state": state,
+            "reason": _AUTHORITY_REASON[kind],
+            # The backend's own code for why a run was stopped, when it wrote one.
+            "detail_code": r.get("last_error_code") or r.get("terminal_reason") or "",
+            "created_at": r.get("created_at"),
+            "updated_at": r.get("updated_at"),
+            "resolution_state": "UNRESOLVED",
+            "provenance": provenance,
+            # Identifiers only. No approval token, no credential, no agent text.
+            "approvals": [{"approval_id": a["id"], "agent": a.get("agent") or "",
+                           "action": a.get("action") or "", "risk": a.get("risk"),
+                           "expires_at": a.get("expires_at")}
+                          for a in pending],
+            "can_user_act": kind == AUTHORITY_APPROVAL_REQUIRED and bool(pending),
+            "read_only": True,
+        })
+
+    return {"items": items, "count": len(items)}
+
+
 # ── historical truth (Phase 9) ──────────────────────────────────────────────
 
 #: Certification-only strategies. Their runs are real runtime records, but they

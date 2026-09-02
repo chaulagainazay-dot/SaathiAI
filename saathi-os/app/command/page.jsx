@@ -36,6 +36,8 @@ import { useAgentOrchestration } from "@/lib/useAgentOrchestration";
 import WhoIsWorking from "@/components/command/WhoIsWorking";
 import WhatNeedsYou from "@/components/command/WhatNeedsYou";
 import WhatIveBeenDoing from "@/components/command/WhatIveBeenDoing";
+import AuthorityCentre from "@/components/command/AuthorityCentre";
+import { useCommandAuthorityCentre } from "@/lib/useCommandAuthorityCentre";
 import { useCommandHistory } from "@/lib/useCommandHistory";
 import { useCommandAttention } from "@/lib/useCommandAttention";
 
@@ -591,6 +593,11 @@ export default function CommandCenterPage() {
   // fixtures, and every row carries verification rather than only the open run.
   const history = useCommandHistory({ conversationId });
 
+  // Phase 10: read-only authority truth. Runs held by an approval decision or
+  // stopped by the system, with their approvals batched -- observation only,
+  // no control that could grant, clear or resolve any of it.
+  const authority = useCommandAuthorityCentre({ conversationId });
+
   if (loading && !model) {
     return (
       <div className="dl-root hc-root" data-testid="command-loading" aria-busy="true">
@@ -819,6 +826,8 @@ export default function CommandCenterPage() {
             </button>
           </div>
         </section>
+
+        <AuthorityCentre model={authority} />
 
         <WhatNeedsYou model={attention} />
 

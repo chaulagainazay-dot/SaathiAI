@@ -291,6 +291,44 @@ class RunStore:
         has_more = len(rows) > limit
         return rows[:limit], has_more
 
+    def authority_runs(self, *, limit: int = 50,
+                       conversation_id: str | None = None) -> list[dict]:
+        """Runs currently held by an authority decision, newest change first.
+
+        Only the two states that mean authority: a run waiting for the owner, and
+        a run the system has stopped. Neither is a failure and neither is a
+        capability problem -- those belong to attention, not here.
+        """
+        states = (RunState.AWAITING_APPROVAL.value, RunState.BLOCKED.value)
+        where = [f"state IN ({','.join('?' * len(states))})"]
+        args: list = list(states)
+        if conversation_id:
+            where.append("conversation_id=?")
+            args.append(conversation_id)
+        args.append(max(1, int(limit)))
+        with self._conn() as c:
+            return [dict(r) for r in c.execute(
+                "SELECT id,objective,strategy,state,actor,conversation_id,"
+                "created_at,updated_at,terminal_reason,last_error_code "
+                f"FROM orchestration_run WHERE {' AND '.join(where)} "
+                "ORDER BY updated_at DESC, id DESC LIMIT ?",
+                args).fetchall()]
+
+    def pending_approvals_for_runs(self, run_ids: list[str]) -> dict[str, list[dict]]:
+        """Pending approvals for many runs in one query rather than one per run."""
+        ids = [str(r) for r in run_ids if r]
+        if not ids:
+            return {}
+        out: dict[str, list[dict]] = {}
+        with self._conn() as c:
+            for row in c.execute(
+                "SELECT * FROM approval_request "
+                f"WHERE run_id IN ({','.join('?' * len(ids))}) AND status='pending' "
+                "ORDER BY created_at ASC", ids
+            ):
+                out.setdefault(row["run_id"], []).append(dict(row))
+        return out
+
     def verification_summary(self, run_ids: list[str]) -> dict[str, dict]:
         """Passed/failed counts per run, in one query rather than one per row.
 
