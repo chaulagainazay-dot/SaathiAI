@@ -1666,10 +1666,20 @@ html, body {
 }
 
 @media (max-width: 820px) {
+  /* Phase 8A. Fixed, 340px of a 390px viewport and z-index 48, this dock
+     floated over the Command Core with nothing reserving its space. At narrow
+     width it joins the normal flow below the content instead, so it can no
+     longer cover anything.
+
+     This is a positioning change only. It is the same element, the same
+     component and the same voice-runtime surface -- no second dock, no second
+     control, and no change to microphone ownership. */
   .voice-output-dock {
-    right: 10px;
-    bottom: 76px;
-    width: min(340px, calc(100vw - 20px));
+    position: static;
+    right: auto;
+    bottom: auto;
+    width: auto;
+    margin: 12px 16px calc(96px + env(safe-area-inset-bottom, 0px));
   }
 }
 @media (max-width: 480px) {

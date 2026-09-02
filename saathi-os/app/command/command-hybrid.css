@@ -926,11 +926,22 @@ html.dl-reduced-root .dl-orb[data-state="LISTENING"],
 }
 
 /* Mobile: Saathi-first stack */
-@media (max-width: 900px) {
+/* Phase 8A: the stack begins at 1180px, not 900px.
+   The three-column layout pins 220px + 240px of fixed side columns, so between
+   901px and ~1180px the only track that could yield was the centre one -- it
+   was measured collapsing to 81px while the sides kept their full width, which
+   inverts the rule that the conversation is the centre and everything else
+   yields around it. Below 1180px the layout stacks instead, so the conversation
+   always has the full track. */
+@media (max-width: 1180px) {
   .dl-layout-a,
   .dl-layout-b,
   .dl-layout-c {
-    grid-template-columns: 1fr;
+    /* `1fr` is `minmax(auto, 1fr)`, and that automatic minimum is the widest
+       item's min-content -- which is how a single column resolved to 438px
+       inside a 354px grid. `minmax(0, 1fr)` drops the floor so the track can
+       never exceed its container. */
+    grid-template-columns: minmax(0, 1fr);
     grid-template-areas:
       "saathi"
       "att"
@@ -1241,3 +1252,47 @@ html.dl-reduced-root .dl-orb[data-core-state],
 .hc-core-status[data-tone="warn"] { color: var(--dl-warn, #d99b3d); }
 .hc-core-status[data-tone="crit"] { color: var(--dl-crit, #d9534f); }
 .hc-core-status[data-tone="ok"] { color: var(--dl-ok, #4a9d5f); }
+
+
+/* ── Phase 8A: responsive command shell ────────────────────────────────────
+   Two measured defects, fixed at their cause rather than clipped:
+
+   1. At ~390px every grid panel resolved to 438px inside a 354px track. Grid
+      and flex items default to `min-width: auto`, so each item's min-content
+      became a floor the track had to honour. The composer's min-content was
+      the widest (438px): a flex `<input>` keeps a ~182px automatic minimum,
+      and the row could not wrap.
+
+   2. Fixed bottom layers (the mobile tab bar, and the voice output dock when
+      present) covered whatever ended the page, because the command shell --
+      unlike `.m-shell` -- reserved no space for them.
+
+   No `overflow-x: hidden` is used here: clipping would hide the defect rather
+   than remove it. */
+
+/* Items may shrink below their intrinsic width; the ellipsis and wrapping
+   rules on the rows themselves decide how the text then behaves. */
+.dl-grid,
+.dl-grid > * {
+  min-width: 0;
+}
+
+/* The composer keeps its controls on one line while there is room, and wraps
+   instead of forcing the whole grid wider when there is not. */
+.dl-composer {
+  flex-wrap: wrap;
+}
+.dl-composer .dl-input {
+  min-width: 0;
+  flex: 1 1 120px;
+}
+
+@media (max-width: 900px) {
+  /* Reserve the space the fixed bottom chrome occupies (the mobile tab bar
+     appears below 900px), using the same
+     allowance `.m-shell` already establishes for the mobile tab bar, so the
+     last panel and the footer can always be scrolled clear of it. */
+  .hc-root {
+    padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+  }
+}
