@@ -251,6 +251,11 @@ proposal-only trading intents, data-mode/quality propagation, conflict
 preservation, and deterministic identity are implemented. Strategy qualification
 is next.
 
+`BACKTEST-CONVERGENCE` **CERTIFIED_WITH_LIMITATIONS**: explicit historical/
+replay/synthetic modes, availability filtering, canonical signal consumption,
+and next-observation execution timing are implemented. Broader M62.4
+walk-forward integration remains limited.
+
 ## Stage D — NEPSE live market data
 
 `D1` instrument master · `D2` market calendar · `D3` live quote adapter ·
