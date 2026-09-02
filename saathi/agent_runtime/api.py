@@ -7,6 +7,8 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Request
 
+from saathi.agent_runtime.models import RunState
+
 from saathi.agent_runtime.test_fail import TEST_FAIL_STRATEGY
 from saathi.agent_runtime.test_hold import TEST_HOLD_STRATEGY
 from pydantic import BaseModel
@@ -25,6 +27,44 @@ router = APIRouter(prefix="/api/v1/agents", tags=["agents"])
 #: dedicated "approve" permission can replace this later by editing one constant
 #: and seeding it onto the roles that should hold it.
 APPROVAL_PERMISSION = "write"
+
+
+#: Future granular authority vocabulary. Every run-control mutation currently
+#: maps to APPROVAL_PERMISSION ("write") because that is the vocabulary the
+#: seeded roles actually ship with; these names are the intended replacement and
+#: exist so the coarse mapping stays visible rather than becoming silent debt.
+#: Migrating to them means seeding the permissions onto roles and swapping the
+#: constant each route passes -- no route logic changes.
+FUTURE_PERMISSIONS = {
+    "approval.resolve": "approve or deny one approval",
+    "run.pause": "pause a running run",
+    "run.resume": "resume a paused run",
+    "run.cancel": "cancel a run",
+    "run.execute": "start execution of a run",
+    "task.retry": "retry one task of a run",
+}
+
+
+def _authorize(request, action: str, *, detail: str = ""):
+    """The single authority gate for a run-control mutation.
+
+    Returns ``(actor_id, refusal)``; ``refusal`` is a response when the caller
+    may not proceed and ``None`` when they may. Refusals are audited, because a
+    refused authority attempt is exactly what an audit log is for.
+
+    Deliberately checked before any resource lookup, so an unauthorised caller
+    cannot learn whether a run or task exists by varying identifiers.
+    """
+    from fastapi.responses import JSONResponse
+
+    actor_id, allowed = _resolve_actor(request)
+    if allowed:
+        return actor_id, None
+
+    _audit_authority(request, f"{action}.denied_unauthorized", ok=False,
+                     user_id=actor_id, detail=detail[:120])
+    return actor_id, JSONResponse({"ok": False, "error": "NOT_AUTHORIZED"},
+                                  status_code=403)
 
 
 def _resolve_actor(request) -> tuple[str, bool]:
@@ -114,7 +154,25 @@ def create_run(req: CreateRun):
 
 
 @router.post("/runs/{rid}/execute")
-def execute(rid: str, max_wall_sec: float = 60.0):
+def execute(rid: str, request: Request, max_wall_sec: float = 60.0):
+    """Start a run's execution.
+
+    Not in the four routes this milestone was scoped around, but the same
+    authority family and strictly more powerful than any of them: it is what
+    causes agents to run and tools to be requested. Leaving it unauthorised
+    while hardening pause would have secured the brakes and not the accelerator.
+    """
+    from fastapi.responses import JSONResponse
+
+    actor, refusal = _authorize(request, "run.execute", detail=rid)
+    if refusal:
+        return refusal
+
+    st = default_orchestrator().store
+    if not st.get_run(rid):
+        return JSONResponse({"ok": False, "error": "RUN_NOT_FOUND"}, status_code=404)
+
+    _audit_authority(request, "run.execute", ok=True, user_id=actor, detail=rid[:32])
     return default_orchestrator().run(rid, max_wall_sec=max_wall_sec)
 
 
@@ -337,25 +395,119 @@ def artifact(aid: str):
 
 
 @router.post("/runs/{rid}/pause")
-def pause(rid: str):
-    default_orchestrator().pause(rid)
-    return {"run_id": rid, "paused": True}
+def pause(rid: str, request: Request):
+    """Pause a run. Authorisation first, then existence, then lifecycle."""
+    from fastapi.responses import JSONResponse
+
+    actor, refusal = _authorize(request, "run.pause", detail=rid)
+    if refusal:
+        return refusal
+
+    st = default_orchestrator().store
+    run = st.get_run(rid)
+    if not run:
+        # Previously this claimed {"paused": True} for a run that did not exist.
+        return JSONResponse({"ok": False, "error": "RUN_NOT_FOUND"}, status_code=404)
+
+    before = run["state"]
+    default_orchestrator().pause(rid, actor=f"user:{actor}")
+    after = st.get_run(rid)["state"]
+    _audit_authority(request, "run.pause", ok=(after != before), user_id=actor,
+                     detail=f"{rid[:32]} {before}->{after}")
+    # Reports what the lifecycle actually did, not what was asked for: an
+    # illegal transition leaves the state alone and must not read as success.
+    return {"run_id": rid, "paused": after == RunState.PAUSED.value, "state": after}
 
 
 @router.post("/runs/{rid}/resume")
-def resume(rid: str):
-    return default_orchestrator().resume(rid)
+def resume(rid: str, request: Request):
+    """Resume a paused run. Resuming is not approving: a run held at the
+    approval gate has an illegal transition to RUNNING and stays held."""
+    from fastapi.responses import JSONResponse
+
+    actor, refusal = _authorize(request, "run.resume", detail=rid)
+    if refusal:
+        return refusal
+
+    st = default_orchestrator().store
+    run = st.get_run(rid)
+    if not run:
+        return JSONResponse({"ok": False, "error": "RUN_NOT_FOUND"}, status_code=404)
+
+    before = run["state"]
+    try:
+        res = default_orchestrator().resume(rid, actor=f"user:{actor}")
+    except Exception as exc:
+        # An illegal transition is a state conflict, not a server fault.
+        _audit_authority(request, "run.resume", ok=False, user_id=actor,
+                         detail=f"{rid[:32]} {before} illegal")
+        return JSONResponse({"ok": False, "error": "INVALID_STATE",
+                             "state": before, "detail": type(exc).__name__},
+                            status_code=409)
+
+    _audit_authority(request, "run.resume", ok=True, user_id=actor,
+                     detail=f"{rid[:32]} {before}->{st.get_run(rid)['state']}")
+    return res
 
 
 @router.post("/runs/{rid}/cancel")
-def cancel(rid: str):
-    default_orchestrator().cancel(rid)
-    return {"run_id": rid, "cancelled": True}
+def cancel(rid: str, request: Request):
+    """Cancel a run. Bound to the run in the URL and to nothing else."""
+    from fastapi.responses import JSONResponse
+
+    actor, refusal = _authorize(request, "run.cancel", detail=rid)
+    if refusal:
+        return refusal
+
+    st = default_orchestrator().store
+    run = st.get_run(rid)
+    if not run:
+        return JSONResponse({"ok": False, "error": "RUN_NOT_FOUND"}, status_code=404)
+
+    before = run["state"]
+    default_orchestrator().cancel(rid, actor=f"user:{actor}")
+    after = st.get_run(rid)["state"]
+    _audit_authority(request, "run.cancel", ok=True, user_id=actor,
+                     detail=f"{rid[:32]} {before}->{after}")
+    # Cancellation is durable and idempotent in the lifecycle controller; the
+    # response reports the resulting state rather than asserting success.
+    return {"run_id": rid, "cancelled": after == RunState.CANCELLED.value,
+            "state": after}
 
 
 @router.post("/runs/{rid}/tasks/{task_id}/retry")
-def retry_task(rid: str, task_id: str):
-    return default_orchestrator().retry_task(rid, task_id)
+def retry_task(rid: str, task_id: str, request: Request):
+    """Retry one task of one run.
+
+    The binding matters more here than anywhere else: `retry_task` resets a task
+    by id, so without this check a request addressed to run A could reset a task
+    belonging to run B -- proven against the real store before this was added --
+    and then run A. The task must belong to the run named in the URL.
+    """
+    from fastapi.responses import JSONResponse
+
+    actor, refusal = _authorize(request, "task.retry", detail=f"{rid}/{task_id}")
+    if refusal:
+        return refusal
+
+    st = default_orchestrator().store
+    run = st.get_run(rid)
+    if not run:
+        return JSONResponse({"ok": False, "error": "RUN_NOT_FOUND"}, status_code=404)
+
+    task = next((t for t in st.list_tasks(rid) if t["id"] == task_id), None)
+    if not task:
+        # Same answer whether the task is unknown or belongs to another run:
+        # it does not exist *on this run*, and saying more would confirm it
+        # exists elsewhere.
+        _audit_authority(request, "task.retry", ok=False, user_id=actor,
+                         detail=f"{rid[:32]} unbound {task_id[:24]}")
+        return JSONResponse({"ok": False, "error": "TASK_NOT_FOUND"}, status_code=404)
+
+    res = default_orchestrator().retry_task(rid, task_id)
+    _audit_authority(request, "task.retry", ok=True, user_id=actor,
+                     detail=f"{rid[:32]} {task_id[:24]}")
+    return res
 
 
 @router.post("/runs/{rid}/approve")

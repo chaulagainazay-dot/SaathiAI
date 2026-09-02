@@ -498,6 +498,13 @@ class Orchestrator:
         if run and is_terminal(RunState(run["state"])):
             # do not silently revive terminal runs — new attempt only via new run
             return self._outcome(rid, partial=True, note="terminal_no_retry_in_place")
+        # The task must belong to this run. `update_task` resets by task id
+        # alone, so without this a retry addressed to run A reset a task owned by
+        # run B and then ran A -- reproduced against the real store. Defence in
+        # depth: the HTTP route refuses this too, but any other caller of this
+        # method would otherwise bypass the check.
+        if not any(t["id"] == task_id for t in self.store.list_tasks(rid)):
+            return self._outcome(rid, partial=True, note="task_not_in_run")
         self.store.update_task(task_id, status="pending")
         run = self.store.get_run(rid)
         if RunState(run["state"]) in (RunState.FAILED, RunState.PARTIALLY_COMPLETED,

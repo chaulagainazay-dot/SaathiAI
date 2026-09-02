@@ -387,6 +387,13 @@ def test_chat_start_orchestration(tmp_path, monkeypatch):
 
 
 # ── API / CLI (integration) ────────────────────────────────────────────────
+class _FakeRequest:
+    """Enough of a Request for a handler called directly rather than over HTTP."""
+    headers: dict = {}
+    cookies: dict = {}
+    client = None
+
+
 def test_api_handlers_direct(store, monkeypatch):
     from saathi.agent_runtime import api
     orch = Orchestrator(store=store, executor=AgentExecutor(execute_fn=_fake_exec),
@@ -399,7 +406,12 @@ def test_api_handlers_direct(store, monkeypatch):
     assert {"planner", "researcher", "architect", "builder", "reviewer",
             "executor", "writer", "ceo"} <= ids
     r = api.create_run(api.CreateRun(objective="implement x", strategy="build"))
-    out = api.execute(r["run_id"])
+    # `execute` now resolves and authorises a real actor (Phase 13), so calling
+    # the handler directly needs a request. Authorisation itself is covered by
+    # tests/test_phase13_run_control_authority.py; this test is about the
+    # handlers, so it supplies an authorised caller and carries on.
+    monkeypatch.setattr(api, "_authorize", lambda request, action, **kw: ("test-user", None))
+    out = api.execute(r["run_id"], _FakeRequest())
     assert out["state"] == RunState.COMPLETED.value
     got = api.get_run(r["run_id"])
     assert got["tasks"] and got["metrics"]
