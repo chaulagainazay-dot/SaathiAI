@@ -155,14 +155,38 @@ def test_audit_carries_no_session_material(monkeypatch, store, orch):
 # ── the HTTP route: binding, errors, CSRF ──────────────────────────────────
 
 @pytest.fixture()
-def client(monkeypatch, store, orch):
-    """The real app with auth bypassed, so route logic is what is under test."""
+def sec(tmp_path):
+    """A bootstrapped security store with a real owner.
+
+    Phase 12 made the approval route check authorisation as well as
+    authentication, so these tests supply a genuinely authorised caller and keep
+    testing what they are about -- run binding, missing approvals and CSRF --
+    rather than re-testing authorisation, which has its own suite.
+    """
+    from saathi.security.store import SecurityStore
+    from tests.support.auth_state import make_active
+
+    sec = SecurityStore(db_path=tmp_path / "security.db")
+    make_active(sec)
+    return sec
+
+
+@pytest.fixture()
+def client(monkeypatch, sec, store, orch):
+    """The real app with an authenticated, authorised owner session."""
     import saathi.agent_runtime.api as api
+    import saathi.security.store as secstore
     import saathi.server as server
+    from saathi import sessions
 
     monkeypatch.setattr(api, "default_orchestrator", lambda: orch)
     monkeypatch.setattr(server, "_is_authed", lambda request: True)
-    return TestClient(server.app)
+    monkeypatch.setattr(secstore, "get_store", lambda: sec)
+    monkeypatch.setattr(sessions, "_store", lambda: sec)
+
+    c = TestClient(server.app)
+    c.headers.update({"x-baadar-session": sessions.create(ua="test", ip="127.0.0.1")})
+    return c
 
 
 def test_an_approval_must_belong_to_the_run_in_the_url(monkeypatch, store, orch, client):
@@ -230,7 +254,7 @@ def test_unauthenticated_mutation_is_rejected(store, orch, monkeypatch):
     with TestClient(server.app) as c:
         r = c.post(f"/api/v1/agents/runs/{rid}/approve",
                    json={"approval_id": aid, "approved": True})
-    assert r.status_code == 401
+    assert r.status_code == 401, "authentication is still the first gate"
     assert store.get_approval(aid)["status"] == "pending"
 
 

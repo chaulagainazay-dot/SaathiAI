@@ -19,6 +19,37 @@ from saathi.agent_runtime.service import start_agent_run
 router = APIRouter(prefix="/api/v1/agents", tags=["agents"])
 
 
+#: The permission an authority mutation requires. Uses the vocabulary the roles
+#: already ship with -- owner holds "*", admin and member hold "write", viewer
+#: does not -- so no role migration is needed to make the check meaningful. A
+#: dedicated "approve" permission can replace this later by editing one constant
+#: and seeding it onto the roles that should hold it.
+APPROVAL_PERMISSION = "write"
+
+
+def _resolve_actor(request) -> tuple[str, bool]:
+    """Who is calling, and may they decide an approval.
+
+    Returns ``(user_id, allowed)``. Fails closed on every uncertainty: an
+    unidentifiable caller is authorised for nothing. Note this is *authorisation*
+    -- authentication has already happened in the app's auth layer, and the two
+    were previously the same check, which is why any authenticated caller could
+    resolve any approval.
+    """
+    from saathi import sessions
+    from saathi.security.store import get_store
+
+    token = (request.cookies.get("baadar_session")
+             or request.headers.get("x-baadar-session", ""))
+    user_id = sessions.identify(token) if token else None
+    if not user_id:
+        return "", False
+    try:
+        return user_id, get_store().has_permission(user_id, APPROVAL_PERMISSION)
+    except Exception:
+        return user_id, False
+
+
 def _origin_allowed(origin: str) -> bool:
     """Same allowlist the app's CORS policy uses; resolved lazily so importing
     this module never depends on server start-up order."""
@@ -354,6 +385,14 @@ def approve(rid: str, req: Approve, request: Request):
     if origin and not _origin_allowed(origin):
         return JSONResponse({"ok": False, "error": "ORIGIN_REJECTED"}, status_code=403)
 
+    actor_id, allowed = _resolve_actor(request)
+    if not allowed:
+        # Authenticated is not authorised. Recorded either way: a refused
+        # authority attempt is exactly the kind of thing an audit log is for.
+        _audit_authority(request, "approval.denied_unauthorized", ok=False,
+                         user_id=actor_id, detail=req.approval_id[:64])
+        return JSONResponse({"ok": False, "error": "NOT_AUTHORIZED"}, status_code=403)
+
     st = default_orchestrator().store
     appr = st.get_approval(req.approval_id)
     if not appr:
@@ -364,8 +403,32 @@ def approve(rid: str, req: Approve, request: Request):
         # another one.
         return JSONResponse({"ok": False, "error": "APPROVAL_NOT_FOUND"}, status_code=404)
 
-    return default_orchestrator().approve(rid, req.approval_id,
-                                          approved=req.approved, actor="user:ajay")
+    # The real caller, not a hardcoded name: every approval used to audit as
+    # "user:ajay" regardless of who resolved it.
+    res = default_orchestrator().approve(rid, req.approval_id,
+                                         approved=req.approved,
+                                         actor=f"user:{actor_id}")
+    _audit_authority(request, "approval.resolved", ok=True, user_id=actor_id,
+                     detail=f"{res.get('status')} {req.approval_id[:32]}")
+    return res
+
+
+def _audit_authority(request, event: str, *, ok: bool, user_id: str, detail: str) -> None:
+    """Durable audit for an authority decision, in the security store's own log.
+
+    Identifiers and outcome only -- never the session token that authenticated
+    the call, and never the approval's payload.
+    """
+    from saathi.security.store import get_store
+    try:
+        get_store().audit(
+            event, ok=ok, user_id=user_id,
+            ip=(request.client.host if request.client else ""),
+            ua=request.headers.get("user-agent", "")[:160],
+            detail=detail[:200],
+        )
+    except Exception:
+        pass  # audit must never break the decision path
 
 
 @router.get("/runs/{rid}/health")

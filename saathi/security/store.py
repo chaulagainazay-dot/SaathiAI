@@ -635,6 +635,41 @@ class SecurityStore:
         return out
 
     # ── audit log ────────────────────────────────────────────────────────────
+    # ── authorization ─────────────────────────────────────────────────────
+
+    def permissions_for(self, user_id: str) -> set[str]:
+        """Every permission this user holds, unioned across their roles.
+
+        The roles and their permissions have existed since the security store
+        was introduced; nothing consulted them. Returns an empty set for an
+        unknown user, so an unrecognised caller is authorised for nothing.
+        """
+        if not user_id:
+            return set()
+        rows = self.db.execute(
+            "SELECT r.permissions FROM user_roles ur "
+            "JOIN roles r ON r.id = ur.role_id WHERE ur.user_id = ?",
+            (user_id,),
+        ).fetchall()
+        out: set[str] = set()
+        for row in rows:
+            try:
+                out.update(json.loads(row["permissions"] or "[]"))
+            except (ValueError, TypeError):
+                continue
+        return out
+
+    def has_permission(self, user_id: str, permission: str) -> bool:
+        """Whether the user may do `permission`. ``*`` grants everything.
+
+        Fails closed: no user, no roles, or an unparsable permission list all
+        answer no.
+        """
+        if not user_id or not permission:
+            return False
+        held = self.permissions_for(user_id)
+        return "*" in held or permission in held
+
     def audit(self, event: str, *, ok: bool = True, user_id: str = "", ip: str = "",
               ua: str = "", detail: str = "", session_id: str = "") -> None:
         self.db.execute(

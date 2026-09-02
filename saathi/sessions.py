@@ -102,6 +102,26 @@ def validate(token: str, *, touch: bool = True) -> bool:
     return True
 
 
+def identify(token: str) -> str | None:
+    """The user this session belongs to, or None if it is not a live session.
+
+    Sessions have always recorded ``user_id`` at creation; ``validate`` simply
+    answered yes/no, so every caller that needed to know *who* was acting had to
+    invent an actor. This is the missing accessor, not new identity: it applies
+    exactly the same liveness rules as ``validate`` and returns the stored id.
+    """
+    if not token:
+        return None
+    rec = _store().session_by_hash(_hash(token))
+    if not rec:
+        return None
+    if rec.get("revoked"):
+        return None
+    if rec.get("expires_at", 0) < _now():
+        return None
+    return rec.get("user_id") or None
+
+
 def session_id(token: str) -> str:
     return _hash(token)[:12] if token else ""
 
