@@ -1,1 +1,1 @@
-{"milestone":"BACKTEST-COST-1","verdict":"BACKTEST_COST_AND_EXECUTION_REALISM_CERTIFIED_WITH_LIMITATIONS","focused_tests":5,"authority":"research_only"}
+{"milestone":"BACKTEST-COST-1","verdict":"BACKTEST_COST_AND_EXECUTION_REALISM_CERTIFIED_WITH_LIMITATIONS","focused_tests":6,"canonical":{"passed":7899,"skipped":8,"deselected":12,"failed":0,"warnings":324,"exit_code":0,"log":"/tmp/saathios-backtest-cost1-final.log"},"authority":"research_only"}

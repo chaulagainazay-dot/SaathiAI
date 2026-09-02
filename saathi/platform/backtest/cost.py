@@ -6,6 +6,9 @@ class CostEstimate:
  explicit_fee:Decimal; spread_cost:Decimal; slippage_cost:Decimal; total_cost:Decimal; currency:str; status:str; policy_version:str
 class CryptoCostModel:
  def __init__(self,fee_bps='10',slippage_bps='5',version='crypto-spot-v1'): self.fee_bps=Decimal(str(fee_bps)); self.slippage_bps=Decimal(str(slippage_bps)); self.version=version
+ def stress(self,multiple):
+  if Decimal(str(multiple))<0: raise ValueError('invalid stress')
+  return CryptoCostModel(self.fee_bps*Decimal(str(multiple)),self.slippage_bps*Decimal(str(multiple)),self.version+':x'+str(multiple))
  def estimate(self,instrument,side,reference,best_price,quantity):
   ref=Decimal(reference); px=Decimal(best_price); qty=Decimal(quantity)
   if min(ref,px,qty)<0 or self.fee_bps<0 or self.slippage_bps<0: raise ValueError('invalid cost input')
