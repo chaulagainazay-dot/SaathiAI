@@ -458,7 +458,13 @@ class Orchestrator:
                 if res.get("task_id"):
                     self.store.update_task(res["task_id"], status="failed",
                                            result=f"approval {res['status']}")
-                self._safe_transition(rid, RunState.RUNNING)
+                # A refused run stops. It previously attempted AWAITING_APPROVAL
+                # -> RUNNING, which is not a legal transition, so _safe_transition
+                # swallowed it and the run was stranded in AWAITING_APPROVAL with
+                # no pending approval -- an authority state nothing could ever
+                # resolve. CANCELLED is legal from here and is what actually
+                # happened: the owner refused, so the run does not continue.
+                self._safe_transition(rid, RunState.CANCELLED, actor=actor)
         return res
 
     # ── control ───────────────────────────────────────────────────────────

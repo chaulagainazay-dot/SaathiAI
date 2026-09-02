@@ -89,9 +89,26 @@ def test_no_production_strategy_contains_the_approval_agent():
             f"{name} now includes executor")
 
 
-def test_executor_is_the_only_approval_requiring_agent():
-    requiring = [a.agent_id for a in registry.all_agents() if a.requires_approval]
-    assert requiring == ["executor"]
+def test_no_production_strategy_routes_to_an_approval_requiring_agent():
+    """The property that actually makes approval unreachable in production.
+
+    Corrects an earlier assertion that `executor` was the only agent declaring
+    `requires_approval`. It is not: `saathi.studio_os.agents` registers a
+    `publisher` with the same flag at import time, so the earlier test only
+    passed when that module happened not to be imported. What matters is not how
+    many such agents exist but that no production strategy routes to one -- which
+    is what is asserted here, across every approval-requiring agent there is.
+    """
+    import saathi.studio_os.agents  # noqa: F401  -- force its registration
+
+    requiring = {a.agent_id for a in registry.all_agents() if a.requires_approval}
+    assert "executor" in requiring
+
+    for name, roles in strategies.STRATEGIES.items():
+        if name in GATED_STRATEGIES:
+            continue
+        overlap = requiring.intersection(roles)
+        assert not overlap, f"{name} routes to approval-requiring {overlap}"
 
 
 # ── the real approval path ─────────────────────────────────────────────────
