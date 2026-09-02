@@ -256,6 +256,10 @@ replay/synthetic modes, availability filtering, canonical signal consumption,
 and next-observation execution timing are implemented. Broader M62.4
 walk-forward integration remains limited.
 
+`BACKTEST-COST-1` **CERTIFIED_WITH_LIMITATIONS**: versioned deterministic
+crypto fee/spread/slippage policies and no-zero-cost fallback are implemented;
+NEPSE rates and full OOS integration remain deferred.
+
 ## Stage D — NEPSE live market data
 
 `D1` instrument master · `D2` market calendar · `D3` live quote adapter ·
