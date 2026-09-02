@@ -34,6 +34,8 @@ import { useRunInContext } from "@/lib/useRunInContext";
 import { commandConversationId } from "@/lib/command-conversation";
 import { useAgentOrchestration } from "@/lib/useAgentOrchestration";
 import WhoIsWorking from "@/components/command/WhoIsWorking";
+import WhatNeedsYou from "@/components/command/WhatNeedsYou";
+import { useCommandAttention } from "@/lib/useCommandAttention";
 
 function Pill({ children, tone = "default" }) {
   const cls =
@@ -569,6 +571,15 @@ export default function CommandCenterPage() {
   );
   const coreStatus = useMemo(() => operationalStatus(coreSnapshot), [coreSnapshot]);
 
+  // Phase 7: unresolved attention only. It reuses the run records Phase 6 already
+  // fetched and the Phase 5 snapshot that already decided whether the system is
+  // degraded, so it costs no request, no subscription and no timer.
+  const attention = useCommandAttention({
+    runs: orchestration.runs,
+    conversationId,
+    snapshot: coreSnapshot,
+  });
+
   if (loading && !model) {
     return (
       <div className="dl-root hc-root" data-testid="command-loading" aria-busy="true">
@@ -797,6 +808,8 @@ export default function CommandCenterPage() {
             </button>
           </div>
         </section>
+
+        <WhatNeedsYou model={attention} />
 
         <WhoIsWorking model={orchestration} />
 

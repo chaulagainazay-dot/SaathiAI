@@ -69,11 +69,17 @@ export function useAgentOrchestration({ conversationId = "", contextRunId = "", 
     loadRuns();
   }, [lastEvent, loadRuns]);
 
-  return useMemo(() => buildAgentOrchestration({
+  return useMemo(() => ({
+    ...buildAgentOrchestration({
+      runs,
+      conversationId,
+      // Only the contextual run's events are on hand; background rows render from
+      // their run records, which is honest and keeps requests bounded.
+      eventsByRunId: contextRunId ? { [contextRunId]: contextEvents } : {},
+    }),
+    // Phase 7 integration point, additive only: "What needs you" derives from the
+    // same run records rather than fetching the list a second time. Exposing the
+    // rows this hook already holds is what keeps the attention surface free.
     runs,
-    conversationId,
-    // Only the contextual run's events are on hand; background rows render from
-    // their run records, which is honest and keeps requests bounded.
-    eventsByRunId: contextRunId ? { [contextRunId]: contextEvents } : {},
   }), [runs, conversationId, contextRunId, contextEvents]);
 }

@@ -42,6 +42,13 @@ export const RUN_STATE_LABEL = Object.freeze({
   partially_completed: "Partly completed",
 });
 
+/**
+ * How many finished runs each group keeps on screen (Phase 7 product rule).
+ * Presentation only: it never alters backend lifecycle truth, and being a count
+ * rather than a duration keeps it free of any clock.
+ */
+export const TERMINAL_RETENTION_LIMIT = 3;
+
 export const CONTEXT_CLASS = Object.freeze({
   IN_CONTEXT: "IN_CONTEXT",
   BACKGROUND: "BACKGROUND",
@@ -191,9 +198,31 @@ export function buildAgentOrchestration({
     .filter((item) => item.runId);
 
   const byRecency = (a, b) => (b.startedAt ?? 0) - (a.startedAt ?? 0);
-  const inContext = items.filter((i) => i.contextClass === CONTEXT_CLASS.IN_CONTEXT).sort(byRecency);
-  const background = items.filter((i) => i.contextClass === CONTEXT_CLASS.BACKGROUND).sort(byRecency);
-  const unassociated = items.filter((i) => i.contextClass === CONTEXT_CLASS.UNASSOCIATED).sort(byRecency);
+
+  // Presentation retention (Phase 7 product rule). Active work is always shown;
+  // finished work is kept only as recent context, because this surface shows
+  // activity and the history surface will show history. The cap is a count over
+  // backend-ordered timestamps -- no clock, so it can never change when a run is
+  // considered finished. Lifecycle truth is untouched; only the row list is cut,
+  // and the remainder is disclosed rather than silently dropped.
+  const retain = (group) => {
+    const active = group.filter((i) => i.lifecycle.active);
+    const terminal = group.filter((i) => !i.lifecycle.active);
+    return {
+      rows: [...active, ...terminal.slice(0, TERMINAL_RETENTION_LIMIT)].sort(byRecency),
+      withheld: Math.max(0, terminal.length - TERMINAL_RETENTION_LIMIT),
+    };
+  };
+
+  const inContextAll = items.filter((i) => i.contextClass === CONTEXT_CLASS.IN_CONTEXT).sort(byRecency);
+  const backgroundAll = items.filter((i) => i.contextClass === CONTEXT_CLASS.BACKGROUND).sort(byRecency);
+  const unassociatedAll = items.filter((i) => i.contextClass === CONTEXT_CLASS.UNASSOCIATED).sort(byRecency);
+
+  const inContextRet = retain(inContextAll);
+  const backgroundRet = retain([...backgroundAll, ...unassociatedAll].sort(byRecency));
+  const inContext = inContextRet.rows;
+  const background = backgroundRet.rows.filter((i) => i.contextClass === CONTEXT_CLASS.BACKGROUND);
+  const unassociated = backgroundRet.rows.filter((i) => i.contextClass === CONTEXT_CLASS.UNASSOCIATED);
 
   const activeCount = items.filter((i) => i.lifecycle.active).length;
   return {
@@ -206,6 +235,8 @@ export function buildAgentOrchestration({
       inContextActive: inContext.filter((i) => i.lifecycle.active).length,
       backgroundActive: background.filter((i) => i.lifecycle.active).length,
     },
+    // Finished runs not listed, so the cap is never silent.
+    withheldTerminal: inContextRet.withheld + backgroundRet.withheld,
     // Nothing here is an action. The panel observes; it never authorises.
     readOnly: true,
   };
