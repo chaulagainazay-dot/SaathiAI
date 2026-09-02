@@ -32,6 +32,49 @@ function WorkRow({ item, inContext }) {
       </span>
       {/* Classification is text, never colour alone. */}
       <span className="wiw-class">{inContext ? "In this conversation" : "Background"}</span>
+
+      {/* Scoped here, not in the parent: styled-jsx only tags markup rendered
+          inside the component that declares the block, so row rules living in
+          WhoIsWorking never reached these elements. */}
+      <style jsx>{`
+        .wiw-row {
+          display: flex; align-items: flex-start; gap: 9px; padding: 7px 9px;
+          border: 1px solid var(--glass-frame-border, rgba(255,255,255,0.08));
+          border-radius: 10px; background: rgba(255,255,255,0.02);
+          /* The panel sits in a narrow column. Without wrapping, the nowrap
+             classification chip competed with the body for horizontal space and
+             won, collapsing the objective to an unreadable ellipsis and
+             colliding with the agent name. Wrapping drops the chip to its own
+             line only when the body cannot keep its minimum. */
+          flex-wrap: wrap;
+        }
+        .wiw-row[data-terminal="true"] { opacity: 0.62; }
+        .wiw-dot {
+          width: 7px; height: 7px; border-radius: 50%; margin-top: 5px; flex-shrink: 0;
+          background: var(--dl-muted, #6c7a96);
+        }
+        .wiw-dot[data-active="true"] { background: var(--signal-active, #5b9fd4); }
+        .wiw-body {
+          display: flex; flex-direction: column; gap: 1px;
+          /* Prefer a readable width, but keep min-width:0 so the row can
+             still shrink. A hard min-width raised the panel's min-content
+             width above its grid track and clipped rows at 390px. */
+          flex: 1 1 140px; min-width: 0;
+        }
+        .wiw-agent { font-size: 13px; color: var(--dl-text, #eef3fc); }
+        .wiw-detail { font-size: 11.5px; color: var(--dl-muted, #8b98b4); }
+        .wiw-objective {
+          font-size: 11px; color: var(--dl-muted, #8b98b4); opacity: 0.85;
+          overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+        .wiw-failure { font-size: 11px; color: var(--dl-crit, #d9534f); }
+        .wiw-class {
+          font-family: var(--font-mono, ui-monospace); font-size: 9px;
+          letter-spacing: 0.08em; text-transform: uppercase;
+          color: var(--dl-muted, #8b98b4); white-space: nowrap; padding-top: 3px;
+          flex: 0 0 auto; margin-left: auto;
+        }
+      `}</style>
     </div>
   );
 }
@@ -68,35 +111,11 @@ export default function WhoIsWorking({ model }) {
       ) : null}
 
       <style jsx>{`
-        .wiw { display: flex; flex-direction: column; gap: 10px; }
+        .wiw { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
         .wiw-group { display: flex; flex-direction: column; gap: 6px; }
         .wiw-group-label {
           font-family: var(--font-mono, ui-monospace); font-size: 10px;
           letter-spacing: 0.14em; text-transform: uppercase; color: var(--dl-muted, #8b98b4);
-        }
-        .wiw-row {
-          display: flex; align-items: flex-start; gap: 9px; padding: 7px 9px;
-          border: 1px solid var(--glass-frame-border, rgba(255,255,255,0.08));
-          border-radius: 10px; background: rgba(255,255,255,0.02);
-        }
-        .wiw-row[data-terminal="true"] { opacity: 0.62; }
-        .wiw-dot {
-          width: 7px; height: 7px; border-radius: 50%; margin-top: 5px; flex-shrink: 0;
-          background: var(--dl-muted, #6c7a96);
-        }
-        .wiw-dot[data-active="true"] { background: var(--signal-active, #5b9fd4); }
-        .wiw-body { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1; }
-        .wiw-agent { font-size: 13px; color: var(--dl-text, #eef3fc); }
-        .wiw-detail { font-size: 11.5px; color: var(--dl-muted, #8b98b4); }
-        .wiw-objective {
-          font-size: 11px; color: var(--dl-muted, #8b98b4); opacity: 0.85;
-          overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-        }
-        .wiw-failure { font-size: 11px; color: var(--dl-crit, #d9534f); }
-        .wiw-class {
-          font-family: var(--font-mono, ui-monospace); font-size: 9px;
-          letter-spacing: 0.08em; text-transform: uppercase;
-          color: var(--dl-muted, #8b98b4); white-space: nowrap; padding-top: 3px;
         }
       `}</style>
     </section>

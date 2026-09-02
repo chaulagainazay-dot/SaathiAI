@@ -56,11 +56,18 @@ export function useAgentOrchestration({ conversationId = "", contextRunId = "", 
   useEffect(() => { loadRuns(); }, [loadRuns]);
   useEffect(() => () => abortRef.current?.abort(), []);
 
-  const lastName = live?.last?.name || "";
+  // Key on the event object, not its name. Consecutive events legitimately
+  // share a name -- a run emits `run.state` for queued->running and again for
+  // running->completed -- and keying on the string meant the second one never
+  // re-ran this effect, so rows stayed pinned to a finished run's last seen
+  // state. The name guard still decides whether a request is made, so the
+  // bounded-request property is unchanged: non-invalidating events return here
+  // before any fetch. Certified in Phase 6B.
+  const lastEvent = live?.last || null;
   useEffect(() => {
-    if (!shouldInvalidateList(lastName)) return;
+    if (!shouldInvalidateList(lastEvent?.name)) return;
     loadRuns();
-  }, [lastName, loadRuns]);
+  }, [lastEvent, loadRuns]);
 
   return useMemo(() => buildAgentOrchestration({
     runs,

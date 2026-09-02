@@ -167,3 +167,63 @@ test("the read model uses no frontend clock", async () => {
     assert.ok(!code.includes(banned), `${banned} must not be system truth`);
   }
 });
+
+test("row styles are scoped in the component that renders the rows", async () => {
+  // Regression: the row rules lived in WhoIsWorking's <style jsx> while the
+  // markup was returned by WorkRow. styled-jsx only tags elements rendered
+  // inside the declaring component, so every row rule was dead in the browser
+  // and rows rendered as run-on unstyled text. Certified in Phase 6B.
+  const fs = await import("node:fs");
+  const src = await fs.promises.readFile(
+    new URL("../components/command/WhoIsWorking.jsx", import.meta.url), "utf8");
+
+  const workRow = src.slice(src.indexOf("function WorkRow"), src.indexOf("export default"));
+  assert.ok(workRow.includes("<style jsx>"), "WorkRow must declare its own scoped style block");
+  for (const rule of [".wiw-row", ".wiw-dot", ".wiw-body", ".wiw-agent", ".wiw-detail", ".wiw-class"]) {
+    assert.ok(workRow.includes(rule), `${rule} must be scoped inside WorkRow`);
+    assert.ok(
+      workRow.split(rule).length - 1 >= 1 && !src.slice(src.indexOf("export default")).includes(rule + " {"),
+      `${rule} must not be declared in the parent, where it cannot apply`
+    );
+  }
+});
+
+test("list invalidation keys on the event, not its name", async () => {
+  // Regression: consecutive events share a name (a run emits `run.state` for
+  // queued->running and again for running->completed). The effect keyed on the
+  // name string, so the second event never re-ran it and rows stayed pinned to
+  // a finished run's last seen state while the server said completed.
+  // Certified in Phase 6B against a real backend.
+  const fs = await import("node:fs");
+  const src = await fs.promises.readFile(
+    new URL("./useAgentOrchestration.js", import.meta.url), "utf8");
+  const body = src.replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm, "");
+
+  assert.ok(!/\}, \[lastName, loadRuns\]\)/.test(body),
+    "the invalidation effect must not depend on the event name alone");
+  assert.ok(/\}, \[lastEvent, loadRuns\]\)/.test(body),
+    "the invalidation effect must depend on the event object identity");
+  // The name guard is what bounds the request count; it must survive the fix.
+  assert.ok(/shouldInvalidateList\(lastEvent\?\.name\)/.test(body),
+    "a non-invalidating event must still return before any fetch");
+});
+
+test("rows stay readable in the narrow orchestration column", async () => {
+  // Regression: the panel renders in a ~220px column. The nowrap classification
+  // chip and the body competed for that width, so the chip collided with the
+  // agent name and the objective collapsed to "Ph…". Certified in Phase 6B at
+  // desktop and 390px.
+  const fs = await import("node:fs");
+  const src = await fs.promises.readFile(
+    new URL("../components/command/WhoIsWorking.jsx", import.meta.url), "utf8");
+  const workRow = src.slice(src.indexOf("function WorkRow"), src.indexOf("export default"));
+
+  assert.match(workRow, /\.wiw-row\s*\{[^}]*flex-wrap:\s*wrap/s,
+    "the row must wrap rather than crush the body");
+  assert.match(workRow, /\.wiw-body\s*\{[^}]*flex:\s*1 1 140px/s,
+    "the body must prefer a readable width");
+  // ...but as a basis, not a floor: a hard min-width raised the panel's
+  // min-content width above its grid track and clipped rows at 390px.
+  assert.match(workRow, /\.wiw-body\s*\{[^}]*min-width:\s*0/s,
+    "the body must still be able to shrink inside its track");
+});
