@@ -246,6 +246,11 @@ outcome references, benchmark-unavailable handling, scoped point-in-time
 lessons, and non-self-promotion gates are implemented. Signal contracts are
 next.
 
+`SIGNAL-1` **CERTIFIED_WITH_LIMITATIONS**: canonical expiring strategy signals,
+proposal-only trading intents, data-mode/quality propagation, conflict
+preservation, and deterministic identity are implemented. Strategy qualification
+is next.
+
 ## Stage D — NEPSE live market data
 
 `D1` instrument master · `D2` market calendar · `D3` live quote adapter ·
