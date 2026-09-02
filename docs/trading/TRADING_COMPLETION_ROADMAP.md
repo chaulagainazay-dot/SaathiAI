@@ -258,7 +258,9 @@ walk-forward integration remains limited.
 
 `BACKTEST-COST-1` **CERTIFIED_WITH_LIMITATIONS**: versioned deterministic
 crypto fee/spread/slippage policies and no-zero-cost fallback are implemented;
-NEPSE rates and full OOS integration remain deferred.
+post-cost canonical regression is green (7,899 passed; log
+`/tmp/saathios-backtest-cost1-final.log`); NEPSE rates and full OOS integration
+remain deferred. Next dependency: `BACKTEST-OOS-1`.
 
 ## Stage D — NEPSE live market data
 
