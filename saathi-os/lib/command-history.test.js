@@ -259,12 +259,16 @@ test("history reports empty as empty", () => {
 
 // ── the hook adds no traffic and cannot repeat the Phase 6 defect ──────────
 
-test("the history hook fetches nothing and keys on no event name", async () => {
+test("history reads its own contract, not the generic run window", async () => {
+  // Superseded the Phase 8B rule that this hook fetched nothing: history now
+  // makes exactly one bounded read of the terminal-history contract, which is
+  // what removes both the fixture-crowding and contextual-verification limits.
   const fs = await import("node:fs");
   const src = await fs.promises.readFile(new URL("./useCommandHistory.js", import.meta.url), "utf8");
   const code = src.replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm, "");
-  for (const banned of ["afetch", "fetch(", "EventSource", "setInterval", "setTimeout",
-    "useEffect", "lastName", "last?.name"]) {
+  assert.equal((code.match(/afetch\(/g) || []).length, 1, "exactly one request site");
+  assert.match(code, /agents\/history/);
+  for (const banned of ["EventSource", "setInterval", "setTimeout"]) {
     assert.ok(!code.includes(banned), `${banned} must not appear on the history path`);
   }
 });
@@ -283,4 +287,96 @@ test("the triad handoff is documented and disjoint", () => {
   assert.deepEqual(TRIAD_HANDOFF.map((t) => t.surface),
     ["WHO_IVE_GOT_WORKING", "WHAT_NEEDS_YOU", "WHAT_IVE_BEEN_DOING"]);
   for (const t of TRIAD_HANDOFF) assert.ok(t.holds && t.question);
+});
+
+// ── Phase 9: the history API contract ──────────────────────────────────────
+
+test("an API item normalises into a history record", async () => {
+  const { normalizeHistoryApiItem } = await import("./command-history.js");
+  const row = normalizeHistoryApiItem({
+    run_id: "r1", objective: "Draft the brief", strategy: "document",
+    terminal_state: "completed", terminal_reason: "", conversation_id: "cmd-x",
+    created_at: 10, terminal_at: 99, verification_state: "PASSED",
+    verification_passed_count: 2, verification_failed_count: 0,
+  });
+  const item = buildHistoryItem(row, { conversationId: "cmd-x" });
+  assert.equal(item.runId, "r1");
+  assert.equal(item.terminalLabel, "Completed");
+  assert.equal(item.verificationState, VERIFICATION.PASSED);
+  assert.equal(item.endedAt, 99, "terminal_at is what history sorts by");
+  assert.equal(item.contextClass, "IN_CONTEXT");
+});
+
+test("a background run carries verification without being contextual", async () => {
+  // The Phase 8B limitation: verification used to require the run's events,
+  // which only the open run had. The API now reports it for every row.
+  const { normalizeHistoryApiItem } = await import("./command-history.js");
+  const row = normalizeHistoryApiItem({
+    run_id: "bg", objective: "Summarise readiness", strategy: "document",
+    terminal_state: "completed", conversation_id: "someone-else",
+    created_at: 1, terminal_at: 2, verification_state: "PASSED",
+  });
+  const model = buildCommandHistory({ runs: [row], conversationId: "cmd-mine" });
+  assert.equal(model.items[0].contextClass, "BACKGROUND");
+  assert.equal(model.items[0].verificationState, VERIFICATION.PASSED,
+    "verification must not depend on which run is open");
+});
+
+test("the API verification state wins over event derivation", async () => {
+  const { normalizeHistoryApiItem } = await import("./command-history.js");
+  const row = normalizeHistoryApiItem({
+    run_id: "r1", terminal_state: "completed", verification_state: "FAILED",
+    created_at: 1, terminal_at: 2,
+  });
+  const item = buildHistoryItem(row, {
+    conversationId: "", events: [{ name: "verification.passed" }] });
+  assert.equal(item.verificationState, VERIFICATION.FAILED,
+    "the batched summary is authoritative");
+});
+
+test("an unknown verification state degrades to unavailable", async () => {
+  const { normalizeHistoryApiItem } = await import("./command-history.js");
+  for (const raw of [undefined, "", "SOMETHING_ELSE", null]) {
+    const row = normalizeHistoryApiItem({ run_id: "r", terminal_state: "completed",
+      verification_state: raw, created_at: 1, terminal_at: 2 });
+    assert.equal(row.verificationState, VERIFICATION.UNAVAILABLE);
+  }
+});
+
+test("history refreshes only on events that can change it", async () => {
+  const { shouldRefreshHistory, HISTORY_INVALIDATING_EVENTS } =
+    await import("./command-history.js");
+
+  for (const name of HISTORY_INVALIDATING_EVENTS) {
+    assert.equal(shouldRefreshHistory(`agentrun.${name}`), true, `${name} changes history`);
+  }
+  // Chatter must not trigger a read.
+  for (const name of ["task.started", "task.completed", "agent.started",
+    "memory.retrieved", "lease.acquired", "test.hold.started", "heartbeat"]) {
+    assert.equal(shouldRefreshHistory(`agentrun.${name}`), false, `${name} must not refetch`);
+  }
+  assert.equal(shouldRefreshHistory("run.completed"), false, "unprefixed names are not run events");
+  assert.equal(shouldRefreshHistory(""), false);
+});
+
+test("the history hook makes one bounded read and no per-row fetch", async () => {
+  const fs = await import("node:fs");
+  const src = await fs.promises.readFile(new URL("./useCommandHistory.js", import.meta.url), "utf8");
+  const code = src.replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm, "");
+
+  assert.equal((code.match(/afetch\(/g) || []).length, 1, "exactly one request site");
+  assert.match(code, /agents\/history/, "it must read the history contract");
+  assert.ok(!/\/events\?/.test(code), "no per-row event fetch");
+  for (const banned of ["setInterval", "setTimeout", "EventSource", "lastName", "last?.name)"]) {
+    assert.ok(!code.includes(banned), `${banned} must not appear on the history path`);
+  }
+  // Keyed on the event object, never its name -- the Phase 6 defect.
+  assert.match(code, /\}, \[lastEvent, load\]\)/);
+});
+
+test("the hook no longer depends on the generic run list", async () => {
+  const fs = await import("node:fs");
+  const src = await fs.promises.readFile(new URL("./useCommandHistory.js", import.meta.url), "utf8");
+  assert.ok(!src.includes("orchestration"), "history must not read the orchestration model");
+  assert.ok(!/runs\?limit=/.test(src), "history must not read the generic run window");
 });

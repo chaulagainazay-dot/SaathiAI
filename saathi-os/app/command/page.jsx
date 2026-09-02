@@ -586,12 +586,10 @@ export default function CommandCenterPage() {
   // carry state, updated_at and terminal_reason -- never from rows the other two
   // surfaces retained, so history reflects what happened rather than what was
   // recently on screen.
-  const history = useCommandHistory({
-    runs: orchestration.runs,
-    conversationId,
-    contextRunId,
-    contextEvents: runEvents,
-  });
+  // Phase 9: history comes from the terminal-history contract, not the generic
+  // run-list window -- so real records are no longer crowded out by certification
+  // fixtures, and every row carries verification rather than only the open run.
+  const history = useCommandHistory({ conversationId });
 
   if (loading && !model) {
     return (

@@ -110,7 +110,8 @@ export function verificationFromEvents(events) {
 }
 
 /** One historical record from one durable run row. */
-export function buildHistoryItem(run, { conversationId = "", events = null } = {}) {
+export function buildHistoryItem(run, { conversationId = "", events = null,
+                                        verificationState = null } = {}) {
   const state = str(run?.state).toLowerCase();
   if (!isTerminal(state)) return null;
 
@@ -136,7 +137,11 @@ export function buildHistoryItem(run, { conversationId = "", events = null } = {
     startedAt: num(run?.created_at),
     // Stamped by the backend on the transition that ended the run.
     endedAt: num(run?.updated_at),
-    verificationState: events ? verificationFromEvents(events) : VERIFICATION.UNAVAILABLE,
+    // The history API aggregates verification for every run, so it wins when
+    // present; deriving from a single run's events was only ever a fallback
+    // for the one run whose events happened to be loaded.
+    verificationState: verificationState || run?.verificationState
+      || (events ? verificationFromEvents(events) : VERIFICATION.UNAVAILABLE),
     // Only the reason the backend itself wrote. Absence stays absence.
     failureReason: str(run?.terminal_reason) || null,
     // A record of a certification fixture, not of the owner's work.
@@ -183,6 +188,7 @@ export function buildCommandHistory({
     .map((run) => buildHistoryItem(run, {
       conversationId,
       events: eventsByRunId[str(run?.id ?? run?.run_id)] || null,
+      verificationState: run?.verificationState || null,
     }))
     .filter(Boolean);
 
@@ -240,3 +246,51 @@ export const TRIAD_HANDOFF = Object.freeze([
   { surface: "WHAT_NEEDS_YOU", holds: "unresolved attention", question: "what needs a decision" },
   { surface: "WHAT_IVE_BEEN_DOING", holds: "terminal runs", question: "what actually happened" },
 ]);
+
+
+/**
+ * One `/api/v1/agents/history` item, in the shape the builder already reads.
+ *
+ * The endpoint returns terminal runs with a batched verification summary, so
+ * every row carries real verification -- not only the run that happens to be
+ * open. Context classification deliberately stays on the frontend: the backend
+ * reports which conversation a run belonged to, and the certified Phase 6 rule
+ * decides what that means relative to the conversation in front of the owner.
+ */
+export function normalizeHistoryApiItem(item) {
+  if (!item) return null;
+  const state = str(item.verification_state).toUpperCase();
+  return {
+    id: str(item.run_id),
+    objective: str(item.objective),
+    strategy: str(item.strategy),
+    state: str(item.terminal_state),
+    conversation_id: str(item.conversation_id),
+    created_at: item.created_at,
+    updated_at: item.terminal_at,
+    terminal_reason: str(item.terminal_reason),
+    verificationState: VERIFICATION[state] || VERIFICATION.UNAVAILABLE,
+  };
+}
+
+
+/**
+ * Which runtime events can change what history holds.
+ *
+ * Task chatter, heartbeats and agent lifecycle cannot: a run only enters history
+ * by becoming terminal, and its verification only changes when a verification is
+ * recorded. Keying the refresh on these alone keeps history to one bounded read
+ * per real change instead of one per event.
+ */
+export const HISTORY_INVALIDATING_EVENTS = Object.freeze([
+  "run.state", "run.completed", "run.timeout",
+  "verification.passed", "verification.failed",
+]);
+
+const RUN_EVENT_PREFIX = "agentrun.";
+
+export function shouldRefreshHistory(eventName) {
+  const name = String(eventName || "");
+  if (!name.startsWith(RUN_EVENT_PREFIX)) return false;
+  return HISTORY_INVALIDATING_EVENTS.includes(name.slice(RUN_EVENT_PREFIX.length));
+}

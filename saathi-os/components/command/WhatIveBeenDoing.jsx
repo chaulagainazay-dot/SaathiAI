@@ -73,6 +73,9 @@ function HistoryRow({ item }) {
 export default function WhatIveBeenDoing({ model }) {
   const items = model?.items || [];
   const withheld = model?.withheld || 0;
+  // The server reports that older history exists without saying how much, so a
+  // count is shown only when it is actually known.
+  const hasMore = Boolean(model?.hasMore);
 
   return (
     <section className="dl-panel wibd" aria-labelledby="wibd-h" data-testid="what-ive-been-doing">
@@ -87,9 +90,11 @@ export default function WhatIveBeenDoing({ model }) {
         </div>
       )}
 
-      {withheld > 0 ? (
+      {withheld > 0 || hasMore ? (
         <p className="dl-muted wibd-withheld" data-testid="wibd-withheld">
-          {withheld} older {withheld === 1 ? "item" : "items"} not shown.
+          {withheld > 0
+            ? `${withheld} older ${withheld === 1 ? "item" : "items"} not shown.`
+            : "Older items not shown."}
         </p>
       ) : null}
 
