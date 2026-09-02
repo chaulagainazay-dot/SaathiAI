@@ -20,6 +20,8 @@ from saathi.agent_runtime import policy as pol
 from saathi.agent_runtime.store import RunStore
 from saathi.agent_runtime.strategies import STRATEGIES, choose_strategy
 from saathi.agent_runtime.test_hold import configured_hold_ms, hold_for_test
+from saathi.agent_runtime.test_fail import (
+    TEST_FAIL_REASON, should_fail_for_test)
 
 
 def _tid() -> str:
@@ -304,8 +306,17 @@ class Orchestrator:
 
         from saathi.agent_runtime.gateway_exec import CancellationToken
 
+        # Certification fixture only. False for every production run: the
+        # environment gate is read first, and the strategy must have been
+        # explicitly requested. It fails the task through the real executor
+        # path below rather than writing a failed state directly.
+        force_test_failure = should_fail_for_test(
+            strategy=str((self.store.get_run(rid) or {}).get("strategy") or ""))
+
         cancel_token = CancellationToken(run_id=rid, store=self.store)
         try:
+            if force_test_failure:
+                raise RuntimeError(TEST_FAIL_REASON)
             result = self.executor.run_turn(
                 defn, task.objective, context=context, cancel_token=cancel_token
             )

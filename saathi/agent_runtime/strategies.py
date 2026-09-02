@@ -17,6 +17,9 @@ STRATEGIES: dict[str, list[str]] = {
     # `requested` strategy AND with SAATHI_TEST_RUN_HOLD_MS set; the
     # objective heuristics below never return it.
     "test_hold": ["planner"],
+    # Certification fixture (Phase 7). Same double gate: reachable ONLY by an
+    # explicit `requested` strategy AND with SAATHI_TEST_RUN_FAIL set.
+    "test_fail": ["planner"],
 }
 
 
