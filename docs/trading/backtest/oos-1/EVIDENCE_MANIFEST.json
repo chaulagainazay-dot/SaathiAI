@@ -1,0 +1,1 @@
+{"milestone":"BACKTEST-OOS-1","verdict":"BACKTEST_OOS_AND_WALK_FORWARD_CERTIFIED_WITH_LIMITATIONS","focused_tests":8,"canonical":{"passed":7901,"skipped":8,"deselected":12,"failed":0,"warnings":324,"exit_code":0,"log":"/tmp/saathios-backtest-oos1-final.log"},"status":"research_only","limitations":["dataset_revision_time","formal_multiple_testing_correction"]}

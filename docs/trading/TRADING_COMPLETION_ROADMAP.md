@@ -262,6 +262,13 @@ post-cost canonical regression is green (7,899 passed; log
 `/tmp/saathios-backtest-cost1-final.log`); NEPSE rates and full OOS integration
 remain deferred. Next dependency: `BACKTEST-OOS-1`.
 
+`BACKTEST-OOS-1` **CERTIFIED_WITH_LIMITATIONS**: chronological evaluation-plan
+and immutable validation-selected configuration contracts are implemented;
+post-OOS canonical regression is green (7,901 passed; log
+`/tmp/saathios-backtest-oos1-final.log`). Dataset revision-time enforcement and
+formal multiple-testing correction remain mandatory limitations before strategy
+promotion. Next dependency: `BACKTEST-PIT-1`.
+
 ## Stage D — NEPSE live market data
 
 `D1` instrument master · `D2` market calendar · `D3` live quote adapter ·

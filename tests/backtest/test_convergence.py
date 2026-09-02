@@ -17,3 +17,14 @@ def test_result_preserves_strategy_dataset_mode_and_future_lessons():
  r=CanonicalBacktest('strat','v2','ds','dv','SYNTHETIC').run(ev,lambda x:'NO_SIGNAL')
  assert (r.strategy_id,r.strategy_version,r.dataset_id,r.dataset_version,r.data_mode)==('strat','v2','ds','dv','SYNTHETIC')
  assert lessons_visible_at([type('L',(),{'available_at':T+timedelta(1)})()],T)==[]
+
+def test_oos_plan_is_chronological_and_config_locks():
+ p=StrategyEvaluationPlan('e','s','1','d','1','CRYPTO','BINANCE',T,T+timedelta(days=1),T+timedelta(days=1),T+timedelta(days=2),T+timedelta(days=2),T+timedelta(days=3),'crypto-v1','next-v1',trial_count=2)
+ c=LockedStrategyConfiguration.lock('s','1',{'window':5},T+timedelta(days=2),'train','val',2,'max_return','crypto-v1','next-v1')
+ assert p.test_start>=p.validation_end and len(c.config_hash)==64
+ with pytest.raises(ValueError):
+  StrategyEvaluationPlan('e','s','1','d','1','C','V',T,T+timedelta(days=2),T+timedelta(days=1),T+timedelta(days=3),T+timedelta(days=3),T+timedelta(days=4),'c','f')
+
+def test_future_lesson_is_rejected_at_oos_time():
+ class A: available_at=T+timedelta(days=1)
+ with pytest.raises(ValueError): validate_oos_visibility(decision_time=T, lessons=[A()])
