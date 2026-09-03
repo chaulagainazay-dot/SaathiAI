@@ -37,6 +37,7 @@ APPROVAL_PERMISSION = "write"
 #: constant each route passes -- no route logic changes.
 FUTURE_PERMISSIONS = {
     "approval.resolve": "approve or deny one approval",
+    "run.create": "create an agent run",
     "run.pause": "pause a running run",
     "run.resume": "resume a paused run",
     "run.cancel": "cancel a run",
@@ -127,12 +128,29 @@ def definition(agent_id: str):
 
 
 @router.post("/runs")
-def create_run(req: CreateRun):
-    """Canonical path: validate via start_agent_run before persistence."""
+def create_run(req: CreateRun, request: Request):
+    """Create a run. The last unauthorised mutation in this family.
+
+    `start_agent_run` already validated the *request* -- objective present,
+    strategy known, authority class fail-closed when elevated -- but validating
+    what is being asked is not the same as deciding who may ask. Without this
+    gate any authenticated caller could start agent work, and the run recorded a
+    hardcoded actor rather than the person who created it.
+
+    Authorisation is independent of the fixture gating in
+    `agent_runtime.test_authority`: permission to create a run never unlocks a
+    certification strategy, and arming a fixture never grants permission.
+    """
+    actor, refusal = _authorize(request, "run.create", detail=req.strategy or "")
+    if refusal:
+        return refusal
+
     orch = default_orchestrator()
     rec = start_agent_run(
         objective=req.objective,
         strategy=req.strategy,
+        # The real creator, not the module default.
+        actor=f"user:{actor}",
         project_id=req.project_id,
         conversation_id=req.conversation_id,
         budget=req.budget or None,
@@ -144,12 +162,17 @@ def create_run(req: CreateRun):
         orchestrator=orch,
     )
     if not rec.ok:
+        _audit_authority(request, "run.create", ok=False, user_id=actor,
+                         detail=f"rejected {rec.error_code}")
         return {
             "error": rec.error_code,
             "message": rec.message,
             "violations": rec.violations,
             "ok": False,
         }
+
+    _audit_authority(request, "run.create", ok=True, user_id=actor,
+                     detail=f"{rec.run_id[:32]} {req.strategy or 'auto'}")
     return {"run_id": rec.run_id, "ok": True, "state": rec.state}
 
 
@@ -174,6 +197,86 @@ def execute(rid: str, request: Request, max_wall_sec: float = 60.0):
 
     _audit_authority(request, "run.execute", ok=True, user_id=actor, detail=rid[:32])
     return default_orchestrator().run(rid, max_wall_sec=max_wall_sec)
+
+
+# ── execution authority snapshot (Phase 14) ─────────────────────────────────
+
+
+def _kill_switch_blocked() -> bool | None:
+    """Global kill-switch state, or None when it cannot be established.
+
+    Only the GLOBAL and TRADING_GUARDIAN scopes are meaningful for an
+    agent-runtime action; the others key on strategy/instrument/portfolio, which
+    an agent run does not have. Any failure returns None, which denies the
+    positive state rather than defaulting to permissive.
+    """
+    try:
+        from saathi.platform.tg.service import TradingGuardianService  # noqa: F401
+        from saathi.platform.tg.kill_switch import KillSwitchStore
+
+        res = KillSwitchStore().is_blocked()
+        return bool(res.get("blocked"))
+    except Exception:
+        return None
+
+
+def _platform_runtime_bound() -> bool | None:
+    """Whether agent tool execution has a platform runtime bound.
+
+    This is the real precondition: `gateway_exec` rejects every tool request
+    with PLATFORM_RUNTIME_REQUIRED when it is absent.
+    """
+    try:
+        from saathi.agent_runtime.gateway_exec import AgentExecutor
+
+        ex = AgentExecutor()
+        return bool(getattr(ex, "platform_runtime", None)
+                    and getattr(ex, "platform_token", None))
+    except Exception:
+        return None
+
+
+@router.get("/runs/{rid}/execution-authority")
+def execution_authority(rid: str, request: Request, task_id: str = ""):
+    """Read-only: what this system can truthfully say about one action.
+
+    Pure inspection. It executes nothing, approves nothing, invokes no gateway
+    mutation and changes no state -- and its answer is not a capability token:
+    `gateway_exec` still enforces independently when execution happens, so a
+    positive snapshot may never be replayed as permission.
+
+    Requires authentication like every other authority surface. Unlike the
+    mutation routes it does not 403 a caller who merely lacks `write`: a
+    read-only explanation of why they cannot act is the point, and it is
+    returned as NOT_AUTHORIZED rather than withheld.
+    """
+    from saathi.agent_runtime.execution_authority import AuthorityInputs, compose
+
+    actor_id, allowed = _resolve_actor(request)
+    st = default_orchestrator().store
+    run = st.get_run(rid)
+
+    inputs = AuthorityInputs(
+        actor_user_id=actor_id or None,
+        has_permission=allowed if actor_id else None,
+        run=run,
+        pending_approvals=st.pending_approvals(rid) if run else [],
+        resolved_approvals=_resolved_approvals(st, rid) if run else [],
+        kill_switch_blocked=_kill_switch_blocked(),
+        platform_runtime_bound=_platform_runtime_bound(),
+    )
+    return compose(inputs, run_id=rid, task_id=task_id)
+
+
+def _resolved_approvals(store, rid: str) -> list[dict]:
+    """Approvals on this run that are no longer pending."""
+    try:
+        with store._conn() as c:
+            return [dict(r) for r in c.execute(
+                "SELECT * FROM approval_request WHERE run_id=? AND status!='pending'",
+                (rid,)).fetchall()]
+    except Exception:
+        return []
 
 
 # ── authority truth (Phase 10) ──────────────────────────────────────────────

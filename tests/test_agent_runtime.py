@@ -405,12 +405,13 @@ def test_api_handlers_direct(store, monkeypatch):
     ids = {d["agent_id"] for d in defs}
     assert {"planner", "researcher", "architect", "builder", "reviewer",
             "executor", "writer", "ceo"} <= ids
-    r = api.create_run(api.CreateRun(objective="implement x", strategy="build"))
-    # `execute` now resolves and authorises a real actor (Phase 13), so calling
-    # the handler directly needs a request. Authorisation itself is covered by
-    # tests/test_phase13_run_control_authority.py; this test is about the
-    # handlers, so it supplies an authorised caller and carries on.
+    # `create_run` and `execute` now resolve and authorise a real actor (Phases
+    # 13-14), so calling the handlers directly needs a request. Authorisation is
+    # covered by the phase suites; this test is about the handlers, so it
+    # supplies an authorised caller and carries on.
     monkeypatch.setattr(api, "_authorize", lambda request, action, **kw: ("test-user", None))
+    r = api.create_run(api.CreateRun(objective="implement x", strategy="build"),
+                       _FakeRequest())
     out = api.execute(r["run_id"], _FakeRequest())
     assert out["state"] == RunState.COMPLETED.value
     got = api.get_run(r["run_id"])
