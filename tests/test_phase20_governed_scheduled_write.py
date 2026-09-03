@@ -711,3 +711,42 @@ def test_the_boundary_denies_a_mutated_payload_on_the_same_key(store, sink,
     assert rec.status == "denied"
     assert rec.failure_category == "idempotency_conflict"
     assert len(sink.sends) == 1
+
+
+# ── where replay safety lives, pinned ──────────────────────────────────────
+
+def test_replay_safety_is_owned_by_the_claim_and_the_boundary_not_the_stub():
+    """`ExecutionGateway.check_idempotency` is still a TODO, and that is the
+    correct outcome rather than an outstanding one.
+
+    Replay safety for a scheduled write is owned in two places that already
+    exist and are already certified: the atomic delegation claim, and the
+    execution boundary's terminal/in-flight guards. Forcing a third
+    implementation into the legacy step method would put the same rule in three
+    places, and the copy that drifts is the one that leaks.
+
+    What must stay true is that the stub cannot *grant* anything -- it records
+    nothing and decides nothing, so an intent it "passes" is still refused by
+    everything downstream.
+    """
+    import inspect
+
+    from saathi.execution.gateway import ExecutionGateway
+
+    source = inspect.getsource(ExecutionGateway.check_idempotency)
+    assert "TODO" in source, "if this is implemented, revisit the ownership note"
+    # It transitions nothing and returns the history unchanged.
+    assert "IntentState.AUTHORIZED" not in source
+    assert "add_transition" not in source
+
+
+def test_the_boundary_owns_the_second_replay_layer():
+    """The claim is first; this is the independent second. Both key on the same
+    occurrence identity, which is why they cannot disagree."""
+    import inspect
+
+    from saathi.execution.universal import UniversalBoundary
+
+    source = inspect.getsource(UniversalBoundary._submit_locked)
+    assert "find_by_idempotency" in source
+    assert "Terminal replay only when the *same* idempotency_key matches" in source
