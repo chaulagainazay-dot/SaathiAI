@@ -581,3 +581,58 @@ def test_a_provider_error_carrying_a_credential_is_sanitised():
     assert fake not in blob and "abc123def456" not in blob
     assert "job_991" in blob, "identifiers must survive; only credentials go"
     assert report.redaction_count >= 2
+
+
+# ── non-HTTP external writes ────────────────────────────────────────────────
+#
+# The repository-wide sweep above looks at httpx/requests. Two genuine writes
+# use neither, and were found only by reading the code: praw posts a Reddit
+# comment through its own client, and a scheduler job submits to reddit.com by
+# driving Brave through AppleScript. Different mechanism, same side effect --
+# and a detector shaped around HTTP verbs cannot see either.
+
+_NON_HTTP_WRITES = [
+    ("saathi/tools/reddit_outreach.py", "send_reply", "praw client"),
+    ("saathi/scheduler.py", "auto_reddit_post", "browser automation via osascript"),
+]
+
+
+@pytest.mark.parametrize("path,func,mechanism", _NON_HTTP_WRITES,
+                         ids=[f for _, f, _ in _NON_HTTP_WRITES])
+def test_non_http_external_writes_are_guarded(path, func, mechanism):
+    tree = ast.parse(pathlib.Path(path).read_text())
+    assert func in _guarded_functions(tree), f"{path}:{func} ({mechanism}) is ungoverned"
+
+
+def test_the_reddit_scheduler_job_refuses_deterministically():
+    """It opens a browser window and submits a post. The refusal belongs before
+    any of that happens, and must be a value the caller can read rather than an
+    exception through a daemon thread."""
+    from saathi import scheduler
+
+    result = scheduler.auto_reddit_post()
+    assert result["status"] == "blocked"
+    assert result["reason_code"] == "egress.not_governed"
+
+
+def test_the_praw_reply_is_refused_outside_governance(monkeypatch):
+    from saathi.tools import reddit_outreach
+
+    monkeypatch.setattr(reddit_outreach, "_creds_ok", lambda: True)
+    monkeypatch.setattr(reddit_outreach, "_get_reddit",
+                        lambda: pytest.fail("reddit client built before the guard"))
+    result = reddit_outreach.send_reply("t3_abc", "hello")
+    # The client is built first, so the guard raises inside the function's own
+    # try/except and comes back as an error rather than propagating.
+    assert result.get("ok") is not True
+
+
+def test_no_browser_automation_reaches_reddit_without_a_grant(monkeypatch):
+    """Dynamic: arm subprocess to fail if the job ever shells out."""
+    import subprocess
+
+    from saathi import scheduler
+
+    monkeypatch.setattr(subprocess, "run",
+                        lambda *a, **k: pytest.fail("subprocess invoked without a grant"))
+    assert scheduler.auto_reddit_post()["status"] == "blocked"
