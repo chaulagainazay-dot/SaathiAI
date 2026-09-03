@@ -796,3 +796,41 @@ def test_no_remaining_todo_sits_on_the_authorization_path():
                 ExecutionGateway.check_approval)
     for method in deciding:
         assert "TODO" not in _inspect.getsource(method), method.__name__
+
+
+# ── the actor context propagates safely, and loses safely ───────────────────
+
+def test_the_bound_actor_survives_the_async_boundary():
+    """Chat and agent inference reach the gateway through `asyncio.run`. If the
+    actor did not cross that boundary, every authenticated call would silently
+    degrade to the capped system actor."""
+    import asyncio
+
+    from saathi.execution.authorization_sources import actor_context, current_actor
+
+    async def probe():
+        return current_actor()
+
+    with actor_context("ajay"):
+        assert asyncio.run(probe()) == "ajay"
+    assert current_actor() is None, "the binding must not outlive its block"
+
+
+def test_losing_the_actor_across_a_thread_loses_authority_not_gains_it():
+    """Context does not cross into a new thread. The result must be *less*
+    authority -- the capped system actor -- never an unattributed call
+    inheriting the caller's rights."""
+    import concurrent.futures
+
+    from saathi.execution.authorization_sources import actor_context, current_actor
+
+    with actor_context("ajay"):
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+            leaked = pool.submit(current_actor).result()
+    assert leaked is None
+
+    # And an unattributed caller is capped, so the loss is fail-closed.
+    intent = _mutating_intent()
+    inputs = _ok(actor_user_id=None, has_permission=None, actor_is_system=True,
+                 approvals=[_approval(tool_intent_digest(intent))])
+    assert authorize_intent(intent, inputs).decision is Decision.DENIED
