@@ -109,6 +109,9 @@ class ExecutionGateway:
         self.queue = queue
         self.audit_trails: Dict[str, AuditTrail] = {}
         self._boundary = boundary  # lazy UniversalBoundary
+        #: Last decision produced by :meth:`authorize`, for evidence. Not a
+        #: capability: it is never consulted to permit anything, only recorded.
+        self._last_decision = None
 
     # ── M17.22 universal boundary ─────────────────────────────────────────
     def _ub(self):
@@ -296,52 +299,153 @@ class ExecutionGateway:
 
         return history
 
-    def authorize(self, intent: ToolIntent, context: ExecutionContext, history: StateHistory) -> StateHistory:
-        """Check authorization.
+    def authorize(
+        self,
+        intent: ToolIntent,
+        context: ExecutionContext,
+        history: StateHistory,
+        *,
+        inputs=None,
+    ) -> StateHistory:
+        """Decide whether this one intent may proceed. Fails closed.
 
-        Raises AuthorizationException if denied.
-        Transitions to AUTHORIZED or DENIED.
+        Every gate that the action's class actually requires must return a
+        current, correlated positive result; anything else -- a refusal, a
+        missing verdict, an input that could not be read -- reaches DENIED. There
+        is no branch that transitions to AUTHORIZED without
+        :func:`~saathi.execution.authorization.authorize_intent` saying so.
+
+        Deciding is all this does. It invokes no handler, touches no connector
+        and produces no side effect beyond the audit record, so an authorized
+        intent has still not executed: `submit`/`gateway_exec` do that, and
+        re-evaluate the gates that can change in between.
+
+        ``inputs`` exists for tests and for callers that have already resolved
+        the authority inputs; when omitted they are resolved from their real
+        sources. It is deliberately keyword-only and not reachable from any
+        request payload -- a caller who could supply their own inputs could
+        supply their own permission.
         """
-        try:
-            # TODO: Implement authorization
-            # - Check actor has permission for operation
-            # - Check actor has access to business_unit
-            # - Check actor's role permits this risk level
-            # - Check actor's quota allows this
+        from saathi.execution.authorization import Decision, authorize_intent
+        from saathi.execution.authorization_sources import resolve_inputs
 
-            history.add_transition(
-                IntentState.AUTHORIZED,
-                f"authorization granted for {context.actor_id}"
-            )
-            logger.info(f"Intent authorized: {intent.intent_id}")
-            return history
+        if inputs is None:
+            inputs = resolve_inputs(intent, context)
+        decision = authorize_intent(intent, inputs)
+        self._last_decision = decision
+        self._audit_decision(decision)
 
-        except Exception as e:
+        if decision.decision is not Decision.AUTHORIZED:
             history.add_transition(
                 IntentState.DENIED,
-                f"authorization denied: {str(e)}"
+                f"authorization {decision.decision.value}: {decision.reason_code}",
+                metadata={"reason_code": decision.reason_code,
+                          "intent_digest": decision.intent_digest},
             )
-            raise AuthorizationException(str(e))
+            logger.info("Intent %s: %s (%s)", decision.decision.value,
+                        intent.intent_id, decision.reason_code)
+            raise AuthorizationException(decision.reason_code)
+
+        history.add_transition(
+            IntentState.AUTHORIZED,
+            f"authorization granted: {decision.reason_code}",
+            metadata={"reason_code": decision.reason_code,
+                      "intent_digest": decision.intent_digest,
+                      "authority_class": decision.authority_class,
+                      "actor_user_id": decision.actor_user_id},
+        )
+        logger.info("Intent authorized: %s", intent.intent_id)
+        return history
+
+    def _audit_decision(self, decision) -> None:
+        """Durable evidence for one authorization decision, refusals included.
+
+        Identifiers, class and reason code only. Never parameters, never a
+        credential, never the actor's session -- a decision log that carried the
+        payload would leak exactly what the gateway exists to contain. Refusals
+        are recorded as deliberately as grants: a refused authority attempt is
+        what an audit log is for.
+        """
+        try:
+            self._ub().store.record_decision(decision)
+        except Exception:
+            logger.debug("authorization decision store unavailable", exc_info=True)
+        try:
+            from saathi.security.store import get_store
+
+            get_store().audit(
+                f"gateway.authorize.{decision.decision.value.lower()}",
+                ok=decision.authorized,
+                user_id=decision.actor_user_id,
+                detail=(f"{decision.reason_code} intent={decision.intent_id[:32]} "
+                        f"digest={decision.intent_digest[:16]} "
+                        f"class={decision.authority_class}")[:200],
+            )
+        except Exception:  # audit must never decide the decision
+            logger.debug("authorization audit unavailable", exc_info=True)
+
+    def inspect_decision(self, *, intent_id: str = "", digest: str = "") -> dict | None:
+        """Read-only: the last decision recorded for one intent or action.
+
+        Inspection, not a grant. It mutates nothing, and its answer confers
+        nothing -- `submit`/`gateway_exec` re-evaluate at execution time, so a
+        caller holding a positive decision has not thereby acquired permission.
+        """
+        try:
+            return self._ub().store.latest_decision(intent_id=intent_id, digest=digest)
+        except Exception:
+            return None
+
+    #: Action risk class → gateway RiskLevel. Deterministic and auditable: the
+    #: class comes from the connector registry or the local action table, never
+    #: from a heuristic and never from a model.
+    _RISK_LEVEL_BY_CLASS = {
+        0: RiskLevel.LOW,       # READ_ONLY
+        1: RiskLevel.LOW,       # LOCAL_REVERSIBLE
+        2: RiskLevel.MEDIUM,    # LOCAL_MUTATION
+        3: RiskLevel.HIGH,      # EXTERNAL_SIDE_EFFECT
+        4: RiskLevel.CRITICAL,  # HIGH_IMPACT
+    }
 
     def classify_risk(self, intent: ToolIntent, context: ExecutionContext, history: StateHistory) -> tuple[StateHistory, RiskLevel]:
-        """Classify execution risk.
+        """Classify execution risk from the action's registered class.
 
-        Returns (updated_history, risk_level).
-        Transitions to RISK_CLASSIFIED.
+        Previously this returned ``RiskLevel.LOW`` unconditionally, which made
+        the approval gate below it decorative -- every action auto-approved
+        because every action was low risk. It now reads the same class the
+        authorization gate used, so risk and authorization cannot disagree.
+
+        An action this system cannot classify raises rather than defaulting.
+        There is no "assume low" path: an unclassifiable action is exactly the
+        one whose risk must not be guessed downward.
         """
-        # TODO: Implement risk classification
-        # - Cost risk (exceeds budget?)
-        # - Data risk (sensitive data?)
-        # - Latency risk (deadline approaching?)
-        # - Provider risk (provider unhealthy?)
-        # - Fallback risk (fallback available?)
+        from saathi.execution.authorization import resolve_action
+        from saathi.execution.authorization_sources import _connector_action
 
-        risk_level = RiskLevel.LOW
+        action = resolve_action(
+            str(getattr(intent, "operation", "") or ""),
+            str(getattr(intent, "connector_id", "") or ""),
+            str(getattr(intent, "capability", "") or ""),
+            connector_action=_connector_action(intent),
+        )
+        if action is None:
+            history.add_transition(
+                IntentState.REJECTED,
+                "risk classification failed: action.unknown",
+                metadata={"reason_code": "risk.unknown"},
+            )
+            raise ExecutionGatewayException("risk.unknown")
+
+        risk_level = self._RISK_LEVEL_BY_CLASS[int(action.risk)]
         history.add_transition(
             IntentState.RISK_CLASSIFIED,
-            f"risk classified as {risk_level.value}"
+            f"risk classified as {risk_level.value}",
+            metadata={"authority_class": action.authority_class.value,
+                      "risk_class": action.risk.name,
+                      "source": action.source},
         )
-        logger.info(f"Intent risk classified: {intent.intent_id} ({risk_level.value})")
+        logger.info("Intent risk classified: %s (%s from %s)",
+                    intent.intent_id, risk_level.value, action.source)
         return history, risk_level
 
     def check_approval(self, intent: ToolIntent, risk_level: RiskLevel, history: StateHistory) -> StateHistory:
@@ -350,29 +454,52 @@ class ExecutionGateway:
         Low-risk intents auto-approve.
         High-risk intents require human approval (max 1 hour).
 
-        Transitions to APPROVED or AWAITING_APPROVAL.
+        Transitions to APPROVED, or to AWAITING_APPROVAL *and raises*.
+
+        Raising matters. This method previously recorded AWAITING_APPROVAL and
+        returned normally, so a caller that did not inspect the history -- which
+        is what :class:`~saathi.execution.integration.SaathiExecutionSystem`
+        did -- queued and executed the action anyway. It went unnoticed because
+        `classify_risk` returned LOW for everything, so the branch was
+        unreachable; making risk real made it reachable, and a gate a caller can
+        walk past is not a gate.
+
+        Approval itself is decided once, by :meth:`authorize`, against an
+        approval correlated to this intent's digest. This method reports that
+        decision rather than forming a second opinion from the risk level alone,
+        which would otherwise block a high-risk action that *does* hold a valid
+        approval.
         """
-        # TODO: Implement approval workflow
-        # - Auto-approve if low-risk
-        # - Create approval record if high-risk
-        # - Wait for human decision or timeout
-        # - Handle approval granted/rejected/expired
+        decision = self._last_decision
+        approved_here = (decision is not None
+                         and decision.authorized
+                         and decision.intent_id == intent.intent_id)
 
-        approval_required = risk_level in (RiskLevel.HIGH, RiskLevel.CRITICAL)
-
-        if approval_required:
-            history.add_transition(
-                IntentState.AWAITING_APPROVAL,
-                f"approval required (risk={risk_level.value}), deadline in 1 hour"
-            )
-            logger.info(f"Intent awaiting approval: {intent.intent_id}")
-        else:
+        if approved_here:
             history.add_transition(
                 IntentState.APPROVED,
-                f"auto-approved (risk={risk_level.value})"
+                f"approval satisfied at authorization (risk={risk_level.value})",
+                metadata={"reason_code": decision.reason_code},
             )
-            logger.info(f"Intent auto-approved: {intent.intent_id}")
+            logger.info("Intent approved: %s", intent.intent_id)
+            return history
 
+        if risk_level in (RiskLevel.HIGH, RiskLevel.CRITICAL):
+            history.add_transition(
+                IntentState.AWAITING_APPROVAL,
+                f"approval required (risk={risk_level.value})",
+                metadata={"reason_code": "approval.required"},
+            )
+            logger.info("Intent awaiting approval: %s", intent.intent_id)
+            raise ApprovalException("approval.required")
+
+        # Below the approval threshold and not separately authorized here: the
+        # action needs no human decision, so this gate has nothing to withhold.
+        history.add_transition(
+            IntentState.APPROVED,
+            f"no approval required (risk={risk_level.value})",
+        )
+        logger.info("Intent requires no approval: %s", intent.intent_id)
         return history
 
     def enqueue_for_execution(self, intent: ToolIntent, history: StateHistory) -> StateHistory:
@@ -439,8 +566,13 @@ class ExecutionGateway:
             attempt_number=1,
             state_history=history,
             authorization_granted=IntentState.AUTHORIZED in [t.to_state for t in history.transitions],
-            authorization_rationale="TODO",
-            approval_required=False,
+            # The machine-safe reason code from the real decision, not prose and
+            # not a placeholder. Absent only when authorize() never ran.
+            authorization_rationale=(
+                self._last_decision.reason_code if self._last_decision
+                else "authorization.not_evaluated"),
+            approval_required=IntentState.AWAITING_APPROVAL in [
+                t.to_state for t in history.transitions],
             sanitized_result=result,
         )
 

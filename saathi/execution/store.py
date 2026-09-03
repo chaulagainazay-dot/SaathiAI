@@ -66,6 +66,30 @@ CREATE TABLE IF NOT EXISTS approval_binding (
   max_uses INTEGER NOT NULL DEFAULT 1
 );
 CREATE INDEX IF NOT EXISTS idx_appr_digest ON approval_binding(tool_intent_digest);
+
+-- Phase 16: one row per authorization decision, refusals included. Additive:
+-- created alongside the existing tables, read by nothing that predates it, so
+-- an older database gains the table on next open and loses nothing.
+--
+-- Secret-free by construction. It holds identifiers, the action's class and a
+-- machine-safe reason code -- never parameters, never a credential, never the
+-- session that authenticated the call. `gates` is the per-gate findings, which
+-- is what makes a refusal reconstructable after the fact.
+CREATE TABLE IF NOT EXISTS authorization_decision (
+  decision_id TEXT PRIMARY KEY,
+  intent_id TEXT NOT NULL,
+  tool_intent_digest TEXT NOT NULL,
+  actor TEXT NOT NULL DEFAULT '',
+  decision TEXT NOT NULL,
+  reason_code TEXT NOT NULL,
+  authority_class TEXT DEFAULT '',
+  risk TEXT DEFAULT '',
+  evaluated_at REAL NOT NULL,
+  gates TEXT NOT NULL DEFAULT '[]'
+);
+CREATE INDEX IF NOT EXISTS idx_decision_intent ON authorization_decision(intent_id);
+CREATE INDEX IF NOT EXISTS idx_decision_digest ON authorization_decision(tool_intent_digest);
+CREATE INDEX IF NOT EXISTS idx_decision_at ON authorization_decision(evaluated_at);
 """
 
 _lock = threading.RLock()
@@ -282,6 +306,74 @@ class ExecutionStore:
                 continue
             return d
         return None
+
+    # ── authorization decisions (Phase 16) ────────────────────────────────
+    def record_decision(self, decision) -> str:
+        """Persist one authorization decision. Append-only; never updated.
+
+        A decision is a statement about one instant, so amending one would
+        destroy the very thing it is evidence of. Re-deciding the same intent
+        writes a new row.
+        """
+        import uuid
+
+        decision_id = f"gwd_{uuid.uuid4().hex[:20]}"
+        with _lock, self._conn() as c:
+            c.execute(
+                """INSERT INTO authorization_decision (
+                    decision_id, intent_id, tool_intent_digest, actor, decision,
+                    reason_code, authority_class, risk, evaluated_at, gates
+                ) VALUES (?,?,?,?,?,?,?,?,?,?)""",
+                (
+                    decision_id, decision.intent_id, decision.intent_digest,
+                    decision.actor_user_id or "", decision.decision.value,
+                    decision.reason_code, decision.authority_class or "",
+                    decision.risk or "", decision.evaluated_at,
+                    json.dumps([g.to_dict() for g in decision.gates]),
+                ),
+            )
+        return decision_id
+
+    def latest_decision(self, *, intent_id: str = "", digest: str = "") -> Optional[dict]:
+        """The most recent decision for one intent, or for one action's digest.
+
+        Read-only, and read by identity rather than handed out as a token: a
+        caller must already know which intent they are asking about, and knowing
+        the answer permits nothing -- enforcement re-evaluates regardless.
+        """
+        if not intent_id and not digest:
+            return None
+        column, value = (("intent_id", intent_id) if intent_id
+                         else ("tool_intent_digest", digest))
+        with self._conn() as c:
+            row = c.execute(
+                f"SELECT * FROM authorization_decision WHERE {column}=? "  # noqa: S608 - column is a literal, not input
+                "ORDER BY evaluated_at DESC LIMIT 1",
+                (value,),
+            ).fetchone()
+        if not row:
+            return None
+        d = dict(row)
+        d["gates"] = json.loads(d.get("gates") or "[]")
+        return d
+
+    def approvals_for_digest(self, digest: str) -> list[dict]:
+        """Every approval bound to one action, whatever its status.
+
+        Unlike `find_valid_approval` this hides nothing: authorization has to be
+        able to say *why* an approval did not satisfy it (denied / expired /
+        exhausted), and a lookup that only returns usable rows makes a denied
+        approval indistinguishable from no approval at all.
+        """
+        if not digest:
+            return []
+        with self._conn() as c:
+            rows = c.execute(
+                "SELECT * FROM approval_binding WHERE tool_intent_digest=? "
+                "ORDER BY created DESC",
+                (digest,),
+            ).fetchall()
+        return [dict(r) for r in rows]
 
     def consume_approval(self, approval_id: str) -> bool:
         with _lock, self._conn() as c:
