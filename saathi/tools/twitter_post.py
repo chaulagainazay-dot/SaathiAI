@@ -73,6 +73,12 @@ def _v1_api():
 
 def tweet(text: str) -> dict:
     """Post a plain text tweet. Returns {"status": "ok", "tweet_id": "..."}."""
+    # Phase 19: the side effect itself is gated, not merely preceded by a
+    # check. An authorization that happened elsewhere cannot vouch for a
+    # call made from anywhere; being inside governed execution can.
+    from saathi.execution.egress import guard
+
+    guard("twitter.tweet", operation="tweet")
     if not app_configured():
         return {"status": "error", "error": "Twitter credentials not configured — see twitter_post.py setup"}
     # Twitter v2 limit: 280 chars
@@ -90,6 +96,12 @@ def tweet(text: str) -> dict:
 
 def tweet_with_image(text: str, image_path: str) -> dict:
     """Post a tweet with an attached image."""
+    # Phase 19: the side effect itself is gated, not merely preceded by a
+    # check. An authorization that happened elsewhere cannot vouch for a
+    # call made from anywhere; being inside governed execution can.
+    from saathi.execution.egress import guard
+
+    guard("twitter.tweet", operation="tweet_with_image")
     if not app_configured():
         return {"status": "error", "error": "Twitter credentials not configured"}
     if len(text) > 280:

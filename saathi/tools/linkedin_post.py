@@ -140,6 +140,12 @@ def _persist_token(token: str, person_urn: str):
 
 def post_text(text: str) -> dict:
     """Post a text-only update to LinkedIn."""
+    # Phase 19: the side effect itself is gated, not merely preceded by a
+    # check. An authorization that happened elsewhere cannot vouch for a
+    # call made from anywhere; being inside governed execution can.
+    from saathi.execution.egress import guard
+
+    guard("linkedin.share", operation="post_text")
     if not token_ok():
         return {"ok": False, "error": "Not connected — visit /api/v1/linkedin/auth first"}
 

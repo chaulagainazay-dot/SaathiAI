@@ -53,6 +53,12 @@ def _creds() -> dict:
 
 def post_facebook(text: str, link: str = "") -> dict:
     """Post text (+ optional link) to the Facebook Page feed."""
+    # Phase 19: the side effect itself is gated, not merely preceded by a
+    # check. An authorization that happened elsewhere cannot vouch for a
+    # call made from anywhere; being inside governed execution can.
+    from saathi.execution.egress import guard
+
+    guard("facebook.page.feed", operation="post_facebook")
     c = _creds()
     if not c["token"] or not c["page_id"]:
         return {"status": "error", "error": "Facebook not configured — need page_access_token and page_id"}
@@ -71,6 +77,12 @@ def post_facebook(text: str, link: str = "") -> dict:
 
 def upload_image_public(local_path: str) -> str:
     """Upload a local image to Imgur (anonymous) and return the public URL."""
+    # Phase 19: the side effect itself is gated, not merely preceded by a
+    # check. An authorization that happened elsewhere cannot vouch for a
+    # call made from anywhere; being inside governed execution can.
+    from saathi.execution.egress import guard
+
+    guard("imgbb.upload", operation="upload_image_public")
     import base64
     with open(local_path, "rb") as f:
         b64 = base64.b64encode(f.read()).decode()
@@ -86,6 +98,12 @@ def upload_image_public(local_path: str) -> str:
 
 def post_instagram_image_local(local_path: str, caption: str) -> dict:
     """Upload a local image to a public host then post it to Instagram."""
+    # Phase 19: the side effect itself is gated, not merely preceded by a
+    # check. An authorization that happened elsewhere cannot vouch for a
+    # call made from anywhere; being inside governed execution can.
+    from saathi.execution.egress import guard
+
+    guard("instagram.media", operation="post_instagram_image_local")
     try:
         public_url = upload_image_public(local_path)
     except Exception as e:
@@ -95,6 +113,12 @@ def post_instagram_image_local(local_path: str, caption: str) -> dict:
 
 def post_instagram_text(caption: str) -> dict:
     """Post a caption-only update to Instagram (no media — for text/reel captions)."""
+    # Phase 19: the side effect itself is gated, not merely preceded by a
+    # check. An authorization that happened elsewhere cannot vouch for a
+    # call made from anywhere; being inside governed execution can.
+    from saathi.execution.egress import guard
+
+    guard("instagram.media", operation="post_instagram_text")
     c = _creds()
     if not c["token"] or not c["ig_id"]:
         return {"status": "error", "error": "Instagram not configured — need page_access_token and ig_account_id"}
@@ -106,6 +130,12 @@ def post_instagram_text(caption: str) -> dict:
 
 def post_instagram_image(image_url: str, caption: str) -> dict:
     """Post a photo to Instagram Business account via Graph API (image must be public URL)."""
+    # Phase 19: the side effect itself is gated, not merely preceded by a
+    # check. An authorization that happened elsewhere cannot vouch for a
+    # call made from anywhere; being inside governed execution can.
+    from saathi.execution.egress import guard
+
+    guard("instagram.media", operation="post_instagram_image")
     c = _creds()
     if not c["token"] or not c["ig_id"]:
         return {"status": "error", "error": "Instagram not configured"}
@@ -132,6 +162,12 @@ def post_instagram_image(image_url: str, caption: str) -> dict:
 
 def post_instagram_reel(video_url: str, caption: str, thumbnail_url: str = "") -> dict:
     """Upload a Reel to Instagram — tries resumable direct upload first, falls back to URL."""
+    # Phase 19: the side effect itself is gated, not merely preceded by a
+    # check. An authorization that happened elsewhere cannot vouch for a
+    # call made from anywhere; being inside governed execution can.
+    from saathi.execution.egress import guard
+
+    guard("instagram.media", operation="post_instagram_reel")
     c = _creds()
     if not c["token"] or not c["ig_id"]:
         return {"status": "error", "error": "Instagram not configured"}

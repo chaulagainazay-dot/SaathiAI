@@ -19,6 +19,12 @@ def _configured() -> bool:
 
 def add_subscriber(email: str, group_id: str = "", fields: dict | None = None) -> dict:
     """Add or update a subscriber. Optionally add to a group."""
+    # Phase 19: the side effect itself is gated, not merely preceded by a
+    # check. An authorization that happened elsewhere cannot vouch for a
+    # call made from anywhere; being inside governed execution can.
+    from saathi.execution.egress import guard
+
+    guard("mailerlite.subscribers", operation="add_subscriber")
     if not _configured():
         return {"error": "MAILERLITE_API_KEY not set"}
     payload: dict = {"email": email}
@@ -84,6 +90,12 @@ def list_groups() -> dict:
 
 def create_group(name: str) -> dict:
     """Create a new subscriber group."""
+    # Phase 19: the side effect itself is gated, not merely preceded by a
+    # check. An authorization that happened elsewhere cannot vouch for a
+    # call made from anywhere; being inside governed execution can.
+    from saathi.execution.egress import guard
+
+    guard("mailerlite.groups", operation="create_group")
     if not _configured():
         return {"error": "MAILERLITE_API_KEY not set"}
     try:
@@ -130,6 +142,12 @@ def get_automation(automation_id: str) -> dict:
 def create_campaign(name: str, subject: str, from_name: str, from_email: str,
                     html_content: str, group_ids: list[str]) -> dict:
     """Create a broadcast campaign (not automation — one-off send to a group)."""
+    # Phase 19: the side effect itself is gated, not merely preceded by a
+    # check. An authorization that happened elsewhere cannot vouch for a
+    # call made from anywhere; being inside governed execution can.
+    from saathi.execution.egress import guard
+
+    guard("mailerlite.campaigns", operation="create_campaign")
     if not _configured():
         return {"error": "MAILERLITE_API_KEY not set"}
     try:

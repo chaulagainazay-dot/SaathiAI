@@ -79,6 +79,12 @@ def _compose_url(to: str, subject: str, body: str) -> str:
 
 def send_email(to: str, subject: str, body: str) -> dict:
     """Send an email. Baadar reads it back and confirms before calling this."""
+    # Phase 19: the side effect itself is gated, not merely preceded by a
+    # check. An authorization that happened elsewhere cannot vouch for a
+    # call made from anywhere; being inside governed execution can.
+    from saathi.execution.egress import guard
+
+    guard("gmail.send", operation="send_email")
     if not _configured():
         # browser path: open a pre-filled Gmail compose window, then send it
         import subprocess
