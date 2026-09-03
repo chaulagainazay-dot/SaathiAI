@@ -398,3 +398,34 @@ def test_sanitisation_does_not_touch_authorization():
     for forbidden in ("authorize", "AuthorizationInputs", "Decision",
                       "approval", "kill_switch", "rbac"):
         assert forbidden not in source, forbidden
+
+
+# ── stored error text is sanitised too ──────────────────────────────────────
+
+def test_a_failing_chat_tool_call_does_not_store_a_raw_exception(tmp_path):
+    """An exception repr is untrusted output: a connector failure can carry the
+    URL, header or connection string it failed on, and this lands in a record a
+    user reads back."""
+    from saathi.chat.engine import ChatEngine
+    from saathi.chat.store import ChatStore
+
+    store = ChatStore(db_path=tmp_path / "chat.db")
+    engine = ChatEngine(store=store, llm_fn=lambda *a, **k: "ok")
+    conv = store.create_conversation(title="t")
+    msg = store.add_message(conv["id"], "assistant", "x")
+
+    class _BoomSystem:
+        model_gateway = type("g", (), {"providers": {}})()
+
+        async def execute_intent(self, intent, ctx):
+            raise RuntimeError(
+                f"connect failed: https://api.example.com?api_key={FAKE_OPENAI}")
+
+    engine._execution_system = lambda: _BoomSystem()
+    engine.call_tool(conv["id"], msg["id"], "local-llm-inference", {"prompt": "hi"})
+
+    stored = store.list_tools(msg["id"])[0]
+    assert stored["status"] == "failed"
+    assert FAKE_OPENAI not in stored["result"]
+    # Still diagnostic: the operator can see what failed.
+    assert "connect failed" in stored["result"]
