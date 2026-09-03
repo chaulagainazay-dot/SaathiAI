@@ -202,6 +202,15 @@ def projects_registry_path() -> pathlib.Path:
     )
 
 
+def content_library_path() -> pathlib.Path:
+    """Mr. Yeti content-pipeline database."""
+    return scoped_state_path(
+        "data/content_library.db",
+        env="SAATHI_CONTENT_LIBRARY_DB",
+        historical=REPO_ROOT / "data" / "content_library.db",
+    )
+
+
 def storage_root_path() -> pathlib.Path:
     """Root of the managed media/artifact store."""
     return scoped_state_path(
