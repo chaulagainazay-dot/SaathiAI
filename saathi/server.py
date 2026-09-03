@@ -1740,6 +1740,32 @@ def _is_authed(request) -> bool:
     return False
 
 
+def _authenticated_user_id(request) -> str | None:
+    """Who authenticated this request, or None.
+
+    `_is_authed` answers *whether* a request is authenticated; this answers
+    *who*. They were the same question for a long time, and the identity half
+    was simply dropped -- `request.state.user_id` was read in several places and
+    assigned in none, so every consumer fell through to a hardcoded owner and
+    every authenticated caller became the same person.
+
+    Only the session carries a user identity. An API token authenticates a
+    program, not a person, so it deliberately resolves to None here: the caller
+    is real and authorised, but there is no human to attribute the action to,
+    and inventing one is what this function exists to stop.
+    """
+    cookies = getattr(request, "cookies", None) or {}
+    token = (cookies.get("baadar_session")
+             or request.headers.get("x-baadar-session", ""))
+    if not token:
+        return None
+    try:
+        from saathi import sessions
+        return sessions.identify(token)
+    except Exception:
+        return None
+
+
 def _owner_id() -> str:
     """Return the owner user_id from the Security Store."""
     from saathi.security.store import get_store
@@ -1956,7 +1982,35 @@ async def _auth(request, call_next):
         pass
     if not _is_authed(request):
         return JSONResponse({"error": "unauthorized"}, status_code=401)
-    return await call_next(request)
+    return await _with_actor(request, call_next)
+
+
+async def _with_actor(request, call_next):
+    """Record who authenticated, and bind them for the duration of the request.
+
+    One place, deliberately. Binding per-route would mean every current and
+    future route that can reach the ExecutionGateway has to remember to do it,
+    and the ones that forgot are exactly the boundaries Phase 16 had to cap at
+    READ_ONLY. Here it is structural: a route cannot opt out of carrying the
+    caller's identity, and a new route inherits it without knowing it exists.
+
+    The binding is a context manager, so it unwinds on the way out whether the
+    handler returns, raises or is cancelled -- no actor survives into the next
+    request. Contextvars are copied into child tasks and into the threadpool
+    that runs sync handlers, so this reaches both. A handler that hands work to
+    a raw thread loses it, which resolves to the constrained system actor:
+    authority shrinks rather than transfers.
+
+    `request.state.user_id` is set for the existing owner-scoped helpers that
+    already read it. It is server-resolved from the session -- never from a
+    body, query parameter or arbitrary header.
+    """
+    from saathi.execution.authorization_sources import actor_context
+
+    user_id = _authenticated_user_id(request)
+    request.state.user_id = user_id
+    with actor_context(user_id):
+        return await call_next(request)
 
 class LoginIn(BaseModel):
     password: str

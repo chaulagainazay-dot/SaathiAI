@@ -7,7 +7,7 @@ never a 500. Same auth model as the other routers (request.state.user_id).
 """
 from __future__ import annotations
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, HTTPException
 
 from saathi.control_center.aggregator import ControlCenterAggregator
 from saathi.control_center import search as _search
@@ -17,7 +17,18 @@ router = APIRouter(prefix="/api/v1/control", tags=["control-center"])
 
 
 def _user(request: Request) -> str:
-    return getattr(request.state, "user_id", None) or "ajay"
+    """The authenticated user this request belongs to.
+
+    Previously `... or "ajay"`. `request.state.user_id` was assigned nowhere, so
+    the fallback was not a fallback -- it was the only branch, and every
+    authenticated caller was scoped to one hardcoded owner. The auth middleware
+    now records the real session user, and a request that reaches here without
+    one is refused rather than attributed to somebody.
+    """
+    user_id = getattr(request.state, "user_id", None)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="NO_AUTHENTICATED_USER")
+    return user_id
 
 
 @router.get("/overview")

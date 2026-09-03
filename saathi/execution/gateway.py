@@ -56,6 +56,20 @@ def _run_coro(coro):
         return pool.submit(lambda: asyncio.run(coro)).result()
 
 
+def _current_requester() -> str:
+    """The actor to attribute an otherwise-unattributed execution to.
+
+    A bound session becomes `user:<id>`; nothing bound becomes the named system
+    actor. It never returns a human identity that was not established, which is
+    the whole point: an unattributed action recorded as a real person is worse
+    than one recorded as the backend, because it is indistinguishable in the
+    audit log from something that person actually did.
+    """
+    from saathi.execution.authorization_sources import current_actor_id
+
+    return current_actor_id()
+
+
 @dataclass
 class ExecutionContext:
     """Environment context for execution decision."""
@@ -188,7 +202,7 @@ class ExecutionGateway:
         tool_id: str,
         arguments: dict | None = None,
         run_id: str = "",
-        requested_by: str = "user:ajay",
+        requested_by: str = "",
         capability: str = "",
         tool_version: str = "",
         idempotency_key: str = "",
@@ -210,6 +224,14 @@ class ExecutionGateway:
         """
         from saathi.tool_runtime.contracts import ToolExecutionRequest
         from saathi.tool_runtime.service import default_tool_service
+
+        # Attribution, resolved rather than assumed. This defaulted to a
+        # hardcoded human identity, so any caller that did not pass one acted as
+        # that person -- including against their approvals. It now takes the
+        # actor the authenticated boundary bound, and falls back to the named
+        # system actor when there is no session: a caller with no identity is
+        # recorded as the backend, never as somebody.
+        requested_by = requested_by or _current_requester()
 
         req = ToolExecutionRequest(
             run_id=run_id or "gw",

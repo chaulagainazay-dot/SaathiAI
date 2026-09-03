@@ -47,6 +47,20 @@ def current_actor() -> str | None:
     return _ACTOR.get()
 
 
+def current_actor_id() -> str:
+    """The bound session as `user:<id>`, or the named system actor.
+
+    The one place this translation happens, so the gateway, the chat engine and
+    anything added later cannot drift into different spellings of "nobody" --
+    and so no caller has to decide for itself what to do when identity is
+    absent. It never invents a user.
+    """
+    from saathi.execution.authorization import SYSTEM_ACTOR
+
+    actor = _ACTOR.get()
+    return f"user:{actor}" if actor else SYSTEM_ACTOR
+
+
 def _kill_switch_blocked() -> bool | None:
     """Global stop state, or None when it cannot be read.
 

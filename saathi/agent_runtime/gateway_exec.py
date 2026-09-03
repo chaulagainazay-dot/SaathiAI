@@ -136,7 +136,48 @@ def _execution_time_block(store, run_id: str) -> str | None:
             return "RUN_STATE_BLOCKS"
     except Exception:
         return "RUN_STATE_UNKNOWN"
+
+    # Ownership. A bound session that is not this run's creator may not drive
+    # its tools, however the request reached here: holding `write` authorises
+    # acting on your own runs, not on everyone's. Checked before the actor is
+    # rebound below, or it would be comparing the owner against themselves.
+    #
+    # No bound session means an internal caller, which is capped elsewhere and
+    # has no user identity to compare -- so ownership is not the gate that
+    # applies to it, and pretending otherwise would block legitimate internal
+    # work while protecting nothing.
+    from saathi.execution.authorization_sources import current_actor
+
+    caller = current_actor()
+    if caller and not _same_actor(caller, run_actor(store, run_id)):
+        return "RUN_NOT_OWNED"
     return None
+
+
+def run_actor(store, run_id: str) -> str:
+    """The run's persisted creator, or "" when it cannot be established.
+
+    Authoritative in a way an ambient request context is not: it survives the
+    HTTP request, so a tool executed later still attributes to the person who
+    asked for the run rather than to whoever happened to trigger the execution.
+    """
+    try:
+        run = store.get_run(run_id)
+        return str((run or {}).get("actor") or "")
+    except Exception:
+        return ""
+
+
+def _same_actor(session_user: str, run_owner: str) -> bool:
+    """Whether a bare session id owns a run recorded as `user:<id>`.
+
+    Fails closed on an unowned run: a run with no recorded creator is not a run
+    that everybody owns.
+    """
+    if not run_owner:
+        return False
+    prefix, _, rest = run_owner.partition(":")
+    return (rest if prefix == "user" else run_owner) == session_user
 
 
 class AgentExecutor:
