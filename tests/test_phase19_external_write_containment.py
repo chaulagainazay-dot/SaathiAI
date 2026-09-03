@@ -1023,3 +1023,47 @@ def test_tiktok_video_publish_is_refused_outside_governance(monkeypatch):
     monkeypatch.setattr(tiktok_post, "token_ok", lambda: True)
     with pytest.raises(EgressDenied):
         tiktok_post.post_video("/tmp/none.mp4", "title")
+
+
+# ── the mechanisms that are structurally incapable of writing ──────────────
+
+def test_the_external_provider_transport_is_read_only_by_construction():
+    """`connectors/providers/external/transport.py` builds arbitrary urllib
+    requests with `method=ctx.method`, which looks like a way to carry a write
+    around the guard. It is not: the profile validator admits GET and HEAD only
+    and raises on anything else, so the transport cannot mutate.
+
+    Pinned because that is a property of one frozenset, and widening it would
+    silently turn a read-only transport into an ungoverned write path.
+    """
+    from saathi.connectors.providers.external.models import (
+        M33_ALLOWED_METHODS, ExternalProfileError)
+
+    assert M33_ALLOWED_METHODS == frozenset({"GET", "HEAD"})
+
+    import saathi.connectors.providers.external.models as models
+
+    source = pathlib.Path(models.__file__).read_text()
+    assert "method_not_read_only" in source
+    assert ExternalProfileError is not None
+
+
+def test_no_http_session_objects_hide_writes_from_the_sweep():
+    """A `requests.Session()` bound to a local name would defeat a sweep that
+    matches module-level receivers, exactly as the alias did. There are none;
+    this fails if one is introduced without the sweep learning about it."""
+    offenders = []
+    for path in pathlib.Path("saathi").rglob("*.py"):
+        if "__pycache__" in str(path):
+            continue
+        try:
+            tree = ast.parse(path.read_text())
+        except SyntaxError:
+            continue
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) \
+                    and node.func.attr in ("Session", "ClientSession"):
+                offenders.append(f"{path}:{node.lineno}")
+    assert offenders == [], (
+        "HTTP session objects found; the sweep matches module receivers and "
+        f"would not see writes through these: {offenders}")
