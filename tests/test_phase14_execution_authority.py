@@ -303,24 +303,60 @@ def test_every_status_names_a_reason_code_and_source():
 
 
 def test_subsystems_that_cannot_speak_say_so():
-    """Guardian and the gateway scaffold are recorded as silent, not as passes."""
+    """Guardian stays silent, and an un-asked gateway says so rather than passing.
+
+    Phase 16 made `ExecutionGateway.authorize` real, so the gateway is no longer
+    excluded as a stub. It decides *intents*, though, and a run-level snapshot
+    names none -- so with no decision to consult it is recorded as not-evaluated.
+    """
     snap = compose(_ok_inputs())
     assert "trading_guardian" in snap["not_applicable"]
-    assert "execution_gateway" in snap["not_applicable"]
     assert "trading" in snap["not_applicable"]["trading_guardian"]
-    assert "unimplemented" in snap["not_applicable"]["execution_gateway"]
+    assert "execution_gateway" in snap["not_applicable"]
+    assert "no gateway decision" in snap["not_applicable"]["execution_gateway"]
 
 
-def test_the_gateway_stub_never_contributes_a_pass():
-    """`ExecutionGateway.authorize` grants unconditionally with a TODO.
-
-    If it is ever implemented this test should be revisited -- until then it must
-    not appear as an authority source at all.
-    """
+def test_an_unevaluated_gateway_never_contributes_a_pass():
+    """Absence of a gateway decision must not read as gateway approval."""
     from saathi.agent_runtime import execution_authority as ea
 
-    assert not any("execution_gateway" in str(p.value).lower() for p in Provenance)
-    assert "execution_gateway" in ea.NOT_APPLICABLE_SOURCES
+    snap = compose(_ok_inputs())
+    # Not evaluated: visible as silence, and never reported as a gateway pass.
+    assert ea.GATEWAY_NOT_EVALUATED in snap["not_applicable"].values()
+    assert not any(b["status"] == AuthorityStatus.GATEWAY_DENIED.value
+                   for b in snap["blocking"])
+    assert "gateway" not in snap["reason_code"]
+
+
+def test_a_gateway_denial_blocks_and_is_attributed_to_the_gateway():
+    inputs = _ok_inputs()
+    inputs.gateway_decision = {"decision": "DENIED", "reason_code": "approval.pending"}
+    snap = compose(inputs)
+    assert snap["status"] == AuthorityStatus.GATEWAY_DENIED.value
+    assert snap["reason_code"] == "gateway.denied"
+    assert snap["provenance"] == "AUTHORITATIVE_EXECUTION_GATEWAY"
+    # The gateway's own reason survives, so the snapshot explains rather than
+    # merely refuses -- but the snapshot does not re-derive it.
+    assert snap["detail"] == "approval.pending"
+    # A consulted gateway is no longer listed as silent.
+    assert "execution_gateway" not in snap["not_applicable"]
+
+
+def test_a_gateway_unknown_is_not_a_gateway_pass():
+    """UNKNOWN is the gateway saying it could not establish an input."""
+    inputs = _ok_inputs()
+    inputs.gateway_decision = {"decision": "UNKNOWN", "reason_code": "kill_switch.unknown"}
+    snap = compose(inputs)
+    assert snap["status"] == AuthorityStatus.GATEWAY_DENIED.value
+
+
+def test_a_gateway_authorization_does_not_by_itself_pass_the_snapshot():
+    """The gateway stops blocking; the other gates still have to hold."""
+    inputs = _ok_inputs()
+    inputs.gateway_decision = {"decision": "AUTHORIZED", "reason_code": "authorization.granted"}
+    inputs.kill_switch_blocked = True
+    snap = compose(inputs)
+    assert snap["status"] == AuthorityStatus.KILL_SWITCH_ACTIVE.value
 
 
 # ── correlation, read-only, non-token ──────────────────────────────────────

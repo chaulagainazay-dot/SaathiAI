@@ -236,8 +236,26 @@ def _platform_runtime_bound() -> bool | None:
         return None
 
 
+def _gateway_decision(intent_id: str) -> dict | None:
+    """The ExecutionGateway's recorded decision for one intent, or None.
+
+    Read-only, and read *from* the gateway rather than recomputed: the gateway
+    owns the decision, this surface only reports it. None means no decision was
+    recorded, which the composer reports as not-evaluated rather than as a pass.
+    """
+    if not intent_id:
+        return None
+    try:
+        from saathi.execution.gateway import ExecutionGateway
+
+        return ExecutionGateway().inspect_decision(intent_id=intent_id)
+    except Exception:
+        return None
+
+
 @router.get("/runs/{rid}/execution-authority")
-def execution_authority(rid: str, request: Request, task_id: str = ""):
+def execution_authority(rid: str, request: Request, task_id: str = "",
+                        intent_id: str = ""):
     """Read-only: what this system can truthfully say about one action.
 
     Pure inspection. It executes nothing, approves nothing, invokes no gateway
@@ -264,6 +282,7 @@ def execution_authority(rid: str, request: Request, task_id: str = ""):
         resolved_approvals=_resolved_approvals(st, rid) if run else [],
         kill_switch_blocked=_kill_switch_blocked(),
         platform_runtime_bound=_platform_runtime_bound(),
+        gateway_decision=_gateway_decision(intent_id),
     )
     return compose(inputs, run_id=rid, task_id=task_id)
 

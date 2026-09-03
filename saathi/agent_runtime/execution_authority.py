@@ -14,11 +14,13 @@ written after auditing what this repository can actually know rather than before
   for an agent-runtime action it is NOT_APPLICABLE. Reporting "Guardian allowed"
   here would invent a verdict from a subsystem that never evaluated the action.
 
-* **`saathi.execution.gateway.ExecutionGateway.authorize`** is an unimplemented
-  scaffold: it carries a `# TODO: Implement authorization` and transitions every
-  intent to AUTHORIZED unconditionally. It therefore contributes UNAVAILABLE and
-  can never contribute a pass -- treating a stub's unconditional yes as authority
-  is exactly the unknown-becomes-allowed path this module exists to prevent.
+* **`saathi.execution.gateway.ExecutionGateway.authorize`** is real as of Phase
+  16 and fails closed, so this module now consumes its verdict instead of
+  excluding it. What it decides, though, is one *execution intent* -- not a run.
+  A run-level snapshot with no intent named has no gateway decision to consult,
+  which is GATEWAY_NOT_EVALUATED: neither a pass nor a denial, and never
+  upgraded into either. Pass an `intent_id` and the recorded decision is read;
+  a negative one blocks as GATEWAY_DENIED.
 
 * The **real** enforcement for agent tool execution is
   `agent_runtime.gateway_exec`, which fails closed: with no platform runtime
@@ -51,6 +53,9 @@ class AuthorityStatus(str, Enum):
     APPROVAL_DENIED = "APPROVAL_DENIED"
     APPROVAL_EXPIRED = "APPROVAL_EXPIRED"
     PLATFORM_RUNTIME_UNAVAILABLE = "PLATFORM_RUNTIME_UNAVAILABLE"
+    #: The ExecutionGateway refused this specific intent. Distinct from every
+    #: state above because it is the gateway's own verdict, not an input to it.
+    GATEWAY_DENIED = "GATEWAY_DENIED"
     #: The weakest truthful positive: the checks this system can perform found
     #: nothing blocking. Not a promise that execution will succeed.
     AUTHORITY_CHECKS_PASSED = "AUTHORITY_CHECKS_PASSED"
@@ -69,6 +74,7 @@ REASON = {
     AuthorityStatus.APPROVAL_DENIED: "approval.denied",
     AuthorityStatus.APPROVAL_EXPIRED: "approval.expired",
     AuthorityStatus.PLATFORM_RUNTIME_UNAVAILABLE: "platform_runtime.unavailable",
+    AuthorityStatus.GATEWAY_DENIED: "gateway.denied",
     AuthorityStatus.AUTHORITY_CHECKS_PASSED: "authority.checks_passed",
     AuthorityStatus.UNKNOWN: "authority.unknown",
 }
@@ -81,6 +87,7 @@ class Provenance(str, Enum):
     APPROVAL_STORE = "AUTHORITATIVE_APPROVAL_STORE"
     KILL_SWITCH = "AUTHORITATIVE_KILL_SWITCH"
     PLATFORM_RUNTIME = "TRUSTED_RUNTIME_PLATFORM"
+    EXECUTION_GATEWAY = "AUTHORITATIVE_EXECUTION_GATEWAY"
     COMPOSER = "COMPOSER"
 
 
@@ -89,9 +96,13 @@ class Provenance(str, Enum):
 NOT_APPLICABLE_SOURCES = {
     "trading_guardian": "trading-scoped: evaluates strategies, portfolios and "
                         "market regimes, not agent run tasks",
-    "execution_gateway": "unimplemented: authorize() is a stub that grants "
-                         "unconditionally, so it cannot contribute a pass",
 }
+
+#: What the snapshot says about the gateway when no decision exists for the
+#: action being described. Named rather than omitted, so a reader can tell "the
+#: gateway refused" from "the gateway was never asked" -- which are opposite
+#: facts that an absent field would render identical.
+GATEWAY_NOT_EVALUATED = "intent-scoped: no gateway decision recorded for this action"
 
 
 #: Blocking precedence, strongest first. Each dominates everything below it.
@@ -113,6 +124,7 @@ PRECEDENCE: tuple[AuthorityStatus, ...] = (
     AuthorityStatus.APPROVAL_DENIED,
     AuthorityStatus.APPROVAL_EXPIRED,
     AuthorityStatus.WAITING_APPROVAL,
+    AuthorityStatus.GATEWAY_DENIED,
     AuthorityStatus.PLATFORM_RUNTIME_UNAVAILABLE,
     AuthorityStatus.UNKNOWN,
     AuthorityStatus.AUTHORITY_CHECKS_PASSED,
@@ -146,6 +158,10 @@ class AuthorityInputs:
     resolved_approvals: list[dict] = field(default_factory=list)
     kill_switch_blocked: bool | None = None
     platform_runtime_bound: bool | None = None
+    #: The ExecutionGateway's recorded decision for a named intent, as returned
+    #: by `ExecutionGateway.inspect_decision`. None means no intent was named or
+    #: none was decided -- which is NOT_EVALUATED, never a pass.
+    gateway_decision: dict | None = None
     now: float | None = None
 
 
@@ -221,7 +237,23 @@ def _platform_runtime(inputs: AuthorityInputs) -> Finding | None:
     return None
 
 
-_GATES = (_kill_switch, _identity, _run_state, _approval, _platform_runtime)
+def _gateway(inputs: AuthorityInputs) -> Finding | None:
+    """Consume the gateway's verdict; never recompute it.
+
+    The gateway owns this decision. Re-deriving it here from the same inputs
+    would put the same security rule in two places, and two copies drift.
+    """
+    decision = inputs.gateway_decision
+    if not decision:
+        return None  # not evaluated; surfaced in the snapshot, not blocking
+    if str(decision.get("decision") or "") == "AUTHORIZED":
+        return None
+    return Finding(AuthorityStatus.GATEWAY_DENIED, Provenance.EXECUTION_GATEWAY,
+                   str(decision.get("reason_code") or "")[:64])
+
+
+_GATES = (_kill_switch, _identity, _run_state, _approval, _platform_runtime,
+          _gateway)
 
 
 def compose(inputs: AuthorityInputs, *, run_id: str = "", task_id: str = "") -> dict:
@@ -256,7 +288,11 @@ def compose(inputs: AuthorityInputs, *, run_id: str = "", task_id: str = "") -> 
             for f in sorted(findings, key=lambda f: _RANK[f.status])
         ],
         # Silence made visible: subsystems that exist but cannot speak here.
-        "not_applicable": dict(NOT_APPLICABLE_SOURCES),
+        "not_applicable": {
+            **NOT_APPLICABLE_SOURCES,
+            **({} if inputs.gateway_decision
+               else {"execution_gateway": GATEWAY_NOT_EVALUATED}),
+        },
         # This is an observation, not a grant. ExecutionGateway/gateway_exec
         # re-evaluate independently at action time; nothing here may be replayed
         # as permission.
