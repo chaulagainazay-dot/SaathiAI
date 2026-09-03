@@ -53,12 +53,22 @@ def send(to: str, subject: str, body: str) -> dict:
         if port == 465:
             with smtplib.SMTP_SSL(host, port, context=ctx, timeout=15) as s:
                 s.login(os.getenv("SMTP_USER", ""), os.getenv("SMTP_PASS", ""))
+                # Phase 19B: guarded at the call, not at function entry. These return
+                # early when unconfigured and several fall back to local generation,
+                # so an entry guard would break paths that never reach a network.
+                from saathi.execution.egress import guard as _egress_guard
+                _egress_guard("smtp.send", operation="send")
                 s.send_message(msg)
         else:
             with smtplib.SMTP(host, port, timeout=15) as s:
                 s.starttls(context=ctx)
                 if os.getenv("SMTP_USER"):
                     s.login(os.getenv("SMTP_USER"), os.getenv("SMTP_PASS", ""))
+                # Phase 19B: guarded at the call, not at function entry. These return
+                # early when unconfigured and several fall back to local generation,
+                # so an entry guard would break paths that never reach a network.
+                from saathi.execution.egress import guard as _egress_guard
+                _egress_guard("smtp.send", operation="send")
                 s.send_message(msg)
         _log(to, subject, body, True)
         return {"ok": True, "delivered": True, "reason": "sent"}

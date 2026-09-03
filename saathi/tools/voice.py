@@ -54,6 +54,11 @@ def _openai(text: str, voice: str) -> bytes | None:
     if not key:
         return None
     import httpx
+    # Phase 19B: guarded at the call, not at function entry. These return
+    # early when unconfigured and several fall back to local generation,
+    # so an entry guard would break paths that never reach a network.
+    from saathi.execution.egress import guard as _egress_guard
+    _egress_guard("openai.tts", operation="_openai")
     r = httpx.post("https://api.openai.com/v1/audio/speech",
                    headers={"Authorization": f"Bearer {key}"},
                    json={"model": "tts-1", "voice": "fable", "input": text,
@@ -67,6 +72,11 @@ def _elevenlabs(text: str, voice: str) -> bytes | None:
     if not (key and vid):
         return None
     import httpx
+    # Phase 19B: guarded at the call, not at function entry. These return
+    # early when unconfigured and several fall back to local generation,
+    # so an entry guard would break paths that never reach a network.
+    from saathi.execution.egress import guard as _egress_guard
+    _egress_guard("elevenlabs.tts", operation="_elevenlabs")
     r = httpx.post(f"https://api.elevenlabs.io/v1/text-to-speech/{vid}",
                    headers={"xi-api-key": key},
                    json={"text": text, "model_id": "eleven_turbo_v2"}, timeout=60)

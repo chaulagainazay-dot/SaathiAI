@@ -294,6 +294,11 @@ def elevenlabs_voiceover(text: str, out_path: str = "") -> dict:
                           f"vo-{dt.date.today().isoformat()}.mp3")
     from pathlib import Path as _P
     _P(out).parent.mkdir(parents=True, exist_ok=True)
+    # Phase 19B: guarded at the call, not at function entry. These return
+    # early when unconfigured and several fall back to local generation,
+    # so an entry guard would break paths that never reach a network.
+    from saathi.execution.egress import guard as _egress_guard
+    _egress_guard("elevenlabs.tts", operation="elevenlabs_voiceover")
     r = httpx.post(
         f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}",
         headers={"xi-api-key": key, "accept": "audio/mpeg"},
@@ -344,6 +349,11 @@ def make_animated_video(script: str = "", image_path: str = "") -> dict:
         }],
         "dimension": {"width": 720, "height": 1280},  # vertical for TikTok
     }
+    # Phase 19B: guarded at the call, not at function entry. These return
+    # early when unconfigured and several fall back to local generation,
+    # so an entry guard would break paths that never reach a network.
+    from saathi.execution.egress import guard as _egress_guard
+    _egress_guard("heygen.video", operation="make_animated_video")
     r = httpx.post("https://api.heygen.com/v2/video/generate",
                    headers={"X-Api-Key": hk, "Content-Type": "application/json"},
                    json=body, timeout=60)
@@ -393,6 +403,11 @@ def make_avatar_video(script: str = "") -> dict:
         body = {"script": {"type": "text", "input": script[:1500]}}
         if presenter:
             body["source_url"] = presenter
+        # Phase 19B: guarded at the call, not at function entry. These return
+        # early when unconfigured and several fall back to local generation,
+        # so an entry guard would break paths that never reach a network.
+        from saathi.execution.egress import guard as _egress_guard
+        _egress_guard("d_id.talks", operation="make_avatar_video")
         r = httpx.post("https://api.d-id.com/talks",
                        headers={"Authorization": f"Basic {key}"}, json=body, timeout=60)
         r.raise_for_status()
@@ -474,6 +489,11 @@ def _voiceover(text: str) -> tuple[bytes, str]:
         try:
             import httpx
             vid = os.getenv("ELEVENLABS_VOICE_ID", "21m00Tcm4TlvDq8ikWAM")
+            # Phase 19B: guarded at the call, not at function entry. These return
+            # early when unconfigured and several fall back to local generation,
+            # so an entry guard would break paths that never reach a network.
+            from saathi.execution.egress import guard as _egress_guard
+            _egress_guard("tts.generate", operation="_voiceover")
             r = httpx.post(
                 f"https://api.elevenlabs.io/v1/text-to-speech/{vid}",
                 headers={"xi-api-key": key, "accept": "audio/mpeg"},
@@ -495,6 +515,11 @@ def _voiceover(text: str) -> tuple[bytes, str]:
             fields["profile_id"] = profile           # exact cloned Mr. Yeti voice
         else:
             fields["instruct"] = "male, middle-aged, low pitch, american accent"
+        # Phase 19B: guarded at the call, not at function entry. These return
+        # early when unconfigured and several fall back to local generation,
+        # so an entry guard would break paths that never reach a network.
+        from saathi.execution.egress import guard as _egress_guard
+        _egress_guard("tts.generate", operation="_voiceover")
         r = httpx.post(f"{base}/generate", data=fields, timeout=240)
         if r.status_code == 200 and r.headers.get("content-type", "").startswith("audio"):
             return r.content, "audio/wav"
@@ -581,6 +606,11 @@ def publish_to_youtube(video_path: str, title: str, description: str = "", tags:
     r = None
     for attempt in range(3):
         try:
+            # Phase 19B: guarded at the call, not at function entry. These return
+            # early when unconfigured and several fall back to local generation,
+            # so an entry guard would break paths that never reach a network.
+            from saathi.execution.egress import guard as _egress_guard
+            _egress_guard("youtube.publish", operation="publish_to_youtube")
             r = httpx.post(url, json={"title": title, "description": description,
                                       "tags": tags, "videoPath": staged}, timeout=120)
             if r.status_code < 500:

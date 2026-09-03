@@ -191,6 +191,11 @@ def _post_instagram_reel_direct(local_path: str, caption: str, c: dict) -> dict:
         file_size = os.path.getsize(local_path)
 
         # Step 1: Create resumable upload session
+        # Phase 19B: guarded at the call, not at function entry. These return
+        # early when unconfigured and several fall back to local generation,
+        # so an entry guard would break paths that never reach a network.
+        from saathi.execution.egress import guard as _egress_guard
+        _egress_guard("instagram.media", operation="_post_instagram_reel_direct")
         session_r = httpx.post(
             f"{_API}/{c['ig_id']}/media",
             data={
@@ -213,6 +218,11 @@ def _post_instagram_reel_direct(local_path: str, caption: str, c: dict) -> dict:
         with open(local_path, "rb") as f:
             video_bytes = f.read()
 
+        # Phase 19B: guarded at the call, not at function entry. These return
+        # early when unconfigured and several fall back to local generation,
+        # so an entry guard would break paths that never reach a network.
+        from saathi.execution.egress import guard as _egress_guard
+        _egress_guard("instagram.media", operation="_post_instagram_reel_direct")
         upload_r = httpx.post(
             upload_uri,
             content=video_bytes,
@@ -254,6 +264,11 @@ def _post_instagram_reel_direct(local_path: str, caption: str, c: dict) -> dict:
             return {"status": "error", "error": "Instagram container processing timed out after 120s — video may be too large or wrong format"}
 
         # Step 4: Publish
+        # Phase 19B: guarded at the call, not at function entry. These return
+        # early when unconfigured and several fall back to local generation,
+        # so an entry guard would break paths that never reach a network.
+        from saathi.execution.egress import guard as _egress_guard
+        _egress_guard("instagram.media", operation="_post_instagram_reel_direct")
         pub_r = httpx.post(
             f"{_API}/{c['ig_id']}/media_publish",
             data={"creation_id": container_id, "access_token": c["token"]},
@@ -272,6 +287,11 @@ def _post_instagram_reel_url(video_url: str, caption: str, c: dict) -> dict:
     """Upload Reel via public video URL (original method)."""
     import time
     try:
+        # Phase 19B: guarded at the call, not at function entry. These return
+        # early when unconfigured and several fall back to local generation,
+        # so an entry guard would break paths that never reach a network.
+        from saathi.execution.egress import guard as _egress_guard
+        _egress_guard("instagram.media", operation="_post_instagram_reel_url")
         r1 = httpx.post(
             f"{_API}/{c['ig_id']}/media",
             data={"media_type": "REELS", "video_url": video_url,
@@ -304,6 +324,11 @@ def _post_instagram_reel_url(video_url: str, caption: str, c: dict) -> dict:
         if not container_ready:
             return {"status": "error", "error": "Instagram URL container timed out after 60s"}
 
+        # Phase 19B: guarded at the call, not at function entry. These return
+        # early when unconfigured and several fall back to local generation,
+        # so an entry guard would break paths that never reach a network.
+        from saathi.execution.egress import guard as _egress_guard
+        _egress_guard("instagram.media", operation="_post_instagram_reel_url")
         r2 = httpx.post(f"{_API}/{c['ig_id']}/media_publish",
                         data={"creation_id": container_id, "access_token": c["token"]},
                         timeout=30)

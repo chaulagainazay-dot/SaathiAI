@@ -399,6 +399,11 @@ def transcribe_audio(video_path: str, model_size: str = "base") -> dict:
     if key and not key.startswith("YOUR"):
         try:
             with open(video_path, "rb") as fh:
+                # Phase 19B: guarded at the call, not at function entry. These return
+                # early when unconfigured and several fall back to local generation,
+                # so an entry guard would break paths that never reach a network.
+                from saathi.execution.egress import guard as _egress_guard
+                _egress_guard("openai.transcriptions", operation="transcribe_audio")
                 r = httpx.post(
                     "https://api.openai.com/v1/audio/transcriptions",
                     headers={"Authorization": f"Bearer {key}"},
