@@ -380,6 +380,52 @@ class CanonicalBar(MarketDataEvent):
         return d
 
 
+@dataclass(frozen=True)
+class HistoricalBar(CanonicalBar):
+    """Canonical immutable bar with source-record and revision identity.
+
+    Historical datasets use the same market-data event contract as every other
+    observation.  The extra fields bind a row to an immutable source revision;
+    they do not create a crypto-specific backtest representation.
+    """
+
+    source_record_id: str = ""
+    revision_id: str = ""
+    supersedes_revision_id: str = ""
+    status: str = "ORIGINAL"
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+        if not self.source_record_id or not self.revision_id:
+            raise ValueError("historical source-record and revision identity are required")
+        if self.status not in {
+            "ORIGINAL", "CORRECTED", "SUPERSEDED", "RETRACTED", "UNKNOWN",
+        }:
+            raise ValueError(f"unsupported historical revision status: {self.status}")
+
+    @property
+    def as_of(self) -> datetime:
+        return self.point_in_time.as_of
+
+    @property
+    def available_at(self) -> datetime:
+        return self.point_in_time.available_at
+
+    @property
+    def received_at(self) -> datetime:
+        return self.point_in_time.received_at
+
+    def to_dict(self) -> dict[str, Any]:
+        d = super().to_dict()
+        d.update(
+            source_record_id=self.source_record_id,
+            revision_id=self.revision_id,
+            supersedes_revision_id=self.supersedes_revision_id,
+            revision_status=self.status,
+        )
+        return d
+
+
 # ── point-in-time filtering ────────────────────────────────────────────────
 
 def visible_at(
