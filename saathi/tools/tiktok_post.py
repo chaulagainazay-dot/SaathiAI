@@ -201,6 +201,15 @@ def post_video(
     """
     if not token_ok():
         return {"ok": False, "error": "Not connected — visit /api/v1/tiktok/auth first"}
+    # Phase 19B: a public TikTok upload. This module imports `requests as _req`,
+    # and an alias is exactly what the first sweep could not see -- it matched
+    # receivers literally named httpx/requests, so an entire social publisher
+    # stayed invisible. Guarded after the connection check so an unconfigured
+    # caller still gets its own honest answer; past that point the upload is
+    # the only thing this function does.
+    from saathi.execution.egress import guard as _egress_guard
+
+    _egress_guard("tiktok.video_publish", operation="post_video")
 
     p = Path(video_path)
     if not p.exists():
