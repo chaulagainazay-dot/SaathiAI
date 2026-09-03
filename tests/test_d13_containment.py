@@ -188,6 +188,16 @@ audit = ContainmentAudit({
     "var_tmp":   "/private/var/folders",
     "system":    "/opt/homebrew",
     "python":    os.path.dirname(os.__file__),
+    # The interpreter's own libraries. `python` above is only the stdlib
+    # (Homebrew Cellar); third-party packages live in the virtualenv, and this
+    # developer's virtualenv sits inside $HOME/SaathiAI. Longest-prefix
+    # classification therefore filed every `import` of a third-party library --
+    # 1682 of them, all under .venv -- as a read of personal state, and the
+    # containment assertion failed on library imports rather than on any access
+    # to operator data. Naming the environment makes the detector truthful; it
+    # does not widen what counts as personal. ~/.saathi remains forbidden, and
+    # this zone is deliberately the venv prefix only, not $HOME/SaathiAI.
+    "python_env": sys.prefix,
 }, allowed_write_zones={"isolated", "tmp", "var_tmp"}).install()
 
 import saathi.server as server
@@ -311,6 +321,76 @@ def test_isolated_boot_opens_no_personal_file(isolated_boot):
     assert isolated_boot["reads_personal"] == []
     personal_files = [p for p in isolated_boot["file_writes_outside"] if "/.saathi/" in p]
     assert personal_files == []
+
+
+# ── negative control: the detector must still catch a real violation ────────
+def test_the_detector_still_catches_a_read_of_personal_state(tmp_path):
+    """Green must mean contained, not that the instrument stopped working.
+
+    Phase 15 added a ``python_env`` zone so library imports stop being filed as
+    personal reads. That is only safe if a genuine personal read is still
+    caught, so this drives one deliberately -- against a fixture inside a fake
+    personal root, never the operator's real ``~/.saathi``.
+    """
+    fake_home = tmp_path / "home"
+    personal = fake_home / ".saathi"
+    personal.mkdir(parents=True)
+    secret = personal / "accounts.db"
+    secret.write_text("fixture")
+
+    child = r'''
+import json, os, sys
+sys.path.insert(0, %(tests)r)
+from support.containment_audit import ContainmentAudit
+audit = ContainmentAudit({
+    "personal": %(personal)r,
+    "python_env": sys.prefix,
+}, allowed_write_zones=set()).install()
+
+# The violation: read a file inside the personal zone.
+open(%(secret)r, "rb").close()
+# And a benign library import, which must NOT be counted as personal.
+import json as _j
+
+print("@@N@@" + json.dumps({
+    "personal_reads": audit.reads_in("personal"),
+}))
+''' % {
+        "tests": str(pathlib.Path(__file__).resolve().parent),
+        "personal": str(personal),
+        "secret": str(secret),
+    }
+
+    proc = subprocess.run([sys.executable, "-c", child], cwd=REPO_ROOT,
+                          env={**os.environ, "PYTHONPATH": str(REPO_ROOT)},
+                          capture_output=True, text=True, timeout=120)
+    assert proc.returncode == 0, proc.stderr[-2000:]
+    line = next(l for l in proc.stdout.splitlines() if l.startswith("@@N@@"))
+    reads = json.loads(line[len("@@N@@"):])["personal_reads"]
+
+    assert reads, "the detector failed to record a real personal read"
+    assert any(os.path.realpath(str(secret)) == r for r in reads)
+
+
+def test_the_python_env_zone_does_not_cover_the_checkout(tmp_path):
+    """The new zone is the virtualenv prefix, not $HOME/SaathiAI.
+
+    If it ever widened to the checkout it would hide real personal reads, which
+    is exactly the failure mode this milestone was called to prevent.
+    """
+    import sys as _sys
+
+    venv = os.path.realpath(_sys.prefix)
+    checkout = os.path.realpath(os.path.join(os.path.expanduser("~"), "SaathiAI"))
+    assert venv != checkout
+    assert venv.startswith(checkout + os.sep) or not venv.startswith(checkout), (
+        "the venv may live inside the checkout, but the zone must be the venv")
+
+    # A file directly in the checkout is not inside the venv zone.
+    from support.containment_audit import classify
+    zones = {"personal_checkout": checkout, "python_env": venv}
+    assert classify(os.path.join(checkout, "data", "growth"), zones) == "personal_checkout"
+    assert classify(os.path.join(venv, "lib", "x.py"), zones) == "python_env"
 
 
 def test_isolated_boot_writes_no_file_outside_the_root(isolated_boot):

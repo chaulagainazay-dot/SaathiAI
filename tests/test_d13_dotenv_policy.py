@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import os
+import pathlib
 import subprocess
 import sys
 
@@ -140,11 +141,42 @@ def test_explicit_isolated_env_opens_no_worktree_env_at_import(tmp_path):
     assert result["worktree_env_opened"] is False
 
 
-def test_default_mode_still_loads_the_worktree_env(tmp_path):
-    """Historical compatibility: nothing configured, nothing changed."""
+def test_default_mode_still_targets_the_worktree_env(tmp_path):
+    """Historical compatibility: nothing configured, nothing changed.
+
+    The assertion is on the *target and policy*, not on the file existing.
+    ``.env`` is gitignored, so it is present in the checkout that created it and
+    absent from every additional git worktree -- this test previously demanded
+    ``reason == "default"``, which only holds where the operator happens to keep
+    a ``.env``. Both outcomes are correct policy and the distinction is not a
+    containment property, so the test now pins the target path and accepts
+    either reason, while still proving the loader considered nothing else.
+    """
+    result = _load_child({"SAATHI_STATE_ROOT": str(tmp_path)})
+    status = result["status"]
+
+    assert status["path"] == str(HISTORICAL_DOTENV), "the default target is the worktree .env"
+    if HISTORICAL_DOTENV.exists():
+        assert status["reason"] == "default" and status["loaded"] is True
+    else:
+        # Absent is a first-class outcome: the loader reports it and loads
+        # nothing rather than searching elsewhere.
+        assert status["reason"] == "default_path_missing" and status["loaded"] is False
+
+
+def test_default_mode_never_searches_beyond_the_worktree(tmp_path):
+    """Whether or not a ``.env`` exists, no other candidate is consulted.
+
+    This is the containment property the previous assertion was standing in for,
+    and unlike it, it holds in every worktree.
+    """
     result = _load_child({"SAATHI_STATE_ROOT": str(tmp_path)})
     assert result["status"]["path"] == str(HISTORICAL_DOTENV)
-    assert result["status"]["reason"] == "default"
+    # No fallback to a home-relative or parent-directory .env.
+    for candidate in (pathlib.Path.home() / ".env",
+                      REPO_ROOT.parent / ".env",
+                      pathlib.Path.home() / ".saathi" / ".env"):
+        assert result["status"]["path"] != str(candidate)
 
 
 # ── write policy (22-25) ────────────────────────────────────────────────────

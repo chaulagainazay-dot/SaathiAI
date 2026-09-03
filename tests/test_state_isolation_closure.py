@@ -529,6 +529,16 @@ def test_decode_never_opens_the_model_writable(tmp_path):
         STATE_ROOT_ENV: str(tmp_path / "state"),
         "SAATHI_VOICE_ARTIFACT_DIR": str(tmp_path / "artifacts"),
         "PYTHONDONTWRITEBYTECODE": "1",
+        # Pin the child to the worktree under test.
+        #
+        # Running a script *by path* puts the script's own directory on
+        # sys.path[0] -- here a pytest tmp dir -- so `saathi` resolved through
+        # the venv's editable install instead, which points at whichever
+        # worktree last ran `pip install -e .`. On this machine that is a
+        # different checkout, so this audit was certifying another worktree's
+        # code. A containment guarantee proven against the wrong codebase is
+        # not a guarantee.
+        "PYTHONPATH": str(REPO_ROOT),
     })
     proc = subprocess.run([sys.executable, str(child)], cwd=REPO_ROOT, env=env,
                           capture_output=True, text=True, timeout=900)
@@ -538,3 +548,52 @@ def test_decode_never_opens_the_model_writable(tmp_path):
     result = json.loads(marker[-1][len("@@A@@"):])
     assert result["ok"], "the decode did not produce a result"
     assert result["writes"] == [], f"model opened for writing: {result['writes']}"
+
+
+# ── Phase 15: a child must audit the worktree under test ────────────────────
+def test_a_child_spawned_by_path_imports_this_worktree(tmp_path):
+    """Certification evidence must come from the code being certified.
+
+    A script run by path puts its own directory on sys.path[0], so `saathi`
+    resolved through the venv's editable install -- which points at whichever
+    checkout last ran `pip install -e .`. On this machine that is a different
+    worktree, so an audit spawned this way was certifying someone else's code
+    while reporting on this one.
+    """
+    child = tmp_path / "probe.py"
+    child.write_text("import json, saathi\n"
+                     "print('@@W@@' + json.dumps({'file': saathi.__file__}))\n")
+
+    env = dict(os.environ)
+    env["PYTHONPATH"] = str(REPO_ROOT)
+    proc = subprocess.run([sys.executable, str(child)], cwd=REPO_ROOT, env=env,
+                          capture_output=True, text=True, timeout=120)
+    assert proc.returncode == 0, proc.stderr[-2000:]
+
+    line = next(l for l in proc.stdout.splitlines() if l.startswith("@@W@@"))
+    resolved = json.loads(line[len("@@W@@"):])["file"]
+    assert os.path.realpath(resolved).startswith(os.path.realpath(str(REPO_ROOT)) + os.sep), (
+        f"child imported saathi from {resolved}, not the worktree under test")
+
+
+def test_without_pinning_a_by_path_child_can_import_another_worktree(tmp_path):
+    """Documents the mechanism, so the pin above is never removed as redundant.
+
+    Asserts only that resolution is *not guaranteed* to be this worktree without
+    the pin -- on a machine with no editable install pointing elsewhere it may
+    legitimately resolve here, so this must not be a hard inequality.
+    """
+    child = tmp_path / "probe.py"
+    child.write_text("import json, saathi, sys\n"
+                     "print('@@W@@' + json.dumps({'file': saathi.__file__, 'p0': sys.path[0]}))\n")
+
+    env = {k: v for k, v in os.environ.items() if k != "PYTHONPATH"}
+    proc = subprocess.run([sys.executable, str(child)], cwd=REPO_ROOT, env=env,
+                          capture_output=True, text=True, timeout=120)
+    assert proc.returncode == 0, proc.stderr[-2000:]
+
+    line = next(l for l in proc.stdout.splitlines() if l.startswith("@@W@@"))
+    data = json.loads(line[len("@@W@@"):])
+    # sys.path[0] is the script's directory, never the worktree -- which is the
+    # whole reason the pin is required.
+    assert os.path.realpath(data["p0"]) != os.path.realpath(str(REPO_ROOT))
