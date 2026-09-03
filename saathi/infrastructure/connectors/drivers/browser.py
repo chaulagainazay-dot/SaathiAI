@@ -48,7 +48,11 @@ class BrowserConnector(Connector):
 
     def execute(self, capability: str, **payload):
         self._require(capability)
-        actor = payload.get("actor") or self._actor
+        # The connector's own bound identity, never one named in the payload.
+        # No caller passes `actor` today, but leaving the path open means a
+        # future tool argument -- a value a model can choose -- could decide who
+        # a browser action is attributed to and approved as.
+        actor = self._actor
         # Injected harness services keep direct path; production singleton is governed
         svc = self._svc()
         allow_direct = bool(getattr(svc, "allow_direct", self._injected))

@@ -114,7 +114,15 @@ async def human_test(request: Request):
     raw = await request.body()
     body = _json.loads(raw) if raw else {}
     url = body.get("url", "https://example.com")
-    actor = body.get("actor") or "user:api"
+    # Authority comes from the authenticated session, never from the body. This
+    # read `body.get("actor") or "user:api"`, and the value reaches
+    # `bind_approval(..., actor=actor)` and the denied-actor permission check --
+    # so a caller could name whoever they liked and have an approval bound to
+    # them, or step around a denial by picking a different name. A body field is
+    # a claim about identity; it is not identity.
+    from saathi.execution.authorization_sources import current_actor_id
+
+    actor = current_actor_id()
     approval_id = body.get("approval_id") or ""
     # Governed intent (domain policy + risk + ledger)
     try:

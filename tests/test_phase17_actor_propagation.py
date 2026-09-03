@@ -523,3 +523,44 @@ def test_an_authorization_for_one_user_does_not_transfer_to_another():
                                  kill_switch_blocked=False, approvals=[approval],
                                  now=1_000_000.0)
     assert authorize_intent(bob_intent, inputs).decision is not Decision.AUTHORIZED
+
+
+# ── no route accepts actor authority from a request body ───────────────────
+
+def test_the_governed_browser_route_ignores_a_body_supplied_actor():
+    """It read `body.get("actor") or "user:api"`, and that value reached
+    `bind_approval(..., actor=...)` and the denied-actor permission check -- so a
+    caller could have an approval bound to someone else, or step around a denial
+    by picking a different name."""
+    import inspect as _inspect
+
+    import saathi.server as server
+
+    source = _inspect.getsource(server.human_test)
+    # Code only. The comment above the fix quotes the old expression, and a
+    # substring match would flag the explanation rather than the defect.
+    code = "\n".join(line for line in source.splitlines()
+                     if not line.lstrip().startswith("#"))
+    assert 'body.get("actor")' not in code
+    assert "current_actor_id()" in code
+
+
+def test_no_execution_route_reads_an_actor_out_of_a_request_body():
+    """Repository-wide: an authority-bearing actor must not come from a payload."""
+    import pathlib
+    import re
+
+    offenders = []
+    for path in pathlib.Path("saathi").rglob("*.py"):
+        if "__pycache__" in str(path):
+            continue
+        for lineno, line in enumerate(path.read_text().splitlines(), 1):
+            if line.lstrip().startswith("#"):
+                continue
+            # `actor` / `actor_id` only. `actor_role=body.actor_role` is a role
+            # label that travels beside an authoritative actor resolved
+            # elsewhere -- matching it would flag correct code.
+            if re.search(r"\bactor(_id)?\s*=\s*(body|payload|req\.json"
+                         r"|request\.json)[\.\[]", line):
+                offenders.append(f"{path}:{lineno}")
+    assert offenders == [], f"actor taken from a request payload: {offenders}"
