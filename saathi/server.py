@@ -5685,11 +5685,24 @@ def dashboard_trigger(body: TriggerIn, request: Request):
     if not _is_authed(request):
         return JSONResponse({"error": "Unauthorized"}, status_code=401)
     from .scheduler import JOBS as SCHEDULER_JOBS
-    import threading
+    from .execution.delegated_work import run_delegated_job
+
     for hh, mm, wd, fn in SCHEDULER_JOBS:
         if fn.__name__ == body.job:
-            threading.Thread(target=fn, daemon=True).start()
-            return {"ok": True, "job": body.job}
+            # The thread outlives this request, so the caller's identity cannot
+            # ride along in a contextvar -- Phase 17 measured that boundary
+            # losing it. A durable delegation is recorded here instead and
+            # re-resolved inside the worker, so the job is attributable to the
+            # person who asked for it, expires, and can be revoked.
+            #
+            # The ceiling is READ_ONLY: this makes anonymous background work
+            # attributable, it does not give a scheduler job more authority than
+            # it had. Widening that is a separate decision with its own evidence.
+            delegation_id = run_delegated_job(
+                job_name=fn.__name__, fn=fn,
+                user_id=_authenticated_user_id(request),
+            )
+            return {"ok": True, "job": body.job, "delegation_id": delegation_id}
     return JSONResponse({"error": f"Job '{body.job}' not found"}, status_code=404)
 
 

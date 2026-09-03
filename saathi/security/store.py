@@ -12,6 +12,7 @@ from __future__ import annotations
 import json
 import secrets
 import sqlite3
+import threading
 import time
 import uuid
 from pathlib import Path
@@ -200,6 +201,38 @@ CREATE TABLE IF NOT EXISTS roles (
     created_at  REAL NOT NULL
 );
 
+-- Phase 18: durable authority delegation.
+--
+-- Answers, for work that outlives the request that started it: who authorized
+-- it, what exactly they delegated, to which run or job, for how long, and up to
+-- what authority. It lives here because this store already owns identity and
+-- RBAC, so the origin user and their current permissions are checked against
+-- the same database that issued them.
+--
+-- Deliberately NOT here: any session token, cookie or header. A session is
+-- authentication material and re-presenting one later is impersonation, not
+-- delegation. This record carries identity and scope, never a reusable secret.
+--
+-- Distinct from `delegation` in the agent-runtime store, which is agent-to-agent
+-- operational hand-off (parent_agent -> child_agent). Same word, different
+-- thing: that one moves work between agents, this one carries a *user's*
+-- authority across time. Conflating them is how an agent would appear to hold
+-- authority a user never granted.
+CREATE TABLE IF NOT EXISTS authority_delegation (
+    delegation_id     TEXT PRIMARY KEY,
+    user_id           TEXT NOT NULL,
+    scope_kind        TEXT NOT NULL,
+    scope_ref         TEXT NOT NULL,
+    action            TEXT NOT NULL,
+    authority_ceiling TEXT NOT NULL,
+    created_at        REAL NOT NULL,
+    expires_at        REAL NOT NULL,
+    max_uses          INTEGER NOT NULL DEFAULT 1,
+    used              INTEGER NOT NULL DEFAULT 0,
+    revoked_at        REAL,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
 CREATE TABLE IF NOT EXISTS user_roles (
     user_id     TEXT NOT NULL,
     role_id     TEXT NOT NULL,
@@ -221,6 +254,9 @@ VALUES
 """
 
 _INDEXES = """
+CREATE INDEX IF NOT EXISTS idx_deleg_user ON authority_delegation(user_id);
+CREATE INDEX IF NOT EXISTS idx_deleg_scope ON authority_delegation(scope_kind, scope_ref);
+
 CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id, last_seen DESC);
 CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(token_hash);
 CREATE INDEX IF NOT EXISTS idx_sessions_expires ON sessions(expires_at);
@@ -669,6 +705,100 @@ class SecurityStore:
             return False
         held = self.permissions_for(user_id)
         return "*" in held or permission in held
+
+    # ── authority delegation (Phase 18) ──────────────────────────────────────
+    #: Serialises the delegation mutators. The store shares one sqlite
+    #: connection across threads (`check_same_thread=False`), which is fine for
+    #: the request-per-thread paths that reach it one at a time, but delegated
+    #: workers race for the same one-shot record by design. Without this, two
+    #: workers issuing UPDATEs on the same connection misuse the driver rather
+    #: than contending on the row. Scoped to these methods rather than the whole
+    #: store: widening it is a separate change with its own evidence.
+    _delegation_lock = threading.RLock()
+
+    def delegation_lock(self):
+        """The lock guarding a delegation's validate-then-claim sequence.
+
+        Exposed because the invariant spans more than one store call. Locking
+        only the mutators was not enough: the reads that validate a delegation
+        run on the same shared connection, so a worker could read a live record
+        while another was claiming it and both would proceed. Callers hold this
+        across the whole read-check-claim sequence.
+
+        Reentrant, so the mutators can take it again inside a held section.
+        """
+        return self._delegation_lock
+
+    def create_delegation(self, *, user_id: str, scope_kind: str, scope_ref: str,
+                          action: str, authority_ceiling: str, ttl_sec: float,
+                          max_uses: int = 1) -> str:
+        """Record that `user_id` delegated one bounded action to deferred work.
+
+        The caller supplies the user id from server-resolved identity; this
+        method neither reads a request nor accepts a claim. Nothing stored here
+        is reusable as a credential.
+        """
+        import uuid
+
+        delegation_id = f"dlg_{uuid.uuid4().hex[:24]}"
+        now = self._now()
+        self.db.execute(
+            "INSERT INTO authority_delegation (delegation_id, user_id, scope_kind,"
+            " scope_ref, action, authority_ceiling, created_at, expires_at,"
+            " max_uses, used, revoked_at) VALUES (?,?,?,?,?,?,?,?,?,0,NULL)",
+            (delegation_id, user_id, scope_kind, scope_ref, action,
+             authority_ceiling, now, now + float(ttl_sec), int(max_uses)),
+        )
+        self.db.commit()
+        return delegation_id
+
+    def get_delegation(self, delegation_id: str) -> dict | None:
+        row = self.db.execute(
+            "SELECT * FROM authority_delegation WHERE delegation_id=?",
+            (delegation_id,),
+        ).fetchone()
+        return dict(row) if row else None
+
+    def consume_delegation(self, delegation_id: str) -> bool:
+        """Claim one use, atomically. True only for the caller that won it.
+
+        The guard lives in the UPDATE's WHERE clause rather than in a read
+        followed by a write, so two workers racing for the last use of a
+        one-shot delegation cannot both observe `used < max_uses` and both
+        proceed.
+        """
+        with self._delegation_lock:
+            cur = self.db.execute(
+                "UPDATE authority_delegation SET used = used + 1 "
+                "WHERE delegation_id = ? AND used < max_uses AND revoked_at IS NULL",
+                (delegation_id,),
+            )
+            self.db.commit()
+            return cur.rowcount == 1
+
+    def revoke_delegation(self, delegation_id: str) -> bool:
+        with self._delegation_lock:
+            cur = self.db.execute(
+                "UPDATE authority_delegation SET revoked_at = ? "
+                "WHERE delegation_id = ? AND revoked_at IS NULL",
+                (self._now(), delegation_id),
+            )
+            self.db.commit()
+            return cur.rowcount == 1
+
+    def revoke_delegations_for_scope(self, scope_kind: str, scope_ref: str) -> int:
+        """Revoke every live delegation bound to one run or job.
+
+        Cancelling the parent work is the natural revocation gesture: a
+        delegation exists to authorize *that* work, so it should not outlive it.
+        """
+        cur = self.db.execute(
+            "UPDATE authority_delegation SET revoked_at = ? "
+            "WHERE scope_kind = ? AND scope_ref = ? AND revoked_at IS NULL",
+            (self._now(), scope_kind, scope_ref),
+        )
+        self.db.commit()
+        return cur.rowcount
 
     def audit(self, event: str, *, ok: bool = True, user_id: str = "", ip: str = "",
               ua: str = "", detail: str = "", session_id: str = "") -> None:
