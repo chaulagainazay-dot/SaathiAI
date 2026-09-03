@@ -21,8 +21,8 @@ class TradingSignal:
  def is_valid(self,at): return at<=self.valid_until and self.quality=='VALID'
 @dataclass(frozen=True)
 class TradingIntentProposal:
- intent_id:str; signal_refs:tuple[str,...]; instrument_id:str; direction:Direction; valid_until:datetime; quality:str
+ intent_id:str; signal_refs:tuple[str,...]; instrument_id:str; direction:Direction; valid_until:datetime; quality:str; generated_at:datetime|None=None; data_mode:str='UNKNOWN'; strategy_id:str=''; strategy_version:str=''
  @classmethod
- def from_signal(cls,s): return cls('intent:'+s.signal_id,(s.signal_id,),s.instrument_id,s.direction,s.valid_until,s.quality)
+ def from_signal(cls,s): return cls('intent:'+s.signal_id,(s.signal_id,),s.instrument_id,s.direction,s.valid_until,s.quality,s.generated_at,s.data_mode,s.strategy_id,s.strategy_version)
 def resolve_conflict(signals):
  ds={s.direction for s in signals}; return 'ALIGNED' if len(ds)<=1 else 'CONFLICTING'

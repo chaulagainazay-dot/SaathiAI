@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import time as _time
+import hashlib
 from decimal import Decimal
 from typing import Any, Callable
 
@@ -14,6 +15,11 @@ from saathi.platform.portfolio_risk_engine.models import (
     LimitEvaluation,
     LimitSeverity,
     REASON_BUDGET_INVALID,
+    REASON_CANDIDATE_AUTHORITY_INVALID,
+    REASON_CANDIDATE_CURRENCY_MISMATCH,
+    REASON_CANDIDATE_SNAPSHOT_MISMATCH,
+    REASON_CANDIDATE_WEIGHT_INVALID,
+    REASON_CRYPTO_EXPOSURE_LIMIT,
     REASON_DAILY_LOSS_LIMIT_EXCEEDED,
     REASON_GROSS_EXPOSURE_LIMIT,
     REASON_INVALID_QUANTITY,
@@ -26,6 +32,7 @@ from saathi.platform.portfolio_risk_engine.models import (
     REASON_MIN_CASH_BUFFER_BREACH,
     REASON_NAV_MISSING,
     REASON_NET_EXPOSURE_LIMIT,
+    REASON_NEPSE_EXPOSURE_LIMIT,
     REASON_PRICE_MISSING,
     REASON_SHORTS_DISABLED,
     REASON_STALE_MARKET_DATA,
@@ -247,6 +254,246 @@ class PortfolioRiskEngine:
                 "trade_notional": proj["trade_notional"],
                 "projected_cash": proj["projected_cash"],
                 "projected_nav": proj["projected_nav"],
+            },
+        )
+
+    def evaluate_candidate_portfolio(
+        self,
+        candidate: Any,
+        *,
+        portfolio_snapshot: Any,
+    ) -> RiskDecision:
+        """Atomically enforce hard limits on a V2 candidate portfolio.
+
+        This supplements, rather than replaces, single-trade impact checks. It
+        is read-only and returns a risk decision that never constitutes an
+        approval or execution authorization.
+        """
+        ts = candidate.decision_time.timestamp()
+        codes: list[str] = []
+        limits: list[LimitEvaluation] = []
+        breaches: list[dict] = []
+
+        def breach(name: str, value: Decimal, limit: Decimal, code: str, detail: str = "") -> None:
+            if code not in codes:
+                codes.append(code)
+            ev = LimitEvaluation(
+                name=name,
+                severity=LimitSeverity.HARD_LIMIT,
+                value=D(value),
+                limit=D(limit),
+                breached=True,
+                warning=False,
+                reason_code=code,
+                detail=detail or f"{name}={value} limit={limit}",
+            )
+            limits.append(ev)
+            breaches.append(ev.to_public())
+
+        authority_valid = (
+            candidate.mode == "PAPER"
+            and candidate.authorizes_execution is False
+            and candidate.risk_approved is False
+            and candidate.quality.startswith("VALID")
+            and candidate.market_data_mode in {"HISTORICAL", "REPLAY", "LIVE"}
+            and candidate.construction_policy_version.startswith("portfolio-construction/v2.")
+            and candidate.risk_budget_version == self.budget.version
+            and self.budget.environment == "PAPER"
+            and not self.budget.leverage_enabled
+            and not self.budget.shorts_enabled
+        )
+        if not authority_valid:
+            breach(
+                "candidate_authority",
+                Decimal("1"),
+                Decimal("0"),
+                REASON_CANDIDATE_AUTHORITY_INVALID,
+                "candidate quality, policy, or proposal-only authority contract is invalid",
+            )
+
+        snapshot_valid = (
+            candidate.fund_id == portfolio_snapshot.fund_id
+            and candidate.portfolio_snapshot_ref == portfolio_snapshot.snapshot_ref
+            and portfolio_snapshot.source_authority == "CANONICAL_FUND_LEDGER"
+        )
+        if not snapshot_valid:
+            breach(
+                "candidate_snapshot_identity",
+                Decimal("1"),
+                Decimal("0"),
+                REASON_CANDIDATE_SNAPSHOT_MISMATCH,
+            )
+        if portfolio_snapshot.reconciliation_status != "HEALTHY":
+            breach(
+                "ledger_reconciliation",
+                Decimal("1"),
+                Decimal("0"),
+                REASON_LEDGER_UNRECONCILED,
+            )
+
+        gross = Decimal("0")
+        crypto = Decimal("0")
+        nepse = Decimal("0")
+        weights: list[Decimal] = []
+        nav = D(portfolio_snapshot.nav)
+        instrument_ids = [allocation.instrument_id for allocation in candidate.allocations]
+        if len(instrument_ids) != len(set(instrument_ids)):
+            breach(
+                "candidate_instrument_identity",
+                Decimal(len(instrument_ids)),
+                Decimal(len(set(instrument_ids))),
+                REASON_CANDIDATE_WEIGHT_INVALID,
+                "duplicate instrument allocation identity",
+            )
+        expected_current_cash = D(portfolio_snapshot.cash) / nav
+        if abs(D(candidate.cash_current_weight) - expected_current_cash) > Decimal("0.0000001"):
+            breach(
+                "candidate_current_cash_identity",
+                D(candidate.cash_current_weight),
+                expected_current_cash,
+                REASON_CANDIDATE_WEIGHT_INVALID,
+            )
+        for allocation in candidate.allocations:
+            weight = D(allocation.target_weight)
+            weights.append(weight)
+            if (
+                weight < 0
+                or weight > 1
+                or D(allocation.current_weight) < 0
+                or D(allocation.target_notional) != weight * nav
+                or D(allocation.weight_change)
+                != weight - D(allocation.current_weight)
+            ):
+                breach(
+                    f"candidate_weight:{allocation.instrument_id}",
+                    weight,
+                    Decimal("1"),
+                    REASON_CANDIDATE_WEIGHT_INVALID,
+                )
+            if allocation.quote_currency != portfolio_snapshot.reporting_currency:
+                breach(
+                    f"candidate_currency:{allocation.instrument_id}",
+                    Decimal("1"),
+                    Decimal("0"),
+                    REASON_CANDIDATE_CURRENCY_MISMATCH,
+                )
+            if weight > D(self.budget.max_position_weight):
+                breach(
+                    f"max_position:{allocation.instrument_id}",
+                    weight,
+                    D(self.budget.max_position_weight),
+                    REASON_MAX_POSITION_WEIGHT_EXCEEDED,
+                )
+            gross += max(Decimal("0"), weight)
+            asset_class = allocation.asset_class.value
+            if asset_class == "CRYPTO":
+                crypto += max(Decimal("0"), weight)
+            elif asset_class == "EQUITY" and allocation.instrument_id.startswith("NEPSE:"):
+                nepse += max(Decimal("0"), weight)
+
+        cash = D(candidate.cash_target_weight)
+        tolerance = Decimal("0.0000001")
+        expected_turnover = sum(
+            (abs(D(allocation.weight_change)) for allocation in candidate.allocations),
+            Decimal("0"),
+        )
+        expected_cost = sum(
+            (D(allocation.estimated_cost) for allocation in candidate.allocations),
+            Decimal("0"),
+        )
+        if (
+            abs(D(candidate.turnover) - expected_turnover) > tolerance
+            or abs(D(candidate.estimated_cost) - expected_cost) > tolerance
+            or expected_cost < 0
+        ):
+            breach(
+                "candidate_aggregate_identity",
+                D(candidate.turnover),
+                expected_turnover,
+                REASON_CANDIDATE_WEIGHT_INVALID,
+                "turnover or estimated-cost aggregate is inconsistent",
+            )
+        if cash < D(self.budget.min_cash_buffer):
+            breach(
+                "min_cash_buffer",
+                cash,
+                D(self.budget.min_cash_buffer),
+                REASON_MIN_CASH_BUFFER_BREACH,
+            )
+        if gross > D(self.budget.max_gross_exposure) + tolerance:
+            breach(
+                "candidate_gross_exposure",
+                gross,
+                D(self.budget.max_gross_exposure),
+                REASON_GROSS_EXPOSURE_LIMIT,
+            )
+        if abs(gross + cash - Decimal("1")) > tolerance:
+            breach(
+                "candidate_funded_weight_identity",
+                gross + cash,
+                Decimal("1"),
+                REASON_CANDIDATE_WEIGHT_INVALID,
+            )
+        if crypto > D(self.budget.max_crypto_exposure) + tolerance:
+            breach(
+                "crypto_exposure",
+                crypto,
+                D(self.budget.max_crypto_exposure),
+                REASON_CRYPTO_EXPOSURE_LIMIT,
+            )
+        if nepse > D(self.budget.max_nepse_exposure) + tolerance:
+            breach(
+                "nepse_exposure",
+                nepse,
+                D(self.budget.max_nepse_exposure),
+                REASON_NEPSE_EXPOSURE_LIMIT,
+            )
+        ordered = sorted(weights, reverse=True)
+        top3 = sum(ordered[:3], Decimal("0"))
+        top5 = sum(ordered[:5], Decimal("0"))
+        if top3 > D(self.budget.max_top3_concentration) + tolerance:
+            breach("candidate_top3", top3, D(self.budget.max_top3_concentration), REASON_MAX_TOP3_CONCENTRATION)
+        if top5 > D(self.budget.max_top5_concentration) + tolerance:
+            breach("candidate_top5", top5, D(self.budget.max_top5_concentration), REASON_MAX_TOP5_CONCENTRATION)
+        if D(portfolio_snapshot.current_drawdown) >= D(self.budget.max_drawdown):
+            breach(
+                "candidate_drawdown",
+                D(portfolio_snapshot.current_drawdown),
+                D(self.budget.max_drawdown),
+                REASON_MAX_DRAWDOWN_EXCEEDED,
+            )
+
+        result = RiskResult.BLOCK if breaches else RiskResult.ALLOW
+        risk_state = (
+            RiskState.RECONCILIATION_REQUIRED
+            if REASON_LEDGER_UNRECONCILED in codes
+            else RiskState.BREACHED if breaches else RiskState.HEALTHY
+        )
+        decision_seed = f"{candidate.candidate_portfolio_id}|{self.budget.version}|{result.value}"
+        return RiskDecision(
+            decision_id="rskcand_" + hashlib.sha256(decision_seed.encode("utf-8")).hexdigest()[:16],
+            result=result,
+            risk_state=risk_state,
+            timestamp=ts,
+            budget_version=self.budget.version,
+            fund_id=candidate.fund_id,
+            metrics={
+                "candidate_gross_exposure": str(gross),
+                "candidate_cash_weight": str(cash),
+                "crypto_exposure": str(crypto),
+                "nepse_exposure": str(nepse),
+                "position_count": len(candidate.allocations),
+            },
+            limits_evaluated=limits,
+            breaches=breaches,
+            warnings=[],
+            reason_codes=codes,
+            proposal=candidate.to_public(),
+            projected={
+                "gross_exposure": str(gross),
+                "cash_weight": str(cash),
+                "crypto_exposure": str(crypto),
+                "nepse_exposure": str(nepse),
             },
         )
 

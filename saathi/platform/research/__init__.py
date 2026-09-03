@@ -8,3 +8,11 @@ from saathi.platform.research.evidence import EvidenceReference, ResearchClaim, 
 from saathi.platform.research.specialists import ResearchContext, SpecialistResult, ResearchBundle, SpecialistOrchestrator, SPECIALISTS
 from saathi.platform.research.challenge import ChallengeType, Resolution, ResearchChallenge, ChallengeResolution, ChallengeSession
 from saathi.platform.research.journal import InvestmentDecisionRecord, DecisionOutcome, InvestmentLesson, LessonStatus, DecisionJournal, lessons_visible, promote
+from saathi.platform.research.durability import (
+    DURABILITY_SCHEMA_VERSION,
+    PersistenceBusyError,
+    PersistenceConflictError,
+    PersistenceCorruptError,
+    ResearchDurabilityStore,
+    UnsupportedSchemaVersion,
+)

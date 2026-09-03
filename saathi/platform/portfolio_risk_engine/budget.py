@@ -20,6 +20,10 @@ class RiskBudget:
     max_position_weight: Decimal = field(default_factory=lambda: Decimal("0.15"))  # 15%
     max_top3_concentration: Decimal = field(default_factory=lambda: Decimal("0.40"))
     max_top5_concentration: Decimal = field(default_factory=lambda: Decimal("0.60"))
+    # V2 asset-class sleeves. V1 defaults preserve the previous broad contract;
+    # PAPER_BUDGET_V2 below carries the conservative certified policy.
+    max_crypto_exposure: Decimal = field(default_factory=lambda: Decimal("1.00"))
+    max_nepse_exposure: Decimal = field(default_factory=lambda: Decimal("1.00"))
     # Cash
     min_cash_buffer: Decimal = field(default_factory=lambda: Decimal("0.05"))  # 5% NAV
     # Loss / drawdown (fractions of NAV or absolute loss vs period start NAV)
@@ -52,3 +56,9 @@ class RiskBudget:
 
 
 PAPER_BUDGET_V1 = RiskBudget()
+
+PAPER_BUDGET_V2 = RiskBudget(
+    version="paper-risk-budget/v2-configured-conservative",
+    max_crypto_exposure=Decimal("0.20"),
+    max_nepse_exposure=Decimal("0.00"),
+)

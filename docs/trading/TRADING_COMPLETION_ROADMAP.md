@@ -275,6 +275,28 @@ regression are green (7,903 passed; `/tmp/saathios-backtest-pit1-final.log`).
 Crypto strategy input paths are PIT-safe; broader corporate-action/reference
 datasets remain limited. Next dependency: `STRATEGY-CRYPTO-1`.
 
+`CRYPTO-DATASET-1` **CRYPTO_REAL_HISTORICAL_DATASET_CERTIFIED_WITH_LIMITATIONS**:
+the official Binance public Spot archive supplied 192/192 checksum-matched monthly
+BTCUSDT/ETHUSDT `1d` archives for 2018-01 through 2025-12. The immutable local
+revision contains 5,844 canonical bars with no continuity gaps or conflicts. Dataset
+version is
+`sha256-0f1290db14ab0037e6a69e25bcd1d7928087629cf11630f0ac2c52dbb27768e8`;
+archive publication-history precision remains limited.
+
+`STRATEGY-CRYPTO-1` **CRYPTO_STRATEGY_QUALIFICATION_CERTIFIED_WITH_LIMITATIONS**:
+the unchanged three-family, two-instrument preregistration consumed 72 exact trials
+and six final-TEST evaluations. One survivor emerged: BTC mean reversion is a
+`PAPER_CANDIDATE`; BTC/ETH trend, BTC breakout, and ETH breakout are only
+`OOS_VALIDATED_WITH_LIMITATIONS`; ETH mean reversion is `REJECTED`. The survivor was
+positive in TEST and both walk-forward OOS segments and survived cost/stress cases,
+but underperformed BTC buy-and-hold on TEST and lost money in TRAIN. No statistical
+significance or live-readiness claim is made. Next dependency:
+`PORTFOLIO-CONSTRUCTION-V2`. `STRATEGY-NEPSE-1` remains deferred because
+`NEPSE_COST_POLICY_UNVERIFIED` is open; long-running PAPER/SHADOW remains blocked on
+RESEARCH-3 durable persistence.
+Canonical offline regression is green: 7,944 passed, 8 skipped, 12 deselected,
+exit code 0; durable log `/tmp/saathios-crypto-dataset1-final.log`.
+
 ## Stage D — NEPSE live market data
 
 `D1` instrument master · `D2` market calendar · `D3` live quote adapter ·
@@ -336,3 +358,32 @@ Research / Data / Models / Agents
    ↓  Canonical Fund Ledger
    ↓  ReconciliationAuthority
 ```
+
+---
+
+## Autonomous continuation — Missions 5–15 (2026-09-04)
+
+Recovered the in-flight lineage (CRYPTO-DATASET-1, STRATEGY-CRYPTO-1,
+PORTFOLIO-CONSTRUCTION-V2, PORTFOLIO-RISK-V2, RESEARCH-3 durability) into bounded
+commits, then completed the remaining program areas.
+
+| Milestone | Verdict |
+|---|---|
+| OMS-MULTI-MARKET-1 | venue-neutral conventions; crypto fractional, NEPSE whole-share/board-lot, equity passthrough |
+| TRADING-GUARDIAN-V2 | per-venue policy; green candidate still blockable for an independent venue reason |
+| PAPER-CRYPTO-1 | ambiguous-transport events (TIMEOUT/DISCONNECT/DUPLICATE/UNKNOWN) fail closed, no auto-retry |
+| PAPER-CRYPTO-2 | canonical cycle construction → risk → Guardian → approval → [ExecutionGateway]; approval never self-granted |
+| RECONCILIATION-V2 | multi-market; no silent healing; explicit resolution required |
+| SHADOW-1 | crypto shadow measures hypothetical fills net of real cost policy; NO ORDER SENT. NEPSE = `NEPSE_SHADOW_ARCHITECTURE_READY_LIVE_FEED_BLOCKED_LICENSE` |
+| ATTRIBUTION-V2 | strategy/asset/venue/benchmark/cost/drawdown/Guardian dimensions; reconciles to net; never fabricates a return |
+| RESILIENCE-1 | deterministic degradation table; no failure auto-retries; unmapped fails closed |
+| SECURITY-1 | HTTPS-only market-data allowlist, SSRF ranges blocked, private/withdrawal paths refused |
+| CI-LANES-1 | core certification lanes offline; public live-data canary is the only network lane and never gates core |
+| VOICE-1 | observation/research/proposal only; execution, approval, safety-control and money movement refused; ambiguity → REFUSED |
+| COMMAND-SURFACE-1 | read-only five-panel Central Command state; UNKNOWN surfaced, no route bypasses authority |
+
+### Carried blockers (unchanged)
+- NEPSE licensed real-time feed remains an external dependency.
+- `NEPSE_COST_POLICY_UNVERIFIED`; NEPSE tick/lot values are provisional.
+- BTC mean-reversion ceiling stays `PAPER_CANDIDATE`; spent TEST periods are not reusable.
+- Real-money execution remains NOT AUTHORIZED (`LIVE_CANARY_USER_AUTHORIZATION_REQUIRED`).

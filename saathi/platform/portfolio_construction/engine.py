@@ -4,6 +4,7 @@ from __future__ import annotations
 import hashlib
 import json
 import time as _time
+from datetime import datetime
 from decimal import Decimal
 from typing import Any, Callable
 
@@ -16,8 +17,14 @@ from saathi.platform.portfolio_construction.construct import (
     signal_proportional_targets,
 )
 from saathi.platform.portfolio_construction.models import (
+    CandidatePortfolio,
+    CandidatePortfolioStatus,
     ConstructionMethod,
+    ConstructionReasonCode,
+    ConstraintEffect,
+    InstrumentAllocation,
     MarkQuote,
+    PortfolioConstructionRequest,
     PortfolioProposal,
     ProposalStatus,
     RC_EXPIRED,
@@ -27,6 +34,8 @@ from saathi.platform.portfolio_construction.models import (
     RC_STALE_PRICE,
     RC_STALE_PROPOSAL,
     RC_SUPERSEDED,
+    RejectedIntent,
+    StrategyQualificationStatus,
     UniverseMember,
     new_proposal_id,
 )
@@ -71,6 +80,501 @@ class PortfolioConstructionEngine:
     def bind_risk(self, risk_engine: PortfolioRiskEngine) -> "PortfolioConstructionEngine":
         self.risk_engine = risk_engine
         return self
+
+    # ── V2 canonical intent construction ────────────────────────────────
+    def construct_from_intents(self, request: PortfolioConstructionRequest) -> CandidatePortfolio:
+        """Translate proposal-only strategy intents into a candidate portfolio.
+
+        This pure path neither reads nor writes the ledger, proposal store,
+        approvals, Guardian state, OMS, or ExecutionGateway.  Strategy strength,
+        research confidence, and historical return are deliberately absent from
+        the request contract and therefore cannot become position size.
+        """
+        if request.construction_policy_version != self.policy.version:
+            raise ValueError(
+                f"construction policy mismatch: {request.construction_policy_version} != {self.policy.version}"
+            )
+
+        snapshot = request.portfolio_snapshot
+        current = {
+            p.instrument_id: D(p.market_value) / D(snapshot.nav)
+            for p in snapshot.positions
+        }
+        positions = {p.instrument_id: p for p in snapshot.positions}
+        metadata = {m.instrument_id: m for m in request.instrument_metadata}
+        qualifications = {q.intent_id: q for q in request.qualifications}
+        target = dict(current)
+        effects: list[ConstraintEffect] = []
+        rejected: list[RejectedIntent] = []
+        reasons: list[ConstructionReasonCode] = []
+        allocation_reasons: dict[str, list[ConstructionReasonCode]] = {
+            instrument_id: [] for instrument_id in current
+        }
+        provenance: dict[str, tuple[set[str], set[str]]] = {}
+
+        def add_reason(instrument_id: str, reason: ConstructionReasonCode) -> None:
+            if reason not in reasons:
+                reasons.append(reason)
+            rows = allocation_reasons.setdefault(instrument_id, [])
+            if reason not in rows:
+                rows.append(reason)
+
+        def constrain(
+            instrument_id: str,
+            before: Decimal,
+            after: Decimal,
+            reason: ConstructionReasonCode,
+            detail: str = "",
+        ) -> Decimal:
+            after = max(Decimal("0"), D(after))
+            if after != before:
+                effects.append(
+                    ConstraintEffect(
+                        instrument_id,
+                        reason,
+                        before,
+                        after,
+                        self.policy.version,
+                        detail,
+                    )
+                )
+            add_reason(instrument_id, reason)
+            return after
+
+        globally_usable = (
+            request.market_data_quality == "VALID"
+            and request.market_data_mode in {"HISTORICAL", "REPLAY", "LIVE"}
+            and snapshot.source_authority == "CANONICAL_FUND_LEDGER"
+            and snapshot.reconciliation_status == "HEALTHY"
+        )
+        if not globally_usable:
+            global_reason = (
+                ConstructionReasonCode.RECONCILIATION_REQUIRED
+                if snapshot.reconciliation_status != "HEALTHY"
+                else ConstructionReasonCode.DATA_QUALITY_INSUFFICIENT
+            )
+            for intent in request.intents:
+                rejected.append(RejectedIntent(intent.intent_id, intent.instrument_id, global_reason))
+                add_reason(intent.instrument_id, global_reason)
+
+        eligible_by_instrument: dict[str, list[tuple[Any, Any]]] = {}
+        if globally_usable:
+            for intent in request.intents:
+                reason: ConstructionReasonCode | None = None
+                qualification = qualifications.get(intent.intent_id)
+                meta = metadata.get(intent.instrument_id)
+                if request.decision_time > intent.valid_until:
+                    reason = ConstructionReasonCode.EXPIRED_INTENT
+                elif intent.quality != "VALID":
+                    reason = ConstructionReasonCode.DATA_QUALITY_INSUFFICIENT
+                elif intent.data_mode not in {"HISTORICAL", "REPLAY", "LIVE"}:
+                    reason = ConstructionReasonCode.DATA_QUALITY_INSUFFICIENT
+                elif intent.generated_at is None or intent.generated_at > request.decision_time:
+                    reason = ConstructionReasonCode.DATA_QUALITY_INSUFFICIENT
+                elif qualification is None or qualification.status is not StrategyQualificationStatus.PAPER_CANDIDATE:
+                    reason = ConstructionReasonCode.STRATEGY_NOT_ELIGIBLE
+                elif not qualification.quality.startswith("CERTIFIED"):
+                    reason = ConstructionReasonCode.STRATEGY_NOT_ELIGIBLE
+                elif qualification.instrument_id != intent.instrument_id or qualification.signal_ref not in intent.signal_refs:
+                    reason = ConstructionReasonCode.STRATEGY_NOT_ELIGIBLE
+                elif meta is None:
+                    reason = ConstructionReasonCode.DATA_QUALITY_INSUFFICIENT
+                elif not meta.enabled:
+                    reason = ConstructionReasonCode.INSTRUMENT_DISABLED
+                elif not meta.venue_enabled:
+                    reason = ConstructionReasonCode.VENUE_DISABLED
+                elif meta.quote_currency != snapshot.reporting_currency:
+                    reason = ConstructionReasonCode.CURRENCY_MISMATCH
+                elif meta.market_type != "SPOT" or meta.asset_class not in {meta.asset_class.CRYPTO, meta.asset_class.EQUITY}:
+                    reason = ConstructionReasonCode.UNSUPPORTED_MARKET
+                elif meta.asset_class == meta.asset_class.EQUITY and self.policy.max_nepse_exposure <= 0:
+                    reason = ConstructionReasonCode.NEPSE_SLEEVE_DISABLED
+                if reason is not None:
+                    rejected.append(RejectedIntent(intent.intent_id, intent.instrument_id, reason))
+                    add_reason(intent.instrument_id, reason)
+                    continue
+                eligible_by_instrument.setdefault(intent.instrument_id, []).append((intent, qualification))
+
+        # Existing positions participate in correlation/concentration even when
+        # they have no fresh eligible intent. New candidates are deterministic
+        # in canonical instrument order.
+        for instrument_id in sorted(eligible_by_instrument):
+            pairs = eligible_by_instrument[instrument_id]
+            intents = [p[0] for p in pairs]
+            quals = [p[1] for p in pairs]
+            meta = metadata[instrument_id]
+            current_weight = current.get(instrument_id, Decimal("0"))
+            provenance[instrument_id] = (
+                {q.strategy_id for q in quals},
+                {i.intent_id for i in intents},
+            )
+            directions = {i.direction.value for i in intents}
+            has_long = "LONG_BIAS" in directions
+            has_reduce = bool(directions & {"REDUCE_BIAS", "EXIT_BIAS"})
+
+            if has_long and has_reduce:
+                target[instrument_id] = current_weight
+                add_reason(instrument_id, ConstructionReasonCode.CONFLICTING_INTENTS)
+                continue
+            if not has_long:
+                if has_reduce:
+                    target[instrument_id] = Decimal("0")
+                continue
+
+            desired = D(self.policy.base_candidate_weight)
+            if current_weight >= self.policy.max_position_weight:
+                target[instrument_id] = current_weight
+                add_reason(instrument_id, ConstructionReasonCode.CURRENT_POSITION_AT_CAP)
+                continue
+
+            if desired > self.policy.max_position_weight:
+                desired = constrain(
+                    instrument_id,
+                    desired,
+                    self.policy.max_position_weight,
+                    ConstructionReasonCode.POSITION_CAP,
+                )
+
+            # PIT-safe realized volatility. Unknown volatility is not assumed to
+            # be zero; it produces no new risk.
+            visible, future_count = self._visible_history(request, instrument_id)
+            if future_count:
+                add_reason(instrument_id, ConstructionReasonCode.FUTURE_DATA_EXCLUDED)
+            volatility = self._annualized_volatility(visible, meta.asset_class.value)
+            if volatility is None:
+                desired = constrain(
+                    instrument_id,
+                    desired,
+                    Decimal("0"),
+                    ConstructionReasonCode.VOLATILITY_DATA_INSUFFICIENT,
+                )
+            elif volatility > self.policy.volatility_target:
+                scaled = desired * self.policy.volatility_target / volatility
+                desired = constrain(
+                    instrument_id,
+                    desired,
+                    scaled,
+                    ConstructionReasonCode.VOLATILITY_REDUCTION,
+                    f"annualized_volatility={volatility}",
+                )
+
+            factor = self._drawdown_factor(snapshot.current_drawdown)
+            if factor < 1:
+                desired = constrain(
+                    instrument_id,
+                    desired,
+                    desired * factor,
+                    ConstructionReasonCode.DRAWDOWN_REDUCTION,
+                    f"drawdown={snapshot.current_drawdown}",
+                )
+
+            if meta.liquidity_limit_weight is None:
+                desired = constrain(
+                    instrument_id,
+                    desired,
+                    min(desired, self.policy.missing_liquidity_cap),
+                    ConstructionReasonCode.LIQUIDITY_DATA_INSUFFICIENT,
+                )
+            elif desired > meta.liquidity_limit_weight:
+                desired = constrain(
+                    instrument_id,
+                    desired,
+                    meta.liquidity_limit_weight,
+                    ConstructionReasonCode.LIQUIDITY_LIMIT,
+                )
+
+            sleeve_cap = (
+                self.policy.max_crypto_exposure
+                if meta.asset_class.value == "CRYPTO"
+                else self.policy.max_nepse_exposure
+            )
+            other_sleeve = sum(
+                weight
+                for other_id, weight in target.items()
+                if other_id != instrument_id
+                and (metadata.get(other_id).asset_class if metadata.get(other_id) else positions[other_id].asset_class)
+                == meta.asset_class
+            )
+            sleeve_room = max(Decimal("0"), sleeve_cap - other_sleeve)
+            if desired > sleeve_room:
+                desired = constrain(
+                    instrument_id,
+                    desired,
+                    sleeve_room,
+                    ConstructionReasonCode.CRYPTO_SLEEVE_CAP
+                    if meta.asset_class.value == "CRYPTO"
+                    else ConstructionReasonCode.NEPSE_SLEEVE_DISABLED,
+                )
+
+            # Treat unknown correlation conservatively. The cap is a robust
+            # cluster bound, not a covariance optimizer.
+            for other_id, other_weight in sorted(target.items()):
+                if other_id == instrument_id or other_weight <= 0:
+                    continue
+                other_meta = metadata.get(other_id)
+                other_class = other_meta.asset_class if other_meta else positions[other_id].asset_class
+                if other_class != meta.asset_class:
+                    continue
+                correlation = self._pairwise_correlation(request, instrument_id, other_id)
+                if correlation is None:
+                    desired = constrain(
+                        instrument_id,
+                        desired,
+                        min(desired, max(Decimal("0"), self.policy.correlated_cluster_cap - other_weight)),
+                        ConstructionReasonCode.CORRELATION_DATA_INSUFFICIENT,
+                        f"pair={other_id}",
+                    )
+                elif abs(correlation) >= self.policy.high_correlation_threshold:
+                    desired = constrain(
+                        instrument_id,
+                        desired,
+                        min(desired, max(Decimal("0"), self.policy.correlated_cluster_cap - other_weight)),
+                        ConstructionReasonCode.CORRELATION_CONCENTRATION,
+                        f"pair={other_id};correlation={correlation}",
+                    )
+
+            desired = max(current_weight, desired)
+
+            # Use authoritative available cash. Reserved/unsettled amounts are
+            # never silently assumed deployable.
+            cash_room = max(
+                Decimal("0"),
+                D(snapshot.available_cash) / D(snapshot.nav) - D(self.policy.min_cash_buffer),
+            )
+            new_weight = max(Decimal("0"), desired - current_weight)
+            if new_weight > cash_room:
+                desired = constrain(
+                    instrument_id,
+                    desired,
+                    current_weight + cash_room,
+                    ConstructionReasonCode.CASH_FLOOR,
+                )
+
+            delta = abs(desired - current_weight)
+            minimum_delta = max(
+                D(self.policy.min_weight_delta),
+                D(self.policy.min_trade_notional) / D(snapshot.nav),
+            )
+            if Decimal("0") < delta < minimum_delta:
+                desired = constrain(
+                    instrument_id,
+                    desired,
+                    current_weight,
+                    ConstructionReasonCode.COST_INEFFICIENT_REBALANCE,
+                )
+            target[instrument_id] = desired
+
+        allocations: list[InstrumentAllocation] = []
+        for instrument_id in sorted(set(target) | set(current)):
+            meta = metadata.get(instrument_id)
+            position = positions.get(instrument_id)
+            if meta is None and position is None:
+                continue
+            current_weight = current.get(instrument_id, Decimal("0"))
+            target_weight = max(Decimal("0"), target.get(instrument_id, current_weight))
+            chosen_asset_class = meta.asset_class if meta else position.asset_class
+            chosen_symbol = meta.symbol if meta else position.symbol
+            chosen_currency = meta.quote_currency if meta else position.quote_currency
+            cost_bps = meta.estimated_round_trip_cost_bps if meta else Decimal("0")
+            estimated_cost = abs(target_weight - current_weight) * snapshot.nav * cost_bps / Decimal("10000")
+            prov = provenance.get(instrument_id, (set(), set()))
+            allocations.append(
+                InstrumentAllocation(
+                    instrument_id=instrument_id,
+                    symbol=chosen_symbol,
+                    asset_class=chosen_asset_class,
+                    quote_currency=chosen_currency,
+                    current_weight=current_weight,
+                    target_weight=target_weight,
+                    weight_change=target_weight - current_weight,
+                    target_notional=target_weight * snapshot.nav,
+                    estimated_cost=estimated_cost,
+                    strategy_ids=tuple(sorted(prov[0])),
+                    intent_ids=tuple(sorted(prov[1])),
+                    reason_codes=tuple(allocation_reasons.get(instrument_id, ())),
+                )
+            )
+
+        total_target = sum((a.target_weight for a in allocations), Decimal("0"))
+        cash_target = max(D(self.policy.min_cash_buffer), Decimal("1") - total_target)
+        cash_current = D(snapshot.cash) / D(snapshot.nav)
+        turnover_value = sum((abs(a.weight_change) for a in allocations), Decimal("0"))
+        estimated_cost = sum((a.estimated_cost for a in allocations), Decimal("0"))
+        eligible_qualifications = tuple(
+            sorted(
+                (q for pairs in eligible_by_instrument.values() for _intent, q in pairs),
+                key=lambda q: (q.intent_id, q.strategy_id),
+            )
+        )
+        eligible_long = any(
+            any(i.direction.value == "LONG_BIAS" for i, _q in pairs)
+            for pairs in eligible_by_instrument.values()
+        )
+        new_allocation = sum((max(Decimal("0"), a.weight_change) for a in allocations), Decimal("0"))
+        reduction_codes = {
+            ConstructionReasonCode.POSITION_CAP,
+            ConstructionReasonCode.CRYPTO_SLEEVE_CAP,
+            ConstructionReasonCode.CASH_FLOOR,
+            ConstructionReasonCode.VOLATILITY_REDUCTION,
+            ConstructionReasonCode.VOLATILITY_DATA_INSUFFICIENT,
+            ConstructionReasonCode.DRAWDOWN_REDUCTION,
+            ConstructionReasonCode.CORRELATION_CONCENTRATION,
+            ConstructionReasonCode.CORRELATION_DATA_INSUFFICIENT,
+            ConstructionReasonCode.LIQUIDITY_LIMIT,
+            ConstructionReasonCode.LIQUIDITY_DATA_INSUFFICIENT,
+        }
+        if not eligible_long or (new_allocation == 0 and total_target == 0):
+            status = CandidatePortfolioStatus.ZERO_ALLOCATION
+        elif any(r in reduction_codes for r in reasons):
+            status = CandidatePortfolioStatus.REDUCED_ALLOCATION
+        else:
+            status = CandidatePortfolioStatus.CANDIDATE_ALLOCATION
+
+        identity = {
+            "request_id": request.request_id,
+            "allocations": [a.to_public() for a in allocations],
+            "cash_target_weight": str(cash_target),
+            "reason_codes": [r.value for r in reasons],
+        }
+        candidate_id = "pcand_" + hashlib.sha256(
+            json.dumps(identity, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        ).hexdigest()[:24]
+        return CandidatePortfolio(
+            candidate_portfolio_id=candidate_id,
+            request_id=request.request_id,
+            fund_id=snapshot.fund_id,
+            status=status,
+            portfolio_snapshot_ref=snapshot.snapshot_ref,
+            market_data_snapshot_ref=request.market_data_snapshot_ref,
+            construction_policy_version=request.construction_policy_version,
+            risk_budget_version=request.risk_budget_version,
+            decision_time=request.decision_time,
+            allocations=tuple(allocations),
+            cash_current_weight=cash_current,
+            cash_target_weight=cash_target,
+            turnover=turnover_value,
+            estimated_cost=estimated_cost,
+            rejected_intents=tuple(sorted(rejected, key=lambda x: x.intent_id)),
+            constraint_effects=tuple(effects),
+            reason_codes=tuple(reasons),
+            intent_ids=tuple(sorted({q.intent_id for q in eligible_qualifications})),
+            strategy_ids=tuple(sorted({q.strategy_id for q in eligible_qualifications})),
+            qualification_artifact_sha256=tuple(
+                sorted({q.qualification_artifact_sha256 for q in eligible_qualifications})
+            ),
+            dataset_versions=tuple(sorted({q.dataset_version for q in eligible_qualifications})),
+            selected_config_hashes=tuple(
+                sorted({q.selected_config_hash for q in eligible_qualifications})
+            ),
+            policy_assumption_status=self.policy.assumption_status,
+            quality="VALID_WITH_LIMITATIONS" if globally_usable else "DATA_INSUFFICIENT",
+            market_data_mode=request.market_data_mode,
+        )
+
+    def build_risk_handoff(
+        self,
+        request: PortfolioConstructionRequest,
+        candidate: CandidatePortfolio,
+    ) -> tuple[RiskTradeProposal, ...]:
+        """Adapt candidate deltas to the existing risk engine contract only.
+
+        The returned objects are risk-evaluation proposals. They have no
+        approval or execution authority and are never submitted here.
+        """
+        if candidate.request_id != request.request_id:
+            raise ValueError("candidate/request identity mismatch")
+        proposals: list[RiskTradeProposal] = []
+        for allocation in candidate.allocations:
+            if allocation.weight_change == 0:
+                continue
+            visible, _future_count = self._visible_history(request, allocation.instrument_id)
+            if not visible or visible[-1].close <= 0:
+                continue
+            notional = abs(allocation.weight_change) * request.portfolio_snapshot.nav
+            proposals.append(
+                RiskTradeProposal(
+                    symbol=allocation.symbol,
+                    side="BUY" if allocation.weight_change > 0 else "SELL",
+                    quantity=notional / visible[-1].close,
+                    price=visible[-1].close,
+                    security_id=allocation.instrument_id,
+                )
+            )
+        return tuple(proposals)
+
+    def _visible_history(
+        self,
+        request: PortfolioConstructionRequest,
+        instrument_id: str,
+    ) -> tuple[tuple[Any, ...], int]:
+        rows = request.history_for(instrument_id)
+        visible = tuple(
+            b
+            for b in rows
+            if b.available_at <= request.decision_time
+            and b.quality.value == "VALID"
+            and b.status not in {"SUPERSEDED", "RETRACTED"}
+        )
+        return visible, len(rows) - len(visible)
+
+    def _returns(self, rows: tuple[Any, ...], lookback: int) -> tuple[Decimal, ...]:
+        closes = [D(b.close) for b in rows if D(b.close) > 0]
+        if len(closes) < 2:
+            return ()
+        returns = tuple((closes[i] / closes[i - 1]) - 1 for i in range(1, len(closes)))
+        return returns[-lookback:]
+
+    def _annualized_volatility(self, rows: tuple[Any, ...], asset_class: str) -> Decimal | None:
+        returns = self._returns(rows, self.policy.volatility_lookback_returns)
+        if len(returns) < self.policy.volatility_min_observations:
+            return None
+        mean = sum(returns, Decimal("0")) / Decimal(len(returns))
+        variance = sum(((x - mean) ** 2 for x in returns), Decimal("0")) / Decimal(len(returns) - 1)
+        days = (
+            self.policy.crypto_annualization_days
+            if asset_class == "CRYPTO"
+            else self.policy.nepse_annualization_days
+        )
+        return variance.sqrt() * Decimal(days).sqrt()
+
+    def _pairwise_correlation(
+        self,
+        request: PortfolioConstructionRequest,
+        left_id: str,
+        right_id: str,
+    ) -> Decimal | None:
+        left_rows, _ = self._visible_history(request, left_id)
+        right_rows, _ = self._visible_history(request, right_id)
+        left_by_time = {b.as_of: D(b.close) for b in left_rows}
+        right_by_time = {b.as_of: D(b.close) for b in right_rows}
+        common = sorted(set(left_by_time) & set(right_by_time))
+        if len(common) < self.policy.correlation_min_observations + 1:
+            return None
+        common = common[-(self.policy.correlation_lookback_returns + 1) :]
+        left = tuple(left_by_time[t] for t in common)
+        right = tuple(right_by_time[t] for t in common)
+        lr = tuple(left[i] / left[i - 1] - 1 for i in range(1, len(left)))
+        rr = tuple(right[i] / right[i - 1] - 1 for i in range(1, len(right)))
+        if len(lr) < self.policy.correlation_min_observations:
+            return None
+        lm = sum(lr, Decimal("0")) / Decimal(len(lr))
+        rm = sum(rr, Decimal("0")) / Decimal(len(rr))
+        lvar = sum(((x - lm) ** 2 for x in lr), Decimal("0"))
+        rvar = sum(((x - rm) ** 2 for x in rr), Decimal("0"))
+        if lvar == 0 or rvar == 0:
+            return None
+        covariance = sum(((x - lm) * (y - rm) for x, y in zip(lr, rr)), Decimal("0"))
+        return covariance / (lvar * rvar).sqrt()
+
+    def _drawdown_factor(self, drawdown: Decimal) -> Decimal:
+        value = D(drawdown)
+        if value >= self.policy.severe_drawdown:
+            return Decimal("0")
+        if value >= self.policy.elevated_drawdown:
+            return D(self.policy.elevated_drawdown_factor)
+        if value >= self.policy.moderate_drawdown:
+            return D(self.policy.moderate_drawdown_factor)
+        return Decimal("1")
 
     # ── construction ─────────────────────────────────────────────────────
     def construct_target(
