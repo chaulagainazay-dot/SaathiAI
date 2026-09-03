@@ -752,6 +752,31 @@ class SecurityStore:
         self.db.commit()
         return delegation_id
 
+    def ensure_scheduled_delegation(self, *, delegation_id: str, user_id: str,
+                                    scope_kind: str, scope_ref: str, action: str,
+                                    authority_ceiling: str, expires_at: float) -> str:
+        """Create one delegation for a scheduled occurrence, at most once.
+
+        The id is supplied by the caller and derived from the occurrence itself,
+        so asking twice for the same scheduled run -- a scheduler restart inside
+        its catch-up window, a duplicate trigger, a second worker -- resolves to
+        the same row rather than a second grant. `INSERT OR IGNORE` makes the
+        second ask a no-op instead of a race.
+
+        Creating the row is not the claim. `consume_delegation` is, and it is
+        atomic, so exactly one caller proceeds however many ask.
+        """
+        self.db.execute(
+            "INSERT OR IGNORE INTO authority_delegation (delegation_id, user_id,"
+            " scope_kind, scope_ref, action, authority_ceiling, created_at,"
+            " expires_at, max_uses, used, revoked_at)"
+            " VALUES (?,?,?,?,?,?,?,?,1,0,NULL)",
+            (delegation_id, user_id, scope_kind, scope_ref, action,
+             authority_ceiling, self._now(), expires_at),
+        )
+        self.db.commit()
+        return delegation_id
+
     def get_delegation(self, delegation_id: str) -> dict | None:
         row = self.db.execute(
             "SELECT * FROM authority_delegation WHERE delegation_id=?",
