@@ -114,6 +114,11 @@ class SaathiExecutionSystem:
             )
 
         # Phase 5: Sanitization
+        #
+        # The sanitised result used to go only to evidence while this method
+        # returned `result` -- the raw one -- so the boundary existed and the
+        # payload went round it. The returned result now carries the sanitised
+        # data, which is the whole point of having sanitised it.
         try:
             sanitized = self.gateway.sanitize_result(result, intent)
         except Exception as e:
@@ -129,7 +134,25 @@ class SaathiExecutionSystem:
             raise
 
         logger.info(f"Execution complete: {intent.intent_id} → {result.status}")
-        return result
+        return ExecutionResult(
+            status=result.status,
+            data=sanitized.sanitized_data,
+            cost_usd=result.cost_usd,
+            duration_sec=result.duration_sec,
+            error=sanitized.error,
+            # Traces record what was sent to the connector, which is precisely
+            # where a request header carrying a credential ends up. Sanitised
+            # like the payload; dropped rather than passed through if it cannot
+            # be checked.
+            connector_trace=self._sanitized_trace(result.connector_trace),
+        )
+
+    @staticmethod
+    def _sanitized_trace(trace):
+        from saathi.execution.sanitization import sanitize
+
+        cleaned, report = sanitize(trace)
+        return {} if report.failed else (cleaned or {})
 
     def _get_video_policy(self, intent: ToolIntent) -> Dict[str, Any]:
         """Evaluate VideoBackendPolicy for video generation.

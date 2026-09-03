@@ -79,8 +79,14 @@ class SanitizedResult:
 
     @property
     def is_clean(self) -> bool:
-        """Check if result is safe to return (no secrets)."""
-        return True  # Verified in sanitization phase
+        """Whether this result can be relied on as secret-free.
+
+        Previously `return True  # Verified in sanitization phase`, while the
+        sanitisation phase was an unimplemented stub -- a property named
+        `is_clean` that answered yes without looking. It now reads the note the
+        sanitiser actually wrote, so a failed sanitisation answers no.
+        """
+        return not self.sanitization_notes.startswith("sanitization_failed")
 
 
 @dataclass(frozen=True)

@@ -569,14 +569,57 @@ class ExecutionGateway:
 
         Raises ResultException if sanitization fails.
         """
-        # TODO: Implement sanitization
-        # - Strip bearer tokens
-        # - Strip API keys
-        # - Strip passwords
-        # - Validate schema
-        # - Check cost within reserved budget
+        from saathi.execution.errors import ExecutionError
+        from saathi.execution.sanitization import sanitize
 
-        return SanitizedResult(original_status=result.status)
+        if result is None:
+            return SanitizedResult(original_status=None,
+                                   sanitization_notes="sanitized: no result")
+
+        data, report = sanitize(result.data)
+
+        error = result.error
+        if error is not None:
+            # Errors leak as readily as successes: a failure that quotes the
+            # request it made carries the credential it made it with. The
+            # message and context are sanitised; the code and severity are
+            # closed vocabularies and carry nothing.
+            message, err_report = sanitize(error.message)
+            context, ctx_report = sanitize(error.context)
+            report.redaction_count += err_report.redaction_count + ctx_report.redaction_count
+            report.categories |= err_report.categories | ctx_report.categories
+            report.failed = report.failed or err_report.failed or ctx_report.failed
+            error = ExecutionError(
+                code=error.code,
+                message=message if message is not None else "[withheld]",
+                severity=error.severity,
+                retriable=error.retriable,
+                context=context,
+            )
+
+        if report.failed:
+            # Nothing that could not be checked goes back to the caller. A raw
+            # fallback here would make every other guarantee conditional on
+            # sanitisation never failing.
+            logger.warning("sanitization failed for %s; payload withheld",
+                           getattr(intent, "intent_id", ""))
+            return SanitizedResult(
+                original_status=result.status,
+                sanitized_data=None,
+                cost_usd=result.cost_usd,
+                duration_sec=result.duration_sec,
+                error=error,
+                sanitization_notes=report.note(),
+            )
+
+        return SanitizedResult(
+            original_status=result.status,
+            sanitized_data=data,
+            cost_usd=result.cost_usd,
+            duration_sec=result.duration_sec,
+            error=error,
+            sanitization_notes=report.note(),
+        )
 
     def record_evidence(self, intent: ToolIntent, history: StateHistory, result: Optional[SanitizedResult]) -> Evidence:
         """Create immutable audit evidence.
