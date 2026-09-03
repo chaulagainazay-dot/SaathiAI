@@ -381,6 +381,8 @@ _NOT_EXTERNAL_WRITES = {
     ("saathi/tools/social_dashboard.py", "_tiktok"),
     ("saathi/tools/email_tool.py", "_access_token"),
     ("saathi/tools/registry.py", "_stage_draft"),
+    ("saathi/tools/linkedin_post.py", "exchange_code"),
+    ("saathi/tools/tiktok_post.py", "exchange_code"),
 }
 
 _HTTP_CLIENTS = {"httpx", "requests", "aiohttp"}
@@ -398,6 +400,28 @@ def _guarded_functions(tree: ast.AST) -> set[str]:
     return out
 
 
+def _client_names(tree: ast.AST) -> set[str]:
+    """Local names bound to an HTTP client, aliases included.
+
+    Matching receivers literally named `httpx`/`requests` is how the first
+    sweep missed an entire social publisher: `saathi/tools/tiktok_post.py`
+    imports `requests as _req`, so its three mutating calls were invisible.
+    Aliases are resolved here rather than assumed away.
+    """
+    names = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            for a in node.names:
+                root = a.name.split(".")[0]
+                if root in _HTTP_CLIENTS:
+                    names.add(a.asname or root)
+        elif isinstance(node, ast.ImportFrom):
+            if (node.module or "").split(".")[0] in _HTTP_CLIENTS:
+                for a in node.names:
+                    names.add(a.asname or a.name)
+    return names
+
+
 def _external_write_sites() -> list[tuple[str, int, str, bool]]:
     """Every mutating HTTP call in the repository, with whether it is guarded."""
     sites = []
@@ -409,6 +433,7 @@ def _external_write_sites() -> list[tuple[str, int, str, bool]]:
         except SyntaxError:
             continue
         guarded = _guarded_functions(tree)
+        clients = _client_names(tree)
         stack: list[str] = []
 
         class Scan(ast.NodeVisitor):
@@ -419,7 +444,7 @@ def _external_write_sites() -> list[tuple[str, int, str, bool]]:
             def visit_Call(self, n):
                 f = n.func
                 if isinstance(f, ast.Attribute) and f.attr in _MUTATING \
-                        and isinstance(f.value, ast.Name) and f.value.id in _HTTP_CLIENTS:
+                        and isinstance(f.value, ast.Name) and f.value.id in clients:
                     fn = stack[-1] if stack else "<module>"
                     key = str(path)
                     if (key, None) not in _NOT_EXTERNAL_WRITES \
@@ -636,3 +661,365 @@ def test_no_browser_automation_reaches_reddit_without_a_grant(monkeypatch):
     monkeypatch.setattr(subprocess, "run",
                         lambda *a, **k: pytest.fail("subprocess invoked without a grant"))
     assert scheduler.auto_reddit_post()["status"] == "blocked"
+
+
+# ══════════════════════════════════════════════════════════════════════════
+# The positive control: a write that DOES happen, through the whole pipeline.
+#
+# Everything above proves refusals. A containment layer that refuses
+# everything is indistinguishable from one that works, so this exercises the
+# real boundary end to end -- ToolIntent, ExecutionGateway.submit, the
+# handler dispatch that opens the grant, a guarded write reaching a local
+# sink -- and proves the sink was actually invoked.
+#
+# The sink is local. Nothing here contacts a provider.
+# ══════════════════════════════════════════════════════════════════════════
+
+class _TestSink:
+    """Records what a governed write would have sent. Never leaves the process.
+
+    Also asserts the grant is present at the moment of the write: a sink that
+    recorded invocations without checking that would prove the plumbing runs,
+    not that it is governed.
+    """
+
+    def __init__(self):
+        self.calls: list[dict] = []
+        self.grants: list = []
+
+    def write(self, target: str, payload: dict) -> dict:
+        from saathi.execution.egress import guard as _g
+
+        grant = _g(target, operation="test.sink")
+        self.grants.append(grant)
+        self.calls.append({"target": target, "payload": payload})
+        # A provider error body that quotes the request, credential included --
+        # the shape the sanitiser exists for.
+        return {"status": "ok", "id": f"remote_{len(self.calls)}",
+                "echo": {"authorization": "Bearer synthetic-abc123def456"}}
+
+
+@pytest.fixture
+def sink():
+    return _TestSink()
+
+
+def _governed_intent(operation="echo"):
+    import hashlib
+    import uuid
+
+    from saathi.execution.toolintent import (
+        ApprovalLevel, BusinessUnit, RiskLevel, ToolIntent)
+
+    return ToolIntent(
+        intent_id=str(uuid.uuid4()), correlation_id=str(uuid.uuid4()),
+        actor_id="user:test", mission_id="m", capability="local",
+        connector_id="local", operation=operation, reason="phase19 sink",
+        risk_level=RiskLevel.LOW, approval_level=ApprovalLevel.L1,
+        idempotency_key=hashlib.sha256(f"p19-{uuid.uuid4()}".encode()).hexdigest(),
+        parameters={"message": "hello"}, metadata={"family": "local"},
+        business_unit=BusinessUnit.MR_YETI)
+
+
+def test_a_governed_write_reaches_the_sink_and_carries_a_grant(sink, tmp_path,
+                                                               monkeypatch):
+    """The whole pipeline, positively. Without this the refusals prove only
+    that the guard can say no."""
+    from saathi.execution.store import ExecutionStore
+    from saathi.execution.universal import UniversalBoundary
+
+    boundary = UniversalBoundary(store=ExecutionStore(tmp_path / "exec.db"))
+
+    def handler(intent, rec):
+        result = sink.write("test.provider", {"op": intent.operation})
+        return {"status": "succeeded", "summary": result["id"]}
+
+    boundary.register_handler("local", handler)
+    rec = boundary.submit(_governed_intent(), handler=handler)
+
+    assert sink.calls, "the governed write never reached the sink"
+    assert sink.grants[0].intent_digest, "the write ran without a correlated grant"
+    assert rec.status in ("succeeded", "SUCCEEDED")
+
+
+def test_the_grant_seen_by_the_sink_matches_the_authorized_intent(sink, tmp_path):
+    """Correlation end to end: the digest the sink saw is the digest of the
+    intent the boundary admitted, not merely some grant."""
+    from saathi.execution.record import tool_intent_digest
+    from saathi.execution.store import ExecutionStore
+    from saathi.execution.universal import UniversalBoundary
+
+    boundary = UniversalBoundary(store=ExecutionStore(tmp_path / "exec.db"))
+    intent = _governed_intent()
+
+    def handler(i, rec):
+        sink.write("test.provider", {"op": i.operation})
+        return {"status": "succeeded"}
+
+    boundary.register_handler("local", handler)
+    boundary.submit(intent, handler=handler)
+
+    assert sink.grants[0].intent_digest == tool_intent_digest(intent)
+    assert sink.grants[0].actor == "user:test"
+
+
+def test_the_grant_closes_after_the_governed_write(sink, tmp_path):
+    from saathi.execution.store import ExecutionStore
+    from saathi.execution.universal import UniversalBoundary
+
+    boundary = UniversalBoundary(store=ExecutionStore(tmp_path / "exec.db"))
+
+    def handler(i, rec):
+        sink.write("test.provider", {})
+        return {"status": "succeeded"}
+
+    boundary.register_handler("local", handler)
+    boundary.submit(_governed_intent(), handler=handler)
+    assert current_grant() is None
+    with pytest.raises(EgressDenied):
+        sink.write("test.provider", {})
+
+
+def test_a_provider_result_crossing_the_boundary_is_sanitised(sink):
+    """The sink returns an echoed Authorization header, which is how provider
+    responses actually leak. Whatever leaves execution crosses the sanitiser."""
+    from saathi.execution.sanitization import sanitize
+
+    with governed_egress(_grant()):
+        raw = sink.write("test.provider", {"x": 1})
+    cleaned, report = sanitize(raw)
+    assert "synthetic-abc123def456" not in str(cleaned)
+    assert cleaned["id"] == "remote_1", "identifiers survive; only credentials go"
+    assert report.redaction_count >= 1
+
+
+def test_a_refused_write_leaves_no_trace_in_the_sink(sink):
+    with pytest.raises(EgressDenied):
+        sink.write("test.provider", {"x": 1})
+    assert sink.calls == []
+
+
+# ── §36 architectural invariants, as executable properties ─────────────────
+
+def _authorization_inputs(**over):
+    from saathi.execution.authorization import AuthorizationInputs
+
+    base = dict(actor_user_id="ajay", has_permission=True, kill_switch_blocked=False,
+                approvals=[], now=1_000_000.0)
+    base.update(over)
+    return AuthorizationInputs(**base)
+
+
+def _write_intent(operation="local-llm-inference", connector_id=""):
+    """A *classifiable* action.
+
+    The gateway reports the first blocking gate in disclosure order, and an
+    unrecognised operation is refused at the action gate before identity or
+    RBAC are ever consulted. Naming a connector tool that is not in the
+    registry therefore reports `action.unknown` for every case -- true, and
+    useless for pinning the gate actually under test.
+    """
+    from saathi.execution.toolintent import ToolIntent
+
+    return ToolIntent(intent_id="p19-inv", operation=operation,
+                      connector_id=connector_id, actor_id="user:ajay",
+                      parameters={"to": "a@example.test"})
+
+
+@pytest.mark.parametrize("label,over,expect", [
+    ("NO_KILL_SWITCH_WRITE", {"kill_switch_blocked": True}, "kill_switch.active"),
+    ("NO_RBAC_REVOKED_WRITE", {"has_permission": False}, "rbac.denied"),
+    ("NO_UNKNOWN_ORIGIN_WRITE", {"actor_user_id": None, "has_permission": None},
+     "actor.unknown"),
+])
+def test_gateway_refuses_the_write_intent(label, over, expect):
+    """These are Phase 16 gates, restated against a *write* intent so the
+    external-write invariants are pinned in the file that owns them."""
+    from saathi.execution.authorization import Decision, authorize_intent
+
+    decision = authorize_intent(_write_intent(), _authorization_inputs(**over))
+    assert decision.decision is not Decision.AUTHORIZED, label
+    assert decision.reason_code == expect, label
+
+
+def test_no_unauthorized_connector_write():
+    from saathi.agent_runtime.contracts import AuthorityClass
+    from saathi.agent_runtime.models import RiskClass
+    from saathi.execution.authorization import (
+        Decision, ResolvedAction, authorize_intent)
+
+    from saathi.execution.record import tool_intent_digest
+
+    intent = _write_intent()
+    action = ResolvedAction(AuthorityClass.EXTERNAL_MUTATION,
+                            RiskClass.EXTERNAL_SIDE_EFFECT,
+                            "connector_registry", requires_connector=True)
+    # EXTERNAL_MUTATION requires approval, and approval is disclosed before
+    # connector state -- so a correlated approval has to be present or every
+    # case here reports approval.missing instead of the gate under test.
+    approval = {"approval_id": "a1", "tool_intent_digest": tool_intent_digest(intent),
+                "status": "approved", "used": 0, "max_uses": 1}
+    for state, reason in (("unauthorized", "connector.unauthorized"),
+                          (None, "connector.unknown")):
+        decision = authorize_intent(
+            intent, _authorization_inputs(connector_action=action,
+                                          connector_state=state,
+                                          approvals=[approval]))
+        assert decision.decision is not Decision.AUTHORIZED
+        assert decision.reason_code == reason
+
+
+def test_no_unapproved_required_write():
+    from saathi.execution.authorization import Decision, authorize_intent
+
+    decision = authorize_intent(_write_intent(operation="video-generation",
+                                              connector_id=""),
+                                _authorization_inputs())
+    assert decision.decision is Decision.DENIED
+    assert decision.reason_code == "approval.missing"
+
+
+def test_no_trading_write_without_guardian():
+    from saathi.agent_runtime.contracts import AuthorityClass
+    from saathi.agent_runtime.models import RiskClass
+    from saathi.execution.authorization import (
+        Decision, ResolvedAction, authorize_intent)
+    from saathi.execution.record import tool_intent_digest
+
+    intent = _write_intent(operation="advice", connector_id="")
+    action = ResolvedAction(AuthorityClass.FINANCIAL_ADVISORY,
+                            RiskClass.EXTERNAL_SIDE_EFFECT, "test_fixture")
+    approval = {"approval_id": "a1", "tool_intent_digest": tool_intent_digest(intent),
+                "status": "approved", "used": 0, "max_uses": 1}
+    decision = authorize_intent(intent, _authorization_inputs(
+        connector_action=action, approvals=[approval]))
+    assert decision.decision is not Decision.AUTHORIZED
+    assert decision.reason_code == "guardian.missing"
+
+
+def test_no_expired_delegation_write(tmp_path):
+    """NO_EXPIRED_DELEGATION_WRITE and NO_USER_BACKGROUND_WRITE_WITHOUT_DELEGATION."""
+    from saathi.execution.delegated_work import SCOPE_JOB, execute_delegated
+    from saathi.execution.delegation import DelegationRequest
+    from saathi.security.store import SecurityStore
+    from tests.support.auth_state import make_active
+
+    store = SecurityStore(db_path=tmp_path / "security.db")
+    make_active(store)
+    uid = store.owner_id()
+    store.db.execute("DELETE FROM user_roles WHERE user_id=?", (uid,))
+    store.db.execute("INSERT INTO user_roles (user_id, role_id, assigned_at)"
+                     " VALUES (?,?,?)", (uid, "role-owner", 0))
+    store.db.commit()
+
+    expired = store.create_delegation(user_id=uid, scope_kind=SCOPE_JOB,
+                                      scope_ref="post", action="post",
+                                      authority_ceiling="READ_ONLY",
+                                      ttl_sec=-1.0, max_uses=1)
+    ran = []
+    request = DelegationRequest(delegation_id=expired, scope_kind=SCOPE_JOB,
+                                scope_ref="post", action="post")
+    decision, _ = execute_delegated(expired, request, lambda: ran.append(1),
+                                    store=store)
+    assert not decision.valid and decision.reason_code == "delegation.expired"
+    assert ran == [], "an expired delegation must not run the work"
+
+
+def test_no_system_external_write_with_read_only_system_actor():
+    """The system actor is capped at READ_ONLY, so it cannot reach an external
+    mutation class even before the egress guard is consulted."""
+    from saathi.agent_runtime.contracts import AuthorityClass
+    from saathi.execution.authorization import (
+        SYSTEM_ACTOR_MAX_AUTHORITY, Decision, authorize_intent)
+
+    assert SYSTEM_ACTOR_MAX_AUTHORITY is AuthorityClass.READ_ONLY
+    decision = authorize_intent(
+        _write_intent(operation="video-generation", connector_id=""),
+        _authorization_inputs(actor_user_id=None, has_permission=None,
+                              actor_is_system=True))
+    assert decision.decision is Decision.DENIED
+    assert decision.reason_code == "actor.system_insufficient_authority"
+
+
+# ── §30 coverage matrix ─────────────────────────────────────────────────────
+#
+# Every external-write family, and how each is covered. Kept as a test rather
+# than a document so a family cannot be added to the codebase and quietly
+# omitted from the matrix -- the sweep and this table are cross-checked against
+# each other.
+
+#: family -> (module paths, mechanism, static, dynamic)
+_COVERAGE = {
+    "social.meta": (["saathi/tools/meta_post.py"], "httpx", True, True),
+    "social.twitter": (["saathi/tools/twitter_post.py"], "tweepy", True, True),
+    "social.linkedin": (["saathi/tools/linkedin_post.py"], "requests (aliased)",
+                        True, True),
+    "social.tiktok": (["saathi/tools/tiktok_post.py"], "requests (aliased)", True, True),
+    "social.reddit": (["saathi/tools/reddit_outreach.py", "saathi/scheduler.py"],
+                      "praw + browser automation", True, True),
+    "social.facebook_video": (["saathi/tools/mr_yeti_pipeline.py"], "httpx", True, False),
+    "email.gmail": (["saathi/tools/email_tool.py"], "httpx + browser", True, True),
+    "email.smtp": (["saathi/mailer.py"], "smtplib", True, True),
+    "email.mailerlite": (["saathi/tools/mailerlite.py"], "httpx", True, True),
+    "messaging.telegram": (["saathi/connectors/adapters/telegram.py"], "httpx",
+                           True, False),
+    "generation.video": (["saathi/tools/backup_video.py"], "httpx", True, True),
+    "generation.avatar_voice": (["saathi/tools/content_studio.py"], "httpx", True, True),
+    "generation.image": (["saathi/tools/images.py"], "httpx", True, True),
+    "generation.speech": (["saathi/tools/voice.py"], "httpx", True, False),
+    "generation.transcription": (["saathi/tools/video_editor.py",
+                                  "saathi/tools/speaking_eval.py"], "httpx", True, False),
+    "publish.n8n": (["saathi/tools/content.py"], "httpx", True, False),
+}
+
+
+@pytest.mark.parametrize("family", sorted(_COVERAGE))
+def test_every_family_has_a_guarded_module(family):
+    paths, mechanism, static_covered, _ = _COVERAGE[family]
+    assert static_covered, f"{family} claims no static coverage"
+    for path in paths:
+        tree = ast.parse(pathlib.Path(path).read_text())
+        assert _guarded_functions(tree), f"{family}: {path} has no guarded function"
+
+
+def test_the_matrix_and_the_sweep_agree():
+    """A module that performs an external write but appears in no family means
+    the matrix has drifted behind the code."""
+    swept = {p for p, _, _, _ in _external_write_sites()}
+    listed = {p for paths, *_ in _COVERAGE.values() for p in paths}
+    missing = swept - listed
+    assert missing == set(), f"external-write modules absent from the matrix: {missing}"
+
+
+def test_the_matrix_lists_no_module_that_stopped_writing():
+    """The other direction: a family whose module no longer writes anything is
+    stale, and a stale matrix is how coverage claims outlive the code."""
+    swept = {p for p, _, _, _ in _external_write_sites()}
+    non_http = {"saathi/tools/reddit_outreach.py", "saathi/scheduler.py",
+                "saathi/mailer.py", "saathi/tools/twitter_post.py"}
+    for family, (paths, *_rest) in _COVERAGE.items():
+        for path in paths:
+            assert path in swept or path in non_http, f"{family}: {path} no longer writes"
+
+
+def test_the_sweep_resolves_aliased_http_imports(tmp_path):
+    """Negative control for the blind spot that hid TikTok.
+
+    `import requests as _req` was invisible to a sweep matching receivers named
+    `requests`, and an entire social publisher stayed unguarded behind it.
+    """
+    probe = tmp_path / "aliased.py"
+    probe.write_text("import requests as _req\n"
+                     "def publish():\n"
+                     "    return _req.post('https://example.com/publish')\n")
+    tree = ast.parse(probe.read_text())
+    assert _client_names(tree) == {"_req"}
+    assert "publish" not in _guarded_functions(tree)
+
+
+def test_tiktok_video_publish_is_refused_outside_governance(monkeypatch):
+    from saathi.tools import tiktok_post
+
+    monkeypatch.setattr(tiktok_post, "token_ok", lambda: True)
+    with pytest.raises(EgressDenied):
+        tiktok_post.post_video("/tmp/none.mp4", "title")
