@@ -21,6 +21,16 @@ hardcoded string to the real owner id. Instead the STT router binds to the
 credential its client already sends: the D15-derived ``X-Platform-Token``,
 validated by the same ``require_context`` that guards every other platform
 surface.
+
+Phase 17 note: the attribute *is* now assigned in the middleware. That is not a
+reversal of the reasoning above -- it is that reasoning's precondition being
+removed. The objection was to re-attributing those routers **silently, as a side
+effect** of repairing a voice endpoint while they still fell back to a hardcoded
+owner. Phase 17 removes both fallbacks in the same change: they now refuse an
+unidentified caller instead of inventing one, so the assignment re-attributes
+nothing silently. The STT router is untouched and still binds to
+``X-Platform-Token`` rather than to this attribute, which is what test 17 below
+now checks.
 """
 from __future__ import annotations
 
@@ -319,18 +329,47 @@ def test_16_voice_authority_remains_none(client, isolated):
     assert "executable" not in r.json()
 
 
-def test_17_no_global_request_state_user_id_is_introduced():
-    """The blast radius that made the obvious fix the wrong one.
+def test_17_identity_is_assigned_once_and_never_fabricated():
+    """The blast radius that made the obvious fix the wrong one, and what
+    replaced it.
 
-    Two routers read this attribute as ``... or "ajay"``. Assigning it in the
-    middleware would re-attribute their actions from that hardcoded string to
-    the real owner, silently, as a side effect of repairing a voice endpoint.
+    D16 refused to assign ``request.state.user_id`` because two routers read it
+    as ``... or "ajay"``: filling it in would have re-attributed their actions
+    from a hardcoded string to the real owner as a silent side effect. Phase 17
+    assigns it deliberately *and* removes both fallbacks, so what this test
+    guards is no longer "never assign it" but the property D16 actually cared
+    about -- that nobody's actions are attributed to an identity that was not
+    established.
     """
     import pathlib
+    import re
     repo = pathlib.Path(__file__).resolve().parent.parent
     server = (repo / "saathi" / "server.py").read_text()
-    assert "state.user_id" not in server
-    assert "request.state.user_id" not in server
+
+    # Assigned in exactly one place: the middleware, from the session.
+    assignments = [line.strip() for line in server.splitlines()
+                   if re.search(r"^\s*request\.state\.user_id\s*=", line)]
+    assert len(assignments) == 1, assignments
+
+    # And never from a hardcoded identity, here or in the routers that read it.
+    # Checked over the parsed tree rather than the text: the docstrings that
+    # explain this repair quote the very expression being forbidden, and a
+    # substring search flags the explanation instead of the defect.
+    import ast as _ast
+
+    for path in ("saathi/server.py",
+                 "saathi/connectors/platform/api.py",
+                 "saathi/control_center/api.py"):
+        tree = _ast.parse((repo / path).read_text())
+        docstrings = {id(node.value) for node in _ast.walk(tree)
+                      if isinstance(node, _ast.Expr)
+                      and isinstance(node.value, _ast.Constant)
+                      and isinstance(node.value.value, str)}
+        literals = [n.value for n in _ast.walk(tree)
+                    if isinstance(n, _ast.Constant)
+                    and isinstance(n.value, str)
+                    and id(n) not in docstrings]
+        assert "ajay" not in literals, f"{path} still hardcodes an owner"
 
     import ast
     import inspect
