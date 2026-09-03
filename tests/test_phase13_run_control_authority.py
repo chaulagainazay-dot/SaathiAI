@@ -381,8 +381,17 @@ def test_audit_never_records_the_session_token(sec, store, orch, client):
 
     blob = str(sec.audit_recent(limit=40))
     assert token not in blob, "the credential that authenticated the call must not be logged"
-    for secret in ("password", "cookie", "authorization", "bootstrap"):
+    for secret in ("password", "cookie", "bootstrap"):
         assert secret not in blob.lower()
+    # "authorization" is checked in its credential-bearing forms only. The bare
+    # word is legitimate vocabulary in this log -- Phase 16 writes the machine-safe
+    # status code `authorization.granted` -- and a substring match on it flags a
+    # correct audit entry while catching no actual secret. What must never appear
+    # is a header or assignment that would carry a value.
+    lowered = blob.lower()
+    for form in ("authorization:", "authorization=", "authorization\":",
+                 "bearer ", "x-baadar-session"):
+        assert form not in lowered, form
 
 
 def test_audit_action_names_are_stable_identifiers(sec, store, orch, client):
