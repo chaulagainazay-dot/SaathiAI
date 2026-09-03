@@ -264,6 +264,13 @@ def send_reply(post_id: str, reply_text: str) -> dict:
             "error": "Reddit credentials not configured. Add REDDIT_CLIENT_ID, REDDIT_CLIENT_SECRET, REDDIT_USERNAME, REDDIT_PASSWORD to .env",
         }
     try:
+        # Phase 19B: an external mutation that never touches an HTTP client --
+        # praw posts the comment itself, so a sweep over httpx/requests could
+        # not see it. Guarded before the client is built: constructing a praw
+        # session authenticates, which is itself a request worth not making.
+        from saathi.execution.egress import guard as _egress_guard
+
+        _egress_guard("reddit.comment", operation="send_reply")
         r = _get_reddit()
         sub = r.submission(id=post_id)
         comment = sub.reply(reply_text)
