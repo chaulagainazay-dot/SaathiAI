@@ -752,3 +752,47 @@ def test_ownership_is_checked_before_the_action_can_proceed_cross_run():
     inputs = _ok_mutating(intent, run_declared=True,
                           run={"state": "running", "actor": "user:other"})
     assert authorize_intent(intent, inputs).reason_code == "run_state.not_owned"
+
+
+# ── the TODOs that remain cannot grant anything ─────────────────────────────
+# Phase 16 resolved 4 of the file's 9 TODOs (authorize, classify_risk,
+# check_approval, and the evidence rationale placeholder). The 5 that remain
+# stay only because none of them sits on a path that can produce a positive
+# authorization. That is an executable claim, not a note.
+
+def test_the_unimplemented_validator_cannot_let_a_bad_intent_through(gw, ctx):
+    """`validate_intent` still passes everything. Authorization does not rely
+    on it: it checks intent integrity itself, so the stub cannot grant."""
+    bad = _intent(operation="")
+    history = gw.validate_intent(bad, _history(bad))
+    assert history.current_state is IntentState.VALIDATED, "the stub still passes"
+    with pytest.raises(AuthorizationException):
+        gw.authorize(bad, ctx, _history(bad), inputs=_ok())
+
+
+def test_the_unimplemented_idempotency_check_cannot_grant(gw, ctx):
+    """It records nothing and decides nothing; duplicate detection lives in the
+    universal boundary. It cannot turn a refusal into a grant."""
+    intent = _intent()
+    history = gw.check_idempotency(intent, _history(intent))
+    assert IntentState.AUTHORIZED not in [t.to_state for t in history.transitions]
+    with pytest.raises(AuthorizationException):
+        gw.authorize(intent, ctx, history, inputs=_ok(has_permission=False))
+
+
+def test_the_unimplemented_execute_returns_no_success(gw):
+    """A stub that returned a successful-looking result would be far worse than
+    one that returns nothing."""
+    intent = _intent()
+    assert gw.execute(intent, _history(intent)).status is None
+
+
+def test_no_remaining_todo_sits_on_the_authorization_path():
+    """Structural: the methods that decide must be TODO-free, and the methods
+    that still carry one must not be decision-makers."""
+    import inspect as _inspect
+
+    deciding = (ExecutionGateway.authorize, ExecutionGateway.classify_risk,
+                ExecutionGateway.check_approval)
+    for method in deciding:
+        assert "TODO" not in _inspect.getsource(method), method.__name__
