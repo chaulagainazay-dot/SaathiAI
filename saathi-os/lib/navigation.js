@@ -33,6 +33,16 @@ export const NAV_GROUPS = [
         authoritySensitivity: "approval-aware",
       },
       {
+        id: "orbit",
+        label: "Orbit",
+        href: "/orbit",
+        icon: "◎",
+        description: "Agent constellation — read-only system view",
+        shortcut: "g o",
+        accent: "#E8B84B",
+        authoritySensitivity: "observation-only",
+      },
+      {
         id: "missions",
         label: "Missions",
         href: "/missions",
@@ -120,6 +130,17 @@ export const NAV_GROUPS = [
         authoritySensitivity: "paper-only",
         environmentSensitivity: "never-imply-production",
       },
+      {
+        id: "nepse",
+        label: "NEPSE Tracker",
+        href: "/nepse",
+        icon: "◪",
+        description: "NEPSE portfolio, screener and market — snapshot data, not a live feed",
+        accent: "#35C47A",
+        riskFlag: true,
+        authoritySensitivity: "observation-only",
+        environmentSensitivity: "never-imply-production",
+      },
     ],
   },
   {
@@ -147,7 +168,10 @@ export const NAV_GROUPS = [
   },
 ];
 
-/** Global chrome destinations (not in the 12 primary areas list for group count). */
+/** Primary navigable areas. Bump deliberately when a surface is added. */
+export const PRIMARY_AREA_COUNT = 14;
+
+/** Global chrome destinations (not in the primary areas list for group count). */
 export const GLOBAL_NAV = [
   {
     id: "fleet",
@@ -321,8 +345,8 @@ export function validateNavigationModel() {
   if (NAV_GROUPS.length !== 4) {
     errors.push(`Expected 4 groups, got ${NAV_GROUPS.length}`);
   }
-  if (primary.length !== 12) {
-    errors.push(`Expected 12 primary areas, got ${primary.length}`);
+  if (primary.length !== PRIMARY_AREA_COUNT) {
+    errors.push(`Expected ${PRIMARY_AREA_COUNT} primary areas, got ${primary.length}`);
   }
 
   for (const g of NAV_GROUPS) {

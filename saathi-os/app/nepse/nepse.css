@@ -27,7 +27,7 @@
   min-height:100vh;
 }
 @media (prefers-color-scheme: dark){
-  .nepse-root:not([data-theme="light"]){
+  :root:not([data-theme="light"]) .nepse-root:not([data-theme="light"]){
     --bg:#0b0f0d; --surface:#121a16; --surface-2:#182019; --border:#25332b;
     --text:#e9efe9; --text-dim:#a3b3a8; --text-faint:#6d7d73;
     --accent:#3fdc8a; --accent-soft:#152a1e; --down:#ec6a5c; --down-soft:#2c1917;

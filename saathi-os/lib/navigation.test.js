@@ -18,9 +18,9 @@ import {
 import { DEPARTMENTS } from "./departments.js";
 
 describe("navigation model integrity", () => {
-  it("has exactly 4 groups and 12 primary areas", () => {
+  it("has exactly 4 groups and 14 primary areas", () => {
     assert.equal(NAV_GROUPS.length, 4);
-    assert.equal(getPrimaryAreas().length, 12);
+    assert.equal(getPrimaryAreas().length, 14); // +orbit +nepse
   });
 
   it("has expected group ids", () => {
@@ -41,6 +41,8 @@ describe("navigation model integrity", () => {
       "/knowledge",
       "/missions",
       "/monitoring",
+      "/nepse",
+      "/orbit",
       "/projects",
       "/security",
       "/studio",
