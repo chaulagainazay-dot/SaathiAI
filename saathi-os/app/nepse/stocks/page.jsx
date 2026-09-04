@@ -5,6 +5,7 @@
 import { useMemo, useState } from "react";
 import { SECTORS } from "@/lib/nepse/data";
 import { useNepseQuotes } from "@/lib/nepse/live";
+import { useNepseIndicators, show } from "@/lib/nepse/use-indicators";
 import { screen } from "@/lib/nepse/screener";
 import { fmtNum, fmtRs, fmtPct, dayChangePct } from "@/lib/nepse/format";
 
@@ -26,10 +27,18 @@ export default function ScreenerPage() {
   const [sort, setSort] = useState({ key: "score", dir: "desc" });
   const [page, setPage] = useState(1);
   const { stocks, isLive } = useNepseQuotes();
+  const { indicators, covered } = useNepseIndicators();
 
   const result = useMemo(
-    () => screen(stocks, { query, sector, sort, page, pageSize: 50 }),
-    [stocks, query, sector, sort, page],
+    () => screen(stocks, {
+      query, sector, sort, page, pageSize: 50,
+      rsiBySymbol: Object.fromEntries(
+        Object.entries(indicators)
+          .filter(([, v]) => v?.rsi?.status === "VALID")
+          .map(([sym, v]) => [sym, v.rsi.value]),
+      ),
+    }),
+    [stocks, indicators, query, sector, sort, page],
   );
 
   const onSort = (key) =>
@@ -78,7 +87,7 @@ export default function ScreenerPage() {
                   <td className="rt num">{r.score}</td>
                   <td><span className={`nepse-badge ${r.signal === "Buy" ? "up" : r.signal === "Sell" ? "down" : "neutral"}`}>{r.signal}</span></td>
                   <td>{r.evaluation}</td>
-                  <td className="rt num">{fmtNum(r.rsi, 0)}</td>
+                  <td className="rt num" title={indicators[r.symbol] ? `computed from ${indicators[r.symbol].observations} closes to ${indicators[r.symbol].lastDate}` : "no history"}>{show(indicators[r.symbol]?.rsi, (v) => v.toFixed(0))}</td>
                   <td className="rt num">{r.pe ?? "—"}</td>
                   <td className="rt num">{r.pb ?? "—"}</td>
                 </tr>

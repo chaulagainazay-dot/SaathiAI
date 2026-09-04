@@ -30,10 +30,14 @@ function momentumScore(stock) {
   return clamp(50 + chg * 10, 0, 100);
 }
 
-// RSI sub-score: rewards the 40–60 "healthy" band, penalizes overbought/oversold.
-function rsiScore(stock) {
-  const r = Number(stock.rsi);
-  if (!Number.isFinite(r)) return 50;
+// RSI sub-score from a REAL computed RSI. The snapshot's rsi field is seed data and
+// must never reach a score — an absent RSI drops the component instead of guessing.
+function rsiScore(realRsi) {
+  // Number(null) is 0 and Number("") is 0 — an absent RSI must be rejected BEFORE
+  // coercion, or "no reading" silently becomes "RSI 0" (a maximally oversold score).
+  if (realRsi === null || realRsi === undefined || realRsi === "") return null;
+  const r = Number(realRsi);
+  if (!Number.isFinite(r)) return null;
   return clamp(100 - Math.abs(r - 50) * 1.6, 0, 100);
 }
 
@@ -49,13 +53,29 @@ function valuationScore(stock) {
 
 export const SCORE_WEIGHTS = { momentum: 0.3, rsi: 0.3, valuation: 0.4 };
 
-export function scoreStock(stock) {
+/**
+ * Composite score. `realRsi` must be a genuinely computed RSI (see lib/nepse/
+ * indicators.js); when it is absent the RSI component is DROPPED and the remaining
+ * weights are renormalized, so the score is honest about what it could measure
+ * rather than padded with a seed value.
+ */
+export function scoreStock(stock, realRsi = null) {
   if (!stock) return 0;
-  const s =
-    momentumScore(stock) * SCORE_WEIGHTS.momentum +
-    rsiScore(stock) * SCORE_WEIGHTS.rsi +
-    valuationScore(stock) * SCORE_WEIGHTS.valuation;
+  const rs = rsiScore(realRsi);
+  const parts = [
+    [momentumScore(stock), SCORE_WEIGHTS.momentum],
+    [valuationScore(stock), SCORE_WEIGHTS.valuation],
+  ];
+  if (rs !== null) parts.push([rs, SCORE_WEIGHTS.rsi]);
+  const totalWeight = parts.reduce((a, [, w]) => a + w, 0);
+  const s = parts.reduce((a, [v, w]) => a + v * w, 0) / totalWeight;
   return Math.round(clamp(s, 0, 100));
+}
+
+/** True when the score included a real RSI component. */
+export function scoreUsedRsi(realRsi) {
+  if (realRsi === null || realRsi === undefined || realRsi === "") return false;
+  return Number.isFinite(Number(realRsi));
 }
 
 export function signalFor(score) {
@@ -75,7 +95,13 @@ export function evaluationFor(stock) {
 }
 
 // Attach all derived analytics fields to a stock (non-mutating).
-export function withAnalytics(stock) {
-  const score = scoreStock(stock);
-  return { ...stock, score, signal: signalFor(score), evaluation: evaluationFor(stock) };
+export function withAnalytics(stock, realRsi = null) {
+  const score = scoreStock(stock, realRsi);
+  return {
+    ...stock,
+    score,
+    signal: signalFor(score),
+    evaluation: evaluationFor(stock),
+    scoreUsedRsi: scoreUsedRsi(realRsi),
+  };
 }

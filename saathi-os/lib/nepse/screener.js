@@ -20,6 +20,7 @@ function sortValue(row, key) {
  * @returns { rows, total, page, pages, pageSize }
  */
 export function screen(stocks, opts = {}) {
+  const rsiBy = opts.rsiBySymbol || {};
   const {
     query = "",
     sector = "",
@@ -28,7 +29,7 @@ export function screen(stocks, opts = {}) {
     pageSize = PAGE_SIZE,
   } = opts;
 
-  let rows = stocks.map(withAnalytics);
+  let rows = stocks.map((s) => withAnalytics(s, rsiBy[s.symbol]));
 
   const q = String(query).trim().toLowerCase();
   if (q) {
