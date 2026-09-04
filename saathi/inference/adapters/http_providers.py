@@ -8,6 +8,7 @@ use ``saathi.llm.generate`` (compatibility facade) or governed engines.
 """
 from __future__ import annotations
 
+import asyncio
 import os
 from typing import Any, Callable
 
@@ -23,6 +24,7 @@ CREDENTIAL_ENV_NAMES: frozenset[str] = frozenset({
     "OPENROUTER_API_KEY",
     "OLLAMA_HOST",
     "OLLAMA_URL",
+    "KIMI_API_KEY",
 })
 
 
@@ -42,6 +44,8 @@ def env_availability(name: str) -> bool:
         return credential_present("GROQ_API_KEY")
     if name.startswith("gemini/"):
         return credential_present("GOOGLE_API_KEY")
+    if name.startswith("kimi/"):
+        return credential_present("KIMI_API_KEY")
     # GLM / DeepSeek / Qwen are served through OpenRouter (one key, many models).
     if name.startswith(("deepseek/", "glm/", "qwen/")):
         return credential_present("OPENROUTER_API_KEY")
@@ -229,6 +233,26 @@ def call_ollama(prompt: str, system: str, max_tokens: int, timeout: int) -> tupl
     return r.json().get("response", ""), model, {}
 
 
+def call_kimi(prompt: str, system: str, max_tokens: int, timeout: int) -> tuple[str, str, dict]:
+    """Compatibility caller delegating to the governed Kimi adapter."""
+    from saathi.inference.adapters.kimi import KimiEngine
+
+    model = os.getenv("KIMI_DEFAULT_MODEL", "kimi-k2.7-code")
+    engine = KimiEngine()
+    result = asyncio.run(
+        engine.generate(
+            [
+                {"role": "system", "content": system},
+                {"role": "user", "content": prompt},
+            ],
+            model=model,
+            max_tokens=max_tokens,
+            timeout=timeout,
+        )
+    )
+    return result.text, result.model, result.usage
+
+
 DEFAULT_FAMILY_CALLERS: dict[str, Caller] = {
     "anthropic": call_anthropic,
     "openai": call_openai,
@@ -238,6 +262,7 @@ DEFAULT_FAMILY_CALLERS: dict[str, Caller] = {
     "groq": call_groq,
     "gemini": call_gemini,
     "ollama": call_ollama,
+    "kimi": call_kimi,
 }
 
 
