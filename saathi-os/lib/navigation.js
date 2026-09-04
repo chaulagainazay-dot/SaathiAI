@@ -131,6 +131,17 @@ export const NAV_GROUPS = [
         environmentSensitivity: "never-imply-production",
       },
       {
+        id: "analysis",
+        label: "Chart Analysis",
+        href: "/analysis",
+        icon: "◈",
+        description: "NEPSE and crypto chart analysis — research only, never advice",
+        accent: "#1F8A53",
+        riskFlag: true,
+        authoritySensitivity: "observation-only",
+        environmentSensitivity: "never-imply-production",
+      },
+      {
         id: "nepse",
         label: "NEPSE Tracker",
         href: "/nepse",
@@ -169,7 +180,7 @@ export const NAV_GROUPS = [
 ];
 
 /** Primary navigable areas. Bump deliberately when a surface is added. */
-export const PRIMARY_AREA_COUNT = 14;
+export const PRIMARY_AREA_COUNT = 15;
 
 /** Global chrome destinations (not in the primary areas list for group count). */
 export const GLOBAL_NAV = [

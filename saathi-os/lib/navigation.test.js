@@ -18,9 +18,9 @@ import {
 import { DEPARTMENTS } from "./departments.js";
 
 describe("navigation model integrity", () => {
-  it("has exactly 4 groups and 14 primary areas", () => {
+  it("has exactly 4 groups and 15 primary areas", () => {
     assert.equal(NAV_GROUPS.length, 4);
-    assert.equal(getPrimaryAreas().length, 14); // +orbit +nepse
+    assert.equal(getPrimaryAreas().length, 15); // +orbit +nepse +analysis
   });
 
   it("has expected group ids", () => {
@@ -35,6 +35,7 @@ describe("navigation model integrity", () => {
     assert.deepEqual(hrefs, [
       "/",
       "/agents",
+      "/analysis",
       "/automation",
       "/business",
       "/command",
@@ -77,7 +78,8 @@ describe("navigation model integrity", () => {
           // Allowed only if alias is intentional redirect of THIS item; primary routes
           // of other items should not appear as aliases of a different area.
           // /control is alias of monitoring; /control is NOT a primary area href. OK.
-          if (["/", "/missions", "/studio", "/projects", "/security", "/automation", "/knowledge", "/command", "/agents", "/business", "/trading", "/monitoring"].includes(a)) {
+          if (["/", "/missions", "/studio", "/projects", "/security", "/automation", "/knowledge", "/command", "/agents",
+      "/analysis", "/business", "/trading", "/monitoring"].includes(a)) {
             assert.equal(owner, item.id, `alias ${a} collides with primary of ${owner}`);
           }
         }
