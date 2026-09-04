@@ -5,7 +5,7 @@ import { Panel, Eyebrow } from "@/components/ui";
 import { login, setPassword, forgotPassword } from "@/lib/api";
 import { passkeySupported, passkeyPlatformName, passkeyUnsupportedReason, passkeyStatus, registerPasskey, unlockPasskey } from "@/lib/passkey";
 
-const ACCENT = "#9B6BFF", TEAL = "#00BFA5", RED = "#FF5A5A", AMBER = "#FFB800";
+const ACCENT = "var(--accent)", TEAL = "#00BFA5", RED = "#FF5A5A", AMBER = "#FFB800";
 
 function friendly(e) {
   const s = String(e && e.message ? e.message : e);

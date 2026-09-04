@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { Panel, Eyebrow } from "@/components/ui";
 import { createMissionTwin } from "@/lib/api";
 
-const ACCENT = "#9B6BFF";
+const ACCENT = "var(--accent)";
 const TYPES = ["business", "client", "product", "startup", "internal", "education", "personal"];
 
 export default function NewMission() {

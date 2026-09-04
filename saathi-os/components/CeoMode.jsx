@@ -22,7 +22,7 @@ export default function CeoMode({ open, onClose }) {
             exit={{ scale: 0.96, opacity: 0 }} transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
             onClick={(e) => e.stopPropagation()} style={{ textAlign: "center", maxWidth: 640 }}>
             <div className="eyebrow" style={{ color: c }}>{DEPARTMENTS[a.dept]?.name} · Today's highest priority</div>
-            <h2 className="display" style={{ fontSize: 42, margin: "18px 0 10px", color: "var(--color-ink-100)",
+            <h2 className="display" style={{ fontSize: 42, margin: "18px 0 10px", color: "var(--text-primary)",
               lineHeight: 1.15 }}>{a.title}</h2>
             <p className="mono" style={{ color: "var(--color-ink-400)", fontSize: 13, letterSpacing: "0.06em" }}>{a.meta}</p>
             <div style={{ display: "flex", gap: 14, justifyContent: "center", marginTop: 36 }}>

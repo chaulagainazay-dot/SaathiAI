@@ -18,7 +18,7 @@ export default function MobileTopBar() {
   return (
     <div className="m-top">
       <div className="eyebrow">{t.eyebrow}</div>
-      <h1 className="display" style={{ fontSize: 25, marginTop: 4, color: "var(--color-ink-100)" }}>{t.title}</h1>
+      <h1 className="display" style={{ fontSize: 25, marginTop: 4, color: "var(--text-primary)" }}>{t.title}</h1>
     </div>
   );
 }
