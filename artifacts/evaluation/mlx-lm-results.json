@@ -1,0 +1,106 @@
+{
+  "schema": "saathios.runtime_candidate_benchmark.v1",
+  "recorded_at": "2026-07-31T03:11:05Z",
+  "runtime": {
+    "name": "mlx-lm",
+    "model": "mlx-community/Qwen2.5-1.5B-Instruct-4bit",
+    "cold_load_ms": 42823.31,
+    "mlx": "0.32.0",
+    "mlx_lm": "0.31.3"
+  },
+  "safety": {
+    "start_memory_free_percent": 60,
+    "end_memory_free_percent": 39,
+    "start_swap_mb": 2106.44,
+    "end_swap_mb": 2090.44,
+    "thermal_observation": "Note: No thermal warning level has been recorded\nNote: No performance warning level has been recorded\nNote: No CPU power status has been recorded",
+    "abort_reasons": []
+  },
+  "summary": {
+    "cases": 6,
+    "successes": 6,
+    "reliability": 1.0,
+    "mean_tokens_per_second": 42.43,
+    "peak_process_memory_mb": 939.31,
+    "decision": "BENCHMARK_ONLY"
+  },
+  "results": [
+    {
+      "returncode": 0,
+      "total_latency_ms": 1556.49,
+      "cold_load_ms": null,
+      "tokens_per_second": 12.85,
+      "output_tokens": 20,
+      "peak_process_memory_mb": 920.78,
+      "error": "",
+      "case_id": "structured_json",
+      "success": true,
+      "output_preview": "```json\n{\n  \"label\": \"ok\",\n  \"score\": 1\n}\n```"
+    },
+    {
+      "returncode": 0,
+      "total_latency_ms": 199.97,
+      "cold_load_ms": null,
+      "tokens_per_second": 10.0,
+      "output_tokens": 2,
+      "peak_process_memory_mb": 931.37,
+      "error": "",
+      "case_id": "tool_selection",
+      "success": true,
+      "output_preview": "get_weather"
+    },
+    {
+      "returncode": 0,
+      "total_latency_ms": 310.37,
+      "cold_load_ms": null,
+      "tokens_per_second": 38.66,
+      "output_tokens": 12,
+      "peak_process_memory_mb": 939.31,
+      "error": "",
+      "case_id": "concise_summary",
+      "success": true,
+      "output_preview": "SaathiOS prioritizes local AI, governed by locals."
+    },
+    {
+      "returncode": 0,
+      "total_latency_ms": 1169.4,
+      "cold_load_ms": null,
+      "tokens_per_second": 74.4,
+      "output_tokens": 87,
+      "peak_process_memory_mb": 926.89,
+      "error": "",
+      "case_id": "permission_risk",
+      "success": true,
+      "output_preview": "Deleting production data is typically considered a HIGH permission risk. This is because production data is often critical to the operations of a business, containing sensitive information that could be exploited by attackers. The process o"
+    },
+    {
+      "returncode": 0,
+      "total_latency_ms": 1113.92,
+      "cold_load_ms": null,
+      "tokens_per_second": 73.61,
+      "output_tokens": 82,
+      "peak_process_memory_mb": 933.21,
+      "error": "",
+      "case_id": "memory_write",
+      "success": true,
+      "output_preview": "No, it should not be written to long-term memory. Writing API keys to long-term memory can be risky because they are sensitive information that can be stolen or misused. Instead, you should use secure methods to store and manage your API ke"
+    },
+    {
+      "returncode": 0,
+      "total_latency_ms": 355.27,
+      "cold_load_ms": null,
+      "tokens_per_second": 45.04,
+      "output_tokens": 16,
+      "peak_process_memory_mb": 929.53,
+      "error": "",
+      "case_id": "code_edit",
+      "success": true,
+      "output_preview": "```python\ndef add(a, b):\n    return a + b\n```"
+    }
+  ],
+  "measurement_notes": {
+    "time_to_first_token": "not available from these non-streaming candidate APIs",
+    "mlx_speed": "output token count divided by end-to-end generation time",
+    "llama_cpp_speed": "native llama.cpp eval timing"
+  }
+}
