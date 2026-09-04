@@ -67,7 +67,8 @@ describe("Command palette safety", () => {
   it("removes misleading approve→finance routing", () => {
     assert.doesNotMatch(src, /Approve recommendation[\s\S]*\/finance/);
     assert.match(src, /\/approvals/);
-    assert.match(src, /\/command/);
+    assert.match(src, /id: "act-command"[\s\S]{0,180}route: "\/"/);
+    assert.match(read("app/page.jsx"), /<CommandCenterPage\s*\/>/);
     assert.match(src, /no direct execution/i);
   });
 });

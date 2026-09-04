@@ -1,4 +1,4 @@
-# R2.1 D6.0 — production microphone capture inventory (post-S6 reconfirmation)
+# R2.1 D6.0 — production microphone capture inventory (canonical convergence update)
 
 Repeated at `032d0d5` (`validation/r2-1-real-microphone-owner`), clean tree,
 before any D6 edit.
@@ -22,7 +22,7 @@ and `app.mount("/ielts", StaticFiles(directory=…))`.
 | # | Surface | Capture API | Ownership | D6 disposition |
 |---|---|---|---|---|
 | 1 | `lib/voice-session/*` + `VoiceRuntimeProvider` + `VoiceRuntimeDock` | `openMicrophoneForClaim` → `getUserMedia`; one `SpeechRecognition` inside the pipeline; `AudioContext` frame tap on the *same* stream | canonical `AudioInputOwner` claim | keep — canonical, claimed |
-| 2 | `components/chat/VoiceControl.jsx` (`/chat`) | own `getUserMedia` + own `SpeechRecognition` | claimed (`chat.VoiceControl`), mutually exclusive with #1 | keep — `CLAIMED_ROUTE_SPECIFIC_CAPTURE_DEFERRED_FOR_CENTRAL_COMMAND_CONVERGENCE` |
+| 2 | Former `components/chat/VoiceControl.jsx` (`/chat`) | formerly owned `getUserMedia` + `SpeechRecognition` | retired | removed during canonical convergence; `/chat` uses #1 |
 | 3 | `components/MobileMic.jsx`, mounted globally in `Shell.jsx` | own `SpeechRecognition`, no claim | **unclaimed** | D6.1 — delete |
 | 4 | `components/mobile/MobileSaathi.jsx` via `lib/useVoice.js` | `getUserMedia` + `MediaRecorder` → `POST /api/v1/voice/command` | **unclaimed** | D6.2 — remove voice portion |
 | 5 | `app/os/page.jsx` via `lib/useVoice.js` | same as #4 | **unclaimed** | D6.3 — remove voice portion |
@@ -57,3 +57,15 @@ no microphone. They are bounded by the S4/S5 repairs and remain covered by the
 backend endpoint security tests. They are not part of the browser microphone
 invariant and are not removed by D6, because direct API compatibility and its
 security surface still exist.
+
+## Canonical convergence certification
+
+`CENTRAL_COMMAND_VOICE_SURFACE_CONVERGENCE_COMPLETE`
+
+The former route-specific chat recognizer has been removed. All SaathiOS
+command, chat, and Copilot voice interaction now uses the shell-mounted
+`VoiceRuntimeDock` and its `VoiceSessionManager` pipeline. The voice settings
+page retains only explicit, transient diagnostics that borrow the same
+`AudioInputOwner` registry. The separately served IELTS lesson remains the
+documented non-command exception described above and has no SaathiOS command,
+agent, approval, or trading authority.

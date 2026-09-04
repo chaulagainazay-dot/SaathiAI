@@ -12,25 +12,25 @@ export const NAV_GROUPS = [
     label: "Operate",
     items: [
       {
-        id: "home",
-        label: "Home",
+        id: "command",
+        label: "Central Command",
         href: "/",
+        icon: "⌘",
+        description: "Plan, request approval, and observe from one center",
+        shortcut: "g c",
+        aliases: ["/command", "/mission"],
+        accent: "#C7CEDA",
+        authoritySensitivity: "approval-aware",
+      },
+      {
+        id: "home",
+        label: "Attention Home",
+        href: "/home",
         icon: "⌂",
-        description: "Attention-first executive home",
+        description: "Attention-first executive dashboard",
         shortcut: "g h",
         aliases: ["/ceo", "/os"],
         accent: "#F4F6FB",
-      },
-      {
-        id: "command",
-        label: "Command Center",
-        href: "/command",
-        icon: "⌘",
-        description: "Plan, request approval, observe",
-        shortcut: "g c",
-        aliases: ["/mission"],
-        accent: "#C7CEDA",
-        authoritySensitivity: "approval-aware",
       },
       {
         id: "orbit",
@@ -263,7 +263,7 @@ export const GLOBAL_NAV = [
 
 /** Mobile companion tabs (5 max). Ask Saathi is a panel action, not a route. */
 export const MOBILE_TABS = [
-  { id: "home", label: "Home", href: "/", icon: "⌂" },
+  { id: "command", label: "Command", href: "/", icon: "⌘" },
   { id: "approvals", label: "Approvals", href: "/approvals", icon: "!" },
   { id: "saathi", label: "Ask Saathi", href: null, action: "copilot", icon: "💬" },
   { id: "business", label: "Business", href: "/business", icon: "◈" },
@@ -272,8 +272,8 @@ export const MOBILE_TABS = [
 
 /** Safe go-to shortcuts (g then letter). */
 export const GO_SHORTCUTS = {
-  h: "/",
-  c: "/command",
+  h: "/home",
+  c: "/",
   m: "/missions",
   p: "/projects",
   a: "/approvals",
@@ -331,7 +331,7 @@ export function breadcrumbFor(pathname) {
   const item = matchNavItem(pathname);
   if (!item) {
     const seg = (pathname || "/").split("/").filter(Boolean);
-    if (!seg.length) return { group: "Operate", area: "Home", href: "/" };
+    if (!seg.length) return { group: "Operate", area: "Central Command", href: "/" };
     const name = seg[seg.length - 1].replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
     return { group: "SaathiOS", area: name, href: pathname };
   }

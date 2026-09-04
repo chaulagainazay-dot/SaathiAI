@@ -7,8 +7,8 @@ import { fileURLToPath } from "node:url";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const read = (rel) => readFileSync(join(root, rel), "utf8");
 
-describe("Home attention-first", () => {
-  const src = read("app/page.jsx");
+describe("Attention Home", () => {
+  const src = read("app/home/page.jsx");
   it("uses attention hook and M1 states", () => {
     assert.match(src, /useAttentionHome/);
     assert.match(src, /LoadingState|EmptyState|ErrorState/);

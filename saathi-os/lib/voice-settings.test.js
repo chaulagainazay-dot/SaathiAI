@@ -81,7 +81,6 @@ describe("voice settings discovery and safety", () => {
       "../app/settings/page.jsx",
       "../components/CommandPalette.jsx",
       "../components/mobile/MobileMe.jsx",
-      "../components/chat/VoiceControl.jsx",
       "../app/platform/onboarding/page.jsx",
     ].map((path) => fs.readFileSync(new URL(path, import.meta.url), "utf8"));
     for (const source of sources) assert.ok(source.includes("/settings/voice"));

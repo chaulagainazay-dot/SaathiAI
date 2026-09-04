@@ -6,7 +6,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { API_BASE, afetch } from "@/lib/api";
 import AgentRunPanel from "./AgentRunPanel";
-import VoiceControl from "./VoiceControl";
 import { useVoiceOutput } from "../voice/VoiceOutputProvider";
 
 const AGENTS = ["", "planner", "researcher", "coder", "reviewer", "architect", "writer", "ceo"];
@@ -54,18 +53,10 @@ const S = {
 /**
  * @param {{ compact?: boolean }} props
  * compact=true → Ask Saathi panel mode: same transport, reduced chrome.
+ * Voice capture is intentionally absent here. The shell-level
+ * VoiceRuntimeDock is the one canonical microphone surface on every route.
  */
-/**
- * @param {object} props
- * @param {boolean} [props.compact] dense layout for the embedded Copilot panel.
- * @param {boolean} [props.voiceEnabled] mount the route's own microphone
- *   surface. Defaults to false and must be opted into explicitly: this
- *   component is reachable from the shell through CopilotPanel, so a voice
- *   surface that is merely a side effect of a layout flag is one prop away
- *   from becoming a second globally mounted microphone. The route that wants
- *   chat voice says so; every other host gets none.
- */
-export default function ChatWorkspace({ compact = false, voiceEnabled = false } = {}) {
+export default function ChatWorkspace({ compact = false } = {}) {
   const [convs, setConvs] = useState([]);
   const [active, setActive] = useState(null);
   const [detail, setDetail] = useState(null);
@@ -78,7 +69,6 @@ export default function ChatWorkspace({ compact = false, voiceEnabled = false } 
   const [error, setError] = useState("");
   const [teamMode, setTeamMode] = useState(false);
   const [teamRunId, setTeamRunId] = useState(null);
-  const [voiceOpen, setVoiceOpen] = useState(false);
   const bottomRef = useRef(null);
   const abortRef = useRef(null);
   const voiceOutput = useVoiceOutput();
@@ -92,7 +82,7 @@ export default function ChatWorkspace({ compact = false, voiceEnabled = false } 
       const j = await r.json();
       setConvs(j.conversations || j.results || []);
       setError("");
-    } catch { setError("Backend unreachable — is the SaathiAI server running?"); }
+    } catch { setError("Backend unreachable — is the SaathiOS service running?"); }
   }, [query, project]);
 
   const loadDetail = useCallback(async (cid) => {
@@ -286,16 +276,6 @@ export default function ChatWorkspace({ compact = false, voiceEnabled = false } 
             }}>
             {teamMode ? "☰ Team" : "☰ Solo"}
           </button>
-          {voiceEnabled && <button
-            onClick={() => setVoiceOpen((v) => !v)}
-            title="Voice mode (browser microphone + speech)"
-            aria-pressed={voiceOpen}
-            style={{
-              ...S.btn, background: voiceOpen ? "rgba(0,191,165,.2)" : S.btn.background,
-              borderColor: voiceOpen ? "rgba(0,191,165,.5)" : undefined,
-            }}>
-            🎙
-          </button>}
             </>
           )}
           {compact && (
@@ -348,20 +328,6 @@ export default function ChatWorkspace({ compact = false, voiceEnabled = false } 
         </section>
 
         {error && <div role="alert" style={{ padding: "6px 16px", color: "#ff8c8c", fontSize: 12 }}>{error}</div>}
-
-        {voiceEnabled && !compact && voiceOpen && (
-          <div style={{ padding: "0 14px 10px" }}>
-            <VoiceControl
-              conversationId={active}
-              chatMode={teamMode ? "team" : "solo"}
-              agent={agent}
-              onTurn={async (turn) => {
-                if (turn.command) return; // command turns don't touch chat history
-                await loadDetail(active); await loadConvs();
-                if (teamMode && turn.agent_run_id) setTeamRunId(turn.agent_run_id);
-              }} />
-          </div>
-        )}
 
         <footer style={{ display: "flex", gap: 8, padding: 14,
                          borderTop: "1px solid rgba(255,255,255,.08)" }}>

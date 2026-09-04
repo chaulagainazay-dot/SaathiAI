@@ -7,8 +7,8 @@ const outfit = Outfit({ subsets: ["latin"], weight: ["300", "400", "500", "600",
 const geist = Geist_Mono({ subsets: ["latin"], weight: ["400", "500", "600"], variable: "--font-mono", display: "swap" });
 
 export const metadata = {
-  title: "SaathiAI — Sovereign Orbit",
-  description: "An AI Operating System with one center.",
+  title: "SaathiOS — Central Command",
+  description: "SaathiOS central command, powered by SaathiAI intelligence.",
 };
 
 export const viewport = {

@@ -613,7 +613,7 @@ export default function CommandCenterPage() {
           title="Command composition unavailable"
           description="Hybrid Command could not compose a read model."
           action={
-            <Link href="/" className="dl-btn dl-btn-ghost">
+            <Link href="/home" className="dl-btn dl-btn-ghost">
               Home
             </Link>
           }

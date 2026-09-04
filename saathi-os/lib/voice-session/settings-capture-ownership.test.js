@@ -8,9 +8,10 @@
  * page and the canonical dock could hold the microphone at the same time.
  *
  * Both now take a claim. This file proves the resulting protocol the way
- * surface-exclusion.test.js proves the dock/chat pair: a faithful reproduction
- * of the page's capture protocol against a deterministic browser, plus source
- * assertions binding that reproduction to the page that actually ships.
+ * surface-exclusion.test.js proves the dock against a synthetic future rival:
+ * a faithful reproduction of the page's capture protocol against a
+ * deterministic browser, plus source assertions binding that reproduction to
+ * the page that actually ships.
  *
  * What it does not prove: anything about a physical microphone, recognition
  * accuracy, or what a real browser does with a permission prompt.
@@ -373,7 +374,7 @@ describe("the diagnostic input test is claimed and bounded", () => {
 });
 
 describe("settings capture is mutually exclusive with the other surfaces", () => {
-  for (const rival of ["VoiceRuntimeProvider", "chat.VoiceControl"]) {
+  for (const rival of ["VoiceRuntimeProvider", "test.synthetic-rival"]) {
     it(`${rival} taking the microphone tears the settings test down`, async () => {
       const page = mountSettingsPage(env);
       await page.startInput();
@@ -423,7 +424,7 @@ describe("settings capture is mutually exclusive with the other surfaces", () =>
     for (let round = 0; round < 5; round += 1) {
       const page = mountSettingsPage(env);
       await page.startInput();
-      const other = openRivalSurface(env, "chat.VoiceControl");
+      const other = openRivalSurface(env, "test.synthetic-rival");
       assert.equal(env.live().length, 1, `round ${round}: exactly one live recognizer`);
       await page.requestPermission();
       assert.equal(env.live().length, 0, `round ${round}: the probe preempted and released`);

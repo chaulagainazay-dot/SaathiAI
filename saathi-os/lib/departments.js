@@ -40,7 +40,7 @@ export const DEPARTMENTS = {
   CONNECTORS:  { name: "Connectors",       color: "#7CF5E4", route: "/connectors", short: "Connect" },
   SECURITY:    { name: "Security",         color: "#FF5A5A", route: "/security",   short: "Security" },
   // Canonical IA accents
-  COMMAND:     { name: "Command Center",  color: "#C7CEDA", route: "/command",    short: "Command" },
+  COMMAND:     { name: "Central Command", color: "#C7CEDA", route: "/",           short: "Command" },
   AGENTS:      { name: "Agents",          color: "#22D3EE", route: "/agents",     short: "Agents" },
   TRADING:     { name: "Trading Guardian", color: "#FF5A5A", route: "/trading",   short: "Trading" },
   MONITORING:  { name: "Monitoring",      color: "#7CF5E4", route: "/monitoring", short: "Monitor" },

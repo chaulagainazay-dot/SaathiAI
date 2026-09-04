@@ -37,7 +37,7 @@ describe("navigation model integrity", () => {
       "/agents",
       "/automation",
       "/business",
-      "/command",
+      "/home",
       "/knowledge",
       "/missions",
       "/monitoring",
@@ -98,7 +98,8 @@ describe("departments CONTROL dedupe", () => {
 
 describe("matchNavItem + breadcrumb", () => {
   it("matches home and nested missions", () => {
-    assert.equal(matchNavItem("/")?.id, "home");
+    assert.equal(matchNavItem("/")?.id, "command");
+    assert.equal(matchNavItem("/home")?.id, "home");
     assert.equal(matchNavItem("/missions")?.id, "missions");
     assert.equal(matchNavItem("/missions/abc/intake")?.id, "missions");
     assert.equal(matchNavItem("/command")?.id, "command");
@@ -116,7 +117,7 @@ describe("mobile tabs", () => {
   it("matches M47.2 companion order", () => {
     assert.deepEqual(
       MOBILE_TABS.map((t) => t.id),
-      ["home", "approvals", "saathi", "business", "me"]
+      ["command", "approvals", "saathi", "business", "me"]
     );
     assert.equal(MOBILE_TABS.find((t) => t.id === "approvals").href, "/approvals");
     assert.equal(MOBILE_TABS.find((t) => t.id === "business").href, "/business");
@@ -127,8 +128,8 @@ describe("mobile tabs", () => {
 
 describe("go shortcuts", () => {
   it("includes safe go-to map", () => {
-    assert.equal(GO_SHORTCUTS.h, "/");
-    assert.equal(GO_SHORTCUTS.c, "/command");
+    assert.equal(GO_SHORTCUTS.h, "/home");
+    assert.equal(GO_SHORTCUTS.c, "/");
     assert.equal(GO_SHORTCUTS.a, "/approvals");
   });
 });

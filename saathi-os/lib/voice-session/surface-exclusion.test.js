@@ -1,24 +1,14 @@
 /**
- * Two voice surfaces, one microphone.
+ * One production voice surface, defensive exclusion against any rival.
  *
- * SaathiOS has two independent recognition surfaces: the shell's
+ * SaathiOS has one production recognition surface: the shell's
  * VoiceRuntimeDock, whose recognizer is owned by VoiceSessionManager's
- * streaming pipeline, and the chat VoiceControl, which still builds its own
- * SpeechRecognition. They are not converged — that is deferred to the Central
- * Command / Mr. Yeti milestone, where scattered voice surfaces are replaced by
- * one persistent system-wide conversational runtime.
+ * streaming pipeline. The former chat VoiceControl was removed during Central
+ * Command convergence. A synthetic rival below keeps proving that the
+ * AudioInputOwner registry will deterministically preempt any future claimant.
  *
- *   VoiceControl status:
- *   LEGACY_SEPARATE_VOICE_SURFACE_DEFERRED_FOR_CENTRAL_COMMAND_CONVERGENCE
- *
- * What must hold today is narrower and testable: the AudioInputOwner registry
- * makes the two deterministically mutually exclusive. At most one claim, at
- * most one live recognizer, switching surfaces tears the previous owner down,
- * and a surface that lost the microphone cannot still submit a turn.
- *
- * This file proves that property. It does not claim architectural
- * convergence: SaathiOS has one active recognizer per ownership domain, not
- * yet one unified system-wide recognition implementation.
+ * This file proves at most one claim and recognizer survive, switching owners
+ * tears the previous one down, and a preempted surface cannot submit a turn.
  */
 import { describe, it, beforeEach, afterEach } from "node:test";
 import assert from "node:assert/strict";
@@ -140,12 +130,11 @@ async function openDock() {
 }
 
 /**
- * The chat surface, reproduced faithfully: its own claim, its own recognizer
- * registered on that claim, and both its result path and its onend restart
- * guarded by `claim.isActive()`.
+ * Test-only rival claimant. This is deliberately not a production component;
+ * it exercises registry preemption if another consumer is introduced later.
  */
-function openChat() {
-  const claim = acquireInputClaim({ label: "chat.VoiceControl" });
+function openSyntheticRival() {
+  const claim = acquireInputClaim({ label: "test.synthetic-rival" });
   const recognition = new env.Recognition();
   const submissions = [];
   recognition.onresult = (ev) => {
@@ -170,31 +159,31 @@ function openChat() {
   return { claim, recognition, submissions };
 }
 
-describe("the two surfaces are mutually exclusive", () => {
-  it("chat taking the microphone tears the dock down", async () => {
+describe("the canonical dock excludes any rival claimant", () => {
+  it("a rival taking the microphone tears the dock down", async () => {
     const dock = await openDock();
     const dockRecognizer = env.recognizers[0];
     assert.equal(env.live().length, 1, "dock is the only owner");
 
-    const chat = openChat();
+    const rival = openSyntheticRival();
 
-    assert.equal(getInputOwnerSnapshot().label, "chat.VoiceControl", "one claim, and it moved");
+    assert.equal(getInputOwnerSnapshot().label, "test.synthetic-rival", "one claim, and it moved");
     assert.equal(dock.manager.getPipeline(), null, "the dock's pipeline is detached");
     assert.equal(dockRecognizer.running, false, "the dock's recognizer is stopped");
     assert.equal(env.live().length, 1, "exactly one recognizer is live");
-    assert.equal(env.live()[0], chat.recognition);
+    assert.equal(env.live()[0], rival.recognition);
     assert.equal(env.liveTracks().length, 0, "the dock's capture is released");
   });
 
-  it("the dock taking the microphone tears chat down", async () => {
-    const chat = openChat();
+  it("the dock taking the microphone tears the rival down", async () => {
+    const rival = openSyntheticRival();
     assert.equal(env.live().length, 1);
 
     const dock = await openDock();
 
-    assert.equal(chat.claim.isActive(), false, "chat lost ownership");
-    assert.equal(chat.recognition.running, false, "chat's recognizer is stopped");
-    assert.equal(chat.recognition.aborts >= 1, true, "and aborted, not merely paused");
+    assert.equal(rival.claim.isActive(), false, "the rival lost ownership");
+    assert.equal(rival.recognition.running, false, "the rival recognizer is stopped");
+    assert.equal(rival.recognition.aborts >= 1, true, "and aborted, not merely paused");
     assert.equal(env.live().length, 1, "exactly one recognizer is live");
     dock.manager.endInput("USER_CANCEL");
   });
@@ -203,10 +192,10 @@ describe("the two surfaces are mutually exclusive", () => {
     for (let round = 0; round < 5; round += 1) {
       const dock = await openDock();
       assert.equal(env.live().length, 1, `round ${round}: dock alone`);
-      const chat = openChat();
-      assert.equal(env.live().length, 1, `round ${round}: chat alone`);
+      const rival = openSyntheticRival();
+      assert.equal(env.live().length, 1, `round ${round}: rival alone`);
       assert.equal(Number(Boolean(getInputOwnerSnapshot().claimId)), 1);
-      chat.claim.release();
+      rival.claim.release();
       dock.manager.endInput("USER_CANCEL");
       assert.equal(env.live().length, 0, `round ${round}: nothing left`);
       assert.equal(getInputOwnerSnapshot().claimId, null);
@@ -215,8 +204,8 @@ describe("the two surfaces are mutually exclusive", () => {
 
   it("leaves no live capture once both surfaces are done", async () => {
     const dock = await openDock();
-    const chat = openChat();
-    chat.claim.release();
+    const rival = openSyntheticRival();
+    rival.claim.release();
     dock.manager.endInput("USER_CANCEL");
     assert.equal(env.live().length, 0);
     assert.equal(env.liveTracks().length, 0);
@@ -225,10 +214,10 @@ describe("the two surfaces are mutually exclusive", () => {
 });
 
 describe("a surface that lost the microphone cannot submit", () => {
-  it("the dock submits nothing after chat preempts it", async () => {
+  it("the dock submits nothing after a rival preempts it", async () => {
     const dock = await openDock();
     const dockRecognizer = env.recognizers[0];
-    openChat();
+    openSyntheticRival();
 
     dockRecognizer.fireResult("Show my missions.", true);
     dockRecognizer.fireEnd();
@@ -237,45 +226,39 @@ describe("a surface that lost the microphone cannot submit", () => {
     assert.equal(dockRecognizer.starts, 1, "and must not restart itself");
   });
 
-  it("chat submits nothing after the dock preempts it", async () => {
-    const chat = openChat();
+  it("a rival submits nothing after the dock preempts it", async () => {
+    const rival = openSyntheticRival();
     const dock = await openDock();
 
-    chat.recognition.fireResult("Open the trading desk.", true);
-    chat.recognition.fireEnd();
+    rival.recognition.fireResult("Open the trading desk.", true);
+    rival.recognition.fireEnd();
 
-    assert.deepEqual(chat.submissions, [], "a preempted surface must not submit");
-    assert.equal(chat.recognition.starts, 1, "and must not restart itself");
+    assert.deepEqual(rival.submissions, [], "a preempted surface must not submit");
+    assert.equal(rival.recognition.starts, 1, "and must not restart itself");
     dock.manager.endInput("USER_CANCEL");
   });
 
   it("one spoken final cannot be submitted by both surfaces", async () => {
     const dock = await openDock();
     const dockRecognizer = env.recognizers[0];
-    const chat = openChat();
+    const rival = openSyntheticRival();
 
     // The same utterance delivered to whichever recognizer still exists.
     dockRecognizer.fireResult("Show my missions.", true);
-    chat.recognition.fireResult("Show my missions.", true);
+    rival.recognition.fireResult("Show my missions.", true);
 
     assert.equal(
-      dock.submissions.length + chat.submissions.length,
+      dock.submissions.length + rival.submissions.length,
       1,
       "exactly one surface may turn a spoken final into a submission"
     );
-    assert.equal(chat.submissions.length, 1, "and it is the surface that owns the microphone");
+    assert.equal(rival.submissions.length, 1, "and it is the surface that owns the microphone");
   });
 });
 
-describe("R2.1 records the surface, it does not converge it", () => {
-  it("states the deferral explicitly", () => {
-    // Prose, deliberately asserted so the classification travels with the code.
-    const classification =
-      "LEGACY_SEPARATE_VOICE_SURFACE_DEFERRED_FOR_CENTRAL_COMMAND_CONVERGENCE";
-    assert.equal(
-      classification,
-      "LEGACY_SEPARATE_VOICE_SURFACE_DEFERRED_FOR_CENTRAL_COMMAND_CONVERGENCE",
-      "chat VoiceControl remains a separate recognition implementation"
-    );
+describe("Central Command voice convergence", () => {
+  it("records one production voice pipeline", () => {
+    const classification = "ONE_PRODUCTION_VOICE_PIPELINE";
+    assert.equal(classification, "ONE_PRODUCTION_VOICE_PIPELINE");
   });
 });

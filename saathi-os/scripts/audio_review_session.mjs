@@ -120,7 +120,7 @@ if (existsSync(templatePath) && !process.env.E2E_FORCE_TEMPLATE) {
       CHECKS.map(([key, label]) => [key, { check: label, result: "AWAITING_OWNER_INPUT", note: "" }])
     ),
     surface_tested: {
-      check: "Which voice surface did you test — platform voice runtime, or chat VoiceControl? They differ; see VOICE_INTERRUPTION_DECISION.json.",
+      check: "Confirm the shell VoiceRuntimeDock was tested; it is the single SaathiOS command voice surface. See VOICE_INTERRUPTION_DECISION.json.",
       result: "AWAITING_OWNER_INPUT",
     },
     verdict: "AWAITING_OWNER_INPUT (accepted_for_private_alpha | defects_raised)",

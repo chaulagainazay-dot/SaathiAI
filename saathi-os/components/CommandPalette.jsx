@@ -43,7 +43,7 @@ function buildCommands(pathname, moduleNavigation) {
       id: "act-command",
       label: "Open Command Center (plan / request approval)",
       group: "Actions",
-      route: "/command",
+      route: "/",
       kind: "safe-action",
     },
     {

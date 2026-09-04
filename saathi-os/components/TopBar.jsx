@@ -109,7 +109,7 @@ export default function TopBar({ onSearch, approvalState, setApprovalState }) {
         <Button
           variant="outline"
           size="sm"
-          onClick={() => router.push("/command")}
+          onClick={() => router.push("/")}
           aria-label="Create or command — opens Command Center"
           title="Sensitive create/act flows open Command Center"
         >

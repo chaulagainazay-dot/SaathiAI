@@ -125,7 +125,6 @@ describe("the production getUserMedia request carries the contract", () => {
 describe("no production caller replaces the contract", () => {
   const sttCaptureSurfaces = [
     "components/voice/VoiceRuntimeProvider.jsx",
-    "components/chat/VoiceControl.jsx",
     "app/settings/voice/page.jsx",
   ];
 
@@ -157,7 +156,6 @@ describe("no production caller replaces the contract", () => {
   it("every openMicrophoneForClaim caller passes no constraints at all", () => {
     for (const relative of [
       "components/voice/VoiceRuntimeProvider.jsx",
-      "components/chat/VoiceControl.jsx",
       // R2.1-D6.5: settings capture joined the claimed callers.
       "app/settings/voice/page.jsx",
     ]) {

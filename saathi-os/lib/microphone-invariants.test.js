@@ -181,11 +181,11 @@ const PRODUCTION = ["app", "components", "lib"].flatMap((d) => walk(join(FRONTEN
 
 /**
  * The canonical capture implementation. Everything else that touches a capture
- * API must either be one of the two claimed product surfaces or be absent.
+ * API must either be in the canonical pipeline, the transient settings
+ * diagnostic, or be absent.
  */
 const CANONICAL_PIPELINE = PRODUCTION.filter((p) => p.startsWith("lib/voice-session/"));
 const CLAIMED_SURFACES = [
-  "components/chat/VoiceControl.jsx",
   "app/settings/voice/page.jsx",
   "components/voice/VoiceRuntimeProvider.jsx",
 ];
@@ -234,42 +234,18 @@ describe("1 — exactly one globally mounted microphone surface", () => {
 
   const shellGraph = importGraph("components/Shell.jsx");
 
-  /**
-   * The claim under test is the production one, and it is narrower than "the
-   * shell imports nothing else that names a capture API". ChatWorkspace is
-   * genuinely reachable from the shell through CopilotPanel, so the honest
-   * invariant is: any shell-reachable capture surface outside the canonical
-   * pipeline must both participate in AudioInputOwner and be explicitly
-   * disabled by every shell-side host that mounts it. Asserting the stricter
-   * shape instead would only tempt a future fix to hide the import behind a
-   * dynamic specifier the scanner cannot see.
-   */
-  it("every shell-reachable capture surface is claimed and explicitly off", () => {
+  it("no shell-reachable capture surface exists outside the canonical pipeline", () => {
     const capturing = [...shellGraph]
       .filter((f) => !CANONICAL_PIPELINE.includes(f))
       .filter((f) => !CAPABILITY_ONLY.includes(f))
       .filter((f) => Object.keys(CAPTURE_PATTERNS).some((api) => reaches(f, api)));
 
-    assert.deepEqual(
-      capturing,
-      ["components/chat/VoiceControl.jsx"],
-      "the set of shell-reachable capture surfaces changed — re-audit it"
-    );
-
-    // It participates in the shared registry rather than opening its own device.
-    const control = code(fRead("components/chat/VoiceControl.jsx"));
-    assert.ok(/acquireInputClaim|openMicrophoneForClaim/.test(control),
-      "a shell-reachable capture surface must go through AudioInputOwner");
-
-    // And the surface that mounts it shell-wide turns it off by name, rather
-    // than relying on a layout flag that happens to hide it today.
+    assert.deepEqual(capturing, [], "a competing shell-reachable capture surface exists");
+    assert.ok(!existsSync(join(FRONTEND, "components/chat/VoiceControl.jsx")));
     const workspace = fRead("components/chat/ChatWorkspace.jsx");
-    assert.match(workspace, /voiceEnabled = false/,
-      "chat voice must default to off, so a new host cannot mount it by accident");
-    assert.match(fRead("components/shell/CopilotPanel.jsx"), /voiceEnabled=\{false\}/,
-      "the shell-wide Copilot must disable route voice explicitly");
-    assert.match(fRead("app/chat/page.jsx"), /voiceEnabled/,
-      "the /chat route is the one host that opts in");
+    assert.doesNotMatch(workspace, /VoiceControl|voiceEnabled|voiceOpen/);
+    assert.doesNotMatch(fRead("components/shell/CopilotPanel.jsx"), /voiceEnabled/);
+    assert.doesNotMatch(fRead("app/chat/page.jsx"), /voiceEnabled|VoiceControl/);
   });
 
   it("the canonical dock is the one microphone control the shell mounts", () => {
@@ -280,13 +256,10 @@ describe("1 — exactly one globally mounted microphone surface", () => {
     assert.ok(layout.includes("<Shell>"), "the shell is the only global chrome host");
   });
 
-  it("the route-specific chat surface is never mounted by a shell-wide host", () => {
-    // Reachable in the import graph, but no shell-side host may render it.
-    const copilot = fRead("components/shell/CopilotPanel.jsx");
-    assert.match(copilot, /voiceEnabled=\{false\}/,
-      "chat capture must stay confined to its route");
-    assert.ok(!/<VoiceControl\b/.test(code(fRead("components/Shell.jsx"))),
-      "the shell must not mount a chat voice control directly");
+  it("chat and Copilot rely on the shell-level dock instead of owning capture", () => {
+    assert.ok(!/VoiceControl|voiceEnabled/.test(fRead("components/chat/ChatWorkspace.jsx")));
+    assert.ok(!/VoiceControl|voiceEnabled/.test(fRead("components/shell/CopilotPanel.jsx")));
+    assert.ok(!/VoiceControl|voiceEnabled/.test(fRead("app/chat/page.jsx")));
   });
 });
 
@@ -417,12 +390,6 @@ describe("9 — route change, unmount and logout release capture", () => {
     assert.ok(source.includes('manager.close("SESSION_CLOSE")'));
   });
 
-  it("chat capture releases on unmount", () => {
-    const source = fRead("components/chat/VoiceControl.jsx");
-    assert.ok(/useEffect\(\(\) => \(\) => \{[\s\S]{0,400}forceReleaseInput\("SESSION_CLOSE"\)/.test(source),
-      "chat must never leave the mic hot on navigation");
-  });
-
   it("settings capture releases on unmount, route change and logout", () => {
     const source = fRead("app/settings/voice/page.jsx");
     assert.ok(source.includes("PLATFORM_CONTEXT_EVENT"), "no logout release");
@@ -525,19 +492,13 @@ describe("15, 16, 17, 18 — the surviving claims are the truthful ones", () => 
       "the viewport certificate suite must exist");
   });
 
-  it("chat capture keeps its deferred-convergence status recorded", () => {
-    const source = fRead("components/chat/VoiceControl.jsx") + fRead("lib/voice-session/surface-exclusion.test.js");
-    assert.ok(/DEFERRED_FOR_CENTRAL_COMMAND_CONVERGENCE/.test(source),
-      "the route-specific surface must stay labelled, not quietly normalised");
-  });
-
-  it("nothing in the tree claims full voice-surface convergence", () => {
+  it("records completed Central Command voice-surface convergence", () => {
     const inventory = readFileSync(
       join(REPO, "docs", "evidence", "r2-1", "microphone-surfaces", "D6_CAPTURE_INVENTORY.md"),
       "utf8"
     );
-    assert.ok(!/converged|convergence achieved|single unified recognizer/i.test(
-      inventory.replace(/DEFERRED[A-Z_]*CONVERGENCE/g, "").replace(/deferred for [^.\n]*convergence/gi, "")
-    ), "D6 unified ownership, not implementation — do not claim convergence");
+    assert.ok(/CENTRAL_COMMAND_VOICE_SURFACE_CONVERGENCE_COMPLETE/.test(inventory));
+    assert.ok(!existsSync(join(FRONTEND, "components/chat/VoiceControl.jsx")));
+    assert.doesNotMatch(fRead("components/chat/ChatWorkspace.jsx"), /VoiceControl|voiceEnabled|voiceOpen/);
   });
 });
