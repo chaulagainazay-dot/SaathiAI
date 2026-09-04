@@ -23,6 +23,7 @@ export default function AnalysisPage() {
   const [error, setError] = useState("");
   const [narr, setNarr] = useState(null);
   const [narrating, setNarrating] = useState(false);
+  const [news, setNews] = useState(null);
 
   const run = useCallback(async (m, s) => {
     setLoading(true); setError(""); setData(null);
@@ -52,6 +53,16 @@ export default function AnalysisPage() {
   }, [market, symbol]);
 
   useEffect(() => { run(market, symbol); setNarr(null); }, [run, market, symbol]);
+
+  // News is context, never cause. Fetched separately so a feed outage cannot
+  // affect the computed analysis.
+  useEffect(() => {
+    const ac = new AbortController();
+    setNews(null);
+    fetch(`/api/news?market=${market}&symbol=${symbol}`, { signal: ac.signal, cache: "no-store" })
+      .then((r) => r.json()).then(setNews).catch(() => setNews({ ok: false }));
+    return () => ac.abort();
+  }, [market, symbol]);
 
   const list = market === "crypto" ? CRYPTO : NEPSE;
   const a = data;
@@ -235,6 +246,63 @@ export default function AnalysisPage() {
                 </p>
               </div>
             </div>
+
+            {news?.ok ? (
+              <div className="nepse-card" style={{ marginTop: "1rem" }}>
+                <div className="nepse-row" style={{ justifyContent: "space-between", alignItems: "baseline" }}>
+                  <h3>News context</h3>
+                  <span className="mono" style={{ fontSize: "0.64rem", color: "var(--text-faint)" }}>
+                    {news.counts.direct} mentioning {symbol} · {news.marketSpecific ?? 0} market-specific
+                  </span>
+                </div>
+                <div className="nepse-banner" style={{ paddingTop: "0.4rem" }}>
+                  <span className="nepse-chip warn">Correlation in time only — no catalyst attributed</span>
+                  <span className="nepse-chip">Untrusted third-party text</span>
+                  {news.injectionFlagged > 0
+                    ? <span className="nepse-chip warn">{news.injectionFlagged} item(s) contained steering text — neutralised</span>
+                    : null}
+                </div>
+
+                {news.direct?.length ? (
+                  <>
+                    <div className="mono" style={{ fontSize: "0.64rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--accent)", margin: "0.7rem 0 0.4rem" }}>
+                      Mentions {symbol}
+                    </div>
+                    <ul style={{ margin: 0, paddingLeft: "1.1rem", fontSize: "0.85rem", lineHeight: 1.65 }}>
+                      {news.direct.slice(0, 5).map((it) => (
+                        <li key={it.title}>
+                          {it.link ? <a href={it.link} target="_blank" rel="noopener noreferrer">{it.title}</a> : it.title}
+                          <span style={{ color: "var(--text-faint)" }}> — {it.sourceLabel}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                ) : (
+                  <p style={{ fontSize: "0.85rem", color: "var(--text-dim)", margin: "0.7rem 0 0" }}>
+                    No headline in the last 7 days mentions {symbol} directly.
+                  </p>
+                )}
+
+                {news.context?.length ? (
+                  <>
+                    <div className="mono" style={{ fontSize: "0.64rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--text-faint)", margin: "0.9rem 0 0.4rem" }}>
+                      Broader headlines {news.marketSpecific === 0 ? "(general news — not market coverage)" : ""}
+                    </div>
+                    <ul style={{ margin: 0, paddingLeft: "1.1rem", fontSize: "0.82rem", color: "var(--text-dim)", lineHeight: 1.6 }}>
+                      {news.context.slice(0, 4).map((it) => (
+                        <li key={it.title}>
+                          {it.link ? <a href={it.link} target="_blank" rel="noopener noreferrer">{it.title}</a> : it.title}
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                ) : null}
+
+                <p className="mono" style={{ fontSize: "0.68rem", color: "var(--text-faint)", marginTop: "0.9rem", lineHeight: 1.6 }}>
+                  Earnings and quarterly financials are <b>not available</b> — no feed here carries them, so no catalyst is inferred from fundamentals.
+                </p>
+              </div>
+            ) : null}
 
             {narr ? (
               <div className="nepse-card" style={{ marginTop: "1rem", borderLeft: "3px solid var(--accent)" }}>

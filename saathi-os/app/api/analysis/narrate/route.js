@@ -10,6 +10,7 @@ import { parseHistoryCsv, NEPSE_RESEARCH_SOURCE } from "@/lib/nepse/history";
 import { computeIndicators } from "@/lib/nepse/indicators";
 import { analyzeChart, narrationPrompt } from "@/lib/analysis/analyze";
 import { gateNarration } from "@/lib/analysis/guard";
+import { NEWS_SOURCES, ALLOWED_NEWS_HOSTS, parseFeed, matchToSymbol, recentItems, newsFactBlock } from "@/lib/news/feed";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -75,8 +76,29 @@ export async function POST(request) {
     const analysis = analyzeChart(bars, indicators, meta);
     if (!analysis.ok) return fail(analysis.reason || "ANALYSIS_FAILED");
 
-    const facts = narrationPrompt(analysis, question);
+    let facts = narrationPrompt(analysis, question);
     if (!facts) return fail("NO_FACTS");
+
+    // News is appended as FENCED, clearly-labelled untrusted text. It is sanitized
+    // before it can reach the model, and the block itself tells the model the text
+    // is data and establishes timing only — never causation.
+    try {
+      const items = [];
+      for (const src of NEWS_SOURCES[market] || []) {
+        const u = new URL(src.url);
+        if (u.protocol !== "https:" || !ALLOWED_NEWS_HOSTS.has(u.hostname)) continue;
+        const nr = await fetch(src.url, { headers: { accept: "application/rss+xml, application/xml" }, signal: ac.signal, cache: "no-store" });
+        if (!nr.ok) continue;
+        const xml = await nr.text();
+        if (xml.length > MAX_BYTES) continue;
+        items.push(...parseFeed(xml, { sourceId: src.id, sourceLabel: src.label, host: src.host, scope: src.scope }).items);
+      }
+      if (items.length) {
+        const recent = recentItems(items, 7);
+        const { direct, context } = matchToSymbol(recent, { symbol });
+        facts = `${facts}\n\n${newsFactBlock(direct, context, { symbol })}`;
+      }
+    } catch { /* news is optional — the analysis narrates without it */ }
 
     // Narration calls a paid model, so the backend keeps it behind auth rather than
     // exposing a free LLM endpoint. Forward the operator's own session; an
