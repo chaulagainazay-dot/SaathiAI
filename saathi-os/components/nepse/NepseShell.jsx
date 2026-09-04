@@ -5,6 +5,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { marketSnapshot, SNAPSHOT_DATE } from "@/lib/nepse/data";
+import { useNepseQuotes } from "@/lib/nepse/live";
 import { fmtNum, fmtPct, fmtCompactRs } from "@/lib/nepse/format";
 
 const TABS = [
@@ -41,6 +42,7 @@ function Ticker() {
 
 export default function NepseShell({ children }) {
   const pathname = usePathname() || "/nepse";
+  const { source, isLive, asOf, reason } = useNepseQuotes();
   const isActive = (href) =>
     href === "/nepse" ? pathname === "/nepse" : pathname.startsWith(href);
   return (
@@ -48,11 +50,14 @@ export default function NepseShell({ children }) {
       <Ticker />
       <div className="nepse-wrap">
         <div className="nepse-banner" data-testid="nepse-boundary">
-          <span className="nepse-chip warn">Snapshot / seed data — NOT a live NEPSE feed</span>
+          <span className={`nepse-chip ${isLive ? "live" : "warn"}`} data-testid="nepse-feed-state">
+            {isLive ? "Live NEPSE feed" : "Snapshot / seed data — NOT a live NEPSE feed"}
+          </span>
           <span className="nepse-chip">No broker login</span>
           <span className="nepse-chip">No OAuth</span>
           <span className="nepse-chip">Not investment advice</span>
-          <span className="nepse-chip">As of {SNAPSHOT_DATE}</span>
+          <span className="nepse-chip">As of {isLive && asOf ? new Date(asOf).toLocaleTimeString() : SNAPSHOT_DATE}</span>
+          {!isLive && reason ? <span className="nepse-chip">{reason}</span> : null}
         </div>
         <nav className="nepse-tabs">
           {TABS.map((t) => (

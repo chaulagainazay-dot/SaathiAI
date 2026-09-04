@@ -3,7 +3,8 @@
 // pagination (50/page). AI Score / Signal / Evaluation are the ILLUSTRATIVE
 // deterministic composite from lib/nepse/analytics — not advice, not a live model.
 import { useMemo, useState } from "react";
-import { STOCKS, SECTORS } from "@/lib/nepse/data";
+import { SECTORS } from "@/lib/nepse/data";
+import { useNepseQuotes } from "@/lib/nepse/live";
 import { screen } from "@/lib/nepse/screener";
 import { fmtNum, fmtRs, fmtPct, dayChangePct } from "@/lib/nepse/format";
 
@@ -24,10 +25,11 @@ export default function ScreenerPage() {
   const [sector, setSector] = useState("");
   const [sort, setSort] = useState({ key: "score", dir: "desc" });
   const [page, setPage] = useState(1);
+  const { stocks, isLive } = useNepseQuotes();
 
   const result = useMemo(
-    () => screen(STOCKS, { query, sector, sort, page, pageSize: 50 }),
-    [query, sector, sort, page],
+    () => screen(stocks, { query, sector, sort, page, pageSize: 50 }),
+    [stocks, query, sector, sort, page],
   );
 
   const onSort = (key) =>
@@ -37,7 +39,7 @@ export default function ScreenerPage() {
     <>
       <header className="nepse-head">
         <div className="nepse-eyebrow">All Stocks</div>
-        <h1 className="nepse-title">Screener · {STOCKS.length} instruments</h1>
+        <h1 className="nepse-title">Screener · {stocks.length} instruments{isLive ? " · live" : ""}</h1>
         <p className="nepse-dek">The data backbone. Score / Signal / Evaluation are an illustrative composite — not investment advice.</p>
       </header>
 
