@@ -50,6 +50,10 @@ export default function MobileMe() {
           style={{ marginTop: 12, background: "none", border: "none", color: "var(--accent)", fontSize: 13, cursor: "pointer", padding: 0, fontWeight: 600 }}>
           🔐 Account Security →
         </button>
+        <button onClick={() => router.push("/settings/voice")}
+          style={{ marginTop: 10, display: "block", background: "none", border: "none", color: "#9B6BFF", fontSize: 13, cursor: "pointer", padding: 0, fontWeight: 600 }}>
+          🎙 Voice Settings →
+        </button>
       </div>
     </div>
   );

@@ -1,0 +1,109 @@
+{
+  "schema_version": 1,
+  "verdict": "SAATHIOS_VOICE_SETTINGS_AND_CONTROL_SURFACE_CERTIFIED_WITH_LIMITATIONS",
+  "timestamp": "2026-08-03T00:48:24Z",
+  "repository": "/Users/macbookpro/SaathiAI-full-e2e",
+  "branch": "improve/saathios-private-alpha-product-excellence",
+  "starting_sha": "1d25a95c6b528f08ea5c9aa98951ae2ce7d60eb4",
+  "certified_tree": "bounded voice-settings working tree subsequently committed without amend",
+  "root_cause": "SETUP_SURFACE_NEVER_IMPLEMENTED_AND_NAVIGATION_LINK_MISSING",
+  "owner_audio_review_status": "OWNER_AUDIO_REVIEW_REQUIRED",
+  "authentication": {
+    "interactive_session": "existing approved owner session in Codex in-app browser",
+    "owner_password_entered": false,
+    "owner_password_read": false,
+    "cookies_or_browser_storage_inspected": false
+  },
+  "browser_runs": [
+    {
+      "kind": "interactive",
+      "runtime": "Codex in-app browser",
+      "engine_version": "not exposed by controlled browser API",
+      "route": "http://127.0.0.1:3000/settings/voice",
+      "authenticated": true,
+      "console_errors": 0
+    },
+    {
+      "kind": "automated",
+      "runtime": "Playwright Chromium",
+      "engine_version": "151.0.7922.34",
+      "route": "http://127.0.0.1:3000/settings/voice",
+      "checks_passed": 13,
+      "checks_failed": 0,
+      "console_errors": 0,
+      "forbidden_external_requests": 0,
+      "evidence": "docs/e2e-functional-audit/browser/VOICE_SETTINGS_AUTOMATED_BROWSER_CHECK.json"
+    }
+  ],
+  "runtime_capabilities": {
+    "speech_synthesis": "AVAILABLE",
+    "speech_recognition_api": "BROWSER_AVAILABLE_BUT_START_RETURNED_NOT_ALLOWED",
+    "microphone_permission_probe": "GRANTED_THEN_TRACK_RELEASED",
+    "microphone_capture_after_test": "OFF",
+    "detected_voice_count": 180,
+    "local_eligible_voice_count": 180,
+    "detected_language_count": 49,
+    "local_nepali_voice": false,
+    "selected_voice": "Samantha",
+    "selected_locale": "en-US"
+  },
+  "checks": [
+    { "name": "approved_session_present", "status": "PASS", "detail": "Authenticated shell showed owner/advisory context and local platform health; no credential was entered or inspected." },
+    { "name": "settings_discoverability", "status": "PASS", "detail": "Settings card, command-palette search, mobile/profile surface, onboarding, and Chat help link expose /settings/voice." },
+    { "name": "route_load", "status": "PASS", "detail": "GET /settings/voice returned 200 and rendered the Voice Settings heading." },
+    { "name": "runtime_voice_discovery", "status": "PASS", "detail": "Runtime reported 180 voices, 180 local eligible voices, and 49 language tags without hardcoded counts." },
+    { "name": "english_play_stop_replay", "status": "PASS", "detail": "English state transitioned to Playing with Samantha, Voice output stopped, then Playing on replay." },
+    { "name": "overlap_prevention", "status": "PASS", "detail": "Each new test cancels speech synthesis and active Saathi output before speaking." },
+    { "name": "route_change_cleanup", "status": "PASS", "detail": "Navigation returned the settings test to idle; focused provider tests verify speech and microphone cleanup on pathname changes." },
+    { "name": "logout_context_cleanup", "status": "PASS", "detail": "Focused tests verify PLATFORM_CONTEXT_EVENT resets output and input without signing out the owner's active session." },
+    { "name": "nepali_truthfulness", "status": "PASS", "detail": "No local ne-* voice was reported; the phrase remained visible and playback was not attempted." },
+    { "name": "mixed_language_limit", "status": "PASS", "detail": "Mixed text is exposed with an explicit non-certified pronunciation limitation." },
+    { "name": "microphone_permission", "status": "PASS_WITH_LIMITATION", "detail": "Permission probe was user-initiated, reported granted, and released its track. SpeechRecognition start returned not-allowed and rendered a safe text fallback." },
+    { "name": "microphone_stop", "status": "PASS", "detail": "Stop returned the UI to Microphone is off; no transcript or audio was recorded in evidence." },
+    { "name": "transcript_ephemeral", "status": "PASS", "detail": "Synthetic text fallback appeared in page memory and was absent after route navigation." },
+    { "name": "privacy_copy", "status": "PASS", "detail": "Local voice filtering, no settings-test persistence/upload, browser-recognition caveat, and no provider credential are visible." },
+    { "name": "credential_controls", "status": "PASS", "detail": "Zero password, API-key, secret, provider-credential, or external-provider controls." },
+    { "name": "network_isolation", "status": "PASS", "detail": "Automated browser harness recorded zero forbidden external requests; only localhost UI/API resources were allowed." },
+    { "name": "interactive_console", "status": "PASS", "detail": "Fresh final-build interactive tab recorded zero console errors after output, fallback, and microphone checks." },
+    { "name": "route_sweep", "status": "PASS", "detail": "/settings, /settings/voice, /chat, and /platform/onboarding each returned HTTP 200." }
+  ],
+  "tests": {
+    "focused_frontend": { "passed": 55, "failed": 0, "scope": "voice settings, output, navigation, onboarding, route cleanup, interruption" },
+    "final_delta_frontend": { "passed": 23, "failed": 0, "scope": "voice output/settings plus route and interruption cleanup after final browser repair" },
+    "full_frontend": { "passed": 388, "failed": 0, "suites": 72 },
+    "relevant_backend": { "passed": 92, "failed": 0, "skipped": 1, "python": "3.12.13" },
+    "production_build": { "status": "PASS", "routes_generated": 134, "voice_settings_route": "STATIC" },
+    "automated_browser": { "passed": 13, "failed": 0 }
+  },
+  "network_and_security": {
+    "settings_test_calls_saathi_api": false,
+    "settings_test_uploads_audio": false,
+    "settings_test_uploads_transcript": false,
+    "external_voice_provider_connected": false,
+    "credentials_required": false,
+    "forbidden_external_request_count": 0,
+    "secret_scan_findings": 0
+  },
+  "screenshots": [
+    "docs/e2e-functional-audit/browser/voice-settings-final-status.png",
+    "docs/e2e-functional-audit/browser/voice-settings-final-runtime.png",
+    "docs/e2e-functional-audit/browser/voice-settings-automated-boundary.png",
+    "docs/e2e-functional-audit/browser/voice-settings-output-and-language.png",
+    "docs/e2e-functional-audit/browser/voice-settings-controls-and-privacy.png"
+  ],
+  "limitations": [
+    "Automation cannot certify audible quality; owner listening review remains required.",
+    "The certified browser reported no local Nepali voice, so native Nepali playback remains unavailable.",
+    "Mixed-language pronunciation quality is not certified.",
+    "Browser SpeechRecognition returned not-allowed in the interactive runtime after the permission probe; the text fallback passed.",
+    "Browser SpeechRecognition processing locality is browser-controlled and is not claimed local by SaathiOS.",
+    "Full acoustic barge-in is not implemented; behavior is stop and push-to-interrupt only.",
+    "Voice preferences are browser-profile scoped, not server per-user records."
+  ],
+  "non_actions": [
+    "No external voice provider, paid API, credential, or cloud speech service was enabled.",
+    "No authentication, RBAC, workspace-isolation, private-alpha, trading, or provider-connectivity boundary was weakened.",
+    "No owner password, cookie, browser storage value, token, audio, or transcript was inspected or recorded.",
+    "No push, merge, deployment, release, or pull-request modification was performed."
+  ]
+}

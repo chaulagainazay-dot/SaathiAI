@@ -1,0 +1,8 @@
+.venv/
+.venv-omni/
+corpus/wav/
+corpus/**/wav/
+corpus/**/*.aiff
+corpus/**/*.mp3
+__pycache__/
+*.pyc

@@ -23,6 +23,7 @@ from saathi.platform.tg.market_data.models import (
     SourceType,
 )
 from saathi.platform.tg.market_data.storage import MarketDataStore, content_checksum, evidence_hash, file_checksum, _uid
+from saathi.platform.market_data.identity import IdentityValidationError, resolve_market_identity
 
 
 def deterministic_dataset_id(
@@ -59,8 +60,8 @@ class DatasetRegistry:
         provider: str = "local",
         source_type: str = SourceType.REPOSITORY_FIXTURE.value,
         source_ref: str = "",
-        market: str = "US",
-        exchange: str = "XNAS",
+        market: str = "",
+        exchange: str = "",
         asset_class: str = "equity",
         instrument_type: str = "stock",
         symbol_namespace: str = "TICKER",
@@ -90,7 +91,22 @@ class DatasetRegistry:
         parent_dataset_id: str | None = None,
         meta: dict | None = None,
         force_id: str | None = None,
+        instrument_id: str | None = None,
     ) -> dict[str, Any]:
+        try:
+            identity = resolve_market_identity(
+                instrument_id=instrument_id,
+                venue=exchange,
+                market=market,
+                asset_class=asset_class,
+            )
+        except IdentityValidationError as exc:
+            raise MarketDataError(exc.code, str(exc)) from exc
+        market = "" if identity.market == "UNKNOWN" else identity.market
+        exchange = identity.venue
+        # Keep the legacy storage spelling (lowercase) while validating against
+        # the canonical identity vocabulary above.
+        asset_class = str(asset_class or "").strip().lower() or "unknown"
         ds_id = force_id or deterministic_dataset_id(
             provider, name, market, asset_class, frequency, source_ref,
         )

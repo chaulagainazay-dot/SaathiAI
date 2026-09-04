@@ -1,0 +1,131 @@
+{
+  "mission": "V-NEXT-2B.2",
+  "locked_gates": {
+    "intent_preservation_min": 0.6,
+    "first_span_preservation_min": 0.5,
+    "cer_max": 0.45,
+    "term_preservation_min": 0.4
+  },
+  "gate_metric_basis": "RAW only",
+  "candidates": [
+    {
+      "name": "devrahul-whisper-small-nepali-ct2",
+      "error": "list index out of range",
+      "nepali_gate_passed": null,
+      "gate_detail": null,
+      "metrics_raw": null,
+      "by_language_raw": null,
+      "latency": null,
+      "peak_rss_mib": null,
+      "cold_load_s": null
+    },
+    {
+      "name": "dragneel-whisper-small-nepali-ct2",
+      "error": null,
+      "nepali_gate_passed": false,
+      "gate_detail": {
+        "intent_ok": false,
+        "first_span_ok": false,
+        "cer_ok": false,
+        "term_ok": false,
+        "passed": false
+      },
+      "metrics_raw": {
+        "n": 13,
+        "mean_wer": 0.8076923076923077,
+        "mean_cer": 0.7628114891154291,
+        "intent_rate": 0.15384615384615385,
+        "first_span_rate": 0.38461538461538464,
+        "term_preservation": 0.0
+      },
+      "by_language_raw": {
+        "en": {
+          "n": 18,
+          "mean_wer": 0.18148148148148147,
+          "mean_cer": 0.03343388637506285,
+          "intent_rate": 0.9444444444444444,
+          "first_span_rate": 0.7777777777777778,
+          "term_preservation": 0.7272727272727273
+        },
+        "ne": {
+          "n": 7,
+          "mean_wer": 0.6428571428571429,
+          "mean_cer": 0.5734443334443335,
+          "intent_rate": 0.2857142857142857,
+          "first_span_rate": 0.7142857142857143,
+          "term_preservation": 0.0
+        },
+        "mixed": {
+          "n": 6,
+          "mean_wer": 1.0,
+          "mean_cer": 0.983739837398374,
+          "intent_rate": 0.0,
+          "first_span_rate": 0.0,
+          "term_preservation": 0.0
+        }
+      },
+      "latency": {
+        "p50": 1.13027825,
+        "p95": 1.4687004590000008,
+        "worst": 2.2106427920000016,
+        "n": 31
+      },
+      "peak_rss_mib": 1003.0,
+      "cold_load_s": 0.18889749999999994
+    },
+    {
+      "name": "sparshrestha-whisper-small-nepali-ct2",
+      "error": null,
+      "nepali_gate_passed": false,
+      "gate_detail": {
+        "intent_ok": false,
+        "first_span_ok": false,
+        "cer_ok": false,
+        "term_ok": false,
+        "passed": false
+      },
+      "metrics_raw": {
+        "n": 13,
+        "mean_wer": 0.982051282051282,
+        "mean_cer": 0.7471176806542232,
+        "intent_rate": 0.15384615384615385,
+        "first_span_rate": 0.3076923076923077,
+        "term_preservation": 0.0
+      },
+      "by_language_raw": {
+        "en": {
+          "n": 18,
+          "mean_wer": 0.6033950617283951,
+          "mean_cer": 0.44667860249283986,
+          "intent_rate": 0.5,
+          "first_span_rate": 0.5555555555555556,
+          "term_preservation": 0.18181818181818182
+        },
+        "ne": {
+          "n": 7,
+          "mean_wer": 0.9666666666666667,
+          "mean_cer": 0.573521016021016,
+          "intent_rate": 0.2857142857142857,
+          "first_span_rate": 0.5714285714285714,
+          "term_preservation": 0.0
+        },
+        "mixed": {
+          "n": 6,
+          "mean_wer": 1.0,
+          "mean_cer": 0.9496471227262983,
+          "intent_rate": 0.0,
+          "first_span_rate": 0.0,
+          "term_preservation": 0.0
+        }
+      },
+      "latency": {
+        "p50": 1.292602875,
+        "p95": 1.4737057499999935,
+        "worst": 2.1086838340000043,
+        "n": 31
+      },
+      "peak_rss_mib": 1003.0,
+      "cold_load_s": 0.1900586670000024
+    }
+  ]
+}

@@ -619,8 +619,8 @@ class MigrationService:
         except Exception:
             pass
         try:
-            from saathi.security.store import SecurityStore
-            SecurityStore().audit(
+            from saathi.security.store import get_store
+            get_store().audit(
                 event, ok=payload.get("ok", True) is not False,
                 user_id="system", detail=event[:200],
             )

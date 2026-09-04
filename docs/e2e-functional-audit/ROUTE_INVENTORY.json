@@ -1,0 +1,1044 @@
+{
+  "record": "SAATHIOS_E2E_ROUTE_INVENTORY",
+  "ui_base": "http://127.0.0.1:3000",
+  "note": "Static routes only. Dynamic segments ([id]) are exercised by the browser certification with real ids, not by this sweep.",
+  "totals": {
+    "routes": 129,
+    "INTENTIONALLY_UNAVAILABLE": 6,
+    "IMPLEMENTED_AND_WORKING": 123
+  },
+  "routes": [
+    {
+      "route": "/",
+      "status": 200,
+      "chars": 7675,
+      "classification": "INTENTIONALLY_UNAVAILABLE",
+      "note": "route renders an explicit availability gate",
+      "console_errors": []
+    },
+    {
+      "route": "/agents",
+      "status": 200,
+      "chars": 7427,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/approvals",
+      "status": 200,
+      "chars": 7794,
+      "classification": "INTENTIONALLY_UNAVAILABLE",
+      "note": "route renders an explicit availability gate",
+      "console_errors": []
+    },
+    {
+      "route": "/apps",
+      "status": 200,
+      "chars": 6870,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/apps/hcg",
+      "status": 200,
+      "chars": 7547,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/apps/ielts",
+      "status": 200,
+      "chars": 7557,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/automation",
+      "status": 200,
+      "chars": 7452,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/automation/production",
+      "status": 200,
+      "chars": 7968,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/business",
+      "status": 200,
+      "chars": 7703,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/ceo",
+      "status": 200,
+      "chars": 7107,
+      "classification": "INTENTIONALLY_UNAVAILABLE",
+      "note": "route renders an explicit availability gate",
+      "console_errors": []
+    },
+    {
+      "route": "/chat",
+      "status": 200,
+      "chars": 6874,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/command",
+      "status": 200,
+      "chars": 7133,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/connectors",
+      "status": 200,
+      "chars": 8100,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/control",
+      "status": 200,
+      "chars": 7112,
+      "classification": "INTENTIONALLY_UNAVAILABLE",
+      "note": "route renders an explicit availability gate",
+      "console_errors": []
+    },
+    {
+      "route": "/control/computer",
+      "status": 200,
+      "chars": 8164,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/evidence",
+      "status": 200,
+      "chars": 11375,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/finance",
+      "status": 200,
+      "chars": 6916,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/fleet",
+      "status": 200,
+      "chars": 7091,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/ielts",
+      "status": 200,
+      "chars": 7286,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/ielts/alerts",
+      "status": 200,
+      "chars": 7717,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/ielts/evidence",
+      "status": 200,
+      "chars": 7603,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/ielts/goals",
+      "status": 200,
+      "chars": 7664,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/ielts/onboarding",
+      "status": 200,
+      "chars": 7608,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/ielts/payments",
+      "status": 200,
+      "chars": 7744,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/ielts/practice",
+      "status": 200,
+      "chars": 7814,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/ielts/practice/listening",
+      "status": 200,
+      "chars": 8296,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/ielts/practice/reading",
+      "status": 200,
+      "chars": 8286,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/ielts/practice/speaking",
+      "status": 200,
+      "chars": 8304,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/ielts/practice/writing",
+      "status": 200,
+      "chars": 8286,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/ielts/settings",
+      "status": 200,
+      "chars": 7809,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/ielts/submissions",
+      "status": 200,
+      "chars": 7743,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/infrastructure",
+      "status": 200,
+      "chars": 10062,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/knowledge",
+      "status": 200,
+      "chars": 7108,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/knowledge/grounding",
+      "status": 200,
+      "chars": 7401,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/knowledge/library",
+      "status": 200,
+      "chars": 8659,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/lab",
+      "status": 200,
+      "chars": 8531,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/learning",
+      "status": 200,
+      "chars": 7427,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/maturity",
+      "status": 200,
+      "chars": 7463,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/me",
+      "status": 200,
+      "chars": 7604,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/mission",
+      "status": 200,
+      "chars": 7357,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/missions",
+      "status": 200,
+      "chars": 7660,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/missions/new",
+      "status": 200,
+      "chars": 7673,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/monitoring",
+      "status": 200,
+      "chars": 10062,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/operations/private-alpha-readiness",
+      "status": 200,
+      "chars": 8800,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/orchestration",
+      "status": 200,
+      "chars": 7241,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/os",
+      "status": 200,
+      "chars": 7648,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/platform",
+      "status": 200,
+      "chars": 11537,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/platform/actions",
+      "status": 200,
+      "chars": 8430,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/platform/agents",
+      "status": 200,
+      "chars": 8321,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/platform/approvals",
+      "status": 200,
+      "chars": 8906,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/platform/approvals/new",
+      "status": 200,
+      "chars": 8826,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/platform/attention",
+      "status": 200,
+      "chars": 8163,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/platform/evidence",
+      "status": 200,
+      "chars": 10034,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/platform/home",
+      "status": 200,
+      "chars": 8383,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/platform/missions",
+      "status": 200,
+      "chars": 8647,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/platform/missions/new",
+      "status": 200,
+      "chars": 8390,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/platform/notifications",
+      "status": 200,
+      "chars": 8818,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/platform/onboarding",
+      "status": 200,
+      "chars": 8296,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/platform/ops",
+      "status": 200,
+      "chars": 9050,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/platform/saved-views",
+      "status": 200,
+      "chars": 8089,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/platform/search",
+      "status": 200,
+      "chars": 7876,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/platform/templates",
+      "status": 200,
+      "chars": 9138,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/platform/workflows",
+      "status": 200,
+      "chars": 8370,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/platform/workflows/new",
+      "status": 200,
+      "chars": 8703,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/projects",
+      "status": 200,
+      "chars": 7076,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/reset-password",
+      "status": 200,
+      "chars": 7004,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/saathi",
+      "status": 200,
+      "chars": 7350,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/security",
+      "status": 200,
+      "chars": 7398,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/settings",
+      "status": 200,
+      "chars": 7604,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/skill-runtime",
+      "status": 200,
+      "chars": 6967,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/skills",
+      "status": 200,
+      "chars": 8625,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/studio",
+      "status": 200,
+      "chars": 8725,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/studio-os",
+      "status": 200,
+      "chars": 7160,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/studio/control-room",
+      "status": 200,
+      "chars": 8429,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/trading",
+      "status": 200,
+      "chars": 8352,
+      "classification": "INTENTIONALLY_UNAVAILABLE",
+      "note": "route renders an explicit availability gate",
+      "console_errors": []
+    },
+    {
+      "route": "/trading/accounts",
+      "status": 200,
+      "chars": 8326,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/trading/approvals",
+      "status": 200,
+      "chars": 8825,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/trading/backtests",
+      "status": 200,
+      "chars": 8424,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/trading/broker-readiness",
+      "status": 200,
+      "chars": 8984,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/trading/broker-sandbox",
+      "status": 200,
+      "chars": 8506,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/trading/comparison",
+      "status": 200,
+      "chars": 8367,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/trading/connectivity-governance",
+      "status": 200,
+      "chars": 8553,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/trading/evidence",
+      "status": 200,
+      "chars": 8511,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/trading/historical",
+      "status": 200,
+      "chars": 8404,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/trading/integration-assurance",
+      "status": 200,
+      "chars": 9801,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/trading/intelligence",
+      "status": 200,
+      "chars": 8989,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/trading/journal",
+      "status": 200,
+      "chars": 8338,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/trading/market-observation",
+      "status": 200,
+      "chars": 8721,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/trading/monte-carlo",
+      "status": 200,
+      "chars": 8434,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/trading/operations",
+      "status": 200,
+      "chars": 9142,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/trading/operations/alerts",
+      "status": 200,
+      "chars": 9579,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/trading/operations/backups",
+      "status": 200,
+      "chars": 9611,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/trading/operations/diagnostics",
+      "status": 200,
+      "chars": 9629,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/trading/operations/health",
+      "status": 200,
+      "chars": 9691,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/trading/operations/metrics",
+      "status": 200,
+      "chars": 9597,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/trading/ops-graduation",
+      "status": 200,
+      "chars": 8425,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/trading/orders",
+      "status": 200,
+      "chars": 8287,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/trading/paper-analytics",
+      "status": 200,
+      "chars": 8342,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/trading/paper-approvals",
+      "status": 200,
+      "chars": 8391,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/trading/paper-campaigns",
+      "status": 200,
+      "chars": 8365,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/trading/paper-journal",
+      "status": 200,
+      "chars": 8319,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/trading/paper-ledger",
+      "status": 200,
+      "chars": 8351,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/trading/paper-ops",
+      "status": 200,
+      "chars": 8370,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/trading/paper-orders",
+      "status": 200,
+      "chars": 8310,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/trading/paper-portfolio",
+      "status": 200,
+      "chars": 8426,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/trading/paper-reconcile",
+      "status": 200,
+      "chars": 8324,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/trading/paper-recovery",
+      "status": 200,
+      "chars": 8350,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/trading/paper-risk",
+      "status": 200,
+      "chars": 8357,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/trading/paper-simulation",
+      "status": 200,
+      "chars": 8609,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/trading/policy",
+      "status": 200,
+      "chars": 9764,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/trading/portfolio-risk",
+      "status": 200,
+      "chars": 8646,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/trading/positions",
+      "status": 200,
+      "chars": 8450,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/trading/proposals",
+      "status": 200,
+      "chars": 8391,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/trading/provider-canary-planning",
+      "status": 200,
+      "chars": 9021,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/trading/provider-contracts",
+      "status": 200,
+      "chars": 9339,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/trading/provider-contracts/capabilities",
+      "status": 200,
+      "chars": 9389,
+      "classification": "INTENTIONALLY_UNAVAILABLE",
+      "note": "route renders an explicit availability gate",
+      "console_errors": []
+    },
+    {
+      "route": "/trading/provider-contracts/replay",
+      "status": 200,
+      "chars": 9274,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/trading/qualification",
+      "status": 200,
+      "chars": 8492,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/trading/reconciliation",
+      "status": 200,
+      "chars": 8596,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/trading/regime",
+      "status": 200,
+      "chars": 8367,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/trading/research",
+      "status": 200,
+      "chars": 8465,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/trading/research-data",
+      "status": 200,
+      "chars": 8697,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/trading/research-lab",
+      "status": 200,
+      "chars": 9193,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/trading/research-orchestrator",
+      "status": 200,
+      "chars": 8674,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/trading/safety",
+      "status": 200,
+      "chars": 8402,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/trading/strategies",
+      "status": 200,
+      "chars": 8503,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/unlock",
+      "status": 200,
+      "chars": 7300,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/voice",
+      "status": 200,
+      "chars": 7568,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    },
+    {
+      "route": "/workspace",
+      "status": 200,
+      "chars": 7217,
+      "classification": "IMPLEMENTED_AND_WORKING",
+      "note": "",
+      "console_errors": []
+    }
+  ]
+}

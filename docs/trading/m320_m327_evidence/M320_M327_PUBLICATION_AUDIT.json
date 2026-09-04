@@ -1,0 +1,69 @@
+{
+  "schema": "m320_m327.publication_audit.v1",
+  "audit_scope": "evidence_only",
+  "branch": "milestone/m320-m327-provider-contracts",
+  "local_sha": "d29bd40c57cc3a95cd2a50a436e7356bbeb38134",
+  "baseline_sha": "6639ca730ece11bce160a55a237fcaff8df3058c",
+  "working_tree_clean": true,
+  "commit_audit": {
+    "commit_count": 10,
+    "logical_progression": true,
+    "unrelated_work": false,
+    "accidental_deletions": false,
+    "history_rewritten": false
+  },
+  "diff_audit": {
+    "files_changed": 48,
+    "additions": 5784,
+    "deletions": 29,
+    "forbidden_artifacts_in_changed_paths": false,
+    "diff_check_clean": true
+  },
+  "security_audit": {
+    "changed_text_secret_findings": 0,
+    "credential_findings": 0,
+    "private_key_findings": 0,
+    "provider_sdk_imports": 0,
+    "network_transport_classes": 0
+  },
+  "architecture_audit": {
+    "governance_composed": true,
+    "authority_lattice_composed": true,
+    "approval_semantics_composed": true,
+    "audit_evidence_composed": true,
+    "maturity_certification_composed": true,
+    "duplicate_provider_registry": false,
+    "duplicate_authority_model": false,
+    "duplicate_execution_gateway": false
+  },
+  "authority_audit": {
+    "all_hard_authorities_false": true,
+    "all_isolation_assertions_true": true
+  },
+  "browser_evidence_audit": {
+    "historical_failure_preserved": true,
+    "authoritative_rerun_present": true,
+    "screenshots_present": 6,
+    "screenshot_hashes_match": true,
+    "rerun_checks_passed": 87,
+    "rerun_checks_failed": 0,
+    "forbidden_external_requests": 0,
+    "credential_controls_present": false,
+    "oauth_controls_present": false,
+    "account_controls_present": false,
+    "order_controls_present": false
+  },
+  "test_evidence_audit": {
+    "focused_backend": "82 passed",
+    "predecessor_regressions": "37 passed",
+    "frontend": "301 passed",
+    "production_build": "PASS; 126 pages",
+    "clean_clone": "PASS",
+    "network_isolation": "PASS"
+  },
+  "documentation_consistent": true,
+  "remote_branch_present_before_push": false,
+  "pr_12_modified": false,
+  "m328_started": false,
+  "publication_readiness": "PUBLICATION_READY"
+}

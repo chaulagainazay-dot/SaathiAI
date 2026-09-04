@@ -10,7 +10,15 @@ from pathlib import Path
 from typing import Any, Optional
 
 ROOT = Path(__file__).resolve().parents[3]
-DEFAULT_STATE_DIR = ROOT / "docs" / "evidence" / "m26"
+# TEST-INFRA-2: this store appends live operational state into the committed
+# docs/evidence/m26 tree, so ordinary operation dirties tracked files. The
+# same SAATHI_EVIDENCE_ROOT override the m25 writers use redirects it; unset,
+# behaviour is unchanged. See saathi/runtime_paths.py — the eventual correct
+# home for this is runtime_evidence_dir("m26"), which is a semantics change
+# beyond this milestone.
+_EVIDENCE_ROOT_ENV = os.environ.get("SAATHI_EVIDENCE_ROOT", "").strip()
+EVIDENCE_ROOT = Path(_EVIDENCE_ROOT_ENV) if _EVIDENCE_ROOT_ENV else ROOT
+DEFAULT_STATE_DIR = EVIDENCE_ROOT / "docs" / "evidence" / "m26"
 SCHEMA = "m26.ops_state.v1"
 
 

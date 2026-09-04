@@ -1,0 +1,26 @@
+{
+  "evidence": "fm_i6_2_live.security_invariants.v1",
+  "checks": {
+    "combined_gate_evaluated_before_inference": true,
+    "threshold_override": false,
+    "one_active_session_only": true,
+    "loopback_only_endpoint": true,
+    "no_wildcard_listener": true,
+    "no_redirect": true,
+    "no_cloud_fallback": true,
+    "no_model_download": true,
+    "no_ollama_start_stop_kill": true,
+    "no_browser": true,
+    "no_shell_execution": true,
+    "no_filesystem_mutation_by_harness": true,
+    "no_provider_credentials_used": true,
+    "no_direct_tool_execution": true,
+    "no_execution_gateway_call": true,
+    "agent_session_adapter_unchanged": true,
+    "trading_guardian_unchanged": true,
+    "PRODUCTION_CERTIFIED": false
+  },
+  "inference_attempted": false,
+  "gate_allowed": false,
+  "denial_reason": "MODEL_HEADROOM_LOW"
+}

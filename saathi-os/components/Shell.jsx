@@ -20,6 +20,7 @@ import { GO_SHORTCUTS } from "@/lib/navigation";
 import { ModuleDiscoveryProvider } from "@/lib/modules/ModuleDiscoveryContext";
 import { useModuleDiscoveryContext } from "@/lib/modules/ModuleDiscoveryContext";
 import ModuleRouteBoundary from "./modules/ModuleRouteBoundary";
+import { VoiceSessionProvider } from "./voice/VoiceSessionProvider";
 import { VoiceOutputProvider } from "./voice/VoiceOutputProvider";
 import VoiceOutputDock from "./voice/VoiceOutputDock";
 import { VoiceRuntimeProvider } from "./voice/VoiceRuntimeProvider";
@@ -184,11 +185,13 @@ export default function Shell({ children }) {
   return (
     <ShellChromeProvider>
       <ModuleDiscoveryProvider>
-        <VoiceOutputProvider>
-          <VoiceRuntimeProvider>
-            <ShellInner>{children}</ShellInner>
-          </VoiceRuntimeProvider>
-        </VoiceOutputProvider>
+        <VoiceSessionProvider>
+          <VoiceOutputProvider>
+            <VoiceRuntimeProvider>
+              <ShellInner>{children}</ShellInner>
+            </VoiceRuntimeProvider>
+          </VoiceOutputProvider>
+        </VoiceSessionProvider>
       </ModuleDiscoveryProvider>
     </ShellChromeProvider>
   );

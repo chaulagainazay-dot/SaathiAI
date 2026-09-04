@@ -6,6 +6,8 @@ Default rollout mode: OFF.
 """
 from __future__ import annotations
 
+import os
+
 import hashlib
 import threading
 import time
@@ -837,7 +839,9 @@ class InferenceOpsService:
         add("provider.not_cooldown", not in_cd, "cooldown" if in_cd else "ok")
 
         # Historical cert package note (never erased by RAM)
-        hist_path = Path(__file__).resolve().parents[3] / "docs" / "evidence" / "m25" / "LAST_SUCCESSFUL_LIVE_CERTIFICATION.json"
+        _ev2 = os.environ.get("SAATHI_EVIDENCE_ROOT", "").strip()
+        _root2 = Path(_ev2) if _ev2 else Path(__file__).resolve().parents[3]
+        hist_path = _root2 / "docs" / "evidence" / "m25" / "LAST_SUCCESSFUL_LIVE_CERTIFICATION.json"
         hist_ok = hist_path.is_file()
 
         # Precedence: DRAINING > STOPPED/OFF/SHADOW policy > env > degraded > ready
@@ -911,7 +915,8 @@ class InferenceOpsService:
         incidents = [i for i in self.store.load_incidents() if i.get("state") == "open"]
         latest_incident = incidents[-1] if incidents else None
         # Dual live evidence pointers
-        root = Path(__file__).resolve().parents[3]
+        _ev = os.environ.get("SAATHI_EVIDENCE_ROOT", "").strip()
+        root = Path(_ev) if _ev else Path(__file__).resolve().parents[3]
         hist = root / "docs" / "evidence" / "m25" / "LAST_SUCCESSFUL_LIVE_CERTIFICATION.json"
         latest = root / "docs" / "evidence" / "m25" / "LATEST_ENVIRONMENT_OBSERVATION.json"
         return {

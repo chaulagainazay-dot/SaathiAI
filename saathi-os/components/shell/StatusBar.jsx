@@ -29,11 +29,20 @@ export default function StatusBar({ approvalState }) {
 
   return (
     <footer className="shell-statusbar only-desktop" role="status" aria-live="polite">
-      <div className="shell-statusbar-seg">
+      {/*
+        M340: this badge reflects the local event stream to the local backend and
+        nothing else. The previous wording used the word "live", which read as
+        broker connectivity, market access or execution readiness — none of which
+        exist. It now says exactly what is true: the local platform is reachable.
+      */}
+      <div className="shell-statusbar-seg" data-testid="local-platform-status">
         <StatusBadge
           status={live.connected ? "success" : "warning"}
-          label={live.connected ? "Live connected" : "Live disconnected"}
+          label={live.connected ? "Local platform online" : "Local platform offline"}
         />
+      </div>
+      <div className="shell-statusbar-seg" data-testid="private-alpha-badge">
+        <StatusBadge status="neutral" label="Private alpha · local only" />
       </div>
       <div className="shell-statusbar-seg">
         <EnvironmentBadge env={env} />

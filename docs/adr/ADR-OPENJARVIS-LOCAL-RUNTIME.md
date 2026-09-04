@@ -1,8 +1,10 @@
 # ADR: OpenJarvis as Local AI Runtime Adapter
 
 **Date:** 2026-07-10
-**Status:** SUPERSEDED IN PART by M20.1 Slice A (2026-07-16)
-**Update:** OpenJarvis is **not** the SaathiOS runtime. SaathiOS-native `saathi.inference` implements the engine contract + catalogue + hardware profile; ModelRouter remains authoritative. Upstream OJ remains Apache-2.0 conceptual reference only.
+**Status:** SUPERSEDED (in part by M20.1 Slice A, 2026-07-16; FM-C1 normalized)
+**Implementation status:** OpenJarvis is **not** the SaathiOS runtime. SaathiOS-native `saathi.inference` implements the engine contract + catalogue + hardware profile; ModelRouter + inference governance remain authoritative for model selection under policy. Upstream OJ remains Apache-2.0 conceptual reference only.
+**Authority impact:** None — historical reference.
+**Superseded by:** M20/M21 inference stack documentation and `saathi.inference` source.
 **Context:** Local-first AI strategy for SaathiOS; Ollama integration; device-aware model selection
 
 ---

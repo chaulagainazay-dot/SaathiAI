@@ -1,0 +1,21 @@
+{
+  "schema": "m327.limitations.v1",
+  "limitations": [
+    "The in-app browser runtime exposed zero instances; the authoritative interactive rerun used the already-installed project-pinned Playwright Chromium runtime",
+    "The existing Control Center SignInGate required a synthetic localhost platform-operator session; no provider credential or provider authentication was used",
+    "Browser cookies and storage values were not inspected under browser-control safety rules",
+    "The global shell LIVE CONNECTED badge denotes localhost platform-runtime health and not provider connectivity",
+    "Only deterministic synthetic mock and replay data exists",
+    "Idempotency persistence was not introduced; restart stability is derived from canonical fingerprints and fixtures",
+    "npm ci reported 9 high-severity advisories in the pre-existing dependency graph; this milestone made no dependency-version change",
+    "Clean clone contains three tracked predecessor database artifacts, but no active or untracked runtime database remained",
+    "Platform operator authentication is reused for existing API/UI access; provider authentication does not exist"
+  ],
+  "deferred": [
+    "Any real provider connectivity",
+    "Any OAuth, credential, or provider-authentication work",
+    "Any account, balance, position, or order-history access",
+    "Any order, transfer, withdrawal, paper-execution, or live-execution work",
+    "Any canary, deployment, release, or M328+ work"
+  ]
+}

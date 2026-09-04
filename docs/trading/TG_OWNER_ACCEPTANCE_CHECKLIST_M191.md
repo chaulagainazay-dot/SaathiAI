@@ -8,6 +8,8 @@ Automated certification does **not** replace human owner sign-off.
 - [ ] Confirmed fixture data cannot promote
 - [ ] Reviewed Monte Carlo limitations
 - [ ] Reviewed Kotegawa-inspired scorecard honesty
-- [ ] Accept residual limitations on NEPSE calendar fixtures and vendor adjusted-price differences
+- [ ] Accept that NEPSE holiday coverage is unsourced/unknown by default and
+      certified NEPSE backtests fail closed until genuine versioned coverage is supplied
+- [ ] Accept residual vendor adjusted-price differences
 
 **Owner sign-off status:** NOT CLAIMED

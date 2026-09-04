@@ -134,6 +134,12 @@ class PaperBroker:
             return ValidationResult(False, f"account not ACTIVE ({account.status.value})")
         if qty <= 0:
             return ValidationResult(False, "quantity must be positive")
+        # T-NEXT-4: an order must never be admitted against a non-positive or
+        # non-finite reference price. The fill path already refuses a zero touch
+        # price, but without this an order is still created and cash reserved
+        # against a meaningless price.
+        if ref_price is None or D(ref_price) <= 0:
+            return ValidationResult(False, "reference price must be positive")
         if order_type not in (OrderType.MARKET, OrderType.LIMIT):
             return ValidationResult(False, f"unsupported order type {order_type.value}")
         if order_type == OrderType.LIMIT and (limit_price is None or D(limit_price) <= 0):

@@ -1,0 +1,25 @@
+SaathiOS Agent Operations Console — snapshot 2026-08-03 19:16:59
+store: /private/tmp/claude-501/-Users-macbookpro-SaathiAI-full-e2e/486c8e2d-e063-4dd0-9688-c0220bb15930/scratchpad/m353store  (read-only, no polling)
+
+1  operator notices        5 (0 blocker, 3 warning)
+     [warning] repository_dirty: 6 uncommitted paths in /Users/macbookpro/SaathiAI-agent-foundation.
+     [warning] stale_worktrees: 102 prunable worktrees reported. This console removes nothing.
+     [warning] unresolved_disagreements: dmevalcov1: chal_53be1d8a30ea
+     [info   ] agentdev_disabled: The environment is disabled by default. The console still reads.
+     [info   ] worktree_creation_disabled: No worktree can be created until an approved handoff enables it.
+2  missions                0 active / 1 total
+3  blocked missions        0
+4  mission lifecycle       13 states, 11 gates
+5  agent hierarchy         14 roles (ok)
+6  review queue            0 waiting
+7  approvals               5 recorded, 5 passed, 0 failed, 0 self-approved
+8  disagreements           3 challenges, 1 unanswered
+9  evidence                24 artifacts, 19 lineage edges
+10 worktrees               113 git, 0 agent, 102 prunable
+11 certification           m344_m351: MULTI_AGENT_DEVELOPMENT_FOUNDATION_CERTIFIED_WITH_LIMITATIONS
+12 repository              milestone/m344-m351-multi-agent-development-foundation @ 9b38d90104da (6 dirty)
+13 active branches         57 (2 agent)
+14 integration candidates  1
+15 resource usage          8.0 GiB RAM, 8 CPU, 64.42 GiB free, peak RSS 22.1 MiB
+
+A snapshot, not a live view. Refreshing means running the command again. The console has no write, approve, execute or provider verb.

@@ -1,9 +1,19 @@
 # ADR: ExecutionGateway Specification (Phase 3.2)
 
-**Date:** 2026-07-10  
-**Status:** SPECIFICATION (awaiting implementation)  
-**Context:** SaathiOS Phase 3.2 execution infrastructure; blocking all external action  
-**Related:** ADR-TOOLINTENT-IMMUTABLE-CONTRACT.md, ADR-VIDEO-BACKEND-POLICY.md
+| Field | Value |
+| --- | --- |
+| **ID** | ADR-EXECUTIONGATEWAY-SPECIFICATION |
+| **Date** | 2026-07-10 |
+| **Status** | **ACCEPTED_IMPLEMENTED** (FM-C1 status repair 2026-08-06) |
+| **Context** | SaathiOS Phase 3.2 execution infrastructure; sole external-action authority |
+| **Implementation status** | **Implemented in source** — `saathi/execution/gateway.py` (`ExecutionGateway`), `saathi/execution/universal.py` (`UniversalBoundary.submit`), `saathi/execution/toolintent.py` |
+| **Authority impact** | Sole external side-effect path; no second gateway may be introduced |
+| **Supersedes** | Informal “gateway optional” / direct-connector execution narratives |
+| **Superseded by** | None (still authoritative for execution boundary) |
+| **Related** | ADR-TOOLINTENT-IMMUTABLE-CONTRACT · ADR-SAATHIOS-ARCHITECTURE-CONSOLIDATION · ADR-VIDEO-BACKEND-POLICY |
+| **Limitations** | Residual legacy domain paths and cooperative-cancel gaps documented in M48 residual risk; Trading Guardian / live finance remain separate gates |
+
+> **FM-C1 note:** Prior header said `SPECIFICATION (awaiting implementation)`. That claim was **stale**. Source evidence at inspection SHA `e9581f43848cf90283c7c4e1c0dbfbad65a4a531` shows a live `ExecutionGateway` with `submit` and `execute_registered_tool` paths.
 
 ---
 
@@ -40,43 +50,43 @@ No bypasses. No direct SDK access. No credential leakage. No silent failures.
 
 ```
 1. No external action bypasses ExecutionGateway.
-   Every API call, file write, network request, credential access must 
+   Every API call, file write, network request, credential access must
    route through the gateway.
 
 2. ToolIntent is never modified.
-   Authorization decisions, approvals, and idempotency detection depend 
+   Authorization decisions, approvals, and idempotency detection depend
    on a stable intent. Changes invalidate audit trail and approval cache.
 
 3. Credentials never appear in ToolIntent, logs, or events.
-   Credentials are leased by ExecutionGateway only, passed to connectors 
+   Credentials are leased by ExecutionGateway only, passed to connectors
    at execution time, then collected back. No trace in results.
 
 4. Authorization fails closed.
-   If authorization cannot be determined, the request is denied. 
+   If authorization cannot be determined, the request is denied.
    No "assume allowed" logic.
 
 5. Approval fails closed.
-   If a request requires approval and approval is missing, the request 
+   If a request requires approval and approval is missing, the request
    is queued (not executed) until approval arrives or expires.
 
 6. Duplicate detection prevents duplicate side effects.
-   Idempotency key is stable across ToolIntent creation. 
+   Idempotency key is stable across ToolIntent creation.
    Same intent submitted twice executes once.
 
 7. Unknown outcomes are reconciled before retry.
-   If a connector returns unclear status (timeout, partial result), 
+   If a connector returns unclear status (timeout, partial result),
    the gateway queries state before retrying.
 
 8. Every attempt produces Evidence.
-   Timeline, state, decision, result (or error) are recorded. 
+   Timeline, state, decision, result (or error) are recorded.
    Audit trail is append-only.
 
 9. Connector output is untrusted.
-   Results from external systems are sanitized, validated, 
+   Results from external systems are sanitized, validated,
    and quota-checked before acceptance.
 
 10. Business-unit isolation is mandatory.
-    Resources, quotas, costs, and audit trails are segregated 
+    Resources, quotas, costs, and audit trails are segregated
     by business_unit. Cross-unit access is not permitted.
 ```
 
@@ -222,7 +232,7 @@ actor_id: "user:456"
 
 ### 1. Validator
 
-**Input:** ToolIntent (JSON or dict)  
+**Input:** ToolIntent (JSON or dict)
 **Output:** (valid, error_details) or raises ExecutionGatewayException
 
 Checks:
@@ -245,7 +255,7 @@ def validate(intent: dict | ToolIntent) -> (bool, Optional[str]):
 
 ### 2. Authorizer
 
-**Input:** ToolIntent, ExecutionContext (actor, role, permissions)  
+**Input:** ToolIntent, ExecutionContext (actor, role, permissions)
 **Output:** (authorized, reason) or raises AuthorizationException
 
 Checks:
@@ -263,7 +273,7 @@ def authorize(intent: ToolIntent, context: ExecutionContext) -> (bool, str):
 
 ### 3. RiskClassifier
 
-**Input:** ToolIntent, ExecutionContext, VideoBackendPolicy  
+**Input:** ToolIntent, ExecutionContext, VideoBackendPolicy
 **Output:** RiskClassification (level, factors, rationale)
 
 Classifies:
@@ -285,7 +295,7 @@ class RiskClassification:
 
 ### 4. ApprovalGate
 
-**Input:** ToolIntent, RiskClassification, ExecutionContext  
+**Input:** ToolIntent, RiskClassification, ExecutionContext
 **Output:** ApprovalDecision (approved, rejected, pending, expired)
 
 Workflow:
@@ -307,7 +317,7 @@ def check_approval(
 
 ### 5. CredentialManager
 
-**Input:** ToolIntent, backend_identifier  
+**Input:** ToolIntent, backend_identifier
 **Output:** LeaseToken (credentials, expiry, id)
 
 - Retrieves secret from vault (never stored in intent)
@@ -322,7 +332,7 @@ class LeaseToken:
     plaintext: Optional[str]  # None if using cloud provider SDKs
     expiry: datetime
     lease_id: str
-    
+
 def lease_credentials(intent: ToolIntent, backend: str) -> LeaseToken:
     """
     Returns LeaseToken. Caller must release() when done.
@@ -337,7 +347,7 @@ def release_credential(lease: LeaseToken) -> None:
 
 ### 6. Queue
 
-**Input:** ToolIntent (after approval)  
+**Input:** ToolIntent (after approval)
 **Output:** QueuedItem (position, eta, id)
 
 - Durable: survives process restart (SQLite backend)
@@ -353,7 +363,7 @@ class QueuedItem:
     eta: datetime
     retry_count: int
     attempt_number: int
-    
+
 def enqueue(intent: ToolIntent, priority: int = 0) -> QueuedItem:
     """
     Returns QueuedItem with position in queue.
@@ -367,7 +377,7 @@ def dequeue() -> Optional[ToolIntent]:
 
 ### 7. Executor
 
-**Input:** ToolIntent, credentials (LeaseToken), RetryPolicy  
+**Input:** ToolIntent, credentials (LeaseToken), RetryPolicy
 **Output:** ExecutionResult (status, data, cost, duration, errors)
 
 Invokes connector (external system). Handles:
@@ -400,7 +410,7 @@ def execute(
 
 ### 8. ResultSanitizer
 
-**Input:** ExecutionResult (from connector)  
+**Input:** ExecutionResult (from connector)
 **Output:** SanitizedResult (no secrets, validated data)
 
 Checks:
@@ -437,11 +447,11 @@ class Evidence:
     cost_actual: float
     timestamps: TimestampRecord
     actor_id: str
-    
+
     # Immutability guarantee
     def __hash__(self) -> int:
         # Hashable for deduplication
-        
+
     def to_audit_log(self) -> str:
         # Structured log entry (JSON-safe)
 ```
@@ -498,20 +508,20 @@ def compute_idempotency_key(intent: ToolIntent) -> str:
       - business_unit (static)
       - parameters (deterministic JSON)
       - expires_at (static)
-    
+
     Excludes:
       - metadata.priority (mutable)
       - metadata.timeout (mutable)
       - created_at (changes on re-submission)
-    
+
     Result: stable SHA256 hex string
     """
-    
+
 def is_duplicate(key: str, db: ExecutionDB) -> bool:
     """
     Returns True if exact same key was executed before.
     """
-    
+
 def get_cached_result(key: str, db: ExecutionDB) -> Optional[Evidence]:
     """
     Returns cached Evidence from prior execution.
@@ -538,7 +548,7 @@ class RetryPolicy:
     backoff_strategy: Literal["exponential", "linear"] = "exponential"
     backoff_base_sec: int = 1
     backoff_max_sec: int = 300
-    
+
 def classify_failure(error: ExecutionError) -> RetryableStatus:
     """
     Returns:
@@ -574,12 +584,12 @@ def reconcile_unknown_outcome(
 ) -> ExecutionResult:
     """
     Calls connector's status-query API (if available) to check outcome.
-    
+
     Examples:
       - Video generation timeout: query render service for job status
       - Payment failed: query payment processor for transaction status
       - DB write timeout: SELECT to verify write succeeded
-    
+
     Returns:
       - If operation succeeded: ExecutionResult(status="success", ...)
       - If operation failed: ExecutionResult(status="failed", ...)
@@ -629,13 +639,13 @@ class ApprovalRecord:
     requested_by_actor_id: str
     risk_level: str
     risk_rationale: str
-    
+
     # Decision (set when approved/rejected)
     decided_at: Optional[datetime] = None
     decided_by_actor_id: Optional[str] = None
     decision: Literal["approved", "rejected", "expired"] = None
     decision_rationale: str = None
-    
+
     # Binding
     is_final: bool = False  # Once set, cannot change
 ```
@@ -788,21 +798,21 @@ ExecutionGateway emits metrics:
 
 ExecutionGateway will be built incrementally:
 
-**Week 1:** Validator + state machine core  
-**Week 2:** Authorizer + RiskClassifier  
-**Week 3:** ApprovalGate + CredentialManager  
-**Week 4:** Queue (in-memory) + Executor  
-**Week 5:** Queue (SQLite, durable) + ResultSanitizer  
-**Week 6:** Evidence + EventBus  
-**Week 7:** Integration testing + idempotency audit  
-**Week 8:** Production deployment + monitoring  
+**Week 1:** Validator + state machine core
+**Week 2:** Authorizer + RiskClassifier
+**Week 3:** ApprovalGate + CredentialManager
+**Week 4:** Queue (in-memory) + Executor
+**Week 5:** Queue (SQLite, durable) + ResultSanitizer
+**Week 6:** Evidence + EventBus
+**Week 7:** Integration testing + idempotency audit
+**Week 8:** Production deployment + monitoring
 
 No adapter work (Claude, OpenJarvis, OpenMontage) begins until ExecutionGateway is stable.
 
 ---
 
-**Status:** SPECIFICATION (awaiting implementation)  
-**Owner:** Infrastructure Team  
-**Implementation Start:** 2026-07-15  
-**Target Completion:** 2026-08-26  
-**Blocking:** All Phase 3.2+ work (video, local runtime, media adapters)
+**Status:** ACCEPTED_IMPLEMENTED (repaired FM-C1 2026-08-06)
+**Owner:** Infrastructure / execution package
+**Source of truth:** `saathi/execution/gateway.py`, `saathi/execution/universal.py`
+**Historical plan block below is archival** (Week 1–8 schedule is no longer a forward plan).
+**Blocking residual:** expansion of *parallel* execution authorities remains **prohibited**; residual legacy domains frozen per architecture freeze register.

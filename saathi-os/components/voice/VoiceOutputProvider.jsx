@@ -20,10 +20,12 @@ import {
   voiceActions,
   voiceOutputReducer,
 } from "@/lib/voice-output";
+import { usePathname } from "next/navigation";
 import {
   getToken,
   PLATFORM_CONTEXT_EVENT,
 } from "@/lib/platform-client";
+import { useVoiceSession } from "./VoiceSessionProvider";
 
 const VoiceOutputContext = createContext(null);
 const TERMINAL = new Set([
@@ -66,6 +68,7 @@ export function VoiceOutputProvider({ children }) {
   const pollRef = useRef(null);
   const metadataRef = useRef(null);
   const operationRef = useRef(null);
+  const voiceSession = useVoiceSession();
 
   useEffect(() => {
     operationRef.current = output.operation;
@@ -183,7 +186,7 @@ export function VoiceOutputProvider({ children }) {
   );
 
   const stop = useCallback(
-    async ({ remote = true } = {}) => {
+    async ({ remote = true, reason = "USER_CANCEL" } = {}) => {
       const operation = operationRef.current;
       clearLocalAudio();
       if (
@@ -195,8 +198,13 @@ export function VoiceOutputProvider({ children }) {
         await voiceActions.cancel(operation.operationId, token).catch(() => null);
       }
       dispatch({ type: "CANCELLED" });
+      try {
+        await voiceSession?.endOutput?.(reason);
+      } catch {
+        /* ignore */
+      }
     },
-    [clearLocalAudio, token]
+    [clearLocalAudio, token, voiceSession]
   );
 
   const prepareAudio = useCallback(
@@ -210,6 +218,7 @@ export function VoiceOutputProvider({ children }) {
       const url = URL.createObjectURL(blob);
       const audio = new Audio(url);
       audio.preload = "auto";
+      audio.volume = preferences.volume;
       audio.onplaying = () => dispatch({ type: "PLAYING" });
       audio.onended = () => dispatch({ type: "ENDED" });
       audio.onerror = () =>
@@ -221,7 +230,7 @@ export function VoiceOutputProvider({ children }) {
       audioRef.current = audio;
       dispatch({ type: "READY", operation });
     },
-    [clearAudioElements]
+    [clearAudioElements, preferences.volume]
   );
 
   const poll = useCallback(
@@ -270,7 +279,22 @@ export function VoiceOutputProvider({ children }) {
     ) => {
       const approvedText = String(text || "").trim();
       if (!preferences.enabled || !token || !approvedText) return false;
+      // Contract: cancel any prior speech before a new synthesis request.
       await stop();
+      // V-NEXT-1/2A: exclusive output claim; arm acoustic barge-in monitor.
+      if (voiceSession?.manager?.beginOutput) {
+        await voiceSession.manager.beginOutput({
+          label: "VoiceOutputProvider",
+          stop: () => clearLocalAudio(),
+          armBargeIn: true,
+        });
+      } else {
+        await voiceSession?.beginOutput?.({
+          label: "VoiceOutputProvider",
+          stop: () => clearLocalAudio(),
+        });
+      }
+      voiceSession?.setTranscript?.({ assistant: approvedText });
       const controller = new AbortController();
       pollRef.current = controller;
       try {
@@ -299,14 +323,27 @@ export function VoiceOutputProvider({ children }) {
             unavailable: error?.status === 503,
             message: String(error?.message || "Speech is unavailable."),
           });
+          voiceSession?.setError?.(String(error?.message || error));
         }
         return false;
       } finally {
         if (pollRef.current === controller) pollRef.current = null;
       }
     },
-    [poll, preferences, stop, token]
+    [poll, preferences, stop, token, voiceSession, clearLocalAudio]
   );
+
+  // The provider sits above the router in Shell, so it never unmounts on a
+  // client-side navigation and the detached Audio element would keep playing
+  // in the background of an unrelated page. Stop speech when the route changes
+  // — never on first render, which would cancel a freshly-started utterance.
+  const pathname = usePathname();
+  const spokenPathRef = useRef(pathname);
+  useEffect(() => {
+    if (spokenPathRef.current === pathname) return;
+    spokenPathRef.current = pathname;
+    stop();
+  }, [pathname, stop]);
 
   const play = useCallback(async () => {
     if (!audioRef.current || !output.audioReady) return false;
