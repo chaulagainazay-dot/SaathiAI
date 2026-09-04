@@ -12,37 +12,47 @@ Two mechanisms:
 All data lives in the local SQLite db. Nothing leaves the Mac.
 """
 import re
-import sqlite3
 import time
 
-from . import config
+from .legacy_store import legacy_connection
 
-_db = sqlite3.connect(config.DB_PATH, check_same_thread=False)
-_db.executescript("""
+_DDL = """
     CREATE TABLE IF NOT EXISTS nepali_corrections(
         id INTEGER PRIMARY KEY, wrong TEXT UNIQUE, right TEXT,
         count INTEGER DEFAULT 1, ts REAL);
     CREATE TABLE IF NOT EXISTS nepali_heard(
         id INTEGER PRIMARY KEY, phrase TEXT, ts REAL);
-""")
+"""
 
 # A few common seed corrections for Nepali words Whisper routinely garbles.
 _SEED = {
     "satie": "साथी", "sati": "साथी", "sotty": "साथी",
 }
-for w, r in _SEED.items():
-    _db.execute("INSERT OR IGNORE INTO nepali_corrections(wrong, right, ts) "
-                "VALUES(?,?,?)", (w, r, time.time()))
-_db.commit()
 
 _cache: dict[str, str] | None = None
+
+
+def _seed(conn):
+    for w, r in _SEED.items():
+        conn.execute("INSERT OR IGNORE INTO nepali_corrections(wrong, right, ts) "
+                     "VALUES(?,?,?)", (w, r, time.time()))
+
+
+def _conn():
+    """Open on first use, not on import.
+
+    Importing this module used to connect and run DDL, which pinned whichever
+    database the path resolved to before any isolation was configured. The seed
+    corrections follow the same rule, applied when the connection is created.
+    """
+    return legacy_connection("nepali", _DDL, on_create=_seed)
 
 
 def _load() -> dict[str, str]:
     global _cache
     if _cache is None:
         _cache = {w.lower(): r for w, r in
-                  _db.execute("SELECT wrong, right FROM nepali_corrections")}
+                  _conn().execute("SELECT wrong, right FROM nepali_corrections")}
     return _cache
 
 
@@ -60,11 +70,12 @@ def apply_corrections(text: str) -> str:
 def teach(wrong: str, right: str) -> dict:
     """Record a correction; applies to all future transcripts."""
     global _cache
-    _db.execute(
+    conn = _conn()
+    conn.execute(
         "INSERT INTO nepali_corrections(wrong, right, ts) VALUES(?,?,?) "
         "ON CONFLICT(wrong) DO UPDATE SET right=excluded.right, "
         "count=count+1, ts=excluded.ts", (wrong.strip(), right.strip(), time.time()))
-    _db.commit()
+    conn.commit()
     _cache = None
     return {"learned": f"{wrong} → {right}",
             "note": "I'll get this right from now on."}
@@ -73,16 +84,18 @@ def teach(wrong: str, right: str) -> dict:
 def log_heard(phrase: str):
     """Passively record a Nepali phrase overheard (local only)."""
     if phrase.strip():
-        _db.execute("INSERT INTO nepali_heard(phrase, ts) VALUES(?,?)",
-                    (phrase.strip(), time.time()))
-        _db.commit()
+        conn = _conn()
+        conn.execute("INSERT INTO nepali_heard(phrase, ts) VALUES(?,?)",
+                     (phrase.strip(), time.time()))
+        conn.commit()
 
 
 def progress() -> dict:
     """Summary of what Saathi has learned."""
-    n_corr = _db.execute("SELECT COUNT(*) FROM nepali_corrections").fetchone()[0]
-    n_heard = _db.execute("SELECT COUNT(*) FROM nepali_heard").fetchone()[0]
-    recent = [c for (c,) in _db.execute(
+    conn = _conn()
+    n_corr = conn.execute("SELECT COUNT(*) FROM nepali_corrections").fetchone()[0]
+    n_heard = conn.execute("SELECT COUNT(*) FROM nepali_heard").fetchone()[0]
+    recent = [c for (c,) in conn.execute(
         "SELECT wrong || ' → ' || right FROM nepali_corrections "
         "ORDER BY ts DESC LIMIT 8")]
     return {"corrections_learned": n_corr, "phrases_heard": n_heard,

@@ -109,7 +109,8 @@ _service: StorageService | None = None
 def get_storage_service(storage_root: "str | Path | None" = None, **kw) -> StorageService:
     global _service
     if _service is None:
-        from saathi import config
-        root = storage_root or (config.ROOT / "storage")
+        from saathi.runtime_paths import storage_db_path, storage_root_path
+        root = Path(storage_root) if storage_root else storage_root_path()
+        kw.setdefault("db_path", storage_db_path(root))
         _service = StorageService(root, **kw)
     return _service

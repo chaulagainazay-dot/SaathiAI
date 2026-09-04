@@ -32,7 +32,7 @@ def test_deferred_not_runtime_executable():
         if name not in _HANDLERS:
             continue
         assert not is_runtime_executable(name)
-        out = execute_tool(name, {}, speaker_verified=True)
+        out = execute_tool(name, {})
         assert out.get("blocked") is True
         assert out.get("disposition") == "DEFERRED_AND_DISABLED"
 
@@ -41,13 +41,13 @@ def test_freeform_shell_not_runtime_executable():
     for name in FREEFORM_SHELL_TOOLS:
         assert classify_legacy_tool(name).value == "PROHIBITED"
         assert not is_runtime_executable(name)
-        out = execute_tool(name, {"command": "ls", "script": "ls", "name": "x"}, speaker_verified=True)
+        out = execute_tool(name, {"command": "ls", "script": "ls", "name": "x"})
         assert out.get("blocked") is True
 
 
 def test_canonical_mapped_route_or_block_not_raw_legacy_mutate():
     # manage_tasks non-list must not mutate via legacy
-    out = execute_tool("manage_tasks", {"action": "complete", "id": "1"}, speaker_verified=True)
+    out = execute_tool("manage_tasks", {"action": "complete", "id": "1"})
     assert out.get("error") in ("canonical_only", "governance_denied") or out.get("blocked") is True
 
 
@@ -55,7 +55,6 @@ def test_send_email_requires_approval_on_bridge():
     out = execute_tool(
         "send_email",
         {"to": "nobody@example.com", "subject": "t", "body": "b"},
-        speaker_verified=True,
     )
     # Must not claim live send succeeded
     assert out.get("sent") is not True
@@ -69,12 +68,12 @@ def test_send_email_requires_approval_on_bridge():
 
 def test_legacy_bounded_stamped_when_executed():
     # canteen_query is inventory LEGACY_BOUNDED — if governance allows, stamp present
-    out = execute_tool("canteen_query", {"query": "hours"}, speaker_verified=True)
+    out = execute_tool("canteen_query", {"query": "hours"})
     if not out.get("error") and not out.get("blocked"):
         assert out.get("_legacy_bounded") is True or out.get("_disposition") == "LEGACY_BOUNDED"
 
 
 def test_unknown_name_rejected_no_generic_fallback():
-    out = execute_tool("m49_4_totally_fake_tool", {}, speaker_verified=True)
+    out = execute_tool("m49_4_totally_fake_tool", {})
     assert out.get("blocked") is True
     assert "unknown tool" in out.get("error", "")

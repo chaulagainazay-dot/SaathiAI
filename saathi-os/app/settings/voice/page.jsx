@@ -11,6 +11,11 @@ import {
   safePermissionState,
   summarizeVoiceCapability,
 } from "@/lib/voice-settings";
+import {
+  acquireInputClaim,
+  openMicrophoneForClaim,
+  subscribeInputOwner,
+} from "@/lib/voice-session";
 
 const card = {
   border: "1px solid var(--border-subtle, rgba(255,255,255,.1))",
@@ -57,6 +62,12 @@ export default function VoiceSettingsPage() {
   const recognitionRef = useRef(null);
   const mediaRef = useRef(null);
   const utteranceRef = useRef(null);
+  // R2.1-D6.5: settings capture is a *borrower* of the shared AudioInputOwner,
+  // never a second owner. Both operations here take a claim, and the claim is
+  // what stops the tracks and the recognizer — so preemption by the canonical
+  // dock or by chat capture tears this surface down through the same path as
+  // an explicit stop.
+  const inputClaimRef = useRef(null);
 
   const capability = useMemo(() => summarizeVoiceCapability(runtimeVoices), [runtimeVoices]);
   const selectedVoice = useMemo(
@@ -69,12 +80,27 @@ export default function VoiceSettingsPage() {
     mediaRef.current = null;
   }, []);
 
+  /**
+   * Give the microphone back.
+   *
+   * Releasing the claim stops the registered recognizer and every track the
+   * claim opened; stopTracks() covers the local reference as well, so a
+   * half-constructed test that never reached setRecognition still ends with
+   * nothing capturing.
+   */
+  const releaseInputClaim = useCallback(() => {
+    const claim = inputClaimRef.current;
+    inputClaimRef.current = null;
+    try { claim?.release?.(); } catch { /* already released */ }
+    stopTracks();
+  }, [stopTracks]);
+
   const stopInput = useCallback(() => {
     try { recognitionRef.current?.stop?.(); } catch { /* already stopped */ }
     recognitionRef.current = null;
-    stopTracks();
+    releaseInputClaim();
     setInputStatus("Microphone is off.");
-  }, [stopTracks]);
+  }, [releaseInputClaim]);
 
   const stopOutput = useCallback(async () => {
     window.speechSynthesis?.cancel();
@@ -109,6 +135,13 @@ export default function VoiceSettingsPage() {
     const cleanup = () => {
       try { recognitionRef.current?.stop?.(); } catch { /* already stopped */ }
       recognitionRef.current = null;
+      // Route change and unmount run this through the effect's teardown, and
+      // logout runs it through PLATFORM_CONTEXT_EVENT. Releasing the claim is
+      // what actually ends capture — dropping the local stream reference alone
+      // would leave the registry believing this surface still owns the input.
+      const claim = inputClaimRef.current;
+      inputClaimRef.current = null;
+      try { claim?.release?.(); } catch { /* already released */ }
       mediaRef.current?.getTracks?.().forEach((track) => track.stop());
       mediaRef.current = null;
       synth?.cancel?.();
@@ -179,22 +212,48 @@ export default function VoiceSettingsPage() {
     synth.speak(utterance);
   }, [capability, selectedVoice, voiceOutput]);
 
+  /**
+   * Transient permission probe.
+   *
+   * It opens the device only to learn whether it can be opened and what the
+   * browser actually applied, then hands the microphone straight back. The
+   * claim is what guarantees that: released in `finally`, so a denial, a
+   * device failure, a preemption mid-probe and a success all end with this
+   * surface owning nothing.
+   */
   const requestPermission = useCallback(async () => {
     if (!navigator.mediaDevices?.getUserMedia) {
       setPermission("unknown");
       setInputStatus("Microphone capture is unavailable. Use the text fallback.");
       return;
     }
+    const claim = acquireInputClaim({ label: "settings.voice.permission-probe" });
+    inputClaimRef.current = claim;
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      stream.getTracks().forEach((track) => track.stop());
+      // No constraint argument: the DEFAULT_MIC_CONSTRAINTS contract applies.
+      const stream = await openMicrophoneForClaim(claim);
+      // Bounded observation only: whether processing was applied, never the
+      // device identifier or label.
+      const applied = stream.getAudioTracks()[0]?.getSettings?.() || {};
+      const flags = ["echoCancellation", "noiseSuppression", "autoGainControl"]
+        .filter((key) => applied[key] === true);
       setPermission("granted");
-      setInputStatus("Microphone permission granted. Capture remains off.");
-    } catch {
-      setPermission("denied");
-      setInputStatus("Microphone permission was denied. Text fallback remains available.");
+      setInputStatus(
+        `Microphone permission granted. Capture remains off. Browser applied: ${
+          flags.length ? flags.join(", ") : "no processing reported"
+        }.`
+      );
+    } catch (error) {
+      const denied = /denied|not.?allowed|permission/i.test(String(error?.name || error?.message || ""));
+      setPermission(denied ? "denied" : "unknown");
+      setInputStatus(denied
+        ? "Microphone permission was denied. Text fallback remains available."
+        : "The microphone could not be opened. Text fallback remains available.");
+    } finally {
+      // Stops every track the claim opened and returns input ownership to idle.
+      releaseInputClaim();
     }
-  }, []);
+  }, [releaseInputClaim]);
 
   const startInput = useCallback(async () => {
     if (!voiceOutput.preferences.inputEnabled) {
@@ -206,17 +265,30 @@ export default function VoiceSettingsPage() {
       setInputStatus("Browser speech recognition is unavailable. Use the text fallback.");
       return;
     }
+    let claim = null;
     try {
       await stopOutput();
       stopInput();
-      mediaRef.current = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // Acquiring preempts whoever holds the microphone — that is the registry
+      // contract, and it is what keeps this from ever running concurrently
+      // with the canonical dock or with chat capture.
+      claim = acquireInputClaim({ label: "settings.voice.input-test" });
+      inputClaimRef.current = claim;
+      // No constraint argument: the DEFAULT_MIC_CONSTRAINTS contract applies.
+      mediaRef.current = await openMicrophoneForClaim(claim);
       setPermission("granted");
       const recognition = new Ctor();
+      // Bounded diagnostic: one utterance, never continuous, and deliberately
+      // no onend restart. Nothing here submits a command or opens a backend
+      // voice session — the transcript stays in page memory.
       recognition.continuous = false;
       recognition.interimResults = true;
       recognition.lang = voiceOutput.preferences.locale;
       recognition.onstart = () => setInputStatus("Listening. Choose Stop microphone test at any time.");
       recognition.onresult = (event) => {
+        // A result arriving after preemption belongs to a test this surface no
+        // longer owns.
+        if (!claim?.isActive?.()) return;
         let text = "";
         for (let i = event.resultIndex; i < event.results.length; i += 1) {
           text += event.results[i][0]?.transcript || "";
@@ -226,21 +298,42 @@ export default function VoiceSettingsPage() {
       };
       recognition.onerror = (event) => {
         setInputStatus(`Microphone test failed safely: ${event.error || "recognition error"}.`);
-        stopTracks();
+        recognitionRef.current = null;
+        releaseInputClaim();
       };
       recognition.onend = () => {
         recognitionRef.current = null;
-        stopTracks();
+        releaseInputClaim();
         setInputStatus((current) => current.startsWith("Microphone test failed") ? current : "Microphone test ended.");
       };
+      // Registering on the claim is what lets a preemption stop this recognizer
+      // rather than leave it running against a claim this surface has lost.
+      claim.setRecognition(recognition);
       recognitionRef.current = recognition;
       recognition.start();
     } catch {
       setPermission("denied");
-      stopTracks();
+      recognitionRef.current = null;
+      releaseInputClaim();
       setInputStatus("Microphone permission was denied or capture could not start. Text fallback remains available.");
     }
-  }, [stopInput, stopOutput, stopTracks, voiceOutput.preferences.inputEnabled, voiceOutput.preferences.locale]);
+  }, [releaseInputClaim, stopInput, stopOutput, voiceOutput.preferences.inputEnabled, voiceOutput.preferences.locale]);
+
+  /**
+   * Preemption is not something this surface performs — it is something that
+   * happens to it. When the canonical dock or chat capture acquires the shared
+   * claim, the registry releases this one and stops its recognizer; without
+   * this the page would keep displaying "Listening" over a microphone it no
+   * longer holds.
+   */
+  useEffect(() => subscribeInputOwner(() => {
+    const claim = inputClaimRef.current;
+    if (!claim || claim.isActive()) return;
+    inputClaimRef.current = null;
+    recognitionRef.current = null;
+    stopTracks();
+    setInputStatus("Microphone test ended: another voice surface took the microphone.");
+  }), [stopTracks]);
 
   const phrase = VOICE_TEST_PHRASES[phraseId];
   return (
@@ -336,6 +429,7 @@ export default function VoiceSettingsPage() {
             <span style={badge(recognitionSupported ? "ok" : "warn")}>Speech recognition: {recognitionSupported ? "browser available" : "unavailable"}</span>
             <span style={badge(permission === "granted" ? "ok" : permission === "denied" ? "warn" : "neutral")}>Microphone permission: {permission}</span>
             <span style={badge()}>Capture: explicit test only</span>
+            <span style={badge()}>Ownership: shared input claim</span>
           </div>
           <label style={row}>
             <input type="checkbox" checked={voiceOutput.preferences.inputEnabled}
@@ -363,6 +457,10 @@ export default function VoiceSettingsPage() {
           <h2 id="interruption-behavior">Interruption behavior</h2>
           <p><strong>Push-to-interrupt:</strong> starting a microphone test stops current SaathiOS/browser playback before capture begins.</p>
           <p><strong>Stop:</strong> Stop test cancels speech; Stop microphone test stops recognition and releases acquired media tracks.</p>
+          <p><strong>Shared microphone ownership:</strong> both microphone operations on this page borrow the
+          same system-wide input claim the Live Voice dock and chat capture use. Starting one here stops
+          whichever surface held the microphone, and a surface started elsewhere stops the test here. At most
+          one capture is ever open.</p>
           <p style={{ color: "#f2b84b" }}><strong>Full acoustic barge-in is not implemented.</strong> The system does not continuously listen for speech over its own output.</p>
         </section>
 

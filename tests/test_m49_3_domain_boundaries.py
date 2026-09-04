@@ -9,7 +9,7 @@ from saathi.tools.registry import execute_tool
 def test_browser_mutation_tools_deferred():
     for name in ("ab_click", "ab_fill", "ab_goto", "ab_open"):
         assert classify_legacy_tool(name).value == "DEFERRED_AND_DISABLED"
-        out = execute_tool(name, {}, speaker_verified=True)
+        out = execute_tool(name, {})
         assert out.get("blocked") is True
 
 
@@ -28,7 +28,7 @@ def test_mac_control_deferred():
 def test_deployment_deferred():
     for name in ("deploy_ielts_site", "publish_to_youtube", "publish_blog"):
         assert classify_legacy_tool(name).value == "DEFERRED_AND_DISABLED"
-        out = execute_tool(name, {}, speaker_verified=True)
+        out = execute_tool(name, {})
         assert out.get("blocked") is True
 
 

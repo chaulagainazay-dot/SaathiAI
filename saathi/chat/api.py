@@ -6,11 +6,12 @@ from __future__ import annotations
 
 import json
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from saathi.chat.engine import default_engine, AGENT_ROLES
+from saathi.execution.authorization_sources import actor_context
 from saathi.chat.store import default_store
 
 router = APIRouter(prefix="/api/v1/chat", tags=["chat"])
@@ -198,13 +199,39 @@ def add_attachment(cid: str, req: AddAttachment):
 
 # ── tools (Layer 7) ─────────────────────────────────────────────────────────
 @router.post("/messages/{mid}/tools")
-def call_tool(mid: str, req: ToolCall):
+def call_tool(mid: str, req: ToolCall, request: Request):
+    """Run one tool for a message, under the caller's own identity.
+
+    The session is resolved here and bound for the gateway call because this is
+    the layer that has one. Without it the gateway sees an unattributed
+    in-process caller, which is capped at READ_ONLY -- so a mutating tool would
+    be refused not because the user lacks the right but because nobody asked who
+    they were. Resolution failure binds nothing, which denies rather than
+    assuming an identity.
+    """
     st = default_store()
     msg = st.get_message(mid)
     if not msg:
         return {"error": "not found"}
-    return default_engine().call_tool(msg["conversation_id"], mid,
-                                      req.tool, req.args)
+    with actor_context(_session_user(request)):
+        return default_engine().call_tool(msg["conversation_id"], mid,
+                                          req.tool, req.args)
+
+
+def _session_user(request: Request) -> str | None:
+    """The authenticated user behind this request, or None.
+
+    Read from the session cookie/header the app's auth layer already issues --
+    never from the request body, where a caller could name anyone.
+    """
+    from saathi import sessions
+
+    token = (request.cookies.get("baadar_session")
+             or request.headers.get("x-baadar-session", ""))
+    try:
+        return sessions.identify(token) if token else None
+    except Exception:
+        return None
 
 
 # ── checkpoints (Layer 4) ───────────────────────────────────────────────────

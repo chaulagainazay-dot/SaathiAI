@@ -1,6 +1,7 @@
 """Evidence Service — the storage core behind the universal schema.
 
-Native, no external service. SQLite at ~/.saathi/evidence.db. One table, one
+Native, no external service. SQLite at <state root>/evidence.db (default
+~/.saathi/evidence.db; see saathi.runtime_paths). One table, one
 shape, every department. The CEO and the Learning layer query THIS. Adapters
 (see adapters.py) convert native events into Evidence before they land here.
 """
@@ -11,11 +12,12 @@ import time
 from pathlib import Path
 
 from saathi.evidence.schema import Evidence, COLUMNS, row_to_dict
+from saathi.runtime_paths import state_path
 
 
 class EvidenceStore:
     def __init__(self, db_path: str | None = None):
-        self.db_path = Path(db_path) if db_path else (Path.home() / ".saathi" / "evidence.db")
+        self.db_path = Path(db_path) if db_path else state_path("evidence.db")
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self._init()
 

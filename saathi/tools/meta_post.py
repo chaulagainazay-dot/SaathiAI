@@ -53,6 +53,12 @@ def _creds() -> dict:
 
 def post_facebook(text: str, link: str = "") -> dict:
     """Post text (+ optional link) to the Facebook Page feed."""
+    # Phase 19: the side effect itself is gated, not merely preceded by a
+    # check. An authorization that happened elsewhere cannot vouch for a
+    # call made from anywhere; being inside governed execution can.
+    from saathi.execution.egress import guard
+
+    guard("facebook.page.feed", operation="post_facebook")
     c = _creds()
     if not c["token"] or not c["page_id"]:
         return {"status": "error", "error": "Facebook not configured — need page_access_token and page_id"}
@@ -71,6 +77,12 @@ def post_facebook(text: str, link: str = "") -> dict:
 
 def upload_image_public(local_path: str) -> str:
     """Upload a local image to Imgur (anonymous) and return the public URL."""
+    # Phase 19: the side effect itself is gated, not merely preceded by a
+    # check. An authorization that happened elsewhere cannot vouch for a
+    # call made from anywhere; being inside governed execution can.
+    from saathi.execution.egress import guard
+
+    guard("imgbb.upload", operation="upload_image_public")
     import base64
     with open(local_path, "rb") as f:
         b64 = base64.b64encode(f.read()).decode()
@@ -86,6 +98,12 @@ def upload_image_public(local_path: str) -> str:
 
 def post_instagram_image_local(local_path: str, caption: str) -> dict:
     """Upload a local image to a public host then post it to Instagram."""
+    # Phase 19: the side effect itself is gated, not merely preceded by a
+    # check. An authorization that happened elsewhere cannot vouch for a
+    # call made from anywhere; being inside governed execution can.
+    from saathi.execution.egress import guard
+
+    guard("instagram.media", operation="post_instagram_image_local")
     try:
         public_url = upload_image_public(local_path)
     except Exception as e:
@@ -95,6 +113,12 @@ def post_instagram_image_local(local_path: str, caption: str) -> dict:
 
 def post_instagram_text(caption: str) -> dict:
     """Post a caption-only update to Instagram (no media — for text/reel captions)."""
+    # Phase 19: the side effect itself is gated, not merely preceded by a
+    # check. An authorization that happened elsewhere cannot vouch for a
+    # call made from anywhere; being inside governed execution can.
+    from saathi.execution.egress import guard
+
+    guard("instagram.media", operation="post_instagram_text")
     c = _creds()
     if not c["token"] or not c["ig_id"]:
         return {"status": "error", "error": "Instagram not configured — need page_access_token and ig_account_id"}
@@ -106,6 +130,12 @@ def post_instagram_text(caption: str) -> dict:
 
 def post_instagram_image(image_url: str, caption: str) -> dict:
     """Post a photo to Instagram Business account via Graph API (image must be public URL)."""
+    # Phase 19: the side effect itself is gated, not merely preceded by a
+    # check. An authorization that happened elsewhere cannot vouch for a
+    # call made from anywhere; being inside governed execution can.
+    from saathi.execution.egress import guard
+
+    guard("instagram.media", operation="post_instagram_image")
     c = _creds()
     if not c["token"] or not c["ig_id"]:
         return {"status": "error", "error": "Instagram not configured"}
@@ -132,6 +162,12 @@ def post_instagram_image(image_url: str, caption: str) -> dict:
 
 def post_instagram_reel(video_url: str, caption: str, thumbnail_url: str = "") -> dict:
     """Upload a Reel to Instagram — tries resumable direct upload first, falls back to URL."""
+    # Phase 19: the side effect itself is gated, not merely preceded by a
+    # check. An authorization that happened elsewhere cannot vouch for a
+    # call made from anywhere; being inside governed execution can.
+    from saathi.execution.egress import guard
+
+    guard("instagram.media", operation="post_instagram_reel")
     c = _creds()
     if not c["token"] or not c["ig_id"]:
         return {"status": "error", "error": "Instagram not configured"}
@@ -155,6 +191,11 @@ def _post_instagram_reel_direct(local_path: str, caption: str, c: dict) -> dict:
         file_size = os.path.getsize(local_path)
 
         # Step 1: Create resumable upload session
+        # Phase 19B: guarded at the call, not at function entry. These return
+        # early when unconfigured and several fall back to local generation,
+        # so an entry guard would break paths that never reach a network.
+        from saathi.execution.egress import guard as _egress_guard
+        _egress_guard("instagram.media", operation="_post_instagram_reel_direct")
         session_r = httpx.post(
             f"{_API}/{c['ig_id']}/media",
             data={
@@ -177,6 +218,11 @@ def _post_instagram_reel_direct(local_path: str, caption: str, c: dict) -> dict:
         with open(local_path, "rb") as f:
             video_bytes = f.read()
 
+        # Phase 19B: guarded at the call, not at function entry. These return
+        # early when unconfigured and several fall back to local generation,
+        # so an entry guard would break paths that never reach a network.
+        from saathi.execution.egress import guard as _egress_guard
+        _egress_guard("instagram.media", operation="_post_instagram_reel_direct")
         upload_r = httpx.post(
             upload_uri,
             content=video_bytes,
@@ -218,6 +264,11 @@ def _post_instagram_reel_direct(local_path: str, caption: str, c: dict) -> dict:
             return {"status": "error", "error": "Instagram container processing timed out after 120s — video may be too large or wrong format"}
 
         # Step 4: Publish
+        # Phase 19B: guarded at the call, not at function entry. These return
+        # early when unconfigured and several fall back to local generation,
+        # so an entry guard would break paths that never reach a network.
+        from saathi.execution.egress import guard as _egress_guard
+        _egress_guard("instagram.media", operation="_post_instagram_reel_direct")
         pub_r = httpx.post(
             f"{_API}/{c['ig_id']}/media_publish",
             data={"creation_id": container_id, "access_token": c["token"]},
@@ -236,6 +287,11 @@ def _post_instagram_reel_url(video_url: str, caption: str, c: dict) -> dict:
     """Upload Reel via public video URL (original method)."""
     import time
     try:
+        # Phase 19B: guarded at the call, not at function entry. These return
+        # early when unconfigured and several fall back to local generation,
+        # so an entry guard would break paths that never reach a network.
+        from saathi.execution.egress import guard as _egress_guard
+        _egress_guard("instagram.media", operation="_post_instagram_reel_url")
         r1 = httpx.post(
             f"{_API}/{c['ig_id']}/media",
             data={"media_type": "REELS", "video_url": video_url,
@@ -268,6 +324,11 @@ def _post_instagram_reel_url(video_url: str, caption: str, c: dict) -> dict:
         if not container_ready:
             return {"status": "error", "error": "Instagram URL container timed out after 60s"}
 
+        # Phase 19B: guarded at the call, not at function entry. These return
+        # early when unconfigured and several fall back to local generation,
+        # so an entry guard would break paths that never reach a network.
+        from saathi.execution.egress import guard as _egress_guard
+        _egress_guard("instagram.media", operation="_post_instagram_reel_url")
         r2 = httpx.post(f"{_API}/{c['ig_id']}/media_publish",
                         data={"creation_id": container_id, "access_token": c["token"]},
                         timeout=30)

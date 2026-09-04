@@ -11,6 +11,8 @@ import time
 import uuid
 from pathlib import Path
 
+from saathi.runtime_paths import state_path
+
 
 # statuses that count as a blocked lane (a stage failed and needs attention)
 _BLOCKED = {"script_blocked", "voice_failed", "assets_failed", "render_failed",
@@ -19,7 +21,7 @@ _BLOCKED = {"script_blocked", "voice_failed", "assets_failed", "render_failed",
 
 class StudioStore:
     def __init__(self, db_path: str | None = None):
-        self.db_path = Path(db_path) if db_path else (Path.home() / ".saathi" / "studio_runs.db")
+        self.db_path = Path(db_path) if db_path else state_path("studio_runs.db")
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self._init()
 

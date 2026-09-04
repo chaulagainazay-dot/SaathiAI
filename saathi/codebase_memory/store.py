@@ -9,8 +9,18 @@ from pathlib import Path
 from typing import Any, Optional
 
 from saathi.codebase_memory.identity import INDEX_SCHEMA_VERSION, RepoIdentity
+from saathi.runtime_paths import state_path
 
-DEFAULT_INDEX_DIR = Path.home() / ".saathi" / "codebase_memory"
+
+def default_index_dir() -> Path:
+    return state_path("codebase_memory")
+
+
+def __getattr__(name: str):
+    """Keep ``DEFAULT_INDEX_DIR`` working without binding it at import time."""
+    if name == "DEFAULT_INDEX_DIR":
+        return default_index_dir()
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
 _SCHEMA = """
@@ -336,9 +346,7 @@ def re_tokenize(q: str) -> list[str]:
 
 
 def index_db_path(ident: RepoIdentity, *, base: Path | None = None) -> Path:
-    base = base or Path(
-        __import__("os").environ.get(
-            "SAATHI_CBM_INDEX_DIR", str(DEFAULT_INDEX_DIR),
-        )
-    )
+    # SAATHI_CBM_INDEX_DIR keeps precedence over the canonical state root.
+    override = (__import__("os").environ.get("SAATHI_CBM_INDEX_DIR") or "").strip()
+    base = base or (Path(override) if override else default_index_dir())
     return base / f"{ident.index_key}.sqlite"

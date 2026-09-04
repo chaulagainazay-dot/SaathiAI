@@ -104,6 +104,82 @@ def gateway_llm(agent_role: str, prompt: str, system: str) -> dict:
             "status": getattr(result.status, "value", "failed")}
 
 
+def _execution_time_block(store, run_id: str) -> str | None:
+    """A machine-safe reason this execution must not start now, or None.
+
+    Deliberately narrow: it re-reads only the authority that can *change*
+    between a decision and a dispatch. Re-running the whole authorization here
+    would duplicate the gateway's logic in a second place, which is how two
+    copies of a security rule start disagreeing.
+
+    Every failure to establish a state returns a block. A kill switch that
+    cannot be read is not an inactive kill switch.
+    """
+    try:
+        from saathi.platform.tg.kill_switch import KillSwitchStore
+
+        if bool(KillSwitchStore().is_blocked().get("blocked")):
+            return "KILL_SWITCH_ACTIVE"
+    except Exception:
+        return "KILL_SWITCH_UNKNOWN"
+
+    if not run_id:
+        return None
+    try:
+        from saathi.agent_runtime.models import RunState, is_terminal
+
+        run = store.get_run(run_id)
+        if not run:
+            return "RUN_NOT_FOUND"
+        state = RunState(str(run.get("state") or ""))
+        if is_terminal(state) or state in (RunState.BLOCKED, RunState.CANCELLED):
+            return "RUN_STATE_BLOCKS"
+    except Exception:
+        return "RUN_STATE_UNKNOWN"
+
+    # Ownership. A bound session that is not this run's creator may not drive
+    # its tools, however the request reached here: holding `write` authorises
+    # acting on your own runs, not on everyone's. Checked before the actor is
+    # rebound below, or it would be comparing the owner against themselves.
+    #
+    # No bound session means an internal caller, which is capped elsewhere and
+    # has no user identity to compare -- so ownership is not the gate that
+    # applies to it, and pretending otherwise would block legitimate internal
+    # work while protecting nothing.
+    from saathi.execution.authorization_sources import current_actor
+
+    caller = current_actor()
+    if caller and not _same_actor(caller, run_actor(store, run_id)):
+        return "RUN_NOT_OWNED"
+    return None
+
+
+def run_actor(store, run_id: str) -> str:
+    """The run's persisted creator, or "" when it cannot be established.
+
+    Authoritative in a way an ambient request context is not: it survives the
+    HTTP request, so a tool executed later still attributes to the person who
+    asked for the run rather than to whoever happened to trigger the execution.
+    """
+    try:
+        run = store.get_run(run_id)
+        return str((run or {}).get("actor") or "")
+    except Exception:
+        return ""
+
+
+def _same_actor(session_user: str, run_owner: str) -> bool:
+    """Whether a bare session id owns a run recorded as `user:<id>`.
+
+    Fails closed on an unowned run: a run with no recorded creator is not a run
+    that everybody owns.
+    """
+    if not run_owner:
+        return False
+    prefix, _, rest = run_owner.partition(":")
+    return (rest if prefix == "user" else run_owner) == session_user
+
+
 class AgentExecutor:
     """Runs a single agent turn + gates every tool through policy + gateway."""
 
@@ -201,7 +277,31 @@ class AgentExecutor:
         risk,
         cancel_token: CancellationToken | None = None,
     ) -> dict:
-        """M52 compatibility shell; no tool dispatch without platform binding."""
+        """M52 compatibility shell; no tool dispatch without platform binding.
+
+        Enforcement, not a second opinion on the decision. Authority is
+        re-checked *here* rather than trusted from whatever allowed the request
+        earlier, because the gates that matter can change in between: an operator
+        can hit the kill switch, a run can be cancelled or fail. A decision is
+        evidence that the gates passed at one instant; it is not a capability
+        that survives the world moving underneath it.
+        """
+        blocked = _execution_time_block(store, run_id)
+        if blocked is not None:
+            rid_ = store.add_tool_request(
+                run_id, agent=agent.agent_id, tool=tool, risk=risk,
+                status="rejected", result=blocked,
+            )
+            store.event(run_id, "tool.blocked",
+                        {"agent": agent.agent_id, "tool": tool, "reason": blocked})
+            return {
+                "allowed": False,
+                "requires_approval": False,
+                "status": "rejected",
+                "request_id": rid_,
+                "reason": blocked,
+                "error_code": blocked,
+            }
         if not self.platform_runtime or not self.platform_token:
             rid_ = store.add_tool_request(
                 run_id,

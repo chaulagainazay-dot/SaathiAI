@@ -15,6 +15,8 @@ import sqlite3
 import time
 from pathlib import Path
 
+from saathi.runtime_paths import state_path
+
 APPROVAL_MODES = ("auto", "semi", "manual")
 
 
@@ -63,7 +65,7 @@ def build_plan(scene_package: dict, *, render_plan: dict | None = None, script: 
 # ── settings (approval mode) + production run log ─────────────────────────────
 class ProductionStore:
     def __init__(self, db_path: str | None = None):
-        self.db_path = Path(db_path) if db_path else (Path.home() / ".saathi" / "production_automation.db")
+        self.db_path = Path(db_path) if db_path else state_path("production_automation.db")
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         with self._conn() as c:
             c.execute("CREATE TABLE IF NOT EXISTS setting(key TEXT PRIMARY KEY, value TEXT)")

@@ -2,14 +2,14 @@
   "schema": "m77.voice_browser_cert.v2",
   "provenance": {
     "schema": "saathi.cert_provenance.v1",
-    "capturedAt": "2026-08-16T14:34:06.030Z",
-    "repoSha": "8b645e3cec97547fdae672c57626483696a4d39a",
-    "repoBranch": "integration/saathios-trunk-v3",
-    "repoDirty": false,
+    "capturedAt": "2026-08-19T14:22:56.904Z",
+    "repoSha": "0b8a13df720bbcb70fe1ad89cfb4cfade8517e55",
+    "repoBranch": "validation/r2-1-real-microphone-owner",
+    "repoDirty": true,
     "worktreePath": "/Users/macbookpro/SaathiAI-trunk-v3",
     "repository": "SaathiAI-trunk-v3",
-    "frontendSha": "8b645e3cec97547fdae672c57626483696a4d39a",
-    "backendSha": "8b645e3cec97547fdae672c57626483696a4d39a",
+    "frontendSha": "0b8a13df720bbcb70fe1ad89cfb4cfade8517e55",
+    "backendSha": "0b8a13df720bbcb70fe1ad89cfb4cfade8517e55",
     "frontendOrigin": "http://127.0.0.1:3000",
     "backendOrigin": "http://127.0.0.1:8765",
     "observedApiOrigins": [],
@@ -18,7 +18,7 @@
     "harnessSha": "8b645e3cec97547fdae672c57626483696a4d39a",
     "harnessVersion": "saathi.cert_provenance.v1"
   },
-  "capturedAt": "2026-08-16T14:33:02.577Z",
+  "capturedAt": "2026-08-19T14:21:56.465Z",
   "mode": "production-build-loopback",
   "hardGates": {
     "api_port_available": {
@@ -115,7 +115,7 @@
     },
     "browser_cancel_acknowledged": {
       "ok": true,
-      "detail": "54ms"
+      "detail": "49ms"
     },
     "desktop_no_overlay": {
       "ok": true,
@@ -254,7 +254,7 @@
     "screenshots/m77_ielts_mobile.png"
   ],
   "timings": {
-    "browserCancelAcknowledgedMs": 54
+    "browserCancelAcknowledgedMs": 49
   },
   "verdict": "PASS",
   "generatedAudioRetained": false,

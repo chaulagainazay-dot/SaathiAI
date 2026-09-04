@@ -42,6 +42,23 @@ export function frameZcr(frame) {
  * @param {Partial<import('./vad-contract.js').VadConfig> & { bargeInMode?: boolean }} [opts]
  * @returns {import('./vad-contract.js').VoiceActivityDetector}
  */
+/**
+ * ZCR bounds for a speech-like frame. Below the floor is a DC-ish or silent
+ * frame; above the ceiling is broadband noise rather than voice.
+ *
+ * Exported because the diagnostics calibration surface must evaluate frames
+ * with exactly this rule. A copied formula would let calibration and the live
+ * VAD drift apart, and then calibration would be measuring something the
+ * pipeline does not use.
+ */
+export const SPEECH_ZCR_MIN = 0.01;
+export const SPEECH_ZCR_MAX = 0.45;
+
+/** Enough energy, and ZCR neither pathologically high (pure noise) nor zero. */
+export function isSpeechLikeFrame(rms, zcr, threshold) {
+  return rms >= threshold && zcr > SPEECH_ZCR_MIN && zcr < SPEECH_ZCR_MAX;
+}
+
 export function createEnergyVad(opts = {}) {
   let cfg = { ...DEFAULT_VAD_CONFIG, ...opts };
   let state = "idle";
@@ -119,8 +136,7 @@ export function createEnergyVad(opts = {}) {
       lastRms = rms;
       lastZcr = zcr;
       const thr = threshold();
-      // Speech-like: enough energy; ZCR not pathologically high (pure noise) or zero
-      const speechLike = rms >= thr && zcr > 0.01 && zcr < 0.45;
+      const speechLike = isSpeechLikeFrame(rms, zcr, thr);
 
       if (!speechActive) {
         if (speechLike) {

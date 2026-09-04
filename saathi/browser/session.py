@@ -15,6 +15,8 @@ import time
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
+from saathi.runtime_paths import state_path
+
 
 @dataclass
 class SessionState:
@@ -39,7 +41,7 @@ class SessionManager:
     """Named, disk-backed browser sessions."""
 
     def __init__(self, root: str | Path | None = None):
-        self.root = Path(root) if root else (Path.home() / ".saathi" / "browser_sessions")
+        self.root = Path(root) if root else state_path("browser_sessions")
 
     def _path(self, name: str) -> Path:
         safe = "".join(c for c in name if c.isalnum() or c in "-_.")

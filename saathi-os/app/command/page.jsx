@@ -28,6 +28,18 @@ import {
 } from "@/lib/command-motion";
 import { LoadingState, ErrorState, EmptyState, StatusBadge, Button } from "@/components/ui";
 import { useVoiceSession } from "@/components/voice/VoiceSessionProvider";
+import { useCommandCoreSnapshot } from "@/lib/useCommandCoreSnapshot";
+import { operationalStatus, presencePresentation } from "@/lib/command-core-status";
+import { useRunInContext } from "@/lib/useRunInContext";
+import { commandConversationId } from "@/lib/command-conversation";
+import { useAgentOrchestration } from "@/lib/useAgentOrchestration";
+import WhoIsWorking from "@/components/command/WhoIsWorking";
+import WhatNeedsYou from "@/components/command/WhatNeedsYou";
+import WhatIveBeenDoing from "@/components/command/WhatIveBeenDoing";
+import AuthorityCentre from "@/components/command/AuthorityCentre";
+import { useCommandAuthorityCentre } from "@/lib/useCommandAuthorityCentre";
+import { useCommandHistory } from "@/lib/useCommandHistory";
+import { useCommandAttention } from "@/lib/useCommandAttention";
 
 function Pill({ children, tone = "default" }) {
   const cls =
@@ -41,6 +53,14 @@ function Pill({ children, tone = "default" }) {
             ? "dl-pill dl-pill-info"
             : "dl-pill";
   return <span className={cls}>{children}</span>;
+}
+
+/** Chip tone from a system-strip status. Unknown never reads as healthy. */
+function chipTone(status) {
+  if (status === "HEALTHY") return "ok";
+  if (status === "DEGRADED" || status === "WARNING") return "warn";
+  if (status === "BLOCKED") return "crit";
+  return "info";
 }
 
 function ProvenanceTag({ p }) {
@@ -516,6 +536,68 @@ export default function CommandCenterPage() {
     model?.evidence?.events,
   ]);
 
+  // ONE Command Core snapshot, above every early return so the hook order is
+  // unconditional. Presence, status and conversation all read this object; no
+  // component derives its own state machine. Guardian and execution are
+  // deliberately not supplied — this surface has no trading-path verdict, so
+  // BLOCKED and EXECUTING stay unreachable rather than faked. Microphone energy
+  // is null: the only real RMS lives behind a pull-only manager probe
+  // (docs/command-core/EVENT_PROVENANCE.md), and a synthesised waveform is not
+  // permitted.
+  // Identity of THIS central interaction. Correlation only — it authorises
+  // nothing and is never sent as a credential. Runs started from the centre
+  // carry it as conversation_id, which is how the agent runtime already
+  // correlates work (see components/chat/ChatWorkspace).
+  const [conversationId, setConversationId] = useState("");
+  useEffect(() => { setConversationId(commandConversationId()); }, []);
+
+  // The run the centre is responsible for, and only that run's real events.
+  // Background runs elsewhere in SaathiOS never reach this snapshot.
+  const { runId: contextRunId, runEvents } = useRunInContext({ conversationId });
+
+  // Phase 6: the orchestration surface around the conversation. It observes
+  // background work too, but the centre above still follows only the
+  // contextual run — Phase 5's contract is untouched.
+  const orchestration = useAgentOrchestration({ conversationId, contextRunId, contextEvents: runEvents });
+
+  const coreMissions = model?.missions?.items || [];
+  const coreSnapshot = useCommandCoreSnapshot({
+    voiceSession: voiceSession?.session,
+    missions: coreMissions,
+    system,
+    runEvents,
+    runId: contextRunId,
+    microphoneEnergy: null,
+  });
+  const corePresence = useMemo(
+    () => presencePresentation(coreSnapshot, { reducedMotion }),
+    [coreSnapshot, reducedMotion]
+  );
+  const coreStatus = useMemo(() => operationalStatus(coreSnapshot), [coreSnapshot]);
+
+  // Phase 7: unresolved attention only. It reuses the run records Phase 6 already
+  // fetched and the Phase 5 snapshot that already decided whether the system is
+  // degraded, so it costs no request, no subscription and no timer.
+  const attention = useCommandAttention({
+    runs: orchestration.runs,
+    conversationId,
+    snapshot: coreSnapshot,
+  });
+
+  // Phase 8B: terminal truth. Built from the same durable run records -- which
+  // carry state, updated_at and terminal_reason -- never from rows the other two
+  // surfaces retained, so history reflects what happened rather than what was
+  // recently on screen.
+  // Phase 9: history comes from the terminal-history contract, not the generic
+  // run-list window -- so real records are no longer crowded out by certification
+  // fixtures, and every row carries verification rather than only the open run.
+  const history = useCommandHistory({ conversationId });
+
+  // Phase 10: read-only authority truth. Runs held by an approval decision or
+  // stopped by the system, with their approvals batched -- observation only,
+  // no control that could grant, clear or resolve any of it.
+  const authority = useCommandAuthorityCentre({ conversationId });
+
   if (loading && !model) {
     return (
       <div className="dl-root hc-root" data-testid="command-loading" aria-busy="true">
@@ -595,8 +677,17 @@ export default function CommandCenterPage() {
             RISK {system?.risk?.value || "—"}
           </Pill>
           <Pill tone={system?.voice?.status === "HEALTHY" ? "info" : "warn"}>VOICE {voice}</Pill>
-          <Pill>MODELS {system?.models?.value || "—"}</Pill>
-          <Pill tone="ok">GW {system?.gateway?.value || "EG"}</Pill>
+          {/* Scalar strings only. `models.value` used to be the raw backend
+              array, which React cannot render as a child. */}
+          <Pill tone={chipTone(system?.models?.status)} title={system?.models?.reason}>
+            MODELS {system?.models?.value || "—"}
+          </Pill>
+          <Pill tone={chipTone(system?.infrastructure?.status)} title={system?.infrastructure?.reason}>
+            INFRA {system?.infrastructure?.value || "—"}
+          </Pill>
+          <Pill tone={chipTone(system?.gateway?.status)} title={system?.gateway?.reason}>
+            GW {system?.gateway?.value || "—"}
+          </Pill>
         </div>
         <div className="dl-top-actions">
           <StatusBadge status="info" label={`VOICE ${voice}`} />
@@ -678,10 +769,13 @@ export default function CommandCenterPage() {
             <div
               className="dl-orb"
               data-state={voice}
+              data-core-state={corePresence.state}
+              data-degraded={corePresence.degraded ? "1" : "0"}
+              data-supervising={corePresence.supervising ? "1" : "0"}
               data-reduced={reducedMotion ? "1" : "0"}
-              data-loop={voiceMeta.loop && !reducedMotion ? "1" : "0"}
+              data-loop={corePresence.animate && voiceMeta.loop ? "1" : "0"}
               role="img"
-              aria-label={`Voice session ${voiceMeta.label}`}
+              aria-label={corePresence.label}
               data-testid="saathi-orb"
             />
             <div
@@ -692,6 +786,17 @@ export default function CommandCenterPage() {
             >
               {voiceMeta.label.toUpperCase()}
             </div>
+            {coreStatus ? (
+              <div
+                className="hc-core-status"
+                data-tone={coreStatus.tone}
+                data-testid="core-operational-status"
+                role="status"
+                aria-live={coreStatus.live ? "polite" : "off"}
+              >
+                {coreStatus.text}
+              </div>
+            ) : null}
             <div className="dl-yeti" data-testid="yeti-state">
               Mr. Yeti · {yeti}
             </div>
@@ -721,6 +826,14 @@ export default function CommandCenterPage() {
             </button>
           </div>
         </section>
+
+        <AuthorityCentre model={authority} />
+
+        <WhatNeedsYou model={attention} />
+
+        <WhoIsWorking model={orchestration} />
+
+        <WhatIveBeenDoing model={history} />
 
         <section
           className={`dl-panel dl-area-sys ${focus === "risk" ? "dl-focus" : ""} ${riskFlash ? "hc-risk-flash" : ""}`}

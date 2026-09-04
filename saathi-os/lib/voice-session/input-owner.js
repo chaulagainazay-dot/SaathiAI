@@ -166,19 +166,50 @@ export function getRecognitionCtor(win = typeof window !== "undefined" ? window 
 }
 
 /**
- * Open mic under a claim. Stops tracks on claim release.
- */
-/**
- * Default constraints enable browser AEC/NS when available (echo control).
+ * The microphone capture contract for voice input.
+ *
+ * These are *requests*. A browser honours them at its discretion and reports
+ * what it actually applied through the track settings — so this improves the
+ * odds that assistant playback is attenuated in the captured signal, and it
+ * guarantees nothing about echo. Acoustic barge-in still depends on the
+ * echo-window logic in the VAD path, not on these flags.
  */
 export const DEFAULT_MIC_CONSTRAINTS = Object.freeze({
-  audio: {
+  audio: Object.freeze({
     echoCancellation: true,
     noiseSuppression: true,
     autoGainControl: true,
-  },
+  }),
 });
 
+/**
+ * Resolve a caller's constraints against the contract.
+ *
+ * A bare `{ audio: true }` is the failure mode this exists to stop: it is easy
+ * to write, it looks harmless, and it silently discards the structured default
+ * — the browser then picks its own processing and the capture arrives with
+ * echo cancellation off. So `audio: true` resolves to the structured default,
+ * and an object merges over it, which keeps a deliberate per-flag override
+ * possible while making an accidental blanket one impossible.
+ *
+ * @param {MediaStreamConstraints|undefined|null} requested
+ * @returns {MediaStreamConstraints}
+ */
+export function resolveMicConstraints(requested) {
+  if (!requested) return DEFAULT_MIC_CONSTRAINTS;
+  const { audio, ...rest } = requested;
+  if (audio === false) return requested;
+  const merged =
+    audio && typeof audio === "object"
+      ? { ...DEFAULT_MIC_CONSTRAINTS.audio, ...audio }
+      : { ...DEFAULT_MIC_CONSTRAINTS.audio };
+  return { ...rest, audio: merged };
+}
+
+/**
+ * Open the mic under a claim. Tracks stop when the claim is released.
+ * Constraints resolve against DEFAULT_MIC_CONSTRAINTS.
+ */
 export async function openMicrophoneForClaim(claim, constraints = DEFAULT_MIC_CONSTRAINTS) {
   if (!claim?.isActive?.()) {
     throw new Error("Input claim is not active");
@@ -186,7 +217,9 @@ export async function openMicrophoneForClaim(claim, constraints = DEFAULT_MIC_CO
   if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) {
     throw new Error("Microphone API unavailable");
   }
-  const stream = await navigator.mediaDevices.getUserMedia(constraints);
+  const stream = await navigator.mediaDevices.getUserMedia(
+    resolveMicConstraints(constraints)
+  );
   if (!claim.isActive()) {
     stream.getTracks().forEach((t) => t.stop());
     throw new Error("Input claim lost during getUserMedia");

@@ -80,7 +80,24 @@ describe("voice providers clean up on route change", () => {
   });
 
   it("hardReset actually stops recognition and releases every media track", () => {
-    assert.ok(runtimeProvider.includes("recognitionRef.current?.stop?.()"));
+    // Recognition ownership moved to VoiceSessionManager's streaming pipeline,
+    // so the provider stops capture by ending input rather than by holding a
+    // recognizer of its own. The pipeline teardown is covered by
+    // lib/voice-session/input-pipeline-lifecycle.test.js.
+    assert.ok(
+      !/new\s+Ctor\(\)|new\s+Recognition\(/.test(runtimeProvider),
+      "the provider must not construct a second SpeechRecognition"
+    );
+    assert.ok(
+      runtimeProvider.includes('voiceSessionRef.current?.endInput?.("USER_CANCEL")'),
+      "cleanup must end input, which is what stops the owned recognizer"
+    );
+    assert.ok(
+      /const hardReset = useCallback\(\(\) => \{\s*\n\s*cleanupLocal\(\);/.test(
+        runtimeProvider
+      ),
+      "hardReset must run the same cleanup path"
+    );
     assert.ok(
       runtimeProvider.includes(
         "mediaStreamRef.current.getTracks().forEach((track) => track.stop())"

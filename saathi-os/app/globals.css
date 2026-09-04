@@ -550,6 +550,43 @@ html, body {
   --shell-topbar-h: 64px;
   --shell-statusbar-h: 36px;
   --shell-copilot-w: 360px;
+
+  /* Space the fixed Live voice dock occupies at the bottom-left, so a page
+     whose last element is interactive can scroll it clear.
+
+     --voice-dock-offset mirrors the dock's own bottom anchor, breakpoint for
+     breakpoint (see VoiceRuntimeDock). It re-anchors well above the viewport
+     bottom on narrow layouts — 328px at phone widths — so a clearance derived
+     only from the desktop anchor leaves the control under the dock exactly
+     where the layout is tightest. Adding the dock's maximum height and a
+     focus-ring margin gives the scroll room the page needs. */
+  --voice-dock-offset: calc(
+    var(--shell-statusbar-h, 36px) + 12px + env(safe-area-inset-bottom, 0px)
+  );
+  --voice-dock-clearance: calc(
+    var(--voice-dock-offset) + min(46vh, 420px) + 24px
+  );
+}
+
+/* Kept in lockstep with the dock's own media queries. */
+@media (max-width: 1023px) {
+  :root {
+    --voice-dock-offset: calc(
+      var(--shell-statusbar-h, 36px) + 12px + 212px + env(safe-area-inset-bottom, 0px)
+    );
+  }
+}
+@media (max-width: 820px) {
+  :root {
+    --voice-dock-offset: calc(
+      var(--shell-statusbar-h, 36px) + 12px + 246px + env(safe-area-inset-bottom, 0px)
+    );
+  }
+}
+@media (max-width: 699px) {
+  :root {
+    --voice-dock-offset: calc(328px + env(safe-area-inset-bottom, 0px));
+  }
 }
 
 /* Desktop chrome is fixed/sticky; main content offsets via padding */
@@ -855,6 +892,10 @@ html, body {
 
 /* Canonical page helpers */
 .shell-page { max-width: 1080px; margin: 0 auto; }
+/* Opt-in for pages whose final interactive control would otherwise sit beneath
+   the fixed Live voice dock. Padding rather than margin or a transform, so the
+   control stays in document flow and remains reachable by keyboard. */
+.shell-page--dock-clearance { padding-bottom: var(--voice-dock-clearance); }
 .shell-page-header { margin-bottom: 20px; }
 .shell-page-grid {
   display: grid;
@@ -1644,10 +1685,20 @@ html, body {
 }
 
 @media (max-width: 820px) {
+  /* Phase 8A. Fixed, 340px of a 390px viewport and z-index 48, this dock
+     floated over the Command Core with nothing reserving its space. At narrow
+     width it joins the normal flow below the content instead, so it can no
+     longer cover anything.
+
+     This is a positioning change only. It is the same element, the same
+     component and the same voice-runtime surface -- no second dock, no second
+     control, and no change to microphone ownership. */
   .voice-output-dock {
-    right: 10px;
-    bottom: 76px;
-    width: min(340px, calc(100vw - 20px));
+    position: static;
+    right: auto;
+    bottom: auto;
+    width: auto;
+    margin: 12px 16px calc(96px + env(safe-area-inset-bottom, 0px));
   }
 }
 @media (max-width: 480px) {

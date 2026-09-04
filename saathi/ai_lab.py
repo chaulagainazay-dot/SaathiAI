@@ -12,7 +12,8 @@ Saathi itself) plugs into, instead of prompts living untracked in code.
     reg.record_eval("studio.metadata", N, score=0.82, latency_ms=2400, cost=0.003, failures=12)
     reg.rollback("studio.metadata", 11)                        # redeploy an older version
 
-Native: no external service. SQLite at ~/.saathi/ai_lab.db. Feeds /os and the
+Native: no external service. SQLite at <state root>/ai_lab.db (default
+~/.saathi/ai_lab.db; see saathi.runtime_paths). Feeds /os and the
 Executive dashboard. Next Production Intelligence services (Evaluation Center,
 Dataset Manager, Workflow Editor) build on this substrate.
 """
@@ -22,6 +23,8 @@ import sqlite3
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
+
+from saathi.runtime_paths import state_path
 
 
 @dataclass
@@ -47,7 +50,7 @@ class PromptVersion:
 
 class PromptRegistry:
     def __init__(self, db_path: str | None = None):
-        self.db_path = Path(db_path) if db_path else (Path.home() / ".saathi" / "ai_lab.db")
+        self.db_path = Path(db_path) if db_path else state_path("ai_lab.db")
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self._init()
 

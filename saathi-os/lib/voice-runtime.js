@@ -38,6 +38,9 @@ export const INITIAL_VOICE_RUNTIME = Object.freeze({
   recording: false,
   listening: false,
   interrupted: false,
+  // Backend sessions whose terminal request has not yet succeeded. Non-empty
+  // means "this client could not confirm cleanup", never "cleanup is done".
+  pendingCleanup: [],
 });
 
 function authHeaders(token, extra = {}) {
@@ -163,10 +166,15 @@ export const voiceRuntimeActions = {
     );
     return parseJson(response);
   },
-  async finish(token, sessionId, signal) {
+  /**
+   * Terminal cleanup. `keepalive` lets the request outlive the page during a
+   * hard navigation or a tab close — sendBeacon cannot carry the platform
+   * token header, so keepalive fetch is the only authenticated option.
+   */
+  async finish(token, sessionId, { signal, keepalive = false } = {}) {
     const response = await fetch(
       `${API_BASE}/api/v1/platform/voice/runtime/sessions/${encodeURIComponent(sessionId)}/finish`,
-      { method: "POST", headers: authHeaders(token), signal }
+      { method: "POST", headers: authHeaders(token), signal, keepalive }
     );
     return parseJson(response);
   },
@@ -195,6 +203,20 @@ export function voiceRuntimeReducer(current, action) {
   switch (action.type) {
     case "RESET":
       return { ...INITIAL_VOICE_RUNTIME };
+    // The backend session ended, but the surface did not. Session-scoped state
+    // is cleared so the next talk opens a fresh session; the history list is
+    // kept, because the conversation that just happened still happened.
+    case "SESSION_CLOSED":
+      return {
+        ...INITIAL_VOICE_RUNTIME,
+        history: current.history,
+        message: INITIAL_VOICE_RUNTIME.message,
+      };
+    case "CLEANUP_PENDING":
+      return {
+        ...current,
+        pendingCleanup: Array.isArray(action.pending) ? action.pending : [],
+      };
     case "SESSION": {
       const session = normalizeRuntimeSession(action.session);
       if (!session) {
@@ -276,6 +298,45 @@ export function micButtonLabel(runtime) {
   if (runtime.speaking) return "Interrupt assistant";
   if (runtime.listening) return "Listening";
   return "Start talking";
+}
+
+/**
+ * The stage of one voice turn, as the runtime can actually prove it.
+ *
+ * Deliberately distinguishes "listen" (capture is open, nothing heard) from
+ * "hear" (a transcript fragment exists). The dock reports the difference, so a
+ * live capture that is producing no speech can never read as progress.
+ */
+export const VOICE_TURN_STAGES = Object.freeze([
+  "idle",
+  "listen",
+  "hear",
+  "think",
+  "speak",
+  "fail",
+]);
+
+export function voiceTurnStage(runtime) {
+  if (!runtime) return "idle";
+  if (runtime.error || runtime.state === "FAILED") return "fail";
+  if (runtime.speaking) return "speak";
+  if (runtime.state === "THINKING") return "think";
+  if (runtime.recording && String(runtime.partialUser || "").trim()) return "hear";
+  if (runtime.recording || runtime.listening) return "listen";
+  return "idle";
+}
+
+export function voiceStageLabel(stage) {
+  return (
+    {
+      idle: "Idle",
+      listen: "Listening",
+      hear: "Hearing you",
+      think: "Thinking",
+      speak: "Speaking",
+      fail: "Failed",
+    }[stage] || "Idle"
+  );
 }
 
 export function createVoiceRuntimeClient() {

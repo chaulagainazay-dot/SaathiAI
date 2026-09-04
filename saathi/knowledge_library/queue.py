@@ -10,12 +10,14 @@ import time
 import uuid
 from pathlib import Path
 
+from saathi.runtime_paths import state_path
+
 STATUSES = ("pending", "importing", "imported", "skipped")
 
 
 class QueueStore:
     def __init__(self, db_path: str | None = None):
-        self.db_path = Path(db_path) if db_path else (Path.home() / ".saathi" / "reading_queue.db")
+        self.db_path = Path(db_path) if db_path else state_path("reading_queue.db")
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         with self._conn() as c:
             c.execute("CREATE TABLE IF NOT EXISTS queue(id TEXT PRIMARY KEY, title TEXT, url TEXT, "

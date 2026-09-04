@@ -13,10 +13,13 @@ import json
 import os
 import secrets
 import sqlite3
+import threading
 import time
 import uuid
 from pathlib import Path
 from typing import Callable
+
+from saathi.runtime_paths import state_path
 
 
 # ── schema ───────────────────────────────────────────────────────────────────
@@ -154,6 +157,17 @@ CREATE TABLE IF NOT EXISTS audit_log (
     session_id  TEXT
 );
 
+-- D14: first-owner bootstrap marker. One row, id=1, written inside the same
+-- transaction that creates the owner and its credential. Its presence is what
+-- makes bootstrap permanently unavailable, including across restarts -- a
+-- process-global flag would re-arm on every boot.
+CREATE TABLE IF NOT EXISTS bootstrap_marker (
+    id           INTEGER PRIMARY KEY CHECK (id = 1),
+    completed_at REAL NOT NULL,
+    owner_id     TEXT NOT NULL,
+    method       TEXT NOT NULL
+);
+
 -- Multi-user foundation (stubs)
 CREATE TABLE IF NOT EXISTS organizations (
     id          TEXT PRIMARY KEY,
@@ -188,6 +202,38 @@ CREATE TABLE IF NOT EXISTS roles (
     created_at  REAL NOT NULL
 );
 
+-- Phase 18: durable authority delegation.
+--
+-- Answers, for work that outlives the request that started it: who authorized
+-- it, what exactly they delegated, to which run or job, for how long, and up to
+-- what authority. It lives here because this store already owns identity and
+-- RBAC, so the origin user and their current permissions are checked against
+-- the same database that issued them.
+--
+-- Deliberately NOT here: any session token, cookie or header. A session is
+-- authentication material and re-presenting one later is impersonation, not
+-- delegation. This record carries identity and scope, never a reusable secret.
+--
+-- Distinct from `delegation` in the agent-runtime store, which is agent-to-agent
+-- operational hand-off (parent_agent -> child_agent). Same word, different
+-- thing: that one moves work between agents, this one carries a *user's*
+-- authority across time. Conflating them is how an agent would appear to hold
+-- authority a user never granted.
+CREATE TABLE IF NOT EXISTS authority_delegation (
+    delegation_id     TEXT PRIMARY KEY,
+    user_id           TEXT NOT NULL,
+    scope_kind        TEXT NOT NULL,
+    scope_ref         TEXT NOT NULL,
+    action            TEXT NOT NULL,
+    authority_ceiling TEXT NOT NULL,
+    created_at        REAL NOT NULL,
+    expires_at        REAL NOT NULL,
+    max_uses          INTEGER NOT NULL DEFAULT 1,
+    used              INTEGER NOT NULL DEFAULT 0,
+    revoked_at        REAL,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
 CREATE TABLE IF NOT EXISTS user_roles (
     user_id     TEXT NOT NULL,
     role_id     TEXT NOT NULL,
@@ -209,6 +255,9 @@ VALUES
 """
 
 _INDEXES = """
+CREATE INDEX IF NOT EXISTS idx_deleg_user ON authority_delegation(user_id);
+CREATE INDEX IF NOT EXISTS idx_deleg_scope ON authority_delegation(scope_kind, scope_ref);
+
 CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id, last_seen DESC);
 CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(token_hash);
 CREATE INDEX IF NOT EXISTS idx_sessions_expires ON sessions(expires_at);
@@ -242,7 +291,7 @@ class SecurityStore:
             self.path = Path(db_path)
         else:
             override = os.environ.get(self._ENV_DB_PATH, "").strip()
-            self.path = Path(override) if override else (Path.home() / ".saathi" / "security.db")
+            self.path = Path(override) if override else state_path("security.db")
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self._now = now
         self.db = sqlite3.connect(str(self.path), check_same_thread=False)
@@ -254,10 +303,22 @@ class SecurityStore:
 
     # ── users ────────────────────────────────────────────────────────────────
     def get_or_create_owner(self, email: str = "", name: str = "") -> str:
-        """Return the owner user_id. Creates if absent."""
+        """Return the owner user_id, creating it only on a bootstrapped system.
+
+        D14: creating an owner is bootstrap's job and nobody else's. This method
+        used to manufacture one on demand, and every caller of it -- including
+        ``has_passkey``, reached by the public unlock screen -- therefore wrote a
+        users row into an uninitialised store. That row is itself the evidence
+        ``auth_state`` reads to detect planting, so a fresh install answered one
+        anonymous GET and then classified itself CONTAMINATED_UNINITIALIZED,
+        refusing the bootstrap it had never had. The creating branch is now
+        conditional on the bootstrap marker; before that, callers get "".
+        """
         row = self.db.execute("SELECT id FROM users WHERE status='active' LIMIT 1").fetchone()
         if row:
             return row["id"]
+        if not self.bootstrap_completed():
+            return ""
         uid = uuid.uuid4().hex
         now = self._now()
         self.db.execute(
@@ -271,6 +332,41 @@ class SecurityStore:
         )
         self.db.commit()
         return uid
+
+    def owner_id(self) -> str | None:
+        """The owner user_id, or None. Never creates.
+
+        ``get_or_create_owner`` is unusable for an authentication decision: it
+        manufactures the very identity the caller is asking about, which is how
+        an unauthenticated caller came to own a freshly installed system.
+        """
+        row = self.db.execute(
+            "SELECT id FROM users WHERE status='active' ORDER BY created_at LIMIT 1"
+        ).fetchone()
+        return row["id"] if row else None
+
+    def bootstrap_completed(self) -> dict | None:
+        row = self.db.execute("SELECT * FROM bootstrap_marker WHERE id=1").fetchone()
+        return dict(row) if row else None
+
+    def credential_census(self) -> dict[str, int]:
+        """Count every durable authentication artefact this store holds.
+
+        Used to tell an untouched installation apart from one where something
+        has already planted a credential. Counting is read-only and creates
+        nothing.
+        """
+        def n(sql: str) -> int:
+            return int(self.db.execute(sql).fetchone()[0])
+
+        return {
+            "users":     n("SELECT COUNT(*) FROM users"),
+            "passwords": n("SELECT COUNT(*) FROM passwords"),
+            "sessions":  n("SELECT COUNT(*) FROM sessions"),
+            "api_tokens": n("SELECT COUNT(*) FROM api_tokens"),
+            "passkeys":  n("SELECT COUNT(*) FROM passkeys"),
+            "user_roles": n("SELECT COUNT(*) FROM user_roles"),
+        }
 
     def get_user(self, user_id: str) -> dict | None:
         row = self.db.execute("SELECT * FROM users WHERE id=?", (user_id,)).fetchone()
@@ -291,6 +387,30 @@ class SecurityStore:
             (user_id,),
         ).fetchone()
         return dict(row) if row else None
+
+    def has_password(self, user_id: str) -> bool:
+        """Whether a stored password credential exists for ``user_id``.
+
+        The presence question and the credential itself are different facts.
+        ``latest_password`` answers the second and hands the caller a hash, so
+        a surface that only needs the first had to fetch a secret to discard
+        it. This answers the first alone: the row is counted in SQL and the
+        hash never leaves the database.
+        """
+        row = self.db.execute(
+            "SELECT 1 FROM passwords WHERE user_id=? AND LENGTH(hash) > 0 LIMIT 1",
+            (user_id,),
+        ).fetchone()
+        return row is not None
+
+    def owner_has_password(self) -> bool:
+        """Whether the active canonical owner has a stored password credential.
+
+        Returns False when there is no owner at all, which is what an
+        uninitialised installation looks like from here. Creates nothing.
+        """
+        owner = self.owner_id()
+        return bool(owner) and self.has_password(owner)
 
     def password_history(self, user_id: str, limit: int = 10) -> list[dict]:
         rows = self.db.execute(
@@ -561,6 +681,160 @@ class SecurityStore:
         return out
 
     # ── audit log ────────────────────────────────────────────────────────────
+    # ── authorization ─────────────────────────────────────────────────────
+
+    def permissions_for(self, user_id: str) -> set[str]:
+        """Every permission this user holds, unioned across their roles.
+
+        The roles and their permissions have existed since the security store
+        was introduced; nothing consulted them. Returns an empty set for an
+        unknown user, so an unrecognised caller is authorised for nothing.
+        """
+        if not user_id:
+            return set()
+        rows = self.db.execute(
+            "SELECT r.permissions FROM user_roles ur "
+            "JOIN roles r ON r.id = ur.role_id WHERE ur.user_id = ?",
+            (user_id,),
+        ).fetchall()
+        out: set[str] = set()
+        for row in rows:
+            try:
+                out.update(json.loads(row["permissions"] or "[]"))
+            except (ValueError, TypeError):
+                continue
+        return out
+
+    def has_permission(self, user_id: str, permission: str) -> bool:
+        """Whether the user may do `permission`. ``*`` grants everything.
+
+        Fails closed: no user, no roles, or an unparsable permission list all
+        answer no.
+        """
+        if not user_id or not permission:
+            return False
+        held = self.permissions_for(user_id)
+        return "*" in held or permission in held
+
+    # ── authority delegation (Phase 18) ──────────────────────────────────────
+    #: Serialises the delegation mutators. The store shares one sqlite
+    #: connection across threads (`check_same_thread=False`), which is fine for
+    #: the request-per-thread paths that reach it one at a time, but delegated
+    #: workers race for the same one-shot record by design. Without this, two
+    #: workers issuing UPDATEs on the same connection misuse the driver rather
+    #: than contending on the row. Scoped to these methods rather than the whole
+    #: store: widening it is a separate change with its own evidence.
+    _delegation_lock = threading.RLock()
+
+    def delegation_lock(self):
+        """The lock guarding a delegation's validate-then-claim sequence.
+
+        Exposed because the invariant spans more than one store call. Locking
+        only the mutators was not enough: the reads that validate a delegation
+        run on the same shared connection, so a worker could read a live record
+        while another was claiming it and both would proceed. Callers hold this
+        across the whole read-check-claim sequence.
+
+        Reentrant, so the mutators can take it again inside a held section.
+        """
+        return self._delegation_lock
+
+    def create_delegation(self, *, user_id: str, scope_kind: str, scope_ref: str,
+                          action: str, authority_ceiling: str, ttl_sec: float,
+                          max_uses: int = 1) -> str:
+        """Record that `user_id` delegated one bounded action to deferred work.
+
+        The caller supplies the user id from server-resolved identity; this
+        method neither reads a request nor accepts a claim. Nothing stored here
+        is reusable as a credential.
+        """
+        import uuid
+
+        delegation_id = f"dlg_{uuid.uuid4().hex[:24]}"
+        now = self._now()
+        self.db.execute(
+            "INSERT INTO authority_delegation (delegation_id, user_id, scope_kind,"
+            " scope_ref, action, authority_ceiling, created_at, expires_at,"
+            " max_uses, used, revoked_at) VALUES (?,?,?,?,?,?,?,?,?,0,NULL)",
+            (delegation_id, user_id, scope_kind, scope_ref, action,
+             authority_ceiling, now, now + float(ttl_sec), int(max_uses)),
+        )
+        self.db.commit()
+        return delegation_id
+
+    def ensure_scheduled_delegation(self, *, delegation_id: str, user_id: str,
+                                    scope_kind: str, scope_ref: str, action: str,
+                                    authority_ceiling: str, expires_at: float) -> str:
+        """Create one delegation for a scheduled occurrence, at most once.
+
+        The id is supplied by the caller and derived from the occurrence itself,
+        so asking twice for the same scheduled run -- a scheduler restart inside
+        its catch-up window, a duplicate trigger, a second worker -- resolves to
+        the same row rather than a second grant. `INSERT OR IGNORE` makes the
+        second ask a no-op instead of a race.
+
+        Creating the row is not the claim. `consume_delegation` is, and it is
+        atomic, so exactly one caller proceeds however many ask.
+        """
+        self.db.execute(
+            "INSERT OR IGNORE INTO authority_delegation (delegation_id, user_id,"
+            " scope_kind, scope_ref, action, authority_ceiling, created_at,"
+            " expires_at, max_uses, used, revoked_at)"
+            " VALUES (?,?,?,?,?,?,?,?,1,0,NULL)",
+            (delegation_id, user_id, scope_kind, scope_ref, action,
+             authority_ceiling, self._now(), expires_at),
+        )
+        self.db.commit()
+        return delegation_id
+
+    def get_delegation(self, delegation_id: str) -> dict | None:
+        row = self.db.execute(
+            "SELECT * FROM authority_delegation WHERE delegation_id=?",
+            (delegation_id,),
+        ).fetchone()
+        return dict(row) if row else None
+
+    def consume_delegation(self, delegation_id: str) -> bool:
+        """Claim one use, atomically. True only for the caller that won it.
+
+        The guard lives in the UPDATE's WHERE clause rather than in a read
+        followed by a write, so two workers racing for the last use of a
+        one-shot delegation cannot both observe `used < max_uses` and both
+        proceed.
+        """
+        with self._delegation_lock:
+            cur = self.db.execute(
+                "UPDATE authority_delegation SET used = used + 1 "
+                "WHERE delegation_id = ? AND used < max_uses AND revoked_at IS NULL",
+                (delegation_id,),
+            )
+            self.db.commit()
+            return cur.rowcount == 1
+
+    def revoke_delegation(self, delegation_id: str) -> bool:
+        with self._delegation_lock:
+            cur = self.db.execute(
+                "UPDATE authority_delegation SET revoked_at = ? "
+                "WHERE delegation_id = ? AND revoked_at IS NULL",
+                (self._now(), delegation_id),
+            )
+            self.db.commit()
+            return cur.rowcount == 1
+
+    def revoke_delegations_for_scope(self, scope_kind: str, scope_ref: str) -> int:
+        """Revoke every live delegation bound to one run or job.
+
+        Cancelling the parent work is the natural revocation gesture: a
+        delegation exists to authorize *that* work, so it should not outlive it.
+        """
+        cur = self.db.execute(
+            "UPDATE authority_delegation SET revoked_at = ? "
+            "WHERE scope_kind = ? AND scope_ref = ? AND revoked_at IS NULL",
+            (self._now(), scope_kind, scope_ref),
+        )
+        self.db.commit()
+        return cur.rowcount
+
     def audit(self, event: str, *, ok: bool = True, user_id: str = "", ip: str = "",
               ua: str = "", detail: str = "", session_id: str = "") -> None:
         self.db.execute(
@@ -585,14 +859,26 @@ class SecurityStore:
 
     # ── migration from legacy JSON files ─────────────────────────────────────
     def migrate_from_legacy(self) -> dict:
-        """One-time migration from JSON files to SQLite. Idempotent."""
+        """One-time migration from JSON files to SQLite. Idempotent.
+
+        D14: refused before the system is bootstrapped. ``get_store()`` runs this
+        on first access in every process, so on an uninitialised install it ran
+        before anybody had authenticated -- creating an owner and importing
+        legacy sessions and passkeys into a store with no owner behind them.
+        That is credential planting performed by the server on its own behalf,
+        and it left a fresh install unable to bootstrap at all. A legacy upgrade
+        migrates on the first process that starts after its owner exists.
+        """
         migrated = {"sessions": 0, "passkeys": 0, "reset_tokens": 0, "audit": 0}
 
-        # Ensure owner exists
+        if not self.bootstrap_completed():
+            migrated["skipped"] = "NOT_INITIALIZED"
+            return migrated
+
         owner_id = self.get_or_create_owner()
 
         # Sessions
-        legacy_sessions = Path.home() / ".saathi" / "sessions.json"
+        legacy_sessions = state_path("sessions.json")
         if legacy_sessions.exists():
             try:
                 rows = json.loads(legacy_sessions.read_text())
@@ -618,7 +904,7 @@ class SecurityStore:
                 pass
 
         # Passkeys
-        legacy_passkeys = Path.home() / ".saathi" / "passkeys.json"
+        legacy_passkeys = state_path("passkeys.json")
         if legacy_passkeys.exists():
             try:
                 rows = json.loads(legacy_passkeys.read_text())
@@ -640,7 +926,7 @@ class SecurityStore:
                 pass
 
         # Reset tokens
-        legacy_reset = Path.home() / ".saathi" / "reset_tokens.json"
+        legacy_reset = state_path("reset_tokens.json")
         if legacy_reset.exists():
             try:
                 rows = json.loads(legacy_reset.read_text())
@@ -659,7 +945,7 @@ class SecurityStore:
                 pass
 
         # Audit log (line-delimited JSON)
-        legacy_audit = Path.home() / ".saathi" / "auth_audit.log"
+        legacy_audit = state_path("auth_audit.log")
         if legacy_audit.exists():
             try:
                 for line in legacy_audit.read_text().splitlines()[-1000:]:

@@ -316,7 +316,11 @@ class ToolExecutionRequest:
     call_id: str = field(default_factory=lambda: "tc_" + uuid.uuid4().hex[:16])
     idempotency_key: str = ""
     capability: str = ""
-    requested_by: str = "user:ajay"
+    #: Who asked for this execution. Empty means *nobody was recorded*, which
+    #: is a fact the approval check can act on. It defaulted to a real person's
+    #: identity, so an unattributed request silently became that person's and
+    #: was matched against their approvals.
+    requested_by: str = ""
     approval_reference: ToolApprovalReference | None = None
     deadline: float = 0.0
     parent_task_id: str = ""

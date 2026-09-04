@@ -16,6 +16,8 @@ import time
 import uuid
 from pathlib import Path
 
+from saathi.runtime_paths import state_path
+
 _COLUMNS = ["id", "slug", "name", "owner_director", "category", "description", "inputs",
             "outputs", "prompt_template", "examples", "tools", "evaluation",
             "related_directors", "trust", "version", "status", "created"]
@@ -25,7 +27,7 @@ STATUSES = ("draft", "active", "deprecated")
 
 class SkillStore:
     def __init__(self, db_path: str | None = None):
-        self.db_path = Path(db_path) if db_path else (Path.home() / ".saathi" / "skills_library.db")
+        self.db_path = Path(db_path) if db_path else state_path("skills_library.db")
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         with self._conn() as c:
             cols = ", ".join(f"{col} {'INTEGER' if col in ('trust', 'version') else 'REAL' if col == 'created' else 'TEXT'}"

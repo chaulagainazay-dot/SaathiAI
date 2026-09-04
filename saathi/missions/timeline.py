@@ -15,6 +15,8 @@ import time
 import uuid
 from pathlib import Path
 
+from saathi.runtime_paths import state_path
+
 # milestone kinds — the vocabulary of a business's history
 KINDS = ("created", "connected", "research", "meeting", "decision", "proposal",
          "launch", "publish", "milestone", "revenue", "learning", "note")
@@ -24,7 +26,7 @@ _COLUMNS = ["id", "mission_id", "timestamp", "kind", "title", "detail", "meta"]
 
 class TimelineStore:
     def __init__(self, db_path: str | None = None):
-        self.db_path = Path(db_path) if db_path else (Path.home() / ".saathi" / "mission_timeline.db")
+        self.db_path = Path(db_path) if db_path else state_path("mission_timeline.db")
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self._init()
 

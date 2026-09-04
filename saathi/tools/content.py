@@ -65,6 +65,11 @@ def post(platform: str, content: str, title: str = "") -> dict:
         "title": title,
         "instagram_caption": content if platform.lower() == "instagram" else "",
     }
+    # Phase 19B: guarded at the call, not at function entry. These return
+    # early when unconfigured and several fall back to local generation,
+    # so an entry guard would break paths that never reach a network.
+    from saathi.execution.egress import guard as _egress_guard
+    _egress_guard("n8n.social_post", operation="post")
     r = httpx.post(url, json=payload, timeout=60)
     r.raise_for_status()
     return {"status": "sent_to_n8n", "platform": platform,

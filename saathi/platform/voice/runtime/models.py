@@ -31,6 +31,13 @@ DEFAULT_SILENCE_TIMEOUT_MS = 900.0
 DEFAULT_MIN_SPEECH_MS = 150.0
 SESSION_TTL_SECONDS = 2 * 60 * 60
 
+# A session whose client stopped talking to us this long ago has been
+# abandoned: the tab was closed, the network dropped, or a hard navigation
+# tore the page down before its terminal request could complete. It is
+# reconciled to FINISHED rather than left counting against the per-user
+# budget. The row itself is kept — this is a state transition, not a delete.
+ABANDONED_SESSION_IDLE_SECONDS = 15 * 60
+
 _SAFE_MODE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.:-]{0,39}$")
 
 

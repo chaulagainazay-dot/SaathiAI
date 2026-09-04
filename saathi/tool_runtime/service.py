@@ -444,8 +444,22 @@ class ToolExecutionService:
         raw: dict
         try:
             adapter_invoked = True
+            # Phase 19: the adapter is the only place a governed tool may touch
+            # the outside world, so the egress grant is opened here and nowhere
+            # else. Opening it earlier would cover code that was never
+            # authorized; opening it in the adapter would let an adapter grant
+            # itself permission.
+            from saathi.execution.egress import EgressGrant, governed_egress
+
+            _grant = EgressGrant(
+                intent_id=getattr(request, "call_id", "") or "",
+                intent_digest=idemp_key or "",
+                actor=getattr(request, "requested_by", "") or "",
+                operation=manifest.tool_id,
+            )
             # Soft wall: adapters should check cancel/deadline; we also wrap timing
-            raw = adapter(dict(request.arguments or {}), ctx)
+            with governed_egress(_grant):
+                raw = adapter(dict(request.arguments or {}), ctx)
             if not isinstance(raw, dict):
                 raw = {"error": "adapter returned non-object", "valid": False}
         except ToolCancelledError:

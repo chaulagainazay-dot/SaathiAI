@@ -55,6 +55,11 @@ def _flux(beat: dict, path: Path) -> bool:
         except Exception:
             prompt = (f"Pixar-style friendly Mr. Yeti IELTS teacher, {beat['label']} scene: "
                       f"{beat['text']}. Warm classroom, soft lighting, no text.")
+        # Phase 19B: guarded at the call, not at function entry. These return
+        # early when unconfigured and several fall back to local generation,
+        # so an entry guard would break paths that never reach a network.
+        from saathi.execution.egress import guard as _egress_guard
+        _egress_guard("flux.image_generate", operation="_flux")
         r = httpx.post(url, headers={"Authorization": f"Bearer {key}"} if key else {},
                        json={"prompt": prompt, "width": W, "height": H}, timeout=120)
         if r.status_code == 200 and r.content:

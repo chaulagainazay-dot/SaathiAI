@@ -110,8 +110,11 @@ class PushToTalk:
             except Exception:
                 ver = {"verified": False, "similarity": 0}
             log(f"🗣  you [{stt['language']}]: {text}", "cyan")
-            reply = self.agent.respond(text, self.session,
-                                       speaker_verified=ver.get("verified", False))
+            # R2.1-S1: the voiceprint result is an observation only. It is
+            # carried as bounded metadata and grants no authority.
+            reply = self.agent.respond(
+                text, self.session,
+                speaker_match_observed=ver.get("verified", None))
             log(f"🤖 baadar: {reply}", "green")
             self.on_state("speaking")
             voice.speak(reply, stt["language"])

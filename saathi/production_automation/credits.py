@@ -14,6 +14,8 @@ import sqlite3
 import time
 from pathlib import Path
 
+from saathi.runtime_paths import state_path
+
 # seed providers: name, kind, daily, unit, cost/unit (USD), quality_tier(1 best), reset_hour, api_env
 _SEED_PROVIDERS = [
     ("google_flow", "video", 10, "clip", 0.0, 1, 0, "GOOGLE_FLOW_API_KEY"),
@@ -29,7 +31,7 @@ _COLS = ["name", "kind", "daily", "remaining", "unit", "cost", "quality_tier",
 
 class CreditManager:
     def __init__(self, db_path: str | None = None):
-        self.db_path = Path(db_path) if db_path else (Path.home() / ".saathi" / "provider_credits.db")
+        self.db_path = Path(db_path) if db_path else state_path("provider_credits.db")
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         with self._conn() as c:
             c.execute("CREATE TABLE IF NOT EXISTS provider(name TEXT PRIMARY KEY, kind TEXT, daily INTEGER, "

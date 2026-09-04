@@ -99,6 +99,11 @@ def _transcribe(audio_bytes: bytes, mime_type: str = "audio/webm") -> str:
         import base64
         import httpx
         b64 = base64.b64encode(audio_bytes).decode()
+        # Phase 19B: guarded at the call, not at function entry. These return
+        # early when unconfigured and several fall back to local generation,
+        # so an entry guard would break paths that never reach a network.
+        from saathi.execution.egress import guard as _egress_guard
+        _egress_guard("gemini.transcribe", operation="_transcribe")
         r = httpx.post(
             f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={api_key}",
             json={"contents": [{"parts": [

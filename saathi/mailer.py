@@ -1,7 +1,7 @@
 """Email adapter — SMTP-pluggable, inert until configured.
 
 Set SMTP_HOST/SMTP_PORT/SMTP_USER/SMTP_PASS/SMTP_FROM in .env to enable real
-sending. Until then send() logs the message to ~/.saathi/outbox.log and returns
+sending. Until then send() logs the message to <state root>/outbox.log and returns
 delivered=False, so the whole recovery flow is testable without a mail server
 and can be switched to live SMTP with zero code changes.
 """
@@ -13,7 +13,11 @@ import ssl
 import time
 from pathlib import Path
 
-_OUTBOX = Path.home() / ".saathi" / "outbox.log"
+from saathi.runtime_paths import state_path
+
+
+def _outbox() -> Path:
+    return state_path("outbox.log")
 
 
 def configured() -> bool:
@@ -22,8 +26,9 @@ def configured() -> bool:
 
 def _log(to: str, subject: str, body: str, delivered: bool) -> None:
     try:
-        _OUTBOX.parent.mkdir(parents=True, exist_ok=True)
-        with _OUTBOX.open("a") as f:
+        outbox = _outbox()
+        outbox.parent.mkdir(parents=True, exist_ok=True)
+        with outbox.open("a") as f:
             f.write(json.dumps({"ts": time.time(), "to": to, "subject": subject,
                                 "delivered": delivered, "body": body[:500]}) + "\n")
     except Exception:
@@ -48,12 +53,22 @@ def send(to: str, subject: str, body: str) -> dict:
         if port == 465:
             with smtplib.SMTP_SSL(host, port, context=ctx, timeout=15) as s:
                 s.login(os.getenv("SMTP_USER", ""), os.getenv("SMTP_PASS", ""))
+                # Phase 19B: guarded at the call, not at function entry. These return
+                # early when unconfigured and several fall back to local generation,
+                # so an entry guard would break paths that never reach a network.
+                from saathi.execution.egress import guard as _egress_guard
+                _egress_guard("smtp.send", operation="send")
                 s.send_message(msg)
         else:
             with smtplib.SMTP(host, port, timeout=15) as s:
                 s.starttls(context=ctx)
                 if os.getenv("SMTP_USER"):
                     s.login(os.getenv("SMTP_USER"), os.getenv("SMTP_PASS", ""))
+                # Phase 19B: guarded at the call, not at function entry. These return
+                # early when unconfigured and several fall back to local generation,
+                # so an entry guard would break paths that never reach a network.
+                from saathi.execution.egress import guard as _egress_guard
+                _egress_guard("smtp.send", operation="send")
                 s.send_message(msg)
         _log(to, subject, body, True)
         return {"ok": True, "delivered": True, "reason": "sent"}

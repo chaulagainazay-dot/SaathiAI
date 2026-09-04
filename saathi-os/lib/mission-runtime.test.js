@@ -63,3 +63,15 @@ test("mission runtime clamps presentation values and preserves evidence arrays",
   assert.equal(runtime.evidence.length, 1);
   assert.equal(runtime.certifications[0].verdict, "MISSION_COMPLETE");
 });
+
+test("an omitted progress_percent is a sentinel, never a real zero", () => {
+  const summary = normalizeMissionRuntimeSummary({ mission_id: "m9", health: "ACTIVE" });
+  assert.equal(summary.progressReported, false);
+  assert.equal(summary.progress, null);
+});
+
+test("a reported zero stays a reported zero", () => {
+  const summary = normalizeMissionRuntimeSummary({ mission_id: "m9", progress_percent: 0 });
+  assert.equal(summary.progressReported, true);
+  assert.equal(summary.progress, 0);
+});

@@ -20,6 +20,25 @@ import {
   toCommandVoiceLabel,
   detectVoiceCapabilities,
 } from "@/lib/voice-session";
+import {
+  createLocalWhisperStt,
+  probeLocalSttHealth,
+} from "@/lib/voice-session/local-whisper-stt";
+
+/**
+ * Readiness probe for the local speech engine, run once per pipeline start.
+ *
+ * This is the composition root: wiring the engine here is what makes local
+ * recognition the shell-wide default instead of a per-surface choice. It
+ * returns an adapter factory when the engine answers ready and null when it
+ * does not — never a guess, and never a silent hand-off to Chrome Web Speech,
+ * which would ship the owner's audio to a Google service.
+ */
+async function resolveLocalStt() {
+  const health = await probeLocalSttHealth();
+  if (!health.available) return null;
+  return () => createLocalWhisperStt({});
+}
 
 const VoiceSessionContext = createContext(null);
 
@@ -37,7 +56,7 @@ export function VoiceSessionProvider({ children, manager: externalManager }) {
   // Single voice session owner is the V-NEXT-1 contract anyway; there is
   // exactly one microphone. `externalManager` stays injectable for tests.
   const manager = useMemo(
-    () => externalManager || getDefaultVoiceSessionManager(),
+    () => externalManager || getDefaultVoiceSessionManager({ resolveLocalStt }),
     [externalManager]
   );
   const [session, setSession] = useState(() => manager.getSnapshot());

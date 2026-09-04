@@ -18,7 +18,7 @@
 | Portfolio (paper) | `/trading/paper-portfolio` etc. | Trading fetchers | |
 | Research | `/trading/research*` | TG research UIs | |
 | Voice settings | `/settings/voice` | voice-settings lib | |
-| Voice enrollment | `/voice` | MediaRecorder legacy | Not command prefs |
+| Voice enrollment | — | Retired (R2.1-S6); `/voice` redirects to `/settings/voice` | Capability withdrawn, not re-gated |
 | Evidence | `/evidence`, `/platform/evidence` | evidence APIs | |
 | Platform ops | `/platform/*` | M50+ identity/ops | |
 | Settings | `/settings` | | |

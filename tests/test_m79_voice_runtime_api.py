@@ -11,6 +11,14 @@ from saathi.tool_runtime.registry import reset_registry_for_tests
 from test_m74_voice_foundation import FakeProvider
 
 
+def _support():
+    """tests/support is not a package on sys.path by default."""
+    import sys, pathlib as _pl
+    sys.path.insert(0, str(_pl.Path(__file__).resolve().parent))
+    from support import platform_auth
+    return platform_auth
+
+
 def client_and_headers(tmp_path, monkeypatch):
     reset_registry_for_tests()
     platform = reset_platform_for_tests(tmp_path / "voice-runtime-api.db")
@@ -22,16 +30,9 @@ def client_and_headers(tmp_path, monkeypatch):
     from saathi.server import app
 
     client = TestClient(app)
-    boot = client.post(
-        "/api/v1/platform/bootstrap",
-        json={
-            "email": "voice-rt-api@local",
-            "name": "Voice RT API",
-            "password": "VoiceRtApiPass1!",
-        },
-    )
-    assert boot.status_code == 200
-    token = boot.json()["token"]
+    # D15: derived from the canonical D14 owner. The bootstrap route no
+    # longer accepts a caller-supplied identity or mints its own password.
+    token = _support().platform_token(client)
     speech = SpeechService(
         platform.store,
         providers=[FakeProvider()],

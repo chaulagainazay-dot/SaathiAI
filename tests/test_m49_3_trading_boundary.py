@@ -53,7 +53,6 @@ def test_generic_shell_cannot_call_trading():
     out = execute_tool(
         "run_shell",
         {"command": "trade --live buy AAPL"},
-        speaker_verified=True,
     )
     assert out.get("blocked") is True
 

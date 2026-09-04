@@ -9,6 +9,8 @@ from io import BytesIO
 from pathlib import Path
 from typing import Any
 
+from saathi.runtime_paths import state_path
+
 from .config import load_config
 from .lifecycle import safety_contract
 from .manifest import build_release_manifest, compatibility_matrix
@@ -85,7 +87,7 @@ def export_support_bundle(
     # Optional bounded logs (redacted)
     log_snippets: dict[str, str] = {}
     if include_logs:
-        home = Path.home() / ".saathi" / "logs"
+        home = state_path("logs")
         for rel in ("backend.log", "frontend.log", "launcher.log"):
             p = home / rel
             if p.is_file():

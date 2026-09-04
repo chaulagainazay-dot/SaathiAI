@@ -6,10 +6,9 @@ import json, os, random, sqlite3, string
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
-from .. import config
+from ..runtime_paths import baadar_db_path
 from ._llm_helper import ask_llm, extract_json
 
-DB_PATH = os.getenv("BAADAR_DB", str(config.ROOT / "data" / "baadar.db"))
 FIREBASE_DB_URL = "https://ielts-and-language-practice-default-rtdb.firebaseio.com"
 _SA_KEY = os.path.expanduser(os.getenv("FIREBASE_SA_KEY", "~/SaathiAI/firebase-admin.json"))
 
@@ -17,8 +16,15 @@ _SA_KEY = os.path.expanduser(os.getenv("FIREBASE_SA_KEY", "~/SaathiAI/firebase-a
 MIN_IMPROVEMENT = 0.5
 
 
+def __getattr__(name: str):
+    """``DB_PATH`` stays importable without freezing the path at import time."""
+    if name == "DB_PATH":
+        return str(baadar_db_path())
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
 def _conn():
-    c = sqlite3.connect(DB_PATH)
+    c = sqlite3.connect(str(baadar_db_path()))
     c.row_factory = sqlite3.Row
     return c
 

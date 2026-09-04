@@ -206,6 +206,16 @@ def _make_yeti_card(hook: str, slot: str, topic: str = "") -> str | None:
 
 def run_social_autopost(slot: str = "AM") -> dict:
     """Post the AM or PM slot to Facebook + Instagram + Twitter/X. Called by scheduler at 9am / 6pm."""
+    # Phase 19: refuse before doing any work, rather than part-way through.
+    # These publish to Facebook, Instagram, Twitter and a blog, and the queue
+    # item was marked posted unconditionally at the end -- so a refused write
+    # still consumed the slot and the post was silently never made. Checking
+    # here keeps a denial deterministic and leaves the queue untouched.
+    from saathi.execution.egress import current_grant
+
+    if current_grant() is None:
+        return {"status": "blocked", "reason_code": "egress.not_governed",
+                "detail": "autopost must run through ExecutionGateway"}
     from .scheduler import _notify
     from .tools import meta_post, growth_engine
     from . import connections
@@ -483,6 +493,16 @@ def _run_quote_autopost() -> dict:
 
 def run_daily_autopost() -> dict:
     """Post the next queued video to YouTube + notify FB/IG. Called by the 8pm scheduler."""
+    # Phase 19: refuse before doing any work, rather than part-way through.
+    # These publish to Facebook, Instagram, Twitter and a blog, and the queue
+    # item was marked posted unconditionally at the end -- so a refused write
+    # still consumed the slot and the post was silently never made. Checking
+    # here keeps a denial deterministic and leaves the queue untouched.
+    from saathi.execution.egress import current_grant
+
+    if current_grant() is None:
+        return {"status": "blocked", "reason_code": "egress.not_governed",
+                "detail": "autopost must run through ExecutionGateway"}
     from .scheduler import _notify
     from .tools import content_studio, meta_post
     from . import connections

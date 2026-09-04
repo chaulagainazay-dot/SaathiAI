@@ -20,6 +20,8 @@ import time
 import uuid
 from pathlib import Path
 
+from saathi.runtime_paths import state_path
+
 # the recording prompts the Voice Setup wizard reads out (cover the TTS spectrum)
 SAMPLE_PROMPTS = [
     {"id": 1, "label": "Intro", "text": "Hi. My name is Ajay. I created SaathiAI to help "
@@ -80,7 +82,7 @@ def recommend(profile: dict) -> dict:
 
 class BrandStore:
     def __init__(self, db_path: str | None = None):
-        self.db_path = Path(db_path) if db_path else (Path.home() / ".saathi" / "mission_brand.db")
+        self.db_path = Path(db_path) if db_path else state_path("mission_brand.db")
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         with self._conn() as c:
             c.execute("CREATE TABLE IF NOT EXISTS brand(mission_id TEXT PRIMARY KEY, identity TEXT, updated REAL)")

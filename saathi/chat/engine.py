@@ -86,6 +86,21 @@ class SendResult:
     citations: list
 
 
+def _actor() -> str:
+    """Who this chat turn acts as.
+
+    Chat used to hardcode a single human identity here, so every conversation --
+    and every run it started, and every tool intent it authorized -- was
+    attributed to that person regardless of who was signed in. The authenticated
+    boundary now binds the real session; with none bound this resolves to the
+    named system actor, which the gateway caps at READ_ONLY rather than treating
+    as an owner.
+    """
+    from saathi.execution.authorization_sources import current_actor_id
+
+    return current_actor_id()
+
+
 class ChatEngine:
     """All chat operations over a ChatStore + the ExecutionGateway."""
 
@@ -128,11 +143,11 @@ class ChatEngine:
             intent_id=f"chat-{uuid.uuid4().hex[:12]}",
             operation="local-llm-inference",
             business_unit="saathi-chat",
-            actor_id="user:ajay",
+            actor_id=_actor(),
             parameters={"prompt": prompt, "system": system, "model": "auto"},
             metadata={"data_sensitivity": "internal", "conversation": cid},
         )
-        ctx = ExecutionContext(actor_id="user:ajay", business_unit="saathi-chat",
+        ctx = ExecutionContext(actor_id=_actor(), business_unit="saathi-chat",
                                timestamp=datetime.utcnow(),
                                current_time=datetime.utcnow())
         # route to the chat adapter
@@ -362,9 +377,9 @@ class ChatEngine:
             return {**rec, "status": "blocked"}
         sysm = self._execution_system()
         intent = ToolIntent(intent_id=f"tool-{uuid.uuid4().hex[:12]}", operation=tool,
-                            business_unit="saathi-chat", actor_id="user:ajay",
+                            business_unit="saathi-chat", actor_id=_actor(),
                             parameters=args, metadata={"conversation": cid})
-        ctx = ExecutionContext(actor_id="user:ajay", business_unit="saathi-chat",
+        ctx = ExecutionContext(actor_id=_actor(), business_unit="saathi-chat",
                                timestamp=datetime.utcnow(), current_time=datetime.utcnow())
         try:
             result = asyncio.run(sysm.execute_intent(intent, ctx))
@@ -373,7 +388,15 @@ class ChatEngine:
                                    result=str(result.data or "")[:2000])
             return {**rec, "status": status, "intent_id": intent.intent_id}
         except Exception as exc:
-            self.store.finish_tool(rec["id"], status="failed", result=repr(exc)[:500])
+            # An exception repr is untrusted output too: a connector failure can
+            # carry the URL, header or connection string it failed on, and this
+            # goes into a stored record a user reads back.
+            from saathi.execution.sanitization import sanitize
+
+            safe, report = sanitize(repr(exc))
+            self.store.finish_tool(
+                rec["id"], status="failed",
+                result=("[error withheld]" if report.failed else str(safe))[:500])
             return {**rec, "status": "failed"}
 
     # ── Layer 9: agent collaboration (M48.4 → canonical runtime wrapper) ──
@@ -440,7 +463,7 @@ class ChatEngine:
         rec = start_agent_run(
             objective=task,
             strategy="single",
-            actor="user:ajay",
+            actor=_actor(),
             project_id=conv.get("project_id", "") or "",
             conversation_id=cid,
             execute=True,
@@ -537,7 +560,7 @@ class ChatEngine:
         rec = start_agent_run(
             objective=objective,
             strategy=strategy,
-            actor="user:ajay",
+            actor=_actor(),
             project_id=conv.get("project_id", ""),
             conversation_id=cid,
             execute=execute,

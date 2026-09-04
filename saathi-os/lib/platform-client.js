@@ -37,6 +37,39 @@ export function setToken(t) {
   }
 }
 
+async function exchangeCanonicalSession() {
+  const { exchangePlatformSession } = await import("./api.js");
+  return exchangePlatformSession();
+}
+
+/** Ensure one platform context exists for the current canonical session. */
+export function createPlatformSessionHydrator({
+  readToken = getToken,
+  exchange = exchangeCanonicalSession,
+  persist = setToken,
+} = {}) {
+  let inFlight = null;
+  return function ensurePlatformSession() {
+    if (readToken()) return Promise.resolve({ ok: true, reused: true });
+    if (inFlight) return inFlight;
+    inFlight = Promise.resolve()
+      .then(() => exchange())
+      .then((result) => {
+        const token = result?.ok && typeof result.token === "string"
+          ? result.token.trim()
+          : "";
+        if (!token) return { ok: false, code: result?.code || "EXCHANGE_FAILED" };
+        persist(token);
+        return { ok: true, reused: false };
+      })
+      .catch(() => ({ ok: false, code: "EXCHANGE_UNREACHABLE" }))
+      .finally(() => { inFlight = null; });
+    return inFlight;
+  };
+}
+
+export const ensurePlatformSession = createPlatformSessionHydrator();
+
 /** Notify shell consumers after a server-authorized org/workspace selection. */
 export function notifyPlatformContextChanged({ orgId = "", workspaceId = "" } = {}) {
   if (typeof window === "undefined") return;

@@ -219,8 +219,10 @@ class Listener:
                     pass
 
                 try:
-                    reply = self.agent.respond(command, session_id="terminal",
-                                               speaker_verified=ver["verified"])
+                    # R2.1-S1: observation only — no authority effect.
+                    reply = self.agent.respond(
+                        command, session_id="terminal",
+                        speaker_match_observed=ver.get("verified", None))
                 except Exception as e:
                     reply = f"Sorry, error: {e}"
                     log(f"agent error: {e}", "red")

@@ -44,7 +44,11 @@ def _patch_reflector_targets(monkeypatch, tmp_path: Path):
     monkeypatch.setattr(config, "LEARNED_MEMORY_DIR", learned_dir)
     monkeypatch.setattr(config, "LEARNED_CONVENTIONS_MD", learned_md)
     monkeypatch.setattr(config, "LEARNED_CONVENTIONS_JSONL", learned_jl)
-    monkeypatch.setattr(config, "DB_PATH", db)
+    # Redirect through the supported mechanism. Setting the module attribute
+    # would shadow saathi.config.__getattr__ permanently once monkeypatch
+    # restored the value it had computed, freezing DB_PATH for the rest of
+    # the session.
+    monkeypatch.setenv("SAATHI_LEGACY_DB", str(db))
     monkeypatch.setattr("saathi.agent.SaathiAgent", _FakeAgent)
     return learned_dir, learned_md, learned_jl
 

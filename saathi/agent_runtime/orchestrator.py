@@ -19,6 +19,9 @@ from saathi.agent_runtime.models import (
 from saathi.agent_runtime import policy as pol
 from saathi.agent_runtime.store import RunStore
 from saathi.agent_runtime.strategies import STRATEGIES, choose_strategy
+from saathi.agent_runtime.test_hold import configured_hold_ms, hold_for_test
+from saathi.agent_runtime.test_fail import (
+    TEST_FAIL_REASON, should_fail_for_test)
 
 
 def _tid() -> str:
@@ -288,13 +291,32 @@ class Orchestrator:
         arid = self.store.add_agent_run(rid, task.agent, task.task_id)
         self.store.event(rid, "task.started", {"task": task.task_id, "agent": task.agent})
 
+        # Certification fixture only. Returns immediately unless
+        # SAATHI_TEST_RUN_HOLD_MS is set AND this run requested the test_hold
+        # strategy, so production timing is untouched.
+        if configured_hold_ms() > 0:
+            hold_for_test(
+                run_id=rid,
+                strategy=str((self.store.get_run(rid) or {}).get("strategy") or ""),
+                store=self.store,
+            )
+
         # Layer 10: scoped memory retrieval (never widens beyond task scope)
         context = self._retrieve_scoped(rid, task, defn)
 
         from saathi.agent_runtime.gateway_exec import CancellationToken
 
+        # Certification fixture only. False for every production run: the
+        # environment gate is read first, and the strategy must have been
+        # explicitly requested. It fails the task through the real executor
+        # path below rather than writing a failed state directly.
+        force_test_failure = should_fail_for_test(
+            strategy=str((self.store.get_run(rid) or {}).get("strategy") or ""))
+
         cancel_token = CancellationToken(run_id=rid, store=self.store)
         try:
+            if force_test_failure:
+                raise RuntimeError(TEST_FAIL_REASON)
             result = self.executor.run_turn(
                 defn, task.objective, context=context, cancel_token=cancel_token
             )
@@ -436,7 +458,13 @@ class Orchestrator:
                 if res.get("task_id"):
                     self.store.update_task(res["task_id"], status="failed",
                                            result=f"approval {res['status']}")
-                self._safe_transition(rid, RunState.RUNNING)
+                # A refused run stops. It previously attempted AWAITING_APPROVAL
+                # -> RUNNING, which is not a legal transition, so _safe_transition
+                # swallowed it and the run was stranded in AWAITING_APPROVAL with
+                # no pending approval -- an authority state nothing could ever
+                # resolve. CANCELLED is legal from here and is what actually
+                # happened: the owner refused, so the run does not continue.
+                self._safe_transition(rid, RunState.CANCELLED, actor=actor)
         return res
 
     # ── control ───────────────────────────────────────────────────────────
@@ -470,6 +498,13 @@ class Orchestrator:
         if run and is_terminal(RunState(run["state"])):
             # do not silently revive terminal runs — new attempt only via new run
             return self._outcome(rid, partial=True, note="terminal_no_retry_in_place")
+        # The task must belong to this run. `update_task` resets by task id
+        # alone, so without this a retry addressed to run A reset a task owned by
+        # run B and then ran A -- reproduced against the real store. Defence in
+        # depth: the HTTP route refuses this too, but any other caller of this
+        # method would otherwise bypass the check.
+        if not any(t["id"] == task_id for t in self.store.list_tasks(rid)):
+            return self._outcome(rid, partial=True, note="task_not_in_run")
         self.store.update_task(task_id, status="pending")
         run = self.store.get_run(rid)
         if RunState(run["state"]) in (RunState.FAILED, RunState.PARTIALLY_COMPLETED,

@@ -98,23 +98,32 @@ export default function MissionsPage() {
                     <div className="mono" style={{ fontSize: "var(--fs-2xs)", color: "var(--text-muted)" }}>{m.key} · {m.id}</div>
                     {m.runtime && (
                       <div style={{ marginTop: 10 }}>
-                        <div
-                          role="progressbar"
-                          aria-label={`${m.name} mission progress`}
-                          aria-valuemin={0}
-                          aria-valuemax={100}
-                          aria-valuenow={m.runtime.progress}
-                          style={{ height: 5, borderRadius: 999, background: "var(--glass-frame-border)", overflow: "hidden" }}
-                        >
-                          <div style={{ width: `${m.runtime.progress}%`, height: "100%", background: "var(--signal-active)" }} />
-                        </div>
+                        {m.runtime.progressReported ? (
+                          <div
+                            role="progressbar"
+                            aria-label={`${m.name} mission progress`}
+                            aria-valuemin={0}
+                            aria-valuemax={100}
+                            aria-valuenow={m.runtime.progress}
+                            style={{ height: 5, borderRadius: 999, background: "var(--glass-frame-border)", overflow: "hidden" }}
+                          >
+                            <div style={{ width: `${m.runtime.progress}%`, height: "100%", background: "var(--signal-active)" }} />
+                          </div>
+                        ) : (
+                          <div
+                            role="progressbar"
+                            aria-label={`${m.name} mission progress`}
+                            aria-valuetext="Progress not reported"
+                            style={{ height: 5, borderRadius: 999, background: "var(--glass-frame-border)", overflow: "hidden" }}
+                          />
+                        )}
                         <div className="mono" style={{ marginTop: 5, fontSize: "var(--fs-2xs)", color: "var(--text-muted)" }}>
-                          {m.runtime.health} · {m.runtime.progress}% · {m.runtime.currentAgent || "No active agent"}
+                          {m.runtime.health} · {m.runtime.progressReported ? `${m.runtime.progress}%` : "progress not reported"} · {m.runtime.currentAgent || "No active agent"}
                         </div>
                       </div>
                     )}
                     <div style={{ display: "flex", gap: 14, marginTop: 10 }}>
-                      {m.runtime && <Metric label="Progress" value={`${m.runtime.progress}%`} tone={m.runtime.signal === "active" ? "active" : "idle"} />}
+                      {m.runtime && <Metric label="Progress" value={m.runtime.progressReported ? `${m.runtime.progress}%` : "—"} tone={m.runtime.signal === "active" ? "active" : "idle"} />}
                       <Metric label="Active" value={m.activeExecutions} tone={m.activeExecutions > 0 ? "active" : "idle"} />
                       <Metric label="Approvals" value={m.pendingApprovals} tone={m.pendingApprovals > 0 ? "attention" : "idle"} />
                       <Metric label="Attention" value={m.attentionCount} tone={m.attentionCount > 0 ? "attention" : "idle"} />
@@ -141,7 +150,7 @@ export default function MissionsPage() {
               <Field label="Status" value={selected.statusLabel} />
               <Field label="Runtime" value={selected.runtime?.state || "Not planned"} />
               <Field label="Health" value={selected.runtime?.health || "Not available"} />
-              <Field label="Progress" value={selected.runtime ? `${selected.runtime.progress}%` : "Not available"} />
+              <Field label="Progress" value={selected.runtime?.progressReported ? `${selected.runtime.progress}%` : "Not reported"} />
               <Field label="Current agent" value={selected.runtime?.currentAgent || "None"} />
               <Field label="Key" value={selected.key} mono />
               <Field label="Project" value={selected.projectId} mono />

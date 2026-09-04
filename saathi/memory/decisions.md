@@ -13,11 +13,20 @@
 - Gemini as secondary fallback
 - **Watch out:** Groq llama defaults to Chinese for IELTS content — always enforce English
 
-## Auth: stateless cookie
-- No sessions table in DB — avoids race conditions on server restart
-- Token = `sha256(password_hash + ":baadar-session")`
-- Password = "sajana" (stored as env var `BAADAR_PASSWORD`)
-- Changing password auto-invalidates all sessions
+## Auth: first-owner bootstrap, server-side sessions (supersedes "stateless cookie")
+- Sessions live in the security store and are validated there. The stateless
+  `sha256(password_hash + ":baadar-session")` token is gone: on a system
+  bootstrapped the current way the credential lives in the store and the process
+  global is empty, so that expression reduced to the hash of a constant.
+- The owner credential is a scrypt hash in the security store. It is never an
+  environment variable, never in a dotenv file, and never written in plaintext
+  anywhere — including here. This document previously recorded the account
+  password in cleartext; it has been removed, and because it is still readable
+  in this repository's history, that password must be treated as disclosed and
+  rotated rather than reused.
+- The first owner is created only by `POST /api/v1/auth/bootstrap`, which needs
+  an explicitly armed installation and a one-time operator token file.
+- Changing the password revokes every other session.
 
 ## Content architecture: prepare + approve
 - Baadar prepares ALL content automatically

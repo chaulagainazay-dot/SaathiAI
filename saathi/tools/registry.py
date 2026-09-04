@@ -1434,16 +1434,36 @@ def recent_governance_decisions(limit: int = 50) -> list:
     return list(_governance_audit)[-limit:][::-1]
 
 
-def execute_tool(name: str, args: dict, speaker_verified: bool = False) -> dict:
+def execute_tool(name: str, args: dict, *,
+                 speaker_match_observed: bool | None = None) -> dict:
     """Legacy dispatcher — M49.3 enforces disposition before any freeform path.
+
+    AUTHORITY BOUNDARY (R2.1-S1) — this path carries no authority.
+
+    No identity signal (voiceprint, face, device, channel, model output, or a
+    caller-supplied boolean) may select an identity, grant a role, satisfy an
+    approval, or unlock a privileged tool here. Approval is only ever a
+    server-minted ``ToolApprovalReference`` validated by ToolExecutionService
+    (``_validate_approval`` → ``ToolApprovalReference.is_valid_for``). This
+    legacy shim cannot mint one and must not fabricate one, so privileged and
+    approval-bearing actions fail closed with a truthful requirement instead.
+
+    ``speaker_match_observed`` is bounded, non-authorizing metadata
+    (True | False | None="unknown"). It is recorded in the L7 audit and has
+    zero positive effect on any decision below.
 
     Order:
       1. unknown name → reject (no generic fallback)
-      2. freeform shell / prohibited / deferred → block
-      3. privileged speaker check
-      4. governance gate
-      5. canonical gateway for migrated tools
-      6. legacy bounded handlers only when policy allows
+      1b. malformed arguments → reject
+      2. freeform shell / explicit prohibitions → block
+      3. governance gate (identity USER, no approval credit) — always runs, so
+         every attempt is audited even when a later step decides the response
+      4. deferred domains → block with their disposition
+      5. privileged tools → fail closed (approval + gateway required)
+      6. governance denial → block
+      7. canonical gateway for migrated tools
+      8. everything else fails closed — no registered handler is ever invoked
+         from this path (R2.1-S2)
     """
     from saathi.tool_runtime.legacy_policy import (
         LegacyDisposition,
@@ -1462,39 +1482,82 @@ def execute_tool(name: str, args: dict, speaker_verified: bool = False) -> dict:
             "outcome_class": "BLOCKED",
         }
 
+    # A malformed request fails closed like any other. Nothing downstream —
+    # classification, the governance gate, the canonical bridge — may be handed
+    # a non-mapping argument set and left to raise its way out of the boundary.
+    if args is None:
+        args = {}
+    if not isinstance(args, dict):
+        return {
+            "error": "malformed_tool_request",
+            "blocked": True,
+            "tool": name,
+            "outcome_class": "BLOCKED",
+            "requires": "execution_gateway",
+            "message": (
+                f"Arguments for '{name}' must be an object. The request was "
+                "rejected without classification and no handler was invoked."
+            ),
+        }
+
     disposition = classify_legacy_tool(name)
     # Hard-block freeform shell and explicit prohibitions before any handler runs
     if disposition == LegacyDisposition.PROHIBITED:
         return block_payload(name, disposition)
 
-    if name in PRIVILEGED and not speaker_verified:
-        return {"error": "speaker_not_verified",
-                "message": "This action is only allowed for Ajay's verified voice. "
-                           "Ask him to re-verify (say the wake phrase clearly) or use the app."}
-
     # ── Runtime Governance Engine gate — classify, govern, audit ──────────────
-    # Ajay's verified voice counts as operator approval (human + code confirm);
-    # any other caller is gated by the action's L0–L5 classification.
+    # R2.1-S1: this caller is never an operator. Identity is always USER and no
+    # approval credit is ever extended from an identity signal; L3+ actions that
+    # need HUMAN or CODE_CONFIRM approval are denied here and must go through the
+    # canonical approval path. speaker_match_observed rides along for audit only.
     from ..safety import ActionRequest, Identity
+    _observed = ("unknown" if speaker_match_observed is None
+                 else str(bool(speaker_match_observed)).lower())
     decision = _governance().gate(
         ActionRequest(tool=name, args=args or {},
-                      identity=Identity.ADMIN if speaker_verified else Identity.USER,
-                      why="tool dispatch"),
-        human_approved=speaker_verified,
-        code_confirmed=speaker_verified,
+                      identity=Identity.USER,
+                      why=f"legacy tool dispatch (speaker_match_observed={_observed})"),
+        human_approved=False,
+        code_confirmed=False,
     )
+    # The gate above always runs, so every dispatch attempt reaches the L7 audit
+    # even when a more specific block below is what the caller is told. Nothing
+    # between here and the returns can re-open an allowed path.
+
+    # Deferred domains remain non-executable after governance audit
+    if disposition == LegacyDisposition.DEFERRED_AND_DISABLED:
+        return block_payload(name, disposition)
+
+    # R2.1-S1: privileged tools are not reachable from the legacy path at all.
+    # No speaker, session or channel unlocks them here — the only way to run one
+    # is an approval issued by the ApprovalCenter and execution through the
+    # canonical ExecutionGateway. Reported ahead of a plain governance denial
+    # because "needs an approval" is the actionable truth for these tools.
+    if name in PRIVILEGED:
+        return {
+            "error": "approval_required",
+            "blocked": True,
+            "tool": name,
+            "outcome_class": "BLOCKED",
+            "requires": "approval_reference+execution_gateway",
+            "speaker_match_observed": speaker_match_observed,
+            "message": (
+                f"'{name}' is a privileged action. It requires an approval issued by "
+                "the ApprovalCenter and execution through the canonical "
+                "ExecutionGateway. Speaker identity does not authorize it."
+            ),
+        }
+
     if not decision.allowed:
         return {"error": "governance_denied",
+                "blocked": True,
+                "outcome_class": "BLOCKED",
                 "level": decision.level.name,
                 "approval": decision.approval.value,
                 "risk": decision.risk,
                 "reasons": decision.reasons,
                 "message": f"Action '{name}' classified {decision.level.name} was blocked by "
                            f"the governance engine: " + "; ".join(decision.reasons)}
-
-    # Deferred domains remain non-executable after governance audit
-    if disposition == LegacyDisposition.DEFERRED_AND_DISABLED:
-        return block_payload(name, disposition)
 
     # M49.3: prefer canonical path for migrated tools (after governance)
     try:
@@ -1523,20 +1586,28 @@ def execute_tool(name: str, args: dict, speaker_verified: bool = False) -> dict:
     if not is_runtime_executable(name):
         return block_payload(name, disposition)
 
-    # LEGACY_BOUNDED only — retained temporary path with deprecation note
-    try:
-        result = handler(**args)
-        # Stamp deprecation only for inventory-listed production tools
-        from saathi.tool_runtime.legacy_policy import LEGACY_BOUNDED_TOOLS
-
-        if isinstance(result, dict) and name in LEGACY_BOUNDED_TOOLS:
-            result = dict(result)
-            result.setdefault("_legacy_bounded", True)
-            result.setdefault("_disposition", disposition.value)
-            result.setdefault(
-                "_deprecation",
-                "M49.3 LEGACY_BOUNDED — planned removal; prefer ExecutionGateway",
-            )
-        return result
-    except Exception as e:  # surface errors to the model so it can explain
-        return {"error": type(e).__name__, "message": str(e)}
+    # R2.1-S2: the legacy path never invokes a registered handler.
+    #
+    # Reaching here means the tool classifies as executable but has no canonical
+    # mapping, so there is no ExecutionGateway contract under which to run it.
+    # Calling ``handler(**args)`` would be execution outside the sole gateway, so
+    # every tool class fails closed here — ordinary, read-only, filesystem,
+    # networked, and residual handlers alike. This is deliberately independent of
+    # the tool's own risk: the invariant is *where* execution happens, not how
+    # dangerous the tool looks. Advisory and conversational output is unaffected;
+    # the model still answers, it just cannot make this shim act.
+    return {
+        "error": "execution_gateway_required",
+        "blocked": True,
+        "tool": name,
+        "disposition": disposition.value,
+        "outcome_class": "BLOCKED",
+        "requires": "execution_gateway",
+        "speaker_match_observed": speaker_match_observed,
+        "message": (
+            f"'{name}' cannot execute from the legacy dispatch path. Tool "
+            "execution is only available through the canonical ExecutionGateway, "
+            "and this shim has no gateway contract for it, so no handler was "
+            "invoked. Speaker identity does not change this."
+        ),
+    }

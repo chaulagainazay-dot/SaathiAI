@@ -11,6 +11,15 @@ from saathi.platform.service import reset_platform_for_tests
 from saathi.tool_runtime.registry import reset_registry_for_tests
 
 
+def _support():
+    """tests/support is not a package on sys.path by default."""
+    import sys, pathlib as _pl
+    sys.path.insert(0, str(_pl.Path(__file__).resolve().parent))
+    from support import platform_auth
+    return platform_auth
+
+
+
 def _client(tmp_path, monkeypatch):
     reset_registry_for_tests()
     svc = reset_platform_for_tests(tmp_path / "api.db")
@@ -23,9 +32,9 @@ def _client(tmp_path, monkeypatch):
 
 
 def _token(client):
-    client.post("/api/v1/platform/bootstrap", json={"email": "m64@local", "name": "M64"})
-    login = client.post("/api/v1/platform/auth/login", json={"email": "m64@local"})
-    return login.json()["token"]
+    # D15: the platform identity is derived from the canonical D14 owner. The
+    # anonymous bootstrap + passwordless login this used are both closed.
+    return _support().platform_token(client)
 
 
 def test_modules_requires_authentication(tmp_path, monkeypatch):

@@ -2,10 +2,40 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Panel, Eyebrow } from "@/components/ui";
-import { login, setPassword, forgotPassword } from "@/lib/api";
+import { login, setPassword, bootstrapStatus, bootstrapOwner } from "@/lib/api";
+import { bootstrapPresentation, UNREACHABLE } from "@/lib/bootstrap-presentation";
 import { passkeySupported, passkeyPlatformName, passkeyUnsupportedReason, passkeyStatus, registerPasskey, unlockPasskey } from "@/lib/passkey";
+import { ensurePlatformSession } from "@/lib/platform-client";
 
 const ACCENT = "var(--accent)", TEAL = "#00BFA5", RED = "#FF5A5A", AMBER = "#FFB800";
+
+// D14: the bounded refusal codes the bootstrap route returns, mapped to what an
+// operator standing at this machine can actually do about each one. The codes
+// are deliberately the whole vocabulary — anything unrecognised falls back to a
+// generic failure rather than rendering a server string, so no refusal detail
+// can be reflected into the page.
+const BOOTSTRAP_MESSAGES = {
+  BOOTSTRAP_DISABLED: "Setup is not armed on this machine.",
+  BOOTSTRAP_ALREADY_COMPLETE: "This installation already has an owner. Sign in instead.",
+  BOOTSTRAP_CONTAMINATED_STATE: "Setup is blocked: this installation holds credentials it should not have yet. An operator must review it.",
+  BOOTSTRAP_TOKEN_FILE_UNSET: "No setup token is configured on this machine.",
+  BOOTSTRAP_TOKEN_FILE_MISSING: "The setup token file is missing.",
+  BOOTSTRAP_TOKEN_FILE_NOT_ABSOLUTE: "The setup token file path is not absolute.",
+  BOOTSTRAP_TOKEN_FILE_NOT_REGULAR: "The setup token file is not a regular file.",
+  BOOTSTRAP_TOKEN_FILE_INSECURE_MODE: "The setup token file must be readable only by its owner (chmod 600).",
+  BOOTSTRAP_TOKEN_FILE_WRONG_OWNER: "The setup token file belongs to another user.",
+  BOOTSTRAP_TOKEN_FILE_UNREADABLE: "The setup token file could not be read.",
+  BOOTSTRAP_TOKEN_EXPIRED: "The setup token has expired. Generate a new one.",
+  BOOTSTRAP_TOKEN_MISSING: "Enter the one-time setup token.",
+  BOOTSTRAP_TOKEN_INVALID: "That setup token is not correct.",
+  BOOTSTRAP_TOKEN_TOO_WEAK: "The setup token is too short to be trusted.",
+  BOOTSTRAP_TOKEN_MAX_AGE_INVALID: "The configured setup token lifetime is invalid.",
+  BOOTSTRAP_PASSWORD_POLICY: "Choose a stronger owner password.",
+  BOOTSTRAP_RATE_LIMITED: "Too many setup attempts. Wait, then try again.",
+  BOOTSTRAP_NOT_LOOPBACK: "Setup must be performed on this machine.",
+  BOOTSTRAP_PROXIED_REQUEST: "Setup cannot be performed through a proxy.",
+  BOOTSTRAP_ORIGIN_REJECTED: "This page is not an allowed origin for setup.",
+};
 
 function friendly(e) {
   const s = String(e && e.message ? e.message : e);
@@ -31,13 +61,20 @@ export default function Unlock() {
   const [np, setNp] = useState("");
   const [np2, setNp2] = useState("");
   const [msg, setMsg] = useState("");
+  const [platformRetry, setPlatformRetry] = useState(false);
   const [busy, setBusy] = useState(false);
   const [showPw, setShowPw] = useState(false);
   const [showNp, setShowNp] = useState(false);
   const [capsOn, setCapsOn] = useState(false);
   const [strength, setStrength] = useState({ score: 0, checks: {} });
   const [mode, setMode] = useState("unlock"); // unlock | forgot | reset
-  const [forgotEmail, setForgotEmail] = useState("");
+  // D14: initialisation state decides whether this screen offers bootstrap at
+  // all. Until the backend reports ACTIVE there is no owner to sign in as.
+  const [boot, setBoot] = useState(null);
+  const [opToken, setOpToken] = useState("");
+  // Last bounded refusal code from a bootstrap submission, so an expired token
+  // reads as "expired" rather than as a still-armed installation.
+  const [bootErr, setBootErr] = useState("");
   const [rememberMe, setRememberMe] = useState(true);
   const [online, setOnline] = useState(true);
   // WebAuthn capability can only be probed in the browser. Calling these during
@@ -61,8 +98,35 @@ export default function Unlock() {
   const { supported, platformName } = capability;
   const pwRef = useRef(null);
 
+  const bootView = bootstrapPresentation(boot, bootErr);
+
   const refresh = () => passkeyStatus().then(setStatus).catch(() => {});
   useEffect(() => { refresh(); }, []);
+  // A rejected status request means the backend did not answer. It is stored
+  // as its own state, never as a status-shaped object: the previous
+  // `{state: "UNKNOWN"}` was read by the panel as `bootstrap_enabled` falsy and
+  // rendered "Setup is disabled", which is a claim about the operator's
+  // configuration invented from a failed fetch.
+  useEffect(() => { bootstrapStatus().then(setBoot).catch(() => setBoot(UNREACHABLE)); }, []);
+
+  const doBootstrap = () => wrap(async () => {
+    if (np.length < 8) return setMsg("Password must be at least 8 characters");
+    if (np !== np2) return setMsg("Passwords don't match");
+    if (!opToken.trim()) return setMsg("Enter the one-time setup token.");
+    const r = await bootstrapOwner(opToken.trim(), np);
+    // Clear the operator token from component state immediately, whatever the
+    // outcome. It is single-use and must not sit in memory after the submit.
+    setOpToken("");
+    if (r.ok) {
+      setMsg("✓ Owner created — you're signed in.");
+      setNp(""); setNp2("");
+      bootstrapStatus().then(setBoot).catch(() => setBoot(UNREACHABLE));
+      refresh();
+    } else {
+      setBootErr(r.error || "");
+      setMsg(BOOTSTRAP_MESSAGES[r.error] || "Setup failed.");
+    }
+  });
 
   // Offline detection
   useEffect(() => {
@@ -88,6 +152,21 @@ export default function Unlock() {
 
   const wrap = async (fn) => { setBusy(true); setMsg(""); try { await fn(); } catch (e) { setMsg(friendly(e)); } finally { setBusy(false); } };
 
+  const continueWithPlatformSession = async () => {
+    const exchange = await ensurePlatformSession();
+    if (!exchange.ok) {
+      setPlatformRetry(true);
+      setMsg("Signed in, but Saathi services are unavailable. Retry.");
+      return false;
+    }
+    setPlatformRetry(false);
+    return true;
+  };
+
+  const retryPlatformSession = () => wrap(async () => {
+    if (await continueWithPlatformSession()) router.push("/os");
+  });
+
   const doSetPassword = () => wrap(async () => {
     if (np.length < 8) return setMsg("Password must be at least 8 characters");
     if (np !== np2) return setMsg("Passwords don't match");
@@ -100,27 +179,25 @@ export default function Unlock() {
   const doLogin = () => wrap(async () => {
     const r = await login(pw, rememberMe);
     if (r.ok) {
-      setMsg("✓ Signed in."); setPw(""); refresh(); setTimeout(() => router.push("/os"), 600);
+      setPw(""); refresh();
+      if (await continueWithPlatformSession()) {
+        setMsg("✓ Signed in."); setTimeout(() => router.push("/os"), 600);
+      }
     } else setMsg(friendly(r.error || "Wrong password"));
   });
 
   const doUnlock = () => wrap(async () => {
     const r = await unlockPasskey(rememberMe);
-    if (r.ok) { setMsg("✓ Unlocked."); setTimeout(() => router.push("/os"), 600); }
-    else setMsg(friendly(r.error || "Unlock failed"));
+    if (!r.ok) { setMsg(friendly(r.error || "Unlock failed")); return; }
+    if (await continueWithPlatformSession()) {
+      setMsg("✓ Unlocked."); setTimeout(() => router.push("/os"), 600);
+    }
   });
 
   const doRegister = () => wrap(async () => {
     const r = await registerPasskey();
     if (r.ok) { setMsg("✓ Passkey set up."); refresh(); }
     else setMsg(friendly(r.error || "Setup failed"));
-  });
-
-  const doForgot = () => wrap(async () => {
-    if (!forgotEmail.includes("@")) return setMsg("Enter a valid email address.");
-    const r = await forgotPassword(forgotEmail);
-    if (r.ok) setMsg("✓ If that email is registered, a reset link was sent.");
-    else setMsg(friendly(r.error || "Failed to send reset email"));
   });
 
   const onNpChange = (v) => {
@@ -181,7 +258,7 @@ export default function Unlock() {
           {mode === "forgot" ? "Reset password" : status.has_password ? (status.signed_in ? "You're signed in" : "Sign in") : "Set up sign-in"}
         </div>
         <div style={{ fontSize: 13, opacity: 0.55, marginBottom: 18 }}>
-          {mode === "forgot" ? "Enter your email and we'll send a reset link." : "Set a password and fingerprint once — then Saathi trusts you on this device."}
+          {mode === "forgot" ? "Recovering access is an operator task on this machine." : "Set a password and fingerprint once — then Saathi trusts you on this device."}
         </div>
 
         <input type="text" name="username" autoComplete="username" value="Ajay" readOnly
@@ -202,18 +279,17 @@ export default function Unlock() {
           </div>
         )}
 
-        {/* ── Forgot Password form ── */}
+        {/* ── Password recovery — retired (D14) ──
+            Emailing a reset link let an anonymous caller cause a credential to
+            be minted on a machine it had never authenticated to. Recovery is an
+            operator task performed on the box, not a form on the sign-in page. */}
         {mode === "forgot" && (
           <Panel style={{ padding: 18, marginTop: 14 }}>
-            <div style={{ fontSize: 13, fontWeight: 600 }} id="forgot-email-label">Email address</div>
-            <input type="email" value={forgotEmail} onChange={(e) => setForgotEmail(e.target.value)}
-              autoComplete="email" autoCapitalize="off" autoCorrect="off" spellCheck={false}
-              enterKeyHint="send" onKeyDown={(e) => e.key === "Enter" && doForgot()}
-              placeholder="you@example.com" style={inp}
-              aria-label="Email address" aria-describedby="forgot-email-label" />
-            <button onClick={doForgot} disabled={busy || !online} style={btn(ACCENT)}>
-              {busy ? "Sending…" : "Send reset link"}
-            </button>
+            <div style={{ fontSize: 13, fontWeight: 600 }}>Password recovery</div>
+            <div style={{ fontSize: 12, opacity: 0.6, margin: "6px 0 10px", lineHeight: 1.5 }}>
+              Email password recovery has been removed. Recovering access to this
+              installation is done by an operator on this machine.
+            </div>
             <button onClick={() => { setMode("unlock"); setMsg(""); }} disabled={busy} style={btn("transparent")}>
               <span style={{ opacity: 0.7 }}>← Back to sign in</span>
             </button>
@@ -221,7 +297,36 @@ export default function Unlock() {
         )}
 
         {/* ── Password form (login or set/change) ── */}
-        {mode === "unlock" && (
+        {/* D14: an uninitialised system offers secure bootstrap, never a
+            password form that would silently become the owner credential. */}
+        {bootView.showPanel && (
+          <Panel style={{ padding: 18, marginTop: 14 }}>
+            <div style={{ fontSize: 13, fontWeight: 600 }}>First-time setup</div>
+            <div style={{ fontSize: 12, opacity: 0.6, margin: "6px 0 10px", lineHeight: 1.5 }}
+              data-bootstrap-state={bootView.kind}>
+              {bootView.copy}
+            </div>
+            {bootView.showForm && (
+              <>
+                <input type="password" value={opToken} onChange={(e) => setOpToken(e.target.value)}
+                  autoComplete="off" autoCapitalize="off" autoCorrect="off" spellCheck={false}
+                  placeholder="One-time setup token" style={inp} aria-label="One-time setup token" />
+                <input type="password" value={np} onChange={(e) => setNp(e.target.value)}
+                  autoComplete="new-password" placeholder="Owner password" style={inp}
+                  aria-label="Owner password" />
+                <input type="password" value={np2} onChange={(e) => setNp2(e.target.value)}
+                  autoComplete="new-password" placeholder="Confirm password" style={inp}
+                  onKeyDown={(e) => e.key === "Enter" && doBootstrap()}
+                  aria-label="Confirm owner password" />
+                <button onClick={doBootstrap} disabled={busy} style={btn(ACCENT)}>
+                  {busy ? "Creating owner…" : "Create owner"}
+                </button>
+              </>
+            )}
+          </Panel>
+        )}
+
+        {bootView.kind === "active" && mode === "unlock" && (
           <>
             <Panel style={{ padding: 18, marginTop: 14 }}>
               <div style={{ fontSize: 13, fontWeight: 600 }}>
@@ -258,7 +363,7 @@ export default function Unlock() {
                     </label>
                     <button onClick={() => { setMode("forgot"); setMsg(""); }}
                       style={{ background: "none", border: "none", color: ACCENT, fontSize: 13, cursor: "pointer", padding: 0, minHeight: 44 }}>
-                      Forgot password?
+                      Lost access?
                     </button>
                   </div>
                 </>
@@ -352,6 +457,11 @@ export default function Unlock() {
 
         {msg && <div role={msg.startsWith("✓") ? "status" : "alert"} aria-live={msg.startsWith("✓") ? "polite" : "assertive"}
           style={{ fontSize: 12.5, marginTop: 14, color: msg.startsWith("✓") ? TEAL : RED }}>{msg}</div>}
+        {platformRetry && (
+          <button onClick={retryPlatformSession} disabled={busy} style={btn(ACCENT)}>
+            Retry platform connection
+          </button>
+        )}
       </div>
     </div>
   );

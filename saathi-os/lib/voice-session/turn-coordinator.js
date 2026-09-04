@@ -58,6 +58,15 @@ export function createTurnCoordinator(opts = {}) {
   let finalizedTurns = 0;
   let falseInterrupts = 0;
   let realInterrupts = 0;
+  /**
+   * Identity of the last finalized utterance. An adapter that redelivers the
+   * same final — a retried event, a doubled callback — must not produce a
+   * second turn, while the same sentence said again is a new utterance and a
+   * genuinely new turn.
+   */
+  let pendingUtteranceId = "";
+  let finalizedUtteranceId = "";
+  let finalizedText = "";
 
   function now() {
     return typeof performance !== "undefined" && performance.now
@@ -81,6 +90,9 @@ export function createTurnCoordinator(opts = {}) {
     const isBc = BACKCHANNEL_RE.test(text);
     const turn = {
       text,
+      // Identity of this finalized turn. A consumer that submits work keys on
+      // it, so replaying the same turn object is recognisably the same turn.
+      sequence: finalizedTurns + 1,
       isBackchannel: isBc,
       isExecutable: isMeaningfulTranscript(text) && !isBc,
       reason,
@@ -91,6 +103,8 @@ export function createTurnCoordinator(opts = {}) {
     finalizedTurns += 1;
     partialText = "";
     lastFinalText = text;
+    finalizedUtteranceId = pendingUtteranceId;
+    finalizedText = text;
     emit("turn.finalized", { text, reason, isExecutable: turn.isExecutable });
     onTurnFinal(turn);
     return turn;
@@ -132,6 +146,13 @@ export function createTurnCoordinator(opts = {}) {
 
     onFinal(ev) {
       const text = normalizeTurnText(ev?.text || "");
+      const utteranceId = String(ev?.utteranceId || "");
+      // Same utterance, same text, already finalized: a redelivery, not speech.
+      if (utteranceId && utteranceId === finalizedUtteranceId && text === finalizedText) {
+        emit("stt.final_duplicate_ignored", { text, reason: "duplicate_final" });
+        return null;
+      }
+      pendingUtteranceId = utteranceId;
       lastFinalText = text;
       partialText = text;
       lastActivityAt = now();
@@ -222,6 +243,9 @@ export function createTurnCoordinator(opts = {}) {
     reset() {
       partialText = "";
       lastFinalText = "";
+      pendingUtteranceId = "";
+      finalizedUtteranceId = "";
+      finalizedText = "";
       vadSpeechActive = false;
       pendingFalseInterrupt = null;
       lastInterruptClass = null;

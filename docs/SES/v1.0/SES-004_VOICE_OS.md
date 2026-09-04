@@ -639,6 +639,29 @@ If the user is in the middle of a confirmation flow and goes silent for > 10s, t
 
 ---
 
+## 4.0 SUPERSEDED — speaker identity carries no authority (R2.1, 2026-08-19)
+
+Sections 4.1–4.6 below describe the originally specified design and are kept
+for the record. They are **not** the implemented contract. As of the R2.1
+speaker-identity authority repair:
+
+- A voice fingerprint selects **no** tier and **no** identity. There is no
+  voice-derived VERIFIED USER and no voice-derived ADMIN. The GUEST /
+  VERIFIED USER / ADMIN table in 4.2 is withdrawn.
+- Authentication comes from the authenticated session; authorization comes
+  from the ApprovalCenter and the canonical ExecutionGateway. A speaker match
+  is recorded as bounded, non-authorizing metadata and changes no decision.
+- Speaker enrollment (4.3) is **retired**. `/api/v1/voice/enroll` answers
+  `voice_enrollment_unavailable`, reads no audio, and writes no profile; the
+  frontend enrollment surfaces have been removed.
+- Speaker verification (4.4) may still be computed as an observation. It is
+  never a credential, and it never unlocks a capability.
+
+Read 4.1–4.6 as design history. The current statements of record are the
+R2.1 security evidence and the tests under `tests/test_r2_1_*`.
+
+---
+
 ## 4.1 Why Speaker Identity Matters for Voice OS
 
 Speaker identity is the voice equivalent of authentication. Without it, anyone who can speak to a SaathiAI device can:

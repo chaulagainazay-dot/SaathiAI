@@ -242,7 +242,7 @@ def audit_reachability_negative() -> dict[str, Any]:
     results = {}
     failures = []
     for name, expect in samples.items():
-        out = execute_tool(name, {"command": "echo x", "url": "https://example.com"}, speaker_verified=True)
+        out = execute_tool(name, {"command": "echo x", "url": "https://example.com"})
         blocked = bool(out.get("blocked") or out.get("error"))
         # Prohibited/deferred/unknown must not return successful tool payload
         success_keys = ("stdout", "result", "ok")
@@ -312,7 +312,7 @@ def audit_shell_closure() -> dict[str, Any]:
     gw = validate_tool_gateway_coverage()
     cmds = list_command_manifests()
     shell_blocked = all(
-        execute_tool(n, {"command": "id", "script": "id", "name": "x"}, speaker_verified=True).get("blocked")
+        execute_tool(n, {"command": "id", "script": "id", "name": "x"}).get("blocked")
         for n in FREEFORM_SHELL_TOOLS
         if n  # all freeform
     )

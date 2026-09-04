@@ -466,6 +466,154 @@ export function composeAttention({
   return { provenance: PROD_PROVENANCE.DERIVED, items: deduped };
 }
 
+/* ------------------------------------------------------------------ */
+/* Infrastructure health presentation                                   */
+/*                                                                      */
+/* The backend contract (GET /api/v1/infrastructure/health) is:         */
+/*                                                                      */
+/*   models      list[{ id, available, light }]                         */
+/*   browser     list[{ id, available, light }]                         */
+/*   connectors  list[{ id, status, light, ... }]                       */
+/*   conversation { voice, stt, tts, wakeword, sessions }               */
+/*   score       { models, browser, connectors, voice, overall }        */
+/*                                                                      */
+/* Two things about that contract drive the code below.                 */
+/*                                                                      */
+/* First, `score.*` is an integer percentage, and its backend helper    */
+/* returns 100 for an empty section — an unreported section scores      */
+/* perfect. So a score alone can never establish health; the count of   */
+/* actual evidence has to gate it.                                      */
+/*                                                                      */
+/* Second, the backend defines no green/amber/red bands over those      */
+/* percentages. The per-item lights are booleans, not score bands.      */
+/* Inventing thresholds here would publish a contract that does not     */
+/* exist, so status comes from counts and the percentage is carried     */
+/* alongside as the backend's own number.                               */
+/* ------------------------------------------------------------------ */
+
+/** The fetch-failure sentinel the command hooks substitute for a payload. */
+function infraFetchFailed(infra) {
+  return Boolean(infra) && infra.ok === false;
+}
+
+/** A backend percentage is only usable when it really is one. */
+function validPercent(value) {
+  return Number.isInteger(value) && value >= 0 && value <= 100 ? value : null;
+}
+
+/**
+ * Availability counts for the models section.
+ *
+ * `available` is compared against `true` rather than tested for truthiness:
+ * the backend counts any truthy value, and a string or a number arriving in
+ * that field is malformed data, not an available model.
+ *
+ * The structured list is preserved next to the scalar so downstream code can
+ * still inspect which models are which — replacing it with the presentation
+ * string is what put an array of objects into a React child slot.
+ */
+export function summarizeInfraModels(infra) {
+  const base = {
+    total: 0,
+    available: 0,
+    scorePercent: validPercent(infra?.score?.models),
+    list: null,
+  };
+  if (!infra || infraFetchFailed(infra)) {
+    return { ...base, scorePercent: null, value: "NOT REPORTED", status: "UNAVAILABLE",
+      reason: "infrastructure health not reported" };
+  }
+  const models = infra.models;
+  if (models == null) {
+    return { ...base, value: "NOT REPORTED", status: "UNAVAILABLE",
+      reason: "models section absent from infrastructure health" };
+  }
+  if (!Array.isArray(models)) {
+    return { ...base, value: "INVALID DATA", status: "DEGRADED",
+      reason: "models section is not a list" };
+  }
+  const total = models.length;
+  const available = models.filter((m) => m?.available === true).length;
+  if (total === 0) {
+    // An empty inventory is not a healthy one, whatever the score says.
+    return { ...base, list: models, total: 0, available: 0, value: "0/0",
+      status: "UNAVAILABLE", reason: "no models reported" };
+  }
+  return {
+    ...base,
+    list: models,
+    total,
+    available,
+    value: `${available}/${total}`,
+    status: available === total ? "HEALTHY" : "DEGRADED",
+    reason: available === total ? "all reported models available" : "some models unavailable",
+  };
+}
+
+/**
+ * Does this snapshot contain enough to say anything about infrastructure?
+ *
+ * A conversation section that is merely present proves nothing — the check is
+ * for a section that actually reports a boolean availability.
+ */
+function infraHasEvidence(infra) {
+  if (!infra || infraFetchFailed(infra)) return false;
+  for (const key of ["models", "browser", "connectors"]) {
+    if (Array.isArray(infra[key]) && infra[key].length > 0) return true;
+  }
+  const conversation = infra.conversation;
+  if (conversation && typeof conversation === "object") {
+    for (const key of ["voice", "stt", "tts", "wakeword"]) {
+      if (typeof conversation[key]?.available === "boolean") return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Overall infrastructure health, from the backend's own aggregate.
+ *
+ * Guarded against the vacuous case: with nothing reported every section scores
+ * 100 and the aggregate reads perfect, which is the opposite of the truth.
+ */
+export function summarizeInfraOverall(infra) {
+  const percent = validPercent(infra?.score?.overall);
+  if (!infraHasEvidence(infra)) {
+    return { value: "NOT REPORTED", status: "UNAVAILABLE", percent: null,
+      reason: infraFetchFailed(infra) || !infra
+        ? "infrastructure health not reported"
+        : "no section reported any evidence" };
+  }
+  if (percent == null) {
+    return { value: "INVALID DATA", status: "DEGRADED", percent: null,
+      reason: "overall score missing or out of range" };
+  }
+  return {
+    value: `${percent}%`,
+    status: percent === 100 ? "HEALTHY" : "DEGRADED",
+    percent,
+    reason: percent === 100 ? "every reported section healthy" : "one or more sections below full health",
+  };
+}
+
+/**
+ * The gateway chip.
+ *
+ * The infrastructure health contract carries no gateway field, and nothing
+ * else already fetched by this read model does either. The chip previously
+ * displayed a hardcoded "EG" with a hardcoded healthy tone, derived from
+ * `infra.gateway` — a key no producer writes. Reporting nothing is the only
+ * truthful option; ExecutionGateway's actual authority is unaffected, this is
+ * presentation only.
+ */
+export function composeGatewayChip() {
+  return {
+    value: "NOT REPORTED",
+    status: "UNAVAILABLE",
+    reason: "infrastructure health contract reports no gateway status",
+  };
+}
+
 export function composeSystemStrip({ portfolio, risk, voiceState, infra = null, tg = null } = {}) {
   const recon =
     portfolio?.portfolio_status === "RECONCILIATION_REQUIRED" ||
@@ -501,14 +649,9 @@ export function composeSystemStrip({ portfolio, risk, voiceState, infra = null, 
             ? "HEALTHY"
             : "UNAVAILABLE",
     },
-    models: {
-      value: infra?.models || "BOUND",
-      status: infra?.ok === false ? "DEGRADED" : "HEALTHY",
-    },
-    gateway: {
-      value: "EG",
-      status: infra?.gateway === "down" ? "DEGRADED" : "HEALTHY",
-    },
+    models: summarizeInfraModels(infra),
+    infrastructure: summarizeInfraOverall(infra),
+    gateway: composeGatewayChip(),
   };
 }
 

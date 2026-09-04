@@ -62,7 +62,12 @@ describe("voice settings discovery and safety", () => {
       'synth.cancel();',
       'window.addEventListener(PLATFORM_CONTEXT_EVENT, onContext)',
       'mediaRef.current?.getTracks?.().forEach((track) => track.stop())',
-      'navigator.mediaDevices.getUserMedia({ audio: true })',
+      // R2.1-D6.5: capture here borrows the shared AudioInputOwner claim rather
+      // than calling getUserMedia directly, so the marker is the claimed call.
+      'acquireInputClaim({ label: "settings.voice.permission-probe" })',
+      'acquireInputClaim({ label: "settings.voice.input-test" })',
+      'await openMicrophoneForClaim(claim)',
+      'releaseInputClaim()',
       'setTranscript(text)',
       "No voice recording or transcript is persisted by this settings test",
       'href="/settings/voice"',

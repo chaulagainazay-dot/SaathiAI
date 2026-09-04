@@ -14,6 +14,7 @@ import time
 from datetime import datetime
 
 from . import config
+from .runtime_paths import legacy_db_path
 
 
 def _notify(title: str, message: str):
@@ -164,7 +165,7 @@ def memory_backup():
     dst = config.ROOT / "data" / "backups"
     dst.mkdir(parents=True, exist_ok=True)
     try:
-        shutil.copy2(config.DB_PATH, dst / f"saathi-{ts}.db")
+        shutil.copy2(legacy_db_path(), dst / f"saathi-{ts}.db")
         # keep only the last 8 backups
         backups = sorted(dst.glob("saathi-*.db"))
         for old in backups[:-8]:
@@ -331,7 +332,7 @@ def memory_reflector():
         recent_feedback = []
         try:
             import sqlite3
-            conn = sqlite3.connect(config.DB_PATH, check_same_thread=False)
+            conn = sqlite3.connect(legacy_db_path(), check_same_thread=False)
             rows = conn.execute(
                 "SELECT kind, detail FROM feedback ORDER BY ts DESC LIMIT 20"
             ).fetchall()
@@ -619,6 +620,15 @@ def daily_linkedin_post():
 
 def auto_reddit_post():
     """10:05am: Auto-submit today's Reddit post via Brave browser JS (hands-free)."""
+    # Phase 19B: this submits to reddit.com by driving a browser through
+    # AppleScript, so no HTTP client appears anywhere in it. The mechanism is
+    # different; the side effect is the same, and it is the whole purpose of the
+    # job -- so the refusal belongs at the entry, before any window is opened.
+    from saathi.execution.egress import current_grant
+
+    if current_grant() is None:
+        return {"status": "blocked", "reason_code": "egress.not_governed",
+                "detail": "reddit auto-post must run through ExecutionGateway"}
     try:
         from .tools.reddit_outreach import get_pending_daily_posts, mark_daily_post_sent
         from .tools import n8n_tools

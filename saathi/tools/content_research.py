@@ -111,9 +111,19 @@ def _analyze_with_baadar(raw_topics: list[dict]) -> dict:
 
 
 def _get_token() -> str:
+    """Read the API token, honouring the process dotenv policy.
+
+    This used to load ``~/SaathiAI/.env`` directly — reaching into
+    the operator's *personal* checkout from whichever checkout happened to be
+    running, and doing so even when the run had explicitly opted out of dotenv.
+    Going through the policy means one configured file, or none.
+    """
     import os
-    from dotenv import load_dotenv
-    load_dotenv(Path.home() / "SaathiAI" / ".env")
+
+    from ..dotenv_policy import apply_dotenv
+
+    if not os.getenv("SAATHI_TOKEN"):
+        apply_dotenv()
     return os.getenv("SAATHI_TOKEN", "")
 
 

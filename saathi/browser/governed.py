@@ -53,6 +53,7 @@ from saathi.execution.toolintent import (
     builder,
 )
 from saathi.execution.universal import UniversalBoundary, default_boundary
+from saathi.runtime_paths import state_path
 
 logger = logging.getLogger(__name__)
 
@@ -61,10 +62,21 @@ _SECRET_RE = re.compile(
     r"(?:\s*[=:]\s*\S+)?"
 )
 
-# Workspace roots for downloads/uploads (tests override)
-DEFAULT_WORKSPACE = Path.home() / ".saathi" / "browser_workspace"
 MAX_DOWNLOAD_BYTES = 25 * 1024 * 1024
 MAX_UPLOAD_BYTES = 10 * 1024 * 1024
+
+
+# Workspace root for downloads/uploads (tests override via the constructor)
+def default_workspace() -> Path:
+    return state_path("browser_workspace")
+
+
+def __getattr__(name: str):
+    """Keep ``DEFAULT_WORKSPACE`` working without binding it at import time."""
+    if name == "DEFAULT_WORKSPACE":
+        return default_workspace()
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
 
 # Metrics (process-local; Control Center reads store + this)
 _metrics_lock = threading.Lock()
@@ -276,7 +288,7 @@ class BrowserAdapter:
     ):
         self.mode = mode
         self._service = service
-        self.workspace = Path(workspace) if workspace else DEFAULT_WORKSPACE
+        self.workspace = Path(workspace) if workspace else default_workspace()
         self.workspace.mkdir(parents=True, exist_ok=True)
         self.allowed_hosts = allowed_hosts
         self._production_adapter = production_adapter  # M17.26 governed live/sandbox

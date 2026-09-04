@@ -574,7 +574,22 @@ class UniversalBoundary:
         try:
             if fn is None:
                 raise RuntimeError(f"no handler registered for family={family}")
-            result = fn(intent, rec) or {}
+            # Phase 19: the handler is where a governed execution reaches a
+            # connector, so the egress grant opens exactly here -- after the
+            # boundary has admitted the intent, and around nothing else. It
+            # carries the intent's canonical digest, so a mutation performed
+            # under it is correlated to the action that was authorized.
+            from saathi.execution.egress import EgressGrant, governed_egress
+            from saathi.execution.record import tool_intent_digest
+
+            _grant = EgressGrant(
+                intent_id=str(getattr(intent, "intent_id", "") or ""),
+                intent_digest=tool_intent_digest(intent),
+                actor=str(getattr(intent, "actor_id", "") or ""),
+                operation=str(getattr(intent, "operation", "") or ""),
+            )
+            with governed_egress(_grant):
+                result = fn(intent, rec) or {}
             if not isinstance(result, dict):
                 result = {"status": "succeeded", "summary": safe_summary(result)}
             status = str(result.get("status", "succeeded")).lower()

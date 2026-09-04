@@ -179,7 +179,8 @@ export default function VoiceControl({ conversationId, chatMode, agent,
     const claim = acquireInputClaim({ label: "chat.VoiceControl" });
     inputClaimRef.current = claim;
     try {
-      await openMicrophoneForClaim(claim, { audio: true });
+      // No constraint argument: the DEFAULT_MIC_CONSTRAINTS contract applies.
+      await openMicrophoneForClaim(claim);
     } catch {
       claim.release();
       inputClaimRef.current = null;

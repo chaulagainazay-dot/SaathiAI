@@ -119,21 +119,17 @@ def exchange_code(code: str) -> dict:
 
 
 def _persist_token(token: str, person_urn: str):
-    """Write LINKEDIN_ACCESS_TOKEN and LINKEDIN_PERSON_URN to .env."""
-    env_path = config.ROOT / ".env"
-    text = env_path.read_text() if env_path.exists() else ""
+    """Write LINKEDIN_ACCESS_TOKEN and LINKEDIN_PERSON_URN to the configured dotenv file.
 
-    def _upsert(content: str, key: str, value: str) -> str:
-        import re
-        pattern = rf"^{key}=.*$"
-        line = f"{key}={value}"
-        if re.search(pattern, content, re.MULTILINE):
-            return re.sub(pattern, line, content, flags=re.MULTILINE)
-        return content.rstrip() + f"\n{line}\n"
+    Raises DotenvPolicyError when dotenv persistence is switched off, which is
+    the refusal: an isolated run has nowhere legitimate to store a live token.
+    """
+    from ..dotenv_policy import write_dotenv_values
 
-    text = _upsert(text, "LINKEDIN_ACCESS_TOKEN", token)
-    text = _upsert(text, "LINKEDIN_PERSON_URN", person_urn)
-    env_path.write_text(text)
+    write_dotenv_values({
+        "LINKEDIN_ACCESS_TOKEN": token,
+        "LINKEDIN_PERSON_URN": person_urn,
+    })
 
     # Hot-reload into current process
     os.environ["LINKEDIN_ACCESS_TOKEN"] = token
@@ -144,6 +140,12 @@ def _persist_token(token: str, person_urn: str):
 
 def post_text(text: str) -> dict:
     """Post a text-only update to LinkedIn."""
+    # Phase 19: the side effect itself is gated, not merely preceded by a
+    # check. An authorization that happened elsewhere cannot vouch for a
+    # call made from anywhere; being inside governed execution can.
+    from saathi.execution.egress import guard
+
+    guard("linkedin.share", operation="post_text")
     if not token_ok():
         return {"ok": False, "error": "Not connected — visit /api/v1/linkedin/auth first"}
 

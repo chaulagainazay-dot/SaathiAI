@@ -43,7 +43,7 @@ export { createEnergyVad, frameRms, frameZcr } from "./energy-vad.js";
 export { createPreRollBuffer } from "./pre-roll-buffer.js";
 export { createAudioFrameTap } from "./audio-frame-tap.js";
 export { createBargeInController } from "./barge-in-controller.js";
-export { DEFAULT_MIC_CONSTRAINTS } from "./input-owner.js";
+export { DEFAULT_MIC_CONSTRAINTS, resolveMicConstraints } from "./input-owner.js";
 export {
   STT_PRIVACY,
   nextUtteranceId,
@@ -81,3 +81,9 @@ export {
   applyDomainVocabulary,
   normalizeTranscriptText,
 } from "./domain-vocab.js";
+export {
+  createTurnBinding,
+  evaluateRecognitionSupport,
+  RECOGNITION_UNSUPPORTED_MESSAGE,
+} from "./recognition-binding.js";
+export { createSessionFinalizer } from "./session-finalizer.js";

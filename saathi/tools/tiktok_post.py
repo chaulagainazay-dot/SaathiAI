@@ -145,25 +145,19 @@ def exchange_code(code: str) -> dict:
 
 
 def _persist_token(token: str, open_id: str, expires_in: int = 0):
-    import re as _re
     from datetime import datetime as _dt, timezone as _tz
-    env_path = config.ROOT / ".env"
-    text = env_path.read_text() if env_path.exists() else ""
 
-    def _upsert(content: str, key: str, value: str) -> str:
-        pat = rf"^{key}=.*$"
-        line = f"{key}={value}"
-        if _re.search(pat, content, _re.MULTILINE):
-            return _re.sub(pat, line, content, flags=_re.MULTILINE)
-        return content.rstrip() + f"\n{line}\n"
+    from ..dotenv_policy import write_dotenv_values
 
-    text = _upsert(text, "TIKTOK_ACCESS_TOKEN", token)
-    text = _upsert(text, "TIKTOK_OPEN_ID",      open_id)
+    updates = {"TIKTOK_ACCESS_TOKEN": token, "TIKTOK_OPEN_ID": open_id}
     if expires_in:
         expiry_ts = int(_dt.now(_tz.utc).timestamp()) + expires_in
-        text = _upsert(text, "TIKTOK_TOKEN_EXPIRY", str(expiry_ts))
-        os.environ["TIKTOK_TOKEN_EXPIRY"] = str(expiry_ts)
-    env_path.write_text(text)
+        updates["TIKTOK_TOKEN_EXPIRY"] = str(expiry_ts)
+    # Raises DotenvPolicyError when dotenv persistence is switched off, which is
+    # the refusal: an isolated run has nowhere legitimate to store a live token.
+    write_dotenv_values(updates)
+    if expires_in:
+        os.environ["TIKTOK_TOKEN_EXPIRY"] = updates["TIKTOK_TOKEN_EXPIRY"]
     os.environ["TIKTOK_ACCESS_TOKEN"] = token
     os.environ["TIKTOK_OPEN_ID"]      = open_id
 
@@ -173,12 +167,12 @@ def token_expiry_days() -> int:
     from datetime import datetime as _dt, timezone as _tz
     expiry_str = os.environ.get("TIKTOK_TOKEN_EXPIRY", "")
     if not expiry_str:
-        # Try reading from .env
+        # Fall back to the configured dotenv file, if the policy allows one.
         try:
-            for line in (config.ROOT / ".env").read_text().splitlines():
-                if line.startswith("TIKTOK_TOKEN_EXPIRY="):
-                    expiry_str = line.split("=", 1)[1].strip()
-                    break
+            from ..dotenv_policy import apply_dotenv
+
+            apply_dotenv()
+            expiry_str = os.environ.get("TIKTOK_TOKEN_EXPIRY", "")
         except Exception:
             pass
     if not expiry_str:
@@ -207,6 +201,15 @@ def post_video(
     """
     if not token_ok():
         return {"ok": False, "error": "Not connected — visit /api/v1/tiktok/auth first"}
+    # Phase 19B: a public TikTok upload. This module imports `requests as _req`,
+    # and an alias is exactly what the first sweep could not see -- it matched
+    # receivers literally named httpx/requests, so an entire social publisher
+    # stayed invisible. Guarded after the connection check so an unconfigured
+    # caller still gets its own honest answer; past that point the upload is
+    # the only thing this function does.
+    from saathi.execution.egress import guard as _egress_guard
+
+    _egress_guard("tiktok.video_publish", operation="post_video")
 
     p = Path(video_path)
     if not p.exists():

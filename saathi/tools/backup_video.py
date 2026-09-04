@@ -142,6 +142,11 @@ def generate_runway(scene: dict, slug: str) -> dict:
         payload["promptImage"] = image_url
 
     try:
+        # Phase 19B: guarded at the call, not at function entry. These return
+        # early when unconfigured and several fall back to local generation,
+        # so an entry guard would break paths that never reach a network.
+        from saathi.execution.egress import guard as _egress_guard
+        _egress_guard("runway.image_to_video", operation="generate_runway")
         resp = requests.post(
             "https://api.dev.runwayml.com/v1/image_to_video",
             headers=headers,
@@ -220,6 +225,11 @@ def generate_kling(scene: dict, slug: str) -> dict:
     }
 
     try:
+        # Phase 19B: guarded at the call, not at function entry. These return
+        # early when unconfigured and several fall back to local generation,
+        # so an entry guard would break paths that never reach a network.
+        from saathi.execution.egress import guard as _egress_guard
+        _egress_guard("kling.text2video", operation="generate_kling")
         resp = requests.post(
             "https://api.klingai.com/v1/videos/text2video",
             headers=headers,
@@ -292,6 +302,11 @@ def generate_minimax(scene: dict, slug: str) -> dict:
     }
 
     try:
+        # Phase 19B: guarded at the call, not at function entry. These return
+        # early when unconfigured and several fall back to local generation,
+        # so an entry guard would break paths that never reach a network.
+        from saathi.execution.egress import guard as _egress_guard
+        _egress_guard("minimax.video_generation", operation="generate_minimax")
         resp = requests.post(
             "https://api.minimax.chat/v1/video_generation",
             headers=headers,
@@ -376,6 +391,11 @@ def generate_pika(scene: dict, slug: str) -> dict:
     }
 
     try:
+        # Phase 19B: guarded at the call, not at function entry. These return
+        # early when unconfigured and several fall back to local generation,
+        # so an entry guard would break paths that never reach a network.
+        from saathi.execution.egress import guard as _egress_guard
+        _egress_guard("pika.generate", operation="generate_pika")
         resp = requests.post(
             "https://api.pika.art/v1/generate",
             headers=headers,

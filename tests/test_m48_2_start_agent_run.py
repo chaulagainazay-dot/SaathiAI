@@ -168,6 +168,13 @@ def test_execute_path(orch):
     assert rec.outcome is not None
 
 
+class _FakeRequest:
+    """Enough of a Request for a handler called directly rather than over HTTP."""
+    headers: dict = {}
+    cookies: dict = {}
+    client = None
+
+
 def test_api_create_run_uses_facade(tmp_path, monkeypatch):
     from saathi.agent_runtime import api
 
@@ -180,15 +187,21 @@ def test_api_create_run_uses_facade(tmp_path, monkeypatch):
     import saathi.agent_runtime.service as svc
 
     monkeypatch.setattr(svc, "default_orchestrator", lambda: orch)
+    # `create_run` authorises a real actor (Phase 14). This test is about the
+    # facade, so it supplies an authorised caller; authorisation itself is
+    # covered by tests/test_phase14_execution_authority.py.
+    monkeypatch.setattr(api, "_authorize", lambda request, action, **kw: ("test-user", None))
 
-    ok = api.create_run(api.CreateRun(objective="implement x", strategy="build"))
+    ok = api.create_run(api.CreateRun(objective="implement x", strategy="build"),
+                        _FakeRequest())
     assert ok.get("run_id")
     bad = api.create_run(
         api.CreateRun(
             objective="x",
             authority_class="FINANCIAL_EXECUTION",
             requested_capability="plan",
-        )
+        ),
+        _FakeRequest(),
     )
     assert bad.get("ok") is False
     assert bad.get("error") == AgentRuntimeErrorCode.PROHIBITED_OPERATION

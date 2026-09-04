@@ -168,7 +168,7 @@ def test_legacy_compat_bridge_system_health():
     from saathi.tools.registry import execute_tool
 
     # governance may allow system_health for USER; then canonical path
-    out = execute_tool("system_health", {}, speaker_verified=True)
+    out = execute_tool("system_health", {})
     assert "error" not in out or out.get("error") != "unknown tool"
     # if governance allows, should have health or canonical marker
     if "error" not in out:

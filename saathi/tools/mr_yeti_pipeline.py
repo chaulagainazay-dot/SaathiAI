@@ -159,6 +159,11 @@ def _upload_facebook_video(video_path: str, caption: str) -> dict:
         for attempt in range(3):
             try:
                 with open(video_path, "rb") as f:
+                    # Phase 19B: guarded at the call, not at function entry. These return
+                    # early when unconfigured and several fall back to local generation,
+                    # so an entry guard would break paths that never reach a network.
+                    from saathi.execution.egress import guard as _egress_guard
+                    _egress_guard("facebook.videos", operation="_upload_facebook_video")
                     r = httpx.post(
                         f"https://graph.facebook.com/v19.0/{page_id}/videos",
                         data={"description": caption, "access_token": token},

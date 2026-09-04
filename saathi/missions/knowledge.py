@@ -19,6 +19,8 @@ import time
 import uuid
 from pathlib import Path
 
+from saathi.runtime_paths import state_path
+
 NODE_TYPES = (
     "company", "brand", "product", "service", "customer", "employee", "partner",
     "competitor", "document", "asset", "workflow", "automation", "prompt", "dataset",
@@ -35,7 +37,7 @@ _COLUMNS = ["id", "mission_id", "type", "key", "label", "data", "source", "updat
 
 class KnowledgeGraph:
     def __init__(self, db_path: str | None = None):
-        self.db_path = Path(db_path) if db_path else (Path.home() / ".saathi" / "mission_knowledge.db")
+        self.db_path = Path(db_path) if db_path else state_path("mission_knowledge.db")
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         with self._conn() as c:
             cols = ", ".join(f"{col} {'REAL' if col == 'updated' else 'TEXT'}" for col in _COLUMNS)

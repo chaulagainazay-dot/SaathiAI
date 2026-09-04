@@ -88,9 +88,54 @@ export async function submitIntakeForm(token, data) {
   if (!r.ok) throw new Error(`submit ${r.status}`); return r.json();
 }
 
-// Log in (sets the httponly session cookie so chat/writes are authorized).
+// D14: initialisation state. Bounded and non-secret — safe to call signed out.
+export async function bootstrapStatus() {
+  const r = await afetch(`${API_BASE}/api/v1/auth/bootstrap/status`, { cache: "no-store" });
+  if (!r.ok) throw new Error(`bootstrap status ${r.status}`);
+  return r.json();
+}
+
+// D14: first-owner provisioning. The operator token is read from the field and
+// posted once. It is never persisted here — not in localStorage, not in
+// sessionStorage, not in component state that outlives the submit — because a
+// bootstrap token that survives the request is a credential lying around.
+export async function bootstrapOwner(operatorToken, newPassword) {
+  const r = await afetch(`${API_BASE}/api/v1/auth/bootstrap`, {
+    method: "POST", credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ operator_token: operatorToken, new_password: newPassword }) });
+  const j = await r.json();
+  if (j.token) setSessionToken(j.token);
+  return j;
+}
+
+// D17: exchange the canonical owner session for a fresh derived platform
+// session. This is the same D15 provisioning route the shell already uses; it is
+// idempotent, so calling it when an identity exists returns that identity with a
+// new session rather than creating a second owner. Used to recover once from an
+// idle-expired platform token at the voice-runtime boundary.
+export async function exchangePlatformSession() {
+  try {
+    const r = await afetch(`${API_BASE}/api/v1/platform/bootstrap`, {
+      method: "POST", credentials: "include",
+      headers: { "Content-Type": "application/json" }, body: "{}",
+    });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok || !j.token) {
+      return { ok: false, status: r.status, code: j?.detail?.code || j?.error || "EXCHANGE_FAILED" };
+    }
+    return { ok: true, status: r.status, token: j.token };
+  } catch {
+    // A network failure is not a session failure. Reported as such so the
+    // caller stops instead of retrying an ambiguous request.
+    return { ok: false, status: 0, code: "EXCHANGE_UNREACHABLE" };
+  }
+}
+
+// Change the password of an already-initialised system. Requires a session;
+// this is no longer the route that creates the owner.
 export async function setPassword(current, newPassword) {
-  const r = await afetch(`${API_BASE}/api/v1/auth/change-password`, {
+  const r = await afetch(`${API_BASE}/api/v1/auth/password`, {
     method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ current: current || "", new_password: newPassword }) });
   const j = await r.json();
@@ -138,27 +183,17 @@ export async function rollbackLabPrompt(name, version) {
   return r.json();
 }
 
-// Voice turn: send recorded audio → { transcript, reply, reply_audio_b64, reply_audio_mime }.
-export async function sendVoice(blob, sessionId = "web") {
-  const fd = new FormData();
-  fd.append("file", blob, "speech.webm");
-  fd.append("session_id", sessionId);
-  fd.append("speak_reply", "true");
-  fd.append("require_wake", "false");
-  const r = await afetch(`${LOCAL_BASE}/api/v1/voice/command`, { method: "POST", body: fd });
-  if (!r.ok) throw new Error(`voice ${r.status}`);
-  return r.json();
-}
+// R2.1-D6.4: sendVoice() is gone. It wrapped the legacy upload endpoint
+// POST /api/v1/voice/command, and its only callers were the unclaimed
+// MediaRecorder surfaces removed in D6.2/D6.3. Live voice is the streaming
+// pipeline owned by VoiceSessionManager, not a blob upload. The endpoint still
+// exists and is still authenticated and bounded for direct API clients — see
+// the backend endpoint tests — but SaathiOS has no client wrapper for it.
+// Do not reintroduce one.
 
-// Enroll the owner's voice (speaker verification) — records the profile so Saathi
-// recognises you. Local-only capability (Mac has the mic + resemblyzer).
-export async function enrollVoice(blob) {
-  const fd = new FormData();
-  fd.append("file", blob, "enroll.webm");
-  const r = await afetch(`${LOCAL_BASE}/api/v1/voice/enroll`, { method: "POST", body: fd });
-  if (!r.ok) throw new Error(`enroll ${r.status}`);
-  return r.json();
-}
+// R2.1-S6: enrollVoice() is gone. It wrapped /api/v1/voice/enroll, which is
+// retired — a speaker profile is not a credential and never granted authority.
+// Do not reintroduce a client wrapper for it.
 
 // Talk to Saathi (the conversation brain). Same-origin cookie auth — the user
 // must be logged in on the dashboard. Returns { reply } or throws on 401.
@@ -602,21 +637,12 @@ export async function renamePasskey(pid, label) {
   return r.json();
 }
 
-export async function forgotPassword(email) {
-  const r = await afetch(`${API_BASE}/api/v1/auth/forgot`, {
-    method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email }),
-  });
-  return r.json();
-}
-
-export async function resetPassword(token, newPassword) {
-  const r = await afetch(`${API_BASE}/api/v1/auth/reset`, {
-    method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ token, new_password: newPassword }),
-  });
-  return r.json();
-}
+// D14: /api/v1/auth/forgot and /api/v1/auth/reset are retired and answer 410
+// from the auth gate. Both were unauthenticated credential paths -- forgot
+// minted a recovery token for any caller-supplied address, reset spent it by
+// writing a plaintext password into the server's .env. No client helper wraps
+// them any more, so no screen can call them by accident. First-owner setup is
+// bootstrapOwner(); changing a known password is setPassword().
 
 export async function fetchAuthAudit(limit = 40) {
   const r = await afetch(`${API_BASE}/api/v1/auth/audit?limit=${limit}`, { cache: "no-store" });

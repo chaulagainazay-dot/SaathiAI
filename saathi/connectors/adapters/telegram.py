@@ -23,6 +23,11 @@ class TelegramAdapter:
         if not token or not chat:
             return {"ok": False, "error": "bot_token and chat_id required"}
         try:
+            # Phase 19B: guarded at the call, not at function entry. These return
+            # early when unconfigured and several fall back to local generation,
+            # so an entry guard would break paths that never reach a network.
+            from saathi.execution.egress import guard as _egress_guard
+            _egress_guard("telegram.send_message", operation="send")
             r = httpx.post(_API.format(token=token, method="sendMessage"),
                            json={"chat_id": chat, "text": text}, timeout=15)
             j = r.json()

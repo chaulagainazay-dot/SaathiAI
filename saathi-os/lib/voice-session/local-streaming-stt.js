@@ -248,12 +248,17 @@ export function createLocalStreamingStt(opts = {}) {
       await maybeTranscribe({ forceFinal: true });
     },
 
-    async cancel() {
+    /** Synchronous cancellation boundary — see the browser adapter. */
+    cancelSync() {
       cancelled = true;
       running = false;
       pcmChunks = [];
       pcmLength = 0;
       recordVoiceTelemetry("stt_cancelled", { sessionId: getSessionId() });
+    },
+
+    async cancel() {
+      this.cancelSync();
     },
 
     async close() {

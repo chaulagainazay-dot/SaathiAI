@@ -15,6 +15,8 @@ import time
 import uuid
 from pathlib import Path
 
+from saathi.runtime_paths import state_path
+
 # reusable workflow templates keyed by director/role
 TEMPLATES = {
     "social_media": {"name": "Instagram Growth",
@@ -38,7 +40,7 @@ _STATUSES = ("todo", "doing", "done", "blocked")
 
 class WorkflowStore:
     def __init__(self, db_path: str | None = None):
-        self.db_path = Path(db_path) if db_path else (Path.home() / ".saathi" / "mission_workflows.db")
+        self.db_path = Path(db_path) if db_path else state_path("mission_workflows.db")
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         with self._conn() as c:
             c.execute("CREATE TABLE IF NOT EXISTS workflow(id TEXT PRIMARY KEY, mission_id TEXT, "

@@ -488,23 +488,36 @@ def platform_provenance():
 
 
 @router.post("/bootstrap")
-def platform_bootstrap(body: BootstrapBody):
+def platform_bootstrap(request: Request, body: BootstrapBody | None = None):
+    """Provision the platform identity for the authenticated canonical owner.
+
+    This route used to take no authentication at all. It sat under the
+    ``/api/v1/platform/*`` middleware exemption, defaulted every field of its
+    body, and with no password fell through to a passwordless owner-creation
+    path -- so an empty POST from any caller that could reach the port created
+    the owner, organisation and workspace, and permanently fixed who the
+    platform owner was. That is the same unauthenticated first-owner
+    provisioning D14 closed on the canonical side.
+
+    Now the platform identity is derived, never asserted: the installation must
+    be canonically ACTIVE, the caller must present a live canonical session
+    belonging to the owner, and the identity provisioned is read from the
+    security store. Every field of ``body`` is ignored for identity purposes and
+    is accepted only so existing clients do not break on a 422; nothing a caller
+    sends can choose the owner, its email, its role or its organisation.
+    """
+    from saathi.platform import canonical_link
+
     try:
-        if body.password:
-            return _svc().bootstrap_owner_secure(
-                email=body.email,
-                name=body.name,
-                password=body.password,
-                org_name=body.org_name,
-                workspace_name=body.workspace_name,
-            )
-        # M50 compatibility: passwordless bootstrap
-        return _svc().bootstrap_owner(
-            email=body.email,
-            name=body.name,
-            org_name=body.org_name,
-            workspace_name=body.workspace_name,
-        )
+        return canonical_link.provision_for_request(_svc(), request)
+    except canonical_link.CanonicalLinkError as e:
+        status = 401 if e.code in (
+            "CANONICAL_SESSION_REQUIRED", "CANONICAL_SESSION_INVALID",
+        ) else 403
+        if e.code in ("PLATFORM_STATE_CONTAMINATED", "PLATFORM_STATE_INCOMPLETE"):
+            status = 409
+        raise HTTPException(status_code=status,
+                            detail={"code": e.code, "message": e.message}) from e
     except PlatformContextError as e:
         raise _err(e) from e
 
@@ -513,19 +526,26 @@ def platform_bootstrap(body: BootstrapBody):
 def platform_login(body: LoginBody, request: Request):
     try:
         client = request.client.host if request.client else ""
-        if body.password or body.magic_code or body.method != "LOCAL_PASSWORD":
-            return _svc().authenticate_login(
-                email=body.email,
-                password=body.password,
-                method=body.method,
-                magic_code=body.magic_code,
-                org_id=body.org_id,
-                workspace_id=body.workspace_id,
-                client_key=f"{client}:{body.email}",
-            )
-        # M50 passwordless path (existing users without credentials)
-        return _svc().login(
-            email=body.email, org_id=body.org_id, workspace_id=body.workspace_id
+        # D15: there is deliberately no passwordless fallback here. This route
+        # used to end with "M50 passwordless path (existing users without
+        # credentials)", which minted a full platform session for any caller who
+        # supplied an existing user's email and nothing else. Together with the
+        # unauthenticated /platform/bootstrap it formed a complete chain: create
+        # owner@local anonymously, then log in as it, anonymously.
+        #
+        # A platform user with no credential is now unreachable by login, which
+        # is the intended shape: the identity provisioned from the canonical
+        # owner deliberately has no password of its own, and the only way to
+        # obtain a session for it is POST /api/v1/platform/bootstrap while
+        # holding a live canonical owner session.
+        return _svc().authenticate_login(
+            email=body.email,
+            password=body.password,
+            method=body.method,
+            magic_code=body.magic_code,
+            org_id=body.org_id,
+            workspace_id=body.workspace_id,
+            client_key=f"{client}:{body.email}",
         )
     except PlatformContextError as e:
         raise _err(e) from e

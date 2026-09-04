@@ -15,12 +15,13 @@ import time
 from pathlib import Path
 
 from saathi.missions.templates import departments_for
+from saathi.runtime_paths import state_path
 
 
 # ── Twin artifact store (kept separate from the Mission row) ───────────────────
 class TwinStore:
     def __init__(self, db_path: str | None = None):
-        self.db_path = Path(db_path) if db_path else (Path.home() / ".saathi" / "mission_twin.db")
+        self.db_path = Path(db_path) if db_path else state_path("mission_twin.db")
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         with self._conn() as c:
             c.execute("CREATE TABLE IF NOT EXISTS twin(mission_id TEXT PRIMARY KEY, "

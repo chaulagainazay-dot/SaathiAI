@@ -12,39 +12,45 @@ Three mechanisms, all local and safe (no self-rewriting of code):
 Run a cycle manually:  python -m saathi.selfimprove
 """
 import json
-import sqlite3
 import time
 from pathlib import Path
 
 from . import config
+from .legacy_store import legacy_connection, legacy_memory
 
 TUNING_PATH = config.ROOT / "data" / "tuning.json"
 
-_db = sqlite3.connect(config.DB_PATH, check_same_thread=False)
-_db.executescript("""
+_DDL = """
     CREATE TABLE IF NOT EXISTS feedback(
         id INTEGER PRIMARY KEY, kind TEXT, detail TEXT, ts REAL);
     CREATE TABLE IF NOT EXISTS verifications(
         id INTEGER PRIMARY KEY, sim REAL, verified INTEGER, ts REAL);
     CREATE TABLE IF NOT EXISTS improvements(
         id INTEGER PRIMARY KEY, summary TEXT, ts REAL);
-""")
+"""
+
+
+def _conn():
+    """Open on first use, not on import — see saathi/legacy_store.py."""
+    return legacy_connection("selfimprove", _DDL)
 
 
 # ---------- 1. feedback capture ----------
 
 def record_feedback(kind: str, detail: str = "") -> dict:
     """kind: 'wrong' | 'blocked' | 'error' | 'praise' | 'missed_wake' | ..."""
-    _db.execute("INSERT INTO feedback(kind, detail, ts) VALUES(?,?,?)",
-                (kind, detail, time.time()))
-    _db.commit()
+    conn = _conn()
+    conn.execute("INSERT INTO feedback(kind, detail, ts) VALUES(?,?,?)",
+                 (kind, detail, time.time()))
+    conn.commit()
     return {"recorded": kind}
 
 
 def record_verification(sim: float, verified: bool):
-    _db.execute("INSERT INTO verifications(sim, verified, ts) VALUES(?,?,?)",
-                (float(sim), 1 if verified else 0, time.time()))
-    _db.commit()
+    conn = _conn()
+    conn.execute("INSERT INTO verifications(sim, verified, ts) VALUES(?,?,?)",
+                 (float(sim), 1 if verified else 0, time.time()))
+    conn.commit()
 
 
 # ---------- 1b. continuous learning from conversation ----------
@@ -63,7 +69,6 @@ def learn_from_turn(user_text: str, reply: str) -> dict:
     _last_learn = now
 
     from .agent import SaathiAgent
-    from .memory import Memory
     agent = SaathiAgent()
     system = (
         "You build long-term memory for Saathi, Ajay's assistant. Read the exchange and "
@@ -85,15 +90,16 @@ def learn_from_turn(user_text: str, reply: str) -> dict:
     if not out or out.upper().startswith("NONE") or len(out) < 8:
         return {"learned": None}
 
-    mem = Memory(config.DB_PATH)
+    mem = legacy_memory()
     # dedupe: skip if a very similar fact already exists
     existing = mem.relevant_facts(out, limit=5)
     if any(_similar(out, e) for e in existing):
         return {"learned": None, "reason": "already known"}
     mem.save_fact(out, category="conversation")
-    _db.execute("INSERT INTO feedback(kind, detail, ts) VALUES(?,?,?)",
-                ("learned", out, now))
-    _db.commit()
+    conn = _conn()
+    conn.execute("INSERT INTO feedback(kind, detail, ts) VALUES(?,?,?)",
+                 ("learned", out, now))
+    conn.commit()
     return {"learned": out}
 
 
@@ -107,7 +113,7 @@ def _similar(a: str, b: str) -> bool:
 def reflect() -> dict:
     """Summarize recent failures into durable learnings stored as facts."""
     since = time.time() - 7 * 86400
-    rows = _db.execute(
+    rows = _conn().execute(
         "SELECT kind, detail FROM feedback WHERE ts > ? ORDER BY ts DESC LIMIT 60",
         (since,)).fetchall()
     if len(rows) < 3:
@@ -115,7 +121,6 @@ def reflect() -> dict:
 
     bundle = "\n".join(f"- [{k}] {d}" for k, d in rows)
     from .agent import SaathiAgent
-    from .memory import Memory
     agent = SaathiAgent()
     system = ("You improve a voice assistant named Saathi for Ajay. Below is recent "
               "feedback about what went wrong. Output 1-3 SHORT, concrete learnings "
@@ -123,7 +128,7 @@ def reflect() -> dict:
               "time. No preamble, just the lines.")
     learnings = agent.complete(system, bundle, max_tokens=250)
 
-    mem = Memory(config.DB_PATH)
+    mem = legacy_memory()
     saved = []
     for line in learnings.splitlines():
         line = line.strip("-• \t")
@@ -131,9 +136,10 @@ def reflect() -> dict:
             mem.save_fact(f"[self-learned] {line}", category="self_improvement")
             saved.append(line)
     summary = f"Reflected on {len(rows)} feedback items, saved {len(saved)} learnings."
-    _db.execute("INSERT INTO improvements(summary, ts) VALUES(?,?)",
-                (summary, time.time()))
-    _db.commit()
+    conn = _conn()
+    conn.execute("INSERT INTO improvements(summary, ts) VALUES(?,?)",
+                 (summary, time.time()))
+    conn.commit()
     return {"learnings": saved, "summary": summary}
 
 
@@ -145,7 +151,7 @@ def autotune_threshold() -> dict:
     Finds the natural gap between the 'noise/stranger' cluster (low scores) and
     the 'Ajay' cluster (high scores) and sets the threshold in that gap.
     """
-    sims = sorted(s for (s,) in _db.execute(
+    sims = sorted(s for (s,) in _conn().execute(
         "SELECT sim FROM verifications WHERE ts > ? AND sim > 0.2",
         (time.time() - 14 * 86400,)).fetchall())
     if len(sims) < 20:
@@ -181,8 +187,9 @@ def _read_tuning() -> dict:
 # ---------- status + full cycle ----------
 
 def status() -> dict:
-    fb = _db.execute("SELECT kind, COUNT(*) FROM feedback GROUP BY kind").fetchall()
-    last = _db.execute(
+    conn = _conn()
+    fb = conn.execute("SELECT kind, COUNT(*) FROM feedback GROUP BY kind").fetchall()
+    last = conn.execute(
         "SELECT summary, ts FROM improvements ORDER BY ts DESC LIMIT 1").fetchone()
     return {"feedback_counts": dict(fb),
             "tuning": _read_tuning(),
@@ -191,8 +198,7 @@ def status() -> dict:
 
 def what_learned(limit: int = 12) -> dict:
     """Recent things Saathi has learned about Ajay from talking with him."""
-    from .memory import Memory
-    mem = Memory(config.DB_PATH)
+    mem = legacy_memory()
     rows = mem.db.execute(
         "SELECT fact FROM facts WHERE category IN ('conversation','self_improvement') "
         "ORDER BY ts DESC LIMIT ?", (limit,)).fetchall()
