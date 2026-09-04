@@ -174,6 +174,19 @@ CALL_PATH_INVENTORY: tuple[CallPath, ...] = (
         notes="OpenAI-compatible HTTP engine; production_supported=false by default policy",
     ),
     CallPath(
+        path_id="engine_nvidia",
+        module="saathi.inference.adapters.nvidia",
+        entry="NvidiaEngine",
+        classification=PathClass.ENGINE_ADAPTER,
+        migration=MigrationStatus.INVENTORIED,
+        default_enabled=False,
+        uses_model_router=False,
+        uses_governed_gateway=False,
+        can_reach_cloud=True,
+        notes="NVIDIA hosted (moonshotai/kimi-k3); optional remote tier, "
+              "off by default, requires NVIDIA_API_KEY",
+    ),
+    CallPath(
         path_id="engine_fake",
         module="saathi.inference.adapters.fake",
         entry="FakeEngine",

@@ -23,6 +23,7 @@ CREDENTIAL_ENV_NAMES: frozenset[str] = frozenset({
     "OPENROUTER_API_KEY",
     "OLLAMA_HOST",
     "OLLAMA_URL",
+    "NVIDIA_API_KEY",
 })
 
 
@@ -47,6 +48,10 @@ def env_availability(name: str) -> bool:
         return credential_present("OPENROUTER_API_KEY")
     if name.startswith("ollama/"):
         return bool(os.getenv("OLLAMA_HOST") or os.getenv("OLLAMA_URL"))
+    # NVIDIA hosted models (moonshotai/kimi-k3 and any later additions) share
+    # one key, the same way OpenRouter serves several families here.
+    if name.startswith(("nvidia/", "moonshotai/")):
+        return credential_present("NVIDIA_API_KEY")
     return False
 
 
