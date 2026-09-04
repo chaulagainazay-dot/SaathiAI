@@ -7,6 +7,7 @@ without needing a second interpreter or a real cross-worktree install.
 from __future__ import annotations
 
 import importlib.util
+import os
 import pathlib
 import types
 
@@ -31,6 +32,12 @@ class TestGuardIsWiredUp:
     def test_repo_root_is_this_checkout(self):
         mod = _load_conftest_module()
         assert mod.REPO_ROOT == REPO_ROOT
+
+    def test_private_reload_preserves_the_session_home(self):
+        original_home = os.environ["HOME"]
+        mod = _load_conftest_module()
+        assert mod._TEST_HOME == original_home
+        assert os.environ["HOME"] == original_home
 
 
 class TestGuardAcceptsLocalPackage:

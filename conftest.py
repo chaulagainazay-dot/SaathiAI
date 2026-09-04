@@ -94,15 +94,22 @@ import tempfile as _tempfile
 # Opt out with SAATHI_TEST_REAL_HOME=1 when a test genuinely needs the real
 # home directory.
 if not _os.environ.get("SAATHI_TEST_REAL_HOME"):
-    # realpath: on macOS mkdtemp returns /var/... which is a symlink to
-    # /private/var/.... Code that compares a resolved candidate path against
-    # $HOME then mismatches. Resolve here so the test environment matches a
-    # normal unsymlinked home.
-    _TEST_HOME = _os.path.realpath(_tempfile.mkdtemp(prefix="saathi-test-home-"))
+    # Re-importing this file is part of the import-guard test suite. Reuse the
+    # session marker so a private module load cannot silently replace HOME
+    # after other test modules have captured their historical defaults.
+    _TEST_HOME = _os.environ.get("SAATHI_TEST_HOME")
+    if not _TEST_HOME:
+        # realpath: on macOS mkdtemp returns /var/... which is a symlink to
+        # /private/var/.... Code that compares a resolved candidate path
+        # against $HOME then mismatches. Resolve here so the test environment
+        # matches a normal unsymlinked home.
+        _TEST_HOME = _os.path.realpath(
+            _tempfile.mkdtemp(prefix="saathi-test-home-")
+        )
+        _os.environ["SAATHI_TEST_HOME"] = _TEST_HOME
     _os.makedirs(_os.path.join(_TEST_HOME, ".saathi"), exist_ok=True)
     _os.environ["HOME"] = _TEST_HOME
     _os.environ["USERPROFILE"] = _TEST_HOME          # Windows equivalent
-    _os.environ.setdefault("SAATHI_TEST_HOME", _TEST_HOME)
 
 # Evidence writers persist under the repository tree. Without this, a test run
 # rewrites tracked files under docs/evidence/** — observed during TEST-INFRA-1,
