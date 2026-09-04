@@ -83,11 +83,13 @@ export function normalizeQuote(row) {
   const ltp = num(row.ltp ?? row.lastTradedPrice ?? row.last_price ?? row.close ?? row.lastPrice);
   if (ltp === null) return null; // a quote without a price is not a quote
 
+  // An unknown previous close stays null. Defaulting it to ltp would render a
+  // confident 0.00% day change that the feed never actually reported.
   const prevClose = num(row.previousClose ?? row.prev_close ?? row.previousClosing ?? row.pc);
   return {
     symbol,
     ltp,
-    prevClose: prevClose === null ? ltp : prevClose,
+    prevClose,
     open: num(row.open ?? row.openPrice),
     high: num(row.high ?? row.highPrice),
     low: num(row.low ?? row.lowPrice),
@@ -112,11 +114,14 @@ export function mergeLiveQuotes(snapshotStocks, liveQuotes) {
     const q = byS.get(s.symbol);
     if (!q) return s;
     const ltp = q.ltp;
-    const prevClose = q.prevClose ?? s.prevClose;
+    // The snapshot's previous close belongs to the snapshot's trading day; pairing
+    // it with a live price would produce a wrong day change. Mark it unavailable.
+    const hasPrev = q.prevClose !== null && q.prevClose !== undefined;
     return {
       ...s,
       ltp,
-      prevClose,
+      prevClose: hasPrev ? q.prevClose : null,
+      changeUnavailable: !hasPrev,
       // derived valuation must follow the live price, not stay stale
       pe: s.eps > 0 ? +(ltp / s.eps).toFixed(2) : null,
       pb: s.bookValue > 0 ? +(ltp / s.bookValue).toFixed(2) : null,

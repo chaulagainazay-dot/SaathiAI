@@ -163,3 +163,24 @@ test("client never calls the vendor directly — only our own route", () => {
   assert.ok(!src.includes("NEPSE_FEED_URL"), "client must not know the vendor URL");
   assert.ok(!src.includes("NEPSE_FEED_KEY"), "client must never see the credential");
 });
+
+// ── unknown previous close must stay unknown (ShareBazaar-shaped feeds) ──────────
+test("a feed with no previous close does not fake one", () => {
+  const q = normalizeQuote({ symbol: "NABIL", ltp: 539, last_updated: "2026-09-04T04:43:27Z" });
+  assert.equal(q.ltp, 539);
+  assert.equal(q.prevClose, null, "must not default prevClose to ltp (would show a fake 0.00%)");
+});
+
+test("merging an LTP-only quote marks the day change unavailable", () => {
+  const merged = mergeLiveQuotes(SNAP, [{ symbol: "NABIL", ltp: 539, prevClose: null }]);
+  const n = merged.find((s) => s.symbol === "NABIL");
+  assert.equal(n.ltp, 539);
+  assert.equal(n.prevClose, null);
+  assert.equal(n.changeUnavailable, true);
+  // the stale snapshot close (495) must NOT be paired with a live price
+  assert.notEqual(n.prevClose, 495);
+});
+
+test("provider error objects are not quotes", () => {
+  assert.equal(normalizeQuote({ error: "Error retrieving stock data" }), null);
+});

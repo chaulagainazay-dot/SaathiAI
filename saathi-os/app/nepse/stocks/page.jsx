@@ -64,13 +64,17 @@ export default function ScreenerPage() {
           </tr></thead>
           <tbody>
             {result.rows.map((r) => {
-              const chg = dayChangePct(r.ltp, r.prevClose);
+              const noChange = r.changeUnavailable || r.prevClose == null;
+              const chg = noChange ? null : dayChangePct(r.ltp, r.prevClose);
               return (
                 <tr key={r.symbol}>
                   <td className="strong"><a href={`/nepse/stocks/${r.symbol}`}>{r.symbol}</a>
                     <div style={{ color: "var(--text-faint)", fontSize: "0.72rem", fontWeight: 400 }}>{r.sector}</div></td>
                   <td className="rt num">{fmtRs(r.ltp)}</td>
-                  <td className={`rt num ${chg >= 0 ? "nepse-up" : "nepse-down"}`}>{fmtPct(chg)}</td>
+                  <td className={`rt num ${noChange ? "" : chg >= 0 ? "nepse-up" : "nepse-down"}`}
+                      title={noChange ? "Feed does not report a previous close" : undefined}>
+                    {noChange ? "—" : fmtPct(chg)}
+                  </td>
                   <td className="rt num">{r.score}</td>
                   <td><span className={`nepse-badge ${r.signal === "Buy" ? "up" : r.signal === "Sell" ? "down" : "neutral"}`}>{r.signal}</span></td>
                   <td>{r.evaluation}</td>
