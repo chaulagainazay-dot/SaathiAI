@@ -272,3 +272,46 @@ test("narration prompt carries the facts it permits, including unavailability", 
 test("no narration for an analysis that failed", () => {
   assert.equal(narrationPrompt(analyzeChart(uptrend(5), {}, {})), null);
 });
+
+// ── narration guard: the control, not the hope ───────────────────────────────────
+import { verifyNarration, verifyNotAdvice, gateNarration, numbersIn } from "./analysis/guard.js";
+
+const FACTS = "Price: 539  Support: 533.06 (3x)  Resistance: 549.72 (2x)  RSI 42.48  ATR 8.54";
+
+test("a narration reusing only permitted figures passes", () => {
+  const n = "Price sits at 539, under resistance at 549.72, with support at 533.06. RSI is 42.48.";
+  assert.equal(verifyNarration(n, FACTS).ok, true);
+});
+
+test("an invented price is caught and the sentence flagged", () => {
+  const n = "Price sits at 539 and should run to 620 once it clears resistance.";
+  const v = verifyNarration(n, FACTS);
+  assert.equal(v.ok, false);
+  assert.ok(v.invented.includes("620"));
+  assert.ok(v.flaggedSentences.length >= 1);
+});
+
+test("rounded restatements of permitted figures are allowed", () => {
+  assert.equal(verifyNarration("RSI is about 42 and ATR near 8.5.", FACTS).ok, true);
+});
+
+test("dates and standard indicator periods do not trip the guard", () => {
+  const n = "As of 2026-09-03 the RSI 14 and MACD 12/26/9 readings hold.";
+  assert.equal(verifyNarration(n, FACTS).ok, true);
+});
+
+test("advice phrasing is rejected even when the numbers are clean", () => {
+  assert.equal(verifyNotAdvice("You should buy this now.").ok, false);
+  assert.equal(verifyNotAdvice("A close above resistance would confirm the move.").ok, true);
+  assert.equal(verifyNotAdvice("This will definitely rise.").ok, false);
+});
+
+test("the gate withholds on either failure and names which", () => {
+  assert.equal(gateNarration("Target 999 next.", FACTS).reason, "INVENTED_NUMBERS");
+  assert.equal(gateNarration("You should buy this.", FACTS).reason, "READS_AS_ADVICE");
+  assert.equal(gateNarration("Price 539 faces resistance at 549.72.", FACTS).ok, true);
+});
+
+test("numbersIn strips thousands separators so 78,949 matches 78949", () => {
+  assert.ok(numbersIn("price 78,949.66").includes("78949.66"));
+});

@@ -21,6 +21,8 @@ export default function AnalysisPage() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [narr, setNarr] = useState(null);
+  const [narrating, setNarrating] = useState(false);
 
   const run = useCallback(async (m, s) => {
     setLoading(true); setError(""); setData(null);
@@ -33,7 +35,23 @@ export default function AnalysisPage() {
     setLoading(false);
   }, []);
 
-  useEffect(() => { run(market, symbol); }, [run, market, symbol]);
+  // Narration asks the server to explain the analysis it already computed. The
+  // browser sends only market+symbol — never a prompt — and the server withholds
+  // any reply that introduces a number or reads as advice.
+  const narrate = useCallback(async () => {
+    setNarrating(true); setNarr(null);
+    try {
+      const r = await fetch("/api/analysis/narrate", {
+        method: "POST", headers: { "content-type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ market, symbol }),
+      });
+      setNarr(await r.json());
+    } catch { setNarr({ ok: false, reason: "unreachable" }); }
+    setNarrating(false);
+  }, [market, symbol]);
+
+  useEffect(() => { run(market, symbol); setNarr(null); }, [run, market, symbol]);
 
   const list = market === "crypto" ? CRYPTO : NEPSE;
   const a = data;
@@ -68,6 +86,9 @@ export default function AnalysisPage() {
           </select>
           <button className="nepse-btn" onClick={() => run(market, symbol)} disabled={loading}>
             {loading ? "analysing…" : "re-run"}
+          </button>
+          <button className="nepse-btn ghost" onClick={narrate} disabled={!data || narrating}>
+            {narrating ? "explaining…" : "explain this"}
           </button>
         </div>
 
@@ -214,6 +235,39 @@ export default function AnalysisPage() {
                 </p>
               </div>
             </div>
+
+            {narr ? (
+              <div className="nepse-card" style={{ marginTop: "1rem", borderLeft: "3px solid var(--accent)" }}>
+                <div className="nepse-row" style={{ justifyContent: "space-between", alignItems: "baseline" }}>
+                  <h3>Explanation</h3>
+                  <span className="mono" style={{ fontSize: "0.66rem", color: "var(--text-faint)" }}>
+                    {narr.model ? `model ${narr.model}` : ""}
+                  </span>
+                </div>
+                {narr.ok && narr.narration ? (
+                  <>
+                    <div style={{ fontSize: "0.9rem", lineHeight: 1.7, whiteSpace: "pre-line", marginTop: "0.6rem" }}>
+                      {narr.narration}
+                    </div>
+                    <p className="mono" style={{ fontSize: "0.68rem", color: "var(--text-faint)", marginTop: "0.9rem" }}>
+                      Verified: {narr.gate?.numeric?.checked ?? 0} figures checked against the computed facts — none invented.
+                    </p>
+                  </>
+                ) : narr.withheld ? (
+                  <div className="nepse-callout" style={{ borderLeftColor: "var(--down)", background: "var(--down-soft)", marginTop: "0.6rem" }}>
+                    <b>Explanation withheld.</b> The model {narr.gate?.reason === "INVENTED_NUMBERS"
+                      ? `introduced ${narr.gate.numeric.invented.length} figure(s) absent from the computed facts (${narr.gate.numeric.invented.slice(0, 4).join(", ")})`
+                      : "produced text that reads as advice"}. The analysis above stands on its own.
+                  </div>
+                ) : (
+                  <p style={{ fontSize: "0.85rem", color: "var(--text-dim)", marginTop: "0.6rem" }}>
+                    {narr.reason === "NOT_SIGNED_IN"
+                      ? "Sign in to have this explained — narration calls a model, so it stays behind auth."
+                      : `Could not explain: ${narr.reason}${narr.detail ? ` — ${narr.detail}` : ""}.`} The computed analysis above is unaffected.
+                  </p>
+                )}
+              </div>
+            ) : null}
 
             <p className="mono" style={{ fontSize: "0.7rem", color: "var(--text-faint)", marginTop: "1.2rem", lineHeight: 1.6 }}>
               {a.authority.note}

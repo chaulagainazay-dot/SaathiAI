@@ -2532,6 +2532,60 @@ def _rate_ok(request: Request) -> bool:
     return True
 
 
+class NarrateIn(BaseModel):
+    """Facts block for chart-analysis narration. The CLIENT NEVER SUPPLIES THE SYSTEM
+    PROMPT — only the computed facts — so this endpoint cannot be repurposed as a
+    general 'run my prompt' hole."""
+
+    facts: str
+    question: str = ""
+
+
+# Fixed server-side. Not overridable by any caller.
+_NARRATE_SYSTEM = (
+    "You explain a chart analysis that has ALREADY been computed by a deterministic "
+    "engine. HARD RULES: (1) Every number you use must appear verbatim in the FACTS. "
+    "Never compute, round, extrapolate or invent a price, level, percentage or "
+    "indicator value. (2) If something is marked unavailable, say it is unavailable; "
+    "never estimate it. (3) Do not give investment advice, a buy/sell recommendation, "
+    "or a position size — explain what the chart shows and what would change it. "
+    "(4) Lead with what conflicts, not only what agrees. (5) If the verdict is AVOID "
+    "or WAIT, say so plainly rather than finding something encouraging to say. "
+    "Write 3-5 short paragraphs for an experienced swing trader."
+)
+
+_NARRATE_MAX_FACTS = 12000
+
+
+@app.post("/api/v1/analysis/narrate")
+def analysis_narrate(body: NarrateIn, request: Request):
+    """Narrate a computed chart analysis. Explanation only — never a new number."""
+    if not _rate_ok(request):
+        return {"ok": False, "reason": "RATE_LIMITED"}
+    facts = (body.facts or "").strip()
+    if not facts:
+        return {"ok": False, "reason": "NO_FACTS"}
+    if len(facts) > _NARRATE_MAX_FACTS:
+        return {"ok": False, "reason": "FACTS_TOO_LARGE"}
+
+    from saathi import llm
+    from saathi.model_router import ModelLabel
+
+    prompt = facts if not body.question else f"{facts}\n\nQUESTION: {body.question}"
+    try:
+        res = llm.generate(
+            ModelLabel.STANDARD,
+            prompt,
+            system=_NARRATE_SYSTEM,
+            max_tokens=900,
+            timeout=60,
+            caller_id="analysis_narrate",
+        )
+        return {"ok": True, "text": getattr(res, "text", "") or "", "model": getattr(res, "model", "")}
+    except Exception as exc:  # narration is optional — never break the analysis
+        return {"ok": False, "reason": "LLM_UNAVAILABLE", "detail": str(exc)[:200]}
+
+
 @app.post("/api/v1/agent/chat")
 def chat(body: ChatIn, request: Request):
     if not _rate_ok(request):
