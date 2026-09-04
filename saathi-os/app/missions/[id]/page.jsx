@@ -25,7 +25,7 @@ export default function MissionDetail() {
   if (!d || !d.mission) return <div className="page" style={{ padding: 40, opacity: 0.5 }}>Loading mission…</div>;
 
   const m = d.mission;
-  const color = DEPT_COLOR[m.department] || "#9B6BFF";
+  const color = DEPT_COLOR[m.department] || "var(--accent)";
   const k = d.kpis;
   const pct = (x) => `${Math.round((x || 0) * 100)}%`;
 

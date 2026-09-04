@@ -6,7 +6,7 @@ import MissionNav from "@/components/MissionNav";
 import { fetchBrand, registerVoice, activateVoice, fetchVoicePackage,
   fetchVoiceExperiments, createVoiceExperiment } from "@/lib/api";
 
-const ACCENT = "#9B6BFF", TEAL = "#00BFA5", RED = "#FF5A5A";
+const ACCENT = "var(--accent)", TEAL = "#00BFA5", RED = "#FF5A5A";
 
 export default function VoicePage() {
   const { id } = useParams();

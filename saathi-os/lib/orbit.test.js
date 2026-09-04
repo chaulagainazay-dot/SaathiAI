@@ -175,3 +175,61 @@ test("orbit surface claims no command authority", () => {
     assert.ok(!src.includes(banned), `orbit must not expose ${banned}`);
   }
 });
+
+// ── live data mapping (orbit-data) ───────────────────────────────────────────────
+import { workerState, workerTier, workerLabel, mapWorkersToAgents, SOURCE_LABEL } from "./orbit-data.js";
+
+test("trust problems outrank health when mapping worker state", () => {
+  assert.equal(workerState({ health_state: "HEALTHY", trust_state: "QUARANTINED" }), "blocked");
+  assert.equal(workerState({ health_state: "HEALTHY", trust_state: "REVOKED" }), "blocked");
+});
+
+test("worker health maps to the orbit vocabulary", () => {
+  assert.equal(workerState({ health_state: "HEALTHY", trust_state: "TRUSTED_LOCAL" }), "active");
+  assert.equal(workerState({ health_state: "DEGRADED" }), "degraded");
+  assert.equal(workerState({ health_state: "OFFLINE" }), "error");
+  assert.equal(workerState({ trust_state: "PENDING_ADMISSION" }), "pending");
+});
+
+test("unknown worker health is neutral, never optimistically active", () => {
+  assert.equal(workerState({}), "unknown");
+  assert.equal(statusToneFor(workerState({})), "neutral");
+  assert.notEqual(statusToneFor(workerState({})), "success");
+});
+
+test("tiering puts primary capabilities on the inner ring", () => {
+  assert.equal(workerTier({ worker_id: "research-01", capability_set: [] }), 1);
+  assert.equal(workerTier({ worker_id: "w1", capability_set: ["trading.paper"] }), 1);
+  assert.equal(workerTier({ worker_id: "misc-9", capability_set: ["thumbnails"] }), 2);
+});
+
+test("labels never invent a name", () => {
+  assert.equal(workerLabel({ worker_id: "ops_watchdog@host" }), "ops watchdog");
+  assert.equal(workerLabel({}), "worker");
+});
+
+test("mapping produces valid orbit nodes", () => {
+  const agents = mapWorkersToAgents([
+    { worker_id: "research-01", health_state: "HEALTHY", trust_state: "TRUSTED_LOCAL", active_lease_count: 2 },
+    { worker_id: "misc-2", health_state: "DEGRADED" },
+  ]);
+  assert.equal(agents.length, 2);
+  for (const a of agents) {
+    assert.ok(a.id && a.label && a.detail);
+    assert.ok([1, 2].includes(a.tier));
+  }
+  const l = layoutOrbit(agents, { size: 800 });
+  assert.equal(l.nodes.length, 2);
+});
+
+test("non-live sources are labelled honestly", () => {
+  assert.match(SOURCE_LABEL.fallback, /NOT LIVE/);
+  assert.match(SOURCE_LABEL.unauthenticated, /REFERENCE SHAPE/);
+  assert.equal(SOURCE_LABEL.live, "LIVE FLEET");
+});
+
+test("page states its data source", () => {
+  const src = readFileSync(join(ROOT, "app/orbit/page.jsx"), "utf8");
+  assert.match(src, /orbit-source/);
+  assert.match(src, /SOURCE_LABEL\[source\]/);
+});

@@ -8,11 +8,11 @@ import { useMemo, useState } from "react";
 import "./orbit.css";
 import AgentOrbit from "@/components/orbit/AgentOrbit";
 import { orbitSummary, statusToneFor } from "@/lib/orbit";
+import { useOrbitAgents, SOURCE_LABEL } from "@/lib/orbit-data";
 import { Panel, Eyebrow, Heading, Text, StatusBadge, Divider, Stack } from "@/components/ui";
 
-// The SaathiOS specialist roster. Tier 1 = primary functions the operator steers by,
-// tier 2 = supporting agents. `state` is wired to live fleet data in the BFF; this
-// roster is the shape that view expects.
+// Reference shape — the roster the view expects. Used only when the live fleet is
+// unreachable or the operator is signed out, and the surface SAYS so when it is.
 const ROSTER = [
   { id: "chief", label: "Chief of Staff", tier: 1, state: "active", detail: "Routes work, holds the daily plan" },
   { id: "research", label: "Research", tier: 1, state: "active", detail: "Evidence, theses, challenge protocol" },
@@ -33,8 +33,10 @@ const ROSTER = [
 
 export default function OrbitPage() {
   const [selectedId, setSelectedId] = useState("");
-  const summary = useMemo(() => orbitSummary(ROSTER), []);
-  const selected = ROSTER.find((a) => a.id === selectedId) || null;
+  const { agents, source, loading, error, reload } = useOrbitAgents(ROSTER);
+  const summary = useMemo(() => orbitSummary(agents), [agents]);
+  const selected = agents.find((a) => a.id === selectedId) || null;
+  const isLive = source === "live";
 
   return (
     <div className="orbit-root page shell-page">
@@ -46,11 +48,17 @@ export default function OrbitPage() {
             Every specialist your system runs, in one field. Colour is state, distance is
             tier, edges are reporting lines. Read-only — this surface observes, it never commands.
           </Text>
+          <div className="orbit-source" data-testid="orbit-source">
+            <StatusBadge status={isLive ? "success" : "warning"} label={SOURCE_LABEL[source]} />
+            {loading ? <Text tone="muted" size="xs">loading fleet…</Text> : null}
+            {error ? <Text tone="warning" size="xs">{error}</Text> : null}
+            <button type="button" className="orbit-reload" onClick={reload}>refresh</button>
+          </div>
         </div>
 
         <Panel>
           <AgentOrbit
-            agents={ROSTER}
+            agents={agents}
             selectedId={selectedId}
             onSelect={(n) => setSelectedId(n.id === selectedId ? "" : n.id)}
           />

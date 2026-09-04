@@ -33,7 +33,7 @@ export default function MobileMe() {
             style={{ display: "flex", alignItems: "center", gap: 12, padding: 16, cursor: "pointer", textAlign: "left" }}>
             <span style={{ width: 10, height: 10, borderRadius: "50%", background: DEPARTMENTS[l.dept]?.color,
               boxShadow: `0 0 10px ${DEPARTMENTS[l.dept]?.color}` }} />
-            <span style={{ flex: 1, fontSize: 15, color: "var(--color-ink-100)" }}>{l.label}</span>
+            <span style={{ flex: 1, fontSize: 15, color: "var(--text-primary)" }}>{l.label}</span>
             <span style={{ color: "var(--color-ink-400)" }}>→</span>
           </button>
         ))}
@@ -47,7 +47,7 @@ export default function MobileMe() {
           Works offline · installable
         </div>
         <button onClick={() => router.push("/security")}
-          style={{ marginTop: 12, background: "none", border: "none", color: "#9B6BFF", fontSize: 13, cursor: "pointer", padding: 0, fontWeight: 600 }}>
+          style={{ marginTop: 12, background: "none", border: "none", color: "var(--accent)", fontSize: 13, cursor: "pointer", padding: 0, fontWeight: 600 }}>
           🔐 Account Security →
         </button>
       </div>

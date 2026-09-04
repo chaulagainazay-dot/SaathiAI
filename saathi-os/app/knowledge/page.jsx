@@ -21,14 +21,14 @@ const NODE_TYPE_META = {
   asset: { label: "Asset", color: "#6E72F0" },
   workflow: { label: "Workflow", color: "#35E0D0" },
   automation: { label: "Automation", color: "#35E0D0" },
-  prompt: { label: "Prompt", color: "#9B6BFF" },
-  dataset: { label: "Dataset", color: "#9B6BFF" },
+  prompt: { label: "Prompt", color: "var(--accent)" },
+  dataset: { label: "Dataset", color: "var(--accent)" },
   evidence: { label: "Evidence", color: "#6E72F0" },
   learning: { label: "Learning", color: "#4FD07A" },
   revenue: { label: "Revenue", color: "#4FD07A" },
   kpi: { label: "KPI", color: "#4FD07A" },
   timeline: { label: "Timeline", color: "#C7CEDA" },
-  decision: { label: "Decision", color: "#9B6BFF" },
+  decision: { label: "Decision", color: "var(--accent)" },
   risk: { label: "Risk", color: "#FF5252" },
   opportunity: { label: "Opportunity", color: "#4FD07A" },
   account: { label: "Account", color: "#3E7BFF" },
@@ -311,7 +311,7 @@ export default function Knowledge() {
                 marginTop: 16,
                 padding: "10px 20px",
                 borderRadius: 12,
-                background: "#9B6BFF",
+                background: "var(--accent)",
                 color: "#fff",
                 fontSize: 14,
                 fontWeight: 600,
@@ -351,7 +351,7 @@ export default function Knowledge() {
                         boxShadow: `0 0 8px ${meta.color}`,
                       }}
                     />
-                    <span style={{ fontWeight: 600, fontSize: 14, color: "var(--color-ink-100)" }}>
+                    <span style={{ fontWeight: 600, fontSize: 14, color: "var(--text-primary)" }}>
                       {meta.label}
                     </span>
                     <Pill color={meta.color} filled={0.16}>

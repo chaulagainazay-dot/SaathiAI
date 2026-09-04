@@ -45,8 +45,8 @@ export default function EvidenceDashboard() {
         <div style={{ fontSize: 13, opacity: 0.5 }}>
           Every department writes one schema · the CEO queries one truth · {data.total} records total (last 30 days).
         </div>
-        <a href="/learning" style={{ fontSize: 12.5, fontWeight: 600, color: "#9B6BFF", textDecoration: "none",
-          padding: "8px 14px", borderRadius: 10, border: "1px solid #9B6BFF66", whiteSpace: "nowrap" }}>
+        <a href="/learning" style={{ fontSize: 12.5, fontWeight: 600, color: "var(--accent)", textDecoration: "none",
+          padding: "8px 14px", borderRadius: 10, border: "1px solid var(--accent)66", whiteSpace: "nowrap" }}>
           🔎 Learning Directors →</a>
       </div>
 

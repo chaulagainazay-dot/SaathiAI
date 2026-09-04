@@ -20,7 +20,7 @@ export const viewport = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className={`${jura.variable} ${outfit.variable} ${geist.variable}`}>
+    <html lang="en" data-theme="light" className={`${jura.variable} ${outfit.variable} ${geist.variable}`}>
       <body>
         <div className="aurora" />
         <Shell>{children}</Shell>

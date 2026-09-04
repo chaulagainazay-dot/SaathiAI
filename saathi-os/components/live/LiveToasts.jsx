@@ -24,7 +24,7 @@ function Toast({ n, onClose }) {
         <button onClick={onClose} style={{ marginLeft: "auto", background: "none", border: "none",
           color: "var(--color-ink-500)", cursor: "pointer", fontSize: 15, lineHeight: 1 }}>×</button>
       </div>
-      <div style={{ fontSize: 13.5, color: "var(--color-ink-100)", margin: "8px 0 12px" }}>{n.title}</div>
+      <div style={{ fontSize: 13.5, color: "var(--text-primary)", margin: "8px 0 12px" }}>{n.title}</div>
       <div style={{ display: "flex", gap: 8 }}>
         <button onClick={onClose} style={{ padding: "7px 16px", borderRadius: 999, fontSize: 11, cursor: "pointer",
           color: accent, background: `${accent}22`, border: `1px solid ${accent}55` }}>{n.action}</button>
