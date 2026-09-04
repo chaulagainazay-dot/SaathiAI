@@ -4,6 +4,9 @@ import asyncio
 import logging
 from datetime import datetime
 
+import pytest
+
+from saathi.execution.errors import AuthorizationException
 from saathi.execution.toolintent import ToolIntent
 from saathi.execution.gateway import ExecutionContext
 from saathi.execution.integration import execute
@@ -13,8 +16,8 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-async def test_video_generation_flow():
-    """Test complete video generation flow."""
+async def test_video_generation_flow_fails_closed_without_actor_authority():
+    """A side-effecting video job cannot execute for an unbound actor."""
     logger.info("=" * 60)
     logger.info("TEST: Video Generation Flow")
     logger.info("=" * 60)
@@ -44,11 +47,8 @@ async def test_video_generation_flow():
         current_time=datetime.utcnow(),
     )
 
-    result = await execute(intent, context)
-    logger.info(f"Result: {result.status}")
-    logger.info(f"Cost: ${result.cost_usd}")
-    logger.info(f"Duration: {result.duration_sec}s")
-    assert result.status.value in ("success", "partial"), f"Expected success/partial, got {result.status}"
+    with pytest.raises(AuthorizationException, match="actor.system_insufficient_authority"):
+        await execute(intent, context)
 
 
 async def test_local_llm_flow():
@@ -92,7 +92,7 @@ async def main():
     logger.info("=" * 60)
 
     try:
-        await test_video_generation_flow()
+        await test_video_generation_flow_fails_closed_without_actor_authority()
         await test_local_llm_flow()
         logger.info("=" * 60)
         logger.info("✅ ALL TESTS PASSED")

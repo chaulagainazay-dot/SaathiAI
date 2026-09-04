@@ -67,20 +67,14 @@ def _assert_saathi_is_local() -> None:
 _assert_saathi_is_local()
 
 
-# ── test isolation: never touch the operator's real ~/.saathi/security.db ────
+# ── test isolation: never touch the operator's real ~/.saathi state ─────────
 #
-# `SecurityStore()` with no explicit path defaults to ``~/.saathi/security.db``.
-# Several code paths (audit emit in particular) construct one per call, so an
-# unfiltered test session opens dozens of connections against one shared,
-# real-home database. That is both a correctness hazard (tests mutating the
-# developer's live security store) and the cause of a hard suite hang: two
-# threads in `test_25_concurrent_claims_one_winner` block forever in
-# `SecurityStore.__init__` executing schema DDL while another test's connection
-# holds the lock.
-#
-# Redirecting the default to a per-session temporary file removes both problems
-# without changing any production default: `SAATHI_SECURITY_DB` is only consulted
-# when no explicit path is passed.
+# The session-wide HOME redirect below protects all default stores, including
+# SecurityStore. A second SAATHI_SECURITY_DB override used to redirect that one
+# store again, but it also overrode SAATHI_STATE_ROOT inside isolation tests and
+# defeated the canonical precedence contract. One isolated HOME is sufficient;
+# store-specific variables remain available only when an individual test or
+# operator explicitly supplies one.
 import os as _os
 import tempfile as _tempfile
 
@@ -129,11 +123,3 @@ if not _os.environ.get("SAATHI_EVIDENCE_ROOT"):
             dirs_exist_ok=True,
         )
     _os.environ["SAATHI_EVIDENCE_ROOT"] = _EV_ROOT
-
-# Explicit override for the security store as well: it is constructed directly
-# in several audit paths, and an explicit variable documents the intent even
-# though the HOME redirect above would already cover it.
-if not _os.environ.get("SAATHI_SECURITY_DB"):
-    _os.environ["SAATHI_SECURITY_DB"] = _os.path.join(
-        _tempfile.mkdtemp(prefix="saathi-test-security-"), "security.db"
-    )

@@ -284,11 +284,20 @@ class LiveBrowserDriver:
                 self.proc.wait(timeout=5)
             except Exception:
                 self.proc.kill()
-                exited = False
+                try:
+                    self.proc.wait(timeout=5)
+                except Exception:
+                    exited = False
         # clean the isolated profile (never committed)
         shutil.rmtree(self.profile_dir, ignore_errors=True)
-        return BrowserEvidence("close", True, {"process_exited": exited,
-                                               "profile_cleaned": True})
+        return BrowserEvidence(
+            "close",
+            True,
+            {
+                "process_exited": exited,
+                "profile_cleaned": not os.path.exists(self.profile_dir),
+            },
+        )
 
 
 def _free_port() -> int:
