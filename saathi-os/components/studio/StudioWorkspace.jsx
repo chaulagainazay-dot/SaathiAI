@@ -56,7 +56,7 @@ export default function StudioWorkspace() {
       const j = await r.json();
       setProjects(j.projects || []);
       setError("");
-    } catch { setError("Backend unreachable — is the SaathiAI server running?"); }
+    } catch { setError("Backend unreachable — is the SaathiOS service running?"); }
   }, []);
 
   const loadDetail = useCallback(async (pid) => {

@@ -1,6 +1,6 @@
-# Brain.md — The Living Brain of SaathiAI
+# Brain.md — The Living Brain of SaathiOS
 
-> **What this document is:** The canonical living constitution of SaathiAI. It summarizes platform state, vision, active priorities, architectural principles, core capabilities, known limitations, and strategic decisions. It is the first document any human or coding agent should read before working on SaathiAI. It does not replace the SES documents — it points to them.
+> **What this document is:** The canonical living constitution of SaathiOS. It summarizes platform state, vision, active priorities, architectural principles, core capabilities, known limitations, and strategic decisions. It is the first document any human or coding agent should read before working on SaathiOS. It does not replace the SES documents — it points to them.
 >
 > **What this document is not:** A technical specification. Engineering specs live in `docs/SES/v1.0/`. This document tells you *what we are building and why*. The SES documents tell you *exactly how*.
 >
@@ -10,19 +10,28 @@
 
 ## 1. The One-Line Vision
 
-SaathiAI is an AI Operating System — a platform that runs autonomous departments, manages its own memory, produces multimedia content, learns from every outcome, and gets smarter with every day it operates.
+SaathiOS is an AI operating environment — a platform that runs governed departments, manages memory, produces multimedia content, learns from outcomes, and gets smarter with every day it operates.
 
 ---
 
-## 2. What SaathiAI Is
+## 2. What SaathiOS Is
 
-SaathiAI is not a chatbot. It is not a content scheduler. It is not a collection of scripts.
+SaathiOS is not a chatbot. It is not a content scheduler. It is not a collection of scripts.
 
-It is a **platform** — one set of shared capabilities (agents, memory, voice, studio, discovery) deployed across multiple products, continuously improving itself through a learning loop that feeds production outcomes back into platform intelligence.
+It is one **product and platform** with shared capabilities for Central Command,
+agents, memory, voice, studio, discovery, governed integrations, and paper-only
+trading intelligence. **SaathiAI** names the internal model routing, inference,
+reasoning, memory, and agent-intelligence layer inside SaathiOS; it is not a
+second product, shell, runtime, or authority boundary. **Saathi** is the
+assistant/persona presented by the product.
 
-**The test for every new feature:** "Does this make SaathiAI a better AI Operating System, or does it solve only one product's problem?"
+**The test for every new feature:** "Does this strengthen the canonical
+SaathiOS product while preserving its single ownership and authority model?"
 
-If the answer is the latter, the feature belongs in the product layer, not the platform. If the answer is the former, it belongs in the shared platform and all products benefit.
+Capabilities shared across applications belong in the SaathiOS platform layer.
+Application-specific behavior stays behind governed app and connector
+boundaries. No feature may create a competing frontend, voice owner, model
+router, agent runtime, approval path, ExecutionGateway, or Trading Guardian.
 
 ---
 

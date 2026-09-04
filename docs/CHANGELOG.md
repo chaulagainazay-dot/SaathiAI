@@ -1,4 +1,4 @@
-# SaathiAI Documentation Changelog
+# SaathiOS Documentation Changelog
 
 All significant changes to the SaathiAI engineering specification are recorded here.
 

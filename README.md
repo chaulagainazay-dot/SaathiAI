@@ -1,5 +1,5 @@
 ---
-title: Baadar AI
+title: SaathiOS
 emoji: 🏔️
 colorFrom: purple
 colorTo: blue
@@ -8,96 +8,85 @@ app_port: 7860
 pinned: true
 ---
 
-# Baadar / SaathiAI 🎙️
+# SaathiOS
 
-Ajay's personal AI assistant + social content engine. FastAPI on Hugging Face Spaces.
-Dashboard: `/dashboard.html`  |  Health: `/api/v1/health`
+SaathiOS is the product: one local operating environment for Central Command,
+conversation and voice, agent work, governed intelligence, applications, and
+paper-only trading research.
 
-## Quick deploy env vars (set in HF Space Settings → Variables and secrets)
+SaathiAI is the internal intelligence layer inside SaathiOS. The existing
+`saathi` Python namespace, inference adapters, model router, memory, and agent
+modules retain their technical names to preserve compatibility; they are not a
+separate application or product.
 
-`FIREBASE_ADMIN_JSON` · `ANTHROPIC_API_KEY` · `GOOGLE_API_KEY` · `GROQ_API_KEY`
-`TELEGRAM_BOT_TOKEN` · `TELEGRAM_CHAT_ID` · `SAATHI_TOKEN` · `BAADAR_PASSWORD`
-`SUPABASE_URL` · `SUPABASE_SERVICE_KEY` · `CONNECTIONS_JSON` · `MAILERLITE_API_KEY`
-`LLM_PROVIDER` · `SHIMMY_URL` · `SHIMMY_MODEL`
+## Canonical local runtime
 
----
+The primary experience is SaathiOS Central Command:
 
-## What it does
-- **Talks like a friend** in Nepali, English, or mixed — replies in your language.
-- **Knows your work**: queries HCGMS canteen data live from Supabase (sales vs NPR 30k
-  target, missing reports, credit alerts, hygiene, 5:30am duty).
-- **Executes tasks**: opens Mac apps, runs macOS Shortcuts, types for you, triggers any
-  n8n workflow, sends Telegram messages, manages your task list.
-- **Creates content**: drafts Facebook/LinkedIn posts and YouTube scripts in your voice,
-  reads them back, and posts via n8n **only after you approve**.
-- **Recognizes YOUR voice**: speaker verification (resemblyzer embeddings). Unverified
-  voices can chat but cannot post, control the Mac, or change data.
-- **English coach**: say "English practice" — it converses, corrects you kindly, and
-  tracks your recurring mistakes for review ("english progress").
-- **Remembers**: long-term facts, conversation history, tasks — in a local SQLite db.
-
-## Setup (one time, ~20 min)
+`http://127.0.0.1:3000`
 
 ```bash
-cd ~/SaathiAI
-python3 -m venv .venv && source .venv/bin/activate
-pip install -e ".[voice]"
-cp .env.example .env   # fill in ANTHROPIC_API_KEY + Supabase keys
+cd /path/to/saathios
+./bin/saathi-local doctor
+./bin/saathi-local start
 ```
 
-1. **Voice engines are fully local** — faster-whisper for speech recognition
-   (Nepali + English, auto-detected) and macOS `say` (English) / gTTS (Nepali) for
-   speech output. Nothing to install beyond `pip install -e ".[voice]"` and
-   `brew install ffmpeg portaudio` (already done). OmniVoice Studio can be plugged
-   in later for premium cloned voices.
-2. **Enroll your voice**: `python scripts/enroll_voice.py` (speak 30s, both languages).
-3. **n8n** (for social posting): `docker run -d -p 5678:5678 -v ~/.n8n:/home/node/.n8n n8nio/n8n`
-   Create a webhook workflow named `social-post` that branches on `platform` and posts
-   via Facebook Pages API / LinkedIn API / YouTube Data API. Credentials live in n8n only.
-4. **Run**:
-   - **Hands-free terminal mode** (wake word, no touching anything):
-     `.venv/bin/python -m saathi.listener` — then just say
-     *"Saathi, aaja ko sales kati bhayo?"* out loud. After Saathi replies, a 12-second
-     follow-up window stays open so you can keep talking without repeating the wake word.
-   - **Server + phone PWA**: `.venv/bin/python -m saathi.server` → open
-     http://localhost:8765 (Mac) or `http://<mac-ip>:8765` on your phone → Add to Home Screen.
-   - **Optional local Shimmy brain**:
-     run Shimmy on `http://127.0.0.1:11435/v1`, then set
-     `LLM_PROVIDER=shimmy`, `SHIMMY_MODEL=<your-model-id>`, and optionally
-     `SHIMMY_URL=http://127.0.0.1:11435/v1` in `.env`.
-5. **Background service** (starts at login, restarts if it crashes):
-   ```bash
-   cp scripts/com.ajay.saathiai.plist ~/Library/LaunchAgents/
-   launchctl load ~/Library/LaunchAgents/com.ajay.saathiai.plist
-   ```
+Useful lifecycle commands:
 
-## Phone access from anywhere
-On the same Wi-Fi, `http://<mac-ip>:8765` works directly. From outside, use Tailscale
-(free, easiest) or your existing No-IP DUC setup. Note: phone browsers require HTTPS for
-the microphone — Tailscale + `tailscale cert` or a Cloudflare Tunnel solves this.
-
-## Try saying
-- "Aaja ko sales kati bhayo?" → live Supabase numbers vs target
-- "Who hasn't submitted their report?"
-- "Draft a Facebook post about today's special momo" → draft → "post it"
-- "Open Safari" / "Run my Morning shortcut"
-- "Remind me to call the vegetable vendor tomorrow"
-- "English practice garam" → coach mode
-
-## Architecture
-```
-Phone PWA / Mac browser
-        │ (audio or text)
-        ▼
-FastAPI server (saathi/server.py)
-  ├── voice.py: OmniVoice STT/TTS + speaker verification
-  ├── agent.py: Claude tool-use loop (claude-sonnet-4-6)
-  ├── memory.py: SQLite — history, facts, mistakes, tasks
-  └── tools/: canteen (Supabase) · content (draft/post) · n8n ·
-              mac_control · notes · english
+```bash
+./bin/saathi-local status
+./bin/saathi-local open
+./bin/saathi-local logs
+./bin/saathi-local stop
 ```
 
-## Safety rules (built in)
-- Privileged tools (posting, Mac control, n8n, Telegram) require a verified voice match.
-- Saathi never posts without reading the draft back and getting explicit approval.
-- No financial execution — ever. Reports and signals only.
+The launcher owns exactly one loopback FastAPI backend on
+`127.0.0.1:8765` and one Next.js frontend on `127.0.0.1:3000`. It refuses
+to kill or silently reuse a process from another checkout. The historical
+`scripts/start_local.sh` entrypoint delegates to this same manager.
+
+One-time setup:
+
+```bash
+python3 -m venv .venv
+.venv/bin/pip install -e ".[dev]"
+cd saathi-os
+npm install
+```
+
+Configuration belongs in an untracked `.env` created from `.env.example`.
+Never commit credentials. Local model use is optional; SaathiOS does not
+download models or enable paid providers automatically.
+
+## Canonical architecture
+
+- Product shell and Central Command: `saathi-os/`
+- Conversation and voice runtime: `saathi/platform/conversation` and
+  `saathi/platform/voice/runtime`
+- SaathiAI intelligence: `saathi/inference`, `saathi/model_router.py`,
+  `saathi/memory`
+- Agent work: `saathi/agent_runtime` and
+  `saathi/platform/mission_runtime`
+- External action boundary: `saathi.execution.ExecutionGateway`
+- Trading safety: `saathi.platform.trading_guardian` and
+  `saathi.platform.tg`
+- Audit and evidence: `saathi/audit`, `saathi/evidence`, and
+  `saathi/security`
+
+The full provenance and ownership record is in
+`docs/architecture/SAATHIOS_CANONICAL_UNIFICATION.md`.
+
+## Safety posture
+
+- Trading is paper/advisory by default; live broker connectivity is not
+  activated.
+- Models and agents may propose work but cannot approve or execute side effects.
+- External writes must pass authenticated policy, approval, ExecutionGateway,
+  and audit boundaries.
+- Voice has one SaathiOS command capture owner; settings microphone checks are
+  explicit transient diagnostics.
+- Runtime state, secrets, databases, caches, model weights, and browser profiles
+  stay outside Git.
+
+The Hugging Face metadata above is retained for compatibility with the existing
+remote. That hosted surface is not the canonical local SaathiOS runtime.

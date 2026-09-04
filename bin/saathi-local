@@ -41,9 +41,9 @@ FRONTEND_LOG="$LOG_DIR/frontend.log"
 LAUNCHER_LOG="$LOG_DIR/launcher.log"
 
 BFF_HOST="127.0.0.1"; BFF_PORT="8765"
-UI_HOST="localhost"; UI_PORT="3000"
+UI_HOST="127.0.0.1"; UI_PORT="3000"
 API_BASE="http://127.0.0.1:8765"
-UI_URL="http://localhost:3000"
+UI_URL="http://127.0.0.1:3000"
 LOG_MAX_BYTES="1048576"   # 1 MiB per log, rotated to .1
 PY="$REPO/.venv/bin/python"
 
@@ -64,14 +64,16 @@ _sig_frontend='next(-server| dev)'
 _alive() { local pid="$1"; [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; }
 _cmd_of() { ps -o command= -p "$1" 2>/dev/null || true; }
 _cwd_of() { lsof -a -p "$1" -d cwd -Fn 2>/dev/null | grep '^n' | head -n1 | sed 's/^n//'; }
-_is_saathi() {  # _is_saathi <pid> <role> — recognizes a SaathiOS process
-  local pid="$1" role="$2" cmd
+_is_saathi() {  # _is_saathi <pid> <role> — recognizes this checkout's SaathiOS process
+  local pid="$1" role="$2" cmd cwd expected
   _alive "$pid" || return 1
   cmd="$(_cmd_of "$pid")"
+  cwd="$(_cwd_of "$pid")"
   case "$role" in
-    backend)  printf '%s' "$cmd" | grep -Eq "$_sig_backend" ;;
-    # Next.js worker command is "next-server ..." (no path); confirm via cwd.
-    frontend) printf '%s' "$cmd" | grep -Eq "$_sig_frontend" && printf '%s' "$(_cwd_of "$pid")" | grep -q "saathi-os" ;;
+    backend)  expected="$REPO"; printf '%s' "$cmd" | grep -Eq "$_sig_backend" && [ "$cwd" = "$expected" ] ;;
+    # Next.js worker command is "next-server ..." (no path); exact cwd binds
+    # port ownership to this canonical checkout, not another Saathi worktree.
+    frontend) expected="$REPO/saathi-os"; printf '%s' "$cmd" | grep -Eq "$_sig_frontend" && [ "$cwd" = "$expected" ] ;;
     *) return 1 ;;
   esac
 }
@@ -88,7 +90,7 @@ _listener_pid() { lsof -nP -iTCP:"$1" -sTCP:LISTEN -t 2>/dev/null | head -n1 || 
 # ── readiness probes ─────────────────────────────────────────────────────────
 _http_code() { curl -s -o /dev/null -w '%{http_code}' --max-time 4 "$1" 2>/dev/null || echo "000"; }
 _backend_ready() { [ "$(_http_code "$API_BASE/api/v1/platform/health")" = "200" ]; }
-_frontend_ready() { [ "$(_http_code "$UI_URL/platform")" = "200" ]; }
+_frontend_ready() { [ "$(_http_code "$UI_URL/")" = "200" ]; }
 
 # ── canonical readiness classifier ───────────────────────────────────────────
 # ONE source of truth for a role's live state, consumed by status, doctor,
@@ -204,7 +206,7 @@ _ensure_frontend() {
     free)
       _check_frontend_toolchain || { say "frontend: cannot start — environment not ready; see doctor"; return 1; }
       _rotate "$FRONTEND_LOG"
-      ( cd "$REPO/saathi-os" && NEXT_PUBLIC_SAATHI_API="$API_BASE" exec npm run dev -- -p "$UI_PORT" ) >>"$FRONTEND_LOG" 2>&1 &
+      ( cd "$REPO/saathi-os" && NEXT_PUBLIC_SAATHI_API="$API_BASE" NEXT_PUBLIC_LOCAL_API="$API_BASE" exec npm run dev ) >>"$FRONTEND_LOG" 2>&1 &
       local np=$!; printf '%s\nfrontend\n' "$np" >"$FRONTEND_PID"
       say "frontend: starting PID $np on $UI_URL (API=$API_BASE)"
       _wait_ready _frontend_ready frontend 90 || { say "frontend failed to start (see: saathi-local logs --frontend)"; return 1; }
@@ -296,7 +298,7 @@ cmd_status() {
   say "  frontend url  $UI_URL"
   say "  api url       $API_BASE"
   say "  api base cfg  NEXT_PUBLIC_SAATHI_API=$API_BASE"
-  say "  binding       localhost-only (127.0.0.1 / localhost)"
+  say "  binding       localhost-only (127.0.0.1)"
   say "  production     NOT_AUTHORIZED"
   say "  connectors     DRY_RUN_ONLY"
   say "  financial      DISABLED"

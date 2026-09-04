@@ -1,4 +1,4 @@
-# SaathiAI Architectural Decision Log
+# SaathiOS Architectural Decision Log
 
 This file records every significant architectural decision made during the design and development of SaathiAI OS. Each entry documents what was decided, why, and what alternatives were rejected.
 

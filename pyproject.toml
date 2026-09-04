@@ -1,7 +1,7 @@
 [project]
 name = "saathiai"
 version = "0.1.0"
-description = "SaathiAI — Ajay's bilingual (Nepali/English) voice agent assistant"
+description = "SaathiAI intelligence layer for the SaathiOS bilingual operating environment"
 requires-python = ">=3.11"
 dependencies = [
     "anthropic>=0.40",

@@ -58,7 +58,7 @@ export default function CeoWorkspace() {
       setFinance(await f.json());
       setRecs(await rc.json());
       setError("");
-    } catch { setError("CEO OS backend unreachable — is the SaathiAI server running?"); }
+    } catch { setError("SaathiOS backend unreachable — is the local service running?"); }
   }, []);
 
   useEffect(() => { load(); }, [load]);

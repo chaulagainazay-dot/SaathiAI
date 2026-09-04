@@ -1,4 +1,4 @@
-# SaathiAI Infrastructure Layer
+# SaathiOS Infrastructure Layer
 
 The provider-agnostic substrate every department sits on. Departments call
 abstractions; they never know which model, browser, connector, or speech engine

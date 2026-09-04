@@ -245,9 +245,9 @@ def test_open_launches_browser_when_both_ready(tmp_path):
         path_prefix=str(bindir),
     )
     assert r.returncode == 0
-    assert "opening http://localhost:3000" in r.stdout
+    assert "opening http://127.0.0.1:3000" in r.stdout
     assert sentinel.exists(), "browser must launch when both roles are ready"
-    assert "http://localhost:3000" in sentinel.read_text()
+    assert "http://127.0.0.1:3000" in sentinel.read_text()
 
 
 def test_start_reports_ready_only_when_both_healthy(tmp_path):

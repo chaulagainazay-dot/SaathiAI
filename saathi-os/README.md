@@ -1,45 +1,42 @@
-# SaathiAI — Sovereign Orbit
+# SaathiOS — Central Command
 
-The CEO interface for SaathiAI, implemented from the *Sovereign Orbit* design language.
-Next.js 15 · React 19 · Tailwind CSS 4 · Framer Motion. You are the center; the AI is invisible.
+This Next.js application is the single SaathiOS product shell. The root route
+(`/`) is Central Command; the earlier attention dashboard remains available at
+`/home`. The compatibility route `/command` renders the same Command Center
+component and does not create a second frontend.
 
 ## Run
 
+From the repository root, prefer the canonical process manager:
+
 ```bash
-cd ~/SaathiAI/saathi-os
-npm install      # once
-npm run dev      # → http://localhost:3000
+./bin/saathi-local start
+# http://127.0.0.1:3000
 ```
 
-Production: `npm run build && npm start`.
+For frontend-only development:
 
-## The four layers (per the approved flow)
+```bash
+cd saathi-os
+npm install
+NEXT_PUBLIC_SAATHI_API=http://127.0.0.1:8765 \
+NEXT_PUBLIC_LOCAL_API=http://127.0.0.1:8765 \
+npm run dev
+```
 
-| Route         | Layer                | What it answers |
-|---------------|----------------------|-----------------|
-| `/`           | **CEO Home**         | "What should I do next?" — priority score, dream progress, top-3 actions, approvals, Saathi briefing |
-| `/mission`    | **Mission Control**  | System health & relationships — the living universe of departments |
-| `/finance`    | **Finance Workspace**| Deep work — portfolio, equity curve, KPIs, L4-governed approvals |
-| `/knowledge`  | **Knowledge Graph**  | Understanding — infinite typed-node graph |
-| `/[dept]`     | Generic workspace    | Studio, Learning, Travel, Cafeteria, Crypto, Discovery, Opportunity, Memory, Business |
+Production build validation is `npm run build`; the frontend suite is
+`npm test`; lint is `npm run lint`.
 
-## Interactions
+## Product boundaries
 
-- **Floating dock** (bottom) — department navigation, auto-highlights the active screen.
-- **⌘K / Ctrl-K** — command palette (search commands, departments, actions).
-- **Space** — CEO Mode: everything disappears, one decision (Approve / Reject / Ask Saathi).
-- **Esc** — dismiss palette / CEO Mode.
+- SaathiOS is the product and shell.
+- SaathiAI is the internal model, reasoning, memory, and agent intelligence.
+- Saathi is the assistant/persona.
+- `VoiceRuntimeDock` is the one shell-mounted command voice surface.
+- Models and frontend controls do not bypass approvals, RBAC,
+  `ExecutionGateway`, or Trading Guardian.
+- Trading views are paper/advisory unless separately certified in a future
+  milestone.
 
-## Design system
-
-- **Color = jurisdiction** — every department owns one hue forever (`lib/departments.js`).
-- **Glassmorphism** — `.glass` panels, soft blur, department glow.
-- **Motion** — 200–300ms flows, animated counters, entrance springs, dashed live-flow edges.
-- Tokens live in `app/globals.css`; mock data in `lib/data.js`.
-
-## Wiring to the backend (next milestone)
-
-All screens read from `lib/data.js`. Swap those for `fetch()` calls to the FastAPI app
-(`saathi.server`, port 8765) exposing the M1–M5 capabilities — Financial Mission Control's
-`to_dict()`, the Executive briefing, portfolio/research/journal endpoints — and the interface
-becomes live. No component changes required beyond the data layer.
+The canonical architecture and merge provenance are recorded in
+`../docs/architecture/SAATHIOS_CANONICAL_UNIFICATION.md`.
