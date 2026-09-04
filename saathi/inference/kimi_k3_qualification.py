@@ -246,3 +246,39 @@ def qualification_status() -> dict[str, Any]:
     return {"provider": "nvidia", "model": KIMI_K3, "live_possible": ready,
             "blocked_reason": "" if ready else f"{NVIDIA_API_KEY_ENV}_missing",
             "credential_env": NVIDIA_API_KEY_ENV}
+
+
+def _main() -> int:
+    """`python -m saathi.inference.kimi_k3_qualification [--live]`.
+
+    A module entry rather than a one-liner because the invocation has three
+    ways to go wrong -- wrong interpreter, missing PYTHONPATH, key pasted into
+    the command -- and none of them should stand between a configured
+    credential and an evidence record.
+
+    The credential is read from the environment. It is never a command-line
+    argument: arguments are visible in `ps` and land in shell history.
+    """
+    import argparse
+    import asyncio
+    import json
+
+    parser = argparse.ArgumentParser(
+        description="Qualify the NVIDIA-hosted Kimi K3 provider.")
+    parser.add_argument("--live", action="store_true",
+                        help=f"contact NVIDIA (requires {NVIDIA_API_KEY_ENV})")
+    args = parser.parse_args()
+
+    status = qualification_status()
+    if args.live and not status["live_possible"]:
+        print(json.dumps({"error": "live_qualification_blocked", **status}, indent=2))
+        return 2
+
+    report = asyncio.run(run_qualification(live=args.live))
+    print(json.dumps(report, indent=2))
+    # Non-zero when a graded case failed, so this is usable from a script.
+    return 0 if report["graded_passed"] == report["graded_total"] else 1
+
+
+if __name__ == "__main__":  # pragma: no cover - CLI entry
+    raise SystemExit(_main())
