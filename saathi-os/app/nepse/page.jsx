@@ -5,12 +5,12 @@
 // Nepal Share). All state is localStorage-only (see lib/nepse/store).
 import { useEffect, useMemo, useState } from "react";
 import { STOCKS } from "@/lib/nepse/data";
+import { useNepseQuotes } from "@/lib/nepse/live";
 import { computePortfolio, PORTFOLIO_COLORS } from "@/lib/nepse/portfolio";
 import { importTransactions } from "@/lib/nepse/importers";
 import { fmtRs, fmtNum, fmtPct } from "@/lib/nepse/format";
 import * as store from "@/lib/nepse/store";
 
-const PRICE_MAP = Object.fromEntries(STOCKS.map((s) => [s.symbol, s.ltp]));
 const SYMBOLS = STOCKS.map((s) => s.symbol);
 
 export default function PortfolioHome() {
@@ -22,6 +22,13 @@ export default function PortfolioHome() {
   const [importSrc, setImportSrc] = useState("meroshare");
   const [importMsg, setImportMsg] = useState("");
 
+  const { stocks, isLive } = useNepseQuotes();
+  // Value holdings at the live price when a feed is serving; snapshot otherwise.
+  const priceMap = useMemo(
+    () => Object.fromEntries(stocks.map((s) => [s.symbol, s.ltp])),
+    [stocks],
+  );
+
   useEffect(() => { setState(store.loadState()); }, []);
 
   const active = useMemo(
@@ -29,8 +36,8 @@ export default function PortfolioHome() {
     [state],
   );
   const computed = useMemo(
-    () => (active ? computePortfolio(active.transactions, PRICE_MAP) : null),
-    [active],
+    () => (active ? computePortfolio(active.transactions, priceMap) : null),
+    [active, priceMap],
   );
 
   if (!state) return <div className="nepse-empty">Loading…</div>;
@@ -125,6 +132,9 @@ export default function PortfolioHome() {
               ))}
             </div>
             <div className="nepse-stat big num" style={{ marginTop: "0.5rem" }}>{fmtRs(shown)}</div>
+            <div className="mono" style={{ fontSize: "0.68rem", letterSpacing: "0.06em", textTransform: "uppercase", color: isLive ? "var(--accent)" : "var(--text-faint)", marginTop: "0.25rem" }}>
+              {isLive ? "valued at live prices" : "valued at snapshot prices"}
+            </div>
             <div className="nepse-row" style={{ marginTop: "0.5rem", gap: "1.5rem" }}>
               <span>Unrealized <b className={computed.totals.unrealizedPnl >= 0 ? "nepse-up" : "nepse-down"}>
                 {fmtRs(computed.totals.unrealizedPnl)} ({fmtPct(computed.totals.returnPct)})</b></span>

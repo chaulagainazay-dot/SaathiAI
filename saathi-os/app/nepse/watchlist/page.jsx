@@ -2,7 +2,8 @@
 // US5 — Watchlist. Portfolio-independent tracking list with the same live-style columns
 // as the screener (score / signal / RSI), add-by-symbol, and a simple remove.
 import { useEffect, useMemo, useState } from "react";
-import { STOCKS, getStock } from "@/lib/nepse/data";
+import { STOCKS } from "@/lib/nepse/data";
+import { useNepseQuotes } from "@/lib/nepse/live";
 import { withAnalytics } from "@/lib/nepse/analytics";
 import { fmtRs, fmtNum, fmtPct, dayChangePct } from "@/lib/nepse/format";
 import * as store from "@/lib/nepse/store";
@@ -12,12 +13,19 @@ const SYMBOLS = STOCKS.map((s) => s.symbol);
 export default function WatchlistPage() {
   const [state, setState] = useState(null);
   const [pick, setPick] = useState("NABIL");
+  const { stocks, isLive } = useNepseQuotes();
   useEffect(() => { setState(store.loadState()); }, []);
 
+  // Resolve watched symbols against the live-merged set, so the watchlist and the
+  // screener can never disagree about a price.
   const rows = useMemo(() => {
     if (!state) return [];
-    return state.watchlist.map((s) => getStock(s)).filter(Boolean).map(withAnalytics);
-  }, [state]);
+    const bySymbol = new Map(stocks.map((s) => [s.symbol, s]));
+    return state.watchlist
+      .map((sym) => bySymbol.get(String(sym).toUpperCase()))
+      .filter(Boolean)
+      .map(withAnalytics);
+  }, [state, stocks]);
 
   if (!state) return <div className="nepse-empty">Loading…</div>;
 
@@ -25,7 +33,7 @@ export default function WatchlistPage() {
     <>
       <header className="nepse-head">
         <div className="nepse-eyebrow">Watchlist</div>
-        <h1 className="nepse-title">Stocks you’re watching</h1>
+        <h1 className="nepse-title">Stocks you’re watching{isLive ? " · live" : ""}</h1>
         <p className="nepse-dek">Independent of any portfolio — for what you track, not necessarily hold.</p>
       </header>
 
@@ -46,12 +54,16 @@ export default function WatchlistPage() {
           </tr></thead>
           <tbody>
             {rows.map((r) => {
-              const chg = dayChangePct(r.ltp, r.prevClose);
+              const noChange = r.changeUnavailable || r.prevClose == null;
+              const chg = noChange ? null : dayChangePct(r.ltp, r.prevClose);
               return (
                 <tr key={r.symbol}>
                   <td className="strong"><a href={`/nepse/stocks/${r.symbol}`}>{r.symbol}</a></td>
                   <td className="rt num">{fmtRs(r.ltp)}</td>
-                  <td className={`rt num ${chg >= 0 ? "nepse-up" : "nepse-down"}`}>{fmtPct(chg)}</td>
+                  <td className={`rt num ${noChange ? "" : chg >= 0 ? "nepse-up" : "nepse-down"}`}
+                      title={noChange ? "Feed does not report a previous close" : undefined}>
+                    {noChange ? "—" : fmtPct(chg)}
+                  </td>
                   <td className="rt num">{r.score}</td>
                   <td><span className={`nepse-badge ${r.signal === "Buy" ? "up" : r.signal === "Sell" ? "down" : "neutral"}`}>{r.signal}</span></td>
                   <td className="rt num">{fmtNum(r.rsi, 0)}</td>

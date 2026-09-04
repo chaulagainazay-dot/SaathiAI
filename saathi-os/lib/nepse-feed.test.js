@@ -184,3 +184,28 @@ test("merging an LTP-only quote marks the day change unavailable", () => {
 test("provider error objects are not quotes", () => {
   assert.equal(normalizeQuote({ error: "Error retrieving stock data" }), null);
 });
+
+// ── every price surface reads the same live source ───────────────────────────────
+test("portfolio, watchlist and screener all value from the live feed", () => {
+  for (const f of [
+    "app/nepse/page.jsx",
+    "app/nepse/watchlist/page.jsx",
+    "app/nepse/stocks/page.jsx",
+  ]) {
+    const src = readFileSync(join(ROOT, f), "utf8");
+    assert.match(src, /useNepseQuotes/, `${f} must read the live feed`);
+  }
+});
+
+test("portfolio values holdings from the live price map, not a frozen constant", () => {
+  const src = readFileSync(join(ROOT, "app/nepse/page.jsx"), "utf8");
+  assert.ok(!/const PRICE_MAP =/.test(src), "module-level PRICE_MAP would freeze prices at snapshot");
+  assert.match(src, /computePortfolio\(active\.transactions, priceMap\)/);
+});
+
+test("watchlist and screener render unknown day change identically", () => {
+  for (const f of ["app/nepse/watchlist/page.jsx", "app/nepse/stocks/page.jsx"]) {
+    const src = readFileSync(join(ROOT, f), "utf8");
+    assert.match(src, /changeUnavailable \|\| r\.prevClose == null/, `${f} must not fake a change`);
+  }
+});

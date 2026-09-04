@@ -5,6 +5,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { getStock, brokersForStock } from "@/lib/nepse/data";
+import { useNepseQuotes } from "@/lib/nepse/live";
 import { withAnalytics } from "@/lib/nepse/analytics";
 import { fmtRs, fmtNum, fmtPct, dayChangePct, fmtCompactRs } from "@/lib/nepse/format";
 import * as store from "@/lib/nepse/store";
@@ -22,7 +23,10 @@ function dividends(stock) {
 export default function StockDetail() {
   const params = useParams();
   const symbol = String(params?.symbol || "").toUpperCase();
-  const base = getStock(symbol);
+  const { stocks, isLive } = useNepseQuotes();
+  // Prefer the live-merged record so the detail page can never disagree with the
+  // screener a click earlier; fall back to the snapshot for unknown symbols.
+  const base = stocks.find((s) => s.symbol === symbol) || getStock(symbol);
   const stock = base ? withAnalytics(base) : null;
   const [tab, setTab] = useState("overview");
   const [watched, setWatched] = useState(false);
@@ -36,14 +40,15 @@ export default function StockDetail() {
 
   if (!stock) return <div className="nepse-empty">Unknown symbol “{symbol}”. <a href="/nepse/stocks">Back to screener</a></div>;
 
-  const chg = dayChangePct(stock.ltp, stock.prevClose);
+  const noChange = stock.changeUnavailable || stock.prevClose == null;
+  const chg = noChange ? null : dayChangePct(stock.ltp, stock.prevClose);
   const toggleStar = () => {
     const st = store.toggleWatch(symbol);
     setWatched(st.watchlist.includes(symbol));
   };
 
   const OV = [
-    ["LTP", fmtRs(stock.ltp)], ["Prev close", fmtRs(stock.prevClose)],
+    ["LTP", fmtRs(stock.ltp)], ["Prev close", noChange ? "—" : fmtRs(stock.prevClose)],
     ["52w high", fmtRs(stock.high52)], ["52w low", fmtRs(stock.low52)],
     ["Market cap", fmtCompactRs(stock.marketCap)], ["Paid-up capital", fmtCompactRs(stock.paidUp * 1e6)],
     ["EPS", fmtRs(stock.eps)], ["P/E", stock.pe ?? "—"],
@@ -60,7 +65,9 @@ export default function StockDetail() {
             <h1 className="nepse-title">{stock.symbol} · <span style={{ fontSize: "0.6em", color: "var(--text-dim)" }}>{stock.name}</span></h1>
             <div className="nepse-row" style={{ marginTop: 6, gap: "1rem" }}>
               <span className="nepse-stat num">{fmtRs(stock.ltp)}</span>
-              <span className={`nepse-badge ${chg >= 0 ? "up" : "down"}`}>{fmtPct(chg)}</span>
+              {noChange
+            ? <span className="nepse-badge neutral" title="Feed does not report a previous close">day change —</span>
+            : <span className={`nepse-badge ${chg >= 0 ? "up" : "down"}`}>{fmtPct(chg)}</span>}
               <span className={`nepse-badge ${stock.signal === "Buy" ? "up" : stock.signal === "Sell" ? "down" : "neutral"}`}>Score {stock.score} · {stock.signal}</span>
             </div>
           </div>
