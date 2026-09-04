@@ -104,6 +104,7 @@ export function parseHistoryCsv(text, { symbol = "", maxRows = 20000 } = {}) {
   const iLow = idx("low");
   const iClose = idx("close");
   const iQty = idx("traded_quantity");
+  const iAmt = idx("traded_amount");
   if (iDate < 0 || iClose < 0) return { bars: [], rejected: [], source: NEPSE_RESEARCH_SOURCE };
 
   const bars = [];
@@ -130,6 +131,7 @@ export function parseHistoryCsv(text, { symbol = "", maxRows = 20000 } = {}) {
     const low = iLow >= 0 ? num(c[iLow]) : null;
     const close = num(c[iClose]);
     const volume = iQty >= 0 ? num(c[iQty]) : null;
+    const turnover = iAmt >= 0 ? num(c[iAmt]) : null;
 
     if (close === null) { rejected.push({ line: i, date, reason: ROW_FLAG.MISSING_CLOSE }); continue; }
     if ([open, high, low, close].some((x) => x !== null && x <= 0)) flags.push(ROW_FLAG.NON_POSITIVE);
@@ -154,7 +156,7 @@ export function parseHistoryCsv(text, { symbol = "", maxRows = 20000 } = {}) {
     bars.push({
       symbol: String(symbol || "").toUpperCase(),
       date,
-      open, high, low, close, volume,
+      open, high, low, close, volume, turnover,
       // Per-field trust — the whole point of this contract.
       trusted: { close: closeUsable, high: rangeUsable, low: rangeUsable, open: openTrusted, volume: volume !== null },
       flags,

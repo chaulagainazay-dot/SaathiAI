@@ -7,6 +7,7 @@
 import { NextResponse } from "next/server";
 import { parseHistoryCsv, NEPSE_RESEARCH_SOURCE } from "@/lib/nepse/history";
 import { computeIndicators } from "@/lib/nepse/indicators";
+import { sessionContext } from "@/lib/nepse/session";
 import { STOCKS } from "@/lib/nepse/data";
 
 export const dynamic = "force-dynamic";
@@ -53,8 +54,10 @@ export async function GET() {
       const { bars } = parseHistoryCsv(text, { symbol: sym });
       if (!bars.length) return null;
       const ind = computeIndicators(bars, { instrument: sym });
+      const ctx = sessionContext(bars);
       // ship only what the screener renders
       return [sym, {
+        session: ctx,
         rsi: { value: ind.rsi.value, status: ind.rsi.status },
         macd: { value: ind.macd.value ? ind.macd.value.histogram : null, status: ind.macd.status },
         bollinger: { value: ind.bollinger.value ? ind.bollinger.value.percentB : null, status: ind.bollinger.status },
