@@ -383,6 +383,20 @@ _NOT_EXTERNAL_WRITES = {
     ("saathi/tools/registry.py", "_stage_draft"),
     ("saathi/tools/linkedin_post.py", "exchange_code"),
     ("saathi/tools/tiktok_post.py", "exchange_code"),
+    # NVIDIA-hosted chat completions, on the same footing as every other LLM
+    # provider above. The sweep flagged this correctly when the adapter landed,
+    # and the call is worth stating rather than waving through: it *does*
+    # consume paid quota, which is what made the media-generation APIs external
+    # writes in Phase 19B.
+    #
+    # The line those sit on is remote *state*. Runway, HeyGen and ElevenLabs
+    # create a job or a hosted asset that outlives the request; a chat
+    # completion creates nothing and returns text. Guarding this one would make
+    # it the only LLM provider in the repository behind the egress boundary,
+    # while OpenAI, Anthropic, Groq and Gemini -- all equally paid -- stayed
+    # outside it. Quota alone is a cost question; the containment boundary is
+    # about mutation.
+    ("saathi/inference/adapters/nvidia.py", None),
 }
 
 _HTTP_CLIENTS = {"httpx", "requests", "aiohttp"}
