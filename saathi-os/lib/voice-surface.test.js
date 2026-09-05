@@ -30,4 +30,12 @@ describe("canonical microphone surface", () => {
     );
     assert.match(shell, /!dedicatedCaptureRoute && <VoiceRuntimeDock \/>/);
   });
+
+  it("keeps the authenticated runtime dock reachable in the viewport", () => {
+    const dock = source("components/voice/VoiceRuntimeDock.jsx");
+    assert.match(dock, /position: fixed;/);
+    assert.match(dock, /left: 16px;/);
+    assert.match(dock, /bottom: 16px;/);
+    assert.match(dock, /z-index: 50;/);
+  });
 });
