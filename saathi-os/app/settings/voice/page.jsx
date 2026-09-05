@@ -10,6 +10,7 @@ import {
   resolveLocalVoice,
   safePermissionState,
   summarizeVoiceCapability,
+  describeRecognitionError,
 } from "@/lib/voice-settings";
 
 const card = {
@@ -225,7 +226,7 @@ export default function VoiceSettingsPage() {
         setInputStatus("Transcript preview updated in memory only.");
       };
       recognition.onerror = (event) => {
-        setInputStatus(`Microphone test failed safely: ${event.error || "recognition error"}.`);
+        setInputStatus(describeRecognitionError(event.error));
         stopTracks();
       };
       recognition.onend = () => {

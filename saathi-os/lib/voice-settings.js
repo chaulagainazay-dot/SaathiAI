@@ -89,3 +89,19 @@ export function phraseCanUseLocalVoice(phraseId, capability) {
 export function safePermissionState(value) {
   return ["granted", "denied", "prompt"].includes(value) ? value : "unknown";
 }
+
+export function describeRecognitionError(value) {
+  const code = String(value || "recognition_error").trim().toLowerCase();
+  if (code === "network") {
+    return "Browser speech recognition reported a network error. Its browser-managed service is unavailable here; use the text fallback or try a browser with speech recognition enabled. No audio is sent to SaathiOS by this settings test.";
+  }
+  if (["not-allowed", "service-not-allowed"].includes(code)) {
+    return "Browser speech recognition is not allowed. Use the text fallback or review this browser's speech permission settings.";
+  }
+  if (code === "audio-capture") {
+    return "Browser speech recognition could not use the microphone. Check microphone access or use the text fallback.";
+  }
+  return code === "" || code === "recognition_error"
+    ? "Browser speech recognition failed. Use the text fallback."
+    : "Browser speech recognition reported an unsupported error. Use the text fallback.";
+}

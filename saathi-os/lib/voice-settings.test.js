@@ -9,6 +9,7 @@ import {
   resolveLocalVoice,
   safePermissionState,
   summarizeVoiceCapability,
+  describeRecognitionError,
 } from "./voice-settings.js";
 
 const voices = [
@@ -43,6 +44,14 @@ describe("voice settings discovery and safety", () => {
     assert.equal(VOICE_TEST_PHRASES.mixed.text, "SaathiOS अहिले local private alpha mode मा चलिरहेको छ।");
     assert.equal(safePermissionState("granted"), "granted");
     assert.equal(safePermissionState("anything-else"), "unknown");
+  });
+
+  it("explains browser-managed recognition network failures without implying SaathiOS upload", () => {
+    const message = describeRecognitionError("network");
+    assert.match(message, /browser-managed service is unavailable/i);
+    assert.match(message, /text fallback/i);
+    assert.match(message, /No audio is sent to SaathiOS/i);
+    assert.doesNotMatch(message, /token|credential|device id/i);
   });
 
   it("certifies the page exposes explicit controls and bounded privacy language", () => {
