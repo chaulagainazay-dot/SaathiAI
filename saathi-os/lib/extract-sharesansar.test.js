@@ -156,3 +156,118 @@ test("headers arriving one-per-line or tab-joined both split correctly", () => {
   assert.deepEqual(splitHeaders("A\nB\nC"), ["A", "B", "C"]);
   assert.deepEqual(splitHeaders("A\tB\tC"), ["A", "B", "C"]);
 });
+
+// ── NEPSE-COMPLETE-1: brokers, IPO pipeline, sector map ──────────────────────
+
+import {
+  parseTopBrokers, parseExistingIssues, parseSectorMap, canonicalSector,
+  CANONICAL_SECTORS,
+} from "./extract/sharesansar.js";
+
+const BROKER_HEADERS = SHARESANSAR_PAGES.topBrokers.headers.join("\n");
+const BROKER_ROWS = [
+  "1\t58\tNaasa Securities Co. Ltd.\t248,671,555.77\t205,792,999.40\t454,464,555.17\t42,878,556.37\t33,631,081.00",
+  "2\t49\tOnline Securities Limited\t141,687,670.30\t116,250,257.40\t257,937,927.70\t25,437,412.90\t10,145,754.40",
+].join("\n");
+
+const IPO_HEADERS = SHARESANSAR_PAGES.existingIssues.headers.join("\n");
+const IPO_ROWS = [
+  "1\tBENI\tBeni Hydropower Project Limited\t863,200.00\t100.00\t2026-09-07\t2026-09-10\t2026-09-21\t\tNMB Capital Limited\tComing Soon\t",
+  "2\tMEPDL\tMount Everest Power Development Limited\t1,427,600.00\t100.00\t2026-06-17\t2026-06-22\t2026-07-01\t2026-08-11\tNIMB Ace Capital Limited\tClosed\t",
+].join("\n");
+
+test("broker rankings parse with numbers, names and session totals", () => {
+  const r = parseTopBrokers(BROKER_ROWS, BROKER_HEADERS, { title: "Top Brokers" });
+  assert.equal(r.ok, true);
+  assert.equal(r.rows.length, 2);
+  assert.equal(r.rows[0].code, 58);
+  assert.equal(r.rows[0].name, "Naasa Securities Co. Ltd.");
+  assert.equal(r.rows[0].buyAmount, 248671555.77);
+  assert.equal(r.rows[1].code, 49);
+  assert.equal(r.rows[1].name, "Online Securities Limited");
+});
+
+test("a broker row without a number or a name is rejected", () => {
+  const bad = "3\t\tNo Number Ltd\t1\t1\t2\t0\t0\n4\t77\t\t1\t1\t2\t0\t0";
+  const r = parseTopBrokers(bad, BROKER_HEADERS, {});
+  assert.equal(r.rows.length, 0);
+  assert.equal(r.rejected.length, 2);
+});
+
+test("brokers refuse a changed layout", () => {
+  const moved = [...SHARESANSAR_PAGES.topBrokers.headers];
+  [moved[3], moved[4]] = [moved[4], moved[3]];
+  assert.equal(parseTopBrokers(BROKER_ROWS, moved.join("\n"), {}).reason, "COLUMN_MOVED");
+});
+
+test("the IPO pipeline parses, leaving unset dates null", () => {
+  const r = parseExistingIssues(IPO_ROWS, IPO_HEADERS, { title: "Existing Issues" });
+  assert.equal(r.ok, true);
+  const beni = r.rows[0];
+  assert.equal(beni.symbol, "BENI");
+  assert.equal(beni.units, 863200);
+  assert.equal(beni.pricePerUnit, 100);
+  assert.equal(beni.opensOn, "2026-09-07");
+  assert.equal(beni.listedOn, null);      // not yet listed — null, not a guess
+  assert.equal(beni.issueManager, "NMB Capital Limited");
+  assert.equal(beni.status, "Coming Soon");
+  assert.equal(r.rows[1].listedOn, "2026-08-11");
+});
+
+test("only headings in the known vocabulary become sectors", () => {
+  assert.equal(canonicalSector("Commercial Bank"), "Commercial Bank");
+  assert.equal(canonicalSector("commercial  bank"), "Commercial Bank");
+  assert.equal(canonicalSector("NEPSE  Calendar"), null);
+  assert.equal(canonicalSector("Some New Sector"), null);
+  assert.ok(CANONICAL_SECTORS.includes("Manufacturing and Processing"));
+});
+
+const secBlock = (rows) =>
+  ["S.No\tSymbol\tOpen\tHigh\tLow\tLTP\tPrev. Closing\tVolume\tPts Change\t% Change", ...rows].join("\n");
+const TWO_SECTORS = ["Commercial Bank", "Hydropower", "NEPSE  Calendar"].join("\n");
+const FOUR_BLOCKS = [
+  secBlock(["1\tNABIL\t1\t1\t1\t539.00\t537.50\t100\t1.5\t0.28"]),
+  secBlock(["1\tEBL\t1\t1\t1\t716.10\t715.00\t100\t1.1\t0.15"]),
+  secBlock(["1\tCKHL\t1\t1\t1\t615.00\t566.60\t100\t48.4\t8.56"]),
+  secBlock(["1\tRHPC\t1\t1\t1\t840.00\t776.00\t100\t64\t8.25"]),
+].join("\n\n");
+
+test("sector map pairs headings to blocks by order and drops non-sector headings", () => {
+  const r = parseSectorMap(TWO_SECTORS, FOUR_BLOCKS, { observedOn: "2026-09-03" });
+  assert.equal(r.ok, true);
+  assert.deepEqual(r.sectors, ["Commercial Bank", "Hydropower"]);
+  assert.deepEqual(r.dropped, ["NEPSE  Calendar"]);
+  assert.equal(r.map.NABIL.sector, "Commercial Bank");
+  assert.equal(r.map.EBL.sector, "Commercial Bank");
+  assert.equal(r.map.CKHL.sector, "Hydropower");
+  assert.equal(r.map.RHPC.sector, "Hydropower");
+  assert.equal(r.map.NABIL.observedOn, "2026-09-03");
+  assert.equal(r.covered, 4);
+});
+
+test("a block count that does not match the sectors is REFUSED, not mislabelled", () => {
+  const threeBlocks = FOUR_BLOCKS.split("\n\n").slice(0, 3).join("\n\n");
+  const r = parseSectorMap(TWO_SECTORS, threeBlocks, {});
+  assert.equal(r.ok, false);
+  assert.equal(r.reason, "PAIRING_MISMATCH");
+  assert.deepEqual(r.map, {});
+  assert.ok(r.detail.includes("4 blocks") || r.detail.includes("found 3"));
+});
+
+test("no recognised heading means no map, rather than an unlabelled one", () => {
+  const r = parseSectorMap("NEPSE  Calendar\nAnalysis", FOUR_BLOCKS, {});
+  assert.equal(r.ok, false);
+  assert.equal(r.reason, "NO_SECTORS");
+});
+
+test("an error page yields no sector map", () => {
+  const r = parseSectorMap(TWO_SECTORS, FOUR_BLOCKS, { title: "400 - Page Not Found" });
+  assert.equal(r.ok, false);
+  assert.equal(r.reason, "ERROR_PAGE");
+});
+
+test("a header row inside a block never becomes a symbol", () => {
+  const r = parseSectorMap(TWO_SECTORS, FOUR_BLOCKS, {});
+  assert.equal(r.map.SYMBOL, undefined);
+  assert.equal(Object.keys(r.map).length, 4);
+});

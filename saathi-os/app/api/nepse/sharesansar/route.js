@@ -10,7 +10,10 @@
 // before any of this returns data. Deny-by-default is not bypassed here.
 
 import { NextResponse } from "next/server";
-import { SHARESANSAR_PAGES, parseTodayPrices, parseProposedDividends } from "@/lib/extract/sharesansar";
+import {
+  SHARESANSAR_PAGES, parseTodayPrices, parseProposedDividends,
+  parseTopBrokers, parseExistingIssues, parseSectorMap,
+} from "@/lib/extract/sharesansar";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -22,6 +25,11 @@ const CACHE_MS = 30 * 60 * 1000;
 const DATASETS = {
   prices: { page: SHARESANSAR_PAGES.todayPrices, parse: parseTodayPrices },
   dividends: { page: SHARESANSAR_PAGES.proposedDividends, parse: parseProposedDividends },
+  brokers: { page: SHARESANSAR_PAGES.topBrokers, parse: parseTopBrokers },
+  ipos: { page: SHARESANSAR_PAGES.existingIssues, parse: parseExistingIssues },
+  // The sector map is not a table: it pairs two node lists by order, so it needs
+  // its own fetch shape rather than the header+rows one every other dataset uses.
+  sectors: { page: SHARESANSAR_PAGES.sectorMap, paired: true },
 };
 
 const cache = new Map();
@@ -59,6 +67,40 @@ export async function GET(request) {
   const ac = new AbortController();
   const timer = setTimeout(() => ac.abort(), TIMEOUT_MS);
   try {
+    if (spec.paired) {
+      const heads = await extract(spec.page.url, spec.page.sectorSelector, headers, ac.signal);
+      const blocks = await extract(spec.page.url, spec.page.blockSelector, headers, ac.signal);
+      if (!heads?.ok || !blocks?.ok) {
+        return NextResponse.json(
+          { available: false, reason: heads?.status === 401 ? "NOT_SIGNED_IN"
+              : heads?.failure_category || blocks?.failure_category || "BROWSER_DENIED",
+            url: spec.page.url },
+          { status: 503, headers: { "cache-control": "no-store" } },
+        );
+      }
+      const observedOn = new Date().toISOString().slice(0, 10);
+      const parsed = parseSectorMap(heads.content || "", blocks.content || "",
+        { title: blocks.page_title || "", observedOn });
+      if (!parsed.ok) {
+        return NextResponse.json(
+          { available: false, reason: parsed.reason, detail: parsed.detail, url: spec.page.url,
+            message: "The sector page's layout no longer pairs. Mapping was refused rather than guessed." },
+          { status: 503, headers: { "cache-control": "no-store" } },
+        );
+      }
+      const out = {
+        available: true, dataset: which, source: parsed.source, url: parsed.url,
+        fetchedAt: new Date().toISOString(), observedOn,
+        sectors: parsed.sectors, dropped: parsed.dropped,
+        covered: parsed.covered, map: parsed.map,
+        // Stated, never implied: this page lists each sector's top movers only.
+        coverage: "PARTIAL_TOP_MOVERS_ONLY",
+        trust: "SCRAPED_UNTRUSTED_SOURCE",
+      };
+      cache.set(which, { at: Date.now(), body: out });
+      return NextResponse.json(out, { headers: { "cache-control": "no-store" } });
+    }
+
     // Headers first: if the layout has drifted there is no point fetching rows.
     const head = await extract(spec.page.url, spec.page.headerSelector, headers, ac.signal);
     if (!head?.ok) {

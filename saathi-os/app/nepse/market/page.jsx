@@ -246,19 +246,33 @@ export default function MarketPage() {
             build knew — with two or three members a sector average was mostly noise.
           </p>
           <div className="nepse-grid-3">
-            {ix.data.sectors.map((sec) => (
-              <div key={sec.index} className="nepse-card">
-                <div className="strong">{sec.label}</div>
-                <div className="nepse-row" style={{ justifyContent: "space-between", marginTop: 4 }}>
-                  <span className="num" style={{ color: "var(--text-faint)", fontSize: "0.85rem" }}>
-                    {fmtNum(sec.close)}
-                  </span>
-                  <span className={`nepse-badge ${(sec.changePct ?? 0) >= 0 ? "up" : "down"}`}>
-                    {sec.changePct === null ? "—" : fmtPct(sec.changePct)}
-                  </span>
+            {ix.data.sectors.map((sec) => {
+              // The published index says how the sector moved; the constituents we
+              // could classify say how broadly. They answer different questions, so
+              // both are shown and neither is derived from the other.
+              const breadth = data.sectors.find(
+                (b) => b.status === "OK" && b.sector.toLowerCase().replace(/[^a-z]/g, "")
+                  === sec.label.toLowerCase().replace(/[^a-z]/g, ""),
+              );
+              return (
+                <div key={sec.index} className="nepse-card">
+                  <div className="strong">{sec.label}</div>
+                  <div className="nepse-row" style={{ justifyContent: "space-between", marginTop: 4 }}>
+                    <span className="num" style={{ color: "var(--text-faint)", fontSize: "0.85rem" }}>
+                      {fmtNum(sec.close)}
+                    </span>
+                    <span className={`nepse-badge ${(sec.changePct ?? 0) >= 0 ? "up" : "down"}`}>
+                      {sec.changePct === null ? "—" : fmtPct(sec.changePct)}
+                    </span>
+                  </div>
+                  {breadth && (
+                    <div style={{ color: "var(--text-faint)", fontSize: "0.75rem", marginTop: 4 }}>
+                      {breadth.advancing}↑ {breadth.declining}↓ of {breadth.members} classified
+                    </div>
+                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
           {ix.data.missingSectors?.length > 0 && (
             <p style={{ color: "var(--text-faint)", fontSize: "0.78rem", marginTop: "0.75rem" }}>

@@ -17,6 +17,7 @@ import { NextResponse } from "next/server";
 import { parseHistoryTail, NEPSE_RESEARCH_SOURCE } from "@/lib/nepse/history";
 import { marketSummary } from "@/lib/nepse/market";
 import { STOCKS } from "@/lib/nepse/data";
+import { sectorMap } from "@/lib/nepse/enrich";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -40,8 +41,8 @@ const TIMEOUT_MS = 60_000;
 const CACHE_MS = 30 * 60 * 1000;
 const UNIVERSE_CACHE_MS = 24 * 60 * 60 * 1000;  // the listed universe barely moves
 
-/** Sector is only known for curated symbols; the rest are honestly Unclassified. */
-const SECTOR_OF = new Map(STOCKS.map((s) => [s.symbol, s.sector]));
+/** The curated fallback: 24 symbols. Widened at request time where possible. */
+const CURATED_SECTOR_OF = new Map(STOCKS.map((s) => [s.symbol, s.sector]));
 
 let cache = { at: 0, body: null };
 let universeCache = { at: 0, symbols: null, via: null };
@@ -140,7 +141,7 @@ async function fetchHeader(signal) {
   return /published_date/i.test(first || "") ? first : null;
 }
 
-export async function GET() {
+export async function GET(request) {
   if (cache.body && Date.now() - cache.at < CACHE_MS) {
     return NextResponse.json(cache.body, { headers: { "cache-control": "no-store" } });
   }
@@ -159,6 +160,12 @@ export async function GET() {
     }
     const universe = resolved.symbols;
 
+    // Optional: a live sector map covering roughly half the market, versus the 24
+    // symbols this build ships with. Partial by construction, so its coverage is
+    // reported rather than implied.
+    const live = await sectorMap(request);
+    const sectorOf = (sym) => live?.map.get(sym) || CURATED_SECTOR_OF.get(sym) || null;
+
     const entries = await pooled(universe, async (sym) => {
       const res = await fetch(`${BASE}/${sym}.csv`, {
         headers: { accept: "text/csv,text/plain", range: `bytes=-${TAIL_BYTES}` },
@@ -170,7 +177,7 @@ export async function GET() {
       if (/^\s*</.test(text)) return null;
       const { bars } = parseHistoryTail(text, header, { symbol: sym });
       if (bars.length < 2) return null;
-      return { symbol: sym, sector: SECTOR_OF.get(sym) || null, bars };
+      return { symbol: sym, sector: sectorOf(sym), bars };
     });
 
     const summary = marketSummary(entries, { listedTotal: universe.length, limit: 10 });
@@ -185,6 +192,9 @@ export async function GET() {
       index: null,
       indexReason: "NO_INDEX_SOURCE",
       sectorsKnownFor: entries.filter((e) => e.sector).length,
+      sectorSource: live
+        ? { id: live.source, coverage: live.coverage, observedOn: live.observedOn, mapped: live.covered }
+        : { id: "built-in curated list", coverage: "24_SYMBOLS_ONLY", observedOn: null, mapped: CURATED_SECTOR_OF.size },
       universeVia: resolved.via,
       // LISTED = every listed company; TRADED = only what changed hands that
       // session; CURATED = this build's own short list. The page says which.

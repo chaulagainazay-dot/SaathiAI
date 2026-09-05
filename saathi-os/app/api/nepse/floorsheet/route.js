@@ -8,6 +8,7 @@ import { NextResponse } from "next/server";
 import { parseFloorsheet, brokerActivity, floorsheetTotals, symbolActivity } from "@/lib/nepse/floorsheet";
 import { NEPSE_INDEX_SOURCE } from "@/lib/nepse/indices";
 import { BROKERS } from "@/lib/nepse/data";
+import { brokerNames } from "@/lib/nepse/enrich";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -21,8 +22,13 @@ const TIMEOUT_MS = 60_000;
 const MAX_BYTES = 40_000_000;
 const CACHE_MS = 30 * 60 * 1000;
 
-/** Codes this build can actually name. Everything else stays a bare code. */
-const BROKER_NAMES = new Map(BROKERS.map((b) => [b.code, b.name]));
+/**
+ * Last-resort names. This hardcoded list was also WRONG: it labelled broker 45
+ * "Kumari Securities" when 45 is Imperial Securities, and 34 "Online Securities"
+ * when that is 49 — wrong firm names attached to real money flows. The live list
+ * from ShareSansar is preferred whenever it can be fetched.
+ */
+const FALLBACK_NAMES = new Map(BROKERS.map((b) => [b.code, b.name]));
 
 let cache = { at: 0, date: null, trades: null };
 
@@ -65,6 +71,9 @@ export async function GET(request) {
     }
 
     const scoped = symbol ? loaded.trades.filter((t) => t.symbol === symbol) : loaded.trades;
+    // Optional: real names for all 92 brokers. Absent, codes stay codes.
+    const live = await brokerNames(request);
+    const names = live?.names || FALLBACK_NAMES;
     // A symbol that did not trade gets an explicit empty session, not an error and
     // certainly not another symbol's activity.
     const body = {
@@ -77,10 +86,11 @@ export async function GET(request) {
       symbol,
       traded: scoped.length > 0,
       totals: floorsheetTotals(scoped),
-      brokers: brokerActivity(scoped, { names: BROKER_NAMES }).slice(0, 40),
+      brokers: brokerActivity(scoped, { names }).slice(0, 40),
       topSymbols: symbol ? [] : symbolActivity(loaded.trades, 12),
       rejectedRows: loaded.rejected ?? 0,
-      namedBrokers: BROKER_NAMES.size,
+      namedBrokers: names.size,
+      namesFrom: live ? live.source : "built-in fallback list (incomplete, and known to contain errors)",
     };
     return NextResponse.json(body, { headers: { "cache-control": "no-store" } });
   } catch {
