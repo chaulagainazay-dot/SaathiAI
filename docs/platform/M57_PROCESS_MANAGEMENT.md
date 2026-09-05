@@ -4,9 +4,13 @@
 - **Recognize** a SaathiOS process by command signature: backend matches
   `uvicorn saathi.server:app` or `-m saathi.server`; frontend matches
   `next-server`/`next dev` **and** a `saathi-os` working directory.
+- **Reuse** a backend only after canonical provenance validation: exact
+  repository/CWD, package path reported by `/api/v1/platform/provenance`, and
+  the canonical security/platform database paths must match. A foreign
+  worktree on port 8765 is `provenance-mismatch`, never reusable or killed.
 - **Own** (for stopping) only processes recorded in the launcher's PID files
-  (`~/.saathi/run/{backend,frontend}.pid`). The launcher **reuses** any healthy
-  SaathiOS process it finds, but **stops only what it started**.
+  (`~/.saathi/run/{backend,frontend}.pid`). The launcher reuses only a healthy,
+  provenance-matched SaathiOS process and **stops only what it started**.
 
 ## Start
 Resolves the repo, verifies `curl`, then classifies ports 8765 and 3000. If a
