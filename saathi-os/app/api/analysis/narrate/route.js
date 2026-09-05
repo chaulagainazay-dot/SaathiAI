@@ -11,6 +11,7 @@ import { computeIndicators } from "@/lib/nepse/indicators";
 import { analyzeChart, narrationPrompt } from "@/lib/analysis/analyze";
 import { gateNarration } from "@/lib/analysis/guard";
 import { NEWS_SOURCES, ALLOWED_NEWS_HOSTS, parseFeed, matchToSymbol, recentItems, newsFactBlock } from "@/lib/news/feed";
+import { validateBaseUrl, buildSearchRequest, normalizeSearch, webFactBlock, symbolQuery } from "@/lib/web/wigolo";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -99,6 +100,34 @@ export async function POST(request) {
         facts = `${facts}\n\n${newsFactBlock(direct, context, { symbol })}`;
       }
     } catch { /* news is optional — the analysis narrates without it */ }
+
+    // Web context, when the local search daemon happens to be running. Optional in
+    // the strict sense: if it is down, absent, or slow, the analysis narrates from
+    // its own computed facts exactly as before. It is added AFTER the numeric facts
+    // and inside its own fence, so the guard downstream still refuses any figure the
+    // model did not get from the computation.
+    try {
+      const base = validateBaseUrl(process.env.WIGOLO_BASE_URL || "http://127.0.0.1:3333");
+      const q = symbolQuery(symbol, { market: market === "crypto" ? "crypto" : "NEPSE", extra: "news" });
+      const req = q ? buildSearchRequest({ query: q, maxResults: 5 }) : { ok: false };
+      if (base.ok && req.ok) {
+        const wr = await fetch(`${base.base}/v1/search`, {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            ...(process.env.WIGOLO_API_TOKEN ? { authorization: `Bearer ${process.env.WIGOLO_API_TOKEN}` } : {}),
+          },
+          body: JSON.stringify(req.body),
+          signal: ac.signal, cache: "no-store", redirect: "error",
+        });
+        if (wr.ok) {
+          const web = normalizeSearch(await wr.json());
+          if (web.ok && web.results.length) {
+            facts = `${facts}\n\n${webFactBlock(web.results, { subject: symbol })}`;
+          }
+        }
+      }
+    } catch { /* web context is optional in exactly the same way */ }
 
     // Narration calls a paid model, so the backend keeps it behind auth rather than
     // exposing a free LLM endpoint. Forward the operator's own session; an

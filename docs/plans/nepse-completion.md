@@ -91,3 +91,57 @@ issue manager, status.
 4. Cross-check broker totals against the floorsheet count already verified to the
    rupee.
 5. Full JS suite, lint, clean production build.
+
+---
+
+# NEPSE-COMPLETE-2 — web intelligence via wigolo
+
+## What was wired
+
+`wigolo` (github.com/KnockOutEZ/wigolo) is a local-first web search / fetch /
+crawl / extract engine that runs as its own daemon. SaathiOS now calls it for
+live web search: a `/nepse/research` surface, and optional web context appended
+to chart narration.
+
+## The licence boundary — the decisive constraint
+
+**wigolo is AGPL-3.0.** That licence's network clause reaches software that is
+combined with it and served to users. So the integration is deliberately
+arm's-length:
+
+- wigolo runs as a **separate process**, started independently, reached over its
+  loopback HTTP API.
+- **No wigolo source is imported, vendored, linked or copied into this repo.**
+  `lib/web/wigolo.js` encodes the wire shape observed from a running daemon —
+  the same way any HTTP client encodes the service it calls.
+- Nothing in SaathiOS is derived from wigolo's code.
+
+Vendoring it later would put SaathiOS's own licensing in question. That is the
+single rule to keep.
+
+## Security posture
+
+- The daemon URL is **validated as loopback** before it is dialled. A config value
+  that could name any host would turn the route into a request-forgery proxy —
+  the same hole already closed in the governed browser.
+- Only **read-only tools** are callable: search, fetch, extract, find_similar.
+  `crawl`, `agent`, `watch`, `diff` and `research` schedule work, spend time or
+  cost money, and are not reachable from this app.
+- Every result is **fenced** through the existing injection filter before it can
+  reach a screen or a prompt, and flagged results are shown as flagged.
+- Web text is labelled `UNTRUSTED_WEB_CONTENT` and styled apart from SaathiOS's
+  own figures. The prompt block states plainly that a snippet is **not a price**
+  and **not an explanation of a price move** — a page mentioning a symbol is
+  evidence the page exists, nothing more.
+- Narration still passes through the numeric guard afterwards, so web text cannot
+  smuggle a figure into an answer.
+
+## Operational notes
+
+- Start the daemon: `npx wigolo serve --port 3333`. SaathiOS does not start it.
+- If it is not running the route says so and returns nothing — a search surface
+  that silently degrades to zero results is indistinguishable from a web where
+  nothing was written.
+- `research` and `agent` want an LLM key; a local Ollama at :11434 was detected on
+  this machine, so keyless synthesis is available if those are ever enabled.
+- Core search is keyless. Observed engines in use: DuckDuckGo and Bing.

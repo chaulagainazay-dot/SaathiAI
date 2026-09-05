@@ -16,6 +16,7 @@ const TABS = [
   { href: "/nepse/watchlist", label: "Watchlist" },
   { href: "/nepse/brokers", label: "Brokers" },
   { href: "/nepse/calendar", label: "Calendar" },
+  { href: "/nepse/research", label: "Research" },
 ];
 
 function Ticker() {
