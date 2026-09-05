@@ -128,6 +128,8 @@ class TestProvenanceCarriesNoSecrets:
             "shaSource",
             "worktreePath",
             "packagePath",
+            "securityDbPath",
+            "platformDbPath",
         }
 
     def test_no_credential_material_is_reflected(self, monkeypatch):

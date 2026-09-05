@@ -116,9 +116,19 @@ def runtime_provenance(environment: str | None = None) -> dict[str, Any]:
     if exposes_local_paths(env):
         payload["worktreePath"] = str(REPO_ROOT)
         payload["packagePath"] = str(PACKAGE_PATH)
+        # Configuration identity is safe in local diagnostics and lets a
+        # launcher validate a backend before lazy stores have opened files.
+        payload["securityDbPath"] = os.getenv(
+            "SAATHI_SECURITY_DB", str(pathlib.Path.home() / ".saathi" / "security.db")
+        )
+        payload["platformDbPath"] = os.getenv(
+            "SAATHI_PLATFORM_DB", str(REPO_ROOT / "data" / "platform" / "platform.db")
+        )
     else:
         payload["worktreePath"] = None
         payload["packagePath"] = None
+        payload["securityDbPath"] = None
+        payload["platformDbPath"] = None
 
     _cache[env] = dict(payload)
     return payload

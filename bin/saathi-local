@@ -93,9 +93,17 @@ _backend_provenance_matches() {
   payload="$(_http_body "$API_BASE/api/v1/platform/provenance")"
   printf '%s' "$payload" | grep -Fq '"worktreePath":"'"$EXPECTED_BACKEND_CWD"'"' || return 1
   printf '%s' "$payload" | grep -Fq '"packagePath":"'"$EXPECTED_BACKEND_PACKAGE"'"' || return 1
+  printf '%s' "$payload" | grep -Fq '"securityDbPath":"'"$EXPECTED_SECURITY_DB"'"' || return 1
+  printf '%s' "$payload" | grep -Fq '"platformDbPath":"'"$EXPECTED_PLATFORM_DB"'"' || return 1
   paths="$(_open_paths_of "$pid")"
-  printf '%s\n' "$paths" | grep -Fxq "$EXPECTED_SECURITY_DB" || return 1
-  printf '%s\n' "$paths" | grep -Fxq "$EXPECTED_PLATFORM_DB" || return 1
+  # Security stores are lazy; require an opened path when present, while the
+  # endpoint remains authoritative before the first authenticated operation.
+  if printf '%s\n' "$paths" | grep -Eq '(^|/)security\.db$'; then
+    printf '%s\n' "$paths" | grep -Fxq "$EXPECTED_SECURITY_DB" || return 1
+  fi
+  if printf '%s\n' "$paths" | grep -Fq 'platform.db'; then
+    printf '%s\n' "$paths" | grep -Fxq "$EXPECTED_PLATFORM_DB" || return 1
+  fi
 }
 # Owned == recognized SaathiOS process AND recorded in the launcher's PID file.
 _owned() {  # _owned <pid> <role>
