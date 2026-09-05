@@ -28,6 +28,7 @@ import {
 } from "@/lib/command-motion";
 import { LoadingState, ErrorState, EmptyState, StatusBadge, Button } from "@/components/ui";
 import { useVoiceSession } from "@/components/voice/VoiceSessionProvider";
+import { useVoiceRuntime } from "@/components/voice/VoiceRuntimeProvider";
 
 function Pill({ children, tone = "default" }) {
   const cls =
@@ -359,6 +360,7 @@ export default function CommandCenterPage() {
 
   const { loading, model, refresh } = useHybridCommand({ fixtureScenario });
   const voiceSession = useVoiceSession();
+  const voiceRuntime = useVoiceRuntime();
 
   const [mode, setMode] = useState("command");
   const [modeEnter, setModeEnter] = useState(false);
@@ -390,9 +392,20 @@ export default function CommandCenterPage() {
   // its state wins over any local presentation label. IDLE/CLOSED means the
   // manager owns nothing, so the local read-model label is shown instead.
   const canonicalVoiceState = voiceSession?.session?.state;
+  const runtimeVoiceState = voiceRuntime?.runtime?.speaking
+    ? "SPEAKING"
+    : voiceRuntime?.runtime?.recording || voiceRuntime?.runtime?.listening
+      ? "LISTENING"
+      : voiceRuntime?.runtime?.state === "THINKING"
+        ? "THINKING"
+        : voiceRuntime?.runtime?.state === "INTERRUPTED"
+          ? "INTERRUPTED"
+          : null;
   const canonicalVoiceOwns =
     !!canonicalVoiceState && canonicalVoiceState !== "IDLE" && canonicalVoiceState !== "CLOSED";
-  const voice = canonicalVoiceOwns ? canonicalVoiceState : voiceOverride;
+  const voice = canonicalVoiceOwns
+    ? canonicalVoiceState
+    : runtimeVoiceState || voiceOverride;
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");

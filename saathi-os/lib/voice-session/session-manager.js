@@ -220,7 +220,7 @@ export function createVoiceSessionManager(hooks = {}) {
     /**
      * Claim input; policy: stop output first (manual interrupt) unless acoustic path.
      */
-    async beginInput({ label = "voice-input", stopOutputFirst = true } = {}) {
+    async beginInput({ label = "voice-input", stopOutputFirst = true, startPipeline = true } = {}) {
       if (closed) throw new Error("Voice session is closed");
       if (stopOutputFirst) {
         await api.interrupt("USER_MIC_REQUEST");
@@ -237,11 +237,15 @@ export function createVoiceSessionManager(hooks = {}) {
         sessionId: snapshot.sessionId,
         claimId: inputClaim.id,
       });
-      // Start streaming STT + turn coordinator (browser or mock)
-      try {
-        await api.startStreamingPipeline({ sttMode: hooks.sttMode || "auto" });
-      } catch (err) {
-        api.notifySttDegraded(String(err?.message || err));
+      // The provider may own the browser recognition instance itself. In that
+      // mode the manager still owns the claim and VAD, but must not create a
+      // second browser recognizer before the provider starts its one.
+      if (startPipeline) {
+        try {
+          await api.startStreamingPipeline({ sttMode: hooks.sttMode || "auto" });
+        } catch (err) {
+          api.notifySttDegraded(String(err?.message || err));
+        }
       }
       return publish({ error: "" });
     },

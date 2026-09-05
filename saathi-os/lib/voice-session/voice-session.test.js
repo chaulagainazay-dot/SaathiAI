@@ -107,6 +107,14 @@ describe("single ownership invariants", () => {
     await mgr.close();
   });
 
+  it("can reserve the canonical claim without starting a second STT pipeline", async () => {
+    const mgr = createVoiceSessionManager();
+    await mgr.beginInput({ label: "provider-recognition", startPipeline: false });
+    assert.equal(mgr.getPipeline(), null);
+    assert.equal(mgr.getInputClaim()?.isActive(), true);
+    await mgr.close();
+  });
+
   it("capability defaults export is frozen shape", () => {
     assert.equal(CAPABILITY_DEFAULTS.vadAvailable, false);
     assert.equal(CAPABILITY_DEFAULTS.manualInterruptAvailable, true);

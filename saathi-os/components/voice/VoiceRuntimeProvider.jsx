@@ -37,6 +37,8 @@ export function VoiceRuntimeProvider({ children }) {
   const [busy, setBusy] = useState(false);
   const recognitionRef = useRef(null);
   const sessionIdRef = useRef("");
+  const sessionCreateRef = useRef(null);
+  const sessionEpochRef = useRef(0);
   const mediaStreamRef = useRef(null);
   const inputClaimRef = useRef(null);
   const voiceOutput = useVoiceOutput();
@@ -79,6 +81,9 @@ export function VoiceRuntimeProvider({ children }) {
   }, []);
 
   const hardReset = useCallback(() => {
+    sessionEpochRef.current += 1;
+    sessionCreateRef.current = null;
+    sessionIdRef.current = "";
     cleanupLocal();
     forceReleaseInput("SESSION_CLOSE");
     try {
@@ -99,6 +104,8 @@ export function VoiceRuntimeProvider({ children }) {
     window.addEventListener(PLATFORM_CONTEXT_EVENT, onContext);
     return () => {
       window.removeEventListener(PLATFORM_CONTEXT_EVENT, onContext);
+      sessionEpochRef.current += 1;
+      sessionCreateRef.current = null;
       cleanupLocal();
     };
   }, [cleanupLocal, hardReset]);
@@ -115,17 +122,35 @@ export function VoiceRuntimeProvider({ children }) {
   }, [pathname, hardReset]);
 
   const ensureSession = useCallback(
-    async (activeToken) => {
+    (activeToken) => {
       if (sessionIdRef.current) return sessionIdRef.current;
-      const created = await voiceRuntimeActions.createSession(activeToken, {
-        input_mode: "toggle",
-        stt_provider: getRecognitionCtor() ? "browser" : "auto",
-        voice_profile_id: "yeti_teacher",
-        yeti_mode: "general",
-      });
-      dispatch({ type: "SESSION", session: created.session });
-      sessionIdRef.current = created.session.session_id;
-      return created.session.session_id;
+      if (sessionCreateRef.current) return sessionCreateRef.current.promise;
+      const epoch = sessionEpochRef.current;
+      const promise = (async () => {
+        const created = await voiceRuntimeActions.createSession(activeToken, {
+          input_mode: "toggle",
+          stt_provider: getRecognitionCtor() ? "browser" : "auto",
+          voice_profile_id: "yeti_teacher",
+          yeti_mode: "general",
+        });
+        const id = created?.session?.session_id;
+        if (!id) throw new Error("Voice session is unavailable.");
+        if (epoch !== sessionEpochRef.current) {
+          // A request that finishes after logout/route teardown must not become
+          // active. Finish the server row through the normal bounded endpoint.
+          try { await voiceRuntimeActions.finish(activeToken, id); } catch { /* best effort */ }
+          throw new Error("Voice session creation was cancelled.");
+        }
+        dispatch({ type: "SESSION", session: created.session });
+        sessionIdRef.current = id;
+        return id;
+      })();
+      sessionCreateRef.current = { epoch, promise };
+      promise.then(
+        () => { if (sessionCreateRef.current?.promise === promise) sessionCreateRef.current = null; },
+        () => { if (sessionCreateRef.current?.promise === promise) sessionCreateRef.current = null; },
+      );
+      return promise;
     },
     []
   );
@@ -189,7 +214,11 @@ export function VoiceRuntimeProvider({ children }) {
         );
       }
       // V-NEXT-1: exclusive input claim via VoiceSessionManager (single owner).
-      await voiceSession?.beginInput?.({ label: "VoiceRuntimeProvider", stopOutputFirst: true });
+      await voiceSession?.beginInput?.({
+        label: "VoiceRuntimeProvider",
+        stopOutputFirst: true,
+        startPipeline: false,
+      });
       let claim = voiceSession?.manager?.getInputClaim?.() || null;
       if (!claim) {
         claim = acquireInputClaim({ label: "VoiceRuntimeProvider" });
