@@ -3,11 +3,17 @@
 **Branch tip base:** UI-NEXT-1 @ `d66fa3a`  
 **After V-NEXT-1:** canonical owners under `lib/voice-session/*`
 
+**Current runtime note (2026-09):** `VoiceRuntimeProvider` owns the browser
+recognition instance while `VoiceSessionManager` owns the claim and VAD. The
+provider requests a claim-only manager input start, so the manager does not
+create a second browser STT adapter for the same turn. Session creation is
+provider-private single-flight and generation-safe.
+
 ## Before (pre V-NEXT-1)
 
 | Owner | Files | Mic | Playback | Lifecycle | Class (before) |
 | --- | --- | --- | --- | --- | --- |
-| VoiceRuntimeProvider | `components/voice/VoiceRuntimeProvider.jsx` | getUserMedia + SpeechRecognition | delegates VoiceOutputProvider | route hardReset, logout | CANONICAL (platform) |
+| VoiceRuntimeProvider | `components/voice/VoiceRuntimeProvider.jsx` | claimed getUserMedia + one provider-owned SpeechRecognition | delegates VoiceOutputProvider | route hardReset, logout | CANONICAL (platform) |
 | VoiceOutputProvider | `components/voice/VoiceOutputProvider.jsx` | no | HTMLAudio + SpeechService poll | route stop, logout | CANONICAL (output) |
 | Chat VoiceControl | `components/chat/VoiceControl.jsx` | SpeechRecognition (own) | speechSynthesis (own) | unmount cleanup | LEGACY/COMPAT |
 | Settings voice page | `app/settings/voice/page.jsx` | test getUserMedia | speechSynthesis test | page-local | COMPATIBILITY |
@@ -28,6 +34,10 @@
 | Chat VoiceControl | **COMPATIBILITY_WRAPPER** — uses input claim |
 | CommandComposer | **CANONICAL_CONSUMER** — no mic ownership |
 | Settings / legacy / useVoice | **DEPRECATE_LATER** / remaining islands (documented) |
+
+The manager's `beginInput({ startPipeline: false })` mode is reserved for this
+provider-owned recognition path; all other manager callers retain the normal
+pipeline startup behavior.
 
 ### Invariants
 
