@@ -519,8 +519,19 @@ class BrowserAdapter:
                 )
             if action in (BrowserAction.READ, BrowserAction.EXTRACT):
                 if selector:
-                    nodes = svc.extract(url, selector)
-                    text = " ".join(nodes) if isinstance(nodes, list) else str(nodes)
+                    # governed=True means "authorization already happened" — it
+                    # skips the re-entry into the gateway. Without it, extract
+                    # builds a NEW GovernedBrowser with default allowed_hosts and
+                    # denies a host this adapter was explicitly permitted, which is
+                    # both a double-governance loop and the wrong answer.
+                    nodes = svc.extract(
+                        url, selector, governed=True,
+                        timeout=int((params or {}).get("timeout") or 30),
+                    )
+                    # One node per line. Joining table rows with a space would
+                    # merge every row into a single line and destroy the only
+                    # structure a caller has to parse.
+                    text = "\n".join(nodes) if isinstance(nodes, list) else str(nodes)
                 else:
                     open_direct = getattr(svc, "_open_direct", None)
                     if callable(open_direct):
