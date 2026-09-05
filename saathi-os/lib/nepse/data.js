@@ -104,45 +104,8 @@ export function brokersForStock(symbol) {
   }).sort((a, b) => (b.buyAmount + b.sellAmount) - (a.buyAmount + a.sellAmount));
 }
 
-// Market-wide snapshot: index, breadth, turnover, and sector day-changes.
-export function marketSnapshot() {
-  const advancing = STOCKS.filter((s) => s.ltp > s.prevClose).length;
-  const declining = STOCKS.filter((s) => s.ltp < s.prevClose).length;
-  const unchanged = STOCKS.length - advancing - declining;
-  const totalMarketCap = STOCKS.reduce((a, s) => a + s.marketCap, 0);
-  const turnover = 3_790_000_000; // snapshot figure
-  const volume = 9_120_000;
-  const sectors = SECTORS.map((name) => {
-    const inSec = STOCKS.filter((s) => s.sector === name);
-    if (!inSec.length) return null;
-    const chg = inSec.reduce((a, s) => a + ((s.ltp - s.prevClose) / s.prevClose) * 100, 0) / inSec.length;
-    return { name, count: inSec.length, dayChange: +chg.toFixed(2) };
-  }).filter(Boolean);
-  return {
-    index: 2557.31,
-    indexPrev: 2558.35,
-    advancing,
-    declining,
-    unchanged,
-    totalMarketCap,
-    avgMarketCap: totalMarketCap / STOCKS.length,
-    turnover,
-    volume,
-    sectors,
-    listed: STOCKS.length,
-    date: SNAPSHOT_DATE,
-  };
-}
-
-// Deterministic index history for the area chart (n daily points ending at index).
-export function indexHistory(points = 90, end = 2557.31) {
-  const out = [];
-  let v = end * 0.86;
-  for (let i = 0; i < points; i += 1) {
-    const wobble = Math.sin(i / 6) * 14 + ((i * 37) % 23) - 11;
-    v = v + (end - v) * 0.03 + wobble;
-    out.push({ t: i, v: +v.toFixed(2) });
-  }
-  out[out.length - 1] = { t: points - 1, v: end };
-  return out;
-}
+// The market-wide snapshot and the index-history generator used to live here.
+// Both were REMOVED: the snapshot carried a hardcoded index (2557.31) and a
+// hardcoded turnover, and the history was a sine wave dressed as an index chart.
+// Exchange-wide figures now come from /api/nepse/market, computed from the daily
+// archive. Nothing in this file may manufacture a market-level number again.

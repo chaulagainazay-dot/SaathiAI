@@ -219,3 +219,26 @@ export function historyQuality(bars, rejected = []) {
     classification: NEPSE_RESEARCH_SOURCE.classification,
   };
 }
+
+/**
+ * Parse the TAIL of an archive CSV — the last few KB fetched with a Range request.
+ *
+ * Market-wide aggregates need the last two closes of ~372 companies. Downloading
+ * every full file is ~30 MB for ~700 rows of actual interest, so the route asks
+ * for the tail instead. The tail has no header, and GUESSING one would silently
+ * misread the file the day the archive reorders its columns — so the caller must
+ * pass the real header line, read from the archive in the same cycle.
+ *
+ * The first line of a tail is almost always a partial row, so it is discarded.
+ */
+export function parseHistoryTail(tailText, headerLine, { symbol = "" } = {}) {
+  const header = String(headerLine || "").trim();
+  if (!header || !/published_date/i.test(header)) {
+    return { bars: [], rejected: [], source: NEPSE_RESEARCH_SOURCE };
+  }
+  const lines = String(tailText || "").split(/\r?\n/);
+  // Drop the leading fragment; a byte range rarely lands on a line boundary.
+  const rows = lines.slice(1).filter((l) => l.trim().length);
+  if (!rows.length) return { bars: [], rejected: [], source: NEPSE_RESEARCH_SOURCE };
+  return parseHistoryCsv([header, ...rows].join("\n"), { symbol });
+}

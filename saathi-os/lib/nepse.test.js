@@ -8,7 +8,7 @@ import { readFileSync, existsSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { STOCKS, getStock, marketSnapshot, brokersForStock, BROKERS, indexHistory } from "./nepse/data.js";
+import { STOCKS, getStock, brokersForStock, BROKERS } from "./nepse/data.js";
 import { scoreStock, signalFor, evaluationFor, rsi, withAnalytics } from "./nepse/analytics.js";
 import { screen, PAGE_SIZE } from "./nepse/screener.js";
 import { computePortfolio } from "./nepse/portfolio.js";
@@ -149,17 +149,13 @@ test("withAnalytics attaches score/signal/evaluation", () => {
 });
 
 // ── M400-NEPSE-004 market ────────────────────────────────────────────────────
-test("marketSnapshot breadth + sectors", () => {
-  const m = marketSnapshot();
-  assert.equal(m.advancing + m.declining + m.unchanged, STOCKS.length);
-  assert.ok(m.sectors.length >= 5);
-  assert.ok(m.totalMarketCap > 0);
-});
-
-test("indexHistory ends exactly at target", () => {
-  const h = indexHistory(30, 2557.31);
-  assert.equal(h.length, 30);
-  assert.equal(h[h.length - 1].v, 2557.31);
+// marketSnapshot() and indexHistory() were removed, not replaced: they generated a
+// hardcoded index and a sine-wave index chart. This test now guards their absence,
+// so nothing reintroduces a manufactured market-level number through this module.
+test("the seed data module exposes no market-level index or generated history", async () => {
+  const data = await import("./nepse/data.js");
+  assert.equal(data.marketSnapshot, undefined);
+  assert.equal(data.indexHistory, undefined);
 });
 
 test("brokers ranked + per-stock breakdown", () => {
