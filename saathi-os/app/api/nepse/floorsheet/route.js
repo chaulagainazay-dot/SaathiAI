@@ -8,7 +8,8 @@ import { NextResponse } from "next/server";
 import { parseFloorsheet, brokerActivity, floorsheetTotals, symbolActivity } from "@/lib/nepse/floorsheet";
 import { NEPSE_INDEX_SOURCE } from "@/lib/nepse/indices";
 import { BROKERS } from "@/lib/nepse/data";
-import { brokerNames } from "@/lib/nepse/enrich";
+import { brokerDirectory } from "@/lib/nepse/enrich";
+import { resolveBroker, DIRECTORY_STATE, stateBanner } from "@/lib/nepse/directory";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -23,12 +24,13 @@ const MAX_BYTES = 40_000_000;
 const CACHE_MS = 30 * 60 * 1000;
 
 /**
- * Last-resort names. This hardcoded list was also WRONG: it labelled broker 45
+ * The built-in list is a LAST RESORT and is known to be wrong: it labels broker 45
  * "Kumari Securities" when 45 is Imperial Securities, and 34 "Online Securities"
- * when that is 49 — wrong firm names attached to real money flows. The live list
- * from ShareSansar is preferred whenever it can be fetched.
+ * when that is 49. Resolution order and the visible state now come from
+ * lib/nepse/directory.js; this import is kept only so the module still declares
+ * where the fallback originates.
  */
-const FALLBACK_NAMES = new Map(BROKERS.map((b) => [b.code, b.name]));
+const BUILT_IN_COUNT = BROKERS.length;
 
 let cache = { at: 0, date: null, trades: null };
 
@@ -71,9 +73,12 @@ export async function GET(request) {
     }
 
     const scoped = symbol ? loaded.trades.filter((t) => t.symbol === symbol) : loaded.trades;
-    // Optional: real names for all 92 brokers. Absent, codes stay codes.
-    const live = await brokerNames(request);
-    const names = live?.names || FALLBACK_NAMES;
+    // Tiered: live enrichment, else the durable last-known-good, else the
+    // built-in list — each reported, never silently swapped.
+    const dir = await brokerDirectory(request);
+    const tiers = [
+      { state: dir.state, names: dir.names, verifiedAt: dir.verifiedAt, source: dir.source },
+    ];
     // A symbol that did not trade gets an explicit empty session, not an error and
     // certainly not another symbol's activity.
     const body = {
@@ -86,11 +91,24 @@ export async function GET(request) {
       symbol,
       traded: scoped.length > 0,
       totals: floorsheetTotals(scoped),
-      brokers: brokerActivity(scoped, { names }).slice(0, 40),
+      brokers: brokerActivity(scoped, { names: dir.names }).slice(0, 40).map((b) => {
+        // Every rendered identity goes through the resolver, so a missing name is
+        // "Broker 49" and never the literal null that once reached this table.
+        const id = resolveBroker(b.code, tiers);
+        return { ...b, name: id.displayName, nameKnown: id.known, nameQuality: id.quality,
+                 nameSource: id.source, nameConflict: id.conflict };
+      }),
       topSymbols: symbol ? [] : symbolActivity(loaded.trades, 12),
       rejectedRows: loaded.rejected ?? 0,
-      namedBrokers: names.size,
-      namesFrom: live ? live.source : "built-in fallback list (incomplete, and known to contain errors)",
+      namedBrokers: dir.names.size,
+      builtInCount: BUILT_IN_COUNT,
+      // The whole point of the milestone: the surface can see its own data state.
+      directory: stateBanner(dir.state, {
+        verifiedAt: dir.verifiedAt, nowMs: Date.now(),
+        entries: dir.names.size, expected: 92,
+      }),
+      directorySource: dir.source,
+      directoryVerifiedAt: dir.verifiedAt,
     };
     return NextResponse.json(body, { headers: { "cache-control": "no-store" } });
   } catch {

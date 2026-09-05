@@ -17,7 +17,8 @@ import { NextResponse } from "next/server";
 import { parseHistoryTail, NEPSE_RESEARCH_SOURCE } from "@/lib/nepse/history";
 import { marketSummary } from "@/lib/nepse/market";
 import { STOCKS } from "@/lib/nepse/data";
-import { sectorMap } from "@/lib/nepse/enrich";
+import { sectorDirectory } from "@/lib/nepse/enrich";
+import { resolveSector, DIRECTORY_STATE, stateBanner } from "@/lib/nepse/directory";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -160,11 +161,17 @@ export async function GET(request) {
     }
     const universe = resolved.symbols;
 
-    // Optional: a live sector map covering roughly half the market, versus the 24
-    // symbols this build ships with. Partial by construction, so its coverage is
-    // reported rather than implied.
-    const live = await sectorMap(request);
-    const sectorOf = (sym) => live?.map.get(sym) || CURATED_SECTOR_OF.get(sym) || null;
+    // Tiered: live enrichment, else the durable last-known-good, else the 24-symbol
+    // curated list. A restart no longer silently drops this from 183 to 24 — the
+    // cache carries it, and whichever tier answered is reported below.
+    const dir = await sectorDirectory(request);
+    const tiers = [
+      { state: dir.state, sectors: dir.sectors, verifiedAt: dir.verifiedAt, source: dir.source },
+      { state: DIRECTORY_STATE.INCOMPLETE_FALLBACK, sectors: CURATED_SECTOR_OF, source: "built-in curated list" },
+    ];
+    // A symbol nobody classifies stays null here so the aggregate treats it as
+    // Unclassified — resolveSector's em dash is for display, not for grouping.
+    const sectorOf = (sym) => resolveSector(sym, tiers).sector;
 
     const entries = await pooled(universe, async (sym) => {
       const res = await fetch(`${BASE}/${sym}.csv`, {
@@ -192,9 +199,17 @@ export async function GET(request) {
       index: null,
       indexReason: "NO_INDEX_SOURCE",
       sectorsKnownFor: entries.filter((e) => e.sector).length,
-      sectorSource: live
-        ? { id: live.source, coverage: live.coverage, observedOn: live.observedOn, mapped: live.covered }
-        : { id: "built-in curated list", coverage: "24_SYMBOLS_ONLY", observedOn: null, mapped: CURATED_SECTOR_OF.size },
+      sectorDirectory: stateBanner(dir.state, {
+        verifiedAt: dir.verifiedAt, nowMs: Date.now(),
+        entries: dir.sectors.size, expected: universe.length,
+      }),
+      sectorSource: {
+        id: dir.source || "built-in curated list",
+        state: dir.state,
+        mapped: dir.sectors.size || CURATED_SECTOR_OF.size,
+        verifiedAt: dir.verifiedAt,
+        freshness: dir.freshness,
+      },
       universeVia: resolved.via,
       // LISTED = every listed company; TRADED = only what changed hands that
       // session; CURATED = this build's own short list. The page says which.

@@ -10,6 +10,7 @@
 
 import { fmtNum, fmtPct, fmtCompactRs } from "@/lib/nepse/format";
 import { useMarketAggregates, useIndices } from "@/lib/nepse/use-market";
+import DataStateBanner from "@/components/nepse/DataStateBanner";
 
 /** Real index history — the close series NEPSE published, not a generated curve. */
 function IndexChart({ series }) {
@@ -236,6 +237,11 @@ export default function MarketPage() {
           bonus or rights issue repricing the stock — holders did not lose that.
         </div>
       )}
+
+      <DataStateBanner banner={data.sectorDirectory} what="sector classifications"
+        detail={data.sectorDirectory?.severity === "warning"
+          ? "Published sub-index levels below are unaffected; only the per-company breadth counts are."
+          : null} />
 
       <h3 style={{ margin: "1.5rem 0 0.5rem" }}>Sector performance</h3>
       {ix.data?.sectors?.length ? (

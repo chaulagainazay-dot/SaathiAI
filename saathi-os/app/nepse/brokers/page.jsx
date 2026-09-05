@@ -10,6 +10,7 @@
 import { useMemo, useState } from "react";
 import { fmtNum, fmtCompactRs } from "@/lib/nepse/format";
 import { useFloorsheet } from "@/lib/nepse/use-market";
+import DataStateBanner from "@/components/nepse/DataStateBanner";
 
 export default function BrokersPage() {
   const [q, setQ] = useState("");
@@ -54,11 +55,19 @@ export default function BrokersPage() {
     <>
       {head}
 
+      <DataStateBanner
+        banner={data.directory}
+        what="broker names"
+        detail={data.directory?.severity === "warning"
+          ? "Trade values are counted from the exchange floorsheet and are unaffected; only the firm names are."
+          : null}
+      />
+
       <div className="nepse-grid-3" style={{ marginTop: "1rem" }}>
         {top3.map((b) => (
           <div key={b.code} className="nepse-card">
             <span className="tag">Rank #{b.rank}</span>
-            <h3>#{b.code} {b.name || <span style={{ color: "var(--text-faint)" }}>name unknown</span>}</h3>
+            <h3>#{b.code} <span style={b.nameKnown ? undefined : { color: "var(--text-faint)" }}>{b.name}</span></h3>
             <div className="nepse-stat num" style={{ fontSize: "1.2rem" }}>{fmtCompactRs(b.total)}</div>
             <div style={{ color: "var(--text-faint)", fontSize: "0.78rem" }}>
               {fmtNum(b.trades, 0)} trades · net {fmtCompactRs(b.net)}
@@ -83,7 +92,13 @@ export default function BrokersPage() {
                 <td className="num">{b.rank}</td>
                 <td className="strong">
                   #{b.code}{" "}
-                  {b.name || <span style={{ color: "var(--text-faint)", fontWeight: 400 }}>name unknown</span>}
+                  <span style={b.nameKnown ? undefined : { color: "var(--text-faint)", fontWeight: 400 }}>{b.name}</span>
+                  {b.nameConflict && (
+                    <span className="nepse-badge" title={`Also known as "${b.nameConflict.rejected.map((r) => r.name).join('", "')}"`}
+                      style={{ marginLeft: "0.4rem", background: "var(--gold-soft)", color: "var(--gold)" }}>
+                      sources disagree
+                    </span>
+                  )}
                 </td>
                 <td className="num">{fmtCompactRs(b.buyAmount)}</td>
                 <td className="num">{fmtCompactRs(b.sellAmount)}</td>
@@ -97,9 +112,9 @@ export default function BrokersPage() {
       </div>
 
       <p style={{ color: "var(--text-faint)", fontSize: "0.78rem", marginTop: "1rem" }}>
-        Top {data.brokers.length} brokers of the session. This build can name{" "}
-        {data.namedBrokers} broker codes; the rest are shown by code rather than
-        guessed. Session turnover counted here is {fmtCompactRs(data.totals.amount)} across{" "}
+        Top {data.brokers.length} brokers of the session. {data.namedBrokers} broker
+        codes are named from {data.directorySource || "the built-in list"}; the rest
+        are shown by code rather than guessed. Session turnover counted here is {fmtCompactRs(data.totals.amount)} across{" "}
         {fmtNum(data.totals.quantity, 0)} shares. Source: {data.source} · {data.license} ·{" "}
         {data.classification}.
       </p>
