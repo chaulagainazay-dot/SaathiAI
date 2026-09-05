@@ -72,6 +72,8 @@ describe("voice settings discovery and safety", () => {
       'window.addEventListener(PLATFORM_CONTEXT_EVENT, onContext)',
       'mediaRef.current?.getTracks?.().forEach((track) => track.stop())',
       'navigator.mediaDevices.getUserMedia({ audio: true })',
+      'Live voice',
+      'Whisper-compatible provider',
       'setTranscript(text)',
       "No voice recording or transcript is persisted by this settings test",
       'href="/settings/voice"',

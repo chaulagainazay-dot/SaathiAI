@@ -357,6 +357,9 @@ export default function VoiceSettingsPage() {
               onChange={(event) => setTranscript(event.target.value)}
               placeholder="Recognized words appear here, or type to verify the fallback." />
           </label>
+          <p style={{ color: "var(--text-muted)", margin: 0 }}>
+            Need local speech-to-text? Open <Link href="/command">Live voice</Link> and select <strong>Local</strong> input. It reuses SaathiOS&apos; admitted local Whisper-compatible provider and does not use browser speech recognition.
+          </p>
           <p role="status" aria-live="polite">{inputStatus}</p>
         </section>
 
