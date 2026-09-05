@@ -357,6 +357,12 @@ def _execute_router_transport(
     timeout_i = int(max(1, min(float(ireq.timeout_seconds), 300)))
     router = ModelRouter(is_available=hp.env_availability)
     chain = router.route(ModelLabel.STANDARD, privacy=privacy, prefer=Prefer.QUALITY)
+    # Explicit provider selection remains governed: the requested router name
+    # is narrowed to the canonical registry entry, then normal policy/kill and
+    # availability checks still apply below.  No provider is auto-enabled.
+    requested_provider = (getattr(ireq, "engine_hint", "") or "").strip().lower()
+    if requested_provider:
+        chain = [spec for spec in chain if spec.name.lower() == requested_provider]
     if not chain:
         code, msg = map_chat_failure("no_provider", "No available provider")
         return ChatCompletionResult(

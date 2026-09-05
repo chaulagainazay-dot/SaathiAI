@@ -2570,18 +2570,15 @@ def analysis_narrate(body: NarrateIn, request: Request):
     if len(facts) > _NARRATE_MAX_FACTS:
         return {"ok": False, "reason": "FACTS_TOO_LARGE"}
 
-    from saathi import llm
-    from saathi.model_router import ModelLabel
+    from saathi.inference.chat_adapter import chat_generate
 
     prompt = facts if not body.question else f"{facts}\n\nQUESTION: {body.question}"
     try:
-        res = llm.generate(
-            ModelLabel.STANDARD,
+        res = chat_generate(
             prompt,
             system=_NARRATE_SYSTEM,
             max_tokens=900,
             timeout=60,
-            caller_id="analysis_narrate",
         )
         return {"ok": True, "text": getattr(res, "text", "") or "", "model": getattr(res, "model", "")}
     except Exception as exc:  # narration is optional — never break the analysis
