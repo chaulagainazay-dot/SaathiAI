@@ -232,7 +232,10 @@ _ensure_backend() {
     free)
       _check_backend_toolchain || { say "backend: cannot start — environment not ready; see doctor"; return 1; }
       _rotate "$BACKEND_LOG"
-      ( cd "$REPO" && exec "$PY" -m uvicorn saathi.server:app --host "$BFF_HOST" --port "$BFF_PORT" ) >>"$BACKEND_LOG" 2>&1 &
+      # Detach service stdio/session from the short-lived launcher shell.  The
+      # launcher is often invoked from a terminal/automation process group;
+      # without nohup, that group can deliver SIGHUP when the command returns.
+      ( cd "$REPO" && exec nohup "$PY" -m uvicorn saathi.server:app --host "$BFF_HOST" --port "$BFF_PORT" </dev/null ) >>"$BACKEND_LOG" 2>&1 &
       local np=$!; printf '%s\nbackend\n' "$np" >"$BACKEND_PID"
       say "backend: starting PID $np on $BFF_HOST:$BFF_PORT"
       _wait_ready _backend_ready backend 60 || { say "backend failed to start (see: saathi-local logs --backend)"; return 1; }
@@ -253,7 +256,7 @@ _ensure_frontend() {
     free)
       _check_frontend_toolchain || { say "frontend: cannot start — environment not ready; see doctor"; return 1; }
       _rotate "$FRONTEND_LOG"
-      ( cd "$REPO/saathi-os" && NEXT_PUBLIC_SAATHI_API="$API_BASE" exec npm run dev -- -p "$UI_PORT" ) >>"$FRONTEND_LOG" 2>&1 &
+      ( cd "$REPO/saathi-os" && NEXT_PUBLIC_SAATHI_API="$API_BASE" exec nohup npm run dev -- -p "$UI_PORT" </dev/null ) >>"$FRONTEND_LOG" 2>&1 &
       local np=$!; printf '%s\nfrontend\n' "$np" >"$FRONTEND_PID"
       say "frontend: starting PID $np on $UI_URL (API=$API_BASE)"
       _wait_ready _frontend_ready frontend 90 || { say "frontend failed to start (see: saathi-local logs --frontend)"; return 1; }
