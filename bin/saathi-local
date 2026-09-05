@@ -236,6 +236,9 @@ _ensure_backend() {
       local np=$!; printf '%s\nbackend\n' "$np" >"$BACKEND_PID"
       say "backend: starting PID $np on $BFF_HOST:$BFF_PORT"
       _wait_ready _backend_ready backend 60 || { say "backend failed to start (see: saathi-local logs --backend)"; return 1; }
+      # uvicorn normally remains the listener; record the actual listener PID
+      # so a launcher-managed child cannot be misclassified as external.
+      local lp; lp="$(_listener_pid "$BFF_PORT")"; [ -n "$lp" ] && printf '%s\nbackend\n' "$lp" >"$BACKEND_PID"
       return 0 ;;
   esac
 }
@@ -254,6 +257,8 @@ _ensure_frontend() {
       local np=$!; printf '%s\nfrontend\n' "$np" >"$FRONTEND_PID"
       say "frontend: starting PID $np on $UI_URL (API=$API_BASE)"
       _wait_ready _frontend_ready frontend 90 || { say "frontend failed to start (see: saathi-local logs --frontend)"; return 1; }
+      # npm may hand off to next-server; own the process actually on port 3000.
+      local lp; lp="$(_listener_pid "$UI_PORT")"; [ -n "$lp" ] && printf '%s\nfrontend\n' "$lp" >"$FRONTEND_PID"
       return 0 ;;
   esac
 }
