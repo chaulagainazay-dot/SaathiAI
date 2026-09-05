@@ -292,6 +292,18 @@ class SecurityStore:
         ).fetchone()
         return dict(row) if row else None
 
+    def active_owner_has_password(self) -> bool:
+        """Return whether an active canonical owner has a stored password.
+
+        This deliberately returns only a boolean so callers such as the unlock
+        status endpoint never need to handle credential material.
+        """
+        row = self.db.execute(
+            "SELECT 1 FROM users u JOIN passwords p ON p.user_id=u.id "
+            "WHERE u.status='active' LIMIT 1"
+        ).fetchone()
+        return row is not None
+
     def password_history(self, user_id: str, limit: int = 10) -> list[dict]:
         rows = self.db.execute(
             "SELECT * FROM passwords WHERE user_id=? ORDER BY created_at DESC LIMIT ?",

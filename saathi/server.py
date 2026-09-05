@@ -1879,9 +1879,11 @@ def _rp(request) -> tuple[str, str]:
 def passkey_status(request: Request):
     """Auth setup status: is a password set, is a passkey registered, am I signed in. Whitelisted."""
     from saathi import passkey
+    from saathi.security.store import get_store
     rp_id, _ = _rp(request)
     return {"has_passkey": passkey.has_passkey(rp_id), "rp_id": rp_id,
-            "has_password": bool(_PASSWORD_HASH), "signed_in": _is_authed(request) or _is_local(request)}
+            "has_password": bool(_PASSWORD_HASH) or get_store().active_owner_has_password(),
+            "signed_in": _is_authed(request) or _is_local(request)}
 
 
 @app.post("/api/v1/auth/passkey/register/options")
