@@ -21,6 +21,7 @@ import re
 import threading
 import time
 import uuid
+from collections import OrderedDict
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Optional
@@ -55,6 +56,12 @@ from saathi.execution.toolintent import (
 from saathi.execution.universal import UniversalBoundary, default_boundary
 
 logger = logging.getLogger(__name__)
+
+# How much page body a READ/EXTRACT may hand back. Large enough for a data table,
+# small enough that a hostile page cannot flood the caller.
+READ_CONTENT_MAX = 200_000
+# How many recent read bodies are held for out-of-band collection.
+CONTENT_BUFFER_MAX = 16
 
 _SECRET_RE = re.compile(
     r"(?i)(password|passwd|secret|token|cookie|authorization|bearer|api[_-]?key)"
@@ -239,6 +246,12 @@ class BrowserResult:
     injection_hits: list = field(default_factory=list)
     retryable: bool = False
     untrusted_excerpt: str = ""  # redacted, never instructions
+    # Full readable body for READ/EXTRACT only. Deliberately NOT part of
+    # as_handler_dict(): the ledger records that a read happened and its safe
+    # summary, never the page. Callers that need the body collect it out of band
+    # via GovernedBrowser.take_content(execution_id).
+    content: str = ""
+    content_truncated: bool = False
 
     def as_handler_dict(self) -> dict:
         st = self.status
@@ -379,6 +392,8 @@ class BrowserAdapter:
                 final_origin=origin_of(final_url), page_title=title,
                 summary=redact_text(f"read {origin_of(final_url)} title={title}"),
                 untrusted_excerpt=redact_text(text, maxlen=200),
+                content=redact_text(text, maxlen=READ_CONTENT_MAX),
+                content_truncated=len(text or "") > READ_CONTENT_MAX,
                 injection_hits=hits,
                 duration_sec=time.time() - t0,
             )
@@ -522,6 +537,8 @@ class BrowserAdapter:
                         page_title=redact_text(title),
                         summary=redact_text(f"read {len(text or '')} chars"),
                         untrusted_excerpt=redact_text(text, maxlen=200),
+                        content=redact_text(text, maxlen=READ_CONTENT_MAX),
+                        content_truncated=len(text or "") > READ_CONTENT_MAX,
                         injection_hits=hits,
                         duration_sec=time.time() - t0,
                     )
@@ -531,6 +548,8 @@ class BrowserAdapter:
                     final_origin=origin_of(url),
                     summary=redact_text(f"extract {selector}"),
                     untrusted_excerpt=redact_text(text, maxlen=200),
+                    content=redact_text(text, maxlen=READ_CONTENT_MAX),
+                    content_truncated=len(text or "") > READ_CONTENT_MAX,
                     injection_hits=hits,
                     duration_sec=time.time() - t0,
                 )
@@ -665,6 +684,30 @@ class GovernedBrowser:
             self.gateway = gateway or ExecutionGateway(boundary=self._boundary)
         # Register browser family handler
         self.gateway.register_handler("browser", self._handler)
+        # Read bodies, held briefly for out-of-band collection. Bounded so a busy
+        # caller cannot grow this without limit, and one-shot so a body is not
+        # served twice.
+        self._content: "OrderedDict[str, dict]" = OrderedDict()
+        self._content_lock = threading.Lock()
+
+    def _stash_content(self, execution_id: str, result: "BrowserResult") -> None:
+        if not execution_id or not result.content:
+            return
+        with self._content_lock:
+            self._content[execution_id] = {
+                "content": result.content,
+                "truncated": result.content_truncated,
+                "page_title": result.page_title,
+                "final_origin": result.final_origin,
+                "injection_hits": list(result.injection_hits),
+            }
+            while len(self._content) > CONTENT_BUFFER_MAX:
+                self._content.popitem(last=False)
+
+    def take_content(self, execution_id: str) -> dict | None:
+        """Collect and DISCARD the body read by one execution. One-shot."""
+        with self._content_lock:
+            return self._content.pop(execution_id, None)
 
     def _handler(self, intent: ToolIntent, rec: ExecutionRecord) -> dict:
         result = self.adapter.dispatch(intent)
@@ -685,6 +728,9 @@ class GovernedBrowser:
             eid = self._evidence_blob(rec, intent, kind="download",
                                       note=result.summary)
             result.download_evidence_id = eid
+
+        # The body goes to the caller, not into the record the ledger writes.
+        self._stash_content(getattr(rec, "execution_id", "") or "", result)
 
         d = result.as_handler_dict()
         if result.status == "uncertain":
