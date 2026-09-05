@@ -86,6 +86,10 @@ DEFAULT_PROVIDERS: list[ProviderSpec] = [
     ProviderSpec("kimi/kimi-k3", frozenset({ModelLabel.STANDARD, ModelLabel.REASONING,
                  ModelLabel.MULTIMODAL, ModelLabel.LONG}), cost_per_1k=15.0,
                  latency_tier=3, is_local=False, quality_tier=1),
+    # NVIDIA NIM-hosted Kimi K3; distinct from the direct Moonshot provider.
+    ProviderSpec("nvidia_kimi/moonshotai/kimi-k3", frozenset({ModelLabel.STANDARD, ModelLabel.REASONING,
+                 ModelLabel.MULTIMODAL, ModelLabel.LONG}), cost_per_1k=15.0,
+                 latency_tier=3, is_local=False, quality_tier=1),
     ProviderSpec("ollama/local", frozenset({ModelLabel.SCREENING, ModelLabel.STANDARD,
                  ModelLabel.FAST, ModelLabel.PRIVATE}), cost_per_1k=0.0, latency_tier=2, is_local=True, quality_tier=3),
 ]

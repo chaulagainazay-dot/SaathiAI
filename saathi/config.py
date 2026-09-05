@@ -42,6 +42,9 @@ OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen2.5:3b")
 SHIMMY_URL = os.getenv("SHIMMY_URL", "http://127.0.0.1:11435/v1")
 SHIMMY_MODEL = os.getenv("SHIMMY_MODEL", "tinyllama-1.1b")
 SHIMMY_API_KEY = os.getenv("SHIMMY_API_KEY", "sk-local")
+# NVIDIA NIM (OpenAI-compatible, explicitly selected; never auto-enabled).
+NVIDIA_API_KEY = os.getenv("NVIDIA_API_KEY", "")
+NVIDIA_KIMI_MODEL = os.getenv("NVIDIA_KIMI_MODEL", "moonshotai/kimi-k3")
 # Pick brain: set LLM_PROVIDER=groq|gemini|shimmy|ollama|anthropic in .env to force one;
 # otherwise Groq if keyed (fastest), then Gemini, then Claude.
 LLM_PROVIDER = os.getenv("LLM_PROVIDER") or (

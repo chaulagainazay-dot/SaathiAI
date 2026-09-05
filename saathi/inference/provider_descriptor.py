@@ -159,6 +159,7 @@ def _credential_state(pol: ProviderPolicy) -> tuple[bool, Optional[bool]]:
         "glm": ("GLM_API_KEY", "OPENROUTER_API_KEY"),
         "qwen": ("QWEN_API_KEY", "OPENROUTER_API_KEY"),
         "kimi": ("KIMI_API_KEY",),
+        "nvidia_kimi": ("NVIDIA_API_KEY",),
         "openai_compat": ("OPENAI_API_KEY", "SAATHI_OPENAI_COMPAT_KEY"),
     }
     keys = key_map.get(pol.family_id, ())
@@ -222,6 +223,7 @@ def descriptor_from_policy(pol: ProviderPolicy) -> ProviderDescriptor:
         "glm": "saathi.inference.adapters.cloud.CloudCallerEngine",
         "qwen": "saathi.inference.adapters.cloud.CloudCallerEngine",
         "kimi": "saathi.inference.adapters.kimi.KimiEngine",
+        "nvidia_kimi": "saathi.inference.adapters.cloud.CloudCallerEngine",
     }
 
     return ProviderDescriptor(
@@ -241,21 +243,23 @@ def descriptor_from_policy(pol: ProviderPolicy) -> ProviderDescriptor:
         supported_models=(
             ("kimi-k2.7-code", "kimi-k3")
             if pol.family_id == "kimi"
+            else ("moonshotai/kimi-k3",)
+            if pol.family_id == "nvidia_kimi"
             else tuple(pol.model_router_prefixes) or (pol.family_id,)
         ),
         model_classes=(
             ("coding_primary", "multimodal", "critical_expensive")
-            if pol.family_id == "kimi"
+            if pol.family_id in {"kimi", "nvidia_kimi"}
             else ("local_small", "local_medium") if local else ("cloud_general",)
         ),
         streaming_supported=bool(pol.streaming),
-        structured_output_supported=pol.family_id == "kimi",
+        structured_output_supported=pol.family_id in {"kimi", "nvidia_kimi"},
         tool_use_supported=bool(pol.tool_calling),
-        max_context_tokens=1_048_576 if pol.family_id == "kimi" else 8192 if local else 128000,
+        max_context_tokens=1_048_576 if pol.family_id in {"kimi", "nvidia_kimi"} else 8192 if local else 128000,
         max_output_tokens=4096 if local else 8192,
         default_timeout_seconds=60.0,
         max_timeout_seconds=600.0,
-        max_retries=2 if pol.family_id == "kimi" else 0,
+        max_retries=2 if pol.family_id in {"kimi", "nvidia_kimi"} else 0,
         privacy_classes_allowed=privacy,
         retention_constraints="metadata_only",
         cloud_data_processing=not local,
