@@ -11,7 +11,6 @@ import MobileTabBar from "./mobile/MobileTabBar";
 import QuickSheet from "./mobile/QuickSheet";
 import { LiveProvider } from "./live/LiveProvider";
 import LiveToasts from "./live/LiveToasts";
-import MobileMic from "./MobileMic";
 import Sidebar from "./shell/Sidebar";
 import StatusBar from "./shell/StatusBar";
 import CopilotPanel from "./shell/CopilotPanel";
@@ -30,6 +29,7 @@ function ShellInner({ children }) {
   const pathname = usePathname();
   const router = useRouter();
   const bare = pathname?.startsWith("/project/create/");
+  const dedicatedCaptureRoute = pathname === "/voice" || pathname === "/os";
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [ceoOpen, setCeoOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -135,9 +135,6 @@ function ShellInner({ children }) {
       <MobileTopBar />
       <MobileTabBar onAdd={() => setSheetOpen(true)} onCopilot={openCopilot} />
       <QuickSheet open={sheetOpen} onClose={() => setSheetOpen(false)} />
-      <div className="only-touch">
-        <MobileMic />
-      </div>
 
       {/* Single main content tree (desktop + mobile) */}
       <main
@@ -169,7 +166,7 @@ function ShellInner({ children }) {
       )}
 
       <LiveToasts />
-      <VoiceRuntimeDock />
+      {!dedicatedCaptureRoute && <VoiceRuntimeDock />}
       <VoiceOutputDock />
       <CommandPalette
         open={paletteOpen}
