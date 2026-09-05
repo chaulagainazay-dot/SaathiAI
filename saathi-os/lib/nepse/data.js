@@ -65,44 +65,26 @@ export function getStock(symbol) {
   return STOCKS.find((x) => x.symbol === s) || null;
 }
 
-// Exchange-wide brokers (broker code, name, buy turnover, sell turnover, trades).
-const RAW_BROKERS = [
-  [58, "Naasa Securities", 812_000_000, 640_000_000, 4210],
-  [45, "Kumari Securities", 705_000_000, 690_000_000, 3980],
-  [42, "Sani Securities", 940_000_000, 880_000_000, 5120],
-  [34, "Online Securities", 520_000_000, 560_000_000, 3110],
-  [28, "Nabil Investment", 610_000_000, 470_000_000, 2890],
-  [13, "Sipla Securities", 330_000_000, 410_000_000, 2050],
-  [17, "Agrawal Securities", 280_000_000, 300_000_000, 1770],
-  [8, "Ashutosh Brokerage", 210_000_000, 190_000_000, 1440],
+// Broker CODE → NAME only.
+//
+// The turnover, trade counts and ranking that used to sit here were invented, as
+// was brokersForStock(), which generated a per-stock breakdown from the sum of a
+// symbol's character codes. All of that now comes from the exchange floorsheet
+// (/api/nepse/floorsheet). What survives is the one thing a name list can honestly
+// provide: a mapping from the numeric code a floorsheet carries to a firm's name.
+// It is INCOMPLETE — NEPSE licenses far more brokers than these — so a code absent
+// from this list is rendered as a bare code, never as a guessed name.
+export const BROKERS = [
+  { code: 58, name: "Naasa Securities" },
+  { code: 45, name: "Kumari Securities" },
+  { code: 42, name: "Sani Securities" },
+  { code: 34, name: "Online Securities" },
+  { code: 28, name: "Nabil Investment" },
+  { code: 13, name: "Sipla Securities" },
+  { code: 17, name: "Agrawal Securities" },
+  { code: 8, name: "Ashutosh Brokerage" },
 ];
 
-export const BROKERS = RAW_BROKERS
-  .map(([code, name, buy, sell, trades]) => ({ code, name, buy, sell, total: buy + sell, trades }))
-  .sort((a, b) => b.total - a.total)
-  .map((b, i) => ({ ...b, rank: i + 1 }));
-
-// Per-stock broker breakdown (deterministic from the exchange list + a symbol seed).
-export function brokersForStock(symbol) {
-  const s = getStock(symbol);
-  if (!s) return [];
-  const seed = s.symbol.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
-  return BROKERS.map((b, i) => {
-    const f = ((seed * (i + 3)) % 100) / 100 + 0.2;
-    const buyQty = Math.round((s.listedShares * 1000 * f) % 90000) + 500;
-    const sellQty = Math.round((s.listedShares * 900 * f) % 85000) + 400;
-    return {
-      code: b.code,
-      name: b.name,
-      buyQty,
-      buyAmount: buyQty * s.ltp,
-      sellQty,
-      sellAmount: sellQty * s.ltp,
-      net: (buyQty - sellQty) * s.ltp,
-      trades: Math.round(20 + (seed * (i + 1)) % 180),
-    };
-  }).sort((a, b) => (b.buyAmount + b.sellAmount) - (a.buyAmount + a.sellAmount));
-}
 
 // The market-wide snapshot and the index-history generator used to live here.
 // Both were REMOVED: the snapshot carried a hardcoded index (2557.31) and a

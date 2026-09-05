@@ -9,7 +9,36 @@
 // NEPSE's, while looking exactly like the published one.
 
 import { fmtNum, fmtPct, fmtCompactRs } from "@/lib/nepse/format";
-import { useMarketAggregates } from "@/lib/nepse/use-market";
+import { useMarketAggregates, useIndices } from "@/lib/nepse/use-market";
+
+/** Real index history — the close series NEPSE published, not a generated curve. */
+function IndexChart({ series }) {
+  const w = 640; const h = 160; const pad = 8;
+  if (!series || series.length < 2) return null;
+  const vs = series.map((d) => d.close);
+  const min = Math.min(...vs); const max = Math.max(...vs);
+  const span = max - min || 1;
+  const pts = series.map((d, i) => [
+    pad + (i / (series.length - 1)) * (w - pad * 2),
+    pad + (1 - (d.close - min) / span) * (h - pad * 2),
+  ]);
+  const line = pts.map((p, i) => `${i ? "L" : "M"}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(" ");
+  const area = `${line} L${pts[pts.length - 1][0].toFixed(1)},${h} L${pts[0][0].toFixed(1)},${h} Z`;
+  return (
+    <>
+      <svg viewBox={`0 0 ${w} ${h}`} width="100%" height={h} role="img"
+           aria-label={`NEPSE index, ${series.length} sessions to ${series[series.length - 1].date}`}>
+        <path d={area} fill="var(--accent-soft)" />
+        <path d={line} fill="none" stroke="var(--accent)" strokeWidth="2" />
+      </svg>
+      <div className="nepse-row" style={{ justifyContent: "space-between", fontSize: "0.75rem", color: "var(--text-faint)" }}>
+        <span>{series[0].date} · {fmtNum(min)}</span>
+        <span>{series.length} sessions</span>
+        <span>{series[series.length - 1].date} · {fmtNum(max)} high</span>
+      </div>
+    </>
+  );
+}
 
 function MoverTable({ title, rows, tone }) {
   if (!rows.length) return null;
@@ -37,6 +66,7 @@ function MoverTable({ title, rows, tone }) {
 
 export default function MarketPage() {
   const { loading, data, error } = useMarketAggregates();
+  const ix = useIndices();
 
   if (loading) {
     return (
@@ -71,8 +101,6 @@ export default function MarketPage() {
   const b = data.breadth;
   const measured = b.measured || 1;
   const needle = Math.round((b.advancing / (b.advancing + b.declining || 1)) * 100);
-  const sectors = data.sectors.filter((s) => s.status === "OK");
-  const otherBuckets = data.sectors.filter((s) => s.status !== "OK");
 
   return (
     <>
@@ -81,37 +109,79 @@ export default function MarketPage() {
         <h1 className="nepse-title">Exchange-wide state</h1>
         <p className="nepse-dek">
           Last completed session {data.asOf} versus {data.priorDate}, across{" "}
-          {b.measured} of {data.coverage.listedTotal} listed companies. Not live —
-          this is the settled session, computed from the daily archive.
+          {b.measured} of {data.coverage.listedTotal}{" "}
+          {data.universeKind === "LISTED" ? "listed companies"
+            : data.universeKind === "TRADED" ? "companies that traded"
+            : "companies in this build's own list"}. Not live — this is the settled
+          session, computed from the daily archive.
         </p>
       </header>
 
       <div className="nepse-grid-4" style={{ marginTop: "1rem" }}>
         <div className="nepse-card">
-          <span className="tag">Index</span>
-          <div className="nepse-stat num" style={{ color: "var(--text-faint)" }}>—</div>
-          <div style={{ color: "var(--text-faint)", fontSize: "0.78rem" }}>
-            No index source. Not computed from company prices.
-          </div>
+          <span className="tag">NEPSE index</span>
+          {ix.data?.index ? (
+            <>
+              <div className="nepse-stat num">{fmtNum(ix.data.index.close)}</div>
+              <div className={ix.data.index.changePct >= 0 ? "nepse-up" : "nepse-down"}>
+                {fmtPct(ix.data.index.changePct)} vs {ix.data.priorDate}
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="nepse-stat num" style={{ color: "var(--text-faint)" }}>—</div>
+              <div style={{ color: "var(--text-faint)", fontSize: "0.78rem" }}>
+                Index source unavailable. Never derived from company prices.
+              </div>
+            </>
+          )}
         </div>
         <div className="nepse-card"><span className="tag">Turnover</span>
-          <div className="nepse-stat num">{fmtCompactRs(data.activity.totalTurnover)}</div>
+          <div className="nepse-stat num">
+            {ix.data?.turnover ? fmtCompactRs(ix.data.turnover) : "—"}
+          </div>
           <div style={{ color: "var(--text-faint)", fontSize: "0.78rem" }}>
-            summed over {data.activity.turnoverReportedBy} reporting
+            {ix.data?.turnover ? "as published with the index" : "no published figure"}
           </div>
         </div>
         <div className="nepse-card"><span className="tag">Volume</span>
           <div className="nepse-stat num">{fmtNum(data.activity.totalVolume, 0)}</div>
-          <div style={{ color: "var(--text-faint)", fontSize: "0.78rem" }}>shares</div>
+          <div style={{ color: "var(--text-faint)", fontSize: "0.78rem" }}>
+            shares, summed over {data.activity.volumeReportedBy} companies
+          </div>
         </div>
         <div className="nepse-card"><span className="tag">Coverage</span>
           <div className="nepse-stat num">{b.measured}</div>
           <div style={{ color: "var(--text-faint)", fontSize: "0.78rem" }}>
-            of {data.coverage.listedTotal} listed
+            of {data.coverage.listedTotal}{" "}
+            {data.universeKind === "LISTED" ? "listed" : data.universeKind === "TRADED" ? "traded" : "curated"}
             {data.coverage.excluded ? ` · ${data.coverage.excluded} unmeasurable` : ""}
           </div>
         </div>
       </div>
+
+      {ix.data?.markets?.length > 1 && (
+        <div className="nepse-grid-4" style={{ marginTop: "0.75rem" }}>
+          {ix.data.markets.filter((m) => m.index !== "NEPSE").map((m) => (
+            <div key={m.index} className="nepse-card">
+              <div style={{ color: "var(--text-faint)", fontSize: "0.8rem" }}>{m.label}</div>
+              <div className="nepse-row" style={{ justifyContent: "space-between", marginTop: 4 }}>
+                <span className="num strong">{fmtNum(m.close)}</span>
+                <span className={`nepse-badge ${(m.changePct ?? 0) >= 0 ? "up" : "down"}`}>
+                  {m.changePct === null ? "—" : fmtPct(m.changePct)}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {ix.data?.series?.length > 1 && (
+        <div className="nepse-card" style={{ marginTop: "1rem" }}>
+          <span className="tag">NEPSE index · published history</span>
+          <IndexChart series={ix.data.series} />
+        </div>
+      )}
 
       <div className="nepse-grid-2" style={{ marginTop: "1rem" }}>
         <div className="nepse-card">
@@ -168,45 +238,54 @@ export default function MarketPage() {
       )}
 
       <h3 style={{ margin: "1.5rem 0 0.5rem" }}>Sector performance</h3>
-      <p style={{ color: "var(--text-faint)", fontSize: "0.82rem", margin: "0 0 0.75rem" }}>
-        Sector is only known for {data.sectorsKnownFor} of the {b.measured} measured
-        companies. Simple average first; turnover-weighted in parentheses, which follows
-        the money rather than the member count.
-      </p>
-      <div className="nepse-grid-3">
-        {sectors.map((sec) => (
-          <div key={sec.sector} className="nepse-card">
-            <div className="strong">{sec.sector}</div>
-            <div className="nepse-row" style={{ justifyContent: "space-between", marginTop: 4 }}>
-              <span style={{ color: "var(--text-faint)", fontSize: "0.8rem" }}>
-                {sec.members} measured · {sec.advancing}↑ {sec.declining}↓
-              </span>
-              <span className={`nepse-badge ${sec.changePct >= 0 ? "up" : "down"}`}>
-                {fmtPct(sec.changePct)}
-                {sec.weightedChangePct === null ? "" : ` (${fmtPct(sec.weightedChangePct)})`}
-              </span>
-            </div>
+      {ix.data?.sectors?.length ? (
+        <>
+          <p style={{ color: "var(--text-faint)", fontSize: "0.82rem", margin: "0 0 0.75rem" }}>
+            NEPSE&apos;s own published sub-indices for {ix.data.asOf} against {ix.data.priorDate}.
+            These replaced an average over the handful of companies whose sector this
+            build knew — with two or three members a sector average was mostly noise.
+          </p>
+          <div className="nepse-grid-3">
+            {ix.data.sectors.map((sec) => (
+              <div key={sec.index} className="nepse-card">
+                <div className="strong">{sec.label}</div>
+                <div className="nepse-row" style={{ justifyContent: "space-between", marginTop: 4 }}>
+                  <span className="num" style={{ color: "var(--text-faint)", fontSize: "0.85rem" }}>
+                    {fmtNum(sec.close)}
+                  </span>
+                  <span className={`nepse-badge ${(sec.changePct ?? 0) >= 0 ? "up" : "down"}`}>
+                    {sec.changePct === null ? "—" : fmtPct(sec.changePct)}
+                  </span>
+                </div>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
-
-      {otherBuckets.length > 0 && (
-        <div className="nepse-callout" style={{ marginTop: "1rem" }}>
-          {otherBuckets.map((s) => (
-            <div key={s.sector}>
-              <strong>{s.sector}</strong>{" "}
-              {s.status === "UNCLASSIFIED"
-                ? `— ${s.members} companies whose sector this build does not know. Their
-                   average (${fmtPct(s.changePct)}) is real, but it is the rest of the
-                   market, not a sector.`
-                : `— ${s.note}`}
+          {ix.data.missingSectors?.length > 0 && (
+            <p style={{ color: "var(--text-faint)", fontSize: "0.78rem", marginTop: "0.75rem" }}>
+              Not carried by this source: {ix.data.missingSectors.join(", ")}. NEPSE publishes
+              it; its absence here is a gap in the feed, not a sector that did not move.
+            </p>
+          )}
+          {ix.data.conflicts?.length > 0 && (
+            <div className="nepse-callout" style={{ marginTop: "0.75rem" }}>
+              <strong>The index source contradicted itself</strong> on{" "}
+              {ix.data.conflicts.map((c) => `${c.index} (${c.values.join(" vs ")})`).join(", ")}.
+              The later row is shown.
             </div>
-          ))}
-        </div>
+          )}
+        </>
+      ) : (
+        <p style={{ color: "var(--text-faint)", fontSize: "0.82rem" }}>
+          Sub-indices unavailable{ix.error ? ` (${ix.error})` : ""}. Nothing is averaged
+          in their place.
+        </p>
       )}
 
       <p style={{ color: "var(--text-faint)", fontSize: "0.78rem", marginTop: "1.25rem" }}>
-        Source: {data.source} · {data.classification} · {data.adjustment} prices.
+        Breadth, movers and volume: {data.source} · {data.classification} ·{" "}
+        {data.adjustment} prices. Index, sub-indices and turnover:{" "}
+        {ix.data ? `${ix.data.source} · ${ix.data.license} · ${ix.data.adjustment} prices` : "unavailable"}.
+        Two independent archives; neither is used to fill a gap in the other.
         Computed {new Date(data.computedAt).toLocaleString()}.
       </p>
     </>

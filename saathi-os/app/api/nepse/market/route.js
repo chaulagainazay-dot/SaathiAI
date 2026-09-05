@@ -25,6 +25,11 @@ const RAW_HOST = "raw.githubusercontent.com";
 const API_HOST = "api.github.com";
 const BASE = `https://${RAW_HOST}/Aabishkar2/nepse-data/main/data/company-wise`;
 const LIST_URL = `https://${API_HOST}/repos/Aabishkar2/nepse-data/contents/data/company-wise`;
+// The traded universe, read from a raw file rather than an API listing. The GitHub
+// contents API allows 60 unauthenticated calls an hour ACROSS the whole host, so
+// hanging the page on it means an unrelated caller can take the market down — which
+// is exactly what happened in testing. Raw file fetches are not metered that way.
+const DAILY_BASE = `https://${RAW_HOST}/socrateai-official/nepse-open-data/main/ohlc_adjusted_stock`;
 const HEADER_SYMBOL = "NABIL"; // any file; the archive shares one schema
 
 const SYMBOL_RE = /^[A-Z0-9]{1,12}$/;
@@ -33,11 +38,13 @@ const TAIL_BYTES = 3000;      // ~30 daily rows — far more than the two we nee
 const HEADER_BYTES = 300;
 const TIMEOUT_MS = 60_000;
 const CACHE_MS = 30 * 60 * 1000;
+const UNIVERSE_CACHE_MS = 24 * 60 * 60 * 1000;  // the listed universe barely moves
 
 /** Sector is only known for curated symbols; the rest are honestly Unclassified. */
 const SECTOR_OF = new Map(STOCKS.map((s) => [s.symbol, s.sector]));
 
 let cache = { at: 0, body: null };
+let universeCache = { at: 0, symbols: null, via: null };
 
 async function pooled(items, worker, limit = CONCURRENCY) {
   const out = [];
@@ -51,19 +58,75 @@ async function pooled(items, worker, limit = CONCURRENCY) {
   return out.filter(Boolean);
 }
 
-/** The archive's own company list — the real universe, not a curated subset. */
-async function listUniverse(signal) {
+/** Symbols traded in the most recent session, from a raw daily market file. */
+async function universeFromDailyFile(signal) {
+  for (let i = 0; i < 10; i += 1) {
+    const day = new Date(Date.now() - i * 86400000).toISOString().slice(0, 10);
+    const res = await fetch(`${DAILY_BASE}/adj_${day}.csv`, {
+      headers: { accept: "text/csv,text/plain" },
+      signal, redirect: "error", cache: "no-store",
+    }).catch(() => null);
+    if (!res || !res.ok) continue;
+    const text = await res.text();
+    if (/^\s*</.test(text)) continue;
+    const lines = text.split(/\r?\n/).filter((l) => l.trim());
+    if (lines.length < 2) continue;
+    const col = lines[0].split(",").map((h) => h.trim().toLowerCase()).indexOf("symbol");
+    if (col < 0) continue;
+    const syms = [...new Set(lines.slice(1)
+      .map((l) => String(l.split(",")[col] || "").trim().toUpperCase())
+      .filter((sy) => SYMBOL_RE.test(sy)))];
+    if (syms.length) return syms;
+  }
+  return null;
+}
+
+/** The archive's own directory listing — accurate, but rate-limited, so it is second. */
+async function universeFromContentsApi(signal) {
   const res = await fetch(LIST_URL, {
     headers: { accept: "application/vnd.github+json" },
     signal, redirect: "error", cache: "no-store",
-  });
-  if (!res.ok) return null;
-  const json = await res.json();
+  }).catch(() => null);
+  if (!res || !res.ok) return null;
+  const json = await res.json().catch(() => null);
   if (!Array.isArray(json)) return null;
-  return json
+  const syms = json
     .filter((f) => f && typeof f.name === "string" && f.name.endsWith(".csv"))
     .map((f) => f.name.slice(0, -4))
-    .filter((s) => SYMBOL_RE.test(s));
+    .filter((sy) => SYMBOL_RE.test(sy));
+  return syms.length ? syms : null;
+}
+
+/**
+ * Resolve the universe, preferring the unmetered source and never letting a
+ * transient listing failure erase a universe we already knew. The last resort is
+ * the curated symbol list: a much smaller universe, which `coverage` then reports
+ * honestly rather than passing off as the market.
+ */
+async function resolveUniverse(signal) {
+  if (universeCache.symbols && Date.now() - universeCache.at < UNIVERSE_CACHE_MS) {
+    return { symbols: universeCache.symbols, via: universeCache.via, kind: universeCache.kind, cached: true };
+  }
+  // The directory listing is tried first because it is the LISTED universe; the
+  // daily file only carries what actually traded that session. With a 24-hour
+  // cache the metered call happens about once a day, and a rate limit now degrades
+  // to a smaller, correctly-labelled universe instead of taking the page down.
+  const attempts = [
+    ["contents-api", universeFromContentsApi, "LISTED"],
+    ["daily-file", universeFromDailyFile, "TRADED"],
+  ];
+  for (const [via, fn, kind] of attempts) {
+    const symbols = await fn(signal).catch(() => null);
+    if (symbols && symbols.length) {
+      universeCache = { at: Date.now(), symbols, via, kind };
+      return { symbols, via, kind, cached: false };
+    }
+  }
+  if (universeCache.symbols) {
+    return { symbols: universeCache.symbols, via: `${universeCache.via} (stale)`, kind: universeCache.kind, cached: true };
+  }
+  const fallback = STOCKS.map((st) => st.symbol).filter((sy) => SYMBOL_RE.test(sy));
+  return fallback.length ? { symbols: fallback, via: "curated-fallback", kind: "CURATED", cached: false } : null;
 }
 
 async function fetchHeader(signal) {
@@ -85,15 +148,16 @@ export async function GET() {
   const ac = new AbortController();
   const timer = setTimeout(() => ac.abort(), TIMEOUT_MS);
   try {
-    const [universe, header] = await Promise.all([listUniverse(ac.signal), fetchHeader(ac.signal)]);
-    // Without the real header the tails cannot be parsed safely, and without the
-    // listing there is no universe. Either way: say so, compute nothing.
-    if (!universe || !universe.length || !header) {
+    const [resolved, header] = await Promise.all([resolveUniverse(ac.signal), fetchHeader(ac.signal)]);
+    // Without the real header the tails cannot be parsed safely, and without any
+    // universe there is nothing to measure. Either way: say so, compute nothing.
+    if (!resolved || !header) {
       return NextResponse.json(
         { available: false, reason: !header ? "HEADER_UNAVAILABLE" : "UNIVERSE_UNAVAILABLE" },
         { status: 503, headers: { "cache-control": "no-store" } },
       );
     }
+    const universe = resolved.symbols;
 
     const entries = await pooled(universe, async (sym) => {
       const res = await fetch(`${BASE}/${sym}.csv`, {
@@ -121,6 +185,10 @@ export async function GET() {
       index: null,
       indexReason: "NO_INDEX_SOURCE",
       sectorsKnownFor: entries.filter((e) => e.sector).length,
+      universeVia: resolved.via,
+      // LISTED = every listed company; TRADED = only what changed hands that
+      // session; CURATED = this build's own short list. The page says which.
+      universeKind: resolved.kind,
       ...summary,
     };
     cache = { at: Date.now(), body };

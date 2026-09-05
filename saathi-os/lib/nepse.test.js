@@ -8,7 +8,7 @@ import { readFileSync, existsSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { STOCKS, getStock, brokersForStock, BROKERS } from "./nepse/data.js";
+import { STOCKS, getStock, BROKERS } from "./nepse/data.js";
 import { scoreStock, signalFor, evaluationFor, rsi, withAnalytics } from "./nepse/analytics.js";
 import { screen, PAGE_SIZE } from "./nepse/screener.js";
 import { computePortfolio } from "./nepse/portfolio.js";
@@ -158,11 +158,23 @@ test("the seed data module exposes no market-level index or generated history", 
   assert.equal(data.indexHistory, undefined);
 });
 
-test("brokers ranked + per-stock breakdown", () => {
-  assert.equal(BROKERS[0].rank, 1);
-  const b = brokersForStock("NABIL");
-  assert.ok(b.length === BROKERS.length);
-  assert.ok(b.every((x) => x.buyQty > 0));
+test("the broker list is a code-to-name map only, with no invented activity", () => {
+  // Turnover, trade counts, ranking and the per-stock breakdown were generated from
+  // a symbol's character codes. They are gone; real activity comes from the
+  // floorsheet. This guards against any of it returning through this module.
+  assert.ok(BROKERS.length > 0);
+  for (const b of BROKERS) {
+    assert.equal(typeof b.code, "number");
+    assert.ok(b.name.length > 0);
+    for (const invented of ["buy", "sell", "total", "trades", "rank"]) {
+      assert.equal(b[invented], undefined, `BROKERS carries invented field ${invented}`);
+    }
+  }
+});
+
+test("the seed module no longer generates a per-stock broker breakdown", async () => {
+  const data = await import("./nepse/data.js");
+  assert.equal(data.brokersForStock, undefined);
 });
 
 // ── M400-NEPSE-005 importers ─────────────────────────────────────────────────

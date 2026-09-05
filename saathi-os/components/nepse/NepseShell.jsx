@@ -6,7 +6,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { SNAPSHOT_DATE } from "@/lib/nepse/data";
 import { useNepseQuotes } from "@/lib/nepse/live";
-import { useMarketAggregates } from "@/lib/nepse/use-market";
+import { useMarketAggregates, useIndices } from "@/lib/nepse/use-market";
 import { fmtNum, fmtPct, fmtCompactRs } from "@/lib/nepse/format";
 
 const TABS = [
@@ -23,15 +23,24 @@ function Ticker() {
   // nothing at all when they cannot be computed — a ticker of invented numbers is
   // the most persuasive lie in a trading UI, because it sits on every page.
   const { data } = useMarketAggregates();
+  const ix = useIndices();
   if (!data) return null;
   const b = data.breadth;
   const top = data.gainers[0];
+  const idx = ix.data?.index;
   const items = [
+    // The index is back — but as the PUBLISHED figure, never the hardcoded one
+    // this ticker used to carry. Omitted entirely when the source is unavailable.
+    ...(idx ? [{
+      l: "NEPSE",
+      v: `${fmtNum(idx.close)} ${idx.changePct === null ? "" : fmtPct(idx.changePct)}`.trim(),
+      dir: (idx.changePct ?? 0) >= 0 ? "up" : "down",
+    }] : []),
     { l: `SESSION ${data.asOf}`, v: b.mood },
     { l: "ADVANCED", v: String(b.advancing), dir: "up" },
     { l: "DECLINED", v: String(b.declining), dir: "down" },
     { l: "UNCHANGED", v: String(b.unchanged) },
-    { l: "TURNOVER", v: fmtCompactRs(data.activity.totalTurnover) },
+    ...(ix.data?.turnover ? [{ l: "TURNOVER", v: fmtCompactRs(ix.data.turnover) }] : []),
     { l: "VOLUME", v: fmtNum(data.activity.totalVolume, 0) },
     ...(top ? [{ l: `TOP ${top.symbol}`, v: fmtPct(top.changePct), dir: "up" }] : []),
     { l: "MEASURED", v: `${b.measured}/${data.coverage.listedTotal}` },
