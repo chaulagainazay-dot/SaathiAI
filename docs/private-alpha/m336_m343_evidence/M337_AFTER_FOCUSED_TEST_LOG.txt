@@ -1,0 +1,12 @@
+........................................................................ [ 98%]
+.                                                                        [100%]
+=============================== warnings summary ===============================
+tests/test_ops.py::test_real_backup_and_restore_roundtrip
+tests/test_ops.py::test_verify_restore_detects_checksum_mismatch
+tests/test_ops.py::test_release_gate_passes_baseline
+tests/test_m336_m343_regression_closure.py::test_release_gate_reports_non_material_markers_instead_of_hiding_them
+  /Users/macbookpro/SaathiAI-m336-m343/saathi/ops/backup.py:112: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+    tar.extractall(target)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+73 passed, 4 warnings in 29.84s

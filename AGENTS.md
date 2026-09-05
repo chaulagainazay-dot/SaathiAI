@@ -117,6 +117,36 @@ Required controls:
 
 Never allow a model or tool to silently weaken these controls.
 
+## Engineering harness (ECC)
+
+The ECC plugin (`ecc@ecc`, project scope) is the development harness for this
+repository. It is a development-plane tool only.
+
+- ECC holds no trading, risk, approval, execution, broker, or ledger authority.
+  Its agents produce suggestions, nothing more.
+- Architecture documents, ADRs, and code override ECC memory, ECC rules, and
+  generic ECC patterns whenever they disagree.
+- SaathiOS mission, milestone, evidence, and certification discipline stay
+  canonical. ECC review, TDD, build-fix, and security passes are additional
+  inputs, never the gate.
+- Before changing a subsystem, state its canonical implementation, authority
+  owner, existing tests, relevant ADRs, milestone evidence, and regression risk.
+- Give every proposed architectural change one verdict: KEEP, ADAPT, INTEGRATE,
+  REPLACE, COMBINE, DEFER, or REJECT. Newer and larger are not arguments.
+- Do not weaken a linter, formatter, or test config to make a check pass. Fix
+  the code.
+- Trading-plane work additionally requires authority, risk, approval,
+  ExecutionGateway, ledger, reconciliation, and no-live-authority audits.
+
+The harness runs a **curated profile**: the `ecc@ecc` plugin is installed but
+disabled and serves only as the pinned vendor source; 47 selected components are
+synced project-locally by `scripts/ecc_profile_sync.sh` from
+`.claude/ecc-profile.json`. Never upgrade ECC automatically — follow the update
+procedure in the policy document.
+
+Full policy, conflict resolution, security posture, resource budget, update
+procedure, and rollback: `docs/engineering/ECC_INTEGRATION.md`.
+
 ## Final report format
 
 Include:

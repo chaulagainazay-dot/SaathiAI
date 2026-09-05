@@ -1,0 +1,170 @@
+{
+  "schema": "M319_BROWSER_CERT",
+  "verdict": "TRADING_CONNECTIVITY_GOVERNANCE_BROWSER_CERT_PASSED_WITH_LIMITATIONS",
+  "ok": true,
+  "checks": [
+    {
+      "name": "page_source_governance_banner",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "page_source_no_password_field",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "page_source_no_api_key_field",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "page_source_no_connect_enable",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "page_source_maturity",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "page_source_approval_not_activation",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "backend_bootstrap",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "backend_cert",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "backend_verdict",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "backend_maturity",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "backend_authority_false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "screenshot_control_center",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "banner_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "verdict_renders",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "max_state_renders",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "maturity_governance_only",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "authority_false_display",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "charter_section",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "provider_section",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "approval_section",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "credential_section",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "threat_section",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "incident_section",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "maturity_section",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "evidence_section",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "no_secret_input",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "no_external_auth_request",
+      "ok": true,
+      "detail": "static local page only"
+    }
+  ],
+  "limitations": [
+    "Governance UI only",
+    "No provider connection",
+    "No credentials",
+    "Localhost-only services"
+  ],
+  "backend": {
+    "bootstrap_ok": true,
+    "cert_ok": true,
+    "verdict": "TRADING_CONNECTIVITY_GOVERNANCE_CERTIFIED_WITH_LIMITATIONS",
+    "maturity": "GOVERNANCE_ONLY",
+    "max_state": "CONNECTIVITY_GOVERNANCE_READY_NO_PROVIDER_CONNECTION",
+    "forbidden_ui": [
+      "enter_api_key",
+      "enter_password",
+      "connect_provider",
+      "authorize_oauth",
+      "select_real_account",
+      "view_balance",
+      "view_position",
+      "submit_order",
+      "activate_canary",
+      "enable_paper_execution",
+      "enable_live_trading"
+    ],
+    "authority_false": true
+  },
+  "failures": []
+}

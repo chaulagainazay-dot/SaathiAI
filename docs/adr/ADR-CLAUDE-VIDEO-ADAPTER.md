@@ -1,9 +1,12 @@
 # ADR-001: Video Production Backend Architecture Selection
 
-**Status:** Proposed  
-**Date:** 2026-07-10  
-**Decision Makers:** SaathiOS Architect, Baadar PM  
-**Stakeholders:** Mr. Yeti Brand Team, Baadar Social Operations, SaathiAI Executive  
+**Status:** PROPOSED (FM-C1: historical video architecture proposal; not agent-runtime control plane)
+**Date:** 2026-07-10
+**Implementation status:** Not verified as sole production path; video adapters remain under ExecutionGateway policy
+**Authority impact:** Must not bypass ExecutionGateway
+
+**Decision Makers:** SaathiOS Architect, Baadar PM
+**Stakeholders:** Mr. Yeti Brand Team, Baadar Social Operations, SaathiAI Executive
 **Reviewers:** OpenMontage Community, Claude Code Toolkit Maintainers (optional)
 
 ---
@@ -86,7 +89,7 @@ SaathiOS needs a video production backend to support two divergent use cases:
 
 ### Option C: Both Systems with Intelligent Routing (RECOMMENDED)
 
-**Approach:** 
+**Approach:**
 - **Claude Video Toolkit** for quick daily content (Baadar, quick demos)
 - **OpenMontage** for production campaigns (Mr. Yeti brand, approvals required)
 - **VideoProductionBackend** abstraction layer to route based on `mode` parameter
@@ -202,7 +205,7 @@ VideoProductionBackend (SaathiOS adapter)
 ```python
 class VideoProductionBackend:
     """Unified video production interface."""
-    
+
     async def generate_video(
         self,
         mode: Literal["quick", "production"],
@@ -211,12 +214,12 @@ class VideoProductionBackend:
     ) -> VideoOutput:
         """
         Generate video based on mode.
-        
+
         Args:
           mode: "quick" (Claude) or "production" (OpenMontage)
           intent: Credential + config wrapper
           content: Script, scenes, assets
-          
+
         Returns:
           VideoOutput: MP4 path, metadata, cost
         """
@@ -226,14 +229,14 @@ class VideoProductionBackend:
             return await self._generate_production(intent, content)
         else:
             raise ValueError(f"Unknown mode: {mode}")
-    
+
     async def _generate_quick(self, intent, content) -> VideoOutput:
         """Route to Claude Video Toolkit skills."""
         # Call SaathiOS skill orchestration
         # → .claude/skills/* via ToolIntent
         # → Returns MP4 in 15-45 minutes
         pass
-    
+
     async def _generate_production(self, intent, content) -> VideoOutput:
         """Route to OpenMontage HTTP service."""
         # POST to OpenMontage /v1/execute
@@ -241,12 +244,12 @@ class VideoProductionBackend:
         # Integrate human approval flow
         # Returns MP4 in 2-4 hours
         pass
-    
+
     async def get_status(self, project_id: str) -> ProjectStatus:
         """Get video generation status."""
         # Route to appropriate backend based on project mode
         pass
-    
+
     async def list_providers(self, mode: str) -> List[Provider]:
         """List available providers (TTS, image gen, etc.) for mode."""
         pass
@@ -259,23 +262,23 @@ class VideoProductionBackend:
 ```python
 class ToolIntent:
     """Video generation intent."""
-    
+
     capability: str = "video_generation"
     mode: Literal["quick", "production"]
-    
+
     # Content specification
     script: str                    # Video script/narration
     scenes: List[Scene]            # Scene definitions
     duration_seconds: Optional[int]
-    
+
     # Branding
     brand_id: str = "default"
     character: Optional[str]       # "yeti" or None
-    
+
     # Control
     approval_required: bool = False
     budget_usd: float = 0.50      # For quick; 2.00 for production
-    
+
     # Credentials (abstracted from SaathiOS)
     credentials: Dict[str, str] = {
         "tts_provider": "qwen3",
@@ -283,7 +286,7 @@ class ToolIntent:
         "video_gen_provider": "ltx2",
         "auth_token": "..."
     }
-    
+
     # Preferences
     quality: Literal["draft", "standard", "high"] = "standard"
     timeout_seconds: int = 3600    # 1 hour for quick, 14400 for production
@@ -374,7 +377,7 @@ async def _generate_production(self, intent, content):
 
 async def _generate_quick(self, intent: ToolIntent, content: VideoContent) -> VideoOutput:
     """Generate video using Claude Video Toolkit skills."""
-    
+
     # 1. Initialize project via skill
     project_id = await self._invoke_skill(
         skill="claude-video/video",
@@ -385,14 +388,14 @@ async def _generate_quick(self, intent: ToolIntent, content: VideoContent) -> Vi
             "title": content.title
         }
     )
-    
+
     # 2. Gather/generate assets (parallel)
     assets = await asyncio.gather(
         self._generate_voiceover(intent, content.script),
         self._generate_images(intent, content.scenes),
         self._generate_background_music(intent)
     )
-    
+
     # 3. Render via Remotion
     output_path = await self._invoke_skill(
         skill="claude-video/render",
@@ -403,7 +406,7 @@ async def _generate_quick(self, intent: ToolIntent, content: VideoContent) -> Vi
             "quality": intent.quality
         }
     )
-    
+
     # 4. Return result
     return VideoOutput(
         mp4_path=output_path,
@@ -425,7 +428,7 @@ async def _invoke_skill(
 ) -> Any:
     """
     Invoke Claude Code skill from SaathiOS.
-    
+
     Pattern: SaathiOS reads skill from .claude/skills/,
     executes via ExecutionGateway, returns result.
     """
@@ -448,12 +451,12 @@ async def _invoke_skill(
 ```python
 class OpenMontageAdapter:
     """HTTP adapter for OpenMontage service."""
-    
+
     def __init__(self, base_url: str, api_key: str):
         self.base_url = base_url        # http://openmontage-service:8000
         self.api_key = api_key          # Service API key
         self.client = httpx.AsyncClient()
-    
+
     async def create_project(self, intent: ToolIntent, content: VideoContent) -> str:
         """Create OpenMontage project, return project_id."""
         response = await self.client.post(
@@ -477,7 +480,7 @@ class OpenMontageAdapter:
             headers={"Authorization": f"Bearer {self.api_key}"}
         )
         return response.json()["project_id"]
-    
+
     async def get_checkpoint(self, project_id: str, stage: str) -> dict:
         """Fetch checkpoint artifact for a stage."""
         response = await self.client.get(
@@ -485,7 +488,7 @@ class OpenMontageAdapter:
             headers={"Authorization": f"Bearer {self.api_key}"}
         )
         return response.json()
-    
+
     async def approve(self, project_id: str, stage: str, feedback: str = "") -> None:
         """Approve stage, allow progression."""
         await self.client.post(
@@ -493,7 +496,7 @@ class OpenMontageAdapter:
             json={"stage": stage, "feedback": feedback},
             headers={"Authorization": f"Bearer {self.api_key}"}
         )
-    
+
     async def get_status(self, project_id: str) -> dict:
         """Get project status."""
         response = await self.client.get(
@@ -510,14 +513,14 @@ class OpenMontageAdapter:
 ```python
 async def _execute_with_approvals(self, project_id: str, om_adapter: OpenMontageAdapter):
     """Poll OpenMontage checkpoints, request SaathiOS approvals."""
-    
+
     while True:
         status = await om_adapter.get_status(project_id)
-        
+
         if status["blocked_on_approval"]:
             stage = status["current_stage"]
             checkpoint = await om_adapter.get_checkpoint(project_id, stage)
-            
+
             # Notify SaathiOS approval system
             approval = await self._request_approval(
                 actor="human",
@@ -529,26 +532,26 @@ async def _execute_with_approvals(self, project_id: str, om_adapter: OpenMontage
                     "estimated_cost": checkpoint.get("cost_usd")
                 }
             )
-            
+
             if approval.approved:
                 # Grant approval
                 await om_adapter.approve(project_id, stage, feedback=approval.feedback)
             else:
                 # Reject (would trigger send-back in OpenMontage)
                 await om_adapter.approve(
-                    project_id, stage, 
+                    project_id, stage,
                     feedback=f"Rejected. Reason: {approval.reason}"
                 )
                 # Handle rejection (restart stage, rollback, etc.)
-        
+
         elif status["complete"]:
             # Video ready
             return status["output_video_path"]
-        
+
         elif status["failed"]:
             # Handle error
             raise VideoGenerationError(status["error"])
-        
+
         # Poll every 30 seconds
         await asyncio.sleep(30)
 ```
@@ -699,8 +702,8 @@ async def _execute_with_approvals(self, project_id: str, om_adapter: OpenMontage
 
 **Option C: Hybrid Backend (Claude Video Toolkit + OpenMontage)**
 
-**Implementation begins:** 2026-07-15  
-**Phase 1 launch:** 2026-08-10 (Baadar daily automation)  
+**Implementation begins:** 2026-07-15
+**Phase 1 launch:** 2026-08-10 (Baadar daily automation)
 **Phase 3 launch:** 2026-09-15 (Mr. Yeti campaigns live)
 
 ---

@@ -1,6 +1,6 @@
-# SaathiAI — Sovereign Orbit
+# SaathiOS — Sovereign Orbit
 
-The CEO interface for SaathiAI, implemented from the *Sovereign Orbit* design language.
+The canonical SaathiOS interface, implemented from the *Sovereign Orbit* design language.
 Next.js 15 · React 19 · Tailwind CSS 4 · Framer Motion. You are the center; the AI is invisible.
 
 ## Run

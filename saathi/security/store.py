@@ -10,6 +10,7 @@ never needs changing when users are added.
 from __future__ import annotations
 
 import json
+import os
 import secrets
 import sqlite3
 import time
@@ -230,9 +231,18 @@ class SecurityStore:
     from the async event loop (single thread).
     """
 
+    # Operators (and the test suite) can redirect the default store away from the
+    # real home directory. An explicit ``db_path`` still wins; when neither is
+    # given the historical ``~/.saathi/security.db`` default is unchanged.
+    _ENV_DB_PATH = "SAATHI_SECURITY_DB"
+
     def __init__(self, db_path: "str | Path | None" = None,
                  now: Callable[[], float] = time.time):
-        self.path = Path(db_path) if db_path else (Path.home() / ".saathi" / "security.db")
+        if db_path:
+            self.path = Path(db_path)
+        else:
+            override = os.environ.get(self._ENV_DB_PATH, "").strip()
+            self.path = Path(override) if override else (Path.home() / ".saathi" / "security.db")
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self._now = now
         self.db = sqlite3.connect(str(self.path), check_same_thread=False)
@@ -281,6 +291,18 @@ class SecurityStore:
             (user_id,),
         ).fetchone()
         return dict(row) if row else None
+
+    def active_owner_has_password(self) -> bool:
+        """Return whether an active canonical owner has a stored password.
+
+        This deliberately returns only a boolean so callers such as the unlock
+        status endpoint never need to handle credential material.
+        """
+        row = self.db.execute(
+            "SELECT 1 FROM users u JOIN passwords p ON p.user_id=u.id "
+            "WHERE u.status='active' LIMIT 1"
+        ).fetchone()
+        return row is not None
 
     def password_history(self, user_id: str, limit: int = 10) -> list[dict]:
         rows = self.db.execute(

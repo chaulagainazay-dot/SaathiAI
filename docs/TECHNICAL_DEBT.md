@@ -1,5 +1,33 @@
 # SaathiOS Technical Debt / Known Gaps
 
+## NEPSE-TXN-1 residual debt (2026-08-31)
+
+- HIGH / CERTIFICATION: genuine Meroshare, TMS, and Nepal Share transaction
+  headers and semantics remain unavailable. All adapters stay
+  `SOURCE_SCHEMA_UNVERIFIED`; NEPSE-SCHEMA-1 must pin real redacted headers
+  before source-specific end-to-end compatibility can be certified.
+- MEDIUM / INTENTIONAL: no populated canonical NEPSE instrument dataset ships;
+  transaction callers must supply `NepseInstrument` records and unknown symbols
+  reject closed.
+- MEDIUM / INTENTIONAL: corporate-action accounting, reconciliation, and ledger
+  application are outside the importer and remain future contract work.
+- LOW: `.xlsx`, Bikram Sambat dates, and non-NPR source semantics remain
+  unsupported; no dependencies or inference rules were added.
+
+## NEPSE-CAL-1.1 residual debt (2026-08-30)
+
+- HIGH / INTENTIONAL: no genuine NEPSE annual holiday dataset ships. Raw
+  Sunday-Thursday sessions therefore carry `HOLIDAY_COVERAGE_UNKNOWN`, and
+  certified NEPSE backtests remain blocked by
+  `REQUIRE_CALENDAR_COVERAGE` until sourced versioned coverage is supplied.
+- MEDIUM: regular 11:00-15:00 Nepal hours are current-regime metadata, not a
+  historical hours/shortened-session dataset.
+- LOW: automatic venue-aware quote classification requires a `NEPSE:` symbol
+  prefix; unqualified symbols cannot safely imply an exchange.
+- LOW: no persisted registry of all legacy evidence exists, so unversioned
+  NEPSE artifacts remain `UNKNOWN` unless their dates prove legacy-calendar
+  impact. They are never silently promoted to canonical.
+
 ## M73–M77 Voice Output Foundation residual debt (2026-07-28)
 
 - HIGH / CERTIFICATION: the dedicated M77 production browser speech journey did
@@ -557,3 +585,12 @@ Product IELTSAlert work uses **PRODUCT/IELTSAlert** numbering — not platform d
   advisories whose registry remediation requires incompatible major versions;
   lint receives trusted checkout-local source only. Revisit with a coordinated
   ESLint/Next config major upgrade.
+## MD-1.1 venue identity resolution (2026-08-31)
+
+- **RESOLVED:** generic `MdRegisterBody`, dataset registration, OHLCV
+  normalization, and calendar checks no longer silently default omitted venue
+  to XNAS. Contradictions fail closed through the canonical venue identity
+  validator.
+- LOW / CARRIED: legacy models retain string `exchange`/`venue` fields and
+  explicit provider fixtures remain; broad type migration belongs to later MD
+  provider work.

@@ -20,6 +20,13 @@ from typing import Any, Callable
 
 from saathi.platform.market_data.models import MDBar, MarketDataQuality
 from saathi.platform.market_data.quality import classify_series
+from saathi.platform.nepse.calendar import (
+    NEPAL_TZ,
+    NEPSE_CALENDAR_V2_CANONICAL,
+    CalendarCoverageStatus,
+    NepseCalendar,
+    SessionClassification,
+)
 from saathi.platform.strategy.models import (
     StrategyDefinition, DatasetReference, CostModel, REALISTIC_COST, EquityPoint,
     ENGINE_VERSION, FEATURE_VERSION, SimOrderStatus, D, q2, _canonical,
@@ -99,6 +106,7 @@ def run_backtest(
     probe: Callable[[BacktestContext], None] | None = None,
     calendar: str = "DEFAULT_24_5",
     strict_quality: bool = True,
+    nepse_calendar: NepseCalendar | None = None,
 ) -> BacktestResult:
     import copy as _copy
     cost = cost or defn.cost_model or REALISTIC_COST
@@ -112,6 +120,26 @@ def run_backtest(
     bars = sorted(_copy.deepcopy(bars), key=lambda b: b.start_time.timestamp())
     instrument = defn.instrument_universe[0] if defn.instrument_universe else (bars[0].instrument if bars else "")
 
+    calendar_name = calendar.upper()
+    calendar_version = "GENERIC_CALENDAR_UNVERSIONED"
+    calendar_source_version = ""
+    calendar_coverage_status = "UNKNOWN"
+    calendar_policy = "GENERIC"
+    confirmed_closed_dates: list[str] = []
+    if calendar_name == "NEPSE":
+        canonical_calendar = nepse_calendar or NepseCalendar()
+        local_days = sorted({b.start_time.astimezone(NEPAL_TZ).date() for b in bars})
+        calendar_version = NEPSE_CALENDAR_V2_CANONICAL
+        calendar_source_version = canonical_calendar.calendar_source_version
+        calendar_coverage_status = canonical_calendar.coverage_status(local_days).value
+        calendar_policy = "REQUIRE_CALENDAR_COVERAGE"
+        confirmed_closed_dates = [
+            day.isoformat()
+            for day in local_days
+            if canonical_calendar.classify_session(day)
+            is SessionClassification.CONFIRMED_CLOSED
+        ]
+
     from saathi.platform.strategy.models import strategy_hash
     shash = strategy_hash(defn, parameters)
     dhash = _dataset_hash(bars)
@@ -121,7 +149,11 @@ def run_backtest(
             "strategy_hash": shash, "dataset_hash": dhash, "engine_version": ENGINE_VERSION,
             "feature_version": FEATURE_VERSION, "cost_model": cost.to_public(),
             "slippage_model": {"slippage_bps": str(cost.slippage_bps), "spread": cost.spread_slippage},
-            "calendar": calendar, "seed": seed, "parameters": parameters,
+            "calendar": calendar_name, "calendar_version": calendar_version,
+            "calendar_source_version": calendar_source_version,
+            "calendar_coverage_status": calendar_coverage_status,
+            "calendar_policy": calendar_policy,
+            "seed": seed, "parameters": parameters,
             "starting_cash": str(starting_cash), "timeframe": defn.timeframe.value,
             "instrument": instrument, "bar_count": len(bars), "result_hash": result_hash,
         }
@@ -139,6 +171,24 @@ def run_backtest(
         return _fail("structural: " + "; ".join(f.code for f in findings if f.severity == "critical"), status="REJECTED")
     if not bars:
         return _fail("empty dataset", status="REJECTED")
+
+    # NEPSE-CAL-1.1: the coverage gate below keys on calendar_name == "NEPSE".
+    # A caller that supplied a NEPSE instrument but left `calendar` at its
+    # DEFAULT_24_5 default therefore skipped the gate entirely and could produce
+    # fills over dates with no sourced calendar truth. Derive the requirement
+    # from instrument identity and refuse the mismatch rather than silently
+    # running a NEPSE instrument under a Western calendar.
+    if str(instrument).upper().startswith("NEPSE:") and calendar_name != "NEPSE":
+        return _fail("NEPSE_INSTRUMENT_REQUIRES_NEPSE_CALENDAR", status="REJECTED")
+
+    # NEPSE-certified runs require full sourced holiday truth.  Raw import may
+    # retain weekly candidates, but a backtest cannot turn those candidates
+    # into fills.  Confirmed-closed rows are also rejected, never skipped.
+    if calendar_name == "NEPSE":
+        if calendar_coverage_status != CalendarCoverageStatus.COMPLETE.value:
+            return _fail("NEPSE_CALENDAR_COVERAGE_REQUIRED", status="REJECTED")
+        if confirmed_closed_dates:
+            return _fail("NEPSE_CONFIRMED_CLOSED_SESSION_BAR", status="REJECTED")
 
     # 2. data-quality gate — invalid datasets block runs
     if strict_quality and qsumm["blocking"] > 0:

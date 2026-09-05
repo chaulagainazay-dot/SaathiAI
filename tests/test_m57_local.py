@@ -106,6 +106,10 @@ def test_launcher_localhost_only_and_failclosed_guards():
     assert "NEXT_PUBLIC_SAATHI_API=" in src or 'NEXT_PUBLIC_SAATHI_API="$API_BASE"' in src
     # does not clobber the pre-existing com.saathi.local agent.
     assert "com.saathi.local-launcher" in src
+    # Reuse is provenance-gated, not merely port/signature-gated.
+    assert "_backend_provenance_matches" in src
+    assert "provenance-mismatch" in src
+    assert "EXPECTED_BACKEND_PACKAGE" in src
 
 
 def _run(args, home, extra_env=None, path_prefix=None):
@@ -217,6 +221,33 @@ def test_start_fails_closed_on_unhealthy_external_frontend(tmp_path, dummy_proce
     assert "reusing healthy external SaathiOS backend PID 1782" in r.stdout
     # 5. no external PID is killed
     assert dummy_process.poll() is None, "external frontend PID must never be killed"
+
+
+def test_start_rejects_backend_provenance_mismatch(tmp_path):
+    """A healthy-looking foreign backend must never be silently reused."""
+    r = _run(
+        ["start"],
+        tmp_path / "saathi-home",
+        extra_env={
+            "SAATHI_LOCAL_ASSESS_BACKEND": "provenance-mismatch 68813",
+            "SAATHI_LOCAL_ASSESS_FRONTEND": "external-healthy 48062",
+        },
+    )
+    assert r.returncode != 0
+    assert "failed canonical runtime provenance validation" in r.stdout
+    assert "not killed or reused" in r.stdout
+    assert "is ready" not in r.stdout
+
+
+def test_status_surfaces_provenance_mismatch(tmp_path):
+    r = _run(
+        ["status"],
+        tmp_path / "saathi-home",
+        extra_env={"SAATHI_LOCAL_ASSESS_BACKEND": "provenance-mismatch 68813"},
+    )
+    assert r.returncode == 0
+    assert "owner=mismatch" in r.stdout
+    assert "ready=no" in r.stdout
 
 
 def test_open_does_not_launch_browser_when_frontend_unready(tmp_path, dummy_process):

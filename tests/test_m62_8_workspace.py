@@ -87,7 +87,24 @@ def test_account_detail_exposes_halt_reason(tmp_path):
     detail = svc.get_account(ctx, a["id"])
     assert detail["status"] == "HALTED"
     assert "halt_reason" in detail and detail["halt_reason"]
-    assert detail["mark_source"] == "replay/fixture"
+    # T-NEXT-1.1: books valuation marks come from canonical fund ledger (or cost),
+    # not the legacy market-event "replay/fixture" label. Halt reason is independent.
+    assert detail["mark_source"] == "canonical_fund_ledger_marks_or_cost"
+    assert detail.get("books_authority") == "canonical_fund_ledger"
+    assert detail.get("source") == "canonical_fund_ledger"
+
+
+def test_account_detail_canonical_books_mark_source_after_cutover(tmp_path):
+    """Explicit post-cutover contract: get_account mark_source is books authority."""
+    ps, svc, sf, ctx, a = _seed(tmp_path)
+    detail = svc.get_account(ctx, a["id"])
+    assert detail["mark_source"] == "canonical_fund_ledger_marks_or_cost"
+    assert detail["books_authority"] == "canonical_fund_ledger"
+    assert detail["mode"] == "PAPER"
+    assert detail["live_execution"] == "UNAVAILABLE"
+    # OMS lifecycle remains available as non-books shadow, not mark authority
+    assert "oms_lifecycle" in detail
+    assert detail["oms_lifecycle"].get("note")
 
 
 def test_tenant_isolation_reads(tmp_path):

@@ -1,0 +1,248 @@
+
+=== REPOSITORY ===
+/Users/macbookpro/SaathiAI
+/Users/macbookpro/SaathiAI
+milestone/m312-m319-connectivity-governance
+e50fb4e438d6e3b86050a7ea66529fe176f3f9f6
+
+=== STATUS ===
+ M docs/evidence/m25/LATEST_ENVIRONMENT_OBSERVATION.json
+ M docs/evidence/m25/LIVE_CERT_EVIDENCE.json
+ M docs/evidence/m25/LIVE_CERT_SUMMARY.md
+ M docs/evidence/m27/connector_events.jsonl
+ M docs/evidence/m28/deprecation_events.jsonl
+?? docs/design-spec/
+?? docs/trading/final_publication_evidence/
+?? docs/trading/m312_m319_evidence/cg_evidence.db
+
+=== STATUS IGNORED (sample) ===
+ M docs/evidence/m25/LATEST_ENVIRONMENT_OBSERVATION.json
+ M docs/evidence/m25/LIVE_CERT_EVIDENCE.json
+ M docs/evidence/m25/LIVE_CERT_SUMMARY.md
+ M docs/evidence/m27/connector_events.jsonl
+ M docs/evidence/m28/deprecation_events.jsonl
+?? docs/design-spec/
+?? docs/trading/final_publication_evidence/
+?? docs/trading/m312_m319_evidence/cg_evidence.db
+!! .claude/settings.local.json
+!! .env
+!! .proxy.env
+!! .pytest_cache/
+!! .saathi-agent-state/
+!! .superpowers/
+!! .venv/
+!! anthropic-proxy
+!! data/agent_runtime.db
+!! data/alpha/
+!! data/application_harness_runs/
+!! data/assets/
+!! data/autopost_log.json
+!! data/baadar.db
+!! data/baadar_episodic.db
+!! data/baadar_semantic.db
+!! data/backups/
+!! data/browser_sessions/
+!! data/ceo_os.db
+!! data/character_memory.json
+!! data/chat.db
+!! data/coach.db
+!! data/connections.json
+!! data/connectors.db
+!! data/connectors.egw.db
+!! data/content/
+!! data/content_feedback.json
+!! data/content_intel.db
+!! data/content_library.db
+!! data/engineering/
+!! data/execution_gateway/
+!! data/files/
+!! data/growth/
+!! data/improvements.db
+!! data/known_failures.json
+!! data/linkedin/
+!! data/local.err.log
+!! data/local.log
+!! data/local_server.log
+!! data/memory.db
+!! data/mr_yeti_queue.json
+!! data/mr_yeti_topics.json
+!! data/owner_voice.npy
+!! data/pielts_uploads.json
+!! data/platform/
+!! data/platform_memory.db
+!! data/projects.json
+!! data/provider_governance.db
+!! data/quote_cards/
+!! data/reddit_outreach/
+!! data/repair_baseline.json
+!! data/repair_history.json
+!! data/revenue.db
+!! data/saathi.db
+!! data/studio_os.db
+!! data/studio_workspaces/
+!! data/subtitled/
+!! data/tasks.json
+!! data/thumbnails/
+!! data/tool_runtime/
+!! data/tts_cache/
+!! data/tuning.json
+!! data/videos
+!! data/voice_os.db
+!! data/workflow_dumps/
+!! data/yeti_analytics.json
+!! docs/evidence/m35/session_lifecycle.json
+!! docs/evidence/m35/synthetic_session_result.json
+!! docs/evidence/m36/session_lifecycle.json
+!! docs/evidence/m46/consumed_authorization.local.jsonl
+!! docs/m41/operator_canary_approval.local.json
+!! docs/m46/cleanup_verification_final.local.json
+
+=== REMOTE ===
+hf	https://huggingface.co/spaces/Baadar/baadar-ai (fetch)
+hf	https://huggingface.co/spaces/Baadar/baadar-ai (push)
+origin	https://github.com/chaulagainazay-dot/SaathiAI.git (fetch)
+origin	https://github.com/chaulagainazay-dot/SaathiAI.git (push)
+
+=== LOG ===
+e50fb4e (HEAD -> milestone/m312-m319-connectivity-governance) docs(tg): finalize LOOP_STATE ending SHA for M312–M319
+08b2d9c docs(tg): M312–M319 evidence pack, roadmap, LOOP_STATE and certification
+74a45fd test(tg): M312–M319 focused tests, browser cert and clean-clone evidence
+39084ae feat(tg): M319 connectivity governance API, CLI and control center UI
+7fa568f feat(tg): M318 threat model, maturity model and governance service
+ea9a5ac feat(tg): M317 revocation, emergency shutdown and incident response
+609cb21 feat(tg): M316 credential governance policy without real secrets
+f1a4832 feat(tg): M315 connectivity approval framework with maker-checker
+0b30ab4 feat(tg): M314 provider governance registry and capability allowlists
+b974605 feat(tg): M312–M313 connectivity governance charter and authority model
+ed3dea7 (milestone/m304-m311-read-only-market-observation) docs(tg): finalize LOOP_STATE ending SHA for M304–M311
+a11315d docs(tg): M304–M311 evidence pack, master roadmap close and LOOP_STATE
+600b697 feat(tg): M311 market observation API, CLI, UI and browser cert
+4e65e56 feat(tg): M304–M310 read-only market observation core
+29930b8 (milestone/m296-m303-portfolio-risk-intelligence) docs(tg): finalize LOOP_STATE ending SHA for M296–M303
+6aa6ba5 docs(tg): M296–M303 evidence pack, roadmap, LOOP_STATE and certification
+7da341f feat(tg): M303 portfolio risk API, CLI, UI and browser cert
+2db0386 feat(tg): M296–M302 institutional portfolio risk intelligence core
+f582dd3 (milestone/m288-m295-institutional-paper-simulation) docs(tg): finalize LOOP_STATE ending SHA for M288–M295
+c2fa469 docs(tg): M288–M295 evidence pack, roadmap, LOOP_STATE and certification
+a007764 feat(tg): M295 paper simulation API, CLI, UI and browser cert
+3949540 feat(tg): M288–M294 institutional paper simulation core
+50abdaa (milestone/m280-m287-autonomous-research-orchestrator) docs(tg): finalize LOOP_STATE ending SHA for M280–M287
+8317a49 docs(tg): M280–M287 evidence, master roadmap, LOOP_STATE and certification
+b684d80 feat(tg): M287 research orchestrator API, CLI, UI and browser cert
+34b7228 feat(tg): M280–M286 autonomous research orchestrator core
+72210d6 (milestone/m272-m279-multi-strategy-research-lab) docs(tg): finalize LOOP_STATE current_sha (no amend loop)
+da58f16 docs(tg): finalize LOOP_STATE ending SHA for M272–M279
+178e6d7 docs(tg): M272–M279 evidence pack, roadmap, LOOP_STATE and certification
+6cbce97 feat(tg): M279 research lab API, CLI, UI and browser cert harness
+
+=== SUBMODULE ===
+
+=== WORKTREE ===
+/Users/macbookpro/SaathiAI                                                               e50fb4e [milestone/m312-m319-connectivity-governance]
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-0n3dtxpr/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-1oukn5y9/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-1vqv2arg/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-20pygqd5/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-2emr5o4f/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-3lbt2qbn/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-3wrf19p2/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-3xnapqfm/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-4_4rk2ga/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-4v9lfzg_/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-59ydh3s4/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-5d2napnv/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-5im2innq/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-5t4qbh_r/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-6waa_di1/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-6wjbb_ab/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-7_rogrpz/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-7xqls_5r/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-83v5u8xl/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-8m3et7ak/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-93d1atbe/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-95jwqlbu/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-9ky3x9x8/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-9ozfa0as/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-9rhq1olp/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-9sa523r_/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-9yhrgyqv/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-al56781w/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-b3roj8h5/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-bpekw9ec/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-cfl1c_12/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-cjbquwfl/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-ckck_ni3/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-clf_suo7/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-dupjzwzr/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-e0o0237v/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-ebxyka95/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-ejk3g0af/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-enqd8js6/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-fgvnfsqr/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-fsn92stm/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-g4uenw62/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-g58g3bff/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-gchz3q30/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-h53ugn0v/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-h82_fuhz/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-hdmmui9u/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-htzjci9i/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-ib9pwmrz/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-ifnl4ulg/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-ihsy00fb/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-ix0wv1t3/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-j7i7r7qr/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-j_583p1a/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-ja4fuw2j/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-jo7up5qd/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-k0up5q0j/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-k_eb859k/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-k_so9qpy/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-kos1uv46/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-lmic3pom/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-lyyyjwj6/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-mpvwscux/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-nwe5_31h/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-o5ozzza1/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-o6ev_za9/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-ogrwq1up/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-oqpymlkj/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-paopt3t7/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-pl_1n09o/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-plu5mjog/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-qx1h4ezf/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-qyxcl7sm/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-s1n5xzz6/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-sgqbsmvh/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-si3s6zsj/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-t4dmzn0h/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-tfzsam38/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-tg11_nbl/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-tic2p0ho/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-u6oi1sfj/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-u7fz82xj/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-udlkrmwq/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-uqbhy4ky/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-uudlju4j/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-v0moy4ip/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-vfvt_06g/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-vsf0fm3x/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-w7dys2xz/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-wvjqrpb7/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-x53wdptx/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-x74czd4j/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-y3hu60_l/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-y96j9cp8/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-ye9j6b0p/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-yk39c9fx/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-yulicqva/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-z0kzdn9o/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-z33cktxv/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-zhb4lfzi/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-zl_5vl6e/clean-wt 1e3f0a1 (detached HEAD)
+/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/m233-worktree-zlu1tqfy/clean-wt 1e3f0a1 (detached HEAD)
+/Users/macbookpro/.worktrees/backend-core                                                dbcb589 [agent/backend-core]
+/Users/macbookpro/.worktrees/frontend-auth                                               82ebdd9 [agent/frontend-auth]
+
+=== UPSTREAM ===
+NO_UPSTREAM

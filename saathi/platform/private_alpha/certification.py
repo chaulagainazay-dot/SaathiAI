@@ -45,9 +45,19 @@ def run_private_alpha_certification(
         "not authorized",
     )
 
-    # Installation / prepare
+    # Installation / prepare.
+    # Host prerequisites are a hard gate. Installable build artifacts (.venv,
+    # saathi-os/node_modules) are reported as their own explicit check so an
+    # incomplete installation stays visible in the certification report instead
+    # of being folded into — or silently dropped from — the prerequisite gate.
     prep = prepare(install_deps=False)
-    add("installation_prepare", "PASS" if prep.get("ok") else "FAIL", "prepare checks")
+    add("installation_prepare", "PASS" if prep.get("ok") else "FAIL", "host prerequisites")
+    pending = prep.get("pending_install_steps") or []
+    add(
+        "installation_complete",
+        "PASS" if prep.get("install_complete") else "WARNING",
+        "dependencies installed" if not pending else "pending: " + ", ".join(pending),
+    )
 
     # Lifecycle contract
     life = safety_contract()

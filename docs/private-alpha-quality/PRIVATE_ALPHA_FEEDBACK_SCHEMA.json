@@ -1,0 +1,57 @@
+{
+  "record": "SAATHIOS_PRIVATE_ALPHA_FEEDBACK_SCHEMA",
+  "version": "1.0.0",
+  "storage": "repository-backed JSON at docs/private-alpha-quality/PRIVATE_ALPHA_FEEDBACK_LOG.json",
+  "no_external_telemetry": true,
+  "no_public_saas": true,
+  "rationale": "Private alpha is local-first and offline-first. Feedback must never leave the machine through a third-party analytics or ticketing service.",
+
+  "privacy_rules": {
+    "never_collect": [
+      "passwords", "session tokens", "API keys", "recovery codes",
+      "voice recordings", "audio files", "microphone streams",
+      "real financial account numbers", "broker credentials",
+      "government identifiers", "real customer personal data"
+    ],
+    "screenshots": "Allowed only after the tester confirms no credential, token or real personal data is visible. Store under docs/private-alpha-quality/screenshots/ and reference by filename only.",
+    "tester_identity": "Use an alias (for example T-OWNER-1, T-OP-1, T-VIEW-1). Do not store real names, emails or phone numbers in the log.",
+    "test_data": "Synthetic or low-risk only. Real sensitive information is prohibited by the validation plan."
+  },
+
+  "fields": {
+    "feedback_id": { "type": "string", "required": true, "format": "PA-<NNN>", "unique": true },
+    "tester_alias": { "type": "string", "required": true, "note": "alias only, never a real identity" },
+    "role": { "type": "enum", "required": true, "values": ["owner", "operator", "viewer"] },
+    "date": { "type": "string", "required": true, "format": "ISO 8601 with +05:45 offset" },
+    "build_sha": { "type": "string", "required": true, "note": "full 40-char SHA the tester actually ran" },
+    "page": { "type": "string", "required": true, "note": "route path, e.g. /platform/approvals" },
+    "journey": { "type": "string", "required": true, "note": "which test script, e.g. Script C - Owner approval flow" },
+    "task": { "type": "string", "required": true, "note": "the numbered step being attempted" },
+    "severity": { "type": "enum", "required": true, "values": ["P0", "P1", "P2", "P3"] },
+    "category": { "type": "enum", "required": true, "values": ["blocker", "security", "functional", "usability", "accessibility", "performance", "reliability", "voice", "documentation", "terminology", "feature_request"] },
+    "expected_result": { "type": "string", "required": true },
+    "actual_result": { "type": "string", "required": true },
+    "screenshot_reference": { "type": "string", "required": false, "note": "filename only; see privacy_rules.screenshots" },
+    "browser": { "type": "string", "required": true },
+    "operating_system": { "type": "string", "required": true },
+    "reproducibility": { "type": "enum", "required": true, "values": ["always", "intermittent", "once", "not_reproducible"] },
+    "user_impact": { "type": "string", "required": true, "note": "plain language: what the user could not accomplish" },
+    "privacy_classification": { "type": "enum", "required": true, "values": ["none", "contains_synthetic_data", "requires_redaction"] },
+    "status": { "type": "enum", "required": true, "values": ["NEW", "TRIAGED", "CONFIRMED", "IN_PROGRESS", "FIXED", "VERIFIED", "DEFERRED", "NOT_REPRODUCIBLE", "PRODUCT_DECISION_REQUIRED", "CLOSED"] },
+    "owner": { "type": "string", "required": true, "note": "who is accountable for resolution" },
+    "resolution": { "type": "string", "required": false },
+    "evidence": { "type": "string", "required": false, "note": "commit SHA, test name, or evidence file path" },
+    "release_target": { "type": "string", "required": false, "note": "e.g. 0.1.0-alpha.2" }
+  },
+
+  "severity_definitions": {
+    "P0": "Security bypass, data corruption, public exposure, cross-workspace access, execution-authority violation, or app unusable. Blocks release unconditionally.",
+    "P1": "Login failure, mission flow blocked, approval flow blocked, session dead-end, voice or microphone cannot stop, major mobile failure, recovery failure. Blocks release.",
+    "P2": "Confusing workflow, slow route, poor empty state, unclear status, accessibility issue, recoverable error. Does not block, requires owner review.",
+    "P3": "Cosmetic, minor copy, low-impact visual inconsistency."
+  },
+
+  "release_gate": "No release may proceed while any P0 or P1 item is in a status other than VERIFIED, DEFERRED-with-owner-approval, or NOT_REPRODUCIBLE.",
+
+  "fabrication_rule": "Entries may only be created from a real tester session. Automation must never author a feedback entry on behalf of a human, and must never infer a subjective result."
+}

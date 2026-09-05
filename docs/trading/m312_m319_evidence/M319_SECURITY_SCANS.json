@@ -1,0 +1,114 @@
+{
+  "account_access_scan": {
+    "ok": true,
+    "paths_active": false
+  },
+  "credential_scan": {
+    "ok": true,
+    "raw_credentials_forbidden": true
+  },
+  "external_domain_scan": {
+    "external_calls": [],
+    "ok": true
+  },
+  "llm_authority_scan": {
+    "llm_may_activate": false,
+    "llm_may_approve": false
+  },
+  "order_path_scan": {
+    "ok": true,
+    "paths_active": false
+  },
+  "provider_isolation": true,
+  "schema": {
+    "forbidden_fields_found": [],
+    "ok": true,
+    "raw_credentials_forbidden": true,
+    "tables": [
+      "cg_meta",
+      "cg_audit",
+      "cg_charter",
+      "cg_providers",
+      "cg_approvals",
+      "cg_credential_refs",
+      "cg_revocations",
+      "cg_incidents",
+      "cg_emergency",
+      "cg_threats",
+      "cg_maturity",
+      "cg_certifications",
+      "cg_authority_decisions"
+    ]
+  },
+  "security": {
+    "ACCOUNT_ACCESS_AUTHORIZED": false,
+    "API_KEYS_ACCEPTED": false,
+    "AUTOMATED_INVESTMENT_AUTHORITY": false,
+    "BALANCE_READ_AUTHORIZED": false,
+    "BROKER_CONNECTIVITY_AUTHORIZED": false,
+    "CANARY_ACTIVATION_AUTHORIZED": false,
+    "CREDENTIAL_PROVISIONING_AUTHORIZED": false,
+    "CREDENTIAL_STORAGE_AUTHORIZED": false,
+    "CREDENTIAL_VALIDATION_AUTHORIZED": false,
+    "EXTERNAL_PAPER_EXECUTION_AUTHORIZED": false,
+    "LIVE_TRADING_AUTHORIZED": false,
+    "OAUTH_AUTHORIZED": false,
+    "ORDER_CANCELLATION_AUTHORIZED": false,
+    "ORDER_EXECUTION_AUTHORIZED": false,
+    "ORDER_MODIFICATION_AUTHORIZED": false,
+    "ORDER_SUBMISSION_AUTHORIZED": false,
+    "POSITION_READ_AUTHORIZED": false,
+    "PRODUCTION_AUTHORIZED": false,
+    "READ_ONLY_PRODUCTION_AUTHORIZED": false,
+    "REAL_CONNECTIVITY_AUTHORIZED": false,
+    "TRANSFER_AUTHORIZED": false,
+    "WITHDRAWAL_AUTHORIZED": false,
+    "approval_does_not_equal_activation": true,
+    "authority_does_not_implicitly_expand": true,
+    "current_maturity": "GOVERNANCE_ONLY",
+    "findings": [],
+    "governance_only": true,
+    "llm_authority_scan": {
+      "llm_may_activate": false,
+      "llm_may_approve": false
+    },
+    "max_state": "CONNECTIVITY_GOVERNANCE_READY_NO_PROVIDER_CONNECTION",
+    "no_account_access": true,
+    "no_balance_access": true,
+    "no_broker_login": true,
+    "no_canary_activation": true,
+    "no_credential_storage": true,
+    "no_live_trading": true,
+    "no_oauth": true,
+    "no_orders": true,
+    "no_position_access": true,
+    "no_provider_connection": true,
+    "offline_first": true,
+    "ok": true,
+    "paper_only": true,
+    "provider_isolation": true,
+    "raw_credentials_forbidden": true,
+    "research_only": true,
+    "sandbox_only": true,
+    "schema": {
+      "forbidden_fields_found": [],
+      "ok": true,
+      "raw_credentials_forbidden": true,
+      "tables": [
+        "cg_meta",
+        "cg_audit",
+        "cg_charter",
+        "cg_providers",
+        "cg_approvals",
+        "cg_credential_refs",
+        "cg_revocations",
+        "cg_incidents",
+        "cg_emergency",
+        "cg_threats",
+        "cg_maturity",
+        "cg_certifications",
+        "cg_authority_decisions"
+      ]
+    }
+  }
+}

@@ -357,6 +357,16 @@ class PaperStore:
                                       (org_id, int(limit), int(offset))).fetchall()
         return [self._order(r) for r in rows]
 
+    def startup_ambiguities(self) -> list[dict[str, str]]:
+        """Return execution rows whose durable state is explicitly ambiguous."""
+        rows = self._conn.execute(
+            "SELECT id, org_id, broker_state AS state FROM paper_orders "
+            "WHERE UPPER(broker_state) IN ('UNKNOWN','RECONCILIATION_REQUIRED') "
+            "UNION ALL SELECT intent_id AS id, org_id, state FROM paper_intents "
+            "WHERE UPPER(state) IN ('UNKNOWN','RECONCILIATION_REQUIRED')"
+        ).fetchall()
+        return [{"id": str(r["id"]), "org_id": str(r["org_id"]), "state": str(r["state"])} for r in rows]
+
     def list_fills(self, org_id, order_id, *, limit=1000, offset=0) -> list[dict]:
         rows = self._conn.execute("SELECT * FROM paper_fills WHERE org_id=? AND paper_order_id=? ORDER BY seq LIMIT ? OFFSET ?",
                                   (org_id, order_id, int(limit), int(offset))).fetchall()

@@ -1,0 +1,31 @@
+{
+  "certification": "fm_i6_2.operator_wait.v1",
+  "milestone": "FM-I6.2",
+  "title": "Operator-Owned Ollama Loopback Remediation Verification and Minimal Live Certification",
+  "baseline_sha": "8540e686f4a56d54b9dca8ec3d36004468fd0392",
+  "branch": "hardening/fm-i6.2-ollama-live-certification",
+  "terminal_verdict": "FM_I6_2_OPERATOR_ACTION_REQUIRED",
+  "production_certified": false,
+  "model_role_qualified": false,
+  "live_path_certified": false,
+  "fm_i7_ready": false,
+  "phases_complete": ["A_inventory", "B_duplicate_diagnosis", "C_operator_guide", "G_regression"],
+  "phases_blocked": ["D_loopback_verify", "E_memory", "H_live", "I_post_live", "J_security_final"],
+  "autonomous_host_mutation": false,
+  "operator_first_action": "Quit Ollama.app from menu bar; retain com.ajay.ollama LaunchAgent",
+  "weekly_radar": {
+    "liquid_lfm2_5": "REQUIRES_PRIMARY_SOURCE_REVERIFICATION",
+    "localai": "ISOLATED_EVALUATION_LATER",
+    "merchantbench": "APPROVED_AS_FUTURE_EVALUATION_PATTERN",
+    "repoprobe": "APPROVED_AS_FUTURE_PRE_WRITE_GATE_PATTERN",
+    "interacvid": "BAADAR_SCHEMA_ADAPTATION_LATER",
+    "implementation_in_fm_i6_2": false
+  },
+  "limitations": [
+    "Duplicate Ollama runtimes still present",
+    "Wildcard bind still open on LAN/global IPv6",
+    "Firewall disabled",
+    "Memory free% below live floor",
+    "Live inference not attempted"
+  ]
+}

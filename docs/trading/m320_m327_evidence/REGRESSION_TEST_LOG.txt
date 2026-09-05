@@ -1,0 +1,4 @@
+COMMAND: python -m pytest -q tests/test_m304_m311_market_observation.py tests/test_m312_m319_connectivity_governance.py
+RESULT: PASS
+TOTAL: 37 passed
+COVERAGE: M304-M311 and M312-M319 predecessor suites

@@ -93,7 +93,7 @@ export default function MobileHome() {
             <Eyebrow>🎓 {mission.program} · Day {mission.day}</Eyebrow>
             <span className="mono" style={{ fontSize: 10, color: "var(--color-ink-400)" }}>🔥 {mission.streak}d · ~{mission.estimated_minutes}m</span>
           </div>
-          <div style={{ fontSize: 16, fontWeight: 600, margin: "8px 0 2px", color: "var(--color-ink-100)" }}>{mission.topic}</div>
+          <div style={{ fontSize: 16, fontWeight: 600, margin: "8px 0 2px", color: "var(--text-primary)" }}>{mission.topic}</div>
           <div className="mono" style={{ fontSize: 10, color: "var(--color-ink-400)", marginBottom: 12 }}>
             {mission.episode} · {mission.phase} · {mission.difficulty}
           </div>
@@ -128,7 +128,7 @@ export default function MobileHome() {
                 alignItems: "center", justifyContent: "center", fontWeight: 700, color: "#0A1120",
                 background: color(a.dept) }}>{i + 1}</span>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontWeight: 600, fontSize: 14.5, color: "var(--color-ink-100)" }}>{a.title}</div>
+                <div style={{ fontWeight: 600, fontSize: 14.5, color: "var(--text-primary)" }}>{a.title}</div>
                 <div className="mono" style={{ fontSize: 10, color: "var(--color-ink-400)", marginTop: 3 }}>{a.meta}</div>
               </div>
               <span style={{ fontSize: 9, letterSpacing: "0.1em", color: color(a.dept), fontFamily: "var(--font-mono)" }}>{a.tag}</span>

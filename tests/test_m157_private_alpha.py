@@ -1,6 +1,7 @@
 """M157–M165 SaathiOS Private Alpha — focused certification tests."""
 from __future__ import annotations
 
+import importlib
 import json
 import os
 import re
@@ -9,6 +10,10 @@ import tarfile
 from pathlib import Path
 
 import pytest
+
+# Private-alpha host certification is Darwin/arm64. Success-path unit tests
+# pin that host class so Linux CI can still exercise prepare/init/upgrade
+# logic without claiming Linux is a certified private-alpha target.
 
 from saathi.platform.context import PlatformContextError
 from saathi.platform.core_os import SaathiCoreService, reset_core_service_for_tests
@@ -42,14 +47,25 @@ from saathi.platform.private_alpha.lifecycle import may_terminate, safety_contra
 from saathi.platform.service import reset_platform_for_tests
 from saathi.tool_runtime.registry import reset_registry_for_tests
 
+# Package re-exports `prepare` as a function on the parent module, which shadows
+# the submodule for `import …prepare as`. Load the real module via importlib.
+_prepare_mod = importlib.import_module("saathi.platform.private_alpha.prepare")
+
 REPO = Path(__file__).resolve().parents[1]
 ALPHA_CLI = REPO / "bin" / "saathi-alpha"
 LOCAL_CLI = REPO / "bin" / "saathi-local"
 
 
+def _pin_certified_private_alpha_host(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Pin prepare() to the certified private-alpha host class (Darwin/arm64)."""
+    monkeypatch.setattr(_prepare_mod.platform, "system", lambda: "Darwin")
+    monkeypatch.setattr(_prepare_mod.platform, "machine", lambda: "arm64")
+
+
 @pytest.fixture()
 def env(tmp_path: Path, monkeypatch):
     reset_registry_for_tests()
+    _pin_certified_private_alpha_host(monkeypatch)
     # Isolate alpha config/data under tmp
     cfg_dir = tmp_path / "alpha_config"
     cfg_dir.mkdir()
@@ -98,6 +114,7 @@ def test_release_manifest_safety_and_fields():
 # ── M158 prepare / init ──────────────────────────────────────────────────────
 def test_prepare_idempotent_and_no_secrets(tmp_path, monkeypatch):
     # use real repo dirs but ensure prepare is re-runnable
+    _pin_certified_private_alpha_host(monkeypatch)
     r1 = prepare(install_deps=False)
     r2 = prepare(install_deps=False)
     assert r1["ok"] is True
@@ -106,6 +123,17 @@ def test_prepare_idempotent_and_no_secrets(tmp_path, monkeypatch):
     blob = json.dumps(r1).lower()
     assert "sk-" not in blob
     assert "api_key_value" not in blob
+
+
+def test_prepare_fails_closed_on_unsupported_os(monkeypatch):
+    """Linux (and other non-certified hosts) stay fail-closed for private alpha."""
+    monkeypatch.setattr(_prepare_mod.platform, "system", lambda: "Linux")
+    monkeypatch.setattr(_prepare_mod.platform, "machine", lambda: "x86_64")
+    result = prepare(install_deps=False)
+    assert result["ok"] is False
+    os_arch = next(c for c in result["checks"] if c["check"] == "os_arch")
+    assert os_arch["status"] == "FAIL"
+    assert "Linux" in os_arch["detail"]
 
 
 def test_init_requires_local_ack():

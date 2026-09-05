@@ -1,0 +1,105 @@
+{
+  "mission": "TEST-INFRA-2 CI and Test-State Isolation",
+  "date": "2026-08-30",
+  "verdict": "TEST_INFRA_2_CI_AND_ISOLATION_CERTIFIED_WITH_LIMITATIONS",
+  "worktree": "/Users/macbookpro/SaathiAI-tnext4",
+  "branch": "feature/t-next-4-execution-integrity",
+  "starting_sha": "0d10dff",
+  "audit": {
+    "files_with_home_path_stores": 44,
+    "distinct_saathi_stores": 30,
+    "with_env_override_before": 0,
+    "evidence_writers_found": 5
+  },
+  "defects_found": [
+    {
+      "id": "D1",
+      "severity": "SECURITY",
+      "file": "saathi/agentdev/config_protection.py",
+      "defect": "_home() unresolved vs resolved candidate; symlinked $HOME made ~/.claude/settings.json, ~/.ssh/id_rsa, ~/.aws/credentials classify UNPROTECTED",
+      "status": "FIXED + 3 regression tests"
+    },
+    {
+      "id": "D2",
+      "severity": "HIGH",
+      "file": "saathi/inference/ops/state.py",
+      "defect": "wrote live operational state into tracked docs/evidence/m26; only module in its family without the override",
+      "found_by": "fresh-context review",
+      "status": "FIXED"
+    }
+  ],
+  "self_inflicted_and_resolved": [
+    {
+      "failure": "test_release_gate_passes_baseline exit 8",
+      "cause": "redirected repo ROOT instead of evidence root",
+      "status": "FIXED"
+    },
+    {
+      "failure": "32 agentdev failures",
+      "cause": "HOME redirect exposed latent D1",
+      "status": "FIXED"
+    }
+  ],
+  "results": {
+    "offline_suite": {
+      "passed": 7641,
+      "failed": 0,
+      "skipped": 2,
+      "deselected": 12,
+      "seconds": 643.76
+    },
+    "trading_regression": {
+      "passed": 294,
+      "failed": 0
+    },
+    "new_isolation_tests": 11,
+    "compileall_syntax_errors": 0,
+    "working_tree_after_run": "clean (only files edited by this milestone)"
+  },
+  "authority": {
+    "trading_plane_files_changed": 0,
+    "NO_LIVE_TRADING": true,
+    "NO_REAL_BROKER": true,
+    "NO_WITHDRAWAL": true,
+    "NO_LEVERAGE": true,
+    "NO_LLM_EXECUTION_AUTHORITY": true,
+    "NO_TRADINGAGENTS_RUNTIME_DEPENDENCY": true,
+    "NO_ECC_RUNTIME_DEPENDENCY": true,
+    "network_calls_made": 0,
+    "credentials_requested": 0
+  },
+  "decision": "SAFE_TO_CONTINUE",
+  "next_milestone": "B1 MD-1 canonical market data contract (available_at vs as_of)",
+  "documents": [
+    {
+      "file": "ARCHITECTURE.md",
+      "sha256": "6cd5f2d8795f5721216fd640394ea437e24b8fc6665be345ea5e926d810bd5f4",
+      "bytes": 4510
+    },
+    {
+      "file": "AUTHORITY_AUDIT.md",
+      "sha256": "8bf302d0a5ebc3bdf5296c90fb4a06546f245988ccdced17217ed149c02ebe99",
+      "bytes": 2405
+    },
+    {
+      "file": "FINAL_CERTIFICATION.md",
+      "sha256": "525b580dc59393be0420d81b73510246031c57fd57d9047c6f8ed3a6fef8d566",
+      "bytes": 3055
+    },
+    {
+      "file": "LIMITATIONS.md",
+      "sha256": "66fc2997d56c0a8e8b582d30db5fda2c8d988363208c0151b5dac413a8402830",
+      "bytes": 3078
+    },
+    {
+      "file": "SECURITY.md",
+      "sha256": "a15d57d6539824a7746e1565ee68c9331ac3d2270cb336a52127dbe8bbf92ee2",
+      "bytes": 2433
+    },
+    {
+      "file": "TEST_REPORT.md",
+      "sha256": "339ab83baa7c36934f258a5afed96deac2e980641e00e5c815b3792832bb88b4",
+      "bytes": 3565
+    }
+  ]
+}

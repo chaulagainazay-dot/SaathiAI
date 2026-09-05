@@ -5,8 +5,9 @@
 #   backend  — uvicorn saathi.server:app on 127.0.0.1:8765
 #   frontend — Next.js dev on localhost:3000 (NEXT_PUBLIC_SAATHI_API=127.0.0.1:8765)
 #
-# Ownership is tracked via PID files AND a command-signature check, so this never
-# stops or reuses an unrelated Node/Python/npm/uvicorn/Next.js process. It never
+# Ownership is tracked via PID files, command signatures, and canonical runtime
+# provenance, so this never stops or reuses an unrelated or foreign-worktree
+# Node/Python/npm/uvicorn/Next.js process. It never
 # binds to 0.0.0.0, never uses tunnels, never enables production/connectors/
 # financial/trading/multi-host, and never requires sudo.
 #
@@ -47,6 +48,15 @@ UI_URL="http://localhost:3000"
 LOG_MAX_BYTES="1048576"   # 1 MiB per log, rotated to .1
 PY="$REPO/.venv/bin/python"
 
+# A port is not provenance. These are the identities a reusable backend must
+# prove. Database paths are checked from the process' open files; they are never
+# printed by the launcher.
+CANONICAL_REPO="$(cd -P "$REPO" && pwd)"
+EXPECTED_BACKEND_CWD="$CANONICAL_REPO"
+EXPECTED_BACKEND_PACKAGE="$CANONICAL_REPO/saathi"
+EXPECTED_SECURITY_DB="${SAATHI_SECURITY_DB:-$HOME/.saathi/security.db}"
+EXPECTED_PLATFORM_DB="${SAATHI_PLATFORM_DB:-$CANONICAL_REPO/data/platform/platform.db}"
+
 mkdir -p "$RUN_DIR" "$LOG_DIR"
 
 # ── logging (bounded, no secrets) ────────────────────────────────────────────
@@ -64,6 +74,7 @@ _sig_frontend='next(-server| dev)'
 _alive() { local pid="$1"; [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; }
 _cmd_of() { ps -o command= -p "$1" 2>/dev/null || true; }
 _cwd_of() { lsof -a -p "$1" -d cwd -Fn 2>/dev/null | grep '^n' | head -n1 | sed 's/^n//'; }
+_open_paths_of() { lsof -a -p "$1" -Fn 2>/dev/null | sed -n 's/^n//p'; }
 _is_saathi() {  # _is_saathi <pid> <role> — recognizes a SaathiOS process
   local pid="$1" role="$2" cmd
   _alive "$pid" || return 1
@@ -74,6 +85,25 @@ _is_saathi() {  # _is_saathi <pid> <role> — recognizes a SaathiOS process
     frontend) printf '%s' "$cmd" | grep -Eq "$_sig_frontend" && printf '%s' "$(_cwd_of "$pid")" | grep -q "saathi-os" ;;
     *) return 1 ;;
   esac
+}
+_backend_provenance_matches() {
+  local pid="$1" cwd payload paths
+  cwd="$(_cwd_of "$pid")"
+  [ "$cwd" = "$EXPECTED_BACKEND_CWD" ] || return 1
+  payload="$(_http_body "$API_BASE/api/v1/platform/provenance")"
+  printf '%s' "$payload" | grep -Fq '"worktreePath":"'"$EXPECTED_BACKEND_CWD"'"' || return 1
+  printf '%s' "$payload" | grep -Fq '"packagePath":"'"$EXPECTED_BACKEND_PACKAGE"'"' || return 1
+  printf '%s' "$payload" | grep -Fq '"securityDbPath":"'"$EXPECTED_SECURITY_DB"'"' || return 1
+  printf '%s' "$payload" | grep -Fq '"platformDbPath":"'"$EXPECTED_PLATFORM_DB"'"' || return 1
+  paths="$(_open_paths_of "$pid")"
+  # Security stores are lazy; require an opened path when present, while the
+  # endpoint remains authoritative before the first authenticated operation.
+  if printf '%s\n' "$paths" | grep -Eq '(^|/)security\.db$'; then
+    printf '%s\n' "$paths" | grep -Fxq "$EXPECTED_SECURITY_DB" || return 1
+  fi
+  if printf '%s\n' "$paths" | grep -Fq 'platform.db'; then
+    printf '%s\n' "$paths" | grep -Fxq "$EXPECTED_PLATFORM_DB" || return 1
+  fi
 }
 # Owned == recognized SaathiOS process AND recorded in the launcher's PID file.
 _owned() {  # _owned <pid> <role>
@@ -87,6 +117,7 @@ _listener_pid() { lsof -nP -iTCP:"$1" -sTCP:LISTEN -t 2>/dev/null | head -n1 || 
 
 # ── readiness probes ─────────────────────────────────────────────────────────
 _http_code() { curl -s -o /dev/null -w '%{http_code}' --max-time 4 "$1" 2>/dev/null || echo "000"; }
+_http_body() { curl -sS --max-time 4 "$1" 2>/dev/null || true; }
 _backend_ready() { [ "$(_http_code "$API_BASE/api/v1/platform/health")" = "200" ]; }
 _frontend_ready() { [ "$(_http_code "$UI_URL/platform")" = "200" ]; }
 
@@ -99,6 +130,7 @@ _frontend_ready() { [ "$(_http_code "$UI_URL/platform")" = "200" ]; }
 #   owned-unhealthy     — launcher-owned SaathiOS process, readiness fails
 #   external-healthy    — externally-managed SaathiOS process, readiness passes
 #   external-unhealthy  — externally-managed SaathiOS process, readiness fails
+#   provenance-mismatch <pid> — SaathiOS-shaped backend from another runtime
 #   unrelated <pid>     — port held by a non-SaathiOS process
 # Test-only override (never set in normal operation): SAATHI_LOCAL_ASSESS_BACKEND
 # / SAATHI_LOCAL_ASSESS_FRONTEND inject a state so the decision layer can be
@@ -113,6 +145,9 @@ _assess() {  # _assess <role> <port> <ready_fn>
   pid="$(_listener_pid "$port")"
   if [ -z "$pid" ]; then printf 'free\n'; return 0; fi
   if ! _is_saathi "$pid" "$role"; then printf 'unrelated %s\n' "$pid"; return 0; fi
+  if [ "$role" = backend ] && ! _backend_provenance_matches "$pid"; then
+    printf 'provenance-mismatch %s\n' "$pid"; return 0
+  fi
   if "$fn"; then ready=1; fi
   if _owned "$pid" "$role"; then
     [ "$ready" = 1 ] && printf 'owned-healthy %s\n' "$pid" || printf 'owned-unhealthy %s\n' "$pid"
@@ -127,6 +162,15 @@ _ready_ok() { case "${1%% *}" in owned-healthy|external-healthy) return 0 ;; *) 
 _blocker() {  # _blocker <role> <state> <pid>
   local role="$1" state="$2" pid="$3" where owner="external"
   case "$role" in backend) where="$BFF_HOST:$BFF_PORT" ;; frontend) where="$UI_URL" ;; esac
+  if [ "$state" = provenance-mismatch ]; then
+    say "$role: BLOCKER — PID $pid on $where failed canonical runtime provenance validation."
+    say "  Expected repository/CWD: $CANONICAL_REPO"
+    say "  Expected backend package: $EXPECTED_BACKEND_PACKAGE"
+    say "  The process was not killed or reused (fail-closed)."
+    say "  Remediate the owned process, then retry: saathi-local start"
+    _log "$role provenance mismatch: PID $pid on $where"
+    return 0
+  fi
   case "$state" in owned-*) owner="launcher-owned" ;; esac
   say "$role: BLOCKER — $owner SaathiOS process PID $pid is listening on $where but is NOT ready."
   if [ "$owner" = external ]; then
@@ -149,10 +193,24 @@ _wait_ready() {  # _wait_ready <fn> <label> <timeout_sec>
 }
 
 # ── environment checks ───────────────────────────────────────────────────────
+# M336–M343: the build toolchain is required only by the paths that actually
+# SPAWN a server. A role that resolves to an already-healthy process (owned or
+# external) is reused and never spawned, so demanding .venv / node_modules for
+# it gated the documented reuse path on developer build artifacts and masked the
+# real blocker (an unhealthy or unrelated listener) behind a generic
+# "environment not ready" message. The spawn-path checks below remain hard
+# fail-closed aborts; nothing is skipped, only scoped to the role that needs it.
+_check_backend_toolchain() {
+  [ -x "$PY" ] || { say "  ! python venv missing at .venv (run: python -m venv .venv && pip install -e .)"; return 1; }
+  return 0
+}
+_check_frontend_toolchain() {
+  [ -d "$REPO/saathi-os/node_modules" ] || { say "  ! frontend deps missing (run: cd saathi-os && npm install)"; return 1; }
+  return 0
+}
+# Host-level prerequisite needed by every subcommand that probes readiness.
 _check_env() {
   local ok=0
-  [ -x "$PY" ] || { say "  ! python venv missing at .venv (run: python -m venv .venv && pip install -e .)"; ok=1; }
-  [ -d "$REPO/saathi-os/node_modules" ] || { say "  ! frontend deps missing (run: cd saathi-os && npm install)"; ok=1; }
   command -v curl >/dev/null 2>&1 || { say "  ! curl not found"; ok=1; }
   return $ok
 }
@@ -169,13 +227,21 @@ _ensure_backend() {
     owned-healthy)    say "backend: reusing healthy launcher-owned backend PID $pid on $BFF_HOST:$BFF_PORT"; return 0 ;;
     external-healthy) say "backend: reusing healthy external SaathiOS backend PID $pid on $BFF_HOST:$BFF_PORT (left as-is)"; return 0 ;;
     owned-unhealthy|external-unhealthy) _blocker backend "$state" "$pid"; return 1 ;;
+    provenance-mismatch) _blocker backend "$state" "$pid"; return 1 ;;
     unrelated) say "backend: port $BFF_PORT occupied by UNRELATED PID $pid — refusing to kill it (fail-closed)"; _log "port $BFF_PORT unrelated $pid"; return 1 ;;
     free)
+      _check_backend_toolchain || { say "backend: cannot start — environment not ready; see doctor"; return 1; }
       _rotate "$BACKEND_LOG"
-      ( cd "$REPO" && exec "$PY" -m uvicorn saathi.server:app --host "$BFF_HOST" --port "$BFF_PORT" ) >>"$BACKEND_LOG" 2>&1 &
+      # Detach service stdio/session from the short-lived launcher shell.  The
+      # launcher is often invoked from a terminal/automation process group;
+      # without nohup, that group can deliver SIGHUP when the command returns.
+      ( cd "$REPO" && exec nohup "$PY" -m uvicorn saathi.server:app --host "$BFF_HOST" --port "$BFF_PORT" </dev/null ) >>"$BACKEND_LOG" 2>&1 &
       local np=$!; printf '%s\nbackend\n' "$np" >"$BACKEND_PID"
       say "backend: starting PID $np on $BFF_HOST:$BFF_PORT"
       _wait_ready _backend_ready backend 60 || { say "backend failed to start (see: saathi-local logs --backend)"; return 1; }
+      # uvicorn normally remains the listener; record the actual listener PID
+      # so a launcher-managed child cannot be misclassified as external.
+      local lp; lp="$(_listener_pid "$BFF_PORT")"; [ -n "$lp" ] && printf '%s\nbackend\n' "$lp" >"$BACKEND_PID"
       return 0 ;;
   esac
 }
@@ -185,13 +251,17 @@ _ensure_frontend() {
     owned-healthy)    say "frontend: reusing healthy launcher-owned frontend PID $pid on $UI_URL"; return 0 ;;
     external-healthy) say "frontend: reusing healthy external SaathiOS frontend PID $pid on $UI_URL (left as-is)"; return 0 ;;
     owned-unhealthy|external-unhealthy) _blocker frontend "$state" "$pid"; return 1 ;;
+    provenance-mismatch) _blocker frontend "$state" "$pid"; return 1 ;;
     unrelated) say "frontend: port $UI_PORT occupied by UNRELATED PID $pid — refusing to kill it (fail-closed)"; _log "port $UI_PORT unrelated $pid"; return 1 ;;
     free)
+      _check_frontend_toolchain || { say "frontend: cannot start — environment not ready; see doctor"; return 1; }
       _rotate "$FRONTEND_LOG"
-      ( cd "$REPO/saathi-os" && NEXT_PUBLIC_SAATHI_API="$API_BASE" exec npm run dev -- -p "$UI_PORT" ) >>"$FRONTEND_LOG" 2>&1 &
+      ( cd "$REPO/saathi-os" && NEXT_PUBLIC_SAATHI_API="$API_BASE" exec nohup npm run dev -- -p "$UI_PORT" </dev/null ) >>"$FRONTEND_LOG" 2>&1 &
       local np=$!; printf '%s\nfrontend\n' "$np" >"$FRONTEND_PID"
       say "frontend: starting PID $np on $UI_URL (API=$API_BASE)"
       _wait_ready _frontend_ready frontend 90 || { say "frontend failed to start (see: saathi-local logs --frontend)"; return 1; }
+      # npm may hand off to next-server; own the process actually on port 3000.
+      local lp; lp="$(_listener_pid "$UI_PORT")"; [ -n "$lp" ] && printf '%s\nfrontend\n' "$lp" >"$FRONTEND_PID"
       return 0 ;;
   esac
 }
@@ -256,6 +326,7 @@ _doctor_port() {  # _doctor_port <role> <port> <ready_fn>
     external-healthy)   say "  port $port       external SaathiOS $role (PID $pid; ready; left as-is)" ;;
     external-unhealthy) say "  port $port       external SaathiOS $role (PID $pid; NOT ready; left as-is)"; warn=1 ;;
     unrelated)          say "  port $port       OCCUPIED by unrelated PID $pid"; warn=1 ;;
+    provenance-mismatch) say "  port $port       SaathiOS $role provenance mismatch (PID $pid; left as-is)"; warn=1 ;;
   esac
 }
 
@@ -270,6 +341,7 @@ _status_line() {  # _status_line <role> <port> <ready_fn>  (canonical classifier
     external-healthy)   st="running"; ready="yes"; own="external" ;;
     external-unhealthy) st="running"; ready="no";  own="external" ;;
     unrelated)          st="running"; ready="no";  own="unrelated" ;;
+    provenance-mismatch) st="running"; ready="no"; own="mismatch" ;;
   esac
   printf '  %-9s %-8s pid=%-7s port=%-5s ready=%-3s owner=%s\n' "$role" "$st" "${pid:-—}" "$port" "$ready" "$own"
 }

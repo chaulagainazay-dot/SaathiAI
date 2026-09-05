@@ -1,0 +1,658 @@
+{
+  "policy": "agentdev.model_qualification.v1",
+  "repository_sha": "d61ab96f5de69d8804ec6c145b0e5a6b65627961",
+  "default_behaviour": {
+    "no_qualified_model": "the request goes to a deterministic workflow or to a person; it is never routed to an unqualified model because that model happens to be installed",
+    "automatic_fallback": "disabled",
+    "cloud_fallback": "prohibited",
+    "paid_provider_fallback": "prohibited",
+    "provider_switching": "prohibited"
+  },
+  "decisions": [
+    {
+      "role": "RESEARCH_DRAFTING",
+      "selected_model": "NO_QUALIFIED_MODEL",
+      "candidates": [],
+      "rejected": [
+        {
+          "model": "gemma4:e2b",
+          "status": "RESOURCE_UNSUITABLE"
+        },
+        {
+          "model": "qwen2.5-coder:3b",
+          "status": "NOT_QUALIFIED"
+        },
+        {
+          "model": "qwen2.5:1.5b",
+          "status": "NOT_QUALIFIED"
+        },
+        {
+          "model": "qwen3:4b",
+          "status": "NOT_QUALIFIED"
+        },
+        {
+          "model": "qwen3:8b",
+          "status": "RESOURCE_UNSUITABLE"
+        }
+      ],
+      "fallback": "disabled",
+      "fallback_reason": "automatic fallback stays off unless every fallback candidate is independently qualified for this same role",
+      "human_review": "mandatory: every output is read by a person before use",
+      "restrictions": [
+        "claim that external research, a command or a test run occurred without evidence",
+        "claim files were modified",
+        "claim tests ran or passed",
+        "claim a branch was committed, pushed or merged",
+        "claim a deployment happened",
+        "approve its own or anyone's work",
+        "change mission state or advance a lifecycle gate",
+        "invoke a tool",
+        "write code to the repository",
+        "access the shell, the filesystem or the network",
+        "hold or read a credential"
+      ],
+      "resource_state": {
+        "safe": false,
+        "breaches": [
+          "reclaimable memory 769.7 MiB is below the 1024.0 MiB floor",
+          "free memory 19% is below the 20% floor"
+        ],
+        "measurements": {
+          "free_swap_mib": 1013.0,
+          "available_memory_mib": 769.7,
+          "free_memory_percent": 19,
+          "free_disk_gib": 57.21,
+          "resident_models": [
+            "qwen3:4b"
+          ]
+        },
+        "verdict": "RESOURCE_LIMIT_EXCEEDED"
+      },
+      "qualification_evidence": {},
+      "reason": "no model is qualified for RESEARCH_DRAFTING on this host; the request goes to a deterministic workflow or to a person"
+    },
+    {
+      "role": "SUMMARIZATION",
+      "selected_model": "NO_QUALIFIED_MODEL",
+      "candidates": [],
+      "rejected": [
+        {
+          "model": "gemma4:e2b",
+          "status": "RESOURCE_UNSUITABLE"
+        },
+        {
+          "model": "qwen2.5-coder:3b",
+          "status": "NOT_QUALIFIED"
+        },
+        {
+          "model": "qwen2.5:1.5b",
+          "status": "NOT_QUALIFIED"
+        },
+        {
+          "model": "qwen3:4b",
+          "status": "NOT_QUALIFIED"
+        },
+        {
+          "model": "qwen3:8b",
+          "status": "RESOURCE_UNSUITABLE"
+        }
+      ],
+      "fallback": "disabled",
+      "fallback_reason": "automatic fallback stays off unless every fallback candidate is independently qualified for this same role",
+      "human_review": "mandatory: every output is read by a person before use",
+      "restrictions": [
+        "claim that external research, a command or a test run occurred without evidence",
+        "claim files were modified",
+        "claim tests ran or passed",
+        "claim a branch was committed, pushed or merged",
+        "claim a deployment happened",
+        "approve its own or anyone's work",
+        "change mission state or advance a lifecycle gate",
+        "invoke a tool",
+        "write code to the repository",
+        "access the shell, the filesystem or the network",
+        "hold or read a credential"
+      ],
+      "resource_state": {
+        "safe": false,
+        "breaches": [
+          "reclaimable memory 769.7 MiB is below the 1024.0 MiB floor",
+          "free memory 19% is below the 20% floor"
+        ],
+        "measurements": {
+          "free_swap_mib": 1013.0,
+          "available_memory_mib": 769.7,
+          "free_memory_percent": 19,
+          "free_disk_gib": 57.21,
+          "resident_models": [
+            "qwen3:4b"
+          ]
+        },
+        "verdict": "RESOURCE_LIMIT_EXCEEDED"
+      },
+      "qualification_evidence": {},
+      "reason": "no model is qualified for SUMMARIZATION on this host; the request goes to a deterministic workflow or to a person"
+    },
+    {
+      "role": "DOCUMENT_CLASSIFICATION",
+      "selected_model": "NO_QUALIFIED_MODEL",
+      "candidates": [],
+      "rejected": [
+        {
+          "model": "gemma4:e2b",
+          "status": "RESOURCE_UNSUITABLE"
+        },
+        {
+          "model": "qwen2.5-coder:3b",
+          "status": "NOT_QUALIFIED"
+        },
+        {
+          "model": "qwen2.5:1.5b",
+          "status": "NOT_QUALIFIED"
+        },
+        {
+          "model": "qwen3:4b",
+          "status": "NOT_QUALIFIED"
+        },
+        {
+          "model": "qwen3:8b",
+          "status": "RESOURCE_UNSUITABLE"
+        }
+      ],
+      "fallback": "disabled",
+      "fallback_reason": "automatic fallback stays off unless every fallback candidate is independently qualified for this same role",
+      "human_review": "mandatory: every output is read by a person before use",
+      "restrictions": [
+        "claim that external research, a command or a test run occurred without evidence",
+        "claim files were modified",
+        "claim tests ran or passed",
+        "claim a branch was committed, pushed or merged",
+        "claim a deployment happened",
+        "approve its own or anyone's work",
+        "change mission state or advance a lifecycle gate",
+        "invoke a tool",
+        "write code to the repository",
+        "access the shell, the filesystem or the network",
+        "hold or read a credential"
+      ],
+      "resource_state": {
+        "safe": false,
+        "breaches": [
+          "reclaimable memory 769.7 MiB is below the 1024.0 MiB floor",
+          "free memory 19% is below the 20% floor"
+        ],
+        "measurements": {
+          "free_swap_mib": 1013.0,
+          "available_memory_mib": 769.7,
+          "free_memory_percent": 19,
+          "free_disk_gib": 57.21,
+          "resident_models": [
+            "qwen3:4b"
+          ]
+        },
+        "verdict": "RESOURCE_LIMIT_EXCEEDED"
+      },
+      "qualification_evidence": {},
+      "reason": "no model is qualified for DOCUMENT_CLASSIFICATION on this host; the request goes to a deterministic workflow or to a person"
+    },
+    {
+      "role": "STRUCTURED_EXTRACTION",
+      "selected_model": "NO_QUALIFIED_MODEL",
+      "candidates": [],
+      "rejected": [
+        {
+          "model": "gemma4:e2b",
+          "status": "RESOURCE_UNSUITABLE"
+        },
+        {
+          "model": "qwen2.5-coder:3b",
+          "status": "NOT_QUALIFIED"
+        },
+        {
+          "model": "qwen2.5:1.5b",
+          "status": "NOT_QUALIFIED"
+        },
+        {
+          "model": "qwen3:4b",
+          "status": "NOT_QUALIFIED"
+        },
+        {
+          "model": "qwen3:8b",
+          "status": "RESOURCE_UNSUITABLE"
+        }
+      ],
+      "fallback": "disabled",
+      "fallback_reason": "automatic fallback stays off unless every fallback candidate is independently qualified for this same role",
+      "human_review": "mandatory: every output is read by a person before use",
+      "restrictions": [
+        "claim that external research, a command or a test run occurred without evidence",
+        "claim files were modified",
+        "claim tests ran or passed",
+        "claim a branch was committed, pushed or merged",
+        "claim a deployment happened",
+        "approve its own or anyone's work",
+        "change mission state or advance a lifecycle gate",
+        "invoke a tool",
+        "write code to the repository",
+        "access the shell, the filesystem or the network",
+        "hold or read a credential"
+      ],
+      "resource_state": {
+        "safe": false,
+        "breaches": [
+          "reclaimable memory 769.7 MiB is below the 1024.0 MiB floor",
+          "free memory 19% is below the 20% floor"
+        ],
+        "measurements": {
+          "free_swap_mib": 1013.0,
+          "available_memory_mib": 769.7,
+          "free_memory_percent": 19,
+          "free_disk_gib": 57.21,
+          "resident_models": [
+            "qwen3:4b"
+          ]
+        },
+        "verdict": "RESOURCE_LIMIT_EXCEEDED"
+      },
+      "qualification_evidence": {},
+      "reason": "no model is qualified for STRUCTURED_EXTRACTION on this host; the request goes to a deterministic workflow or to a person"
+    },
+    {
+      "role": "MEETING_NOTE_DRAFTING",
+      "selected_model": "NO_QUALIFIED_MODEL",
+      "candidates": [],
+      "rejected": [
+        {
+          "model": "gemma4:e2b",
+          "status": "RESOURCE_UNSUITABLE"
+        },
+        {
+          "model": "qwen2.5-coder:3b",
+          "status": "NOT_QUALIFIED"
+        },
+        {
+          "model": "qwen2.5:1.5b",
+          "status": "NOT_QUALIFIED"
+        },
+        {
+          "model": "qwen3:4b",
+          "status": "NOT_QUALIFIED"
+        },
+        {
+          "model": "qwen3:8b",
+          "status": "RESOURCE_UNSUITABLE"
+        }
+      ],
+      "fallback": "disabled",
+      "fallback_reason": "automatic fallback stays off unless every fallback candidate is independently qualified for this same role",
+      "human_review": "mandatory: every output is read by a person before use",
+      "restrictions": [
+        "claim that external research, a command or a test run occurred without evidence",
+        "claim files were modified",
+        "claim tests ran or passed",
+        "claim a branch was committed, pushed or merged",
+        "claim a deployment happened",
+        "approve its own or anyone's work",
+        "change mission state or advance a lifecycle gate",
+        "invoke a tool",
+        "write code to the repository",
+        "access the shell, the filesystem or the network",
+        "hold or read a credential"
+      ],
+      "resource_state": {
+        "safe": false,
+        "breaches": [
+          "reclaimable memory 769.7 MiB is below the 1024.0 MiB floor",
+          "free memory 19% is below the 20% floor"
+        ],
+        "measurements": {
+          "free_swap_mib": 1013.0,
+          "available_memory_mib": 769.7,
+          "free_memory_percent": 19,
+          "free_disk_gib": 57.21,
+          "resident_models": [
+            "qwen3:4b"
+          ]
+        },
+        "verdict": "RESOURCE_LIMIT_EXCEEDED"
+      },
+      "qualification_evidence": {},
+      "reason": "no model is qualified for MEETING_NOTE_DRAFTING on this host; the request goes to a deterministic workflow or to a person"
+    },
+    {
+      "role": "DOCUMENTATION_DRAFTING",
+      "selected_model": "NO_QUALIFIED_MODEL",
+      "candidates": [],
+      "rejected": [
+        {
+          "model": "gemma4:e2b",
+          "status": "RESOURCE_UNSUITABLE"
+        },
+        {
+          "model": "qwen2.5-coder:3b",
+          "status": "NOT_QUALIFIED"
+        },
+        {
+          "model": "qwen2.5:1.5b",
+          "status": "NOT_QUALIFIED"
+        },
+        {
+          "model": "qwen3:4b",
+          "status": "NOT_QUALIFIED"
+        },
+        {
+          "model": "qwen3:8b",
+          "status": "RESOURCE_UNSUITABLE"
+        }
+      ],
+      "fallback": "disabled",
+      "fallback_reason": "automatic fallback stays off unless every fallback candidate is independently qualified for this same role",
+      "human_review": "mandatory: every output is read by a person before use",
+      "restrictions": [
+        "claim that external research, a command or a test run occurred without evidence",
+        "claim files were modified",
+        "claim tests ran or passed",
+        "claim a branch was committed, pushed or merged",
+        "claim a deployment happened",
+        "approve its own or anyone's work",
+        "change mission state or advance a lifecycle gate",
+        "invoke a tool",
+        "write code to the repository",
+        "access the shell, the filesystem or the network",
+        "hold or read a credential"
+      ],
+      "resource_state": {
+        "safe": false,
+        "breaches": [
+          "reclaimable memory 769.7 MiB is below the 1024.0 MiB floor",
+          "free memory 19% is below the 20% floor"
+        ],
+        "measurements": {
+          "free_swap_mib": 1013.0,
+          "available_memory_mib": 769.7,
+          "free_memory_percent": 19,
+          "free_disk_gib": 57.21,
+          "resident_models": [
+            "qwen3:4b"
+          ]
+        },
+        "verdict": "RESOURCE_LIMIT_EXCEEDED"
+      },
+      "qualification_evidence": {},
+      "reason": "no model is qualified for DOCUMENTATION_DRAFTING on this host; the request goes to a deterministic workflow or to a person"
+    },
+    {
+      "role": "CODE_REVIEW_ASSISTANCE",
+      "selected_model": "NO_QUALIFIED_MODEL",
+      "candidates": [],
+      "rejected": [
+        {
+          "model": "gemma4:e2b",
+          "status": "RESOURCE_UNSUITABLE"
+        },
+        {
+          "model": "qwen2.5-coder:3b",
+          "status": "NOT_QUALIFIED"
+        },
+        {
+          "model": "qwen2.5:1.5b",
+          "status": "NOT_QUALIFIED"
+        },
+        {
+          "model": "qwen3:4b",
+          "status": "NOT_QUALIFIED"
+        },
+        {
+          "model": "qwen3:8b",
+          "status": "RESOURCE_UNSUITABLE"
+        }
+      ],
+      "fallback": "disabled",
+      "fallback_reason": "automatic fallback stays off unless every fallback candidate is independently qualified for this same role",
+      "human_review": "mandatory: every finding is validated deterministically or by a person; no finding is acted on unreviewed",
+      "restrictions": [
+        "claim that external research, a command or a test run occurred without evidence",
+        "claim files were modified",
+        "claim tests ran or passed",
+        "claim a branch was committed, pushed or merged",
+        "claim a deployment happened",
+        "approve its own or anyone's work",
+        "change mission state or advance a lifecycle gate",
+        "invoke a tool",
+        "write code to the repository",
+        "access the shell, the filesystem or the network",
+        "hold or read a credential"
+      ],
+      "resource_state": {
+        "safe": false,
+        "breaches": [
+          "reclaimable memory 769.7 MiB is below the 1024.0 MiB floor",
+          "free memory 19% is below the 20% floor"
+        ],
+        "measurements": {
+          "free_swap_mib": 1013.0,
+          "available_memory_mib": 769.7,
+          "free_memory_percent": 19,
+          "free_disk_gib": 57.21,
+          "resident_models": [
+            "qwen3:4b"
+          ]
+        },
+        "verdict": "RESOURCE_LIMIT_EXCEEDED"
+      },
+      "qualification_evidence": {},
+      "reason": "no model is qualified for CODE_REVIEW_ASSISTANCE on this host; the request goes to a deterministic workflow or to a person"
+    },
+    {
+      "role": "TEST_CASE_SUGGESTION",
+      "selected_model": "NO_QUALIFIED_MODEL",
+      "candidates": [],
+      "rejected": [
+        {
+          "model": "gemma4:e2b",
+          "status": "RESOURCE_UNSUITABLE"
+        },
+        {
+          "model": "qwen2.5-coder:3b",
+          "status": "NOT_QUALIFIED"
+        },
+        {
+          "model": "qwen2.5:1.5b",
+          "status": "NOT_QUALIFIED"
+        },
+        {
+          "model": "qwen3:4b",
+          "status": "NOT_QUALIFIED"
+        },
+        {
+          "model": "qwen3:8b",
+          "status": "RESOURCE_UNSUITABLE"
+        }
+      ],
+      "fallback": "disabled",
+      "fallback_reason": "automatic fallback stays off unless every fallback candidate is independently qualified for this same role",
+      "human_review": "mandatory: every finding is validated deterministically or by a person; no finding is acted on unreviewed",
+      "restrictions": [
+        "claim that external research, a command or a test run occurred without evidence",
+        "claim files were modified",
+        "claim tests ran or passed",
+        "claim a branch was committed, pushed or merged",
+        "claim a deployment happened",
+        "approve its own or anyone's work",
+        "change mission state or advance a lifecycle gate",
+        "invoke a tool",
+        "write code to the repository",
+        "access the shell, the filesystem or the network",
+        "hold or read a credential"
+      ],
+      "resource_state": {
+        "safe": false,
+        "breaches": [
+          "reclaimable memory 769.7 MiB is below the 1024.0 MiB floor",
+          "free memory 19% is below the 20% floor"
+        ],
+        "measurements": {
+          "free_swap_mib": 1013.0,
+          "available_memory_mib": 769.7,
+          "free_memory_percent": 19,
+          "free_disk_gib": 57.21,
+          "resident_models": [
+            "qwen3:4b"
+          ]
+        },
+        "verdict": "RESOURCE_LIMIT_EXCEEDED"
+      },
+      "qualification_evidence": {},
+      "reason": "no model is qualified for TEST_CASE_SUGGESTION on this host; the request goes to a deterministic workflow or to a person"
+    },
+    {
+      "role": "SECURITY_REVIEW_ASSISTANCE",
+      "selected_model": "NO_QUALIFIED_MODEL",
+      "candidates": [],
+      "rejected": [
+        {
+          "model": "gemma4:e2b",
+          "status": "RESOURCE_UNSUITABLE"
+        },
+        {
+          "model": "qwen2.5-coder:3b",
+          "status": "NOT_QUALIFIED"
+        },
+        {
+          "model": "qwen2.5:1.5b",
+          "status": "NOT_QUALIFIED"
+        },
+        {
+          "model": "qwen3:4b",
+          "status": "NOT_QUALIFIED"
+        },
+        {
+          "model": "qwen3:8b",
+          "status": "RESOURCE_UNSUITABLE"
+        }
+      ],
+      "fallback": "disabled",
+      "fallback_reason": "automatic fallback stays off unless every fallback candidate is independently qualified for this same role",
+      "human_review": "mandatory: every finding is validated deterministically or by a person; no finding is acted on unreviewed",
+      "restrictions": [
+        "claim that external research, a command or a test run occurred without evidence",
+        "claim files were modified",
+        "claim tests ran or passed",
+        "claim a branch was committed, pushed or merged",
+        "claim a deployment happened",
+        "approve its own or anyone's work",
+        "change mission state or advance a lifecycle gate",
+        "invoke a tool",
+        "write code to the repository",
+        "access the shell, the filesystem or the network",
+        "hold or read a credential"
+      ],
+      "resource_state": {
+        "safe": false,
+        "breaches": [
+          "reclaimable memory 769.7 MiB is below the 1024.0 MiB floor",
+          "free memory 19% is below the 20% floor"
+        ],
+        "measurements": {
+          "free_swap_mib": 1013.0,
+          "available_memory_mib": 769.7,
+          "free_memory_percent": 19,
+          "free_disk_gib": 57.21,
+          "resident_models": [
+            "qwen3:4b"
+          ]
+        },
+        "verdict": "RESOURCE_LIMIT_EXCEEDED"
+      },
+      "qualification_evidence": {},
+      "reason": "no model is qualified for SECURITY_REVIEW_ASSISTANCE on this host; the request goes to a deterministic workflow or to a person"
+    },
+    {
+      "role": "ARCHITECTURE_RECOMMENDATION",
+      "selected_model": "NO_QUALIFIED_MODEL",
+      "candidates": [],
+      "rejected": [
+        {
+          "model": "gemma4:e2b",
+          "status": "RESOURCE_UNSUITABLE"
+        },
+        {
+          "model": "qwen2.5-coder:3b",
+          "status": "NOT_QUALIFIED"
+        },
+        {
+          "model": "qwen2.5:1.5b",
+          "status": "NOT_QUALIFIED"
+        },
+        {
+          "model": "qwen3:4b",
+          "status": "NOT_QUALIFIED"
+        },
+        {
+          "model": "qwen3:8b",
+          "status": "RESOURCE_UNSUITABLE"
+        }
+      ],
+      "fallback": "disabled",
+      "fallback_reason": "automatic fallback stays off unless every fallback candidate is independently qualified for this same role",
+      "human_review": "mandatory: a human architect reviews every recommendation; the model holds recommendation authority only",
+      "restrictions": [
+        "claim that external research, a command or a test run occurred without evidence",
+        "claim files were modified",
+        "claim tests ran or passed",
+        "claim a branch was committed, pushed or merged",
+        "claim a deployment happened",
+        "approve its own or anyone's work",
+        "change mission state or advance a lifecycle gate",
+        "invoke a tool",
+        "write code to the repository",
+        "access the shell, the filesystem or the network",
+        "hold or read a credential"
+      ],
+      "resource_state": {
+        "safe": false,
+        "breaches": [
+          "reclaimable memory 769.7 MiB is below the 1024.0 MiB floor",
+          "free memory 19% is below the 20% floor"
+        ],
+        "measurements": {
+          "free_swap_mib": 1013.0,
+          "available_memory_mib": 769.7,
+          "free_memory_percent": 19,
+          "free_disk_gib": 57.21,
+          "resident_models": [
+            "qwen3:4b"
+          ]
+        },
+        "verdict": "RESOURCE_LIMIT_EXCEEDED"
+      },
+      "qualification_evidence": {},
+      "reason": "no model is qualified for ARCHITECTURE_RECOMMENDATION on this host; the request goes to a deterministic workflow or to a person"
+    }
+  ],
+  "roles_routed": 0,
+  "roles_unrouted": 10,
+  "resource_state": {
+    "safe": false,
+    "breaches": [
+      "reclaimable memory 769.7 MiB is below the 1024.0 MiB floor",
+      "free memory 19% is below the 20% floor"
+    ],
+    "measurements": {
+      "free_swap_mib": 1013.0,
+      "available_memory_mib": 769.7,
+      "free_memory_percent": 19,
+      "free_disk_gib": 57.21,
+      "resident_models": [
+        "qwen3:4b"
+      ]
+    },
+    "verdict": "RESOURCE_LIMIT_EXCEEDED"
+  },
+  "concurrency": {
+    "max_active_local_models": 1,
+    "max_simultaneous_evaluations": 1,
+    "enforcement": "schema_validated and operator-observed. No component in this package spawns a model process, so no component enforces the ceiling at the operating-system level."
+  },
+  "limitation": "A policy over measured qualification, not a scheduler. Nothing here executes a routing decision; it records which model an operator may ask, under what restrictions."
+}

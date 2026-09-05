@@ -1,0 +1,3 @@
+# DATA_FRESHNESS
+
+FRESH / STALE / INCOMPLETE_VALUATION / DATA_INSUFFICIENT on observations and snapshot.

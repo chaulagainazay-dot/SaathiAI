@@ -27,13 +27,12 @@ from .cors_policy import (  # noqa: E402
 )
 
 _origins = resolve_cors_origins()
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=_origins,
-    allow_credentials=True,
-    allow_methods=CORS_ALLOW_METHODS,
-    allow_headers=CORS_ALLOW_HEADERS,
-)
+# NOTE: CORSMiddleware is deliberately NOT registered here. Starlette builds the
+# middleware stack outermost-first from the reverse of the registration order, so
+# registering CORS at import time would bury it beneath the `_auth` gate defined
+# further down this module. It is registered at the bottom of the file instead —
+# see `_install_outermost_cors()` — so that CORS is the outermost layer and an
+# authentication rejection still leaves the origin correctly labelled.
 
 
 # ── Security Headers Middleware (Phase 7) ───────────────────────────────────
@@ -1719,6 +1718,11 @@ async def _auth(request, call_next):
     path = request.url.path
     # Always allow: login endpoint, OAuth callbacks, static assets, and
     # endpoints that enforce their own bearer auth (BAADAR_API_KEY).
+    #
+    # There is no `OPTIONS` bypass here. CORSMiddleware is the outermost layer
+    # (see `_install_outermost_cors()`), so a browser preflight is answered
+    # before it ever reaches this gate. An `OPTIONS` request that is not a
+    # preflight is an ordinary request and is authenticated like any other.
     if (path == "/api/v1/auth/login"
             or path == "/api/v1/auth/change-password"
             or path == "/api/v1/auth/logout"
@@ -1875,9 +1879,11 @@ def _rp(request) -> tuple[str, str]:
 def passkey_status(request: Request):
     """Auth setup status: is a password set, is a passkey registered, am I signed in. Whitelisted."""
     from saathi import passkey
+    from saathi.security.store import get_store
     rp_id, _ = _rp(request)
     return {"has_passkey": passkey.has_passkey(rp_id), "rp_id": rp_id,
-            "has_password": bool(_PASSWORD_HASH), "signed_in": _is_authed(request) or _is_local(request)}
+            "has_password": bool(_PASSWORD_HASH) or get_store().active_owner_has_password(),
+            "signed_in": _is_authed(request) or _is_local(request)}
 
 
 @app.post("/api/v1/auth/passkey/register/options")
@@ -2526,6 +2532,57 @@ def _rate_ok(request: Request) -> bool:
         return False
     hits.append(now); _CHAT_HITS[key] = hits; _CHAT_GLOBAL.append(now)
     return True
+
+
+class NarrateIn(BaseModel):
+    """Facts block for chart-analysis narration. The CLIENT NEVER SUPPLIES THE SYSTEM
+    PROMPT — only the computed facts — so this endpoint cannot be repurposed as a
+    general 'run my prompt' hole."""
+
+    facts: str
+    question: str = ""
+
+
+# Fixed server-side. Not overridable by any caller.
+_NARRATE_SYSTEM = (
+    "You explain a chart analysis that has ALREADY been computed by a deterministic "
+    "engine. HARD RULES: (1) Every number you use must appear verbatim in the FACTS. "
+    "Never compute, round, extrapolate or invent a price, level, percentage or "
+    "indicator value. (2) If something is marked unavailable, say it is unavailable; "
+    "never estimate it. (3) Do not give investment advice, a buy/sell recommendation, "
+    "or a position size — explain what the chart shows and what would change it. "
+    "(4) Lead with what conflicts, not only what agrees. (5) If the verdict is AVOID "
+    "or WAIT, say so plainly rather than finding something encouraging to say. "
+    "Write 3-5 short paragraphs for an experienced swing trader."
+)
+
+_NARRATE_MAX_FACTS = 12000
+
+
+@app.post("/api/v1/analysis/narrate")
+def analysis_narrate(body: NarrateIn, request: Request):
+    """Narrate a computed chart analysis. Explanation only — never a new number."""
+    if not _rate_ok(request):
+        return {"ok": False, "reason": "RATE_LIMITED"}
+    facts = (body.facts or "").strip()
+    if not facts:
+        return {"ok": False, "reason": "NO_FACTS"}
+    if len(facts) > _NARRATE_MAX_FACTS:
+        return {"ok": False, "reason": "FACTS_TOO_LARGE"}
+
+    from saathi.inference.chat_adapter import chat_generate
+
+    prompt = facts if not body.question else f"{facts}\n\nQUESTION: {body.question}"
+    try:
+        res = chat_generate(
+            prompt,
+            system=_NARRATE_SYSTEM,
+            max_tokens=900,
+            timeout=60,
+        )
+        return {"ok": True, "text": getattr(res, "text", "") or "", "model": getattr(res, "model", "")}
+    except Exception as exc:  # narration is optional — never break the analysis
+        return {"ok": False, "reason": "LLM_UNAVAILABLE", "detail": str(exc)[:200]}
 
 
 @app.post("/api/v1/agent/chat")
@@ -5308,6 +5365,38 @@ def _start_background():
                 register_project(_name, _path)
     except Exception:
         pass
+
+
+def _install_outermost_cors() -> None:
+    """Register CORSMiddleware as the outermost middleware.
+
+    Starlette applies `add_middleware` by prepending, so the last registration
+    wins the outermost position. Every other middleware in this module — the
+    security headers layer and the `_auth` gate — is registered above, which
+    makes this call the one that puts CORS on the outside.
+
+    Ordering matters beyond preflight. With CORS innermost, an authentication
+    rejection short-circuits before CORS can label the response, so the browser
+    reports a CORS failure for what is really a 401 and the real cause is
+    invisible in the console. With CORS outermost:
+
+      * an allowed-origin preflight is answered by CORS and never reaches
+        `_auth`, so no `OPTIONS` bypass is needed in the auth gate;
+      * an allowed-origin unauthenticated request still returns 401, and that
+        401 carries the correct `Access-Control-Allow-Origin`;
+      * a disallowed origin gets no `Access-Control-Allow-Origin` on anything,
+        and authentication is not consulted to decide that.
+    """
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=_origins,
+        allow_credentials=True,
+        allow_methods=CORS_ALLOW_METHODS,
+        allow_headers=CORS_ALLOW_HEADERS,
+    )
+
+
+_install_outermost_cors()
 
 
 def main():

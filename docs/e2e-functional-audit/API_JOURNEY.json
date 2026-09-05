@@ -1,0 +1,2171 @@
+{
+  "base": "http://127.0.0.1:8766",
+  "steps": [
+    {
+      "step": "owner valid login",
+      "method": "POST",
+      "path": "/api/v1/platform/auth/login",
+      "status": 200,
+      "expected": 200,
+      "ok": true
+    },
+    {
+      "step": "invalid password rejected",
+      "method": "POST",
+      "path": "/api/v1/platform/auth/login",
+      "status": 401,
+      "expected": [
+        401,
+        403
+      ],
+      "ok": true
+    },
+    {
+      "step": "unknown account rejected",
+      "method": "POST",
+      "path": "/api/v1/platform/auth/login",
+      "status": 401,
+      "expected": [
+        401,
+        403
+      ],
+      "ok": true
+    },
+    {
+      "step": "owner /me",
+      "method": "GET",
+      "path": "/api/v1/platform/me",
+      "status": 200,
+      "expected": 200,
+      "ok": true
+    },
+    {
+      "step": "list organizations",
+      "method": "GET",
+      "path": "/api/v1/platform/organizations",
+      "status": 200,
+      "expected": 200,
+      "ok": true
+    },
+    {
+      "step": "list workspaces",
+      "method": "GET",
+      "path": "/api/v1/platform/workspaces",
+      "status": 200,
+      "expected": 200,
+      "ok": true
+    },
+    {
+      "step": "navigation",
+      "method": "GET",
+      "path": "/api/v1/platform/navigation",
+      "status": 200,
+      "expected": 200,
+      "ok": true
+    },
+    {
+      "step": "module discovery",
+      "method": "GET",
+      "path": "/api/v1/platform/modules",
+      "status": 200,
+      "expected": 200,
+      "ok": true
+    },
+    {
+      "step": "private-alpha banner",
+      "method": "GET",
+      "path": "/api/v1/platform/private-alpha",
+      "status": 200,
+      "expected": 200,
+      "ok": true
+    },
+    {
+      "step": "missions without token denied",
+      "method": "GET",
+      "path": "/api/v1/platform/missions",
+      "status": 401,
+      "expected": [
+        401,
+        403
+      ],
+      "ok": true
+    },
+    {
+      "step": "missions with bogus token denied",
+      "method": "GET",
+      "path": "/api/v1/platform/audit",
+      "status": 401,
+      "expected": [
+        401,
+        403
+      ],
+      "ok": true
+    },
+    {
+      "step": "owner invites operator",
+      "method": "POST",
+      "path": "/api/v1/platform/invitations",
+      "status": 200,
+      "expected": 200,
+      "ok": true
+    },
+    {
+      "step": "owner invites viewer",
+      "method": "POST",
+      "path": "/api/v1/platform/invitations",
+      "status": 200,
+      "expected": 200,
+      "ok": true
+    },
+    {
+      "step": "operator accepts invite",
+      "method": "POST",
+      "path": "/api/v1/platform/invitations/accept",
+      "status": 200,
+      "expected": 200,
+      "ok": true
+    },
+    {
+      "step": "viewer accepts invite",
+      "method": "POST",
+      "path": "/api/v1/platform/invitations/accept",
+      "status": 200,
+      "expected": 200,
+      "ok": true
+    },
+    {
+      "step": "operator password login",
+      "method": "POST",
+      "path": "/api/v1/platform/auth/login",
+      "status": 200,
+      "expected": 200,
+      "ok": true
+    },
+    {
+      "step": "viewer password login",
+      "method": "POST",
+      "path": "/api/v1/platform/auth/login",
+      "status": 200,
+      "expected": 200,
+      "ok": true
+    },
+    {
+      "step": "rbac owner GET /api/v1/platform/missions",
+      "method": "GET",
+      "path": "/api/v1/platform/missions",
+      "status": 200,
+      "expected": null,
+      "ok": true
+    },
+    {
+      "step": "rbac owner GET /api/v1/platform/audit",
+      "method": "GET",
+      "path": "/api/v1/platform/audit",
+      "status": 200,
+      "expected": null,
+      "ok": true
+    },
+    {
+      "step": "rbac owner GET /api/v1/platform/approvals",
+      "method": "GET",
+      "path": "/api/v1/platform/approvals",
+      "status": 200,
+      "expected": null,
+      "ok": true
+    },
+    {
+      "step": "rbac owner POST /api/v1/platform/projects",
+      "method": "POST",
+      "path": "/api/v1/platform/projects",
+      "status": 200,
+      "expected": null,
+      "ok": true
+    },
+    {
+      "step": "rbac owner POST /api/v1/platform/invitations",
+      "method": "POST",
+      "path": "/api/v1/platform/invitations",
+      "status": 200,
+      "expected": null,
+      "ok": true
+    },
+    {
+      "step": "rbac operator GET /api/v1/platform/missions",
+      "method": "GET",
+      "path": "/api/v1/platform/missions",
+      "status": 200,
+      "expected": null,
+      "ok": true
+    },
+    {
+      "step": "rbac operator GET /api/v1/platform/audit",
+      "method": "GET",
+      "path": "/api/v1/platform/audit",
+      "status": 200,
+      "expected": null,
+      "ok": true
+    },
+    {
+      "step": "rbac operator GET /api/v1/platform/approvals",
+      "method": "GET",
+      "path": "/api/v1/platform/approvals",
+      "status": 200,
+      "expected": null,
+      "ok": true
+    },
+    {
+      "step": "rbac operator POST /api/v1/platform/projects",
+      "method": "POST",
+      "path": "/api/v1/platform/projects",
+      "status": 200,
+      "expected": null,
+      "ok": true
+    },
+    {
+      "step": "rbac operator POST /api/v1/platform/invitations",
+      "method": "POST",
+      "path": "/api/v1/platform/invitations",
+      "status": 403,
+      "expected": null,
+      "ok": true
+    },
+    {
+      "step": "rbac viewer GET /api/v1/platform/missions",
+      "method": "GET",
+      "path": "/api/v1/platform/missions",
+      "status": 200,
+      "expected": null,
+      "ok": true
+    },
+    {
+      "step": "rbac viewer GET /api/v1/platform/audit",
+      "method": "GET",
+      "path": "/api/v1/platform/audit",
+      "status": 200,
+      "expected": null,
+      "ok": true
+    },
+    {
+      "step": "rbac viewer GET /api/v1/platform/approvals",
+      "method": "GET",
+      "path": "/api/v1/platform/approvals",
+      "status": 200,
+      "expected": null,
+      "ok": true
+    },
+    {
+      "step": "rbac viewer POST /api/v1/platform/projects",
+      "method": "POST",
+      "path": "/api/v1/platform/projects",
+      "status": 403,
+      "expected": null,
+      "ok": true
+    },
+    {
+      "step": "rbac viewer POST /api/v1/platform/invitations",
+      "method": "POST",
+      "path": "/api/v1/platform/invitations",
+      "status": 403,
+      "expected": null,
+      "ok": true
+    },
+    {
+      "step": "operator creates project",
+      "method": "POST",
+      "path": "/api/v1/platform/projects",
+      "status": 200,
+      "expected": 200,
+      "ok": true
+    },
+    {
+      "step": "operator lists projects",
+      "method": "GET",
+      "path": "/api/v1/platform/projects",
+      "status": 200,
+      "expected": 200,
+      "ok": true
+    },
+    {
+      "step": "operator creates mission",
+      "method": "POST",
+      "path": "/api/v1/platform/missions",
+      "status": 200,
+      "expected": 200,
+      "ok": true
+    },
+    {
+      "step": "duplicate mission key rejected",
+      "method": "POST",
+      "path": "/api/v1/platform/missions",
+      "status": 409,
+      "expected": [
+        400,
+        409
+      ],
+      "ok": true
+    },
+    {
+      "step": "viewer mission creation denied",
+      "method": "POST",
+      "path": "/api/v1/platform/missions",
+      "status": 403,
+      "expected": [
+        401,
+        403
+      ],
+      "ok": true
+    },
+    {
+      "step": "mission runtime readable",
+      "method": "GET",
+      "path": "/api/v1/platform/missions/mis_1129aee9868841ee/runtime",
+      "status": 200,
+      "expected": 200,
+      "ok": true
+    },
+    {
+      "step": "owner creates agent binding",
+      "method": "POST",
+      "path": "/api/v1/platform/agent-bindings",
+      "status": 200,
+      "expected": 200,
+      "ok": true
+    },
+    {
+      "step": "operator requests approval",
+      "method": "POST",
+      "path": "/api/v1/platform/approvals",
+      "status": 200,
+      "expected": 200,
+      "ok": true
+    },
+    {
+      "step": "self-approval rejected",
+      "method": "POST",
+      "path": "/api/v1/platform/approvals/apr_518d4a030c914f0b/decide",
+      "status": 403,
+      "expected": [
+        400,
+        403,
+        409
+      ],
+      "ok": true
+    },
+    {
+      "step": "viewer approval denied",
+      "method": "POST",
+      "path": "/api/v1/platform/approvals/apr_518d4a030c914f0b/decide",
+      "status": 403,
+      "expected": [
+        401,
+        403
+      ],
+      "ok": true
+    },
+    {
+      "step": "owner approves",
+      "method": "POST",
+      "path": "/api/v1/platform/approvals/apr_518d4a030c914f0b/decide",
+      "status": 200,
+      "expected": 200,
+      "ok": true
+    },
+    {
+      "step": "approval single-use enforced",
+      "method": "POST",
+      "path": "/api/v1/platform/approvals/apr_518d4a030c914f0b/decide",
+      "status": 403,
+      "expected": [
+        400,
+        403,
+        409
+      ],
+      "ok": true
+    },
+    {
+      "step": "operator executes approved local tool",
+      "method": "POST",
+      "path": "/api/v1/platform/execute",
+      "status": 200,
+      "expected": 200,
+      "ok": true
+    },
+    {
+      "step": "idempotent replay handled",
+      "method": "POST",
+      "path": "/api/v1/platform/execute",
+      "status": 200,
+      "expected": [
+        200,
+        400,
+        409
+      ],
+      "ok": true
+    },
+    {
+      "step": "unapproved execution denied",
+      "method": "POST",
+      "path": "/api/v1/platform/execute",
+      "status": 409,
+      "expected": [
+        400,
+        401,
+        403,
+        409
+      ],
+      "ok": true
+    },
+    {
+      "step": "list executions",
+      "method": "GET",
+      "path": "/api/v1/platform/runtime/executions",
+      "status": 200,
+      "expected": 200,
+      "ok": true
+    },
+    {
+      "step": "execution detail",
+      "method": "GET",
+      "path": "/api/v1/platform/runtime/executions/pex_168825a8508c457f",
+      "status": 200,
+      "expected": 200,
+      "ok": true
+    },
+    {
+      "step": "execution timeline",
+      "method": "GET",
+      "path": "/api/v1/platform/runtime/executions/pex_168825a8508c457f/timeline",
+      "status": 200,
+      "expected": 200,
+      "ok": true
+    },
+    {
+      "step": "operator denied runtime cancel (RUNTIME_OPERATE is owner+)",
+      "method": "POST",
+      "path": "/api/v1/platform/runtime/executions/pex_168825a8508c457f/cancel",
+      "status": 403,
+      "expected": 403,
+      "ok": true
+    },
+    {
+      "step": "runtime metrics",
+      "method": "GET",
+      "path": "/api/v1/platform/runtime/metrics",
+      "status": 200,
+      "expected": 200,
+      "ok": true
+    },
+    {
+      "step": "runtime diagnostics",
+      "method": "GET",
+      "path": "/api/v1/platform/runtime/diagnostics",
+      "status": 200,
+      "expected": 200,
+      "ok": true
+    },
+    {
+      "step": "audit trail readable",
+      "method": "GET",
+      "path": "/api/v1/platform/audit",
+      "status": 200,
+      "expected": 200,
+      "ok": true
+    },
+    {
+      "step": "conversation health",
+      "method": "GET",
+      "path": "/api/v1/platform/conversation/health",
+      "status": 200,
+      "expected": 200,
+      "ok": true
+    },
+    {
+      "step": "conversation providers",
+      "method": "GET",
+      "path": "/api/v1/platform/conversation/providers",
+      "status": 200,
+      "expected": 200,
+      "ok": true
+    },
+    {
+      "step": "voice health",
+      "method": "GET",
+      "path": "/api/v1/platform/voice/health",
+      "status": 200,
+      "expected": 200,
+      "ok": true
+    },
+    {
+      "step": "voice providers",
+      "method": "GET",
+      "path": "/api/v1/platform/voice/providers",
+      "status": 200,
+      "expected": 200,
+      "ok": true
+    },
+    {
+      "step": "voice runtime health",
+      "method": "GET",
+      "path": "/api/v1/platform/voice/runtime/health",
+      "status": 200,
+      "expected": 200,
+      "ok": true
+    },
+    {
+      "step": "stt providers",
+      "method": "GET",
+      "path": "/api/v1/platform/voice/runtime/stt-providers",
+      "status": 200,
+      "expected": 200,
+      "ok": true
+    },
+    {
+      "step": "ops /api/v1/platform/private-alpha/readiness",
+      "method": "GET",
+      "path": "/api/v1/platform/private-alpha/readiness",
+      "status": 200,
+      "expected": 200,
+      "ok": true
+    },
+    {
+      "step": "ops /api/v1/platform/private-alpha/checklist",
+      "method": "GET",
+      "path": "/api/v1/platform/private-alpha/checklist",
+      "status": 200,
+      "expected": 200,
+      "ok": true
+    },
+    {
+      "step": "ops /api/v1/platform/private-alpha/contract",
+      "method": "GET",
+      "path": "/api/v1/platform/private-alpha/contract",
+      "status": 200,
+      "expected": 200,
+      "ok": true
+    },
+    {
+      "step": "ops /api/v1/platform/core/health",
+      "method": "GET",
+      "path": "/api/v1/platform/core/health",
+      "status": 200,
+      "expected": 200,
+      "ok": true
+    },
+    {
+      "step": "ops /api/v1/platform/core/home",
+      "method": "GET",
+      "path": "/api/v1/platform/core/home",
+      "status": 200,
+      "expected": 200,
+      "ok": true
+    },
+    {
+      "step": "ops /api/v1/platform/core/notifications",
+      "method": "GET",
+      "path": "/api/v1/platform/core/notifications",
+      "status": 200,
+      "expected": 200,
+      "ok": true
+    },
+    {
+      "step": "list sessions",
+      "method": "GET",
+      "path": "/api/v1/platform/sessions",
+      "status": 200,
+      "expected": 200,
+      "ok": true
+    },
+    {
+      "step": "operator second session",
+      "method": "POST",
+      "path": "/api/v1/platform/auth/login",
+      "status": 200,
+      "expected": 200,
+      "ok": true
+    },
+    {
+      "step": "second session works",
+      "method": "GET",
+      "path": "/api/v1/platform/me",
+      "status": 200,
+      "expected": 200,
+      "ok": true
+    },
+    {
+      "step": "revoke second session",
+      "method": "POST",
+      "path": "/api/v1/platform/sessions/ses_b1ffc95ec9a94eb1/revoke",
+      "status": 200,
+      "expected": 200,
+      "ok": true
+    },
+    {
+      "step": "revoked session denied",
+      "method": "GET",
+      "path": "/api/v1/platform/me",
+      "status": 401,
+      "expected": [
+        401,
+        403
+      ],
+      "ok": true
+    },
+    {
+      "step": "viewer logout",
+      "method": "POST",
+      "path": "/api/v1/platform/auth/logout",
+      "status": 200,
+      "expected": 200,
+      "ok": true
+    },
+    {
+      "step": "logged-out token denied",
+      "method": "GET",
+      "path": "/api/v1/platform/me",
+      "status": 401,
+      "expected": [
+        401,
+        403
+      ],
+      "ok": true
+    }
+  ],
+  "artifacts": {
+    "org_id": "org_fab961eba28942b1",
+    "workspace_id": "ws_e928227858dd4a81",
+    "invalid_login_body": {
+      "detail": {
+        "code": "AUTH_FAILED",
+        "message": "auth_failed"
+      }
+    },
+    "unknown_account_body": {
+      "detail": {
+        "code": "AUTH_FAILED",
+        "message": "auth_failed"
+      }
+    },
+    "invite_codes_issued": true,
+    "roles_provisioned": {
+      "owner": true,
+      "operator": true,
+      "viewer": true
+    },
+    "rbac_matrix": [
+      {
+        "role": "owner",
+        "method": "GET",
+        "path": "/api/v1/platform/missions",
+        "status": 200
+      },
+      {
+        "role": "owner",
+        "method": "GET",
+        "path": "/api/v1/platform/audit",
+        "status": 200
+      },
+      {
+        "role": "owner",
+        "method": "GET",
+        "path": "/api/v1/platform/approvals",
+        "status": 200
+      },
+      {
+        "role": "owner",
+        "method": "POST",
+        "path": "/api/v1/platform/projects",
+        "status": 200
+      },
+      {
+        "role": "owner",
+        "method": "POST",
+        "path": "/api/v1/platform/invitations",
+        "status": 200
+      },
+      {
+        "role": "operator",
+        "method": "GET",
+        "path": "/api/v1/platform/missions",
+        "status": 200
+      },
+      {
+        "role": "operator",
+        "method": "GET",
+        "path": "/api/v1/platform/audit",
+        "status": 200
+      },
+      {
+        "role": "operator",
+        "method": "GET",
+        "path": "/api/v1/platform/approvals",
+        "status": 200
+      },
+      {
+        "role": "operator",
+        "method": "POST",
+        "path": "/api/v1/platform/projects",
+        "status": 200
+      },
+      {
+        "role": "operator",
+        "method": "POST",
+        "path": "/api/v1/platform/invitations",
+        "status": 403
+      },
+      {
+        "role": "viewer",
+        "method": "GET",
+        "path": "/api/v1/platform/missions",
+        "status": 200
+      },
+      {
+        "role": "viewer",
+        "method": "GET",
+        "path": "/api/v1/platform/audit",
+        "status": 200
+      },
+      {
+        "role": "viewer",
+        "method": "GET",
+        "path": "/api/v1/platform/approvals",
+        "status": 200
+      },
+      {
+        "role": "viewer",
+        "method": "POST",
+        "path": "/api/v1/platform/projects",
+        "status": 403
+      },
+      {
+        "role": "viewer",
+        "method": "POST",
+        "path": "/api/v1/platform/invitations",
+        "status": 403
+      }
+    ],
+    "project_id": "prj_012ad53f2b6a4550",
+    "mission_id": "mis_1129aee9868841ee",
+    "mission_create_response": {
+      "mission": {
+        "mission_id": "mis_1129aee9868841ee",
+        "project_id": "prj_012ad53f2b6a4550",
+        "org_id": "org_fab961eba28942b1",
+        "workspace_id": "ws_e928227858dd4a81",
+        "key": "e2e-mission-1785634772",
+        "name": "E2E Local Mission",
+        "owner_id": "usr_1d9291dc50654737",
+        "status": "active",
+        "created_at": 1785634772.1969101
+      }
+    },
+    "mission_runtime": {
+      "mission": {
+        "mission_id": "mis_1129aee9868841ee",
+        "project_id": "prj_012ad53f2b6a4550",
+        "org_id": "org_fab961eba28942b1",
+        "workspace_id": "ws_e928227858dd4a81",
+        "key": "e2e-mission-1785634772",
+        "name": "E2E Local Mission",
+        "owner_id": "usr_1d9291dc50654737",
+        "status": "active",
+        "created_at": 1785634772.1969101
+      },
+      "runtime": null,
+      "hierarchy": [],
+      "tasks": [],
+      "dependencies": [],
+      "evidence": [],
+      "decisions": [],
+      "checkpoints": [],
+      "reviews": [],
+      "certifications": [],
+      "dashboard": null
+    },
+    "binding_id": "bind_404cbce20ff64607",
+    "approval_id": "apr_518d4a030c914f0b",
+    "approval_create_response": {
+      "approval": {
+        "approval_id": "apr_518d4a030c914f0b",
+        "user_id": "usr_1d9291dc50654737",
+        "org_id": "org_fab961eba28942b1",
+        "workspace_id": "ws_e928227858dd4a81",
+        "project_id": "prj_012ad53f2b6a4550",
+        "mission_id": "mis_1129aee9868841ee",
+        "tool_id": "m49.local_note_write",
+        "action": "write",
+        "target_resource": "",
+        "authority": "LOCAL_MUTATION",
+        "side_effect_class": "LOCAL_REVERSIBLE",
+        "capability": "write",
+        "status": "pending",
+        "requested_by": "usr_1d9291dc50654737",
+        "decided_by": "",
+        "reason": "",
+        "created_at": 1785634772.209623,
+        "expires_at": 1785638372.209623,
+        "decided_at": 0.0,
+        "consumed_at": 0.0,
+        "run_id": "",
+        "connector": ""
+      }
+    },
+    "approval_decide_response": {
+      "approval": {
+        "approval_id": "apr_518d4a030c914f0b",
+        "user_id": "usr_1d9291dc50654737",
+        "org_id": "org_fab961eba28942b1",
+        "workspace_id": "ws_e928227858dd4a81",
+        "project_id": "prj_012ad53f2b6a4550",
+        "mission_id": "mis_1129aee9868841ee",
+        "tool_id": "m49.local_note_write",
+        "action": "write",
+        "target_resource": "",
+        "authority": "LOCAL_MUTATION",
+        "side_effect_class": "LOCAL_REVERSIBLE",
+        "capability": "write",
+        "status": "approved",
+        "requested_by": "usr_1d9291dc50654737",
+        "decided_by": "usr_4d70bdd06aab4fe9",
+        "reason": "e2e owner approval",
+        "created_at": 1785634772.209623,
+        "expires_at": 1785638372.209623,
+        "decided_at": 1785634772.216127,
+        "consumed_at": 0,
+        "run_id": "",
+        "connector": ""
+      }
+    },
+    "execute_response": {
+      "ok": true,
+      "outcome_class": "SUCCESS_CONFIRMED",
+      "error_code": "",
+      "safe_message": "ok",
+      "data": {
+        "written": true,
+        "key": "e2e-1785634772",
+        "size": 9
+      },
+      "run_id": "run_c24cfb473f5e47da",
+      "tool_id": "m49.local_note_write",
+      "execution_id": "pex_c992428825eb4bee",
+      "execution_state": "COMPLETED"
+    },
+    "execute_replay": {
+      "ok": true,
+      "outcome_class": "SUCCESS_CONFIRMED",
+      "error_code": "",
+      "safe_message": "ok",
+      "data": {
+        "key": "e2e-1785634772",
+        "size": 9,
+        "written": true
+      },
+      "run_id": "run_c24cfb473f5e47da",
+      "tool_id": "m49.local_note_write",
+      "execution_id": "pex_c992428825eb4bee",
+      "execution_state": "COMPLETED"
+    },
+    "execution_count": 10,
+    "execution_sample": {
+      "execution_id": "pex_168825a8508c457f",
+      "state": "WAITING_APPROVAL",
+      "org_id": "org_fab961eba28942b1",
+      "workspace_id": "ws_e928227858dd4a81",
+      "project_id": "prj_012ad53f2b6a4550",
+      "mission_id": "mis_1129aee9868841ee",
+      "agent_id": "platform-agent",
+      "binding_id": "bind_88f3c8574bd54807",
+      "binding_version": 1,
+      "run_id": "run_440eb02dd8574af1",
+      "tool_id": "m49.local_note_write",
+      "capability": "write",
+      "authority": "LOCAL_MUTATION",
+      "created_at": 1785634772.238744,
+      "updated_at": 1785634772.240005,
+      "deadline_at": 0.0,
+      "cancel_requested": false,
+      "dispatch_started": false,
+      "adapter_invoked": false,
+      "error_code": "",
+      "recovery_count": 0,
+      "attention_reasons": [
+        "APPROVAL_REQUIRED"
+      ],
+      "idempotency": {
+        "present": true,
+        "reference": "idem:084ced27a20d"
+      }
+    },
+    "conversation_providers": {
+      "providers": [
+        {
+          "provider_id": "ollama_local",
+          "adapter_implemented": true,
+          "executable_available": true,
+          "model_configured": true,
+          "model_loaded": true,
+          "generation_healthy": true,
+          "streaming_healthy": true,
+          "tool_calling_supported": false,
+          "certified": true,
+          "model": "qwen2.5:1.5b",
+          "detail": "Ollama reachable; model=qwen2.5:1.5b",
+          "auto_download": false,
+          "state": "ready"
+        },
+        {
+          "provider_id": "unavailable",
+          "adapter_implemented": true,
+          "executable_available": false,
+          "model_configured": false,
+          "model_loaded": false,
+          "generation_healthy": false,
+          "streaming_healthy": false,
+          "tool_calling_supported": false,
+          "certified": false,
+          "model": "",
+          "detail": "No conversational model is available.",
+          "auto_download": false,
+          "state": "unavailable"
+        }
+      ]
+    },
+    "voice_health": {
+      "health": {
+        "status": "healthy",
+        "persistence": "single_host_sqlite",
+        "queue": {
+          "capacity": 8,
+          "in_memory_depth": 0,
+          "worker_count": 2,
+          "heavy_provider_concurrency": 1
+        },
+        "ready_providers": [
+          "macos_system"
+        ],
+        "certified_providers": [
+          "macos_system"
+        ],
+        "default_provider": "macos_system",
+        "english_certified": true,
+        "nepali_state": "unsupported_not_verified",
+        "cloning_state": "CAPABILITY_DISABLED",
+        "reconciled_on_start": 0
+      }
+    },
+    "voice_providers": {
+      "providers": [
+        {
+          "provider_id": "macos_system",
+          "health": {
+            "provider_id": "macos_system",
+            "state": "ready",
+            "configured": true,
+            "installed": true,
+            "model_available": false,
+            "runtime_verified": true,
+            "voice_count": 184,
+            "detail": "Native local speech is ready."
+          },
+          "capabilities": {
+            "provider_id": "macos_system",
+            "synthesis": true,
+            "streaming": false,
+            "cancellation": true,
+            "languages": [
+              "ar-001",
+              "bg-BG",
+              "bn-IN",
+              "ca-ES",
+              "cs-CZ",
+              "da-DK",
+              "de-DE",
+              "el-GR",
+              "en-AU",
+              "en-GB",
+              "en-IE",
+              "en-IN",
+              "en-US",
+              "en-ZA",
+              "es-ES",
+              "es-MX",
+              "fi-FI",
+              "fr-CA",
+              "fr-FR",
+              "he-IL",
+              "hi-IN",
+              "hr-HR",
+              "hu-HU",
+              "id-ID",
+              "it-IT",
+              "ja-JP",
+              "kk-KZ",
+              "kn-IN",
+              "ko-KR",
+              "lt-LT",
+              "ms-MY",
+              "nb-NO",
+              "nl-BE",
+              "nl-NL",
+              "pl-PL",
+              "pt-BR",
+              "pt-PT",
+              "ro-RO",
+              "ru-RU",
+              "sk-SK",
+              "sl-SI",
+              "sv-SE",
+              "ta-IN",
+              "te-IN",
+              "th-TH",
+              "tr-TR",
+              "uk-UA",
+              "vi-VN",
+              "zh-CN",
+              "zh-HK",
+              "zh-TW"
+            ],
+            "certified_languages": [
+              "en"
+            ],
+            "voices": [
+              {
+                "voice_id": "Albert",
+                "language": "en-US",
+                "installed": true
+              },
+              {
+                "voice_id": "Alice",
+                "language": "it-IT",
+                "installed": true
+              },
+              {
+                "voice_id": "Soumya",
+                "language": "kn-IN",
+                "installed": true
+              },
+              {
+                "voice_id": "Alva",
+                "language": "sv-SE",
+                "installed": true
+              },
+              {
+                "voice_id": "Aman",
+                "language": "en-IN",
+                "installed": true
+              },
+              {
+                "voice_id": "Am\u00e9lie",
+                "language": "fr-CA",
+                "installed": true
+              },
+              {
+                "voice_id": "Amira",
+                "language": "ms-MY",
+                "installed": true
+              },
+              {
+                "voice_id": "Anna",
+                "language": "de-DE",
+                "installed": true
+              },
+              {
+                "voice_id": "Aru",
+                "language": "kk-KZ",
+                "installed": true
+              },
+              {
+                "voice_id": "Bad News",
+                "language": "en-US",
+                "installed": true
+              },
+              {
+                "voice_id": "Bahh",
+                "language": "en-US",
+                "installed": true
+              },
+              {
+                "voice_id": "Bells",
+                "language": "en-US",
+                "installed": true
+              },
+              {
+                "voice_id": "Boing",
+                "language": "en-US",
+                "installed": true
+              },
+              {
+                "voice_id": "Bubbles",
+                "language": "en-US",
+                "installed": true
+              },
+              {
+                "voice_id": "Carmit",
+                "language": "he-IL",
+                "installed": true
+              },
+              {
+                "voice_id": "Cellos",
+                "language": "en-US",
+                "installed": true
+              },
+              {
+                "voice_id": "Damayanti",
+                "language": "id-ID",
+                "installed": true
+              },
+              {
+                "voice_id": "Daniel",
+                "language": "en-GB",
+                "installed": true
+              },
+              {
+                "voice_id": "Daria",
+                "language": "bg-BG",
+                "installed": true
+              },
+              {
+                "voice_id": "Wobble",
+                "language": "en-US",
+                "installed": true
+              },
+              {
+                "voice_id": "Eddy (German (Germany))",
+                "language": "de-DE",
+                "installed": true
+              },
+              {
+                "voice_id": "Eddy (English (UK))",
+                "language": "en-GB",
+                "installed": true
+              },
+              {
+                "voice_id": "Eddy (English (US))",
+                "language": "en-US",
+                "installed": true
+              },
+              {
+                "voice_id": "Eddy (Spanish (Spain))",
+                "language": "es-ES",
+                "installed": true
+              },
+              {
+                "voice_id": "Eddy (Spanish (Mexico))",
+                "language": "es-MX",
+                "installed": true
+              },
+              {
+                "voice_id": "Eddy (Finnish (Finland))",
+                "language": "fi-FI",
+                "installed": true
+              },
+              {
+                "voice_id": "Eddy (French (Canada))",
+                "language": "fr-CA",
+                "installed": true
+              },
+              {
+                "voice_id": "Eddy (French (France))",
+                "language": "fr-FR",
+                "installed": true
+              },
+              {
+                "voice_id": "Eddy (Italian (Italy))",
+                "language": "it-IT",
+                "installed": true
+              },
+              {
+                "voice_id": "Eddy (Japanese (Japan))",
+                "language": "ja-JP",
+                "installed": true
+              },
+              {
+                "voice_id": "Eddy (Korean (South Korea))",
+                "language": "ko-KR",
+                "installed": true
+              },
+              {
+                "voice_id": "Eddy (Portuguese (Brazil))",
+                "language": "pt-BR",
+                "installed": true
+              },
+              {
+                "voice_id": "Eddy (Chinese (China mainland))",
+                "language": "zh-CN",
+                "installed": true
+              },
+              {
+                "voice_id": "Eddy (Chinese (Taiwan))",
+                "language": "zh-TW",
+                "installed": true
+              },
+              {
+                "voice_id": "Ellen",
+                "language": "nl-BE",
+                "installed": true
+              },
+              {
+                "voice_id": "Flo (German (Germany))",
+                "language": "de-DE",
+                "installed": true
+              },
+              {
+                "voice_id": "Flo (English (UK))",
+                "language": "en-GB",
+                "installed": true
+              },
+              {
+                "voice_id": "Flo (English (US))",
+                "language": "en-US",
+                "installed": true
+              },
+              {
+                "voice_id": "Flo (Spanish (Spain))",
+                "language": "es-ES",
+                "installed": true
+              },
+              {
+                "voice_id": "Flo (Spanish (Mexico))",
+                "language": "es-MX",
+                "installed": true
+              },
+              {
+                "voice_id": "Flo (Finnish (Finland))",
+                "language": "fi-FI",
+                "installed": true
+              },
+              {
+                "voice_id": "Flo (French (Canada))",
+                "language": "fr-CA",
+                "installed": true
+              },
+              {
+                "voice_id": "Flo (French (France))",
+                "language": "fr-FR",
+                "installed": true
+              },
+              {
+                "voice_id": "Flo (Italian (Italy))",
+                "language": "it-IT",
+                "installed": true
+              },
+              {
+                "voice_id": "Flo (Japanese (Japan))",
+                "language": "ja-JP",
+                "installed": true
+              },
+              {
+                "voice_id": "Flo (Korean (South Korea))",
+                "language": "ko-KR",
+                "installed": true
+              },
+              {
+                "voice_id": "Flo (Portuguese (Brazil))",
+                "language": "pt-BR",
+                "installed": true
+              },
+              {
+                "voice_id": "Flo (Chinese (China mainland))",
+                "language": "zh-CN",
+                "installed": true
+              },
+              {
+                "voice_id": "Flo (Chinese (Taiwan))",
+                "language": "zh-TW",
+                "installed": true
+              },
+              {
+                "voice_id": "Fred",
+                "language": "en-US",
+                "installed": true
+              },
+              {
+                "voice_id": "Geeta",
+                "language": "te-IN",
+                "installed": true
+              },
+              {
+                "voice_id": "Good News",
+                "language": "en-US",
+                "installed": true
+              },
+              {
+                "voice_id": "Grandma (German (Germany))",
+                "language": "de-DE",
+                "installed": true
+              },
+              {
+                "voice_id": "Grandma (English (UK))",
+                "language": "en-GB",
+                "installed": true
+              },
+              {
+                "voice_id": "Grandma (English (US))",
+                "language": "en-US",
+                "installed": true
+              },
+              {
+                "voice_id": "Grandma (Spanish (Spain))",
+                "language": "es-ES",
+                "installed": true
+              },
+              {
+                "voice_id": "Grandma (Spanish (Mexico))",
+                "language": "es-MX",
+                "installed": true
+              },
+              {
+                "voice_id": "Grandma (Finnish (Finland))",
+                "language": "fi-FI",
+                "installed": true
+              },
+              {
+                "voice_id": "Grandma (French (Canada))",
+                "language": "fr-CA",
+                "installed": true
+              },
+              {
+                "voice_id": "Grandma (French (France))",
+                "language": "fr-FR",
+                "installed": true
+              },
+              {
+                "voice_id": "Grandma (Italian (Italy))",
+                "language": "it-IT",
+                "installed": true
+              },
+              {
+                "voice_id": "Grandma (Japanese (Japan))",
+                "language": "ja-JP",
+                "installed": true
+              },
+              {
+                "voice_id": "Grandma (Korean (South Korea))",
+                "language": "ko-KR",
+                "installed": true
+              },
+              {
+                "voice_id": "Grandma (Portuguese (Brazil))",
+                "language": "pt-BR",
+                "installed": true
+              },
+              {
+                "voice_id": "Grandma (Chinese (China mainland))",
+                "language": "zh-CN",
+                "installed": true
+              },
+              {
+                "voice_id": "Grandma (Chinese (Taiwan))",
+                "language": "zh-TW",
+                "installed": true
+              },
+              {
+                "voice_id": "Grandpa (German (Germany))",
+                "language": "de-DE",
+                "installed": true
+              },
+              {
+                "voice_id": "Grandpa (English (UK))",
+                "language": "en-GB",
+                "installed": true
+              },
+              {
+                "voice_id": "Grandpa (English (US))",
+                "language": "en-US",
+                "installed": true
+              },
+              {
+                "voice_id": "Grandpa (Spanish (Spain))",
+                "language": "es-ES",
+                "installed": true
+              },
+              {
+                "voice_id": "Grandpa (Spanish (Mexico))",
+                "language": "es-MX",
+                "installed": true
+              },
+              {
+                "voice_id": "Grandpa (Finnish (Finland))",
+                "language": "fi-FI",
+                "installed": true
+              },
+              {
+                "voice_id": "Grandpa (French (Canada))",
+                "language": "fr-CA",
+                "installed": true
+              },
+              {
+                "voice_id": "Grandpa (French (France))",
+                "language": "fr-FR",
+                "installed": true
+              },
+              {
+                "voice_id": "Grandpa (Italian (Italy))",
+                "language": "it-IT",
+                "installed": true
+              },
+              {
+                "voice_id": "Grandpa (Japanese (Japan))",
+                "language": "ja-JP",
+                "installed": true
+              },
+              {
+                "voice_id": "Grandpa (Korean (South Korea))",
+                "language": "ko-KR",
+                "installed": true
+              },
+              {
+                "voice_id": "Grandpa (Portuguese (Brazil))",
+                "language": "pt-BR",
+                "installed": true
+              },
+              {
+                "voice_id": "Grandpa (Chinese (China mainland))",
+                "language": "zh-CN",
+                "installed": true
+              },
+              {
+                "voice_id": "Grandpa (Chinese (Taiwan))",
+                "language": "zh-TW",
+                "installed": true
+              },
+              {
+                "voice_id": "Jester",
+                "language": "en-US",
+                "installed": true
+              },
+              {
+                "voice_id": "Ioana",
+                "language": "ro-RO",
+                "installed": true
+              },
+              {
+                "voice_id": "Jacques",
+                "language": "fr-FR",
+                "installed": true
+              },
+              {
+                "voice_id": "Joana",
+                "language": "pt-PT",
+                "installed": true
+              },
+              {
+                "voice_id": "Junior",
+                "language": "en-US",
+                "installed": true
+              },
+              {
+                "voice_id": "Kanya",
+                "language": "th-TH",
+                "installed": true
+              },
+              {
+                "voice_id": "Karen",
+                "language": "en-AU",
+                "installed": true
+              },
+              {
+                "voice_id": "Kathy",
+                "language": "en-US",
+                "installed": true
+              },
+              {
+                "voice_id": "Kyoko",
+                "language": "ja-JP",
+                "installed": true
+              },
+              {
+                "voice_id": "Lana",
+                "language": "hr-HR",
+                "installed": true
+              },
+              {
+                "voice_id": "Laura",
+                "language": "sk-SK",
+                "installed": true
+              },
+              {
+                "voice_id": "Lekha",
+                "language": "hi-IN",
+                "installed": true
+              },
+              {
+                "voice_id": "Lesya",
+                "language": "uk-UA",
+                "installed": true
+              },
+              {
+                "voice_id": "Linh",
+                "language": "vi-VN",
+                "installed": true
+              },
+              {
+                "voice_id": "Luciana",
+                "language": "pt-BR",
+                "installed": true
+              },
+              {
+                "voice_id": "Majed",
+                "language": "ar-001",
+                "installed": true
+              },
+              {
+                "voice_id": "T\u00fcnde",
+                "language": "hu-HU",
+                "installed": true
+              },
+              {
+                "voice_id": "Meijia",
+                "language": "zh-TW",
+                "installed": true
+              },
+              {
+                "voice_id": "Melina",
+                "language": "el-GR",
+                "installed": true
+              },
+              {
+                "voice_id": "Milena",
+                "language": "ru-RU",
+                "installed": true
+              },
+              {
+                "voice_id": "Moira",
+                "language": "en-IE",
+                "installed": true
+              },
+              {
+                "voice_id": "M\u00f3nica",
+                "language": "es-ES",
+                "installed": true
+              },
+              {
+                "voice_id": "Montse",
+                "language": "ca-ES",
+                "installed": true
+              },
+              {
+                "voice_id": "Nora",
+                "language": "nb-NO",
+                "installed": true
+              },
+              {
+                "voice_id": "Ona",
+                "language": "lt-LT",
+                "installed": true
+              },
+              {
+                "voice_id": "Organ",
+                "language": "en-US",
+                "installed": true
+              },
+              {
+                "voice_id": "Paulina",
+                "language": "es-MX",
+                "installed": true
+              },
+              {
+                "voice_id": "Piya",
+                "language": "bn-IN",
+                "installed": true
+              },
+              {
+                "voice_id": "Superstar",
+                "language": "en-US",
+                "installed": true
+              },
+              {
+                "voice_id": "Ralph",
+                "language": "en-US",
+                "installed": true
+              },
+              {
+                "voice_id": "Reed (German (Germany))",
+                "language": "de-DE",
+                "installed": true
+              },
+              {
+                "voice_id": "Reed (English (UK))",
+                "language": "en-GB",
+                "installed": true
+              },
+              {
+                "voice_id": "Reed (English (US))",
+                "language": "en-US",
+                "installed": true
+              },
+              {
+                "voice_id": "Reed (Spanish (Spain))",
+                "language": "es-ES",
+                "installed": true
+              },
+              {
+                "voice_id": "Reed (Spanish (Mexico))",
+                "language": "es-MX",
+                "installed": true
+              },
+              {
+                "voice_id": "Reed (Finnish (Finland))",
+                "language": "fi-FI",
+                "installed": true
+              },
+              {
+                "voice_id": "Reed (French (Canada))",
+                "language": "fr-CA",
+                "installed": true
+              },
+              {
+                "voice_id": "Reed (Italian (Italy))",
+                "language": "it-IT",
+                "installed": true
+              },
+              {
+                "voice_id": "Reed (Japanese (Japan))",
+                "language": "ja-JP",
+                "installed": true
+              },
+              {
+                "voice_id": "Reed (Korean (South Korea))",
+                "language": "ko-KR",
+                "installed": true
+              },
+              {
+                "voice_id": "Reed (Portuguese (Brazil))",
+                "language": "pt-BR",
+                "installed": true
+              },
+              {
+                "voice_id": "Reed (Chinese (China mainland))",
+                "language": "zh-CN",
+                "installed": true
+              },
+              {
+                "voice_id": "Reed (Chinese (Taiwan))",
+                "language": "zh-TW",
+                "installed": true
+              },
+              {
+                "voice_id": "Rishi",
+                "language": "en-IN",
+                "installed": true
+              },
+              {
+                "voice_id": "Rocko (German (Germany))",
+                "language": "de-DE",
+                "installed": true
+              },
+              {
+                "voice_id": "Rocko (English (UK))",
+                "language": "en-GB",
+                "installed": true
+              },
+              {
+                "voice_id": "Rocko (English (US))",
+                "language": "en-US",
+                "installed": true
+              },
+              {
+                "voice_id": "Rocko (Spanish (Spain))",
+                "language": "es-ES",
+                "installed": true
+              },
+              {
+                "voice_id": "Rocko (Spanish (Mexico))",
+                "language": "es-MX",
+                "installed": true
+              },
+              {
+                "voice_id": "Rocko (Finnish (Finland))",
+                "language": "fi-FI",
+                "installed": true
+              },
+              {
+                "voice_id": "Rocko (French (Canada))",
+                "language": "fr-CA",
+                "installed": true
+              },
+              {
+                "voice_id": "Rocko (French (France))",
+                "language": "fr-FR",
+                "installed": true
+              },
+              {
+                "voice_id": "Rocko (Italian (Italy))",
+                "language": "it-IT",
+                "installed": true
+              },
+              {
+                "voice_id": "Rocko (Japanese (Japan))",
+                "language": "ja-JP",
+                "installed": true
+              },
+              {
+                "voice_id": "Rocko (Korean (South Korea))",
+                "language": "ko-KR",
+                "installed": true
+              },
+              {
+                "voice_id": "Rocko (Portuguese (Brazil))",
+                "language": "pt-BR",
+                "installed": true
+              },
+              {
+                "voice_id": "Rocko (Chinese (China mainland))",
+                "language": "zh-CN",
+                "installed": true
+              },
+              {
+                "voice_id": "Rocko (Chinese (Taiwan))",
+                "language": "zh-TW",
+                "installed": true
+              },
+              {
+                "voice_id": "Samantha",
+                "language": "en-US",
+                "installed": true
+              },
+              {
+                "voice_id": "Sandy (German (Germany))",
+                "language": "de-DE",
+                "installed": true
+              },
+              {
+                "voice_id": "Sandy (English (UK))",
+                "language": "en-GB",
+                "installed": true
+              },
+              {
+                "voice_id": "Sandy (English (US))",
+                "language": "en-US",
+                "installed": true
+              },
+              {
+                "voice_id": "Sandy (Spanish (Spain))",
+                "language": "es-ES",
+                "installed": true
+              },
+              {
+                "voice_id": "Sandy (Spanish (Mexico))",
+                "language": "es-MX",
+                "installed": true
+              },
+              {
+                "voice_id": "Sandy (Finnish (Finland))",
+                "language": "fi-FI",
+                "installed": true
+              },
+              {
+                "voice_id": "Sandy (French (Canada))",
+                "language": "fr-CA",
+                "installed": true
+              },
+              {
+                "voice_id": "Sandy (French (France))",
+                "language": "fr-FR",
+                "installed": true
+              },
+              {
+                "voice_id": "Sandy (Italian (Italy))",
+                "language": "it-IT",
+                "installed": true
+              },
+              {
+                "voice_id": "Sandy (Japanese (Japan))",
+                "language": "ja-JP",
+                "installed": true
+              },
+              {
+                "voice_id": "Sandy (Korean (South Korea))",
+                "language": "ko-KR",
+                "installed": true
+              },
+              {
+                "voice_id": "Sandy (Portuguese (Brazil))",
+                "language": "pt-BR",
+                "installed": true
+              },
+              {
+                "voice_id": "Sandy (Chinese (China mainland))",
+                "language": "zh-CN",
+                "installed": true
+              },
+              {
+                "voice_id": "Sandy (Chinese (Taiwan))",
+                "language": "zh-TW",
+                "installed": true
+              },
+              {
+                "voice_id": "Sara",
+                "language": "da-DK",
+                "installed": true
+              },
+              {
+                "voice_id": "Satu",
+                "language": "fi-FI",
+                "installed": true
+              },
+              {
+                "voice_id": "Shelley (German (Germany))",
+                "language": "de-DE",
+                "installed": true
+              },
+              {
+                "voice_id": "Shelley (English (UK))",
+                "language": "en-GB",
+                "installed": true
+              },
+              {
+                "voice_id": "Shelley (English (US))",
+                "language": "en-US",
+                "installed": true
+              },
+              {
+                "voice_id": "Shelley (Spanish (Spain))",
+                "language": "es-ES",
+                "installed": true
+              },
+              {
+                "voice_id": "Shelley (Spanish (Mexico))",
+                "language": "es-MX",
+                "installed": true
+              },
+              {
+                "voice_id": "Shelley (Finnish (Finland))",
+                "language": "fi-FI",
+                "installed": true
+              },
+              {
+                "voice_id": "Shelley (French (Canada))",
+                "language": "fr-CA",
+                "installed": true
+              },
+              {
+                "voice_id": "Shelley (French (France))",
+                "language": "fr-FR",
+                "installed": true
+              },
+              {
+                "voice_id": "Shelley (Italian (Italy))",
+                "language": "it-IT",
+                "installed": true
+              },
+              {
+                "voice_id": "Shelley (Japanese (Japan))",
+                "language": "ja-JP",
+                "installed": true
+              },
+              {
+                "voice_id": "Shelley (Korean (South Korea))",
+                "language": "ko-KR",
+                "installed": true
+              },
+              {
+                "voice_id": "Shelley (Portuguese (Brazil))",
+                "language": "pt-BR",
+                "installed": true
+              },
+              {
+                "voice_id": "Shelley (Chinese (China mainland))",
+                "language": "zh-CN",
+                "installed": true
+              },
+              {
+                "voice_id": "Shelley (Chinese (Taiwan))",
+                "language": "zh-TW",
+                "installed": true
+              },
+              {
+                "voice_id": "Sinji",
+                "language": "zh-HK",
+                "installed": true
+              },
+              {
+                "voice_id": "Tara",
+                "language": "en-IN",
+                "installed": true
+              },
+              {
+                "voice_id": "Tessa",
+                "language": "en-ZA",
+                "installed": true
+              },
+              {
+                "voice_id": "Thomas",
+                "language": "fr-FR",
+                "installed": true
+              },
+              {
+                "voice_id": "Tina",
+                "language": "sl-SI",
+                "installed": true
+              },
+              {
+                "voice_id": "Tingting",
+                "language": "zh-CN",
+                "installed": true
+              },
+              {
+                "voice_id": "Trinoids",
+                "language": "en-US",
+                "installed": true
+              },
+              {
+                "voice_id": "Vani",
+                "language": "ta-IN",
+                "installed": true
+              },
+              {
+                "voice_id": "Whisper",
+                "language": "en-US",
+                "installed": true
+              },
+              {
+                "voice_id": "Xander",
+                "language": "nl-NL",
+                "installed": true
+              },
+              {
+                "voice_id": "Yelda",
+                "language": "tr-TR",
+                "installed": true
+              },
+              {
+                "voice_id": "Yuna",
+                "language": "ko-KR",
+                "installed": true
+              },
+              {
+                "voice_id": "Zarvox",
+                "language": "en-US",
+                "installed": true
+              },
+              {
+                "voice_id": "Zosia",
+                "language": "pl-PL",
+                "installed": true
+              },
+              {
+                "voice_id": "Zuzana",
+                "language": "cs-CZ",
+                "installed": true
+              }
+            ],
+            "output_formats": [
+              "wav",
+              "aiff"
+            ],
+            "cloning": false,
+            "voice_design": false,
+            "local_only": true,
+            "process_isolated": true
+          }
+        },
+        {
+          "provider_id": "unavailable",
+          "health": {
+            "provider_id": "unavailable",
+            "state": "unavailable",
+            "configured": true,
+            "installed": true,
+            "model_available": false,
+            "runtime_verified": true,
+            "detail": "No speech backend is currently available."
+          },
+          "capabilities": {
+            "provider_id": "unavailable",
+            "synthesis": false,
+            "streaming": false,
+            "cancellation": true,
+            "languages": [],
+            "certified_languages": [],
+            "cloning": false,
+            "voice_design": false,
+            "local_only": true
+          }
+        },
+        {
+          "provider_id": "voxcpm",
+          "health": {
+            "provider_id": "voxcpm",
+            "configured": false,
+            "installed": false,
+            "model_available": false,
+            "runtime_verified": false,
+            "quality_reviewed": false,
+            "certified": false,
+            "backend_mode": "not_configured",
+            "state": "disabled",
+            "detail": "VoxCPM is optional and disabled."
+          },
+          "capabilities": {
+            "provider_id": "voxcpm",
+            "synthesis": true,
+            "streaming": false,
+            "streaming_state": "evaluated_artifact_only",
+            "cancellation": true,
+            "cancellation_mode": "request_abandon",
+            "languages": [
+              "ar",
+              "my",
+              "zh",
+              "da",
+              "nl",
+              "en",
+              "fi",
+              "fr",
+              "de",
+              "el",
+              "he",
+              "hi",
+              "id",
+              "it",
+              "ja",
+              "km",
+              "ko",
+              "lo",
+              "ms",
+              "no",
+              "pl",
+              "pt",
+              "ru",
+              "es",
+              "sw",
+              "sv",
+              "tl",
+              "th",
+              "tr",
+              "vi"
+            ],
+            "certified_languages": [],
+            "language_support_state": "upstream_documented_not_locally_verified",
+            "output_formats": [
+              "wav"
+            ],
+            "cloning": false,
+            "cloning_state": "CAPABILITY_DISABLED",
+            "voice_design": true,
+            "voice_design_state": "adapter_mapped_not_runtime_verified",
+            "local_only": true,
+            "process_isolated": true,
+            "backend_mode": "not_configured"
+          }
+        }
+      ]
+    },
+    "voice_runtime_health": {
+      "health": {
+        "runtime": "voice_runtime",
+        "speech_service_bound": true,
+        "stt_providers": [
+          {
+            "provider_id": "macos_speech",
+            "state": "unavailable",
+            "configured": true,
+            "installed": false,
+            "streaming": false,
+            "runtime_verified": false,
+            "auto_install": false,
+            "note": "Requires local SaathiOS STT helper; no automatic install.",
+            "available": false
+          },
+          {
+            "provider_id": "whisper_compatible",
+            "state": "ready",
+            "configured": true,
+            "installed": true,
+            "model_size": "tiny",
+            "streaming": false,
+            "runtime_verified": true,
+            "auto_install": false,
+            "note": "Uses already-installed faster_whisper only; never auto-downloads.",
+            "available": true
+          },
+          {
+            "provider_id": "browser",
+            "state": "ready",
+            "configured": true,
+            "installed": true,
+            "streaming": true,
+            "runtime_verified": true,
+            "auto_install": false,
+            "note": "Browser performs recognition; server carries the transcript.",
+            "available": true
+          },
+          {
+            "provider_id": "unavailable",
+            "state": "unavailable",
+            "configured": true,
+            "installed": false,
+            "streaming": false,
+            "runtime_verified": false,
+            "auto_install": false,
+            "available": false
+          }
+        ],
+        "background_recording": false,
+        "hidden_activation": false,
+        "loopback_only": true,
+        "public_listeners": false,
+        "cloning": false,
+        "auto_model_download": false
+      }
+    },
+    "stt_providers": {
+      "providers": [
+        {
+          "provider_id": "macos_speech",
+          "state": "unavailable",
+          "configured": true,
+          "installed": false,
+          "streaming": false,
+          "runtime_verified": false,
+          "auto_install": false,
+          "note": "Requires local SaathiOS STT helper; no automatic install.",
+          "available": false
+        },
+        {
+          "provider_id": "whisper_compatible",
+          "state": "ready",
+          "configured": true,
+          "installed": true,
+          "model_size": "tiny",
+          "streaming": false,
+          "runtime_verified": true,
+          "auto_install": false,
+          "note": "Uses already-installed faster_whisper only; never auto-downloads.",
+          "available": true
+        },
+        {
+          "provider_id": "browser",
+          "state": "ready",
+          "configured": true,
+          "installed": true,
+          "streaming": true,
+          "runtime_verified": true,
+          "auto_install": false,
+          "note": "Browser performs recognition; server carries the transcript.",
+          "available": true
+        },
+        {
+          "provider_id": "unavailable",
+          "state": "unavailable",
+          "configured": true,
+          "installed": false,
+          "streaming": false,
+          "runtime_verified": false,
+          "auto_install": false,
+          "available": false
+        }
+      ]
+    },
+    "session_count": 13
+  },
+  "summary": {
+    "total": 73,
+    "passed": 73,
+    "failed": 0,
+    "unasserted": 15
+  },
+  "record": "SAATHIOS_E2E_API_JOURNEY",
+  "note": "Drives the platform API exactly as the rendered UI drives it. Credentials come from the environment and never appear here."
+}

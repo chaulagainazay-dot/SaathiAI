@@ -14,6 +14,7 @@ from decimal import Decimal
 from enum import Enum
 from typing import Any, Callable
 
+from saathi.platform.nepse.calendar import NepseCalendar
 from saathi.platform.tg.data_contract import DataClassification, is_authoritative, fingerprint_payload
 from saathi.platform.tg.domain import PerformanceMetrics, coerce_decimal
 from saathi.platform.tg.historical.models import DatasetVersion, DataQualityVerdict
@@ -66,6 +67,7 @@ class ResearchConfig:
     use_adjusted_prices: bool = True
     benchmark: str = ""
     calendar_name: str = "DEFAULT_24_5"
+    calendar_policy: str = "GENERIC"
     policy_version: str = "1.0.0"
     risk_policy_version: str = "1.0.0"
     strategy_version: str = "1.0.0"
@@ -204,6 +206,7 @@ class HistoricalResearchRunner:
         run_backtest_fn: Callable | None = None,
         run_walk_forward_fn: Callable | None = None,
         run_stress_fn: Callable | None = None,
+        nepse_calendar: NepseCalendar | None = None,
     ) -> dict[str, Any]:
         cfg = config or ResearchConfig()
         started = time.time()
@@ -236,6 +239,21 @@ class HistoricalResearchRunner:
                     "paper_only": True,
                     "metrics": None,
                 }
+            if (
+                dataset_version.manifest.calendar_name == "NEPSE"
+                and dataset_version.manifest.calendar_coverage_status != "COMPLETE"
+            ):
+                return {
+                    "status": "REJECTED",
+                    "reason": "NEPSE_CALENDAR_COVERAGE_REQUIRED",
+                    "calendar_policy": "REQUIRE_CALENDAR_COVERAGE",
+                    "calendar_version": dataset_version.manifest.to_public()["calendar_version"],
+                    "calendar_source_version": dataset_version.manifest.calendar_source_version,
+                    "calendar_coverage_status": dataset_version.manifest.calendar_coverage_status,
+                    "run_id": run_id,
+                    "paper_only": True,
+                    "metrics": None,
+                }
             adj_bars = list(dataset_version.bars)
             quality_verdict = dataset_version.quality.verdict.value
             corporate_status = dataset_version.corporate_action_status
@@ -254,6 +272,12 @@ class HistoricalResearchRunner:
             cfg.calendar_name = dataset_version.manifest.calendar_name or cfg.calendar_name
         elif bars is not None:
             adj_bars = bars
+
+        if cfg.calendar_name.upper() == "NEPSE":
+            cfg.calendar_name = "NEPSE"
+            # The implemented NEPSE policy is not caller-weakenable.  Raw
+            # import can preserve uncertainty; research always requires truth.
+            cfg.calendar_policy = "REQUIRE_CALENDAR_COVERAGE"
 
         period_bars, period_meta = slice_period(adj_bars, cfg)
         if not period_bars:
@@ -309,7 +333,14 @@ class HistoricalResearchRunner:
                 }
             builder = mapping.get(slug, valid_momentum)
             defn = builder()
-            res = run_backtest(defn, b, seed=cfg.seed, cost=cost)
+            res = run_backtest(
+                defn,
+                b,
+                seed=cfg.seed,
+                cost=cost,
+                calendar=cfg.calendar_name,
+                nepse_calendar=nepse_calendar,
+            )
             raw = res.metrics or {}
 
             def _mv(key, default="0"):
@@ -375,7 +406,14 @@ class HistoricalResearchRunner:
                     dataset_id=dataset_id or "historical",
                     classification=classification,
                     strategy_builder=strategy_builder,
-                    run_backtest_fn=lambda defn, b, seed=0: run_backtest(defn, b, seed=seed, cost=cost),
+                    run_backtest_fn=lambda defn, b, seed=0: run_backtest(
+                        defn,
+                        b,
+                        seed=seed,
+                        cost=cost,
+                        calendar=cfg.calendar_name,
+                        nepse_calendar=nepse_calendar,
+                    ),
                     config=WalkForwardConfig(
                         n_folds=cfg.n_folds,
                         candidate_parameter_sets=[{}, {"equity_fraction": "0.3"}, {"equity_fraction": "0.5"}],
@@ -406,7 +444,20 @@ class HistoricalResearchRunner:
                     dataset_id=dataset_id or "historical",
                     classification=classification,
                     run_backtest_fn=lambda d, b, cost=None: (
-                        run_backtest(d, b, cost=cost) if cost is not None else run_backtest(d, b)
+                        run_backtest(
+                            d,
+                            b,
+                            cost=cost,
+                            calendar=cfg.calendar_name,
+                            nepse_calendar=nepse_calendar,
+                        )
+                        if cost is not None
+                        else run_backtest(
+                            d,
+                            b,
+                            calendar=cfg.calendar_name,
+                            nepse_calendar=nepse_calendar,
+                        )
                     ),
                     strategy_version=cfg.strategy_version,
                 )
@@ -522,6 +573,7 @@ class HistoricalResearchRunner:
             "use_adjusted_prices": cfg.use_adjusted_prices,
             "benchmark": cfg.benchmark,
             "calendar_name": cfg.calendar_name,
+            "calendar_policy": cfg.calendar_policy,
             "policy_version": cfg.policy_version,
             "risk_policy_version": cfg.risk_policy_version,
             "strategy_version": cfg.strategy_version,

@@ -7,8 +7,8 @@ const outfit = Outfit({ subsets: ["latin"], weight: ["300", "400", "500", "600",
 const geist = Geist_Mono({ subsets: ["latin"], weight: ["400", "500", "600"], variable: "--font-mono", display: "swap" });
 
 export const metadata = {
-  title: "SaathiAI — Sovereign Orbit",
-  description: "An AI Operating System with one center.",
+  title: "SaathiOS — Sovereign Orbit",
+  description: "SaathiOS: one operating system with one center.",
 };
 
 export const viewport = {
@@ -20,7 +20,7 @@ export const viewport = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className={`${jura.variable} ${outfit.variable} ${geist.variable}`}>
+    <html lang="en" data-theme="light" className={`${jura.variable} ${outfit.variable} ${geist.variable}`}>
       <body>
         <div className="aurora" />
         <Shell>{children}</Shell>

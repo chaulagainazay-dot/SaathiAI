@@ -1,0 +1,340 @@
+{
+  "milestone": "M352",
+  "audit": {
+    "audit": "agentdev.terminology.v1",
+    "root": "/Users/macbookpro/SaathiAI-agent-foundation",
+    "files_scanned": 37,
+    "banned_phrases": 22,
+    "lexicon_terms": 12,
+    "findings": [],
+    "clean": true,
+    "limitation": "A literal-phrase guard. It catches the wordings the owner named and cannot detect an overstatement phrased in words nobody listed. Terminology consistency beyond these phrases is documentation_only."
+  },
+  "lexicon": {
+    "lexicon": "agentdev.terminology.v1",
+    "classifications": [
+      "technically_enforced",
+      "schema_validated",
+      "deterministic",
+      "model_evaluated",
+      "advisory_only",
+      "documentation_only",
+      "rejected"
+    ],
+    "by_classification": {
+      "deterministic": [
+        "behaviour scenario suite",
+        "orchestration",
+        "simulation"
+      ],
+      "documentation_only": [
+        "certification",
+        "runtime"
+      ],
+      "model_evaluated": [
+        "behaviour evaluation"
+      ],
+      "rejected": [
+        "autonomy",
+        "behaviour coverage",
+        "governance evaluation"
+      ],
+      "schema_validated": [
+        "authority"
+      ],
+      "technically_enforced": [
+        "approval",
+        "enforcement"
+      ]
+    },
+    "terms": [
+      {
+        "term": "behaviour coverage",
+        "classification": "rejected",
+        "means": "",
+        "does_not_mean": "That a measured proportion of a known behaviour space has been exercised. No such space is enumerated, so no proportion exists.",
+        "replacement": "behaviour scenario suite",
+        "surfaces": [
+          "docs",
+          "cli",
+          "evidence",
+          "tests"
+        ]
+      },
+      {
+        "term": "behaviour scenario suite",
+        "classification": "deterministic",
+        "means": "A counted set of offline scenarios, each asserting one governance property by driving the real modules and observing the real refusal. Reported as a count, never as a percentage.",
+        "does_not_mean": "That the scenarios bound what an agent can do.",
+        "replacement": "",
+        "surfaces": [
+          "docs",
+          "cli",
+          "evidence",
+          "tests"
+        ]
+      },
+      {
+        "term": "behaviour evaluation",
+        "classification": "model_evaluated",
+        "means": "A local model produced output, a documented rubric scored it, and the run is recorded with model, prompt and seed. Establishes what one model did on one host at one moment.",
+        "does_not_mean": "That the model will behave the same way again, that a different model would behave this way, or that the behaviour is enforced.",
+        "replacement": "",
+        "surfaces": [
+          "docs",
+          "cli",
+          "evidence"
+        ]
+      },
+      {
+        "term": "governance evaluation",
+        "classification": "rejected",
+        "means": "",
+        "does_not_mean": "Anything specific. It was used for both deterministic refusal scenarios and model-scored behaviour, which are different claims.",
+        "replacement": "governance refusal scenario (deterministic) or behaviour evaluation (model evaluated)",
+        "surfaces": [
+          "docs",
+          "evidence"
+        ]
+      },
+      {
+        "term": "simulation",
+        "classification": "deterministic",
+        "means": "A scripted mission executed end to end with no model, no network and no provider. Every value is authored in the script.",
+        "does_not_mean": "That an agent's reasoning was reproduced. Nothing is inferred; the script asserts the governance path, not the thinking.",
+        "replacement": "",
+        "surfaces": [
+          "docs",
+          "cli",
+          "evidence",
+          "tests"
+        ]
+      },
+      {
+        "term": "certification",
+        "classification": "documentation_only",
+        "means": "An owner-reviewed statement about one commit, naming one verdict token, its evidence and its limitations.",
+        "does_not_mean": "Fitness for production, external audit, or any claim about a model.",
+        "replacement": "",
+        "surfaces": [
+          "docs",
+          "evidence"
+        ]
+      },
+      {
+        "term": "enforcement",
+        "classification": "technically_enforced",
+        "means": "The code path cannot proceed: an exception is raised or a non-zero exit is returned. Always written with its tier attached.",
+        "does_not_mean": "That an instruction in a prompt was obeyed. Prompt text is never enforcement; it is advisory_only.",
+        "replacement": "",
+        "surfaces": [
+          "docs",
+          "code",
+          "cli",
+          "evidence",
+          "tests"
+        ]
+      },
+      {
+        "term": "orchestration",
+        "classification": "deterministic",
+        "means": "Scripted sequencing of participants and stages by the runner. The sequence is fixed in code and takes no model input.",
+        "does_not_mean": "That an agent decides what happens next. Where the *workflow* refuses to advance, the correct phrase is orchestration-checked.",
+        "replacement": "",
+        "surfaces": [
+          "docs",
+          "code",
+          "cli"
+        ]
+      },
+      {
+        "term": "autonomy",
+        "classification": "rejected",
+        "means": "",
+        "does_not_mean": "Anything this system does. Every execution is operator-initiated, every authority flag is false by default, and no path merges, pushes or deploys.",
+        "replacement": "operator-initiated execution",
+        "surfaces": [
+          "docs",
+          "evidence"
+        ]
+      },
+      {
+        "term": "runtime",
+        "classification": "documentation_only",
+        "means": "Reserved for the SaathiOS product runtime \u2014 the agents that serve users at request time \u2014 or for the adverb sense, at execution time.",
+        "does_not_mean": "Any component of this package. The execution engine here is the deterministic runner; naming it a runtime would collide with saathi/platform/mission_runtime/.",
+        "replacement": "",
+        "surfaces": [
+          "docs",
+          "code"
+        ]
+      },
+      {
+        "term": "approval",
+        "classification": "technically_enforced",
+        "means": "A gate record naming an approver who is not the subject author, bound to evidence artifact ids. Refused otherwise.",
+        "does_not_mean": "Owner approval. That is a distinct, owner-only gate that no agent and no automation can satisfy.",
+        "replacement": "",
+        "surfaces": [
+          "docs",
+          "code",
+          "cli",
+          "evidence",
+          "tests"
+        ]
+      },
+      {
+        "term": "authority",
+        "classification": "schema_validated",
+        "means": "A saathi.safety.SafetyLevel ceiling declared in a role contract and checked when the registry loads.",
+        "does_not_mean": "A capability granted to a running process. A contract describes what a role may ask for, not what the operating system permits.",
+        "replacement": "",
+        "surfaces": [
+          "docs",
+          "code",
+          "cli",
+          "tests"
+        ]
+      }
+    ],
+    "banned_phrases": [
+      {
+        "phrase": "behaviour coverage",
+        "reason": "Implies a measured proportion of an enumerated behaviour space.",
+        "use_instead": "behaviour scenario suite, reported as a count"
+      },
+      {
+        "phrase": "behavior coverage",
+        "reason": "American spelling of the same rejected term.",
+        "use_instead": "behaviour scenario suite, reported as a count"
+      },
+      {
+        "phrase": "governance evaluation",
+        "reason": "Used for two different claims \u2014 deterministic refusal and model scoring.",
+        "use_instead": "governance refusal scenario, or behaviour evaluation"
+      },
+      {
+        "phrase": "fully autonomous",
+        "reason": "No execution here starts without an operator.",
+        "use_instead": "operator-initiated execution"
+      },
+      {
+        "phrase": "autonomous agent",
+        "reason": "Every agent is scripted or prompted by the runner; none self-starts.",
+        "use_instead": "development agent"
+      },
+      {
+        "phrase": "agent runtime",
+        "reason": "Collides with the SaathiOS product runtime.",
+        "use_instead": "deterministic runner"
+      },
+      {
+        "phrase": "agentdev runtime",
+        "reason": "Collides with the SaathiOS product runtime.",
+        "use_instead": "deterministic runner"
+      },
+      {
+        "phrase": "prompt enforcement",
+        "reason": "Prompt text cannot enforce; it can only be evaluated afterwards.",
+        "use_instead": "prompt guidance, tier advisory_only"
+      },
+      {
+        "phrase": "enforced by prompt",
+        "reason": "Prompt text cannot enforce; it can only be evaluated afterwards.",
+        "use_instead": "stated in the prompt and checked by evaluation"
+      },
+      {
+        "phrase": "cannot be bypassed",
+        "reason": "Unfalsifiable as written, and false for any process with its own shell.",
+        "use_instead": "the code path refuses; a process with its own shell is out of scope"
+      },
+      {
+        "phrase": "impossible to bypass",
+        "reason": "Unfalsifiable as written.",
+        "use_instead": "refused by the gate engine"
+      },
+      {
+        "phrase": "guarantees compliance",
+        "reason": "No control here guarantees what a model does.",
+        "use_instead": "records and detects non-compliance"
+      },
+      {
+        "phrase": "guaranteed safe",
+        "reason": "Safety is scoped and tiered, never absolute.",
+        "use_instead": "refused at tier technically_enforced"
+      },
+      {
+        "phrase": "certifies the model",
+        "reason": "Certification is a statement about a commit, never about a model.",
+        "use_instead": "records one model's measured behaviour"
+      },
+      {
+        "phrase": "model is certified",
+        "reason": "Certification is a statement about a commit, never about a model.",
+        "use_instead": "the model evaluation run is recorded"
+      },
+      {
+        "phrase": "production ready",
+        "reason": "Nothing in this package has been validated for production.",
+        "use_instead": "foundation, owner-reviewed at this commit"
+      },
+      {
+        "phrase": "production certified",
+        "reason": "Nothing in this package has been validated for production.",
+        "use_instead": "foundation, owner-reviewed at this commit"
+      },
+      {
+        "phrase": "simulated agent",
+        "reason": "Nothing simulates an agent; the script asserts a governance path.",
+        "use_instead": "scripted participant"
+      },
+      {
+        "phrase": "agent simulation",
+        "reason": "Nothing simulates an agent; the script asserts a governance path.",
+        "use_instead": "scripted mission"
+      },
+      {
+        "phrase": "self-approve",
+        "reason": "Reads as a capability. It is a refusal code.",
+        "use_instead": "self-approval is refused"
+      },
+      {
+        "phrase": "auto-approve",
+        "reason": "No gate is ever satisfied without a named approver.",
+        "use_instead": "recorded by a named approver"
+      },
+      {
+        "phrase": "100% coverage",
+        "reason": "No proportion of any behaviour space is measured.",
+        "use_instead": "N of N scenarios passed"
+      }
+    ],
+    "quoted_for_rejection": [
+      {
+        "file": "docs/ai-development/limitations.md",
+        "phrase": "behaviour coverage",
+        "reason": "States that the wording was rejected and names the replacement."
+      },
+      {
+        "file": "docs/ai-development/terminology.md",
+        "phrase": "*",
+        "reason": "The decision record itself lists every rejected phrase."
+      },
+      {
+        "file": "saathi/agentdev/terminology.py",
+        "phrase": "*",
+        "reason": "This module is the list."
+      },
+      {
+        "file": "tests/test_m352_agentdev_terminology.py",
+        "phrase": "*",
+        "reason": "The test asserts the guard fires on each banned phrase."
+      },
+      {
+        "file": "docs/evidence/m352_m359/TERMINOLOGY_AUDIT.json",
+        "phrase": "*",
+        "reason": "Generated audit output quotes each phrase it searched for."
+      }
+    ]
+  }
+}

@@ -4,6 +4,7 @@ Read-safe by default. Mutation routes require session + RBAC. No live connectors
 """
 from __future__ import annotations
 
+import base64
 import re
 from typing import Any
 
@@ -65,6 +66,7 @@ def _err(exc: PlatformContextError) -> HTTPException:
     if exc.code in (
         "APPROVAL_REQUIRED",
         "INVALID_STATE",
+        "MISSION_KEY_EXISTS",
         "RESOURCE_BUDGET_EXHAUSTED",
         "REVIEW_REQUIRED",
         "VERIFICATION_REQUIRED",
@@ -393,6 +395,15 @@ class VoiceRuntimeListenBody(BaseModel):
     permission_granted: bool = True
 
 
+class VoiceRuntimeSttBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    session_id: str = Field(min_length=1, max_length=160)
+    audio_base64: str = Field(min_length=1, max_length=8_000_000)
+    sample_rate: int = Field(default=16000, ge=8000, le=48000)
+    language: str = Field(default="en", max_length=16)
+
+
 class VoiceRuntimeTranscriptBody(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -465,7 +476,25 @@ class RetentionHoldBody(BaseModel):
 
 @router.get("/health")
 def platform_health():
-    return _svc().health()
+    """Platform health, with the provenance of the code answering it.
+
+    The provenance block lets a browser certification harness prove which
+    checkout served the run instead of assuming. Filesystem paths in it are
+    local/development/test only — see `saathi.provenance`.
+    """
+    from saathi.provenance import runtime_provenance
+
+    payload = dict(_svc().health())
+    payload["provenance"] = runtime_provenance()
+    return payload
+
+
+@router.get("/provenance")
+def platform_provenance():
+    """Standalone runtime identity of the backend. Non-secret by construction."""
+    from saathi.provenance import runtime_provenance
+
+    return runtime_provenance()
 
 
 @router.post("/bootstrap")
@@ -5201,6 +5230,42 @@ def paper_summary(account_id: str, authorization: str | None = Header(default=No
         raise _err(e) from e
 
 
+@router.get("/paper/accounts/{account_id}/command-snapshot")
+def paper_command_snapshot(account_id: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    """Canonical ledger snapshot for production Hybrid Command (read-only)."""
+    try:
+        return _ppsvc().command_center_snapshot(_ppctx(authorization, x_platform_token), account_id)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/paper/accounts/{account_id}/risk")
+def paper_account_risk(account_id: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    """Independent PortfolioRiskEngine contract for production Command (read-only)."""
+    try:
+        return _ppsvc().paper_risk_snapshot(_ppctx(authorization, x_platform_token), account_id)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/paper/accounts/{account_id}/proposals")
+def paper_account_proposals(account_id: str, limit: int = 10, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    """Latest portfolio construction proposals for fund (read-only; no execution)."""
+    try:
+        return _ppsvc().list_portfolio_proposals(_ppctx(authorization, x_platform_token), account_id, limit=limit)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/paper/accounts/{account_id}/performance")
+def paper_account_performance(account_id: str, period: str = "SINCE_INCEPTION", authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    """Deterministic PAPER performance history contract (T-NEXT-4). Read-only."""
+    try:
+        return _ppsvc().paper_performance_snapshot(_ppctx(authorization, x_platform_token), account_id, period=period)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
 @router.post("/paper/order-intents")
 def paper_intent_create(body: PaperIntentBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
     try:
@@ -6640,6 +6705,31 @@ def voice_runtime_permission(
                 session_id,
                 granted=body.granted,
             )
+        )
+    except Exception as exc:
+        raise _voice_failure(exc) from exc
+
+
+@router.post("/voice/runtime/sessions/{session_id}/stt")
+def voice_runtime_stt(
+    session_id: str,
+    body: VoiceRuntimeSttBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    if body.session_id != session_id:
+        raise _voice_failure(PlatformContextError("VALIDATION_FAILED", "session mismatch"))
+    try:
+        audio = base64.b64decode(body.audio_base64, validate=True)
+    except (ValueError, base64.binascii.Error) as exc:
+        raise _voice_failure(PlatformContextError("VALIDATION_FAILED", "invalid audio encoding")) from exc
+    try:
+        return _voice_runtime().transcribe_audio(
+            _voice_context(authorization, x_platform_token),
+            session_id,
+            audio,
+            sample_rate=body.sample_rate,
+            language=body.language,
         )
     except Exception as exc:
         raise _voice_failure(exc) from exc
@@ -10664,8 +10754,10 @@ class MdRegisterBody(BaseModel):
     provider: str = "local"
     source_type: str = "REPOSITORY_FIXTURE"
     source_ref: str = ""
-    market: str = "US"
-    exchange: str = "XNAS"
+    # Generic registration is deliberately venue-neutral.  Callers must supply
+    # identity or use a bounded adapter; omission must never become XNAS.
+    market: str = ""
+    exchange: str = ""
     asset_class: str = "equity"
     frequency: str = "1d"
     licence_type: str = "CC0-1.0"
@@ -12572,3 +12664,877 @@ def tg_mo_live_feed(authorization: str | None = Header(default=None), x_platform
         return _tg_market_observation().refuse_authenticated_live_feed()
     except PlatformContextError as e:
         raise _err(e) from e
+
+
+# ---------------------------------------------------------------------------
+# M312–M319 Connectivity Governance (governance only — no provider connection)
+# ---------------------------------------------------------------------------
+
+def _tg_connectivity_governance():
+    from saathi.platform.tg.connectivity_governance.service import default_connectivity_governance
+    return default_connectivity_governance()
+
+
+@router.get("/tg/connectivity-governance/posture")
+def tg_cg_posture(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_connectivity_governance().posture()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/connectivity-governance/verdict")
+def tg_cg_verdict(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_connectivity_governance().terminal_verdict()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/connectivity-governance/dashboard")
+def tg_cg_dashboard(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_connectivity_governance().dashboard()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/connectivity-governance/charter")
+def tg_cg_charter(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_connectivity_governance().charter()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/connectivity-governance/authorities")
+def tg_cg_authorities(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_connectivity_governance().authority_list()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/connectivity-governance/authorities/{capability}")
+def tg_cg_authority_detail(capability: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_connectivity_governance().authority_evaluate(capability)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/connectivity-governance/providers")
+def tg_cg_providers(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_connectivity_governance().list_providers()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/connectivity-governance/providers/{provider_id}")
+def tg_cg_provider_detail(provider_id: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_connectivity_governance().get_provider(provider_id)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/connectivity-governance/capability-policy")
+def tg_cg_capability_policy(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_connectivity_governance().capability_policy()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/connectivity-governance/approvals")
+def tg_cg_approvals(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_connectivity_governance().list_approvals()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/connectivity-governance/approvals/{approval_id}")
+def tg_cg_approval_detail(approval_id: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_connectivity_governance().get_approval(approval_id)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+class CgApprovalBody(BaseModel):
+    requestor: str = "api_requestor"
+    approval_type: str = "provider_documentation_review"
+    provider: str = "prov_mock_contract"
+    environment: str = "governance"
+    capability_scope: list[str] = ["offline_fixture_access"]
+    operation_scope: list[str] = ["documentation_review"]
+    jurisdiction: str = "N/A"
+    expiry_seconds: float = 86400.0
+    allowed_network_destinations: list[str] = ["localhost"]
+    evidence_requirements: list[str] = ["docs"]
+    revocation_conditions: list[str] = ["operator_request"]
+    acknowledgements: list[str] = ["governance_only", "no_activation"]
+
+
+@router.post("/tg/connectivity-governance/approvals")
+def tg_cg_approval_create(body: CgApprovalBody | None = None, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        import time as _time
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        b = body or CgApprovalBody()
+        return _tg_connectivity_governance().create_approval(
+            requestor=b.requestor,
+            approval_type=b.approval_type,
+            provider=b.provider,
+            environment=b.environment,
+            capability_scope=b.capability_scope,
+            operation_scope=b.operation_scope,
+            jurisdiction=b.jurisdiction,
+            expiry_time=_time.time() + b.expiry_seconds,
+            allowed_network_destinations=b.allowed_network_destinations,
+            evidence_requirements=b.evidence_requirements,
+            revocation_conditions=b.revocation_conditions,
+            acknowledgements=b.acknowledgements,
+        )
+    except Exception as e:
+        from saathi.platform.tg.connectivity_governance.errors import ConnectivityGovernanceError
+        if isinstance(e, ConnectivityGovernanceError):
+            return e.to_dict()
+        if isinstance(e, PlatformContextError):
+            raise _err(e) from e
+        raise
+
+
+class CgReviewBody(BaseModel):
+    approver: str = "api_approver"
+    decision: str = "approve"
+    notes: str = ""
+
+
+@router.post("/tg/connectivity-governance/approvals/{approval_id}/submit")
+def tg_cg_approval_submit(approval_id: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        appr = _tg_connectivity_governance().get_approval(approval_id)
+        actor = (appr.get("approval") or {}).get("requestor") or "api_requestor"
+        return _tg_connectivity_governance().submit_approval(approval_id, actor=actor)
+    except Exception as e:
+        from saathi.platform.tg.connectivity_governance.errors import ConnectivityGovernanceError
+        if isinstance(e, ConnectivityGovernanceError):
+            return e.to_dict()
+        if isinstance(e, PlatformContextError):
+            raise _err(e) from e
+        raise
+
+
+@router.post("/tg/connectivity-governance/approvals/{approval_id}/review")
+def tg_cg_approval_review(approval_id: str, body: CgReviewBody | None = None, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        b = body or CgReviewBody()
+        return _tg_connectivity_governance().review_approval(approval_id, approver=b.approver, decision=b.decision, notes=b.notes)
+    except Exception as e:
+        from saathi.platform.tg.connectivity_governance.errors import ConnectivityGovernanceError
+        if isinstance(e, ConnectivityGovernanceError):
+            return e.to_dict()
+        if isinstance(e, PlatformContextError):
+            raise _err(e) from e
+        raise
+
+
+@router.post("/tg/connectivity-governance/approvals/{approval_id}/revoke")
+def tg_cg_approval_revoke(approval_id: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_connectivity_governance().revoke_approval(approval_id, actor="api_operator", reason="operator_request")
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/connectivity-governance/credential-policy")
+def tg_cg_credential_policy(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_connectivity_governance().credential_policy()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/connectivity-governance/revocations")
+def tg_cg_revocations(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_connectivity_governance().list_revocations()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/connectivity-governance/incidents")
+def tg_cg_incidents(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_connectivity_governance().list_incidents()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/connectivity-governance/incidents/{incident_id}")
+def tg_cg_incident_detail(incident_id: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_connectivity_governance().get_incident(incident_id)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+class CgEmergencyBody(BaseModel):
+    actor: str = "api_operator"
+    reason: str = "governance_drill"
+
+
+@router.get("/tg/connectivity-governance/emergency-shutdown")
+def tg_cg_emergency_status(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_connectivity_governance().emergency_status()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/connectivity-governance/emergency-shutdown")
+def tg_cg_emergency_activate(body: CgEmergencyBody | None = None, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        b = body or CgEmergencyBody()
+        return _tg_connectivity_governance().emergency_shutdown(actor=b.actor, reason=b.reason)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/connectivity-governance/threat-model")
+def tg_cg_threats(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_connectivity_governance().list_threats()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/connectivity-governance/risk-summary")
+def tg_cg_risk_summary(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_connectivity_governance().risk_summary()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/connectivity-governance/maturity")
+def tg_cg_maturity(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_connectivity_governance().maturity()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/connectivity-governance/bootstrap")
+def tg_cg_bootstrap(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_connectivity_governance().bootstrap_demo_pipeline()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/connectivity-governance/certify")
+def tg_cg_certify(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_connectivity_governance().certify()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/connectivity-governance/evidence")
+def tg_cg_evidence(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_connectivity_governance().evidence_bundle()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/tg/connectivity-governance/security")
+def tg_cg_security(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_connectivity_governance().security_scan()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+# Hard refusal endpoints — no secrets accepted, no connectivity
+@router.post("/tg/connectivity-governance/broker/login")
+def tg_cg_broker_login(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_connectivity_governance().refuse_broker_login()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/connectivity-governance/oauth")
+def tg_cg_oauth(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_connectivity_governance().refuse_oauth()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+class CgCredBody(BaseModel):
+    # Deliberately does not accept raw secret fields as validated credentials
+    note: str = "credentials_refused"
+
+
+@router.post("/tg/connectivity-governance/credentials")
+def tg_cg_credentials(body: CgCredBody | None = None, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_connectivity_governance().refuse_credentials(None)
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/connectivity-governance/connect")
+def tg_cg_connect(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_connectivity_governance().refuse_provider_connect()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/connectivity-governance/orders")
+def tg_cg_orders(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_connectivity_governance().refuse_order()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/connectivity-governance/accounts")
+def tg_cg_accounts(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_connectivity_governance().refuse_account_access()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/connectivity-governance/balances")
+def tg_cg_balances(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_connectivity_governance().refuse_balance_access()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/connectivity-governance/positions")
+def tg_cg_positions(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_connectivity_governance().refuse_position_access()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/connectivity-governance/canary/activate")
+def tg_cg_canary(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_connectivity_governance().refuse_canary()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.post("/tg/connectivity-governance/live/activate")
+def tg_cg_live(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_connectivity_governance().refuse_live_trading()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+# ---------------------------------------------------------------------------
+# M320–M327 Credentialless Provider Contracts (mock/replay only)
+# ---------------------------------------------------------------------------
+
+def _tg_provider_contracts():
+    from saathi.platform.tg.provider_contracts.service import default_provider_contracts
+    return default_provider_contracts()
+
+
+def _tg_pc_authorized(
+    authorization: str | None,
+    x_platform_token: str | None,
+):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_provider_contracts()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+class ProviderCapabilityBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    provider_id: str = "saathi.mock.market.v1"
+    capabilities: list[str] = Field(default_factory=lambda: [
+        "quotes",
+        "candles",
+        "trades",
+        "orderbook",
+        "symbols",
+        "market_status",
+    ])
+
+
+class ProviderOfflineRequestBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    provider_id: str = "saathi.mock.market.v1"
+    operation: str = "quotes.get"
+    params: dict[str, Any] = Field(default_factory=lambda: {"symbol": "AAPL"})
+    idempotency_key: str = "ui:mock:quote:AAPL:v1"
+    schema_version: str = "m320.provider_contracts.v1"
+
+
+@router.get("/tg/provider-contracts/posture")
+def tg_pc_posture(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    return _tg_pc_authorized(authorization, x_platform_token).posture()
+
+
+@router.get("/tg/provider-contracts/charter")
+def tg_pc_charter(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    return _tg_pc_authorized(authorization, x_platform_token).charter()
+
+
+@router.get("/tg/provider-contracts/dashboard")
+def tg_pc_dashboard(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    return _tg_pc_authorized(authorization, x_platform_token).dashboard()
+
+
+@router.get("/tg/provider-contracts/providers")
+def tg_pc_providers(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    return _tg_pc_authorized(authorization, x_platform_token).list_providers()
+
+
+@router.get("/tg/provider-contracts/providers/{provider_id}")
+def tg_pc_provider_detail(provider_id: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    service = _tg_pc_authorized(authorization, x_platform_token)
+    try:
+        return service.get_provider(provider_id)
+    except Exception as exc:
+        from saathi.platform.tg.provider_contracts.errors import normalize_error
+        return {"ok": False, "error": normalize_error(exc).to_dict()}
+
+
+@router.get("/tg/provider-contracts/capabilities")
+def tg_pc_capabilities(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    return _tg_pc_authorized(authorization, x_platform_token).capabilities()
+
+
+@router.post("/tg/provider-contracts/capabilities/negotiate")
+def tg_pc_capability_negotiate(body: ProviderCapabilityBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    service = _tg_pc_authorized(authorization, x_platform_token)
+    try:
+        return service.negotiate(body.provider_id, body.capabilities)
+    except Exception as exc:
+        from saathi.platform.tg.provider_contracts.errors import normalize_error
+        return {"ok": False, "error": normalize_error(exc).to_dict()}
+
+
+@router.get("/tg/provider-contracts/sessions")
+def tg_pc_sessions(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    return _tg_pc_authorized(authorization, x_platform_token).sessions()
+
+
+@router.get("/tg/provider-contracts/replay/fixtures")
+def tg_pc_replay_fixtures(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    return _tg_pc_authorized(authorization, x_platform_token).replay_fixtures()
+
+
+@router.post("/tg/provider-contracts/requests")
+def tg_pc_request(body: ProviderOfflineRequestBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    service = _tg_pc_authorized(authorization, x_platform_token)
+    return service.request(body.model_dump())
+
+
+@router.get("/tg/provider-contracts/security")
+def tg_pc_security(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    return _tg_pc_authorized(authorization, x_platform_token).security_scan()
+
+
+@router.get("/tg/provider-contracts/maturity")
+def tg_pc_maturity(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    return _tg_pc_authorized(authorization, x_platform_token).maturity()
+
+
+@router.get("/tg/provider-contracts/evidence")
+def tg_pc_evidence(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    return _tg_pc_authorized(authorization, x_platform_token).evidence_bundle()
+
+
+@router.post("/tg/provider-contracts/certify")
+def tg_pc_certify(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    return _tg_pc_authorized(authorization, x_platform_token).certify()
+
+
+# ---------------------------------------------------------------------------
+# M328–M335 Production Readiness, Observability & Operational Resilience
+# Read-only offline operations surface. No execution or deployment control.
+# ---------------------------------------------------------------------------
+
+def _tg_operations():
+    from saathi.platform.tg.production_readiness.service import default_operations
+    return default_operations()
+
+
+def _tg_ops_authorized(
+    authorization: str | None,
+    x_platform_token: str | None,
+):
+    try:
+        from saathi.platform.models import PlatformPermission
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return _tg_operations()
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+def _tg_ops_guard(fn, *args, **kwargs):
+    try:
+        return fn(*args, **kwargs)
+    except Exception as exc:
+        from saathi.platform.tg.production_readiness.errors import error_envelope
+        return error_envelope(exc)
+
+
+class OperationsAlertActionBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    actor: str = "operator"
+
+
+class OperationsRecoveryBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    snapshot_id: str | None = None
+
+
+@router.get("/tg/operations/posture")
+def tg_ops_posture(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    return _tg_ops_authorized(authorization, x_platform_token).posture()
+
+
+@router.get("/tg/operations/charter")
+def tg_ops_charter(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    return _tg_ops_authorized(authorization, x_platform_token).charter()
+
+
+@router.get("/tg/operations/control-center")
+def tg_ops_control_center(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    return _tg_ops_authorized(authorization, x_platform_token).control_center()
+
+
+@router.get("/tg/operations/health")
+def tg_ops_health(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    return _tg_ops_authorized(authorization, x_platform_token).health.snapshot()
+
+
+@router.get("/tg/operations/health/{component_id}")
+def tg_ops_health_component(component_id: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    service = _tg_ops_authorized(authorization, x_platform_token)
+    return _tg_ops_guard(service.health.component, component_id)
+
+
+@router.get("/tg/operations/observability")
+def tg_ops_observability(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    return _tg_ops_authorized(authorization, x_platform_token).observability.posture()
+
+
+@router.get("/tg/operations/observability/logs")
+def tg_ops_logs(limit: int = 200, level: str | None = None, component: str | None = None, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    service = _tg_ops_authorized(authorization, x_platform_token)
+    return _tg_ops_guard(service.observability.records, limit=limit, level=level, component=component)
+
+
+@router.get("/tg/operations/observability/traces/{trace_id}")
+def tg_ops_trace(trace_id: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    service = _tg_ops_authorized(authorization, x_platform_token)
+    return _tg_ops_guard(service.observability.trace, trace_id)
+
+
+@router.get("/tg/operations/observability/timelines")
+def tg_ops_timelines(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    return _tg_ops_authorized(authorization, x_platform_token).observability.timelines()
+
+
+@router.get("/tg/operations/observability/execution-history")
+def tg_ops_execution_history(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    return _tg_ops_authorized(authorization, x_platform_token).observability.execution_history()
+
+
+@router.get("/tg/operations/observability/audit-visualization")
+def tg_ops_audit_visualization(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    service = _tg_ops_authorized(authorization, x_platform_token)
+    return service.observability.audit_visualization(service.governance.store.list_audit(100))
+
+
+@router.get("/tg/operations/metrics")
+def tg_ops_metrics(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    return _tg_ops_authorized(authorization, x_platform_token).metrics.summary()
+
+
+@router.get("/tg/operations/alerts")
+def tg_ops_alerts(severity: str | None = None, state: str | None = None, limit: int = 100, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    service = _tg_ops_authorized(authorization, x_platform_token)
+    return _tg_ops_guard(service.alerts.list_alerts, severity=severity, state=state, limit=limit)
+
+
+@router.get("/tg/operations/alerts/policy")
+def tg_ops_alert_policy(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    return _tg_ops_authorized(authorization, x_platform_token).alerts.destination_policy()
+
+
+@router.post("/tg/operations/alerts/{alert_id}/acknowledge")
+def tg_ops_alert_acknowledge(alert_id: str, body: OperationsAlertActionBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    service = _tg_ops_authorized(authorization, x_platform_token)
+    return _tg_ops_guard(service.alerts.acknowledge, alert_id, body.actor)
+
+
+@router.post("/tg/operations/alerts/{alert_id}/resolve")
+def tg_ops_alert_resolve(alert_id: str, body: OperationsAlertActionBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    service = _tg_ops_authorized(authorization, x_platform_token)
+    return _tg_ops_guard(service.alerts.resolve, alert_id, body.actor)
+
+
+@router.get("/tg/operations/backups")
+def tg_ops_backups(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    return _tg_ops_authorized(authorization, x_platform_token).backups.list_snapshots()
+
+
+@router.post("/tg/operations/backups/verify")
+def tg_ops_backup_verify(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    return _tg_ops_authorized(authorization, x_platform_token).verify_backups()
+
+
+@router.post("/tg/operations/backups/simulate-recovery")
+def tg_ops_simulate_recovery(body: OperationsRecoveryBody, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    service = _tg_ops_authorized(authorization, x_platform_token)
+    return _tg_ops_guard(service.simulate_recovery, body.snapshot_id)
+
+
+@router.get("/tg/operations/backups/recovery-history")
+def tg_ops_recovery_history(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    return _tg_ops_authorized(authorization, x_platform_token).backups.recovery_history()
+
+
+@router.post("/tg/operations/diagnostics")
+def tg_ops_diagnostics(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    return _tg_ops_authorized(authorization, x_platform_token).run_diagnostics()
+
+
+@router.post("/tg/operations/load-validation")
+def tg_ops_load_validation(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    return _tg_ops_authorized(authorization, x_platform_token).run_load_validation()
+
+
+@router.get("/tg/operations/authority")
+def tg_ops_authority(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    return _tg_ops_authorized(authorization, x_platform_token).authority_summary()
+
+
+@router.get("/tg/operations/certification-history")
+def tg_ops_certification_history(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    return _tg_ops_authorized(authorization, x_platform_token).certification_history()
+
+
+@router.get("/tg/operations/security")
+def tg_ops_security(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    return _tg_ops_authorized(authorization, x_platform_token).security_scan()
+
+
+@router.get("/tg/operations/maturity")
+def tg_ops_maturity(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    return _tg_ops_authorized(authorization, x_platform_token).maturity()
+
+
+@router.get("/tg/operations/evidence")
+def tg_ops_evidence(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    return _tg_ops_authorized(authorization, x_platform_token).evidence_bundle()
+
+
+@router.post("/tg/operations/certify")
+def tg_ops_certify(authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
+    return _tg_ops_authorized(authorization, x_platform_token).certify()
+
+
+# ---------------------------------------------------------------------------
+# M336–M343 Private Alpha Launch Readiness
+# Read-only. No route here launches, deploys, publishes, invites, connects a
+# provider, executes an order, or records owner review. Owner review is a human
+# act performed outside this tooling and is never satisfied by an API call.
+# ---------------------------------------------------------------------------
+
+def _private_alpha_readiness_authorized(
+    authorization: str | None,
+    x_platform_token: str | None,
+):
+    try:
+        from saathi.platform.models import PlatformPermission
+
+        ctx = _tg_ctx(authorization, x_platform_token)
+        ctx.require_permission(PlatformPermission.PAPER_SAFETY_READ)
+        return ctx
+    except PlatformContextError as e:
+        raise _err(e) from e
+
+
+@router.get("/private-alpha/readiness")
+def private_alpha_readiness(
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    _private_alpha_readiness_authorized(authorization, x_platform_token)
+    from saathi.platform.private_alpha.launch_readiness import launch_readiness_report
+
+    return launch_readiness_report()
+
+
+@router.get("/private-alpha/checklist")
+def private_alpha_checklist(
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    _private_alpha_readiness_authorized(authorization, x_platform_token)
+    from saathi.platform.private_alpha.launch_readiness import build_checklist
+
+    return {"checklist": build_checklist()}
+
+
+@router.get("/private-alpha/contract")
+def private_alpha_contract(
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    _private_alpha_readiness_authorized(authorization, x_platform_token)
+    from saathi.platform.private_alpha.launch_readiness import (
+        AUTHORITY_LOCKS,
+        KNOWN_LIMITATIONS,
+        MAX_STATE,
+        authority_posture,
+    )
+
+    return {
+        "private_alpha": True,
+        "invite_only": True,
+        "public_registration_authorized": False,
+        "max_state": MAX_STATE,
+        "known_limitations": KNOWN_LIMITATIONS,
+        "authority_locks": authority_posture()["locks"],
+        "authority_lock_names": list(AUTHORITY_LOCKS),
+    }

@@ -13,7 +13,7 @@ function stateColor(runtime) {
 }
 
 export default function VoiceRuntimeDock() {
-  const { token, runtime, busy, toggleMic, interrupt, retry, micLabel } =
+  const { token, runtime, busy, toggleMic, interrupt, retry, micLabel, inputMode, setInputMode } =
     useVoiceRuntime();
   if (!token) return null;
 
@@ -48,6 +48,13 @@ export default function VoiceRuntimeDock() {
       </div>
 
       <div className="voice-runtime-controls">
+        <label className="voice-runtime-mode">
+          <span>Input</span>
+          <select value={inputMode} onChange={(e) => setInputMode(e.target.value)} disabled={runtime.recording || runtime.listening}>
+            <option value="LOCAL">Local</option>
+            <option value="BROWSER">Browser</option>
+          </select>
+        </label>
         <button
           type="button"
           className="voice-runtime-mic"
@@ -158,7 +165,13 @@ export default function VoiceRuntimeDock() {
 
       <style jsx>{`
         .voice-runtime-dock {
-          margin: 8px 12px 0;
+          position: fixed;
+          left: 16px;
+          bottom: 16px;
+          z-index: 50;
+          width: min(360px, calc(100vw - 32px));
+          box-sizing: border-box;
+          margin: 0;
           padding: 10px 12px;
           border-radius: 14px;
           border: 1px solid rgba(255, 255, 255, 0.08);
@@ -291,7 +304,9 @@ export default function VoiceRuntimeDock() {
         }
         @media (max-width: 720px) {
           .voice-runtime-dock {
-            margin: 6px 8px 0;
+            left: 8px;
+            bottom: 8px;
+            width: calc(100vw - 16px);
           }
         }
       `}</style>

@@ -144,6 +144,18 @@ export const voiceRuntimeActions = {
     );
     return parseJson(response);
   },
+  async stt(token, sessionId, body, signal) {
+    const response = await fetch(
+      `${API_BASE}/api/v1/platform/voice/runtime/sessions/${encodeURIComponent(sessionId)}/stt`,
+      {
+        method: "POST",
+        headers: authHeaders(token),
+        body: JSON.stringify({ session_id: sessionId, ...body }),
+        signal,
+      }
+    );
+    return parseJson(response);
+  },
   async interrupt(token, sessionId, signal) {
     const response = await fetch(
       `${API_BASE}/api/v1/platform/voice/runtime/sessions/${encodeURIComponent(sessionId)}/interrupt`,

@@ -1,0 +1,37 @@
+{
+  "evidence": "fm_i6_2.live_gates.v1",
+  "milestone": "FM-I6.2",
+  "captured_at": "2026-08-07T08:14:41+05:45",
+  "baseline_sha": "8540e686f4a56d54b9dca8ec3d36004468fd0392",
+  "gates": {
+    "runtime_available": true,
+    "endpoint_client_loopback": true,
+    "model_pin": true,
+    "digest_match": true,
+    "runtime_version_compatible": true,
+    "binding_loopback_only": false,
+    "lan_closed": false,
+    "ipv6_non_loopback_closed": false,
+    "firewall_enabled": false,
+    "single_server_process": false,
+    "no_loaded_model": true,
+    "memory_free_pct_ge_20": false,
+    "memory_available_mib_ge_1024": true,
+    "regression_suite_green": true,
+    "overall_live_allowed": false
+  },
+  "skip_reasons": [
+    "LIVE_OLLAMA_BINDING_UNSAFE: app server on *:11434 LAN/global open",
+    "DUPLICATE_RUNTIME: CLI LaunchAgent + Ollama.app both running",
+    "FIREWALL_DISABLED",
+    "MEMORY_GATE: free_percent≈19.74 < 20"
+  ],
+  "live_inference": {
+    "attempted": false,
+    "result": "NOT_STARTED"
+  },
+  "regression": {
+    "command": "pytest FM-I1..I4 + FM-I6 harness suites",
+    "result": "184 passed, 1 skipped"
+  }
+}
