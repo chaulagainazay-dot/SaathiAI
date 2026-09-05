@@ -254,13 +254,13 @@ export default function OperatorHome() {
         </div>
 
         <div style={card} data-core-yeti="true">
-          <h2 style={{ marginTop: 0, fontSize: 15 }}>Unified Yeti</h2>
+          <h2 style={{ marginTop: 0, fontSize: 15 }}>Unified Saathi</h2>
           <p style={{ fontSize: 12, color: "#8B98B4" }}>{CORE_NOTICE.yeti}</p>
           <div style={{ display: "flex", gap: 8 }}>
             <input
               value={yetiQ}
               onChange={(e) => setYetiQ(e.target.value)}
-              aria-label="Ask Yeti"
+              aria-label="Ask Saathi"
               style={{ flex: 1, padding: 8, borderRadius: 8 }}
             />
             <button
@@ -394,7 +394,7 @@ export default function OperatorHome() {
             </li>
           ))}
         </ul>
-        {!home?.activity?.length && <p style={{ color: "#8B98B4" }}>Activity appears as you search and ask Yeti.</p>}
+        {!home?.activity?.length && <p style={{ color: "#8B98B4" }}>Activity appears as you search and ask Saathi.</p>}
       </section>
 
       <p style={{ marginTop: 16, fontSize: 12, color: "#8B98B4" }}>{CORE_NOTICE.production}</p>

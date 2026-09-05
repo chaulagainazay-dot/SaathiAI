@@ -26,7 +26,7 @@ async function parseJson(response) {
 
 export const CORE_NOTICE = {
   unification: "Composes certified runtimes — not a second OS architecture",
-  yeti: "Yeti is read-only for financial and assessment mutation; ExecutionGateway remains authoritative",
+  yeti: "Saathi is read-only for financial and assessment mutation; ExecutionGateway remains authoritative",
   production: "Production deployment is not authorized for core unification",
 };
 

@@ -490,7 +490,8 @@ export default function CommandCenterPage() {
   const onSubmit = useCallback(
     (e) => {
       e?.preventDefault?.();
-      const text = input.trim();
+      const formValue = e?.currentTarget?.elements?.namedItem?.("command")?.value;
+      const text = String(formValue ?? input).trim();
       if (!text) return;
       setTranscript(text);
       setVoiceOverride("THINKING");
@@ -717,7 +718,7 @@ export default function CommandCenterPage() {
       </div>
 
       <p className="dl-context" data-testid="context-focus">
-        Focus: <strong>{contextLabel}</strong> · mode <strong>{mode}</strong> · Yeti <strong>{yeti}</strong>
+        Focus: <strong>{contextLabel}</strong> · mode <strong>{mode}</strong> · Saathi <strong>{yeti}</strong>
         {reducedMotion ? " · reduced motion" : ""}
       </p>
 
@@ -798,7 +799,7 @@ export default function CommandCenterPage() {
               </div>
             ) : null}
             <div className="dl-yeti" data-testid="yeti-state">
-              Mr. Yeti · {yeti}
+              Saathi · {yeti}
             </div>
             <div className="dl-transcript" data-testid="transcript">
               {transcript || model.saathi?.transcript
@@ -1146,6 +1147,7 @@ export default function CommandCenterPage() {
             {context.kind ? ` · ask about ${context.label}` : ""}
           </span>
           <input
+            name="command"
             className="dl-input"
             value={input}
             onChange={(e) => setInput(e.target.value)}

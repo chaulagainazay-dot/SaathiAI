@@ -20,7 +20,7 @@ const NAV = [
   "Listening",
   "Mock Test",
   "Readiness",
-  "Yeti",
+  "Saathi",
   "Settings",
 ];
 
@@ -550,15 +550,15 @@ export default function IELTSProductWorkspace() {
         </section>
       )}
 
-      {view === "Yeti" && (
+      {view === "Saathi" && (
         <section style={card}>
-          <h2 style={{ marginTop: 0 }}>Ask Yeti (grounded, read-only)</h2>
+          <h2 style={{ marginTop: 0 }}>Ask Saathi (grounded, read-only)</h2>
           <div style={{ display: "flex", gap: 8 }}>
             <input
               value={yetiQ}
               onChange={(e) => setYetiQ(e.target.value)}
               style={{ flex: 1, padding: 8, borderRadius: 8 }}
-              aria-label="Yeti coaching question"
+              aria-label="Saathi coaching question"
             />
             <button
               type="button"

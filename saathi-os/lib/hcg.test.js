@@ -63,7 +63,7 @@ describe("HCG Operations frontend contract", () => {
       "QR payment reference",
       "Open shift",
       "ledger-backed",
-      "Ask Yeti",
+      "Ask Saathi",
       "Create backup",
       "Application launcher",
       "derived from authoritative",

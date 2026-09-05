@@ -2,7 +2,7 @@
 import { usePathname } from "next/navigation";
 
 const TITLES = {
-  "/": { eyebrow: "MONDAY · 3 JULY", title: "Good morning, Ajay 👋" },
+  "/": { eyebrow: "OPERATE", title: "Central Command" },
   "/mission": { eyebrow: "SYSTEM", title: "Mission Control" },
   "/finance": { eyebrow: "DEPARTMENT", title: "Finance" },
   "/saathi": { eyebrow: "COMPANION", title: "Saathi" },

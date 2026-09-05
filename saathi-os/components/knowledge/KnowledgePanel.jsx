@@ -190,7 +190,7 @@ export default function KnowledgePanel() {
       <section style={styles.card} aria-label="Grounded question">
         <form onSubmit={ask}>
           <label htmlFor="knowledge-query" style={{ display: "block", marginBottom: 8, fontSize: 13 }}>
-            Ask Yeti (grounded)
+            Ask Saathi (grounded)
           </label>
           <textarea
             id="knowledge-query"

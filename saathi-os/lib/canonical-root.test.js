@@ -26,4 +26,22 @@ describe("SaathiOS canonical root", () => {
     assert.match(layout, /powered by SaathiAI intelligence/);
     assert.doesNotMatch(layout, /SaathiAI — Sovereign Orbit/);
   });
+
+  it("identifies the root truthfully in the mobile shell", () => {
+    const mobileTopBar = read("components/mobile/MobileTopBar.jsx");
+    assert.match(mobileTopBar, /"\/": \{ eyebrow: "OPERATE", title: "Central Command" \}/);
+    assert.doesNotMatch(mobileTopBar, /3 JULY|Good morning, Ajay/);
+  });
+
+  it("keeps chat inside the shell's single main landmark", () => {
+    const chat = read("components/chat/ChatWorkspace.jsx");
+    assert.match(chat, /aria-label=\{compact \? "Saathi conversation" : "Saathi Chat workspace"\}/);
+    assert.doesNotMatch(chat, /<main\b/);
+  });
+
+  it("submits the command form from its native named control", () => {
+    const command = read("app/command/page.jsx");
+    assert.match(command, /namedItem\?\.\("command"\)\?\.value/);
+    assert.match(command, /name="command"/);
+  });
 });

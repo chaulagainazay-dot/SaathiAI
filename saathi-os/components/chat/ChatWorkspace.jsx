@@ -251,7 +251,10 @@ export default function ChatWorkspace({ compact = false } = {}) {
       )}
 
       {/* ── main ── */}
-      <main style={compact ? { ...S.main, minHeight: 280 } : S.main}>
+      <section
+        aria-label={compact ? "Saathi conversation" : "Saathi Chat workspace"}
+        style={compact ? { ...S.main, minHeight: 280 } : S.main}
+      >
         <header style={{ display: "flex", gap: 10, alignItems: "center",
                          padding: "12px 16px", borderBottom: "1px solid rgba(255,255,255,.08)" }}>
           <strong style={{ fontSize: 14, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -348,7 +351,7 @@ export default function ChatWorkspace({ compact = false } = {}) {
             </button>
           )}
         </footer>
-      </main>
+      </section>
 
       {/* ── context panel (full workspace only) ── */}
       {!compact && conv && (

@@ -252,7 +252,7 @@ export default function DesignLabPage() {
       </div>
 
       <p className="dl-context" data-testid="context-focus">
-        Focus: <strong>{context.label}</strong> · scope <strong>{mode}</strong> · Yeti <strong>{yeti}</strong>
+        Focus: <strong>{context.label}</strong> · scope <strong>{mode}</strong> · Saathi <strong>{yeti}</strong>
         {reducedMotion ? " · reduced motion" : ""}
       </p>
 
@@ -302,7 +302,7 @@ export default function DesignLabPage() {
               data-testid="saathi-orb"
             />
             <div className="dl-yeti" data-testid="yeti-state">
-              Mr. Yeti (2D) · {yeti}
+              Saathi (2D) · {yeti}
             </div>
             <div className="dl-transcript" data-testid="transcript">
               {transcript ? `You: “${transcript}”` : "No transcript yet"}

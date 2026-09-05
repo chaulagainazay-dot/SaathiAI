@@ -32,7 +32,7 @@ export const INITIAL_VOICE_RUNTIME = Object.freeze({
   transcript: [],
   interruptions: [],
   history: [],
-  message: "Press the microphone to talk with Yeti.",
+  message: "Press the microphone to talk with Saathi.",
   error: "",
   speaking: false,
   recording: false,

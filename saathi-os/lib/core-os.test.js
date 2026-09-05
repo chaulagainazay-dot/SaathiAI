@@ -41,7 +41,7 @@ describe("SaathiOS Core unification frontend", () => {
     for (const text of [
       "Operator Home",
       "Universal Search",
-      "Unified Yeti",
+      "Unified Saathi",
       "Notification Center",
       "Today",
       "Automations",

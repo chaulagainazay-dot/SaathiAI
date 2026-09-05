@@ -800,12 +800,12 @@ export default function HcgWorkspace() {
             </ul>
           )}
           <div style={{ marginTop: 16 }}>
-            <h3 style={{ fontSize: 14 }}>Ask Yeti (grounded, read-only)</h3>
+            <h3 style={{ fontSize: 14 }}>Ask Saathi (grounded, read-only)</h3>
             <div style={{ display: "flex", gap: 8 }}>
               <input
                 value={yetiQ}
                 onChange={(e) => setYetiQ(e.target.value)}
-                aria-label="Yeti operational question"
+                aria-label="Saathi operational question"
                 style={{ flex: 1, padding: 8, borderRadius: 8 }}
               />
               <button

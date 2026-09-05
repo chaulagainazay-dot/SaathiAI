@@ -51,7 +51,7 @@ describe("IELTSAlert frontend contract", () => {
       "Listening practice",
       "Mock test workflow",
       "Exam readiness",
-      "Ask Yeti",
+      "Ask Saathi",
       "Pronunciation is not acoustically assessed",
       "no official IELTS claim",
       "Application launcher",
