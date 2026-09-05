@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useVoiceOutput } from "@/components/voice/VoiceOutputProvider";
+import { useVoiceRuntime } from "@/components/voice/VoiceRuntimeProvider";
 import { PLATFORM_CONTEXT_EVENT } from "@/lib/platform-client";
 import {
   VOICE_TEST_PHRASES,
@@ -45,6 +46,7 @@ function recognitionCtor() {
 
 export default function VoiceSettingsPage() {
   const voiceOutput = useVoiceOutput();
+  const voiceRuntime = useVoiceRuntime();
   const [runtimeVoices, setRuntimeVoices] = useState([]);
   const [voicesLoaded, setVoicesLoaded] = useState(false);
   const [synthesisSupported, setSynthesisSupported] = useState(false);
@@ -358,8 +360,49 @@ export default function VoiceSettingsPage() {
               placeholder="Recognized words appear here, or type to verify the fallback." />
           </label>
           <p style={{ color: "var(--text-muted)", margin: 0 }}>
-            Need local speech-to-text? Open <Link href="/command">Live voice</Link> and select <strong>Local</strong> input. It reuses SaathiOS&apos; admitted local Whisper-compatible provider and does not use browser speech recognition.
+            For local speech-to-text, select <strong>Local</strong> input below and run the explicit provider test. It reuses SaathiOS&apos; admitted Whisper-compatible provider and does not use browser speech recognition.
           </p>
+          <div style={row}>
+            <label style={row}>
+              <span>STT input</span>
+              <select
+                style={control}
+                value={voiceRuntime.inputMode}
+                onChange={(event) => voiceRuntime.setInputMode(event.target.value)}
+                disabled={voiceRuntime.runtime.recording || voiceRuntime.runtime.listening}
+              >
+                <option value="LOCAL">Local (Whisper-compatible)</option>
+                <option value="BROWSER">Browser SpeechRecognition</option>
+              </select>
+            </label>
+            <button
+              type="button"
+              style={button}
+              onClick={() => {
+                void voiceRuntime.toggleMic();
+                setInputStatus("Starting the local STT microphone test…");
+              }}
+              disabled={voiceRuntime.busy || voiceRuntime.runtime.recording || voiceRuntime.runtime.listening || voiceRuntime.inputMode !== "LOCAL"}
+            >
+              Start local STT test
+            </button>
+            <button
+              type="button"
+              style={button}
+              onClick={() => {
+                void voiceRuntime.toggleMic();
+                setInputStatus("Stopping the local STT microphone test…");
+              }}
+              disabled={voiceRuntime.busy || (!voiceRuntime.runtime.recording && !voiceRuntime.runtime.listening)}
+            >
+              Stop local STT test
+            </button>
+          </div>
+          {voiceRuntime.runtime.error && (
+            <p role="alert" style={{ color: "#f2b84b", margin: 0 }}>
+              Local STT is unavailable or failed safely. Use the text fallback or check local provider readiness.
+            </p>
+          )}
           <p role="status" aria-live="polite">{inputStatus}</p>
         </section>
 
