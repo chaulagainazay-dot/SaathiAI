@@ -393,8 +393,10 @@ export function VoiceRuntimeProvider({ children }) {
       const text = String(turn?.text || "").trim();
       const activeToken = token || getToken();
       const sid = sessionIdRef.current;
-      if (!text || !activeToken || !sid || localFinalRef.current === text) return;
-      localFinalRef.current = text;
+      const key = `${sid}:${turn?.utteranceId || turn?.sequence || ""}`;
+      const hasIdentity = Boolean(turn?.utteranceId || turn?.sequence);
+      if (!text || !activeToken || !sid || (hasIdentity && localFinalRef.current === key)) return;
+      localFinalRef.current = key;
       setBusy(true);
       void submitFinalTranscript(activeToken, sid, text).finally(() => setBusy(false));
     });

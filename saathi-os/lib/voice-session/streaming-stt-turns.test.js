@@ -78,6 +78,21 @@ describe("turn coordinator", () => {
     tc.onFinal({ text: "Stop talking please" });
     assert.equal(tc.getLastInterruptClass(), "REAL_INTERRUPTION");
   });
+
+  it("deduplicates repeated final events by utterance identity, not text", () => {
+    const finals = [];
+    const tc = createTurnCoordinator({ onTurnFinal: (turn) => finals.push(turn) });
+
+    tc.onFinal({ text: "yes", utteranceId: "u1" });
+    tc.onFinal({ text: "yes", utteranceId: "u1" });
+    tc.onFinal({ text: "yes", utteranceId: "u2" });
+
+    assert.equal(finals.length, 2);
+    assert.deepEqual(
+      finals.map((turn) => turn.utteranceId),
+      ["u1", "u2"]
+    );
+  });
 });
 
 describe("streaming pipeline + manager", () => {

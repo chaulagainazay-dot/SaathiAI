@@ -58,6 +58,9 @@ export function createTurnCoordinator(opts = {}) {
   let finalizedTurns = 0;
   let falseInterrupts = 0;
   let realInterrupts = 0;
+  let pendingUtteranceId = "";
+  let finalizedUtteranceId = "";
+  let finalizedText = "";
 
   function now() {
     return typeof performance !== "undefined" && performance.now
@@ -87,6 +90,7 @@ export function createTurnCoordinator(opts = {}) {
       finalizedAt: new Date().toISOString(),
       // Authority: never auto-execute tools from turn alone
       authority: "none",
+      utteranceId: pendingUtteranceId || "",
     };
     finalizedTurns += 1;
     partialText = "";
@@ -132,6 +136,11 @@ export function createTurnCoordinator(opts = {}) {
 
     onFinal(ev) {
       const text = normalizeTurnText(ev?.text || "");
+      const utteranceId = String(ev?.utteranceId || ev?.sequence || "");
+      if (utteranceId && utteranceId === finalizedUtteranceId && text === finalizedText) {
+        return null;
+      }
+      pendingUtteranceId = utteranceId;
       lastFinalText = text;
       partialText = text;
       lastActivityAt = now();
@@ -153,7 +162,12 @@ export function createTurnCoordinator(opts = {}) {
 
       // Linguistic completeness: punctuation / clause length / speech ended
       if (looksSyntacticallyComplete(text) || !vadSpeechActive || cfg.preferSttFinal) {
-        return tryFinalize("stt_final");
+        const out = tryFinalize("stt_final");
+        if (out) {
+          finalizedUtteranceId = utteranceId;
+          finalizedText = text;
+        }
+        return out;
       }
       emit("turn.possible_end", { reason: "stt_final_incomplete" });
       return null;
@@ -225,6 +239,9 @@ export function createTurnCoordinator(opts = {}) {
       vadSpeechActive = false;
       pendingFalseInterrupt = null;
       lastInterruptClass = null;
+      pendingUtteranceId = "";
+      finalizedUtteranceId = "";
+      finalizedText = "";
     },
 
     health() {
