@@ -1,0 +1,107 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+  <style>
+    body{margin:0;background:#f7f5f0;color:#16201b;font-family:'IBM Plex Sans',ui-sans-serif,system-ui,sans-serif;font-size:15px;line-height:1.55;}
+    *{box-sizing:border-box;}
+    h1,h2,h3{font-family:'Fraunces',Georgia,serif;font-weight:600;margin:0;}
+    .num{font-family:'IBM Plex Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums;}
+    a{color:#1f8a53;text-decoration:none;} a:hover{color:#166b40;}
+    .card{background:#fff;border:1px solid #dcdfd5;border-radius:12px;padding:1.1rem 1.25rem;box-shadow:0 1px 2px rgba(22,32,27,.04),0 8px 24px -12px rgba(22,32,27,.12);}
+    .tag{font-family:'IBM Plex Mono',monospace;font-size:.66rem;letter-spacing:.06em;text-transform:uppercase;color:#8a988f;}
+    .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:#1f8a53;display:flex;align-items:center;gap:.5rem;margin-bottom:.6rem;}
+    .eyebrow::before{content:"";width:6px;height:6px;border-radius:50%;background:#1f8a53;box-shadow:0 0 0 3px #e4f2e9;}
+    .badge{display:inline-flex;align-items:center;gap:.3rem;font-family:'IBM Plex Mono',monospace;font-size:.66rem;padding:.15rem .5rem;border-radius:100px;}
+    .up{background:#e4f2e9;color:#1f8a53;} .down{background:#fbeae7;color:#b83f34;}
+    .neutral{background:#eef0ea;color:#55645b;} .gold{background:#f6ecd6;color:#9a6d1f;}
+    .btn{font-size:.88rem;font-weight:600;padding:.5rem .9rem;border-radius:8px;border:1px solid #1f8a53;background:#1f8a53;color:#fff;display:inline-block;}
+    .btn.ghost{background:transparent;color:#1f8a53;}
+    .inp{font-size:.9rem;padding:.5rem .7rem;border:1px solid #dcdfd5;border-radius:8px;background:#fff;color:#16201b;}
+    th{text-align:left;font-family:'IBM Plex Mono',monospace;font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;color:#8a988f;font-weight:500;padding:.6rem .8rem;border-bottom:1px solid #dcdfd5;white-space:nowrap;}
+    td{padding:.6rem .8rem;border-bottom:1px solid #dcdfd5;color:#55645b;white-space:nowrap;}
+    td.s{color:#16201b;font-weight:600;}
+    table{width:100%;border-collapse:collapse;font-size:.88rem;}
+    .wrap{border:1px solid #dcdfd5;border-radius:12px;background:#fff;overflow:hidden;box-shadow:0 1px 2px rgba(22,32,27,.04),0 8px 24px -12px rgba(22,32,27,.12);}
+  </style>
+</helmet>
+<div style="min-height:100%;background:#f7f5f0;position:relative;"><div style="padding:0 0 1.5rem;">
+  <div style="padding:1rem 1.15rem .4rem;">
+    <div class="eyebrow" style="font-size:.62rem;">Portfolio</div>
+    <h1 style="font-size:1.5rem;letter-spacing:-0.01em;">All accounts</h1>
+  </div>
+
+  <div style="padding:0 1.15rem;">
+    <div class="card" style="padding:.95rem 1rem;">
+      <div class="tag">Market value</div>
+      <div class="num" style="font-family:'Fraunces',serif;font-size:1.9rem;font-weight:600;">Rs 18,42,660</div>
+      <div class="num" style="color:#1f8a53;font-size:.86rem;">+Rs 1,24,180 · +7.22%</div>
+      <div style="display:flex;gap:.4rem;margin-top:.6rem;flex-wrap:wrap;">
+        <span class="badge up">Today +4,310</span>
+        <span class="badge gold">1 unpriced</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:.4rem;overflow:hidden;padding:.75rem 1.15rem;">
+    <span class="badge up" style="padding:.35rem .7rem;font-size:.7rem;">All</span>
+    <span class="badge neutral" style="padding:.35rem .7rem;font-size:.7rem;">Naasa</span>
+    <span class="badge neutral" style="padding:.35rem .7rem;font-size:.7rem;">Imperial</span>
+    <span class="badge neutral" style="padding:.35rem .7rem;font-size:.7rem;">Vision</span>
+  </div>
+
+  <div style="padding:0 1.15rem;display:flex;flex-direction:column;gap:.5rem;">
+    <div class="card" style="padding:.75rem .85rem;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div><div style="font-weight:600;">NABIL</div><div class="num" style="color:#8a988f;font-size:.74rem;">420 @ 498.20 · Naasa</div></div>
+        <div style="text-align:right;"><div class="num" style="font-weight:600;">2,26,380</div><div class="num" style="color:#1f8a53;font-size:.76rem;">+17,136</div></div>
+      </div>
+    </div>
+    <div class="card" style="padding:.75rem .85rem;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div><div style="font-weight:600;">GBIME</div><div class="num" style="color:#8a988f;font-size:.74rem;">900 @ 238.40 · Imperial</div></div>
+        <div style="text-align:right;"><div class="num" style="font-weight:600;">2,25,000</div><div class="num" style="color:#1f8a53;font-size:.76rem;">+10,440</div></div>
+      </div>
+    </div>
+    <div class="card" style="padding:.75rem .85rem;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div><div style="font-weight:600;">EBL</div><div class="num" style="color:#8a988f;font-size:.74rem;">180 @ 742.00 · Imperial</div></div>
+        <div style="text-align:right;"><div class="num" style="font-weight:600;">1,28,898</div><div class="num" style="color:#b83f34;font-size:.76rem;">−4,662</div></div>
+      </div>
+    </div>
+    <div class="card" style="padding:.75rem .85rem;border-style:dashed;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div><div style="font-weight:600;color:#8a988f;">SHPC</div><div class="num" style="color:#8a988f;font-size:.74rem;">300 @ 418.60 · Vision</div></div>
+        <div style="text-align:right;"><div class="num" style="color:#9a6d1f;font-size:.8rem;">unpriced</div><div class="num" style="color:#8a988f;font-size:.74rem;">excluded</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div style="position:absolute;left:0;right:0;bottom:0;border-top:1px solid #dcdfd5;background:#ffffff;display:grid;grid-template-columns:repeat(4,1fr);">
+    <div style="padding:.7rem 0 1.4rem;text-align:center;color:#1f8a53;font-size:.7rem;font-weight:600;min-height:44px;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1f8a53" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg>
+      <div>Portfolio</div>
+    </div>
+    <div style="padding:.7rem 0 1.4rem;text-align:center;color:#8a988f;font-size:.7rem;min-height:44px;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8a988f" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l4-5 3 3 5-7"/></svg>
+      <div>Market</div>
+    </div>
+    <div style="padding:.7rem 0 1.4rem;text-align:center;color:#8a988f;font-size:.7rem;min-height:44px;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8a988f" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <div>Scan</div>
+    </div>
+    <div style="padding:.7rem 0 1.4rem;text-align:center;color:#8a988f;font-size:.7rem;min-height:44px;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8a988f" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 8-3 8h18s-3-1-3-8"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg>
+      <div>Alerts</div>
+    </div>
+  </div>
+</div></div>
+</x-dc>
+</body>
+</html>

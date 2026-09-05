@@ -1,0 +1,158 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+  <style>
+    body{margin:0;background:#f7f5f0;color:#16201b;font-family:'IBM Plex Sans',ui-sans-serif,system-ui,sans-serif;font-size:15px;line-height:1.55;}
+    *{box-sizing:border-box;}
+    h1,h2,h3{font-family:'Fraunces',Georgia,serif;font-weight:600;margin:0;}
+    .num{font-family:'IBM Plex Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums;}
+    a{color:#1f8a53;text-decoration:none;} a:hover{color:#166b40;}
+    .card{background:#fff;border:1px solid #dcdfd5;border-radius:12px;padding:1.1rem 1.25rem;box-shadow:0 1px 2px rgba(22,32,27,.04),0 8px 24px -12px rgba(22,32,27,.12);}
+    .tag{font-family:'IBM Plex Mono',monospace;font-size:.66rem;letter-spacing:.06em;text-transform:uppercase;color:#8a988f;}
+    .tile{border-radius:8px;padding:.5rem .55rem;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden;}
+    .tile .s{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:.78rem;}
+    .tile .p{font-family:'IBM Plex Mono',monospace;font-size:.7rem;opacity:.85;}
+  </style>
+</helmet>
+
+<div style="min-height:100%;background:#f7f5f0;">
+  <div style="max-width:1180px;margin:0 auto;padding:1.5rem 1.5rem 3rem;">
+
+    <div style="padding:0 0 .5rem;">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:#1f8a53;display:flex;align-items:center;gap:.5rem;margin-bottom:.6rem;">
+        <span style="width:6px;height:6px;border-radius:50%;background:#1f8a53;box-shadow:0 0 0 3px #e4f2e9;"></span>Market
+      </div>
+      <h1 style="font-size:2.3rem;letter-spacing:-0.01em;">Exchange-wide state</h1>
+      <p style="margin-top:.5rem;color:#55645b;max-width:60ch;">Last completed session 2026-09-03 against 2026-09-02, across 370 of 372 listed companies. Not live — this is the settled session.</p>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-top:1rem;">
+      <div class="card">
+        <div class="tag">NEPSE index</div>
+        <div class="num" style="font-family:'Fraunces',serif;font-size:2.2rem;font-weight:600;">2,542.77</div>
+        <div class="num" style="color:#1f8a53;font-size:.88rem;">+0.18% vs 2026-09-02</div>
+      </div>
+      <div class="card">
+        <div class="tag">Turnover</div>
+        <div class="num" style="font-family:'Fraunces',serif;font-size:2.2rem;font-weight:600;">Rs 3.47 Ar</div>
+        <div style="color:#8a988f;font-size:.78rem;">as published with the index</div>
+      </div>
+      <div class="card">
+        <div class="tag">Breadth</div>
+        <div class="num" style="font-family:'Fraunces',serif;font-size:2.2rem;font-weight:600;">1.17</div>
+        <div style="font-size:.82rem;"><span style="color:#1f8a53;">190 ↑</span> <span style="color:#b83f34;">162 ↓</span> <span style="color:#8a988f;">18 flat</span></div>
+      </div>
+      <div class="card">
+        <div class="tag">Classified</div>
+        <div class="num" style="font-family:'Fraunces',serif;font-size:2.2rem;font-weight:600;">183<span style="color:#8a988f;font-size:1.2rem;"> / 370</span></div>
+        <div style="color:#9a6d1f;font-size:.78rem;">partial sector coverage</div>
+      </div>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin:1.5rem 0 .4rem;">
+      <h3 style="font-size:1rem;">Sector heatmap</h3>
+      <div style="display:flex;gap:.35rem;align-items:center;font-family:'IBM Plex Mono',monospace;font-size:.64rem;color:#8a988f;">
+        <span>−3%</span>
+        <span style="width:22px;height:10px;background:#b83f34;border-radius:2px;"></span>
+        <span style="width:22px;height:10px;background:#d98b81;border-radius:2px;"></span>
+        <span style="width:22px;height:10px;background:#eef0ea;border-radius:2px;"></span>
+        <span style="width:22px;height:10px;background:#7fc49b;border-radius:2px;"></span>
+        <span style="width:22px;height:10px;background:#1f8a53;border-radius:2px;"></span>
+        <span>+3%</span>
+        <span style="margin-left:.5rem;">tile size = turnover</span>
+      </div>
+    </div>
+
+    <div class="card" style="padding:.9rem;">
+      <div style="display:grid;grid-template-columns:2fr 1.4fr 1fr;gap:.5rem;height:150px;">
+        <div style="display:flex;flex-direction:column;gap:.35rem;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.62rem;letter-spacing:.06em;text-transform:uppercase;color:#8a988f;">Commercial Bank · +0.25%</div>
+          <div style="display:grid;grid-template-columns:1.6fr 1fr 1fr;gap:.35rem;flex-grow:1;">
+            <div class="tile" style="background:#7fc49b;color:#0f3a24;"><span class="s">NABIL</span><span class="p">+0.28%</span></div>
+            <div class="tile" style="background:#a9d8bf;color:#0f3a24;"><span class="s">EBL</span><span class="p">+0.15%</span></div>
+            <div class="tile" style="background:#e4f2e9;color:#166b40;"><span class="s">GBIME</span><span class="p">+0.04%</span></div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:.35rem;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.62rem;letter-spacing:.06em;text-transform:uppercase;color:#8a988f;">Hydropower · −0.24%</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:.35rem;flex-grow:1;">
+            <div class="tile" style="background:#1f8a53;color:#ffffff;"><span class="s">RHPC</span><span class="p">+8.25%</span></div>
+            <div class="tile" style="background:#d98b81;color:#4a1712;"><span class="s">SPL</span><span class="p">−3.61%</span></div>
+            <div class="tile" style="background:#fbeae7;color:#b83f34;"><span class="s">MKJC</span><span class="p">−0.42%</span></div>
+            <div class="tile" style="background:#eef0ea;color:#55645b;"><span class="s">ULHC</span><span class="p">0.00%</span></div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:.35rem;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.62rem;letter-spacing:.06em;text-transform:uppercase;color:#8a988f;">Manufacturing · +0.46%</div>
+          <div style="display:grid;grid-template-rows:1.8fr 1fr;gap:.35rem;flex-grow:1;">
+            <div class="tile" style="background:#3fa06c;color:#ffffff;"><span class="s">RSML</span><span class="p">+5.01%</span></div>
+            <div class="tile" style="background:#a9d8bf;color:#0f3a24;"><span class="s">SHIVM</span><span class="p">+0.46%</span></div>
+          </div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:.5rem;height:78px;margin-top:.5rem;">
+        <div style="display:flex;flex-direction:column;gap:.3rem;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.62rem;text-transform:uppercase;color:#8a988f;">Microfinance · +0.27%</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.3rem;flex-grow:1;">
+            <div class="tile" style="background:#1f8a53;color:#fff;"><span class="s">WNLB</span><span class="p">+8.76%</span></div>
+            <div class="tile" style="background:#c96f63;color:#fff;"><span class="s">ANLB</span><span class="p">−6.10%</span></div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:.3rem;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.62rem;text-transform:uppercase;color:#8a988f;">Life Ins. · +0.08%</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.3rem;flex-grow:1;">
+            <div class="tile" style="background:#e4f2e9;color:#166b40;"><span class="s">LICN</span><span class="p">−0.76%</span></div>
+            <div class="tile" style="background:#a9d8bf;color:#0f3a24;"><span class="s">HLI</span><span class="p">+0.31%</span></div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:.3rem;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.62rem;text-transform:uppercase;color:#8a988f;">Investment · +1.26%</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.3rem;flex-grow:1;">
+            <div class="tile" style="background:#3fa06c;color:#fff;"><span class="s">CIT</span><span class="p">+1.84%</span></div>
+            <div class="tile" style="background:#7fc49b;color:#0f3a24;"><span class="s">NIFRA</span><span class="p">+0.92%</span></div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:.3rem;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.62rem;text-transform:uppercase;color:#8a988f;">Unsized · 4 symbols</div>
+          <div style="border:1px dashed #dcdfd5;border-radius:8px;flex-grow:1;display:flex;align-items:center;justify-content:center;color:#8a988f;font-size:.72rem;text-align:center;padding:0 .4rem;">no turnover reported — not drawn as zero</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1rem;">
+      <div class="card">
+        <div class="tag">Top gainers</div>
+        <div style="margin-top:.5rem;display:flex;flex-direction:column;gap:.4rem;">
+          <div style="display:flex;justify-content:space-between;"><span style="font-weight:600;">WNLB</span><span class="num" style="color:#1f8a53;">+8.76%</span></div>
+          <div style="display:flex;justify-content:space-between;"><span style="font-weight:600;">CKHL</span><span class="num" style="color:#1f8a53;">+8.56%</span></div>
+          <div style="display:flex;justify-content:space-between;"><span style="font-weight:600;">ALBSL</span><span class="num" style="color:#1f8a53;">+8.29%</span></div>
+          <div style="display:flex;justify-content:space-between;"><span style="font-weight:600;">RHPC</span><span class="num" style="color:#1f8a53;">+8.25%</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="tag">Top losers</div>
+        <div style="margin-top:.5rem;display:flex;flex-direction:column;gap:.4rem;">
+          <div style="display:flex;justify-content:space-between;"><span style="font-weight:600;">ANLB</span><span class="num" style="color:#b83f34;">−6.10%</span></div>
+          <div style="display:flex;justify-content:space-between;"><span style="font-weight:600;">CFCL</span><span class="num" style="color:#b83f34;">−5.76%</span></div>
+          <div style="display:flex;justify-content:space-between;"><span style="font-weight:600;">SMFBS</span><span class="num" style="color:#b83f34;">−4.38%</span></div>
+          <div style="display:flex;justify-content:space-between;"><span style="font-weight:600;">RMF2</span><span class="num" style="color:#b83f34;">−4.33%</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div style="border-left:3px solid #9a6d1f;background:#f6ecd6;border-radius:0 8px 8px 0;padding:.9rem 1.1rem;font-size:.9rem;margin-top:1rem;">
+      <strong>PURE −13.33% is held out of the losers table.</strong> A move beyond the ±10% circuit cannot be a trade move — on unadjusted prices that is a book closure or bonus issue repricing the stock. Holders did not lose that.
+    </div>
+
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

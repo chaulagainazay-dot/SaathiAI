@@ -1,0 +1,124 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+  <style>
+    body{margin:0;background:#f7f5f0;color:#16201b;font-family:'IBM Plex Sans',ui-sans-serif,system-ui,sans-serif;font-size:15px;line-height:1.55;}
+    *{box-sizing:border-box;}
+    h1,h2,h3{font-family:'Fraunces',Georgia,serif;font-weight:600;margin:0;}
+    .num{font-family:'IBM Plex Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums;}
+    a{color:#1f8a53;text-decoration:none;} a:hover{color:#166b40;}
+    .card{background:#fff;border:1px solid #dcdfd5;border-radius:12px;padding:1.1rem 1.25rem;box-shadow:0 1px 2px rgba(22,32,27,.04),0 8px 24px -12px rgba(22,32,27,.12);}
+    .tag{font-family:'IBM Plex Mono',monospace;font-size:.66rem;letter-spacing:.06em;text-transform:uppercase;color:#8a988f;}
+    .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:#1f8a53;display:flex;align-items:center;gap:.5rem;margin-bottom:.6rem;}
+    .eyebrow::before{content:"";width:6px;height:6px;border-radius:50%;background:#1f8a53;box-shadow:0 0 0 3px #e4f2e9;}
+    .badge{display:inline-flex;align-items:center;gap:.3rem;font-family:'IBM Plex Mono',monospace;font-size:.66rem;padding:.15rem .5rem;border-radius:100px;}
+    .up{background:#e4f2e9;color:#1f8a53;} .down{background:#fbeae7;color:#b83f34;}
+    .neutral{background:#eef0ea;color:#55645b;} .gold{background:#f6ecd6;color:#9a6d1f;}
+    .btn{font-size:.88rem;font-weight:600;padding:.5rem .9rem;border-radius:8px;border:1px solid #1f8a53;background:#1f8a53;color:#fff;display:inline-block;}
+    .btn.ghost{background:transparent;color:#1f8a53;}
+    .inp{font-size:.9rem;padding:.5rem .7rem;border:1px solid #dcdfd5;border-radius:8px;background:#fff;color:#16201b;}
+    th{text-align:left;font-family:'IBM Plex Mono',monospace;font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;color:#8a988f;font-weight:500;padding:.6rem .8rem;border-bottom:1px solid #dcdfd5;white-space:nowrap;}
+    td{padding:.6rem .8rem;border-bottom:1px solid #dcdfd5;color:#55645b;white-space:nowrap;}
+    td.s{color:#16201b;font-weight:600;}
+    table{width:100%;border-collapse:collapse;font-size:.88rem;}
+    .wrap{border:1px solid #dcdfd5;border-radius:12px;background:#fff;overflow:hidden;box-shadow:0 1px 2px rgba(22,32,27,.04),0 8px 24px -12px rgba(22,32,27,.12);}
+  </style>
+</helmet>
+<div style="min-height:100%;background:#f7f5f0;"><div style="max-width:1180px;margin:0 auto;padding:1.5rem 1.5rem 3rem;">
+  <div class="eyebrow">Alerts</div>
+  <h1 style="font-size:2.3rem;letter-spacing:-0.01em;">Price alerts</h1>
+  <p style="margin-top:.5rem;color:#55645b;max-width:60ch;">Rules are evaluated against the settled session and the live quote feed. A rule that could not be evaluated is shown as such — &ldquo;did not fire&rdquo; and &ldquo;could not tell&rdquo; are different, and acting on the first when it was the second is the failure this screen is designed against.</p>
+
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-top:1.25rem;">
+    <div class="card"><div class="tag">Active rules</div><div class="num" style="font-family:'Fraunces',serif;font-size:2.2rem;font-weight:600;">14</div></div>
+    <div class="card"><div class="tag">Fired today</div><div class="num" style="font-family:'Fraunces',serif;font-size:2.2rem;font-weight:600;color:#1f8a53;">3</div><div style="color:#8a988f;font-size:.78rem;">2 suppressed by cooldown</div></div>
+    <div class="card"><div class="tag">Not evaluable</div><div class="num" style="font-family:'Fraunces',serif;font-size:2.2rem;font-weight:600;color:#9a6d1f;">2</div><div style="color:#9a6d1f;font-size:.78rem;">missing price or indicator</div></div>
+  </div>
+
+  <div style="display:flex;gap:.6rem;flex-wrap:wrap;align-items:center;margin:1.25rem 0 .75rem;">
+    <span class="btn">New alert</span>
+    <span class="inp" style="color:#8a988f;">Delivery: in-app + push</span>
+    <span class="badge gold">Push not yet connected</span>
+  </div>
+
+  <div class="wrap">
+    <table>
+      <thead><tr><th>Symbol</th><th>Rule</th><th style="text-align:right;">Threshold</th><th style="text-align:right;">Observed</th><th>State</th><th>Last fired</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="s">NABIL</td><td>Price rises above</td>
+          <td class="num" style="text-align:right;">545.00</td><td class="num" style="text-align:right;">539.00</td>
+          <td><span class="badge neutral">Armed</span></td><td class="num" style="color:#8a988f;">—</td>
+        </tr>
+        <tr style="background:#eef0ea;">
+          <td class="s">RHPC</td><td>Day change above</td>
+          <td class="num" style="text-align:right;">+5.00%</td><td class="num" style="text-align:right;color:#1f8a53;">+8.25%</td>
+          <td><span class="badge up">Fired</span></td><td class="num">2026-09-03 12:41</td>
+        </tr>
+        <tr>
+          <td class="s">WNLB</td><td>Volume ratio above</td>
+          <td class="num" style="text-align:right;">2.00</td><td class="num" style="text-align:right;color:#1f8a53;">3.18</td>
+          <td><span class="badge up">Fired</span></td><td class="num">2026-09-03 11:07</td>
+        </tr>
+        <tr>
+          <td class="s">EBL</td><td>Price falls below</td>
+          <td class="num" style="text-align:right;">700.00</td><td class="num" style="text-align:right;">716.10</td>
+          <td><span class="badge neutral">Armed</span></td><td class="num" style="color:#8a988f;">—</td>
+        </tr>
+        <tr>
+          <td class="s">CKHL</td><td>RSI crosses above</td>
+          <td class="num" style="text-align:right;">30</td><td class="num" style="text-align:right;">32.1</td>
+          <td><span class="badge neutral">Cooling down · 41m</span></td><td class="num">2026-09-03 10:19</td>
+        </tr>
+        <tr>
+          <td class="s" style="color:#8a988f;">SHPC</td><td style="color:#8a988f;">Price rises above</td>
+          <td class="num" style="text-align:right;color:#8a988f;">440.00</td><td class="num" style="text-align:right;color:#9a6d1f;">no price</td>
+          <td><span class="badge gold">Not evaluable</span></td><td class="num" style="color:#8a988f;">—</td>
+        </tr>
+        <tr>
+          <td class="s" style="color:#8a988f;">NBF3</td><td style="color:#8a988f;">MACD crosses above signal</td>
+          <td class="num" style="text-align:right;color:#8a988f;">0</td><td class="num" style="text-align:right;color:#9a6d1f;">insufficient history</td>
+          <td><span class="badge gold">Not evaluable</span></td><td class="num" style="color:#8a988f;">—</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1rem;">
+    <div class="card">
+      <div class="tag">New alert</div>
+      <div style="display:flex;flex-direction:column;gap:.55rem;margin-top:.6rem;">
+        <div style="display:flex;gap:.4rem;align-items:center;flex-wrap:wrap;">
+          <span class="inp" style="min-width:110px;">NABIL</span>
+          <span class="inp">price rises above</span>
+          <span class="inp num" style="width:96px;">545.00</span>
+        </div>
+        <div style="display:flex;gap:.4rem;align-items:center;flex-wrap:wrap;">
+          <span style="color:#55645b;font-size:.86rem;">Cooldown</span>
+          <span class="inp num" style="width:72px;">60</span>
+          <span style="color:#55645b;font-size:.86rem;">minutes — so one crossing does not fire all day</span>
+        </div>
+        <div style="display:flex;gap:.5rem;margin-top:.2rem;"><span class="btn">Save alert</span><span class="btn ghost">Cancel</span></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="tag">Delivery</div>
+      <div style="margin-top:.6rem;display:flex;flex-direction:column;gap:.5rem;">
+        <div style="display:flex;justify-content:space-between;align-items:center;"><span>In-app</span><span class="badge up">On</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;"><span>Browser push</span><span class="badge gold">Needs permission</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;"><span>Telegram</span><span class="badge neutral">Off</span></div>
+      </div>
+      <div style="margin-top:.7rem;font-size:.78rem;color:#8a988f;">Rules decide whether an alert should fire. Delivery is separate, so a failed send can never look like a rule that never triggered.</div>
+    </div>
+  </div>
+</div></div>
+</x-dc>
+</body>
+</html>
