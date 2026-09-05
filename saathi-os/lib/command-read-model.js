@@ -480,6 +480,13 @@ export function composeSystemStrip({ portfolio, risk, voiceState, infra = null, 
           ? "UNAVAILABLE"
           : "HEALTHY";
 
+  // Infrastructure health returns `models` as a list of bounded capability
+  // records. Keep the command UI's status-strip value scalar; rendering the
+  // list directly would make React attempt to render those records as children.
+  const modelValue = Array.isArray(infra?.models)
+    ? (infra.models.length ? `${infra.models.length} bound` : "BOUND")
+    : (typeof infra?.models === "string" ? infra.models : "BOUND");
+
   return {
     provenance: PROD_PROVENANCE.DERIVED,
     paper: { value: "PAPER", status: "HEALTHY" },
@@ -502,7 +509,7 @@ export function composeSystemStrip({ portfolio, risk, voiceState, infra = null, 
             : "UNAVAILABLE",
     },
     models: {
-      value: infra?.models || "BOUND",
+      value: modelValue,
       status: infra?.ok === false ? "DEGRADED" : "HEALTHY",
     },
     gateway: {

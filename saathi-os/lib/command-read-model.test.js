@@ -7,6 +7,7 @@ import {
   composeProposalPanel,
   composePerformancePanel,
   composeAttention,
+  composeSystemStrip,
   reasonCodeLabel,
   mapProductionUiIntent,
   formatFraction,
@@ -91,6 +92,14 @@ describe("command-read-model production", () => {
     assert.equal(m.meta.authorizesExecution, false);
     assert.equal(m.meta.frontendRiskAuthority, false);
     assert.ok(m.evidence.causal_chain.some((c) => c.type === "ledger"));
+  });
+
+  it("keeps infrastructure model status scalar for React rendering", () => {
+    const strip = composeSystemStrip({
+      infra: { models: [{ id: "local", available: true, light: "🟢" }] },
+    });
+    assert.equal(strip.models.value, "1 bound");
+    assert.equal(typeof strip.models.value, "string");
   });
 
   it("voice intents never authorize finance", () => {
