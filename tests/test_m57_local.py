@@ -108,6 +108,14 @@ def test_launcher_localhost_only_and_failclosed_guards():
     assert "com.saathi.local-launcher" in src
 
 
+def test_launcher_detaches_owned_services_from_the_invoking_shell():
+    src = open(LAUNCHER, encoding="utf-8").read()
+    assert src.count("exec nohup") == 2
+    assert src.count("</dev/null") >= 2
+    assert 'node_modules/.bin/next" dev' in src
+    assert "_descends_from" in src
+
+
 def _run(args, home, extra_env=None, path_prefix=None):
     path = os.environ.get("PATH", "")
     if path_prefix:

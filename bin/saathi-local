@@ -64,6 +64,16 @@ _sig_frontend='next(-server| dev)'
 _alive() { local pid="$1"; [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; }
 _cmd_of() { ps -o command= -p "$1" 2>/dev/null || true; }
 _cwd_of() { lsof -a -p "$1" -d cwd -Fn 2>/dev/null | grep '^n' | head -n1 | sed 's/^n//'; }
+_descends_from() {  # _descends_from <pid> <ancestor> — bounded parent walk
+  local pid="$1" ancestor="$2" parent hops=0
+  while [ "$pid" -gt 1 ] 2>/dev/null && [ "$hops" -lt 16 ]; do
+    parent="$(ps -o ppid= -p "$pid" 2>/dev/null | tr -d ' ' || true)"
+    [ -n "$parent" ] || return 1
+    [ "$parent" = "$ancestor" ] && return 0
+    pid="$parent"; hops=$((hops+1))
+  done
+  return 1
+}
 _is_saathi() {  # _is_saathi <pid> <role> — recognizes this checkout's SaathiOS process
   local pid="$1" role="$2" cmd cwd expected
   _alive "$pid" || return 1
@@ -79,10 +89,11 @@ _is_saathi() {  # _is_saathi <pid> <role> — recognizes this checkout's SaathiO
 }
 # Owned == recognized SaathiOS process AND recorded in the launcher's PID file.
 _owned() {  # _owned <pid> <role>
-  local pid="$1" role="$2" pf
+  local pid="$1" role="$2" pf recorded
   _is_saathi "$pid" "$role" || return 1
   case "$role" in backend) pf="$BACKEND_PID";; frontend) pf="$FRONTEND_PID";; *) return 1;; esac
-  [ "$(_read_pid "$pf")" = "$pid" ]
+  recorded="$(_read_pid "$pf")"
+  [ "$recorded" = "$pid" ] || _descends_from "$pid" "$recorded"
 }
 _read_pid() { [ -f "$1" ] && head -n1 "$1" 2>/dev/null | tr -dc '0-9' || true; }
 _listener_pid() { lsof -nP -iTCP:"$1" -sTCP:LISTEN -t 2>/dev/null | head -n1 || true; }
@@ -189,7 +200,7 @@ _ensure_backend() {
     free)
       _check_backend_toolchain || { say "backend: cannot start — environment not ready; see doctor"; return 1; }
       _rotate "$BACKEND_LOG"
-      ( cd "$REPO" && exec "$PY" -m uvicorn saathi.server:app --host "$BFF_HOST" --port "$BFF_PORT" ) >>"$BACKEND_LOG" 2>&1 &
+      ( cd "$REPO" && exec nohup "$PY" -m uvicorn saathi.server:app --host "$BFF_HOST" --port "$BFF_PORT" ) </dev/null >>"$BACKEND_LOG" 2>&1 &
       local np=$!; printf '%s\nbackend\n' "$np" >"$BACKEND_PID"
       say "backend: starting PID $np on $BFF_HOST:$BFF_PORT"
       _wait_ready _backend_ready backend 60 || { say "backend failed to start (see: saathi-local logs --backend)"; return 1; }
@@ -206,7 +217,7 @@ _ensure_frontend() {
     free)
       _check_frontend_toolchain || { say "frontend: cannot start — environment not ready; see doctor"; return 1; }
       _rotate "$FRONTEND_LOG"
-      ( cd "$REPO/saathi-os" && NEXT_PUBLIC_SAATHI_API="$API_BASE" NEXT_PUBLIC_LOCAL_API="$API_BASE" exec npm run dev ) >>"$FRONTEND_LOG" 2>&1 &
+      ( cd "$REPO/saathi-os" && exec nohup env NEXT_PUBLIC_SAATHI_API="$API_BASE" NEXT_PUBLIC_LOCAL_API="$API_BASE" "$REPO/saathi-os/node_modules/.bin/next" dev -H "$UI_HOST" -p "$UI_PORT" ) </dev/null >>"$FRONTEND_LOG" 2>&1 &
       local np=$!; printf '%s\nfrontend\n' "$np" >"$FRONTEND_PID"
       say "frontend: starting PID $np on $UI_URL (API=$API_BASE)"
       _wait_ready _frontend_ready frontend 90 || { say "frontend failed to start (see: saathi-local logs --frontend)"; return 1; }
