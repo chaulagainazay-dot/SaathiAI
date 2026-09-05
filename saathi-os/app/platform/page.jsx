@@ -490,6 +490,10 @@ export default function PlatformPage() {
                 Sign in to bring the runtime online. Executes only through PlatformAgentRuntime and
                 ExecutionGateway. Connectors remain dry-run; production and trading are disabled.
               </Text>
+              <Text tone="muted" size="sm" as="p" style={{ marginTop: 8 }}>
+                SaathiOS owners should use the canonical security sign-in first; it establishes the
+                platform session without a second credential prompt. <a href="/unlock" style={{ color: "var(--accent)" }}>Open canonical sign-in →</a>
+              </Text>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginTop: "var(--space-4)" }}>
                 <Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="email" aria-label="Email" data-testid="platform-email" style={{ maxWidth: 220 }} />
                 <Input
