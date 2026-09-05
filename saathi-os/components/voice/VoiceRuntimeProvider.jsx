@@ -23,6 +23,7 @@ import {
   acquireInputClaim,
   openMicrophoneForClaim,
   forceReleaseInput,
+  createLocalStreamingStt,
 } from "@/lib/voice-session";
 import { useVoiceSession } from "./VoiceSessionProvider";
 
@@ -35,6 +36,7 @@ export function VoiceRuntimeProvider({ children }) {
     INITIAL_VOICE_RUNTIME
   );
   const [busy, setBusy] = useState(false);
+  const [inputMode, setInputMode] = useState("BROWSER");
   const recognitionRef = useRef(null);
   const sessionIdRef = useRef("");
   const sessionCreateRef = useRef(null);
@@ -96,6 +98,10 @@ export function VoiceRuntimeProvider({ children }) {
   }, [cleanupLocal]);
 
   useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem("saathi_voice_input_mode_v1");
+      if (saved === "LOCAL" || saved === "BROWSER") setInputMode(saved);
+    } catch { /* optional preference */ }
     setToken(getToken());
     const onContext = (event) => {
       hardReset();
@@ -109,6 +115,25 @@ export function VoiceRuntimeProvider({ children }) {
       cleanupLocal();
     };
   }, [cleanupLocal, hardReset]);
+
+  const encodePcm = useCallback((pcm) => {
+    const bytes = new Uint8Array(pcm.length * 2);
+    const view = new DataView(bytes.buffer);
+    for (let i = 0; i < pcm.length; i += 1) {
+      const sample = Math.max(-1, Math.min(1, Number(pcm[i]) || 0));
+      view.setInt16(i * 2, sample < 0 ? sample * 32768 : sample * 32767, true);
+    }
+    let binary = "";
+    const step = 0x8000;
+    for (let i = 0; i < bytes.length; i += step) binary += String.fromCharCode(...bytes.subarray(i, i + step));
+    return btoa(binary);
+  }, []);
+
+  const setLocalMode = useCallback((mode) => {
+    const next = mode === "LOCAL" ? "LOCAL" : "BROWSER";
+    setInputMode(next);
+    try { window.localStorage.setItem("saathi_voice_input_mode_v1", next); } catch { /* optional */ }
+  }, []);
 
   // Shell mounts this provider above the router, so a client-side navigation
   // does not unmount it and the microphone stream would stay hot on an
@@ -129,7 +154,7 @@ export function VoiceRuntimeProvider({ children }) {
       const promise = (async () => {
         const created = await voiceRuntimeActions.createSession(activeToken, {
           input_mode: "toggle",
-          stt_provider: getRecognitionCtor() ? "browser" : "auto",
+          stt_provider: inputMode === "LOCAL" ? "whisper_compatible" : (getRecognitionCtor() ? "browser" : "auto"),
           voice_profile_id: "yeti_teacher",
           yeti_mode: "general",
         });
@@ -152,7 +177,7 @@ export function VoiceRuntimeProvider({ children }) {
       );
       return promise;
     },
-    []
+    [inputMode]
   );
 
   const refreshHistory = useCallback(
@@ -318,6 +343,29 @@ export function VoiceRuntimeProvider({ children }) {
     [cleanupLocal, submitFinalTranscript, voiceSession]
   );
 
+  const startLocalRecognition = useCallback(async (activeToken, sessionId) => {
+    const factory = () => createLocalStreamingStt({
+      modelId: "tiny",
+      engineId: "faster-whisper",
+      sampleRate: 16000,
+      minSamplesForPartial: 16000 * 30,
+      partialEveryMs: 30_000,
+      transcribeFn: async ({ pcm, sampleRate, language, isFinal }) => {
+        if (!isFinal) return { text: "", isFinal: false, language };
+        const result = await voiceRuntimeActions.stt(activeToken, sessionId, {
+          audio_base64: encodePcm(pcm),
+          sample_rate: sampleRate,
+          language: language || "en",
+        });
+        return result.transcript || { text: "", isFinal: true, language };
+      },
+    });
+    await voiceSession?.beginInput({ label: "VoiceRuntimeProvider", stopOutputFirst: true, startPipeline: false });
+    await voiceSession?.manager?.startStreamingPipeline?.({ sttMode: "local", localSttFactory: factory });
+    await voiceSession?.armVad?.({ bargeInMode: false });
+    dispatch({ type: "LOCAL_RECORDING", recording: true, listening: true });
+  }, [encodePcm, voiceSession]);
+
   const interrupt = useCallback(async () => {
     const activeToken = token || getToken();
     const sessionId = sessionIdRef.current;
@@ -337,6 +385,22 @@ export function VoiceRuntimeProvider({ children }) {
     }
   }, [startBrowserRecognition, token, voiceOutput, voiceSession]);
 
+  const localFinalRef = useRef("");
+  useEffect(() => {
+    const manager = voiceSession?.manager;
+    if (inputMode !== "LOCAL" || !manager?.setTurnFinalHandler) return undefined;
+    const unset = manager.setTurnFinalHandler((turn) => {
+      const text = String(turn?.text || "").trim();
+      const activeToken = token || getToken();
+      const sid = sessionIdRef.current;
+      if (!text || !activeToken || !sid || localFinalRef.current === text) return;
+      localFinalRef.current = text;
+      setBusy(true);
+      void submitFinalTranscript(activeToken, sid, text).finally(() => setBusy(false));
+    });
+    return unset;
+  }, [inputMode, submitFinalTranscript, token, voiceSession]);
+
   const toggleMic = useCallback(async () => {
     const activeToken = token || getToken();
     if (!activeToken) {
@@ -348,6 +412,7 @@ export function VoiceRuntimeProvider({ children }) {
       return;
     }
     if (runtime.recording) {
+      localFinalRef.current = "";
       cleanupLocal();
       if (sessionIdRef.current) {
         try {
@@ -370,12 +435,16 @@ export function VoiceRuntimeProvider({ children }) {
       // Source contract: await voiceOutput.stop immediately before ensureSession.
       await voiceSession?.openSession?.({
         sessionId: sessionIdRef.current || undefined,
-        inputProvider: "browser",
+        inputProvider: inputMode.toLowerCase(),
         outputProvider: "platform",
       });
       await voiceOutput?.stop?.();
       const sessionId = await ensureSession(activeToken);
-      await startBrowserRecognition(activeToken, sessionId);
+      if (inputMode === "LOCAL") {
+        await startLocalRecognition(activeToken, sessionId);
+      } else {
+        await startBrowserRecognition(activeToken, sessionId);
+      }
       await refreshHistory(activeToken);
     } catch (error) {
       dispatch({
@@ -395,6 +464,8 @@ export function VoiceRuntimeProvider({ children }) {
     runtime.recording,
     runtime.speaking,
     startBrowserRecognition,
+    startLocalRecognition,
+    inputMode,
     token,
     voiceSession,
     voiceOutput,
@@ -413,6 +484,8 @@ export function VoiceRuntimeProvider({ children }) {
     interrupt,
     retry,
     hardReset,
+    inputMode,
+    setInputMode: setLocalMode,
     micLabel: micButtonLabel(runtime),
   };
 

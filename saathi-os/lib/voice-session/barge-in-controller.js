@@ -122,6 +122,7 @@ export function createBargeInController({ manager = null, getStream, config = {}
           stream,
           config: cfg,
           onFrame: (frame, meta) => {
+            mgr()?.notifyPcmFrame?.(frame, meta);
             vad.processAudioFrame(frame, meta);
           },
         });

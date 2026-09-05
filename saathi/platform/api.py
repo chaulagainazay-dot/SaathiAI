@@ -4,6 +4,7 @@ Read-safe by default. Mutation routes require session + RBAC. No live connectors
 """
 from __future__ import annotations
 
+import base64
 import re
 from typing import Any
 
@@ -392,6 +393,15 @@ class VoiceRuntimeListenBody(BaseModel):
 
     mode: str = Field(default="toggle", max_length=40)
     permission_granted: bool = True
+
+
+class VoiceRuntimeSttBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    session_id: str = Field(min_length=1, max_length=160)
+    audio_base64: str = Field(min_length=1, max_length=8_000_000)
+    sample_rate: int = Field(default=16000, ge=8000, le=48000)
+    language: str = Field(default="en", max_length=16)
 
 
 class VoiceRuntimeTranscriptBody(BaseModel):
@@ -6695,6 +6705,31 @@ def voice_runtime_permission(
                 session_id,
                 granted=body.granted,
             )
+        )
+    except Exception as exc:
+        raise _voice_failure(exc) from exc
+
+
+@router.post("/voice/runtime/sessions/{session_id}/stt")
+def voice_runtime_stt(
+    session_id: str,
+    body: VoiceRuntimeSttBody,
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    if body.session_id != session_id:
+        raise _voice_failure(PlatformContextError("VALIDATION_FAILED", "session mismatch"))
+    try:
+        audio = base64.b64decode(body.audio_base64, validate=True)
+    except (ValueError, base64.binascii.Error) as exc:
+        raise _voice_failure(PlatformContextError("VALIDATION_FAILED", "invalid audio encoding")) from exc
+    try:
+        return _voice_runtime().transcribe_audio(
+            _voice_context(authorization, x_platform_token),
+            session_id,
+            audio,
+            sample_rate=body.sample_rate,
+            language=body.language,
         )
     except Exception as exc:
         raise _voice_failure(exc) from exc

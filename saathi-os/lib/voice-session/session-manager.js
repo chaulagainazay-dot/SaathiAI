@@ -63,6 +63,7 @@ export function createVoiceSessionManager(hooks = {}) {
   let speechDetected = false;
   let error = "";
   let startedAt = null;
+  let turnFinalHandler = null;
 
   function getMediaStream() {
     return inputClaim?.mediaStream || null;
@@ -185,6 +186,11 @@ export function createVoiceSessionManager(hooks = {}) {
     notifyTurnFinal(turn) {
       // isExecutable flag is informational — Command must not auto-execute tools
       publish({ lastTurn: turn });
+      try { turnFinalHandler?.(turn); } catch { /* consumer isolation */ }
+    },
+    setTurnFinalHandler(fn) {
+      turnFinalHandler = typeof fn === "function" ? fn : null;
+      return () => { if (turnFinalHandler === fn) turnFinalHandler = null; };
     },
     notifyPipelineEvent(ev) {
       publish({ lastPipelineEvent: ev });
@@ -242,7 +248,7 @@ export function createVoiceSessionManager(hooks = {}) {
       // second browser recognizer before the provider starts its one.
       if (startPipeline) {
         try {
-          await api.startStreamingPipeline({ sttMode: hooks.sttMode || "auto" });
+            await api.startStreamingPipeline({ sttMode: hooks.sttMode || "auto", localSttFactory: hooks.localSttFactory });
         } catch (err) {
           api.notifySttDegraded(String(err?.message || err));
         }
@@ -253,7 +259,7 @@ export function createVoiceSessionManager(hooks = {}) {
     /**
      * Attach streaming STT pipeline (tests may inject mock mode).
      */
-    async startStreamingPipeline({ sttMode = "auto" } = {}) {
+    async startStreamingPipeline({ sttMode = "auto", localSttFactory = null } = {}) {
       if (pipeline) {
         try {
           await pipeline.stop();
@@ -261,7 +267,7 @@ export function createVoiceSessionManager(hooks = {}) {
           /* ignore */
         }
       }
-      pipeline = createRealtimeVoicePipeline({ manager: api, sttMode });
+      pipeline = createRealtimeVoicePipeline({ manager: api, sttMode, localSttFactory });
       await pipeline.start();
       return pipeline.health();
     },
@@ -302,6 +308,11 @@ export function createVoiceSessionManager(hooks = {}) {
     /** Test/synthetic frames into VAD + pre-roll */
     processVadFrame(frame, meta) {
       bargeIn.processFrame(frame, meta);
+    },
+
+    notifyPcmFrame(frame, meta) {
+      pipeline?.pushLivePcm?.(frame, meta);
+      hooks.onPcmFrame?.(frame, meta);
     },
 
     getPreRollSamples() {

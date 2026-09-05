@@ -493,6 +493,29 @@ class VoiceSessionManager:
             "turn": turn,
         }
 
+    def transcribe_audio(
+        self,
+        ctx,
+        session_id: str,
+        audio_bytes: bytes,
+        *,
+        sample_rate: int = 16_000,
+        language: str = "en",
+    ) -> dict[str, Any]:
+        """Authenticated STT-only operation; never creates a conversation turn."""
+        self._require(ctx, PlatformPermission.VOICE_TRANSCRIBE)
+        session = self._get_owned(ctx, session_id)
+        if not audio_bytes or len(audio_bytes) > MAX_AUDIO_UPLOAD_BYTES:
+            raise PlatformContextError("VALIDATION_FAILED", "audio payload is invalid")
+        provider = select_stt_provider("whisper_compatible", self.stt_providers)
+        result = provider.transcribe(
+            audio_bytes,
+            sample_rate=int(sample_rate),
+            language=(language or session.locale or "en").split("-")[0],
+            timeout_seconds=30.0,
+        )
+        return {"transcript": result.to_public(), "session_id": session.session_id}
+
     # ── turn / speak / interrupt ─────────────────────────────────────────
     def _run_turn(self, ctx, session: ConversationSession, user_text: str) -> dict[str, Any]:
         # Final transcripts may arrive from IDLE after push-to-talk stop.

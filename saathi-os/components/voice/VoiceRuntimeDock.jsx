@@ -13,7 +13,7 @@ function stateColor(runtime) {
 }
 
 export default function VoiceRuntimeDock() {
-  const { token, runtime, busy, toggleMic, interrupt, retry, micLabel } =
+  const { token, runtime, busy, toggleMic, interrupt, retry, micLabel, inputMode, setInputMode } =
     useVoiceRuntime();
   if (!token) return null;
 
@@ -48,6 +48,13 @@ export default function VoiceRuntimeDock() {
       </div>
 
       <div className="voice-runtime-controls">
+        <label className="voice-runtime-mode">
+          <span>Input</span>
+          <select value={inputMode} onChange={(e) => setInputMode(e.target.value)} disabled={runtime.recording || runtime.listening}>
+            <option value="LOCAL">Local</option>
+            <option value="BROWSER">Browser</option>
+          </select>
+        </label>
         <button
           type="button"
           className="voice-runtime-mic"
