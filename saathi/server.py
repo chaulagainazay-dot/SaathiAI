@@ -2688,19 +2688,17 @@ def analysis_narrate(body: NarrateIn, request: Request):
     if len(facts) > _NARRATE_MAX_FACTS:
         return {"ok": False, "reason": "FACTS_TOO_LARGE"}
 
-    from saathi import llm
-    from saathi.model_router import ModelLabel
+    # Server routes reach the model INDIRECTLY, through the registered
+    # `tools_llm_helper` caller — the convention the `server_tools` caller policy
+    # states outright ("no direct provider from server routes"). The earlier
+    # version called the deprecated `llm.generate` facade with caller_id
+    # "analysis_narrate", which is not a registered caller, so preflight denied
+    # every request and this endpoint always answered LLM_UNAVAILABLE.
+    from saathi.tools._llm_helper import ask_llm_result
 
     prompt = facts if not body.question else f"{facts}\n\nQUESTION: {body.question}"
     try:
-        res = llm.generate(
-            ModelLabel.STANDARD,
-            prompt,
-            system=_NARRATE_SYSTEM,
-            max_tokens=900,
-            timeout=60,
-            caller_id="analysis_narrate",
-        )
+        res = ask_llm_result(prompt, _NARRATE_SYSTEM, timeout=60, max_tokens=900)
         return {"ok": True, "text": getattr(res, "text", "") or "", "model": getattr(res, "model", "")}
     except Exception as exc:  # narration is optional — never break the analysis
         return {"ok": False, "reason": "LLM_UNAVAILABLE", "detail": str(exc)[:200]}
