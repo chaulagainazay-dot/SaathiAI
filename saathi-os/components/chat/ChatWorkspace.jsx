@@ -4,7 +4,7 @@
 // Main: streamed messages, agent/model selector, citations + execution
 // timeline panel, memory indicator, composer with attachments.
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { API_BASE, afetch } from "@/lib/api";
+import { API_BASE, afetchWithSessionRecovery as afetch } from "@/lib/api";
 import AgentRunPanel from "./AgentRunPanel";
 import { useVoiceOutput } from "../voice/VoiceOutputProvider";
 

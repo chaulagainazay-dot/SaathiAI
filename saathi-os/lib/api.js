@@ -26,6 +26,24 @@ export function afetch(url, opts = {}) {
   return fetch(url, { credentials: "include", ...opts, headers: h });
 }
 
+// Chat requests are safe to retry once after an authentication refusal: the
+// backend rejects the request before running the route. Re-hydrate from the
+// canonical owner cookie so an idle-expired local token does not strand chat.
+export async function afetchWithSessionRecovery(url, opts = {}) {
+  let response = await afetch(url, opts);
+  if (response.status !== 401 || String(url).includes("/api/v1/platform/bootstrap")) {
+    return response;
+  }
+  const exchanged = await exchangePlatformSession();
+  const token = exchanged?.ok && typeof exchanged.token === "string"
+    ? exchanged.token.trim()
+    : "";
+  if (!token) return response;
+  setSessionToken(token);
+  response = await afetch(url, opts);
+  return response;
+}
+
 
 export async function fetchCeoHome() {
   const r = await afetch(`${API_BASE}/api/executive/briefing`, { cache: "no-store" });
