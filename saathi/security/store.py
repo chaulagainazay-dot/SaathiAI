@@ -299,8 +299,10 @@ class SecurityStore:
         status endpoint never need to handle credential material.
         """
         row = self.db.execute(
-            "SELECT 1 FROM users u JOIN passwords p ON p.user_id=u.id "
-            "WHERE u.status='active' LIMIT 1"
+            "SELECT 1 FROM users u "
+            "JOIN user_roles ur ON ur.user_id=u.id AND ur.role_id='role-owner' "
+            "JOIN passwords p ON p.user_id=u.id "
+            "WHERE u.status='active' AND LENGTH(p.hash) > 0 LIMIT 1"
         ).fetchone()
         return row is not None
 
@@ -316,7 +318,7 @@ class SecurityStore:
             "SELECT p.hash FROM users u "
             "JOIN user_roles ur ON ur.user_id=u.id AND ur.role_id='role-owner' "
             "JOIN passwords p ON p.user_id=u.id "
-            "WHERE u.status='active' "
+            "WHERE u.status='active' AND LENGTH(p.hash) > 0 "
             "ORDER BY p.created_at DESC LIMIT 1"
         ).fetchone()
         if not row:
