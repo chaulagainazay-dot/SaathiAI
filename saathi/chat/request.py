@@ -335,7 +335,6 @@ def chat_request_to_inference_request(
         idempotency_key=req.idempotency_key or req.request_id,
         model_hint="" if not req.metadata.get("model_override_authorized") else req.model_preference,
         engine_hint="" if not req.metadata.get("provider_override_authorized") else req.provider_preference,
-        engine_hint="",
         contract_version="m23.chat",
         metadata={
             "m23_chat_runtime": True,
