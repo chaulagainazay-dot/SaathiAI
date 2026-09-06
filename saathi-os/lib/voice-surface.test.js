@@ -38,4 +38,14 @@ describe("canonical microphone surface", () => {
     assert.match(dock, /bottom: 16px;/);
     assert.match(dock, /z-index: 50;/);
   });
+
+  it("provides a compact, keyboard-accessible collapsed control", () => {
+    const dock = source("components/voice/VoiceRuntimeDock.jsx");
+    assert.match(dock, /voice-runtime-dock-collapsed/);
+    assert.match(dock, /data-testid="voice-runtime-compact-mic"/);
+    assert.match(dock, /data-testid="voice-runtime-expand"/);
+    assert.match(dock, /aria-label=\{micLabel\}/);
+    assert.match(dock, /Expand Live voice controls/);
+    assert.match(dock, /voice-runtime-dock-chat/);
+  });
 });
