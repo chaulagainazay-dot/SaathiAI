@@ -31,6 +31,7 @@ def records_from_session(
     venue: str = "BINANCE",
     asset_class: str = "CRYPTO",
     mark_prices: dict | None = None,
+    max_seq: int | None = None,
 ) -> list[AttributionRecord]:
     """One attribution record per instrument in a shadow session.
 
@@ -43,8 +44,8 @@ def records_from_session(
     if session is None:
         raise ValueError(f"unknown shadow session: {session_id}")
 
-    state = store.derive_portfolio(session_id)
-    fills = store.fills(session_id)
+    state = store.derive_portfolio(session_id, max_seq=max_seq)
+    fills = store.fills(session_id, max_seq=max_seq)
     marks = {k: D(v) for k, v in (mark_prices or {}).items()}
 
     # The session records a strategy for the whole run. A session that mixed
@@ -96,8 +97,14 @@ def records_from_session(
 
 def counterfactuals_from_session(
     store, session_id: str, *, strategy_id: str | None = None,
+    max_seq: int | None = None,
 ) -> list[CounterfactualRecord]:
-    """Blocked proposals and their observed forward path, as estimates."""
+    """Blocked proposals and their observed forward path, as estimates.
+
+    `max_seq` bounds the read the same way it does for records. A counterfactual
+    is scored against a LATER price, so an unbounded read is exactly where future
+    knowledge would enter a point-in-time view.
+    """
     session = store.get_session(session_id)
     if session is None:
         raise ValueError(f"unknown shadow session: {session_id}")
@@ -105,6 +112,8 @@ def counterfactuals_from_session(
 
     out: list[CounterfactualRecord] = []
     for cf in store.counterfactuals(session_id):
+        if max_seq is not None and cf["seq"] > max_seq:
+            continue
         forward = cf.get("forward_price")
         out.append(CounterfactualRecord(
             strategy_id=strategy,

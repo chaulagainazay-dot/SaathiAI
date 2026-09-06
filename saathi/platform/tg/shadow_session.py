@@ -324,11 +324,20 @@ class ShadowSessionStore:
         self.connection.commit()
         return True
 
-    def fills(self, session_id: str) -> list[dict[str, Any]]:
-        rows = self.connection.execute(
-            "SELECT seq,symbol,side,quantity,reference_price,fill_price,fee,spread_cost,slippage_cost "
-            "FROM shadow_fills WHERE session_id=? ORDER BY seq", (session_id,)
-        ).fetchall()
+    def fills(self, session_id: str, *, max_seq: int | None = None) -> list[dict[str, Any]]:
+        """Fills, optionally truncated at a sequence cutoff.
+
+        `max_seq` exists for point-in-time reads: seq is this session's canonical
+        ordering, so bounding it is how a caller asks "what did we know by then?"
+        without needing a clock. Omitted, behaviour is unchanged.
+        """
+        sql = ("SELECT seq,symbol,side,quantity,reference_price,fill_price,fee,spread_cost,slippage_cost "
+               "FROM shadow_fills WHERE session_id=?")
+        args: list[Any] = [session_id]
+        if max_seq is not None:
+            sql += " AND seq<=?"
+            args.append(int(max_seq))
+        rows = self.connection.execute(sql + " ORDER BY seq", tuple(args)).fetchall()
         return [
             {"seq": r[0], "symbol": r[1], "side": r[2], "quantity": Decimal(r[3]),
              "reference_price": Decimal(r[4]), "fill_price": Decimal(r[5]), "fee": Decimal(r[6]),
@@ -396,7 +405,7 @@ class ShadowSessionStore:
         ]
 
     # ── derived portfolio + reconciliation ──────────────────────────────────
-    def derive_portfolio(self, session_id: str) -> ShadowPortfolioState:
+    def derive_portfolio(self, session_id: str, *, max_seq: int | None = None) -> ShadowPortfolioState:
         """Rebuild the shadow book from its fills alone.
 
         Deriving rather than storing is deliberate: a stored balance can drift
@@ -413,7 +422,7 @@ class ShadowSessionStore:
         realized = Decimal("0")
         turnover = Decimal("0")
         n = 0
-        for f in self.fills(session_id):
+        for f in self.fills(session_id, max_seq=max_seq):
             qty, px, fee = f["quantity"], f["fill_price"], f["fee"]
             notional = qty * px
             turnover += notional
