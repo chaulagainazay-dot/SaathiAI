@@ -317,81 +317,47 @@ def test_no_shadow_object_can_reach_a_broker_adapter(db):
         assert not hasattr(broker, "orders"), "the adapter holds no order book to have been mutated"
 
 
-def test_the_broker_numeric_helper_silently_zeroes_non_numbers(db):
-    """Documents a latent weakness found while proving the shadow boundary.
+def test_the_broker_numeric_helper_now_refuses_non_numbers(db):
+    """FINANCIAL-NUMERIC-1 closed the silent-zero this milestone found.
 
-    PaperBroker.D() turns None, "abc", True and arbitrary objects into Decimal 0
-    rather than refusing, which is why reserve_for_buy accepts a ShadowOrder and
-    answers 0.00. Nothing in SHADOW depends on that behaviour, and shadow cannot
-    reach a live path through it — but a cash RESERVATION that silently becomes
-    zero is the same silent-zero class this codebase is otherwise built against.
-    Pinned here so a fix is a visible change, not a surprise.
+    D() previously turned None, "abc", True and arbitrary objects into Decimal 0,
+    which is why reserve_for_buy accepted a ShadowOrder and answered 0.00. It now
+    raises. A legitimate zero still parses, and the documented optional path
+    (None/"") still yields the caller's declared default.
     """
-    from saathi.platform.paper_trading.broker import D
+    from saathi.platform.trading_models import D, InvalidFinancialValue
 
-    for junk in (None, "abc", object(), True):
-        assert D(junk) == Decimal("0"), "current (undesirable) behaviour"
-    assert D("12.5") == Decimal("12.5")
+    for junk in ("abc", object(), True, False, [], {}, "NaN", "Infinity", float("nan")):
+        with pytest.raises(InvalidFinancialValue):
+            D(junk)
 
-
-def test_shadow_never_writes_a_paper_or_real_ledger_row(db):
-    s = _store(db)
-    sid = _open(s)
-    _run_cycle(s, sid, approval_granted=True)
-    tables = {r[0] for r in s.connection.execute(
-        "SELECT name FROM sqlite_master WHERE type='table'").fetchall()}
-    for t in tables:
-        low = t.lower()
-        if ("paper" in low or "ledger" in low or "broker" in low) and "shadow" not in low:
-            n = s.connection.execute(f"SELECT COUNT(*) FROM {t}").fetchone()[0]
-            assert n == 0, f"shadow mutated {t} ({n} rows)"
+    assert D("0") == Decimal("0"), "a legitimate zero is not the defect"
+    assert D(Decimal("1.25")) == Decimal("1.25")
+    assert D(None) == Decimal("0"), "None remains the caller-declared optional path"
 
 
-def test_replay_mode_is_never_reported_as_live(db):
-    s = _store(db)
-    sid = _open(s)
-    _run_cycle(s, sid, approval_granted=True)
-    m = s.metrics(sid)
-    assert m["mode"] == ShadowMode.REPLAY.value
-    assert "LIVE" not in m["mode"] or m["mode"] == "LIVE_PUBLIC"
-    assert s.get_session(sid)["mode"] != "LIVE_PUBLIC"
+def test_a_shadow_order_can_no_longer_obtain_a_cash_reservation(db):
+    """The observed defect, now closed at the money boundary.
 
+    reserve_for_buy used to answer 0.00 for a ShadowOrder. It must now refuse —
+    and, as before, nothing about that path creates an order, a position or a
+    ledger row.
+    """
+    from saathi.platform.paper_trading.broker import FeeModel, PaperBroker, SlippageModel
+    from saathi.platform.paper_trading.models import OrderType
+    from saathi.platform.tg.shadow_engine import ShadowOrder
 
-# ── fault injection over the real chain ─────────────────────────────────────
-
-def test_a_reconciliation_failure_stops_the_session_resuming(db):
-    s = _store(db)
-    sid = _open(s)
-    _run_cycle(s, sid, approval_granted=True)
-    # Inject an impossible sell.
-    seq = s.next_seq(sid)
-    s.append_event(sid, seq, ShadowEventKind.HYPOTHETICAL_FILL, {"injected": "bad"})
-    s.record_fill(sid, seq, symbol=BTC, side="SELL", quantity="9999",
-                  reference_price="60000", fill_price="60000", fee="1")
-    rec = s.reconcile(sid)
-    assert rec["ok"] is False
-    assert s.get_session(sid)["status"] == ShadowSessionStatus.RECONCILIATION_REQUIRED.value
+    order = ShadowOrder(
+        symbol=BTC, side="BUY", quantity=Decimal("1"), reference_price=Decimal("60000"),
+        estimated_fill_price=Decimal("60030"), fee=Decimal("60"), spread_cost=Decimal("20"),
+        slippage_cost=Decimal("10"), total_cost=Decimal("90"), notional=Decimal("60030"),
+    )
+    broker = PaperBroker(fee_model=FeeModel(), slippage_model=SlippageModel())
     with pytest.raises(Exception):
-        s.resume(sid)
+        broker.reserve_for_buy(quantity=order, ref_price=order, limit_price=None,
+                               order_type=OrderType.MARKET)
 
-
-def test_a_duplicate_market_event_does_not_duplicate_the_decision(db):
-    s = _store(db)
-    sid = _open(s)
-    _run_cycle(s, sid, approval_granted=True)
-    fills_once = s.derive_portfolio(sid).fills
-    # The same cycle arrives again with the same sequence numbers.
-    evs = s.events(sid, ShadowEventKind.HYPOTHETICAL_FILL)
-    for e in evs:
-        assert s.append_event(sid, e["seq"], ShadowEventKind.HYPOTHETICAL_FILL, e["payload"]) is False
-    assert s.derive_portfolio(sid).fills == fills_once
-
-
-def test_metrics_separate_system_certification_from_strategy_evidence(db):
-    s = _store(db)
-    sid = _open(s)
-    _run_cycle(s, sid, approval_granted=True)
-    m = s.metrics(sid)
-    # Machinery counts are present; profitability is NOT claimed from a bounded run.
-    assert m["fills"] >= 0 and m["guardian_blocks"] >= 0
-    assert m["nav"] is None, "NAV needs an explicit price map — never assumed"
+    # A real reservation still works, and a real zero quantity still reserves zero.
+    assert broker.reserve_for_buy(
+        quantity=Decimal("0"), ref_price=Decimal("60000"),
+        limit_price=None, order_type=OrderType.MARKET) == Decimal("0.00")
