@@ -68,6 +68,7 @@ export function VoiceOutputProvider({ children }) {
   const pollRef = useRef(null);
   const metadataRef = useRef(null);
   const operationRef = useRef(null);
+  const browserUtteranceRef = useRef(null);
   const voiceSession = useVoiceSession();
 
   useEffect(() => {
@@ -93,6 +94,10 @@ export function VoiceOutputProvider({ children }) {
       pollRef.current = null;
     }
     clearAudioElements();
+    if (typeof window !== "undefined" && window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
+    browserUtteranceRef.current = null;
   }, [clearAudioElements]);
 
   const refreshMetadata = useCallback(async (activeToken) => {
@@ -278,7 +283,34 @@ export function VoiceOutputProvider({ children }) {
       } = {}
     ) => {
       const approvedText = String(text || "").trim();
-      if (!preferences.enabled || !token || !approvedText) return false;
+      if (!preferences.enabled || !approvedText) return false;
+      // Safe local fallback: browser speech never leaves the device and does
+      // not require a platform token or create a backend speech operation.
+      const browserAvailable = typeof window !== "undefined" &&
+        typeof window.speechSynthesis?.speak === "function" &&
+        typeof window.SpeechSynthesisUtterance === "function";
+      const backendAvailable = Boolean(
+        token && !metadata.error && metadata.health &&
+        metadata.health.ok !== false && metadata.health.available !== false
+      );
+      if (!backendAvailable && browserAvailable) {
+        await stop({ remote: false, reason: "NEW_ASSISTANT_RESPONSE" });
+        const utterance = new window.SpeechSynthesisUtterance(approvedText.slice(0, 4_000));
+        utterance.lang = language;
+        utterance.rate = preferences.speakingRate;
+        utterance.volume = preferences.volume;
+        utterance.onstart = () => dispatch({ type: "PLAYING" });
+        utterance.onend = () => dispatch({ type: "ENDED" });
+        utterance.onerror = () => dispatch({ type: "FAILED", message: "Browser speech output failed." });
+        browserUtteranceRef.current = utterance;
+        dispatch({ type: "OPERATION", operation: {
+          operation_id: `browser-${Date.now()}`,
+          state: "playing", provider: "browser_synthesis",
+        }});
+        window.speechSynthesis.speak(utterance);
+        return true;
+      }
+      if (!token) return false;
       // Contract: cancel any prior speech before a new synthesis request.
       await stop();
       // V-NEXT-1/2A: exclusive output claim; arm acoustic barge-in monitor.
@@ -330,7 +362,7 @@ export function VoiceOutputProvider({ children }) {
         if (pollRef.current === controller) pollRef.current = null;
       }
     },
-    [poll, preferences, stop, token, voiceSession, clearLocalAudio]
+    [metadata.error, metadata.health, poll, preferences, stop, token, voiceSession, clearLocalAudio]
   );
 
   // The provider sits above the router in Shell, so it never unmounts on a
