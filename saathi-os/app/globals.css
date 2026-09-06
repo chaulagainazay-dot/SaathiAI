@@ -1604,6 +1604,25 @@ html, body {
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
 }
+.voice-output-dock.is-collapsed {
+  width: auto;
+  padding: 6px 9px;
+  border-radius: 999px;
+}
+.voice-output-expand {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 0;
+  padding: 0;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+}
+.voice-output-expand strong {
+  font-size: var(--fs-2xs);
+}
 .voice-output-head,
 .voice-output-actions {
   display: flex;

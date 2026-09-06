@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useVoiceOutput } from "./VoiceOutputProvider";
 
 function providerLabel(provider) {
@@ -13,6 +14,7 @@ function providerLabel(provider) {
 
 export default function VoiceOutputDock() {
   const voice = useVoiceOutput();
+  const [expanded, setExpanded] = useState(false);
   if (!voice.token) return null;
 
   const operation = voice.output.operation;
@@ -25,13 +27,22 @@ export default function VoiceOutputDock() {
 
   return (
     <section
-      className="voice-output-dock"
+      className={`voice-output-dock${expanded ? " is-expanded" : " is-collapsed"}`}
       data-voice-state={voice.output.state}
       aria-label="Speech output controls"
     >
       <div className="voice-output-head">
-        <strong>Voice output</strong>
-        <label className="voice-output-toggle">
+        <button
+          type="button"
+          className="voice-output-expand"
+          aria-expanded={expanded}
+          aria-controls="voice-output-details"
+          onClick={() => setExpanded((value) => !value)}
+        >
+          <span aria-hidden="true">{expanded ? "−" : "◉"}</span>
+          <strong>Voice output</strong>
+        </button>
+        {expanded ? <label className="voice-output-toggle">
           <input
             type="checkbox"
             checked={voice.preferences.enabled}
@@ -43,9 +54,10 @@ export default function VoiceOutputDock() {
             aria-label="Enable speech output"
           />
           {voice.preferences.enabled ? "Enabled" : "Disabled"}
-        </label>
+        </label> : null}
       </div>
 
+      {expanded ? <div id="voice-output-details">
       <div className="voice-output-settings">
         <label>
           <span>Voice</span>
@@ -125,6 +137,7 @@ export default function VoiceOutputDock() {
           Provider unavailable · Retry
         </button>
       ) : null}
+      </div> : null}
     </section>
   );
 }
