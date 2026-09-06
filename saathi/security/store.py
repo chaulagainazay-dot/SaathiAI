@@ -304,6 +304,26 @@ class SecurityStore:
         ).fetchone()
         return row is not None
 
+    def verify_active_owner_password(self, password: str) -> bool:
+        """Verify a password against the active canonical owner's latest credential.
+
+        Credential material stays inside the security-store boundary; callers only
+        receive a boolean result.
+        """
+        if not password:
+            return False
+        row = self.db.execute(
+            "SELECT p.hash FROM users u "
+            "JOIN user_roles ur ON ur.user_id=u.id AND ur.role_id='role-owner' "
+            "JOIN passwords p ON p.user_id=u.id "
+            "WHERE u.status='active' "
+            "ORDER BY p.created_at DESC LIMIT 1"
+        ).fetchone()
+        if not row:
+            return False
+        from saathi import authsec
+        return authsec.verify_password(password, row["hash"])
+
     def password_history(self, user_id: str, limit: int = 10) -> list[dict]:
         rows = self.db.execute(
             "SELECT * FROM passwords WHERE user_id=? ORDER BY created_at DESC LIMIT ?",

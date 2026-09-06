@@ -1824,6 +1824,7 @@ class LoginIn(BaseModel):
 def login(body: LoginIn, request: Request):
     from fastapi.responses import JSONResponse
     from saathi import sessions, authsec
+    from saathi.security.store import get_store
     ip = request.headers.get("x-forwarded-for", "").split(",")[0].strip() or (request.client.host if request.client else "")
     ua = request.headers.get("user-agent", "")
     # rate-limit brute-force attempts
@@ -1831,9 +1832,16 @@ def login(body: LoginIn, request: Request):
     if not allowed:
         authsec.audit("login", ok=False, ip=ip, ua=ua, detail="rate_limited")
         return JSONResponse({"ok": False, "error": f"Too many attempts. Try again in {retry_after}s."}, status_code=429)
-    ok = (_PASSWORD_HASH and authsec.verify_password(body.password, _PASSWORD_HASH)) or (ACCESS_TOKEN and body.password == ACCESS_TOKEN)
+    # Accept the canonical owner's stored credential through the security-store
+    # abstraction, while preserving legacy environment fallback credentials.
+    store = get_store()
+    has_stored_password = store.active_owner_has_password()
+    stored_owner_ok = store.verify_active_owner_password(body.password)
+    ok = (stored_owner_ok or
+          (_PASSWORD_HASH and authsec.verify_password(body.password, _PASSWORD_HASH)) or
+          (ACCESS_TOKEN and body.password == ACCESS_TOKEN))
     if not ok:
-        if not (_PASSWORD_HASH or ACCESS_TOKEN):
+        if not (_PASSWORD_HASH or ACCESS_TOKEN or has_stored_password):
             ok = True  # nothing configured — let the owner in
         else:
             authsec.rate_hit(f"{ip}:login")
