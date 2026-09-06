@@ -36,7 +36,7 @@ export default function VoiceRuntimeDock() {
 
   if (collapsed) {
     return (
-      <div className={`voice-runtime-dock voice-runtime-dock-collapsed ${pathname === "/chat" ? "voice-runtime-dock-chat" : ""}`} data-testid="voice-runtime-dock">
+      <div className={`voice-runtime-dock voice-runtime-dock-collapsed ${pathname === "/chat" ? "voice-runtime-dock-chat" : ""}`} data-testid="voice-runtime-dock" style={{ position: "fixed", left: pathname === "/chat" ? "auto" : 16, right: pathname === "/chat" ? 16 : "auto", bottom: pathname === "/chat" ? 0 : 16, zIndex: 50, minWidth: 150, height: 44, padding: "4px 6px", display: "inline-flex", alignItems: "center", gap: 8, boxSizing: "border-box", borderRadius: 14, border: "1px solid rgba(255,255,255,.08)", background: "rgba(10,14,28,.88)", color: "#e8eefc", fontSize: 12 }}>
         <button
           type="button"
           className="voice-runtime-compact-mic"
@@ -46,9 +46,9 @@ export default function VoiceRuntimeDock() {
           title={micLabel}
           disabled={busy && !runtime.recording && !runtime.speaking}
           onClick={() => toggleMic()}
-          style={{ color, borderColor: `${color}88` }}
+          style={{ color, borderColor: `${color}88`, width: 32, height: 32, borderRadius: 999, border: "1px solid", background: "rgba(255,255,255,.06)", display: "inline-flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 15 }}
         >{runtime.recording ? "■" : "🎤"}</button>
-        <span className="voice-runtime-compact-status" aria-live="polite">{statusLabel}</span>
+        <span className="voice-runtime-compact-status" aria-live="polite" style={{ minWidth: 58, textAlign: "center", fontSize: 11 }}>{statusLabel}</span>
         <button
           type="button"
           className="voice-runtime-expand"
@@ -56,6 +56,7 @@ export default function VoiceRuntimeDock() {
           aria-label="Expand Live voice controls"
           title="Expand Live voice controls"
           onClick={() => setCollapsed(false)}
+          style={{ width: 32, height: 32, borderRadius: 999, border: "1px solid rgba(255,255,255,.16)", background: "rgba(255,255,255,.06)", color: "inherit", cursor: "pointer", fontSize: 14 }}
         >⌃</button>
       </div>
     );
