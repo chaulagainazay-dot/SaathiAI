@@ -76,14 +76,26 @@ export function exportTransactions(portfolios = []) {
   return toCsv(rows, TRANSACTION_COLUMNS);
 }
 
+/**
+ * Position columns, named against what `computePortfolio` actually returns.
+ *
+ * These used to read `wacc`/`cost`/`value`/`pnl` — fields no producer in this
+ * repo emits. `toCsv` would have written a header row and then a blank cell for
+ * every one of them, which is the worst possible failure for an export: a file
+ * that opens, looks structurally right, and is empty where the money goes. Each
+ * column now carries an explicit getter so a future rename breaks a test rather
+ * than silently blanking a column.
+ */
 export const HOLDING_COLUMNS = Object.freeze([
   { key: "symbol", header: "Symbol" },
   { key: "qty", header: "Quantity" },
-  { key: "wacc", header: "WACC" },
-  { key: "cost", header: "Cost" },
+  { key: "avgCost", header: "WACC", get: (h) => h.avgCost ?? h.wacc ?? "" },
+  { key: "invested", header: "Cost", get: (h) => h.invested ?? h.cost ?? "" },
   { key: "ltp", header: "LTP" },
-  { key: "value", header: "Value" },
-  { key: "pnl", header: "Unrealized PnL" },
+  { key: "marketValue", header: "Value", get: (h) => h.marketValue ?? h.value ?? "" },
+  { key: "unrealizedPnl", header: "Unrealized PnL", get: (h) => h.unrealizedPnl ?? h.pnl ?? "" },
+  { key: "returnPct", header: "Return %" },
+  { key: "receivableQty", header: "Receivable Qty" },
 ]);
 
 /** A positions view. Derived, so it is a REPORT, not a backup. */

@@ -8,14 +8,20 @@ import { SNAPSHOT_DATE } from "@/lib/nepse/data";
 import { useNepseQuotes } from "@/lib/nepse/live";
 import { useMarketAggregates, useIndices } from "@/lib/nepse/use-market";
 import { fmtNum, fmtPct, fmtCompactRs } from "@/lib/nepse/format";
+import GlobalSearch from "@/components/nepse/GlobalSearch";
 
 const TABS = [
   { href: "/nepse", label: "Portfolio" },
   { href: "/nepse/market", label: "Market" },
   { href: "/nepse/stocks", label: "All Stocks" },
   { href: "/nepse/watchlist", label: "Watchlist" },
+  { href: "/nepse/scanners", label: "Scanners" },
+  { href: "/nepse/alerts", label: "Alerts" },
+  { href: "/nepse/compare", label: "Compare" },
   { href: "/nepse/brokers", label: "Brokers" },
   { href: "/nepse/calendar", label: "Calendar" },
+  { href: "/nepse/calculators", label: "Calculators" },
+  { href: "/nepse/forex", label: "Forex" },
   { href: "/nepse/research", label: "Research" },
 ];
 
@@ -88,6 +94,7 @@ export default function NepseShell({ children }) {
               {t.label}
             </Link>
           ))}
+          <GlobalSearch />
         </nav>
         {children}
       </div>

@@ -67,17 +67,48 @@ export function tradingDays(entries = []) {
  * reporting in a sparse archive is not evidence it was shut.
  */
 export function calendar(entries = [], { minTradedFor = 1 } = {}) {
-  const perDay = new Map();
+  const perDay = {};
   for (const e of entries) {
     for (const b of e?.bars || []) {
       if (!b?.date) continue;
       const d = b.date.slice(0, 10);
       if (dayEpoch(d) === null) continue;
-      perDay.set(d, (perDay.get(d) || 0) + 1);
+      perDay[d] = (perDay[d] || 0) + 1;
     }
+  }
+  return calendarFromCounts(perDay, { minTradedFor });
+}
+
+/**
+ * The same classification from a date -> instrument-count map.
+ *
+ * A server that has already walked the archive holds these counts and nothing
+ * else worth shipping; sending every bar of every symbol to a browser so it can
+ * re-derive one integer per day would be several megabytes to answer a question
+ * the server already answered. The count is the evidence — it is what separates
+ * CLOSED from UNCONFIRMED — so it travels, and the bars do not.
+ */
+export function calendarFromCounts(counts = {}, { minTradedFor = 1 } = {}) {
+  const perDay = new Map();
+  for (const [date, count] of Object.entries(counts || {})) {
+    const d = String(date).slice(0, 10);
+    if (dayEpoch(d) === null) continue;
+    // Rejected BEFORE coercion: `Number(true)` is 1, finite and positive, so a
+    // boolean would arrive here as "one instrument reported" and could turn a
+    // genuine closure into a trading day. `Number(null)` is 0, which lands on the
+    // other side of the same guard and would manufacture a closure instead.
+    if (count === null || count === undefined || count === "" || typeof count === "boolean") continue;
+    const n = Number(count);
+    // A day present in the map with an unreadable count is dropped rather than
+    // counted as zero: zero is the evidence for CLOSED, and inventing it here
+    // would turn a parse failure into a claim about the exchange.
+    if (!Number.isFinite(n) || n <= 0) continue;
+    perDay.set(d, n);
   }
   const days = [...perDay.keys()].sort();
   if (!days.length) return { days: [], closures: [], span: null, coverage: 0 };
+
+  const disputed = disputedMonths(perDay);
 
   const first = dayEpoch(days[0]);
   const last = dayEpoch(days[days.length - 1]);
@@ -86,7 +117,11 @@ export function calendar(entries = [], { minTradedFor = 1 } = {}) {
     const iso = isoOf(t);
     const count = perDay.get(iso) || 0;
     let kind;
-    if (isWeekend(iso)) kind = DAY_KIND.WEEKEND;
+    if (disputed.has(iso.slice(0, 7))) {
+      // This month's dates contradict the trading week, so no day in it can be
+      // classified — including the ones that look ordinary. See disputedMonths.
+      kind = DAY_KIND.UNCONFIRMED;
+    } else if (isWeekend(iso)) kind = DAY_KIND.WEEKEND;
     else if (count >= minTradedFor) kind = DAY_KIND.TRADED;
     else kind = neighbourTraded(perDay, t) ? DAY_KIND.CLOSED : DAY_KIND.UNCONFIRMED;
     out.push({ date: iso, weekday: weekdayOf(iso), kind, instruments: count });
@@ -96,7 +131,51 @@ export function calendar(entries = [], { minTradedFor = 1 } = {}) {
     closures: out.filter((d) => d.kind === DAY_KIND.CLOSED),
     span: { from: days[0], to: days[days.length - 1] },
     coverage: days.length,
+    disputedMonths: [...disputed].sort(),
   };
+}
+
+/**
+ * Months whose dates contradict the trading week, and which therefore cannot be
+ * classified at all.
+ *
+ * NEPSE trades Sunday to Thursday. A month in which the archive records a busy
+ * FRIDAY is not a month in which the exchange opened on a Friday — it is a month
+ * whose dates are shifted, and a shift moves every date in it, not just the one
+ * that looks wrong. This was found by probing the live archive: it is Sun–Thu for
+ * thirty years and then reports Mon–Fri, so a calendar that trusted the labels
+ * would have published every Sunday of that period as a market holiday and
+ * accepted the Friday sessions without comment.
+ *
+ * Refusing the whole month is the only safe reading. Marking just the Fridays
+ * would leave the neighbouring "closures" standing, and those are the fabricated
+ * ones.
+ */
+function disputedMonths(perDay, { minSessions = 3 } = {}) {
+  const busyWeekend = new Map();
+  for (const [iso, count] of perDay) {
+    if (!isWeekend(iso) || count < minSessions) continue;
+    const month = iso.slice(0, 7);
+    busyWeekend.set(month, (busyWeekend.get(month) || 0) + 1);
+  }
+  return new Set(busyWeekend.keys());
+}
+
+/**
+ * Session days per weekday, for reporting the conflict above rather than hiding
+ * it. Index 0 is Sunday, matching `weekdayOf`.
+ */
+export function weekdayProfile(counts = {}) {
+  const profile = [0, 0, 0, 0, 0, 0, 0];
+  for (const [date, count] of Object.entries(counts || {})) {
+    const iso = String(date).slice(0, 10);
+    if (dayEpoch(iso) === null) continue;
+    if (count === null || count === undefined || count === "" || typeof count === "boolean") continue;
+    const n = Number(count);
+    if (!Number.isFinite(n) || n <= 0) continue;
+    profile[weekdayOf(iso)] += 1;
+  }
+  return profile;
 }
 
 /**

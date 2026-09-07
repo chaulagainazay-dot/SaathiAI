@@ -13,6 +13,11 @@ const EMPTY = {
   // are recomputed from current readings so a stale match can never resurface
   // looking like a live one.
   strategies: [],
+  // Alert RULES, and the per-rule delivery history the suppression logic reads.
+  // History is state about what was already said to the user, so it must survive
+  // a reload: without it every refresh re-fires every standing alert.
+  alerts: [],
+  alertHistory: {},
 };
 
 function safeRead() {
@@ -168,4 +173,49 @@ export function forkScan(scan) {
     root: scan?.root,
     forkedFrom: scan?.id || null,
   });
+}
+
+// ── alerts (rules + delivery history) ───────────────────────────────────────
+
+const aid = () => `a_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;
+
+export function listAlerts() {
+  return safeRead().alerts || [];
+}
+
+/** Persist an alert rule. Returns the saved record, with an id it can be found by. */
+export function saveAlert(rule) {
+  const state = safeRead();
+  const list = state.alerts || [];
+  const existing = rule?.id ? list.find((a) => a.id === rule.id) : null;
+  const record = existing
+    ? { ...existing, ...rule, updatedAt: Date.now() }
+    : { ...rule, id: rule?.id || aid(), createdAt: Date.now() };
+  state.alerts = existing ? list.map((a) => (a.id === record.id ? record : a)) : [...list, record];
+  safeWrite(state);
+  return record;
+}
+
+export function deleteAlert(id) {
+  const state = safeRead();
+  state.alerts = (state.alerts || []).filter((a) => a.id !== id);
+  // The history goes with the rule. Leaving it behind would let a NEW rule that
+  // happened to reuse the id inherit a cooldown it never earned.
+  const hist = { ...(state.alertHistory || {}) };
+  delete hist[id];
+  state.alertHistory = hist;
+  safeWrite(state);
+  return state.alerts;
+}
+
+export function loadAlertHistory() {
+  return safeRead().alertHistory || {};
+}
+
+/** Replace the whole delivery-history map. The caller owns the merge. */
+export function saveAlertHistory(history) {
+  const state = safeRead();
+  state.alertHistory = history && typeof history === "object" ? history : {};
+  safeWrite(state);
+  return state.alertHistory;
 }

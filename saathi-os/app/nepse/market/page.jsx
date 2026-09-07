@@ -11,6 +11,10 @@
 import { fmtNum, fmtPct, fmtCompactRs } from "@/lib/nepse/format";
 import { useMarketAggregates, useIndices } from "@/lib/nepse/use-market";
 import DataStateBanner from "@/components/nepse/DataStateBanner";
+import Heatmap from "@/components/nepse/Heatmap";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { WEIGHT_FIELDS } from "@/lib/nepse/heatmap";
 
 /** Real index history — the close series NEPSE published, not a generated curve. */
 function IndexChart({ series }) {
@@ -68,6 +72,8 @@ function MoverTable({ title, rows, tone }) {
 export default function MarketPage() {
   const { loading, data, error } = useMarketAggregates();
   const ix = useIndices();
+  const router = useRouter();
+  const [weightBy, setWeightBy] = useState("turnover");
 
   if (loading) {
     return (
@@ -227,6 +233,26 @@ export default function MarketPage() {
         <MoverTable title="Top gainers" rows={data.gainers} tone="nepse-up" />
         <MoverTable title="Top losers" rows={data.losers} tone="nepse-down" />
       </div>
+
+      <section style={{ marginTop: "1.75rem" }}>
+        <div className="nepse-row" style={{ justifyContent: "space-between", alignItems: "baseline" }}>
+          <h2 style={{ fontSize: "1.1rem" }}>Sector map</h2>
+          <select className="nepse-select" aria-label="Size tiles by" value={weightBy}
+                  onChange={(e) => setWeightBy(e.target.value)}>
+            {WEIGHT_FIELDS.map((f) => <option key={f} value={f}>sized by {f}</option>)}
+          </select>
+        </div>
+        <p style={{ color: "var(--text-faint)", fontSize: "0.8rem", margin: "0.3rem 0 0.75rem" }}>
+          Each tile&apos;s area is how much that symbol traded, and its colour is how
+          far it moved. A symbol we cannot size is listed below the map rather than
+          drawn small — a tiny rectangle and &ldquo;no turnover reported&rdquo; look
+          the same and mean opposite things.
+        </p>
+        {/* `rows` is the full measured set; the mover tables above are its extremes. */}
+        <Heatmap rows={data.rows || []} weightBy={weightBy}
+                 onSelect={(sym) => router.push(`/nepse/stocks/${sym}`)} />
+      </section>
+
 
       {data.repriced.length > 0 && (
         <div className="nepse-callout" style={{ marginTop: "1rem" }}>
