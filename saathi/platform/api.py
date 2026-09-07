@@ -13311,21 +13311,15 @@ def tg_ops_health(authorization: str | None = Header(default=None), x_platform_t
 
 
 def _trading_ops_sources():
-    """The subsystem objects this process can read SAFELY, and only those.
+    """Canonical runtime instances, resolved by TRADING-RUNTIME-INSTANCE-WIRING-1.
 
-    Guardian and the kill switch expose verified side-effect-free reads, so they
-    are wired. Market data, provider and approval are not wired here: this process
-    holds no live feed supervisor, and the provider tracker and approval centre
-    live in runtimes this route does not own. Handing the collector a fabricated
-    stand-in would be worse than reporting nothing — those subsystems report
-    INSUFFICIENT_EVIDENCE, which is the truth, and the operator is told to verify
-    them by hand rather than shown an invented green.
+    One owner per subsystem. Unwired subsystems contribute no source and report
+    their real reason instead of a stand-in — the objective is real evidence, not
+    green evidence.
     """
-    svc = _tg_svc()
-    return {
-        "guardian_service": svc,
-        "kill_switch_store": getattr(svc, "kill_switches", None),
-    }
+    from saathi.platform.tg.runtime_wiring import collector_sources
+
+    return collector_sources()
 
 
 @router.get("/tg/operations/trading-ops")
@@ -13349,7 +13343,21 @@ def tg_trading_ops_status(
         # Operational freshness genuinely needs a clock, and this is the boundary
         # where one belongs — the collector and producers below stay clock-free.
         now = _time.strftime("%Y-%m-%dT%H:%M:%SZ", _time.gmtime())
-        return default_status_service().status(now=now, **_trading_ops_sources()).to_public()
+        from saathi.platform.tg.runtime_wiring import (
+            collector_sources, unavailable_reasons, wiring_report,
+        )
+
+        wiring = __import__(
+            "saathi.platform.tg.runtime_wiring", fromlist=["resolve_all"]
+        ).resolve_all()
+        payload = default_status_service().status(
+            now=now, unavailable_reasons=unavailable_reasons(wiring),
+            **collector_sources(wiring)
+        ).to_public()
+        # Wiring travels beside health so an operator can tell "unhealthy" from
+        # "not wired in this process" — two facts a single UNKNOWN would merge.
+        payload["runtime_wiring"] = wiring_report(wiring)
+        return payload
 
     return _tg_ops_guard(_serve)
 

@@ -310,10 +310,16 @@ def test_the_status_route_is_registered_and_read_only():
 
 
 def test_the_route_only_wires_subsystems_with_verified_safe_reads():
-    """A fabricated stand-in would be worse than reporting nothing."""
+    """A fabricated stand-in would be worse than reporting nothing.
+
+    Updated by TRADING-RUNTIME-INSTANCE-WIRING-1: the approval centre and
+    gateway posture now resolve to real runtime instances, so they are wired.
+    Market data and provider still have no process-wide instance and are still
+    NOT wired — that half of the rule is the half that matters.
+    """
     import saathi.platform.api as api
 
     sources = api._trading_ops_sources()
-    assert set(sources) == {"guardian_service", "kill_switch_store"}
-    assert "approval_center" not in sources
+    assert {"guardian_service", "kill_switch_store", "approval_center"} <= set(sources)
+    assert "market_data_source" not in sources
     assert "provider_tracker" not in sources

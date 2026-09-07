@@ -34,7 +34,7 @@ be.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from enum import Enum
 
 from saathi.platform.tg.health_producers import (
@@ -333,6 +333,7 @@ def collect_trading_health(
     kill_switch_store=None,
     approval_center=None,
     gateway=None,
+    unavailable_reasons: dict | None = None,
     max_age_seconds: int = DEFAULT_MAX_OBSERVATION_AGE_SECONDS,
 ) -> CollectionResult:
     """One safe pass over the trading subsystems. Pure with respect to the clock.
@@ -345,6 +346,10 @@ def collect_trading_health(
     readings: list[SubsystemReading] = []
     healths: list[ProducedHealth] = []
     failures: list[dict] = []
+    # A caller that knows WHY a subsystem is absent — "no live feed supervisor in
+    # this process" — can say so more precisely than the collector, which only
+    # knows it was handed nothing.
+    reasons = dict(unavailable_reasons or {})
 
     def _produce(reading: SubsystemReading, producer, **kwargs):
         readings.append(reading)
@@ -358,7 +363,18 @@ def collect_trading_health(
             # An unusable reading contributes no state, so the producer reaches
             # its own insufficient-evidence path rather than a fabricated one.
             state = dict(reading.state) if reading.usable else {}
-            healths.append(producer(observed_at=evaluation_time, **state, **kwargs))
+            produced = producer(observed_at=evaluation_time, **state, **kwargs)
+            # ONLY the caller's authored reason reaches the payload. `reading.error`
+            # is exception text and is deliberately NOT used here: it can carry a
+            # filesystem path or internal detail, and this string is served to a
+            # browser. It stays in `failures` for the operator's own diagnostics.
+            reason = reasons.get(reading.subsystem)
+            if not reading.usable and reason:
+                # A wiring gap and a subsystem fault must not read the same, so
+                # "no live public feed supervisor in this process" replaces a
+                # bare "insufficient evidence" — but only from a trusted source.
+                produced = replace(produced, detail=reason)
+            healths.append(produced)
         except Exception as exc:
             failures.append({
                 "subsystem": reading.subsystem,
