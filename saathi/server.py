@@ -5549,7 +5549,7 @@ def _saathi_stop_local_heartbeat():
 
 
 @app.on_event("startup")
-def _saathi_start_public_market_data():
+async def _saathi_start_public_market_data():
     """Start the public crypto feed ONLY when explicitly configured.
 
     Off unless `SAATHI_PUBLIC_MARKET_DATA=1`. Booting the server must not open a
@@ -5574,7 +5574,9 @@ def _saathi_start_public_market_data():
         )
         rt = reset_public_market_data_for_tests(
             PublicMarketDataConfig(enabled=True, symbols=symbols))
-        rt.start()
+        # Async lifecycle: connect, subscribe, then start the single ingestion
+        # task. Without the reader the socket would be open and unread.
+        await rt.start_async()
     except Exception:
         # A feed that cannot start must not take the server down with it; the
         # health surface reports the real state either way.
@@ -5582,12 +5584,16 @@ def _saathi_start_public_market_data():
 
 
 @app.on_event("shutdown")
-def _saathi_stop_public_market_data():
-    """Close the public stream cleanly: socket closed, queue released."""
+async def _saathi_stop_public_market_data():
+    """Close the public stream cleanly: reader cancelled, socket closed, queue released.
+
+    Order is load-bearing — the transport close is what frees a thread parked in
+    a blocking recv, so cancelling the reader alone would leave it waiting.
+    """
     try:
         from saathi.platform.crypto import runtime as _rt_mod
 
         if _rt_mod._RUNTIME is not None:
-            _rt_mod._RUNTIME.stop()
+            await _rt_mod._RUNTIME.stop_async()
     except Exception:
         pass

@@ -147,6 +147,9 @@ class PublicMarketDataRuntime:
         self.resync_pending = False
         self.started_at: datetime | None = None
         self.stopped_at: datetime | None = None
+        #: Set only by the async lifecycle. A runtime driven directly by
+        #: `on_frame` (tests, replay) legitimately has no reader.
+        self.reader = None
 
     # ── lifecycle ───────────────────────────────────────────────────────────
     def start(self, *, now: datetime | None = None) -> str:
@@ -196,6 +199,44 @@ class PublicMarketDataRuntime:
             self.stopped_at = _utcnow()
             self.state = RuntimeState.STOPPED
         return self.state.value
+
+    async def start_async(self, *, now: datetime | None = None, event_types=None) -> str:
+        """Connect, then start the single ingestion task.
+
+        Order matters: the transport must be connected and subscribed BEFORE the
+        reader exists, or the reader's first `recv` races an absent socket. The
+        freshness clock still starts at nothing — a connected socket with a live
+        reader is not evidence that market data has arrived.
+        """
+        from saathi.platform.crypto.reader import AsyncFrameReader, DEFAULT_EVENT_TYPES
+
+        # IDEMPOTENT. A second call must not build a second reader: two readers
+        # on one socket interleave `recv` and shred the frame order the sequence
+        # tracker depends on, and the first task would be orphaned still holding
+        # an executor thread.
+        if self.reader is not None and self.reader.alive:
+            return self.state.value
+        state = self.start(now=now)
+        if state != RuntimeState.RUNNING.value:
+            return state
+        if self.reader is None or not self.reader.alive:
+            self.reader = AsyncFrameReader(
+                self, event_types=event_types or DEFAULT_EVENT_TYPES)
+        self.reader.start()
+        return self.state.value
+
+    async def stop_async(self) -> str:
+        """Deterministic shutdown: stop reading, then close, then release.
+
+        The reader is cancelled first so nothing dispatches into a closing
+        runtime, but the transport close is what actually frees a thread parked
+        in a blocking `recv` — cancellation alone would leave it waiting on a
+        socket nobody will feed.
+        """
+        self.state = RuntimeState.STOPPING
+        if self.reader is not None:
+            await self.reader.stop()
+        return self.stop()
 
     # ── events ──────────────────────────────────────────────────────────────
     def on_frame(self, frame, *, now: datetime | None = None) -> str:
@@ -254,7 +295,14 @@ class PublicMarketDataRuntime:
         already decides that from `last_valid_observation`. Deciding it here
         would put a second, competing freshness rule in the system.
         """
-        connected = bool(self.controller.connected and self.state is RuntimeState.RUNNING)
+        # A DEAD READER IS NOT A CONNECTED FEED. If ingestion was started and
+        # the task has since died, the socket may still look open while nothing
+        # is being read from it — reporting that as connected is the same lie as
+        # treating connectivity as freshness.
+        reader_ok = self.reader is None or self.reader.alive
+        connected = bool(self.controller.connected
+                         and self.state is RuntimeState.RUNNING
+                         and reader_ok)
         return {
             "connected": connected,
             "source": "LIVE_PUBLIC",
@@ -292,6 +340,7 @@ class PublicMarketDataRuntime:
             "capture_overflow": self.supervisor.capture_overflow,
             "reconnect_count": self.supervisor.reconnect_count,
             "last_error": self.last_error,
+            "reader": (self.reader.diagnostics() if self.reader is not None else None),
             "requires_credentials": False,
             "authorizes_execution": False,
         }

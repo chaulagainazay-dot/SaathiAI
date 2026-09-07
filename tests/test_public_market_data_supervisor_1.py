@@ -9,6 +9,7 @@ trading account.
 from __future__ import annotations
 
 import ast
+import asyncio
 import gc
 import threading
 from datetime import datetime, timedelta, timezone
@@ -528,7 +529,7 @@ def test_server_boot_opens_no_socket_unless_explicitly_configured(monkeypatch):
 
     monkeypatch.delenv("SAATHI_PUBLIC_MARKET_DATA", raising=False)
     rt_mod._RUNTIME = None
-    srv._saathi_start_public_market_data()
+    asyncio.run(srv._saathi_start_public_market_data())
     assert rt_mod._RUNTIME is None
 
 
@@ -539,7 +540,7 @@ def test_only_an_explicit_affirmative_starts_the_feed(monkeypatch, value):
 
     monkeypatch.setenv("SAATHI_PUBLIC_MARKET_DATA", value)
     rt_mod._RUNTIME = None
-    srv._saathi_start_public_market_data()
+    asyncio.run(srv._saathi_start_public_market_data())
     assert rt_mod._RUNTIME is None
 
 
@@ -548,7 +549,7 @@ def test_shutdown_is_safe_when_the_feed_never_started():
     from saathi.platform.crypto import runtime as rt_mod
 
     rt_mod._RUNTIME = None
-    srv._saathi_stop_public_market_data()      # must not raise
+    asyncio.run(srv._saathi_stop_public_market_data())   # must not raise
 
 
 def test_shutdown_stops_a_running_runtime():
@@ -559,7 +560,7 @@ def test_shutdown_stops_a_running_runtime():
     ws = FakeWS()
     rt._transport_factory = lambda: ws
     rt.start(now=T0)
-    srv._saathi_stop_public_market_data()
+    asyncio.run(srv._saathi_stop_public_market_data())
     assert ws.closed is True
     assert rt_mod._RUNTIME.state is RuntimeState.STOPPED
 
