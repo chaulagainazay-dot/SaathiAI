@@ -80,7 +80,9 @@ export default function NepseShell({ children }) {
             {/* Names what the chip actually covers. Pages such as Market render no
                 live prices at all, and an unqualified "Live NEPSE feed" sitting above
                 a settled-session table reads as a claim about that table. */}
-            {isLive ? "Live price feed — quotes only" : "Snapshot / seed data — NOT a live NEPSE feed"}
+            {isLive ? "Live price feed — quotes only"
+              : source === "closed" ? "Market closed — last settled prices"
+              : "Snapshot / seed data — NOT a live NEPSE feed"}
           </span>
           <span className="nepse-chip">No broker login</span>
           <span className="nepse-chip">No OAuth</span>

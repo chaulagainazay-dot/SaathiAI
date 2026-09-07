@@ -12,7 +12,7 @@
 import { useMemo, useState } from "react";
 import { HEATMAP_BUCKET, heatmapModel, squarify } from "@/lib/nepse/heatmap";
 import { INDICATOR_STATUS } from "@/lib/nepse/indicators";
-import { fmtPct, fmtCompactRs } from "@/lib/nepse/format";
+import { fmtNum, fmtPct, fmtCompactRs } from "@/lib/nepse/format";
 
 const W = 960;
 const H = 520;
@@ -82,7 +82,11 @@ export default function Heatmap({ rows, weightBy = "turnover", onSelect }) {
           <g key={s.sector}>
             <text x={s.box.x + 3} y={s.box.y + 11} fontSize="10" fill="var(--text-dim)"
                   fontFamily="'IBM Plex Mono', monospace">
-              {s.box.w > 90 ? `${s.sector} · ${fmtPct((s.share ?? 0) * 100)}` : ""}
+              {/* Share of market turnover, NOT a price move. fmtPct signs it, and
+                  "+56.22%" beside a sector name in a trading UI reads as a rally. */}
+              {s.box.w > 90
+                ? `${s.sector} · ${fmtNum((s.share ?? 0) * 100, 1)}% of turnover`
+                : ""}
             </text>
             {s.tiles.map((t) => (
               <g key={t.symbol}
