@@ -13310,6 +13310,50 @@ def tg_ops_health(authorization: str | None = Header(default=None), x_platform_t
     return _tg_ops_authorized(authorization, x_platform_token).health.snapshot()
 
 
+def _trading_ops_sources():
+    """The subsystem objects this process can read SAFELY, and only those.
+
+    Guardian and the kill switch expose verified side-effect-free reads, so they
+    are wired. Market data, provider and approval are not wired here: this process
+    holds no live feed supervisor, and the provider tracker and approval centre
+    live in runtimes this route does not own. Handing the collector a fabricated
+    stand-in would be worse than reporting nothing — those subsystems report
+    INSUFFICIENT_EVIDENCE, which is the truth, and the operator is told to verify
+    them by hand rather than shown an invented green.
+    """
+    svc = _tg_svc()
+    return {
+        "guardian_service": svc,
+        "kill_switch_store": getattr(svc, "kill_switches", None),
+    }
+
+
+@router.get("/tg/operations/trading-ops")
+def tg_trading_ops_status(
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    """Canonical trading-operations snapshot. READ ONLY.
+
+    The single source Central Command renders from. It classifies nothing: the
+    payload is TRADING-OPS-1's snapshot, produced through HEALTH-COLLECTOR-1's
+    non-mutating reads, plus the freshness that says whether it still describes
+    now. Collection is request-driven and coalesced by the collector's own
+    minimum interval, so page loads cannot turn into a polling storm.
+    """
+    _tg_ops_authorized(authorization, x_platform_token)
+    from saathi.platform.tg.ops_status import default_status_service
+
+    def _serve():
+        import time as _time
+        # Operational freshness genuinely needs a clock, and this is the boundary
+        # where one belongs — the collector and producers below stay clock-free.
+        now = _time.strftime("%Y-%m-%dT%H:%M:%SZ", _time.gmtime())
+        return default_status_service().status(now=now, **_trading_ops_sources()).to_public()
+
+    return _tg_ops_guard(_serve)
+
+
 @router.get("/tg/operations/health/{component_id}")
 def tg_ops_health_component(component_id: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
     service = _tg_ops_authorized(authorization, x_platform_token)
