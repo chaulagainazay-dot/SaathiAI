@@ -27,14 +27,30 @@ Manifests are small atomic JSON documents under `.runtime/observation-epochs/`
 (write-temp-then-rename, mode 0600), the same convention the NEPSE directory
 snapshots use.
 
-## Epoch 1
+## The live epoch
+
+Two earlier epochs were opened and immediately invalidated, both with **zero
+evidence**, and the sequence is worth recording because it proves the
+invalidation rule is real rather than decorative.
+
+`epoch-1` was opened at `78921d75`. Committing this observer module then moved
+the branch tip, and `verify_provenance` returned `CODE_SHA_CHANGED` — even though
+the *observed trading chain* was byte-identical (`git diff 78921d75..HEAD` over
+`saathi/platform/tg/` excluding the observer is empty). The rule is deliberately
+coarse: it anchors to the SHA of the code actually running, and weakening it to
+"only the files I consider material" is how an epoch quietly outlives the
+configuration it claims to describe. `epoch-2` met the same fate when this
+document was written.
+
+**The operational lesson, now written into the workflow: land every commit on the
+observation branch BEFORE opening the live epoch.** An epoch is opened last, and
+the branch does not move again while it is open.
 
 | | |
 |---|---|
-| epoch_id | `epoch-1` |
-| session_id | `shadow-2653fbd591f94e25` |
-| provenance fingerprint | `86be59474cf51685` |
-| started_at | 2026-09-07T01:02:24Z |
+| epoch_id | `epoch-3` |
+| provenance fingerprint | recorded in the manifest at open |
+| started_at | see manifest |
 | mode | **REPLAY** |
 | strategy | `btc-mean-reversion@crypto-1-paper-candidate` |
 | qualification ref | `45a115c978047e22…` (STRATEGY-CRYPTO-1) |
@@ -98,8 +114,8 @@ on epoch ids, and restart continuity.
 
 ## Current elapsed evidence
 
-**None.** The epoch opened at 2026-09-07T01:02:24Z with zero events, zero fills
-and zero closed trades. Any performance claim at this point would be fabricated.
+**None.** The epoch opens with zero events, zero fills and zero closed trades.
+Any performance claim at this point would be fabricated.
 
 ## Limitations carried on the manifest
 
@@ -110,3 +126,5 @@ and zero closed trades. Any performance claim at this point would be fabricated.
 - spent TEST windows from crypto-1 are not reusable and are not reopened
 - **strategy ceiling remains `PAPER_CANDIDATE`; this epoch does not promote it**
 - no elapsed-time evidence exists at epoch start
+- supersedes `epoch-1` and `epoch-2`, both INVALIDATED by `CODE_SHA_CHANGED` with
+  zero evidence recorded
