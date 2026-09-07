@@ -5546,3 +5546,48 @@ def _saathi_stop_local_heartbeat():
         stop_local_heartbeat()
     except Exception:
         pass
+
+
+@app.on_event("startup")
+def _saathi_start_public_market_data():
+    """Start the public crypto feed ONLY when explicitly configured.
+
+    Off unless `SAATHI_PUBLIC_MARKET_DATA=1`. Booting the server must not open a
+    socket by default: a feed nobody asked for is an unannounced outbound
+    connection, and in test or offline contexts it would be a failure looking for
+    somewhere to happen. Public Binance spot market data only — no credentials
+    exist on this path and no account, order or user-data surface is reachable.
+    """
+    import os
+
+    if os.getenv("SAATHI_PUBLIC_MARKET_DATA", "").strip().lower() not in {"1", "true", "yes", "on"}:
+        return
+    try:
+        from saathi.platform.crypto.runtime import (
+            PublicMarketDataConfig, reset_public_market_data_for_tests,
+        )
+
+        symbols = tuple(
+            s.strip().upper()
+            for s in os.getenv("SAATHI_PUBLIC_MARKET_DATA_SYMBOLS", "BTCUSDT,ETHUSDT").split(",")
+            if s.strip()
+        )
+        rt = reset_public_market_data_for_tests(
+            PublicMarketDataConfig(enabled=True, symbols=symbols))
+        rt.start()
+    except Exception:
+        # A feed that cannot start must not take the server down with it; the
+        # health surface reports the real state either way.
+        pass
+
+
+@app.on_event("shutdown")
+def _saathi_stop_public_market_data():
+    """Close the public stream cleanly: socket closed, queue released."""
+    try:
+        from saathi.platform.crypto import runtime as _rt_mod
+
+        if _rt_mod._RUNTIME is not None:
+            _rt_mod._RUNTIME.stop()
+    except Exception:
+        pass

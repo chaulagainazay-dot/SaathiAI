@@ -98,13 +98,18 @@ def test_every_wired_subsystem_declares_exactly_one_owner():
 def test_no_fake_market_data_supervisor_is_invented():
     """NO_FABRICATED_RUNTIME_INSTANCE.
 
-    A fixture-sourced validation service presented as feed health would be a
-    false live label. The absence is reported instead.
+    Updated by PUBLIC-MARKET-DATA-SUPERVISOR-1: market data now resolves to the
+    real public Binance runtime, which is DISABLED by default. The invariant is
+    unchanged — nothing is fabricated to fill the panel, and a switched-off feed
+    reports as switched off rather than as an outage or as healthy.
     """
+    from saathi.platform.crypto.runtime import reset_public_market_data_for_tests
+
+    reset_public_market_data_for_tests()          # disabled, the default
     w = resolve_market_data()
     assert w.state == WiringState.PUBLIC_FEED_DISABLED.value
     assert w.instance is None
-    assert "not a feed" in (w.detail or "")
+    assert "disabled" in (w.detail or "").lower()
 
 
 def test_no_monitoring_only_provider_tracker_is_created():

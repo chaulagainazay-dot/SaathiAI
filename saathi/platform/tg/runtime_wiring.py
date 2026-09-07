@@ -136,40 +136,71 @@ def resolve_approval() -> WiredSubsystem:
 
 
 def resolve_provider() -> WiredSubsystem:
-    """No process-wide provider runtime exists, and none is invented here.
+    """The public market-data runtime owns the canonical provider tracker.
 
-    `ProviderExecutionRuntime` owns a `ProviderHealthTracker`, but nothing
-    constructs one at process level — only the providers CLI and an external
-    verify path do. Creating a monitoring-only tracker would fill the panel with
-    the health of an object no request ever touches: green, and meaningless.
+    PUBLIC-MARKET-DATA-SUPERVISOR-1 supplied the process-wide instance this
+    previously reported as absent — and it is the tracker the runtime itself
+    updates from real transport events, not a monitoring-only copy. When the
+    runtime is switched off there is still nothing to observe, and that is
+    reported rather than papered over.
+
+    SCOPE IS PUBLIC MARKET DATA. A healthy provider here says nothing about a
+    trading account, and the capability travels with the health to keep the two
+    from being read as one claim.
     """
+    try:
+        from saathi.platform.crypto.runtime import (
+            PROVIDER_ID, RuntimeState, default_public_market_data,
+        )
+
+        rt = default_public_market_data()
+    except Exception as exc:
+        return _failed(Subsystem.PROVIDER.value, exc)
+
+    owner = "saathi.platform.crypto.runtime.default_public_market_data"
+    if rt.state is RuntimeState.DISABLED:
+        return WiredSubsystem(
+            subsystem=Subsystem.PROVIDER.value,
+            state=WiringState.NOT_CONFIGURED.value,
+            detail="public market-data runtime is disabled; no provider is being observed",
+            owner=owner,
+        )
     return WiredSubsystem(
-        subsystem=Subsystem.PROVIDER.value,
-        state=WiringState.NOT_CONFIGURED.value,
-        detail=(
-            "no process-wide ProviderExecutionRuntime; provider health is tracked "
-            "per-runtime and none is constructed in the serving process"
-        ),
-        owner="saathi.connectors.providers.runtime.ProviderExecutionRuntime",
+        subsystem=Subsystem.PROVIDER.value, state=WiringState.WIRED.value,
+        instance=rt.health, owner=owner,
+        detail=f"canonical provider tracker owned by the public market-data runtime ({PROVIDER_ID})",
     )
 
 
 def resolve_market_data() -> WiredSubsystem:
-    """No live feed supervisor in this process.
+    """The certified public Binance runtime, when it is switched on.
 
-    `default_market_observation()` exists, but it is a validation harness —
-    fixture-sourced, with no transport, heartbeat or last-observation clock.
-    Presenting it as feed health would misrepresent a fixture as a live feed,
-    which is the false-live label this program forbids.
+    `market_observation` is deliberately still NOT used as feed health: it is a
+    fixture-sourced validation harness with no transport, heartbeat or
+    last-observation clock, and presenting it as a feed would be the false-live
+    label this program forbids. The real supervisor is
+    PUBLIC-MARKET-DATA-SUPERVISOR-1's runtime, which is off by default.
     """
+    try:
+        from saathi.platform.crypto.runtime import RuntimeState, default_public_market_data
+
+        rt = default_public_market_data()
+    except Exception as exc:
+        return _failed(Subsystem.MARKET_DATA.value, exc)
+
+    owner = "saathi.platform.crypto.runtime.default_public_market_data"
+    if rt.state is RuntimeState.DISABLED:
+        return WiredSubsystem(
+            subsystem=Subsystem.MARKET_DATA.value,
+            state=WiringState.PUBLIC_FEED_DISABLED.value,
+            detail=("public market-data runtime is disabled; no live public feed "
+                    "is running in this process"),
+            owner=owner,
+        )
     return WiredSubsystem(
-        subsystem=Subsystem.MARKET_DATA.value,
-        state=WiringState.PUBLIC_FEED_DISABLED.value,
-        detail=(
-            "no live public feed supervisor started in this process; "
-            "market_observation is a fixture-sourced validation service, not a feed"
-        ),
-        owner="saathi.platform.tg.market_observation.service.default_market_observation",
+        subsystem=Subsystem.MARKET_DATA.value, state=WiringState.WIRED.value,
+        instance=rt, owner=owner,
+        detail="live public Binance spot market data (public endpoints only)",
     )
 
 
@@ -238,6 +269,11 @@ def collector_sources(wiring: dict | None = None) -> dict:
         out["market_data_source"] = w[Subsystem.MARKET_DATA.value].instance
     if w[Subsystem.PROVIDER.value].available:
         out["provider_tracker"] = w[Subsystem.PROVIDER.value].instance
+        from saathi.platform.crypto.runtime import PROVIDER_ID
+
+        # Named explicitly: the collector never enumerates providers by asking
+        # for ones it was not told about, which is how `get` would create them.
+        out["provider_ids"] = (PROVIDER_ID,)
     gw = w.get(Subsystem.EXECUTION_GATEWAY.value)
     if gw is not None and gw.available:
         out["gateway"] = gw.instance
