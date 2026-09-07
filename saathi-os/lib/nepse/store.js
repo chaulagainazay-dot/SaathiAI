@@ -7,7 +7,13 @@ import { PORTFOLIO_COLORS } from "./portfolio.js";
 
 const KEY = "nepse.tracker.v1";
 
-const EMPTY = { portfolios: [], activeId: null, watchlist: [], watchGroups: {} };
+const EMPTY = {
+  portfolios: [], activeId: null, watchlist: [], watchGroups: {},
+  // Saved strategies from the builder. Definitions only — never results, which
+  // are recomputed from current readings so a stale match can never resurface
+  // looking like a live one.
+  strategies: [],
+};
 
 function safeRead() {
   if (typeof window === "undefined") return { ...EMPTY };
@@ -117,4 +123,49 @@ export function exportBackupCSV(state = safeRead()) {
     }
   }
   return lines.join("\n");
+}
+
+
+// ── saved strategies (strategy builder persistence) ─────────────────────────
+const sid = () => `s_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;
+
+/** Persist a strategy definition. Returns the saved record. */
+export function saveStrategy(strategy) {
+  const state = safeRead();
+  const list = state.strategies || [];
+  const now = new Date().toISOString();
+  const existing = strategy?.id ? list.find((s) => s.id === strategy.id) : null;
+  const record = existing
+    ? { ...existing, ...strategy, updatedAt: now }
+    : { ...strategy, id: strategy?.id || sid(), createdAt: now, updatedAt: now };
+  state.strategies = existing
+    ? list.map((s) => (s.id === record.id ? record : s))
+    : [...list, record];
+  safeWrite(state);
+  return record;
+}
+
+export function listStrategies() {
+  return safeRead().strategies || [];
+}
+
+export function getStrategy(id) {
+  return (safeRead().strategies || []).find((s) => s.id === id) || null;
+}
+
+export function deleteStrategy(id) {
+  const state = safeRead();
+  state.strategies = (state.strategies || []).filter((s) => s.id !== id);
+  safeWrite(state);
+  return state.strategies;
+}
+
+/** Copy a built-in scan into the user's own saved list so it can be edited. */
+export function forkScan(scan) {
+  return saveStrategy({
+    name: `${scan?.name || "Scan"} (copy)`,
+    description: scan?.description || "",
+    root: scan?.root,
+    forkedFrom: scan?.id || null,
+  });
 }
