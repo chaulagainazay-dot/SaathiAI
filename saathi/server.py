@@ -11,6 +11,7 @@ import os as _os
 from fastapi import Body, Depends, FastAPI, File, Form, Request, UploadFile
 
 
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -62,6 +63,45 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         return response
 
 app.add_middleware(SecurityHeadersMiddleware)
+
+
+@app.exception_handler(RequestValidationError)
+async def _validation_error_without_secrets(request, exc):
+    """422 responses must never echo the credential that was submitted.
+
+    FastAPI's default handler puts the offending `input` verbatim into the error
+    body. A login endpoint therefore answers a malformed request by REFLECTING
+    the password back to the caller, which then lands in terminal scrollback,
+    proxy logs, browser devtools and any error tracker in the path. This was
+    observed live: POSTing to /api/v1/platform/auth/login without the required
+    field returned the submitted password in the 422 body.
+
+    The fix is at the boundary, not per-endpoint. Every route that takes a body
+    inherits this handler, so a new endpoint cannot reintroduce the leak by
+    forgetting about it, and the field list is the repo's existing certified
+    secret detector rather than a second copy that would drift from it.
+
+    `loc` is kept: a field NAME is what makes the error actionable, and naming
+    "password" is not disclosing one.
+    """
+    from saathi.tool_runtime.secrets import REDACTED, is_secret_key, redact
+
+    safe = []
+    for err in exc.errors():
+        e = dict(err)
+        loc = e.get("loc") or ()
+        # The value that failed validation, under a key that names a credential.
+        leaf = str(loc[-1]) if loc else ""
+        if "input" in e:
+            e["input"] = REDACTED if is_secret_key(leaf) else redact(e["input"])
+        if "ctx" in e:
+            e["ctx"] = redact(e["ctx"])
+        # Pydantic's url points at its docs; harmless, but nothing needs it.
+        e.pop("url", None)
+        safe.append(e)
+    return JSONResponse({"detail": safe}, status_code=422)
+
+
 
 
 # ── BFF: one aggregated contract for the CEO Home screen (desktop + mobile) ──

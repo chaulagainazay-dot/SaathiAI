@@ -21,11 +21,19 @@ DANGEROUS_SCHEMES = frozenset({
     "file", "javascript", "data", "vbscript", "blob", "about",
 })
 
-# ── default allowlist (dev / staging / localhost) ─────────────────────────
+# ── default allowlist (dev / staging fixtures) ────────────────────────────
+#
+# LOOPBACK IS DELIBERATELY ABSENT. A governed browser that may fetch
+# 127.0.0.1 can read every service bound to this machine — the SaathiOS API
+# itself, Ollama, anything else listening — from a URL that may have been
+# chosen by untrusted page content. That is the classic SSRF pivot, and it was
+# reachable: a live fetch of http://127.0.0.1:8765/openapi.json succeeded.
+#
+# Loopback is still reachable when a CALLER passes `allowed_hosts` explicitly,
+# which is how every test and fixture in this repository already does it. The
+# difference is that it is now a deliberate grant rather than the default, so a
+# production runtime cannot inherit it by accident.
 DEFAULT_ALLOWED_HOST_SUFFIXES = (
-    "localhost",
-    "127.0.0.1",
-    "::1",
     "example.com",
     "example.org",
     "example.net",
