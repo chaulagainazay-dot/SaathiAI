@@ -219,8 +219,31 @@ test("formatters", () => {
   assert.equal(fmtRs(1234.5), "Rs 1,234.50");
   assert.equal(fmtPct(2.5), "+2.50%");
   assert.equal(fmtPct(-1), "-1.00%");
-  assert.equal(isMarketOpen(new Date("2026-08-28T12:00:00")), false); // Friday
-  assert.equal(isMarketOpen(new Date("2026-08-30T12:00:00")), true); // Sunday noon
+  // Explicit UTC instants, not bare local-time strings: a date written without a
+  // zone is parsed in the HOST's timezone, so these assertions used to mean
+  // something different on every machine — and passed here only because this
+  // developer box is set to +05:45.
+  assert.equal(isMarketOpen(new Date("2026-08-28T06:00:00Z")), false); // Fri 11:45 NPT
+  assert.equal(isMarketOpen(new Date("2026-08-30T06:00:00Z")), true);  // Sun 11:45 NPT
+  assert.equal(isMarketOpen(new Date("2026-08-30T18:00:00Z")), false); // Sun 23:45 NPT
+});
+
+test("market hours do not depend on the host timezone", () => {
+  // The regression this guards: getHours()/getDay() read the host clock, so a
+  // server in UTC reported NEPSE open through a Kathmandu night. Same instant,
+  // same answer, whatever TZ the process runs under.
+  const OPEN = new Date("2026-08-30T06:00:00Z");  // Sun 11:45 in Kathmandu
+  const SHUT = new Date("2026-08-30T17:00:00Z");  // Sun 22:45 in Kathmandu
+  const original = process.env.TZ;
+  try {
+    for (const tz of ["UTC", "America/New_York", "Asia/Kathmandu", "Pacific/Auckland"]) {
+      process.env.TZ = tz;
+      assert.equal(isMarketOpen(OPEN), true, `open instant misread under ${tz}`);
+      assert.equal(isMarketOpen(SHUT), false, `shut instant misread under ${tz}`);
+    }
+  } finally {
+    if (original === undefined) delete process.env.TZ; else process.env.TZ = original;
+  }
 });
 
 // ── M400-NEPSE-006/007 structural: routes + boundary labels ──────────────────
