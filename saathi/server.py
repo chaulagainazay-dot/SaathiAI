@@ -3,7 +3,9 @@ import base64
 import json
 import re
 import secrets
+import threading
 import time
+import uuid
 from pathlib import Path
 import os as _os
 from fastapi import Body, Depends, FastAPI, File, Form, Request, UploadFile
@@ -165,6 +167,124 @@ async def human_test(request: Request):
     except Exception as e:
         return {"ok": False, "error": str(e), "execution_id": gov_exec_id, "governed": True,
                 "hint": "start the Mac Agent: bash ~/SaathiAI/run_human_agent.sh"}
+
+
+_SAATHIOS_BROWSER = None
+_SAATHIOS_BROWSER_LOCK = threading.Lock()
+
+
+def _saathios_browser():
+    """The browser behind the SaathiOS Browser surface.
+
+    Real network access is OPT-IN via SAATHI_BROWSER_LIVE=1. Without it this runs
+    the deterministic fake, so the surface, its policy denials and its UI are all
+    exercisable without a single outbound request. The process-wide
+    default_governed_browser() singleton is deliberately left alone: it defaults to
+    the fake, and every existing caller and test depends on that.
+    """
+    global _SAATHIOS_BROWSER
+    with _SAATHIOS_BROWSER_LOCK:
+        if _SAATHIOS_BROWSER is None:
+            from saathi.browser.governed import GovernedBrowser
+            from saathi.browser.policy import DEFAULT_ALLOWED_HOST_SUFFIXES
+            live = _os.getenv("SAATHI_BROWSER_LIVE", "").strip() in ("1", "true", "yes")
+            # The adapter re-checks the domain itself (defence in depth) with its
+            # OWN host list, which does not consult the environment. Pass the
+            # configured hosts explicitly or an allowlisted host is still refused
+            # at the second check. The deny list applies regardless of this list.
+            extra = [h.strip().lower() for h in
+                     _os.getenv("SAATHI_BROWSER_ALLOWED_DOMAINS", "").split(",") if h.strip()]
+            hosts = list(DEFAULT_ALLOWED_HOST_SUFFIXES) + extra
+            _SAATHIOS_BROWSER = GovernedBrowser(
+                mode="service" if live else "fake", allowed_hosts=hosts,
+            )
+        return _SAATHIOS_BROWSER
+
+
+class BrowserFetchIn(BaseModel):
+    url: str
+    action: str = "read"          # read | extract | navigate | screenshot
+    selector: str = ""
+    timeout: int = 30
+    actor: str = "user:api"
+
+
+@app.post("/api/v1/browser/fetch")
+async def browser_fetch(body: BrowserFetchIn):
+    """Read a page through the GOVERNED browser (SaathiOS Browser surface).
+
+    Every request passes domain policy, risk classification, approval and the
+    ExecutionGateway before any network call — this endpoint adds a surface, never
+    a bypass. Only non-side-effecting actions are accepted here: reading a page is
+    not the same authority as clicking or submitting on one, and mixing them behind
+    one endpoint is how a read surface quietly becomes an action surface.
+
+    Page text comes back marked UNTRUSTED. It is third-party content that reaches a
+    model and a browser, so injection hits are reported alongside it and the caller
+    is expected to treat it as data.
+    """
+    import asyncio
+
+    READ_ONLY = {"read", "extract", "navigate", "open", "screenshot"}
+    action = (body.action or "read").strip().lower()
+    if action not in READ_ONLY:
+        return {"ok": False, "error": "action_not_permitted",
+                "message": f"{action} can change a page; this endpoint is read-only",
+                "permitted": sorted(READ_ONLY)}
+
+    url = (body.url or "").strip()
+    if not url:
+        return {"ok": False, "error": "missing_url"}
+
+    try:
+        gb = _saathios_browser()
+        rec = await asyncio.to_thread(
+            gb.execute,
+            action=action,
+            url=url,
+            selector=(body.selector or "").strip(),
+            actor=body.actor or "user:api",
+            request_source="api",
+            mission_id="saathios_browser",
+            mission_run_id="browser-surface",
+            environment=_os.getenv("SAATHI_ENV", "dev"),
+            payload={"timeout": max(1, min(int(body.timeout or 30), 60))},
+            # Reads are not side-effecting, so re-reading a page is a legitimate
+            # act rather than a duplicate one. Without a fresh key the gateway's
+            # idempotency guard — which exists to stop a click or a submit being
+            # replayed — refuses the second read of the same URL.
+            idempotency_key=uuid.uuid4().hex,
+        )
+    except Exception as e:  # governance itself failed — never fall through to a raw fetch
+        return {"ok": False, "error": "governance_error", "detail": str(e)[:300]}
+
+    if rec.status not in ("succeeded", "completed", "ok"):
+        # A denial is an answer, not an error: say which rule refused and why.
+        return {
+            "ok": False,
+            "error": "denied",
+            "status": rec.status,
+            "failure_category": getattr(rec, "failure_category", "") or "",
+            "execution_id": rec.execution_id,
+            "url": url,
+            "governed": True,
+        }
+
+    body_out = gb.take_content(rec.execution_id) or {}
+    return {
+        "ok": True,
+        "governed": True,
+        "execution_id": rec.execution_id,
+        "url": url,
+        "action": action,
+        "final_origin": body_out.get("final_origin", ""),
+        "page_title": body_out.get("page_title", ""),
+        "content": body_out.get("content", ""),
+        "truncated": bool(body_out.get("truncated", False)),
+        "injection_hits": body_out.get("injection_hits", []),
+        "trust": "UNTRUSTED_EXTERNAL_CONTENT",
+        "summary": getattr(rec, "result_summary", "") or "",
+    }
 
 
 @app.get("/api/v1/human/automation")
@@ -2578,16 +2698,25 @@ def analysis_narrate(body: NarrateIn, request: Request):
     if len(facts) > _NARRATE_MAX_FACTS:
         return {"ok": False, "reason": "FACTS_TOO_LARGE"}
 
-    from saathi.inference.chat_adapter import chat_generate
+    # Server routes reach the model INDIRECTLY, through the registered
+    # `tools_llm_helper` caller — the convention the `server_tools` caller policy
+    # states outright ("no direct provider from server routes"). The earlier
+    # version called the deprecated `llm.generate` facade with caller_id
+    # "analysis_narrate", which is not a registered caller, so preflight denied
+    # every request and this endpoint always answered LLM_UNAVAILABLE.
+    #
+    # RUNTIME-CONVERGENCE-1: the connectivity-governance branch resolved the same
+    # dead route through `chat_generate`, which is the ChatEngine adapter — it
+    # borrows caller_id "chat_engine" for a route that is not the chat engine,
+    # and it returns a DICT, so this function's `getattr(res, "text", "")` read
+    # the default and the endpoint answered ok:true with empty narration. The
+    # helper below returns an LLMResult carrying both .text and the .model the
+    # analysis UI displays.
+    from saathi.tools._llm_helper import ask_llm_result
 
     prompt = facts if not body.question else f"{facts}\n\nQUESTION: {body.question}"
     try:
-        res = chat_generate(
-            prompt,
-            system=_NARRATE_SYSTEM,
-            max_tokens=900,
-            timeout=60,
-        )
+        res = ask_llm_result(prompt, _NARRATE_SYSTEM, timeout=60, max_tokens=900)
         return {"ok": True, "text": getattr(res, "text", "") or "", "model": getattr(res, "model", "")}
     except Exception as exc:  # narration is optional — never break the analysis
         return {"ok": False, "reason": "LLM_UNAVAILABLE", "detail": str(exc)[:200]}
@@ -5433,5 +5562,56 @@ def _saathi_stop_local_heartbeat():
     try:
         from saathi.platform.cluster import stop_local_heartbeat
         stop_local_heartbeat()
+    except Exception:
+        pass
+
+
+@app.on_event("startup")
+async def _saathi_start_public_market_data():
+    """Start the public crypto feed ONLY when explicitly configured.
+
+    Off unless `SAATHI_PUBLIC_MARKET_DATA=1`. Booting the server must not open a
+    socket by default: a feed nobody asked for is an unannounced outbound
+    connection, and in test or offline contexts it would be a failure looking for
+    somewhere to happen. Public Binance spot market data only — no credentials
+    exist on this path and no account, order or user-data surface is reachable.
+    """
+    import os
+
+    if os.getenv("SAATHI_PUBLIC_MARKET_DATA", "").strip().lower() not in {"1", "true", "yes", "on"}:
+        return
+    try:
+        from saathi.platform.crypto.runtime import (
+            PublicMarketDataConfig, reset_public_market_data_for_tests,
+        )
+
+        symbols = tuple(
+            s.strip().upper()
+            for s in os.getenv("SAATHI_PUBLIC_MARKET_DATA_SYMBOLS", "BTCUSDT,ETHUSDT").split(",")
+            if s.strip()
+        )
+        rt = reset_public_market_data_for_tests(
+            PublicMarketDataConfig(enabled=True, symbols=symbols))
+        # Async lifecycle: connect, subscribe, then start the single ingestion
+        # task. Without the reader the socket would be open and unread.
+        await rt.start_async()
+    except Exception:
+        # A feed that cannot start must not take the server down with it; the
+        # health surface reports the real state either way.
+        pass
+
+
+@app.on_event("shutdown")
+async def _saathi_stop_public_market_data():
+    """Close the public stream cleanly: reader cancelled, socket closed, queue released.
+
+    Order is load-bearing — the transport close is what frees a thread parked in
+    a blocking recv, so cancelling the reader alone would leave it waiting.
+    """
+    try:
+        from saathi.platform.crypto import runtime as _rt_mod
+
+        if _rt_mod._RUNTIME is not None:
+            await _rt_mod._RUNTIME.stop_async()
     except Exception:
         pass

@@ -257,6 +257,21 @@ def check_domain(
     if blocked and not allow_private:
         return DomainDecision(False, why, origin=origin_of(raw), host=host, scheme=scheme)
 
+    # Denylist BEFORE the allowlist, on this path too.
+    #
+    # The allowlist below matches by suffix, so a broad entry ("com.np") would
+    # otherwise reach hosts nobody meant to permit. The canonical policy service
+    # already denies these; this legacy path did not, which meant the protected
+    # market portals were only ever "not allowlisted" — one careless allowlist
+    # entry away from being fetchable. A deny must not be defeatable by an allow.
+    from saathi.browser.domain_policy import DEFAULT_DENY_HOSTS
+    for d in DEFAULT_DENY_HOSTS:
+        if not d:
+            continue
+        if host == d or host.endswith("." + d):
+            return DomainDecision(False, "domain_denylisted", origin=origin_of(raw),
+                                  host=host, scheme=scheme)
+
     allow = tuple(allowed_hosts) if allowed_hosts is not None else DEFAULT_ALLOWED_HOST_SUFFIXES
     # Exact host or explicit subdomain-of root — not arbitrary substring
     ok = False

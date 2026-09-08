@@ -8,6 +8,7 @@ import { STOCKS } from "@/lib/nepse/data";
 import { useNepseQuotes } from "@/lib/nepse/live";
 import { computePortfolio, PORTFOLIO_COLORS } from "@/lib/nepse/portfolio";
 import { importTransactions } from "@/lib/nepse/importers";
+import { exportHoldings, exportPortfolioBundle } from "@/lib/nepse/export";
 import { fmtRs, fmtNum, fmtPct } from "@/lib/nepse/format";
 import * as store from "@/lib/nepse/store";
 
@@ -67,6 +68,40 @@ export default function PortfolioHome() {
       setImportMsg(`Imported ${txs.length} row(s) from ${importSrc}.`);
     } catch (e) { setImportMsg(String(e.message || e)); }
   };
+  /**
+   * Hand the browser a file.
+   *
+   * The object URL is revoked after the click: leaving it alive keeps the whole
+   * CSV — every transaction the user has — pinned in memory for the life of the
+   * tab, on a page they may leave open all day.
+   */
+  const download = (filename, csv) => {
+    // The BOM is what makes Excel read this as UTF-8. Without it a company name
+    // in Devanagari opens as mojibake, and the user blames the export.
+    const blob = new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const exportBackup = () => {
+    const bundle = exportPortfolioBundle({ ...state, exportedAt: new Date().toISOString() });
+    download(bundle.filename, bundle.csv);
+    setImportMsg(`Exported ${bundle.transactions} transaction(s) across ${bundle.portfolios} portfolio(s). `
+      + "Transactions are the restore path — re-import this file with the TMS reader.");
+  };
+
+  const exportPositions = () => {
+    if (!computed) return;
+    download(`saathios-holdings-${new Date().toISOString().slice(0, 10)}.csv`,
+             exportHoldings(computed.holdings));
+    setImportMsg("Exported positions. This is a REPORT, not a backup — holdings are "
+      + "derived from the transaction log, and restoring them would discard the history that produced them.");
+  };
+
   const onFile = (e) => {
     const f = e.target.files?.[0];
     if (!f) return;
@@ -207,6 +242,26 @@ export default function PortfolioHome() {
               </select>
               <input className="nepse-input" type="file" accept=".csv,.tsv,.txt" onChange={onFile} />
             </div>
+
+            <h3 style={{ marginTop: "1.25rem" }}>Export</h3>
+            <p style={{ color: "var(--text-dim)", fontSize: "0.9rem", margin: "0.4rem 0 0.9rem" }}>
+              The backup writes your TRANSACTIONS in the same column names the TMS
+              importer reads, so it round-trips back into this app or into a
+              spreadsheet. Cells that begin with <span className="mono">=</span>,{" "}
+              <span className="mono">+</span>, <span className="mono">-</span> or{" "}
+              <span className="mono">@</span> are escaped: a symbol field is not a
+              formula, and spreadsheets will execute one.
+            </p>
+            <div className="nepse-row">
+              <button className="nepse-btn" type="button" onClick={exportBackup}>
+                Export backup (transactions)
+              </button>
+              <button className="nepse-btn ghost" type="button" onClick={exportPositions}
+                      disabled={!computed?.holdings.length}>
+                Export positions (report)
+              </button>
+            </div>
+
             {importMsg && <p className="nepse-callout" style={{ marginTop: "0.8rem" }}>{importMsg}</p>}
           </div>
         </>

@@ -1,3 +1,5 @@
+import { marketWindow } from "./feed-policy.js";
+
 // NEPSE — display formatters and calendar helpers. Pure, no side effects.
 // Money is Nepali Rupee (Rs). These are DISPLAY ONLY — never accounting authority.
 
@@ -46,10 +48,17 @@ export function dir(delta) {
   return n > 0 ? "up" : "down";
 }
 
-// NEPSE trades Sun–Thu, roughly 11:00–15:00 Nepal time. `now` injectable for tests.
+/**
+ * Is NEPSE trading right now? `now` injectable for tests.
+ *
+ * Delegates to `marketWindow`, which does the arithmetic against Asia/Kathmandu
+ * explicitly. This function used to read `getDay()` and `getHours()` — the HOST's
+ * timezone — which is right only on a machine already set to NPT and silently
+ * wrong everywhere else. It reported the exchange open through a Kathmandu night
+ * for anything running in UTC, and shut through a Kathmandu morning for anything
+ * west of it. The developer machine happens to be set to +05:45, so the bug could
+ * not be observed locally: it would have appeared only once deployed.
+ */
 export function isMarketOpen(now = new Date()) {
-  const day = now.getDay(); // 0 Sun .. 6 Sat
-  if (day === 5 || day === 6) return false; // Fri, Sat closed
-  const mins = now.getHours() * 60 + now.getMinutes();
-  return mins >= 11 * 60 && mins <= 15 * 60;
+  return marketWindow(now).open;
 }

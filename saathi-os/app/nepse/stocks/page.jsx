@@ -5,7 +5,7 @@
 import { useMemo, useState } from "react";
 import { SECTORS } from "@/lib/nepse/data";
 import { useNepseQuotes } from "@/lib/nepse/live";
-import { useNepseIndicators, show } from "@/lib/nepse/use-indicators";
+import { useNepseIndicators, show, liveDayChange } from "@/lib/nepse/use-indicators";
 import { screen } from "@/lib/nepse/screener";
 import { fmtNum, fmtRs, fmtPct, dayChangePct } from "@/lib/nepse/format";
 
@@ -73,15 +73,18 @@ export default function ScreenerPage() {
           </tr></thead>
           <tbody>
             {result.rows.map((r) => {
-              const noChange = r.changeUnavailable || r.prevClose == null;
-              const chg = noChange ? null : dayChangePct(r.ltp, r.prevClose);
+              // Day change now comes from the archive-derived previous close, so a
+              // live-LTP-only feed no longer forces a blank column.
+              const dc = liveDayChange(r.ltp, indicators[r.symbol], isLive);
+              const noChange = !dc.available;
+              const chg = dc.changePct;
               return (
                 <tr key={r.symbol}>
                   <td className="strong"><a href={`/nepse/stocks/${r.symbol}`}>{r.symbol}</a>
                     <div style={{ color: "var(--text-faint)", fontSize: "0.72rem", fontWeight: 400 }}>{r.sector}</div></td>
                   <td className="rt num">{fmtRs(r.ltp)}</td>
                   <td className={`rt num ${noChange ? "" : chg >= 0 ? "nepse-up" : "nepse-down"}`}
-                      title={noChange ? "Feed does not report a previous close" : undefined}>
+                      title={noChange ? (dc.reason === "PRICE_NOT_LIVE" ? "Snapshot price — a day change would be misleading" : "No trustworthy previous close available") : `vs close of ${dc.against}`}>
                     {noChange ? "—" : fmtPct(chg)}
                   </td>
                   <td className="rt num">{r.score}</td>

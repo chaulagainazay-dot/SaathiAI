@@ -8,7 +8,7 @@ import { readFileSync, existsSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { STOCKS, getStock, marketSnapshot, brokersForStock, BROKERS, indexHistory } from "./nepse/data.js";
+import { STOCKS, getStock, BROKERS } from "./nepse/data.js";
 import { scoreStock, signalFor, evaluationFor, rsi, withAnalytics } from "./nepse/analytics.js";
 import { screen, PAGE_SIZE } from "./nepse/screener.js";
 import { computePortfolio } from "./nepse/portfolio.js";
@@ -149,24 +149,32 @@ test("withAnalytics attaches score/signal/evaluation", () => {
 });
 
 // ── M400-NEPSE-004 market ────────────────────────────────────────────────────
-test("marketSnapshot breadth + sectors", () => {
-  const m = marketSnapshot();
-  assert.equal(m.advancing + m.declining + m.unchanged, STOCKS.length);
-  assert.ok(m.sectors.length >= 5);
-  assert.ok(m.totalMarketCap > 0);
+// marketSnapshot() and indexHistory() were removed, not replaced: they generated a
+// hardcoded index and a sine-wave index chart. This test now guards their absence,
+// so nothing reintroduces a manufactured market-level number through this module.
+test("the seed data module exposes no market-level index or generated history", async () => {
+  const data = await import("./nepse/data.js");
+  assert.equal(data.marketSnapshot, undefined);
+  assert.equal(data.indexHistory, undefined);
 });
 
-test("indexHistory ends exactly at target", () => {
-  const h = indexHistory(30, 2557.31);
-  assert.equal(h.length, 30);
-  assert.equal(h[h.length - 1].v, 2557.31);
+test("the broker list is a code-to-name map only, with no invented activity", () => {
+  // Turnover, trade counts, ranking and the per-stock breakdown were generated from
+  // a symbol's character codes. They are gone; real activity comes from the
+  // floorsheet. This guards against any of it returning through this module.
+  assert.ok(BROKERS.length > 0);
+  for (const b of BROKERS) {
+    assert.equal(typeof b.code, "number");
+    assert.ok(b.name.length > 0);
+    for (const invented of ["buy", "sell", "total", "trades", "rank"]) {
+      assert.equal(b[invented], undefined, `BROKERS carries invented field ${invented}`);
+    }
+  }
 });
 
-test("brokers ranked + per-stock breakdown", () => {
-  assert.equal(BROKERS[0].rank, 1);
-  const b = brokersForStock("NABIL");
-  assert.ok(b.length === BROKERS.length);
-  assert.ok(b.every((x) => x.buyQty > 0));
+test("the seed module no longer generates a per-stock broker breakdown", async () => {
+  const data = await import("./nepse/data.js");
+  assert.equal(data.brokersForStock, undefined);
 });
 
 // ── M400-NEPSE-005 importers ─────────────────────────────────────────────────
@@ -211,8 +219,31 @@ test("formatters", () => {
   assert.equal(fmtRs(1234.5), "Rs 1,234.50");
   assert.equal(fmtPct(2.5), "+2.50%");
   assert.equal(fmtPct(-1), "-1.00%");
-  assert.equal(isMarketOpen(new Date("2026-08-28T12:00:00")), false); // Friday
-  assert.equal(isMarketOpen(new Date("2026-08-30T12:00:00")), true); // Sunday noon
+  // Explicit UTC instants, not bare local-time strings: a date written without a
+  // zone is parsed in the HOST's timezone, so these assertions used to mean
+  // something different on every machine — and passed here only because this
+  // developer box is set to +05:45.
+  assert.equal(isMarketOpen(new Date("2026-08-28T06:00:00Z")), false); // Fri 11:45 NPT
+  assert.equal(isMarketOpen(new Date("2026-08-30T06:00:00Z")), true);  // Sun 11:45 NPT
+  assert.equal(isMarketOpen(new Date("2026-08-30T18:00:00Z")), false); // Sun 23:45 NPT
+});
+
+test("market hours do not depend on the host timezone", () => {
+  // The regression this guards: getHours()/getDay() read the host clock, so a
+  // server in UTC reported NEPSE open through a Kathmandu night. Same instant,
+  // same answer, whatever TZ the process runs under.
+  const OPEN = new Date("2026-08-30T06:00:00Z");  // Sun 11:45 in Kathmandu
+  const SHUT = new Date("2026-08-30T17:00:00Z");  // Sun 22:45 in Kathmandu
+  const original = process.env.TZ;
+  try {
+    for (const tz of ["UTC", "America/New_York", "Asia/Kathmandu", "Pacific/Auckland"]) {
+      process.env.TZ = tz;
+      assert.equal(isMarketOpen(OPEN), true, `open instant misread under ${tz}`);
+      assert.equal(isMarketOpen(SHUT), false, `shut instant misread under ${tz}`);
+    }
+  } finally {
+    if (original === undefined) delete process.env.TZ; else process.env.TZ = original;
+  }
 });
 
 // ── M400-NEPSE-006/007 structural: routes + boundary labels ──────────────────

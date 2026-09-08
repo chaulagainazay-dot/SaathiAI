@@ -104,6 +104,7 @@ export function parseHistoryCsv(text, { symbol = "", maxRows = 20000 } = {}) {
   const iLow = idx("low");
   const iClose = idx("close");
   const iQty = idx("traded_quantity");
+  const iAmt = idx("traded_amount");
   if (iDate < 0 || iClose < 0) return { bars: [], rejected: [], source: NEPSE_RESEARCH_SOURCE };
 
   const bars = [];
@@ -130,6 +131,7 @@ export function parseHistoryCsv(text, { symbol = "", maxRows = 20000 } = {}) {
     const low = iLow >= 0 ? num(c[iLow]) : null;
     const close = num(c[iClose]);
     const volume = iQty >= 0 ? num(c[iQty]) : null;
+    const turnover = iAmt >= 0 ? num(c[iAmt]) : null;
 
     if (close === null) { rejected.push({ line: i, date, reason: ROW_FLAG.MISSING_CLOSE }); continue; }
     if ([open, high, low, close].some((x) => x !== null && x <= 0)) flags.push(ROW_FLAG.NON_POSITIVE);
@@ -154,7 +156,7 @@ export function parseHistoryCsv(text, { symbol = "", maxRows = 20000 } = {}) {
     bars.push({
       symbol: String(symbol || "").toUpperCase(),
       date,
-      open, high, low, close, volume,
+      open, high, low, close, volume, turnover,
       // Per-field trust — the whole point of this contract.
       trusted: { close: closeUsable, high: rangeUsable, low: rangeUsable, open: openTrusted, volume: volume !== null },
       flags,
@@ -216,4 +218,27 @@ export function historyQuality(bars, rejected = []) {
     adjustment: NEPSE_RESEARCH_SOURCE.adjustment,
     classification: NEPSE_RESEARCH_SOURCE.classification,
   };
+}
+
+/**
+ * Parse the TAIL of an archive CSV — the last few KB fetched with a Range request.
+ *
+ * Market-wide aggregates need the last two closes of ~372 companies. Downloading
+ * every full file is ~30 MB for ~700 rows of actual interest, so the route asks
+ * for the tail instead. The tail has no header, and GUESSING one would silently
+ * misread the file the day the archive reorders its columns — so the caller must
+ * pass the real header line, read from the archive in the same cycle.
+ *
+ * The first line of a tail is almost always a partial row, so it is discarded.
+ */
+export function parseHistoryTail(tailText, headerLine, { symbol = "" } = {}) {
+  const header = String(headerLine || "").trim();
+  if (!header || !/published_date/i.test(header)) {
+    return { bars: [], rejected: [], source: NEPSE_RESEARCH_SOURCE };
+  }
+  const lines = String(tailText || "").split(/\r?\n/);
+  // Drop the leading fragment; a byte range rarely lands on a line boundary.
+  const rows = lines.slice(1).filter((l) => l.trim().length);
+  if (!rows.length) return { bars: [], rejected: [], source: NEPSE_RESEARCH_SOURCE };
+  return parseHistoryCsv([header, ...rows].join("\n"), { symbol });
 }

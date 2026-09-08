@@ -29,6 +29,8 @@ import {
 import { LoadingState, ErrorState, EmptyState, StatusBadge, Button } from "@/components/ui";
 import { useVoiceSession } from "@/components/voice/VoiceSessionProvider";
 import { useVoiceRuntime } from "@/components/voice/VoiceRuntimeProvider";
+import TradingOpsPanel from "@/components/command/TradingOpsPanel";
+import { useTradingOps } from "@/lib/useTradingOps";
 
 function Pill({ children, tone = "default" }) {
   const cls =
@@ -348,6 +350,7 @@ function ProposalPanel({
 }
 
 export default function CommandCenterPage() {
+  const { status: tradingOps } = useTradingOps();
   const [fixtureScenario, setFixtureScenario] = useState(null);
   useEffect(() => {
     try {
@@ -900,6 +903,10 @@ export default function CommandCenterPage() {
             />
 
             <PerformancePanel performance={performance} />
+
+            {/* Canonical trading-operations status. Rendered from the ops
+                snapshot alone — this page classifies no health of its own. */}
+            <TradingOpsPanel status={tradingOps} />
 
             <h3 className="dl-subh">Positions</h3>
             {portfolio?.error ? (

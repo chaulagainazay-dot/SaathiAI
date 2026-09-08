@@ -196,8 +196,29 @@ def test_guardian_rejects_non_valid_market_data():
 
 # ── adversarial ───────────────────────────────────────────────────────────────
 def test_adversarial_invalid_decimal_and_negatives():
-    from saathi.platform.trading_models import D
-    assert D("not-a-number") == Decimal("0")   # malformed provider string -> safe 0 (not exception)
+    """FINANCIAL-NUMERIC-1: a malformed provider value is REFUSED, not zeroed.
+
+    This test previously asserted ``D("not-a-number") == Decimal("0")`` and called
+    it a "safe 0". It is not safe: a provider string that fails to parse became a
+    valid-looking price of zero, which is indistinguishable downstream from a real
+    zero and feeds cash reservation, risk limits and safety metrics. Parsing now
+    fails closed; a caller that wants absence to mean zero must say so itself.
+    """
+    import pytest as _pytest
+
+    from saathi.platform.trading_models import D, InvalidFinancialValue
+
+    with _pytest.raises(InvalidFinancialValue):
+        D("not-a-number")
+    # NaN and Infinity are refused too — a NaN compares false against every limit.
+    for hostile in ("NaN", "Infinity", "-Infinity", float("nan"), float("inf"), True):
+        with _pytest.raises(InvalidFinancialValue):
+            D(hostile)
+    # Legitimate values, including a real zero, are untouched.
+    assert D("0") == Decimal("0")
+    assert D(None) == Decimal("0")          # documented optional path
+    assert D("1.25") == Decimal("1.25")
+
     q = _q(bid=Decimal("0"))
     assert classify_quote(q, now=NOW) == MarketDataQuality.INVALID_PRICE
 

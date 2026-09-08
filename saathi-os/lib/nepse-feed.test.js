@@ -203,9 +203,11 @@ test("portfolio values holdings from the live price map, not a frozen constant",
   assert.match(src, /computePortfolio\(active\.transactions, priceMap\)/);
 });
 
-test("watchlist and screener render unknown day change identically", () => {
+test("watchlist and screener derive day change through the SAME path", () => {
   for (const f of ["app/nepse/watchlist/page.jsx", "app/nepse/stocks/page.jsx"]) {
     const src = readFileSync(join(ROOT, f), "utf8");
-    assert.match(src, /changeUnavailable \|\| r\.prevClose == null/, `${f} must not fake a change`);
+    // One shared derivation, so the two surfaces cannot quote different changes.
+    assert.match(src, /liveDayChange\(r\.ltp, indicators\[r\.symbol\], isLive\)/, `${f} must use the shared derivation`);
+    assert.match(src, /!dc\.available/, `${f} must render unknown as unavailable, not zero`);
   }
 });

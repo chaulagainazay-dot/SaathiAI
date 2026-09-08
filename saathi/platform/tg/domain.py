@@ -1045,7 +1045,15 @@ class TradingGuardianKillSwitch:
 
 
 def coerce_decimal(value: Any, default: str = "0") -> Decimal:
-    try:
-        return D(value, default)
-    except Exception:
-        return Decimal(default)
+    """Parse a Guardian risk input. FAIL CLOSED.
+
+    This used to wrap D() in a bare ``except: return Decimal(default)``, which
+    defeated the parser entirely: a malformed entry price, stop price or stop
+    distance silently became zero, and a zero stop distance is not a small risk —
+    it is a risk check that cannot fail. The exception now propagates so the
+    signal is refused rather than evaluated against fabricated numbers.
+
+    ``None``/``""`` still yield ``default`` via D(): that is the declared optional
+    path, not a parse failure.
+    """
+    return D(value, default)

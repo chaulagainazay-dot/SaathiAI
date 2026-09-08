@@ -13345,6 +13345,58 @@ def tg_ops_health(authorization: str | None = Header(default=None), x_platform_t
     return _tg_ops_authorized(authorization, x_platform_token).health.snapshot()
 
 
+def _trading_ops_sources():
+    """Canonical runtime instances, resolved by TRADING-RUNTIME-INSTANCE-WIRING-1.
+
+    One owner per subsystem. Unwired subsystems contribute no source and report
+    their real reason instead of a stand-in — the objective is real evidence, not
+    green evidence.
+    """
+    from saathi.platform.tg.runtime_wiring import collector_sources
+
+    return collector_sources()
+
+
+@router.get("/tg/operations/trading-ops")
+def tg_trading_ops_status(
+    authorization: str | None = Header(default=None),
+    x_platform_token: str | None = Header(default=None, alias="X-Platform-Token"),
+):
+    """Canonical trading-operations snapshot. READ ONLY.
+
+    The single source Central Command renders from. It classifies nothing: the
+    payload is TRADING-OPS-1's snapshot, produced through HEALTH-COLLECTOR-1's
+    non-mutating reads, plus the freshness that says whether it still describes
+    now. Collection is request-driven and coalesced by the collector's own
+    minimum interval, so page loads cannot turn into a polling storm.
+    """
+    _tg_ops_authorized(authorization, x_platform_token)
+    from saathi.platform.tg.ops_status import default_status_service
+
+    def _serve():
+        import time as _time
+        # Operational freshness genuinely needs a clock, and this is the boundary
+        # where one belongs — the collector and producers below stay clock-free.
+        now = _time.strftime("%Y-%m-%dT%H:%M:%SZ", _time.gmtime())
+        from saathi.platform.tg.runtime_wiring import (
+            collector_sources, unavailable_reasons, wiring_report,
+        )
+
+        wiring = __import__(
+            "saathi.platform.tg.runtime_wiring", fromlist=["resolve_all"]
+        ).resolve_all()
+        payload = default_status_service().status(
+            now=now, unavailable_reasons=unavailable_reasons(wiring),
+            **collector_sources(wiring)
+        ).to_public()
+        # Wiring travels beside health so an operator can tell "unhealthy" from
+        # "not wired in this process" — two facts a single UNKNOWN would merge.
+        payload["runtime_wiring"] = wiring_report(wiring)
+        return payload
+
+    return _tg_ops_guard(_serve)
+
+
 @router.get("/tg/operations/health/{component_id}")
 def tg_ops_health_component(component_id: str, authorization: str | None = Header(default=None), x_platform_token: str | None = Header(default=None, alias="X-Platform-Token")):
     service = _tg_ops_authorized(authorization, x_platform_token)

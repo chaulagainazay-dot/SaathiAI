@@ -76,10 +76,28 @@ _DEFAULT_ALLOW: dict[BrowserEnvironment, tuple[str, ...]] = {
 }
 
 # Explicit denylist always applied
+#
+# Two kinds of host live here. The metadata endpoints are the classic SSRF
+# targets. The rest are the NO_PROTECTED_SCRAPING invariant expressed as code:
+# NEPSE's own portal, the depository, and broker trading-management systems are
+# authenticated or bot-protected surfaces belonging to the exchange and to
+# individual investors. They are denied at the policy layer rather than merely
+# left out of an allowlist, so that widening the allowlist — which is a routine,
+# low-ceremony act — can never quietly reach them.
+PROTECTED_MARKET_HOSTS = frozenset({
+    "nepalstock.com.np",          # NEPSE's own portal (token/WAF protected)
+    "www.nepalstock.com.np",
+    "newweb.nepalstock.com.np",
+    "meroshare.cdsc.com.np",      # CDSC depository — investor credentials
+    "cdsc.com.np",
+    "tms.nepsetms.com.np",        # broker trading-management systems
+    "nepsetms.com.np",
+})
+
 DEFAULT_DENY_HOSTS = frozenset({
     "metadata.google.internal",
     "metadata",
-})
+}) | PROTECTED_MARKET_HOSTS
 
 
 @dataclass(frozen=True)

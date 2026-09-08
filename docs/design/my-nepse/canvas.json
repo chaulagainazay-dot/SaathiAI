@@ -1,0 +1,16 @@
+{
+  "artboards": [
+    { "file": "Main.dc.html",     "x": 0,    "y": 0,    "w": 1180, "h": 1180, "title": "Portfolio · all accounts" },
+    { "file": "Market.dc.html",   "x": 1300, "y": 0,    "w": 1180, "h": 1180, "title": "Market · sector heatmap" },
+    { "file": "Stock.dc.html",    "x": 2600, "y": 0,    "w": 1180, "h": 1180, "title": "Stock · chart + indicators" },
+    { "file": "Scanner.dc.html",  "x": 0,    "y": 1360, "w": 1180, "h": 1120, "title": "Scanner · strategy builder" },
+    { "file": "Alerts.dc.html",   "x": 1300, "y": 1360, "w": 1180, "h": 1120, "title": "Price alerts" },
+    { "file": "Calendar.dc.html", "x": 2600, "y": 1360, "w": 1180, "h": 1120, "title": "Dividends & IPO calendar" },
+    { "file": "Mobile.dc.html",   "x": 3900, "y": 0,    "w": 390,  "h": 844,  "title": "Mobile · portfolio" }
+  ],
+  "annotations": [
+    { "id": "scope", "x": 0, "y": -190, "w": 640, "text": "My NEPSE — seven screens.\n\nMatched to the shipping app: Fraunces headings, IBM Plex Sans body, IBM Plex Mono for every number, and the exact nepse.css palette.\n\nAll figures are REAL and verified from the 2026-09-03 session — NEPSE 2,542.77, turnover Rs 3.47 Ar, NABIL 539.00. Only the holdings are invented, and they are marked as sample." },
+    { "id": "honesty", "x": 700, "y": -190, "w": 560, "text": "Every screen shows an unknown as an unknown.\n\nUnpriced holding, unsized heatmap tile, not-evaluable alert, unknown scan result, missing open gap — each is drawn explicitly rather than as a zero. That is the product's defining behaviour, so the design has to carry it." }
+  ],
+  "launch": { "view": "canvas" }
+}

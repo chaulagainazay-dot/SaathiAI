@@ -4,7 +4,8 @@
 // and Brokers (per-stock buy/sell breakdown). Header carries a watchlist star.
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
-import { getStock, brokersForStock } from "@/lib/nepse/data";
+import { getStock } from "@/lib/nepse/data";
+import { useFloorsheet } from "@/lib/nepse/use-market";
 import { useNepseQuotes } from "@/lib/nepse/live";
 import { withAnalytics } from "@/lib/nepse/analytics";
 import { fmtRs, fmtNum, fmtPct, dayChangePct, fmtCompactRs } from "@/lib/nepse/format";
@@ -35,7 +36,9 @@ export default function StockDetail() {
     try { setWatched(store.loadState().watchlist.includes(symbol)); } catch { /* noop */ }
   }, [symbol]);
 
-  const brokers = useMemo(() => (stock ? brokersForStock(symbol) : []), [symbol, stock]);
+  // Real per-broker activity for this symbol, counted from the session floorsheet.
+  const fs = useFloorsheet(stock ? symbol : null);
+  const brokers = fs.data?.brokers || [];
   const divs = useMemo(() => (stock ? dividends(stock) : []), [stock]);
 
   if (!stock) return <div className="nepse-empty">Unknown symbol “{symbol}”. <a href="/nepse/stocks">Back to screener</a></div>;
@@ -110,7 +113,18 @@ export default function StockDetail() {
         </div>
       )}
 
-      {tab === "brokers" && (
+      {tab === "brokers" && (fs.loading ? (
+        <div className="nepse-empty">Counting this symbol&apos;s trades from the session floorsheet…</div>
+      ) : !fs.data ? (
+        <div className="nepse-callout">
+          <strong>No floorsheet.</strong> Broker activity for {symbol} could not be read
+          ({fs.error}). Nothing is shown rather than a generated breakdown.
+        </div>
+      ) : !fs.data.traded ? (
+        <div className="nepse-empty">
+          {symbol} did not trade on {fs.data.asOf}. No broker took a side.
+        </div>
+      ) : (
         <div className="nepse-table-wrap">
           <table className="nepse-table">
             <thead><tr>
@@ -119,7 +133,10 @@ export default function StockDetail() {
             </tr></thead>
             <tbody>{brokers.map((b) => (
               <tr key={b.code}>
-                <td className="strong">#{b.code} {b.name}</td>
+                <td className="strong">
+                  #{b.code}{" "}
+                  {b.name || <span style={{ color: "var(--text-faint)", fontWeight: 400 }}>name unknown</span>}
+                </td>
                 <td className="rt num">{fmtNum(b.buyQty, 0)}</td>
                 <td className="rt num">{fmtCompactRs(b.buyAmount)}</td>
                 <td className="rt num">{fmtNum(b.sellQty, 0)}</td>
@@ -129,8 +146,12 @@ export default function StockDetail() {
               </tr>
             ))}</tbody>
           </table>
+          <p style={{ color: "var(--text-faint)", fontSize: "0.78rem", marginTop: "0.6rem" }}>
+            {symbol} on {fs.data.asOf}: {fmtNum(fs.data.totals.trades, 0)} trades,{" "}
+            {fmtNum(fs.data.totals.quantity, 0)} shares, {fmtCompactRs(fs.data.totals.amount)}.
+          </p>
         </div>
-      )}
+      ))}
     </>
   );
 }
