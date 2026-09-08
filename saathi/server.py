@@ -2955,8 +2955,40 @@ def pielts_set_targets(body: TargetIn):
 
 @app.get("/api/v1/connections")
 def get_connections():
+    """Platform connection settings, with credential VALUES redacted.
+
+    This returned `connections.get_all()` verbatim, so an authenticated caller
+    received the Facebook page access token — 202 characters of live publishing
+    credential — in a 200 body, where it lands in browser devtools, proxy logs
+    and any client-side error reporting. The 422 redaction boundary does not
+    cover success responses; this one does.
+
+    PRESENCE is preserved. The UI has to show whether a platform is configured,
+    and `has_page_access_token: true` says that without disclosing the value.
+    Field names come from the repository's existing secret detector rather than
+    a second list that would drift from it.
+    """
+    from saathi.tool_runtime.secrets import REDACTED, is_secret_key
+
     from . import connections
-    return {"connections": connections.get_all()}
+
+    safe = {}
+    for platform, cfg in (connections.get_all() or {}).items():
+        if not isinstance(cfg, dict):
+            safe[platform] = cfg
+            continue
+        out = {}
+        for key, value in cfg.items():
+            if is_secret_key(key) and value not in (None, "", [], {}):
+                out[key] = REDACTED
+                out[f"has_{key}"] = True
+            elif is_secret_key(key):
+                out[key] = value
+                out[f"has_{key}"] = False
+            else:
+                out[key] = value
+        safe[platform] = out
+    return {"connections": safe}
 
 
 class ConnIn(BaseModel):
