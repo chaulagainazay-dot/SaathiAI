@@ -86,3 +86,36 @@ def test_a_non_secret_value_is_still_shown():
 def test_the_redaction_marker_is_the_repo_wide_one():
     res = _post_missing_required_field({"password": SENTINELS["password"]})
     assert REDACTED in res.text
+
+
+def test_a_malformed_body_still_returns_422_and_not_a_crash():
+    """The handler must never raise.
+
+    A malformed body reaches the handler as raw BYTES, which json cannot encode.
+    The first version of this handler threw on that input, and an exception
+    inside an exception handler does not become a 422 — it escapes as an
+    unhandled 500. That turned a redaction fix into an availability bug on every
+    endpoint that takes a body.
+    """
+    res = client.post(
+        "/api/v1/platform/auth/login",
+        content=b"not json",
+        headers={"content-type": "application/json"},
+    )
+    assert res.status_code == 422, res.status_code
+    assert res.json()["detail"], "the error body must still be useful"
+
+
+def test_a_body_that_is_not_an_object_is_handled():
+    for payload in ("a string", 42, [1, 2, 3], None, True):
+        res = client.post("/api/v1/platform/auth/login", json=payload)
+        assert res.status_code == 422, f"{payload!r} produced {res.status_code}"
+
+
+def test_a_secret_inside_a_malformed_nested_shape_is_still_redacted():
+    res = client.post(
+        "/api/v1/platform/auth/login",
+        json={"password": {"nested": [{"token": SENTINELS["token"]}]}},
+    )
+    assert res.status_code == 422
+    assert SENTINELS["token"] not in res.text

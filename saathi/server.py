@@ -84,7 +84,26 @@ async def _validation_error_without_secrets(request, exc):
     `loc` is kept: a field NAME is what makes the error actionable, and naming
     "password" is not disclosing one.
     """
+    from fastapi.encoders import jsonable_encoder
+
     from saathi.tool_runtime.secrets import REDACTED, is_secret_key, redact
+
+    def _safe(value):
+        """Redacted AND serialisable.
+
+        A malformed body arrives here as raw BYTES, which json cannot encode. An
+        exception raised inside this handler does not become a 422 — it escapes
+        as an unhandled error, so a handler that can throw turns the bug it was
+        written to fix into a 500. Everything is coerced through
+        `jsonable_encoder`, and anything that still resists becomes its repr.
+        """
+        try:
+            return jsonable_encoder(redact(value))
+        except Exception:
+            try:
+                return repr(value)[:200]
+            except Exception:
+                return REDACTED
 
     safe = []
     for err in exc.errors():
@@ -93,11 +112,15 @@ async def _validation_error_without_secrets(request, exc):
         # The value that failed validation, under a key that names a credential.
         leaf = str(loc[-1]) if loc else ""
         if "input" in e:
-            e["input"] = REDACTED if is_secret_key(leaf) else redact(e["input"])
+            e["input"] = REDACTED if is_secret_key(leaf) else _safe(e["input"])
         if "ctx" in e:
-            e["ctx"] = redact(e["ctx"])
+            e["ctx"] = _safe(e["ctx"])
         # Pydantic's url points at its docs; harmless, but nothing needs it.
         e.pop("url", None)
+        try:
+            e["loc"] = [str(x) for x in loc]
+        except Exception:
+            e["loc"] = []
         safe.append(e)
     return JSONResponse({"detail": safe}, status_code=422)
 
